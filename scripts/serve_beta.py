@@ -65,6 +65,7 @@ import phase26_team as _p26
 # Wolf Core Organisation Registry (read APIs)
 from core import organisation as _org
 from core import identity as _identity
+from core import staffing as _staffing
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -334,6 +335,21 @@ def ensure_schema() -> None:
             assert spec_p and spec_p.loader
             spec_p.loader.exec_module(mod_p)
             mod_p.main()
+        except Exception:
+            pass
+    # 007 Role + Position + Assignment (idempotent)
+    try:
+        from migrations.migrate_role_position_assignment import main as _mig_rpa
+        _mig_rpa()
+    except Exception:
+        try:
+            import importlib.util
+            mig_r = Path(__file__).resolve().parent / "migrations" / "migrate_role_position_assignment.py"
+            spec_r = importlib.util.spec_from_file_location("migrate_role_position_assignment", mig_r)
+            mod_r = importlib.util.module_from_spec(spec_r)
+            assert spec_r and spec_r.loader
+            spec_r.loader.exec_module(mod_r)
+            mod_r.main()
         except Exception:
             pass
     for _stage in ("RAW", "EDIT", "FINAL"):
@@ -1401,6 +1417,33 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._publish_gate(qs)
             return
 
+        # Wolf Core Role / Position / Assignment (read-only; org_* not LLM role)
+        if path == "/api/core/roles":
+            self._get_core_roles()
+            return
+        m_role = re.match(r"^/api/core/roles/([^/]+)$", path)
+        if m_role:
+            self._get_core_role(m_role.group(1))
+            return
+        if path == "/api/core/positions":
+            self._get_core_positions()
+            return
+        m_pos = re.match(r"^/api/core/positions/([^/]+)$", path)
+        if m_pos:
+            self._get_core_position(m_pos.group(1))
+            return
+        m_pos_asg = re.match(r"^/api/core/positions/([^/]+)/assignments$", path)
+        if m_pos_asg:
+            self._get_core_position_assignments(m_pos_asg.group(1))
+            return
+        m_pers_asg = re.match(r"^/api/core/persons/([^/]+)/assignments$", path)
+        if m_pers_asg:
+            self._get_core_person_assignments(m_pers_asg.group(1))
+            return
+        if path == "/api/core/me/assignments":
+            self._get_core_me_assignments()
+            return
+
         # Wolf Core Person + Auth Identity (read-only; DEVELOPMENT assertion honesty)
         if path == "/api/core/persons":
             self._get_core_persons()
@@ -2386,6 +2429,70 @@ class BetaHandler(SimpleHTTPRequestHandler):
         return self._require_permission("can_create_plan", body)
 
 
+
+
+    def _get_core_roles(self) -> None:
+        self._send_json({"ok": True, "roles": _staffing.list_roles()})
+
+    def _get_core_role(self, role_id: str) -> None:
+        role = _staffing.get_role(role_id)
+        if not role:
+            self._send_json({"ok": False, "error": "not_found", "role_id": role_id}, status=404)
+            return
+        self._send_json({"ok": True, "role": role})
+
+    def _get_core_positions(self) -> None:
+        self._send_json({"ok": True, "positions": _staffing.list_positions()})
+
+    def _get_core_position(self, position_id: str) -> None:
+        pos = _staffing.get_position(position_id)
+        if not pos:
+            self._send_json({"ok": False, "error": "not_found", "position_id": position_id}, status=404)
+            return
+        self._send_json({"ok": True, "position": pos})
+
+    def _get_core_position_assignments(self, position_id: str) -> None:
+        if not _staffing.get_position(position_id):
+            self._send_json({"ok": False, "error": "not_found", "position_id": position_id}, status=404)
+            return
+        self._send_json({
+            "ok": True,
+            "position_id": position_id,
+            "assignments": _staffing.list_assignments_for_position(position_id),
+            "current_occupants": _staffing.get_current_occupants(position_id),
+        })
+
+    def _get_core_person_assignments(self, person_id: str) -> None:
+        if not _identity.get_person(person_id):
+            self._send_json({"ok": False, "error": "not_found", "person_id": person_id}, status=404)
+            return
+        self._send_json({
+            "ok": True,
+            "person_id": person_id,
+            "assignments": _staffing.list_assignments_for_person(person_id, include_ended=True),
+            "org_context": _staffing.resolve_org_context_for_person(person_id),
+        })
+
+    def _get_core_me_assignments(self) -> None:
+        qs = parse_qs(urlparse(self.path).query)
+        asserted = _wi.resolve_development_identity_assertion(self)
+        if not asserted:
+            asserted = (qs.get("subject") or [""])[0].strip() or None
+        me = _identity.resolve_from_development_assertion(asserted)
+        person_id = me.get("person_id")
+        assignments = (
+            _staffing.list_active_assignments_for_person(person_id) if person_id else []
+        )
+        self._send_json({
+            "ok": True,
+            "identity_assurance": me.get("identity_assurance"),
+            "real_authentication": False,
+            "asserted_identifier": me.get("asserted_identifier"),
+            "person_id": person_id,
+            "assignments": assignments,
+            "org_context": _staffing.resolve_org_context_for_person(person_id) if person_id else None,
+            "note": me.get("note"),
+        })
 
     def _get_core_persons(self) -> None:
         # Minimal fields only — no emails on list
