@@ -66,6 +66,7 @@ import phase26_team as _p26
 from core import organisation as _org
 from core import identity as _identity
 from core import staffing as _staffing
+from core import scope as _scope
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -350,6 +351,21 @@ def ensure_schema() -> None:
             assert spec_r and spec_r.loader
             spec_r.loader.exec_module(mod_r)
             mod_r.main()
+        except Exception:
+            pass
+    # 008 Assignment Scope (idempotent)
+    try:
+        from migrations.migrate_assignment_scope import main as _mig_scope
+        _mig_scope()
+    except Exception:
+        try:
+            import importlib.util
+            mig_s = Path(__file__).resolve().parent / "migrations" / "migrate_assignment_scope.py"
+            spec_s = importlib.util.spec_from_file_location("migrate_assignment_scope", mig_s)
+            mod_s = importlib.util.module_from_spec(spec_s)
+            assert spec_s and spec_s.loader
+            spec_s.loader.exec_module(mod_s)
+            mod_s.main()
         except Exception:
             pass
     for _stage in ("RAW", "EDIT", "FINAL"):
@@ -1417,6 +1433,22 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._publish_gate(qs)
             return
 
+        # Wolf Core Assignment Scope (read-only; WHERE only — no RBAC)
+        if path == "/api/core/scopes":
+            self._get_core_scopes()
+            return
+        m_scope = re.match(r"^/api/core/scopes/([^/]+)$", path)
+        if m_scope:
+            self._get_core_scope(m_scope.group(1))
+            return
+        m_asg_scopes = re.match(r"^/api/core/assignments/([^/]+)/scopes$", path)
+        if m_asg_scopes:
+            self._get_core_assignment_scopes(m_asg_scopes.group(1))
+            return
+        if path == "/api/core/me/scopes":
+            self._get_core_me_scopes()
+            return
+
         # Wolf Core Role / Position / Assignment (read-only; org_* not LLM role)
         if path == "/api/core/roles":
             self._get_core_roles()
@@ -2430,6 +2462,64 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
 
 
+
+    def _get_core_scopes(self) -> None:
+        self._send_json({"ok": True, "scopes": _scope.list_scopes()})
+
+    def _get_core_scope(self, scope_id: str) -> None:
+        scope = _scope.get_scope(scope_id)
+        if not scope:
+            self._send_json({"ok": False, "error": "not_found", "scope_id": scope_id}, status=404)
+            return
+        self._send_json({
+            "ok": True,
+            "scope": scope,
+            "targets": _scope.list_scope_targets(scope_id),
+            "effective_context": _scope.resolve_effective_scope_context(scope_id),
+        })
+
+    def _get_core_assignment_scopes(self, assignment_id: str) -> None:
+        # Assignment existence via staffing assignments table
+        conn = _staffing.db_connect()
+        try:
+            row = conn.execute(
+                "SELECT assignment_id FROM org_assignments WHERE assignment_id=?",
+                (assignment_id,),
+            ).fetchone()
+        finally:
+            conn.close()
+        if not row:
+            self._send_json({"ok": False, "error": "not_found", "assignment_id": assignment_id}, status=404)
+            return
+        self._send_json({
+            "ok": True,
+            "assignment_id": assignment_id,
+            "scopes": _scope.list_scopes_for_assignment(assignment_id, include_ended=True),
+        })
+
+    def _get_core_me_scopes(self) -> None:
+        qs = parse_qs(urlparse(self.path).query)
+        asserted = _wi.resolve_development_identity_assertion(self)
+        if not asserted:
+            asserted = (qs.get("subject") or [""])[0].strip() or None
+        me = _identity.resolve_from_development_assertion(asserted)
+        person_id = me.get("person_id")
+        scopes = _scope.list_active_scopes_for_person(person_id) if person_id else []
+        contexts = [
+            _scope.resolve_effective_scope_context(s["scope_id"]) for s in scopes
+        ]
+        self._send_json({
+            "ok": True,
+            "identity_assurance": me.get("identity_assurance"),
+            "real_authentication": False,
+            "asserted_identifier": me.get("asserted_identifier"),
+            "person_id": person_id,
+            "scopes": scopes,
+            "effective_contexts": contexts,
+            "rbac": "NOT_BUILT",
+            "authority_limits": "NOT_BUILT",
+            "note": me.get("note"),
+        })
 
     def _get_core_roles(self) -> None:
         self._send_json({"ok": True, "roles": _staffing.list_roles()})

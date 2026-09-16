@@ -2,7 +2,7 @@
 """Organisation Role / Position / Assignment repository (Beta).
 
 Uses org_roles / org_positions / org_assignments — not LLM routing "role".
-Scope and permission engines are out of scope for this module.
+Permission engines are out of scope for this module. Scope lives in core.scope.
 """
 from __future__ import annotations
 
@@ -270,11 +270,15 @@ def get_current_occupants(
 def resolve_org_context_for_person(
     person_id: str, conn: sqlite3.Connection | None = None
 ) -> dict[str, Any]:
-    """Active Assignment → Position → org Role (not LLM role)."""
+    """Active Assignment → Position → org Role + Assignment Scopes (not LLM role)."""
     active = list_active_assignments_for_person(person_id, conn=conn)
+    # Import locally to avoid circular import at module load
+    from core import scope as _scope  # type: ignore
+    scopes = _scope.list_active_scopes_for_person(person_id, conn=conn)
     return {
         "person_id": person_id,
         "active_assignments": active,
-        "scope": "NOT_BUILT",
+        "scopes": scopes,
+        "scope": scopes,  # transitional alias; was "NOT_BUILT"
         "rbac": "NOT_BUILT",
     }
