@@ -64,6 +64,7 @@ import phase26_team as _p26
 
 # Wolf Core Organisation Registry (read APIs)
 from core import organisation as _org
+from core import identity as _identity
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -318,6 +319,21 @@ def ensure_schema() -> None:
             assert spec_org and spec_org.loader
             spec_org.loader.exec_module(mod_org)
             mod_org.main()
+        except Exception:
+            pass
+    # 006 Person + Auth Identity (idempotent)
+    try:
+        from migrations.migrate_person_auth_identity import main as _mig_person
+        _mig_person()
+    except Exception:
+        try:
+            import importlib.util
+            mig_p = Path(__file__).resolve().parent / "migrations" / "migrate_person_auth_identity.py"
+            spec_p = importlib.util.spec_from_file_location("migrate_person_auth_identity", mig_p)
+            mod_p = importlib.util.module_from_spec(spec_p)
+            assert spec_p and spec_p.loader
+            spec_p.loader.exec_module(mod_p)
+            mod_p.main()
         except Exception:
             pass
     for _stage in ("RAW", "EDIT", "FINAL"):
@@ -1385,6 +1401,22 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._publish_gate(qs)
             return
 
+        # Wolf Core Person + Auth Identity (read-only; DEVELOPMENT assertion honesty)
+        if path == "/api/core/persons":
+            self._get_core_persons()
+            return
+        m_pers = re.match(r"^/api/core/persons/([^/]+)$", path)
+        if m_pers:
+            self._get_core_person(m_pers.group(1))
+            return
+        m_pers_auth = re.match(r"^/api/core/persons/([^/]+)/auth-identities$", path)
+        if m_pers_auth:
+            self._get_core_person_auth_identities(m_pers_auth.group(1))
+            return
+        if path == "/api/core/me":
+            self._get_core_me()
+            return
+
         # Wolf Core Organisation Registry (read-only)
         if path == "/api/core/entities":
             self._get_core_entities()
@@ -2311,8 +2343,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
     ) -> str | None:
         """Return subject email if allowed for `permission`; else send 403 and return None.
 
-        Uses has_permission + resolve_authenticated_subject.
-        X-Wolf-Subject / JSON subject = DEVELOPMENT ONLY — not production identity.
+        Uses has_permission + resolve_development_identity_assertion (legacy alias: resolve_authenticated_subject).
+        X-Wolf-Subject / JSON subject = DEVELOPMENT_IDENTITY_ASSERTION — spoofable; not production identity.
         Cloudflare Access JWT is the intended production path (NOT wired this phase).
         """
         # Prefer cached body when caller already read JSON; else use provided body.
@@ -2353,6 +2385,57 @@ class BetaHandler(SimpleHTTPRequestHandler):
         """Compatibility wrapper — build-next / admin sync still use can_create_plan."""
         return self._require_permission("can_create_plan", body)
 
+
+
+    def _get_core_persons(self) -> None:
+        # Minimal fields only — no emails on list
+        self._send_json({"ok": True, "persons": _identity.list_persons()})
+
+    def _get_core_person(self, person_id: str) -> None:
+        person = _identity.get_person(person_id)
+        if not person:
+            self._send_json({"ok": False, "error": "not_found", "person_id": person_id}, status=404)
+            return
+        # Omit nothing required; legal_name may be null
+        self._send_json({
+            "ok": True,
+            "person": {
+                "person_id": person["person_id"],
+                "display_name": person["display_name"],
+                "legal_name": person.get("legal_name"),
+                "status": person["status"],
+            },
+        })
+
+    def _get_core_person_auth_identities(self, person_id: str) -> None:
+        if not _identity.get_person(person_id):
+            self._send_json({"ok": False, "error": "not_found", "person_id": person_id}, status=404)
+            return
+        rows = _identity.list_auth_identities_for_person(person_id)
+        # Return identifiers for operator debug on Beta; not a public marketing API
+        safe = [
+            {
+                "auth_identity_id": r["auth_identity_id"],
+                "provider": r["provider"],
+                "identifier": r["identifier"],
+                "status": r["status"],
+                "is_primary": r["is_primary"],
+            }
+            for r in rows
+        ]
+        self._send_json({"ok": True, "person_id": person_id, "auth_identities": safe})
+
+    def _get_core_me(self) -> None:
+        # DEVELOPMENT_IDENTITY_ASSERTION — spoofable; never claim secure login
+        qs = parse_qs(urlparse(self.path).query)
+        asserted = _wi.resolve_development_identity_assertion(self)
+        if not asserted:
+            asserted = (qs.get("subject") or [""])[0].strip() or None
+        payload = _identity.resolve_from_development_assertion(asserted)
+        # Also expose transitional permission subject for Content Machine compat
+        payload["ok"] = True
+        payload["permission_subject"] = asserted  # email still used by permissions table
+        self._send_json(payload)
 
     def _get_core_entities(self) -> None:
         self._send_json({"ok": True, "entities": _org.list_entities()})

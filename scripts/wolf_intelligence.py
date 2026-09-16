@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Phase 1 Wolf Intelligence helpers — permissions, memory governance, DB helpers.
 
-Identity note: Cloudflare JWT is NOT wired yet. Mutating planner routes use
-resolve_authenticated_subject() which currently reads X-Wolf-Subject / JSON subject.
-X-Wolf-Subject is DEVELOPMENT ONLY — production must use Cloudflare Access JWT.
+Identity note: Cloudflare JWT is NOT wired yet.
+Current Beta subject resolution is DEVELOPMENT_IDENTITY_ASSERTION only
+(X-Wolf-Subject / JSON subject / query subject). It is spoofable.
+Prefer resolve_development_identity_assertion(). Legacy name
+resolve_authenticated_subject() remains as a thin alias — it does NOT mean
+real authentication occurred. Production must use Cloudflare Access JWT.
 Timezone: store published_at_utc as UTC; planning/display day = Asia/Makassar.
 """
 from __future__ import annotations
@@ -106,12 +109,12 @@ def resolve_subject(headers: dict | None, body: dict | None) -> str | None:
 
 
 
-def resolve_authenticated_subject(request_like) -> str | None:
-    """Resolve authenticated subject for Beta mutating routes.
+def resolve_development_identity_assertion(request_like) -> str | None:
+    """DEVELOPMENT_IDENTITY_ASSERTION — spoofable Beta subject email.
 
-    DEVELOPMENT ONLY path: X-Wolf-Subject header or JSON body.subject / actor.
-    Cloudflare Access JWT is the intended production path and is NOT wired yet.
-    Do not treat X-Wolf-Subject as production identity.
+    Reads X-Wolf-Subject header or JSON body.subject / actor.
+    This is NOT authentication. Cloudflare Access JWT is NOT wired.
+    Do not treat the returned value as a verified login.
     """
     headers = None
     body = None
@@ -123,6 +126,15 @@ def resolve_authenticated_subject(request_like) -> str | None:
         headers = {k: v for k, v in getattr(request_like, "headers", {}).items()}
         body = getattr(request_like, "_wolf_body_cache", None) or {}
     return resolve_subject(headers, body if isinstance(body, dict) else {})
+
+
+def resolve_authenticated_subject(request_like) -> str | None:
+    """LEGACY ALIAS — does NOT imply real authentication.
+
+    Calls resolve_development_identity_assertion(). Kept so Content Machine
+    permission gates keep working unchanged. Prefer the honest name in new code.
+    """
+    return resolve_development_identity_assertion(request_like)
 
 
 def operational_lane_clause(column: str = "data_lane") -> str:
