@@ -1,0 +1,8 @@
+Domain,Data object / fact,Authoritative source,Wolf copy?,Can Wolf edit source?,Conflict rule,Freshness expectation,Sensitivity,Owner,Status
+Hotel,Reservation / occupancy / room status,Yanolja,YES - contextual copy,NO except via supported authorised PMS actions,Surface discrepancy; correct at source where possible,Near real-time,Guest sensitive,AMG,SPECIFIED
+F&B,POS transaction / outlet stock,ESB,YES - contextual copy,NO except supported authorised actions,ESB transaction truth wins; discrepancies investigated,Near real-time,Commercial,BZG,SPECIFIED
+Accounting,Ledger / journals / financial statements,Wolf Accounting,YES,YES under authority,Wolf official books per entity,Current,Highly sensitive,Finance,SPECIFIED
+HR,Person / position / assignment / employment record,Wolf HR,YES,YES under authority,Wolf HR canonical,Current,Highly sensitive,HR,SPECIFIED
+Assets,Asset identity / maintenance history,Wolf Asset Registry,YES,YES,Wolf canonical; supplier/manufacturer docs evidence attributes,Current,Internal,Engineering,SPECIFIED
+Institutional Memory,Approved rules / decisions / lessons,Wolf Memory,YES,Governed only,Version/supersession model,Current + historical,Varies,Wolf Governance,SPECIFIED
+Content performance,Social metrics,Metricool,YES,Read-oriented,Timestamp evidence; do not overclaim causation,Scheduled,Client/commercial,GGV,SPECIFIED

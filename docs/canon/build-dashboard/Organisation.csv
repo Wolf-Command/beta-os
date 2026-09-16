@@ -1,0 +1,5 @@
+Entity ID,Entity,Type,Directors / Commissioners,Ownership,Sale independently?,Wolf licence model,Notes,Status
+ENT-GGV,GGV,Legal entity,Director Matt; Commissioner Amanda Goss,Matt 25%; Amanda 25%; HK company 50%,YES,Licensed from Matt-owned Wolf IP,Agency + internal shared marketing engine,LIVE
+ENT-AMG,AMG,Legal entity,President Director Matt; Director Scott; Commissioner Etik,1/3 Matt; 1/3 Scott; 1/3 Etik,YES,Licensed from Matt-owned Wolf IP,Hotel management / Atrium operations,LIVE
+ENT-BZG,BZG,Legal entity,Director Matt; Commissioner Etik,25% Matt; 25% Etik; 25% Scott; 25% Maciej,YES,Licensed from Matt-owned Wolf IP,F&B group with multiple venues,LIVE
+IP-WOLF,Wolf IP,Matt-owned IP,Matt only,Matt personally,N/A,Licensor,"Crown-jewel architecture, orchestration, source/build/recovery playbook",LIVE

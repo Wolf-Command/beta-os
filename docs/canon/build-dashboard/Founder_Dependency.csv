@@ -1,0 +1,5 @@
+Dependency ID,Entity,Process / Relationship,Category,Why Matt is needed today,Target state,Replacement mechanism,Owner,Due,Status,Last Matt interruption
+FD-001,ALL,Major direction / bottom-line decisions,APPROVAL,Legitimate owner authority,Retain owner decision,Decision card with evidence + options,Matt,,LIVE,
+FD-002,ALL,Routine operational escalations,OPERATIONAL DEPENDENCY,Historical founder involvement,Eliminate,Role authority + SOP + dashboard + escalation rules,GMs,,SPECIFIED,
+FD-003,GGV,Client relationships dependent on Matt,PERSONAL RELATIONSHIP,Founder-led relationship knowledge,Second owner + documented CRM/decisions,Succession relationship plan,GGV Mgmt,,SPECIFIED,
+FD-004,ALL,Undocumented knowledge in Matt head,KNOWLEDGE DEPENDENCY,Institutional memory not captured,Eliminate,Decision/SOP/Promise/Knowledge capture,Wolf,,SPECIFIED,

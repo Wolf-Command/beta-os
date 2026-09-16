@@ -1,0 +1,5 @@
+Risk ID,Entity,Category,Risk,Evidence,Likelihood,Impact,Trajectory,Owner,Mitigation,Review Date,Status
+RISK-001,ALL,Founder,Operational dependency on Matt,Interview identifies broad founder involvement,TBD,HIGH,IMPROVING,Matt / GMs,Founder dependency burn-down + delegation + SOP + dashboards,,OPEN
+RISK-002,BZG,Fraud/Theft,Cash/stock leakage,User states theft/stealing is major concern,TBD,HIGH,TBD,BZG Mgmt,"Fob approvals, variance analysis, CCTV windows, segregation of duties",,OPEN
+RISK-003,ALL,Technology,Legacy Blu Tack / undocumented glue,User explicitly wants broken sticky-tape architecture eliminated,TBD,HIGH,TBD,Tech,Technology/integration/capability registry + observability + debt register,,OPEN
+RISK-004,AMG/BZG,Operations,Tropical environment asset degradation,Dust/construction/climate causing clogged AC and cleaning burden,HIGH,MEDIUM,TBD,Engineering,Condition-based PM and reliability analytics,,OPEN

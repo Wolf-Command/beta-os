@@ -1,0 +1,5 @@
+Record ID,Type,Entity,Context,Statement / Commitment,Owner,To / Audience,Due / Effective,Evidence,Expected outcome,Actual outcome,Status,Supersedes
+DEC-001,DECISION,ALL,Technology,Yanolja replaces Cloudbeds; ESB remains BZG POS; Xero/Airtable/n8n are gone,Matt,Build team,2026-09-16,Interview,Architecture matches actual systems,,LIVE,Historical stale architecture
+DEC-002,DECISION,ALL,IP,Wolf IP owned personally by Matt and licensed to operating companies,Matt,All entities,2026-09-16,Interview,Independent business saleability + retained IP value,,LIVE,
+DEC-003,DECISION,ALL,UX,Frontline follows 12-year-old-stoner/KISS principle,Matt,Build team,2026-09-16,Interview,Fast adoption and low error rate,,LIVE,
+DEC-004,DECISION,ALL,Operations,Three needle-moving priorities per day preferred to overwhelming task volume,Matt,Managers,2026-09-16,Interview,Focus + execution quality,,LIVE,

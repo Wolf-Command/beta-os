@@ -1,0 +1,4 @@
+SOP ID,Entity,Department,Process,Owner,Version,Status,Effective Date,Review Date,Executable workflow?,Training linked?,Competency required?,KPI linked?,Evidence required,Last divergence review,Notes
+SOP-EXAMPLE-01,BZG,Receiving,Receive supplier delivery,TBD,0.1,IDEA,,,YES,YES,YES,YES,"PO, count/weight, discrepancy, photos/temperature as applicable",,Template candidate
+SOP-EXAMPLE-02,AMG,Housekeeping,Pre-checkout room audit,TBD,0.1,IDEA,,,YES,YES,YES,YES,Damage/theft/smoking evidence,,
+SOP-EXAMPLE-03,ALL,HR,New staff Wolf onboarding,HR,0.1,SPECIFIED,,,YES,YES,YES,YES,Identity/access/training/competency completion,,

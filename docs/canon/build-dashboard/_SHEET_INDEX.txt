@@ -1,0 +1,20 @@
+sheet_count=19
+README	README.csv	18	8
+Master Build	Master_Build.csv	17	14
+Organisation	Organisation.csv	5	9
+Brands_Locations	Brands_Locations.csv	8	11
+Identity_Roles	Identity_Roles.csv	6	12
+Permissions	Permissions.csv	6	9
+Technology	Technology.csv	17	15
+Integrations	Integrations.csv	6	14
+Data_Sources	Data_Sources.csv	8	10
+Capabilities	Capabilities.csv	8	11
+SOP_Register	SOP_Register.csv	4	16
+KPI_Register	KPI_Register.csv	6	14
+Risks	Risks.csv	5	12
+Decisions_Promises	Decisions_Promises.csv	5	13
+Sale_Readiness	Sale_Readiness.csv	61	9
+Founder_Dependency	Founder_Dependency.csv	5	11
+Interview_Ledger	Interview_Ledger.csv	15	5
+Commissioning	Commissioning.csv	11	18
+Not_Yet	Not_Yet.csv	4	7

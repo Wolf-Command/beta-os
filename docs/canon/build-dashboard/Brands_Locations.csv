@@ -1,0 +1,8 @@
+Unit ID,Entity,Brand / Business Unit,Location,Type,Status,Domain / Website,Operational system,Own P&L?,Shared services,Notes
+BZG-UMA,BZG,Uma Blu Brunch Cafe,Atrium Lombok,Venue,LIVE,umablu.com (example/current to verify),ESB,YES,"Finance, HR, Engineering, IT, Marketing as scoped",Open now
+BZG-RAIN,BZG,Blu Zone Rainforest Restaurant & Bar,Atrium Lombok,Venue,APPROVED,,ESB,YES,Shared BZG services,Includes pool bar; target 7 Oct 2026
+BZG-MERAH,BZG,Merah Underground Nightclub and Bar,Atrium Lombok,Venue,APPROVED,merah.com (example/current to verify),ESB,YES,Shared BZG services,Target by year-end
+BZG-ROOF,BZG,Rooftop Bar - name TBD,Atrium Lombok,Venue,APPROVED,,ESB,YES,Shared BZG services,Target by year-end
+BZG-CAT,BZG,Catering,Atrium / offsite,Business unit,SPECIFIED,,ESB,YES,Shared BZG services,
+BZG-RS,BZG,Room Service,Atrium Lombok,Business unit,SPECIFIED,,ESB,YES,AMG guest interface + BZG fulfilment,BZG bills AMG at arm length; avoid double tax treatment errors
+AMG-ATR,AMG,Atrium Lombok,Lombok,Hotel property,LIVE,atriumlombok.com,Yanolja,YES,GGV marketing; shared engineering where contracted,

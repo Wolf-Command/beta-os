@@ -1,0 +1,6 @@
+Record ID,Entity,Department,Role / Position,Scope,Login identity,Company email needed?,Functional email,Dashboard,Can approve?,Notes,Status
+ROLE-AMG-GM,AMG,Executive,General Manager,AMG / Atrium,Personal identity authenticates Wolf,YES,gm@atriumlombok.com,AMG Executive,YES,Generic business mailbox persists across staff turnover,SPECIFIED
+ROLE-BZG-HFB,BZG,F&B,Head of F&B,All BZG venues,Personal identity authenticates Wolf,NO unless business need,,BZG F&B Master,YES,One login; drill into each venue,SPECIFIED
+ROLE-GGV-EDIT,GGV,Content,Video Editor,Assigned clients/brands,Personal email/login,NO,,Content Machine / Editing,NO,No company mailbox required,SPECIFIED
+ROLE-ENG,AMG/BZG,Engineering,Engineering shared service,Contracted entity/location scope,Personal identity,Optional,engineering@ relevant entity,Engineering Master,Scoped,Shared work must preserve entity ownership/intercompany economics,SPECIFIED
+ROLE-MATT,ALL,Executive,Matt / Owner,Authorised group scope,Matt identity,Named shareholder addresses,Multiple,Matt Command,YES,Crown-jewel system/admin visibility Matt-only,SPECIFIED

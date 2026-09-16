@@ -1,0 +1,6 @@
+Permission ID,Role / Position,Entity / Scope,Resource / Module,Action,Limit / Constraint,Approval needed?,Evidence / Audit,Status
+PERM-001,Matt,ALL,Wolf Crown Jewels,Admin / full backup playbook,Matt only,N/A,All access auditable,SPECIFIED
+PERM-002,Frontline staff,Assigned,SOP / Task,Read / execute,Role-relevant only,NO,Execution evidence logged,SPECIFIED
+PERM-003,Manager,Assigned,Till exceptions,Approve,Authority threshold + fob where supported,YES by role,Person/time/terminal/action logged,SPECIFIED
+PERM-004,Finance approver,Assigned entity,Payments,Approve payment run,Threshold + segregation of duties,YES,Full audit; bank settlement confirms paid,SPECIFIED
+PERM-005,GGV client user,Client scope,Client Portal,View / feedback / selected approvals,No internal GGV/cross-client data,Selected,Client approval preserved as evidence,SPECIFIED

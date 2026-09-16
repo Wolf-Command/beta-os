@@ -1,0 +1,8 @@
+Capability ID,Domain,Capability,Scope,Status,Live proof / evidence,Risk level,Human authority,Dependencies,Owner,Next test
+CAP-CONTENT-SHELL,Content,Content Engine Beta shell,GGV,BETA,Operational shell exists; exact live capabilities require audit,MEDIUM,Human creative authority,Current Content Machine,TBD,Audit against source spec
+CAP-WI-MULTI,Intelligence,Live multi-model routing,ALL,NOT TARGET,Target architecture only unless separately authorised/shipped,HIGH,Human + policy,Provider abstraction,Matt,Do not claim live
+CAP-MET-READ,Content,Metricool read connector,GGV,SPECIFIED,Read-oriented target; verify actual connection state,MEDIUM,Human interprets,Metricool,TBD,Connectivity test
+CAP-YAN-API,AMG,Yanolja API connection,AMG,SPECIFIED,User confirms API access available; services not yet audited,HIGH,Operational policies,Yanolja,TBD,API inventory
+CAP-ESB-API,BZG,ESB API connection,BZG,SPECIFIED,ESB current system; exact endpoints/capabilities to verify,HIGH,Operational policies,ESB,TBD,API inventory
+CAP-FIN,Finance,Wolf Accounting,Per entity,SPECIFIED,Requirement accepted; build not yet verified,CRITICAL,Finance authority,Core registries,TBD,Architecture + ledger model
+CAP-PROC,Procurement,Wolf Procurement,ALL,SPECIFIED,Requirement accepted; build not yet verified,CRITICAL,Approval engine,Finance + supplier + asset,TBD,Workflow model

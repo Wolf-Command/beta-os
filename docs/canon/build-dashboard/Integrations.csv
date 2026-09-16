@@ -1,0 +1,6 @@
+Integration ID,Source,Target,Purpose,Data / Events,Method,Frequency,Owner,Criticality,Status,Last success,Fallback,Error handling,Notes
+INT-YAN-WOLF,Yanolja,Wolf,Hotel reservation/operations intelligence,"Reservations, occupancy, arrivals/departures, room status, guest/folio fields as permitted",API/webhook to verify,Near real-time,AMG,CRITICAL,SPECIFIED,,Manual/contingency PMS export,Staleness degrades confidence and creates technical incident,
+INT-ESB-WOLF,ESB,Wolf,F&B sales/inventory/operational intelligence,"Sales, checks, voids, discounts, stock, outlets, purchasing fields as available",API to verify,Near real-time,BZG,CRITICAL,SPECIFIED,,ESB reports/export,Staleness degrades F&B intelligence,
+INT-GWS-WOLF,Google Workspace,Wolf,Email/calendar/documents/auth,"Messages, events, documents as authorised",API,Near real-time,ALL,HIGH,SPECIFIED,,Native Workspace access,Connector failure incident,
+INT-BANK-WOLF,Mandiri/BNI/BRI statements,Wolf Finance,Cash/reconciliation,Weekly statements,File import,Weekly,Finance,CRITICAL,SPECIFIED,,Manual controlled upload,Import/reconciliation exceptions,Direct banking API not assumed
+INT-MET-WOLF,Metricool,Wolf Intelligence,Social performance data,Post/account performance,API,Scheduled,GGV,MEDIUM,SPECIFIED,,Manual report export,Staleness shown,Read-oriented first

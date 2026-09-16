@@ -1,0 +1,4 @@
+Idea,Reason not now,Reconsideration trigger,Business value,Complexity / risk,Owner,Status
+Replace Yanolja with custom PMS,Commodity/specialist system; not strategic while Yanolja serves operations,Yanolja materially blocks required workflows/economics or market alternative is clearly superior,Potential control but huge build burden,VERY HIGH,Matt,NOT TARGET
+Build own email server,Commodity infrastructure; little strategic advantage,Only if external providers become unacceptable for proven reasons,Low,HIGH,Matt,NOT TARGET
+Direct bank payment initiation,Current Indonesian banking integration uncertain/not assumed,Proven secure bank API / corporate integration becomes available,Medium,HIGH,Finance,NOT TARGET

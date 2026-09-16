@@ -12,8 +12,9 @@ You MUST read, in order:
 
 1. `RULE-Software-First-Agent-Scarcity-2026-09-16.md`
 2. `RULE-Beta-Construction-Production-Sacred-2026-09-16.md`
-3. Wolf Command Master Specification (when present in the build workspace)
-4. Master Build Dashboard (when available in the build workspace)
+3. `canon/WOLF-COMMAND-MASTER-SPECIFICATION.md`
+4. `canon/MASTER-BUILD-DASHBOARD-README.md`
+5. relevant registry CSVs for the capability being changed (`canon/build-dashboard/`)
 
 If a required document is missing, **stop and report**. Do not invent architecture.
 
@@ -22,6 +23,18 @@ Work only under:
 `/Users/wolfterminal/beta-os/`
 
 unless Matt explicitly approves another path.
+
+---
+
+## Canon vs code
+
+**THE MASTER SPECIFICATION DEFINES INTENT.**
+
+**THE REGISTRIES DEFINE CURRENT APPROVED STRUCTURE AND BUILD STATE.**
+
+**THE CODE MUST NOT SILENTLY CONTRADICT EITHER.**
+
+If code and canon conflict, **STOP** and surface the conflict before inventing a third answer.
 
 ---
 

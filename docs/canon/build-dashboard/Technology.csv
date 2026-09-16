@@ -1,0 +1,17 @@
+Tech ID,Technology,Category,Why it exists,Entities,Data owned / authoritative?,Integration,Criticality,Lifecycle,Cost / month,Renewal,Exit / replacement condition,Owner,Last verified,Notes
+TECH-WOLF,Wolf Command,Core platform,Operating system + canonical workflows/data,ALL,Wolf-native domains,Internal,CRITICAL,BUILDING,,,,Matt,,
+TECH-WI,Wolf Intelligence,Core intelligence,Institutional intelligence/orchestration,ALL,Memory/evidence owned by Wolf,Wolf tools/data,CRITICAL,BUILDING,,,,Matt,,
+TECH-YAN,Yanolja,Connected core,AMG PMS/hotel operations,AMG,Reservation/PMS facts,API,CRITICAL,LIVE,,,Replace only with proven superior PMS / strategic reason,AMG,,Current API/services audit required
+TECH-ESB,ESB,Connected core,BZG POS/F&B transactions/inventory,BZG,POS/F&B transaction facts,API,CRITICAL,LIVE,,,Replace only with proven superior operational value,BZG,,
+TECH-GWS,Google Workspace,Connected core,Email/calendar/docs/auth where appropriate,ALL,Workspace-native data,API,HIGH,LIVE,,,,,,
+TECH-MET,Metricool,Connected,Social publishing/performance,GGV + brands,Social metrics source,API,MEDIUM,LIVE,,,Review if Wolf-native/better provider materially improves outcome,,,
+TECH-NAS,NAS,Infrastructure,Media/local high-volume storage,ALL,File storage,Mount/sync,HIGH,LIVE,,,,,,
+TECH-B2,Backblaze B2,Infrastructure,Backup/archive,ALL,Backup copies,Backup jobs,CRITICAL,LIVE,,,Keep if restore/cost audit proves suitable,,,
+TECH-TAIL,Tailscale,Infrastructure,Private connectivity,ALL,N/A,Network,HIGH,REVIEW,,,Keep only where justified by final architecture,,,
+TECH-MAC,Mac Studio,Infrastructure,Existing compute,ALL,Runtime state maybe,Local,HIGH,REVIEW,,,Reduce critical single-machine dependency after audit,,,
+TECH-NOTION,Notion,Transitional,Legacy operational information,ALL,Legacy only,Migration,MEDIUM,MIGRATING,,,Retire duplicated operational DBs after Wolf parity + migration,,,
+TECH-XERO,Xero,Retired,No longer used,ALL,None,None,NONE,RETIRED,,,,,,
+TECH-AIR,Airtable,Retired,No longer used,ALL,None,None,NONE,RETIRED,,,,,,
+TECH-N8N,n8n,Retired,No longer used,ALL,None,None,NONE,RETIRED,,,,,,
+TECH-CB,Cloudbeds,Retired,Replaced by Yanolja,AMG,None,None,NONE,RETIRED,,,,,,
+TECH-PL,PriceLabs,Not target,Not confirmed in use,AMG,None,None,NONE,NOT TARGET,,,Only reconsider if real dependency/business case found,,,

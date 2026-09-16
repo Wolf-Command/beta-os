@@ -1,0 +1,6 @@
+KPI ID,Entity,Business Unit / Dept,KPI,Definition / Formula,Source,Owner,Frequency,Target,Warning,Visibility,Leading/Lagging,Version,Status
+KPI-GGV-MARGIN,GGV,Company,Operating margin,Defined consistently in Wolf Finance; target 70%,Wolf Accounting,Matt/Shareholders,Monthly,70%,,Matt + GGV shareholders,Lagging,1.0,SPECIFIED
+KPI-AMG-MARGIN,AMG,Company,Operating margin,Defined consistently in Wolf Finance; target 20%,Wolf Accounting,Matt/Shareholders,Monthly,20%,,Matt + AMG shareholders,Lagging,1.0,SPECIFIED
+KPI-BZG-MARGIN,BZG,Company,Operating margin,Defined consistently in Wolf Finance; target 20%,Wolf Accounting,Matt/Shareholders,Monthly,20%,,Matt + BZG shareholders,Lagging,1.0,SPECIFIED
+KPI-FOUNDER,ALL,Executive,Founder interruptions / week,Operational requests reaching Matt that should have been resolved elsewhere,Wolf Tasks/Approvals,Matt,Weekly,Downward trend,,Matt,Leading,1.0,SPECIFIED
+KPI-FIRE,ALL,Management,Preventable emergencies,Count/cost of incidents classified preventable or partially preventable,Incident Registry,Management,Weekly/Monthly,Downward trend,,Mgmt/Shareholder summary,Leading,1.0,SPECIFIED
