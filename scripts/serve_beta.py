@@ -67,6 +67,7 @@ from core import organisation as _org
 from core import identity as _identity
 from core import staffing as _staffing
 from core import scope as _scope
+from core import rbac as _rbac
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -366,6 +367,21 @@ def ensure_schema() -> None:
             assert spec_s and spec_s.loader
             spec_s.loader.exec_module(mod_s)
             mod_s.main()
+        except Exception:
+            pass
+    # 009 RBAC / Permissions (idempotent)
+    try:
+        from migrations.migrate_rbac_permissions import main as _mig_rbac
+        _mig_rbac()
+    except Exception:
+        try:
+            import importlib.util
+            mig_b = Path(__file__).resolve().parent / "migrations" / "migrate_rbac_permissions.py"
+            spec_b = importlib.util.spec_from_file_location("migrate_rbac_permissions", mig_b)
+            mod_b = importlib.util.module_from_spec(spec_b)
+            assert spec_b and spec_b.loader
+            spec_b.loader.exec_module(mod_b)
+            mod_b.main()
         except Exception:
             pass
     for _stage in ("RAW", "EDIT", "FINAL"):
@@ -1433,6 +1449,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._publish_gate(qs)
             return
 
+        # Wolf Core RBAC (WHAT; development assertion honesty)
+        if path == "/api/core/permissions":
+            self._get_core_permissions()
+            return
+        if path == "/api/core/me/permissions":
+            self._get_core_me_permissions()
+            return
+
         # Wolf Core Assignment Scope (read-only; WHERE only — no RBAC)
         if path == "/api/core/scopes":
             self._get_core_scopes()
@@ -2463,6 +2487,40 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
 
 
+    def _get_core_permissions(self) -> None:
+        self._send_json({
+            "ok": True,
+            "permissions": _rbac.list_permissions(),
+            "role_grants": _rbac.list_role_permission_grants(),
+            "authority_limits": "NOT_BUILT",
+            "access_control_live": False,
+        })
+
+    def _get_core_me_permissions(self) -> None:
+        qs = parse_qs(urlparse(self.path).query)
+        asserted = _wi.resolve_development_identity_assertion(self)
+        if not asserted:
+            asserted = (qs.get("subject") or [""])[0].strip() or None
+        me = _identity.resolve_from_development_assertion(asserted)
+        person_id = me.get("person_id")
+        target = _rbac.default_content_target()
+        codes = (
+            _rbac.effective_permissions_for_person(person_id, target)
+            if person_id else []
+        )
+        self._send_json({
+            "ok": True,
+            "identity_assurance": me.get("identity_assurance"),
+            "real_authentication": False,
+            "asserted_identifier": me.get("asserted_identifier"),
+            "person_id": person_id,
+            "target_context": target,
+            "permissions": codes,
+            "authority_limits": "NOT_BUILT",
+            "access_control_live": False,
+            "note": me.get("note"),
+        })
+
     def _get_core_scopes(self) -> None:
         self._send_json({"ok": True, "scopes": _scope.list_scopes()})
 
@@ -2585,6 +2643,22 @@ class BetaHandler(SimpleHTTPRequestHandler):
         })
 
     def _get_core_persons(self) -> None:
+        # Vertical-slice RBAC: organisation.person.read
+        asserted = _wi.resolve_development_identity_assertion(self)
+        person = None
+        if asserted:
+            person = _identity.resolve_person_from_email(asserted)
+        if not person or not _rbac.can(
+            person["person_id"], "organisation.person.read", _rbac.default_content_target()
+        ):
+            self._send_json({
+                "ok": False,
+                "error": "forbidden",
+                "permission": "organisation.person.read",
+                "identity_assurance": "development_assertion",
+                "real_authentication": False,
+            }, status=403)
+            return
         # Minimal fields only — no emails on list
         self._send_json({"ok": True, "persons": _identity.list_persons()})
 
@@ -2635,6 +2709,22 @@ class BetaHandler(SimpleHTTPRequestHandler):
         self._send_json(payload)
 
     def _get_core_entities(self) -> None:
+        # Vertical-slice RBAC: organisation.entity.read under GGV content default target
+        asserted = _wi.resolve_development_identity_assertion(self)
+        person = None
+        if asserted:
+            person = _identity.resolve_person_from_email(asserted)
+        if not person or not _rbac.can(
+            person["person_id"], "organisation.entity.read", _rbac.default_content_target()
+        ):
+            self._send_json({
+                "ok": False,
+                "error": "forbidden",
+                "permission": "organisation.entity.read",
+                "identity_assurance": "development_assertion",
+                "real_authentication": False,
+            }, status=403)
+            return
         self._send_json({"ok": True, "entities": _org.list_entities()})
 
     def _get_core_entity(self, entity_id: str) -> None:

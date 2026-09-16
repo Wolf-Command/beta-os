@@ -48,12 +48,35 @@ def has_permission(
     brand_id: str | None = None,
     conn: sqlite3.Connection | None = None,
 ) -> bool:
+    """Canonical path preferred: email → Person → Assignment → Role → Scope → Permission.
+
+    Legacy `permissions` email rows remain TRANSITIONAL fallback only when no Person
+    exists yet. Email is a DEVELOPMENT identity input, not permission truth.
+    """
     email = (subject or "").strip().lower()
     if not email or "@" not in email:
         return False
     own = conn is None
     c = conn or db_connect()
     try:
+        # Prefer canonical RBAC when Person is known
+        try:
+            from core import identity as _identity
+            from core import rbac as _rbac
+
+            person = _identity.resolve_person_from_email(email, conn=c)
+            if person and person.get("person_id"):
+                target = _rbac.default_content_target()
+                # Content Machine brand_id is a content-library brand, not org_brands —
+                # keep GGV content target; do not invent org brand from client brand strings.
+                return _rbac.can(
+                    person["person_id"], permission, target, conn=c
+                )
+        except Exception:
+            # Fall through to transitional legacy if core unavailable mid-boot
+            pass
+
+        # TRANSITIONAL: legacy email subject rows (no Person mapped)
         row = c.execute(
             """
             SELECT 1 FROM permissions
