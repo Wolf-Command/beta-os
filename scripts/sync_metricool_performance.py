@@ -19,6 +19,8 @@ from zoneinfo import ZoneInfo
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from metricool_read_client import (  # noqa: E402
+    metricool_enabled,
+    metricool_status,
     MetricoolReadError,
     analytics_all_content,
     window_days_range,
@@ -258,6 +260,13 @@ def sync_metricool_performance(
         "oldest_published_at_utc": None,
         "newest_published_at_utc": None,
     }
+    if not metricool_enabled():
+        st = metricool_status()
+        report["errors"].append(st.get("status") or "DISABLED IN BETA")
+        report["metricool"] = st
+        if own:
+            c.close()
+        return report
     try:
         blog_id = resolve_blog_id(c, brand_key)
         if not blog_id:

@@ -2772,6 +2772,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
             scripts_dir = str(Path(__file__).resolve().parent)
             if scripts_dir not in sys.path:
                 sys.path.insert(0, scripts_dir)
+            from metricool_read_client import metricool_enabled, metricool_status
+            if not metricool_enabled():
+                st = metricool_status()
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "metricool_disabled",
+                        "status": st.get("status") or "DISABLED IN BETA",
+                        "metricool": st,
+                        "brand": brand,
+                        "subject": subject,
+                    },
+                    status=200,
+                )
+                return
             from sync_metricool_performance import sync_metricool_performance
             report = sync_metricool_performance(brand_key=brand, window_days=window_days)
             safe = {

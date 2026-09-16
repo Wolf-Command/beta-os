@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Metricool READ-ONLY client for Beta OS (:8788).
+"""Metricool client for Beta OS (:8788) — FAIL CLOSED by default.
 
-GET helpers only. Never schedule/upload/delete/publish.
-Does NOT import wolf-system write/publish modules.
-Credentials loaded in-process from ~/.openclaw/credentials/metricool.json —
-never logged or placed in exception messages.
+Default: BETA_METRICOOL_ENABLED=false → no auth, no network, no prod credential load.
+Writes: BETA_METRICOOL_WRITE_ENABLED=false → any write/publish path fails visibly.
+
+Credentials (only when ENABLED=true) must come from an explicit Beta-local path
+via BETA_METRICOOL_CREDS_PATH under /Users/wolfterminal/beta-os/.
+NEVER falls back to shared OpenClaw credential stores or wolf-system paths.
 """
 from __future__ import annotations
 
@@ -18,7 +20,8 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-CREDS_PATH = Path.home() / ".openclaw" / "credentials" / "metricool.json"
+BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
+DEFAULT_ENV_PATH = BETA_ROOT / ".env"
 DEFAULT_BASE = "https://app.metricool.com/api"
 TZ_DISPLAY = ZoneInfo("Asia/Makassar")
 
@@ -33,16 +36,128 @@ _FORBIDDEN_NAMES = frozenset({
     "_post",
 })
 
+# Hard-ban substrings for credential paths (production / shared)
+_BANNED_CRED_SUBSTR = (
+    "/.openclaw/",
+    "openclaw/credentials",
+    "/wolf-system/",
+    "wolf-system/credentials",
+)
+
 
 class MetricoolReadError(Exception):
-    """Soft-fail error with no secrets."""
+    """Soft-fail / policy error with no secrets."""
+
+
+class MetricoolWriteBlocked(Exception):
+    """Deterministic block for Metricool write/publish in Beta."""
+
+
+def _truthy(raw: str | None) -> bool:
+    return (raw or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _load_beta_env() -> None:
+    """Load beta-os/.env into os.environ for unset keys only (no overwrite)."""
+    path = DEFAULT_ENV_PATH
+    if not path.is_file():
+        return
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            s = line.strip()
+            if not s or s.startswith("#") or "=" not in s:
+                continue
+            k, v = s.split("=", 1)
+            k = k.strip()
+            v = v.strip().strip('"').strip("'")
+            if k and (k not in os.environ or not (os.environ.get(k) or "").strip()):
+                os.environ[k] = v
+    except OSError:
+        return
+
+
+def metricool_enabled() -> bool:
+    _load_beta_env()
+    return _truthy(os.environ.get("BETA_METRICOOL_ENABLED"))
+
+
+def metricool_write_enabled() -> bool:
+    _load_beta_env()
+    return _truthy(os.environ.get("BETA_METRICOOL_WRITE_ENABLED"))
+
+
+def metricool_status() -> dict[str, Any]:
+    """UI/service status — never opens credential files."""
+    enabled = metricool_enabled()
+    write_ok = metricool_write_enabled()
+    if not enabled:
+        return {
+            "connected": False,
+            "status": "DISABLED IN BETA",
+            "enabled": False,
+            "write_enabled": False,
+            "note": "BETA_METRICOOL_ENABLED=false — no auth, no network, no production credential load",
+        }
+    path_raw = (os.environ.get("BETA_METRICOOL_CREDS_PATH") or "").strip()
+    return {
+        "connected": False,  # connected only after successful load; status API does not load
+        "status": "NOT CONNECTED" if not path_raw else "CONFIGURED PATH SET (not verified here)",
+        "enabled": True,
+        "write_enabled": write_ok,
+        "creds_path_configured": bool(path_raw),
+        "note": "Enabled — credentials must be Beta-local via BETA_METRICOOL_CREDS_PATH",
+    }
+
+
+def assert_metricool_write_allowed(operation: str = "write") -> None:
+    """Fail closed for any Metricool write/publish operation."""
+    if not metricool_write_enabled():
+        raise MetricoolWriteBlocked(
+            f"Metricool {operation} blocked: BETA_METRICOOL_WRITE_ENABLED=false"
+        )
+    if not metricool_enabled():
+        raise MetricoolWriteBlocked(
+            f"Metricool {operation} blocked: BETA_METRICOOL_ENABLED=false"
+        )
+
+
+def _resolve_beta_creds_path() -> Path:
+    """Explicit Beta-only creds path. No production fallback."""
+    raw = (os.environ.get("BETA_METRICOOL_CREDS_PATH") or "").strip()
+    if not raw:
+        raise MetricoolReadError(
+            "Metricool enabled but BETA_METRICOOL_CREDS_PATH unset — fail closed (no production fallback)"
+        )
+    path = Path(raw).expanduser()
+    if not path.is_absolute():
+        path = (BETA_ROOT / path).resolve()
+    else:
+        path = path.resolve()
+    resolved = str(path)
+    for ban in _BANNED_CRED_SUBSTR:
+        if ban in resolved:
+            raise MetricoolReadError(
+                "Metricool credential path refused — production/shared path not allowed"
+            )
+    try:
+        path.relative_to(BETA_ROOT)
+    except ValueError as exc:
+        raise MetricoolReadError(
+            "Metricool credential path must be under /Users/wolfterminal/beta-os/"
+        ) from exc
+    return path
 
 
 def _load_creds() -> dict:
-    if not CREDS_PATH.is_file():
-        raise MetricoolReadError("Metricool credentials file missing")
+    if not metricool_enabled():
+        raise MetricoolReadError(
+            "Metricool DISABLED IN BETA (BETA_METRICOOL_ENABLED=false) — no credential load"
+        )
+    creds_path = _resolve_beta_creds_path()
+    if not creds_path.is_file():
+        raise MetricoolReadError("Metricool credentials file missing (Beta path)")
     try:
-        with open(CREDS_PATH, "r", encoding="utf-8") as f:
+        with open(creds_path, "r", encoding="utf-8") as f:
             data = json.load(f)
     except Exception as exc:  # noqa: BLE001
         raise MetricoolReadError(f"Metricool credentials unreadable: {type(exc).__name__}") from None
@@ -80,6 +195,8 @@ def _iso_range(start: Any, end: Any) -> tuple[str, str]:
 
 def _http_get(path: str, params: dict | None = None, *, timeout: int = 45) -> Any:
     """GET only. Soft-fails with MetricoolReadError (no token in message)."""
+    if not metricool_enabled():
+        raise MetricoolReadError("Metricool DISABLED IN BETA — no network")
     creds = _load_creds()
     params = dict(params or {})
     params.setdefault("userId", _uid(creds))
@@ -91,10 +208,11 @@ def _http_get(path: str, params: dict | None = None, *, timeout: int = 45) -> An
             raw = resp.read()
         return json.loads(raw.decode("utf-8"))
     except urllib.error.HTTPError as exc:
-        # Do not include headers/body that might echo auth
         raise MetricoolReadError(f"Metricool HTTP {exc.code} on GET {path}") from None
     except urllib.error.URLError as exc:
-        raise MetricoolReadError(f"Metricool network error on GET {path}: {type(exc.reason).__name__ if hasattr(exc, 'reason') else 'URLError'}") from None
+        raise MetricoolReadError(
+            f"Metricool network error on GET {path}: {type(exc.reason).__name__ if hasattr(exc, 'reason') else 'URLError'}"
+        ) from None
     except json.JSONDecodeError:
         raise MetricoolReadError(f"Metricool invalid JSON on GET {path}") from None
     except MetricoolReadError:
@@ -186,6 +304,11 @@ def window_days_range(window_days: int = 60) -> tuple[str, str]:
 # Explicit public API (tests assert write names absent)
 __all__ = [
     "MetricoolReadError",
+    "MetricoolWriteBlocked",
+    "metricool_enabled",
+    "metricool_write_enabled",
+    "metricool_status",
+    "assert_metricool_write_allowed",
     "list_profiles",
     "analytics_posts",
     "analytics_reels",
