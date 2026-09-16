@@ -1,0 +1,5 @@
+-- Phase 2.6 Team Readiness (notes; apply via migrate_phase2_6_team_readiness.py)
+-- brands: theme_json, default_assignee, logo_url
+-- content_plans: review_state (APPROVED | CHANGES_PENDING_REVIEW | WORKING), approved_revision_id
+-- assets/staged: content_hash, file_size, detail_tags_json, readiness, readiness_note
+-- permissions: Haikal/Misa lose can_approve_plan + can_create_plan

@@ -1,0 +1,45 @@
+-- Phase 2.5B Smart Upload Naming — additive columns only. Never DROP.
+-- Idempotent via migrate_phase2_5b_smart_upload.py (PRAGMA checks).
+
+-- staged_assets smart meta
+-- ALTER TABLE staged_assets ADD COLUMN original_filename TEXT;
+-- ALTER TABLE staged_assets ADD COLUMN canonical_filename TEXT;
+-- ALTER TABLE staged_assets ADD COLUMN subject TEXT;
+-- ALTER TABLE staged_assets ADD COLUMN detail TEXT;
+-- ALTER TABLE staged_assets ADD COLUMN location TEXT;
+-- ALTER TABLE staged_assets ADD COLUMN shoot_date TEXT;
+-- ALTER TABLE staged_assets ADD COLUMN sequence_token TEXT;
+-- ALTER TABLE staged_assets ADD COLUMN media_type TEXT;
+-- ALTER TABLE staged_assets ADD COLUMN uploaded_by TEXT;
+-- ALTER TABLE staged_assets ADD COLUMN uploaded_at TEXT;
+-- ALTER TABLE staged_assets ADD COLUMN content_plan_id INTEGER;
+-- ALTER TABLE staged_assets ADD COLUMN content_card_id INTEGER;
+-- ALTER TABLE staged_assets ADD COLUMN processing_status TEXT;
+-- ALTER TABLE staged_assets ADD COLUMN library_status TEXT;
+-- ALTER TABLE staged_assets ADD COLUMN data_lane TEXT;
+-- ALTER TABLE staged_assets ADD COLUMN batch_id TEXT;
+
+-- assets smart meta
+-- ALTER TABLE assets ADD COLUMN original_filename TEXT;
+-- ALTER TABLE assets ADD COLUMN canonical_filename TEXT;
+-- ALTER TABLE assets ADD COLUMN subject TEXT;
+-- ALTER TABLE assets ADD COLUMN detail TEXT;
+-- ALTER TABLE assets ADD COLUMN location TEXT;
+-- ALTER TABLE assets ADD COLUMN shoot_date TEXT;
+-- ALTER TABLE assets ADD COLUMN sequence_token TEXT;
+-- ALTER TABLE assets ADD COLUMN media_type TEXT;
+-- ALTER TABLE assets ADD COLUMN uploaded_by TEXT;
+-- ALTER TABLE assets ADD COLUMN uploaded_at TEXT;
+-- ALTER TABLE assets ADD COLUMN content_plan_id INTEGER;
+-- ALTER TABLE assets ADD COLUMN content_card_id INTEGER;
+-- ALTER TABLE assets ADD COLUMN processing_status TEXT;
+-- ALTER TABLE assets ADD COLUMN library_status TEXT;
+-- ALTER TABLE assets ADD COLUMN data_lane TEXT;
+-- ALTER TABLE assets ADD COLUMN batch_id TEXT;
+
+-- Indexes (created by Python migrator if missing)
+-- CREATE INDEX IF NOT EXISTS idx_assets_canonical ON assets(canonical_filename);
+-- CREATE INDEX IF NOT EXISTS idx_assets_meta ON assets(brand, stage, shoot_date, subject);
+-- CREATE INDEX IF NOT EXISTS idx_assets_lane ON assets(data_lane);
+-- CREATE INDEX IF NOT EXISTS idx_staged_canonical ON staged_assets(canonical_filename);
+-- CREATE INDEX IF NOT EXISTS idx_staged_batch ON staged_assets(batch_id);

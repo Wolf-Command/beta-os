@@ -1,0 +1,2070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Content Engine · Beta</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --bg2: #12151d;
+    --bg3: #1a1f2b;
+    --bg4: #222836;
+    --border: #2a3142;
+    --text: #e8ecf4;
+    --muted: #8b95a8;
+    --accent: #6ea8ff;
+    --accent2: #8b7cff;
+    --ok: #3dd68c;
+    --warn: #f5a524;
+    --danger: #f04438;
+    --radius: 12px;
+    --font: "Inter", "SF Pro Text", system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100%; }
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+  a { color: var(--accent); text-decoration: none; }
+  button, input, select, textarea { font: inherit; }
+  .btn {
+    appearance: none; border: 1px solid var(--border); background: var(--bg3);
+    color: var(--text); border-radius: 999px; padding: 8px 16px; font-size: 0.85rem;
+    cursor: pointer; transition: 0.15s ease;
+  }
+  .btn:hover { border-color: var(--accent); color: #fff; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-color: transparent; color: #fff; font-weight: 600;
+  }
+  .btn-ok { background: rgba(61,214,140,0.15); border-color: rgba(61,214,140,0.45); color: var(--ok); }
+  .btn-ghost { background: transparent; }
+
+  /* Top chrome */
+  .topbar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+    padding: 12px 18px; border-bottom: 1px solid var(--border); background: var(--bg2);
+    position: sticky; top: 0; z-index: 40;
+  }
+  .logo { font-weight: 700; letter-spacing: -0.02em; font-size: 1.02rem; white-space: nowrap; }
+  .logo span { color: var(--accent); }
+  .primary-nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  .primary-nav button {
+    appearance: none; border: 1px solid transparent; background: transparent;
+    color: var(--muted); border-radius: 999px; padding: 8px 14px; font-size: 0.8rem;
+    cursor: pointer; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .primary-nav button:hover { color: var(--text); background: var(--bg3); }
+  .primary-nav button.active {
+    color: #fff; background: var(--bg4); border-color: var(--border);
+  }
+  .brand-select {
+    margin-left: auto; display: flex; align-items: center; gap: 8px;
+  }
+  .brand-select label { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .brand-select select, .filter-bar select, .filter-bar input, .field input, .field select, .field textarea {
+    background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; padding: 8px 10px; min-width: 0;
+  }
+  .brand-select select { min-width: 140px; }
+
+  main { flex: 1; padding: 20px 20px 48px; max-width: 1280px; width: 100%; margin: 0 auto; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  h1 { font-size: 1.45rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+  h2 { font-size: 1.05rem; margin: 0 0 12px; color: var(--text); }
+  h3 { font-size: 0.78rem; margin: 0 0 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 20px; }
+
+  .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .stat-card, .panel, .plan-card, .lib-card, .upload-row, .wi-shell {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .stat-card { padding: 16px; }
+  .stat-card .label { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat-card .value { font-size: 1.6rem; font-weight: 700; margin-top: 6px; letter-spacing: -0.03em; }
+  .stat-card .hint { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+
+  .panel { padding: 16px 18px; margin-bottom: 16px; }
+  .empty {
+    text-align: center; padding: 36px 20px; color: var(--muted);
+    border: 1px dashed var(--border); border-radius: var(--radius); background: rgba(255,255,255,0.02);
+  }
+  .empty strong { display: block; color: var(--text); margin-bottom: 6px; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    border-radius: 999px; padding: 3px 9px; font-size: 0.7rem; font-weight: 600;
+    letter-spacing: 0.03em; border: 1px solid var(--border); color: var(--muted); background: var(--bg3);
+  }
+  .badge.s-NOT_STARTED { color: var(--muted); }
+  .badge.s-NEEDS_FILMING { color: var(--warn); border-color: rgba(245,165,36,0.4); background: rgba(245,165,36,0.1); }
+  .badge.s-READY { color: var(--accent); border-color: rgba(110,168,255,0.4); background: rgba(110,168,255,0.1); }
+  .badge.s-IN_PRODUCTION, .badge.s-EDITING { color: var(--accent2); border-color: rgba(139,124,255,0.4); background: rgba(139,124,255,0.12); }
+  .badge.s-READY_FOR_REVIEW { color: #ffd08a; border-color: rgba(245,165,36,0.5); background: rgba(245,165,36,0.15); }
+  .badge.s-COMPLETE { color: var(--ok); border-color: rgba(61,214,140,0.45); background: rgba(61,214,140,0.12); }
+  .badge.dev { color: #c9b8ff; border-color: rgba(139,124,255,0.35); font-weight: 500; }
+
+  .plan-header {
+    display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-start;
+    justify-content: space-between; margin-bottom: 16px;
+  }
+  .plan-header .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+  .prepared-line {
+    color: var(--muted); font-size: 0.8rem; margin: 0 0 16px; cursor: pointer;
+    user-select: none;
+  }
+  .prepared-line:hover { color: var(--text); }
+  .prepared-detail {
+    display: none; font-size: 0.78rem; color: var(--muted); margin: -8px 0 16px;
+    padding: 10px 12px; background: var(--bg3); border-radius: 8px; border: 1px solid var(--border);
+  }
+  .prepared-detail.open { display: block; }
+
+  .group { margin-bottom: 22px; }
+  .group-title { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+  .group-title h2 { margin: 0; }
+  .group-title .count { color: var(--muted); font-size: 0.85rem; }
+
+  .item-card {
+    display: grid; grid-template-columns: 72px 1fr auto; gap: 12px; align-items: center;
+    padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--bg2); cursor: pointer; margin-bottom: 8px; transition: 0.12s;
+  }
+  .item-card:hover { border-color: var(--accent); background: var(--bg3); }
+  .item-card .num {
+    font-weight: 700; font-size: 0.85rem; color: var(--accent); letter-spacing: 0.04em;
+  }
+  .item-card .title { font-weight: 600; font-size: 0.92rem; }
+  .item-card .row2 { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; color: var(--muted); font-size: 0.78rem; }
+  .item-card .right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+
+  .plan-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .plan-pick {
+    display: flex; justify-content: space-between; gap: 12px; align-items: center;
+    padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--bg2); cursor: pointer; text-align: left; width: 100%; color: inherit;
+  }
+  .plan-pick:hover, .plan-pick.active { border-color: var(--accent); }
+  .plan-pick .t { font-weight: 600; }
+  .plan-pick .d { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+
+  .mgmt {
+    margin-top: 28px; padding-top: 16px; border-top: 1px dashed var(--border);
+  }
+  .mgmt.hidden { display: none; }
+
+  /* Modal / brief */
+  .backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(4,6,10,0.72);
+    z-index: 50; align-items: stretch; justify-content: flex-end;
+  }
+  .backdrop.open { display: flex; }
+  .drawer {
+    width: min(560px, 100%); background: var(--bg2); border-left: 1px solid var(--border);
+    display: flex; flex-direction: column; max-height: 100vh; animation: slideIn 0.18s ease;
+  }
+  @keyframes slideIn { from { transform: translateX(24px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+  .drawer-head {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    padding: 16px 18px; border-bottom: 1px solid var(--border);
+  }
+  .drawer-body { flex: 1; overflow: auto; padding: 16px 18px 28px; }
+  .drawer-foot {
+    display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;
+    padding: 12px 18px; border-top: 1px solid var(--border); background: var(--bg3);
+  }
+  .brief-field { margin-bottom: 14px; }
+  .brief-field .k {
+    display: block; color: var(--muted); font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 0.07em; margin-bottom: 4px; font-weight: 600;
+  }
+  .brief-field .v { font-size: 0.92rem; line-height: 1.45; white-space: pre-wrap; }
+  .brief-field .v.empty-v { color: var(--muted); font-style: italic; }
+  .brief-field ul { margin: 0; padding-left: 18px; }
+  .brief-field li { margin: 3px 0; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .field input, .field select, .field textarea { width: 100%; }
+  .field textarea { min-height: 72px; resize: vertical; }
+
+  /* Library */
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; align-items: center; }
+  .filter-bar input[type="search"] { flex: 1; min-width: 180px; }
+  .lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .lib-card { overflow: hidden; cursor: default; }
+  .lib-thumb {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(145deg, #1c2230, #141820); color: var(--muted); font-size: 0.75rem;
+    text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;
+  }
+  .lib-thumb.video { background: linear-gradient(145deg, #1a2438, #12181f); color: var(--accent); }
+  .lib-thumb.image { background: linear-gradient(145deg, #241a30, #16121c); color: var(--accent2); }
+  .lib-meta { padding: 10px 12px; }
+  .lib-meta .slug { font-weight: 600; font-size: 0.85rem; word-break: break-word; }
+  .lib-meta .meta { color: var(--muted); font-size: 0.72rem; margin-top: 4px; }
+
+  /* Upload */
+  .dropzone {
+    border: 2px dashed var(--border); border-radius: var(--radius); padding: 48px 20px;
+    text-align: center; background: var(--bg2); cursor: pointer; transition: 0.15s;
+    margin-bottom: 18px;
+  }
+  .dropzone:hover, .dropzone.drag { border-color: var(--accent); background: rgba(110,168,255,0.06); }
+  .dropzone h2 { margin: 0 0 6px; font-size: 1.2rem; }
+  .upload-list { display: flex; flex-direction: column; gap: 8px; }
+  .upload-row {
+    display: flex; justify-content: space-between; gap: 12px; align-items: center;
+    padding: 12px 14px;
+  }
+  .progress {
+    height: 4px; background: var(--bg4); border-radius: 99px; overflow: hidden; margin-top: 10px;
+  }
+  .progress > div { height: 100%; width: 0; background: var(--accent); transition: width 0.2s; }
+
+  .wizard-steps { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .wizard-steps .step {
+    flex: 1; min-width: 120px; text-align: center; padding: 10px 8px;
+    border-radius: 10px; border: 1px solid var(--border); background: var(--bg2);
+    color: var(--muted); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em;
+  }
+  .wizard-steps .step.on { border-color: var(--accent); color: var(--text); background: rgba(110,168,255,0.1); }
+  .wizard-steps .step.done { border-color: rgba(61,214,140,0.45); color: var(--ok); }
+  .wizard-panel { display: none; }
+  .wizard-panel.on { display: block; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .form-grid .field.span2 { grid-column: span 2; }
+  @media (max-width: 640px) { .form-grid .field.span2 { grid-column: span 1; } }
+  .nas-banner {
+    padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 0.85rem;
+    border: 1px solid var(--border); background: var(--bg3); color: var(--muted);
+  }
+  .nas-banner.warn { border-color: rgba(245,165,36,0.45); color: var(--warn); background: rgba(245,165,36,0.08); }
+  .nas-banner.ok { border-color: rgba(61,214,140,0.35); color: var(--ok); background: rgba(61,214,140,0.08); }
+  .review-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .review-table th, .review-table td {
+    text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top;
+  }
+  .review-table th { color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .review-table input {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 6px 8px;
+  }
+  .canon { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; word-break: break-all; color: var(--accent); }
+  .wizard-nav { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; justify-content: flex-end; }
+  .file-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; margin: 4px 4px 0 0;
+    border-radius: 999px; background: var(--bg3); border: 1px solid var(--border); font-size: 0.75rem;
+  }
+
+  /* Wolf Intelligence */
+  .wi-shell { padding: 18px; }
+  .wi-context {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;
+  }
+  .wi-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+  .wi-honest {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; font-size: 0.88rem; line-height: 1.5; color: var(--muted);
+  }
+  .wi-honest strong { color: var(--text); }
+  .wi-honest ul { margin: 8px 0 0; padding-left: 18px; }
+  .toast {
+    position: fixed; bottom: 20px; right: 20px; background: var(--bg4); color: var(--text);
+    border: 1px solid var(--border); padding: 10px 14px; border-radius: 10px;
+    opacity: 0; pointer-events: none; transition: 0.2s; z-index: 80; max-width: 320px;
+  }
+  .toast.show { opacity: 1; }
+  footer { text-align: center; color: var(--muted); font-size: 0.75rem; padding: 12px; border-top: 1px solid var(--border); }
+
+  :root {
+    --brand-primary: #6ea8ff;
+    --brand-accent: #8b7cff;
+    --brand-neutral: #8b95a8;
+  }
+  .logo .mark {
+    width: 28px; height: 28px; border-radius: 8px; margin-right: 8px;
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+    display:inline-flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:800; color:#fff;
+  }
+  .btn-primary { background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent)); }
+  .badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+  .badge.s-NOT_STARTED { color: #c5cddc; border-color: #3a4558; background: #1a2030; }
+  .badge.s-NEEDS_FILMING { color: #ffd08a; border-color: rgba(245,165,36,0.55); background: rgba(245,165,36,0.16); }
+  .badge.s-READY { color: #9ec5ff; border-color: rgba(110,168,255,0.55); background: rgba(110,168,255,0.14); }
+  .badge.s-IN_PRODUCTION { color: #c9b8ff; border-color: rgba(139,124,255,0.55); background: rgba(139,124,255,0.16); }
+  .badge.s-EDITING { color: #e0b3ff; border-color: rgba(180,120,255,0.5); background: rgba(180,120,255,0.14); }
+  .badge.s-READY_FOR_REVIEW { color: #ffe099; border-color: rgba(255,200,80,0.55); background: rgba(255,200,80,0.14); }
+  .badge.s-COMPLETE { color: #7dffb5; border-color: rgba(61,214,140,0.55); background: rgba(61,214,140,0.14); }
+  .badge.s-APPROVED { color: #7dffb5; border-color: rgba(61,214,140,0.55); background: rgba(61,214,140,0.14); }
+  .badge.s-CHANGES_PENDING_REVIEW { color: #ffd08a; border-color: rgba(245,165,36,0.55); background: rgba(245,165,36,0.16); }
+  .badge.ready-READY_TO_USE { color: #7dffb5; border-color: rgba(61,214,140,0.5); background: rgba(61,214,140,0.12); }
+  .badge.ready-CHECKING { color: #9ec5ff; border-color: rgba(110,168,255,0.45); background: rgba(110,168,255,0.12); }
+  .badge.ready-FAILED { color: #ff9b94; border-color: rgba(240,68,56,0.5); background: rgba(240,68,56,0.12); }
+  .btn-ok { background: rgba(61,214,140,0.15); border-color: rgba(61,214,140,0.45); color: var(--ok); }
+  .btn-warn { background: rgba(245,165,36,0.12); border-color: rgba(245,165,36,0.4); color: var(--warn); }
+  /* Centered modal replaces drawer */
+  .backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(4,6,10,0.72);
+    z-index: 50; align-items: center; justify-content: center; padding: 24px 16px;
+  }
+  .backdrop.open { display: flex; }
+  .modal, .drawer {
+    width: min(720px, 100%); max-height: min(92vh, 900px);
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 16px;
+    display: flex; flex-direction: column; box-shadow: 0 24px 80px rgba(0,0,0,0.55);
+    border-left: 1px solid var(--border);
+  }
+  .drawer-head, .modal-head {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    padding: 16px 18px; border-bottom: 1px solid var(--border);
+  }
+  .drawer-body, .modal-body { flex: 1; overflow: auto; padding: 16px 18px 28px; }
+  .drawer-foot, .modal-foot {
+    display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;
+    padding: 12px 18px; border-top: 1px solid var(--border); background: var(--bg3);
+    border-radius: 0 0 16px 16px;
+  }
+  @media (max-width: 560px) {
+    .backdrop { padding: 0; align-items: stretch; }
+    .modal, .drawer { width: 100%; max-height: 100%; border-radius: 0; min-height: 100%; }
+  }
+  .breakdown-row {
+    display: grid; grid-template-columns: 36px 1fr 1fr; gap: 8px; padding: 8px;
+    border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; background: var(--bg3);
+  }
+  .filter-bar input[type="search"] { flex: 1; min-width: 220px; font-size: 1rem; padding: 12px 14px; }
+  .lib-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .lib-card { cursor: pointer; position: relative; }
+  .lib-card.selected { outline: 2px solid var(--brand-primary); }
+  .lib-card .sel { position: absolute; top: 8px; left: 8px; z-index: 2; }
+  .lib-thumb .brand-badge {
+    position: absolute; top: 8px; right: 8px; font-size: 0.65rem; padding: 3px 8px;
+    border-radius: 999px; background: rgba(0,0,0,0.55); color: #fff;
+  }
+  .lib-thumb { position: relative; aspect-ratio: 16/10; }
+  .wi-transcript { flex: 1; overflow: auto; padding: 16px; min-height: 220px; max-height: 380px; }
+  .wi-msg { margin-bottom: 12px; max-width: 90%; }
+  .wi-msg.user { margin-left: auto; }
+  .wi-msg .bubble {
+    display: inline-block; padding: 10px 12px; border-radius: 12px; font-size: 0.9rem;
+    background: var(--bg3); border: 1px solid var(--border); line-height: 1.4;
+  }
+  .wi-msg.user .bubble { background: rgba(110,168,255,0.15); border-color: rgba(110,168,255,0.35); }
+  .wi-compose { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--border); background: var(--bg3); }
+  .wi-compose input { flex: 1; background: var(--bg2); border: 1px solid var(--border); color: var(--text); border-radius: 999px; padding: 10px 14px; }
+  .preview-media { width: 100%; max-height: 60vh; background: #000; border-radius: 8px; }
+  .preview-media img, .preview-media video { width: 100%; max-height: 60vh; object-fit: contain; display: block; }
+
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="logo"><span class="mark" id="brandMark">H</span>Content <span>Engine</span></div>
+    <nav class="primary-nav" id="primaryNav" aria-label="Primary">
+      <button type="button" data-view="dashboard" class="active">DASHBOARD</button>
+      <button type="button" data-view="plan">CONTENT PLAN</button>
+      <button type="button" data-view="library">LIBRARY</button>
+      <button type="button" data-view="upload">UPLOAD</button>
+      <button type="button" data-view="wolf">WOLF INTELLIGENCE</button>
+    </nav>
+    <div class="brand-select">
+      <label for="brandSelect">Brand</label>
+      <select id="brandSelect"></select>
+    </div>
+  </header>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section class="view active" id="view-dashboard">
+      <h1>What do I need to do?</h1>
+      <p class="sub" id="dashSub">Loading current fortnight…</p>
+      <div class="grid-cards" id="dashStats"></div>
+      <div class="panel" style="margin-top:16px">
+        <h3>Needs attention</h3>
+        <div id="dashAttention"></div>
+      </div>
+      <div class="panel">
+        <h3>Recent uploads</h3>
+        <div id="dashUploads"></div>
+      </div>
+    </section>
+
+    <!-- CONTENT PLAN -->
+    <section class="view" id="view-plan">
+      <div class="plan-header">
+        <div>
+          <h1 id="planTitle">Content Plan</h1>
+          <div class="meta" id="planMeta"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn" id="btnRefreshPlans">Refresh</button>
+          <button type="button" class="btn" id="btnShowPlanList">Working Drafts</button>
+          <button type="button" class="btn hidden" id="btnViewChanges">VIEW CHANGES</button>
+          <button type="button" class="btn btn-ok hidden" id="btnApproveChanges">APPROVE CHANGES</button>
+          <button type="button" class="btn btn-warn hidden" id="btnRequestRevision">REQUEST REVISION</button>
+          <button type="button" class="btn btn-primary hidden" id="btnApprovePlan">Approve Plan</button>
+        </div>
+      </div>
+      <p class="prepared-line" id="preparedLine" title="Click for details">Plan prepared using available brand, historical and performance information.</p>
+      <div class="prepared-detail" id="preparedDetail"></div>
+
+      <div id="planListPanel" class="panel" style="display:none">
+        <h3>Existing Working Drafts</h3>
+        <p class="sub" style="margin-bottom:10px">Open an existing plan — do not regenerate unless you intend to.</p>
+        <div class="plan-list" id="planList"></div>
+      </div>
+
+      <div id="planEmpty" class="empty" style="display:none">
+        <strong>No content plan yet</strong>
+        <span id="planEmptyCopy">No Working Draft for this brand. Management can build the next plan when ready.</span>
+      </div>
+
+      <div id="planBody">
+        <div class="group">
+          <div class="group-title"><h2>Posts</h2><span class="count" id="postCount"></span></div>
+          <div id="postsList"></div>
+        </div>
+        <div class="group">
+          <div class="group-title"><h2>Stories</h2><span class="count" id="storyCount"></span></div>
+          <div id="storiesList"></div>
+        </div>
+      </div>
+
+      <div class="mgmt hidden" id="mgmtPanel">
+        <h3>Management</h3>
+        <p class="sub">Build a new fortnight plan only when needed. Prefer opening an existing Working Draft above.</p>
+        <button type="button" class="btn btn-primary" id="btnBuildNext">Build Next Plan</button>
+        <span id="buildHint" class="sub" style="margin-left:8px"></span>
+      </div>
+    </section>
+
+    <!-- LIBRARY -->
+    <section class="view" id="view-library">
+      <h1>Library</h1>
+      <p class="sub">Browse verified assets for this brand. Paths stay internal.</p>
+      <div class="filter-bar">
+        <input type="search" id="libSearch" placeholder="Search canonical name, original, subject, detail…" />
+        <select id="libBrand"><option value="">Brand</option></select>
+        <select id="libType">
+          <option value="">Video / Photo</option>
+          <option value="video">Video</option>
+          <option value="photo">Photo</option>
+          <option value="image">Photo</option>
+        </select>
+        <select id="libStage">
+          <option value="">RAW / EDIT / FINAL</option>
+          <option value="RAW">RAW</option>
+          <option value="EDIT">EDIT</option>
+          <option value="FINAL">FINAL</option>
+        </select>
+        <select id="libStatus">
+          <option value="">Ready / Checking / Failed</option>
+          <option value="READY_TO_USE">Ready</option>
+          <option value="CHECKING">Checking</option>
+          <option value="FAILED">Failed</option>
+        </select>
+        <input type="date" id="libShoot" title="Shoot Date" />
+        <input type="text" id="libSubject" placeholder="Subject" style="min-width:110px" />
+        <input type="text" id="libLocation" placeholder="Location" style="min-width:110px" />
+        <button type="button" class="btn" id="libRefresh">Refresh</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+        <button type="button" class="btn" id="libDownloadSel" disabled>Download selected (ZIP)</button>
+        <span class="sub" id="libSelCount" style="margin:0">0 selected</span>
+        <span class="sub" style="margin:0">Hover preview: muted when ready — otherwise honest “not ready” (no fake proxy).</span>
+      </div>
+      <div id="libGrid" class="lib-grid"></div>
+    </section>
+
+    <!-- UPLOAD -->
+    <section class="view" id="view-upload">
+      <h1>Smart Upload</h1>
+      <p class="sub">Keep camera filenames. Content Engine generates Wolf names + metadata. No rename required.</p>
+      <div id="nasBanner" class="nas-banner">Checking NAS…</div>
+      <div class="wizard-steps" id="wizardSteps">
+        <div class="step on" data-step="1">1 · Batch</div>
+        <div class="step" data-step="2">2 · Files</div>
+        <div class="step" data-step="3">3 · Review &amp; Upload</div>
+      </div>
+
+      <div class="wizard-panel on" id="wizStep1">
+        <div class="panel">
+          <h2>Batch details</h2>
+          <div class="form-grid">
+            <div class="field"><label>Brand *</label>
+              <select id="upBrand"></select>
+            </div>
+            <div class="field"><label>Stage *</label>
+              <select id="upStage">
+                <option value="RAW" selected>RAW</option>
+                <option value="EDIT">EDIT</option>
+                <option value="FINAL">FINAL</option>
+              </select>
+            </div>
+            <div class="field"><label>Media type *</label>
+              <select id="upMediaType">
+                <option value="video" selected>video</option>
+                <option value="image">image</option>
+                <option value="audio">audio</option>
+                <option value="broll">broll</option>
+                <option value="graphic">graphic</option>
+              </select>
+            </div>
+            <div class="field"><label>Shoot date *</label>
+              <input type="date" id="upShootDate" required />
+            </div>
+            <div class="field span2"><label>Subject *</label>
+              <input type="text" id="upSubject" placeholder="e.g. habitat-villa" required />
+            </div>
+            <div class="field"><label>Location (optional)</label>
+              <input type="text" id="upLocation" placeholder="e.g. umalas" />
+            </div>
+            <div class="field span2"><label>Default detail * (≥1 slug token)</label>
+              <input type="text" id="upDetailDefault" placeholder="e.g. pool-wide" required />
+            </div>
+          </div>
+          <div class="wizard-nav">
+            <button type="button" class="btn btn-primary" id="wizNext1">Next · Files</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-panel" id="wizStep2">
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Drop files to upload">
+          <h2>Drop RAW files here</h2>
+          <p class="sub" style="margin:0">or click to choose · keep original camera names · 5–50 files typical</p>
+          <div id="selectedFiles" style="margin-top:14px"></div>
+        </div>
+        <input type="file" id="fileInput" multiple accept=".mp4,.mov,.m4a,.mp3,.png,.jpg,.jpeg,.webp,video/*,audio/*,image/*" hidden />
+        <div class="wizard-nav">
+          <button type="button" class="btn" id="wizBack2">Back</button>
+          <button type="button" class="btn btn-primary" id="wizNext2">Next · Review</button>
+        </div>
+      </div>
+
+      <div class="wizard-panel" id="wizStep3">
+        <div class="panel">
+          <h2>Review generated names</h2>
+          <p class="sub" style="margin-top:0">Original kept as metadata. Edit per-file detail if needed, then upload.</p>
+          <div style="overflow-x:auto">
+            <table class="review-table" id="reviewTable">
+              <thead>
+                <tr>
+                  <th>Preview</th>
+                  <th>Original</th>
+                  <th>Detail</th>
+                  <th>Generated name</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="reviewBody"></tbody>
+            </table>
+          </div>
+          <div class="progress" id="uploadProgress" style="display:none;margin-top:14px"><div id="uploadProgressBar"></div></div>
+          <p id="uploadStatus" class="sub" style="margin:10px 0 0"></p>
+          <div class="wizard-nav">
+            <button type="button" class="btn" id="wizBack3">Back</button>
+            <button type="button" class="btn btn-primary" id="wizUpload">UPLOAD</button>
+          </div>
+        </div>
+      </div>
+
+      <h3>Latest uploads</h3>
+      <div class="upload-list" id="uploadList"></div>
+    </section>
+
+    <!-- WOLF INTELLIGENCE -->
+    <section class="view" id="view-wolf">
+      <h1>Wolf Intelligence</h1>
+      <p class="sub">Chat shell with brand + content context. Honest when not connected — does not silently edit the plan.</p>
+      <div class="wi-shell">
+        <div class="wi-context" id="wiContext"></div>
+        <div class="wi-honest" id="wiHonest"></div>
+        <div class="wi-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+          <button type="button" class="btn" id="wiOpenPlan">Open current plan</button>
+          <button type="button" class="btn" id="wiRefreshContext">Refresh context</button>
+        </div>
+        <div id="wiPrefill" class="panel" style="display:none;margin-top:12px"></div>
+        <div class="wi-actions" id="wiQuickActions"></div>
+        <div class="wi-transcript" id="wiTranscript"></div>
+        <div class="wi-compose">
+          <button type="button" class="btn" id="wiClear">Clear / New</button>
+          <input type="text" id="wiInput" placeholder="Ask Wolf Intelligence…" />
+          <button type="button" class="btn btn-primary" id="wiSend">Send</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Content Brief drawer -->
+  <div class="backdrop" id="briefBackdrop" role="dialog" aria-modal="true">
+    <div class="drawer modal">
+      <div class="drawer-head">
+        <div>
+          <div class="badge" id="briefKind">POST</div>
+          <h2 id="briefTitle" style="margin:8px 0 0;font-size:1.15rem"></h2>
+          <div id="briefSub" class="sub" style="margin:6px 0 0"></div>
+        </div>
+        <button type="button" class="btn btn-ghost" id="briefClose">Close</button>
+      </div>
+      <div class="drawer-body" id="briefBody"></div>
+      <div class="drawer-foot" id="briefFoot">
+        <button type="button" class="btn" id="briefWolf">Ask Wolf Intelligence</button>
+        <button type="button" class="btn btn-primary" id="briefEdit">Edit</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="backdrop" id="prevBackdrop" role="dialog" aria-modal="true">
+    <div class="modal drawer" style="width:min(860px,100%)">
+      <div class="drawer-head">
+        <div><h2 id="prevTitle" style="margin:0;font-size:1.1rem"></h2><div id="prevSub" class="sub" style="margin:6px 0 0"></div></div>
+        <button type="button" class="btn btn-ghost" id="prevClose">Close</button>
+      </div>
+      <div class="drawer-body"><div id="prevMedia" class="preview-media"></div><p class="sub" id="prevNote"></p></div>
+      <div class="drawer-foot">
+        <button type="button" class="btn" id="prevDownload">Download</button>
+        <button type="button" class="btn btn-primary" id="prevClose2">Done</button>
+      </div>
+    </div>
+  </div>
+  <div class="backdrop" id="chgBackdrop" role="dialog" aria-modal="true">
+    <div class="modal drawer">
+      <div class="drawer-head">
+        <div><h2 style="margin:0">View changes</h2><div class="sub" style="margin:6px 0 0">Compared to last approved version</div></div>
+        <button type="button" class="btn btn-ghost" id="chgClose">Close</button>
+      </div>
+      <div class="drawer-body" id="chgBody"></div>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-warn" id="chgRequest">REQUEST REVISION</button>
+        <button type="button" class="btn btn-ok" id="chgApprove">APPROVE CHANGES</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <footer>beta-os · content team · local 8788</footer>
+
+<script>
+(function () {
+  const BRANDS_FALLBACK = ["habitat", "umablu", "atrium", "selo", "tropik"];
+  const STATUS_OPTS = [
+    ["NOT_STARTED", "NOT STARTED"],
+    ["NEEDS_FILMING", "NEEDS FILMING"],
+    ["READY", "READY"],
+    ["IN_PRODUCTION", "IN PRODUCTION"],
+    ["EDITING", "EDITING"],
+    ["READY_FOR_REVIEW", "READY FOR REVIEW"],
+    ["COMPLETE", "COMPLETE"],
+  ];
+  const SUBJECT_KEY = "wolf_subject";
+
+  const state = {
+    view: "dashboard",
+    brand: localStorage.getItem("wolf_brand") || "habitat",
+    subject: localStorage.getItem(SUBJECT_KEY) || "haikalqilbari123@gmail.com",
+    canCreatePlan: false,
+    canApprovePlan: false,
+    canEditPlan: false,
+    canUpload: false,
+    canUpdateProduction: false,
+    canUseWolfIntelligence: false,
+    planId: null,
+    ux: null,
+    plans: [],
+    briefCard: null,
+    editing: false,
+    wiPrefill: null,
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2800);
+  }
+
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ "Accept": "application/json" }, opts.headers || {});
+    if (state.subject) headers["X-Wolf-Subject"] = state.subject;
+    if (opts.body && !(opts.body instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(opts.body);
+    }
+    const res = await fetch(path, { ...opts, headers });
+    const ct = res.headers.get("content-type") || "";
+    const data = ct.includes("json") ? await res.json() : { ok: false, error: await res.text() };
+    if (!res.ok && data && data.error) {
+      const err = new Error(data.message || data.error);
+      err.data = data;
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
+  function setView(name) {
+    state.view = name;
+    document.querySelectorAll(".primary-nav button").forEach((b) => {
+      b.classList.toggle("active", b.dataset.view === name);
+    });
+    document.querySelectorAll(".view").forEach((v) => {
+      v.classList.toggle("active", v.id === "view-" + name);
+    });
+    if (name === "dashboard") loadDashboard();
+    if (name === "plan") loadPlanView();
+    if (name === "library") loadLibrary();
+    if (name === "upload") loadUploads();
+    if (name === "wolf") renderWolf();
+  }
+
+  /* ----- Brand / capabilities ----- */
+  async function loadBrands() {
+    const sel = $("brandSelect");
+    let brands = BRANDS_FALLBACK.map((id) => ({ id, display_name: id }));
+    try {
+      const data = await api("/api/brands");
+      if (data.brands && data.brands.length) brands = data.brands;
+    } catch (_) { /* fallback */ }
+    sel.innerHTML = brands.map((b) =>
+      `<option value="${esc(b.id)}"${b.id === state.brand ? " selected" : ""}>${esc(b.display_name || b.id)}</option>`
+    ).join("");
+  }
+
+  async function loadCapabilities() {
+    try {
+      const q = encodeURIComponent(state.subject || "");
+      const data = await api(`/api/me/capabilities?subject=${q}`);
+      state.canCreatePlan = !!data.can_create_plan;
+      state.canApprovePlan = !!data.can_approve_plan;
+      state.canEditPlan = !!data.can_edit_plan;
+      state.canUpload = !!data.can_upload;
+      state.canUpdateProduction = !!data.can_update_production;
+      state.canUseWolfIntelligence = !!data.can_use_wolf_intelligence;
+      if (data.subject) state.subject = data.subject;
+    } catch (_) {
+      state.canCreatePlan = false;
+      state.canApprovePlan = false;
+      state.canEditPlan = false;
+      state.canUpload = false;
+      state.canUpdateProduction = false;
+      state.canUseWolfIntelligence = false;
+    }
+    $("mgmtPanel").classList.toggle("hidden", !state.canCreatePlan);
+    const ap = $("btnApprovePlan");
+    if (ap) ap.classList.toggle("hidden", !state.canApprovePlan);
+    const emptyCopy = $("planEmptyCopy");
+    if (emptyCopy) {
+      emptyCopy.textContent = state.canCreatePlan
+        ? "No Working Draft for this brand. Use Build Next Plan when ready."
+        : "No Working Draft for this brand yet. Ask Matt or Amanda to build the next fortnight plan — you can edit and approve once it exists.";
+    }
+  }
+
+  function planStatusLabel(status) {
+    const s = String(status || "");
+    if (s === "Human_Approved" || s === "HUMAN_APPROVED" || s === "Approved") return "APPROVED";
+    return s.replace(/_/g, " ");
+  }
+
+  /* ----- Dashboard ----- */
+  async function loadDashboard() {
+    $("dashSub").textContent = "Loading…";
+    try {
+      const data = await api(`/api/planner/dashboard?brand=${encodeURIComponent(state.brand)}`);
+      const ux = data.current_plan;
+      state.ux = ux;
+      if (ux && ux.plan) state.planId = ux.plan.id;
+      if (!ux) {
+        $("dashSub").textContent = `No plan yet for ${state.brand}.`;
+        $("dashStats").innerHTML = `<div class="empty" style="grid-column:1/-1"><strong>Nothing on the board</strong>Open Content Plan to see Working Drafts, or ask management to build the next fortnight.</div>`;
+        $("dashAttention").innerHTML = `<div class="empty">No items need attention.</div>`;
+      } else {
+        const p = ux.plan;
+        const pr = p.progress || {};
+        $("dashSub").textContent = `${(p.brand_id || state.brand).toUpperCase()} · ${p.period_start || "?"} → ${p.period_end || "?"}${p.is_test_lane ? " · DEV fixture" : ""}`;
+        $("dashStats").innerHTML = [
+          stat("Posts", `${pr.posts_done || 0}/${pr.posts_target || 3}`, "complete this fortnight"),
+          stat("Stories", `${pr.stories_done || 0}/${pr.stories_target || 14}`, "complete this fortnight"),
+          stat("Filming", String(pr.filming_required || 0), "still need footage"),
+          stat("Review", String(pr.awaiting_review || 0), "awaiting review"),
+        ].join("");
+        const need = [...(ux.posts || []), ...(ux.stories || [])].filter((c) =>
+          ["NEEDS_FILMING", "READY_FOR_REVIEW", "IN_PRODUCTION", "EDITING"].includes(c.status)
+        ).slice(0, 8);
+        if (!need.length) {
+          $("dashAttention").innerHTML = `<div class="empty">All clear for now.</div>`;
+        } else {
+          $("dashAttention").innerHTML = need.map((c) => `
+            <div class="item-card" data-card-id="${c.id}" style="margin-bottom:8px">
+              <div class="num">${esc(c.label)}</div>
+              <div>
+                <div class="title">${esc(c.title || c.brief?.idea || "Untitled")}</div>
+                <div class="row2"><span>${esc(c.date || "—")}</span><span>${esc(c.format || "")}</span></div>
+              </div>
+              <div class="right"><span class="badge s-${esc(c.status)}">${esc(c.status_label)}</span></div>
+            </div>`).join("");
+          $("dashAttention").querySelectorAll(".item-card").forEach((el) => {
+            el.addEventListener("click", () => openBrief(Number(el.dataset.cardId)));
+          });
+        }
+      }
+      const ups = data.recent_uploads || [];
+      if (!ups.length) {
+        $("dashUploads").innerHTML = `<div class="empty">No recent uploads.</div>`;
+      } else {
+        $("dashUploads").innerHTML = ups.map((u) => `
+          <div class="upload-row" style="margin-bottom:8px">
+            <div><strong>${esc(u.name)}</strong><div class="sub" style="margin:0">${esc(u.brand || "")} · ${esc(u.type || "")}</div></div>
+            <span class="badge">${esc(mapUploadStatus(u.status))}</span>
+          </div>`).join("");
+      }
+    } catch (e) {
+      $("dashSub").textContent = "Could not load dashboard.";
+      toast(e.message || "Dashboard error");
+    }
+  }
+
+  function stat(label, value, hint) {
+    return `<div class="stat-card"><div class="label">${esc(label)}</div><div class="value">${esc(value)}</div><div class="hint">${esc(hint)}</div></div>`;
+  }
+
+  function mapUploadStatus(s) {
+    const u = String(s || "").toUpperCase().replace(/\s+/g, "_");
+    if (u === "STAGED" || u === "PENDING" || u === "CHECKING" || u === "UPLOAD_RECEIVED") return "CHECKING";
+    if (u === "UPLOADING") return "UPLOADING";
+    if (u === "VERIFIED" || u === "COMMITTED" || u === "READY" || u === "LIBRARY_READY") return "READY";
+    if (u === "FAILED" || u === "REJECTED" || u === "ERROR") return "FAILED";
+    return u || "CHECKING";
+  }
+
+  /* ----- Content Plan ----- */
+  async function loadPlanList() {
+    const data = await api(`/api/planner/plans?brand=${encodeURIComponent(state.brand)}`);
+    state.plans = data.plans || [];
+    const box = $("planList");
+    if (!state.plans.length) {
+      box.innerHTML = `<div class="empty">No plans in the database for this brand.</div>`;
+      return;
+    }
+    box.innerHTML = state.plans.map((p) => `
+      <button type="button" class="plan-pick${p.id === state.planId ? " active" : ""}" data-id="${p.id}">
+        <div>
+          <div class="t">${esc(p.title || "Untitled plan")}</div>
+          <div class="d">${esc(p.period_start || "?")} → ${esc(p.period_end || "?")} · ${esc(planStatusLabel(p.status_label || p.status))} · ${p.posts || 0} posts / ${p.stories || 0} stories</div>
+        </div>
+        <div>${p.is_test_lane ? '<span class="badge dev">DEV</span>' : ""}<span class="badge">${esc(p.data_lane || "operational")}</span></div>
+      </button>`).join("");
+    box.querySelectorAll(".plan-pick").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.planId = Number(btn.dataset.id);
+        $("planListPanel").style.display = "none";
+        loadPlanView();
+      });
+    });
+  }
+
+  async function loadPlanView() {
+    $("mgmtPanel").classList.toggle("hidden", !state.canCreatePlan);
+    const ap = $("btnApprovePlan");
+    if (ap) ap.classList.toggle("hidden", !state.canApprovePlan);
+    try {
+      if (!state.planId) {
+        await loadPlanList();
+        if (state.plans.length) state.planId = state.plans[0].id;
+      }
+      if (!state.planId) {
+        $("planEmpty").style.display = "block";
+        $("planBody").style.display = "none";
+        $("planTitle").textContent = "Content Plan";
+        $("planMeta").innerHTML = "";
+        return;
+      }
+      const data = await api(`/api/planner/plans/${state.planId}?ux=1`);
+      const ux = data.ux || null;
+      state.ux = ux;
+      if (!ux) {
+        $("planEmpty").style.display = "block";
+        $("planBody").style.display = "none";
+        return;
+      }
+      $("planEmpty").style.display = "none";
+      $("planBody").style.display = "block";
+      const p = ux.plan;
+      $("planTitle").textContent = p.title || "Content Plan";
+      $("planMeta").innerHTML = [
+        `<span class="badge">${esc((p.brand_id || state.brand).toUpperCase())}</span>`,
+        `<span class="badge">${esc(p.period_start || "?")} → ${esc(p.period_end || "?")}</span>`,
+        `<span class="badge">${esc(planStatusLabel(p.status_label || p.status))}</span>`,
+        `<span class="badge">${esc(ux.counts.posts)} posts</span>`,
+        `<span class="badge">${esc(ux.counts.stories)} stories</span>`,
+        p.is_test_lane ? `<span class="badge dev">DEV fixture</span>` : "",
+      ].join("");
+      $("preparedLine").textContent = p.prepared_note || "Plan prepared using available brand, historical and performance information.";
+      $("preparedDetail").innerHTML = "Brand memory, previous plans, and available performance context were used where present. Trend and inspiration lanes are not connected yet.";
+      $("postCount").textContent = `${ux.counts.posts} items`;
+      $("storyCount").textContent = `${ux.counts.stories} items`;
+      $("postsList").innerHTML = renderItemCards(ux.posts || []);
+      $("storiesList").innerHTML = renderItemCards(ux.stories || []);
+      bindItemCards($("postsList"));
+      bindItemCards($("storiesList"));
+    } catch (e) {
+      toast(e.message || "Plan load failed");
+      $("planEmpty").style.display = "block";
+      $("planBody").style.display = "none";
+    }
+  }
+
+  function renderItemCards(items) {
+    if (!items.length) return `<div class="empty">Nothing in this group.</div>`;
+    return items.map((c) => `
+      <div class="item-card" data-card-id="${c.id}">
+        <div class="num">${esc(c.label)}</div>
+        <div>
+          <div class="title">${esc(c.title || c.brief?.idea || "Untitled")}</div>
+          <div class="row2">
+            <span>${esc(c.date || "Date TBD")}</span>
+            <span>${esc(c.format || "—")}</span>
+            <span>${esc(c.theme || "")}</span>
+          </div>
+        </div>
+        <div class="right">
+          <span class="badge s-${esc(c.status)}">${esc(c.status_label)}</span>
+          <span class="badge">${esc(assetLabel(c.asset_status))}</span>
+        </div>
+      </div>`).join("");
+  }
+
+  function assetLabel(a) {
+    const u = String(a || "").toUpperCase();
+    if (u === "FILM" || u === "NEEDED" || u === "MISSING") return "Footage needed";
+    if (u === "MATCH" || u === "HAVE" || u === "READY") return "Footage ready";
+    return u ? u : "Assets TBD";
+  }
+
+  function bindItemCards(root) {
+    root.querySelectorAll(".item-card").forEach((el) => {
+      el.addEventListener("click", () => openBrief(Number(el.dataset.cardId)));
+    });
+  }
+
+  /* ----- Brief ----- */
+  async function openBrief(cardId) {
+    try {
+      const data = await api(`/api/planner/cards/${cardId}`);
+      state.briefCard = data.card;
+      state.editing = false;
+      renderBrief();
+      $("briefBackdrop").classList.add("open");
+    } catch (e) {
+      toast(e.message || "Could not open brief");
+    }
+  }
+
+  function renderBrief() {
+    const c = state.briefCard;
+    if (!c) return;
+    const b = c.brief || {};
+    $("briefKind").textContent = c.label || c.kind;
+    $("briefTitle").textContent = c.title || b.idea || "Content brief";
+    $("briefSub").textContent = `${c.date || "Date TBD"} · ${c.format || ""} · ${c.status_label || ""}`;
+    const foot = $("briefFoot");
+    if (state.editing) {
+      $("briefBody").innerHTML = editFormHtml(c);
+      foot.innerHTML = `
+        <button type="button" class="btn" id="briefCancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="briefSave">Save Changes</button>`;
+      $("briefCancel").onclick = () => { state.editing = false; renderBrief(); };
+      $("briefSave").onclick = saveBrief;
+    } else {
+      $("briefBody").innerHTML = viewBriefHtml(b, c);
+      foot.innerHTML = `
+        <button type="button" class="btn" id="briefWolf">Ask Wolf Intelligence</button>
+        <button type="button" class="btn btn-primary" id="briefEdit">Edit</button>`;
+      $("briefEdit").onclick = () => { state.editing = true; renderBrief(); };
+      $("briefWolf").onclick = () => {
+        state.wiPrefill = {
+          brand: state.brand,
+          plan_id: c.plan_id,
+          card_id: c.id,
+          label: c.label,
+          title: c.title,
+          theme: b.theme,
+          hook: b.hook,
+        };
+        $("briefBackdrop").classList.remove("open");
+        setView("wolf");
+      };
+    }
+  }
+
+  function fieldView(label, value, list) {
+    let inner;
+    if (list && Array.isArray(value)) {
+      if (!value.length) inner = `<span class="v empty-v">—</span>`;
+      else inner = `<ul>${value.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
+    } else {
+      const v = (value == null || value === "") ? null : value;
+      inner = v == null ? `<span class="v empty-v">—</span>` : `<div class="v">${esc(v)}</div>`;
+    }
+    return `<div class="brief-field"><span class="k">${esc(label)}</span>${inner}</div>`;
+  }
+
+  function viewBriefHtml(b, c) {
+    return [
+      fieldView("Goal", b.goal),
+      fieldView("Theme", b.theme),
+      fieldView("Content type", b.content_type),
+      fieldView("Idea / concept", b.idea),
+      fieldView("Hook", b.hook),
+      fieldView("Scene / slide", b.scene),
+      fieldView("Text overlays", b.text_overlays, true),
+      fieldView("CTA", b.cta),
+      fieldView("Caption", b.caption),
+      fieldView("Hashtags", b.hashtags, true),
+      fieldView("Recommended shot list", b.shot_list, true),
+      fieldView("Shot list note", b.shot_list_note),
+      fieldView("Production notes", b.production_notes),
+      fieldView("Existing footage", b.existing_footage),
+      fieldView("Footage needed", b.footage_needed),
+      fieldView("Inspiration", b.inspiration),
+      fieldView("Status", c.status_label || b.status),
+      fieldView("Assignee", b.assignee),
+    ].join("");
+  }
+
+  function editFormHtml(c) {
+    const b = c.brief || {};
+    const statusOpts = STATUS_OPTS.map(([v, l]) =>
+      `<option value="${v}"${(b.status || c.status) === v ? " selected" : ""}>${l}</option>`
+    ).join("");
+    const list = (arr) => (arr || []).join("\n");
+    return `
+      <div class="field"><label>Goal</label><textarea name="goal">${esc(b.goal)}</textarea></div>
+      <div class="field"><label>Theme</label><input name="theme" value="${esc(b.theme)}" /></div>
+      <div class="field"><label>Content type</label><input name="content_type" value="${esc(b.content_type)}" /></div>
+      <div class="field"><label>Idea / concept</label><textarea name="idea">${esc(b.idea)}</textarea></div>
+      <div class="field"><label>Hook</label><textarea name="hook">${esc(b.hook)}</textarea></div>
+      <div class="field"><label>Scene / slide</label><textarea name="scene">${esc(b.scene)}</textarea></div>
+      <div class="field"><label>Text overlays (one per line)</label><textarea name="text_overlays">${esc(list(b.text_overlays))}</textarea></div>
+      <div class="field"><label>CTA</label><input name="cta" value="${esc(b.cta)}" /></div>
+      <div class="field"><label>Caption</label><textarea name="caption">${esc(b.caption)}</textarea></div>
+      <div class="field"><label>Hashtags (space or comma separated)</label><input name="hashtags" value="${esc((b.hashtags || []).join(" "))}" /></div>
+      <div class="field"><label>Recommended shot list (one per line)</label><textarea name="shot_list">${esc(list(b.shot_list))}</textarea></div>
+      <div class="field"><label>Production notes</label><textarea name="production_notes">${esc(b.production_notes)}</textarea></div>
+      <div class="field"><label>Existing footage</label><textarea name="existing_footage">${esc(b.existing_footage)}</textarea></div>
+      <div class="field"><label>Footage needed</label><textarea name="footage_needed">${esc(b.footage_needed)}</textarea></div>
+      <div class="field"><label>Inspiration</label><textarea name="inspiration">${esc(b.inspiration)}</textarea></div>
+      <div class="field"><label>Status</label><select name="workflow_status">${statusOpts}</select></div>
+      <div class="field"><label>Assignee</label><input name="assignee" value="${esc(b.assignee)}" /></div>
+      <div class="field"><label>Title</label><input name="title" value="${esc(c.title)}" /></div>
+    `;
+  }
+
+  async function saveBrief() {
+    const root = $("briefBody");
+    const get = (n) => {
+      const el = root.querySelector(`[name="${n}"]`);
+      return el ? el.value : "";
+    };
+    const lines = (s) => String(s || "").split("\n").map((x) => x.trim()).filter(Boolean);
+    const tags = (s) => String(s || "").split(/[\s,]+/).map((x) => x.trim()).filter(Boolean);
+    const patch = {
+      title: get("title"),
+      goal: get("goal"),
+      theme: get("theme"),
+      content_type: get("content_type"),
+      idea: get("idea"),
+      hook: get("hook"),
+      scene: get("scene"),
+      text_overlays: lines(get("text_overlays")),
+      cta: get("cta"),
+      caption: get("caption"),
+      hashtags: tags(get("hashtags")),
+      shot_list: lines(get("shot_list")),
+      production_notes: get("production_notes"),
+      existing_footage: get("existing_footage"),
+      footage_needed: get("footage_needed"),
+      inspiration: get("inspiration"),
+      workflow_status: get("workflow_status"),
+      assignee: get("assignee"),
+    };
+    try {
+      await api(`/api/planner/cards/${state.briefCard.id}/edit`, {
+        method: "POST",
+        body: { subject: state.subject, patch },
+      });
+      toast("Changes saved");
+      state.editing = false;
+      await openBrief(state.briefCard.id);
+      if (state.view === "plan") loadPlanView();
+      if (state.view === "dashboard") loadDashboard();
+    } catch (e) {
+      toast(e.message || "Save failed");
+    }
+  }
+
+  /* ----- Library ----- */
+  async function loadLibrary() {
+    try {
+      const q = new URLSearchParams();
+      q.set("brand", state.brand);
+      const st = $("libStatus").value;
+      if (st) q.set("status", st);
+      const data = await api(`/api/assets?${q}`);
+      let assets = data.assets || [];
+      const type = $("libType").value.toLowerCase();
+      const search = ($("libSearch").value || "").toLowerCase().trim();
+      if (type) assets = assets.filter((a) => String(a.type || "").toLowerCase().includes(type) || String(a.thumb || "") === type);
+      if (search) assets = assets.filter((a) =>
+        `${a.slug || ""} ${a.filename || ""}`.toLowerCase().includes(search)
+      );
+      const grid = $("libGrid");
+      if (!assets.length) {
+        grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><strong>No assets yet</strong>Upload media, then commit from staging to grow the library.</div>`;
+        return;
+      }
+      grid.innerHTML = assets.map((a) => {
+        const thumb = a.thumb || "file";
+        return `<div class="lib-card">
+          <div class="lib-thumb ${esc(thumb)}">${esc(thumb)}</div>
+          <div class="lib-meta">
+            <div class="slug">${esc(a.slug || a.filename || "asset-" + a.id)}</div>
+            <div class="meta">${esc(a.type || "")} · ${esc(a.stage || "")} · ${esc(a.status || "")}<br/>${esc(a.date_added || "")}</div>
+          </div>
+        </div>`;
+      }).join("");
+      // Guard: no raw paths in DOM
+      if (/\/Users\/|library_v2\/|original_path|v2_path/.test(grid.innerHTML)) {
+        console.warn("path leak blocked visually");
+      }
+    } catch (e) {
+      $("libGrid").innerHTML = `<div class="empty" style="grid-column:1/-1">${esc(e.message)}</div>`;
+    }
+  }
+
+  /* ----- Smart Upload wizard (Phase 2.5B) ----- */
+  const uploadWizard = {
+    step: 1,
+    files: [],
+    previews: [],
+    batchId: null,
+  };
+
+  function todayInputDate() {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  function setWizardStep(n) {
+    uploadWizard.step = n;
+    document.querySelectorAll("#wizardSteps .step").forEach((el) => {
+      const s = Number(el.dataset.step);
+      el.classList.toggle("on", s === n);
+      el.classList.toggle("done", s < n);
+    });
+    ["1", "2", "3"].forEach((s) => {
+      const panel = $("wizStep" + s);
+      if (panel) panel.classList.toggle("on", Number(s) === n);
+    });
+  }
+
+  async function loadNasBanner() {
+    const el = $("nasBanner");
+    if (!el) return;
+    try {
+      const data = await api("/api/nas/status");
+      if (data.connected) {
+        el.className = "nas-banner ok";
+        el.textContent = data.message || "NAS mounted. Uploads write to Beta library (NAS sync not in this MVP).";
+      } else {
+        el.className = "nas-banner warn";
+        el.textContent = data.message || "NAS not connected — uploads stay on Beta only. We will not claim NAS received.";
+      }
+    } catch (e) {
+      el.className = "nas-banner warn";
+      el.textContent = "Could not check NAS — treat as not connected. No fake NAS received.";
+    }
+  }
+
+  async function initUploadForm() {
+    const brandSel = $("upBrand");
+    if (brandSel && !brandSel.options.length) {
+      BRANDS_FALLBACK.forEach((id) => {
+        const o = document.createElement("option");
+        o.value = id; o.textContent = id;
+        if (id === state.brand) o.selected = true;
+        brandSel.appendChild(o);
+      });
+      try {
+        const data = await api("/api/brands");
+        if (data.brands && data.brands.length) {
+          brandSel.innerHTML = data.brands.map((b) =>
+            `<option value="${esc(b.id)}"${b.id === state.brand ? " selected" : ""}>${esc(b.display_name || b.id)}</option>`
+          ).join("");
+        }
+      } catch (_) {}
+    } else if (brandSel) {
+      brandSel.value = state.brand;
+    }
+    const sd = $("upShootDate");
+    if (sd && !sd.value) sd.value = todayInputDate();
+    // Optional plans for brand
+    try {
+      const plans = await api(`/api/planner/plans?brand=${encodeURIComponent(state.brand)}`);
+      const sel = $("upPlan");
+      const cur = sel.value;
+      sel.innerHTML = `<option value="">— none —</option>` + (plans.plans || []).map((p) =>
+        `<option value="${p.id}">#${p.id} ${esc(p.title || "plan")}</option>`
+      ).join("");
+      if (cur) sel.value = cur;
+    } catch (_) {}
+  }
+
+  function validateBatch() {
+    const brand = $("upBrand").value;
+    const stage = $("upStage").value;
+    const mediaType = $("upMediaType").value;
+    const shootDate = $("upShootDate").value;
+    const subject = ($("upSubject").value || "").trim();
+    if (!brand) return "Brand required";
+    if (!stage) return "Stage required";
+    if (!mediaType) return "Media type required";
+    if (!shootDate) return "Shoot date required";
+    if (!subject) return "Subject required";
+    return null;
+  }
+
+  function renderSelectedFiles() {
+    const box = $("selectedFiles");
+    if (!uploadWizard.files.length) {
+      box.innerHTML = `<p class="sub" style="margin:0">No files selected yet.</p>`;
+      return;
+    }
+    box.innerHTML = uploadWizard.files.map((f) =>
+      `<span class="file-chip">${esc(f.name)} · ${Math.round(f.size / 1024)} KB</span>`
+    ).join("");
+  }
+
+  function setSelectedFiles(fileList) {
+    const arr = [...fileList].slice(0, 50);
+    uploadWizard.files = arr;
+    renderSelectedFiles();
+  }
+
+  async function buildReview() {
+    const err = validateBatch();
+    if (err) { toast(err); return false; }
+    if (!uploadWizard.files.length) { toast("Select at least one file"); return false; }
+    const detailDefault = ($("upDetailDefault").value || "").trim();
+    const body = {
+      brand: $("upBrand").value,
+      stage: $("upStage").value,
+      media_type: $("upMediaType").value,
+      shoot_date: $("upShootDate").value,
+      subject: ($("upSubject").value || "").trim(),
+      files: uploadWizard.files.map((f) => ({
+        original_filename: f.name,
+        detail: detailDefault || undefined,
+      })),
+    };
+    const data = await api("/api/upload/preview-names", { method: "POST", body });
+    uploadWizard.previews = data.previews || [];
+    const tbody = $("reviewBody");
+    tbody.innerHTML = uploadWizard.previews.map((p, i) => {
+      const f = uploadWizard.files[i];
+      const kind = (p.media_type || "").toLowerCase();
+      const thumb = kind === "video" || kind === "broll" ? "video" : (kind === "audio" ? "audio" : "image");
+      return `<tr data-idx="${i}">
+        <td><span class="badge">${esc(thumb)}</span></td>
+        <td>${esc(p.original_filename)}</td>
+        <td><input type="text" class="rev-detail" value="${esc(p.detail || detailDefault || "")}" data-idx="${i}" /></td>
+        <td class="canon" id="canon-${i}">${esc(p.canonical_filename)}</td>
+        <td><span class="badge" id="ust-${i}">PENDING</span></td>
+      </tr>`;
+    }).join("");
+    tbody.querySelectorAll(".rev-detail").forEach((inp) => {
+      inp.addEventListener("change", async () => {
+        const idx = Number(inp.dataset.idx);
+        await refreshOnePreview(idx, inp.value);
+      });
+    });
+    return true;
+  }
+
+  async function refreshOnePreview(idx, detail) {
+    const f = uploadWizard.files[idx];
+    if (!f) return;
+    const body = {
+      brand: $("upBrand").value,
+      stage: $("upStage").value,
+      media_type: $("upMediaType").value,
+      shoot_date: $("upShootDate").value,
+      subject: ($("upSubject").value || "").trim(),
+      files: uploadWizard.files.map((file, i) => ({
+        original_filename: file.name,
+        detail: i === idx ? detail : (($("reviewBody").querySelector(`.rev-detail[data-idx="${i}"]`) || {}).value || ""),
+      })),
+    };
+    const data = await api("/api/upload/preview-names", { method: "POST", body });
+    uploadWizard.previews = data.previews || [];
+    uploadWizard.previews.forEach((p, i) => {
+      const el = $("canon-" + i);
+      if (el) el.textContent = p.canonical_filename;
+    });
+  }
+
+  async function loadUploads() {
+    await loadNasBanner();
+    await initUploadForm();
+    try {
+      const data = await api(`/api/upload/recent?brand=${encodeURIComponent(state.brand)}&data_lane=operational`);
+      const items = data.items || [];
+      if (!items.length) {
+        $("uploadList").innerHTML = `<div class="empty"><strong>No uploads yet</strong>Use the wizard above — keep camera names; Wolf generates canonical filenames.</div>`;
+        return;
+      }
+      $("uploadList").innerHTML = items.map((it) => {
+        const name = it.canonical_filename || it.name || `upload-${it.id}`;
+        const lib = it.library_status || it.status || "";
+        return `<div class="upload-row">
+          <div>
+            <strong>${esc(name)}</strong>
+            <div class="sub" style="margin:0">original: ${esc(it.original_filename || "—")} · ${esc(it.brand || "")} · ${esc(it.media_type || it.type || "")}</div>
+          </div>
+          <span class="badge">${esc(mapUploadStatus(it.ui_status || lib))}</span>
+        </div>`;
+      }).join("");
+      if (/\/Users\/|library_v2\/|original_path|v2_path/.test($("uploadList").innerHTML)) {
+        console.warn("path leak blocked visually");
+      }
+    } catch (e) {
+      $("uploadList").innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+    }
+  }
+
+  async function runSmartUpload() {
+    if (!state.canUpload) {
+      toast("You do not have upload permission");
+      return;
+    }
+    const err = validateBatch();
+    if (err) { toast(err); return; }
+    if (!uploadWizard.files.length) { toast("No files"); return; }
+    uploadWizard.batchId = (uploadWizard.batchId || ("b" + Date.now().toString(36)));
+    const status = $("uploadStatus");
+    const wrap = $("uploadProgress");
+    const bar = $("uploadProgressBar");
+    wrap.style.display = "block";
+    const planId = ($("upPlan").value || "").trim();
+    const cardId = ($("upCard").value || "").trim();
+    const location = ($("upLocation").value || "").trim();
+    let ok = 0, fail = 0;
+    for (let i = 0; i < uploadWizard.files.length; i++) {
+      const file = uploadWizard.files[i];
+      const detailEl = $("reviewBody").querySelector(`.rev-detail[data-idx="${i}"]`);
+      const detail = detailEl ? detailEl.value.trim() : "";
+      const badge = $("ust-" + i);
+      if (badge) badge.textContent = "UPLOADING";
+      status.textContent = `Uploading ${file.name} (${i + 1}/${uploadWizard.files.length})…`;
+      bar.style.width = `${Math.round((i / uploadWizard.files.length) * 100)}%`;
+      const fd = new FormData();
+      fd.append("file", file, file.name);
+      fd.append("brand", $("upBrand").value);
+      fd.append("stage", $("upStage").value);
+      fd.append("media_type", $("upMediaType").value);
+      fd.append("shoot_date", $("upShootDate").value);
+      fd.append("subject", ($("upSubject").value || "").trim());
+      if (detail) fd.append("detail", detail);
+      if (location) fd.append("location", location);
+      if (planId) fd.append("content_plan_id", planId);
+      if (cardId) fd.append("content_card_id", cardId);
+      fd.append("batch_id", uploadWizard.batchId);
+      fd.append("data_lane", "operational");
+      try {
+        if (badge) badge.textContent = "CHECKING";
+        const res = await fetch("/api/upload/smart", {
+          method: "POST",
+          headers: state.subject ? { "X-Wolf-Subject": state.subject } : {},
+          body: fd,
+        });
+        const data = await res.json();
+        if (!res.ok || data.ok === false) throw new Error(data.error || data.message || "Upload failed");
+        if (badge) badge.textContent = mapUploadStatus(data.ui_status || data.library_status || "READY");
+        const canon = $("canon-" + i);
+        if (canon && data.canonical_filename) canon.textContent = data.canonical_filename;
+        ok++;
+      } catch (e) {
+        fail++;
+        if (badge) badge.textContent = "FAILED";
+        toast(`${file.name}: ${e.message}`);
+      }
+    }
+    bar.style.width = "100%";
+    status.textContent = `Done — ${ok} ready, ${fail} failed. Original filenames preserved; Wolf names are canonical.`;
+    setTimeout(() => { wrap.style.display = "none"; bar.style.width = "0"; }, 1600);
+    loadUploads();
+    if (state.view === "library") loadLibrary();
+  }
+
+  /* ----- Wolf Intelligence ----- */
+  function renderWolf() {
+    const ctx = $("wiContext");
+    ctx.innerHTML = [
+      `<span class="badge">${esc(state.brand.toUpperCase())}</span>`,
+      state.planId ? `<span class="badge">Plan #${state.planId}</span>` : `<span class="badge">No plan selected</span>`,
+      state.wiPrefill ? `<span class="badge s-READY">${esc(state.wiPrefill.label || "Item context")}</span>` : "",
+    ].join("");
+
+    const honest = $("wiHonest");
+    const ux = state.ux;
+    const connected = [];
+    const notYet = [];
+    connected.push("Open and edit the current content plan");
+    connected.push("Review posts and stories with full production briefs");
+    connected.push("Save brief changes (team edits)");
+    connected.push("Browse library assets and stage new uploads");
+    if (ux && ux.plan && ux.plan.theme) {
+      connected.push(`Current theme context: “${ux.plan.theme}”`);
+    }
+    notYet.push("Live trend signals");
+    notYet.push("Inspiration library browsing");
+    notYet.push("Automated creative generation in this panel");
+    honest.innerHTML = `
+      <strong>What we can do here now</strong>
+      <ul>${connected.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      <strong style="display:block;margin-top:12px">Not connected yet</strong>
+      <ul>${notYet.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      <p style="margin:12px 0 0">This panel stays honest — we will not invent trends or inspiration.</p>`;
+
+    const pre = $("wiPrefill");
+    if (pre && state.wiPrefill) {
+      pre.style.display = "block";
+      const p = state.wiPrefill;
+      pre.innerHTML = `<h3>Context from card</h3>
+        <div class="brief-field"><span class="k">Item</span><div class="v">${esc(p.label)} — ${esc(p.title)}</div></div>
+        <div class="brief-field"><span class="k">Theme</span><div class="v">${esc(p.theme || "—")}</div></div>
+        <div class="brief-field"><span class="k">Hook</span><div class="v">${esc(p.hook || "—")}</div></div>
+        <p class="sub">Use Content Plan to refine this brief. Creative generation will land here when wired.</p>`;
+    } else if (pre) {
+      pre.style.display = "none";
+      pre.innerHTML = "";
+    }
+  }
+
+  /* ----- Approve plan ----- */
+  async function approveCurrentPlan() {
+    if (!state.canApprovePlan) return;
+    if (!state.planId) {
+      toast("Open a plan first");
+      return;
+    }
+    const ok = window.confirm("Approve this fortnight plan for the team?");
+    if (!ok) return;
+    try {
+      const data = await api(`/api/planner/plans/${state.planId}/approve`, {
+        method: "POST",
+        body: { subject: state.subject },
+      });
+      const label = data.status_label || data.ui_status || "APPROVED";
+      toast(`Plan ${label}`);
+      await loadPlanView();
+      await loadDashboard();
+    } catch (e) {
+      toast(e.message || "Approve failed");
+    }
+  }
+
+  /* ----- Build next (mgmt) ----- */
+  async function buildNextPlan() {
+    if (!state.canCreatePlan) return;
+    $("buildHint").textContent = "Building…";
+    try {
+      const data = await api("/api/planner/build-next", {
+        method: "POST",
+        body: { brand_id: state.brand, subject: state.subject },
+      });
+      const id = data.plan_id || data.plan?.id || data.ux?.plan?.id;
+      if (id) state.planId = id;
+      toast("New Working Draft created");
+      $("buildHint").textContent = "";
+      await loadPlanList();
+      await loadPlanView();
+    } catch (e) {
+      $("buildHint").textContent = e.message || "Failed";
+      toast(e.message || "Build failed");
+    }
+  }
+
+  /* ----- Wire UI ----- */
+  document.querySelectorAll(".primary-nav button").forEach((btn) => {
+    btn.addEventListener("click", () => setView(btn.dataset.view));
+  });
+  $("brandSelect").addEventListener("change", () => {
+    state.brand = $("brandSelect").value;
+    localStorage.setItem("wolf_brand", state.brand);
+    state.planId = null;
+    state.ux = null;
+    setView(state.view);
+  });
+  $("btnRefreshPlans").addEventListener("click", () => loadPlanView());
+  $("btnShowPlanList").addEventListener("click", async () => {
+    const panel = $("planListPanel");
+    const show = panel.style.display === "none" || !panel.style.display;
+    if (show) {
+      await loadPlanList();
+      panel.style.display = "block";
+    } else {
+      panel.style.display = "none";
+    }
+  });
+  $("preparedLine").addEventListener("click", () => {
+    $("preparedDetail").classList.toggle("open");
+  });
+  $("btnBuildNext").addEventListener("click", buildNextPlan);
+  const btnAp = $("btnApprovePlan");
+  if (btnAp) btnAp.addEventListener("click", approveCurrentPlan);
+  $("briefClose").addEventListener("click", () => $("briefBackdrop").classList.remove("open"));
+  $("briefBackdrop").addEventListener("click", (e) => {
+    if (e.target === $("briefBackdrop")) $("briefBackdrop").classList.remove("open");
+  });
+  $("libRefresh").addEventListener("click", loadLibrary);
+  $("libSearch").addEventListener("input", () => loadLibrary());
+  $("libType").addEventListener("change", loadLibrary);
+  $("libStatus").addEventListener("change", loadLibrary);
+
+  const dz = $("dropzone");
+  const fi = $("fileInput");
+  if (dz && fi) {
+    dz.addEventListener("click", () => fi.click());
+    dz.addEventListener("dragover", (e) => { e.preventDefault(); dz.classList.add("drag"); });
+    dz.addEventListener("dragleave", () => dz.classList.remove("drag"));
+    dz.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dz.classList.remove("drag");
+      setSelectedFiles(e.dataTransfer.files);
+    });
+    fi.addEventListener("change", () => setSelectedFiles(fi.files));
+  }
+  const wizNext1 = $("wizNext1");
+  if (wizNext1) wizNext1.addEventListener("click", () => {
+    const err = validateBatch();
+    if (err) { toast(err); return; }
+    state.brand = $("upBrand").value;
+    setWizardStep(2);
+  });
+  const wizBack2 = $("wizBack2");
+  if (wizBack2) wizBack2.addEventListener("click", () => setWizardStep(1));
+  const wizNext2 = $("wizNext2");
+  if (wizNext2) wizNext2.addEventListener("click", async () => {
+    try {
+      const ok = await buildReview();
+      if (ok) setWizardStep(3);
+    } catch (e) { toast(e.message || "Preview failed"); }
+  });
+  const wizBack3 = $("wizBack3");
+  if (wizBack3) wizBack3.addEventListener("click", () => setWizardStep(2));
+  const wizUpload = $("wizUpload");
+  if (wizUpload) wizUpload.addEventListener("click", () => runSmartUpload());
+
+  const wiOpenPlanBtn = $("wiOpenPlan");
+  if (wiOpenPlanBtn) wiOpenPlanBtn.addEventListener("click", () => setView("plan"));
+  const wiRefreshBtn = $("wiRefreshContext");
+  if (wiRefreshBtn) wiRefreshBtn.addEventListener("click", async () => {
+    try {
+      const data = await api(`/api/planner/dashboard?brand=${encodeURIComponent(state.brand)}`);
+      state.ux = data.current_plan;
+      if (state.ux?.plan?.id) state.planId = state.ux.plan.id;
+      renderWolf();
+      toast("Context refreshed");
+    } catch (e) { toast(e.message); }
+  });
+
+  (async function init() {
+    await loadBrands();
+    $("brandSelect").value = state.brand;
+    await loadCapabilities();
+    setView("dashboard");
+  })();
+
+  /* ===== Phase 2.6 Team Readiness overrides ===== */
+  const POST_TYPES_26 = ["Reel·30sec", "Carousel·6 slides", "Static"];
+  const STORY_CTAS_26 = ["NONE","LINK STICKER","POLL","QUESTION","QUIZ","REACTION","DM","OTHER"];
+  const WI_ACTIONS_26 = [
+    ["REFINE","REFINE"],["HOOK","HOOK"],["FOOTAGE","FOOTAGE"],["CTA","CTA"],
+    ["SHORTEN_CAPTION","SHORTEN CAPTION"],["ANOTHER_IDEA","ANOTHER IDEA"],
+    ["BRAND_FIT","BRAND FIT"],["SIMILAR","SIMILAR"],["PERFORMED_WELL","PERFORMED WELL"],["INSPIRATION","INSPIRATION"]
+  ];
+  state.libSelected = state.libSelected || new Set();
+  state.wiTranscript = state.wiTranscript || [];
+  state.wiCardId = state.wiCardId || null;
+  state.brandMeta = state.brandMeta || {};
+
+  function applyBrandTheme26(meta) {
+    const th = (meta && meta.theme) || {};
+    document.documentElement.style.setProperty("--brand-primary", th.primary || "#6ea8ff");
+    document.documentElement.style.setProperty("--brand-accent", th.accent || "#8b7cff");
+    const mark = document.getElementById("brandMark");
+    if (mark) mark.textContent = String(th.logo_text || (meta && meta.display_name) || state.brand || "W").slice(0,1).toUpperCase();
+  }
+
+  function planStatusLabel26(s) {
+    const x = String(s || "");
+    if (x.includes("CHANGES")) return "CHANGES PENDING REVIEW";
+    if (x === "APPROVED" || x === "Human_Approved" || x === "HUMAN_APPROVED") return "APPROVED";
+    if (x === "WORKING" || x === "Working_Draft") return "WORKING";
+    return x.replace(/_/g, " ");
+  }
+
+  const _loadDashboardOrig = typeof loadDashboard === "function" ? loadDashboard : null;
+  loadDashboard = async function () {
+    try {
+      $("dashSub").textContent = "Loading…";
+      const data = await api(`/api/planner/dashboard?brand=${encodeURIComponent(state.brand)}`);
+      const ux = data.current_plan;
+      if (ux && ux.plan) state.planId = ux.plan.id;
+      const prog = (ux && ux.progress) || data.progress || {};
+      const postsLabel = data.posts_progress || prog.posts_label || `${prog.posts_done||0}/${prog.posts_target||0}` || "0/0";
+      const storiesLabel = data.stories_progress || prog.stories_label || `${prog.stories_done||0}/${prog.stories_target||0}` || "0/0";
+      const review = data.review_label || ((ux && ux.plan && (ux.plan.review_label || ux.plan.status_label)) || "");
+      if (!ux || !ux.plan) {
+        $("dashSub").textContent = `No plan yet for ${state.brand}.`;
+      } else {
+        const p = ux.plan;
+        $("dashSub").textContent = `${(p.brand_id || state.brand).toUpperCase()} · ${p.period_start || "?"} → ${p.period_end || "?"} · ${planStatusLabel26(review || p.review_label || p.status_label)}`;
+      }
+      $("dashStats").innerHTML = `
+        <div class="stat-card"><div class="label">Posts progress</div><div class="value">${esc(postsLabel)}</div><div class="hint">Complete / target</div></div>
+        <div class="stat-card"><div class="label">Stories progress</div><div class="value">${esc(storiesLabel)}</div><div class="hint">Complete / target</div></div>
+        <div class="stat-card"><div class="label">Plan status</div><div class="value" style="font-size:1.05rem">${esc(planStatusLabel26(review))}</div><div class="hint">${esc((ux && ux.plan && ux.plan.title) || "No plan")}</div></div>
+        <div class="stat-card"><div class="label">Library</div><div class="value">${esc(data.library_count || 0)}</div><div class="hint">Operational assets</div></div>`;
+      const cards = [...((ux && ux.posts) || []), ...((ux && ux.stories) || [])];
+      const attn = cards.filter((c) => ["NEEDS_FILMING","READY_FOR_REVIEW","IN_PRODUCTION","EDITING"].includes(c.status));
+      $("dashAttention").innerHTML = attn.length ? attn.slice(0,8).map((c) => `
+        <div class="item-card" data-id="${c.id}"><div class="num">${esc(c.label)}</div>
+        <div><div class="title">${esc(c.title)}</div></div>
+        <div class="right"><span class="badge s-${esc(c.status)}">${esc(c.status_label)}</span></div></div>`).join("") : `<div class="empty">Nothing urgent.</div>`;
+      $("dashAttention").querySelectorAll(".item-card").forEach((el) => el.addEventListener("click", () => openBrief(Number(el.dataset.id))));
+      const ups = data.recent_uploads || [];
+      $("dashUploads").innerHTML = ups.length ? ups.map((u) => `
+        <div class="upload-row"><div><strong>${esc(u.name)}</strong></div><span class="badge">${esc(u.status||"")}</span></div>`).join("") : `<div class="empty">No recent uploads.</div>`;
+    } catch (e) { toast(e.message || "Dashboard error"); }
+  };
+
+  function updateReviewButtons26(plan) {
+    const pending = (plan.review_state === "CHANGES_PENDING_REVIEW") || (plan.review_label === "CHANGES PENDING REVIEW");
+    const approved = (plan.review_label === "APPROVED") || (plan.status === "Human_Approved");
+    const vc = $("btnViewChanges"), ac = $("btnApproveChanges"), rr = $("btnRequestRevision"), ap = $("btnApprovePlan");
+    if (vc) vc.classList.toggle("hidden", !(state.canApprovePlan && (pending || approved)));
+    if (ac) ac.classList.toggle("hidden", !(state.canApprovePlan && pending));
+    if (rr) rr.classList.toggle("hidden", !(state.canApprovePlan && pending));
+    if (ap) ap.classList.toggle("hidden", !(state.canApprovePlan && !approved && !pending));
+  }
+
+  const _openPlanOrig = typeof openPlan === "function" ? openPlan : null;
+  openPlan = async function (id) {
+    state.planId = id;
+    try {
+      const data = await api(`/api/planner/plans/${id}?ux=1`);
+      const ux = data.ux; state.ux = ux; const p = ux.plan || {};
+      $("planEmpty").style.display = "none"; $("planBody").style.display = "block";
+      $("planTitle").textContent = p.title || "Content Plan";
+      $("planMeta").innerHTML = [
+        `<span class="badge s-${esc(String(p.review_state||"WORKING").replace(/ /g,"_"))}">${esc(planStatusLabel26(p.review_label||p.status_label))}</span>`,
+        `<span class="badge">Posts ${esc((ux.progress||{}).posts_label||"")}</span>`,
+        `<span class="badge">Stories ${esc((ux.progress||{}).stories_label||"")}</span>`,
+      ].join(" ");
+      renderCardList26("postsList", "postCount", ux.posts || [], (ux.progress||{}).posts_label);
+      renderCardList26("storiesList", "storyCount", ux.stories || [], (ux.progress||{}).stories_label);
+      updateReviewButtons26(p);
+    } catch (e) { toast(e.message || "Open plan failed"); }
+  };
+
+  // Phase 2.6: setView("plan") calls loadPlanView — route through openPlan (ux.counts removed)
+  loadPlanView = async function () {
+    $("mgmtPanel").classList.toggle("hidden", !state.canCreatePlan);
+    const ap = $("btnApprovePlan");
+    if (ap) ap.classList.toggle("hidden", !state.canApprovePlan);
+    try {
+      if (!state.planId) {
+        await loadPlanList();
+        if (state.plans.length) state.planId = state.plans[0].id;
+      }
+      if (!state.planId) {
+        $("planEmpty").style.display = "block";
+        $("planBody").style.display = "none";
+        $("planTitle").textContent = "Content Plan";
+        $("planMeta").innerHTML = "";
+        return;
+      }
+      await openPlan(state.planId);
+    } catch (e) {
+      toast(e.message || "Plan load failed");
+      $("planEmpty").style.display = "block";
+      $("planBody").style.display = "none";
+    }
+  };
+
+  function renderCardList26(listId, countId, items, progress) {
+    $(countId).textContent = progress ? `(${progress})` : `(${items.length})`;
+    $(listId).innerHTML = items.map((c) => `
+      <div class="item-card" data-id="${c.id}">
+        <div class="num">${esc(c.label)}</div>
+        <div><div class="title">${esc(c.title)}</div>
+          <div class="row2"><span>${esc(c.format||"")}</span><span>${c.evergreen?"Evergreen":esc(c.date||"Date TBD")}</span><span>${esc(c.assignee||"Unassigned")}</span></div>
+        </div>
+        <div class="right"><span class="badge s-${esc(c.status)}">${esc(c.status_label)}</span></div>
+      </div>`).join("") || `<div class="empty">None yet.</div>`;
+    $(listId).querySelectorAll(".item-card").forEach((el) => el.addEventListener("click", () => openBrief(Number(el.dataset.id))));
+  }
+
+  function parseBreakdown26(text) {
+    return String(text||"").split("\n").map((line,i) => {
+      const parts = line.split("|").map((s)=>s.trim());
+      if (!parts[0] && !parts[1]) return null;
+      return { n: i+1, text_overlay: parts[0]||"", visual: parts[1]||"", timing: parts[2]||"" };
+    }).filter(Boolean);
+  }
+
+  const _renderBriefView = typeof renderBriefView === "function" ? renderBriefView : null;
+  renderBriefView = function () {
+    const c = state.brief || state.briefCard || {};
+    const b = c.brief || {};
+    const field = (k,v) => {
+      const empty = v==null || v==="" || (Array.isArray(v)&&!v.length);
+      let body = "";
+      if (Array.isArray(v) && v.length && typeof v[0]==="object") {
+        body = v.map((r)=>`<div class="breakdown-row"><div>${esc(r.n||"")}</div><div>${esc(r.text_overlay||"")}</div><div>${esc(r.visual||"")}</div></div>`).join("");
+      } else if (Array.isArray(v)) body = `<ul>${v.map((x)=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+      else body = `<div class="v${empty?" empty-v":""}">${empty?"—":esc(v)}</div>`;
+      return `<div class="brief-field"><span class="k">${esc(k)}</span>${body}</div>`;
+    };
+    if ((c.kind||"") === "STORY") {
+      $("briefBody").innerHTML = [field("STORY TITLE", b.story_title||c.title), field("GOAL / PURPOSE", b.goal_purpose||b.goal),
+        field("STORY BREAKDOWN", b.story_breakdown||b.content_breakdown||[]), field("CTA", b.story_cta||b.cta||"NONE"),
+        field("EVERGREEN", b.evergreen?"Yes":"No"), field("STATUS", c.status_label), field("ASSIGNEE", b.assignee||c.assignee)].join("");
+    } else {
+      $("briefBody").innerHTML = [field("POST TITLE", b.post_title||c.title), field("POST TYPE", b.post_type||c.format),
+        field("PILLAR", b.pillar||c.theme), field("CONTENT BREAKDOWN", b.content_breakdown||[]),
+        field("CAPTION DIRECTION", b.caption_direction||b.caption), field("CTA", b.cta),
+        field("HASHTAGS", b.hashtags||[]), field("RECOMMENDED SHOT LIST", b.recommended_shot_list||b.shot_list||[]),
+        field("STATUS", c.status_label), field("ASSIGNEE", b.assignee||c.assignee),
+        field("INSPIRATION / EXAMPLES", b.inspiration_examples||b.inspiration)].join("");
+    }
+  };
+
+  // Patch openBrief + renderBrief — Phase 2.6 overrides named renderBriefView/Edit but board uses renderBrief
+  const _openBriefOrig = openBrief;
+  openBrief = async function (cardId) {
+    await _openBriefOrig(cardId);
+    state.brief = state.briefCard;
+  };
+  renderBrief = function () {
+    const c = state.briefCard || state.brief;
+    if (!c) return;
+    state.brief = c;
+    const b = c.brief || {};
+    $("briefKind").textContent = c.label || c.kind;
+    $("briefTitle").textContent = b.post_title || b.story_title || c.title || "Content brief";
+    $("briefSub").textContent = `${c.date || "Date TBD"} · ${c.format || ""} · ${c.status_label || ""}`;
+    const foot = $("briefFoot");
+    if (state.editing) {
+      renderBriefEdit();
+      foot.innerHTML = `
+        <button type="button" class="btn" id="briefCancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="briefSave">Save Changes</button>`;
+      $("briefCancel").onclick = () => { state.editing = false; renderBrief(); };
+      $("briefSave").onclick = () => saveBrief26();
+    } else {
+      renderBriefView();
+      foot.innerHTML = `
+        <button type="button" class="btn" id="briefWolf">Ask Wolf Intelligence</button>
+        <button type="button" class="btn btn-primary" id="briefEdit">Edit</button>`;
+      $("briefEdit").onclick = () => { state.editing = true; renderBrief(); };
+      $("briefWolf").onclick = () => {
+        state.wiPrefill = { brand: state.brand, plan_id: c.plan_id, card_id: c.id, label: c.label, title: c.title };
+        state.wiCardId = c.id;
+        $("briefBackdrop").classList.remove("open");
+        setView("wolf");
+      };
+    }
+  };
+
+  renderBriefEdit = function () {
+    const c = state.brief || state.briefCard || {};
+    const b = c.brief || {};
+    const statusOpts = STATUS_OPTS.map(([v,l]) => `<option value="${v}"${(b.status||c.status)===v?" selected":""}>${l}</option>`).join("");
+    if ((c.kind||"") === "STORY") {
+      const ctaOpts = STORY_CTAS_26.map((x)=>`<option value="${x}"${String(b.story_cta||"NONE").toUpperCase()===x?" selected":""}>${x}</option>`).join("");
+      const bd = (b.story_breakdown||b.content_breakdown||[]).map((r)=>`${r.text_overlay||""} | ${r.visual||""}`).join("\n");
+      $("briefBody").innerHTML = `
+        <div class="field"><label>Story title</label><input name="title" value="${esc(b.story_title||c.title||"")}"/></div>
+        <div class="field"><label>Goal / purpose</label><textarea name="goal_purpose">${esc(b.goal_purpose||b.goal||"")}</textarea></div>
+        <div class="field"><label>Story breakdown (overlay | visual)</label><textarea name="story_breakdown_text">${esc(bd)}</textarea></div>
+        <div class="field"><label>CTA</label><select name="story_cta">${ctaOpts}</select></div>
+        <div class="field"><label><input type="checkbox" name="evergreen" ${b.evergreen?"checked":""}/> Evergreen</label></div>
+        <div class="field"><label>Status</label><select name="workflow_status">${statusOpts}</select></div>
+        <div class="field"><label>Assignee</label><input name="assignee" value="${esc(b.assignee||c.assignee||"")}"/></div>`;
+    } else {
+      const ptOpts = POST_TYPES_26.map((x)=>`<option value="${x}"${(b.post_type||"")===x?" selected":""}>${x}</option>`).join("");
+      const bd = (b.content_breakdown||[]).map((r)=>`${r.text_overlay||""} | ${r.visual||""}`).join("\n");
+      $("briefBody").innerHTML = `
+        <div class="field"><label>Post title</label><input name="title" value="${esc(b.post_title||c.title||"")}"/></div>
+        <div class="field"><label>Post type</label><select name="post_type">${ptOpts}</select></div>
+        <div class="field"><label>Pillar</label><input name="pillar" value="${esc(b.pillar||"")}"/></div>
+        <div class="field"><label>Content breakdown (overlay | visual)</label><textarea name="content_breakdown_text">${esc(bd)}</textarea></div>
+        <div class="field"><label>Caption direction</label><textarea name="caption_direction">${esc(b.caption_direction||b.caption||"")}</textarea></div>
+        <div class="field"><label>CTA</label><input name="cta" value="${esc(b.cta||"")}"/></div>
+        <div class="field"><label>Hashtags</label><input name="hashtags" value="${esc((b.hashtags||[]).join(" "))}"/></div>
+        <div class="field"><label>Recommended shot list</label><textarea name="recommended_shot_list">${esc((b.recommended_shot_list||b.shot_list||[]).join("\n"))}</textarea></div>
+        <div class="field"><label>Status</label><select name="workflow_status">${statusOpts}</select></div>
+        <div class="field"><label>Assignee</label><input name="assignee" value="${esc(b.assignee||c.assignee||"")}"/></div>
+        <div class="field"><label>Inspiration / examples</label><textarea name="inspiration_examples">${esc(b.inspiration_examples||b.inspiration||"")}</textarea></div>`;
+    }
+  };
+
+  async function saveBrief26() {
+    const c = state.brief || state.briefCard; if (!c) return;
+    const root = $("briefBody");
+    const get = (n) => { const el = root.querySelector(`[name="${n}"]`); return el ? (el.type==="checkbox"?el.checked:el.value) : ""; };
+    const patch = { title: get("title"), workflow_status: get("workflow_status"), assignee: get("assignee") };
+    if (c.kind === "STORY") {
+      patch.goal = get("goal_purpose"); patch.goal_purpose = get("goal_purpose");
+      patch.story_cta = get("story_cta"); patch.cta = get("story_cta");
+      patch.evergreen = !!get("evergreen");
+      patch.story_breakdown = parseBreakdown26(get("story_breakdown_text"));
+      patch.content_breakdown = patch.story_breakdown;
+    } else {
+      patch.post_type = get("post_type"); patch.pillar = get("pillar");
+      patch.caption_direction = get("caption_direction"); patch.caption = get("caption_direction");
+      patch.cta = get("cta");
+      patch.hashtags = String(get("hashtags")||"").split(/[\s,]+/).filter(Boolean);
+      patch.recommended_shot_list = String(get("recommended_shot_list")||"").split("\n").map((s)=>s.trim()).filter(Boolean);
+      patch.shot_list = patch.recommended_shot_list;
+      patch.content_breakdown = parseBreakdown26(get("content_breakdown_text"));
+      patch.inspiration_examples = get("inspiration_examples");
+    }
+    try {
+      const res = await api(`/api/planner/cards/${c.id}/edit`, { method:"POST", json:{ patch } });
+      toast(res.message || "Saved");
+      closeBrief();
+      if (state.planId) await openPlan(state.planId);
+      if (state.view === "dashboard") loadDashboard();
+    } catch (e) { toast(e.message || "Save failed"); }
+  }
+
+  // Library override
+  loadLibrary = async function () {
+    try {
+      const q = new URLSearchParams();
+      const brandEl = $("libBrand");
+      q.set("brand", (brandEl && brandEl.value) || state.brand);
+      if ($("libSearch").value.trim()) q.set("q", $("libSearch").value.trim());
+      const mt = $("libType").value; if (mt) q.set("media_type", mt === "photo" ? "image" : mt);
+      const st = $("libStage"); if (st && st.value) q.set("stage", st.value);
+      if ($("libStatus").value) q.set("readiness", $("libStatus").value);
+      const sh = $("libShoot"); if (sh && sh.value) q.set("shoot_date", sh.value);
+      const sj = $("libSubject"); if (sj && sj.value.trim()) q.set("subject", sj.value.trim());
+      const loc = $("libLocation"); if (loc && loc.value.trim()) q.set("location", loc.value.trim());
+      const data = await api("/api/assets?" + q.toString());
+      const assets = data.assets || [];
+      const grid = $("libGrid");
+      if (!assets.length) { grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><strong>No assets</strong></div>`; return; }
+      grid.innerHTML = assets.map((a) => `
+        <div class="lib-card${state.libSelected.has(a.id)?" selected":""}" data-id="${a.id}">
+          <input class="sel" type="checkbox" ${state.libSelected.has(a.id)?"checked":""} data-sel="${a.id}" />
+          <div class="lib-thumb ${esc(a.thumb||"file")}" data-open="${a.id}">
+            <span class="brand-badge">${esc(a.brand_badge||a.brand||"")}</span>${esc(a.media_label||a.thumb||"")}
+          </div>
+          <div class="lib-body" data-open="${a.id}">
+            <div style="font-weight:600;font-size:0.82rem;word-break:break-word">${esc(a.canonical_name||a.name)}</div>
+            <div style="color:var(--muted);font-size:0.72rem">${esc(a.original_name||"")}</div>
+            <div class="meta" style="color:var(--muted);font-size:0.72rem;margin-top:6px">
+              ${esc(a.media_label)} · ${esc(a.stage)} · ${esc(a.shoot_date||"—")}<br/>
+              ${esc(a.subject||"")} · ${esc(a.detail||"")}<br/>
+              <span class="badge ready-${esc(a.readiness)}">${esc(a.readiness_label||a.readiness||"")}</span>
+            </div>
+          </div>
+        </div>`).join("");
+      grid.querySelectorAll("[data-open]").forEach((el) => el.addEventListener("click", (ev) => {
+        if (ev.target.classList.contains("sel")) return;
+        openPreview26(Number(el.getAttribute("data-open")), assets);
+      }));
+      grid.querySelectorAll("[data-sel]").forEach((el) => el.addEventListener("change", () => {
+        const id = Number(el.getAttribute("data-sel"));
+        if (el.checked) state.libSelected.add(id); else state.libSelected.delete(id);
+        const sc = $("libSelCount"); if (sc) sc.textContent = `${state.libSelected.size} selected`;
+        const dl = $("libDownloadSel"); if (dl) dl.disabled = state.libSelected.size === 0;
+      }));
+    } catch (e) { toast(e.message || "Library error"); }
+  };
+
+  async function openPreview26(id, assets) {
+    const a = (assets||[]).find((x)=>x.id===id) || {id};
+    $("prevTitle").textContent = a.canonical_name || a.name || `Asset ${id}`;
+    $("prevSub").textContent = `${a.original_name||""} · ${a.readiness_label||""}`;
+    $("prevMedia").innerHTML = `<div class="empty">Loading…</div>`;
+    $("prevNote").textContent = a.readiness_note || "";
+    $("prevBackdrop").classList.add("open");
+    $("prevDownload").onclick = () => window.open(`/api/assets/${id}/download?subject=${encodeURIComponent(state.subject)}`, "_blank");
+    try {
+      const res = await fetch(`/api/assets/${id}/preview?subject=${encodeURIComponent(state.subject)}`, { headers: { "X-Wolf-Subject": state.subject } });
+      if (!res.ok) {
+        let msg = "Preview not ready — no fake proxy.";
+        try { msg = (await res.json()).message || msg; } catch(_){}
+        $("prevMedia").innerHTML = `<div class="empty"><strong>Preview unavailable</strong>${esc(msg)}</div>`;
+        return;
+      }
+      const ct = res.headers.get("content-type")||"";
+      const blob = await res.blob(); const obj = URL.createObjectURL(blob);
+      if (ct.startsWith("video/")) $("prevMedia").innerHTML = `<video controls autoplay muted playsinline src="${obj}" style="width:100%;max-height:60vh"></video>`;
+      else if (ct.startsWith("image/")) $("prevMedia").innerHTML = `<img alt="" src="${obj}" style="width:100%;max-height:60vh;object-fit:contain" />`;
+      else $("prevMedia").innerHTML = `<div class="empty">Use Download for this type.</div>`;
+    } catch (e) { $("prevMedia").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  }
+
+  // WI
+  loadWolf = function () {
+    const planTitle = (state.ux && state.ux.plan && state.ux.plan.title) || (state.planId ? `Plan #${state.planId}` : "No plan");
+    $("wiContext").textContent = `Brand: ${state.brand} · Content: ${state.wiCardId ? "Item #"+state.wiCardId : planTitle}`;
+    $("wiHonest").textContent = "Live generation not connected. No fabricate. WI does not silently edit the plan.";
+    const qa = $("wiQuickActions");
+    if (qa) {
+      qa.innerHTML = WI_ACTIONS_26.map(([id,l]) => `<button type="button" class="btn" data-wa="${id}">${l}</button>`).join("");
+      qa.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => wiSend26(b.dataset.wa, "")));
+    }
+    renderWi26();
+  };
+  function renderWi26() {
+    const el = $("wiTranscript"); if (!el) return;
+    if (!state.wiTranscript.length) { el.innerHTML = `<div class="empty">Quick action or type a message.</div>`; return; }
+    el.innerHTML = state.wiTranscript.map((m)=>`<div class="wi-msg ${m.role}"><div class="bubble">${esc(m.text)}</div></div>`).join("");
+  }
+  async function wiSend26(action, message) {
+    if (!state.canUseWolfIntelligence) { toast("No WI permission"); return; }
+    const msg = message || (($("wiInput")&&$("wiInput").value.trim())||"");
+    try {
+      const data = await api("/api/wolf/chat", { method:"POST", json:{ action: action||"CHAT", message: msg, brand: state.brand, card_id: state.wiCardId, plan_id: state.planId }});
+      (data.transcript_append||[]).forEach((t)=>state.wiTranscript.push(t));
+      if ($("wiInput")) $("wiInput").value = "";
+      renderWi26();
+    } catch (e) { toast(e.message||"WI error"); }
+  }
+
+  async function viewChanges26() {
+    if (!state.planId) return;
+    try {
+      const data = await api(`/api/planner/plans/${state.planId}/changes`);
+      const edits = data.recent_edits || [];
+      $("chgBody").innerHTML = `<div class="brief-field"><span class="k">Status</span><div class="v">${esc(data.review_label||"")}</div></div>
+        <div class="brief-field"><span class="k">Recent edits</span>${edits.length?`<ul>${edits.map((e)=>`<li>${esc(e.kind)} ${esc(e.number)} — ${esc(e.title)} · ${esc(e.edited_by)}</li>`).join("")}</ul>`:`<div class="v empty-v">None listed</div>`}</div>
+        <p class="sub">Previous approved version is preserved.</p>`;
+      $("chgBackdrop").classList.add("open");
+    } catch (e) { toast(e.message||"Changes failed"); }
+  }
+  async function approveChanges26() {
+    if (!state.planId || !state.canApprovePlan) return;
+    if (!confirm("Approve these changes for the team?")) return;
+    try {
+      const data = await api(`/api/planner/plans/${state.planId}/approve-changes`, { method:"POST", json:{} });
+      toast(data.review_label || data.status_label || "APPROVED");
+      $("chgBackdrop").classList.remove("open");
+      await openPlan(state.planId); loadDashboard();
+    } catch (e) { toast(e.message||"Approve failed"); }
+  }
+  async function requestRevision26() {
+    if (!state.planId || !state.canApprovePlan) return;
+    const note = prompt("Revision note (optional):","") || "";
+    try {
+      await api(`/api/planner/plans/${state.planId}/request-revision`, { method:"POST", json:{ note } });
+      toast("Revision requested"); $("chgBackdrop").classList.remove("open"); await openPlan(state.planId);
+    } catch (e) { toast(e.message||"Request failed"); }
+  }
+
+  // Upload: require detail; clear wizard; no plan/card
+  const _wizNext1 = $("wizNext1");
+  if (_wizNext1) {
+    _wizNext1.replaceWith(_wizNext1.cloneNode(true));
+    $("wizNext1").addEventListener("click", () => {
+      if (!$("upBrand").value || !$("upSubject").value.trim() || !$("upDetailDefault").value.trim() || !$("upShootDate").value) {
+        toast("Brand, Subject, Detail*, Shoot date required"); return;
+      }
+      setWizardStep(2);
+    });
+  }
+
+  // Patch runSmartUpload to clear wizard + force dup + concurrency note — wrap after definition
+  const _runSmartUpload = runSmartUpload;
+  runSmartUpload = async function () {
+    await _runSmartUpload();
+    // Clear active wizard queue after terminal states (best-effort)
+    try {
+      uploadWizard.files = [];
+      uploadWizard.previews = [];
+      if ($("selectedFiles")) $("selectedFiles").textContent = "";
+      if ($("reviewBody")) $("reviewBody").innerHTML = "";
+      setWizardStep(1);
+    } catch (_) {}
+  };
+
+  // Wire new controls once DOM ready extras
+  function wire26() {
+    const be = $("briefEdit");
+    if (be) {
+      be.addEventListener("click", () => {
+        setTimeout(() => {
+          const sb = $("briefSave"); if (sb) { sb.classList.remove("hidden"); sb.onclick = saveBrief26; }
+          const bc = $("briefCancel"); if (bc) bc.onclick = () => { if (state.editMode) { cancelEdit(); const s=$("briefSave"); if(s)s.classList.add("hidden"); } else closeBrief(); };
+        }, 0);
+      });
+    }
+    const bs = $("briefSave"); if (bs) bs.addEventListener("click", saveBrief26);
+    const bc = $("briefCancel"); if (bc) bc.addEventListener("click", () => closeBrief());
+    [["btnViewChanges", viewChanges26],["btnApproveChanges", approveChanges26],["btnRequestRevision", requestRevision26],
+     ["chgApprove", approveChanges26],["chgRequest", requestRevision26],
+     ["chgClose", () => $("chgBackdrop").classList.remove("open")],
+     ["prevClose", () => $("prevBackdrop").classList.remove("open")],
+     ["prevClose2", () => $("prevBackdrop").classList.remove("open")]].forEach(([id, fn]) => {
+      const el = $(id); if (el) el.addEventListener("click", fn);
+    });
+    const dl = $("libDownloadSel");
+    if (dl) dl.addEventListener("click", async () => {
+      const ids = [...state.libSelected];
+      if (!ids.length) return;
+      try {
+        const res = await fetch("/api/assets/zip", { method:"POST", headers:{"Content-Type":"application/json","X-Wolf-Subject":state.subject}, body: JSON.stringify({subject:state.subject, ids}) });
+        if (!res.ok) { const j=await res.json().catch(()=>({})); throw new Error(j.message||j.error||"ZIP failed"); }
+        const blob = await res.blob(); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="library-selection.zip"; a.click();
+      } catch (e) { toast(e.message||"ZIP failed"); }
+    });
+    ["libStage","libShoot","libSubject","libLocation","libBrand"].forEach((id) => {
+      const el = $(id); if (el) el.addEventListener(id.includes("Subject")||id.includes("Location")?"input":"change", () => loadLibrary());
+    });
+    const wiSend = $("wiSend"); if (wiSend) wiSend.addEventListener("click", () => wiSend26("CHAT", $("wiInput").value.trim()));
+    const wiIn = $("wiInput"); if (wiIn) wiIn.addEventListener("keydown", (e)=>{ if(e.key==="Enter") wiSend26("CHAT", wiIn.value.trim()); });
+    const wiCl = $("wiClear"); if (wiCl) wiCl.addEventListener("click", () => { state.wiTranscript=[]; state.wiCardId=null; renderWi26(); loadWolf(); });
+    // brand theme on load
+    api("/api/brands").then((data) => {
+      (data.brands||[]).forEach((b) => { state.brandMeta[b.id]=b; });
+      applyBrandTheme26(state.brandMeta[state.brand]);
+      const lb = $("libBrand");
+      if (lb && lb.options.length <= 1) {
+        (data.brands||[]).forEach((b) => { const o=document.createElement("option"); o.value=b.id; o.textContent=b.display_name||b.id; lb.appendChild(o); });
+      }
+    }).catch(()=>{});
+  }
+  wire26();
+
+})();
+</script>
+</body>
+</html>
