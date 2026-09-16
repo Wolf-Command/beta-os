@@ -62,6 +62,9 @@ import skills as _skills
 import smart_upload as _smart_upload
 import phase26_team as _p26
 
+# Wolf Core Organisation Registry (read APIs)
+from core import organisation as _org
+
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
 CATALOG_DB = BETA_ROOT / "catalog" / "content_library.sqlite"
@@ -300,6 +303,21 @@ def ensure_schema() -> None:
             assert spec26 and spec26.loader
             spec26.loader.exec_module(mod26)
             mod26.main()
+        except Exception:
+            pass
+    # 005 Organisation Registry (idempotent)
+    try:
+        from migrations.migrate_org_registry import main as _mig_org
+        _mig_org()
+    except Exception:
+        try:
+            import importlib.util
+            mig_org = Path(__file__).resolve().parent / "migrations" / "migrate_org_registry.py"
+            spec_org = importlib.util.spec_from_file_location("migrate_org_registry", mig_org)
+            mod_org = importlib.util.module_from_spec(spec_org)
+            assert spec_org and spec_org.loader
+            spec_org.loader.exec_module(mod_org)
+            mod_org.main()
         except Exception:
             pass
     for _stage in ("RAW", "EDIT", "FINAL"):
@@ -1367,6 +1385,31 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._publish_gate(qs)
             return
 
+        # Wolf Core Organisation Registry (read-only)
+        if path == "/api/core/entities":
+            self._get_core_entities()
+            return
+        m_ent = re.match(r"^/api/core/entities/([^/]+)$", path)
+        if m_ent:
+            self._get_core_entity(m_ent.group(1))
+            return
+        m_ent_brands = re.match(r"^/api/core/entities/([^/]+)/brands$", path)
+        if m_ent_brands:
+            self._get_core_entity_brands(m_ent_brands.group(1))
+            return
+        m_ent_locs = re.match(r"^/api/core/entities/([^/]+)/locations$", path)
+        if m_ent_locs:
+            self._get_core_entity_locations(m_ent_locs.group(1))
+            return
+        m_ent_deps = re.match(r"^/api/core/entities/([^/]+)/departments$", path)
+        if m_ent_deps:
+            self._get_core_entity_departments(m_ent_deps.group(1))
+            return
+        m_brand = re.match(r"^/api/core/brands/([^/]+)$", path)
+        if m_brand:
+            self._get_core_brand(m_brand.group(1))
+            return
+
         if path == "/api/brands":
             self._get_brands()
             return
@@ -2309,6 +2352,54 @@ class BetaHandler(SimpleHTTPRequestHandler):
     def _require_can_create_plan(self, body: dict | None = None) -> str | None:
         """Compatibility wrapper — build-next / admin sync still use can_create_plan."""
         return self._require_permission("can_create_plan", body)
+
+
+    def _get_core_entities(self) -> None:
+        self._send_json({"ok": True, "entities": _org.list_entities()})
+
+    def _get_core_entity(self, entity_id: str) -> None:
+        ent = _org.get_entity(entity_id)
+        if not ent:
+            self._send_json({"ok": False, "error": "not_found", "entity_id": entity_id}, status=404)
+            return
+        self._send_json({"ok": True, "entity": ent})
+
+    def _get_core_entity_brands(self, entity_id: str) -> None:
+        if not _org.get_entity(entity_id):
+            self._send_json({"ok": False, "error": "not_found", "entity_id": entity_id}, status=404)
+            return
+        self._send_json({
+            "ok": True,
+            "entity_id": entity_id,
+            "brands": _org.list_brands_by_entity(entity_id),
+        })
+
+    def _get_core_entity_locations(self, entity_id: str) -> None:
+        if not _org.get_entity(entity_id):
+            self._send_json({"ok": False, "error": "not_found", "entity_id": entity_id}, status=404)
+            return
+        self._send_json({
+            "ok": True,
+            "entity_id": entity_id,
+            "locations": _org.list_locations_by_entity(entity_id),
+        })
+
+    def _get_core_entity_departments(self, entity_id: str) -> None:
+        if not _org.get_entity(entity_id):
+            self._send_json({"ok": False, "error": "not_found", "entity_id": entity_id}, status=404)
+            return
+        self._send_json({
+            "ok": True,
+            "entity_id": entity_id,
+            "departments": _org.list_departments_by_entity(entity_id),
+        })
+
+    def _get_core_brand(self, brand_id: str) -> None:
+        brand = _org.get_brand(brand_id)
+        if not brand:
+            self._send_json({"ok": False, "error": "not_found", "brand_id": brand_id}, status=404)
+            return
+        self._send_json({"ok": True, "brand": brand})
 
     def _get_brands(self) -> None:
         try:
