@@ -69,6 +69,15 @@ METADATA_ALLOWLIST = frozenset(
         "governing_policy_id",
         "governing_policy_version",
         "bind_policy",
+        "evidence_type",
+        "governed_object_type",
+        "governed_object_id",
+        "verification_status",
+        "missing",
+        "enforce_evidence",
+        "evidence_result",
+        "requirement_id",
+        "requirement_version",
     }
 )
 METADATA_MAX_BYTES = 4096

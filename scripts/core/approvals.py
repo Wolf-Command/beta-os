@@ -5,6 +5,7 @@ REQUESTED ≠ APPROVAL 1 ≠ APPROVAL N ≠ APPROVED ≠ EXECUTED ≠ OUTCOME.
 Authority = capacity; Approval = specific decision evidence.
 Approval never creates Authority. Completing a linked Work Item ≠ approving.
 Dual approval = BUILT (required_decision_count). SoD = BUILT (Person independence).
+Evidence requirements = BUILT (CLAIMED ≠ EVIDENCED ≠ VERIFIED).
 UI / LLM = NOT BUILT. Delegation evaluator = BUILT (identity never delegates).
 """
 from __future__ import annotations
@@ -25,6 +26,7 @@ from core import work_items as _work_items
 from core import delegation as _delegation
 from core import governance_policy as _gov
 from core import sod as _sod
+from core import evidence as _evidence
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 CATALOG_DB = BETA_ROOT / "catalog" / "content_library.sqlite"
@@ -65,11 +67,13 @@ HONESTY = {
     "segregation_of_duties": "BUILT",
     "delegation": "BUILT",
     "policy_binding": "BUILT",
+    "evidence_requirements": "BUILT",
     "approval_ui": "NOT_BUILT",
     "ai_approver": False,
     "requested_is_not_approved": True,
     "approved_is_not_executed": True,
     "partial_approve_is_not_approved": True,
+    "claimed_is_not_evidenced": True,
 }
 
 PERS_MATT = "PERS-MATT"
@@ -137,6 +141,73 @@ def mint_request_id() -> str:
 
 def mint_decision_id() -> str:
     return f"APD-{uuid.uuid4()}"
+
+
+def _enforce_evidence_gate(
+    *,
+    entity_id: str,
+    action_type: str,
+    request_type: str | None,
+    scope_id: str | None,
+    governed_object_type: str | None,
+    governed_object_id: str | None,
+    verified_person_id: str,
+    identity: dict[str, Any] | None,
+    enforce_evidence: bool,
+    policy_evidence_required: bool,
+    conn: sqlite3.Connection,
+) -> dict[str, Any] | None:
+    """Evaluate evidence requirements when gated; raise ApprovalError on deny.
+
+    Default unbound (enforce_evidence=False, no policy flag): still evaluates;
+    zero ACTIVE requirements → pass (legacy tests green).
+    Client evidence_present / evidence_required flags are never consulted.
+    """
+    # Always evaluate so ACTIVE fixtures fail closed; zero → no_evidence_requirements.
+    ev = _evidence.evaluate_evidence_requirements(
+        entity_id,
+        action_type,
+        scope_id=scope_id,
+        request_type=request_type,
+        governed_object_type=governed_object_type,
+        governed_object_id=governed_object_id,
+        verified_person_id=verified_person_id,
+        identity=identity,
+        audit=True,
+        conn=conn,
+        # Client override claims ignored even if somehow passed
+        evidence_present=None,
+        evidence_required=None,
+    )
+    has_reqs = bool(ev.get("requirements") or ev.get("candidates"))
+    must = enforce_evidence or policy_evidence_required or has_reqs
+
+    if policy_evidence_required and ev.get("reason_code") == "no_evidence_requirements":
+        raise ApprovalError(
+            "governance policy requires evidence but no ACTIVE evidence requirements configured",
+            code="evidence_requirements_unconfigured",
+            http_status=403,
+        )
+
+    if not must:
+        return ev
+
+    if not ev.get("satisfied"):
+        reason = ev.get("reason_code") or "missing_required_evidence"
+        raise ApprovalError(
+            f"evidence requirements not satisfied: {reason}",
+            code=reason
+            if reason
+            in (
+                "missing_required_evidence",
+                "requirement_conflict",
+                "missing_governed_object",
+                "evidence_requirements_unconfigured",
+            )
+            else "missing_required_evidence",
+            http_status=403,
+        )
+    return ev
 
 
 def _row(r: sqlite3.Row | None) -> dict[str, Any] | None:
@@ -513,9 +584,14 @@ def create_approval_request(
     review_owner_person_id: str | None = None,
     required_decision_count: int | None = None,
     bind_policy: bool = False,
+    enforce_evidence: bool = False,
     scope_id: str | None = None,
-    # Client-supplied actor fields ignored (spoof refused)
+    governed_object_type: str | None = None,
+    governed_object_id: str | None = None,
+    # Client-supplied actor / evidence flags ignored (spoof refused)
     requested_by_person_id: str | None = None,
+    evidence_present: Any = None,
+    evidence_required: Any = None,
     identity: dict[str, Any] | None = None,
     conn: sqlite3.Connection | None = None,
     commit: bool = True,
@@ -525,8 +601,13 @@ def create_approval_request(
     bind_policy=False (default): existing unbound path — dual/approval regressions stay green.
     bind_policy=True: fail-closed evaluate_governance_policy; server sets
     required_decision_count + governing_policy_* from matched policy.
+    enforce_evidence=False (default): evaluate only when ACTIVE requirements / policy flag.
+    Client evidence_present / evidence_required are IGNORED.
     Production material path will set bind_policy=True later — this slice builds machinery.
     """
+    # Explicitly ignore client evidence override claims
+    _ = evidence_present, evidence_required
+
     verified = (verified_person_id or "").strip()
     if not verified:
         raise ApprovalError("verified_person_id required", code="missing_verified_person")
@@ -658,10 +739,62 @@ def create_approval_request(
                     code="policy_permission_mismatch",
                     http_status=400,
                 )
+            policy_evidence_required = bool(int(ev.get("evidence_required") or 0))
         else:
             rdc = _coerce_required_decision_count(
                 required_decision_count if required_decision_count is not None else 1
             )
+            policy_evidence_required = False
+
+        # Evidence gate: enforce_evidence OR (bind_policy + policy.evidence_required)
+        # OR any ACTIVE matching requirements. Client flags ignored.
+        gov_type = (governed_object_type or "").strip() or (st if st else None)
+        gov_id = (governed_object_id or "").strip() or (
+            (source_id or "").strip() or None
+        )
+        evidence_action = (
+            _gov.action_type_for_request_type(rt) if bind_policy else "approval.request"
+        )
+        try:
+            _enforce_evidence_gate(
+                entity_id=eid,
+                action_type=evidence_action,
+                request_type=rt,
+                scope_id=(scope_id or "").strip() or None,
+                governed_object_type=gov_type,
+                governed_object_id=gov_id,
+                verified_person_id=verified,
+                identity=identity,
+                enforce_evidence=bool(enforce_evidence),
+                policy_evidence_required=policy_evidence_required,
+                conn=c,
+            )
+        except ApprovalError as e:
+            _audit_approval(
+                action="approval.request_denied",
+                result="DENIED",
+                request={
+                    "approval_request_id": None,
+                    "owning_entity_id": eid,
+                    "correlation_id": (identity or {}).get("correlation_id"),
+                    "brand_id": (brand_id or "").strip() or None,
+                    "location_id": (location_id or "").strip() or None,
+                    "department_id": (department_id or "").strip() or None,
+                },
+                verified_person_id=verified,
+                identity=identity,
+                reason_code=e.code,
+                metadata={
+                    "request_type": rt,
+                    "enforce_evidence": bool(enforce_evidence),
+                    "bind_policy": bool(bind_policy),
+                    "reason": e.code,
+                },
+                conn=c,
+            )
+            if commit:
+                c.commit()
+            raise
 
         perm = _rbac.get_permission_by_code(code, conn=c)
         if not perm:
@@ -872,6 +1005,9 @@ def _decide(
     reason: str | None = None,
     decided_by_assignment_id: str | None = None,
     decided_by_person_id: str | None = None,
+    enforce_evidence: bool = False,
+    governed_object_type: str | None = None,
+    governed_object_id: str | None = None,
     identity: dict[str, Any] | None = None,
     conn: sqlite3.Connection | None = None,
     commit: bool = True,
@@ -879,6 +1015,8 @@ def _decide(
     """Approve or reject. Dual: N independent APPROVED before status APPROVED.
 
     REJECTED is immediate. Does not execute source. Does not complete Work Items.
+    Evidence gate on APPROVED when enforce_evidence, governing policy.evidence_required,
+    or ACTIVE requirements match approval.decide.
     """
     verified = (verified_person_id or "").strip()
     if not verified:
@@ -1326,6 +1464,60 @@ def _decide(
                     http_status=403,
                 )
 
+            # Evidence requirements on APPROVED path (CLAIMED ≠ EVIDENCED ≠ VERIFIED)
+            policy_evidence_required = False
+            if req.get("governing_policy_id") and req.get("governing_policy_version") is not None:
+                pol = _gov.get_governance_policy(
+                    req["governing_policy_id"],
+                    int(req["governing_policy_version"]),
+                    conn=c,
+                )
+                if pol:
+                    policy_evidence_required = bool(int(pol.get("evidence_required") or 0))
+            gov_type = (
+                (governed_object_type or "").strip()
+                or (req.get("source_type") or "").strip()
+                or "approval_request"
+            )
+            gov_id = (
+                (governed_object_id or "").strip()
+                or (req.get("source_id") or "").strip()
+                or req["approval_request_id"]
+            )
+            try:
+                _enforce_evidence_gate(
+                    entity_id=req["owning_entity_id"],
+                    action_type="approval.decide",
+                    request_type=req.get("request_type"),
+                    scope_id=None,
+                    governed_object_type=gov_type,
+                    governed_object_id=gov_id,
+                    verified_person_id=verified,
+                    identity=identity,
+                    enforce_evidence=bool(enforce_evidence),
+                    policy_evidence_required=policy_evidence_required,
+                    conn=c,
+                )
+            except ApprovalError as e:
+                _audit_approval(
+                    action="approval.decide_attempt",
+                    result="DENIED",
+                    request=req,
+                    verified_person_id=verified,
+                    identity=identity,
+                    reason_code=e.code,
+                    metadata={
+                        "decision": dec,
+                        "enforce_evidence": bool(enforce_evidence),
+                        "evidence_result": e.code,
+                        "reason": e.code,
+                    },
+                    conn=c,
+                )
+                if commit:
+                    c.commit()
+                raise
+
         # Re-check PENDING under write (another decider may have flipped status)
         fresh = get_approval_request(req["approval_request_id"], conn=c, expire=False)
         if not fresh or fresh["status"] != "PENDING":
@@ -1541,6 +1733,9 @@ def approve_request(
     reason: str | None = None,
     decided_by_assignment_id: str | None = None,
     decided_by_person_id: str | None = None,
+    enforce_evidence: bool = False,
+    governed_object_type: str | None = None,
+    governed_object_id: str | None = None,
     identity: dict[str, Any] | None = None,
     conn: sqlite3.Connection | None = None,
     commit: bool = True,
@@ -1552,6 +1747,9 @@ def approve_request(
         reason=reason,
         decided_by_assignment_id=decided_by_assignment_id,
         decided_by_person_id=decided_by_person_id,
+        enforce_evidence=enforce_evidence,
+        governed_object_type=governed_object_type,
+        governed_object_id=governed_object_id,
         identity=identity,
         conn=conn,
         commit=commit,

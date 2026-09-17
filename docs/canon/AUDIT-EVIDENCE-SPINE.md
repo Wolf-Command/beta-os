@@ -2,7 +2,7 @@
 
 **Canon status:** transitional (Beta OS / `build/wolf-command-rebuild` only)  
 **Sibling style:** match Real Auth transitional honesty docs  
-**Updated:** 2026-09-17 WITA (Cursor implementation landed; tests green on Mac Beta)
+**Updated:** 2026-09-17 WITA (Evidence Requirement Enforcement extension landed; spine unchanged)
 
 > CLAIMED ≠ VERIFIED for production. This slice is Beta `:8788` only. No hash-chain / court-grade immutability.
 
@@ -26,6 +26,7 @@
 | Integration: one Content Machine mutation | BUILT+TESTED | `POST /api/planner/save` after commit → `source=content_planner` |
 | Automated tests `scripts/tests/test_core_audit.py` | BUILT+TESTED | 40/40 pass (2026-09-17) |
 | Event bus / Decision Ledger / SIEM / AI scoring | NOT BUILT | Explicit non-goals |
+| Canonical evidence objects + requirement enforcement | BUILT+TESTED | Extension slice `018_evidence_requirements` + `scripts/core/evidence.py` — see `docs/canon/EVIDENCE-REQUIREMENTS.md`. Does **not** replace this append-only spine. Live requirements = 0. Crypto immutability still NOT BUILT. |
 | Production / `:8787` / wolf-system | NOT BUILT | Forbidden this lane |
 
 ## Honesty rules

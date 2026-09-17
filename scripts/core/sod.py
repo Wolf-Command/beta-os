@@ -507,6 +507,31 @@ def resolve_prior_participants(
                 persons.append(p)
         return persons, None
 
+    # EVIDENCE family: derive submitter from canonical evidence record
+    if fam == "EVIDENCE" and action == "evidence.submit":
+        tabs_ev = {
+            r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }
+        if "core_evidence_records" not in tabs_ev:
+            return None, "sod_evidence_unavailable"
+        row = conn.execute(
+            """
+            SELECT submitted_by_person_id, entity_id, status
+            FROM core_evidence_records
+            WHERE evidence_id=?
+            """,
+            (sid,),
+        ).fetchone()
+        if not row:
+            return None, "sod_evidence_unavailable"
+        if (row["entity_id"] or "").strip() != eid:
+            return None, "sod_evidence_unavailable"
+        submitter = (row["submitted_by_person_id"] or "").strip()
+        if not submitter:
+            return None, "sod_evidence_unavailable"
+        persons.append(submitter)
+        return persons, None
+
     # Generic / fixture ledger (SYSTEM|TEST rows written by trusted path only)
     tabs = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
     if "core_sod_participation" not in tabs:
