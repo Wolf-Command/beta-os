@@ -62,6 +62,13 @@ METADATA_ALLOWLIST = frozenset(
         "valid_approve_count",
         "approvals_remaining",
         "terminal",
+        "action_type",
+        "policy_id",
+        "policy_version",
+        "approvals_required",
+        "governing_policy_id",
+        "governing_policy_version",
+        "bind_policy",
     }
 )
 METADATA_MAX_BYTES = 4096

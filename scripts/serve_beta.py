@@ -3281,7 +3281,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if identity is None:
             return
         try:
-            rdc_raw = body.get("required_decision_count", 1)
+            rdc_raw = body.get("required_decision_count", None)
             item = _approvals.create_approval_request(
                 title=body.get("title") or "",
                 description=body.get("description"),
@@ -3301,7 +3301,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 requested_by_assignment_id=body.get("requested_by_assignment_id"),
                 link_work_item=bool(body.get("link_work_item")),
                 review_owner_person_id=body.get("review_owner_person_id"),
-                required_decision_count=rdc_raw if rdc_raw is not None else 1,
+                required_decision_count=rdc_raw,
+                bind_policy=bool(body.get("bind_policy")),
+                scope_id=body.get("scope_id"),
                 # Ignore client spoof of requester
                 requested_by_person_id=None,
                 verified_person_id=identity["person_id"],

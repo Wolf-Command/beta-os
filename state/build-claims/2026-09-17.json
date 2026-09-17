@@ -98,6 +98,20 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_dual_approval.py >/tmp/dual-approval-test.out 2>&1; tail -1 /tmp/dual-approval-test.out",
       "expect": "pass=84 fail=0",
       "by": "cursor-local"
+    },
+    {
+      "id": "approval-policy-binding-016",
+      "claim": "core_governance_policies + governing_policy_* on requests; live policies=0; manage grants=0; auth=0",
+      "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); cols={r[1] for r in c.execute('PRAGMA table_info(core_approval_requests)')}; print(int('governing_policy_id' in cols and 'governing_policy_version' in cols), c.execute('select count(*) from core_governance_policies').fetchone()[0], c.execute('select count(*) from org_authority_limits').fetchone()[0], c.execute(\\\"select count(*) from org_role_permissions where permission_id='PERM-GOV-POLICY-MANAGE'\\\").fetchone()[0], c.execute('select count(*) from core_audit_events').fetchone()[0])\"",
+      "expect": "1 0 0 0 47",
+      "by": "cursor-local"
+    },
+    {
+      "id": "approval-policy-binding-tests",
+      "claim": "test_approval_policy_binding.py passes; APR/DLG/Dual regressions green; temp-DB only",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_approval_policy_binding.py >/tmp/apb-test.out 2>&1; tail -1 /tmp/apb-test.out",
+      "expect": "pass=65 fail=0",
+      "by": "cursor-local"
     }
   ]
 }

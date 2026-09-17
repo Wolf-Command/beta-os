@@ -23,6 +23,7 @@ from core import organisation as _org
 from core import rbac as _rbac
 from core import work_items as _work_items
 from core import delegation as _delegation
+from core import governance_policy as _gov
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 CATALOG_DB = BETA_ROOT / "catalog" / "content_library.sqlite"
@@ -53,6 +54,8 @@ IMMUTABLE_FIELDS = frozenset(
         "source_id",
         "request_type",
         "required_decision_count",
+        "governing_policy_id",
+        "governing_policy_version",
     }
 )
 
@@ -60,6 +63,7 @@ HONESTY = {
     "dual_approval": "BUILT",
     "segregation_of_duties": "NOT_BUILT",
     "delegation": "BUILT",
+    "policy_binding": "BUILT",
     "approval_ui": "NOT_BUILT",
     "ai_approver": False,
     "requested_is_not_approved": True,
@@ -167,6 +171,8 @@ def compute_snapshot_hash(
     source_id: str | None,
     request_type: str = "GENERAL",
     required_decision_count: int = 1,
+    governing_policy_id: str | None = None,
+    governing_policy_version: int | None = None,
 ) -> str:
     parts = [
         owning_entity_id or "",
@@ -181,6 +187,8 @@ def compute_snapshot_hash(
         source_id or "",
         (request_type or "").upper(),
         str(int(required_decision_count)),
+        governing_policy_id or "",
+        "" if governing_policy_version is None else str(int(governing_policy_version)),
     ]
     return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()
 
@@ -502,14 +510,22 @@ def create_approval_request(
     prior_request_id: str | None = None,
     link_work_item: bool = False,
     review_owner_person_id: str | None = None,
-    required_decision_count: int = 1,
+    required_decision_count: int | None = None,
+    bind_policy: bool = False,
+    scope_id: str | None = None,
     # Client-supplied actor fields ignored (spoof refused)
     requested_by_person_id: str | None = None,
     identity: dict[str, Any] | None = None,
     conn: sqlite3.Connection | None = None,
     commit: bool = True,
 ) -> dict[str, Any]:
-    """Create PENDING approval request. Identity from verified_person_id only."""
+    """Create PENDING approval request. Identity from verified_person_id only.
+
+    bind_policy=False (default): existing unbound path — dual/approval regressions stay green.
+    bind_policy=True: fail-closed evaluate_governance_policy; server sets
+    required_decision_count + governing_policy_* from matched policy.
+    Production material path will set bind_policy=True later — this slice builds machinery.
+    """
     verified = (verified_person_id or "").strip()
     if not verified:
         raise ApprovalError("verified_person_id required", code="missing_verified_person")
@@ -537,7 +553,6 @@ def create_approval_request(
         raise ApprovalError(
             "required_permission_code required", code="missing_permission_code"
         )
-    rdc = _coerce_required_decision_count(required_decision_count)
 
     amt = (str(material_amount).strip() if material_amount is not None else None) or None
     cur = (currency or "").strip().upper() or None
@@ -572,6 +587,79 @@ def create_approval_request(
                 f"entity out of scope: {eid}",
                 code="entity_out_of_scope",
                 http_status=403,
+            )
+
+        governing_policy_id: str | None = None
+        governing_policy_version: int | None = None
+        if bind_policy:
+            action = _gov.action_type_for_request_type(rt)
+            ev = _gov.evaluate_governance_policy(
+                eid,
+                action,
+                scope_id=(scope_id or "").strip() or None,
+                request_type=rt,
+                amount=amt,
+                currency=cur,
+                verified_person_id=verified,
+                identity=identity,
+                audit=True,
+                conn=c,
+            )
+            reason = ev.get("reason_code") or "no_matching_policy"
+            result = ev.get("result")
+            if result == "PROHIBITED" or reason == "action_prohibited":
+                raise ApprovalError(
+                    "action prohibited by governance policy",
+                    code="action_prohibited",
+                    http_status=403,
+                )
+            if result == "CONFLICT" or reason == "policy_conflict":
+                raise ApprovalError(
+                    "conflicting governance policies",
+                    code="policy_conflict",
+                    http_status=409,
+                )
+            if result == "MISSING_AMOUNT" or reason == "missing_amount":
+                raise ApprovalError(
+                    "amount required for amount-governed policy",
+                    code="missing_amount",
+                    http_status=400,
+                )
+            if result != "REQUIREMENTS":
+                raise ApprovalError(
+                    "no matching governance policy",
+                    code="no_matching_policy",
+                    http_status=403,
+                )
+            policy_rdc = int(ev.get("approvals_required") or 0)
+            if policy_rdc < 1:
+                raise ApprovalError(
+                    "matched policy requires no approval seats; refuse create",
+                    code="policy_approvals_not_required",
+                    http_status=400,
+                )
+            if required_decision_count is not None:
+                client_rdc = _coerce_required_decision_count(required_decision_count)
+                if client_rdc < policy_rdc:
+                    raise ApprovalError(
+                        "client required_decision_count below governing policy; override refused",
+                        code="policy_count_override_refused",
+                        http_status=400,
+                    )
+            rdc = policy_rdc
+            governing_policy_id = ev.get("matched_policy_id")
+            governing_policy_version = int(ev.get("matched_policy_version") or 0)
+            # Optional: policy may name a required permission code — refuse mismatch
+            pol_perm = (ev.get("permission_required") or "").strip() or None
+            if pol_perm and pol_perm != code:
+                raise ApprovalError(
+                    f"required_permission_code must match policy ({pol_perm})",
+                    code="policy_permission_mismatch",
+                    http_status=400,
+                )
+        else:
+            rdc = _coerce_required_decision_count(
+                required_decision_count if required_decision_count is not None else 1
             )
 
         perm = _rbac.get_permission_by_code(code, conn=c)
@@ -641,6 +729,8 @@ def create_approval_request(
             source_id=(source_id or "").strip() or None,
             request_type=rt,
             required_decision_count=rdc,
+            governing_policy_id=governing_policy_id,
+            governing_policy_version=governing_policy_version,
         )
 
         c.execute(
@@ -653,7 +743,8 @@ def create_approval_request(
               material_amount, currency, source_type, source_id,
               evidence_reference, status, requested_at, decided_at, expires_at,
               created_at, updated_at, correlation_id, linked_work_item_id,
-              prior_request_id, snapshot_hash, required_decision_count
+              prior_request_id, snapshot_hash, required_decision_count,
+              governing_policy_id, governing_policy_version
             ) VALUES (
               ?, ?, ?, ?,
               ?, ?, ?, ?,
@@ -662,7 +753,8 @@ def create_approval_request(
               ?, ?, ?, ?,
               ?, 'PENDING', ?, NULL, ?,
               ?, ?, ?, NULL,
-              ?, ?, ?
+              ?, ?, ?,
+              ?, ?
             )
             """,
             (
@@ -691,6 +783,8 @@ def create_approval_request(
                 prior,
                 snap,
                 rdc,
+                governing_policy_id,
+                governing_policy_version,
             ),
         )
 
@@ -735,6 +829,9 @@ def create_approval_request(
                 "required_permission": code,
                 "linked_work_item_id": linked_wi,
                 "required_decision_count": rdc,
+                "governing_policy_id": governing_policy_id,
+                "governing_policy_version": governing_policy_version,
+                "bind_policy": bool(bind_policy),
             },
             conn=c,
         )
