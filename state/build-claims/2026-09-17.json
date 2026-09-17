@@ -77,6 +77,13 @@
       "check": "sqlite3 catalog/content_library.sqlite \"SELECT COUNT(*) FROM org_authority_limits; SELECT COUNT(*) FROM core_delegations;\" && test -f scripts/core/delegation.py && python3 scripts/tests/test_delegation.py",
       "expect": "0\n0 and test pass=N fail=0",
       "by": "cursor-local-agent"
+    },
+    {
+      "id": "dlg-rt-001",
+      "claim": "Material APPROVE denies missing amount on native+delegation; amount_ctx always has amount key; live auth/dlg=0",
+      "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); print(c.execute('select count(*) from org_authority_limits').fetchone()[0], c.execute('select count(*) from core_delegations').fetchone()[0], c.execute('select count(*) from core_audit_events').fetchone()[0])\" && python3 /Users/wolfterminal/beta-os/scripts/tests/test_delegation.py >/tmp/dlg-rt-001.out 2>&1; tail -1 /tmp/dlg-rt-001.out",
+      "expect": "0 0 47 and pass=56 fail=0",
+      "by": "cursor-local"
     }
   ]
 }

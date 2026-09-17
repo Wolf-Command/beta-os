@@ -708,6 +708,50 @@ def main() -> int:
             denied21 = e.code == "self_approval_denied"
         check("21 delegation does not bypass self-approval", denied21)
 
+    # DLG-RT-001: forged PENDING SPEND with NULL amount + valid delegation → APPROVE denied
+    c = sqlite3.connect(str(tmp_db))
+    forge_id = "APR-DLG-FORGE-NULL-AMT"
+    forge_ts = "2026-09-17T02:00:00Z"
+    c.execute(
+        """
+        INSERT INTO core_approval_requests (
+          approval_request_id, request_type, title, description,
+          owning_entity_id, brand_id, location_id, department_id,
+          requested_by_person_id, requested_by_assignment_id,
+          required_permission_code, required_permission_id,
+          material_amount, currency, source_type, source_id,
+          evidence_reference, status, requested_at, decided_at, expires_at,
+          created_at, updated_at, correlation_id, linked_work_item_id,
+          prior_request_id, snapshot_hash
+        ) VALUES (
+          ?, 'SPEND', 'forged null amount via dlg', NULL,
+          'ENT-GGV', NULL, NULL, 'DEPT-GGV-CONTENT',
+          'PERS-AMANDA', 'ASG-AMANDA-CM-1',
+          ?, ?,
+          NULL, NULL, 'HUMAN', NULL,
+          NULL, 'PENDING', ?, NULL, NULL,
+          ?, ?, 'CORR-DLG-FORGE-NULL', NULL,
+          NULL, 'dlg-forge-null-amt'
+        )
+        """,
+        (forge_id, CODE_SPEND, PERM_SPEND, forge_ts, forge_ts, forge_ts),
+    )
+    c.commit()
+    c.close()
+    null_amt_denied = False
+    null_amt_code = None
+    try:
+        apr.approve_request(forge_id, verified_person_id="PERS-HAIKAL", reason="should deny")
+    except apr.ApprovalError as e:
+        null_amt_code = e.code
+        null_amt_denied = e.code == "missing_amount"
+    forged_row = apr.get_approval_request(forge_id)
+    check(
+        "DLG-RT-001 forge NULL-amount SPEND via delegation → missing_amount; stays PENDING",
+        null_amt_denied and forged_row and forged_row["status"] == "PENDING",
+        f"code={null_amt_code} status={forged_row.get('status') if forged_row else None}",
+    )
+
     # 22 audit provenance
     created_ev = audit.list_events(action="delegation.created", source="delegation", limit=20)
     used_ev = audit.list_events(action="delegation.used", source="delegation", limit=20)

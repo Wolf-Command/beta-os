@@ -438,15 +438,18 @@ def main() -> int:
     c.commit()
     c.close()
     null_amt_denied = False
+    null_amt_code = None
     try:
         apr.approve_request(forge_id, verified_person_id="PERS-MATT", reason="should deny")
     except apr.ApprovalError as e:
-        null_amt_denied = e.code == "authority_denied"
+        null_amt_code = e.code
+        # DLG-RT-001 / APR-RT-001: fail-closed missing_amount before authority (native + dlg)
+        null_amt_denied = e.code == "missing_amount"
     forged_row = apr.get_approval_request(forge_id)
     check(
-        "forge NULL-amount SPEND approve → authority denied",
+        "forge NULL-amount SPEND approve → missing_amount denied",
         null_amt_denied and forged_row and forged_row["status"] == "PENDING",
-        str(forged_row.get("status") if forged_row else None),
+        f"code={null_amt_code} status={forged_row.get('status') if forged_row else None}",
     )
 
     # Reject path (no authority required) — amount over limit still rejectable

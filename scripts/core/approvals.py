@@ -753,6 +753,28 @@ def _decide(
                 http_status=409,
             )
 
+        # DLG-RT-001 / APR-RT-001: material APPROVE requires amount (native + delegation)
+        if dec == "APPROVED" and is_material_request(req):
+            raw_amt = req.get("material_amount")
+            if raw_amt is None or str(raw_amt).strip() == "":
+                _audit_approval(
+                    action="approval.decide_attempt",
+                    result="DENIED",
+                    request=req,
+                    verified_person_id=verified,
+                    identity=identity,
+                    reason_code="missing_amount",
+                    metadata={"decision": dec, "status": req.get("status")},
+                    conn=c,
+                )
+                if commit:
+                    c.commit()
+                raise ApprovalError(
+                    "material_amount required to approve material request",
+                    code="missing_amount",
+                    http_status=400,
+                )
+
         # Self-approval (material only when flag on)
         if (
             deny_self_approval_enabled()
@@ -779,8 +801,9 @@ def _decide(
 
         target = target_context_for_request(req)
         req_code = req["required_permission_code"]
+        # Always include amount key for material evaluate_delegation (None → fail-closed)
         amount_ctx = None
-        if is_material_request(req) and req.get("material_amount") is not None:
+        if is_material_request(req):
             amount_ctx = {
                 "amount": req.get("material_amount"),
                 "currency": req.get("currency"),
