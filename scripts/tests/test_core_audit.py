@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tests for Wolf Core Audit / Evidence Spine (Beta). CLAIMED ≠ VERIFIED.
 
-Temp sqlite for service tests; live Beta DB for Matt-only API smoke.
+Temp sqlite for service + HTTP tests. Never write new audit rows to live catalog.
 Does not write Production / wolf-system / :8787.
 """
 from __future__ import annotations
@@ -51,18 +51,35 @@ def load_mig():
     return mod
 
 
+def live_audit_count() -> int:
+    conn = sqlite3.connect(str(LIVE_DB))
+    try:
+        return int(conn.execute("SELECT COUNT(*) FROM core_audit_events").fetchone()[0])
+    finally:
+        conn.close()
+
+
 def main() -> int:
+    os.environ["WOLF_TEST_MODE"] = "1"
+
     src = AUDIT_PY.read_text(encoding="utf-8")
     check("no LLM/AI call sites in audit.py", "openai" not in src.lower() and "anthropic" not in src.lower())
     check("refuses wolf-system", "refuses wolf-system" in src)
     check("refuses Production", "Production" in src)
     check("update_event raises NotImplementedError", "NotImplementedError" in src and "update_event" in src)
-    check("delete_event raises NotImplementedError", "delete_event" in src)
+    check("delete_event raises NotImplementedError", "NotImplementedError" in src)
+    check("test-mode live write guard present", "WOLF_TEST_MODE" in src and "refuses writes to live" in src)
 
-    # Live migrate idempotent
+    # Live migrate idempotent (schema/seed only — no new audit rows from migrate)
+    live_before_migrate = live_audit_count()
     mig = load_mig()
     rc = mig.main()
     check("migrate exit 0", rc == 0, str(rc))
+    check(
+        "migrate did not add audit rows",
+        live_audit_count() == live_before_migrate,
+        f"{live_before_migrate}->{live_audit_count()}",
+    )
 
     live = sqlite3.connect(str(LIVE_DB))
     live.row_factory = sqlite3.Row
@@ -97,10 +114,18 @@ def main() -> int:
     import core.audit as audit
     import core.request_auth as ra
     import core.identity as identity
+    import core.rbac as rbac
+    import core.authority as authority
+    import core.organisation as organisation
+    import core.staffing as staffing
+    import core.scope as scope
 
-    # Point modules at temp DB
-    audit.CATALOG_DB = tmp_db
-    identity.CATALOG_DB = tmp_db
+    # Point ALL catalog modules at temp DB — never LIVE for HTTP/service writes
+    for mod in (audit, identity, rbac, authority, organisation, staffing, scope, ra):
+        if hasattr(mod, "CATALOG_DB"):
+            mod.CATALOG_DB = tmp_db
+
+    live_baseline = live_audit_count()
 
     # 1. record + get + list
     ev = audit.record_event(
@@ -240,6 +265,23 @@ def main() -> int:
     meta = allow.get("metadata") or {}
     check("metadata allowlist drops unknown", "evil_unknown" not in meta and meta.get("note") == "ok", str(meta))
 
+    # Live write refused under WOLF_TEST_MODE when pointed at live
+    live_write_blocked = False
+    prev_catalog = audit.CATALOG_DB
+    try:
+        audit.CATALOG_DB = LIVE_DB
+        audit.record_event(
+            action="should.not.land",
+            result="SUCCEEDED",
+            source="test",
+            actor_type="SYSTEM",
+        )
+    except audit.AuditValidationError as e:
+        live_write_blocked = "live catalog" in str(e).lower()
+    finally:
+        audit.CATALOG_DB = prev_catalog
+    check("WOLF_TEST_MODE blocks live catalog write", live_write_blocked)
+
     # 13. SQL UPDATE/DELETE blocked by triggers
     conn = audit.db_connect(tmp_db)
     upd_blocked = False
@@ -267,17 +309,24 @@ def main() -> int:
     check("SQL DELETE blocked by trigger", del_blocked)
     conn.close()
 
-    # Restore live catalog paths for API smoke
-    audit.CATALOG_DB = LIVE_DB
-    identity.CATALOG_DB = LIVE_DB
-
-    # API + integration smoke
+    # API + integration smoke — still on TEMP DB (never LIVE_DB)
     try:
         import serve_beta as sb
         import inspect
+        import wolf_intelligence as wi
 
         os.environ["BETA_AUTH_MODE"] = "development_assertion"
         ra._ENV_LOADED = True
+        sb.CATALOG_DB = tmp_db
+        wi.CATALOG_DB = tmp_db if hasattr(wi, "CATALOG_DB") else None
+        # Re-bind core modules already imported by serve_beta
+        sb._audit.CATALOG_DB = tmp_db
+        sb._identity.CATALOG_DB = tmp_db
+        sb._rbac.CATALOG_DB = tmp_db
+        sb._authority.CATALOG_DB = tmp_db
+        sb._org.CATALOG_DB = tmp_db
+        sb._staffing.CATALOG_DB = tmp_db
+        sb._scope.CATALOG_DB = tmp_db
 
         Handler = None
         for _, obj in inspect.getmembers(sb, inspect.isclass):
@@ -287,7 +336,23 @@ def main() -> int:
         check("API handler found", Handler is not None)
         if Handler:
             if hasattr(sb, "ensure_schema"):
-                sb.ensure_schema()
+                # ensure_schema must not retarget live — patch connection helper if present
+                orig_connect = getattr(sb, "db_connect", None)
+                if orig_connect:
+
+                    def _tmp_connect():
+                        c = sqlite3.connect(str(tmp_db))
+                        c.row_factory = sqlite3.Row
+                        c.execute("PRAGMA foreign_keys=ON")
+                        return c
+
+                    sb.db_connect = _tmp_connect  # type: ignore[attr-defined]
+                try:
+                    sb.ensure_schema()
+                finally:
+                    if orig_connect:
+                        sb.db_connect = orig_connect  # type: ignore[attr-defined]
+
             httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
             port = httpd.server_address[1]
             t = threading.Thread(target=httpd.serve_forever, daemon=True)
@@ -319,6 +384,24 @@ def main() -> int:
                             payload = {"raw": raw}
                         return e.code, payload
 
+                def tmp_count(**filters):
+                    clauses = []
+                    params = []
+                    for k, v in filters.items():
+                        clauses.append(f"{k}=?")
+                        params.append(v)
+                    where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+                    conn2 = sqlite3.connect(str(tmp_db))
+                    try:
+                        return int(
+                            conn2.execute(
+                                f"SELECT COUNT(*) FROM core_audit_events{where}",
+                                params,
+                            ).fetchone()[0]
+                        )
+                    finally:
+                        conn2.close()
+
                 # 8. Matt can read audit; non-Matt cannot
                 st, data = call("GET", "/api/core/audit?limit=5", MATT)
                 check("Matt GET /api/core/audit 200", st == 200 and data.get("ok") is True, str(data)[:200])
@@ -331,31 +414,22 @@ def main() -> int:
                     str(data)[:200],
                 )
 
-                # 9. Auth success → event (development resolve)
-                before = sqlite3.connect(str(LIVE_DB)).execute(
-                    "SELECT COUNT(*) FROM core_audit_events WHERE source='request_auth' AND result='SUCCEEDED'"
-                ).fetchone()[0]
+                # 9. Auth success → event (development resolve) on TEMP
+                before = tmp_count(source="request_auth", result="SUCCEEDED")
                 call("GET", "/api/core/me", MATT)
-                after = sqlite3.connect(str(LIVE_DB)).execute(
-                    "SELECT COUNT(*) FROM core_audit_events WHERE source='request_auth' AND result='SUCCEEDED'"
-                ).fetchone()[0]
+                after = tmp_count(source="request_auth", result="SUCCEEDED")
                 check("auth success → SUCCEEDED event", after > before, f"{before}->{after}")
 
                 # Auth fail → DENIED without JWT body (cloudflare mode)
                 os.environ["BETA_AUTH_MODE"] = "cloudflare_access"
                 os.environ["BETA_CF_ACCESS_AUD"] = "test-aud-for-audit"
                 ra._ENV_LOADED = True
-                before_d = sqlite3.connect(str(LIVE_DB)).execute(
-                    "SELECT COUNT(*) FROM core_audit_events WHERE result='DENIED' AND action='auth.resolve'"
-                ).fetchone()[0]
+                before_d = tmp_count(result="DENIED", action="auth.resolve")
                 st, data = call("GET", "/api/core/me")
                 check("auth fail status 403", st == 403, str(data)[:160])
-                after_d = sqlite3.connect(str(LIVE_DB)).execute(
-                    "SELECT COUNT(*) FROM core_audit_events WHERE result='DENIED' AND action='auth.resolve'"
-                ).fetchone()[0]
+                after_d = tmp_count(result="DENIED", action="auth.resolve")
                 check("auth fail → DENIED event", after_d > before_d, f"{before_d}->{after_d}")
-                # Ensure no JWT-like blob stored in recent deny metadata
-                row = sqlite3.connect(str(LIVE_DB)).execute(
+                row = sqlite3.connect(str(tmp_db)).execute(
                     """
                     SELECT metadata_json FROM core_audit_events
                     WHERE result='DENIED' AND action='auth.resolve'
@@ -369,11 +443,8 @@ def main() -> int:
                 os.environ["BETA_AUTH_MODE"] = "development_assertion"
                 ra._ENV_LOADED = True
 
-                # 10. RBAC deny → DENIED via _require_permission (representative path)
-                before_r = sqlite3.connect(str(LIVE_DB)).execute(
-                    "SELECT COUNT(*) FROM core_audit_events WHERE source='rbac' AND result='DENIED'"
-                ).fetchone()[0]
-                # Haikal lacks can_approve_plan
+                # 10. RBAC deny → DENIED via _require_permission
+                before_r = tmp_count(source="rbac", result="DENIED")
                 st, data = call(
                     "POST",
                     "/api/planner/plans/1/approve",
@@ -381,15 +452,11 @@ def main() -> int:
                     body={},
                 )
                 check("RBAC deny returns 403", st == 403, str(data)[:160])
-                after_r = sqlite3.connect(str(LIVE_DB)).execute(
-                    "SELECT COUNT(*) FROM core_audit_events WHERE source='rbac' AND result='DENIED'"
-                ).fetchone()[0]
+                after_r = tmp_count(source="rbac", result="DENIED")
                 check("RBAC deny → DENIED event", after_r > before_r, f"{before_r}->{after_r}")
 
                 # 11. Authority deny (amount + no live limit)
-                before_a = sqlite3.connect(str(LIVE_DB)).execute(
-                    "SELECT COUNT(*) FROM core_audit_events WHERE source='authority' AND result='DENIED'"
-                ).fetchone()[0]
+                before_a = tmp_count(source="authority", result="DENIED")
                 st, data = call(
                     "GET",
                     "/api/core/authority/check?permission_code=content.plan.approve&amount=100&currency=IDR",
@@ -398,15 +465,11 @@ def main() -> int:
                 check("authority/check 200", st == 200 and data.get("ok") is True, str(data)[:160])
                 dec = (data or {}).get("decision") or {}
                 check("authority denied (no live limit)", dec.get("allowed") is False, str(dec.get("reason")))
-                after_a = sqlite3.connect(str(LIVE_DB)).execute(
-                    "SELECT COUNT(*) FROM core_audit_events WHERE source='authority' AND result='DENIED'"
-                ).fetchone()[0]
+                after_a = tmp_count(source="authority", result="DENIED")
                 check("authority deny → DENIED event", after_a > before_a, f"{before_a}->{after_a}")
 
-                # 12. Content mutation → SUCCEEDED after commit
-                before_c = sqlite3.connect(str(LIVE_DB)).execute(
-                    "SELECT COUNT(*) FROM core_audit_events WHERE source='content_planner' AND result='SUCCEEDED'"
-                ).fetchone()[0]
+                # 12. Content mutation → SUCCEEDED after commit (TEMP DB)
+                before_c = tmp_count(source="content_planner", result="SUCCEEDED")
                 st, data = call(
                     "POST",
                     "/api/planner/save",
@@ -415,15 +478,13 @@ def main() -> int:
                         "brand": "habitat",
                         "platform": "IG_Reels",
                         "scheduled_date": "2099-01-06",
-                        "title_slug": "audit-spine-smoke",
-                        "script_body": "audit evidence spine test",
+                        "title_slug": "audit-spine-smoke-tmp",
+                        "script_body": "audit evidence spine test temp isolation",
                         "status": "Draft",
                     },
                 )
                 check("planner/save 200", st == 200 and data.get("ok") is True, str(data)[:200])
-                after_c = sqlite3.connect(str(LIVE_DB)).execute(
-                    "SELECT COUNT(*) FROM core_audit_events WHERE source='content_planner' AND result='SUCCEEDED'"
-                ).fetchone()[0]
+                after_c = tmp_count(source="content_planner", result="SUCCEEDED")
                 check(
                     "content mutation → SUCCEEDED event",
                     after_c > before_c,
@@ -433,6 +494,15 @@ def main() -> int:
                 httpd.shutdown()
     except Exception as e:
         check("API smoke", False, repr(e))
+
+    live_after = live_audit_count()
+    check(
+        "live audit count unchanged by this test run",
+        live_after == live_baseline,
+        f"{live_baseline}->{live_after}",
+    )
+    # Document: do not delete historical pollution rows
+    check("live audit still has historical rows (no silent delete)", live_after >= 47, str(live_after))
 
     print()
     print(f"SUMMARY pass={PASS} fail={FAIL}")

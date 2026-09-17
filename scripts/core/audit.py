@@ -8,8 +8,10 @@ Never stores jwt/password/cookie/api_key/authorization/token.
 from __future__ import annotations
 
 import json
+import os
 import re
 import sqlite3
+import sys
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -17,6 +19,7 @@ from typing import Any
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 CATALOG_DB = BETA_ROOT / "catalog" / "content_library.sqlite"
+LIVE_CATALOG_DB = (BETA_ROOT / "catalog" / "content_library.sqlite").resolve()
 TZ_UTC = timezone.utc
 
 RESULTS = frozenset({"ALLOWED", "DENIED", "SUCCEEDED", "FAILED", "ERROR"})
@@ -46,6 +49,8 @@ METADATA_ALLOWLIST = frozenset(
         "status",
         "email_domain",
         "http_status",
+        "work_type",
+        "owner_person_id",
     }
 )
 METADATA_MAX_BYTES = 4096
@@ -53,6 +58,27 @@ METADATA_MAX_BYTES = 4096
 
 class AuditValidationError(ValueError):
     """Fail-closed validation for audit writes."""
+
+
+def _under_test_process() -> bool:
+    if (os.environ.get("WOLF_TEST_MODE") or "").strip() == "1":
+        return True
+    argv0 = " ".join(sys.argv[:2]) if sys.argv else ""
+    return "scripts/tests" in argv0.replace("\\", "/")
+
+
+def assert_catalog_writable(db_path: Path) -> None:
+    """Fail closed: refuse accidental live catalog writes from tests.
+
+    Prefer explicit temp CATALOG_DB wiring. Override only with WOLF_ALLOW_LIVE_AUDIT=1.
+    """
+    resolved = Path(db_path).resolve()
+    if (os.environ.get("WOLF_ALLOW_LIVE_AUDIT") or "").strip() == "1":
+        return
+    if resolved == LIVE_CATALOG_DB and _under_test_process():
+        raise AuditValidationError(
+            "test mode refuses writes to live catalog DB; point CATALOG_DB at a temp copy"
+        )
 
 
 def db_connect(db_path: Path | None = None) -> sqlite3.Connection:
@@ -227,6 +253,8 @@ def record_event(
     own = conn is None
     c = conn or db_connect()
     try:
+        # Refuse accidental live writes from test processes (explicit temp wiring preferred).
+        assert_catalog_writable(Path(c.execute("PRAGMA database_list").fetchone()[2] or CATALOG_DB))
         if corrects_event_id:
             prior = c.execute(
                 "SELECT audit_event_id FROM core_audit_events WHERE audit_event_id=?",
@@ -413,11 +441,14 @@ def safe_record(handler_or_none=None, **kwargs) -> dict[str, Any] | None:
     """Best-effort record: never crash the caller deny/success path.
 
     Returns the event dict or None on failure. Surfaces ERROR via stderr only.
+    Under WOLF_TEST_MODE (or scripts/tests argv), live catalog writes fail closed
+    inside record_event/db_connect — still swallowed here so request paths stay up.
     """
     try:
+        # Prefer caller's conn; otherwise assert current CATALOG_DB is writable.
+        if kwargs.get("conn") is None:
+            assert_catalog_writable(Path(CATALOG_DB))
         return record_event(**kwargs)
     except Exception as exc:  # noqa: BLE001
-        import sys
-
         print(f"audit.safe_record failed: {exc}", file=sys.stderr)
         return None

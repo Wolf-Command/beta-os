@@ -211,4 +211,22 @@ Project UI, Kanban, recurring scheduler, notifications, approval/SLA/escalation 
 
 ## Build record
 
-_(Cursor appends)_
+**Implementer:** Cursor Local Agent on Wolfs-Mac-Studio  
+**HEAD start:** `f59b0bb` (`docs: Grok plan for core work items`)  
+**Commit message:** `feat(core): add work item task primitive` (see `git log -1` on `build/wolf-command-rebuild`)  
+**Decision served:** 2026-09-17 Local Cursor Build Path (LOCKED ★ Matthew) + approved CURSOR-MISSION-WORK-ITEMS-2026-09-17 (extends started Wolf Core rebuild)
+
+### Backup (before migrate)
+
+- Path: `catalog/backups/pre-work-items-20260917-102806.sqlite`
+- SHA-256: `f149800daa17e3a1469ef0787cf98fb61488089d5bfdf4b1e30d70d2d1e80ec3`
+- Record: `state/work-items-backup-20260917-102806.sha256`
+
+### Evidence
+
+- Live `core_work_items` count: **0**
+- Live `core_audit_events` count: **47** (unchanged; no silent delete)
+- `test_core_work_items.py`: SUMMARY pass=54 fail=0
+- `test_core_audit.py` (off LIVE_DB): SUMMARY pass=45 fail=0
+- Canon honesty: `docs/canon/WORK-ITEMS.md`
+- No remote. No Production. No Kanban/UI/scheduler.

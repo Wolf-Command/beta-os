@@ -71,6 +71,7 @@ from core import rbac as _rbac
 from core import authority as _authority
 from core import request_auth as _request_auth
 from core import audit as _audit
+from core import work_items as _work_items
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1493,6 +1494,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._get_core_audit(qs)
             return
 
+        # Wolf Core Work Items (task primitive; not org_assignments)
+        if path == "/api/core/work-items":
+            self._get_core_work_items(qs)
+            return
+        m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
+        if m_wi:
+            self._get_core_work_item(m_wi.group(1))
+            return
+
         # Wolf Core Assignment Scope (read-only; WHERE only — no RBAC)
         if path == "/api/core/scopes":
             self._get_core_scopes()
@@ -1727,6 +1737,43 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._admin_sync_metricool()
             return
 
+        # Wolf Core Work Items
+        if path == "/api/core/work-items":
+            self._post_core_work_item()
+            return
+        m_wi_assign = re.match(r"^/api/core/work-items/([^/]+)/assign$", path)
+        if m_wi_assign:
+            self._post_core_work_item_assign(m_wi_assign.group(1))
+            return
+        m_wi_start = re.match(r"^/api/core/work-items/([^/]+)/start$", path)
+        if m_wi_start:
+            self._post_core_work_item_start(m_wi_start.group(1))
+            return
+        m_wi_block = re.match(r"^/api/core/work-items/([^/]+)/block$", path)
+        if m_wi_block:
+            self._post_core_work_item_block(m_wi_block.group(1))
+            return
+        m_wi_complete = re.match(r"^/api/core/work-items/([^/]+)/complete$", path)
+        if m_wi_complete:
+            self._post_core_work_item_complete(m_wi_complete.group(1))
+            return
+        m_wi_verify = re.match(r"^/api/core/work-items/([^/]+)/verify$", path)
+        if m_wi_verify:
+            self._post_core_work_item_verify(m_wi_verify.group(1))
+            return
+        m_wi_cancel = re.match(r"^/api/core/work-items/([^/]+)/cancel$", path)
+        if m_wi_cancel:
+            self._post_core_work_item_cancel(m_wi_cancel.group(1))
+            return
+
+        self._send_err(404, "not found")
+
+    def do_PATCH(self) -> None:
+        path = urlparse(self.path).path
+        m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
+        if m_wi:
+            self._patch_core_work_item(m_wi.group(1))
+            return
         self._send_err(404, "not found")
 
     def _llm_generate(self) -> None:
@@ -2763,6 +2810,322 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "person_id": person_id,
             }
         )
+
+    def _work_identity(self, permission: str, body: dict | None = None) -> dict | None:
+        """Permission gate + verified person_id for work-item mutations."""
+        subject = self._require_permission(permission, body)
+        if subject is None:
+            return None
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok") or not identity.get("person_id"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "no_person",
+                    "message": "Work items require a verified Person binding.",
+                    "required_permission": permission,
+                },
+                status=403,
+            )
+            return None
+        identity = dict(identity)
+        identity["correlation_id"] = getattr(self, "_wolf_correlation_id", None) or _audit.mint_correlation_id()
+        return identity
+
+    def _send_work_error(self, exc: Exception) -> None:
+        if isinstance(exc, _work_items.WorkItemError):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                },
+                status=int(exc.http_status),
+            )
+            return
+        self._send_json({"ok": False, "error": "server_error", "message": str(exc)}, status=500)
+
+    def _get_core_work_items(self, qs: dict) -> None:
+        identity = self._work_identity("work.read")
+        if identity is None:
+            return
+        try:
+            limit = int((qs.get("limit") or ["50"])[0])
+        except (TypeError, ValueError):
+            limit = 50
+        try:
+            offset = int((qs.get("offset") or ["0"])[0])
+        except (TypeError, ValueError):
+            offset = 0
+        try:
+            items = _work_items.list_work_items(
+                identity["person_id"],
+                status=((qs.get("status") or [None])[0] or None) or None,
+                owning_entity_id=((qs.get("owning_entity_id") or [None])[0] or None) or None,
+                owner_person_id=((qs.get("owner_person_id") or [None])[0] or None) or None,
+                work_type=((qs.get("work_type") or [None])[0] or None) or None,
+                limit=limit,
+                offset=offset,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_work_error(exc)
+            return
+        self._send_json(
+            {
+                "ok": True,
+                "work_items": items,
+                "count": len(items),
+                "limit": max(1, min(limit, 200)),
+                "offset": max(0, offset),
+                "person_id": identity["person_id"],
+                "claimed_completed_is_not_verified": True,
+            }
+        )
+
+    def _get_core_work_item(self, work_item_id: str) -> None:
+        identity = self._work_identity("work.read")
+        if identity is None:
+            return
+        item = _work_items.get_work_item(work_item_id)
+        if not item:
+            self._send_json({"ok": False, "error": "not_found"}, status=404)
+            return
+        if not _work_items.person_can_see_entity(
+            identity["person_id"], item["owning_entity_id"]
+        ):
+            self._send_json({"ok": False, "error": "entity_out_of_scope"}, status=403)
+            return
+        self._send_json(
+            {
+                "ok": True,
+                "work_item": item,
+                "claimed_completed_is_not_verified": True,
+            }
+        )
+
+    def _post_core_work_item(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._work_identity("work.create", body)
+        if identity is None:
+            return
+        # Refuse client status=VERIFIED / forged provenance
+        if str(body.get("status") or "").strip().upper() == "VERIFIED":
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "illegal_transition",
+                    "message": "Cannot set status=VERIFIED on create; use /verify",
+                },
+                status=400,
+            )
+            return
+        actor_type = (body.get("created_by_actor_type") or "PERSON").strip().upper()
+        try:
+            item = _work_items.create_work_item(
+                title=body.get("title") or "",
+                description=body.get("description"),
+                work_type=body.get("work_type") or "GENERAL",
+                priority=body.get("priority", 3),
+                owning_entity_id=body.get("owning_entity_id") or "",
+                source_type=body.get("source_type") or "HUMAN",
+                source_id=body.get("source_id"),
+                created_by_actor_type=actor_type,
+                created_by_person_id=body.get("created_by_person_id"),
+                verified_person_id=identity["person_id"] if actor_type == "PERSON" else None,
+                owner_person_id=body.get("owner_person_id"),
+                owner_org_assignment_id=body.get("owner_org_assignment_id"),
+                due_at=body.get("due_at"),
+                parent_work_item_id=body.get("parent_work_item_id"),
+                identity=identity,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_work_error(exc)
+            return
+        self._send_json({"ok": True, "work_item": item}, status=201)
+
+    def _patch_core_work_item(self, work_item_id: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._work_identity("work.update", body)
+        if identity is None:
+            return
+        forbidden = {
+            "status",
+            "owner_person_id",
+            "owner_org_assignment_id",
+            "source_type",
+            "source_id",
+            "created_by_actor_type",
+            "created_by_person_id",
+            "owning_entity_id",
+            "work_type",
+        }
+        hit = [k for k in forbidden if k in body]
+        if hit:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "immutable_or_wrong_endpoint",
+                    "message": f"PATCH cannot set {hit}; use assign/transition endpoints",
+                },
+                status=400,
+            )
+            return
+        kwargs: dict = {
+            "verified_person_id": identity["person_id"],
+            "identity": identity,
+        }
+        if "title" in body:
+            kwargs["title"] = body.get("title")
+        if "description" in body:
+            kwargs["description"] = body.get("description")
+        if "priority" in body:
+            kwargs["priority"] = body.get("priority")
+        if "due_at" in body:
+            kwargs["due_at"] = body.get("due_at")
+        try:
+            item = _work_items.update_work_item_fields(work_item_id, **kwargs)
+        except Exception as exc:  # noqa: BLE001
+            self._send_work_error(exc)
+            return
+        self._send_json({"ok": True, "work_item": item})
+
+    def _post_core_work_item_assign(self, work_item_id: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._work_identity("work.assign", body)
+        if identity is None:
+            return
+        try:
+            item = _work_items.reassign_owner(
+                work_item_id,
+                verified_person_id=identity["person_id"],
+                owner_person_id=body.get("owner_person_id"),
+                owner_org_assignment_id=body.get("owner_org_assignment_id"),
+                identity=identity,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_work_error(exc)
+            return
+        self._send_json({"ok": True, "work_item": item})
+
+    def _post_core_work_item_start(self, work_item_id: str) -> None:
+        try:
+            body = self._read_json() if int(self.headers.get("Content-Length") or 0) > 0 else {}
+        except Exception:
+            body = {}
+        identity = self._work_identity("work.update", body if isinstance(body, dict) else {})
+        if identity is None:
+            return
+        try:
+            item = _work_items.start_work_item(
+                work_item_id,
+                verified_person_id=identity["person_id"],
+                identity=identity,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_work_error(exc)
+            return
+        self._send_json({"ok": True, "work_item": item})
+
+    def _post_core_work_item_block(self, work_item_id: str) -> None:
+        try:
+            body = self._read_json() if int(self.headers.get("Content-Length") or 0) > 0 else {}
+        except Exception:
+            body = {}
+        identity = self._work_identity("work.update", body if isinstance(body, dict) else {})
+        if identity is None:
+            return
+        try:
+            item = _work_items.block_work_item(
+                work_item_id,
+                verified_person_id=identity["person_id"],
+                identity=identity,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_work_error(exc)
+            return
+        self._send_json({"ok": True, "work_item": item})
+
+    def _post_core_work_item_complete(self, work_item_id: str) -> None:
+        try:
+            body = self._read_json() if int(self.headers.get("Content-Length") or 0) > 0 else {}
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._work_identity("work.complete", body)
+        if identity is None:
+            return
+        try:
+            item = _work_items.claim_complete(
+                work_item_id,
+                verified_person_id=identity["person_id"],
+                outcome=body.get("outcome"),
+                completion_evidence_reference=body.get("completion_evidence_reference"),
+                identity=identity,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_work_error(exc)
+            return
+        self._send_json(
+            {
+                "ok": True,
+                "work_item": item,
+                "claimed_completed_is_not_verified": True,
+            }
+        )
+
+    def _post_core_work_item_verify(self, work_item_id: str) -> None:
+        try:
+            body = self._read_json() if int(self.headers.get("Content-Length") or 0) > 0 else {}
+        except Exception:
+            body = {}
+        identity = self._work_identity("work.verify", body if isinstance(body, dict) else {})
+        if identity is None:
+            return
+        try:
+            item = _work_items.verify_work_item(
+                work_item_id,
+                verified_person_id=identity["person_id"],
+                identity=identity,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_work_error(exc)
+            return
+        self._send_json({"ok": True, "work_item": item})
+
+    def _post_core_work_item_cancel(self, work_item_id: str) -> None:
+        try:
+            body = self._read_json() if int(self.headers.get("Content-Length") or 0) > 0 else {}
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._work_identity("work.update", body)
+        if identity is None:
+            return
+        try:
+            item = _work_items.cancel_work_item(
+                work_item_id,
+                verified_person_id=identity["person_id"],
+                outcome=body.get("outcome"),
+                identity=identity,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_work_error(exc)
+            return
+        self._send_json({"ok": True, "work_item": item})
 
     def _get_core_me_authority_limits(self) -> None:
         identity = self._resolve_identity()

@@ -35,6 +35,20 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_core_audit.py >/tmp/audit-spine-test.out 2>&1; tail -3 /tmp/audit-spine-test.out",
       "expect": "fail=0",
       "by": "cursor-local"
+    },
+    {
+      "id": "work-items-012",
+      "claim": "core_work_items schema + Matt-only work.* on Beta; live rows=0; COMPLETED≠VERIFIED",
+      "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); print(c.execute('select count(*) from core_work_items').fetchone()[0], c.execute(\\\"select count(*) from org_role_permissions rp join org_permissions p on p.permission_id=rp.permission_id where rp.role_id='ROLE-MATT' and p.code like 'work.%'\\\").fetchone()[0], c.execute('select count(*) from core_audit_events').fetchone()[0])\"",
+      "expect": "0 6 47+",
+      "by": "cursor-local"
+    },
+    {
+      "id": "work-items-tests",
+      "claim": "test_core_work_items.py + test_core_audit.py isolation off LIVE_DB",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_core_work_items.py >/tmp/work-items-test.out 2>&1; tail -3 /tmp/work-items-test.out",
+      "expect": "fail=0",
+      "by": "cursor-local"
     }
   ]
 }
