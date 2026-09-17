@@ -80,6 +80,7 @@ from core import delegation as _delegation
 from core import content_publish as _content_publish
 from core import venue_close as _venue_close
 from core import esb_close_snapshot as _esb_close_snapshot
+from core import progress_read_model as _progress
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1512,6 +1513,19 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/venue-close/list":
             self._venue_close_list(qs)
             return
+        # Matt Progress Dashboard — Owner / PERS-MATT only
+        if path == "/api/progress/honesty":
+            self._progress_honesty()
+            return
+        if path == "/api/progress/calculation":
+            self._progress_calculation()
+            return
+        if path == "/api/progress/view":
+            self._progress_view(qs)
+            return
+        if path == "/api/progress":
+            self._progress_empire()
+            return
         m_vc = re.match(r"^/api/venue-close/([^/]+)$", path)
         if m_vc and m_vc.group(1) not in (
             "open",
@@ -1712,6 +1726,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
         if path in ("/", "/index.html"):
             self.path = "/content-2.0.html"
+        elif path in ("/progress", "/progress/"):
+            self.path = "/progress.html"
+        elif path == "/dashboards/progress.html":
+            self.path = "/progress.html"
         return SimpleHTTPRequestHandler.do_GET(self)
 
     def do_POST(self) -> None:
@@ -2885,6 +2903,91 @@ class BetaHandler(SimpleHTTPRequestHandler):
     def _require_can_create_plan(self, body: dict | None = None) -> str | None:
         """Compatibility wrapper — build-next / admin sync still use can_create_plan."""
         return self._require_permission("can_create_plan", body)
+
+    # ----- Matt Progress Dashboard (Owner / PERS-MATT only) -----
+
+    def _require_progress_owner(self, body: dict | None = None) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Staff seats → 403."""
+        identity = self._resolve_identity(body)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Progress Dashboard is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **_progress.honesty_flags(),
+                },
+                status=403,
+            )
+            return None
+        # RBAC belt: progress.read on ROLE-MATT (migration 022)
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **_progress.honesty_flags(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _progress_honesty(self) -> None:
+        identity = self._require_progress_owner()
+        if identity is None:
+            return
+        self._send_json({"ok": True, "person_id": identity.get("person_id"), **_progress.honesty_flags()})
+
+    def _progress_calculation(self) -> None:
+        identity = self._require_progress_owner()
+        if identity is None:
+            return
+        self._send_json(
+            {
+                "ok": True,
+                "person_id": identity.get("person_id"),
+                **_progress.calculation_english(),
+                **_progress.honesty_flags(),
+            }
+        )
+
+    def _progress_empire(self) -> None:
+        identity = self._require_progress_owner()
+        if identity is None:
+            return
+        try:
+            model = _progress.build_read_model()
+            model["person_id"] = identity.get("person_id")
+            self._send_json(model)
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _progress_view(self, qs: dict) -> None:
+        identity = self._require_progress_owner()
+        if identity is None:
+            return
+        name = (qs.get("name") or qs.get("view") or ["Empire"])[0]
+        try:
+            out = _progress.get_view(str(name or "Empire"))
+            if not out.get("ok"):
+                self._send_json(out, status=404)
+                return
+            out["person_id"] = identity.get("person_id")
+            self._send_json(out)
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
 
     # ----- Uma Blu daily close -----
 

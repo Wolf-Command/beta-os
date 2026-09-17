@@ -189,6 +189,20 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_uma_blu_daily_close.py >/tmp/uma-close-test.out 2>&1; tail -1 /tmp/uma-close-test.out",
       "expect": "62 passed, 0 failed",
       "by": "cursor-local"
+    },
+    {
+      "id": "progress-dashboard-022",
+      "claim": "Matt Progress Dashboard v1: progress.read ROLE-MATT only; overlay+read-model; Owner API /progress; PARTIAL_ESTIMATE; no Habitat/ESB/Metricool writes",
+      "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); print(c.execute(\\\"select count(*) from org_role_permissions rp join org_permissions p on p.permission_id=rp.permission_id where p.code='progress.read' and rp.role_id='ROLE-MATT'\\\").fetchone()[0], c.execute(\\\"select count(*) from org_role_permissions rp join org_permissions p on p.permission_id=rp.permission_id where p.code='progress.read' and rp.role_id!='ROLE-MATT'\\\").fetchone()[0], c.execute(\\\"select id from schema_migrations where id='022_progress_dashboard'\\\").fetchone()[0])\" && test -f state/progress/v1_overlay.json && test -f dashboards/progress.html",
+      "expect": "1 0 022_progress_dashboard and files exist",
+      "by": "cursor-local"
+    },
+    {
+      "id": "progress-dashboard-tests",
+      "claim": "test_progress_dashboard.py passes Matt mandatory list; staff 403; BUILT≠COMMISSIONED≠LIVE; Habitat/Uma verticals honest",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_progress_dashboard.py >/tmp/progress-dash-test.out 2>&1; tail -1 /tmp/progress-dash-test.out",
+      "expect": "92 passed, 0 failed",
+      "by": "cursor-local"
     }
   ]
 }

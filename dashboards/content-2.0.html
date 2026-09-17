@@ -368,6 +368,7 @@
       <button type="button" data-view="library">LIBRARY</button>
       <button type="button" data-view="upload">UPLOAD</button>
       <button type="button" data-view="wolf">WOLF INTELLIGENCE</button>
+      <a id="ownerProgressLink" class="hidden" href="/progress" style="display:none;align-self:center;padding:8px 12px;font-size:0.78rem;font-weight:650;letter-spacing:0.04em;color:var(--accent);text-decoration:none;border:1px solid var(--border);border-radius:8px">PROGRESS</a>
     </nav>
     <div class="brand-select">
       <span id="identityLabel" class="sub" style="margin:0;font-size:0.75rem;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="">Signed out</span>
@@ -776,8 +777,15 @@
       state.identityAssurance = me.identity_assurance;
       state.realAuthentication = !!me.real_authentication;
       state.developmentAssertionAllowed = !!me.development_assertion_allowed;
+      state.personId = me.person_id || null;
       if (state.developmentAssertionAllowed && state.subject) {
         localStorage.setItem(SUBJECT_KEY, state.subject);
+      }
+      const prog = $("ownerProgressLink");
+      if (prog) {
+        const isOwner = state.personId === "PERS-MATT";
+        prog.style.display = isOwner ? "inline-block" : "none";
+        prog.classList.toggle("hidden", !isOwner);
       }
     } catch (e) {
       state.subject = null;
