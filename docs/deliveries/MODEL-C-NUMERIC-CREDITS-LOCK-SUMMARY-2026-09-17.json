@@ -1,0 +1,27 @@
+{
+  "version": "MODEL-C-SYSTEM-CREDITS-v1.0-2026-09-17",
+  "reconcile": "PASS",
+  "counts": {
+    "PROVEN": 9,
+    "READY": 3,
+    "SPECIFIED": 45,
+    "BUILT": 19,
+    "ABSENT": 1
+  },
+  "sum_credits": "17.20",
+  "exact_pct": "22.33766233766233766233766234",
+  "rounded_pct": "22.3",
+  "genuinely_immature": 39,
+  "under_evidenced": [
+    "CAP-FIN-05",
+    "CAP-HR-04",
+    "CAP-INTEL-02",
+    "CAP-INTEL-03",
+    "CAP-INTG-07",
+    "CAP-MSC-05",
+    "CAP-DR-01"
+  ],
+  "canon": "docs/MODEL-C-SYSTEM-NUMERIC-CREDITS.md",
+  "backlog": "/Users/wolfterminal/beta-os/docs/deliveries/MODEL-C-EVIDENCE-REMEDIATION-BACKLOG-2026-09-17.md",
+  "official_baseline": "docs/deliveries/MODEL-C-SYSTEM-BASELINE-OFFICIAL-2026-09-17.md"
+}

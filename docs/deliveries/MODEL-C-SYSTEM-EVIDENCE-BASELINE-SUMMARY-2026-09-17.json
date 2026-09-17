@@ -1,0 +1,44 @@
+{
+  "audited": 77,
+  "states": {
+    "PROVEN": 9,
+    "READY": 3,
+    "SPECIFIED": 45,
+    "BUILT": 19,
+    "ABSENT": 1
+  },
+  "ready": [
+    "CAP-CORE-02",
+    "CAP-GGV-02",
+    "CAP-BZG-03"
+  ],
+  "proven": [
+    "CAP-CORE-01",
+    "CAP-CORE-03",
+    "CAP-CORE-04",
+    "CAP-CORE-05",
+    "CAP-CORE-06",
+    "CAP-CORE-07",
+    "CAP-CORE-08",
+    "CAP-CORE-09",
+    "CAP-CORE-10"
+  ],
+  "partial_credit_caps": 0,
+  "insufficient_evidence_notes": 46,
+  "ready_rt": "3/3",
+  "proven_rt": "9/9",
+  "sample": 12,
+  "maps": {
+    "A Linear": 39.6,
+    "B Proof-heavy": 24.2,
+    "C Ready-gated": 27.7
+  },
+  "recommended": "B Proof-heavy",
+  "sim_pct": 24.2,
+  "alt_range": [
+    24.2,
+    39.6
+  ],
+  "ledger": "/Users/wolfterminal/beta-os/docs/deliveries/MODEL-C-SYSTEM-EVIDENCE-LEDGER-2026-09-17.md",
+  "baseline": "/Users/wolfterminal/beta-os/docs/deliveries/MODEL-C-SYSTEM-EVIDENCE-BASELINE-2026-09-17.md"
+}
