@@ -225,16 +225,16 @@ Use the same test harness / `development_assertion` patterns as Real Auth / Auth
 
 ## Done checklist
 
-- [ ] Preflight CLEAN + HEAD noted
-- [ ] Backup path + SHA-256 recorded
-- [ ] Migration applied on Beta DB only
-- [ ] `scripts/core/audit.py` + tests green
-- [ ] Permission seeded Matt-only
-- [ ] `GET /api/core/audit` gated
-- [ ] Five integrations only
-- [ ] `docs/canon/AUDIT-EVIDENCE-SPINE.md` honesty table updated to match reality
-- [ ] One commit: `feat(core): add audit evidence spine`
-- [ ] Working tree CLEAN; no remote
+- [x] Preflight CLEAN + HEAD noted
+- [x] Backup path + SHA-256 recorded
+- [x] Migration applied on Beta DB only
+- [x] `scripts/core/audit.py` + tests green
+- [x] Permission seeded Matt-only
+- [x] `GET /api/core/audit` gated
+- [x] Five integrations only
+- [x] `docs/canon/AUDIT-EVIDENCE-SPINE.md` honesty table updated to match reality
+- [x] One commit: `feat(core): add audit evidence spine`
+- [x] Working tree CLEAN; no remote
 
 ---
 
@@ -246,9 +246,15 @@ Implement this file end-to-end on Beta OS. Verify live patterns for SQLite path,
 
 ## Build record (Cursor fills)
 
-- Backup path:
-- SHA-256:
-- HEAD before:
-- HEAD after:
-- Tests run:
+- Backup path: `/Users/wolfterminal/beta-os/catalog/backups/pre-audit-spine-20260917-100654.sqlite`
+- SHA-256: `77eae9103105634a3d41c441a9e742a3f49c2902da67ffcdbc8b7c590a0c479c`
+- HEAD before: `9a417fe` (drift from expected `f829f0c` — Grok docs commit `docs: Grok plan for audit evidence spine` already on branch; proceeded per Cursor sole brief)
+- HEAD after: this commit (`feat(core): add audit evidence spine` on `build/wolf-command-rebuild`)
+- Tests run: `python3 scripts/tests/test_core_audit.py` → **pass=40 fail=0**; prior `test_real_auth_binding.py` / `test_authority_limits.py` rechecked
 - Notes / drift:
+  - SQLite: `/Users/wolfterminal/beta-os/catalog/content_library.sqlite`
+  - Migration: `011_audit_evidence_spine` (DDL + triggers + `audit.event.read` → ROLE-MATT only)
+  - Five integrations only: request_auth success/fail, rbac deny via `_require_permission`, authority deny on `/api/core/authority/check`, content_planner save after commit
+  - Hash-chain / court-grade immutability: NOT BUILT (honesty table truthful)
+  - No remote push; no `:8787`; no wolf-system edits
+

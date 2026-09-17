@@ -70,6 +70,7 @@ from core import scope as _scope
 from core import rbac as _rbac
 from core import authority as _authority
 from core import request_auth as _request_auth
+from core import audit as _audit
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1487,6 +1488,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._get_core_me_authority_limits()
             return
 
+        # Wolf Core Audit / Evidence Spine (read-only; Matt / Owner only)
+        if path == "/api/core/audit":
+            self._get_core_audit(qs)
+            return
+
         # Wolf Core Assignment Scope (read-only; WHERE only — no RBAC)
         if path == "/api/core/scopes":
             self._get_core_scopes()
@@ -2196,6 +2202,32 @@ class BetaHandler(SimpleHTTPRequestHandler):
             out = row_to_slot(row, wm)
             if demoted:
                 out["demoted_from_human_approved"] = True
+            # Integration #5: Content Machine mutation AFTER successful commit
+            try:
+                identity = self._resolve_identity(emit_audit=False)
+                if identity.get("ok") and identity.get("person_id"):
+                    _audit.safe_record(
+                        action="content_planner.save",
+                        result="SUCCEEDED",
+                        source="content_planner",
+                        actor_type="PERSON",
+                        verified_person_id=identity["person_id"],
+                        actor_person_id=identity["person_id"],
+                        actor_auth_identity_id=identity.get("auth_identity_id"),
+                        identity_assurance=identity.get("identity_assurance"),
+                        brand_id=brand,
+                        resource_type="content_planner_slot",
+                        resource_id=str(new_id),
+                        correlation_id=getattr(self, "_wolf_correlation_id", None)
+                        or _audit.mint_correlation_id(),
+                        metadata={
+                            "brand": brand,
+                            "slot_id": new_id,
+                            "status": out.get("status"),
+                        },
+                    )
+            except Exception:  # noqa: BLE001
+                pass
             return out
         finally:
             conn.close()
@@ -2465,11 +2497,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
     def _request_headers_dict(self) -> dict:
         return {k: v for k, v in self.headers.items()}
 
-    def _resolve_identity(self, body: dict | None = None) -> dict:
+    def _resolve_identity(self, body: dict | None = None, *, emit_audit: bool = True) -> dict:
         """Single identity entry — Cloudflare JWT or explicit development assertion."""
         cached = getattr(self, "_wolf_body_cache", None)
         use_body = body if body is not None else (cached if isinstance(cached, dict) else {})
-        return _request_auth.resolve_request_identity(self, body=use_body if isinstance(use_body, dict) else {})
+        return _request_auth.resolve_request_identity(
+            self,
+            body=use_body if isinstance(use_body, dict) else {},
+            emit_audit=emit_audit,
+        )
 
     def _send_identity_deny(self, identity: dict, *, required_permission: str | None = None) -> None:
         payload = {
@@ -2513,6 +2549,44 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return None
         if not _wi.has_permission(subject, permission):
+            # Integration #3: RBAC denial on a representative protected action
+            person_id = identity.get("person_id")
+            if person_id:
+                _audit.safe_record(
+                    action="rbac.evaluate",
+                    result="DENIED",
+                    source="rbac",
+                    actor_type="PERSON",
+                    verified_person_id=person_id,
+                    actor_person_id=person_id,
+                    actor_auth_identity_id=identity.get("auth_identity_id"),
+                    identity_assurance=identity.get("identity_assurance"),
+                    correlation_id=getattr(self, "_wolf_correlation_id", None)
+                    or _audit.mint_correlation_id(),
+                    reason_code="forbidden",
+                    metadata={
+                        "permission": permission,
+                        "required_permission": permission,
+                        "error": "forbidden",
+                    },
+                )
+            else:
+                _audit.safe_record(
+                    action="rbac.evaluate",
+                    result="DENIED",
+                    source="rbac",
+                    actor_type="SYSTEM",
+                    identity_assurance=identity.get("identity_assurance")
+                    or _identity.IDENTITY_ASSURANCE_NONE,
+                    correlation_id=getattr(self, "_wolf_correlation_id", None)
+                    or _audit.mint_correlation_id(),
+                    reason_code="forbidden",
+                    metadata={
+                        "permission": permission,
+                        "required_permission": permission,
+                        "error": "forbidden",
+                    },
+                )
             self._send_json(
                 {
                     "ok": False,
@@ -2615,6 +2689,31 @@ class BetaHandler(SimpleHTTPRequestHandler):
         decision = _authority.within_authority(
             person_id, permission_code, target, amount_context
         )
+        # Integration #4: Authority denial (amount + no limit / out of threshold)
+        if not decision.get("allowed"):
+            _audit.safe_record(
+                action="authority.check",
+                result="DENIED",
+                source="authority",
+                actor_type="PERSON",
+                verified_person_id=person_id,
+                actor_person_id=person_id,
+                actor_auth_identity_id=identity.get("auth_identity_id"),
+                identity_assurance=identity.get("identity_assurance"),
+                entity_id=target.get("entity_id"),
+                brand_id=target.get("brand_id"),
+                location_id=target.get("location_id"),
+                department_id=target.get("department_id"),
+                correlation_id=getattr(self, "_wolf_correlation_id", None)
+                or _audit.mint_correlation_id(),
+                reason_code=str(decision.get("reason") or "denied"),
+                metadata={
+                    "permission_code": permission_code,
+                    "amount": amount_context.get("amount"),
+                    "currency": amount_context.get("currency"),
+                    "reason": decision.get("reason"),
+                },
+            )
         self._send_json({
             "ok": True,
             "identity_assurance": identity.get("identity_assurance"),
@@ -2624,6 +2723,46 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "decision": decision,
             "access_control_live": False,
         })
+
+    def _get_core_audit(self, qs: dict) -> None:
+        """GET /api/core/audit — Matt-only read of append-only evidence spine."""
+        subject = self._require_permission("audit.event.read")
+        if subject is None:
+            return
+        identity = self._resolve_identity(emit_audit=False)
+        person_id = identity.get("person_id") if identity.get("ok") else None
+        try:
+            limit = int((qs.get("limit") or ["50"])[0])
+        except (TypeError, ValueError):
+            limit = 50
+        try:
+            offset = int((qs.get("offset") or ["0"])[0])
+        except (TypeError, ValueError):
+            offset = 0
+        events = _audit.list_events(
+            entity_id=((qs.get("entity_id") or [None])[0] or None) or None,
+            action=((qs.get("action") or [None])[0] or None) or None,
+            result=((qs.get("result") or [None])[0] or None) or None,
+            source=((qs.get("source") or [None])[0] or None) or None,
+            correlation_id=((qs.get("correlation_id") or [None])[0] or None) or None,
+            occurred_from=((qs.get("occurred_from") or [None])[0] or None) or None,
+            occurred_to=((qs.get("occurred_to") or [None])[0] or None) or None,
+            actor_person_id=((qs.get("actor_person_id") or [None])[0] or None) or None,
+            limit=limit,
+            offset=offset,
+        )
+        self._send_json(
+            {
+                "ok": True,
+                "events": events,
+                "limit": max(1, min(limit, 200)),
+                "offset": max(0, offset),
+                "count": len(events),
+                "hash_chain": "NOT_BUILT",
+                "immutability": "append_only_service_and_triggers",
+                "person_id": person_id,
+            }
+        )
 
     def _get_core_me_authority_limits(self) -> None:
         identity = self._resolve_identity()

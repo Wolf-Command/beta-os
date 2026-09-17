@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
+from core import audit as _audit
 from core import cf_access
 from core import identity as _identity
 
@@ -104,6 +105,66 @@ def _query_subject(handler) -> str | None:
     return ((qs.get("subject") or [""])[0] or "").strip() or None
 
 
+def _correlation_id(handler) -> str:
+    if isinstance(handler, dict):
+        existing = handler.get("correlation_id")
+        if existing:
+            return str(existing)
+        cid = _audit.mint_correlation_id()
+        handler["correlation_id"] = cid
+        return cid
+    existing = getattr(handler, "_wolf_correlation_id", None)
+    if existing:
+        return str(existing)
+    cid = _audit.mint_correlation_id()
+    try:
+        setattr(handler, "_wolf_correlation_id", cid)
+    except Exception:  # noqa: BLE001
+        pass
+    return cid
+
+
+def _audit_auth_denied(
+    handler,
+    *,
+    error: str,
+    identity_assurance: str,
+    source: str = "request_auth",
+) -> None:
+    """Integration #2: protected auth failure → SYSTEM DENIED (never store JWT)."""
+    _audit.safe_record(
+        action="auth.resolve",
+        result="DENIED",
+        source=source,
+        actor_type="SYSTEM",
+        identity_assurance=identity_assurance or _identity.IDENTITY_ASSURANCE_NONE,
+        reason_code=error,
+        correlation_id=_correlation_id(handler),
+        metadata={"error": error, "auth_mode": auth_mode()},
+    )
+
+
+def _audit_auth_succeeded(handler, identity: dict[str, Any]) -> None:
+    """Integration #1: verified auth resolution → PERSON SUCCEEDED."""
+    person_id = identity.get("person_id")
+    if not person_id:
+        return
+    _audit.safe_record(
+        action="auth.resolve",
+        result="SUCCEEDED",
+        source="request_auth",
+        actor_type="PERSON",
+        verified_person_id=person_id,
+        actor_person_id=person_id,
+        actor_auth_identity_id=identity.get("auth_identity_id"),
+        identity_assurance=identity.get("identity_assurance"),
+        correlation_id=_correlation_id(handler),
+        metadata={
+            "auth_mode": identity.get("auth_mode") or auth_mode(),
+        },
+    )
+
+
 def _deny(
     *,
     error: str,
@@ -111,6 +172,9 @@ def _deny(
     identity_assurance: str = _identity.IDENTITY_ASSURANCE_NONE,
     real_authentication: bool = False,
     extra: dict | None = None,
+    handler=None,
+    audit: bool = True,
+    audit_source: str = "request_auth",
 ) -> dict[str, Any]:
     out: dict[str, Any] = {
         "ok": False,
@@ -126,14 +190,24 @@ def _deny(
     }
     if extra:
         out.update(extra)
+    if audit and handler is not None:
+        _audit_auth_denied(
+            handler,
+            error=error,
+            identity_assurance=identity_assurance,
+            source=audit_source,
+        )
     return out
 
 
-def resolve_request_identity(handler, body: dict | None = None) -> dict[str, Any]:
+def resolve_request_identity(
+    handler, body: dict | None = None, *, emit_audit: bool = True
+) -> dict[str, Any]:
     """Resolve caller identity for protected Beta routes.
 
     cloudflare_access: JWT only; ignore client subject channels.
     development_assertion: X-Wolf-Subject / JSON subject / query subject.
+    Set emit_audit=False for optional identity probes (e.g. post-commit audit attach).
     """
     mode = auth_mode()
     headers = _headers_dict(handler)
@@ -149,6 +223,8 @@ def resolve_request_identity(handler, body: dict | None = None) -> dict[str, Any
                 ),
                 identity_assurance=_identity.IDENTITY_ASSURANCE_NONE,
                 real_authentication=False,
+                handler=handler,
+                audit=emit_audit,
             )
         token = cf_access.token_from_headers(headers)
         if not token:
@@ -160,6 +236,9 @@ def resolve_request_identity(handler, body: dict | None = None) -> dict[str, Any
                 ),
                 identity_assurance=_identity.IDENTITY_ASSURANCE_NONE,
                 real_authentication=False,
+                handler=handler,
+                audit=emit_audit,
+                audit_source="cf_access",
             )
         claims = cf_access.verify_access_jwt(
             token, team_domain=team_domain(), audience=aud
@@ -170,6 +249,9 @@ def resolve_request_identity(handler, body: dict | None = None) -> dict[str, Any
                 message="Cloudflare Access JWT failed cryptographic verification.",
                 identity_assurance=_identity.IDENTITY_ASSURANCE_NONE,
                 real_authentication=False,
+                handler=handler,
+                audit=emit_audit,
+                audit_source="cf_access",
             )
         email = cf_access.email_from_claims(claims)
         if not email:
@@ -178,6 +260,9 @@ def resolve_request_identity(handler, body: dict | None = None) -> dict[str, Any
                 message="Verified JWT has no usable email claim.",
                 identity_assurance=_identity.IDENTITY_ASSURANCE_NONE,
                 real_authentication=False,
+                handler=handler,
+                audit=emit_audit,
+                audit_source="cf_access",
             )
         bound = _identity.resolve_verified_person(email)
         if not bound.get("ok"):
@@ -191,8 +276,10 @@ def resolve_request_identity(handler, body: dict | None = None) -> dict[str, Any
                     "permission_subject": email,
                     "note": bound.get("note"),
                 },
+                handler=handler,
+                audit=emit_audit,
             )
-        return {
+        identity = {
             "ok": True,
             "error": None,
             "message": None,
@@ -209,6 +296,9 @@ def resolve_request_identity(handler, body: dict | None = None) -> dict[str, Any
                 "Client subject headers/body/query ignored."
             ),
         }
+        if emit_audit:
+            _audit_auth_succeeded(handler, identity)
+        return identity
 
     # development_assertion — explicit env only
     body_d = _body_dict(handler, body)
@@ -231,9 +321,11 @@ def resolve_request_identity(handler, body: dict | None = None) -> dict[str, Any
             identity_assurance=_identity.IDENTITY_ASSURANCE_NONE,
             real_authentication=False,
             extra={"auth_mode": mode},
+            handler=handler,
+            audit=emit_audit,
         )
     me = _identity.resolve_from_development_assertion(asserted)
-    return {
+    identity = {
         "ok": True,
         "error": None,
         "message": None,
@@ -248,6 +340,9 @@ def resolve_request_identity(handler, body: dict | None = None) -> dict[str, Any
         "auth_mode": mode,
         "note": me.get("note"),
     }
+    if emit_audit:
+        _audit_auth_succeeded(handler, identity)
+    return identity
 
 
 def auth_mode_payload() -> dict[str, Any]:

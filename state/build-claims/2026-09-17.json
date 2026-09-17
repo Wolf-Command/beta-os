@@ -21,6 +21,20 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_real_auth_binding.py >/tmp/real-auth-test.out 2>&1; tail -3 /tmp/real-auth-test.out",
       "expect": "fail=0",
       "by": "cursor-local"
+    },
+    {
+      "id": "audit-spine-011",
+      "claim": "core_audit_events append-only schema + Matt-only audit.event.read on Beta",
+      "check": "python3 -c \"import sqlite3; c=sqlite3.connect(\"/Users/wolfterminal/beta-os/catalog/content_library.sqlite\"); print(c.execute(\"select count(*) from org_role_permissions where permission_id=\\\"PERM-AUDIT-EVENT-READ\\\"\").fetchone()[0], c.execute(\"select name from sqlite_master where type=\\\"trigger\\\" and tbl_name=\\\"core_audit_events\\\"\").fetchall())\"",
+      "expect": "1 and two triggers",
+      "by": "cursor-local"
+    },
+    {
+      "id": "audit-spine-tests",
+      "claim": "test_core_audit.py passes (audit evidence spine)",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_core_audit.py >/tmp/audit-spine-test.out 2>&1; tail -3 /tmp/audit-spine-test.out",
+      "expect": "fail=0",
+      "by": "cursor-local"
     }
   ]
 }
