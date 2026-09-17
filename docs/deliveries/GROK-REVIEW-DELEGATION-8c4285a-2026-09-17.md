@@ -56,3 +56,23 @@
 ## Gate
 
 Delegation Grok red-team: **FAIL** until DLG-RT-001 fixed + re-review PASS.
+
+---
+
+## GROK RE-REVIEW after `af96f56` (2026-09-17 WITA)
+
+**Fix commit reviewed:** `af96f565042e76a1e6d14ed7f1d99a9a6c595485`  
+**Diff reviewed:** actual `scripts/core/approvals.py` + tests.
+
+| Check | Result |
+|-------|--------|
+| Material APPROVE missing amount denied early | **PASS** — `missing_amount` 400 before permission/authority |
+| Material `amount_ctx` always includes `amount` key | **PASS** |
+| Forge NULL-amount SPEND via delegation | **PASS** — test stays PENDING |
+| New material findings this re-review | **NONE** |
+
+**Re-review verdict:** **PASS**
+
+**Peaches verify (separate):** delegation tests 56/0; approval tests 60/0; live auth/dlg/appr/dec/audit = 0/0/0/0/47.
+
+**Gate:** Delegation Grok red-team **PASS**. Slice ready for Matt final report.
