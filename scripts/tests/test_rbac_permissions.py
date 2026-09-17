@@ -181,9 +181,11 @@ def main() -> int:
     check("Matt effective includes approve", "content.plan.approve" in eff)
     check("Matt effective includes entity.read", "organisation.entity.read" in eff)
 
-    # no org_authority / person email grants table
-    tabs = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-    check("no authority limits table", "org_authority_limits" not in tabs)
+    # Authority Limits live in separate module (010); rbac itself stays permission-only
+    check(
+        "rbac module does not implement authority",
+        "within_authority" not in (ROOT / "scripts" / "core" / "rbac.py").read_text(encoding="utf-8"),
+    )
     check("persons unchanged", conn.execute("SELECT COUNT(*) FROM org_persons").fetchone()[0] == persons_before)
     check("assignments unchanged", conn.execute("SELECT COUNT(*) FROM org_assignments").fetchone()[0] == asg_before)
 

@@ -68,6 +68,7 @@ from core import identity as _identity
 from core import staffing as _staffing
 from core import scope as _scope
 from core import rbac as _rbac
+from core import authority as _authority
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -382,6 +383,21 @@ def ensure_schema() -> None:
             assert spec_b and spec_b.loader
             spec_b.loader.exec_module(mod_b)
             mod_b.main()
+        except Exception:
+            pass
+    # 010 Authority Limits (idempotent; seeded live = 0)
+    try:
+        from migrations.migrate_authority_limits import main as _mig_auth
+        _mig_auth()
+    except Exception:
+        try:
+            import importlib.util
+            mig_a = Path(__file__).resolve().parent / "migrations" / "migrate_authority_limits.py"
+            spec_a = importlib.util.spec_from_file_location("migrate_authority_limits", mig_a)
+            mod_a = importlib.util.module_from_spec(spec_a)
+            assert spec_a and spec_a.loader
+            spec_a.loader.exec_module(mod_a)
+            mod_a.main()
         except Exception:
             pass
     for _stage in ("RAW", "EDIT", "FINAL"):
@@ -1457,6 +1473,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._get_core_me_permissions()
             return
 
+        # Wolf Core Authority Limits (HOW MUCH; read/check only — no admin UI)
+        if path == "/api/core/authority/check":
+            self._get_core_authority_check(qs)
+            return
+        if path == "/api/core/me/authority-limits":
+            self._get_core_me_authority_limits()
+            return
+
         # Wolf Core Assignment Scope (read-only; WHERE only — no RBAC)
         if path == "/api/core/scopes":
             self._get_core_scopes()
@@ -2516,7 +2540,83 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "person_id": person_id,
             "target_context": target,
             "permissions": codes,
-            "authority_limits": "NOT_BUILT",
+            "authority_limits": "SEE_core.authority",
+            "access_control_live": False,
+            "note": me.get("note"),
+        })
+
+    def _get_core_authority_check(self, qs: dict) -> None:
+        """Read-only within_authority check. No write/admin."""
+        asserted = _wi.resolve_development_identity_assertion(self)
+        if not asserted:
+            asserted = (qs.get("subject") or [""])[0].strip() or None
+        me = _identity.resolve_from_development_assertion(asserted)
+        person_id = me.get("person_id")
+        permission_code = (qs.get("permission_code") or [""])[0].strip()
+        target = {
+            k: (qs.get(k) or [""])[0].strip() or None
+            for k in ("entity_id", "brand_id", "location_id", "department_id")
+        }
+        target = {k: v for k, v in target.items() if v}
+        if not target:
+            target = _rbac.default_content_target()
+        amount_raw = (qs.get("amount") or [None])[0]
+        currency = (qs.get("currency") or [None])[0]
+        at = (qs.get("at") or [None])[0]
+        amount_context: dict = {}
+        if amount_raw is not None and str(amount_raw).strip() != "":
+            amount_context["amount"] = amount_raw
+        if currency is not None and str(currency).strip() != "":
+            amount_context["currency"] = str(currency).strip()
+        if at is not None and str(at).strip() != "":
+            amount_context["at"] = str(at).strip()
+        if not person_id:
+            self._send_json({
+                "ok": False,
+                "error": "no_person",
+                "identity_assurance": me.get("identity_assurance"),
+                "real_authentication": "NOT_BUILT",
+                "note": me.get("note"),
+            }, status=403)
+            return
+        if not permission_code:
+            self._send_json({
+                "ok": False,
+                "error": "missing_permission_code",
+            }, status=400)
+            return
+        decision = _authority.within_authority(
+            person_id, permission_code, target, amount_context
+        )
+        self._send_json({
+            "ok": True,
+            "identity_assurance": me.get("identity_assurance"),
+            "asserted_identifier": me.get("asserted_identifier"),
+            "decision": decision,
+            "access_control_live": False,
+        })
+
+    def _get_core_me_authority_limits(self) -> None:
+        qs = parse_qs(urlparse(self.path).query)
+        asserted = _wi.resolve_development_identity_assertion(self)
+        if not asserted:
+            asserted = (qs.get("subject") or [""])[0].strip() or None
+        me = _identity.resolve_from_development_assertion(asserted)
+        person_id = me.get("person_id")
+        limits = (
+            _authority.list_authority_limits_for_person(person_id)
+            if person_id else []
+        )
+        self._send_json({
+            "ok": True,
+            "identity_assurance": me.get("identity_assurance"),
+            "real_authentication": "NOT_BUILT",
+            "asserted_identifier": me.get("asserted_identifier"),
+            "person_id": person_id,
+            "authority_limits": limits,
+            "delegation": "NOT_BUILT",
+            "dual_approval": "NOT_BUILT",
+            "segregation_of_duties": "NOT_BUILT",
             "access_control_live": False,
             "note": me.get("note"),
         })

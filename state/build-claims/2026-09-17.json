@@ -1,0 +1,19 @@
+{
+  "date": "2026-09-17",
+  "claims": [
+    {
+      "id": "auth-limits-010",
+      "claim": "org_authority_limits schema + within_authority evaluator on Beta; seeded live = 0",
+      "check": "python3 -c \"import sqlite3; c=sqlite3.connect(\"/Users/wolfterminal/beta-os/catalog/content_library.sqlite\"); print(c.execute(\"select count(*) from org_authority_limits\").fetchone()[0])\"",
+      "expect": "0",
+      "by": "cursor-local"
+    },
+    {
+      "id": "auth-limits-tests",
+      "claim": "test_authority_limits.py passes (deterministic authority evaluator)",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_authority_limits.py >/tmp/authlim-test.out 2>&1; tail -3 /tmp/authlim-test.out",
+      "expect": "fail=0",
+      "by": "cursor-local"
+    }
+  ]
+}

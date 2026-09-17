@@ -10,7 +10,7 @@ Person → Auth Identity → active Assignment → Position → Role → Scope �
 
 - **Scope (008)** = WHERE  
 - **RBAC (009)** = WHAT  
-- **Authority Limits** = NOT BUILT  
+- **Authority Limits** = BUILT+TESTED in `core.authority` (separate; seeded live = 0) — see `AUTHORITY-LIMITS-TRANSITIONAL.md`  
 - **Real Cloudflare Auth** = NOT BUILT (`DEVELOPMENT_IDENTITY_ASSERTION` still spoofable)
 
 ## Tables

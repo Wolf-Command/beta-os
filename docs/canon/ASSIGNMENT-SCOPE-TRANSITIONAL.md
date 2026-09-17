@@ -49,10 +49,13 @@ No invented AMG/BZG staff assignment scopes.
 
 ## NOT BUILT
 
-- RBAC / Permissions engine
-- Authority Limits
 - Real Cloudflare Access JWT authentication (still `DEVELOPMENT_IDENTITY_ASSERTION`)
 - Access control LIVE
+
+## Related (built elsewhere)
+
+- RBAC / Permissions — see `RBAC-PERMISSIONS-TRANSITIONAL.md`
+- Authority Limits — see `AUTHORITY-LIMITS-TRANSITIONAL.md` (HOW MUCH; seeded live = 0)
 
 ## APIs (read-only Beta)
 
