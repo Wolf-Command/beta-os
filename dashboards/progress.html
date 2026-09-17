@@ -72,6 +72,14 @@
   }
   .chip strong { color: var(--text); margin-left: 4px; }
   .chip:hover { border-color: var(--accent); color: var(--text); }
+  .mission {
+    border-top: 1px solid var(--line); padding: 12px 0;
+  }
+  .mission:first-child { border-top: 0; padding-top: 0; }
+  .mission .t { font-weight: 650; }
+  .mission .n { color: var(--muted); font-size: 0.8rem; margin-top: 3px; line-height: 1.35; }
+  .mission .who { color: var(--accent); font-size: 0.72rem; letter-spacing: 0.04em; margin-top: 4px; }
+  .empty-ok { color: var(--ok); font-size: 0.88rem; margin: 0; }
   .nav {
     display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px;
   }
@@ -293,7 +301,6 @@
   function renderEmpire() {
     const v = (model.views || {}).Empire || {};
     const overall = model.overall || {};
-    const reconcile = model.reconcile || {};
     const phase = v.owner_phase || model.owner_phase || "";
     const chips = v.status_chips || model.status_chips || [];
     const pulse = v.owner_pulse || model.owner_pulse || {};
@@ -303,9 +310,35 @@
     const domains = v.domains || model.domains || {};
     const fh = (v.factory_health || model.factory_health || {});
     const tech = v.technical_details || {};
+    const needsYou = v.needs_you || model.needs_you || [];
+    const waitingOthers = v.waiting_on_others || model.waiting_on_others || [];
+    const policies = v.policy_decisions || model.policy_decisions || [];
 
     const heroChips = chips.filter((c) => c.id !== "COMMISSIONED");
     const firstMove = moves[0];
+
+    function renderMissionCards(list, emptyMsg) {
+      if (!list.length) return `<p class="empty-ok">${esc(emptyMsg)}</p>`;
+      return list.map((m) => `
+        <div class="mission">
+          <span class="move-cls ${esc(m.status || "WAITING")}">${esc(m.status || m.bucket || "")}</span>
+          <div class="t" style="display:inline;margin-left:8px">${esc(m.title || "")}</div>
+          ${m.who ? `<div class="who">${esc(m.who)}</div>` : ""}
+          ${m.note ? `<div class="n">${esc(m.note)}</div>` : ""}
+        </div>
+      `).join("");
+    }
+
+    function renderPolicyCards(list) {
+      if (!list.length) return `<p class="empty-ok">No open policy decisions curated.</p>`;
+      return list.map((p) => `
+        <div class="mission">
+          <span class="move-cls RECOMMENDED">POLICY</span>
+          <div class="t" style="display:inline;margin-left:8px">${esc(p.title || "")}</div>
+          ${p.note ? `<div class="n">${esc(p.note)}</div>` : ""}
+        </div>
+      `).join("");
+    }
 
     return `
       <div class="stack">
@@ -314,13 +347,12 @@
           <p class="pct">${esc(overall.overall_pct)}%<small> / 100</small></p>
           <span class="label-est">${esc(overall.label || "PARTIAL ESTIMATE")}</span>
           <p class="phase-line">${esc(phase)}</p>
-          ${reconcile.show_why ? `<div class="why"><strong>Why vs prior ~${esc(reconcile.prior_pct)}%:</strong> ${esc(reconcile.why)}</div>` : ""}
-          <div class="chips" aria-label="Status chips">
+          <div class="chips" aria-label="Status vocabulary">
             ${heroChips.map((c) => `
-              <span class="chip" title="${esc(c.tooltip || "")}">${esc(c.label)}<strong>${esc(c.count)}</strong></span>
+              <span class="chip" title="${esc(c.tooltip || "")}">${esc(c.label)}</span>
             `).join("")}
           </div>
-          <p class="muted" style="margin:10px 0 0">progress_type: PARTIAL_ESTIMATE · CSV staleness: KNOWN · overlay required: YES · Factory excluded from %</p>
+          <p class="muted" style="margin:10px 0 0">Vocabulary only — categories overlap. Counts and builder honesty live under How calculated.</p>
         </div>
 
         ${firstMove ? `
@@ -334,6 +366,19 @@
             </div>
           </div>
         </div>` : ""}
+
+        <div class="panel">
+          <h2>Needs you</h2>
+          ${renderMissionCards(needsYou, "Nothing needs you right now — success (except active Progress retest while iterating).")}
+        </div>
+        <div class="panel">
+          <h2>Waiting on others</h2>
+          ${renderMissionCards(waitingOthers, "No curated waiting-on-others missions.")}
+        </div>
+        <div class="panel">
+          <h2>Policy decisions</h2>
+          ${renderPolicyCards(policies)}
+        </div>
 
         <div class="panel">
           <h2>Owner pulse</h2>
@@ -428,8 +473,10 @@
         </div>
 
         <details class="disclose">
-          <summary>DETAILS · SOURCE · technical IDs</summary>
+          <summary>DETAILS · SOURCE · technical IDs · why vs prior</summary>
           <p class="muted">Raw capability rows with IDs (PERS-/EVR-/ROLE-/GPO- kept here, not in Owner fields).</p>
+          ${((tech.reconcile || model.reconcile || {}).show_why) ? `<div class="why"><strong>Why vs prior ~${esc((tech.reconcile || model.reconcile).prior_pct)}%:</strong> ${esc((tech.reconcile || model.reconcile).why)}</div>` : ""}
+          <p class="muted" style="margin-top:8px">progress_type: ${(tech.honesty || {}).progress_type || "PARTIAL_ESTIMATE"} · CSV staleness: ${(tech.honesty || {}).master_build_csv_staleness || "KNOWN"} · overlay required: YES</p>
           ${renderItems(tech.items || [], 30)}
         </details>
       </div>
@@ -524,6 +571,7 @@
       <details class="calc">
         <summary>HOW CALCULATED · How is this calculated?</summary>
         <ol>${(calc.steps || []).map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
+        <p class="muted" style="margin-top:10px">BUILT ≠ HUMAN_COMMISSIONED ≠ LIVE</p>
       </details>
       <details class="disclose">
         <summary>BUILD FACTORY · status ${esc(fh.status || "")}</summary>

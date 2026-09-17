@@ -176,7 +176,99 @@ def main() -> int:
         {"BUILT", "WAITING", "POLICY_NEEDED"}.issubset(chip_ids),
         str(chip_ids),
     )
+    # v2.1 — hero chips are vocabulary (show_count False); no fake exclusive counts on Empire
+    hero_chips = [c for c in chips if c.get("hero", True)]
+    check(
+        "hero chips omit exclusive counts (show_count False)",
+        all(c.get("show_count") is False for c in hero_chips),
+        str([(c.get("id"), c.get("show_count")) for c in hero_chips]),
+    )
+    check(
+        "HTML Empire chips have no count strong tags in vocabulary mode",
+        'aria-label="Status vocabulary"' in HTML.read_text(encoding="utf-8"),
+    )
+
+    # v2.1 — waiting_class_for: SPECIFIED/IDEA/APPROVED → PLANNED (never auto POLICY)
+    check(
+        "SPECIFIED → PLANNED",
+        prm.waiting_class_for({"lifecycle": "SPECIFIED", "built": False}) == "PLANNED",
+    )
+    check(
+        "IDEA → PLANNED",
+        prm.waiting_class_for({"lifecycle": "IDEA"}) == "PLANNED",
+    )
+    check(
+        "APPROVED → PLANNED",
+        prm.waiting_class_for({"lifecycle": "APPROVED"}) == "PLANNED",
+    )
+    check(
+        "explicit UNAPPROVED_POLICY preserved",
+        prm.waiting_class_for({"lifecycle": "SPECIFIED", "waiting_class": "UNAPPROVED_POLICY"})
+        == "UNAPPROVED_POLICY",
+    )
+    empire_items = (
+        ((model.get("views") or {}).get("Empire") or {}).get("technical_details") or {}
+    ).get("items") or []
+    # Overlay may still mark Knowledge rule as UNAPPROVED_POLICY explicitly — that's curated
+    auto_mapped = [
+        i
+        for i in empire_items
+        if (i.get("lifecycle") or "").upper() in ("SPECIFIED", "IDEA", "APPROVED")
+        and i.get("waiting_class") == "UNAPPROVED_POLICY"
+        and i.get("id") != "OV-KNOWLEDGE-RULE"
+    ]
+    check(
+        "no SPECIFIED/IDEA/APPROVED auto→POLICY (except curated Knowledge row)",
+        len(auto_mapped) == 0,
+        str([(i.get("id"), i.get("capability")) for i in auto_mapped[:5]]),
+    )
+    sale_policy = [
+        i
+        for i in empire_items
+        if i.get("domain") == "Sale Readiness" and i.get("waiting_class") == "UNAPPROVED_POLICY"
+    ]
+    check("Sale Readiness not inflated as POLICY", len(sale_policy) == 0, str(len(sale_policy)))
+
+    # Curated missions / policy cards
+    needs_you = model.get("needs_you") or []
+    waiting_others = model.get("waiting_on_others") or []
+    policies = model.get("policy_decisions") or []
+    check("needs_you is list", isinstance(needs_you, list))
+    check("waiting_on_others is list", isinstance(waiting_others, list))
+    check("policy_decisions is list", isinstance(policies, list))
+    check("needs_you has Progress ACTIVE", any(
+        "Progress" in (m.get("title") or "") and m.get("status") == "ACTIVE" for m in needs_you
+    ), str(needs_you))
+    check("waiting_on_others has Habitat staff", any(
+        "Habitat" in (m.get("title") or "") for m in waiting_others
+    ), str(waiting_others))
+    check("waiting_on_others has Uma closer", any(
+        "Uma" in (m.get("title") or "") for m in waiting_others
+    ), str(waiting_others))
+    check("policy_decisions has Uma variance", any(
+        "variance" in (p.get("title") or "").lower() for p in policies
+    ), str(policies))
+    check("policy_decisions count small (not 77)", 1 <= len(policies) <= 5, str(len(policies)))
+
     pulse = model.get("owner_pulse") or {}
+    pulse_blob = " ".join(
+        str(x)
+        for key in ("working_now", "waiting_on_people", "policy_data_needed")
+        for x in (pulse.get(key) or [])
+    ).lower()
+    check(
+        "no fake Matt Core governance commission in pulse",
+        "matt human commission of built core" not in pulse_blob
+        and "commission core governance" not in pulse_blob,
+        pulse_blob[:200],
+    )
+    moves = model.get("next_moves") or []
+    moves_blob = " ".join(str(m.get("text") or "") for m in moves).lower()
+    check(
+        "no Core Matt commission fake in next_moves",
+        "commission core governance" not in moves_blob,
+        moves_blob,
+    )
     check("owner_pulse working_now", isinstance(pulse.get("working_now"), list) and len(pulse["working_now"]) > 0)
     check(
         "owner_pulse build_system factory",
@@ -219,6 +311,9 @@ def main() -> int:
     check("Empire has owner_phase", bool(empire.get("owner_phase")))
     check("Empire has next_moves", len(empire.get("next_moves") or []) <= 3)
     check("Empire technical_details present", isinstance(empire.get("technical_details"), dict))
+    check("Empire has needs_you", isinstance(empire.get("needs_you"), list))
+    check("Empire has waiting_on_others", isinstance(empire.get("waiting_on_others"), list))
+    check("Empire has policy_decisions", isinstance(empire.get("policy_decisions"), list))
     check(
         "Empire habitat_owner stages",
         len((empire.get("habitat_owner") or {}).get("stages") or []) == 7,
@@ -313,6 +408,10 @@ def main() -> int:
         "Owner pulse",
         "Milestone road",
         "How far are we?",
+        "Needs you",
+        "Waiting on others",
+        "Policy decisions",
+        "Status vocabulary",
     ):
         check(f"HTML contains {needle}", needle in html)
 

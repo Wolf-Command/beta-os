@@ -238,6 +238,27 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/prove_deployed_ui_routes.py >/tmp/prove-v2.out 2>&1; tail -1 /tmp/prove-v2.out",
       "expect": "PASS all deployed-route checks",
       "by": "cursor-local"
+    },
+    {
+      "id": "progress-dashboard-v21-025",
+      "claim": "Progress v2.1: SPECIFIED/IDEA/APPROVED→PLANNED (not POLICY); curated needs_you/waiting_on_others/policy_decisions; no Matt Core commission fake; Empire chips without exclusive counts; overall still 28%",
+      "check": "python3 -c \"import sys; sys.path.insert(0,'/Users/wolfterminal/beta-os/scripts'); from core import progress_read_model as p; m=p.build_read_model(); assert p.waiting_class_for({'lifecycle':'SPECIFIED'})=='PLANNED'; assert m['overall']['overall_pct']==28; assert any(x.get('status')=='ACTIVE' for x in m['needs_you']); assert 1<=len(m['policy_decisions'])<=5; blob=' '.join(str(x) for k in ('working_now','waiting_on_people') for x in (m.get('owner_pulse') or {}).get(k) or []).lower(); assert 'commission core governance' not in blob; print('v21', m['overall']['overall_pct'], len(m['needs_you']), len(m['waiting_on_others']), len(m['policy_decisions']), 'ok')\"",
+      "expect": "v21 28 1 2 2 ok",
+      "by": "cursor-local"
+    },
+    {
+      "id": "progress-dashboard-v21-tests",
+      "claim": "test_progress_dashboard.py passes v2.1 semantic cases (no SPECIFIED→POLICY; missions; policy cards)",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_progress_dashboard.py >/tmp/progress-v21-test.out 2>&1; tail -1 /tmp/progress-v21-test.out",
+      "expect": "177 passed, 0 failed",
+      "by": "cursor-local"
+    },
+    {
+      "id": "progress-v21-deployed-route",
+      "claim": "After beta_restart, prove_deployed_ui_routes.py PASS for /progress on :8788 (v2.1)",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/prove_deployed_ui_routes.py >/tmp/prove-v21.out 2>&1; tail -1 /tmp/prove-v21.out",
+      "expect": "PASS all deployed-route checks",
+      "by": "cursor-local"
     }
   ]
 }

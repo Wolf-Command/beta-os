@@ -1,8 +1,8 @@
-# Progress Dashboard — Canon (v2 Owner Cockpit)
+# Progress Dashboard — Canon (v2.1 semantic Owner Cockpit)
 
-**Status:** BUILT + TESTED 2026-09-17 (Cursor Local Agent) — Owner Cockpit iterate  
-**Run:** `BF-progress-dashboard-v2-20260917`  
-**Decision:** `2026-09-17 · PICK: Matt Progress Dashboard v1 on Beta only` (v2 extends same surface)  
+**Status:** BUILT + TESTED 2026-09-17 (Cursor Local Agent) — v2.1 semantic correction  
+**Run:** `BF-progress-dashboard-v21-20260917`  
+**Decision:** `2026-09-17 · PICK: Matt Progress Dashboard v1 on Beta only` (v2 / v2.1 extend same surface)  
 **Audience:** Owner / `PERS-MATT` only. Staff seats → **403**.
 
 ## Honesty
@@ -12,32 +12,33 @@ progress_type: PARTIAL_ESTIMATE
 master_build_csv_staleness: KNOWN
 overlay_required: YES
 BUILT ≠ HUMAN_COMMISSIONED ≠ LIVE
-WAITING ≠ BLOCKED
+WAITING ≠ BLOCKED ≠ PLANNED ≠ UNAPPROVED_POLICY
 TARGET profit ≠ ACTUAL (ACTUAL NOT YET TRUSTWORTHY)
 Factory HEALTHY ≠ mission complete
 ```
 
-No invented AI percentages. Peaches recommendations are not APPROVED. Domain weights labelled **ESTIMATED** until a registry owns them.
+No invented AI percentages. Peaches recommendations are not APPROVED. Domain weights labelled **ESTIMATED** until a registry owns them. Empire hero shows **status vocabulary without exclusive aggregate counts** (categories overlap).
 
 ## Architecture
 
 ```
 docs/canon/build-dashboard/*.csv
 + state/build-factory/runs/*.json (read-only → factory_health status)
-+ state/progress/v1_overlay.json (provenance + owner_cockpit)
++ state/progress/v1_overlay.json (provenance + owner_cockpit + commissioning_missions + policy_decisions)
     → scripts/core/progress_read_model.py
     → GET /api/progress* (Owner only)
     → dashboards/progress.html (+ /progress)
 ```
 
-Overlay fills gaps where `Master_Build.csv` is stale vs proven commits. Each overlay row carries `source`, `as_of`, `confidence` (`DERIVED` | `ESTIMATED` | `CURATED`). Owner cockpit fields (`owner_pulse`, `next_moves`, `recent_wins`, `milestones`) live under `owner_cockpit` with provenance.
+Overlay fills gaps where `Master_Build.csv` is stale vs proven commits. Each overlay row carries `source`, `as_of`, `confidence` (`DERIVED` | `ESTIMATED` | `CURATED`). Owner cockpit fields live under `owner_cockpit`. Curated `commissioning_missions[]` and `policy_decisions[]` drive Empire NEEDS YOU / WAITING ON OTHERS / POLICY DECISIONS.
 
 ## How is this calculated?
 
 1. **Domain weights** (CURATED, labelled ESTIMATED; **Factory health EXCLUDED**): Core ~26%, GGV ~21%, BZG ~16%, AMG ~16%, Intelligence ~11%, Integrations ~5%, Sale Readiness ~5% (prior ratios ÷0.95 after removing Factory 5%).
-2. **Factory health** is separate system status ∈ {**HEALTHY**, **DEGRADED**, **FAILING**} from deterministic checks (ACTIVE factory clean, deployed UI routes, Beta :8788 up, Production untouched). **Not** mission maturity.
-3. **Core %** = maturity of **tracked approved Core capabilities in Master_Build+overlay** (`item_count` denominator) — **NOT** “all imaginable Wolf Core forever”.
-4. **Per-capability maturity** from lifecycle (not file count):
+2. **Factory health** is separate system status ∈ {**HEALTHY**, **DEGRADED**, **FAILING**} from deterministic checks. **Not** mission maturity.
+3. **Tracked denominator (unchanged):** Core 18 · GGV 3 · BZG 2 · AMG 1 · Intelligence 2 · Integrations 5 · Sale Readiness 61 · **total 92**. Overall **~28%** PARTIAL ESTIMATE — do not change unless scoring inputs change.
+4. **Core %** = maturity of **tracked approved Core capabilities in Master_Build+overlay** (`item_count` denominator) — **NOT** “all imaginable Wolf Core forever”.
+5. **Per-capability maturity** from lifecycle (not file count):
    - IDEA / SPECIFIED = 0.05
    - APPROVED = 0.15
    - BUILDING = 0.35
@@ -46,15 +47,22 @@ Overlay fills gaps where `Master_Build.csv` is stale vs proven commits. Each ove
    - VERIFIED = 0.85
    - LIVE = 1.0
    - RETIRED / NOT_TARGET = n/a (0)
-5. **Commissioning penalty:** if BUILT / TESTED (or equivalent) but `HUMAN_COMMISSIONING ≠ DONE` → score capped at **0.65** (BUILT ≠ LIVE).
-6. **Overall** = weighted average of **mission** domain scores (no Factory). Shown as integer % + label **PARTIAL ESTIMATE**.
-7. **Prior 27% → new value:** v1 overall included Factory at 5% weight (~27%). v2 removes Factory and re-normalizes — do not inflate to look good. UI shows why note.
+6. **Commissioning penalty:** if BUILT / TESTED (or equivalent) but `HUMAN_COMMISSIONING ≠ DONE` → score capped at **0.65** (BUILT ≠ LIVE).
+7. **Waiting class:** SPECIFIED / IDEA / APPROVED → **PLANNED**. `UNAPPROVED_POLICY` only from curated `policy_decisions[]` (or explicit row / vertical flags) — never auto-mapped from every not-yet-built capability.
+8. **Human commissioning** = curated evidence list only (`needs_you` / `waiting_on_others`). Core is proven through verticals — **no Matt-per-primitive Core governance commission queue**.
+9. **Overall** = weighted average of **mission** domain scores (no Factory). Shown as integer % + label **PARTIAL ESTIMATE**.
+10. **Prior 27% → new value:** v1 overall included Factory at 5% weight (~27%). v2 removes Factory and re-normalizes. Why-vs-prior and builder honesty (`progress_type`, CSV staleness, overlay required) live under HOW CALCULATED / DETAILS — not Empire hero.
 
 ## Owner Cockpit (Empire)
 
-Hierarchy: How far are we? → status chips → Owner pulse → Next 3 moves (ACTIVE|WAITING|RECOMMENDED|APPROVED) → Recent wins → Milestone road → Domain cards (bar · plain phase · biggest gap).
+Hierarchy: How far are we? (phase + vocabulary chips, no fake counts) → **Needs you** → **Waiting on others** → **Policy decisions** (individual cards) → Owner pulse → Next 3 moves → Recent wins → Milestone road → Domain cards.
 
-Raw IDs (`PERS-` / `EVR-` / `ROLE-` / `GPO-`) stay in DETAILS / technical_details — not Owner pulse / moves / wins copy.
+Genuine queues (evidence):
+- **NEEDS YOU:** Progress Dashboard UX commissioning (Matt, ACTIVE while iterating).
+- **WAITING ON OTHERS:** Habitat → Haikal/Amanda; Uma Blu → verified closer.
+- **POLICY:** Uma variance threshold; optional Authorised Knowledge Resolution as Owner decision.
+
+Raw IDs (`PERS-` / `EVR-` / `ROLE-` / `GPO-`) stay in DETAILS / technical_details.
 
 ## Views
 
@@ -65,7 +73,7 @@ Default: **Empire**.
 ### Mandatory distinctions
 
 - BUILT ≠ HUMAN_COMMISSIONED ≠ LIVE
-- WAITING_HUMAN ≠ BLOCKED_SYSTEM ≠ UNAPPROVED_POLICY ≠ INACCESSIBLE_SOURCE
+- WAITING_HUMAN ≠ BLOCKED_SYSTEM ≠ UNAPPROVED_POLICY ≠ INACCESSIBLE_SOURCE ≠ PLANNED
 - TARGET profit ≠ ACTUAL — ACTUAL NOT YET TRUSTWORTHY
 - ESTIMATED labelled
 - Factory HEALTHY ≠ mission complete
@@ -73,7 +81,6 @@ Default: **Empire**.
 ### Verticals (owner stages)
 
 **Habitat (owner):** PLAN → WORK → PROOF → APPROVAL → PUBLISH READY → PUBLISH → LEARN  
-(Technical: PLAN → WORK → EVIDENCE → APPROVAL → PUBLISH_GATE → METRICOOL → PERFORMANCE)  
 Metricool write **LOCKED**. APPROVED ≠ PUBLISHED. REAL_EXTERNAL_PUBLISH = no.
 
 **Uma Close (owner):** ESB DATA → CASH COUNT → CHECK → EXCEPTION → FIX → VERIFIED CLOSE  
@@ -107,3 +114,5 @@ Evidence unlock: Foundations + First Real Workflow + Second Business Vertical wh
 - Editing Phase 2.6 dirty WIP files for cosmetics
 - Invented thresholds or fake % precision
 - Putting Factory health back into mission weighted %
+- Inventing Matt Core governance commission missions
+- Inflating POLICY from every SPECIFIED / IDEA / APPROVED row

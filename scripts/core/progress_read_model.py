@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Matt Progress Dashboard v2 — Owner Cockpit read-model (Beta, Owner-only).
+"""Matt Progress Dashboard v2.1 — Owner Cockpit read-model (Beta, Owner-only).
 
 BUILT ≠ HUMAN_COMMISSIONED ≠ LIVE.
 Factory health is SYSTEM STATUS — excluded from mission weighted %.
 progress_type: PARTIAL_ESTIMATE while Master_Build CSV + overlay mix exists.
+SPECIFIED/IDEA/APPROVED → PLANNED (never auto UNAPPROVED_POLICY).
+UNAPPROVED_POLICY only from curated policy_decisions[] / explicit flags.
 No ESB / Metricool / Production / Habitat mutations.
 """
 from __future__ import annotations
@@ -686,13 +688,18 @@ def reconcile_prior(overall_pct: int, overlay: dict[str, Any]) -> dict[str, Any]
 
 
 def waiting_class_for(item: dict[str, Any]) -> str | None:
+    """Derive waiting class. SPECIFIED/IDEA/APPROVED → PLANNED (not policy).
+
+    UNAPPROVED_POLICY only when the row already carries that class (curated
+    overlay / vertical flag) — never auto-mapped from lifecycle alone.
+    """
     if item.get("waiting_class"):
         return item["waiting_class"]
     lc = _norm_lifecycle(item.get("lifecycle") or "")
     if item.get("live"):
         return None
     if lc in ("SPECIFIED", "APPROVED", "IDEA"):
-        return "UNAPPROVED_POLICY"
+        return "PLANNED"
     if lc in ("BUILDING", "SCHEMA_BUILT", "BETA", "TESTED"):
         if item.get("human_commissioning") != "DONE":
             return "WAITING_HUMAN"
@@ -726,15 +733,23 @@ def calculation_english() -> dict[str, Any]:
         "steps": [
             weight_line,
             "Factory health is separate system status ∈ {HEALTHY, DEGRADED, FAILING} — not mission maturity.",
+            "Tracked capability denominator (unchanged for mission %): Core 18 · GGV 3 · BZG 2 · AMG 1 · "
+            "Intelligence 2 · Integrations 5 · Sale Readiness 61 · total 92. Overall ~28% PARTIAL ESTIMATE.",
             "Core % = maturity of tracked approved Core capabilities in Master_Build+overlay "
             "(item_count denominator) — NOT all imaginable Wolf Core forever.",
             "Per-capability maturity from lifecycle (not file count): IDEA/SPECIFIED=0.05 · APPROVED=0.15 · "
             "BUILDING=0.35 · BETA/SCHEMA_BUILT/TESTED=0.55 · PILOT=0.7 · VERIFIED=0.85 · LIVE=1.0 · RETIRED=n/a.",
             "Commissioning penalty: if BUILT/TESTED but HUMAN_COMMISSIONING ≠ DONE → score capped at 0.65 (BUILT ≠ LIVE).",
+            "WAITING class: SPECIFIED/IDEA/APPROVED → PLANNED. UNAPPROVED_POLICY only from curated "
+            "policy_decisions[] (or explicit row flags) — not every not-yet-built capability.",
+            "Human commissioning missions are curated evidence lists (needs_you / waiting_on_others) — "
+            "not every built Core row. Core is proven through verticals; no Matt-per-primitive commission queue.",
             "Overall = weighted average of mission domain scores (no Factory). Shown as integer % + label "
             "PARTIAL ESTIMATE while Master_Build CSV + overlay mix exists.",
             f"Prior mission % with Factory weight was ~{PRIOR_MISSION_PCT_WITH_FACTORY}%; "
             "recompute excludes Factory and re-normalizes — do not inflate to look good.",
+            "Builder honesty: progress_type PARTIAL_ESTIMATE · Master_Build CSV staleness KNOWN · "
+            "overlay required YES · Factory excluded from mission %.",
         ],
         "honesty": {
             "progress_type": "PARTIAL_ESTIMATE",
@@ -743,10 +758,11 @@ def calculation_english() -> dict[str, Any]:
             "no_fake_precision": True,
             "peaches_recommendation_is_not_approved": True,
             "factory_excluded_from_mission_pct": True,
+            "denominator_tracked_capabilities": 92,
         },
         "distinctions": [
             "BUILT ≠ HUMAN_COMMISSIONED ≠ LIVE",
-            "WAITING_HUMAN ≠ BLOCKED_SYSTEM ≠ UNAPPROVED_POLICY ≠ INACCESSIBLE_SOURCE",
+            "WAITING_HUMAN ≠ BLOCKED_SYSTEM ≠ UNAPPROVED_POLICY ≠ INACCESSIBLE_SOURCE ≠ PLANNED",
             "TARGET profit ≠ ACTUAL (ACTUAL NOT YET TRUSTWORTHY)",
             "ESTIMATED labelled",
             "Factory HEALTHY ≠ mission complete",
@@ -790,6 +806,7 @@ def _derive_owner_phase(
     overall_pct: int,
     verticals: dict[str, Any],
 ) -> str:
+    """Natural-English owner phase — foundations + first GGV/BZG workflows; commissioning underway."""
     core_pct = (card.get("Core") or {}).get("pct") or 0
     ggv_pct = (card.get("GGV") or {}).get("pct") or 0
     bzg_pct = (card.get("BZG") or {}).get("pct") or 0
@@ -803,20 +820,33 @@ def _derive_owner_phase(
     if core_pct >= 30 and (ggv_pct >= 40 or bzg_pct >= 25):
         bits = []
         if waiting_closer:
-            bits.append("Uma close waiting on people")
+            bits.append("Uma closer still needed for first verified close")
         if met_locked:
             bits.append("Habitat publish write still locked")
-        tail = (" · " + " · ".join(bits)) if bits else ""
-        return (
-            f"Capabilities built on Beta (~{overall_pct}%) — "
-            f"human commissioning & live ops still ahead{tail}"
+        mid = (
+            "Foundations and first GGV/BZG workflows are on Beta; "
+            "human commissioning is underway; AMG and company ops still ahead"
         )
+        if bits:
+            return f"{mid} ({'; '.join(bits)})"
+        return mid
     if overall_pct < 40:
-        return f"Mid-build (~{overall_pct}% PARTIAL ESTIMATE) — Core and first verticals advancing"
-    return f"Empire ~{overall_pct}% PARTIAL ESTIMATE — commission, live, and buyer-ready still open"
+        return (
+            f"Mid-build — Core and first verticals advancing "
+            f"(~{overall_pct}% PARTIAL ESTIMATE)"
+        )
+    return (
+        f"Empire roughly {overall_pct}% (PARTIAL ESTIMATE) — "
+        "commission, live ops, and buyer-ready still open"
+    )
 
 
 def _status_chips(all_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Status vocabulary legend — no fake exclusive aggregate counts on Empire hero.
+
+    Counts stay in technical_details only; hero chips omit count so BUILT/HUMAN
+    TESTING/WAITING are not shown as if mutually exclusive buckets.
+    """
     built_n = sum(1 for i in all_items if i.get("built"))
     commissioned_n = sum(1 for i in all_items if i.get("commissioned"))
     live_n = sum(1 for i in all_items if i.get("live"))
@@ -828,92 +858,192 @@ def _status_chips(all_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     policy_n = sum(
         1 for i in all_items if i.get("waiting_class") == "UNAPPROVED_POLICY"
     )
-    # HUMAN TESTING ≈ built but not commissioned (awaiting human path)
+    planned_n = sum(1 for i in all_items if i.get("waiting_class") == "PLANNED")
     human_testing_n = sum(
         1 for i in all_items if i.get("built") and not i.get("commissioned") and not i.get("live")
     )
+    # hero=True chips are vocabulary only (no count displayed)
     return [
         {
             "id": "BUILT",
             "label": "BUILT",
             "count": built_n,
+            "show_count": False,
             "tooltip": "Code/schema exists on Beta. BUILT ≠ COMMISSIONED ≠ LIVE.",
         },
         {
             "id": "HUMAN_TESTING",
             "label": "HUMAN TESTING",
             "count": human_testing_n,
-            "tooltip": "Built paths awaiting human walkthrough / commission. Not LIVE.",
+            "show_count": False,
+            "tooltip": "Built paths awaiting human walkthrough / commission. Not LIVE. Overlaps BUILT.",
         },
         {
             "id": "LIVE",
             "label": "LIVE",
             "count": live_n,
+            "show_count": False,
             "tooltip": "Commissioned and operating live. Rare until human commission DONE.",
         },
         {
             "id": "WAITING",
             "label": "WAITING",
             "count": waiting_n,
+            "show_count": False,
             "tooltip": "WAITING_HUMAN or BLOCKED_SYSTEM — not the same as policy gap.",
         },
         {
+            "id": "PLANNED",
+            "label": "PLANNED",
+            "count": planned_n,
+            "show_count": False,
+            "tooltip": "SPECIFIED/IDEA/APPROVED — tracked but not a policy decision queue.",
+        },
+        {
             "id": "POLICY_NEEDED",
-            "label": "POLICY NEEDED",
+            "label": "POLICY",
             "count": policy_n,
-            "tooltip": "UNAPPROVED_POLICY — decision/data/policy required. ≠ system failure.",
+            "show_count": False,
+            "tooltip": "Curated UNAPPROVED_POLICY only — see Policy decisions cards. ≠ every SPECIFIED row.",
         },
         {
             "id": "COMMISSIONED",
             "label": "COMMISSIONED",
             "count": commissioned_n,
-            "tooltip": "HUMAN_COMMISSIONING=DONE. Hidden from hero chips by default; kept for honesty.",
+            "show_count": False,
+            "tooltip": "HUMAN_COMMISSIONING=DONE. Hidden from hero chips by default.",
             "hero": False,
         },
     ]
+
+
+def _build_policy_decisions(
+    overlay: dict[str, Any],
+    verticals: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Individual policy decision cards — never a giant inflated count."""
+    curated = overlay.get("policy_decisions")
+    out: list[dict[str, Any]] = []
+    if isinstance(curated, list) and curated:
+        for p in curated:
+            if not isinstance(p, dict):
+                continue
+            out.append(
+                {
+                    "id": p.get("id") or "",
+                    "title": _owner_text_clean(str(p.get("title") or p.get("text") or "")),
+                    "note": _owner_text_clean(str(p.get("note") or "")),
+                    "owner": p.get("owner") or "Owner",
+                    "status": p.get("status") or "UNAPPROVED_POLICY",
+                    "source": p.get("source"),
+                    "as_of": p.get("as_of"),
+                    "confidence": p.get("confidence") or "CURATED",
+                }
+            )
+        return out
+    # Fallback from vertical flags if overlay omits the list
+    uma = verticals.get("uma_close") or {}
+    if uma.get("variance_policy") == "NOT_CONFIGURED":
+        out.append(
+            {
+                "id": "POL-UMA-VARIANCE",
+                "title": "Uma Blu cash variance threshold",
+                "note": "NOT_CONFIGURED — policy gap, not a system failure",
+                "owner": "Owner",
+                "status": "UNAPPROVED_POLICY",
+                "source": uma.get("source") or "docs/canon/UMA-BLU-DAILY-CLOSE.md",
+                "as_of": uma.get("as_of"),
+                "confidence": "DERIVED",
+            }
+        )
+    return out
+
+
+def _build_commissioning_missions(overlay: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+    """Curated human commissioning missions → needs_you / waiting_on_others."""
+    missions = overlay.get("commissioning_missions") or []
+    needs_you: list[dict[str, Any]] = []
+    waiting_on_others: list[dict[str, Any]] = []
+    for m in missions:
+        if not isinstance(m, dict):
+            continue
+        bucket = str(m.get("bucket") or "").upper()
+        status = str(m.get("status") or "WAITING").upper()
+        if not bucket:
+            bucket = "NEEDS_YOU" if status == "ACTIVE" else "WAITING_ON_OTHERS"
+        card = {
+            "id": m.get("id") or "",
+            "title": _owner_text_clean(str(m.get("title") or m.get("text") or "")),
+            "who": _owner_text_clean(str(m.get("who") or "")),
+            "note": _owner_text_clean(str(m.get("note") or "")),
+            "status": status,
+            "bucket": bucket,
+            "source": m.get("source"),
+            "as_of": m.get("as_of"),
+            "confidence": m.get("confidence") or "CURATED",
+        }
+        if bucket == "NEEDS_YOU":
+            needs_you.append(card)
+        else:
+            waiting_on_others.append(card)
+    return {"needs_you": needs_you, "waiting_on_others": waiting_on_others}
 
 
 def _build_owner_pulse(
     overlay: dict[str, Any],
     factory_health: dict[str, Any],
     verticals: dict[str, Any],
+    missions: dict[str, list[dict[str, Any]]] | None = None,
+    policy_decisions: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     cockpit = overlay.get("owner_cockpit") or {}
     pulse = dict(cockpit.get("owner_pulse") or {})
-    # Always stamp build-system from live factory assessment
     pulse["build_system"] = {
         "factory": factory_health.get("status"),
         "production": "UNTOUCHED",
         "note": factory_health.get("note"),
     }
-    # Ensure lists exist
     for key in ("working_now", "waiting_on_people", "policy_data_needed"):
         if key not in pulse or not isinstance(pulse[key], list):
             pulse[key] = []
-    # Derive fallbacks from verticals if overlay empty
-    if not pulse["waiting_on_people"]:
-        uma = verticals.get("uma_close") or {}
-        if uma.get("waiting") == "WAITING_FOR_CLOSER":
-            pulse["waiting_on_people"].append(
-                "Uma Blu closer to run first verified close (WAITING_HUMAN)"
-            )
-        pulse["waiting_on_people"].append(
-            "Matt human commission of built Core governance slices"
+    # Strip any invented Matt Core governance commission language
+    def _not_fake_core(text: str) -> bool:
+        t = (text or "").lower()
+        return not (
+            "matt human commission of built core" in t
+            or "commission core governance" in t
+            or "core governance slices" in t and "commission" in t
         )
+
+    pulse["waiting_on_people"] = [x for x in pulse["waiting_on_people"] if _not_fake_core(str(x))]
+    pulse["working_now"] = [x for x in pulse["working_now"] if _not_fake_core(str(x))]
+
+    # Prefer curated mission titles when pulse lists empty
+    missions = missions or {"needs_you": [], "waiting_on_others": []}
+    if not pulse["waiting_on_people"]:
+        for m in missions.get("waiting_on_others") or []:
+            who = m.get("who") or ""
+            title = m.get("title") or ""
+            pulse["waiting_on_people"].append(
+                f"{title}" + (f" — {who}" if who else "")
+            )
     if not pulse["policy_data_needed"]:
-        uma = verticals.get("uma_close") or {}
-        if uma.get("variance_policy") == "NOT_CONFIGURED":
+        for p in policy_decisions or []:
             pulse["policy_data_needed"].append(
-                "Uma variance threshold NOT_CONFIGURED (policy gap, not system failure)"
+                f"{p.get('title')}" + (f" — {p.get('note')}" if p.get("note") else "")
             )
     if not pulse["working_now"]:
-        pulse["working_now"].append("Owner Cockpit + factory health split on Progress v2")
+        for m in missions.get("needs_you") or []:
+            pulse["working_now"].append(
+                f"{m.get('title')}" + (f" ({m.get('status')})" if m.get("status") else "")
+            )
+        if not pulse["working_now"]:
+            pulse["working_now"].append("Progress Dashboard UX commissioning on Beta")
     pulse["source"] = pulse.get("source") or cockpit.get("source") or str(
         OVERLAY_PATH.relative_to(BETA_ROOT)
     )
     pulse["as_of"] = pulse.get("as_of") or cockpit.get("as_of") or overlay.get("as_of")
     pulse["confidence"] = pulse.get("confidence") or cockpit.get("confidence") or "CURATED"
-    # Owner surface — no raw PERS-/EVR-/ROLE-/GPO- ids in pulse text (strip if present)
     return pulse
 
 
@@ -933,15 +1063,21 @@ def _build_next_moves(overlay: dict[str, Any]) -> list[dict[str, Any]]:
     for m in (cockpit.get("next_moves") or [])[:3]:
         if not isinstance(m, dict):
             continue
+        text = _owner_text_clean(str(m.get("text") or ""))
+        # Never surface invented Matt Core governance commission as a next move
+        tl = text.lower()
+        if "commission core governance" in tl or (
+            "core governance" in tl and "commission" in tl
+        ):
+            continue
         cls = str(m.get("class") or "RECOMMENDED").upper()
         if cls not in ("ACTIVE", "WAITING", "RECOMMENDED", "APPROVED"):
             cls = "RECOMMENDED"
         moves.append(
             {
-                "text": _owner_text_clean(str(m.get("text") or "")),
+                "text": text,
                 "class": cls,
                 "note": _owner_text_clean(str(m.get("note") or "")),
-                # provenance stays in technical / source fields
                 "source": m.get("source"),
                 "as_of": m.get("as_of"),
                 "confidence": m.get("confidence") or "CURATED",
@@ -1113,7 +1249,13 @@ def build_read_model(*, overlay_path: Path | None = None) -> dict[str, Any]:
 
     owner_phase = _derive_owner_phase(card, overall["overall_pct"], verticals)
     status_chips = _status_chips(all_scored)
-    owner_pulse = _build_owner_pulse(overlay, factory_health, verticals)
+    missions = _build_commissioning_missions(overlay)
+    policy_decisions = _build_policy_decisions(overlay, verticals)
+    needs_you = missions["needs_you"]
+    waiting_on_others = missions["waiting_on_others"]
+    owner_pulse = _build_owner_pulse(
+        overlay, factory_health, verticals, missions, policy_decisions
+    )
     next_moves = _build_next_moves(overlay)
     recent_wins = _build_recent_wins(overlay)
     milestone_road = _build_milestone_road(overlay, card, verticals, all_scored)
@@ -1142,6 +1284,9 @@ def build_read_model(*, overlay_path: Path | None = None) -> dict[str, Any]:
                 "view": view_name,
                 "owner_phase": owner_phase,
                 "status_chips": [c for c in status_chips if c.get("hero", True)],
+                "needs_you": needs_you,
+                "waiting_on_others": waiting_on_others,
+                "policy_decisions": policy_decisions,
                 "owner_pulse": owner_pulse,
                 "next_moves": next_moves,
                 "recent_wins": recent_wins,
@@ -1160,6 +1305,14 @@ def build_read_model(*, overlay_path: Path | None = None) -> dict[str, Any]:
                     "factory_items": factory,
                     "factory_health_checks": factory_health.get("checks"),
                     "status_chips_all": status_chips,
+                    "reconcile": reconcile,
+                    "honesty": {
+                        "progress_type": "PARTIAL_ESTIMATE",
+                        "master_build_csv_staleness": overlay.get(
+                            "master_build_csv_staleness", "KNOWN"
+                        ),
+                        "overlay_required": True,
+                    },
                 },
             }
         elif view_name == "Backlog":
@@ -1224,6 +1377,9 @@ def build_read_model(*, overlay_path: Path | None = None) -> dict[str, Any]:
         "reconcile": reconcile,
         "owner_phase": owner_phase,
         "status_chips": [c for c in status_chips if c.get("hero", True)],
+        "needs_you": needs_you,
+        "waiting_on_others": waiting_on_others,
+        "policy_decisions": policy_decisions,
         "owner_pulse": owner_pulse,
         "next_moves": next_moves,
         "recent_wins": recent_wins,

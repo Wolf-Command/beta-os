@@ -11,30 +11,30 @@
   "owner_cockpit": {
     "as_of": "2026-09-17",
     "confidence": "CURATED",
-    "source": "docs/deliveries/GROK-PLAN-PROGRESS-DASHBOARD-V2-2026-09-17.md + verticals + overlay rows",
+    "source": "docs/deliveries/GROK-PLAN-PROGRESS-DASHBOARD-V21-2026-09-17.md + PROGRESS-V21-SEMANTIC-AUDIT + verticals",
     "owner_pulse": {
       "working_now": [
+        "Progress Dashboard UX commissioning — Matt ACTIVE NOW",
         "Habitat operator path on Beta — plan through publish gate (write still locked)",
-        "Uma Blu daily close path built — waiting on closer for first verified close",
-        "Core governance slices built on Beta — Authority through Exception"
+        "Uma Blu daily close path built — waiting on closer for first verified close"
       ],
       "waiting_on_people": [
-        "Uma Blu closer to run first verified close",
-        "Matt human commission of built Core governance slices"
+        "Habitat content commissioning — Haikal / Amanda",
+        "Uma Blu closer to run first verified close"
       ],
       "policy_data_needed": [
-        "Uma variance threshold not configured (policy gap, not system failure)",
-        "Authorised Knowledge Resolution rule still specified — needs approval"
+        "Uma Blu cash variance threshold not configured (policy gap, not system failure)",
+        "Authorised Knowledge Resolution rule — Owner decision still open"
       ]
     },
     "next_moves": [
       {
-        "text": "Commission Core governance on Beta (Authority through Exception)",
-        "class": "WAITING",
-        "note": "WAITING_HUMAN — BUILT ≠ COMMISSIONED. Not an APPROVED next build.",
-        "source": "Commissioning.csv LIVE?=NO + overlay Core TESTED rows",
+        "text": "Finish Progress Dashboard UX commissioning (this retest)",
+        "class": "ACTIVE",
+        "note": "NEEDS YOU — Matt human walkthrough. BUILT ≠ COMMISSIONED.",
+        "source": "docs/deliveries/CURSOR-MISSION-PROGRESS-DASHBOARD-V21-2026-09-17.md",
         "as_of": "2026-09-17",
-        "confidence": "DERIVED"
+        "confidence": "CURATED"
       },
       {
         "text": "Run first Uma Blu verified close with the closer",
@@ -45,10 +45,10 @@
         "confidence": "DERIVED"
       },
       {
-        "text": "Approve Authorised Knowledge Resolution rule",
+        "text": "Approve Uma variance threshold (and Knowledge Resolution if retained)",
         "class": "RECOMMENDED",
-        "note": "Peaches recommendation is not APPROVED — Owner decision required",
-        "source": "docs/RULE-Authorised-Knowledge-Resolution-2026-09-17.md",
+        "note": "UNAPPROVED_POLICY — Owner decision. Peaches recommendation is not APPROVED.",
+        "source": "docs/canon/UMA-BLU-DAILY-CLOSE.md; docs/RULE-Authorised-Knowledge-Resolution-2026-09-17.md",
         "as_of": "2026-09-17",
         "confidence": "CURATED"
       }
@@ -82,6 +82,63 @@
       {"id": "MS-BUYER", "label": "Buyer Ready", "order": 6, "locked": true, "reason": "Requires commissioned live ops + trustworthy actuals"}
     ]
   },
+  "commissioning_missions": [
+    {
+      "id": "CM-PROGRESS-UX",
+      "title": "Progress Dashboard UX commissioning",
+      "who": "Matt",
+      "bucket": "NEEDS_YOU",
+      "status": "ACTIVE",
+      "note": "Owner walkthrough / retest of this surface. ACTIVE NOW.",
+      "source": "docs/deliveries/CURSOR-MISSION-PROGRESS-DASHBOARD-V21-2026-09-17.md",
+      "as_of": "2026-09-17",
+      "confidence": "CURATED"
+    },
+    {
+      "id": "CM-HABITAT-STAFF",
+      "title": "Habitat content commissioning",
+      "who": "Haikal / Amanda",
+      "bucket": "WAITING_ON_OTHERS",
+      "status": "WAITING",
+      "note": "Staff path on Habitat operator — WAITING ON OTHERS. Metricool write still locked.",
+      "source": "docs/canon/HABITAT-PUBLISH-GATE.md; dashboards/habitat-operator.html",
+      "as_of": "2026-09-17",
+      "confidence": "CURATED"
+    },
+    {
+      "id": "CM-UMA-CLOSER",
+      "title": "Uma Blu first verified close",
+      "who": "Verified closer",
+      "bucket": "WAITING_ON_OTHERS",
+      "status": "WAITING",
+      "note": "WAITING_FOR_CLOSER — human path, not a system outage.",
+      "source": "docs/canon/UMA-BLU-DAILY-CLOSE.md",
+      "as_of": "2026-09-17",
+      "confidence": "DERIVED"
+    }
+  ],
+  "policy_decisions": [
+    {
+      "id": "POL-UMA-VARIANCE",
+      "title": "Uma Blu cash variance threshold",
+      "note": "NOT_CONFIGURED — set the live variance threshold. Policy gap, not a system failure.",
+      "owner": "Owner",
+      "status": "UNAPPROVED_POLICY",
+      "source": "docs/canon/UMA-BLU-DAILY-CLOSE.md",
+      "as_of": "2026-09-17",
+      "confidence": "DERIVED"
+    },
+    {
+      "id": "POL-KNOWLEDGE-RESOLUTION",
+      "title": "Authorised Knowledge Resolution rule",
+      "note": "Rule specified — Owner approval still open. Peaches recommendation is not APPROVED.",
+      "owner": "Owner",
+      "status": "UNAPPROVED_POLICY",
+      "source": "docs/RULE-Authorised-Knowledge-Resolution-2026-09-17.md",
+      "as_of": "2026-09-17",
+      "confidence": "CURATED"
+    }
+  ],
   "rows": [
     {
       "id": "OV-AUTH-JWT",
