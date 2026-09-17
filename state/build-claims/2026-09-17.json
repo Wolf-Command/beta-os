@@ -199,9 +199,23 @@
     },
     {
       "id": "progress-dashboard-tests",
-      "claim": "test_progress_dashboard.py passes Matt mandatory list; staff 403; BUILT≠COMMISSIONED≠LIVE; Habitat/Uma verticals honest",
+      "claim": "test_progress_dashboard.py passes Matt mandatory list; staff 403; BUILT\u2260COMMISSIONED\u2260LIVE; Habitat/Uma verticals honest",
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_progress_dashboard.py >/tmp/progress-dash-test.out 2>&1; tail -1 /tmp/progress-dash-test.out",
       "expect": "92 passed, 0 failed",
+      "by": "cursor-local"
+    },
+    {
+      "id": "deployed-route-verify-023",
+      "claim": "Clean aliases + /dashboards/ rewrites for progress/habitat-operator/uma-blu-close on live Beta :8788; RULE-Deployed-Route-Verify present; prove_deployed_routes GREEN",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/prove_deployed_routes.py >/tmp/prove-deployed.out 2>&1; tail -2 /tmp/prove-deployed.out",
+      "expect": "PASS all deployed-route checks",
+      "by": "cursor-local"
+    },
+    {
+      "id": "deployed-route-alias-tests",
+      "claim": "test_deployed_route_aliases.py passes (ephemeral rewrite + optional live)",
+      "check": "python3 -m unittest scripts.tests.test_deployed_route_aliases >/tmp/alias-tests.out 2>&1; tail -3 /tmp/alias-tests.out",
+      "expect": "OK / Ran 4",
       "by": "cursor-local"
     }
   ]
