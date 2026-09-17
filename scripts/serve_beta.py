@@ -3552,8 +3552,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "delegation": "BUILT",
             "redelegation": "DENIED",
             "impersonation": "BLOCKED",
-            "dual_approval": "NOT_BUILT",
-            "segregation_of_duties": "NOT_BUILT",
+            "dual_approval": "BUILT",
+            "segregation_of_duties": "BUILT",
             "access_control_live": False,
             "note": identity.get("note"),
         })

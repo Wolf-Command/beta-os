@@ -9,7 +9,7 @@
 | Approval integration (`authority_basis_*=DELEGATION`) | BUILT+TESTED |
 | Re-delegation | DENIED (this slice; `allow_redelegation=0`) |
 | Delegation UI | NOT BUILT |
-| Dual approval / SoD | Dual BUILT (Approval Engine); SoD NOT BUILT |
+| Dual approval / SoD | Dual BUILT; SoD BUILT (see `SEGREGATION-OF-DUTIES.md` — delegation cannot launder Person identity) |
 | Live Authority policy | NOT CONFIGURED |
 
 ## Constitutional

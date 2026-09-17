@@ -112,6 +112,20 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_approval_policy_binding.py >/tmp/apb-test.out 2>&1; tail -1 /tmp/apb-test.out",
       "expect": "pass=65 fail=0",
       "by": "cursor-local"
+    },
+    {
+      "id": "sod-constraints-017",
+      "claim": "core_sod_constraints + core_sod_participation; evaluate_sod wired on approve; live SoD/auth/gov=0; manage grants=0",
+      "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); tabs={r[0] for r in c.execute(\\\"select name from sqlite_master where type='table'\\\")}; print(int('core_sod_constraints' in tabs and 'core_sod_participation' in tabs), c.execute('select count(*) from core_sod_constraints').fetchone()[0], c.execute('select count(*) from org_authority_limits').fetchone()[0], c.execute('select count(*) from core_governance_policies').fetchone()[0], c.execute(\\\"select count(*) from org_role_permissions where permission_id='PERM-SOD-CONSTRAINT-MANAGE'\\\").fetchone()[0])\"",
+      "expect": "1 0 0 0 0",
+      "by": "cursor-local"
+    },
+    {
+      "id": "sod-constraints-tests",
+      "claim": "test_sod_constraints.py passes; APR/DLG/Dual/APB regressions green; temp-DB only",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_sod_constraints.py >/tmp/sod-test.out 2>&1; tail -1 /tmp/sod-test.out",
+      "expect": "pass=54 fail=0",
+      "by": "cursor-local"
     }
   ]
 }

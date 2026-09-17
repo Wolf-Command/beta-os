@@ -4,8 +4,8 @@
 REQUESTED ≠ APPROVAL 1 ≠ APPROVAL N ≠ APPROVED ≠ EXECUTED ≠ OUTCOME.
 Authority = capacity; Approval = specific decision evidence.
 Approval never creates Authority. Completing a linked Work Item ≠ approving.
-Dual approval = BUILT (required_decision_count). SoD / UI / LLM = NOT BUILT.
-Delegation evaluator = BUILT (identity never delegates).
+Dual approval = BUILT (required_decision_count). SoD = BUILT (Person independence).
+UI / LLM = NOT BUILT. Delegation evaluator = BUILT (identity never delegates).
 """
 from __future__ import annotations
 
@@ -24,6 +24,7 @@ from core import rbac as _rbac
 from core import work_items as _work_items
 from core import delegation as _delegation
 from core import governance_policy as _gov
+from core import sod as _sod
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 CATALOG_DB = BETA_ROOT / "catalog" / "content_library.sqlite"
@@ -61,7 +62,7 @@ IMMUTABLE_FIELDS = frozenset(
 
 HONESTY = {
     "dual_approval": "BUILT",
-    "segregation_of_duties": "NOT_BUILT",
+    "segregation_of_duties": "BUILT",
     "delegation": "BUILT",
     "policy_binding": "BUILT",
     "approval_ui": "NOT_BUILT",
@@ -1279,6 +1280,51 @@ def _decide(
             # Authority not required for reject
             authority_allowed = 0
             authority_reason = "not_required_for_reject"
+
+        # SoD: APPROVED path only this slice. Zero ACTIVE → sod_not_applicable (legacy green).
+        # Authority / Permission / Delegation / Policy Binding cannot override SoD deny.
+        if dec == "APPROVED":
+            sod_ev = _sod.evaluate_sod(
+                verified,
+                req["owning_entity_id"],
+                "APPROVAL",
+                "approval.decide",
+                req["approval_request_id"],
+                scope_id=None,
+                identity=identity,
+                audit=True,
+                conn=c,
+                # Client independence claims ignored even if present on identity
+                requester_is_different=(identity or {}).get("requester_is_different"),
+                client_prior_participants=(identity or {}).get("prior_participants"),
+            )
+            if not sod_ev.get("allowed"):
+                reason = sod_ev.get("reason_code") or "sod_same_person_conflict"
+                _audit_approval(
+                    action="approval.decide_attempt",
+                    result="DENIED",
+                    request=req,
+                    verified_person_id=verified,
+                    identity=identity,
+                    reason_code=reason,
+                    metadata={
+                        "decision": dec,
+                        "sod_result": sod_ev.get("result"),
+                        "sod_constraint_id": sod_ev.get("matched_constraint_id"),
+                        "sod_constraint_version": sod_ev.get("matched_constraint_version"),
+                        "prior_action": sod_ev.get("prior_action"),
+                        "prior_participants": sod_ev.get("prior_participants"),
+                        "conflicting_person_id": sod_ev.get("conflicting_person_id"),
+                    },
+                    conn=c,
+                )
+                if commit:
+                    c.commit()
+                raise ApprovalError(
+                    f"segregation of duties denied: {reason}",
+                    code=reason,
+                    http_status=403,
+                )
 
         # Re-check PENDING under write (another decider may have flipped status)
         fresh = get_approval_request(req["approval_request_id"], conn=c, expire=False)

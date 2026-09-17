@@ -3,7 +3,7 @@
 
 IDENTITY NEVER DELEGATES. Actor = authenticated Person always.
 Delegation does not create power; grant ≤ what delegator currently holds.
-NO RE-DELEGATION. No dual/SoD/UI/LLM. Live Authority Limits stay 0.
+NO RE-DELEGATION. Dual BUILT; SoD BUILT (cannot launder). No UI/LLM. Live Authority Limits stay 0.
 """
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ HONESTY = {
     "redelegation": "DENIED",
     "impersonation": "BLOCKED",
     "dual_approval": "BUILT",
-    "segregation_of_duties": "NOT_BUILT",
+    "segregation_of_duties": "BUILT",
     "delegation_ui": "NOT_BUILT",
     "ai_delegate": False,
     "identity_never_delegates": True,
