@@ -175,6 +175,20 @@
       "check": "test -f /Users/wolfterminal/beta-os/dashboards/habitat-operator.html && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8788/habitat-operator.html && python3 /Users/wolfterminal/beta-os/scripts/tests/test_habitat_operator_smoke.py >/tmp/habitat-op-smoke.out 2>&1; tail -1 /tmp/habitat-op-smoke.out",
       "expect": "200 and 14 passed, 0 failed",
       "by": "cursor-local"
+    },
+    {
+      "id": "uma-blu-daily-close-021",
+      "claim": "venue_daily_closes + PERS-DEVI/HFB/SCOPE-BZG-UMA seed on Beta; live variance policies=0; live auth=0; closer WAITING; Habitat content_planner untouched",
+      "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); print(c.execute(\\\"select count(*) from venue_close_variance_policies\\\").fetchone()[0], c.execute('select count(*) from org_authority_limits').fetchone()[0], c.execute(\\\"select identifier from org_auth_identities where person_id='PERS-DEVI'\\\").fetchone()[0], c.execute(\\\"select count(*) from org_assignments a join org_positions p on p.position_id=a.position_id where p.role_id='ROLE-BZG-CLOSER' and a.status='ACTIVE' and a.end_at is null\\\").fetchone()[0], c.execute(\\\"select id from schema_migrations where id='021_uma_blu_daily_close'\\\").fetchone()[0])\"",
+      "expect": "0 0 deviputu236@gmail.com 0 021_uma_blu_daily_close",
+      "by": "cursor-local"
+    },
+    {
+      "id": "uma-blu-daily-close-tests",
+      "claim": "test_uma_blu_daily_close.py passes Matt mandatory list; honesty flags; empty-day/stale/SoD/zero-variance paths",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_uma_blu_daily_close.py >/tmp/uma-close-test.out 2>&1; tail -1 /tmp/uma-close-test.out",
+      "expect": "62 passed, 0 failed",
+      "by": "cursor-local"
     }
   ]
 }

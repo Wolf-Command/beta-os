@@ -78,6 +78,8 @@ from core import work_items as _work_items
 from core import approvals as _approvals
 from core import delegation as _delegation
 from core import content_publish as _content_publish
+from core import venue_close as _venue_close
+from core import esb_close_snapshot as _esb_close_snapshot
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1367,6 +1369,13 @@ def _ux_shape_plan(draft: dict) -> dict:
     ui_status = rev_label
     if rev_label == "WORKING":
         ui_status = "WORKING"
+    # Format-on-read: human fortnight title; keep DB title as title_raw
+    title_raw = plan.get("title") or ""
+    title_human = _wi.format_fortnight_title(
+        plan.get("brand_id") or "",
+        plan.get("period_start") or "",
+        plan.get("period_end") or "",
+    ) if (plan.get("period_start") and plan.get("period_end")) else title_raw
     return {
         "plan": {
             **{k: plan.get(k) for k in (
@@ -1374,6 +1383,8 @@ def _ux_shape_plan(draft: dict) -> dict:
                 "status", "created_by", "created_at", "updated_at", "data_lane",
                 "review_state", "approved_revision_id",
             )},
+            "title": title_human or title_raw,
+            "title_raw": title_raw,
             "status_label": ui_status,
             "review_state": plan.get("review_state") or ("APPROVED" if rev_label == "APPROVED" else "WORKING"),
             "review_label": rev_label,
@@ -1492,6 +1503,28 @@ class BetaHandler(SimpleHTTPRequestHandler):
         # Wolf Core auth mode diagnostics (no secrets)
         if path == "/api/core/auth-mode":
             self._send_json(_request_auth.auth_mode_payload())
+            return
+
+        # Uma Blu daily close (Beta — read)
+        if path == "/api/venue-close/honesty":
+            self._venue_close_honesty()
+            return
+        if path == "/api/venue-close/list":
+            self._venue_close_list(qs)
+            return
+        m_vc = re.match(r"^/api/venue-close/([^/]+)$", path)
+        if m_vc and m_vc.group(1) not in (
+            "open",
+            "capture",
+            "declare-cash",
+            "reconcile",
+            "exception",
+            "resolve",
+            "verify",
+            "honesty",
+            "list",
+        ):
+            self._venue_close_get(m_vc.group(1), qs)
             return
 
         # Wolf Core RBAC (WHAT; identity via request_auth)
@@ -1783,6 +1816,30 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/core/work-items":
             self._post_core_work_item()
             return
+
+        # Uma Blu daily close mutations (server computes totals/variance/state)
+        if path == "/api/venue-close/open":
+            self._venue_close_open()
+            return
+        if path == "/api/venue-close/capture":
+            self._venue_close_capture()
+            return
+        if path == "/api/venue-close/declare-cash":
+            self._venue_close_declare_cash()
+            return
+        if path == "/api/venue-close/reconcile":
+            self._venue_close_reconcile()
+            return
+        if path == "/api/venue-close/exception":
+            self._venue_close_exception()
+            return
+        if path == "/api/venue-close/resolve":
+            self._venue_close_resolve()
+            return
+        if path == "/api/venue-close/verify":
+            self._venue_close_verify()
+            return
+
         m_wi_assign = re.match(r"^/api/core/work-items/([^/]+)/assign$", path)
         if m_wi_assign:
             self._post_core_work_item_assign(m_wi_assign.group(1))
@@ -2829,8 +2886,263 @@ class BetaHandler(SimpleHTTPRequestHandler):
         """Compatibility wrapper — build-next / admin sync still use can_create_plan."""
         return self._require_permission("can_create_plan", body)
 
+    # ----- Uma Blu daily close -----
 
+    def _venue_close_person(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="venue.close.*")
+            return None
+        pid = identity.get("person_id")
+        if not pid:
+            self._send_identity_deny(
+                {
+                    "error": "missing_person",
+                    "message": "Resolved identity has no Person binding.",
+                    "identity_assurance": identity.get("identity_assurance"),
+                    "real_authentication": identity.get("real_authentication"),
+                },
+                required_permission="venue.close.*",
+            )
+            return None
+        return identity
 
+    def _venue_close_err(self, exc: Exception) -> None:
+        if isinstance(exc, _venue_close.VenueCloseError):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    **_venue_close.HONESTY,
+                },
+                status=exc.http_status,
+            )
+            return
+        if isinstance(exc, _esb_close_snapshot.EsbSnapshotError):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    **_esb_close_snapshot.HONESTY,
+                },
+                status=exc.http_status,
+            )
+            return
+        self._send_err(500, str(exc))
+
+    def _venue_close_honesty(self) -> None:
+        try:
+            self._send_json({"ok": True, **_venue_close.honesty_flags()})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_list(self, qs: dict) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            state = (qs.get("state") or [None])[0]
+            rows = _venue_close.list_closes(state=state)
+            self._send_json(
+                {
+                    "ok": True,
+                    "closes": rows,
+                    "count": len(rows),
+                    **_venue_close.honesty_flags(),
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_get(self, close_id: str, qs: dict) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            date = (qs.get("business_date") or [None])[0]
+            if close_id == "by-date":
+                row = _venue_close.get_close(business_date=date)
+            else:
+                row = _venue_close.get_close(close_id)
+            if not row:
+                self._send_json(
+                    {"ok": False, "error": "not_found", "message": "close not found"},
+                    status=404,
+                )
+                return
+            self._send_json({"ok": True, "close": row, **_venue_close.HONESTY})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_refuse_overrides(self, body: dict, keys: tuple[str, ...]) -> bool:
+        for forbidden in keys:
+            if forbidden in body:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "client_override_refused",
+                        "message": f"client cannot submit {forbidden}",
+                    },
+                    status=400,
+                )
+                return True
+        return False
+
+    def _venue_close_open(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "variance_cash_amount", "esb_totals", "esb_totals_json", "expected_cash")
+        ):
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            out = _venue_close.open_or_get(
+                str(body.get("business_date") or ""),
+                verified_person_id=identity["person_id"],
+                identity=identity,
+            )
+            self._send_json({"ok": True, "close": out})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_capture(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "esb_totals", "esb_fingerprint_sha256", "variance_cash_amount")
+        ):
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            out = _venue_close.capture_esb_snapshot(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                identity=identity,
+            )
+            self._send_json({"ok": True, "close": out})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_declare_cash(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "variance_cash_amount", "esb_totals", "verified_cash")
+        ):
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            out = _venue_close.attach_declared_cash(
+                str(body.get("close_id") or ""),
+                declared_cash_amount=body.get("declared_cash_amount"),
+                verified_person_id=identity["person_id"],
+                object_ref=(body.get("object_ref") or None),
+                notes=(body.get("notes") or None),
+                identity=identity,
+            )
+            self._send_json({"ok": True, "close": out})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_reconcile(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "variance_cash_amount", "esb_totals")
+        ):
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            out = _venue_close.reconcile(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                identity=identity,
+            )
+            self._send_json({"ok": True, "close": out})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_exception(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            out = _venue_close.open_exception(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                identity=identity,
+            )
+            self._send_json({"ok": True, "close": out})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_resolve(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            out = _venue_close.resolve_exception(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                resolution_notes=str(body.get("resolution_notes") or ""),
+                object_ref=(body.get("object_ref") or None),
+                identity=identity,
+            )
+            self._send_json({"ok": True, "close": out})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_verify(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            out = _venue_close.verify_close(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                identity=identity,
+            )
+            self._send_json({"ok": True, "close": out})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
 
     def _get_core_permissions(self) -> None:
         self._send_json({
@@ -4051,6 +4363,13 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     r["is_test_lane"] = (r.get("data_lane") or "") == "test"
                     r["review_label"] = _p26.review_label(r)
                     r["status_label"] = r["review_label"]
+                    r["title_raw"] = r.get("title") or ""
+                    if r.get("period_start") and r.get("period_end"):
+                        r["title"] = _wi.format_fortnight_title(
+                            r.get("brand_id") or "",
+                            r.get("period_start") or "",
+                            r.get("period_end") or "",
+                        )
                     # light card counts
                     cc = conn.execute(
                         """

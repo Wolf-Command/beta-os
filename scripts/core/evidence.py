@@ -492,6 +492,7 @@ def submit_evidence(
     identity: dict[str, Any] | None = None,
     allow_test_write: bool = False,
     department_id: str | None = None,
+    brand_id: str | None = None,
     conn: sqlite3.Connection | None = None,
     commit: bool = True,
 ) -> dict[str, Any]:
@@ -546,6 +547,9 @@ def submit_evidence(
         dept = (department_id or "").strip() or None
         if dept:
             rbac_target["department_id"] = dept
+        brand = (brand_id or "").strip() or None
+        if brand:
+            rbac_target["brand_id"] = brand
         sid = (scope_id or "").strip() or None
         if sid:
             rbac_target["scope_id"] = sid

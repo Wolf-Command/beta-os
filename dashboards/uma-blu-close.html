@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Uma Blu · Daily Close</title>
+<style>
+  :root {
+    --bg: #0f1c24;
+    --bg2: #162833;
+    --bg3: #1e3542;
+    --line: #2a4554;
+    --text: #eef4f7;
+    --muted: #8aa0ad;
+    --accent: #3db8a0;
+    --warn: #e0a045;
+    --danger: #e05a4c;
+    --ok: #4ecf8a;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font); min-height: 100%;
+  }
+  body {
+    padding: 16px 16px 64px;
+    max-width: 480px;
+    margin: 0 auto;
+    background:
+      radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
+      radial-gradient(ellipse 90% 60% at 100% 0%, #163028 0%, transparent 50%),
+      var(--bg);
+  }
+  .brand {
+    font-size: 1.55rem; font-weight: 700; letter-spacing: -0.03em;
+    margin: 0 0 2px;
+  }
+  .brand em { font-style: normal; color: var(--accent); }
+  .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 18px; line-height: 1.35; }
+  .panel {
+    background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .panel h2 {
+    margin: 0 0 10px; font-size: 0.78rem; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); font-weight: 650;
+  }
+  label { display: block; font-size: 0.8rem; color: var(--muted); margin: 10px 0 6px; }
+  input[type="date"], input[type="number"], input[type="text"], textarea {
+    width: 100%; appearance: none; border: 1px solid var(--line);
+    background: var(--bg3); color: var(--text); border-radius: 10px;
+    padding: 13px 12px; font: inherit; font-size: 1.05rem;
+  }
+  textarea { min-height: 72px; resize: vertical; }
+  .btn {
+    appearance: none; border: 1px solid var(--line); background: var(--bg3);
+    color: var(--text); border-radius: 12px; padding: 14px 16px;
+    font-size: 1rem; font-weight: 650; cursor: pointer; width: 100%;
+    margin-top: 10px;
+  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: #1f6b5c; border-color: #2a8a76; color: #fff; }
+  .btn-ok { background: rgba(78,207,138,0.12); border-color: rgba(78,207,138,0.4); color: var(--ok); }
+  .btn-warn { background: rgba(224,160,69,0.12); border-color: rgba(224,160,69,0.45); color: var(--warn); }
+  .state {
+    display: inline-block; padding: 5px 10px; border-radius: 999px;
+    border: 1px solid var(--line); font-size: 0.78rem; color: var(--muted);
+    margin-top: 4px;
+  }
+  .state.ok { color: var(--ok); border-color: rgba(78,207,138,0.45); }
+  .state.warn { color: var(--warn); border-color: rgba(224,160,69,0.45); }
+  .state.bad { color: var(--danger); border-color: rgba(224,90,76,0.45); }
+  .fig { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
+  .fig small { display: block; font-size: 0.72rem; font-weight: 500; color: var(--muted); margin-top: 2px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .msg { margin-top: 10px; font-size: 0.88rem; white-space: pre-wrap; }
+  .msg.err { color: var(--danger); }
+  .msg.ok { color: var(--ok); }
+  .muted { color: var(--muted); font-size: 0.78rem; line-height: 1.4; }
+  .exc {
+    border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px;
+  }
+  .exc:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
+  .who { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; }
+</style>
+</head>
+<body>
+  <h1 class="brand">Uma Blu <em>Daily Close</em></h1>
+  <p class="sub">Count the till. We pull ESB sales. Variance only when numbers disagree.</p>
+  <div class="who" id="who">Checking who you are…</div>
+
+  <div class="panel">
+    <h2>Today’s close</h2>
+    <label for="bizDate">Business date</label>
+    <input type="date" id="bizDate" />
+    <button class="btn btn-primary" id="btnOpen" type="button">Open close</button>
+    <button class="btn" id="btnCapture" type="button" disabled>Pull ESB sales</button>
+    <div id="esbBox" class="muted" style="margin-top:10px"></div>
+    <label for="cashAmt">Cash in the till (declared)</label>
+    <input type="number" id="cashAmt" min="0" step="1000" placeholder="Amount counted" disabled />
+    <label for="cashNote">Optional note / photo ref</label>
+    <input type="text" id="cashNote" placeholder="e.g. photo on phone" disabled />
+    <button class="btn" id="btnDeclare" type="button" disabled>Submit cash count</button>
+    <button class="btn btn-ok" id="btnReconcile" type="button" disabled>Reconcile</button>
+    <div id="statusBox" style="margin-top:12px"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Exceptions needing you</h2>
+    <p class="muted">Only variance / policy gaps appear here — quiet when the day is clean.</p>
+    <div id="excList" class="muted">Loading…</div>
+  </div>
+
+  <div class="panel">
+    <h2>Honesty</h2>
+    <div class="muted" id="honesty">…</div>
+  </div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  let close = null;
+  let me = null;
+
+  function todayWITA() {
+    const d = new Date();
+    // Approximate local calendar date for operator phone
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function money(n) {
+    if (n == null || n === "") return "—";
+    return Number(n).toLocaleString("id-ID");
+  }
+
+  function stateClass(s) {
+    if (s === "VERIFIED_CLOSED") return "ok";
+    if (s === "VARIANCE_REQUIRES_POLICY" || s === "EXCEPTION" || s === "RESOLVED") return "warn";
+    if (s === "CANCELLED") return "bad";
+    return "";
+  }
+
+  function humanState(s) {
+    const map = {
+      OPEN: "Opened — pull ESB next",
+      DATA_CAPTURED: "ESB pulled — count cash",
+      EVIDENCE_SUBMITTED: "Cash declared — reconcile",
+      RECONCILED: "Reconciled",
+      VARIANCE_REQUIRES_POLICY: "Variance — needs policy / handover",
+      EXCEPTION: "Exception open",
+      RESOLVED: "Resolved — needs verify",
+      VERIFIED_CLOSED: "Closed & verified",
+      CANCELLED: "Cancelled",
+    };
+    return map[s] || s;
+  }
+
+  async function api(path, opts) {
+    const res = await fetch(path, {
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", ...(opts && opts.headers) },
+      ...opts,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) {
+      const err = new Error(data.message || data.error || res.statusText);
+      err.data = data;
+      throw err;
+    }
+    return data;
+  }
+
+  function setMsg(text, ok) {
+    const el = $("msg");
+    el.textContent = text || "";
+    el.className = "msg " + (ok ? "ok" : text ? "err" : "");
+  }
+
+  function renderClose() {
+    const box = $("statusBox");
+    const esb = $("esbBox");
+    if (!close) {
+      box.innerHTML = "";
+      esb.textContent = "";
+      return;
+    }
+    const totals = close.esb_totals || {};
+    const st = close.state;
+    box.innerHTML =
+      `<div class="state ${stateClass(st)}">${humanState(st)}</div>` +
+      `<div class="row">` +
+      `<div class="fig">${money(close.declared_cash_amount)}<small>Declared cash</small></div>` +
+      `<div class="fig">${money(totals.cash_from_payments)}<small>ESB cash (payments)</small></div>` +
+      `</div>` +
+      `<div class="row">` +
+      `<div class="fig">${money(close.variance_cash_amount)}<small>Variance</small></div>` +
+      `<div class="fig">${totals.finished_count ?? "—"}<small>Finished bills</small></div>` +
+      `</div>` +
+      (close.work_item_id ? `<p class="muted" style="margin-top:8px">Work item ${close.work_item_id}</p>` : "");
+
+    esb.textContent = totals.cash_label
+      ? `ESB basis: ${totals.cash_label} — not settlement. Settlement API unavailable.`
+      : "";
+
+    const canCapture = st === "OPEN" || st === "DATA_CAPTURED";
+    const canDeclare = st === "DATA_CAPTURED" || st === "EVIDENCE_SUBMITTED";
+    const canRec = st === "EVIDENCE_SUBMITTED" || st === "VARIANCE_REQUIRES_POLICY";
+    $("btnCapture").disabled = !canCapture;
+    $("cashAmt").disabled = !canDeclare;
+    $("cashNote").disabled = !canDeclare;
+    $("btnDeclare").disabled = !canDeclare;
+    $("btnReconcile").disabled = !canRec;
+  }
+
+  async function loadHonesty() {
+    try {
+      const h = await api("/api/venue-close/honesty");
+      $("honesty").textContent =
+        `settlement_api: ${h.settlement_api}\n` +
+        `esb_cash_basis: ${h.esb_cash_basis}\n` +
+        `live_variance_threshold: ${h.live_variance_threshold}\n` +
+        `live_monetary_authority: ${h.live_monetary_authority}\n` +
+        `closer: ${h.closer_commissioning}`;
+    } catch (e) {
+      $("honesty").textContent = String(e.message || e);
+    }
+  }
+
+  async function loadExceptions() {
+    const el = $("excList");
+    try {
+      const data = await api("/api/venue-close/list?state=EXCEPTION");
+      const data2 = await api("/api/venue-close/list?state=VARIANCE_REQUIRES_POLICY");
+      const data3 = await api("/api/venue-close/list?state=RESOLVED");
+      const rows = [...(data.closes || []), ...(data2.closes || []), ...(data3.closes || [])];
+      if (!rows.length) {
+        el.textContent = "None right now.";
+        return;
+      }
+      el.innerHTML = rows
+        .map((r) => {
+          const actions =
+            r.state === "VARIANCE_REQUIRES_POLICY"
+              ? `<button class="btn btn-warn" data-act="exception" data-id="${r.close_id}" type="button">Open exception</button>`
+              : r.state === "EXCEPTION"
+              ? `<label>Resolution note</label><textarea data-notes="${r.close_id}"></textarea>` +
+                `<button class="btn" data-act="resolve" data-id="${r.close_id}" type="button">Resolve</button>`
+              : r.state === "RESOLVED"
+              ? `<button class="btn btn-ok" data-act="verify" data-id="${r.close_id}" type="button">Verify close</button>`
+              : "";
+          return (
+            `<div class="exc">` +
+            `<strong>${r.business_date}</strong> · ${humanState(r.state)}` +
+            `<div class="muted">Variance ${money(r.variance_cash_amount)}</div>` +
+            actions +
+            `</div>`
+          );
+        })
+        .join("");
+    } catch (e) {
+      el.textContent = e.message || String(e);
+    }
+  }
+
+  async function boot() {
+    $("bizDate").value = todayWITA();
+    try {
+      const meData = await api("/api/core/me");
+      me = meData.person || meData;
+      $("who").textContent = me.display_name
+        ? `Signed in as ${me.display_name}`
+        : me.email
+        ? `Signed in as ${me.email}`
+        : "Signed in";
+    } catch (e) {
+      $("who").textContent = "Not signed in — open via Cloudflare Access.";
+    }
+    await loadHonesty();
+    await loadExceptions();
+  }
+
+  $("btnOpen").onclick = async () => {
+    setMsg("");
+    try {
+      const data = await api("/api/venue-close/open", {
+        method: "POST",
+        body: JSON.stringify({ business_date: $("bizDate").value }),
+      });
+      close = data.close;
+      renderClose();
+      setMsg(close.created ? "Close opened." : "Existing close loaded.", true);
+    } catch (e) {
+      setMsg(e.message || String(e));
+    }
+  };
+
+  $("btnCapture").onclick = async () => {
+    if (!close) return;
+    setMsg("");
+    try {
+      const data = await api("/api/venue-close/capture", {
+        method: "POST",
+        body: JSON.stringify({ close_id: close.close_id }),
+      });
+      close = data.close;
+      renderClose();
+      setMsg("ESB sales pulled.", true);
+    } catch (e) {
+      setMsg((e.data && e.data.message) || e.message || String(e));
+    }
+  };
+
+  $("btnDeclare").onclick = async () => {
+    if (!close) return;
+    setMsg("");
+    try {
+      const data = await api("/api/venue-close/declare-cash", {
+        method: "POST",
+        body: JSON.stringify({
+          close_id: close.close_id,
+          declared_cash_amount: Number($("cashAmt").value),
+          object_ref: $("cashNote").value || null,
+          notes: $("cashNote").value || null,
+        }),
+      });
+      close = data.close;
+      renderClose();
+      setMsg("Cash count recorded as DECLARED (not verified).", true);
+    } catch (e) {
+      setMsg(e.message || String(e));
+    }
+  };
+
+  $("btnReconcile").onclick = async () => {
+    if (!close) return;
+    setMsg("");
+    try {
+      const data = await api("/api/venue-close/reconcile", {
+        method: "POST",
+        body: JSON.stringify({ close_id: close.close_id }),
+      });
+      close = data.close;
+      renderClose();
+      setMsg(
+        close.state === "VERIFIED_CLOSED"
+          ? "Clean day — closed and verified."
+          : "Variance needs policy / exception handover.",
+        close.state === "VERIFIED_CLOSED"
+      );
+      await loadExceptions();
+    } catch (e) {
+      setMsg((e.data && e.data.message) || e.message || String(e));
+    }
+  };
+
+  $("excList").addEventListener("click", async (ev) => {
+    const btn = ev.target.closest("button[data-act]");
+    if (!btn) return;
+    const id = btn.getAttribute("data-id");
+    const act = btn.getAttribute("data-act");
+    try {
+      if (act === "exception") {
+        await api("/api/venue-close/exception", {
+          method: "POST",
+          body: JSON.stringify({ close_id: id }),
+        });
+      } else if (act === "resolve") {
+        const ta = document.querySelector(`textarea[data-notes="${id}"]`);
+        await api("/api/venue-close/resolve", {
+          method: "POST",
+          body: JSON.stringify({
+            close_id: id,
+            resolution_notes: (ta && ta.value) || "",
+          }),
+        });
+      } else if (act === "verify") {
+        await api("/api/venue-close/verify", {
+          method: "POST",
+          body: JSON.stringify({ close_id: id }),
+        });
+      }
+      await loadExceptions();
+      setMsg("Updated.", true);
+    } catch (e) {
+      setMsg(e.message || String(e));
+    }
+  });
+
+  boot();
+})();
+</script>
+</body>
+</html>
