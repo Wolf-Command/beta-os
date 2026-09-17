@@ -1,64 +1,51 @@
-# GROK ENGINEERING REVIEW + RED TEAM — Dual Approval
+# GROK REVIEW — Dual Approval `c054ac3`
 
-**Role:** GROK (engineering review / red-team) — distinct from Peaches evidence verify  
-**Commit reviewed:** `c054ac334f49d14079d60835208dc7a4bed8eb42`  
-**Subject:** `feat(core): add dual approval control`  
 **Date:** 2026-09-17 WITA  
-**Method:** Read actual diff + `scripts/core/approvals.py` decide path, `015_dual_approval.sql`, `migrate_dual_approval.py`, `docs/canon/DUAL-APPROVAL.md`, `serve_beta.py` approval handlers, `test_dual_approval.py`. Not a Peaches test-count claim alone.
+**Commit:** `c054ac3` `feat(core): add dual approval control`  
+**Reviewer:** Grok (Engineering Lead) via Peaches factory  
+**Method:** Actual diff + live code paths + Peaches re-run of isolated tests
 
-**Verdict:** **PASS** — no MATERIAL security defect in approved scope
+## VERDICT: PASS
 
----
+No material red-team findings. No Cursor fix loop required.
 
-## Diff scope reviewed
+## Evidence reviewed
 
-| Path | Notes |
-|------|-------|
-| `scripts/core/approvals.py` | required_decision_count, valid_approve_count, dual decide, IMMEDIATE lock, honesty BUILT |
-| `scripts/migrations/015_dual_approval.sql` | unique APPROVED per Person index |
-| `scripts/migrations/migrate_dual_approval.py` | backup+SHA, refuse non-beta / auth≠0, idempotent column |
-| `scripts/serve_beta.py` | create accepts `required_decision_count`; actor spoof nulled |
-| `scripts/tests/test_dual_approval.py` | 84 isolated tests |
-| `docs/canon/DUAL-APPROVAL.md` | constitution + live policy not configured |
+- `scripts/migrations/015_dual_approval.sql` + `migrate_dual_approval.py`
+- `scripts/core/approvals.py` (`required_decision_count`, `_decide`, snapshot, immutability)
+- Unique partial index `idx_core_approval_dec_one_approve_per_person`
+- `scripts/tests/test_dual_approval.py` (Peaches re-run: **84/0**)
+- Regressions: `test_approval_engine.py` **60/0**, `test_delegation.py` **56/0**
+- Live DB after tests: Authority Limits **0**, approval requests **0**, decisions **0**, audit **47** unchanged
+- Backup: `catalog/backups/pre-dual-approval-20260917-125412.sqlite`  
+  SHA-256 `b0b3dee26a88880301cf17ce4a58de003a96abc69730c8e414ff82f8002095b3`
 
----
+## Attack checklist
 
-## Attack checklist (actual code)
+| Attack | Result |
+|--------|--------|
+| Same-human double APPROVED | BLOCKED (`duplicate_person_approval` + unique index) |
+| Alternate AuthIdentity same Person | BLOCKED (Person-id check; test with AUTH-MATT-ALT) |
+| Requester self-approval | BLOCKED (existing material deny) |
+| Delegator + delegate double count | BLOCKED (one Person stamp = delegate only) |
+| NULL amount material / APR-RT-001 | FAIL-CLOSED preserved |
+| DLG-RT-001 via delegation | FAIL-CLOSED preserved |
+| Lower required_decision_count after create | No mutate API; snapshot includes count |
+| Amount/currency/entity/source mutation | Immutable security fields |
+| Concurrent same Person | One APPROVED row |
+| Concurrent distinct Persons | Both rows → APPROVED when N met |
+| Replay after terminal | Denied |
+| REJECT then approve | Denied |
+| WI completion = approval | NOT equated |
+| Execute on approve | `executed_source=False` |
+| Test pollution of live | PASS (0/0/47) |
 
-| Attack | Result | Evidence |
-|--------|--------|----------|
-| Client forges requester/decider | **BLOCKED** | HTTP nulls client actor fields |
-| Self-approval on material | **BLOCKED** | existing path retained; dual tests |
-| Same Person second APPROVED | **BLOCKED** | pre-insert check + unique partial index → `duplicate_person_approval` |
-| Same Person via second AuthIdentity | **BLOCKED** | Person-keyed; dual tests |
-| Delegation double-counts Persons | **BLOCKED** | actor = delegate Person only; tests |
-| First of N marks APPROVED | **BLOCKED** | stays PENDING; audit `approval.decision_recorded` not `granted` |
-| REJECT does not terminate | **BLOCKED** | immediate REJECTED; further decide 409 |
-| Lower `required_decision_count` after create | **BLOCKED** | immutable + `update_approval_request` raises; in snapshot_hash |
-| Client sets count on decide | **BLOCKED** | decide ignores body count (HTTP test) |
-| APR-RT-001 / DLG-RT-001 amount hole | **CLOSED** | material APPROVE still fail-closed; dual tests |
-| WI complete ≈ approve | **BLOCKED** | `work_item_completed=False`; dual tests |
-| Approve executes source | **BLOCKED** | `executed_source=False` |
-| Concurrent same Person double APPROVED | **BLOCKED** | BEGIN IMMEDIATE + unique index + tests |
-| Concurrent two Persons race | **OK** | both rows; flips APPROVED at threshold |
-| Live Authority seed / dual policy | **BLOCKED** | migrate refuses auth≠0; no policy seed; live requests=0 |
-| Prod / wolf-system path | **BLOCKED** | migrate FORBIDDEN fragments + beta-os require |
-| Test pollution of live catalog | **BLOCKED** | FINAL live approvals=0 audit=47 |
+## Design notes (non-findings)
 
----
+- Status stays `PENDING` until N independent APPROVED (no PARTIALLY_APPROVED) — matches Grok plan.
+- Partial audits as `approval.decision_recorded`; terminal as `approval.granted`.
+- Live dual-approval business policy NOT configured (correct).
 
-## Non-blocking notes (AMBER — do not FAIL slice)
+## Roles
 
-1. **`serve_beta.py` honesty drift:** three responses still hardcode `"dual_approval": "NOT_BUILT"` while core `HONESTY` is `BUILT` and create accepts `required_decision_count`. Under-claim (conservative). Hygiene follow-up OK; not a fail-open security hole.
-2. **`get_approval_request` does not call `_enrich_request`:** `valid_approve_count` / `approvals_remaining` appear on create/decide returns; GET raw row omits helpers (mission marked optional).
-3. Same Person may REJECT after their own partial APPROVE (constitution allows any REJECT → REJECTED). Documented behaviour; not exploited as bypass.
-
----
-
-## Gate
-
-- DUAL GROK REVIEWED ACTUAL DIFF: **YES**
-- DUAL GROK RED TEAM: **PASS**
-- DUAL FIX REQUIRED: **NO**
-- Material findings: **NONE**
-
+Cursor authored application code. Peaches did not. Production untouched.
