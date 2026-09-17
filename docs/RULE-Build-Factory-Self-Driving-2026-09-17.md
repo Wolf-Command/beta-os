@@ -69,3 +69,28 @@ Before marking a UI / `serve_beta.py` slice **FINISHED**:
 3. Ephemeral/unit HTTP greens alone are **not** acceptance.
 
 Canon: `docs/RULE-UI-Finished-Deployed-Route-2026-09-17.md`.
+
+
+---
+
+## Amendment 2026-09-18 — Overnight stall repair
+
+**Event:** BF-uma-close-nits Cursor finished 2026-09-17 21:58 WITA (`CURSOR_DONE`, commit `4259d31`) but stayed `WAITING_CURSOR` until Matt `status` at 2026-09-18 06:07 WITA (~8h9m). **90-DAY DISAPPEARANCE TEST: FAIL.**
+
+### Root cause (compound)
+
+1. **Completion detection defect:** `bf_watch.py` required log line `EXIT:N` for `child_done`. Cursor agent prints `CURSOR_DONE` only → `next_action=INSPECT` not `ADVANCE`.
+2. **Dead watcher overnight:** build-factory-watch cron was `*/5 8-19` weekdays — last tick ~19:55; Cursor finished 21:58; no overnight ticks until morning.
+3. **Advisory-only watch:** `bf_watch` never wrote the next stage. Advancement depended on Peaches being woken and acting — founder dependency for ordinary engineering state changes.
+
+### Fix
+
+- `bf_watch.py`: `CURSOR_DONE` + process gone ⇒ treat as EXIT:0 / ADVANCE
+- `bf_advance.py`: deterministic `WAITING_CURSOR` → `GROK_REVIEW` + `WAKE.json` (`require_matt=false`)
+- Watch routine schedule: weekday `*/5` **24h** (overnight ACTIVE missions)
+- Tests: `scripts/tests/test_build_factory_advance.py`
+- Proof: `docs/deliveries/FACTORY-ADVANCE-PROOF-2026-09-18.md`
+
+### Remaining limitation
+
+Auto-advance persists GROK_REVIEW + WAKE. Grok review body still needs Peaches/watch to execute (software cannot replace Grok judgment). It must **not** wait for Matt status.

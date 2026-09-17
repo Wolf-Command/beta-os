@@ -37,6 +37,7 @@ def pid_alive(pid: int | None) -> bool:
 
 
 def log_exit_code(log_path: str | None) -> int | None:
+    """Prefer explicit EXIT:N. CURSOR_DONE with process gone counts as EXIT:0."""
     if not log_path:
         return None
     p = Path(log_path)
@@ -53,12 +54,26 @@ def log_exit_code(log_path: str | None) -> int | None:
     return None
 
 
+def log_cursor_done(log_path: str | None) -> bool:
+    if not log_path:
+        return False
+    p = Path(log_path)
+    if not p.exists():
+        return False
+    return "CURSOR_DONE" in p.read_text(encoding="utf-8", errors="replace")
+
+
 def advise(run: dict) -> dict:
     stage = run.get("stage") or "UNKNOWN"
     pid = run.get("cursor_pid") or run.get("child_pid")
     log_path = run.get("cursor_log") or run.get("child_log")
     alive = pid_alive(int(pid)) if pid else False
     exit_code = log_exit_code(log_path)
+    cursor_done = log_cursor_done(log_path)
+    # CLAIMED≠VERIFIED: process gone + (EXIT line OR CURSOR_DONE) = child_done
+    # Historical defect 2026-09-17: CURSOR_DONE without EXIT forced INSPECT forever.
+    if exit_code is None and cursor_done and (not alive):
+        exit_code = 0
     child_done = (not alive) and (exit_code is not None)
 
     next_action = "WAIT"
@@ -69,7 +84,7 @@ def advise(run: dict) -> dict:
     elif stage in ("WAITING_CURSOR", "WAITING_CURSOR_FIX", "WAITING_HARMLESS_JOB") and alive:
         next_action = "WAIT"
     elif stage in ("WAITING_CURSOR", "WAITING_CURSOR_FIX", "WAITING_HARMLESS_JOB") and (not alive) and exit_code is None:
-        next_action = "INSPECT"  # process gone but no EXIT line yet
+        next_action = "INSPECT"  # process gone, no EXIT and no CURSOR_DONE
     elif stage in ("GROK_REVIEW", "GROK_REREVIEW", "PEACHES_VERIFY", "GROK_PLAN"):
         next_action = "CONTINUE_PEACHES"
     elif stage == "REPORT":
@@ -81,6 +96,7 @@ def advise(run: dict) -> dict:
         "stage": stage,
         "child_alive": alive,
         "exit_code": exit_code,
+        "cursor_done": cursor_done,
         "child_done": child_done,
         "next_action": next_action,
         "blocker": run.get("blocker"),
