@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Habitat Operator · Beta</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --bg2: #12151d;
+    --bg3: #1a1f2b;
+    --border: #2a3142;
+    --text: #e8ecf4;
+    --muted: #8b95a8;
+    --accent: #6ea8ff;
+    --ok: #3dd68c;
+    --warn: #f5a524;
+    --danger: #f04438;
+    --font: "SF Pro Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font); min-height: 100%;
+  }
+  body { padding: 12px 14px 48px; max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 1.25rem; margin: 0 0 4px; letter-spacing: -0.02em; }
+  h1 span { color: var(--accent); }
+  .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 14px; }
+  .banner {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; font-size: 0.9rem; margin-bottom: 14px;
+  }
+  .banner .muted { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tabs button {
+    flex: 1; appearance: none; border: 1px solid var(--border); background: var(--bg3);
+    color: var(--muted); border-radius: 999px; padding: 12px 10px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer;
+  }
+  .tabs button.active { color: #fff; border-color: var(--accent); background: #1a2740; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  label { display: block; font-size: 0.78rem; color: var(--muted); margin: 12px 0 6px; }
+  select, textarea, input[type="text"], input[type="week"] {
+    width: 100%; appearance: none; border: 1px solid var(--border); background: var(--bg3);
+    color: var(--text); border-radius: 10px; padding: 12px; font: inherit;
+  }
+  textarea { min-height: 120px; resize: vertical; line-height: 1.4; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
+  .status-pill {
+    display: inline-block; border: 1px solid var(--border); border-radius: 999px;
+    padding: 4px 10px; font-size: 0.78rem; color: var(--muted);
+  }
+  .status-pill.ok { color: var(--ok); border-color: rgba(61,214,140,0.4); }
+  .status-pill.wait { color: var(--warn); border-color: rgba(245,165,36,0.45); }
+  .meta { font-size: 0.78rem; color: var(--muted); margin-top: 6px; word-break: break-word; }
+  .meta strong { color: var(--text); font-weight: 600; }
+  .btn {
+    appearance: none; border: 1px solid var(--border); background: var(--bg3);
+    color: var(--text); border-radius: 12px; padding: 14px 16px; font-size: 1rem;
+    font-weight: 650; cursor: pointer; width: 100%; margin-top: 10px;
+  }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-primary { background: #2a5bb8; border-color: #3b6fd0; color: #fff; }
+  .btn-ok { background: rgba(61,214,140,0.14); border-color: rgba(61,214,140,0.45); color: var(--ok); }
+  .btn-danger { background: rgba(240,68,56,0.14); border-color: rgba(240,68,56,0.45); color: var(--danger); }
+  .btn-pair { display: flex; gap: 8px; }
+  .btn-pair .btn { flex: 1; }
+  .card {
+    border: 1px solid var(--border); background: var(--bg2); border-radius: 12px;
+    padding: 12px; margin-top: 12px;
+  }
+  .card h3 { margin: 0 0 6px; font-size: 1.02rem; }
+  .card .id { font-size: 0.72rem; color: var(--muted); }
+  .gate-box {
+    margin-top: 12px; padding: 12px; border-radius: 12px;
+    border: 1px dashed var(--border); background: #0e121a; font-size: 0.9rem;
+  }
+  .gate-box.ready { border-color: rgba(61,214,140,0.5); }
+  .err { color: var(--danger); font-size: 0.88rem; margin-top: 10px; white-space: pre-wrap; }
+  .okmsg { color: var(--ok); font-size: 0.88rem; margin-top: 10px; }
+  .toast {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+    background: #1c2433; border: 1px solid var(--border); color: var(--text);
+    padding: 10px 14px; border-radius: 999px; font-size: 0.85rem;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 20;
+    max-width: 90vw;
+  }
+  .toast.show { opacity: 1; }
+  .empty { color: var(--muted); font-size: 0.9rem; padding: 16px 4px; }
+</style>
+</head>
+<body>
+  <h1>Habitat Operator <span>· Beta</span></h1>
+  <p class="sub">Core publish gate · Habitat only · Metricool write stays disabled</p>
+
+  <div class="banner" id="whoami">
+    <div id="whoLine">Loading identity…</div>
+    <div class="muted" id="whoMeta"></div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button type="button" class="active" data-tab="producer" id="tabProducer">Producer</button>
+    <button type="button" data-tab="approver" id="tabApprover">Approver</button>
+  </div>
+
+  <section class="panel active" id="panel-producer">
+    <label for="weekInput">Week (Monday)</label>
+    <input type="date" id="weekInput" />
+
+    <label for="slotPick">Habitat item</label>
+    <select id="slotPick"><option value="">Loading…</option></select>
+
+    <div class="row">
+      <span class="status-pill" id="prodStatus">—</span>
+      <span class="meta" id="prodMeta"></span>
+    </div>
+
+    <label for="prodTitle">Title</label>
+    <input type="text" id="prodTitle" placeholder="Human title" />
+
+    <label for="prodScript">Caption / script</label>
+    <textarea id="prodScript" placeholder="Caption or script body"></textarea>
+
+    <div class="meta" id="prodEvidence">Evidence: content_draft required for Habitat publish</div>
+
+    <button type="button" class="btn" id="btnSave">Save edits</button>
+    <button type="button" class="btn btn-primary" id="btnSubmit">Submit for approval</button>
+    <div id="prodWaiting" class="meta"></div>
+    <div id="prodMsg"></div>
+  </section>
+
+  <section class="panel" id="panel-approver">
+    <div id="aprList" class="empty">Loading items needing approval…</div>
+    <div id="aprDetail" style="display:none">
+      <div class="card">
+        <h3 id="aprTitle">—</h3>
+        <div class="id" id="aprIds"></div>
+        <div class="meta" id="aprProducer"></div>
+        <div class="meta" id="aprStatus"></div>
+        <label>Content</label>
+        <div class="card" style="margin-top:6px;background:var(--bg3)" id="aprContent"></div>
+        <div class="meta" id="aprEvidence"></div>
+        <label for="aprReason">Reject reason (optional)</label>
+        <input type="text" id="aprReason" placeholder="Why reject?" />
+        <div class="btn-pair">
+          <button type="button" class="btn btn-ok" id="btnApprove">Approve</button>
+          <button type="button" class="btn btn-danger" id="btnReject">Reject</button>
+        </div>
+        <div id="aprDecision" class="okmsg"></div>
+      </div>
+
+      <div id="gateBlock" style="display:none">
+        <button type="button" class="btn btn-primary" id="btnGate">Run publish gate</button>
+        <div class="gate-box" id="gateResult"></div>
+      </div>
+    </div>
+    <div id="aprMsg"></div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  const SUBJECT_KEY = "wolf-beta-subject";
+  const DEV_SUBJECTS = [
+    "mrwolf@wolfcommand.net",
+    "amanda@ggv.group",
+    "misa@ggv.group",
+    "haikal@ggv.group",
+  ];
+
+  const state = {
+    subject: null,
+    developmentAssertionAllowed: false,
+    me: null,
+    permissions: [],
+    weekStart: null,
+    slots: [],
+    selectedId: null,
+    pendingBySlot: {},
+    approvalItems: [],
+    selectedApproval: null,
+    lastDecision: null,
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]
+  );
+
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2600);
+  }
+
+  function setMsg(el, text, ok) {
+    el.className = ok ? "okmsg" : "err";
+    el.textContent = text || "";
+  }
+
+  function mondayOf(d) {
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const day = (x.getDay() + 6) % 7;
+    x.setDate(x.getDate() - day);
+    return x;
+  }
+
+  function isoDate(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ Accept: "application/json" }, opts.headers || {});
+    if (state.developmentAssertionAllowed && state.subject) {
+      headers["X-Wolf-Subject"] = state.subject;
+    }
+    const init = Object.assign({}, opts);
+    if (init.json !== undefined) {
+      headers["Content-Type"] = "application/json";
+      init.body = JSON.stringify(init.json);
+      delete init.json;
+    }
+    init.credentials = "same-origin";
+    init.headers = headers;
+    const res = await fetch(path, init);
+    const ct = res.headers.get("content-type") || "";
+    const data = ct.includes("json")
+      ? await res.json()
+      : { ok: false, error: await res.text() };
+    if (!res.ok) {
+      const err = new Error(
+        (data && (data.message || data.error)) || `HTTP ${res.status}`
+      );
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  }
+
+  function humanTitle(slot) {
+    const t = (slot && (slot.title || slot.title_slug) || "").trim();
+    return t || "(untitled)";
+  }
+
+  function parseSlotIdFromSource(sourceId) {
+    const m = String(sourceId || "").match(/^content_planner:(\d+)$/i);
+    return m ? Number(m[1]) : null;
+  }
+
+  async function loadIdentity() {
+    try {
+      const mode = await api("/api/core/auth-mode");
+      state.developmentAssertionAllowed = !!mode.development_assertion_allowed;
+      if (state.developmentAssertionAllowed) {
+        state.subject = localStorage.getItem(SUBJECT_KEY) || DEV_SUBJECTS[0];
+        localStorage.setItem(SUBJECT_KEY, state.subject);
+      } else {
+        localStorage.removeItem(SUBJECT_KEY);
+        state.subject = null;
+      }
+      const me = await api("/api/core/me");
+      state.me = me;
+      state.subject = me.permission_subject || me.email || state.subject;
+      if (state.developmentAssertionAllowed && state.subject) {
+        localStorage.setItem(SUBJECT_KEY, state.subject);
+      }
+      let perms = [];
+      try {
+        const p = await api("/api/core/me/permissions");
+        perms = p.permissions || [];
+        state.permissions = perms;
+      } catch (_) {
+        state.permissions = [];
+      }
+      const name =
+        (me.person && (me.person.display_name || me.person.name)) ||
+        me.email ||
+        me.permission_subject ||
+        me.person_id ||
+        "signed in";
+      $("whoLine").textContent = `You: ${name}`;
+      $("whoMeta").textContent = [
+        me.person_id || "",
+        me.identity_assurance || "",
+        me.real_authentication ? "verified" : "development",
+        me.auth_mode || "",
+      ].filter(Boolean).join(" · ");
+    } catch (e) {
+      $("whoLine").textContent = "You: not signed in";
+      $("whoMeta").textContent = e.message || "Identity required (Cloudflare Access)";
+      throw e;
+    }
+  }
+
+  async function loadPlanner() {
+    const week = state.weekStart || isoDate(mondayOf(new Date()));
+    state.weekStart = week;
+    $("weekInput").value = week;
+    const data = await api(`/api/planner?brand=habitat&week=${encodeURIComponent(week)}`);
+    state.slots = data.items || (data.plan && data.plan.slots) || [];
+    const sel = $("slotPick");
+    const prev = state.selectedId;
+    sel.innerHTML = state.slots.length
+      ? state.slots.map((s) => {
+          const label = `${humanTitle(s)} · ${s.status || "?"} · ${s.scheduled_date || ""}`;
+          return `<option value="${s.id}">${esc(label)}</option>`;
+        }).join("")
+      : `<option value="">No Habitat items this week</option>`;
+    if (prev && state.slots.some((s) => String(s.id) === String(prev))) {
+      sel.value = String(prev);
+    }
+    state.selectedId = sel.value ? Number(sel.value) : null;
+    renderProducerSlot();
+  }
+
+  async function loadPendingApprovals() {
+    const data = await api("/api/core/approvals?status=PENDING&limit=100");
+    const all = data.approvals || [];
+    const habitat = all.filter((a) =>
+      String(a.source_id || "").toLowerCase().startsWith("content_planner:")
+    );
+    state.approvalItems = habitat;
+    state.pendingBySlot = {};
+    for (const a of habitat) {
+      const sid = parseSlotIdFromSource(a.source_id);
+      if (sid != null) state.pendingBySlot[sid] = a;
+    }
+    renderApproverList();
+    renderProducerWaiting();
+  }
+
+  function currentSlot() {
+    return state.slots.find((s) => Number(s.id) === Number(state.selectedId)) || null;
+  }
+
+  function renderProducerSlot() {
+    const slot = currentSlot();
+    if (!slot) {
+      $("prodTitle").value = "";
+      $("prodScript").value = "";
+      $("prodStatus").textContent = "—";
+      $("prodStatus").className = "status-pill";
+      $("prodMeta").textContent = "";
+      renderProducerWaiting();
+      return;
+    }
+    $("prodTitle").value = humanTitle(slot) === "(untitled)" ? "" : humanTitle(slot);
+    $("prodScript").value = slot.script_body || "";
+    $("prodStatus").textContent = slot.status || "—";
+    $("prodStatus").className = "status-pill" + (
+      slot.status === "Human_Approved" ? " ok" :
+      state.pendingBySlot[slot.id] ? " wait" : ""
+    );
+    $("prodMeta").textContent = `id ${slot.id} · ${slot.platform_canon || slot.platform || ""} · ${slot.scheduled_date || ""}`;
+    renderProducerWaiting();
+  }
+
+  function renderProducerWaiting() {
+    const slot = currentSlot();
+    const el = $("prodWaiting");
+    if (!slot) {
+      el.textContent = "";
+      return;
+    }
+    const pending = state.pendingBySlot[slot.id];
+    if (pending) {
+      el.className = "meta";
+      el.innerHTML = `Waiting: submitted · approval <strong>${esc(pending.approval_request_id)}</strong> (PENDING)`;
+    } else if (slot.status === "Human_Approved") {
+      el.className = "okmsg";
+      el.textContent = "Submitted ✓ · Core approved (Human_Approved)";
+    } else {
+      el.className = "meta";
+      el.textContent = "Waiting: not submitted";
+    }
+  }
+
+  function renderApproverList() {
+    const box = $("aprList");
+    if (!state.approvalItems.length) {
+      box.className = "empty";
+      box.textContent = "No Habitat items needing approval.";
+      $("aprDetail").style.display = "none";
+      return;
+    }
+    box.className = "";
+    box.innerHTML = state.approvalItems.map((a) => {
+      const sid = parseSlotIdFromSource(a.source_id);
+      const slot = state.slots.find((s) => Number(s.id) === Number(sid));
+      const title = slot ? humanTitle(slot) : (a.title || `Slot ${sid || "?"}`);
+      const active = state.selectedApproval &&
+        state.selectedApproval.approval_request_id === a.approval_request_id;
+      return `<button type="button" class="btn" data-apr="${esc(a.approval_request_id)}" style="text-align:left;margin-top:8px;${active ? "border-color:var(--accent)" : ""}">
+        <strong>${esc(title)}</strong>
+        <div class="meta">Producer: ${esc(a.requested_by_person_id || "?")} · ${esc(a.approval_request_id)}</div>
+      </button>`;
+    }).join("");
+    box.querySelectorAll("[data-apr]").forEach((btn) => {
+      btn.addEventListener("click", () => selectApproval(btn.getAttribute("data-apr")));
+    });
+  }
+
+  function selectApproval(aprId, fallback) {
+    const a =
+      state.approvalItems.find((x) => x.approval_request_id === aprId) ||
+      fallback ||
+      null;
+    state.selectedApproval = a;
+    if (!fallback) {
+      state.lastDecision = state.lastDecision;
+    }
+    if (!a) {
+      $("aprDecision").textContent = state.lastDecision
+        ? `Decision recorded: ${state.lastDecision.action} → ${state.lastDecision.status}`
+        : "";
+      $("aprDetail").style.display = state.lastDecision ? "block" : "none";
+      renderApproverList();
+      return;
+    }
+    renderApproverList();
+    const sid = parseSlotIdFromSource(a.source_id);
+    const slot = state.slots.find((s) => Number(s.id) === Number(sid));
+    $("aprDetail").style.display = "block";
+    $("aprTitle").textContent = slot ? humanTitle(slot) : (a.title || "Habitat item");
+    $("aprIds").textContent = `slot ${sid || "?"} · ${a.approval_request_id}`;
+    $("aprProducer").innerHTML = `Producer: <strong>${esc(a.requested_by_person_id || "?")}</strong>`;
+    $("aprStatus").textContent = `Core: ${a.status || "PENDING"} · Slot: ${slot ? slot.status : "load week to see slot"}`;
+    $("aprContent").textContent = slot
+      ? (slot.script_body || "(empty caption/script)")
+      : "Slot not in current week — switch week or still approve/reject via Core id.";
+    $("aprEvidence").textContent =
+      `Evidence: content_draft · ref ${a.evidence_reference || "—"}`;
+
+    const showGate =
+      (slot && slot.status === "Human_Approved") ||
+      a.status === "APPROVED" ||
+      (state.lastDecision && state.lastDecision.action === "approve");
+    $("gateBlock").style.display = showGate ? "block" : "none";
+    if (!showGate) {
+      $("gateResult").className = "gate-box";
+      $("gateResult").textContent = "";
+    }
+  }
+
+  async function saveEdits(opts = {}) {
+    const quiet = !!opts.quiet;
+    const slot = currentSlot();
+    if (!slot) return;
+    if (!quiet) setMsg($("prodMsg"), "");
+    try {
+      // Omit status so save preserves current (Human_Approved cannot be set via save).
+      const body = {
+        id: slot.id,
+        brand: "habitat",
+        platform: slot.platform_canon || slot.platform,
+        scheduled_date: slot.scheduled_date,
+        slot_time: slot.slot_time || "",
+        title: ($("prodTitle").value || "").trim(),
+        title_slug: ($("prodTitle").value || "").trim(),
+        script_body: $("prodScript").value || "",
+        raw_asset_id: slot.raw_asset_id || slot.asset_id || null,
+      };
+      await api("/api/planner/save", { method: "POST", json: body });
+      if (!quiet) {
+        toast("Saved");
+        setMsg($("prodMsg"), "Saved.", true);
+      }
+      await loadPlanner();
+      if (!quiet) await loadPendingApprovals();
+    } catch (e) {
+      setMsg($("prodMsg"), e.message || "Save failed");
+      throw e;
+    }
+  }
+
+  async function submitForApproval() {
+    const slot = currentSlot();
+    if (!slot) return;
+    setMsg($("prodMsg"), "");
+    $("btnSubmit").disabled = true;
+    try {
+      // Persist edits first so evidence hash matches what the producer sees
+      await saveEdits({ quiet: true });
+      const out = await api("/api/planner/submit-for-approval", {
+        method: "POST",
+        json: { id: slot.id },
+      });
+      setMsg(
+        $("prodMsg"),
+        `Submitted ✓ · ${out.approval_request_id || ""} · ${out.approval_status || "PENDING"}`,
+        true
+      );
+      toast("Submitted for approval");
+      await loadPlanner();
+      await loadPendingApprovals();
+    } catch (e) {
+      setMsg($("prodMsg"), e.message || "Submit failed");
+    } finally {
+      $("btnSubmit").disabled = false;
+    }
+  }
+
+  async function approveSelected() {
+    const a = state.selectedApproval;
+    if (!a) return;
+    const sid = parseSlotIdFromSource(a.source_id);
+    if (sid == null) {
+      setMsg($("aprMsg"), "Missing content_planner source id");
+      return;
+    }
+    setMsg($("aprMsg"), "");
+    $("btnApprove").disabled = true;
+    try {
+      const out = await api("/api/planner/approve", {
+        method: "POST",
+        json: { id: sid, approve: true },
+      });
+      const status = (out.slot && out.slot.status) || (out.core && out.core.status) || "Human_Approved";
+      state.lastDecision = { action: "approve", status, core: out.core, slotId: sid };
+      $("aprDecision").textContent = `Decision recorded: APPROVED → ${status}`;
+      toast("Approved");
+      const keep = {
+        approval_request_id: (out.core && out.core.approval_request_id) || a.approval_request_id,
+        source_id: `content_planner:${sid}`,
+        requested_by_person_id: a.requested_by_person_id,
+        status: "APPROVED",
+        evidence_reference: a.evidence_reference,
+        title: a.title,
+      };
+      await loadPlanner();
+      await loadPendingApprovals();
+      selectApproval(keep.approval_request_id, keep);
+      $("aprDecision").textContent = `Decision recorded: APPROVED → ${status}`;
+      $("gateBlock").style.display = "block";
+    } catch (e) {
+      setMsg($("aprMsg"), e.message || "Approve failed");
+    } finally {
+      $("btnApprove").disabled = false;
+    }
+  }
+
+  async function rejectSelected() {
+    const a = state.selectedApproval;
+    if (!a) return;
+    setMsg($("aprMsg"), "");
+    $("btnReject").disabled = true;
+    try {
+      const reason = ($("aprReason").value || "").trim();
+      const out = await api(`/api/core/approvals/${encodeURIComponent(a.approval_request_id)}/reject`, {
+        method: "POST",
+        json: reason ? { reason } : {},
+      });
+      const st =
+        (out.request && out.request.status) ||
+        (out.approval && out.approval.status) ||
+        (out.status) ||
+        "REJECTED";
+      state.lastDecision = { action: "reject", status: st };
+      $("aprDecision").textContent = `Decision recorded: ${st}${reason ? ` · ${reason}` : ""}`;
+      toast("Rejected");
+      $("gateBlock").style.display = "none";
+      await loadPlanner();
+      await loadPendingApprovals();
+    } catch (e) {
+      setMsg($("aprMsg"), e.message || "Reject failed");
+    } finally {
+      $("btnReject").disabled = false;
+    }
+  }
+
+  async function runPublishGate() {
+    const a = state.selectedApproval;
+    const sid = a ? parseSlotIdFromSource(a.source_id) : state.selectedId;
+    if (sid == null) {
+      setMsg($("aprMsg"), "Pick an approved item first");
+      return;
+    }
+    try {
+      const gate = await api(`/api/planner/publish-gate?id=${encodeURIComponent(sid)}`);
+      const box = $("gateResult");
+      const ready = gate.stage === "READY_TO_PUBLISH";
+      box.className = "gate-box" + (ready ? " ready" : "");
+      const metricool =
+        gate.metricool === "DISABLED" || String(gate.metricool || "").toUpperCase().includes("DISABLED")
+          ? "WRITE DISABLED"
+          : String(gate.metricool || "WRITE DISABLED");
+      box.innerHTML = [
+        `<div><strong>Gate:</strong> ${esc(gate.stage || "?")}</div>`,
+        `<div><strong>Reason:</strong> ${esc(gate.reason || "—")}</div>`,
+        `<div><strong>Metricool:</strong> ${esc(metricool)}</div>`,
+        ready ? `<div class="okmsg" style="margin-top:8px">READY_TO_PUBLISH · Metricool WRITE DISABLED</div>` : "",
+        `<div class="meta" style="margin-top:8px">Core ${esc(gate.core_status || "—")} · slot ${esc(gate.status || "—")}</div>`,
+      ].join("");
+      toast(ready ? "READY_TO_PUBLISH" : "Gate denied");
+    } catch (e) {
+      setMsg($("aprMsg"), e.message || "Publish gate failed");
+    }
+  }
+
+  function bind() {
+    document.querySelectorAll(".tabs button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tabs button").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+        $(`panel-${btn.dataset.tab}`).classList.add("active");
+        if (btn.dataset.tab === "approver") {
+          loadPendingApprovals().catch((e) => setMsg($("aprMsg"), e.message));
+        }
+      });
+    });
+    $("weekInput").addEventListener("change", async () => {
+      const v = $("weekInput").value;
+      if (!v) return;
+      state.weekStart = isoDate(mondayOf(new Date(v + "T12:00:00")));
+      try {
+        await loadPlanner();
+        await loadPendingApprovals();
+      } catch (e) {
+        setMsg($("prodMsg"), e.message);
+      }
+    });
+    $("slotPick").addEventListener("change", () => {
+      state.selectedId = $("slotPick").value ? Number($("slotPick").value) : null;
+      setMsg($("prodMsg"), "");
+      renderProducerSlot();
+    });
+    $("btnSave").addEventListener("click", () => {
+      saveEdits().catch(() => {});
+    });
+    $("btnSubmit").addEventListener("click", submitForApproval);
+    $("btnApprove").addEventListener("click", approveSelected);
+    $("btnReject").addEventListener("click", rejectSelected);
+    $("btnGate").addEventListener("click", runPublishGate);
+  }
+
+  async function boot() {
+    bind();
+    state.weekStart = isoDate(mondayOf(new Date()));
+    $("weekInput").value = state.weekStart;
+    try {
+      await loadIdentity();
+      await loadPlanner();
+      await loadPendingApprovals();
+    } catch (e) {
+      setMsg($("prodMsg"), e.message || "Failed to load");
+      $("aprList").textContent = e.message || "Failed to load";
+    }
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>

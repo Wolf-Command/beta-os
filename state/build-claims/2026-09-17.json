@@ -168,6 +168,13 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_habitat_publish_gate.py >/tmp/habitat-gate-test.out 2>&1; tail -1 /tmp/habitat-gate-test.out",
       "expect": "51 passed, 0 failed",
       "by": "cursor-local"
+    },
+    {
+      "id": "habitat-operator-ui-021",
+      "claim": "Habitat human operator UI served on Beta :8788; wires submit-for-approval / approve / Core reject / publish-gate; no Metricool write flip; no thin planner reject",
+      "check": "test -f /Users/wolfterminal/beta-os/dashboards/habitat-operator.html && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8788/habitat-operator.html && python3 /Users/wolfterminal/beta-os/scripts/tests/test_habitat_operator_smoke.py >/tmp/habitat-op-smoke.out 2>&1; tail -1 /tmp/habitat-op-smoke.out",
+      "expect": "200 and 14 passed, 0 failed",
+      "by": "cursor-local"
     }
   ]
 }
