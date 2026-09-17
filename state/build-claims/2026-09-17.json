@@ -84,6 +84,20 @@
       "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); print(c.execute('select count(*) from org_authority_limits').fetchone()[0], c.execute('select count(*) from core_delegations').fetchone()[0], c.execute('select count(*) from core_audit_events').fetchone()[0])\" && python3 /Users/wolfterminal/beta-os/scripts/tests/test_delegation.py >/tmp/dlg-rt-001.out 2>&1; tail -1 /tmp/dlg-rt-001.out",
       "expect": "0 0 47 and pass=56 fail=0",
       "by": "cursor-local"
+    },
+    {
+      "id": "dual-approval-015",
+      "claim": "required_decision_count on core_approval_requests; dual Person threshold; live auth/req/dec=0; no dual policy seed",
+      "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); cols={r[1] for r in c.execute('PRAGMA table_info(core_approval_requests)')}; print(int('required_decision_count' in cols), c.execute('select count(*) from org_authority_limits').fetchone()[0], c.execute('select count(*) from core_approval_requests').fetchone()[0], c.execute('select count(*) from core_approval_decisions').fetchone()[0], c.execute('select count(*) from core_audit_events').fetchone()[0])\"",
+      "expect": "1 0 0 0 47",
+      "by": "cursor-local"
+    },
+    {
+      "id": "dual-approval-tests",
+      "claim": "test_dual_approval.py passes; approval+delegation regressions green; temp-DB only",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_dual_approval.py >/tmp/dual-approval-test.out 2>&1; tail -1 /tmp/dual-approval-test.out",
+      "expect": "pass=84 fail=0",
+      "by": "cursor-local"
     }
   ]
 }

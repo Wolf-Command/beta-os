@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Wolf Core Approval Engine — deterministic REQUEST → decide (Beta).
 
-REQUESTED ≠ APPROVED ≠ EXECUTED ≠ OUTCOME.
+REQUESTED ≠ APPROVAL 1 ≠ APPROVAL N ≠ APPROVED ≠ EXECUTED ≠ OUTCOME.
 Authority = capacity; Approval = specific decision evidence.
 Approval never creates Authority. Completing a linked Work Item ≠ approving.
-Dual / SoD / UI / LLM = NOT BUILT. Delegation evaluator = BUILT (identity never delegates).
+Dual approval = BUILT (required_decision_count). SoD / UI / LLM = NOT BUILT.
+Delegation evaluator = BUILT (identity never delegates).
 """
 from __future__ import annotations
 
@@ -50,17 +51,20 @@ IMMUTABLE_FIELDS = frozenset(
         "currency",
         "source_type",
         "source_id",
+        "request_type",
+        "required_decision_count",
     }
 )
 
 HONESTY = {
-    "dual_approval": "NOT_BUILT",
+    "dual_approval": "BUILT",
     "segregation_of_duties": "NOT_BUILT",
     "delegation": "BUILT",
     "approval_ui": "NOT_BUILT",
     "ai_approver": False,
     "requested_is_not_approved": True,
     "approved_is_not_executed": True,
+    "partial_approve_is_not_approved": True,
 }
 
 PERS_MATT = "PERS-MATT"
@@ -161,6 +165,8 @@ def compute_snapshot_hash(
     currency: str | None,
     source_type: str,
     source_id: str | None,
+    request_type: str = "GENERAL",
+    required_decision_count: int = 1,
 ) -> str:
     parts = [
         owning_entity_id or "",
@@ -173,8 +179,74 @@ def compute_snapshot_hash(
         currency or "",
         source_type or "",
         source_id or "",
+        (request_type or "").upper(),
+        str(int(required_decision_count)),
     ]
     return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()
+
+
+def _coerce_required_decision_count(raw: Any) -> int:
+    """Validate integer >= 1. Tests prove 1 and 2; schema allows N>2 later."""
+    if isinstance(raw, bool):
+        raise ApprovalError(
+            "required_decision_count must be an integer >= 1",
+            code="invalid_required_decision_count",
+        )
+    try:
+        n = int(raw)
+    except (TypeError, ValueError):
+        raise ApprovalError(
+            "required_decision_count must be an integer >= 1",
+            code="invalid_required_decision_count",
+        ) from None
+    if n < 1:
+        raise ApprovalError(
+            "required_decision_count must be >= 1",
+            code="invalid_required_decision_count",
+        )
+    return n
+
+
+def valid_approve_count(
+    approval_request_id: str,
+    *,
+    conn: sqlite3.Connection | None = None,
+) -> int:
+    """Distinct Persons with APPROVED decisions on this request."""
+    rid = (approval_request_id or "").strip()
+    if not rid:
+        return 0
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        row = c.execute(
+            """
+            SELECT COUNT(DISTINCT decided_by_person_id)
+            FROM core_approval_decisions
+            WHERE approval_request_id=? AND decision='APPROVED'
+            """,
+            (rid,),
+        ).fetchone()
+        return int(row[0] if row else 0)
+    finally:
+        if own:
+            c.close()
+
+
+def approvals_remaining(req: dict[str, Any], *, conn: sqlite3.Connection | None = None) -> int:
+    need = _coerce_required_decision_count(req.get("required_decision_count") or 1)
+    have = valid_approve_count(req["approval_request_id"], conn=conn)
+    return max(0, need - have)
+
+
+def _enrich_request(req: dict[str, Any], *, conn: sqlite3.Connection) -> dict[str, Any]:
+    out = dict(req)
+    need = int(out.get("required_decision_count") or 1)
+    have = valid_approve_count(out["approval_request_id"], conn=conn)
+    out["valid_approve_count"] = have
+    out["approvals_remaining"] = max(0, need - have)
+    out["required_decision_count"] = need
+    return out
 
 
 def is_material_request(req: dict[str, Any]) -> bool:
@@ -430,6 +502,7 @@ def create_approval_request(
     prior_request_id: str | None = None,
     link_work_item: bool = False,
     review_owner_person_id: str | None = None,
+    required_decision_count: int = 1,
     # Client-supplied actor fields ignored (spoof refused)
     requested_by_person_id: str | None = None,
     identity: dict[str, Any] | None = None,
@@ -464,6 +537,7 @@ def create_approval_request(
         raise ApprovalError(
             "required_permission_code required", code="missing_permission_code"
         )
+    rdc = _coerce_required_decision_count(required_decision_count)
 
     amt = (str(material_amount).strip() if material_amount is not None else None) or None
     cur = (currency or "").strip().upper() or None
@@ -565,6 +639,8 @@ def create_approval_request(
             currency=cur,
             source_type=st,
             source_id=(source_id or "").strip() or None,
+            request_type=rt,
+            required_decision_count=rdc,
         )
 
         c.execute(
@@ -577,7 +653,7 @@ def create_approval_request(
               material_amount, currency, source_type, source_id,
               evidence_reference, status, requested_at, decided_at, expires_at,
               created_at, updated_at, correlation_id, linked_work_item_id,
-              prior_request_id, snapshot_hash
+              prior_request_id, snapshot_hash, required_decision_count
             ) VALUES (
               ?, ?, ?, ?,
               ?, ?, ?, ?,
@@ -586,7 +662,7 @@ def create_approval_request(
               ?, ?, ?, ?,
               ?, 'PENDING', ?, NULL, ?,
               ?, ?, ?, NULL,
-              ?, ?
+              ?, ?, ?
             )
             """,
             (
@@ -614,6 +690,7 @@ def create_approval_request(
                 corr,
                 prior,
                 snap,
+                rdc,
             ),
         )
 
@@ -657,13 +734,20 @@ def create_approval_request(
                 "currency": cur,
                 "required_permission": code,
                 "linked_work_item_id": linked_wi,
+                "required_decision_count": rdc,
             },
             conn=c,
         )
         if commit:
             c.commit()
-        out = dict(req)
+        out = _enrich_request(dict(req), conn=c)
         out.update(HONESTY)
+        if rdc > 1:
+            out["honesty_note"] = (
+                f"REQUESTED ≠ {rdc} independent APPROVED decisions ≠ APPROVED ≠ EXECUTED"
+            )
+        else:
+            out["honesty_note"] = "REQUESTED ≠ APPROVED ≠ EXECUTED"
         return out
     finally:
         if own:
@@ -694,7 +778,10 @@ def _decide(
     conn: sqlite3.Connection | None = None,
     commit: bool = True,
 ) -> dict[str, Any]:
-    """Approve or reject. First successful decision wins. Does not execute source."""
+    """Approve or reject. Dual: N independent APPROVED before status APPROVED.
+
+    REJECTED is immediate. Does not execute source. Does not complete Work Items.
+    """
     verified = (verified_person_id or "").strip()
     if not verified:
         raise ApprovalError("verified_person_id required", code="missing_verified_person")
@@ -712,6 +799,9 @@ def _decide(
     c = conn or db_connect()
     try:
         assert_catalog_writable(Path(CATALOG_DB))
+        # Concurrency: exclusive lock before re-check + insert (own connection only)
+        if commit and own:
+            c.execute("BEGIN IMMEDIATE")
         req = get_approval_request(approval_request_id, conn=c, expire=True)
         if not req:
             raise ApprovalError("approval request not found", code="not_found", http_status=404)
@@ -752,6 +842,8 @@ def _decide(
                 code="not_pending",
                 http_status=409,
             )
+
+        required_n = _coerce_required_decision_count(req.get("required_decision_count") or 1)
 
         # DLG-RT-001 / APR-RT-001: material APPROVE requires amount (native + delegation)
         if dec == "APPROVED" and is_material_request(req):
@@ -798,6 +890,41 @@ def _decide(
                 code="self_approval_denied",
                 http_status=403,
             )
+
+        # Duplicate Person APPROVED (same human via any AuthIdentity)
+        if dec == "APPROVED":
+            prior_ok = c.execute(
+                """
+                SELECT approval_decision_id FROM core_approval_decisions
+                WHERE approval_request_id=? AND decided_by_person_id=? AND decision='APPROVED'
+                LIMIT 1
+                """,
+                (req["approval_request_id"], verified),
+            ).fetchone()
+            if prior_ok:
+                _audit_approval(
+                    action="approval.decide_attempt",
+                    result="DENIED",
+                    request=req,
+                    verified_person_id=verified,
+                    identity=identity,
+                    reason_code="duplicate_person_approval",
+                    metadata={
+                        "decision": dec,
+                        "required_decision_count": required_n,
+                        "valid_approve_count": valid_approve_count(
+                            req["approval_request_id"], conn=c
+                        ),
+                    },
+                    conn=c,
+                )
+                if commit:
+                    c.commit()
+                raise ApprovalError(
+                    "person already has APPROVED decision on this request",
+                    code="duplicate_person_approval",
+                    http_status=409,
+                )
 
         target = target_context_for_request(req)
         req_code = req["required_permission_code"]
@@ -1056,15 +1183,9 @@ def _decide(
             authority_allowed = 0
             authority_reason = "not_required_for_reject"
 
-        # First successful APPROVED/REJECTED wins — re-check PENDING under write
-        existing = c.execute(
-            """
-            SELECT COUNT(*) FROM core_approval_decisions
-            WHERE approval_request_id=? AND decision IN ('APPROVED','REJECTED')
-            """,
-            (req["approval_request_id"],),
-        ).fetchone()[0]
-        if existing:
+        # Re-check PENDING under write (another decider may have flipped status)
+        fresh = get_approval_request(req["approval_request_id"], conn=c, expire=False)
+        if not fresh or fresh["status"] != "PENDING":
             if commit:
                 c.commit()
             raise ApprovalError(
@@ -1073,52 +1194,127 @@ def _decide(
                 http_status=409,
             )
 
+        # REJECT terminates: any existing REJECTED decision means not PENDING already.
+        # For APPROVED path with required_n>1, prior APPROVED rows are expected.
+
         ts = now_utc_iso()
         did = mint_decision_id()
         corr = (identity or {}).get("correlation_id") or req.get("correlation_id") or _audit.mint_correlation_id()
-        c.execute(
-            """
-            INSERT INTO core_approval_decisions (
-              approval_decision_id, approval_request_id, decision,
-              decided_by_person_id, decided_by_assignment_id, identity_assurance,
-              reason, decided_at, authority_allowed, authority_reason,
-              authority_matched_limit_id, authority_basis_type,
-              authority_basis_delegation_id, correlation_id, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                did,
-                req["approval_request_id"],
-                dec,
-                verified,
-                asg_id,
-                (identity or {}).get("identity_assurance"),
-                (reason or "").strip() or None,
-                ts,
-                authority_allowed,
-                authority_reason,
-                authority_matched,
-                basis_type,
-                basis_dlg_id,
-                corr,
-                ts,
-            ),
-        )
-        new_status = "APPROVED" if dec == "APPROVED" else "REJECTED"
-        c.execute(
-            """
-            UPDATE core_approval_requests
-            SET status=?, decided_at=?, updated_at=?
-            WHERE approval_request_id=? AND status='PENDING'
-            """,
-            (new_status, ts, ts, req["approval_request_id"]),
-        )
-        if c.total_changes == 0:
-            raise ApprovalError("already decided", code="already_decided", http_status=409)
+        try:
+            c.execute(
+                """
+                INSERT INTO core_approval_decisions (
+                  approval_decision_id, approval_request_id, decision,
+                  decided_by_person_id, decided_by_assignment_id, identity_assurance,
+                  reason, decided_at, authority_allowed, authority_reason,
+                  authority_matched_limit_id, authority_basis_type,
+                  authority_basis_delegation_id, correlation_id, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    did,
+                    req["approval_request_id"],
+                    dec,
+                    verified,
+                    asg_id,
+                    (identity or {}).get("identity_assurance"),
+                    (reason or "").strip() or None,
+                    ts,
+                    authority_allowed,
+                    authority_reason,
+                    authority_matched,
+                    basis_type,
+                    basis_dlg_id,
+                    corr,
+                    ts,
+                ),
+            )
+        except sqlite3.IntegrityError as exc:
+            # Unique index: one APPROVED per Person per request
+            _audit_approval(
+                action="approval.decide_attempt",
+                result="DENIED",
+                request=req,
+                verified_person_id=verified,
+                identity=identity,
+                reason_code="duplicate_person_approval",
+                metadata={"decision": dec, "required_decision_count": required_n},
+                conn=c,
+            )
+            if commit:
+                c.commit()
+            raise ApprovalError(
+                "person already has APPROVED decision on this request",
+                code="duplicate_person_approval",
+                http_status=409,
+            ) from exc
+
+        terminal = False
+        new_status = "PENDING"
+        if dec == "REJECTED":
+            new_status = "REJECTED"
+            terminal = True
+            c.execute(
+                """
+                UPDATE core_approval_requests
+                SET status='REJECTED', decided_at=?, updated_at=?
+                WHERE approval_request_id=? AND status='PENDING'
+                """,
+                (ts, ts, req["approval_request_id"]),
+            )
+            if c.total_changes == 0:
+                raise ApprovalError("already decided", code="already_decided", http_status=409)
+        else:
+            approve_count = valid_approve_count(req["approval_request_id"], conn=c)
+            if approve_count >= required_n:
+                new_status = "APPROVED"
+                terminal = True
+                c.execute(
+                    """
+                    UPDATE core_approval_requests
+                    SET status='APPROVED', decided_at=?, updated_at=?
+                    WHERE approval_request_id=? AND status='PENDING'
+                    """,
+                    (ts, ts, req["approval_request_id"]),
+                )
+                if c.total_changes == 0:
+                    # Race: another writer flipped; decisions still preserved
+                    updated_race = get_approval_request(
+                        req["approval_request_id"], conn=c, expire=False
+                    )
+                    if updated_race and updated_race["status"] == "APPROVED":
+                        new_status = "APPROVED"
+                        terminal = True
+                    else:
+                        raise ApprovalError(
+                            "already decided", code="already_decided", http_status=409
+                        )
+            else:
+                # Partial: leave PENDING; bump updated_at only
+                c.execute(
+                    """
+                    UPDATE core_approval_requests
+                    SET updated_at=?
+                    WHERE approval_request_id=? AND status='PENDING'
+                    """,
+                    (ts, req["approval_request_id"]),
+                )
+                new_status = "PENDING"
+                terminal = False
 
         updated = get_approval_request(req["approval_request_id"], conn=c, expire=False)
         assert updated is not None
-        audit_action = "approval.granted" if dec == "APPROVED" else "approval.rejected"
+        approve_count = valid_approve_count(req["approval_request_id"], conn=c)
+        remaining = max(0, required_n - approve_count)
+
+        if dec == "REJECTED":
+            audit_action = "approval.rejected"
+        elif terminal and new_status == "APPROVED":
+            audit_action = "approval.granted"
+        else:
+            # Partial decision recorded — NOT terminal approval.granted
+            audit_action = "approval.decision_recorded"
+
         _audit_approval(
             action=audit_action,
             result="SUCCEEDED",
@@ -1126,13 +1322,17 @@ def _decide(
             verified_person_id=verified,
             identity=identity,
             metadata={
-                "status": new_status,
+                "status": updated.get("status"),
                 "decision": dec,
                 "amount": updated.get("material_amount"),
                 "currency": updated.get("currency"),
                 "required_permission": updated.get("required_permission_code"),
                 "authority_basis_type": basis_type,
                 "delegation_id": basis_dlg_id,
+                "required_decision_count": required_n,
+                "valid_approve_count": approve_count,
+                "approvals_remaining": remaining,
+                "terminal": terminal,
             },
             conn=c,
         )
@@ -1160,9 +1360,10 @@ def _decide(
             c.commit()
 
         # HARD RULE: do not execute source; do not complete/verify linked work item
+        enriched = _enrich_request(dict(updated), conn=c)
         out = {
             "ok": True,
-            "request": updated,
+            "request": enriched,
             "decision": dict(
                 c.execute(
                     "SELECT * FROM core_approval_decisions WHERE approval_decision_id=?",
@@ -1171,9 +1372,20 @@ def _decide(
             ),
             "executed_source": False,
             "work_item_completed": False,
+            "terminal": terminal,
+            "valid_approve_count": approve_count,
+            "approvals_remaining": remaining,
+            "required_decision_count": required_n,
             **HONESTY,
         }
         return out
+    except Exception:
+        if commit and own:
+            try:
+                c.rollback()
+            except Exception:
+                pass
+        raise
     finally:
         if own:
             c.close()
@@ -1302,6 +1514,15 @@ def cancel_request(
     finally:
         if own:
             c.close()
+
+
+def update_approval_request(*_a, **_k):  # noqa: ANN001
+    """Security fields (incl. required_decision_count) are immutable after create."""
+    raise ApprovalError(
+        "approval requests are immutable after create; cancel and create new with prior_request_id",
+        code="immutable_fields",
+        http_status=400,
+    )
 
 
 def update_decision(*_a, **_k):  # noqa: ANN001

@@ -31,7 +31,7 @@ PERS_MATT = "PERS-MATT"
 HONESTY = {
     "redelegation": "DENIED",
     "impersonation": "BLOCKED",
-    "dual_approval": "NOT_BUILT",
+    "dual_approval": "BUILT",
     "segregation_of_duties": "NOT_BUILT",
     "delegation_ui": "NOT_BUILT",
     "ai_delegate": False,
