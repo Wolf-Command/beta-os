@@ -1728,6 +1728,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self.path = "/content-2.0.html"
         elif path in ("/progress", "/progress/"):
             self.path = "/progress.html"
+        if path in ("/uma-blu-close", "/uma-blu-close/"):
+            self.path = "/uma-blu-close.html"
+        if path in ("/habitat-operator", "/habitat-operator/"):
+            self.path = "/habitat-operator.html"
         elif path == "/dashboards/progress.html":
             self.path = "/progress.html"
         return SimpleHTTPRequestHandler.do_GET(self)

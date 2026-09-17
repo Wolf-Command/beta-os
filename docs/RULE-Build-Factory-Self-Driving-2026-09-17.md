@@ -58,3 +58,14 @@ run_id, slice, approved_scope, stage, grok_plan_ref, cursor_log, cursor_pid, hea
 ## Forbidden
 
 Matt-as-poller · silent ignore of ACTIVE completion · Dual Approval in this mission · Authority seed · Production · Wolf app code changes for this fix
+
+
+## MUST — Deployed-route UI gate (2026-09-17)
+
+Before marking a UI / `serve_beta.py` slice **FINISHED**:
+
+1. Restart Beta via LaunchAgent (`scripts/beta_restart.py` or `launchctl kickstart -k gui/$(id -u)/net.wolfcommand.serve-beta`). Never touch `:8787`.
+2. `python3 scripts/prove_deployed_ui_routes.py` must **PASS** against real `127.0.0.1:8788`.
+3. Ephemeral/unit HTTP greens alone are **not** acceptance.
+
+Canon: `docs/RULE-UI-Finished-Deployed-Route-2026-09-17.md`.
