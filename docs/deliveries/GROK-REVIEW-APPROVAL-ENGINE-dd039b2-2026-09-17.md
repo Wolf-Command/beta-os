@@ -91,3 +91,14 @@ Peaches previously re-ran tests on Mac: `pass=56 fail=0`; live auth/approvals/de
 - APPROVAL FIX REQUIRED: **YES**
 - Delegation slice: **HOLD** until fix commit + Grok re-review PASS
 
+---
+
+## Build note (Cursor APR-RT-001 fix — 2026-09-17)
+
+Bounded fix applied on `build/wolf-command-rebuild` starting clean at `a1a09f0`:
+- `create_approval_request`: SPEND/EXCEPTION require non-empty `material_amount` + `currency` (coerce reused).
+- `_decide` APPROVE: always `within_authority` when `is_material_request` (missing amount fail-closed).
+- Tests: create SPEND/EXCEPTION without amount fail; forged NULL-amount PENDING → approve authority-denied.
+- Live `org_authority_limits` / approval rows untouched; no dual/SoD/delegation/UI.
+- Commit: `fix(core): require amount on material approval types`
+

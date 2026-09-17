@@ -466,6 +466,17 @@ def create_approval_request(
 
     amt = (str(material_amount).strip() if material_amount is not None else None) or None
     cur = (currency or "").strip().upper() or None
+    if rt in MATERIAL_TYPES:
+        if amt is None:
+            raise ApprovalError(
+                "material_amount required for SPEND/EXCEPTION",
+                code="missing_amount",
+            )
+        if not cur:
+            raise ApprovalError(
+                "currency required for SPEND/EXCEPTION",
+                code="missing_currency",
+            )
     if amt is not None:
         parsed = _authority._coerce_amount(amt)
         if parsed is None or parsed < 0:
@@ -850,13 +861,13 @@ def _decide(
         authority_allowed = 1
         authority_reason = None
         authority_matched = None
-        if dec == "APPROVED" and req.get("material_amount"):
+        if dec == "APPROVED" and is_material_request(req):
             auth = _authority.within_authority(
                 verified,
                 req_code,
                 target,
                 {
-                    "amount": req["material_amount"],
+                    "amount": req.get("material_amount"),
                     "currency": req.get("currency"),
                 },
                 conn=c,

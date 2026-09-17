@@ -249,6 +249,49 @@ def main() -> int:
         forged = e.code == "forged_requester"
     check("forged requested_by refused", forged)
 
+    # APR-RT-001: material types require amount+currency at create
+    spend_no_amt = False
+    try:
+        apr.create_approval_request(
+            title="spend no amount",
+            owning_entity_id="ENT-GGV",
+            required_permission_code=CODE_SPEND,
+            request_type="SPEND",
+            currency="IDR",
+            verified_person_id="PERS-MATT",
+        )
+    except apr.ApprovalError as e:
+        spend_no_amt = e.code == "missing_amount"
+    check("create SPEND without amount fails", spend_no_amt)
+
+    exc_no_amt = False
+    try:
+        apr.create_approval_request(
+            title="exception no amount",
+            owning_entity_id="ENT-GGV",
+            required_permission_code=CODE_SPEND,
+            request_type="EXCEPTION",
+            currency="IDR",
+            verified_person_id="PERS-MATT",
+        )
+    except apr.ApprovalError as e:
+        exc_no_amt = e.code == "missing_amount"
+    check("create EXCEPTION without amount fails", exc_no_amt)
+
+    spend_no_cur = False
+    try:
+        apr.create_approval_request(
+            title="spend no currency",
+            owning_entity_id="ENT-GGV",
+            required_permission_code=CODE_SPEND,
+            request_type="SPEND",
+            material_amount="1000",
+            verified_person_id="PERS-MATT",
+        )
+    except apr.ApprovalError as e:
+        spend_no_cur = e.code == "missing_currency"
+    check("create SPEND without currency fails", spend_no_cur)
+
     # Immutable mutation helper
     imm = False
     try:
@@ -362,6 +405,49 @@ def main() -> int:
     check("authority denied above limit", auth_denied)
     auth_aud = audit.list_events(action="approval.authority_denied", source="approvals", limit=5)
     check("audit approval.authority_denied", len(auth_aud) >= 1)
+
+    # APR-RT-001: forged PENDING SPEND with NULL amount → APPROVE must deny (fail-closed)
+    c = sqlite3.connect(str(tmp_db))
+    c.row_factory = sqlite3.Row
+    forge_id = "APR-FORGE-NULL-AMT"
+    forge_ts = "2026-09-17T01:00:00Z"
+    c.execute(
+        """
+        INSERT INTO core_approval_requests (
+          approval_request_id, request_type, title, description,
+          owning_entity_id, brand_id, location_id, department_id,
+          requested_by_person_id, requested_by_assignment_id,
+          required_permission_code, required_permission_id,
+          material_amount, currency, source_type, source_id,
+          evidence_reference, status, requested_at, decided_at, expires_at,
+          created_at, updated_at, correlation_id, linked_work_item_id,
+          prior_request_id, snapshot_hash
+        ) VALUES (
+          ?, 'SPEND', 'forged null amount', NULL,
+          'ENT-GGV', NULL, NULL, ?,
+          'PERS-AMANDA', 'ASG-AMANDA-CM-1',
+          ?, ?,
+          NULL, NULL, 'HUMAN', NULL,
+          NULL, 'PENDING', ?, NULL, NULL,
+          ?, ?, 'CORR-FORGE-NULL', NULL,
+          NULL, 'forge-null-amt'
+        )
+        """,
+        (forge_id, TGT_DEPT, CODE_SPEND, PERM_SPEND, forge_ts, forge_ts, forge_ts),
+    )
+    c.commit()
+    c.close()
+    null_amt_denied = False
+    try:
+        apr.approve_request(forge_id, verified_person_id="PERS-MATT", reason="should deny")
+    except apr.ApprovalError as e:
+        null_amt_denied = e.code == "authority_denied"
+    forged_row = apr.get_approval_request(forge_id)
+    check(
+        "forge NULL-amount SPEND approve → authority denied",
+        null_amt_denied and forged_row and forged_row["status"] == "PENDING",
+        str(forged_row.get("status") if forged_row else None),
+    )
 
     # Reject path (no authority required) — amount over limit still rejectable
     rejected = apr.reject_request(

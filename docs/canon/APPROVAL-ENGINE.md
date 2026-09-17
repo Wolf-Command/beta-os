@@ -8,6 +8,7 @@
 | Approval Request + Decision models | BUILT |
 | REQUESTED ≠ APPROVED ≠ EXECUTED | BUILT (approve does not execute source; WI complete ≠ approve) |
 | Self-approval default deny (flag) | BUILT (`BETA_APPROVAL_DENY_SELF_APPROVAL=1` default) |
+| SPEND/EXCEPTION require amount+currency at create; APPROVE always runs `within_authority` when material | BUILT (APR-RT-001) |
 | Matt-only `approval.*` permissions | BUILT (live seed) |
 | Linked `APPROVAL_REQUIRED` Work Item | BUILT (optional; complete/verify does not approve) |
 | Dual approval orchestration | NOT BUILT |
