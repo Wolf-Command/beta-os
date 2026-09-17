@@ -143,7 +143,8 @@ def snapshot_day(
                 http_status=500,
             ) from None
         bc = (bill.get("branchCode") or "").strip().upper()
-        if bc and bc != branch:
+        # Fail-closed: blank/missing branchCode is NOT included in Uma (BLZ) totals
+        if bc != branch:
             continue
         status = (bill.get("statusName") or "").strip()
         pulled = r["pulled_at"]

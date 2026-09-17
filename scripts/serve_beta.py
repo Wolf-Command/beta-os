@@ -3202,6 +3202,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
         except Exception as exc:  # noqa: BLE001
             self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
             return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "variance_cash_amount", "esb_totals")
+        ):
+            return
         identity = self._venue_close_person(body)
         if identity is None:
             return
@@ -3220,6 +3224,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
             body = self._read_json()
         except Exception as exc:  # noqa: BLE001
             self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "variance_cash_amount", "esb_totals")
+        ):
             return
         identity = self._venue_close_person(body)
         if identity is None:
@@ -3241,6 +3249,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
             body = self._read_json()
         except Exception as exc:  # noqa: BLE001
             self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "variance_cash_amount", "esb_totals", "verified_at")
+        ):
             return
         identity = self._venue_close_person(body)
         if identity is None:

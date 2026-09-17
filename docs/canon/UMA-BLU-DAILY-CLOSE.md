@@ -14,21 +14,23 @@
 | Variance = declared − esb_cash_from_payments | **BUILT** (server-only) |
 | Live variance threshold rows | **0** (never invent; non-zero → `VARIANCE_REQUIRES_POLICY`) |
 | Live monetary authority | **0** (unchanged) |
-| Clean path (variance 0 + fresh fingerprint) | **VERIFIED_CLOSED** via SYSTEM |
+| Clean path (variance 0 + fresh fingerprint) | **RECONCILED** then **VERIFIED_CLOSED** via SYSTEM |
 | Exception Work Item → Head of F&B assignment | **BUILT** (role/scope — no `if Devi`) |
-| SoD: resolver ≠ sole verifier | **BUILT** |
+| HFB (`ROLE-BZG-HFB`) permissions | **exception resolve + verify only** — **not** `venue.close.submit` (do not widen overnight; closer still WAITING) |
+| SoD: resolver ≠ sole verifier; submitter ≠ verifier on exception | **BUILT** |
 | Closer role `ROLE-BZG-CLOSER` | **BUILT** — **WAITING FOR VERIFIED CLOSING OPERATOR** (no named person) |
+| Submit grants | **ROLE-BZG-CLOSER** + **ROLE-MATT** only |
 | Devi seed (`PERS-DEVI` / `deviputu236@gmail.com`) | **BUILT** (HR-authorised email) |
 | API `/api/venue-close/...` | **BUILT** |
 | UI `dashboards/uma-blu-close.html` | **BUILT** |
-| Client totals / variance / state override | **REFUSED** |
+| Client totals / variance / state override | **REFUSED** (open/capture/declare/reconcile/exception/resolve/verify) |
 | Habitat `content_planner` | **UNTOUCHED** |
 | ESB / Production writes | **FORBIDDEN** |
 | POS / Alchemist / ClickUp / other venues | **NOT IN SLICE** |
 
 ## States (strict)
 
-`OPEN` → `DATA_CAPTURED` → `EVIDENCE_SUBMITTED` → (`VERIFIED_CLOSED` if variance 0)  
+`OPEN` → `DATA_CAPTURED` → `EVIDENCE_SUBMITTED` → `RECONCILED` → `VERIFIED_CLOSED` (variance 0, system)  
 or → `VARIANCE_REQUIRES_POLICY` → `EXCEPTION` → `RESOLVED` → `VERIFIED_CLOSED`  
 
 `SUBMITTED` ≠ `RECONCILED` ≠ `VERIFIED`  

@@ -595,7 +595,36 @@ def reconcile(
         ts = now_utc_iso()
 
         if abs(variance) < 1e-9:
-            # Clean path: RECONCILED then system VERIFIED_CLOSED (no Matt required)
+            # Clean path: RECONCILED then system VERIFIED_CLOSED (honesty: SUBMITTED ≠ RECONCILED ≠ VERIFIED)
+            c.execute(
+                """
+                UPDATE venue_daily_closes SET
+                  state='RECONCILED',
+                  variance_cash_amount=?,
+                  variance_policy_id=NULL,
+                  updated_at=?
+                WHERE close_id=?
+                """,
+                (0.0, ts, close_id),
+            )
+            _audit.safe_record(
+                action="venue_close.reconcile",
+                result="ALLOWED",
+                source="venue_close",
+                actor_type="PERSON",
+                verified_person_id=verified,
+                actor_person_id=verified,
+                identity_assurance=(identity or {}).get("identity_assurance"),
+                resource_type="venue_daily_close",
+                resource_id=close_id,
+                reason_code="zero_variance_reconciled",
+                metadata={
+                    "variance_cash_amount": 0.0,
+                    "state": "RECONCILED",
+                    **HONESTY,
+                },
+                conn=c,
+            )
             c.execute(
                 """
                 UPDATE venue_daily_closes SET
@@ -618,7 +647,7 @@ def reconcile(
                 reason_code="zero_variance_system_close",
                 resource_type="venue_daily_close",
                 resource_id=close_id,
-                metadata={"variance_cash_amount": 0.0, **HONESTY},
+                metadata={"variance_cash_amount": 0.0, "prior_state": "RECONCILED", **HONESTY},
                 conn=c,
             )
         else:
@@ -969,7 +998,8 @@ def verify_close(
                 http_status=403,
             )
         submitter = (row.get("submitted_by_person_id") or "").strip()
-        if submitter and submitter == verified and resolver == verified:
+        # Independent of resolver SoD: submitter cannot verify own exception close
+        if submitter and submitter == verified:
             raise VenueCloseError(
                 "SoD: closer cannot self-verify own exception",
                 code="sod_self_close",

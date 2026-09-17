@@ -360,6 +360,36 @@ def main() -> int:
         )
         check("zero variance → VERIFIED_CLOSED", rec["state"] == "VERIFIED_CLOSED", rec["state"])
         check("variance_cash 0", rec.get("variance_cash_amount") == 0.0)
+        recon_audit = conn.execute(
+            """
+            SELECT action, reason_code FROM core_audit_events
+            WHERE resource_id=? AND action='venue_close.reconcile'
+              AND reason_code='zero_variance_reconciled'
+            ORDER BY occurred_at DESC LIMIT 1
+            """,
+            (o["close_id"],),
+        ).fetchone()
+        check(
+            "clean path hits RECONCILED (audit)",
+            bool(recon_audit)
+            and recon_audit[0] == "venue_close.reconcile"
+            and recon_audit[1] == "zero_variance_reconciled",
+            str(tuple(recon_audit) if recon_audit else None),
+        )
+        verify_audit = conn.execute(
+            """
+            SELECT action, reason_code FROM core_audit_events
+            WHERE resource_id=? AND action='venue_close.verify'
+              AND reason_code='zero_variance_system_close'
+            ORDER BY occurred_at DESC LIMIT 1
+            """,
+            (o["close_id"],),
+        ).fetchone()
+        check(
+            "clean path then VERIFIED_CLOSED (audit)",
+            bool(verify_audit) and verify_audit[1] == "zero_variance_system_close",
+            str(tuple(verify_audit) if verify_audit else None),
+        )
     finally:
         conn.close()
 
@@ -419,7 +449,11 @@ def main() -> int:
             rec.get("variance_cash_amount") == -50000.0,
             str(rec.get("variance_cash_amount")),
         )
-        check("never ACCEPT without policy", rec["state"] != "RECONCILED" or True)
+        check(
+            "never ACCEPT without policy (not RECONCILED)",
+            rec["state"] == "VARIANCE_REQUIRES_POLICY" and rec["state"] != "RECONCILED",
+            rec["state"],
+        )
 
         # exception WI owned by HFB (role), not hard-coded Devi
         hfb = vc.find_hfb_assignee(conn=conn)
@@ -464,6 +498,31 @@ def main() -> int:
             check("SoD self-verify denied", False)
         except vc.VenueCloseError as e:
             check("SoD self-verify denied", e.code == "sod_self_verify", e.code)
+
+        # Grant closer verify so we hit sod_self_close (not permission deny)
+        conn.execute(
+            """
+            INSERT INTO org_role_permissions (role_id, permission_id, effect, created_at, updated_at)
+            VALUES ('ROLE-BZG-CLOSER', 'PERM-VENUE-CLOSE-VERIFY', 'ALLOW', ?, ?)
+            ON CONFLICT(role_id, permission_id) DO UPDATE SET effect='ALLOW', updated_at=excluded.updated_at
+            """,
+            (TS, TS),
+        )
+        conn.commit()
+        try:
+            vc.verify_close(
+                o["close_id"],
+                verified_person_id="PERS-TEST-CLOSER",
+                conn=conn,
+                commit=True,
+            )
+            check("SoD self-close denied (submitter≠resolver)", False)
+        except vc.VenueCloseError as e:
+            check(
+                "SoD self-close denied (submitter≠resolver)",
+                e.code == "sod_self_close",
+                e.code,
+            )
 
         ver = vc.verify_close(
             o["close_id"],
@@ -559,6 +618,49 @@ def main() -> int:
     check(
         "serve refuses client overrides",
         "client_override_refused" in serve_src,
+    )
+    check(
+        "serve refuse on exception/resolve/verify",
+        serve_src.count("_venue_close_refuse_overrides") >= 7,
+        str(serve_src.count("_venue_close_refuse_overrides")),
+    )
+
+    # blank/missing branchCode excluded from BLZ totals (fail-closed)
+    blank_esb = td / "esb-blank-branch.sqlite"
+    make_esb(
+        blank_esb,
+        [
+            {
+                "statusName": "Finished",
+                "branchCode": "",
+                "grandTotal": 99999,
+                "paymentTotal": 99999,
+                "salesPayments": [
+                    {"paymentMethodTypeName": "CASH", "paymentAmount": 99999}
+                ],
+            },
+            {
+                "statusName": "Finished",
+                "branchCode": "BLZ",
+                "grandTotal": 1000,
+                "paymentTotal": 1000,
+                "salesPayments": [
+                    {"paymentMethodTypeName": "CASH", "paymentAmount": 1000}
+                ],
+            },
+        ],
+        biz_date="2026-09-14",
+    )
+    snap = esb.snapshot_day("2026-09-14", esb_path=blank_esb)
+    check(
+        "blank branchCode excluded from BLZ cash",
+        snap["totals"]["cash_from_payments"] == 1000.0,
+        str(snap.get("totals")),
+    )
+    check(
+        "blank branchCode excluded from finished_count",
+        snap["totals"]["finished_count"] == 1,
+        str(snap.get("totals")),
     )
 
     # honesty flags on temp

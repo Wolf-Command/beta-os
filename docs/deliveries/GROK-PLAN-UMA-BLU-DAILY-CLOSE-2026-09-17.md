@@ -52,7 +52,7 @@ Create smallest:
 - POS for ROLE-BZG-HFB (or ROLE-BZG-OPS-LEAD if cleaner; prefer existing ROLE-BZG-HFB) scoped ENT-BZG + BZG-UMA
 - Assignment ACTIVE
 - Scope SCOPE-BZG-UMA (brand) + entity BZG
-- RBAC: close_submit, close_resolve_exception, close_verify (SoD: closer ≠ sole verifier on own exception where practical)
+- RBAC (honesty lock 2026-09-17 overnight nits): HFB = `close_resolve_exception` + `close_verify` only — **not** `close_submit`. Submit stays `ROLE-BZG-CLOSER` + Matt (closer still WAITING). SoD: resolver ≠ sole verifier; submitter ≠ verifier on exception path.
 
 Do **not** `if person_id == PERS-DEVI`.  
 CF Access Include for her email is **Matt CF gate** — software binds identity; live CF seat may still be WAITING.
