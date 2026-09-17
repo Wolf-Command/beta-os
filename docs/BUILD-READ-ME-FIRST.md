@@ -12,9 +12,10 @@ You MUST read, in order:
 
 1. `RULE-Software-First-Agent-Scarcity-2026-09-16.md`
 2. `RULE-Beta-Construction-Production-Sacred-2026-09-16.md`
-3. `canon/WOLF-COMMAND-MASTER-SPECIFICATION.md`
-4. `canon/MASTER-BUILD-DASHBOARD-README.md`
-5. relevant registry CSVs for the capability being changed (`canon/build-dashboard/`)
+3. `RULE-Local-Cursor-Build-Path-2026-09-17.md`
+4. `canon/WOLF-COMMAND-MASTER-SPECIFICATION.md`
+5. `canon/MASTER-BUILD-DASHBOARD-README.md`
+6. relevant registry CSVs for the capability being changed (`canon/build-dashboard/`)
 
 If a required document is missing, **stop and report**. Do not invent architecture.
 
@@ -57,6 +58,26 @@ Also:
 
 ---
 
+## Builder factory (locked 17 Sep 2026)
+
+**Primary coding environment:** Cursor Local Agent / My Machine on Wolfs-Mac-Studio
+
+**Local Beta repository:** `/Users/wolfterminal/beta-os/` (canonical construction repository)
+
+**Branch:** `build/wolf-command-rebuild`
+
+**Remote SCM:** NOT YET REQUIRED
+
+Do not create a remote just to satisfy Cursor Cloud Agents.
+
+Flow: Matt → Peaches → Grok Bot (plan) → Cursor Local Agent (code) → tests → Grok review/red-team → Cursor fixes → Peaches verify → Matt.
+
+Peaches governs and may invoke Cursor; Peaches must not substitute Shell for Cursor application implementation.
+
+Full rule: `RULE-Local-Cursor-Build-Path-2026-09-17.md`
+
+---
+
 ## Hard stops
 
 * Do not create a new agent to solve an engineering problem software can solve.
@@ -87,4 +108,4 @@ CLAIMED ≠ VERIFIED.
 
 ---
 
-Locked ★ 16 Sep 2026 Matthew. Read before every Beta change.
+Locked ★ 16 Sep 2026 Matthew; builder factory ★ 17 Sep 2026. Read before every Beta change.
