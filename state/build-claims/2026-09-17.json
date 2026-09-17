@@ -63,6 +63,13 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_approval_engine.py >/tmp/approval-engine-test.out 2>&1; tail -3 /tmp/approval-engine-test.out",
       "expect": "fail=0",
       "by": "cursor-local"
+    },
+    {
+      "id": "apr-rt-001",
+      "claim": "SPEND/EXCEPTION require material_amount+currency at create; APPROVE always within_authority when is_material_request; live auth/approvals stay 0",
+      "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); print(c.execute('select count(*) from org_authority_limits').fetchone()[0], c.execute('select count(*) from core_approval_requests').fetchone()[0], c.execute('select count(*) from core_approval_decisions').fetchone()[0], c.execute('select count(*) from core_audit_events').fetchone()[0])\" && python3 /Users/wolfterminal/beta-os/scripts/tests/test_approval_engine.py >/tmp/apr-rt-001.out 2>&1; tail -1 /tmp/apr-rt-001.out",
+      "expect": "0 0 0 47 and pass=60 fail=0",
+      "by": "cursor-local"
     }
   ]
 }

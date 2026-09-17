@@ -102,3 +102,24 @@ Bounded fix applied on `build/wolf-command-rebuild` starting clean at `a1a09f0`:
 - Live `org_authority_limits` / approval rows untouched; no dual/SoD/delegation/UI.
 - Commit: `fix(core): require amount on material approval types`
 
+
+---
+
+## GROK RE-REVIEW after `04a3d63` (2026-09-17 WITA)
+
+**Fix commit reviewed:** `04a3d63b080b2fb705b0297dd8145af0036ab27f`  
+**Diff reviewed:** actual `scripts/core/approvals.py` + tests (not Peaches claim alone).
+
+| Check | Result |
+|-------|--------|
+| Create SPEND/EXCEPTION requires amount+currency | **PASS** — raises `missing_amount` / `missing_currency` before insert |
+| Decide APPROVE uses `is_material_request` | **PASS** — no longer gated only on truthy amount |
+| NULL amount on material APPROVE | **PASS** — `within_authority` with `amount=None` → deny; test forge row stays PENDING |
+| APR-RT-001 closed | **YES** |
+| New material findings in this re-review | **NONE** |
+
+**Re-review verdict:** **PASS**
+
+**Peaches verify (separate):** `pass=60 fail=0`; live auth/appr/dec/audit = 0/0/0/47.
+
+**Gate:** Approval Grok gap **CLOSED**. Delegation slice may proceed.
