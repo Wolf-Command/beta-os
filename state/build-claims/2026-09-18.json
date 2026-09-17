@@ -7,6 +7,13 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_authorised_knowledge.py >/tmp/akr-v1-test.out 2>&1; tail -3 /tmp/akr-v1-test.out",
       "expect": "PASS=51 FAIL=0",
       "by": "cursor-local"
+    },
+    {
+      "id": "decision-memory-v1-cap-intel-04",
+      "claim": "Decision Memory v1 BUILT (INSERT-only; no silent rewrite; scope isolation; empty outcome=OUTCOME_UNKNOWN; recall max 50); CAP-INTEL-04; fixture DB tests green",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_decision_memory.py >/tmp/dm-v1-test.out 2>&1; tail -3 /tmp/dm-v1-test.out",
+      "expect": "PASS=54 FAIL=0",
+      "by": "cursor-local"
     }
   ]
 }
