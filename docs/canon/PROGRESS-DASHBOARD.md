@@ -1,8 +1,8 @@
-# Progress Dashboard — Canon (v1)
+# Progress Dashboard — Canon (v2 Owner Cockpit)
 
-**Status:** BUILT + TESTED 2026-09-17 (Cursor Local Agent)  
-**Run:** BF-progress-dashboard-20260917  
-**Decision:** `2026-09-17 · PICK: Matt Progress Dashboard v1 on Beta only`  
+**Status:** BUILT + TESTED 2026-09-17 (Cursor Local Agent) — Owner Cockpit iterate  
+**Run:** `BF-progress-dashboard-v2-20260917`  
+**Decision:** `2026-09-17 · PICK: Matt Progress Dashboard v1 on Beta only` (v2 extends same surface)  
 **Audience:** Owner / `PERS-MATT` only. Staff seats → **403**.
 
 ## Honesty
@@ -12,7 +12,9 @@ progress_type: PARTIAL_ESTIMATE
 master_build_csv_staleness: KNOWN
 overlay_required: YES
 BUILT ≠ HUMAN_COMMISSIONED ≠ LIVE
+WAITING ≠ BLOCKED
 TARGET profit ≠ ACTUAL (ACTUAL NOT YET TRUSTWORTHY)
+Factory HEALTHY ≠ mission complete
 ```
 
 No invented AI percentages. Peaches recommendations are not APPROVED. Domain weights labelled **ESTIMATED** until a registry owns them.
@@ -21,19 +23,21 @@ No invented AI percentages. Peaches recommendations are not APPROVED. Domain wei
 
 ```
 docs/canon/build-dashboard/*.csv
-+ state/build-factory/runs/*.json (read-only)
-+ state/progress/v1_overlay.json (provenance required)
++ state/build-factory/runs/*.json (read-only → factory_health status)
++ state/progress/v1_overlay.json (provenance + owner_cockpit)
     → scripts/core/progress_read_model.py
     → GET /api/progress* (Owner only)
     → dashboards/progress.html (+ /progress)
 ```
 
-Overlay fills gaps where `Master_Build.csv` is stale vs proven commits (Authority, Approval, Dual, SoD, Evidence, Exception, Habitat gate, Uma Close, Auth JWT, Knowledge rule). Each overlay row carries `source`, `as_of`, `confidence` (`DERIVED` | `ESTIMATED` | `CURATED`).
+Overlay fills gaps where `Master_Build.csv` is stale vs proven commits. Each overlay row carries `source`, `as_of`, `confidence` (`DERIVED` | `ESTIMATED` | `CURATED`). Owner cockpit fields (`owner_pulse`, `next_moves`, `recent_wins`, `milestones`) live under `owner_cockpit` with provenance.
 
 ## How is this calculated?
 
-1. **Domain weights** (CURATED, labelled ESTIMATED): Core 25%, GGV 20%, BZG 15%, AMG 15%, Intelligence 10%, Integrations 5%, Sale Readiness 5%, Factory health 5%.
-2. **Per-capability maturity** from lifecycle (not file count):
+1. **Domain weights** (CURATED, labelled ESTIMATED; **Factory health EXCLUDED**): Core ~26%, GGV ~21%, BZG ~16%, AMG ~16%, Intelligence ~11%, Integrations ~5%, Sale Readiness ~5% (prior ratios ÷0.95 after removing Factory 5%).
+2. **Factory health** is separate system status ∈ {**HEALTHY**, **DEGRADED**, **FAILING**} from deterministic checks (ACTIVE factory clean, deployed UI routes, Beta :8788 up, Production untouched). **Not** mission maturity.
+3. **Core %** = maturity of **tracked approved Core capabilities in Master_Build+overlay** (`item_count` denominator) — **NOT** “all imaginable Wolf Core forever”.
+4. **Per-capability maturity** from lifecycle (not file count):
    - IDEA / SPECIFIED = 0.05
    - APPROVED = 0.15
    - BUILDING = 0.35
@@ -42,9 +46,15 @@ Overlay fills gaps where `Master_Build.csv` is stale vs proven commits (Authorit
    - VERIFIED = 0.85
    - LIVE = 1.0
    - RETIRED / NOT_TARGET = n/a (0)
-3. **Commissioning penalty:** if BUILT / TESTED (or equivalent) but `HUMAN_COMMISSIONING ≠ DONE` → score capped at **0.65** (BUILT ≠ LIVE).
-4. **Overall** = weighted average of domain scores. Shown as integer % + label **PARTIAL ESTIMATE** while CSV + overlay mix exists.
-5. **Reconcile vs prior ~32%:** if computed differs by more than 8 points, UI shows a why note (new Core slices + Habitat / Uma verticals landed after that estimate).
+5. **Commissioning penalty:** if BUILT / TESTED (or equivalent) but `HUMAN_COMMISSIONING ≠ DONE` → score capped at **0.65** (BUILT ≠ LIVE).
+6. **Overall** = weighted average of **mission** domain scores (no Factory). Shown as integer % + label **PARTIAL ESTIMATE**.
+7. **Prior 27% → new value:** v1 overall included Factory at 5% weight (~27%). v2 removes Factory and re-normalizes — do not inflate to look good. UI shows why note.
+
+## Owner Cockpit (Empire)
+
+Hierarchy: How far are we? → status chips → Owner pulse → Next 3 moves (ACTIVE|WAITING|RECOMMENDED|APPROVED) → Recent wins → Milestone road → Domain cards (bar · plain phase · biggest gap).
+
+Raw IDs (`PERS-` / `EVR-` / `ROLE-` / `GPO-`) stay in DETAILS / technical_details — not Owner pulse / moves / wins copy.
 
 ## Views
 
@@ -58,18 +68,21 @@ Default: **Empire**.
 - WAITING_HUMAN ≠ BLOCKED_SYSTEM ≠ UNAPPROVED_POLICY ≠ INACCESSIBLE_SOURCE
 - TARGET profit ≠ ACTUAL — ACTUAL NOT YET TRUSTWORTHY
 - ESTIMATED labelled
+- Factory HEALTHY ≠ mission complete
 
-### Verticals (accurate from canon / state)
+### Verticals (owner stages)
 
-**Habitat:** PLAN → WORK → EVIDENCE → APPROVAL → PUBLISH_GATE → METRICOOL → PERFORMANCE  
+**Habitat (owner):** PLAN → WORK → PROOF → APPROVAL → PUBLISH READY → PUBLISH → LEARN  
+(Technical: PLAN → WORK → EVIDENCE → APPROVAL → PUBLISH_GATE → METRICOOL → PERFORMANCE)  
 Metricool write **LOCKED**. APPROVED ≠ PUBLISHED. REAL_EXTERNAL_PUBLISH = no.
 
-**Uma Close:** ESB → SNAPSHOT → CASH → RECONCILE → EXCEPTION → RESOLUTION → VERIFIED  
+**Uma Close (owner):** ESB DATA → CASH COUNT → CHECK → EXCEPTION → FIX → VERIFIED CLOSE  
 `WAITING_FOR_CLOSER` (WAITING_HUMAN). Variance policy **NOT_CONFIGURED** (policy gap, not system failure).
 
-### Achievements
+### Milestone road
 
-Locked until evidence: Foundations · First Real Workflow · First Human Commission · First External Action. Do not award without proof.
+Foundations → First Real Workflow → Second Business Vertical → First Human Commission → First External Action → Buyer Ready.  
+Evidence unlock: Foundations + First Real Workflow + Second Business Vertical when Core verticals + Habitat + Uma built. Commission / external / buyer stay locked without proof.
 
 ## Security
 
@@ -93,3 +106,4 @@ Locked until evidence: Foundations · First Real Workflow · First Human Commiss
 - Habitat `content_planner` mutations
 - Editing Phase 2.6 dirty WIP files for cosmetics
 - Invented thresholds or fake % precision
+- Putting Factory health back into mission weighted %

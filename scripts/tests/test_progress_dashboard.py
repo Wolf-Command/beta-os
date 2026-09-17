@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Matt Progress Dashboard v1 — mandatory cases (Beta).
+"""Matt Progress Dashboard v2 Owner Cockpit — mandatory cases (Beta).
 
 Owner (PERS-MATT) only. Staff 403. Read-model only.
-No Habitat planner / ESB / Metricool / Production writes.
+Factory health excluded from mission %. No Habitat/ESB/Metricool/Production writes.
 """
 from __future__ import annotations
 
@@ -146,6 +146,95 @@ def main() -> int:
     for d, meta in (model.get("domain_weights") or {}).items():
         check(f"weight {d} labelled ESTIMATED", meta.get("label") == "ESTIMATED")
 
+    # Factory health split — not a mission domain weight
+    check(
+        "Factory health NOT in domain_weights",
+        "Factory health" not in (model.get("domain_weights") or {}),
+        str(list((model.get("domain_weights") or {}).keys())),
+    )
+    check(
+        "Factory health NOT in domains scorecard",
+        "Factory health" not in (model.get("domains") or {}),
+    )
+    fh = model.get("factory_health") or {}
+    check(
+        "factory_health.status ∈ HEALTHY|DEGRADED|FAILING",
+        fh.get("status") in ("HEALTHY", "DEGRADED", "FAILING"),
+        str(fh.get("status")),
+    )
+    check("factory_health excluded_from_mission_pct", fh.get("excluded_from_mission_pct") is True)
+    check("factory_health production UNTOUCHED", fh.get("production") == "UNTOUCHED")
+    wsum = sum(float(meta.get("weight") or 0) for meta in (model.get("domain_weights") or {}).values())
+    check("mission weights sum ~1.0", abs(wsum - 1.0) < 0.01, str(wsum))
+
+    # Owner Cockpit fields
+    check("owner_phase present", bool(model.get("owner_phase")))
+    chips = model.get("status_chips") or []
+    chip_ids = {c.get("id") for c in chips}
+    check(
+        "status_chips has BUILT/WAITING/POLICY",
+        {"BUILT", "WAITING", "POLICY_NEEDED"}.issubset(chip_ids),
+        str(chip_ids),
+    )
+    pulse = model.get("owner_pulse") or {}
+    check("owner_pulse working_now", isinstance(pulse.get("working_now"), list) and len(pulse["working_now"]) > 0)
+    check(
+        "owner_pulse build_system factory",
+        (pulse.get("build_system") or {}).get("factory") in ("HEALTHY", "DEGRADED", "FAILING"),
+    )
+    moves = model.get("next_moves") or []
+    check("next_moves ≤3", len(moves) <= 3, str(len(moves)))
+    check("next_moves present", len(moves) >= 1)
+    if moves:
+        check(
+            "next_moves class valid",
+            moves[0].get("class") in ("ACTIVE", "WAITING", "RECOMMENDED", "APPROVED"),
+            str(moves[0].get("class")),
+        )
+    wins = model.get("recent_wins") or []
+    check("recent_wins present", len(wins) >= 1)
+    road = model.get("milestone_road") or []
+    check("milestone_road present", len(road) >= 4)
+    unlocked = [m for m in road if m.get("unlocked")]
+    check(
+        "Foundations/workflow/vertical unlock evidence path",
+        any(m.get("id") == "MS-FOUNDATIONS" and m.get("unlocked") for m in road),
+        str([(m.get("id"), m.get("unlocked")) for m in road]),
+    )
+    check("Buyer Ready still locked", any(m.get("id") == "MS-BUYER" and not m.get("unlocked") for m in road))
+
+    # Domain owner fields
+    for dname, dcard in (model.get("domains") or {}).items():
+        check(f"{dname} has plain_phase", bool(dcard.get("plain_phase")))
+        check(f"{dname} has biggest_gap", bool(dcard.get("biggest_gap")))
+        check(f"{dname} has visual_pct", isinstance(dcard.get("visual_pct"), int))
+        gap = dcard.get("biggest_gap") or ""
+        check(
+            f"{dname} biggest_gap hides raw GPO-/EVR- ids",
+            "GPO-" not in gap and "EVR-" not in gap and "PERS-" not in gap,
+            gap,
+        )
+
+    empire = (model.get("views") or {}).get("Empire") or {}
+    check("Empire has owner_phase", bool(empire.get("owner_phase")))
+    check("Empire has next_moves", len(empire.get("next_moves") or []) <= 3)
+    check("Empire technical_details present", isinstance(empire.get("technical_details"), dict))
+    check(
+        "Empire habitat_owner stages",
+        len((empire.get("habitat_owner") or {}).get("stages") or []) == 7,
+    )
+    check(
+        "Empire uma_owner stages",
+        len((empire.get("uma_owner") or {}).get("stages") or []) == 6,
+    )
+
+    bf = (model.get("views") or {}).get("Build Factory") or {}
+    check("Build Factory has factory_health", (bf.get("factory_health") or {}).get("status") in ("HEALTHY", "DEGRADED", "FAILING"))
+
+    # Overall documents factory exclusion
+    ov = model.get("overall") or {}
+    check("overall has factory_excluded_note", "Factory" in (ov.get("factory_excluded_note") or ""))
+
     menu = model.get("menu") or []
     for name in (
         "Empire",
@@ -177,7 +266,10 @@ def main() -> int:
 
     # Distinctions on items
     sample = None
-    for it in ((model.get("views") or {}).get("Empire") or {}).get("items") or []:
+    empire_items = (
+        ((model.get("views") or {}).get("Empire") or {}).get("technical_details") or {}
+    ).get("items") or []
+    for it in empire_items:
         if it.get("source_kind") == "overlay" and it.get("built"):
             sample = it
             break
@@ -199,10 +291,14 @@ def main() -> int:
     # Calculation English
     calc = model.get("calculation") or {}
     check("calculation steps present", len(calc.get("steps") or []) >= 5)
+    calc_blob = " ".join(calc.get("steps") or [])
+    check("calculation excludes Factory from mission %", "EXCLUDED" in calc_blob or "Factory health is separate" in calc_blob)
+    check("calculation states Core denominator", "item_count denominator" in calc_blob)
     canon_text = CANON.read_text(encoding="utf-8")
     check("canon has How is this calculated", "How is this calculated" in canon_text)
     check("canon has commissioning penalty", "0.65" in canon_text)
     check("canon has PARTIAL_ESTIMATE", "PARTIAL_ESTIMATE" in canon_text)
+    check("canon Factory EXCLUDED", "Factory health EXCLUDED" in canon_text or "Factory health** is separate" in canon_text)
 
     html = HTML.read_text(encoding="utf-8")
     for needle in (
@@ -214,8 +310,20 @@ def main() -> int:
         "WAITING_FOR_CLOSER",
         "WRITE_LOCKED",
         "Empire",
+        "Owner pulse",
+        "Milestone road",
+        "How far are we?",
     ):
         check(f"HTML contains {needle}", needle in html)
+
+    # Overlay owner_cockpit provenance
+    oc = overlay.get("owner_cockpit") or {}
+    check("overlay owner_cockpit present", bool(oc))
+    check("overlay next_moves ≤3", len(oc.get("next_moves") or []) <= 3)
+    check(
+        "overlay owner_cockpit provenance",
+        bool(oc.get("source") and oc.get("as_of") and oc.get("confidence")),
+    )
 
     content = CONTENT.read_text(encoding="utf-8")
     check("Owner nav Progress link", 'id="ownerProgressLink"' in content and 'href="/progress"' in content)

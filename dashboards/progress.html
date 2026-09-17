@@ -32,7 +32,7 @@
   .wrap { max-width: 980px; margin: 0 auto; padding: 20px 18px 72px; }
   header {
     display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
-    justify-content: space-between; margin-bottom: 18px;
+    justify-content: space-between; margin-bottom: 14px;
   }
   .brand {
     font-family: var(--display);
@@ -41,13 +41,6 @@
   .brand em { font-style: italic; color: var(--accent); font-weight: 500; }
   .sub { color: var(--muted); font-size: 0.92rem; margin: 4px 0 0; max-width: 36rem; line-height: 1.4; }
   .who { font-size: 0.78rem; color: var(--muted); text-align: right; }
-  .hero {
-    display: grid; grid-template-columns: 1fr; gap: 14px;
-    margin-bottom: 16px;
-  }
-  @media (min-width: 720px) {
-    .hero { grid-template-columns: 1.1fr 1fr; }
-  }
   .panel {
     background: color-mix(in srgb, var(--bg2) 94%, #000);
     border: 1px solid var(--line);
@@ -56,15 +49,29 @@
   }
   .pct {
     font-family: var(--display);
-    font-size: 3.4rem; line-height: 1; letter-spacing: -0.04em; margin: 0;
+    font-size: clamp(3rem, 12vw, 3.8rem); line-height: 1; letter-spacing: -0.04em; margin: 0;
   }
   .pct small { font-size: 0.9rem; color: var(--muted); font-family: var(--font); letter-spacing: 0; }
+  .phase-line {
+    margin: 10px 0 0; font-size: 1.05rem; line-height: 1.35; color: var(--text);
+    font-family: var(--display); font-weight: 500;
+  }
   .label-est {
     display: inline-block; margin-top: 8px; font-size: 0.72rem; letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--warn);
     border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--line));
     padding: 4px 8px; border-radius: 6px;
   }
+  .chips {
+    display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0;
+  }
+  .chip {
+    appearance: none; border: 1px solid var(--line); background: var(--bg3);
+    color: var(--muted); border-radius: 8px; padding: 6px 10px;
+    font-size: 0.72rem; font-weight: 650; letter-spacing: 0.04em; cursor: help;
+  }
+  .chip strong { color: var(--text); margin-left: 4px; }
+  .chip:hover { border-color: var(--accent); color: var(--text); }
   .nav {
     display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px;
   }
@@ -83,20 +90,83 @@
     .nav-toggle { display: block; }
     .nav { display: none; }
     .nav.open { display: flex; }
+    .desktop-only { display: none !important; }
   }
   h2 {
     margin: 0 0 10px; font-size: 0.75rem; text-transform: uppercase;
     letter-spacing: 0.07em; color: var(--muted); font-weight: 650;
   }
-  .grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;
+  .pulse-grid {
+    display: grid; grid-template-columns: 1fr; gap: 10px;
+  }
+  @media (min-width: 720px) {
+    .pulse-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .pulse-block ul { margin: 0; padding-left: 1.1rem; color: var(--muted); font-size: 0.88rem; line-height: 1.45; }
+  .pulse-block .factory-tag {
+    display: inline-block; margin-top: 4px; font-size: 0.75rem; font-weight: 700;
+    letter-spacing: 0.06em; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--line);
+  }
+  .factory-tag.HEALTHY { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+  .factory-tag.DEGRADED { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); }
+  .factory-tag.FAILING { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); }
+  .move {
+    border-top: 1px solid var(--line); padding: 12px 0;
+    display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start;
+  }
+  .move:first-child { border-top: 0; padding-top: 0; }
+  .move-cls {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em;
+    border: 1px solid var(--line); border-radius: 6px; padding: 4px 7px; color: var(--muted);
+    white-space: nowrap;
+  }
+  .move-cls.ACTIVE { color: var(--ok); }
+  .move-cls.WAITING { color: var(--warn); }
+  .move-cls.RECOMMENDED { color: var(--accent); }
+  .move-cls.APPROVED { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); }
+  .move .t { font-weight: 650; }
+  .move .n { color: var(--muted); font-size: 0.8rem; margin-top: 3px; line-height: 1.35; }
+  .win { border-top: 1px solid var(--line); padding: 10px 0; }
+  .win:first-child { border-top: 0; padding-top: 0; }
+  .win .t { font-weight: 650; }
+  .win .e { color: var(--muted); font-size: 0.78rem; margin-top: 3px; }
+  .road {
+    display: flex; flex-wrap: nowrap; gap: 0; overflow-x: auto; padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mile {
+    flex: 0 0 auto; min-width: 120px; max-width: 150px;
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px;
+    background: var(--bg3); margin-right: 8px; font-size: 0.78rem;
+  }
+  .mile.on { border-color: color-mix(in srgb, var(--ok) 50%, var(--line)); }
+  .mile.off { opacity: 0.55; }
+  .mile .lab { font-weight: 700; margin-bottom: 4px; }
+  .mile .st { font-size: 0.68rem; letter-spacing: 0.05em; color: var(--muted); }
+  .mile.on .st { color: var(--ok); }
+  .dom-grid {
+    display: grid; grid-template-columns: 1fr; gap: 10px;
+  }
+  @media (min-width: 640px) {
+    .dom-grid { grid-template-columns: 1fr 1fr; }
   }
   .dom {
-    border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--bg3);
+    border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--bg3);
   }
-  .dom .n { font-size: 0.78rem; color: var(--muted); }
-  .dom .v { font-size: 1.45rem; font-weight: 700; margin-top: 4px; }
-  .dom .w { font-size: 0.68rem; color: var(--accent); margin-top: 4px; letter-spacing: 0.04em; }
+  .dom .n { font-size: 0.82rem; font-weight: 700; }
+  .dom .phase { color: var(--muted); font-size: 0.8rem; margin: 4px 0 8px; line-height: 1.35; }
+  .bar {
+    height: 8px; border-radius: 999px; background: #12171c; overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .bar > i {
+    display: block; height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, #8a7348, var(--accent));
+    width: 0%;
+  }
+  .dom .row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px; }
+  .dom .v { font-size: 1.15rem; font-weight: 700; }
+  .dom .gap { color: var(--warn); font-size: 0.75rem; margin-top: 8px; line-height: 1.35; }
   .item {
     border-top: 1px solid var(--line); padding: 12px 0;
   }
@@ -120,11 +190,13 @@
     background: var(--bg3); font-size: 0.75rem;
   }
   .stage strong { display: block; font-size: 0.72rem; color: var(--muted); margin-bottom: 2px; }
-  details.calc {
+  details.calc, details.disclose {
     margin-top: 14px; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
     background: var(--bg2);
   }
-  details.calc summary { cursor: pointer; font-weight: 650; color: var(--accent); }
+  details.calc summary, details.disclose summary {
+    cursor: pointer; font-weight: 650; color: var(--accent);
+  }
   details.calc ol { margin: 10px 0 0; padding-left: 1.2rem; color: var(--muted); font-size: 0.88rem; line-height: 1.45; }
   .gate {
     border: 1px solid color-mix(in srgb, var(--danger) 50%, var(--line));
@@ -140,6 +212,11 @@
   a.back { color: var(--accent); text-decoration: none; font-size: 0.85rem; }
   a.back:hover { text-decoration: underline; }
   .locked { opacity: 0.55; }
+  .stack { display: flex; flex-direction: column; gap: 12px; }
+  .mobile-next { display: none; }
+  @media (max-width: 640px) {
+    .mobile-next { display: block; }
+  }
 </style>
 </head>
 <body>
@@ -197,54 +274,198 @@
     return list.map((it) => `
       <div class="item">
         <div class="cap">${esc(it.capability || it.id)}</div>
-        <div class="meta">${esc(it.domain || "")} · ${esc(it.id || "")}${it.source ? ` · ${esc(it.source)}` : ""}</div>
-        <div>${pillLifecycle(it.lifecycle)} ${pillFlags(it)}</div>
+        <div class="meta">${esc(it.domain || "")}${it.source ? ` · ${esc(it.source)}` : ""}</div>
+        <details class="disclose" style="margin-top:8px;padding:8px 10px">
+          <summary>DETAILS</summary>
+          <div class="meta" style="margin-top:6px">ID ${esc(it.id || "")}${it.master_build_id ? ` · ${esc(it.master_build_id)}` : ""}</div>
+          <div>${pillLifecycle(it.lifecycle)} ${pillFlags(it)}</div>
+        </details>
         ${it.target_profit_note ? `<div class="meta" style="color:var(--warn)">${esc(it.target_profit_note)}</div>` : ""}
       </div>
     `).join("");
   }
 
-  function renderViewBody() {
-    const v = (model.views || {})[view] || {};
-    if (view === "Empire") {
-      const domains = v.domains || model.domains || {};
-      return `
+  function bar(pct) {
+    const p = Math.max(0, Math.min(100, Number(pct) || 0));
+    return `<div class="bar" aria-hidden="true"><i style="width:${p}%"></i></div>`;
+  }
+
+  function renderEmpire() {
+    const v = (model.views || {}).Empire || {};
+    const overall = model.overall || {};
+    const reconcile = model.reconcile || {};
+    const phase = v.owner_phase || model.owner_phase || "";
+    const chips = v.status_chips || model.status_chips || [];
+    const pulse = v.owner_pulse || model.owner_pulse || {};
+    const moves = v.next_moves || model.next_moves || [];
+    const wins = v.recent_wins || model.recent_wins || [];
+    const road = v.milestone_road || model.milestone_road || [];
+    const domains = v.domains || model.domains || {};
+    const fh = (v.factory_health || model.factory_health || {});
+    const tech = v.technical_details || {};
+
+    const heroChips = chips.filter((c) => c.id !== "COMMISSIONED");
+    const firstMove = moves[0];
+
+    return `
+      <div class="stack">
         <div class="panel">
-          <h2>Domains · weights ESTIMATED</h2>
-          <div class="grid">
+          <h2>How far are we?</h2>
+          <p class="pct">${esc(overall.overall_pct)}%<small> / 100</small></p>
+          <span class="label-est">${esc(overall.label || "PARTIAL ESTIMATE")}</span>
+          <p class="phase-line">${esc(phase)}</p>
+          ${reconcile.show_why ? `<div class="why"><strong>Why vs prior ~${esc(reconcile.prior_pct)}%:</strong> ${esc(reconcile.why)}</div>` : ""}
+          <div class="chips" aria-label="Status chips">
+            ${heroChips.map((c) => `
+              <span class="chip" title="${esc(c.tooltip || "")}">${esc(c.label)}<strong>${esc(c.count)}</strong></span>
+            `).join("")}
+          </div>
+          <p class="muted" style="margin:10px 0 0">progress_type: PARTIAL_ESTIMATE · CSV staleness: KNOWN · overlay required: YES · Factory excluded from %</p>
+        </div>
+
+        ${firstMove ? `
+        <div class="panel mobile-next">
+          <h2>Next move</h2>
+          <div class="move" style="border:0;padding:0">
+            <span class="move-cls ${esc(firstMove.class)}">${esc(firstMove.class)}</span>
+            <div>
+              <div class="t">${esc(firstMove.text)}</div>
+              ${firstMove.note ? `<div class="n">${esc(firstMove.note)}</div>` : ""}
+            </div>
+          </div>
+        </div>` : ""}
+
+        <div class="panel">
+          <h2>Owner pulse</h2>
+          <div class="pulse-grid">
+            <div class="pulse-block">
+              <div class="n" style="font-weight:700;margin-bottom:4px">Working now</div>
+              <ul>${(pulse.working_now || []).map((x) => `<li>${esc(x)}</li>`).join("") || "<li class='muted'>—</li>"}</ul>
+            </div>
+            <div class="pulse-block">
+              <div class="n" style="font-weight:700;margin-bottom:4px">Waiting on people</div>
+              <ul>${(pulse.waiting_on_people || []).map((x) => `<li>${esc(x)}</li>`).join("") || "<li class='muted'>—</li>"}</ul>
+            </div>
+            <div class="pulse-block">
+              <div class="n" style="font-weight:700;margin-bottom:4px">Policy · data needed</div>
+              <ul>${(pulse.policy_data_needed || []).map((x) => `<li>${esc(x)}</li>`).join("") || "<li class='muted'>—</li>"}</ul>
+            </div>
+            <div class="pulse-block">
+              <div class="n" style="font-weight:700;margin-bottom:4px">Build system</div>
+              <div>
+                <span class="factory-tag ${esc((pulse.build_system || {}).factory || fh.status || "HEALTHY")}">Factory ${(pulse.build_system || {}).factory || fh.status || "?"}</span>
+                <span class="factory-tag HEALTHY" style="margin-left:6px">Production UNTOUCHED</span>
+              </div>
+              <p class="muted" style="margin:8px 0 0">Factory is system health — not mission completion.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel desktop-only">
+          <h2>Next 3 moves</h2>
+          ${moves.length ? moves.map((m) => `
+            <div class="move">
+              <span class="move-cls ${esc(m.class)}">${esc(m.class)}</span>
+              <div>
+                <div class="t">${esc(m.text)}</div>
+                ${m.note ? `<div class="n">${esc(m.note)}</div>` : ""}
+              </div>
+            </div>
+          `).join("") : `<p class="muted">No moves curated yet.</p>`}
+          <p class="muted" style="margin:8px 0 0">RECOMMENDED ≠ APPROVED. WAITING ≠ BLOCKED.</p>
+        </div>
+
+        <div class="panel">
+          <h2>Recent wins</h2>
+          ${wins.length ? wins.map((w) => `
+            <div class="win">
+              <div class="t">${esc(w.text)}</div>
+              ${w.evidence ? `<div class="e">Evidence: ${esc(w.evidence)}</div>` : ""}
+            </div>
+          `).join("") : `<p class="muted">No evidence-backed wins listed.</p>`}
+        </div>
+
+        <div class="panel">
+          <h2>Milestone road</h2>
+          <div class="road">
+            ${road.map((m) => `
+              <div class="mile ${m.unlocked ? "on" : "off"}">
+                <div class="lab">${esc(m.label)}</div>
+                <div class="st">${m.unlocked ? "UNLOCKED" : "LOCKED"}</div>
+                <div class="muted" style="margin-top:6px;font-size:0.72rem">${esc(m.reason || "")}</div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Domains</h2>
+          <p class="muted" style="margin-top:0">Weights only in How calculated · ESTIMATED. Bars are visual maturity of tracked items.</p>
+          <div class="dom-grid">
             ${Object.keys(domains).map((d) => {
               const x = domains[d];
-              return `<div class="dom"><div class="n">${esc(d)}</div><div class="v">${esc(x.pct)}%</div><div class="w">weight ${(x.weight * 100).toFixed(0)}% · ESTIMATED</div></div>`;
+              return `<div class="dom">
+                <div class="n">${esc(d)}</div>
+                <div class="phase">${esc(x.plain_phase || "")}</div>
+                ${bar(x.visual_pct != null ? x.visual_pct : x.pct)}
+                <div class="row"><span class="v">${esc(x.visual_pct != null ? x.visual_pct : x.pct)}%</span><span class="muted" style="font-size:0.72rem">PARTIAL ESTIMATE</span></div>
+                <div class="gap">Biggest gap: ${esc(x.biggest_gap || "—")}</div>
+                ${x.denominator_note ? `<div class="muted" style="margin-top:6px;font-size:0.72rem">${esc(x.denominator_note)}</div>` : ""}
+              </div>`;
             }).join("")}
           </div>
         </div>
-        <div class="panel" style="margin-top:12px">
-          <h2>Habitat vertical</h2>
-          ${renderStages(((model.verticals || {}).habitat || {}).stages)}
-          <p class="muted">Metricool write LOCKED · APPROVED ≠ PUBLISHED · REAL_EXTERNAL_PUBLISH = no</p>
+
+        <div class="panel">
+          <h2>Habitat · owner stages</h2>
+          ${renderStages((v.habitat_owner || {}).stages)}
+          <p class="muted">${((v.habitat_owner || {}).distinctions_plain || []).map(esc).join(" · ")}</p>
         </div>
-        <div class="panel" style="margin-top:12px">
-          <h2>Uma Blu close vertical</h2>
-          ${renderStages(((model.verticals || {}).uma_close || {}).stages)}
-          <p class="muted">${esc(((model.verticals || {}).uma_close || {}).waiting || "WAITING_FOR_CLOSER")} · variance ${esc(((model.verticals || {}).uma_close || {}).variance_policy || "NOT_CONFIGURED")}</p>
+        <div class="panel">
+          <h2>Uma Blu · owner stages</h2>
+          ${renderStages((v.uma_owner || {}).stages)}
+          <p class="muted">${esc((v.uma_owner || {}).waiting_plain || "")} · ${esc((v.uma_owner || {}).variance_plain || "")}</p>
         </div>
-        <div class="panel" style="margin-top:12px">
-          <h2>Achievements</h2>
-          ${(model.achievements || []).map((a) => `
-            <div class="item locked">
-              <div class="cap">${esc(a.label)}</div>
-              <div class="meta">${a.locked ? "Locked — " : ""}${esc(a.reason || "")}</div>
-            </div>
-          `).join("") || `<p class="muted">None defined.</p>`}
+
+        <details class="disclose">
+          <summary>DETAILS · SOURCE · technical IDs</summary>
+          <p class="muted">Raw capability rows with IDs (PERS-/EVR-/ROLE-/GPO- kept here, not in Owner fields).</p>
+          ${renderItems(tech.items || [], 30)}
+        </details>
+      </div>
+    `;
+  }
+
+  function renderViewBody() {
+    const v = (model.views || {})[view] || {};
+    if (view === "Empire") return renderEmpire();
+    if (view === "Build Factory") {
+      const fh = v.factory_health || model.factory_health || {};
+      const checks = fh.checks || {};
+      return `
+        <div class="panel">
+          <h2>Build Factory · system health</h2>
+          <p class="muted" style="margin-top:0">${esc(v.note || "Excluded from mission weighted %.")}</p>
+          <span class="factory-tag ${esc(fh.status || "")}">${esc(fh.status || "?")}</span>
+          <span class="factory-tag HEALTHY" style="margin-left:6px">Production ${esc(fh.production || "UNTOUCHED")}</span>
+          <div style="margin-top:12px">
+            ${Object.keys(checks).map((k) => {
+              const c = checks[k];
+              return `<div class="item"><div class="cap">${esc(k)}</div><div class="meta">${esc(c.result)} · ${esc(c.detail || "")}</div></div>`;
+            }).join("")}
+          </div>
         </div>
+        <div class="panel" style="margin-top:12px"><h2>Factory runs</h2>${renderItems(v.items, 40)}</div>
       `;
     }
     if (view === "GGV") {
       return `
         <div class="panel">
-          <h2>Habitat · PLAN → PERFORMANCE</h2>
-          ${renderStages((v.habitat || {}).stages)}
+          <h2>Habitat · PLAN → LEARN</h2>
+          ${renderStages((v.habitat_owner || {}).stages)}
           <p class="muted">Write LOCKED on Metricool. BUILT ≠ COMMISSIONED ≠ LIVE.</p>
+          ${v.visual_pct != null ? `${bar(v.visual_pct)}<p class="muted">${esc(v.plain_phase || "")} · ${esc(v.pct)}%</p>` : ""}
+          ${v.biggest_gap ? `<p class="muted" style="color:var(--warn)">Biggest gap: ${esc(v.biggest_gap)}</p>` : ""}
         </div>
         <div class="panel" style="margin-top:12px"><h2>GGV capabilities</h2>${renderItems(v.items)}</div>
       `;
@@ -252,9 +473,10 @@
     if (view === "BZG") {
       return `
         <div class="panel">
-          <h2>Uma Close · ESB → VERIFIED</h2>
-          ${renderStages((v.uma_close || {}).stages)}
-          <p class="muted">${esc((v.uma_close || {}).waiting || "")} · ${(v.uma_close || {}).variance_note || "variance NOT CONFIGURED (policy, not failure)"}</p>
+          <h2>Uma Close · ESB DATA → VERIFIED CLOSE</h2>
+          ${renderStages((v.uma_owner || {}).stages)}
+          <p class="muted">${esc((v.uma_owner || {}).waiting_plain || (v.uma_close || {}).waiting || "")} · ${esc((v.uma_owner || {}).variance_plain || "")}</p>
+          <p class="muted">WAITING_FOR_CLOSER · WRITE_LOCKED paths remain honest. BUILT ≠ COMMISSIONED ≠ LIVE.</p>
         </div>
         <div class="panel" style="margin-top:12px"><h2>BZG capabilities</h2>${renderItems(v.items)}</div>
       `;
@@ -270,46 +492,50 @@
     if (view === "Backlog") {
       return `<div class="panel"><p class="muted" style="margin-top:0">${esc(v.note || "")}</p>${renderItems(v.items, 40)}</div>`;
     }
-    return `<div class="panel"><h2>${esc(view)}</h2>${v.pct != null ? `<p class="muted">Domain estimate ${esc(v.pct)}% · ESTIMATED</p>` : ""}${renderItems(v.items, 50)}</div>`;
+    if (view === "Wolf Core") {
+      return `<div class="panel">
+        <h2>Wolf Core</h2>
+        ${v.denominator_note ? `<p class="muted" style="margin-top:0">${esc(v.denominator_note)}</p>` : ""}
+        ${v.visual_pct != null ? `${bar(v.visual_pct)}<p class="muted">${esc(v.plain_phase || "")} · ${esc(v.pct)}% · ESTIMATED</p>` : ""}
+        ${v.biggest_gap ? `<p class="muted" style="color:var(--warn)">Biggest gap: ${esc(v.biggest_gap)}</p>` : ""}
+        ${renderItems(v.items, 50)}
+      </div>`;
+    }
+    return `<div class="panel"><h2>${esc(view)}</h2>${v.pct != null ? `<p class="muted">Domain estimate ${esc(v.pct)}% · ESTIMATED</p>` : ""}${v.plain_phase ? `<p class="muted">${esc(v.plain_phase)}</p>` : ""}${renderItems(v.items, 50)}</div>`;
   }
 
   function render() {
-    const overall = model.overall || {};
-    const reconcile = model.reconcile || {};
     const calc = model.calculation || {};
+    const fh = model.factory_health || {};
     app.innerHTML = `
       <header>
         <div>
           <p style="margin:0 0 6px"><a class="back" href="/content-2.0.html">← Content Engine</a></p>
           <h1 class="brand">Wolf <em>Progress</em></h1>
-          <p class="sub">Empire build state for the Owner. BUILT ≠ COMMISSIONED ≠ LIVE. No fake precision.</p>
+          <p class="sub">Owner cockpit. BUILT ≠ COMMISSIONED ≠ LIVE. Factory health separate. No fake precision.</p>
         </div>
         <div class="who" id="who">Owner surface</div>
       </header>
-      <div class="hero">
-        <div class="panel">
-          <h2>Overall</h2>
-          <p class="pct">${esc(overall.overall_pct)}%<small> / 100</small></p>
-          <span class="label-est">${esc(overall.label || "PARTIAL ESTIMATE")}</span>
-          ${reconcile.show_why ? `<div class="why"><strong>Why vs prior ~${esc(reconcile.prior_pct)}%:</strong> ${esc(reconcile.why)}</div>` : ""}
-          <p class="muted" style="margin:10px 0 0">progress_type: PARTIAL_ESTIMATE · CSV staleness: KNOWN · overlay required: YES</p>
-        </div>
-        <div class="panel">
-          <h2>Mandatory distinctions</h2>
-          <p class="muted" style="margin:0">BUILT ≠ HUMAN_COMMISSIONED ≠ LIVE</p>
-          <p class="muted">WAITING_HUMAN ≠ BLOCKED_SYSTEM ≠ UNAPPROVED_POLICY ≠ INACCESSIBLE_SOURCE</p>
-          <p class="muted">TARGET ≠ ACTUAL — ACTUAL NOT YET TRUSTWORTHY</p>
-          <p class="muted">Weights and % labelled ESTIMATED</p>
-        </div>
-      </div>
       <button type="button" class="nav-toggle" id="navToggle">Menu · ${esc(view)}</button>
       <nav class="nav" id="nav" aria-label="Progress views">
         ${(model.menu || []).map((m) => `<button type="button" data-view="${esc(m)}" class="${m === view ? "active" : ""}">${esc(m)}</button>`).join("")}
       </nav>
       <div id="body">${renderViewBody()}</div>
       <details class="calc">
-        <summary>How is this calculated?</summary>
+        <summary>HOW CALCULATED · How is this calculated?</summary>
         <ol>${(calc.steps || []).map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
+      </details>
+      <details class="disclose">
+        <summary>BUILD FACTORY · status ${esc(fh.status || "")}</summary>
+        <p class="muted">${esc(fh.note || "")}</p>
+        <p class="muted">Production: UNTOUCHED · Excluded from mission %</p>
+      </details>
+      <details class="disclose">
+        <summary>MANDATORY DISTINCTIONS</summary>
+        <p class="muted">BUILT ≠ HUMAN_COMMISSIONED ≠ LIVE</p>
+        <p class="muted">WAITING_HUMAN ≠ BLOCKED_SYSTEM ≠ UNAPPROVED_POLICY ≠ INACCESSIBLE_SOURCE</p>
+        <p class="muted">TARGET ≠ ACTUAL — ACTUAL NOT YET TRUSTWORTHY</p>
+        <p class="muted">Weights and % labelled ESTIMATED · Factory HEALTHY ≠ mission complete</p>
       </details>
     `;
     const nav = document.getElementById("nav");
@@ -330,7 +556,6 @@
       return;
     }
     const person = me.data.person_id;
-    document.getElementById("app");
     const prog = await api("/api/progress");
     if (prog.status === 403 || !prog.data.ok) {
       app.innerHTML = `<div class="gate"><h1>403</h1><p class="muted">${esc(prog.data.message || "Staff seats cannot open Progress.")}</p><p class="muted">Resolved person: ${esc(person || "none")}</p></div>`;

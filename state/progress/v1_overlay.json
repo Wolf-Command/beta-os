@@ -4,10 +4,84 @@
   "master_build_csv_staleness": "KNOWN",
   "overlay_required": true,
   "as_of": "2026-09-17",
-  "prior_estimate_pct": 32,
-  "prior_estimate_note": "Prior ~32% predated Core slices (Authority/Approval/Dual/SoD/Evidence/Exception) plus Habitat publish gate and Uma Blu daily close.",
+  "prior_estimate_pct": 27,
+  "prior_estimate_note": "Prior 27% included Factory health at 5% mission weight. v2 removes Factory from mission % (system health ∈ HEALTHY/DEGRADED/FAILING) and re-normalizes remaining domain weights (prior ratios ÷0.95). Not inflated to look good.",
   "domain_weights_confidence": "ESTIMATED",
-  "domain_weights_note": "CURATED weights until a registry owns them. Label ESTIMATED.",
+  "domain_weights_note": "CURATED weights until a registry owns them. Label ESTIMATED. Factory health EXCLUDED from mission weighted %.",
+  "owner_cockpit": {
+    "as_of": "2026-09-17",
+    "confidence": "CURATED",
+    "source": "docs/deliveries/GROK-PLAN-PROGRESS-DASHBOARD-V2-2026-09-17.md + verticals + overlay rows",
+    "owner_pulse": {
+      "working_now": [
+        "Habitat operator path on Beta — plan through publish gate (write still locked)",
+        "Uma Blu daily close path built — waiting on closer for first verified close",
+        "Core governance slices built on Beta — Authority through Exception"
+      ],
+      "waiting_on_people": [
+        "Uma Blu closer to run first verified close",
+        "Matt human commission of built Core governance slices"
+      ],
+      "policy_data_needed": [
+        "Uma variance threshold not configured (policy gap, not system failure)",
+        "Authorised Knowledge Resolution rule still specified — needs approval"
+      ]
+    },
+    "next_moves": [
+      {
+        "text": "Commission Core governance on Beta (Authority through Exception)",
+        "class": "WAITING",
+        "note": "WAITING_HUMAN — BUILT ≠ COMMISSIONED. Not an APPROVED next build.",
+        "source": "Commissioning.csv LIVE?=NO + overlay Core TESTED rows",
+        "as_of": "2026-09-17",
+        "confidence": "DERIVED"
+      },
+      {
+        "text": "Run first Uma Blu verified close with the closer",
+        "class": "WAITING",
+        "note": "WAITING_FOR_CLOSER — human path, not a system outage",
+        "source": "docs/canon/UMA-BLU-DAILY-CLOSE.md",
+        "as_of": "2026-09-17",
+        "confidence": "DERIVED"
+      },
+      {
+        "text": "Approve Authorised Knowledge Resolution rule",
+        "class": "RECOMMENDED",
+        "note": "Peaches recommendation is not APPROVED — Owner decision required",
+        "source": "docs/RULE-Authorised-Knowledge-Resolution-2026-09-17.md",
+        "as_of": "2026-09-17",
+        "confidence": "CURATED"
+      }
+    ],
+    "recent_wins": [
+      {
+        "text": "Real Auth Binding on Beta — Cloudflare sign-in maps to a Person",
+        "evidence": "docs/canon/REAL-AUTH-BINDING-TRANSITIONAL.md; test_real_auth_binding.py",
+        "as_of": "2026-09-17",
+        "confidence": "DERIVED"
+      },
+      {
+        "text": "Habitat publish gate — external write stays locked until ready",
+        "evidence": "docs/canon/HABITAT-PUBLISH-GATE.md; Metricool write LOCKED",
+        "as_of": "2026-09-17",
+        "confidence": "DERIVED"
+      },
+      {
+        "text": "Uma Blu daily close path — ESB read through verified close",
+        "evidence": "docs/canon/UMA-BLU-DAILY-CLOSE.md; WAITING_FOR_CLOSER",
+        "as_of": "2026-09-17",
+        "confidence": "DERIVED"
+      }
+    ],
+    "milestones": [
+      {"id": "MS-FOUNDATIONS", "label": "Foundations", "order": 1, "evidence": "Core overlay TESTED slices + Master_Build tracked set"},
+      {"id": "MS-FIRST-WORKFLOW", "label": "First Real Workflow", "order": 2, "evidence": "Habitat publish gate or Uma close path built"},
+      {"id": "MS-SECOND-VERTICAL", "label": "Second Business Vertical", "order": 3, "evidence": "Habitat + Uma both built"},
+      {"id": "MS-HUMAN-COMMISSION", "label": "First Human Commission", "order": 4, "locked": true, "reason": "Commissioning.csv LIVE?=NO across board"},
+      {"id": "MS-EXTERNAL", "label": "First External Action", "order": 5, "locked": true, "reason": "Metricool write LOCKED; no REAL_EXTERNAL_PUBLISH"},
+      {"id": "MS-BUYER", "label": "Buyer Ready", "order": 6, "locked": true, "reason": "Requires commissioned live ops + trustworthy actuals"}
+    ]
+  },
   "rows": [
     {
       "id": "OV-AUTH-JWT",

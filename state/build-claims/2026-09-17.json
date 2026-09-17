@@ -217,6 +217,27 @@
       "check": "python3 -m unittest scripts.tests.test_deployed_route_aliases >/tmp/alias-tests.out 2>&1; tail -3 /tmp/alias-tests.out",
       "expect": "OK / Ran 4",
       "by": "cursor-local"
+    },
+    {
+      "id": "progress-dashboard-v2-024",
+      "claim": "Progress Dashboard v2 Owner Cockpit: Factory health excluded from mission %; factory_health.status \u2208 HEALTHY|DEGRADED|FAILING; Empire owner_phase/chips/pulse/moves/wins/milestones; Beta /progress 200",
+      "check": "python3 -c \"import sys; sys.path.insert(0,'/Users/wolfterminal/beta-os/scripts'); from core import progress_read_model as p; m=p.build_read_model(); assert 'Factory health' not in m['domain_weights']; assert m['factory_health']['status'] in ('HEALTHY','DEGRADED','FAILING'); assert m.get('owner_phase') and len(m.get('next_moves') or [])<=3; print(m['overall']['overall_pct'], m['factory_health']['status'], 'ok')\" && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8788/progress",
+      "expect": "28-ish HEALTHY ok and 200",
+      "by": "cursor-local"
+    },
+    {
+      "id": "progress-dashboard-v2-tests",
+      "claim": "test_progress_dashboard.py passes v2 Owner Cockpit cases; factory excluded; staff 403",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_progress_dashboard.py >/tmp/progress-v2-test.out 2>&1; tail -1 /tmp/progress-v2-test.out",
+      "expect": "152 passed, 0 failed",
+      "by": "cursor-local"
+    },
+    {
+      "id": "progress-v2-deployed-route",
+      "claim": "After beta_restart, prove_deployed_ui_routes.py PASS for /progress on :8788",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/prove_deployed_ui_routes.py >/tmp/prove-v2.out 2>&1; tail -1 /tmp/prove-v2.out",
+      "expect": "PASS all deployed-route checks",
+      "by": "cursor-local"
     }
   ]
 }
