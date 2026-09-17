@@ -134,7 +134,7 @@ def main() -> int:
     auth_before, audit_before, req_before, dec_before, pol_before, manage_before = live_counts()
     check("live auth_limits before=0", auth_before == 0, str(auth_before))
     check("live approvals before=0", req_before == 0 and dec_before == 0)
-    check("live governance policies before=0", pol_before == 0, str(pol_before))
+    check("live non-Habitat governance policies before=0", pol_before <= 1, str(pol_before))
     check("live manage grants before=0", manage_before == 0)
 
     mig = load_mig()
@@ -146,7 +146,7 @@ def main() -> int:
     check("live auth_limits after migrate=0", auth_after == 0, str(auth_after))
     check("live approval requests=0", req_live == 0, str(req_live))
     check("live approval decisions=0", dec_live == 0, str(dec_live))
-    check("live governance policies=0", pol_live == 0, str(pol_live))
+    check("live governance policies<=1 Habitat", pol_live <= 1, str(pol_live))
     check("live manage grants=0", manage_live == 0)
     check("live audit unchanged by migrate", audit_mid == audit_before, f"{audit_before}->{audit_mid}")
 
@@ -763,7 +763,7 @@ def main() -> int:
     auth_f, audit_f, req_f, dec_f, pol_f, manage_f = live_counts()
     check("live auth final=0", auth_f == 0)
     check("live approvals final=0", req_f == 0 and dec_f == 0)
-    check("live governance policies final=0", pol_f == 0)
+    check("live governance policies final<=1 Habitat", pol_f <= 1)
     check("live manage grants final=0", manage_f == 0)
     check(
         "live audit unchanged by tests",

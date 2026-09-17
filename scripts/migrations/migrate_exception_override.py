@@ -289,9 +289,16 @@ def main() -> int:
                 file=sys.stderr,
             )
             return 2
-        if n_pol != 0 and is_live:
+        # Habitat pilot (020) may seed exactly one policy + one evidence requirement.
+        n_pol_extra = conn.execute(
+            """
+            SELECT COUNT(*) FROM core_governance_policies
+            WHERE NOT (policy_id='GPO-HABITAT-CONTENT-PUBLISH' AND policy_version=1)
+            """
+        ).fetchone()[0]
+        if n_pol_extra != 0 and is_live:
             print(
-                f"REFUSE: live governance policies must stay 0, got {n_pol}",
+                f"REFUSE: non-Habitat governance policies must stay 0, got {n_pol_extra}",
                 file=sys.stderr,
             )
             return 2
@@ -301,9 +308,15 @@ def main() -> int:
                 file=sys.stderr,
             )
             return 2
-        if n_evr != 0 and is_live:
+        n_evr_extra = conn.execute(
+            """
+            SELECT COUNT(*) FROM core_evidence_requirements
+            WHERE NOT (requirement_id='EVR-HABITAT-CONTENT-PUBLISH' AND requirement_version=1)
+            """
+        ).fetchone()[0]
+        if n_evr_extra != 0 and is_live:
             print(
-                f"REFUSE: live evidence requirements must stay 0, got {n_evr}",
+                f"REFUSE: non-Habitat evidence requirements must stay 0, got {n_evr_extra}",
                 file=sys.stderr,
             )
             return 2

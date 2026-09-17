@@ -635,6 +635,7 @@ def create_approval_request(
     scope_id: str | None = None,
     governed_object_type: str | None = None,
     governed_object_id: str | None = None,
+    action_type: str | None = None,
     # Client-supplied actor / evidence flags ignored (spoof refused)
     requested_by_person_id: str | None = None,
     evidence_present: Any = None,
@@ -648,6 +649,7 @@ def create_approval_request(
     bind_policy=False (default): existing unbound path — dual/approval regressions stay green.
     bind_policy=True: fail-closed evaluate_governance_policy; server sets
     required_decision_count + governing_policy_* from matched policy.
+    action_type: optional override (e.g. HABITAT.CONTENT.PUBLISH); default maps from request_type.
     enforce_evidence=False (default): evaluate only when ACTIVE requirements / policy flag.
     Client evidence_present / evidence_required are IGNORED.
     Production material path will set bind_policy=True later — this slice builds machinery.
@@ -720,8 +722,9 @@ def create_approval_request(
 
         governing_policy_id: str | None = None
         governing_policy_version: int | None = None
+        action_override = (action_type or "").strip().upper() or None
         if bind_policy:
-            action = _gov.action_type_for_request_type(rt)
+            action = action_override or _gov.action_type_for_request_type(rt)
             ev = _gov.evaluate_governance_policy(
                 eid,
                 action,
@@ -799,9 +802,10 @@ def create_approval_request(
         gov_id = (governed_object_id or "").strip() or (
             (source_id or "").strip() or None
         )
-        evidence_action = (
-            _gov.action_type_for_request_type(rt) if bind_policy else "approval.request"
-        )
+        if bind_policy:
+            evidence_action = action_override or _gov.action_type_for_request_type(rt)
+        else:
+            evidence_action = action_override or "approval.request"
         try:
             _enforce_evidence_gate(
                 entity_id=eid,
@@ -1553,6 +1557,8 @@ def _decide(
 
             # Evidence requirements on APPROVED path (CLAIMED ≠ EVIDENCED ≠ VERIFIED)
             policy_evidence_required = False
+            evidence_action = "approval.decide"
+            evidence_scope: str | None = None
             if req.get("governing_policy_id") and req.get("governing_policy_version") is not None:
                 pol = _gov.get_governance_policy(
                     req["governing_policy_id"],
@@ -1561,6 +1567,8 @@ def _decide(
                 )
                 if pol:
                     policy_evidence_required = bool(int(pol.get("evidence_required") or 0))
+                    evidence_action = (pol.get("action_type") or "").strip() or "approval.decide"
+                    evidence_scope = (pol.get("scope_id") or "").strip() or None
             gov_type = (
                 (governed_object_type or "").strip()
                 or (req.get("source_type") or "").strip()
@@ -1574,9 +1582,9 @@ def _decide(
             try:
                 _enforce_evidence_gate(
                     entity_id=req["owning_entity_id"],
-                    action_type="approval.decide",
+                    action_type=evidence_action,
                     request_type=req.get("request_type"),
-                    scope_id=None,
+                    scope_id=evidence_scope,
                     governed_object_type=gov_type,
                     governed_object_id=gov_id,
                     verified_person_id=verified,

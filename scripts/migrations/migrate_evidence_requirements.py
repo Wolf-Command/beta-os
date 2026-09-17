@@ -109,13 +109,16 @@ def _seed_permission_codes(conn: sqlite3.Connection, ts: str) -> None:
             """,
             (perm_id, code, resource, action, desc, ts, ts),
         )
-        conn.execute(
-            """
-            DELETE FROM org_role_permissions
-            WHERE permission_id=? AND role_id != ?
-            """,
-            (perm_id, ROLE_MATT),
-        )
+        # manage + read stay Matt-only. submit may be granted by Habitat pilot (020)
+        # to CONTENT-MGMT / CONTENT-CREW — do not wipe those on re-run.
+        if perm_id != "PERM-EVIDENCE-RECORD-SUBMIT":
+            conn.execute(
+                """
+                DELETE FROM org_role_permissions
+                WHERE permission_id=? AND role_id != ?
+                """,
+                (perm_id, ROLE_MATT),
+            )
         conn.execute(
             """
             INSERT INTO org_role_permissions (role_id, permission_id, effect, created_at, updated_at)
@@ -230,11 +233,11 @@ def main() -> int:
             if "core_sod_constraints" in tabs
             else 0
         )
+        # submit may be Habitat-granted; manage+read must stay Matt-only
         non_matt_grants = conn.execute(
             """
             SELECT COUNT(*) FROM org_role_permissions
             WHERE permission_id IN (
-              'PERM-EVIDENCE-RECORD-SUBMIT',
               'PERM-EVIDENCE-RECORD-READ',
               'PERM-EVIDENCE-REQUIREMENT-MANAGE'
             ) AND role_id != ?
@@ -282,9 +285,16 @@ def main() -> int:
                 file=sys.stderr,
             )
             return 2
-        if n_req != 0 and is_live:
+        # Habitat pilot (020) may seed exactly EVR-HABITAT-CONTENT-PUBLISH + GPO.
+        n_req_extra = conn.execute(
+            """
+            SELECT COUNT(*) FROM core_evidence_requirements
+            WHERE NOT (requirement_id='EVR-HABITAT-CONTENT-PUBLISH' AND requirement_version=1)
+            """
+        ).fetchone()[0]
+        if n_req_extra != 0 and is_live:
             print(
-                f"REFUSE: live evidence requirements must stay 0, got {n_req}",
+                f"REFUSE: non-Habitat evidence requirements must stay 0, got {n_req_extra}",
                 file=sys.stderr,
             )
             return 2
@@ -294,9 +304,15 @@ def main() -> int:
                 file=sys.stderr,
             )
             return 2
-        if n_pol != 0 and is_live:
+        n_pol_extra = conn.execute(
+            """
+            SELECT COUNT(*) FROM core_governance_policies
+            WHERE NOT (policy_id='GPO-HABITAT-CONTENT-PUBLISH' AND policy_version=1)
+            """
+        ).fetchone()[0]
+        if n_pol_extra != 0 and is_live:
             print(
-                f"REFUSE: live governance policies must stay 0, got {n_pol}",
+                f"REFUSE: non-Habitat governance policies must stay 0, got {n_pol_extra}",
                 file=sys.stderr,
             )
             return 2
@@ -308,7 +324,7 @@ def main() -> int:
             return 2
         if non_matt_grants != 0:
             print(
-                f"REFUSE: evidence.* must have 0 non-Matt grants, got {non_matt_grants}",
+                f"REFUSE: evidence manage/read must have 0 non-Matt grants, got {non_matt_grants}",
                 file=sys.stderr,
             )
             return 2

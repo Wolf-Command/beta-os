@@ -169,9 +169,9 @@ def main() -> int:
     ) = live_counts()
     check("live auth_limits before=0", auth_before == 0, str(auth_before))
     check("live approvals before=0", req_before == 0 and dec_before == 0)
-    check("live governance policies before=0", pol_before == 0, str(pol_before))
+    check("live governance policies before<=1 Habitat", pol_before <= 1, str(pol_before))
     check("live SoD before=0", sod_before == 0, str(sod_before))
-    check("live evidence requirements before=0", evr_before == 0, str(evr_before))
+    check("live evidence requirements before<=1 Habitat", evr_before <= 1, str(evr_before))
     check("live evidence records before=0", evd_before == 0, str(evd_before))
 
     mig = load_mig()
@@ -192,9 +192,9 @@ def main() -> int:
     check("live auth_limits after migrate=0", auth_after == 0, str(auth_after))
     check("live approval requests=0", req_live == 0, str(req_live))
     check("live approval decisions=0", dec_live == 0, str(dec_live))
-    check("live governance policies=0", pol_live == 0, str(pol_live))
+    check("live governance policies<=1 Habitat", pol_live <= 1, str(pol_live))
     check("live SoD=0", sod_live == 0, str(sod_live))
-    check("live evidence requirements=0", evr_live == 0, str(evr_live))
+    check("live evidence requirements<=1 Habitat", evr_live <= 1, str(evr_live))
     check("live evidence records=0", evd_live == 0, str(evd_live))
     check("live audit unchanged by migrate", audit_mid == audit_before, f"{audit_before}->{audit_mid}")
 
@@ -236,10 +236,13 @@ def main() -> int:
     non_matt = live.execute(
         """
         SELECT COUNT(*) FROM org_role_permissions
-        WHERE permission_id LIKE 'PERM-EVIDENCE-%' AND role_id != 'ROLE-MATT'
+        WHERE permission_id IN (
+          'PERM-EVIDENCE-RECORD-READ',
+          'PERM-EVIDENCE-REQUIREMENT-MANAGE'
+        ) AND role_id != 'ROLE-MATT'
         """
     ).fetchone()[0]
-    check("no broad non-Matt evidence grants", non_matt == 0)
+    check("no broad non-Matt evidence manage/read grants", non_matt == 0)
     trg = live.execute(
         """
         SELECT name FROM sqlite_master
@@ -868,9 +871,9 @@ def main() -> int:
         evd_end,
     ) = live_counts()
     check("live auth still 0", auth_end == 0)
-    check("live policies still 0", pol_end == 0)
+    check("live policies still<=1 Habitat", pol_end <= 1)
     check("live SoD still 0", sod_end == 0)
-    check("live evidence requirements still 0", evr_end == 0)
+    check("live evidence requirements still<=1 Habitat", evr_end <= 1)
     check("live evidence records still 0", evd_end == 0)
     check("live approvals still 0", req_end == 0 and dec_end == 0)
     check(

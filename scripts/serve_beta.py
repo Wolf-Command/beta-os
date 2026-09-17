@@ -25,8 +25,10 @@ Platforms (canonical):
 HARD GATES:
   - POST /api/planner/save may set Draft or AI_Generated ONLY
     (never Human_Approved / Ready_for_Render via save)
-  - POST /api/planner/approve {id, approve:true} ONLY from
-    AI_Generated (or legacy Render_Ready) → Human_Approved
+  - Habitat: POST /api/planner/submit-for-approval then
+    POST /api/planner/approve {id, approve:true} → Core decide only;
+    Human_Approved is DERIVED from Core APPROVED (never reverse)
+  - Non-habitat: POST /api/planner/approve still legacy status flip
   - POST /api/planner/ready-render {id} ONLY from Human_Approved
     → Ready_for_Render
   - POST /api/planner/render {id} 403 unless status in
@@ -34,6 +36,7 @@ HARD GATES:
   - POST /api/planner/attach-asset {id, raw_asset_id}
   - Metricool/webhooks MUST check GET /api/planner/publish-gate?id=
     or call assert_publish_allowed(slot_id) before any publish.
+    Legacy Human_Approved alone DENY. Metricool write stays disabled.
 """
 
 from __future__ import annotations
@@ -74,6 +77,7 @@ from core import audit as _audit
 from core import work_items as _work_items
 from core import approvals as _approvals
 from core import delegation as _delegation
+from core import content_publish as _content_publish
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1019,10 +1023,20 @@ def fetch_week(brand: str, week_monday: date) -> list[dict]:
 def get_slot(slot_id: int) -> dict | None:
     conn = db_connect()
     try:
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(content_planner)")}
+        extra = ""
+        for c in (
+            "content_version_hash",
+            "work_item_id",
+            "core_approval_request_id",
+            "approved_version_hash",
+        ):
+            if c in cols:
+                extra += f", {c}"
         row = conn.execute(
-            """
+            f"""
             SELECT id, brand, platform, scheduled_date, slot_time, title_slug,
-                   script_body, raw_asset_id, status, updated_at
+                   script_body, raw_asset_id, status, updated_at{extra}
             FROM content_planner WHERE id = ?
             """,
             (slot_id,),
@@ -1032,16 +1046,21 @@ def get_slot(slot_id: int) -> dict | None:
         conn.close()
 
 
-def assert_publish_allowed(slot_id: int) -> None:
-    """Stub for Metricool/webhooks: raise unless status is Human_Approved."""
-    row = get_slot(int(slot_id))
-    if row is None:
-        raise PermissionError(f"publish denied: slot {slot_id} not found")
-    if row.get("status") != STATUS_APPROVED:
+def assert_publish_allowed(slot_id: int, *, verified_person_id: str | None = None) -> dict:
+    """Core-canonical Habitat publish gate. Raises unless READY_TO_PUBLISH.
+
+    Legacy Human_Approved alone is NEVER sufficient. Does not enable Metricool write.
+    """
+    gate = _content_publish.assert_habitat_publish_allowed(
+        int(slot_id),
+        verified_person_id=verified_person_id,
+    )
+    if not gate.get("ok") or gate.get("stage") != "READY_TO_PUBLISH":
         raise PermissionError(
-            f"publish denied: slot {slot_id} status is {row.get('status')!r}, "
-            f"must be {STATUS_APPROVED!r}"
+            f"publish denied: slot {slot_id} stage={gate.get('stage')!r} "
+            f"reason={gate.get('reason')!r}"
         )
+    return gate
 
 
 def query_assets(qs: dict) -> list[dict]:
@@ -1670,6 +1689,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/planner/approve":
             self._approve_slot()
             return
+        if path == "/api/planner/submit-for-approval":
+            self._submit_for_approval()
+            return
         if path == "/api/planner/ready-render":
             self._ready_render_slot()
             return
@@ -2029,18 +2051,26 @@ class BetaHandler(SimpleHTTPRequestHandler):
         except ValueError:
             self._send_err(400, "id must be integer")
             return
-        row = get_slot(slot_id)
-        if row is None:
-            self._send_json({"ok": True, "allowed": False, "id": slot_id, "status": None})
-            return
-        allowed = row.get("status") == STATUS_APPROVED
+        try:
+            identity = self._resolve_identity(emit_audit=False)
+            person_id = identity.get("person_id")
+        except Exception:  # noqa: BLE001
+            person_id = None
+        gate = _content_publish.assert_habitat_publish_allowed(
+            slot_id, verified_person_id=person_id
+        )
         self._send_json(
             {
                 "ok": True,
-                "allowed": allowed,
+                "allowed": bool(gate.get("ok")),
                 "id": slot_id,
-                "status": row.get("status"),
-                "note": "Metricool/webhooks MUST check this before publish",
+                "stage": gate.get("stage"),
+                "reason": gate.get("reason"),
+                "metricool": gate.get("metricool"),
+                "real_external_publish": gate.get("real_external_publish"),
+                "status": (get_slot(slot_id) or {}).get("status"),
+                "core_status": gate.get("core_status"),
+                "note": "Core Approval canonical; Metricool write stays disabled unless already enabled",
             }
         )
 
@@ -2325,8 +2355,57 @@ class BetaHandler(SimpleHTTPRequestHandler):
         finally:
             conn.close()
 
+    def _submit_for_approval(self) -> None:
+        """POST /api/planner/submit-for-approval {id} — Habitat Core evidence + APR create."""
+        try:
+            body = self._read_json()
+            # Reject client spoof of identity fields
+            for spoof in ("verified_person_id", "person_id", "requested_by_person_id"):
+                if spoof in body and body.get(spoof) not in (None, ""):
+                    # Still allow identity resolution headers; body claims ignored below
+                    pass
+            identity = self._resolve_identity(body if isinstance(body, dict) else {})
+            person_id = identity.get("person_id")
+            if not person_id:
+                self._send_err(401, "verified identity required")
+                return
+            # Body person spoof refused
+            claim = (body.get("verified_person_id") or body.get("person_id") or "").strip()
+            if claim and claim != person_id:
+                self._send_err(400, "person_id spoof refused")
+                return
+
+            raw_id = body.get("id")
+            if raw_id is None or str(raw_id).strip() == "":
+                self._send_err(400, "id required")
+                return
+            try:
+                slot_id = int(raw_id)
+            except (TypeError, ValueError):
+                self._send_err(400, "id must be integer")
+                return
+
+            row = get_slot(slot_id)
+            if row is None:
+                self._send_err(404, "slot not found")
+                return
+            if (row.get("brand") or "").strip().lower() != "habitat":
+                self._send_err(400, "submit-for-approval is Habitat pilot only")
+                return
+
+            result = _content_publish.submit_for_approval(
+                slot_id,
+                verified_person_id=person_id,
+                identity=identity,
+            )
+            self._send_json(result)
+        except _content_publish.ContentPublishError as exc:
+            self._send_err(exc.http_status, str(exc))
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
     def _approve_slot(self) -> None:
-        """HARD GATE: {id, approve:true}; only from AI_Generated (or legacy Render_Ready)."""
+        """HARD GATE: {id, approve:true}. Habitat → Core only; derive Human_Approved."""
         try:
             body = self._read_json()
             if body.get("approve") is not True:
@@ -2343,6 +2422,58 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 self._send_err(400, "id must be integer")
                 return
 
+            # Peek brand first
+            peek = get_slot(slot_id)
+            if peek is None:
+                self._send_err(404, "slot not found")
+                return
+
+            if (peek.get("brand") or "").strip().lower() == "habitat":
+                identity = self._resolve_identity(body if isinstance(body, dict) else {})
+                person_id = identity.get("person_id")
+                if not person_id:
+                    self._send_err(401, "verified identity required")
+                    return
+                claim = (body.get("verified_person_id") or body.get("person_id") or "").strip()
+                if claim and claim != person_id:
+                    self._send_err(400, "person_id spoof refused")
+                    return
+                # Reject client status spoof — Human_Approved only derived from Core
+                if body.get("status") in (STATUS_APPROVED, "Human_Approved", "APPROVED"):
+                    self._send_err(400, "status spoof refused; Core decide only")
+                    return
+                try:
+                    core_out = _content_publish.apply_core_approval_to_slot(
+                        slot_id,
+                        verified_person_id=person_id,
+                        reason=(body.get("reason") or None),
+                        identity=identity,
+                    )
+                except _content_publish.ContentPublishError as exc:
+                    self._send_err(exc.http_status, str(exc))
+                    return
+                row = get_slot(slot_id)
+                assert row is not None
+                sched = row["scheduled_date"] or monday_of().isoformat()
+                wm = monday_of(date.fromisoformat(str(sched)[:10]))
+                slot = row_to_slot(row, wm)
+                slots = fetch_week(row["brand"], wm)
+                self._send_json(
+                    {
+                        "ok": True,
+                        "slot": slot,
+                        "core": core_out,
+                        "derived_from_core": True,
+                        "plan": {
+                            "brand": row["brand"],
+                            "week_start": wm.isoformat(),
+                            "slots": slots,
+                        },
+                    }
+                )
+                return
+
+            # Non-Habitat: legacy path (not publish-gated by Habitat Core)
             conn = db_connect()
             try:
                 row = conn.execute(
@@ -2357,8 +2488,6 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     self._send_err(404, "slot not found")
                     return
                 current = row["status"]
-                # Accept AI_Generated (new) or legacy Render_Ready still in DB;
-                # also accept legacy Script_Drafted/Raw_Paired via canon → AI_Generated
                 ok_from = (
                     current in STATUSES_APPROVE_FROM
                     or canon_status(current) == "AI_Generated"

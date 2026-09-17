@@ -78,13 +78,15 @@ def main() -> int:
                 """,
                 (ROLE_MATT, perm_id, ts, ts),
             )
-            conn.execute(
-                """
-                DELETE FROM org_role_permissions
-                WHERE permission_id=? AND role_id != ?
-                """,
-                (perm_id, ROLE_MATT),
-            )
+            # Habitat publish gate (020) grants work.create to content roles — keep them.
+            if perm_id != "PERM-WORK-CREATE":
+                conn.execute(
+                    """
+                    DELETE FROM org_role_permissions
+                    WHERE permission_id=? AND role_id != ?
+                    """,
+                    (perm_id, ROLE_MATT),
+                )
 
         conn.execute(
             """

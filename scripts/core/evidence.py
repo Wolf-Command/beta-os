@@ -39,7 +39,7 @@ CONTENT_HASH_RE = re.compile(r"^[a-fA-F0-9]{64}$")
 
 HONESTY = {
     "evidence_requirements": "BUILT",
-    "live_evidence_requirements": 0,
+    "live_evidence_requirements": "HABITAT_PILOT_1",
     "claimed_is_not_evidenced": True,
     "evidenced_is_not_verified": True,
     "cryptographic_immutability": "NOT_BUILT",
@@ -183,6 +183,7 @@ def _assert_permission(
     entity_id: str,
     conn: sqlite3.Connection,
     allow_test_write: bool = False,
+    target_context: dict[str, Any] | None = None,
 ) -> None:
     if allow_test_write:
         if not _under_test_process() and (os.environ.get("WOLF_TEST_MODE") or "").strip() != "1":
@@ -199,10 +200,13 @@ def _assert_permission(
             code="permission_denied",
             http_status=403,
         )
+    target = {"entity_id": entity_id}
+    if target_context:
+        target.update({k: v for k, v in target_context.items() if v is not None})
     ev = _rbac.evaluate(
         pid,
         permission_code,
-        {"entity_id": entity_id},
+        target,
         conn=conn,
     )
     if not ev.get("allowed"):
@@ -487,6 +491,7 @@ def submit_evidence(
     metadata: dict[str, Any] | None = None,
     identity: dict[str, Any] | None = None,
     allow_test_write: bool = False,
+    department_id: str | None = None,
     conn: sqlite3.Connection | None = None,
     commit: bool = True,
 ) -> dict[str, Any]:
@@ -537,12 +542,20 @@ def submit_evidence(
     c = conn or db_connect()
     try:
         assert_catalog_writable(Path(CATALOG_DB))
+        rbac_target: dict[str, Any] = {}
+        dept = (department_id or "").strip() or None
+        if dept:
+            rbac_target["department_id"] = dept
+        sid = (scope_id or "").strip() or None
+        if sid:
+            rbac_target["scope_id"] = sid
         _assert_permission(
             verified_person_id=verified,
             permission_code="evidence.record.submit",
             entity_id=eid,
             conn=c,
             allow_test_write=allow_test_write,
+            target_context=rbac_target or None,
         )
         trow = c.execute(
             "SELECT evidence_type, status FROM core_evidence_types WHERE evidence_type=?",

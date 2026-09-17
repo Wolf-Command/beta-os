@@ -77,13 +77,8 @@ def main() -> int:
                 """,
                 (ROLE_MATT, perm_id, ts, ts),
             )
-            conn.execute(
-                """
-                DELETE FROM org_role_permissions
-                WHERE permission_id=? AND role_id != ?
-                """,
-                (perm_id, ROLE_MATT),
-            )
+            # Do not wipe non-Matt grants — Habitat publish gate (020) grants
+            # approval.decide / approval.request to content roles.
 
         conn.execute(
             """
@@ -141,8 +136,31 @@ def main() -> int:
         ok = conn.execute("PRAGMA integrity_check").fetchone()[0]
         print(f"integrity_check={ok}")
         if other_grants != 0:
-            print("WARN: approval.* granted to non-Matt roles", file=sys.stderr)
-            return 2
+            # Habitat publish gate (020) grants approval.decide/request to content roles.
+            habitat_only = conn.execute(
+                """
+                SELECT COUNT(*) FROM org_role_permissions
+                WHERE permission_id IN (
+                  SELECT permission_id FROM org_permissions WHERE code LIKE 'approval.%'
+                ) AND role_id NOT IN (
+                  'ROLE-MATT',
+                  'ROLE-GGV-CREATIVE-DIRECTOR',
+                  'ROLE-CONTENT-MGMT',
+                  'ROLE-GGV-EDIT',
+                  'ROLE-CONTENT-CREW'
+                )
+                """
+            ).fetchone()[0]
+            if habitat_only != 0:
+                print(
+                    f"REFUSE: unexpected non-Habitat approval.* grants={habitat_only}",
+                    file=sys.stderr,
+                )
+                return 2
+            print(
+                f"NOTE: Habitat content roles hold approval.* grants ({other_grants})",
+                file=sys.stderr,
+            )
         if len(matt_codes) != 4:
             print(f"WARN: expected 4 Matt approval.* grants, got {len(matt_codes)}", file=sys.stderr)
             return 2

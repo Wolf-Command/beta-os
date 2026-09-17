@@ -275,9 +275,16 @@ def main() -> int:
                 file=sys.stderr,
             )
             return 2
-        if n_pol != 0 and is_live:
+        # Habitat pilot (020) may seed exactly GPO-HABITAT-CONTENT-PUBLISH.
+        n_pol_extra = conn.execute(
+            """
+            SELECT COUNT(*) FROM core_governance_policies
+            WHERE NOT (policy_id='GPO-HABITAT-CONTENT-PUBLISH' AND policy_version=1)
+            """
+        ).fetchone()[0]
+        if n_pol_extra != 0 and is_live:
             print(
-                f"REFUSE: live governance policies must stay 0, got {n_pol}",
+                f"REFUSE: non-Habitat governance policies must stay 0, got {n_pol_extra}",
                 file=sys.stderr,
             )
             return 2

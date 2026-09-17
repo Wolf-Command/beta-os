@@ -41,7 +41,7 @@ REQUEST_TYPE_TO_ACTION = {
 
 HONESTY = {
     "policy_binding": "BUILT",
-    "live_governance_policies": 0,
+    "live_governance_policies": "HABITAT_PILOT_1",
     "exception_override": "NOT_BUILT",
     "ai_policy": False,
 }

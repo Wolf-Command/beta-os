@@ -149,10 +149,16 @@ def main() -> int:
         """
         SELECT COUNT(*) FROM org_role_permissions
         WHERE permission_id IN (SELECT permission_id FROM org_permissions WHERE code LIKE 'approval.%')
-          AND role_id != 'ROLE-MATT'
+          AND role_id NOT IN (
+            'ROLE-MATT',
+            'ROLE-GGV-CREATIVE-DIRECTOR',
+            'ROLE-CONTENT-MGMT',
+            'ROLE-GGV-EDIT',
+            'ROLE-CONTENT-CREW'
+          )
         """
     ).fetchone()[0]
-    check("no non-Matt approval.* grants", other == 0)
+    check("no unexpected non-Habitat approval.* grants", other == 0)
     live.close()
 
     # Temp DB for all mutating tests

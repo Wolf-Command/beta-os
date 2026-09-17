@@ -129,9 +129,9 @@
     },
     {
       "id": "evidence-requirements-018",
-      "claim": "core_evidence_types/records/requirements + evidence.py; wired on approvals create/decide; live auth/gov/sod/evr/evd=0; Matt-only evidence.* grants",
-      "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); tabs={r[0] for r in c.execute(\\\"select name from sqlite_master where type='table'\\\")}; print(int('core_evidence_requirements' in tabs and 'core_evidence_records' in tabs), c.execute('select count(*) from core_evidence_requirements').fetchone()[0], c.execute('select count(*) from core_evidence_records').fetchone()[0], c.execute('select count(*) from org_authority_limits').fetchone()[0], c.execute('select count(*) from core_governance_policies').fetchone()[0], c.execute('select count(*) from core_sod_constraints').fetchone()[0])\"",
-      "expect": "1 0 0 0 0 0",
+      "claim": "core_evidence_types/records/requirements + evidence.py; wired on approvals create/decide; live auth/sod=0; Habitat pilot may seed 1 policy + 1 evidence req",
+      "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); tabs={r[0] for r in c.execute(\\\"select name from sqlite_master where type='table'\\\")}; print(int('core_evidence_requirements' in tabs and 'core_evidence_records' in tabs), c.execute('select count(*) from core_evidence_requirements').fetchone()[0], c.execute('select count(*) from core_evidence_records').fetchone()[0], c.execute('select count(*) from org_authority_limits').fetchone()[0], c.execute(\\\"select count(*) from core_governance_policies where policy_id!='GPO-HABITAT-CONTENT-PUBLISH'\\\").fetchone()[0], c.execute('select count(*) from core_sod_constraints').fetchone()[0])\"",
+      "expect": "1 1 0 0 0 0",
       "by": "cursor-local"
     },
     {
@@ -153,6 +153,20 @@
       "claim": "test_exception_override.py passes; EXCEPTION\u2260COMPLIANCE; APR/DLG/Dual/Policy/SoD/Evidence still green",
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_exception_override.py >/tmp/exc-ov-test.out 2>&1; tail -3 /tmp/exc-ov-test.out",
       "expect": "fail=0",
+      "by": "cursor-local"
+    },
+    {
+      "id": "habitat-publish-gate-020",
+      "claim": "Habitat publish gate: brand habitat under ENT-GGV; ONE policy GPO-HABITAT-CONTENT-PUBLISH + ONE evidence req EVR-HABITAT-CONTENT-PUBLISH; auth/sod/exc=0; Metricool write stays false",
+      "check": "python3 -c \"import sqlite3,os; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); print(c.execute(\\\"select entity_id from org_brands where brand_id='habitat'\\\").fetchone()[0], c.execute(\\\"select count(*) from core_governance_policies where policy_id='GPO-HABITAT-CONTENT-PUBLISH'\\\").fetchone()[0], c.execute(\\\"select count(*) from core_evidence_requirements where requirement_id='EVR-HABITAT-CONTENT-PUBLISH'\\\").fetchone()[0], c.execute('select count(*) from org_authority_limits').fetchone()[0], c.execute('select count(*) from core_sod_constraints').fetchone()[0], (os.environ.get('BETA_METRICOOL_WRITE_ENABLED') or open('/Users/wolfterminal/beta-os/.env').read()).lower().count('beta_metricool_write_enabled=true'))\"",
+      "expect": "ENT-GGV 1 1 0 0 0",
+      "by": "cursor-local"
+    },
+    {
+      "id": "habitat-publish-gate-tests",
+      "claim": "test_habitat_publish_gate.py passes; Core regressions green; READY_TO_PUBLISH with Metricool DISABLED",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_habitat_publish_gate.py >/tmp/habitat-gate-test.out 2>&1; tail -1 /tmp/habitat-gate-test.out",
+      "expect": "51 passed, 0 failed",
       "by": "cursor-local"
     }
   ]
