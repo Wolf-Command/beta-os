@@ -1,0 +1,82 @@
+{
+  "description": "Habitat-like offline registry for AKR v1 unit tests (no network).",
+  "sources": [
+    {
+      "source_id": "habitat-brand-guide",
+      "scopes": ["brand:habitat", "entity:ggv"],
+      "question_keys": ["brand_font", "font", "typography", "visual_identity"],
+      "authority": "CLIENT_APPROVED",
+      "freshness": "2026-06-02",
+      "lane": "brand_identity",
+      "identity": {"brand": "habitat"},
+      "accessible": true,
+      "path": "habitat/brand_guide.json"
+    },
+    {
+      "source_id": "habitat-theme-ui",
+      "scopes": ["brand:habitat", "*"],
+      "question_keys": ["ui_font", "font", "typography"],
+      "authority": "OPERATIONAL_UI",
+      "freshness": "2026-09-01",
+      "lane": "ui_chrome",
+      "identity": {"brand": "habitat"},
+      "accessible": true,
+      "path": "habitat/theme_ui.json"
+    },
+    {
+      "source_id": "habitat-canva-kit",
+      "scopes": ["brand:habitat"],
+      "question_keys": ["visual_identity", "brand_font", "font"],
+      "authority": "CLIENT_APPROVED",
+      "freshness": "2026-06-01",
+      "lane": "brand_identity",
+      "identity": {"brand": "habitat"},
+      "accessible": false,
+      "path": "habitat/canva_unreachable.json"
+    },
+    {
+      "source_id": "habitat-vault-stale-font",
+      "scopes": ["brand:habitat"],
+      "question_keys": ["headline_case"],
+      "authority": "OPERATIONAL",
+      "freshness": "2026-05-01",
+      "lane": "brand_identity",
+      "identity": {"brand": "habitat"},
+      "accessible": true,
+      "path": "habitat/headline_upper.json"
+    },
+    {
+      "source_id": "habitat-brand-cards-case",
+      "scopes": ["brand:habitat"],
+      "question_keys": ["headline_case"],
+      "authority": "OPERATIONAL",
+      "freshness": "2026-05-15",
+      "lane": "brand_identity",
+      "identity": {"brand": "habitat"},
+      "accessible": true,
+      "path": "habitat/headline_lower.json"
+    },
+    {
+      "source_id": "unrelated-brand-guide",
+      "scopes": ["brand:uma-blu"],
+      "question_keys": ["brand_font", "font"],
+      "authority": "CLIENT_APPROVED",
+      "freshness": "2026-01-01",
+      "lane": "brand_identity",
+      "identity": {"brand": "uma-blu"},
+      "accessible": true,
+      "path": "habitat/unrelated.json"
+    },
+    {
+      "source_id": "grok-inference-only",
+      "scopes": ["brand:habitat"],
+      "question_keys": ["brand_font", "font"],
+      "authority": "INFERENCE",
+      "freshness": "2026-09-17",
+      "lane": "brand_identity",
+      "identity": {"brand": "habitat"},
+      "accessible": true,
+      "facts": {"brand_font": "ComicSans"}
+    }
+  ]
+}

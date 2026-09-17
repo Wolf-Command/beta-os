@@ -1,0 +1,12 @@
+{
+  "date": "2026-09-18",
+  "claims": [
+    {
+      "id": "akr-v1-cap-intel-02-03",
+      "claim": "Authorised Knowledge Resolver v1 BUILT (deterministic; no LLM invent; no memory_items auto-promote); CAP-INTEL-02/03; fixture tests green",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_authorised_knowledge.py >/tmp/akr-v1-test.out 2>&1; tail -3 /tmp/akr-v1-test.out",
+      "expect": "PASS=51 FAIL=0",
+      "by": "cursor-local"
+    }
+  ]
+}
