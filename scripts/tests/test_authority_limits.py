@@ -487,6 +487,11 @@ def main() -> int:
     try:
         import serve_beta as sb
         import inspect
+        import os
+
+        os.environ["BETA_AUTH_MODE"] = "development_assertion"
+        import core.request_auth as ra
+        ra._ENV_LOADED = True
 
         Handler = None
         for _, obj in inspect.getmembers(sb, inspect.isclass):

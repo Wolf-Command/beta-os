@@ -14,7 +14,7 @@ Person → active Assignment → Role → Permission (WHAT)
 - **Scope (008)** = WHERE  
 - **Authority Limit (010)** = HOW MUCH / material conditions  
 - Authority **never** creates Permission  
-- **Real Cloudflare Auth** = NOT BUILT (`DEVELOPMENT_IDENTITY_ASSERTION` still spoofable)
+- **Real Cloudflare Auth** = BUILT+TESTED (fixtures); LIVE pending AUD — see `REAL-AUTH-BINDING-TRANSITIONAL.md`
 
 ## Backup (before migrate on live Beta SQLite)
 

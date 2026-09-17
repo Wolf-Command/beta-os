@@ -81,7 +81,8 @@ def main() -> int:
     check("org_scopes exists", "org_scopes" in tables)
     check("org_scope_targets exists", "org_scope_targets" in tables)
     check("org_assignment_scopes exists", "org_assignment_scopes" in tables)
-    check("no org_scopes rbac sibling tables", "org_rbac" not in tables and "org_authority_limits" not in tables)
+    check("no org_scopes rbac sibling tables", "org_rbac" not in tables)
+    check("authority limits are separate slice", "org_authority_limits" in tables)
     check("no org_person_scopes table", "org_person_scopes" not in tables)
 
     n_scopes = conn.execute("SELECT COUNT(*) FROM org_scopes").fetchone()[0]
@@ -257,6 +258,10 @@ def main() -> int:
         if Handler is None:
             check("API handler class found", False)
         else:
+            import os
+            os.environ["BETA_AUTH_MODE"] = "development_assertion"
+            import core.request_auth as ra
+            ra._ENV_LOADED = True
             httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
             port = httpd.server_address[1]
             t = threading.Thread(target=httpd.serve_forever, daemon=True)
@@ -295,7 +300,7 @@ def main() -> int:
                     "development" in ia or "assertion" in ia or data.get("real_authentication") is False,
                     str(data.get("identity_assurance")),
                 )
-                check("API me/scopes rbac NOT_BUILT", data.get("rbac") == "NOT_BUILT")
+                check("API me/scopes has scopes list", isinstance(data.get("scopes"), list))
             finally:
                 httpd.shutdown()
     except Exception as e:

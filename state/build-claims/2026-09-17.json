@@ -14,6 +14,13 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_authority_limits.py >/tmp/authlim-test.out 2>&1; tail -3 /tmp/authlim-test.out",
       "expect": "fail=0",
       "by": "cursor-local"
+    },
+    {
+      "id": "real-auth-binding",
+      "claim": "Beta binds verified Cloudflare Access JWT to Person; default cloudflare_access fail-closed; no auto-create; AUD required",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_real_auth_binding.py >/tmp/real-auth-test.out 2>&1; tail -3 /tmp/real-auth-test.out",
+      "expect": "fail=0",
+      "by": "cursor-local"
     }
   ]
 }

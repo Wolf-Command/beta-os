@@ -3,8 +3,8 @@
 
 A human is not an email address. Email is an AuthenticationIdentity identifier.
 
-Role, Position, Assignment and permission engines are out of scope for this module.
-Real Cloudflare JWT verification is NOT BUILT.
+Cloudflare Access JWT verification lives in core.cf_access / core.request_auth.
+This module binds a *verified* email to Person via AuthIdentity — no auto-create.
 """
 from __future__ import annotations
 
@@ -16,6 +16,7 @@ BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 CATALOG_DB = BETA_ROOT / "catalog" / "content_library.sqlite"
 
 IDENTITY_ASSURANCE_DEVELOPMENT = "development_assertion"
+IDENTITY_ASSURANCE_CLOUDFLARE = "cloudflare_access_verified"
 IDENTITY_ASSURANCE_NONE = "none"
 
 
@@ -150,7 +151,8 @@ def resolve_from_development_assertion(
 ) -> dict[str, Any]:
     """Resolve Person from DEVELOPMENT identity assertion (spoofable email subject).
 
-    Never claims production authentication.
+    Never claims production authentication. Only used when BETA_AUTH_MODE is
+    explicitly development_assertion.
     """
     person = resolve_person_from_email(asserted_identifier, conn=conn)
     return {
@@ -165,6 +167,101 @@ def resolve_from_development_assertion(
         "note": (
             "DEVELOPMENT_IDENTITY_ASSERTION only. "
             "X-Wolf-Subject / JSON subject is spoofable. "
-            "Cloudflare Access JWT verification is NOT BUILT."
+            "Not used when BETA_AUTH_MODE=cloudflare_access."
         ),
     }
+
+
+def resolve_verified_person(
+    email: str | None, conn: sqlite3.Connection | None = None
+) -> dict[str, Any]:
+    """Bind a cryptographically verified email to Person via AuthIdentity.
+
+    Does NOT auto-create Persons or AuthIdentities for unknown emails.
+    Accepts provider in (email, cloudflare) matching the verified identifier.
+    """
+    ident = (email or "").strip().lower()
+    if not ident or "@" not in ident:
+        return {
+            "ok": False,
+            "error": "invalid_email",
+            "message": "Verified token produced no usable email.",
+            "person_id": None,
+            "auth_identity_id": None,
+            "person": None,
+        }
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        row = c.execute(
+            """
+            SELECT p.person_id, p.display_name, p.legal_name, p.status,
+                   p.created_at, p.updated_at,
+                   a.auth_identity_id, a.provider, a.identifier AS auth_identifier,
+                   a.status AS auth_status
+            FROM org_auth_identities a
+            JOIN org_persons p ON p.person_id = a.person_id
+            WHERE a.provider IN ('email', 'cloudflare')
+              AND lower(a.identifier)=?
+            ORDER BY CASE a.status WHEN 'ACTIVE' THEN 0 ELSE 1 END,
+                     CASE p.status WHEN 'ACTIVE' THEN 0 ELSE 1 END,
+                     a.is_primary DESC
+            LIMIT 1
+            """,
+            (ident,),
+        ).fetchone()
+        if row is None:
+            return {
+                "ok": False,
+                "error": "unknown_identity",
+                "message": (
+                    "Verified email is not linked to a Person. "
+                    "Onboarding required — no auto-create."
+                ),
+                "person_id": None,
+                "auth_identity_id": None,
+                "person": None,
+                "note": "unknown_identity",
+            }
+        if isinstance(row, sqlite3.Row):
+            data = dict(row)
+        elif isinstance(row, dict):
+            data = row
+        else:
+            cols = (
+                "person_id", "display_name", "legal_name", "status",
+                "created_at", "updated_at",
+                "auth_identity_id", "provider", "auth_identifier", "auth_status",
+            )
+            data = dict(zip(cols, row))
+        if str(data.get("auth_status") or "").upper() != "ACTIVE":
+            return {
+                "ok": False,
+                "error": "inactive_identity",
+                "message": "AuthenticationIdentity is inactive.",
+                "person_id": data.get("person_id"),
+                "auth_identity_id": data.get("auth_identity_id"),
+                "person": person_summary(data),
+            }
+        if str(data.get("status") or "").upper() != "ACTIVE":
+            return {
+                "ok": False,
+                "error": "inactive_person",
+                "message": "Person is inactive.",
+                "person_id": data.get("person_id"),
+                "auth_identity_id": data.get("auth_identity_id"),
+                "person": person_summary(data),
+            }
+        return {
+            "ok": True,
+            "error": None,
+            "message": None,
+            "person_id": data["person_id"],
+            "auth_identity_id": data["auth_identity_id"],
+            "person": person_summary(data),
+            "auth_identifier": data.get("auth_identifier"),
+            "provider": data.get("provider"),
+        }
+    finally:
+        if own:
+            c.close()

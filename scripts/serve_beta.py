@@ -69,6 +69,7 @@ from core import staffing as _staffing
 from core import scope as _scope
 from core import rbac as _rbac
 from core import authority as _authority
+from core import request_auth as _request_auth
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1465,7 +1466,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._publish_gate(qs)
             return
 
-        # Wolf Core RBAC (WHAT; development assertion honesty)
+        # Wolf Core auth mode diagnostics (no secrets)
+        if path == "/api/core/auth-mode":
+            self._send_json(_request_auth.auth_mode_payload())
+            return
+
+        # Wolf Core RBAC (WHAT; identity via request_auth)
         if path == "/api/core/permissions":
             self._get_core_permissions()
             return
@@ -2459,35 +2465,51 @@ class BetaHandler(SimpleHTTPRequestHandler):
     def _request_headers_dict(self) -> dict:
         return {k: v for k, v in self.headers.items()}
 
+    def _resolve_identity(self, body: dict | None = None) -> dict:
+        """Single identity entry — Cloudflare JWT or explicit development assertion."""
+        cached = getattr(self, "_wolf_body_cache", None)
+        use_body = body if body is not None else (cached if isinstance(cached, dict) else {})
+        return _request_auth.resolve_request_identity(self, body=use_body if isinstance(use_body, dict) else {})
+
+    def _send_identity_deny(self, identity: dict, *, required_permission: str | None = None) -> None:
+        payload = {
+            "ok": False,
+            "error": identity.get("error") or "unauthorized",
+            "message": identity.get("message") or "Identity denied.",
+            "identity_assurance": identity.get("identity_assurance"),
+            "real_authentication": identity.get("real_authentication"),
+            "auth_mode": identity.get("auth_mode") or _request_auth.auth_mode(),
+        }
+        if required_permission:
+            payload["required_permission"] = required_permission
+        if identity.get("email"):
+            payload["email"] = identity.get("email")
+        self._send_json(payload, status=403)
+
     def _require_permission(
         self,
         permission: str,
         body: dict | None = None,
     ) -> str | None:
-        """Return subject email if allowed for `permission`; else send 403 and return None.
+        """Return permission subject email if identity + permission ok; else 403 / None.
 
-        Uses has_permission + resolve_development_identity_assertion (legacy alias: resolve_authenticated_subject).
-        X-Wolf-Subject / JSON subject = DEVELOPMENT_IDENTITY_ASSERTION — spoofable; not production identity.
-        Cloudflare Access JWT is the intended production path (NOT wired this phase).
+        Identity from core.request_auth (Cloudflare JWT fail-closed by default).
+        Client subject channels ignored in cloudflare_access mode.
         """
-        # Prefer cached body when caller already read JSON; else use provided body.
-        cached = getattr(self, "_wolf_body_cache", None)
-        use_body = body if body is not None else (cached if isinstance(cached, dict) else {})
-        subject = _wi.resolve_authenticated_subject(
-            {"headers": self._request_headers_dict(), "body": use_body or {}}
-        )
+        identity = self._resolve_identity(body)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission=permission)
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
         if not subject:
-            self._send_json(
+            self._send_identity_deny(
                 {
-                    "ok": False,
                     "error": "missing_subject",
-                    "message": (
-                        "Provide X-Wolf-Subject header or JSON subject email "
-                        "(DEVELOPMENT ONLY). Cloudflare Access JWT not wired yet."
-                    ),
-                    "required_permission": permission,
+                    "message": "Resolved identity has no email subject.",
+                    "identity_assurance": identity.get("identity_assurance"),
+                    "real_authentication": identity.get("real_authentication"),
                 },
-                status=403,
+                required_permission=permission,
             )
             return None
         if not _wi.has_permission(subject, permission):
@@ -2498,6 +2520,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     "message": f"subject lacks {permission}: {subject}",
                     "subject": subject,
                     "required_permission": permission,
+                    "identity_assurance": identity.get("identity_assurance"),
+                    "real_authentication": identity.get("real_authentication"),
+                    "person_id": identity.get("person_id"),
                 },
                 status=403,
             )
@@ -2521,12 +2546,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
         })
 
     def _get_core_me_permissions(self) -> None:
-        qs = parse_qs(urlparse(self.path).query)
-        asserted = _wi.resolve_development_identity_assertion(self)
-        if not asserted:
-            asserted = (qs.get("subject") or [""])[0].strip() or None
-        me = _identity.resolve_from_development_assertion(asserted)
-        person_id = me.get("person_id")
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return
+        person_id = identity.get("person_id")
         target = _rbac.default_content_target()
         codes = (
             _rbac.effective_permissions_for_person(person_id, target)
@@ -2534,24 +2558,27 @@ class BetaHandler(SimpleHTTPRequestHandler):
         )
         self._send_json({
             "ok": True,
-            "identity_assurance": me.get("identity_assurance"),
-            "real_authentication": False,
-            "asserted_identifier": me.get("asserted_identifier"),
+            "identity_assurance": identity.get("identity_assurance"),
+            "real_authentication": identity.get("real_authentication"),
+            "asserted_identifier": identity.get("asserted_identifier"),
+            "email": identity.get("email"),
+            "permission_subject": identity.get("permission_subject"),
             "person_id": person_id,
             "target_context": target,
             "permissions": codes,
             "authority_limits": "SEE_core.authority",
             "access_control_live": False,
-            "note": me.get("note"),
+            "auth_mode": identity.get("auth_mode"),
+            "note": identity.get("note"),
         })
 
     def _get_core_authority_check(self, qs: dict) -> None:
         """Read-only within_authority check. No write/admin."""
-        asserted = _wi.resolve_development_identity_assertion(self)
-        if not asserted:
-            asserted = (qs.get("subject") or [""])[0].strip() or None
-        me = _identity.resolve_from_development_assertion(asserted)
-        person_id = me.get("person_id")
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return
+        person_id = identity.get("person_id")
         permission_code = (qs.get("permission_code") or [""])[0].strip()
         target = {
             k: (qs.get(k) or [""])[0].strip() or None
@@ -2574,9 +2601,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_json({
                 "ok": False,
                 "error": "no_person",
-                "identity_assurance": me.get("identity_assurance"),
-                "real_authentication": "NOT_BUILT",
-                "note": me.get("note"),
+                "identity_assurance": identity.get("identity_assurance"),
+                "real_authentication": identity.get("real_authentication"),
+                "note": identity.get("note"),
             }, status=403)
             return
         if not permission_code:
@@ -2590,35 +2617,37 @@ class BetaHandler(SimpleHTTPRequestHandler):
         )
         self._send_json({
             "ok": True,
-            "identity_assurance": me.get("identity_assurance"),
-            "asserted_identifier": me.get("asserted_identifier"),
+            "identity_assurance": identity.get("identity_assurance"),
+            "real_authentication": identity.get("real_authentication"),
+            "asserted_identifier": identity.get("asserted_identifier"),
+            "email": identity.get("email"),
             "decision": decision,
             "access_control_live": False,
         })
 
     def _get_core_me_authority_limits(self) -> None:
-        qs = parse_qs(urlparse(self.path).query)
-        asserted = _wi.resolve_development_identity_assertion(self)
-        if not asserted:
-            asserted = (qs.get("subject") or [""])[0].strip() or None
-        me = _identity.resolve_from_development_assertion(asserted)
-        person_id = me.get("person_id")
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return
+        person_id = identity.get("person_id")
         limits = (
             _authority.list_authority_limits_for_person(person_id)
             if person_id else []
         )
         self._send_json({
             "ok": True,
-            "identity_assurance": me.get("identity_assurance"),
-            "real_authentication": "NOT_BUILT",
-            "asserted_identifier": me.get("asserted_identifier"),
+            "identity_assurance": identity.get("identity_assurance"),
+            "real_authentication": identity.get("real_authentication"),
+            "asserted_identifier": identity.get("asserted_identifier"),
+            "email": identity.get("email"),
             "person_id": person_id,
             "authority_limits": limits,
             "delegation": "NOT_BUILT",
             "dual_approval": "NOT_BUILT",
             "segregation_of_duties": "NOT_BUILT",
             "access_control_live": False,
-            "note": me.get("note"),
+            "note": identity.get("note"),
         })
 
     def _get_core_scopes(self) -> None:
@@ -2656,27 +2685,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         })
 
     def _get_core_me_scopes(self) -> None:
-        qs = parse_qs(urlparse(self.path).query)
-        asserted = _wi.resolve_development_identity_assertion(self)
-        if not asserted:
-            asserted = (qs.get("subject") or [""])[0].strip() or None
-        me = _identity.resolve_from_development_assertion(asserted)
-        person_id = me.get("person_id")
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return
+        person_id = identity.get("person_id")
         scopes = _scope.list_active_scopes_for_person(person_id) if person_id else []
         contexts = [
             _scope.resolve_effective_scope_context(s["scope_id"]) for s in scopes
         ]
         self._send_json({
             "ok": True,
-            "identity_assurance": me.get("identity_assurance"),
-            "real_authentication": False,
-            "asserted_identifier": me.get("asserted_identifier"),
+            "identity_assurance": identity.get("identity_assurance"),
+            "real_authentication": identity.get("real_authentication"),
+            "asserted_identifier": identity.get("asserted_identifier"),
+            "email": identity.get("email"),
             "person_id": person_id,
             "scopes": scopes,
             "effective_contexts": contexts,
-            "rbac": "NOT_BUILT",
-            "authority_limits": "NOT_BUILT",
-            "note": me.get("note"),
+            "note": identity.get("note"),
         })
 
     def _get_core_roles(self) -> None:
@@ -2722,44 +2749,43 @@ class BetaHandler(SimpleHTTPRequestHandler):
         })
 
     def _get_core_me_assignments(self) -> None:
-        qs = parse_qs(urlparse(self.path).query)
-        asserted = _wi.resolve_development_identity_assertion(self)
-        if not asserted:
-            asserted = (qs.get("subject") or [""])[0].strip() or None
-        me = _identity.resolve_from_development_assertion(asserted)
-        person_id = me.get("person_id")
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return
+        person_id = identity.get("person_id")
         assignments = (
             _staffing.list_active_assignments_for_person(person_id) if person_id else []
         )
         self._send_json({
             "ok": True,
-            "identity_assurance": me.get("identity_assurance"),
-            "real_authentication": False,
-            "asserted_identifier": me.get("asserted_identifier"),
+            "identity_assurance": identity.get("identity_assurance"),
+            "real_authentication": identity.get("real_authentication"),
+            "asserted_identifier": identity.get("asserted_identifier"),
+            "email": identity.get("email"),
             "person_id": person_id,
             "assignments": assignments,
             "org_context": _staffing.resolve_org_context_for_person(person_id) if person_id else None,
-            "note": me.get("note"),
+            "note": identity.get("note"),
         })
 
     def _get_core_persons(self) -> None:
-        # Vertical-slice RBAC: organisation.person.read
-        asserted = _wi.resolve_development_identity_assertion(self)
-        person = None
-        if asserted:
-            person = _identity.resolve_person_from_email(asserted)
-        if not person or not _rbac.can(
-            person["person_id"], "organisation.person.read", _rbac.default_content_target()
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return
+        person_id = identity.get("person_id")
+        if not person_id or not _rbac.can(
+            person_id, "organisation.person.read", _rbac.default_content_target()
         ):
             self._send_json({
                 "ok": False,
                 "error": "forbidden",
                 "permission": "organisation.person.read",
-                "identity_assurance": "development_assertion",
-                "real_authentication": False,
+                "identity_assurance": identity.get("identity_assurance"),
+                "real_authentication": identity.get("real_authentication"),
             }, status=403)
             return
-        # Minimal fields only — no emails on list
         self._send_json({"ok": True, "persons": _identity.list_persons()})
 
     def _get_core_person(self, person_id: str) -> None:
@@ -2797,32 +2823,42 @@ class BetaHandler(SimpleHTTPRequestHandler):
         self._send_json({"ok": True, "person_id": person_id, "auth_identities": safe})
 
     def _get_core_me(self) -> None:
-        # DEVELOPMENT_IDENTITY_ASSERTION — spoofable; never claim secure login
-        qs = parse_qs(urlparse(self.path).query)
-        asserted = _wi.resolve_development_identity_assertion(self)
-        if not asserted:
-            asserted = (qs.get("subject") or [""])[0].strip() or None
-        payload = _identity.resolve_from_development_assertion(asserted)
-        # Also expose transitional permission subject for Content Machine compat
-        payload["ok"] = True
-        payload["permission_subject"] = asserted  # email still used by permissions table
-        self._send_json(payload)
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return
+        self._send_json({
+            "ok": True,
+            "identity_assurance": identity.get("identity_assurance"),
+            "real_authentication": identity.get("real_authentication"),
+            "asserted_identifier": identity.get("asserted_identifier"),
+            "email": identity.get("email"),
+            "permission_subject": identity.get("permission_subject"),
+            "person_id": identity.get("person_id"),
+            "person": identity.get("person"),
+            "auth_identity_id": identity.get("auth_identity_id"),
+            "auth_mode": identity.get("auth_mode"),
+            "development_assertion_allowed": (
+                identity.get("auth_mode") == _request_auth.AUTH_MODE_DEVELOPMENT
+            ),
+            "note": identity.get("note"),
+        })
 
     def _get_core_entities(self) -> None:
-        # Vertical-slice RBAC: organisation.entity.read under GGV content default target
-        asserted = _wi.resolve_development_identity_assertion(self)
-        person = None
-        if asserted:
-            person = _identity.resolve_person_from_email(asserted)
-        if not person or not _rbac.can(
-            person["person_id"], "organisation.entity.read", _rbac.default_content_target()
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return
+        person_id = identity.get("person_id")
+        if not person_id or not _rbac.can(
+            person_id, "organisation.entity.read", _rbac.default_content_target()
         ):
             self._send_json({
                 "ok": False,
                 "error": "forbidden",
                 "permission": "organisation.entity.read",
-                "identity_assurance": "development_assertion",
-                "real_authentication": False,
+                "identity_assurance": identity.get("identity_assurance"),
+                "real_authentication": identity.get("real_authentication"),
             }, status=403)
             return
         self._send_json({"ok": True, "entities": _org.list_entities()})
@@ -3114,22 +3150,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_err(500, str(exc))
 
     def _get_me_capabilities(self, qs: dict) -> None:
-        """Return permission bits for UI gates (Build Next / Approve / etc).
-
-        Subject via X-Wolf-Subject or ?subject= — DEVELOPMENT ONLY path.
-        """
-        subject = _wi.resolve_authenticated_subject(
-            {"headers": self._request_headers_dict(), "body": {}}
-        )
-        # Also allow ?subject= for local/dev UI (same DEVELOPMENT ONLY path)
-        if not subject:
-            subject = (qs.get("subject") or [""])[0].strip() or None
+        """Return permission bits for UI gates (Build Next / Approve / etc)."""
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return
+        subject = identity.get("permission_subject") or identity.get("email")
         perms = _wi.list_permissions(subject)
         self._send_json({
             "ok": True,
             "subject": subject,
+            "identity_assurance": identity.get("identity_assurance"),
+            "real_authentication": identity.get("real_authentication"),
+            "person_id": identity.get("person_id"),
+            "auth_mode": identity.get("auth_mode"),
             **perms,
-            # explicit aliases kept for older UI
             "can_create_plan": perms.get("can_create_plan", False),
             "can_approve_plan": perms.get("can_approve_plan", False),
             "can_edit_plan": perms.get("can_edit_plan", False),
@@ -3466,18 +3501,22 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def _asset_media(self, asset_id: int, mode: str, qs: dict) -> None:
         """Stream preview/download bytes. Paths never returned in JSON."""
-        # Permission: view/upload holders can download; gate lightly
-        subject = _wi.resolve_authenticated_subject(
-            {"headers": self._request_headers_dict(), "body": {}}
-        )
-        if not subject:
-            subject = ((qs.get("subject") or [""])[0] or "").strip() or None
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return
+        subject = identity.get("permission_subject") or identity.get("email")
         if not subject or not (
             _wi.has_permission(subject, "can_upload")
             or _wi.has_permission(subject, "can_view_plan")
             or _wi.has_permission(subject, "can_edit_plan")
         ):
-            self._send_json({"ok": False, "error": "forbidden", "required_permission": "can_view_plan|can_upload"}, status=403)
+            self._send_json({
+                "ok": False,
+                "error": "forbidden",
+                "required_permission": "can_view_plan|can_upload",
+                "identity_assurance": identity.get("identity_assurance"),
+            }, status=403)
             return
         conn = db_connect()
         try:
@@ -3665,6 +3704,8 @@ def pick_port(preferred: int) -> int:
 
 
 def main() -> None:
+    # Load beta-os/.env auth keys if unset (AUD / mode / team domain)
+    _request_auth._load_auth_env()
     preferred = int(os.environ.get("BETA_PORT", DEFAULT_PORT))
     if preferred == 8787:
         print("Refusing port 8787 (reserved). Use 8788+.", file=sys.stderr)

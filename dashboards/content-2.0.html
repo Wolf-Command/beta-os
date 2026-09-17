@@ -370,6 +370,9 @@
       <button type="button" data-view="wolf">WOLF INTELLIGENCE</button>
     </nav>
     <div class="brand-select">
+      <span id="identityLabel" class="sub" style="margin:0;font-size:0.75rem;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="">Signed out</span>
+      <label for="devSubjectSelect" id="devSubjectLabel" class="hidden">Dev identity</label>
+      <select id="devSubjectSelect" class="hidden" aria-label="Development identity switcher"></select>
       <label for="brandSelect">Brand</label>
       <select id="brandSelect"></select>
     </div>
@@ -661,11 +664,21 @@
     ["COMPLETE", "COMPLETE"],
   ];
   const SUBJECT_KEY = "wolf_subject";
+  const DEV_SUBJECTS = [
+    "mrwolf@wolfcommand.net",
+    "amanda@wolfcommand.net",
+    "haikalqilbari123@gmail.com",
+    "mlsary111@gmail.com",
+  ];
 
   const state = {
     view: "dashboard",
     brand: localStorage.getItem("wolf_brand") || "habitat",
-    subject: localStorage.getItem(SUBJECT_KEY) || "haikalqilbari123@gmail.com",
+    subject: null,
+    identityAssurance: null,
+    realAuthentication: false,
+    authMode: null,
+    developmentAssertionAllowed: false,
     canCreatePlan: false,
     canApprovePlan: false,
     canEditPlan: false,
@@ -694,7 +707,10 @@
 
   async function api(path, opts = {}) {
     const headers = Object.assign({ "Accept": "application/json" }, opts.headers || {});
-    if (state.subject) headers["X-Wolf-Subject"] = state.subject;
+    // X-Wolf-Subject only in explicit development_assertion mode — never override CF JWT
+    if (state.developmentAssertionAllowed && state.subject) {
+      headers["X-Wolf-Subject"] = state.subject;
+    }
     if (opts.body && !(opts.body instanceof FormData)) {
       headers["Content-Type"] = "application/json";
       opts.body = JSON.stringify(opts.body);
@@ -709,6 +725,67 @@
       throw err;
     }
     return data;
+  }
+
+  function renderIdentityChrome() {
+    const label = $("identityLabel");
+    const sel = $("devSubjectSelect");
+    const selLabel = $("devSubjectLabel");
+    if (label) {
+      if (state.subject) {
+        const who = state.subject;
+        const assurance = state.identityAssurance || "none";
+        label.textContent = who;
+        label.title = assurance + (state.realAuthentication ? " · verified" : " · development");
+      } else {
+        label.textContent = "Not signed in";
+        label.title = state.identityAssurance || "none";
+      }
+    }
+    const showDev = !!state.developmentAssertionAllowed;
+    if (sel) sel.classList.toggle("hidden", !showDev);
+    if (selLabel) selLabel.classList.toggle("hidden", !showDev);
+    if (showDev && sel && !sel.options.length) {
+      sel.innerHTML = DEV_SUBJECTS.map((e) =>
+        `<option value="${esc(e)}"${e === state.subject ? " selected" : ""}>${esc(e)}</option>`
+      ).join("");
+      sel.addEventListener("change", () => {
+        state.subject = sel.value;
+        localStorage.setItem(SUBJECT_KEY, state.subject);
+        loadCapabilities().then(() => setView(state.view));
+      });
+    } else if (showDev && sel && state.subject) {
+      sel.value = state.subject;
+    }
+  }
+
+  async function loadIdentity() {
+    try {
+      const mode = await api("/api/core/auth-mode");
+      state.authMode = mode.auth_mode;
+      state.developmentAssertionAllowed = !!mode.development_assertion_allowed;
+      if (state.developmentAssertionAllowed) {
+        const stored = localStorage.getItem(SUBJECT_KEY);
+        state.subject = stored || DEV_SUBJECTS[0];
+      } else {
+        localStorage.removeItem(SUBJECT_KEY);
+        state.subject = null;
+      }
+      const me = await api("/api/core/me");
+      state.subject = me.permission_subject || me.email || state.subject;
+      state.identityAssurance = me.identity_assurance;
+      state.realAuthentication = !!me.real_authentication;
+      state.developmentAssertionAllowed = !!me.development_assertion_allowed;
+      if (state.developmentAssertionAllowed && state.subject) {
+        localStorage.setItem(SUBJECT_KEY, state.subject);
+      }
+    } catch (e) {
+      state.subject = null;
+      state.identityAssurance = (e.data && e.data.identity_assurance) || "none";
+      state.realAuthentication = false;
+      toast(e.message || "Identity required");
+    }
+    renderIdentityChrome();
   }
 
   function setView(name) {
@@ -741,8 +818,7 @@
 
   async function loadCapabilities() {
     try {
-      const q = encodeURIComponent(state.subject || "");
-      const data = await api(`/api/me/capabilities?subject=${q}`);
+      const data = await api(`/api/me/capabilities`);
       state.canCreatePlan = !!data.can_create_plan;
       state.canApprovePlan = !!data.can_approve_plan;
       state.canEditPlan = !!data.can_edit_plan;
@@ -1394,7 +1470,8 @@
         if (badge) badge.textContent = "CHECKING";
         const res = await fetch("/api/upload/smart", {
           method: "POST",
-          headers: state.subject ? { "X-Wolf-Subject": state.subject } : {},
+          headers: (state.developmentAssertionAllowed && state.subject)
+            ? { "X-Wolf-Subject": state.subject } : {},
           body: fd,
         });
         const data = await res.json();
@@ -1590,6 +1667,7 @@
   });
 
   (async function init() {
+    await loadIdentity();
     await loadBrands();
     $("brandSelect").value = state.brand;
     await loadCapabilities();
@@ -1915,9 +1993,12 @@
     $("prevMedia").innerHTML = `<div class="empty">Loading…</div>`;
     $("prevNote").textContent = a.readiness_note || "";
     $("prevBackdrop").classList.add("open");
-    $("prevDownload").onclick = () => window.open(`/api/assets/${id}/download?subject=${encodeURIComponent(state.subject)}`, "_blank");
+    $("prevDownload").onclick = () => window.open(`/api/assets/${id}/download`, "_blank");
     try {
-      const res = await fetch(`/api/assets/${id}/preview?subject=${encodeURIComponent(state.subject)}`, { headers: { "X-Wolf-Subject": state.subject } });
+      const res = await fetch(`/api/assets/${id}/preview`, {
+        headers: (state.developmentAssertionAllowed && state.subject)
+          ? { "X-Wolf-Subject": state.subject } : {},
+      });
       if (!res.ok) {
         let msg = "Preview not ready — no fake proxy.";
         try { msg = (await res.json()).message || msg; } catch(_){}
@@ -2041,7 +2122,13 @@
       const ids = [...state.libSelected];
       if (!ids.length) return;
       try {
-        const res = await fetch("/api/assets/zip", { method:"POST", headers:{"Content-Type":"application/json","X-Wolf-Subject":state.subject}, body: JSON.stringify({subject:state.subject, ids}) });
+        const zipHeaders = {"Content-Type":"application/json"};
+        if (state.developmentAssertionAllowed && state.subject) {
+          zipHeaders["X-Wolf-Subject"] = state.subject;
+        }
+        const zipBody = { ids };
+        if (state.developmentAssertionAllowed && state.subject) zipBody.subject = state.subject;
+        const res = await fetch("/api/assets/zip", { method:"POST", headers: zipHeaders, body: JSON.stringify(zipBody) });
         if (!res.ok) { const j=await res.json().catch(()=>({})); throw new Error(j.message||j.error||"ZIP failed"); }
         const blob = await res.blob(); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="library-selection.zip"; a.click();
       } catch (e) { toast(e.message||"ZIP failed"); }
