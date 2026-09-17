@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Read-only build-factory run inspector. Beta tooling only. No Wolf app writes."""
+"""Read-only build-factory run inspector. Beta tooling only. No Wolf app writes.
+
+Also surfaces ACTIVE_MISSION lane status from bf_queue when present.
+"""
 from __future__ import annotations
 
 import json
@@ -11,6 +14,9 @@ ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 BF = ROOT / "state" / "build-factory"
 ACTIVE = BF / "ACTIVE"
 RUNS = BF / "runs"
+
+sys.path.insert(0, str(ROOT / "scripts" / "build-factory"))
+import bf_queue as bq  # noqa: E402
 
 
 def load_run(run_id: str | None = None) -> dict | None:
@@ -105,10 +111,44 @@ def advise(run: dict) -> dict:
     }
 
 
+def advise_mission(mission_id: str | None = None) -> dict:
+    """Read-only mission/lane advise from persisted file."""
+    mid = mission_id or bq.read_active_mission_id(BF)
+    if not mid:
+        return {"ok": True, "active_mission": False, "next_action": "IDLE"}
+    mission = bq.load_mission(mid, BF / "missions")
+    if not mission:
+        return {"ok": True, "active_mission": False, "stale_pointer": True, "mission_id": mid}
+    nxt = bq.next_runnable_lane(mission)
+    aid = mission.get("active_lane_id")
+    active = bq.get_lane(mission, aid) if aid else None
+    return {
+        "ok": True,
+        "active_mission": True,
+        "mission_id": mid,
+        "mission_status": mission.get("status"),
+        "active_lane_id": aid,
+        "active_lane_status": active["status"] if active else None,
+        "next_lane_id": nxt["id"] if nxt else None,
+        "next_action": "RESUME" if active and active["status"] not in bq.TERMINAL_LANE else (
+            "CLOSE_SLICE" if nxt else "IDLE"
+        ),
+        "retry_ceiling": bq.RETRY_CEILING,
+    }
+
+
 def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] == "--mission":
+        mid = sys.argv[2] if len(sys.argv) > 2 else None
+        print(json.dumps(advise_mission(mid), indent=2))
+        return 0
     run_id = sys.argv[1] if len(sys.argv) > 1 else None
     run = load_run(run_id)
     if not run:
+        miss = advise_mission()
+        if miss.get("active_mission"):
+            print(json.dumps(miss, indent=2))
+            return 0
         print(json.dumps({"ok": True, "active": False, "next_action": "IDLE"}))
         return 0
     out = {"ok": True, "active": True, **advise(run)}

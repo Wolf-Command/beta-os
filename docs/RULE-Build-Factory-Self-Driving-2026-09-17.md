@@ -94,3 +94,32 @@ Canon: `docs/RULE-UI-Finished-Deployed-Route-2026-09-17.md`.
 ### Remaining limitation
 
 Auto-advance persists GROK_REVIEW + WAKE. Grok review body still needs Peaches/watch to execute (software cannot replace Grok judgment). It must **not** wait for Matt status.
+
+---
+
+## Amendment 2026-09-18 — Deterministic lane queue
+
+**Software:** `scripts/build-factory/bf_queue.py` (extended `bf_watch.py` / `bf_advance.py`).  
+**Tests:** `scripts/tests/test_build_factory_queue.py` · proving: `scripts/build-factory/proving/prove_queue_mission.py`  
+**Proof:** `docs/deliveries/FACTORY-QUEUE-PROOF-2026-09-18.md`
+
+### Machine
+
+Persisted mission file: `state/build-factory/missions/<id>.json` (runtime gitignored; tests use temp dirs).
+
+A mission has an **ordered authorised lane list**. Each lane: `id`, `bound`, `status`, persisted `retry_count`, optional `completion_commit`.
+
+| Rule | Behaviour |
+|------|-----------|
+| Slice close | Selects next authorised runnable lane and can start it — **no human pick** |
+| Policy block | Lane → `BLOCKED` with reason; later authorised safe lanes continue |
+| Grok FAIL | → `WAITING_CURSOR_FIX`; increment persisted retry count |
+| Retry ceiling | Constant `RETRY_CEILING=2` (3 attempts total); exhaustion → `ESCALATED`, no loop |
+| Restart | Reconstruct from mission file only — never memory-only flags |
+| Completion commit | Restart must **not** relaunch a lane that already has `completion_commit` |
+| No invention | Lanes outside the mission list are refused |
+| Boundaries | `guard_lane_bound()` refuses Production / external-write / owner-authority even if a lane asks |
+
+Idempotent: duplicate completion / watcher / Grok-FAIL events do not double-complete or increment past the ceiling.
+
+This is **deterministic queue software**, not a new agent. Peaches still orchestrates Grok judgment; Cursor still writes application code. No maturity credit from proving missions.

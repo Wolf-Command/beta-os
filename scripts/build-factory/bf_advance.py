@@ -5,6 +5,8 @@ Invariant: authorised WAITING_CURSOR → GROK_REVIEW must not require Matt "stat
 
 Does NOT run Grok/Cursor itself — only persists the next stage so Peaches/watch
 can continue without Owner prompt. Idempotent.
+
+Also exposes mission-lane close_slice via bf_queue (deterministic lane queue).
 """
 from __future__ import annotations
 
@@ -23,6 +25,7 @@ WAKE = BF / "WAKE.json"
 # Import advise helpers from bf_watch
 sys.path.insert(0, str(ROOT / "scripts" / "build-factory"))
 import bf_watch as bw  # noqa: E402
+import bf_queue as bq  # noqa: E402
 
 
 def now_iso() -> str:
@@ -89,12 +92,41 @@ def advance_once(run_id: str | None = None, dry_run: bool = False) -> dict:
     return out
 
 
+def advance_mission_slice(mission_id: str | None = None, dry_run: bool = False) -> dict:
+    """Slice close on persisted mission: next authorised runnable lane, no human pick."""
+    mid = mission_id or bq.read_active_mission_id(BF)
+    if not mid:
+        return {"ok": True, "advanced": False, "reason": "no_active_mission"}
+    mission = bq.load_mission(mid, BF / "missions")
+    if not mission:
+        return {"ok": False, "error": "mission_not_found", "mission_id": mid}
+    if dry_run:
+        nxt = bq.next_runnable_lane(mission)
+        return {
+            "ok": True,
+            "dry_run": True,
+            "mission_id": mid,
+            "next_lane_id": nxt["id"] if nxt else None,
+            "next_status": nxt["status"] if nxt else None,
+        }
+    out = bq.close_slice(mission)
+    bq.save_mission(mission, BF / "missions")
+    out["mission_id"] = mid
+    out["advanced"] = bool(out.get("started"))
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--run-id", default=None)
+    ap.add_argument("--mission-id", default=None)
+    ap.add_argument("--mission-slice", action="store_true", help="close_slice on ACTIVE_MISSION")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
-    print(json.dumps(advance_once(args.run_id, dry_run=args.dry_run), indent=2))
+    if args.mission_slice or args.mission_id:
+        print(json.dumps(advance_mission_slice(args.mission_id, dry_run=args.dry_run), indent=2))
+    else:
+        print(json.dumps(advance_once(args.run_id, dry_run=args.dry_run), indent=2))
     return 0
 
 
