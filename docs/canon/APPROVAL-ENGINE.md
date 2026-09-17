@@ -12,7 +12,8 @@
 | Matt-only `approval.*` permissions | BUILT (live seed) |
 | Linked `APPROVAL_REQUIRED` Work Item | BUILT (optional; complete/verify does not approve) |
 | Dual approval orchestration | NOT BUILT |
-| Delegation / SoD engine | NOT BUILT |
+| Delegation (evaluator + decision basis) | BUILT (see `DELEGATION.md`) |
+| SoD engine | NOT BUILT |
 | Approval UI | NOT BUILT |
 | AI / LLM approver | NOT BUILT |
 | Live Authority policy | NOT CONFIGURED (`org_authority_limits` seeded live = 0) |

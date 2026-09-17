@@ -4,7 +4,7 @@
 REQUESTED ≠ APPROVED ≠ EXECUTED ≠ OUTCOME.
 Authority = capacity; Approval = specific decision evidence.
 Approval never creates Authority. Completing a linked Work Item ≠ approving.
-Dual / SoD / delegation / UI / LLM = NOT BUILT.
+Dual / SoD / UI / LLM = NOT BUILT. Delegation evaluator = BUILT (identity never delegates).
 """
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ from core import authority as _authority
 from core import organisation as _org
 from core import rbac as _rbac
 from core import work_items as _work_items
+from core import delegation as _delegation
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 CATALOG_DB = BETA_ROOT / "catalog" / "content_library.sqlite"
@@ -55,7 +56,7 @@ IMMUTABLE_FIELDS = frozenset(
 HONESTY = {
     "dual_approval": "NOT_BUILT",
     "segregation_of_duties": "NOT_BUILT",
-    "delegation": "NOT_BUILT",
+    "delegation": "BUILT",
     "approval_ui": "NOT_BUILT",
     "ai_approver": False,
     "requested_is_not_approved": True,
@@ -777,57 +778,126 @@ def _decide(
             )
 
         target = target_context_for_request(req)
+        req_code = req["required_permission_code"]
+        amount_ctx = None
+        if is_material_request(req) and req.get("material_amount") is not None:
+            amount_ctx = {
+                "amount": req.get("material_amount"),
+                "currency": req.get("currency"),
+            }
 
-        # RBAC: approval.decide
+        # Permission gates: native RBAC, else evaluate_delegation (identity stays verified)
+        used_delegation = False
+        decide_dlg_id = None
+        req_dlg_id = None
+
         ev_decide = _rbac.evaluate(verified, "approval.decide", target, conn=c)
         if not ev_decide.get("allowed"):
-            _audit_approval(
-                action="approval.decide_attempt",
-                result="DENIED",
-                request=req,
-                verified_person_id=verified,
-                identity=identity,
-                reason_code="rbac_denied",
-                metadata={
-                    "decision": dec,
-                    "permission": "approval.decide",
-                    "reason": ev_decide.get("reason"),
-                },
-                conn=c,
+            dlg_decide = _delegation.evaluate_delegation(
+                verified, "approval.decide", target, None, conn=c
             )
-            if commit:
-                c.commit()
-            raise ApprovalError(
-                "approval.decide denied",
-                code="rbac_denied",
-                http_status=403,
-            )
+            if dlg_decide.get("allowed"):
+                used_delegation = True
+                decide_dlg_id = dlg_decide.get("delegation_id")
+            else:
+                _audit_approval(
+                    action="approval.decide_attempt",
+                    result="DENIED",
+                    request=req,
+                    verified_person_id=verified,
+                    identity=identity,
+                    reason_code="rbac_denied",
+                    metadata={
+                        "decision": dec,
+                        "permission": "approval.decide",
+                        "reason": ev_decide.get("reason"),
+                    },
+                    conn=c,
+                )
+                if dlg_decide.get("delegation_id") or dlg_decide.get("reason") not in (
+                    "no_valid_delegation",
+                    "deny_by_default",
+                    "missing_entity",
+                ):
+                    _delegation._audit_delegation(
+                        action="delegation.denied",
+                        result="DENIED",
+                        delegation={"delegation_id": dlg_decide.get("delegation_id"), "entity_id": target.get("entity_id"), "permission_code": "approval.decide", "correlation_id": (identity or {}).get("correlation_id")},
+                        verified_person_id=verified,
+                        identity=identity,
+                        reason_code=dlg_decide.get("reason") or "delegation_denied",
+                        metadata={"permission_code": "approval.decide", "decision": dec},
+                        conn=c,
+                    )
+                if commit:
+                    c.commit()
+                raise ApprovalError(
+                    "approval.decide denied",
+                    code="rbac_denied",
+                    http_status=403,
+                )
 
-        # RBAC: required_permission_code in target context
-        req_code = req["required_permission_code"]
         ev_req = _rbac.evaluate(verified, req_code, target, conn=c)
+        req_via_dlg = False
         if not ev_req.get("allowed"):
-            _audit_approval(
-                action="approval.decide_attempt",
-                result="DENIED",
-                request=req,
-                verified_person_id=verified,
-                identity=identity,
-                reason_code="required_permission_denied",
-                metadata={
-                    "decision": dec,
-                    "required_permission": req_code,
-                    "reason": ev_req.get("reason"),
-                },
-                conn=c,
+            dlg_req = _delegation.evaluate_delegation(
+                verified, req_code, target, amount_ctx, conn=c
             )
-            if commit:
-                c.commit()
-            raise ApprovalError(
-                f"required permission denied: {req_code}",
-                code="required_permission_denied",
-                http_status=403,
-            )
+            if dlg_req.get("allowed"):
+                used_delegation = True
+                req_via_dlg = True
+                req_dlg_id = dlg_req.get("delegation_id")
+            else:
+                _audit_approval(
+                    action="approval.decide_attempt",
+                    result="DENIED",
+                    request=req,
+                    verified_person_id=verified,
+                    identity=identity,
+                    reason_code="required_permission_denied",
+                    metadata={
+                        "decision": dec,
+                        "required_permission": req_code,
+                        "reason": dlg_req.get("reason") or ev_req.get("reason"),
+                        "delegation_id": dlg_req.get("delegation_id"),
+                    },
+                    conn=c,
+                )
+                if dlg_req.get("delegation_id") or dlg_req.get("reason") not in (
+                    "no_valid_delegation",
+                    "deny_by_default",
+                    "missing_entity",
+                ):
+                    _delegation._audit_delegation(
+                        action="delegation.denied",
+                        result="DENIED",
+                        delegation={
+                            "delegation_id": dlg_req.get("delegation_id"),
+                            "entity_id": target.get("entity_id"),
+                            "permission_code": req_code,
+                            "correlation_id": (identity or {}).get("correlation_id"),
+                        },
+                        verified_person_id=verified,
+                        identity=identity,
+                        reason_code=dlg_req.get("reason") or "delegation_denied",
+                        metadata={
+                            "permission_code": req_code,
+                            "decision": dec,
+                            "amount": (amount_ctx or {}).get("amount"),
+                            "currency": (amount_ctx or {}).get("currency"),
+                        },
+                        conn=c,
+                    )
+                if commit:
+                    c.commit()
+                raise ApprovalError(
+                    f"required permission denied: {req_code}",
+                    code="required_permission_denied",
+                    http_status=403,
+                )
+
+        basis_type = "DELEGATION" if used_delegation else "NATIVE"
+        basis_dlg_id = req_dlg_id or decide_dlg_id if used_delegation else None
 
         asg_id = (decided_by_assignment_id or "").strip() or None
         if asg_id:
@@ -862,44 +932,102 @@ def _decide(
         authority_reason = None
         authority_matched = None
         if dec == "APPROVED" and is_material_request(req):
-            auth = _authority.within_authority(
-                verified,
-                req_code,
-                target,
-                {
-                    "amount": req.get("material_amount"),
-                    "currency": req.get("currency"),
-                },
-                conn=c,
-            )
-            if not auth.get("allowed"):
-                _audit_approval(
-                    action="approval.authority_denied",
-                    result="DENIED",
-                    request=req,
-                    verified_person_id=verified,
-                    identity=identity,
-                    reason_code=auth.get("reason") or "authority_denied",
-                    metadata={
-                        "decision": dec,
+            if req_via_dlg or (used_delegation and not ev_req.get("allowed")):
+                # Via delegation: amount must pass evaluate_delegation cap rules
+                # (already checked above when amount_ctx set). Do NOT treat
+                # delegate as owning the Authority Limit.
+                dlg_auth = _delegation.evaluate_delegation(
+                    verified, req_code, target, amount_ctx, conn=c
+                )
+                if not dlg_auth.get("allowed"):
+                    _audit_approval(
+                        action="approval.authority_denied",
+                        result="DENIED",
+                        request=req,
+                        verified_person_id=verified,
+                        identity=identity,
+                        reason_code=dlg_auth.get("reason") or "authority_denied",
+                        metadata={
+                            "decision": dec,
+                            "amount": req.get("material_amount"),
+                            "currency": req.get("currency"),
+                            "reason": dlg_auth.get("reason"),
+                            "required_permission": req_code,
+                            "delegation_id": dlg_auth.get("delegation_id"),
+                            "authority_basis_type": "DELEGATION",
+                        },
+                        conn=c,
+                    )
+                    _delegation._audit_delegation(
+                        action="delegation.denied",
+                        result="DENIED",
+                        delegation={
+                            "delegation_id": dlg_auth.get("delegation_id"),
+                            "entity_id": target.get("entity_id"),
+                            "permission_code": req_code,
+                            "correlation_id": (identity or {}).get("correlation_id"),
+                        },
+                        verified_person_id=verified,
+                        identity=identity,
+                        reason_code=dlg_auth.get("reason") or "authority_denied",
+                        metadata={
+                            "permission_code": req_code,
+                            "amount": req.get("material_amount"),
+                            "currency": req.get("currency"),
+                        },
+                        conn=c,
+                    )
+                    if commit:
+                        c.commit()
+                    raise ApprovalError(
+                        f"authority denied: {dlg_auth.get('reason')}",
+                        code="authority_denied",
+                        http_status=403,
+                    )
+                authority_allowed = 1
+                authority_reason = dlg_auth.get("reason") or "delegation_cap_ok"
+                authority_matched = None
+                basis_type = "DELEGATION"
+                basis_dlg_id = dlg_auth.get("delegation_id") or basis_dlg_id
+            else:
+                auth = _authority.within_authority(
+                    verified,
+                    req_code,
+                    target,
+                    {
                         "amount": req.get("material_amount"),
                         "currency": req.get("currency"),
-                        "reason": auth.get("reason"),
-                        "required_permission": req_code,
                     },
                     conn=c,
                 )
-                if commit:
-                    c.commit()
-                raise ApprovalError(
-                    f"authority denied: {auth.get('reason')}",
-                    code="authority_denied",
-                    http_status=403,
-                )
-            authority_allowed = 1
-            authority_reason = auth.get("reason")
-            matched = auth.get("matched_limit") or {}
-            authority_matched = matched.get("authority_limit_id")
+                if not auth.get("allowed"):
+                    _audit_approval(
+                        action="approval.authority_denied",
+                        result="DENIED",
+                        request=req,
+                        verified_person_id=verified,
+                        identity=identity,
+                        reason_code=auth.get("reason") or "authority_denied",
+                        metadata={
+                            "decision": dec,
+                            "amount": req.get("material_amount"),
+                            "currency": req.get("currency"),
+                            "reason": auth.get("reason"),
+                            "required_permission": req_code,
+                        },
+                        conn=c,
+                    )
+                    if commit:
+                        c.commit()
+                    raise ApprovalError(
+                        f"authority denied: {auth.get('reason')}",
+                        code="authority_denied",
+                        http_status=403,
+                    )
+                authority_allowed = 1
+                authority_reason = auth.get("reason")
+                matched = auth.get("matched_limit") or {}
+                authority_matched = matched.get("authority_limit_id")
         elif dec == "REJECTED":
             # Authority not required for reject
             authority_allowed = 0
@@ -931,8 +1059,9 @@ def _decide(
               approval_decision_id, approval_request_id, decision,
               decided_by_person_id, decided_by_assignment_id, identity_assurance,
               reason, decided_at, authority_allowed, authority_reason,
-              authority_matched_limit_id, correlation_id, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              authority_matched_limit_id, authority_basis_type,
+              authority_basis_delegation_id, correlation_id, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 did,
@@ -946,6 +1075,8 @@ def _decide(
                 authority_allowed,
                 authority_reason,
                 authority_matched,
+                basis_type,
+                basis_dlg_id,
                 corr,
                 ts,
             ),
@@ -977,9 +1108,31 @@ def _decide(
                 "amount": updated.get("material_amount"),
                 "currency": updated.get("currency"),
                 "required_permission": updated.get("required_permission_code"),
+                "authority_basis_type": basis_type,
+                "delegation_id": basis_dlg_id,
             },
             conn=c,
         )
+        if basis_type == "DELEGATION" and basis_dlg_id:
+            _delegation._audit_delegation(
+                action="delegation.used",
+                result="SUCCEEDED",
+                delegation={
+                    "delegation_id": basis_dlg_id,
+                    "entity_id": updated.get("owning_entity_id"),
+                    "permission_code": updated.get("required_permission_code"),
+                    "correlation_id": corr,
+                },
+                verified_person_id=verified,
+                identity=identity,
+                metadata={
+                    "decision": dec,
+                    "delegation_id": basis_dlg_id,
+                    "authority_basis_type": "DELEGATION",
+                    "required_permission": updated.get("required_permission_code"),
+                },
+                conn=c,
+            )
         if commit:
             c.commit()
 

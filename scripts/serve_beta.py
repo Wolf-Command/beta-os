@@ -73,6 +73,7 @@ from core import request_auth as _request_auth
 from core import audit as _audit
 from core import work_items as _work_items
 from core import approvals as _approvals
+from core import delegation as _delegation
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1513,6 +1514,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._get_core_approval(m_apr.group(1))
             return
 
+        # Wolf Core Delegation (IDENTITY NEVER DELEGATES)
+        if path == "/api/core/delegations":
+            self._get_core_delegations(qs)
+            return
+        m_dlg = re.match(r"^/api/core/delegations/([^/]+)$", path)
+        if m_dlg:
+            self._get_core_delegation(m_dlg.group(1))
+            return
+
         # Wolf Core Assignment Scope (read-only; WHERE only — no RBAC)
         if path == "/api/core/scopes":
             self._get_core_scopes()
@@ -1791,6 +1801,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
         m_apr_cancel = re.match(r"^/api/core/approvals/([^/]+)/cancel$", path)
         if m_apr_cancel:
             self._post_core_approval_cancel(m_apr_cancel.group(1))
+            return
+
+        # Wolf Core Delegation
+        if path == "/api/core/delegations":
+            self._post_core_delegation()
+            return
+        m_dlg_revoke = re.match(r"^/api/core/delegations/([^/]+)/revoke$", path)
+        if m_dlg_revoke:
+            self._post_core_delegation_revoke(m_dlg_revoke.group(1))
             return
 
         self._send_err(404, "not found")
@@ -3362,6 +3381,152 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         self._send_json({"ok": True, "approval": item})
 
+
+    def _delegation_identity(self, permission: str, body: dict | None = None) -> dict | None:
+        subject = self._require_permission(permission, body)
+        if subject is None:
+            return None
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok") or not identity.get("person_id"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "no_person",
+                    "message": "Delegations require a verified Person binding.",
+                    "required_permission": permission,
+                },
+                status=403,
+            )
+            return None
+        identity = dict(identity)
+        identity["correlation_id"] = getattr(self, "_wolf_correlation_id", None) or _audit.mint_correlation_id()
+        return identity
+
+    def _send_delegation_error(self, exc: Exception) -> None:
+        if isinstance(exc, _delegation.DelegationError):
+            self._send_json(
+                {"ok": False, "error": exc.code, "message": str(exc)},
+                status=int(exc.http_status),
+            )
+            return
+        self._send_json({"ok": False, "error": "server_error", "message": str(exc)}, status=500)
+
+    def _get_core_delegations(self, qs: dict) -> None:
+        identity = self._delegation_identity("delegation.read")
+        if identity is None:
+            return
+        try:
+            limit = int((qs.get("limit") or ["50"])[0])
+        except (TypeError, ValueError):
+            limit = 50
+        try:
+            offset = int((qs.get("offset") or ["0"])[0])
+        except (TypeError, ValueError):
+            offset = 0
+        try:
+            items = _delegation.list_delegations(
+                identity["person_id"],
+                status=((qs.get("status") or [None])[0] or None) or None,
+                entity_id=((qs.get("entity_id") or [None])[0] or None) or None,
+                delegator_person_id=((qs.get("delegator_person_id") or [None])[0] or None) or None,
+                delegate_person_id=((qs.get("delegate_person_id") or [None])[0] or None) or None,
+                limit=limit,
+                offset=offset,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_delegation_error(exc)
+            return
+        self._send_json(
+            {
+                "ok": True,
+                "delegations": items,
+                "count": len(items),
+                "limit": max(1, min(limit, 200)),
+                "offset": max(0, offset),
+                "person_id": identity["person_id"],
+                "redelegation": "DENIED",
+                "impersonation": "BLOCKED",
+            }
+        )
+
+    def _get_core_delegation(self, delegation_id: str) -> None:
+        identity = self._delegation_identity("delegation.read")
+        if identity is None:
+            return
+        item = _delegation.get_delegation(delegation_id)
+        if not item:
+            self._send_json({"ok": False, "error": "not_found"}, status=404)
+            return
+        if not _work_items.person_can_see_entity(identity["person_id"], item["entity_id"]):
+            self._send_json({"ok": False, "error": "entity_out_of_scope"}, status=403)
+            return
+        self._send_json(
+            {
+                "ok": True,
+                "delegation": item,
+                "redelegation": "DENIED",
+                "impersonation": "BLOCKED",
+            }
+        )
+
+    def _post_core_delegation(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._delegation_identity("delegation.create", body)
+        if identity is None:
+            return
+        # Prefer body fields for other party only; ignore forged delegator/delegate vs verified
+        try:
+            item = _delegation.create_delegation(
+                verified_person_id=identity["person_id"],
+                # Server ignores client spoof of delegator unless equal verified / Matt path
+                delegator_person_id=body.get("delegator_person_id"),
+                delegate_person_id=body.get("delegate_person_id") or "",
+                delegator_assignment_id=body.get("delegator_assignment_id") or "",
+                delegate_assignment_id=body.get("delegate_assignment_id") or "",
+                entity_id=body.get("entity_id") or "",
+                scope_id=body.get("scope_id") or "",
+                permission_code=body.get("permission_code") or "",
+                effective_from=body.get("effective_from") or "",
+                effective_to=body.get("effective_to") or "",
+                delegated_cap_amount=body.get("delegated_cap_amount"),
+                currency=body.get("currency"),
+                authority_limit_id=body.get("authority_limit_id"),
+                reason=body.get("reason"),
+                linked_work_item_id=body.get("linked_work_item_id"),
+                allow_redelegation=int(body.get("allow_redelegation") or 0),
+                identity=identity,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_delegation_error(exc)
+            return
+        self._send_json({"ok": True, "delegation": item}, status=201)
+
+    def _post_core_delegation_revoke(self, delegation_id: str) -> None:
+        try:
+            body = self._read_json() if int(self.headers.get("Content-Length") or 0) > 0 else {}
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._delegation_identity("delegation.revoke", body)
+        if identity is None:
+            return
+        try:
+            item = _delegation.revoke_delegation(
+                delegation_id,
+                verified_person_id=identity["person_id"],
+                reason=body.get("reason"),
+                identity=identity,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_delegation_error(exc)
+            return
+        self._send_json({"ok": True, "delegation": item})
+
     def _get_core_me_authority_limits(self) -> None:
         identity = self._resolve_identity()
         if not identity.get("ok"):
@@ -3380,7 +3545,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "email": identity.get("email"),
             "person_id": person_id,
             "authority_limits": limits,
-            "delegation": "NOT_BUILT",
+            "delegation": "BUILT",
+            "redelegation": "DENIED",
+            "impersonation": "BLOCKED",
             "dual_approval": "NOT_BUILT",
             "segregation_of_duties": "NOT_BUILT",
             "access_control_live": False,

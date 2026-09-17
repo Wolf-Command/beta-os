@@ -38,7 +38,7 @@
     },
     {
       "id": "work-items-012",
-      "claim": "core_work_items schema + Matt-only work.* on Beta; live rows=0; COMPLETED≠VERIFIED",
+      "claim": "core_work_items schema + Matt-only work.* on Beta; live rows=0; COMPLETED\u2260VERIFIED",
       "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); print(c.execute('select count(*) from core_work_items').fetchone()[0], c.execute(\\\"select count(*) from org_role_permissions rp join org_permissions p on p.permission_id=rp.permission_id where rp.role_id='ROLE-MATT' and p.code like 'work.%'\\\").fetchone()[0], c.execute('select count(*) from core_audit_events').fetchone()[0])\"",
       "expect": "0 6 47+",
       "by": "cursor-local"
@@ -52,7 +52,7 @@
     },
     {
       "id": "approval-engine-013",
-      "claim": "core_approval_requests/decisions + Matt-only approval.*; live rows=0; live authority limits=0; WI complete≠approve",
+      "claim": "core_approval_requests/decisions + Matt-only approval.*; live rows=0; live authority limits=0; WI complete\u2260approve",
       "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); print(c.execute('select count(*) from org_authority_limits').fetchone()[0], c.execute('select count(*) from core_approval_requests').fetchone()[0], c.execute('select count(*) from core_approval_decisions').fetchone()[0], c.execute(\\\"select count(*) from org_role_permissions rp join org_permissions p on p.permission_id=rp.permission_id where rp.role_id='ROLE-MATT' and p.code like 'approval.%'\\\").fetchone()[0], c.execute('select count(*) from core_audit_events').fetchone()[0])\"",
       "expect": "0 0 0 4 47",
       "by": "cursor-local"
@@ -70,6 +70,13 @@
       "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); print(c.execute('select count(*) from org_authority_limits').fetchone()[0], c.execute('select count(*) from core_approval_requests').fetchone()[0], c.execute('select count(*) from core_approval_decisions').fetchone()[0], c.execute('select count(*) from core_audit_events').fetchone()[0])\" && python3 /Users/wolfterminal/beta-os/scripts/tests/test_approval_engine.py >/tmp/apr-rt-001.out 2>&1; tail -1 /tmp/apr-rt-001.out",
       "expect": "0 0 0 47 and pass=60 fail=0",
       "by": "cursor-local"
+    },
+    {
+      "id": "delegation-built-20260917",
+      "claim": "Wolf Core deterministic Delegation BUILT+TESTED; live org_authority_limits=0; live core_delegations=0",
+      "check": "sqlite3 catalog/content_library.sqlite \"SELECT COUNT(*) FROM org_authority_limits; SELECT COUNT(*) FROM core_delegations;\" && test -f scripts/core/delegation.py && python3 scripts/tests/test_delegation.py",
+      "expect": "0\n0 and test pass=N fail=0",
+      "by": "cursor-local-agent"
     }
   ]
 }

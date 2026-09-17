@@ -54,6 +54,10 @@ METADATA_ALLOWLIST = frozenset(
         "request_type",
         "decision",
         "linked_work_item_id",
+        "delegation_id",
+        "authority_basis_type",
+        "delegator_person_id",
+        "delegate_person_id",
     }
 )
 METADATA_MAX_BYTES = 4096
