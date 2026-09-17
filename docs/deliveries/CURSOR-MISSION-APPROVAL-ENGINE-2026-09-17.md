@@ -201,4 +201,24 @@ Live Authority policy/thresholds, dual approval orchestration, SoD engine, deleg
 
 ## Build record
 
-_(Cursor appends)_
+**Decision served:** 2026-09-17 Local Cursor Build Path (LOCKED ★ Matthew) + approved CURSOR-MISSION-APPROVAL-ENGINE-2026-09-17 (extends started Wolf Core rebuild)
+
+**HEAD start:** `8cd005d` (`docs: Grok plan for deterministic approval engine`)  
+**Commit message:** `feat(core): add deterministic approval engine`
+
+**Backup (before migrate):**
+- path: `catalog/backups/pre-approval-engine-20260917-105452.sqlite`
+- SHA-256: `36faa044fa10a8a2c1832f120007a244fd653f6e0a0f52b7d1a713977cffced1`
+- recorded: `state/approval-engine-backup-20260917-105452.sha256`
+
+**Live after migrate (verified):**
+- `org_authority_limits` = **0**
+- `core_approval_requests` = **0**
+- `core_approval_decisions` = **0**
+- `core_audit_events` = **47** (unchanged; tests did not pollute)
+- Matt `approval.*` grants = **4**
+
+**Tests:** `python3 scripts/tests/test_approval_engine.py` → `pass=56 fail=0`  
+- Temp-DB fixtures only for Authority Limits + `PERM-TEST-SPEND`
+- Self-approval DENIED; WI complete/verify does NOT approve; second decide → 409
+- No remote. No Production. No dual/SoD/UI/LLM.

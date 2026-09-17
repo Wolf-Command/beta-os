@@ -72,6 +72,7 @@ from core import authority as _authority
 from core import request_auth as _request_auth
 from core import audit as _audit
 from core import work_items as _work_items
+from core import approvals as _approvals
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1503,6 +1504,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._get_core_work_item(m_wi.group(1))
             return
 
+        # Wolf Core Approval Engine (REQUESTED ≠ APPROVED ≠ EXECUTED)
+        if path == "/api/core/approvals":
+            self._get_core_approvals(qs)
+            return
+        m_apr = re.match(r"^/api/core/approvals/([^/]+)$", path)
+        if m_apr:
+            self._get_core_approval(m_apr.group(1))
+            return
+
         # Wolf Core Assignment Scope (read-only; WHERE only — no RBAC)
         if path == "/api/core/scopes":
             self._get_core_scopes()
@@ -1764,6 +1774,23 @@ class BetaHandler(SimpleHTTPRequestHandler):
         m_wi_cancel = re.match(r"^/api/core/work-items/([^/]+)/cancel$", path)
         if m_wi_cancel:
             self._post_core_work_item_cancel(m_wi_cancel.group(1))
+            return
+
+        # Wolf Core Approval Engine
+        if path == "/api/core/approvals":
+            self._post_core_approval()
+            return
+        m_apr_approve = re.match(r"^/api/core/approvals/([^/]+)/approve$", path)
+        if m_apr_approve:
+            self._post_core_approval_approve(m_apr_approve.group(1))
+            return
+        m_apr_reject = re.match(r"^/api/core/approvals/([^/]+)/reject$", path)
+        if m_apr_reject:
+            self._post_core_approval_reject(m_apr_reject.group(1))
+            return
+        m_apr_cancel = re.match(r"^/api/core/approvals/([^/]+)/cancel$", path)
+        if m_apr_cancel:
+            self._post_core_approval_cancel(m_apr_cancel.group(1))
             return
 
         self._send_err(404, "not found")
@@ -3126,6 +3153,214 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_work_error(exc)
             return
         self._send_json({"ok": True, "work_item": item})
+
+    def _approval_identity(self, permission: str, body: dict | None = None) -> dict | None:
+        """Permission gate + verified person_id for approval mutations."""
+        subject = self._require_permission(permission, body)
+        if subject is None:
+            return None
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok") or not identity.get("person_id"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "no_person",
+                    "message": "Approvals require a verified Person binding.",
+                    "required_permission": permission,
+                },
+                status=403,
+            )
+            return None
+        identity = dict(identity)
+        identity["correlation_id"] = getattr(self, "_wolf_correlation_id", None) or _audit.mint_correlation_id()
+        return identity
+
+    def _send_approval_error(self, exc: Exception) -> None:
+        if isinstance(exc, _approvals.ApprovalError):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                },
+                status=int(exc.http_status),
+            )
+            return
+        self._send_json({"ok": False, "error": "server_error", "message": str(exc)}, status=500)
+
+    def _get_core_approvals(self, qs: dict) -> None:
+        identity = self._approval_identity("approval.read")
+        if identity is None:
+            return
+        try:
+            limit = int((qs.get("limit") or ["50"])[0])
+        except (TypeError, ValueError):
+            limit = 50
+        try:
+            offset = int((qs.get("offset") or ["0"])[0])
+        except (TypeError, ValueError):
+            offset = 0
+        try:
+            items = _approvals.list_approval_requests(
+                identity["person_id"],
+                status=((qs.get("status") or [None])[0] or None) or None,
+                owning_entity_id=((qs.get("owning_entity_id") or [None])[0] or None) or None,
+                requested_by_person_id=((qs.get("requested_by_person_id") or [None])[0] or None)
+                or None,
+                limit=limit,
+                offset=offset,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_approval_error(exc)
+            return
+        self._send_json(
+            {
+                "ok": True,
+                "approvals": items,
+                "count": len(items),
+                "limit": max(1, min(limit, 200)),
+                "offset": max(0, offset),
+                "person_id": identity["person_id"],
+                "requested_is_not_approved": True,
+                "approved_is_not_executed": True,
+                "dual_approval": "NOT_BUILT",
+            }
+        )
+
+    def _get_core_approval(self, approval_request_id: str) -> None:
+        identity = self._approval_identity("approval.read")
+        if identity is None:
+            return
+        item = _approvals.get_approval_request(approval_request_id)
+        if not item:
+            self._send_json({"ok": False, "error": "not_found"}, status=404)
+            return
+        if not _work_items.person_can_see_entity(
+            identity["person_id"], item["owning_entity_id"]
+        ):
+            self._send_json({"ok": False, "error": "entity_out_of_scope"}, status=403)
+            return
+        decisions = _approvals.list_decisions(approval_request_id)
+        self._send_json(
+            {
+                "ok": True,
+                "approval": item,
+                "decisions": decisions,
+                "requested_is_not_approved": True,
+                "approved_is_not_executed": True,
+                "dual_approval": "NOT_BUILT",
+            }
+        )
+
+    def _post_core_approval(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._approval_identity("approval.request", body)
+        if identity is None:
+            return
+        try:
+            item = _approvals.create_approval_request(
+                title=body.get("title") or "",
+                description=body.get("description"),
+                request_type=body.get("request_type") or "GENERAL",
+                owning_entity_id=body.get("owning_entity_id") or "",
+                brand_id=body.get("brand_id"),
+                location_id=body.get("location_id"),
+                department_id=body.get("department_id"),
+                required_permission_code=body.get("required_permission_code") or "",
+                material_amount=body.get("material_amount"),
+                currency=body.get("currency"),
+                source_type=body.get("source_type") or "HUMAN",
+                source_id=body.get("source_id"),
+                evidence_reference=body.get("evidence_reference"),
+                expires_at=body.get("expires_at"),
+                prior_request_id=body.get("prior_request_id"),
+                requested_by_assignment_id=body.get("requested_by_assignment_id"),
+                link_work_item=bool(body.get("link_work_item")),
+                review_owner_person_id=body.get("review_owner_person_id"),
+                # Ignore client spoof of requester
+                requested_by_person_id=None,
+                verified_person_id=identity["person_id"],
+                identity=identity,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_approval_error(exc)
+            return
+        self._send_json({"ok": True, "approval": item}, status=201)
+
+    def _post_core_approval_approve(self, approval_request_id: str) -> None:
+        try:
+            body = self._read_json() if int(self.headers.get("Content-Length") or 0) > 0 else {}
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._approval_identity("approval.decide", body)
+        if identity is None:
+            return
+        try:
+            result = _approvals.approve_request(
+                approval_request_id,
+                verified_person_id=identity["person_id"],
+                reason=body.get("reason"),
+                decided_by_assignment_id=body.get("decided_by_assignment_id"),
+                # Ignore client spoof of decider
+                decided_by_person_id=None,
+                identity=identity,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_approval_error(exc)
+            return
+        self._send_json(result)
+
+    def _post_core_approval_reject(self, approval_request_id: str) -> None:
+        try:
+            body = self._read_json() if int(self.headers.get("Content-Length") or 0) > 0 else {}
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._approval_identity("approval.decide", body)
+        if identity is None:
+            return
+        try:
+            result = _approvals.reject_request(
+                approval_request_id,
+                verified_person_id=identity["person_id"],
+                reason=body.get("reason"),
+                decided_by_assignment_id=body.get("decided_by_assignment_id"),
+                decided_by_person_id=None,
+                identity=identity,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_approval_error(exc)
+            return
+        self._send_json(result)
+
+    def _post_core_approval_cancel(self, approval_request_id: str) -> None:
+        try:
+            body = self._read_json() if int(self.headers.get("Content-Length") or 0) > 0 else {}
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._approval_identity("approval.cancel", body)
+        if identity is None:
+            return
+        try:
+            item = _approvals.cancel_request(
+                approval_request_id,
+                verified_person_id=identity["person_id"],
+                reason=body.get("reason"),
+                identity=identity,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_approval_error(exc)
+            return
+        self._send_json({"ok": True, "approval": item})
 
     def _get_core_me_authority_limits(self) -> None:
         identity = self._resolve_identity()

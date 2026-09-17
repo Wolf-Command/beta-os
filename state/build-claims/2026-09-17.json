@@ -49,6 +49,20 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_core_work_items.py >/tmp/work-items-test.out 2>&1; tail -3 /tmp/work-items-test.out",
       "expect": "fail=0",
       "by": "cursor-local"
+    },
+    {
+      "id": "approval-engine-013",
+      "claim": "core_approval_requests/decisions + Matt-only approval.*; live rows=0; live authority limits=0; WI complete≠approve",
+      "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); print(c.execute('select count(*) from org_authority_limits').fetchone()[0], c.execute('select count(*) from core_approval_requests').fetchone()[0], c.execute('select count(*) from core_approval_decisions').fetchone()[0], c.execute(\\\"select count(*) from org_role_permissions rp join org_permissions p on p.permission_id=rp.permission_id where rp.role_id='ROLE-MATT' and p.code like 'approval.%'\\\").fetchone()[0], c.execute('select count(*) from core_audit_events').fetchone()[0])\"",
+      "expect": "0 0 0 4 47",
+      "by": "cursor-local"
+    },
+    {
+      "id": "approval-engine-tests",
+      "claim": "test_approval_engine.py passes; temp-DB Authority fixtures only; live audit unchanged",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_approval_engine.py >/tmp/approval-engine-test.out 2>&1; tail -3 /tmp/approval-engine-test.out",
+      "expect": "fail=0",
+      "by": "cursor-local"
     }
   ]
 }

@@ -51,6 +51,9 @@ METADATA_ALLOWLIST = frozenset(
         "http_status",
         "work_type",
         "owner_person_id",
+        "request_type",
+        "decision",
+        "linked_work_item_id",
     }
 )
 METADATA_MAX_BYTES = 4096
