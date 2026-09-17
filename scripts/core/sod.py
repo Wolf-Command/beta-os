@@ -36,7 +36,7 @@ PROCESS_APPROVAL = "APPROVAL"
 HONESTY = {
     "segregation_of_duties": "BUILT",
     "live_sod_constraints": 0,
-    "exception_override": "NOT_BUILT",
+    "exception_override": "BUILT",
     "ai_sod": False,
 }
 

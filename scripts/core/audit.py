@@ -78,6 +78,14 @@ METADATA_ALLOWLIST = frozenset(
         "evidence_result",
         "requirement_id",
         "requirement_version",
+        "exception_id",
+        "control_type",
+        "control_reference",
+        "normal_result",
+        "normal_reason_code",
+        "exception_result",
+        "usage_limit",
+        "used_count",
     }
 )
 METADATA_MAX_BYTES = 4096

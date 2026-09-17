@@ -27,6 +27,7 @@ from core import delegation as _delegation
 from core import governance_policy as _gov
 from core import sod as _sod
 from core import evidence as _evidence
+from core import exceptions as _exceptions
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 CATALOG_DB = BETA_ROOT / "catalog" / "content_library.sqlite"
@@ -68,12 +69,14 @@ HONESTY = {
     "delegation": "BUILT",
     "policy_binding": "BUILT",
     "evidence_requirements": "BUILT",
+    "exception_override": "BUILT",
     "approval_ui": "NOT_BUILT",
     "ai_approver": False,
     "requested_is_not_approved": True,
     "approved_is_not_executed": True,
     "partial_approve_is_not_approved": True,
     "claimed_is_not_evidenced": True,
+    "exception_is_not_compliance": True,
 }
 
 PERS_MATT = "PERS-MATT"
@@ -162,6 +165,9 @@ def _enforce_evidence_gate(
     Default unbound (enforce_evidence=False, no policy flag): still evaluates;
     zero ACTIVE requirements → pass (legacy tests green).
     Client evidence_present / evidence_required flags are never consulted.
+    On DENY: check AUTHORISED EVIDENCE_REQUIREMENT exception for the exact
+    requirement_id; if ok → ALLOWED_UNDER_EXCEPTION + consume (normal DENY codes preserved).
+    Never rewrite normal PASS / SATISFIED into an exception path.
     """
     # Always evaluate so ACTIVE fixtures fail closed; zero → no_evidence_requirements.
     ev = _evidence.evaluate_evidence_requirements(
@@ -192,22 +198,63 @@ def _enforce_evidence_gate(
     if not must:
         return ev
 
-    if not ev.get("satisfied"):
-        reason = ev.get("reason_code") or "missing_required_evidence"
-        raise ApprovalError(
-            f"evidence requirements not satisfied: {reason}",
-            code=reason
-            if reason
-            in (
-                "missing_required_evidence",
-                "requirement_conflict",
-                "missing_governed_object",
-                "evidence_requirements_unconfigured",
-            )
-            else "missing_required_evidence",
-            http_status=403,
+    if ev.get("satisfied"):
+        # Never rewrite normal PASS
+        return ev
+
+    reason = ev.get("reason_code") or "missing_required_evidence"
+    deny_code = (
+        reason
+        if reason
+        in (
+            "missing_required_evidence",
+            "requirement_conflict",
+            "missing_governed_object",
+            "evidence_requirements_unconfigured",
         )
-    return ev
+        else "missing_required_evidence"
+    )
+
+    # Exception path: only for concrete missing requirement_ids (not conflicts).
+    got = (governed_object_type or "").strip()
+    goi = (governed_object_id or "").strip()
+    if deny_code == "missing_required_evidence" and got and goi:
+        missing = ev.get("missing") or []
+        for m in missing:
+            req_id = (m.get("requirement_id") or "").strip()
+            if not req_id:
+                continue
+            under = _exceptions.try_allow_under_exception(
+                entity_id=entity_id,
+                control_type="EVIDENCE_REQUIREMENT",
+                control_reference=req_id,
+                governed_object_type=got,
+                governed_object_id=goi,
+                scope_id=scope_id,
+                normal_result="DENIED",
+                normal_reason_code=deny_code,
+                verified_person_id=verified_person_id,
+                identity=identity,
+                conn=conn,
+                commit=False,
+            )
+            if under:
+                out = dict(ev)
+                out["allowed"] = True
+                out["satisfied"] = False
+                out["result"] = "ALLOWED_UNDER_EXCEPTION"
+                out["normal_result"] = "DENIED"
+                out["normal_reason_code"] = deny_code
+                out["exception_id"] = under["exception_id"]
+                out["exception_result"] = under["result"]
+                out["reason_code"] = "allowed_under_exception"
+                return out
+
+    raise ApprovalError(
+        f"evidence requirements not satisfied: {reason}",
+        code=deny_code,
+        http_status=403,
+    )
 
 
 def _row(r: sqlite3.Row | None) -> dict[str, Any] | None:
@@ -1436,32 +1483,72 @@ def _decide(
                 requester_is_different=(identity or {}).get("requester_is_different"),
                 client_prior_participants=(identity or {}).get("prior_participants"),
             )
+            sod_under_exception = None
             if not sod_ev.get("allowed"):
                 reason = sod_ev.get("reason_code") or "sod_same_person_conflict"
+                # Exception path: only when bound to that exact SOD_CONSTRAINT id.
+                # Never rewrite normal PASS; never cover EVIDENCE with SOD exception.
+                cid = (sod_ev.get("matched_constraint_id") or "").strip()
+                if cid:
+                    sod_under_exception = _exceptions.try_allow_under_exception(
+                        entity_id=req["owning_entity_id"],
+                        control_type="SOD_CONSTRAINT",
+                        control_reference=cid,
+                        governed_object_type="approval_request",
+                        governed_object_id=req["approval_request_id"],
+                        scope_id=None,
+                        normal_result="DENIED",
+                        normal_reason_code=reason,
+                        verified_person_id=verified,
+                        identity=identity,
+                        conn=c,
+                        commit=False,
+                    )
+                if not sod_under_exception:
+                    _audit_approval(
+                        action="approval.decide_attempt",
+                        result="DENIED",
+                        request=req,
+                        verified_person_id=verified,
+                        identity=identity,
+                        reason_code=reason,
+                        metadata={
+                            "decision": dec,
+                            "sod_result": sod_ev.get("result"),
+                            "sod_constraint_id": sod_ev.get("matched_constraint_id"),
+                            "sod_constraint_version": sod_ev.get("matched_constraint_version"),
+                            "prior_action": sod_ev.get("prior_action"),
+                            "prior_participants": sod_ev.get("prior_participants"),
+                            "conflicting_person_id": sod_ev.get("conflicting_person_id"),
+                        },
+                        conn=c,
+                    )
+                    if commit:
+                        c.commit()
+                    raise ApprovalError(
+                        f"segregation of duties denied: {reason}",
+                        code=reason,
+                        http_status=403,
+                    )
                 _audit_approval(
                     action="approval.decide_attempt",
-                    result="DENIED",
+                    result="ALLOWED",
                     request=req,
                     verified_person_id=verified,
                     identity=identity,
-                    reason_code=reason,
+                    reason_code="allowed_under_exception",
                     metadata={
                         "decision": dec,
                         "sod_result": sod_ev.get("result"),
                         "sod_constraint_id": sod_ev.get("matched_constraint_id"),
-                        "sod_constraint_version": sod_ev.get("matched_constraint_version"),
-                        "prior_action": sod_ev.get("prior_action"),
-                        "prior_participants": sod_ev.get("prior_participants"),
-                        "conflicting_person_id": sod_ev.get("conflicting_person_id"),
+                        "normal_result": "DENIED",
+                        "normal_reason_code": reason,
+                        "exception_id": sod_under_exception.get("exception_id"),
+                        "exception_result": sod_under_exception.get("result"),
+                        "control_type": "SOD_CONSTRAINT",
+                        "control_reference": cid,
                     },
                     conn=c,
-                )
-                if commit:
-                    c.commit()
-                raise ApprovalError(
-                    f"segregation of duties denied: {reason}",
-                    code=reason,
-                    http_status=403,
                 )
 
             # Evidence requirements on APPROVED path (CLAIMED ≠ EVIDENCED ≠ VERIFIED)

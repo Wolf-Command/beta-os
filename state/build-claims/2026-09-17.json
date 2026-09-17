@@ -140,6 +140,20 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_evidence_requirements.py >/tmp/evd-req-test.out 2>&1; tail -1 /tmp/evd-req-test.out",
       "expect": "pass=73 fail=0",
       "by": "cursor-local"
+    },
+    {
+      "id": "exception-override-019",
+      "claim": "core_governance_exceptions + exceptionable registry + Matt-only governance.exception.authorise/revoke on Beta; live exceptions=0",
+      "check": "python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/beta-os/catalog/content_library.sqlite'); print(c.execute('select count(*) from core_governance_exceptions').fetchone()[0], c.execute(\\\"select count(*) from org_role_permissions where permission_id='PERM-GOV-EXCEPTION-AUTHORISE' and role_id='ROLE-MATT'\\\").fetchone()[0], c.execute(\\\"select count(*) from org_role_permissions where permission_id like 'PERM-GOV-EXCEPTION-%' and role_id!='ROLE-MATT'\\\").fetchone()[0])\"",
+      "expect": "0 1 0",
+      "by": "cursor-local"
+    },
+    {
+      "id": "exception-override-tests",
+      "claim": "test_exception_override.py passes; EXCEPTION\u2260COMPLIANCE; APR/DLG/Dual/Policy/SoD/Evidence still green",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_exception_override.py >/tmp/exc-ov-test.out 2>&1; tail -3 /tmp/exc-ov-test.out",
+      "expect": "fail=0",
+      "by": "cursor-local"
     }
   ]
 }

@@ -43,6 +43,7 @@ HONESTY = {
     "claimed_is_not_evidenced": True,
     "evidenced_is_not_verified": True,
     "cryptographic_immutability": "NOT_BUILT",
+    "exception_override": "BUILT",
     "ai_evidence_verify": False,
 }
 
