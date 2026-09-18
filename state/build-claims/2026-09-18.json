@@ -49,6 +49,13 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_decision_memory.py >/tmp/dm-live.out 2>&1; tail -3 /tmp/dm-live.out; sqlite3 /Users/wolfterminal/beta-os/catalog/decision_memory.sqlite \"SELECT COUNT(*) FROM core_decision_memory\"; sqlite3 /Users/wolfterminal/beta-os/catalog/content_library.sqlite \"SELECT COUNT(*) FROM org_permissions WHERE code LIKE 'decision.memory.%' AND status='ACTIVE'; SELECT COUNT(*) FROM org_role_permissions WHERE permission_id LIKE 'PERM-DECISION-MEMORY%' AND role_id IN ('ROLE-MATT','ROLE-OWNER','ROLE-AMANDA','ROLE-HAIKAL','ROLE-MISA','ROLE-DEVI');\"; sqlite3 /Users/wolfterminal/beta-os/catalog/content_library.sqlite \"SELECT COUNT(*) FROM core_audit_events WHERE action='decision.memory.record';\"",
       "expect": "PASS=85 FAIL=0; 6 decisions; 2 perms; 0 staff grants; >=6 audit events",
       "by": "cursor-decision-memory-live"
+    },
+    {
+      "id": "uma-ops-console-v1",
+      "claim": "BZG/Uma Blu ops console first vertical: routes /bzg /bzg/uma-blu /bzg/uma-blu/bills /bzg/uma-blu/issues; PR table with 3 example rows; payment approve perm with 0 authority limits; POLICY_REQUIRED when no limit; paid claim \u2260 verified",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_uma_ops_console.py >/tmp/uma-ops.out 2>&1; tail -3 /tmp/uma-ops.out; sqlite3 /Users/wolfterminal/beta-os/catalog/content_library.sqlite \"SELECT COUNT(*) FROM bzg_ops_purchase_requests WHERE example=1; SELECT COUNT(*) FROM org_authority_limits WHERE permission_id='PERM-BZG-PR-PAYMENT-APPROVE';\"",
+      "expect": "PASS=21 FAIL=0; 3 example PRs; 0 authority limits for payment approve",
+      "by": "cursor-uma-ops-console"
     }
   ],
   "restored_by": "peaches-factory-verify",

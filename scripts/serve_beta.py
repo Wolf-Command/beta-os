@@ -79,6 +79,7 @@ from core import approvals as _approvals
 from core import delegation as _delegation
 from core import content_publish as _content_publish
 from core import venue_close as _venue_close
+from core import uma_ops_console as _uma_ops
 from core import esb_close_snapshot as _esb_close_snapshot
 from core import progress_read_model as _progress
 from core import lead_spine as _lead_spine
@@ -1507,6 +1508,23 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_json(_request_auth.auth_mode_payload())
             return
 
+        # BZG / Uma Blu ops console (Beta — read)
+        if path == "/api/bzg/uma-blu/today":
+            self._uma_ops_today()
+            return
+        if path == "/api/bzg/uma-blu/prs":
+            self._uma_ops_prs()
+            return
+        if path == "/api/bzg/uma-blu/issues":
+            self._uma_ops_issues()
+            return
+        if path == "/api/bzg/uma-blu/history":
+            self._uma_ops_history()
+            return
+        if path == "/api/bzg/uma-blu/honesty":
+            self._uma_ops_honesty()
+            return
+
         # Uma Blu daily close (Beta — read)
         if path == "/api/venue-close/honesty":
             self._venue_close_honesty()
@@ -1740,6 +1758,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self.path = "/progress.html"
         elif path in ("/uma-blu-close", "/uma-blu-close/"):
             self.path = "/uma-blu-close.html"
+        elif path in ("/bzg", "/bzg/"):
+            self.path = "/bzg.html"
+        elif path in ("/bzg/uma-blu", "/bzg/uma-blu/"):
+            self.path = "/bzg-uma-blu.html"
+        elif path in ("/bzg/uma-blu/bills", "/bzg/uma-blu/bills/"):
+            self.path = "/bzg-uma-blu-bills.html"
+        elif path in ("/bzg/uma-blu/issues", "/bzg/uma-blu/issues/"):
+            self.path = "/bzg-uma-blu-issues.html"
         elif path in ("/habitat-operator", "/habitat-operator/"):
             self.path = "/habitat-operator.html"
         elif path in ("/lead-spine", "/lead-spine/"):
@@ -1748,6 +1774,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self.path = "/progress.html"
         elif path == "/dashboards/uma-blu-close.html":
             self.path = "/uma-blu-close.html"
+        elif path == "/dashboards/bzg.html":
+            self.path = "/bzg.html"
+        elif path == "/dashboards/bzg-uma-blu.html":
+            self.path = "/bzg-uma-blu.html"
+        elif path == "/dashboards/bzg-uma-blu-bills.html":
+            self.path = "/bzg-uma-blu-bills.html"
+        elif path == "/dashboards/bzg-uma-blu-issues.html":
+            self.path = "/bzg-uma-blu-issues.html"
         elif path == "/dashboards/habitat-operator.html":
             self.path = "/habitat-operator.html"
         elif path == "/dashboards/lead-spine.html":
@@ -3021,6 +3055,41 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_err(500, str(exc))
 
     # ----- Uma Blu daily close -----
+
+    def _uma_ops_honesty(self) -> None:
+        self._send_json({"ok": True, **_uma_ops.honesty_flags()})
+
+    def _uma_ops_today(self) -> None:
+        try:
+            self._send_json(_uma_ops.today_cards())
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_prs(self) -> None:
+        try:
+            rows = _uma_ops.list_prs()
+            self._send_json(
+                {
+                    "ok": True,
+                    "prs": rows,
+                    "count": len(rows),
+                    **_uma_ops.honesty_flags(),
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_issues(self) -> None:
+        try:
+            self._send_json(_uma_ops.list_issues())
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_history(self) -> None:
+        try:
+            self._send_json(_uma_ops.list_history())
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
 
     def _venue_close_person(self, body: dict | None = None) -> dict | None:
         identity = self._resolve_identity(body)

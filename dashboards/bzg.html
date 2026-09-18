@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BZG · Overview</title>
+<style>
+  :root {
+    --bg: #0f1c24;
+    --bg2: #162833;
+    --bg3: #1e3542;
+    --line: #2a4554;
+    --text: #eef4f7;
+    --muted: #8aa0ad;
+    --accent: #3db8a0;
+    --warn: #e0a045;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font); min-height: 100%;
+  }
+  body {
+    padding: 16px 16px 64px;
+    max-width: 480px;
+    margin: 0 auto;
+    background:
+      radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
+      radial-gradient(ellipse 90% 60% at 100% 0%, #163028 0%, transparent 50%),
+      var(--bg);
+  }
+  .brand { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 2px; }
+  .brand em { font-style: normal; color: var(--accent); }
+  .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 18px; line-height: 1.35; }
+  nav { margin-bottom: 16px; }
+  nav a {
+    display: block; padding: 14px 16px; margin-bottom: 8px;
+    background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 12px;
+    color: var(--text); text-decoration: none; font-weight: 650;
+  }
+  nav a:hover { border-color: var(--accent); }
+  nav a.active { border-color: var(--accent); color: var(--accent); }
+  .disabled {
+    display: block; padding: 12px 16px; margin-bottom: 6px;
+    color: var(--muted); font-size: 0.88rem; opacity: 0.55;
+  }
+  .panel {
+    background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 14px;
+  }
+  .panel h2 {
+    margin: 0 0 8px; font-size: 0.78rem; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); font-weight: 650;
+  }
+  .muted { color: var(--muted); font-size: 0.82rem; line-height: 1.4; }
+</style>
+</head>
+<body>
+  <h1 class="brand">BZG <em>Overview</em></h1>
+  <p class="sub">Blu Zone Group · venues you can open today</p>
+
+  <nav>
+    <a class="active" href="/bzg">Overview</a>
+    <a href="/bzg/uma-blu">Uma Blu</a>
+  </nav>
+
+  <div class="panel">
+    <h2>Later</h2>
+    <span class="disabled">Finance — later</span>
+    <span class="disabled">Venues list — later</span>
+    <span class="disabled">Procurement catalog — later</span>
+    <span class="disabled">People admin — later</span>
+  </div>
+
+  <p class="muted">Open Uma Blu for today’s work, bills, daily close, and issues.</p>
+</body>
+</html>

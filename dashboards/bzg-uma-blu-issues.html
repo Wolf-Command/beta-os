@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Uma Blu · Issues</title>
+<style>
+  :root {
+    --bg: #0f1c24;
+    --bg2: #162833;
+    --bg3: #1e3542;
+    --line: #2a4554;
+    --text: #eef4f7;
+    --muted: #8aa0ad;
+    --accent: #3db8a0;
+    --warn: #e0a045;
+    --danger: #e05a4c;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font); min-height: 100%;
+  }
+  body {
+    padding: 16px 16px 64px; max-width: 480px; margin: 0 auto;
+    background:
+      radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
+      radial-gradient(ellipse 90% 60% at 100% 0%, #163028 0%, transparent 50%),
+      var(--bg);
+  }
+  .brand { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 2px; }
+  .brand em { font-style: normal; color: var(--accent); }
+  .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 14px; line-height: 1.35; }
+  nav.uma { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  nav.uma a {
+    padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line);
+    color: var(--muted); text-decoration: none; font-size: 0.82rem; font-weight: 650;
+  }
+  nav.uma a.active { color: var(--accent); border-color: var(--accent); }
+  nav.uma span.disabled { padding: 8px 12px; font-size: 0.78rem; color: var(--muted); opacity: 0.5; }
+  .crumb { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
+  .crumb a { color: var(--muted); }
+  .row {
+    display: block; background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px;
+    margin-bottom: 10px; color: var(--text); text-decoration: none;
+  }
+  .row:hover { border-color: var(--warn); }
+  .row h3 { margin: 0 0 4px; font-size: 1.02rem; }
+  .ex { color: var(--warn); font-size: 0.75rem; margin-top: 6px; }
+  .kind { color: var(--muted); font-size: 0.78rem; }
+  .empty { color: var(--muted); font-size: 0.95rem; padding: 16px 4px; }
+  .muted { color: var(--muted); font-size: 0.82rem; }
+</style>
+</head>
+<body>
+  <p class="crumb"><a href="/bzg">BZG</a> · <a href="/bzg/uma-blu">Uma Blu</a> · Issues</p>
+  <h1 class="brand">Uma Blu <em>Issues</em></h1>
+  <p class="sub">Exceptions only — quiet when nothing is wrong</p>
+
+  <nav class="uma">
+    <a href="/bzg/uma-blu">Today</a>
+    <a href="/bzg/uma-blu/bills">PR and bills</a>
+    <a href="/uma-blu-close">Daily close</a>
+    <a class="active" href="/bzg/uma-blu/issues">Issues</a>
+    <span class="disabled">Petty cash — later</span>
+  </nav>
+
+  <div id="list"><p class="muted">Loading…</p></div>
+
+<script>
+(function () {
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  fetch("/api/bzg/uma-blu/issues")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var box = document.getElementById("list");
+      box.innerHTML = "";
+      var rows = data.issues || [];
+      if (!rows.length) {
+        box.appendChild(el("p", "empty", "No issues. The day is clean."));
+        return;
+      }
+      rows.forEach(function (it) {
+        var a = el("a", "row");
+        a.href = it.href || "#";
+        a.appendChild(el("div", "kind", it.kind || "issue"));
+        a.appendChild(el("h3", null, it.label || "Issue"));
+        if (it.example) a.appendChild(el("div", "ex", "Example"));
+        box.appendChild(a);
+      });
+    })
+    .catch(function () {
+      document.getElementById("list").textContent = "Could not load issues.";
+    });
+})();
+</script>
+</body>
+</html>

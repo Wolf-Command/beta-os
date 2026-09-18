@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Uma Blu · Today</title>
+<style>
+  :root {
+    --bg: #0f1c24;
+    --bg2: #162833;
+    --bg3: #1e3542;
+    --line: #2a4554;
+    --text: #eef4f7;
+    --muted: #8aa0ad;
+    --accent: #3db8a0;
+    --warn: #e0a045;
+    --danger: #e05a4c;
+    --ok: #4ecf8a;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font); min-height: 100%;
+  }
+  body {
+    padding: 16px 16px 64px;
+    max-width: 480px;
+    margin: 0 auto;
+    background:
+      radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
+      radial-gradient(ellipse 90% 60% at 100% 0%, #163028 0%, transparent 50%),
+      var(--bg);
+  }
+  .brand { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 2px; }
+  .brand em { font-style: normal; color: var(--accent); }
+  .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 14px; line-height: 1.35; }
+  .banner {
+    background: rgba(224,160,69,0.12); border: 1px solid rgba(224,160,69,0.45);
+    color: var(--warn); border-radius: 12px; padding: 10px 12px;
+    font-size: 0.88rem; margin-bottom: 14px;
+  }
+  .banner.hidden { display: none; }
+  nav.uma { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  nav.uma a {
+    padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line);
+    color: var(--muted); text-decoration: none; font-size: 0.82rem; font-weight: 650;
+  }
+  nav.uma a.active { color: var(--accent); border-color: var(--accent); }
+  nav.uma span.disabled { padding: 8px 12px; font-size: 0.78rem; color: var(--muted); opacity: 0.5; }
+  .crumb { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
+  .crumb a { color: var(--muted); }
+  .card {
+    display: block; background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px;
+    margin-bottom: 10px; color: var(--text); text-decoration: none;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card h3 { margin: 0 0 4px; font-size: 1.02rem; }
+  .card .meta { color: var(--muted); font-size: 0.82rem; }
+  .card .ex { color: var(--warn); font-size: 0.75rem; margin-top: 6px; }
+  .panel {
+    background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 16px;
+  }
+  .panel h2 {
+    margin: 0 0 10px; font-size: 0.78rem; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); font-weight: 650;
+  }
+  .hist { list-style: none; padding: 0; margin: 0; }
+  .hist li { border-top: 1px solid var(--line); padding: 8px 0; font-size: 0.88rem; }
+  .hist li:first-child { border-top: 0; padding-top: 0; }
+  .hist .when { display: block; color: var(--muted); font-size: 0.72rem; margin-bottom: 2px; }
+  .muted { color: var(--muted); font-size: 0.82rem; }
+  .empty { color: var(--muted); font-size: 0.9rem; padding: 8px 0; }
+</style>
+</head>
+<body>
+  <p class="crumb"><a href="/bzg">BZG</a> · Uma Blu</p>
+  <h1 class="brand">Uma Blu <em>Today</em></h1>
+  <p class="sub">What needs a human today — quiet when the day is clean</p>
+
+  <div class="banner hidden" id="fixtureBanner">These purchase requests are examples, not live orders.</div>
+
+  <nav class="uma">
+    <a class="active" href="/bzg/uma-blu">Today</a>
+    <a href="/bzg/uma-blu/bills">PR and bills</a>
+    <a href="/uma-blu-close">Daily close</a>
+    <a href="/bzg/uma-blu/issues">Issues</a>
+    <span class="disabled">Petty cash — later</span>
+  </nav>
+
+  <div id="cards"><p class="muted">Loading…</p></div>
+
+  <div class="panel">
+    <h2>History</h2>
+    <ul class="hist" id="hist"><li class="muted">Loading…</li></ul>
+  </div>
+
+<script>
+(function () {
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function loadToday() {
+    fetch("/api/bzg/uma-blu/today")
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var box = document.getElementById("cards");
+        box.innerHTML = "";
+        if (data.fixture_notice) {
+          document.getElementById("fixtureBanner").classList.remove("hidden");
+        }
+        var cards = data.cards || [];
+        if (!cards.length) {
+          box.appendChild(el("p", "empty", "Nothing waiting right now."));
+          return;
+        }
+        cards.forEach(function (c) {
+          var a = el("a", "card");
+          a.href = c.href || "#";
+          a.appendChild(el("h3", null, c.title));
+          if (c.count && c.kind !== "daily_close") {
+            a.appendChild(el("div", "meta", c.count === 1 ? "1 item" : c.count + " items"));
+          }
+          (c.items || []).forEach(function (it) {
+            var line = el("div", "meta", it.label);
+            a.appendChild(line);
+            if (it.example) a.appendChild(el("div", "ex", "Example"));
+          });
+          box.appendChild(a);
+        });
+      })
+      .catch(function () {
+        document.getElementById("cards").textContent = "Could not load Today.";
+      });
+  }
+  function loadHist() {
+    fetch("/api/bzg/uma-blu/history")
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var ul = document.getElementById("hist");
+        ul.innerHTML = "";
+        var ev = data.events || [];
+        if (!ev.length) {
+          ul.appendChild(el("li", "muted", "No history yet."));
+          return;
+        }
+        ev.forEach(function (e) {
+          var li = el("li");
+          if (e.when) li.appendChild(el("span", "when", e.when));
+          li.appendChild(document.createTextNode(e.sentence || ""));
+          ul.appendChild(li);
+        });
+      })
+      .catch(function () {
+        document.getElementById("hist").innerHTML = "<li class='muted'>History not loaded.</li>";
+      });
+  }
+  loadToday();
+  loadHist();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Uma Blu · PR and bills</title>
+<style>
+  :root {
+    --bg: #0f1c24;
+    --bg2: #162833;
+    --bg3: #1e3542;
+    --line: #2a4554;
+    --text: #eef4f7;
+    --muted: #8aa0ad;
+    --accent: #3db8a0;
+    --warn: #e0a045;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font); min-height: 100%;
+  }
+  body {
+    padding: 16px 16px 64px; max-width: 480px; margin: 0 auto;
+    background:
+      radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
+      radial-gradient(ellipse 90% 60% at 100% 0%, #163028 0%, transparent 50%),
+      var(--bg);
+  }
+  .brand { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 2px; }
+  .brand em { font-style: normal; color: var(--accent); }
+  .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 14px; line-height: 1.35; }
+  .banner {
+    background: rgba(224,160,69,0.12); border: 1px solid rgba(224,160,69,0.45);
+    color: var(--warn); border-radius: 12px; padding: 10px 12px;
+    font-size: 0.88rem; margin-bottom: 14px;
+  }
+  .banner.hidden { display: none; }
+  nav.uma { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  nav.uma a {
+    padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line);
+    color: var(--muted); text-decoration: none; font-size: 0.82rem; font-weight: 650;
+  }
+  nav.uma a.active { color: var(--accent); border-color: var(--accent); }
+  nav.uma span.disabled { padding: 8px 12px; font-size: 0.78rem; color: var(--muted); opacity: 0.5; }
+  .crumb { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
+  .crumb a { color: var(--muted); }
+  .row {
+    background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 10px;
+  }
+  .row h3 { margin: 0 0 6px; font-size: 1.02rem; }
+  .state {
+    display: inline-block; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--line); font-size: 0.75rem; color: var(--muted); margin-bottom: 8px;
+  }
+  .state.warn { color: var(--warn); border-color: rgba(224,160,69,0.45); }
+  .meta { color: var(--muted); font-size: 0.82rem; line-height: 1.4; }
+  .id { font-size: 0.72rem; color: var(--muted); margin-top: 8px; word-break: break-all; }
+  .ex { color: var(--warn); font-size: 0.75rem; margin-top: 6px; }
+  .muted { color: var(--muted); font-size: 0.82rem; }
+  .empty { color: var(--muted); font-size: 0.9rem; padding: 8px 0; }
+</style>
+</head>
+<body>
+  <p class="crumb"><a href="/bzg">BZG</a> · <a href="/bzg/uma-blu">Uma Blu</a> · PR and bills</p>
+  <h1 class="brand">PR <em>and bills</em></h1>
+  <p class="sub">Request is not approval. A paid claim is not a verified payment.</p>
+
+  <div class="banner hidden" id="fixtureBanner">These rows are examples — not live purchase orders.</div>
+
+  <nav class="uma">
+    <a href="/bzg/uma-blu">Today</a>
+    <a class="active" href="/bzg/uma-blu/bills">PR and bills</a>
+    <a href="/uma-blu-close">Daily close</a>
+    <a href="/bzg/uma-blu/issues">Issues</a>
+    <span class="disabled">Petty cash — later</span>
+  </nav>
+
+  <div id="list"><p class="muted">Loading…</p></div>
+
+<script>
+(function () {
+  var STATE_LABEL = {
+    REQUESTED: "Waiting approval",
+    APPROVED: "Approved",
+    ORDERED: "Ordered",
+    RECEIVED: "Received",
+    BILL_RECEIVED: "Bill received",
+    PAYMENT_REQUESTED: "Payment requested",
+    PAYMENT_APPROVED: "Payment approved",
+    PAID_CLAIMED: "Paid claimed — not verified",
+    PAYMENT_VERIFIED: "Payment verified",
+    CLOSED: "Closed",
+    POLICY_REQUIRED: "Policy required",
+    REJECTED: "Rejected"
+  };
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  fetch("/api/bzg/uma-blu/prs")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var box = document.getElementById("list");
+      box.innerHTML = "";
+      var rows = data.prs || [];
+      if (rows.some(function (p) { return p.example; })) {
+        document.getElementById("fixtureBanner").classList.remove("hidden");
+      }
+      if (!rows.length) {
+        box.appendChild(el("p", "empty", "No purchase requests yet."));
+        return;
+      }
+      rows.forEach(function (p) {
+        var d = el("div", "row");
+        var st = p.state || "";
+        var pill = el("span", "state" + (st === "POLICY_REQUIRED" || st === "PAID_CLAIMED" ? " warn" : ""), STATE_LABEL[st] || st);
+        d.appendChild(pill);
+        var title = (p.supplier_name || "Purchase request");
+        if (p.purpose) title += " · " + p.purpose;
+        d.appendChild(el("h3", null, title));
+        var bits = [];
+        if (p.requester_label) bits.push("Requested by " + p.requester_label);
+        if (p.expected_value != null) {
+          var amt = String(p.expected_value);
+          if (p.currency) amt += " " + p.currency;
+          bits.push(amt);
+        } else if (p.currency) {
+          bits.push(p.currency);
+        }
+        if (p.bill_reference) bits.push("Bill " + p.bill_reference);
+        if (bits.length) d.appendChild(el("div", "meta", bits.join(" · ")));
+        if (p.example) d.appendChild(el("div", "ex", "Example"));
+        d.appendChild(el("div", "id", p.pr_id));
+        box.appendChild(d);
+      });
+    })
+    .catch(function () {
+      document.getElementById("list").textContent = "Could not load bills.";
+    });
+})();
+</script>
+</body>
+</html>
