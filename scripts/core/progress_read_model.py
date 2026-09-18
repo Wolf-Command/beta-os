@@ -1371,11 +1371,164 @@ def _build_policy_decisions(
     return out
 
 
-def _build_commissioning_missions(overlay: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
-    """Curated human commissioning missions → needs_you / waiting_on_others."""
+def _is_example_pulse_line(text: str) -> bool:
+    t = (text or "").strip()
+    return (
+        t.startswith("Example —")
+        or t.startswith("Example -")
+        or t.startswith("Example:")
+    )
+
+
+def _blob_forces_class(blob: str) -> str | None:
+    """OPENING BALANCE and CLOSER never auto-land as Matt tasks."""
+    u = (blob or "").upper()
+    if (
+        "OPENING BALANCE" in u
+        or "FLOAT NOT_FOUND" in u
+        or "FLOAT NOT FOUND" in u
+    ):
+        return "NEEDS_POLICY"
+    if "CLOSER REQUIRED" in u or "WAITING_FOR_CLOSER" in u:
+        return "NEEDS_STAFF"
+    return None
+
+
+def _safe_operating_issues() -> list[dict[str, Any]]:
+    try:
+        from core import uma_ops_console as uoc
+
+        payload = uoc.list_issues()
+    except Exception:  # noqa: BLE001
+        return []
+    if not isinstance(payload, dict):
+        return []
+    rows = payload.get("issues") or []
+    return [i for i in rows if isinstance(i, dict)]
+
+
+def _human_exception_title(label: str, why: str) -> str:
+    title = (label or "").strip()
+    if not title or title.startswith(
+        ("PR-", "PETTY-", "WI-", "PERS-", "EVD-", "ENT-", "DEC-", "ASG-")
+    ):
+        return why or "Issue"
+    return title
+
+
+def bucket_owner_exceptions(
+    issues: list[dict[str, Any]] | None,
+) -> dict[str, list[dict[str, Any]]]:
+    """Four owner buckets from operating issues. example:true never enters.
+
+    Needs You is only NEEDS_MATT. Opening-float and closer blockers are forced
+    out of that panel even if a caller marked them NEEDS_MATT.
+    """
+    from core.blocker_explain import (
+        WHY_CLOSER,
+        WHY_OPENING_FLOAT,
+        explain_operating_blocker,
+    )
+
+    out: dict[str, list[dict[str, Any]]] = {
+        "needs_you": [],
+        "needs_staff": [],
+        "needs_policy": [],
+        "needs_external_access": [],
+    }
+    for iss in issues or []:
+        if not isinstance(iss, dict) or iss.get("example"):
+            continue
+        label = str(iss.get("label") or iss.get("title") or "")
+        if label.startswith("Example —") or label.startswith("Example -"):
+            continue
+        kind = str(iss.get("kind") or "")
+        explained = explain_operating_blocker(
+            kind,
+            {
+                "label": label,
+                "opening_float_status": iss.get("opening_float_status"),
+                "question": iss.get("question"),
+                "scope": iss.get("scope"),
+                "surface": iss.get("surface"),
+                "actor_context": iss.get("actor_context"),
+                "resolve": iss.get("resolve"),
+            },
+        )
+        classification = str(explained.get("classification") or "")
+        why = str(explained.get("why") or iss.get("why") or "")
+        forced = _blob_forces_class(f"{kind} {label} {why}")
+        if forced:
+            classification = forced
+            if forced == "NEEDS_POLICY" and (
+                kind in ("opening_balance_required", "float_not_found")
+                or "FLOAT" in label.upper()
+                or "OPENING BALANCE" in label.upper()
+            ):
+                why = WHY_OPENING_FLOAT
+            if forced == "NEEDS_STAFF" and (
+                "CLOSER" in f"{kind} {label}".upper()
+                or kind.upper() == "WAITING_FOR_CLOSER"
+            ):
+                why = WHY_CLOSER
+        key = {
+            "NEEDS_MATT": "needs_you",
+            "NEEDS_STAFF": "needs_staff",
+            "NEEDS_POLICY": "needs_policy",
+            "NEEDS_EXTERNAL_ACCESS": "needs_external_access",
+        }.get(classification)
+        if not key:
+            continue
+        card: dict[str, Any] = {
+            "title": _human_exception_title(label, why),
+            "why": why,
+            "note": why,
+            "classification": classification,
+            "example": False,
+        }
+        href = iss.get("href")
+        if href:
+            card["href"] = href
+        status = explained.get("status") or (iss.get("explain") or {}).get("status")
+        if status:
+            card["status"] = status
+        out[key].append(card)
+    return out
+
+
+def owner_pulse_lines_from_issues(
+    issues: list[dict[str, Any]] | None,
+) -> list[str]:
+    """Non-example issue lines only. Example rows never feed Owner Pulse."""
+    lines: list[str] = []
+    for iss in issues or []:
+        if not isinstance(iss, dict) or iss.get("example"):
+            continue
+        label = str(iss.get("label") or "").strip()
+        if _is_example_pulse_line(label) or label.startswith("Example"):
+            continue
+        why = str(iss.get("why") or "").strip()
+        if not why:
+            continue
+        lines.append(f"{label}: {why}" if label else why)
+    return lines
+
+
+def _build_commissioning_missions(
+    overlay: dict[str, Any],
+    issues: list[dict[str, Any]] | None = None,
+) -> dict[str, list[dict[str, Any]]]:
+    """Curated missions plus Uma issues.
+
+    Needs You = NEEDS_MATT (bucket NEEDS_YOU maps to Matt). Parallel buckets
+    hold staff / policy / external-access exceptions. Example issues excluded.
+    """
     missions = overlay.get("commissioning_missions") or []
     needs_you: list[dict[str, Any]] = []
     waiting_on_others: list[dict[str, Any]] = []
+    needs_staff: list[dict[str, Any]] = []
+    needs_policy: list[dict[str, Any]] = []
+    needs_external: list[dict[str, Any]] = []
     for m in missions:
         if not isinstance(m, dict):
             continue
@@ -1396,11 +1549,41 @@ def _build_commissioning_missions(overlay: dict[str, Any]) -> dict[str, list[dic
             "as_of": m.get("as_of"),
             "confidence": m.get("confidence") or "CURATED",
         }
+        forced = _blob_forces_class(f"{card['title']} {card['note']}")
+        if bucket == "NEEDS_YOU" and forced:
+            card["classification"] = forced
+            card["bucket"] = forced
+            card["why"] = card["note"]
+            if forced == "NEEDS_POLICY":
+                needs_policy.append(card)
+            else:
+                needs_staff.append(card)
+            continue
         if bucket == "NEEDS_YOU":
+            card["classification"] = "NEEDS_MATT"
             needs_you.append(card)
         else:
             waiting_on_others.append(card)
-    return {"needs_you": needs_you, "waiting_on_others": waiting_on_others}
+
+    extra = bucket_owner_exceptions(
+        issues if issues is not None else _safe_operating_issues()
+    )
+    needs_you.extend(extra["needs_you"])
+    needs_staff.extend(extra["needs_staff"])
+    needs_policy.extend(extra["needs_policy"])
+    needs_external.extend(extra["needs_external_access"])
+    needs_you = [
+        m
+        for m in needs_you
+        if not m.get("example") and m.get("classification") in (None, "", "NEEDS_MATT")
+    ]
+    return {
+        "needs_you": needs_you,
+        "waiting_on_others": waiting_on_others,
+        "needs_staff": needs_staff,
+        "needs_policy": needs_policy,
+        "needs_external_access": needs_external,
+    }
 
 
 def _build_owner_pulse(
@@ -1409,6 +1592,7 @@ def _build_owner_pulse(
     verticals: dict[str, Any],
     missions: dict[str, list[dict[str, Any]]] | None = None,
     policy_decisions: list[dict[str, Any]] | None = None,
+    issues: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     cockpit = overlay.get("owner_cockpit") or {}
     pulse = dict(cockpit.get("owner_pulse") or {})
@@ -1458,6 +1642,20 @@ def _build_owner_pulse(
     )
     pulse["as_of"] = pulse.get("as_of") or cockpit.get("as_of") or overlay.get("as_of")
     pulse["confidence"] = pulse.get("confidence") or cockpit.get("confidence") or "CURATED"
+    # Example fixtures must not feed Owner Pulse.
+    banned = []
+    for iss in issues or []:
+        if isinstance(iss, dict) and iss.get("example"):
+            lab = str(iss.get("label") or "").strip()
+            if lab:
+                banned.append(lab)
+    for key in ("working_now", "waiting_on_people", "policy_data_needed"):
+        pulse[key] = [
+            x
+            for x in (pulse.get(key) or [])
+            if not _is_example_pulse_line(str(x))
+            and not any(b and b in str(x) for b in banned)
+        ]
     return pulse
 
 
@@ -1688,12 +1886,21 @@ def build_read_model(
 
     owner_phase = _derive_owner_phase(card, overall["overall_pct"], verticals)
     status_chips = _status_chips(all_scored)
-    missions = _build_commissioning_missions(overlay)
+    operating_issues = _safe_operating_issues()
+    missions = _build_commissioning_missions(overlay, operating_issues)
     policy_decisions = _build_policy_decisions(overlay, verticals)
     needs_you = missions["needs_you"]
     waiting_on_others = missions["waiting_on_others"]
+    needs_staff = missions.get("needs_staff") or []
+    needs_policy = missions.get("needs_policy") or []
+    needs_external_access = missions.get("needs_external_access") or []
     owner_pulse = _build_owner_pulse(
-        overlay, factory_health, verticals, missions, policy_decisions
+        overlay,
+        factory_health,
+        verticals,
+        missions,
+        policy_decisions,
+        operating_issues,
     )
     next_moves = _build_next_moves(overlay)
     recent_wins = _build_recent_wins(overlay)
@@ -1728,6 +1935,9 @@ def build_read_model(
                 "owner_phase": owner_phase,
                 "status_chips": [c for c in status_chips if c.get("hero", True)],
                 "needs_you": needs_you,
+                "needs_staff": needs_staff,
+                "needs_policy": needs_policy,
+                "needs_external_access": needs_external_access,
                 "waiting_on_others": waiting_on_others,
                 "policy_decisions": policy_decisions,
                 "owner_pulse": owner_pulse,
@@ -1842,6 +2052,9 @@ def build_read_model(
         "owner_phase": owner_phase,
         "status_chips": [c for c in status_chips if c.get("hero", True)],
         "needs_you": needs_you,
+        "needs_staff": needs_staff,
+        "needs_policy": needs_policy,
+        "needs_external_access": needs_external_access,
         "waiting_on_others": waiting_on_others,
         "policy_decisions": policy_decisions,
         "owner_pulse": owner_pulse,

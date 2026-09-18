@@ -17,6 +17,10 @@ from typing import Any
 
 from core import audit as _audit
 from core import authority as _authority
+from core.blocker_explain import (
+    CLASSIFICATION_LABELS,
+    explain_operating_blocker,
+)
 from core import evidence as _evidence
 from core import venue_close as _venue_close
 from core import work_items as _work_items
@@ -1366,13 +1370,16 @@ def _petty_day_issue(d: dict[str, Any]) -> dict[str, Any]:
     label = f"Petty tin · {d.get('business_date') or 'date unknown'} · {st}"
     if d.get("example"):
         label = f"Example — {label}"
-    if d.get("opening_float") is None:
+    float_missing = d.get("opening_float") is None or d.get("opening_float_status") == "NOT_FOUND"
+    if float_missing:
         label = f"{label} (float NOT FOUND)"
-    kind = {
-        "POLICY_REQUIRED": "petty_policy_required",
-        "OPEN": "petty_open_uncounted",
-        "VARIANCE_NOTED": "petty_variance_noted",
-    }.get(st, "petty_attention")
+        kind = "opening_balance_required"
+    else:
+        kind = {
+            "POLICY_REQUIRED": "petty_policy_required",
+            "OPEN": "petty_open_uncounted",
+            "VARIANCE_NOTED": "petty_variance_noted",
+        }.get(st, "petty_attention")
     return {
         "kind": kind,
         "label": label,
@@ -1380,6 +1387,35 @@ def _petty_day_issue(d: dict[str, Any]) -> dict[str, Any]:
         "business_date": d.get("business_date"),
         "href": "/bzg/uma-blu/petty",
     }
+
+
+def _annotate_issue(issue: dict[str, Any]) -> dict[str, Any]:
+    """Attach deterministic why / classification / explain. No raw-id headline."""
+    row = dict(issue)
+    label = str(row.get("label") or "")
+    kind = str(row.get("kind") or "")
+    float_status = row.get("opening_float_status")
+    if kind == "opening_balance_required" or "float NOT FOUND" in label:
+        float_status = float_status or "NOT_FOUND"
+    explained = explain_operating_blocker(
+        kind,
+        {
+            "label": label,
+            "example": bool(row.get("example")),
+            "opening_float_status": float_status,
+        },
+    )
+    row["why"] = explained.get("why") or ""
+    row["classification"] = explained.get("classification") or ""
+    label_human = CLASSIFICATION_LABELS.get(row["classification"])
+    if label_human:
+        row["classification_label"] = label_human
+    row["explain"] = {
+        k: v
+        for k, v in explained.items()
+        if v not in (None, "", [], {})
+    }
+    return row
 
 
 def list_issues(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
@@ -1441,6 +1477,7 @@ def list_issues(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
         except Exception:  # noqa: BLE001
             pass
 
+        issues = [_annotate_issue(i) for i in issues]
         return {"ok": True, "issues": issues, "empty": len(issues) == 0, "honesty": dict(HONESTY)}
     finally:
         if own:

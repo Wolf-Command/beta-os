@@ -49,7 +49,9 @@
   .row:hover { border-color: var(--warn); }
   .row h3 { margin: 0 0 4px; font-size: 1.02rem; }
   .ex { color: var(--warn); font-size: 0.75rem; margin-top: 6px; }
-  .kind { color: var(--muted); font-size: 0.78rem; }
+  .kind { color: var(--accent); font-size: 0.78rem; font-weight: 650; }
+  .why { color: var(--text); font-size: 0.88rem; margin-top: 6px; line-height: 1.35; }
+  .status { color: var(--muted); font-size: 0.75rem; margin-top: 6px; }
   .empty { color: var(--muted); font-size: 0.95rem; padding: 16px 4px; }
   .muted { color: var(--muted); font-size: 0.82rem; }
 </style>
@@ -90,8 +92,23 @@
       rows.forEach(function (it) {
         var a = el("a", "row");
         a.href = it.href || "#";
-        a.appendChild(el("div", "kind", it.kind || "issue"));
-        a.appendChild(el("h3", null, it.label || "Issue"));
+        var human = it.classification_label || ({
+          NEEDS_MATT: "Needs you",
+          NEEDS_STAFF: "Needs staff",
+          NEEDS_POLICY: "Needs policy",
+          NEEDS_EXTERNAL_ACCESS: "Needs external access"
+        })[it.classification] || "Issue";
+        a.appendChild(el("div", "kind", human));
+        a.appendChild(el("h3", null, it.label || it.why || "Issue"));
+        if (it.why) a.appendChild(el("div", "why", it.why));
+        var explain = it.explain || {};
+        if (explain.status) a.appendChild(el("div", "status", "Knowledge status: " + explain.status));
+        if (explain.decision && explain.decision.summary) {
+          a.appendChild(el("div", "why", explain.decision.summary));
+        }
+        if (explain.provenance && explain.provenance.length) {
+          a.appendChild(el("div", "status", explain.provenance.join(" · ")));
+        }
         if (it.example) a.appendChild(el("div", "ex", "Example"));
         box.appendChild(a);
       });

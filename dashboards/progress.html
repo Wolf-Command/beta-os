@@ -346,13 +346,57 @@
     const domains = v.domains || model.domains || {};
     const fh = (v.factory_health || model.factory_health || {});
     const tech = v.technical_details || {};
-    const needsYou = (v.needs_you || model.needs_you || []).filter((m) => !m.example);
+    const needsYou = (v.needs_you || model.needs_you || []).filter(isMattTask);
+    const needsStaff = (v.needs_staff || model.needs_staff || []).filter(isException);
+    const needsPolicy = (v.needs_policy || model.needs_policy || []).filter(isException);
+    const needsExternal = (v.needs_external_access || model.needs_external_access || []).filter(isException);
     const waitingOthers = v.waiting_on_others || model.waiting_on_others || [];
     const policies = v.policy_decisions || model.policy_decisions || [];
 
     const firstMove = moves[0];
     const stale = system.status && system.status !== "OK";
     const systemPct = (!stale && system.system_pct != null) ? system.system_pct : null;
+
+    function classLabel(c) {
+      return ({
+        NEEDS_MATT: "Needs you",
+        NEEDS_STAFF: "Needs staff",
+        NEEDS_POLICY: "Needs policy",
+        NEEDS_EXTERNAL_ACCESS: "Needs external access",
+      })[c] || "";
+    }
+
+    function forcedOutOfMatt(m) {
+      const t = `${m.title || ""} ${m.note || ""} ${m.why || ""}`.toUpperCase();
+      return t.includes("OPENING BALANCE")
+        || t.includes("FLOAT NOT FOUND")
+        || t.includes("FLOAT NOT_FOUND")
+        || t.includes("CLOSER REQUIRED")
+        || t.includes("WAITING_FOR_CLOSER");
+    }
+
+    function isMattTask(m) {
+      if (!m || m.example) return false;
+      if (forcedOutOfMatt(m)) return false;
+      if (m.classification && m.classification !== "NEEDS_MATT") return false;
+      return true;
+    }
+
+    function isException(m) {
+      return m && !m.example;
+    }
+
+    function renderExceptionCards(list, emptyMsg) {
+      if (!list.length) return `<p class="empty-ok">${esc(emptyMsg)}</p>`;
+      return list.map((m) => `
+        <div class="mission">
+          <span class="move-cls WAITING">${esc(classLabel(m.classification) || "Exception")}</span>
+          <div class="t" style="display:inline;margin-left:8px">${esc(m.title || "")}</div>
+          ${m.why ? `<div class="n">${esc(m.why)}</div>` : ""}
+          ${m.note && m.note !== m.why ? `<div class="n">${esc(m.note)}</div>` : ""}
+        </div>
+      `).join("");
+    }
 
     function renderMissionCards(list, emptyMsg) {
       if (!list.length) return `<p class="empty-ok">${esc(emptyMsg)}</p>`;
@@ -455,6 +499,18 @@
         <div class="panel">
           <h2>Needs you</h2>
           ${renderMissionCards(needsYou, "Nothing needs you right now — success (except active Progress retest while iterating).")}
+        </div>
+        <div class="panel">
+          <h2>Needs staff</h2>
+          ${renderExceptionCards(needsStaff, "No staff exceptions.")}
+        </div>
+        <div class="panel">
+          <h2>Needs policy</h2>
+          ${renderExceptionCards(needsPolicy, "No policy exceptions.")}
+        </div>
+        <div class="panel">
+          <h2>Needs external access</h2>
+          ${renderExceptionCards(needsExternal, "No external-access exceptions.")}
         </div>
         <div class="panel">
           <h2>Waiting on others</h2>
