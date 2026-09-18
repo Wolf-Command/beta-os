@@ -225,6 +225,35 @@
   @media (max-width: 640px) {
     .mobile-next { display: block; }
   }
+  .dial-label {
+    font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 6px;
+  }
+  .model-e { list-style: none; margin: 12px 0 0; padding: 0; }
+  .model-e li {
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 8px 0; border-top: 1px solid var(--line);
+    font-size: 0.9rem;
+  }
+  .model-e li:first-child { border-top: 0; padding-top: 0; }
+  .model-e .k { color: var(--muted); letter-spacing: 0.04em; }
+  .model-e .v { color: var(--text); font-weight: 650; }
+  .model-e .v.unscored { color: var(--muted); font-weight: 500; }
+  .stale-banner {
+    margin: 10px 0 0; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--danger) 50%, var(--line));
+    color: var(--danger); font-size: 0.88rem; font-weight: 650;
+    letter-spacing: 0.04em;
+  }
+  .nav a.nav-link {
+    appearance: none; border: 1px solid var(--line); background: var(--bg3);
+    color: var(--muted); border-radius: 999px; padding: 9px 12px;
+    font-size: 0.82rem; font-weight: 600; text-decoration: none;
+  }
+  .nav a.nav-link:hover { border-color: var(--accent); color: var(--text); }
+  .bzg-pulse { margin-top: 8px; font-size: 0.88rem; color: var(--muted); line-height: 1.45; }
+  .bzg-pulse strong { color: var(--text); font-weight: 650; }
+  .legacy-note { font-size: 0.75rem; color: var(--muted); margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -300,6 +329,10 @@
 
   function renderEmpire() {
     const v = (model.views || {}).Empire || {};
+    const system = v.system || model.system || {};
+    const modelE = v.model_e || model.model_e || [];
+    const detail = v.system_detail || model.system_detail || {};
+    const bzgPulse = v.bzg_pulse || model.bzg_pulse;
     const overall = model.overall || {};
     const phase = v.owner_phase || model.owner_phase || "";
     const chips = v.status_chips || model.status_chips || [];
@@ -316,6 +349,8 @@
 
     const heroChips = chips.filter((c) => c.id !== "COMMISSIONED");
     const firstMove = moves[0];
+    const stale = system.status && system.status !== "OK";
+    const systemPct = (!stale && system.system_pct != null) ? system.system_pct : null;
 
     function renderMissionCards(list, emptyMsg) {
       if (!list.length) return `<p class="empty-ok">${esc(emptyMsg)}</p>`;
@@ -340,12 +375,47 @@
       `).join("");
     }
 
+    function renderBzgPulse(bp) {
+      if (!bp) return "";
+      const close = bp.daily_close;
+      const lines = [];
+      if (close && close.label) lines.push(`Daily Close: <strong>${esc(close.label)}</strong>`);
+      if (bp.pr_attention_count != null) lines.push(`PR attention: <strong>${esc(bp.pr_attention_count)}</strong>`);
+      if (bp.policy_required_count != null) lines.push(`POLICY REQUIRED: <strong>${esc(bp.policy_required_count)}</strong>`);
+      if (bp.unresolved_issues_count != null) lines.push(`Unresolved issues: <strong>${esc(bp.unresolved_issues_count)}</strong>`);
+      if (!lines.length) return "";
+      return `<div class="bzg-pulse">${lines.join(" · ")} · <a class="back" href="/bzg">BZG</a> · <a class="back" href="/bzg/uma-blu">Uma Blu</a></div>`;
+    }
+
+    const counts = system.counts || {};
+    const domainRows = (detail.domain_counts || []).map((d) =>
+      `<div class="item"><div class="cap">${esc(d.domain)}</div><div class="meta">${esc(d.n)} caps · ABSENT ${esc(d.ABSENT)} · SPECIFIED ${esc(d.SPECIFIED)} · BUILT ${esc(d.BUILT)} · PROVEN ${esc(d.PROVEN)} · READY ${esc(d.READY)}</div></div>`
+    ).join("");
+    const waitingRows = (detail.waiting_evidence || []).slice(0, 24).map((w) =>
+      `<div class="item"><div class="cap">${esc(w.id)} · ${esc(w.state)}</div><div class="meta">${esc(w.waiting_evidence)}</div></div>`
+    ).join("") || `<p class="muted">No open next-bar evidence notes.</p>`;
+    const moveRows = (detail.recent_movements || []).slice().reverse().map((m) =>
+      `<div class="item"><div class="cap">${esc(m.event || "movement")}</div><div class="meta">${esc(m.at || "")} · sum ${esc(m.sum_credits)} · ${esc(m.note || "")}</div></div>`
+    ).join("") || `<p class="muted">No score history yet.</p>`;
+
     return `
       <div class="stack">
         <div class="panel">
           <h2>How far are we?</h2>
-          <p class="pct">${esc(overall.overall_pct)}%<small> / 100</small></p>
-          <span class="label-est">${esc(overall.label || "PARTIAL ESTIMATE")}</span>
+          <p class="dial-label">SYSTEM</p>
+          ${stale
+            ? `<div class="stale-banner" role="status">SCORING PROJECTION STALE</div>
+               <p class="muted" style="margin:8px 0 0">${esc(system.stale_reason || "Ledger / read model / HTML projection disagree — no percentage shown.")}</p>`
+            : `<p class="pct">${esc(systemPct)}%<small> / 100</small></p>`
+          }
+          <ul class="model-e" aria-label="Model E dials">
+            ${modelE.map((d) => `
+              <li>
+                <span class="k">${esc(d.label)}</span>
+                <span class="v ${d.scored ? "" : "unscored"}">${esc(d.display || "Not scored yet")}</span>
+              </li>
+            `).join("")}
+          </ul>
           <p class="phase-line">${esc(phase)}</p>
           <div class="chips" aria-label="Status vocabulary">
             ${heroChips.map((c) => `
@@ -353,7 +423,26 @@
             `).join("")}
           </div>
           <p class="muted" style="margin:10px 0 0">Vocabulary only — categories overlap. Counts and builder honesty live under How calculated.</p>
+          <p class="legacy-note">Legacy PARTIAL ESTIMATE (Master_Build mix) is retired as the primary dial — history only${overall.overall_pct != null ? ` (was ~${esc(overall.overall_pct)}%)` : ""}.</p>
         </div>
+
+        <details class="disclose">
+          <summary>SYSTEM detail · 77 capabilities · counts · domains · movements</summary>
+          <p class="muted">${esc(detail.note || "")}</p>
+          <p class="muted">Counts — ABSENT ${esc(counts.ABSENT)} · SPECIFIED ${esc(counts.SPECIFIED)} · BUILT ${esc(counts.BUILT)} · PROVEN ${esc(counts.PROVEN)} · READY ${esc(counts.READY)} · sum credits ${esc(system.sum_credits)}</p>
+          <h3 style="font-size:0.95rem;margin:14px 0 8px">By domain (catalog)</h3>
+          ${domainRows || `<p class="muted">No domain rows.</p>`}
+          <h3 style="font-size:0.95rem;margin:14px 0 8px">Waiting evidence (next bar open)</h3>
+          ${waitingRows}
+          <h3 style="font-size:0.95rem;margin:14px 0 8px">Recent movements</h3>
+          ${moveRows}
+        </details>
+
+        ${bzgPulse ? `
+        <div class="panel">
+          <h2>BZG pulse</h2>
+          ${renderBzgPulse(bzgPulse)}
+        </div>` : ""}
 
         ${firstMove ? `
         <div class="panel mobile-next">
@@ -453,7 +542,7 @@
                 <div class="n">${esc(d)}</div>
                 <div class="phase">${esc(x.plain_phase || "")}</div>
                 ${bar(x.visual_pct != null ? x.visual_pct : x.pct)}
-                <div class="row"><span class="v">${esc(x.visual_pct != null ? x.visual_pct : x.pct)}%</span><span class="muted" style="font-size:0.72rem">PARTIAL ESTIMATE</span></div>
+                <div class="row"><span class="v">${esc(x.visual_pct != null ? x.visual_pct : x.pct)}%</span><span class="muted" style="font-size:0.72rem">LEGACY ESTIMATE</span></div>
                 <div class="gap">Biggest gap: ${esc(x.biggest_gap || "—")}</div>
                 ${x.denominator_note ? `<div class="muted" style="margin-top:6px;font-size:0.72rem">${esc(x.denominator_note)}</div>` : ""}
               </div>`;
@@ -476,7 +565,7 @@
           <summary>DETAILS · SOURCE · technical IDs · why vs prior</summary>
           <p class="muted">Raw capability rows with IDs (PERS-/EVR-/ROLE-/GPO- kept here, not in Owner fields).</p>
           ${((tech.reconcile || model.reconcile || {}).show_why) ? `<div class="why"><strong>Why vs prior ~${esc((tech.reconcile || model.reconcile).prior_pct)}%:</strong> ${esc((tech.reconcile || model.reconcile).why)}</div>` : ""}
-          <p class="muted" style="margin-top:8px">progress_type: ${(tech.honesty || {}).progress_type || "PARTIAL_ESTIMATE"} · CSV staleness: ${(tech.honesty || {}).master_build_csv_staleness || "KNOWN"} · overlay required: YES</p>
+          <p class="muted" style="margin-top:8px">progress_type: ${(tech.honesty || {}).progress_type || "SYSTEM_FROM_LEDGER"} · legacy: ${(tech.honesty || {}).legacy_progress_type || "PARTIAL_ESTIMATE"} · CSV staleness: ${(tech.honesty || {}).master_build_csv_staleness || "KNOWN"} · overlay required: YES</p>
           ${renderItems(tech.items || [], 30)}
         </details>
       </div>
@@ -518,9 +607,13 @@
       `;
     }
     if (view === "BZG") {
+      const bp = v.bzg_pulse || model.bzg_pulse;
       return `
         <div class="panel">
-          <h2>Uma Close · ESB DATA → VERIFIED CLOSE</h2>
+          <h2>BZG · Uma Blu</h2>
+          <p class="muted" style="margin-top:0"><a class="back" href="/bzg">Open BZG</a> · <a class="back" href="/bzg/uma-blu">Uma Blu</a></p>
+          ${bp ? `<div class="bzg-pulse">Daily Close: <strong>${esc((bp.daily_close || {}).label || "—")}</strong> · PR attention <strong>${esc(bp.pr_attention_count)}</strong> · POLICY REQUIRED <strong>${esc(bp.policy_required_count)}</strong> · unresolved <strong>${esc(bp.unresolved_issues_count)}</strong></div>` : `<p class="muted">Operational pulse unavailable.</p>`}
+          <h2 style="margin-top:16px">Uma Close · ESB DATA → VERIFIED CLOSE</h2>
           ${renderStages((v.uma_owner || {}).stages)}
           <p class="muted">${esc((v.uma_owner || {}).waiting_plain || (v.uma_close || {}).waiting || "")} · ${esc((v.uma_owner || {}).variance_plain || "")}</p>
           <p class="muted">WAITING_FOR_CLOSER · WRITE_LOCKED paths remain honest. BUILT ≠ COMMISSIONED ≠ LIVE.</p>
@@ -554,42 +647,51 @@
   function render() {
     const calc = model.calculation || {};
     const fh = model.factory_health || {};
+    const navItems = model.nav || (model.menu || []).map((m) => ({ id: m, label: m, kind: "view" }));
     app.innerHTML = `
       <header>
         <div>
           <p style="margin:0 0 6px"><a class="back" href="/content-2.0.html">← Content Engine</a></p>
           <h1 class="brand">Wolf <em>Progress</em></h1>
-          <p class="sub">Owner cockpit. BUILT ≠ COMMISSIONED ≠ LIVE. Factory health separate. No fake precision.</p>
+          <p class="sub">Owner cockpit. SYSTEM from the Model C ledger. BUILT ≠ COMMISSIONED ≠ LIVE. Factory health separate.</p>
         </div>
         <div class="who" id="who">Owner surface</div>
       </header>
       <button type="button" class="nav-toggle" id="navToggle">Menu · ${esc(view)}</button>
       <nav class="nav" id="nav" aria-label="Progress views">
-        ${(model.menu || []).map((m) => `<button type="button" data-view="${esc(m)}" class="${m === view ? "active" : ""}">${esc(m)}</button>`).join("")}
+        ${navItems.map((n) => {
+          if (n.kind === "links") {
+            return (n.links || [{ label: n.label, href: n.href }]).map((l) =>
+              `<a class="nav-link" href="${esc(l.href)}">${esc(l.label)}</a>`
+            ).join("");
+          }
+          return `<button type="button" data-view="${esc(n.id || n.label)}" class="${(n.id || n.label) === view ? "active" : ""}">${esc(n.label)}</button>`;
+        }).join("")}
       </nav>
       <div id="body">${renderViewBody()}</div>
       <details class="calc">
         <summary>HOW CALCULATED · How is this calculated?</summary>
         <ol>${(calc.steps || []).map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
         <p class="muted" style="margin-top:10px">BUILT ≠ HUMAN_COMMISSIONED ≠ LIVE</p>
+        <p class="legacy-note">History: PARTIAL ESTIMATE / build-tracker mix retired as primary (prior about twenty-eight percent display was legacy, not Model C).</p>
       </details>
       <details class="disclose">
         <summary>BUILD FACTORY · status ${esc(fh.status || "")}</summary>
         <p class="muted">${esc(fh.note || "")}</p>
-        <p class="muted">Production: UNTOUCHED · Excluded from mission %</p>
+        <p class="muted">Production: UNTOUCHED · Excluded from SYSTEM maturity %</p>
       </details>
       <details class="disclose">
         <summary>MANDATORY DISTINCTIONS</summary>
         <p class="muted">BUILT ≠ HUMAN_COMMISSIONED ≠ LIVE</p>
         <p class="muted">WAITING_HUMAN ≠ BLOCKED_SYSTEM ≠ UNAPPROVED_POLICY ≠ INACCESSIBLE_SOURCE</p>
         <p class="muted">TARGET ≠ ACTUAL — ACTUAL NOT YET TRUSTWORTHY</p>
-        <p class="muted">Weights and % labelled ESTIMATED · Factory HEALTHY ≠ mission complete</p>
+        <p class="muted">SYSTEM is a ledger projection · Factory HEALTHY ≠ mission complete</p>
       </details>
     `;
     const nav = document.getElementById("nav");
     const toggle = document.getElementById("navToggle");
     toggle.addEventListener("click", () => nav.classList.toggle("open"));
-    nav.querySelectorAll("button").forEach((btn) => {
+    nav.querySelectorAll("button[data-view]").forEach((btn) => {
       btn.addEventListener("click", () => {
         view = btn.getAttribute("data-view");
         render();

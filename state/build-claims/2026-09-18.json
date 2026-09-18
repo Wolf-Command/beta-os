@@ -56,6 +56,13 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_uma_ops_console.py >/tmp/uma-ops.out 2>&1; tail -3 /tmp/uma-ops.out; sqlite3 /Users/wolfterminal/beta-os/catalog/content_library.sqlite \"SELECT COUNT(*) FROM bzg_ops_purchase_requests WHERE example=1; SELECT COUNT(*) FROM org_authority_limits WHERE permission_id='PERM-BZG-PR-PAYMENT-APPROVE';\"",
       "expect": "PASS=21 FAIL=0; 3 example PRs; 0 authority limits for payment approve",
       "by": "cursor-uma-ops-console"
+    },
+    {
+      "id": "dashboard-truth-system-projection-2026-09-18",
+      "claim": "Beta Progress primary dial is SYSTEM computed from model-c-baseline-assessments.json (77 rows); Model E others Not scored yet; PARTIAL ESTIMATE retired as primary; integrity stale path tested; Production :8787 untouched",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_dashboard_truth.py >/tmp/dash-truth.out 2>&1; tail -3 /tmp/dash-truth.out; python3 -c \"import sys; sys.path.insert(0,'/Users/wolfterminal/beta-os/scripts'); from core import progress_read_model as p; m=p.build_read_model(); print(m['system']['system_pct'], m['system']['sum_credits_exact'], m['system']['status'])\"; curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8788/progress; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0)\"",
+      "expect": "PASS=50 FAIL=0; system_pct one-decimal; sum 19.45; status OK; /progress 200; 8787 True",
+      "by": "cursor-dashboard-truth"
     }
   ],
   "restored_by": "peaches-factory-verify",

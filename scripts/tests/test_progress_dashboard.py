@@ -136,12 +136,16 @@ def main() -> int:
 
     model = prm.build_read_model()
     check("model ok", model.get("ok") is True)
-    check("model PARTIAL_ESTIMATE", model.get("progress_type") == "PARTIAL_ESTIMATE")
+    check("model SYSTEM_FROM_LEDGER", model.get("progress_type") == "SYSTEM_FROM_LEDGER")
+    check("model legacy PARTIAL_ESTIMATE", model.get("legacy_progress_type") == "PARTIAL_ESTIMATE")
     check("overall label PARTIAL ESTIMATE", (model.get("overall") or {}).get("label") == "PARTIAL ESTIMATE")
+    check("overall retired_as_primary", (model.get("overall") or {}).get("retired_as_primary") is True)
     check("overall_pct is int", isinstance((model.get("overall") or {}).get("overall_pct"), int))
     pct = (model.get("overall") or {}).get("overall_pct")
     check("no fake precision (no float % display field)", "overall_pct_float" not in (model.get("overall") or {}))
     check("pct in 0..100", isinstance(pct, int) and 0 <= pct <= 100, str(pct))
+    check("system dial present", (model.get("system") or {}).get("label") == "SYSTEM")
+    check("system_pct computed float or None", (model.get("system") or {}).get("system_pct") is None or isinstance((model.get("system") or {}).get("system_pct"), float))
 
     for d, meta in (model.get("domain_weights") or {}).items():
         check(f"weight {d} labelled ESTIMATED", meta.get("label") == "ESTIMATED")
@@ -331,6 +335,9 @@ def main() -> int:
     check("overall has factory_excluded_note", "Factory" in (ov.get("factory_excluded_note") or ""))
 
     menu = model.get("menu") or []
+    for name in ("Empire", "GGV", "AMG", "BZG"):
+        check(f"primary menu has {name}", name in menu)
+    menu_all = model.get("menu_all_views") or []
     for name in (
         "Empire",
         "Wolf Core",
@@ -343,7 +350,7 @@ def main() -> int:
         "Build Factory",
         "Backlog",
     ):
-        check(f"menu has {name}", name in menu)
+        check(f"menu_all_views has {name}", name in menu_all)
 
     check("default view Empire", model.get("default_view") == "Empire")
 
@@ -540,8 +547,12 @@ def main() -> int:
                 st, data = call("/api/progress", MATT)
                 check("Matt /api/progress 200", st == 200 and data.get("ok") is True, str(data)[:200])
                 check(
-                    "Matt payload PARTIAL_ESTIMATE",
-                    data.get("progress_type") == "PARTIAL_ESTIMATE",
+                    "Matt payload SYSTEM_FROM_LEDGER",
+                    data.get("progress_type") == "SYSTEM_FROM_LEDGER",
+                )
+                check(
+                    "Matt payload has system dial",
+                    (data.get("system") or {}).get("label") == "SYSTEM",
                 )
                 check("Matt sees Empire menu", "Empire" in (data.get("menu") or []))
 

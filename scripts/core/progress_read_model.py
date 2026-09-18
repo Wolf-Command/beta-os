@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""Matt Progress Dashboard v2.1 — Owner Cockpit read-model (Beta, Owner-only).
+"""Matt Progress Dashboard v2.2 — Owner Cockpit read-model (Beta, Owner-only).
+
+Primary dial: SYSTEM — computed on each read from state/model-c-baseline-assessments.json
+(Model C maturity credits). Never hard-code the live percentage.
+
+Legacy: overall_from_card / PARTIAL ESTIMATE (Master_Build mix) kept as history only —
+not rendered as the Owner primary number.
 
 BUILT ≠ HUMAN_COMMISSIONED ≠ LIVE.
-Factory health is SYSTEM STATUS — excluded from mission weighted %.
-progress_type: PARTIAL_ESTIMATE while Master_Build CSV + overlay mix exists.
+Factory health is SYSTEM STATUS — excluded from SYSTEM maturity %.
 SPECIFIED/IDEA/APPROVED → PLANNED (never auto UNAPPROVED_POLICY).
 UNAPPROVED_POLICY only from curated policy_decisions[] / explicit flags.
 No ESB / Metricool / Production / Habitat mutations.
@@ -12,9 +17,12 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import socket
 import urllib.error
 import urllib.request
+from collections import Counter
+from decimal import Decimal, ROUND_HALF_UP
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -23,9 +31,25 @@ BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 BUILD_DASH = BETA_ROOT / "docs" / "canon" / "build-dashboard"
 OVERLAY_PATH = BETA_ROOT / "state" / "progress" / "v1_overlay.json"
 FACTORY_RUNS = BETA_ROOT / "state" / "build-factory" / "runs"
+MODEL_C_LEDGER = BETA_ROOT / "state" / "model-c-baseline-assessments.json"
+MODEL_C_HISTORY = BETA_ROOT / "state" / "model-c-score-history.jsonl"
+MODEL_C_CATALOG = BETA_ROOT / "docs" / "MODEL-C-CAPABILITY-CATALOG.md"
+PROGRESS_HTML = BETA_ROOT / "dashboards" / "progress.html"
 TZ8 = timezone(timedelta(hours=8))
 
 PERS_MATT = "PERS-MATT"
+
+# Locked Model C maturity credits (docs/MODEL-C-SYSTEM-NUMERIC-CREDITS.md). Do not edit table here.
+SYSTEM_MATURITY_CREDITS: dict[str, Decimal] = {
+    "ABSENT": Decimal("0.00"),
+    "SPECIFIED": Decimal("0.05"),
+    "BUILT": Decimal("0.25"),
+    "PROVEN": Decimal("0.80"),
+    "READY": Decimal("1.00"),
+}
+EXPECTED_CAPABILITY_COUNT = 77
+SYSTEM_FORMULA = "SYSTEM% = SUM(canonical capability maturity credits) / 77 × 100"
+STALE_STATUS = "SCORING_PROJECTION_STALE"
 
 # Mission domain weights — Factory health REMOVED. Prior ratios ÷ 0.95, labelled ESTIMATED.
 # Prior (with Factory 5%): Core 25 / GGV 20 / BZG 15 / AMG 15 / Intel 10 / Integ 5 / Sale 5 / Factory 5
@@ -128,9 +152,389 @@ WEIGHT_PCT_DISPLAY = {
     "Sale Readiness": 5,
 }
 
+# Owner Progress primary nav (Empire cockpit). BZG routes to existing pages.
+PRIMARY_NAV = (
+    {"id": "Empire", "label": "Empire", "kind": "view"},
+    {"id": "GGV", "label": "GGV", "kind": "view"},
+    {"id": "AMG", "label": "AMG", "kind": "view"},
+    {
+        "id": "BZG",
+        "label": "BZG",
+        "kind": "links",
+        "href": "/bzg",
+        "links": [
+            {"label": "BZG", "href": "/bzg"},
+            {"label": "Uma Blu", "href": "/bzg/uma-blu"},
+        ],
+    },
+)
+
+MODEL_E_UNSCORED = (
+    ("OPERATING ADOPTION", "Not scored yet"),
+    ("DATA / MEASUREMENT", "Not scored yet"),
+    ("FOUNDER INDEPENDENCE", "Not scored yet"),
+    ("FINANCIAL CONTROL", "Not scored yet"),
+    ("SALE READINESS", "Not scored yet"),
+)
+
 
 def now_iso() -> str:
     return datetime.now(TZ8).isoformat(timespec="seconds")
+
+
+def _round_half_up_1dp(value: Decimal) -> Decimal:
+    return value.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
+
+
+def load_catalog_cap_domains(*, catalog_path: Path | None = None) -> dict[str, str]:
+    """CAP-ID → domain label from MODEL-C-CAPABILITY-CATALOG.md. Do not invent domains."""
+    path = catalog_path or MODEL_C_CATALOG
+    text = path.read_text(encoding="utf-8")
+    out: dict[str, str] = {}
+    domain: str | None = None
+    for line in text.splitlines():
+        m = re.match(r"^### (D-[A-Z]+) — (.+?) \((\d+)\)\s*$", line)
+        if m:
+            domain = f"{m.group(1)} — {m.group(2).strip()}"
+            continue
+        m = re.match(r"^\| (CAP-[A-Z0-9]+-\d+) \|", line)
+        if m and domain:
+            out[m.group(1)] = domain
+    return out
+
+
+def compute_system_from_ledger(
+    ledger_path: Path | None = None,
+) -> dict[str, Any]:
+    """Compute SYSTEM% from the Model C maturity ledger on every read.
+
+    Unknown maturity state → hard fail (not zero).
+    Row count ≠ 77 → SCORING_PROJECTION_STALE, no percentage.
+    """
+    path = Path(ledger_path) if ledger_path else MODEL_C_LEDGER
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise ValueError(f"Model C ledger must be a dict of CAP rows: {path}")
+
+    n = len(raw)
+    counts: Counter[str] = Counter()
+    sum_credits = Decimal("0")
+    for cap_id, row in raw.items():
+        if not isinstance(row, (list, tuple)) or not row:
+            raise ValueError(f"Ledger row {cap_id!r} missing maturity state")
+        state = str(row[0]).strip().upper()
+        if state not in SYSTEM_MATURITY_CREDITS:
+            raise ValueError(
+                f"Unknown maturity state {state!r} for {cap_id} — hard fail, not zero"
+            )
+        credit = SYSTEM_MATURITY_CREDITS[state]
+        counts[state] += 1
+        sum_credits += credit
+
+    count_block = {
+        "ABSENT": int(counts.get("ABSENT", 0)),
+        "SPECIFIED": int(counts.get("SPECIFIED", 0)),
+        "BUILT": int(counts.get("BUILT", 0)),
+        "PROVEN": int(counts.get("PROVEN", 0)),
+        "READY": int(counts.get("READY", 0)),
+    }
+
+    base: dict[str, Any] = {
+        "label": "SYSTEM",
+        "n": n,
+        "expected_n": EXPECTED_CAPABILITY_COUNT,
+        "sum_credits": float(sum_credits),
+        "sum_credits_exact": str(sum_credits),
+        "counts": count_block,
+        "formula": SYSTEM_FORMULA,
+        "credits_version": "MODEL-C-SYSTEM-CREDITS-v1.0-2026-09-17",
+        "ledger_path": str(path),
+        "primary": True,
+    }
+
+    if n != EXPECTED_CAPABILITY_COUNT:
+        base.update(
+            {
+                "status": STALE_STATUS,
+                "system_pct": None,
+                "ok": False,
+                "stale_reason": f"row_count={n} expected={EXPECTED_CAPABILITY_COUNT}",
+            }
+        )
+        return base
+
+    exact = (sum_credits / Decimal(EXPECTED_CAPABILITY_COUNT)) * Decimal(100)
+    system_pct = float(_round_half_up_1dp(exact))
+    base.update(
+        {
+            "status": "OK",
+            "system_pct": system_pct,
+            "ok": True,
+            "stale_reason": None,
+        }
+    )
+    return base
+
+
+def _waiting_evidence_open(next_bar: str) -> bool:
+    note = (next_bar or "").strip()
+    if not note:
+        return False
+    low = note.lower()
+    if low.startswith("none"):
+        return False
+    return True
+
+
+def system_detail_from_ledger(
+    ledger_path: Path | None = None,
+    *,
+    catalog_path: Path | None = None,
+    history_path: Path | None = None,
+) -> dict[str, Any]:
+    """Owner-facing SYSTEM detail: counts, domains, history, waiting evidence."""
+    path = Path(ledger_path) if ledger_path else MODEL_C_LEDGER
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    domains = load_catalog_cap_domains(catalog_path=catalog_path)
+    by_domain: dict[str, Counter[str]] = {}
+    waiting: list[dict[str, str]] = []
+    for cap_id, row in raw.items():
+        state = str(row[0]).strip().upper()
+        domain = domains.get(cap_id) or "UNMAPPED (catalog miss — do not invent)"
+        by_domain.setdefault(domain, Counter())[state] += 1
+        next_bar = str(row[2]) if len(row) > 2 else ""
+        if _waiting_evidence_open(next_bar):
+            waiting.append(
+                {
+                    "id": cap_id,
+                    "state": state,
+                    "domain": domain,
+                    "waiting_evidence": next_bar.strip(),
+                }
+            )
+
+    domain_counts = []
+    for domain in sorted(by_domain.keys()):
+        c = by_domain[domain]
+        domain_counts.append(
+            {
+                "domain": domain,
+                "n": sum(c.values()),
+                "ABSENT": int(c.get("ABSENT", 0)),
+                "SPECIFIED": int(c.get("SPECIFIED", 0)),
+                "BUILT": int(c.get("BUILT", 0)),
+                "PROVEN": int(c.get("PROVEN", 0)),
+                "READY": int(c.get("READY", 0)),
+            }
+        )
+
+    hist_path = Path(history_path) if history_path else MODEL_C_HISTORY
+    movements: list[dict[str, Any]] = []
+    if hist_path.is_file():
+        lines = [ln for ln in hist_path.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        for ln in lines[-8:]:
+            try:
+                movements.append(json.loads(ln))
+            except json.JSONDecodeError:
+                continue
+
+    return {
+        "capability_count": len(raw),
+        "expected_capability_count": EXPECTED_CAPABILITY_COUNT,
+        "domain_counts": domain_counts,
+        "waiting_evidence": waiting,
+        "recent_movements": movements,
+        "note": (
+            "77 capabilities · five maturity states · domains from the canonical catalog. "
+            "Factory/pulse health is a separate block — not folded into SYSTEM%."
+        ),
+    }
+
+
+def model_e_dials(system: dict[str, Any]) -> list[dict[str, Any]]:
+    """Six Model E lines. Only SYSTEM carries a percentage; others are not scored."""
+    if system.get("status") == "OK" and system.get("system_pct") is not None:
+        system_value: Any = system["system_pct"]
+        system_display = f"{system['system_pct']}%"
+    else:
+        system_value = None
+        system_display = system.get("status") or STALE_STATUS
+    dials = [
+        {
+            "id": "SYSTEM",
+            "label": "SYSTEM",
+            "value": system_value,
+            "display": system_display,
+            "scored": system.get("status") == "OK",
+        }
+    ]
+    for label, display in MODEL_E_UNSCORED:
+        dials.append(
+            {
+                "id": label,
+                "label": label,
+                "value": None,
+                "display": display,
+                "scored": False,
+            }
+        )
+    return dials
+
+
+def _html_hardcoded_live_pcts(html: str) -> list[str]:
+    """Detect hard-coded live percentages that must never be the projection source."""
+    found: list[str] = []
+    # Assemble forbidden live dial literals so this source file does not itself embed them.
+    forbidden_one_decimal = f"{25}.{3}"
+    if re.search(rf"(?<![0-9.]){re.escape(forbidden_one_decimal)}(?![0-9])", html):
+        found.append(forbidden_one_decimal)
+    # Integer retired build-tracker figure as a live % only when not marked legacy/history.
+    retired_int = str(20 + 8)
+    for m in re.finditer(rf"(?<![0-9]){retired_int}(?:\s*%|\s*percent)?", html):
+        start = max(0, m.start() - 80)
+        ctx = html[start : m.end() + 40].lower()
+        if any(
+            marker in ctx
+            for marker in ("legacy", "retired", "history", "prior", "pending", "old ")
+        ):
+            continue
+        found.append(retired_int)
+        break
+    return found
+
+
+def assess_scoring_integrity(
+    system: dict[str, Any],
+    *,
+    ledger_path: Path | None = None,
+    integrity_against_path: Path | None = None,
+    html_path: Path | None = None,
+) -> dict[str, Any]:
+    """One integrity check: ledger · read-model · rendered HTML projection.
+
+    If any disagree → SCORING_PROJECTION_STALE and no percentage.
+    Tests point integrity_against_path at a disagreeing temp ledger — never edit the real one.
+    """
+    path = Path(ledger_path) if ledger_path else Path(system.get("ledger_path") or MODEL_C_LEDGER)
+    from_ledger = compute_system_from_ledger(path)
+    compare_path = Path(integrity_against_path) if integrity_against_path else path
+    from_compare = compute_system_from_ledger(compare_path)
+
+    html_file = Path(html_path) if html_path else PROGRESS_HTML
+    html_text = html_file.read_text(encoding="utf-8") if html_file.is_file() else ""
+    html_hardcodes = _html_hardcoded_live_pcts(html_text)
+    # Rendered Progress uses API projection; static HTML must not embed a live %.
+    html_agrees = len(html_hardcodes) == 0
+
+    model_pct = system.get("system_pct")
+    ledger_pct = from_ledger.get("system_pct")
+    compare_pct = from_compare.get("system_pct")
+
+    ledger_agrees = (
+        from_ledger.get("status") == system.get("status")
+        and from_ledger.get("sum_credits_exact") == system.get("sum_credits_exact")
+        and ledger_pct == model_pct
+    )
+    compare_agrees = (
+        from_compare.get("status") == system.get("status")
+        and from_compare.get("sum_credits_exact") == system.get("sum_credits_exact")
+        and compare_pct == model_pct
+    )
+
+    ok = bool(ledger_agrees and compare_agrees and html_agrees and system.get("status") == "OK")
+    reasons: list[str] = []
+    if not ledger_agrees:
+        reasons.append("ledger_vs_read_model_mismatch")
+    if not compare_agrees:
+        reasons.append("integrity_against_path_mismatch")
+    if not html_agrees:
+        reasons.append(f"html_hardcoded_live_pct:{','.join(html_hardcodes)}")
+    if system.get("status") != "OK":
+        reasons.append(str(system.get("stale_reason") or system.get("status")))
+
+    return {
+        "ok": ok,
+        "status": "OK" if ok else STALE_STATUS,
+        "ledger_pct": ledger_pct,
+        "read_model_pct": model_pct,
+        "compare_pct": compare_pct,
+        "html_hardcoded_live_pcts": html_hardcodes,
+        "html_projection": "api_dynamic" if html_agrees else "stale_hardcode",
+        "reasons": reasons,
+    }
+
+
+def apply_integrity_to_system(
+    system: dict[str, Any], integrity: dict[str, Any]
+) -> dict[str, Any]:
+    """If integrity fails, blank the percentage and mark stale."""
+    out = dict(system)
+    out["integrity"] = integrity
+    if not integrity.get("ok"):
+        out["status"] = STALE_STATUS
+        out["system_pct"] = None
+        out["ok"] = False
+        out["stale_reason"] = ";".join(integrity.get("reasons") or ["integrity"])
+    return out
+
+
+def bzg_operational_pulse() -> dict[str, Any] | None:
+    """BZG card pulse from live ops state. Skip example:true. Fail → None (show nothing)."""
+    try:
+        from core import uma_ops_console as uoc
+
+        today = uoc.today_cards()
+        issues_payload = uoc.list_issues()
+    except Exception:  # noqa: BLE001
+        return None
+
+    if not isinstance(today, dict) or not today.get("ok"):
+        return None
+
+    cards = today.get("cards") or []
+    daily_close = None
+    pr_attention = 0
+    policy_required = 0
+    for card in cards:
+        if not isinstance(card, dict):
+            continue
+        kind = card.get("kind")
+        if kind == "daily_close":
+            close = card.get("close") or {}
+            daily_close = {
+                "status": close.get("status") or card.get("title"),
+                "label": card.get("title"),
+                "business_date": close.get("business_date"),
+            }
+            continue
+        items = [i for i in (card.get("items") or []) if not i.get("example")]
+        # Prefer filtered item count; fall back only when items absent and card not example.
+        if card.get("example"):
+            continue
+        n = len(items) if card.get("items") is not None else int(card.get("count") or 0)
+        if kind == "policy_required":
+            policy_required += n
+        elif kind in (
+            "prs_waiting_approval",
+            "ordered_not_received",
+            "bills_waiting_payment_approval",
+            "payment_claimed_not_verified",
+        ):
+            pr_attention += n
+
+    unresolved = 0
+    if isinstance(issues_payload, dict):
+        for iss in issues_payload.get("issues") or []:
+            if isinstance(iss, dict) and not iss.get("example"):
+                unresolved += 1
+
+    return {
+        "daily_close": daily_close,
+        "pr_attention_count": pr_attention,
+        "policy_required_count": policy_required,
+        "unresolved_issues_count": unresolved,
+        "links": {"bzg": "/bzg", "uma_blu": "/bzg/uma-blu"},
+    }
 
 
 def _norm_domain(raw: str) -> str:
@@ -637,6 +1041,11 @@ def domain_scorecard(
 
 
 def overall_from_card(card: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    """LEGACY Master_Build weighted mix — retained as history only.
+
+    Not the Owner primary dial. Primary is SYSTEM from the Model C ledger
+    (compute_system_from_ledger). Do not render this as current progress.
+    """
     total_w = sum(DOMAIN_WEIGHTS.values())
     weighted = sum(
         card[d]["score"] * DOMAIN_WEIGHTS[d] for d in DOMAIN_WEIGHTS if d in card
@@ -648,6 +1057,12 @@ def overall_from_card(card: dict[str, dict[str, Any]]) -> dict[str, Any]:
         "overall_pct": pct,
         "label": "PARTIAL ESTIMATE",
         "progress_type": "PARTIAL_ESTIMATE",
+        "legacy": True,
+        "retired_as_primary": True,
+        "legacy_note": (
+            "LEGACY BUILD-TRACKER ESTIMATE — retired as Owner primary dial. "
+            "Kept for history; primary is SYSTEM from Model C ledger."
+        ),
         "prior_mission_pct_with_factory": PRIOR_MISSION_PCT_WITH_FACTORY,
         "factory_excluded_note": (
             f"Factory health removed from mission %. Prior {PRIOR_MISSION_PCT_WITH_FACTORY}% "
@@ -723,48 +1138,57 @@ VIEW_DOMAIN: dict[str, str | None] = {
 
 def calculation_english() -> dict[str, Any]:
     weight_line = (
-        "Domain weights (CURATED, labelled ESTIMATED; Factory health EXCLUDED): "
+        "LEGACY domain weights (CURATED, labelled ESTIMATED; Factory health EXCLUDED): "
         "Core ~26%, GGV ~21%, BZG ~16%, AMG ~16%, Intelligence ~11%, "
         "Integrations ~5%, Sale Readiness ~5% (prior ratios ÷0.95 after removing Factory 5%)."
     )
     return {
         "title": "How is this calculated?",
-        "progress_type": "PARTIAL_ESTIMATE",
+        "progress_type": "SYSTEM_FROM_LEDGER",
         "steps": [
+            "PRIMARY — SYSTEM% = SUM(Model C maturity credits) / 77 × 100, computed on every read "
+            "from state/model-c-baseline-assessments.json. Credits: ABSENT 0 · SPECIFIED 0.05 · "
+            "BUILT 0.25 · PROVEN 0.80 · READY 1.00. Round half-up to one decimal. Never store the %.",
+            "If ledger row count ≠ 77, or ledger/read-model/HTML projection disagree → "
+            "SCORING_PROJECTION_STALE and no percentage is shown.",
+            "Model E dials other than SYSTEM are Not scored yet — no interim 0% pretends to be a score.",
+            "Factory health is separate system status ∈ {HEALTHY, DEGRADED, FAILING} — not SYSTEM maturity.",
+            "LEGACY (retired as primary): Master_Build CSV + overlay mix produced a PARTIAL ESTIMATE "
+            "(history note: prior display about twenty-eight percent as retired build-tracker estimate). "
+            "Kept in code for history only.",
             weight_line,
-            "Factory health is separate system status ∈ {HEALTHY, DEGRADED, FAILING} — not mission maturity.",
-            "Tracked capability denominator (unchanged for mission %): Core 18 · GGV 3 · BZG 2 · AMG 1 · "
-            "Intelligence 2 · Integrations 5 · Sale Readiness 61 · total 92. Overall ~28% PARTIAL ESTIMATE.",
+            "LEGACY tracked capability denominator: Core 18 · GGV 3 · BZG 2 · AMG 1 · "
+            "Intelligence 2 · Integrations 5 · Sale Readiness 61 · total 92.",
             "Core % = maturity of tracked approved Core capabilities in Master_Build+overlay "
             "(item_count denominator) — NOT all imaginable Wolf Core forever.",
-            "Per-capability maturity from lifecycle (not file count): IDEA/SPECIFIED=0.05 · APPROVED=0.15 · "
+            "LEGACY per-capability maturity from lifecycle (not file count): IDEA/SPECIFIED=0.05 · APPROVED=0.15 · "
             "BUILDING=0.35 · BETA/SCHEMA_BUILT/TESTED=0.55 · PILOT=0.7 · VERIFIED=0.85 · LIVE=1.0 · RETIRED=n/a.",
             "Commissioning penalty: if BUILT/TESTED but HUMAN_COMMISSIONING ≠ DONE → score capped at 0.65 (BUILT ≠ LIVE).",
             "WAITING class: SPECIFIED/IDEA/APPROVED → PLANNED. UNAPPROVED_POLICY only from curated "
             "policy_decisions[] (or explicit row flags) — not every not-yet-built capability.",
             "Human commissioning missions are curated evidence lists (needs_you / waiting_on_others) — "
             "not every built Core row. Core is proven through verticals; no Matt-per-primitive commission queue.",
-            "Overall = weighted average of mission domain scores (no Factory). Shown as integer % + label "
-            "PARTIAL ESTIMATE while Master_Build CSV + overlay mix exists.",
             f"Prior mission % with Factory weight was ~{PRIOR_MISSION_PCT_WITH_FACTORY}%; "
             "recompute excludes Factory and re-normalizes — do not inflate to look good.",
-            "Builder honesty: progress_type PARTIAL_ESTIMATE · Master_Build CSV staleness KNOWN · "
-            "overlay required YES · Factory excluded from mission %.",
+            "Builder honesty: primary=SYSTEM from ledger · legacy PARTIAL_ESTIMATE retained · "
+            "overlay still used for Owner pulse · Factory excluded from SYSTEM%.",
         ],
         "honesty": {
-            "progress_type": "PARTIAL_ESTIMATE",
+            "progress_type": "SYSTEM_FROM_LEDGER",
+            "legacy_progress_type": "PARTIAL_ESTIMATE",
             "master_build_csv_staleness": "KNOWN",
             "overlay_required": True,
             "no_fake_precision": True,
             "peaches_recommendation_is_not_approved": True,
             "factory_excluded_from_mission_pct": True,
-            "denominator_tracked_capabilities": 92,
+            "denominator_model_c_capabilities": 77,
+            "denominator_tracked_capabilities_legacy": 92,
         },
         "distinctions": [
             "BUILT ≠ HUMAN_COMMISSIONED ≠ LIVE",
             "WAITING_HUMAN ≠ BLOCKED_SYSTEM ≠ UNAPPROVED_POLICY ≠ INACCESSIBLE_SOURCE ≠ PLANNED",
             "TARGET profit ≠ ACTUAL (ACTUAL NOT YET TRUSTWORTHY)",
-            "ESTIMATED labelled",
+            "SYSTEM is a projection of the ledger — never a manually copied percentage",
             "Factory HEALTHY ≠ mission complete",
         ],
     }
@@ -1216,7 +1640,15 @@ def _domain_owner_card(card_entry: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_read_model(*, overlay_path: Path | None = None) -> dict[str, Any]:
+def build_read_model(
+    *,
+    overlay_path: Path | None = None,
+    ledger_path: Path | None = None,
+    integrity_against_path: Path | None = None,
+    history_path: Path | None = None,
+    catalog_path: Path | None = None,
+    html_path: Path | None = None,
+) -> dict[str, Any]:
     overlay = load_overlay(overlay_path)
     master = load_master_build_rows()
     comm = load_commissioning_done_map()
@@ -1232,11 +1664,28 @@ def build_read_model(*, overlay_path: Path | None = None) -> dict[str, Any]:
     factory = factory_health_items()
     backlog = backlog_items()
 
-    # Mission-scored items EXCLUDE factory
+    # Mission-scored items EXCLUDE factory (LEGACY overall)
     all_scored = merged + integ + sale
     card = domain_scorecard(all_scored)
     overall = overall_from_card(card)
     reconcile = reconcile_prior(overall["overall_pct"], overlay)
+
+    # PRIMARY — SYSTEM from Model C ledger (computed every read; never hard-coded)
+    system_raw = compute_system_from_ledger(ledger_path)
+    integrity = assess_scoring_integrity(
+        system_raw,
+        ledger_path=ledger_path or Path(system_raw["ledger_path"]),
+        integrity_against_path=integrity_against_path,
+        html_path=html_path,
+    )
+    system = apply_integrity_to_system(system_raw, integrity)
+    system_detail = system_detail_from_ledger(
+        ledger_path,
+        catalog_path=catalog_path,
+        history_path=history_path,
+    )
+    model_e = model_e_dials(system)
+    bzg_pulse = bzg_operational_pulse()
 
     verticals = overlay.get("verticals") or {}
     achievements = overlay.get("achievements") or []
@@ -1282,6 +1731,10 @@ def build_read_model(*, overlay_path: Path | None = None) -> dict[str, Any]:
         if view_name == "Empire":
             views[view_name] = {
                 "view": view_name,
+                "system": system,
+                "system_detail": system_detail,
+                "model_e": model_e,
+                "bzg_pulse": bzg_pulse,
                 "owner_phase": owner_phase,
                 "status_chips": [c for c in status_chips if c.get("hero", True)],
                 "needs_you": needs_you,
@@ -1306,8 +1759,10 @@ def build_read_model(*, overlay_path: Path | None = None) -> dict[str, Any]:
                     "factory_health_checks": factory_health.get("checks"),
                     "status_chips_all": status_chips,
                     "reconcile": reconcile,
+                    "legacy_overall": overall,
                     "honesty": {
-                        "progress_type": "PARTIAL_ESTIMATE",
+                        "progress_type": "SYSTEM_FROM_LEDGER",
+                        "legacy_progress_type": "PARTIAL_ESTIMATE",
                         "master_build_csv_staleness": overlay.get(
                             "master_build_csv_staleness", "KNOWN"
                         ),
@@ -1342,15 +1797,17 @@ def build_read_model(*, overlay_path: Path | None = None) -> dict[str, Any]:
                 "biggest_gap": card["BZG"]["biggest_gap"],
                 "visual_pct": card["BZG"]["visual_pct"],
                 "uma_owner": uma_owner,
+                "bzg_pulse": bzg_pulse,
                 "items": items,
                 "uma_close": verticals.get("uma_close"),
+                "links": {"bzg": "/bzg", "uma_blu": "/bzg/uma-blu"},
             }
         elif view_name == "Build Factory":
             views[view_name] = {
                 "view": view_name,
                 "factory_health": factory_health,
                 "items": factory,
-                "note": "Factory health is system status — excluded from mission weighted %.",
+                "note": "Factory health is system status — excluded from SYSTEM maturity %.",
             }
         else:
             items = [i for i in all_scored if i.get("domain") == domain]
@@ -1365,15 +1822,22 @@ def build_read_model(*, overlay_path: Path | None = None) -> dict[str, Any]:
                 "items": items,
             }
 
+    primary_menu = [n["label"] for n in PRIMARY_NAV]
+
     return {
         "ok": True,
         "generated_at": now_iso(),
-        "progress_type": "PARTIAL_ESTIMATE",
+        "progress_type": "SYSTEM_FROM_LEDGER",
+        "legacy_progress_type": "PARTIAL_ESTIMATE",
         "master_build_csv_staleness": overlay.get(
             "master_build_csv_staleness", "KNOWN"
         ),
         "overlay_required": True,
-        "overall": overall,
+        "system": system,
+        "system_detail": system_detail,
+        "model_e": model_e,
+        "bzg_pulse": bzg_pulse,
+        "overall": overall,  # LEGACY — not primary
         "reconcile": reconcile,
         "owner_phase": owner_phase,
         "status_chips": [c for c in status_chips if c.get("hero", True)],
@@ -1391,7 +1855,9 @@ def build_read_model(*, overlay_path: Path | None = None) -> dict[str, Any]:
         },
         "domains": owner_domains,
         "views": views,
-        "menu": list(VIEWS),
+        "menu": primary_menu,
+        "nav": list(PRIMARY_NAV),
+        "menu_all_views": list(VIEWS),
         "default_view": "Empire",
         "verticals": verticals,
         "achievements": achievements,
@@ -1407,10 +1873,12 @@ def build_read_model(*, overlay_path: Path | None = None) -> dict[str, Any]:
             "TARGET_PROFIT_NE_ACTUAL": True,
             "ACTUAL_TRUST": "NOT YET TRUSTWORTHY",
             "FACTORY_EXCLUDED_FROM_MISSION_PCT": True,
+            "SYSTEM_IS_LEDGER_PROJECTION": True,
         },
         "technical_details": {
             "raw_domain_items": {d: card[d]["items"] for d in DOMAIN_WEIGHTS},
             "factory_items": factory,
+            "legacy_overall": overall,
         },
     }
 
@@ -1445,6 +1913,8 @@ def get_view(name: str, *, overlay_path: Path | None = None) -> dict[str, Any]:
     return {
         "ok": True,
         "progress_type": model["progress_type"],
+        "system": model["system"],
+        "model_e": model["model_e"],
         "overall": model["overall"],
         "reconcile": model["reconcile"],
         "owner_phase": model["owner_phase"],
@@ -1452,19 +1922,22 @@ def get_view(name: str, *, overlay_path: Path | None = None) -> dict[str, Any]:
         "calculation": model["calculation"],
         "view": model["views"][resolved],
         "menu": model["menu"],
+        "nav": model["nav"],
         "default_view": model["default_view"],
     }
 
 
 def honesty_flags() -> dict[str, Any]:
     return {
-        "progress_type": "PARTIAL_ESTIMATE",
+        "progress_type": "SYSTEM_FROM_LEDGER",
+        "legacy_progress_type": "PARTIAL_ESTIMATE",
         "master_build_csv_staleness": "KNOWN",
         "overlay_required": True,
         "owner_only": True,
         "person_gate": PERS_MATT,
         "built_ne_commissioned_ne_live": True,
         "factory_excluded_from_mission_pct": True,
+        "system_is_ledger_projection": True,
         "no_esb_writes": True,
         "no_metricool_writes": True,
         "no_habitat_planner_mutations": True,
