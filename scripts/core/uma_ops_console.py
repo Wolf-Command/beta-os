@@ -8,6 +8,7 @@ No invented authority limit / variance threshold. No second history table.
 """
 from __future__ import annotations
 
+import json
 import os
 import sqlite3
 import uuid
@@ -50,6 +51,46 @@ PETTY_DAY_STATES = frozenset(
 )
 # Day states that need a human Today card (omit when clean).
 PETTY_TODAY_ATTENTION = frozenset({"OPEN", "POLICY_REQUIRED", "VARIANCE_NOTED"})
+
+# Attention-first ranks. Lower sorts earlier inside the same attention tier.
+TODAY_RANK = {
+    "policy_required": 10,
+    "opening_balance_required": 20,
+    "petty_policy_required": 30,
+    "close_exception": 40,
+    "close_policy_required": 50,
+    "missing_payment_evidence": 60,
+    "bill_waiting_payment": 70,
+    "pr_waiting_approval": 80,
+    "ordered_not_received": 90,
+    "petty_variance_noted": 100,
+    "petty_open_uncounted": 110,
+    "petty_attention": 120,
+    "close_not_started": 130,
+    "close_not_loaded": 140,
+    "daily_close": 150,
+    "issues": 160,
+    "history": 900,
+}
+BLOCKED_EXPLAIN_KINDS = frozenset(
+    {
+        "policy_required",
+        "opening_balance_required",
+        "petty_policy_required",
+        "missing_payment_evidence",
+        "close_exception",
+        "close_policy_required",
+        "petty_variance_noted",
+    }
+)
+PR_CARD_EXPLAIN = {
+    "prs_waiting_approval": "pr_waiting_approval",
+    "ordered_not_received": "ordered_not_received",
+    "bills_waiting_payment_approval": "bill_waiting_payment",
+    "payment_claimed_not_verified": "missing_payment_evidence",
+    "policy_required": "policy_required",
+}
+COMMISSIONING_READY_NAME = "uma-today-commissioning-2026-09-19.json"
 
 STATES = frozenset(
     {
@@ -1168,52 +1209,244 @@ def _audit_pr(
     )
 
 
+def _item_counts(items: list[dict[str, Any]]) -> tuple[int, int]:
+    attention = sum(1 for i in items if not i.get("example"))
+    example = sum(1 for i in items if i.get("example"))
+    return attention, example
+
+
+def _apply_explain(
+    card: dict[str, Any],
+    explain_kind: str | None,
+    *,
+    label: str,
+    float_status: str | None = None,
+) -> None:
+    """Attach why + classification from the blocker helper. No invented numbers."""
+    if not explain_kind:
+        return
+    explained = explain_operating_blocker(
+        explain_kind,
+        {"label": label, "opening_float_status": float_status},
+    )
+    card["explain_kind"] = explain_kind
+    card["why"] = explained.get("why") or ""
+    card["classification"] = explained.get("classification") or ""
+    human = CLASSIFICATION_LABELS.get(card["classification"])
+    if human:
+        card["classification_label"] = human
+    card["explain"] = {
+        k: v for k, v in explained.items() if v not in (None, "", [], {})
+    }
+
+
 def _safe_close_for_today(
     *,
     conn: sqlite3.Connection | None = None,
 ) -> dict[str, Any]:
-    """Read today's close. On path/guard failure → Close not loaded (no fake numbers)."""
+    """Read today's close state only. No closer name. No variance threshold."""
     try:
         biz = today_biz_date()
         row = _venue_close.get_close(business_date=biz, conn=conn)
         if not row:
-            return {"status": "not_started", "label": "Daily close not started", "business_date": biz}
+            return {
+                "status": "not_started",
+                "label": "Daily close not started",
+                "business_date": biz,
+                "attention": True,
+                "blocked": False,
+                "explain_kind": "close_not_started",
+            }
         st = row.get("state") or ""
+        base = {"business_date": biz, "state": st}
         if st == "VERIFIED_CLOSED":
             return {
+                **base,
                 "status": "verified",
                 "label": "Daily close verified",
-                "business_date": biz,
-                "close_id": row.get("close_id"),
+                "attention": False,
+                "blocked": False,
+                "explain_kind": None,
             }
         if st == "EXCEPTION":
             return {
+                **base,
                 "status": "exception",
                 "label": "Daily close exception open",
-                "business_date": biz,
-                "close_id": row.get("close_id"),
+                "attention": True,
+                "blocked": True,
+                "explain_kind": "close_exception",
             }
         if st == "VARIANCE_REQUIRES_POLICY":
             return {
+                **base,
                 "status": "blocked",
                 "label": "Daily close blocked — policy needed",
-                "business_date": biz,
-                "close_id": row.get("close_id"),
+                "attention": True,
+                "blocked": True,
+                "explain_kind": "close_policy_required",
             }
-        # Quiet for other in-progress states
+        if st == "CANCELLED":
+            return {
+                **base,
+                "status": "cancelled",
+                "label": "Daily close cancelled",
+                "attention": False,
+                "blocked": False,
+                "explain_kind": None,
+            }
+        progress_labels = {
+            "OPEN": "Daily close open",
+            "DATA_CAPTURED": "Daily close data captured",
+            "EVIDENCE_SUBMITTED": "Daily close evidence submitted",
+            "RECONCILED": "Daily close reconciled",
+            "RESOLVED": "Daily close resolved",
+        }
         return {
+            **base,
             "status": "in_progress",
-            "label": None,
-            "business_date": biz,
-            "close_id": row.get("close_id"),
-            "state": st,
+            "label": progress_labels.get(st, "Daily close in progress"),
+            "attention": False,
+            "blocked": False,
+            "explain_kind": None,
         }
     except Exception:  # noqa: BLE001
-        return {"status": "not_loaded", "label": "Close not loaded"}
+        return {
+            "status": "not_loaded",
+            "label": "Close not loaded",
+            "attention": True,
+            "blocked": False,
+            "explain_kind": "close_not_loaded",
+        }
+
+
+def _petty_today_card(days: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """One petty card. Float missing stays OPENING BALANCE REQUIRED, not a number."""
+    if not days:
+        return None
+    items: list[dict[str, Any]] = []
+    best: dict[str, Any] | None = None
+    best_key = 10**9
+    for d in days:
+        issue = _petty_day_issue(d)
+        item = {
+            "label": issue["label"],
+            "example": bool(issue.get("example")),
+            "business_date": issue.get("business_date"),
+            "state": d.get("state") or "OPEN",
+            "kind": issue.get("kind"),
+        }
+        items.append(item)
+        rank = TODAY_RANK.get(str(issue.get("kind") or ""), 120)
+        live_penalty = 0 if not item["example"] else 1000
+        key = live_penalty + rank
+        if key < best_key:
+            best_key = key
+            best = issue
+    explain_kind = str((best or {}).get("kind") or "petty_attention")
+    attention_count, example_count = _item_counts(items)
+    title = "Petty cash needs attention"
+    if explain_kind == "opening_balance_required":
+        title = "OPENING BALANCE REQUIRED"
+    elif explain_kind == "petty_policy_required":
+        title = "Petty count needs a variance policy"
+    elif explain_kind in ("petty_open_uncounted", "petty_variance_noted"):
+        title = "Petty cash count gap"
+    blocked = explain_kind in BLOCKED_EXPLAIN_KINDS
+    card: dict[str, Any] = {
+        "kind": "petty_cash",
+        "title": title,
+        "count": len(items),
+        "attention_count": attention_count,
+        "example_count": example_count,
+        "href": "/bzg/uma-blu/petty",
+        "items": items,
+        "attention": attention_count > 0,
+        "blocked": blocked,
+        "rank": TODAY_RANK.get(explain_kind, 120),
+        "example": attention_count == 0 and example_count > 0,
+    }
+    if card["attention"] or blocked:
+        _apply_explain(
+            card,
+            explain_kind,
+            label=title,
+            float_status="NOT_FOUND" if explain_kind == "opening_balance_required" else None,
+        )
+    return card
+
+
+def _issues_today_card(issues: list[dict[str, Any]]) -> dict[str, Any]:
+    items = [
+        {
+            "label": i.get("label") or "Issue",
+            "example": bool(i.get("example")),
+            "kind": i.get("kind"),
+        }
+        for i in issues
+    ]
+    attention_count, example_count = _item_counts(items)
+    live = [i for i in issues if isinstance(i, dict) and not i.get("example")]
+    card: dict[str, Any] = {
+        "kind": "issues",
+        "title": "Issues",
+        "count": len(items),
+        "attention_count": attention_count,
+        "example_count": example_count,
+        "href": "/bzg/uma-blu/issues",
+        "items": items,
+        "attention": attention_count > 0,
+        "blocked": attention_count > 0,
+        "rank": TODAY_RANK["issues"],
+        "example": attention_count == 0 and example_count > 0,
+    }
+    if live:
+        lead = live[0]
+        card["why"] = lead.get("why") or ""
+        card["classification"] = lead.get("classification") or ""
+        human = CLASSIFICATION_LABELS.get(card["classification"])
+        if human:
+            card["classification_label"] = human
+        if lead.get("explain"):
+            card["explain"] = lead["explain"]
+        card["explain_kind"] = lead.get("kind")
+    return card
+
+
+def _history_teaser(conn: sqlite3.Connection) -> dict[str, Any]:
+    try:
+        hist = list_history(limit=3, conn=conn)
+        lines = hist.get("events") or []
+    except Exception:  # noqa: BLE001
+        lines = []
+    teaser = [
+        {"when": ln.get("when"), "sentence": ln.get("sentence")}
+        for ln in lines[:3]
+        if isinstance(ln, dict)
+    ]
+    return {
+        "kind": "history",
+        "title": "Recent history",
+        "count": len(teaser),
+        "attention_count": 0,
+        "example_count": 0,
+        "href": "/bzg/uma-blu#history",
+        "items": [],
+        "teaser": teaser,
+        "attention": False,
+        "blocked": False,
+        "rank": TODAY_RANK["history"],
+        "example": False,
+    }
 
 
 def today_cards(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
-    """Human-language Today cards. Quiet cards omitted. Fixtures labelled Example."""
+    """Attention-first Today cards. example:true never counts as live attention.
+
+    Quiet PR/petty cards stay omitted. Daily Close, Issues count, and a History
+    teaser always surface. Why comes from the blocker helper. No invented float
+    or closer.
+    """
     own = conn is None
     c = conn or db_connect()
     try:
@@ -1230,122 +1463,142 @@ def today_cards(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
         ) -> None:
             if not items:
                 return
-            cards.append(
+            public = [
                 {
-                    "kind": kind,
-                    "title": title,
-                    "count": len(items),
-                    "href": href,
-                    "items": [
-                        {
-                            "label": _pr_human_label(p),
-                            "example": bool(p.get("example")),
-                            "pr_id": p["pr_id"],  # click-through only
-                        }
-                        for p in items
-                    ],
+                    "label": _pr_human_label(p),
+                    "example": bool(p.get("example")),
+                    "pr_id": p["pr_id"],  # click-through only
                 }
-            )
+                for p in items
+            ]
+            attention_count, example_count = _item_counts(public)
+            explain_kind = PR_CARD_EXPLAIN.get(kind, kind)
+            blocked = explain_kind in BLOCKED_EXPLAIN_KINDS
+            card: dict[str, Any] = {
+                "kind": kind,
+                "title": title,
+                "count": len(public),
+                "attention_count": attention_count,
+                "example_count": example_count,
+                "href": href,
+                "items": public,
+                "attention": attention_count > 0,
+                "blocked": blocked,
+                "rank": TODAY_RANK.get(explain_kind, 200),
+                "example": attention_count == 0 and example_count > 0,
+            }
+            if card["attention"] or blocked:
+                _apply_explain(card, explain_kind, label=title)
+            cards.append(card)
 
-        waiting = [p for p in prs if p["state"] == "REQUESTED"]
         add_card(
             "prs_waiting_approval",
             "PRs waiting approval",
-            waiting,
+            [p for p in prs if p["state"] == "REQUESTED"],
             href="/bzg/uma-blu/bills",
         )
-
-        ordered = [p for p in prs if p["state"] == "ORDERED"]
         add_card(
             "ordered_not_received",
             "Ordered, not received",
-            ordered,
+            [p for p in prs if p["state"] == "ORDERED"],
             href="/bzg/uma-blu/bills",
         )
-
-        bills = [p for p in prs if p["state"] in ("BILL_RECEIVED", "PAYMENT_REQUESTED")]
         add_card(
             "bills_waiting_payment_approval",
             "Bills waiting payment approval",
-            bills,
+            [p for p in prs if p["state"] in ("BILL_RECEIVED", "PAYMENT_REQUESTED")],
             href="/bzg/uma-blu/bills",
         )
-
-        claimed = [p for p in prs if p["state"] == "PAID_CLAIMED"]
         add_card(
             "payment_claimed_not_verified",
             "Payment claimed, not verified",
-            claimed,
+            [p for p in prs if p["state"] == "PAID_CLAIMED"],
             href="/bzg/uma-blu/bills",
         )
-
-        policy = [p for p in prs if p["state"] == "POLICY_REQUIRED"]
         add_card(
             "policy_required",
             "Policy required",
-            policy,
+            [p for p in prs if p["state"] == "POLICY_REQUIRED"],
             href="/bzg/uma-blu/issues",
         )
 
         close_info = _safe_close_for_today(conn=c)
-        if close_info.get("label") and close_info.get("status") in (
-            "not_started",
-            "blocked",
-            "exception",
-            "verified",
-            "not_loaded",
-        ):
-            cards.append(
-                {
-                    "kind": "daily_close",
-                    "title": close_info["label"],
-                    "count": 1,
-                    "href": "/uma-blu-close",
-                    "example": False,
-                    "items": [],
-                    "close": {
-                        k: v
-                        for k, v in close_info.items()
-                        if k in ("status", "business_date")
-                    },
-                }
-            )
+        explain_kind = close_info.get("explain_kind")
+        attention = bool(close_info.get("attention"))
+        blocked = bool(close_info.get("blocked"))
+        close_pub = {
+            k: close_info[k]
+            for k in ("status", "business_date", "state")
+            if close_info.get(k) not in (None, "")
+        }
+        close_card: dict[str, Any] = {
+            "kind": "daily_close",
+            "title": close_info.get("label") or "Daily close",
+            "count": 1,
+            "attention_count": 1 if attention else 0,
+            "example_count": 0,
+            "href": "/uma-blu-close",
+            "example": False,
+            "items": [],
+            "attention": attention,
+            "blocked": blocked,
+            "rank": TODAY_RANK.get(explain_kind or "daily_close", TODAY_RANK["daily_close"]),
+            "close": close_pub,
+        }
+        if attention or blocked:
+            _apply_explain(close_card, explain_kind, label=close_card["title"])
+        cards.append(close_card)
 
-        # Petty: quiet when clean; card when open / policy-required / uncounted.
         petty_days = _petty_attention_for_today(conn=c)
-        if petty_days:
-            items = []
-            for d in petty_days:
-                st = d.get("state") or "OPEN"
-                label = f"Petty tin · {d.get('business_date') or 'date unknown'} · {st}"
-                if d.get("example"):
-                    label = f"Example — {label}"
-                if d.get("opening_float") is None:
-                    label = f"{label} (float NOT FOUND)"
-                items.append(
-                    {
-                        "label": label,
-                        "example": bool(d.get("example")),
-                        "business_date": d.get("business_date"),
-                        "state": st,
-                    }
-                )
-            cards.append(
-                {
-                    "kind": "petty_cash",
-                    "title": "Petty cash needs attention",
-                    "count": len(items),
-                    "href": "/bzg/uma-blu/petty",
-                    "items": items,
-                }
-            )
+        petty_card = _petty_today_card(petty_days)
+        if petty_card:
+            cards.append(petty_card)
 
+        try:
+            issues_payload = list_issues(conn=c)
+            issue_rows = issues_payload.get("issues") or []
+        except Exception:  # noqa: BLE001
+            issue_rows = []
+        cards.append(_issues_today_card(issue_rows))
+        cards.append(_history_teaser(c))
+
+        cards.sort(
+            key=lambda card: (
+                0 if card.get("attention") else 1,
+                int(card.get("rank") or 500),
+                str(card.get("kind") or ""),
+            )
+        )
+        lead = next((card for card in cards if card.get("attention")), None)
+        now = None
+        if lead:
+            now = {
+                "title": lead.get("title"),
+                "why": lead.get("why") or "",
+                "classification": lead.get("classification") or "",
+                "classification_label": lead.get("classification_label") or "",
+                "href": lead.get("href"),
+                "kind": lead.get("kind"),
+            }
+        all_days = list_petty_days(conn=c)
+        float_status = (
+            "PROVIDED"
+            if any(d.get("opening_float") is not None for d in all_days)
+            else "NOT_FOUND"
+        )
+        honesty = dict(HONESTY)
+        honesty["float"] = "NOT_FOUND" if float_status == "NOT_FOUND" else "PROVIDED"
         return {
             "ok": True,
             "cards": cards,
-            "honesty": dict(HONESTY),
+            "now": now,
+            "order": [card.get("kind") for card in cards],
+            "honesty": honesty,
+            "float_status": float_status,
+            "opening_float": None if float_status == "NOT_FOUND" else "see_days",
             "fixture_notice": any(p.get("example") for p in prs)
-            or any(d.get("example") for d in petty_days),
+            or any(d.get("example") for d in petty_days)
+            or any(i.get("example") for i in issue_rows),
         }
     finally:
         if own:
@@ -1656,6 +1909,130 @@ def seed_fixture_prs(conn: sqlite3.Connection) -> list[dict[str, Any]]:
             continue
         out.append(insert_pr_row(conn=conn, example=True, **f))
     return out
+
+
+def commissioning_readiness() -> dict[str, Any]:
+    """Readiness only. Does not grant a seat, invent a float, or name a closer."""
+    float_ex = explain_operating_blocker(
+        "opening_balance_required",
+        {"opening_float_status": "NOT_FOUND", "label": "OPENING BALANCE REQUIRED"},
+    )
+    policy_ex = explain_operating_blocker("policy_required", {})
+    closer_ex = explain_operating_blocker("closer_required", {})
+    closer_status = str(
+        _venue_close.HONESTY.get("closer_commissioning")
+        or "WAITING FOR VERIFIED CLOSING OPERATOR"
+    )
+    return {
+        "date": "2026-09-19",
+        "artifact": "commissioning_readiness",
+        "system": "uma-blu-today",
+        "beta_only": True,
+        "human_commissioning": "NOT_DONE",
+        "staff_grant": False,
+        "devi_auto_commission": False,
+        "invented_float": False,
+        "invented_closer": False,
+        "intended_operator_role": "Uma Blu ops lead",
+        "intended_operator_note": (
+            "The intended operator is the Uma Blu ops lead. This slice does not "
+            "grant that seat, does not insert a person, and does not auto-commission anyone."
+        ),
+        "permissions_required": [
+            {
+                "code": "bzg.pr.payment_approve",
+                "granted_live": False,
+                "note": "Permission may exist. No live role grant and no authority limit.",
+            },
+            {
+                "code": "venue.close.read",
+                "note": "Read the existing Daily Close. Do not rebuild it.",
+            },
+            {
+                "code": "venue.close.submit",
+                "note": "ROLE-BZG-CLOSER and ROLE-MATT only. Closer is not commissioned.",
+            },
+            {
+                "code": "venue.close.resolve_exception",
+                "note": "ROLE-BZG-HFB. Not widened in this slice.",
+            },
+            {
+                "code": "venue.close.verify",
+                "note": "ROLE-BZG-HFB. Submitter is not the verifier.",
+            },
+        ],
+        "can": [
+            "Open Today and see attention-ordered cards with why and classification.",
+            "Open PR and bills as an operational record.",
+            "Record petty movements while the opening float is NOT_FOUND.",
+            "Open Daily Close at /uma-blu-close.",
+            "Read Issues and History.",
+        ],
+        "cannot": [
+            "Execute a payment.",
+            "Approve a payment without an authorised monetary limit.",
+            "Invent or display an opening float.",
+            "Submit a close as a named closer.",
+            "Set a variance threshold.",
+            "Grant live staff or auto-commission an ops lead.",
+        ],
+        "remaining_blockers": [
+            {
+                "id": "opening_float",
+                "status": "NOT_FOUND",
+                "classification": float_ex.get("classification"),
+                "why": float_ex.get("why"),
+            },
+            {
+                "id": "monetary_authority",
+                "status": "NOT_SEEDED",
+                "classification": policy_ex.get("classification"),
+                "why": policy_ex.get("why"),
+            },
+            {
+                "id": "closer",
+                "status": closer_status,
+                "classification": closer_ex.get("classification"),
+                "why": closer_ex.get("why"),
+            },
+            {
+                "id": "variance_policy",
+                "status": "NOT_CONFIGURED",
+                "classification": "NEEDS_POLICY",
+                "why": (
+                    "No authorised variance policy exists. "
+                    "No threshold was invented."
+                ),
+            },
+        ],
+        "commissioning_test_steps": [
+            "Confirm staff_grant is false: no new person row and no new live role assignment.",
+            "Open /bzg/uma-blu. Cards are attention-first. Each blocked card shows why and classification. attention_count excludes example:true.",
+            "Open /bzg/uma-blu/petty. float_status is NOT_FOUND and the page says OPENING BALANCE REQUIRED. Movements still list.",
+            "Open /uma-blu-close. The existing Daily Close loads. The Today card href is /uma-blu-close. No closer name was added.",
+            "Open /bzg/uma-blu/issues. Exception rows only, with why from the blocker helper.",
+            "Do not grant bzg.pr.payment_approve to a live person. Do not seed an authority limit. Do not seed an opening float.",
+        ],
+        "routes": [
+            "/bzg/uma-blu",
+            "/bzg/uma-blu/petty",
+            "/bzg/uma-blu/issues",
+            "/uma-blu-close",
+        ],
+    }
+
+
+def commissioning_ready_path() -> Path:
+    return BETA_ROOT / "state" / "build-claims" / COMMISSIONING_READY_NAME
+
+
+def write_commissioning_readiness(path: Path | None = None) -> Path:
+    """Write the readiness artifact. Does not grant staff or touch Production."""
+    target = path or commissioning_ready_path()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    payload = commissioning_readiness()
+    target.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return target
 
 
 def honesty_flags() -> dict[str, Any]:

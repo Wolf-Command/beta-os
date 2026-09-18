@@ -7,6 +7,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_uma_ops_console.py >/tmp/uma-hist-ops.out 2>&1; tail -2 /tmp/uma-hist-ops.out; python3 scripts/tests/test_uma_petty_cash.py >/tmp/uma-hist-petty.out 2>&1; tail -2 /tmp/uma-hist-petty.out; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/bzg/uma-blu; curl -sS -o /dev/null -w 'hist:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/uma-blu/history; curl -sS -o /dev/null -w 'issues:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/uma-blu/issues; sqlite3 catalog/content_library.sqlite \"SELECT COUNT(*) FROM bzg_ops_petty_movements WHERE example=0;\"; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0)\"",
       "expect": "PASS=24 FAIL=0; PASS=52 FAIL=0; page:200; hist:200; issues:200; non-example petty 0; 8787 True",
       "by": "cursor-uma-history-issues"
+    },
+    {
+      "id": "uma-today-commissionable",
+      "claim": "Uma Blu Today is an attention-first front door over existing PR, petty, Daily Close, Issues, and History. Blocked cards carry why and classification from the blocker helper. example:true is excluded from attention_count. Daily Close href is /uma-blu-close. Float stays NOT_FOUND. No staff grant, no invented closer. Commissioning readiness doc is written. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_uma_today_commissionable.py | tail -1; python3 -c \"import json; d=json.load(open('state/build-claims/uma-today-commissioning-2026-09-19.json')); assert d['staff_grant'] is False and d['invented_float'] is False and d['invented_closer'] is False; print('doc', d['intended_operator_role'])\"; curl -sS -o /dev/null -w 'today:%{http_code}\\n' http://127.0.0.1:8788/bzg/uma-blu; curl -sS -o /dev/null -w 'petty:%{http_code}\\n' http://127.0.0.1:8788/bzg/uma-blu/petty; curl -sS -o /dev/null -w 'issues:%{http_code}\\n' http://127.0.0.1:8788/bzg/uma-blu/issues; curl -sS -o /dev/null -w 'close:%{http_code}\\n' http://127.0.0.1:8788/uma-blu-close; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0)\"",
+      "expect": "PASS=33 FAIL=0; doc Uma Blu ops lead; today:200; petty:200; issues:200; close:200; 8787 True",
+      "by": "cursor-uma-today-commissionable"
     }
   ]
 }

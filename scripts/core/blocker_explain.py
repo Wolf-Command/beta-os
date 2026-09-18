@@ -45,6 +45,18 @@ WHY_PETTY_OPEN = "The petty tin is open and has not been counted."
 WHY_PETTY_VARIANCE = "The petty tin has a noted variance that is not resolved."
 WHY_PETTY_ATTENTION = "The petty tin needs attention."
 WHY_EXTERNAL = "Required external access has not been granted for this action."
+WHY_PR_WAITING = "A purchase request is waiting for approval."
+WHY_ORDERED = "An order has been placed and the goods have not been received."
+WHY_BILL_WAITING = "A bill is waiting for payment approval."
+WHY_CLOSE_NOT_STARTED = "Daily Close has not been started."
+WHY_CLOSE_POLICY = (
+    "Daily Close is blocked because no variance policy is authorised. "
+    "No threshold was invented."
+)
+WHY_CLOSE_NOT_LOADED = (
+    "Daily Close could not be loaded. No substitute figures were invented."
+)
+WHY_ISSUES = "Issues are open and need a human."
 WHY_UNMATCHED = (
     "No deterministic explanation template matches this blocker, "
     "so it is not treated as an owner task."
@@ -62,6 +74,13 @@ _TEMPLATES: dict[str, tuple[str, str]] = {
     "petty_variance_noted": (WHY_PETTY_VARIANCE, CLASS_NEEDS_STAFF),
     "petty_attention": (WHY_PETTY_ATTENTION, CLASS_NEEDS_STAFF),
     "external_access_required": (WHY_EXTERNAL, CLASS_NEEDS_EXTERNAL),
+    "pr_waiting_approval": (WHY_PR_WAITING, CLASS_NEEDS_STAFF),
+    "ordered_not_received": (WHY_ORDERED, CLASS_NEEDS_STAFF),
+    "bill_waiting_payment": (WHY_BILL_WAITING, CLASS_NEEDS_STAFF),
+    "close_not_started": (WHY_CLOSE_NOT_STARTED, CLASS_NEEDS_STAFF),
+    "close_policy_required": (WHY_CLOSE_POLICY, CLASS_NEEDS_POLICY),
+    "close_not_loaded": (WHY_CLOSE_NOT_LOADED, CLASS_NEEDS_STAFF),
+    "issues_open": (WHY_ISSUES, CLASS_NEEDS_STAFF),
 }
 
 _KIND_ALIAS = {

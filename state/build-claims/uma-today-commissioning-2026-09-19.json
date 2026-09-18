@@ -1,0 +1,91 @@
+{
+  "date": "2026-09-19",
+  "artifact": "commissioning_readiness",
+  "system": "uma-blu-today",
+  "beta_only": true,
+  "human_commissioning": "NOT_DONE",
+  "staff_grant": false,
+  "devi_auto_commission": false,
+  "invented_float": false,
+  "invented_closer": false,
+  "intended_operator_role": "Uma Blu ops lead",
+  "intended_operator_note": "The intended operator is the Uma Blu ops lead. This slice does not grant that seat, does not insert a person, and does not auto-commission anyone.",
+  "permissions_required": [
+    {
+      "code": "bzg.pr.payment_approve",
+      "granted_live": false,
+      "note": "Permission may exist. No live role grant and no authority limit."
+    },
+    {
+      "code": "venue.close.read",
+      "note": "Read the existing Daily Close. Do not rebuild it."
+    },
+    {
+      "code": "venue.close.submit",
+      "note": "ROLE-BZG-CLOSER and ROLE-MATT only. Closer is not commissioned."
+    },
+    {
+      "code": "venue.close.resolve_exception",
+      "note": "ROLE-BZG-HFB. Not widened in this slice."
+    },
+    {
+      "code": "venue.close.verify",
+      "note": "ROLE-BZG-HFB. Submitter is not the verifier."
+    }
+  ],
+  "can": [
+    "Open Today and see attention-ordered cards with why and classification.",
+    "Open PR and bills as an operational record.",
+    "Record petty movements while the opening float is NOT_FOUND.",
+    "Open Daily Close at /uma-blu-close.",
+    "Read Issues and History."
+  ],
+  "cannot": [
+    "Execute a payment.",
+    "Approve a payment without an authorised monetary limit.",
+    "Invent or display an opening float.",
+    "Submit a close as a named closer.",
+    "Set a variance threshold.",
+    "Grant live staff or auto-commission an ops lead."
+  ],
+  "remaining_blockers": [
+    {
+      "id": "opening_float",
+      "status": "NOT_FOUND",
+      "classification": "NEEDS_POLICY",
+      "why": "No authorised opening-float source was found."
+    },
+    {
+      "id": "monetary_authority",
+      "status": "NOT_SEEDED",
+      "classification": "NEEDS_POLICY",
+      "why": "No approved monetary authority limit exists for this action."
+    },
+    {
+      "id": "closer",
+      "status": "WAITING FOR VERIFIED CLOSING OPERATOR",
+      "classification": "NEEDS_STAFF",
+      "why": "A named closer has not been assigned."
+    },
+    {
+      "id": "variance_policy",
+      "status": "NOT_CONFIGURED",
+      "classification": "NEEDS_POLICY",
+      "why": "No authorised variance policy exists. No threshold was invented."
+    }
+  ],
+  "commissioning_test_steps": [
+    "Confirm staff_grant is false: no new person row and no new live role assignment.",
+    "Open /bzg/uma-blu. Cards are attention-first. Each blocked card shows why and classification. attention_count excludes example:true.",
+    "Open /bzg/uma-blu/petty. float_status is NOT_FOUND and the page says OPENING BALANCE REQUIRED. Movements still list.",
+    "Open /uma-blu-close. The existing Daily Close loads. The Today card href is /uma-blu-close. No closer name was added.",
+    "Open /bzg/uma-blu/issues. Exception rows only, with why from the blocker helper.",
+    "Do not grant bzg.pr.payment_approve to a live person. Do not seed an authority limit. Do not seed an opening float."
+  ],
+  "routes": [
+    "/bzg/uma-blu",
+    "/bzg/uma-blu/petty",
+    "/bzg/uma-blu/issues",
+    "/uma-blu-close"
+  ]
+}

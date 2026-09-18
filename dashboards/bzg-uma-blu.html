@@ -59,6 +59,10 @@
   .card h3 { margin: 0 0 4px; font-size: 1.02rem; }
   .card .meta { color: var(--muted); font-size: 0.82rem; }
   .card .ex { color: var(--warn); font-size: 0.75rem; margin-top: 6px; }
+  .card .kind { color: var(--accent); font-size: 0.78rem; font-weight: 650; }
+  .card .why { color: var(--text); font-size: 0.88rem; margin-top: 6px; line-height: 1.35; }
+  .card.attn { border-color: rgba(224,160,69,0.55); }
+  .now-title { margin: 0 0 4px; font-size: 1.05rem; }
   .panel {
     background: color-mix(in srgb, var(--bg2) 92%, #000);
     border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 16px;
@@ -90,9 +94,14 @@
     <a href="/bzg/uma-blu/petty">Petty cash</a>
   </nav>
 
+  <div class="panel" id="now">
+    <h2>What do I need to do now?</h2>
+    <div id="nowBody"><p class="muted">Loading…</p></div>
+  </div>
+
   <div id="cards"><p class="muted">Loading…</p></div>
 
-  <div class="panel">
+  <div class="panel" id="history">
     <h2>History</h2>
     <ul class="hist" id="hist"><li class="muted">Loading…</li></ul>
   </div>
@@ -115,21 +124,48 @@
           document.getElementById("fixtureBanner").classList.remove("hidden");
         }
         var cards = data.cards || [];
+        var nowBox = document.getElementById("nowBody");
+        if (nowBox) {
+          nowBox.innerHTML = "";
+          var now = data.now;
+          if (!now) {
+            nowBox.appendChild(el("p", "empty", "Nothing live needs you right now."));
+          } else {
+            if (now.classification_label) {
+              nowBox.appendChild(el("div", "kind", now.classification_label));
+            }
+            nowBox.appendChild(el("p", "now-title", now.title || "Attention"));
+            if (now.why) nowBox.appendChild(el("div", "why", now.why));
+          }
+        }
         if (!cards.length) {
           box.appendChild(el("p", "empty", "Nothing waiting right now."));
           return;
         }
         cards.forEach(function (c) {
-          var a = el("a", "card");
+          var a = el("a", "card" + (c.attention ? " attn" : ""));
           a.href = c.href || "#";
+          if (c.classification_label) {
+            a.appendChild(el("div", "kind", c.classification_label));
+          }
           a.appendChild(el("h3", null, c.title));
-          if (c.count && c.kind !== "daily_close") {
-            a.appendChild(el("div", "meta", c.count === 1 ? "1 item" : c.count + " items"));
+          if (c.why) a.appendChild(el("div", "why", c.why));
+          if (c.kind === "daily_close" && c.close && c.close.status) {
+            a.appendChild(el("div", "meta", "State: " + c.close.status));
+          } else if (c.kind !== "history" && c.attention_count != null) {
+            var n = c.attention_count;
+            var line = n === 1 ? "1 needing attention" : n + " needing attention";
+            if (c.example_count) line += " · " + c.example_count + " example";
+            a.appendChild(el("div", "meta", line));
           }
           (c.items || []).forEach(function (it) {
-            var line = el("div", "meta", it.label);
-            a.appendChild(line);
+            a.appendChild(el("div", "meta", it.label));
             if (it.example) a.appendChild(el("div", "ex", "Example"));
+          });
+          (c.teaser || []).forEach(function (t) {
+            var bit = t.sentence || "";
+            if (t.when) bit = t.when + " — " + bit;
+            a.appendChild(el("div", "meta", bit));
           });
           box.appendChild(a);
         });

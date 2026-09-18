@@ -78,7 +78,7 @@
   <h1 class="brand">Petty <em>cash</em></h1>
   <p class="sub">Tin movements only — opening float is unavailable until authorised.</p>
 
-  <div class="banner danger" id="floatBanner">Opening float: NOT FOUND — not available</div>
+  <div class="banner danger" id="floatBanner">OPENING BALANCE REQUIRED — opening float NOT FOUND. Movements can still be recorded.</div>
   <div class="banner hidden" id="fixtureBanner">These rows are examples — not live tin activity.</div>
 
   <nav class="uma">
@@ -119,7 +119,7 @@
       var floatStatus = (data.float_status || (data.honesty && data.honesty.float) || "NOT_FOUND");
       var floatEl = document.getElementById("floatBanner");
       if (floatStatus === "NOT_FOUND" || floatStatus === "NOT_IN_SLICE") {
-        floatEl.textContent = "Opening float: NOT FOUND — not available";
+        floatEl.textContent = "OPENING BALANCE REQUIRED — opening float NOT FOUND. Movements can still be recorded.";
         floatEl.classList.add("danger");
       } else {
         floatEl.textContent = "Opening float: recorded on a day tin (see below)";
@@ -142,7 +142,7 @@
           row.appendChild(stEl);
           row.appendChild(el("h3", null, d.business_date || "Date unknown"));
           var floatLine = d.opening_float == null
-            ? "Opening float: NOT FOUND"
+            ? "OPENING BALANCE REQUIRED — float NOT FOUND"
             : "Opening float: " + d.opening_float;
           row.appendChild(el("div", "meta", floatLine));
           if (d.counted_amount != null) {
