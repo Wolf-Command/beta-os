@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Uma Blu · Petty cash</title>
+<style>
+  :root {
+    --bg: #0f1c24;
+    --bg2: #162833;
+    --bg3: #1e3542;
+    --line: #2a4554;
+    --text: #eef4f7;
+    --muted: #8aa0ad;
+    --accent: #3db8a0;
+    --warn: #e0a045;
+    --danger: #e05a4c;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font); min-height: 100%;
+  }
+  body {
+    padding: 16px 16px 64px; max-width: 480px; margin: 0 auto;
+    background:
+      radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
+      radial-gradient(ellipse 90% 60% at 100% 0%, #163028 0%, transparent 50%),
+      var(--bg);
+  }
+  .brand { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 2px; }
+  .brand em { font-style: normal; color: var(--accent); }
+  .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 14px; line-height: 1.35; }
+  .banner {
+    background: rgba(224,160,69,0.12); border: 1px solid rgba(224,160,69,0.45);
+    color: var(--warn); border-radius: 12px; padding: 10px 12px;
+    font-size: 0.88rem; margin-bottom: 14px;
+  }
+  .banner.hidden { display: none; }
+  .banner.danger {
+    background: rgba(224,90,76,0.12); border-color: rgba(224,90,76,0.45); color: var(--danger);
+  }
+  nav.uma { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  nav.uma a {
+    padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line);
+    color: var(--muted); text-decoration: none; font-size: 0.82rem; font-weight: 650;
+  }
+  nav.uma a.active { color: var(--accent); border-color: var(--accent); }
+  .crumb { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
+  .crumb a { color: var(--muted); }
+  .row {
+    background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 10px;
+  }
+  .row h3 { margin: 0 0 6px; font-size: 1.02rem; }
+  .state {
+    display: inline-block; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--line); font-size: 0.75rem; color: var(--muted); margin-bottom: 8px;
+  }
+  .state.warn { color: var(--warn); border-color: rgba(224,160,69,0.45); }
+  .meta { color: var(--muted); font-size: 0.82rem; line-height: 1.4; }
+  .ex { color: var(--warn); font-size: 0.75rem; margin-top: 6px; }
+  .muted { color: var(--muted); font-size: 0.82rem; }
+  .empty { color: var(--muted); font-size: 0.9rem; padding: 8px 0; }
+  .panel {
+    background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 16px;
+  }
+  .panel h2 {
+    margin: 0 0 10px; font-size: 0.78rem; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); font-weight: 650;
+  }
+</style>
+</head>
+<body>
+  <p class="crumb"><a href="/bzg">BZG</a> · <a href="/bzg/uma-blu">Uma Blu</a> · Petty cash</p>
+  <h1 class="brand">Petty <em>cash</em></h1>
+  <p class="sub">Tin movements only — opening float is unavailable until authorised.</p>
+
+  <div class="banner danger" id="floatBanner">Opening float: NOT FOUND — not available</div>
+  <div class="banner hidden" id="fixtureBanner">These rows are examples — not live tin activity.</div>
+
+  <nav class="uma">
+    <a href="/bzg/uma-blu">Today</a>
+    <a href="/bzg/uma-blu/bills">PR and bills</a>
+    <a href="/uma-blu-close">Daily close</a>
+    <a href="/bzg/uma-blu/issues">Issues</a>
+    <a class="active" href="/bzg/uma-blu/petty">Petty cash</a>
+  </nav>
+
+  <div class="panel">
+    <h2>Day tin</h2>
+    <div id="days"><p class="muted">Loading…</p></div>
+  </div>
+
+  <div class="panel">
+    <h2>Movements</h2>
+    <div id="list"><p class="muted">Loading…</p></div>
+  </div>
+
+<script>
+(function () {
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function money(amt, cur) {
+    if (amt == null) return "—";
+    var s = String(amt);
+    if (cur) return s + " " + cur;
+    return s + " (currency not recorded)";
+  }
+  fetch("/api/bzg/uma-blu/petty")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var floatStatus = (data.float_status || (data.honesty && data.honesty.float) || "NOT_FOUND");
+      var floatEl = document.getElementById("floatBanner");
+      if (floatStatus === "NOT_FOUND" || floatStatus === "NOT_IN_SLICE") {
+        floatEl.textContent = "Opening float: NOT FOUND — not available";
+        floatEl.classList.add("danger");
+      } else {
+        floatEl.textContent = "Opening float: recorded on a day tin (see below)";
+        floatEl.classList.remove("danger");
+      }
+      if (data.fixture_notice) {
+        document.getElementById("fixtureBanner").classList.remove("hidden");
+      }
+
+      var daysBox = document.getElementById("days");
+      daysBox.innerHTML = "";
+      var days = data.days || [];
+      if (!days.length) {
+        daysBox.appendChild(el("p", "empty", "No day tin records yet."));
+      } else {
+        days.forEach(function (d) {
+          var row = el("div", "row");
+          var st = d.state || "OPEN";
+          var stEl = el("span", "state" + (st === "POLICY_REQUIRED" || st === "VARIANCE_NOTED" ? " warn" : ""), st);
+          row.appendChild(stEl);
+          row.appendChild(el("h3", null, d.business_date || "Date unknown"));
+          var floatLine = d.opening_float == null
+            ? "Opening float: NOT FOUND"
+            : "Opening float: " + d.opening_float;
+          row.appendChild(el("div", "meta", floatLine));
+          if (d.counted_amount != null) {
+            row.appendChild(el("div", "meta", "Counted: " + d.counted_amount));
+          }
+          if (d.expected_amount != null) {
+            row.appendChild(el("div", "meta", "Expected: " + d.expected_amount));
+          } else if (d.opening_float == null) {
+            row.appendChild(el("div", "meta", "Expected: unavailable (float NOT FOUND)"));
+          }
+          if (d.note) row.appendChild(el("div", "meta", d.note));
+          if (d.example) row.appendChild(el("div", "ex", "Example"));
+          daysBox.appendChild(row);
+        });
+      }
+
+      var box = document.getElementById("list");
+      box.innerHTML = "";
+      var rows = data.movements || [];
+      if (!rows.length) {
+        box.appendChild(el("p", "empty", "No petty movements yet."));
+        return;
+      }
+      rows.forEach(function (m) {
+        var d = el("div", "row");
+        d.appendChild(el("span", "state", m.direction || "?"));
+        d.appendChild(el("h3", null, m.purpose || "Movement"));
+        d.appendChild(el("div", "meta", (m.business_date || "") + " · " + money(m.amount, m.currency)));
+        if (m.example) d.appendChild(el("div", "ex", "Example"));
+        box.appendChild(d);
+      });
+    })
+    .catch(function () {
+      document.getElementById("list").textContent = "Could not load petty cash.";
+      document.getElementById("days").textContent = "Could not load day tin.";
+    });
+})();
+</script>
+</body>
+</html>

@@ -77,6 +77,13 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_dashboard_truth.py >/tmp/empire-surfaces.out 2>&1; python3 /Users/wolfterminal/beta-os/scripts/tests/test_progress_dashboard.py >/tmp/empire-progress.out 2>&1; tail -3 /tmp/empire-surfaces.out; tail -3 /tmp/empire-progress.out; rg -n 'AMG \u00b7 Atrium|if \\(view === \"AMG\"\\)|% \u00b7 ESTIMATED' /Users/wolfterminal/beta-os/dashboards/progress.html | head -20; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0)\"",
       "expect": "PASS=61 FAIL=0; progress 197 passed 0 failed; AMG \u00b7 Atrium + AMG branch + ESTIMATED labels present; 8787 True",
       "by": "cursor-empire-surfaces"
+    },
+    {
+      "id": "uma-petty-today-close-2026-09-18",
+      "claim": "Uma Blu petty cash surface on Beta: /bzg/uma-blu/petty 200; GET /api/bzg/uma-blu/petty; honesty petty_cash_page=BUILT float=NOT_FOUND; 0 live non-example movements; Today quiet-or-card; no Devi/float invention; Production :8787 untouched",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_uma_petty_cash.py >/tmp/uma-petty.out 2>&1; tail -3 /tmp/uma-petty.out; curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8788/bzg/uma-blu/petty; curl -sS http://127.0.0.1:8788/api/bzg/uma-blu/honesty | python3 -c \"import sys,json; d=json.load(sys.stdin); print(d.get('petty_cash_page'), d.get('float'))\"; sqlite3 /Users/wolfterminal/beta-os/catalog/content_library.sqlite \"SELECT COUNT(*) FROM bzg_ops_petty_movements WHERE example=0\"; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0)\"",
+      "expect": "PASS=47 FAIL=0; page 200; BUILT NOT_FOUND; 0 live non-example; 8787 True",
+      "by": "cursor-uma-petty-today-close"
     }
   ],
   "restored_by": "peaches-factory-verify",

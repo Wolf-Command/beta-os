@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""BZG / Uma Blu operations console — PR operational record (Beta).
+"""BZG / Uma Blu operations console — PR + petty operational record (Beta).
 
 REQUESTED ≠ APPROVED ≠ ORDERED ≠ RECEIVED ≠ BILL ≠ PAYMENT ≠ PAID_CLAIMED ≠ VERIFIED.
 PAID_CLAIMED stores human-paid evidence only. Does not move money.
-No float. No invented authority limit. No second history table.
+Petty: movements + day-tin states only. Opening float NOT FOUND unless provided.
+No invented authority limit / variance threshold. No second history table.
 """
 from __future__ import annotations
 
@@ -29,7 +30,21 @@ ENTITY_BZG = "ENT-BZG"
 VENUE_UMA = "BZG-UMA"
 AUDIT_SOURCE = "uma_ops_console"
 RESOURCE_TYPE = "bzg_purchase_request"
+RESOURCE_PETTY = "bzg_petty_movement"
 PAYMENT_PERM = "bzg.pr.payment_approve"
+
+PETTY_DIRECTIONS = frozenset({"OUT", "IN"})
+PETTY_DAY_STATES = frozenset(
+    {
+        "OPEN",
+        "COUNTED",
+        "VARIANCE_NOTED",
+        "CLOSED_CLAIMED",
+        "POLICY_REQUIRED",
+    }
+)
+# Day states that need a human Today card (omit when clean).
+PETTY_TODAY_ATTENTION = frozenset({"OPEN", "POLICY_REQUIRED", "VARIANCE_NOTED"})
 
 STATES = frozenset(
     {
@@ -68,8 +83,9 @@ HONESTY = {
     "paid_claim_is_not_verified": True,
     "request_is_not_approval": True,
     "authority_limits_invented": False,
-    "float": "NOT_IN_SLICE",
-    "petty_cash_page": "NOT_IN_SLICE",
+    # Opening float baseline not authorised — never OK with a made-up number.
+    "float": "NOT_FOUND",
+    "petty_cash_page": "BUILT",
 }
 
 
@@ -128,8 +144,490 @@ def mint_pr_id() -> str:
     return f"PR-UMA-{uuid.uuid4().hex[:12].upper()}"
 
 
+def mint_petty_id() -> str:
+    return f"PETTY-UMA-{uuid.uuid4().hex[:10].upper()}"
+
+
 def _row(r: sqlite3.Row | None) -> dict[str, Any] | None:
     return dict(r) if r is not None else None
+
+
+def _petty_variance_policy_exists(conn: sqlite3.Connection) -> bool:
+    """True only when an authorised petty variance policy row exists. Never invent one."""
+    try:
+        row = conn.execute(
+            """
+            SELECT 1 FROM sqlite_master
+            WHERE type='table' AND name='bzg_ops_petty_variance_policies'
+            """
+        ).fetchone()
+        if not row:
+            return False
+        n = conn.execute(
+            "SELECT COUNT(*) FROM bzg_ops_petty_variance_policies WHERE venue=?",
+            (VENUE_UMA,),
+        ).fetchone()[0]
+        return int(n) > 0
+    except sqlite3.Error:
+        return False
+
+
+def _public_petty_movement(row: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not row:
+        return None
+    out = dict(row)
+    out["example"] = bool(out.get("example"))
+    return out
+
+
+def _public_petty_day(row: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not row:
+        return None
+    out = dict(row)
+    out["example"] = bool(out.get("example"))
+    # Never present missing float as 0.
+    if out.get("opening_float") is None:
+        out["opening_float_status"] = "NOT_FOUND"
+    else:
+        out["opening_float_status"] = "PROVIDED"
+    return out
+
+
+def get_petty_day(
+    business_date: str,
+    *,
+    venue: str = VENUE_UMA,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any] | None:
+    biz = (business_date or "").strip()
+    if not biz:
+        return None
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        row = _row(
+            c.execute(
+                """
+                SELECT * FROM bzg_ops_petty_days
+                WHERE venue=? AND business_date=?
+                """,
+                (venue, biz),
+            ).fetchone()
+        )
+        return _public_petty_day(row) if row else None
+    finally:
+        if own:
+            c.close()
+
+
+def list_petty_movements(
+    *,
+    venue: str = VENUE_UMA,
+    business_date: str | None = None,
+    limit: int = 100,
+    conn: sqlite3.Connection | None = None,
+) -> list[dict[str, Any]]:
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        lim = max(1, min(int(limit), 200))
+        if business_date:
+            rows = c.execute(
+                """
+                SELECT * FROM bzg_ops_petty_movements
+                WHERE venue=? AND business_date=?
+                ORDER BY created_at DESC LIMIT ?
+                """,
+                (venue, business_date.strip(), lim),
+            ).fetchall()
+        else:
+            rows = c.execute(
+                """
+                SELECT * FROM bzg_ops_petty_movements
+                WHERE venue=?
+                ORDER BY business_date DESC, created_at DESC LIMIT ?
+                """,
+                (venue, lim),
+            ).fetchall()
+        return [_public_petty_movement(dict(r)) for r in rows]  # type: ignore[misc]
+    finally:
+        if own:
+            c.close()
+
+
+def list_petty_days(
+    *,
+    venue: str = VENUE_UMA,
+    limit: int = 40,
+    conn: sqlite3.Connection | None = None,
+) -> list[dict[str, Any]]:
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        lim = max(1, min(int(limit), 100))
+        rows = c.execute(
+            """
+            SELECT * FROM bzg_ops_petty_days
+            WHERE venue=?
+            ORDER BY business_date DESC LIMIT ?
+            """,
+            (venue, lim),
+        ).fetchall()
+        return [_public_petty_day(dict(r)) for r in rows]  # type: ignore[misc]
+    finally:
+        if own:
+            c.close()
+
+
+def _ensure_petty_day(
+    conn: sqlite3.Connection,
+    business_date: str,
+    *,
+    example: bool = False,
+    opening_float: float | None = None,
+) -> dict[str, Any]:
+    """Create OPEN day row if missing. Never default opening_float to 0."""
+    existing = get_petty_day(business_date, conn=conn)
+    if existing:
+        return existing
+    ts = now_utc_iso()
+    # Only store float when caller explicitly provided one (not None).
+    conn.execute(
+        """
+        INSERT INTO bzg_ops_petty_days (
+          venue, business_date, state, opening_float, counted_amount,
+          expected_amount, note, example, created_at, updated_at
+        ) VALUES (?, ?, 'OPEN', ?, NULL, NULL, NULL, ?, ?, ?)
+        """,
+        (
+            VENUE_UMA,
+            business_date,
+            opening_float,
+            1 if example else 0,
+            ts,
+            ts,
+        ),
+    )
+    out = get_petty_day(business_date, conn=conn)
+    assert out
+    return out
+
+
+def _compute_expected_from_float_and_movements(
+    conn: sqlite3.Connection,
+    business_date: str,
+    opening_float: float | None,
+) -> float | None:
+    """Expected tin = float + IN − OUT. Returns None when float unknown — never invent 0."""
+    if opening_float is None:
+        return None
+    rows = conn.execute(
+        """
+        SELECT direction, amount FROM bzg_ops_petty_movements
+        WHERE venue=? AND business_date=?
+        """,
+        (VENUE_UMA, business_date),
+    ).fetchall()
+    total = float(opening_float)
+    for r in rows:
+        amt = float(r["amount"])
+        if r["direction"] == "IN":
+            total += amt
+        else:
+            total -= amt
+    return total
+
+
+def insert_petty_movement(
+    *,
+    business_date: str,
+    direction: str,
+    amount: float,
+    currency: str | None = None,
+    purpose: str | None = None,
+    example: bool = False,
+    work_item_id: str | None = None,
+    evidence_id: str | None = None,
+    opening_float: float | None = None,
+    movement_id: str | None = None,
+    conn: sqlite3.Connection,
+) -> dict[str, Any]:
+    """Insert a movement. Currency blank stays NULL — never guessed."""
+    ensure_schema(conn)
+    biz = (business_date or "").strip()
+    if not biz:
+        raise UmaOpsError("business_date required", code="missing_business_date")
+    direc = (direction or "").strip().upper()
+    if direc not in PETTY_DIRECTIONS:
+        raise UmaOpsError(f"invalid direction: {direction!r}", code="invalid_direction")
+    try:
+        amt = float(amount)
+    except (TypeError, ValueError) as exc:
+        raise UmaOpsError("amount must be numeric", code="invalid_amount") from exc
+    if amt < 0:
+        raise UmaOpsError("amount must be non-negative", code="invalid_amount")
+
+    cur = (currency or "").strip() or None
+    mid = (movement_id or "").strip() or mint_petty_id()
+    ts = now_utc_iso()
+    _ensure_petty_day(
+        conn,
+        biz,
+        example=example,
+        opening_float=opening_float,
+    )
+    conn.execute(
+        """
+        INSERT INTO bzg_ops_petty_movements (
+          movement_id, venue, business_date, direction, amount, currency,
+          purpose, example, work_item_id, evidence_id, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            mid,
+            VENUE_UMA,
+            biz,
+            direc,
+            amt,
+            cur,
+            (purpose or "").strip() or None,
+            1 if example else 0,
+            (work_item_id or "").strip() or None,
+            (evidence_id or "").strip() or None,
+            ts,
+        ),
+    )
+    day = get_petty_day(biz, conn=conn)
+    if day and day.get("state") in ("COUNTED", "CLOSED_CLAIMED"):
+        # New movement re-opens attention until re-counted.
+        conn.execute(
+            """
+            UPDATE bzg_ops_petty_days
+            SET state='OPEN', updated_at=?, counted_amount=NULL, expected_amount=NULL
+            WHERE venue=? AND business_date=?
+            """,
+            (ts, VENUE_UMA, biz),
+        )
+    row = _row(
+        conn.execute(
+            "SELECT * FROM bzg_ops_petty_movements WHERE movement_id=?",
+            (mid,),
+        ).fetchone()
+    )
+    out = _public_petty_movement(row)
+    assert out
+    return out
+
+
+def note_petty_count(
+    business_date: str,
+    counted_amount: float,
+    *,
+    conn: sqlite3.Connection,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Record a tin count. Missing float or missing variance policy → POLICY_REQUIRED."""
+    biz = (business_date or "").strip()
+    if not biz:
+        raise UmaOpsError("business_date required", code="missing_business_date")
+    try:
+        counted = float(counted_amount)
+    except (TypeError, ValueError) as exc:
+        raise UmaOpsError("counted_amount must be numeric", code="invalid_amount") from exc
+
+    ensure_schema(conn)
+    day = get_petty_day(biz, conn=conn) or _ensure_petty_day(conn, biz)
+    opening = day.get("opening_float")
+    expected = _compute_expected_from_float_and_movements(conn, biz, opening)
+    ts = now_utc_iso()
+
+    if opening is None or expected is None:
+        # Float unknown — cannot honestly compare. Block without inventing 0.
+        state = "POLICY_REQUIRED"
+        note = "Opening float NOT FOUND — count cannot be reconciled"
+    elif counted == expected:
+        state = "COUNTED"
+        note = None
+    elif _petty_variance_policy_exists(conn):
+        state = "VARIANCE_NOTED"
+        note = "Count differs from expected — variance noted under policy"
+    else:
+        # No policy row → blocked honesty, never invent a threshold number.
+        state = "POLICY_REQUIRED"
+        note = "Count differs from expected — variance policy required (none authorised)"
+
+    conn.execute(
+        """
+        UPDATE bzg_ops_petty_days
+        SET state=?, counted_amount=?, expected_amount=?, note=?, updated_at=?
+        WHERE venue=? AND business_date=?
+        """,
+        (state, counted, expected, note, ts, VENUE_UMA, biz),
+    )
+    if commit:
+        conn.commit()
+    out = get_petty_day(biz, conn=conn)
+    assert out
+    return out
+
+
+def list_petty(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
+    """GET payload: movements + day summaries + honesty. Float stays NOT_FOUND when absent."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        ensure_schema(c)
+        movements = list_petty_movements(conn=c)
+        days = list_petty_days(conn=c)
+        any_float = any(d.get("opening_float") is not None for d in days)
+        float_status = "PROVIDED" if any_float else "NOT_FOUND"
+        honesty = dict(HONESTY)
+        # Per-response float stays NOT_FOUND unless a day actually stores one.
+        if float_status == "NOT_FOUND":
+            honesty["float"] = "NOT_FOUND"
+        attention = [
+            d
+            for d in days
+            if d.get("state") in PETTY_TODAY_ATTENTION
+            or (
+                d.get("state") == "OPEN"
+            )
+        ]
+        return {
+            "ok": True,
+            "movements": movements,
+            "days": days,
+            "attention_count": len(attention),
+            "float_status": float_status,
+            "opening_float": None if float_status == "NOT_FOUND" else "see_days",
+            "honesty": honesty,
+            "fixture_notice": any(m.get("example") for m in movements)
+            or any(d.get("example") for d in days),
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def create_petty_movement_test_mode(
+    *,
+    business_date: str | None = None,
+    direction: str = "OUT",
+    amount: float = 1.0,
+    currency: str | None = None,
+    purpose: str | None = None,
+    example: bool = True,
+    opening_float: float | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Fixture/demo insert — refused unless WOLF_TEST_MODE (or test argv)."""
+    if not _under_test_process():
+        raise UmaOpsError(
+            "petty write only allowed in test mode",
+            code="test_mode_required",
+            http_status=403,
+        )
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        assert_catalog_writable(Path(CATALOG_DB))
+        ensure_schema(c)
+        biz = (business_date or "").strip() or today_biz_date()
+        out = insert_petty_movement(
+            business_date=biz,
+            direction=direction,
+            amount=amount,
+            currency=currency,
+            purpose=purpose or "Example petty movement",
+            example=example,
+            opening_float=opening_float,
+            conn=c,
+        )
+        if commit:
+            c.commit()
+        return out
+    finally:
+        if own:
+            c.close()
+
+
+def seed_fixture_petty(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    """At most 3 example movements. Does not invent opening float."""
+    ensure_schema(conn)
+    fixtures = [
+        {
+            "movement_id": "PETTY-UMA-EXAMPLE-1",
+            "business_date": "2026-09-18",
+            "direction": "OUT",
+            "amount": 75000.0,
+            "currency": "IDR",
+            "purpose": "Ice top-up",
+        },
+        {
+            "movement_id": "PETTY-UMA-EXAMPLE-2",
+            "business_date": "2026-09-18",
+            "direction": "OUT",
+            "amount": 42000.0,
+            "currency": "IDR",
+            "purpose": "Market herbs",
+        },
+        {
+            "movement_id": "PETTY-UMA-EXAMPLE-3",
+            "business_date": "2026-09-17",
+            "direction": "IN",
+            "amount": 100000.0,
+            "currency": None,  # blank — never guess
+            "purpose": "Owner top-up (currency not recorded)",
+        },
+    ]
+    out = []
+    for f in fixtures:
+        existing = _row(
+            conn.execute(
+                "SELECT * FROM bzg_ops_petty_movements WHERE movement_id=?",
+                (f["movement_id"],),
+            ).fetchone()
+        )
+        if existing:
+            out.append(_public_petty_movement(existing))
+            continue
+        out.append(
+            insert_petty_movement(
+                movement_id=f["movement_id"],
+                business_date=f["business_date"],
+                direction=f["direction"],
+                amount=f["amount"],
+                currency=f.get("currency"),
+                purpose=f.get("purpose"),
+                example=True,
+                # opening_float omitted → NOT FOUND on day row
+                conn=conn,
+            )
+        )
+    return out
+
+
+def _petty_human_label(m: dict[str, Any]) -> str:
+    bits = []
+    direc = m.get("direction") or ""
+    if direc:
+        bits.append(direc)
+    if m.get("purpose"):
+        bits.append(str(m["purpose"]))
+    label = " · ".join(bits) if bits else "Petty movement"
+    if m.get("example"):
+        label = f"Example — {label}"
+    return label
+
+
+def _petty_attention_for_today(
+    *,
+    conn: sqlite3.Connection,
+) -> list[dict[str, Any]]:
+    """Days needing a human: OPEN / POLICY_REQUIRED / VARIANCE_NOTED (uncounted)."""
+    days = list_petty_days(conn=conn, limit=60)
+    return [d for d in days if d.get("state") in PETTY_TODAY_ATTENTION]
 
 
 def ensure_schema(conn: sqlite3.Connection) -> None:
@@ -159,6 +657,42 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
           ON bzg_ops_purchase_requests(state);
         CREATE INDEX IF NOT EXISTS idx_bzg_ops_pr_venue
           ON bzg_ops_purchase_requests(venue);
+
+        CREATE TABLE IF NOT EXISTS bzg_ops_petty_movements (
+          movement_id TEXT PRIMARY KEY,
+          venue TEXT NOT NULL,
+          business_date TEXT NOT NULL,
+          direction TEXT NOT NULL,
+          amount REAL NOT NULL,
+          currency TEXT,
+          purpose TEXT,
+          example INTEGER NOT NULL DEFAULT 0,
+          work_item_id TEXT,
+          evidence_id TEXT,
+          created_at TEXT NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_bzg_ops_petty_mov_date
+          ON bzg_ops_petty_movements(venue, business_date);
+        CREATE INDEX IF NOT EXISTS idx_bzg_ops_petty_mov_example
+          ON bzg_ops_petty_movements(example);
+
+        CREATE TABLE IF NOT EXISTS bzg_ops_petty_days (
+          venue TEXT NOT NULL,
+          business_date TEXT NOT NULL,
+          state TEXT NOT NULL,
+          opening_float REAL,
+          counted_amount REAL,
+          expected_amount REAL,
+          note TEXT,
+          example INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          PRIMARY KEY (venue, business_date)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_bzg_ops_petty_day_state
+          ON bzg_ops_petty_days(state);
         """
     )
 
@@ -698,11 +1232,41 @@ def today_cards(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
                 }
             )
 
+        # Petty: quiet when clean; card when open / policy-required / uncounted.
+        petty_days = _petty_attention_for_today(conn=c)
+        if petty_days:
+            items = []
+            for d in petty_days:
+                st = d.get("state") or "OPEN"
+                label = f"Petty tin · {d.get('business_date') or 'date unknown'} · {st}"
+                if d.get("example"):
+                    label = f"Example — {label}"
+                if d.get("opening_float") is None:
+                    label = f"{label} (float NOT FOUND)"
+                items.append(
+                    {
+                        "label": label,
+                        "example": bool(d.get("example")),
+                        "business_date": d.get("business_date"),
+                        "state": st,
+                    }
+                )
+            cards.append(
+                {
+                    "kind": "petty_cash",
+                    "title": "Petty cash needs attention",
+                    "count": len(items),
+                    "href": "/bzg/uma-blu/petty",
+                    "items": items,
+                }
+            )
+
         return {
             "ok": True,
             "cards": cards,
             "honesty": dict(HONESTY),
-            "fixture_notice": any(p.get("example") for p in prs),
+            "fixture_notice": any(p.get("example") for p in prs)
+            or any(d.get("example") for d in petty_days),
         }
     finally:
         if own:

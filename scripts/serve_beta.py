@@ -1524,6 +1524,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/bzg/uma-blu/honesty":
             self._uma_ops_honesty()
             return
+        if path == "/api/bzg/uma-blu/petty":
+            self._uma_ops_petty()
+            return
 
         # Uma Blu daily close (Beta — read)
         if path == "/api/venue-close/honesty":
@@ -1766,6 +1769,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self.path = "/bzg-uma-blu-bills.html"
         elif path in ("/bzg/uma-blu/issues", "/bzg/uma-blu/issues/"):
             self.path = "/bzg-uma-blu-issues.html"
+        elif path in ("/bzg/uma-blu/petty", "/bzg/uma-blu/petty/"):
+            self.path = "/bzg-uma-blu-petty.html"
         elif path in ("/habitat-operator", "/habitat-operator/"):
             self.path = "/habitat-operator.html"
         elif path in ("/lead-spine", "/lead-spine/"):
@@ -1782,6 +1787,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self.path = "/bzg-uma-blu-bills.html"
         elif path == "/dashboards/bzg-uma-blu-issues.html":
             self.path = "/bzg-uma-blu-issues.html"
+        elif path == "/dashboards/bzg-uma-blu-petty.html":
+            self.path = "/bzg-uma-blu-petty.html"
         elif path == "/dashboards/habitat-operator.html":
             self.path = "/habitat-operator.html"
         elif path == "/dashboards/lead-spine.html":
@@ -1824,6 +1831,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/llm/generate":
             self._llm_generate()
+            return
+        # Uma petty — test-mode fixture write only
+        if path == "/api/bzg/uma-blu/petty":
+            self._uma_ops_petty_post()
             return
         # Legacy aliases → same handlers
         if path == "/api/planner":
@@ -3088,6 +3099,38 @@ class BetaHandler(SimpleHTTPRequestHandler):
     def _uma_ops_history(self) -> None:
         try:
             self._send_json(_uma_ops.list_history())
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_petty(self) -> None:
+        try:
+            self._send_json(_uma_ops.list_petty())
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_petty_post(self) -> None:
+        """Test-mode-only fixture movement. No ESB/ClickUp/Telegram/bank writes."""
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length) if length > 0 else b"{}"
+            body = json.loads(raw.decode("utf-8") or "{}")
+            if not isinstance(body, dict):
+                body = {}
+            out = _uma_ops.create_petty_movement_test_mode(
+                business_date=body.get("business_date"),
+                direction=body.get("direction") or "OUT",
+                amount=body.get("amount") if body.get("amount") is not None else 1.0,
+                currency=body.get("currency"),
+                purpose=body.get("purpose"),
+                example=bool(body.get("example", True)),
+                opening_float=body.get("opening_float"),
+            )
+            self._send_json({"ok": True, "movement": out, **_uma_ops.honesty_flags()})
+        except _uma_ops.UmaOpsError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
         except Exception as exc:  # noqa: BLE001
             self._send_err(500, str(exc))
 
