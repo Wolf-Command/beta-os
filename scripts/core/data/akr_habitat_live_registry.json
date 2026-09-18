@@ -1,0 +1,54 @@
+{
+  "description": "Habitat AKR live read-only registry. Authority is explicit — do not infer from filenames. No Drive/Notion in this slice.",
+  "allowlisted_roots": [
+    "/Volumes/01-Media-Library/Brand-Assets/GGV/Habitat/",
+    "/Users/wolfterminal/WolfCommandSystem/WolfCommand/01-Wolf-Command/Brands/Habitat-Villas/",
+    "/Users/wolfterminal/beta-os/scripts/phase26_team.py"
+  ],
+  "sources": [
+    {
+      "source_id": "habitat-nas-brand-guide",
+      "type": "pdf",
+      "scopes": ["brand:habitat", "entity:ggv"],
+      "question_keys": ["brand_font"],
+      "authority": "CLIENT_APPROVED",
+      "lane": "brand_identity",
+      "identity": {"brand": "habitat"},
+      "canonical": false,
+      "path": "/Volumes/01-Media-Library/Brand-Assets/GGV/Habitat/style-guide/Habitat_brand_guide.pdf"
+    },
+    {
+      "source_id": "habitat-vault-brand",
+      "type": "markdown",
+      "scopes": ["brand:habitat"],
+      "question_keys": ["brand_font", "brand_voice", "headline_case"],
+      "authority": "OPERATIONAL",
+      "lane": "brand_identity",
+      "identity": {"brand": "habitat"},
+      "canonical": false,
+      "path": "/Users/wolfterminal/WolfCommandSystem/WolfCommand/01-Wolf-Command/Brands/Habitat-Villas/Habitat-Brand.md"
+    },
+    {
+      "source_id": "habitat-vault-strategy",
+      "type": "markdown",
+      "scopes": ["brand:habitat"],
+      "question_keys": ["headline_case"],
+      "authority": "OPERATIONAL",
+      "lane": "brand_identity",
+      "identity": {"brand": "habitat"},
+      "canonical": false,
+      "path": "/Users/wolfterminal/WolfCommandSystem/WolfCommand/01-Wolf-Command/Brands/Habitat-Villas/Habitat-Strategy.md"
+    },
+    {
+      "source_id": "wolf-ui-chrome",
+      "type": "python",
+      "scopes": ["brand:habitat"],
+      "question_keys": ["ui_font"],
+      "authority": "OPERATIONAL_UI",
+      "lane": "ui_chrome",
+      "identity": {"brand": "habitat"},
+      "canonical": false,
+      "path": "/Users/wolfterminal/beta-os/scripts/phase26_team.py"
+    }
+  ]
+}
