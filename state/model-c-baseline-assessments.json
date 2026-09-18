@@ -496,12 +496,12 @@
     "Accepted PROVEN 2026-09-18 owner audit; not READY. Prior BUILT kept in state/model-c-score-history.jsonl"
   ],
   "CAP-INTEL-04": [
-    "BUILT",
-    "Decision memory implementation commit 7ff5208 + docs/deliveries/GROK-REVIEW-DECISION-MEMORY-7ff5208-2026-09-18.md; Matt ACCEPTED BUILT 2026-09-18 (not PROVEN)",
-    "Deterministic PROVEN pack + live recall prove for READY",
-    "UNKNOWN",
-    "MED",
-    "Accepted BUILT 2026-09-18 owner audit; not PROVEN"
+    "PROVEN",
+    "d50f74c Owner seed of 4 decisions + DR/INTG correction pair + exact recall + RBAC fail-closed + audit bind; review PASS 4095310; Matt ACCEPTED PROVEN 2026-09-18 (not READY)",
+    "READY needs an owner screen and a real person using recall. Not this write.",
+    "HIGH",
+    "HIGH",
+    "Accepted PROVEN 2026-09-18 owner audit; not READY. Prior BUILT kept in state/model-c-score-history.jsonl"
   ],
   "CAP-INTEL-05": [
     "SPECIFIED",
