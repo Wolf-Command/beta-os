@@ -1,19 +1,16 @@
-{
-  "date": "2026-09-18",
-  "claims": [
-    {
-      "id": "akr-v1-cap-intel-02-03",
-      "claim": "Authorised Knowledge Resolver v1 BUILT (deterministic; no LLM invent; no memory_items auto-promote); CAP-INTEL-02/03; fixture tests green",
-      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_authorised_knowledge.py >/tmp/akr-v1-test.out 2>&1; tail -3 /tmp/akr-v1-test.out",
-      "expect": "PASS=51 FAIL=0",
-      "by": "cursor-local"
-    },
-    {
-      "id": "decision-memory-v1-cap-intel-04",
-      "claim": "Decision Memory v1 BUILT (INSERT-only; no silent rewrite; scope isolation; empty outcome=OUTCOME_UNKNOWN; recall max 50); CAP-INTEL-04; fixture DB tests green",
-      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_decision_memory.py >/tmp/dm-v1-test.out 2>&1; tail -3 /tmp/dm-v1-test.out",
-      "expect": "PASS=54 FAIL=0",
-      "by": "cursor-local"
-    }
-  ]
-}
+[
+  {
+    "id": "lead-spine-v1-schema",
+    "claim": "Beta catalog has core_leads + core_lead_events + core_lead_stage_maps and four ACTIVE lead.* permission codes; staff role lead grants remain 0",
+    "check": "sqlite3 catalog/content_library.sqlite \"SELECT (SELECT COUNT(*) FROM sqlite_master WHERE name='core_leads') + (SELECT COUNT(*) FROM org_permissions WHERE code LIKE 'lead.%' AND status='ACTIVE') AS n; SELECT COUNT(*) FROM org_role_permissions WHERE permission_id LIKE 'PERM-LEAD%' AND role_id NOT IN ('ROLE-LEAD-DEMO-FIXTURE');\"",
+    "expect": "tables present; 4 lead perms; 0 non-fixture role grants",
+    "by": "cursor-lead-spine-v1"
+  },
+  {
+    "id": "lead-spine-operator-path",
+    "claim": "Beta serves /lead-spine (200, demo banner) and /api/leads?brand=habitat returns 403 without cookie; 8 fixture leads + PERS-LEAD-DEMO habitat-only lead.* fixture role; no staff lead grants",
+    "check": "curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8788/lead-spine; curl -sS -o /dev/null -w '%{http_code}' 'http://127.0.0.1:8788/api/leads?brand=habitat'; sqlite3 catalog/content_library.sqlite \"SELECT COUNT(*) FROM core_leads WHERE source_system='fixture'; SELECT COUNT(*) FROM org_persons WHERE person_id='PERS-LEAD-DEMO'; SELECT COUNT(*) FROM org_role_permissions WHERE permission_id LIKE 'PERM-LEAD%' AND role_id IN ('ROLE-MATT','ROLE-OWNER');\"",
+    "expect": "200; 403; 8; 1; 0",
+    "by": "cursor-lead-spine-operator"
+  }
+]

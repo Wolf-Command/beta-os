@@ -81,6 +81,7 @@ from core import content_publish as _content_publish
 from core import venue_close as _venue_close
 from core import esb_close_snapshot as _esb_close_snapshot
 from core import progress_read_model as _progress
+from core import lead_spine as _lead_spine
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1724,6 +1725,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._get_intel_plan(int(m_plan.group(1)), qs=qs)
             return
 
+        # Lead Spine operator (Beta fixtures) — identity from CF Access only
+        if path == "/api/leads":
+            self._get_leads(qs)
+            return
+        m_lead = re.match(r"^/api/leads/([^/]+)$", path)
+        if m_lead:
+            self._get_lead(m_lead.group(1))
+            return
+
         if path in ("/", "/index.html"):
             self.path = "/content-2.0.html"
         elif path in ("/progress", "/progress/"):
@@ -1732,12 +1742,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self.path = "/uma-blu-close.html"
         elif path in ("/habitat-operator", "/habitat-operator/"):
             self.path = "/habitat-operator.html"
+        elif path in ("/lead-spine", "/lead-spine/"):
+            self.path = "/lead-spine.html"
         elif path == "/dashboards/progress.html":
             self.path = "/progress.html"
         elif path == "/dashboards/uma-blu-close.html":
             self.path = "/uma-blu-close.html"
         elif path == "/dashboards/habitat-operator.html":
             self.path = "/habitat-operator.html"
+        elif path == "/dashboards/lead-spine.html":
+            self.path = "/lead-spine.html"
         return SimpleHTTPRequestHandler.do_GET(self)
 
     def do_POST(self) -> None:
@@ -1915,6 +1929,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
         m_dlg_revoke = re.match(r"^/api/core/delegations/([^/]+)/revoke$", path)
         if m_dlg_revoke:
             self._post_core_delegation_revoke(m_dlg_revoke.group(1))
+            return
+
+        # Lead Spine operator mutations (Beta fixtures)
+        m_lead_act = re.match(
+            r"^/api/leads/([^/]+)/(touch|note|stage|assign|unassign|work-item|claim)$",
+            path,
+        )
+        if m_lead_act:
+            self._post_lead_action(m_lead_act.group(1), m_lead_act.group(2))
             return
 
         self._send_err(404, "not found")
@@ -3441,6 +3464,238 @@ class BetaHandler(SimpleHTTPRequestHandler):
         identity = dict(identity)
         identity["correlation_id"] = getattr(self, "_wolf_correlation_id", None) or _audit.mint_correlation_id()
         return identity
+
+    def _lead_identity(self, body: dict | None = None) -> dict | None:
+        """Verified Person for Lead Spine. Never trust person id from the browser body."""
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": identity.get("error") or "unauthorized",
+                    "message": identity.get("message")
+                    or "You must be signed in to use Lead Spine.",
+                },
+                status=403,
+            )
+            return None
+        if not identity.get("person_id"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "no_person",
+                    "message": "Lead Spine requires a verified Person binding.",
+                },
+                status=403,
+            )
+            return None
+        if isinstance(body, dict):
+            for key in ("person_id", "verified_person_id", "actor_person_id"):
+                spoof = body.get(key)
+                if spoof and str(spoof).strip() != str(identity.get("person_id")).strip():
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "person_id_spoof",
+                            "message": "Person id from the browser body is refused.",
+                        },
+                        status=400,
+                    )
+                    return None
+        return identity
+
+    def _send_lead_error(self, exc: Exception) -> None:
+        if isinstance(exc, _lead_spine.LeadSpineError):
+            code = exc.code
+            if code in ("denied",):
+                status = 403
+                message = str(exc) if str(exc).startswith("You ") else (
+                    "You do not have permission to access leads for this brand."
+                )
+                if "denied" in str(exc).lower() and not str(exc).startswith("You "):
+                    message = (
+                        "You do not have permission to access leads for this brand."
+                    )
+            elif code == "not_found":
+                status = 404
+                message = str(exc)
+            else:
+                status = 400
+                message = str(exc)
+            self._send_json(
+                {"ok": False, "error": code, "message": message},
+                status=status,
+            )
+            return
+        self._send_json(
+            {"ok": False, "error": "server_error", "message": str(exc)},
+            status=500,
+        )
+
+    def _get_leads(self, qs: dict) -> None:
+        identity = self._lead_identity()
+        if identity is None:
+            return
+        brand = ((qs.get("brand") or [None])[0] or "").strip()
+        if not brand:
+            self._send_json(
+                {"ok": False, "error": "invalid", "message": "brand query required."},
+                status=400,
+            )
+            return
+        try:
+            payload = _lead_spine.api_list_leads(
+                verified_person_id=identity["person_id"],
+                brand_id=brand,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_lead_error(exc)
+            return
+        self._send_json(payload)
+
+    def _get_lead(self, lead_id: str) -> None:
+        identity = self._lead_identity()
+        if identity is None:
+            return
+        try:
+            payload = _lead_spine.api_get_lead(
+                lead_id,
+                verified_person_id=identity["person_id"],
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_lead_error(exc)
+            return
+        self._send_json(payload)
+
+    def _post_lead_action(self, lead_id: str, action: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._lead_identity(body)
+        if identity is None:
+            return
+        pid = identity["person_id"]
+        try:
+            if action == "touch":
+                result = _lead_spine.record_human_touch(
+                    lead_id,
+                    verified_person_id=pid,
+                    actor_type="PERSON",
+                )
+            elif action == "note":
+                result = _lead_spine.record_note(
+                    lead_id,
+                    str(body.get("note") or ""),
+                    verified_person_id=pid,
+                    actor_type="PERSON",
+                )
+            elif action == "stage":
+                if "source_stage" in body:
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "source_stage_refused",
+                            "message": "This path changes Wolf lifecycle only. Source stage stays as observed.",
+                        },
+                        status=400,
+                    )
+                    return
+                ws = body.get("wolf_stage")
+                if not ws:
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "invalid",
+                            "message": "wolf_stage required.",
+                        },
+                        status=400,
+                    )
+                    return
+                result = _lead_spine.set_wolf_stage(
+                    lead_id,
+                    str(ws),
+                    verified_person_id=pid,
+                    actor_type="PERSON",
+                )
+            elif action == "assign":
+                owner = body.get("owner_person_id")
+                if not owner:
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "invalid",
+                            "message": "owner_person_id required. Use /unassign to clear.",
+                        },
+                        status=400,
+                    )
+                    return
+                result = _lead_spine.assign_owner(
+                    lead_id,
+                    str(owner),
+                    owner_assignment_id=(body.get("owner_assignment_id") or None),
+                    verified_person_id=pid,
+                )
+            elif action == "unassign":
+                # assign_owner already clears when owner is null — no separate unassign core.
+                result = _lead_spine.assign_owner(
+                    lead_id,
+                    None,
+                    owner_assignment_id=None,
+                    verified_person_id=pid,
+                )
+            elif action == "work-item":
+                wid = body.get("work_item_id")
+                if not wid:
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "invalid",
+                            "message": "work_item_id required. This links an existing Core work item only.",
+                        },
+                        status=400,
+                    )
+                    return
+                result = _lead_spine.link_work_item(
+                    lead_id,
+                    str(wid),
+                    verified_person_id=pid,
+                    actor_type="PERSON",
+                )
+            elif action == "claim":
+                if "amount" in body:
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "amount_refused",
+                            "message": "Claim sets CLAIMED only. No amount. Verification needs evidence.",
+                        },
+                        status=400,
+                    )
+                    return
+                result = _lead_spine.claim_conversion(
+                    lead_id,
+                    verified_person_id=pid,
+                    actor_type="PERSON",
+                    payload={k: v for k, v in body.items() if k != "person_id"},
+                )
+            else:
+                self._send_err(404, "not found")
+                return
+        except Exception as exc:  # noqa: BLE001
+            self._send_lead_error(exc)
+            return
+        lead = result.get("lead") or {}
+        self._send_json(
+            {
+                "ok": True,
+                "action": action,
+                "lead": _lead_spine.lead_operator_card(lead),
+                "event": result.get("event"),
+            }
+        )
 
     def _send_work_error(self, exc: Exception) -> None:
         if isinstance(exc, _work_items.WorkItemError):

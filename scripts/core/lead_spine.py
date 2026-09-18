@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Wolf Core Lead Spine v1 — Beta fixtures only.
+"""Wolf Core Lead Spine v1 — Beta fixtures + operator path.
 
 LEAD is not PERSON, not CUSTOMER, not SALE, not REVENUE.
-No live import. No external writes. Bound: beta-lead-spine-fixtures.
+No live import. No external writes.
+Bound: beta-lead-spine-fixtures / beta-lead-spine-operator.
 """
 from __future__ import annotations
 
@@ -1137,3 +1138,336 @@ def honesty_flags() -> dict[str, Any]:
         "hardcoded_people": False,
         "closed_implies_conversion": False,
     }
+
+
+def list_lead_events(
+    lead_id: str,
+    *,
+    conn: sqlite3.Connection | None = None,
+    db_path: Path | str | None = None,
+    limit: int = 100,
+) -> list[dict[str, Any]]:
+    own = conn is None
+    c = conn or _open(db_path)
+    try:
+        lim = max(1, min(int(limit), 500))
+        rows = c.execute(
+            """
+            SELECT * FROM core_lead_events
+            WHERE lead_id=?
+            ORDER BY recorded_at ASC, event_id ASC
+            LIMIT ?
+            """,
+            (lead_id, lim),
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        if own:
+            c.close()
+
+
+def list_leads(
+    *,
+    verified_person_id: str,
+    brand_id: str,
+    entity_id: str | None = None,
+    conn: sqlite3.Connection | None = None,
+    db_path: Path | str | None = None,
+    limit: int = 100,
+    offset: int = 0,
+) -> list[dict[str, Any]]:
+    """Permissioned lead list for one brand. Empty list is valid — never invent a lead."""
+    bid = (brand_id or "").strip()
+    if not bid:
+        raise LeadSpineError("brand required", code="invalid")
+    own = conn is None
+    c = conn or _open(db_path)
+    try:
+        _require_perm(
+            c,
+            verified_person_id=verified_person_id,
+            permission_code="lead.read",
+            brand_id=bid,
+            entity_id=(entity_id or "").strip() or None,
+        )
+        lim = max(1, min(int(limit), 200))
+        off = max(0, int(offset))
+        if entity_id:
+            rows = c.execute(
+                """
+                SELECT * FROM core_leads
+                WHERE brand_id=? AND entity_id=?
+                ORDER BY wolf_ingested_at DESC, lead_id ASC
+                LIMIT ? OFFSET ?
+                """,
+                (bid, entity_id.strip(), lim, off),
+            ).fetchall()
+        else:
+            rows = c.execute(
+                """
+                SELECT * FROM core_leads
+                WHERE brand_id=?
+                ORDER BY wolf_ingested_at DESC, lead_id ASC
+                LIMIT ? OFFSET ?
+                """,
+                (bid, lim, off),
+            ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        if own:
+            c.close()
+
+
+def set_wolf_stage(
+    lead_id: str,
+    wolf_stage: str,
+    *,
+    verified_person_id: str | None = None,
+    actor_type: str = "PERSON",
+    actor_person_id: str | None = None,
+    conn: sqlite3.Connection | None = None,
+    db_path: Path | str | None = None,
+) -> dict[str, Any]:
+    """Set Wolf lifecycle only. Never rewrites source_stage."""
+    ws = (wolf_stage or "").strip().upper()
+    if ws not in WOLF_STAGES:
+        raise LeadSpineError(
+            f"wolf_stage must be one of {sorted(WOLF_STAGES)}",
+            code="invalid_stage",
+        )
+    own = conn is None
+    c = conn or _open(db_path)
+    try:
+        lead = get_lead(lead_id, conn=c)
+        if not lead:
+            raise LeadSpineError("lead not found", code="not_found")
+        if actor_type == "PERSON":
+            _require_perm(
+                c,
+                verified_person_id=verified_person_id,
+                permission_code="lead.event.append",
+                brand_id=lead["brand_id"],
+                entity_id=lead["entity_id"],
+            )
+            actor_person_id = (verified_person_id or "").strip()
+
+        before_src = lead["source_stage"]
+        before_wolf = lead["wolf_stage"]
+        c.execute(
+            "UPDATE core_leads SET wolf_stage=? WHERE lead_id=?",
+            (ws, lead_id),
+        )
+        evt = append_event(
+            lead_id,
+            "stage_changed",
+            payload={
+                "source_before": before_src,
+                "source_after": before_src,
+                "wolf_before": before_wolf,
+                "wolf_after": ws,
+                "wolf_only": True,
+            },
+            actor_type=actor_type,
+            actor_person_id=actor_person_id,
+            verified_person_id=verified_person_id,
+            require_perm=False,
+            conn=c,
+        )
+        c.commit()
+        after = get_lead(lead_id, conn=c)
+        if after and after.get("source_stage") != before_src:
+            raise LeadSpineError("source_stage mutated", code="append_only_violation")
+        return {"lead": after, "event": evt}
+    finally:
+        if own:
+            c.close()
+
+
+def record_note(
+    lead_id: str,
+    note: str,
+    *,
+    verified_person_id: str | None = None,
+    actor_type: str = "PERSON",
+    conn: sqlite3.Connection | None = None,
+    db_path: Path | str | None = None,
+) -> dict[str, Any]:
+    text = (note or "").strip()
+    if not text:
+        raise LeadSpineError("note required", code="invalid")
+    own = conn is None
+    c = conn or _open(db_path)
+    try:
+        lead = get_lead(lead_id, conn=c)
+        if not lead:
+            raise LeadSpineError("lead not found", code="not_found")
+        if actor_type == "PERSON":
+            _require_perm(
+                c,
+                verified_person_id=verified_person_id,
+                permission_code="lead.event.append",
+                brand_id=lead["brand_id"],
+                entity_id=lead["entity_id"],
+            )
+        evt = append_event(
+            lead_id,
+            "note_recorded",
+            payload={"note": text},
+            actor_type=actor_type,
+            actor_person_id=verified_person_id if actor_type == "PERSON" else None,
+            verified_person_id=verified_person_id,
+            require_perm=False,
+            conn=c,
+        )
+        c.commit()
+        return {"lead": get_lead(lead_id, conn=c), "event": evt}
+    finally:
+        if own:
+            c.close()
+
+
+def _demo_label(provenance_json: str | None) -> str | None:
+    if not provenance_json:
+        return None
+    try:
+        prov = json.loads(provenance_json)
+    except (TypeError, json.JSONDecodeError):
+        return None
+    if not isinstance(prov, dict):
+        return None
+    label = prov.get("label")
+    if isinstance(label, str) and label.strip():
+        return label.strip()
+    if prov.get("demo") is True:
+        return "DEMO"
+    return None
+
+
+def owner_display_name(
+    conn: sqlite3.Connection, owner_person_id: str | None
+) -> str | None:
+    oid = (owner_person_id or "").strip() or None
+    if not oid:
+        return None
+    row = conn.execute(
+        "SELECT display_name FROM org_persons WHERE person_id=?",
+        (oid,),
+    ).fetchone()
+    if row and row[0]:
+        return str(row[0])
+    return oid
+
+
+def lead_operator_card(
+    lead: dict[str, Any],
+    *,
+    conn: sqlite3.Connection | None = None,
+    db_path: Path | str | None = None,
+) -> dict[str, Any]:
+    """Human-first card. Database ids are secondary."""
+    own = conn is None
+    c = conn or _open(db_path)
+    try:
+        rt = response_time(lead)
+        if rt.get("status") == "UNAVAILABLE":
+            response_words = "unavailable"
+        else:
+            secs = rt.get("seconds")
+            response_words = f"{int(secs)} seconds" if secs is not None else "unavailable"
+        owner_id = lead.get("owner_person_id")
+        owner_name = owner_display_name(c, owner_id)
+        conv = lead.get("conversion_status")
+        return {
+            "lead_id": lead.get("lead_id"),
+            "demo_label": _demo_label(lead.get("provenance_json")),
+            "wolf_lifecycle": lead.get("wolf_stage") or "none",
+            "source_stage": lead.get("source_stage") if lead.get("source_stage") is not None else "none",
+            "owner": owner_name or "Unassigned",
+            "owner_person_id": owner_id,
+            "conversion": conv or "none",
+            "response_time": response_words,
+            "response_time_detail": rt,
+            "brand_id": lead.get("brand_id"),
+            "entity_id": lead.get("entity_id"),
+            "current_work_item_id": lead.get("current_work_item_id"),
+            "closed_note": (
+                "Closed is not a sale and not verified revenue."
+                if (lead.get("wolf_stage") or "").upper() == "CLOSED"
+                else None
+            ),
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def api_list_leads(
+    *,
+    verified_person_id: str,
+    brand_id: str,
+    conn: sqlite3.Connection | None = None,
+    db_path: Path | str | None = None,
+) -> dict[str, Any]:
+    """API used by GET /api/leads — raises LeadSpineError(code=denied) → 403."""
+    rows = list_leads(
+        verified_person_id=verified_person_id,
+        brand_id=brand_id,
+        conn=conn,
+        db_path=db_path,
+    )
+    own = conn is None
+    c = conn or _open(db_path)
+    try:
+        cards = [lead_operator_card(r, conn=c) for r in rows]
+        return {
+            "ok": True,
+            "brand_id": brand_id,
+            "leads": cards,
+            "count": len(cards),
+            "empty": len(cards) == 0,
+            "empty_message": (
+                "No leads for this brand yet." if len(cards) == 0 else None
+            ),
+            "honesty": {
+                "closed_is_not_a_sale": True,
+                "closed_is_not_verified_revenue": True,
+                "demo_data": True,
+            },
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def api_get_lead(
+    lead_id: str,
+    *,
+    verified_person_id: str,
+    conn: sqlite3.Connection | None = None,
+    db_path: Path | str | None = None,
+) -> dict[str, Any]:
+    own = conn is None
+    c = conn or _open(db_path)
+    try:
+        lead = read_lead(lead_id, verified_person_id=verified_person_id, conn=c)
+        events = list_lead_events(lead_id, conn=c)
+        return {
+            "ok": True,
+            "lead": lead_operator_card(lead, conn=c),
+            "raw": {
+                "lead_id": lead.get("lead_id"),
+                "source_system": lead.get("source_system"),
+                "source_id": lead.get("source_id"),
+                "source_stage": lead.get("source_stage"),
+                "wolf_stage": lead.get("wolf_stage"),
+                "conversion_status": lead.get("conversion_status"),
+                "conversion_evidence_id": lead.get("conversion_evidence_id"),
+                "first_human_touch_at": lead.get("first_human_touch_at"),
+                "current_work_item_id": lead.get("current_work_item_id"),
+                "owner_person_id": lead.get("owner_person_id"),
+            },
+            "events": events,
+        }
+    finally:
+        if own:
+            c.close()

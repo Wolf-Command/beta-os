@@ -198,6 +198,16 @@ def main(argv: list[str] | None = None) -> int:
             WHERE permission_id IN (
               'PERM-LEAD-READ','PERM-LEAD-CREATE','PERM-LEAD-EVENT','PERM-LEAD-ASSIGN'
             )
+            AND role_id NOT IN ('ROLE-LEAD-DEMO-FIXTURE')
+            """
+        ).fetchone()[0]
+        fixture_role_grants = conn.execute(
+            """
+            SELECT COUNT(*) FROM org_role_permissions
+            WHERE permission_id IN (
+              'PERM-LEAD-READ','PERM-LEAD-CREATE','PERM-LEAD-EVENT','PERM-LEAD-ASSIGN'
+            )
+            AND role_id='ROLE-LEAD-DEMO-FIXTURE'
             """
         ).fetchone()[0]
         vocabs = [
@@ -216,7 +226,8 @@ def main(argv: list[str] | None = None) -> int:
                 ts,
                 (
                     f"Lead spine; leads={n_leads}; maps={n_maps}; "
-                    f"perms={n_perms}; role_grants={role_grants}; vocabs={vocabs}"
+                    f"perms={n_perms}; role_grants={role_grants}; "
+                    f"fixture_role_grants={fixture_role_grants}; vocabs={vocabs}"
                 ),
             ),
         )
@@ -225,7 +236,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  core_leads={n_leads}")
         print(f"  core_lead_stage_maps={n_maps}")
         print(f"  lead permission codes={n_perms}")
-        print(f"  lead role grants={role_grants}")
+        print(f"  lead role grants (non-fixture)={role_grants}")
+        print(f"  lead fixture role grants={fixture_role_grants}")
         print(f"  vocabs={vocabs}")
         ok = conn.execute("PRAGMA integrity_check").fetchone()[0]
         print(f"integrity_check={ok}")
@@ -233,10 +245,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"WARN: expected 4 lead perms, got {n_perms}", file=sys.stderr)
             return 2
         if role_grants != 0:
-            print(f"WARN: lead role grants must be 0, got {role_grants}", file=sys.stderr)
+            print(f"WARN: staff/non-fixture lead role grants must be 0, got {role_grants}", file=sys.stderr)
             return 2
-        if n_leads != 0:
+        if n_leads != 0 and fixture_role_grants == 0:
             print(f"NOTE: leads already present: {n_leads}")
+        elif n_leads != 0:
+            print(f"NOTE: fixture leads present: {n_leads}")
         return 0 if ok == "ok" else 2
     finally:
         conn.close()
