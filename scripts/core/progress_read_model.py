@@ -170,11 +170,11 @@ PRIMARY_NAV = (
 )
 
 MODEL_E_UNSCORED = (
-    ("OPERATING ADOPTION", "Not scored yet"),
-    ("DATA / MEASUREMENT", "Not scored yet"),
-    ("FOUNDER INDEPENDENCE", "Not scored yet"),
-    ("FINANCIAL CONTROL", "Not scored yet"),
-    ("SALE READINESS", "Not scored yet"),
+    ("Operating Adoption", "Not scored yet"),
+    ("Data / Measurement", "Not scored yet"),
+    ("Founder Independence", "Not scored yet"),
+    ("Financial Control", "Not scored yet"),
+    ("Sale Readiness", "Not scored yet"),
 )
 
 
@@ -352,22 +352,9 @@ def system_detail_from_ledger(
 
 
 def model_e_dials(system: dict[str, Any]) -> list[dict[str, Any]]:
-    """Six Model E lines. Only SYSTEM carries a percentage; others are not scored."""
-    if system.get("status") == "OK" and system.get("system_pct") is not None:
-        system_value: Any = system["system_pct"]
-        system_display = f"{system['system_pct']}%"
-    else:
-        system_value = None
-        system_display = system.get("status") or STALE_STATUS
-    dials = [
-        {
-            "id": "SYSTEM",
-            "label": "SYSTEM",
-            "value": system_value,
-            "display": system_display,
-            "scored": system.get("status") == "OK",
-        }
-    ]
+    """Five Model E lines — all unscored. SYSTEM% is the owner headline only, not a list row."""
+    _ = system  # call-site compatibility; SYSTEM figure is not a dial row
+    dials: list[dict[str, Any]] = []
     for label, display in MODEL_E_UNSCORED:
         dials.append(
             {
@@ -1151,7 +1138,8 @@ def calculation_english() -> dict[str, Any]:
             "BUILT 0.25 · PROVEN 0.80 · READY 1.00. Round half-up to one decimal. Never store the %.",
             "If ledger row count ≠ 77, or ledger/read-model/HTML projection disagree → "
             "SCORING_PROJECTION_STALE and no percentage is shown.",
-            "Model E dials other than SYSTEM are Not scored yet — no interim 0% pretends to be a score.",
+            "Model E list is five unscored dials (Operating Adoption … Sale Readiness) — "
+            "SYSTEM% is the owner headline only; no interim 0% pretends to be a score.",
             "Factory health is separate system status ∈ {HEALTHY, DEGRADED, FAILING} — not SYSTEM maturity.",
             "LEGACY (retired as primary): Master_Build CSV + overlay mix produced a PARTIAL ESTIMATE "
             "(history note: prior display about twenty-eight percent as retired build-tracker estimate). "
@@ -1390,6 +1378,8 @@ def _build_commissioning_missions(overlay: dict[str, Any]) -> dict[str, list[dic
     waiting_on_others: list[dict[str, Any]] = []
     for m in missions:
         if not isinstance(m, dict):
+            continue
+        if m.get("example"):
             continue
         bucket = str(m.get("bucket") or "").upper()
         status = str(m.get("status") or "WAITING").upper()

@@ -188,8 +188,12 @@ def main() -> int:
         str([(c.get("id"), c.get("show_count")) for c in hero_chips]),
     )
     check(
-        "HTML Empire chips have no count strong tags in vocabulary mode",
-        'aria-label="Status vocabulary"' in HTML.read_text(encoding="utf-8"),
+        "primary card omits decorative Status vocabulary chips",
+        'aria-label="Status vocabulary"' not in HTML.read_text(encoding="utf-8"),
+    )
+    check(
+        "primary card title WOLF TRANSFORMATION",
+        "WOLF TRANSFORMATION" in HTML.read_text(encoding="utf-8"),
     )
 
     # v2.1 — waiting_class_for: SPECIFIED/IDEA/APPROVED → PLANNED (never auto POLICY)
@@ -414,11 +418,11 @@ def main() -> int:
         "Empire",
         "Owner pulse",
         "Milestone road",
-        "How far are we?",
+        "WOLF TRANSFORMATION",
+        "Technical capability built",
         "Needs you",
         "Waiting on others",
         "Policy decisions",
-        "Status vocabulary",
     ):
         check(f"HTML contains {needle}", needle in html)
 

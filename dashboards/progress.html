@@ -225,9 +225,13 @@
   @media (max-width: 640px) {
     .mobile-next { display: block; }
   }
-  .dial-label {
-    font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--accent); margin: 0 0 6px;
+  .system-headline {
+    font-family: var(--display);
+    font-size: clamp(1.55rem, 5vw, 2rem); line-height: 1.15;
+    letter-spacing: -0.02em; margin: 0;
+  }
+  .system-sub {
+    margin: 6px 0 0; font-size: 0.92rem; color: var(--muted); line-height: 1.35;
   }
   .model-e { list-style: none; margin: 12px 0 0; padding: 0; }
   .model-e li {
@@ -335,7 +339,6 @@
     const bzgPulse = v.bzg_pulse || model.bzg_pulse;
     const overall = model.overall || {};
     const phase = v.owner_phase || model.owner_phase || "";
-    const chips = v.status_chips || model.status_chips || [];
     const pulse = v.owner_pulse || model.owner_pulse || {};
     const moves = v.next_moves || model.next_moves || [];
     const wins = v.recent_wins || model.recent_wins || [];
@@ -343,11 +346,10 @@
     const domains = v.domains || model.domains || {};
     const fh = (v.factory_health || model.factory_health || {});
     const tech = v.technical_details || {};
-    const needsYou = v.needs_you || model.needs_you || [];
+    const needsYou = (v.needs_you || model.needs_you || []).filter((m) => !m.example);
     const waitingOthers = v.waiting_on_others || model.waiting_on_others || [];
     const policies = v.policy_decisions || model.policy_decisions || [];
 
-    const heroChips = chips.filter((c) => c.id !== "COMMISSIONED");
     const firstMove = moves[0];
     const stale = system.status && system.status !== "OK";
     const systemPct = (!stale && system.system_pct != null) ? system.system_pct : null;
@@ -400,14 +402,14 @@
 
     return `
       <div class="stack">
-        <div class="panel">
-          <h2>How far are we?</h2>
-          <p class="dial-label">SYSTEM</p>
+        <div class="panel" data-owner-primary="wolf-transform">
+          <h2>WOLF TRANSFORMATION</h2>
           ${stale
             ? `<div class="stale-banner" role="status">SCORING PROJECTION STALE</div>
                <p class="muted" style="margin:8px 0 0">${esc(system.stale_reason || "Ledger / read model / HTML projection disagree — no percentage shown.")}</p>`
-            : `<p class="pct">${esc(systemPct)}%<small> / 100</small></p>`
+            : `<p class="system-headline">SYSTEM — ${esc(systemPct)}%</p>`
           }
+          <p class="system-sub">Technical capability built &amp; proven</p>
           <ul class="model-e" aria-label="Model E dials">
             ${modelE.map((d) => `
               <li>
@@ -416,18 +418,12 @@
               </li>
             `).join("")}
           </ul>
-          <p class="phase-line">${esc(phase)}</p>
-          <div class="chips" aria-label="Status vocabulary">
-            ${heroChips.map((c) => `
-              <span class="chip" title="${esc(c.tooltip || "")}">${esc(c.label)}</span>
-            `).join("")}
-          </div>
-          <p class="muted" style="margin:10px 0 0">Vocabulary only — categories overlap. Counts and builder honesty live under How calculated.</p>
           <p class="legacy-note">Legacy PARTIAL ESTIMATE (Master_Build mix) is retired as the primary dial — history only${overall.overall_pct != null ? ` (was ~${esc(overall.overall_pct)}%)` : ""}.</p>
         </div>
 
         <details class="disclose">
           <summary>SYSTEM detail · 77 capabilities · counts · domains · movements</summary>
+          <p class="phase-line">${esc(phase)}</p>
           <p class="muted">${esc(detail.note || "")}</p>
           <p class="muted">Counts — ABSENT ${esc(counts.ABSENT)} · SPECIFIED ${esc(counts.SPECIFIED)} · BUILT ${esc(counts.BUILT)} · PROVEN ${esc(counts.PROVEN)} · READY ${esc(counts.READY)} · sum credits ${esc(system.sum_credits)}</p>
           <h3 style="font-size:0.95rem;margin:14px 0 8px">By domain (catalog)</h3>

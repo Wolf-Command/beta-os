@@ -89,11 +89,23 @@ def main() -> int:
     check("legacy overall marked retired_as_primary", overall.get("retired_as_primary") is True)
 
     dials = model.get("model_e") or []
-    check("model_e has 6 dials", len(dials) == 6, str(len(dials)))
-    check("first dial SYSTEM", (dials[0] or {}).get("id") == "SYSTEM")
-    unscored = [d for d in dials[1:] if d.get("display") == "Not scored yet"]
-    check("five dials Not scored yet", len(unscored) == 5, str([d.get("display") for d in dials[1:]]))
-    check("no fake 0% on unscored", all(d.get("value") is None for d in dials[1:]))
+    check("model_e has 5 dials", len(dials) == 5, str(len(dials)))
+    check("no SYSTEM dial in model_e list", all(d.get("id") != "SYSTEM" and d.get("label") != "SYSTEM" for d in dials))
+    expected_labels = [
+        "Operating Adoption",
+        "Data / Measurement",
+        "Founder Independence",
+        "Financial Control",
+        "Sale Readiness",
+    ]
+    check(
+        "five Model E labels exact",
+        [d.get("label") for d in dials] == expected_labels,
+        str([d.get("label") for d in dials]),
+    )
+    unscored = [d for d in dials if d.get("display") == "Not scored yet"]
+    check("five dials Not scored yet", len(unscored) == 5, str([d.get("display") for d in dials]))
+    check("no fake 0% on unscored", all(d.get("value") is None for d in dials))
 
     detail = model.get("system_detail") or {}
     check("detail capability_count 77", detail.get("capability_count") == 77)
@@ -193,6 +205,31 @@ def main() -> int:
     check("read model has no hard-coded 25.3", "25.3" not in rm)
     check("HTML primary dial uses system.system_pct", "system.system_pct" in html or "systemPct" in html)
     check("HTML shows Not scored yet", "Not scored yet" in html)
+    check("HTML primary title WOLF TRANSFORMATION", "WOLF TRANSFORMATION" in html)
+    check("HTML SYSTEM headline binds systemPct", "SYSTEM — ${esc(systemPct)}%" in html)
+    check(
+        "HTML subtitle technical capability",
+        "Technical capability built &amp; proven" in html
+        or "Technical capability built & proven" in html,
+    )
+    panel_match = re.search(
+        r'data-owner-primary="wolf-transform">([\s\S]*?)<p class="legacy-note">',
+        html,
+    )
+    primary_body = panel_match.group(1) if panel_match else ""
+    check("primary card markup found", bool(panel_match))
+    check(
+        "phase sentence not in primary card",
+        "phase-line" not in primary_body and "${esc(phase)}" not in primary_body,
+    )
+    check(
+        "decorative chips absent from primary card",
+        "Status vocabulary" not in primary_body
+        and "heroChips" not in primary_body
+        and 'class="chips"' not in primary_body
+        and "BUILT" not in primary_body,
+    )
+    check("phase sentence under SYSTEM detail", 'class="phase-line">${esc(phase)}' in html)
     check("HTML shows SYSTEM label", "SYSTEM" in html)
     check("HTML legacy notes PARTIAL ESTIMATE", "PARTIAL ESTIMATE" in html)
     check("HTML does not use overall_pct as primary pct dial", 'class="pct">${esc(overall.overall_pct)}' not in html)
