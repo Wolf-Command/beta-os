@@ -204,6 +204,44 @@ def main() -> int:
             money["state"] != "PAYMENT_APPROVED",
         )
 
+        events = audit.list_events(
+            entity_id="ENT-BZG",
+            source="uma_ops_console",
+            limit=50,
+            conn=conn,
+        )
+        pr_events = [
+            e
+            for e in events
+            if e.get("resource_id") == cur and e.get("source") == "uma_ops_console"
+        ]
+        check(
+            "transition writes uma_ops_console audit",
+            any((e.get("action") or "").startswith("bzg.pr.") for e in pr_events),
+            str([e.get("action") for e in pr_events][:8]),
+        )
+        hist = ops.list_history(conn=conn, limit=40)
+        lines = [
+            ln
+            for ln in (hist.get("events") or [])
+            if (ln.get("sentence") or "").strip()
+        ]
+        check(
+            "history returns non-empty human line after transition",
+            len(lines) >= 1,
+            str(hist)[:240],
+        )
+        primary = next((ln for ln in lines if ln.get("resource_id") == cur), lines[0] if lines else {})
+        sent = primary.get("sentence") or ""
+        check(
+            "history primary label is a human sentence",
+            bool(sent)
+            and cur not in sent
+            and "PERS-" not in sent
+            and not sent.startswith(("PR-", "PETTY-", "WI-", "ENT-", "EVD-", "bzg.")),
+            sent,
+        )
+
         # --- paid claim does not set verified ---
         # Seed a payment-approved fixture path via direct insert then claim
         ops.insert_pr_row(
@@ -279,6 +317,11 @@ def main() -> int:
 
         # --- Issues empty when nothing wrong ---
         conn.execute("DELETE FROM bzg_ops_purchase_requests")
+        try:
+            conn.execute("DELETE FROM bzg_ops_petty_movements")
+            conn.execute("DELETE FROM bzg_ops_petty_days")
+        except sqlite3.OperationalError:
+            pass
         # No EXCEPTION closes assumed in temp (copy may have some — filter)
         # Clear any EXCEPTION closes in temp for this check
         try:

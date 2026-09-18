@@ -31,6 +31,7 @@ VENUE_UMA = "BZG-UMA"
 AUDIT_SOURCE = "uma_ops_console"
 RESOURCE_TYPE = "bzg_purchase_request"
 RESOURCE_PETTY = "bzg_petty_movement"
+RESOURCE_PETTY_DAY = "bzg_petty_day"
 PAYMENT_PERM = "bzg.pr.payment_approve"
 
 PETTY_DIRECTIONS = frozenset({"OUT", "IN"})
@@ -370,6 +371,8 @@ def insert_petty_movement(
     cur = (currency or "").strip() or None
     mid = (movement_id or "").strip() or mint_petty_id()
     ts = now_utc_iso()
+    prior_day = get_petty_day(biz, conn=conn)
+    day_was_new = prior_day is None
     _ensure_petty_day(
         conn,
         biz,
@@ -398,7 +401,8 @@ def insert_petty_movement(
         ),
     )
     day = get_petty_day(biz, conn=conn)
-    if day and day.get("state") in ("COUNTED", "CLOSED_CLAIMED"):
+    reopened = bool(day and day.get("state") in ("COUNTED", "CLOSED_CLAIMED"))
+    if reopened:
         # New movement re-opens attention until re-counted.
         conn.execute(
             """
@@ -414,6 +418,34 @@ def insert_petty_movement(
             (mid,),
         ).fetchone()
     )
+    purpose_note = (purpose or "").strip()
+    if example:
+        purpose_note = f"Example — {purpose_note}" if purpose_note else "Example"
+    move_meta: dict[str, Any] = {"status": direc, "amount": amt}
+    if purpose_note:
+        move_meta["note"] = purpose_note
+    if cur:
+        move_meta["currency"] = cur
+    _audit_ops(
+        action="bzg.petty.movement",
+        result="SUCCEEDED",
+        resource_type=RESOURCE_PETTY,
+        resource_id=mid,
+        conn=conn,
+        metadata=move_meta,
+    )
+    if day_was_new or reopened:
+        day_note = "reopened" if reopened else "opened"
+        if example:
+            day_note = f"Example — {day_note}"
+        _audit_ops(
+            action="bzg.petty.day_state",
+            result="SUCCEEDED",
+            resource_type=RESOURCE_PETTY_DAY,
+            resource_id=biz,
+            conn=conn,
+            metadata={"status": "OPEN", "note": day_note},
+        )
     out = _public_petty_movement(row)
     assert out
     return out
@@ -463,6 +495,21 @@ def note_petty_count(
         WHERE venue=? AND business_date=?
         """,
         (state, counted, expected, note, ts, VENUE_UMA, biz),
+    )
+    count_note = note or ""
+    if day.get("example"):
+        count_note = f"Example — {count_note}" if count_note else "Example"
+    count_meta: dict[str, Any] = {"status": state}
+    if count_note:
+        count_meta["note"] = count_note
+    _audit_ops(
+        action="bzg.petty.count",
+        result="SUCCEEDED",
+        resource_type=RESOURCE_PETTY_DAY,
+        resource_id=biz,
+        conn=conn,
+        metadata=count_meta,
+        reason_code="POLICY_REQUIRED" if state == "POLICY_REQUIRED" else None,
     )
     if commit:
         conn.commit()
@@ -1052,6 +1099,44 @@ def transition_pr(
             c.close()
 
 
+def _audit_ops(
+    *,
+    action: str,
+    result: str,
+    resource_type: str,
+    resource_id: str,
+    conn: sqlite3.Connection,
+    metadata: dict[str, Any] | None = None,
+    reason_code: str | None = None,
+    actor_type: str = "SYSTEM",
+    verified_person_id: str | None = None,
+    identity: dict[str, Any] | None = None,
+) -> None:
+    """Append one uma_ops_console audit row. Same spine as PR transitions. No second store."""
+    at = (actor_type or "SYSTEM").strip().upper()
+    kwargs: dict[str, Any] = {
+        "action": action,
+        "result": result,
+        "source": AUDIT_SOURCE,
+        "actor_type": at,
+        "entity_id": ENTITY_BZG,
+        "brand_id": VENUE_UMA,
+        "resource_type": resource_type,
+        "resource_id": resource_id,
+        "reason_code": reason_code,
+        "metadata": metadata or {},
+        "conn": conn,
+        "commit": False,
+    }
+    if at == "PERSON":
+        kwargs["verified_person_id"] = verified_person_id
+        kwargs["actor_person_id"] = verified_person_id
+        if identity:
+            kwargs["actor_auth_identity_id"] = identity.get("auth_identity_id")
+            kwargs["identity_assurance"] = identity.get("assurance")
+    _audit.record_event(**kwargs)
+
+
 def _audit_pr(
     *,
     action: str,
@@ -1065,28 +1150,18 @@ def _audit_pr(
     metadata: dict[str, Any] | None = None,
     reason_code: str | None = None,
 ) -> None:
-    at = actor_type.upper()
-    kwargs: dict[str, Any] = {
-        "action": action,
-        "result": result,
-        "source": AUDIT_SOURCE,
-        "actor_type": at,
-        "entity_id": ENTITY_BZG,
-        "brand_id": VENUE_UMA,
-        "resource_type": RESOURCE_TYPE,
-        "resource_id": pr_id,
-        "reason_code": reason_code,
-        "metadata": metadata or {"status": state},
-        "conn": conn,
-        "commit": False,
-    }
-    if at == "PERSON":
-        kwargs["verified_person_id"] = verified_person_id
-        kwargs["actor_person_id"] = verified_person_id
-        if identity:
-            kwargs["actor_auth_identity_id"] = identity.get("auth_identity_id")
-            kwargs["identity_assurance"] = identity.get("assurance")
-    _audit.record_event(**kwargs)
+    _audit_ops(
+        action=action,
+        result=result,
+        resource_type=RESOURCE_TYPE,
+        resource_id=pr_id,
+        conn=conn,
+        metadata=metadata or {"status": state},
+        reason_code=reason_code,
+        actor_type=actor_type,
+        verified_person_id=verified_person_id,
+        identity=identity,
+    )
 
 
 def _safe_close_for_today(
@@ -1285,6 +1360,28 @@ def _pr_human_label(p: dict[str, Any]) -> str:
     return label
 
 
+def _petty_day_issue(d: dict[str, Any]) -> dict[str, Any]:
+    """Same attention states as Today. Omit COUNTED / CLOSED_CLAIMED (quiet when clean)."""
+    st = d.get("state") or "OPEN"
+    label = f"Petty tin · {d.get('business_date') or 'date unknown'} · {st}"
+    if d.get("example"):
+        label = f"Example — {label}"
+    if d.get("opening_float") is None:
+        label = f"{label} (float NOT FOUND)"
+    kind = {
+        "POLICY_REQUIRED": "petty_policy_required",
+        "OPEN": "petty_open_uncounted",
+        "VARIANCE_NOTED": "petty_variance_noted",
+    }.get(st, "petty_attention")
+    return {
+        "kind": kind,
+        "label": label,
+        "example": bool(d.get("example")),
+        "business_date": d.get("business_date"),
+        "href": "/bzg/uma-blu/petty",
+    }
+
+
 def list_issues(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
     """Exception rows only. Empty when nothing is wrong."""
     own = conn is None
@@ -1325,6 +1422,9 @@ def list_issues(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
                             "href": "/bzg/uma-blu/bills",
                         }
                     )
+
+        for d in _petty_attention_for_today(conn=c):
+            issues.append(_petty_day_issue(d))
 
         try:
             closes = _venue_close.list_closes(state="EXCEPTION", limit=20, conn=c)
@@ -1381,22 +1481,95 @@ def list_history(
             c.close()
 
 
+_PR_HUMAN = {
+    "bzg.pr.requested": "Purchase requested",
+    "bzg.pr.approved": "Purchase approved",
+    "bzg.pr.ordered": "Purchase ordered",
+    "bzg.pr.received": "Goods received",
+    "bzg.pr.bill_received": "Bill received",
+    "bzg.pr.payment_requested": "Payment requested",
+    "bzg.pr.payment_approved": "Payment approved",
+    "bzg.pr.paid_claimed": "Payment claimed, not yet verified",
+    "bzg.pr.payment_verified": "Payment verified",
+    "bzg.pr.closed": "Purchase closed",
+    "bzg.pr.rejected": "Purchase rejected",
+    "bzg.pr.policy_required": "Payment approval needs a policy (authority limit missing)",
+}
+_ENG_ID_PREFIXES = ("PR-", "PETTY-", "PERS-", "WI-", "ENT-", "EVD-", "ASG-", "PERM-", "ROLE-")
+
+
+def _detail_not_id(text: str | None) -> str:
+    t = (text or "").strip()
+    if not t or t.startswith(_ENG_ID_PREFIXES):
+        return ""
+    return t
+
+
 def _human_audit_line(e: dict[str, Any]) -> dict[str, Any]:
     action = (e.get("action") or "").strip()
     result = (e.get("result") or "").strip()
     when = e.get("occurred_at") or e.get("recorded_at") or ""
     resource = e.get("resource_id") or ""
-    sentence = action.replace(".", " ").replace("_", " ").strip()
-    if result == "DENIED":
-        sentence = f"{sentence} — not allowed"
-    elif result == "SUCCEEDED":
-        sentence = f"{sentence} — done"
-    if e.get("reason_code") == "POLICY_REQUIRED":
-        sentence = "Payment approval needs a policy (authority limit missing)"
+    meta = e.get("metadata") if isinstance(e.get("metadata"), dict) else {}
+    note = _detail_not_id(str(meta.get("note") or ""))
+    status = str(meta.get("status") or "").strip()
+    reason = (e.get("reason_code") or "").strip()
+
+    if action.startswith("bzg.pr.") or e.get("resource_type") == RESOURCE_TYPE:
+        if action == "bzg.pr.policy_required" or reason == "POLICY_REQUIRED":
+            sentence = _PR_HUMAN["bzg.pr.policy_required"]
+        else:
+            sentence = _PR_HUMAN.get(action) or "Purchase request updated"
+            if result == "DENIED":
+                sentence = f"{sentence} — not allowed"
+    elif action == "bzg.petty.movement" or e.get("resource_type") == RESOURCE_PETTY:
+        if status == "IN":
+            sentence = "Petty cash in recorded"
+        elif status == "OUT":
+            sentence = "Petty cash out recorded"
+        else:
+            sentence = "Petty cash movement recorded"
+        if note:
+            sentence = f"{sentence} — {note}"
+    elif action == "bzg.petty.count":
+        if reason == "POLICY_REQUIRED" or status == "POLICY_REQUIRED":
+            if "NOT FOUND" in (meta.get("note") or ""):
+                sentence = "Petty tin count blocked — opening float NOT FOUND"
+            else:
+                sentence = "Petty tin count needs a variance policy"
+        elif status == "COUNTED":
+            sentence = "Petty tin counted"
+        elif status == "VARIANCE_NOTED":
+            sentence = "Petty tin variance noted"
+        else:
+            sentence = "Petty tin count recorded"
+        if note.startswith("Example") and not sentence.startswith("Example"):
+            sentence = f"Example — {sentence}"
+    elif action == "bzg.petty.day_state":
+        if "reopen" in note.lower():
+            sentence = "Petty tin reopened after a new movement"
+        else:
+            sentence = "Petty tin opened"
+        if note.startswith("Example") and not sentence.startswith("Example"):
+            sentence = f"Example — {sentence}"
+    else:
+        words = action.replace(".", " ").replace("_", " ").strip()
+        if words.startswith("venue close"):
+            words = ("Daily close " + words[len("venue close") :].strip()).strip()
+        sentence = (words[:1].upper() + words[1:]) if words else "Recorded"
+        if result == "DENIED":
+            sentence = f"{sentence} — not allowed"
+        elif result == "SUCCEEDED":
+            sentence = f"{sentence} — done"
+
+    if resource and sentence.strip() == resource:
+        sentence = "Uma Blu record updated"
+    if sentence.startswith(_ENG_ID_PREFIXES):
+        sentence = "Uma Blu record updated"
     return {
         "when": when,
         "sentence": sentence[:200],
-        "resource_id": resource or None,  # detail only; UI may hide
+        "resource_id": resource or None,  # detail only; UI shows sentence
     }
 
 

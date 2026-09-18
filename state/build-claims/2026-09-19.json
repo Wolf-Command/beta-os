@@ -1,0 +1,12 @@
+{
+  "date": "2026-09-19",
+  "claims": [
+    {
+      "id": "uma-history-issues-read-models",
+      "claim": "Uma Blu History and Issues stay one audit spine: PR transitions and petty movement/count/day-state emit source uma_ops_console; History lines are human sentences; Issues include petty POLICY_REQUIRED and open tin, quiet when clean; float NOT_FOUND; payment_execution NOT_BUILT; 0 new live non-example petty rows; Production :8787 untouched",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_uma_ops_console.py >/tmp/uma-hist-ops.out 2>&1; tail -2 /tmp/uma-hist-ops.out; python3 scripts/tests/test_uma_petty_cash.py >/tmp/uma-hist-petty.out 2>&1; tail -2 /tmp/uma-hist-petty.out; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/bzg/uma-blu; curl -sS -o /dev/null -w 'hist:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/uma-blu/history; curl -sS -o /dev/null -w 'issues:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/uma-blu/issues; sqlite3 catalog/content_library.sqlite \"SELECT COUNT(*) FROM bzg_ops_petty_movements WHERE example=0;\"; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0)\"",
+      "expect": "PASS=24 FAIL=0; PASS=52 FAIL=0; page:200; hist:200; issues:200; non-example petty 0; 8787 True",
+      "by": "cursor-uma-history-issues"
+    }
+  ]
+}

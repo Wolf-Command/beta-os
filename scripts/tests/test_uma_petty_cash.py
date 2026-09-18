@@ -224,6 +224,66 @@ def main() -> int:
             str(counted.get("expected_amount")),
         )
 
+        petty_events = audit.list_events(
+            entity_id="ENT-BZG",
+            source="uma_ops_console",
+            limit=40,
+            conn=conn,
+        )
+        check(
+            "petty movement writes uma_ops_console audit",
+            any(e.get("action") == "bzg.petty.movement" and e.get("source") == "uma_ops_console" for e in petty_events),
+            str([e.get("action") for e in petty_events][:8]),
+        )
+        check(
+            "petty count writes uma_ops_console audit",
+            any(
+                e.get("action") == "bzg.petty.count" and e.get("reason_code") == "POLICY_REQUIRED"
+                for e in petty_events
+            ),
+            str([e.get("action") for e in petty_events][:8]),
+        )
+
+        forced = ops.list_issues(conn=conn)
+        forced_rows = forced.get("issues") or []
+        check(
+            "Issues lists petty POLICY_REQUIRED when fixture forces it",
+            any(
+                i.get("kind") == "petty_policy_required"
+                or (
+                    "Petty" in (i.get("label") or "")
+                    and "POLICY_REQUIRED" in (i.get("label") or "")
+                )
+                for i in forced_rows
+            ),
+            str(forced_rows)[:400],
+        )
+        check(
+            "petty issue label is human",
+            all(
+                "PETTY-" not in (i.get("label") or "") and "PERS-" not in (i.get("label") or "")
+                for i in forced_rows
+            ),
+            str(forced_rows)[:300],
+        )
+
+        conn.execute("DELETE FROM bzg_ops_petty_movements")
+        conn.execute("DELETE FROM bzg_ops_petty_days")
+        conn.execute("DELETE FROM bzg_ops_purchase_requests")
+        try:
+            conn.execute(
+                "UPDATE venue_daily_closes SET state='OPEN' WHERE state='EXCEPTION'"
+            )
+        except sqlite3.OperationalError:
+            pass
+        conn.commit()
+        quiet = ops.list_issues(conn=conn)
+        check(
+            "Issues quiet when petty clean",
+            quiet.get("empty") is True and len(quiet.get("issues") or []) == 0,
+            str(quiet)[:300],
+        )
+
         # Ephemeral HTTP: page + API
         import serve_beta as sb
 
