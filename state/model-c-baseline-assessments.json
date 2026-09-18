@@ -85,7 +85,7 @@
     "Build SOP loop evidence-learn-approve-version-train-use",
     "UNKNOWN",
     "MED",
-    "Catalog/Spec only \u2014 not BUILT"
+    "Catalog/Spec only — not BUILT"
   ],
   "CAP-CORE-12": [
     "BUILT",
@@ -121,7 +121,7 @@
   ],
   "CAP-GGV-04": [
     "BUILT",
-    "Lead boards/ingest patterns (Habitat leads, Ivy stale) \u2014 partial triage",
+    "Lead boards/ingest patterns (Habitat leads, Ivy stale) — partial triage",
     "Governed speed-to-lead capability with tests/red-team",
     "UNKNOWN",
     "MED",
@@ -480,20 +480,20 @@
     "Helpers are not CAP READY"
   ],
   "CAP-INTEL-02": [
-    "BUILT",
-    "authorised_knowledge.py + test PASS=51 + commit 2908dad + CAP-INTEL-02-03-EVIDENCE-BIND-2026-09-18.md; Matt ACCEPTED BUILT 2026-09-18 (not PROVEN)",
-    "Live Owner API / live authorised retrieval prove",
-    "UNKNOWN",
+    "PROVEN",
+    "c4ba95a live Habitat registry + NAS PDF page/hash provenance + test_authorised_knowledge_live.py green + fixture PASS=51; Matt ACCEPTED PROVEN 2026-09-18 (not READY)",
+    "READY needs sustained human workflow use, not another fixture",
     "HIGH",
-    "Accepted BUILT 2026-09-18 owner audit; not PROVEN"
+    "HIGH",
+    "Accepted PROVEN 2026-09-18 owner audit; not READY. Prior BUILT kept in state/model-c-score-history.jsonl"
   ],
   "CAP-INTEL-03": [
-    "BUILT",
-    "Same AKR module provenance/confidence/conflict + Grok review PASS 2908dad; Matt ACCEPTED BUILT 2026-09-18 (not PROVEN)",
-    "Live conflict resolution against real multi-source allowlist",
-    "UNKNOWN",
+    "PROVEN",
+    "c4ba95a real headline_case CONFLICTED + empty canonical NOT_CANONICAL + NOT_FOUND attempt_log + lane split; Matt ACCEPTED PROVEN 2026-09-18 (not READY)",
+    "READY needs sustained human workflow use, not another fixture",
     "HIGH",
-    "Accepted BUILT 2026-09-18 owner audit; not PROVEN"
+    "HIGH",
+    "Accepted PROVEN 2026-09-18 owner audit; not READY. Prior BUILT kept in state/model-c-score-history.jsonl"
   ],
   "CAP-INTEL-04": [
     "BUILT",
@@ -561,7 +561,7 @@
   ],
   "CAP-INTG-07": [
     "SPECIFIED",
-    ".env.example + .gitignore env globs + RULE-Beta-Construction-Production-Sacred; scripts/tests/test_cap_intg_07_environment_separation.py; Matt REJECTED PROVEN 2026-09-18 \u2014 repo checks are evidence not PROVEN",
+    ".env.example + .gitignore env globs + RULE-Beta-Construction-Production-Sacred; scripts/tests/test_cap_intg_07_environment_separation.py; Matt REJECTED PROVEN 2026-09-18 — repo checks are evidence not PROVEN",
     "Deterministic vault/rotation/separation prove for PROVEN; vault product for READY",
     "UNKNOWN",
     "HIGH",
