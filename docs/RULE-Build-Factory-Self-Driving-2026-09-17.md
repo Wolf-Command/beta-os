@@ -123,3 +123,26 @@ A mission has an **ordered authorised lane list**. Each lane: `id`, `bound`, `st
 Idempotent: duplicate completion / watcher / Grok-FAIL events do not double-complete or increment past the ceiling.
 
 This is **deterministic queue software**, not a new agent. Peaches still orchestrates Grok judgment; Cursor still writes application code. No maturity credit from proving missions.
+
+---
+
+## Amendment 2026-09-19 — Calendar-free ACTIVE supervisor
+
+**Event:** 18→19 Sep History/Issues Cursor died ~00:21 Saturday. Watch routine `*/5 * * * 1-5` did not fire. Matt `status` at 06:48 resumed work. **DISAPPEARANCE TEST 18→19 Sep: FAIL** (see `docs/deliveries/FACTORY-DISAPPEARANCE-TEST-2026-09-18-19.md` — do not rewrite).
+
+### Root cause
+
+Supervisor wake depended on Grok Bot weekday cron. `bf_watch` / `bf_advance` had no Saturday filter; the calendar gate was the routine schedule.
+
+### Fix (active-mission supervisor)
+
+1. `scripts/build-factory/bf_supervisor.py` — calendar-blind tick: IDLE when inactive; ADVANCE on EXIT/CURSOR_DONE; RECOVER_INSPECT on dead/no-exit; ESCALATE at inspect retry ceiling; `require_matt` always false.
+2. LaunchAgent `net.wolfcommand.build-factory-supervisor` — `StartInterval` 300, **no Weekday/Month/Day calendar**.
+3. Grok routine `build-factory-watch` schedule → `*/5 * * * *` (all days); quiet when inactive.
+4. Tests: `scripts/tests/test_build_factory_supervisor.py`.
+
+### Invariant
+
+**ACTIVE MISSION → FACTORY ADVANCEMENT AVAILABLE REGARDLESS OF CALENDAR**
+
+Matt prompt is not an input to the state machine.
