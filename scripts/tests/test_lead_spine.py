@@ -11,6 +11,7 @@ import re
 import shutil
 import sqlite3
 import sys
+import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -714,6 +715,11 @@ def main() -> int:
 
     print(f"PASS={PASS} FAIL={FAIL}")
     return 0 if FAIL == 0 else 1
+
+
+class TestLeadSpine(unittest.TestCase):
+    def test_lead_spine_checks(self) -> None:
+        self.assertEqual(main(), 0)
 
 
 if __name__ == "__main__":

@@ -781,25 +781,52 @@ def record_human_touch(
     *,
     touched_at: str | None = None,
     verified_person_id: str | None = None,
-    actor_type: str = "SYSTEM",
+    actor_type: str = "PERSON",
     conn: sqlite3.Connection | None = None,
     db_path: Path | str | None = None,
 ) -> dict[str, Any]:
+    """Record a person touch. Receipt clock is source_observed_at, never wolf_ingested_at."""
+    if actor_type != "PERSON":
+        raise LeadSpineError("actor_type must be PERSON", code="invalid_actor")
+    vpid = (verified_person_id or "").strip()
+    if not vpid:
+        raise LeadSpineError("verified_person_id required", code="denied")
+    if touched_at is None or not str(touched_at).strip():
+        raise LeadSpineError("touched_at required", code="invalid")
+    ts = str(touched_at).strip()
+
     own = conn is None
     c = conn or _open(db_path)
     try:
         lead = get_lead(lead_id, conn=c)
         if not lead:
             raise LeadSpineError("lead not found", code="not_found")
-        if actor_type == "PERSON":
-            _require_perm(
-                c,
-                verified_person_id=verified_person_id,
-                permission_code="lead.event.append",
-                brand_id=lead["brand_id"],
-                entity_id=lead["entity_id"],
+        observed = (lead.get("source_observed_at") or "").strip()
+        if not observed:
+            raise LeadSpineError(
+                "source_observed_at missing",
+                code="invalid_chronology",
             )
-        ts = touched_at or now_utc_iso()
+        try:
+            touch_dt = _parse_ts(ts)
+            observed_dt = _parse_ts(observed)
+        except (TypeError, ValueError) as exc:
+            raise LeadSpineError(
+                "unparseable touch chronology",
+                code="invalid_chronology",
+            ) from exc
+        if touch_dt < observed_dt:
+            raise LeadSpineError(
+                "touched_at before source_observed_at",
+                code="invalid_chronology",
+            )
+        _require_perm(
+            c,
+            verified_person_id=vpid,
+            permission_code="lead.event.append",
+            brand_id=lead["brand_id"],
+            entity_id=lead["entity_id"],
+        )
         if lead["first_human_touch_at"] is None:
             c.execute(
                 "UPDATE core_leads SET first_human_touch_at=? WHERE lead_id=?",
@@ -808,10 +835,10 @@ def record_human_touch(
         evt = append_event(
             lead_id,
             "human_touch_recorded",
-            payload={"touched_at": ts},
-            actor_type=actor_type,
-            actor_person_id=verified_person_id if actor_type == "PERSON" else None,
-            verified_person_id=verified_person_id,
+            payload={"touched_at": ts, "person_id": vpid},
+            actor_type="PERSON",
+            actor_person_id=vpid,
+            verified_person_id=vpid,
             occurred_at=ts,
             require_perm=False,
             conn=c,
@@ -1123,7 +1150,7 @@ def response_time(
     touch = lead.get("first_human_touch_at")
     if not touch:
         return {"status": "UNAVAILABLE", "seconds": None}
-    start = lead.get("source_observed_at") or lead.get("wolf_ingested_at")
+    start = lead.get("source_observed_at")
     if not start:
         return {"status": "UNAVAILABLE", "seconds": None}
     seconds = (_parse_ts(touch) - _parse_ts(start)).total_seconds()
