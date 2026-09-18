@@ -596,10 +596,21 @@
           <h2>Habitat · PLAN → LEARN</h2>
           ${renderStages((v.habitat_owner || {}).stages)}
           <p class="muted">Write LOCKED on Metricool. BUILT ≠ COMMISSIONED ≠ LIVE.</p>
-          ${v.visual_pct != null ? `${bar(v.visual_pct)}<p class="muted">${esc(v.plain_phase || "")} · ${esc(v.pct)}%</p>` : ""}
+          ${v.visual_pct != null ? `${bar(v.visual_pct)}<p class="muted">${esc(v.plain_phase || "")} · ${esc(v.pct)}% · ESTIMATED</p>` : ""}
           ${v.biggest_gap ? `<p class="muted" style="color:var(--warn)">Biggest gap: ${esc(v.biggest_gap)}</p>` : ""}
         </div>
         <div class="panel" style="margin-top:12px"><h2>GGV capabilities</h2>${renderItems(v.items)}</div>
+      `;
+    }
+    if (view === "AMG") {
+      return `
+        <div class="panel">
+          <h2>AMG · Atrium</h2>
+          ${v.visual_pct != null ? `${bar(v.visual_pct)}<p class="muted">${esc(v.plain_phase || "")} · ${esc(v.pct)}% · ESTIMATED</p>` : (v.pct != null ? `<p class="muted">Domain estimate ${esc(v.pct)}% · ESTIMATED</p>` : "")}
+          ${v.plain_phase && v.visual_pct == null ? `<p class="muted">${esc(v.plain_phase)}</p>` : ""}
+          ${v.biggest_gap ? `<p class="muted" style="color:var(--warn)">Biggest gap: ${esc(v.biggest_gap)}</p>` : ""}
+        </div>
+        <div class="panel" style="margin-top:12px"><h2>AMG capabilities</h2>${renderItems(v.items)}</div>
       `;
     }
     if (view === "BZG") {
@@ -609,6 +620,8 @@
           <h2>BZG · Uma Blu</h2>
           <p class="muted" style="margin-top:0"><a class="back" href="/bzg">Open BZG</a> · <a class="back" href="/bzg/uma-blu">Uma Blu</a></p>
           ${bp ? `<div class="bzg-pulse">Daily Close: <strong>${esc((bp.daily_close || {}).label || "—")}</strong> · PR attention <strong>${esc(bp.pr_attention_count)}</strong> · POLICY REQUIRED <strong>${esc(bp.policy_required_count)}</strong> · unresolved <strong>${esc(bp.unresolved_issues_count)}</strong></div>` : `<p class="muted">Operational pulse unavailable.</p>`}
+          ${v.visual_pct != null ? `${bar(v.visual_pct)}<p class="muted">${esc(v.plain_phase || "")} · ${esc(v.pct)}% · ESTIMATED</p>` : (v.pct != null ? `<p class="muted">Domain estimate ${esc(v.pct)}% · ESTIMATED</p>` : "")}
+          ${v.biggest_gap ? `<p class="muted" style="color:var(--warn)">Biggest gap: ${esc(v.biggest_gap)}</p>` : ""}
           <h2 style="margin-top:16px">Uma Close · ESB DATA → VERIFIED CLOSE</h2>
           ${renderStages((v.uma_owner || {}).stages)}
           <p class="muted">${esc((v.uma_owner || {}).waiting_plain || (v.uma_close || {}).waiting || "")} · ${esc((v.uma_owner || {}).variance_plain || "")}</p>

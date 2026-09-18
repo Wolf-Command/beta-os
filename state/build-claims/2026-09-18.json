@@ -63,6 +63,20 @@
       "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_dashboard_truth.py >/tmp/dash-truth.out 2>&1; tail -3 /tmp/dash-truth.out; python3 -c \"import sys; sys.path.insert(0,'/Users/wolfterminal/beta-os/scripts'); from core import progress_read_model as p; m=p.build_read_model(); print(m['system']['system_pct'], m['system']['sum_credits_exact'], m['system']['status'])\"; curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8788/progress; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0)\"",
       "expect": "PASS=50 FAIL=0; system_pct one-decimal; sum 19.45; status OK; /progress 200; 8787 True",
       "by": "cursor-dashboard-truth"
+    },
+    {
+      "id": "owner-cockpit-ux-system-once-2026-09-18",
+      "claim": "Beta /progress primary card is WOLF TRANSFORMATION with one SYSTEM headline bound to system.system_pct; model_e has exactly five unscored dials (no SYSTEM row); phase sentence under SYSTEM detail; decorative vocabulary chips absent from primary card; Production :8787 untouched",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_dashboard_truth.py >/tmp/owner-cockpit.out 2>&1; tail -3 /tmp/owner-cockpit.out; python3 -c \"import sys; sys.path.insert(0,'/Users/wolfterminal/beta-os/scripts'); from core import progress_read_model as p; m=p.build_read_model(); print(m['system']['system_pct'], len(m['model_e']), [d['label'] for d in m['model_e']])\" ; curl -sS http://127.0.0.1:8788/progress | rg -c 'WOLF TRANSFORMAT|How far are we\\?|Status vocabulary' ; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0)\"",
+      "expect": "PASS=58 FAIL=0; system_pct computed; model_e n=5 no SYSTEM; HTML has WOLF TRANSFORMA; no How far / Status vocabulary; 8787 True",
+      "by": "cursor-owner-cockpit-ux"
+    },
+    {
+      "id": "empire-surfaces-estimated-2026-09-18",
+      "claim": "Beta /progress entity views: AMG dedicated AMG \u00b7 Atrium panel; GGV/AMG/BZG domain pct labelled ESTIMATED (not SYSTEM); Empire WOLF TRANSFORMATION primary card untouched; Production :8787 untouched",
+      "check": "python3 /Users/wolfterminal/beta-os/scripts/tests/test_dashboard_truth.py >/tmp/empire-surfaces.out 2>&1; python3 /Users/wolfterminal/beta-os/scripts/tests/test_progress_dashboard.py >/tmp/empire-progress.out 2>&1; tail -3 /tmp/empire-surfaces.out; tail -3 /tmp/empire-progress.out; rg -n 'AMG \u00b7 Atrium|if \\(view === \"AMG\"\\)|% \u00b7 ESTIMATED' /Users/wolfterminal/beta-os/dashboards/progress.html | head -20; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0)\"",
+      "expect": "PASS=61 FAIL=0; progress 197 passed 0 failed; AMG \u00b7 Atrium + AMG branch + ESTIMATED labels present; 8787 True",
+      "by": "cursor-empire-surfaces"
     }
   ],
   "restored_by": "peaches-factory-verify",

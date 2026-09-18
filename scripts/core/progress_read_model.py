@@ -1778,6 +1778,16 @@ def build_read_model(
                 "items": items,
                 "habitat": verticals.get("habitat"),
             }
+        elif view_name == "AMG":
+            items = [i for i in all_scored if i.get("domain") == "AMG"]
+            views[view_name] = {
+                "view": view_name,
+                "pct": card["AMG"]["pct"],
+                "plain_phase": card["AMG"]["plain_phase"],
+                "biggest_gap": card["AMG"]["biggest_gap"],
+                "visual_pct": card["AMG"]["visual_pct"],
+                "items": items,
+            }
         elif view_name == "BZG":
             items = [i for i in all_scored if i.get("domain") == "BZG"]
             views[view_name] = {

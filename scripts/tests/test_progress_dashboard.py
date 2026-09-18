@@ -423,8 +423,23 @@ def main() -> int:
         "Needs you",
         "Waiting on others",
         "Policy decisions",
+        "AMG · Atrium",
     ):
         check(f"HTML contains {needle}", needle in html)
+    check("HTML AMG dedicated render branch", 'if (view === "AMG")' in html)
+    check(
+        "HTML GGV/AMG/BZG domain pct ESTIMATED",
+        html.count("${esc(v.pct)}% · ESTIMATED") >= 3,
+        str(html.count("${esc(v.pct)}% · ESTIMATED")),
+    )
+    check("HTML SYSTEM headline binds once", html.count("SYSTEM — ${esc(systemPct)}%") == 1)
+    amg_view = (model.get("views") or {}).get("AMG") or {}
+    check("AMG view has plain_phase", bool(amg_view.get("plain_phase")))
+    check("AMG view has biggest_gap", bool(amg_view.get("biggest_gap")))
+    check("AMG view has pct", isinstance(amg_view.get("pct"), (int, float)))
+    for dname in ("GGV", "AMG", "BZG"):
+        dv = (model.get("views") or {}).get(dname) or {}
+        check(f"{dname} view pct is domain estimate field", dv.get("pct") is not None)
 
     # Overlay owner_cockpit provenance
     oc = overlay.get("owner_cockpit") or {}

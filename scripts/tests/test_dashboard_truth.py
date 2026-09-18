@@ -207,6 +207,17 @@ def main() -> int:
     check("HTML shows Not scored yet", "Not scored yet" in html)
     check("HTML primary title WOLF TRANSFORMATION", "WOLF TRANSFORMATION" in html)
     check("HTML SYSTEM headline binds systemPct", "SYSTEM — ${esc(systemPct)}%" in html)
+    # Entity surfaces P2 — dedicated AMG; domain % honesty on GGV/AMG/BZG
+    check("HTML AMG dedicated title AMG · Atrium", "AMG · Atrium" in html)
+    check("HTML AMG dedicated render branch", 'if (view === "AMG")' in html)
+    check(
+        "HTML GGV/AMG/BZG domain pct labelled ESTIMATED",
+        html.count("${esc(v.pct)}% · ESTIMATED") >= 3
+        and 'if (view === "GGV")' in html
+        and 'if (view === "AMG")' in html
+        and 'if (view === "BZG")' in html,
+        str(html.count("${esc(v.pct)}% · ESTIMATED")),
+    )
     check(
         "HTML subtitle technical capability",
         "Technical capability built &amp; proven" in html
