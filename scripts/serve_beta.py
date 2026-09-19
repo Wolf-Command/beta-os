@@ -87,6 +87,7 @@ from core import intel_orchestration as _intel
 from core import intel_eval_cost as _intel_cost
 from core import lead_spine as _lead_spine
 from core import integration_health as _integration_health
+from core import sop_factory as _sop
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1633,6 +1634,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/integration-health":
             self._integration_health_get()
             return
+        # CAP-CORE-11 SOP Factory v1. Owner or role. Anon → 403. Not live without approve.
+        if path == "/api/sop":
+            self._sop_list()
+            return
+        m_sop = re.match(r"^/api/sop/([^/]+)$", path)
+        if m_sop:
+            self._sop_read(m_sop.group(1))
+            return
         m_vc = re.match(r"^/api/venue-close/([^/]+)$", path)
         if m_vc and m_vc.group(1) not in (
             "open",
@@ -2106,6 +2115,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
         )
         if m_lead_act:
             self._post_lead_action(m_lead_act.group(1), m_lead_act.group(2))
+            return
+
+        if path == "/api/sop/draft":
+            self._sop_draft_post()
+            return
+        if path == "/api/sop/version":
+            self._sop_version_post()
+            return
+        if path == "/api/sop/approve":
+            self._sop_approve_post()
             return
 
         if path == "/api/intel/eval-cost":
@@ -3399,6 +3418,124 @@ class BetaHandler(SimpleHTTPRequestHandler):
         self._send_json(
             {"ok": True, "person_id": identity.get("person_id"), **out}
         )
+
+    def _sop_actor(self, action: str, body: dict | None = None) -> tuple[str, bool] | None:
+        """Identity required. Owner always. Role only if rbac.can already grants it.
+
+        Does not insert a permission. Anonymous fails closed.
+        """
+        identity = self._resolve_identity(body)
+        if not identity.get("ok"):
+            self._send_identity_deny(
+                identity, required_permission=_sop.permission_for(action)
+            )
+            return None
+        person_id = (identity.get("person_id") or "").strip()
+        if not person_id:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "denied",
+                    "message": "anonymous callers are refused",
+                    **_sop.honesty_flags(),
+                },
+                status=403,
+            )
+            return None
+        role_allowed = False
+        if person_id != _sop.OWNER_PERSON:
+            try:
+                role_allowed = bool(
+                    _rbac.can(person_id, _sop.permission_for(action))
+                )
+            except Exception:  # noqa: BLE001
+                role_allowed = False
+        return person_id, role_allowed
+
+    def _sop_fail(self, exc: Exception) -> None:
+        code = getattr(exc, "code", "invalid")
+        if code == "denied":
+            status = 403
+        elif code == "not_found":
+            status = 404
+        else:
+            status = 400
+        self._send_json(
+            {
+                "ok": False,
+                "error": code,
+                "message": str(exc),
+                **_sop.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _sop_list(self) -> None:
+        actor = self._sop_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            out = _sop.list_sops(person_id, role_allowed=role_allowed)
+        except _sop.SopFactoryError as exc:
+            self._sop_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"ok": True, "person_id": person_id, **out})
+
+    def _sop_read(self, sop_id: str) -> None:
+        actor = self._sop_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            out = _sop.read_sop(sop_id, person_id, role_allowed=role_allowed)
+        except _sop.SopFactoryError as exc:
+            self._sop_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"ok": True, "person_id": person_id, **out})
+
+    def _sop_post(self, action: str, fn) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "bad_payload",
+                    "message": f"invalid JSON: {exc}",
+                    **_sop.honesty_flags(),
+                },
+                status=400,
+            )
+            return
+        actor = self._sop_actor(action, body)
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            out = fn(body, person_id=person_id, role_allowed=role_allowed)
+        except _sop.SopFactoryError as exc:
+            self._sop_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"ok": True, "person_id": person_id, **out})
+
+    def _sop_draft_post(self) -> None:
+        self._sop_post("draft", _sop.create_draft)
+
+    def _sop_version_post(self) -> None:
+        self._sop_post("version", _sop.append_version)
+
+    def _sop_approve_post(self) -> None:
+        self._sop_post("approve", _sop.approve)
 
     # ----- Uma Blu ops (Devi commissioning: fail-closed) -----
 
