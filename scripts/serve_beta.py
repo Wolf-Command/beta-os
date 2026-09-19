@@ -91,6 +91,7 @@ from core import tech_capability_registry as _tech_registry
 from core import sop_factory as _sop
 from core import strat_12wy_prove as _strat_12wy
 from core import escalation_burndown as _burndown
+from core import sale_evidence_pack as _sale_pack
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1653,6 +1654,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/core/escalation-burndown":
             self._escalation_burndown_get()
             return
+        # CAP-SALE-01 framework. Owner read. No VDR, no filled evidence.
+        if self._sale_pack_export_code(path):
+            self._sale_pack_write_refused(path)
+            return
+        if path == "/api/sale-evidence-pack":
+            self._sale_pack_get(qs)
+            return
+        if path == "/api/sale-evidence-pack/domains":
+            self._sale_pack_get(qs, domains_only=True)
+            return
+        m_sale = re.match(r"^/api/sale-evidence-pack/([^/]+)$", path)
+        if m_sale:
+            self._sale_pack_get(qs, m_sale.group(1))
+            return
         # CAP-CORE-11 SOP Factory v1. Owner or role. Anon → 403. Not live without approve.
         if path == "/api/sop":
             self._sop_list()
@@ -1910,6 +1925,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._escalation_burndown_page()
             return
+        elif path in (
+            "/sale-evidence-pack",
+            "/sale-evidence-pack/",
+            "/sale-evidence-pack.html",
+            "/dashboards/sale-evidence-pack.html",
+        ):
+            self._sale_pack_page()
+            return
         elif path in ("/uma-blu-close", "/uma-blu-close/"):
             self.path = "/uma-blu-close.html"
         elif path in ("/bzg", "/bzg/"):
@@ -1963,6 +1986,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/core/escalation-burndown" or path.startswith("/api/core/escalation-burndown/"):
             self._escalation_burndown_write_refused()
+            return
+        if path == "/api/sale-evidence-pack" or path.startswith("/api/sale-evidence-pack/") or self._sale_pack_export_code(path):
+            self._sale_pack_write_refused(path)
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -2196,6 +2222,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/core/escalation-burndown" or path.startswith("/api/core/escalation-burndown/"):
             self._escalation_burndown_write_refused()
             return
+        if path == "/api/sale-evidence-pack" or path.startswith("/api/sale-evidence-pack/") or self._sale_pack_export_code(path):
+            self._sale_pack_write_refused(path)
+            return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
             self._patch_core_work_item(m_wi.group(1))
@@ -2377,6 +2406,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/core/escalation-burndown" or path.startswith("/api/core/escalation-burndown/"):
             self._escalation_burndown_write_refused()
+            return
+        if path == "/api/sale-evidence-pack" or path.startswith("/api/sale-evidence-pack/") or self._sale_pack_export_code(path):
+            self._sale_pack_write_refused(path)
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -3688,6 +3720,194 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "external_writes": False,
                 "ledger_write": False,
                 "needs_matt_auto_cleared": False,
+            },
+            status=405,
+        )
+
+    def _require_sale_pack_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Same Owner gate as the burn-down."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Sale evidence pack is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "vdr_export": False,
+                    "buyer_export": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "external_writes": False,
+                    "vdr_export": False,
+                    "buyer_export": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _sale_pack_export_code(self, path: str) -> str | None:
+        if path in {
+            "/api/vdr/export",
+            "/api/sale-evidence-pack/export",
+            "/api/sale-evidence-pack/vdr",
+        }:
+            return "vdr"
+        if path in {
+            "/api/buyer-mode/export",
+            "/api/buyer/export",
+            "/api/sale-evidence-pack/buyer-export",
+        }:
+            return "buyer"
+        return None
+
+    def _sale_pack_page(self) -> None:
+        identity = self._require_sale_pack_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "sale-evidence-pack.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Sale evidence pack page is missing.",
+                    "vdr_export": False,
+                    "buyer_export": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _sale_pack_get(self, qs: dict, control_id: str | None = None, domains_only: bool = False) -> None:
+        identity = self._require_sale_pack_owner()
+        if identity is None:
+            return
+        export = (qs.get("export") or [""])[0]
+        fill = (qs.get("fill") or [""])[0]
+        vdr = (qs.get("vdr") or [""])[0]
+        entity = (qs.get("entity") or [""])[0] or None
+        domain = (qs.get("domain") or [""])[0] or None
+        try:
+            _sale_pack.guard_query(export=export, fill=fill, vdr=vdr)
+            if domains_only:
+                full = _sale_pack.build_pack()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "domains": full["domains"],
+                    "unmapped": full["unmapped"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "vdr_export": False,
+                    "buyer_export": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif control_id:
+                report = _sale_pack.read_control(control_id)
+            else:
+                report = _sale_pack.build_pack(entity=entity, domain=domain)
+        except _sale_pack.SalePackError as exc:
+            status = 404 if exc.code == "not_found" else 400
+            if exc.code in {
+                "vdr_export_refused",
+                "buyer_export_refused",
+                "fill_refused",
+                "writes_refused",
+            }:
+                status = 405
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "vdr_export": False,
+                    "buyer_export": False,
+                },
+                status=status,
+            )
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "read_failed",
+                    "message": type(exc).__name__,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "vdr_export": False,
+                    "buyer_export": False,
+                },
+                status=500,
+            )
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _sale_pack_write_refused(self, path: str) -> None:
+        identity = self._require_sale_pack_owner()
+        if identity is None:
+            return
+        try:
+            if self._sale_pack_export_code(path) == "vdr":
+                _sale_pack.refuse_vdr_export({})
+            elif self._sale_pack_export_code(path) == "buyer":
+                _sale_pack.refuse_buyer_export({})
+            else:
+                _sale_pack.refuse_external_write({})
+        except _sale_pack.SalePackError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "vdr_export": False,
+                    "buyer_export": False,
+                    **_sale_pack.honesty_flags(),
+                },
+                status=405,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Sale evidence pack is read-only. No buyer export and no filled evidence.",
+                "external_writes": False,
+                "ledger_write": False,
+                "vdr_export": False,
+                "buyer_export": False,
             },
             status=405,
         )

@@ -140,6 +140,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_escalation_burndown.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-CORE-12'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-6e3fd7b9d7edca0e';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/core/escalation-burndown; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/escalation-burndown; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
       "expect": "PASS=117 FAIL=0; BUILT 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
       "by": "cursor-core-escalation-burndown"
+    },
+    {
+      "id": "bf-sale-evidence-pack-framework-20260919",
+      "claim": "Beta Owner sale evidence pack lists six required domains and 60 diligence controls from Sale_Readiness.csv. Empty evidence cells stay empty. Unauth /api/sale-evidence-pack and /sale-evidence-pack are 403. Owner writes, buyer export, and VDR export are refused. CAP-SALE-01 stays SPECIFIED. CR-b7ce6d6668848b6e stays OPEN. No filled evidence and no PROVEN invented. Ledger stays 77 rows. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_sale_evidence_pack.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-SALE-01'][0], d['CAP-SALE-02'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-b7ce6d6668848b6e';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/sale-evidence-pack; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/sale-evidence-pack; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=116 FAIL=0; SPECIFIED SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
+      "by": "cursor-sale-evidence-pack-framework"
     }
   ]
 }
