@@ -1653,7 +1653,11 @@ def _history_teaser(conn: sqlite3.Connection) -> dict[str, Any]:
     }
 
 
-def today_cards(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
+def today_cards(
+    *,
+    conn: sqlite3.Connection | None = None,
+    person_id: str | None = None,
+) -> dict[str, Any]:
     """Attention-first Today cards. example:true never counts as live attention.
 
     Quiet PR/petty cards stay omitted. Daily Close, Issues count, and a History
@@ -1844,7 +1848,7 @@ def today_cards(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
         )
         honesty = dict(HONESTY)
         honesty["float"] = "NOT_FOUND" if float_status == "NOT_FOUND" else "PROVIDED"
-        return {
+        payload = {
             "ok": True,
             "cards": cards,
             "now": now,
@@ -1855,6 +1859,11 @@ def today_cards(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
             "fixture_notice": fixture_notice_for(prs, petty_days, issue_rows, legacy_moves),
             "legacy_projection": legacy_summary,
         }
+        if (person_id or "").strip():
+            from core import uma_devi_p0 as _p0
+
+            payload = _p0.annotate_today(payload, person_id=person_id.strip(), conn=c)
+        return payload
     finally:
         if own:
             c.close()

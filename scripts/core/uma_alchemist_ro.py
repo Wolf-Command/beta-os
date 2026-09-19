@@ -355,6 +355,7 @@ def _map_pr(row: sqlite3.Row) -> dict[str, Any]:
     department = (row["department"] or "").strip() or None
     total = row["invoice_total"]
     out: dict[str, Any] = {
+        "department": department,
         "pr_id": pr_num or "Existing purchase",
         "pr_num": pr_num,
         "state": mapped["state"],
@@ -432,6 +433,99 @@ def _history_pr(row: sqlite3.Row) -> dict[str, Any]:
         "detail": None,
     }
     return _stamp(out, "pr_orders", row["id"])
+
+
+def project_pr_by_key(key: str) -> dict[str, Any] | None:
+    """One Alchemist PR plus interpretable order lines. None if missing.
+
+    Does not invent an amount when invoice_total is null. Does not write.
+    """
+    wanted = (key or "").strip()
+    if not wanted:
+        return None
+
+    def run(conn: sqlite3.Connection) -> dict[str, Any] | None:
+        rows = _query(
+            conn,
+            f"""
+            SELECT {_PR_COLS}
+            FROM pr_orders
+            WHERE pr_num = ? OR CAST(id AS TEXT) = ?
+            LIMIT 1
+            """,
+            (wanted, wanted),
+        )
+        if not rows:
+            return None
+        row = rows[0]
+        mapped = _map_pr(row)
+        if row["invoice_total"] is None:
+            mapped["expected_value"] = None
+        mapped["lines"] = _order_lines(conn, row["id"])
+        mapped["alchemist_pr_id"] = row["id"]
+        return mapped
+
+    out = _with_conn(run)
+    if out is _MISS:
+        return None
+    return out
+
+
+def project_order_lines(alchemist_pr_id: int) -> list[dict[str, Any]]:
+    """Lines for one pr_orders.id. Empty when the source is missing."""
+
+    def run(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+        return _order_lines(conn, alchemist_pr_id)
+
+    out = _with_conn(run)
+    return [] if out is _MISS else out
+
+
+def _num(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _order_lines(conn: sqlite3.Connection, alchemist_pr_id: int) -> list[dict[str, Any]]:
+    """Copy stored line columns only. qty null → not interpretable. No extended amount."""
+    try:
+        rows = _query(
+            conn,
+            """
+            SELECT id, pr_id, item, qty, unit, received_qty, short_over, price
+            FROM pr_order_lines
+            WHERE pr_id = ?
+            ORDER BY id
+            """,
+            (int(alchemist_pr_id),),
+        )
+    except (sqlite3.Error, TypeError, ValueError):
+        return []
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        qty = _num(row["qty"])
+        received = _num(row["received_qty"])
+        price = _num(row["price"])
+        line: dict[str, Any] = {
+            "source_line_id": str(row["id"]),
+            "item": (row["item"] or "").strip() or None,
+            "unit": (row["unit"] or "").strip() or None,
+            "qty": qty,
+            "interpretable": qty is not None,
+        }
+        if received is not None:
+            line["source_received_qty"] = received
+        short = (row["short_over"] or "").strip() if row["short_over"] else ""
+        if short:
+            line["short_over"] = short
+        if price is not None:
+            line["price"] = price
+        out.append(line)
+    return out
 
 
 def _history_petty(row: sqlite3.Row) -> dict[str, Any]:

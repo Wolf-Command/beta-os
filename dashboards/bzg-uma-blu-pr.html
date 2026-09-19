@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Uma Blu · Purchase</title>
+<style>
+  :root {
+    --bg: #0f1c24; --bg2: #162833; --bg3: #1e3542; --line: #2a4554;
+    --text: #eef4f7; --muted: #8aa0ad; --accent: #3db8a0; --warn: #e0a045;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
+  body {
+    padding: 16px 16px 72px; max-width: 480px; margin: 0 auto;
+    overflow-wrap: anywhere; word-break: break-word;
+  }
+  .brand { font-size: 1.45rem; font-weight: 700; margin: 0 0 4px; }
+  .brand em { font-style: normal; color: var(--accent); }
+  .sub, .muted { color: var(--muted); font-size: 0.86rem; line-height: 1.4; }
+  nav.uma { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 16px; }
+  nav.uma a {
+    min-height: 40px; display: inline-flex; align-items: center;
+    padding: 10px 12px; border-radius: 999px; border: 1px solid var(--line);
+    color: var(--muted); text-decoration: none; font-size: 0.84rem; font-weight: 650;
+  }
+  .panel {
+    background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px;
+  }
+  .chip {
+    display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid rgba(61,184,160,0.45); color: var(--accent);
+    font-size: 0.72rem; font-weight: 650;
+  }
+  .line { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; }
+  .line:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+  label { display: block; font-size: 0.8rem; color: var(--muted); margin: 8px 0 4px; }
+  input {
+    width: 100%; border: 1px solid var(--line); background: var(--bg3); color: var(--text);
+    border-radius: 10px; padding: 12px; font: inherit; font-size: 1.05rem;
+  }
+  .btn {
+    appearance: none; width: 100%; min-height: 44px; margin-top: 10px;
+    border-radius: 12px; border: 1px solid #2a8a76; background: #1f6b5c; color: #fff;
+    font-size: 1rem; font-weight: 650;
+  }
+  .btn:disabled { opacity: 0.4; }
+  .err { color: #e05a4c; }
+</style>
+</head>
+<body>
+  <p class="muted"><a href="/bzg/uma-blu/bills" style="color:var(--muted)">Bills</a></p>
+  <h1 class="brand">Purchase <em>detail</em></h1>
+  <p class="sub">Existing records stay as recorded. Wolf does not mark them verified.</p>
+  <nav class="uma">
+    <a href="/bzg/uma-blu">Today</a>
+    <a href="/bzg/uma-blu/bills">Bills</a>
+    <a href="/bzg/uma-blu/petty">Petty</a>
+    <a href="/uma-blu-close">Close</a>
+    <a href="/bzg/uma-blu/issues">Issues</a>
+  </nav>
+  <div id="body"><p class="muted">Loading…</p></div>
+<script>
+(function () {
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function keyFromLocation() {
+    var q = new URLSearchParams(location.search).get("pr");
+    if (q) return q;
+    var parts = location.pathname.split("/").filter(Boolean);
+    return decodeURIComponent(parts[parts.length - 1] || "");
+  }
+  function field(panel, label, value) {
+    if (value == null || value === "") return;
+    panel.appendChild(el("div", "muted", label + ": " + value));
+  }
+  var key = keyFromLocation();
+  if (!key || key === "bills") {
+    document.getElementById("body").textContent = "No purchase selected.";
+    return;
+  }
+  fetch("/api/bzg/uma-blu/prs/" + encodeURIComponent(key))
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var box = document.getElementById("body");
+      box.innerHTML = "";
+      if (!data.ok || !data.pr) {
+        box.appendChild(el("p", "err", (data && data.message) || "Purchase request not found."));
+        return;
+      }
+      var p = data.pr;
+      var actions = data.actions || {};
+      var head = el("div", "panel");
+      var title = el("h2", null, p.supplier_name || "Purchase");
+      title.style.margin = "0 0 8px";
+      head.appendChild(title);
+      if (p.chip === "Existing" || p.legacy) head.appendChild(el("span", "chip", "Existing"));
+      field(head, "Number", p.pr_num);
+      field(head, "Supplier", p.supplier_name);
+      field(head, "Department", p.department);
+      field(head, "Requested by", p.requester_label);
+      field(head, "Date", p.requested_date);
+      field(head, "Status", p.display_status || p.alchemist_status || p.state);
+      if (p.expected_value != null) field(head, "Recorded total", String(p.expected_value));
+      if (p.source_status_note) head.appendChild(el("p", "muted", p.source_status_note));
+      box.appendChild(head);
+
+      var lines = p.lines || [];
+      var linePanel = el("div", "panel");
+      linePanel.appendChild(el("h2", null, "Lines"));
+      if (!lines.length) {
+        linePanel.appendChild(el("p", "muted", "No order lines stored."));
+      }
+      lines.forEach(function (ln) {
+        var row = el("div", "line");
+        row.appendChild(el("strong", null, ln.item || "Line"));
+        if (ln.qty != null) row.appendChild(el("div", "muted", "Qty " + ln.qty + (ln.unit ? " " + ln.unit : "")));
+        if (ln.source_received_qty != null) {
+          row.appendChild(el("div", "muted", "Existing record received " + ln.source_received_qty + " — not Wolf-verified"));
+        }
+        if (ln.wolf_received_qty != null) row.appendChild(el("div", "muted", "Wolf received " + ln.wolf_received_qty));
+        if (ln.wolf_outstanding_qty != null) row.appendChild(el("div", "muted", "Still to receive " + ln.wolf_outstanding_qty));
+        if (ln.price != null) row.appendChild(el("div", "muted", "Price " + ln.price));
+        linePanel.appendChild(row);
+      });
+      box.appendChild(linePanel);
+
+      var act = el("div", "panel");
+      act.appendChild(el("h2", null, "Actions"));
+      act.appendChild(el("p", "muted", actions.payment_waiting || "Waiting on finance — no action needed from you."));
+      if (actions.receive) {
+        var form = el("form");
+        lines.filter(function (ln) { return ln.interpretable && ln.wolf_outstanding_qty > 0; }).forEach(function (ln) {
+          var lab = el("label", null, (ln.item || "Line") + " received now");
+          lab.setAttribute("for", "qty-" + ln.source_line_id);
+          var input = el("input");
+          input.id = "qty-" + ln.source_line_id;
+          input.type = "number";
+          input.min = "0";
+          input.step = "any";
+          input.setAttribute("data-line", ln.source_line_id);
+          form.appendChild(lab);
+          form.appendChild(input);
+        });
+        var btn = el("button", "btn", "Receive goods");
+        btn.type = "submit";
+        form.appendChild(btn);
+        var msg = el("p", "muted", "");
+        form.appendChild(msg);
+        form.onsubmit = function (ev) {
+          ev.preventDefault();
+          var payload = [];
+          form.querySelectorAll("input[data-line]").forEach(function (input) {
+            if (input.value === "") return;
+            payload.push({ source_line_id: input.getAttribute("data-line"), received_qty: Number(input.value) });
+          });
+          if (!payload.length) {
+            msg.textContent = "Enter a quantity that is already on the order. Nothing was invented.";
+            return;
+          }
+          btn.disabled = true;
+          fetch("/api/bzg/uma-blu/receive", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pr: key, lines: payload })
+          }).then(function (r) { return r.json(); }).then(function (out) {
+            btn.disabled = false;
+            if (!out.ok) {
+              msg.className = "err";
+              msg.textContent = out.error || out.message || "Receive was not recorded.";
+              return;
+            }
+            msg.className = "muted";
+            msg.textContent = "Recorded " + ((out.receipt && out.receipt.status) || "") + ". Existing record was not rewritten.";
+          }).catch(function () {
+            btn.disabled = false;
+            msg.className = "err";
+            msg.textContent = "Receive was not recorded.";
+          });
+        };
+        act.appendChild(form);
+      } else if (actions.receive_waiting) {
+        act.appendChild(el("p", "muted", actions.receive_waiting));
+      }
+      box.appendChild(act);
+    })
+    .catch(function () {
+      document.getElementById("body").textContent = "Could not load this purchase.";
+    });
+})();
+</script>
+</body>
+</html>

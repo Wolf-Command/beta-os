@@ -182,8 +182,12 @@
               nowBox.appendChild(el("div", "kind", now.classification_label));
             }
             nowBox.appendChild(el("p", "now-title", humanTitle(now.title) || "Attention"));
-            if (now.why) nowBox.appendChild(el("div", "why", now.why));
-            if (now.href) {
+            if (now.actionable === false && now.waiting_copy) {
+              nowBox.appendChild(el("div", "why", now.waiting_copy));
+            } else if (now.why) {
+              nowBox.appendChild(el("div", "why", now.why));
+            }
+            if (now.href && now.actionable !== false) {
               var go = el("a", "meta", "Open →");
               go.href = now.href;
               go.style.display = "inline-block";
@@ -203,13 +207,18 @@
           live.push(c);
         });
         function paintCard(c) {
-          var a = el("a", "card" + (c.attention ? " attn" : ""));
-          a.href = c.href || "#";
+          var linked = c.actionable !== false && c.href;
+          var a = el(linked ? "a" : "div", "card" + (c.attention ? " attn" : ""));
+          if (linked) a.href = c.href;
           if (c.classification_label) {
             a.appendChild(el("div", "kind", c.classification_label));
           }
           a.appendChild(el("h3", null, humanTitle(c.title)));
-          if (c.why) a.appendChild(el("div", "why", c.why));
+          if (c.actionable === false && c.waiting_copy) {
+            a.appendChild(el("div", "why", c.waiting_copy));
+          } else if (c.why) {
+            a.appendChild(el("div", "why", c.why));
+          }
           if (c.kind === "daily_close") {
             var line = closeStateLine(c);
             if (line) a.appendChild(el("div", "meta", line));

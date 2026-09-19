@@ -80,6 +80,7 @@ from core import delegation as _delegation
 from core import content_publish as _content_publish
 from core import venue_close as _venue_close
 from core import uma_ops_console as _uma_ops
+from core import uma_devi_p0 as _uma_p0
 from core import esb_close_snapshot as _esb_close_snapshot
 from core import progress_read_model as _progress
 from core import lead_spine as _lead_spine
@@ -1518,6 +1519,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if path == "/api/bzg/uma-blu/prs":
                 self._uma_ops_prs()
                 return
+            m_pr = re.match(r"^/api/bzg/uma-blu/prs/([^/]+)$", path)
+            if m_pr:
+                self._uma_ops_pr_detail(m_pr.group(1))
+                return
             if path == "/api/bzg/uma-blu/issues":
                 self._uma_ops_issues()
                 return
@@ -1547,6 +1552,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/venue-close/list":
             self._venue_close_list(qs)
             return
+        if path == "/api/venue-close/previous":
+            self._venue_close_previous(qs)
+            return
+        if path == "/api/venue-close/capabilities":
+            self._venue_close_capabilities()
+            return
         # Matt Progress Dashboard — Owner / PERS-MATT only
         if path == "/api/progress/honesty":
             self._progress_honesty()
@@ -1571,6 +1582,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "verify",
             "honesty",
             "list",
+            "previous",
+            "capabilities",
         ):
             self._venue_close_get(m_vc.group(1), qs)
             return
@@ -1777,8 +1790,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self.path = "/bzg.html"
         elif path in ("/bzg/uma-blu", "/bzg/uma-blu/"):
             self.path = "/bzg-uma-blu.html"
+        elif path in ("/bzg/uma-blu/bills", "/bzg/uma-blu/bills/") and (qs.get("pr") or [""])[0].strip():
+            self.path = "/bzg-uma-blu-pr.html"
         elif path in ("/bzg/uma-blu/bills", "/bzg/uma-blu/bills/"):
             self.path = "/bzg-uma-blu-bills.html"
+        elif re.match(r"^/bzg/uma-blu/bills/([^/]+)/?$", path):
+            self.path = "/bzg-uma-blu-pr.html"
         elif path in ("/bzg/uma-blu/issues", "/bzg/uma-blu/issues/"):
             self.path = "/bzg-uma-blu-issues.html"
         elif path in ("/bzg/uma-blu/petty", "/bzg/uma-blu/petty/"):
@@ -1851,6 +1868,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 return
             if path == "/api/bzg/uma-blu/petty":
                 self._uma_ops_petty_post()
+                return
+            if path == "/api/bzg/uma-blu/receive":
+                self._uma_ops_receive_post()
                 return
             self._send_json(
                 {
@@ -3144,7 +3164,74 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def _uma_ops_today(self) -> None:
         try:
-            self._send_json(_uma_ops.today_cards())
+            identity = self._resolve_identity(emit_audit=False)
+            person_id = identity.get("person_id") if identity.get("ok") else None
+            self._send_json(_uma_ops.today_cards(person_id=person_id))
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_pr_detail(self, key: str) -> None:
+        try:
+            from urllib.parse import unquote
+
+            identity = self._resolve_identity(emit_audit=False)
+            person_id = identity.get("person_id") if identity.get("ok") else None
+            detail = _uma_p0.pr_detail(unquote(key))
+            if not detail:
+                self._send_json(
+                    {"ok": False, "error": "not_found", "message": "Purchase request not found."},
+                    status=404,
+                )
+                return
+            actions = {}
+            if person_id:
+                conn = _uma_ops.db_connect()
+                try:
+                    actions = _uma_p0.pr_actions(person_id, conn=conn)
+                finally:
+                    conn.close()
+            self._send_json(
+                {
+                    "ok": True,
+                    "pr": detail,
+                    "actions": actions,
+                    "payment_approve": False,
+                    **_uma_ops.honesty_flags(),
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_receive_post(self) -> None:
+        """Append-only Wolf receipt. Fail closed without a venue receive permission."""
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._resolve_identity(body, emit_audit=False)
+        person_id = identity.get("person_id") if identity.get("ok") else None
+        if not person_id:
+            self._send_json(
+                {"ok": False, "error": "forbidden", "message": "Identity required."},
+                status=403,
+            )
+            return
+        try:
+            out = _uma_p0.receive_goods(
+                person_id=person_id,
+                pr_key=str(body.get("pr") or body.get("pr_key") or ""),
+                lines=body.get("lines") or [],
+                notes=body.get("notes"),
+                corrects_receipt_id=body.get("corrects_receipt_id"),
+                identity=identity,
+            )
+            self._send_json({"ok": True, "receipt": out, "payment_approve": False})
+        except _uma_ops.UmaOpsError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
         except Exception as exc:  # noqa: BLE001
             self._send_err(500, str(exc))
 
@@ -3274,6 +3361,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         except Exception as exc:  # noqa: BLE001
             self._venue_close_err(exc)
 
+    def _venue_close_previous(self, qs: dict) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            exclude = (qs.get("exclude_business_date") or qs.get("business_date") or [None])[0]
+            self._send_json(_uma_p0.previous_closes(exclude_business_date=exclude))
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_capabilities(self) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            self._send_json(_uma_p0.close_capabilities(identity["person_id"]))
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
     def _venue_close_get(self, close_id: str, qs: dict) -> None:
         identity = self._venue_close_person()
         if identity is None:
@@ -3290,7 +3396,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     status=404,
                 )
                 return
-            self._send_json({"ok": True, "close": row, **_venue_close.HONESTY})
+            detail = _uma_p0.close_detail(row["close_id"])
+            self._send_json(
+                {
+                    "ok": True,
+                    "close": row,
+                    "detail": detail,
+                    **_venue_close.HONESTY,
+                }
+            )
         except Exception as exc:  # noqa: BLE001
             self._venue_close_err(exc)
 

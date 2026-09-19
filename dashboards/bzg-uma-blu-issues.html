@@ -61,12 +61,13 @@
   <h1 class="brand">Uma Blu <em>Issues</em></h1>
   <p class="sub">Exceptions only — quiet when nothing is wrong</p>
 
-  <nav class="uma">
+    <nav class="uma">
     <a href="/bzg/uma-blu">Today</a>
-    <a href="/bzg/uma-blu/bills">PR and bills</a>
-    <a href="/uma-blu-close">Daily close</a>
+    <a href="/bzg/uma-blu/bills">Bills</a>
+    <a href="/bzg/uma-blu/petty">Petty</a>
+    <a href="/uma-blu-close">Close</a>
     <a class="active" href="/bzg/uma-blu/issues">Issues</a>
-    <a href="/bzg/uma-blu/petty">Petty cash</a>
+    <a href="/bzg/uma-blu#history">History</a>
   </nav>
 
   <div id="list"><p class="muted">Loading…</p></div>
@@ -85,11 +86,16 @@
       var box = document.getElementById("list");
       box.innerHTML = "";
       var rows = data.issues || [];
-      if (!rows.length) {
+      var liveIssues = rows.filter(function (it) { return !it.example; });
+      var exIssues = rows.filter(function (it) { return it.example; });
+      if (!liveIssues.length && !exIssues.length) {
         box.appendChild(el("p", "empty", "No issues. The day is clean."));
         return;
       }
-      rows.forEach(function (it) {
+      if (!liveIssues.length) {
+        box.appendChild(el("p", "empty", "No live issues. The day is clean."));
+      }
+      liveIssues.forEach(function (it) {
         var a = el("a", "row");
         a.href = it.href || "#";
         var human = it.classification_label || ({
@@ -102,14 +108,10 @@
         a.appendChild(el("h3", null, it.label || it.why || "Issue"));
         if (it.why) a.appendChild(el("div", "why", it.why));
         var explain = it.explain || {};
-        if (explain.status) a.appendChild(el("div", "status", "Knowledge status: " + explain.status));
         if (explain.decision && explain.decision.summary) {
           a.appendChild(el("div", "why", explain.decision.summary));
         }
-        if (explain.provenance && explain.provenance.length) {
-          a.appendChild(el("div", "status", explain.provenance.join(" · ")));
-        }
-        if (it.example) a.appendChild(el("div", "ex", "Example"));
+        if (it.example) a.appendChild(el("div", "ex", "Practice example — not live"));
         box.appendChild(a);
       });
     })

@@ -86,26 +86,53 @@
   }
   .exc:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
   .who { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; }
+  .tabs { display: flex; gap: 8px; margin: 0 0 14px; }
+  .tabs button { width: auto; margin: 0; min-height: 44px; padding: 10px 16px; }
+  .tabs button.on { border-color: var(--accent); color: var(--accent); }
+  .hidden { display: none !important; }
+  .prev {
+    display: block; width: 100%; text-align: left; margin-top: 8px;
+    min-height: 44px;
+  }
+  .chip {
+    display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid rgba(61,184,160,0.45); color: var(--accent);
+    font-size: 0.72rem; font-weight: 650;
+  }
 </style>
 </head>
 <body>
   <h1 class="brand">Uma Blu <em>Daily Close</em></h1>
   <p class="sub">Count the till. We pull ESB sales. Variance only when numbers disagree.</p>
+    <nav class="uma" style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px">
+    <a href="/bzg/uma-blu" style="padding:10px 12px;border-radius:999px;border:1px solid #2a4554;color:#8aa0ad;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:40px;display:inline-flex;align-items:center">Today</a>
+    <a href="/bzg/uma-blu/bills" style="padding:10px 12px;border-radius:999px;border:1px solid #2a4554;color:#8aa0ad;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:40px;display:inline-flex;align-items:center">Bills</a>
+    <a href="/bzg/uma-blu/petty" style="padding:10px 12px;border-radius:999px;border:1px solid #2a4554;color:#8aa0ad;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:40px;display:inline-flex;align-items:center">Petty</a>
+    <a href="/uma-blu-close" style="padding:10px 12px;border-radius:999px;border:1px solid #3db8a0;color:#3db8a0;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:40px;display:inline-flex;align-items:center">Close</a>
+    <a href="/bzg/uma-blu/issues" style="padding:10px 12px;border-radius:999px;border:1px solid #2a4554;color:#8aa0ad;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:40px;display:inline-flex;align-items:center">Issues</a>
+    <a href="/bzg/uma-blu#history" style="padding:10px 12px;border-radius:999px;border:1px solid #2a4554;color:#8aa0ad;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:40px;display:inline-flex;align-items:center">History</a>
+  </nav>
   <div class="who" id="who">Checking who you are…</div>
+  <div class="tabs">
+    <button class="btn on" id="tabToday" type="button">Today</button>
+    <button class="btn" id="tabPrevious" type="button">Previous</button>
+  </div>
+  <p class="muted hidden" id="capNote"></p>
 
+  <div id="paneToday">
   <div class="panel">
     <h2>Today’s close</h2>
     <label for="bizDate">Business date</label>
     <input type="date" id="bizDate" />
-    <button class="btn btn-primary" id="btnOpen" type="button">Open close</button>
-    <button class="btn" id="btnCapture" type="button" disabled>Pull ESB sales</button>
+    <button class="btn btn-primary" id="btnOpen" data-cap="submit" type="button">Open close</button>
+    <button class="btn" id="btnCapture" data-cap="submit" type="button" disabled>Pull ESB sales</button>
     <div id="esbBox" class="muted" style="margin-top:10px"></div>
     <label for="cashAmt">Cash in the till (declared)</label>
     <input type="number" id="cashAmt" min="0" step="1000" placeholder="Amount counted" disabled />
     <label for="cashNote">Optional note / photo ref</label>
     <input type="text" id="cashNote" placeholder="e.g. photo on phone" disabled />
-    <button class="btn" id="btnDeclare" type="button" disabled>Submit cash count</button>
-    <button class="btn btn-ok" id="btnReconcile" type="button" disabled>Reconcile</button>
+    <button class="btn" id="btnDeclare" data-cap="submit" type="button" disabled>Submit cash count</button>
+    <button class="btn btn-ok" id="btnReconcile" data-cap="submit" type="button" disabled>Reconcile</button>
     <div id="statusBox" style="margin-top:12px"></div>
     <div class="msg" id="msg"></div>
   </div>
@@ -115,9 +142,18 @@
     <p class="muted">Only variance / policy gaps appear here — quiet when the day is clean.</p>
     <div id="excList" class="muted">Loading…</div>
   </div>
+  </div>
+
+  <div id="panePrevious" class="hidden">
+    <div class="panel">
+      <h2>Previous closes</h2>
+      <div id="prevList" class="muted">Loading…</div>
+    </div>
+    <div class="panel hidden" id="prevDetail"></div>
+  </div>
 
   <div class="panel">
-    <h2>Honesty</h2>
+    <h2>What this screen can and cannot do</h2>
     <div class="muted" id="honesty">…</div>
   </div>
 
@@ -126,6 +162,10 @@
   const $ = (id) => document.getElementById(id);
   let close = null;
   let me = null;
+  let caps = {
+    open: false, capture: false, declare: false, reconcile: false,
+    exception: false, resolve: false, verify: false, submit: false
+  };
 
   function todayWITA() {
     const d = new Date();
@@ -210,9 +250,13 @@
       ? `ESB basis: ${totals.cash_label} — not settlement. Settlement API unavailable.`
       : "";
 
-    const canCapture = st === "OPEN" || st === "DATA_CAPTURED";
-    const canDeclare = st === "DATA_CAPTURED" || st === "EVIDENCE_SUBMITTED";
-    const canRec = st === "EVIDENCE_SUBMITTED" || st === "VARIANCE_REQUIRES_POLICY";
+    const canCapture = (st === "OPEN" || st === "DATA_CAPTURED") && !!caps.capture;
+    const canDeclare = (st === "DATA_CAPTURED" || st === "EVIDENCE_SUBMITTED") && !!caps.declare;
+    const canRec = (st === "EVIDENCE_SUBMITTED" || st === "VARIANCE_REQUIRES_POLICY") && !!caps.reconcile;
+    $("btnOpen").hidden = !caps.open;
+    $("btnCapture").hidden = !caps.capture;
+    $("btnDeclare").hidden = !caps.declare;
+    $("btnReconcile").hidden = !caps.reconcile;
     $("btnCapture").disabled = !canCapture;
     $("cashAmt").disabled = !canDeclare;
     $("cashNote").disabled = !canDeclare;
@@ -248,14 +292,14 @@
       el.innerHTML = rows
         .map((r) => {
           const actions =
-            r.state === "VARIANCE_REQUIRES_POLICY"
+            r.state === "VARIANCE_REQUIRES_POLICY" && caps.exception
               ? `<button class="btn btn-warn" data-act="exception" data-id="${r.close_id}" type="button">Open exception</button>`
-              : r.state === "EXCEPTION"
+              : r.state === "EXCEPTION" && caps.resolve
               ? `<label>Resolution note</label><textarea data-notes="${r.close_id}"></textarea>` +
                 `<button class="btn" data-act="resolve" data-id="${r.close_id}" type="button">Resolve</button>`
-              : r.state === "RESOLVED"
+              : r.state === "RESOLVED" && caps.verify
               ? `<button class="btn btn-ok" data-act="verify" data-id="${r.close_id}" type="button">Verify close</button>`
-              : "";
+              : `<p class="muted">Waiting on closer — no action needed from you.</p>`;
           return (
             `<div class="exc">` +
             `<strong>${r.business_date}</strong> · ${humanState(r.state)}` +
@@ -265,6 +309,86 @@
           );
         })
         .join("");
+    } catch (e) {
+      el.textContent = e.message || String(e);
+    }
+  }
+
+  async function loadCaps() {
+    try {
+      const data = await api("/api/venue-close/capabilities");
+      caps = Object.assign(caps, data.can || {});
+      const note = $("capNote");
+      if (!caps.submit && data.denied_explanation) {
+        note.classList.remove("hidden");
+        note.textContent = data.denied_explanation;
+      }
+      $("btnOpen").hidden = !caps.open;
+      $("btnCapture").hidden = !caps.capture;
+      $("btnDeclare").hidden = !caps.declare;
+      $("btnReconcile").hidden = !caps.reconcile;
+    } catch (e) {
+      $("capNote").classList.remove("hidden");
+      $("capNote").textContent = "Could not read what you are allowed to do. Actions stay hidden.";
+      $("btnOpen").hidden = true;
+      $("btnCapture").hidden = true;
+      $("btnDeclare").hidden = true;
+      $("btnReconcile").hidden = true;
+    }
+  }
+
+  function showTab(which) {
+    const today = which === "today";
+    $("paneToday").classList.toggle("hidden", !today);
+    $("panePrevious").classList.toggle("hidden", today);
+    $("tabToday").classList.toggle("on", today);
+    $("tabPrevious").classList.toggle("on", !today);
+    if (!today) loadPrevious();
+  }
+
+  function paintDetail(detail) {
+    const box = $("prevDetail");
+    box.classList.remove("hidden");
+    if (!detail) {
+      box.textContent = "Close not found.";
+      return;
+    }
+    const summary = detail.summary || {};
+    const bits = [];
+    bits.push(`<strong>${summary.business_date || ""}</strong> · ${humanState(summary.state || "")}`);
+    if (detail.chip) bits.push(`<span class="chip">${detail.chip}</span>`);
+    if (summary.declared_cash_amount != null) bits.push(`<div class="muted">Declared cash ${money(summary.declared_cash_amount)}</div>`);
+    if (summary.variance_flag) bits.push(`<div class="muted">Variance ${money(summary.variance_cash_amount)}</div>`);
+    const labels = detail.operator_labels || {};
+    if (labels.submitted_by) bits.push(`<div class="muted">Submitted by ${labels.submitted_by}</div>`);
+    if (labels.resolved_by) bits.push(`<div class="muted">Resolved by ${labels.resolved_by}</div>`);
+    if (labels.verified_by) bits.push(`<div class="muted">Verified by ${labels.verified_by}</div>`);
+    const refs = detail.evidence_refs || [];
+    if (!refs.length) bits.push(`<div class="muted">No evidence reference stored.</div>`);
+    refs.forEach((ref) => {
+      bits.push(`<div class="muted">Evidence ${ref.field}</div>`);
+    });
+    const audits = detail.audit_sentences || [];
+    if (!audits.length) bits.push(`<div class="muted">No audit sentences stored.</div>`);
+    audits.forEach((a) => bits.push(`<div class="muted">${a.sentence || ""}</div>`));
+    box.innerHTML = bits.join("");
+  }
+
+  async function loadPrevious() {
+    const el = $("prevList");
+    try {
+      const data = await api("/api/venue-close/previous?exclude_business_date=" + encodeURIComponent($("bizDate").value || ""));
+      const rows = data.closes || [];
+      if (!rows.length) {
+        el.textContent = data.empty_message || "No previous closes recorded in Wolf yet";
+        $("prevDetail").classList.add("hidden");
+        return;
+      }
+      el.innerHTML = rows.map((r) => {
+        const cash = r.declared_cash_amount != null ? ` · cash ${money(r.declared_cash_amount)}` : "";
+        const chip = r.chip ? ` <span class="chip">${r.chip}</span>` : "";
+        return `<button class="btn prev" type="button" data-prev="${r.close_id}">${r.business_date} · ${humanState(r.state)}${cash}${chip}</button>`;
+      }).join("");
     } catch (e) {
       el.textContent = e.message || String(e);
     }
@@ -283,9 +407,25 @@
     } catch (e) {
       $("who").textContent = "Not signed in — open via Cloudflare Access.";
     }
+    await loadCaps();
     await loadHonesty();
     await loadExceptions();
+    renderClose();
   }
+
+  $("tabToday").onclick = () => showTab("today");
+  $("tabPrevious").onclick = () => showTab("previous");
+  $("prevList").addEventListener("click", async (ev) => {
+    const btn = ev.target.closest("button[data-prev]");
+    if (!btn) return;
+    try {
+      const data = await api("/api/venue-close/" + encodeURIComponent(btn.getAttribute("data-prev")));
+      paintDetail(data.detail);
+    } catch (e) {
+      $("prevDetail").classList.remove("hidden");
+      $("prevDetail").textContent = e.message || String(e);
+    }
+  });
 
   $("btnOpen").onclick = async () => {
     setMsg("");

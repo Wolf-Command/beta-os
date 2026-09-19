@@ -75,8 +75,8 @@ def main() -> int:
     petty_html = PETTY_HTML.read_text(encoding="utf-8")
     check("Today page renders why", "c.why" in today_html)
     check("Today page renders classification", "classification_label" in today_html)
-    check("petty page keeps NOT FOUND", "NOT FOUND" in petty_html)
-    check("petty page says OPENING BALANCE REQUIRED", "OPENING BALANCE REQUIRED" in petty_html)
+    check("petty page maps float machine-state in JS", "NOT_FOUND" in petty_html and "Opening cash balance needed" in petty_html)
+    check("petty page human opening-balance copy", "Opening cash balance needed" in petty_html)
 
     td = tempfile.mkdtemp(prefix="uma-today-", dir=str(ROOT / "state"))
     try:

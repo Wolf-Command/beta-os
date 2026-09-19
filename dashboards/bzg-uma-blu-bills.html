@@ -46,7 +46,8 @@
   nav.uma span.disabled { padding: 8px 12px; font-size: 0.78rem; color: var(--muted); opacity: 0.5; }
   .crumb { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
   .crumb a { color: var(--muted); }
-  .row {
+  a.row, .row {
+    display: block; color: inherit; text-decoration: none;
     background: color-mix(in srgb, var(--bg2) 92%, #000);
     border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 10px;
   }
@@ -128,7 +129,9 @@
         box.appendChild(el("p", "empty", "No live purchase requests yet."));
       }
       liveRows.forEach(function (p) {
-        var d = el("div", "row");
+        var key = p.pr_num || p.pr_id;
+        var d = key ? el("a", "row") : el("div", "row");
+        if (key) d.href = "/bzg/uma-blu/bills/" + encodeURIComponent(key);
         var st = p.state || "";
         var label = p.display_status || STATE_LABEL[st] || st;
         var warn = st === "POLICY_REQUIRED" || st === "PAID_CLAIMED" || p.alchemist_status === "Awaiting Devi";

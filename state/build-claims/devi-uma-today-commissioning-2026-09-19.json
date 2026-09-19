@@ -1,6 +1,6 @@
 {
   "claim_id": "devi-uma-today-commissioning-2026-09-19",
-  "HUMAN_COMMISSIONING_STATUS": "NOT_DONE",
+  "HUMAN_COMMISSIONING_STATUS": "PARTIAL_FEEDBACK_RECEIVED",
   "PERSON": "PERS-DEVI",
   "EMAIL": "deviputu236@gmail.com",
   "AUTH": "AUTH-DEVI-EMAIL",
@@ -14,7 +14,7 @@
     "SCOPE-BZG-ENTITY"
   ],
   "SCOPE_FIX_STATUS": "APPLIED",
-  "CF_ACCESS": "NEEDS_MATT",
+  "CF_ACCESS": "UNLOCKED_BY_MATT",
   "API_AUTH_GATE": "GATED",
   "FACTORY_SLICE": "BF-devi-uma-commission-auth-20260919",
   "FACTORY_STAGE": "FINISHED",
@@ -22,11 +22,39 @@
   "PAYMENT_APPROVE": "DENIED",
   "CLOSER_SUBMIT": "DENIED",
   "URL": "https://beta.wolfcommand.net/bzg/uma-blu",
-  "UPDATED_AT_WITA": "2026-09-19T08:52:07+08:00",
-  "UPDATED_BY": "peaches-factory-watch-grok-review",
-  "NOTES": "Uma Blu APIs fail-closed on Beta :8788 (275d1c7). ROLE-BZG-HFB kept. HUMAN NOT_DONE. CF NEEDS_MATT. ENTITY scope re-ended after petty-test stomper; durable migrate upsert fix is follow-up.",
+  "UPDATED_AT_WITA": "2026-09-19T11:17:33+08:00",
+  "UPDATED_BY": "peaches-commission-sent",
+  "NOTES": "Email sent by Matt via draft card 19 Sep. Waiting Devi phone Today check + reply. Do not mark HUMAN COMMISSIONED from send alone.",
   "FACTORY_RUN_ID": "BF-devi-uma-commission-auth-20260919",
   "CURSOR_PID": 57578,
   "REVIEW_REF": "docs/deliveries/GROK-REVIEW-DEVI-UMA-COMMISSION-AUTH-275d1c7-2026-09-19.md",
-  "HEAD_COMMIT": "275d1c7c10c52f82b715b16e1210f722e00cc9b4"
+  "HEAD_COMMIT": "275d1c7c10c52f82b715b16e1210f722e00cc9b4",
+  "VERIFY_275d1c7": "PASS_ANCESTOR_OF_HEAD",
+  "VERIFY_IDENTITY": "PASS",
+  "VERIFY_SCOPE_UMA": "PASS_ACTIVE",
+  "VERIFY_SCOPE_ENTITY": "PASS_ENDED",
+  "VERIFY_PAYMENT": "PASS_DENIED",
+  "VERIFY_CLOSER_SUBMIT": "PASS_DENIED",
+  "VERIFY_OPENING_FLOAT_INVENT": "PASS_NEVER_INVENT",
+  "VERIFY_UMA_RBAC": "PASS_venue.close.read_on_BZG-UMA",
+  "MESSAGE_STATUS": "SENT",
+  "SAFE_ACTION_REQUESTED": "Open Today; reply with top attention item + friction; no payment/closer/float invent",
+  "CUTOVER_AT": null,
+  "MESSAGE_SENT_AT_WITA": "2026-09-19T11:17:33+08:00",
+  "MESSAGE_TO": "deviputu236@gmail.com",
+  "MESSAGE_FROM": "mrwolf@wolfcommand.net",
+  "MESSAGE_SUBJECT": "Uma Blu Today \u2014 phone try Beta",
+  "UX_PREFLIGHT": "PASS_WITH_PROJECTION",
+  "UMA_FULL_OPERATIONAL_COMMISSIONING": "NOT_DONE",
+  "DEVI_FEEDBACK_AT": "2026-09-19",
+  "DEVI_EVIDENCE": {
+    "authenticated": true,
+    "reached_uma_interface": true,
+    "recognized_operational_data": true,
+    "navigated_close_bills": true,
+    "identified_missing_workflows": [
+      "previous_closes",
+      "pr_detail_receive"
+    ]
+  }
 }
