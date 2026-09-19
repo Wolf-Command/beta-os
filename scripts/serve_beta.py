@@ -100,6 +100,7 @@ from core import failure_domains as _failure_domains
 from core import crm_connector_prove as _crm_connector
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
+from core import ggv_speed_to_lead_prove as _ggv_speed
 from core import crm_identity_memory as _crm_ident
 from core import bzg_reputation_observe as _bzg_rep
 from core import ggv_social_derive as _ggv_social
@@ -1814,6 +1815,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/strat/radar-prove":
             self._strat_radar_prove_get()
             return
+        # CAP-GGV-04 speed-to-lead prove. Owner read. Does not invent a lead, a receipt, or PROVEN.
+        if path == "/api/ggv/speed-to-lead-prove":
+            self._ggv_speed_prove_get()
+            return
         # CAP-BZG-07 reputation observe. No scrape. No guest reply. No invented rating.
         if self._bzg_reputation_scrape(path):
             self._bzg_reputation_scrape_refused()
@@ -2181,6 +2186,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._strat_radar_page()
             return
         elif path in (
+            "/speed-to-lead-prove",
+            "/speed-to-lead-prove/",
+            "/speed-to-lead-prove.html",
+            "/dashboards/speed-to-lead-prove.html",
+        ):
+            self._ggv_speed_page()
+            return
+        elif path in (
             "/bzg-reputation",
             "/bzg-reputation/",
             "/bzg-reputation.html",
@@ -2284,6 +2297,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/strat/radar-prove" or path.startswith("/api/strat/radar-prove/"):
             self._strat_radar_write_refused(path)
+            return
+        if path == "/api/ggv/speed-to-lead-prove" or path.startswith("/api/ggv/speed-to-lead-prove/"):
+            self._ggv_speed_write_refused(path)
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -2580,6 +2596,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/strat/radar-prove" or path.startswith("/api/strat/radar-prove/"):
             self._strat_radar_write_refused(path)
             return
+        if path == "/api/ggv/speed-to-lead-prove" or path.startswith("/api/ggv/speed-to-lead-prove/"):
+            self._ggv_speed_write_refused(path)
+            return
         if self._crm_identity_blast(path) or path == "/api/crm/identity" or path.startswith("/api/crm/identity/"):
             self._crm_identity_append_only_refused()
             return
@@ -2797,6 +2816,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/strat/radar-prove" or path.startswith("/api/strat/radar-prove/"):
             self._strat_radar_write_refused(path)
+            return
+        if path == "/api/ggv/speed-to-lead-prove" or path.startswith("/api/ggv/speed-to-lead-prove/"):
+            self._ggv_speed_write_refused(path)
             return
         if self._crm_identity_blast(path) or path == "/api/crm/identity" or path.startswith("/api/crm/identity/"):
             self._crm_identity_append_only_refused()
@@ -4236,6 +4258,136 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "ok": False,
                 "error": "writes_refused",
                 "message": "Owner Radar prove is read-only.",
+                "external_writes": False,
+                "ledger_write": False,
+            },
+            status=405,
+        )
+
+    def _require_ggv_speed_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Same Owner gate as the lead CAP prove."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Speed-to-lead prove is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _ggv_speed_page(self) -> None:
+        identity = self._require_ggv_speed_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "speed-to-lead-prove.html"
+        if not page.is_file():
+            self._send_json(
+                {"ok": False, "error": "page_missing", "message": "Speed-to-lead prove page is missing."},
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _ggv_speed_prove_get(self) -> None:
+        identity = self._require_ggv_speed_owner()
+        if identity is None:
+            return
+        try:
+            report = _ggv_speed.build_prove()
+        except _ggv_speed.ProveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=400,
+            )
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _ggv_speed_hint(self, path: str) -> dict:
+        if path.endswith("/klaviyo"):
+            return {"klaviyo": True}
+        if path.endswith("/metricool"):
+            return {"metricool": True}
+        if path.endswith("/activecampaign") or path.endswith("/ac"):
+            return {"activecampaign": True}
+        if path.endswith("/crm"):
+            return {"external_crm": True}
+        if path.endswith("/leads"):
+            return {"invent_lead": True}
+        if path.endswith("/receipts"):
+            return {"invent_receipt": True}
+        if path.endswith("/proven") or path.endswith("/ready"):
+            return {"proven": True}
+        return {}
+
+    def _ggv_speed_write_refused(self, path: str) -> None:
+        identity = self._require_ggv_speed_owner()
+        if identity is None:
+            return
+        try:
+            _ggv_speed.refuse_external_write(self._ggv_speed_hint(path))
+        except _ggv_speed.ProveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "klaviyo_write": False,
+                    "metricool_write": False,
+                    "activecampaign_write": False,
+                    "invented_leads": False,
+                    "invented_receipts": False,
+                },
+                status=405,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Speed-to-lead prove is read-only.",
                 "external_writes": False,
                 "ledger_write": False,
             },

@@ -28,6 +28,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_sale_attack_audit.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-SALE-04'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-c6e1a48e4a3e8a91';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/attack-audit; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/attack-audit; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
       "expect": "PASS=170 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
       "by": "cursor-sale-attack-audit-framework"
+    },
+    {
+      "id": "bf-ggv-speed-to-lead-cap-prove-20260920",
+      "claim": "Beta Owner speed-to-lead prove is Habitat scope and read-only. Unread is not zero. A missing first touch stays absent. Ivy with no rows is ABSENT, not zero. Unauth /api/ggv/speed-to-lead-prove and /speed-to-lead-prove are 403. Owner invent-PROVEN, invent-leads, invent-receipts, Metricool, Klaviyo, ActiveCampaign, and external CRM writes are refused. CAP-GGV-04 stays BUILT. CR-f089b11530ab4673 stays OPEN. No PROVEN or READY invented. Ledger stays 77 rows. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_ggv_speed_to_lead_prove.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-GGV-04'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-f089b11530ab4673';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/ggv/speed-to-lead-prove; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/speed-to-lead-prove; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=159 FAIL=0; BUILT 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
+      "by": "cursor-ggv-speed-to-lead-cap-prove"
     }
   ]
 }
