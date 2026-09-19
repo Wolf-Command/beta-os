@@ -184,6 +184,146 @@ def main() -> int:
     out = bq.close_slice(mission)
     check("blocked lane allows alternate safe lane", out.get("started") == "L2" or (mission.get("active_lane_id") == "L2"), str(out) + str(mission.get("active_lane_id")))
 
+    def arm(tmp: Path, mission_id: str, lanes: list, mutate=None) -> None:
+        mission = bq.new_mission(mission_id, lanes)
+        if mutate:
+            mutate(mission)
+        bq.save_mission(mission, tmp / "missions")
+        bq.set_active_mission(mission_id, tmp)
+        (tmp / "ACTIVE").write_text("", encoding="utf-8")
+
+    # empty ACTIVE + PENDING lane → LAUNCH_NEXT, not silent IDLE
+    def pending_launch(tmp, runs):
+        arm(tmp, "MIS-pending", [{"id": "lane-next", "bound": "beta-docs"}])
+        out = sup.tick(dry_run=False)
+        check(
+            "empty ACTIVE + PENDING lane → LAUNCH_NEXT",
+            out.get("action") == "LAUNCH_NEXT" and out.get("lane_id") == "lane-next",
+            str(out),
+        )
+        check("empty ACTIVE is not silent IDLE", out.get("action") != "IDLE", str(out))
+        check("LAUNCH_NEXT require_matt false", out.get("require_matt") is False)
+        wake = json.loads((tmp / "WAKE.json").read_text())
+        check(
+            "WAKE is FACTORY_LAUNCH_NEXT without Matt pick",
+            wake.get("kind") == "FACTORY_LAUNCH_NEXT"
+            and wake.get("require_matt") is False
+            and wake.get("lane_id") == "lane-next",
+            str(wake),
+        )
+        loaded = bq.load_mission("MIS-pending", tmp / "missions")
+        lane = bq.get_lane(loaded, "lane-next")
+        check(
+            "selected lane is WAITING_CURSOR",
+            lane is not None and lane.get("status") == bq.LANE_WAITING_CURSOR,
+            str(lane),
+        )
+    with_temp_bf(pending_launch)
+
+    # blocked lane skipped; next safe starts
+    def blocked_skip(tmp, runs):
+        def mutate(mission):
+            bq.mark_blocked(mission, "blocked-lane", "policy_block")
+
+        arm(
+            tmp,
+            "MIS-blocked",
+            [
+                {"id": "blocked-lane", "bound": "beta-docs"},
+                {"id": "safe-lane", "bound": "beta-docs"},
+            ],
+            mutate,
+        )
+        out = sup.tick(dry_run=False)
+        check(
+            "blocked lane skipped → LAUNCH_NEXT safe lane",
+            out.get("action") == "LAUNCH_NEXT" and out.get("lane_id") == "safe-lane",
+            str(out),
+        )
+        loaded = bq.load_mission("MIS-blocked", tmp / "missions")
+        blocked = bq.get_lane(loaded, "blocked-lane")
+        check(
+            "blocked lane stays BLOCKED",
+            blocked is not None and blocked.get("status") == bq.LANE_BLOCKED,
+            str(blocked),
+        )
+        wake = json.loads((tmp / "WAKE.json").read_text())
+        check("blocked-skip wake require_matt false", wake.get("require_matt") is False and wake.get("kind") == "FACTORY_LAUNCH_NEXT")
+    with_temp_bf(blocked_skip)
+
+    # human-parked Devi retest does not stop the mission
+    def human_park(tmp, runs):
+        def mutate(mission):
+            bq.record_completion_commit(mission, "devi-feedback-p0", "5b53d3abf223b2820010eacd959040da9117b2ef")
+            retest = bq.get_lane(mission, "devi-human-retest")
+            retest["status"] = bq.LANE_WAITING_CURSOR
+            retest["human_parked"] = True
+            retest["block_reason"] = "human_retest_parked"
+            mission["active_lane_id"] = "devi-human-retest"
+
+        arm(
+            tmp,
+            "MIS-devi-park",
+            [
+                {"id": "devi-feedback-p0", "bound": "beta-docs"},
+                {"id": "devi-human-retest", "bound": "beta-docs"},
+                {"id": "factory-auto-advance-wire", "bound": "beta-docs"},
+            ],
+            mutate,
+        )
+        out = sup.tick(dry_run=False)
+        check(
+            "human-parked Devi retest does not stop mission",
+            out.get("action") == "LAUNCH_NEXT" and out.get("lane_id") == "factory-auto-advance-wire",
+            str(out),
+        )
+        check("human park require_matt false", out.get("require_matt") is False)
+        loaded = bq.load_mission("MIS-devi-park", tmp / "missions")
+        retest = bq.get_lane(loaded, "devi-human-retest")
+        check(
+            "Devi retest stays parked",
+            retest is not None and retest.get("status") == "PARKED" and retest.get("human_parked") is True,
+            str(retest),
+        )
+        nxt = bq.get_lane(loaded, "factory-auto-advance-wire")
+        check(
+            "next safe lane started after human park",
+            nxt is not None and nxt.get("status") == bq.LANE_WAITING_CURSOR,
+            str(nxt),
+        )
+    with_temp_bf(human_park)
+
+    # in-flight lane with empty ACTIVE resumes; does not jump the queue
+    def resume_inflight(tmp, runs):
+        def mutate(mission):
+            bq.start_lane(mission, "inflight")
+
+        arm(
+            tmp,
+            "MIS-resume",
+            [
+                {"id": "inflight", "bound": "beta-docs"},
+                {"id": "later", "bound": "beta-docs"},
+            ],
+            mutate,
+        )
+        out = sup.tick(dry_run=False)
+        check(
+            "empty ACTIVE in-flight lane → RESUME_LANE",
+            out.get("action") == "RESUME_LANE" and out.get("lane_id") == "inflight",
+            str(out),
+        )
+        wake = json.loads((tmp / "WAKE.json").read_text())
+        check(
+            "RESUME wake is not a Matt pick",
+            wake.get("kind") == "FACTORY_RESUME_LANE" and wake.get("require_matt") is False,
+            str(wake),
+        )
+        loaded = bq.load_mission("MIS-resume", tmp / "missions")
+        later = bq.get_lane(loaded, "later")
+        check("later lane not started on resume", later is not None and later.get("status") == bq.LANE_PENDING, str(later))
+    with_temp_bf(resume_inflight)
+
     print(f"\nSUPERVISOR RESULT: PASS={PASS} FAIL={FAIL}")
     return 0 if FAIL == 0 else 1
 

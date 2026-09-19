@@ -21,6 +21,34 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_devi_uma_commission_auth.py | tail -1; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/uma-blu/today; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
       "expect": "PASS=27 FAIL=0; anon:403; 8787 True; 8788 True",
       "by": "cursor-devi-uma-commission-auth"
+    },
+    {
+      "id": "bf-completion-register-20260919",
+      "claim": "Beta wolf_completion_items is the Owner completion register, seeded from Model C ABSENT/SPECIFIED/BUILT, required Model E adoption not started, Uma commissioning blockers, cutover_at null, and the documented ENDED-scope resurrection. /progress Open Loops counts at read time. Needs Matt is blocker_class NEEDS_MATT only. SYSTEM ledger unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_completion_register.py | tail -1; python3 -c \"import sqlite3; c=sqlite3.connect('catalog/content_library.sqlite'); u=c.execute(\\\"SELECT COUNT(*) FROM wolf_completion_items WHERE state!='RESOLVED'\\\").fetchone()[0]; m=c.execute(\\\"SELECT COUNT(*) FROM wolf_completion_items WHERE state!='RESOLVED' AND blocker_class='NEEDS_MATT'\\\").fetchone()[0]; print('unresolved', u); print('needs_matt', m)\"; curl -sS -o /dev/null -w 'progress:%{http_code}\\n' http://127.0.0.1:8788/progress; curl -sS http://127.0.0.1:8788/progress | python3 -c \"import sys; t=sys.stdin.read(); print('marker', t.count('Open Loops'))\"; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0); s.close()\"",
+      "expect": "PASS=102 FAIL=0; unresolved > 0; needs_matt 0; progress:200; marker >= 1; 8787 True",
+      "by": "cursor-bf-completion-register-20260919"
+    },
+    {
+      "id": "bf-ended-scope-no-resurrect-20260919",
+      "claim": "Beta migrate/seed upserts do not force an ENDED org_assignment_scopes row back to ACTIVE or clear end_at. Devi ASG-DEVI-HFB-UMA-1 SCOPE-BZG-ENTITY stays ENDED; SCOPE-BZG-UMA stays ACTIVE. Completion item CR-67663e23a6c95b97 is RESOLVED. Production :8787 untouched. SYSTEM ledger unchanged.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_ended_scope_no_resurrect.py | tail -1; python3 -c \"import sqlite3; c=sqlite3.connect('catalog/content_library.sqlite'); e=c.execute(\\\"SELECT status, end_at FROM org_assignment_scopes WHERE assignment_id='ASG-DEVI-HFB-UMA-1' AND scope_id='SCOPE-BZG-ENTITY'\\\").fetchone(); u=c.execute(\\\"SELECT status, end_at FROM org_assignment_scopes WHERE assignment_id='ASG-DEVI-HFB-UMA-1' AND scope_id='SCOPE-BZG-UMA'\\\").fetchone(); cr=c.execute(\\\"SELECT state FROM wolf_completion_items WHERE id='CR-67663e23a6c95b97'\\\").fetchone(); print(e[0], 'ended' if e[1] else 'open', u[0], 'uma_open' if u[1] is None else 'uma_ended', cr[0])\"; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0); s.close()\"",
+      "expect": "PASS=16 FAIL=0; ENDED ended ACTIVE uma_open RESOLVED; 8787 True",
+      "by": "cursor-bf-ended-scope-no-resurrect-20260919"
+    },
+    {
+      "id": "bf-devi-feedback-p0-20260919",
+      "claim": "Beta Uma close has Today and Previous from venue_daily_closes only (honest empty, no Alchemist cash_count). PR detail merges Wolf and Alchemist without inventing amount. Receive is append-only and fail-closed because RBAC has no venue receive permission. Devi is not granted payment approval. Today non-actionable cards say Waiting on role. Close submit buttons hide without venue.close.submit. Completion item Devi commissioning stays unresolved. HUMAN commissioning NOT_DONE. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_devi_feedback_p0.py | tail -1; curl -sS -o /dev/null -w 'close:%{http_code}\\n' http://127.0.0.1:8788/uma-blu-close; curl -sS -o /dev/null -w 'pr:%{http_code}\\n' http://127.0.0.1:8788/bzg/uma-blu/bills/PR-1422; curl -sS -o /dev/null -w 'prev:%{http_code}\\n' http://127.0.0.1:8788/api/venue-close/previous; curl -sS -o /dev/null -w 'recv:%{http_code}\\n' -X POST -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:8788/api/bzg/uma-blu/receive; sqlite3 catalog/content_library.sqlite \"SELECT COUNT(*) FROM bzg_ops_receipt_events; SELECT COUNT(*) FROM org_role_permissions rp JOIN org_permissions p ON p.permission_id=rp.permission_id WHERE rp.role_id='ROLE-BZG-HFB' AND p.code='bzg.pr.payment_approve'; SELECT state FROM wolf_completion_items WHERE id='CR-0fc49fa643fb2c26';\"; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=63 FAIL=0; close:200; pr:200; prev:403; recv:403; receipt events 0; HFB payment grants 0; WAITING_HUMAN; 8787 True; 8788 True",
+      "by": "cursor-bf-devi-feedback-p0-20260919"
+    },
+    {
+      "id": "bf-factory-auto-advance-wire-20260919",
+      "claim": "Empty ACTIVE plus an eligible PENDING lane on ACTIVE_MISSION writes FACTORY_LAUNCH_NEXT with require_matt false via bf_queue.close_slice. A blocked lane is skipped. A human-parked Devi retest does not stop the mission. CR-a0e1f0f8adc02de3 is RESOLVED. Production untouched. No finance or HR lane started.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_build_factory_supervisor.py | tail -1; python3 scripts/tests/test_build_factory_queue.py | tail -1; python3 scripts/tests/test_build_factory_advance.py | tail -1; python3 -c \"import sqlite3; c=sqlite3.connect('catalog/content_library.sqlite'); r=c.execute(\\\"SELECT state, resolution_evidence FROM wolf_completion_items WHERE id='CR-a0e1f0f8adc02de3'\\\").fetchone(); print(r[0]); print('evidence' if r[1] and 'test_build_factory_supervisor.py' in r[1] else 'missing')\"",
+      "expect": "PASS=37 FAIL=0; PASS=47 FAIL=0; PASS=13 FAIL=0; RESOLVED; evidence",
+      "by": "cursor-bf-factory-auto-advance-wire-20260919"
     }
   ]
 }

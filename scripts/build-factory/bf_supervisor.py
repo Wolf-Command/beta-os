@@ -26,6 +26,7 @@ TICKS = BF / "supervisor-ticks.jsonl"
 sys.path.insert(0, str(ROOT / "scripts" / "build-factory"))
 import bf_advance as ba  # noqa: E402
 import bf_watch as bw  # noqa: E402
+import bf_queue as bq  # noqa: E402
 
 # Hard ceiling for consecutive INSPECT recoveries on the same run without EXIT.
 INSPECT_RETRY_CEILING = 2
@@ -86,6 +87,164 @@ def calendar_independent() -> bool:
     return not any(n in body for n in needles)
 
 
+
+
+_IN_FLIGHT = (
+    bq.LANE_WAITING_CURSOR,
+    bq.LANE_WAITING_CURSOR_FIX,
+    bq.LANE_ACTIVE,
+    bq.LANE_GROK_REVIEW,
+)
+
+
+def _human_parked_lane(lane: dict | None) -> bool:
+    """Human retest / park is a side branch. It must not stall later safe lanes."""
+    if not lane:
+        return False
+    if lane.get("human_parked") is True:
+        return True
+    status = str(lane.get("status") or "")
+    if status in ("PARKED", "WAITING_HUMAN"):
+        return True
+    reason = str(lane.get("block_reason") or "").lower()
+    return "human_retest" in reason or reason.startswith("human_park")
+
+
+def _release_human_parks(mission: dict) -> None:
+    """Drop a human-parked pointer so close_slice can select the next safe lane."""
+    for lane in mission.get("lanes") or []:
+        if not _human_parked_lane(lane):
+            continue
+        if lane.get("status") not in bq.TERMINAL_LANE and lane.get("status") != "PARKED":
+            lane["status"] = "PARKED"
+            lane["stage"] = "PARKED"
+            if not lane.get("block_reason"):
+                lane["block_reason"] = "human_retest_parked"
+        if mission.get("active_lane_id") == lane.get("id"):
+            mission["active_lane_id"] = None
+
+
+def _resume_wake(mid: str, lane_id: str, status: str | None) -> dict:
+    return {
+        "kind": "FACTORY_RESUME_LANE",
+        "mission_id": mid,
+        "lane_id": lane_id,
+        "at": now_iso(),
+        "require_matt": False,
+        "instruction": (
+            "ACTIVE run pointer empty but mission lane still in flight. "
+            "Relaunch or finish that lane, then close_slice. Do not wait for Matt."
+        ),
+        "lane_status": status,
+    }
+
+
+def mission_continue_if_idle(*, dry_run: bool = False) -> dict:
+    """When no ACTIVE run, CLOSE→SELECT NEXT on ACTIVE_MISSION if eligible.
+
+    Owner 19 Sep invariant: IDLE with eligible safe queue is a factory defect.
+    Queue software already proved; this wires run-empty ticks to close_slice.
+    Does not launch cursor-agent itself — writes FACTORY_LAUNCH_NEXT wake.
+    Human-parked retest (Devi) is not a mission stop.
+    """
+    mid = bq.read_active_mission_id(BF)
+    if not mid:
+        return {"action": "IDLE", "reason": "no_active_run_and_no_mission"}
+    mission = bq.load_mission(mid, BF / "missions")
+    if not mission:
+        return {"action": "IDLE", "reason": "active_mission_missing", "mission_id": mid}
+
+    if not dry_run:
+        _release_human_parks(mission)
+
+    # If current lane still non-terminal and has no completion, do not skip it.
+    # A human-parked retest is not in-flight work.
+    aid = mission.get("active_lane_id")
+    if aid:
+        cur = bq.get_lane(mission, aid)
+        if (
+            cur
+            and not _human_parked_lane(cur)
+            and cur.get("status") not in bq.TERMINAL_LANE
+            and not cur.get("completion_commit")
+            and cur.get("status") in _IN_FLIGHT
+        ):
+            out = {
+                "action": "RESUME_LANE",
+                "reason": "active_run_missing_lane_in_flight",
+                "mission_id": mid,
+                "lane_id": aid,
+                "lane_status": cur.get("status"),
+                "require_matt": False,
+            }
+            if not dry_run:
+                _write_wake(_resume_wake(mid, aid, cur.get("status")))
+                bq.save_mission(mission, BF / "missions")
+            return out
+
+    if dry_run:
+        nxt = None
+        for lane in mission["lanes"]:
+            if lane["status"] == bq.LANE_PENDING and not lane.get("completion_commit"):
+                g = bq.guard_lane_bound(lane.get("bound"))
+                if g["allowed"]:
+                    nxt = lane
+                    break
+        return {
+            "action": "CLOSE_SLICE" if nxt else "IDLE",
+            "reason": "dry_run_mission_scan",
+            "mission_id": mid,
+            "next_lane_id": nxt["id"] if nxt else None,
+        }
+
+    result = bq.close_slice(mission)
+    bq.save_mission(mission, BF / "missions")
+    if result.get("resumed") and not result.get("started"):
+        lane_id = result.get("lane_id") or mission.get("active_lane_id")
+        lane = bq.get_lane(mission, lane_id) if lane_id else None
+        if lane_id and not _human_parked_lane(lane):
+            _write_wake(_resume_wake(mid, lane_id, (lane or {}).get("status")))
+            return {
+                "action": "RESUME_LANE",
+                "reason": "close_slice_resumed_in_flight",
+                "mission_id": mid,
+                "lane_id": lane_id,
+                "close_slice": result,
+                "require_matt": False,
+            }
+    if result.get("started"):
+        lane_id = result.get("lane_id") or mission.get("active_lane_id")
+        lane = bq.get_lane(mission, lane_id) if lane_id else None
+        wake = {
+            "kind": "FACTORY_LAUNCH_NEXT",
+            "mission_id": mid,
+            "lane_id": lane_id,
+            "bound": (lane or {}).get("bound"),
+            "at": now_iso(),
+            "require_matt": False,
+            "instruction": (
+                "close_slice selected next eligible safe lane. Peaches must START Cursor "
+                "for this lane (plan→WAITING_CURSOR), update Completion Register, no Matt pick."
+            ),
+        }
+        _write_wake(wake)
+        return {
+            "action": "LAUNCH_NEXT",
+            "reason": "mission_close_slice_started",
+            "mission_id": mid,
+            "lane_id": lane_id,
+            "close_slice": result,
+            "require_matt": False,
+        }
+    return {
+        "action": "IDLE",
+        "reason": result.get("reason") or "no_runnable_lane",
+        "mission_id": mid,
+        "close_slice": result,
+        "require_matt": False,
+    }
+
+
 def tick(*, dry_run: bool = False) -> dict:
     """One supervisor tick. Idempotent. Calendar-blind."""
     out: dict = {
@@ -99,7 +258,10 @@ def tick(*, dry_run: bool = False) -> dict:
     }
 
     if not ACTIVE.exists() or not ACTIVE.read_text(encoding="utf-8").strip():
-        out["reason"] = "no_active_run"
+        # Owner 19 Sep: empty ACTIVE must still consume ACTIVE_MISSION queue.
+        cont = mission_continue_if_idle(dry_run=dry_run)
+        out.update(cont)
+        out["reason"] = cont.get("reason", "no_active_run")
         if not dry_run:
             _append_tick(out)
         return out
@@ -120,8 +282,15 @@ def tick(*, dry_run: bool = False) -> dict:
     action = advice["next_action"]
 
     if action == "IDLE":
-        out["action"] = "IDLE"
-        out["reason"] = "terminal_or_done"
+        # Terminal run: attempt mission close_slice so DONE cannot stall the queue.
+        cont = mission_continue_if_idle(dry_run=dry_run)
+        if cont.get("action") in ("LAUNCH_NEXT", "CLOSE_SLICE", "RESUME_LANE"):
+            out.update(cont)
+        else:
+            out["action"] = "IDLE"
+            out["reason"] = "terminal_or_done"
+            if cont.get("reason"):
+                out["mission_idle_reason"] = cont.get("reason")
     elif action == "WAIT":
         out["action"] = "WAIT"
         out["reason"] = "child_alive"
