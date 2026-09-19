@@ -92,6 +92,7 @@ from core import sop_factory as _sop
 from core import strat_12wy_prove as _strat_12wy
 from core import escalation_burndown as _burndown
 from core import sale_evidence_pack as _sale_pack
+from core import sale_buyer_dataroom as _buyer_room
 from core import restore_drill as _restore_drill
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
@@ -1674,6 +1675,23 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if m_sale:
             self._sale_pack_get(qs, m_sale.group(1))
             return
+        # CAP-SALE-02 framework. Owner read. Empty folders. No share, no export, no buyer.
+        if self._buyer_room_refuse_code(path):
+            self._buyer_room_write_refused(path)
+            return
+        if path == "/api/buyer-dataroom":
+            self._buyer_room_get(qs)
+            return
+        if path == "/api/buyer-dataroom/tree":
+            self._buyer_room_get(qs, view="tree")
+            return
+        if path == "/api/buyer-dataroom/checklist":
+            self._buyer_room_get(qs, view="checklist")
+            return
+        m_room = re.match(r"^/api/buyer-dataroom/([^/]+)$", path)
+        if m_room:
+            self._buyer_room_get(qs, folder_id=m_room.group(1))
+            return
         # CAP-DR-01 framework. Owner read. No live restore. No NAS/B2/Production write.
         if self._restore_drill_refuse_code(path):
             self._restore_drill_write_refused(path)
@@ -2004,6 +2022,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._sale_pack_page()
             return
         elif path in (
+            "/buyer-dataroom",
+            "/buyer-dataroom/",
+            "/buyer-dataroom.html",
+            "/dashboards/buyer-dataroom.html",
+        ):
+            self._buyer_room_page()
+            return
+        elif path in (
             "/restore-drill",
             "/restore-drill/",
             "/restore-drill.html",
@@ -2107,6 +2133,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/sale-evidence-pack" or path.startswith("/api/sale-evidence-pack/") or self._sale_pack_export_code(path):
             self._sale_pack_write_refused(path)
+            return
+        if path == "/api/buyer-dataroom" or path.startswith("/api/buyer-dataroom/") or self._buyer_room_refuse_code(path):
+            self._buyer_room_write_refused(path)
             return
         if path == "/api/restore-drill" or path.startswith("/api/restore-drill/"):
             self._restore_drill_write_refused(path)
@@ -2388,6 +2417,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/sale-evidence-pack" or path.startswith("/api/sale-evidence-pack/") or self._sale_pack_export_code(path):
             self._sale_pack_write_refused(path)
             return
+        if path == "/api/buyer-dataroom" or path.startswith("/api/buyer-dataroom/") or self._buyer_room_refuse_code(path):
+            self._buyer_room_write_refused(path)
+            return
         if path == "/api/restore-drill" or path.startswith("/api/restore-drill/"):
             self._restore_drill_write_refused(path)
             return
@@ -2590,6 +2622,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/sale-evidence-pack" or path.startswith("/api/sale-evidence-pack/") or self._sale_pack_export_code(path):
             self._sale_pack_write_refused(path)
+            return
+        if path == "/api/buyer-dataroom" or path.startswith("/api/buyer-dataroom/") or self._buyer_room_refuse_code(path):
+            self._buyer_room_write_refused(path)
             return
         if path == "/api/restore-drill" or path.startswith("/api/restore-drill/"):
             self._restore_drill_write_refused(path)
@@ -4346,6 +4381,230 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "ledger_write": False,
                 "vdr_export": False,
                 "buyer_export": False,
+            },
+            status=405,
+        )
+
+    def _require_buyer_room_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Same Owner gate as the sale pack."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Buyer data room is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "buyer_access": False,
+                    "live_share": False,
+                    "vdr_export": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "external_writes": False,
+                    "buyer_access": False,
+                    "live_share": False,
+                    "vdr_export": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _buyer_room_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/buyer-dataroom/share", "/api/vdr/share"}:
+            return "share"
+        if path in {"/api/buyer-dataroom/export", "/api/buyer-dataroom/download"}:
+            return "export"
+        if path in {"/api/buyer-dataroom/grant", "/api/vdr/grant"}:
+            return "grant"
+        if path in {"/api/buyer-dataroom/upload", "/api/buyer-dataroom/fill"}:
+            return "fill"
+        return None
+
+    def _buyer_room_page(self) -> None:
+        identity = self._require_buyer_room_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "buyer-dataroom.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Buyer data room page is missing.",
+                    "buyer_access": False,
+                    "live_share": False,
+                    "vdr_export": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _buyer_room_get(self, qs: dict, folder_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_buyer_room_owner()
+        if identity is None:
+            return
+        export = (qs.get("export") or [""])[0]
+        fill = (qs.get("fill") or [""])[0]
+        share = (qs.get("share") or [""])[0]
+        buyer = (qs.get("buyer") or [""])[0]
+        entity = (qs.get("entity") or [""])[0] or None
+        folder = (qs.get("folder") or [""])[0] or None
+        try:
+            _buyer_room.guard_query(export=export, fill=fill, share=share, buyer=buyer)
+            if view == "tree":
+                full = _buyer_room.build_room(entity=entity, folder=folder)
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "tree": full["tree"],
+                    "folders": full["folders"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "on_disk": False,
+                    "buyer_access": False,
+                    "live_share": False,
+                    "vdr_export": False,
+                    "document_count": 0,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "checklist":
+                full = _buyer_room.build_room(entity=entity, folder=folder)
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "checklist": full["checklist"],
+                    "slot_count": full["slot_count"],
+                    "empty_slots": full["empty_slots"],
+                    "filled_slots": full["filled_slots"],
+                    "document_count": 0,
+                    "unmapped": full["unmapped"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "on_disk": False,
+                    "buyer_access": False,
+                    "live_share": False,
+                    "vdr_export": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif folder_id:
+                report = _buyer_room.read_folder(folder_id)
+            else:
+                report = _buyer_room.build_room(entity=entity, folder=folder)
+        except _buyer_room.BuyerDataroomError as exc:
+            status = 404 if exc.code == "not_found" else 400
+            if exc.code in {
+                "vdr_share_refused",
+                "vdr_export_refused",
+                "buyer_access_refused",
+                "fill_refused",
+                "writes_refused",
+            }:
+                status = 405
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "on_disk": False,
+                    "buyer_access": False,
+                    "live_share": False,
+                    "vdr_export": False,
+                },
+                status=status,
+            )
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "read_failed",
+                    "message": type(exc).__name__,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "on_disk": False,
+                    "buyer_access": False,
+                    "live_share": False,
+                    "vdr_export": False,
+                },
+                status=500,
+            )
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _buyer_room_write_refused(self, path: str) -> None:
+        identity = self._require_buyer_room_owner()
+        if identity is None:
+            return
+        code = self._buyer_room_refuse_code(path)
+        try:
+            if code == "share" or path.endswith("/share"):
+                _buyer_room.refuse_share({})
+            elif code == "export" or path.endswith("/export") or path.endswith("/download"):
+                _buyer_room.refuse_export({})
+            elif code == "grant" or path.endswith("/grant"):
+                _buyer_room.refuse_buyer_access({})
+            elif code == "fill" or path.endswith("/upload") or path.endswith("/fill"):
+                _buyer_room.refuse_fill({})
+            else:
+                _buyer_room.refuse_external_write({})
+        except _buyer_room.BuyerDataroomError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "on_disk": False,
+                    "buyer_access": False,
+                    "live_share": False,
+                    "vdr_export": False,
+                    **_buyer_room.honesty_flags(),
+                },
+                status=405,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Buyer data room is read-only. No share, no export, and no filled document.",
+                "external_writes": False,
+                "ledger_write": False,
+                "on_disk": False,
+                "buyer_access": False,
+                "live_share": False,
+                "vdr_export": False,
             },
             status=405,
         )

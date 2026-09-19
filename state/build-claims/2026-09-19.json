@@ -189,6 +189,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_ggv_social_derive.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-GGV-05'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-e20099e21930b9a6';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/ggv/social; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
       "expect": "PASS=104 FAIL=0; BUILT 77; OPEN; anon:403; 8787 True; 8788 True",
       "by": "cursor-ggv-social-derive-views"
+    },
+    {
+      "id": "bf-sale-buyer-dataroom-framework-20260919",
+      "claim": "Beta Owner buyer data room names six empty virtual folders and 60 empty checklist slots from Sale_Readiness.csv. Source text is not copied into a document. Unauth /api/buyer-dataroom and /buyer-dataroom are 403. Owner writes, live share, export, and buyer grant are refused. CAP-SALE-02 stays SPECIFIED. CR-766f242208e401ad stays OPEN. No filled document and no PROVEN or READY invented. Ledger stays 77 rows. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_sale_buyer_dataroom.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-SALE-01'][0], d['CAP-SALE-02'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-766f242208e401ad';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/buyer-dataroom; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/buyer-dataroom; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=148 FAIL=0; SPECIFIED SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
+      "by": "cursor-sale-buyer-dataroom-framework"
     }
   ]
 }
