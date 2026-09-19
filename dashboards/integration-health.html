@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wolf · Integration Health</title>
+<style>
+  :root {
+    --bg: #101418;
+    --bg2: #171d23;
+    --bg3: #1f272f;
+    --line: #2c3842;
+    --text: #eef2f5;
+    --muted: #8b9aa6;
+    --accent: #c4a574;
+    --warn: #d4a35c;
+    --danger: #d66a5e;
+    --read: #8eb4d4;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background:
+      radial-gradient(ellipse 90% 60% at 0% -10%, #243039 0%, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 20px 16px 64px; }
+  h1 {
+    font-family: var(--display);
+    font-size: 2rem; font-weight: 600; letter-spacing: -0.03em; margin: 0;
+  }
+  h1 em { font-style: italic; color: var(--accent); font-weight: 500; }
+  .sub { color: var(--muted); font-size: 0.92rem; line-height: 1.45; max-width: 40rem; }
+  .banner {
+    margin: 14px 0;
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--muted);
+    font-size: 0.84rem;
+    line-height: 1.4;
+  }
+  .card {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin: 8px 0;
+  }
+  .top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .id { font-size: 0.75rem; letter-spacing: 0.06em; color: var(--muted); }
+  .name { font-weight: 650; margin-top: 2px; }
+  .status {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+    border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px;
+    color: var(--muted); white-space: nowrap;
+  }
+  .status.READ_OK { color: var(--read); border-color: color-mix(in srgb, var(--read) 50%, var(--line)); }
+  .status.DEGRADED, .status.UNKNOWN { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); }
+  .status.ERROR { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); }
+  .ev { color: var(--muted); font-size: 0.82rem; line-height: 1.4; margin: 8px 0 0; }
+  h2 { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; }
+  .err { color: var(--danger); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Integration <em>Health</em></h1>
+  <p class="sub">Owner read of connector facts already on disk. Missing source stays UNKNOWN or NOT_CONFIGURED. No external writes. Ledger is not updated.</p>
+  <div class="banner" id="banner">Loading…</div>
+  <div id="list">
+    <article class="card"><div class="id">CAP-INTG-01</div><div class="name">Yanolja Connector</div><p class="ev">Waiting for the read.</p></article>
+    <article class="card"><div class="id">CAP-INTG-02</div><div class="name">ESB Connector</div><p class="ev">Waiting for the read.</p></article>
+    <article class="card"><div class="id">CAP-INTG-03</div><div class="name">Google Workspace Connector</div><p class="ev">Waiting for the read.</p></article>
+    <article class="card"><div class="id">CAP-INTG-04</div><div class="name">Bank Statement Connector</div><p class="ev">Waiting for the read.</p></article>
+    <article class="card"><div class="id">CAP-INTG-05</div><div class="name">Metricool Connector</div><p class="ev">Waiting for the read.</p></article>
+    <article class="card"><div class="id">CAP-INTG-06</div><div class="name">Technology &amp; Capability Registries</div><p class="ev">Waiting for the read.</p></article>
+    <article class="card"><div class="id">CAP-INTG-07</div><div class="name">Secrets &amp; Environment Separation</div><p class="ev">Waiting for the read.</p></article>
+  </div>
+  <h2>Sources read</h2>
+  <div id="sources"></div>
+</div>
+<script>
+const VOCAB = ["UNKNOWN", "NOT_CONFIGURED", "READ_OK", "DEGRADED", "ERROR"];
+
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function badge(status) {
+  const token = VOCAB.indexOf(status) >= 0 ? status : "ERROR";
+  return '<span class="status ' + token + '">' + esc(token) + '</span>';
+}
+
+function card(row) {
+  const id = esc(row.cap_id || row.source_id || "");
+  const name = esc(row.name || row.source_id || "");
+  const extra = row.ledger_maturity_unchanged
+    ? " Ledger stays " + esc(row.ledger_maturity_unchanged) + "."
+    : "";
+  return '<article class="card"><div class="top"><div><div class="id">' + id +
+    '</div><div class="name">' + name + '</div></div>' + badge(row.status) +
+    '</div><p class="ev">' + esc(row.evidence || "") + extra + '</p></article>';
+}
+
+async function load() {
+  const banner = document.getElementById("banner");
+  const list = document.getElementById("list");
+  const sources = document.getElementById("sources");
+  let res;
+  try {
+    res = await fetch("/api/integration-health", { headers: { "Accept": "application/json" } });
+  } catch (err) {
+    banner.textContent = "Read failed. No status invented.";
+    banner.classList.add("err");
+    return;
+  }
+  let body = {};
+  try { body = await res.json(); } catch (err) { body = {}; }
+  if (!res.ok || !body.ok) {
+    banner.textContent = body.message || "Identity denied. This panel is Owner-only and fail-closed.";
+    banner.classList.add("err");
+    list.innerHTML = "";
+    sources.innerHTML = "";
+    return;
+  }
+  banner.textContent = "Read-only. External writes off. Ledger write off. Network probes off.";
+  const rows = Array.isArray(body.connectors) ? body.connectors : [];
+  list.innerHTML = rows.map(card).join("") || "<p class='ev'>No connectors returned.</p>";
+  const src = Array.isArray(body.sources) ? body.sources : [];
+  sources.innerHTML = src.map(card).join("") || "<p class='ev'>No extra sources.</p>";
+}
+load();
+</script>
+</body>
+</html>

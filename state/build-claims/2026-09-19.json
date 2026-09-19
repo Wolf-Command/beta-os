@@ -105,6 +105,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_ggv_speed_to_lead_ops.py | tail -1; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/lead-spine; curl -sS -o /dev/null -w 'triage:%{http_code}\\n' 'http://127.0.0.1:8788/api/leads/triage?brand=habitat'; python3 -c \"import json; print(json.load(open('state/model-c-baseline-assessments.json'))['CAP-GGV-04'][0])\"; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
       "expect": "PASS=71 FAIL=0; page:200; triage:403; BUILT; 8787 True; 8788 True",
       "by": "cursor-ggv-speed-to-lead-ops"
+    },
+    {
+      "id": "beta-integration-health-readonly",
+      "claim": "Beta Owner Integration Health lists CAP-INTG-01..07 from local reads only. Missing source is UNKNOWN or NOT_CONFIGURED. Unauth /api/integration-health and /integration-health are 403. No external writes. CAP-INTG-01 stays ABSENT. CAP-INTG-07 stays SPECIFIED. Ledger stays 77 rows. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_integration_health.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-INTG-01'][0], d['CAP-INTG-07'][0], len(d))\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/integration-health; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/integration-health; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=69 FAIL=0; ABSENT SPECIFIED 77; anon:403; page:403; 8787 True; 8788 True",
+      "by": "cursor-integration-health-readonly"
     }
   ]
 }

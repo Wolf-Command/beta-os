@@ -86,6 +86,7 @@ from core import progress_read_model as _progress
 from core import intel_orchestration as _intel
 from core import intel_eval_cost as _intel_cost
 from core import lead_spine as _lead_spine
+from core import integration_health as _integration_health
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1629,6 +1630,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/progress":
             self._progress_empire()
             return
+        if path == "/api/integration-health":
+            self._integration_health_get()
+            return
         m_vc = re.match(r"^/api/venue-close/([^/]+)$", path)
         if m_vc and m_vc.group(1) not in (
             "open",
@@ -1846,6 +1850,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self.path = "/content-2.0.html"
         elif path in ("/progress", "/progress/"):
             self.path = "/progress.html"
+        elif path in (
+            "/integration-health",
+            "/integration-health/",
+            "/integration-health.html",
+            "/dashboards/integration-health.html",
+        ):
+            self._integration_health_page()
+            return
         elif path in ("/uma-blu-close", "/uma-blu-close/"):
             self.path = "/uma-blu-close.html"
         elif path in ("/bzg", "/bzg/"):
@@ -1888,6 +1900,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = urlparse(self.path).path
+        if path == "/api/integration-health":
+            self._integration_health_write_refused()
+            return
         if path == "/api/planner/save":
             self._save_slot()
             return
@@ -3140,6 +3155,100 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return None
         return identity
+
+    def _require_integration_health_owner(self, body: dict | None = None) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Same Owner gate as Progress."""
+        identity = self._resolve_identity(body)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Integration Health is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _integration_health_page(self) -> None:
+        identity = self._require_integration_health_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "integration-health.html"
+        if not page.is_file():
+            self._send_json(
+                {"ok": False, "error": "page_missing", "message": "Integration Health page is missing."},
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _integration_health_get(self) -> None:
+        identity = self._require_integration_health_owner()
+        if identity is None:
+            return
+        try:
+            report = _integration_health.build_report()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "read_failed",
+                    "message": type(exc).__name__,
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=500,
+            )
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _integration_health_write_refused(self) -> None:
+        identity = self._require_integration_health_owner()
+        if identity is None:
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Integration Health is read-only. No external writes.",
+                "external_writes": False,
+                "ledger_write": False,
+            },
+            status=405,
+        )
 
     def _progress_honesty(self) -> None:
         identity = self._require_progress_owner()
