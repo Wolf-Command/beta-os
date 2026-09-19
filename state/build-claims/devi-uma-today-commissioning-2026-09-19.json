@@ -17,14 +17,16 @@
   "CF_ACCESS": "NEEDS_MATT",
   "API_AUTH_GATE": "GATED",
   "FACTORY_SLICE": "BF-devi-uma-commission-auth-20260919",
-  "FACTORY_STAGE": "CURSOR_IMPLEMENTING",
+  "FACTORY_STAGE": "FINISHED",
   "PROGRESS_ACCESS": "DENIED_OWNER_ONLY",
   "PAYMENT_APPROVE": "DENIED",
   "CLOSER_SUBMIT": "DENIED",
   "URL": "https://beta.wolfcommand.net/bzg/uma-blu",
-  "UPDATED_AT_WITA": "2026-09-19T08:45:00+08:00",
-  "UPDATED_BY": "cursor-devi-uma-commission-auth",
-  "NOTES": "Uma Blu APIs fail-closed on Beta :8788. ROLE-BZG-HFB kept. Factory CURSOR_IMPLEMENTING. CF still NEEDS_MATT. HUMAN NOT_DONE.",
+  "UPDATED_AT_WITA": "2026-09-19T08:52:07+08:00",
+  "UPDATED_BY": "peaches-factory-watch-grok-review",
+  "NOTES": "Uma Blu APIs fail-closed on Beta :8788 (275d1c7). ROLE-BZG-HFB kept. HUMAN NOT_DONE. CF NEEDS_MATT. ENTITY scope re-ended after petty-test stomper; durable migrate upsert fix is follow-up.",
   "FACTORY_RUN_ID": "BF-devi-uma-commission-auth-20260919",
-  "CURSOR_PID": 57578
+  "CURSOR_PID": 57578,
+  "REVIEW_REF": "docs/deliveries/GROK-REVIEW-DEVI-UMA-COMMISSION-AUTH-275d1c7-2026-09-19.md",
+  "HEAD_COMMIT": "275d1c7c10c52f82b715b16e1210f722e00cc9b4"
 }
