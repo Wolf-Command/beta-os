@@ -409,6 +409,7 @@ def main() -> int:
               status='ACTIVE',
               is_primary=1,
               updated_at=excluded.updated_at
+            WHERE org_assignments.status!='ENDED' AND org_assignments.end_at IS NULL
             """,
             (ASG_DEVI, DEVI_PERSON, POS_HFB, START, ts, ts),
         )

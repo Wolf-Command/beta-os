@@ -170,6 +170,18 @@
           };
           return map[st] || (st ? ("Close: " + st) : "");
         }
+        function operatorChip(c) {
+          if (!c) return "";
+          var label = c.classification_label || "";
+          if (c.actionable === true && (label === "Needs staff" || c.classification === "NEEDS_STAFF")) {
+            return "You can act";
+          }
+          if (c.actionable === false && (c.waiting_role === "policy" || c.classification === "NEEDS_POLICY")) {
+            return "Policy required";
+          }
+          if (c.actionable === false && c.waiting_role) return "Waiting on " + c.waiting_role;
+          return label;
+        }
         var cards = data.cards || [];
         var nowBox = document.getElementById("nowBody");
         if (nowBox) {
@@ -178,8 +190,8 @@
           if (!now) {
             nowBox.appendChild(el("p", "empty", "Nothing live needs you right now."));
           } else {
-            if (now.classification_label) {
-              nowBox.appendChild(el("div", "kind", now.classification_label));
+            if (operatorChip(now)) {
+              nowBox.appendChild(el("div", "kind", operatorChip(now)));
             }
             nowBox.appendChild(el("p", "now-title", humanTitle(now.title) || "Attention"));
             if (now.actionable === false && now.waiting_copy) {
@@ -210,8 +222,8 @@
           var linked = c.actionable !== false && c.href;
           var a = el(linked ? "a" : "div", "card" + (c.attention ? " attn" : ""));
           if (linked) a.href = c.href;
-          if (c.classification_label) {
-            a.appendChild(el("div", "kind", c.classification_label));
+          if (operatorChip(c)) {
+            a.appendChild(el("div", "kind", operatorChip(c)));
           }
           a.appendChild(el("h3", null, humanTitle(c.title)));
           if (c.actionable === false && c.waiting_copy) {

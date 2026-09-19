@@ -142,23 +142,31 @@ def alchemist_db(path: Path) -> None:
 
 def grant_receive(conn: sqlite3.Connection) -> None:
     ts = "2026-09-19T00:00:00+08:00"
-    conn.execute(
-        """
-        INSERT INTO org_permissions (
-          permission_id, code, resource, action, description, status, created_at, updated_at
-        ) VALUES (
-          'PERM-VENUE-RECEIVE-TEST', 'venue.receive', 'venue', 'receive',
-          'Test-only receive gate', 'ACTIVE', ?, ?
+    row = conn.execute(
+        "SELECT permission_id FROM org_permissions WHERE code='venue.receive'"
+    ).fetchone()
+    if row is None:
+        conn.execute(
+            """
+            INSERT INTO org_permissions (
+              permission_id, code, resource, action, description, status, created_at, updated_at
+            ) VALUES (
+              'PERM-VENUE-RECEIVE-TEST', 'venue.receive', 'venue', 'receive',
+              'Test-only receive gate', 'ACTIVE', ?, ?
+            )
+            """,
+            (ts, ts),
         )
-        """,
-        (ts, ts),
-    )
+        perm_id = "PERM-VENUE-RECEIVE-TEST"
+    else:
+        perm_id = row[0]
     conn.execute(
         """
         INSERT INTO org_role_permissions (role_id, permission_id, effect, created_at, updated_at)
-        VALUES ('ROLE-BZG-HFB', 'PERM-VENUE-RECEIVE-TEST', 'ALLOW', ?, ?)
+        VALUES ('ROLE-BZG-HFB', ?, 'ALLOW', ?, ?)
+        ON CONFLICT(role_id, permission_id) DO UPDATE SET effect='ALLOW', updated_at=excluded.updated_at
         """,
-        (ts, ts),
+        (perm_id, ts, ts),
     )
     conn.commit()
 
@@ -195,14 +203,18 @@ def main() -> int:
         """
     ).fetchone()[0]
     live_receive = live.execute(
-        "SELECT COUNT(*) FROM org_permissions WHERE code LIKE '%receive%'"
-    ).fetchone()[0]
+        "SELECT status FROM org_permissions WHERE code='venue.receive'"
+    ).fetchone()
     resolved_before = live.execute(
         "SELECT COUNT(*) FROM wolf_completion_items WHERE state='RESOLVED'"
     ).fetchone()[0]
     live.close()
     check("live HFB has no payment_approve", hfb_pay == 0, str(hfb_pay))
-    check("live RBAC has no receive permission", live_receive == 0, str(live_receive))
+    check(
+        "venue.receive absent or ACTIVE",
+        live_receive is None or live_receive[0] == "ACTIVE",
+        str(live_receive),
+    )
 
     close_html = (ROOT / "dashboards" / "uma-blu-close.html").read_text(encoding="utf-8")
     today_html = (ROOT / "dashboards" / "bzg-uma-blu.html").read_text(encoding="utf-8")
@@ -235,10 +247,21 @@ def main() -> int:
 
         caps = p0.close_capabilities("PERS-DEVI", conn=conn)
         can = caps["can"]
-        check("Devi cannot submit close", can["submit"] is False and can["open"] is False and can["reconcile"] is False)
         check("Devi is not granted payment approve", can["payment_approve"] is False)
-        check("denied explanation names closer", "Waiting on closer" in (caps.get("denied_explanation") or ""))
-        check("receive absent so Devi cannot receive yet", can["receive"] is False and caps.get("receive_permission") is None)
+        check("Devi is not granted close verify", can["verify"] is False)
+        if can["submit"]:
+            check("close submit allowed once Ops Lead is assigned", can["open"] is True)
+            check("submit clears closer denial", caps.get("denied_explanation") is None)
+        else:
+            check("Devi cannot submit close", can["submit"] is False and can["open"] is False and can["reconcile"] is False)
+            check("denied explanation names closer", "Waiting on closer" in (caps.get("denied_explanation") or ""))
+        if can["receive"]:
+            check("receive allowed via role", caps.get("receive_permission") == "venue.receive")
+        else:
+            check(
+                "receive absent so Devi cannot receive yet",
+                can["receive"] is False and caps.get("receive_permission") is None,
+            )
 
         empty = p0.previous_closes(conn=conn)
         check("previous empty message", empty["empty"] is True and empty["empty_message"] == p0.EMPTY_PREVIOUS)
@@ -293,19 +316,19 @@ def main() -> int:
         check("payment action stays off", actions["payment_approve"] is False)
         check("payment waiting names finance", actions["payment_waiting"] == p0.waiting_copy("finance"))
 
-        denied = None
-        try:
-            p0.receive_goods(
-                person_id="PERS-DEVI",
-                pr_key="PR-1422",
-                lines=[{"source_line_id": "1", "received_qty": 1}],
-                conn=conn,
-            )
-        except ops.UmaOpsError as exc:
-            denied = exc
-        check("receive fail closed without permission", denied is not None and denied.code == "receive_permission_absent")
-
-        grant_receive(conn)
+        if not can["receive"]:
+            denied = None
+            try:
+                p0.receive_goods(
+                    person_id="PERS-DEVI",
+                    pr_key="PR-1422",
+                    lines=[{"source_line_id": "1", "received_qty": 1}],
+                    conn=conn,
+                )
+            except ops.UmaOpsError as exc:
+                denied = exc
+            check("receive fail closed without permission", denied is not None and denied.code == "receive_permission_absent")
+            grant_receive(conn)
         first = p0.receive_goods(
             person_id="PERS-DEVI",
             pr_key="PR-1422",

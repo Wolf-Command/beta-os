@@ -24,6 +24,8 @@ EMPTY_PREVIOUS = "No previous closes recorded in Wolf yet"
 WOLF_VERIFIED_CHIP = "Wolf-verified"
 EXISTING_CHIP = "Existing"
 WAITING_TEMPLATE = "Waiting on {role} — no action needed from you"
+CAN_ACT_LABEL = "You can act"
+POLICY_REQUIRED_LABEL = "Policy required"
 CLOSE_DENIED = (
     "You cannot open, submit, or reconcile this close. "
     "Waiting on closer — no action needed from you."
@@ -589,6 +591,26 @@ def _close_gate(card: dict[str, Any], caps: dict[str, Any]) -> tuple[bool, str |
     return False, "closer"
 
 
+def _apply_operator_chip(row: dict[str, Any], decision: dict[str, Any]) -> None:
+    """Authenticated operator: action when they can act. Never 'Needs staff' then.
+
+    Waiting on [role], or Policy required, when they cannot.
+    """
+    if decision.get("navigation"):
+        return
+    if decision.get("actionable"):
+        label = str(row.get("classification_label") or "")
+        if row.get("classification") == "NEEDS_STAFF" or label in ("", "Needs staff"):
+            row["classification"] = "CAN_ACT"
+            row["classification_label"] = CAN_ACT_LABEL
+        return
+    role = str(decision.get("waiting_role") or "policy")
+    if role == "policy":
+        row["classification_label"] = POLICY_REQUIRED_LABEL
+    else:
+        row["classification_label"] = f"Waiting on {role}"
+
+
 def annotate_today(
     payload: dict[str, Any],
     *,
@@ -612,6 +634,7 @@ def annotate_today(
                 it.pop("href", None)
                 items.append(it)
             row["items"] = items
+        _apply_operator_chip(row, decision)
         cards.append(row)
 
     def sort_key(card: dict[str, Any]) -> tuple:

@@ -3,6 +3,27 @@
   "status": "ACTIVE",
   "mode": "EXTENDED_AUTONOMOUS_BETA",
   "first_slice": "BF-completion-register-20260919",
-  "notify_matt": ["NEEDS_MATT_REAL", "MAJOR_MILESTONE", "GLOBAL_SAFETY_STOP"],
-  "started_wita": "2026-09-19T12:48:00+08:00"
+  "notify_matt": [
+    "NEEDS_MATT_REAL",
+    "MAJOR_MILESTONE",
+    "GLOBAL_SAFETY_STOP"
+  ],
+  "started_wita": "2026-09-19T12:48:00+08:00",
+  "updated_wita": "2026-09-19T14:16:44+08:00",
+  "active_mission": "owner-autonomous-20260919",
+  "current_run": "BF-4fffc5e8d131",
+  "current_lane": "devi-feedback-p0",
+  "owner_correction_2026-09-19": {
+    "keep_building_without_matt": true,
+    "devi_retest_is_not_mission_end": true,
+    "idle_with_eligible_queue_is_defect": true,
+    "on_lane_finish": "CLOSE\u2192UPDATE_CR\u2192SELECT_NEXT\u2192START",
+    "model_c_recon_after_devi_p0_stable": "read-only; no score gaming"
+  },
+  "devi_fb_ops_lead": {
+    "decision_id": "DEC-DEVI-BZG-FB-OPS-LEAD-2026-09-19",
+    "status": "QUEUED_AFTER_HAIKAL",
+    "lane": "devi-fb-ops-lead",
+    "at": "2026-09-19T15:33:27+08:00"
+  }
 }

@@ -3216,12 +3216,13 @@ class BetaHandler(SimpleHTTPRequestHandler):
     # ----- Uma Blu ops (Devi commissioning: fail-closed) -----
 
     def _require_uma_ops(self, body: dict | None = None) -> str | None:
-        """Identity + venue.close.read on Uma + active SCOPE-BZG-UMA. Fail closed.
+        """Identity + venue.close.read + Uma or BZG F&B scope. Fail closed.
 
-        Does not grant payment approve, closer submit, float invent, or Progress.
-        Keeps ROLE-BZG-HFB. Does not invent bzg.pr.payment_approve.
+        SCOPE-BZG-UMA and SCOPE-BZG-FB are equivalent for these APIs.
+        Does not grant payment approve, close verify, progress, or Owner.
         """
         permission = "venue.close.read"
+        accepted = ("SCOPE-BZG-UMA", "SCOPE-BZG-FB")
         subject = self._require_permission(
             permission,
             body,
@@ -3232,16 +3233,17 @@ class BetaHandler(SimpleHTTPRequestHandler):
         identity = self._resolve_identity(body, emit_audit=False)
         person_id = identity.get("person_id")
         scopes = _scope.list_active_scopes_for_person(person_id) if person_id else []
-        if not any(row.get("scope_id") == "SCOPE-BZG-UMA" for row in scopes):
+        if not any(row.get("scope_id") in accepted for row in scopes):
             self._send_json(
                 {
                     "ok": False,
                     "error": "forbidden",
-                    "message": "subject lacks SCOPE-BZG-UMA",
+                    "message": "subject lacks SCOPE-BZG-UMA or SCOPE-BZG-FB",
                     "subject": subject,
                     "person_id": person_id,
                     "required_permission": permission,
                     "required_scope": "SCOPE-BZG-UMA",
+                    "accepted_scopes": list(accepted),
                     "identity_assurance": identity.get("identity_assurance"),
                     "real_authentication": identity.get("real_authentication"),
                 },

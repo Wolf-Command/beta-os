@@ -33,6 +33,7 @@ TZ_UTC = timezone.utc
 ENTITY_BZG = "ENT-BZG"
 BRAND_UMA = "BZG-UMA"
 ROLE_HFB = "ROLE-BZG-HFB"
+ROLE_FB_OPS_LEAD = "ROLE-BZG-FB-OPS-LEAD"
 ROLE_CLOSER = "ROLE-BZG-CLOSER"
 EVIDENCE_CASH = "cash_count"
 
@@ -713,8 +714,9 @@ def find_hfb_assignee(
     venue_brand_id: str = BRAND_UMA,
     conn: sqlite3.Connection | None = None,
 ) -> dict[str, Any] | None:
-    """Resolve Head of F&B owner by ROLE + ACTIVE assignment + brand/entity scope.
+    """Resolve F&B exception owner by role + ACTIVE assignment + brand scope.
 
+    Prefers ROLE-BZG-HFB, then ROLE-BZG-FB-OPS-LEAD.
     Never hard-codes PERS-DEVI.
     """
     own = conn is None
@@ -725,13 +727,13 @@ def find_hfb_assignee(
             SELECT a.assignment_id, a.person_id, p.position_id, p.role_id, p.brand_id
             FROM org_assignments a
             JOIN org_positions p ON p.position_id = a.position_id
-            WHERE p.role_id=?
+            WHERE p.role_id IN (?, ?)
               AND p.entity_id=?
               AND a.status='ACTIVE'
               AND a.end_at IS NULL
-            ORDER BY a.assignment_id
+            ORDER BY CASE p.role_id WHEN ? THEN 0 ELSE 1 END, a.assignment_id
             """,
-            (ROLE_HFB, entity_id),
+            (ROLE_HFB, ROLE_FB_OPS_LEAD, entity_id, ROLE_HFB),
         ).fetchall()
         for r in rows:
             # Prefer brand-matched position; else require assignment scope covering brand
@@ -855,7 +857,7 @@ def open_exception(
             metadata={
                 "work_item_id": wi["work_item_id"],
                 "owner_person_id": owner["person_id"],
-                "owner_role_id": ROLE_HFB,
+                "owner_role_id": owner["role_id"],
             },
             conn=c,
         )

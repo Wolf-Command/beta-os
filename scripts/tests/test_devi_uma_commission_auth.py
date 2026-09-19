@@ -254,7 +254,11 @@ def main() -> int:
         def _scopes_without_uma(person_id, conn=None):
             rows = real_scopes(person_id, conn=conn)
             if person_id == "PERS-DEVI":
-                return [r for r in rows if r.get("scope_id") != "SCOPE-BZG-UMA"]
+                return [
+                    r
+                    for r in rows
+                    if r.get("scope_id") not in ("SCOPE-BZG-UMA", "SCOPE-BZG-FB")
+                ]
             return rows
 
         sb._scope.list_active_scopes_for_person = _scopes_without_uma
@@ -277,21 +281,17 @@ def main() -> int:
         st, body = call("/api/bzg/uma-blu/float", headers=devi_h, payload={"opening_float": 100})
         check("Devi float invent route 403", st == 403, f"{st} {body.get('error')}")
 
-        # Writable guard runs before the permission check inside a test process.
-        # Lift it only for this call so the deny is the permission, not the guard.
-        os.environ["WOLF_ALLOW_LIVE_AUDIT"] = "1"
-        try:
-            st, body = call(
-                "/api/venue-close/open",
-                headers=devi_h,
-                payload={"business_date": "2026-09-19"},
-            )
-        finally:
-            os.environ.pop("WOLF_ALLOW_LIVE_AUDIT", None)
+        st, body = call("/api/venue-close/capabilities", headers=devi_h)
+        can = body.get("can") or {}
         check(
-            "Devi closer submit 403",
-            st == 403 and body.get("error") == "forbidden",
-            f"{st} {body.get('error')} {body.get('message')}",
+            "Devi close submit allowed and verify denied",
+            st == 200 and can.get("submit") is True and can.get("verify") is False,
+            f"{st} submit={can.get('submit')} verify={can.get('verify')} {body.get('error')}",
+        )
+        check(
+            "Devi payment_approve still denied",
+            can.get("payment_approve") is False,
+            str(can.get("payment_approve")),
         )
 
         st, body = call("/api/progress", headers=devi_h)

@@ -17,9 +17,9 @@
     },
     {
       "id": "devi-uma-commission-auth",
-      "claim": "Beta :8788 /api/bzg/uma-blu/* GET and POST are fail-closed without identity and without SCOPE-BZG-UMA. Devi with ROLE-BZG-HFB and SCOPE-BZG-UMA can read allowed Uma ops. Payment approve, closer submit, float invent, and Progress stay denied for Devi. HUMAN_COMMISSIONING stays NOT_DONE. :8787 untouched.",
+      "claim": "Beta :8788 /api/bzg/uma-blu/* GET and POST are fail-closed without identity and without Uma or F&B scope. Devi can read allowed Uma ops. Payment approve, float invent, close verify, and Progress stay denied. Close submit is allowed on ROLE-BZG-FB-OPS-LEAD. HUMAN_COMMISSIONING stays NOT_DONE. :8787 untouched.",
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_devi_uma_commission_auth.py | tail -1; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/uma-blu/today; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
-      "expect": "PASS=27 FAIL=0; anon:403; 8787 True; 8788 True",
+      "expect": "PASS=28 FAIL=0; anon:403; 8787 True; 8788 True",
       "by": "cursor-devi-uma-commission-auth"
     },
     {
@@ -59,10 +59,17 @@
     },
     {
       "id": "bf-ggv-ops-safe-haikal-ux-20260919",
-      "claim": "Beta content board wave 1: human fortnight titles on read and on new creates (Habitat Fortnight Sep 14—27 pattern, no historical rewrite), short page headers, post/story status change without Edit, Library Select all / Deselect all, brand colour tint with shared Inter font, Library search plus collapsed Detailed filters. Upload / Smart Upload unchanged. No Metricool write. Production :8787 untouched.",
+      "claim": "Beta content board wave 1: human fortnight titles on read and on new creates (Habitat Fortnight Sep 14\u201427 pattern, no historical rewrite), short page headers, post/story status change without Edit, Library Select all / Deselect all, brand colour tint with shared Inter font, Library search plus collapsed Detailed filters. Upload / Smart Upload unchanged. No Metricool write. Production :8787 untouched.",
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_haikal_content_ux_wave1.py | tail -1; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0); s.close()\"",
       "expect": "PASS=21 FAIL=0; 8787 True",
       "by": "cursor-bf-ggv-ops-safe-haikal-ux-20260919"
+    },
+    {
+      "id": "bf-devi-fb-ops-lead-20260919",
+      "claim": "Beta PERS-DEVI is ROLE-BZG-FB-OPS-LEAD on ASG-DEVI-FB-OPS-1 with venue.receive and venue.close.submit. Payment approve, close verify, progress.read, and approval.decide stay denied. ASG-DEVI-HFB-UMA-1 is ENDED. SCOPE-BZG-ENTITY on that assignment stays ENDED. Production :8787 untouched. No Alchemist write.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_devi_fb_ops_lead.py | tail -1; python3 -c \"import sqlite3; c=sqlite3.connect('catalog/content_library.sqlite'); e=c.execute(\\\"SELECT status FROM org_assignment_scopes WHERE assignment_id='ASG-DEVI-HFB-UMA-1' AND scope_id='SCOPE-BZG-ENTITY'\\\").fetchone()[0]; a=c.execute(\\\"SELECT status FROM org_assignments WHERE assignment_id='ASG-DEVI-FB-OPS-1'\\\").fetchone()[0]; pay=c.execute(\\\"SELECT COUNT(*) FROM org_role_permissions rp JOIN org_permissions p ON p.permission_id=rp.permission_id WHERE rp.role_id='ROLE-BZG-FB-OPS-LEAD' AND p.code='bzg.pr.payment_approve'\\\").fetchone()[0]; print(e, a, pay)\"; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0); s.close()\"",
+      "expect": "PASS=60 FAIL=0; ENDED ACTIVE 0; 8787 True",
+      "by": "cursor-devi-fb-ops-lead"
     }
   ]
 }

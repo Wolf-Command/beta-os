@@ -299,7 +299,11 @@
                 `<button class="btn" data-act="resolve" data-id="${r.close_id}" type="button">Resolve</button>`
               : r.state === "RESOLVED" && caps.verify
               ? `<button class="btn btn-ok" data-act="verify" data-id="${r.close_id}" type="button">Verify close</button>`
-              : `<p class="muted">Waiting on closer — no action needed from you.</p>`;
+              : r.state === "RESOLVED"
+              ? `<p class="muted">Waiting on verifier — no action needed from you.</p>`
+              : !caps.submit
+              ? `<p class="muted">Waiting on closer — no action needed from you.</p>`
+              : `<p class="muted">No further action on this row.</p>`;
           return (
             `<div class="exc">` +
             `<strong>${r.business_date}</strong> · ${humanState(r.state)}` +
@@ -319,7 +323,12 @@
       const data = await api("/api/venue-close/capabilities");
       caps = Object.assign(caps, data.can || {});
       const note = $("capNote");
-      if (!caps.submit && data.denied_explanation) {
+      if (caps.submit) {
+        note.classList.remove("hidden");
+        note.textContent = caps.verify
+          ? "You can perform and submit this close."
+          : "You can perform and submit this close. Verify stays with a separate role.";
+      } else if (!caps.submit && data.denied_explanation) {
         note.classList.remove("hidden");
         note.textContent = data.denied_explanation;
       }
