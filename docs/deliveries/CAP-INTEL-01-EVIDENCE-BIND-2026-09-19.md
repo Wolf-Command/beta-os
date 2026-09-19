@@ -26,7 +26,7 @@ python3 scripts/tests/test_blocker_explain.py
 
 `CR-85ef88d8e1da110c` resolved only. `resolution_evidence` is the implementation commit plus `scripts/tests/test_intel_orchestration.py`.
 
-Commit: stamped in `wolf_completion_items.resolution_evidence` after the implementation commit.
+Commit: `9848be2` plus `scripts/tests/test_intel_orchestration.py` (PASS=65 FAIL=0).
 
 ## Why not PROVEN
 
