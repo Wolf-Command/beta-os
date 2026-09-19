@@ -103,6 +103,7 @@ from core import crm_connector_prove as _crm_connector
 from core import gws_integrate_prove as _gws_prove
 from core import crm_package_intel as _pkg_intel
 from core import msc_asset_register as _msc_assets
+from core import msc_compliance_pack as _msc_compliance
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import ggv_speed_to_lead_prove as _ggv_speed
@@ -1906,6 +1907,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/msc/assets/"):
             self._msc_assets_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-MSC-03 compliance pack. Owner read. Empty is not proof. No payment. No Cloudflare mutate.
+        if self._msc_compliance_refuse_code(path):
+            self._msc_compliance_write_refused(path)
+            return
+        if path == "/api/msc/compliance":
+            self._msc_compliance_get(qs)
+            return
+        if path == "/api/msc/compliance/schema":
+            self._msc_compliance_get(qs, view="schema")
+            return
+        if path == "/api/msc/compliance/kinds":
+            self._msc_compliance_get(qs, view="kinds")
+            return
+        if path == "/api/msc/compliance/pack":
+            self._msc_compliance_get(qs, view="pack")
+            return
+        if path.startswith("/api/msc/compliance/"):
+            self._msc_compliance_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-CRM-01 bound prove. Owner read. Does not invent a lead or PROVEN.
         if path == "/api/crm/lead-cap-prove":
             self._crm_lead_prove_get()
@@ -2301,6 +2321,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._msc_assets_page()
             return
         elif path in (
+            "/msc-compliance",
+            "/msc-compliance/",
+            "/msc-compliance.html",
+            "/dashboards/msc-compliance.html",
+        ):
+            self._msc_compliance_page()
+            return
+        elif path in (
             "/crm-lead-cap-prove",
             "/crm-lead-cap-prove/",
             "/crm-lead-cap-prove.html",
@@ -2455,6 +2483,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/msc/assets" or path.startswith("/api/msc/assets/"):
             self._msc_assets_write_refused(path)
+            return
+        if self._msc_compliance_refuse_code(path):
+            self._msc_compliance_write_refused(path)
+            return
+        if path == "/api/msc/compliance" or path.startswith("/api/msc/compliance/"):
+            self._msc_compliance_write_refused(path)
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -2785,6 +2819,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/msc/assets" or path.startswith("/api/msc/assets/"):
             self._msc_assets_write_refused(path)
             return
+        if self._msc_compliance_refuse_code(path):
+            self._msc_compliance_write_refused(path)
+            return
+        if path == "/api/msc/compliance" or path.startswith("/api/msc/compliance/"):
+            self._msc_compliance_write_refused(path)
+            return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
             self._patch_core_work_item(m_wi.group(1))
@@ -3025,6 +3065,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/msc/assets" or path.startswith("/api/msc/assets/"):
             self._msc_assets_write_refused(path)
+            return
+        if self._msc_compliance_refuse_code(path):
+            self._msc_compliance_write_refused(path)
+            return
+        if path == "/api/msc/compliance" or path.startswith("/api/msc/compliance/"):
+            self._msc_compliance_write_refused(path)
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -7369,6 +7415,267 @@ class BetaHandler(SimpleHTTPRequestHandler):
         out["person_id"] = identity.get("person_id")
         out["honesty"] = _msc_assets.honesty_flags()
         self._send_json(out)
+
+    def _require_msc_compliance_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Compliance pack is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Compliance pack is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "compliance_proved": False,
+                    "licence_status": None,
+                    "current": False,
+                    "payment": None,
+                    "cloudflare_mutated": False,
+                    "access_mutated": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "compliance_proved": False,
+                    "licence_status": None,
+                    "payment": None,
+                    "cloudflare_mutated": False,
+                    "access_mutated": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _msc_compliance_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/msc/compliance/payment", "/api/msc/compliance/money"}:
+            return "payment"
+        if path in {
+            "/api/msc/compliance/licence-status",
+            "/api/msc/compliance/current",
+            "/api/msc/compliance/compliant",
+        }:
+            return "licence_status"
+        if path in {"/api/msc/compliance/cloudflare", "/api/msc/compliance/cf"}:
+            return "cloudflare"
+        if path in {"/api/msc/compliance/access", "/api/msc/compliance/cf-access"}:
+            return "access"
+        if path in {"/api/msc/compliance/prove", "/api/msc/compliance/proven"}:
+            return "prove"
+        if path == "/api/msc/compliance/ready":
+            return "ready"
+        if path == "/api/msc/compliance/resolve":
+            return "resolve"
+        if path in {"/api/msc/compliance/production", "/api/msc/compliance/production/mutate"}:
+            return "production"
+        if path in {"/api/msc/compliance/fill", "/api/msc/compliance/note"}:
+            return "fill"
+        return None
+
+    def _msc_compliance_fail(self, exc: _msc_compliance.CompliancePackError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "licence_status_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "compliance_proved": False,
+                "licence_status": None,
+                "current": False,
+                "payment": None,
+                "cloudflare_mutated": False,
+                "access_mutated": False,
+                "ledger_write": False,
+                "cr_resolved": False,
+                **_msc_compliance.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _msc_compliance_write_refused(self, path: str) -> None:
+        identity = self._require_msc_compliance_owner()
+        if identity is None:
+            return
+        try:
+            code = self._msc_compliance_refuse_code(path)
+            if code == "payment":
+                _msc_compliance.refuse_payment({})
+            elif code == "licence_status":
+                _msc_compliance.refuse_licence_status({})
+            elif code == "cloudflare":
+                _msc_compliance.refuse_cloudflare({})
+            elif code == "access":
+                _msc_compliance.refuse_access({})
+            elif code == "prove":
+                _msc_compliance.refuse_proven({})
+            elif code == "ready":
+                _msc_compliance.refuse_ready({})
+            elif code == "resolve":
+                _msc_compliance.refuse_resolve({})
+            elif code == "production":
+                _msc_compliance.refuse_production({})
+            elif code == "fill":
+                _msc_compliance.refuse_fill({})
+            else:
+                _msc_compliance.refuse_external_write({})
+        except _msc_compliance.CompliancePackError as exc:
+            self._msc_compliance_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Compliance pack does not store evidence or a current licence.",
+                "compliance_proved": False,
+                "licence_status": None,
+                "payment": None,
+                "cloudflare_mutated": False,
+                "access_mutated": False,
+                "ledger_write": False,
+                "cr_resolved": False,
+            },
+            status=405,
+        )
+
+    def _msc_compliance_page(self) -> None:
+        identity = self._require_msc_compliance_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "msc-compliance.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Compliance pack page is missing.",
+                    "compliance_proved": False,
+                    "licence_status": None,
+                    "payment": None,
+                    "cr_resolved": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _msc_compliance_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_msc_compliance_owner()
+        if identity is None:
+            return
+        try:
+            _msc_compliance.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                licence_status=(qs.get("licence_status") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                compliant=(qs.get("compliant") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _msc_compliance.build_pack()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "compliance_proved": False,
+                    "licence_status": None,
+                    "payment": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _msc_compliance.build_pack()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    "empty_is_compliance": False,
+                    "compliance_proved": False,
+                    "licence_status": None,
+                    "payment": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "pack":
+                full = _msc_compliance.build_pack()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    "compliance_proved": False,
+                    "licence_status": None,
+                    "payment": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _msc_compliance.read_kind(ref_id)
+            else:
+                report = _msc_compliance.build_pack()
+        except _msc_compliance.CompliancePackError as exc:
+            self._msc_compliance_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
 
     def _require_gws_prove_owner(self) -> dict | None:
         """CF JWT → Person; only PERS-MATT. Same Owner gate as the other proves."""
