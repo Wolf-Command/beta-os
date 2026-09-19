@@ -3151,14 +3151,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
     def _uma_ops_prs(self) -> None:
         try:
             rows = _uma_ops.list_prs()
-            self._send_json(
-                {
-                    "ok": True,
-                    "prs": rows,
-                    "count": len(rows),
-                    **_uma_ops.honesty_flags(),
-                }
-            )
+            payload = {
+                "ok": True,
+                "prs": rows,
+                "count": len(rows),
+                **_uma_ops.honesty_flags(),
+            }
+            payload["fixture_notice"] = _uma_ops.fixture_notice_for(rows)
+            self._send_json(payload)
         except Exception as exc:  # noqa: BLE001
             self._send_err(500, str(exc))
 

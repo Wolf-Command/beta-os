@@ -56,6 +56,11 @@
     border: 1px solid var(--line); font-size: 0.75rem; color: var(--muted); margin-bottom: 8px;
   }
   .state.warn { color: var(--warn); border-color: rgba(224,160,69,0.45); }
+  .chip {
+    display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid rgba(61,184,160,0.45); color: var(--accent);
+    font-size: 0.72rem; font-weight: 650; vertical-align: middle;
+  }
   .meta { color: var(--muted); font-size: 0.82rem; line-height: 1.4; }
   .id { font-size: 0.72rem; color: var(--muted); margin-top: 8px; word-break: break-all; }
   .ex { color: var(--warn); font-size: 0.75rem; margin-top: 6px; }
@@ -70,12 +75,13 @@
 
   <div class="banner hidden" id="fixtureBanner">These rows are examples — not live purchase orders.</div>
 
-  <nav class="uma">
+    <nav class="uma">
     <a href="/bzg/uma-blu">Today</a>
-    <a class="active" href="/bzg/uma-blu/bills">PR and bills</a>
-    <a href="/uma-blu-close">Daily close</a>
+    <a class="active" href="/bzg/uma-blu/bills">Bills</a>
+    <a href="/bzg/uma-blu/petty">Petty</a>
+    <a href="/uma-blu-close">Close</a>
     <a href="/bzg/uma-blu/issues">Issues</a>
-    <a href="/bzg/uma-blu/petty">Petty cash</a>
+    <a href="/bzg/uma-blu#history">History</a>
   </nav>
 
   <div id="list"><p class="muted">Loading…</p></div>
@@ -108,22 +114,33 @@
       var box = document.getElementById("list");
       box.innerHTML = "";
       var rows = data.prs || [];
-      if (rows.some(function (p) { return p.example; })) {
+      var hasLegacy = rows.some(function (p) { return p.legacy; });
+      var liveRows = rows.filter(function (p) { return !p.example; });
+      var exRows = hasLegacy ? [] : rows.filter(function (p) { return p.example; });
+      if (data.fixture_notice && exRows.length && !hasLegacy) {
         document.getElementById("fixtureBanner").classList.remove("hidden");
       }
-      if (!rows.length) {
+      if (!liveRows.length && !exRows.length) {
         box.appendChild(el("p", "empty", "No purchase requests yet."));
         return;
       }
-      rows.forEach(function (p) {
+      if (!liveRows.length) {
+        box.appendChild(el("p", "empty", "No live purchase requests yet."));
+      }
+      liveRows.forEach(function (p) {
         var d = el("div", "row");
         var st = p.state || "";
-        var pill = el("span", "state" + (st === "POLICY_REQUIRED" || st === "PAID_CLAIMED" ? " warn" : ""), STATE_LABEL[st] || st);
-        d.appendChild(pill);
+        var label = p.display_status || STATE_LABEL[st] || st;
+        var warn = st === "POLICY_REQUIRED" || st === "PAID_CLAIMED" || p.alchemist_status === "Awaiting Devi";
+        var head = el("div");
+        head.appendChild(el("span", "state" + (warn ? " warn" : ""), label));
+        if (p.legacy) head.appendChild(el("span", "chip", "Existing"));
+        d.appendChild(head);
         var title = (p.supplier_name || "Purchase request");
         if (p.purpose) title += " · " + p.purpose;
         d.appendChild(el("h3", null, title));
         var bits = [];
+        if (p.pr_num && !/^\d+$/.test(String(p.pr_num))) bits.push(String(p.pr_num));
         if (p.requester_label) bits.push("Requested by " + p.requester_label);
         if (p.expected_value != null) {
           var amt = String(p.expected_value);
@@ -135,9 +152,24 @@
         if (p.bill_reference) bits.push("Bill " + p.bill_reference);
         if (bits.length) d.appendChild(el("div", "meta", bits.join(" · ")));
         if (p.example) d.appendChild(el("div", "ex", "Example"));
-        d.appendChild(el("div", "id", p.pr_id));
+        // staff UI: do not show raw PR ids
+        if (p.example) d.appendChild(el("div", "ex", "Practice example — not live"));
         box.appendChild(d);
       });
+      if (exRows.length) {
+        box.appendChild(el("p", "muted", "Practice examples (not live Uma Blu work)"));
+        exRows.forEach(function (p) {
+          var d = el("div", "row");
+          var st = p.state || "";
+          var pill = el("span", "state" + (st === "POLICY_REQUIRED" || st === "PAID_CLAIMED" ? " warn" : ""), STATE_LABEL[st] || st);
+          d.appendChild(pill);
+          var title = (p.supplier_name || "Purchase request");
+          if (p.purpose) title += " · " + p.purpose;
+          d.appendChild(el("h3", null, title));
+          d.appendChild(el("div", "ex", "Practice example — not live"));
+          box.appendChild(d);
+        });
+      }
     })
     .catch(function () {
       document.getElementById("list").textContent = "Could not load bills.";

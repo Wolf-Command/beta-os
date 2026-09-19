@@ -27,6 +27,8 @@
     padding: 16px 16px 64px;
     max-width: 480px;
     margin: 0 auto;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     background:
       radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
       radial-gradient(ellipse 90% 60% at 100% 0%, #163028 0%, transparent 50%),
@@ -60,6 +62,11 @@
   .card .meta { color: var(--muted); font-size: 0.82rem; }
   .card .ex { color: var(--warn); font-size: 0.75rem; margin-top: 6px; }
   .card .kind { color: var(--accent); font-size: 0.78rem; font-weight: 650; }
+  .chip {
+    display: inline-block; margin-right: 6px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid rgba(61,184,160,0.45); color: var(--accent);
+    font-size: 0.72rem; font-weight: 650; vertical-align: middle;
+  }
   .card .why { color: var(--text); font-size: 0.88rem; margin-top: 6px; line-height: 1.35; }
   .card.attn { border-color: rgba(224,160,69,0.55); }
   .now-title { margin: 0 0 4px; font-size: 1.05rem; }
@@ -77,21 +84,36 @@
   .hist .when { display: block; color: var(--muted); font-size: 0.72rem; margin-bottom: 2px; }
   .muted { color: var(--muted); font-size: 0.82rem; }
   .empty { color: var(--muted); font-size: 0.9rem; padding: 8px 0; }
+
+  nav.uma a { min-height: 40px; display: inline-flex; align-items: center; font-size: 0.84rem; padding: 10px 12px; }
+  .card, .panel, .banner, .sub, .why, .meta { overflow-wrap: anywhere; word-break: break-word; }
+  .practice {
+    margin-top: 18px; padding-top: 8px; border-top: 1px dashed var(--line);
+  }
+  .practice h2 {
+    margin: 0 0 8px; font-size: 0.78rem; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); font-weight: 650;
+  }
+  .practice .card { opacity: 0.72; border-style: dashed; }
+  .banner.info {
+    background: rgba(61,184,160,0.10); border-color: rgba(61,184,160,0.35); color: var(--accent);
+  }
 </style>
 </head>
 <body>
   <p class="crumb"><a href="/bzg">BZG</a> · Uma Blu</p>
   <h1 class="brand">Uma Blu <em>Today</em></h1>
-  <p class="sub">What needs a human today — quiet when the day is clean</p>
+  <p class="sub">What needs you today</p>
 
-  <div class="banner hidden" id="fixtureBanner">These purchase requests are examples, not live orders.</div>
+  <div class="banner hidden" id="fixtureBanner">Some rows are practice only — not live Uma Blu work.</div>
 
   <nav class="uma">
     <a class="active" href="/bzg/uma-blu">Today</a>
-    <a href="/bzg/uma-blu/bills">PR and bills</a>
-    <a href="/uma-blu-close">Daily close</a>
+    <a href="/bzg/uma-blu/bills">Bills</a>
+    <a href="/bzg/uma-blu/petty">Petty</a>
+    <a href="/uma-blu-close">Close</a>
     <a href="/bzg/uma-blu/issues">Issues</a>
-    <a href="/bzg/uma-blu/petty">Petty cash</a>
+    <a href="/bzg/uma-blu#history">History</a>
   </nav>
 
   <div class="panel" id="now">
@@ -120,8 +142,33 @@
       .then(function (data) {
         var box = document.getElementById("cards");
         box.innerHTML = "";
-        if (data.fixture_notice) {
-          document.getElementById("fixtureBanner").classList.remove("hidden");
+        // Example fixtures are hidden from Today staff view — keep banner tucked away.
+
+        var TITLE_HUMAN = {
+          "OPENING BALANCE REQUIRED": "Opening cash balance needed",
+          "Policy required": "Policy needed before we can finish this",
+          "PRs waiting approval": "Purchase requests waiting for approval",
+          "Payment claimed, not verified": "Payment claimed — not verified yet",
+          "Petty cash needs attention": "Petty cash needs attention",
+          "Daily close not started": "Daily close not started"
+        };
+        function humanTitle(t) {
+          if (!t) return "Attention";
+          return TITLE_HUMAN[t] || t;
+        }
+        function closeStateLine(c) {
+          if (c.close && c.close.label) return c.close.label;
+          var st = (c.close && c.close.status) || "";
+          var map = {
+            not_started: "Not started yet",
+            in_progress: "In progress",
+            verified: "Verified closed",
+            exception: "Exception open",
+            blocked: "Blocked — policy needed",
+            cancelled: "Cancelled",
+            not_loaded: "Could not load close"
+          };
+          return map[st] || (st ? ("Close: " + st) : "");
         }
         var cards = data.cards || [];
         var nowBox = document.getElementById("nowBody");
@@ -134,41 +181,68 @@
             if (now.classification_label) {
               nowBox.appendChild(el("div", "kind", now.classification_label));
             }
-            nowBox.appendChild(el("p", "now-title", now.title || "Attention"));
+            nowBox.appendChild(el("p", "now-title", humanTitle(now.title) || "Attention"));
             if (now.why) nowBox.appendChild(el("div", "why", now.why));
+            if (now.href) {
+              var go = el("a", "meta", "Open →");
+              go.href = now.href;
+              go.style.display = "inline-block";
+              go.style.marginTop = "8px";
+              go.style.color = "var(--accent)";
+              nowBox.appendChild(go);
+            }
           }
         }
-        if (!cards.length) {
-          box.appendChild(el("p", "empty", "Nothing waiting right now."));
-          return;
-        }
+        var live = [];
+        var nowKind = (data.now && data.now.kind) || "";
         cards.forEach(function (c) {
+          if (c.kind === "history") return; // history has its own panel
+          if (c.kind === "daily_close" && nowKind === "daily_close") return; // already in Now
+          // Never show example-only fixtures as Uma Blu work on Today
+          if (c.example && !(c.attention_count > 0)) return;
+          live.push(c);
+        });
+        function paintCard(c) {
           var a = el("a", "card" + (c.attention ? " attn" : ""));
           a.href = c.href || "#";
           if (c.classification_label) {
             a.appendChild(el("div", "kind", c.classification_label));
           }
-          a.appendChild(el("h3", null, c.title));
+          a.appendChild(el("h3", null, humanTitle(c.title)));
           if (c.why) a.appendChild(el("div", "why", c.why));
-          if (c.kind === "daily_close" && c.close && c.close.status) {
-            a.appendChild(el("div", "meta", "State: " + c.close.status));
-          } else if (c.kind !== "history" && c.attention_count != null) {
+          if (c.kind === "daily_close") {
+            var line = closeStateLine(c);
+            if (line) a.appendChild(el("div", "meta", line));
+          } else if (c.attention_count != null) {
             var n = c.attention_count;
-            var line = n === 1 ? "1 needing attention" : n + " needing attention";
-            if (c.example_count) line += " · " + c.example_count + " example";
-            a.appendChild(el("div", "meta", line));
+            var line2 = n === 1 ? "1 needing attention" : n + " needing attention";
+            if (c.example_count) line2 += " · " + c.example_count + " practice example";
+            a.appendChild(el("div", "meta", line2));
           }
+          var shown = 0;
           (c.items || []).forEach(function (it) {
-            a.appendChild(el("div", "meta", it.label));
-            if (it.example) a.appendChild(el("div", "ex", "Example"));
+            if (it.example) return; // keep example lines out of live cards
+            if (shown >= 8) return;
+            shown += 1;
+            var line = el("div", "meta");
+            if (it.legacy) line.appendChild(el("span", "chip", "Existing"));
+            line.appendChild(document.createTextNode(it.label || ""));
+            a.appendChild(line);
           });
           (c.teaser || []).forEach(function (t) {
             var bit = t.sentence || "";
             if (t.when) bit = t.when + " — " + bit;
             a.appendChild(el("div", "meta", bit));
           });
-          box.appendChild(a);
-        });
+          if (c.example) a.appendChild(el("div", "ex", "Practice example — not live"));
+          return a;
+        }
+        if (!live.length) {
+          box.appendChild(el("p", "empty", "Nothing else waiting right now."));
+        } else {
+          live.forEach(function (c) { box.appendChild(paintCard(c)); });
+        }
+
       })
       .catch(function () {
         document.getElementById("cards").textContent = "Could not load Today.";
@@ -188,7 +262,11 @@
         ev.forEach(function (e) {
           var li = el("li");
           if (e.when) li.appendChild(el("span", "when", e.when));
-          li.appendChild(document.createTextNode(e.sentence || ""));
+          if (e.legacy) li.appendChild(el("span", "chip", "Existing"));
+          var sentence = e.sentence || "";
+          if (e.pr_num && !/^\d+$/.test(String(e.pr_num))) sentence += " · " + e.pr_num;
+          else if (e.detail && !/^\d+$/.test(String(e.detail))) sentence += " · " + e.detail;
+          li.appendChild(document.createTextNode(sentence));
           ul.appendChild(li);
         });
       })

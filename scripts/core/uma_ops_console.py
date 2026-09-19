@@ -23,6 +23,7 @@ from core.blocker_explain import (
     explain_operating_blocker,
 )
 from core import evidence as _evidence
+from core import uma_alchemist_ro as _legacy_alc
 from core import venue_close as _venue_close
 from core import work_items as _work_items
 
@@ -61,7 +62,9 @@ TODAY_RANK = {
     "close_policy_required": 50,
     "missing_payment_evidence": 60,
     "bill_waiting_payment": 70,
+    "legacy_unpaid_ledger": 72,
     "pr_waiting_approval": 80,
+    "received_follow_up": 85,
     "ordered_not_received": 90,
     "petty_variance_noted": 100,
     "petty_open_uncounted": 110,
@@ -563,14 +566,120 @@ def note_petty_count(
     return out
 
 
+def _live_legacy(rows: list[dict[str, Any]] | None) -> bool:
+    return any(isinstance(r, dict) and r.get("legacy") for r in (rows or []))
+
+
+def fixture_notice_for(*groups: list[dict[str, Any]] | None) -> bool:
+    """False when a live legacy row is present — examples must not dominate."""
+    if any(_live_legacy(g) for g in groups):
+        return False
+    return any(
+        isinstance(r, dict) and r.get("example") for g in groups for r in (g or [])
+    )
+
+
+def _provenance_key(row: dict[str, Any]) -> tuple[str, str, str] | None:
+    prov = row.get("provenance")
+    if isinstance(prov, dict) and prov.get("source_id") is not None:
+        return (
+            str(prov.get("source") or ""),
+            str(prov.get("table") or ""),
+            str(prov.get("source_id")),
+        )
+    return None
+
+
+def _merge_wolf_legacy(
+    wolf: list[dict[str, Any]],
+    legacy: list[dict[str, Any]],
+    *,
+    limit: int,
+    id_fields: tuple[str, ...],
+) -> list[dict[str, Any]]:
+    """Wolf non-example first, then legacy. Drop examples when legacy is live.
+
+    Dedupe by provenance id and by the public id fields (pr_id / pr_num).
+    """
+    if not legacy:
+        return wolf[:limit]
+    seen_ids: set[str] = set()
+    seen_prov: set[tuple[str, str, str]] = set()
+    out: list[dict[str, Any]] = []
+
+    def push(row: dict[str, Any]) -> bool:
+        ids = [str(row.get(field)) for field in id_fields if row.get(field)]
+        prov = _provenance_key(row)
+        if prov and prov in seen_prov:
+            return False
+        if any(i in seen_ids for i in ids):
+            return False
+        seen_ids.update(ids)
+        if prov:
+            seen_prov.add(prov)
+        out.append(row)
+        return len(out) >= limit
+
+    for row in wolf:
+        if row.get("example"):
+            continue
+        if push(row):
+            return out
+    for row in legacy:
+        if push(row):
+            return out
+    return out
+
+
+def _safe_legacy_prs(limit: int) -> list[dict[str, Any]]:
+    try:
+        rows = _legacy_alc.project_prs(limit=limit, attention_only=False)
+    except Exception:  # noqa: BLE001 — missing Alchemist must not crash Today
+        return []
+    return list(rows or [])
+
+
+def _safe_legacy_petty(limit: int) -> list[dict[str, Any]]:
+    try:
+        rows = _legacy_alc.project_petty_movements(limit=limit)
+    except Exception:  # noqa: BLE001
+        return []
+    return list(rows or [])
+
+
+def _safe_legacy_history(limit: int) -> list[dict[str, Any]]:
+    try:
+        rows = _legacy_alc.project_history_events(limit=limit)
+    except Exception:  # noqa: BLE001
+        return []
+    return list(rows or [])
+
+
+def _safe_legacy_summary() -> dict[str, Any]:
+    try:
+        summary = _legacy_alc.project_attention_summary()
+    except Exception:  # noqa: BLE001
+        return {"source_status": "INACCESSIBLE", "recent_petty": [], "unpaid_ledger_count": 0}
+    return summary if isinstance(summary, dict) else {"source_status": "INACCESSIBLE"}
+
+
 def list_petty(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
     """GET payload: movements + day summaries + honesty. Float stays NOT_FOUND when absent."""
     own = conn is None
     c = conn or db_connect()
     try:
         ensure_schema(c)
-        movements = list_petty_movements(conn=c)
+        movements = list_petty_movements(conn=c, limit=200)
+        legacy_moves = _safe_legacy_petty(200)
+        if legacy_moves:
+            movements = _merge_wolf_legacy(
+                movements,
+                legacy_moves,
+                limit=200,
+                id_fields=("movement_id",),
+            )
         days = list_petty_days(conn=c)
+        # Float comes only from a Wolf day row. Legacy amounts never become one.
         any_float = any(d.get("opening_float") is not None for d in days)
         float_status = "PROVIDED" if any_float else "NOT_FOUND"
         honesty = dict(HONESTY)
@@ -593,8 +702,7 @@ def list_petty(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
             "float_status": float_status,
             "opening_float": None if float_status == "NOT_FOUND" else "see_days",
             "honesty": honesty,
-            "fixture_notice": any(m.get("example") for m in movements)
-            or any(d.get("example") for d in days),
+            "fixture_notice": fixture_notice_for(movements, days),
         }
     finally:
         if own:
@@ -812,35 +920,55 @@ def list_prs(
     *,
     venue: str = VENUE_UMA,
     state: str | None = None,
-    limit: int = 100,
+    limit: int = 200,
     conn: sqlite3.Connection | None = None,
 ) -> list[dict[str, Any]]:
+    """Wolf non-example first, then Alchemist projection. No canonical insert."""
     own = conn is None
     c = conn or db_connect()
     try:
         lim = max(1, min(int(limit), 200))
+        wolf = _wolf_prs(c, venue=venue, state=state, limit=lim)
+        legacy = _safe_legacy_prs(lim)
         if state:
-            rows = c.execute(
-                """
-                SELECT * FROM bzg_ops_purchase_requests
-                WHERE venue=? AND state=?
-                ORDER BY updated_at DESC LIMIT ?
-                """,
-                (venue, state.strip().upper(), lim),
-            ).fetchall()
-        else:
-            rows = c.execute(
-                """
-                SELECT * FROM bzg_ops_purchase_requests
-                WHERE venue=?
-                ORDER BY updated_at DESC LIMIT ?
-                """,
-                (venue, lim),
-            ).fetchall()
-        return [_public(dict(r)) for r in rows]
+            want = state.strip().upper()
+            legacy = [r for r in legacy if (r.get("state") or "").upper() == want]
+        if not legacy:
+            return wolf
+        return _merge_wolf_legacy(
+            wolf, legacy, limit=lim, id_fields=("pr_id", "pr_num")
+        )
     finally:
         if own:
             c.close()
+
+
+def _wolf_prs(
+    conn: sqlite3.Connection,
+    *,
+    venue: str,
+    state: str | None,
+    limit: int,
+) -> list[dict[str, Any]]:
+    if state:
+        rows = conn.execute(
+            """
+            SELECT * FROM bzg_ops_purchase_requests
+            WHERE venue=? AND state=?
+            ORDER BY updated_at DESC LIMIT ?
+            """,
+            (venue, state.strip().upper(), limit),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """
+            SELECT * FROM bzg_ops_purchase_requests
+            WHERE venue=?
+            ORDER BY updated_at DESC LIMIT ?
+            """,
+            (venue, limit),
+        ).fetchall()
+    return [_public(dict(r)) for r in rows]
 
 
 def _public(row: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -1413,6 +1541,86 @@ def _issues_today_card(issues: list[dict[str, Any]]) -> dict[str, Any]:
     return card
 
 
+def _legacy_opening_card(history_note: str) -> dict[str, Any]:
+    """Opening-balance blocker when only legacy movements exist. No invented float."""
+    card: dict[str, Any] = {
+        "kind": "petty_cash",
+        "title": "OPENING BALANCE REQUIRED",
+        "count": 1,
+        "attention_count": 1,
+        "example_count": 0,
+        "href": "/bzg/uma-blu/petty",
+        "items": [
+            {
+                "label": (
+                    "Existing tin movements are listed on Petty. "
+                    "They do not set an opening balance."
+                ),
+                "example": False,
+                "legacy": True,
+                "record_origin": "alchemist",
+            }
+        ],
+        "attention": True,
+        "blocked": True,
+        "rank": TODAY_RANK["opening_balance_required"],
+        "example": False,
+        "legacy": True,
+        "record_origin": "alchemist",
+    }
+    _apply_explain(
+        card,
+        "opening_balance_required",
+        label="OPENING BALANCE REQUIRED",
+        float_status="NOT_FOUND",
+    )
+    card["why"] = ((card.get("why") or "") + history_note).strip()
+    return card
+
+
+def _legacy_unpaid_card(summary: dict[str, Any]) -> dict[str, Any]:
+    n = int(summary.get("unpaid_ledger_count") or 0)
+    recorded = summary.get("unpaid_ledger_sum")
+    why = (
+        f"{n} bills are still recorded unpaid in the existing ledger. "
+        "This is not a verified Wolf payment."
+    )
+    if recorded is not None:
+        why = (
+            f"{n} bills are still recorded unpaid in the existing ledger "
+            f"(recorded sum {recorded}). This is not a verified Wolf payment "
+            "and it is not an opening balance."
+        )
+    prov = {"source": "alchemist", "table": "ledger", "source_id": "unpaid-summary"}
+    return {
+        "kind": "legacy_unpaid_ledger",
+        "title": "Unpaid bills in the existing record",
+        "count": n,
+        "attention_count": n,
+        "example_count": 0,
+        "href": "/bzg/uma-blu/bills",
+        "items": [
+            {
+                "label": why,
+                "example": False,
+                "legacy": True,
+                "record_origin": "alchemist",
+                "provenance": prov,
+            }
+        ],
+        "attention": True,
+        "blocked": False,
+        "rank": TODAY_RANK["legacy_unpaid_ledger"],
+        "example": False,
+        "legacy": True,
+        "record_origin": "alchemist",
+        "why": why,
+        "classification": "NEEDS_STAFF",
+        "classification_label": CLASSIFICATION_LABELS.get("NEEDS_STAFF"),
+        "provenance": prov,
+    }
+
+
 def _history_teaser(conn: sqlite3.Connection) -> dict[str, Any]:
     try:
         hist = list_history(limit=3, conn=conn)
@@ -1420,7 +1628,12 @@ def _history_teaser(conn: sqlite3.Connection) -> dict[str, Any]:
     except Exception:  # noqa: BLE001
         lines = []
     teaser = [
-        {"when": ln.get("when"), "sentence": ln.get("sentence")}
+        {
+            "when": ln.get("when"),
+            "sentence": ln.get("sentence"),
+            "legacy": bool(ln.get("legacy")),
+            "pr_num": ln.get("pr_num"),
+        }
         for ln in lines[:3]
         if isinstance(ln, dict)
     ]
@@ -1467,7 +1680,12 @@ def today_cards(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
                 {
                     "label": _pr_human_label(p),
                     "example": bool(p.get("example")),
-                    "pr_id": p["pr_id"],  # click-through only
+                    "pr_id": p.get("pr_id"),  # click-through only; UI shows pr_num
+                    "legacy": bool(p.get("legacy")),
+                    "pr_num": p.get("pr_num"),
+                    "record_origin": p.get("record_origin"),
+                    "provenance": p.get("provenance"),
+                    "display_status": p.get("display_status"),
                 }
                 for p in items
             ]
@@ -1521,6 +1739,26 @@ def today_cards(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
             [p for p in prs if p["state"] == "POLICY_REQUIRED"],
             href="/bzg/uma-blu/issues",
         )
+        received = [
+            p
+            for p in prs
+            if p.get("legacy") and p.get("needs_attention") and p.get("state") == "RECEIVED"
+        ]
+        add_card(
+            "received_follow_up",
+            "Received, needs follow-up",
+            received,
+            href="/bzg/uma-blu/bills",
+        )
+        if cards and cards[-1].get("kind") == "received_follow_up":
+            cards[-1]["why"] = (
+                "Goods were marked received in the existing Uma record and still "
+                "need a follow-up. This is not a Wolf payment check."
+            )
+            cards[-1]["classification"] = "NEEDS_STAFF"
+            cards[-1]["classification_label"] = CLASSIFICATION_LABELS.get("NEEDS_STAFF")
+            cards[-1]["legacy"] = True
+            cards[-1]["record_origin"] = "alchemist"
 
         close_info = _safe_close_for_today(conn=c)
         explain_kind = close_info.get("explain_kind")
@@ -1562,6 +1800,24 @@ def today_cards(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
         cards.append(_issues_today_card(issue_rows))
         cards.append(_history_teaser(c))
 
+        legacy_moves = _safe_legacy_petty(5)
+        legacy_summary = _safe_legacy_summary()
+        history_note = (
+            " Past tin movements still show on Petty. They do not set an opening balance."
+        )
+        if legacy_moves:
+            petty_live = next((card for card in cards if card.get("kind") == "petty_cash"), None)
+            if petty_live:
+                why = str(petty_live.get("why") or "")
+                if "do not set an opening balance" not in why:
+                    petty_live["why"] = (why + history_note).strip()
+                petty_live["legacy"] = True
+            else:
+                cards.append(_legacy_opening_card(history_note))
+        unpaid_n = int(legacy_summary.get("unpaid_ledger_count") or 0)
+        if unpaid_n > 0:
+            cards.append(_legacy_unpaid_card(legacy_summary))
+
         cards.sort(
             key=lambda card: (
                 0 if card.get("attention") else 1,
@@ -1596,9 +1852,8 @@ def today_cards(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
             "honesty": honesty,
             "float_status": float_status,
             "opening_float": None if float_status == "NOT_FOUND" else "see_days",
-            "fixture_notice": any(p.get("example") for p in prs)
-            or any(d.get("example") for d in petty_days)
-            or any(i.get("example") for i in issue_rows),
+            "fixture_notice": fixture_notice_for(prs, petty_days, issue_rows, legacy_moves),
+            "legacy_projection": legacy_summary,
         }
     finally:
         if own:
@@ -1607,6 +1862,8 @@ def today_cards(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
 
 def _pr_human_label(p: dict[str, Any]) -> str:
     bits = []
+    if p.get("legacy") and p.get("pr_num"):
+        bits.append(str(p["pr_num"]))
     if p.get("supplier_name"):
         bits.append(str(p["supplier_name"]))
     if p.get("purpose"):
@@ -1765,7 +2022,24 @@ def list_history(
             reverse=True,
         )[:limit]
         lines = [_human_audit_line(e) for e in merged]
-        return {"ok": True, "events": lines, "honesty": dict(HONESTY)}
+        legacy_lines = _safe_legacy_history(limit)
+        combined = list(lines) + list(legacy_lines)
+        seen_prov: set[tuple[str, str, str]] = set()
+        deduped: list[dict[str, Any]] = []
+        for row in combined:
+            prov = _provenance_key(row)
+            if prov and prov in seen_prov:
+                continue
+            if prov:
+                seen_prov.add(prov)
+            deduped.append(row)
+        deduped.sort(key=lambda e: str(e.get("when") or ""), reverse=True)
+        return {
+            "ok": True,
+            "events": deduped[:limit],
+            "honesty": dict(HONESTY),
+            "fixture_notice": fixture_notice_for(deduped),
+        }
     finally:
         if own:
             c.close()

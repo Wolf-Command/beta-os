@@ -59,6 +59,11 @@
     border: 1px solid var(--line); font-size: 0.75rem; color: var(--muted); margin-bottom: 8px;
   }
   .state.warn { color: var(--warn); border-color: rgba(224,160,69,0.45); }
+  .chip {
+    display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid rgba(61,184,160,0.45); color: var(--accent);
+    font-size: 0.72rem; font-weight: 650; vertical-align: middle;
+  }
   .meta { color: var(--muted); font-size: 0.82rem; line-height: 1.4; }
   .ex { color: var(--warn); font-size: 0.75rem; margin-top: 6px; }
   .muted { color: var(--muted); font-size: 0.82rem; }
@@ -76,17 +81,18 @@
 <body>
   <p class="crumb"><a href="/bzg">BZG</a> · <a href="/bzg/uma-blu">Uma Blu</a> · Petty cash</p>
   <h1 class="brand">Petty <em>cash</em></h1>
-  <p class="sub">Tin movements only — opening float is unavailable until authorised.</p>
+  <p class="sub">Tin movements only.</p>
 
-  <div class="banner danger" id="floatBanner">OPENING BALANCE REQUIRED — opening float NOT FOUND. Movements can still be recorded.</div>
-  <div class="banner hidden" id="fixtureBanner">These rows are examples — not live tin activity.</div>
+  <div class="banner" id="floatBanner">Opening cash balance needed. Uma Blu has no approved opening balance yet. You can view movements, but the tin total cannot be verified.</div>
+  <div class="banner hidden" id="fixtureBanner">Practice examples — not live Uma Blu tin activity.</div>
 
-  <nav class="uma">
+    <nav class="uma">
     <a href="/bzg/uma-blu">Today</a>
-    <a href="/bzg/uma-blu/bills">PR and bills</a>
-    <a href="/uma-blu-close">Daily close</a>
+    <a href="/bzg/uma-blu/bills">Bills</a>
+    <a class="active" href="/bzg/uma-blu/petty">Petty</a>
+    <a href="/uma-blu-close">Close</a>
     <a href="/bzg/uma-blu/issues">Issues</a>
-    <a class="active" href="/bzg/uma-blu/petty">Petty cash</a>
+    <a href="/bzg/uma-blu#history">History</a>
   </nav>
 
   <div class="panel">
@@ -119,13 +125,17 @@
       var floatStatus = (data.float_status || (data.honesty && data.honesty.float) || "NOT_FOUND");
       var floatEl = document.getElementById("floatBanner");
       if (floatStatus === "NOT_FOUND" || floatStatus === "NOT_IN_SLICE") {
-        floatEl.textContent = "OPENING BALANCE REQUIRED — opening float NOT FOUND. Movements can still be recorded.";
-        floatEl.classList.add("danger");
+        var banner = "Opening cash balance needed. Uma Blu has no approved opening balance yet. You can view movements, but the tin total cannot be verified.";
+        if ((data.movements || []).length) {
+          banner += " Past movements stay listed under this notice. They do not set an opening balance.";
+        }
+        floatEl.textContent = banner;
+        floatEl.classList.remove("danger");
       } else {
         floatEl.textContent = "Opening float: recorded on a day tin (see below)";
         floatEl.classList.remove("danger");
       }
-      if (data.fixture_notice) {
+      if (data.fixture_notice && !(data.movements || []).some(function (m) { return m.legacy; })) {
         document.getElementById("fixtureBanner").classList.remove("hidden");
       }
 
@@ -138,11 +148,12 @@
         days.forEach(function (d) {
           var row = el("div", "row");
           var st = d.state || "OPEN";
-          var stEl = el("span", "state" + (st === "POLICY_REQUIRED" || st === "VARIANCE_NOTED" ? " warn" : ""), st);
+          var STATE_HUMAN = {OPEN:"Open", COUNTED:"Counted", POLICY_REQUIRED:"Needs policy", VARIANCE_NOTED:"Variance noted", CLOSED:"Closed"};
+          var stEl = el("span", "state" + (st === "POLICY_REQUIRED" || st === "VARIANCE_NOTED" ? " warn" : ""), STATE_HUMAN[st] || st);
           row.appendChild(stEl);
           row.appendChild(el("h3", null, d.business_date || "Date unknown"));
           var floatLine = d.opening_float == null
-            ? "OPENING BALANCE REQUIRED — float NOT FOUND"
+            ? "Opening cash balance not set yet"
             : "Opening float: " + d.opening_float;
           row.appendChild(el("div", "meta", floatLine));
           if (d.counted_amount != null) {
@@ -151,7 +162,7 @@
           if (d.expected_amount != null) {
             row.appendChild(el("div", "meta", "Expected: " + d.expected_amount));
           } else if (d.opening_float == null) {
-            row.appendChild(el("div", "meta", "Expected: unavailable (float NOT FOUND)"));
+            row.appendChild(el("div", "meta", "Expected balance unavailable until opening cash is set"));
           }
           if (d.note) row.appendChild(el("div", "meta", d.note));
           if (d.example) row.appendChild(el("div", "ex", "Example"));
@@ -168,9 +179,14 @@
       }
       rows.forEach(function (m) {
         var d = el("div", "row");
-        d.appendChild(el("span", "state", m.direction || "?"));
+        var head = el("div");
+        head.appendChild(el("span", "state", m.direction_label || m.direction || "?"));
+        if (m.legacy) head.appendChild(el("span", "chip", "Existing"));
+        d.appendChild(head);
         d.appendChild(el("h3", null, m.purpose || "Movement"));
-        d.appendChild(el("div", "meta", (m.business_date || "") + " · " + money(m.amount, m.currency)));
+        var meta = (m.business_date || "") + " · " + money(m.amount, m.currency);
+        if (m.logged_by) meta += " · " + m.logged_by;
+        d.appendChild(el("div", "meta", meta));
         if (m.example) d.appendChild(el("div", "ex", "Example"));
         box.appendChild(d);
       });
