@@ -110,6 +110,7 @@ from core import intg_secrets_env as _intg_secrets
 from core import ggv_client_profitability as _ggv_pnl
 from core import msc_posture_prove as _msc_posture
 from core import intg_connector_contract as _intg_contract
+from core import intg_connector_cap_tests as _intg_cap_tests
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import ggv_speed_to_lead_prove as _ggv_speed
@@ -2049,6 +2050,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/intg/connector-contract/"):
             self._intg_contract_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-INTG-04 connector tests. Owner read. Empty is not a bank prove or a bank feed.
+        if self._intg_cap_tests_refuse_code(path):
+            self._intg_cap_tests_write_refused(path)
+            return
+        if path == "/api/intg/connector-cap-tests":
+            self._intg_cap_tests_get(qs)
+            return
+        if path == "/api/intg/connector-cap-tests/schema":
+            self._intg_cap_tests_get(qs, view="schema")
+            return
+        if path == "/api/intg/connector-cap-tests/kinds":
+            self._intg_cap_tests_get(qs, view="kinds")
+            return
+        if path == "/api/intg/connector-cap-tests/framework":
+            self._intg_cap_tests_get(qs, view="framework")
+            return
+        if path.startswith("/api/intg/connector-cap-tests/"):
+            self._intg_cap_tests_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-CRM-01 bound prove. Owner read. Does not invent a lead or PROVEN.
         if path == "/api/crm/lead-cap-prove":
             self._crm_lead_prove_get()
@@ -2500,6 +2520,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._intg_contract_page()
             return
         elif path in (
+            "/connector-cap-tests",
+            "/connector-cap-tests/",
+            "/connector-cap-tests.html",
+            "/dashboards/connector-cap-tests.html",
+        ):
+            self._intg_cap_tests_page()
+            return
+        elif path in (
             "/crm-lead-cap-prove",
             "/crm-lead-cap-prove/",
             "/crm-lead-cap-prove.html",
@@ -2696,6 +2724,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/intg/connector-contract" or path.startswith("/api/intg/connector-contract/"):
             self._intg_contract_write_refused(path)
+            return
+        if self._intg_cap_tests_refuse_code(path):
+            self._intg_cap_tests_write_refused(path)
+            return
+        if path == "/api/intg/connector-cap-tests" or path.startswith("/api/intg/connector-cap-tests/"):
+            self._intg_cap_tests_write_refused(path)
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -3068,6 +3102,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/intg/connector-contract" or path.startswith("/api/intg/connector-contract/"):
             self._intg_contract_write_refused(path)
             return
+        if self._intg_cap_tests_refuse_code(path):
+            self._intg_cap_tests_write_refused(path)
+            return
+        if path == "/api/intg/connector-cap-tests" or path.startswith("/api/intg/connector-cap-tests/"):
+            self._intg_cap_tests_write_refused(path)
+            return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
             self._patch_core_work_item(m_wi.group(1))
@@ -3350,6 +3390,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/intg/connector-contract" or path.startswith("/api/intg/connector-contract/"):
             self._intg_contract_write_refused(path)
+            return
+        if self._intg_cap_tests_refuse_code(path):
+            self._intg_cap_tests_write_refused(path)
+            return
+        if path == "/api/intg/connector-cap-tests" or path.startswith("/api/intg/connector-cap-tests/"):
+            self._intg_cap_tests_write_refused(path)
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -9596,6 +9642,286 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _intg_contract.build_framework()
         except _intg_contract.ConnectorContractError as exc:
             self._intg_contract_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _intg_cap_tests_quiet(self) -> dict:
+        return {
+            "proved": False,
+            "empty_is_prove": False,
+            "empty_is_ready": False,
+            "empty_is_bank_feed": False,
+            "live_bank_connector": False,
+            "current": False,
+            "fixture": None,
+            "bank_feed": None,
+            "bank_connector": None,
+            "bank_api_called": False,
+            "bank_feed_called": False,
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "external_write": False,
+            "ledger_write": False,
+            "cap_intg_01_rewritten": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+        }
+
+    def _require_intg_cap_tests_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Connector tests are Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Connector tests are Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._intg_cap_tests_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._intg_cap_tests_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _intg_cap_tests_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/intg/connector-cap-tests/payment", "/api/intg/connector-cap-tests/money"}:
+            return "payment"
+        if path in {
+            "/api/intg/connector-cap-tests/bank",
+            "/api/intg/connector-cap-tests/bank-api",
+            "/api/intg/connector-cap-tests/live-bank",
+        }:
+            return "bank"
+        if path in {"/api/intg/connector-cap-tests/feed", "/api/intg/connector-cap-tests/bank-feed"}:
+            return "feed"
+        if path == "/api/intg/connector-cap-tests/current":
+            return "current"
+        if path in {"/api/intg/connector-cap-tests/connector", "/api/intg/connector-cap-tests/external"}:
+            return "connector"
+        if path in {"/api/intg/connector-cap-tests/cloudflare", "/api/intg/connector-cap-tests/cf"}:
+            return "cloudflare"
+        if path in {"/api/intg/connector-cap-tests/access", "/api/intg/connector-cap-tests/cf-access"}:
+            return "access"
+        if path in {"/api/intg/connector-cap-tests/prove", "/api/intg/connector-cap-tests/proven"}:
+            return "prove"
+        if path == "/api/intg/connector-cap-tests/ready":
+            return "ready"
+        if path == "/api/intg/connector-cap-tests/resolve":
+            return "resolve"
+        if path in {
+            "/api/intg/connector-cap-tests/production",
+            "/api/intg/connector-cap-tests/production/mutate",
+        }:
+            return "production"
+        if path == "/api/intg/connector-cap-tests/score":
+            return "score"
+        if path in {"/api/intg/connector-cap-tests/fill", "/api/intg/connector-cap-tests/note"}:
+            return "fill"
+        if path == "/api/intg/connector-cap-tests/rewrite":
+            return "rewrite"
+        return None
+
+    def _intg_cap_tests_fail(self, exc: _intg_cap_tests.ConnectorCapTestsError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "feed_refused",
+            "current_refused",
+            "connector_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "rewrite_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._intg_cap_tests_quiet(),
+                **_intg_cap_tests.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _intg_cap_tests_write_refused(self, path: str) -> None:
+        identity = self._require_intg_cap_tests_owner()
+        if identity is None:
+            return
+        try:
+            code = self._intg_cap_tests_refuse_code(path)
+            if code == "payment":
+                _intg_cap_tests.refuse_payment({})
+            elif code == "bank":
+                _intg_cap_tests.refuse_bank({})
+            elif code == "feed":
+                _intg_cap_tests.refuse_feed({})
+            elif code == "current":
+                _intg_cap_tests.refuse_current({})
+            elif code == "connector":
+                _intg_cap_tests.refuse_connector({})
+            elif code == "cloudflare":
+                _intg_cap_tests.refuse_cloudflare({})
+            elif code == "access":
+                _intg_cap_tests.refuse_access({})
+            elif code == "prove":
+                _intg_cap_tests.refuse_proven({})
+            elif code == "ready":
+                _intg_cap_tests.refuse_ready({})
+            elif code == "resolve":
+                _intg_cap_tests.refuse_resolve({})
+            elif code == "production":
+                _intg_cap_tests.refuse_production({})
+            elif code == "score":
+                _intg_cap_tests.refuse_score({})
+            elif code == "fill":
+                _intg_cap_tests.refuse_fill({})
+            elif code == "rewrite":
+                _intg_cap_tests.refuse_rewrite({})
+            else:
+                _intg_cap_tests.refuse_external_write({})
+        except _intg_cap_tests.ConnectorCapTestsError as exc:
+            self._intg_cap_tests_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Connector tests framework does not store a live bank connector.",
+                **self._intg_cap_tests_quiet(),
+            },
+            status=405,
+        )
+
+    def _intg_cap_tests_page(self) -> None:
+        identity = self._require_intg_cap_tests_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "connector-cap-tests.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Connector tests page is missing.",
+                    **self._intg_cap_tests_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _intg_cap_tests_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_intg_cap_tests_owner()
+        if identity is None:
+            return
+        try:
+            _intg_cap_tests.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                feed=(qs.get("feed") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                connector=(qs.get("connector") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                rewrite=(qs.get("rewrite") or [""])[0],
+            )
+            if view == "schema":
+                full = _intg_cap_tests.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._intg_cap_tests_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _intg_cap_tests.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._intg_cap_tests_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _intg_cap_tests.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._intg_cap_tests_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _intg_cap_tests.read_kind(ref_id)
+            else:
+                report = _intg_cap_tests.build_framework()
+        except _intg_cap_tests.ConnectorCapTestsError as exc:
+            self._intg_cap_tests_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
