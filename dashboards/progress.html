@@ -623,6 +623,15 @@
           <p class="muted" style="margin:8px 0 0">RECOMMENDED ≠ APPROVED. WAITING ≠ BLOCKED.</p>
         </div>
 
+        <div class="panel" id="intel-sample">
+          <h2>Institutional question</h2>
+          <p class="muted" style="margin-top:0">What is Wolf's ClickUp policy? · Wolf system</p>
+          <p id="intel-summary">Loading live sample…</p>
+          <p class="muted">status <strong id="intel-status">—</strong></p>
+          <p class="muted" id="intel-prov">provenance —</p>
+          <p class="muted">next_human_action <strong id="intel-next">—</strong></p>
+        </div>
+
         <div class="panel">
           <h2>Recent wins</h2>
           ${wins.length ? wins.map((w) => `
@@ -825,6 +834,30 @@
         render();
       });
     });
+    if (view === "Empire") loadIntelSample();
+  }
+
+  async function loadIntelSample() {
+    const box = document.getElementById("intel-sample");
+    if (!box) return;
+    const q = "What is Wolf's ClickUp policy?";
+    const scope = "Wolf system";
+    const path = "/api/intel/orchestrate?question=" + encodeURIComponent(q) + "&scope=" + encodeURIComponent(scope);
+    const res = await api(path);
+    const d = res.data || {};
+    const summary = document.getElementById("intel-summary");
+    const status = document.getElementById("intel-status");
+    const next = document.getElementById("intel-next");
+    const prov = document.getElementById("intel-prov");
+    if (res.status !== 200 || !d.ok) {
+      if (summary) summary.textContent = d.message || "Unavailable";
+      return;
+    }
+    if (summary) summary.textContent = d.summary || "";
+    if (status) status.textContent = d.status || "";
+    if (next) next.textContent = d.next_human_action || "";
+    const labels = Array.isArray(d.provenance) ? d.provenance.filter(Boolean).join(", ") : "";
+    if (prov) prov.textContent = labels ? ("provenance " + labels) : "provenance none";
   }
 
   async function boot() {

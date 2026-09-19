@@ -472,12 +472,12 @@
     "Do not inflate via Progress Dashboard"
   ],
   "CAP-INTEL-01": [
-    "SPECIFIED",
-    "Catalog orchestration surface; agent army exists but not one institutional WI",
-    "One WI experience implementation",
+    "BUILT",
+    "scripts/core/intel_orchestration.py + GET /api/intel/orchestrate + progress intel-sample panel + scripts/tests/test_intel_orchestration.py; docs/deliveries/CAP-INTEL-01-EVIDENCE-BIND-2026-09-19.md",
+    "PROVEN needs sustained Owner use of the orchestration surface, not this slice",
     "UNKNOWN",
     "MED",
-    "Helpers are not CAP READY"
+    "BUILT only. Not PROVEN. Not READY. Does not claim Cloudflare JWT as evidence."
   ],
   "CAP-INTEL-02": [
     "PROVEN",

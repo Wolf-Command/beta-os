@@ -83,6 +83,7 @@ from core import uma_ops_console as _uma_ops
 from core import uma_devi_p0 as _uma_p0
 from core import esb_close_snapshot as _esb_close_snapshot
 from core import progress_read_model as _progress
+from core import intel_orchestration as _intel
 from core import lead_spine as _lead_spine
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
@@ -1557,6 +1558,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/venue-close/capabilities":
             self._venue_close_capabilities()
+            return
+        # CAP-INTEL-01 read-only orchestration. Owner / PERS-MATT. Anon → 403.
+        if path == "/api/intel/orchestrate":
+            self._intel_orchestrate(qs)
             return
         # Matt Progress Dashboard — Owner / PERS-MATT only
         if path == "/api/progress/honesty":
@@ -3119,6 +3124,46 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_json(out)
         except Exception as exc:  # noqa: BLE001
             self._send_err(500, str(exc))
+
+    def _intel_orchestrate(self, qs: dict) -> None:
+        """GET /api/intel/orchestrate — read-only. Does not claim Cloudflare JWT as evidence."""
+        identity = self._require_progress_owner()
+        if identity is None:
+            return
+        question = (qs.get("question") or [_intel.DEMO_QUESTION])[0]
+        scope = (qs.get("scope") or [_intel.DEMO_SCOPE])[0]
+        kind = (qs.get("kind") or [""])[0].strip()
+        work_item_id = (qs.get("work_item_id") or [""])[0].strip() or None
+        actor: dict = {
+            "person_id": identity.get("person_id"),
+            "permission_context": {"person_id": identity.get("person_id")},
+        }
+        if kind:
+            actor["kind"] = kind
+        try:
+            out = _intel.orchestrate_institutional_question(
+                question,
+                scope,
+                actor_context=actor,
+                work_item_id=work_item_id,
+            )
+        except _intel.IntelOrchestrationError as exc:
+            status = 404 if exc.code == "work_item_missing" else 400
+            self._send_json(
+                {"ok": False, "error": exc.code, "message": str(exc)},
+                status=status,
+            )
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json(
+            {
+                "ok": True,
+                "person_id": identity.get("person_id"),
+                **out,
+            }
+        )
 
     # ----- Uma Blu ops (Devi commissioning: fail-closed) -----
 

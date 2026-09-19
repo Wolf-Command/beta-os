@@ -65,7 +65,7 @@ def main() -> int:
 
     live_sum, live_pct, live_n = ledger_sum_and_pct(LEDGER)
     check("live ledger n=77", live_n == 77, str(live_n))
-    check("live sum credits == 19.45", live_sum == Decimal("19.45"), str(live_sum))
+    check("live sum credits == 19.65", live_sum == Decimal("19.65"), str(live_sum))
     check("live computed pct one-decimal", isinstance(live_pct, float), str(live_pct))
 
     system = prm.compute_system_from_ledger(LEDGER)

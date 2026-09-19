@@ -49,6 +49,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_build_factory_supervisor.py | tail -1; python3 scripts/tests/test_build_factory_queue.py | tail -1; python3 scripts/tests/test_build_factory_advance.py | tail -1; python3 -c \"import sqlite3; c=sqlite3.connect('catalog/content_library.sqlite'); r=c.execute(\\\"SELECT state, resolution_evidence FROM wolf_completion_items WHERE id='CR-a0e1f0f8adc02de3'\\\").fetchone(); print(r[0]); print('evidence' if r[1] and 'test_build_factory_supervisor.py' in r[1] else 'missing')\"",
       "expect": "PASS=37 FAIL=0; PASS=47 FAIL=0; PASS=13 FAIL=0; RESOLVED; evidence",
       "by": "cursor-bf-factory-auto-advance-wire-20260919"
+    },
+    {
+      "id": "cap-intel-01-orchestration-built",
+      "claim": "Beta CAP-INTEL-01 orchestration is BUILT not PROVEN. orchestrate_institutional_question composes knowledge_resolution and optional blocker_explain with honesty flags and no chain-of-thought. GET /api/intel/orchestrate on :8788 is Owner-only; anon is 403. Progress shows one live sample. CR-85ef88d8e1da110c is RESOLVED. Credits table unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_intel_orchestration.py | tail -1; python3 scripts/tests/test_knowledge_resolution.py | tail -1; python3 -c \"import json; print(json.load(open('state/model-c-baseline-assessments.json'))['CAP-INTEL-01'][0])\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-85ef88d8e1da110c';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' 'http://127.0.0.1:8788/api/intel/orchestrate'; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=65 FAIL=0; PASS=61 FAIL=0; BUILT; RESOLVED; anon:403; 8787 True; 8788 True",
+      "by": "cursor-intel-foundation-20260919"
     }
   ]
 }
