@@ -273,3 +273,58 @@ def resolve_effective_scope_context(
     finally:
         if own:
             c.close()
+
+
+def upsert_assignment_scope(
+    conn: sqlite3.Connection,
+    assignment_id: str,
+    scope_id: str,
+    start_at: str,
+    ts: str,
+    *,
+    end_at: str | None = None,
+    status: str = "ACTIVE",
+    revive: bool = False,
+) -> None:
+    """Insert an assignment-scope. Default: do not revive an ended row.
+
+    On conflict, if the existing row is ENDED or end_at is set, status and
+    end_at stay as they are. revive=True forces ACTIVE and clears end_at.
+    That flag is Owner-only tooling. Migrate, seed, and test helpers must
+    leave it False.
+    """
+    if revive:
+        end_at = None
+        status = "ACTIVE"
+        conflict = "end_at=NULL, status='ACTIVE', updated_at=excluded.updated_at"
+    else:
+        conflict = """
+          end_at=CASE
+            WHEN org_assignment_scopes.status='ENDED'
+              OR org_assignment_scopes.end_at IS NOT NULL
+            THEN org_assignment_scopes.end_at
+            ELSE excluded.end_at
+          END,
+          status=CASE
+            WHEN org_assignment_scopes.status='ENDED'
+              OR org_assignment_scopes.end_at IS NOT NULL
+            THEN org_assignment_scopes.status
+            ELSE excluded.status
+          END,
+          updated_at=CASE
+            WHEN org_assignment_scopes.status='ENDED'
+              OR org_assignment_scopes.end_at IS NOT NULL
+            THEN org_assignment_scopes.updated_at
+            ELSE excluded.updated_at
+          END
+        """
+    conn.execute(
+        f"""
+        INSERT INTO org_assignment_scopes (
+          assignment_id, scope_id, start_at, end_at, status, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(assignment_id, scope_id, start_at) DO UPDATE SET
+          {conflict}
+        """,
+        (assignment_id, scope_id, start_at, end_at, status, ts, ts),
+    )

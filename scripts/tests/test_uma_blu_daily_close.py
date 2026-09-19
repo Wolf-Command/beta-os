@@ -109,15 +109,9 @@ def seed_test_closer(conn: sqlite3.Connection) -> None:
         """,
         (TS, TS, TS),
     )
-    conn.execute(
-        """
-        INSERT INTO org_assignment_scopes (
-          assignment_id, scope_id, start_at, end_at, status, created_at, updated_at
-        ) VALUES ('ASG-TEST-CLOSER-1', 'SCOPE-BZG-UMA', ?, NULL, 'ACTIVE', ?, ?)
-        ON CONFLICT(assignment_id, scope_id, start_at) DO UPDATE SET status='ACTIVE', end_at=NULL
-        """,
-        (TS, TS, TS),
-    )
+    from core.scope import upsert_assignment_scope
+
+    upsert_assignment_scope(conn, "ASG-TEST-CLOSER-1", "SCOPE-BZG-UMA", TS, TS)
     conn.commit()
 
 
@@ -137,6 +131,50 @@ def wire_modules(tmp_db: Path, esb_path: Path):
             mod.CATALOG_DB = tmp_db
     os.environ["WOLF_ESB_SQLITE"] = str(esb_path)
     return vc, esb
+
+
+def prove_ended_scope_upsert(mig) -> None:
+    """Devi ENTITY ended on a temp DB must survive the daily-close upsert."""
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    conn.executescript(
+        """
+        CREATE TABLE org_assignment_scopes (
+          assignment_id TEXT NOT NULL,
+          scope_id TEXT NOT NULL,
+          start_at TEXT NOT NULL,
+          end_at TEXT,
+          status TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          PRIMARY KEY (assignment_id, scope_id, start_at)
+        );
+        """
+    )
+    ts = "2026-09-19T13:00:00+08:00"
+    end_at = "2026-09-19T12:00:00+08:00"
+    mig.upsert_asg_scope(conn, "ASG-DEVI-HFB-UMA-1", "SCOPE-BZG-ENTITY", ts)
+    conn.execute(
+        """
+        UPDATE org_assignment_scopes
+           SET status='ENDED', end_at=?
+         WHERE assignment_id='ASG-DEVI-HFB-UMA-1' AND scope_id='SCOPE-BZG-ENTITY'
+        """,
+        (end_at,),
+    )
+    mig.upsert_asg_scope(conn, "ASG-DEVI-HFB-UMA-1", "SCOPE-BZG-ENTITY", ts)
+    got = conn.execute(
+        """
+        SELECT status, end_at FROM org_assignment_scopes
+        WHERE assignment_id='ASG-DEVI-HFB-UMA-1' AND scope_id='SCOPE-BZG-ENTITY'
+        """
+    ).fetchone()
+    check(
+        "Devi ENTITY ENDED survives daily-close upsert",
+        got is not None and got["status"] == "ENDED" and got["end_at"] == end_at,
+        "" if got is None else f"{got['status']} {got['end_at']}",
+    )
+    conn.close()
 
 
 def main() -> int:
@@ -168,8 +206,19 @@ def main() -> int:
     before = live_snapshot()
     check("live auth before=0", before["auth"] == 0, str(before["auth"]))
 
+    live_pre = sqlite3.connect(str(LIVE_DB))
+    live_pre.row_factory = sqlite3.Row
+    ent_before = live_pre.execute(
+        """
+        SELECT status, end_at FROM org_assignment_scopes
+        WHERE assignment_id='ASG-DEVI-HFB-UMA-1' AND scope_id='SCOPE-BZG-ENTITY'
+        """
+    ).fetchone()
+    live_pre.close()
+
     mig = load_mig()
     mig.DB = LIVE_DB
+    prove_ended_scope_upsert(mig)
     check("live migrate exit 0", mig.main() == 0)
     check("live migrate idempotent", mig.main() == 0)
 
@@ -212,6 +261,22 @@ def main() -> int:
         (asg["assignment_id"],),
     ).fetchone()
     check("SCOPE-BZG-UMA on Devi assignment", bool(scope))
+    if ent_before is not None and (
+        ent_before["status"] == "ENDED" or ent_before["end_at"]
+    ):
+        ent_after = live.execute(
+            """
+            SELECT status, end_at FROM org_assignment_scopes
+            WHERE assignment_id='ASG-DEVI-HFB-UMA-1' AND scope_id='SCOPE-BZG-ENTITY'
+            """
+        ).fetchone()
+        check(
+            "live Devi ENTITY stays ENDED after migrate",
+            ent_after is not None
+            and ent_after["status"] == ent_before["status"]
+            and ent_after["end_at"] == ent_before["end_at"],
+            "" if ent_after is None else f"{ent_after['status']} {ent_after['end_at']}",
+        )
     closer_n = live.execute(
         """
         SELECT COUNT(*) FROM org_assignments a

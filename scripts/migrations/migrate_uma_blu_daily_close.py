@@ -17,6 +17,9 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+SCRIPTS = ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
 DB = ROOT / "catalog" / "content_library.sqlite"
 SQL = Path(__file__).resolve().parent / "021_uma_blu_daily_close.sql"
 MIGRATION_ID = "021_uma_blu_daily_close"
@@ -196,16 +199,23 @@ def upsert_target(conn, scope_id, target_type, target_id, ts):
     )
 
 
-def upsert_asg_scope(conn, assignment_id, scope_id, ts):
-    conn.execute(
-        """
-        INSERT INTO org_assignment_scopes (
-          assignment_id, scope_id, start_at, end_at, status, created_at, updated_at
-        ) VALUES (?, ?, ?, NULL, 'ACTIVE', ?, ?)
-        ON CONFLICT(assignment_id, scope_id, start_at) DO UPDATE SET
-          end_at=NULL, status='ACTIVE', updated_at=excluded.updated_at
-        """,
-        (assignment_id, scope_id, START, ts, ts),
+def upsert_asg_scope(conn, assignment_id, scope_id, ts, *, revive: bool = False):
+    """Seed an assignment-scope. Default does not revive ENDED rows.
+
+    revive=True is Owner-only. main() and other migrate/seed/test callers
+    must not pass it.
+    """
+    from core.scope import upsert_assignment_scope
+
+    upsert_assignment_scope(
+        conn,
+        assignment_id,
+        scope_id,
+        START,
+        ts,
+        end_at=None,
+        status="ACTIVE",
+        revive=revive,
     )
 
 
