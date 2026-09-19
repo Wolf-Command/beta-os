@@ -108,6 +108,7 @@ from core import msc_cyber_baseline as _msc_cyber
 from core import msc_records_defensibility as _msc_records
 from core import intg_secrets_env as _intg_secrets
 from core import ggv_client_profitability as _ggv_pnl
+from core import msc_posture_prove as _msc_posture
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import ggv_speed_to_lead_prove as _ggv_speed
@@ -2009,6 +2010,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/ggv/client-profitability/"):
             self._ggv_pnl_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-MSC-02 posture prove. Owner read. Empty is not a prove and not READY.
+        if self._msc_posture_refuse_code(path):
+            self._msc_posture_write_refused(path)
+            return
+        if path == "/api/msc/posture":
+            self._msc_posture_get(qs)
+            return
+        if path == "/api/msc/posture/schema":
+            self._msc_posture_get(qs, view="schema")
+            return
+        if path == "/api/msc/posture/kinds":
+            self._msc_posture_get(qs, view="kinds")
+            return
+        if path == "/api/msc/posture/framework":
+            self._msc_posture_get(qs, view="framework")
+            return
+        if path.startswith("/api/msc/posture/"):
+            self._msc_posture_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-CRM-01 bound prove. Owner read. Does not invent a lead or PROVEN.
         if path == "/api/crm/lead-cap-prove":
             self._crm_lead_prove_get()
@@ -2444,6 +2464,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._ggv_pnl_page()
             return
         elif path in (
+            "/msc-posture",
+            "/msc-posture/",
+            "/msc-posture.html",
+            "/dashboards/msc-posture.html",
+        ):
+            self._msc_posture_page()
+            return
+        elif path in (
             "/crm-lead-cap-prove",
             "/crm-lead-cap-prove/",
             "/crm-lead-cap-prove.html",
@@ -2628,6 +2656,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ggv/client-profitability" or path.startswith("/api/ggv/client-profitability/"):
             self._ggv_pnl_write_refused(path)
+            return
+        if self._msc_posture_refuse_code(path):
+            self._msc_posture_write_refused(path)
+            return
+        if path == "/api/msc/posture" or path.startswith("/api/msc/posture/"):
+            self._msc_posture_write_refused(path)
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -2988,6 +3022,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/ggv/client-profitability" or path.startswith("/api/ggv/client-profitability/"):
             self._ggv_pnl_write_refused(path)
             return
+        if self._msc_posture_refuse_code(path):
+            self._msc_posture_write_refused(path)
+            return
+        if path == "/api/msc/posture" or path.startswith("/api/msc/posture/"):
+            self._msc_posture_write_refused(path)
+            return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
             self._patch_core_work_item(m_wi.group(1))
@@ -3258,6 +3298,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ggv/client-profitability" or path.startswith("/api/ggv/client-profitability/"):
             self._ggv_pnl_write_refused(path)
+            return
+        if self._msc_posture_refuse_code(path):
+            self._msc_posture_write_refused(path)
+            return
+        if path == "/api/msc/posture" or path.startswith("/api/msc/posture/"):
+            self._msc_posture_write_refused(path)
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -9010,6 +9056,247 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _ggv_pnl.build_register()
         except _ggv_pnl.ClientProfitabilityError as exc:
             self._ggv_pnl_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _msc_posture_quiet(self) -> dict:
+        return {
+            "proved": False,
+            "empty_is_prove": False,
+            "empty_is_ready": False,
+            "posture_score": None,
+            "current": False,
+            "control": None,
+            "evidence": None,
+            "payment": None,
+            "money": None,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+        }
+
+    def _require_msc_posture_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Posture prove is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Automated posture prove is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._msc_posture_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._msc_posture_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _msc_posture_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/msc/posture/payment", "/api/msc/posture/money"}:
+            return "payment"
+        if path in {
+            "/api/msc/posture/score",
+            "/api/msc/posture/live-score",
+            "/api/msc/posture/posture-score",
+            "/api/msc/posture/current",
+        }:
+            return "score"
+        if path in {"/api/msc/posture/cloudflare", "/api/msc/posture/cf"}:
+            return "cloudflare"
+        if path in {"/api/msc/posture/access", "/api/msc/posture/cf-access"}:
+            return "access"
+        if path in {"/api/msc/posture/prove", "/api/msc/posture/proven"}:
+            return "prove"
+        if path == "/api/msc/posture/ready":
+            return "ready"
+        if path == "/api/msc/posture/resolve":
+            return "resolve"
+        if path in {"/api/msc/posture/production", "/api/msc/posture/production/mutate"}:
+            return "production"
+        if path in {"/api/msc/posture/fill", "/api/msc/posture/note"}:
+            return "fill"
+        return None
+
+    def _msc_posture_fail(self, exc: _msc_posture.PostureProveError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "score_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._msc_posture_quiet(),
+                **_msc_posture.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _msc_posture_write_refused(self, path: str) -> None:
+        identity = self._require_msc_posture_owner()
+        if identity is None:
+            return
+        try:
+            code = self._msc_posture_refuse_code(path)
+            if code == "payment":
+                _msc_posture.refuse_payment({})
+            elif code == "score":
+                _msc_posture.refuse_score({})
+            elif code == "cloudflare":
+                _msc_posture.refuse_cloudflare({})
+            elif code == "access":
+                _msc_posture.refuse_access({})
+            elif code == "prove":
+                _msc_posture.refuse_proven({})
+            elif code == "ready":
+                _msc_posture.refuse_ready({})
+            elif code == "resolve":
+                _msc_posture.refuse_resolve({})
+            elif code == "production":
+                _msc_posture.refuse_production({})
+            elif code == "fill":
+                _msc_posture.refuse_fill({})
+            else:
+                _msc_posture.refuse_external_write({})
+        except _msc_posture.PostureProveError as exc:
+            self._msc_posture_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Posture prove framework does not store evidence or a live score.",
+                **self._msc_posture_quiet(),
+            },
+            status=405,
+        )
+
+    def _msc_posture_page(self) -> None:
+        identity = self._require_msc_posture_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "msc-posture.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Posture prove page is missing.",
+                    **self._msc_posture_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _msc_posture_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_msc_posture_owner()
+        if identity is None:
+            return
+        try:
+            _msc_posture.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                posture_score=(qs.get("posture_score") or qs.get("posture-score") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _msc_posture.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._msc_posture_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _msc_posture.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._msc_posture_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _msc_posture.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._msc_posture_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _msc_posture.read_kind(ref_id)
+            else:
+                report = _msc_posture.build_framework()
+        except _msc_posture.PostureProveError as exc:
+            self._msc_posture_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
