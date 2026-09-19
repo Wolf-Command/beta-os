@@ -85,6 +85,7 @@ from core import esb_close_snapshot as _esb_close_snapshot
 from core import progress_read_model as _progress
 from core import intel_orchestration as _intel
 from core import intel_eval_cost as _intel_cost
+from core import intel_approve_to_rule as _intel_rule
 from core import lead_spine as _lead_spine
 from core import integration_health as _integration_health
 from core import tech_capability_registry as _tech_registry
@@ -1634,6 +1635,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/intel/eval-cost":
             self._intel_eval_cost_get(qs)
             return
+        # CAP-INTEL-05 approve-to-rule skeleton. Owner or role. Not a production rule.
+        if self._intel_rule_handled(path, "GET"):
+            return
         # Matt Progress Dashboard — Owner / PERS-MATT only
         if path == "/api/progress/honesty":
             self._progress_honesty()
@@ -2555,11 +2559,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/intel/eval-cost":
             self._intel_eval_cost_post()
             return
+        if self._intel_rule_handled(path, "POST"):
+            return
 
         self._send_err(404, "not found")
 
     def do_PATCH(self) -> None:
         path = urlparse(self.path).path
+        if self._intel_rule_handled(path, "PATCH"):
+            return
         if path == "/api/tech-registry" or path.startswith("/api/tech-registry/"):
             self._tech_registry_write_refused()
             return
@@ -2781,6 +2789,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_PUT(self) -> None:
         path = urlparse(self.path).path
+        if self._intel_rule_handled(path, "PUT"):
+            return
         if path == "/api/tech-registry" or path.startswith("/api/tech-registry/"):
             self._tech_registry_write_refused()
             return
@@ -6448,6 +6458,227 @@ class BetaHandler(SimpleHTTPRequestHandler):
         self._send_json(
             {"ok": True, "person_id": identity.get("person_id"), **out}
         )
+
+    def _intel_rule_actor(self, action: str, body: dict | None = None) -> tuple[str, bool] | None:
+        """Identity required. Owner always. Role only if rbac.can already grants it.
+
+        Does not insert a permission. Anonymous fails closed.
+        """
+        identity = self._resolve_identity(body)
+        if not identity.get("ok"):
+            self._send_identity_deny(
+                identity, required_permission=_intel_rule.permission_for(action)
+            )
+            return None
+        person_id = (identity.get("person_id") or "").strip()
+        if not person_id:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "denied",
+                    "message": "anonymous callers are refused",
+                    "appended": False,
+                    "promoted": False,
+                    "executed": False,
+                    **_intel_rule.honesty_flags(),
+                },
+                status=403,
+            )
+            return None
+        role_allowed = False
+        if person_id != _intel_rule.OWNER_PERSON:
+            try:
+                role_allowed = bool(
+                    _rbac.can(person_id, _intel_rule.permission_for(action))
+                )
+            except Exception:  # noqa: BLE001
+                role_allowed = False
+        return person_id, role_allowed
+
+    def _intel_rule_fail(self, exc: Exception) -> None:
+        code = getattr(exc, "code", "invalid")
+        if code == "denied":
+            status = 403
+        elif code == "not_found":
+            status = 404
+        elif code == "writes_refused":
+            status = 405
+        else:
+            status = 400
+        self._send_json(
+            {
+                "ok": False,
+                "error": code,
+                "message": str(exc),
+                "appended": False,
+                "promoted": False,
+                "executed": False,
+                "live": False,
+                **_intel_rule.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _intel_rule_refuse_kind(self, path: str) -> str | None:
+        low = (path or "").rstrip("/")
+        if low in {
+            "/api/intel/approve-to-rule/promote",
+            "/api/intel/approve-to-rule/auto-promote",
+        }:
+            return "promote"
+        if low in {
+            "/api/intel/approve-to-rule/proven",
+            "/api/intel/approve-to-rule/ready",
+        }:
+            return "proven"
+        if low in {
+            "/api/intel/approve-to-rule/execute",
+            "/api/intel/approve-to-rule/run",
+        }:
+            return "execute"
+        if low == "/api/intel/approve-to-rule/production":
+            return "production"
+        return None
+
+    def _intel_rule_refuse(self, kind: str) -> None:
+        actor = self._intel_rule_actor("read")
+        if actor is None:
+            return
+        fn = {
+            "promote": _intel_rule.refuse_promote,
+            "proven": _intel_rule.refuse_proven,
+            "execute": _intel_rule.refuse_execute,
+            "production": _intel_rule.refuse_production,
+        }.get(kind, _intel_rule.refuse_method)
+        try:
+            fn({})
+        except _intel_rule.IntelRuleError as exc:
+            self._intel_rule_fail(exc)
+
+    def _intel_rule_writes_refused(self) -> None:
+        actor = self._intel_rule_actor("read")
+        if actor is None:
+            return
+        try:
+            _intel_rule.refuse_method({})
+        except _intel_rule.IntelRuleError as exc:
+            self._intel_rule_fail(exc)
+
+    def _intel_rule_handled(self, path: str, method: str) -> bool:
+        if path != "/api/intel/approve-to-rule" and not path.startswith(
+            "/api/intel/approve-to-rule/"
+        ):
+            return False
+        kind = self._intel_rule_refuse_kind(path)
+        if method in {"PUT", "PATCH"}:
+            if kind:
+                self._intel_rule_refuse(kind)
+            else:
+                self._intel_rule_writes_refused()
+            return True
+        if method == "POST":
+            if kind:
+                self._intel_rule_refuse(kind)
+                return True
+            if path == "/api/intel/approve-to-rule/note":
+                self._intel_rule_post("note", _intel_rule.record_note)
+                return True
+            if path == "/api/intel/approve-to-rule/approve":
+                self._intel_rule_post("approve", _intel_rule.approve_note)
+                return True
+            if path == "/api/intel/approve-to-rule/rule":
+                self._intel_rule_post("rule", _intel_rule.stub_rule)
+                return True
+            self._intel_rule_writes_refused()
+            return True
+        if method == "GET":
+            if kind:
+                self._intel_rule_refuse(kind)
+                return True
+            if path == "/api/intel/approve-to-rule":
+                self._intel_rule_list()
+                return True
+            match = re.match(r"^/api/intel/approve-to-rule/([^/]+)$", path)
+            reserved = {
+                "note",
+                "approve",
+                "rule",
+                "promote",
+                "auto-promote",
+                "proven",
+                "ready",
+                "execute",
+                "run",
+                "production",
+            }
+            if match and match.group(1) not in reserved:
+                self._intel_rule_read(match.group(1))
+                return True
+            self._send_err(404, "not found")
+            return True
+        return False
+
+    def _intel_rule_list(self) -> None:
+        actor = self._intel_rule_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            out = _intel_rule.list_experiments(person_id, role_allowed=role_allowed)
+        except _intel_rule.IntelRuleError as exc:
+            self._intel_rule_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"ok": True, "person_id": person_id, **out})
+
+    def _intel_rule_read(self, experiment_id: str) -> None:
+        actor = self._intel_rule_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            out = _intel_rule.read_experiment(
+                experiment_id, person_id, role_allowed=role_allowed
+            )
+        except _intel_rule.IntelRuleError as exc:
+            self._intel_rule_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"ok": True, "person_id": person_id, **out})
+
+    def _intel_rule_post(self, action: str, fn) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "bad_payload",
+                    "message": f"invalid JSON: {exc}",
+                    "appended": False,
+                    "promoted": False,
+                    **_intel_rule.honesty_flags(),
+                },
+                status=400,
+            )
+            return
+        actor = self._intel_rule_actor(action, body)
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            out = fn(body, person_id=person_id, role_allowed=role_allowed)
+        except _intel_rule.IntelRuleError as exc:
+            self._intel_rule_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"ok": True, "person_id": person_id, **out})
 
     def _sop_actor(self, action: str, body: dict | None = None) -> tuple[str, bool] | None:
         """Identity required. Owner always. Role only if rbac.can already grants it.
