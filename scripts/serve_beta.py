@@ -109,6 +109,7 @@ from core import msc_records_defensibility as _msc_records
 from core import intg_secrets_env as _intg_secrets
 from core import ggv_client_profitability as _ggv_pnl
 from core import ggv_strategy_machine as _ggv_strategy
+from core import amg_journey_workflow as _amg_journey
 from core import msc_posture_prove as _msc_posture
 from core import intg_connector_contract as _intg_contract
 from core import intg_connector_cap_tests as _intg_cap_tests
@@ -2032,6 +2033,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/ggv/strategy-machine/"):
             self._ggv_strategy_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-AMG-02 guest journey. Owner read. Empty is not a live journey workflow.
+        if self._amg_journey_refuse_code(path):
+            self._amg_journey_write_refused(path)
+            return
+        if path == "/api/amg/journey-workflow":
+            self._amg_journey_get(qs)
+            return
+        if path == "/api/amg/journey-workflow/schema":
+            self._amg_journey_get(qs, view="schema")
+            return
+        if path == "/api/amg/journey-workflow/kinds":
+            self._amg_journey_get(qs, view="kinds")
+            return
+        if path == "/api/amg/journey-workflow/framework":
+            self._amg_journey_get(qs, view="framework")
+            return
+        if path.startswith("/api/amg/journey-workflow/"):
+            self._amg_journey_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-MSC-02 posture prove. Owner read. Empty is not a prove and not READY.
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -2532,6 +2552,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._ggv_strategy_page()
             return
         elif path in (
+            "/amg-journey-workflow",
+            "/amg-journey-workflow/",
+            "/amg-journey-workflow.html",
+            "/dashboards/amg-journey-workflow.html",
+        ):
+            self._amg_journey_page()
+            return
+        elif path in (
             "/msc-posture",
             "/msc-posture/",
             "/msc-posture.html",
@@ -2746,6 +2774,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ggv/strategy-machine" or path.startswith("/api/ggv/strategy-machine/"):
             self._ggv_strategy_write_refused(path)
+            return
+        if self._amg_journey_refuse_code(path):
+            self._amg_journey_write_refused(path)
+            return
+        if path == "/api/amg/journey-workflow" or path.startswith("/api/amg/journey-workflow/"):
+            self._amg_journey_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -3130,6 +3164,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/ggv/strategy-machine" or path.startswith("/api/ggv/strategy-machine/"):
             self._ggv_strategy_write_refused(path)
             return
+        if self._amg_journey_refuse_code(path):
+            self._amg_journey_write_refused(path)
+            return
+        if path == "/api/amg/journey-workflow" or path.startswith("/api/amg/journey-workflow/"):
+            self._amg_journey_write_refused(path)
+            return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
             return
@@ -3424,6 +3464,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ggv/strategy-machine" or path.startswith("/api/ggv/strategy-machine/"):
             self._ggv_strategy_write_refused(path)
+            return
+        if self._amg_journey_refuse_code(path):
+            self._amg_journey_write_refused(path)
+            return
+        if path == "/api/amg/journey-workflow" or path.startswith("/api/amg/journey-workflow/"):
+            self._amg_journey_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -9484,6 +9530,294 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _ggv_strategy.build_framework()
         except _ggv_strategy.StrategyMachineError as exc:
             self._ggv_strategy_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _amg_journey_quiet(self) -> dict:
+        return {
+            "empty_is_journey": False,
+            "empty_is_operations": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_journey": False,
+            "guest_operations": False,
+            "current": False,
+            "booking_count": None,
+            "occupancy": None,
+            "yanolja_live": False,
+            "yanolja_called": False,
+            "yanolja_write": False,
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+        }
+
+    def _require_amg_journey_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Journey framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Guest journey framework is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._amg_journey_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._amg_journey_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _amg_journey_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/amg/journey-workflow/payment", "/api/amg/journey-workflow/money"}:
+            return "payment"
+        if path in {"/api/amg/journey-workflow/bank", "/api/amg/journey-workflow/transfer"}:
+            return "bank"
+        if path in {"/api/amg/journey-workflow/zayen", "/api/amg/journey-workflow/books"}:
+            return "books"
+        if path in {"/api/amg/journey-workflow/yanolja", "/api/amg/journey-workflow/yanolja-write"}:
+            return "yanolja"
+        if path in {
+            "/api/amg/journey-workflow/booking-count",
+            "/api/amg/journey-workflow/occupancy",
+            "/api/amg/journey-workflow/current",
+        }:
+            return "current"
+        if path in {"/api/amg/journey-workflow/cloudflare", "/api/amg/journey-workflow/cf"}:
+            return "cloudflare"
+        if path in {"/api/amg/journey-workflow/access", "/api/amg/journey-workflow/cf-access"}:
+            return "access"
+        if path in {"/api/amg/journey-workflow/prove", "/api/amg/journey-workflow/proven"}:
+            return "prove"
+        if path == "/api/amg/journey-workflow/ready":
+            return "ready"
+        if path == "/api/amg/journey-workflow/resolve":
+            return "resolve"
+        if path in {
+            "/api/amg/journey-workflow/production",
+            "/api/amg/journey-workflow/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/amg/journey-workflow/score", "/api/amg/journey-workflow/credits"}:
+            return "score"
+        if path in {"/api/amg/journey-workflow/fill", "/api/amg/journey-workflow/note"}:
+            return "fill"
+        if path == "/api/amg/journey-workflow/alchemist":
+            return "alchemist"
+        return None
+
+    def _amg_journey_fail(self, exc: _amg_journey.JourneyWorkflowError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "yanolja_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._amg_journey_quiet(),
+                **_amg_journey.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _amg_journey_write_refused(self, path: str) -> None:
+        identity = self._require_amg_journey_owner()
+        if identity is None:
+            return
+        try:
+            code = self._amg_journey_refuse_code(path)
+            if code == "payment":
+                _amg_journey.refuse_payment({})
+            elif code == "bank":
+                _amg_journey.refuse_bank({})
+            elif code == "books":
+                _amg_journey.refuse_books({})
+            elif code == "yanolja":
+                _amg_journey.refuse_yanolja({})
+            elif code == "current":
+                _amg_journey.refuse_current({})
+            elif code == "cloudflare":
+                _amg_journey.refuse_cloudflare({})
+            elif code == "access":
+                _amg_journey.refuse_access({})
+            elif code == "prove":
+                _amg_journey.refuse_proven({})
+            elif code == "ready":
+                _amg_journey.refuse_ready({})
+            elif code == "resolve":
+                _amg_journey.refuse_resolve({})
+            elif code == "production":
+                _amg_journey.refuse_production({})
+            elif code == "score":
+                _amg_journey.refuse_score({})
+            elif code == "fill":
+                _amg_journey.refuse_fill({})
+            elif code == "alchemist":
+                _amg_journey.refuse_alchemist({})
+            else:
+                _amg_journey.refuse_external_write({})
+        except _amg_journey.JourneyWorkflowError as exc:
+            self._amg_journey_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Journey framework does not store a live journey workflow.",
+                **self._amg_journey_quiet(),
+            },
+            status=405,
+        )
+
+    def _amg_journey_page(self) -> None:
+        identity = self._require_amg_journey_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "amg-journey-workflow.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Guest journey page is missing.",
+                    **self._amg_journey_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _amg_journey_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_amg_journey_owner()
+        if identity is None:
+            return
+        try:
+            _amg_journey.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                yanolja=(qs.get("yanolja") or [""])[0],
+                booking_count=(qs.get("booking_count") or qs.get("booking-count") or [""])[0],
+                occupancy=(qs.get("occupancy") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _amg_journey.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._amg_journey_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _amg_journey.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._amg_journey_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _amg_journey.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._amg_journey_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _amg_journey.read_kind(ref_id)
+            else:
+                report = _amg_journey.build_framework()
+        except _amg_journey.JourneyWorkflowError as exc:
+            self._amg_journey_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
