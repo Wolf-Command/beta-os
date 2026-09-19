@@ -93,6 +93,7 @@ from core import strat_12wy_prove as _strat_12wy
 from core import escalation_burndown as _burndown
 from core import sale_evidence_pack as _sale_pack
 from core import sale_buyer_dataroom as _buyer_room
+from core import sale_buyer_mode as _buyer_mode
 from core import restore_drill as _restore_drill
 from core import failure_domains as _failure_domains
 from core import crm_connector_prove as _crm_connector
@@ -1694,6 +1695,27 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if m_room:
             self._buyer_room_get(qs, folder_id=m_room.group(1))
             return
+        # CAP-SALE-03 framework. Owner read. Hides stay hidden. Export slots stay empty.
+        # /api/buyer-mode/export stays on the sale-pack refuse above this block.
+        if self._buyer_mode_refuse_code(path):
+            self._buyer_mode_write_refused(path)
+            return
+        if path == "/api/buyer-mode":
+            self._buyer_mode_get(qs)
+            return
+        if path == "/api/buyer-mode/surfaces":
+            self._buyer_mode_get(qs, view="surfaces")
+            return
+        if path == "/api/buyer-mode/hides":
+            self._buyer_mode_get(qs, view="hides")
+            return
+        if path == "/api/buyer-mode/exports":
+            self._buyer_mode_get(qs, view="exports")
+            return
+        m_mode = re.match(r"^/api/buyer-mode/([^/]+)$", path)
+        if m_mode:
+            self._buyer_mode_get(qs, surface_id=m_mode.group(1))
+            return
         # CAP-DR-01 framework. Owner read. No live restore. No NAS/B2/Production write.
         if self._restore_drill_refuse_code(path):
             self._restore_drill_write_refused(path)
@@ -2082,6 +2104,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._buyer_room_page()
             return
         elif path in (
+            "/buyer-mode",
+            "/buyer-mode/",
+            "/buyer-mode.html",
+            "/dashboards/buyer-mode.html",
+        ):
+            self._buyer_mode_page()
+            return
+        elif path in (
             "/restore-drill",
             "/restore-drill/",
             "/restore-drill.html",
@@ -2204,6 +2234,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/buyer-dataroom" or path.startswith("/api/buyer-dataroom/") or self._buyer_room_refuse_code(path):
             self._buyer_room_write_refused(path)
+            return
+        if path == "/api/buyer-mode" or (path.startswith("/api/buyer-mode/") and not self._sale_pack_export_code(path)):
+            self._buyer_mode_write_refused(path)
             return
         if path == "/api/restore-drill" or path.startswith("/api/restore-drill/"):
             self._restore_drill_write_refused(path)
@@ -2494,6 +2527,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/buyer-dataroom" or path.startswith("/api/buyer-dataroom/") or self._buyer_room_refuse_code(path):
             self._buyer_room_write_refused(path)
             return
+        if path == "/api/buyer-mode" or (path.startswith("/api/buyer-mode/") and not self._sale_pack_export_code(path)):
+            self._buyer_mode_write_refused(path)
+            return
         if path == "/api/restore-drill" or path.startswith("/api/restore-drill/"):
             self._restore_drill_write_refused(path)
             return
@@ -2705,6 +2741,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/buyer-dataroom" or path.startswith("/api/buyer-dataroom/") or self._buyer_room_refuse_code(path):
             self._buyer_room_write_refused(path)
+            return
+        if path == "/api/buyer-mode" or (path.startswith("/api/buyer-mode/") and not self._sale_pack_export_code(path)):
+            self._buyer_mode_write_refused(path)
             return
         if path == "/api/restore-drill" or path.startswith("/api/restore-drill/"):
             self._restore_drill_write_refused(path)
@@ -4691,6 +4730,270 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "buyer_access": False,
                 "live_share": False,
                 "vdr_export": False,
+            },
+            status=405,
+        )
+
+    def _require_buyer_mode_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Same Owner gate as the data room."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Buyer mode is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "buyer_grant": False,
+                    "live_share": False,
+                    "buyer_export": False,
+                    "crown_jewels_opened": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "external_writes": False,
+                    "buyer_grant": False,
+                    "live_share": False,
+                    "buyer_export": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _buyer_mode_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/buyer-mode/grant", "/api/buyer-mode/access"}:
+            return "grant"
+        if path in {"/api/buyer-mode/share"}:
+            return "share"
+        if path in {"/api/buyer-mode/reveal", "/api/buyer-mode/unhide"}:
+            return "reveal"
+        if path in {"/api/buyer-mode/fill", "/api/buyer-mode/upload"}:
+            return "fill"
+        if path in {"/api/buyer-mode/blend", "/api/buyer-mode/cross"}:
+            return "cross"
+        if path in {"/api/buyer-mode/production"}:
+            return "production"
+        return None
+
+    def _buyer_mode_page(self) -> None:
+        identity = self._require_buyer_mode_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "buyer-mode.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Buyer mode page is missing.",
+                    "buyer_grant": False,
+                    "buyer_export": False,
+                    "crown_jewels_opened": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _buyer_mode_fail(self, exc: _buyer_mode.BuyerModeError) -> None:
+        status = 404 if exc.code == "not_found" else 400
+        if exc.code in {
+            "buyer_export_refused",
+            "buyer_grant_refused",
+            "buyer_share_refused",
+            "hide_refused",
+            "fill_refused",
+            "cross_company_refused",
+            "writes_refused",
+            "production_refused",
+        }:
+            status = 405
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "external_writes": False,
+                "ledger_write": False,
+                "on_disk": False,
+                "buyer_grant": False,
+                "buyer_access": False,
+                "live_share": False,
+                "buyer_export": False,
+                "crown_jewels_opened": False,
+                "cross_company_exposed": False,
+            },
+            status=status,
+        )
+
+    def _buyer_mode_get(self, qs: dict, surface_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_buyer_mode_owner()
+        if identity is None:
+            return
+        try:
+            _buyer_mode.guard_query(
+                export=(qs.get("export") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                share=(qs.get("share") or [""])[0],
+                grant=(qs.get("grant") or [""])[0],
+                buyer=(qs.get("buyer") or [""])[0],
+                reveal=(qs.get("reveal") or [""])[0],
+                unhide=(qs.get("unhide") or [""])[0],
+                cross=(qs.get("cross") or [""])[0],
+                blend=(qs.get("blend") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+            )
+            entity = (qs.get("entity") or [""])[0] or None
+            if view == "surfaces":
+                full = _buyer_mode.build_mode(entity=entity)
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "surfaces": full["surfaces"],
+                    "diligence_surfaces": full["diligence_surfaces"],
+                    "ask_surfaces": full["ask_surfaces"],
+                    "diligence_surface_count": full["diligence_surface_count"],
+                    "ask_surface_count": full["ask_surface_count"],
+                    "approved_count": full["approved_count"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "buyer_grant": False,
+                    "buyer_export": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "hides":
+                full = _buyer_mode.build_mode(entity=entity)
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "hides": full["hides"],
+                    "hide_count": full["hide_count"],
+                    "hides_default_hidden": full["hides_default_hidden"],
+                    "crown_jewels_opened": False,
+                    "cross_company_exposed": False,
+                    "framework_skeleton": full["framework_skeleton"],
+                    "buyer_grant": False,
+                    "buyer_export": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "exports":
+                full = _buyer_mode.build_mode(entity=entity)
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "exports": full["exports"],
+                    "export_count": full["export_count"],
+                    "empty_exports": full["empty_exports"],
+                    "filled_exports": full["filled_exports"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "buyer_grant": False,
+                    "buyer_export": False,
+                    "controlled_export": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif surface_id:
+                report = _buyer_mode.read_surface(surface_id)
+            else:
+                report = _buyer_mode.build_mode(entity=entity)
+        except _buyer_mode.BuyerModeError as exc:
+            self._buyer_mode_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "read_failed",
+                    "message": type(exc).__name__,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "buyer_grant": False,
+                    "buyer_export": False,
+                    "crown_jewels_opened": False,
+                },
+                status=500,
+            )
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _buyer_mode_write_refused(self, path: str) -> None:
+        identity = self._require_buyer_mode_owner()
+        if identity is None:
+            return
+        code = self._buyer_mode_refuse_code(path)
+        try:
+            if code == "grant" or path.endswith("/grant") or path.endswith("/access"):
+                _buyer_mode.refuse_grant({})
+            elif code == "share" or path.endswith("/share"):
+                _buyer_mode.refuse_share({})
+            elif code == "reveal" or path.endswith("/reveal") or path.endswith("/unhide"):
+                _buyer_mode.refuse_reveal({})
+            elif code == "fill" or path.endswith("/fill") or path.endswith("/upload"):
+                _buyer_mode.refuse_fill({})
+            elif code == "cross" or path.endswith("/blend") or path.endswith("/cross"):
+                _buyer_mode.refuse_cross({})
+            elif code == "production" or path.endswith("/production"):
+                _buyer_mode.refuse_production({})
+            elif path.endswith("/export") or path.endswith("/download"):
+                _buyer_mode.refuse_export({})
+            else:
+                _buyer_mode.refuse_external_write({})
+        except _buyer_mode.BuyerModeError as exc:
+            flags = _buyer_mode.honesty_flags()
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "on_disk": False,
+                    "buyer_grant": False,
+                    "live_share": False,
+                    "buyer_export": False,
+                    "crown_jewels_opened": False,
+                    **flags,
+                },
+                status=405,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Buyer mode is read-only. No grant, no share, and no filled export.",
+                "external_writes": False,
+                "ledger_write": False,
+                "buyer_grant": False,
+                "live_share": False,
+                "buyer_export": False,
             },
             status=405,
         )
