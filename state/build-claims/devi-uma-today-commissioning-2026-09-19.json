@@ -1,0 +1,30 @@
+{
+  "claim_id": "devi-uma-today-commissioning-2026-09-19",
+  "HUMAN_COMMISSIONING_STATUS": "NOT_DONE",
+  "PERSON": "PERS-DEVI",
+  "EMAIL": "deviputu236@gmail.com",
+  "AUTH": "AUTH-DEVI-EMAIL",
+  "ROLE": "ROLE-BZG-HFB",
+  "ROLE_NOTE": "Optional ROLE-BZG-UMA-OPS-LEAD display alias may be created by Cursor; until then ROLE-BZG-HFB",
+  "ASSIGNMENT": "ASG-DEVI-HFB-UMA-1",
+  "SCOPE_ACTIVE": [
+    "SCOPE-BZG-UMA"
+  ],
+  "SCOPE_ENDED": [
+    "SCOPE-BZG-ENTITY"
+  ],
+  "SCOPE_FIX_STATUS": "APPLIED",
+  "CF_ACCESS": "NEEDS_MATT",
+  "API_AUTH_GATE": "GATED",
+  "FACTORY_SLICE": "BF-devi-uma-commission-auth-20260919",
+  "FACTORY_STAGE": "CURSOR_IMPLEMENTING",
+  "PROGRESS_ACCESS": "DENIED_OWNER_ONLY",
+  "PAYMENT_APPROVE": "DENIED",
+  "CLOSER_SUBMIT": "DENIED",
+  "URL": "https://beta.wolfcommand.net/bzg/uma-blu",
+  "UPDATED_AT_WITA": "2026-09-19T08:45:00+08:00",
+  "UPDATED_BY": "cursor-devi-uma-commission-auth",
+  "NOTES": "Uma Blu APIs fail-closed on Beta :8788. ROLE-BZG-HFB kept. Factory CURSOR_IMPLEMENTING. CF still NEEDS_MATT. HUMAN NOT_DONE.",
+  "FACTORY_RUN_ID": "BF-devi-uma-commission-auth-20260919",
+  "CURSOR_PID": 57578
+}

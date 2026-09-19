@@ -1508,24 +1508,36 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_json(_request_auth.auth_mode_payload())
             return
 
-        # BZG / Uma Blu ops console (Beta — read)
-        if path == "/api/bzg/uma-blu/today":
-            self._uma_ops_today()
-            return
-        if path == "/api/bzg/uma-blu/prs":
-            self._uma_ops_prs()
-            return
-        if path == "/api/bzg/uma-blu/issues":
-            self._uma_ops_issues()
-            return
-        if path == "/api/bzg/uma-blu/history":
-            self._uma_ops_history()
-            return
-        if path == "/api/bzg/uma-blu/honesty":
-            self._uma_ops_honesty()
-            return
-        if path == "/api/bzg/uma-blu/petty":
-            self._uma_ops_petty()
+        # BZG / Uma Blu ops console (Beta — read). Fail-closed: identity + permission + Uma scope.
+        if path == "/api/bzg/uma-blu" or path.startswith("/api/bzg/uma-blu/"):
+            if self._require_uma_ops() is None:
+                return
+            if path == "/api/bzg/uma-blu/today":
+                self._uma_ops_today()
+                return
+            if path == "/api/bzg/uma-blu/prs":
+                self._uma_ops_prs()
+                return
+            if path == "/api/bzg/uma-blu/issues":
+                self._uma_ops_issues()
+                return
+            if path == "/api/bzg/uma-blu/history":
+                self._uma_ops_history()
+                return
+            if path == "/api/bzg/uma-blu/honesty":
+                self._uma_ops_honesty()
+                return
+            if path == "/api/bzg/uma-blu/petty":
+                self._uma_ops_petty()
+                return
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Unknown Uma Blu route.",
+                },
+                status=404,
+            )
             return
 
         # Uma Blu daily close (Beta — read)
@@ -1832,9 +1844,23 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/llm/generate":
             self._llm_generate()
             return
-        # Uma petty — test-mode fixture write only
-        if path == "/api/bzg/uma-blu/petty":
-            self._uma_ops_petty_post()
+        # Uma Blu mutations. Reads use the same gate. Unknown writes stay forbidden
+        # (payment approve / closer submit / float invent are not granted here).
+        if path == "/api/bzg/uma-blu" or path.startswith("/api/bzg/uma-blu/"):
+            if self._require_uma_ops() is None:
+                return
+            if path == "/api/bzg/uma-blu/petty":
+                self._uma_ops_petty_post()
+                return
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Uma Blu mutation is not authorised on this route.",
+                    "required_permission": "venue.close.read",
+                },
+                status=403,
+            )
             return
         # Legacy aliases → same handlers
         if path == "/api/planner":
@@ -2899,6 +2925,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
         self,
         permission: str,
         body: dict | None = None,
+        *,
+        target: dict | None = None,
     ) -> str | None:
         """Return permission subject email if identity + permission ok; else 403 / None.
 
@@ -2921,7 +2949,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 required_permission=permission,
             )
             return None
-        if not _wi.has_permission(subject, permission):
+        if target is not None:
+            person_id_for_target = identity.get("person_id")
+            allowed = bool(person_id_for_target) and _rbac.can(
+                person_id_for_target, permission, target
+            )
+        else:
+            allowed = _wi.has_permission(subject, permission)
+        if not allowed:
             # Integration #3: RBAC denial on a representative protected action
             person_id = identity.get("person_id")
             if person_id:
@@ -3064,6 +3099,43 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_json(out)
         except Exception as exc:  # noqa: BLE001
             self._send_err(500, str(exc))
+
+    # ----- Uma Blu ops (Devi commissioning: fail-closed) -----
+
+    def _require_uma_ops(self, body: dict | None = None) -> str | None:
+        """Identity + venue.close.read on Uma + active SCOPE-BZG-UMA. Fail closed.
+
+        Does not grant payment approve, closer submit, float invent, or Progress.
+        Keeps ROLE-BZG-HFB. Does not invent bzg.pr.payment_approve.
+        """
+        permission = "venue.close.read"
+        subject = self._require_permission(
+            permission,
+            body,
+            target={"entity_id": "ENT-BZG", "brand_id": "BZG-UMA"},
+        )
+        if subject is None:
+            return None
+        identity = self._resolve_identity(body, emit_audit=False)
+        person_id = identity.get("person_id")
+        scopes = _scope.list_active_scopes_for_person(person_id) if person_id else []
+        if not any(row.get("scope_id") == "SCOPE-BZG-UMA" for row in scopes):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks SCOPE-BZG-UMA",
+                    "subject": subject,
+                    "person_id": person_id,
+                    "required_permission": permission,
+                    "required_scope": "SCOPE-BZG-UMA",
+                    "identity_assurance": identity.get("identity_assurance"),
+                    "real_authentication": identity.get("real_authentication"),
+                },
+                status=403,
+            )
+            return None
+        return subject
 
     # ----- Uma Blu daily close -----
 

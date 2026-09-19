@@ -5,7 +5,7 @@
       "id": "uma-history-issues-read-models",
       "claim": "Uma Blu History and Issues stay one audit spine: PR transitions and petty movement/count/day-state emit source uma_ops_console; History lines are human sentences; Issues include petty POLICY_REQUIRED and open tin, quiet when clean; float NOT_FOUND; payment_execution NOT_BUILT; 0 new live non-example petty rows; Production :8787 untouched",
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_uma_ops_console.py >/tmp/uma-hist-ops.out 2>&1; tail -2 /tmp/uma-hist-ops.out; python3 scripts/tests/test_uma_petty_cash.py >/tmp/uma-hist-petty.out 2>&1; tail -2 /tmp/uma-hist-petty.out; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/bzg/uma-blu; curl -sS -o /dev/null -w 'hist:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/uma-blu/history; curl -sS -o /dev/null -w 'issues:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/uma-blu/issues; sqlite3 catalog/content_library.sqlite \"SELECT COUNT(*) FROM bzg_ops_petty_movements WHERE example=0;\"; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0)\"",
-      "expect": "PASS=24 FAIL=0; PASS=52 FAIL=0; page:200; hist:200; issues:200; non-example petty 0; 8787 True",
+      "expect": "PASS=24 FAIL=0; PASS=53 FAIL=0; page:200; hist:403; issues:403; non-example petty 0; 8787 True",
       "by": "cursor-uma-history-issues"
     },
     {
@@ -14,6 +14,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_uma_today_commissionable.py | tail -1; python3 -c \"import json; d=json.load(open('state/build-claims/uma-today-commissioning-2026-09-19.json')); assert d['staff_grant'] is False and d['invented_float'] is False and d['invented_closer'] is False; print('doc', d['intended_operator_role'])\"; curl -sS -o /dev/null -w 'today:%{http_code}\\n' http://127.0.0.1:8788/bzg/uma-blu; curl -sS -o /dev/null -w 'petty:%{http_code}\\n' http://127.0.0.1:8788/bzg/uma-blu/petty; curl -sS -o /dev/null -w 'issues:%{http_code}\\n' http://127.0.0.1:8788/bzg/uma-blu/issues; curl -sS -o /dev/null -w 'close:%{http_code}\\n' http://127.0.0.1:8788/uma-blu-close; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0)\"",
       "expect": "PASS=33 FAIL=0; doc Uma Blu ops lead; today:200; petty:200; issues:200; close:200; 8787 True",
       "by": "cursor-uma-today-commissionable"
+    },
+    {
+      "id": "devi-uma-commission-auth",
+      "claim": "Beta :8788 /api/bzg/uma-blu/* GET and POST are fail-closed without identity and without SCOPE-BZG-UMA. Devi with ROLE-BZG-HFB and SCOPE-BZG-UMA can read allowed Uma ops. Payment approve, closer submit, float invent, and Progress stay denied for Devi. HUMAN_COMMISSIONING stays NOT_DONE. :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_devi_uma_commission_auth.py | tail -1; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/uma-blu/today; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=27 FAIL=0; anon:403; 8787 True; 8788 True",
+      "by": "cursor-devi-uma-commission-auth"
     }
   ]
 }

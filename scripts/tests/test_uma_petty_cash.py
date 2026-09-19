@@ -304,8 +304,12 @@ def main() -> int:
             t = threading.Thread(target=httpd.serve_forever, daemon=True)
             t.start()
 
-            def get(path: str):
-                req = Request(f"http://127.0.0.1:{port}{path}", method="GET")
+            def get(path: str, headers: dict | None = None):
+                req = Request(
+                    f"http://127.0.0.1:{port}{path}",
+                    method="GET",
+                    headers=headers or {},
+                )
                 try:
                     with urlopen(req, timeout=8) as r:
                         return r.status, r.read()
@@ -321,7 +325,18 @@ def main() -> int:
             check("petty page float NOT FOUND copy", "NOT FOUND" in html)
 
             st2, body2 = get("/api/bzg/uma-blu/petty")
-            check("petty API 200", st2 == 200, f"status={st2}")
+            check("petty API no identity 403", st2 == 403, f"status={st2}")
+            import core.request_auth as _ra
+
+            os.environ["BETA_AUTH_MODE"] = "development_assertion"
+            _ra._ENV_LOADED = True
+            st2, body2 = get(
+                "/api/bzg/uma-blu/petty",
+                headers={"X-Wolf-Subject": "deviputu236@gmail.com"},
+            )
+            os.environ["BETA_AUTH_MODE"] = "cloudflare_access"
+            _ra._ENV_LOADED = True
+            check("petty API Devi Uma scope 200", st2 == 200, f"status={st2} {body2[:180]!r}")
             try:
                 data = json.loads(body2.decode("utf-8"))
             except json.JSONDecodeError:
