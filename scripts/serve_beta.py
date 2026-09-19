@@ -99,6 +99,7 @@ from core import sale_attack_audit as _attack_audit
 from core import restore_drill as _restore_drill
 from core import failure_domains as _failure_domains
 from core import crm_connector_prove as _crm_connector
+from core import gws_integrate_prove as _gws_prove
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import ggv_speed_to_lead_prove as _ggv_speed
@@ -1811,6 +1812,31 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/crm-connector-prove/"):
             self._crm_connector_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-INTG-03 workspace prove. Owner read. Four surfaces. No probe. No GREEN.
+        if self._gws_prove_refuse_code(path):
+            self._gws_prove_write_refused(path)
+            return
+        if path == "/api/gws-integrate-prove":
+            self._gws_prove_get(qs)
+            return
+        if path == "/api/gws-integrate-prove/checklist":
+            self._gws_prove_get(qs, view="checklist")
+            return
+        if path == "/api/gws-integrate-prove/schema":
+            self._gws_prove_get(qs, view="schema")
+            return
+        if path == "/api/gws-integrate-prove/log":
+            self._gws_prove_get(qs, view="log")
+            return
+        if path == "/api/gws-integrate-prove/surfaces":
+            self._gws_prove_get(qs, view="surfaces")
+            return
+        if path == "/api/gws-integrate-prove/gaps":
+            self._gws_prove_get(qs, view="gaps")
+            return
+        if path.startswith("/api/gws-integrate-prove/"):
+            self._gws_prove_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-CRM-01 bound prove. Owner read. Does not invent a lead or PROVEN.
         if path == "/api/crm/lead-cap-prove":
             self._crm_lead_prove_get()
@@ -2174,6 +2200,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._crm_connector_page()
             return
         elif path in (
+            "/gws-integrate-prove",
+            "/gws-integrate-prove/",
+            "/gws-integrate-prove.html",
+            "/dashboards/gws-integrate-prove.html",
+        ):
+            self._gws_prove_page()
+            return
+        elif path in (
             "/crm-lead-cap-prove",
             "/crm-lead-cap-prove/",
             "/crm-lead-cap-prove.html",
@@ -2295,6 +2329,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/crm-connector-prove" or path.startswith("/api/crm-connector-prove/"):
             self._crm_connector_write_refused(path)
+            return
+        if path == "/api/gws-integrate-prove" or path.startswith("/api/gws-integrate-prove/"):
+            self._gws_prove_write_refused(path)
             return
         if path == "/api/crm/lead-cap-prove" or path.startswith("/api/crm/lead-cap-prove/"):
             self._crm_lead_prove_write_refused(path)
@@ -2598,6 +2635,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/crm-connector-prove" or path.startswith("/api/crm-connector-prove/"):
             self._crm_connector_write_refused(path)
             return
+        if path == "/api/gws-integrate-prove" or path.startswith("/api/gws-integrate-prove/"):
+            self._gws_prove_write_refused(path)
+            return
         if path == "/api/crm/lead-cap-prove" or path.startswith("/api/crm/lead-cap-prove/"):
             self._crm_lead_prove_write_refused(path)
             return
@@ -2820,6 +2860,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/crm-connector-prove" or path.startswith("/api/crm-connector-prove/"):
             self._crm_connector_write_refused(path)
+            return
+        if path == "/api/gws-integrate-prove" or path.startswith("/api/gws-integrate-prove/"):
+            self._gws_prove_write_refused(path)
             return
         if path == "/api/crm/lead-cap-prove" or path.startswith("/api/crm/lead-cap-prove/"):
             self._crm_lead_prove_write_refused(path)
@@ -6303,6 +6346,357 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "ledger_write": False,
                 "send": False,
                 "external_crm_write": False,
+                "conflated": False,
+                "cr_resolved": False,
+            },
+            status=405,
+        )
+
+    def _require_gws_prove_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Same Owner gate as the other proves."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Workspace prove is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "probed": False,
+                    "scopes_widened": False,
+                    "green_claimed": False,
+                    "gmail_called": False,
+                    "calendar_called": False,
+                    "drive_called": False,
+                    "auth_called": False,
+                    "conflated": False,
+                    "cr_resolved": False,
+                    "messages": None,
+                    "events": None,
+                    "files": None,
+                    "scopes": None,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "external_writes": False,
+                    "probed": False,
+                    "scopes_widened": False,
+                    "cr_resolved": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _gws_prove_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/gws-integrate-prove/gmail", "/api/gws-integrate-prove/gmail-write"}:
+            return "gmail"
+        if path in {"/api/gws-integrate-prove/calendar", "/api/gws-integrate-prove/calendar-write"}:
+            return "calendar"
+        if path in {"/api/gws-integrate-prove/drive", "/api/gws-integrate-prove/drive-write"}:
+            return "drive"
+        if path in {"/api/gws-integrate-prove/oauth", "/api/gws-integrate-prove/oauth-write", "/api/gws-integrate-prove/auth"}:
+            return "auth"
+        if path in {"/api/gws-integrate-prove/probe", "/api/gws-integrate-prove/probed"}:
+            return "probe"
+        if path in {"/api/gws-integrate-prove/scopes", "/api/gws-integrate-prove/oauth-widen"}:
+            return "scopes"
+        if path in {"/api/gws-integrate-prove/green", "/api/gws-integrate-prove/healthy"}:
+            return "green"
+        if path == "/api/gws-integrate-prove/conflate":
+            return "conflate"
+        if path in {"/api/gws-integrate-prove/production", "/api/gws-integrate-prove/production/mutate"}:
+            return "production"
+        if path in {"/api/gws-integrate-prove/prove", "/api/gws-integrate-prove/proven"}:
+            return "prove"
+        if path == "/api/gws-integrate-prove/resolve":
+            return "resolve"
+        if path == "/api/gws-integrate-prove/fill":
+            return "fill"
+        if path == "/api/gws-integrate-prove/ready":
+            return "ready"
+        return None
+
+    def _gws_prove_page(self) -> None:
+        identity = self._require_gws_prove_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "gws-integrate-prove.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Workspace prove page is missing.",
+                    "probed": False,
+                    "scopes_widened": False,
+                    "green_claimed": False,
+                    "cr_resolved": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _gws_prove_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_gws_prove_owner()
+        if identity is None:
+            return
+        try:
+            _gws_prove.guard_query(
+                gmail=(qs.get("gmail") or [""])[0],
+                calendar=(qs.get("calendar") or [""])[0],
+                drive=(qs.get("drive") or [""])[0],
+                auth=(qs.get("auth") or [""])[0],
+                probe=(qs.get("probe") or [""])[0],
+                scopes=(qs.get("scopes") or [""])[0],
+                green=(qs.get("green") or [""])[0],
+                conflate=(qs.get("conflate") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                messages=(qs.get("messages") or [""])[0],
+                events=(qs.get("events") or [""])[0],
+                files=(qs.get("files") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "checklist":
+                full = _gws_prove.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "checklist": full["checklist"],
+                    "checklist_count": full["checklist_count"],
+                    "checklist_executed": full["checklist_executed"],
+                    "status": full["status"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "probed": False,
+                    "scopes_widened": False,
+                    "green_claimed": False,
+                    "conflated": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "schema":
+                full = _gws_prove.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "probed": False,
+                    "green_claimed": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "log":
+                full = _gws_prove.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "log": full["log"],
+                    "log_valid": full["log_valid"],
+                    "status": full["status"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "probed": False,
+                    "messages": None,
+                    "scopes": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "surfaces":
+                full = _gws_prove.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "surfaces": full["surfaces"],
+                    "surface_count": full["surface_count"],
+                    "distinction": full["distinction"],
+                    "probed": False,
+                    "conflated": False,
+                    "green_claimed": False,
+                    "messages": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "gaps":
+                full = _gws_prove.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "gaps": full["gaps"],
+                    "gap_count": full["gap_count"],
+                    "probed": False,
+                    "green_claimed": False,
+                    "scopes": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _gws_prove.read_ref(ref_id)
+            else:
+                report = _gws_prove.build_framework()
+        except _gws_prove.GwsProveError as exc:
+            status = 404 if exc.code == "not_found" else 400
+            if exc.code in {
+                "gmail_write_refused",
+                "calendar_write_refused",
+                "drive_write_refused",
+                "oauth_write_refused",
+                "probe_refused",
+                "scope_widen_refused",
+                "green_refused",
+                "conflate_refused",
+                "production_refused",
+                "ready_refused",
+                "proven_refused",
+                "resolve_refused",
+                "slots_refused",
+                "invent_metrics_refused",
+                "success_refused",
+                "writes_refused",
+                "alchemist_refused",
+            }:
+                status = 405
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "probed": False,
+                    "scopes_widened": False,
+                    "green_claimed": False,
+                    "gmail_called": False,
+                    "calendar_called": False,
+                    "drive_called": False,
+                    "auth_called": False,
+                    "conflated": False,
+                    "production_mutated": False,
+                    "cr_resolved": False,
+                    "messages": None,
+                    "events": None,
+                    "files": None,
+                    "scopes": None,
+                },
+                status=status,
+            )
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "read_failed",
+                    "message": type(exc).__name__,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "probed": False,
+                    "scopes_widened": False,
+                    "cr_resolved": False,
+                },
+                status=500,
+            )
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _gws_prove_write_refused(self, path: str) -> None:
+        identity = self._require_gws_prove_owner()
+        if identity is None:
+            return
+        try:
+            code = self._gws_prove_refuse_code(path)
+            if code == "gmail":
+                _gws_prove.refuse_gmail_write({})
+            elif code == "calendar":
+                _gws_prove.refuse_calendar_write({})
+            elif code == "drive":
+                _gws_prove.refuse_drive_write({})
+            elif code == "auth":
+                _gws_prove.refuse_oauth_write({})
+            elif code == "probe":
+                _gws_prove.refuse_probe({})
+            elif code == "scopes":
+                _gws_prove.refuse_scope_widen({})
+            elif code == "green":
+                _gws_prove.refuse_green({})
+            elif code == "conflate":
+                _gws_prove.refuse_conflate({})
+            elif code == "production":
+                _gws_prove.refuse_production({})
+            elif code == "prove":
+                _gws_prove.refuse_proven({})
+            elif code == "resolve":
+                _gws_prove.refuse_resolve({})
+            elif code == "fill":
+                _gws_prove.refuse_fill({})
+            elif code == "ready":
+                _gws_prove.refuse_ready({})
+            else:
+                _gws_prove.refuse_external_write({})
+        except _gws_prove.GwsProveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "probed": False,
+                    "scopes_widened": False,
+                    "green_claimed": False,
+                    "gmail_called": False,
+                    "calendar_called": False,
+                    "drive_called": False,
+                    "auth_called": False,
+                    "conflated": False,
+                    "production_mutated": False,
+                    "cr_resolved": False,
+                    "messages": None,
+                    "scopes": None,
+                    **_gws_prove.honesty_flags(),
+                },
+                status=405,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Workspace prove is read-only. Gmail is not Calendar. Not GREEN. No probe.",
+                "external_writes": False,
+                "ledger_write": False,
+                "probed": False,
+                "scopes_widened": False,
+                "green_claimed": False,
                 "conflated": False,
                 "cr_resolved": False,
             },
