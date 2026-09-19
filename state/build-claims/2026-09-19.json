@@ -175,6 +175,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_crm_identity_memory.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-CRM-02'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-820682ce791563fa';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/crm/identity; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
       "expect": "PASS=103 FAIL=0; SPECIFIED 77; OPEN; anon:403; 8787 True; 8788 True",
       "by": "cursor-crm-identity-memory-v1"
+    },
+    {
+      "id": "bf-bzg-reputation-observe-v1-20260919",
+      "claim": "Beta CAP-BZG-07 reputation observe v1: empty honesty view when no source; provenance store is append-only; omitted rating stays null; scrape and guest auto-reply refused; anon 403. CAP-BZG-07 stays SPECIFIED. CR-d1aacda59180eba7 stays OPEN. No PROVEN invented. Ledger stays 77 rows. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_bzg_reputation_observe.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-BZG-07'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-d1aacda59180eba7';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/reputation; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=112 FAIL=0; SPECIFIED 77; OPEN; anon:403; 8787 True; 8788 True",
+      "by": "cursor-bzg-reputation-observe-v1"
     }
   ]
 }

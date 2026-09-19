@@ -96,6 +96,7 @@ from core import restore_drill as _restore_drill
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import crm_identity_memory as _crm_ident
+from core import bzg_reputation_observe as _bzg_rep
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1699,6 +1700,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/strat/radar-prove":
             self._strat_radar_prove_get()
             return
+        # CAP-BZG-07 reputation observe. No scrape. No guest reply. No invented rating.
+        if self._bzg_reputation_scrape(path):
+            self._bzg_reputation_scrape_refused()
+            return
+        if self._bzg_reputation_reply(path):
+            self._bzg_reputation_reply_refused()
+            return
+        if path in {"/api/bzg/reputation", "/api/bzg/reputation/observations"}:
+            self._bzg_reputation_list(qs)
+            return
+        m_bzg = re.match(r"^/api/bzg/reputation/([^/]+)$", path)
+        if m_bzg and m_bzg.group(1) not in {"observe", "scrape", "reply", "observations"}:
+            self._bzg_reputation_read(m_bzg.group(1))
+            return
         # CAP-CRM-02 identity memory. Owner or authorised staff. Not a lead. Not a blast.
         if self._crm_identity_blast(path) or (
             path.startswith("/api/crm/") and (qs.get("blast") or [""])[0].strip()
@@ -2002,6 +2017,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._strat_radar_page()
             return
         elif path in (
+            "/bzg-reputation",
+            "/bzg-reputation/",
+            "/bzg-reputation.html",
+            "/dashboards/bzg-reputation.html",
+        ):
+            self._bzg_reputation_page()
+            return
+        elif path in (
             "/crm-identity",
             "/crm-identity/",
             "/crm-identity.html",
@@ -2289,6 +2312,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/sop/approve":
             self._sop_approve_post()
             return
+        if self._bzg_reputation_scrape(path):
+            self._bzg_reputation_scrape_refused()
+            return
+        if self._bzg_reputation_reply(path):
+            self._bzg_reputation_reply_refused()
+            return
+        if path == "/api/bzg/reputation/observe":
+            self._bzg_reputation_post("observe", _bzg_rep.record_observation)
+            return
+        if path in {"/api/bzg/reputation", "/api/bzg/reputation/observations"}:
+            self._bzg_reputation_summary_refused()
+            return
         if self._crm_identity_blast(path):
             self._crm_identity_blast_refused()
             return
@@ -2336,6 +2371,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if self._crm_identity_blast(path) or path == "/api/crm/identity" or path.startswith("/api/crm/identity/"):
             self._crm_identity_append_only_refused()
+            return
+        if path == "/api/bzg/reputation" or path.startswith("/api/bzg/reputation/"):
+            self._bzg_reputation_append_only_refused()
             return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
@@ -2533,6 +2571,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if self._crm_identity_blast(path) or path == "/api/crm/identity" or path.startswith("/api/crm/identity/"):
             self._crm_identity_append_only_refused()
+            return
+        if path == "/api/bzg/reputation" or path.startswith("/api/bzg/reputation/"):
+            self._bzg_reputation_append_only_refused()
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -4946,6 +4987,221 @@ class BetaHandler(SimpleHTTPRequestHandler):
             out = fn(body, person_id=person_id, role_allowed=role_allowed)
         except _crm_ident.CrmIdentityError as exc:
             self._crm_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"person_id": person_id, **out})
+
+    def _bzg_reputation_scrape(self, path: str) -> bool:
+        low = (path or "").lower().rstrip("/")
+        return low in {
+            "/api/bzg/reputation/scrape",
+            "/api/bzg/reviews/scrape",
+            "/api/google/reviews/scrape",
+            "/api/tripadvisor/scrape",
+        }
+
+    def _bzg_reputation_reply(self, path: str) -> bool:
+        low = (path or "").lower().rstrip("/")
+        return low in {
+            "/api/bzg/reputation/reply",
+            "/api/bzg/reviews/reply",
+            "/api/reviews/auto-reply",
+        }
+
+    def _bzg_actor(self, action: str, body: dict | None = None) -> tuple[str, bool] | None:
+        """Identity required. Owner always. Staff only if rbac.can already grants it."""
+        identity = self._resolve_identity(body)
+        if not identity.get("ok"):
+            self._send_identity_deny(
+                identity, required_permission=_bzg_rep.permission_for(action)
+            )
+            return None
+        person_id = (identity.get("person_id") or "").strip()
+        if not person_id:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "denied",
+                    "message": "anonymous callers are refused",
+                    "summary_rating": None,
+                    "five_star_invented": False,
+                    "scraped": False,
+                    "auto_reply": False,
+                    **_bzg_rep.honesty_flags(),
+                },
+                status=403,
+            )
+            return None
+        role_allowed = False
+        if person_id != _bzg_rep.OWNER_PERSON:
+            try:
+                role_allowed = bool(_rbac.can(person_id, _bzg_rep.permission_for(action)))
+            except Exception:  # noqa: BLE001
+                role_allowed = False
+        return person_id, role_allowed
+
+    def _bzg_fail(self, exc: Exception) -> None:
+        code = getattr(exc, "code", "invalid")
+        if code == "denied":
+            status = 403
+        elif code == "not_an_observation":
+            status = 404
+        elif code in {
+            "scrape_refused",
+            "auto_reply_refused",
+            "append_only",
+            "summary_refused",
+        }:
+            status = 405
+        else:
+            status = 400
+        self._send_json(
+            {
+                "ok": False,
+                "error": code,
+                "message": str(exc),
+                "summary_rating": None,
+                "five_star_invented": False,
+                "source_connected": False,
+                "scraped": False,
+                "auto_reply": False,
+                "guest_reply_sent": False,
+                **_bzg_rep.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _bzg_reputation_scrape_refused(self) -> None:
+        actor = self._bzg_actor("read")
+        if actor is None:
+            return
+        try:
+            _bzg_rep.scrape({})
+        except _bzg_rep.ReputationObserveError as exc:
+            self._bzg_fail(exc)
+
+    def _bzg_reputation_reply_refused(self) -> None:
+        actor = self._bzg_actor("read")
+        if actor is None:
+            return
+        try:
+            _bzg_rep.reply_to_guest({})
+        except _bzg_rep.ReputationObserveError as exc:
+            self._bzg_fail(exc)
+
+    def _bzg_reputation_summary_refused(self) -> None:
+        actor = self._bzg_actor("read")
+        if actor is None:
+            return
+        try:
+            _bzg_rep.refuse_summary({})
+        except _bzg_rep.ReputationObserveError as exc:
+            self._bzg_fail(exc)
+
+    def _bzg_reputation_append_only_refused(self) -> None:
+        path = urlparse(self.path).path
+        if self._bzg_reputation_scrape(path):
+            self._bzg_reputation_scrape_refused()
+            return
+        if self._bzg_reputation_reply(path):
+            self._bzg_reputation_reply_refused()
+            return
+        actor = self._bzg_actor("read")
+        if actor is None:
+            return
+        self._bzg_fail(
+            _bzg_rep.ReputationObserveError(
+                "Review observations are append-only.",
+                code="append_only",
+            )
+        )
+
+    def _bzg_reputation_page(self) -> None:
+        actor = self._bzg_actor("read")
+        if actor is None:
+            return
+        page = DASHBOARDS / "bzg-reputation.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Review observe page is missing.",
+                    "summary_rating": None,
+                    "five_star_invented": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _bzg_reputation_list(self, qs: dict) -> None:
+        actor = self._bzg_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        venue = (qs.get("venue") or [""])[0] or None
+        try:
+            out = _bzg_rep.list_observations(
+                person_id, role_allowed=role_allowed, venue=venue
+            )
+        except _bzg_rep.ReputationObserveError as exc:
+            self._bzg_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"person_id": person_id, **out})
+
+    def _bzg_reputation_read(self, observation_id: str) -> None:
+        actor = self._bzg_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            out = _bzg_rep.read_observation(
+                observation_id, person_id, role_allowed=role_allowed
+            )
+        except _bzg_rep.ReputationObserveError as exc:
+            self._bzg_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"person_id": person_id, **out})
+
+    def _bzg_reputation_post(self, action: str, fn) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "bad_payload",
+                    "message": f"invalid JSON: {exc}",
+                    "summary_rating": None,
+                    "five_star_invented": False,
+                    **_bzg_rep.honesty_flags(),
+                },
+                status=400,
+            )
+            return
+        actor = self._bzg_actor(action, body)
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            out = fn(body, person_id=person_id, role_allowed=role_allowed)
+        except _bzg_rep.ReputationObserveError as exc:
+            self._bzg_fail(exc)
             return
         except Exception as exc:  # noqa: BLE001
             self._send_err(500, str(exc))

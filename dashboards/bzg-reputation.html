@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wolf · Review observe</title>
+<style>
+  :root {
+    --bg: #101418;
+    --line: #2c3842;
+    --text: #eef2f5;
+    --muted: #8b9aa6;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --display: "Iowan Old Style", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font);
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-family: var(--display); font-weight: 500; font-size: 32px; margin: 0 0 8px; }
+  p { line-height: 1.45; color: var(--muted); }
+  .card {
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; margin-top: 16px;
+  }
+  code { color: var(--text); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Review observe</h1>
+    <p>CAP-BZG-07 on Beta. Wolf observes reviews. It does not solicit them. No review source is connected. No star rating is invented. There is no scrape and no reply to guests.</p>
+    <div class="card" id="status">Loading…</div>
+  </div>
+  <script>
+    fetch("/api/bzg/reputation", { headers: { "Accept": "application/json" } })
+      .then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
+      .then(function (res) {
+        var h = (res.body && res.body.honesty) || {};
+        var el = document.getElementById("status");
+        var rating = res.body ? res.body.summary_rating : null;
+        el.textContent = [
+          "HTTP " + res.status,
+          "observations " + (res.body && res.body.count == null ? "—" : res.body.count),
+          "source connected " + String(res.body && res.body.source_connected === true),
+          "summary rating " + (rating == null ? "none" : String(rating)),
+          "five-star invented " + String(res.body && res.body.five_star_invented === true),
+          "ledger " + (h.ledger_maturity || "—"),
+          "ceiling " + (h.maturity_ceiling || "—"),
+          "CR " + (h.cr_state || "—")
+        ].join(" · ");
+      })
+      .catch(function () {
+        document.getElementById("status").textContent = "Review observe could not be read.";
+      });
+  </script>
+</body>
+</html>
