@@ -94,6 +94,7 @@ from core import escalation_burndown as _burndown
 from core import sale_evidence_pack as _sale_pack
 from core import sale_buyer_dataroom as _buyer_room
 from core import restore_drill as _restore_drill
+from core import failure_domains as _failure_domains
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import crm_identity_memory as _crm_ident
@@ -1711,6 +1712,28 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/restore-drill/"):
             self._restore_drill_get(qs, step_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-DR-02 failure domains. Owner read. Beta is not Production. Slots stay empty.
+        if self._failure_domains_refuse_code(path):
+            self._failure_domains_write_refused(path)
+            return
+        if path == "/api/failure-domains":
+            self._failure_domains_get(qs)
+            return
+        if path == "/api/failure-domains/checklist":
+            self._failure_domains_get(qs, view="checklist")
+            return
+        if path == "/api/failure-domains/schema":
+            self._failure_domains_get(qs, view="schema")
+            return
+        if path == "/api/failure-domains/log":
+            self._failure_domains_get(qs, view="log")
+            return
+        if path == "/api/failure-domains/domains":
+            self._failure_domains_get(qs, view="domains")
+            return
+        if path.startswith("/api/failure-domains/"):
+            self._failure_domains_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-CRM-01 bound prove. Owner read. Does not invent a lead or PROVEN.
         if path == "/api/crm/lead-cap-prove":
             self._crm_lead_prove_get()
@@ -2038,6 +2061,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._restore_drill_page()
             return
         elif path in (
+            "/failure-domains",
+            "/failure-domains/",
+            "/failure-domains.html",
+            "/dashboards/failure-domains.html",
+        ):
+            self._failure_domains_page()
+            return
+        elif path in (
             "/crm-lead-cap-prove",
             "/crm-lead-cap-prove/",
             "/crm-lead-cap-prove.html",
@@ -2139,6 +2170,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/restore-drill" or path.startswith("/api/restore-drill/"):
             self._restore_drill_write_refused(path)
+            return
+        if path == "/api/failure-domains" or path.startswith("/api/failure-domains/"):
+            self._failure_domains_write_refused(path)
             return
         if path == "/api/crm/lead-cap-prove" or path.startswith("/api/crm/lead-cap-prove/"):
             self._crm_lead_prove_write_refused(path)
@@ -2423,6 +2457,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/restore-drill" or path.startswith("/api/restore-drill/"):
             self._restore_drill_write_refused(path)
             return
+        if path == "/api/failure-domains" or path.startswith("/api/failure-domains/"):
+            self._failure_domains_write_refused(path)
+            return
         if path == "/api/crm/lead-cap-prove" or path.startswith("/api/crm/lead-cap-prove/"):
             self._crm_lead_prove_write_refused(path)
             return
@@ -2628,6 +2665,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/restore-drill" or path.startswith("/api/restore-drill/"):
             self._restore_drill_write_refused(path)
+            return
+        if path == "/api/failure-domains" or path.startswith("/api/failure-domains/"):
+            self._failure_domains_write_refused(path)
             return
         if path == "/api/crm/lead-cap-prove" or path.startswith("/api/crm/lead-cap-prove/"):
             self._crm_lead_prove_write_refused(path)
@@ -4834,6 +4874,296 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "external_writes": False,
                 "ledger_write": False,
                 "live_restore": False,
+            },
+            status=405,
+        )
+
+    def _require_failure_domains_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Same Owner gate as the restore drill."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Failure domains are Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "live_restore": False,
+                    "production_mutated": False,
+                    "nas_destructive": False,
+                    "b2_destructive": False,
+                    "independence_proved": False,
+                    "beta_equals_production": False,
+                    "slots_filled": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "external_writes": False,
+                    "live_restore": False,
+                    "independence_proved": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _failure_domains_refuse_code(self, path: str) -> str | None:
+        if path in {
+            "/api/failure-domains/run",
+            "/api/failure-domains/restore",
+            "/api/failure-domains/execute",
+        }:
+            return "live_restore"
+        if path in {"/api/failure-domains/nas", "/api/failure-domains/nas/delete"}:
+            return "nas"
+        if path in {"/api/failure-domains/b2", "/api/failure-domains/b2/delete"}:
+            return "b2"
+        if path in {"/api/failure-domains/production", "/api/failure-domains/production/mutate"}:
+            return "production"
+        if path in {"/api/failure-domains/prove", "/api/failure-domains/independence"}:
+            return "prove"
+        if path == "/api/failure-domains/collapse":
+            return "collapse"
+        if path == "/api/failure-domains/fill":
+            return "fill"
+        if path == "/api/failure-domains/playbook":
+            return "playbook"
+        return None
+
+    def _failure_domains_page(self) -> None:
+        identity = self._require_failure_domains_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "failure-domains.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Failure domains page is missing.",
+                    "live_restore": False,
+                    "independence_proved": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _failure_domains_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_failure_domains_owner()
+        if identity is None:
+            return
+        try:
+            _failure_domains.guard_query(
+                restore=(qs.get("restore") or [""])[0],
+                run=(qs.get("run") or [""])[0],
+                delete=(qs.get("delete") or [""])[0],
+                nas=(qs.get("nas") or [""])[0],
+                b2=(qs.get("b2") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                collapse=(qs.get("collapse") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                playbook=(qs.get("playbook") or [""])[0],
+            )
+            if view == "checklist":
+                full = _failure_domains.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "checklist": full["checklist"],
+                    "checklist_count": full["checklist_count"],
+                    "checklist_executed": full["checklist_executed"],
+                    "status": full["status"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "live_restore": False,
+                    "independence_proved": False,
+                    "slots_filled": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "schema":
+                full = _failure_domains.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "live_restore": False,
+                    "independence_proved": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "log":
+                full = _failure_domains.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "log": full["log"],
+                    "log_valid": full["log_valid"],
+                    "status": full["status"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "live_restore": False,
+                    "beta_equals_production": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "domains":
+                full = _failure_domains.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "domains": full["domains"],
+                    "domain_count": full["domain_count"],
+                    "separation": full["separation"],
+                    "beta_equals_production": False,
+                    "independence_proved": False,
+                    "slots_filled": False,
+                    "live_restore": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                try:
+                    report = _failure_domains.read_step(ref_id)
+                except _failure_domains.FailureDomainError as exc:
+                    if exc.code != "not_found":
+                        raise
+                    report = _failure_domains.read_domain(ref_id)
+            else:
+                report = _failure_domains.build_framework()
+        except _failure_domains.FailureDomainError as exc:
+            status = 404 if exc.code == "not_found" else 400
+            if exc.code in {
+                "live_restore_refused",
+                "production_refused",
+                "nas_destructive_refused",
+                "b2_destructive_refused",
+                "ready_refused",
+                "proven_refused",
+                "collapse_refused",
+                "independence_refused",
+                "slots_refused",
+                "playbook_refused",
+                "success_refused",
+                "writes_refused",
+            }:
+                status = 405
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "live_restore": False,
+                    "production_mutated": False,
+                    "nas_destructive": False,
+                    "b2_destructive": False,
+                    "beta_equals_production": False,
+                    "independence_proved": False,
+                    "slots_filled": False,
+                },
+                status=status,
+            )
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "read_failed",
+                    "message": type(exc).__name__,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "live_restore": False,
+                    "independence_proved": False,
+                },
+                status=500,
+            )
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _failure_domains_write_refused(self, path: str) -> None:
+        identity = self._require_failure_domains_owner()
+        if identity is None:
+            return
+        try:
+            code = self._failure_domains_refuse_code(path)
+            if code == "live_restore":
+                _failure_domains.refuse_live_restore({})
+            elif code == "nas":
+                _failure_domains.refuse_nas({})
+            elif code == "b2":
+                _failure_domains.refuse_b2({})
+            elif code == "production":
+                _failure_domains.refuse_production({})
+            elif code == "prove":
+                _failure_domains.refuse_independence({})
+            elif code == "collapse":
+                _failure_domains.refuse_collapse({})
+            elif code == "fill":
+                _failure_domains.refuse_fill({})
+            elif code == "playbook":
+                _failure_domains.refuse_playbook({})
+            else:
+                _failure_domains.refuse_external_write({})
+        except _failure_domains.FailureDomainError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "live_restore": False,
+                    "production_mutated": False,
+                    "nas_destructive": False,
+                    "b2_destructive": False,
+                    "beta_equals_production": False,
+                    "independence_proved": False,
+                    "slots_filled": False,
+                    **_failure_domains.honesty_flags(),
+                },
+                status=405,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Failure-domain prove is read-only. Beta is not Production. Slots stay empty.",
+                "external_writes": False,
+                "ledger_write": False,
+                "live_restore": False,
+                "independence_proved": False,
+                "slots_filled": False,
             },
             status=405,
         )
