@@ -107,6 +107,7 @@ from core import msc_compliance_pack as _msc_compliance
 from core import msc_cyber_baseline as _msc_cyber
 from core import msc_records_defensibility as _msc_records
 from core import intg_secrets_env as _intg_secrets
+from core import ggv_client_profitability as _ggv_pnl
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import ggv_speed_to_lead_prove as _ggv_speed
@@ -1989,6 +1990,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/intg/secrets/"):
             self._intg_secrets_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-GGV-03 client/contract P&L skeleton. Owner read. Empty is not a live P&L. No invented numbers.
+        if self._ggv_pnl_refuse_code(path):
+            self._ggv_pnl_write_refused(path)
+            return
+        if path == "/api/ggv/client-profitability":
+            self._ggv_pnl_get(qs)
+            return
+        if path == "/api/ggv/client-profitability/schema":
+            self._ggv_pnl_get(qs, view="schema")
+            return
+        if path == "/api/ggv/client-profitability/kinds":
+            self._ggv_pnl_get(qs, view="kinds")
+            return
+        if path == "/api/ggv/client-profitability/register":
+            self._ggv_pnl_get(qs, view="register")
+            return
+        if path.startswith("/api/ggv/client-profitability/"):
+            self._ggv_pnl_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-CRM-01 bound prove. Owner read. Does not invent a lead or PROVEN.
         if path == "/api/crm/lead-cap-prove":
             self._crm_lead_prove_get()
@@ -2416,6 +2436,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._intg_secrets_page()
             return
         elif path in (
+            "/ggv-client-profitability",
+            "/ggv-client-profitability/",
+            "/ggv-client-profitability.html",
+            "/dashboards/ggv-client-profitability.html",
+        ):
+            self._ggv_pnl_page()
+            return
+        elif path in (
             "/crm-lead-cap-prove",
             "/crm-lead-cap-prove/",
             "/crm-lead-cap-prove.html",
@@ -2594,6 +2622,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/intg/secrets" or path.startswith("/api/intg/secrets/"):
             self._intg_secrets_write_refused(path)
+            return
+        if self._ggv_pnl_refuse_code(path):
+            self._ggv_pnl_write_refused(path)
+            return
+        if path == "/api/ggv/client-profitability" or path.startswith("/api/ggv/client-profitability/"):
+            self._ggv_pnl_write_refused(path)
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -2948,6 +2982,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/intg/secrets" or path.startswith("/api/intg/secrets/"):
             self._intg_secrets_write_refused(path)
             return
+        if self._ggv_pnl_refuse_code(path):
+            self._ggv_pnl_write_refused(path)
+            return
+        if path == "/api/ggv/client-profitability" or path.startswith("/api/ggv/client-profitability/"):
+            self._ggv_pnl_write_refused(path)
+            return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
             self._patch_core_work_item(m_wi.group(1))
@@ -3212,6 +3252,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/intg/secrets" or path.startswith("/api/intg/secrets/"):
             self._intg_secrets_write_refused(path)
+            return
+        if self._ggv_pnl_refuse_code(path):
+            self._ggv_pnl_write_refused(path)
+            return
+        if path == "/api/ggv/client-profitability" or path.startswith("/api/ggv/client-profitability/"):
+            self._ggv_pnl_write_refused(path)
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -8690,6 +8736,280 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _intg_secrets.build_register()
         except _intg_secrets.SecretsEnvError as exc:
             self._intg_secrets_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _ggv_pnl_quiet(self) -> dict:
+        return {
+            "profitability_proved": False,
+            "live_pnl": False,
+            "empty_is_pnl": False,
+            "revenue": None,
+            "cost": None,
+            "margin": None,
+            "fx": None,
+            "current": False,
+            "target_is_actual": False,
+            "payment": None,
+            "money": None,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+        }
+
+    def _require_ggv_pnl_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Profitability framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        quiet = self._ggv_pnl_quiet()
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Client profitability framework is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **quiet,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **quiet,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _ggv_pnl_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/ggv/client-profitability/payment", "/api/ggv/client-profitability/money"}:
+            return "payment"
+        if path in {"/api/ggv/client-profitability/bank", "/api/ggv/client-profitability/transfer"}:
+            return "bank"
+        if path in {"/api/ggv/client-profitability/zayen", "/api/ggv/client-profitability/books"}:
+            return "books"
+        if path in {
+            "/api/ggv/client-profitability/revenue",
+            "/api/ggv/client-profitability/cost",
+            "/api/ggv/client-profitability/margin",
+            "/api/ggv/client-profitability/fx",
+            "/api/ggv/client-profitability/live-pnl",
+            "/api/ggv/client-profitability/current",
+        }:
+            return "current"
+        if path in {"/api/ggv/client-profitability/cloudflare", "/api/ggv/client-profitability/cf"}:
+            return "cloudflare"
+        if path in {"/api/ggv/client-profitability/access", "/api/ggv/client-profitability/cf-access"}:
+            return "access"
+        if path in {"/api/ggv/client-profitability/prove", "/api/ggv/client-profitability/proven"}:
+            return "prove"
+        if path == "/api/ggv/client-profitability/ready":
+            return "ready"
+        if path == "/api/ggv/client-profitability/resolve":
+            return "resolve"
+        if path in {
+            "/api/ggv/client-profitability/production",
+            "/api/ggv/client-profitability/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/ggv/client-profitability/fill", "/api/ggv/client-profitability/note"}:
+            return "fill"
+        if path in {"/api/ggv/client-profitability/score", "/api/ggv/client-profitability/credits"}:
+            return "score"
+        return None
+
+    def _ggv_pnl_fail(self, exc: _ggv_pnl.ClientProfitabilityError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "slots_refused",
+            "score_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._ggv_pnl_quiet(),
+                **_ggv_pnl.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _ggv_pnl_write_refused(self, path: str) -> None:
+        identity = self._require_ggv_pnl_owner()
+        if identity is None:
+            return
+        try:
+            code = self._ggv_pnl_refuse_code(path)
+            if code == "payment":
+                _ggv_pnl.refuse_payment({})
+            elif code == "bank":
+                _ggv_pnl.refuse_bank({})
+            elif code == "books":
+                _ggv_pnl.refuse_books({})
+            elif code == "current":
+                _ggv_pnl.refuse_current({})
+            elif code == "cloudflare":
+                _ggv_pnl.refuse_cloudflare({})
+            elif code == "access":
+                _ggv_pnl.refuse_access({})
+            elif code == "prove":
+                _ggv_pnl.refuse_proven({})
+            elif code == "ready":
+                _ggv_pnl.refuse_ready({})
+            elif code == "resolve":
+                _ggv_pnl.refuse_resolve({})
+            elif code == "production":
+                _ggv_pnl.refuse_production({})
+            elif code == "fill":
+                _ggv_pnl.refuse_fill({})
+            elif code == "score":
+                _ggv_pnl.refuse_score({})
+            else:
+                _ggv_pnl.refuse_external_write({})
+        except _ggv_pnl.ClientProfitabilityError as exc:
+            self._ggv_pnl_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Client profitability framework does not store a P&L or a payment.",
+                **self._ggv_pnl_quiet(),
+            },
+            status=405,
+        )
+
+    def _ggv_pnl_page(self) -> None:
+        identity = self._require_ggv_pnl_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "ggv-client-profitability.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Client profitability page is missing.",
+                    **self._ggv_pnl_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _ggv_pnl_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_ggv_pnl_owner()
+        if identity is None:
+            return
+        try:
+            _ggv_pnl.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                revenue=(qs.get("revenue") or [""])[0],
+                cost=(qs.get("cost") or [""])[0],
+                margin=(qs.get("margin") or [""])[0],
+                fx=(qs.get("fx") or [""])[0],
+                live_pnl=(qs.get("live_pnl") or qs.get("live-pnl") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _ggv_pnl.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._ggv_pnl_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _ggv_pnl.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._ggv_pnl_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "register":
+                full = _ggv_pnl.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._ggv_pnl_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _ggv_pnl.read_kind(ref_id)
+            else:
+                report = _ggv_pnl.build_register()
+        except _ggv_pnl.ClientProfitabilityError as exc:
+            self._ggv_pnl_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
