@@ -94,6 +94,7 @@ from core import escalation_burndown as _burndown
 from core import sale_evidence_pack as _sale_pack
 from core import sale_buyer_dataroom as _buyer_room
 from core import sale_buyer_mode as _buyer_mode
+from core import sale_attack_audit as _attack_audit
 from core import restore_drill as _restore_drill
 from core import failure_domains as _failure_domains
 from core import crm_connector_prove as _crm_connector
@@ -1716,6 +1717,26 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if m_mode:
             self._buyer_mode_get(qs, surface_id=m_mode.group(1))
             return
+        # CAP-SALE-04 framework. Owner read. Sections named. Packs empty. Licence preserved.
+        if self._attack_audit_refuse_code(path):
+            self._attack_audit_write_refused(path)
+            return
+        if path == "/api/attack-audit":
+            self._attack_audit_get(qs)
+            return
+        if path == "/api/attack-audit/sections":
+            self._attack_audit_get(qs, view="sections")
+            return
+        if path == "/api/attack-audit/packs":
+            self._attack_audit_get(qs, view="packs")
+            return
+        if path == "/api/attack-audit/licence":
+            self._attack_audit_get(qs, view="licence")
+            return
+        m_audit = re.match(r"^/api/attack-audit/([^/]+)$", path)
+        if m_audit:
+            self._attack_audit_get(qs, section_id=m_audit.group(1))
+            return
         # CAP-DR-01 framework. Owner read. No live restore. No NAS/B2/Production write.
         if self._restore_drill_refuse_code(path):
             self._restore_drill_write_refused(path)
@@ -2112,6 +2133,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._buyer_mode_page()
             return
         elif path in (
+            "/attack-audit",
+            "/attack-audit/",
+            "/attack-audit.html",
+            "/dashboards/attack-audit.html",
+        ):
+            self._attack_audit_page()
+            return
+        elif path in (
             "/restore-drill",
             "/restore-drill/",
             "/restore-drill.html",
@@ -2237,6 +2266,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/buyer-mode" or (path.startswith("/api/buyer-mode/") and not self._sale_pack_export_code(path)):
             self._buyer_mode_write_refused(path)
+            return
+        if path == "/api/attack-audit" or path.startswith("/api/attack-audit/"):
+            self._attack_audit_write_refused(path)
             return
         if path == "/api/restore-drill" or path.startswith("/api/restore-drill/"):
             self._restore_drill_write_refused(path)
@@ -2530,6 +2562,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/buyer-mode" or (path.startswith("/api/buyer-mode/") and not self._sale_pack_export_code(path)):
             self._buyer_mode_write_refused(path)
             return
+        if path == "/api/attack-audit" or path.startswith("/api/attack-audit/"):
+            self._attack_audit_write_refused(path)
+            return
         if path == "/api/restore-drill" or path.startswith("/api/restore-drill/"):
             self._restore_drill_write_refused(path)
             return
@@ -2744,6 +2779,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/buyer-mode" or (path.startswith("/api/buyer-mode/") and not self._sale_pack_export_code(path)):
             self._buyer_mode_write_refused(path)
+            return
+        if path == "/api/attack-audit" or path.startswith("/api/attack-audit/"):
+            self._attack_audit_write_refused(path)
             return
         if path == "/api/restore-drill" or path.startswith("/api/restore-drill/"):
             self._restore_drill_write_refused(path)
@@ -4994,6 +5032,268 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "buyer_grant": False,
                 "live_share": False,
                 "buyer_export": False,
+            },
+            status=405,
+        )
+
+    def _require_attack_audit_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Same Owner gate as buyer mode."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Attack audit is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "attack_run": False,
+                    "licence_granted": False,
+                    "buyer_grant": False,
+                    "buyer_export": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "external_writes": False,
+                    "attack_run": False,
+                    "licence_granted": False,
+                    "buyer_grant": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _attack_audit_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/attack-audit/run", "/api/attack-audit/attack", "/api/attack-audit/redteam"}:
+            return "attack"
+        if path in {"/api/attack-audit/fill", "/api/attack-audit/upload"}:
+            return "fill"
+        if path in {"/api/attack-audit/grant", "/api/attack-audit/access"}:
+            return "grant"
+        if path in {"/api/attack-audit/share"}:
+            return "share"
+        if path in {"/api/attack-audit/export", "/api/attack-audit/download"}:
+            return "export"
+        if path in {"/api/attack-audit/transfer", "/api/attack-audit/licence-grant"}:
+            return "licence"
+        if path in {"/api/attack-audit/production"}:
+            return "production"
+        return None
+
+    def _attack_audit_page(self) -> None:
+        identity = self._require_attack_audit_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "attack-audit.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Attack audit page is missing.",
+                    "attack_run": False,
+                    "licence_granted": False,
+                    "buyer_grant": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _attack_audit_fail(self, exc: _attack_audit.AttackAuditError) -> None:
+        status = 404 if exc.code == "not_found" else 400
+        if exc.code in {
+            "attack_refused",
+            "fill_refused",
+            "buyer_grant_refused",
+            "buyer_share_refused",
+            "buyer_export_refused",
+            "licence_refused",
+            "writes_refused",
+            "production_refused",
+        }:
+            status = 405
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "external_writes": False,
+                "ledger_write": False,
+                "on_disk": False,
+                "attack_run": False,
+                "licence_granted": False,
+                "buyer_grant": False,
+                "buyer_export": False,
+                "wolf_ip_transferred": False,
+            },
+            status=status,
+        )
+
+    def _attack_audit_get(self, qs: dict, section_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_attack_audit_owner()
+        if identity is None:
+            return
+        try:
+            _attack_audit.guard_query(
+                attack=(qs.get("attack") or [""])[0],
+                run=(qs.get("run") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                share=(qs.get("share") or [""])[0],
+                grant=(qs.get("grant") or [""])[0],
+                buyer=(qs.get("buyer") or [""])[0],
+                export=(qs.get("export") or [""])[0],
+                licence=(qs.get("licence") or [""])[0],
+                transfer=(qs.get("transfer") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+            )
+            entity = (qs.get("entity") or [""])[0] or None
+            if view == "sections":
+                full = _attack_audit.build_audit(entity=entity)
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "sections": full["sections"],
+                    "section_count": full["section_count"],
+                    "item_count": full["item_count"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "attack_run": False,
+                    "buyer_grant": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "packs":
+                full = _attack_audit.build_audit(entity=entity)
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "packs": full["packs"],
+                    "pack_count": full["pack_count"],
+                    "empty_packs": full["empty_packs"],
+                    "filled_packs": full["filled_packs"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "attack_run": False,
+                    "buyer_grant": False,
+                    "transition_pack_written": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "licence":
+                full = _attack_audit.build_audit(entity=entity)
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "licence": full["licence"],
+                    "licence_preserved": full["licence_preserved"],
+                    "licence_granted": False,
+                    "wolf_ip_transferred": False,
+                    "framework_skeleton": full["framework_skeleton"],
+                    "attack_run": False,
+                    "buyer_grant": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif section_id:
+                report = _attack_audit.read_section(section_id)
+            else:
+                report = _attack_audit.build_audit(entity=entity)
+        except _attack_audit.AttackAuditError as exc:
+            self._attack_audit_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "read_failed",
+                    "message": type(exc).__name__,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "attack_run": False,
+                    "licence_granted": False,
+                    "buyer_grant": False,
+                },
+                status=500,
+            )
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _attack_audit_write_refused(self, path: str) -> None:
+        identity = self._require_attack_audit_owner()
+        if identity is None:
+            return
+        code = self._attack_audit_refuse_code(path)
+        try:
+            if code == "attack" or path.endswith("/run") or path.endswith("/attack") or path.endswith("/redteam"):
+                _attack_audit.refuse_attack({})
+            elif code == "fill" or path.endswith("/fill") or path.endswith("/upload"):
+                _attack_audit.refuse_fill({})
+            elif code == "grant" or path.endswith("/grant") or path.endswith("/access"):
+                _attack_audit.refuse_grant({})
+            elif code == "share" or path.endswith("/share"):
+                _attack_audit.refuse_share({})
+            elif code == "export" or path.endswith("/export") or path.endswith("/download"):
+                _attack_audit.refuse_export({})
+            elif code == "licence" or path.endswith("/transfer") or path.endswith("/licence-grant"):
+                _attack_audit.refuse_licence({})
+            elif code == "production" or path.endswith("/production"):
+                _attack_audit.refuse_production({})
+            else:
+                _attack_audit.refuse_external_write({})
+        except _attack_audit.AttackAuditError as exc:
+            flags = _attack_audit.honesty_flags()
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "on_disk": False,
+                    "attack_run": False,
+                    "licence_granted": False,
+                    "buyer_grant": False,
+                    "buyer_export": False,
+                    "wolf_ip_transferred": False,
+                    **flags,
+                },
+                status=405,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Attack audit is read-only. No attack, no filled pack, and no buyer grant.",
+                "external_writes": False,
+                "ledger_write": False,
+                "attack_run": False,
+                "licence_granted": False,
+                "buyer_grant": False,
             },
             status=405,
         )
