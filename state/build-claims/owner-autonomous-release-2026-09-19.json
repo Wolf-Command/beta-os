@@ -9,10 +9,10 @@
     "GLOBAL_SAFETY_STOP"
   ],
   "started_wita": "2026-09-19T12:48:00+08:00",
-  "updated_wita": "2026-09-19T14:16:44+08:00",
+  "updated_wita": "2026-09-19T16:43:30+08:00",
   "active_mission": "owner-autonomous-20260919",
-  "current_run": "BF-4fffc5e8d131",
-  "current_lane": "devi-feedback-p0",
+  "current_run": "BF-progress-system-pct-owner-prove-20260919",
+  "current_lane": "progress-system-pct-owner-prove",
   "owner_correction_2026-09-19": {
     "keep_building_without_matt": true,
     "devi_retest_is_not_mission_end": true,
@@ -22,8 +22,42 @@
   },
   "devi_fb_ops_lead": {
     "decision_id": "DEC-DEVI-BZG-FB-OPS-LEAD-2026-09-19",
-    "status": "QUEUED_AFTER_HAIKAL",
+    "status": "FINISHED_READY_TO_RETEST",
     "lane": "devi-fb-ops-lead",
-    "at": "2026-09-19T15:33:27+08:00"
-  }
+    "completion_commit": "8e9e844e215e6dd5ecaff9067945e0d4bb7452bb",
+    "review": "docs/deliveries/GROK-REVIEW-DEVI-FB-OPS-LEAD-8e9e844-2026-09-19.md",
+    "milestone": "DEVI F&B ACCESS READY TO RETEST",
+    "human_retest": "PARKED",
+    "at": "2026-09-19T16:11:11+08:00"
+  },
+  "model_c_evidence_recon": {
+    "status": "FINISHED",
+    "lane": "model-c-evidence-recon",
+    "completion_commit": "4e914919006e66b4333c50fe09d36d111ed769b5",
+    "review": "docs/deliveries/GROK-REVIEW-MODEL-C-EVIDENCE-RECON-4e91491-2026-09-19.md",
+    "tests": "PASS=44 FAIL=0",
+    "system_pct_audited": 25.5,
+    "sum_credits": 19.65,
+    "ledger_write": null,
+    "at": "2026-09-19T16:29:57+08:00"
+  },
+  "progress_system_pct_owner_prove": {
+    "status": "FINISHED",
+    "lane": "progress-system-pct-owner-prove",
+    "run_id": "BF-progress-system-pct-owner-prove-20260919",
+    "where": "docs/deliveries/CURSOR-MISSION-PROGRESS-SYSTEM-PCT-OWNER-PROVE-2026-09-19.md",
+    "tests": "PASS=45 FAIL=0",
+    "system_pct": 25.5,
+    "sum_credits": 19.65,
+    "ledger_write": null,
+    "at": "2026-09-19T16:43:30+08:00"
+  },
+  "mission_status": "CURSOR_DONE",
+  "mission_idle_reason": null,
+  "next_pending_lanes": [
+    "intel-eval-cost-ledger",
+    "bzg-fb-today-ops-polish",
+    "ggv-speed-to-lead-ops",
+    "integration-health-readonly"
+  ]
 }

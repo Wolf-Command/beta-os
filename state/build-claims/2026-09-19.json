@@ -77,6 +77,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_model_c_evidence_recon.py | tail -1; python3 -c \"import json; h=open('state/model-c-score-history.jsonl').read().strip().splitlines(); print(json.loads(h[-1])['event']); print('rows', len(json.load(open('state/model-c-baseline-assessments.json'))))\"; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0); s.close()\"",
       "expect": "PASS=44 FAIL=0; pre-INTEL-01-BUILT; rows 77; 8787 True",
       "by": "cursor-bf-model-c-evidence-recon-20260919"
+    },
+    {
+      "id": "bf-progress-system-pct-owner-prove-20260919",
+      "claim": "Owner /progress and build_read_model show SYSTEM 25.5% from the live ledger sum 19.65/77 half-up to 1 d.p. No hard-coded 25.3. No ledger write. PROVEN stays 12 and READY stays 3. WIP four digests unchanged. Production :8787 untouched. Live :8788 HTML derives system.system_pct. Anonymous /api/progress stays 403.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_progress_system_pct_owner.py | tail -1; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0); s.close()\"",
+      "expect": "PASS=45 FAIL=0; 8787 True",
+      "by": "cursor-bf-progress-system-pct-owner-prove-20260919"
     }
   ]
 }
