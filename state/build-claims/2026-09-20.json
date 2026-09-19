@@ -91,6 +91,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_msc_records_defensibility.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-MSC-05'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-2d299c339747f432';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/msc/records; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/msc-records; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
       "expect": "PASS=147 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
       "by": "cursor-msc-records-defensibility-v1"
+    },
+    {
+      "id": "bf-intg-secrets-env-separation-v1-20260920",
+      "claim": "Beta Owner secrets framework names vault, rotation, and Beta-Production separation slots and leaves every slot empty. Empty is not proof of separation and not a live vault. Repo checks are evidence pointers only. Unauth /api/intg/secrets and /intg-secrets are 403. Owner payment, live vault, current rotation, secret-store write, Cloudflare mutate, Access mutate, prove, ready, resolve, production, and fill are refused. CAP-INTG-07 stays SPECIFIED. Ceiling label is BUILT. CR-273f30371bd52c8a stays OPEN. No PROVEN or READY invented. Ledger stays 77 rows. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_intg_secrets_env.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-INTG-07'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-273f30371bd52c8a';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/intg/secrets; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/intg-secrets; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=167 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
+      "by": "cursor-intg-secrets-env-separation-v1"
     }
   ]
 }

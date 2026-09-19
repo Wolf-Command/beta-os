@@ -106,6 +106,7 @@ from core import msc_asset_register as _msc_assets
 from core import msc_compliance_pack as _msc_compliance
 from core import msc_cyber_baseline as _msc_cyber
 from core import msc_records_defensibility as _msc_records
+from core import intg_secrets_env as _intg_secrets
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import ggv_speed_to_lead_prove as _ggv_speed
@@ -1966,6 +1967,28 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/msc/records/"):
             self._msc_records_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-INTG-07 secrets/env separation. Owner read. Empty is not proof. Not a live vault.
+        if self._intg_secrets_refuse_code(path):
+            self._intg_secrets_write_refused(path)
+            return
+        if path == "/api/intg/secrets":
+            self._intg_secrets_get(qs)
+            return
+        if path == "/api/intg/secrets/schema":
+            self._intg_secrets_get(qs, view="schema")
+            return
+        if path == "/api/intg/secrets/kinds":
+            self._intg_secrets_get(qs, view="kinds")
+            return
+        if path == "/api/intg/secrets/register":
+            self._intg_secrets_get(qs, view="register")
+            return
+        if path == "/api/intg/secrets/pointers":
+            self._intg_secrets_get(qs, view="pointers")
+            return
+        if path.startswith("/api/intg/secrets/"):
+            self._intg_secrets_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-CRM-01 bound prove. Owner read. Does not invent a lead or PROVEN.
         if path == "/api/crm/lead-cap-prove":
             self._crm_lead_prove_get()
@@ -2385,6 +2408,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._msc_records_page()
             return
         elif path in (
+            "/intg-secrets",
+            "/intg-secrets/",
+            "/intg-secrets.html",
+            "/dashboards/intg-secrets.html",
+        ):
+            self._intg_secrets_page()
+            return
+        elif path in (
             "/crm-lead-cap-prove",
             "/crm-lead-cap-prove/",
             "/crm-lead-cap-prove.html",
@@ -2557,6 +2588,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/msc/records" or path.startswith("/api/msc/records/"):
             self._msc_records_write_refused(path)
+            return
+        if self._intg_secrets_refuse_code(path):
+            self._intg_secrets_write_refused(path)
+            return
+        if path == "/api/intg/secrets" or path.startswith("/api/intg/secrets/"):
+            self._intg_secrets_write_refused(path)
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -2905,6 +2942,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/msc/records" or path.startswith("/api/msc/records/"):
             self._msc_records_write_refused(path)
             return
+        if self._intg_secrets_refuse_code(path):
+            self._intg_secrets_write_refused(path)
+            return
+        if path == "/api/intg/secrets" or path.startswith("/api/intg/secrets/"):
+            self._intg_secrets_write_refused(path)
+            return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
             self._patch_core_work_item(m_wi.group(1))
@@ -3163,6 +3206,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/msc/records" or path.startswith("/api/msc/records/"):
             self._msc_records_write_refused(path)
+            return
+        if self._intg_secrets_refuse_code(path):
+            self._intg_secrets_write_refused(path)
+            return
+        if path == "/api/intg/secrets" or path.startswith("/api/intg/secrets/"):
+            self._intg_secrets_write_refused(path)
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -8318,6 +8367,329 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _msc_records.build_register()
         except _msc_records.RecordsDefensibilityError as exc:
             self._msc_records_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _require_intg_secrets_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Secrets framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Secrets framework is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "separation_proved": False,
+                    "live_vault": False,
+                    "vault": None,
+                    "rotation": None,
+                    "separation": None,
+                    "current": False,
+                    "payment": None,
+                    "pointer_is_proof": False,
+                    "contents_read": False,
+                    "secret_store_write": False,
+                    "cloudflare_mutated": False,
+                    "access_mutated": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "separation_proved": False,
+                    "live_vault": False,
+                    "vault": None,
+                    "rotation": None,
+                    "separation": None,
+                    "payment": None,
+                    "pointer_is_proof": False,
+                    "contents_read": False,
+                    "secret_store_write": False,
+                    "cloudflare_mutated": False,
+                    "access_mutated": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _intg_secrets_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/intg/secrets/payment", "/api/intg/secrets/money"}:
+            return "payment"
+        if path in {
+            "/api/intg/secrets/live-vault",
+            "/api/intg/secrets/rotation-status",
+            "/api/intg/secrets/separation-status",
+            "/api/intg/secrets/current",
+        }:
+            return "current"
+        if path in {"/api/intg/secrets/secret-store", "/api/intg/secrets/external"}:
+            return "secret-store"
+        if path in {"/api/intg/secrets/cloudflare", "/api/intg/secrets/cf"}:
+            return "cloudflare"
+        if path in {"/api/intg/secrets/access", "/api/intg/secrets/cf-access"}:
+            return "access"
+        if path in {"/api/intg/secrets/prove", "/api/intg/secrets/proven"}:
+            return "prove"
+        if path == "/api/intg/secrets/ready":
+            return "ready"
+        if path == "/api/intg/secrets/resolve":
+            return "resolve"
+        if path in {"/api/intg/secrets/production", "/api/intg/secrets/production/mutate"}:
+            return "production"
+        if path in {"/api/intg/secrets/fill", "/api/intg/secrets/note"}:
+            return "fill"
+        return None
+
+    def _intg_secrets_fail(self, exc: _intg_secrets.SecretsEnvError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "current_refused",
+            "secret_store_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "separation_proved": False,
+                "live_vault": False,
+                "vault": None,
+                "rotation": None,
+                "separation": None,
+                "current": False,
+                "payment": None,
+                "pointer_is_proof": False,
+                "contents_read": False,
+                "secret_store_write": False,
+                "cloudflare_mutated": False,
+                "access_mutated": False,
+                "ledger_write": False,
+                "cr_resolved": False,
+                **_intg_secrets.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _intg_secrets_write_refused(self, path: str) -> None:
+        identity = self._require_intg_secrets_owner()
+        if identity is None:
+            return
+        try:
+            code = self._intg_secrets_refuse_code(path)
+            if code == "payment":
+                _intg_secrets.refuse_payment({})
+            elif code == "current":
+                _intg_secrets.refuse_current({})
+            elif code == "secret-store":
+                _intg_secrets.refuse_secret_store({})
+            elif code == "cloudflare":
+                _intg_secrets.refuse_cloudflare({})
+            elif code == "access":
+                _intg_secrets.refuse_access({})
+            elif code == "prove":
+                _intg_secrets.refuse_proven({})
+            elif code == "ready":
+                _intg_secrets.refuse_ready({})
+            elif code == "resolve":
+                _intg_secrets.refuse_resolve({})
+            elif code == "production":
+                _intg_secrets.refuse_production({})
+            elif code == "fill":
+                _intg_secrets.refuse_fill({})
+            else:
+                _intg_secrets.refuse_external_write({})
+        except _intg_secrets.SecretsEnvError as exc:
+            self._intg_secrets_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Secrets framework does not store a secret or a live vault.",
+                "separation_proved": False,
+                "live_vault": False,
+                "vault": None,
+                "rotation": None,
+                "separation": None,
+                "payment": None,
+                "pointer_is_proof": False,
+                "contents_read": False,
+                "secret_store_write": False,
+                "cloudflare_mutated": False,
+                "access_mutated": False,
+                "ledger_write": False,
+                "cr_resolved": False,
+            },
+            status=405,
+        )
+
+    def _intg_secrets_page(self) -> None:
+        identity = self._require_intg_secrets_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "intg-secrets.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Secrets framework page is missing.",
+                    "separation_proved": False,
+                    "live_vault": False,
+                    "payment": None,
+                    "cr_resolved": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _intg_secrets_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_intg_secrets_owner()
+        if identity is None:
+            return
+        try:
+            _intg_secrets.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                vault=(qs.get("vault") or [""])[0],
+                live_vault=(qs.get("live_vault") or qs.get("live-vault") or [""])[0],
+                rotation=(qs.get("rotation") or [""])[0],
+                separation=(qs.get("separation") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                secret=(qs.get("secret") or [""])[0],
+                secret_store=(qs.get("secret_store") or qs.get("secret-store") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _intg_secrets.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "separation_proved": False,
+                    "live_vault": False,
+                    "vault": None,
+                    "rotation": None,
+                    "separation": None,
+                    "payment": None,
+                    "pointer_is_proof": False,
+                    "contents_read": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _intg_secrets.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    "empty_is_separation": False,
+                    "separation_proved": False,
+                    "live_vault": False,
+                    "vault": None,
+                    "rotation": None,
+                    "separation": None,
+                    "payment": None,
+                    "pointer_is_proof": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "register":
+                full = _intg_secrets.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    "separation_proved": False,
+                    "live_vault": False,
+                    "vault": None,
+                    "rotation": None,
+                    "separation": None,
+                    "payment": None,
+                    "pointer_is_proof": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "pointers":
+                full = _intg_secrets.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "pointers": full["pointers"],
+                    "pointer_is_proof": False,
+                    "checks_are_proof": False,
+                    "contents_read": False,
+                    "separation_proved": False,
+                    "live_vault": False,
+                    "payment": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _intg_secrets.read_kind(ref_id)
+            else:
+                report = _intg_secrets.build_register()
+        except _intg_secrets.SecretsEnvError as exc:
+            self._intg_secrets_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
