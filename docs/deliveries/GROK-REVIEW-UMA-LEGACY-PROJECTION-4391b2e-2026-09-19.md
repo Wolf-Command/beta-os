@@ -1,7 +1,7 @@
 # Grok review — Uma legacy projection (working tree on 4391b2e)
 
 Date: 19 September 2026 (WITA)
-Commit base: 4391b2e (slice files uncommitted at review start; commit follows PASS)
+Commit: 704e6ec (base 4391b2e)
 Run: BF-26c2148684de / BF-uma-legacy-projection-20260919
 Reviewer: Peaches (Grok actual-diff + Peaches verify)
 
