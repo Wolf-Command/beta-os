@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wolf · Lead CAP prove</title>
+<style>
+  :root {
+    --bg: #101418;
+    --bg2: #171d23;
+    --line: #2c3842;
+    --text: #eef2f5;
+    --muted: #8b9aa6;
+    --accent: #c4a574;
+    --warn: #d4a35c;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background:
+      radial-gradient(ellipse 90% 60% at 0% -10%, #243039 0%, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 64px; }
+  h1 { font-family: var(--display); font-weight: 500; font-size: 32px; margin: 0 0 6px; }
+  h2 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 28px 0 8px; }
+  p { line-height: 1.45; }
+  .lede { color: var(--muted); margin: 0 0 16px; }
+  .banner {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    border-left: 3px solid var(--accent);
+    padding: 12px 14px;
+    margin: 12px 0 8px;
+  }
+  .banner.err { border-left-color: var(--warn); }
+  .card {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    padding: 14px;
+    margin: 8px 0;
+  }
+  .k { color: var(--muted); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .v { font-family: var(--display); font-size: 28px; margin: 4px 0; }
+  .note { color: var(--muted); font-size: 14px; }
+  code { font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Lead CAP prove</h1>
+  <p class="lede">CAP-CRM-01 is already built. This page does not promote it. No lead is invented. Closed is not a sale. Klaviyo and Metricool writes are refused.</p>
+  <div id="banner" class="banner">Reading the prove pack…</div>
+  <h2>Habitat</h2>
+  <div id="habitat" class="card"></div>
+  <h2>Atrium</h2>
+  <div id="atrium" class="card"></div>
+  <h2>Gaps</h2>
+  <div id="gaps"></div>
+</div>
+<script>
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function num(value) {
+  return value == null ? "not read" : String(value);
+}
+
+function habitatLine(row) {
+  row = row || {};
+  return '<div class="k">habitat bound</div><div class="v">' + esc(row.status || "NOT_READ") + '</div>' +
+    '<p>Owned ' + esc(num(row.owned)) + ', unowned ' + esc(num(row.unowned)) +
+    ', aged ' + esc(num(row.aged)) + ', followed ' + esc(num(row.followed)) + '.</p>' +
+    '<p class="note">' + esc(row.why || "") + '</p>' +
+    '<p class="note">Sales are not counted. An empty read is not an invented lead.</p>';
+}
+
+function atriumLine(row) {
+  row = row || {};
+  return '<div class="k">atrium surface</div><div class="v">' + esc(row.status || "NOT_READ") + '</div>' +
+    '<p class="note">' + esc(row.why || "") + '</p>';
+}
+
+function gapLine(row) {
+  return '<article class="card"><div class="k">' + esc(row.id) + '</div>' +
+    '<p>' + esc(row.status) + '</p>' +
+    '<p class="note">' + esc(row.why || "") + '</p></article>';
+}
+
+fetch("/api/crm/lead-cap-prove", { headers: { "Accept": "application/json" } })
+  .then(function (res) {
+    return res.json().then(function (body) { return { status: res.status, body: body }; });
+  })
+  .then(function (pack) {
+    const body = pack.body || {};
+    const banner = document.getElementById("banner");
+    if (!body.ok) {
+      banner.className = "banner err";
+      banner.textContent = body.message || body.error || "Read failed. No lead was invented.";
+      return;
+    }
+    const h = body.honesty || {};
+    const maturity = h.ledger_maturity || "UNKNOWN";
+    banner.textContent = "CAP-CRM-01 ledger " + maturity +
+      ". Not promoted. " + (h.cr_id || "") + " " + (h.cr_state || "unread") +
+      ". Writes refused.";
+    document.getElementById("habitat").innerHTML = habitatLine(body.habitat);
+    document.getElementById("atrium").innerHTML = atriumLine(body.atrium);
+    const gaps = body.gaps || [];
+    document.getElementById("gaps").innerHTML = gaps.map(gapLine).join("");
+  })
+  .catch(function () {
+    const banner = document.getElementById("banner");
+    banner.className = "banner err";
+    banner.textContent = "Read failed. No lead was invented.";
+  });
+</script>
+</body>
+</html>
