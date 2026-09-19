@@ -1481,6 +1481,10 @@ def api_get_lead(
         return {
             "ok": True,
             "lead": lead_operator_card(lead, conn=c),
+            "next_action": next_action_for_lead(lead),
+            "speed": speed_to_lead_signal(lead),
+            "work_item_hook": work_item_hook(lead),
+            "claim_hook": claim_hook(lead),
             "raw": {
                 "lead_id": lead.get("lead_id"),
                 "source_system": lead.get("source_system"),
@@ -1494,6 +1498,224 @@ def api_get_lead(
                 "owner_person_id": lead.get("owner_person_id"),
             },
             "events": events,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def _seconds_since(start: str | None, end: datetime) -> float | None:
+    """Elapsed seconds from an authorised timestamp. None if missing, unparseable, or future."""
+    raw = (start or "").strip()
+    if not raw:
+        return None
+    if end.tzinfo is None:
+        return None
+    try:
+        delta = (end - _parse_ts(raw)).total_seconds()
+    except (TypeError, ValueError):
+        return None
+    if delta < 0:
+        return None
+    return delta
+
+
+def speed_to_lead_signal(
+    lead: dict[str, Any],
+    *,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Speed from timestamps already on the lead. Never invents an SLA target."""
+    clock = now or datetime.now(timezone.utc)
+    observed = lead.get("source_observed_at")
+    touch = (lead.get("first_human_touch_at") or "").strip() or None
+    rt = response_time(lead)
+    waiting = None
+    if not (observed or "").strip():
+        status = "UNAVAILABLE"
+    elif not touch:
+        waiting = _seconds_since(observed, clock)
+        status = "WAITING" if waiting is not None else "UNAVAILABLE"
+    else:
+        status = rt.get("status") if rt.get("status") == "MEASURED" else "UNAVAILABLE"
+    if observed and str(observed).strip():
+        age_seconds = _seconds_since(observed, clock)
+        age_basis = "source_observed_at" if age_seconds is not None else None
+        age_status = "MEASURED" if age_seconds is not None else "UNAVAILABLE"
+    else:
+        # Ingest clock is a fact, but it is not the speed-to-lead receipt clock.
+        age_seconds = _seconds_since(lead.get("wolf_ingested_at"), clock)
+        age_basis = "wolf_ingested_at" if age_seconds is not None else None
+        age_status = "MEASURED" if age_seconds is not None else "UNAVAILABLE"
+    if status == "WAITING" and waiting is not None:
+        words = f"Waiting {int(waiting)} seconds"
+    elif status == "MEASURED" and rt.get("seconds") is not None:
+        words = f"Answered in {int(rt['seconds'])} seconds"
+    else:
+        words = "unavailable"
+    return {
+        "status": status,
+        "words": words,
+        "response_seconds": rt.get("seconds") if status == "MEASURED" else None,
+        "waiting_seconds": waiting if status == "WAITING" else None,
+        "stage_age": {
+            "status": age_status,
+            "seconds": age_seconds,
+            "basis": age_basis,
+        },
+        "sla_target_seconds": None,
+        "sla_breached": None,
+    }
+
+
+def next_action_for_lead(lead: dict[str, Any]) -> dict[str, Any]:
+    """One next step from facts already on the lead. Hooks are existing spine actions."""
+    touch = (lead.get("first_human_touch_at") or "").strip() or None
+    owner = (lead.get("owner_person_id") or "").strip() or None
+    work_id = (lead.get("current_work_item_id") or "").strip() or None
+    wolf = (lead.get("wolf_stage") or "").strip().upper()
+    conv = (lead.get("conversion_status") or "").strip().upper()
+    if not touch:
+        code, label, hook = "touch", "Record touch", "touch"
+    elif not owner:
+        code, label, hook = "assign", "Assign owner", "assign"
+    elif not work_id:
+        code, label, hook = "work-item", "Link work item", "work-item"
+    elif wolf in ("", "OPEN"):
+        code, label, hook = "stage", "Update Wolf lifecycle", "stage"
+    elif wolf == "CLOSED" and conv not in ("CLAIMED", "VERIFIED"):
+        code, label, hook = "claim", "Claim conversion", "claim"
+    else:
+        code, label, hook = "none", "No further triage action", None
+    return {
+        "code": code,
+        "label": label,
+        "hook": hook,
+        "creates_work_item": False,
+    }
+
+
+def work_item_hook(lead: dict[str, Any]) -> dict[str, Any]:
+    wid = (lead.get("current_work_item_id") or "").strip() or None
+    return {
+        "action": "work-item",
+        "work_item_id": wid,
+        "creates_work_item": False,
+        "label": "Work item linked" if wid else "Link work item",
+        "note": "Links an existing Core work item. Does not create one.",
+    }
+
+
+def claim_hook(lead: dict[str, Any]) -> dict[str, Any]:
+    wolf = (lead.get("wolf_stage") or "").strip().upper()
+    conv = (lead.get("conversion_status") or "").strip().upper()
+    available = wolf == "CLOSED" and conv not in ("CLAIMED", "VERIFIED")
+    return {
+        "action": "claim",
+        "available": available,
+        "verifies": False,
+        "sets_status": "CLAIMED" if available else None,
+        "label": "Claim conversion" if available else None,
+        "note": "Claim sets CLAIMED only. Closed is not a sale and not verified revenue.",
+    }
+
+
+def needs_triage(lead: dict[str, Any]) -> bool:
+    """Hot/open leads still needing a person. Parked and closed stay off this queue."""
+    wolf = (lead.get("wolf_stage") or "").strip().upper()
+    if wolf in ("PARKED", "CLOSED"):
+        return False
+    touch = (lead.get("first_human_touch_at") or "").strip()
+    owner = (lead.get("owner_person_id") or "").strip()
+    if not touch or not owner or wolf in ("", "OPEN"):
+        return True
+    return False
+
+
+def triage_card(
+    lead: dict[str, Any],
+    *,
+    conn: sqlite3.Connection | None = None,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    card = lead_operator_card(lead, conn=conn)
+    card["next_action"] = next_action_for_lead(lead)
+    card["speed"] = speed_to_lead_signal(lead, now=now)
+    card["work_item_hook"] = work_item_hook(lead)
+    card["claim_hook"] = claim_hook(lead)
+    card["needs_triage"] = True
+    return card
+
+
+def _triage_sort_key(card: dict[str, Any]) -> tuple:
+    speed = card.get("speed") or {}
+    waiting_rank = 0 if speed.get("status") == "WAITING" else 1
+    seconds = speed.get("waiting_seconds")
+    if not isinstance(seconds, (int, float)):
+        age = (speed.get("stage_age") or {}).get("seconds")
+        seconds = age if isinstance(age, (int, float)) else None
+    age_rank = -float(seconds) if seconds is not None else 0.0
+    return (waiting_rank, age_rank, str(card.get("lead_id") or ""))
+
+
+def _row_is_demo(lead: dict[str, Any]) -> bool:
+    raw = lead.get("provenance_json")
+    if not raw:
+        return False
+    try:
+        prov = json.loads(raw)
+    except (TypeError, json.JSONDecodeError):
+        return False
+    return isinstance(prov, dict) and prov.get("demo") is True
+
+
+def api_triage_board(
+    *,
+    verified_person_id: str,
+    brand_id: str,
+    conn: sqlite3.Connection | None = None,
+    db_path: Path | str | None = None,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Hot/open triage queue. Empty is valid. Never inserts a lead."""
+    clock = now or datetime.now(timezone.utc)
+    if clock.tzinfo is None:
+        raise LeadSpineError("now must be timezone-aware", code="invalid")
+    rows = list_leads(
+        verified_person_id=verified_person_id,
+        brand_id=brand_id,
+        conn=conn,
+        db_path=db_path,
+    )
+    own = conn is None
+    c = conn or _open(db_path)
+    try:
+        queue = [
+            triage_card(row, conn=c, now=clock) for row in rows if needs_triage(row)
+        ]
+        queue.sort(key=_triage_sort_key)
+        return {
+            "ok": True,
+            "brand_id": brand_id,
+            "queue": queue,
+            "count": len(queue),
+            "empty": len(queue) == 0,
+            "empty_message": (
+                "No open leads need triage." if len(queue) == 0 else None
+            ),
+            "honesty": {
+                "invented_leads": False,
+                "invented_sla": False,
+                "sla_target_seconds": None,
+                "metricool_write": False,
+                "capability_id": "CAP-GGV-04",
+                "maturity": "BUILT",
+                "proven": False,
+                "closed_is_not_a_sale": True,
+                "all_listed_rows_are_demo": (
+                    all(_row_is_demo(row) for row in rows) if rows else None
+                ),
+            },
         }
     finally:
         if own:

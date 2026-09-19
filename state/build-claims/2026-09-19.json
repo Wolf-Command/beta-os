@@ -84,6 +84,27 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_progress_system_pct_owner.py | tail -1; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0); s.close()\"",
       "expect": "PASS=45 FAIL=0; 8787 True",
       "by": "cursor-bf-progress-system-pct-owner-prove-20260919"
+    },
+    {
+      "id": "bf-intel-eval-cost-ledger-20260919",
+      "claim": "Beta append-only intel eval/cost ledger records model, tokens, caller-supplied cost, route, outcome, and provenance. Owner GET/POST /api/intel/eval-cost on :8788. Prices are not invented, spend APIs and auto-billing are refused, and a missing ledger file is not created on read. CAP-INTEL-01 stays BUILT, CAP-INTEL-05 stays SPECIFIED, ledger stays 77 rows. WIP four digests unchanged. Production :8787 untouched. Not PROVEN.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_intel_eval_cost.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-INTEL-01'][0], d['CAP-INTEL-05'][0], len(d))\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/intel/eval-cost; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=109 FAIL=0; BUILT SPECIFIED 77; anon:403; 8787 True; 8788 True",
+      "by": "cursor-intel-eval-cost-ledger-20260919"
+    },
+    {
+      "id": "bf-bzg-fb-today-ops-polish-20260919",
+      "claim": "Beta Uma Today for ROLE-BZG-FB-OPS-LEAD shows a perform action when the fixture capabilities allow it, never Needs staff on those cards. Waiting on role or person, or Policy required, when they cannot. Close perform/submit stays visible; verify stays a separate role. No payment/bank/Owner grant, no ENTITY resurrect, no fake transactions, no Alchemist write. Human retest stays WAITING_HUMAN. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_bzg_fb_today_ops_polish.py | tail -1; curl -sS -o /dev/null -w 'today:%{http_code}\\n' http://127.0.0.1:8788/bzg/uma-blu; curl -sS -o /dev/null -w 'close:%{http_code}\\n' http://127.0.0.1:8788/uma-blu-close; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0); s.close()\"",
+      "expect": "PASS=70 FAIL=0; today:200; close:200; 8787 True",
+      "by": "cursor-bzg-fb-today-ops-polish"
+    },
+    {
+      "id": "bf-ggv-speed-to-lead-ops-20260919",
+      "claim": "Beta :8788 Lead Spine shows a Habitat triage queue of hot/open leads with a next action from existing touch, assign, work-item, and stage hooks. Speed uses source timestamps already on the lead. Missing clock is UNAVAILABLE, not zero, and no SLA target is invented. Unauth /api/leads/triage is 403. CAP-GGV-04 stays BUILT, not PROVEN. No Metricool write. No invented leads. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_ggv_speed_to_lead_ops.py | tail -1; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/lead-spine; curl -sS -o /dev/null -w 'triage:%{http_code}\\n' 'http://127.0.0.1:8788/api/leads/triage?brand=habitat'; python3 -c \"import json; print(json.load(open('state/model-c-baseline-assessments.json'))['CAP-GGV-04'][0])\"; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=71 FAIL=0; page:200; triage:403; BUILT; 8787 True; 8788 True",
+      "by": "cursor-ggv-speed-to-lead-ops"
     }
   ]
 }

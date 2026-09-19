@@ -89,6 +89,8 @@
   .hidden { display: none; }
   .events { margin-top: 10px; font-size: 0.78rem; color: var(--muted); }
   .events li { margin: 4px 0; }
+  .triage-note { color: var(--muted); font-size: 0.82rem; margin: 0 0 8px; }
+  .card .btn { width: 100%; }
 </style>
 </head>
 <body>
@@ -105,6 +107,12 @@
   </div>
 
   <section id="listView">
+    <div class="sep" id="triageHeading">Needs triage</div>
+    <p class="triage-note" id="triageNote">Open Habitat leads that still need a person. Speed uses the source time already on the lead. No SLA number is invented.</p>
+    <div id="triageMsg" class="empty">Loading triage…</div>
+    <div id="triageList"></div>
+
+    <div class="sep">All leads</div>
     <div id="listMsg" class="empty">Loading leads…</div>
     <div id="leadList"></div>
   </section>
@@ -119,6 +127,9 @@
       <div class="sep">Source stage (as observed)</div>
       <span class="status-pill source" id="detSource">—</span>
       <div class="meta" id="detOwner"></div>
+      <div class="meta" id="detNext"></div>
+      <div class="meta" id="detSpeed"></div>
+      <div class="meta" id="detWork"></div>
       <div class="meta" id="detConv"></div>
       <div class="meta" id="detResp"></div>
       <div class="meta" id="detClosed"></div>
@@ -163,6 +174,7 @@
   const state = {
     me: null,
     leads: [],
+    triage: [],
     selectedId: null,
     detail: null,
   };
@@ -267,6 +279,134 @@
     renderList();
   }
 
+  function triageActionHtml(L) {
+    const next = L.next_action || {};
+    if (next.code === "touch") {
+      return `<button type="button" class="btn btn-primary" data-act="touch">Record touch</button>`;
+    }
+    if (next.code === "assign") {
+      return `<button type="button" class="btn btn-primary" data-act="assign">Assign to me</button>`;
+    }
+    if (next.code === "work-item") {
+      return `<input type="text" data-wi placeholder="Existing work item id" />
+        <button type="button" class="btn" data-act="work-item">Link work item</button>`;
+    }
+    if (next.code === "claim") {
+      return `<button type="button" class="btn" data-act="claim">Claim conversion</button>`;
+    }
+    if (next.code === "stage") {
+      return `<button type="button" class="btn" data-act="open">Update Wolf lifecycle</button>`;
+    }
+    return `<div class="meta">${esc(next.label || "No further triage action")}</div>`;
+  }
+
+  function renderTriage() {
+    const box = $("triageList");
+    const msg = $("triageMsg");
+    if (!state.triage.length) {
+      box.innerHTML = "";
+      msg.className = "empty";
+      msg.textContent = "No open leads need triage.";
+      return;
+    }
+    msg.textContent = "";
+    box.innerHTML = state.triage.map((L) => {
+      const title = L.demo_label || "Lead";
+      const speed = (L.speed && L.speed.words) || "unavailable";
+      const hook = L.work_item_hook || {};
+      const claim = L.claim_hook || {};
+      const wi = hook.work_item_id
+        ? esc(hook.work_item_id)
+        : "none — link an existing one. Does not create a task.";
+      const claimLine = claim.available
+        ? "Claim sets CLAIMED only. Not verified revenue."
+        : "Claim is not this step. Claim does not verify.";
+      return `
+        <div class="card" data-id="${esc(L.lead_id)}">
+          <h3>${esc(title)}</h3>
+          <div>
+            <span class="status-pill wait">${esc((L.next_action && L.next_action.label) || "Needs triage")}</span>
+            <span class="status-pill ok">${esc(L.wolf_lifecycle)}</span>
+          </div>
+          <div class="meta"><strong>Speed</strong> ${esc(speed)}</div>
+          <div class="meta"><strong>Owner</strong> ${esc(L.owner)}</div>
+          <div class="meta"><strong>Work item</strong> ${wi}</div>
+          <div class="meta">${esc(claimLine)}</div>
+          ${triageActionHtml(L)}
+          <div class="id">${esc(L.lead_id)}</div>
+        </div>`;
+    }).join("");
+    box.querySelectorAll(".card").forEach((el) => {
+      el.addEventListener("click", () => openDetail(el.getAttribute("data-id")));
+      el.querySelectorAll("[data-act]").forEach((btn) => {
+        btn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          const actName = btn.getAttribute("data-act");
+          const id = el.getAttribute("data-id");
+          if (actName === "open") {
+            openDetail(id);
+            return;
+          }
+          runTriage(id, actName, el);
+        });
+      });
+      const field = el.querySelector("[data-wi]");
+      if (field) {
+        field.addEventListener("click", (ev) => ev.stopPropagation());
+      }
+    });
+  }
+
+  async function loadTriage() {
+    $("triageMsg").textContent = "Loading triage…";
+    const { res, data } = await api(`/api/leads/triage?brand=${encodeURIComponent(BRAND)}`);
+    if (!res.ok) {
+      $("triageList").innerHTML = "";
+      $("triageMsg").className = "err";
+      $("triageMsg").textContent =
+        (data && data.message) || "You do not have permission to view leads for this brand.";
+      return;
+    }
+    state.triage = (data && data.queue) || [];
+    if (data && data.empty) {
+      $("triageList").innerHTML = "";
+      $("triageMsg").className = "empty";
+      $("triageMsg").textContent = data.empty_message || "No open leads need triage.";
+      return;
+    }
+    renderTriage();
+  }
+
+  async function runTriage(id, action, card) {
+    const json = {};
+    if (action === "assign") {
+      if (!state.me || !state.me.person_id) {
+        toast("No verified person");
+        return;
+      }
+      json.owner_person_id = state.me.person_id;
+    }
+    if (action === "work-item") {
+      const field = card && card.querySelector("[data-wi]");
+      json.work_item_id = field ? field.value.trim() : "";
+      if (!json.work_item_id) {
+        toast("Work item id required. This links an existing item only.");
+        return;
+      }
+    }
+    const { res, data } = await api(
+      `/api/leads/${encodeURIComponent(id)}/${action}`,
+      { method: "POST", json: json }
+    );
+    if (!res.ok) {
+      toast((data && data.message) || "Action failed");
+      return;
+    }
+    toast((data && data.next_action && data.next_action.label) || "Saved");
+    await loadTriage();
+    await loadList();
+  }
+
   function showList() {
     $("listView").classList.remove("hidden");
     $("detailView").classList.add("hidden");
@@ -286,6 +426,12 @@
     $("detWolf").textContent = L.wolf_lifecycle || "none";
     $("detSource").textContent = L.source_stage || "none";
     $("detOwner").innerHTML = `<strong>Owner</strong> ${esc(L.owner)}`;
+    const next = (state.detail && state.detail.next_action) || {};
+    const speed = (state.detail && state.detail.speed) || {};
+    const hook = (state.detail && state.detail.work_item_hook) || {};
+    $("detNext").innerHTML = `<strong>Next</strong> ${esc(next.label || "none")}`;
+    $("detSpeed").innerHTML = `<strong>Speed</strong> ${esc(speed.words || L.response_time || "unavailable")}`;
+    $("detWork").innerHTML = `<strong>Work item</strong> ${esc(hook.work_item_id || "none — link an existing one")}`;
     $("detConv").innerHTML = `<strong>Conversion</strong> ${esc(L.conversion)}`;
     $("detResp").innerHTML = `<strong>Response time</strong> ${esc(L.response_time)}`;
     $("detClosed").textContent =
@@ -329,10 +475,12 @@
     setMsg($("detMsg"), "Saved.", true);
     await openDetail(state.selectedId);
     await loadList();
+    await loadTriage();
   }
 
   $("btnBack").addEventListener("click", () => {
     showList();
+    loadTriage();
     loadList();
   });
   $("btnNote").addEventListener("click", () =>
@@ -357,6 +505,7 @@
 
   (async function init() {
     await loadMe();
+    await loadTriage();
     await loadList();
   })();
 })();

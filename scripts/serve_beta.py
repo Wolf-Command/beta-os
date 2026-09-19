@@ -1833,6 +1833,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/leads":
             self._get_leads(qs)
             return
+        # Before /api/leads/<id> so "triage" is not treated as a lead id.
+        if path == "/api/leads/triage":
+            self._get_leads_triage(qs)
+            return
         m_lead = re.match(r"^/api/leads/([^/]+)$", path)
         if m_lead:
             self._get_lead(m_lead.group(1))
@@ -4020,6 +4024,28 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         self._send_json(payload)
 
+    def _get_leads_triage(self, qs: dict) -> None:
+        """GET /api/leads/triage — hot/open Habitat queue. Same identity gate as list."""
+        identity = self._lead_identity()
+        if identity is None:
+            return
+        brand = ((qs.get("brand") or [None])[0] or "").strip()
+        if not brand:
+            self._send_json(
+                {"ok": False, "error": "invalid", "message": "brand query required."},
+                status=400,
+            )
+            return
+        try:
+            payload = _lead_spine.api_triage_board(
+                verified_person_id=identity["person_id"],
+                brand_id=brand,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_lead_error(exc)
+            return
+        self._send_json(payload)
+
     def _get_lead(self, lead_id: str) -> None:
         identity = self._lead_identity()
         if identity is None:
@@ -4047,8 +4073,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
         pid = identity["person_id"]
         try:
             if action == "touch":
+                # Operator click clock. Not an SLA target. Body may supply touched_at.
+                touched = str(body.get("touched_at") or "").strip() or _lead_spine.now_utc_iso()
                 result = _lead_spine.record_human_touch(
                     lead_id,
+                    touched_at=touched,
                     verified_person_id=pid,
                     actor_type="PERSON",
                 )
@@ -4160,6 +4189,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "ok": True,
                 "action": action,
                 "lead": _lead_spine.lead_operator_card(lead),
+                "next_action": _lead_spine.next_action_for_lead(lead),
+                "speed": _lead_spine.speed_to_lead_signal(lead),
+                "work_item_hook": _lead_spine.work_item_hook(lead),
+                "claim_hook": _lead_spine.claim_hook(lead),
                 "event": result.get("event"),
             }
         )

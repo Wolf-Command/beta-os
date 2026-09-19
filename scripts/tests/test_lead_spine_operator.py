@@ -139,16 +139,9 @@ def seed_other_brand(conn: sqlite3.Connection) -> None:
         """,
         (SCOPE_OTHER, BRAND_OTHER, TS),
     )
-    conn.execute(
-        """
-        INSERT INTO org_assignment_scopes (
-          assignment_id, scope_id, start_at, end_at, status, created_at, updated_at
-        ) VALUES (?, ?, ?, NULL, 'ACTIVE', ?, ?)
-        ON CONFLICT(assignment_id, scope_id, start_at) DO UPDATE SET
-          status='ACTIVE', end_at=NULL, updated_at=excluded.updated_at
-        """,
-        (ASG_DENIED, SCOPE_OTHER, TS, TS, TS),
-    )
+    from core.scope import upsert_assignment_scope
+
+    upsert_assignment_scope(conn, ASG_DENIED, SCOPE_OTHER, TS, TS)
     conn.commit()
 
 
@@ -254,8 +247,13 @@ def main() -> int:
     check("demo-07 present", lead7 is not None)
     assert lead7
     before_src = lead7["source_stage"]
+    observed = lead7["source_observed_at"]
     ls.record_human_touch(
-        lead7["lead_id"], verified_person_id=PERS_DEMO, actor_type="PERSON", conn=conn
+        lead7["lead_id"],
+        touched_at=observed,
+        verified_person_id=PERS_DEMO,
+        actor_type="PERSON",
+        conn=conn,
     )
     ls.record_note(
         lead7["lead_id"],
