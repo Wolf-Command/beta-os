@@ -95,6 +95,7 @@ from core import sale_evidence_pack as _sale_pack
 from core import restore_drill as _restore_drill
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
+from core import crm_identity_memory as _crm_ident
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1698,6 +1699,19 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/strat/radar-prove":
             self._strat_radar_prove_get()
             return
+        # CAP-CRM-02 identity memory. Owner or authorised staff. Not a lead. Not a blast.
+        if self._crm_identity_blast(path) or (
+            path.startswith("/api/crm/") and (qs.get("blast") or [""])[0].strip()
+        ):
+            self._crm_identity_blast_refused()
+            return
+        if path == "/api/crm/identity":
+            self._crm_identity_list(qs)
+            return
+        m_crm = re.match(r"^/api/crm/identity/([^/]+)$", path)
+        if m_crm and m_crm.group(1) not in {"note", "link", "merge", "blast"}:
+            self._crm_identity_read(m_crm.group(1))
+            return
         # CAP-CORE-11 SOP Factory v1. Owner or role. Anon → 403. Not live without approve.
         if path == "/api/sop":
             self._sop_list()
@@ -1987,6 +2001,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._strat_radar_page()
             return
+        elif path in (
+            "/crm-identity",
+            "/crm-identity/",
+            "/crm-identity.html",
+            "/dashboards/crm-identity.html",
+        ):
+            self._crm_identity_page()
+            return
         elif path in ("/uma-blu-close", "/uma-blu-close/"):
             self.path = "/uma-blu-close.html"
         elif path in ("/bzg", "/bzg/"):
@@ -2267,6 +2289,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/sop/approve":
             self._sop_approve_post()
             return
+        if self._crm_identity_blast(path):
+            self._crm_identity_blast_refused()
+            return
+        if path == "/api/crm/identity":
+            self._crm_identity_post("register", _crm_ident.register_customer)
+            return
+        if path == "/api/crm/identity/note":
+            self._crm_identity_post("note", _crm_ident.append_note)
+            return
+        if path == "/api/crm/identity/link":
+            self._crm_identity_post("link", _crm_ident.propose_link)
+            return
+        if path == "/api/crm/identity/merge":
+            self._crm_identity_post("merge", _crm_ident.merge_people)
+            return
 
         if path == "/api/intel/eval-cost":
             self._intel_eval_cost_post()
@@ -2296,6 +2333,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/strat/radar-prove" or path.startswith("/api/strat/radar-prove/"):
             self._strat_radar_write_refused(path)
+            return
+        if self._crm_identity_blast(path) or path == "/api/crm/identity" or path.startswith("/api/crm/identity/"):
+            self._crm_identity_append_only_refused()
             return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
@@ -2490,6 +2530,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/strat/radar-prove" or path.startswith("/api/strat/radar-prove/"):
             self._strat_radar_write_refused(path)
+            return
+        if self._crm_identity_blast(path) or path == "/api/crm/identity" or path.startswith("/api/crm/identity/"):
+            self._crm_identity_append_only_refused()
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -4728,6 +4771,186 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def _sop_approve_post(self) -> None:
         self._sop_post("approve", _sop.approve)
+
+    def _crm_identity_blast(self, path: str) -> bool:
+        low = (path or "").lower()
+        return low in {
+            "/api/crm/blast",
+            "/api/crm/identity/blast",
+            "/api/marketing/blast",
+            "/api/klaviyo/send",
+            "/api/email/blast",
+        }
+
+    def _crm_actor(self, action: str, body: dict | None = None) -> tuple[str, bool] | None:
+        """Identity required. Owner always. Staff only if rbac.can already grants it.
+
+        Does not insert a permission. Anonymous fails closed.
+        """
+        identity = self._resolve_identity(body)
+        if not identity.get("ok"):
+            self._send_identity_deny(
+                identity, required_permission=_crm_ident.permission_for(action)
+            )
+            return None
+        person_id = (identity.get("person_id") or "").strip()
+        if not person_id:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "denied",
+                    "message": "anonymous callers are refused",
+                    "marketing_blast": False,
+                    "identity_graph_complete": False,
+                    **_crm_ident.honesty_flags(),
+                },
+                status=403,
+            )
+            return None
+        role_allowed = False
+        if person_id != _crm_ident.OWNER_PERSON:
+            try:
+                role_allowed = bool(
+                    _rbac.can(person_id, _crm_ident.permission_for(action))
+                )
+            except Exception:  # noqa: BLE001
+                role_allowed = False
+        return person_id, role_allowed
+
+    def _crm_fail(self, exc: Exception) -> None:
+        code = getattr(exc, "code", "invalid")
+        if code == "denied":
+            status = 403
+        elif code in {"not_found", "not_a_customer"}:
+            status = 404
+        elif code in {"marketing_refused", "append_only"}:
+            status = 405
+        else:
+            status = 400
+        self._send_json(
+            {
+                "ok": False,
+                "error": code,
+                "message": str(exc),
+                "marketing_blast": False,
+                "merged": False,
+                "identity_graph_complete": False,
+                **_crm_ident.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _crm_identity_blast_refused(self) -> None:
+        actor = self._crm_actor("read")
+        if actor is None:
+            return
+        try:
+            _crm_ident.refuse_marketing({})
+        except _crm_ident.CrmIdentityError as exc:
+            self._crm_fail(exc)
+
+    def _crm_identity_append_only_refused(self) -> None:
+        if self._crm_identity_blast(urlparse(self.path).path):
+            self._crm_identity_blast_refused()
+            return
+        actor = self._crm_actor("read")
+        if actor is None:
+            return
+        self._crm_fail(
+            _crm_ident.CrmIdentityError(
+                "Customer rows and memory notes are append-only.",
+                code="append_only",
+            )
+        )
+
+    def _crm_identity_page(self) -> None:
+        actor = self._crm_actor("read")
+        if actor is None:
+            return
+        page = DASHBOARDS / "crm-identity.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Customer identity page is missing.",
+                    "marketing_blast": False,
+                    "identity_graph_complete": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _crm_identity_list(self, qs: dict) -> None:
+        actor = self._crm_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        entity = (qs.get("entity") or [""])[0] or None
+        try:
+            out = _crm_ident.list_customers(
+                person_id, role_allowed=role_allowed, entity=entity
+            )
+        except _crm_ident.CrmIdentityError as exc:
+            self._crm_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"person_id": person_id, **out})
+
+    def _crm_identity_read(self, customer_id: str) -> None:
+        actor = self._crm_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            out = _crm_ident.read_customer(
+                customer_id, person_id, role_allowed=role_allowed
+            )
+        except _crm_ident.CrmIdentityError as exc:
+            self._crm_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"person_id": person_id, **out})
+
+    def _crm_identity_post(self, action: str, fn) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "bad_payload",
+                    "message": f"invalid JSON: {exc}",
+                    "marketing_blast": False,
+                    **_crm_ident.honesty_flags(),
+                },
+                status=400,
+            )
+            return
+        actor = self._crm_actor(action, body)
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            out = fn(body, person_id=person_id, role_allowed=role_allowed)
+        except _crm_ident.CrmIdentityError as exc:
+            self._crm_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"person_id": person_id, **out})
 
     # ----- Uma Blu ops (Devi commissioning: fail-closed) -----
 
