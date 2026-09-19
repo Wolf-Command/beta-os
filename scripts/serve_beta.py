@@ -97,6 +97,7 @@ from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import crm_identity_memory as _crm_ident
 from core import bzg_reputation_observe as _bzg_rep
+from core import ggv_social_derive as _ggv_social
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1714,6 +1715,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if m_bzg and m_bzg.group(1) not in {"observe", "scrape", "reply", "observations"}:
             self._bzg_reputation_read(m_bzg.group(1))
             return
+        # CAP-GGV-05 social DERIVE. Stored Metricool reads only. No write. No ad spend.
+        if self._ggv_social_metricool(path):
+            self._ggv_social_metricool_refused()
+            return
+        if self._ggv_social_ads(path):
+            self._ggv_social_ads_refused()
+            return
+        if path in {"/api/ggv/social", "/api/ggv/social/derive"}:
+            self._ggv_social_get(qs)
+            return
         # CAP-CRM-02 identity memory. Owner or authorised staff. Not a lead. Not a blast.
         if self._crm_identity_blast(path) or (
             path.startswith("/api/crm/") and (qs.get("blast") or [""])[0].strip()
@@ -2025,6 +2036,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._bzg_reputation_page()
             return
         elif path in (
+            "/ggv-social",
+            "/ggv-social/",
+            "/ggv-social.html",
+            "/dashboards/ggv-social.html",
+        ):
+            self._ggv_social_page()
+            return
+        elif path in (
             "/crm-identity",
             "/crm-identity/",
             "/crm-identity.html",
@@ -2324,6 +2343,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path in {"/api/bzg/reputation", "/api/bzg/reputation/observations"}:
             self._bzg_reputation_summary_refused()
             return
+        if self._ggv_social_metricool(path):
+            self._ggv_social_metricool_refused()
+            return
+        if self._ggv_social_ads(path):
+            self._ggv_social_ads_refused()
+            return
+        if path in {"/api/ggv/social", "/api/ggv/social/derive"} or path.startswith("/api/ggv/social/"):
+            self._ggv_social_post()
+            return
         if self._crm_identity_blast(path):
             self._crm_identity_blast_refused()
             return
@@ -2374,6 +2402,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/bzg/reputation" or path.startswith("/api/bzg/reputation/"):
             self._bzg_reputation_append_only_refused()
+            return
+        if path == "/api/ggv/social" or path.startswith("/api/ggv/social/"):
+            self._ggv_social_write_refused(path)
             return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
@@ -2574,6 +2605,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/bzg/reputation" or path.startswith("/api/bzg/reputation/"):
             self._bzg_reputation_append_only_refused()
+            return
+        if path == "/api/ggv/social" or path.startswith("/api/ggv/social/"):
+            self._ggv_social_write_refused(path)
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -5207,6 +5241,215 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_err(500, str(exc))
             return
         self._send_json({"person_id": person_id, **out})
+
+    def _ggv_social_metricool(self, path: str) -> bool:
+        low = (path or "").lower().rstrip("/")
+        return low in {
+            "/api/ggv/social/metricool",
+            "/api/ggv/social/publish",
+            "/api/metricool/publish",
+        }
+
+    def _ggv_social_ads(self, path: str) -> bool:
+        low = (path or "").lower().rstrip("/")
+        return low in {
+            "/api/ggv/social/ads",
+            "/api/ggv/social/spend",
+            "/api/ggv/social/boost",
+        }
+
+    def _ggv_actor(self, action: str, body: dict | None = None) -> tuple[str, bool] | None:
+        """Identity required. Owner always. Staff only if rbac.can already grants it."""
+        identity = self._resolve_identity(body)
+        if not identity.get("ok"):
+            self._send_identity_deny(
+                identity, required_permission=_ggv_social.permission_for(action)
+            )
+            return None
+        person_id = (identity.get("person_id") or "").strip()
+        if not person_id:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "denied",
+                    "message": "anonymous callers are refused",
+                    "metricool_write": False,
+                    "invented_metrics": False,
+                    "paid_ads_spend": None,
+                    "blended_score": None,
+                    **_ggv_social.honesty_flags(),
+                },
+                status=403,
+            )
+            return None
+        role_allowed = False
+        if person_id != _ggv_social.OWNER_PERSON:
+            try:
+                role_allowed = bool(_rbac.can(person_id, _ggv_social.permission_for(action)))
+            except Exception:  # noqa: BLE001
+                role_allowed = False
+        return person_id, role_allowed
+
+    def _ggv_fail(self, exc: Exception) -> None:
+        code = getattr(exc, "code", "invalid")
+        if code == "denied":
+            status = 403
+        elif code in {
+            "metricool_write_refused",
+            "paid_ads_refused",
+            "invented_metrics",
+            "read_only",
+            "cr_resolve_refused",
+            "invented_proven",
+        }:
+            status = 405
+        else:
+            status = 400
+        self._send_json(
+            {
+                "ok": False,
+                "error": code,
+                "message": str(exc),
+                "metricool_write": False,
+                "invented_metrics": False,
+                "paid_ads_spend": None,
+                "paid_ads_called": False,
+                "blended_score": None,
+                "surfaces_blended": False,
+                **_ggv_social.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _ggv_social_metricool_refused(self) -> None:
+        actor = self._ggv_actor("read")
+        if actor is None:
+            return
+        try:
+            _ggv_social.metricool_write({})
+        except _ggv_social.SocialDeriveError as exc:
+            self._ggv_fail(exc)
+
+    def _ggv_social_ads_refused(self) -> None:
+        actor = self._ggv_actor("read")
+        if actor is None:
+            return
+        try:
+            _ggv_social.paid_ads({})
+        except _ggv_social.SocialDeriveError as exc:
+            self._ggv_fail(exc)
+
+    def _ggv_social_write_refused(self, path: str) -> None:
+        if self._ggv_social_metricool(path):
+            self._ggv_social_metricool_refused()
+            return
+        if self._ggv_social_ads(path):
+            self._ggv_social_ads_refused()
+            return
+        actor = self._ggv_actor("read")
+        if actor is None:
+            return
+        self._ggv_fail(
+            _ggv_social.SocialDeriveError(
+                "Social derive views are read-only.",
+                code="read_only",
+            )
+        )
+
+    def _ggv_social_page(self) -> None:
+        actor = self._ggv_actor("read")
+        if actor is None:
+            return
+        page = DASHBOARDS / "ggv-social.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Social derive page is missing.",
+                    "metricool_write": False,
+                    "invented_metrics": False,
+                    "paid_ads_spend": None,
+                    "blended_score": None,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _ggv_social_get(self, qs: dict) -> None:
+        actor = self._ggv_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        brand = (qs.get("brand") or [""])[0]
+        raw_window = (qs.get("window_days") or [""])[0].strip()
+        window = None
+        if raw_window:
+            if not raw_window.isdigit():
+                self._ggv_fail(
+                    _ggv_social.SocialDeriveError(
+                        "window_days must be a whole number",
+                        code="invalid",
+                    )
+                )
+                return
+            window = int(raw_window)
+        try:
+            out = _ggv_social.derive_view(
+                brand,
+                person_id=person_id,
+                role_allowed=role_allowed,
+                window_days=window,
+            )
+        except _ggv_social.SocialDeriveError as exc:
+            self._ggv_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"person_id": person_id, **out})
+
+    def _ggv_social_post(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "bad_payload",
+                    "message": f"invalid JSON: {exc}",
+                    "metricool_write": False,
+                    "invented_metrics": False,
+                    "paid_ads_spend": None,
+                    "blended_score": None,
+                    **_ggv_social.honesty_flags(),
+                },
+                status=400,
+            )
+            return
+        if not isinstance(body, dict):
+            body = {}
+        actor = self._ggv_actor("read", body)
+        if actor is None:
+            return
+        try:
+            if _ggv_social.looks_like_metricool_write(body):
+                _ggv_social.metricool_write(body)
+            elif _ggv_social.looks_like_ads(body):
+                _ggv_social.paid_ads(body)
+            elif _ggv_social.looks_like_invented_metric(body):
+                _ggv_social.invent_metrics(body)
+            else:
+                _ggv_social.refuse_write(body)
+        except _ggv_social.SocialDeriveError as exc:
+            self._ggv_fail(exc)
 
     # ----- Uma Blu ops (Devi commissioning: fail-closed) -----
 

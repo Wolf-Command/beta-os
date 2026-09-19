@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wolf · Social derive</title>
+<style>
+  :root {
+    --bg: #101418;
+    --line: #2c3842;
+    --text: #eef2f5;
+    --muted: #8b9aa6;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --display: "Iowan Old Style", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font);
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-family: var(--display); font-weight: 500; font-size: 32px; margin: 0 0 8px; }
+  p { line-height: 1.45; color: var(--muted); }
+  .card {
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; margin-top: 16px;
+  }
+  code { color: var(--text); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Social derive</h1>
+    <p>CAP-GGV-05 on Beta. This view reads Metricool numbers already stored for an authorised brand. Missing numbers stay missing. Surfaces are not blended. No Metricool write. No paid ads spend. A score is not invented.</p>
+    <div class="card" id="status">Loading…</div>
+  </div>
+  <script>
+    fetch("/api/ggv/social?brand=habitat", { headers: { "Accept": "application/json" } })
+      .then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
+      .then(function (res) {
+        var body = res.body || {};
+        var h = body.honesty || {};
+        var el = document.getElementById("status");
+        var spend = body.paid_ads_spend;
+        var score = body.blended_score;
+        el.textContent = [
+          "HTTP " + res.status,
+          "brand " + (body.brand_key || "—"),
+          "authorised " + String(body.authorised === true),
+          "available " + String(body.available === true),
+          "rows " + (body.row_count == null ? "—" : body.row_count),
+          "blended score " + (score == null ? "none" : String(score)),
+          "paid ads spend " + (spend == null ? "none" : String(spend)),
+          "metricool write " + String(body.metricool_write === true),
+          "metrics invented " + String(body.invented_metrics === true),
+          "ledger " + (h.ledger_maturity || body.ledger_maturity || "—"),
+          "ceiling " + (h.maturity_ceiling || body.maturity_ceiling || "—"),
+          "CR " + (h.cr_state || body.cr_state || "—")
+        ].join(" · ");
+      })
+      .catch(function () {
+        document.getElementById("status").textContent = "Social derive could not be read.";
+      });
+  </script>
+</body>
+</html>

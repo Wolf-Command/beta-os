@@ -182,6 +182,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_bzg_reputation_observe.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-BZG-07'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-d1aacda59180eba7';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/reputation; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
       "expect": "PASS=112 FAIL=0; SPECIFIED 77; OPEN; anon:403; 8787 True; 8788 True",
       "by": "cursor-bzg-reputation-observe-v1"
+    },
+    {
+      "id": "bf-ggv-social-derive-views-20260919",
+      "claim": "Beta CAP-GGV-05 social DERIVE views read stored Metricool numbers for an authorised brand only. NULL is not zero. Surfaces are not blended. Unauth /api/ggv/social and /ggv-social are 403. Metricool write, paid ads spend, and invented metrics are refused. CAP-GGV-05 stays BUILT. CR-e20099e21930b9a6 stays OPEN. No PROVEN invented. Ledger stays 77 rows. Role grants for ggv.social.read stay 0. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_ggv_social_derive.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-GGV-05'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-e20099e21930b9a6';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/ggv/social; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=104 FAIL=0; BUILT 77; OPEN; anon:403; 8787 True; 8788 True",
+      "by": "cursor-ggv-social-derive-views"
     }
   ]
 }
