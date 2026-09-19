@@ -35,4 +35,4 @@ Do not false-resolve `CR-c4ed4e3fa9f15a40`. Delivery evidence is the completion 
 Production, train/ack/use loop, CAP PROVEN promotions, Devi human retest (PARKED), Alchemist writes, finance/HR, score gaming, permission grants.
 
 ## Mission
-Lane `core-sop-factory-v1` → COMPLETED at completion commit after Peaches verify. Then close_slice → next eligible (`intg-tech-capability-registry`).
+Lane `core-sop-factory-v1` → COMPLETED at `e2b600694fe4bb81c6d1fee4c452488d7b650b4e`. Then close_slice → next eligible (`intg-tech-capability-registry`).
