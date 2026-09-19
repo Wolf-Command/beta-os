@@ -35,4 +35,4 @@ Do not false-resolve `CR-44ffb6a57469ff25`. Delivery evidence is the completion 
 Production, CAP PROVEN promotions, Devi human retest (PARKED), Alchemist writes, finance/HR, score gaming, connector live probes beyond local Integration Health copy.
 
 ## Mission
-Lane `intg-tech-capability-registry` → COMPLETED at completion commit (feat). Then close_slice → next eligible (`strat-12wy-cap-prove`).
+Lane `intg-tech-capability-registry` → COMPLETED at `918e4be3587216d6af5029707cf8f354c738180e`. Then close_slice → next eligible (`strat-12wy-cap-prove`).
