@@ -53,4 +53,4 @@ Do not false-resolve `CR-766f242208e401ad`. Delivery evidence is the future comp
 Production, CAP PROVEN promotions, filled VDR documents, live buyer share/export, Devi human retest (PARKED), Alchemist writes, finance/HR money paths, score gaming, unrelated dirty trees.
 
 ## Mission
-Lane `sale-buyer-dataroom-framework` → COMPLETED (completion commit recorded after this review lands). Then close_slice → next eligible (w4 may IDLE if none).
+Lane `sale-buyer-dataroom-framework` → COMPLETED at `23ed1aa` (`23ed1aa8a13eaf5ea604cdc983e84f9ba2ba7477`). Then close_slice → w4 IDLE (no runnable lane).
