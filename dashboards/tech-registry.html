@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wolf · Tech Registry</title>
+<style>
+  :root {
+    --bg: #101418;
+    --bg2: #171d23;
+    --line: #2c3842;
+    --text: #eef2f5;
+    --muted: #8b9aa6;
+    --accent: #c4a574;
+    --warn: #d4a35c;
+    --danger: #d66a5e;
+    --read: #8eb4d4;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background:
+      radial-gradient(ellipse 90% 60% at 0% -10%, #243039 0%, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 20px 16px 64px; }
+  h1 {
+    font-family: var(--display);
+    font-size: 2rem; font-weight: 600; letter-spacing: -0.03em; margin: 0;
+  }
+  h1 em { font-style: italic; color: var(--accent); font-weight: 500; }
+  .sub { color: var(--muted); font-size: 0.92rem; line-height: 1.45; max-width: 42rem; }
+  .banner {
+    margin: 14px 0;
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--muted);
+    font-size: 0.84rem;
+    line-height: 1.4;
+  }
+  .card {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin: 8px 0;
+  }
+  .top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .id { font-size: 0.75rem; letter-spacing: 0.06em; color: var(--muted); }
+  .name { font-weight: 650; margin-top: 2px; }
+  .status {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+    border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px;
+    color: var(--muted); white-space: nowrap;
+  }
+  .status.READ_OK, .status.BUILT { color: var(--read); }
+  .status.DEGRADED, .status.UNKNOWN, .status.SPECIFIED { color: var(--warn); }
+  .status.ERROR, .status.ABSENT { color: var(--danger); }
+  .ev, .note { color: var(--muted); font-size: 0.82rem; line-height: 1.4; margin: 8px 0 0; }
+  h2 { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; }
+  .err { color: var(--danger); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tech <em>Registry</em></h1>
+  <p class="sub">Owner read of capabilities, connectors, and technologies. Status comes from the Model C ledger or a local health read. No replace decision is recorded. External writes are refused. CAP-INTG-01 stays on the ledger. This page does not raise maturity.</p>
+  <div class="banner" id="banner">Loading…</div>
+  <h2>Connectors</h2>
+  <div id="connectors">
+    <article class="card"><div class="id">CAP-INTG-01</div><div class="name">Yanolja</div><p class="note">No replace decision is recorded.</p></article>
+  </div>
+  <h2>Technologies</h2>
+  <div id="technologies"></div>
+  <h2>Capabilities</h2>
+  <div id="capabilities"></div>
+</div>
+<script>
+const HEALTH = ["UNKNOWN", "NOT_CONFIGURED", "READ_OK", "DEGRADED", "ERROR"];
+const MATURITY = ["UNKNOWN", "ABSENT", "SPECIFIED", "BUILT", "PROVEN", "READY"];
+
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function badge(row) {
+  const allowed = row.status_kind === "maturity" ? MATURITY : HEALTH;
+  const token = allowed.indexOf(row.status) >= 0 ? row.status : "ERROR";
+  return '<span class="status ' + token + '">' + esc(token) + '</span>';
+}
+
+function card(row) {
+  const ledger = row.ledger_maturity
+    ? '<p class="note">Ledger stays ' + esc(row.ledger_maturity) + '. Not promoted.</p>'
+    : "";
+  return '<article class="card"><div class="top"><div><div class="id">' + esc(row.id) +
+    '</div><div class="name">' + esc(row.name) + '</div></div>' + badge(row) +
+    '</div><p class="ev">' + esc(row.evidence || row.intent || "") + '</p>' +
+    '<p class="note">Exit: ' + esc(row.exit_note) + '</p>' +
+    '<p class="note">Replace: ' + esc(row.replace_note) + '</p>' + ledger + '</article>';
+}
+
+function paint(rows, id) {
+  const host = document.getElementById(id);
+  host.innerHTML = rows.length ? rows.map(card).join("") : '<p class="ev">None in this read.</p>';
+}
+
+fetch("/api/tech-registry", { headers: { "Accept": "application/json" } })
+  .then(function (res) {
+    return res.json().then(function (body) { return { status: res.status, body: body }; });
+  })
+  .then(function (pack) {
+    const body = pack.body || {};
+    const banner = document.getElementById("banner");
+    if (!body.ok) {
+      banner.className = "banner err";
+      banner.textContent = body.message || body.error || "Read failed.";
+      return;
+    }
+    const h = body.honesty || {};
+    banner.textContent = (h.cap || "CAP-INTG-06") + " ledger " + (h.ledger_maturity || "UNKNOWN") +
+      ". Ceiling " + (h.maturity_ceiling || "BUILT") +
+      ". " + (h.cr_id || "") + " " + (h.cr_state || "unread") +
+      ". External writes refused.";
+    const entries = body.entries || [];
+    paint(entries.filter(function (row) { return row.kind === "connector"; }), "connectors");
+    paint(entries.filter(function (row) { return row.kind === "technology"; }), "technologies");
+    paint(entries.filter(function (row) { return row.kind === "capability"; }), "capabilities");
+  })
+  .catch(function () {
+    const banner = document.getElementById("banner");
+    banner.className = "banner err";
+    banner.textContent = "Read failed. No status was invented.";
+  });
+</script>
+</body>
+</html>

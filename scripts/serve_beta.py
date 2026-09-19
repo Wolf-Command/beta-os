@@ -87,6 +87,7 @@ from core import intel_orchestration as _intel
 from core import intel_eval_cost as _intel_cost
 from core import lead_spine as _lead_spine
 from core import integration_health as _integration_health
+from core import tech_capability_registry as _tech_registry
 from core import sop_factory as _sop
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
@@ -1634,6 +1635,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/integration-health":
             self._integration_health_get()
             return
+        # CAP-INTG-06 Tech & Capability Registry. Owner read. Writes refused.
+        if path == "/api/tech-registry":
+            self._tech_registry_get(qs)
+            return
+        m_reg = re.match(r"^/api/tech-registry/([^/]+)$", path)
+        if m_reg:
+            self._tech_registry_get(qs, m_reg.group(1))
+            return
         # CAP-CORE-11 SOP Factory v1. Owner or role. Anon → 403. Not live without approve.
         if path == "/api/sop":
             self._sop_list()
@@ -1867,6 +1876,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._integration_health_page()
             return
+        elif path in (
+            "/tech-registry",
+            "/tech-registry/",
+            "/tech-registry.html",
+            "/dashboards/tech-registry.html",
+        ):
+            self._tech_registry_page()
+            return
         elif path in ("/uma-blu-close", "/uma-blu-close/"):
             self.path = "/uma-blu-close.html"
         elif path in ("/bzg", "/bzg/"):
@@ -1911,6 +1928,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == "/api/integration-health":
             self._integration_health_write_refused()
+            return
+        if path == "/api/tech-registry" or path.startswith("/api/tech-registry/"):
+            self._tech_registry_write_refused()
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -2135,6 +2155,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_PATCH(self) -> None:
         path = urlparse(self.path).path
+        if path == "/api/tech-registry" or path.startswith("/api/tech-registry/"):
+            self._tech_registry_write_refused()
+            return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
             self._patch_core_work_item(m_wi.group(1))
@@ -2307,9 +2330,13 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_err(500, str(exc))
 
     def do_PUT(self) -> None:
+        path = urlparse(self.path).path
+        if path == "/api/tech-registry" or path.startswith("/api/tech-registry/"):
+            self._tech_registry_write_refused()
+            return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
-        if urlparse(self.path).path == "/api/planner":
+        if path == "/api/planner":
             self._save_slot()
             return
         self._send_err(404, "not found")
@@ -3263,6 +3290,131 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "ok": False,
                 "error": "writes_refused",
                 "message": "Integration Health is read-only. No external writes.",
+                "external_writes": False,
+                "ledger_write": False,
+            },
+            status=405,
+        )
+
+    def _require_tech_registry_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Same Owner gate as Integration Health."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Tech registry is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _tech_registry_page(self) -> None:
+        identity = self._require_tech_registry_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "tech-registry.html"
+        if not page.is_file():
+            self._send_json(
+                {"ok": False, "error": "page_missing", "message": "Tech registry page is missing."},
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _tech_registry_get(self, qs: dict, entry_id: str | None = None) -> None:
+        identity = self._require_tech_registry_owner()
+        if identity is None:
+            return
+        kind = (qs.get("kind") or [""])[0].strip().lower() or None
+        try:
+            if entry_id:
+                report = _tech_registry.read_entry(entry_id, kind=kind)
+            else:
+                report = _tech_registry.build_registry(kind=kind)
+        except _tech_registry.RegistryError as exc:
+            status = 404 if exc.code == "not_found" else 400
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=status,
+            )
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "read_failed",
+                    "message": type(exc).__name__,
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=500,
+            )
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _tech_registry_write_refused(self) -> None:
+        identity = self._require_tech_registry_owner()
+        if identity is None:
+            return
+        try:
+            _tech_registry.refuse_external_write({})
+        except _tech_registry.RegistryError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=405,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Tech registry is read-only. No external writes.",
                 "external_writes": False,
                 "ledger_write": False,
             },
