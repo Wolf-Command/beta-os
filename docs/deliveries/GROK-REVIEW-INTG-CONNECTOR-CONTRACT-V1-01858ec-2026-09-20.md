@@ -57,4 +57,4 @@ Production, CAP SPECIFIED/PROVEN promotions, Devi human retest (PARKED), Alchemi
 Lane `intg-connector-contract-v1` → COMPLETED at completion commit below. Then close_slice → next eligible safe lane (`intg-connector-cap-tests-v1`).
 
 ## Completion commit
-PENDING_COMMIT
+141d30b185da4d7946b3b4af437710e20850408f
