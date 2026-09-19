@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wolf · Connector prove</title>
+<style>
+  :root {
+    --bg: #101418;
+    --bg2: #171d23;
+    --line: #2c3842;
+    --text: #eef2f5;
+    --muted: #8b9aa6;
+    --accent: #c4a574;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background:
+      radial-gradient(ellipse 90% 60% at 0% -10%, #243039 0%, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 20px 16px 64px; }
+  h1 { font-family: var(--display); font-weight: 500; font-size: 32px; margin: 0 0 6px; }
+  h2 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 28px 0 8px; }
+  p { line-height: 1.45; }
+  .lede { color: var(--muted); margin: 0 0 16px; }
+  .banner {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    border-left: 3px solid var(--accent);
+    padding: 12px 14px;
+    margin: 12px 0 8px;
+  }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .card {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    padding: 14px;
+    margin: 0;
+  }
+  .k { color: var(--muted); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .v { font-family: var(--display); font-size: 28px; margin: 4px 0; }
+  .note { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Connector prove</h1>
+  <p class="lede">Klaviyo is not ActiveCampaign. CAP-CRM-04 stays BUILT. Brand scopes are documented, not counted. Habitat is the only documented Klaviyo scope. Other brands are ABSENT, not zero. No send. No external CRM write. This page does not resolve the completion row.</p>
+  <div id="banner" class="banner">Reading the prove… Klaviyo is not ActiveCampaign. No send.</div>
+  <h2>Connectors</h2>
+  <div id="connectors" class="grid">
+    <article class="card"><div class="k">Connectors</div><div class="v">EMPTY</div><p class="note">Named only. Not called.</p></article>
+  </div>
+  <h2>Brand scopes</h2>
+  <div id="brands" class="grid">
+    <article class="card"><div class="k">Brands</div><div class="v">EMPTY</div><p class="note">Documented or ABSENT. Not a count.</p></article>
+  </div>
+  <h2>Gaps</h2>
+  <div id="gaps" class="grid">
+    <article class="card"><div class="k">Gaps</div><div class="v">DOCUMENTED</div><p class="note">A gap is not a send count.</p></article>
+  </div>
+</div>
+<script>
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function paint(pack) {
+  var banner = document.getElementById("banner");
+  var flags = pack.honesty || {};
+  var split = pack.distinction || {};
+  banner.textContent = "Skeleton " + (pack.framework_skeleton || "BUILT")
+    + ". Ledger " + (flags.maturity || "unread")
+    + ". Ceiling " + (flags.maturity_ceiling || "BUILT")
+    + ". Klaviyo is not ActiveCampaign. Slot " + (split.slot || "EMPTY")
+    + ". No send.";
+  var connectors = "";
+  (pack.connectors || []).forEach(function (row) {
+    connectors += '<article class="card"><div class="k">' + esc(row.id) + '</div>'
+      + '<div class="v">' + esc(row.slot || "EMPTY") + '</div>'
+      + '<p class="note">' + esc(row.name) + " · not called</p></article>";
+  });
+  if (connectors) document.getElementById("connectors").innerHTML = connectors;
+  var brands = "";
+  (pack.brands || []).forEach(function (row) {
+    brands += '<article class="card"><div class="k">' + esc(row.brand_id) + '</div>'
+      + '<div class="v">' + esc(row.slot || "EMPTY") + '</div>'
+      + '<p class="note">Klaviyo ' + esc(row.klaviyo_scope) + " · ActiveCampaign " + esc(row.activecampaign_scope) + "</p></article>";
+  });
+  if (brands) document.getElementById("brands").innerHTML = brands;
+  var gaps = "";
+  (pack.gaps || []).forEach(function (row) {
+    gaps += '<article class="card"><div class="k">' + esc(row.id) + '</div>'
+      + '<div class="v">' + esc(row.status || "DOCUMENTED") + '</div>'
+      + '<p class="note">' + esc(row.why) + "</p></article>";
+  });
+  if (gaps) document.getElementById("gaps").innerHTML = gaps;
+}
+
+fetch("/api/crm-connector-prove", { headers: { "Accept": "application/json" } })
+  .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
+  .then(function (result) {
+    if (!result.ok) {
+      document.getElementById("banner").textContent = "Read refused. Klaviyo is not ActiveCampaign. No send.";
+      return;
+    }
+    paint(result.body);
+  })
+  .catch(function () {
+    document.getElementById("banner").textContent = "Read failed. No send was made. The completion row was not resolved.";
+  });
+</script>
+</body>
+</html>

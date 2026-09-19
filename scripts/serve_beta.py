@@ -95,6 +95,7 @@ from core import sale_evidence_pack as _sale_pack
 from core import sale_buyer_dataroom as _buyer_room
 from core import restore_drill as _restore_drill
 from core import failure_domains as _failure_domains
+from core import crm_connector_prove as _crm_connector
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import crm_identity_memory as _crm_ident
@@ -1734,6 +1735,34 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/failure-domains/"):
             self._failure_domains_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-CRM-04 connector prove. Owner read. Klaviyo is not ActiveCampaign. No send.
+        if self._crm_connector_refuse_code(path):
+            self._crm_connector_write_refused(path)
+            return
+        if path == "/api/crm-connector-prove":
+            self._crm_connector_get(qs)
+            return
+        if path == "/api/crm-connector-prove/checklist":
+            self._crm_connector_get(qs, view="checklist")
+            return
+        if path == "/api/crm-connector-prove/schema":
+            self._crm_connector_get(qs, view="schema")
+            return
+        if path == "/api/crm-connector-prove/log":
+            self._crm_connector_get(qs, view="log")
+            return
+        if path == "/api/crm-connector-prove/connectors":
+            self._crm_connector_get(qs, view="connectors")
+            return
+        if path == "/api/crm-connector-prove/brands":
+            self._crm_connector_get(qs, view="brands")
+            return
+        if path == "/api/crm-connector-prove/gaps":
+            self._crm_connector_get(qs, view="gaps")
+            return
+        if path.startswith("/api/crm-connector-prove/"):
+            self._crm_connector_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-CRM-01 bound prove. Owner read. Does not invent a lead or PROVEN.
         if path == "/api/crm/lead-cap-prove":
             self._crm_lead_prove_get()
@@ -2069,6 +2098,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._failure_domains_page()
             return
         elif path in (
+            "/crm-connector-prove",
+            "/crm-connector-prove/",
+            "/crm-connector-prove.html",
+            "/dashboards/crm-connector-prove.html",
+        ):
+            self._crm_connector_page()
+            return
+        elif path in (
             "/crm-lead-cap-prove",
             "/crm-lead-cap-prove/",
             "/crm-lead-cap-prove.html",
@@ -2173,6 +2210,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/failure-domains" or path.startswith("/api/failure-domains/"):
             self._failure_domains_write_refused(path)
+            return
+        if path == "/api/crm-connector-prove" or path.startswith("/api/crm-connector-prove/"):
+            self._crm_connector_write_refused(path)
             return
         if path == "/api/crm/lead-cap-prove" or path.startswith("/api/crm/lead-cap-prove/"):
             self._crm_lead_prove_write_refused(path)
@@ -2460,6 +2500,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/failure-domains" or path.startswith("/api/failure-domains/"):
             self._failure_domains_write_refused(path)
             return
+        if path == "/api/crm-connector-prove" or path.startswith("/api/crm-connector-prove/"):
+            self._crm_connector_write_refused(path)
+            return
         if path == "/api/crm/lead-cap-prove" or path.startswith("/api/crm/lead-cap-prove/"):
             self._crm_lead_prove_write_refused(path)
             return
@@ -2668,6 +2711,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/failure-domains" or path.startswith("/api/failure-domains/"):
             self._failure_domains_write_refused(path)
+            return
+        if path == "/api/crm-connector-prove" or path.startswith("/api/crm-connector-prove/"):
+            self._crm_connector_write_refused(path)
             return
         if path == "/api/crm/lead-cap-prove" or path.startswith("/api/crm/lead-cap-prove/"):
             self._crm_lead_prove_write_refused(path)
@@ -5164,6 +5210,336 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "live_restore": False,
                 "independence_proved": False,
                 "slots_filled": False,
+            },
+            status=405,
+        )
+
+    def _require_crm_connector_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Same Owner gate as the other proves."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Connector prove is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "send": False,
+                    "klaviyo_called": False,
+                    "ac_called": False,
+                    "conflated": False,
+                    "external_crm_write": False,
+                    "cr_resolved": False,
+                    "sends": None,
+                    "subscribers": None,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "external_writes": False,
+                    "send": False,
+                    "external_crm_write": False,
+                    "cr_resolved": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _crm_connector_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/crm-connector-prove/send", "/api/crm-connector-prove/blast"}:
+            return "send"
+        if path in {"/api/crm-connector-prove/klaviyo-write", "/api/crm-connector-prove/klaviyo"}:
+            return "klaviyo"
+        if path in {"/api/crm-connector-prove/ac-write", "/api/crm-connector-prove/activecampaign"}:
+            return "ac"
+        if path in {"/api/crm-connector-prove/crm-write", "/api/crm-connector-prove/write"}:
+            return "crm"
+        if path == "/api/crm-connector-prove/conflate":
+            return "conflate"
+        if path in {"/api/crm-connector-prove/production", "/api/crm-connector-prove/production/mutate"}:
+            return "production"
+        if path in {"/api/crm-connector-prove/prove", "/api/crm-connector-prove/proven"}:
+            return "prove"
+        if path == "/api/crm-connector-prove/resolve":
+            return "resolve"
+        if path in {"/api/crm-connector-prove/metricool", "/api/crm-connector-prove/metricool-write"}:
+            return "metricool"
+        if path == "/api/crm-connector-prove/fill":
+            return "fill"
+        if path == "/api/crm-connector-prove/ready":
+            return "ready"
+        return None
+
+    def _crm_connector_page(self) -> None:
+        identity = self._require_crm_connector_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "crm-connector-prove.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Connector prove page is missing.",
+                    "send": False,
+                    "external_crm_write": False,
+                    "cr_resolved": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _crm_connector_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_crm_connector_owner()
+        if identity is None:
+            return
+        try:
+            _crm_connector.guard_query(
+                send=(qs.get("send") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+                klaviyo=(qs.get("klaviyo") or [""])[0],
+                ac=(qs.get("ac") or [""])[0],
+                conflate=(qs.get("conflate") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                metricool=(qs.get("metricool") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                subscribers=(qs.get("subscribers") or [""])[0],
+            )
+            if view == "checklist":
+                full = _crm_connector.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "checklist": full["checklist"],
+                    "checklist_count": full["checklist_count"],
+                    "checklist_executed": full["checklist_executed"],
+                    "status": full["status"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "send": False,
+                    "conflated": False,
+                    "external_crm_write": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "schema":
+                full = _crm_connector.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "send": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "log":
+                full = _crm_connector.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "log": full["log"],
+                    "log_valid": full["log_valid"],
+                    "status": full["status"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "send": False,
+                    "sends": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "connectors":
+                full = _crm_connector.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "connectors": full["connectors"],
+                    "connector_count": full["connector_count"],
+                    "distinction": full["distinction"],
+                    "conflated": False,
+                    "klaviyo_called": False,
+                    "ac_called": False,
+                    "send": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "brands":
+                full = _crm_connector.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "brands": full["brands"],
+                    "brand_count": full["brand_count"],
+                    "subscribers": None,
+                    "sends": None,
+                    "send": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "gaps":
+                full = _crm_connector.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "gaps": full["gaps"],
+                    "gap_count": full["gap_count"],
+                    "sends": None,
+                    "send": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _crm_connector.read_ref(ref_id)
+            else:
+                report = _crm_connector.build_framework()
+        except _crm_connector.ConnectorProveError as exc:
+            status = 404 if exc.code == "not_found" else 400
+            if exc.code in {
+                "send_refused",
+                "klaviyo_write_refused",
+                "ac_write_refused",
+                "crm_write_refused",
+                "metricool_write_refused",
+                "conflate_refused",
+                "production_refused",
+                "ready_refused",
+                "proven_refused",
+                "resolve_refused",
+                "slots_refused",
+                "invent_metrics_refused",
+                "success_refused",
+                "writes_refused",
+                "alchemist_refused",
+            }:
+                status = 405
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "send": False,
+                    "klaviyo_called": False,
+                    "ac_called": False,
+                    "conflated": False,
+                    "external_crm_write": False,
+                    "production_mutated": False,
+                    "cr_resolved": False,
+                    "sends": None,
+                    "subscribers": None,
+                },
+                status=status,
+            )
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "read_failed",
+                    "message": type(exc).__name__,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "send": False,
+                    "external_crm_write": False,
+                    "cr_resolved": False,
+                },
+                status=500,
+            )
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _crm_connector_write_refused(self, path: str) -> None:
+        identity = self._require_crm_connector_owner()
+        if identity is None:
+            return
+        try:
+            code = self._crm_connector_refuse_code(path)
+            if code == "send":
+                _crm_connector.refuse_send({})
+            elif code == "klaviyo":
+                _crm_connector.refuse_klaviyo_write({})
+            elif code == "ac":
+                _crm_connector.refuse_ac_write({})
+            elif code == "crm":
+                _crm_connector.refuse_crm_write({})
+            elif code == "metricool":
+                _crm_connector.refuse_metricool({})
+            elif code == "conflate":
+                _crm_connector.refuse_conflate({})
+            elif code == "production":
+                _crm_connector.refuse_production({})
+            elif code == "prove":
+                _crm_connector.refuse_proven({})
+            elif code == "resolve":
+                _crm_connector.refuse_resolve({})
+            elif code == "fill":
+                _crm_connector.refuse_fill({})
+            elif code == "ready":
+                _crm_connector.refuse_ready({})
+            else:
+                _crm_connector.refuse_external_write({})
+        except _crm_connector.ConnectorProveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "send": False,
+                    "klaviyo_called": False,
+                    "ac_called": False,
+                    "conflated": False,
+                    "external_crm_write": False,
+                    "production_mutated": False,
+                    "cr_resolved": False,
+                    "sends": None,
+                    "subscribers": None,
+                    **_crm_connector.honesty_flags(),
+                },
+                status=405,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Connector prove is read-only. Klaviyo is not ActiveCampaign. No send.",
+                "external_writes": False,
+                "ledger_write": False,
+                "send": False,
+                "external_crm_write": False,
+                "conflated": False,
+                "cr_resolved": False,
             },
             status=405,
         )
