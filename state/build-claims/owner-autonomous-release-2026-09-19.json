@@ -1,0 +1,8 @@
+{
+  "claim_id": "owner-autonomous-release-2026-09-19",
+  "status": "ACTIVE",
+  "mode": "EXTENDED_AUTONOMOUS_BETA",
+  "first_slice": "BF-completion-register-20260919",
+  "notify_matt": ["NEEDS_MATT_REAL", "MAJOR_MILESTONE", "GLOBAL_SAFETY_STOP"],
+  "started_wita": "2026-09-19T12:48:00+08:00"
+}

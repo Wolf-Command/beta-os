@@ -331,6 +331,66 @@
     return `<div class="bar" aria-hidden="true"><i style="width:${p}%"></i></div>`;
   }
 
+  function loopCount(ol, key) {
+    if (!ol || ol[key] == null || ol[key] === "") return "—";
+    return ol[key];
+  }
+
+  function renderOpenLoops(loops) {
+    const ol = loops || {};
+    const oldest = Array.isArray(ol.oldest_material) ? ol.oldest_material : [];
+    const recent = Array.isArray(ol.recently_resolved) ? ol.recently_resolved : [];
+    const blockerLabel = {
+      NEEDS_MATT: "Needs Matt",
+      NEEDS_STAFF: "Needs staff",
+      NEEDS_POLICY: "Needs policy",
+      NEEDS_EXTERNAL_ACCESS: "Needs external",
+      NEEDS_ENGINEERING: "Needs engineering",
+      NEEDS_EVIDENCE: "Needs evidence",
+      NEEDS_COMMISSIONING: "Needs commissioning",
+      NEEDS_ADOPTION: "Needs adoption",
+    };
+    const oldestHtml = oldest.length
+      ? oldest.map((it) => `
+        <div class="mission">
+          <span class="move-cls WAITING">${esc(blockerLabel[it.blocker_class] || it.blocker_class || it.state || "")}</span>
+          <div class="t" style="display:inline;margin-left:8px">${esc(it.title || "")}</div>
+          ${it.why_it_matters ? `<div class="n">${esc(it.why_it_matters)}</div>` : ""}
+        </div>
+      `).join("")
+      : `<p class="empty-ok">No material open loops in this view.</p>`;
+    const recentHtml = recent.length
+      ? recent.map((it) => `
+        <div class="win">
+          <div class="t">${esc(it.title || "")}</div>
+          ${it.resolution_evidence ? `<div class="e">Evidence: ${esc(it.resolution_evidence)}</div>` : ""}
+        </div>
+      `).join("")
+      : `<p class="muted">Nothing resolved in this view yet.</p>`;
+    const eng = loopCount(ol, "engineering_debt");
+    return `
+      <div class="panel" id="open-loops" data-section="open-loops">
+        <h2>Open Loops</h2>
+        <p class="muted" style="margin-top:0">From the completion register at read time. Needs Matt counts NEEDS_MATT only.</p>
+        <div class="chips" aria-label="Open Loops summary">
+          <span class="chip">Open <strong>${esc(loopCount(ol, "total_open"))}</strong></span>
+          <span class="chip">In progress <strong>${esc(loopCount(ol, "in_progress"))}</strong></span>
+          <span class="chip">Blocked <strong>${esc(loopCount(ol, "blocked"))}</strong></span>
+          <span class="chip">Needs Matt <strong>${esc(loopCount(ol, "needs_matt"))}</strong></span>
+          <span class="chip">Needs staff <strong>${esc(loopCount(ol, "needs_staff"))}</strong></span>
+          <span class="chip">Needs policy <strong>${esc(loopCount(ol, "needs_policy"))}</strong></span>
+          <span class="chip">Needs external <strong>${esc(loopCount(ol, "needs_external"))}</strong></span>
+          <span class="chip">Commissioning / adoption <strong>${esc(loopCount(ol, "commissioning_adoption_debt"))}</strong></span>
+        </div>
+        <h3 style="font-size:0.95rem;margin:14px 0 8px">Oldest material</h3>
+        ${oldestHtml}
+        <p class="muted">Engineering debt is counted, not listed: ${esc(eng)}</p>
+        <h3 style="font-size:0.95rem;margin:14px 0 8px">Recently resolved</h3>
+        ${recentHtml}
+      </div>
+    `;
+  }
+
   function renderEmpire() {
     const v = (model.views || {}).Empire || {};
     const system = v.system || model.system || {};
@@ -464,6 +524,8 @@
           </ul>
           <p class="legacy-note">Legacy PARTIAL ESTIMATE (Master_Build mix) is retired as the primary dial — history only${overall.overall_pct != null ? ` (was ~${esc(overall.overall_pct)}%)` : ""}.</p>
         </div>
+
+        ${renderOpenLoops(v.open_loops || model.open_loops)}
 
         <details class="disclose">
           <summary>SYSTEM detail · 77 capabilities · counts · domains · movements</summary>
@@ -627,10 +689,11 @@
   function renderViewBody() {
     const v = (model.views || {})[view] || {};
     if (view === "Empire") return renderEmpire();
+    const loops = renderOpenLoops(v.open_loops);
     if (view === "Build Factory") {
       const fh = v.factory_health || model.factory_health || {};
       const checks = fh.checks || {};
-      return `
+      return loops + `
         <div class="panel">
           <h2>Build Factory · system health</h2>
           <p class="muted" style="margin-top:0">${esc(v.note || "Excluded from mission weighted %.")}</p>
@@ -647,7 +710,7 @@
       `;
     }
     if (view === "GGV") {
-      return `
+      return loops + `
         <div class="panel">
           <h2>Habitat · PLAN → LEARN</h2>
           ${renderStages((v.habitat_owner || {}).stages)}
@@ -659,7 +722,7 @@
       `;
     }
     if (view === "AMG") {
-      return `
+      return loops + `
         <div class="panel">
           <h2>AMG · Atrium</h2>
           ${v.visual_pct != null ? `${bar(v.visual_pct)}<p class="muted">${esc(v.plain_phase || "")} · ${esc(v.pct)}% · ESTIMATED</p>` : (v.pct != null ? `<p class="muted">Domain estimate ${esc(v.pct)}% · ESTIMATED</p>` : "")}
@@ -671,7 +734,7 @@
     }
     if (view === "BZG") {
       const bp = v.bzg_pulse || model.bzg_pulse;
-      return `
+      return loops + `
         <div class="panel">
           <h2>BZG · Uma Blu</h2>
           <p class="muted" style="margin-top:0"><a class="back" href="/bzg">Open BZG</a> · <a class="back" href="/bzg/uma-blu">Uma Blu</a></p>
@@ -687,7 +750,7 @@
       `;
     }
     if (view === "Sale Readiness") {
-      return `
+      return loops + `
         <div class="panel">
           <p class="muted" style="margin-top:0">TARGET profit ≠ ACTUAL — <strong style="color:var(--warn)">ACTUAL NOT YET TRUSTWORTHY</strong></p>
           ${renderItems(v.items, 60)}
@@ -695,10 +758,10 @@
       `;
     }
     if (view === "Backlog") {
-      return `<div class="panel"><p class="muted" style="margin-top:0">${esc(v.note || "")}</p>${renderItems(v.items, 40)}</div>`;
+      return loops + `<div class="panel"><p class="muted" style="margin-top:0">${esc(v.note || "")}</p>${renderItems(v.items, 40)}</div>`;
     }
     if (view === "Wolf Core") {
-      return `<div class="panel">
+      return loops + `<div class="panel">
         <h2>Wolf Core</h2>
         ${v.denominator_note ? `<p class="muted" style="margin-top:0">${esc(v.denominator_note)}</p>` : ""}
         ${v.visual_pct != null ? `${bar(v.visual_pct)}<p class="muted">${esc(v.plain_phase || "")} · ${esc(v.pct)}% · ESTIMATED</p>` : ""}
@@ -706,7 +769,7 @@
         ${renderItems(v.items, 50)}
       </div>`;
     }
-    return `<div class="panel"><h2>${esc(view)}</h2>${v.pct != null ? `<p class="muted">Domain estimate ${esc(v.pct)}% · ESTIMATED</p>` : ""}${v.plain_phase ? `<p class="muted">${esc(v.plain_phase)}</p>` : ""}${renderItems(v.items, 50)}</div>`;
+    return loops + `<div class="panel"><h2>${esc(view)}</h2>${v.pct != null ? `<p class="muted">Domain estimate ${esc(v.pct)}% · ESTIMATED</p>` : ""}${v.plain_phase ? `<p class="muted">${esc(v.plain_phase)}</p>` : ""}${renderItems(v.items, 50)}</div>`;
   }
 
   function render() {

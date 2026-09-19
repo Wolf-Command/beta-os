@@ -1122,6 +1122,21 @@ VIEW_DOMAIN: dict[str, str | None] = {
     "Backlog": "Backlog",
 }
 
+# Completion-register drill keys. Empire is the unfiltered owner summary.
+# Needs Matt stays NEEDS_MATT only — counted in completion_register, not here.
+REGISTER_VIEW_KEY: dict[str, str | None] = {
+    "Empire": None,
+    "Wolf Core": "Core",
+    "GGV": "GGV",
+    "AMG": "AMG",
+    "BZG": "BZG",
+    "Intelligence": "Intelligence",
+    "Integrations": "Integrations",
+    "Sale Readiness": "Sale Readiness",
+    "Build Factory": "Factory",
+    "Backlog": "Backlog",
+}
+
 
 def calculation_english() -> dict[str, Any]:
     weight_line = (
@@ -1828,6 +1843,22 @@ def _domain_owner_card(card_entry: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def open_loops_summary(
+    *,
+    db_path: Path | None = None,
+    view_key: str | None = None,
+) -> dict[str, Any]:
+    """Owner Open Loops from the completion register. Numbers at read time."""
+    import sys
+
+    scripts_dir = str(Path(__file__).resolve().parents[1])
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    from core import completion_register as _cr
+
+    return _cr.summary_for_owner(db_path=db_path, view_key=view_key)
+
+
 def build_read_model(
     *,
     overlay_path: Path | None = None,
@@ -1836,6 +1867,7 @@ def build_read_model(
     history_path: Path | None = None,
     catalog_path: Path | None = None,
     html_path: Path | None = None,
+    register_db_path: Path | None = None,
 ) -> dict[str, Any]:
     overlay = load_overlay(overlay_path)
     master = load_master_build_rows()
@@ -2032,6 +2064,21 @@ def build_read_model(
                 "items": items,
             }
 
+    loop_cache: dict[str | None, dict[str, Any]] = {}
+
+    def loops_for(view_name: str) -> dict[str, Any]:
+        key = REGISTER_VIEW_KEY.get(view_name)
+        if key not in loop_cache:
+            loop_cache[key] = open_loops_summary(
+                db_path=register_db_path,
+                view_key=key,
+            )
+        return loop_cache[key]
+
+    for view_name, payload in views.items():
+        payload["open_loops"] = loops_for(view_name)
+    open_loops = loops_for("Empire")
+
     primary_menu = [n["label"] for n in PRIMARY_NAV]
 
     return {
@@ -2061,6 +2108,7 @@ def build_read_model(
         "next_moves": next_moves,
         "recent_wins": recent_wins,
         "milestone_road": milestone_road,
+        "open_loops": open_loops,
         "factory_health": factory_health,
         "domain_weights": {
             d: {"weight": w, "label": "ESTIMATED", "pct_display": WEIGHT_PCT_DISPLAY.get(d)}
@@ -2096,8 +2144,16 @@ def build_read_model(
     }
 
 
-def get_view(name: str, *, overlay_path: Path | None = None) -> dict[str, Any]:
-    model = build_read_model(overlay_path=overlay_path)
+def get_view(
+    name: str,
+    *,
+    overlay_path: Path | None = None,
+    register_db_path: Path | None = None,
+) -> dict[str, Any]:
+    model = build_read_model(
+        overlay_path=overlay_path,
+        register_db_path=register_db_path,
+    )
     key = name.strip()
     aliases = {
         "empire": "Empire",
