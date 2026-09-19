@@ -105,6 +105,7 @@ from core import crm_package_intel as _pkg_intel
 from core import msc_asset_register as _msc_assets
 from core import msc_compliance_pack as _msc_compliance
 from core import msc_cyber_baseline as _msc_cyber
+from core import msc_records_defensibility as _msc_records
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import ggv_speed_to_lead_prove as _ggv_speed
@@ -1946,6 +1947,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/msc/cyber/"):
             self._msc_cyber_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-MSC-05 records register. Owner read. Empty is not proof. No live hold. No Cloudflare mutate.
+        if self._msc_records_refuse_code(path):
+            self._msc_records_write_refused(path)
+            return
+        if path == "/api/msc/records":
+            self._msc_records_get(qs)
+            return
+        if path == "/api/msc/records/schema":
+            self._msc_records_get(qs, view="schema")
+            return
+        if path == "/api/msc/records/kinds":
+            self._msc_records_get(qs, view="kinds")
+            return
+        if path == "/api/msc/records/register":
+            self._msc_records_get(qs, view="register")
+            return
+        if path.startswith("/api/msc/records/"):
+            self._msc_records_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-CRM-01 bound prove. Owner read. Does not invent a lead or PROVEN.
         if path == "/api/crm/lead-cap-prove":
             self._crm_lead_prove_get()
@@ -2357,6 +2377,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._msc_cyber_page()
             return
         elif path in (
+            "/msc-records",
+            "/msc-records/",
+            "/msc-records.html",
+            "/dashboards/msc-records.html",
+        ):
+            self._msc_records_page()
+            return
+        elif path in (
             "/crm-lead-cap-prove",
             "/crm-lead-cap-prove/",
             "/crm-lead-cap-prove.html",
@@ -2523,6 +2551,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/msc/cyber" or path.startswith("/api/msc/cyber/"):
             self._msc_cyber_write_refused(path)
+            return
+        if self._msc_records_refuse_code(path):
+            self._msc_records_write_refused(path)
+            return
+        if path == "/api/msc/records" or path.startswith("/api/msc/records/"):
+            self._msc_records_write_refused(path)
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -2865,6 +2899,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/msc/cyber" or path.startswith("/api/msc/cyber/"):
             self._msc_cyber_write_refused(path)
             return
+        if self._msc_records_refuse_code(path):
+            self._msc_records_write_refused(path)
+            return
+        if path == "/api/msc/records" or path.startswith("/api/msc/records/"):
+            self._msc_records_write_refused(path)
+            return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
             self._patch_core_work_item(m_wi.group(1))
@@ -3117,6 +3157,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/msc/cyber" or path.startswith("/api/msc/cyber/"):
             self._msc_cyber_write_refused(path)
+            return
+        if self._msc_records_refuse_code(path):
+            self._msc_records_write_refused(path)
+            return
+        if path == "/api/msc/records" or path.startswith("/api/msc/records/"):
+            self._msc_records_write_refused(path)
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -7992,6 +8038,286 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _msc_cyber.build_baseline()
         except _msc_cyber.CyberBaselineError as exc:
             self._msc_cyber_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _require_msc_records_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Records register is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Records register is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "defensibility_proved": False,
+                    "records_status": None,
+                    "retention": None,
+                    "legal_hold": None,
+                    "current": False,
+                    "payment": None,
+                    "cloudflare_mutated": False,
+                    "access_mutated": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "defensibility_proved": False,
+                    "records_status": None,
+                    "retention": None,
+                    "legal_hold": None,
+                    "payment": None,
+                    "cloudflare_mutated": False,
+                    "access_mutated": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _msc_records_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/msc/records/payment", "/api/msc/records/money"}:
+            return "payment"
+        if path in {
+            "/api/msc/records/retention-status",
+            "/api/msc/records/legal-hold-status",
+            "/api/msc/records/hold",
+            "/api/msc/records/current",
+        }:
+            return "current"
+        if path in {"/api/msc/records/cloudflare", "/api/msc/records/cf"}:
+            return "cloudflare"
+        if path in {"/api/msc/records/access", "/api/msc/records/cf-access"}:
+            return "access"
+        if path in {"/api/msc/records/prove", "/api/msc/records/proven"}:
+            return "prove"
+        if path == "/api/msc/records/ready":
+            return "ready"
+        if path == "/api/msc/records/resolve":
+            return "resolve"
+        if path in {"/api/msc/records/production", "/api/msc/records/production/mutate"}:
+            return "production"
+        if path in {"/api/msc/records/fill", "/api/msc/records/note"}:
+            return "fill"
+        return None
+
+    def _msc_records_fail(self, exc: _msc_records.RecordsDefensibilityError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "defensibility_proved": False,
+                "records_status": None,
+                "retention": None,
+                "legal_hold": None,
+                "current": False,
+                "payment": None,
+                "cloudflare_mutated": False,
+                "access_mutated": False,
+                "ledger_write": False,
+                "cr_resolved": False,
+                **_msc_records.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _msc_records_write_refused(self, path: str) -> None:
+        identity = self._require_msc_records_owner()
+        if identity is None:
+            return
+        try:
+            code = self._msc_records_refuse_code(path)
+            if code == "payment":
+                _msc_records.refuse_payment({})
+            elif code == "current":
+                _msc_records.refuse_current({})
+            elif code == "cloudflare":
+                _msc_records.refuse_cloudflare({})
+            elif code == "access":
+                _msc_records.refuse_access({})
+            elif code == "prove":
+                _msc_records.refuse_proven({})
+            elif code == "ready":
+                _msc_records.refuse_ready({})
+            elif code == "resolve":
+                _msc_records.refuse_resolve({})
+            elif code == "production":
+                _msc_records.refuse_production({})
+            elif code == "fill":
+                _msc_records.refuse_fill({})
+            else:
+                _msc_records.refuse_external_write({})
+        except _msc_records.RecordsDefensibilityError as exc:
+            self._msc_records_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Records register does not store evidence or a live legal hold.",
+                "defensibility_proved": False,
+                "records_status": None,
+                "retention": None,
+                "legal_hold": None,
+                "payment": None,
+                "cloudflare_mutated": False,
+                "access_mutated": False,
+                "ledger_write": False,
+                "cr_resolved": False,
+            },
+            status=405,
+        )
+
+    def _msc_records_page(self) -> None:
+        identity = self._require_msc_records_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "msc-records.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Records register page is missing.",
+                    "defensibility_proved": False,
+                    "records_status": None,
+                    "payment": None,
+                    "cr_resolved": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _msc_records_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_msc_records_owner()
+        if identity is None:
+            return
+        try:
+            _msc_records.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                records=(qs.get("records") or [""])[0],
+                records_status=(qs.get("records_status") or [""])[0],
+                retention=(qs.get("retention") or [""])[0],
+                retention_status=(qs.get("retention_status") or qs.get("retention-status") or [""])[0],
+                legal_hold=(qs.get("legal_hold") or qs.get("legal-hold") or [""])[0],
+                hold=(qs.get("hold") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _msc_records.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "defensibility_proved": False,
+                    "records_status": None,
+                    "retention": None,
+                    "legal_hold": None,
+                    "payment": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _msc_records.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    "empty_is_defensibility": False,
+                    "defensibility_proved": False,
+                    "records_status": None,
+                    "retention": None,
+                    "legal_hold": None,
+                    "payment": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "register":
+                full = _msc_records.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    "defensibility_proved": False,
+                    "records_status": None,
+                    "retention": None,
+                    "legal_hold": None,
+                    "payment": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _msc_records.read_kind(ref_id)
+            else:
+                report = _msc_records.build_register()
+        except _msc_records.RecordsDefensibilityError as exc:
+            self._msc_records_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
