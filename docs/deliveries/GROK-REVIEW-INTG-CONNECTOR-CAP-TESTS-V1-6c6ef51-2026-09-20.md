@@ -58,4 +58,4 @@ Production, CAP PROVEN promotions, Devi human retest (PARKED), Alchemist writes,
 Lane `intg-connector-cap-tests-v1` → COMPLETED at completion commit below. Then close_slice → next eligible safe lane (`ggv-strategy-machine-v1`).
 
 ## Completion commit
-PENDING_LANE_COMMIT
+b6b7b2ee5c33ea6805b2d0b58c9475d91e94d8ac
