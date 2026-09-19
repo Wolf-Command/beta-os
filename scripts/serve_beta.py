@@ -1233,6 +1233,54 @@ UX_STATUS_LABELS = {
     "COMPLETE": "COMPLETE",
 }
 
+_BRAND_TITLE_NAMES = {
+    "habitat": "Habitat",
+    "umablu": "Uma Blu",
+    "atrium": "Atrium",
+    "selo": "Selo",
+    "tropik": "Tropik",
+}
+_TITLE_MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+
+def _human_fortnight_title(
+    brand_id: str,
+    period_start: str,
+    period_end: str,
+    display_name: str | None = None,
+) -> str:
+    """Human plan title on read and on new creates. e.g. Habitat Fortnight Sep 14—27.
+
+    Uses wolf_intelligence.format_fortnight_title when that helper is present.
+    Does not rewrite historical rows.
+    """
+    fn = getattr(_wi, "format_fortnight_title", None)
+    if callable(fn):
+        try:
+            return fn(brand_id, period_start, period_end, display_name)
+        except TypeError:
+            return fn(brand_id, period_start, period_end)
+    bid = (brand_id or "").strip().lower()
+    if bid in _BRAND_TITLE_NAMES:
+        name = _BRAND_TITLE_NAMES[bid]
+    elif display_name:
+        name = str(display_name).split("/")[0].strip() or (bid.title() if bid else "Brand")
+    else:
+        name = bid.title() if bid else "Brand"
+    try:
+        start = date.fromisoformat(str(period_start)[:10])
+        end = date.fromisoformat(str(period_end)[:10])
+    except ValueError:
+        return f"{name} Fortnight"
+    if start.month == end.month and start.year == end.year:
+        span = f"{_TITLE_MONTHS[start.month - 1]} {start.day}—{end.day}"
+    else:
+        span = (
+            f"{_TITLE_MONTHS[start.month - 1]} {start.day}—"
+            f"{_TITLE_MONTHS[end.month - 1]} {end.day}"
+        )
+    return f"{name} Fortnight {span}"
+
 
 def _ux_derive_workflow_status(card: dict, body: dict | None = None) -> str:
     """Map card + body to team-facing workflow status without exposing AI/HUMAN roles."""
@@ -1376,7 +1424,7 @@ def _ux_shape_plan(draft: dict) -> dict:
         ui_status = "WORKING"
     # Format-on-read: human fortnight title; keep DB title as title_raw
     title_raw = plan.get("title") or ""
-    title_human = _wi.format_fortnight_title(
+    title_human = _human_fortnight_title(
         plan.get("brand_id") or "",
         plan.get("period_start") or "",
         plan.get("period_end") or "",
@@ -5086,7 +5134,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     r["status_label"] = r["review_label"]
                     r["title_raw"] = r.get("title") or ""
                     if r.get("period_start") and r.get("period_end"):
-                        r["title"] = _wi.format_fortnight_title(
+                        r["title"] = _human_fortnight_title(
                             r.get("brand_id") or "",
                             r.get("period_start") or "",
                             r.get("period_end") or "",
@@ -5269,6 +5317,17 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     self._send_err(404, f"brand not found: {brand_id}")
                     return
                 result = _skills.orchestrate_build_next(conn, brand_id, subject)
+                ps = result.get("period_start")
+                pe = result.get("period_end")
+                pid = result.get("plan_id")
+                if pid and ps and pe:
+                    human = _human_fortnight_title(brand_id, ps, pe)
+                    conn.execute(
+                        "UPDATE content_plans SET title=?, updated_at=? WHERE id=?",
+                        (human, _wi.now_iso(), pid),
+                    )
+                    conn.commit()
+                    result["title"] = human
                 self._send_json({"ok": True, **result})
             finally:
                 conn.close()

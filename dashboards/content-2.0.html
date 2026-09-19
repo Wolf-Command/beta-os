@@ -283,6 +283,38 @@
     --brand-accent: #8b7cff;
     --brand-neutral: #8b95a8;
   }
+  .page-lede {
+    color: var(--text); font-size: 0.95rem; line-height: 1.4;
+    margin: 0 0 10px; max-width: 40rem;
+  }
+  .topbar {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--brand-primary) 32%, var(--bg2)), var(--bg2) 62%);
+    border-bottom-color: color-mix(in srgb, var(--brand-primary) 55%, var(--border));
+  }
+  body {
+    background:
+      radial-gradient(900px 220px at 0 -40px, color-mix(in srgb, var(--brand-primary) 22%, transparent), transparent 70%),
+      var(--bg);
+  }
+  .logo span { color: var(--brand-primary); }
+  .primary-nav button.active {
+    border-color: color-mix(in srgb, var(--brand-primary) 65%, var(--border));
+  }
+  .status-inline {
+    background: var(--bg3); color: var(--text);
+    border: 1px solid color-mix(in srgb, var(--brand-primary) 45%, var(--border));
+    border-radius: 8px; padding: 6px 8px; font-size: 0.75rem; max-width: 11.5rem;
+    cursor: pointer;
+  }
+  .lib-search-row input[type="search"] {
+    flex: 1 1 320px; min-width: 240px; font-size: 1.15rem; padding: 14px 16px;
+  }
+  .lib-detailed {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin: -4px 0 16px; padding: 12px;
+    border: 1px solid var(--border); border-radius: 10px; background: var(--bg2);
+  }
+  .lib-detailed[hidden] { display: none; }
   .logo .mark {
     width: 28px; height: 28px; border-radius: 8px; margin-right: 8px;
     background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
@@ -383,6 +415,7 @@
     <!-- DASHBOARD -->
     <section class="view active" id="view-dashboard">
       <h1>What do I need to do?</h1>
+      <p class="page-lede" id="dashLede">See what needs filming, a review, or is already done.</p>
       <p class="sub" id="dashSub">Loading current fortnight…</p>
       <div class="grid-cards" id="dashStats"></div>
       <div class="panel" style="margin-top:16px">
@@ -400,6 +433,7 @@
       <div class="plan-header">
         <div>
           <h1 id="planTitle">Content Plan</h1>
+          <p class="page-lede" id="planLede">Open a post or story. Change its status here, or use Edit for the full brief.</p>
           <div class="meta" id="planMeta"></div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -447,34 +481,39 @@
     <!-- LIBRARY -->
     <section class="view" id="view-library">
       <h1>Library</h1>
-      <p class="sub">Browse verified assets for this brand. Paths stay internal.</p>
-      <div class="filter-bar">
-        <input type="search" id="libSearch" placeholder="Search canonical name, original, subject, detail…" />
-        <select id="libBrand"><option value="">Brand</option></select>
-        <select id="libType">
+      <p class="page-lede" id="libLede">Find photos and videos. Tick what you need, then download a zip.</p>
+      <div class="filter-bar lib-search-row">
+        <input type="search" id="libSearch" placeholder="Search name, subject, or detail" />
+        <select id="libBrand" aria-label="Brand filter"><option value="">This brand</option></select>
+        <button type="button" class="btn" id="libDetailedToggle" aria-expanded="false" aria-controls="libDetailed">Detailed filters</button>
+        <button type="button" class="btn" id="libRefresh">Refresh</button>
+      </div>
+      <div id="libDetailed" class="lib-detailed" hidden>
+        <select id="libType" aria-label="Content type">
           <option value="">Video / Photo</option>
           <option value="video">Video</option>
           <option value="photo">Photo</option>
           <option value="image">Photo</option>
         </select>
-        <select id="libStage">
+        <select id="libStage" aria-label="Stage">
           <option value="">RAW / EDIT / FINAL</option>
           <option value="RAW">RAW</option>
           <option value="EDIT">EDIT</option>
           <option value="FINAL">FINAL</option>
         </select>
-        <select id="libStatus">
+        <select id="libStatus" aria-label="Readiness">
           <option value="">Ready / Checking / Failed</option>
           <option value="READY_TO_USE">Ready</option>
           <option value="CHECKING">Checking</option>
           <option value="FAILED">Failed</option>
         </select>
-        <input type="date" id="libShoot" title="Shoot Date" />
-        <input type="text" id="libSubject" placeholder="Subject" style="min-width:110px" />
-        <input type="text" id="libLocation" placeholder="Location" style="min-width:110px" />
-        <button type="button" class="btn" id="libRefresh">Refresh</button>
+        <input type="date" id="libShoot" title="Shoot Date" aria-label="Shoot date" />
+        <input type="text" id="libSubject" placeholder="Subject" style="min-width:110px" aria-label="Subject" />
+        <input type="text" id="libLocation" placeholder="Location" style="min-width:110px" aria-label="Location" />
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+        <button type="button" class="btn" id="libSelectAll">Select all</button>
+        <button type="button" class="btn" id="libDeselectAll">Deselect all</button>
         <button type="button" class="btn" id="libDownloadSel" disabled>Download selected (ZIP)</button>
         <span class="sub" id="libSelCount" style="margin:0">0 selected</span>
         <span class="sub" style="margin:0">Hover preview: muted when ready — otherwise honest “not ready” (no fake proxy).</span>
@@ -582,7 +621,7 @@
     <!-- WOLF INTELLIGENCE -->
     <section class="view" id="view-wolf">
       <h1>Wolf Intelligence</h1>
-      <p class="sub">Chat shell with brand + content context. Honest when not connected — does not silently edit the plan.</p>
+      <p class="page-lede" id="wolfLede">Ask about this brand’s plan. It does not change the plan by itself.</p>
       <div class="wi-shell">
         <div class="wi-context" id="wiContext"></div>
         <div class="wi-honest" id="wiHonest"></div>
@@ -664,6 +703,31 @@
     ["READY_FOR_REVIEW", "READY FOR REVIEW"],
     ["COMPLETE", "COMPLETE"],
   ];
+
+  function humanFortnightTitle(brandId, periodStart, periodEnd) {
+    const names = {
+      habitat: "Habitat", umablu: "Uma Blu", atrium: "Atrium", selo: "Selo", tropik: "Tropik",
+    };
+    const bid = String(brandId || "").trim().toLowerCase();
+    const name = names[bid] || (bid ? bid.charAt(0).toUpperCase() + bid.slice(1) : "Brand");
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const ps = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(periodStart || ""));
+    const pe = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(periodEnd || ""));
+    if (!ps || !pe) return name + " Fortnight";
+    const sm = Number(ps[2]), sd = Number(ps[3]), em = Number(pe[2]), ed = Number(pe[3]);
+    const span = (sm === em && ps[1] === pe[1])
+      ? `${months[sm - 1]} ${sd}—${ed}`
+      : `${months[sm - 1]} ${sd}—${months[em - 1]} ${ed}`;
+    return `${name} Fortnight ${span}`;
+  }
+
+  function displayPlanTitle(p) {
+    const plan = p || {};
+    if (plan.period_start && plan.period_end) {
+      return humanFortnightTitle(plan.brand_id || state.brand, plan.period_start, plan.period_end);
+    }
+    return plan.title || "Content Plan";
+  }
   const SUBJECT_KEY = "wolf_subject";
   const DEV_SUBJECTS = [
     "mrwolf@wolfcommand.net",
@@ -712,11 +776,14 @@
     if (state.developmentAssertionAllowed && state.subject) {
       headers["X-Wolf-Subject"] = state.subject;
     }
-    if (opts.body && !(opts.body instanceof FormData)) {
+    const payload = opts.body != null ? opts.body : opts.json;
+    const fetchOpts = Object.assign({}, opts);
+    delete fetchOpts.json;
+    if (payload && !(payload instanceof FormData)) {
       headers["Content-Type"] = "application/json";
-      opts.body = JSON.stringify(opts.body);
+      fetchOpts.body = JSON.stringify(payload);
     }
-    const res = await fetch(path, { ...opts, headers });
+    const res = await fetch(path, { ...fetchOpts, headers });
     const ct = res.headers.get("content-type") || "";
     const data = ct.includes("json") ? await res.json() : { ok: false, error: await res.text() };
     if (!res.ok && data && data.error) {
@@ -942,7 +1009,7 @@
     box.innerHTML = state.plans.map((p) => `
       <button type="button" class="plan-pick${p.id === state.planId ? " active" : ""}" data-id="${p.id}">
         <div>
-          <div class="t">${esc(p.title || "Untitled plan")}</div>
+          <div class="t">${esc(displayPlanTitle(p))}</div>
           <div class="d">${esc(p.period_start || "?")} → ${esc(p.period_end || "?")} · ${esc(planStatusLabel(p.status_label || p.status))} · ${p.posts || 0} posts / ${p.stories || 0} stories</div>
         </div>
         <div>${p.is_test_lane ? '<span class="badge dev">DEV</span>' : ""}<span class="badge">${esc(p.data_lane || "operational")}</span></div>
@@ -983,7 +1050,7 @@
       $("planEmpty").style.display = "none";
       $("planBody").style.display = "block";
       const p = ux.plan;
-      $("planTitle").textContent = p.title || "Content Plan";
+      $("planTitle").textContent = displayPlanTitle(p);
       $("planMeta").innerHTML = [
         `<span class="badge">${esc((p.brand_id || state.brand).toUpperCase())}</span>`,
         `<span class="badge">${esc(p.period_start || "?")} → ${esc(p.period_end || "?")}</span>`,
@@ -1599,6 +1666,7 @@
     localStorage.setItem("wolf_brand", state.brand);
     state.planId = null;
     state.ux = null;
+    applyBrandTheme26((state.brandMeta && state.brandMeta[state.brand]) || { id: state.brand });
     setView(state.view);
   });
   $("btnRefreshPlans").addEventListener("click", () => loadPlanView());
@@ -1695,12 +1763,36 @@
   state.wiCardId = state.wiCardId || null;
   state.brandMeta = state.brandMeta || {};
 
+  const BRAND_TINT = {
+    habitat: { primary: "#79755B", accent: "#A6A28B", neutral: "#EAE6D7", logo_text: "Habitat" },
+    umablu: { primary: "#2B6CB0", accent: "#63B3ED", neutral: "#8B95A8", logo_text: "Uma Blu" },
+    atrium: { primary: "#8B6914", accent: "#C4A574", neutral: "#8B95A8", logo_text: "Atrium" },
+    selo: { primary: "#2F5D50", accent: "#6B9B8A", neutral: "#8B95A8", logo_text: "Selo" },
+    tropik: { primary: "#0D9488", accent: "#F59E0B", neutral: "#8B95A8", logo_text: "Tropik" },
+  };
+  const LEGACY_BLUE = new Set(["#6ea8ff", "#6EA8FF", "#8b7cff", "#8B7CFF"]);
+
   function applyBrandTheme26(meta) {
+    const id = String((meta && meta.id) || state.brand || "").toLowerCase();
+    const kit = BRAND_TINT[id] || {};
     const th = (meta && meta.theme) || {};
-    document.documentElement.style.setProperty("--brand-primary", th.primary || "#6ea8ff");
-    document.documentElement.style.setProperty("--brand-accent", th.accent || "#8b7cff");
+    let primary = th.primary || kit.primary || "#6ea8ff";
+    let accent = th.accent || kit.accent || "#8b7cff";
+    if (LEGACY_BLUE.has(String(primary)) && kit.primary) {
+      primary = kit.primary;
+      accent = kit.accent || accent;
+    }
+    const root = document.documentElement;
+    root.style.setProperty("--brand-primary", primary);
+    root.style.setProperty("--brand-accent", accent);
+    root.style.setProperty("--brand-neutral", th.neutral || kit.neutral || "#8b95a8");
+    root.style.setProperty("--accent", primary);
+    root.style.setProperty("--accent2", accent);
+    // Keep the shared typeface. Do not set font-family from brand theme.
     const mark = document.getElementById("brandMark");
-    if (mark) mark.textContent = String(th.logo_text || (meta && meta.display_name) || state.brand || "W").slice(0,1).toUpperCase();
+    const logo = th.logo_text || kit.logo_text || (meta && meta.display_name) || id || "W";
+    if (mark) mark.textContent = String(logo).slice(0, 1).toUpperCase();
+    if (document.body) document.body.dataset.brand = id;
   }
 
   function planStatusLabel26(s) {
@@ -1726,20 +1818,21 @@
         $("dashSub").textContent = `No plan yet for ${state.brand}.`;
       } else {
         const p = ux.plan;
-        $("dashSub").textContent = `${(p.brand_id || state.brand).toUpperCase()} · ${p.period_start || "?"} → ${p.period_end || "?"} · ${planStatusLabel26(review || p.review_label || p.status_label)}`;
+        $("dashSub").textContent = `${displayPlanTitle(p)} · ${planStatusLabel26(review || p.review_label || p.status_label)}`;
       }
       $("dashStats").innerHTML = `
         <div class="stat-card"><div class="label">Posts progress</div><div class="value">${esc(postsLabel)}</div><div class="hint">Complete / target</div></div>
         <div class="stat-card"><div class="label">Stories progress</div><div class="value">${esc(storiesLabel)}</div><div class="hint">Complete / target</div></div>
-        <div class="stat-card"><div class="label">Plan status</div><div class="value" style="font-size:1.05rem">${esc(planStatusLabel26(review))}</div><div class="hint">${esc((ux && ux.plan && ux.plan.title) || "No plan")}</div></div>
+        <div class="stat-card"><div class="label">Plan status</div><div class="value" style="font-size:1.05rem">${esc(planStatusLabel26(review))}</div><div class="hint">${esc((ux && ux.plan) ? displayPlanTitle(ux.plan) : "No plan")}</div></div>
         <div class="stat-card"><div class="label">Library</div><div class="value">${esc(data.library_count || 0)}</div><div class="hint">Operational assets</div></div>`;
       const cards = [...((ux && ux.posts) || []), ...((ux && ux.stories) || [])];
       const attn = cards.filter((c) => ["NEEDS_FILMING","READY_FOR_REVIEW","IN_PRODUCTION","EDITING"].includes(c.status));
       $("dashAttention").innerHTML = attn.length ? attn.slice(0,8).map((c) => `
         <div class="item-card" data-id="${c.id}"><div class="num">${esc(c.label)}</div>
         <div><div class="title">${esc(c.title)}</div></div>
-        <div class="right"><span class="badge s-${esc(c.status)}">${esc(c.status_label)}</span></div></div>`).join("") : `<div class="empty">Nothing urgent.</div>`;
+        <div class="right">${statusSelectHtml(c)}</div></div>`).join("") : `<div class="empty">Nothing urgent.</div>`;
       $("dashAttention").querySelectorAll(".item-card").forEach((el) => el.addEventListener("click", () => openBrief(Number(el.dataset.id))));
+      bindStatusSelects($("dashAttention"));
       const ups = data.recent_uploads || [];
       $("dashUploads").innerHTML = ups.length ? ups.map((u) => `
         <div class="upload-row"><div><strong>${esc(u.name)}</strong></div><span class="badge">${esc(u.status||"")}</span></div>`).join("") : `<div class="empty">No recent uploads.</div>`;
@@ -1763,7 +1856,7 @@
       const data = await api(`/api/planner/plans/${id}?ux=1`);
       const ux = data.ux; state.ux = ux; const p = ux.plan || {};
       $("planEmpty").style.display = "none"; $("planBody").style.display = "block";
-      $("planTitle").textContent = p.title || "Content Plan";
+      $("planTitle").textContent = displayPlanTitle(p);
       $("planMeta").innerHTML = [
         `<span class="badge s-${esc(String(p.review_state||"WORKING").replace(/ /g,"_"))}">${esc(planStatusLabel26(p.review_label||p.status_label))}</span>`,
         `<span class="badge">Posts ${esc((ux.progress||{}).posts_label||"")}</span>`,
@@ -1800,6 +1893,50 @@
     }
   };
 
+  function statusSelectHtml(c) {
+    const cur = c.status || "";
+    const known = STATUS_OPTS.some(([v]) => v === cur);
+    const extra = (!known && cur)
+      ? `<option value="${esc(cur)}" selected>${esc(c.status_label || cur)}</option>`
+      : "";
+    const opts = STATUS_OPTS.map(([v, l]) =>
+      `<option value="${esc(v)}"${cur === v ? " selected" : ""}>${esc(l)}</option>`
+    ).join("");
+    return `<select class="status-inline" data-card-status="${c.id}" data-prev="${esc(cur)}" aria-label="Status">${extra}${opts}</select>`;
+  }
+
+  function bindStatusSelects(root) {
+    if (!root) return;
+    root.querySelectorAll(".status-inline").forEach((sel) => {
+      const stop = (ev) => ev.stopPropagation();
+      sel.addEventListener("click", stop);
+      sel.addEventListener("mousedown", stop);
+      sel.addEventListener("change", (ev) => {
+        ev.stopPropagation();
+        setCardStatus(Number(sel.getAttribute("data-card-status")), sel.value, sel);
+      });
+    });
+  }
+
+  async function setCardStatus(cardId, workflowStatus, selectEl) {
+    if (!cardId || !workflowStatus) return;
+    try {
+      const body = { workflow_status: workflowStatus };
+      if (state.developmentAssertionAllowed && state.subject) body.subject = state.subject;
+      await api(`/api/planner/cards/${cardId}/production-status`, {
+        method: "POST",
+        body,
+      });
+      toast("Status updated");
+      if (selectEl) selectEl.dataset.prev = workflowStatus;
+      if (state.planId) await openPlan(state.planId);
+      if (state.view === "dashboard") await loadDashboard();
+    } catch (e) {
+      toast(e.message || "Status not saved");
+      if (selectEl && selectEl.dataset.prev) selectEl.value = selectEl.dataset.prev;
+    }
+  }
+
   function renderCardList26(listId, countId, items, progress) {
     $(countId).textContent = progress ? `(${progress})` : `(${items.length})`;
     $(listId).innerHTML = items.map((c) => `
@@ -1808,9 +1945,10 @@
         <div><div class="title">${esc(c.title)}</div>
           <div class="row2"><span>${esc(c.format||"")}</span><span>${c.evergreen?"Evergreen":esc(c.date||"Date TBD")}</span><span>${esc(c.assignee||"Unassigned")}</span></div>
         </div>
-        <div class="right"><span class="badge s-${esc(c.status)}">${esc(c.status_label)}</span></div>
+        <div class="right">${statusSelectHtml(c)}</div>
       </div>`).join("") || `<div class="empty">None yet.</div>`;
     $(listId).querySelectorAll(".item-card").forEach((el) => el.addEventListener("click", () => openBrief(Number(el.dataset.id))));
+    bindStatusSelects($(listId));
   }
 
   function parseBreakdown26(text) {
@@ -1948,6 +2086,13 @@
     } catch (e) { toast(e.message || "Save failed"); }
   }
 
+  function syncLibSel() {
+    const sc = $("libSelCount");
+    if (sc) sc.textContent = `${state.libSelected.size} selected`;
+    const dl = $("libDownloadSel");
+    if (dl) dl.disabled = state.libSelected.size === 0;
+  }
+
   // Library override
   loadLibrary = async function () {
     try {
@@ -1963,8 +2108,13 @@
       const loc = $("libLocation"); if (loc && loc.value.trim()) q.set("location", loc.value.trim());
       const data = await api("/api/assets?" + q.toString());
       const assets = data.assets || [];
+      state.libVisibleIds = assets.map((a) => a.id);
       const grid = $("libGrid");
-      if (!assets.length) { grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><strong>No assets</strong></div>`; return; }
+      if (!assets.length) {
+        grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><strong>No assets</strong></div>`;
+        syncLibSel();
+        return;
+      }
       grid.innerHTML = assets.map((a) => `
         <div class="lib-card${state.libSelected.has(a.id)?" selected":""}" data-id="${a.id}">
           <input class="sel" type="checkbox" ${state.libSelected.has(a.id)?"checked":""} data-sel="${a.id}" />
@@ -1988,9 +2138,11 @@
       grid.querySelectorAll("[data-sel]").forEach((el) => el.addEventListener("change", () => {
         const id = Number(el.getAttribute("data-sel"));
         if (el.checked) state.libSelected.add(id); else state.libSelected.delete(id);
-        const sc = $("libSelCount"); if (sc) sc.textContent = `${state.libSelected.size} selected`;
-        const dl = $("libDownloadSel"); if (dl) dl.disabled = state.libSelected.size === 0;
+        const card = el.closest(".lib-card");
+        if (card) card.classList.toggle("selected", el.checked);
+        syncLibSel();
       }));
+      syncLibSel();
     } catch (e) { toast(e.message || "Library error"); }
   };
 
@@ -2023,7 +2175,7 @@
 
   // WI
   loadWolf = function () {
-    const planTitle = (state.ux && state.ux.plan && state.ux.plan.title) || (state.planId ? `Plan #${state.planId}` : "No plan");
+    const planTitle = (state.ux && state.ux.plan) ? displayPlanTitle(state.ux.plan) : (state.planId ? `Plan #${state.planId}` : "No plan");
     $("wiContext").textContent = `Brand: ${state.brand} · Content: ${state.wiCardId ? "Item #"+state.wiCardId : planTitle}`;
     $("wiHonest").textContent = "Live generation not connected. No fabricate. WI does not silently edit the plan.";
     const qa = $("wiQuickActions");
@@ -2141,13 +2293,45 @@
         const blob = await res.blob(); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="library-selection.zip"; a.click();
       } catch (e) { toast(e.message||"ZIP failed"); }
     });
+    const selAll = $("libSelectAll");
+    if (selAll) selAll.addEventListener("click", () => {
+      (state.libVisibleIds || []).forEach((id) => state.libSelected.add(id));
+      document.querySelectorAll("#libGrid [data-sel]").forEach((el) => {
+        el.checked = true;
+        const card = el.closest(".lib-card");
+        if (card) card.classList.add("selected");
+      });
+      syncLibSel();
+    });
+    const desel = $("libDeselectAll");
+    if (desel) desel.addEventListener("click", () => {
+      state.libSelected.clear();
+      document.querySelectorAll("#libGrid [data-sel]").forEach((el) => {
+        el.checked = false;
+        const card = el.closest(".lib-card");
+        if (card) card.classList.remove("selected");
+      });
+      syncLibSel();
+    });
+    const detBtn = $("libDetailedToggle");
+    const det = $("libDetailed");
+    if (detBtn && det) {
+      det.hidden = true;
+      detBtn.setAttribute("aria-expanded", "false");
+      detBtn.addEventListener("click", () => {
+        const open = det.hidden;
+        det.hidden = !open;
+        detBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    }
     ["libStage","libShoot","libSubject","libLocation","libBrand"].forEach((id) => {
       const el = $(id); if (el) el.addEventListener(id.includes("Subject")||id.includes("Location")?"input":"change", () => loadLibrary());
     });
     const wiSend = $("wiSend"); if (wiSend) wiSend.addEventListener("click", () => wiSend26("CHAT", $("wiInput").value.trim()));
     const wiIn = $("wiInput"); if (wiIn) wiIn.addEventListener("keydown", (e)=>{ if(e.key==="Enter") wiSend26("CHAT", wiIn.value.trim()); });
     const wiCl = $("wiClear"); if (wiCl) wiCl.addEventListener("click", () => { state.wiTranscript=[]; state.wiCardId=null; renderWi26(); loadWolf(); });
-    // brand theme on load
+    // brand theme on load — kit colours immediately; API theme refines if not legacy blue
+    applyBrandTheme26(state.brandMeta[state.brand] || { id: state.brand });
     api("/api/brands").then((data) => {
       (data.brands||[]).forEach((b) => { state.brandMeta[b.id]=b; });
       applyBrandTheme26(state.brandMeta[state.brand]);
