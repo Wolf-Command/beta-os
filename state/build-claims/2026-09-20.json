@@ -77,6 +77,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_msc_compliance_pack.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-MSC-03'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-1f93c785c88e9564';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/msc/compliance; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/msc-compliance; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
       "expect": "PASS=137 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
       "by": "cursor-msc-compliance-pack-v1"
+    },
+    {
+      "id": "bf-msc-cyber-baseline-v1-20260920",
+      "claim": "Beta Owner cybersecurity baseline names MFA, device posture, and audited-access slots and leaves every slot empty. Empty is not proof of security and not current MFA. Unauth /api/msc/cyber and /msc-cyber are 403. Owner payment, current MFA, device posture, Cloudflare mutate, Access mutate, prove, ready, resolve, production, and fill are refused. CAP-MSC-04 stays SPECIFIED. Ceiling label is BUILT. CR-7dae8b389cce6f9a stays OPEN. No PROVEN or READY invented. Ledger stays 77 rows. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_msc_cyber_baseline.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-MSC-04'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-7dae8b389cce6f9a';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/msc/cyber; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/msc-cyber; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=146 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
+      "by": "cursor-msc-cyber-baseline-v1"
     }
   ]
 }

@@ -104,6 +104,7 @@ from core import gws_integrate_prove as _gws_prove
 from core import crm_package_intel as _pkg_intel
 from core import msc_asset_register as _msc_assets
 from core import msc_compliance_pack as _msc_compliance
+from core import msc_cyber_baseline as _msc_cyber
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import ggv_speed_to_lead_prove as _ggv_speed
@@ -1926,6 +1927,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/msc/compliance/"):
             self._msc_compliance_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-MSC-04 cyber baseline. Owner read. Empty is not proof. No current MFA. No Cloudflare mutate.
+        if self._msc_cyber_refuse_code(path):
+            self._msc_cyber_write_refused(path)
+            return
+        if path == "/api/msc/cyber":
+            self._msc_cyber_get(qs)
+            return
+        if path == "/api/msc/cyber/schema":
+            self._msc_cyber_get(qs, view="schema")
+            return
+        if path == "/api/msc/cyber/kinds":
+            self._msc_cyber_get(qs, view="kinds")
+            return
+        if path == "/api/msc/cyber/baseline":
+            self._msc_cyber_get(qs, view="baseline")
+            return
+        if path.startswith("/api/msc/cyber/"):
+            self._msc_cyber_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-CRM-01 bound prove. Owner read. Does not invent a lead or PROVEN.
         if path == "/api/crm/lead-cap-prove":
             self._crm_lead_prove_get()
@@ -2329,6 +2349,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._msc_compliance_page()
             return
         elif path in (
+            "/msc-cyber",
+            "/msc-cyber/",
+            "/msc-cyber.html",
+            "/dashboards/msc-cyber.html",
+        ):
+            self._msc_cyber_page()
+            return
+        elif path in (
             "/crm-lead-cap-prove",
             "/crm-lead-cap-prove/",
             "/crm-lead-cap-prove.html",
@@ -2489,6 +2517,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/msc/compliance" or path.startswith("/api/msc/compliance/"):
             self._msc_compliance_write_refused(path)
+            return
+        if self._msc_cyber_refuse_code(path):
+            self._msc_cyber_write_refused(path)
+            return
+        if path == "/api/msc/cyber" or path.startswith("/api/msc/cyber/"):
+            self._msc_cyber_write_refused(path)
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -2825,6 +2859,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/msc/compliance" or path.startswith("/api/msc/compliance/"):
             self._msc_compliance_write_refused(path)
             return
+        if self._msc_cyber_refuse_code(path):
+            self._msc_cyber_write_refused(path)
+            return
+        if path == "/api/msc/cyber" or path.startswith("/api/msc/cyber/"):
+            self._msc_cyber_write_refused(path)
+            return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
             self._patch_core_work_item(m_wi.group(1))
@@ -3071,6 +3111,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/msc/compliance" or path.startswith("/api/msc/compliance/"):
             self._msc_compliance_write_refused(path)
+            return
+        if self._msc_cyber_refuse_code(path):
+            self._msc_cyber_write_refused(path)
+            return
+        if path == "/api/msc/cyber" or path.startswith("/api/msc/cyber/"):
+            self._msc_cyber_write_refused(path)
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -7673,6 +7719,279 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _msc_compliance.build_pack()
         except _msc_compliance.CompliancePackError as exc:
             self._msc_compliance_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _require_msc_cyber_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Cyber baseline is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Cybersecurity baseline is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "security_proved": False,
+                    "mfa_status": None,
+                    "device_posture": None,
+                    "audited_access": None,
+                    "current": False,
+                    "payment": None,
+                    "cloudflare_mutated": False,
+                    "access_mutated": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "security_proved": False,
+                    "mfa_status": None,
+                    "device_posture": None,
+                    "payment": None,
+                    "cloudflare_mutated": False,
+                    "access_mutated": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _msc_cyber_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/msc/cyber/payment", "/api/msc/cyber/money"}:
+            return "payment"
+        if path in {
+            "/api/msc/cyber/mfa-status",
+            "/api/msc/cyber/device-posture-status",
+            "/api/msc/cyber/posture",
+            "/api/msc/cyber/current",
+        }:
+            return "posture"
+        if path in {"/api/msc/cyber/cloudflare", "/api/msc/cyber/cf"}:
+            return "cloudflare"
+        if path in {"/api/msc/cyber/access", "/api/msc/cyber/cf-access"}:
+            return "access"
+        if path in {"/api/msc/cyber/prove", "/api/msc/cyber/proven"}:
+            return "prove"
+        if path == "/api/msc/cyber/ready":
+            return "ready"
+        if path == "/api/msc/cyber/resolve":
+            return "resolve"
+        if path in {"/api/msc/cyber/production", "/api/msc/cyber/production/mutate"}:
+            return "production"
+        if path in {"/api/msc/cyber/fill", "/api/msc/cyber/note"}:
+            return "fill"
+        return None
+
+    def _msc_cyber_fail(self, exc: _msc_cyber.CyberBaselineError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "posture_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "security_proved": False,
+                "mfa_status": None,
+                "device_posture": None,
+                "audited_access": None,
+                "current": False,
+                "payment": None,
+                "cloudflare_mutated": False,
+                "access_mutated": False,
+                "ledger_write": False,
+                "cr_resolved": False,
+                **_msc_cyber.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _msc_cyber_write_refused(self, path: str) -> None:
+        identity = self._require_msc_cyber_owner()
+        if identity is None:
+            return
+        try:
+            code = self._msc_cyber_refuse_code(path)
+            if code == "payment":
+                _msc_cyber.refuse_payment({})
+            elif code == "posture":
+                _msc_cyber.refuse_posture({})
+            elif code == "cloudflare":
+                _msc_cyber.refuse_cloudflare({})
+            elif code == "access":
+                _msc_cyber.refuse_access({})
+            elif code == "prove":
+                _msc_cyber.refuse_proven({})
+            elif code == "ready":
+                _msc_cyber.refuse_ready({})
+            elif code == "resolve":
+                _msc_cyber.refuse_resolve({})
+            elif code == "production":
+                _msc_cyber.refuse_production({})
+            elif code == "fill":
+                _msc_cyber.refuse_fill({})
+            else:
+                _msc_cyber.refuse_external_write({})
+        except _msc_cyber.CyberBaselineError as exc:
+            self._msc_cyber_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Cybersecurity baseline does not store evidence or current MFA.",
+                "security_proved": False,
+                "mfa_status": None,
+                "device_posture": None,
+                "payment": None,
+                "cloudflare_mutated": False,
+                "access_mutated": False,
+                "ledger_write": False,
+                "cr_resolved": False,
+            },
+            status=405,
+        )
+
+    def _msc_cyber_page(self) -> None:
+        identity = self._require_msc_cyber_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "msc-cyber.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Cybersecurity baseline page is missing.",
+                    "security_proved": False,
+                    "mfa_status": None,
+                    "payment": None,
+                    "cr_resolved": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _msc_cyber_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_msc_cyber_owner()
+        if identity is None:
+            return
+        try:
+            _msc_cyber.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                mfa=(qs.get("mfa") or [""])[0],
+                mfa_status=(qs.get("mfa_status") or [""])[0],
+                device_posture=(qs.get("device_posture") or qs.get("device-posture") or [""])[0],
+                posture=(qs.get("posture") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _msc_cyber.build_baseline()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "security_proved": False,
+                    "mfa_status": None,
+                    "device_posture": None,
+                    "payment": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _msc_cyber.build_baseline()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    "empty_is_security": False,
+                    "security_proved": False,
+                    "mfa_status": None,
+                    "device_posture": None,
+                    "payment": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "baseline":
+                full = _msc_cyber.build_baseline()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    "security_proved": False,
+                    "mfa_status": None,
+                    "device_posture": None,
+                    "payment": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _msc_cyber.read_kind(ref_id)
+            else:
+                report = _msc_cyber.build_baseline()
+        except _msc_cyber.CyberBaselineError as exc:
+            self._msc_cyber_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
