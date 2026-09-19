@@ -92,6 +92,7 @@ from core import sop_factory as _sop
 from core import strat_12wy_prove as _strat_12wy
 from core import escalation_burndown as _burndown
 from core import sale_evidence_pack as _sale_pack
+from core import restore_drill as _restore_drill
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1668,6 +1669,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if m_sale:
             self._sale_pack_get(qs, m_sale.group(1))
             return
+        # CAP-DR-01 framework. Owner read. No live restore. No NAS/B2/Production write.
+        if self._restore_drill_refuse_code(path):
+            self._restore_drill_write_refused(path)
+            return
+        if path == "/api/restore-drill":
+            self._restore_drill_get(qs)
+            return
+        if path == "/api/restore-drill/checklist":
+            self._restore_drill_get(qs, view="checklist")
+            return
+        if path == "/api/restore-drill/schema":
+            self._restore_drill_get(qs, view="schema")
+            return
+        if path == "/api/restore-drill/log":
+            self._restore_drill_get(qs, view="log")
+            return
+        if path.startswith("/api/restore-drill/"):
+            self._restore_drill_get(qs, step_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-CORE-11 SOP Factory v1. Owner or role. Anon → 403. Not live without approve.
         if path == "/api/sop":
             self._sop_list()
@@ -1933,6 +1953,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._sale_pack_page()
             return
+        elif path in (
+            "/restore-drill",
+            "/restore-drill/",
+            "/restore-drill.html",
+            "/dashboards/restore-drill.html",
+        ):
+            self._restore_drill_page()
+            return
         elif path in ("/uma-blu-close", "/uma-blu-close/"):
             self.path = "/uma-blu-close.html"
         elif path in ("/bzg", "/bzg/"):
@@ -1989,6 +2017,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/sale-evidence-pack" or path.startswith("/api/sale-evidence-pack/") or self._sale_pack_export_code(path):
             self._sale_pack_write_refused(path)
+            return
+        if path == "/api/restore-drill" or path.startswith("/api/restore-drill/"):
+            self._restore_drill_write_refused(path)
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -2225,6 +2256,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/sale-evidence-pack" or path.startswith("/api/sale-evidence-pack/") or self._sale_pack_export_code(path):
             self._sale_pack_write_refused(path)
             return
+        if path == "/api/restore-drill" or path.startswith("/api/restore-drill/"):
+            self._restore_drill_write_refused(path)
+            return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
             self._patch_core_work_item(m_wi.group(1))
@@ -2409,6 +2443,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/sale-evidence-pack" or path.startswith("/api/sale-evidence-pack/") or self._sale_pack_export_code(path):
             self._sale_pack_write_refused(path)
+            return
+        if path == "/api/restore-drill" or path.startswith("/api/restore-drill/"):
+            self._restore_drill_write_refused(path)
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -3908,6 +3945,235 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "ledger_write": False,
                 "vdr_export": False,
                 "buyer_export": False,
+            },
+            status=405,
+        )
+
+    def _require_restore_drill_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Same Owner gate as the sale pack."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Restore drill is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "live_restore": False,
+                    "production_mutated": False,
+                    "nas_destructive": False,
+                    "b2_destructive": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "external_writes": False,
+                    "live_restore": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _restore_drill_refuse_code(self, path: str) -> str | None:
+        if path in {
+            "/api/restore-drill/run",
+            "/api/restore-drill/restore",
+            "/api/restore-drill/execute",
+        }:
+            return "live_restore"
+        if path in {"/api/restore-drill/nas", "/api/restore-drill/nas/delete"}:
+            return "nas"
+        if path in {"/api/restore-drill/b2", "/api/restore-drill/b2/delete"}:
+            return "b2"
+        if path in {"/api/restore-drill/production", "/api/restore-drill/production/mutate"}:
+            return "production"
+        return None
+
+    def _restore_drill_page(self) -> None:
+        identity = self._require_restore_drill_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "restore-drill.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Restore drill page is missing.",
+                    "live_restore": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _restore_drill_get(self, qs: dict, step_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_restore_drill_owner()
+        if identity is None:
+            return
+        try:
+            _restore_drill.guard_query(
+                restore=(qs.get("restore") or [""])[0],
+                run=(qs.get("run") or [""])[0],
+                delete=(qs.get("delete") or [""])[0],
+                nas=(qs.get("nas") or [""])[0],
+                b2=(qs.get("b2") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+            )
+            if view == "checklist":
+                full = _restore_drill.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "checklist": full["checklist"],
+                    "checklist_count": full["checklist_count"],
+                    "checklist_executed": full["checklist_executed"],
+                    "status": full["status"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "live_restore": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "schema":
+                full = _restore_drill.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "live_restore": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "log":
+                full = _restore_drill.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "log": full["log"],
+                    "log_valid": full["log_valid"],
+                    "status": full["status"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "live_restore": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif step_id:
+                report = _restore_drill.read_step(step_id)
+            else:
+                report = _restore_drill.build_framework()
+        except _restore_drill.RestoreDrillError as exc:
+            status = 404 if exc.code == "not_found" else 400
+            if exc.code in {
+                "live_restore_refused",
+                "production_refused",
+                "nas_destructive_refused",
+                "b2_destructive_refused",
+                "ready_refused",
+                "proven_refused",
+                "success_refused",
+                "writes_refused",
+                "historical_not_proof",
+            }:
+                status = 405
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "live_restore": False,
+                    "production_mutated": False,
+                    "nas_destructive": False,
+                    "b2_destructive": False,
+                },
+                status=status,
+            )
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "read_failed",
+                    "message": type(exc).__name__,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "live_restore": False,
+                },
+                status=500,
+            )
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _restore_drill_write_refused(self, path: str) -> None:
+        identity = self._require_restore_drill_owner()
+        if identity is None:
+            return
+        try:
+            code = self._restore_drill_refuse_code(path)
+            if code == "live_restore":
+                _restore_drill.refuse_live_restore({})
+            elif code == "nas":
+                _restore_drill.refuse_nas({})
+            elif code == "b2":
+                _restore_drill.refuse_b2({})
+            elif code == "production":
+                _restore_drill.refuse_production({})
+            else:
+                _restore_drill.refuse_external_write({})
+        except _restore_drill.RestoreDrillError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "live_restore": False,
+                    "production_mutated": False,
+                    "nas_destructive": False,
+                    "b2_destructive": False,
+                    **_restore_drill.honesty_flags(),
+                },
+                status=405,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Restore drill is read-only. No live restore and no NAS or B2 delete.",
+                "external_writes": False,
+                "ledger_write": False,
+                "live_restore": False,
             },
             status=405,
         )
