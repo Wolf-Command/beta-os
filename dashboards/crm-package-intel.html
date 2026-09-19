@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wolf · Package register</title>
+<style>
+  :root {
+    --bg: #101418;
+    --bg2: #171d23;
+    --line: #2c3842;
+    --text: #eef2f5;
+    --muted: #8b9aa6;
+    --accent: #c4a574;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background:
+      radial-gradient(ellipse 90% 60% at 0% -10%, #243039 0%, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 20px 16px 64px; }
+  h1 { font-family: var(--display); font-weight: 500; font-size: 32px; margin: 0 0 6px; }
+  h2 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 28px 0 8px; }
+  p { line-height: 1.45; }
+  .lede { color: var(--muted); margin: 0 0 16px; }
+  .banner {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    border-left: 3px solid var(--accent);
+    padding: 12px 14px;
+    margin: 12px 0 8px;
+  }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .card {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    padding: 14px;
+    margin: 0;
+  }
+  .k { color: var(--muted); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .v { font-family: var(--display); font-size: 28px; margin: 4px 0; }
+  .note { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Package register</h1>
+  <p class="lede">An empty register is not a market count and not a price. No booking is changed. CAP-CRM-03 stays at the ledger value. The ceiling label is BUILT. This page does not resolve the completion row.</p>
+  <div id="banner" class="banner">Reading the register… Empty until an evidenced row exists. Not a price.</div>
+  <h2>Recorded products</h2>
+  <div id="products" class="grid">
+    <article class="card"><div class="k">Products</div><div class="v">EMPTY</div><p class="note">No evidenced row. This is not a price and not a booking.</p></article>
+  </div>
+  <h2>Brands are not packages</h2>
+  <div id="brands" class="grid">
+    <article class="card"><div class="k">Brands</div><div class="v">—</div><p class="note">A brand id is not a package and not a price.</p></article>
+  </div>
+</div>
+<script>
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function paint(pack) {
+  var banner = document.getElementById("banner");
+  var flags = pack.honesty || {};
+  var empty = pack.empty ? "empty" : "has rows";
+  banner.textContent = "Register " + empty
+    + ". Recorded " + (pack.recorded_count == null ? "unread" : pack.recorded_count)
+    + ". Market count unread. Not a price."
+    + " Ledger " + (flags.maturity || "unread")
+    + ". Ceiling " + (flags.maturity_ceiling || "BUILT")
+    + ". No booking. Row not resolved.";
+  var products = "";
+  (pack.products || []).forEach(function (row) {
+    products += '<article class="card"><div class="k">' + esc(row.brand) + '</div>'
+      + '<div class="v">' + esc(row.status || "NAMED") + '</div>'
+      + '<p class="note">' + esc(row.name) + " · evidence " + esc((row.evidence_refs || []).length)
+      + " · not a price</p></article>";
+  });
+  if (!products) {
+    products = '<article class="card"><div class="k">Products</div><div class="v">EMPTY</div>'
+      + '<p class="note">No evidenced row. Empty is not a market count and not a price. No booking.</p></article>';
+  }
+  document.getElementById("products").innerHTML = products;
+  var brands = "";
+  (pack.brands || []).forEach(function (row) {
+    brands += '<article class="card"><div class="k">' + esc(row.brand_id) + '</div>'
+      + '<div class="v">NOT A PACKAGE</div>'
+      + '<p class="note">' + esc(row.display_name) + " · price unread · no booking</p></article>";
+  });
+  if (brands) document.getElementById("brands").innerHTML = brands;
+}
+
+fetch("/api/crm/package-intel", { headers: { "Accept": "application/json" } })
+  .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
+  .then(function (result) {
+    if (!result.ok) {
+      document.getElementById("banner").textContent = "Read refused. Empty is not a price. No booking. The completion row was not resolved.";
+      return;
+    }
+    paint(result.body);
+  })
+  .catch(function () {
+    document.getElementById("banner").textContent = "Read failed. No price was stored. No booking was changed. The completion row was not resolved.";
+  });
+</script>
+</body>
+</html>

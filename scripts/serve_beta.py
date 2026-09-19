@@ -100,6 +100,7 @@ from core import restore_drill as _restore_drill
 from core import failure_domains as _failure_domains
 from core import crm_connector_prove as _crm_connector
 from core import gws_integrate_prove as _gws_prove
+from core import crm_package_intel as _pkg_intel
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import ggv_speed_to_lead_prove as _ggv_speed
@@ -1837,6 +1838,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/gws-integrate-prove/"):
             self._gws_prove_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-CRM-03 package register. Owner read. Empty is not a price. No booking.
+        if self._pkg_intel_refuse_code(path):
+            self._pkg_intel_write_refused(path)
+            return
+        if path == "/api/crm/package-intel":
+            self._pkg_intel_get(qs)
+            return
+        if path == "/api/crm/package-intel/schema":
+            self._pkg_intel_get(qs, view="schema")
+            return
+        if path == "/api/crm/package-intel/products":
+            self._pkg_intel_get(qs, view="products")
+            return
+        if path == "/api/crm/package-intel/brands":
+            self._pkg_intel_get(qs, view="brands")
+            return
+        if path.startswith("/api/crm/package-intel/"):
+            self._pkg_intel_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-CRM-01 bound prove. Owner read. Does not invent a lead or PROVEN.
         if path == "/api/crm/lead-cap-prove":
             self._crm_lead_prove_get()
@@ -2208,6 +2228,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._gws_prove_page()
             return
         elif path in (
+            "/crm-package-intel",
+            "/crm-package-intel/",
+            "/crm-package-intel.html",
+            "/dashboards/crm-package-intel.html",
+        ):
+            self._pkg_intel_page()
+            return
+        elif path in (
             "/crm-lead-cap-prove",
             "/crm-lead-cap-prove/",
             "/crm-lead-cap-prove.html",
@@ -2341,6 +2369,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ggv/speed-to-lead-prove" or path.startswith("/api/ggv/speed-to-lead-prove/"):
             self._ggv_speed_write_refused(path)
+            return
+        if self._pkg_intel_refuse_code(path):
+            self._pkg_intel_write_refused(path)
+            return
+        if path == "/api/crm/package-intel/register":
+            self._pkg_intel_register()
+            return
+        if path == "/api/crm/package-intel" or path.startswith("/api/crm/package-intel/"):
+            self._pkg_intel_write_refused(path)
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -2656,6 +2693,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/ggv/social" or path.startswith("/api/ggv/social/"):
             self._ggv_social_write_refused(path)
             return
+        if self._pkg_intel_refuse_code(path):
+            self._pkg_intel_write_refused(path)
+            return
+        if path == "/api/crm/package-intel" or path.startswith("/api/crm/package-intel/"):
+            self._pkg_intel_write_refused(path)
+            return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
             self._patch_core_work_item(m_wi.group(1))
@@ -2881,6 +2924,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ggv/social" or path.startswith("/api/ggv/social/"):
             self._ggv_social_write_refused(path)
+            return
+        if self._pkg_intel_refuse_code(path):
+            self._pkg_intel_write_refused(path)
+            return
+        if path == "/api/crm/package-intel" or path.startswith("/api/crm/package-intel/"):
+            self._pkg_intel_write_refused(path)
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -6351,6 +6400,274 @@ class BetaHandler(SimpleHTTPRequestHandler):
             },
             status=405,
         )
+
+    def _require_pkg_intel_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Package register is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Package register is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "price": None,
+                    "pricing_is_truth": False,
+                    "booking_mutated": False,
+                    "market_package_count": None,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "price": None,
+                    "booking_mutated": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _pkg_intel_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/crm/package-intel/price", "/api/crm/package-intel/pricing"}:
+            return "price"
+        if path in {"/api/crm/package-intel/booking", "/api/crm/package-intel/book"}:
+            return "booking"
+        if path in {"/api/crm/package-intel/prove", "/api/crm/package-intel/proven"}:
+            return "prove"
+        if path == "/api/crm/package-intel/ready":
+            return "ready"
+        if path == "/api/crm/package-intel/resolve":
+            return "resolve"
+        if path in {"/api/crm/package-intel/production", "/api/crm/package-intel/production/mutate"}:
+            return "production"
+        if path in {"/api/crm/package-intel/fill", "/api/crm/package-intel/invent"}:
+            return "fill"
+        if path in {"/api/crm/package-intel/demand", "/api/crm/package-intel/margin"}:
+            return "metrics"
+        return None
+
+    def _pkg_intel_fail(self, exc: _pkg_intel.PackageIntelError) -> None:
+        status = 400
+        if exc.code in {
+            "price_refused",
+            "booking_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "slots_refused",
+            "invent_metrics_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "price": None,
+                "pricing_is_truth": False,
+                "booking_mutated": False,
+                "market_package_count": None,
+                "ledger_write": False,
+                "cr_resolved": False,
+                **_pkg_intel.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _pkg_intel_write_refused(self, path: str) -> None:
+        identity = self._require_pkg_intel_owner()
+        if identity is None:
+            return
+        try:
+            code = self._pkg_intel_refuse_code(path)
+            if code == "price":
+                _pkg_intel.refuse_price({})
+            elif code == "booking":
+                _pkg_intel.refuse_booking({})
+            elif code == "prove":
+                _pkg_intel.refuse_proven({})
+            elif code == "ready":
+                _pkg_intel.refuse_ready({})
+            elif code == "resolve":
+                _pkg_intel.refuse_resolve({})
+            elif code == "production":
+                _pkg_intel.refuse_production({})
+            elif code == "fill":
+                _pkg_intel.refuse_fill({})
+            elif code == "metrics":
+                _pkg_intel.refuse_invent_metrics({})
+            else:
+                _pkg_intel.refuse_external_write({})
+        except _pkg_intel.PackageIntelError as exc:
+            self._pkg_intel_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Package register does not invent a price or a booking.",
+                "price": None,
+                "pricing_is_truth": False,
+                "booking_mutated": False,
+                "ledger_write": False,
+                "cr_resolved": False,
+            },
+            status=405,
+        )
+
+    def _pkg_intel_page(self) -> None:
+        identity = self._require_pkg_intel_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "crm-package-intel.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Package register page is missing.",
+                    "price": None,
+                    "booking_mutated": False,
+                    "cr_resolved": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _pkg_intel_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_pkg_intel_owner()
+        if identity is None:
+            return
+        try:
+            _pkg_intel.guard_query(
+                price=(qs.get("price") or [""])[0],
+                booking=(qs.get("booking") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                demand=(qs.get("demand") or [""])[0],
+                margin=(qs.get("margin") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _pkg_intel.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "price": None,
+                    "pricing_is_truth": False,
+                    "booking_mutated": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "products":
+                full = _pkg_intel.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "empty": full["empty"],
+                    "recorded_count": full["recorded_count"],
+                    "market_package_count": None,
+                    "products": full["products"],
+                    "price": None,
+                    "pricing_is_truth": False,
+                    "booking_mutated": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "brands":
+                full = _pkg_intel.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "brands": full["brands"],
+                    "brands_are_not_packages": True,
+                    "price": None,
+                    "booking_mutated": False,
+                    "market_package_count": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _pkg_intel.read_product(ref_id)
+            else:
+                report = _pkg_intel.build_register()
+        except _pkg_intel.PackageIntelError as exc:
+            self._pkg_intel_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _pkg_intel_register(self) -> None:
+        identity = self._require_pkg_intel_owner()
+        if identity is None:
+            return
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "bad_payload",
+                    "message": f"invalid JSON: {exc}",
+                    "price": None,
+                    "booking_mutated": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                },
+                status=400,
+            )
+            return
+        try:
+            out = _pkg_intel.register_product(body, person_id=identity.get("person_id") or "")
+        except _pkg_intel.PackageIntelError as exc:
+            self._pkg_intel_fail(exc)
+            return
+        out["person_id"] = identity.get("person_id")
+        out["honesty"] = _pkg_intel.honesty_flags()
+        self._send_json(out)
 
     def _require_gws_prove_owner(self) -> dict | None:
         """CF JWT → Person; only PERS-MATT. Same Owner gate as the other proves."""
