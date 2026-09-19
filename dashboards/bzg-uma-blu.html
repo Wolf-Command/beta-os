@@ -29,6 +29,7 @@
     margin: 0 auto;
     overflow-wrap: anywhere;
     word-break: break-word;
+    overflow-x: clip;
     background:
       radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
       radial-gradient(ellipse 90% 60% at 100% 0%, #163028 0%, transparent 50%),
@@ -68,6 +69,13 @@
     font-size: 0.72rem; font-weight: 650; vertical-align: middle;
   }
   .card .why { color: var(--text); font-size: 0.88rem; margin-top: 6px; line-height: 1.35; }
+  .act, a.act {
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 10px; min-height: 44px; padding: 12px 14px;
+    border-radius: 12px; background: #1f6b5c; border: 1px solid #2a8a76;
+    color: #fff; font-size: 1rem; font-weight: 650; text-align: center;
+    text-decoration: none;
+  }
   .card.attn { border-color: rgba(224,160,69,0.55); }
   .now-title { margin: 0 0 4px; font-size: 1.05rem; }
   .panel {
@@ -85,8 +93,13 @@
   .muted { color: var(--muted); font-size: 0.82rem; }
   .empty { color: var(--muted); font-size: 0.9rem; padding: 8px 0; }
 
-  nav.uma a { min-height: 40px; display: inline-flex; align-items: center; font-size: 0.84rem; padding: 10px 12px; }
+  nav.uma a { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.84rem; padding: 10px 12px; }
   .card, .panel, .banner, .sub, .why, .meta { overflow-wrap: anywhere; word-break: break-word; }
+  @media (max-width: 420px) {
+    body { padding-left: 12px; padding-right: 12px; }
+    nav.uma a { flex: 1 1 calc(33.33% - 6px); }
+    .brand { font-size: 1.35rem; }
+  }
   .practice {
     margin-top: 18px; padding-top: 8px; border-top: 1px dashed var(--line);
   }
@@ -173,14 +186,21 @@
         function operatorChip(c) {
           if (!c) return "";
           var label = c.classification_label || "";
-          if (c.actionable === true && (label === "Needs staff" || c.classification === "NEEDS_STAFF")) {
+          if (c.actionable === true && (label === "Needs staff" || c.classification === "NEEDS_STAFF" || !label)) {
             return "You can act";
           }
-          if (c.actionable === false && (c.waiting_role === "policy" || c.classification === "NEEDS_POLICY")) {
+          if (c.actionable === false && (c.waiting_role === "policy" || c.classification === "NEEDS_POLICY" || label === "Policy required")) {
             return "Policy required";
           }
+          if (c.actionable === false && label.indexOf("Waiting on ") === 0) return label;
+          if (c.actionable === false && c.waiting_on) return "Waiting on " + c.waiting_on;
           if (c.actionable === false && c.waiting_role) return "Waiting on " + c.waiting_role;
           return label;
+        }
+        function paintAction(parent, c) {
+          if (!c || c.actionable === false || !c.action || !c.action.label) return;
+          var btn = el("span", "act", c.action.label);
+          parent.appendChild(btn);
         }
         var cards = data.cards || [];
         var nowBox = document.getElementById("nowBody");
@@ -199,7 +219,11 @@
             } else if (now.why) {
               nowBox.appendChild(el("div", "why", now.why));
             }
-            if (now.href && now.actionable !== false) {
+            if (now.action && now.action.label && now.actionable !== false) {
+              var act = el("a", "act", now.action.label);
+              act.href = now.action.href || now.href || "/bzg/uma-blu";
+              nowBox.appendChild(act);
+            } else if (now.href && now.actionable !== false) {
               var go = el("a", "meta", "Open →");
               go.href = now.href;
               go.style.display = "inline-block";
@@ -231,6 +255,7 @@
           } else if (c.why) {
             a.appendChild(el("div", "why", c.why));
           }
+          paintAction(a, c);
           if (c.kind === "daily_close") {
             var line = closeStateLine(c);
             if (line) a.appendChild(el("div", "meta", line));

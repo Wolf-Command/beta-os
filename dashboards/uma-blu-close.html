@@ -27,6 +27,9 @@
     padding: 16px 16px 64px;
     max-width: 480px;
     margin: 0 auto;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    overflow-x: clip;
     background:
       radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
       radial-gradient(ellipse 90% 60% at 100% 0%, #163028 0%, transparent 50%),
@@ -60,7 +63,7 @@
     appearance: none; border: 1px solid var(--line); background: var(--bg3);
     color: var(--text); border-radius: 12px; padding: 14px 16px;
     font-size: 1rem; font-weight: 650; cursor: pointer; width: 100%;
-    margin-top: 10px;
+    margin-top: 10px; min-height: 44px;
   }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
   .btn-primary { background: #1f6b5c; border-color: #2a8a76; color: #fff; }
@@ -99,18 +102,25 @@
     border: 1px solid rgba(61,184,160,0.45); color: var(--accent);
     font-size: 0.72rem; font-weight: 650;
   }
+  nav.uma a { min-height: 44px; }
+  @media (max-width: 420px) {
+    body { padding-left: 12px; padding-right: 12px; }
+    .row { grid-template-columns: 1fr; }
+    .brand { font-size: 1.35rem; }
+    nav.uma a { flex: 1 1 calc(33.33% - 6px); justify-content: center; text-align: center; }
+  }
 </style>
 </head>
 <body>
   <h1 class="brand">Uma Blu <em>Daily Close</em></h1>
   <p class="sub">Count the till. We pull ESB sales. Variance only when numbers disagree.</p>
     <nav class="uma" style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px">
-    <a href="/bzg/uma-blu" style="padding:10px 12px;border-radius:999px;border:1px solid #2a4554;color:#8aa0ad;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:40px;display:inline-flex;align-items:center">Today</a>
-    <a href="/bzg/uma-blu/bills" style="padding:10px 12px;border-radius:999px;border:1px solid #2a4554;color:#8aa0ad;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:40px;display:inline-flex;align-items:center">Bills</a>
-    <a href="/bzg/uma-blu/petty" style="padding:10px 12px;border-radius:999px;border:1px solid #2a4554;color:#8aa0ad;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:40px;display:inline-flex;align-items:center">Petty</a>
-    <a href="/uma-blu-close" style="padding:10px 12px;border-radius:999px;border:1px solid #3db8a0;color:#3db8a0;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:40px;display:inline-flex;align-items:center">Close</a>
-    <a href="/bzg/uma-blu/issues" style="padding:10px 12px;border-radius:999px;border:1px solid #2a4554;color:#8aa0ad;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:40px;display:inline-flex;align-items:center">Issues</a>
-    <a href="/bzg/uma-blu#history" style="padding:10px 12px;border-radius:999px;border:1px solid #2a4554;color:#8aa0ad;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:40px;display:inline-flex;align-items:center">History</a>
+    <a href="/bzg/uma-blu" style="padding:10px 12px;border-radius:999px;border:1px solid #2a4554;color:#8aa0ad;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:44px;display:inline-flex;align-items:center">Today</a>
+    <a href="/bzg/uma-blu/bills" style="padding:10px 12px;border-radius:999px;border:1px solid #2a4554;color:#8aa0ad;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:44px;display:inline-flex;align-items:center">Bills</a>
+    <a href="/bzg/uma-blu/petty" style="padding:10px 12px;border-radius:999px;border:1px solid #2a4554;color:#8aa0ad;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:44px;display:inline-flex;align-items:center">Petty</a>
+    <a href="/uma-blu-close" style="padding:10px 12px;border-radius:999px;border:1px solid #3db8a0;color:#3db8a0;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:44px;display:inline-flex;align-items:center">Close</a>
+    <a href="/bzg/uma-blu/issues" style="padding:10px 12px;border-radius:999px;border:1px solid #2a4554;color:#8aa0ad;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:44px;display:inline-flex;align-items:center">Issues</a>
+    <a href="/bzg/uma-blu#history" style="padding:10px 12px;border-radius:999px;border:1px solid #2a4554;color:#8aa0ad;text-decoration:none;font-size:0.84rem;font-weight:650;min-height:44px;display:inline-flex;align-items:center">History</a>
   </nav>
   <div class="who" id="who">Checking who you are…</div>
   <div class="tabs">

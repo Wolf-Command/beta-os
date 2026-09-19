@@ -26,6 +26,15 @@ EXISTING_CHIP = "Existing"
 WAITING_TEMPLATE = "Waiting on {role} — no action needed from you"
 CAN_ACT_LABEL = "You can act"
 POLICY_REQUIRED_LABEL = "Policy required"
+ACTION_RECEIVE = "Receive goods"
+ACTION_PERFORM_CLOSE = "Perform close"
+ACTION_RESOLVE = "Resolve exception"
+ACTION_OPEN_EXCEPTION = "Open exception"
+# Waiting tokens that map to a role. A single other active assignee becomes the person.
+_WAIT_ROLE_IDS = {
+    "Head of F&B": ("ROLE-BZG-HFB",),
+    "closer": ("ROLE-BZG-CLOSER",),
+}
 CLOSE_DENIED = (
     "You cannot open, submit, or reconcile this close. "
     "Waiting on closer — no action needed from you."
@@ -523,6 +532,73 @@ def pr_actions(person_id: str, *, conn: sqlite3.Connection) -> dict[str, Any]:
     return actions
 
 
+def _waiting_subject(conn: sqlite3.Connection, role: str, person_id: str) -> str:
+    """Role label, or the one other active person's name. Never invents a name."""
+    token = (role or "").strip() or "policy"
+    role_ids = _WAIT_ROLE_IDS.get(token)
+    if not role_ids:
+        return token
+    placeholders = ",".join("?" * len(role_ids))
+    try:
+        rows = conn.execute(
+            f"""
+            SELECT DISTINCT pe.person_id, pe.display_name
+            FROM org_assignments a
+            JOIN org_positions po ON po.position_id = a.position_id
+            JOIN org_persons pe ON pe.person_id = a.person_id
+            WHERE po.role_id IN ({placeholders})
+              AND a.status = 'ACTIVE'
+              AND a.end_at IS NULL
+              AND pe.status = 'ACTIVE'
+            """,
+            role_ids,
+        ).fetchall()
+    except sqlite3.Error:
+        return token
+    viewer = (person_id or "").strip()
+    names: list[str] = []
+    seen: set[str] = set()
+    for row in rows:
+        pid = str(row[0] or "")
+        if not pid or pid == viewer or pid in seen:
+            continue
+        seen.add(pid)
+        name = str(row[1] or "").strip()
+        if name:
+            names.append(name)
+    if len(names) == 1:
+        return names[0]
+    return token
+
+
+def _perform_action(kind: str, card: dict[str, Any], caps: dict[str, Any]) -> dict[str, str] | None:
+    """Verb the operator can perform. Verify is never a Today action."""
+    if kind == "ordered_not_received" and caps.get("receive"):
+        return {
+            "label": ACTION_RECEIVE,
+            "href": str(card.get("href") or "/bzg/uma-blu/bills"),
+        }
+    if kind != "daily_close":
+        return None
+    close = card.get("close") or {}
+    status = str(close.get("status") or "")
+    state = str(close.get("state") or "")
+    if status == "verified" or state in ("VERIFIED_CLOSED", "RESOLVED"):
+        return None
+    href = "/uma-blu-close"
+    if status == "exception" or state == "EXCEPTION":
+        if caps.get("resolve"):
+            return {"label": ACTION_RESOLVE, "href": href}
+        return None
+    if status == "blocked" or state == "VARIANCE_REQUIRES_POLICY":
+        if caps.get("exception"):
+            return {"label": ACTION_OPEN_EXCEPTION, "href": href}
+        return None
+    if caps.get("submit"):
+        return {"label": ACTION_PERFORM_CLOSE, "href": href}
+    return None
+
+
 def actionable_for(
     person_id: str,
     card: dict[str, Any],
@@ -532,14 +608,32 @@ def actionable_for(
     """Whether this Today card is something this person can act on."""
     kind = str(card.get("kind") or "")
     if kind in _INFORMATIONAL:
-        return {"actionable": True, "navigation": True, "waiting_role": None}
+        return {"actionable": True, "navigation": True, "waiting_role": None, "action": None}
     caps = _caps(person_id, conn)
     actionable, role = _card_gate(kind, card, caps)
+    action = _perform_action(kind, card, caps) if actionable else None
+    if actionable and kind == "daily_close" and action is None:
+        return {
+            "actionable": True,
+            "navigation": True,
+            "waiting_role": None,
+            "waiting_copy": None,
+            "waiting_on": None,
+            "action": None,
+        }
+    token = role or "policy"
+    waiting_on = None
+    if not actionable:
+        waiting_on = "policy" if token == "policy" else _waiting_subject(conn, token, person_id)
     return {
         "actionable": actionable,
         "navigation": False,
-        "waiting_role": None if actionable else role,
-        "waiting_copy": None if actionable else waiting_copy(role or "policy"),
+        "waiting_role": None if actionable else token,
+        "waiting_on": None if actionable else waiting_on,
+        "waiting_copy": None
+        if actionable
+        else waiting_copy("policy" if token == "policy" else (waiting_on or token)),
+        "action": action,
     }
 
 
@@ -592,13 +686,23 @@ def _close_gate(card: dict[str, Any], caps: dict[str, Any]) -> tuple[bool, str |
 
 
 def _apply_operator_chip(row: dict[str, Any], decision: dict[str, Any]) -> None:
-    """Authenticated operator: action when they can act. Never 'Needs staff' then.
+    """Authenticated operator: a perform action when they can. Never 'Needs staff' then.
 
-    Waiting on [role], or Policy required, when they cannot.
+    Waiting on [role/person], or Policy required, when they cannot.
+    Verify is not offered here.
     """
+    if decision.get("action"):
+        row["action"] = dict(decision["action"])
     if decision.get("navigation"):
         return
     if decision.get("actionable"):
+        if decision.get("action"):
+            row["classification"] = "CAN_ACT"
+            row["classification_label"] = CAN_ACT_LABEL
+            href = (decision.get("action") or {}).get("href")
+            if href:
+                row["href"] = href
+            return
         label = str(row.get("classification_label") or "")
         if row.get("classification") == "NEEDS_STAFF" or label in ("", "Needs staff"):
             row["classification"] = "CAN_ACT"
@@ -607,8 +711,10 @@ def _apply_operator_chip(row: dict[str, Any], decision: dict[str, Any]) -> None:
     role = str(decision.get("waiting_role") or "policy")
     if role == "policy":
         row["classification_label"] = POLICY_REQUIRED_LABEL
-    else:
-        row["classification_label"] = f"Waiting on {role}"
+        return
+    who = str(decision.get("waiting_on") or role)
+    row["waiting_on"] = who
+    row["classification_label"] = f"Waiting on {who}"
 
 
 def annotate_today(
@@ -626,7 +732,9 @@ def annotate_today(
             row["navigation"] = True
         if not decision["actionable"]:
             row["waiting_role"] = decision.get("waiting_role")
+            row["waiting_on"] = decision.get("waiting_on")
             row["waiting_copy"] = decision.get("waiting_copy")
+            row.pop("action", None)
             row["href"] = None
             items = []
             for item in row.get("items") or []:
@@ -686,6 +794,8 @@ def annotate_today(
             "actionable": bool(lead.get("actionable")),
             "waiting_copy": lead.get("waiting_copy") or "",
             "waiting_role": lead.get("waiting_role") or "",
+            "waiting_on": lead.get("waiting_on") or "",
+            "action": lead.get("action"),
         }
     return out
 
