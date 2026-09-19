@@ -109,6 +109,7 @@ from core import msc_records_defensibility as _msc_records
 from core import intg_secrets_env as _intg_secrets
 from core import ggv_client_profitability as _ggv_pnl
 from core import msc_posture_prove as _msc_posture
+from core import intg_connector_contract as _intg_contract
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import ggv_speed_to_lead_prove as _ggv_speed
@@ -2029,6 +2030,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/msc/posture/"):
             self._msc_posture_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-INTG-01 connector contract. Owner read. Empty is not Yanolja or ESB.
+        if self._intg_contract_refuse_code(path):
+            self._intg_contract_write_refused(path)
+            return
+        if path == "/api/intg/connector-contract":
+            self._intg_contract_get(qs)
+            return
+        if path == "/api/intg/connector-contract/schema":
+            self._intg_contract_get(qs, view="schema")
+            return
+        if path == "/api/intg/connector-contract/kinds":
+            self._intg_contract_get(qs, view="kinds")
+            return
+        if path == "/api/intg/connector-contract/framework":
+            self._intg_contract_get(qs, view="framework")
+            return
+        if path.startswith("/api/intg/connector-contract/"):
+            self._intg_contract_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-CRM-01 bound prove. Owner read. Does not invent a lead or PROVEN.
         if path == "/api/crm/lead-cap-prove":
             self._crm_lead_prove_get()
@@ -2472,6 +2492,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._msc_posture_page()
             return
         elif path in (
+            "/connector-contract",
+            "/connector-contract/",
+            "/connector-contract.html",
+            "/dashboards/connector-contract.html",
+        ):
+            self._intg_contract_page()
+            return
+        elif path in (
             "/crm-lead-cap-prove",
             "/crm-lead-cap-prove/",
             "/crm-lead-cap-prove.html",
@@ -2662,6 +2690,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/msc/posture" or path.startswith("/api/msc/posture/"):
             self._msc_posture_write_refused(path)
+            return
+        if self._intg_contract_refuse_code(path):
+            self._intg_contract_write_refused(path)
+            return
+        if path == "/api/intg/connector-contract" or path.startswith("/api/intg/connector-contract/"):
+            self._intg_contract_write_refused(path)
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -3028,6 +3062,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/msc/posture" or path.startswith("/api/msc/posture/"):
             self._msc_posture_write_refused(path)
             return
+        if self._intg_contract_refuse_code(path):
+            self._intg_contract_write_refused(path)
+            return
+        if path == "/api/intg/connector-contract" or path.startswith("/api/intg/connector-contract/"):
+            self._intg_contract_write_refused(path)
+            return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
             self._patch_core_work_item(m_wi.group(1))
@@ -3304,6 +3344,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/msc/posture" or path.startswith("/api/msc/posture/"):
             self._msc_posture_write_refused(path)
+            return
+        if self._intg_contract_refuse_code(path):
+            self._intg_contract_write_refused(path)
+            return
+        if path == "/api/intg/connector-contract" or path.startswith("/api/intg/connector-contract/"):
+            self._intg_contract_write_refused(path)
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -9297,6 +9343,259 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _msc_posture.build_framework()
         except _msc_posture.PostureProveError as exc:
             self._msc_posture_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _intg_contract_quiet(self) -> dict:
+        return {
+            "proved": False,
+            "empty_is_prove": False,
+            "empty_is_ready": False,
+            "empty_is_yanolja": False,
+            "empty_is_esb": False,
+            "live_connector": False,
+            "current": False,
+            "contract": None,
+            "fixture": None,
+            "yanolja_called": False,
+            "esb_called": False,
+            "payment": None,
+            "money": None,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_specified": False,
+            "invented_proven": False,
+            "invented_ready": False,
+        }
+
+    def _require_intg_contract_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Connector contract is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Connector contract is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._intg_contract_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._intg_contract_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _intg_contract_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/intg/connector-contract/payment", "/api/intg/connector-contract/money"}:
+            return "payment"
+        if path in {"/api/intg/connector-contract/yanolja", "/api/intg/connector-contract/live-yanolja"}:
+            return "yanolja"
+        if path in {"/api/intg/connector-contract/esb", "/api/intg/connector-contract/live-esb"}:
+            return "esb"
+        if path in {"/api/intg/connector-contract/cloudflare", "/api/intg/connector-contract/cf"}:
+            return "cloudflare"
+        if path in {"/api/intg/connector-contract/access", "/api/intg/connector-contract/cf-access"}:
+            return "access"
+        if path in {"/api/intg/connector-contract/specified", "/api/intg/connector-contract/specify"}:
+            return "specified"
+        if path in {"/api/intg/connector-contract/prove", "/api/intg/connector-contract/proven"}:
+            return "prove"
+        if path == "/api/intg/connector-contract/ready":
+            return "ready"
+        if path == "/api/intg/connector-contract/resolve":
+            return "resolve"
+        if path in {"/api/intg/connector-contract/production", "/api/intg/connector-contract/production/mutate"}:
+            return "production"
+        if path in {"/api/intg/connector-contract/fill", "/api/intg/connector-contract/note"}:
+            return "fill"
+        return None
+
+    def _intg_contract_fail(self, exc: _intg_contract.ConnectorContractError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "yanolja_refused",
+            "esb_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "specified_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._intg_contract_quiet(),
+                **_intg_contract.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _intg_contract_write_refused(self, path: str) -> None:
+        identity = self._require_intg_contract_owner()
+        if identity is None:
+            return
+        try:
+            code = self._intg_contract_refuse_code(path)
+            if code == "payment":
+                _intg_contract.refuse_payment({})
+            elif code == "yanolja":
+                _intg_contract.refuse_yanolja({})
+            elif code == "esb":
+                _intg_contract.refuse_esb({})
+            elif code == "cloudflare":
+                _intg_contract.refuse_cloudflare({})
+            elif code == "access":
+                _intg_contract.refuse_access({})
+            elif code == "specified":
+                _intg_contract.refuse_specified({})
+            elif code == "prove":
+                _intg_contract.refuse_proven({})
+            elif code == "ready":
+                _intg_contract.refuse_ready({})
+            elif code == "resolve":
+                _intg_contract.refuse_resolve({})
+            elif code == "production":
+                _intg_contract.refuse_production({})
+            elif code == "fill":
+                _intg_contract.refuse_fill({})
+            else:
+                _intg_contract.refuse_external_write({})
+        except _intg_contract.ConnectorContractError as exc:
+            self._intg_contract_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Connector contract framework does not store a live connector.",
+                **self._intg_contract_quiet(),
+            },
+            status=405,
+        )
+
+    def _intg_contract_page(self) -> None:
+        identity = self._require_intg_contract_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "connector-contract.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Connector contract page is missing.",
+                    **self._intg_contract_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _intg_contract_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_intg_contract_owner()
+        if identity is None:
+            return
+        try:
+            _intg_contract.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                yanolja=(qs.get("yanolja") or [""])[0],
+                esb=(qs.get("esb") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                specified=(qs.get("specified") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _intg_contract.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._intg_contract_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _intg_contract.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._intg_contract_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _intg_contract.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._intg_contract_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _intg_contract.read_kind(ref_id)
+            else:
+                report = _intg_contract.build_framework()
+        except _intg_contract.ConnectorContractError as exc:
+            self._intg_contract_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
