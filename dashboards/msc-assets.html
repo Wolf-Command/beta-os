@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wolf · Asset register</title>
+<style>
+  :root {
+    --bg: #101418;
+    --bg2: #171d23;
+    --line: #2c3842;
+    --text: #eef2f5;
+    --muted: #8b9aa6;
+    --accent: #c4a574;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background:
+      radial-gradient(ellipse 90% 60% at 0% -10%, #243039 0%, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 20px 16px 64px; }
+  h1 { font-family: var(--display); font-weight: 500; font-size: 32px; margin: 0 0 6px; }
+  h2 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 28px 0 8px; }
+  p { line-height: 1.45; }
+  .lede { color: var(--muted); margin: 0 0 16px; }
+  .banner {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    border-left: 3px solid var(--accent);
+    padding: 12px 14px;
+    margin: 12px 0 8px;
+  }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .card {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    padding: 14px;
+    margin: 0;
+  }
+  .k { color: var(--muted); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .v { font-family: var(--display); font-size: 28px; margin: 4px 0; }
+  .note { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Asset register</h1>
+  <p class="lede">An empty register is not an inventory count and not a payment. A location is not an asset. CAP-MSC-01 stays at the ledger value. The ceiling label is BUILT. This page does not resolve the completion row.</p>
+  <div id="banner" class="banner">Reading the register… Empty until a noted row exists. Not an inventory count. Not a payment.</div>
+  <h2>Recorded notes</h2>
+  <div id="rows" class="grid">
+    <article class="card"><div class="k">Notes</div><div class="v">EMPTY</div><p class="note">No noted row. This is not an inventory count and not a payment.</p></article>
+  </div>
+  <h2>Locations are not assets</h2>
+  <div id="venues" class="grid">
+    <article class="card"><div class="k">Locations</div><div class="v">—</div><p class="note">A location id is not an asset and not an inventory count.</p></article>
+  </div>
+</div>
+<script>
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function paint(pack) {
+  var banner = document.getElementById("banner");
+  var flags = pack.honesty || {};
+  var empty = pack.empty ? "empty" : "has notes";
+  banner.textContent = "Register " + empty
+    + ". Recorded notes " + (pack.recorded_count == null ? "unread" : pack.recorded_count)
+    + ". Inventory count unread. Not a payment."
+    + " Ledger " + (flags.maturity || "unread")
+    + ". Ceiling " + (flags.maturity_ceiling || "BUILT")
+    + ". Row not resolved.";
+  var rows = "";
+  (pack.rows || []).forEach(function (row) {
+    rows += '<article class="card"><div class="k">' + esc(row.venue) + '</div>'
+      + '<div class="v">' + esc(row.status || "NOTED") + '</div>'
+      + '<p class="note">' + esc(row.type) + " · " + esc(row.last_service)
+      + " · not a payment · not an inventory count</p></article>";
+  });
+  if (!rows) {
+    rows = '<article class="card"><div class="k">Notes</div><div class="v">EMPTY</div>'
+      + '<p class="note">No noted row. Empty is not an inventory count and not a payment.</p></article>';
+  }
+  document.getElementById("rows").innerHTML = rows;
+  var venues = "";
+  (pack.venues || []).forEach(function (row) {
+    venues += '<article class="card"><div class="k">' + esc(row.location_id) + '</div>'
+      + '<div class="v">NOT AN ASSET</div>'
+      + '<p class="note">' + esc(row.display_name) + " · inventory unread · no payment</p></article>";
+  });
+  if (venues) document.getElementById("venues").innerHTML = venues;
+}
+
+fetch("/api/msc/assets", { headers: { "Accept": "application/json" } })
+  .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
+  .then(function (result) {
+    if (!result.ok) {
+      document.getElementById("banner").textContent = "Read refused. Empty is not an inventory count. No payment. The completion row was not resolved.";
+      return;
+    }
+    paint(result.body);
+  })
+  .catch(function () {
+    document.getElementById("banner").textContent = "Read failed. No inventory count was stored. No payment was stored. The completion row was not resolved.";
+  });
+</script>
+</body>
+</html>

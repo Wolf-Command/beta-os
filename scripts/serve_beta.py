@@ -102,6 +102,7 @@ from core import dr_crown_jewel as _crown_jewel
 from core import crm_connector_prove as _crm_connector
 from core import gws_integrate_prove as _gws_prove
 from core import crm_package_intel as _pkg_intel
+from core import msc_asset_register as _msc_assets
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import ggv_speed_to_lead_prove as _ggv_speed
@@ -1886,6 +1887,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/crm/package-intel/"):
             self._pkg_intel_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-MSC-01 asset register. Owner read. Empty is not an inventory count. No payment.
+        if self._msc_assets_refuse_code(path):
+            self._msc_assets_write_refused(path)
+            return
+        if path == "/api/msc/assets":
+            self._msc_assets_get(qs)
+            return
+        if path == "/api/msc/assets/schema":
+            self._msc_assets_get(qs, view="schema")
+            return
+        if path == "/api/msc/assets/venues":
+            self._msc_assets_get(qs, view="venues")
+            return
+        if path == "/api/msc/assets/register":
+            self._msc_assets_get(qs, view="register")
+            return
+        if path.startswith("/api/msc/assets/"):
+            self._msc_assets_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-CRM-01 bound prove. Owner read. Does not invent a lead or PROVEN.
         if path == "/api/crm/lead-cap-prove":
             self._crm_lead_prove_get()
@@ -2273,6 +2293,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._pkg_intel_page()
             return
         elif path in (
+            "/msc-assets",
+            "/msc-assets/",
+            "/msc-assets.html",
+            "/dashboards/msc-assets.html",
+        ):
+            self._msc_assets_page()
+            return
+        elif path in (
             "/crm-lead-cap-prove",
             "/crm-lead-cap-prove/",
             "/crm-lead-cap-prove.html",
@@ -2418,6 +2446,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/crm/package-intel" or path.startswith("/api/crm/package-intel/"):
             self._pkg_intel_write_refused(path)
+            return
+        if self._msc_assets_refuse_code(path):
+            self._msc_assets_write_refused(path)
+            return
+        if path == "/api/msc/assets/register":
+            self._msc_assets_register()
+            return
+        if path == "/api/msc/assets" or path.startswith("/api/msc/assets/"):
+            self._msc_assets_write_refused(path)
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -2742,6 +2779,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/crm/package-intel" or path.startswith("/api/crm/package-intel/"):
             self._pkg_intel_write_refused(path)
             return
+        if self._msc_assets_refuse_code(path):
+            self._msc_assets_write_refused(path)
+            return
+        if path == "/api/msc/assets" or path.startswith("/api/msc/assets/"):
+            self._msc_assets_write_refused(path)
+            return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
             self._patch_core_work_item(m_wi.group(1))
@@ -2976,6 +3019,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/crm/package-intel" or path.startswith("/api/crm/package-intel/"):
             self._pkg_intel_write_refused(path)
+            return
+        if self._msc_assets_refuse_code(path):
+            self._msc_assets_write_refused(path)
+            return
+        if path == "/api/msc/assets" or path.startswith("/api/msc/assets/"):
+            self._msc_assets_write_refused(path)
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -7059,6 +7108,266 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         out["person_id"] = identity.get("person_id")
         out["honesty"] = _pkg_intel.honesty_flags()
+        self._send_json(out)
+
+    def _require_msc_assets_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Asset register is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Asset register is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "inventory_count": None,
+                    "payment": None,
+                    "service_proved": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "inventory_count": None,
+                    "payment": None,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _msc_assets_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/msc/assets/payment", "/api/msc/assets/money"}:
+            return "payment"
+        if path in {"/api/msc/assets/inventory", "/api/msc/assets/count"}:
+            return "inventory"
+        if path in {"/api/msc/assets/prove", "/api/msc/assets/proven"}:
+            return "prove"
+        if path == "/api/msc/assets/ready":
+            return "ready"
+        if path == "/api/msc/assets/resolve":
+            return "resolve"
+        if path in {"/api/msc/assets/production", "/api/msc/assets/production/mutate"}:
+            return "production"
+        if path in {"/api/msc/assets/fill", "/api/msc/assets/invent"}:
+            return "fill"
+        return None
+
+    def _msc_assets_fail(self, exc: _msc_assets.AssetRegisterError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "inventory_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "inventory_count": None,
+                "payment": None,
+                "service_proved": False,
+                "ledger_write": False,
+                "cr_resolved": False,
+                **_msc_assets.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _msc_assets_write_refused(self, path: str) -> None:
+        identity = self._require_msc_assets_owner()
+        if identity is None:
+            return
+        try:
+            code = self._msc_assets_refuse_code(path)
+            if code == "payment":
+                _msc_assets.refuse_payment({})
+            elif code == "inventory":
+                _msc_assets.refuse_inventory({})
+            elif code == "prove":
+                _msc_assets.refuse_proven({})
+            elif code == "ready":
+                _msc_assets.refuse_ready({})
+            elif code == "resolve":
+                _msc_assets.refuse_resolve({})
+            elif code == "production":
+                _msc_assets.refuse_production({})
+            elif code == "fill":
+                _msc_assets.refuse_fill({})
+            else:
+                _msc_assets.refuse_external_write({})
+        except _msc_assets.AssetRegisterError as exc:
+            self._msc_assets_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Asset register does not invent an inventory count or a payment.",
+                "inventory_count": None,
+                "payment": None,
+                "service_proved": False,
+                "ledger_write": False,
+                "cr_resolved": False,
+            },
+            status=405,
+        )
+
+    def _msc_assets_page(self) -> None:
+        identity = self._require_msc_assets_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "msc-assets.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Asset register page is missing.",
+                    "inventory_count": None,
+                    "payment": None,
+                    "cr_resolved": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _msc_assets_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_msc_assets_owner()
+        if identity is None:
+            return
+        try:
+            _msc_assets.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                count=(qs.get("count") or [""])[0],
+                inventory=(qs.get("inventory") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _msc_assets.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "inventory_count": None,
+                    "payment": None,
+                    "service_proved": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "register":
+                full = _msc_assets.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "empty": full["empty"],
+                    "recorded_count": full["recorded_count"],
+                    "recorded_is_inventory": False,
+                    "inventory_count": None,
+                    "rows": full["rows"],
+                    "payment": None,
+                    "service_proved": False,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "venues":
+                full = _msc_assets.build_register()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "venues": full["venues"],
+                    "locations_are_not_assets": True,
+                    "inventory_count": None,
+                    "payment": None,
+                    "ledger_write": False,
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _msc_assets.read_asset(ref_id)
+            else:
+                report = _msc_assets.build_register()
+        except _msc_assets.AssetRegisterError as exc:
+            self._msc_assets_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _msc_assets_register(self) -> None:
+        identity = self._require_msc_assets_owner()
+        if identity is None:
+            return
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "bad_payload",
+                    "message": f"invalid JSON: {exc}",
+                    "inventory_count": None,
+                    "payment": None,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                },
+                status=400,
+            )
+            return
+        try:
+            out = _msc_assets.register_asset(body, person_id=identity.get("person_id") or "")
+        except _msc_assets.AssetRegisterError as exc:
+            self._msc_assets_fail(exc)
+            return
+        out["person_id"] = identity.get("person_id")
+        out["honesty"] = _msc_assets.honesty_flags()
         self._send_json(out)
 
     def _require_gws_prove_owner(self) -> dict | None:
