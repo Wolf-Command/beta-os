@@ -57,4 +57,4 @@ Production, CAP PROVEN promotions, Devi human retest (PARKED), Alchemist writes,
 Lane `msc-posture-prove-v1` → COMPLETED at completion commit below. Then close_slice → next eligible safe lane (`intg-connector-contract-v1`).
 
 ## Completion commit
-`COMPLETION_COMMIT_PLACEHOLDER`
+`463d84ad108d4a76ebe1ccd0e6d907f4942dbcc9`
