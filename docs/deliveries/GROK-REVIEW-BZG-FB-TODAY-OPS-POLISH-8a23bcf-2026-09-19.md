@@ -1,4 +1,4 @@
-# GROK REVIEW — BZG F&B Today ops polish — PENDING_SHA — 2026-09-19
+# GROK REVIEW — BZG F&B Today ops polish — 8a23bcf — 2026-09-19
 
 ## Verdict
 **PASS**
