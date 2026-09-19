@@ -70,6 +70,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_devi_fb_ops_lead.py | tail -1; python3 -c \"import sqlite3; c=sqlite3.connect('catalog/content_library.sqlite'); e=c.execute(\\\"SELECT status FROM org_assignment_scopes WHERE assignment_id='ASG-DEVI-HFB-UMA-1' AND scope_id='SCOPE-BZG-ENTITY'\\\").fetchone()[0]; a=c.execute(\\\"SELECT status FROM org_assignments WHERE assignment_id='ASG-DEVI-FB-OPS-1'\\\").fetchone()[0]; pay=c.execute(\\\"SELECT COUNT(*) FROM org_role_permissions rp JOIN org_permissions p ON p.permission_id=rp.permission_id WHERE rp.role_id='ROLE-BZG-FB-OPS-LEAD' AND p.code='bzg.pr.payment_approve'\\\").fetchone()[0]; print(e, a, pay)\"; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0); s.close()\"",
       "expect": "PASS=60 FAIL=0; ENDED ACTIVE 0; 8787 True",
       "by": "cursor-devi-fb-ops-lead"
+    },
+    {
+      "id": "bf-model-c-evidence-recon-20260919",
+      "claim": "Read-only Model C evidence recon on Beta. Live ledger is 77 rows. Audited SYSTEM is the read-time sum of locked credits over 77 (19.65 / 77 = 25.5%). Recon note classifies the INTEL sample, remediation backlog, and five zero-hit SPECIFIED caps. No ledger write. No PROVEN or READY invented. Credits table unchanged. WIP four digests unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_model_c_evidence_recon.py | tail -1; python3 -c \"import json; h=open('state/model-c-score-history.jsonl').read().strip().splitlines(); print(json.loads(h[-1])['event']); print('rows', len(json.load(open('state/model-c-baseline-assessments.json'))))\"; python3 -c \"import socket; s=socket.socket(); s.settimeout(1.5); print('8787', s.connect_ex(('127.0.0.1',8787))==0); s.close()\"",
+      "expect": "PASS=44 FAIL=0; pre-INTEL-01-BUILT; rows 77; 8787 True",
+      "by": "cursor-bf-model-c-evidence-recon-20260919"
     }
   ]
 }
