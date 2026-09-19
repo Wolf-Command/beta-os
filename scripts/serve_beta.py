@@ -94,6 +94,7 @@ from core import escalation_burndown as _burndown
 from core import sale_evidence_pack as _sale_pack
 from core import restore_drill as _restore_drill
 from core import crm_lead_cap_prove as _crm_lead_prove
+from core import strat_radar_prove as _strat_radar
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1693,6 +1694,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/crm/lead-cap-prove":
             self._crm_lead_prove_get()
             return
+        # CAP-STRAT-02 prove pack. Owner read. Progress is not this CAP. Does not invent PROVEN.
+        if path == "/api/strat/radar-prove":
+            self._strat_radar_prove_get()
+            return
         # CAP-CORE-11 SOP Factory v1. Owner or role. Anon → 403. Not live without approve.
         if path == "/api/sop":
             self._sop_list()
@@ -1974,6 +1979,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._crm_lead_prove_page()
             return
+        elif path in (
+            "/radar-prove",
+            "/radar-prove/",
+            "/radar-prove.html",
+            "/dashboards/radar-prove.html",
+        ):
+            self._strat_radar_page()
+            return
         elif path in ("/uma-blu-close", "/uma-blu-close/"):
             self.path = "/uma-blu-close.html"
         elif path in ("/bzg", "/bzg/"):
@@ -2036,6 +2049,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/crm/lead-cap-prove" or path.startswith("/api/crm/lead-cap-prove/"):
             self._crm_lead_prove_write_refused(path)
+            return
+        if path == "/api/strat/radar-prove" or path.startswith("/api/strat/radar-prove/"):
+            self._strat_radar_write_refused(path)
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -2278,6 +2294,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/crm/lead-cap-prove" or path.startswith("/api/crm/lead-cap-prove/"):
             self._crm_lead_prove_write_refused(path)
             return
+        if path == "/api/strat/radar-prove" or path.startswith("/api/strat/radar-prove/"):
+            self._strat_radar_write_refused(path)
+            return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
             self._patch_core_work_item(m_wi.group(1))
@@ -2468,6 +2487,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/crm/lead-cap-prove" or path.startswith("/api/crm/lead-cap-prove/"):
             self._crm_lead_prove_write_refused(path)
+            return
+        if path == "/api/strat/radar-prove" or path.startswith("/api/strat/radar-prove/"):
+            self._strat_radar_write_refused(path)
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -3779,6 +3801,125 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "ok": False,
                 "error": "writes_refused",
                 "message": "Lead CAP prove is read-only.",
+                "external_writes": False,
+                "ledger_write": False,
+            },
+            status=405,
+        )
+
+    def _require_strat_radar_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Same Owner gate as the 12WY prove."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Owner Radar prove is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _strat_radar_page(self) -> None:
+        identity = self._require_strat_radar_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "radar-prove.html"
+        if not page.is_file():
+            self._send_json(
+                {"ok": False, "error": "page_missing", "message": "Owner Radar prove page is missing."},
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _strat_radar_prove_get(self) -> None:
+        identity = self._require_strat_radar_owner()
+        if identity is None:
+            return
+        try:
+            report = _strat_radar.build_prove()
+        except _strat_radar.ProveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=400,
+            )
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _strat_radar_hint(self, path: str) -> dict:
+        if path.endswith("/task"):
+            return {"create_task": True}
+        if path.endswith("/progress"):
+            return {"progress": True}
+        if path.endswith("/proven"):
+            return {"proven": True}
+        return {}
+
+    def _strat_radar_write_refused(self, path: str) -> None:
+        identity = self._require_strat_radar_owner()
+        if identity is None:
+            return
+        try:
+            _strat_radar.refuse_external_write(self._strat_radar_hint(path))
+        except _strat_radar.ProveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "create_task": False,
+                    "progress_used_as_cap": False,
+                },
+                status=405,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Owner Radar prove is read-only.",
                 "external_writes": False,
                 "ledger_write": False,
             },
