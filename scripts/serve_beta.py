@@ -108,6 +108,7 @@ from core import msc_cyber_baseline as _msc_cyber
 from core import msc_records_defensibility as _msc_records
 from core import intg_secrets_env as _intg_secrets
 from core import ggv_client_profitability as _ggv_pnl
+from core import ggv_strategy_machine as _ggv_strategy
 from core import msc_posture_prove as _msc_posture
 from core import intg_connector_contract as _intg_contract
 from core import intg_connector_cap_tests as _intg_cap_tests
@@ -2012,6 +2013,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/ggv/client-profitability/"):
             self._ggv_pnl_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-GGV-01 strategy machine. Owner read. Empty is not a live strategy machine.
+        if self._ggv_strategy_refuse_code(path):
+            self._ggv_strategy_write_refused(path)
+            return
+        if path == "/api/ggv/strategy-machine":
+            self._ggv_strategy_get(qs)
+            return
+        if path == "/api/ggv/strategy-machine/schema":
+            self._ggv_strategy_get(qs, view="schema")
+            return
+        if path == "/api/ggv/strategy-machine/kinds":
+            self._ggv_strategy_get(qs, view="kinds")
+            return
+        if path == "/api/ggv/strategy-machine/framework":
+            self._ggv_strategy_get(qs, view="framework")
+            return
+        if path.startswith("/api/ggv/strategy-machine/"):
+            self._ggv_strategy_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-MSC-02 posture prove. Owner read. Empty is not a prove and not READY.
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -2504,6 +2524,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._ggv_pnl_page()
             return
         elif path in (
+            "/ggv-strategy-machine",
+            "/ggv-strategy-machine/",
+            "/ggv-strategy-machine.html",
+            "/dashboards/ggv-strategy-machine.html",
+        ):
+            self._ggv_strategy_page()
+            return
+        elif path in (
             "/msc-posture",
             "/msc-posture/",
             "/msc-posture.html",
@@ -2712,6 +2740,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ggv/client-profitability" or path.startswith("/api/ggv/client-profitability/"):
             self._ggv_pnl_write_refused(path)
+            return
+        if self._ggv_strategy_refuse_code(path):
+            self._ggv_strategy_write_refused(path)
+            return
+        if path == "/api/ggv/strategy-machine" or path.startswith("/api/ggv/strategy-machine/"):
+            self._ggv_strategy_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -3090,6 +3124,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/ggv/client-profitability" or path.startswith("/api/ggv/client-profitability/"):
             self._ggv_pnl_write_refused(path)
             return
+        if self._ggv_strategy_refuse_code(path):
+            self._ggv_strategy_write_refused(path)
+            return
+        if path == "/api/ggv/strategy-machine" or path.startswith("/api/ggv/strategy-machine/"):
+            self._ggv_strategy_write_refused(path)
+            return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
             return
@@ -3378,6 +3418,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ggv/client-profitability" or path.startswith("/api/ggv/client-profitability/"):
             self._ggv_pnl_write_refused(path)
+            return
+        if self._ggv_strategy_refuse_code(path):
+            self._ggv_strategy_write_refused(path)
+            return
+        if path == "/api/ggv/strategy-machine" or path.startswith("/api/ggv/strategy-machine/"):
+            self._ggv_strategy_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -9148,6 +9194,296 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _ggv_pnl.build_register()
         except _ggv_pnl.ClientProfitabilityError as exc:
             self._ggv_pnl_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _ggv_strategy_quiet(self) -> dict:
+        return {
+            "empty_is_machine": False,
+            "empty_is_learning": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_strategy_machine": False,
+            "governed_learning": False,
+            "current": False,
+            "strategy_score": None,
+            "revenue": None,
+            "learn_outcome": None,
+            "metricool_write": False,
+            "metricool_called": False,
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+        }
+
+    def _require_ggv_strategy_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Strategy framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Strategy framework is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._ggv_strategy_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._ggv_strategy_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _ggv_strategy_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/ggv/strategy-machine/payment", "/api/ggv/strategy-machine/money"}:
+            return "payment"
+        if path in {"/api/ggv/strategy-machine/bank", "/api/ggv/strategy-machine/transfer"}:
+            return "bank"
+        if path in {"/api/ggv/strategy-machine/zayen", "/api/ggv/strategy-machine/books"}:
+            return "books"
+        if path in {"/api/ggv/strategy-machine/metricool", "/api/ggv/strategy-machine/metricool-write"}:
+            return "metricool"
+        if path in {
+            "/api/ggv/strategy-machine/strategy-score",
+            "/api/ggv/strategy-machine/revenue",
+            "/api/ggv/strategy-machine/learn-outcome",
+            "/api/ggv/strategy-machine/current",
+        }:
+            return "current"
+        if path in {"/api/ggv/strategy-machine/cloudflare", "/api/ggv/strategy-machine/cf"}:
+            return "cloudflare"
+        if path in {"/api/ggv/strategy-machine/access", "/api/ggv/strategy-machine/cf-access"}:
+            return "access"
+        if path in {"/api/ggv/strategy-machine/prove", "/api/ggv/strategy-machine/proven"}:
+            return "prove"
+        if path == "/api/ggv/strategy-machine/ready":
+            return "ready"
+        if path == "/api/ggv/strategy-machine/resolve":
+            return "resolve"
+        if path in {
+            "/api/ggv/strategy-machine/production",
+            "/api/ggv/strategy-machine/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/ggv/strategy-machine/score", "/api/ggv/strategy-machine/credits"}:
+            return "score"
+        if path in {"/api/ggv/strategy-machine/fill", "/api/ggv/strategy-machine/note"}:
+            return "fill"
+        if path == "/api/ggv/strategy-machine/alchemist":
+            return "alchemist"
+        return None
+
+    def _ggv_strategy_fail(self, exc: _ggv_strategy.StrategyMachineError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "metricool_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._ggv_strategy_quiet(),
+                **_ggv_strategy.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _ggv_strategy_write_refused(self, path: str) -> None:
+        identity = self._require_ggv_strategy_owner()
+        if identity is None:
+            return
+        try:
+            code = self._ggv_strategy_refuse_code(path)
+            if code == "payment":
+                _ggv_strategy.refuse_payment({})
+            elif code == "bank":
+                _ggv_strategy.refuse_bank({})
+            elif code == "books":
+                _ggv_strategy.refuse_books({})
+            elif code == "metricool":
+                _ggv_strategy.refuse_metricool({})
+            elif code == "current":
+                _ggv_strategy.refuse_current({})
+            elif code == "cloudflare":
+                _ggv_strategy.refuse_cloudflare({})
+            elif code == "access":
+                _ggv_strategy.refuse_access({})
+            elif code == "prove":
+                _ggv_strategy.refuse_proven({})
+            elif code == "ready":
+                _ggv_strategy.refuse_ready({})
+            elif code == "resolve":
+                _ggv_strategy.refuse_resolve({})
+            elif code == "production":
+                _ggv_strategy.refuse_production({})
+            elif code == "score":
+                _ggv_strategy.refuse_score({})
+            elif code == "fill":
+                _ggv_strategy.refuse_fill({})
+            elif code == "alchemist":
+                _ggv_strategy.refuse_alchemist({})
+            else:
+                _ggv_strategy.refuse_external_write({})
+        except _ggv_strategy.StrategyMachineError as exc:
+            self._ggv_strategy_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Strategy framework does not store a live strategy machine.",
+                **self._ggv_strategy_quiet(),
+            },
+            status=405,
+        )
+
+    def _ggv_strategy_page(self) -> None:
+        identity = self._require_ggv_strategy_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "ggv-strategy-machine.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Strategy machine page is missing.",
+                    **self._ggv_strategy_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _ggv_strategy_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_ggv_strategy_owner()
+        if identity is None:
+            return
+        try:
+            _ggv_strategy.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                metricool=(qs.get("metricool") or [""])[0],
+                strategy_score=(qs.get("strategy_score") or qs.get("strategy-score") or [""])[0],
+                revenue=(qs.get("revenue") or [""])[0],
+                learn_outcome=(qs.get("learn_outcome") or qs.get("learn-outcome") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _ggv_strategy.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._ggv_strategy_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _ggv_strategy.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._ggv_strategy_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _ggv_strategy.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._ggv_strategy_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _ggv_strategy.read_kind(ref_id)
+            else:
+                report = _ggv_strategy.build_framework()
+        except _ggv_strategy.StrategyMachineError as exc:
+            self._ggv_strategy_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
