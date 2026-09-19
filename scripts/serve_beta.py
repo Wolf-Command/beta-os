@@ -98,6 +98,7 @@ from core import sale_buyer_mode as _buyer_mode
 from core import sale_attack_audit as _attack_audit
 from core import restore_drill as _restore_drill
 from core import failure_domains as _failure_domains
+from core import dr_crown_jewel as _crown_jewel
 from core import crm_connector_prove as _crm_connector
 from core import gws_integrate_prove as _gws_prove
 from core import crm_package_intel as _pkg_intel
@@ -1785,6 +1786,34 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/failure-domains/"):
             self._failure_domains_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-DR-02 crown-jewel register. Owner read. Contents stay closed. Slots stay empty.
+        if self._crown_jewel_refuse_code(path):
+            self._crown_jewel_write_refused(path)
+            return
+        if path == "/api/crown-jewels":
+            self._crown_jewel_get(qs)
+            return
+        if path == "/api/crown-jewels/checklist":
+            self._crown_jewel_get(qs, view="checklist")
+            return
+        if path == "/api/crown-jewels/schema":
+            self._crown_jewel_get(qs, view="schema")
+            return
+        if path == "/api/crown-jewels/register":
+            self._crown_jewel_get(qs, view="register")
+            return
+        if path == "/api/crown-jewels/systems":
+            self._crown_jewel_get(qs, view="systems")
+            return
+        if path == "/api/crown-jewels/log":
+            self._crown_jewel_get(qs, view="log")
+            return
+        if path == "/api/crown-jewels/domains":
+            self._crown_jewel_get(qs, view="domains")
+            return
+        if path.startswith("/api/crown-jewels/"):
+            self._crown_jewel_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-CRM-04 connector prove. Owner read. Klaviyo is not ActiveCampaign. No send.
         if self._crm_connector_refuse_code(path):
             self._crm_connector_write_refused(path)
@@ -2212,6 +2241,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._failure_domains_page()
             return
         elif path in (
+            "/crown-jewels",
+            "/crown-jewels/",
+            "/crown-jewels.html",
+            "/dashboards/crown-jewels.html",
+        ):
+            self._crown_jewel_page()
+            return
+        elif path in (
             "/crm-connector-prove",
             "/crm-connector-prove/",
             "/crm-connector-prove.html",
@@ -2354,6 +2391,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/failure-domains" or path.startswith("/api/failure-domains/"):
             self._failure_domains_write_refused(path)
+            return
+        if path == "/api/crown-jewels" or path.startswith("/api/crown-jewels/"):
+            self._crown_jewel_write_refused(path)
             return
         if path == "/api/crm-connector-prove" or path.startswith("/api/crm-connector-prove/"):
             self._crm_connector_write_refused(path)
@@ -2669,6 +2709,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/failure-domains" or path.startswith("/api/failure-domains/"):
             self._failure_domains_write_refused(path)
             return
+        if path == "/api/crown-jewels" or path.startswith("/api/crown-jewels/"):
+            self._crown_jewel_write_refused(path)
+            return
         if path == "/api/crm-connector-prove" or path.startswith("/api/crm-connector-prove/"):
             self._crm_connector_write_refused(path)
             return
@@ -2900,6 +2943,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/failure-domains" or path.startswith("/api/failure-domains/"):
             self._failure_domains_write_refused(path)
+            return
+        if path == "/api/crown-jewels" or path.startswith("/api/crown-jewels/"):
+            self._crown_jewel_write_refused(path)
             return
         if path == "/api/crm-connector-prove" or path.startswith("/api/crm-connector-prove/"):
             self._crm_connector_write_refused(path)
@@ -6066,6 +6112,352 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "ledger_write": False,
                 "live_restore": False,
                 "independence_proved": False,
+                "slots_filled": False,
+            },
+            status=405,
+        )
+
+    def _require_crown_jewel_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Crown-jewel register is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Crown-jewel register is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "live_restore": False,
+                    "production_mutated": False,
+                    "nas_destructive": False,
+                    "b2_destructive": False,
+                    "independence_proved": False,
+                    "crown_jewels_opened": False,
+                    "protection_proved": False,
+                    "protected_count": None,
+                    "cr_resolved": False,
+                    "slots_filled": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "external_writes": False,
+                    "live_restore": False,
+                    "crown_jewels_opened": False,
+                    "independence_proved": False,
+                    "cr_resolved": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _crown_jewel_refuse_code(self, path: str) -> str | None:
+        if path in {
+            "/api/crown-jewels/run",
+            "/api/crown-jewels/restore",
+            "/api/crown-jewels/execute",
+        }:
+            return "live_restore"
+        if path in {"/api/crown-jewels/nas", "/api/crown-jewels/nas/delete"}:
+            return "nas"
+        if path in {"/api/crown-jewels/b2", "/api/crown-jewels/b2/delete"}:
+            return "b2"
+        if path in {"/api/crown-jewels/production", "/api/crown-jewels/production/mutate"}:
+            return "production"
+        if path in {"/api/crown-jewels/prove", "/api/crown-jewels/independence"}:
+            return "prove"
+        if path == "/api/crown-jewels/collapse":
+            return "collapse"
+        if path == "/api/crown-jewels/fill":
+            return "fill"
+        if path in {"/api/crown-jewels/playbook", "/api/crown-jewels/open", "/api/crown-jewels/copy"}:
+            return "playbook"
+        if path in {"/api/crown-jewels/protect", "/api/crown-jewels/protected"}:
+            return "protect"
+        if path == "/api/crown-jewels/resolve":
+            return "resolve"
+        if path == "/api/crown-jewels/ready":
+            return "ready"
+        if path in {"/api/crown-jewels/prove-ready", "/api/crown-jewels/proven"}:
+            return "proven"
+        return None
+
+    def _crown_jewel_fail(self, exc: _crown_jewel.CrownJewelError, *, default: int = 400) -> None:
+        status = default
+        if exc.code == "not_found":
+            status = 404
+        elif exc.code in {
+            "live_restore_refused",
+            "production_refused",
+            "nas_destructive_refused",
+            "b2_destructive_refused",
+            "ready_refused",
+            "proven_refused",
+            "collapse_refused",
+            "independence_refused",
+            "slots_refused",
+            "playbook_refused",
+            "protection_refused",
+            "resolve_refused",
+            "success_refused",
+            "writes_refused",
+            "alchemist_refused",
+        }:
+            status = 405
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "external_writes": False,
+                "ledger_write": False,
+                "live_restore": False,
+                "production_mutated": False,
+                "nas_destructive": False,
+                "b2_destructive": False,
+                "beta_equals_production": False,
+                "independence_proved": False,
+                "protection_proved": False,
+                "crown_jewels_opened": False,
+                "protected_count": None,
+                "contents": None,
+                "slots_filled": False,
+                "cr_resolved": False,
+                **_crown_jewel.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _crown_jewel_page(self) -> None:
+        identity = self._require_crown_jewel_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "crown-jewels.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Crown-jewel page is missing.",
+                    "live_restore": False,
+                    "crown_jewels_opened": False,
+                    "cr_resolved": False,
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _crown_jewel_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_crown_jewel_owner()
+        if identity is None:
+            return
+        try:
+            _crown_jewel.guard_query(
+                restore=(qs.get("restore") or [""])[0],
+                run=(qs.get("run") or [""])[0],
+                delete=(qs.get("delete") or [""])[0],
+                nas=(qs.get("nas") or [""])[0],
+                b2=(qs.get("b2") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                collapse=(qs.get("collapse") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                playbook=(qs.get("playbook") or [""])[0],
+                open=(qs.get("open") or [""])[0],
+                protect=(qs.get("protect") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+            )
+            if view == "checklist":
+                full = _crown_jewel.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "checklist": full["checklist"],
+                    "checklist_count": full["checklist_count"],
+                    "checklist_executed": full["checklist_executed"],
+                    "status": full["status"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "live_restore": False,
+                    "independence_proved": False,
+                    "crown_jewels_opened": False,
+                    "slots_filled": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "schema":
+                full = _crown_jewel.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "live_restore": False,
+                    "crown_jewels_opened": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "log":
+                full = _crown_jewel.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "log": full["log"],
+                    "log_valid": full["log_valid"],
+                    "status": full["status"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    "live_restore": False,
+                    "crown_jewels_opened": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                    "honesty": full["honesty"],
+                }
+            elif view == "domains":
+                full = _crown_jewel.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "domains": full["domains"],
+                    "domain_count": full["domain_count"],
+                    "separation": full["separation"],
+                    "beta_equals_production": False,
+                    "independence_proved": False,
+                    "slots_filled": False,
+                    "live_restore": False,
+                    "crown_jewels_opened": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                    "honesty": full["honesty"],
+                }
+            elif view in {"register", "systems"}:
+                full = _crown_jewel.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "systems": full["systems"],
+                    "system_count": full["system_count"],
+                    "identified_count": full["identified_count"],
+                    "protected_count": None,
+                    "identified_is_protected": False,
+                    "crown_jewels_opened": False,
+                    "contents": None,
+                    "protection_proved": False,
+                    "independence_proved": False,
+                    "live_restore": False,
+                    "ledger_write": False,
+                    "cr_resolved": False,
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                try:
+                    report = _crown_jewel.read_step(ref_id)
+                except _crown_jewel.CrownJewelError as exc:
+                    if exc.code != "not_found":
+                        raise
+                    try:
+                        report = _crown_jewel.read_system(ref_id)
+                    except _crown_jewel.CrownJewelError as exc2:
+                        if exc2.code != "not_found":
+                            raise
+                        report = _crown_jewel.read_domain(ref_id)
+            else:
+                report = _crown_jewel.build_framework()
+        except _crown_jewel.CrownJewelError as exc:
+            self._crown_jewel_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "read_failed",
+                    "message": type(exc).__name__,
+                    "external_writes": False,
+                    "ledger_write": False,
+                    "live_restore": False,
+                    "crown_jewels_opened": False,
+                    "cr_resolved": False,
+                },
+                status=500,
+            )
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _crown_jewel_write_refused(self, path: str) -> None:
+        identity = self._require_crown_jewel_owner()
+        if identity is None:
+            return
+        try:
+            code = self._crown_jewel_refuse_code(path)
+            if code == "live_restore":
+                _crown_jewel.refuse_live_restore({})
+            elif code == "nas":
+                _crown_jewel.refuse_nas({})
+            elif code == "b2":
+                _crown_jewel.refuse_b2({})
+            elif code == "production":
+                _crown_jewel.refuse_production({})
+            elif code == "prove":
+                _crown_jewel.refuse_independence({})
+            elif code == "collapse":
+                _crown_jewel.refuse_collapse({})
+            elif code == "fill":
+                _crown_jewel.refuse_fill({})
+            elif code == "playbook":
+                _crown_jewel.refuse_playbook({})
+            elif code == "protect":
+                _crown_jewel.refuse_protection({})
+            elif code == "resolve":
+                _crown_jewel.refuse_resolve({})
+            elif code == "ready":
+                _crown_jewel.refuse_ready({})
+            elif code == "proven":
+                _crown_jewel.refuse_proven({})
+            else:
+                _crown_jewel.refuse_external_write({})
+        except _crown_jewel.CrownJewelError as exc:
+            self._crown_jewel_fail(exc, default=405)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Crown-jewel register is read-only. Contents stay closed. Slots stay empty.",
+                "external_writes": False,
+                "ledger_write": False,
+                "live_restore": False,
+                "crown_jewels_opened": False,
+                "independence_proved": False,
+                "protected_count": None,
+                "cr_resolved": False,
                 "slots_filled": False,
             },
             status=405,

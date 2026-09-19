@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wolf · Crown jewels</title>
+<style>
+  :root {
+    --bg: #101418;
+    --bg2: #171d23;
+    --line: #2c3842;
+    --text: #eef2f5;
+    --muted: #8b9aa6;
+    --accent: #c4a574;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background:
+      radial-gradient(ellipse 90% 60% at 0% -10%, #243039 0%, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 20px 16px 64px; }
+  h1 { font-family: var(--display); font-weight: 500; font-size: 32px; margin: 0 0 6px; }
+  h2 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 28px 0 8px; }
+  p { line-height: 1.45; }
+  .lede { color: var(--muted); margin: 0 0 16px; }
+  .banner {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    border-left: 3px solid var(--accent);
+    padding: 12px 14px;
+    margin: 12px 0 8px;
+  }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .card {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    padding: 14px;
+    margin: 0;
+  }
+  .k { color: var(--muted); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .v { font-family: var(--display); font-size: 28px; margin: 4px 0; }
+  .note { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Crown jewels</h1>
+  <p class="lede">CAP-DR-02 names crown-jewel systems and keeps their contents closed. Beta is not Production. Every independence slot stays empty. Naming a system is not protecting it. Live restore is refused. NAS and B2 are not contacted. Production is not written. This page does not resolve the completion row.</p>
+  <div id="banner" class="banner">Reading the register… Contents stay closed. Slots stay empty.</div>
+  <h2>Systems</h2>
+  <div id="systems" class="grid">
+    <article class="card"><div class="k">Systems</div><div class="v">HIDDEN</div><p class="note">Named only. Contents are not opened.</p></article>
+  </div>
+  <h2>Failure domains</h2>
+  <div id="domains" class="grid">
+    <article class="card"><div class="k">Domains</div><div class="v">EMPTY</div><p class="note">Named only. Not contacted.</p></article>
+  </div>
+  <h2>Checklist</h2>
+  <div id="steps" class="grid">
+    <article class="card"><div class="k">Checklist</div><div class="v">NOT_RUN</div><p class="note">No step has been executed.</p></article>
+  </div>
+</div>
+<script>
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function paint(pack) {
+  var banner = document.getElementById("banner");
+  var flags = pack.honesty || {};
+  var split = pack.separation || {};
+  banner.textContent = "Skeleton " + (pack.framework_skeleton || "BUILT")
+    + ". Ledger " + (flags.maturity || "unread")
+    + ". Status " + (pack.status || "NOT_RUN")
+    + ". Contents closed. Protected count is not a number. Independence slot " + (split.slot || "EMPTY") + ".";
+  var systems = "";
+  (pack.systems || []).forEach(function (row) {
+    systems += '<article class="card"><div class="k">' + esc(row.id) + '</div>'
+      + '<div class="v">' + esc(row.visibility || "HIDDEN") + '</div>'
+      + '<p class="note">' + esc(row.name) + " · contents closed · slot " + esc(row.slot || "EMPTY") + "</p></article>";
+  });
+  if (systems) document.getElementById("systems").innerHTML = systems;
+  var domains = "";
+  (pack.domains || []).forEach(function (row) {
+    domains += '<article class="card"><div class="k">' + esc(row.id) + '</div>'
+      + '<div class="v">' + esc(row.slot || "EMPTY") + '</div>'
+      + '<p class="note">' + esc(row.name) + " · not contacted</p></article>";
+  });
+  if (domains) document.getElementById("domains").innerHTML = domains;
+  var html = "";
+  (pack.checklist || []).forEach(function (row) {
+    html += '<article class="card"><div class="k">' + esc(row.id) + '</div>'
+      + '<div class="v">' + esc(row.slot || "EMPTY") + '</div>'
+      + '<p class="note">' + esc(row.title) + '</p></article>';
+  });
+  if (html) document.getElementById("steps").innerHTML = html;
+}
+
+fetch("/api/crown-jewels", { headers: { "Accept": "application/json" } })
+  .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
+  .then(function (result) {
+    if (!result.ok) {
+      document.getElementById("banner").textContent = "Read refused. Contents stay closed. Slots stay empty.";
+      return;
+    }
+    paint(result.body);
+  })
+  .catch(function () {
+    document.getElementById("banner").textContent = "Read failed. No restore was run. No crown jewel was opened.";
+  });
+</script>
+</body>
+</html>
