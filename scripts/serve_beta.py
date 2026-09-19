@@ -89,6 +89,7 @@ from core import lead_spine as _lead_spine
 from core import integration_health as _integration_health
 from core import tech_capability_registry as _tech_registry
 from core import sop_factory as _sop
+from core import strat_12wy_prove as _strat_12wy
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1643,6 +1644,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if m_reg:
             self._tech_registry_get(qs, m_reg.group(1))
             return
+        # CAP-STRAT-01 prove pack. Owner read. Does not invent PROVEN.
+        if path == "/api/strat/12wy-prove":
+            self._strat_12wy_prove()
+            return
         # CAP-CORE-11 SOP Factory v1. Owner or role. Anon → 403. Not live without approve.
         if path == "/api/sop":
             self._sop_list()
@@ -1884,6 +1889,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._tech_registry_page()
             return
+        elif path in (
+            "/12wy-prove",
+            "/12wy-prove/",
+            "/12wy-prove.html",
+            "/dashboards/12wy-prove.html",
+        ):
+            self._strat_12wy_page()
+            return
         elif path in ("/uma-blu-close", "/uma-blu-close/"):
             self.path = "/uma-blu-close.html"
         elif path in ("/bzg", "/bzg/"):
@@ -1931,6 +1944,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/tech-registry" or path.startswith("/api/tech-registry/"):
             self._tech_registry_write_refused()
+            return
+        if path == "/api/strat/12wy-prove":
+            self._strat_12wy_write_refused()
             return
         if path == "/api/planner/save":
             self._save_slot()
@@ -2158,6 +2174,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/tech-registry" or path.startswith("/api/tech-registry/"):
             self._tech_registry_write_refused()
             return
+        if path == "/api/strat/12wy-prove":
+            self._strat_12wy_write_refused()
+            return
         m_wi = re.match(r"^/api/core/work-items/([^/]+)$", path)
         if m_wi:
             self._patch_core_work_item(m_wi.group(1))
@@ -2333,6 +2352,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == "/api/tech-registry" or path.startswith("/api/tech-registry/"):
             self._tech_registry_write_refused()
+            return
+        if path == "/api/strat/12wy-prove":
+            self._strat_12wy_write_refused()
             return
         # Legacy whole-plan PUT no longer supported as bulk replace;
         # accept single-slot body via save semantics for compat.
@@ -3415,6 +3437,115 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "ok": False,
                 "error": "writes_refused",
                 "message": "Tech registry is read-only. No external writes.",
+                "external_writes": False,
+                "ledger_write": False,
+            },
+            status=405,
+        )
+
+    def _require_strat_12wy_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Same Owner gate as the tech registry."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "12WY prove is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _strat_12wy_page(self) -> None:
+        identity = self._require_strat_12wy_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "12wy-prove.html"
+        if not page.is_file():
+            self._send_json(
+                {"ok": False, "error": "page_missing", "message": "12WY prove page is missing."},
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _strat_12wy_prove(self) -> None:
+        identity = self._require_strat_12wy_owner()
+        if identity is None:
+            return
+        try:
+            report = _strat_12wy.build_prove()
+        except _strat_12wy.ProveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=400,
+            )
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _strat_12wy_write_refused(self) -> None:
+        identity = self._require_strat_12wy_owner()
+        if identity is None:
+            return
+        try:
+            _strat_12wy.refuse_external_write({})
+        except _strat_12wy.ProveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "external_writes": False,
+                    "ledger_write": False,
+                    **_strat_12wy.honesty_flags(),
+                },
+                status=405,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "12WY prove pack is read-only.",
                 "external_writes": False,
                 "ledger_write": False,
             },
