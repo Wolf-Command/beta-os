@@ -84,6 +84,7 @@ from core import uma_devi_p0 as _uma_p0
 from core import esb_close_snapshot as _esb_close_snapshot
 from core import progress_read_model as _progress
 from core import intel_orchestration as _intel
+from core import intel_eval_cost as _intel_cost
 from core import lead_spine as _lead_spine
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
@@ -1611,6 +1612,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/intel/orchestrate":
             self._intel_orchestrate(qs)
             return
+        # Eval/cost ledger. Owner only. No price lookup, no billing.
+        if path == "/api/intel/eval-cost":
+            self._intel_eval_cost_get(qs)
+            return
         # Matt Progress Dashboard — Owner / PERS-MATT only
         if path == "/api/progress/honesty":
             self._progress_honesty()
@@ -2082,6 +2087,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
         )
         if m_lead_act:
             self._post_lead_action(m_lead_act.group(1), m_lead_act.group(2))
+            return
+
+        if path == "/api/intel/eval-cost":
+            self._intel_eval_cost_post()
             return
 
         self._send_err(404, "not found")
@@ -3211,6 +3220,71 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "person_id": identity.get("person_id"),
                 **out,
             }
+        )
+
+    def _intel_eval_cost_get(self, qs: dict) -> None:
+        """GET /api/intel/eval-cost — Owner summary. Does not create the ledger."""
+        identity = self._require_progress_owner()
+        if identity is None:
+            return
+        raw_limit = (qs.get("limit") or ["20"])[0]
+        try:
+            limit = int(raw_limit)
+        except (TypeError, ValueError):
+            self._send_json(
+                {"ok": False, "error": "bad_limit", "message": "limit must be an integer"},
+                status=400,
+            )
+            return
+        try:
+            out = _intel_cost.read_summary(identity.get("person_id"), limit=limit)
+        except _intel_cost.IntelEvalCostError as exc:
+            status = 403 if exc.code == "denied" else 400
+            self._send_json(
+                {"ok": False, "error": exc.code, "message": str(exc), **_intel_cost.honesty_flags()},
+                status=status,
+            )
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json(
+            {"ok": True, "person_id": identity.get("person_id"), **out}
+        )
+
+    def _intel_eval_cost_post(self) -> None:
+        """POST /api/intel/eval-cost — append one call. Refuses billing and price lookup."""
+        identity = self._require_progress_owner()
+        if identity is None:
+            return
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {"ok": False, "error": "bad_payload", "message": f"invalid JSON: {exc}"},
+                status=400,
+            )
+            return
+        try:
+            out = _intel_cost.record_call(body, person_id=identity.get("person_id"))
+        except _intel_cost.IntelEvalCostError as exc:
+            status = 403 if exc.code == "denied" else 400
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "appended": False,
+                    **_intel_cost.honesty_flags(),
+                },
+                status=status,
+            )
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json(
+            {"ok": True, "person_id": identity.get("person_id"), **out}
         )
 
     # ----- Uma Blu ops (Devi commissioning: fail-closed) -----
