@@ -56,4 +56,4 @@ Production, CAP PROVEN promotions, Devi human retest (PARKED), Alchemist writes,
 Lane `ggv-client-profitability-v1` → COMPLETED at completion commit below. Then close_slice → mission drain (last w7 lane) → arm next wave / mission_continue_if_idle.
 
 ## Completion commit
-PENDING_LANE_COMMIT
+`1af6c368efb362ea144df4494209162a65f4ce54`
