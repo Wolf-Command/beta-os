@@ -252,6 +252,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_fin_mgmt_reporting.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-FIN-05'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-20b4dd71cc0fcc88';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/fin/mgmt-reporting; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/fin-mgmt-reporting; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
       "expect": "PASS=266 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
       "by": "cursor-fin-mgmt-reporting-v1"
+    },
+    {
+      "id": "bf-fin-intercompany-billing-v1-20260920",
+      "claim": "Beta Owner Intercompany Billing framework names invoice, allocation, arms_length, ar_ap, checklist, and notes slots and leaves every slot empty. Empty is not live intercompany billing and not proof of GGV↔AMG/BZG billing machinery. Unauth /api/fin/intercompany-billing and /fin-intercompany-billing are 403. Owner payment, bank write, Zayen books, invented invoices/allocations/AR/AP, tax treatment, guest blast, staff blast, public post, Cloudflare mutate, Access mutate, prove, ready, resolve, production, score, alchemist, and fill are refused. CAP-FIN-06 stays SPECIFIED. Ceiling label is BUILT. CR-48e86edd40f5c009 stays OPEN. Paired honesty with CAP-GGV-06 — client-mode PROVEN not claimed. No PROVEN or READY invented. Ledger stays 77 rows. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_fin_intercompany_billing.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-FIN-06'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-48e86edd40f5c009';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/fin/intercompany-billing; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/fin-intercompany-billing; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=292 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
+      "by": "cursor-fin-intercompany-billing-v1"
     }
   ]
 }

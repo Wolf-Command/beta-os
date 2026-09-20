@@ -121,6 +121,7 @@ from core import hr_training_competency as _hr_train
 from core import hr_payroll_inputs as _hr_pay
 from core import hr_retention_signals as _hr_ret
 from core import fin_mgmt_reporting as _fin_mgmt
+from core import fin_intercompany_billing as _fin_ic
 from core import ggv_intercompany_client as _ggv_ic
 from core import bzg_venue_pnl as _bzg_pnl
 from core import bzg_variance_waste as _bzg_var
@@ -2372,6 +2373,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/fin/mgmt-reporting/"):
             self._fin_mgmt_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-FIN-06 Intercompany Billing. Owner read. Empty is not live intercompany billing.
+        if self._fin_ic_refuse_code(path):
+            self._fin_ic_write_refused(path)
+            return
+        if path == "/api/fin/intercompany-billing":
+            self._fin_ic_get(qs)
+            return
+        if path == "/api/fin/intercompany-billing/schema":
+            self._fin_ic_get(qs, view="schema")
+            return
+        if path == "/api/fin/intercompany-billing/kinds":
+            self._fin_ic_get(qs, view="kinds")
+            return
+        if path == "/api/fin/intercompany-billing/framework":
+            self._fin_ic_get(qs, view="framework")
+            return
+        if path.startswith("/api/fin/intercompany-billing/"):
+            self._fin_ic_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-MSC-02 posture prove. Owner read. Empty is not a prove and not READY.
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -3008,6 +3028,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._fin_mgmt_page()
             return
         elif path in (
+            "/fin-intercompany-billing",
+            "/fin-intercompany-billing/",
+            "/fin-intercompany-billing.html",
+            "/dashboards/fin-intercompany-billing.html",
+        ):
+            self._fin_ic_page()
+            return
+        elif path in (
             "/msc-posture",
             "/msc-posture/",
             "/msc-posture.html",
@@ -3324,6 +3352,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/mgmt-reporting" or path.startswith("/api/fin/mgmt-reporting/"):
             self._fin_mgmt_write_refused(path)
+            return
+        if self._fin_ic_refuse_code(path):
+            self._fin_ic_write_refused(path)
+            return
+        if path == "/api/fin/intercompany-billing" or path.startswith("/api/fin/intercompany-billing/"):
+            self._fin_ic_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -3810,6 +3844,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/fin/mgmt-reporting" or path.startswith("/api/fin/mgmt-reporting/"):
             self._fin_mgmt_write_refused(path)
             return
+        if self._fin_ic_refuse_code(path):
+            self._fin_ic_write_refused(path)
+            return
+        if path == "/api/fin/intercompany-billing" or path.startswith("/api/fin/intercompany-billing/"):
+            self._fin_ic_write_refused(path)
+            return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
             return
@@ -4206,6 +4246,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/mgmt-reporting" or path.startswith("/api/fin/mgmt-reporting/"):
             self._fin_mgmt_write_refused(path)
+            return
+        if self._fin_ic_refuse_code(path):
+            self._fin_ic_write_refused(path)
+            return
+        if path == "/api/fin/intercompany-billing" or path.startswith("/api/fin/intercompany-billing/"):
+            self._fin_ic_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -14228,6 +14274,350 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _fin_mgmt.build_framework()
         except _fin_mgmt.FinMgmtReportingError as exc:
             self._fin_mgmt_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+
+    def _fin_ic_quiet(self) -> dict:
+        return {
+            "empty_is_billing": False,
+            "empty_is_billing_machinery": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_billing": False,
+            "billing_machinery": False,
+            "ggv_client_mode_proven": False,
+            "current": False,
+            "invoice": None,
+            "allocation": None,
+            "arms_length": None,
+            "ar_ap": None,
+            "checklist": None,
+            "tax_treatment": None,
+            "tax_claimed": False,
+            "guest_blast": False,
+            "staff_blast": False,
+            "public_post": False,
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_invoice": False,
+            "invented_allocation": False,
+            "invented_ar_ap": False,
+            "invented_tax": False,
+        }
+
+    def _require_fin_ic_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Intercompany billing framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Intercompany billing is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._fin_ic_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._fin_ic_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _fin_ic_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/fin/intercompany-billing/payment", "/api/fin/intercompany-billing/money"}:
+            return "payment"
+        if path in {"/api/fin/intercompany-billing/bank", "/api/fin/intercompany-billing/transfer"}:
+            return "bank"
+        if path in {"/api/fin/intercompany-billing/zayen", "/api/fin/intercompany-billing/books"}:
+            return "books"
+        if path in {"/api/fin/intercompany-billing/tax", "/api/fin/intercompany-billing/tax-treatment"}:
+            return "tax"
+        if path in {
+            "/api/fin/intercompany-billing/guest-blast",
+            "/api/fin/intercompany-billing/blast",
+        }:
+            return "guest_blast"
+        if path in {
+            "/api/fin/intercompany-billing/staff-blast",
+            "/api/fin/intercompany-billing/staff-broadcast",
+        }:
+            return "staff_blast"
+        if path in {
+            "/api/fin/intercompany-billing/public-post",
+            "/api/fin/intercompany-billing/public",
+            "/api/fin/intercompany-billing/post",
+            "/api/fin/intercompany-billing/publish",
+        }:
+            return "public_post"
+        if path == "/api/fin/intercompany-billing/current":
+            return "current"
+        if path in {"/api/fin/intercompany-billing/cloudflare", "/api/fin/intercompany-billing/cf"}:
+            return "cloudflare"
+        if path in {"/api/fin/intercompany-billing/access", "/api/fin/intercompany-billing/cf-access"}:
+            return "access"
+        if path in {"/api/fin/intercompany-billing/prove", "/api/fin/intercompany-billing/proven"}:
+            return "prove"
+        if path == "/api/fin/intercompany-billing/ready":
+            return "ready"
+        if path == "/api/fin/intercompany-billing/resolve":
+            return "resolve"
+        if path in {
+            "/api/fin/intercompany-billing/production",
+            "/api/fin/intercompany-billing/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/fin/intercompany-billing/score", "/api/fin/intercompany-billing/credits"}:
+            return "score"
+        if path in {"/api/fin/intercompany-billing/fill", "/api/fin/intercompany-billing/note"}:
+            return "fill"
+        if path == "/api/fin/intercompany-billing/alchemist":
+            return "alchemist"
+        return None
+
+    def _fin_ic_fail(self, exc: _fin_ic.FinIntercompanyBillingError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "tax_refused",
+            "guest_blast_refused",
+            "staff_blast_refused",
+            "public_post_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._fin_ic_quiet(),
+                **_fin_ic.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _fin_ic_write_refused(self, path: str) -> None:
+        identity = self._require_fin_ic_owner()
+        if identity is None:
+            return
+        try:
+            code = self._fin_ic_refuse_code(path)
+            tail = path.rstrip("/").rsplit("/", 1)[-1]
+            if code is None and tail in {
+                "invoice",
+                "invoices",
+                "allocation",
+                "allocations",
+                "ar_ap",
+                "ar-ap",
+                "arms_length",
+                "arms-length",
+            }:
+                code = "current"
+            elif code is None and tail in {"notes", "checklist"}:
+                code = "fill"
+            if code == "payment":
+                _fin_ic.refuse_payment({})
+            elif code == "bank":
+                _fin_ic.refuse_bank({})
+            elif code == "books":
+                _fin_ic.refuse_books({})
+            elif code == "tax":
+                _fin_ic.refuse_tax({})
+            elif code == "guest_blast":
+                _fin_ic.refuse_guest_blast({})
+            elif code == "staff_blast":
+                _fin_ic.refuse_staff_blast({})
+            elif code == "public_post":
+                _fin_ic.refuse_public_post({})
+            elif code == "current":
+                _fin_ic.refuse_current({})
+            elif code == "cloudflare":
+                _fin_ic.refuse_cloudflare({})
+            elif code == "access":
+                _fin_ic.refuse_access({})
+            elif code == "prove":
+                _fin_ic.refuse_proven({})
+            elif code == "ready":
+                _fin_ic.refuse_ready({})
+            elif code == "resolve":
+                _fin_ic.refuse_resolve({})
+            elif code == "production":
+                _fin_ic.refuse_production({})
+            elif code == "score":
+                _fin_ic.refuse_score({})
+            elif code == "fill":
+                _fin_ic.refuse_fill({})
+            elif code == "alchemist":
+                _fin_ic.refuse_alchemist({})
+            else:
+                _fin_ic.refuse_external_write({})
+        except _fin_ic.FinIntercompanyBillingError as exc:
+            self._fin_ic_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Intercompany billing framework does not store live intercompany billing.",
+                **self._fin_ic_quiet(),
+            },
+            status=405,
+        )
+
+    def _fin_ic_page(self) -> None:
+        identity = self._require_fin_ic_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "fin-intercompany-billing.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Intercompany Billing page is missing.",
+                    **self._fin_ic_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _fin_ic_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_fin_ic_owner()
+        if identity is None:
+            return
+        try:
+            _fin_ic.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                invoice=(qs.get("invoice") or [""])[0],
+                allocation=(qs.get("allocation") or [""])[0],
+                ar_ap=(qs.get("ar_ap") or qs.get("ar-ap") or [""])[0],
+                arms_length=(qs.get("arms_length") or qs.get("arms-length") or [""])[0],
+                checklist=(qs.get("checklist") or [""])[0],
+                tax=(qs.get("tax") or qs.get("tax-treatment") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                guest_blast=(qs.get("guest_blast") or qs.get("guest-blast") or [""])[0],
+                staff_blast=(qs.get("staff_blast") or qs.get("staff-blast") or [""])[0],
+                public_post=(qs.get("public_post") or qs.get("public-post") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _fin_ic.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "paired_cap": full["paired_cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._fin_ic_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _fin_ic.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "paired_cap": full["paired_cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._fin_ic_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _fin_ic.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "paired_cap": full["paired_cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._fin_ic_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _fin_ic.read_kind(ref_id)
+            else:
+                report = _fin_ic.build_framework()
+        except _fin_ic.FinIntercompanyBillingError as exc:
+            self._fin_ic_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
