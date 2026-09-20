@@ -120,6 +120,7 @@ from core import hr_hiring_onboarding as _hr_hire
 from core import hr_training_competency as _hr_train
 from core import hr_payroll_inputs as _hr_pay
 from core import hr_retention_signals as _hr_ret
+from core import fin_mgmt_reporting as _fin_mgmt
 from core import ggv_intercompany_client as _ggv_ic
 from core import bzg_venue_pnl as _bzg_pnl
 from core import bzg_variance_waste as _bzg_var
@@ -2352,6 +2353,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/hr/retention-signals/"):
             self._hr_ret_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-FIN-05 Management Reporting. Owner read. Empty is not a live management-reporting pack.
+        if self._fin_mgmt_refuse_code(path):
+            self._fin_mgmt_write_refused(path)
+            return
+        if path == "/api/fin/mgmt-reporting":
+            self._fin_mgmt_get(qs)
+            return
+        if path == "/api/fin/mgmt-reporting/schema":
+            self._fin_mgmt_get(qs, view="schema")
+            return
+        if path == "/api/fin/mgmt-reporting/kinds":
+            self._fin_mgmt_get(qs, view="kinds")
+            return
+        if path == "/api/fin/mgmt-reporting/framework":
+            self._fin_mgmt_get(qs, view="framework")
+            return
+        if path.startswith("/api/fin/mgmt-reporting/"):
+            self._fin_mgmt_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-MSC-02 posture prove. Owner read. Empty is not a prove and not READY.
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -2980,6 +3000,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._hr_ret_page()
             return
         elif path in (
+            "/fin-mgmt-reporting",
+            "/fin-mgmt-reporting/",
+            "/fin-mgmt-reporting.html",
+            "/dashboards/fin-mgmt-reporting.html",
+        ):
+            self._fin_mgmt_page()
+            return
+        elif path in (
             "/msc-posture",
             "/msc-posture/",
             "/msc-posture.html",
@@ -3290,6 +3318,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/hr/retention-signals" or path.startswith("/api/hr/retention-signals/"):
             self._hr_ret_write_refused(path)
+            return
+        if self._fin_mgmt_refuse_code(path):
+            self._fin_mgmt_write_refused(path)
+            return
+        if path == "/api/fin/mgmt-reporting" or path.startswith("/api/fin/mgmt-reporting/"):
+            self._fin_mgmt_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -3770,6 +3804,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/hr/retention-signals" or path.startswith("/api/hr/retention-signals/"):
             self._hr_ret_write_refused(path)
             return
+        if self._fin_mgmt_refuse_code(path):
+            self._fin_mgmt_write_refused(path)
+            return
+        if path == "/api/fin/mgmt-reporting" or path.startswith("/api/fin/mgmt-reporting/"):
+            self._fin_mgmt_write_refused(path)
+            return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
             return
@@ -4160,6 +4200,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/hr/retention-signals" or path.startswith("/api/hr/retention-signals/"):
             self._hr_ret_write_refused(path)
+            return
+        if self._fin_mgmt_refuse_code(path):
+            self._fin_mgmt_write_refused(path)
+            return
+        if path == "/api/fin/mgmt-reporting" or path.startswith("/api/fin/mgmt-reporting/"):
+            self._fin_mgmt_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -13848,6 +13894,340 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _hr_ret.build_framework()
         except _hr_ret.RetentionSignalsError as exc:
             self._hr_ret_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+
+
+    def _fin_mgmt_quiet(self) -> dict:
+        return {
+            "empty_is_management_reporting": False,
+            "empty_is_pnl_bs_cf": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_pnl": False,
+            "live_balance_sheet": False,
+            "live_cash_flow": False,
+            "live_management_reporting": False,
+            "pnl_bs_cf_machinery": False,
+            "current": False,
+            "pnl": None,
+            "pnl_number": None,
+            "balance_sheet": None,
+            "balance_sheet_number": None,
+            "cash_flow": None,
+            "cash_flow_number": None,
+            "checklist": None,
+            "guest_blast": False,
+            "staff_blast": False,
+            "public_post": False,
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_pnl": False,
+            "invented_balance_sheet": False,
+            "invented_cash_flow": False,
+        }
+
+    def _require_fin_mgmt_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Management reporting framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Management reporting is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._fin_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._fin_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _fin_mgmt_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/fin/mgmt-reporting/payment", "/api/fin/mgmt-reporting/money"}:
+            return "payment"
+        if path in {"/api/fin/mgmt-reporting/bank", "/api/fin/mgmt-reporting/transfer"}:
+            return "bank"
+        if path in {"/api/fin/mgmt-reporting/zayen", "/api/fin/mgmt-reporting/books"}:
+            return "books"
+        if path in {
+            "/api/fin/mgmt-reporting/guest-blast",
+            "/api/fin/mgmt-reporting/blast",
+        }:
+            return "guest_blast"
+        if path in {
+            "/api/fin/mgmt-reporting/staff-blast",
+            "/api/fin/mgmt-reporting/staff-broadcast",
+        }:
+            return "staff_blast"
+        if path in {
+            "/api/fin/mgmt-reporting/public-post",
+            "/api/fin/mgmt-reporting/public",
+            "/api/fin/mgmt-reporting/post",
+            "/api/fin/mgmt-reporting/publish",
+        }:
+            return "public_post"
+        if path == "/api/fin/mgmt-reporting/current":
+            return "current"
+        if path in {"/api/fin/mgmt-reporting/cloudflare", "/api/fin/mgmt-reporting/cf"}:
+            return "cloudflare"
+        if path in {"/api/fin/mgmt-reporting/access", "/api/fin/mgmt-reporting/cf-access"}:
+            return "access"
+        if path in {"/api/fin/mgmt-reporting/prove", "/api/fin/mgmt-reporting/proven"}:
+            return "prove"
+        if path == "/api/fin/mgmt-reporting/ready":
+            return "ready"
+        if path == "/api/fin/mgmt-reporting/resolve":
+            return "resolve"
+        if path in {
+            "/api/fin/mgmt-reporting/production",
+            "/api/fin/mgmt-reporting/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/fin/mgmt-reporting/score", "/api/fin/mgmt-reporting/credits"}:
+            return "score"
+        if path in {"/api/fin/mgmt-reporting/fill", "/api/fin/mgmt-reporting/note"}:
+            return "fill"
+        if path == "/api/fin/mgmt-reporting/alchemist":
+            return "alchemist"
+        return None
+
+    def _fin_mgmt_fail(self, exc: _fin_mgmt.FinMgmtReportingError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "guest_blast_refused",
+            "staff_blast_refused",
+            "public_post_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._fin_mgmt_quiet(),
+                **_fin_mgmt.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _fin_mgmt_write_refused(self, path: str) -> None:
+        identity = self._require_fin_mgmt_owner()
+        if identity is None:
+            return
+        try:
+            code = self._fin_mgmt_refuse_code(path)
+            tail = path.rstrip("/").rsplit("/", 1)[-1]
+            if code is None and tail in {
+                "pnl",
+                "balance_sheet",
+                "balance-sheet",
+                "cash_flow",
+                "cash-flow",
+                "checklist",
+            }:
+                code = "current"
+            elif code is None and tail == "notes":
+                code = "fill"
+            if code == "payment":
+                _fin_mgmt.refuse_payment({})
+            elif code == "bank":
+                _fin_mgmt.refuse_bank({})
+            elif code == "books":
+                _fin_mgmt.refuse_books({})
+            elif code == "guest_blast":
+                _fin_mgmt.refuse_guest_blast({})
+            elif code == "staff_blast":
+                _fin_mgmt.refuse_staff_blast({})
+            elif code == "public_post":
+                _fin_mgmt.refuse_public_post({})
+            elif code == "current":
+                _fin_mgmt.refuse_current({})
+            elif code == "cloudflare":
+                _fin_mgmt.refuse_cloudflare({})
+            elif code == "access":
+                _fin_mgmt.refuse_access({})
+            elif code == "prove":
+                _fin_mgmt.refuse_proven({})
+            elif code == "ready":
+                _fin_mgmt.refuse_ready({})
+            elif code == "resolve":
+                _fin_mgmt.refuse_resolve({})
+            elif code == "production":
+                _fin_mgmt.refuse_production({})
+            elif code == "score":
+                _fin_mgmt.refuse_score({})
+            elif code == "fill":
+                _fin_mgmt.refuse_fill({})
+            elif code == "alchemist":
+                _fin_mgmt.refuse_alchemist({})
+            else:
+                _fin_mgmt.refuse_external_write({})
+        except _fin_mgmt.FinMgmtReportingError as exc:
+            self._fin_mgmt_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Management reporting framework does not store a live management-reporting pack.",
+                **self._fin_mgmt_quiet(),
+            },
+            status=405,
+        )
+
+    def _fin_mgmt_page(self) -> None:
+        identity = self._require_fin_mgmt_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "fin-mgmt-reporting.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Management Reporting page is missing.",
+                    **self._fin_mgmt_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _fin_mgmt_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_fin_mgmt_owner()
+        if identity is None:
+            return
+        try:
+            _fin_mgmt.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                pnl=(qs.get("pnl") or [""])[0],
+                balance_sheet=(qs.get("balance_sheet") or qs.get("balance-sheet") or [""])[0],
+                cash_flow=(qs.get("cash_flow") or qs.get("cash-flow") or [""])[0],
+                checklist=(qs.get("checklist") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                guest_blast=(qs.get("guest_blast") or qs.get("guest-blast") or [""])[0],
+                staff_blast=(qs.get("staff_blast") or qs.get("staff-blast") or [""])[0],
+                public_post=(qs.get("public_post") or qs.get("public-post") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _fin_mgmt.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._fin_mgmt_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _fin_mgmt.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._fin_mgmt_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _fin_mgmt.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._fin_mgmt_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _fin_mgmt.read_kind(ref_id)
+            else:
+                report = _fin_mgmt.build_framework()
+        except _fin_mgmt.FinMgmtReportingError as exc:
+            self._fin_mgmt_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
