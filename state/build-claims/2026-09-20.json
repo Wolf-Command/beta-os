@@ -238,6 +238,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_hr_payroll_inputs.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-HR-04'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-482b3b453867189f';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/hr/payroll-inputs; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/hr-payroll-inputs; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
       "expect": "PASS=289 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
       "by": "cursor-hr-payroll-inputs-v1"
+    },
+    {
+      "id": "bf-hr-retention-signals-v1-20260920",
+      "claim": "Beta Owner Retention & Succession Signals framework names retention_signal, succession_signal, risk_flag, checklist, and notes slots and leaves every slot empty. Empty is not a live retention/succession workflow and not proof of HR people-signal machinery. Unauth /api/hr/retention-signals and /hr-retention-signals are 403. Owner payment, bank write, Zayen books, payroll execute, HR people master write, guest blast, staff blast, public post, invented retention/succession/people-signal numbers, Cloudflare mutate, Access mutate, prove, ready, resolve, production, score, alchemist, and fill are refused. CAP-HR-05 stays SPECIFIED. Ceiling label is BUILT. CR-1ade9354d7443ed5 stays OPEN. No PROVEN or READY invented. Ledger stays 77 rows. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_hr_retention_signals.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-HR-05'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-1ade9354d7443ed5';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/hr/retention-signals; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/hr-retention-signals; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=291 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
+      "by": "cursor-hr-retention-signals-v1"
     }
   ]
 }
