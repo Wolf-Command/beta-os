@@ -111,6 +111,7 @@ from core import ggv_client_profitability as _ggv_pnl
 from core import ggv_strategy_machine as _ggv_strategy
 from core import amg_journey_workflow as _amg_journey
 from core import amg_daily_ops_state as _amg_ops
+from core import amg_packages_products as _amg_packages
 from core import msc_posture_prove as _msc_posture
 from core import intg_connector_contract as _intg_contract
 from core import intg_connector_cap_tests as _intg_cap_tests
@@ -2072,6 +2073,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/amg/daily-ops-state/"):
             self._amg_ops_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-AMG-03 packages as products. Owner read. Empty is not a live catalog.
+        if self._amg_packages_refuse_code(path):
+            self._amg_packages_write_refused(path)
+            return
+        if path == "/api/amg/packages-products":
+            self._amg_packages_get(qs)
+            return
+        if path == "/api/amg/packages-products/schema":
+            self._amg_packages_get(qs, view="schema")
+            return
+        if path == "/api/amg/packages-products/kinds":
+            self._amg_packages_get(qs, view="kinds")
+            return
+        if path == "/api/amg/packages-products/framework":
+            self._amg_packages_get(qs, view="framework")
+            return
+        if path.startswith("/api/amg/packages-products/"):
+            self._amg_packages_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-MSC-02 posture prove. Owner read. Empty is not a prove and not READY.
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -2588,6 +2608,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._amg_ops_page()
             return
         elif path in (
+            "/amg-packages-products",
+            "/amg-packages-products/",
+            "/amg-packages-products.html",
+            "/dashboards/amg-packages-products.html",
+        ):
+            self._amg_packages_page()
+            return
+        elif path in (
             "/msc-posture",
             "/msc-posture/",
             "/msc-posture.html",
@@ -2814,6 +2842,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/amg/daily-ops-state" or path.startswith("/api/amg/daily-ops-state/"):
             self._amg_ops_write_refused(path)
+            return
+        if self._amg_packages_refuse_code(path):
+            self._amg_packages_write_refused(path)
+            return
+        if path == "/api/amg/packages-products" or path.startswith("/api/amg/packages-products/"):
+            self._amg_packages_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -3210,6 +3244,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/amg/daily-ops-state" or path.startswith("/api/amg/daily-ops-state/"):
             self._amg_ops_write_refused(path)
             return
+        if self._amg_packages_refuse_code(path):
+            self._amg_packages_write_refused(path)
+            return
+        if path == "/api/amg/packages-products" or path.startswith("/api/amg/packages-products/"):
+            self._amg_packages_write_refused(path)
+            return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
             return
@@ -3516,6 +3556,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/amg/daily-ops-state" or path.startswith("/api/amg/daily-ops-state/"):
             self._amg_ops_write_refused(path)
+            return
+        if self._amg_packages_refuse_code(path):
+            self._amg_packages_write_refused(path)
+            return
+        if path == "/api/amg/packages-products" or path.startswith("/api/amg/packages-products/"):
+            self._amg_packages_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -10169,6 +10215,313 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _amg_ops.build_framework()
         except _amg_ops.DailyOpsStateError as exc:
             self._amg_ops_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _amg_packages_quiet(self) -> dict:
+        return {
+            "empty_is_catalog": False,
+            "empty_is_products": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_catalog": False,
+            "live_packages": False,
+            "commercial_products": False,
+            "current": False,
+            "packages": None,
+            "sold_count": None,
+            "margin_idr": None,
+            "yanolja_live": False,
+            "yanolja_called": False,
+            "yanolja_write": False,
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_packages": False,
+            "invented_sold": False,
+            "invented_margin": False,
+        }
+
+    def _require_amg_packages_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Packages framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Packages as products is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._amg_packages_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._amg_packages_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _amg_packages_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/amg/packages-products/payment", "/api/amg/packages-products/money"}:
+            return "payment"
+        if path in {"/api/amg/packages-products/bank", "/api/amg/packages-products/transfer"}:
+            return "bank"
+        if path in {"/api/amg/packages-products/zayen", "/api/amg/packages-products/books"}:
+            return "books"
+        if path in {"/api/amg/packages-products/yanolja", "/api/amg/packages-products/yanolja-write"}:
+            return "yanolja"
+        if path in {
+            "/api/amg/packages-products/sold",
+            "/api/amg/packages-products/sold-count",
+            "/api/amg/packages-products/packages",
+            "/api/amg/packages-products/margin-idr",
+            "/api/amg/packages-products/current",
+        }:
+            return "current"
+        if path in {"/api/amg/packages-products/cloudflare", "/api/amg/packages-products/cf"}:
+            return "cloudflare"
+        if path in {"/api/amg/packages-products/access", "/api/amg/packages-products/cf-access"}:
+            return "access"
+        if path in {"/api/amg/packages-products/prove", "/api/amg/packages-products/proven"}:
+            return "prove"
+        if path == "/api/amg/packages-products/ready":
+            return "ready"
+        if path == "/api/amg/packages-products/resolve":
+            return "resolve"
+        if path in {
+            "/api/amg/packages-products/production",
+            "/api/amg/packages-products/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/amg/packages-products/score", "/api/amg/packages-products/credits"}:
+            return "score"
+        if path in {"/api/amg/packages-products/fill", "/api/amg/packages-products/note"}:
+            return "fill"
+        if path == "/api/amg/packages-products/alchemist":
+            return "alchemist"
+        return None
+
+    def _amg_packages_fail(self, exc: _amg_packages.PackagesProductsError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "yanolja_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._amg_packages_quiet(),
+                **_amg_packages.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _amg_packages_write_refused(self, path: str) -> None:
+        identity = self._require_amg_packages_owner()
+        if identity is None:
+            return
+        try:
+            code = self._amg_packages_refuse_code(path)
+            tail = path.rstrip("/").rsplit("/", 1)[-1]
+            if code is None and tail == "margin":
+                code = "current"
+            elif code is None and tail in {
+                "stay",
+                "activity",
+                "stay+activity",
+                "sop",
+                "notes",
+            }:
+                code = "fill"
+            if code == "payment":
+                _amg_packages.refuse_payment({})
+            elif code == "bank":
+                _amg_packages.refuse_bank({})
+            elif code == "books":
+                _amg_packages.refuse_books({})
+            elif code == "yanolja":
+                _amg_packages.refuse_yanolja({})
+            elif code == "current":
+                _amg_packages.refuse_current({})
+            elif code == "cloudflare":
+                _amg_packages.refuse_cloudflare({})
+            elif code == "access":
+                _amg_packages.refuse_access({})
+            elif code == "prove":
+                _amg_packages.refuse_proven({})
+            elif code == "ready":
+                _amg_packages.refuse_ready({})
+            elif code == "resolve":
+                _amg_packages.refuse_resolve({})
+            elif code == "production":
+                _amg_packages.refuse_production({})
+            elif code == "score":
+                _amg_packages.refuse_score({})
+            elif code == "fill":
+                _amg_packages.refuse_fill({})
+            elif code == "alchemist":
+                _amg_packages.refuse_alchemist({})
+            else:
+                _amg_packages.refuse_external_write({})
+        except _amg_packages.PackagesProductsError as exc:
+            self._amg_packages_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Packages framework does not store a live package catalog.",
+                **self._amg_packages_quiet(),
+            },
+            status=405,
+        )
+
+    def _amg_packages_page(self) -> None:
+        identity = self._require_amg_packages_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "amg-packages-products.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Packages as products page is missing.",
+                    **self._amg_packages_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _amg_packages_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_amg_packages_owner()
+        if identity is None:
+            return
+        try:
+            _amg_packages.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                yanolja=(qs.get("yanolja") or [""])[0],
+                packages=(qs.get("packages") or [""])[0],
+                sold=(qs.get("sold") or [""])[0],
+                margin=(qs.get("margin") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _amg_packages.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._amg_packages_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _amg_packages.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._amg_packages_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _amg_packages.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._amg_packages_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _amg_packages.read_kind(ref_id)
+            else:
+                report = _amg_packages.build_framework()
+        except _amg_packages.PackagesProductsError as exc:
+            self._amg_packages_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
