@@ -4,7 +4,7 @@
 **PASS**
 
 ## Scope check
-- Working tree for this slice (baseline `efd376f` → completion commit PENDING)::
+- Working tree for this slice (baseline `efd376f` → completion commit `f8e26d5` / `f8e26d538e68352b1677f757108da07d00179f6c`)::
   - `scripts/core/hr_hiring_onboarding.py` (new)
   - `scripts/tests/test_hr_hiring_onboarding.py` (new)
   - `dashboards/hr-hiring-onboarding.html` (new)
