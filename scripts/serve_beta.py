@@ -114,6 +114,7 @@ from core import amg_daily_ops_state as _amg_ops
 from core import amg_packages_products as _amg_packages
 from core import amg_revenue_yield as _amg_yield
 from core import amg_service_improve as _amg_improve
+from core import amg_sla_incident as _amg_sla
 from core import ggv_intercompany_client as _ggv_ic
 from core import bzg_venue_pnl as _bzg_pnl
 from core import msc_posture_prove as _msc_posture
@@ -2172,6 +2173,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/amg/service-improve/"):
             self._amg_improve_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-AMG-06 SLA / incident trail. Owner read. Empty is not a live trail.
+        if self._amg_sla_refuse_code(path):
+            self._amg_sla_write_refused(path)
+            return
+        if path == "/api/amg/sla-incident":
+            self._amg_sla_get(qs)
+            return
+        if path == "/api/amg/sla-incident/schema":
+            self._amg_sla_get(qs, view="schema")
+            return
+        if path == "/api/amg/sla-incident/kinds":
+            self._amg_sla_get(qs, view="kinds")
+            return
+        if path == "/api/amg/sla-incident/framework":
+            self._amg_sla_get(qs, view="framework")
+            return
+        if path.startswith("/api/amg/sla-incident/"):
+            self._amg_sla_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-MSC-02 posture prove. Owner read. Empty is not a prove and not READY.
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -2728,6 +2748,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._amg_improve_page()
             return
         elif path in (
+            "/amg-sla-incident",
+            "/amg-sla-incident/",
+            "/amg-sla-incident.html",
+            "/dashboards/amg-sla-incident.html",
+        ):
+            self._amg_sla_page()
+            return
+        elif path in (
             "/msc-posture",
             "/msc-posture/",
             "/msc-posture.html",
@@ -2984,6 +3012,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/amg/service-improve" or path.startswith("/api/amg/service-improve/"):
             self._amg_improve_write_refused(path)
+            return
+        if self._amg_sla_refuse_code(path):
+            self._amg_sla_write_refused(path)
+            return
+        if path == "/api/amg/sla-incident" or path.startswith("/api/amg/sla-incident/"):
+            self._amg_sla_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -3410,6 +3444,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/amg/service-improve" or path.startswith("/api/amg/service-improve/"):
             self._amg_improve_write_refused(path)
             return
+        if self._amg_sla_refuse_code(path):
+            self._amg_sla_write_refused(path)
+            return
+        if path == "/api/amg/sla-incident" or path.startswith("/api/amg/sla-incident/"):
+            self._amg_sla_write_refused(path)
+            return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
             return
@@ -3746,6 +3786,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/amg/service-improve" or path.startswith("/api/amg/service-improve/"):
             self._amg_improve_write_refused(path)
+            return
+        if self._amg_sla_refuse_code(path):
+            self._amg_sla_write_refused(path)
+            return
+        if path == "/api/amg/sla-incident" or path.startswith("/api/amg/sla-incident/"):
+            self._amg_sla_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -11336,6 +11382,338 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _amg_improve.build_framework()
         except _amg_improve.ServiceImproveError as exc:
             self._amg_improve_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _amg_sla_quiet(self) -> dict:
+        return {
+            "empty_is_sla_trail": False,
+            "empty_is_guest_experience": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_request": False,
+            "live_incident": False,
+            "live_sla": False,
+            "guest_experience_machinery": False,
+            "current": False,
+            "request": None,
+            "incident": None,
+            "incident_number": None,
+            "sla": None,
+            "sla_timer": None,
+            "escalation": None,
+            "escalation_outcome": None,
+            "trail": None,
+            "guest_blast": False,
+            "public_post": False,
+            "yanolja_live": False,
+            "yanolja_called": False,
+            "yanolja_write": False,
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_incident": False,
+            "invented_sla": False,
+            "invented_escalation": False,
+        }
+
+    def _require_amg_sla_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. SLA/incident framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "SLA/incident trail is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._amg_sla_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._amg_sla_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _amg_sla_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/amg/sla-incident/payment", "/api/amg/sla-incident/money"}:
+            return "payment"
+        if path in {"/api/amg/sla-incident/bank", "/api/amg/sla-incident/transfer"}:
+            return "bank"
+        if path in {"/api/amg/sla-incident/zayen", "/api/amg/sla-incident/books"}:
+            return "books"
+        if path in {"/api/amg/sla-incident/yanolja", "/api/amg/sla-incident/yanolja-write"}:
+            return "yanolja"
+        if path in {
+            "/api/amg/sla-incident/guest-blast",
+            "/api/amg/sla-incident/guest",
+            "/api/amg/sla-incident/blast",
+        }:
+            return "guest_blast"
+        if path in {
+            "/api/amg/sla-incident/public-post",
+            "/api/amg/sla-incident/public",
+            "/api/amg/sla-incident/post",
+            "/api/amg/sla-incident/publish",
+        }:
+            return "public_post"
+        if path == "/api/amg/sla-incident/current":
+            return "current"
+        if path in {"/api/amg/sla-incident/cloudflare", "/api/amg/sla-incident/cf"}:
+            return "cloudflare"
+        if path in {"/api/amg/sla-incident/access", "/api/amg/sla-incident/cf-access"}:
+            return "access"
+        if path in {"/api/amg/sla-incident/prove", "/api/amg/sla-incident/proven"}:
+            return "prove"
+        if path == "/api/amg/sla-incident/ready":
+            return "ready"
+        if path == "/api/amg/sla-incident/resolve":
+            return "resolve"
+        if path in {
+            "/api/amg/sla-incident/production",
+            "/api/amg/sla-incident/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/amg/sla-incident/score", "/api/amg/sla-incident/credits"}:
+            return "score"
+        if path in {"/api/amg/sla-incident/fill", "/api/amg/sla-incident/note"}:
+            return "fill"
+        if path == "/api/amg/sla-incident/alchemist":
+            return "alchemist"
+        return None
+
+    def _amg_sla_fail(self, exc: _amg_sla.SlaIncidentError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "yanolja_refused",
+            "guest_blast_refused",
+            "public_post_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._amg_sla_quiet(),
+                **_amg_sla.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _amg_sla_write_refused(self, path: str) -> None:
+        identity = self._require_amg_sla_owner()
+        if identity is None:
+            return
+        try:
+            code = self._amg_sla_refuse_code(path)
+            tail = path.rstrip("/").rsplit("/", 1)[-1]
+            if code is None and tail in {
+                "request",
+                "incident",
+                "sla",
+                "escalation",
+                "trail",
+            }:
+                code = "current"
+            elif code is None and tail == "notes":
+                code = "fill"
+            if code == "payment":
+                _amg_sla.refuse_payment({})
+            elif code == "bank":
+                _amg_sla.refuse_bank({})
+            elif code == "books":
+                _amg_sla.refuse_books({})
+            elif code == "yanolja":
+                _amg_sla.refuse_yanolja({})
+            elif code == "guest_blast":
+                _amg_sla.refuse_guest_blast({})
+            elif code == "public_post":
+                _amg_sla.refuse_public_post({})
+            elif code == "current":
+                _amg_sla.refuse_current({})
+            elif code == "cloudflare":
+                _amg_sla.refuse_cloudflare({})
+            elif code == "access":
+                _amg_sla.refuse_access({})
+            elif code == "prove":
+                _amg_sla.refuse_proven({})
+            elif code == "ready":
+                _amg_sla.refuse_ready({})
+            elif code == "resolve":
+                _amg_sla.refuse_resolve({})
+            elif code == "production":
+                _amg_sla.refuse_production({})
+            elif code == "score":
+                _amg_sla.refuse_score({})
+            elif code == "fill":
+                _amg_sla.refuse_fill({})
+            elif code == "alchemist":
+                _amg_sla.refuse_alchemist({})
+            else:
+                _amg_sla.refuse_external_write({})
+        except _amg_sla.SlaIncidentError as exc:
+            self._amg_sla_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "SLA/incident framework does not store a live SLA/incident trail.",
+                **self._amg_sla_quiet(),
+            },
+            status=405,
+        )
+
+    def _amg_sla_page(self) -> None:
+        identity = self._require_amg_sla_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "amg-sla-incident.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "SLA/incident trail page is missing.",
+                    **self._amg_sla_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _amg_sla_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_amg_sla_owner()
+        if identity is None:
+            return
+        try:
+            _amg_sla.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                yanolja=(qs.get("yanolja") or [""])[0],
+                request=(qs.get("request") or [""])[0],
+                incident=(qs.get("incident") or [""])[0],
+                sla=(qs.get("sla") or [""])[0],
+                escalation=(qs.get("escalation") or [""])[0],
+                trail=(qs.get("trail") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                guest_blast=(qs.get("guest_blast") or qs.get("guest-blast") or [""])[0],
+                public_post=(qs.get("public_post") or qs.get("public-post") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _amg_sla.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._amg_sla_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _amg_sla.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._amg_sla_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _amg_sla.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._amg_sla_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _amg_sla.read_kind(ref_id)
+            else:
+                report = _amg_sla.build_framework()
+        except _amg_sla.SlaIncidentError as exc:
+            self._amg_sla_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)

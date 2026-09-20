@@ -182,6 +182,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_amg_service_improve.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-AMG-07'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-29c6ac36a9ca03f1';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/amg/service-improve; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/amg-service-improve; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
       "expect": "PASS=286 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
       "by": "cursor-amg-service-improve-v1"
+    },
+    {
+      "id": "bf-amg-sla-incident-v1-20260920",
+      "claim": "Beta Owner guest experience / SLA / incident trail framework names request, incident, sla, escalation, trail, and notes slots and leaves every slot empty. Empty is not a live SLA/incident trail and not proof of guest experience loop machinery. Unauth /api/amg/sla-incident and /amg-sla-incident are 403. Owner payment, bank write, Zayen books, live incidents, SLA timers, escalation outcomes, guest blast, public post, live Yanolja, Cloudflare mutate, Access mutate, prove, ready, resolve, production, score, alchemist, and fill are refused. CAP-AMG-06 stays SPECIFIED. Ceiling label is BUILT. CR-e9b3d23e63c1c8a7 stays OPEN. No PROVEN or READY invented. Ledger stays 77 rows. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_amg_sla_incident.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-AMG-06'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-e9b3d23e63c1c8a7';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/amg/sla-incident; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/amg-sla-incident; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=290 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
+      "by": "cursor-amg-sla-incident-v1"
     }
   ]
 }
