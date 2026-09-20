@@ -4,7 +4,7 @@
 **PASS**
 
 ## Scope check
-- Working tree for this slice (baseline `49ee985` → completion commit pending pin)::
+- Working tree for this slice (baseline `49ee985` → completion commit `3533492` / `353349259727ba6f863421210df2ebc808d8c4d6`)::
   - `scripts/core/bzg_variance_waste.py` (new)
   - `scripts/tests/test_bzg_variance_waste.py` (new)
   - `dashboards/bzg-variance-waste.html` (new)
