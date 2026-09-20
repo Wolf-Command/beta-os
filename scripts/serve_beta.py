@@ -113,6 +113,7 @@ from core import amg_journey_workflow as _amg_journey
 from core import amg_daily_ops_state as _amg_ops
 from core import amg_packages_products as _amg_packages
 from core import amg_revenue_yield as _amg_yield
+from core import ggv_intercompany_client as _ggv_ic
 from core import msc_posture_prove as _msc_posture
 from core import intg_connector_contract as _intg_contract
 from core import intg_connector_cap_tests as _intg_cap_tests
@@ -2112,6 +2113,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/amg/revenue-yield/"):
             self._amg_yield_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-GGV-06 intercompany client mode. Owner read. Empty is not live billing.
+        if self._ggv_ic_refuse_code(path):
+            self._ggv_ic_write_refused(path)
+            return
+        if path == "/api/ggv/intercompany-client":
+            self._ggv_ic_get(qs)
+            return
+        if path == "/api/ggv/intercompany-client/schema":
+            self._ggv_ic_get(qs, view="schema")
+            return
+        if path == "/api/ggv/intercompany-client/kinds":
+            self._ggv_ic_get(qs, view="kinds")
+            return
+        if path == "/api/ggv/intercompany-client/framework":
+            self._ggv_ic_get(qs, view="framework")
+            return
+        if path.startswith("/api/ggv/intercompany-client/"):
+            self._ggv_ic_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-MSC-02 posture prove. Owner read. Empty is not a prove and not READY.
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -2644,6 +2664,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._amg_yield_page()
             return
         elif path in (
+            "/ggv-intercompany-client",
+            "/ggv-intercompany-client/",
+            "/ggv-intercompany-client.html",
+            "/dashboards/ggv-intercompany-client.html",
+        ):
+            self._ggv_ic_page()
+            return
+        elif path in (
             "/msc-posture",
             "/msc-posture/",
             "/msc-posture.html",
@@ -2882,6 +2910,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/amg/revenue-yield" or path.startswith("/api/amg/revenue-yield/"):
             self._amg_yield_write_refused(path)
+            return
+        if self._ggv_ic_refuse_code(path):
+            self._ggv_ic_write_refused(path)
+            return
+        if path == "/api/ggv/intercompany-client" or path.startswith("/api/ggv/intercompany-client/"):
+            self._ggv_ic_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -3290,6 +3324,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/amg/revenue-yield" or path.startswith("/api/amg/revenue-yield/"):
             self._amg_yield_write_refused(path)
             return
+        if self._ggv_ic_refuse_code(path):
+            self._ggv_ic_write_refused(path)
+            return
+        if path == "/api/ggv/intercompany-client" or path.startswith("/api/ggv/intercompany-client/"):
+            self._ggv_ic_write_refused(path)
+            return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
             return
@@ -3608,6 +3648,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/amg/revenue-yield" or path.startswith("/api/amg/revenue-yield/"):
             self._amg_yield_write_refused(path)
+            return
+        if self._ggv_ic_refuse_code(path):
+            self._ggv_ic_write_refused(path)
+            return
+        if path == "/api/ggv/intercompany-client" or path.startswith("/api/ggv/intercompany-client/"):
+            self._ggv_ic_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -10868,6 +10914,313 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _amg_yield.build_framework()
         except _amg_yield.RevenueYieldError as exc:
             self._amg_yield_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _ggv_ic_quiet(self) -> dict:
+        return {
+            "empty_is_billing": False,
+            "empty_is_client_machinery": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_billing": False,
+            "client_machinery": False,
+            "current": False,
+            "service_record": None,
+            "invoice": None,
+            "allocation": None,
+            "arms_length": None,
+            "ar_ap": None,
+            "tax_treatment": None,
+            "tax_claimed": False,
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_invoice": False,
+            "invented_allocation": False,
+            "invented_ar_ap": False,
+            "invented_tax": False,
+        }
+
+    def _require_ggv_ic_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Intercompany framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Intercompany client mode is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._ggv_ic_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._ggv_ic_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _ggv_ic_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/ggv/intercompany-client/payment", "/api/ggv/intercompany-client/money"}:
+            return "payment"
+        if path in {"/api/ggv/intercompany-client/bank", "/api/ggv/intercompany-client/transfer"}:
+            return "bank"
+        if path in {"/api/ggv/intercompany-client/zayen", "/api/ggv/intercompany-client/books"}:
+            return "books"
+        if path in {"/api/ggv/intercompany-client/tax", "/api/ggv/intercompany-client/tax-treatment"}:
+            return "tax"
+        if path == "/api/ggv/intercompany-client/current":
+            return "current"
+        if path in {"/api/ggv/intercompany-client/cloudflare", "/api/ggv/intercompany-client/cf"}:
+            return "cloudflare"
+        if path in {"/api/ggv/intercompany-client/access", "/api/ggv/intercompany-client/cf-access"}:
+            return "access"
+        if path in {"/api/ggv/intercompany-client/prove", "/api/ggv/intercompany-client/proven"}:
+            return "prove"
+        if path == "/api/ggv/intercompany-client/ready":
+            return "ready"
+        if path == "/api/ggv/intercompany-client/resolve":
+            return "resolve"
+        if path in {
+            "/api/ggv/intercompany-client/production",
+            "/api/ggv/intercompany-client/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/ggv/intercompany-client/score", "/api/ggv/intercompany-client/credits"}:
+            return "score"
+        if path in {"/api/ggv/intercompany-client/fill", "/api/ggv/intercompany-client/note"}:
+            return "fill"
+        if path == "/api/ggv/intercompany-client/alchemist":
+            return "alchemist"
+        return None
+
+    def _ggv_ic_fail(self, exc: _ggv_ic.IntercompanyClientError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "tax_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._ggv_ic_quiet(),
+                **_ggv_ic.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _ggv_ic_write_refused(self, path: str) -> None:
+        identity = self._require_ggv_ic_owner()
+        if identity is None:
+            return
+        try:
+            code = self._ggv_ic_refuse_code(path)
+            tail = path.rstrip("/").rsplit("/", 1)[-1]
+            if code is None and tail in {
+                "invoice",
+                "allocation",
+                "ar-ap",
+                "ar_ap",
+                "arms-length",
+                "arms_length",
+                "service-record",
+                "service_record",
+            }:
+                code = "current"
+            elif code is None and tail == "notes":
+                code = "fill"
+            if code == "payment":
+                _ggv_ic.refuse_payment({})
+            elif code == "bank":
+                _ggv_ic.refuse_bank({})
+            elif code == "books":
+                _ggv_ic.refuse_books({})
+            elif code == "tax":
+                _ggv_ic.refuse_tax({})
+            elif code == "current":
+                _ggv_ic.refuse_current({})
+            elif code == "cloudflare":
+                _ggv_ic.refuse_cloudflare({})
+            elif code == "access":
+                _ggv_ic.refuse_access({})
+            elif code == "prove":
+                _ggv_ic.refuse_proven({})
+            elif code == "ready":
+                _ggv_ic.refuse_ready({})
+            elif code == "resolve":
+                _ggv_ic.refuse_resolve({})
+            elif code == "production":
+                _ggv_ic.refuse_production({})
+            elif code == "score":
+                _ggv_ic.refuse_score({})
+            elif code == "fill":
+                _ggv_ic.refuse_fill({})
+            elif code == "alchemist":
+                _ggv_ic.refuse_alchemist({})
+            else:
+                _ggv_ic.refuse_external_write({})
+        except _ggv_ic.IntercompanyClientError as exc:
+            self._ggv_ic_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Intercompany framework does not store live intercompany billing.",
+                **self._ggv_ic_quiet(),
+            },
+            status=405,
+        )
+
+    def _ggv_ic_page(self) -> None:
+        identity = self._require_ggv_ic_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "ggv-intercompany-client.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Intercompany client mode page is missing.",
+                    **self._ggv_ic_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _ggv_ic_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_ggv_ic_owner()
+        if identity is None:
+            return
+        try:
+            _ggv_ic.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                invoice=(qs.get("invoice") or [""])[0],
+                allocation=(qs.get("allocation") or [""])[0],
+                ar_ap=(qs.get("ar_ap") or [""])[0],
+                arms_length=(qs.get("arms_length") or [""])[0],
+                service_record=(qs.get("service_record") or [""])[0],
+                tax=(qs.get("tax") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _ggv_ic.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._ggv_ic_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _ggv_ic.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._ggv_ic_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _ggv_ic.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._ggv_ic_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _ggv_ic.read_kind(ref_id)
+            else:
+                report = _ggv_ic.build_framework()
+        except _ggv_ic.IntercompanyClientError as exc:
+            self._ggv_ic_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
