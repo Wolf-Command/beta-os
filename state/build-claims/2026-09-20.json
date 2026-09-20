@@ -196,6 +196,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_bzg_variance_waste.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-BZG-04'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-72671b592b8f8631';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/variance-waste; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/bzg-variance-waste; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
       "expect": "PASS=267 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
       "by": "cursor-bzg-variance-waste-v1"
+    },
+    {
+      "id": "bf-bzg-allocation-engine-v1-20260920",
+      "claim": "Beta Owner central kitchen / shared cost allocation framework names kitchen, venues, shared_cost, allocation, drivers, and notes slots and leaves every slot empty. Empty is not a live allocation engine and not proof of shared-cost allocation machinery. Unauth /api/bzg/allocation-engine and /bzg-allocation-engine are 403. Owner payment, bank write, Zayen books, ESB mutate, invented allocation/shared cost/kitchen/venues/drivers, Cloudflare mutate, Access mutate, prove, ready, resolve, production, score, alchemist, and fill are refused. CAP-BZG-05 stays SPECIFIED. Ceiling label is BUILT. CR-777c285859b3b745 stays OPEN. No PROVEN or READY invented. Ledger stays 77 rows. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_bzg_allocation_engine.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-BZG-05'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-777c285859b3b745';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/allocation-engine; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/bzg-allocation-engine; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=268 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
+      "by": "cursor-bzg-allocation-engine-v1"
     }
   ]
 }

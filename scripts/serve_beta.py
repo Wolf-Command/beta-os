@@ -118,6 +118,7 @@ from core import amg_sla_incident as _amg_sla
 from core import ggv_intercompany_client as _ggv_ic
 from core import bzg_venue_pnl as _bzg_pnl
 from core import bzg_variance_waste as _bzg_var
+from core import bzg_allocation_engine as _bzg_alloc
 from core import msc_posture_prove as _msc_posture
 from core import intg_connector_contract as _intg_contract
 from core import intg_connector_cap_tests as _intg_cap_tests
@@ -2174,6 +2175,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/bzg/variance-waste/"):
             self._bzg_var_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-BZG-05 central kitchen / shared cost allocation. Owner read. Empty is not a live allocation engine.
+        if self._bzg_alloc_refuse_code(path):
+            self._bzg_alloc_write_refused(path)
+            return
+        if path == "/api/bzg/allocation-engine":
+            self._bzg_alloc_get(qs)
+            return
+        if path == "/api/bzg/allocation-engine/schema":
+            self._bzg_alloc_get(qs, view="schema")
+            return
+        if path == "/api/bzg/allocation-engine/kinds":
+            self._bzg_alloc_get(qs, view="kinds")
+            return
+        if path == "/api/bzg/allocation-engine/framework":
+            self._bzg_alloc_get(qs, view="framework")
+            return
+        if path.startswith("/api/bzg/allocation-engine/"):
+            self._bzg_alloc_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-AMG-07 service improvement / review-to-improve loop. Owner read. Empty is not a live loop.
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
@@ -2768,6 +2788,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._bzg_var_page()
             return
         elif path in (
+            "/bzg-allocation-engine",
+            "/bzg-allocation-engine/",
+            "/bzg-allocation-engine.html",
+            "/dashboards/bzg-allocation-engine.html",
+        ):
+            self._bzg_alloc_page()
+            return
+        elif path in (
             "/amg-service-improve",
             "/amg-service-improve/",
             "/amg-service-improve.html",
@@ -3040,6 +3068,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/bzg/variance-waste" or path.startswith("/api/bzg/variance-waste/"):
             self._bzg_var_write_refused(path)
+            return
+        if self._bzg_alloc_refuse_code(path):
+            self._bzg_alloc_write_refused(path)
+            return
+        if path == "/api/bzg/allocation-engine" or path.startswith("/api/bzg/allocation-engine/"):
+            self._bzg_alloc_write_refused(path)
             return
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
@@ -3478,6 +3512,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/bzg/variance-waste" or path.startswith("/api/bzg/variance-waste/"):
             self._bzg_var_write_refused(path)
             return
+        if self._bzg_alloc_refuse_code(path):
+            self._bzg_alloc_write_refused(path)
+            return
+        if path == "/api/bzg/allocation-engine" or path.startswith("/api/bzg/allocation-engine/"):
+            self._bzg_alloc_write_refused(path)
+            return
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
             return
@@ -3826,6 +3866,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/bzg/variance-waste" or path.startswith("/api/bzg/variance-waste/"):
             self._bzg_var_write_refused(path)
+            return
+        if self._bzg_alloc_refuse_code(path):
+            self._bzg_alloc_write_refused(path)
+            return
+        if path == "/api/bzg/allocation-engine" or path.startswith("/api/bzg/allocation-engine/"):
+            self._bzg_alloc_write_refused(path)
             return
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
@@ -12681,6 +12727,312 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _bzg_var.build_framework()
         except _bzg_var.VarianceWasteError as exc:
             self._bzg_var_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+
+    def _bzg_alloc_quiet(self) -> dict:
+        return {
+            "empty_is_allocation_engine": False,
+            "empty_is_shared_cost_allocation_machinery": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_allocation_engine": False,
+            "shared_cost_allocation_machinery": False,
+            "current": False,
+            "kitchen": None,
+            "venues": None,
+            "shared_cost": None,
+            "allocation": None,
+            "drivers": None,
+            "esb_mutated": False,
+            "esb_sot_note": "ESB remains transactional SoT (read-only note only; no ESB mutate).",
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_kitchen": False,
+            "invented_venues": False,
+            "invented_shared_cost": False,
+            "invented_allocation": False,
+            "invented_drivers": False,
+        }
+
+    def _require_bzg_alloc_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Allocation framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Allocation engine is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._bzg_alloc_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._bzg_alloc_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _bzg_alloc_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/bzg/allocation-engine/payment", "/api/bzg/allocation-engine/money"}:
+            return "payment"
+        if path in {"/api/bzg/allocation-engine/bank", "/api/bzg/allocation-engine/transfer"}:
+            return "bank"
+        if path in {"/api/bzg/allocation-engine/zayen", "/api/bzg/allocation-engine/books"}:
+            return "books"
+        if path in {"/api/bzg/allocation-engine/esb", "/api/bzg/allocation-engine/esb-mutate", "/api/bzg/allocation-engine/esb-write"}:
+            return "esb"
+        if path == "/api/bzg/allocation-engine/current":
+            return "current"
+        if path in {"/api/bzg/allocation-engine/cloudflare", "/api/bzg/allocation-engine/cf"}:
+            return "cloudflare"
+        if path in {"/api/bzg/allocation-engine/access", "/api/bzg/allocation-engine/cf-access"}:
+            return "access"
+        if path in {"/api/bzg/allocation-engine/prove", "/api/bzg/allocation-engine/proven"}:
+            return "prove"
+        if path == "/api/bzg/allocation-engine/ready":
+            return "ready"
+        if path == "/api/bzg/allocation-engine/resolve":
+            return "resolve"
+        if path in {
+            "/api/bzg/allocation-engine/production",
+            "/api/bzg/allocation-engine/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/bzg/allocation-engine/score", "/api/bzg/allocation-engine/credits"}:
+            return "score"
+        if path in {"/api/bzg/allocation-engine/fill", "/api/bzg/allocation-engine/note"}:
+            return "fill"
+        if path == "/api/bzg/allocation-engine/alchemist":
+            return "alchemist"
+        return None
+
+    def _bzg_alloc_fail(self, exc: _bzg_alloc.AllocationEngineError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "esb_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._bzg_alloc_quiet(),
+                **_bzg_alloc.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _bzg_alloc_write_refused(self, path: str) -> None:
+        identity = self._require_bzg_alloc_owner()
+        if identity is None:
+            return
+        try:
+            code = self._bzg_alloc_refuse_code(path)
+            tail = path.rstrip("/").rsplit("/", 1)[-1]
+            if code is None and tail in {
+                "kitchen",
+                "venues",
+                "shared_cost",
+                "allocation",
+                "drivers",
+            }:
+                code = "current"
+            elif code is None and tail == "notes":
+                code = "fill"
+            if code == "payment":
+                _bzg_alloc.refuse_payment({})
+            elif code == "bank":
+                _bzg_alloc.refuse_bank({})
+            elif code == "books":
+                _bzg_alloc.refuse_books({})
+            elif code == "esb":
+                _bzg_alloc.refuse_esb({})
+            elif code == "current":
+                _bzg_alloc.refuse_current({})
+            elif code == "cloudflare":
+                _bzg_alloc.refuse_cloudflare({})
+            elif code == "access":
+                _bzg_alloc.refuse_access({})
+            elif code == "prove":
+                _bzg_alloc.refuse_proven({})
+            elif code == "ready":
+                _bzg_alloc.refuse_ready({})
+            elif code == "resolve":
+                _bzg_alloc.refuse_resolve({})
+            elif code == "production":
+                _bzg_alloc.refuse_production({})
+            elif code == "score":
+                _bzg_alloc.refuse_score({})
+            elif code == "fill":
+                _bzg_alloc.refuse_fill({})
+            elif code == "alchemist":
+                _bzg_alloc.refuse_alchemist({})
+            else:
+                _bzg_alloc.refuse_external_write({})
+        except _bzg_alloc.AllocationEngineError as exc:
+            self._bzg_alloc_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Allocation framework does not store a live allocation engine.",
+                **self._bzg_alloc_quiet(),
+            },
+            status=405,
+        )
+
+    def _bzg_alloc_page(self) -> None:
+        identity = self._require_bzg_alloc_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "bzg-allocation-engine.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Allocation engine page is missing.",
+                    **self._bzg_alloc_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _bzg_alloc_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_bzg_alloc_owner()
+        if identity is None:
+            return
+        try:
+            _bzg_alloc.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                esb=(qs.get("esb") or [""])[0],
+                kitchen=(qs.get("kitchen") or [""])[0],
+                venues=(qs.get("venues") or [""])[0],
+                shared_cost=(qs.get("shared_cost") or [""])[0],
+                allocation=(qs.get("allocation") or [""])[0],
+                drivers=(qs.get("drivers") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _bzg_alloc.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._bzg_alloc_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _bzg_alloc.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._bzg_alloc_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _bzg_alloc.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._bzg_alloc_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _bzg_alloc.read_kind(ref_id)
+            else:
+                report = _bzg_alloc.build_framework()
+        except _bzg_alloc.AllocationEngineError as exc:
+            self._bzg_alloc_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
