@@ -115,6 +115,7 @@ from core import amg_packages_products as _amg_packages
 from core import amg_revenue_yield as _amg_yield
 from core import amg_service_improve as _amg_improve
 from core import amg_sla_incident as _amg_sla
+from core import amg_pms_orchestration as _amg_pms
 from core import ggv_intercompany_client as _ggv_ic
 from core import bzg_venue_pnl as _bzg_pnl
 from core import bzg_variance_waste as _bzg_var
@@ -2252,6 +2253,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/amg/sla-incident/"):
             self._amg_sla_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-AMG-01 Hotel PMS orchestration. Owner read. Empty is not live PMS.
+        if self._amg_pms_refuse_code(path):
+            self._amg_pms_write_refused(path)
+            return
+        if path == "/api/amg/pms-orchestration":
+            self._amg_pms_get(qs)
+            return
+        if path == "/api/amg/pms-orchestration/schema":
+            self._amg_pms_get(qs, view="schema")
+            return
+        if path == "/api/amg/pms-orchestration/kinds":
+            self._amg_pms_get(qs, view="kinds")
+            return
+        if path == "/api/amg/pms-orchestration/framework":
+            self._amg_pms_get(qs, view="framework")
+            return
+        if path.startswith("/api/amg/pms-orchestration/"):
+            self._amg_pms_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-MSC-02 posture prove. Owner read. Empty is not a prove and not READY.
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -2840,6 +2860,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._amg_sla_page()
             return
         elif path in (
+            "/amg-pms-orchestration",
+            "/amg-pms-orchestration/",
+            "/amg-pms-orchestration.html",
+            "/dashboards/amg-pms-orchestration.html",
+        ):
+            self._amg_pms_page()
+            return
+        elif path in (
             "/msc-posture",
             "/msc-posture/",
             "/msc-posture.html",
@@ -3120,6 +3148,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/amg/sla-incident" or path.startswith("/api/amg/sla-incident/"):
             self._amg_sla_write_refused(path)
+            return
+        if self._amg_pms_refuse_code(path):
+            self._amg_pms_write_refused(path)
+            return
+        if path == "/api/amg/pms-orchestration" or path.startswith("/api/amg/pms-orchestration/"):
+            self._amg_pms_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -3570,6 +3604,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/amg/sla-incident" or path.startswith("/api/amg/sla-incident/"):
             self._amg_sla_write_refused(path)
             return
+        if self._amg_pms_refuse_code(path):
+            self._amg_pms_write_refused(path)
+            return
+        if path == "/api/amg/pms-orchestration" or path.startswith("/api/amg/pms-orchestration/"):
+            self._amg_pms_write_refused(path)
+            return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
             return
@@ -3930,6 +3970,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/amg/sla-incident" or path.startswith("/api/amg/sla-incident/"):
             self._amg_sla_write_refused(path)
+            return
+        if self._amg_pms_refuse_code(path):
+            self._amg_pms_write_refused(path)
+            return
+        if path == "/api/amg/pms-orchestration" or path.startswith("/api/amg/pms-orchestration/"):
+            self._amg_pms_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -11852,6 +11898,344 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _amg_sla.build_framework()
         except _amg_sla.SlaIncidentError as exc:
             self._amg_sla_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _amg_pms_quiet(self) -> dict:
+        return {
+            "empty_is_pms_orchestration": False,
+            "empty_is_yanolja_maturity": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_pms": False,
+            "live_pms_orchestration": False,
+            "yanolja_connector_maturity": False,
+            "current": False,
+            "pms": None,
+            "pms_number": None,
+            "rooms": None,
+            "room_number": None,
+            "reservations": None,
+            "reservation_number": None,
+            "guests": None,
+            "guest_number": None,
+            "orchestration": None,
+            "guest_blast": False,
+            "public_post": False,
+            "yanolja_live": False,
+            "yanolja_called": False,
+            "yanolja_write": False,
+            "yanolja_credentials": False,
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_pms": False,
+            "invented_rooms": False,
+            "invented_reservations": False,
+            "invented_guests": False,
+        }
+
+    def _require_amg_pms_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. PMS orchestration framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Hotel PMS orchestration is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._amg_pms_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._amg_pms_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _amg_pms_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/amg/pms-orchestration/payment", "/api/amg/pms-orchestration/money"}:
+            return "payment"
+        if path in {"/api/amg/pms-orchestration/bank", "/api/amg/pms-orchestration/transfer"}:
+            return "bank"
+        if path in {"/api/amg/pms-orchestration/zayen", "/api/amg/pms-orchestration/books"}:
+            return "books"
+        if path in {
+            "/api/amg/pms-orchestration/yanolja",
+            "/api/amg/pms-orchestration/yanolja-write",
+            "/api/amg/pms-orchestration/yanolja-connector",
+            "/api/amg/pms-orchestration/credentials",
+        }:
+            return "yanolja"
+        if path in {
+            "/api/amg/pms-orchestration/guest-blast",
+            "/api/amg/pms-orchestration/blast",
+        }:
+            return "guest_blast"
+        if path in {
+            "/api/amg/pms-orchestration/public-post",
+            "/api/amg/pms-orchestration/public",
+            "/api/amg/pms-orchestration/post",
+            "/api/amg/pms-orchestration/publish",
+        }:
+            return "public_post"
+        if path == "/api/amg/pms-orchestration/current":
+            return "current"
+        if path in {"/api/amg/pms-orchestration/cloudflare", "/api/amg/pms-orchestration/cf"}:
+            return "cloudflare"
+        if path in {"/api/amg/pms-orchestration/access", "/api/amg/pms-orchestration/cf-access"}:
+            return "access"
+        if path in {"/api/amg/pms-orchestration/prove", "/api/amg/pms-orchestration/proven"}:
+            return "prove"
+        if path == "/api/amg/pms-orchestration/ready":
+            return "ready"
+        if path == "/api/amg/pms-orchestration/resolve":
+            return "resolve"
+        if path in {
+            "/api/amg/pms-orchestration/production",
+            "/api/amg/pms-orchestration/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/amg/pms-orchestration/score", "/api/amg/pms-orchestration/credits"}:
+            return "score"
+        if path in {"/api/amg/pms-orchestration/fill", "/api/amg/pms-orchestration/note"}:
+            return "fill"
+        if path == "/api/amg/pms-orchestration/alchemist":
+            return "alchemist"
+        return None
+
+    def _amg_pms_fail(self, exc: _amg_pms.PmsOrchestrationError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "yanolja_refused",
+            "guest_blast_refused",
+            "public_post_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._amg_pms_quiet(),
+                **_amg_pms.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _amg_pms_write_refused(self, path: str) -> None:
+        identity = self._require_amg_pms_owner()
+        if identity is None:
+            return
+        try:
+            code = self._amg_pms_refuse_code(path)
+            tail = path.rstrip("/").rsplit("/", 1)[-1]
+            if code is None and tail in {
+                "pms",
+                "rooms",
+                "reservations",
+                "guests",
+                "orchestration",
+            }:
+                code = "current"
+            elif code is None and tail == "notes":
+                code = "fill"
+            if code == "payment":
+                _amg_pms.refuse_payment({})
+            elif code == "bank":
+                _amg_pms.refuse_bank({})
+            elif code == "books":
+                _amg_pms.refuse_books({})
+            elif code == "yanolja":
+                _amg_pms.refuse_yanolja({})
+            elif code == "guest_blast":
+                _amg_pms.refuse_guest_blast({})
+            elif code == "public_post":
+                _amg_pms.refuse_public_post({})
+            elif code == "current":
+                _amg_pms.refuse_current({})
+            elif code == "cloudflare":
+                _amg_pms.refuse_cloudflare({})
+            elif code == "access":
+                _amg_pms.refuse_access({})
+            elif code == "prove":
+                _amg_pms.refuse_proven({})
+            elif code == "ready":
+                _amg_pms.refuse_ready({})
+            elif code == "resolve":
+                _amg_pms.refuse_resolve({})
+            elif code == "production":
+                _amg_pms.refuse_production({})
+            elif code == "score":
+                _amg_pms.refuse_score({})
+            elif code == "fill":
+                _amg_pms.refuse_fill({})
+            elif code == "alchemist":
+                _amg_pms.refuse_alchemist({})
+            else:
+                _amg_pms.refuse_external_write({})
+        except _amg_pms.PmsOrchestrationError as exc:
+            self._amg_pms_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "PMS orchestration framework does not store a live PMS orchestration.",
+                **self._amg_pms_quiet(),
+            },
+            status=405,
+        )
+
+    def _amg_pms_page(self) -> None:
+        identity = self._require_amg_pms_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "amg-pms-orchestration.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Hotel PMS orchestration page is missing.",
+                    **self._amg_pms_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _amg_pms_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_amg_pms_owner()
+        if identity is None:
+            return
+        try:
+            _amg_pms.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                yanolja=(qs.get("yanolja") or [""])[0],
+                pms=(qs.get("pms") or [""])[0],
+                rooms=(qs.get("rooms") or [""])[0],
+                reservations=(qs.get("reservations") or [""])[0],
+                guests=(qs.get("guests") or [""])[0],
+                orchestration=(qs.get("orchestration") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                guest_blast=(qs.get("guest_blast") or qs.get("guest-blast") or [""])[0],
+                public_post=(qs.get("public_post") or qs.get("public-post") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _amg_pms.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._amg_pms_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _amg_pms.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._amg_pms_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _amg_pms.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._amg_pms_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _amg_pms.read_kind(ref_id)
+            else:
+                report = _amg_pms.build_framework()
+        except _amg_pms.PmsOrchestrationError as exc:
+            self._amg_pms_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
