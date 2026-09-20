@@ -117,6 +117,7 @@ from core import amg_service_improve as _amg_improve
 from core import amg_sla_incident as _amg_sla
 from core import amg_pms_orchestration as _amg_pms
 from core import hr_hiring_onboarding as _hr_hire
+from core import hr_training_competency as _hr_train
 from core import ggv_intercompany_client as _ggv_ic
 from core import bzg_venue_pnl as _bzg_pnl
 from core import bzg_variance_waste as _bzg_var
@@ -2292,6 +2293,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/hr/hiring-onboarding/"):
             self._hr_hire_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-HR-03 Training & Competency. Owner read. Empty is not live training.
+        if self._hr_train_refuse_code(path):
+            self._hr_train_write_refused(path)
+            return
+        if path == "/api/hr/training-competency":
+            self._hr_train_get(qs)
+            return
+        if path == "/api/hr/training-competency/schema":
+            self._hr_train_get(qs, view="schema")
+            return
+        if path == "/api/hr/training-competency/kinds":
+            self._hr_train_get(qs, view="kinds")
+            return
+        if path == "/api/hr/training-competency/framework":
+            self._hr_train_get(qs, view="framework")
+            return
+        if path.startswith("/api/hr/training-competency/"):
+            self._hr_train_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-MSC-02 posture prove. Owner read. Empty is not a prove and not READY.
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -2896,6 +2916,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._hr_hire_page()
             return
         elif path in (
+            "/hr-training-competency",
+            "/hr-training-competency/",
+            "/hr-training-competency.html",
+            "/dashboards/hr-training-competency.html",
+        ):
+            self._hr_train_page()
+            return
+        elif path in (
             "/msc-posture",
             "/msc-posture/",
             "/msc-posture.html",
@@ -3188,6 +3216,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/hr/hiring-onboarding" or path.startswith("/api/hr/hiring-onboarding/"):
             self._hr_hire_write_refused(path)
+            return
+        if self._hr_train_refuse_code(path):
+            self._hr_train_write_refused(path)
+            return
+        if path == "/api/hr/training-competency" or path.startswith("/api/hr/training-competency/"):
+            self._hr_train_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -3650,6 +3684,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/hr/hiring-onboarding" or path.startswith("/api/hr/hiring-onboarding/"):
             self._hr_hire_write_refused(path)
             return
+        if self._hr_train_refuse_code(path):
+            self._hr_train_write_refused(path)
+            return
+        if path == "/api/hr/training-competency" or path.startswith("/api/hr/training-competency/"):
+            self._hr_train_write_refused(path)
+            return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
             return
@@ -4022,6 +4062,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/hr/hiring-onboarding" or path.startswith("/api/hr/hiring-onboarding/"):
             self._hr_hire_write_refused(path)
+            return
+        if self._hr_train_refuse_code(path):
+            self._hr_train_write_refused(path)
+            return
+        if path == "/api/hr/training-competency" or path.startswith("/api/hr/training-competency/"):
+            self._hr_train_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -12640,6 +12686,360 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _hr_hire.build_framework()
         except _hr_hire.HiringOnboardingError as exc:
             self._hr_hire_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+
+    def _hr_train_quiet(self) -> dict:
+        return {
+            "empty_is_training_competency": False,
+            "empty_is_hr_training_machinery": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_training": False,
+            "live_training_competency": False,
+            "hr_training_machinery": False,
+            "current": False,
+            "training_module": None,
+            "training_module_number": None,
+            "training": None,
+            "training_number": None,
+            "competency": None,
+            "competency_score": None,
+            "acknowledgement": None,
+            "acknowledgement_number": None,
+            "checklist": None,
+            "guest_blast": False,
+            "staff_blast": False,
+            "public_post": False,
+            "hr_master_write": False,
+            "payroll_executed": False,
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_training": False,
+            "invented_competency": False,
+            "invented_acknowledgement": False,
+        }
+
+    def _require_hr_train_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Training & competency framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Training & Competency is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._hr_train_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._hr_train_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _hr_train_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/hr/training-competency/payment", "/api/hr/training-competency/money"}:
+            return "payment"
+        if path in {"/api/hr/training-competency/bank", "/api/hr/training-competency/transfer"}:
+            return "bank"
+        if path in {"/api/hr/training-competency/zayen", "/api/hr/training-competency/books"}:
+            return "books"
+        if path in {
+            "/api/hr/training-competency/payroll",
+            "/api/hr/training-competency/payroll-execute",
+        }:
+            return "payroll"
+        if path in {
+            "/api/hr/training-competency/hr-master",
+            "/api/hr/training-competency/people-master",
+        }:
+            return "hr_master"
+        if path in {
+            "/api/hr/training-competency/guest-blast",
+            "/api/hr/training-competency/blast",
+        }:
+            return "guest_blast"
+        if path in {
+            "/api/hr/training-competency/staff-blast",
+            "/api/hr/training-competency/staff-broadcast",
+        }:
+            return "staff_blast"
+        if path in {
+            "/api/hr/training-competency/public-post",
+            "/api/hr/training-competency/public",
+            "/api/hr/training-competency/post",
+            "/api/hr/training-competency/publish",
+        }:
+            return "public_post"
+        if path == "/api/hr/training-competency/current":
+            return "current"
+        if path in {"/api/hr/training-competency/cloudflare", "/api/hr/training-competency/cf"}:
+            return "cloudflare"
+        if path in {"/api/hr/training-competency/access", "/api/hr/training-competency/cf-access"}:
+            return "access"
+        if path in {"/api/hr/training-competency/prove", "/api/hr/training-competency/proven"}:
+            return "prove"
+        if path == "/api/hr/training-competency/ready":
+            return "ready"
+        if path == "/api/hr/training-competency/resolve":
+            return "resolve"
+        if path in {
+            "/api/hr/training-competency/production",
+            "/api/hr/training-competency/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/hr/training-competency/score", "/api/hr/training-competency/credits"}:
+            return "score"
+        if path in {"/api/hr/training-competency/fill", "/api/hr/training-competency/note"}:
+            return "fill"
+        if path == "/api/hr/training-competency/alchemist":
+            return "alchemist"
+        return None
+
+    def _hr_train_fail(self, exc: _hr_train.TrainingCompetencyError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "payroll_refused",
+            "hr_master_refused",
+            "guest_blast_refused",
+            "staff_blast_refused",
+            "public_post_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._hr_train_quiet(),
+                **_hr_train.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _hr_train_write_refused(self, path: str) -> None:
+        identity = self._require_hr_train_owner()
+        if identity is None:
+            return
+        try:
+            code = self._hr_train_refuse_code(path)
+            tail = path.rstrip("/").rsplit("/", 1)[-1]
+            if code is None and tail in {
+                "training_module",
+                "training-module",
+                "training",
+                "competency",
+                "acknowledgement",
+                "checklist",
+            }:
+                code = "current"
+            elif code is None and tail == "notes":
+                code = "fill"
+            if code == "payment":
+                _hr_train.refuse_payment({})
+            elif code == "bank":
+                _hr_train.refuse_bank({})
+            elif code == "books":
+                _hr_train.refuse_books({})
+            elif code == "payroll":
+                _hr_train.refuse_payroll({})
+            elif code == "hr_master":
+                _hr_train.refuse_hr_master({})
+            elif code == "guest_blast":
+                _hr_train.refuse_guest_blast({})
+            elif code == "staff_blast":
+                _hr_train.refuse_staff_blast({})
+            elif code == "public_post":
+                _hr_train.refuse_public_post({})
+            elif code == "current":
+                _hr_train.refuse_current({})
+            elif code == "cloudflare":
+                _hr_train.refuse_cloudflare({})
+            elif code == "access":
+                _hr_train.refuse_access({})
+            elif code == "prove":
+                _hr_train.refuse_proven({})
+            elif code == "ready":
+                _hr_train.refuse_ready({})
+            elif code == "resolve":
+                _hr_train.refuse_resolve({})
+            elif code == "production":
+                _hr_train.refuse_production({})
+            elif code == "score":
+                _hr_train.refuse_score({})
+            elif code == "fill":
+                _hr_train.refuse_fill({})
+            elif code == "alchemist":
+                _hr_train.refuse_alchemist({})
+            else:
+                _hr_train.refuse_external_write({})
+        except _hr_train.TrainingCompetencyError as exc:
+            self._hr_train_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Training & competency framework does not store a live training workflow.",
+                **self._hr_train_quiet(),
+            },
+            status=405,
+        )
+
+    def _hr_train_page(self) -> None:
+        identity = self._require_hr_train_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "hr-training-competency.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Training & Competency page is missing.",
+                    **self._hr_train_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _hr_train_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_hr_train_owner()
+        if identity is None:
+            return
+        try:
+            _hr_train.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                payroll=(qs.get("payroll") or [""])[0],
+                hr_master=(qs.get("hr_master") or qs.get("hr-master") or [""])[0],
+                training_module=(qs.get("training_module") or qs.get("training-module") or [""])[0],
+                training=(qs.get("training") or [""])[0],
+                competency=(qs.get("competency") or [""])[0],
+                acknowledgement=(qs.get("acknowledgement") or [""])[0],
+                checklist=(qs.get("checklist") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                guest_blast=(qs.get("guest_blast") or qs.get("guest-blast") or [""])[0],
+                staff_blast=(qs.get("staff_blast") or qs.get("staff-blast") or [""])[0],
+                public_post=(qs.get("public_post") or qs.get("public-post") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _hr_train.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._hr_train_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _hr_train.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._hr_train_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _hr_train.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._hr_train_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _hr_train.read_kind(ref_id)
+            else:
+                report = _hr_train.build_framework()
+        except _hr_train.TrainingCompetencyError as exc:
+            self._hr_train_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
