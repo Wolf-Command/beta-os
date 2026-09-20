@@ -203,6 +203,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_bzg_allocation_engine.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-BZG-05'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-777c285859b3b745';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/allocation-engine; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/bzg-allocation-engine; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
       "expect": "PASS=268 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
       "by": "cursor-bzg-allocation-engine-v1"
+    },
+    {
+      "id": "bf-bzg-bom-yield-v1-20260920",
+      "claim": "Beta Owner BOM/yield / recipe cost standards framework names bom, yield, waste, theoretical_cost, menu_engineering, and notes slots and leaves every slot empty. Empty is not live BOM/yield machinery and not proof of recipe cost standards. Unauth /api/bzg/bom-yield and /bzg-bom-yield are 403. Owner payment, bank write, Zayen books, ESB mutate, invented BOM/yield/waste/theoretical cost/menu engineering, Cloudflare mutate, Access mutate, prove, ready, resolve, production, score, alchemist, and fill are refused. CAP-BZG-06 stays SPECIFIED. Ceiling label is BUILT. CR-bbabeb11ff864169 stays OPEN. No PROVEN or READY invented. Ledger stays 77 rows. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_bzg_bom_yield.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-BZG-06'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-bbabeb11ff864169';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/bom-yield; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/bzg-bom-yield; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=272 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
+      "by": "cursor-bzg-bom-yield-v1"
     }
   ]
 }

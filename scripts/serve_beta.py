@@ -119,6 +119,7 @@ from core import ggv_intercompany_client as _ggv_ic
 from core import bzg_venue_pnl as _bzg_pnl
 from core import bzg_variance_waste as _bzg_var
 from core import bzg_allocation_engine as _bzg_alloc
+from core import bzg_bom_yield as _bzg_bom
 from core import msc_posture_prove as _msc_posture
 from core import intg_connector_contract as _intg_contract
 from core import intg_connector_cap_tests as _intg_cap_tests
@@ -2194,6 +2195,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/bzg/allocation-engine/"):
             self._bzg_alloc_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-BZG-06 Recipe / Cost Standards (BOM/yield). Owner read. Empty is not live BOM/yield machinery.
+        if self._bzg_bom_refuse_code(path):
+            self._bzg_bom_write_refused(path)
+            return
+        if path == "/api/bzg/bom-yield":
+            self._bzg_bom_get(qs)
+            return
+        if path == "/api/bzg/bom-yield/schema":
+            self._bzg_bom_get(qs, view="schema")
+            return
+        if path == "/api/bzg/bom-yield/kinds":
+            self._bzg_bom_get(qs, view="kinds")
+            return
+        if path == "/api/bzg/bom-yield/framework":
+            self._bzg_bom_get(qs, view="framework")
+            return
+        if path.startswith("/api/bzg/bom-yield/"):
+            self._bzg_bom_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-AMG-07 service improvement / review-to-improve loop. Owner read. Empty is not a live loop.
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
@@ -2796,6 +2816,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._bzg_alloc_page()
             return
         elif path in (
+            "/bzg-bom-yield",
+            "/bzg-bom-yield/",
+            "/bzg-bom-yield.html",
+            "/dashboards/bzg-bom-yield.html",
+        ):
+            self._bzg_bom_page()
+            return
+        elif path in (
             "/amg-service-improve",
             "/amg-service-improve/",
             "/amg-service-improve.html",
@@ -3074,6 +3102,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/bzg/allocation-engine" or path.startswith("/api/bzg/allocation-engine/"):
             self._bzg_alloc_write_refused(path)
+            return
+        if self._bzg_bom_refuse_code(path):
+            self._bzg_bom_write_refused(path)
+            return
+        if path == "/api/bzg/bom-yield" or path.startswith("/api/bzg/bom-yield/"):
+            self._bzg_bom_write_refused(path)
             return
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
@@ -3518,6 +3552,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/bzg/allocation-engine" or path.startswith("/api/bzg/allocation-engine/"):
             self._bzg_alloc_write_refused(path)
             return
+        if self._bzg_bom_refuse_code(path):
+            self._bzg_bom_write_refused(path)
+            return
+        if path == "/api/bzg/bom-yield" or path.startswith("/api/bzg/bom-yield/"):
+            self._bzg_bom_write_refused(path)
+            return
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
             return
@@ -3872,6 +3912,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/bzg/allocation-engine" or path.startswith("/api/bzg/allocation-engine/"):
             self._bzg_alloc_write_refused(path)
+            return
+        if self._bzg_bom_refuse_code(path):
+            self._bzg_bom_write_refused(path)
+            return
+        if path == "/api/bzg/bom-yield" or path.startswith("/api/bzg/bom-yield/"):
+            self._bzg_bom_write_refused(path)
             return
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
@@ -13033,6 +13079,311 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _bzg_alloc.build_framework()
         except _bzg_alloc.AllocationEngineError as exc:
             self._bzg_alloc_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _bzg_bom_quiet(self) -> dict:
+        return {
+            "empty_is_bom_yield_machinery": False,
+            "empty_is_recipe_cost_standards": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_bom_yield_machinery": False,
+            "recipe_cost_standards": False,
+            "current": False,
+            "bom": None,
+            "yield": None,
+            "waste": None,
+            "theoretical_cost": None,
+            "menu_engineering": None,
+            "esb_mutated": False,
+            "esb_sot_note": "ESB remains transactional SoT (read-only note only; no ESB mutate).",
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_bom": False,
+            "invented_yield": False,
+            "invented_waste": False,
+            "invented_theoretical_cost": False,
+            "invented_menu_engineering": False,
+        }
+
+    def _require_bzg_bom_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. BOM/yield framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "BOM/yield framework is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._bzg_bom_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._bzg_bom_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _bzg_bom_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/bzg/bom-yield/payment", "/api/bzg/bom-yield/money"}:
+            return "payment"
+        if path in {"/api/bzg/bom-yield/bank", "/api/bzg/bom-yield/transfer"}:
+            return "bank"
+        if path in {"/api/bzg/bom-yield/zayen", "/api/bzg/bom-yield/books"}:
+            return "books"
+        if path in {"/api/bzg/bom-yield/esb", "/api/bzg/bom-yield/esb-mutate", "/api/bzg/bom-yield/esb-write"}:
+            return "esb"
+        if path == "/api/bzg/bom-yield/current":
+            return "current"
+        if path in {"/api/bzg/bom-yield/cloudflare", "/api/bzg/bom-yield/cf"}:
+            return "cloudflare"
+        if path in {"/api/bzg/bom-yield/access", "/api/bzg/bom-yield/cf-access"}:
+            return "access"
+        if path in {"/api/bzg/bom-yield/prove", "/api/bzg/bom-yield/proven"}:
+            return "prove"
+        if path == "/api/bzg/bom-yield/ready":
+            return "ready"
+        if path == "/api/bzg/bom-yield/resolve":
+            return "resolve"
+        if path in {
+            "/api/bzg/bom-yield/production",
+            "/api/bzg/bom-yield/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/bzg/bom-yield/score", "/api/bzg/bom-yield/credits"}:
+            return "score"
+        if path in {"/api/bzg/bom-yield/fill", "/api/bzg/bom-yield/note"}:
+            return "fill"
+        if path == "/api/bzg/bom-yield/alchemist":
+            return "alchemist"
+        return None
+
+    def _bzg_bom_fail(self, exc: _bzg_bom.BomYieldError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "esb_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._bzg_bom_quiet(),
+                **_bzg_bom.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _bzg_bom_write_refused(self, path: str) -> None:
+        identity = self._require_bzg_bom_owner()
+        if identity is None:
+            return
+        try:
+            code = self._bzg_bom_refuse_code(path)
+            tail = path.rstrip("/").rsplit("/", 1)[-1]
+            if code is None and tail in {
+                "bom",
+                "yield",
+                "waste",
+                "theoretical_cost",
+                "menu_engineering",
+            }:
+                code = "current"
+            elif code is None and tail == "notes":
+                code = "fill"
+            if code == "payment":
+                _bzg_bom.refuse_payment({})
+            elif code == "bank":
+                _bzg_bom.refuse_bank({})
+            elif code == "books":
+                _bzg_bom.refuse_books({})
+            elif code == "esb":
+                _bzg_bom.refuse_esb({})
+            elif code == "current":
+                _bzg_bom.refuse_current({})
+            elif code == "cloudflare":
+                _bzg_bom.refuse_cloudflare({})
+            elif code == "access":
+                _bzg_bom.refuse_access({})
+            elif code == "prove":
+                _bzg_bom.refuse_proven({})
+            elif code == "ready":
+                _bzg_bom.refuse_ready({})
+            elif code == "resolve":
+                _bzg_bom.refuse_resolve({})
+            elif code == "production":
+                _bzg_bom.refuse_production({})
+            elif code == "score":
+                _bzg_bom.refuse_score({})
+            elif code == "fill":
+                _bzg_bom.refuse_fill({})
+            elif code == "alchemist":
+                _bzg_bom.refuse_alchemist({})
+            else:
+                _bzg_bom.refuse_external_write({})
+        except _bzg_bom.BomYieldError as exc:
+            self._bzg_bom_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "BOM/yield framework does not store live BOM/yield machinery.",
+                **self._bzg_bom_quiet(),
+            },
+            status=405,
+        )
+
+    def _bzg_bom_page(self) -> None:
+        identity = self._require_bzg_bom_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "bzg-bom-yield.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "BOM/yield page is missing.",
+                    **self._bzg_bom_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _bzg_bom_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_bzg_bom_owner()
+        if identity is None:
+            return
+        try:
+            _bzg_bom.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                esb=(qs.get("esb") or [""])[0],
+                bom=(qs.get("bom") or [""])[0],
+                yield_=(qs.get("yield") or [""])[0],
+                waste=(qs.get("waste") or [""])[0],
+                theoretical_cost=(qs.get("theoretical_cost") or [""])[0],
+                menu_engineering=(qs.get("menu_engineering") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _bzg_bom.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._bzg_bom_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _bzg_bom.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._bzg_bom_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _bzg_bom.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._bzg_bom_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _bzg_bom.read_kind(ref_id)
+            else:
+                report = _bzg_bom.build_framework()
+        except _bzg_bom.BomYieldError as exc:
+            self._bzg_bom_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
