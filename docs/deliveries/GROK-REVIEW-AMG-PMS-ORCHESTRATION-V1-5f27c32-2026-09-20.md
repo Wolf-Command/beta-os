@@ -4,7 +4,7 @@
 **PASS**
 
 ## Scope check
-- Working tree for this slice (baseline `edb88d1` → completion commit PENDING)::
+- Working tree for this slice (baseline `edb88d1` → completion commit `5f27c32` / `5f27c32657ccbe9c2f445e835a8a8a037fd49725`)::
   - `scripts/core/amg_pms_orchestration.py` (new)
   - `scripts/tests/test_amg_pms_orchestration.py` (new)
   - `dashboards/amg-pms-orchestration.html` (new)
