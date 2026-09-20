@@ -4,7 +4,7 @@
 **PASS**
 
 ## Scope check
-- Working tree for this slice (baseline `5006d1d` → completion commit PENDING)::
+- Working tree for this slice (baseline `5006d1d` → completion commit `6e33bb4` / `6e33bb4e56001e2902b9b6807bc872220d71379d`)::
   - `scripts/core/bzg_bom_yield.py` (new)
   - `scripts/tests/test_bzg_bom_yield.py` (new)
   - `dashboards/bzg-bom-yield.html` (new)
