@@ -140,6 +140,13 @@
       "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_amg_journey_workflow.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-AMG-02'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-ce127471ba41692b';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/amg/journey-workflow; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/amg-journey-workflow; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
       "expect": "PASS=236 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
       "by": "cursor-amg-journey-workflow-v1"
+    },
+    {
+      "id": "bf-amg-daily-ops-state-v1-20260920",
+      "claim": "Beta Owner daily hotel operating-state framework names occupancy, arrivals, departures, in-house, out-of-order, and notes slots and leaves every slot empty. Empty is not a live daily ops state and not proof of hotel operations. Unauth /api/amg/daily-ops-state and /amg-daily-ops-state are 403. Owner payment, bank write, Zayen books, occupancy, ADR, RevPAR, live Yanolja, Cloudflare mutate, Access mutate, prove, ready, resolve, production, score, alchemist, and fill are refused. CAP-AMG-04 stays SPECIFIED. Ceiling label is BUILT. CR-bc5785d66c981fd4 stays OPEN. No PROVEN or READY invented. Ledger stays 77 rows. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_amg_daily_ops_state.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-AMG-04'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-bc5785d66c981fd4';\"; curl -sS -o /dev/null -w 'anon:%{http_code}\\n' http://127.0.0.1:8788/api/amg/daily-ops-state; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/amg-daily-ops-state; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "PASS=245 FAIL=0; SPECIFIED 77; OPEN; anon:403; page:403; 8787 True; 8788 True",
+      "by": "cursor-amg-daily-ops-state-v1"
     }
   ]
 }

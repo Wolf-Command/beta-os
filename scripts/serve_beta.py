@@ -110,6 +110,7 @@ from core import intg_secrets_env as _intg_secrets
 from core import ggv_client_profitability as _ggv_pnl
 from core import ggv_strategy_machine as _ggv_strategy
 from core import amg_journey_workflow as _amg_journey
+from core import amg_daily_ops_state as _amg_ops
 from core import msc_posture_prove as _msc_posture
 from core import intg_connector_contract as _intg_contract
 from core import intg_connector_cap_tests as _intg_cap_tests
@@ -2052,6 +2053,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/amg/journey-workflow/"):
             self._amg_journey_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-AMG-04 daily hotel operating state. Owner read. Empty is not live ops.
+        if self._amg_ops_refuse_code(path):
+            self._amg_ops_write_refused(path)
+            return
+        if path == "/api/amg/daily-ops-state":
+            self._amg_ops_get(qs)
+            return
+        if path == "/api/amg/daily-ops-state/schema":
+            self._amg_ops_get(qs, view="schema")
+            return
+        if path == "/api/amg/daily-ops-state/kinds":
+            self._amg_ops_get(qs, view="kinds")
+            return
+        if path == "/api/amg/daily-ops-state/framework":
+            self._amg_ops_get(qs, view="framework")
+            return
+        if path.startswith("/api/amg/daily-ops-state/"):
+            self._amg_ops_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-MSC-02 posture prove. Owner read. Empty is not a prove and not READY.
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -2560,6 +2580,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._amg_journey_page()
             return
         elif path in (
+            "/amg-daily-ops-state",
+            "/amg-daily-ops-state/",
+            "/amg-daily-ops-state.html",
+            "/dashboards/amg-daily-ops-state.html",
+        ):
+            self._amg_ops_page()
+            return
+        elif path in (
             "/msc-posture",
             "/msc-posture/",
             "/msc-posture.html",
@@ -2780,6 +2808,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/amg/journey-workflow" or path.startswith("/api/amg/journey-workflow/"):
             self._amg_journey_write_refused(path)
+            return
+        if self._amg_ops_refuse_code(path):
+            self._amg_ops_write_refused(path)
+            return
+        if path == "/api/amg/daily-ops-state" or path.startswith("/api/amg/daily-ops-state/"):
+            self._amg_ops_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -3170,6 +3204,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/amg/journey-workflow" or path.startswith("/api/amg/journey-workflow/"):
             self._amg_journey_write_refused(path)
             return
+        if self._amg_ops_refuse_code(path):
+            self._amg_ops_write_refused(path)
+            return
+        if path == "/api/amg/daily-ops-state" or path.startswith("/api/amg/daily-ops-state/"):
+            self._amg_ops_write_refused(path)
+            return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
             return
@@ -3470,6 +3510,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/amg/journey-workflow" or path.startswith("/api/amg/journey-workflow/"):
             self._amg_journey_write_refused(path)
+            return
+        if self._amg_ops_refuse_code(path):
+            self._amg_ops_write_refused(path)
+            return
+        if path == "/api/amg/daily-ops-state" or path.startswith("/api/amg/daily-ops-state/"):
+            self._amg_ops_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -9818,6 +9864,311 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _amg_journey.build_framework()
         except _amg_journey.JourneyWorkflowError as exc:
             self._amg_journey_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _amg_ops_quiet(self) -> dict:
+        return {
+            "empty_is_ops": False,
+            "empty_is_operations": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_ops": False,
+            "hotel_operations": False,
+            "current": False,
+            "occupancy": None,
+            "adr": None,
+            "revpar": None,
+            "yanolja_live": False,
+            "yanolja_called": False,
+            "yanolja_write": False,
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_occupancy": False,
+            "invented_adr": False,
+            "invented_revpar": False,
+        }
+
+    def _require_amg_ops_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Daily ops framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Daily hotel operating state is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._amg_ops_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._amg_ops_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _amg_ops_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/amg/daily-ops-state/payment", "/api/amg/daily-ops-state/money"}:
+            return "payment"
+        if path in {"/api/amg/daily-ops-state/bank", "/api/amg/daily-ops-state/transfer"}:
+            return "bank"
+        if path in {"/api/amg/daily-ops-state/zayen", "/api/amg/daily-ops-state/books"}:
+            return "books"
+        if path in {"/api/amg/daily-ops-state/yanolja", "/api/amg/daily-ops-state/yanolja-write"}:
+            return "yanolja"
+        if path in {
+            "/api/amg/daily-ops-state/adr",
+            "/api/amg/daily-ops-state/revpar",
+            "/api/amg/daily-ops-state/current",
+            "/api/amg/daily-ops-state/occupancy-value",
+        }:
+            return "current"
+        if path in {"/api/amg/daily-ops-state/cloudflare", "/api/amg/daily-ops-state/cf"}:
+            return "cloudflare"
+        if path in {"/api/amg/daily-ops-state/access", "/api/amg/daily-ops-state/cf-access"}:
+            return "access"
+        if path in {"/api/amg/daily-ops-state/prove", "/api/amg/daily-ops-state/proven"}:
+            return "prove"
+        if path == "/api/amg/daily-ops-state/ready":
+            return "ready"
+        if path == "/api/amg/daily-ops-state/resolve":
+            return "resolve"
+        if path in {
+            "/api/amg/daily-ops-state/production",
+            "/api/amg/daily-ops-state/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/amg/daily-ops-state/score", "/api/amg/daily-ops-state/credits"}:
+            return "score"
+        if path in {"/api/amg/daily-ops-state/fill", "/api/amg/daily-ops-state/note"}:
+            return "fill"
+        if path == "/api/amg/daily-ops-state/alchemist":
+            return "alchemist"
+        return None
+
+    def _amg_ops_fail(self, exc: _amg_ops.DailyOpsStateError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "yanolja_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._amg_ops_quiet(),
+                **_amg_ops.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _amg_ops_write_refused(self, path: str) -> None:
+        identity = self._require_amg_ops_owner()
+        if identity is None:
+            return
+        try:
+            code = self._amg_ops_refuse_code(path)
+            tail = path.rstrip("/").rsplit("/", 1)[-1]
+            if code is None and tail == "occupancy":
+                code = "current"
+            elif code is None and tail in {
+                "arrivals",
+                "departures",
+                "in-house",
+                "out-of-order",
+                "notes",
+            }:
+                code = "fill"
+            if code == "payment":
+                _amg_ops.refuse_payment({})
+            elif code == "bank":
+                _amg_ops.refuse_bank({})
+            elif code == "books":
+                _amg_ops.refuse_books({})
+            elif code == "yanolja":
+                _amg_ops.refuse_yanolja({})
+            elif code == "current":
+                _amg_ops.refuse_current({})
+            elif code == "cloudflare":
+                _amg_ops.refuse_cloudflare({})
+            elif code == "access":
+                _amg_ops.refuse_access({})
+            elif code == "prove":
+                _amg_ops.refuse_proven({})
+            elif code == "ready":
+                _amg_ops.refuse_ready({})
+            elif code == "resolve":
+                _amg_ops.refuse_resolve({})
+            elif code == "production":
+                _amg_ops.refuse_production({})
+            elif code == "score":
+                _amg_ops.refuse_score({})
+            elif code == "fill":
+                _amg_ops.refuse_fill({})
+            elif code == "alchemist":
+                _amg_ops.refuse_alchemist({})
+            else:
+                _amg_ops.refuse_external_write({})
+        except _amg_ops.DailyOpsStateError as exc:
+            self._amg_ops_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Daily ops framework does not store a live daily ops state.",
+                **self._amg_ops_quiet(),
+            },
+            status=405,
+        )
+
+    def _amg_ops_page(self) -> None:
+        identity = self._require_amg_ops_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "amg-daily-ops-state.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Daily hotel operating state page is missing.",
+                    **self._amg_ops_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _amg_ops_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_amg_ops_owner()
+        if identity is None:
+            return
+        try:
+            _amg_ops.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                yanolja=(qs.get("yanolja") or [""])[0],
+                occupancy=(qs.get("occupancy") or [""])[0],
+                adr=(qs.get("adr") or [""])[0],
+                revpar=(qs.get("revpar") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _amg_ops.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._amg_ops_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _amg_ops.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._amg_ops_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _amg_ops.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._amg_ops_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _amg_ops.read_kind(ref_id)
+            else:
+                report = _amg_ops.build_framework()
+        except _amg_ops.DailyOpsStateError as exc:
+            self._amg_ops_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
