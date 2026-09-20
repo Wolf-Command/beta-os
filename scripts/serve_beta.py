@@ -122,6 +122,7 @@ from core import hr_payroll_inputs as _hr_pay
 from core import hr_retention_signals as _hr_ret
 from core import fin_mgmt_reporting as _fin_mgmt
 from core import fin_intercompany_billing as _fin_ic
+from core import fin_budget_forecast_cash as _fin_bfc
 from core import ggv_intercompany_client as _ggv_ic
 from core import bzg_venue_pnl as _bzg_pnl
 from core import bzg_variance_waste as _bzg_var
@@ -2392,6 +2393,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/fin/intercompany-billing/"):
             self._fin_ic_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-FIN-07 Budget / Forecast / Cash. Owner read. Empty is not a live budget pack.
+        if self._fin_bfc_refuse_code(path):
+            self._fin_bfc_write_refused(path)
+            return
+        if path == "/api/fin/budget-forecast-cash":
+            self._fin_bfc_get(qs)
+            return
+        if path == "/api/fin/budget-forecast-cash/schema":
+            self._fin_bfc_get(qs, view="schema")
+            return
+        if path == "/api/fin/budget-forecast-cash/kinds":
+            self._fin_bfc_get(qs, view="kinds")
+            return
+        if path == "/api/fin/budget-forecast-cash/framework":
+            self._fin_bfc_get(qs, view="framework")
+            return
+        if path.startswith("/api/fin/budget-forecast-cash/"):
+            self._fin_bfc_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-MSC-02 posture prove. Owner read. Empty is not a prove and not READY.
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -3036,6 +3056,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._fin_ic_page()
             return
         elif path in (
+            "/fin-budget-forecast-cash",
+            "/fin-budget-forecast-cash/",
+            "/fin-budget-forecast-cash.html",
+            "/dashboards/fin-budget-forecast-cash.html",
+        ):
+            self._fin_bfc_page()
+            return
+        elif path in (
             "/msc-posture",
             "/msc-posture/",
             "/msc-posture.html",
@@ -3358,6 +3386,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/intercompany-billing" or path.startswith("/api/fin/intercompany-billing/"):
             self._fin_ic_write_refused(path)
+            return
+        if self._fin_bfc_refuse_code(path):
+            self._fin_bfc_write_refused(path)
+            return
+        if path == "/api/fin/budget-forecast-cash" or path.startswith("/api/fin/budget-forecast-cash/"):
+            self._fin_bfc_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -3850,6 +3884,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/fin/intercompany-billing" or path.startswith("/api/fin/intercompany-billing/"):
             self._fin_ic_write_refused(path)
             return
+        if self._fin_bfc_refuse_code(path):
+            self._fin_bfc_write_refused(path)
+            return
+        if path == "/api/fin/budget-forecast-cash" or path.startswith("/api/fin/budget-forecast-cash/"):
+            self._fin_bfc_write_refused(path)
+            return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
             return
@@ -4252,6 +4292,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/intercompany-billing" or path.startswith("/api/fin/intercompany-billing/"):
             self._fin_ic_write_refused(path)
+            return
+        if self._fin_bfc_refuse_code(path):
+            self._fin_bfc_write_refused(path)
+            return
+        if path == "/api/fin/budget-forecast-cash" or path.startswith("/api/fin/budget-forecast-cash/"):
+            self._fin_bfc_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -14618,6 +14664,343 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _fin_ic.build_framework()
         except _fin_ic.FinIntercompanyBillingError as exc:
             self._fin_ic_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+
+
+    def _fin_bfc_quiet(self) -> dict:
+        return {
+            "empty_is_budget_pack": False,
+            "empty_is_forecast": False,
+            "empty_is_cash_machinery": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_budget": False,
+            "live_forecast": False,
+            "live_cash": False,
+            "cash_13_week_machinery": False,
+            "current": False,
+            "annual_budget": None,
+            "annual_budget_number": None,
+            "rolling_forecast": None,
+            "rolling_forecast_number": None,
+            "cash_13_week": None,
+            "cash_13_week_number": None,
+            "cash_position": None,
+            "checklist": None,
+            "guest_blast": False,
+            "staff_blast": False,
+            "public_post": False,
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_budget": False,
+            "invented_forecast": False,
+            "invented_cash": False,
+        }
+
+    def _require_fin_bfc_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Budget/forecast/cash framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Budget / Forecast / Cash Cadence is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._fin_bfc_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._fin_bfc_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _fin_bfc_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/fin/budget-forecast-cash/payment", "/api/fin/budget-forecast-cash/money"}:
+            return "payment"
+        if path in {"/api/fin/budget-forecast-cash/bank", "/api/fin/budget-forecast-cash/transfer"}:
+            return "bank"
+        if path in {"/api/fin/budget-forecast-cash/zayen", "/api/fin/budget-forecast-cash/books"}:
+            return "books"
+        if path in {
+            "/api/fin/budget-forecast-cash/guest-blast",
+            "/api/fin/budget-forecast-cash/blast",
+        }:
+            return "guest_blast"
+        if path in {
+            "/api/fin/budget-forecast-cash/staff-blast",
+            "/api/fin/budget-forecast-cash/staff-broadcast",
+        }:
+            return "staff_blast"
+        if path in {
+            "/api/fin/budget-forecast-cash/public-post",
+            "/api/fin/budget-forecast-cash/public",
+            "/api/fin/budget-forecast-cash/post",
+            "/api/fin/budget-forecast-cash/publish",
+        }:
+            return "public_post"
+        if path == "/api/fin/budget-forecast-cash/current":
+            return "current"
+        if path in {"/api/fin/budget-forecast-cash/cloudflare", "/api/fin/budget-forecast-cash/cf"}:
+            return "cloudflare"
+        if path in {"/api/fin/budget-forecast-cash/access", "/api/fin/budget-forecast-cash/cf-access"}:
+            return "access"
+        if path in {"/api/fin/budget-forecast-cash/prove", "/api/fin/budget-forecast-cash/proven"}:
+            return "prove"
+        if path == "/api/fin/budget-forecast-cash/ready":
+            return "ready"
+        if path == "/api/fin/budget-forecast-cash/resolve":
+            return "resolve"
+        if path in {
+            "/api/fin/budget-forecast-cash/production",
+            "/api/fin/budget-forecast-cash/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/fin/budget-forecast-cash/score", "/api/fin/budget-forecast-cash/credits"}:
+            return "score"
+        if path in {"/api/fin/budget-forecast-cash/fill", "/api/fin/budget-forecast-cash/note"}:
+            return "fill"
+        if path == "/api/fin/budget-forecast-cash/alchemist":
+            return "alchemist"
+        return None
+
+    def _fin_bfc_fail(self, exc: _fin_bfc.FinBudgetForecastCashError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "guest_blast_refused",
+            "staff_blast_refused",
+            "public_post_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._fin_bfc_quiet(),
+                **_fin_bfc.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _fin_bfc_write_refused(self, path: str) -> None:
+        identity = self._require_fin_bfc_owner()
+        if identity is None:
+            return
+        try:
+            code = self._fin_bfc_refuse_code(path)
+            tail = path.rstrip("/").rsplit("/", 1)[-1]
+            if code is None and tail in {
+                "annual_budget",
+                "annual-budget",
+                "rolling_forecast",
+                "rolling-forecast",
+                "cash_13_week",
+                "cash-13-week",
+                "cash_position",
+                "cash-position",
+            }:
+                code = "current"
+            elif code is None and tail in {"notes", "checklist"}:
+                code = "fill"
+            if code == "payment":
+                _fin_bfc.refuse_payment({})
+            elif code == "bank":
+                _fin_bfc.refuse_bank({})
+            elif code == "books":
+                _fin_bfc.refuse_books({})
+            elif code == "guest_blast":
+                _fin_bfc.refuse_guest_blast({})
+            elif code == "staff_blast":
+                _fin_bfc.refuse_staff_blast({})
+            elif code == "public_post":
+                _fin_bfc.refuse_public_post({})
+            elif code == "current":
+                _fin_bfc.refuse_current({})
+            elif code == "cloudflare":
+                _fin_bfc.refuse_cloudflare({})
+            elif code == "access":
+                _fin_bfc.refuse_access({})
+            elif code == "prove":
+                _fin_bfc.refuse_proven({})
+            elif code == "ready":
+                _fin_bfc.refuse_ready({})
+            elif code == "resolve":
+                _fin_bfc.refuse_resolve({})
+            elif code == "production":
+                _fin_bfc.refuse_production({})
+            elif code == "score":
+                _fin_bfc.refuse_score({})
+            elif code == "fill":
+                _fin_bfc.refuse_fill({})
+            elif code == "alchemist":
+                _fin_bfc.refuse_alchemist({})
+            else:
+                _fin_bfc.refuse_external_write({})
+        except _fin_bfc.FinBudgetForecastCashError as exc:
+            self._fin_bfc_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Budget / forecast / cash framework does not store a live budget pack.",
+                **self._fin_bfc_quiet(),
+            },
+            status=405,
+        )
+
+    def _fin_bfc_page(self) -> None:
+        identity = self._require_fin_bfc_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "fin-budget-forecast-cash.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Budget / Forecast / Cash Cadence page is missing.",
+                    **self._fin_bfc_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _fin_bfc_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_fin_bfc_owner()
+        if identity is None:
+            return
+        try:
+            _fin_bfc.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                annual_budget=(qs.get("annual_budget") or qs.get("annual-budget") or [""])[0],
+                rolling_forecast=(qs.get("rolling_forecast") or qs.get("rolling-forecast") or [""])[0],
+                cash_13_week=(qs.get("cash_13_week") or qs.get("cash-13-week") or [""])[0],
+                checklist=(qs.get("checklist") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                guest_blast=(qs.get("guest_blast") or qs.get("guest-blast") or [""])[0],
+                staff_blast=(qs.get("staff_blast") or qs.get("staff-blast") or [""])[0],
+                public_post=(qs.get("public_post") or qs.get("public-post") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _fin_bfc.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._fin_bfc_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _fin_bfc.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._fin_bfc_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _fin_bfc.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._fin_bfc_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _fin_bfc.read_kind(ref_id)
+            else:
+                report = _fin_bfc.build_framework()
+        except _fin_bfc.FinBudgetForecastCashError as exc:
+            self._fin_bfc_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
