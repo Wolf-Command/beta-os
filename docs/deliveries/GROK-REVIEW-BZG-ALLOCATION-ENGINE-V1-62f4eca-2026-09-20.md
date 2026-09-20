@@ -4,7 +4,7 @@
 **PASS**
 
 ## Scope check
-- Working tree for this slice (baseline `e43bd56` → completion commit PENDING)::
+- Working tree for this slice (baseline `e43bd56` → completion commit `62f4eca` / `62f4ecae68826b58cdba691fce41cb97cd1952b7`)::
   - `scripts/core/bzg_allocation_engine.py` (new)
   - `scripts/tests/test_bzg_allocation_engine.py` (new)
   - `dashboards/bzg-allocation-engine.html` (new)
