@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wolf · Venue P&L / Management Rollup</title>
+<style>
+  :root {
+    --bg: #101418;
+    --bg2: #171d23;
+    --line: #2c3842;
+    --text: #eef2f5;
+    --muted: #8b9aa6;
+    --accent: #c4a574;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background:
+      radial-gradient(ellipse 90% 60% at 0% -10%, #243039 0%, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 20px 16px 64px; }
+  h1 { font-family: var(--display); font-weight: 500; font-size: 32px; margin: 0 0 6px; }
+  h2 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 28px 0 8px; }
+  p { line-height: 1.45; }
+  .lede { color: var(--muted); margin: 0 0 16px; }
+  .banner {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    border-left: 3px solid var(--accent);
+    padding: 12px 14px;
+    margin: 12px 0 8px;
+  }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .card {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    padding: 14px;
+    margin: 0;
+  }
+  .k { color: var(--muted); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .v { font-family: var(--display); font-size: 28px; margin: 4px 0; }
+  .note { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Venue P&L</h1>
+  <p class="lede">Bound beta-bzg-ops-safe. An empty framework is not a live venue P&L and not proof of management rollup machinery. Not PROVEN. Not READY. CAP-BZG-02 stays SPECIFIED. The ceiling label is BUILT. This page does not invent revenue. This page does not invent cost. This page does not invent contribution or rollup. This page does not claim tax treatment. This page does not move money. This page does not mutate Cloudflare or Access. This page does not resolve the completion row.</p>
+  <div id="banner" class="banner">Reading the framework… Empty until a slot is named. Not a live venue P&L. Not proof of management rollup machinery. Not READY.</div>
+  <h2>Venue P&L slots</h2>
+  <div id="kinds" class="grid">
+    <article class="card"><div class="k">Slots</div><div class="v">EMPTY</div><p class="note">No venue. No revenue. No cost. No contribution. No rollup. No notes. Empty is not a live venue P&L and not proof of management rollup machinery.</p></article>
+  </div>
+</div>
+<script>
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function paint(pack) {
+  var banner = document.getElementById("banner");
+  var flags = pack.honesty || {};
+  banner.textContent = "Framework empty. Not a live venue P&L. Not proof of management rollup machinery. Not READY."
+    + " No revenue. No cost. No contribution. No rollup. No tax treatment. No payment."
+    + " Cloudflare not mutated. Access not mutated."
+    + " Ledger " + (flags.maturity || "unread")
+    + ". Ceiling " + (flags.maturity_ceiling || "BUILT")
+    + ". CAP-BZG-02 stays SPECIFIED. Row not resolved.";
+  var rows = "";
+  (pack.kinds || []).forEach(function (row) {
+    rows += '<article class="card"><div class="k">' + esc(row.kind) + '</div>'
+      + '<div class="v">EMPTY</div>'
+      + '<p class="note">' + esc(row.why) + " · not a live venue P&L · not proof of management rollup machinery · not READY</p></article>";
+  });
+  if (!rows) {
+    rows = '<article class="card"><div class="k">Slots</div><div class="v">EMPTY</div>'
+      + '<p class="note">No revenue. No cost. No contribution. No rollup. Empty is not a live venue P&L and not proof of management rollup machinery.</p></article>';
+  }
+  document.getElementById("kinds").innerHTML = rows;
+}
+
+fetch("/api/bzg/venue-pnl", { headers: { "Accept": "application/json" } })
+  .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
+  .then(function (result) {
+    if (!result.ok) {
+      document.getElementById("banner").textContent = "Read refused. Empty is not a live venue P&L and not proof of management rollup machinery. Not READY. No revenue. No cost. No contribution. No rollup. No tax treatment. No payment. Cloudflare and Access were not mutated. CAP-BZG-02 stays SPECIFIED. The completion row was not resolved.";
+      return;
+    }
+    paint(result.body);
+  })
+  .catch(function () {
+    document.getElementById("banner").textContent = "Read failed. No venue P&L was stored. No revenue. No tax treatment. No payment. CAP-BZG-02 stays SPECIFIED. The completion row was not resolved.";
+  });
+</script>
+</body>
+</html>

@@ -114,6 +114,7 @@ from core import amg_daily_ops_state as _amg_ops
 from core import amg_packages_products as _amg_packages
 from core import amg_revenue_yield as _amg_yield
 from core import ggv_intercompany_client as _ggv_ic
+from core import bzg_venue_pnl as _bzg_pnl
 from core import msc_posture_prove as _msc_posture
 from core import intg_connector_contract as _intg_contract
 from core import intg_connector_cap_tests as _intg_cap_tests
@@ -2132,6 +2133,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/ggv/intercompany-client/"):
             self._ggv_ic_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-BZG-02 venue P&L / management rollup. Owner read. Empty is not a live venue P&L.
+        if self._bzg_pnl_refuse_code(path):
+            self._bzg_pnl_write_refused(path)
+            return
+        if path == "/api/bzg/venue-pnl":
+            self._bzg_pnl_get(qs)
+            return
+        if path == "/api/bzg/venue-pnl/schema":
+            self._bzg_pnl_get(qs, view="schema")
+            return
+        if path == "/api/bzg/venue-pnl/kinds":
+            self._bzg_pnl_get(qs, view="kinds")
+            return
+        if path == "/api/bzg/venue-pnl/framework":
+            self._bzg_pnl_get(qs, view="framework")
+            return
+        if path.startswith("/api/bzg/venue-pnl/"):
+            self._bzg_pnl_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-MSC-02 posture prove. Owner read. Empty is not a prove and not READY.
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -2672,6 +2692,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._ggv_ic_page()
             return
         elif path in (
+            "/bzg-venue-pnl",
+            "/bzg-venue-pnl/",
+            "/bzg-venue-pnl.html",
+            "/dashboards/bzg-venue-pnl.html",
+        ):
+            self._bzg_pnl_page()
+            return
+        elif path in (
             "/msc-posture",
             "/msc-posture/",
             "/msc-posture.html",
@@ -2916,6 +2944,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ggv/intercompany-client" or path.startswith("/api/ggv/intercompany-client/"):
             self._ggv_ic_write_refused(path)
+            return
+        if self._bzg_pnl_refuse_code(path):
+            self._bzg_pnl_write_refused(path)
+            return
+        if path == "/api/bzg/venue-pnl" or path.startswith("/api/bzg/venue-pnl/"):
+            self._bzg_pnl_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -3330,6 +3364,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/ggv/intercompany-client" or path.startswith("/api/ggv/intercompany-client/"):
             self._ggv_ic_write_refused(path)
             return
+        if self._bzg_pnl_refuse_code(path):
+            self._bzg_pnl_write_refused(path)
+            return
+        if path == "/api/bzg/venue-pnl" or path.startswith("/api/bzg/venue-pnl/"):
+            self._bzg_pnl_write_refused(path)
+            return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
             return
@@ -3654,6 +3694,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ggv/intercompany-client" or path.startswith("/api/ggv/intercompany-client/"):
             self._ggv_ic_write_refused(path)
+            return
+        if self._bzg_pnl_refuse_code(path):
+            self._bzg_pnl_write_refused(path)
+            return
+        if path == "/api/bzg/venue-pnl" or path.startswith("/api/bzg/venue-pnl/"):
+            self._bzg_pnl_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -11221,6 +11267,314 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _ggv_ic.build_framework()
         except _ggv_ic.IntercompanyClientError as exc:
             self._ggv_ic_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+
+    def _bzg_pnl_quiet(self) -> dict:
+        return {
+            "empty_is_pnl": False,
+            "empty_is_rollup_machinery": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_pnl": False,
+            "rollup_machinery": False,
+            "current": False,
+            "venue": None,
+            "revenue": None,
+            "cost": None,
+            "contribution": None,
+            "rollup": None,
+            "tax_treatment": None,
+            "tax_claimed": False,
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_revenue": False,
+            "invented_cost": False,
+            "invented_contribution": False,
+            "invented_rollup": False,
+            "invented_tax": False,
+        }
+
+    def _require_bzg_pnl_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Venue P&L framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Venue P&L is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._bzg_pnl_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._bzg_pnl_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _bzg_pnl_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/bzg/venue-pnl/payment", "/api/bzg/venue-pnl/money"}:
+            return "payment"
+        if path in {"/api/bzg/venue-pnl/bank", "/api/bzg/venue-pnl/transfer"}:
+            return "bank"
+        if path in {"/api/bzg/venue-pnl/zayen", "/api/bzg/venue-pnl/books"}:
+            return "books"
+        if path in {"/api/bzg/venue-pnl/tax", "/api/bzg/venue-pnl/tax-treatment"}:
+            return "tax"
+        if path == "/api/bzg/venue-pnl/current":
+            return "current"
+        if path in {"/api/bzg/venue-pnl/cloudflare", "/api/bzg/venue-pnl/cf"}:
+            return "cloudflare"
+        if path in {"/api/bzg/venue-pnl/access", "/api/bzg/venue-pnl/cf-access"}:
+            return "access"
+        if path in {"/api/bzg/venue-pnl/prove", "/api/bzg/venue-pnl/proven"}:
+            return "prove"
+        if path == "/api/bzg/venue-pnl/ready":
+            return "ready"
+        if path == "/api/bzg/venue-pnl/resolve":
+            return "resolve"
+        if path in {
+            "/api/bzg/venue-pnl/production",
+            "/api/bzg/venue-pnl/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/bzg/venue-pnl/score", "/api/bzg/venue-pnl/credits"}:
+            return "score"
+        if path in {"/api/bzg/venue-pnl/fill", "/api/bzg/venue-pnl/note"}:
+            return "fill"
+        if path == "/api/bzg/venue-pnl/alchemist":
+            return "alchemist"
+        return None
+
+    def _bzg_pnl_fail(self, exc: _bzg_pnl.VenuePnlError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "tax_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._bzg_pnl_quiet(),
+                **_bzg_pnl.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _bzg_pnl_write_refused(self, path: str) -> None:
+        identity = self._require_bzg_pnl_owner()
+        if identity is None:
+            return
+        try:
+            code = self._bzg_pnl_refuse_code(path)
+            tail = path.rstrip("/").rsplit("/", 1)[-1]
+            if code is None and tail in {
+                "venue",
+                "venues",
+                "revenue",
+                "cost",
+                "costs",
+                "contribution",
+                "rollup",
+            }:
+                code = "current"
+            elif code is None and tail == "notes":
+                code = "fill"
+            if code == "payment":
+                _bzg_pnl.refuse_payment({})
+            elif code == "bank":
+                _bzg_pnl.refuse_bank({})
+            elif code == "books":
+                _bzg_pnl.refuse_books({})
+            elif code == "tax":
+                _bzg_pnl.refuse_tax({})
+            elif code == "current":
+                _bzg_pnl.refuse_current({})
+            elif code == "cloudflare":
+                _bzg_pnl.refuse_cloudflare({})
+            elif code == "access":
+                _bzg_pnl.refuse_access({})
+            elif code == "prove":
+                _bzg_pnl.refuse_proven({})
+            elif code == "ready":
+                _bzg_pnl.refuse_ready({})
+            elif code == "resolve":
+                _bzg_pnl.refuse_resolve({})
+            elif code == "production":
+                _bzg_pnl.refuse_production({})
+            elif code == "score":
+                _bzg_pnl.refuse_score({})
+            elif code == "fill":
+                _bzg_pnl.refuse_fill({})
+            elif code == "alchemist":
+                _bzg_pnl.refuse_alchemist({})
+            else:
+                _bzg_pnl.refuse_external_write({})
+        except _bzg_pnl.VenuePnlError as exc:
+            self._bzg_pnl_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Venue P&L framework does not store a live venue P&L.",
+                **self._bzg_pnl_quiet(),
+            },
+            status=405,
+        )
+
+    def _bzg_pnl_page(self) -> None:
+        identity = self._require_bzg_pnl_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "bzg-venue-pnl.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Venue P&L page is missing.",
+                    **self._bzg_pnl_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _bzg_pnl_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_bzg_pnl_owner()
+        if identity is None:
+            return
+        try:
+            _bzg_pnl.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                venue=(qs.get("venue") or [""])[0],
+                revenue=(qs.get("revenue") or [""])[0],
+                cost=(qs.get("cost") or [""])[0],
+                contribution=(qs.get("contribution") or [""])[0],
+                rollup=(qs.get("rollup") or [""])[0],
+                tax=(qs.get("tax") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _bzg_pnl.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._bzg_pnl_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _bzg_pnl.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._bzg_pnl_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _bzg_pnl.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._bzg_pnl_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _bzg_pnl.read_kind(ref_id)
+            else:
+                report = _bzg_pnl.build_framework()
+        except _bzg_pnl.VenuePnlError as exc:
+            self._bzg_pnl_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
