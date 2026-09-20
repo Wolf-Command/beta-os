@@ -116,6 +116,7 @@ from core import amg_revenue_yield as _amg_yield
 from core import amg_service_improve as _amg_improve
 from core import amg_sla_incident as _amg_sla
 from core import amg_pms_orchestration as _amg_pms
+from core import hr_hiring_onboarding as _hr_hire
 from core import ggv_intercompany_client as _ggv_ic
 from core import bzg_venue_pnl as _bzg_pnl
 from core import bzg_variance_waste as _bzg_var
@@ -2272,6 +2273,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/amg/pms-orchestration/"):
             self._amg_pms_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-HR-02 Hiring & Onboarding. Owner read. Empty is not live hiring.
+        if self._hr_hire_refuse_code(path):
+            self._hr_hire_write_refused(path)
+            return
+        if path == "/api/hr/hiring-onboarding":
+            self._hr_hire_get(qs)
+            return
+        if path == "/api/hr/hiring-onboarding/schema":
+            self._hr_hire_get(qs, view="schema")
+            return
+        if path == "/api/hr/hiring-onboarding/kinds":
+            self._hr_hire_get(qs, view="kinds")
+            return
+        if path == "/api/hr/hiring-onboarding/framework":
+            self._hr_hire_get(qs, view="framework")
+            return
+        if path.startswith("/api/hr/hiring-onboarding/"):
+            self._hr_hire_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-MSC-02 posture prove. Owner read. Empty is not a prove and not READY.
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -2868,6 +2888,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._amg_pms_page()
             return
         elif path in (
+            "/hr-hiring-onboarding",
+            "/hr-hiring-onboarding/",
+            "/hr-hiring-onboarding.html",
+            "/dashboards/hr-hiring-onboarding.html",
+        ):
+            self._hr_hire_page()
+            return
+        elif path in (
             "/msc-posture",
             "/msc-posture/",
             "/msc-posture.html",
@@ -3154,6 +3182,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/amg/pms-orchestration" or path.startswith("/api/amg/pms-orchestration/"):
             self._amg_pms_write_refused(path)
+            return
+        if self._hr_hire_refuse_code(path):
+            self._hr_hire_write_refused(path)
+            return
+        if path == "/api/hr/hiring-onboarding" or path.startswith("/api/hr/hiring-onboarding/"):
+            self._hr_hire_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -3610,6 +3644,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/amg/pms-orchestration" or path.startswith("/api/amg/pms-orchestration/"):
             self._amg_pms_write_refused(path)
             return
+        if self._hr_hire_refuse_code(path):
+            self._hr_hire_write_refused(path)
+            return
+        if path == "/api/hr/hiring-onboarding" or path.startswith("/api/hr/hiring-onboarding/"):
+            self._hr_hire_write_refused(path)
+            return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
             return
@@ -3976,6 +4016,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/amg/pms-orchestration" or path.startswith("/api/amg/pms-orchestration/"):
             self._amg_pms_write_refused(path)
+            return
+        if self._hr_hire_refuse_code(path):
+            self._hr_hire_write_refused(path)
+            return
+        if path == "/api/hr/hiring-onboarding" or path.startswith("/api/hr/hiring-onboarding/"):
+            self._hr_hire_write_refused(path)
             return
         if self._msc_posture_refuse_code(path):
             self._msc_posture_write_refused(path)
@@ -12236,6 +12282,364 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _amg_pms.build_framework()
         except _amg_pms.PmsOrchestrationError as exc:
             self._amg_pms_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+
+    def _hr_hire_quiet(self) -> dict:
+        return {
+            "empty_is_hiring_onboarding": False,
+            "empty_is_hr_hire_machinery": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_hiring": False,
+            "live_hiring_onboarding": False,
+            "hr_hire_machinery": False,
+            "current": False,
+            "requisition": None,
+            "requisition_number": None,
+            "candidate": None,
+            "candidate_number": None,
+            "hire": None,
+            "hire_number": None,
+            "offer": None,
+            "offer_number": None,
+            "onboarding": None,
+            "onboarding_number": None,
+            "checklist": None,
+            "guest_blast": False,
+            "staff_blast": False,
+            "public_post": False,
+            "hr_master_write": False,
+            "payroll_executed": False,
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_hire": False,
+            "invented_candidate": False,
+            "invented_offer": False,
+            "invented_onboarding": False,
+        }
+
+    def _require_hr_hire_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Hiring & onboarding framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Hiring & Onboarding is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._hr_hire_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._hr_hire_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _hr_hire_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/hr/hiring-onboarding/payment", "/api/hr/hiring-onboarding/money"}:
+            return "payment"
+        if path in {"/api/hr/hiring-onboarding/bank", "/api/hr/hiring-onboarding/transfer"}:
+            return "bank"
+        if path in {"/api/hr/hiring-onboarding/zayen", "/api/hr/hiring-onboarding/books"}:
+            return "books"
+        if path in {
+            "/api/hr/hiring-onboarding/payroll",
+            "/api/hr/hiring-onboarding/payroll-execute",
+        }:
+            return "payroll"
+        if path in {
+            "/api/hr/hiring-onboarding/hr-master",
+            "/api/hr/hiring-onboarding/people-master",
+        }:
+            return "hr_master"
+        if path in {
+            "/api/hr/hiring-onboarding/guest-blast",
+            "/api/hr/hiring-onboarding/blast",
+        }:
+            return "guest_blast"
+        if path in {
+            "/api/hr/hiring-onboarding/staff-blast",
+            "/api/hr/hiring-onboarding/staff-broadcast",
+        }:
+            return "staff_blast"
+        if path in {
+            "/api/hr/hiring-onboarding/public-post",
+            "/api/hr/hiring-onboarding/public",
+            "/api/hr/hiring-onboarding/post",
+            "/api/hr/hiring-onboarding/publish",
+        }:
+            return "public_post"
+        if path == "/api/hr/hiring-onboarding/current":
+            return "current"
+        if path in {"/api/hr/hiring-onboarding/cloudflare", "/api/hr/hiring-onboarding/cf"}:
+            return "cloudflare"
+        if path in {"/api/hr/hiring-onboarding/access", "/api/hr/hiring-onboarding/cf-access"}:
+            return "access"
+        if path in {"/api/hr/hiring-onboarding/prove", "/api/hr/hiring-onboarding/proven"}:
+            return "prove"
+        if path == "/api/hr/hiring-onboarding/ready":
+            return "ready"
+        if path == "/api/hr/hiring-onboarding/resolve":
+            return "resolve"
+        if path in {
+            "/api/hr/hiring-onboarding/production",
+            "/api/hr/hiring-onboarding/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/hr/hiring-onboarding/score", "/api/hr/hiring-onboarding/credits"}:
+            return "score"
+        if path in {"/api/hr/hiring-onboarding/fill", "/api/hr/hiring-onboarding/note"}:
+            return "fill"
+        if path == "/api/hr/hiring-onboarding/alchemist":
+            return "alchemist"
+        return None
+
+    def _hr_hire_fail(self, exc: _hr_hire.HiringOnboardingError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "payroll_refused",
+            "hr_master_refused",
+            "guest_blast_refused",
+            "staff_blast_refused",
+            "public_post_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._hr_hire_quiet(),
+                **_hr_hire.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _hr_hire_write_refused(self, path: str) -> None:
+        identity = self._require_hr_hire_owner()
+        if identity is None:
+            return
+        try:
+            code = self._hr_hire_refuse_code(path)
+            tail = path.rstrip("/").rsplit("/", 1)[-1]
+            if code is None and tail in {
+                "requisition",
+                "candidate",
+                "offer",
+                "onboarding",
+                "checklist",
+                "hire",
+            }:
+                code = "current"
+            elif code is None and tail == "notes":
+                code = "fill"
+            if code == "payment":
+                _hr_hire.refuse_payment({})
+            elif code == "bank":
+                _hr_hire.refuse_bank({})
+            elif code == "books":
+                _hr_hire.refuse_books({})
+            elif code == "payroll":
+                _hr_hire.refuse_payroll({})
+            elif code == "hr_master":
+                _hr_hire.refuse_hr_master({})
+            elif code == "guest_blast":
+                _hr_hire.refuse_guest_blast({})
+            elif code == "staff_blast":
+                _hr_hire.refuse_staff_blast({})
+            elif code == "public_post":
+                _hr_hire.refuse_public_post({})
+            elif code == "current":
+                _hr_hire.refuse_current({})
+            elif code == "cloudflare":
+                _hr_hire.refuse_cloudflare({})
+            elif code == "access":
+                _hr_hire.refuse_access({})
+            elif code == "prove":
+                _hr_hire.refuse_proven({})
+            elif code == "ready":
+                _hr_hire.refuse_ready({})
+            elif code == "resolve":
+                _hr_hire.refuse_resolve({})
+            elif code == "production":
+                _hr_hire.refuse_production({})
+            elif code == "score":
+                _hr_hire.refuse_score({})
+            elif code == "fill":
+                _hr_hire.refuse_fill({})
+            elif code == "alchemist":
+                _hr_hire.refuse_alchemist({})
+            else:
+                _hr_hire.refuse_external_write({})
+        except _hr_hire.HiringOnboardingError as exc:
+            self._hr_hire_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Hiring & onboarding framework does not store a live hiring workflow.",
+                **self._hr_hire_quiet(),
+            },
+            status=405,
+        )
+
+    def _hr_hire_page(self) -> None:
+        identity = self._require_hr_hire_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "hr-hiring-onboarding.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Hiring & Onboarding page is missing.",
+                    **self._hr_hire_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _hr_hire_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_hr_hire_owner()
+        if identity is None:
+            return
+        try:
+            _hr_hire.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                payroll=(qs.get("payroll") or [""])[0],
+                hr_master=(qs.get("hr_master") or qs.get("hr-master") or [""])[0],
+                requisition=(qs.get("requisition") or [""])[0],
+                candidate=(qs.get("candidate") or [""])[0],
+                hire=(qs.get("hire") or [""])[0],
+                offer=(qs.get("offer") or [""])[0],
+                onboarding=(qs.get("onboarding") or [""])[0],
+                checklist=(qs.get("checklist") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                guest_blast=(qs.get("guest_blast") or qs.get("guest-blast") or [""])[0],
+                staff_blast=(qs.get("staff_blast") or qs.get("staff-blast") or [""])[0],
+                public_post=(qs.get("public_post") or qs.get("public-post") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _hr_hire.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._hr_hire_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _hr_hire.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._hr_hire_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _hr_hire.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._hr_hire_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _hr_hire.read_kind(ref_id)
+            else:
+                report = _hr_hire.build_framework()
+        except _hr_hire.HiringOnboardingError as exc:
+            self._hr_hire_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
