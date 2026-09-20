@@ -117,6 +117,7 @@ from core import amg_service_improve as _amg_improve
 from core import amg_sla_incident as _amg_sla
 from core import ggv_intercompany_client as _ggv_ic
 from core import bzg_venue_pnl as _bzg_pnl
+from core import bzg_variance_waste as _bzg_var
 from core import msc_posture_prove as _msc_posture
 from core import intg_connector_contract as _intg_contract
 from core import intg_connector_cap_tests as _intg_cap_tests
@@ -2154,6 +2155,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/bzg/venue-pnl/"):
             self._bzg_pnl_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-BZG-04 variance / waste analysis. Owner read. Empty is not a live analysis.
+        if self._bzg_var_refuse_code(path):
+            self._bzg_var_write_refused(path)
+            return
+        if path == "/api/bzg/variance-waste":
+            self._bzg_var_get(qs)
+            return
+        if path == "/api/bzg/variance-waste/schema":
+            self._bzg_var_get(qs, view="schema")
+            return
+        if path == "/api/bzg/variance-waste/kinds":
+            self._bzg_var_get(qs, view="kinds")
+            return
+        if path == "/api/bzg/variance-waste/framework":
+            self._bzg_var_get(qs, view="framework")
+            return
+        if path.startswith("/api/bzg/variance-waste/"):
+            self._bzg_var_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
         # CAP-AMG-07 service improvement / review-to-improve loop. Owner read. Empty is not a live loop.
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
@@ -2740,6 +2760,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._bzg_pnl_page()
             return
         elif path in (
+            "/bzg-variance-waste",
+            "/bzg-variance-waste/",
+            "/bzg-variance-waste.html",
+            "/dashboards/bzg-variance-waste.html",
+        ):
+            self._bzg_var_page()
+            return
+        elif path in (
             "/amg-service-improve",
             "/amg-service-improve/",
             "/amg-service-improve.html",
@@ -3006,6 +3034,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/bzg/venue-pnl" or path.startswith("/api/bzg/venue-pnl/"):
             self._bzg_pnl_write_refused(path)
+            return
+        if self._bzg_var_refuse_code(path):
+            self._bzg_var_write_refused(path)
+            return
+        if path == "/api/bzg/variance-waste" or path.startswith("/api/bzg/variance-waste/"):
+            self._bzg_var_write_refused(path)
             return
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
@@ -3438,6 +3472,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/bzg/venue-pnl" or path.startswith("/api/bzg/venue-pnl/"):
             self._bzg_pnl_write_refused(path)
             return
+        if self._bzg_var_refuse_code(path):
+            self._bzg_var_write_refused(path)
+            return
+        if path == "/api/bzg/variance-waste" or path.startswith("/api/bzg/variance-waste/"):
+            self._bzg_var_write_refused(path)
+            return
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
             return
@@ -3780,6 +3820,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/bzg/venue-pnl" or path.startswith("/api/bzg/venue-pnl/"):
             self._bzg_pnl_write_refused(path)
+            return
+        if self._bzg_var_refuse_code(path):
+            self._bzg_var_write_refused(path)
+            return
+        if path == "/api/bzg/variance-waste" or path.startswith("/api/bzg/variance-waste/"):
+            self._bzg_var_write_refused(path)
             return
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
@@ -12329,6 +12375,312 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _bzg_pnl.build_framework()
         except _bzg_pnl.VenuePnlError as exc:
             self._bzg_pnl_fail(exc)
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+
+    def _bzg_var_quiet(self) -> dict:
+        return {
+            "empty_is_variance_waste": False,
+            "empty_is_inventory_variance_machinery": False,
+            "empty_is_ready": False,
+            "proved": False,
+            "live_variance_waste": False,
+            "inventory_variance_machinery": False,
+            "current": False,
+            "variance": None,
+            "waste": None,
+            "comps": None,
+            "voids": None,
+            "analysis": None,
+            "esb_mutated": False,
+            "esb_sot_note": "ESB remains transactional SoT (read-only note only; no ESB mutate).",
+            "payment": None,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "books_write": False,
+            "zayen_write": False,
+            "alchemist_write": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "score_changed": False,
+            "ledger_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_variance": False,
+            "invented_waste": False,
+            "invented_comps": False,
+            "invented_voids": False,
+            "invented_analysis": False,
+        }
+
+    def _require_bzg_var_owner(self) -> dict | None:
+        """CF JWT → Person; only PERS-MATT. Variance/waste framework is Owner read."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Variance/waste is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    "required_person": _progress.PERS_MATT,
+                    **self._bzg_var_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    "required_permission": "progress.read",
+                    **self._bzg_var_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _bzg_var_refuse_code(self, path: str) -> str | None:
+        if path in {"/api/bzg/variance-waste/payment", "/api/bzg/variance-waste/money"}:
+            return "payment"
+        if path in {"/api/bzg/variance-waste/bank", "/api/bzg/variance-waste/transfer"}:
+            return "bank"
+        if path in {"/api/bzg/variance-waste/zayen", "/api/bzg/variance-waste/books"}:
+            return "books"
+        if path in {"/api/bzg/variance-waste/esb", "/api/bzg/variance-waste/esb-mutate", "/api/bzg/variance-waste/esb-write"}:
+            return "esb"
+        if path == "/api/bzg/variance-waste/current":
+            return "current"
+        if path in {"/api/bzg/variance-waste/cloudflare", "/api/bzg/variance-waste/cf"}:
+            return "cloudflare"
+        if path in {"/api/bzg/variance-waste/access", "/api/bzg/variance-waste/cf-access"}:
+            return "access"
+        if path in {"/api/bzg/variance-waste/prove", "/api/bzg/variance-waste/proven"}:
+            return "prove"
+        if path == "/api/bzg/variance-waste/ready":
+            return "ready"
+        if path == "/api/bzg/variance-waste/resolve":
+            return "resolve"
+        if path in {
+            "/api/bzg/variance-waste/production",
+            "/api/bzg/variance-waste/production/mutate",
+        }:
+            return "production"
+        if path in {"/api/bzg/variance-waste/score", "/api/bzg/variance-waste/credits"}:
+            return "score"
+        if path in {"/api/bzg/variance-waste/fill", "/api/bzg/variance-waste/note"}:
+            return "fill"
+        if path == "/api/bzg/variance-waste/alchemist":
+            return "alchemist"
+        return None
+
+    def _bzg_var_fail(self, exc: _bzg_var.VarianceWasteError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "esb_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "access_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "score_refused",
+            "slots_refused",
+            "writes_refused",
+            "alchemist_refused",
+            "ledger_write_refused",
+            "not_beta",
+            "catalog_refused",
+            "live_guard",
+        }:
+            status = 405
+        elif exc.code == "not_found":
+            status = 404
+        elif exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._bzg_var_quiet(),
+                **_bzg_var.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _bzg_var_write_refused(self, path: str) -> None:
+        identity = self._require_bzg_var_owner()
+        if identity is None:
+            return
+        try:
+            code = self._bzg_var_refuse_code(path)
+            tail = path.rstrip("/").rsplit("/", 1)[-1]
+            if code is None and tail in {
+                "variance",
+                "waste",
+                "comps",
+                "voids",
+                "analysis",
+            }:
+                code = "current"
+            elif code is None and tail == "notes":
+                code = "fill"
+            if code == "payment":
+                _bzg_var.refuse_payment({})
+            elif code == "bank":
+                _bzg_var.refuse_bank({})
+            elif code == "books":
+                _bzg_var.refuse_books({})
+            elif code == "esb":
+                _bzg_var.refuse_esb({})
+            elif code == "current":
+                _bzg_var.refuse_current({})
+            elif code == "cloudflare":
+                _bzg_var.refuse_cloudflare({})
+            elif code == "access":
+                _bzg_var.refuse_access({})
+            elif code == "prove":
+                _bzg_var.refuse_proven({})
+            elif code == "ready":
+                _bzg_var.refuse_ready({})
+            elif code == "resolve":
+                _bzg_var.refuse_resolve({})
+            elif code == "production":
+                _bzg_var.refuse_production({})
+            elif code == "score":
+                _bzg_var.refuse_score({})
+            elif code == "fill":
+                _bzg_var.refuse_fill({})
+            elif code == "alchemist":
+                _bzg_var.refuse_alchemist({})
+            else:
+                _bzg_var.refuse_external_write({})
+        except _bzg_var.VarianceWasteError as exc:
+            self._bzg_var_fail(exc)
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Variance/waste framework does not store a live variance/waste analysis.",
+                **self._bzg_var_quiet(),
+            },
+            status=405,
+        )
+
+    def _bzg_var_page(self) -> None:
+        identity = self._require_bzg_var_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "bzg-variance-waste.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Variance/waste page is missing.",
+                    **self._bzg_var_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _bzg_var_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
+        identity = self._require_bzg_var_owner()
+        if identity is None:
+            return
+        try:
+            _bzg_var.guard_query(
+                payment=(qs.get("payment") or [""])[0],
+                money=(qs.get("money") or [""])[0],
+                bank=(qs.get("bank") or [""])[0],
+                zayen=(qs.get("zayen") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                esb=(qs.get("esb") or [""])[0],
+                variance=(qs.get("variance") or [""])[0],
+                waste=(qs.get("waste") or [""])[0],
+                comps=(qs.get("comps") or [""])[0],
+                voids=(qs.get("voids") or [""])[0],
+                analysis=(qs.get("analysis") or [""])[0],
+                current=(qs.get("current") or [""])[0],
+                cloudflare=(qs.get("cloudflare") or [""])[0],
+                access=(qs.get("access") or [""])[0],
+                prove=(qs.get("prove") or [""])[0],
+                proven=(qs.get("proven") or [""])[0],
+                ready=(qs.get("ready") or [""])[0],
+                resolve=(qs.get("resolve") or [""])[0],
+                production=(qs.get("production") or [""])[0],
+                fill=(qs.get("fill") or [""])[0],
+                score=(qs.get("score") or [""])[0],
+                alchemist=(qs.get("alchemist") or [""])[0],
+                write=(qs.get("write") or [""])[0],
+            )
+            if view == "schema":
+                full = _bzg_var.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "schema": full["schema"],
+                    "framework_skeleton": full["framework_skeleton"],
+                    **self._bzg_var_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "kinds":
+                full = _bzg_var.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "kinds": full["kinds"],
+                    "empty": True,
+                    **self._bzg_var_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif view == "framework":
+                full = _bzg_var.build_framework()
+                report = {
+                    "ok": True,
+                    "cap": full["cap"],
+                    "bound": full["bound"],
+                    "empty": True,
+                    "recorded_count": 0,
+                    "rows": [],
+                    **self._bzg_var_quiet(),
+                    "honesty": full["honesty"],
+                }
+            elif ref_id:
+                report = _bzg_var.read_kind(ref_id)
+            else:
+                report = _bzg_var.build_framework()
+        except _bzg_var.VarianceWasteError as exc:
+            self._bzg_var_fail(exc)
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
