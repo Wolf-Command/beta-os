@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-22",
+  "claims": [
+    {
+      "id": "bf-intel-ops-pack-20260922-v2",
+      "claim": "Beta Intel Ops desk on :8788 composes orchestration ask, Decision Memory recall, and approve-to-rule experiment-note handoff. Anon pack + mutating intel routes are 403. No money/bank/payment. CAP-INTEL-01 stays BUILT; CAP-INTEL-02\u201304 stay PROVEN; CAP-INTEL-05 stays SPECIFIED. CR-be51980bd1194448 and CR-dca0ad62e1b0032e stay OPEN. AU-INTEL-02-WOLF stays NOT STARTED. No PROVEN/READY invented. No auto-promote. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_intel_ops_pack.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-INTEL-01'][0], d['CAP-INTEL-05'][0])\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id IN ('CR-be51980bd1194448','CR-dca0ad62e1b0032e');\"; curl -sS -o /dev/null -w 'pack:%{http_code}\\n' http://127.0.0.1:8788/api/intel/ops-pack; curl -sS -o /dev/null -w 'ask:%{http_code}\\n' -X POST -H 'Content-Type: application/json' -d '{\"question\":\"x\"}' http://127.0.0.1:8788/api/intel/ops-pack/ask; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/intel-ops-pack; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "EXIT: SUCCESS; BUILT SPECIFIED; OPEN OPEN; pack:403; ask:403; page:403; 8787 True; 8788 True",
+      "by": "cursor-intel-ops-pack-v2",
+      "at": "2026-09-21T18:19:21Z",
+      "tests": "PASS=83 FAIL=0",
+      "checked": true,
+      "updated_at": "2026-09-21T18:19:55Z",
+      "checked_at": "2026-09-21T18:37:26Z",
+      "checked_by": "peaches-bf-watch"
+    }
+  ]
+}

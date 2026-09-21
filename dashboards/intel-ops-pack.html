@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Intel Ops · Beta</title>
+<style>
+  :root {
+    --bg: #10131a; --bg2: #171c26; --bg3: #222836; --border: #2f3848;
+    --text: #eef2f8; --muted: #9aa6b8; --accent: #7ec8e3; --ok: #3dd68c;
+    --warn: #e0b15a; --danger: #f04438;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 720px; padding: 12px 14px 80px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  h1 { font-size: 1.25rem; margin: 0 0 4px; }
+  h1 span { color: var(--accent); }
+  h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
+  .lede, .note, .meta { color: var(--muted); font-size: 0.85rem; }
+  .meta { font-size: 0.78rem; margin-top: 4px; }
+  .banner { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: 0.88rem; }
+  .banner.warn { border-color: rgba(224,177,90,0.55); color: var(--warn); }
+  .card { border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; padding: 12px; margin-top: 8px; }
+  .card.loud { border-color: rgba(224,177,90,0.7); }
+  .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.75rem; margin-right: 4px; color: var(--muted); }
+  .pill.loud { color: var(--warn); border-color: rgba(224,177,90,0.55); }
+  label { display: block; font-size: 0.78rem; color: var(--muted); margin: 8px 0 4px; }
+  input, textarea { width: 100%; background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: inherit; }
+  textarea { min-height: 72px; resize: vertical; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  button, a.action {
+    display: inline-block; text-decoration: none; border-radius: 10px; padding: 10px 12px;
+    border: 1px solid #35586a; background: #1c3340; color: var(--text); font-weight: 650; cursor: pointer; font: inherit;
+  }
+  button.primary, a.action.primary { border-color: var(--accent); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .err { color: var(--danger); white-space: pre-wrap; font-size: 0.85rem; }
+  ul { margin: 8px 0 0; padding-left: 18px; }
+  li { margin: 4px 0; }
+</style>
+</head>
+<body>
+  <h1>Intel Ops <span>· Beta</span></h1>
+  <p class="lede">Bound beta-intel-safe. Ask → provenance → Decision Memory recall → approve-to-rule experiment note. CAP-INTEL-01 stays BUILT. CAP-INTEL-05 stays SPECIFIED. Stub ≠ live rule. No auto-promote. No money, bank, payment, Zayen, HR, or trading.</p>
+  <div class="banner warn" id="who">Loading…</div>
+  <div id="msg"></div>
+
+  <h2>Today · last ask</h2>
+  <div id="today"></div>
+
+  <h2>Ask</h2>
+  <div class="card">
+    <label for="question">Institutional question</label>
+    <textarea id="question">What is Wolf's ClickUp policy?</textarea>
+    <label for="scope">Scope</label>
+    <input id="scope" value="Wolf system" />
+    <div class="row">
+      <button class="primary" id="askBtn" type="button">Ask</button>
+    </div>
+    <p class="meta">Reuses orchestration. No LLM-as-evidence. Honesty flags stay visible.</p>
+    <div id="askOut"></div>
+  </div>
+
+  <h2>Decision Memory recall</h2>
+  <p class="note">Empty is not invented history. AU-INTEL-02-WOLF stays NOT STARTED.</p>
+  <div id="recall"></div>
+
+  <h2>Approve-to-rule queue</h2>
+  <p class="note">NOTED / APPROVED / STUB counts. A stub is not a live rule. No auto-promote.</p>
+  <div id="queue"></div>
+
+  <h2>Learning stub handoff</h2>
+  <div class="card">
+    <label for="note">Experiment note (append-only)</label>
+    <textarea id="note" placeholder="What should we learn from the ask? This is not a live rule."></textarea>
+    <div class="row">
+      <button id="noteBtn" type="button">Append experiment note</button>
+    </div>
+    <p class="meta">Writes an approve-to-rule NOTED row only. Does not approve, stub, promote, or execute.</p>
+    <div id="noteOut"></div>
+  </div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+
+  async function api(path, opts) {
+    const res = await fetch(path, Object.assign({
+      headers: { Accept: "application/json", "Content-Type": "application/json" }
+    }, opts || {}));
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) {
+      const err = new Error(data.message || data.error || ("HTTP " + res.status));
+      err.payload = data;
+      throw err;
+    }
+    return data;
+  }
+
+  function pill(text, loud) {
+    return `<span class="pill${loud ? " loud" : ""}">${esc(text)}</span>`;
+  }
+
+  function renderToday(today) {
+    if (!today || today.empty) {
+      $("today").innerHTML = `<div class="card loud">${pill("EMPTY", true)}<p>${esc(today && today.why || "No ask yet.")}</p></div>`;
+      return;
+    }
+    const prov = (today.provenance || []).map((p) => pill(p, false)).join(" ") || pill("no provenance labels", true);
+    $("today").innerHTML = `<div class="card">${pill(today.status || "UNKNOWN", false)} ${pill(today.next_human_action || "NONE", false)}
+      <p>${esc(today.summary || "")}</p>
+      <p class="meta">Q: ${esc(today.question || "")}</p>
+      <div>${prov}</div>
+      <p class="meta">CAP-INTEL-01 ${esc((today.honesty || {}).cap_intel_01 || "BUILT")} · proven=${esc((today.honesty || {}).proven)} · llm_as_evidence=${esc((today.honesty || {}).llm_as_evidence)}</p>
+    </div>`;
+  }
+
+  function renderAsk(out) {
+    const prov = (out.provenance || []).map((p) => pill(p, false)).join(" ") || pill("no provenance labels", true);
+    $("askOut").innerHTML = `<div class="card" style="margin-top:10px">${pill(out.status || "UNKNOWN", false)} ${pill(out.next_human_action || "NONE", false)}
+      <p>${esc(out.summary || "")}</p>
+      <div>${prov}</div>
+      <p class="meta">persisted=${esc(out.persisted)} · auto_promote=false · live_rule=false</p>
+    </div>`;
+  }
+
+  function renderRecall(recall) {
+    const rows = recall.decisions || [];
+    if (recall.empty || !rows.length) {
+      $("recall").innerHTML = `<div class="card loud">${pill("EMPTY", true)}<p>${esc(recall.why || "No decisions.")}</p><p class="meta">via ${esc(recall.via || "")} · not invented history</p></div>`;
+      return;
+    }
+    $("recall").innerHTML = `<div class="card">${pill(String(recall.count) + " rows", false)} ${pill(recall.via || "", false)}
+      <ul>${rows.map((d) => `<li><strong>${esc(d.decision_id || "")}</strong> — ${esc(d.title || "")}<div class="meta">${esc(d.status || "")} · ${esc(d.occurred_at || "")}</div></li>`).join("")}</ul>
+      <p class="meta">${esc(recall.why || "")}</p>
+    </div>`;
+  }
+
+  function renderQueue(queue) {
+    const sc = queue.state_counts || {};
+    $("queue").innerHTML = `<div class="card">${pill("NOTED " + (sc.NOTED || 0), false)} ${pill("APPROVED " + (sc.APPROVED || 0), false)} ${pill("STUB " + (sc.STUB || 0), true)}
+      <p>${esc(queue.why || "")}</p>
+      <p class="meta">promoted_count=${esc(queue.promoted_count)} · executed_count=${esc(queue.executed_count)} · auto_promote=false · live_rule=false</p>
+      <p class="meta">CAP-INTEL-05 stays SPECIFIED. CR-be51980bd1194448 stays OPEN.</p>
+    </div>`;
+  }
+
+  function show(data) {
+    const seat = data.seat || {};
+    const honesty = data.honesty || {};
+    $("who").textContent = "Signed in as " + (data.person_id || seat.person_id || "caller")
+      + ". Money, finance, Zayen, HR, and trading are hidden. Caps: INTEL-01 "
+      + (honesty.cap_intel_01 || "?") + " · 02–04 "
+      + [honesty.cap_intel_02, honesty.cap_intel_03, honesty.cap_intel_04].join("/")
+      + " · 05 " + (honesty.cap_intel_05 || "?") + ".";
+    renderToday(data.today || {});
+    renderRecall(data.recall || {});
+    renderQueue(data.queue || {});
+  }
+
+  async function reload() {
+    const data = await api("/api/intel/ops-pack");
+    show(data);
+  }
+
+  $("askBtn").addEventListener("click", async () => {
+    $("msg").textContent = "";
+    $("askBtn").disabled = true;
+    try {
+      const out = await api("/api/intel/ops-pack/ask", {
+        method: "POST",
+        body: JSON.stringify({
+          question: $("question").value,
+          scope: $("scope").value
+        })
+      });
+      renderAsk(out);
+      await reload();
+    } catch (err) {
+      $("msg").innerHTML = `<p class="err">${esc(err.message || "ask failed")}</p>`;
+    } finally {
+      $("askBtn").disabled = false;
+    }
+  });
+
+  $("noteBtn").addEventListener("click", async () => {
+    $("msg").textContent = "";
+    $("noteBtn").disabled = true;
+    try {
+      const out = await api("/api/intel/ops-pack/note", {
+        method: "POST",
+        body: JSON.stringify({ experiment_note: $("note").value })
+      });
+      $("noteOut").innerHTML = `<div class="card" style="margin-top:10px">${pill(out.state || "NOTED", false)}
+        <p>${esc(out.why || "")}</p>
+        <p class="meta">${esc(out.note_id || "")} · ${esc(out.experiment_id || "")} · promoted=false · live_rule=false</p>
+      </div>`;
+      $("note").value = "";
+      await reload();
+    } catch (err) {
+      $("msg").innerHTML = `<p class="err">${esc(err.message || "note failed")}</p>`;
+    } finally {
+      $("noteBtn").disabled = false;
+    }
+  });
+
+  reload().catch((err) => {
+    $("who").textContent = "This desk did not load.";
+    $("msg").innerHTML = `<p class="err">${esc(err.message || "failed")}</p>`;
+  });
+})();
+</script>
+</body>
+</html>

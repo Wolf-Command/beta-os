@@ -141,6 +141,7 @@ from core import bzg_reputation_observe as _bzg_rep
 from core import ggv_social_derive as _ggv_social
 from core import owner_empire_pack as _owner_empire
 from core import core_harden_pack as _core_harden
+from core import intel_ops_pack as _intel_ops
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1683,6 +1684,13 @@ class BetaHandler(SimpleHTTPRequestHandler):
         # CAP-INTEL-05 approve-to-rule skeleton. Owner or role. Not a production rule.
         if self._intel_rule_handled(path, "GET"):
             return
+        # Track D Intel Ops desk. Owner / intel.rule / decision.memory. No money.
+        if self._intel_ops_refuse_code(path):
+            self._intel_ops_write_refused(path)
+            return
+        if path == "/api/intel/ops-pack" or path.startswith("/api/intel/ops-pack/"):
+            self._intel_ops_get(path, qs)
+            return
         # Matt Progress Dashboard — Owner / PERS-MATT only
         if path == "/api/progress/honesty":
             self._progress_honesty()
@@ -3003,6 +3011,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._core_harden_page()
             return
         elif path in (
+            "/intel-ops-pack",
+            "/intel-ops-pack/",
+            "/intel-ops-pack.html",
+            "/dashboards/intel-ops-pack.html",
+        ):
+            self._intel_ops_page()
+            return
+        elif path in (
             "/amg-journey-workflow",
             "/amg-journey-workflow/",
             "/amg-journey-workflow.html",
@@ -3273,6 +3289,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/core/harden-pack" or path.startswith("/api/core/harden-pack/"):
             self._core_harden_write_refused(path)
+            return
+        if self._intel_ops_refuse_code(path):
+            self._intel_ops_write_refused(path)
+            return
+        if path == "/api/intel/ops-pack" or path.startswith("/api/intel/ops-pack/"):
+            self._intel_ops_post(path)
             return
         if path == "/api/amg/ops-pack" or path.startswith("/api/amg/ops-pack/"):
             self._amg_pack_post(path)
@@ -3804,6 +3826,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/core/harden-pack" or path.startswith("/api/core/harden-pack/"):
             self._core_harden_write_refused(path)
             return
+        if path == "/api/intel/ops-pack" or path.startswith("/api/intel/ops-pack/"):
+            self._intel_ops_write_refused(path)
+            return
         if path == "/api/amg/ops-pack" or path.startswith("/api/amg/ops-pack/"):
             self._amg_pack_write_refused(path)
             return
@@ -4224,6 +4249,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/core/harden-pack" or path.startswith("/api/core/harden-pack/"):
             self._core_harden_write_refused(path)
+            return
+        if path == "/api/intel/ops-pack" or path.startswith("/api/intel/ops-pack/"):
+            self._intel_ops_write_refused(path)
             return
         if path == "/api/amg/ops-pack" or path.startswith("/api/amg/ops-pack/"):
             self._amg_pack_write_refused(path)
@@ -18689,6 +18717,238 @@ class BetaHandler(SimpleHTTPRequestHandler):
         report = dict(report)
         report["person_id"] = identity.get("person_id")
         report.update(self._core_harden_quiet())
+        self._send_json(report)
+
+    def _intel_ops_quiet(self) -> dict:
+        flags = _intel_ops.honesty_flags()
+        return {
+            "bound": flags.get("bound"),
+            "auto_promote": False,
+            "live_rule": False,
+            "promoted": False,
+            "executed": False,
+            "payment_executed": False,
+            "money": None,
+            "finance_controls": False,
+            "cr_mutated": False,
+            "caps_raised": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "honesty": flags,
+        }
+
+    def _intel_ops_refuse_code(self, path: str) -> str | None:
+        return _intel_ops.refuse_code(path)
+
+    def _require_intel_ops(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body)
+        if not identity.get("ok"):
+            self._send_identity_deny(
+                identity, required_permission="decision.memory.read"
+            )
+            return None
+        person_id = (identity.get("person_id") or "").strip()
+        try:
+            seat = _intel_ops.require_actor(person_id)
+        except _intel_ops.IntelOpsPackError as exc:
+            self._intel_ops_fail(exc)
+            return None
+        return {**identity, "seat": seat}
+
+    def _intel_ops_fail(self, exc: _intel_ops.IntelOpsPackError) -> None:
+        status = 405 if exc.code.endswith("_refused") or exc.code == "writes_refused" else 400
+        if exc.code in {"forbidden", "denied"}:
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._intel_ops_quiet(),
+            },
+            status=status,
+        )
+
+    def _intel_ops_write_refused(self, path: str) -> None:
+        identity = self._require_intel_ops()
+        if identity is None:
+            return
+        code = self._intel_ops_refuse_code(path)
+        try:
+            if code == "payment":
+                _intel_ops.refuse_payment({})
+            elif code == "bank":
+                _intel_ops.refuse_bank({})
+            elif code == "finance":
+                _intel_ops.refuse_finance({})
+            elif code == "hr":
+                _intel_ops.refuse_hr({})
+            elif code == "trading":
+                _intel_ops.refuse_trading({})
+            elif code == "proven":
+                _intel_ops.refuse_proven({})
+            elif code == "ready":
+                _intel_ops.refuse_ready({})
+            elif code == "resolve":
+                _intel_ops.refuse_resolve({})
+            elif code == "promote":
+                _intel_ops.refuse_promote({})
+            elif code == "execute":
+                _intel_ops.refuse_execute({})
+            elif code == "production":
+                _intel_ops.refuse_production({})
+            else:
+                _intel_ops.refuse_external_write({})
+        except _intel_ops.IntelOpsPackError as exc:
+            self._intel_ops_fail(exc)
+
+    def _intel_ops_page(self) -> None:
+        identity = self._require_intel_ops()
+        if identity is None:
+            return
+        page = DASHBOARDS / "intel-ops-pack.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "missing_page",
+                    "message": "intel-ops-pack.html is missing",
+                    **self._intel_ops_quiet(),
+                },
+                status=404,
+            )
+            return
+        raw = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(raw)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(raw)
+
+    def _intel_ops_get(self, path: str, qs: dict) -> None:
+        identity = self._require_intel_ops()
+        if identity is None:
+            return
+        person_id = identity["person_id"]
+        view = path[len("/api/intel/ops-pack") :].strip("/") or ""
+        try:
+            if view == "":
+                report = _intel_ops.build_desk(verified_person_id=person_id)
+            elif view == "today":
+                report = {"ok": True, **_intel_ops.today_strip()}
+            elif view == "ask":
+                question = (qs.get("question") or [""])[0]
+                scope = (qs.get("scope") or ["Wolf system"])[0]
+                kind = (qs.get("kind") or [""])[0].strip() or None
+                work_item_id = (qs.get("work_item_id") or [""])[0].strip() or None
+                report = _intel_ops.ask_question(
+                    question=question,
+                    scope=scope,
+                    verified_person_id=person_id,
+                    kind=kind,
+                    work_item_id=work_item_id,
+                    persist=True,
+                )
+            elif view == "recall":
+                scope = (qs.get("scope") or ["Wolf system"])[0]
+                query = (qs.get("query") or [""])[0]
+                report = _intel_ops.recall_decisions(
+                    scope=scope,
+                    query=query,
+                    verified_person_id=person_id,
+                )
+            elif view == "queue":
+                report = _intel_ops.queue_summary(verified_person_id=person_id)
+            elif view == "schema":
+                report = {"ok": True, "schema": _intel_ops.schema_document()}
+            elif view == "permissions":
+                seat = identity.get("seat") or _intel_ops.seat_for(person_id)
+                report = {"ok": True, "person_id": person_id, "seat": seat}
+            else:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "not_found",
+                        "message": f"unknown intel ops view: {view}",
+                        **self._intel_ops_quiet(),
+                    },
+                    status=404,
+                )
+                return
+        except _intel_ops.IntelOpsPackError as exc:
+            self._intel_ops_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        if isinstance(report, dict):
+            report.setdefault("person_id", person_id)
+            report.update(self._intel_ops_quiet())
+        self._send_json(report)
+
+    def _intel_ops_post(self, path: str) -> None:
+        identity = self._require_intel_ops()
+        if identity is None:
+            return
+        person_id = identity["person_id"]
+        view = path[len("/api/intel/ops-pack") :].strip("/") or ""
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "bad_payload",
+                    "message": f"invalid JSON: {exc}",
+                    **self._intel_ops_quiet(),
+                },
+                status=400,
+            )
+            return
+        if not isinstance(body, dict):
+            body = {}
+        try:
+            if view == "ask":
+                report = _intel_ops.ask_question(
+                    question=str(body.get("question") or ""),
+                    scope=body.get("scope") or "Wolf system",
+                    verified_person_id=person_id,
+                    kind=(str(body.get("kind") or "").strip() or None),
+                    work_item_id=(str(body.get("work_item_id") or "").strip() or None),
+                    persist=True,
+                )
+            elif view == "note":
+                report = _intel_ops.handoff_note(
+                    body, verified_person_id=person_id
+                )
+            elif view in {"", "today", "recall", "queue", "schema", "permissions"}:
+                _intel_ops.refuse_external_write(body)
+                return
+            else:
+                code = self._intel_ops_refuse_code(path)
+                if code:
+                    self._intel_ops_write_refused(path)
+                    return
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "not_found",
+                        "message": f"unknown intel ops post: {view}",
+                        **self._intel_ops_quiet(),
+                    },
+                    status=404,
+                )
+                return
+        except _intel_ops.IntelOpsPackError as exc:
+            self._intel_ops_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        if isinstance(report, dict):
+            report.setdefault("person_id", person_id)
+            report.update(self._intel_ops_quiet())
         self._send_json(report)
 
     def _progress_empire(self) -> None:
