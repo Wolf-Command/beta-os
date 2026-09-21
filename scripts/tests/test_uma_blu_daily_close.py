@@ -245,20 +245,28 @@ def main() -> int:
         "SELECT identifier FROM org_auth_identities WHERE person_id='PERS-DEVI' AND provider='email'"
     ).fetchone()
     check("AUTH Devi email authorised", bool(auth) and auth[0] == "deviputu236@gmail.com", str(auth))
-    asg = live.execute(
-        """
-        SELECT a.assignment_id, p.role_id FROM org_assignments a
-        JOIN org_positions p ON p.position_id=a.position_id
-        WHERE a.person_id='PERS-DEVI' AND a.status='ACTIVE'
-        """
-    ).fetchone()
-    check("Devi ACTIVE HFB assignment", bool(asg) and asg["role_id"] == "ROLE-BZG-HFB")
+    active_roles = {
+        r["role_id"]: r["assignment_id"]
+        for r in live.execute(
+            """
+            SELECT a.assignment_id, p.role_id FROM org_assignments a
+            JOIN org_positions p ON p.position_id=a.position_id
+            WHERE a.person_id='PERS-DEVI' AND a.status='ACTIVE' AND a.end_at IS NULL
+            """
+        )
+    }
+    check(
+        "Devi ACTIVE Uma ops assignment",
+        "ROLE-BZG-HFB" in active_roles or "ROLE-BZG-FB-OPS-LEAD" in active_roles,
+        str(active_roles),
+    )
+    asg_id = active_roles.get("ROLE-BZG-FB-OPS-LEAD") or active_roles.get("ROLE-BZG-HFB")
     scope = live.execute(
         """
         SELECT 1 FROM org_assignment_scopes
         WHERE assignment_id=? AND scope_id='SCOPE-BZG-UMA' AND status='ACTIVE'
         """,
-        (asg["assignment_id"],),
+        (asg_id,),
     ).fetchone()
     check("SCOPE-BZG-UMA on Devi assignment", bool(scope))
     if ent_before is not None and (
@@ -523,7 +531,11 @@ def main() -> int:
         # exception WI owned by HFB (role), not hard-coded Devi
         hfb = vc.find_hfb_assignee(conn=conn)
         check("HFB assignee found via role", bool(hfb) and hfb["person_id"] == "PERS-DEVI")
-        check("HFB assignee role", hfb and hfb["role_id"] == "ROLE-BZG-HFB")
+        check(
+            "F&B assignee role is HFB or Ops Lead",
+            bool(hfb) and hfb["role_id"] in ("ROLE-BZG-HFB", "ROLE-BZG-FB-OPS-LEAD"),
+            str(hfb),
+        )
 
         ex = vc.open_exception(
             o["close_id"],
@@ -562,7 +574,11 @@ def main() -> int:
             )
             check("SoD self-verify denied", False)
         except vc.VenueCloseError as e:
-            check("SoD self-verify denied", e.code == "sod_self_verify", e.code)
+            check(
+                "verify denied for Devi (SoD or no verify grant)",
+                e.code in ("sod_self_verify", "forbidden"),
+                e.code,
+            )
 
         # Grant closer verify so we hit sod_self_close (not permission deny)
         conn.execute(

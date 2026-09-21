@@ -1,0 +1,55 @@
+{
+  "date": "2026-09-21",
+  "claims": [
+    {
+      "id": "bf-bzg-ops-pack-20260921",
+      "claim": "Beta Uma phone loop on :8788 covers Today, draft-to-ops-close purchase requests, partial receive with evidence, stock framework honesty, petty movement, Daily Close wiring, and issues. Anon mutating /api/bzg/uma-blu routes are 403. Payment execution stays refused. CAP-BZG-03 stays READY and is not rewritten. CR-215a379980f228e8 stays OPEN. Human commissioning stays NOT_DONE. No PROVEN or READY invented. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_bzg_ops_pack.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-BZG-03'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-215a379980f228e8';\"; curl -sS -o /dev/null -w 'today:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/uma-blu/today; curl -sS -o /dev/null -w 'stock:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/uma-blu/stock; curl -sS -o /dev/null -w 'pay:%{http_code}\\n' -X POST -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:8788/api/bzg/uma-blu/pay; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "EXIT: SUCCESS; READY 77; OPEN; today:403; stock:403; pay:403; 8787 True; 8788 True",
+      "by": "cursor-bzg-ops-pack",
+      "checked": true,
+      "checked_at": "2026-09-21T11:17:05Z",
+      "checked_by": "peaches-grok-review",
+      "verify": "PASS",
+      "tests": "PASS=56 FAIL=0",
+      "grok_review_ref": "docs/deliveries/GROK-REVIEW-SPRINT-TRACK-A-BZG-OPS-PACK-2026-09-21.md"
+    },
+    {
+      "id": "bf-amg-ops-pack-20260921",
+      "claim": "Beta Atrium desk loop on :8788 covers Today slots, desk notes, slot attention, journey tasks, an honest empty SLA list, and service handoffs. Anon mutating /api/amg/ops-pack routes are 403. Payment, folio, and Yanolja writes stay refused. CAP-AMG-01 through CAP-AMG-07 stay SPECIFIED. CR-bc5785d66c981fd4 stays OPEN. No PROVEN or READY invented. Empty slots are not occupancy, ADR, or RevPAR. Track A Uma and Track B GGV routes stay in place. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_amg_ops_pack.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-AMG-04'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT state FROM wolf_completion_items WHERE id='CR-bc5785d66c981fd4';\"; curl -sS -o /dev/null -w 'ops:%{http_code}\\n' http://127.0.0.1:8788/api/amg/ops-pack; curl -sS -o /dev/null -w 'notes:%{http_code}\\n' -X POST -H 'Content-Type: application/json' -d '{\"body\":\"anon\"}' http://127.0.0.1:8788/api/amg/ops-pack/notes; curl -sS -o /dev/null -w 'folio:%{http_code}\\n' -X POST -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:8788/api/amg/ops-pack/folio; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "EXIT: SUCCESS; SPECIFIED 77; OPEN; ops:403; notes:403; folio:403; 8787 True; 8788 True",
+      "by": "cursor-amg-ops-pack",
+      "checked": true,
+      "checked_at": "2026-09-21T11:53:20Z",
+      "checked_by": "peaches-grok-review",
+      "verify": "PASS",
+      "tests": "PASS=106 FAIL=0",
+      "grok_review_ref": "docs/deliveries/GROK-REVIEW-SPRINT-TRACK-C-AMG-OPS-PACK-2026-09-21.md"
+    },
+    {
+      "id": "bf-owner-empire-pack-20260921",
+      "claim": "Beta Owner Empire desk on :8788 shows ledger Progress SYSTEM%, Radar and 12WY honesty, and read-only BZG/GGV/AMG handoffs with a next board link. Anon pack and mutating /api/owner/empire-pack routes are 403. Payment, bank, Zayen, HR, and trading stay refused. CAP-STRAT-01 and CAP-STRAT-02 stay at the ledger. No PROVEN or READY invented. No second SYSTEM% table. Track D stays parked. Track A Uma, Track B GGV, and Track C AMG routes stay in place. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_owner_empire_pack.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-STRAT-01'][0], d['CAP-STRAT-02'][0], len(d))\"; sqlite3 catalog/content_library.sqlite \"SELECT id || '=' || state FROM wolf_completion_items WHERE id IN ('CR-6535f7cb02370850','CR-7a145ad69d8bf3c5');\"; curl -sS -o /dev/null -w 'pack:%{http_code}\\n' http://127.0.0.1:8788/api/owner/empire-pack; curl -sS -o /dev/null -w 'pay:%{http_code}\\n' -X POST -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:8788/api/owner/empire-pack/payment; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/owner-empire-pack; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "EXIT: SUCCESS; BUILT BUILT 77; CR rows unchanged; pack:403; pay:403; page:403; 8787 True; 8788 True",
+      "by": "cursor-owner-empire-pack",
+      "checked": true,
+      "checked_at": "2026-09-21T12:44:14Z",
+      "checked_by": "peaches-grok-review",
+      "verify": "PASS",
+      "tests": "PASS=80 FAIL=0",
+      "grok_review_ref": "docs/deliveries/GROK-REVIEW-SPRINT-TRACK-E-OWNER-EMPIRE-PACK-2026-09-21.md"
+    },
+    {
+      "id": "bf-core-harden-pack-20260921",
+      "claim": "Beta Core Harden desk on :8788 shows Devi and Habitat commissioning as NOT_DONE, factory claim hygiene for bf-*-20260921, and a real next human action. Anon pack and mutating /api/core/harden-pack routes are 403. Payment, Cloudflare Access, and commissioning or adoption flips stay refused. CAP-CORE-11 stays SPECIFIED. CAP-CORE-12 stays BUILT. AU-BZG-03-UMA stays NOT STARTED. CR-c4ed4e3fa9f15a40 and CR-6e3fd7b9d7edca0e stay OPEN. No PROVEN, READY, COMMISSIONED, or ADOPTED invented. Track D and parked Finance lanes stay unstarted. Track A Uma, Track B GGV, Track C AMG, and Track E Owner routes stay in place. WIP four unchanged. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_core_harden_pack.py | tail -1; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-CORE-11'][0], d['CAP-CORE-12'][0], len(d))\"; python3 -c \"import json; rows=json.load(open('state/model-e-au-discovery.json')); print(next(r['state'] for r in rows if r['au_id']=='AU-BZG-03-UMA'))\"; sqlite3 catalog/content_library.sqlite \"SELECT id || '=' || state FROM wolf_completion_items WHERE id IN ('CR-6e3fd7b9d7edca0e','CR-c4ed4e3fa9f15a40') ORDER BY id;\"; curl -sS -o /dev/null -w 'pack:%{http_code}\\n' http://127.0.0.1:8788/api/core/harden-pack; curl -sS -o /dev/null -w 'pay:%{http_code}\\n' -X POST -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:8788/api/core/harden-pack/payment; curl -sS -o /dev/null -w 'cf:%{http_code}\\n' -X POST -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:8788/api/core/harden-pack/cloudflare; curl -sS -o /dev/null -w 'adopt:%{http_code}\\n' -X POST -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:8788/api/core/harden-pack/adopt; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/core-harden-pack; curl -sS -o /dev/null -w 'uma:%{http_code}\\n' http://127.0.0.1:8788/api/bzg/uma-blu/today; curl -sS -o /dev/null -w 'ggv:%{http_code}\\n' http://127.0.0.1:8788/api/ggv/ops-pack; curl -sS -o /dev/null -w 'amg:%{http_code}\\n' http://127.0.0.1:8788/api/amg/ops-pack; curl -sS -o /dev/null -w 'empire:%{http_code}\\n' http://127.0.0.1:8788/api/owner/empire-pack; python3 -c \"import socket\\n\\ndef up(port):\\n s=socket.socket(); s.settimeout(1.5); ok=s.connect_ex(('127.0.0.1', port))==0; s.close(); print(port, ok)\\nup(8787); up(8788)\"",
+      "expect": "EXIT: SUCCESS; SPECIFIED BUILT 77; NOT STARTED; CR-6e3fd7b9d7edca0e=OPEN; CR-c4ed4e3fa9f15a40=OPEN; pack:403; pay:403; cf:403; adopt:403; page:403; uma:403; ggv:403; amg:403; empire:403; 8787 True; 8788 True",
+      "by": "cursor-core-harden-pack",
+      "verify": "PASS",
+      "checked_at": "2026-09-21T13:58:16Z",
+      "checked_by": "peaches-build-factory-watch",
+      "tests": "PASS=110 FAIL=0"
+    }
+  ]
+}

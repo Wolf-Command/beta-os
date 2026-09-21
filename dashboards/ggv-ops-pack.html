@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GGV ops pack · Beta</title>
+<style>
+  :root {
+    --bg: #0b0d12; --bg2: #12151d; --bg3: #1a1f2b; --border: #2a3142;
+    --text: #e8ecf4; --muted: #8b95a8; --accent: #6ea8ff; --ok: #3dd68c;
+    --warn: #f5a524; --danger: #f04438;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 720px; padding: 12px 14px 64px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  h1 { font-size: 1.25rem; margin: 0 0 4px; }
+  h1 span { color: var(--accent); }
+  h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
+  .lede, .note { color: var(--muted); font-size: 0.85rem; }
+  .banner { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: 0.88rem; }
+  .banner.warn { border-color: rgba(245,165,36,0.45); color: var(--warn); }
+  .card { border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; padding: 12px; margin-top: 8px; }
+  .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.75rem; margin-right: 4px; color: var(--muted); }
+  .pill.you { color: var(--warn); border-color: rgba(245,165,36,0.45); }
+  label { display: block; font-size: 0.75rem; color: var(--muted); margin: 8px 0 4px; }
+  input, select { width: 100%; background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px; font: inherit; }
+  button { margin-top: 8px; width: 100%; border-radius: 10px; padding: 10px; border: 1px solid #3b6fd0; background: #2a5bb8; color: #fff; font-weight: 650; }
+  button:disabled { opacity: 0.45; }
+  .err { color: var(--danger); white-space: pre-wrap; font-size: 0.85rem; }
+  .ok { color: var(--ok); font-size: 0.85rem; }
+  .meta { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+</style>
+</head>
+<body>
+  <h1>GGV ops <span>· Beta</span></h1>
+  <p class="lede">Bound beta-ggv-ops-safe. Habitat operator loop. Not PROVEN. Not READY. CAP-GGV-04 stays BUILT. Closed is not a sale. An empty client/project framework is not live profitability. Publish-gate status is a read. This page does not write Metricool. This page does not write Klaviyo. This page does not write an external CRM. This page does not resolve the completion row.</p>
+  <div class="banner warn" id="who">Loading…</div>
+  <div id="msg"></div>
+
+  <h2>Needs you</h2>
+  <p class="note">Waiting uses the source time already on the lead. A missing clock is not an SLA breach.</p>
+  <div id="exceptions"></div>
+
+  <h2>Lead lifecycle</h2>
+  <p class="note">OPEN, ACTIVE, PARKED, CLOSED. A next action is required. Haikal and Misa cannot close.</p>
+  <div id="board"></div>
+
+  <h2>Client / project</h2>
+  <div id="framework"></div>
+
+  <h2>Habitat publish gate</h2>
+  <p class="note">Read only. Metricool write stays off.</p>
+  <div id="gates"></div>
+
+  <h2>Seats</h2>
+  <div id="seats"></div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+
+  async function api(path, opts) {
+    const res = await fetch(path, Object.assign({ headers: { Accept: "application/json" } }, opts || {}));
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) {
+      const err = new Error(data.message || data.error || ("HTTP " + res.status));
+      err.payload = data;
+      throw err;
+    }
+    return data;
+  }
+
+  function cardHtml(lead, canClose) {
+    const aging = lead.aging || {};
+    const you = aging.needs_you ? '<span class="pill you">Needs you</span>' : "";
+    const stages = ["OPEN", "ACTIVE", "PARKED"].concat(canClose ? ["CLOSED"] : []);
+    const opts = stages.map((s) => `<option value="${s}"${s === lead.wolf_lifecycle ? " selected" : ""}>${s}</option>`).join("");
+    return `<article class="card" data-lead="${esc(lead.lead_id)}">
+      <strong>${esc(lead.demo_label || lead.lead_id)}</strong>
+      ${you}
+      <span class="pill">${esc(lead.wolf_lifecycle)}</span>
+      <div class="meta">${esc(lead.owner)} · ${esc((lead.speed || {}).words || "")}</div>
+      <div class="meta">Next action: ${esc(lead.recorded_next_action || "none recorded")}</div>
+      <div class="meta">${esc(aging.reason || "")}</div>
+      <label>Wolf lifecycle</label>
+      <select class="stage">${opts}</select>
+      <label>Next action</label>
+      <input class="next" type="text" placeholder="What happens next?" />
+      <button type="button" class="move">Update lifecycle</button>
+      <div class="meta rowmsg"></div>
+    </article>`;
+  }
+
+  function paint(data) {
+    const seat = data.seat || {};
+    $("who").textContent = (seat.seat || "seat") + " · " + (seat.person_id || "") + " · Habitat only";
+    const ex = (data.exceptions && data.exceptions.exceptions) || [];
+    $("exceptions").innerHTML = ex.length
+      ? ex.map((row) => `<div class="card"><span class="pill you">Needs you</span> <strong>${esc(row.demo_label || row.lead_id)}</strong><div class="meta">${esc((row.aging || {}).words || "")} · SLA breach not recorded</div></div>`).join("")
+      : `<p class="note">${esc((data.exceptions || {}).empty_message || "No exception.")}</p>`;
+    const leads = data.leads || [];
+    $("board").innerHTML = leads.length
+      ? leads.map((lead) => cardHtml(lead, seat.can_close === true)).join("")
+      : `<p class="note">No Habitat leads on this board.</p>`;
+    const kinds = (data.framework && data.framework.kinds) || [];
+    $("framework").innerHTML = `<div class="banner">${esc((data.framework || {}).why || "")}</div>` + kinds.map((k) => `<div class="card"><strong>${esc(k.label)}</strong> <span class="pill">${esc(k.slot)}</span><div class="meta">${esc(k.why)}</div></div>`).join("");
+    const items = (data.publish_gate && data.publish_gate.items) || [];
+    $("gates").innerHTML = items.length
+      ? items.map((item) => `<div class="card"><strong>${esc(item.title_slug || item.slot_id)}</strong> <span class="pill">${esc(item.gate_stage)}</span><div class="meta">${esc(item.reason || "")} · Metricool write off</div></div>`).join("")
+      : `<p class="note">No Habitat planner rows to read.</p>`;
+    const perms = data.permissions || [];
+    $("seats").innerHTML = perms.map((p) => `<div class="card"><strong>${esc(p.seat)}</strong> <span class="pill">${esc(p.person_id)}</span><div class="meta">Lifecycle ${esc((p.lifecycle || []).join(", "))} · close ${p.can_close ? "yes" : "no"}</div></div>`).join("");
+    document.querySelectorAll("button.move").forEach((btn) => {
+      btn.addEventListener("click", () => move(btn.closest("article"), seat));
+    });
+  }
+
+  async function move(article, seat) {
+    const msg = article.querySelector(".rowmsg");
+    const next = article.querySelector(".next").value.trim();
+    const stage = article.querySelector(".stage").value;
+    msg.className = "meta rowmsg";
+    if (!next) {
+      msg.className = "err rowmsg";
+      msg.textContent = "A next action is required.";
+      return;
+    }
+    try {
+      await api("/api/ggv/ops-pack/leads/" + encodeURIComponent(article.dataset.lead) + "/lifecycle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ wolf_stage: stage, next_action: next }),
+      });
+      const data = await api("/api/ggv/ops-pack");
+      paint(data);
+      $("msg").className = "ok";
+      $("msg").textContent = stage === "CLOSED"
+        ? "Lifecycle updated. Closed is not a sale."
+        : "Lifecycle updated.";
+    } catch (err) {
+      msg.className = "err rowmsg";
+      msg.textContent = err.message;
+    }
+  }
+
+  api("/api/ggv/ops-pack").then(paint).catch((err) => {
+    $("who").textContent = "Cannot open the pack.";
+    $("msg").className = "err";
+    $("msg").textContent = err.message;
+  });
+})();
+</script>
+</body>
+</html>

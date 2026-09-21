@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Core Harden · Beta</title>
+<style>
+  :root {
+    --bg: #12110f; --bg2: #1c1a16; --bg3: #2a261f; --border: #3d382e;
+    --text: #f7f3ea; --muted: #b7ae9e; --accent: #e6c27a; --ok: #3dd68c;
+    --warn: #e0b15a; --danger: #f04438;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 720px; padding: 12px 14px 72px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  h1 { font-size: 1.25rem; margin: 0 0 4px; }
+  h1 span { color: var(--accent); }
+  h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
+  .lede, .note { color: var(--muted); font-size: 0.85rem; }
+  .banner { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: 0.88rem; }
+  .banner.warn { border-color: rgba(224,177,90,0.55); color: var(--warn); }
+  .card { border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; padding: 12px; margin-top: 8px; }
+  .card.loud { border-color: rgba(224,177,90,0.7); }
+  .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.75rem; margin: 0 4px 4px 0; color: var(--muted); }
+  .pill.loud { color: var(--warn); border-color: rgba(224,177,90,0.55); }
+  .err { color: var(--danger); white-space: pre-wrap; font-size: 0.85rem; }
+  .meta { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+  a.quiet { color: var(--accent); }
+</style>
+</head>
+<body>
+  <h1>Core Harden <span>· Beta</span></h1>
+  <p class="lede">Bound beta-core-safe. Commissioning gates and factory claim hygiene. Owner only. NOT_DONE is not done. This desk does not mark COMMISSIONED or ADOPTED. No payment, bank, Zayen, HR, trading, or Cloudflare Access write.</p>
+  <div class="banner warn" id="who">Loading…</div>
+  <div id="msg"></div>
+
+  <h2>Next human action</h2>
+  <div id="next"></div>
+
+  <h2>Devi / Uma</h2>
+  <div id="devi"></div>
+
+  <h2>Habitat</h2>
+  <div id="habitat"></div>
+
+  <h2>Factory hygiene</h2>
+  <div id="factory"></div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+
+  function pill(text, loud) {
+    return '<span class="pill' + (loud ? " loud" : "") + '">' + esc(text) + "</span>";
+  }
+
+  async function api(path) {
+    const res = await fetch(path, { headers: { Accept: "application/json" } });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) {
+      const err = new Error(data.message || data.error || ("HTTP " + res.status));
+      err.payload = data;
+      throw err;
+    }
+    return data;
+  }
+
+  function renderNext(actions) {
+    const nxt = (actions && actions.next) || null;
+    if (!nxt) {
+      $("next").innerHTML = '<div class="card loud">No human action was read. That empty list is not done.</div>';
+      return;
+    }
+    const href = nxt.href
+      ? '<div class="meta"><a class="quiet" href="' + esc(nxt.href) + '">Open the existing board</a></div>'
+      : "";
+    $("next").innerHTML =
+      '<div class="card loud"><strong>' + esc(nxt.label) + "</strong>" +
+      '<div class="meta">' + esc(nxt.who) + " · not done</div>" +
+      "<p>" + esc(nxt.why) + "</p>" + href + "</div>";
+  }
+
+  function renderDevi(devi) {
+    const blockers = (devi.blockers || []).map((row) =>
+      "<li><strong>" + esc(row.id) + "</strong> — " + esc(row.why) + "</li>"
+    ).join("");
+    const au = devi.au || {};
+    $("devi").innerHTML =
+      '<div class="card loud">' +
+      pill(devi.human_commissioning || "NOT_DONE", true) +
+      pill("detail " + (devi.status_detail || ""), true) +
+      pill("retest " + (devi.phone_retest || ""), true) +
+      pill(au.au_id + " " + (au.state || ""), true) +
+      "<p>NOT_DONE is not done. Partial feedback is not commissioned. " +
+      esc(au.au_id) + " stays " + esc(au.state) + ".</p>" +
+      "<ul>" + blockers + "</ul></div>";
+  }
+
+  function renderHabitat(habitat) {
+    const prove = habitat.prove_week || {};
+    const units = (habitat.adoption_units || []).map((row) =>
+      "<li>" + esc(row.au_id) + " · " + esc(row.state) + "</li>"
+    ).join("");
+    const staff = habitat.staff_mission || {};
+    $("habitat").innerHTML =
+      '<div class="card loud">' +
+      pill(habitat.human_commissioning || "NOT_DONE", true) +
+      pill("staff " + (staff.status || ""), true) +
+      pill("prove-week " + (prove.status || "NOT_PROVED"), true) +
+      pill("Metricool " + (habitat.metricool_write || ""), true) +
+      "<p>" + esc(prove.why || "") + "</p>" +
+      "<p class='meta'>" + esc(staff.note || "") + "</p>" +
+      "<ul>" + units + "</ul></div>";
+  }
+
+  function renderFactory(factory) {
+    const d = factory.track_d || {};
+    const lanes = (factory.lanes || []).map((row) =>
+      "<li>Track " + esc(row.track) + " · " + esc(row.status) +
+      " · commit " + esc(row.completion_commit_kind) +
+      (row.commit_deferred_reason ? " · " + esc(row.commit_deferred_reason) : "") +
+      "</li>"
+    ).join("");
+    const claims = (factory.claims || []).map((row) =>
+      "<li>" + esc(row.id) + " · " + esc(row.verify) + "</li>"
+    ).join("");
+    const wave = factory.wave12 || {};
+    $("factory").innerHTML =
+      '<div class="card">' +
+      pill("run " + (factory.active_run_id || "EMPTY"), !factory.active_run_read) +
+      pill("mission " + (factory.mission_id || "EMPTY"), false) +
+      pill("lane " + (factory.active_lane_id || "EMPTY"), false) +
+      "<p>Track D is parked. Reason: " + esc(d.reason || "") + ". This desk does not start it.</p>" +
+      "<p class='meta'>A synthetic or absent commit is not a git SHA. ABSENT is not PASS. UNCHECKED is not PASS.</p>" +
+      "<ul>" + lanes + "</ul>" +
+      "<p class='meta'>Claim verify</p><ul>" + claims + "</ul>" +
+      "<p class='meta'>Wave 12 " + esc(wave.status) + " · parked " +
+      esc((wave.parked_pending || []).join(", ")) + "</p></div>";
+  }
+
+  api("/api/core/harden-pack").then((desk) => {
+    $("who").textContent = "Owner read. CAP-CORE-11 " +
+      ((desk.honesty || {}).cap_core_11 || "") + " · CAP-CORE-12 " +
+      ((desk.honesty || {}).cap_core_12 || "") + ". Neither cap is raised here.";
+    renderNext(desk.actions);
+    renderDevi(desk.devi || {});
+    renderHabitat(desk.habitat || {});
+    renderFactory(desk.factory || {});
+  }).catch((err) => {
+    $("who").textContent = "This desk did not load.";
+    $("msg").innerHTML = '<div class="err">' + esc(err.message) + "</div>";
+  });
+})();
+</script>
+</body>
+</html>

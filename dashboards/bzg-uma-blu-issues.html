@@ -70,6 +70,15 @@
     <a href="/bzg/uma-blu#history">History</a>
   </nav>
 
+  <div class="panel" id="issueForm" hidden style="background:#162833;border:1px solid #2a4554;border-radius:14px;padding:14px;margin-bottom:12px">
+    <form id="newIssue">
+      <label style="display:block;color:#8aa0ad;font-size:0.8rem">What happened
+        <textarea id="issueNote" required style="width:100%;min-height:72px;margin-top:4px;border-radius:10px;border:1px solid #2a4554;background:#1e3542;color:#eef4f7;padding:10px;font:inherit"></textarea>
+      </label>
+      <button type="submit" style="width:100%;min-height:44px;margin-top:8px;border-radius:12px;border:1px solid #2a8a76;background:#1f6b5c;color:#fff;font-weight:650">Open issue</button>
+      <p class="muted" id="issueMsg"></p>
+    </form>
+  </div>
   <div id="list"><p class="muted">Loading…</p></div>
 
 <script>
@@ -118,6 +127,30 @@
     .catch(function () {
       document.getElementById("list").textContent = "Could not load issues.";
     });
+})();
+</script>
+<script>
+(function () {
+  fetch("/api/bzg/uma-blu/permissions").then(function (r) { return r.json(); }).then(function (perm) {
+    if (!perm || !perm.buttons || !perm.buttons.create_issue) return;
+    var panel = document.getElementById("issueForm");
+    panel.hidden = false;
+    document.getElementById("newIssue").onsubmit = function (ev) {
+      ev.preventDefault();
+      var msg = document.getElementById("issueMsg");
+      fetch("/api/bzg/uma-blu/issues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source_kind: "close_exception", note: document.getElementById("issueNote").value })
+      }).then(function (r) { return r.json(); }).then(function (out) {
+        if (!out.ok) {
+          msg.textContent = out.error || out.message || "Issue was not opened.";
+          return;
+        }
+        location.reload();
+      }).catch(function () { msg.textContent = "Issue was not opened."; });
+    };
+  }).catch(function () {});
 })();
 </script>
 </body>

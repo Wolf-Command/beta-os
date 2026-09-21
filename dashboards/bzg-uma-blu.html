@@ -119,6 +119,8 @@
   <p class="sub">What needs you today</p>
 
   <div class="banner hidden" id="fixtureBanner">Some rows are practice only — not live Uma Blu work.</div>
+  <div class="banner info" id="roleBanner">Checking what you can do…</div>
+  <div class="banner info" id="stockBanner">Stock on hand is empty. An empty framework is not a live inventory count.</div>
 
   <nav class="uma">
     <a class="active" href="/bzg/uma-blu">Today</a>
@@ -135,6 +137,11 @@
   </div>
 
   <div id="cards"><p class="muted">Loading…</p></div>
+
+  <div class="panel" id="closes">
+    <h2>Earlier closes</h2>
+    <div id="closesBody"><p class="muted">Loading…</p></div>
+  </div>
 
   <div class="panel" id="history">
     <h2>History</h2>
@@ -233,10 +240,46 @@
             }
           }
         }
+        var stock = data.stock || {};
+        var stockBox = document.getElementById("stockBanner");
+        if (stockBox) {
+          var hooks = (stock.variance_hooks || []).length;
+          stockBox.textContent = hooks
+            ? "Stock framework only. " + hooks + " receipt shortfall"
+              + (hooks === 1 ? "" : "s")
+              + " — not a verified on-hand count. ESB stays the stock record."
+            : "Stock on hand is empty. An empty framework is not a live inventory count. ESB stays the stock record.";
+        }
+        var roleBox = document.getElementById("roleBanner");
+        var perm = data.permissions || {};
+        if (roleBox) {
+          if (perm.view === "owner") {
+            roleBox.textContent = "Owner view. You can read the day. This screen does not execute payment.";
+          } else if (perm.view === "operator") {
+            roleBox.textContent = "Ops view. Buttons you cannot use stay hidden. Payment is not on this screen.";
+          } else {
+            roleBox.textContent = "Sign-in decides which buttons you see. Payment is not on this screen.";
+          }
+        }
+        var closesBox = document.getElementById("closesBody");
+        if (closesBox) {
+          closesBox.innerHTML = "";
+          var prev = data.previous_closes || {};
+          var rows = prev.closes || [];
+          if (!rows.length) {
+            closesBox.appendChild(el("p", "empty", prev.empty_message || "No earlier closes recorded in Wolf yet."));
+          } else {
+            rows.forEach(function (cl) {
+              var line = el("div", "meta", (cl.business_date || "Date unknown") + " — " + (cl.state || "recorded"));
+              closesBox.appendChild(line);
+            });
+          }
+        }
         var live = [];
         var nowKind = (data.now && data.now.kind) || "";
         cards.forEach(function (c) {
           if (c.kind === "history") return; // history has its own panel
+          if (c.kind === "issues" && !(c.attention_count > 0) && !c.why && !c.waiting_copy) return;
           if (c.kind === "daily_close" && nowKind === "daily_close") return; // already in Now
           // Never show example-only fixtures as Uma Blu work on Today
           if (c.example && !(c.attention_count > 0)) return;

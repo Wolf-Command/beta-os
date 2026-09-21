@@ -85,6 +85,24 @@
     <a href="/bzg/uma-blu#history">History</a>
   </nav>
 
+  <div class="panel" id="createPanel" hidden>
+    <h2 style="margin:0 0 8px;font-size:0.78rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)">New request</h2>
+    <form id="createForm">
+      <label>Supplier<input id="supplier" required /></label>
+      <label>What it is for<input id="purpose" required /></label>
+      <label>Item<input id="item" required /></label>
+      <label>Quantity<input id="qty" type="number" min="0" step="any" required /></label>
+      <button class="btn" type="submit">Save draft</button>
+      <p class="muted" id="createMsg"></p>
+    </form>
+  </div>
+  <style>
+    label { display:block; font-size:0.8rem; color:var(--muted); margin:8px 0 4px; }
+    input { width:100%; border:1px solid var(--line); background:var(--bg3); color:var(--text); border-radius:10px; padding:12px; font:inherit; }
+    .btn { appearance:none; width:100%; min-height:44px; margin-top:10px; border-radius:12px; border:1px solid #2a8a76; background:#1f6b5c; color:#fff; font-size:1rem; font-weight:650; }
+    .panel { background: color-mix(in srgb, var(--bg2) 92%, #000); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px; }
+  </style>
+
   <div id="list"><p class="muted">Loading…</p></div>
 
 <script>
@@ -101,7 +119,10 @@
     PAYMENT_VERIFIED: "Payment verified",
     CLOSED: "Closed",
     POLICY_REQUIRED: "Policy required",
-    REJECTED: "Rejected"
+    REJECTED: "Rejected",
+    DRAFT: "Draft — not submitted",
+    PARTIALLY_RECEIVED: "Part received",
+    OPS_CLOSED: "Closed for operations — payment not executed"
   };
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -177,6 +198,39 @@
     .catch(function () {
       document.getElementById("list").textContent = "Could not load bills.";
     });
+})();
+</script>
+<script>
+(function () {
+  var panel = document.getElementById("createPanel");
+  if (!panel) return;
+  fetch("/api/bzg/uma-blu/permissions").then(function (r) { return r.json(); }).then(function (perm) {
+    var buttons = (perm && perm.buttons) || {};
+    if (!buttons.create_pr) return;
+    panel.hidden = false;
+    document.getElementById("createForm").onsubmit = function (ev) {
+      ev.preventDefault();
+      var msg = document.getElementById("createMsg");
+      fetch("/api/bzg/uma-blu/prs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          supplier_name: document.getElementById("supplier").value,
+          purpose: document.getElementById("purpose").value,
+          submitted: false,
+          lines: [{ item: document.getElementById("item").value, qty: Number(document.getElementById("qty").value) }]
+        })
+      }).then(function (r) { return r.json(); }).then(function (out) {
+        if (!out.ok) {
+          msg.textContent = out.error || out.message || "Draft was not saved.";
+          return;
+        }
+        location.href = "/bzg/uma-blu/bills/" + encodeURIComponent(out.pr.pr_id);
+      }).catch(function () {
+        msg.textContent = "Draft was not saved.";
+      });
+    };
+  }).catch(function () {});
 })();
 </script>
 </body>

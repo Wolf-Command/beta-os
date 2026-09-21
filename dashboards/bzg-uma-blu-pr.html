@@ -133,14 +133,56 @@
 
       var act = el("div", "panel");
       act.appendChild(el("h2", null, "Actions"));
-      act.appendChild(el("p", "muted", actions.payment_waiting || "Waiting on finance — no action needed from you."));
-      if (actions.receive) {
+      act.appendChild(el("p", "muted", actions.payment_waiting || "Waiting on finance — this screen does not execute payment."));
+      function postAction(path, payload, msg, btn) {
+        btn.disabled = true;
+        fetch(path, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload || {})
+        }).then(function (r) { return r.json(); }).then(function (out) {
+          btn.disabled = false;
+          if (!out.ok) {
+            msg.className = "err";
+            msg.textContent = out.error || out.message || "That step was not recorded.";
+            return;
+          }
+          location.reload();
+        }).catch(function () {
+          btn.disabled = false;
+          msg.className = "err";
+          msg.textContent = "That step was not recorded.";
+        });
+      }
+      var msg = el("p", "muted", "");
+      var state = p.state || p.wolf_state || "";
+      if (state === "DRAFT" && actions.submit) {
+        var submitBtn = el("button", "btn", "Submit request");
+        submitBtn.type = "button";
+        submitBtn.onclick = function () { postAction("/api/bzg/uma-blu/prs/" + encodeURIComponent(key) + "/submit", {}, msg, submitBtn); };
+        act.appendChild(submitBtn);
+      } else if (state === "DRAFT") {
+        act.appendChild(el("p", "muted", actions.submit_waiting || "Waiting on staff — no action needed from you."));
+      }
+      if (state === "REQUESTED" && actions.approve_ops) {
+        var approveBtn = el("button", "btn", "Approve request");
+        approveBtn.type = "button";
+        approveBtn.onclick = function () { postAction("/api/bzg/uma-blu/prs/" + encodeURIComponent(key) + "/approve", {}, msg, approveBtn); };
+        act.appendChild(approveBtn);
+      } else if (state === "REQUESTED") {
+        act.appendChild(el("p", "muted", actions.approve_waiting || "Waiting on approver — no action needed from you."));
+      }
+      if (state === "APPROVED" && actions.order) {
+        var orderBtn = el("button", "btn", "Mark ordered");
+        orderBtn.type = "button";
+        orderBtn.onclick = function () { postAction("/api/bzg/uma-blu/prs/" + encodeURIComponent(key) + "/order", {}, msg, orderBtn); };
+        act.appendChild(orderBtn);
+      }
+      if (actions.receive && (state === "ORDERED" || state === "PARTIALLY_RECEIVED" || p.legacy)) {
         var form = el("form");
-        lines.filter(function (ln) { return ln.interpretable && ln.wolf_outstanding_qty > 0; }).forEach(function (ln) {
+        lines.filter(function (ln) { return ln.interpretable && (ln.wolf_outstanding_qty == null || ln.wolf_outstanding_qty > 0); }).forEach(function (ln) {
           var lab = el("label", null, (ln.item || "Line") + " received now");
-          lab.setAttribute("for", "qty-" + ln.source_line_id);
           var input = el("input");
-          input.id = "qty-" + ln.source_line_id;
           input.type = "number";
           input.min = "0";
           input.step = "any";
@@ -148,10 +190,15 @@
           form.appendChild(lab);
           form.appendChild(input);
         });
+        var noteLab = el("label", null, "Note id or photo id");
+        var noteInput = el("input");
+        noteInput.id = "evidence-note";
+        noteInput.placeholder = "Photo or note id";
+        form.appendChild(noteLab);
+        form.appendChild(noteInput);
         var btn = el("button", "btn", "Receive goods");
         btn.type = "submit";
         form.appendChild(btn);
-        var msg = el("p", "muted", "");
         form.appendChild(msg);
         form.onsubmit = function (ev) {
           ev.preventDefault();
@@ -160,15 +207,20 @@
             if (input.value === "") return;
             payload.push({ source_line_id: input.getAttribute("data-line"), received_qty: Number(input.value) });
           });
+          var evid = noteInput.value.trim();
           if (!payload.length) {
             msg.textContent = "Enter a quantity that is already on the order. Nothing was invented.";
+            return;
+          }
+          if (!evid) {
+            msg.textContent = "A note id or photo id is required. Nothing was recorded.";
             return;
           }
           btn.disabled = true;
           fetch("/api/bzg/uma-blu/receive", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ pr: key, lines: payload })
+            body: JSON.stringify({ pr: key, lines: payload, evidence_note_id: evid })
           }).then(function (r) { return r.json(); }).then(function (out) {
             btn.disabled = false;
             if (!out.ok) {
@@ -176,8 +228,9 @@
               msg.textContent = out.error || out.message || "Receive was not recorded.";
               return;
             }
+            var receipt = out.receipt || {};
             msg.className = "muted";
-            msg.textContent = "Recorded " + ((out.receipt && out.receipt.status) || "") + ". Existing record was not rewritten.";
+            msg.textContent = "Recorded " + (receipt.status || "") + (receipt.variance_flag ? ". Shortfall noted — not a stock count." : ".") + " Existing record was not rewritten.";
           }).catch(function () {
             btn.disabled = false;
             msg.className = "err";
@@ -185,9 +238,27 @@
           });
         };
         act.appendChild(form);
-      } else if (actions.receive_waiting) {
+      } else if (actions.receive_waiting && (state === "ORDERED" || state === "PARTIALLY_RECEIVED")) {
         act.appendChild(el("p", "muted", actions.receive_waiting));
       }
+      if (actions.close_ops && (state === "RECEIVED" || state === "PARTIALLY_RECEIVED")) {
+        var closeNote = el("input");
+        closeNote.placeholder = "Close note id or photo id";
+        var closeBtn = el("button", "btn", "Close request");
+        closeBtn.type = "button";
+        closeBtn.onclick = function () {
+          if (!closeNote.value.trim()) {
+            msg.className = "err";
+            msg.textContent = "A note id or photo id is required to close. Payment was not executed.";
+            return;
+          }
+          postAction("/api/bzg/uma-blu/prs/" + encodeURIComponent(key) + "/close", { evidence_note_id: closeNote.value.trim() }, msg, closeBtn);
+        };
+        act.appendChild(closeNote);
+        act.appendChild(closeBtn);
+        act.appendChild(el("p", "muted", "Closing here does not pay the supplier."));
+      }
+      if (!act.contains(msg)) act.appendChild(msg);
       box.appendChild(act);
     })
     .catch(function () {

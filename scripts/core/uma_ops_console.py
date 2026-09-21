@@ -66,6 +66,8 @@ TODAY_RANK = {
     "pr_waiting_approval": 80,
     "received_follow_up": 85,
     "ordered_not_received": 90,
+    "partial_receive": 88,
+    "draft_not_submitted": 84,
     "petty_variance_noted": 100,
     "petty_open_uncounted": 110,
     "petty_attention": 120,
@@ -88,7 +90,9 @@ BLOCKED_EXPLAIN_KINDS = frozenset(
 )
 PR_CARD_EXPLAIN = {
     "prs_waiting_approval": "pr_waiting_approval",
+    "draft_pr": "draft_not_submitted",
     "ordered_not_received": "ordered_not_received",
+    "awaiting_remainder": "partial_receive",
     "bills_waiting_payment_approval": "bill_waiting_payment",
     "payment_claimed_not_verified": "missing_payment_evidence",
     "policy_required": "policy_required",
@@ -97,9 +101,11 @@ COMMISSIONING_READY_NAME = "uma-today-commissioning-2026-09-19.json"
 
 STATES = frozenset(
     {
+        "DRAFT",
         "REQUESTED",
         "APPROVED",
         "ORDERED",
+        "PARTIALLY_RECEIVED",
         "RECEIVED",
         "BILL_RECEIVED",
         "PAYMENT_REQUESTED",
@@ -109,14 +115,27 @@ STATES = frozenset(
         "CLOSED",
         "POLICY_REQUIRED",
         "REJECTED",
+        "OPS_CLOSED",
+    }
+)
+
+# Operational close is not a payment. These destinations stay off the phone pack.
+PAYMENT_EXECUTION_STATES = frozenset(
+    {
+        "PAYMENT_REQUESTED",
+        "PAYMENT_APPROVED",
+        "PAID_CLAIMED",
+        "PAYMENT_VERIFIED",
     }
 )
 
 ALLOWED_TRANSITIONS: dict[str, frozenset[str]] = {
+    "DRAFT": frozenset({"REQUESTED", "REJECTED"}),
     "REQUESTED": frozenset({"APPROVED", "REJECTED"}),
     "APPROVED": frozenset({"ORDERED"}),
-    "ORDERED": frozenset({"RECEIVED"}),
-    "RECEIVED": frozenset({"BILL_RECEIVED"}),
+    "ORDERED": frozenset({"RECEIVED", "PARTIALLY_RECEIVED"}),
+    "PARTIALLY_RECEIVED": frozenset({"RECEIVED", "OPS_CLOSED"}),
+    "RECEIVED": frozenset({"BILL_RECEIVED", "OPS_CLOSED"}),
     "BILL_RECEIVED": frozenset({"PAYMENT_REQUESTED"}),
     "PAYMENT_REQUESTED": frozenset({"PAYMENT_APPROVED"}),
     "POLICY_REQUIRED": frozenset({"PAYMENT_APPROVED"}),
@@ -125,6 +144,7 @@ ALLOWED_TRANSITIONS: dict[str, frozenset[str]] = {
     "PAYMENT_VERIFIED": frozenset({"CLOSED"}),
     "REJECTED": frozenset(),
     "CLOSED": frozenset(),
+    "OPS_CLOSED": frozenset(),
 }
 
 HONESTY = {
@@ -135,6 +155,13 @@ HONESTY = {
     # Opening float baseline not authorised — never OK with a made-up number.
     "float": "NOT_FOUND",
     "petty_cash_page": "BUILT",
+    "stock_perpetual_inventory": "NOT_BUILT",
+    "empty_stock_is_not_a_count": True,
+    "ops_close_is_not_payment": True,
+    "human_commissioning": "NOT_DONE",
+    "proven": False,
+    "ready": False,
+    "cap_bzg_03_rewritten": False,
 }
 
 
@@ -893,7 +920,385 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
 
         CREATE INDEX IF NOT EXISTS idx_bzg_ops_petty_day_state
           ON bzg_ops_petty_days(state);
+
+        CREATE TABLE IF NOT EXISTS bzg_ops_pr_lines (
+          line_id TEXT PRIMARY KEY,
+          pr_id TEXT NOT NULL,
+          item TEXT NOT NULL,
+          qty REAL NOT NULL,
+          unit TEXT,
+          created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_bzg_ops_pr_lines_pr
+          ON bzg_ops_pr_lines(pr_id);
+
+        CREATE TABLE IF NOT EXISTS bzg_ops_operator_issues (
+          issue_id TEXT PRIMARY KEY,
+          venue TEXT NOT NULL,
+          source_kind TEXT NOT NULL,
+          source_id TEXT,
+          note TEXT NOT NULL,
+          status TEXT NOT NULL,
+          created_by TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS bzg_ops_pr_close_slots (
+          pr_id TEXT PRIMARY KEY,
+          evidence_note_id TEXT,
+          evidence_photo_id TEXT,
+          closed_by TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        );
         """
+    )
+
+
+def list_pr_lines(pr_id: str, *, conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    """Wolf order lines. Interpretable only when qty was stored. No invented qty."""
+    pid = (pr_id or "").strip()
+    if not pid:
+        return []
+    ensure_schema(conn)
+    rows = conn.execute(
+        """
+        SELECT line_id, item, qty, unit
+        FROM bzg_ops_pr_lines
+        WHERE pr_id=?
+        ORDER BY created_at, line_id
+        """,
+        (pid,),
+    ).fetchall()
+    out = []
+    for row in rows:
+        qty = row["qty"]
+        out.append(
+            {
+                "source_line_id": row["line_id"],
+                "item": row["item"],
+                "qty": qty,
+                "unit": row["unit"],
+                "interpretable": qty is not None,
+            }
+        )
+    return out
+
+
+def _insert_pr_lines(
+    conn: sqlite3.Connection,
+    pr_id: str,
+    lines: list[dict[str, Any]],
+    ts: str,
+) -> None:
+    ensure_schema(conn)
+    for raw in lines:
+        if not isinstance(raw, dict):
+            raise UmaOpsError("line must be an object", code="invalid_line")
+        item = str(raw.get("item") or "").strip()
+        if not item:
+            raise UmaOpsError("line item required", code="invalid_line")
+        try:
+            qty = float(raw.get("qty"))
+        except (TypeError, ValueError) as exc:
+            raise UmaOpsError("line qty must be numeric", code="invalid_qty") from exc
+        if qty <= 0:
+            raise UmaOpsError("line qty must be positive", code="invalid_qty")
+        unit = str(raw.get("unit") or "").strip() or None
+        conn.execute(
+            """
+            INSERT INTO bzg_ops_pr_lines (line_id, pr_id, item, qty, unit, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (f"PRL-{uuid.uuid4().hex[:12].upper()}", pr_id, item, qty, unit, ts),
+        )
+
+
+def assert_not_payment_execution(to_state: str) -> None:
+    """Phone pack refuses payment destinations. Does not move money."""
+    dest = (to_state or "").strip().upper()
+    if dest in PAYMENT_EXECUTION_STATES:
+        raise UmaOpsError(
+            "Payment execution is not available on this screen.",
+            code="payment_execution_refused",
+            http_status=403,
+        )
+
+
+def stock_framework(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
+    """Read model only. Empty on-hand is not a live perpetual inventory.
+
+    Variance hooks are receipt shortfalls. They are not verified stock counts.
+    ESB remains the stock system of record. This function does not write ESB.
+    """
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        ensure_schema(c)
+        c.execute(
+            """
+            CREATE TABLE IF NOT EXISTS bzg_ops_receipt_slots (
+              receipt_id TEXT PRIMARY KEY,
+              evidence_note_id TEXT,
+              evidence_photo_id TEXT,
+              variance_flag INTEGER NOT NULL DEFAULT 0,
+              shortfall_json TEXT,
+              created_at TEXT NOT NULL
+            )
+            """
+        )
+        rows = c.execute(
+            """
+            SELECT receipt_id, shortfall_json, created_at
+            FROM bzg_ops_receipt_slots
+            WHERE variance_flag=1
+            ORDER BY created_at DESC
+            LIMIT 20
+            """
+        ).fetchall()
+        hooks = []
+        for row in rows:
+            shortfall: dict[str, Any] = {}
+            raw = row["shortfall_json"]
+            if raw:
+                try:
+                    parsed = json.loads(raw)
+                    if isinstance(parsed, dict):
+                        shortfall = parsed
+                except json.JSONDecodeError:
+                    shortfall = {}
+            hooks.append(
+                {
+                    "receipt_id": row["receipt_id"],
+                    "shortfall": shortfall,
+                    "verified_stock_count": False,
+                    "note": "Receipt shortfall only. Not an on-hand count.",
+                }
+            )
+        return {
+            "ok": True,
+            "framework": True,
+            "live_perpetual_inventory": False,
+            "on_hand": None,
+            "on_hand_status": "EMPTY",
+            "empty_is_not_live_inventory": True,
+            "verified_stock_count": False,
+            "esb_remains_stock_sot": True,
+            "esb_mutated": False,
+            "variance_hooks": hooks,
+            "honesty": dict(HONESTY),
+            "proven": False,
+            "ready": False,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def _require_ops_permission(
+    conn: sqlite3.Connection,
+    person_id: str,
+    code: str,
+) -> None:
+    from core import rbac as _rbac
+
+    pid = (person_id or "").strip()
+    if not pid:
+        raise UmaOpsError("verified_person_id required", code="missing_verified_person", http_status=403)
+    target = {"entity_id": ENTITY_BZG, "brand_id": VENUE_UMA}
+    if not _rbac.can(pid, code, target, conn=conn):
+        raise UmaOpsError(
+            f"permission denied: {code}",
+            code="forbidden",
+            http_status=403,
+        )
+
+
+def record_petty_ops(
+    *,
+    person_id: str,
+    business_date: str | None = None,
+    direction: str = "OUT",
+    amount: float,
+    currency: str | None = None,
+    purpose: str | None = None,
+    evidence_note_id: str | None = None,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Record a tin movement for an operator who can create work. No bank write."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        assert_catalog_writable(Path(CATALOG_DB))
+        ensure_schema(c)
+        _require_ops_permission(c, person_id, "work.create")
+        note = (purpose or "").strip()
+        if not note:
+            raise UmaOpsError("purpose required", code="missing_purpose")
+        biz = (business_date or "").strip() or today_biz_date()
+        out = insert_petty_movement(
+            business_date=biz,
+            direction=direction,
+            amount=amount,
+            currency=currency,
+            purpose=note,
+            example=False,
+            evidence_id=(evidence_note_id or "").strip() or None,
+            conn=c,
+        )
+        _audit_ops(
+            action="bzg.petty.movement",
+            result="SUCCEEDED",
+            resource_type=RESOURCE_PETTY,
+            resource_id=str(out.get("movement_id") or biz),
+            conn=c,
+            metadata={"status": direction, "note": note, "actor": "operator"},
+            actor_type="PERSON",
+            verified_person_id=person_id,
+            identity=identity,
+        )
+        if commit:
+            c.commit()
+        return out
+    finally:
+        if own:
+            c.close()
+
+
+def count_petty_ops(
+    *,
+    person_id: str,
+    business_date: str,
+    counted_amount: float,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Count the tin. Missing float stays POLICY_REQUIRED. No invented opening."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        assert_catalog_writable(Path(CATALOG_DB))
+        _require_ops_permission(c, person_id, "work.update")
+        out = note_petty_count(
+            business_date,
+            counted_amount,
+            conn=c,
+            commit=False,
+        )
+        _audit_ops(
+            action="bzg.petty.count",
+            result="SUCCEEDED",
+            resource_type=RESOURCE_PETTY_DAY,
+            resource_id=(business_date or "").strip(),
+            conn=c,
+            metadata={"status": out.get("state"), "note": "operator count"},
+            actor_type="PERSON",
+            verified_person_id=person_id,
+            identity=identity,
+        )
+        if commit:
+            c.commit()
+        return out
+    finally:
+        if own:
+            c.close()
+
+
+def create_operator_issue(
+    *,
+    person_id: str,
+    source_kind: str,
+    note: str,
+    source_id: str | None = None,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Open an ops issue from an exception. Does not resolve a completion row."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        assert_catalog_writable(Path(CATALOG_DB))
+        ensure_schema(c)
+        _require_ops_permission(c, person_id, "work.create")
+        kind = (source_kind or "").strip() or "issues_open"
+        text = (note or "").strip()
+        if not text:
+            raise UmaOpsError("note required", code="missing_note")
+        ts = now_utc_iso()
+        issue_id = f"ISS-UMA-{uuid.uuid4().hex[:10].upper()}"
+        c.execute(
+            """
+            INSERT INTO bzg_ops_operator_issues (
+              issue_id, venue, source_kind, source_id, note, status, created_by, created_at
+            ) VALUES (?, ?, ?, ?, ?, 'OPEN', ?, ?)
+            """,
+            (
+                issue_id,
+                VENUE_UMA,
+                kind,
+                (source_id or "").strip() or None,
+                text,
+                person_id.strip(),
+                ts,
+            ),
+        )
+        _audit_ops(
+            action="bzg.issue.opened",
+            result="SUCCEEDED",
+            resource_type="bzg_ops_issue",
+            resource_id=issue_id,
+            conn=c,
+            metadata={"status": "OPEN", "note": text, "kind": kind, "cr_resolved": False},
+            actor_type="PERSON",
+            verified_person_id=person_id,
+            identity=identity,
+        )
+        if commit:
+            c.commit()
+        return {
+            "issue_id": issue_id,
+            "kind": kind,
+            "note": text,
+            "status": "OPEN",
+            "cr_resolved": False,
+            "payment_execution": False,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def save_pr_close_slot(
+    conn: sqlite3.Connection,
+    *,
+    pr_id: str,
+    evidence_note_id: str | None,
+    evidence_photo_id: str | None,
+    closed_by: str,
+) -> None:
+    ensure_schema(conn)
+    note = (evidence_note_id or "").strip() or None
+    photo = (evidence_photo_id or "").strip() or None
+    if not note and not photo:
+        raise UmaOpsError(
+            "A note id or photo id is required to close this request.",
+            code="missing_evidence",
+        )
+    conn.execute(
+        """
+        INSERT INTO bzg_ops_pr_close_slots (
+          pr_id, evidence_note_id, evidence_photo_id, closed_by, created_at
+        ) VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(pr_id) DO UPDATE SET
+          evidence_note_id=excluded.evidence_note_id,
+          evidence_photo_id=excluded.evidence_photo_id,
+          closed_by=excluded.closed_by,
+          created_at=excluded.created_at
+        """,
+        (pr_id, note, photo, closed_by, now_utc_iso()),
     )
 
 
@@ -991,6 +1396,8 @@ def create_pr(
     required_by_date: str | None = None,
     quote_evidence_id: str | None = None,
     bill_reference: str | None = None,
+    lines: list[dict[str, Any]] | None = None,
+    submitted: bool = True,
     example: bool = False,
     verified_person_id: str | None = None,
     actor_type: str = "SYSTEM",
@@ -1006,6 +1413,7 @@ def create_pr(
         ensure_schema(c)
         ts = now_utc_iso()
         pr_id = mint_pr_id()
+        initial = "REQUESTED" if submitted else "DRAFT"
         cur = (currency or "").strip() or None
         val = expected_value
         if val is not None:
@@ -1032,7 +1440,7 @@ def create_pr(
               expected_value, currency, requested_date, required_by_date,
               quote_evidence_id, bill_reference, payment_evidence_id,
               state, work_item_id, example, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'REQUESTED', ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)
             """,
             (
                 pr_id,
@@ -1046,22 +1454,24 @@ def create_pr(
                 (required_by_date or "").strip() or None,
                 (quote_evidence_id or "").strip() or None,
                 (bill_reference or "").strip() or None,
+                initial,
                 wi["work_item_id"],
                 1 if example else 0,
                 ts,
                 ts,
             ),
         )
+        _insert_pr_lines(c, pr_id, lines or [], ts)
         _audit_pr(
-            action="bzg.pr.requested",
+            action="bzg.pr.requested" if submitted else "bzg.pr.draft",
             result="SUCCEEDED",
             pr_id=pr_id,
-            state="REQUESTED",
+            state=initial,
             verified_person_id=verified_person_id,
             actor_type=actor_type,
             identity=identity,
             conn=c,
-            metadata={"status": "REQUESTED", "note": "request_is_not_approval"},
+            metadata={"status": initial, "note": "request_is_not_approval"},
         )
         if commit:
             c.commit()
@@ -1714,6 +2124,12 @@ def today_cards(
             cards.append(card)
 
         add_card(
+            "draft_pr",
+            "Purchase requests not submitted",
+            [p for p in prs if p["state"] == "DRAFT"],
+            href="/bzg/uma-blu/bills",
+        )
+        add_card(
             "prs_waiting_approval",
             "PRs waiting approval",
             [p for p in prs if p["state"] == "REQUESTED"],
@@ -1723,6 +2139,12 @@ def today_cards(
             "ordered_not_received",
             "Ordered, not received",
             [p for p in prs if p["state"] == "ORDERED"],
+            href="/bzg/uma-blu/bills",
+        )
+        add_card(
+            "awaiting_remainder",
+            "Part received, rest still out",
+            [p for p in prs if p["state"] == "PARTIALLY_RECEIVED"],
             href="/bzg/uma-blu/bills",
         )
         add_card(
@@ -1848,6 +2270,17 @@ def today_cards(
         )
         honesty = dict(HONESTY)
         honesty["float"] = "NOT_FOUND" if float_status == "NOT_FOUND" else "PROVIDED"
+        try:
+            stock = stock_framework(conn=c)
+        except Exception:  # noqa: BLE001
+            stock = {
+                "ok": False,
+                "on_hand": None,
+                "on_hand_status": "EMPTY",
+                "empty_is_not_live_inventory": True,
+                "live_perpetual_inventory": False,
+                "verified_stock_count": False,
+            }
         payload = {
             "ok": True,
             "cards": cards,
@@ -1858,11 +2291,35 @@ def today_cards(
             "opening_float": None if float_status == "NOT_FOUND" else "see_days",
             "fixture_notice": fixture_notice_for(prs, petty_days, issue_rows, legacy_moves),
             "legacy_projection": legacy_summary,
+            "stock": stock,
+            "payment_execution": False,
+            "human_commissioning": "NOT_DONE",
         }
         if (person_id or "").strip():
             from core import uma_devi_p0 as _p0
 
+            try:
+                payload["previous_closes"] = _p0.previous_closes(
+                    exclude_business_date=today_biz_date(),
+                    limit=8,
+                    conn=c,
+                )
+            except Exception:  # noqa: BLE001
+                payload["previous_closes"] = {
+                    "ok": False,
+                    "closes": [],
+                    "empty": True,
+                    "empty_message": "Earlier closes could not be loaded. No figures were invented.",
+                }
+            payload["permissions"] = _p0.operator_view(person_id.strip(), conn=c)
             payload = _p0.annotate_today(payload, person_id=person_id.strip(), conn=c)
+        else:
+            payload["previous_closes"] = {
+                "ok": True,
+                "closes": [],
+                "empty": True,
+                "empty_message": "Sign in to see earlier closes.",
+            }
         return payload
     finally:
         if own:
@@ -1996,6 +2453,31 @@ def list_issues(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
         except Exception:  # noqa: BLE001
             pass
 
+        try:
+            extra = c.execute(
+                """
+                SELECT issue_id, source_kind, source_id, note, status
+                FROM bzg_ops_operator_issues
+                WHERE venue=? AND status='OPEN'
+                ORDER BY created_at DESC
+                LIMIT 30
+                """,
+                (VENUE_UMA,),
+            ).fetchall()
+            for row in extra:
+                kind = str(row["source_kind"] or "issues_open")
+                issues.append(
+                    {
+                        "kind": kind if kind else "issues_open",
+                        "label": str(row["note"] or "Issue"),
+                        "example": False,
+                        "issue_id": row["issue_id"],
+                        "href": "/bzg/uma-blu/issues",
+                    }
+                )
+        except sqlite3.OperationalError:
+            pass
+
         issues = [_annotate_issue(i) for i in issues]
         return {"ok": True, "issues": issues, "empty": len(issues) == 0, "honesty": dict(HONESTY)}
     finally:
@@ -2055,10 +2537,13 @@ def list_history(
 
 
 _PR_HUMAN = {
+    "bzg.pr.draft": "Purchase draft saved",
     "bzg.pr.requested": "Purchase requested",
     "bzg.pr.approved": "Purchase approved",
     "bzg.pr.ordered": "Purchase ordered",
+    "bzg.pr.partially_received": "Part of the order received",
     "bzg.pr.received": "Goods received",
+    "bzg.pr.ops_closed": "Purchase closed for operations. Payment was not executed.",
     "bzg.pr.bill_received": "Bill received",
     "bzg.pr.payment_requested": "Payment requested",
     "bzg.pr.payment_approved": "Payment approved",
@@ -2125,6 +2610,10 @@ def _human_audit_line(e: dict[str, Any]) -> dict[str, Any]:
             sentence = "Petty tin opened"
         if note.startswith("Example") and not sentence.startswith("Example"):
             sentence = f"Example — {sentence}"
+    elif action == "bzg.issue.opened":
+        sentence = "Issue opened from an exception"
+        if note:
+            sentence = f"{sentence} — {note}"
     else:
         words = action.replace(".", " ").replace("_", " ").strip()
         if words.startswith("venue close"):

@@ -30,6 +30,9 @@ ACTION_RECEIVE = "Receive goods"
 ACTION_PERFORM_CLOSE = "Perform close"
 ACTION_RESOLVE = "Resolve exception"
 ACTION_OPEN_EXCEPTION = "Open exception"
+ACTION_APPROVE = "Approve request"
+ACTION_SUBMIT = "Submit request"
+ACTION_ORDER = "Mark ordered"
 # Waiting tokens that map to a role. A single other active assignee becomes the person.
 _WAIT_ROLE_IDS = {
     "Head of F&B": ("ROLE-BZG-HFB",),
@@ -131,6 +134,14 @@ def ensure_receipt_schema(conn: sqlite3.Connection) -> None:
         );
         CREATE INDEX IF NOT EXISTS idx_bzg_ops_receipt_line
           ON bzg_ops_receipt_lines(receipt_id);
+        CREATE TABLE IF NOT EXISTS bzg_ops_receipt_slots (
+          receipt_id TEXT PRIMARY KEY,
+          evidence_note_id TEXT,
+          evidence_photo_id TEXT,
+          variance_flag INTEGER NOT NULL DEFAULT 0,
+          shortfall_json TEXT,
+          created_at TEXT NOT NULL
+        );
         CREATE TRIGGER IF NOT EXISTS trg_bzg_receipt_events_no_update
         BEFORE UPDATE ON bzg_ops_receipt_events
         BEGIN
@@ -196,6 +207,13 @@ def _caps(person_id: str, conn: sqlite3.Connection) -> dict[str, bool]:
         "payment_approve": allow("bzg.pr.payment_approve"),
         "receive": allow(receive_code),
         "receive_permission": receive_code,
+        "create": allow("work.create"),
+        "submit_pr": allow("work.update"),
+        "approve_ops": allow("work.complete"),
+        "order": allow("work.update"),
+        "close_ops": allow("work.complete"),
+        "petty": allow("work.create"),
+        "issue": allow("work.create"),
     }
 
 
@@ -450,7 +468,8 @@ def pr_detail(key: str, *, conn: sqlite3.Connection | None = None) -> dict[str, 
             detail["wolf"] = True
             if not legacy:
                 detail["legacy"] = False
-                detail["lines"] = detail.get("lines") or []
+                detail["lines"] = _ops.list_pr_lines(str(wolf.get("pr_id") or wanted), conn=c)
+                detail["display_status"] = wolf.get("state")
         if "expected_value" not in detail:
             detail["expected_value"] = None
         detail["lines"] = _attach_wolf_received(detail.get("lines") or [], detail, c)
@@ -518,17 +537,31 @@ def _attach_wolf_received(
 
 def pr_actions(person_id: str, *, conn: sqlite3.Connection) -> dict[str, Any]:
     caps = _caps(person_id, conn)
-    actions: dict[str, Any] = {}
+    actions: dict[str, Any] = {
+        "create_pr": bool(caps.get("create")),
+        "submit": bool(caps.get("submit_pr")),
+        "approve_ops": bool(caps.get("approve_ops")),
+        "order": bool(caps.get("order")),
+        "close_ops": bool(caps.get("close_ops")),
+        "petty_record": bool(caps.get("petty")),
+        "petty_count": bool(caps.get("petty")),
+        "create_issue": bool(caps.get("issue")),
+        "perform_close": bool(caps.get("submit")),
+        "payment_approve": False,
+        "payment_execution": False,
+        "verify_close": False,
+        "progress": False,
+    }
     if caps["receive"]:
         actions["receive"] = True
     else:
         actions["receive"] = False
         actions["receive_waiting"] = waiting_copy("policy" if not caps.get("receive_permission") else "receiver")
-    actions["payment_approve"] = False
-    if not caps["payment_approve"]:
-        actions["payment_waiting"] = waiting_copy("finance")
-    else:
-        actions["payment_waiting"] = "Waiting for approval. This screen does not approve payment."
+    if not caps["submit_pr"]:
+        actions["submit_waiting"] = waiting_copy("staff")
+    if not caps["approve_ops"]:
+        actions["approve_waiting"] = waiting_copy("approver")
+    actions["payment_waiting"] = waiting_copy("finance")
     return actions
 
 
@@ -576,6 +609,21 @@ def _perform_action(kind: str, card: dict[str, Any], caps: dict[str, Any]) -> di
     if kind == "ordered_not_received" and caps.get("receive"):
         return {
             "label": ACTION_RECEIVE,
+            "href": str(card.get("href") or "/bzg/uma-blu/bills"),
+        }
+    if kind == "awaiting_remainder" and caps.get("receive"):
+        return {
+            "label": ACTION_RECEIVE,
+            "href": str(card.get("href") or "/bzg/uma-blu/bills"),
+        }
+    if kind == "prs_waiting_approval" and caps.get("approve_ops"):
+        return {
+            "label": ACTION_APPROVE,
+            "href": str(card.get("href") or "/bzg/uma-blu/bills"),
+        }
+    if kind == "draft_pr" and caps.get("submit_pr"):
+        return {
+            "label": ACTION_SUBMIT,
             "href": str(card.get("href") or "/bzg/uma-blu/bills"),
         }
     if kind != "daily_close":
@@ -643,8 +691,14 @@ def _card_gate(kind: str, card: dict[str, Any], caps: dict[str, Any]) -> tuple[b
     if kind in ("policy_required", "opening_balance_required", "petty_policy_required"):
         return False, "policy"
     if kind == "prs_waiting_approval":
+        if caps.get("approve_ops"):
+            return True, None
         return False, "approver"
-    if kind == "ordered_not_received":
+    if kind == "draft_pr":
+        if caps.get("submit_pr"):
+            return True, None
+        return False, "staff"
+    if kind == "ordered_not_received" or kind == "awaiting_remainder":
         if caps.get("receive"):
             return True, None
         return False, "policy"
@@ -819,6 +873,9 @@ def receive_goods(
     lines: list[dict[str, Any]],
     notes: str | None = None,
     corrects_receipt_id: str | None = None,
+    evidence_note_id: str | None = None,
+    evidence_photo_id: str | None = None,
+    require_evidence: bool = False,
     identity: dict[str, Any] | None = None,
     conn: sqlite3.Connection | None = None,
     commit: bool = True,
@@ -854,6 +911,20 @@ def receive_goods(
         detail = pr_detail(key, conn=c)
         if not detail:
             raise _ops.UmaOpsError("PR not found", code="not_found", http_status=404)
+        if detail.get("wolf") and not detail.get("legacy"):
+            wolf_state = str(detail.get("state") or "")
+            if wolf_state not in ("ORDERED", "PARTIALLY_RECEIVED"):
+                raise _ops.UmaOpsError(
+                    "Goods can be received after the request is ordered.",
+                    code="illegal_transition",
+                )
+        note_id = (evidence_note_id or "").strip() or None
+        photo_id = (evidence_photo_id or "").strip() or None
+        if require_evidence and not note_id and not photo_id:
+            raise _ops.UmaOpsError(
+                "A note id or photo id is required to record this receipt.",
+                code="missing_evidence",
+            )
         source_lines = [ln for ln in (detail.get("lines") or []) if ln.get("interpretable")]
         if not source_lines:
             raise _ops.UmaOpsError(
@@ -995,6 +1066,36 @@ def receive_goods(
                     "requested_qty": src.get("qty"),
                 }
             )
+        variance = not complete
+        shortfall = {k: v for k, v in outstanding.items() if v > QTY_EPS}
+        c.execute(
+            """
+            INSERT INTO bzg_ops_receipt_slots (
+              receipt_id, evidence_note_id, evidence_photo_id, variance_flag,
+              shortfall_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                receipt_id,
+                note_id,
+                photo_id,
+                1 if variance else 0,
+                json.dumps(shortfall),
+                ts,
+            ),
+        )
+        if detail.get("wolf") and not detail.get("legacy"):
+            dest = "RECEIVED" if complete else "PARTIALLY_RECEIVED"
+            if str(detail.get("state") or "") != dest:
+                _ops.transition_pr(
+                    str(detail.get("pr_id") or key),
+                    dest,
+                    verified_person_id=pid,
+                    actor_type="PERSON",
+                    identity=identity,
+                    conn=c,
+                    commit=False,
+                )
         _ops._audit_ops(
             action="bzg.receipt.appended",
             result="SUCCEEDED",
@@ -1023,8 +1124,111 @@ def receive_goods(
             "lines": stored_lines,
             "corrects_receipt_id": corrects,
             "wolf_verified_alchemist": False,
+            "variance_flag": variance,
+            "variance_is_not_a_stock_count": True,
+            "evidence_note_id": note_id,
+            "evidence_photo_id": photo_id,
             "outstanding": {k: v for k, v in outstanding.items()},
         }
+    finally:
+        if own:
+            c.close()
+
+
+OWNER_PERSON = "PERS-MATT"
+_OPS_DEST_CAP = {
+    "REQUESTED": "submit_pr",
+    "APPROVED": "approve_ops",
+    "ORDERED": "order",
+    "OPS_CLOSED": "close_ops",
+}
+
+
+def operator_view(person_id: str, *, conn: sqlite3.Connection) -> dict[str, Any]:
+    """Devi-scoped operator versus Owner manager read. No money controls on either."""
+    pid = (person_id or "").strip()
+    caps = _caps(pid, conn)
+    owner = pid == OWNER_PERSON
+    buttons = {
+        "create_pr": bool(caps.get("create")),
+        "submit": bool(caps.get("submit_pr")),
+        "approve_ops": bool(caps.get("approve_ops")),
+        "order": bool(caps.get("order")),
+        "receive": bool(caps.get("receive")),
+        "close_ops": bool(caps.get("close_ops")),
+        "petty_record": bool(caps.get("petty")),
+        "petty_count": bool(caps.get("submit_pr")),
+        "create_issue": bool(caps.get("issue")),
+        "perform_close": bool(caps.get("submit")),
+        "payment_approve": False,
+        "payment_execution": False,
+        "verify_close": False,
+        "progress": False,
+    }
+    return {
+        "ok": True,
+        "view": "owner" if owner else "operator",
+        "person_id": pid or None,
+        "manager_read": owner,
+        "buttons": buttons,
+        "payment_execution": False,
+        "sees_money_controls": False,
+        "human_commissioning": "NOT_DONE",
+        "proven": False,
+        "ready": False,
+    }
+
+
+def ops_advance(
+    *,
+    person_id: str,
+    pr_id: str,
+    to_state: str,
+    evidence_note_id: str | None = None,
+    evidence_photo_id: str | None = None,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Ops lifecycle only. Payment destinations are refused."""
+    dest = (to_state or "").strip().upper()
+    _ops.assert_not_payment_execution(dest)
+    need = _OPS_DEST_CAP.get(dest)
+    if not need:
+        raise _ops.UmaOpsError(f"invalid state: {to_state!r}", code="invalid_state")
+    pid = (person_id or "").strip()
+    own = conn is None
+    c = conn or _ops.db_connect()
+    try:
+        _ops.assert_catalog_writable(_ops.CATALOG_DB)
+        caps = _caps(pid, c)
+        if not caps.get(need):
+            raise _ops.UmaOpsError(
+                f"permission denied: {need}",
+                code="forbidden",
+                http_status=403,
+            )
+        if dest == "OPS_CLOSED":
+            _ops.save_pr_close_slot(
+                c,
+                pr_id=(pr_id or "").strip(),
+                evidence_note_id=evidence_note_id,
+                evidence_photo_id=evidence_photo_id,
+                closed_by=pid,
+            )
+        out = _ops.transition_pr(
+            pr_id,
+            dest,
+            verified_person_id=pid,
+            actor_type="PERSON",
+            identity=identity,
+            conn=c,
+            commit=False,
+        )
+        out["payment_execution"] = False
+        if commit:
+            c.commit()
+        return out
     finally:
         if own:
             c.close()

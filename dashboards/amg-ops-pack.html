@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AMG ops pack · Beta</title>
+<style>
+  :root {
+    --bg: #14110c; --bg2: #1e1912; --bg3: #2a241b; --border: #3d3426;
+    --text: #f4efe4; --muted: #b3a48c; --accent: #c4a574; --ok: #3dd68c;
+    --warn: #e0b15a; --danger: #f04438;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 720px; padding: 12px 14px 72px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  h1 { font-size: 1.25rem; margin: 0 0 4px; }
+  h1 span { color: var(--accent); }
+  h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
+  .lede, .note { color: var(--muted); font-size: 0.85rem; }
+  .banner { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: 0.88rem; }
+  .banner.warn { border-color: rgba(224,177,90,0.55); color: var(--warn); }
+  .card { border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; padding: 12px; margin-top: 8px; }
+  .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.75rem; margin-right: 4px; color: var(--muted); }
+  .pill.look { color: var(--warn); border-color: rgba(224,177,90,0.55); }
+  label { display: block; font-size: 0.75rem; color: var(--muted); margin: 8px 0 4px; }
+  input, select, textarea { width: 100%; background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px; font: inherit; }
+  textarea { min-height: 72px; }
+  button { margin-top: 8px; width: 100%; border-radius: 10px; padding: 10px; border: 1px solid #8B6914; background: #6e5310; color: #fff; font-weight: 650; }
+  button:disabled { opacity: 0.45; }
+  .err { color: var(--danger); white-space: pre-wrap; font-size: 0.85rem; }
+  .ok { color: var(--ok); font-size: 0.85rem; }
+  .meta { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+</style>
+</head>
+<body>
+  <h1>Atrium desk <span>· Beta</span></h1>
+  <p class="lede">Bound beta-amg-ops-safe. Today, journey, SLA, and service handoff. Not PROVEN. Not READY. CAP-AMG-04 stays SPECIFIED. CR-bc5785d66c981fd4 stays OPEN. An empty slot is not live occupancy, ADR, or RevPAR. Yanolja is not called. This desk has no payment, folio, bank, or settlement action.</p>
+  <div class="banner warn" id="who">Loading…</div>
+  <div id="msg"></div>
+
+  <h2>Today</h2>
+  <p class="note" id="today-why"></p>
+  <div id="slots"></div>
+
+  <h2>Desk note</h2>
+  <p class="note">A note is a desk word. It does not fill occupancy.</p>
+  <div class="card">
+    <label>Slot</label>
+    <select id="note-slot"></select>
+    <label>Note</label>
+    <textarea id="note-body" placeholder="What should the next person know?"></textarea>
+    <button type="button" id="save-note">Save note</button>
+  </div>
+  <div id="notes"></div>
+
+  <h2>Needs a look</h2>
+  <p class="note">Marking a slot does not invent a hotel number.</p>
+  <div class="card">
+    <label>Slot</label>
+    <select id="look-slot"></select>
+    <label>Reason</label>
+    <input id="look-reason" type="text" placeholder="Why does this slot need a look?" />
+    <button type="button" id="mark-look">Mark for a look</button>
+  </div>
+
+  <h2>Journey today</h2>
+  <p class="note">A journey item is a task. It is not a booking.</p>
+  <div class="card">
+    <label>Kind</label>
+    <select id="journey-kind"></select>
+    <label>Title</label>
+    <input id="journey-title" type="text" placeholder="What is the task?" />
+    <button type="button" id="open-journey">Open journey item</button>
+  </div>
+  <div id="journey"></div>
+
+  <h2>SLA</h2>
+  <p class="note">No open incident is invented. An empty slot is not an SLA timer.</p>
+  <div id="sla"></div>
+
+  <h2>Service handoff</h2>
+  <p class="note">A handoff is a note to the next shift. It is not a review score.</p>
+  <div class="card">
+    <label>Kind</label>
+    <select id="handoff-kind"></select>
+    <label>Handoff</label>
+    <textarea id="handoff-note" placeholder="What should the next shift carry?"></textarea>
+    <button type="button" id="open-handoff">Save handoff</button>
+  </div>
+  <div id="handoffs"></div>
+
+  <h2>Seats</h2>
+  <div id="seats"></div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+
+  async function api(path, opts) {
+    const res = await fetch(path, Object.assign({ headers: { Accept: "application/json" } }, opts || {}));
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) {
+      const err = new Error(data.message || data.error || ("HTTP " + res.status));
+      err.payload = data;
+      throw err;
+    }
+    return data;
+  }
+
+  function options(select, rows, selected) {
+    select.innerHTML = rows.map((row) => {
+      const id = row.kind || row;
+      const label = row.label || row;
+      return `<option value="${esc(id)}"${id === selected ? " selected" : ""}>${esc(label)}</option>`;
+    }).join("");
+  }
+
+  function paint(data) {
+    const seat = data.seat || {};
+    $("who").textContent = (seat.seat || "seat") + " · " + (seat.person_id || "") + " · Atrium desk · no money actions";
+    const today = data.today || {};
+    $("today-why").textContent = today.why || "";
+    const slots = today.slots || [];
+    options($("note-slot"), [{ kind: "", label: "No slot" }].concat(slots));
+    options($("look-slot"), slots);
+    $("slots").innerHTML = slots.map((slot) => {
+      const look = slot.attention ? '<span class="pill look">Needs a look</span>' : "";
+      return `<article class="card"><strong>${esc(slot.label)}</strong> ${look}<span class="pill">${esc(slot.slot)}</span><div class="meta">${esc(slot.why)}</div></article>`;
+    }).join("");
+    const notes = today.notes || [];
+    $("notes").innerHTML = notes.length
+      ? notes.map((note) => `<div class="card"><strong>${esc(note.slot_kind || "Desk")}</strong><div class="meta">${esc(note.body)}</div><div class="meta">${esc(note.updated_by)} · not a hotel fact</div></div>`).join("")
+      : `<p class="note">No desk note yet.</p>`;
+    const journey = data.journey || {};
+    options($("journey-kind"), journey.kinds || []);
+    const items = journey.items || [];
+    $("journey").innerHTML = items.length
+      ? items.map((item) => `<div class="card"><strong>${esc(item.title)}</strong> <span class="pill">${esc(item.kind)}</span> <span class="pill">${esc(item.status)}</span><div class="meta">${esc(journey.why || "")}</div></div>`).join("")
+      : `<p class="note">${esc(journey.why || "No journey item for today.")}</p>`;
+    const sla = data.sla || {};
+    const open = sla.open || [];
+    const kinds = sla.kinds || [];
+    $("sla").innerHTML = `<div class="banner">${esc(sla.why || "")}</div>` + (open.length
+      ? open.map((row) => `<div class="card">${esc(row)}</div>`).join("")
+      : `<p class="note">Open incident list is empty.</p>`) + kinds.map((kind) => `<div class="card"><strong>${esc(kind.label)}</strong> <span class="pill">${esc(kind.slot)}</span><div class="meta">${esc(kind.why)}</div></div>`).join("");
+    const handoff = data.handoff || {};
+    options($("handoff-kind"), handoff.kinds || []);
+    const hands = handoff.items || [];
+    $("handoffs").innerHTML = hands.length
+      ? hands.map((row) => `<div class="card"><strong>${esc(row.kind)}</strong> <span class="pill">${esc(row.status)}</span><div class="meta">${esc(row.note)}</div><div class="meta">Desk handoff. Not a review score.</div></div>`).join("")
+      : `<p class="note">${esc(handoff.why || "")}</p>`;
+    const perms = data.permissions || [];
+    $("seats").innerHTML = perms.map((row) => `<div class="card"><strong>${esc(row.seat)}</strong> <span class="pill">${esc(row.person_id || "unassigned")}</span><div class="meta">${row.assigned === false ? esc(row.why || "") : "Read and desk actions. Money stays off."}</div></div>`).join("");
+  }
+
+  async function reload(okText) {
+    const data = await api("/api/amg/ops-pack");
+    paint(data);
+    if (okText) {
+      $("msg").className = "ok";
+      $("msg").textContent = okText;
+    }
+  }
+
+  async function post(path, body, okText) {
+    $("msg").className = "meta";
+    $("msg").textContent = "";
+    try {
+      await api(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(body),
+      });
+      await reload(okText);
+    } catch (err) {
+      $("msg").className = "err";
+      $("msg").textContent = err.message;
+    }
+  }
+
+  $("save-note").addEventListener("click", () => {
+    const body = $("note-body").value.trim();
+    if (!body) {
+      $("msg").className = "err";
+      $("msg").textContent = "A desk note needs words.";
+      return;
+    }
+    post("/api/amg/ops-pack/notes", { body: body, slot: $("note-slot").value }, "Note saved. Occupancy was not filled.");
+  });
+  $("mark-look").addEventListener("click", () => {
+    const reason = $("look-reason").value.trim();
+    if (!reason) {
+      $("msg").className = "err";
+      $("msg").textContent = "A look needs a reason.";
+      return;
+    }
+    post("/api/amg/ops-pack/attention", { slot: $("look-slot").value, attention: true, reason: reason }, "Slot marked. No hotel number was invented.");
+  });
+  $("open-journey").addEventListener("click", () => {
+    const title = $("journey-title").value.trim();
+    if (!title) {
+      $("msg").className = "err";
+      $("msg").textContent = "A journey item needs a title.";
+      return;
+    }
+    post("/api/amg/ops-pack/journey", { kind: $("journey-kind").value, title: title }, "Journey item opened. It is not a booking.");
+  });
+  $("open-handoff").addEventListener("click", () => {
+    const note = $("handoff-note").value.trim();
+    if (!note) {
+      $("msg").className = "err";
+      $("msg").textContent = "A service handoff needs words.";
+      return;
+    }
+    post("/api/amg/ops-pack/handoff", { kind: $("handoff-kind").value, note: note }, "Handoff saved. It is not a review score.");
+  });
+
+  api("/api/amg/ops-pack").then(paint).catch((err) => {
+    $("who").textContent = "Cannot open the desk.";
+    $("msg").className = "err";
+    $("msg").textContent = err.message;
+  });
+})();
+</script>
+</body>
+</html>

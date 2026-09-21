@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Owner Empire · Beta</title>
+<style>
+  :root {
+    --bg: #10140f; --bg2: #182018; --bg3: #243024; --border: #314033;
+    --text: #f3f7f1; --muted: #a8b5a6; --accent: #d7e26a; --ok: #3dd68c;
+    --warn: #e0b15a; --danger: #f04438;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 720px; padding: 12px 14px 72px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  h1 { font-size: 1.25rem; margin: 0 0 4px; }
+  h1 span { color: var(--accent); }
+  h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
+  .lede, .note { color: var(--muted); font-size: 0.85rem; }
+  .banner { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: 0.88rem; }
+  .banner.warn { border-color: rgba(224,177,90,0.55); color: var(--warn); }
+  .card { border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; padding: 12px; margin-top: 8px; }
+  .card.loud { border-color: rgba(224,177,90,0.7); }
+  .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.75rem; margin-right: 4px; color: var(--muted); }
+  .pill.loud { color: var(--warn); border-color: rgba(224,177,90,0.55); }
+  a.action { display: block; margin-top: 8px; text-decoration: none; border-radius: 10px; padding: 10px 12px; border: 1px solid #5d6b2a; background: #2d3816; color: var(--text); font-weight: 650; }
+  a.action.primary { border-color: var(--accent); }
+  .err { color: var(--danger); white-space: pre-wrap; font-size: 0.85rem; }
+  .meta { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+  .pct { font-size: 1.6rem; margin: 4px 0; }
+</style>
+</head>
+<body>
+  <h1>Owner Empire <span>· Beta</span></h1>
+  <p class="lede">Bound beta-owner-safe. Today, Radar honesty, 12-Week Year honesty, and pack handoffs. Owner only. SYSTEM% comes from the Progress ledger. EMPTY is not 0%. CAP-STRAT stays at the ledger. No payment, bank, Zayen, HR, or trading on this desk. Track D is parked.</p>
+  <div class="banner warn" id="who">Loading…</div>
+  <div id="msg"></div>
+
+  <h2>Next human action</h2>
+  <div id="next"></div>
+
+  <h2>Today · Progress</h2>
+  <div id="today"></div>
+
+  <h2>Radar · CAP-STRAT-02</h2>
+  <div id="radar"></div>
+
+  <h2>12-Week Year · CAP-STRAT-01</h2>
+  <div id="wy"></div>
+
+  <h2>Pack handoffs</h2>
+  <p class="note">Read-only. An EMPTY card is not an invented count. Amounts stay off this desk.</p>
+  <div id="handoffs"></div>
+
+  <h2>Intel</h2>
+  <div id="intel"></div>
+
+  <h2>Other boards</h2>
+  <div id="actions"></div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+
+  async function api(path) {
+    const res = await fetch(path, { headers: { Accept: "application/json" } });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) {
+      const err = new Error(data.message || data.error || ("HTTP " + res.status));
+      err.payload = data;
+      throw err;
+    }
+    return data;
+  }
+
+  function loudClass(row) {
+    return row && row.loud ? " card loud" : " card";
+  }
+
+  function pill(text, loud) {
+    return `<span class="pill${loud ? " loud" : ""}">${esc(text)}</span>`;
+  }
+
+  function link(href, label, primary) {
+    return `<a class="action${primary ? " primary" : ""}" href="${esc(href)}">${esc(label)}</a>`;
+  }
+
+  function show(data) {
+    const seat = data.seat || {};
+    $("who").textContent = "Signed in as " + (data.person_id || seat.person_id || "Owner") + ". Money, finance, Zayen, HR, and trading are hidden.";
+    const next = (data.actions || {}).next || {};
+    $("next").innerHTML = next.href
+      ? `<div class="card">${pill("Next", false)}<p>${esc(next.why || "")}</p>${link(next.href, next.label || "Open board", true)}</div>`
+      : `<div class="card loud">No next board link. This is EMPTY, not a pace.</div>`;
+
+    const today = data.today || {};
+    const pct = today.status === "LEDGER" && today.system_pct != null
+      ? `<div class="pct">${esc(today.system_pct)}%</div>`
+      : `<div class="pct">${esc(today.status || "UNWIRED")}</div>`;
+    $("today").innerHTML = `<div class="${loudClass(today).trim()}">${pill(today.status || "UNWIRED", today.loud)}${pct}<p>${esc(today.why || "")}</p><p class="meta">${esc(today.formula || "")}</p>${link(today.href || "/progress.html", "Open Progress", false)}</div>`;
+
+    const radar = data.radar || {};
+    $("radar").innerHTML = `<div class="${loudClass(radar).trim()}">${pill(radar.display || "UNWIRED", radar.loud)} ${pill(radar.maturity || "UNKNOWN", false)}<p>${esc(radar.why || "")}</p><p class="meta">CAP-STRAT-02 · counts not invented · SYSTEM% not copied</p>${link(radar.href || "/radar-prove", "Open Radar prove", false)}</div>`;
+
+    const wy = data.twelve_wy || {};
+    const score = wy.display === "WIRED" && wy.percent != null
+      ? `<div class="pct">${esc(wy.percent)}%</div>`
+      : `<div class="pct">${esc(wy.display || "UNWIRED")}</div>`;
+    $("wy").innerHTML = `<div class="${loudClass(wy).trim()}">${pill(wy.display || "UNWIRED", wy.loud)} ${pill(wy.maturity || "UNKNOWN", false)}${score}<p>${esc(wy.why || "")}</p><p class="meta">EMPTY is not 0%. Not PROVEN from this desk.</p>${link(wy.href || "/12wy-prove", "Open 12-Week Year prove", false)}</div>`;
+
+    const cards = ((data.handoffs || {}).cards) || [];
+    $("handoffs").innerHTML = cards.map((card) => {
+      const count = card.attention_count == null ? "EMPTY" : String(card.attention_count);
+      return `<div class="${loudClass(card).trim()}">${pill(card.pack || "", false)} ${pill(card.state || "EMPTY", card.loud)}<p>${esc(card.label || "")}: ${esc(count)}</p><p>${esc(card.why || "")}</p>${link(card.href, "Open " + (card.label || "board"), false)}</div>`;
+    }).join("") || `<div class="card loud">Pack handoffs EMPTY.</div>`;
+
+    const intel = data.intel || {};
+    $("intel").innerHTML = `<div class="card loud">${pill("PARKED", true)}<p>${esc(intel.why || "Track D is parked.")}</p><p class="meta">No intel ops pack is built here.</p></div>`;
+
+    const actions = ((data.actions || {}).actions) || [];
+    $("actions").innerHTML = actions.map((row) => link(row.href, row.label, false)).join("");
+  }
+
+  api("/api/owner/empire-pack").then(show).catch((err) => {
+    $("who").textContent = "This desk did not load.";
+    $("msg").innerHTML = `<p class="err">${esc(err.message || "failed")}</p>`;
+  });
+})();
+</script>
+</body>
+</html>

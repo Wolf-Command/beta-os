@@ -116,6 +116,7 @@ from core import amg_revenue_yield as _amg_yield
 from core import amg_service_improve as _amg_improve
 from core import amg_sla_incident as _amg_sla
 from core import amg_pms_orchestration as _amg_pms
+from core import amg_ops_pack as _amg_pack
 from core import hr_hiring_onboarding as _hr_hire
 from core import hr_training_competency as _hr_train
 from core import hr_payroll_inputs as _hr_pay
@@ -134,9 +135,12 @@ from core import intg_connector_cap_tests as _intg_cap_tests
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import ggv_speed_to_lead_prove as _ggv_speed
+from core import ggv_ops_pack as _ggv_ops
 from core import crm_identity_memory as _crm_ident
 from core import bzg_reputation_observe as _bzg_rep
 from core import ggv_social_derive as _ggv_social
+from core import owner_empire_pack as _owner_empire
+from core import core_harden_pack as _core_harden
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1636,6 +1640,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if path == "/api/bzg/uma-blu/petty":
                 self._uma_ops_petty()
                 return
+            if path == "/api/bzg/uma-blu/stock":
+                self._uma_ops_stock()
+                return
+            if path == "/api/bzg/uma-blu/permissions":
+                self._uma_ops_permissions()
+                return
+            if path == "/api/bzg/uma-blu/closes":
+                self._uma_ops_closes()
+                return
             self._send_json(
                 {
                     "ok": False,
@@ -1682,6 +1695,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/progress":
             self._progress_empire()
+            return
+        # Owner Empire command desk. Owner only. Reads Progress, Radar, and 12WY.
+        if self._owner_empire_refuse_code(path):
+            self._owner_empire_write_refused(path)
+            return
+        if path == "/api/owner/empire-pack" or path.startswith("/api/owner/empire-pack/"):
+            self._owner_empire_get(path)
+            return
+        # Core Harden desk. Owner read. Does not commission, adopt, or write Access.
+        if self._core_harden_refuse_code(path):
+            self._core_harden_write_refused(path)
+            return
+        if path == "/api/core/harden-pack" or path.startswith("/api/core/harden-pack/"):
+            self._core_harden_get(path)
             return
         if path == "/api/integration-health":
             self._integration_health_get()
@@ -2050,6 +2077,38 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path.startswith("/api/ggv/strategy-machine/"):
             self._ggv_strategy_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
+        # GGV ops pack. Habitat seats. Lifecycle requires a next action.
+        if self._ggv_ops_refuse_code(path):
+            self._ggv_ops_write_refused(path)
+            return
+        if path == "/api/ggv/ops-pack":
+            self._ggv_ops_get(qs)
+            return
+        if path == "/api/ggv/ops-pack/exceptions":
+            self._ggv_ops_get(qs, view="exceptions")
+            return
+        if path == "/api/ggv/ops-pack/isolation":
+            self._ggv_ops_get(qs, view="isolation")
+            return
+        if path == "/api/ggv/ops-pack/framework":
+            self._ggv_ops_get(qs, view="framework")
+            return
+        if path == "/api/ggv/ops-pack/publish-gate":
+            self._ggv_ops_get(qs, view="publish-gate")
+            return
+        if path == "/api/ggv/ops-pack/permissions":
+            self._ggv_ops_get(qs, view="permissions")
+            return
+        if path == "/api/ggv/ops-pack/schema":
+            self._ggv_ops_get(qs, view="schema")
+            return
+        # AMG ops pack. Owner and Atrium hotel-ops. Desk loop, not hotel facts.
+        if self._amg_pack_refuse_code(path):
+            self._amg_pack_write_refused(path)
+            return
+        if path == "/api/amg/ops-pack" or path.startswith("/api/amg/ops-pack/"):
+            self._amg_pack_get(qs, path)
             return
         # CAP-AMG-02 guest journey. Owner read. Empty is not a live journey workflow.
         if self._amg_journey_refuse_code(path):
@@ -2912,6 +2971,38 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._ggv_strategy_page()
             return
         elif path in (
+            "/ggv-ops-pack",
+            "/ggv-ops-pack/",
+            "/ggv-ops-pack.html",
+            "/dashboards/ggv-ops-pack.html",
+        ):
+            self._ggv_ops_page()
+            return
+        elif path in (
+            "/amg-ops-pack",
+            "/amg-ops-pack/",
+            "/amg-ops-pack.html",
+            "/dashboards/amg-ops-pack.html",
+        ):
+            self._amg_pack_page()
+            return
+        elif path in (
+            "/owner-empire-pack",
+            "/owner-empire-pack/",
+            "/owner-empire-pack.html",
+            "/dashboards/owner-empire-pack.html",
+        ):
+            self._owner_empire_page()
+            return
+        elif path in (
+            "/core-harden-pack",
+            "/core-harden-pack/",
+            "/core-harden-pack.html",
+            "/dashboards/core-harden-pack.html",
+        ):
+            self._core_harden_page()
+            return
+        elif path in (
             "/amg-journey-workflow",
             "/amg-journey-workflow/",
             "/amg-journey-workflow.html",
@@ -3177,6 +3268,19 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = urlparse(self.path).path
+        if path == "/api/owner/empire-pack" or path.startswith("/api/owner/empire-pack/"):
+            self._owner_empire_write_refused(path)
+            return
+        if path == "/api/core/harden-pack" or path.startswith("/api/core/harden-pack/"):
+            self._core_harden_write_refused(path)
+            return
+        if path == "/api/amg/ops-pack" or path.startswith("/api/amg/ops-pack/"):
+            self._amg_pack_post(path)
+            return
+        m_ops_life = re.match(r"^/api/ggv/ops-pack/leads/([^/]+)/lifecycle$", path)
+        if m_ops_life:
+            self._ggv_ops_lifecycle(m_ops_life.group(1))
+            return
         if path == "/api/integration-health":
             self._integration_health_write_refused()
             return
@@ -3278,6 +3382,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ggv/strategy-machine" or path.startswith("/api/ggv/strategy-machine/"):
             self._ggv_strategy_write_refused(path)
+            return
+        if self._ggv_ops_refuse_code(path) or path == "/api/ggv/ops-pack" or path.startswith("/api/ggv/ops-pack/"):
+            self._ggv_ops_write_refused(path)
             return
         if self._amg_journey_refuse_code(path):
             self._amg_journey_write_refused(path)
@@ -3451,8 +3558,27 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/bzg/uma-blu" or path.startswith("/api/bzg/uma-blu/"):
             if self._require_uma_ops() is None:
                 return
+            if path in ("/api/bzg/uma-blu/pay", "/api/bzg/uma-blu/payment"):
+                self._uma_ops_payment_refused()
+                return
+            if path == "/api/bzg/uma-blu/prs":
+                self._uma_ops_pr_create()
+                return
+            m_act = re.match(
+                r"^/api/bzg/uma-blu/prs/([^/]+)/(submit|approve|order|close|payment)$",
+                path,
+            )
+            if m_act:
+                self._uma_ops_pr_action(m_act.group(1), m_act.group(2))
+                return
+            if path == "/api/bzg/uma-blu/issues":
+                self._uma_ops_issue_post()
+                return
             if path == "/api/bzg/uma-blu/petty":
                 self._uma_ops_petty_post()
+                return
+            if path == "/api/bzg/uma-blu/petty/count":
+                self._uma_ops_petty_count_post()
                 return
             if path == "/api/bzg/uma-blu/receive":
                 self._uma_ops_receive_post()
@@ -3672,6 +3798,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_PATCH(self) -> None:
         path = urlparse(self.path).path
+        if path == "/api/owner/empire-pack" or path.startswith("/api/owner/empire-pack/"):
+            self._owner_empire_write_refused(path)
+            return
+        if path == "/api/core/harden-pack" or path.startswith("/api/core/harden-pack/"):
+            self._core_harden_write_refused(path)
+            return
+        if path == "/api/amg/ops-pack" or path.startswith("/api/amg/ops-pack/"):
+            self._amg_pack_write_refused(path)
+            return
         if self._intel_rule_handled(path, "PATCH"):
             return
         if path == "/api/tech-registry" or path.startswith("/api/tech-registry/"):
@@ -3775,6 +3910,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ggv/strategy-machine" or path.startswith("/api/ggv/strategy-machine/"):
             self._ggv_strategy_write_refused(path)
+            return
+        if self._ggv_ops_refuse_code(path) or path == "/api/ggv/ops-pack" or path.startswith("/api/ggv/ops-pack/"):
+            self._ggv_ops_write_refused(path)
             return
         if self._amg_journey_refuse_code(path):
             self._amg_journey_write_refused(path)
@@ -4081,6 +4219,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_PUT(self) -> None:
         path = urlparse(self.path).path
+        if path == "/api/owner/empire-pack" or path.startswith("/api/owner/empire-pack/"):
+            self._owner_empire_write_refused(path)
+            return
+        if path == "/api/core/harden-pack" or path.startswith("/api/core/harden-pack/"):
+            self._core_harden_write_refused(path)
+            return
+        if path == "/api/amg/ops-pack" or path.startswith("/api/amg/ops-pack/"):
+            self._amg_pack_write_refused(path)
+            return
         if self._intel_rule_handled(path, "PUT"):
             return
         if path == "/api/tech-registry" or path.startswith("/api/tech-registry/"):
@@ -4184,6 +4331,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ggv/strategy-machine" or path.startswith("/api/ggv/strategy-machine/"):
             self._ggv_strategy_write_refused(path)
+            return
+        if self._ggv_ops_refuse_code(path) or path == "/api/ggv/ops-pack" or path.startswith("/api/ggv/ops-pack/"):
+            self._ggv_ops_write_refused(path)
             return
         if self._amg_journey_refuse_code(path):
             self._amg_journey_write_refused(path)
@@ -10072,6 +10222,218 @@ class BetaHandler(SimpleHTTPRequestHandler):
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
 
+    def _ggv_ops_quiet(self) -> dict:
+        return {
+            "invented_leads": False,
+            "invented_sla": False,
+            "sla_breached": None,
+            "sla_target_seconds": None,
+            "empty_is_profitability": False,
+            "live_profitability": False,
+            "revenue": None,
+            "metricool_write": False,
+            "klaviyo_write": False,
+            "external_crm_write": False,
+            "production_write": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "proven": False,
+            "ready": False,
+            "closed_is_not_a_sale": True,
+            "bound": "beta-ggv-ops-safe",
+        }
+
+    def _require_ggv_ops_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return None
+        person_id = identity.get("person_id")
+        if _ggv_ops.seat_for(person_id) is None:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "GGV ops pack is for Owner, Amanda, Haikal, and Misa on Habitat.",
+                    "person_id": person_id,
+                    **self._ggv_ops_quiet(),
+                },
+                status=403,
+            )
+            return None
+        if isinstance(body, dict):
+            for key in ("person_id", "verified_person_id", "actor_person_id"):
+                spoof = body.get(key)
+                if spoof and str(spoof).strip() != str(person_id).strip():
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "person_id_spoof",
+                            "message": "Person id from the browser body is refused.",
+                            **self._ggv_ops_quiet(),
+                        },
+                        status=400,
+                    )
+                    return None
+        return identity
+
+    def _ggv_ops_refuse_code(self, path: str) -> str | None:
+        refused = {
+            "/api/ggv/ops-pack/metricool": "metricool",
+            "/api/ggv/ops-pack/klaviyo": "klaviyo",
+            "/api/ggv/ops-pack/crm": "crm",
+            "/api/ggv/ops-pack/external-crm": "crm",
+            "/api/ggv/ops-pack/invent-lead": "invent",
+            "/api/ggv/ops-pack/proven": "proven",
+            "/api/ggv/ops-pack/ready": "ready",
+            "/api/ggv/ops-pack/resolve": "resolve",
+            "/api/ggv/ops-pack/production": "production",
+        }
+        return refused.get(path)
+
+    def _ggv_ops_fail(self, exc: _ggv_ops.OpsPackError) -> None:
+        status = 400
+        if exc.code in {
+            "metricool_refused",
+            "klaviyo_refused",
+            "crm_refused",
+            "invent_lead_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "writes_refused",
+            "not_beta",
+        }:
+            status = 405
+        elif exc.code in {"forbidden", "brand_isolated", "denied"}:
+            status = 403
+        elif exc.code == "not_found":
+            status = 404
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._ggv_ops_quiet(),
+            },
+            status=status,
+        )
+
+    def _ggv_ops_write_refused(self, path: str) -> None:
+        identity = self._require_ggv_ops_seat()
+        if identity is None:
+            return
+        code = self._ggv_ops_refuse_code(path)
+        try:
+            if code == "metricool":
+                _ggv_ops.refuse_metricool({})
+            elif code == "klaviyo":
+                _ggv_ops.refuse_klaviyo({})
+            elif code == "crm":
+                _ggv_ops.refuse_external_crm({})
+            elif code == "invent":
+                _ggv_ops.refuse_invent_lead({})
+            elif code == "proven":
+                _ggv_ops.refuse_proven({})
+            elif code == "ready":
+                _ggv_ops.refuse_ready({})
+            elif code == "resolve":
+                _ggv_ops.refuse_resolve({})
+            elif code == "production":
+                _ggv_ops.refuse_production({})
+            else:
+                _ggv_ops.refuse_external_write({})
+        except _ggv_ops.OpsPackError as exc:
+            self._ggv_ops_fail(exc)
+
+    def _ggv_ops_page(self) -> None:
+        identity = self._require_ggv_ops_seat()
+        if identity is None:
+            return
+        page = DASHBOARDS / "ggv-ops-pack.html"
+        if not page.is_file():
+            self._send_json(
+                {"ok": False, "error": "not_found", "message": "GGV ops pack page is missing.", **self._ggv_ops_quiet()},
+                status=404,
+            )
+            return
+        body = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _ggv_ops_get(self, qs: dict, view: str | None = None) -> None:
+        identity = self._require_ggv_ops_seat()
+        if identity is None:
+            return
+        brand = ((qs.get("brand") or [None])[0] or "").strip()
+        try:
+            _ggv_ops.guard_brand(brand or None)
+            full = _ggv_ops.build_board(verified_person_id=identity["person_id"])
+        except _ggv_ops.OpsPackError as exc:
+            self._ggv_ops_fail(exc)
+            return
+        if view == "exceptions":
+            report = full["exceptions"]
+        elif view == "isolation":
+            report = full["isolation"]
+        elif view == "framework":
+            report = full["framework"]
+        elif view == "publish-gate":
+            report = full["publish_gate"]
+        elif view == "permissions":
+            report = {"ok": True, "permissions": full["permissions"], "seat": full["seat"]}
+        elif view == "schema":
+            report = {"ok": True, "schema": full["schema"]}
+        else:
+            report = full
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report.update(self._ggv_ops_quiet())
+        if view is None:
+            report["honesty"] = full["honesty"]
+        self._send_json(report)
+
+    def _ggv_ops_lifecycle(self, lead_id: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        if any(body.get(k) for k in ("metricool", "klaviyo", "crm_write", "external_crm", "proven", "ready", "resolve", "production", "invent_lead")):
+            identity = self._require_ggv_ops_seat(body)
+            if identity is None:
+                return
+            try:
+                _ggv_ops.refuse_external_write(body)
+            except _ggv_ops.OpsPackError as exc:
+                self._ggv_ops_fail(exc)
+            return
+        identity = self._require_ggv_ops_seat(body)
+        if identity is None:
+            return
+        try:
+            result = _ggv_ops.move_lifecycle(
+                lead_id,
+                str(body.get("wolf_stage") or ""),
+                str(body.get("next_action") or ""),
+                verified_person_id=identity["person_id"],
+            )
+        except _ggv_ops.OpsPackError as exc:
+            self._ggv_ops_fail(exc)
+            return
+        except _lead_spine.LeadSpineError as exc:
+            self._ggv_ops_fail(_ggv_ops.OpsPackError(str(exc), code=exc.code))
+            return
+        result["person_id"] = identity.get("person_id")
+        self._send_json(result)
+
     def _ggv_strategy_quiet(self) -> dict:
         return {
             "empty_is_machine": False,
@@ -10649,6 +11011,289 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
+
+    def _amg_pack_quiet(self) -> dict:
+        return {
+            "occupancy": None,
+            "adr": None,
+            "revpar": None,
+            "yanolja_live": False,
+            "yanolja_called": False,
+            "yanolja_write": False,
+            "live_ops": False,
+            "hotel_operations": False,
+            "empty_is_hotel_state": False,
+            "payment_executed": False,
+            "money": None,
+            "folio_executed": False,
+            "finance_controls": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_incident": False,
+            "invented_sla": False,
+            "cr_resolved": False,
+            "ledger_write": False,
+            "bound": "beta-amg-ops-safe",
+        }
+
+    def _amg_pack_refuse_code(self, path: str) -> str | None:
+        refused = {
+            "/api/amg/ops-pack/payment": "payment",
+            "/api/amg/ops-pack/money": "payment",
+            "/api/amg/ops-pack/bank": "bank",
+            "/api/amg/ops-pack/transfer": "bank",
+            "/api/amg/ops-pack/folio": "folio",
+            "/api/amg/ops-pack/settlement": "folio",
+            "/api/amg/ops-pack/zayen": "books",
+            "/api/amg/ops-pack/books": "books",
+            "/api/amg/ops-pack/yanolja": "yanolja",
+            "/api/amg/ops-pack/yanolja-write": "yanolja",
+            "/api/amg/ops-pack/occupancy": "occupancy",
+            "/api/amg/ops-pack/adr": "adr",
+            "/api/amg/ops-pack/revpar": "revpar",
+            "/api/amg/ops-pack/proven": "proven",
+            "/api/amg/ops-pack/ready": "ready",
+            "/api/amg/ops-pack/resolve": "resolve",
+            "/api/amg/ops-pack/production": "production",
+            "/api/amg/ops-pack/cloudflare": "cloudflare",
+            "/api/amg/ops-pack/cf": "cloudflare",
+            "/api/amg/ops-pack/guest-blast": "guest_blast",
+            "/api/amg/ops-pack/fill": "fill",
+        }
+        return refused.get(path)
+
+    def _require_amg_pack_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return None
+        person_id = identity.get("person_id")
+        if _amg_pack.seat_for(person_id) is None:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "AMG ops pack is for the Owner and an active Atrium hotel-ops assignment.",
+                    "person_id": person_id,
+                    **self._amg_pack_quiet(),
+                },
+                status=403,
+            )
+            return None
+        if isinstance(body, dict):
+            for key in ("person_id", "verified_person_id", "actor_person_id"):
+                spoof = body.get(key)
+                if spoof and str(spoof).strip() != str(person_id).strip():
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "person_id_spoof",
+                            "message": "Person id from the browser body is refused.",
+                            **self._amg_pack_quiet(),
+                        },
+                        status=400,
+                    )
+                    return None
+        return identity
+
+    def _amg_pack_fail(self, exc: _amg_pack.OpsPackError) -> None:
+        status = 400
+        if exc.code in {
+            "payment_refused",
+            "bank_refused",
+            "books_refused",
+            "folio_refused",
+            "yanolja_refused",
+            "current_refused",
+            "cloudflare_refused",
+            "proven_refused",
+            "ready_refused",
+            "resolve_refused",
+            "production_refused",
+            "guest_blast_refused",
+            "fact_refused",
+            "slots_refused",
+            "writes_refused",
+            "not_beta",
+        }:
+            status = 405
+        elif exc.code in {"forbidden", "denied"}:
+            status = 403
+        elif exc.code == "not_found":
+            status = 404
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._amg_pack_quiet(),
+            },
+            status=status,
+        )
+
+    def _amg_pack_write_refused(self, path: str) -> None:
+        identity = self._require_amg_pack_seat()
+        if identity is None:
+            return
+        code = self._amg_pack_refuse_code(path)
+        try:
+            if code == "payment":
+                _amg_pack.refuse_payment({})
+            elif code == "bank":
+                _amg_pack.refuse_bank({})
+            elif code == "books":
+                _amg_pack.refuse_books({})
+            elif code == "folio":
+                _amg_pack.refuse_folio({})
+            elif code == "yanolja":
+                _amg_pack.refuse_yanolja({})
+            elif code == "occupancy":
+                _amg_pack.refuse_occupancy({})
+            elif code == "adr":
+                _amg_pack.refuse_adr({})
+            elif code == "revpar":
+                _amg_pack.refuse_revpar({})
+            elif code == "proven":
+                _amg_pack.refuse_proven({})
+            elif code == "ready":
+                _amg_pack.refuse_ready({})
+            elif code == "resolve":
+                _amg_pack.refuse_resolve({})
+            elif code == "production":
+                _amg_pack.refuse_production({})
+            elif code == "cloudflare":
+                _amg_pack.refuse_cloudflare({})
+            elif code == "guest_blast":
+                _amg_pack.refuse_guest_blast({})
+            elif code == "fill":
+                _amg_pack.refuse_fill({})
+            else:
+                _amg_pack.refuse_external_write({})
+        except _amg_pack.OpsPackError as exc:
+            self._amg_pack_fail(exc)
+
+    def _amg_pack_page(self) -> None:
+        identity = self._require_amg_pack_seat()
+        if identity is None:
+            return
+        page = DASHBOARDS / "amg-ops-pack.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "AMG ops pack page is missing.",
+                    **self._amg_pack_quiet(),
+                },
+                status=404,
+            )
+            return
+        body = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _amg_pack_get(self, qs: dict, path: str) -> None:
+        identity = self._require_amg_pack_seat()
+        if identity is None:
+            return
+        view = path[len("/api/amg/ops-pack") :].strip("/") or None
+        day = ((qs.get("service_day") or [None])[0] or "").strip() or None
+        try:
+            full = _amg_pack.build_board(
+                verified_person_id=identity["person_id"],
+                service_day_value=day,
+            )
+        except _amg_pack.OpsPackError as exc:
+            self._amg_pack_fail(exc)
+            return
+        if view in {None, "today"}:
+            report = full
+        elif view == "journey":
+            report = full["journey"]
+        elif view == "sla":
+            report = full["sla"]
+        elif view == "handoff":
+            report = full["handoff"]
+        elif view == "framework":
+            report = full["framework"]
+        elif view == "pms":
+            report = full["pms"]
+        elif view == "notes":
+            report = {"ok": True, "notes": full["today"]["notes"]}
+        elif view == "permissions":
+            report = {"ok": True, "permissions": full["permissions"], "seat": full["seat"]}
+        elif view == "schema":
+            report = {"ok": True, "schema": full["schema"]}
+        else:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Unknown AMG ops pack view.",
+                    **self._amg_pack_quiet(),
+                },
+                status=404,
+            )
+            return
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report.update(self._amg_pack_quiet())
+        if view in {None, "today"}:
+            report["honesty"] = full["honesty"]
+            report["today"] = full["today"]
+            report["journey"] = full["journey"]
+            report["sla"] = full["sla"]
+            report["handoff"] = full["handoff"]
+            report["pms"] = full["pms"]
+            report["seat"] = full["seat"]
+            report["permissions"] = full["permissions"]
+            report["finance_controls"] = False
+        self._send_json(report)
+
+    def _amg_pack_post(self, path: str) -> None:
+        if self._amg_pack_refuse_code(path) or path == "/api/amg/ops-pack":
+            self._amg_pack_write_refused(path)
+            return
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        if any(body.get(key) not in (None, "", False) for key in _amg_pack.FACT_KEYS):
+            identity = self._require_amg_pack_seat(body)
+            if identity is None:
+                return
+            try:
+                _amg_pack.refuse_external_write(body)
+            except _amg_pack.OpsPackError as exc:
+                self._amg_pack_fail(exc)
+            return
+        identity = self._require_amg_pack_seat(body)
+        if identity is None:
+            return
+        try:
+            if path == "/api/amg/ops-pack/notes":
+                result = _amg_pack.save_note(body, verified_person_id=identity["person_id"])
+            elif path == "/api/amg/ops-pack/attention":
+                result = _amg_pack.mark_attention(body, verified_person_id=identity["person_id"])
+            elif path == "/api/amg/ops-pack/journey":
+                result = _amg_pack.open_journey(body, verified_person_id=identity["person_id"])
+            elif path == "/api/amg/ops-pack/handoff":
+                result = _amg_pack.open_handoff(body, verified_person_id=identity["person_id"])
+            else:
+                _amg_pack.refuse_external_write(body)
+                return
+        except _amg_pack.OpsPackError as exc:
+            self._amg_pack_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._amg_pack_quiet())
+        self._send_json(result)
 
     def _amg_ops_quiet(self) -> dict:
         return {
@@ -17682,6 +18327,370 @@ class BetaHandler(SimpleHTTPRequestHandler):
             }
         )
 
+    def _owner_empire_quiet(self) -> dict:
+        return {
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "zayen_write": False,
+            "finance_controls": False,
+            "hr_broadened": False,
+            "trading": False,
+            "invented_system_pct": False,
+            "invented_12wy_percent": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "second_scoring_table": False,
+            "cr_mutated": False,
+            "ledger_write": False,
+            "track_d_built": False,
+            "bound": "beta-owner-safe",
+        }
+
+    def _owner_empire_refuse_code(self, path: str) -> str | None:
+        refused = {
+            "/api/owner/empire-pack/payment": "payment",
+            "/api/owner/empire-pack/money": "payment",
+            "/api/owner/empire-pack/pay": "payment",
+            "/api/owner/empire-pack/bank": "bank",
+            "/api/owner/empire-pack/transfer": "bank",
+            "/api/owner/empire-pack/finance": "finance",
+            "/api/owner/empire-pack/zayen": "finance",
+            "/api/owner/empire-pack/payroll": "finance",
+            "/api/owner/empire-pack/tax": "finance",
+            "/api/owner/empire-pack/folio": "finance",
+            "/api/owner/empire-pack/hr": "hr",
+            "/api/owner/empire-pack/hris": "hr",
+            "/api/owner/empire-pack/trading": "trading",
+            "/api/owner/empire-pack/percent": "percent",
+            "/api/owner/empire-pack/system-pct": "percent",
+            "/api/owner/empire-pack/proven": "proven",
+            "/api/owner/empire-pack/ready": "ready",
+            "/api/owner/empire-pack/resolve": "resolve",
+            "/api/owner/empire-pack/production": "production",
+            "/api/owner/empire-pack/cloudflare": "production",
+        }
+        return refused.get(path)
+
+    def _require_owner_empire(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Owner Empire is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_person": _progress.PERS_MATT,
+                    **self._owner_empire_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    **self._owner_empire_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _owner_empire_fail(self, exc: _owner_empire.EmpirePackError) -> None:
+        status = 405 if exc.code.endswith("_refused") or exc.code == "writes_refused" else 400
+        if exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._owner_empire_quiet(),
+            },
+            status=status,
+        )
+
+    def _owner_empire_write_refused(self, path: str) -> None:
+        identity = self._require_owner_empire()
+        if identity is None:
+            return
+        code = self._owner_empire_refuse_code(path)
+        try:
+            if code == "payment":
+                _owner_empire.refuse_payment({})
+            elif code == "bank":
+                _owner_empire.refuse_bank({})
+            elif code == "finance":
+                _owner_empire.refuse_finance({})
+            elif code == "hr":
+                _owner_empire.refuse_hr({})
+            elif code == "trading":
+                _owner_empire.refuse_trading({})
+            elif code == "percent":
+                _owner_empire.refuse_percent({})
+            elif code == "proven":
+                _owner_empire.refuse_proven({})
+            elif code == "ready":
+                _owner_empire.refuse_ready({})
+            elif code == "resolve":
+                _owner_empire.refuse_resolve({})
+            elif code == "production":
+                _owner_empire.refuse_production({})
+            else:
+                _owner_empire.refuse_external_write({})
+        except _owner_empire.EmpirePackError as exc:
+            self._owner_empire_fail(exc)
+
+    def _owner_empire_page(self) -> None:
+        identity = self._require_owner_empire()
+        if identity is None:
+            return
+        page = DASHBOARDS / "owner-empire-pack.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Owner Empire page is missing.",
+                    **self._owner_empire_quiet(),
+                },
+                status=404,
+            )
+            return
+        body = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _owner_empire_get(self, path: str) -> None:
+        identity = self._require_owner_empire()
+        if identity is None:
+            return
+        view = path[len("/api/owner/empire-pack") :].strip("/") or None
+        try:
+            full = _owner_empire.build_desk(verified_person_id=identity["person_id"])
+        except _owner_empire.EmpirePackError as exc:
+            self._owner_empire_fail(exc)
+            return
+        if view in {None, "desk"}:
+            report = full
+        elif view == "today":
+            report = full["today"]
+        elif view == "radar":
+            report = full["radar"]
+        elif view in {"12wy", "twelve-wy"}:
+            report = full["twelve_wy"]
+        elif view == "handoffs":
+            report = full["handoffs"]
+        elif view == "actions":
+            report = full["actions"]
+        elif view == "intel":
+            report = full["intel"]
+        elif view == "honesty":
+            report = {"ok": True, "honesty": full["honesty"]}
+        elif view == "schema":
+            report = {"ok": True, "schema": _owner_empire.schema_document()}
+        else:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Unknown Owner Empire view.",
+                    **self._owner_empire_quiet(),
+                },
+                status=404,
+            )
+            return
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report.update(self._owner_empire_quiet())
+        self._send_json(report)
+
+    def _core_harden_quiet(self) -> dict:
+        return {
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "zayen_write": False,
+            "finance_controls": False,
+            "hr_broadened": False,
+            "trading": False,
+            "cloudflare_mutated": False,
+            "invented_commissioned": False,
+            "invented_adopted": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "au_flipped": False,
+            "cr_mutated": False,
+            "ledger_write": False,
+            "track_d_restarted": False,
+            "fin_lanes_restarted": False,
+            "bound": "beta-core-safe",
+        }
+
+    def _core_harden_refuse_code(self, path: str) -> str | None:
+        return _core_harden.refuse_code(path)
+
+    def _require_core_harden(self) -> dict | None:
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="progress.read")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Core Harden is Owner (PERS-MATT) only.",
+                    "person_id": person_id,
+                    "required_person": _progress.PERS_MATT,
+                    **self._core_harden_quiet(),
+                },
+                status=403,
+            )
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks progress.read",
+                    "person_id": person_id,
+                    **self._core_harden_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _core_harden_fail(self, exc: _core_harden.HardenPackError) -> None:
+        status = 405 if exc.code.endswith("_refused") or exc.code == "writes_refused" else 400
+        if exc.code == "forbidden":
+            status = 403
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._core_harden_quiet(),
+            },
+            status=status,
+        )
+
+    def _core_harden_write_refused(self, path: str) -> None:
+        identity = self._require_core_harden()
+        if identity is None:
+            return
+        code = self._core_harden_refuse_code(path)
+        try:
+            if code == "payment":
+                _core_harden.refuse_payment({})
+            elif code == "bank":
+                _core_harden.refuse_bank({})
+            elif code == "finance":
+                _core_harden.refuse_finance({})
+            elif code == "hr":
+                _core_harden.refuse_hr({})
+            elif code == "trading":
+                _core_harden.refuse_trading({})
+            elif code == "cloudflare":
+                _core_harden.refuse_cloudflare({})
+            elif code == "commission":
+                _core_harden.refuse_commission({})
+            elif code == "adopt":
+                _core_harden.refuse_adopt({})
+            elif code == "proven":
+                _core_harden.refuse_proven({})
+            elif code == "ready":
+                _core_harden.refuse_ready({})
+            elif code == "resolve":
+                _core_harden.refuse_resolve({})
+            elif code == "production":
+                _core_harden.refuse_production({})
+            else:
+                _core_harden.refuse_external_write({})
+        except _core_harden.HardenPackError as exc:
+            self._core_harden_fail(exc)
+
+    def _core_harden_page(self) -> None:
+        identity = self._require_core_harden()
+        if identity is None:
+            return
+        page = DASHBOARDS / "core-harden-pack.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Core Harden page is missing.",
+                    **self._core_harden_quiet(),
+                },
+                status=404,
+            )
+            return
+        body = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _core_harden_get(self, path: str) -> None:
+        identity = self._require_core_harden()
+        if identity is None:
+            return
+        view = path[len("/api/core/harden-pack") :].strip("/") or None
+        try:
+            full = _core_harden.build_desk(verified_person_id=identity["person_id"])
+        except _core_harden.HardenPackError as exc:
+            self._core_harden_fail(exc)
+            return
+        if view in {None, "desk"}:
+            report = full
+        elif view == "devi":
+            report = full["devi"]
+        elif view == "habitat":
+            report = full["habitat"]
+        elif view == "factory":
+            report = full["factory"]
+        elif view == "actions":
+            report = full["actions"]
+        elif view == "honesty":
+            report = {"ok": True, "honesty": full["honesty"]}
+        elif view == "schema":
+            report = {"ok": True, "schema": _core_harden.schema_document()}
+        else:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Unknown Core Harden view.",
+                    **self._core_harden_quiet(),
+                },
+                status=404,
+            )
+            return
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report.update(self._core_harden_quiet())
+        self._send_json(report)
+
     def _progress_empire(self) -> None:
         identity = self._require_progress_owner()
         if identity is None:
@@ -18862,6 +19871,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 lines=body.get("lines") or [],
                 notes=body.get("notes"),
                 corrects_receipt_id=body.get("corrects_receipt_id"),
+                evidence_note_id=body.get("evidence_note_id"),
+                evidence_photo_id=body.get("evidence_photo_id"),
+                require_evidence=True,
                 identity=identity,
             )
             self._send_json({"ok": True, "receipt": out, "payment_approve": False})
@@ -18905,24 +19917,245 @@ class BetaHandler(SimpleHTTPRequestHandler):
         except Exception as exc:  # noqa: BLE001
             self._send_err(500, str(exc))
 
+    def _uma_ops_payment_refused(self) -> None:
+        self._send_json(
+            {
+                "ok": False,
+                "error": "payment_execution_refused",
+                "message": "Payment execution is not available on this screen.",
+                "payment_execution": False,
+            },
+            status=403,
+        )
+
+    def _uma_ops_actor(self, body: dict | None = None) -> tuple[str, dict] | None:
+        identity = self._resolve_identity(body, emit_audit=False)
+        person_id = identity.get("person_id") if identity.get("ok") else None
+        if not person_id:
+            self._send_json(
+                {"ok": False, "error": "forbidden", "message": "Identity required."},
+                status=403,
+            )
+            return None
+        return str(person_id), identity
+
+    def _uma_ops_stock(self) -> None:
+        try:
+            self._send_json(_uma_ops.stock_framework())
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_permissions(self) -> None:
+        actor = self._uma_ops_actor()
+        if actor is None:
+            return
+        person_id, _identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                self._send_json(_uma_p0.operator_view(person_id, conn=conn))
+            finally:
+                conn.close()
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_closes(self) -> None:
+        try:
+            self._send_json(_uma_p0.previous_closes(limit=20))
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_pr_create(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        actor = self._uma_ops_actor(body)
+        if actor is None:
+            return
+        person_id, identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                view = _uma_p0.operator_view(person_id, conn=conn)
+            finally:
+                conn.close()
+            if not (view.get("buttons") or {}).get("create_pr"):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "forbidden",
+                        "message": "You cannot create a purchase request.",
+                    },
+                    status=403,
+                )
+                return
+            want_submit = bool(body.get("submitted"))
+            if want_submit and not (view.get("buttons") or {}).get("submit"):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "forbidden",
+                        "message": "You cannot submit a purchase request.",
+                    },
+                    status=403,
+                )
+                return
+            out = _uma_ops.create_pr(
+                requester_label=body.get("requester_label"),
+                supplier_name=body.get("supplier_name"),
+                purpose=body.get("purpose"),
+                expected_value=body.get("expected_value"),
+                currency=body.get("currency"),
+                lines=body.get("lines") or [],
+                submitted=want_submit,
+                verified_person_id=person_id,
+                actor_type="PERSON",
+                identity=identity,
+            )
+            self._send_json({"ok": True, "pr": out, "payment_execution": False})
+        except _uma_ops.UmaOpsError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_pr_action(self, pr_id: str, action: str) -> None:
+        if action == "payment":
+            self._uma_ops_payment_refused()
+            return
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if not isinstance(body, dict):
+            body = {}
+        actor = self._uma_ops_actor(body)
+        if actor is None:
+            return
+        person_id, identity = actor
+        from urllib.parse import unquote
+
+        pr_id = unquote(pr_id)
+        dest = {
+            "submit": "REQUESTED",
+            "approve": "APPROVED",
+            "order": "ORDERED",
+            "close": "OPS_CLOSED",
+        }[action]
+        try:
+            out = _uma_p0.ops_advance(
+                person_id=person_id,
+                pr_id=pr_id,
+                to_state=dest,
+                evidence_note_id=body.get("evidence_note_id"),
+                evidence_photo_id=body.get("evidence_photo_id"),
+                identity=identity,
+            )
+            self._send_json({"ok": True, "pr": out, "payment_execution": False})
+        except _uma_ops.UmaOpsError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_issue_post(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if not isinstance(body, dict):
+            body = {}
+        actor = self._uma_ops_actor(body)
+        if actor is None:
+            return
+        person_id, identity = actor
+        try:
+            out = _uma_ops.create_operator_issue(
+                person_id=person_id,
+                source_kind=str(body.get("source_kind") or "issues_open"),
+                note=str(body.get("note") or ""),
+                source_id=body.get("source_id"),
+                identity=identity,
+            )
+            self._send_json({"ok": True, "issue": out, "cr_resolved": False})
+        except _uma_ops.UmaOpsError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_petty_count_post(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if not isinstance(body, dict):
+            body = {}
+        actor = self._uma_ops_actor(body)
+        if actor is None:
+            return
+        person_id, identity = actor
+        try:
+            out = _uma_ops.count_petty_ops(
+                person_id=person_id,
+                business_date=str(body.get("business_date") or ""),
+                counted_amount=body.get("counted_amount"),
+                identity=identity,
+            )
+            self._send_json({"ok": True, "day": out, "payment_execution": False, **_uma_ops.honesty_flags()})
+        except _uma_ops.UmaOpsError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
     def _uma_ops_petty_post(self) -> None:
-        """Test-mode-only fixture movement. No ESB/ClickUp/Telegram/bank writes."""
+        """Operator tin movement, or a test-mode fixture. No bank write."""
         try:
             length = int(self.headers.get("Content-Length") or 0)
             raw = self.rfile.read(length) if length > 0 else b"{}"
             body = json.loads(raw.decode("utf-8") or "{}")
             if not isinstance(body, dict):
                 body = {}
-            out = _uma_ops.create_petty_movement_test_mode(
-                business_date=body.get("business_date"),
-                direction=body.get("direction") or "OUT",
-                amount=body.get("amount") if body.get("amount") is not None else 1.0,
-                currency=body.get("currency"),
-                purpose=body.get("purpose"),
-                example=bool(body.get("example", True)),
-                opening_float=body.get("opening_float"),
-            )
-            self._send_json({"ok": True, "movement": out, **_uma_ops.honesty_flags()})
+            if body.get("operator"):
+                actor = self._uma_ops_actor(body)
+                if actor is None:
+                    return
+                person_id, identity = actor
+                out = _uma_ops.record_petty_ops(
+                    person_id=person_id,
+                    business_date=body.get("business_date"),
+                    direction=body.get("direction") or "OUT",
+                    amount=body.get("amount") if body.get("amount") is not None else 0,
+                    currency=body.get("currency"),
+                    purpose=body.get("purpose"),
+                    evidence_note_id=body.get("evidence_note_id"),
+                    identity=identity,
+                )
+            else:
+                out = _uma_ops.create_petty_movement_test_mode(
+                    business_date=body.get("business_date"),
+                    direction=body.get("direction") or "OUT",
+                    amount=body.get("amount") if body.get("amount") is not None else 1.0,
+                    currency=body.get("currency"),
+                    purpose=body.get("purpose"),
+                    example=bool(body.get("example", True)),
+                    opening_float=body.get("opening_float"),
+                )
+            self._send_json({"ok": True, "movement": out, "payment_execution": False, **_uma_ops.honesty_flags()})
         except _uma_ops.UmaOpsError as exc:
             self._send_json(
                 {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},

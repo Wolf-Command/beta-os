@@ -95,6 +95,27 @@
     <a href="/bzg/uma-blu#history">History</a>
   </nav>
 
+  <div class="panel" id="pettyForm" hidden>
+    <h2>Record a movement</h2>
+    <p class="muted">This writes the tin only. It does not pay a supplier or touch the bank.</p>
+    <form id="moveForm">
+      <label style="display:block;color:#8aa0ad;font-size:0.8rem;margin:8px 0 4px">Out or in
+        <select id="direction" style="width:100%;margin-top:4px;min-height:44px;border-radius:10px;background:#1e3542;color:#eef4f7;border:1px solid #2a4554">
+          <option value="OUT">Out</option>
+          <option value="IN">In</option>
+        </select>
+      </label>
+      <label style="display:block;color:#8aa0ad;font-size:0.8rem;margin:8px 0 4px">Amount
+        <input id="amount" type="number" min="0" step="any" required style="width:100%;min-height:44px;border-radius:10px;background:#1e3542;color:#eef4f7;border:1px solid #2a4554;padding:8px" />
+      </label>
+      <label style="display:block;color:#8aa0ad;font-size:0.8rem;margin:8px 0 4px">What it was for
+        <input id="purpose" required style="width:100%;min-height:44px;border-radius:10px;background:#1e3542;color:#eef4f7;border:1px solid #2a4554;padding:8px" />
+      </label>
+      <button type="submit" style="width:100%;min-height:44px;margin-top:8px;border-radius:12px;border:1px solid #2a8a76;background:#1f6b5c;color:#fff;font-weight:650">Record movement</button>
+      <p class="muted" id="moveMsg"></p>
+    </form>
+  </div>
+
   <div class="panel">
     <h2>Day tin</h2>
     <div id="days"><p class="muted">Loading…</p></div>
@@ -195,6 +216,35 @@
       document.getElementById("list").textContent = "Could not load petty cash.";
       document.getElementById("days").textContent = "Could not load day tin.";
     });
+})();
+</script>
+<script>
+(function () {
+  fetch("/api/bzg/uma-blu/permissions").then(function (r) { return r.json(); }).then(function (perm) {
+    if (!perm || !perm.buttons || !perm.buttons.petty_record) return;
+    var panel = document.getElementById("pettyForm");
+    panel.hidden = false;
+    document.getElementById("moveForm").onsubmit = function (ev) {
+      ev.preventDefault();
+      var msg = document.getElementById("moveMsg");
+      fetch("/api/bzg/uma-blu/petty", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          operator: true,
+          direction: document.getElementById("direction").value,
+          amount: Number(document.getElementById("amount").value),
+          purpose: document.getElementById("purpose").value
+        })
+      }).then(function (r) { return r.json(); }).then(function (out) {
+        if (!out.ok) {
+          msg.textContent = out.error || out.message || "Movement was not recorded.";
+          return;
+        }
+        location.reload();
+      }).catch(function () { msg.textContent = "Movement was not recorded."; });
+    };
+  }).catch(function () {});
 })();
 </script>
 </body>
