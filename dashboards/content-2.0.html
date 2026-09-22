@@ -1423,6 +1423,7 @@
       media_type: $("upMediaType").value,
       shoot_date: $("upShootDate").value,
       subject: ($("upSubject").value || "").trim(),
+      detail: detailDefault || undefined,
       files: uploadWizard.files.map((f) => ({
         original_filename: f.name,
         detail: detailDefault || undefined,
@@ -1461,6 +1462,7 @@
       media_type: $("upMediaType").value,
       shoot_date: $("upShootDate").value,
       subject: ($("upSubject").value || "").trim(),
+      detail: (detail || ($("upDetailDefault").value || "").trim() || undefined),
       files: uploadWizard.files.map((file, i) => ({
         original_filename: file.name,
         detail: i === idx ? detail : (($("reviewBody").querySelector(`.rev-detail[data-idx="${i}"]`) || {}).value || ""),

@@ -546,13 +546,21 @@ def preview_batch(serve_mod: Any, body: dict) -> dict:
         subject_tok = body.get("subject") or body.get("subject_token")
         if not subject_tok:
             raise ValueError("subject required")
-        detail_raw = body.get("detail") or body.get("default_detail") or ""
-        if not _p26.detail_valid(str(detail_raw)):
-            raise ValueError("detail required — need ≥1 meaningful slug token")
-        media_type = _wn.normalize_media_type(body.get("media_type") or "video")
         files = body.get("files") or []
         if not isinstance(files, list) or not files:
             raise ValueError("files array required")
+        detail_raw = body.get("detail") or body.get("default_detail") or ""
+        if not str(detail_raw).strip():
+            # UI may only send detail on files[].detail (content-2.0 buildReview).
+            for f in files:
+                if isinstance(f, dict):
+                    cand = f.get("detail") or f.get("default_detail") or ""
+                    if str(cand).strip():
+                        detail_raw = cand
+                        break
+        if not _p26.detail_valid(str(detail_raw)):
+            raise ValueError("detail required — need ≥1 meaningful slug token")
+        media_type = _wn.normalize_media_type(body.get("media_type") or "video")
         if len(files) > 50:
             raise ValueError("max 50 files per batch")
         dest_dirs = [
