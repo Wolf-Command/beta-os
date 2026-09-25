@@ -129,6 +129,7 @@ def connect(cfg: Config) -> sqlite3.Connection:
     conn = sqlite3.connect(cfg.catalog, timeout=30)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA busy_timeout=30000")
+    conn.execute("PRAGMA journal_mode=WAL")
     repair._nas_index_columns(conn)
     try:
         repair.ensure_registry(conn)
@@ -576,6 +577,7 @@ def thumb_batch(cfg: Config, conn: sqlite3.Connection) -> int:
         """,
         (cfg.thumb_batch,),
     ).fetchall()
+    conn.commit()
     done = 0
     for row in rows:
         row_id = int(row["id"])
@@ -617,8 +619,8 @@ def thumb_batch(cfg: Config, conn: sqlite3.Connection) -> int:
             mark_failed(cfg, conn, row_id, str(src), "thumb_timeout")
         except Exception as exc:  # noqa: BLE001 — one bad file must not stop the run
             mark_failed(cfg, conn, row_id, str(src), f"thumb_error:{type(exc).__name__}")
+        conn.commit()
         done += 1
-    conn.commit()
     return done
 
 
@@ -645,6 +647,7 @@ def hash_batch(cfg: Config, conn: sqlite3.Connection) -> int:
         """,
         (cfg.hash_batch,),
     ).fetchall()
+    conn.commit()
     done = 0
     for row in rows:
         row_id = int(row["id"])
@@ -665,8 +668,8 @@ def hash_batch(cfg: Config, conn: sqlite3.Connection) -> int:
             )
         except Exception as exc:  # noqa: BLE001
             mark_failed(cfg, conn, row_id, str(src), f"hash_error:{type(exc).__name__}")
+        conn.commit()
         done += 1
-    conn.commit()
     return done
 
 
