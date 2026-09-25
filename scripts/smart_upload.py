@@ -16,6 +16,7 @@ from zoneinfo import ZoneInfo
 import stage_inspector as _stage_inspector
 import wolf_naming as _wn
 import phase26_team as _p26
+from core import nas_library as _nas
 
 TZ = ZoneInfo("Asia/Makassar")
 NAS_PROBE_PATHS = (
@@ -57,30 +58,8 @@ def now_iso() -> str:
 
 
 def nas_status() -> dict[str, Any]:
-    """Honest NAS connectivity. Never fake 'NAS received'."""
-    connected = False
-    found = None
-    for p in NAS_PROBE_PATHS:
-        try:
-            if p.exists() and p.is_dir():
-                connected = True
-                found = str(p)
-                break
-        except OSError:
-            continue
-    if connected:
-        return {
-            "connected": True,
-            "path": found,
-            "message": "NAS volume mounted. Smart Upload writes to Beta library_v2; NAS sync is not part of this MVP.",
-            "nas_received": False,
-        }
-    return {
-        "connected": False,
-        "path": None,
-        "message": "NAS not connected — uploads stay on Beta library only. We will not claim NAS received.",
-        "nas_received": False,
-    }
+    """Honest NAS connectivity. Status endpoint never claims a file was received."""
+    return _nas.public_nas_status()
 
 
 def _opt_int(v: Any) -> int | None:
@@ -107,10 +86,14 @@ def handle_smart_upload(
     *,
     subject: str,
     serve_mod: Any,
+    scopes: list[str] | None = None,
 ) -> dict:
     """Process one smart-upload file with batch metadata.
 
-    Returns {http, body} — body never includes filesystem paths for UI.
+    Pipeline: staging → validate → hash → dup check → metadata → scope →
+    library_v2 mirror → canonical NAS placement → index.
+    Returns {http, body} — body never includes raw filesystem paths for UI.
+    nas_received=true only when file is verified on NAS.
     """
     file_field = fields.get("file")
     if not isinstance(file_field, dict) or not file_field.get("data"):
@@ -208,6 +191,22 @@ def handle_smart_upload(
                 "error": str(exc),
                 "ui_status": UI_FAILED,
                 "original_filename": original_filename,
+            },
+        }
+
+    # Scope / permission — brand must be in Person→…→Scope (wrong-scope → 403)
+    if scopes is not None and not _nas.scopes_allow_brand(scopes, brand):
+        return {
+            "http": 403,
+            "body": {
+                "ok": False,
+                "status": "error",
+                "error": "forbidden",
+                "message": f"subject lacks scope for brand {brand}",
+                "required_scope_for_brand": brand,
+                "ui_status": UI_FAILED,
+                "original_filename": original_filename,
+                "nas_received": False,
             },
         }
 
@@ -404,8 +403,46 @@ def handle_smart_upload(
                 pass
 
         now = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")
+        # Canonical NAS placement (additive under _Imports/Wolf-Library only)
+        nas_place = _nas.place_on_nas(
+            final_path,
+            brand=brand,
+            stage=stage,
+            shoot_date=shoot_date,
+            canonical_filename=final_name,
+            data_lane=data_lane,
+            content_hash=content_hash,
+            original_filename=original_filename,
+        )
+        nas_received = bool(nas_place.get("nas_received"))
+        # Double-check honesty — never true unless file really on NAS
+        if nas_received and not _nas.verify_nas_received(
+            nas_place.get("nas_path"), expected_size=file_size
+        ):
+            nas_received = False
+            nas_place = {
+                **nas_place,
+                "nas_received": False,
+                "message": "NAS verify failed after copy — refuse nas_received",
+            }
+        provenance = {
+            "original_filename": original_filename,
+            "canonical_filename": final_name,
+            "source_system": "smart_upload",
+            "beta_library_mirror": True,
+            "nas_rel": nas_place.get("nas_rel"),
+            "nas_received": nas_received,
+            "data_lane": data_lane,
+            "test_marked": data_lane == "test",
+        }
+        from core import content_engine_repair as _ce_repair
+
+        content_class = (_field_str(fields, "content_class") or "").strip().lower()
+        if content_class in {slug for slug, _label in _ce_repair.CONTENT_CLASSES}:
+            provenance["content_class"] = content_class
         conn = serve_mod.db_connect()
         try:
+            _nas.migrate_schema(conn)
             cur = conn.execute(
                 """
                 INSERT INTO assets (
@@ -415,8 +452,10 @@ def handle_smart_upload(
                   shoot_date, sequence_token, media_type, uploaded_by, uploaded_at,
                   content_plan_id, content_card_id, processing_status, library_status,
                   data_lane, batch_id,
-                  content_hash, file_size, detail_tags_json, readiness, readiness_note
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                  content_hash, file_size, detail_tags_json, readiness, readiness_note,
+                  nas_path, nas_rel, nas_received, nas_received_at, nas_verified_size,
+                  provenance_json
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 (
                     brand,
@@ -449,7 +488,17 @@ def handle_smart_upload(
                     file_size,
                     __import__("json").dumps(detail_tags),
                     "READY_TO_USE",
-                    "Verified in Beta library and ready for team use.",
+                    (
+                        "Verified on NAS and Beta library."
+                        if nas_received
+                        else "Verified in Beta library; NAS not confirmed."
+                    ),
+                    nas_place.get("nas_path") if nas_received else None,
+                    nas_place.get("nas_rel") if nas_received else None,
+                    1 if nas_received else 0,
+                    nas_place.get("nas_received_at") if nas_received else None,
+                    nas_place.get("verified_size") if nas_received else None,
+                    __import__("json").dumps(provenance),
                 ),
             )
             asset_id = cur.lastrowid
@@ -469,9 +518,16 @@ def handle_smart_upload(
             conn.close()
 
         nas = nas_status()
-        return {
-            "http": 200,
-            "body": {
+        nas_public = {
+            "connected": bool(nas.get("connected")),
+            "message": nas.get("message"),
+            "nas_received": False,  # connectivity banner never claims this file
+            "wolf_write_prefix_name": "_Imports/Wolf-Library",
+        }
+        from core import content_engine_repair as _ce_repair
+
+        body = _ce_repair.annotate_upload(
+            {
                 "ok": True,
                 "status": "success",
                 "ui_status": UI_READY,
@@ -500,11 +556,22 @@ def handle_smart_upload(
                 "file_size": file_size,
                 "readiness": "READY_TO_USE",
                 "readiness_label": "READY TO USE",
-                "nas": nas,
-                # Explicit: no NAS claim
-                "nas_received": False,
+                "nas": nas_public,
+                "nas_received": nas_received,
+                "nas_rel": nas_place.get("nas_rel") if nas_received else None,
+                "nas_message": nas_place.get("message"),
+                "provenance": {
+                    "original_filename": original_filename,
+                    "canonical_filename": final_name,
+                    "nas_rel": nas_place.get("nas_rel") if nas_received else None,
+                    "nas_received": nas_received,
+                    "source_system": "smart_upload",
+                    "data_lane": data_lane,
+                },
             },
-        }
+            media_path=final_path,
+        )
+        return {"http": 200, "body": body}
     except Exception as exc:  # noqa: BLE001
         conn = serve_mod.db_connect()
         try:
@@ -627,7 +694,8 @@ def list_smart_uploads(serve_mod: Any, qs: dict) -> list[dict]:
             SELECT id, brand, stage, type, media_type, subject, detail, location,
                    shoot_date, sequence_token, original_filename, canonical_filename,
                    filename, uploaded_by, uploaded_at, content_plan_id, content_card_id,
-                   processing_status, library_status, data_lane, batch_id, status, date_added
+                   processing_status, library_status, data_lane, batch_id, status, date_added,
+                   content_hash, nas_received
             FROM assets
             WHERE {where}
             ORDER BY id DESC
@@ -635,9 +703,12 @@ def list_smart_uploads(serve_mod: Any, qs: dict) -> list[dict]:
             """,
             (*params, limit),
         ).fetchall()
+        from core import content_engine_repair as _ce_repair
+
         out = []
         for r in rows:
             d = dict(r)
+            available = _ce_repair.row_library_available(d)
             out.append(
                 {
                     "id": d["id"],
@@ -662,13 +733,20 @@ def list_smart_uploads(serve_mod: Any, qs: dict) -> list[dict]:
                     "status": d.get("library_status") or d.get("status"),
                     "data_lane": d.get("data_lane") or "operational",
                     "batch_id": d.get("batch_id"),
-                    "ui_status": UI_READY
-                    if (d.get("library_status") == LIB_READY)
-                    else (
-                        UI_FAILED
-                        if d.get("library_status") == LIB_FAILED
-                        else UI_CHECKING
+                    "ui_status": (
+                        "COMPLETE"
+                        if available
+                        else (
+                            UI_FAILED
+                            if d.get("library_status") == LIB_FAILED
+                            else UI_CHECKING
+                        )
                     ),
+                    "staff_outcome": _ce_repair.staff_upload_outcome(d),
+                    "staff_title": _ce_repair.library_display_title(
+                        d.get("subject"), d.get("detail"), d.get("original_filename")
+                    ),
+                    "library_available": available,
                 }
             )
         return out

@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-25",
+  "claims": [
+    {
+      "id": "bf-content-engine-haikal-round2-20260925",
+      "claim": "Beta Content Engine on :8788 reads Haikal's active org assignment ASG-HAIKAL-CD-1 (ROLE-GGV-CREATIVE-DIRECTOR) and a content-only all-brands scope SCOPE-WOLF-CONTENT-ALL-BRANDS for the eight content brands. Brand dropdown, Library filter, and Upload preselect use that provider. NAS library cards use an original-filename title when no canonical title exists, and thumbnails are generated beside the index without moving NAS files. Upload status is Uploading n of N, Processing, Saving to NAS, Adding to Library, Complete, or Failed. Header hamburger switches apps and does not put Wolf Intelligence in the tab row. CAP stays SPECIFIED. staff_ready, proven, and ready stay false. Human status stays FAILED_RETEST_REQUIRED. Production :8787 pid 15975 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_content_engine_haikal_round2.py | tail -4; python3 -c \"import json; d=json.load(open('state/commissioning/evidence/CE-HAIKAL-ROUND2-GATE-2026-09-25.json')); print(d['staff_ready'], ' '.join(d['gates'][g] for g in ['G1','G2','G3','G4','G5','G6','G7','G8','G9','G10']))\"; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"; echo \"8787pid=$(lsof -nP -iTCP:8787 -sTCP:LISTEN -t | head -1)\"",
+      "expect": "PASS=37 FAIL=0; G1=PASS G2=PASS G3=PASS G4=PASS G5=PASS G6=PASS G7=PASS G8=PASS G9=PASS G10=PASS; EXIT: SUCCESS; False PASS PASS PASS PASS PASS PASS PASS PASS PASS PASS; 8787 True; 8788 True; 8787pid=15975",
+      "by": "cursor-content-engine-haikal-round2",
+      "at": "2026-09-25T14:45:00Z",
+      "tests": "round2 PASS=37 FAIL=0; fail-repair PASS=75 FAIL=0; shell PASS=45 FAIL=0; staff ux PASS=54 FAIL=0",
+      "evidence": "state/commissioning/evidence/CE-HAIKAL-ROUND2-GATE-2026-09-25.json",
+      "staff_ready": false,
+      "proven": false,
+      "ready": false
+    }
+  ]
+}

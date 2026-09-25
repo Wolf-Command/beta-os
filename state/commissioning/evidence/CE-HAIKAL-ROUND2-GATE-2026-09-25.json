@@ -1,0 +1,51 @@
+{
+  "run_id": "BF-content-engine-haikal-round2-20260925",
+  "subject": "haikalqilbari123@gmail.com",
+  "person_id": "PERS-HAIKAL",
+  "staff_ready": false,
+  "prod_8787_pid": [
+    "15975"
+  ],
+  "gates": {
+    "G1": "PASS",
+    "G2": "PASS",
+    "G3": "PASS",
+    "G4": "PASS",
+    "G5": "PASS",
+    "G6": "PASS",
+    "G7": "PASS",
+    "G8": "PASS",
+    "G9": "PASS",
+    "G10": "PASS"
+  },
+  "nas_resolve": {
+    "ok": true,
+    "considered": 63,
+    "resolved_thumb": 63,
+    "filename_title": 63,
+    "untitled": 0,
+    "thumb_failed": 0,
+    "nas_destructive": false,
+    "staff_ready": false
+  },
+  "brand_names": [
+    "Atrium",
+    "Uma Blu",
+    "Selo Group",
+    "Habitat",
+    "Tropik",
+    "The One",
+    "Blu Zone Rainforest Resto",
+    "Goss Group"
+  ],
+  "recent_outcomes": [
+    "Available in Library",
+    "Saving"
+  ],
+  "whoami_assignment": {
+    "id": "ASG-HAIKAL-CD-1",
+    "role": "ROLE-GGV-CREATIVE-DIRECTOR",
+    "label": "Creative Director",
+    "source": "org_assignments"
+  }
+}

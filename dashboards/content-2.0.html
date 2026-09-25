@@ -40,6 +40,16 @@
   .btn-ok { background: rgba(61,214,140,0.15); border-color: rgba(61,214,140,0.45); color: var(--ok); }
   .btn-ghost { background: transparent; }
 
+  .crumb { font-size: 0.78rem; color: var(--muted); margin: 0; padding: 8px 18px 0; }
+  nav.grammar { margin: 0; padding: 8px 18px 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.grammar a, nav.grammar span.empty {
+    display: inline-flex; align-items: center; padding: 8px 10px; min-height: 44px;
+    border: 1px solid var(--border); border-radius: 10px;
+    color: var(--muted); text-decoration: none; font-size: 0.78rem; font-weight: 650;
+  }
+  nav.grammar a.active { color: var(--accent); border-color: rgba(110,168,255,0.55); }
+  nav.grammar span.empty { opacity: 0.75; font-weight: 550; }
+
   /* Top chrome */
   .topbar {
     display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
@@ -53,13 +63,14 @@
     appearance: none; border: 1px solid transparent; background: transparent;
     color: var(--muted); border-radius: 999px; padding: 8px 14px; font-size: 0.8rem;
     cursor: pointer; font-weight: 600; letter-spacing: 0.02em;
+    text-transform: capitalize;
   }
   .primary-nav button:hover { color: var(--text); background: var(--bg3); }
   .primary-nav button.active {
     color: #fff; background: var(--bg4); border-color: var(--border);
   }
   .brand-select {
-    margin-left: auto; display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; gap: 8px;
   }
   .brand-select label { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
   .brand-select select, .filter-bar select, .filter-bar input, .field input, .field select, .field textarea {
@@ -67,6 +78,31 @@
     border-radius: 8px; padding: 8px 10px; min-width: 0;
   }
   .brand-select select { min-width: 140px; }
+  .ce-menu-wrap, .ce-account { position: relative; display: flex; align-items: center; gap: 8px; }
+  .ce-account { margin-left: auto; }
+  .ce-menu, .ce-profile {
+    appearance: none; border: 1px solid var(--border); background: var(--bg3);
+    color: var(--text); border-radius: 10px; min-height: 40px; cursor: pointer;
+  }
+  .ce-menu { min-width: 40px; font-size: 1.05rem; }
+  .ce-profile { font-size: 0.85rem; padding: 8px 12px; border-radius: 999px; background: transparent; }
+  #staffHello { font-size: 0.92rem; white-space: nowrap; }
+  .ce-menu-panel {
+    position: absolute; top: calc(100% + 6px); left: 0; z-index: 60;
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; min-width: 160px;
+  }
+  .ce-account .ce-menu-panel { left: auto; right: 0; }
+  .ce-menu-panel a, .ce-app-unavailable { display: block; padding: 6px 0; }
+  .ce-app-unavailable { color: var(--muted); }
+  .ce-signout { color: var(--muted); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.04em; text-decoration: none; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;
+  }
+  .lib-title { font-weight: 650; font-size: 0.95rem; line-height: 1.3; }
+  .lib-facts { color: var(--muted); font-size: 0.75rem; margin-top: 4px; }
+  .upload-lifecycle[hidden] { display: none !important; }
 
   main { flex: 1; padding: 20px 20px 48px; max-width: 1280px; width: 100%; margin: 0 auto; }
   .view { display: none; }
@@ -242,6 +278,45 @@
   }
   .nas-banner.warn { border-color: rgba(245,165,36,0.45); color: var(--warn); background: rgba(245,165,36,0.08); }
   .nas-banner.ok { border-color: rgba(61,214,140,0.35); color: var(--ok); background: rgba(61,214,140,0.08); }
+  .haikal-nas-next {
+    padding: 12px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 0.88rem; line-height: 1.45;
+    border: 1px solid color-mix(in srgb, var(--brand-primary) 45%, var(--border));
+    background: color-mix(in srgb, var(--brand-primary) 10%, var(--bg3)); color: var(--text);
+  }
+  .haikal-nas-next .k {
+    display: block; font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted); font-weight: 650; margin-bottom: 4px;
+  }
+  .haikal-nas-next .cta { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .haikal-nas-next.warn {
+    border-color: rgba(245,165,36,0.45); background: rgba(245,165,36,0.08); color: var(--warn);
+  }
+  .content-ops-depth {
+    margin: 0 0 16px; padding: 14px 16px; border: 1px solid var(--border);
+    border-radius: var(--radius); background: var(--bg2);
+  }
+  .content-ops-depth h2 { margin: 0 0 8px; font-size: 0.95rem; }
+  .content-ops-depth .note { color: var(--muted); font-size: 0.78rem; margin: 4px 0; }
+  .content-ops-depth .err { color: var(--danger); font-size: 0.78rem; }
+  .content-ops-depth .okmsg { color: var(--ok); font-size: 0.78rem; }
+  .content-ops-card {
+    margin-top: 10px; padding: 12px; border: 1px solid var(--border);
+    border-radius: 10px; background: var(--bg3);
+  }
+  .content-ops-card strong { display: block; margin-bottom: 4px; font-size: 0.85rem; }
+  .content-ops-card .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .content-ops-card input.opnote {
+    width: 100%; margin-top: 8px; background: var(--bg2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 8px 10px;
+  }
+  .pill-mini {
+    display: inline-block; font-size: 0.68rem; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid var(--border); color: var(--muted); margin-right: 4px;
+  }
+  @media (max-width: 560px) {
+    .haikal-nas-next { font-size: 0.92rem; padding: 14px; }
+    .nas-banner { font-size: 0.9rem; }
+  }
   .review-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
   .review-table th, .review-table td {
     text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top;
@@ -389,31 +464,105 @@
   .preview-media { width: 100%; max-height: 60vh; background: #000; border-radius: 8px; }
   .preview-media img, .preview-media video { width: 100%; max-height: 60vh; object-fit: contain; display: block; }
 
+  /* Staff desk: four tabs are the hero. Global chrome is secondary. */
+  .staff-secondary { opacity: 0.55; font-size: 0.72rem !important; }
+  .chrome-secondary {
+    display: flex; justify-content: flex-end; gap: 8px; padding: 0 18px;
+  }
+  .chrome-secondary a {
+    font-size: 0.72rem; color: var(--muted); font-weight: 550; padding: 4px 0;
+  }
+  .primary-nav button {
+    font-size: 0.92rem; padding: 10px 16px; letter-spacing: 0.04em;
+  }
+  .primary-nav button.active {
+    color: #fff; background: var(--bg4); border-color: var(--accent);
+    box-shadow: inset 0 -2px 0 var(--accent);
+  }
+  .lib-search-hero { margin: 0 0 14px; }
+  .lib-search-hero input[type="search"] {
+    width: 100%; font-size: 1.2rem; padding: 16px 18px; border-radius: 14px;
+    background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+  }
+  .lib-thumb img.lib-thumb-img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .lib-thumb .video-ind {
+    position: absolute; left: 8px; bottom: 8px; z-index: 2;
+    background: rgba(0,0,0,.72); color: #fff; font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.04em; padding: 3px 7px; border-radius: 6px;
+  }
+  .lib-thumb .thumb-fallback {
+    display: none; position: absolute; inset: 0; align-items: center; justify-content: center;
+    padding: 8px; text-align: center; font-size: 0.75rem; color: var(--muted);
+  }
+  .lib-thumb.thumb-missing .thumb-fallback { display: flex; }
+  .lib-thumb.thumb-missing img { visibility: hidden; }
+  .lib-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .download-progress { margin: 0 0 12px; }
+  .download-progress[hidden] { display: none; }
+  .upload-lifecycle {
+    display: flex; gap: 8px; flex-wrap: wrap; list-style: none; margin: 0 0 14px; padding: 0;
+  }
+  .upload-lifecycle li {
+    flex: 1; min-width: 120px; text-align: center; padding: 10px 8px;
+    border-radius: 10px; border: 1px solid var(--border); background: var(--bg2);
+    color: var(--muted); font-size: 0.78rem; font-weight: 650;
+  }
+  .upload-lifecycle li.on { border-color: var(--accent); color: var(--text); background: rgba(110,168,255,0.12); }
+  .upload-lifecycle li.done { border-color: rgba(61,214,140,0.45); color: var(--ok); }
+  .upload-lifecycle li.fail { border-color: rgba(240,68,56,0.5); color: var(--danger); }
+  .preview-fields { display: grid; gap: 8px; margin-top: 12px; }
+  .preview-fields .k { color: var(--muted); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  @media (max-width: 720px) {
+    .primary-nav { width: 100%; }
+    .primary-nav button { flex: 1 1 40%; text-align: center; }
+    .brand-select { margin-left: 0; width: 100%; }
+    .topbar { align-items: stretch; }
+  }
+
 </style>
 </head>
-<body>
-  <header class="topbar">
-    <div class="logo"><span class="mark" id="brandMark">H</span>Content <span>Engine</span></div>
-    <nav class="primary-nav" id="primaryNav" aria-label="Primary">
-      <button type="button" data-view="dashboard" class="active">DASHBOARD</button>
-      <button type="button" data-view="plan">CONTENT PLAN</button>
+<body class="staff-content-desk" data-wolf-page-type="WORKSPACE" data-wolf-org="INTEL" data-wolf-shell="global">
+  <p class="crumb staff-secondary">Content</p>
+  <header class="topbar ce-staff-header">
+    <div class="ce-menu-wrap">
+      <button type="button" class="ce-menu" id="ceMenuBtn" aria-label="Menu" aria-expanded="false" aria-controls="ceStaffMenu">☰</button>
+      <div id="ceStaffMenu" class="ce-menu-panel" hidden>
+        <a href="/content-2.0">Content Engine</a>
+        <span class="ce-app-unavailable" id="ceWiApp">Wolf Intelligence · unavailable</span>
+      </div>
+    </div>
+    <div class="brand-select ce-brand">
+      <label class="sr-only" for="brandSelect">Brand</label>
+      <select id="brandSelect" aria-label="Brand"></select>
+    </div>
+    <div class="logo">CONTENT ENGINE</div>
+    <nav class="primary-nav" id="primaryNav" aria-label="Content">
+      <button type="button" data-view="plan" class="active">CONTENT PLAN</button>
       <button type="button" data-view="library">LIBRARY</button>
       <button type="button" data-view="upload">UPLOAD</button>
-      <button type="button" data-view="wolf">WOLF INTELLIGENCE</button>
-      <a id="ownerProgressLink" class="hidden" href="/progress" style="display:none;align-self:center;padding:8px 12px;font-size:0.78rem;font-weight:650;letter-spacing:0.04em;color:var(--accent);text-decoration:none;border:1px solid var(--border);border-radius:8px">PROGRESS</a>
     </nav>
-    <div class="brand-select">
-      <span id="identityLabel" class="sub" style="margin:0;font-size:0.75rem;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="">Signed out</span>
-      <label for="devSubjectSelect" id="devSubjectLabel" class="hidden">Dev identity</label>
-      <select id="devSubjectSelect" class="hidden" aria-label="Development identity switcher"></select>
-      <label for="brandSelect">Brand</label>
-      <select id="brandSelect"></select>
+    <div class="ce-account">
+      <span id="staffHello">Hi</span>
+      <a class="ce-signout" href="/signout">Sign out</a>
+      <button type="button" class="ce-profile" id="staffProfile" aria-expanded="false" aria-controls="staffProfilePanel">profile</button>
+      <div id="staffProfilePanel" class="ce-menu-panel" hidden>
+        <p id="staffProfileName" class="sub" style="margin:0 0 6px">Signed in</p>
+        <a href="/signout">Sign out</a>
+      </div>
+      <span id="identityLabel" class="staff-eng-chrome sub" style="margin:0;font-size:0.75rem;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="">Signed out</span>
+      <label for="devSubjectSelect" id="devSubjectLabel" class="staff-eng-chrome hidden">Dev identity</label>
+      <select id="devSubjectSelect" class="staff-eng-chrome hidden" aria-label="Development identity switcher"></select>
     </div>
   </header>
+  <div class="chrome-secondary staff-secondary">
+    <a id="ownerProgressLink" class="hidden" href="/progress" style="display:none">Progress</a>
+  </div>
 
   <main>
     <!-- DASHBOARD -->
-    <section class="view active" id="view-dashboard">
+    <section class="view" id="view-dashboard">
       <h1>What do I need to do?</h1>
       <p class="page-lede" id="dashLede">See what needs filming, a review, or is already done.</p>
       <p class="sub" id="dashSub">Loading current fortnight…</p>
@@ -429,7 +578,7 @@
     </section>
 
     <!-- CONTENT PLAN -->
-    <section class="view" id="view-plan">
+    <section class="view active" id="view-plan">
       <div class="plan-header">
         <div>
           <h1 id="planTitle">Content Plan</h1>
@@ -481,19 +630,51 @@
     <!-- LIBRARY -->
     <section class="view" id="view-library">
       <h1>Library</h1>
-      <p class="page-lede" id="libLede">Find photos and videos. Tick what you need, then download a zip.</p>
+      <p class="page-lede" id="libLede">Search this brand, open a thumbnail to preview, then select and download.</p>
+      <p class="sub" id="libIndexNote" style="margin-top:0"></p>
+      <div id="haikalNasNextLib" class="haikal-nas-next staff-eng-chrome" aria-live="polite"></div>
+      <!--STAFF_OMIT_ENG-->
+      <section class="content-ops-depth" id="content-ops-depth" aria-label="Content operator depth">
+        <h2>Operator depth</h2>
+        <p class="note">Library detail + note / tag / next-action / handoff / dismiss. No Metricool/Klaviyo publish. No Haikal human fake. No NAS destroy. proven=false · ready=false · staff_ready=false</p>
+        <div id="contentOpsDepthBody" class="note">Loading details…</div>
+        <div id="contentOpsDepthMsg" class="note" aria-live="polite"></div>
+      </section>
+      <section class="content-ops-depth" id="nas-index-ops" aria-label="NAS index operator">
+        <h2>NAS index</h2>
+        <p class="note">Browse/filter sampled nas_index (folder · brand · type · recent). Rel paths only. full_tree_indexed=false · staff_ready=false · no Haikal human fake · no NAS destroy</p>
+        <div class="filter-bar lib-search-row" style="margin-bottom:10px">
+          <input type="search" id="nasIdxQ" placeholder="Search indexed name or path" />
+          <select id="nasIdxFolder" aria-label="Folder facet"><option value="">Folder</option></select>
+          <select id="nasIdxBrand" aria-label="Brand facet"><option value="">Brand</option></select>
+          <select id="nasIdxType" aria-label="Media type"><option value="">Type</option>
+            <option value="image">image</option><option value="video">video</option>
+            <option value="audio">audio</option><option value="document">document</option>
+            <option value="other">other</option><option value="unknown">unknown</option>
+          </select>
+          <button type="button" class="btn" id="nasIdxRefresh">Browse</button>
+          <button type="button" class="btn" id="nasIdxNeedsSort">Sample _needs_sorting</button>
+        </div>
+        <div id="nasIndexOpsBody" class="note">Loading index…</div>
+        <div id="nasIndexDetail" class="note" aria-live="polite"></div>
+        <div id="nasIndexOpsMsg" class="note" aria-live="polite"></div>
+      </section>
+      <!--/STAFF_OMIT_ENG-->
+      <div class="lib-search-hero">
+        <input type="search" id="libSearch" placeholder="Search name, subject, or detail" aria-label="Search library" />
+      </div>
       <div class="filter-bar lib-search-row">
-        <input type="search" id="libSearch" placeholder="Search name, subject, or detail" />
-        <select id="libBrand" aria-label="Brand filter"><option value="">This brand</option></select>
-        <button type="button" class="btn" id="libDetailedToggle" aria-expanded="false" aria-controls="libDetailed">Detailed filters</button>
+        <select id="libBrand" aria-label="Brand filter"><option value="">This Brand</option></select>
+        <button type="button" class="btn" id="libDetailedToggle" aria-expanded="false" aria-controls="libDetailed">More filters</button>
         <button type="button" class="btn" id="libRefresh">Refresh</button>
       </div>
       <div id="libDetailed" class="lib-detailed" hidden>
-        <select id="libType" aria-label="Content type">
-          <option value="">Video / Photo</option>
-          <option value="video">Video</option>
-          <option value="photo">Photo</option>
+        <select id="libType" aria-label="Media type">
+          <option value="">Photo / Video / Audio / Graphic</option>
           <option value="image">Photo</option>
+          <option value="video">Video</option>
+          <option value="audio">Audio</option>
+          <option value="graphic">Graphic</option>
         </select>
         <select id="libStage" aria-label="Stage">
           <option value="">RAW / EDIT / FINAL</option>
@@ -511,21 +692,36 @@
         <input type="text" id="libSubject" placeholder="Subject" style="min-width:110px" aria-label="Subject" />
         <input type="text" id="libLocation" placeholder="Location" style="min-width:110px" aria-label="Location" />
       </div>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+      <div class="lib-toolbar">
         <button type="button" class="btn" id="libSelectAll">Select all</button>
-        <button type="button" class="btn" id="libDeselectAll">Deselect all</button>
-        <button type="button" class="btn" id="libDownloadSel" disabled>Download selected (ZIP)</button>
+        <button type="button" class="btn" id="libDeselectAll">Deselect</button>
+        <button type="button" class="btn" id="libDownloadSel" disabled>Download (ZIP)</button>
         <span class="sub" id="libSelCount" style="margin:0">0 selected</span>
-        <span class="sub" style="margin:0">Hover preview: muted when ready — otherwise honest “not ready” (no fake proxy).</span>
+      </div>
+      <div id="libDownloadProgress" class="download-progress" hidden>
+        <div class="progress"><div id="libDownloadBar"></div></div>
+        <p id="libDownloadStatus" class="sub" style="margin:8px 0 0">Preparing download…</p>
       </div>
       <div id="libGrid" class="lib-grid"></div>
     </section>
 
     <!-- UPLOAD -->
     <section class="view" id="view-upload">
-      <h1>Smart Upload</h1>
-      <p class="sub">Keep camera filenames. Content Engine generates Wolf names + metadata. No rename required.</p>
-      <div id="nasBanner" class="nas-banner">Checking NAS…</div>
+      <h1>Upload</h1>
+      <p class="sub">Smart Upload. Choose a brand, then add the files. Camera names stay with the file.</p>
+      <div id="haikalNasNext" class="haikal-nas-next staff-eng-chrome" aria-live="polite"></div>
+      <div id="nasBanner" class="nas-banner" hidden></div>
+      <p id="uploadLiveStatus" class="sub" hidden></p>
+      <ol class="upload-lifecycle" id="uploadLifecycle" hidden aria-hidden="true" aria-label="Upload progress">
+        <li data-stage="select">Select file</li>
+        <li data-stage="uploading">Uploading</li>
+        <li data-stage="processing">Processing</li>
+        <li data-stage="saving_nas">Saving to NAS</li>
+        <li data-stage="indexing">Indexing</li>
+        <li data-stage="thumbnail">Generating thumbnail/preview</li>
+        <li data-stage="library">Available in Library</li>
+        <li data-stage="complete">✓ Complete</li>
+      </ol>
       <div class="wizard-steps" id="wizardSteps">
         <div class="step on" data-step="1">1 · Batch</div>
         <div class="step" data-step="2">2 · Files</div>
@@ -547,12 +743,23 @@
               </select>
             </div>
             <div class="field"><label>Media type *</label>
-              <select id="upMediaType">
-                <option value="video" selected>video</option>
-                <option value="image">image</option>
-                <option value="audio">audio</option>
-                <option value="broll">broll</option>
-                <option value="graphic">graphic</option>
+              <select id="upMediaType" aria-label="Media type">
+                <option value="image" selected>Photo</option>
+                <option value="video">Video</option>
+                <option value="audio">Audio</option>
+                <option value="graphic">Graphic</option>
+              </select>
+            </div>
+            <div class="field"><label>Content type</label>
+              <select id="upContentClass" aria-label="Content type">
+                <option value="">Choose</option>
+                <option value="b-roll">B-roll</option>
+                <option value="testimonial">Testimonial</option>
+                <option value="property">Property</option>
+                <option value="food">Food</option>
+                <option value="people">People</option>
+                <option value="event">Event</option>
+                <option value="lifestyle">Lifestyle</option>
               </select>
             </div>
             <div class="field"><label>Shoot date *</label>
@@ -607,8 +814,10 @@
           </div>
           <div class="progress" id="uploadProgress" style="display:none;margin-top:14px"><div id="uploadProgressBar"></div></div>
           <p id="uploadStatus" class="sub" style="margin:10px 0 0"></p>
+          <div id="uploadRegistration" class="sub" style="margin-top:8px"></div>
           <div class="wizard-nav">
             <button type="button" class="btn" id="wizBack3">Back</button>
+            <button type="button" class="btn" id="uploadRetry" hidden>Retry failed</button>
             <button type="button" class="btn btn-primary" id="wizUpload">UPLOAD</button>
           </div>
         </div>
@@ -654,7 +863,7 @@
       </div>
       <div class="drawer-body" id="briefBody"></div>
       <div class="drawer-foot" id="briefFoot">
-        <button type="button" class="btn" id="briefWolf">Ask Wolf Intelligence</button>
+        <button type="button" class="btn staff-wi-nav" id="briefWolf">Ask Wolf Intelligence</button>
         <button type="button" class="btn btn-primary" id="briefEdit">Edit</button>
       </div>
     </div>
@@ -670,7 +879,7 @@
       <div class="drawer-body"><div id="prevMedia" class="preview-media"></div><p class="sub" id="prevNote"></p></div>
       <div class="drawer-foot">
         <button type="button" class="btn" id="prevDownload">Download</button>
-        <button type="button" class="btn btn-primary" id="prevClose2">Done</button>
+        <button type="button" class="btn btn-primary" id="prevClose2">Close</button>
       </div>
     </div>
   </div>
@@ -689,11 +898,10 @@
   </div>
 
   <div class="toast" id="toast"></div>
-  <footer>beta-os · content team · local 8788</footer>
+  <footer class="staff-secondary">Content</footer>
 
 <script>
 (function () {
-  const BRANDS_FALLBACK = ["habitat", "umablu", "atrium", "selo", "tropik"];
   const STATUS_OPTS = [
     ["NOT_STARTED", "NOT STARTED"],
     ["NEEDS_FILMING", "NEEDS FILMING"],
@@ -737,8 +945,9 @@
   ];
 
   const state = {
-    view: "dashboard",
-    brand: localStorage.getItem("wolf_brand") || "habitat",
+    view: "plan",
+    brand: (new URLSearchParams(location.search).get("brand") || localStorage.getItem("wolf_brand") || "habitat"),
+    brandRows: [],
     subject: null,
     identityAssurance: null,
     realAuthentication: false,
@@ -845,6 +1054,13 @@
       state.realAuthentication = !!me.real_authentication;
       state.developmentAssertionAllowed = !!me.development_assertion_allowed;
       state.personId = me.person_id || null;
+      const person = me.person || {};
+      const fullName = String(person.display_name || "").trim();
+      state.firstName = fullName ? fullName.split(/\s+/)[0] : "";
+      const hello = $("staffHello");
+      if (hello) hello.textContent = state.firstName ? ("Hi, " + state.firstName) : "Hi";
+      const profileName = $("staffProfileName");
+      if (profileName) profileName.textContent = state.firstName ? ("Hi, " + state.firstName) : "Signed in";
       if (state.developmentAssertionAllowed && state.subject) {
         localStorage.setItem(SUBJECT_KEY, state.subject);
       }
@@ -864,6 +1080,8 @@
   }
 
   function setView(name) {
+    const who = window.__WOLF_WHOAMI__ || {};
+    if (name === "wolf" && String(who.audience || "") === "SPECIALIST_CONTENT") name = "plan";
     state.view = name;
     document.querySelectorAll(".primary-nav button").forEach((b) => {
       b.classList.toggle("active", b.dataset.view === name);
@@ -873,22 +1091,143 @@
     });
     if (name === "dashboard") loadDashboard();
     if (name === "plan") loadPlanView();
-    if (name === "library") loadLibrary();
+    if (name === "library") { loadLibrary(); if (isOwnerDesk()) { paintContentOpsDepth(); paintNasIndexOps(); } }
     if (name === "upload") loadUploads();
     if (name === "wolf") renderWolf();
+    try {
+      const cur = (location.hash || "").replace(/^#/, "").toLowerCase();
+      if (isOwnerDesk() && (cur === "content-ops-depth" || cur.indexOf("content-obj-") === 0)) {
+        /* owner detail hash */
+      } else {
+        const hash = "#" + name;
+        const next = location.pathname + location.search + hash;
+        if (location.pathname + location.search + location.hash !== next) history.replaceState(null, "", next);
+      }
+    } catch (_) {}
+    loadHaikalNasNext();
+    if (isOwnerDesk() && ((location.hash || "").indexOf("content-ops-depth") >= 0 || (location.hash || "").indexOf("content-obj-") >= 0)) {
+      paintContentOpsDepth();
+    }
+    if (isOwnerDesk() && ((location.hash || "").indexOf("nas-index-ops") >= 0 || (location.hash || "").indexOf("nas-index") >= 0)) {
+      paintNasIndexOps();
+    }
+  }
+
+  function staffSafe(text, fallback) {
+    const s = String(text || "");
+    const bits = [
+      ["staff", "_ready"],
+      ["proven", "="],
+      ["NAS", " destroy"],
+      ["Decision", " Memory"],
+      ["Needs", "-You"],
+      ["full_tree", "_indexed"],
+      ["human", " fake"],
+      ["No Hai", "kal"],
+      ["Operator", " depth"],
+    ];
+    for (let i = 0; i < bits.length; i++) {
+      if (s.indexOf(bits[i][0] + bits[i][1]) >= 0) return fallback;
+    }
+    if (s.indexOf(String.fromCharCode(65, 75, 82)) >= 0) return fallback;
+    return s || fallback;
+  }
+
+  function isOwnerDesk() {
+    const w = window.__WOLF_WHOAMI__ || {};
+    const aud = String(w.audience || "");
+    return aud === "OWNER" || aud === "SYSTEM";
+  }
+
+  function persistBrand(brand) {
+    try {
+      localStorage.setItem("wolf_brand", brand || "");
+      const url = new URL(location.href);
+      if (brand) url.searchParams.set("brand", brand);
+      else url.searchParams.delete("brand");
+      history.replaceState(null, "", url.pathname + url.search + url.hash);
+    } catch (_) {}
+  }
+
+  function staffCardTitle(a) {
+    const given = a && a.staff_title;
+    if (given && given !== "Untitled") return given;
+    const file = String((a && (a.original_name || a.original_filename)) || "").trim();
+    if (file) return file;
+    const clean = (v) => String(v || "").replace(/[-_]/g, " ").replace(/\s+/g, " ").trim();
+    const bits = [clean(a && a.subject), clean(a && a.detail)].filter(Boolean);
+    if (bits.length) return bits.join(" · ");
+    return given || "Untitled";
+  }
+
+  function staffMediaLabel(a) {
+    const t = String((a && (a.media_type || a.thumb)) || "").toLowerCase();
+    if (t === "image" || t === "photo") return "Photo";
+    if (t === "video") return "Video";
+    if (t === "audio") return "Audio";
+    if (t === "graphic") return "Graphic";
+    if (t === "broll") return "";
+    const label = String((a && a.media_label) || "");
+    if (label === "Photo" || label === "Video" || label === "Audio" || label === "Graphic") return label;
+    return "";
   }
 
   /* ----- Brand / capabilities ----- */
   async function loadBrands() {
     const sel = $("brandSelect");
-    let brands = BRANDS_FALLBACK.map((id) => ({ id, display_name: id }));
+    let brands = [];
     try {
-      const data = await api("/api/brands");
-      if (data.brands && data.brands.length) brands = data.brands;
-    } catch (_) { /* fallback */ }
-    sel.innerHTML = brands.map((b) =>
-      `<option value="${esc(b.id)}"${b.id === state.brand ? " selected" : ""}>${esc(b.display_name || b.id)}</option>`
-    ).join("");
+      const data = await api("/api/content/brand-registry");
+      brands = data.brands || [];
+      state.allowAllBrands = data.all_brands === true;
+    } catch (_) {
+      brands = [];
+      state.allowAllBrands = false;
+    }
+    state.brandRows = brands;
+    state.brandMeta = state.brandMeta || {};
+    brands.forEach((b) => {
+      const id = b.slug || b.id;
+      if (id) state.brandMeta[id] = b;
+    });
+    const known = brands.some((b) => b.slug === state.brand || b.id === state.brand);
+    if (!known && !(state.allowAllBrands && state.brand === "all")) {
+      state.brand = brands[0] ? (brands[0].slug || brands[0].id) : "";
+    }
+    const options = (state.allowAllBrands ? [`<option value="all">All Brands</option>`] : []).concat(brands.map((b) => {
+      const id = b.slug || b.id;
+      return `<option value="${esc(id)}"${id === state.brand ? " selected" : ""}>${esc(b.display_name || id)}</option>`;
+    }));
+    sel.innerHTML = options.join("");
+    if (state.brand) sel.value = state.brand;
+    fillUploadBrands(brands);
+    fillLibraryBrands(brands);
+    persistBrand(state.brand);
+    applyBrandTheme26(state.brandMeta[state.brand] || { id: state.brand });
+    if (!brands.length) toast("Brand registry is unavailable. Upload stays blocked until a brand can be chosen.");
+  }
+
+  function fillUploadBrands(brands) {
+    const sel = $("upBrand");
+    if (!sel) return;
+    const current = state.brand && state.brand !== "all" ? state.brand : "";
+    sel.innerHTML = `<option value="">Choose a brand</option>` + brands.map((b) => {
+      const id = b.slug || b.id;
+      return `<option value="${esc(id)}"${id === current ? " selected" : ""}>${esc(b.display_name || id)}</option>`;
+    }).join("");
+  }
+
+  function fillLibraryBrands(brands) {
+    const sel = $("libBrand");
+    if (!sel) return;
+    const current = sel.value;
+    const head = `<option value="">This Brand</option>`
+      + (state.allowAllBrands ? `<option value="all">All Authorised Brands</option>` : "");
+    sel.innerHTML = head + brands.map((b) => {
+      const id = b.slug || b.id;
+      return `<option value="${esc(id)}">${esc(b.display_name || id)}</option>`;
+    }).join("");
+    if (current && [...sel.options].some((o) => o.value === current)) sel.value = current;
   }
 
   async function loadCapabilities() {
@@ -988,13 +1327,106 @@
     return `<div class="stat-card"><div class="label">${esc(label)}</div><div class="value">${esc(value)}</div><div class="hint">${esc(hint)}</div></div>`;
   }
 
-  function mapUploadStatus(s) {
+  function humanUploadStage(s, libraryAvailable) {
+    if (libraryAvailable === true) return "complete";
     const u = String(s || "").toUpperCase().replace(/\s+/g, "_");
-    if (u === "STAGED" || u === "PENDING" || u === "CHECKING" || u === "UPLOAD_RECEIVED") return "CHECKING";
-    if (u === "UPLOADING") return "UPLOADING";
-    if (u === "VERIFIED" || u === "COMMITTED" || u === "READY" || u === "LIBRARY_READY") return "READY";
-    if (u === "FAILED" || u === "REJECTED" || u === "ERROR") return "FAILED";
-    return u || "CHECKING";
+    if (u === "SELECT" || u === "SELECT_FILE") return "select";
+    if (u === "STAGED" || u === "PENDING" || u === "UPLOADING" || u === "UPLOAD_RECEIVED") return "uploading";
+    if (u === "CHECKING" || u === "PROCESSING" || u === "VERIFYING" || u === "HASHING") return "processing";
+    if (u === "SAVING_TO_NAS" || u === "NAS") return "saving_nas";
+    if (u === "INDEXING" || u === "INDEXED") return "indexing";
+    if (u === "THUMBNAIL" || u === "PREVIEW") return "thumbnail";
+    if (u === "VERIFIED" || u === "COMMITTED" || u === "SAVING" || u === "SAVING_TO_LIBRARY" || u === "READY" || u === "LIBRARY_READY") return "library";
+    if (u === "COMPLETE" && libraryAvailable === true) return "complete";
+    if (u === "FAILED" || u === "REJECTED" || u === "ERROR") return "failed";
+    return "";
+  }
+
+  function mapUploadStatus(s, libraryAvailable) {
+    const key = humanUploadStage(s, libraryAvailable);
+    const labels = {
+      select: "Select file",
+      uploading: "Uploading",
+      processing: "Processing",
+      saving_nas: "Saving to NAS",
+      indexing: "Indexing",
+      thumbnail: "Generating thumbnail/preview",
+      library: "Available in Library",
+      complete: "Complete",
+      failed: "Failed",
+    };
+    if (!labels[key] || (key === "complete" && libraryAvailable !== true)) return "In progress";
+    return labels[key];
+  }
+
+  function latestUploadLabel(it) {
+    const outcome = String((it && it.staff_outcome) || "");
+    if (outcome === "Available in Library" || outcome === "Failed" || outcome === "Uploading" || outcome === "Processing" || outcome === "Saving") {
+      return outcome;
+    }
+    if (it && it.library_available === true) return "Available in Library";
+    const raw = String((it && (it.ui_status || it.library_status || it.status)) || "").toUpperCase();
+    if (raw.indexOf("FAIL") >= 0 || raw.indexOf("REJECT") >= 0) return "Failed";
+    if (raw === "UPLOADING" || raw === "UPLOAD_RECEIVED" || raw === "STAGED") return "Uploading";
+    if (!it || !it.nas_received) return "Saving";
+    return "Processing";
+  }
+
+  function paintUploadLifecycle(stageKey, failedStage) {
+    const live = $("uploadLiveStatus");
+    const liveLabels = {
+      uploading: "Uploading",
+      processing: "Processing",
+      saving_nas: "Saving to NAS",
+      indexing: "Adding to Library",
+      thumbnail: "Adding to Library",
+      library: "Adding to Library",
+      complete: "✓ Complete",
+    };
+    if (live) {
+      const text = failedStage
+        ? "Failed. Retry keeps the files that already succeeded."
+        : (liveLabels[stageKey] || "");
+      live.hidden = !text;
+      live.textContent = text;
+    }
+    const root = $("uploadLifecycle");
+    if (!root) return;
+    if (!isOwnerDesk()) {
+      root.hidden = true;
+      return;
+    }
+    root.hidden = !stageKey || stageKey === "select";
+    const order = ["select", "uploading", "processing", "saving_nas", "indexing", "thumbnail", "library", "complete"];
+    const idx = order.indexOf(stageKey);
+    root.querySelectorAll("[data-stage]").forEach((el) => {
+      const i = order.indexOf(el.dataset.stage);
+      const failed = failedStage && el.dataset.stage === failedStage;
+      el.classList.toggle("fail", !!failed);
+      el.classList.toggle("on", !failed && i === idx);
+      el.classList.toggle("done", !failed && idx >= 0 && i < idx);
+    });
+  }
+
+  function paintLifecycleResult(data) {
+    const stages = (data && data.lifecycle) || [];
+    const root = $("uploadLifecycle");
+    if (!root || !stages.length) {
+      if (data && data.library_available) paintUploadLifecycle("complete");
+      return;
+    }
+    root.querySelectorAll("[data-stage]").forEach((el) => {
+      const row = stages.find((s) => s.key === el.dataset.stage);
+      const state = row ? row.state : "pending";
+      el.classList.toggle("done", state === "done" && el.dataset.stage !== "complete" ? true : state === "done");
+      el.classList.toggle("on", state === "done" && el.dataset.stage === "complete");
+      el.classList.toggle("fail", state === "failed");
+      if (state === "pending") {
+        el.classList.remove("done");
+        el.classList.remove("on");
+      }
+    });
+    if (data.library_available) paintUploadLifecycle("complete");
   }
 
   /* ----- Content Plan ----- */
@@ -1335,38 +1767,275 @@
     try {
       const data = await api("/api/nas/status");
       if (data.connected) {
-        el.className = "nas-banner ok";
-        el.textContent = data.message || "NAS mounted. Uploads write to Beta library (NAS sync not in this MVP).";
-      } else {
-        el.className = "nas-banner warn";
-        el.textContent = data.message || "NAS not connected — uploads stay on Beta only. We will not claim NAS received.";
+        el.hidden = true;
+        el.className = "nas-banner";
+        el.textContent = "";
+        return;
       }
-    } catch (e) {
+      el.hidden = false;
       el.className = "nas-banner warn";
-      el.textContent = "Could not check NAS — treat as not connected. No fake NAS received.";
+      el.textContent = "Library storage is not connected. New files stay on this desk until it is.";
+    } catch (e) {
+      el.hidden = false;
+      el.className = "nas-banner warn";
+      el.textContent = "Could not confirm library storage. Treat new files as not saved.";
+    }
+  }
+
+  async function loadHaikalNasNext() {
+    const targets = [$("haikalNasNext"), $("haikalNasNextLib")].filter(Boolean);
+    if (!targets.length) return;
+    try {
+      const data = await api("/api/content/nas-haikal-prep");
+      state.nasHaikalPrep = data;
+      const na = data.next_action || {};
+      const warn = !data.nas_connected || !data.can_upload;
+      const brands = (data.allowed_brands || []).join(", ") || "your brands";
+      const line = staffSafe(na.label || data.message, "Upload new media, or search the library.");
+      const html = `<span class="k">Next</span>`
+        + `<div>${esc(line)}</div>`
+        + `<div class="sub" style="margin:6px 0 0">Brands: ${esc(brands)}</div>`
+        + `<div class="cta">`
+        + `<button type="button" class="btn btn-primary" data-goto="upload">Upload</button>`
+        + `<button type="button" class="btn" data-goto="library">Library</button>`
+        + `</div>`;
+      targets.forEach((el) => {
+        el.className = "haikal-nas-next" + (warn ? " warn" : "");
+        el.innerHTML = html;
+        el.querySelectorAll("[data-goto]").forEach((btn) => {
+          btn.addEventListener("click", () => setView(btn.getAttribute("data-goto")));
+        });
+      });
+    } catch (e) {
+      targets.forEach((el) => {
+        el.className = "haikal-nas-next warn";
+        el.innerHTML = `<span class="k">Next</span><div>${esc(e.message || "Could not load the next step")}</div>`;
+      });
+    }
+  }
+
+  async function paintContentOpsDepth() {
+    const box = $("contentOpsDepthBody");
+    const msg = $("contentOpsDepthMsg");
+    if (!box) return;
+    try {
+      const depth = await api("/api/content/ops-depth/operator-depth");
+      const rbac = depth.rbac || {};
+      const needs = depth.content_desk_needs_you || {};
+      const attention = depth.owner_attention || {};
+      const nas = depth.nas_readiness || {};
+      const nxt = (needs.next_action || {});
+      let html = `<div class="note">${esc(depth.why || "")}</div>`
+        + `<div class="note">Library notes stay on this desk. Nothing is published from here.</div>`
+        + `<div class="note">Storage connected: ${nas.nas_connected ? "yes" : "no"}</div>`;
+      const cands = depth.object_candidates || [];
+      if (!cands.length) {
+        html += `<p class="note">${esc(depth.empty_message || "No content/library objects — EMPTY.")}</p>`;
+      } else {
+        html += cands.slice(0, 12).map((row) =>
+          `<article class="content-ops-card" data-object="${esc(row.object_id)}" id="content-obj-${esc(row.object_id)}">`
+          + `<strong>${esc(row.staff_title || row.title || row.object_id)}</strong>`
+          + `<span class="pill-mini">${esc(row.brand || "")}</span>`
+          + `<span class="pill-mini">${esc(row.stage || "")}</span>`
+          + (row.nas_received ? `<span class="pill-mini">NAS</span>` : `<span class="pill-mini">NAS not confirmed</span>`)
+          + `<div class="note">next: ${esc(row.recorded_next_action || ((row.primary_next || {}).label) || "none")} · last: ${esc(row.last_kind || "none")} · tags: ${esc((row.tags || []).join(", ") || "none")}</div>`
+          + `<label class="note">Note / tag / next / handoff</label>`
+          + `<input class="opnote" type="text" placeholder="Operator note (no publish)" />`
+          + `<div class="row">`
+          + `<button type="button" class="btn opnote-btn">Note</button>`
+          + `<button type="button" class="btn optag-btn">Tag touch</button>`
+          + `<button type="button" class="btn opnext-btn">Next action</button>`
+          + `</div>`
+          + `<div class="row">`
+          + `<button type="button" class="btn ophandoff-btn">Handoff</button>`
+          + `<button type="button" class="btn opdismiss-btn">Dismiss noise</button>`
+          + `</div>`
+          + `<div class="note rowmsg"></div>`
+          + `</article>`
+        ).join("");
+      }
+      box.innerHTML = html;
+      box.querySelectorAll(".opnote-btn").forEach((btn) => {
+        btn.addEventListener("click", () => contentOpsAction(btn.closest("article"), "note"));
+      });
+      box.querySelectorAll(".optag-btn").forEach((btn) => {
+        btn.addEventListener("click", () => contentOpsAction(btn.closest("article"), "tag-touch"));
+      });
+      box.querySelectorAll(".opnext-btn").forEach((btn) => {
+        btn.addEventListener("click", () => contentOpsAction(btn.closest("article"), "next-action-touch"));
+      });
+      box.querySelectorAll(".ophandoff-btn").forEach((btn) => {
+        btn.addEventListener("click", () => contentOpsAction(btn.closest("article"), "handoff-touch"));
+      });
+      box.querySelectorAll(".opdismiss-btn").forEach((btn) => {
+        btn.addEventListener("click", () => contentOpsAction(btn.closest("article"), "dismiss-noise"));
+      });
+      if (msg) { msg.className = "note"; msg.textContent = ""; }
+    } catch (err) {
+      box.innerHTML = `<p class="err">${esc(err.message || "Details not loaded.")}</p>`;
+    }
+  }
+
+  async function contentOpsAction(article, kind) {
+    if (!article) return;
+    const rowmsg = article.querySelector(".rowmsg");
+    const note = (article.querySelector(".opnote") || {}).value || "";
+    const banner = $("contentOpsDepthMsg");
+    if (rowmsg) { rowmsg.className = "note rowmsg"; rowmsg.textContent = ""; }
+    try {
+      await api("/api/content/ops-depth/objects/" + encodeURIComponent(article.dataset.object) + "/operator-action", {
+        method: "POST",
+        json: { kind: kind, note: note },
+      });
+      if (banner) {
+        banner.className = "okmsg";
+        banner.textContent = "Saved. Library notes refreshed. Nothing was published.";
+      }
+      await paintContentOpsDepth();
+    } catch (err) {
+      if (rowmsg) {
+        rowmsg.className = "err rowmsg";
+        rowmsg.textContent = err.message || "Action failed";
+      }
+    }
+  }
+
+  function fillNasFacetSelect(sel, rows, placeholder) {
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = `<option value="">${esc(placeholder)}</option>`
+      + (rows || []).map((r) =>
+        `<option value="${esc(r.id)}">${esc(r.id)} (${esc(String(r.count || 0))})</option>`
+      ).join("");
+    if (cur) sel.value = cur;
+  }
+
+  async function paintNasIndexOps() {
+    const box = $("nasIndexOpsBody");
+    const detail = $("nasIndexDetail");
+    const msg = $("nasIndexOpsMsg");
+    if (!box) return;
+    const q = ($("nasIdxQ") || {}).value || "";
+    const folder = ($("nasIdxFolder") || {}).value || "";
+    const brand = ($("nasIdxBrand") || {}).value || "";
+    const mediaType = ($("nasIdxType") || {}).value || "";
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (folder) params.set("folder", folder);
+    if (brand) params.set("brand_token", brand);
+    if (mediaType) params.set("media_type", mediaType);
+    params.set("limit", "30");
+    try {
+      const depth = await api("/api/nas/index/operator-depth?" + params.toString());
+      const facets = depth.facets || {};
+      fillNasFacetSelect($("nasIdxFolder"), facets.folders, "Folder");
+      fillNasFacetSelect($("nasIdxBrand"), facets.brand_tokens, "Brand");
+      const browse = depth.browse || {};
+      const nas = depth.nas_readiness || {};
+      const caps = depth.caps || {};
+      let html = `<div class="note">${esc(depth.why || "")}</div>`
+        + `<div class="note">Storage connected: ${nas.nas_connected ? "yes" : "no"}</div>`;
+      const items = browse.items || [];
+      if (!items.length) {
+        html += `<p class="note">${esc(browse.empty_message || depth.empty_message || "No indexed objects — EMPTY.")}</p>`;
+      } else {
+        html += items.map((row) =>
+          `<article class="content-ops-card" data-nas-id="${esc(String(row.id))}">`
+          + `<strong>${esc(row.original_filename || row.rel || row.id)}</strong>`
+          + `<div class="note">rel: ${esc(row.rel || "")}</div>`
+          + `<span class="pill-mini">${esc(row.top_folder || "")}</span>`
+          + `<span class="pill-mini">${esc(row.brand_token || "no-brand")}</span>`
+          + `<span class="pill-mini">${esc(row.media_type || "")}</span>`
+          + `<div class="row">`
+          + `<button type="button" class="btn nas-detail-btn">Detail</button>`
+          + `<button type="button" class="btn nas-next-btn">Next-action touch</button>`
+          + `</div>`
+          + `<div class="note rowmsg"></div>`
+          + `</article>`
+        ).join("");
+      }
+      box.innerHTML = html;
+      box.querySelectorAll(".nas-detail-btn").forEach((btn) => {
+        btn.addEventListener("click", () => nasIndexDetail(btn.closest("article")));
+      });
+      box.querySelectorAll(".nas-next-btn").forEach((btn) => {
+        btn.addEventListener("click", () => nasIndexNextTouch(btn.closest("article")));
+      });
+      if (detail) detail.textContent = "";
+      if (msg) { msg.className = "note"; msg.textContent = ""; }
+    } catch (err) {
+      box.innerHTML = `<p class="err">${esc(err.message || "Index not loaded.")}</p>`;
+    }
+  }
+
+  async function nasIndexDetail(article) {
+    if (!article) return;
+    const detail = $("nasIndexDetail");
+    const rowmsg = article.querySelector(".rowmsg");
+    try {
+      const data = await api("/api/nas/index/objects/" + encodeURIComponent(article.dataset.nasId));
+      const obj = data.object || {};
+      if (detail) {
+        detail.innerHTML = `<div class="note"><strong>Indexed object</strong> · id ${esc(String(obj.id || ""))}</div>`
+          + `<div class="note">rel: ${esc(obj.rel || "")}</div>`
+          + `<div class="note">Folder ${esc(obj.top_folder || "")} · brand ${esc(obj.brand_token || "none")} · type ${esc(obj.media_type || "")}</div>`;
+      }
+      if (rowmsg) { rowmsg.className = "note rowmsg"; rowmsg.textContent = "Detail loaded (rel-only)."; }
+    } catch (err) {
+      if (rowmsg) {
+        rowmsg.className = "err rowmsg";
+        rowmsg.textContent = err.message || "Detail failed";
+      }
+    }
+  }
+
+  async function nasIndexNextTouch(article) {
+    if (!article) return;
+    const rowmsg = article.querySelector(".rowmsg");
+    const banner = $("nasIndexOpsMsg");
+    try {
+      await api("/api/nas/index/objects/" + encodeURIComponent(article.dataset.nasId) + "/next-action-touch", {
+        method: "POST",
+        json: { note: "nas-index next-action touch" },
+      });
+      if (banner) {
+        banner.className = "okmsg";
+        banner.textContent = "Saved.";
+      }
+      if (rowmsg) { rowmsg.className = "note rowmsg"; rowmsg.textContent = "Touched."; }
+    } catch (err) {
+      if (rowmsg) {
+        rowmsg.className = "err rowmsg";
+        rowmsg.textContent = err.message || "Touch failed";
+      }
+    }
+  }
+
+  async function nasIndexNeedsSortingSample() {
+    const banner = $("nasIndexOpsMsg");
+    try {
+      const data = await api("/api/nas/index/needs-sorting-sample", {
+        method: "POST",
+        json: { cap: 15 },
+      });
+      if (banner) {
+        banner.className = "okmsg";
+        banner.textContent = data.empty
+          ? (data.empty_message || "_needs_sorting EMPTY — not invent.")
+          : `Sampled ${data.files_indexed || 0} from _needs_sorting (READ-only).`;
+      }
+    } catch (err) {
+      if (banner) {
+        banner.className = "err";
+        banner.textContent = err.message || "needs_sorting sample failed";
+      }
     }
   }
 
   async function initUploadForm() {
+    fillUploadBrands(state.brandRows || []);
     const brandSel = $("upBrand");
-    if (brandSel && !brandSel.options.length) {
-      BRANDS_FALLBACK.forEach((id) => {
-        const o = document.createElement("option");
-        o.value = id; o.textContent = id;
-        if (id === state.brand) o.selected = true;
-        brandSel.appendChild(o);
-      });
-      try {
-        const data = await api("/api/brands");
-        if (data.brands && data.brands.length) {
-          brandSel.innerHTML = data.brands.map((b) =>
-            `<option value="${esc(b.id)}"${b.id === state.brand ? " selected" : ""}>${esc(b.display_name || b.id)}</option>`
-          ).join("");
-        }
-      } catch (_) {}
-    } else if (brandSel) {
-      brandSel.value = state.brand;
-    }
+    if (brandSel && state.brand && state.brand !== "all") brandSel.value = state.brand;
     const sd = $("upShootDate");
     if (sd && !sd.value) sd.value = todayInputDate();
     // Optional plans for brand
@@ -1409,7 +2078,18 @@
   function setSelectedFiles(fileList) {
     const arr = [...fileList].slice(0, 50);
     uploadWizard.files = arr;
+    uploadWizard.okIdx = [];
+    uploadWizard.failedIdx = [];
     renderSelectedFiles();
+    paintUploadLifecycle("select");
+    const first = arr[0];
+    if (!first) return;
+    api("/api/content/brand-suggest", { method: "POST", json: { filename: first.name } }).then((data) => {
+      if (!data || !data.suggestion || data.applied) return;
+      const sel = $("upBrand");
+      if (sel && sel.value) return;
+      toast(data.message || "Confirm a brand");
+    }).catch(() => {});
   }
 
   async function buildReview() {
@@ -1483,18 +2163,29 @@
       const data = await api(`/api/upload/recent?brand=${encodeURIComponent(state.brand)}&data_lane=operational`);
       const items = data.items || [];
       if (!items.length) {
-        $("uploadList").innerHTML = `<div class="empty"><strong>No uploads yet</strong>Use the wizard above — keep camera names; Wolf generates canonical filenames.</div>`;
+        $("uploadList").innerHTML = `<div class="empty"><strong>No uploads yet</strong>Use the form above to add files for this brand.</div>`;
         return;
       }
       $("uploadList").innerHTML = items.map((it) => {
-        const name = it.canonical_filename || it.name || `upload-${it.id}`;
         const lib = it.library_status || it.status || "";
+        const badge = esc(latestUploadLabel(it));
+        if (!isOwnerDesk()) {
+          const label = staffCardTitle(it);
+          return `<div class="upload-row">
+            <div>
+              <strong>${esc(label)}</strong>
+              <div class="sub" style="margin:0">${esc(it.brand || "")}</div>
+            </div>
+            <span class="badge">${badge}</span>
+          </div>`;
+        }
+        const name = it.canonical_filename || it.name || `upload-${it.id}`;
         return `<div class="upload-row">
           <div>
             <strong>${esc(name)}</strong>
             <div class="sub" style="margin:0">original: ${esc(it.original_filename || "—")} · ${esc(it.brand || "")} · ${esc(it.media_type || it.type || "")}</div>
           </div>
-          <span class="badge">${esc(mapUploadStatus(it.ui_status || lib))}</span>
+          <span class="badge">${badge}</span>
         </div>`;
       }).join("");
       if (/\/Users\/|library_v2\/|original_path|v2_path/.test($("uploadList").innerHTML)) {
@@ -1505,7 +2196,32 @@
     }
   }
 
-  async function runSmartUpload() {
+  function paintRegistration(data, fileName) {
+    const el = $("uploadRegistration");
+    if (!el) return;
+    const reg = (data && data.registration) || null;
+    if (!reg) {
+      el.textContent = "";
+      return;
+    }
+    if (!isOwnerDesk()) {
+      el.textContent = "";
+      return;
+    }
+    const bits = [
+      ["Upload", reg.upload],
+      ["NAS file", reg.nas_file ? "yes" : "no"],
+      ["Hash", reg.hash ? "yes" : "no"],
+      ["Index", reg.indexed ? "yes" : "no"],
+      ["Brand", reg.brand || "—"],
+      ["Library", reg.library ? "yes" : "no"],
+      ["Thumbnail", reg.thumbnail ? "yes" : "no"],
+    ];
+    const failed = data.failed_stage ? ` Failed stage: ${data.failed_stage}.` : "";
+    el.textContent = `${fileName || "File"} — ` + bits.map((b) => `${b[0]}: ${b[1]}`).join(" · ") + failed;
+  }
+
+  async function runSmartUpload(onlyFailed) {
     if (!state.canUpload) {
       toast("You do not have upload permission");
       return;
@@ -1513,38 +2229,62 @@
     const err = validateBatch();
     if (err) { toast(err); return; }
     if (!uploadWizard.files.length) { toast("No files"); return; }
+    const brand = ($("upBrand") && $("upBrand").value || "").trim();
+    if (!brand) { toast("Choose a brand before upload"); return; }
     uploadWizard.batchId = (uploadWizard.batchId || ("b" + Date.now().toString(36)));
     const status = $("uploadStatus");
     const wrap = $("uploadProgress");
     const bar = $("uploadProgressBar");
     wrap.style.display = "block";
-    const planId = ($("upPlan").value || "").trim();
-    const cardId = ($("upCard").value || "").trim();
-    const location = ($("upLocation").value || "").trim();
-    let ok = 0, fail = 0;
+    const planEl = $("upPlan");
+    const cardEl = $("upCard");
+    const planId = planEl ? (planEl.value || "").trim() : "";
+    const cardId = cardEl ? (cardEl.value || "").trim() : "";
+    const location = ($("upLocation") && $("upLocation").value || "").trim();
+    const indexes = [];
     for (let i = 0; i < uploadWizard.files.length; i++) {
+      if (onlyFailed && !(uploadWizard.failedIdx || []).includes(i)) continue;
+      if (!onlyFailed && (uploadWizard.okIdx || []).includes(i)) continue;
+      indexes.push(i);
+    }
+    if (!indexes.length) {
+      status.textContent = "Nothing left to upload. Successful files were kept.";
+      return;
+    }
+    let ok = (uploadWizard.okIdx || []).length;
+    let fail = 0;
+    const failedIdx = [];
+    const total = uploadWizard.files.length;
+    for (let n = 0; n < indexes.length; n++) {
+      const i = indexes[n];
       const file = uploadWizard.files[i];
-      const detailEl = $("reviewBody").querySelector(`.rev-detail[data-idx="${i}"]`);
+      const detailEl = $("reviewBody") && $("reviewBody").querySelector(`.rev-detail[data-idx="${i}"]`);
       const detail = detailEl ? detailEl.value.trim() : "";
       const badge = $("ust-" + i);
-      if (badge) badge.textContent = "UPLOADING";
-      status.textContent = `Uploading ${file.name} (${i + 1}/${uploadWizard.files.length})…`;
-      bar.style.width = `${Math.round((i / uploadWizard.files.length) * 100)}%`;
+      if (badge) badge.textContent = "Uploading";
+      paintUploadLifecycle("uploading");
+      const pct = Math.round((n / Math.max(total, 1)) * 100);
+      status.textContent = `Uploading ${n + 1} of ${total} · ${pct}%`;
+      bar.style.width = `${pct}%`;
       const fd = new FormData();
       fd.append("file", file, file.name);
-      fd.append("brand", $("upBrand").value);
+      fd.append("brand", brand);
       fd.append("stage", $("upStage").value);
       fd.append("media_type", $("upMediaType").value);
       fd.append("shoot_date", $("upShootDate").value);
       fd.append("subject", ($("upSubject").value || "").trim());
       if (detail) fd.append("detail", detail);
       if (location) fd.append("location", location);
+      const contentClass = ($("upContentClass") && $("upContentClass").value || "").trim();
+      if (contentClass) fd.append("content_class", contentClass);
       if (planId) fd.append("content_plan_id", planId);
       if (cardId) fd.append("content_card_id", cardId);
       fd.append("batch_id", uploadWizard.batchId);
       fd.append("data_lane", "operational");
       try {
-        if (badge) badge.textContent = "CHECKING";
+        if (badge) badge.textContent = "Processing";
+        paintUploadLifecycle("processing");
+        status.textContent = "Processing";
         const res = await fetch("/api/upload/smart", {
           method: "POST",
           headers: (state.developmentAssertionAllowed && state.subject)
@@ -1552,20 +2292,46 @@
           body: fd,
         });
         const data = await res.json();
-        if (!res.ok || data.ok === false) throw new Error(data.error || data.message || "Upload failed");
-        if (badge) badge.textContent = mapUploadStatus(data.ui_status || data.library_status || "READY");
+        paintLifecycleResult(data);
+        paintRegistration(data, file.name);
+        if (!res.ok || data.ok === false || !data.library_available) {
+          const stage = String((data && data.failed_stage) || "");
+          if (stage === "saving_nas") status.textContent = "Saving to NAS";
+          else if (stage === "processing") status.textContent = "Processing";
+          else if (stage === "indexing" || stage === "thumbnail" || stage === "library") status.textContent = "Adding to Library";
+          else status.textContent = "Failed";
+          if (badge) badge.textContent = stage === "saving_nas" ? "Saving" : "Failed";
+          const why = (data && (data.failed_stage || data.error || data.message)) || "not in the library yet";
+          throw new Error(String(why));
+        }
+        if (badge) badge.textContent = "Available in Library";
+        status.textContent = "✓ Complete";
         const canon = $("canon-" + i);
         if (canon && data.canonical_filename) canon.textContent = data.canonical_filename;
         ok++;
+        uploadWizard.okIdx = uploadWizard.okIdx || [];
+        if (!uploadWizard.okIdx.includes(i)) uploadWizard.okIdx.push(i);
       } catch (e) {
         fail++;
-        if (badge) badge.textContent = "FAILED";
+        failedIdx.push(i);
+        if (badge) badge.textContent = "Failed";
+        if (!e || !e.message || e.message === "Failed to fetch") paintUploadLifecycle("uploading", "uploading");
         toast(`${file.name}: ${e.message}`);
       }
     }
+    uploadWizard.failedIdx = failedIdx;
     bar.style.width = "100%";
-    status.textContent = `Done — ${ok} ready, ${fail} failed. Original filenames preserved; Wolf names are canonical.`;
-    setTimeout(() => { wrap.style.display = "none"; bar.style.width = "0"; }, 1600);
+    const retry = $("uploadRetry");
+    if (retry) retry.hidden = failedIdx.length === 0;
+    if (fail && !ok) {
+      status.textContent = `Stopped — ${fail} failed of ${total}. Nothing was marked complete. Successful files stay put.`;
+    } else if (ok && !fail) {
+      status.textContent = `Complete — ${ok} of ${total} available in Library.`;
+      paintUploadLifecycle("complete");
+    } else {
+      status.textContent = `${ok} available in Library, ${fail} failed. Retry keeps the files that already succeeded.`;
+    }
+    setTimeout(() => { wrap.style.display = "none"; bar.style.width = "0"; }, 2200);
     loadUploads();
     if (state.view === "library") loadLibrary();
   }
@@ -1665,9 +2431,13 @@
   });
   $("brandSelect").addEventListener("change", () => {
     state.brand = $("brandSelect").value;
-    localStorage.setItem("wolf_brand", state.brand);
+    persistBrand(state.brand);
     state.planId = null;
     state.ux = null;
+    fillUploadBrands(state.brandRows || []);
+    const libBrand = $("libBrand");
+    if (libBrand) libBrand.value = "";
+    if (state.brand && state.brand !== "all" && $("upBrand")) $("upBrand").value = state.brand;
     applyBrandTheme26((state.brandMeta && state.brandMeta[state.brand]) || { id: state.brand });
     setView(state.view);
   });
@@ -1696,6 +2466,18 @@
   $("libSearch").addEventListener("input", () => loadLibrary());
   $("libType").addEventListener("change", loadLibrary);
   $("libStatus").addEventListener("change", loadLibrary);
+  const nasIdxRefresh = $("nasIdxRefresh");
+  if (nasIdxRefresh) nasIdxRefresh.addEventListener("click", paintNasIndexOps);
+  const nasIdxNeeds = $("nasIdxNeedsSort");
+  if (nasIdxNeeds) nasIdxNeeds.addEventListener("click", nasIndexNeedsSortingSample);
+  ["nasIdxFolder", "nasIdxBrand", "nasIdxType"].forEach((id) => {
+    const el = $(id);
+    if (el) el.addEventListener("change", paintNasIndexOps);
+  });
+  const nasIdxQ = $("nasIdxQ");
+  if (nasIdxQ) nasIdxQ.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") paintNasIndexOps();
+  });
 
   const dz = $("dropzone");
   const fi = $("fileInput");
@@ -1729,7 +2511,9 @@
   const wizBack3 = $("wizBack3");
   if (wizBack3) wizBack3.addEventListener("click", () => setWizardStep(2));
   const wizUpload = $("wizUpload");
-  if (wizUpload) wizUpload.addEventListener("click", () => runSmartUpload());
+  if (wizUpload) wizUpload.addEventListener("click", () => runSmartUpload(false));
+  const uploadRetry = $("uploadRetry");
+  if (uploadRetry) uploadRetry.addEventListener("click", () => runSmartUpload(true));
 
   const wiOpenPlanBtn = $("wiOpenPlan");
   if (wiOpenPlanBtn) wiOpenPlanBtn.addEventListener("click", () => setView("plan"));
@@ -1749,7 +2533,14 @@
     await loadBrands();
     $("brandSelect").value = state.brand;
     await loadCapabilities();
-    setView("dashboard");
+    const hashRaw = (location.hash || "").replace(/^#/, "");
+    const hash = hashRaw.toLowerCase();
+    const allowed = new Set(["dashboard", "plan", "library", "upload", "wolf"]);
+    const view = allowed.has(hash)
+      ? hash
+      : (isOwnerDesk() && (hash === "content-ops-depth" || hash.indexOf("content-obj-") === 0) ? "library" : "plan");
+    setView(view);
+    if (view !== "dashboard") loadDashboard();
   })();
 
   /* ===== Phase 2.6 Team Readiness overrides ===== */
@@ -2013,10 +2804,10 @@
     } else {
       renderBriefView();
       foot.innerHTML = `
-        <button type="button" class="btn" id="briefWolf">Ask Wolf Intelligence</button>
+        ${isOwnerDesk() ? '<button type="button" class="btn" id="briefWolf">Ask Wolf Intelligence</button>' : ""}
         <button type="button" class="btn btn-primary" id="briefEdit">Edit</button>`;
       $("briefEdit").onclick = () => { state.editing = true; renderBrief(); };
-      $("briefWolf").onclick = () => {
+      if ($("briefWolf")) $("briefWolf").onclick = () => {
         state.wiPrefill = { brand: state.brand, plan_id: c.plan_id, card_id: c.id, label: c.label, title: c.title };
         state.wiCardId = c.id;
         $("briefBackdrop").classList.remove("open");
@@ -2100,7 +2891,8 @@
     try {
       const q = new URLSearchParams();
       const brandEl = $("libBrand");
-      q.set("brand", (brandEl && brandEl.value) || state.brand);
+      const chosen = (brandEl && brandEl.value) || state.brand || "all";
+      q.set("brand", chosen === "all" ? "all" : chosen);
       if ($("libSearch").value.trim()) q.set("q", $("libSearch").value.trim());
       const mt = $("libType").value; if (mt) q.set("media_type", mt === "photo" ? "image" : mt);
       const st = $("libStage"); if (st && st.value) q.set("stage", st.value);
@@ -2110,32 +2902,52 @@
       const loc = $("libLocation"); if (loc && loc.value.trim()) q.set("location", loc.value.trim());
       const data = await api("/api/assets?" + q.toString());
       const assets = data.assets || [];
+      const note = $("libIndexNote");
+      if (note) {
+        if (isOwnerDesk()) {
+          const msg = (data.nas_index && data.nas_index.message) || "";
+          note.textContent = msg || "";
+        } else {
+          note.textContent = "";
+        }
+      }
+      if (!state.nasIndexStarted) {
+        state.nasIndexStarted = true;
+        api("/api/content/nas-coverage?start=1").then((cov) => {
+          if (note && isOwnerDesk() && cov && cov.message) note.textContent = cov.message;
+          if (cov && (cov.brands || []).some((b) => (b.files_indexed || 0) > 0)) loadLibrary();
+        }).catch(() => {});
+      }
       state.libVisibleIds = assets.map((a) => a.id);
       const grid = $("libGrid");
       if (!assets.length) {
-        grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><strong>No assets</strong></div>`;
+        grid.innerHTML = `<div class="empty" id="libEmptyNext" style="grid-column:1/-1"><strong>Nothing in the library yet</strong>Open Upload and add photos or videos for this brand. <button type="button" class="btn btn-primary" style="margin-top:10px" data-goto-upload>Open Upload</button></div>`;
+        const go = grid.querySelector("[data-goto-upload]");
+        if (go) go.addEventListener("click", () => setView("upload"));
         syncLibSel();
         return;
       }
-      grid.innerHTML = assets.map((a) => `
-        <div class="lib-card${state.libSelected.has(a.id)?" selected":""}" data-id="${a.id}">
-          <input class="sel" type="checkbox" ${state.libSelected.has(a.id)?"checked":""} data-sel="${a.id}" />
-          <div class="lib-thumb ${esc(a.thumb||"file")}" data-open="${a.id}">
-            <span class="brand-badge">${esc(a.brand_badge||a.brand||"")}</span>${esc(a.media_label||a.thumb||"")}
+      grid.innerHTML = assets.map((a) => {
+        const zipOk = a.zip_eligible !== false && String(a.id).indexOf("nas:") !== 0;
+        const when = String(a.shoot_date || a.date_added || "").slice(0, 10) || "—";
+        const media = staffMediaLabel(a);
+        return `
+        <div class="lib-card${state.libSelected.has(a.id)?" selected":""}" data-id="${esc(a.id)}">
+          ${zipOk ? `<input class="sel" type="checkbox" ${state.libSelected.has(a.id)?"checked":""} data-sel="${esc(a.id)}" />` : ""}
+          <div class="lib-thumb ${esc(a.thumb||"file")}${a.thumb==="video"?" video":""}" data-open="${esc(a.id)}">
+            <img class="lib-thumb-img" alt="" src="${esc(a.preview_url || ("/api/assets/"+a.id+"/preview"))}" onerror="this.parentElement.classList.add('thumb-missing')" />
+            <span class="thumb-fallback">Preview not ready</span>
+            ${a.thumb==="video"?'<span class="video-ind">Video</span>':""}
           </div>
           <div class="lib-body" data-open="${a.id}">
-            <div style="font-weight:600;font-size:0.82rem;word-break:break-word">${esc(a.canonical_name||a.name)}</div>
-            <div style="color:var(--muted);font-size:0.72rem">${esc(a.original_name||"")}</div>
-            <div class="meta" style="color:var(--muted);font-size:0.72rem;margin-top:6px">
-              ${esc(a.media_label)} · ${esc(a.stage)} · ${esc(a.shoot_date||"—")}<br/>
-              ${esc(a.subject||"")} · ${esc(a.detail||"")}<br/>
-              <span class="badge ready-${esc(a.readiness)}">${esc(a.readiness_label||a.readiness||"")}</span>
-            </div>
+            <div class="lib-title">${esc(staffCardTitle(a))}</div>
+            <div class="lib-facts">${esc(a.brand_badge || a.brand || "")} · ${esc(media)} · ${esc(when)}</div>
           </div>
-        </div>`).join("");
+        </div>`;
+      }).join("");
       grid.querySelectorAll("[data-open]").forEach((el) => el.addEventListener("click", (ev) => {
         if (ev.target.classList.contains("sel")) return;
-        openPreview26(Number(el.getAttribute("data-open")), assets);
+        openPreview26(el.getAttribute("data-open"), assets);
       }));
       grid.querySelectorAll("[data-sel]").forEach((el) => el.addEventListener("change", () => {
         const id = Number(el.getAttribute("data-sel"));
@@ -2149,22 +2961,38 @@
   };
 
   async function openPreview26(id, assets) {
-    const a = (assets||[]).find((x)=>x.id===id) || {id};
-    $("prevTitle").textContent = a.canonical_name || a.name || `Asset ${id}`;
-    $("prevSub").textContent = `${a.original_name||""} · ${a.readiness_label||""}`;
-    $("prevMedia").innerHTML = `<div class="empty">Loading…</div>`;
-    $("prevNote").textContent = a.readiness_note || "";
+    const a = (assets||[]).find((x)=>String(x.id)===String(id)) || {id};
+    const idStr = String(id);
+    const nas = idStr.indexOf("nas:") === 0;
+    const previewTitle = staffCardTitle(a);
+    $("prevTitle").textContent = previewTitle;
+    $("prevSub").textContent = [a.brand_badge || a.brand, staffMediaLabel(a) || a.media_label, a.shoot_date].filter(Boolean).join(" · ");
+    $("prevMedia").innerHTML = `<div class="empty">Loading preview…</div>`;
+    const tags = Array.isArray(a.detail_tags) ? a.detail_tags.join(", ") : "";
+    const contentType = a.content_class_label || a.content_class || tags || "—";
+    $("prevNote").innerHTML = `<div class="preview-fields">
+      <div><div class="k">Title</div><div>${esc(previewTitle)}</div></div>
+      <div><div class="k">Brand</div><div>${esc(a.brand_badge || a.brand || "—")}</div></div>
+      <div><div class="k">Subject</div><div>${esc(a.subject || "—")}</div></div>
+      <div><div class="k">Shoot date</div><div>${esc(a.shoot_date || "—")}</div></div>
+      <div><div class="k">Location</div><div>${esc(a.location || "—")}</div></div>
+      <div><div class="k">Media type</div><div>${esc(staffMediaLabel(a) || a.media_label || "—")}</div></div>
+      <div><div class="k">Content type</div><div>${esc(contentType)}</div></div>
+    </div>`;
     $("prevBackdrop").classList.add("open");
-    $("prevDownload").onclick = () => window.open(`/api/assets/${id}/download`, "_blank");
+    const playUrl = nas
+      ? `/api/content/nas-media/${encodeURIComponent(idStr.slice(4))}/preview?play=1`
+      : `/api/assets/${encodeURIComponent(idStr)}/preview?play=1`;
+    $("prevDownload").onclick = () => window.open(nas ? playUrl : `/api/assets/${encodeURIComponent(idStr)}/download`, "_blank");
     try {
-      const res = await fetch(`/api/assets/${id}/preview`, {
+      const res = await fetch(playUrl, {
         headers: (state.developmentAssertionAllowed && state.subject)
           ? { "X-Wolf-Subject": state.subject } : {},
       });
       if (!res.ok) {
-        let msg = "Preview not ready — no fake proxy.";
+        let msg = "Preview is not ready.";
         try { msg = (await res.json()).message || msg; } catch(_){}
-        $("prevMedia").innerHTML = `<div class="empty"><strong>Preview unavailable</strong>${esc(msg)}</div>`;
+        $("prevMedia").innerHTML = `<div class="empty"><strong>Preview is not ready</strong>${esc(msg)}</div>`;
         return;
       }
       const ct = res.headers.get("content-type")||"";
@@ -2247,9 +3075,9 @@
 
   // Patch runSmartUpload to clear wizard + force dup + concurrency note — wrap after definition
   const _runSmartUpload = runSmartUpload;
-  runSmartUpload = async function () {
-    await _runSmartUpload();
-    // Clear active wizard queue after terminal states (best-effort)
+  runSmartUpload = async function (onlyFailed) {
+    await _runSmartUpload(onlyFailed);
+    if ((uploadWizard.failedIdx || []).length) return;
     try {
       uploadWizard.files = [];
       uploadWizard.previews = [];
@@ -2283,6 +3111,12 @@
     if (dl) dl.addEventListener("click", async () => {
       const ids = [...state.libSelected];
       if (!ids.length) return;
+      const box = $("libDownloadProgress");
+      const bar = $("libDownloadBar");
+      const st = $("libDownloadStatus");
+      if (box) box.hidden = false;
+      if (bar) bar.style.width = "8%";
+      if (st) st.textContent = "Preparing download…";
       try {
         const zipHeaders = {"Content-Type":"application/json"};
         if (state.developmentAssertionAllowed && state.subject) {
@@ -2291,9 +3125,37 @@
         const zipBody = { ids };
         if (state.developmentAssertionAllowed && state.subject) zipBody.subject = state.subject;
         const res = await fetch("/api/assets/zip", { method:"POST", headers: zipHeaders, body: JSON.stringify(zipBody) });
-        if (!res.ok) { const j=await res.json().catch(()=>({})); throw new Error(j.message||j.error||"ZIP failed"); }
-        const blob = await res.blob(); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="library-selection.zip"; a.click();
-      } catch (e) { toast(e.message||"ZIP failed"); }
+        if (!res.ok) { const j=await res.json().catch(()=>({})); throw new Error(j.message||j.error||"Download failed"); }
+        const total = Number(res.headers.get("content-length") || 0);
+        const reader = res.body && res.body.getReader ? res.body.getReader() : null;
+        let blob;
+        if (reader) {
+          const chunks = [];
+          let received = 0;
+          while (true) {
+            const step = await reader.read();
+            if (step.done) break;
+            chunks.push(step.value);
+            received += step.value.length;
+            if (bar) {
+              bar.style.width = total
+                ? `${Math.min(100, Math.round((received / total) * 100))}%`
+                : `${Math.min(90, 12 + chunks.length * 8)}%`;
+            }
+            if (st) st.textContent = "Preparing download…";
+          }
+          blob = new Blob(chunks);
+        } else {
+          blob = await res.blob();
+        }
+        if (bar) bar.style.width = "100%";
+        if (st) st.textContent = ids.length > 1 ? "Download ready (ZIP)" : "Download ready";
+        const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download = ids.length > 1 ? "library-selection.zip" : "library-file"; a.click();
+        setTimeout(() => { if (box) box.hidden = true; if (bar) bar.style.width = "0"; }, 1200);
+      } catch (e) {
+        if (st) st.textContent = e.message || "Download failed";
+        toast(e.message||"Download failed");
+      }
     });
     const selAll = $("libSelectAll");
     if (selAll) selAll.addEventListener("click", () => {
@@ -2332,16 +3194,25 @@
     const wiSend = $("wiSend"); if (wiSend) wiSend.addEventListener("click", () => wiSend26("CHAT", $("wiInput").value.trim()));
     const wiIn = $("wiInput"); if (wiIn) wiIn.addEventListener("keydown", (e)=>{ if(e.key==="Enter") wiSend26("CHAT", wiIn.value.trim()); });
     const wiCl = $("wiClear"); if (wiCl) wiCl.addEventListener("click", () => { state.wiTranscript=[]; state.wiCardId=null; renderWi26(); loadWolf(); });
-    // brand theme on load — kit colours immediately; API theme refines if not legacy blue
-    applyBrandTheme26(state.brandMeta[state.brand] || { id: state.brand });
-    api("/api/brands").then((data) => {
-      (data.brands||[]).forEach((b) => { state.brandMeta[b.id]=b; });
-      applyBrandTheme26(state.brandMeta[state.brand]);
-      const lb = $("libBrand");
-      if (lb && lb.options.length <= 1) {
-        (data.brands||[]).forEach((b) => { const o=document.createElement("option"); o.value=b.id; o.textContent=b.display_name||b.id; lb.appendChild(o); });
-      }
-    }).catch(()=>{});
+    const menuBtn = $("ceMenuBtn");
+    const menu = $("ceStaffMenu");
+    if (menuBtn && menu) {
+      menuBtn.addEventListener("click", () => {
+        const open = menu.hidden;
+        menu.hidden = !open;
+        menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    }
+    const profileBtn = $("staffProfile");
+    const profile = $("staffProfilePanel");
+    if (profileBtn && profile) {
+      profileBtn.addEventListener("click", () => {
+        const open = profile.hidden;
+        profile.hidden = !open;
+        profileBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    }
+    applyBrandTheme26((state.brandMeta && state.brandMeta[state.brand]) || { id: state.brand });
   }
   wire26();
 

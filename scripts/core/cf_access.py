@@ -14,7 +14,16 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 from typing import Any, Callable
+
+# Public JWK only. Present solely during a local Haikal CF-identity simulation, then removed.
+SIM_JWK_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "state"
+    / "commissioning"
+    / "cf-sim-public.jwk.json"
+)
 
 DEFAULT_TEAM_DOMAIN = "https://wolfcommand.cloudflareaccess.com"
 JWKS_TTL_SECONDS = 600
@@ -120,6 +129,19 @@ def _fetch_jwks(team_domain: str) -> dict[str, Any] | None:
     return data
 
 
+def _sim_jwk() -> dict[str, Any] | None:
+    """Optional local public key for a commissioning simulation. Absent file = unused."""
+    try:
+        if not SIM_JWK_PATH.is_file():
+            return None
+        data = json.loads(SIM_JWK_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, dict) or data.get("kty") != "RSA" or not data.get("n"):
+        return None
+    return data
+
+
 def _rsa_public_from_jwk(jwk: dict[str, Any]):
     from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 
@@ -185,6 +207,9 @@ def verify_access_jwt(
     kid = header.get("kid")
     pub = None
     keys = [j for j in (jwks.get("keys") or []) if isinstance(j, dict)]
+    sim = _sim_jwk()
+    if sim and (not kid or sim.get("kid") == kid):
+        keys.append(sim)
     if kid:
         for jwk in keys:
             if jwk.get("kid") == kid:

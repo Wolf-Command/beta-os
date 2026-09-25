@@ -55,3 +55,5 @@ dashboards/*.bak
 
 # Build-factory runtime state (ACTIVE runs / logs)
 state/build-factory/
+state/content-thumbs/
+state/commissioning/cf-sim-public.jwk.json
