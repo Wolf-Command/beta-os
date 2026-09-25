@@ -1,0 +1,13 @@
+{
+  "date": "2026-09-26",
+  "claims": [
+    {
+      "id": "nas-estate-index-20260926",
+      "claim": "Beta in-place NAS indexer scripts/nas_estate_index.py reads state/nas-estate/manifest.tsv into catalog nas_index, resumes from state/nas-estate/index-checkpoint.json, writes thumbs only under state/content-thumbs, and records duplicate candidates without deleting NAS files. Library /api/assets search on :8788 counts indexed rows. staff_ready and full_nas_complete stay false. Production :8787 untouched. Not a claim that the whole NAS is complete.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_nas_estate_index.py | tail -1; python3 -c \"import json; d=json.load(open('state/nas-estate/owner-counts.json')); print('HONEST', d.get('staff_ready'), d.get('full_nas_complete'))\"; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "EXIT: SUCCESS; HONEST False False; 8787 True; 8788 True",
+      "by": "cursor-nas-estate-index-20260926",
+      "at": "2026-09-25T16:30:00Z"
+    }
+  ]
+}

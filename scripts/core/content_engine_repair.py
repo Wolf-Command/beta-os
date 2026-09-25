@@ -123,11 +123,41 @@ def all_brands_authorised(brand_count: int) -> bool:
 INDEX_STATES = (
     "DISCOVERED",
     "INDEXED",
-    "HASHED",
+    "THUMB_PREVIEW_READY",
     "THUMBNAIL_READY",
     "SEARCHABLE",
+    "HASHED",
     "FAILED",
     "UNKNOWN",
+)
+
+# Higher rank wins. FAILED stays failed. Empty legacy rows stay eligible for Library.
+STATE_RANK = {
+    "": 0,
+    "DISCOVERED": 1,
+    "INDEXED": 2,
+    "THUMBNAIL_READY": 3,
+    "THUMB_PREVIEW_READY": 3,
+    "SEARCHABLE": 4,
+    "HASHED": 5,
+    "FAILED": 9,
+}
+
+# Library search includes every indexed row, including rows still waiting on a thumb or hash.
+LIBRARY_INDEX_STATES = (
+    "INDEXED",
+    "THUMBNAIL_READY",
+    "THUMB_PREVIEW_READY",
+    "SEARCHABLE",
+    "HASHED",
+)
+
+# Read-only roots from the 25 Sep estate discovery. Not write targets.
+NAS_READ_ROOTS = (
+    Path("/Volumes/01-Media-Library"),
+    Path("/Volumes/00-Editing-Workspace-3"),
+    Path("/Volumes/02-Stock-Assets-1"),
+    Path("/Volumes/03-Templates"),
 )
 
 # Canonical registry rows + clean names. Selector reads org_brands + aliases.
@@ -278,10 +308,18 @@ def _nas_index_columns(conn: sqlite3.Connection) -> None:
         "index_state": "TEXT",
         "map_confidence": "TEXT",
         "thumb_ready": "INTEGER",
+        "fail_reason": "TEXT",
+        "preview_note": "TEXT",
     }
     for name, typ in adds.items():
         if name not in have:
             conn.execute(f"ALTER TABLE nas_index ADD COLUMN {name} {typ}")
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_nas_index_brand_state ON nas_index(brand_slug, index_state)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_nas_index_name_size ON nas_index(original_filename, size)"
+    )
 
 
 def ensure_registry(conn: sqlite3.Connection) -> dict[str, Any]:
@@ -646,6 +684,15 @@ def _index_one(
         digest, partial = "", True
         state = "FAILED"
     thumb_ok = 0
+    prior = conn.execute(
+        "SELECT index_state FROM nas_index WHERE original_path=?",
+        (str(fp),),
+    ).fetchone()
+    new_state = "SEARCHABLE" if state == "HASHED" else state
+    if prior is not None:
+        old_state = (prior["index_state"] if hasattr(prior, "keys") else prior[0]) or ""
+        if STATE_RANK.get(str(old_state), 0) >= STATE_RANK.get(new_state, 0):
+            new_state = str(old_state)
     conn.execute(
         """
         INSERT INTO nas_index (
@@ -657,7 +704,10 @@ def _index_one(
         ON CONFLICT(original_path) DO UPDATE SET
           size=excluded.size,
           mtime=excluded.mtime,
-          sha256_1mb=excluded.sha256_1mb,
+          sha256_1mb=CASE
+            WHEN excluded.sha256_1mb != '' THEN excluded.sha256_1mb
+            ELSE nas_index.sha256_1mb
+          END,
           hash_partial=excluded.hash_partial,
           brand_slug=excluded.brand_slug,
           index_state=excluded.index_state,
@@ -679,12 +729,12 @@ def _index_one(
             now_iso(),
             "operational",
             slug,
-            "SEARCHABLE" if state == "HASHED" else state,
+            new_state,
             confidence,
             thumb_ok,
         ),
     )
-    return "SEARCHABLE" if state == "HASHED" else state
+    return new_state
 
 
 def start_inplace_index(
@@ -857,89 +907,205 @@ def read_coverage() -> dict[str, Any]:
     return data
 
 
+def _library_slugs(scopes: list[str] | set[str] | None, brand: str | None) -> list[str]:
+    allowed = set(_nas.brands_for_scopes(scopes))
+    brand = (brand or "").strip().lower()
+    if brand in ("", "all", "*"):
+        slugs = sorted(allowed)
+        have = {str(s).strip() for s in (scopes or []) if str(s).strip()}
+        if "SCOPE-WOLF-GROUP" in have:
+            slugs = sorted(set(slugs) | {"SHARED_STOCK", "UNKNOWN"})
+        return slugs
+    if brand not in allowed and brand not in {"SHARED_STOCK", "UNKNOWN"}:
+        return []
+    if brand in {"SHARED_STOCK", "UNKNOWN"}:
+        have = {str(s).strip() for s in (scopes or []) if str(s).strip()}
+        if "SCOPE-WOLF-GROUP" not in have:
+            return []
+    elif brand not in allowed:
+        return []
+    return [brand]
+
+
+def _nas_card(row: sqlite3.Row | dict[str, Any], names: dict[str, str]) -> dict[str, Any] | None:
+    d = dict(row)
+    filename = d.get("original_filename") or Path(str(d.get("original_path") or "")).name
+    kind = (d.get("classification") or "").lower()
+    if kind == "photo":
+        kind = "image"
+    if kind not in ("image", "video", "audio", "graphic"):
+        kind = _media_kind(filename) or kind
+    if kind not in ("image", "video", "audio", "graphic"):
+        return None
+    slug = (d.get("brand_slug") or "").strip().lower()
+    nas_id = d.get("id")
+    title = library_display_title(None, None, filename)
+    thumb_file = nas_thumb_path(int(nas_id))
+    thumb_kind = "video" if kind == "video" else "audio" if kind == "audio" else "image"
+    return {
+        "id": f"nas:{nas_id}",
+        "nas_index_id": nas_id,
+        "source": "nas_index",
+        "brand": slug,
+        "brand_badge": names.get(slug, slug),
+        "stage": d.get("index_state") or "INDEXED",
+        "canonical_name": filename or "file",
+        "original_name": filename or "",
+        "name": filename or "file",
+        "staff_title": title,
+        "media_type": kind,
+        "media_label": staff_media_label(kind),
+        "content_class": "",
+        "subject": "",
+        "location": "",
+        "shoot_date": "",
+        "thumb": thumb_kind,
+        "thumb_ready": bool(d.get("thumb_ready")) or thumb_file.is_file(),
+        "zip_eligible": False,
+        "index_state": d.get("index_state") or "INDEXED",
+        "preview_url": f"/api/content/nas-media/{nas_id}/preview",
+        "content_hash": d.get("sha256_1mb") or None,
+    }
+
+
+def nas_library_search(
+    conn: sqlite3.Connection,
+    scopes: list[str] | set[str] | None,
+    brand: str | None,
+    *,
+    q: str = "",
+    media_type: str | None = None,
+    limit: int = 48,
+    offset: int = 0,
+) -> dict[str, Any]:
+    """Search every indexed nas_index row the caller may see. One page comes back; matched is the full count."""
+    _nas_index_columns(conn)
+    limit = max(1, min(48, int(limit)))
+    offset = max(0, int(offset))
+    slugs = _library_slugs(scopes, brand)
+    empty = {
+        "cards": [],
+        "matched": 0,
+        "limit": limit,
+        "offset": offset,
+        "staff_ready": False,
+        "full_tree_indexed": False,
+        "full_nas_complete": False,
+    }
+    if not slugs:
+        return empty
+    q = (q or "").strip().lower()
+    media = (media_type or "").strip().lower()
+    if media == "photo":
+        media = "image"
+    names = {r["slug"]: r["display_name"] for r in REQUIRED_BRANDS}
+    wanted = set(slugs)
+    state_sql = ",".join("?" * len(LIBRARY_INDEX_STATES))
+    slug_sql = ",".join("?" * len(slugs))
+    where = [
+        f"lower(ifnull(brand_slug,'')) IN ({slug_sql})",
+        f"(ifnull(index_state,'') = '' OR index_state IN ({state_sql}))",
+    ]
+    params: list[Any] = [*slugs, *LIBRARY_INDEX_STATES]
+    if q:
+        where.append(
+            "(lower(ifnull(original_filename,'')) LIKE ? OR lower(ifnull(rel,'')) LIKE ?)"
+        )
+        like = f"%{q}%"
+        params.extend([like, like])
+    if media in ("image", "video", "audio", "graphic"):
+        where.append("lower(ifnull(classification,'')) = ?")
+        params.append(media)
+    clause = " AND ".join(where)
+    try:
+        matched = int(
+            conn.execute(f"SELECT COUNT(*) FROM nas_index WHERE {clause}", params).fetchone()[0]
+        )
+        rows = conn.execute(
+            f"""
+            SELECT id, original_filename, rel, size, brand_slug, index_state,
+                   map_confidence, classification, sha256_1mb, thumb_ready
+            FROM nas_index
+            WHERE {clause}
+            ORDER BY id DESC
+            LIMIT ? OFFSET ?
+            """,
+            [*params, limit, offset],
+        ).fetchall()
+    except sqlite3.OperationalError:
+        return empty
+    cards = []
+    for row in rows:
+        card = _nas_card(row, names)
+        if card is None or card["brand"] not in wanted:
+            continue
+        cards.append(card)
+    if offset == 0 and len(cards) < limit:
+        try:
+            legacy = conn.execute(
+                """
+                SELECT id, original_filename, rel, size, brand_slug, index_state,
+                       map_confidence, classification, sha256_1mb, thumb_ready, original_path
+                FROM nas_index
+                WHERE ifnull(brand_slug,'') = ''
+                ORDER BY id DESC
+                LIMIT 40
+                """
+            ).fetchall()
+        except sqlite3.OperationalError:
+            legacy = []
+        seen = {c["nas_index_id"] for c in cards}
+        for row in legacy:
+            if len(cards) >= limit:
+                break
+            d = dict(row)
+            inferred = (
+                _nas.infer_brand_token(d.get("rel") or "")
+                or _nas.infer_brand_token(str(d.get("original_path") or ""))
+                or ""
+            )
+            if inferred not in wanted:
+                continue
+            d["brand_slug"] = inferred
+            card = _nas_card(d, names)
+            if card is None or card["nas_index_id"] in seen:
+                continue
+            if q and q not in (card["original_name"] or "").lower() and q not in str(d.get("rel") or "").lower():
+                continue
+            cards.append(card)
+            seen.add(card["nas_index_id"])
+    return {
+        "cards": cards,
+        "matched": matched,
+        "limit": limit,
+        "offset": offset,
+        "staff_ready": False,
+        "full_tree_indexed": False,
+        "full_nas_complete": False,
+    }
+
+
 def nas_library_cards(
     conn: sqlite3.Connection,
     scopes: list[str] | set[str] | None,
     brand: str | None,
     *,
     limit: int = 24,
+    offset: int = 0,
+    q: str = "",
+    media_type: str | None = None,
 ) -> list[dict[str, Any]]:
     """Library tiles for indexed NAS media the caller is allowed to see. No path leak."""
-    _nas_index_columns(conn)
-    allowed = set(_nas.brands_for_scopes(scopes))
-    brand = (brand or "").strip().lower()
-    if brand in ("", "all", "*"):
-        slugs = sorted(allowed)
-    elif brand not in allowed:
-        return []
-    else:
-        slugs = [brand]
-    if not slugs:
-        return []
-    try:
-        rows = conn.execute(
-            """
-            SELECT id, original_filename, rel, size, brand_slug, index_state,
-                   map_confidence, classification, sha256_1mb, thumb_ready, original_path
-            FROM nas_index
-            ORDER BY id DESC
-            """
-        ).fetchall()
-    except sqlite3.OperationalError:
-        return []
-    names = {r["slug"]: r["display_name"] for r in REQUIRED_BRANDS}
-    wanted = set(slugs)
-    cards = []
-    for r in rows:
-        if len(cards) >= limit:
-            break
-        d = dict(r)
-        filename = d.get("original_filename") or Path(str(d.get("original_path") or "")).name
-        kind = (d.get("classification") or "").lower()
-        if kind not in ("image", "video"):
-            kind = _media_kind(filename) or ""
-        if kind not in ("image", "video"):
-            continue
-        slug = (d.get("brand_slug") or "").strip().lower()
-        if slug not in wanted:
-            inferred = (
-                _nas.infer_brand_token(d.get("rel") or "")
-                or _nas.infer_brand_token(str(d.get("original_path") or ""))
-                or ""
-            )
-            slug = inferred if inferred in wanted else ""
-        if slug not in wanted:
-            continue
-        nas_id = d.get("id")
-        title = library_display_title(None, None, filename)
-        thumb_file = nas_thumb_path(int(nas_id))
-        cards.append(
-            {
-                "id": f"nas:{nas_id}",
-                "nas_index_id": nas_id,
-                "source": "nas_index",
-                "brand": slug,
-                "brand_badge": names.get(slug, slug),
-                "stage": d.get("index_state") or "INDEXED",
-                "canonical_name": filename or "file",
-                "original_name": filename or "",
-                "name": filename or "file",
-                "staff_title": title,
-                "media_type": kind,
-                "media_label": staff_media_label(kind),
-                "content_class": "",
-                "subject": "",
-                "location": "",
-                "shoot_date": "",
-                "thumb": "video" if kind == "video" else "image",
-                "thumb_ready": bool(d.get("thumb_ready")) or thumb_file.is_file(),
-                "zip_eligible": False,
-                "index_state": d.get("index_state") or "INDEXED",
-                "preview_url": f"/api/content/nas-media/{nas_id}/preview",
-                "content_hash": d.get("sha256_1mb") or None,
-            }
-        )
-    return cards
+    page = nas_library_search(
+        conn,
+        scopes,
+        brand,
+        q=q,
+        media_type=media_type,
+        limit=limit,
+        offset=offset,
+    )
+    return page["cards"]
 
 
 def resolve_indexed_media(
@@ -1013,10 +1179,27 @@ def resolve_nas_media(
     if not raw:
         return None
     path = Path(raw)
-    try:
-        path = _nas._ensure_under_media(path)
-    except Exception:
+    if not _path_under_nas_read_root(path):
         return None
     if not path.is_file():
         return None
     return path
+
+
+def _path_under_nas_read_root(path: Path) -> bool:
+    """True when path resolves inside a discovery read root. Does not create or modify anything."""
+    try:
+        resolved = path.resolve()
+    except OSError:
+        return False
+    for root in NAS_READ_ROOTS:
+        try:
+            root_resolved = root.resolve()
+        except OSError:
+            continue
+        try:
+            resolved.relative_to(root_resolved)
+            return True
+        except ValueError:
+            continue
+    return False

@@ -703,6 +703,11 @@
         <p id="libDownloadStatus" class="sub" style="margin:8px 0 0">Preparing download…</p>
       </div>
       <div id="libGrid" class="lib-grid"></div>
+      <div id="libPager" class="lib-toolbar" hidden>
+        <button type="button" class="btn" id="libPrev">Previous</button>
+        <span class="sub" id="libPageNote" style="margin:0"></span>
+        <button type="button" class="btn" id="libNext">Next</button>
+      </div>
     </section>
 
     <!-- UPLOAD -->
@@ -2462,8 +2467,18 @@
   $("briefBackdrop").addEventListener("click", (e) => {
     if (e.target === $("briefBackdrop")) $("briefBackdrop").classList.remove("open");
   });
-  $("libRefresh").addEventListener("click", loadLibrary);
+  $("libRefresh").addEventListener("click", () => { state.libNasOffset = 0; state.libFilterSig = ""; loadLibrary(); });
   $("libSearch").addEventListener("input", () => loadLibrary());
+  const libPrev = $("libPrev");
+  if (libPrev) libPrev.addEventListener("click", () => {
+    state.libNasOffset = Math.max(0, (state.libNasOffset || 0) - 48);
+    loadLibrary();
+  });
+  const libNext = $("libNext");
+  if (libNext) libNext.addEventListener("click", () => {
+    state.libNasOffset = (state.libNasOffset || 0) + 48;
+    loadLibrary();
+  });
   $("libType").addEventListener("change", loadLibrary);
   $("libStatus").addEventListener("change", loadLibrary);
   const nasIdxRefresh = $("nasIdxRefresh");
@@ -2900,16 +2915,40 @@
       const sh = $("libShoot"); if (sh && sh.value) q.set("shoot_date", sh.value);
       const sj = $("libSubject"); if (sj && sj.value.trim()) q.set("subject", sj.value.trim());
       const loc = $("libLocation"); if (loc && loc.value.trim()) q.set("location", loc.value.trim());
+      const filterSig = q.toString();
+      if (state.libFilterSig !== filterSig) {
+        state.libFilterSig = filterSig;
+        state.libNasOffset = 0;
+      }
+      q.set("nas_limit", "48");
+      q.set("nas_offset", String(state.libNasOffset || 0));
       const data = await api("/api/assets?" + q.toString());
       const assets = data.assets || [];
+      const nasMatched = Number(data.nas_matched || 0);
+      const nasOffset = Number(data.nas_offset || 0);
+      const nasOnPage = assets.filter((a) => String(a.id).indexOf("nas:") === 0).length;
       const note = $("libIndexNote");
+      const pageNote = nasMatched
+        ? `${nasMatched} indexed files match. Showing ${nasOnPage} on this page. The whole NAS is not complete.`
+        : "";
       if (note) {
         if (isOwnerDesk()) {
           const msg = (data.nas_index && data.nas_index.message) || "";
-          note.textContent = msg || "";
+          note.textContent = [msg, pageNote].filter(Boolean).join(" ");
         } else {
-          note.textContent = "";
+          note.textContent = pageNote;
         }
+      }
+      const pager = $("libPager");
+      const pagerNote = $("libPageNote");
+      if (pager) {
+        const showPager = nasMatched > Number(data.nas_limit || 48);
+        pager.hidden = !showPager;
+        if (pagerNote) pagerNote.textContent = pageNote;
+        const prev = $("libPrev");
+        const next = $("libNext");
+        if (prev) prev.disabled = nasOffset <= 0;
+        if (next) next.disabled = nasOffset + nasOnPage >= nasMatched;
       }
       if (!state.nasIndexStarted) {
         state.nasIndexStarted = true;
