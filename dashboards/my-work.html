@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>My Work</title>
+<style>
+  :root {
+    --bg: #f4f1ea; --card: #fffdf8; --text: #1c1915; --muted: #5c564c;
+    --line: #e4dccf; --accent: #1f4d3a;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { max-width: 100%; overflow-x: hidden; }
+  body {
+    margin: 0 auto; max-width: 720px; padding: 16px 16px 88px;
+    background: var(--bg); color: var(--text); font-family: var(--font);
+    font-size: 17px; line-height: 1.4;
+  }
+  h1 { font-size: 1.45rem; margin: 0 0 4px; }
+  h2 { font-size: 1.05rem; margin: 22px 0 8px; }
+  .role, .covers, .boundary, .note { color: var(--muted); margin: 4px 0; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px; margin-top: 8px;
+  }
+  a.action {
+    display: block; margin-top: 12px; text-decoration: none;
+    background: var(--accent); color: #fff; border-radius: 12px;
+    padding: 14px 16px; font-weight: 650; min-height: 48px;
+  }
+  .err { color: #8d1d1d; }
+  @media (max-width: 420px) {
+    body { padding: 12px 12px 88px; font-size: 16px; }
+  }
+</style>
+<style>
+  html, body { overflow-x: hidden !important; max-width: 100%; }
+  #wolf-boards, #wolfnav, #wolfnav-scrim { max-width: 100vw !important; }
+</style>
+</head>
+<body data-wolf-page-type="WORKSPACE" data-wolf-shell="global">
+  <h1 id="hello">My Work</h1>
+  <p class="role" id="role"></p>
+  <p class="covers" id="covers"></p>
+  <p class="boundary" id="boundary"></p>
+  <div id="msg"></div>
+  <div id="sections"></div>
+  <p class="note" id="notes"></p>
+  <div id="desk"></div>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+
+  function list(block) {
+    if (!block) return "";
+    const items = block.items || [];
+    const body = block.empty
+      ? `<div class="card">${esc(block.empty_message || "Nothing here.")}</div>`
+      : items.map((it) => `<div class="card"><p>${esc(it.title)}</p></div>`).join("");
+    return `<h2>${esc(block.title || "")}</h2>${body}`;
+  }
+
+  fetch("/api/staff/home", { headers: { Accept: "application/json" } })
+    .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+    .then(({ ok, data }) => {
+      if (!ok || data.ok === false) {
+        $("hello").textContent = "My Work";
+        $("msg").innerHTML = `<p class="err">${esc(data.message || "This page did not load.")}</p>`;
+        return;
+      }
+      $("hello").textContent = data.greeting || "My Work";
+      const role = (data.role || {}).label || "";
+      $("role").textContent = role;
+      const covers = data.covers || [];
+      $("covers").textContent = covers.length ? covers.join(", ") : "";
+      $("boundary").textContent = data.boundary || "";
+      $("sections").innerHTML = (data.sections || []).map(list).join("");
+      const notes = data.notifications || {};
+      $("notes").textContent = notes.empty_message || "";
+      $("desk").innerHTML = (data.desk || []).map((link) => (
+        `<a class="action" href="${esc(link.href)}">${esc(link.label)}</a>`
+      )).join("");
+      const over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
+      document.body.setAttribute("data-overflow", over ? "yes" : "no");
+      document.body.setAttribute("data-ready", "1");
+    })
+    .catch((err) => {
+      $("msg").innerHTML = `<p class="err">${esc(err.message || "This page did not load.")}</p>`;
+    });
+})();
+</script>
+</body>
+</html>

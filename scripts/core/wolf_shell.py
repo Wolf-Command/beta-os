@@ -252,6 +252,7 @@ DASHBOARDS_HTML_CANONICAL: dict[str, str] = {
     "/dashboards/sale-evidence-pack.html": "/sale-evidence-pack",
     "/dashboards/owner-empire-pack.html": "/owner-empire-pack",
     "/dashboards/staff-ops-routing.html": "/staff-ops-routing",
+    "/dashboards/my-work.html": "/my-work",
     "/dashboards/ggv-ops-pack.html": "/ggv-ops-pack",
     "/dashboards/ggv-finance.html": "/ggv/finance",
     "/dashboards/amg-ops-pack.html": "/amg-ops-pack",
@@ -344,6 +345,7 @@ def route_merge_inventory() -> dict[str, Any]:
 
 # Soft-land role landings via whoami (visibility only — not auth grants).
 # Owner → Empire (/wolf). Devi/ops → Uma Blu Today (/bzg/uma-blu).
+MY_WORK_HREF = "/my-work"
 LANDING_BY_AUDIENCE: dict[str, str | None] = {
     "OWNER": WOLF_ALIAS,
     "SYSTEM": WOLF_ALIAS,
@@ -352,6 +354,7 @@ LANDING_BY_AUDIENCE: dict[str, str | None] = {
     "SPECIALIST_GGV": "/ggv-ops-pack",
     "SPECIALIST_AMG": "/amg-ops-pack",
     "SPECIALIST_CONTENT": CONTENT_HREF,
+    "SPECIALIST_FINANCE": MY_WORK_HREF,
     "CLIENT": None,
 }
 
@@ -442,8 +445,26 @@ AUDIENCE_PAGES: dict[str, list[str]] = {
     # Content crew: Content under Intelligence→Content + Needs You + assigned GGV brands.
     # Never Owner Intelligence Home (/intel-ops-pack) via nav alone.
     "SPECIALIST_CONTENT": [NEEDS_YOU_HREF, CONTENT_HREF, "/ggv-ops-pack"],
+    "SPECIALIST_FINANCE": [MY_WORK_HREF, "/ggv/finance"],
     "CLIENT": [],  # controlled projection — never inherit operator Boards
     "SYSTEM": list(ALL_HREFS),
+}
+
+# Job → chrome audience for a person who is not in the fixture map.
+# Known people keep PERSON_AUDIENCE so existing seats do not move.
+ROLE_AUDIENCE: dict[str, str] = {
+    "ROLE-OWNER": "OWNER",
+    "ROLE-GGV-CREATIVE-DIRECTOR": "SPECIALIST_CONTENT",
+    "ROLE-CONTENT": "SPECIALIST_CONTENT",
+    "ROLE-CONTENT-MGMT": "SPECIALIST_CONTENT",
+    "ROLE-CONTENT-CREW": "SPECIALIST_CONTENT",
+    "ROLE-BZG-FB-OPS-LEAD": "OPERATOR",
+    "ROLE-BZG-HFB": "OPERATOR",
+    "ROLE-BZG-CLOSER": "OPERATOR",
+    "ROLE-GGV-LEAD": "SPECIALIST_GGV",
+    "ROLE-AMG-OPS": "SPECIALIST_AMG",
+    "ROLE-AMG-GM": "SPECIALIST_AMG",
+    "ROLE-GGV-EXTERNAL-ACCOUNTANT": "SPECIALIST_FINANCE",
 }
 
 PERSON_AUDIENCE: dict[str, str] = {
@@ -1035,7 +1056,20 @@ def specialist_not_in_primary_ia(tree: list[dict[str, Any]] | None = None) -> bo
 def audience_for_person(person_id: str | None) -> str:
     if not person_id:
         return "CLIENT"
-    return PERSON_AUDIENCE.get(str(person_id), "CLIENT")
+    pid = str(person_id)
+    mapped = PERSON_AUDIENCE.get(pid)
+    if mapped:
+        return mapped
+    rows = _org_assignments(pid)
+    if not rows:
+        return "CLIENT"
+    role = str(rows[0].get("role") or "")
+    if role in ROLE_AUDIENCE:
+        return ROLE_AUDIENCE[role]
+    label = str(rows[0].get("label") or "").lower()
+    if "owner" in label and "executive" in label:
+        return "OWNER"
+    return "CLIENT"
 
 
 def pages_for_audience(audience: str) -> list[str]:

@@ -1,0 +1,15 @@
+{
+  "date": "2026-09-27",
+  "claims": [
+    {
+      "id": "sprint7-p3-staff-home-20260927",
+      "claim": "Beta staff daily page /my-work and /api/staff/home read Wolf Core by role. Creative Director, BZG F&B Operations Lead, and a temporary finance seat get different desks. Owner /wolf shows pulse sections. Anon on :8788 is 403. No money movement. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_staff_home.py | tail -3; curl -sS -o /dev/null -w 'home:%{http_code}\\n' http://127.0.0.1:8788/api/staff/home; curl -sS -o /dev/null -w 'page:%{http_code}\\n' http://127.0.0.1:8788/my-work; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "EXIT: SUCCESS; home:403; page:403; 8787 True; 8788 True",
+      "by": "cursor-sprint7-p3-staff-home",
+      "at": "2026-09-26T19:12:00Z",
+      "tests": "PASS=89 FAIL=0",
+      "checked": false
+    }
+  ]
+}

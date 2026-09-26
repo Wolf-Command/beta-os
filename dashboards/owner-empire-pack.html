@@ -30,10 +30,12 @@
   .pct { font-size: 1.6rem; margin: 4px 0; }
 </style>
 </head>
-<body>
+<body data-wolf-page-type="DASHBOARD" data-wolf-org="WOLF/GROUP" data-wolf-shell="global" data-wolf-home-primary="empire">
+  <nav class="wolf-crumb" aria-label="Org context" style="font-size:0.75rem;color:var(--muted);margin:0 0 8px;letter-spacing:0.02em">WOLF › GROUP › Empire Pulse</nav>
   <h1>Owner Empire <span>· Beta</span></h1>
   <p class="lede">Bound beta-owner-safe. Today, Radar honesty, 12-Week Year honesty, and pack handoffs. Owner only. SYSTEM% comes from the Progress ledger. EMPTY is not 0%. CAP-STRAT stays at the ledger. No payment, bank, Zayen, HR, or trading on this desk. Track D is parked.</p>
   <div class="banner warn" id="who">Loading…</div>
+  <div id="pulse"></div>
   <div id="msg"></div>
 
   <h2>Next human action</h2>
@@ -123,6 +125,28 @@
     const actions = ((data.actions || {}).actions) || [];
     $("actions").innerHTML = actions.map((row) => link(row.href, row.label, false)).join("");
   }
+
+  function pulseList(block) {
+    if (!block) return "";
+    const items = block.items || [];
+    const body = block.empty
+      ? `<div class="card">${esc(block.empty_message || "Nothing here.")}</div>`
+      : items.map((it) => `<div class="card"><p>${esc(it.title)}</p></div>`).join("");
+    return `<h2>${esc(block.title || "")}</h2>${body}`;
+  }
+
+  api("/api/staff/home").then((home) => {
+    if (!home || home.experience !== "owner_pulse") {
+      $("pulse").innerHTML = `<div class="card loud">This view is for the owner role.</div>`;
+      return;
+    }
+    $("pulse").innerHTML = (home.sections || []).map(pulseList).join("");
+    const over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
+    document.body.setAttribute("data-overflow", over ? "yes" : "no");
+    document.body.setAttribute("data-pulse-ready", "1");
+  }).catch(() => {
+    $("pulse").innerHTML = `<div class="card loud">Pulse did not load. No figures were filled in.</div>`;
+  });
 
   api("/api/owner/empire-pack").then(show).catch((err) => {
     $("who").textContent = "This desk did not load.";
