@@ -628,6 +628,7 @@ def create_approval_request(
     expires_at: str | None = None,
     prior_request_id: str | None = None,
     link_work_item: bool = False,
+    existing_work_item_id: str | None = None,
     review_owner_person_id: str | None = None,
     required_decision_count: int | None = None,
     bind_policy: bool = False,
@@ -974,7 +975,37 @@ def create_approval_request(
         )
 
         linked_wi = None
-        if link_work_item or review_owner_person_id:
+        existing_wi = (existing_work_item_id or "").strip() or None
+        if existing_wi and (link_work_item or review_owner_person_id):
+            raise ApprovalError(
+                "existing work item cannot be combined with creating another",
+                code="duplicate_work_item",
+                http_status=400,
+            )
+        if existing_wi:
+            found = _work_items.get_work_item(existing_wi, conn=c)
+            if not found:
+                raise ApprovalError(
+                    "work item not found",
+                    code="unknown_work_item",
+                    http_status=404,
+                )
+            if (found.get("owning_entity_id") or "") != eid:
+                raise ApprovalError(
+                    "work item belongs to a different entity",
+                    code="entity_mismatch",
+                    http_status=400,
+                )
+            linked_wi = existing_wi
+            c.execute(
+                """
+                UPDATE core_approval_requests
+                SET linked_work_item_id=?, updated_at=?
+                WHERE approval_request_id=?
+                """,
+                (linked_wi, ts, rid),
+            )
+        elif link_work_item or review_owner_person_id:
             wi = _work_items.create_work_item(
                 title=t,
                 description=(description or "").strip() or None,

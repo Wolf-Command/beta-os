@@ -10,6 +10,16 @@
       "at": "2026-09-26T19:12:00Z",
       "tests": "PASS=89 FAIL=0",
       "checked": false
+    },
+    {
+      "id": "sprint7-p4-work-loop-20260927",
+      "claim": "Beta work loop assigns a Wolf Core work item by role and scope, blocks submit when evidence is required, routes approval, checks authority, SoD, and delegation, and reflects the status on My Work, the approver queue, the owner pulse, and a live Progress slice. Anon item and governance-loop routes on :8788 are 403. Money route is 405. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_work_loop.py | tail -3; curl -sS -o /dev/null -w 'open:%{http_code}\\n' http://127.0.0.1:8788/api/work-loop/items/none; curl -sS -o /dev/null -w 'money:%{http_code}\\n' -X POST http://127.0.0.1:8788/api/work-loop/money; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "EXIT: SUCCESS; open:403; money:405; 8787 True; 8788 True",
+      "by": "cursor-sprint7-p4-work-loop",
+      "at": "2026-09-26T19:26:00Z",
+      "tests": "PASS=52 FAIL=0",
+      "checked": false
     }
   ]
 }

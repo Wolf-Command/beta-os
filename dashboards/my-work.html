@@ -29,6 +29,8 @@
     background: var(--accent); color: #fff; border-radius: 12px;
     padding: 14px 16px; font-weight: 650; min-height: 48px;
   }
+  a.card { display: block; text-decoration: none; color: inherit; }
+  a.card:active { border-color: var(--accent); }
   .err { color: #8d1d1d; }
   @media (max-width: 420px) {
     body { padding: 12px 12px 88px; font-size: 16px; }
@@ -60,7 +62,11 @@
     const items = block.items || [];
     const body = block.empty
       ? `<div class="card">${esc(block.empty_message || "Nothing here.")}</div>`
-      : items.map((it) => `<div class="card"><p>${esc(it.title)}</p></div>`).join("");
+      : items.map((it) => {
+          const inner = `<p>${esc(it.title)}</p>${it.status ? `<p class="role">${esc(it.status)}</p>` : ""}`;
+          if (it.href) return `<a class="card" href="${esc(it.href)}">${inner}</a>`;
+          return `<div class="card">${inner}</div>`;
+        }).join("");
     return `<h2>${esc(block.title || "")}</h2>${body}`;
   }
 

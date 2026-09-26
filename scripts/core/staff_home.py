@@ -204,8 +204,17 @@ def _section(key: str, title: str, items: list[dict[str, str]], empty_message: s
     }
 
 
-def _item(item_id: str, title: str) -> dict[str, str]:
-    return {"id": item_id, "title": title}
+def _item(item_id: str, title: str, *, href: str | None = None, status: str | None = None) -> dict[str, str]:
+    row = {"id": item_id, "title": title}
+    if href:
+        row["href"] = href
+    if status:
+        row["status"] = status
+    return row
+
+
+def _work_href(work_item_id: str) -> str:
+    return f"/my-work/item/{work_item_id}"
 
 
 def _placeholders(n: int) -> str:
@@ -224,8 +233,20 @@ def _work_rows(conn, entities: set[str], statuses: tuple[str, ...], owner: str |
     """
     params: list[Any] = [*sorted(entities), *statuses]
     if owner:
-        sql += " AND owner_person_id = ?"
-        params.append(owner)
+        inherited: list[str] = []
+        try:
+            from core import work_loop as _loop
+
+            inherited = _loop.inherited_work_item_ids(conn, owner)
+        except Exception:
+            inherited = []
+        if inherited:
+            sql += f" AND (owner_person_id = ? OR work_item_id IN ({_placeholders(len(inherited))}))"
+            params.append(owner)
+            params.extend(inherited)
+        else:
+            sql += " AND owner_person_id = ?"
+            params.append(owner)
     sql += " ORDER BY priority ASC, due_at IS NULL, due_at ASC, updated_at DESC LIMIT 40"
     try:
         return [dict(r) for r in conn.execute(sql, params).fetchall()]
@@ -239,7 +260,7 @@ def _approval_rows(conn, entities: set[str]) -> list[dict[str, Any]]:
     sql = f"""
         SELECT approval_request_id, title, status, request_type, material_amount,
                currency, requested_by_person_id, owning_entity_id,
-               required_permission_code
+               required_permission_code, linked_work_item_id
         FROM core_approval_requests
         WHERE owning_entity_id IN ({_placeholders(len(entities))})
           AND status = 'PENDING'
@@ -373,12 +394,24 @@ def _staff_sections(
     codes: set[str],
 ) -> list[dict[str, Any]]:
     mine = _clean_work(_work_rows(conn, entities, ("OPEN", "IN_PROGRESS", "BLOCKED"), person_id))
-    today = [_item(r["work_item_id"], r["title"]) for r in mine if r["status"] in {"OPEN", "IN_PROGRESS"}]
-    blocked = [_item(r["work_item_id"], r["title"]) for r in mine if r["status"] == "BLOCKED"]
+    today = [
+        _item(r["work_item_id"], r["title"], href=_work_href(r["work_item_id"]), status=r["status"])
+        for r in mine
+        if r["status"] in {"OPEN", "IN_PROGRESS"}
+    ]
+    blocked = [
+        _item(r["work_item_id"], r["title"], href=_work_href(r["work_item_id"]), status=r["status"])
+        for r in mine
+        if r["status"] == "BLOCKED"
+    ]
     done_rows = _clean_work(
         _work_rows(conn, entities, ("COMPLETED", "VERIFIED"), person_id)
     )
-    done = [_item(r["work_item_id"], r["title"]) for r in done_rows[:8]]
+    done = [
+        _item(r["work_item_id"], r["title"], href=_work_href(r["work_item_id"]), status=r["status"])
+        for r in done_rows[:8]
+    ]
+    mine_ids = {str(r["work_item_id"]) for r in mine}
     for ev in _evidence_rows(conn, entities):
         if str(ev.get("submitted_by_person_id") or "") != person_id:
             continue
@@ -394,12 +427,14 @@ def _staff_sections(
         if _demo(ap.get("approval_request_id"), ap.get("title"), ap.get("requested_by_person_id")):
             continue
         title = str(ap.get("title") or "Request")
-        if str(ap.get("requested_by_person_id") or "") == person_id:
-            waiting.append(_item(str(ap["approval_request_id"]), title))
+        linked = str(ap.get("linked_work_item_id") or "")
+        href = _work_href(linked) if linked else None
+        if str(ap.get("requested_by_person_id") or "") == person_id or (linked and linked in mine_ids):
+            waiting.append(_item(str(ap["approval_request_id"]), title, href=href, status="PENDING"))
             continue
         needed = str(ap.get("required_permission_code") or "")
         if "approval.decide" in codes and (not needed or needed in codes):
-            attention.append(_item(str(ap["approval_request_id"]), title))
+            attention.append(_item(str(ap["approval_request_id"]), title, href=href, status="PENDING"))
 
     return [
         _section("today", "What do I need to do today?", today[:12], "Nothing is assigned to you for today."),
@@ -413,9 +448,18 @@ def _owner_sections(conn, entities: set[str], codes: set[str], person_id: str) -
     open_rows = _clean_work(_work_rows(conn, entities, ("OPEN", "IN_PROGRESS"), None))
     blocked_rows = _clean_work(_work_rows(conn, entities, ("BLOCKED",), None))
     done_rows = _clean_work(_work_rows(conn, entities, ("COMPLETED", "VERIFIED"), None))
-    happening = [_item(r["work_item_id"], r["title"]) for r in open_rows[:12]]
-    blocked = [_item(r["work_item_id"], r["title"]) for r in blocked_rows[:12]]
-    improving = [_item(r["work_item_id"], r["title"]) for r in done_rows[:8]]
+    happening = [
+        _item(r["work_item_id"], r["title"], href=_work_href(r["work_item_id"]), status=r["status"])
+        for r in open_rows[:12]
+    ]
+    blocked = [
+        _item(r["work_item_id"], r["title"], href=_work_href(r["work_item_id"]), status=r["status"])
+        for r in blocked_rows[:12]
+    ]
+    improving = [
+        _item(r["work_item_id"], r["title"], href=_work_href(r["work_item_id"]), status=r["status"])
+        for r in done_rows[:8]
+    ]
     wrong = []
     authority = []
     money = []
@@ -434,16 +478,18 @@ def _owner_sections(conn, entities: set[str], codes: set[str], person_id: str) -
             continue
         title = str(ap.get("title") or "Request")
         aid = str(ap["approval_request_id"])
+        linked = str(ap.get("linked_work_item_id") or "")
+        href = _work_href(linked) if linked else None
         if str(ap.get("request_type") or "") == "SPEND" or str(ap.get("material_amount") or "").strip():
             amount = str(ap.get("material_amount") or "").strip()
             label = title if not amount else f"{title} ({amount} {ap.get('currency') or ''})".strip()
-            money.append(_item(aid, label))
+            money.append(_item(aid, label, href=href, status="PENDING"))
         needed = str(ap.get("required_permission_code") or "")
         requester = str(ap.get("requested_by_person_id") or "")
         if requester != person_id and "approval.decide" in codes and (not needed or needed in codes):
-            authority.append(_item(aid, title))
+            authority.append(_item(aid, title, href=href, status="PENDING"))
         if requester == person_id:
-            wrong.append(_item(aid, title))
+            wrong.append(_item(aid, title, href=href, status="PENDING"))
     for ev in _evidence_rows(conn, entities):
         if _demo(ev.get("evidence_id"), ev.get("evidence_type"), ev.get("submitted_by_person_id")):
             continue

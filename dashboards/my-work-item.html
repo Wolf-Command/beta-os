@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Work</title>
+<style>
+  :root {
+    --bg: #f4f1ea; --card: #fffdf8; --text: #1c1915; --muted: #5c564c;
+    --line: #e4dccf; --accent: #1f4d3a; --danger: #8d1d1d;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { max-width: 100%; overflow-x: hidden; }
+  body {
+    margin: 0 auto; max-width: 720px; padding: 16px 16px 88px;
+    background: var(--bg); color: var(--text); font-family: var(--font);
+    font-size: 17px; line-height: 1.4;
+  }
+  h1 { font-size: 1.35rem; margin: 8px 0; }
+  a.back { color: var(--accent); text-decoration: none; font-weight: 650; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px; margin-top: 10px;
+  }
+  .muted { color: var(--muted); }
+  .err { color: var(--danger); }
+  .stale { color: var(--danger); font-weight: 700; }
+  button, textarea {
+    font: inherit; width: 100%; margin-top: 8px;
+  }
+  button {
+    min-height: 48px; border-radius: 12px; border: 0;
+    background: var(--accent); color: #fff; font-weight: 650;
+  }
+  button.secondary { background: #fff; color: var(--text); border: 1px solid var(--line); }
+  textarea { min-height: 88px; border-radius: 12px; border: 1px solid var(--line); padding: 10px; }
+</style>
+</head>
+<body data-wolf-page-type="WORKSPACE" data-wolf-shell="global">
+  <a class="back" href="/my-work">My Work</a>
+  <h1 id="title">Work</h1>
+  <p class="muted" id="status"></p>
+  <div id="msg"></div>
+  <div id="body"></div>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+  const parts = location.pathname.split("/").filter(Boolean);
+  const id = decodeURIComponent(parts[parts.length - 1] || "");
+
+  function paint(data) {
+    const item = data.work_item || {};
+    const place = data.placement || {};
+    const progress = place.progress || {};
+    const approval = data.approval || {};
+    const evidence = data.evidence || {};
+    $("title").textContent = item.title || "Work";
+    const fresh = progress.freshness === "STALE" ? "STALE" : "LIVE";
+    $("status").textContent = [
+      item.status || "",
+      approval.status ? "approval " + approval.status : "",
+      fresh
+    ].filter(Boolean).join(" · ");
+    const missing = (evidence.missing || []).length
+      ? "Evidence still required before this can be submitted."
+      : (evidence.satisfied ? "Evidence requirement is met." : "No evidence requirement is on record.");
+    const basis = (data.decision || {}).authority_basis_type || "";
+    $("body").innerHTML = `
+      <div class="card">
+        <p>${esc(missing)}</p>
+        <p class="muted">My Work: ${esc(place.my_work || "")}</p>
+        <p class="muted">Approver queue: ${esc(place.approver_queue || "")}</p>
+        <p class="muted">Owner pulse: ${esc(place.owner_pulse || "")}</p>
+        <p class="${fresh === "STALE" ? "stale" : "muted"}">Progress: ${esc(fresh)} · ${esc(progress.status || item.status || "")}</p>
+        ${basis ? `<p class="muted">Decision basis: ${esc(basis)}</p>` : ""}
+      </div>
+      <div class="card" id="act">
+        <label for="note">Evidence note</label>
+        <textarea id="note" placeholder="What is true about this work"></textarea>
+        <button type="button" id="attach">Attach evidence</button>
+        <button type="button" id="submit">Submit for approval</button>
+        <button type="button" class="secondary" id="approve">Approve</button>
+        <button type="button" class="secondary" id="reject">Reject</button>
+      </div>`;
+    const post = (path, payload) => fetch(path, {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(payload || {})
+    }).then((res) => res.json().then((body) => ({ ok: res.ok, body })));
+    $("attach").onclick = () => post(`/api/work-loop/items/${encodeURIComponent(id)}/evidence`, {
+      note: $("note").value
+    }).then(show);
+    $("submit").onclick = () => post(`/api/work-loop/items/${encodeURIComponent(id)}/submit`, {}).then(show);
+    $("approve").onclick = () => post(`/api/work-loop/items/${encodeURIComponent(id)}/decide`, {
+      decision: "APPROVE"
+    }).then(show);
+    $("reject").onclick = () => post(`/api/work-loop/items/${encodeURIComponent(id)}/decide`, {
+      decision: "REJECT",
+      reason: "Returned to the assigned role."
+    }).then(show);
+    document.body.setAttribute("data-ready", "1");
+    document.body.setAttribute(
+      "data-overflow",
+      document.documentElement.scrollWidth > document.documentElement.clientWidth + 1 ? "yes" : "no"
+    );
+  }
+
+  function show(result) {
+    const data = result.body || {};
+    if (!result.ok || data.ok === false) {
+      $("msg").innerHTML = `<p class="err">${esc(data.message || "This did not go through.")}</p>`;
+      if (data.work_item) paint(data);
+      return;
+    }
+    $("msg").innerHTML = "";
+    paint(data);
+  }
+
+  fetch(`/api/work-loop/items/${encodeURIComponent(id)}`, { headers: { Accept: "application/json" } })
+    .then((res) => res.json().then((data) => ({ ok: res.ok, body: data })))
+    .then(show)
+    .catch((err) => {
+      $("msg").innerHTML = `<p class="err">${esc(err.message || "This page did not load.")}</p>`;
+    });
+})();
+</script>
+</body>
+</html>
