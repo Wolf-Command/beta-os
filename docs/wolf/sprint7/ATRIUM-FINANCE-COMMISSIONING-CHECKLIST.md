@@ -2,7 +2,32 @@
 
 27 Sep 2026. This is the ledger application on a fresh database. It is not commissioned until a person in each role below has signed in and checked their own screen.
 
-Offsite backup is not ready. There is no B2 key in the environment, so no backup was uploaded or restored.
+## Start a fresh database
+
+From `/Users/wolfterminal/atrium-finance`:
+
+```
+export SESSION_SECRET='(a long random value; do not commit it)'
+export SEED_CONTROLLER_PASSWORD='(role password; do not commit it)'
+export SEED_ACCOUNTANT_PASSWORD='...'
+export SEED_FRONT_OFFICE_PASSWORD='...'
+export SEED_PURCHASING_PASSWORD='...'
+export SEED_GM_PASSWORD='...'
+export SEED_AUDITOR_PASSWORD='...'
+export PORT=8790
+export DATABASE_FILE="$PWD/data/commissioning/atrium.sqlite"
+zsh scripts/start-fresh-commissioning.sh
+```
+
+The script refuses port 8787 and port 8788. It refuses any database path under `data/uncommissioned/`. It refuses to start if any name above is empty. It refuses to open an existing database file unless `FRESH_DB_REUSE=yes`. The server creates the SQLite file on first boot. `*.sqlite` is gitignored.
+
+Sign in at `http://127.0.0.1:8790` after it prints that it is listening.
+
+## Backup
+
+The atrium-finance nightly job is not configured. These names are unset: `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET_NAME`, `B2_ENDPOINT`. There is no `.env`. `scripts/com.atriumfinance.backup.plist` is not loaded. The screen still says no backup is recorded until that job uploads.
+
+A separate scratch proof on 27 Sep 2026 used the existing rclone remote named `b2` (type b2). It uploaded one test database to `b2:wolf-cold-archive/atrium-finance-d5-scratch/atrium-d5-fresh.sqlite`, matched SHA1 `25e4b3d6689678c96052414989adf7e18fbfb4ca`, restored the file, and booted it on port 8792. That object is a test marker (`D5-SCRATCH-MARKER`), not the hotel's books and not the scheduled atrium backup. Do not point commissioning at it.
 
 Do not use `data/uncommissioned/atrium.sqlite`. Do not import `data/owner_pool.json` or `data/owner_email_store.json`. Those files are an old generated sample (98 units), not the hotel's register.
 
@@ -33,7 +58,7 @@ Passwords are whatever was set in `SEED_*_PASSWORD` before the first boot. They 
 
 1. Command Centre should say the property profile is not set, and that there are no posted journals. You should not see a dollar total standing in for hotel revenue.
 2. Administration → Period Closing Locks & Hotel Master Profile. The name is blank, rooms are 0, and the period lock is empty (books open). Type the real property name, room count, and currency. Save. Leave the lock date empty until you actually close a period.
-3. Confirm the other five role accounts exist, and that each is attached to the role in the table above, not to a person's private rules.
+3. Confirm the other five role accounts exist, and that each is attached to the role in the table above, not to a person's private rules. Creating a user starts with an empty password field. Type a password. The form does not fill one in.
 4. Tax: the tax names are a list. Rates are not set. Enter a rate only when you know the rate that applies. Do not calculate tax before that.
 5. Chart of accounts: review the template. It is a starting chart, not a statement of what the hotel earned.
 6. Do not press anything that promises sample staff or sample owners. That action is turned off.
@@ -79,4 +104,4 @@ Passwords are whatever was set in `SEED_*_PASSWORD` before the first boot. They 
 
 - Do not move money, pay a vendor, or change a bank account as part of this test.
 - Do not email owners. The old dispatch list is sample data.
-- Backup to B2 waits until a scoped key exists. Until then the screen says no backup is recorded. That is true.
+- The atrium nightly backup waits until `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET_NAME`, and `B2_ENDPOINT` are set and `scripts/com.atriumfinance.backup.plist` is loaded. Until then the screen says no backup is recorded. That is true for this app. The scratch object under `atrium-finance-d5-scratch/` is not that job.
