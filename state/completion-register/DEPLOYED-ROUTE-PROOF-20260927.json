@@ -1,0 +1,142 @@
+{
+  "register_id": "DEPLOYED-ROUTE-PROOF-20260927",
+  "pack": "D3",
+  "as_of": "2026-09-27T07:56:25+08:00",
+  "kind": "DEPLOYED_ROUTE_PROOF",
+  "separate_from": ["STAFF_READINESS", "HUMAN_COMMISSIONING", "OPERATING_ADOPTION", "TECHNICAL_PROOF"],
+  "human_commissioned": false,
+  "staff_ready": false,
+  "operating_adoption": false,
+  "result": "FAIL",
+  "fail_reason": "No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof.",
+  "listeners": {
+    "prod_8787_pid": 15975,
+    "prod_touched": false,
+    "beta_8788_pid": 4443,
+    "beta_restarted": false,
+    "beta_auth_mode": "cloudflare_access",
+    "development_assertion_allowed": false,
+    "cloudflare_aud_configured": true,
+    "team_domain": "https://wolfcommand.cloudflareaccess.com",
+    "sim_jwk_present": false
+  },
+  "path": [
+    "Cf-Access-Jwt-Assertion header only",
+    "cf_access.verify_access_jwt RS256 + JWKS /cdn-cgi/access/certs + iss + aud + exp + iat + email claim",
+    "identity.resolve_verified_person email to org_auth_identities to org_persons; no auto-create",
+    "org_assignments ACTIVE end_at null to org_positions.role_id",
+    "route gate: uma venue.close.read + SCOPE-BZG-UMA|SCOPE-BZG-FB; /wolf PERS-MATT + progress.read; /ggv/finance finance.nota.read; /content-2.0 shell filter_hrefs; /my-work any failed identity is Sign in required"
+  ],
+  "untrusted": [
+    "Cf-Access-Authenticated-User-Email",
+    "X-Wolf-Subject",
+    "JSON subject",
+    "query subject"
+  ],
+  "roles": [
+    {
+      "asked": "Creative Director",
+      "role_id": "ROLE-GGV-CREATIVE-DIRECTOR",
+      "seated": true,
+      "person_id": "PERS-HAIKAL",
+      "assignment_id": "ASG-HAIKAL-CD-1",
+      "authorised_email": true,
+      "email": "haikalqilbari123@gmail.com",
+      "shell_landing": "/content-2.0",
+      "deployed_http_200": false,
+      "deployed_unsigned": "403 forbidden on /content-2.0; 403 missing_auth on /bzg/uma-blu /wolf /ggv/finance",
+      "local_projection_not_http": {
+        "content_shell": true,
+        "venue.close.read_uma": false,
+        "finance.nota.read": false,
+        "owner_page": false
+      }
+    },
+    {
+      "asked": "BZG F&B Operations Lead",
+      "role_id": "ROLE-BZG-FB-OPS-LEAD",
+      "seated": true,
+      "person_id": "PERS-DEVI",
+      "assignment_id": "ASG-DEVI-FB-OPS-1",
+      "authorised_email": true,
+      "email": "deviputu236@gmail.com",
+      "shell_landing": "/bzg/uma-blu",
+      "deployed_http_200": false,
+      "deployed_unsigned": "403 missing_auth on /bzg/uma-blu; bad JWT 403 invalid_token",
+      "local_projection_not_http": {
+        "content_shell": false,
+        "venue.close.read_uma": true,
+        "finance.nota.read": false,
+        "owner_page": false
+      }
+    },
+    {
+      "asked": "venue closer",
+      "role_id": "ROLE-BZG-CLOSER",
+      "seated": false,
+      "position_id": "POS-BZG-CLOSER-UMA-1",
+      "active_assignments": 0,
+      "waiting_human": "seat decision",
+      "deployed_http_200": false
+    },
+    {
+      "asked": "finance external accountant",
+      "role_id": "ROLE-GGV-EXTERNAL-ACCOUNTANT",
+      "seated": false,
+      "position_id": "POS-GGV-EXT-ACCT",
+      "active_assignments": 0,
+      "waiting_human": "seat decision",
+      "deployed_http_200": false,
+      "note": "PERS-AMANDA ROLE-CONTENT-MGMT has finance.nota.read. That is not this seat."
+    },
+    {
+      "asked": "finance controller",
+      "role_id": null,
+      "seated": false,
+      "waiting_human": "no controller role exists",
+      "deployed_http_200": false
+    },
+    {
+      "asked": "Owner",
+      "role_id": "ROLE-MATT",
+      "catalog_role_owner_row": false,
+      "chrome_label_role_owner": true,
+      "seated": true,
+      "person_id": "PERS-MATT",
+      "assignment_id": "ASG-MATT-OWNER-1",
+      "authorised_email": true,
+      "email": "mrwolf@wolfcommand.net",
+      "shell_landing": "/wolf",
+      "deployed_http_200": false,
+      "deployed_unsigned": "403 missing_auth on /wolf; bad JWT 403 invalid_token",
+      "local_projection_not_http": {
+        "content_shell": true,
+        "venue.close.read_uma": true,
+        "finance.nota.read": true,
+        "progress.read": true,
+        "owner_page": true
+      }
+    }
+  ],
+  "public_access": {
+    "host": "https://beta.wolfcommand.net",
+    "status": 302,
+    "location_host": "wolfcommand.cloudflareaccess.com",
+    "location_path": "/cdn-cgi/access/login/beta.wolfcommand.net",
+    "nonsense_path_same_gate": true,
+    "origin_route_distinguished": false
+  },
+  "jwks": {
+    "url": "https://wolfcommand.cloudflareaccess.com/cdn-cgi/access/certs",
+    "http": 200,
+    "key_count": 2,
+    "alg": "RS256"
+  },
+  "local_verifier_suite": {
+    "command": "python3 scripts/tests/test_real_auth_binding.py",
+    "pass": 44,
+    "fail": 0,
+    "sufficient_for_deployed_role_proof": false,
+    "reason": "Ephemeral key and stubbed JWKS in the test process. Not a Cloudflare token on pid 4443."
+  }
+}
