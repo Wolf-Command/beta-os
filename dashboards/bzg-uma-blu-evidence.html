@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Uma Blu · Evidence</title>
+<style>
+  :root {
+    --bg: #0f1c24; --bg2: #162833; --line: #2a4554; --text: #eef4f7;
+    --muted: #8aa0ad; --accent: #3db8a0;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font); min-height: 100%;
+  }
+  body {
+    padding: 16px 16px 64px; max-width: 480px; margin: 0 auto;
+    overflow-wrap: anywhere; overflow-x: clip;
+  }
+  .brand { font-size: 1.45rem; font-weight: 700; margin: 0 0 2px; }
+  .brand em { font-style: normal; color: var(--accent); }
+  .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 14px; line-height: 1.35; }
+  nav.uma { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  nav.uma a {
+    padding: 10px 12px; border-radius: 999px; border: 1px solid var(--line);
+    color: var(--muted); text-decoration: none; font-size: 0.84rem; font-weight: 650;
+    min-height: 44px; display: inline-flex; align-items: center;
+  }
+  nav.uma a.active { color: var(--accent); border-color: var(--accent); }
+  .card {
+    background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 10px;
+  }
+  .empty { color: var(--muted); font-size: 0.95rem; }
+  a.link { color: var(--accent); }
+</style>
+</head>
+<body data-wolf-page-type="WORKSPACE" data-wolf-org="BZG/UMA" data-wolf-shell="global">
+  <h1 class="brand">Uma Blu <em>Evidence</em></h1>
+  <p class="sub">Photos and notes already saved with a close. Empty means none are recorded yet.</p>
+  <nav class="uma" aria-label="Uma Blu day">
+    <a href="/bzg/uma-blu">Today</a>
+    <a href="/uma-blu-close">Daily Close</a>
+    <a href="/bzg/uma-blu/issues">Issues</a>
+    <a href="/bzg/uma-blu/bills">Bills</a>
+    <a href="/bzg/uma-blu/bills#purchasing">Purchasing</a>
+    <a class="active" href="/bzg/uma-blu/evidence">Evidence</a>
+    <a href="/bzg/uma-blu/exceptions">Exceptions</a>
+    <a href="/my-work">My Work</a>
+    <a href="/bzg/uma-blu/petty">Petty cash</a>
+  </nav>
+  <div id="list"><p class="empty">Loading…</p></div>
+<script>
+(function () {
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  fetch("/api/bzg/uma-blu/evidence")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var box = document.getElementById("list");
+      box.innerHTML = "";
+      var rows = data.rows || [];
+      if (!rows.length) {
+        box.appendChild(el("p", "empty", data.empty_message || "No close evidence recorded in Wolf yet."));
+      } else {
+        rows.forEach(function (row) {
+          var card = el("div", "card");
+          card.appendChild(el("div", null, row.label || "Evidence"));
+          box.appendChild(card);
+        });
+      }
+      var back = el("p");
+      var a = el("a", "link", "Open Daily Close");
+      a.href = "/uma-blu-close";
+      back.appendChild(a);
+      box.appendChild(back);
+      document.body.setAttribute("data-ready", "1");
+      var over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
+      document.body.setAttribute("data-overflow", over ? "yes" : "no");
+    })
+    .catch(function () {
+      document.getElementById("list").textContent = "Could not load evidence.";
+    });
+})();
+</script>
+</body>
+</html>

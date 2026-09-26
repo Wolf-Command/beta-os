@@ -34,8 +34,9 @@
   .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 14px; line-height: 1.35; }
   nav.uma { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
   nav.uma a {
-    padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line);
-    color: var(--muted); text-decoration: none; font-size: 0.82rem; font-weight: 650;
+    padding: 10px 12px; border-radius: 999px; border: 1px solid var(--line);
+    color: var(--muted); text-decoration: none; font-size: 0.84rem; font-weight: 650;
+    min-height: 44px; display: inline-flex; align-items: center;
   }
   nav.uma a.active { color: var(--accent); border-color: var(--accent); }
   nav.uma span.disabled { padding: 8px 12px; font-size: 0.78rem; color: var(--muted); opacity: 0.5; }
@@ -59,15 +60,18 @@
 <body>
   <p class="crumb"><a href="/bzg">BZG</a> · <a href="/bzg/uma-blu">Uma Blu</a> · Issues</p>
   <h1 class="brand">Uma Blu <em>Issues</em></h1>
-  <p class="sub">Exceptions only — quiet when nothing is wrong</p>
+  <p class="sub">Write down what went wrong. Quiet when nothing is wrong.</p>
 
-    <nav class="uma">
+    <nav class="uma" aria-label="Uma Blu day">
     <a href="/bzg/uma-blu">Today</a>
-    <a href="/bzg/uma-blu/bills">Bills</a>
-    <a href="/bzg/uma-blu/petty">Petty</a>
-    <a href="/uma-blu-close">Close</a>
+    <a href="/uma-blu-close">Daily Close</a>
     <a class="active" href="/bzg/uma-blu/issues">Issues</a>
-    <a href="/bzg/uma-blu#history">History</a>
+    <a href="/bzg/uma-blu/bills">Bills</a>
+    <a href="/bzg/uma-blu/bills#purchasing">Purchasing</a>
+    <a href="/bzg/uma-blu/evidence">Evidence</a>
+    <a href="/bzg/uma-blu/exceptions">Exceptions</a>
+    <a href="/my-work">My Work</a>
+    <a href="/bzg/uma-blu/petty">Petty cash</a>
   </nav>
 
   <div class="panel" id="issueForm" hidden style="background:#162833;border:1px solid #2a4554;border-radius:14px;padding:14px;margin-bottom:12px">

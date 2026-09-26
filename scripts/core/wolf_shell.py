@@ -266,6 +266,8 @@ DASHBOARDS_HTML_CANONICAL: dict[str, str] = {
     "/dashboards/bzg-uma-blu-bills.html": "/bzg/uma-blu/bills",
     "/dashboards/bzg-uma-blu-issues.html": "/bzg/uma-blu/issues",
     "/dashboards/bzg-uma-blu-petty.html": "/bzg/uma-blu/petty",
+    "/dashboards/bzg-uma-blu-evidence.html": "/bzg/uma-blu/evidence",
+    "/dashboards/bzg-uma-blu-exceptions.html": "/bzg/uma-blu/exceptions",
     "/dashboards/bzg-uma-blu-pr.html": "/bzg/uma-blu/bills",
     "/dashboards/uma-blu-close.html": "/uma-blu-close",
     # Flat legacy filenames that used to sit next to clean routes
@@ -625,6 +627,8 @@ ROUTE_PARENT: dict[str, str | None] = {
     "/bzg/uma-blu/issues": "/bzg/uma-blu",
     "/bzg/uma-blu/petty": "/bzg/uma-blu",
     "/uma-blu-close": "/bzg/uma-blu",
+    "/bzg/uma-blu/evidence": "/bzg/uma-blu",
+    "/bzg/uma-blu/exceptions": "/bzg/uma-blu",
     INTEL_HREF: EMPIRE_HREF,
     CONTENT_HREF: INTEL_HREF,
     # Wave 7: Progress = System soft-land home; children UP → Progress.

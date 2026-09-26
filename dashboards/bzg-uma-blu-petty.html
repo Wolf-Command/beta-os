@@ -43,8 +43,9 @@
   }
   nav.uma { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
   nav.uma a {
-    padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line);
-    color: var(--muted); text-decoration: none; font-size: 0.82rem; font-weight: 650;
+    padding: 10px 12px; border-radius: 999px; border: 1px solid var(--line);
+    color: var(--muted); text-decoration: none; font-size: 0.84rem; font-weight: 650;
+    min-height: 44px; display: inline-flex; align-items: center;
   }
   nav.uma a.active { color: var(--accent); border-color: var(--accent); }
   .crumb { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
@@ -86,13 +87,16 @@
   <div class="banner" id="floatBanner">Opening cash balance needed. Uma Blu has no approved opening balance yet. You can view movements, but the tin total cannot be verified.</div>
   <div class="banner hidden" id="fixtureBanner">Practice examples — not live Uma Blu tin activity.</div>
 
-    <nav class="uma">
+    <nav class="uma" aria-label="Uma Blu day">
     <a href="/bzg/uma-blu">Today</a>
-    <a href="/bzg/uma-blu/bills">Bills</a>
-    <a class="active" href="/bzg/uma-blu/petty">Petty</a>
-    <a href="/uma-blu-close">Close</a>
+    <a href="/uma-blu-close">Daily Close</a>
     <a href="/bzg/uma-blu/issues">Issues</a>
-    <a href="/bzg/uma-blu#history">History</a>
+    <a href="/bzg/uma-blu/bills">Bills</a>
+    <a href="/bzg/uma-blu/bills#purchasing">Purchasing</a>
+    <a href="/bzg/uma-blu/evidence">Evidence</a>
+    <a href="/bzg/uma-blu/exceptions">Exceptions</a>
+    <a href="/my-work">My Work</a>
+    <a class="active" href="/bzg/uma-blu/petty">Petty cash</a>
   </nav>
 
   <div class="panel" id="pettyForm" hidden>

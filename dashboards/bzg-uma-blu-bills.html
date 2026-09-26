@@ -39,8 +39,9 @@
   .banner.hidden { display: none; }
   nav.uma { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
   nav.uma a {
-    padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line);
-    color: var(--muted); text-decoration: none; font-size: 0.82rem; font-weight: 650;
+    padding: 10px 12px; border-radius: 999px; border: 1px solid var(--line);
+    color: var(--muted); text-decoration: none; font-size: 0.84rem; font-weight: 650;
+    min-height: 44px; display: inline-flex; align-items: center;
   }
   nav.uma a.active { color: var(--accent); border-color: var(--accent); }
   nav.uma span.disabled { padding: 8px 12px; font-size: 0.78rem; color: var(--muted); opacity: 0.5; }
@@ -76,13 +77,16 @@
 
   <div class="banner hidden" id="fixtureBanner">These rows are examples — not live purchase orders.</div>
 
-    <nav class="uma">
+    <nav class="uma" aria-label="Uma Blu day">
     <a href="/bzg/uma-blu">Today</a>
-    <a class="active" href="/bzg/uma-blu/bills">Bills</a>
-    <a href="/bzg/uma-blu/petty">Petty</a>
-    <a href="/uma-blu-close">Close</a>
+    <a href="/uma-blu-close">Daily Close</a>
     <a href="/bzg/uma-blu/issues">Issues</a>
-    <a href="/bzg/uma-blu#history">History</a>
+    <a class="active" href="/bzg/uma-blu/bills">Bills</a>
+    <a href="/bzg/uma-blu/bills#purchasing">Purchasing</a>
+    <a href="/bzg/uma-blu/evidence">Evidence</a>
+    <a href="/bzg/uma-blu/exceptions">Exceptions</a>
+    <a href="/my-work">My Work</a>
+    <a href="/bzg/uma-blu/petty">Petty cash</a>
   </nav>
 
   <div class="panel" id="createPanel" hidden>
@@ -103,6 +107,7 @@
     .panel { background: color-mix(in srgb, var(--bg2) 92%, #000); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px; }
   </style>
 
+  <div id="purchasing"></div>
   <div id="list"><p class="muted">Loading…</p></div>
 
 <script>
