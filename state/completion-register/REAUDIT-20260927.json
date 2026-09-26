@@ -1,0 +1,1614 @@
+{
+  "reaudit_id": "REAUDIT-20260927",
+  "as_of": "2026-09-27T03:39:00+08:00",
+  "workspace": "/Users/wolfterminal/beta-os",
+  "canonical_ledger": "state/model-c-baseline-assessments.json",
+  "canonical_catalog": "docs/MODEL-C-CAPABILITY-CATALOG.md",
+  "canonical_credits": "docs/MODEL-C-SYSTEM-NUMERIC-CREDITS.md",
+  "credits_version": "MODEL-C-SYSTEM-CREDITS-v1.0-2026-09-17",
+  "application_code_changed": false,
+  "ledger_file_rewritten": false,
+  "n": 77,
+  "previous_sum_credits": "19.65",
+  "previous_pct_exact": "25.51948051948051948051948052",
+  "previous_pct_1dp_half_up": "25.5",
+  "previous_pct_2dp_half_up": "25.52",
+  "previous_19_65_arithmetically_correct": true,
+  "new_sum_credits": "13.00",
+  "new_pct_exact": "16.88311688311688311688311688",
+  "new_pct_2dp_half_up": "16.88",
+  "counts_new": {
+    "ABSENT": 1,
+    "SPECIFIED": 41,
+    "BUILT": 31,
+    "PROVEN": 4,
+    "READY": 0
+  },
+  "human_commissioned": false,
+  "dimensions": {
+    "Operating Adoption": "no canonical model \u2014 not scored",
+    "Data/Measurement": "no canonical model \u2014 not scored",
+    "Founder Independence": "no canonical model \u2014 not scored",
+    "Financial Control": "no canonical model \u2014 not scored",
+    "Sale Readiness": "no canonical model \u2014 not scored"
+  },
+  "dimension_basis": "docs/MODEL-C-CAPABILITY-CATALOG.md section 'Model E dimensions (definitions only \u2014 no scores)'; docs/MODEL-C-SYSTEM-SCORING-RULES.md section 10 combined TRANSFORMATION % NOT APPROVED; scripts/core/progress_read_model.py MODEL_E_UNSCORED = Not scored yet.",
+  "capabilities": [
+    {
+      "id": "CAP-CORE-01",
+      "name": "Organisation Registry",
+      "previous_state": "PROVEN",
+      "previous_score": 0.8,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "scripts/core/organisation.py",
+        "scripts/tests/test_org_registry.py",
+        "docs/canon/ORG-REGISTRY-TRANSITIONAL.md",
+        "state/model-c-baseline-assessments.json"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 org registry exists; changing the hierarchy is still an owner act, not a new Matt login.",
+      "reason_for_change": "Cited proof scripts/tests/test_org_registry.py exited 1 on 2026-09-27 (PASS=33 FAIL=4: brand seed 12 not 7, Habitat brand, GGV client brands, invalid-entity 404). Implementation scripts/core/organisation.py remains. PROVEN needs a green suite. Not raised.",
+      "changed": true,
+      "ledger_note": "scripts/core/organisation.py + test_org_registry.py + docs/canon/ORG-REGISTRY-TRANSITIONAL.md",
+      "previous_next_bar": "Deployed-route / live org UI prove for READY"
+    },
+    {
+      "id": "CAP-CORE-02",
+      "name": "Person & Auth Identity",
+      "previous_state": "READY",
+      "previous_score": 1.0,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "scripts/tests/test_real_auth_binding.py",
+        "scripts/tests/test_person_auth_identity.py",
+        "scripts/core/identity.py",
+        "docs/wolf/sprint7/P3-STAFFHOME-RESULT.md",
+        "docs/wolf/sprint7/P4-LOOP-RESULT.md",
+        "docs/wolf/sprint7/P5-UMA-RESULT.md"
+      ],
+      "commit_refs": [
+        "f829f0c"
+      ],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight. test_real_auth_binding.py passed. Role screens on :8788 were not signed in (P3/P4/P5).",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 granting a Cloudflare seat stays an owner Access flip. Day-to-day JWT binding does not need Matt once the seat exists. Tonight's missing staff sign-in is not a new Matt step.",
+      "reason_for_change": "READY withdrawn: staff Cloudflare sign-in on :8788 was not walked (P3/P4/P5). test_real_auth_binding.py PASS=44 FAIL=0, but cited test_person_auth_identity.py exited 1 (PASS=28 FAIL=4: 6 persons not 4, org_roles table now exists, person 404). Mixed suite is not PROVEN. Binding code remains.",
+      "changed": true,
+      "ledger_note": "f829f0c real auth JWT binding; test_real_auth_binding.py; test_person_auth_identity.py; scripts/core/identity.py cf_access.py; Beta :8788 200",
+      "previous_next_bar": "None for technical READY; adoption separate"
+    },
+    {
+      "id": "CAP-CORE-03",
+      "name": "Role / Position / Assignment",
+      "previous_state": "PROVEN",
+      "previous_score": 0.8,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "scripts/tests/test_role_position_assignment.py",
+        "docs/canon/ROLE-POSITION-ASSIGNMENT-TRANSITIONAL.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 roles and assignments exist. Seating a person is a human act on the role, not a name key, and not a new Matt dependency.",
+      "reason_for_change": "scripts/tests/test_role_position_assignment.py exited 1 (PASS=33 FAIL=5), including stale 'no org_scopes' and seed counts 12/10 not 4/4. Role module remains. Not PROVEN while the suite is red.",
+      "changed": true,
+      "ledger_note": "test_role_position_assignment.py + ROLE-POSITION-ASSIGNMENT-TRANSITIONAL.md",
+      "previous_next_bar": "Runtime board prove for READY"
+    },
+    {
+      "id": "CAP-CORE-04",
+      "name": "Permission & Authority Engine",
+      "previous_state": "PROVEN",
+      "previous_score": 0.8,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "scripts/core/rbac.py",
+        "scripts/tests/test_rbac_permissions.py",
+        "scripts/tests/test_phase2_5a_permissions.py"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUTOMATE \u2014 server RBAC denies without a grant. Matt is not in the allow path.",
+      "reason_for_change": "test_rbac_permissions.py exited 1 (PASS=39 FAIL=4) and test_phase2_5a_permissions.py exited 1 (PASS=16 FAIL=10, including a stale :8787 pid check). RBAC code remains. Not PROVEN.",
+      "changed": true,
+      "ledger_note": "scripts/core/rbac.py + test_rbac_permissions.py + test_phase2_5a_permissions.py + RBAC canon",
+      "previous_next_bar": "Full seat-matrix deployed prove not re-run this audit"
+    },
+    {
+      "id": "CAP-CORE-05",
+      "name": "Authority Limits Evaluator",
+      "previous_state": "PROVEN",
+      "previous_score": 0.8,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "scripts/tests/test_authority_limits.py",
+        "docs/wolf/sprint7/P4-LOOP-RESULT.md"
+      ],
+      "commit_refs": [
+        "f7d1874"
+      ],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 limit values stay an owner setting. The evaluator does not add a Matt check to get a pass.",
+      "reason_for_change": "test_authority_limits.py exited 1 (PASS=48 FAIL=1: scope required denied). P4's work-loop pass does not restore this suite. Not PROVEN.",
+      "changed": true,
+      "ledger_note": "f7d1874 authority limits; test_authority_limits.py; AUTHORITY-LIMITS canon",
+      "previous_next_bar": "Broader runtime prove for READY; live limits at 0 is config"
+    },
+    {
+      "id": "CAP-CORE-06",
+      "name": "Work Items / Promises / Decisions",
+      "previous_state": "PROVEN",
+      "previous_score": 0.8,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "scripts/tests/test_core_work_items.py",
+        "scripts/core/work_loop.py",
+        "docs/wolf/sprint7/P4-LOOP-RESULT.md"
+      ],
+      "commit_refs": [
+        "7114b95"
+      ],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "ELIMINATE \u2014 P4 assigns work by role and scope. Matt is not the assignee key.",
+      "reason_for_change": "test_core_work_items.py exited 1 (PASS=49 FAIL=5: migrate exit 2, HTTP assign). P4 test_work_loop.py PASS=52 is a slice on temporary seats and is not staff-usable. Pass count does not keep PROVEN.",
+      "changed": true,
+      "ledger_note": "7114b95 work items; test_core_work_items.py; WORK-ITEMS.md; audit spine",
+      "previous_next_bar": "End-to-end operator trail across all domains for READY"
+    },
+    {
+      "id": "CAP-CORE-07",
+      "name": "Approval Engine",
+      "previous_state": "PROVEN",
+      "previous_score": 0.8,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "scripts/tests/test_approval_engine.py",
+        "scripts/tests/test_dual_approval.py",
+        "scripts/tests/test_approval_policy_binding.py"
+      ],
+      "commit_refs": [
+        "dd039b2",
+        "c054ac3",
+        "09d1c07"
+      ],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 a material decision still needs the authorised person. That person is not required to be Matt.",
+      "reason_for_change": "test_approval_engine.py exited 1 (live decisions 6 not 0). test_dual_approval.py and test_approval_policy_binding.py raised ApprovalError: required permission denied. Engine code remains. Not PROVEN.",
+      "changed": true,
+      "ledger_note": "dd039b2 approval engine + dual c054ac3 + policy 09d1c07; tests; Grok PASS after APR-RT-001",
+      "previous_next_bar": "Wide production policy packs"
+    },
+    {
+      "id": "CAP-CORE-08",
+      "name": "Segregation of Duties",
+      "previous_state": "PROVEN",
+      "previous_score": 0.8,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "scripts/tests/test_sod_constraints.py",
+        "docs/wolf/sprint7/P4-LOOP-RESULT.md"
+      ],
+      "commit_refs": [
+        "aa4ec07"
+      ],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUTOMATE \u2014 same-person conflicts deny. No Matt bypass was added.",
+      "reason_for_change": "test_sod_constraints.py raised ApprovalError: required permission denied. P4 showed one SoD denial on a temporary constraint, then removed it. Not a green SoD suite. Not PROVEN.",
+      "changed": true,
+      "ledger_note": "aa4ec07 SoD; test_sod_constraints.py; SEGREGATION-OF-DUTIES.md; Grok PASS",
+      "previous_next_bar": "Broader finance SoD live packs for READY"
+    },
+    {
+      "id": "CAP-CORE-09",
+      "name": "Evidence Requirements",
+      "previous_state": "PROVEN",
+      "previous_score": 0.8,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "scripts/tests/test_evidence_requirements.py"
+      ],
+      "commit_refs": [
+        "1f71765"
+      ],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 evidence is attached by the role that holds the work. Matt is not the uploader.",
+      "reason_for_change": "test_evidence_requirements.py exited 1 (PASS=65 FAIL=8), live evidence records 3 not 0 and approvals 6 not 0. Implementation remains. Not PROVEN.",
+      "changed": true,
+      "ledger_note": "1f71765 evidence requirements; test_evidence_requirements.py; EVIDENCE-REQUIREMENTS.md; Grok PASS",
+      "previous_next_bar": "Universal evidence packs on all material actions for READY"
+    },
+    {
+      "id": "CAP-CORE-10",
+      "name": "Exception / Override Governance",
+      "previous_state": "PROVEN",
+      "previous_score": 0.8,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "scripts/tests/test_exception_override.py"
+      ],
+      "commit_refs": [
+        "b83d1d6"
+      ],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 authorising an exception stays an owner step. P4 leaves it REQUESTED.",
+      "reason_for_change": "test_exception_override.py exited 1 (PASS=77 FAIL=11); live exceptions 2 not 0. Implementation remains. Not PROVEN.",
+      "changed": true,
+      "ledger_note": "b83d1d6 exception override; test_exception_override.py; EXCEPTION-OVERRIDE.md; Grok PASS",
+      "previous_next_bar": "Operating exception review cadence for READY"
+    },
+    {
+      "id": "CAP-CORE-11",
+      "name": "SOP Factory",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 there is no SOP loop, so operating SOP changes still sit with the owner. No new Matt step was added.",
+      "reason_for_change": "Unchanged SPECIFIED. Repeated nav and progress reviews keep this SPECIFIED. P4's work loop is not an SOP factory.",
+      "changed": false,
+      "ledger_note": "Master Spec + catalog SOP Factory full-loop intent; no complete SOP Factory implementation in scripts/core",
+      "previous_next_bar": "Build SOP loop evidence-learn-approve-version-train-use"
+    },
+    {
+      "id": "CAP-CORE-12",
+      "name": "Delegation & Escalation Burn-down",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [
+        "8c4285a"
+      ],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "SIMPLIFY \u2014 delegation exists and is time-bounded in code. 7/30/90/365 burn-down is not proven, so accidental founder load is not yet measured out.",
+      "reason_for_change": "Unchanged BUILT. test_delegation.py raised DelegationError: delegate assignment not ACTIVE, so it is not PROVEN. The module remains. 7/30/90/365 burn-down is still open.",
+      "changed": false,
+      "ledger_note": "8c4285a delegation + test_delegation.py + DELEGATION.md + DLG-RT-001 fix; Grok re-review PASS",
+      "previous_next_bar": "Escalation burn-down + 7/30/90/365 independence tests"
+    },
+    {
+      "id": "CAP-GGV-01",
+      "name": "Content Machine",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "docs/wolf/sprint7/P1-CONTENT-RESULT.md",
+        "state/nas-estate/FINAL-TRUTH-20260927.json"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "P1 Beta library checks as Creative Director assignment passed on :8788 while that listener was pid 47662; staff_ready false. This reaudit did not re-hit those routes.",
+      "human_commissioned": false,
+      "founder_dependency": "AUTOMATE \u2014 NAS recheck and library search run without Matt. UNKNOWN folders and calling the desk staff-ready stay with a person who knows the brands, not a new Matt login.",
+      "reason_for_change": "Unchanged BUILT. P1 indexed the NAS library and test_nas_estate_index.py / round3 passed, with staff_ready false and 4787 UNKNOWN. That is not the full strategy\u2192learn machine and does not raise the cap.",
+      "changed": false,
+      "ledger_note": "Content boards/scripts/skills (Metricool, smart upload, phase2 content) exist",
+      "previous_next_bar": "Full strategy-plan-asset-workflow-learn as one governed machine + tests"
+    },
+    {
+      "id": "CAP-GGV-02",
+      "name": "Publish Gate & Operator Loop",
+      "previous_state": "READY",
+      "previous_score": 1.0,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "scripts/tests/test_habitat_publish_gate.py",
+        "state/completion-register/content-engine-staff-ux-20260924.json",
+        "state/completion-register/content-engine-haikal-fail-repair-20260924.json",
+        "docs/wolf/sprint7/P1-CONTENT-RESULT.md"
+      ],
+      "commit_refs": [
+        "f833f37",
+        "3f9a838"
+      ],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight. Publish-gate suite failed on live exception counts. Content staff_ready false.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 publish still needs the designated approver. staff_ready is false. Matt was not added as that approver.",
+      "reason_for_change": "READY withdrawn. test_habitat_publish_gate.py exited 1 (live exceptions not 0). Content CRs staff_ready=false; Haikal retest required; P1 staff_ready false. Publish-gate code remains. Not PROVEN, not staff-usable.",
+      "changed": true,
+      "ledger_note": "f833f37 publish gate + 3f9a838 operator UI; tests; HABITAT-PUBLISH-GATE.md; Grok reviews; Beta serve 200",
+      "previous_next_bar": "Human commissioning is ADOPTION; Metricool write still off"
+    },
+    {
+      "id": "CAP-GGV-03",
+      "name": "Client Profitability",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 no client P&L machine. Commercial judgement stays outside Wolf. No new Matt dependency.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog + GGV margin targets; no Client P&L machinery found",
+      "previous_next_bar": "Build client/contract P&L allocation"
+    },
+    {
+      "id": "CAP-GGV-04",
+      "name": "Lead Triage & Speed-to-Lead",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 lead boards exist. Speed-to-lead is not a governed Matt-free SLA.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Lead boards/ingest patterns (Habitat leads, Ivy stale) \u2014 partial triage",
+      "previous_next_bar": "Governed speed-to-lead capability with tests/red-team"
+    },
+    {
+      "id": "CAP-GGV-05",
+      "name": "Brand Social Performance",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUTOMATE \u2014 Metricool read path and isolation checks run without a Matt post. Writes stay off.",
+      "reason_for_change": "Unchanged BUILT. test_metricool_isolation.py exited 0. Governed performance views are still the open bar. Isolation pass does not raise to PROVEN.",
+      "changed": false,
+      "ledger_note": "metricool_read_client.py; sync_metricool_*; analyze_metricool_performance; test_metricool_isolation.py",
+      "previous_next_bar": "Governed DERIVE views + PROVEN red-team"
+    },
+    {
+      "id": "CAP-GGV-06",
+      "name": "Intercompany Client Mode",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 intercompany client mode is specified only. No Matt step was added to fake it.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog + Matt IN SCOPE near-term decision; explicit non-build this mission",
+      "previous_next_bar": "Intercompany client mode implementation"
+    },
+    {
+      "id": "CAP-AMG-01",
+      "name": "Hotel PMS Orchestration",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 no Yanolja connector. Hotel facts stay in the PMS. No Matt integration was added.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog OWN+INTEGRATE boundary; Master Spec hotel OS; no Wolf Yanolja connector implementation found",
+      "previous_next_bar": "Yanolja connector + orchestration code/tests"
+    },
+    {
+      "id": "CAP-AMG-02",
+      "name": "Guest Journey Operations",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 journey is specified. Empty operator depth does not create a Matt queue.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog guest journey intent; discovery docs only",
+      "previous_next_bar": "Journey workflow implementation"
+    },
+    {
+      "id": "CAP-AMG-03",
+      "name": "Packages as Products",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 packages are specified. No Matt price entry was added to look live.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog packages-as-products",
+      "previous_next_bar": "Package product machinery"
+    },
+    {
+      "id": "CAP-AMG-04",
+      "name": "Daily Hotel Operating State",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 daily hotel state is specified. No invented occupancy.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog daily hotel operating state",
+      "previous_next_bar": "Machine-generated daily ops"
+    },
+    {
+      "id": "CAP-AMG-05",
+      "name": "Hotel Revenue & Yield",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 yield is specified. No invented ADR.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog hotel revenue and yield",
+      "previous_next_bar": "Yield machinery"
+    },
+    {
+      "id": "CAP-AMG-06",
+      "name": "Guest Experience Loop",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 SLA trail is specified. No Matt ticket desk was added.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog guest experience loop",
+      "previous_next_bar": "SLA/incident trail"
+    },
+    {
+      "id": "CAP-AMG-07",
+      "name": "Service Improvement Loop",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 service-improve is specified. Reviews are not solicited.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog service improvement loop",
+      "previous_next_bar": "Review-to-improve loop"
+    },
+    {
+      "id": "CAP-BZG-01",
+      "name": "F&B POS Orchestration",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 ESB snapshot feeds Uma close. ESB stays the transactional source. No ESB write.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "esb_close_snapshot.py used by Uma close; F&B POS orchestration partial via ESB facts",
+      "previous_next_bar": "Full POS orchestration + ESB connector maturity"
+    },
+    {
+      "id": "CAP-BZG-02",
+      "name": "Venue P&L & Management Rollup",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 venue P&L skeleton stays empty. No invented margin.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog venue P&L + rollup",
+      "previous_next_bar": "Venue P&L dashboards as capability"
+    },
+    {
+      "id": "CAP-BZG-03",
+      "name": "Venue Daily Close",
+      "previous_state": "READY",
+      "previous_score": 1.0,
+      "new_state": "PROVEN",
+      "new_score": 0.8,
+      "evidence_paths": [
+        "scripts/tests/test_uma_blu_daily_close.py",
+        "docs/canon/UMA-BLU-DAILY-CLOSE.md",
+        "docs/wolf/sprint7/P5-UMA-RESULT.md"
+      ],
+      "commit_refs": [
+        "909954d"
+      ],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight. P5 unsigned GET /bzg/uma-blu on :8788 returned 403 missing_auth. Close proof ran on a temporary database (70 passed). Live variance policies stayed 0.",
+      "human_commissioned": false,
+      "founder_dependency": "ELIMINATE \u2014 the closer role counts the till, not Matt. RETAIN \u2014 a variance with no policy stops, and verify stays on a separate role. Payment stays off.",
+      "reason_for_change": "READY withdrawn: P5 STAFF READY no, no Cloudflare role session, no live closer, variance policies 0, settlement UNAVAILABLE. Automated proof did pass: test_uma_blu_daily_close.py 70 passed, 0 failed; P5 test_uma_daily_loop_finish.py PASS=44 FAIL=0. Cash-to-bank is not staff-finishable, so not READY. Petty-cash PASS=50 FAIL=3 and nav PASS=110 FAIL=1 stay red and do not raise this score.",
+      "changed": true,
+      "ledger_note": "909954d Uma Blu daily close; venue_close.py; esb_close_snapshot.py; test_uma_blu_daily_close.py; UMA-BLU-DAILY-CLOSE.md; Grok review PASS",
+      "previous_next_bar": "Other venues are ADOPTION not SYSTEM"
+    },
+    {
+      "id": "CAP-BZG-04",
+      "name": "Inventory & Stock Control",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 variance/waste skeleton is empty. ESB is not mutated.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog inventory and stock; ESB SoT noted",
+      "previous_next_bar": "Variance/waste analysis machinery"
+    },
+    {
+      "id": "CAP-BZG-05",
+      "name": "Central Kitchen & Shared Cost Allocation",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 allocation skeleton is empty. No invented shares.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog central kitchen allocation",
+      "previous_next_bar": "Allocation engine"
+    },
+    {
+      "id": "CAP-BZG-06",
+      "name": "Recipe / Cost Standards",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 BOM skeleton is empty. No invented recipe cost.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog recipe/cost standards",
+      "previous_next_bar": "BOM/yield machinery"
+    },
+    {
+      "id": "CAP-BZG-07",
+      "name": "Review & Reputation Capture",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 observe-only. Wolf does not solicit reviews.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog OBSERVE reviews",
+      "previous_next_bar": "Observe/ingest path"
+    },
+    {
+      "id": "CAP-HR-01",
+      "name": "People Master Record",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 org_persons is the people record used by My Work. A legal-entity HR master beyond that is not a separate proven machine. Not keyed on a person name.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "HR desk/people records patterns; org/person core overlaps",
+      "previous_next_bar": "Canonical People Master per legal entity with CAP-bound tests"
+    },
+    {
+      "id": "CAP-HR-02",
+      "name": "Hiring & Onboarding",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 hiring skeleton stays empty. No Matt recruiter step was added.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog hiring/onboarding",
+      "previous_next_bar": "Workflows"
+    },
+    {
+      "id": "CAP-HR-03",
+      "name": "Training & Competency",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 training skeleton stays empty.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog training/competency; SOP Factory link",
+      "previous_next_bar": "Training ack machinery"
+    },
+    {
+      "id": "CAP-HR-04",
+      "name": "Payroll Inputs",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 payroll-input skeleton stays empty. No payroll execute.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog payroll inputs; atrium payroll banners exist as UI fragments",
+      "previous_next_bar": "Clean payroll-inputs CAP prove"
+    },
+    {
+      "id": "CAP-HR-05",
+      "name": "Retention & Succession Signals",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 succession skeleton stays empty. The point of the cap is to avoid accidental Matt dependency; it is not operating.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog retention/succession",
+      "previous_next_bar": "Signals machinery"
+    },
+    {
+      "id": "CAP-FIN-01",
+      "name": "Wolf Accounting Core",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "docs/wolf/sprint7/P2-FINANCE-RESULT.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "P2 proof was a separate Atrium process on :8790 with a scratch database, then stopped. Not Beta :8788 and not production.",
+      "human_commissioned": false,
+      "founder_dependency": "ELIMINATE \u2014 Atrium ledger sign-in is by role id (P2, separate app, scratch database). RETAIN \u2014 a controller must enter real figures. Matt was not added as that controller. Backup is not proven.",
+      "reason_for_change": "Unchanged BUILT. P2 made the separate Atrium ledger staff-startable on an empty scratch database (:8790, npm test 10 pass). That is not Wolf group accounting, backup is unproven, and a pass count does not raise this cap.",
+      "changed": false,
+      "ledger_note": "Accounting core scripts/boards (atrium-finance, journals, CoA config missions)",
+      "previous_next_bar": "Deterministic Core tests + red-team as Model C CAP"
+    },
+    {
+      "id": "CAP-FIN-02",
+      "name": "Bank Statement Ingest & Reconcile",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 statement ingest exists. Bank truth stays at the bank. No payment.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Bank statement ingest/reconcile path; Aug statements ingested historically",
+      "previous_next_bar": "CAP-bound tests + connector honesty prove"
+    },
+    {
+      "id": "CAP-FIN-03",
+      "name": "Entity Finance Boards",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 entity finance surfaces exist. P2 empty Atrium ledger is staff-startable on :8790 and is not Wolf group books.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Entity finance boards (GGV/Atrium/Uma surfaces) on Beta stack",
+      "previous_next_bar": "Shared CAP prove matrix all entities"
+    },
+    {
+      "id": "CAP-FIN-04",
+      "name": "Invoicing & Receivables",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 invoice paths exist. Issuing a real invoice is a role act, not a Matt act added tonight.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Invoicing Save-Issue paths (Amanda Habitat invoices)",
+      "previous_next_bar": "CAP-bound tests/red-team; Amanda human prove is ADOPTION"
+    },
+    {
+      "id": "CAP-FIN-05",
+      "name": "Management Reporting",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 management pack is specified. No invented statements.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog management reporting; Reports sections exist partially",
+      "previous_next_bar": "Full P&L/BS/CF management pack"
+    },
+    {
+      "id": "CAP-FIN-06",
+      "name": "Intercompany Billing",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 intercompany billing skeleton stays empty. No money movement.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog intercompany billing paired with GGV-06",
+      "previous_next_bar": "Implementation"
+    },
+    {
+      "id": "CAP-FIN-07",
+      "name": "Budget / Forecast / Cash Cadence",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 budget/forecast/cash skeleton stays empty. No invented forecast.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog budget/forecast/cash",
+      "previous_next_bar": "13-week cash machinery"
+    },
+    {
+      "id": "CAP-FIN-08",
+      "name": "Profit Leakage Intelligence",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 leakage skeleton stays empty. No invented waste numbers.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog profit leakage intelligence",
+      "previous_next_bar": "Leakage engine"
+    },
+    {
+      "id": "CAP-PROC-01",
+      "name": "Supplier Register & Intelligence",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 supplier register is specified only.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog supplier register",
+      "previous_next_bar": "Implementation"
+    },
+    {
+      "id": "CAP-PROC-02",
+      "name": "Purchase & Approval Flow",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 purchase flow is specified only. No pay action.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog purchase and approval flow",
+      "previous_next_bar": "PO-match-pay with SoD"
+    },
+    {
+      "id": "CAP-PROC-03",
+      "name": "Payment Tracking",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 payment tracking is specified. PAID still needs settlement evidence that is not in Wolf. No money movement.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog payment tracking; Alchemist payment tracking known gap",
+      "previous_next_bar": "Payment runs + settlement evidence"
+    },
+    {
+      "id": "CAP-CRM-01",
+      "name": "Lead CRM",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 lead boards exist. Follow-up is not a proven Matt-free SLA.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Lead CRM boards (Habitat/Atrium leads)",
+      "previous_next_bar": "CAP-bound tests/red-team"
+    },
+    {
+      "id": "CAP-CRM-02",
+      "name": "Customer Identity & Memory",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 identity graph stays specified. Operator depth does not raise it.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog customer identity/memory",
+      "previous_next_bar": "Identity graph"
+    },
+    {
+      "id": "CAP-CRM-03",
+      "name": "Package Intelligence",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 package intelligence stays specified. No invented margin.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog package intelligence",
+      "previous_next_bar": "Implementation"
+    },
+    {
+      "id": "CAP-CRM-04",
+      "name": "Email Marketing Wire",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 connector honesty exists. No send was added.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Klaviyo/AC wiring distinctions in rules; Numbers tiles",
+      "previous_next_bar": "Honest connector prove"
+    },
+    {
+      "id": "CAP-MSC-01",
+      "name": "Asset & Maintenance Register",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 asset register stays specified.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog asset/maintenance",
+      "previous_next_bar": "Register"
+    },
+    {
+      "id": "CAP-MSC-02",
+      "name": "Access & Cloudflare Posture",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 Cloudflare and Access flips stay Matt-owned. Posture notes do not move that.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Cloudflare Access posture managed; Cipher sweeps; Matt-owned flips preserved",
+      "previous_next_bar": "CAP-bound automated posture prove as READY"
+    },
+    {
+      "id": "CAP-MSC-03",
+      "name": "Compliance Pack",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 compliance pack stays specified. No invented licence status.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog compliance pack",
+      "previous_next_bar": "Licence/statutory evidence pack"
+    },
+    {
+      "id": "CAP-MSC-04",
+      "name": "Cybersecurity Baseline",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 cybersecurity baseline stays specified.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog cybersecurity baseline",
+      "previous_next_bar": "MFA/device posture CAP"
+    },
+    {
+      "id": "CAP-MSC-05",
+      "name": "Documents / Records / Legal Defensibility",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 records/legal hold stays specified. No silent delete.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog documents/records/legal; legal files dashboards exist partially",
+      "previous_next_bar": "Callable records + legal hold CAP"
+    },
+    {
+      "id": "CAP-STRAT-01",
+      "name": "12-Week Year Cadence",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 12-week surfaces exist. Cadence is not a proven operating loop without Matt.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "12WY/Radar/Helm cadence surfaces",
+      "previous_next_bar": "Deterministic CAP prove"
+    },
+    {
+      "id": "CAP-STRAT-02",
+      "name": "Owner Radar / Mission Control",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 radar and the owner pulse exist. P3/P4 pulse is empty because Wolf Core has no live work. Not a new Matt board.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "radar.html / Owner Radar / Progress cockpit adjacent",
+      "previous_next_bar": "CAP-bound Model C prove; Progress is not this CAP alone"
+    },
+    {
+      "id": "CAP-INTEL-01",
+      "name": "Orchestration / Reasoning Surface",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "scripts/tests/test_intel_orchestration.py",
+        "scripts/core/intel_orchestration.py"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 one orchestration surface exists and its test is green. It does not replace an owner decision, and the pass does not raise the cap.",
+      "reason_for_change": "Unchanged BUILT. test_intel_orchestration.py PASS=65 FAIL=0 tonight. The evidence bind says BUILT only, not PROVEN. A pass count does not raise it.",
+      "changed": false,
+      "ledger_note": "scripts/core/intel_orchestration.py + GET /api/intel/orchestrate + progress intel-sample panel + scripts/tests/test_intel_orchestration.py; docs/deliveries/CAP-INTEL-01-EVIDENCE-BIND-2026-09-19.md",
+      "previous_next_bar": "PROVEN needs sustained Owner use of the orchestration surface, not this slice"
+    },
+    {
+      "id": "CAP-INTEL-02",
+      "name": "Authorised Retrieval & Institutional Memory",
+      "previous_state": "PROVEN",
+      "previous_score": 0.8,
+      "new_state": "PROVEN",
+      "new_score": 0.8,
+      "evidence_paths": [
+        "scripts/tests/test_authorised_knowledge_live.py",
+        "scripts/tests/test_authorised_knowledge.py"
+      ],
+      "commit_refs": [
+        "c4ba95a"
+      ],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight. Live authorised-knowledge prove is a read of allowlisted files, not a staff route.",
+      "human_commissioned": false,
+      "founder_dependency": "AUTOMATE \u2014 live authorised retrieval passed (font, voice, conflict, empty, absent). Matt is not in the lookup.",
+      "reason_for_change": "Unchanged PROVEN. test_authorised_knowledge.py PASS=51 FAIL=0 and test_authorised_knowledge_live.py PASS=36 FAIL=0 (font, voice, conflict, empty, absent). Not READY: no staff workflow use tonight. Not human commissioned.",
+      "changed": false,
+      "ledger_note": "c4ba95a live Habitat registry + NAS PDF page/hash provenance + test_authorised_knowledge_live.py green + fixture PASS=51; Matt ACCEPTED PROVEN 2026-09-18 (not READY)",
+      "previous_next_bar": "READY needs sustained human workflow use, not another fixture"
+    },
+    {
+      "id": "CAP-INTEL-03",
+      "name": "Provenance / Confidence / Conflict Resolution",
+      "previous_state": "PROVEN",
+      "previous_score": 0.8,
+      "new_state": "PROVEN",
+      "new_score": 0.8,
+      "evidence_paths": [
+        "scripts/tests/test_authorised_knowledge_live.py"
+      ],
+      "commit_refs": [
+        "c4ba95a"
+      ],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight. Same live read prove. Not a staff route.",
+      "human_commissioned": false,
+      "founder_dependency": "AUTOMATE \u2014 the same live prove marks conflict, empty, and absent without inventing a source.",
+      "reason_for_change": "Unchanged PROVEN. Live prove in test_authorised_knowledge_live.py covers conflict, empty\u2260UNKNOWN, and absent attempt log (PASS=36 FAIL=0). Not READY. Not human commissioned.",
+      "changed": false,
+      "ledger_note": "c4ba95a real headline_case CONFLICTED + empty canonical NOT_CANONICAL + NOT_FOUND attempt_log + lane split; Matt ACCEPTED PROVEN 2026-09-18 (not READY)",
+      "previous_next_bar": "READY needs sustained human workflow use, not another fixture"
+    },
+    {
+      "id": "CAP-INTEL-04",
+      "name": "Decision Memory",
+      "previous_state": "PROVEN",
+      "previous_score": 0.8,
+      "new_state": "PROVEN",
+      "new_score": 0.8,
+      "evidence_paths": [
+        "scripts/tests/test_decision_memory.py"
+      ],
+      "commit_refs": [
+        "d50f74c",
+        "4095310"
+      ],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight. Decision-memory suite is local. No owner recall screen used by a person tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 decision recall tests passed. Writing a decision is still a human act. Not a Matt-only memory.",
+      "reason_for_change": "Unchanged PROVEN. test_decision_memory.py PASS=85 FAIL=0. Not READY: no owner screen in staff use tonight. Not human commissioned.",
+      "changed": false,
+      "ledger_note": "d50f74c Owner seed of 4 decisions + DR/INTG correction pair + exact recall + RBAC fail-closed + audit bind; review PASS 4095310; Matt ACCEPTED PROVEN 2026-09-18 (not READY)",
+      "previous_next_bar": "READY needs an owner screen and a real person using recall. Not this write."
+    },
+    {
+      "id": "CAP-INTEL-05",
+      "name": "Learning / Experiments / Performance Policy",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 approve-to-rule stays specified. No rule was auto-approved.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog learning/experiments policy",
+      "previous_next_bar": "Approve-to-rule learning loop"
+    },
+    {
+      "id": "CAP-INTG-01",
+      "name": "Yanolja Connector",
+      "previous_state": "ABSENT",
+      "previous_score": 0.0,
+      "new_state": "ABSENT",
+      "new_score": 0.0,
+      "evidence_paths": [
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 no Wolf Yanolja connector. Vendor existence is not maturity.",
+      "reason_for_change": "Unchanged ABSENT. No Yanolja connector module under scripts/. Vendor existence is not Wolf maturity.",
+      "changed": false,
+      "ledger_note": "Catalog INTEGRATE Yanolja; search found no Wolf Yanolja connector implementation",
+      "previous_next_bar": "Connector code/tests/contract"
+    },
+    {
+      "id": "CAP-INTG-02",
+      "name": "ESB Connector",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUTOMATE \u2014 ESB is read into the close snapshot. No ESB write. No Matt export step.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "esb_close_snapshot.py + Uma close integration of ESB facts",
+      "previous_next_bar": "Full ESB connector CAP + contract tests"
+    },
+    {
+      "id": "CAP-INTG-03",
+      "name": "Google Workspace Connector",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 Workspace connectors are used. This reaudit did not broaden scopes.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Gmail/Drive/Calendar connectors used operationally across Wolf",
+      "previous_next_bar": "CAP-bound INTEGRATE prove pack"
+    },
+    {
+      "id": "CAP-INTG-04",
+      "name": "Bank Statement Connector",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUGMENT \u2014 statement file import exists. No bank API and no payment.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Bank statement file import path (ingest registry)",
+      "previous_next_bar": "CAP-bound connector tests"
+    },
+    {
+      "id": "CAP-INTG-05",
+      "name": "Metricool Connector",
+      "previous_state": "BUILT",
+      "previous_score": 0.25,
+      "new_state": "BUILT",
+      "new_score": 0.25,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "AUTOMATE \u2014 Metricool read and isolation passed. Writes stay fail-closed.",
+      "reason_for_change": "Unchanged BUILT. Read path and isolation test exited 0. Write stays fail-closed. Not PROVEN.",
+      "changed": false,
+      "ledger_note": "metricool_read_client + sync + isolation tests; write fail-closed",
+      "previous_next_bar": "PROVEN red-team of connector contract"
+    },
+    {
+      "id": "CAP-INTG-06",
+      "name": "Technology & Capability Registries",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 technology registry stays specified.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog technology and capability registries",
+      "previous_next_bar": "Tech inventory + exit conditions product"
+    },
+    {
+      "id": "CAP-INTG-07",
+      "name": "Secrets & Environment Separation",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 owner rejected PROVEN on 2026-09-18. Secrets and prod separation stay an owner control. Repo checks are not that prove.",
+      "reason_for_change": "Unchanged SPECIFIED. Owner rejected PROVEN on 2026-09-18. Repo hygiene is not a vault prove.",
+      "changed": false,
+      "ledger_note": ".env.example + .gitignore env globs + RULE-Beta-Construction-Production-Sacred; scripts/tests/test_cap_intg_07_environment_separation.py; Matt REJECTED PROVEN 2026-09-18 \u2014 repo checks are evidence not PROVEN",
+      "previous_next_bar": "Deterministic vault/rotation/separation prove for PROVEN; vault product for READY"
+    },
+    {
+      "id": "CAP-DR-01",
+      "name": "Backup / Restore Testing / Disaster Recovery",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 owner rejected PROVEN on 2026-09-18. P2 found no B2 key and did not restore. Nothing is called backed up.",
+      "reason_for_change": "Unchanged SPECIFIED. Owner rejected PROVEN on 2026-09-18. P2 recorded no B2 credentials and no restore.",
+      "changed": false,
+      "ledger_note": "restore-drill.py + 38-restore-drill.sh; B2-RESTORE-DRILL-2026-08-29 sha256 match retained as historical evidence; backup_status.json 2026-09-17 b2_ok; docs/deliveries/CAP-DR-01-EVIDENCE-BIND-2026-09-17.md; Matt REJECTED PROVEN 2026-09-18",
+      "previous_next_bar": "Deterministic canonical restore-drill proof for PROVEN; fresh CAP-bound Beta drill for READY"
+    },
+    {
+      "id": "CAP-DR-02",
+      "name": "Crown Jewel Protection",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 crown-jewel playbook stays Matt-only by spec. Not built out tonight.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog crown jewel protection; Matt-only playbook default in Spec",
+      "previous_next_bar": "Independent failure domains prove"
+    },
+    {
+      "id": "CAP-SALE-01",
+      "name": "Continuous Sale Evidence Pack",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 sale evidence pack is specified. Diligence cells are not capabilities and were not scored up.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog Continuous Sale Evidence Pack; 60 cells are controls not caps",
+      "previous_next_bar": "Evidence pack automation consuming domains"
+    },
+    {
+      "id": "CAP-SALE-02",
+      "name": "Buyer Data Room",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 buyer data room is specified. No export.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog Buyer Data Room; Vault helper exists historically",
+      "previous_next_bar": "Continuously updated VDR product"
+    },
+    {
+      "id": "CAP-SALE-03",
+      "name": "Buyer Mode / Controlled Export",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 buyer mode is specified. No controlled export was turned on.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog Buyer Mode / Controlled Export",
+      "previous_next_bar": "Buyer mode implementation"
+    },
+    {
+      "id": "CAP-SALE-04",
+      "name": "Buyer Attack & Transition Readiness",
+      "previous_state": "SPECIFIED",
+      "previous_score": 0.05,
+      "new_state": "SPECIFIED",
+      "new_score": 0.05,
+      "evidence_paths": [
+        "state/model-c-baseline-assessments.json",
+        "docs/MODEL-C-CAPABILITY-CATALOG.md"
+      ],
+      "commit_refs": [],
+      "deployed_proof": "Listeners after this reaudit: production :8787 pid 15975 untouched; beta :8788 pid 4443 scripts/serve_beta.py. Unsigned Beta routes fail closed (403). No staff Cloudflare session was walked tonight.",
+      "human_commissioned": false,
+      "founder_dependency": "RETAIN \u2014 attack/transition pack is specified. No buyer session.",
+      "reason_for_change": "Unchanged. Re-checked against the catalog, the ledger note, and tonight's packs. No green suite was used to raise it. Skeleton pages that say the owner ledger stays SPECIFIED were left SPECIFIED. staff_ready was not treated as READY.",
+      "changed": false,
+      "ledger_note": "Catalog Buyer Attack and Transition",
+      "previous_next_bar": "Attack audit + transition pack"
+    }
+  ]
+}
