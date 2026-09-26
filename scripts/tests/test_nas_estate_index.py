@@ -7,6 +7,7 @@ import os
 import sqlite3
 import sys
 import tempfile
+import unicodedata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -48,6 +49,180 @@ def seed_catalog(path: Path) -> None:
     )
     conn.commit()
     conn.close()
+
+
+def path_cases(log) -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        live = root / "00-Editing-Workspace-3" / "Atrium"
+        stub = root / "00-Editing-Workspace" / "Atrium"
+        live.mkdir(parents=True)
+        pic = live / "a.jpg"
+        pic.write_bytes(b"\xff\xd8\xff\xd9")
+        stored = str(stub / "a.jpg")
+        resolved = idx.resolve_media_path(
+            stored,
+            mounts=((str(root / "00-Editing-Workspace"), str(root / "00-Editing-Workspace-3")),),
+            roots=(),
+        )
+        log(
+            resolved.path is not None and resolved.path == pic and resolved.reason.startswith("remap_"),
+            "stale mount remaps onto the live copy",
+            resolved.reason,
+        )
+        literal = live / "hash%2e.jpg"
+        literal.write_bytes(b"x")
+        decoded = live / "hash.jpg"
+        decoded.write_bytes(b"y")
+        kept = idx.resolve_media_path(str(literal), mounts=(), roots=())
+        log(kept.reason == "raw" and kept.path == literal, "literal percent is not unquoted first", kept.reason)
+        spaced = live / "space name.jpg"
+        spaced.write_bytes(b"z")
+        encoded = str(live / "space%20name.jpg")
+        opened = idx.resolve_media_path(encoded, mounts=(), roots=())
+        log(
+            opened.path is not None and opened.path == spaced and "unquote" in opened.reason,
+            "url-encoded path resolves",
+            opened.reason,
+        )
+        nfd_name = unicodedata.normalize("NFD", "café.jpg")
+        nfd_file = live / nfd_name
+        nfd_file.write_bytes(b"c")
+        nfc_lookup = str(live / unicodedata.normalize("NFC", "café.jpg"))
+        normalised = idx.resolve_media_path(nfc_lookup, mounts=(), roots=())
+        log(normalised.path is not None and normalised.path.is_file(), "unicode path resolves", normalised.reason)
+        folder = live / "not-a-file"
+        folder.mkdir()
+        as_dir = idx.resolve_media_path(str(folder), mounts=(), roots=())
+        log(as_dir.reason == "missing_file:not_a_regular_file", "directory is not a media file", as_dir.reason)
+        gone = idx.resolve_media_path(str(live / "no-such.jpg"), mounts=(), roots=())
+        log(gone.reason == "missing_file:not_found" and gone.path is None, "true miss is not_found", gone.reason)
+        rel_root = root / "library"
+        rel_file = rel_root / "Atrium" / "rel.jpg"
+        rel_file.parent.mkdir(parents=True)
+        rel_file.write_bytes(b"r")
+        relative = idx.resolve_media_path("Atrium/rel.jpg", mounts=(), roots=(rel_root,))
+        log(relative.path == rel_file, "relative path joins a read root", str(relative.path))
+
+        estate = root / "estate"
+        estate.mkdir()
+        catalog = root / "catalog.sqlite"
+        seed_catalog(catalog)
+        (estate / "manifest.tsv").write_text("", encoding="utf-8")
+        (estate / "discovery.json").write_text("{}", encoding="utf-8")
+        cfg = idx.Config(
+            catalog=catalog,
+            estate=estate,
+            manifest=estate / "manifest.tsv",
+            discovery=estate / "discovery.json",
+        )
+        old_mounts = idx.STALE_MOUNTS
+        idx.STALE_MOUNTS = ((str(root / "00-Editing-Workspace"), str(root / "00-Editing-Workspace-3")),)
+        try:
+            conn = idx.connect(cfg)
+            conn.execute(
+                """
+                INSERT INTO nas_index (
+                  original_path, original_filename, rel, size, brand_slug, index_state, fail_reason
+                ) VALUES (?,?,?,?,?,?,?)
+                """,
+                (stored, "a.jpg", "Atrium/a.jpg", pic.stat().st_size, "atrium", "FAILED", "missing_file"),
+            )
+            conn.commit()
+            first = idx.requeue_resolved_failures(cfg, conn)
+            second = idx.requeue_resolved_failures(cfg, conn)
+            row = conn.execute(
+                "SELECT original_path, index_state, fail_reason FROM nas_index"
+            ).fetchone()
+            count = conn.execute("SELECT COUNT(*) FROM nas_index").fetchone()[0]
+            conn.close()
+        finally:
+            idx.STALE_MOUNTS = old_mounts
+        log(first["requeued"] == 1 and second["requeued"] == 0, "requeue is idempotent", str((first, second)))
+        log(count == 1 and row["index_state"] == "INDEXED", "requeue resets a resolved row to INDEXED", row["index_state"])
+        log(row["original_path"] == str(pic), "requeue stores the live path", row["original_path"])
+
+
+def brand_search_cases(log) -> None:
+    """Thumb then promote reaches SEARCHABLE. Search hits atrium, selo, and habitat."""
+    from PIL import Image
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        estate = root / "estate"
+        thumbs = root / "thumbs"
+        estate.mkdir()
+        catalog = root / "catalog.sqlite"
+        seed_catalog(catalog)
+        library = root / "library"
+        folders = {
+            "atrium": library / "Atrium" / "atrium.jpg",
+            "selo": library / "Selong Selo" / "selo.jpg",
+            "habitat": library / "Habitat" / "habitat.jpg",
+        }
+        lines = []
+        for _slug, path in folders.items():
+            path.parent.mkdir(parents=True)
+            Image.new("RGB", (8, 8), (1, 2, 3)).save(path, "JPEG")
+            lines.append(
+                "\t".join(
+                    [
+                        str(path),
+                        path.name,
+                        "image",
+                        str(path.stat().st_size),
+                        "1700000000",
+                        "UNKNOWN",
+                        "review_required",
+                        str(library),
+                    ]
+                )
+            )
+        manifest = estate / "manifest.tsv"
+        manifest.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        (estate / "discovery.json").write_text(json.dumps({"files": 3}), encoding="utf-8")
+        os.environ["NAS_THUMB_DIR"] = str(thumbs)
+        try:
+            cfg = idx.Config(
+                catalog=catalog,
+                estate=estate,
+                manifest=manifest,
+                discovery=estate / "discovery.json",
+                ingest_batch=20,
+                thumb_batch=10,
+                hash_batch=10,
+            )
+            conn = idx.connect(cfg)
+            aliases = idx.load_aliases(conn)
+            line, finished = idx.ingest_batch(cfg, conn, aliases, 0)
+            log(finished and line == 3, "three brand rows ingested", str(line))
+            idx.thumb_batch(cfg, conn)
+            promoted = idx.promote_searchable(conn)
+            states = {
+                row["brand_slug"]: row["index_state"]
+                for row in conn.execute("SELECT brand_slug, index_state FROM nas_index")
+            }
+            log(promoted == 3 and set(states.values()) == {"SEARCHABLE"}, "rows reach SEARCHABLE", str(states))
+            scopes = ["SCOPE-WOLF-CONTENT-ALL-BRANDS"]
+            for brand in ("atrium", "selo", "habitat"):
+                page = repair.nas_library_search(conn, scopes, brand, q=brand, limit=5)
+                log(
+                    int(page.get("matched") or 0) >= 1 and page.get("staff_ready") is False,
+                    f"search hit {brand}",
+                    str(page.get("matched")),
+                )
+            idx.hash_batch(cfg, conn)
+            hashed = {
+                row["brand_slug"]: row["index_state"]
+                for row in conn.execute("SELECT brand_slug, index_state FROM nas_index")
+            }
+            log(set(hashed.values()) == {"HASHED"}, "SEARCHABLE rows can still be hashed", str(hashed))
+            for brand in ("atrium", "selo", "habitat"):
+                page = repair.nas_library_search(conn, scopes, brand, q=brand, limit=5)
+                log(int(page.get("matched") or 0) >= 1, f"search still hits hashed {brand}", str(page.get("matched")))
+            conn.close()
+        finally:
+            os.environ.pop("NAS_THUMB_DIR", None)
 
 
 def main() -> None:
@@ -187,8 +362,48 @@ def main() -> None:
             log((estate / "index-checkpoint.json").is_file(), "checkpoint written")
             src = Path(idx.__file__).read_text(encoding="utf-8")
             log("os.remove" not in src and "shutil.rmtree" not in src, "indexer has no NAS delete helpers")
+            # A resolved failure is re-queued. A second pass does not add a row.
+            conn = sqlite3.connect(catalog)
+            before = conn.execute("SELECT COUNT(*) FROM nas_index").fetchone()[0]
+            conn.execute(
+                """
+                UPDATE nas_index
+                SET index_state='FAILED', fail_reason='missing_file'
+                WHERE original_path=?
+                """,
+                (str(good_a),),
+            )
+            conn.commit()
+            conn.close()
+            third = idx.run(cfg)
+            conn = sqlite3.connect(catalog)
+            conn.row_factory = sqlite3.Row
+            again = conn.execute("SELECT COUNT(*) FROM nas_index").fetchone()[0]
+            healed = conn.execute(
+                "SELECT index_state, fail_reason FROM nas_index WHERE original_path=?",
+                (str(good_a),),
+            ).fetchone()
+            log(again == before, "requeue does not duplicate rows", f"{before}->{again}")
+            log(
+                healed["index_state"] in ("HASHED", "SEARCHABLE", "THUMB_PREVIEW_READY", "INDEXED"),
+                "resolved missing_file returns to the pipeline",
+                f"{healed['index_state']} phase={third.get('phase')}",
+            )
+            still = conn.execute(
+                "SELECT index_state, fail_reason FROM nas_index WHERE original_path=?",
+                (str(missing),),
+            ).fetchone()
+            log(
+                still["index_state"] == "FAILED" and str(still["fail_reason"] or "").startswith("missing_file:"),
+                "true miss stays failed with a precise reason",
+                f"{still['index_state']} {still['fail_reason']}",
+            )
+            conn.close()
         finally:
             os.environ.pop("NAS_THUMB_DIR", None)
+
+    path_cases(log)
+    brand_search_cases(log)
 
     print(f"EXIT: {'SUCCESS' if FAIL == 0 else 'FAIL'} PASS={PASS} FAIL={FAIL}")
     if FAIL:

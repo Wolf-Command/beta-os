@@ -1178,8 +1178,15 @@ def resolve_nas_media(
     raw = d.get("original_path") or ""
     if not raw:
         return None
-    path = Path(raw)
-    if not _path_under_nas_read_root(path):
+    try:
+        import nas_estate_index as estate_index
+        resolved = estate_index.resolve_media_path(str(raw))
+        path = resolved.path
+    except ImportError:
+        path = Path(str(raw))
+        if not path.is_file():
+            path = None
+    if path is None or not _path_under_nas_read_root(path):
         return None
     if not path.is_file():
         return None

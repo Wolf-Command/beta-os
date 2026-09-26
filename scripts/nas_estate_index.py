@@ -2,7 +2,9 @@
 """Resumable in-place NAS catalog indexer. Beta only.
 
 Reads state/nas-estate/manifest.tsv (already discovered). Writes catalog rows,
-local thumbs under state/content-thumbs, and owner counts. Never moves, renames,
+local thumbs under state/content-thumbs, and owner counts. Resolves stale mount
+names, unicode normalisation, and URL-encoded paths before marking a file
+missing. Re-queues a failed row when the file resolves. Never moves, renames,
 deletes, or writes inside a NAS media tree. staff_ready stays false.
 full_nas_complete stays false.
 
@@ -10,14 +12,18 @@ Serves the 2026-09-22 NAS commissioning rule and the 2026-09-25 estate discovery
 """
 from __future__ import annotations
 
+import errno
 import json
 import os
 import re
 import signal
 import sqlite3
+import stat
 import subprocess
 import sys
 import time
+import unicodedata
+import urllib.parse
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -43,6 +49,37 @@ FOLDER_RULES = {
     "habitat": "habitat",
 }
 STOCK_ROOTS = {"02-Stock-Assets-1", "03-Templates"}
+
+# Live copies only. Match on a path boundary so the -3 / -1 mounts are not rewritten.
+# 00-Editing-Workspace, -1, and -2 are empty stubs. 02-Stock-Assets is the empty stub.
+STALE_MOUNTS: tuple[tuple[str, str], ...] = (
+    ("/Volumes/00-Editing-Workspace-2", "/Volumes/00-Editing-Workspace-3"),
+    ("/Volumes/00-Editing-Workspace-1", "/Volumes/00-Editing-Workspace-3"),
+    ("/Volumes/00-Editing-Workspace", "/Volumes/00-Editing-Workspace-3"),
+    ("/Volumes/02-Stock-Assets", "/Volumes/02-Stock-Assets-1"),
+)
+
+_TRANSIENT_ERRNO = {
+    n
+    for n in (
+        getattr(errno, name, None)
+        for name in (
+            "EIO",
+            "ETIMEDOUT",
+            "ESTALE",
+            "EAGAIN",
+            "EINTR",
+            "ENOTCONN",
+            "EHOSTDOWN",
+            "ENODEV",
+            "ENETDOWN",
+            "ENETUNREACH",
+            "EBUSY",
+            "ECONNRESET",
+        )
+    )
+    if isinstance(n, int)
+}
 IMAGE_EXT = {
     ".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp", ".tif", ".tiff",
     ".gif", ".bmp",
@@ -116,6 +153,233 @@ def refuse_nas_write(path: Path) -> None:
             raise RuntimeError(f"refusing write under NAS: {text}")
     if text.startswith("/Volumes/"):
         raise RuntimeError(f"refusing write under /Volumes: {text}")
+
+
+@dataclass(frozen=True)
+class ResolvedPath:
+    path: Path | None
+    reason: str
+    transient: bool = False
+
+
+def _mount_remap(path: str, mounts: tuple[tuple[str, str], ...]) -> str:
+    """Rewrite a stale mount prefix. A longer live name is not treated as the stub."""
+    for old, new in mounts:
+        if not old or old == new:
+            continue
+        if path == old or path.startswith(old + "/"):
+            return new + path[len(old):]
+    return path
+
+
+def _path_variants(
+    stored: str,
+    mounts: tuple[tuple[str, str], ...],
+    roots: tuple[Path, ...],
+) -> list[tuple[str, str]]:
+    """Candidate absolute paths. Raw is first so a literal % in a filename is kept."""
+    out: list[tuple[str, str]] = []
+    seen: set[str] = set()
+
+    def add(label: str, value: str) -> None:
+        if not value or value in seen:
+            return
+        seen.add(value)
+        out.append((label, value))
+
+    nfc = unicodedata.normalize("NFC", stored)
+    nfd = unicodedata.normalize("NFD", stored)
+    unq = urllib.parse.unquote(stored)
+    labeled = (
+        (stored, "raw"),
+        (nfc, "nfc"),
+        (nfd, "nfd"),
+        (unq, "unquote"),
+        (unicodedata.normalize("NFC", unq), "unquote_nfc"),
+        (unicodedata.normalize("NFD", unq), "unquote_nfd"),
+    )
+    for value, label in labeled:
+        add(label, value)
+    for label, value in list(out):
+        mapped = _mount_remap(value, mounts)
+        add("remap_" + label, mapped)
+        add("remap_" + label + "_nfc", unicodedata.normalize("NFC", mapped))
+        add("remap_" + label + "_nfd", unicodedata.normalize("NFD", mapped))
+    if not stored.startswith("/"):
+        for root in roots:
+            add("relative_" + root.name, str(Path(root) / stored))
+            add("relative_nfc_" + root.name, str(Path(root) / nfc))
+            add("relative_nfd_" + root.name, str(Path(root) / nfd))
+    return out
+
+
+def _stat_kind(path: str) -> tuple[str, int | None]:
+    try:
+        st = os.stat(path, follow_symlinks=True)
+    except FileNotFoundError:
+        return "missing", errno.ENOENT
+    except OSError as exc:
+        return "error", exc.errno or 0
+    if stat.S_ISREG(st.st_mode):
+        return "file", None
+    if stat.S_ISDIR(st.st_mode):
+        return "dir", None
+    return "other", None
+
+
+def _sibling_nfc(path_str: str) -> str | None:
+    """Read-only: find a same-directory name that matches under NFC. Does not rename."""
+    parent = os.path.dirname(path_str)
+    name = os.path.basename(path_str)
+    if not parent or not name or not os.path.isdir(parent):
+        return None
+    target = unicodedata.normalize("NFC", name)
+    try:
+        names = os.listdir(parent)
+    except OSError:
+        return None
+    for cand in names:
+        if unicodedata.normalize("NFC", cand) == target:
+            return os.path.join(parent, cand)
+    return None
+
+
+def resolve_media_path(
+    stored: str,
+    *,
+    mounts: tuple[tuple[str, str], ...] | None = None,
+    roots: tuple[Path, ...] | None = None,
+) -> ResolvedPath:
+    """Find a regular file for a catalog path.
+
+    Tries the stored string, NFC, NFD, URL-unquote, stale-mount remap, and a
+    relative join onto the live read roots. Never creates or renames anything.
+    """
+    mounts = STALE_MOUNTS if mounts is None else mounts
+    if roots is None:
+        roots = repair.NAS_READ_ROOTS
+    stored = (stored or "").strip()
+    if not stored:
+        return ResolvedPath(None, "missing_file:empty_path")
+    saw_dir = False
+    transient_errno: int | None = None
+    for label, cand in _path_variants(stored, mounts, roots):
+        kind, err = _stat_kind(cand)
+        if kind == "file":
+            return ResolvedPath(Path(cand), label)
+        if kind == "dir":
+            saw_dir = True
+            continue
+        if kind == "error" and err in _TRANSIENT_ERRNO:
+            transient_errno = err
+    for label, cand in (
+        ("sibling_nfc", stored),
+        ("remap_sibling_nfc", _mount_remap(stored, mounts)),
+    ):
+        sibling = _sibling_nfc(cand)
+        if not sibling:
+            continue
+        kind, _err = _stat_kind(sibling)
+        if kind == "file":
+            return ResolvedPath(Path(sibling), label)
+    if transient_errno is not None:
+        return ResolvedPath(None, f"missing_file:transient_errno_{transient_errno}", transient=True)
+    if saw_dir:
+        return ResolvedPath(None, "missing_file:not_a_regular_file")
+    return ResolvedPath(None, "missing_file:not_found")
+
+
+def remember_resolved_path(
+    cfg: Config,
+    conn: sqlite3.Connection,
+    row_id: int,
+    stored: str,
+    resolved: Path,
+) -> tuple[str, str | None]:
+    """Point the row at a resolved file when that path is free.
+
+    A path already owned by another row is recorded as a duplicate candidate.
+    Nothing on disk is deleted.
+    """
+    new = str(resolved)
+    if new == stored:
+        return stored, None
+    clash = conn.execute(
+        "SELECT id FROM nas_index WHERE original_path=? AND id<>?",
+        (new, row_id),
+    ).fetchone()
+    if clash:
+        record_duplicate(cfg, conn, stored, new, "resolved_path_already_indexed", None, None)
+        return stored, f"missing_file:resolved_path_owned_by_{int(clash['id'])}"
+    conn.execute("UPDATE nas_index SET original_path=? WHERE id=?", (new, row_id))
+    return new, None
+
+
+def requeue_resolved_failures(cfg: Config, conn: sqlite3.Connection) -> dict[str, int]:
+    """Put FAILED (and blank) rows back on INDEXED when a regular file resolves.
+
+    Rows that still do not exist stay FAILED with a precise reason. Idempotent:
+    a second pass only sees rows that are still failed or blank.
+    """
+    rows = conn.execute(
+        """
+        SELECT id, original_path, ifnull(index_state,'') AS index_state
+        FROM nas_index
+        WHERE index_state='FAILED'
+           OR ifnull(index_state,'') IN ('', 'DISCOVERED')
+        ORDER BY id
+        """
+    ).fetchall()
+    requeued = 0
+    still_missing = 0
+    transient = 0
+    for seen, row in enumerate(rows, start=1):
+        row_id = int(row["id"])
+        stored = str(row["original_path"] or "")
+        resolved = resolve_media_path(stored)
+        if resolved.path is not None:
+            _adopted, clash = remember_resolved_path(cfg, conn, row_id, stored, resolved.path)
+            if clash:
+                conn.execute(
+                    "UPDATE nas_index SET index_state='FAILED', fail_reason=? WHERE id=?",
+                    (clash[:300], row_id),
+                )
+                still_missing += 1
+            else:
+                conn.execute(
+                    """
+                    UPDATE nas_index
+                    SET index_state='INDEXED', fail_reason=NULL
+                    WHERE id=?
+                    """,
+                    (row_id,),
+                )
+                requeued += 1
+        elif resolved.transient:
+            conn.execute(
+                """
+                UPDATE nas_index
+                SET index_state='INDEXED', fail_reason=?
+                WHERE id=?
+                """,
+                (resolved.reason[:300], row_id),
+            )
+            transient += 1
+        else:
+            conn.execute(
+                "UPDATE nas_index SET index_state='FAILED', fail_reason=? WHERE id=?",
+                (resolved.reason[:300], row_id),
+            )
+            still_missing += 1
+        if seen % 2000 == 0:
+            conn.commit()
+            log_line(
+                cfg,
+                f"requeue progress seen={seen} resolved={requeued} "
+                f"missing={still_missing} transient={transient}",
+            )
+    conn.commit()
+    return {"requeued": requeued, "still_missing": still_missing, "transient": transient}
 
 
 def log_line(cfg: Config, message: str) -> None:
@@ -572,7 +836,11 @@ def thumb_batch(cfg: Config, conn: sqlite3.Connection) -> int:
         SELECT id, original_path, original_filename, classification
         FROM nas_index
         WHERE index_state='INDEXED'
-        ORDER BY id
+        ORDER BY CASE
+            WHEN ifnull(fail_reason,'') LIKE 'missing_file:transient%' THEN 1
+            ELSE 0
+          END,
+          id
         LIMIT ?
         """,
         (cfg.thumb_batch,),
@@ -581,22 +849,43 @@ def thumb_batch(cfg: Config, conn: sqlite3.Connection) -> int:
     done = 0
     for row in rows:
         row_id = int(row["id"])
-        src = Path(str(row["original_path"] or ""))
+        stored = str(row["original_path"] or "")
+        resolved = resolve_media_path(stored)
+        if resolved.transient:
+            conn.execute(
+                """
+                UPDATE nas_index SET fail_reason=?
+                WHERE id=? AND index_state='INDEXED'
+                """,
+                (resolved.reason[:300], row_id),
+            )
+            conn.commit()
+            continue
+        if resolved.path is None:
+            mark_failed(cfg, conn, row_id, stored, resolved.reason)
+            conn.commit()
+            done += 1
+            continue
+        adopted, clash = remember_resolved_path(cfg, conn, row_id, stored, resolved.path)
+        if clash:
+            mark_failed(cfg, conn, row_id, stored, clash)
+            conn.commit()
+            done += 1
+            continue
+        src = Path(adopted)
         ext = src.suffix.lower()
         try:
             if ext not in IMAGE_EXT and ext not in VIDEO_EXT:
                 conn.execute(
                     """
                     UPDATE nas_index
-                    SET index_state='SEARCHABLE', preview_note='no_raster_preview', thumb_ready=0
+                    SET index_state='SEARCHABLE', preview_note='no_raster_preview',
+                        thumb_ready=0, fail_reason=NULL
                     WHERE id=? AND index_state='INDEXED'
                     """,
                     (row_id,),
                 )
-                done += 1
-                continue
-            if not src.is_file():
-                mark_failed(cfg, conn, row_id, str(src), "missing_file")
+                conn.commit()
                 done += 1
                 continue
             dest = thumb_dest_for(row_id)
@@ -651,12 +940,28 @@ def hash_batch(cfg: Config, conn: sqlite3.Connection) -> int:
     done = 0
     for row in rows:
         row_id = int(row["id"])
-        src = Path(str(row["original_path"] or ""))
+        stored = str(row["original_path"] or "")
+        resolved = resolve_media_path(stored)
         try:
-            if not src.is_file():
-                mark_failed(cfg, conn, row_id, str(src), "missing_file_at_hash")
+            if resolved.transient:
+                conn.execute(
+                    "UPDATE nas_index SET fail_reason=? WHERE id=? AND index_state='SEARCHABLE'",
+                    (resolved.reason[:300], row_id),
+                )
+                conn.commit()
+                continue
+            if resolved.path is None:
+                mark_failed(cfg, conn, row_id, stored, resolved.reason)
+                conn.commit()
                 done += 1
                 continue
+            adopted, clash = remember_resolved_path(cfg, conn, row_id, stored, resolved.path)
+            if clash:
+                mark_failed(cfg, conn, row_id, stored, clash)
+                conn.commit()
+                done += 1
+                continue
+            src = Path(adopted)
             digest, partial = nas.sha256_file(src, max_bytes=HASH_BYTES)
             conn.execute(
                 """
@@ -667,7 +972,7 @@ def hash_batch(cfg: Config, conn: sqlite3.Connection) -> int:
                 (digest, 1 if partial else 0, row_id),
             )
         except Exception as exc:  # noqa: BLE001
-            mark_failed(cfg, conn, row_id, str(src), f"hash_error:{type(exc).__name__}")
+            mark_failed(cfg, conn, row_id, stored, f"hash_error:{type(exc).__name__}")
         conn.commit()
         done += 1
     return done
@@ -727,6 +1032,13 @@ def run(cfg: Config | None = None) -> dict:
     line = int(checkpoint.get("manifest_line") or 0)
     if int(checkpoint.get("manifest_bytes") or -1) != manifest_bytes:
         line = 0
+    healed = requeue_resolved_failures(cfg, conn)
+    log_line(
+        cfg,
+        "requeue "
+        f"resolved={healed['requeued']} missing={healed['still_missing']} transient={healed['transient']}",
+    )
+    write_counts(cfg, conn, phase="requeue", manifest_line=line)
     total_lines = _manifest_lines(cfg)
     name_dupes_done = bool(checkpoint.get("name_dupes_done")) and line != 0 and line >= total_lines
     phase = "ingest"
@@ -758,9 +1070,9 @@ def run(cfg: Config | None = None) -> dict:
                 })
                 log_line(cfg, f"name duplicate candidates recorded groups_pairs={noted}")
                 write_counts(cfg, conn, phase=phase, manifest_line=line)
+            thumbed = thumb_batch(cfg, conn)
             promoted = promote_searchable(conn)
             hashed = hash_batch(cfg, conn)
-            thumbed = thumb_batch(cfg, conn)
             work = remaining_work(conn)
             phase = "enrich" if any(work.values()) else "caught_up"
             save_checkpoint(cfg, {

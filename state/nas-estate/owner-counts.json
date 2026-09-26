@@ -1,0 +1,43 @@
+{
+  "as_of": "2026-09-26T08:34:01+08:00",
+  "phase": "requeue",
+  "manifest_line": 63337,
+  "manifest_files": 63337,
+  "catalog_rows": 63370,
+  "by_brand_state": {
+    "SHARED_STOCK": {
+      "HASHED": 1263,
+      "INDEXED": 3586
+    },
+    "UNKNOWN": {
+      "HASHED": 5151,
+      "INDEXED": 174
+    },
+    "atrium": {
+      "HASHED": 6137,
+      "INDEXED": 26516
+    },
+    "habitat": {
+      "HASHED": 807,
+      "INDEXED": 3220
+    },
+    "selo": {
+      "HASHED": 6471,
+      "INDEXED": 7
+    },
+    "tropik": {
+      "HASHED": 1590,
+      "INDEXED": 2
+    },
+    "umablu": {
+      "HASHED": 53,
+      "INDEXED": 8393
+    }
+  },
+  "failed": 0,
+  "duplicate_candidates": 22375,
+  "staff_ready": false,
+  "full_nas_complete": false,
+  "full_tree_indexed": false,
+  "note": "Counts are the catalog rows loaded from the discovery manifest. This is not a claim that the whole NAS is complete."
+}

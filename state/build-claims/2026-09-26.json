@@ -8,6 +8,14 @@
       "expect": "EXIT: SUCCESS; HONEST False False; 8787 True; 8788 True",
       "by": "cursor-nas-estate-index-20260926",
       "at": "2026-09-25T16:30:00Z"
+    },
+    {
+      "id": "nas-index-missing-file-repair-20260926",
+      "claim": "NAS indexer resolves stale mounts, NFC/NFD, and URL-encoded paths before marking missing_file. False missing_file rows are re-queued to INDEXED when the file stats. Rows that still do not exist stay FAILED with missing_file:not_found or missing_file:not_a_regular_file. Library search returns atrium, selo, and habitat once a row is SEARCHABLE, and still returns them after HASHED. staff_ready and full_nas_complete stay false. Not a claim that the whole NAS is complete.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_nas_estate_index.py | tail -1",
+      "expect": "EXIT: SUCCESS",
+      "by": "cursor-nas-repair-20260926",
+      "at": "2026-09-26T00:30:00Z"
     }
   ]
 }
