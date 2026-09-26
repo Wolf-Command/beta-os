@@ -1,0 +1,108 @@
+{
+  "register_id": "COMMISSIONING-STATE-20260927",
+  "as_of": "2026-09-27T07:45:00+08:00",
+  "purpose": "HUMAN COMMISSIONING, STAFF READINESS, and OPERATING ADOPTION gaps. Not a SYSTEM score. Do not add these into state/model-c-baseline-assessments.json maturity credits.",
+  "human_commissioned": false,
+  "system_ledger": "state/model-c-baseline-assessments.json",
+  "system_sum_credits": "19.65",
+  "system_pct_2dp": "25.52",
+  "rule": "READY is not human commissioned and is not live operating adoption. docs/MODEL-C-SYSTEM-SCORING-RULES.md section 2 and section 7.",
+  "capabilities": [
+    {
+      "id": "CAP-CORE-01",
+      "system_state": "PROVEN",
+      "staff_readiness": "Not claimed. Unsigned Beta entity list is fail-closed.",
+      "human_commissioning": "Not commissioned. No staff walk of the org UI.",
+      "operating_adoption": "Not scored. Not adopted.",
+      "gap": "Next SYSTEM bar remains a deployed org UI prove for READY. That bar is not this register."
+    },
+    {
+      "id": "CAP-CORE-02",
+      "system_state": "READY",
+      "staff_readiness": "No. P3, P4, and P5 did not walk a Cloudflare staff session on :8788.",
+      "human_commissioning": "Not commissioned.",
+      "operating_adoption": "Not scored. JWT binding is not people using the seat.",
+      "gap": "A person with a Cloudflare seat still has to sign in on Beta :8788. That walk does not change this SYSTEM row."
+    },
+    {
+      "id": "CAP-CORE-03",
+      "system_state": "PROVEN",
+      "staff_readiness": "Not claimed.",
+      "human_commissioning": "Not commissioned. Seating a person is a human act and is not this score.",
+      "operating_adoption": "Not scored.",
+      "gap": "Runtime board prove for READY remains open. ASG-HAIKAL-VE-1 is ENDED as of 2026-09-24T17:34:12+08:00. Active seat is ASG-HAIKAL-CD-1."
+    },
+    {
+      "id": "CAP-CORE-04",
+      "system_state": "PROVEN",
+      "staff_readiness": "Not claimed. Unsigned :8788 routes return 403 missing_auth.",
+      "human_commissioning": "Not commissioned.",
+      "operating_adoption": "Not scored.",
+      "gap": "ROLE-GGV-CREATIVE-DIRECTOR does not hold organisation.entity.read. ROLE-GGV-EDIT does, and that assignment is ended. Full seat-matrix deployed prove was already the next bar."
+    },
+    {
+      "id": "CAP-CORE-05",
+      "system_state": "PROVEN",
+      "staff_readiness": "Not claimed.",
+      "human_commissioning": "Not commissioned. Limit values stay an owner setting.",
+      "operating_adoption": "Not scored.",
+      "gap": "Live org_authority_limits count is 0. That is configuration, already excluded from this maturity row."
+    },
+    {
+      "id": "CAP-CORE-06",
+      "system_state": "PROVEN",
+      "staff_readiness": "No. P4 staff ready is no. test_work_loop.py is not a staff walk.",
+      "human_commissioning": "Not commissioned.",
+      "operating_adoption": "Not scored.",
+      "gap": "End-to-end operator trail across domains remains the READY bar."
+    },
+    {
+      "id": "CAP-CORE-07",
+      "system_state": "PROVEN",
+      "staff_readiness": "Not claimed.",
+      "human_commissioning": "Not commissioned. A material decision still needs the authorised person.",
+      "operating_adoption": "Not scored.",
+      "gap": "Live core_approval_decisions count is 6. core_approval_requests count is 0. Wide policy packs remain the READY bar."
+    },
+    {
+      "id": "CAP-CORE-08",
+      "system_state": "PROVEN",
+      "staff_readiness": "Not claimed.",
+      "human_commissioning": "Not commissioned.",
+      "operating_adoption": "Not scored.",
+      "gap": "Broader finance SoD packs remain the READY bar. A temporary P4 constraint is not this row."
+    },
+    {
+      "id": "CAP-CORE-09",
+      "system_state": "PROVEN",
+      "staff_readiness": "Not claimed.",
+      "human_commissioning": "Not commissioned.",
+      "operating_adoption": "Not scored.",
+      "gap": "Live core_evidence_records count is 3. Universal evidence packs remain the READY bar."
+    },
+    {
+      "id": "CAP-CORE-10",
+      "system_state": "PROVEN",
+      "staff_readiness": "Not claimed.",
+      "human_commissioning": "Not commissioned. Authorising an exception stays a human act.",
+      "operating_adoption": "Not scored.",
+      "gap": "Live core_governance_exceptions count is 2. Operating review cadence remains the READY bar."
+    },
+    {
+      "id": "CAP-GGV-02",
+      "system_state": "READY",
+      "staff_readiness": "No. Content completion-register staff_ready is false. P1 staff ready is no. Haikal retest was not walked.",
+      "human_commissioning": "Not commissioned. The human publish loop is adoption.",
+      "operating_adoption": "Not scored. Habitat is first adoption, not a second capability.",
+      "gap": "Metricool write stays off. Unsigned /habitat-operator is HTTP 403."
+    },
+    {
+      "id": "CAP-BZG-03",
+      "system_state": "READY",
+      "staff_readiness": "No. P5 staff ready is no. No Cloudflare role session was opened.",
+      "human_commissioning": "Not commissioned. No occupant on ROLE-BZG-CLOSER. venue_close.py honesty closer_commissioning is WAITING FOR VERIFIED CLOSING OPERATOR.",
+      "operating_adoption": "Not scored. Uma Blu commissioning does not lower or raise SYSTEM. docs/MODEL-C-SYSTEM-SCORING-RULES.md section 7.",
+      "gap": "venue_close_variance_policies count is 0. venue_daily_closes count is 0. settlement_api is UNAVAILABLE in scripts/core/venue_close.py. No payment was added. A mismatched till stops at VARIANCE_REQUIRES_POLICY until a real policy exists. No policy was invented."
+    }
+  ]
+}

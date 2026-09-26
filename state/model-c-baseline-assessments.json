@@ -5,7 +5,8 @@
     "Deployed-route / live org UI prove for READY",
     "UNKNOWN",
     "HIGH",
-    "Org registry implemented+tested; transitional canon"
+    "Org registry implemented+tested; transitional canon",
+    "D1-20260927: kept PROVEN. Red checks are the 2026-09-16 slice census (brands 12 not 7, Habitat org row, GGV brands 5) plus a mislabeled 403 on the unsigned entity list. Hierarchy and content org_brand_id NULL checks passed. Direct GET /api/core/entities/ENT-NOPE is HTTP 404. Not a human-walk downgrade."
   ],
   "CAP-CORE-02": [
     "READY",
@@ -13,7 +14,8 @@
     "None for technical READY; adoption separate",
     "HEALTHY",
     "HIGH",
-    "CF JWT to Person on Beta; READY is not staff commissioning"
+    "CF JWT to Person on Beta; READY is not staff commissioning",
+    "D1-20260927: kept READY. test_real_auth_binding.py PASS=44 FAIL=0. person_auth reds are person-count drift, the negative org_roles slice guard, and a 403 on the unsigned persons list recorded as person 404. Direct GET /api/core/persons/PERS-NOPE is HTTP 404. Staff Cloudflare sign-in is commissioning, not SYSTEM. See COMMISSIONING-STATE-20260927.json."
   ],
   "CAP-CORE-03": [
     "PROVEN",
@@ -21,7 +23,8 @@
     "Runtime board prove for READY",
     "UNKNOWN",
     "HIGH",
-    "Role/position/assignment tests green"
+    "Role/position/assignment tests green",
+    "D1-20260927: kept PROVEN. Red checks are grown seat counts (positions 12, assignments 10, GGV positions 8) and negative guards that scope/RBAC tables must not exist. Those tables exist because later core slices were built. Duplicate-primary and history checks passed."
   ],
   "CAP-CORE-04": [
     "PROVEN",
@@ -29,7 +32,8 @@
     "Full seat-matrix deployed prove not re-run this audit",
     "UNKNOWN",
     "HIGH",
-    "Server RBAC exists+tested; conservative PROVEN"
+    "Server RBAC exists+tested; conservative PROVEN",
+    "D1-20260927: kept PROVEN. test_rbac_permissions.py PASS=39 FAIL=4 map to active seats (SCOPE-WOLF-CONTENT-ALL-BRANDS includes BZG-UMA; ASG-INTEL-OPERATOR-MATT still covers DEPT-GGV-CONTENT; ASG-HAIKAL-VE-1 ended 2026-09-24 so ROLE-GGV-EDIT grants do not apply). phase2_5a FAIL includes stale pid 3758 and content email flags, not rbac.evaluate. Staff sign-in is not this score."
   ],
   "CAP-CORE-05": [
     "PROVEN",
@@ -37,7 +41,8 @@
     "Broader runtime prove for READY; live limits at 0 is config",
     "UNKNOWN",
     "HIGH",
-    "Evaluator built+tested; limit values are not maturity"
+    "Evaluator built+tested; limit values are not maturity",
+    "D1-20260927: kept PROVEN. The one red check ends scopes only on ASG-MATT-OWNER-1. ASG-INTEL-OPERATOR-MATT remains and its entity scope covers DEPT-GGV-CONTENT, so within_authority still allows. PASS=48 includes inactive-assignment denied. Live limits stay 0."
   ],
   "CAP-CORE-06": [
     "PROVEN",
@@ -45,7 +50,8 @@
     "End-to-end operator trail across all domains for READY",
     "UNKNOWN",
     "HIGH",
-    "Work item primitive + tests"
+    "Work item primitive + tests",
+    "D1-20260927: kept PROVEN. Migrate exit 2 is the non-Matt work.* warning after later role grants. HTTP assign 400 is ASG-HAIKAL-VE-1 ended. Lifecycle checks passed. Staff-usable is not PROVEN's definition."
   ],
   "CAP-CORE-07": [
     "PROVEN",
@@ -53,7 +59,8 @@
     "Wide production policy packs",
     "UNKNOWN",
     "HIGH",
-    "Approval+dual+policy proven; Dual is requirement class"
+    "Approval+dual+policy proven; Dual is requirement class",
+    "D1-20260927: kept PROVEN. test_approval_engine.py pass=57 fail=3 are live decision counts 6 not 0. Dual and policy suites' FAIL lines are the same empty-db guard; they then abort because the fixture grants ROLE-GGV-EDIT and Haikal's active seat is ROLE-GGV-CREATIVE-DIRECTOR. Dual rules that ran passed."
   ],
   "CAP-CORE-08": [
     "PROVEN",
@@ -61,7 +68,8 @@
     "Broader finance SoD live packs for READY",
     "UNKNOWN",
     "HIGH",
-    ""
+    "",
+    "D1-20260927: kept PROVEN. SoD conflict checks passed (PASS=42 before abort). FAIL lines are live approval counts. Abort is the same ended-role permission denial, not a failed SoD rule."
   ],
   "CAP-CORE-09": [
     "PROVEN",
@@ -69,7 +77,8 @@
     "Universal evidence packs on all material actions for READY",
     "UNKNOWN",
     "HIGH",
-    ""
+    "",
+    "D1-20260927: kept PROVEN. pass=65 fail=8 are live evidence-record and approval-count guards. Migrate REFUSE: live evidence records must stay 0, got 3. Behavioral checks passed."
   ],
   "CAP-CORE-10": [
     "PROVEN",
@@ -77,7 +86,8 @@
     "Operating exception review cadence for READY",
     "UNKNOWN",
     "HIGH",
-    ""
+    "",
+    "D1-20260927: kept PROVEN. pass=77 fail=11 are live exception/evidence/approval count guards. Migrate REFUSE: live governance exceptions must stay 0, got 2. Behavioral checks passed."
   ],
   "CAP-CORE-11": [
     "SPECIFIED",
@@ -85,7 +95,7 @@
     "Build SOP loop evidence-learn-approve-version-train-use",
     "UNKNOWN",
     "MED",
-    "Catalog/Spec only — not BUILT"
+    "Catalog/Spec only \u2014 not BUILT"
   ],
   "CAP-CORE-12": [
     "BUILT",
@@ -109,7 +119,8 @@
     "Human commissioning is ADOPTION; Metricool write still off",
     "HEALTHY",
     "HIGH",
-    "SYSTEM READY; human loop not SYSTEM; write-lock does not auto-block READY"
+    "SYSTEM READY; human loop not SYSTEM; write-lock does not auto-block READY",
+    "D1-20260927: kept READY. Publish-gate behavior passed (46 passed, 5 failed on live exceptions=2 and the migrate guard). /api/planner/publish-gate returns HTTP 400 id required; /habitat-operator returns HTTP 403. staff_ready false is staff readiness, not SYSTEM. See commissioning file."
   ],
   "CAP-GGV-03": [
     "SPECIFIED",
@@ -121,7 +132,7 @@
   ],
   "CAP-GGV-04": [
     "BUILT",
-    "Lead boards/ingest patterns (Habitat leads, Ivy stale) — partial triage",
+    "Lead boards/ingest patterns (Habitat leads, Ivy stale) \u2014 partial triage",
     "Governed speed-to-lead capability with tests/red-team",
     "UNKNOWN",
     "MED",
@@ -221,7 +232,8 @@
     "Other venues are ADOPTION not SYSTEM",
     "HEALTHY",
     "HIGH",
-    "Shared CAP READY; Uma adoption separate"
+    "Shared CAP READY; Uma adoption separate",
+    "D1-20260927: kept READY. test_uma_blu_daily_close.py 70 passed, 0 failed; test_uma_daily_loop_finish.py PASS=44 FAIL=0. /bzg/uma-blu returns HTTP 403 fail-closed. Variance policies 0, no ROLE-BZG-CLOSER occupant, and settlement_api UNAVAILABLE are commissioning/adoption and the no-payment boundary, not a SYSTEM downgrade. Scoring rules section 7."
   ],
   "CAP-BZG-04": [
     "SPECIFIED",
@@ -561,7 +573,7 @@
   ],
   "CAP-INTG-07": [
     "SPECIFIED",
-    ".env.example + .gitignore env globs + RULE-Beta-Construction-Production-Sacred; scripts/tests/test_cap_intg_07_environment_separation.py; Matt REJECTED PROVEN 2026-09-18 — repo checks are evidence not PROVEN",
+    ".env.example + .gitignore env globs + RULE-Beta-Construction-Production-Sacred; scripts/tests/test_cap_intg_07_environment_separation.py; Matt REJECTED PROVEN 2026-09-18 \u2014 repo checks are evidence not PROVEN",
     "Deterministic vault/rotation/separation prove for PROVEN; vault product for READY",
     "UNKNOWN",
     "HIGH",
