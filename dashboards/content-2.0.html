@@ -2967,12 +2967,13 @@
         return;
       }
       grid.innerHTML = assets.map((a) => {
-        const zipOk = a.zip_eligible !== false && String(a.id).indexOf("nas:") !== 0;
+        const idKey = String(a.id);
+        const zipOk = a.zip_eligible !== false;
         const when = String(a.shoot_date || a.date_added || "").slice(0, 10) || "—";
         const media = staffMediaLabel(a);
         return `
-        <div class="lib-card${state.libSelected.has(a.id)?" selected":""}" data-id="${esc(a.id)}">
-          ${zipOk ? `<input class="sel" type="checkbox" ${state.libSelected.has(a.id)?"checked":""} data-sel="${esc(a.id)}" />` : ""}
+        <div class="lib-card${state.libSelected.has(idKey)?" selected":""}" data-id="${esc(idKey)}">
+          ${zipOk ? `<input class="sel" type="checkbox" ${state.libSelected.has(idKey)?"checked":""} data-sel="${esc(idKey)}" />` : ""}
           <div class="lib-thumb ${esc(a.thumb||"file")}${a.thumb==="video"?" video":""}" data-open="${esc(a.id)}">
             <img class="lib-thumb-img" alt="" src="${esc(a.preview_url || ("/api/assets/"+a.id+"/preview"))}" onerror="this.parentElement.classList.add('thumb-missing')" />
             <span class="thumb-fallback">Preview not ready</span>
@@ -2989,7 +2990,7 @@
         openPreview26(el.getAttribute("data-open"), assets);
       }));
       grid.querySelectorAll("[data-sel]").forEach((el) => el.addEventListener("change", () => {
-        const id = Number(el.getAttribute("data-sel"));
+        const id = el.getAttribute("data-sel");
         if (el.checked) state.libSelected.add(id); else state.libSelected.delete(id);
         const card = el.closest(".lib-card");
         if (card) card.classList.toggle("selected", el.checked);
@@ -3022,7 +3023,10 @@
     const playUrl = nas
       ? `/api/content/nas-media/${encodeURIComponent(idStr.slice(4))}/preview?play=1`
       : `/api/assets/${encodeURIComponent(idStr)}/preview?play=1`;
-    $("prevDownload").onclick = () => window.open(nas ? playUrl : `/api/assets/${encodeURIComponent(idStr)}/download`, "_blank");
+    const downloadUrl = nas
+      ? `/api/content/nas-media/${encodeURIComponent(idStr.slice(4))}/preview?download=1`
+      : `/api/assets/${encodeURIComponent(idStr)}/download`;
+    $("prevDownload").onclick = () => window.open(downloadUrl, "_blank");
     try {
       const res = await fetch(playUrl, {
         headers: (state.developmentAssertionAllowed && state.subject)
@@ -3198,7 +3202,7 @@
     });
     const selAll = $("libSelectAll");
     if (selAll) selAll.addEventListener("click", () => {
-      (state.libVisibleIds || []).forEach((id) => state.libSelected.add(id));
+      (state.libVisibleIds || []).forEach((id) => state.libSelected.add(String(id)));
       document.querySelectorAll("#libGrid [data-sel]").forEach((el) => {
         el.checked = true;
         const card = el.closest(".lib-card");

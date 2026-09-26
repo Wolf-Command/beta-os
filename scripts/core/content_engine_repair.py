@@ -961,7 +961,7 @@ def _nas_card(row: sqlite3.Row | dict[str, Any], names: dict[str, str]) -> dict[
         "shoot_date": "",
         "thumb": thumb_kind,
         "thumb_ready": bool(d.get("thumb_ready")) or thumb_file.is_file(),
-        "zip_eligible": False,
+        "zip_eligible": kind in ("image", "video"),
         "index_state": d.get("index_state") or "INDEXED",
         "preview_url": f"/api/content/nas-media/{nas_id}/preview",
         "content_hash": d.get("sha256_1mb") or None,

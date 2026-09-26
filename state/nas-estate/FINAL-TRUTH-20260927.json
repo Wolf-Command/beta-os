@@ -1,0 +1,52 @@
+{
+  "as_of": "2026-09-27T02:37:13+08:00",
+  "catalog": "/Users/wolfterminal/beta-os/catalog/content_library.sqlite",
+  "discovered": 63370,
+  "processed": 63370,
+  "searchable": 63246,
+  "preview_ready": 63246,
+  "thumbnail_ready": 60474,
+  "genuine_failures": 124,
+  "unknown_brand": 4787,
+  "inaccessible": 0,
+  "by_brand_state": {
+    "SHARED_STOCK": {
+      "HASHED": 4849
+    },
+    "UNKNOWN": {
+      "FAILED": 5,
+      "HASHED": 4782
+    },
+    "atrium": {
+      "FAILED": 84,
+      "HASHED": 32608
+    },
+    "goss": {
+      "HASHED": 3
+    },
+    "habitat": {
+      "FAILED": 7,
+      "HASHED": 4076
+    },
+    "rainforest": {
+      "HASHED": 34
+    },
+    "selo": {
+      "FAILED": 5,
+      "HASHED": 6519
+    },
+    "tropik": {
+      "FAILED": 2,
+      "HASHED": 1688
+    },
+    "umablu": {
+      "FAILED": 21,
+      "HASHED": 8687
+    },
+    "theone": {}
+  },
+  "staff_ready": false,
+  "full_nas_complete": false,
+  "human_commissioned": false,
+  "note": "Counts are rows in nas_index. This is not a claim that every file on the NAS was visited."
+}

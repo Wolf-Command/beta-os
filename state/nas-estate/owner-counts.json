@@ -1,41 +1,46 @@
 {
-  "as_of": "2026-09-26T08:34:01+08:00",
-  "phase": "requeue",
+  "as_of": "2026-09-27T02:37:13+08:00",
+  "phase": "caught_up",
   "manifest_line": 63337,
   "manifest_files": 63337,
   "catalog_rows": 63370,
   "by_brand_state": {
     "SHARED_STOCK": {
-      "HASHED": 1263,
-      "INDEXED": 3586
+      "HASHED": 4849
     },
     "UNKNOWN": {
-      "HASHED": 5151,
-      "INDEXED": 174
+      "FAILED": 5,
+      "HASHED": 4782
     },
     "atrium": {
-      "HASHED": 6137,
-      "INDEXED": 26516
+      "FAILED": 84,
+      "HASHED": 32608
+    },
+    "goss": {
+      "HASHED": 3
     },
     "habitat": {
-      "HASHED": 807,
-      "INDEXED": 3220
+      "FAILED": 7,
+      "HASHED": 4076
+    },
+    "rainforest": {
+      "HASHED": 34
     },
     "selo": {
-      "HASHED": 6471,
-      "INDEXED": 7
+      "FAILED": 5,
+      "HASHED": 6519
     },
     "tropik": {
-      "HASHED": 1590,
-      "INDEXED": 2
+      "FAILED": 2,
+      "HASHED": 1688
     },
     "umablu": {
-      "HASHED": 53,
-      "INDEXED": 8393
+      "FAILED": 21,
+      "HASHED": 8687
     }
   },
-  "failed": 0,
-  "duplicate_candidates": 22375,
+  "failed": 124,
+  "duplicate_candidates": 42215,
   "staff_ready": false,
   "full_nas_complete": false,
   "full_tree_indexed": false,

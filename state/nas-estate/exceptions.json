@@ -1,0 +1,875 @@
+{
+  "as_of": "2026-09-27T02:37:13+08:00",
+  "count": 124,
+  "note": "Corrupt, timed out, or unsupported renders. They do not block the rest of the catalog.",
+  "items": [
+    {
+      "id": 450,
+      "filename": "IMG_1510.MOV",
+      "brand_slug": "UNKNOWN",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 1260,
+      "filename": "IMG_6911.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 1978,
+      "filename": "IMG_4382.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 2077,
+      "filename": "IMG_4482.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 2122,
+      "filename": "IMG_4527.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 2416,
+      "filename": "IMG_5216.mov",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 3003,
+      "filename": "IMG_8470.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 3994,
+      "filename": "IMG_9866.mov",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 4102,
+      "filename": "IMG_6810.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 4922,
+      "filename": "IMG_1148.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 4976,
+      "filename": "IMG_1223.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 7312,
+      "filename": "IMG_9071.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 7366,
+      "filename": "IMG_9126.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 7793,
+      "filename": "Master PLAN.png",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_timeout"
+    },
+    {
+      "id": 8887,
+      "filename": "DJI_20241007233953_0021_D.MP4",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 8983,
+      "filename": "DJI_20241128161544_0042_D.mp4",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 10035,
+      "filename": "dining.mp4",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 10292,
+      "filename": "IMG_8534.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 10406,
+      "filename": "IMG_6646.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 10438,
+      "filename": "IMG_8239.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 10539,
+      "filename": "IMG_8239.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 11264,
+      "filename": "IMG_9310.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 12735,
+      "filename": "a.png",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_timeout"
+    },
+    {
+      "id": 12736,
+      "filename": "square.png",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_timeout"
+    },
+    {
+      "id": 12737,
+      "filename": "vertical.png",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_timeout"
+    },
+    {
+      "id": 12782,
+      "filename": "DJI_20241121012830_0012_D.MP4",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 12805,
+      "filename": "DJI_20241018024423_0003_D.MP4",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 12888,
+      "filename": "DJI_20250327013350_0008_D.MP4",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 13573,
+      "filename": "IMG_2831.mov",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 13657,
+      "filename": "IMG_2921.mov",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 14541,
+      "filename": "IMG_5126.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 14669,
+      "filename": "IMG_5303 2.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 15367,
+      "filename": "IMG_3550.mov",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 15372,
+      "filename": "IMG_3555.mov",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 17153,
+      "filename": "Atrium greens.mp4",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 18226,
+      "filename": "white_texture.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 18227,
+      "filename": "3501FE58483D90B9DF5324B72BD17AF6.png",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 18230,
+      "filename": "0A8A59FA4079904E399A5D9FD85B432F.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 18231,
+      "filename": "40261B5E4C617BAE79F6DAA5BD819F43.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 18232,
+      "filename": "44DDCDFF4AEC38D9296D9E9AD8DE41D0.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 18233,
+      "filename": "CE1171434696B6E853E1978539B948EF.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 18598,
+      "filename": "Atrium-2026-Recruitment-Poster-150x230cm-01.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_timeout"
+    },
+    {
+      "id": 18599,
+      "filename": "Atrium-2026-Recruitment-Poster-150x230cm-02.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_timeout"
+    },
+    {
+      "id": 18601,
+      "filename": "front.png",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_timeout"
+    },
+    {
+      "id": 18704,
+      "filename": "22.mp4",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 18705,
+      "filename": "23.mp4",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 19625,
+      "filename": "white_texture.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 19626,
+      "filename": "3501FE58483D90B9DF5324B72BD17AF6.png",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 19629,
+      "filename": "0A8A59FA4079904E399A5D9FD85B432F.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 19630,
+      "filename": "40261B5E4C617BAE79F6DAA5BD819F43.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 19631,
+      "filename": "44DDCDFF4AEC38D9296D9E9AD8DE41D0.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 19632,
+      "filename": "CE1171434696B6E853E1978539B948EF.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 20005,
+      "filename": "C483EBF7405476BAE6B6D182E3BD237C101182894_Texture.tif",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_timeout"
+    },
+    {
+      "id": 20006,
+      "filename": "CE45C8DA4092FA23A03252B57CBA7F7F101182894_Texture.tif",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_timeout"
+    },
+    {
+      "id": 20686,
+      "filename": "674BF3C64371375B90F330BF17F9D661brown_mud_leaves_01_ao.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 20687,
+      "filename": "674BF3C64371375B90F330BF17F9D661brown_mud_leaves_01_basecolor.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 20688,
+      "filename": "674BF3C64371375B90F330BF17F9D661brown_mud_leaves_01_height.png",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 20689,
+      "filename": "674BF3C64371375B90F330BF17F9D661brown_mud_leaves_01_normal.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 20690,
+      "filename": "674BF3C64371375B90F330BF17F9D661brown_mud_leaves_01_rough.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 21830,
+      "filename": "white_texture.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 21831,
+      "filename": "3501FE58483D90B9DF5324B72BD17AF6.png",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 21832,
+      "filename": "B687B28948D79983E585F7A545CDC0F1.jpg",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 23017,
+      "filename": "horizontal 1.png",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_timeout"
+    },
+    {
+      "id": 23018,
+      "filename": "horizontal 2.png",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_timeout"
+    },
+    {
+      "id": 23019,
+      "filename": "vertical 1.png",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_timeout"
+    },
+    {
+      "id": 23346,
+      "filename": "IMG_4382.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 23445,
+      "filename": "IMG_4482.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 23490,
+      "filename": "IMG_4527.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 23738,
+      "filename": "IMG_5216.mov",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 24499,
+      "filename": "IMG_2831.mov",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 24522,
+      "filename": "IMG_2921.mov",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 24922,
+      "filename": "IMG_5126.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 25056,
+      "filename": "IMG_5303 2.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 25729,
+      "filename": "IMG_6535.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 25931,
+      "filename": "IMG_3550.mov",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 25936,
+      "filename": "IMG_3555.mov",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 28758,
+      "filename": "IMG_6810.MOV",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 28770,
+      "filename": "IMG_6535.mov",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 30072,
+      "filename": "IMG_8963.mov",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 31137,
+      "filename": "MAH00097.MP4",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 31139,
+      "filename": "MAH00099.MP4",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "hash_error:OSError"
+    },
+    {
+      "id": 31140,
+      "filename": "MAH00100.MP4",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "hash_error:OSError"
+    },
+    {
+      "id": 31409,
+      "filename": "IMG_5216.mov",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 32988,
+      "filename": "IMG_9071.MOV",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 33480,
+      "filename": "IMG_4382.MOV",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 33567,
+      "filename": "IMG_4482.MOV",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 33612,
+      "filename": "IMG_4527.MOV",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 33785,
+      "filename": "IMG_5216.mov",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 33852,
+      "filename": "IMG_5216.mov",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 37107,
+      "filename": "IMG_9071.MOV",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 37633,
+      "filename": "IMG_4382.MOV",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 37720,
+      "filename": "IMG_4482.MOV",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 37765,
+      "filename": "IMG_4527.MOV",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 37938,
+      "filename": "IMG_5216.mov",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 38005,
+      "filename": "IMG_5216.mov",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 40006,
+      "filename": "umablu_drop_12.mp4",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 40007,
+      "filename": "umablu_drop_13.mp4",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 40008,
+      "filename": "umablu_drop_14.mp4",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 40009,
+      "filename": "umablu_drop_15.mp4",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 40010,
+      "filename": "umablu_drop_16.mp4",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 40011,
+      "filename": "umablu_drop_3..mp4",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 40012,
+      "filename": "umablu_drop_4.mp4",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 40013,
+      "filename": "umablu_drop_8.mp4",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 40014,
+      "filename": "umablu_drop_9.mp4",
+      "brand_slug": "umablu",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 40574,
+      "filename": "DJI_20260112110256_0169_D.MP4",
+      "brand_slug": "habitat",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 40944,
+      "filename": "IMG_9930.MOV",
+      "brand_slug": "habitat",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 42369,
+      "filename": "HABITAT - LULU PHOTO - 1:12:2514.mov",
+      "brand_slug": "habitat",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_timeout"
+    },
+    {
+      "id": 42371,
+      "filename": "HABITAT - LULU PHOTO - 1:12:2516.mov",
+      "brand_slug": "habitat",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_timeout"
+    },
+    {
+      "id": 42655,
+      "filename": "DJI_20260112110256_0169_D.MP4",
+      "brand_slug": "habitat",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 43297,
+      "filename": "vid10 voiceover question.mp4",
+      "brand_slug": "habitat",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 43771,
+      "filename": "WhatsApp Audio 2025-07-10 at 2.19.09 PM.mp4",
+      "brand_slug": "habitat",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 47651,
+      "filename": "IMG_5796.MOV",
+      "brand_slug": "selo",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 48334,
+      "filename": "IMG_6536.mov",
+      "brand_slug": "selo",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 48493,
+      "filename": "selongselo_drop_selong_selo_iphone_footage_interior_2.MOV",
+      "brand_slug": "selo",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 49335,
+      "filename": "IMG_5796.MOV",
+      "brand_slug": "selo",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 50017,
+      "filename": "IMG_6536.mov",
+      "brand_slug": "selo",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 50368,
+      "filename": "10.jpg",
+      "brand_slug": "tropik",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 51079,
+      "filename": "IMG_6903.MP4",
+      "brand_slug": "tropik",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 51681,
+      "filename": "Master PLAN.png",
+      "brand_slug": "UNKNOWN",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_timeout"
+    },
+    {
+      "id": 54019,
+      "filename": "TLC00002.mp4",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 54554,
+      "filename": "DJI_20241121012830_0012_D.MP4",
+      "brand_slug": "atrium",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 54967,
+      "filename": "DJI_20241016010842_0001_D.MP4",
+      "brand_slug": "UNKNOWN",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 55040,
+      "filename": "DJI_20241018024423_0003_D.MP4",
+      "brand_slug": "UNKNOWN",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    },
+    {
+      "id": 55373,
+      "filename": "DJI_20250301074058_0003_D.MP4",
+      "brand_slug": "UNKNOWN",
+      "source_root": "01-Media-Library",
+      "reason": "thumb_failed"
+    }
+  ]
+}

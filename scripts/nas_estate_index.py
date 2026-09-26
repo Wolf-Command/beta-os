@@ -24,6 +24,7 @@ import sys
 import time
 import unicodedata
 import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -48,6 +49,15 @@ FOLDER_RULES = {
     "tropic at selong": "tropik",
     "habitat": "habitat",
 }
+# Filename prefixes from the intake drop naming. The brand token is the prefix, not a guess.
+INTAKE_PREFIXES = (
+    ("selongselo_drop_", "selo"),
+    ("umablu_drop_", "umablu"),
+    ("habitat_drop_", "habitat"),
+    ("tropik_drop_", "tropik"),
+    ("atrium_drop_", "atrium"),
+)
+_BLU_ZONE_FOLDER = re.compile(r"(^| )blu zone( |$)")
 STOCK_ROOTS = {"02-Stock-Assets-1", "03-Templates"}
 
 # Live copies only. Match on a path boundary so the -3 / -1 mounts are not rewritten.
@@ -102,8 +112,8 @@ class Config:
     manifest: Path
     discovery: Path
     ingest_batch: int = 400
-    thumb_batch: int = 8
-    hash_batch: int = 40
+    thumb_batch: int = 24
+    hash_batch: int = 80
 
     @property
     def checkpoint(self) -> Path:
@@ -249,6 +259,7 @@ def resolve_media_path(
     *,
     mounts: tuple[tuple[str, str], ...] | None = None,
     roots: tuple[Path, ...] | None = None,
+    attempts: int = 3,
 ) -> ResolvedPath:
     """Find a regular file for a catalog path.
 
@@ -284,9 +295,45 @@ def resolve_media_path(
             return ResolvedPath(Path(sibling), label)
     if transient_errno is not None:
         return ResolvedPath(None, f"missing_file:transient_errno_{transient_errno}", transient=True)
+    if _candidates_volume_unavailable([cand for _label, cand in _path_variants(stored, mounts, roots)]):
+        # A gone /Volumes/<share> is not a deleted file. Leave it for the next pass.
+        return ResolvedPath(None, "missing_file:volume_unavailable", transient=True)
     if saw_dir:
         return ResolvedPath(None, "missing_file:not_a_regular_file")
+    # A mounted share can answer ENOENT while the file is still there.
+    # Retry before a permanent not_found. A path that is still absent stays not_found.
+    root = _volume_root(stored)
+    if attempts > 1 and root:
+        kind, _err = _stat_kind(root)
+        if kind == "dir":
+            time.sleep(0.15)
+            return resolve_media_path(stored, mounts=mounts, roots=roots, attempts=attempts - 1)
     return ResolvedPath(None, "missing_file:not_found")
+
+
+def _volume_root(path: str) -> str | None:
+    if not path.startswith("/Volumes/"):
+        return None
+    parts = path.split("/")
+    if len(parts) < 3 or not parts[2]:
+        return None
+    return "/Volumes/" + parts[2]
+
+
+def _candidates_volume_unavailable(candidates: list[str]) -> bool:
+    """True when every /Volumes candidate sits on a share that is not a directory."""
+    roots = []
+    for cand in candidates:
+        root = _volume_root(cand)
+        if root:
+            roots.append(root)
+    if not roots:
+        return False
+    for root in roots:
+        kind, _err = _stat_kind(root)
+        if kind == "dir":
+            return False
+    return True
 
 
 def remember_resolved_path(
@@ -316,16 +363,23 @@ def remember_resolved_path(
 
 
 def requeue_resolved_failures(cfg: Config, conn: sqlite3.Connection) -> dict[str, int]:
-    """Put FAILED (and blank) rows back on INDEXED when a regular file resolves.
+    """Put stale missing_file rows back on INDEXED when a regular file resolves.
 
-    Rows that still do not exist stay FAILED with a precise reason. Idempotent:
-    a second pass only sees rows that are still failed or blank.
+    Blank and DISCOVERED rows are included. thumb_failed, thumb_timeout, and
+    other genuine exceptions stay FAILED so they do not block the rest.
+    A second pass only sees rows that are still a missing_file failure or blank.
     """
     rows = conn.execute(
         """
         SELECT id, original_path, ifnull(index_state,'') AS index_state
         FROM nas_index
-        WHERE index_state='FAILED'
+        WHERE (
+            index_state='FAILED'
+            AND (
+              ifnull(fail_reason,'') LIKE 'missing_file%'
+              OR fail_reason IN ('hash_error:FileNotFoundError', 'hash_error:TimeoutError')
+            )
+          )
            OR ifnull(index_state,'') IN ('', 'DISCOVERED')
         ORDER BY id
         """
@@ -454,6 +508,19 @@ def brand_for(parts: list[str], aliases: dict[str, str], root_name: str) -> tupl
             return aliases[raw], "certain"
         if key in aliases:
             return aliases[key], "certain"
+    phrases = sorted((key for key in aliases if " " in key), key=len, reverse=True)
+    for part in parts:
+        key = norm(part)
+        if _BLU_ZONE_FOLDER.search(key) and "rainforest" in known:
+            return "rainforest", "folder_rule"
+        for phrase in phrases:
+            if re.search(rf"(?:^| ){re.escape(phrase)}(?: |$|\.)", key) and aliases[phrase] in known:
+                return aliases[phrase], "folder_phrase"
+    if parts:
+        filename = parts[-1].lower()
+        for prefix, slug in INTAKE_PREFIXES:
+            if filename.startswith(prefix) and slug in known:
+                return slug, "intake_prefix"
     for part in parts:
         for word in norm(part).split():
             if len(word) >= 4 and word in aliases and aliases[word] in known:
@@ -466,6 +533,51 @@ def brand_for(parts: list[str], aliases: dict[str, str], root_name: str) -> tupl
     if root_name in STOCK_ROOTS:
         return "SHARED_STOCK", "shared"
     return "UNKNOWN", "review_required"
+
+
+def deterministic_slug(parts: list[str], aliases: dict[str, str], root_name: str) -> tuple[str, str]:
+    """Brand from a folder chain, or from an explicit filename token.
+
+    A single brand word inside an unrelated filename stays UNKNOWN.
+    """
+    folder_parts = parts[:-1]
+    if folder_parts:
+        slug, conf = brand_for(folder_parts, aliases, root_name)
+        if slug not in ("UNKNOWN", "SHARED_STOCK"):
+            return slug, conf
+    if parts:
+        slug, conf = brand_for([parts[-1]], aliases, root_name)
+        if conf in ("certain", "folder_rule", "folder_phrase", "intake_prefix"):
+            return slug, conf
+    return "UNKNOWN", "review_required"
+
+
+def remap_unknown_brands(conn: sqlite3.Connection, aliases: dict[str, str]) -> int:
+    """Set UNKNOWN or blank rows when folder evidence maps to one registry brand."""
+    rows = conn.execute(
+        """
+        SELECT id, rel, source_root
+        FROM nas_index
+        WHERE brand_slug IS NULL OR brand_slug='' OR brand_slug='UNKNOWN'
+        """
+    ).fetchall()
+    changed = 0
+    for row in rows:
+        parts = [part for part in str(row["rel"] or "").split("/") if part]
+        slug, conf = deterministic_slug(parts, aliases, str(row["source_root"] or ""))
+        if slug in ("UNKNOWN", "SHARED_STOCK", ""):
+            continue
+        conn.execute(
+            """
+            UPDATE nas_index
+            SET brand_slug=?, map_confidence=?
+            WHERE id=? AND (brand_slug IS NULL OR brand_slug='' OR brand_slug='UNKNOWN')
+            """,
+            (slug, conf, int(row["id"])),
+        )
+        changed += 1
+    conn.commit()
+    return changed
 
 
 def load_checkpoint(cfg: Config) -> dict:
@@ -830,6 +942,39 @@ def write_local_thumb(src: Path, dest: Path) -> bool:
     return False
 
 
+def _thumb_workers() -> int:
+    try:
+        count = int(os.environ.get("NAS_THUMB_WORKERS", "4"))
+    except ValueError:
+        count = 4
+    return max(1, min(count, 8))
+
+
+def _render_thumb(row_id: int, src: Path) -> tuple[int, bool, str | None, str, int]:
+    """Render one thumbnail and hash the first 1MB. No catalog writes."""
+    try:
+        digest, partial = nas.sha256_file(src, max_bytes=HASH_BYTES)
+    except FileNotFoundError:
+        time.sleep(0.2)
+        try:
+            digest, partial = nas.sha256_file(src, max_bytes=HASH_BYTES)
+        except Exception as exc:  # noqa: BLE001
+            return row_id, False, f"hash_error:{type(exc).__name__}", "", 0
+    except Exception as exc:  # noqa: BLE001
+        return row_id, False, f"hash_error:{type(exc).__name__}", "", 0
+    try:
+        dest = thumb_dest_for(row_id)
+        if dest.is_file() and dest.stat().st_size > 32:
+            return row_id, True, None, digest, 1 if partial else 0
+        if write_local_thumb(src, dest):
+            return row_id, True, None, digest, 1 if partial else 0
+        return row_id, False, "thumb_failed", digest, 1 if partial else 0
+    except subprocess.TimeoutExpired:
+        return row_id, False, "thumb_timeout", digest, 1 if partial else 0
+    except Exception as exc:  # noqa: BLE001 — one bad file must not stop the run
+        return row_id, False, f"thumb_error:{type(exc).__name__}", digest, 1 if partial else 0
+
+
 def thumb_batch(cfg: Config, conn: sqlite3.Connection) -> int:
     rows = conn.execute(
         """
@@ -837,7 +982,7 @@ def thumb_batch(cfg: Config, conn: sqlite3.Connection) -> int:
         FROM nas_index
         WHERE index_state='INDEXED'
         ORDER BY CASE
-            WHEN ifnull(fail_reason,'') LIKE 'missing_file:transient%' THEN 1
+            WHEN ifnull(fail_reason,'') LIKE 'missing_file:%' THEN 1
             ELSE 0
           END,
           id
@@ -847,6 +992,7 @@ def thumb_batch(cfg: Config, conn: sqlite3.Connection) -> int:
     ).fetchall()
     conn.commit()
     done = 0
+    jobs: list[tuple[int, Path]] = []
     for row in rows:
         row_id = int(row["id"])
         stored = str(row["original_path"] or "")
@@ -859,57 +1005,51 @@ def thumb_batch(cfg: Config, conn: sqlite3.Connection) -> int:
                 """,
                 (resolved.reason[:300], row_id),
             )
-            conn.commit()
             continue
         if resolved.path is None:
             mark_failed(cfg, conn, row_id, stored, resolved.reason)
-            conn.commit()
             done += 1
             continue
         adopted, clash = remember_resolved_path(cfg, conn, row_id, stored, resolved.path)
         if clash:
             mark_failed(cfg, conn, row_id, stored, clash)
-            conn.commit()
             done += 1
             continue
         src = Path(adopted)
         ext = src.suffix.lower()
-        try:
-            if ext not in IMAGE_EXT and ext not in VIDEO_EXT:
-                conn.execute(
-                    """
-                    UPDATE nas_index
-                    SET index_state='SEARCHABLE', preview_note='no_raster_preview',
-                        thumb_ready=0, fail_reason=NULL
-                    WHERE id=? AND index_state='INDEXED'
-                    """,
-                    (row_id,),
-                )
-                conn.commit()
-                done += 1
-                continue
-            dest = thumb_dest_for(row_id)
-            if dest.is_file() and dest.stat().st_size > 32:
-                ok = True
-            else:
-                ok = write_local_thumb(src, dest)
+        if ext not in IMAGE_EXT and ext not in VIDEO_EXT:
+            conn.execute(
+                """
+                UPDATE nas_index
+                SET index_state='SEARCHABLE', preview_note='no_raster_preview',
+                    thumb_ready=0, fail_reason=NULL
+                WHERE id=? AND index_state='INDEXED'
+                """,
+                (row_id,),
+            )
+            done += 1
+            continue
+        jobs.append((row_id, src))
+    if jobs:
+        sources = {row_id: src for row_id, src in jobs}
+        workers = min(_thumb_workers(), len(jobs))
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            rendered = list(pool.map(lambda job: _render_thumb(job[0], job[1]), jobs))
+        for row_id, ok, reason, digest, partial in rendered:
             if ok:
                 conn.execute(
                     """
                     UPDATE nas_index
-                    SET index_state='THUMB_PREVIEW_READY', thumb_ready=1, fail_reason=NULL
+                    SET index_state='THUMB_PREVIEW_READY', thumb_ready=1, fail_reason=NULL,
+                        sha256_1mb=?, hash_partial=?
                     WHERE id=? AND index_state='INDEXED'
                     """,
-                    (row_id,),
+                    (digest, partial, row_id),
                 )
             else:
-                mark_failed(cfg, conn, row_id, str(src), "thumb_failed")
-        except subprocess.TimeoutExpired:
-            mark_failed(cfg, conn, row_id, str(src), "thumb_timeout")
-        except Exception as exc:  # noqa: BLE001 — one bad file must not stop the run
-            mark_failed(cfg, conn, row_id, str(src), f"thumb_error:{type(exc).__name__}")
-        conn.commit()
-        done += 1
+                mark_failed(cfg, conn, row_id, str(sources[row_id]), reason or "thumb_failed")
+            done += 1
+    conn.commit()
     return done
 
 
@@ -928,7 +1068,7 @@ def promote_searchable(conn: sqlite3.Connection) -> int:
 def hash_batch(cfg: Config, conn: sqlite3.Connection) -> int:
     rows = conn.execute(
         """
-        SELECT id, original_path, size
+        SELECT id, original_path, size, sha256_1mb
         FROM nas_index
         WHERE index_state='SEARCHABLE'
         ORDER BY id
@@ -941,6 +1081,18 @@ def hash_batch(cfg: Config, conn: sqlite3.Connection) -> int:
     for row in rows:
         row_id = int(row["id"])
         stored = str(row["original_path"] or "")
+        existing = str(row["sha256_1mb"] or "")
+        if existing:
+            conn.execute(
+                """
+                UPDATE nas_index SET index_state='HASHED'
+                WHERE id=? AND index_state='SEARCHABLE'
+                """,
+                (row_id,),
+            )
+            conn.commit()
+            done += 1
+            continue
         resolved = resolve_media_path(stored)
         try:
             if resolved.transient:
@@ -1009,6 +1161,102 @@ def acquire_pid(cfg: Config) -> bool:
     return True
 
 
+def write_exceptions(cfg: Config, conn: sqlite3.Connection) -> int:
+    """Genuine thumb/decode failures. missing_file rows are not exceptions."""
+    rows = conn.execute(
+        """
+        SELECT id, original_filename, brand_slug, fail_reason, source_root
+        FROM nas_index
+        WHERE index_state='FAILED'
+          AND ifnull(fail_reason,'') NOT LIKE 'missing_file%'
+        ORDER BY id
+        """
+    ).fetchall()
+    items = [
+        {
+            "id": int(row["id"]),
+            "filename": row["original_filename"] or "",
+            "brand_slug": row["brand_slug"] or "",
+            "source_root": row["source_root"] or "",
+            "reason": row["fail_reason"] or "",
+        }
+        for row in rows
+    ]
+    payload = {
+        "as_of": now_iso(),
+        "count": len(items),
+        "note": "Corrupt, timed out, or unsupported renders. They do not block the rest of the catalog.",
+        "items": items,
+    }
+    path = cfg.estate / "exceptions.json"
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return len(items)
+
+
+def write_final_truth(cfg: Config, conn: sqlite3.Connection) -> dict:
+    """Measured catalog counts. Empty brands stay zero. No invented history."""
+
+    def count(sql: str, params: tuple = ()) -> int:
+        return int(conn.execute(sql, params).fetchone()[0])
+
+    by_rows = conn.execute(
+        """
+        SELECT ifnull(brand_slug,'UNKNOWN') AS brand,
+               ifnull(index_state,'DISCOVERED') AS state,
+               COUNT(*) AS n
+        FROM nas_index
+        GROUP BY 1, 2
+        """
+    ).fetchall()
+    per_brand: dict[str, dict[str, int]] = {}
+    for row in by_rows:
+        per_brand.setdefault(str(row["brand"]), {})[str(row["state"])] = int(row["n"])
+    for slug in repair.registry_slugs():
+        per_brand.setdefault(slug, {})
+    discovered = count("SELECT COUNT(*) FROM nas_index")
+    payload = {
+        "as_of": now_iso(),
+        "catalog": str(cfg.catalog),
+        "discovered": discovered,
+        "processed": count(
+            "SELECT COUNT(*) FROM nas_index WHERE ifnull(index_state,'') NOT IN ('', 'DISCOVERED')"
+        ),
+        "searchable": count(
+            "SELECT COUNT(*) FROM nas_index WHERE index_state IN ('SEARCHABLE', 'HASHED')"
+        ),
+        "preview_ready": count(
+            """
+            SELECT COUNT(*) FROM nas_index
+            WHERE index_state IN ('THUMB_PREVIEW_READY', 'SEARCHABLE', 'HASHED')
+            """
+        ),
+        "thumbnail_ready": count("SELECT COUNT(*) FROM nas_index WHERE thumb_ready=1"),
+        "genuine_failures": count(
+            """
+            SELECT COUNT(*) FROM nas_index
+            WHERE index_state='FAILED' AND ifnull(fail_reason,'') NOT LIKE 'missing_file%'
+            """
+        ),
+        "unknown_brand": count(
+            "SELECT COUNT(*) FROM nas_index WHERE brand_slug IS NULL OR brand_slug='' OR brand_slug='UNKNOWN'"
+        ),
+        "inaccessible": count(
+            """
+            SELECT COUNT(*) FROM nas_index
+            WHERE index_state='FAILED' AND ifnull(fail_reason,'') LIKE 'missing_file%'
+            """
+        ),
+        "by_brand_state": per_brand,
+        "staff_ready": False,
+        "full_nas_complete": False,
+        "human_commissioned": False,
+        "note": "Counts are rows in nas_index. This is not a claim that every file on the NAS was visited.",
+    }
+    path = cfg.estate / "FINAL-TRUTH-20260927.json"
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return payload
+
+
 def release_pid(cfg: Config) -> None:
     if not cfg.pid_path.is_file():
         return
@@ -1027,6 +1275,8 @@ def run(cfg: Config | None = None) -> dict:
         return {"ok": True, "already_running": True, "staff_ready": False, "full_nas_complete": False}
     conn = connect(cfg)
     aliases = load_aliases(conn)
+    remapped = remap_unknown_brands(conn, aliases)
+    log_line(cfg, f"brand remap unknown_or_blank_updated={remapped}")
     checkpoint = load_checkpoint(cfg)
     manifest_bytes = cfg.manifest.stat().st_size if cfg.manifest.is_file() else 0
     line = int(checkpoint.get("manifest_line") or 0)
@@ -1086,12 +1336,32 @@ def run(cfg: Config | None = None) -> dict:
                 write_counts(cfg, conn, phase=phase, manifest_line=line)
                 log_line(cfg, f"enrich thumbs={thumbed} hashes={hashed} promoted={promoted} remaining={work}")
             if phase == "caught_up":
+                healed_again = requeue_resolved_failures(cfg, conn)
+                log_line(
+                    cfg,
+                    "recheck "
+                    f"resolved={healed_again['requeued']} missing={healed_again['still_missing']} "
+                    f"transient={healed_again['transient']}",
+                )
+                if healed_again["requeued"] or healed_again["transient"]:
+                    continue
                 scan_hash_duplicates(cfg, conn)
                 conn.commit()
+                exceptions = write_exceptions(cfg, conn)
+                truth = write_final_truth(cfg, conn)
                 counts = write_counts(cfg, conn, phase=phase, manifest_line=line)
-                log_line(cfg, f"caught up catalog_rows={counts.get('catalog_rows')} failed={counts.get('failed')}")
+                log_line(
+                    cfg,
+                    "caught up "
+                    f"catalog_rows={counts.get('catalog_rows')} failed={counts.get('failed')} "
+                    f"exceptions={exceptions} unknown_brand={truth.get('unknown_brand')} "
+                    f"inaccessible={truth.get('inaccessible')}",
+                )
                 counts["ok"] = True
                 counts["already_running"] = False
+                counts["exceptions"] = exceptions
+                counts["unknown_brand"] = truth.get("unknown_brand")
+                counts["inaccessible"] = truth.get("inaccessible")
                 return counts
             if thumbed == 0 and hashed == 0 and promoted == 0:
                 time.sleep(1)

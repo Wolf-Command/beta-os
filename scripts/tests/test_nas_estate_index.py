@@ -141,6 +141,29 @@ def path_cases(log) -> None:
         log(first["requeued"] == 1 and second["requeued"] == 0, "requeue is idempotent", str((first, second)))
         log(count == 1 and row["index_state"] == "INDEXED", "requeue resets a resolved row to INDEXED", row["index_state"])
         log(row["original_path"] == str(pic), "requeue stores the live path", row["original_path"])
+        conn = idx.connect(cfg)
+        keep = pic.with_name("keep.jpg")
+        keep.write_bytes(pic.read_bytes())
+        conn.execute(
+            """
+            INSERT INTO nas_index (
+              original_path, original_filename, rel, size, brand_slug, index_state, fail_reason
+            ) VALUES (?,?,?,?,?,?,?)
+            """,
+            (str(keep), "keep.jpg", "Atrium/keep.jpg", keep.stat().st_size, "atrium", "FAILED", "thumb_failed"),
+        )
+        conn.commit()
+        kept = idx.requeue_resolved_failures(cfg, conn)
+        held = conn.execute(
+            "SELECT index_state, fail_reason FROM nas_index WHERE original_filename='keep.jpg'"
+        ).fetchone()
+        conn.close()
+        log(kept["requeued"] == 0, "thumb_failed is not requeued", str(kept))
+        log(
+            held["index_state"] == "FAILED" and held["fail_reason"] == "thumb_failed",
+            "genuine thumb failure stays failed",
+            f"{held['index_state']} {held['fail_reason']}",
+        )
 
 
 def brand_search_cases(log) -> None:
@@ -237,6 +260,40 @@ def main() -> None:
     log(slug == "UNKNOWN" and conf == "review_required", "GGV stays UNKNOWN", f"{slug} {conf}")
     slug, conf = idx.brand_for(["Misc"], aliases, "02-Stock-Assets-1")
     log(slug == "SHARED_STOCK" and conf == "shared", "stock root maps shared", f"{slug} {conf}")
+    rich = {
+        "atrium": "atrium",
+        "atrium lombok": "atrium",
+        "uma blu": "umablu",
+        "umablu": "umablu",
+        "goss group": "goss",
+        "goss": "goss",
+        "rainforest": "rainforest",
+        "selo": "selo",
+        "habitat": "habitat",
+        "tropik": "tropik",
+    }
+    slug, conf = idx.brand_for(["Uma Blu posts"], rich, "01-Media-Library")
+    log(slug == "umablu" and conf == "folder_phrase", "Uma Blu folder phrase", f"{slug} {conf}")
+    slug, conf = idx.brand_for(["01 Blu Zone", "Logos"], rich, "01-Media-Library")
+    log(slug == "rainforest" and conf == "folder_rule", "Blu Zone folder is rainforest", f"{slug} {conf}")
+    slug, conf = idx.deterministic_slug(
+        ["unsorted", "atrium weekly update.mov"], rich, "01-Media-Library"
+    )
+    log(slug == "UNKNOWN", "filename word alone stays UNKNOWN", f"{slug} {conf}")
+    slug, conf = idx.deterministic_slug(
+        ["_INBOX", "umablu_drop_menu.jpg"], rich, "01-Media-Library"
+    )
+    log(slug == "umablu" and conf == "intake_prefix", "intake prefix maps umablu", f"{slug} {conf}")
+    slug, conf = idx.deterministic_slug(
+        ["Brand-Assets", "GGV", "logos", "goss-group-logo.png"], rich, "01-Media-Library"
+    )
+    log(slug == "goss" and conf == "folder_phrase", "goss group filename phrase", f"{slug} {conf}")
+    gone_vol = idx.resolve_media_path("/Volumes/wolf-no-such-volume/a.jpg", mounts=(), roots=())
+    log(
+        gone_vol.transient and gone_vol.reason == "missing_file:volume_unavailable",
+        "unmounted volume is transient",
+        gone_vol.reason,
+    )
 
     try:
         idx.refuse_nas_write(Path("/Volumes/01-Media-Library/GGV/nope.jpg"))
