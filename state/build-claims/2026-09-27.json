@@ -40,6 +40,16 @@
       "at": "2026-09-27T00:30:00Z",
       "tests": "PASS=98 FAIL=0",
       "checked": false
+    },
+    {
+      "id": "wave3-p1-owner-command-20260927",
+      "claim": "Beta /wolf is the Owner Command read for GGV, AMG, and BZG. It does not invent occupancy, a cash figure, or a green KPI. Anon /api/owner/command and /wolf on :8788 are 403. POST /api/owner/command is 403 unsigned. staff_ready and human_commissioned stay false. Production :8787 pid 15975 was not restarted.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_owner_command.py | tail -3; curl -sS -o /dev/null -w 'wolf:%{http_code}\\n' http://127.0.0.1:8788/wolf; curl -sS -o /dev/null -w 'api:%{http_code}\\n' http://127.0.0.1:8788/api/owner/command; curl -sS -o /dev/null -w 'post:%{http_code}\\n' -X POST http://127.0.0.1:8788/api/owner/command; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "PASS=66 FAIL=0; EXIT: SUCCESS; wolf:403; api:403; post:403; 8787 True; 8788 True",
+      "by": "cursor-wave3-p1-owner",
+      "at": "2026-09-27T00:42:00Z",
+      "tests": "PASS=66 FAIL=0",
+      "checked": false
     }
   ]
 }

@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Owner Empire · Beta</title>
+<title>Owner Command · Beta</title>
+<link rel="stylesheet" href="/wolf-tokens.css" />
+<link rel="stylesheet" href="/assets/wolf-truth.css?v=20260927-w3p4" />
 <style>
   :root {
     --bg: #10140f; --bg2: #182018; --bg3: #243024; --border: #314033;
@@ -12,55 +14,220 @@
     --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
-  body { margin: 0 auto; max-width: 720px; padding: 12px 14px 72px; background: var(--bg); color: var(--text); font-family: var(--font); }
-  h1 { font-size: 1.25rem; margin: 0 0 4px; }
+  body { margin: 0 auto; max-width: 960px; padding: 16px 16px 80px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  h1 { font-size: 1.35rem; margin: 0 0 4px; }
   h1 span { color: var(--accent); }
   h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
-  .lede, .note { color: var(--muted); font-size: 0.85rem; }
+  .lede, .note, .meta { color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
   .banner { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: 0.88rem; }
   .banner.warn { border-color: rgba(224,177,90,0.55); color: var(--warn); }
   .card { border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; padding: 12px; margin-top: 8px; }
   .card.loud { border-color: rgba(224,177,90,0.7); }
-  .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.75rem; margin-right: 4px; color: var(--muted); }
+  .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.75rem; margin: 0 4px 4px 0; color: var(--muted); }
   .pill.loud { color: var(--warn); border-color: rgba(224,177,90,0.55); }
-  a.action { display: block; margin-top: 8px; text-decoration: none; border-radius: 10px; padding: 10px 12px; border: 1px solid #5d6b2a; background: #2d3816; color: var(--text); font-weight: 650; }
+  a.action { display: inline-flex; align-items: center; min-height: 44px; margin-top: 8px; text-decoration: none; border-radius: 10px; padding: 10px 12px; border: 1px solid #5d6b2a; background: #2d3816; color: var(--text); font-weight: 650; }
   a.action.primary { border-color: var(--accent); }
   .err { color: var(--danger); white-space: pre-wrap; font-size: 0.85rem; }
-  .meta { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
   .pct { font-size: 1.6rem; margin: 4px 0; }
+  .answers { display: grid; gap: 8px; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .q { font-weight: 700; margin: 0 0 4px; }
+  details { margin-top: 16px; }
+  summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--muted); }
+  @media (max-width: 860px) {
+    body { max-width: 100%; padding: 12px 12px 80px; }
+    .grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body data-wolf-page-type="DASHBOARD" data-wolf-org="WOLF/GROUP" data-wolf-shell="global" data-wolf-home-primary="empire">
-  <nav class="wolf-crumb" aria-label="Org context" style="font-size:0.75rem;color:var(--muted);margin:0 0 8px;letter-spacing:0.02em">WOLF › GROUP › Empire Pulse</nav>
-  <h1>Owner Empire <span>· Beta</span></h1>
-  <p class="lede">Bound beta-owner-safe. Today, Radar honesty, 12-Week Year honesty, and pack handoffs. Owner only. SYSTEM% comes from the Progress ledger. EMPTY is not 0%. CAP-STRAT stays at the ledger. No payment, bank, Zayen, HR, or trading on this desk. Track D is parked.</p>
-  <div id="wolf-truth" data-wolf-truth data-surface="empire"></div>
-  <div class="banner warn" id="who">Loading…</div>
-  <div id="pulse"></div>
+  <nav class="wolf-crumb" aria-label="Org context" style="font-size:0.75rem;color:var(--muted);margin:0 0 8px;letter-spacing:0.02em">WOLF › GROUP › Owner Command</nav>
+  <h1>Owner Command <span>· Beta</span></h1>
+  <p class="lede">Bound beta-owner-safe. Pulse and exceptions for GGV, AMG, and BZG. Unknown stays UNKNOWN. Missing stays MISSING. No manufactured green KPI. No payment, bank, Zayen, HR, or trading on this desk.</p>
+  <section id="answers" class="answers">
+    <article class="card"><p class="q">Are my businesses okay?</p><p data-answer="okay">Loading…</p></article>
+    <article class="card"><p class="q">What changed?</p><p data-answer="changed">Loading…</p></article>
+    <article class="card"><p class="q">What is going wrong?</p><p data-answer="wrong">Loading…</p></article>
+    <article class="card"><p class="q">What needs my decision?</p><p data-answer="decision">Loading…</p></article>
+    <article class="card"><p class="q">Where is money at risk?</p><p data-answer="money">Loading…</p></article>
+    <article class="card"><p class="q">Who or what is blocked?</p><p data-answer="blocked">Loading…</p></article>
+    <article class="card"><p class="q">Are we less dependent on me?</p><p data-answer="dependency">Loading…</p></article>
+  </section>
+  <div id="command"></div>
   <div id="msg"></div>
 
-  <h2>Next human action</h2>
-  <div id="next"></div>
+  <details>
+    <summary>System health</summary>
+    <p class="note">Secondary. A source stamp is not a business score. Not commissioned.</p>
+    <div id="wolf-truth" data-wolf-truth data-surface="empire"></div>
+  </details>
 
-  <h2>Today · Progress</h2>
-  <div id="today"></div>
+  <details>
+    <summary>Ledger and pack handoffs</summary>
+    <p class="lede">Today, Radar honesty, 12-Week Year honesty, and pack handoffs. SYSTEM% comes from the Progress ledger. EMPTY is not 0%. CAP-STRAT stays at the ledger. Track D is parked.</p>
+    <div class="banner warn" id="who">Loading…</div>
+    <div id="pulse"></div>
+    <h2>Next human action</h2>
+    <div id="next"></div>
+    <h2>Today · Progress</h2>
+    <div id="today"></div>
+    <h2>Radar · CAP-STRAT-02</h2>
+    <div id="radar"></div>
+    <h2>12-Week Year · CAP-STRAT-01</h2>
+    <div id="wy"></div>
+    <h2>Pack handoffs</h2>
+    <p class="note">Read-only. An EMPTY card is not an invented count. Amounts stay off this desk.</p>
+    <div id="handoffs"></div>
+    <h2>Intel</h2>
+    <div id="intel"></div>
+    <h2>Other boards</h2>
+    <div id="actions"></div>
+  </details>
 
-  <h2>Radar · CAP-STRAT-02</h2>
-  <div id="radar"></div>
+<script src="/assets/wolf-truth.js?v=20260927-w3p4"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+  const TRUTH = ["LIVE", "CURRENT", "STALE", "UNKNOWN", "UNAVAILABLE", "NEEDS REVIEW"];
 
-  <h2>12-Week Year · CAP-STRAT-01</h2>
-  <div id="wy"></div>
+  function mark(state) {
+    const label = String(state || "UNKNOWN");
+    if (TRUTH.indexOf(label) >= 0 && window.WolfTruth) return window.WolfTruth.chip(label);
+    return `<span class="pill" data-mark="${esc(label)}">${esc(label)}</span>`;
+  }
 
-  <h2>Pack handoffs</h2>
-  <p class="note">Read-only. An EMPTY card is not an invented count. Amounts stay off this desk.</p>
-  <div id="handoffs"></div>
+  function metric(label, row) {
+    const state = (row && row.state) || "UNKNOWN";
+    const value = row && row.value != null ? String(row.value) : state;
+    return `<p>${esc(label)}: ${mark(state)} <strong>${esc(value)}</strong></p>`;
+  }
 
-  <h2>Intel</h2>
-  <div id="intel"></div>
+  function link(href, label) {
+    if (!href) return `<p class="meta">Link: MISSING</p>`;
+    return `<a class="action" href="${esc(href)}">${esc(label)}</a>`;
+  }
 
-  <h2>Other boards</h2>
-  <div id="actions"></div>
+  async function api(path) {
+    const res = await fetch(path, { headers: { Accept: "application/json" } });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 403 || (data.ui && data.ui.component === "permission-denied")) {
+      const err = new Error("denied");
+      err.denied = true;
+      err.payload = data;
+      throw err;
+    }
+    if (!res.ok || data.ok === false) {
+      const err = new Error(data.message || data.error || ("HTTP " + res.status));
+      err.payload = data;
+      throw err;
+    }
+    return data;
+  }
 
+  function show(data) {
+    (data.answers || []).forEach((row) => {
+      const slot = document.querySelector('[data-answer="' + row.id + '"]');
+      if (slot) slot.textContent = row.answer || "";
+    });
+    const companies = (data.companies || []).map((card) => {
+      const sources = (card.sources || []).map((src) =>
+        `${mark(src.display_state)} ${esc(src.name)}`
+      ).join(" ");
+      const businesses = card.operating_businesses || {};
+      const biz = businesses.state === "READ"
+        ? (businesses.items || []).map((item) =>
+            `<p>${esc(item.name)} <span class="pill" data-mark="${esc(item.status || "MISSING")}">${esc(item.status || "MISSING")}</span>${item.href ? "" : " · No separate desk."}</p>${item.href ? link(item.href, "Open " + item.name) : ""}`
+          ).join("")
+        : `<p>${mark(businesses.state || "MISSING")} No operating business list was read.</p>`;
+      const priorities = card.priorities || {};
+      const pri = priorities.state === "READ"
+        ? (priorities.items || []).map((item) => `<p>${esc(item.title)}</p>`).join("")
+        : `<p>${mark(priorities.state || "EMPTY")} ${priorities.state === "EMPTY" ? "No priorities are on record." : "Priorities were not read."}</p>`;
+      return `<article class="card wolf-card" data-company="${esc(card.code)}">
+        <h3>${esc(card.code)} · ${esc(card.name)}</h3>
+        <p>${sources || mark("UNKNOWN")}</p>
+        ${metric("Desk attention", card.attention)}
+        ${metric("Financial position", card.financial_position)}
+        ${metric("Occupancy", card.occupancy)}
+        ${metric("Guest issues", card.guest_issues)}
+        ${metric("Open work", card.open_work)}
+        ${metric("Blocked work", card.blocked_work)}
+        ${metric("Approvals", card.approvals)}
+        ${metric("Exceptions", card.exceptions)}
+        <p class="meta">${esc(card.desk_why || "")}</p>
+        <h2>Operating businesses</h2>${biz}
+        <h2>Three priorities</h2>${pri}
+        ${link(card.href, "Open " + card.code)}
+      </article>`;
+    }).join("");
+    const needs = data.needs_you || {};
+    const needItems = needs.items || [];
+    const needBody = needItems.length
+      ? needItems.map((item) => `<article class="card wolf-card" data-kind="${esc(item.kind)}">
+          ${mark(item.kind)} ${mark(item.company)} ${mark(item.state)}
+          <p>${esc(item.issue)}</p>
+          <p class="meta">Owner role: ${esc(item.owner_role || "MISSING")} · Age: ${esc(item.age || "MISSING")}</p>
+          <p class="meta">${esc(item.why || "")}</p>
+          ${item.amount_state === "READ" ? `<p>Amount on record: ${esc(item.amount)}</p>` : `<p>Amount: ${mark(item.amount_state || "MISSING")}</p>`}
+          ${link(item.href, "Open")}
+        </article>`).join("")
+      : `<div class="wolf-empty" data-state="empty">${esc(needs.empty_message || "Needs you could not be read. Nothing was invented.")}</div>`;
+    const ex = data.exceptions || {};
+    const exBody = (ex.items || []).length
+      ? ex.items.map((item) => `<article class="card wolf-card">
+          <p>${mark(item.company)} ${esc(item.issue)}</p>
+          <p class="meta">Severity: ${mark(item.severity)} · Owner role: ${esc(item.owner_role)} · Age: ${esc(item.age)}</p>
+          <p class="meta">State: ${esc(item.state)} · Current action: ${mark(item.current_action)} · Escalation: ${mark(item.escalation_state)}</p>
+          <p class="meta">Evidence: ${item.evidence ? esc(item.evidence) : mark(item.evidence_state || "EMPTY")}</p>
+        </article>`).join("")
+      : `<div class="wolf-empty" data-state="empty">${esc(ex.empty_message || ex.why || "Exceptions were not read.")}</div>`;
+    const changed = data.changed || {};
+    const changedBody = (changed.items || []).length
+      ? changed.items.map((item) => `<p>${esc(item.when)} · ${esc(item.company)} · ${esc(item.action)} · ${esc(item.result)}</p>`).join("")
+      : `<div class="wolf-empty" data-state="empty">${esc(changed.empty_message || changed.why || "What changed was not read.")}</div>`;
+    const blocked = data.blocked || {};
+    const blockedBody = (blocked.items || []).length
+      ? blocked.items.map((item) => `<article class="card"><p>${esc(item.company)} · ${esc(item.what)}</p><p class="meta">Owner role: ${esc(item.owner_role)} · Age: ${esc(item.age)}</p>${link(item.href, "Open work")}</article>`).join("")
+      : `<div class="wolf-empty" data-state="empty">${esc(blocked.empty_message || blocked.why || "Blocked work was not read.")}</div>`;
+    const founder = data.founder_dependency || {};
+    const founderItems = (founder.items || []).map((item) =>
+      `<article class="card"><p>${mark(item.class)} ${esc(item.name)}</p><p class="meta">${esc(item.reason || "")}</p></article>`
+    ).join("");
+    $("command").innerHTML = `
+      <h2>Group status</h2>
+      <div class="grid" id="companies">${companies}</div>
+      <h2>What changed</h2>
+      <div class="card">${changedBody}</div>
+      <h2>Needs you</h2>
+      <div id="needs-you">${needBody}</div>
+      <h2>Business pulse</h2>
+      <p class="note">The company cards above are the pulse. Open a company to leave this screen.</p>
+      <h2>Exceptions</h2>
+      <div id="exceptions">${exBody}</div>
+      <h2>Who or what is blocked</h2>
+      <div id="blocked">${blockedBody}</div>
+      <h2>Founder dependency</h2>
+      <div class="card"><p>${esc(founder.verdict || "")}</p><p>Less dependent: ${mark(founder.less_dependent || "NOT MEASURED")}</p></div>
+      <div id="founder">${founderItems}</div>`;
+    const over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
+    document.body.setAttribute("data-overflow", over ? "yes" : "no");
+    document.body.setAttribute("data-command-ready", "1");
+  }
+
+  api("/api/owner/command").then(show).catch((err) => {
+    if (err.denied && window.WolfTruth) {
+      $("command").innerHTML = window.WolfTruth.denied();
+      return;
+    }
+    const box = window.WolfTruth ? window.WolfTruth.error(err.message) : `<p class="err">${esc(err.message || "failed")}</p>`;
+    $("command").innerHTML = box;
+    document.body.setAttribute("data-command-ready", "0");
+  });
+})();
+</script>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -142,8 +309,6 @@
       return;
     }
     $("pulse").innerHTML = (home.sections || []).map(pulseList).join("");
-    const over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
-    document.body.setAttribute("data-overflow", over ? "yes" : "no");
     document.body.setAttribute("data-pulse-ready", "1");
   }).catch(() => {
     $("pulse").innerHTML = `<div class="card loud">Pulse did not load. No figures were filled in.</div>`;
@@ -155,6 +320,5 @@
   });
 })();
 </script>
-<script src="/assets/wolf-truth.js?v=20260927-w3p4"></script>
 </body>
 </html>
