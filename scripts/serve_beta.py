@@ -33267,10 +33267,40 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "note": identity.get("note"),
         })
 
+    def _require_org_role_read(self) -> dict | None:
+        """Identity plus organisation.role.read. Sends 403 and returns None on deny.
+
+        The catalog already grants this for reading roles, positions, and
+        assignments. The actor is person_id plus assignment. A display name
+        is not the allow reason. Missing rows are checked only after this
+        gate, so an unsigned caller does not learn whether an id exists.
+        """
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="organisation.role.read")
+            return None
+        person_id = identity.get("person_id")
+        if not person_id or not _rbac.can(
+            person_id, "organisation.role.read", _rbac.default_content_target()
+        ):
+            self._send_json({
+                "ok": False,
+                "error": "forbidden",
+                "permission": "organisation.role.read",
+                "identity_assurance": identity.get("identity_assurance"),
+                "real_authentication": identity.get("real_authentication"),
+            }, status=403)
+            return None
+        return identity
+
     def _get_core_roles(self) -> None:
+        if self._require_org_role_read() is None:
+            return
         self._send_json({"ok": True, "roles": _staffing.list_roles()})
 
     def _get_core_role(self, role_id: str) -> None:
+        if self._require_org_role_read() is None:
+            return
         role = _staffing.get_role(role_id)
         if not role:
             self._send_json({"ok": False, "error": "not_found", "role_id": role_id}, status=404)
@@ -33278,9 +33308,13 @@ class BetaHandler(SimpleHTTPRequestHandler):
         self._send_json({"ok": True, "role": role})
 
     def _get_core_positions(self) -> None:
+        if self._require_org_role_read() is None:
+            return
         self._send_json({"ok": True, "positions": _staffing.list_positions()})
 
     def _get_core_position(self, position_id: str) -> None:
+        if self._require_org_role_read() is None:
+            return
         pos = _staffing.get_position(position_id)
         if not pos:
             self._send_json({"ok": False, "error": "not_found", "position_id": position_id}, status=404)
@@ -33288,6 +33322,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
         self._send_json({"ok": True, "position": pos})
 
     def _get_core_position_assignments(self, position_id: str) -> None:
+        if self._require_org_role_read() is None:
+            return
         if not _staffing.get_position(position_id):
             self._send_json({"ok": False, "error": "not_found", "position_id": position_id}, status=404)
             return
@@ -33299,6 +33335,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
         })
 
     def _get_core_person_assignments(self, person_id: str) -> None:
+        if self._require_org_role_read() is None:
+            return
         if not _identity.get_person(person_id):
             self._send_json({"ok": False, "error": "not_found", "person_id": person_id}, status=404)
             return
