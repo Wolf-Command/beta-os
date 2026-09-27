@@ -27419,6 +27419,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     **self._intg_cap_tests_quiet(),
                     "honesty": full["honesty"],
                 }
+            elif ref_id == "file-read" or view == "file-read":
+                report = _intg_cap_tests.read_authorised_files()
             elif ref_id:
                 report = _intg_cap_tests.read_kind(ref_id)
             else:

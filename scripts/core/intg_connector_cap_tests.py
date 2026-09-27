@@ -16,10 +16,13 @@ The ceiling label is BUILT. PROVEN and READY are not invented.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import re
 import sqlite3
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +36,11 @@ CONTRACT_DB = BETA_ROOT / "catalog" / "intg_connector_contract.sqlite"
 OWNER_PERSON = "PERS-MATT"
 CR_ID = "CR-859e7cad64e7e4ad"
 CAP_ID = "CAP-INTG-04"
+# 2026-07-30 decision: no bank feed. Statements are files the owner already filed.
+OWNER_ARCHIVE = Path.home() / ".openclaw" / "state" / "bank"
+STATEMENT_SUFFIXES = frozenset({".pdf", ".csv", ".xls", ".xlsx", ".ofx", ".qfx", ".mt940"})
+SPREADSHEET_SUFFIXES = frozenset({".xls", ".xlsx"})
+MAX_STATEMENT_BYTES = 20_000_000
 OTHER_CAP_ID = "CAP-INTG-01"
 SCHEMA_ID = "wolf.cap-intg-04.connector-cap-tests.v1"
 
@@ -638,6 +646,188 @@ def call_bank_feed(*_args: Any, **_kwargs: Any) -> None:
 
 def _present(value: str | None) -> bool:
     return (value or "").strip() != ""
+
+
+def _redact_name(name: str) -> str:
+    """Drop digit runs. A file name is not an account number to repeat."""
+    return re.sub(r"\d{4,}", "#", name)
+
+
+def _root_kind(root: Path) -> str:
+    """Owner archive, or a temp shape check. Anything else is refused."""
+    resolved = root.resolve()
+    archive = OWNER_ARCHIVE.resolve()
+    try:
+        resolved.relative_to(archive)
+        return "archive"
+    except ValueError:
+        pass
+    temp_root = Path(tempfile.gettempdir()).resolve()
+    try:
+        resolved.relative_to(temp_root)
+        return "temp"
+    except ValueError as exc:
+        raise ConnectorCapTestsError(
+            "Statement read refuses a path that is not the owner archive.",
+            code="archive_refused",
+        ) from exc
+
+
+def _empty_read(*, authorised: bool, archive_present: bool) -> dict[str, Any]:
+    configured = bool(authorised and archive_present)
+    return {
+        "ok": True,
+        "cap": CAP_ID,
+        "archive_present": archive_present,
+        "authorised": authorised,
+        "configured": configured,
+        "connected": False,
+        "tested": True,
+        "commissioned": False,
+        "states_collapsed": False,
+        "state_notes": {
+            "configured": (
+                "The owner statement archive is on disk."
+                if configured
+                else "The owner statement archive is not on disk."
+            ),
+            "connected": "No bank API is called. A file on disk is not a bank connection.",
+            "tested": "This read attempt finished.",
+            "commissioned": "No human acceptance was recorded.",
+        },
+        "file_read": False,
+        "opened": 0,
+        "pdf": 0,
+        "csv": 0,
+        "spreadsheet": 0,
+        "skipped_other": 0,
+        "unreadable": 0,
+        "oversize": 0,
+        "bytes": 0,
+        "manifest_sha256": hashlib.sha256(b"").hexdigest(),
+        "payment_executed": False,
+        "bank_api_called": False,
+        "bank_feed_called": False,
+        "money_moved": False,
+        "amounts_parsed": False,
+        "persisted": False,
+        "books_written": False,
+        "reconciled": False,
+        "management_report": False,
+        "ledger_write": False,
+        "external_write": False,
+        "rows": [],
+    }
+
+
+def read_authorised_files(
+    root: Path | str | None = None,
+    *,
+    payment: str | None = None,
+) -> dict[str, Any]:
+    """Read statement files the owner already filed.
+
+    Serves the 2026-07-30 decision: there is no bank feed. This does not
+    call a bank, parse an amount, write books, or move money. A temp
+    directory is a shape check and is not the authorised archive.
+    CONFIGURED, CONNECTED, TESTED, and COMMISSIONED stay separate.
+    """
+    if _present(payment):
+        refuse_payment({})
+    if root is None:
+        base = OWNER_ARCHIVE
+        kind = "archive"
+    else:
+        base = Path(root)
+        kind = _root_kind(base)
+    authorised = kind == "archive"
+    if not base.is_dir():
+        report = _empty_read(authorised=authorised, archive_present=False)
+        report["authorised"] = authorised
+        return report
+
+    opened = 0
+    pdf = 0
+    csv = 0
+    spreadsheet = 0
+    skipped_other = 0
+    unreadable = 0
+    oversize = 0
+    total = 0
+    rows: list[dict[str, Any]] = []
+    manifest = hashlib.sha256()
+    root_resolved = base.resolve()
+    for dirpath, dirnames, filenames in os.walk(base, followlinks=False):
+        dirnames[:] = [name for name in dirnames if not name.startswith(".")]
+        for name in sorted(filenames):
+            if name.startswith("."):
+                skipped_other += 1
+                continue
+            path = Path(dirpath) / name
+            try:
+                resolved = path.resolve()
+                resolved.relative_to(root_resolved)
+            except (OSError, ValueError):
+                skipped_other += 1
+                continue
+            suffix = resolved.suffix.lower()
+            if suffix not in STATEMENT_SUFFIXES:
+                skipped_other += 1
+                continue
+            try:
+                size = resolved.stat().st_size
+            except OSError:
+                unreadable += 1
+                continue
+            if size > MAX_STATEMENT_BYTES:
+                oversize += 1
+                continue
+            try:
+                blob = resolved.read_bytes()
+            except OSError:
+                unreadable += 1
+                continue
+            digest = hashlib.sha256(blob).hexdigest()
+            rel = _redact_name(str(resolved.relative_to(root_resolved)))
+            if re.search(r"\d{4,}", rel):
+                rel = re.sub(r"\d", "#", rel)
+            opened += 1
+            total += len(blob)
+            if suffix == ".pdf":
+                pdf += 1
+            elif suffix == ".csv":
+                csv += 1
+            elif suffix in SPREADSHEET_SUFFIXES:
+                spreadsheet += 1
+            manifest.update(suffix.encode("ascii"))
+            manifest.update(b"\0")
+            manifest.update(digest.encode("ascii"))
+            manifest.update(b"\0")
+            manifest.update(str(len(blob)).encode("ascii"))
+            manifest.update(b"\n")
+            rows.append(
+                {
+                    "name": rel,
+                    "suffix": suffix,
+                    "bytes": len(blob),
+                    "sha256": digest,
+                }
+            )
+    report = _empty_read(authorised=authorised, archive_present=True)
+    report["authorised"] = authorised
+    report["configured"] = authorised
+    report["file_read"] = bool(authorised and opened)
+    report["opened"] = opened
+    report["pdf"] = pdf
+    report["csv"] = csv
+    report["spreadsheet"] = spreadsheet
+    report["skipped_other"] = skipped_other
+    report["unreadable"] = unreadable
+    report["oversize"] = oversize
+    report["bytes"] = total
+    report["manifest_sha256"] = manifest.hexdigest()
+    report["rows"] = rows
+    return report
 
 
 def guard_query(
