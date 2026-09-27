@@ -6,7 +6,7 @@ Pack S2. Owner brief 27 Sep 2026 16:32 WITA. This is the one execution queue. Ru
 
 Register count is **12**. `build_war_room()` in S1 returned P0 12, P1 20, P2 42, P3 3. The closed set is CAP-CORE-01 through CAP-CORE-10, plus CAP-MSC-02 and CAP-INTG-07. There is no thirteenth P0.
 
-CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit `99f5a27`. CAP-CORE-06 stays OPEN after the temporary trail in commit `2229b21`. The other seven stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
+CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED after the empty-table deny in commit `fcae665`. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit `99f5a27`. CAP-CORE-06 stays OPEN after the temporary trail in commit `2229b21`. The other six stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
 
 Order is the critical path. A prerequisite is another P0 the next bar actually waits on. The catalog records no extra prerequisite inside the kernel, because those rows are already PROVEN or READY. That does not make the deployed observation done.
 
@@ -78,14 +78,14 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 
 ## 7. CAP-CORE-05 — Authority Limits Evaluator
 
-- Current state: SYSTEM PROVEN (0.80). Live `org_authority_limits` count is 0. The ledger says that zero is configuration, not maturity.
-- Exact missing evidence: a broader runtime prove on Beta. No limit row exists. A displayed 0 is not a chosen tolerance.
-- Cursor work: prove a denial when no limit row exists, on a temporary catalog, and record that the live table is still empty. Do not insert a limit.
+- Current state: SYSTEM PROVEN (0.80). The queue row is CLOSED. On a deleted catalog copy with zero limit rows, `PERS-MATT` on `content.plan.approve` and `PERS-HAIKAL` on `content.plan.edit` were denied (`higher_approval_required`, `no_matching_authority_limit`). An email string was not an allow. Live `org_authority_limits` stayed 0. On Beta `:8788` pid 64196, unsigned, a spoofed email, `X-Wolf-Subject`, and a bad JWT are 403 on `GET /api/core/authority/check` and `GET /api/core/me/authority-limits`. The public hostname redirects those two GETs to the Access login. No seated check was observed. The live count 0 is configuration, not a tolerance.
+- Exact missing evidence: none for this queue row. The ledger READY bar was not observed and is not claimed.
+- Cursor work: done in commit `fcae665`. Evidence: `docs/wolf/p0/P0-CAP-CORE-05-RESULT.md`. No limit was inserted. The ledger was not raised.
 - Human work: none.
 - External dependency: none.
-- Prerequisite: CAP-CORE-04.
-- Closure test: the action is denied, and the live count is still 0. The empty table does not have to be filled before this item can close.
-- Target: CLOSED. Status: OPEN.
+- Prerequisite: CAP-CORE-04. The closure test does not use the seated matrix that keeps CAP-CORE-04 OPEN. The critical path records no extra prerequisite.
+- Closure test: the action is denied, and the live count is still 0. That test passed (`SUMMARY pass=39 fail=0`). The empty table was not filled. `test_authority_limits.py` is pass=48 fail=1. The fail is `scope required denied`, already recorded in D1. It was not repaired.
+- Target: CLOSED. Status: CLOSED. Commit: `fcae665`.
 
 ## 8. CAP-CORE-06 — Work Items / Promises / Decisions
 

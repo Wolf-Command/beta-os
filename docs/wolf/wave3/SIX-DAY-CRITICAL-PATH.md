@@ -59,10 +59,10 @@ Production `:8787` is out of this path. Beta `:8788` is the boundary for any dep
 ### 7. CAP-CORE-05 — Authority Limits Evaluator
 
 - Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
-- Next bar: Broader runtime prove for READY; live limits at 0 is config
+- Next bar: P0 queue CLOSED in commit fcae665. Empty-table deny recorded. Live count stayed 0. Ledger stays PROVEN.
 - Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
 - Responsible role: Owner.
-- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- In six days: The empty-table deny exits 0. Live org_authority_limits stayed 0. Unsigned callers are 403 on Beta :8788 pid 64196. A seated check was not observed. Ledger stays PROVEN. Do not insert a limit. Do not read 0 as a tolerance.
 
 ### 8. CAP-CORE-06 — Work Items / Promises / Decisions
 

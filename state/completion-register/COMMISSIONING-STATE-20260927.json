@@ -43,10 +43,10 @@
     {
       "id": "CAP-CORE-05",
       "system_state": "PROVEN",
-      "staff_readiness": "Not claimed.",
-      "human_commissioning": "Not commissioned. Limit values stay an owner setting.",
-      "operating_adoption": "Not scored.",
-      "gap": "Live org_authority_limits count is 0. That is configuration, already excluded from this maturity row."
+      "staff_readiness": "No. Unsigned authority reads on Beta :8788 are 403. No seated session was walked.",
+      "human_commissioning": "Not commissioned. Limit values stay an owner setting. None were inserted.",
+      "operating_adoption": "Not scored. Not adopted.",
+      "gap": "P0 queue row CLOSED in commit fcae665. An action with no authority-limit row is denied. Live org_authority_limits stayed 0. That 0 is configuration, not a tolerance. Ledger stays PROVEN. This is not staff ready and not human commissioned."
     },
     {
       "id": "CAP-CORE-06",

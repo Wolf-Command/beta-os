@@ -330,7 +330,7 @@
       "operating_adoption": "NOT MEASURED",
       "staff_ready": false,
       "human_commissioned": false,
-      "gap": "Broader runtime prove for READY; live limits at 0 is config",
+      "gap": "P0 queue row CLOSED in commit fcae665. An action with no authority-limit row is denied. Live org_authority_limits stayed 0. That 0 is configuration, not a tolerance. Unsigned callers are 403 on Beta :8788. A seated check was not observed. Ledger stays PROVEN. This is not staff ready and not human commissioned.",
       "owner_role": "Owner",
       "effort_class": "S",
       "dependency": "No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY."

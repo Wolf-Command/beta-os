@@ -19,13 +19,13 @@
   "human_commissioned": 0,
   "operating_adoption": "NOT MEASURED",
   "final_status_count": {
-    "OPEN": 10,
-    "CLOSED": 0,
+    "OPEN": 9,
+    "CLOSED": 1,
     "READY_FOR_HUMAN": 1,
     "WAITING_EXTERNAL": 0,
     "BLOCKED_OWNER": 1
   },
-  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-MSC-02 stays OPEN. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit 99f5a27. CAP-CORE-06 stays OPEN after the temporary trail in commit 2229b21. The seated work-item read was not observed. Live core_work_items stayed 0. The ledger stays PROVEN. Staff ready, human commissioned, and operating adoption stay unset. The other seven P0 items stay OPEN.",
+  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED. The empty-table deny is commit fcae665. Live org_authority_limits stayed 0. The ledger stays PROVEN. CAP-MSC-02 stays OPEN. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit 99f5a27. CAP-CORE-06 stays OPEN after the temporary trail in commit 2229b21. Staff ready, human commissioned, and operating adoption stay unset. The other six P0 items stay OPEN.",
   "items": [
     {
       "order": 1,
@@ -136,15 +136,20 @@
       "order": 7,
       "id": "CAP-CORE-05",
       "title": "Authority Limits Evaluator",
-      "current_state": "SYSTEM PROVEN (0.80). test_authority_limits.py. Live org_authority_limits count is 0. The ledger already says that zero is configuration, not maturity.",
-      "exact_missing_evidence": "Broader runtime prove on Beta for READY. No approved limit rows exist. A displayed 0 must not be read as a tolerance that was chosen.",
-      "cursor_work": "Prove the evaluator still denies an action when no limit row exists, on a temporary catalog, then record that the live table is empty. Do not insert a limit.",
+      "current_state": "SYSTEM PROVEN (0.80). The queue row is CLOSED. On a deleted catalog copy with zero authority-limit rows, PERS-MATT on content.plan.approve and PERS-HAIKAL on content.plan.edit were denied: higher_approval_required, no_matching_authority_limit. An email string was not an allow. Live org_authority_limits stayed 0. No amount was written. On Beta :8788 pid 64196, unsigned, a spoofed email, X-Wolf-Subject, and Cf-Access-Jwt-Assertion a.b.c are 403 on GET /api/core/authority/check and GET /api/core/me/authority-limits. The public hostname returns 302 to the Access login for those two GETs. No seated check was observed. The ledger stays PROVEN. The live count 0 is configuration, not a tolerance.",
+      "exact_missing_evidence": "None for this queue row. The ledger READY bar, a broader runtime prove on Beta under a real session, was not observed and is not claimed. A displayed 0 is still the row count, not a chosen tolerance.",
+      "cursor_work": "Done in commit fcae665. The empty copy was deleted. No limit was inserted. Do not raise the ledger. Do not mark staff ready.",
       "human_work": "none",
       "external_dependency": "none",
       "prerequisite": ["CAP-CORE-04"],
-      "closure_test": "An action with no authority-limit row is denied, and the live org_authority_limits count is still 0 after the prove. No amount was written. The empty table is configuration. It is not a tolerance Matt must fill in before this item can close.",
+      "closure_test": "An action with no authority-limit row is denied, and the live org_authority_limits count is still 0 after the prove. No amount was written. The empty table is configuration. It is not a tolerance Matt must fill in before this item can close. That test passed (SUMMARY pass=39 fail=0). The ledger was not raised.",
       "target_final_state": "CLOSED",
-      "status": "OPEN"
+      "status": "CLOSED",
+      "evidence": [
+        "docs/wolf/p0/P0-CAP-CORE-05-RESULT.md",
+        "scripts/tests/test_cap_core_05_empty_deny.py"
+      ],
+      "commit": "fcae665"
     },
     {
       "order": 8,

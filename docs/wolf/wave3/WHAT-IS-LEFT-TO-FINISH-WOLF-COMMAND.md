@@ -89,14 +89,14 @@ P0 or P1, and the SYSTEM state is not READY. The next bar is Wolf-side work. Sev
 - What it is: Amount/scope limits on actions.
 - Why it matters: Wolf cannot enforce or refuse an action without this.
 - Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: Broader runtime prove for READY; live limits at 0 is config
+- Exact remaining work: The P0 queue row is CLOSED. Commit fcae665 denies an action when the catalog copy has no authority-limit row, and live org_authority_limits stayed 0. That 0 is the row count, not a tolerance. Ledger stays PROVEN. The broader Beta runtime prove that would raise READY was not observed. See docs/wolf/p0/P0-CAP-CORE-05-RESULT.md. Staff ready stays no.
 - Work classes: local_deterministic, human_commissioning, owner_decision.
 - Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
 - Responsible role: Owner.
-- Evidence required to close: Deployed or runtime proof on the intended Beta boundary for READY. A repository test is not a deployed-route test. A human walk is not this bar.
-- Six-day note: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- Evidence required to close: The P0 closure test is the empty-table deny plus live count 0. That test passed. Raising the ledger to READY still wants a broader runtime prove on Beta. That prove was not observed. A repository test is not a seated session. A human walk is not this bar.
+- Six-day note: The empty-table deny exits 0. Commit fcae665. Live org_authority_limits stayed 0. Unsigned callers are 403 on Beta :8788 pid 64196. A seated check was not observed. Ledger stays PROVEN. Do not insert a limit.
 - Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
+- Deployed proof: Unsigned deny on Beta :8788 pid 64196 is recorded for the authority check and the limits list. DEPLOYED-ROUTE-PROOF-20260927 stays FAIL for a seated allow. No real Cloudflare Access JWT was presented. The empty-table deny is not that seated proof.
 
 ### CAP-CORE-06 — Work Items / Promises / Decisions
 
