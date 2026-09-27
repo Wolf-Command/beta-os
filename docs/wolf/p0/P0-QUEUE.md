@@ -6,7 +6,7 @@ Pack S2. Owner brief 27 Sep 2026 16:32 WITA. This is the one execution queue. Ru
 
 Register count is **12**. `build_war_room()` in S1 returned P0 12, P1 20, P2 42, P3 3. The closed set is CAP-CORE-01 through CAP-CORE-10, plus CAP-MSC-02 and CAP-INTG-07. There is no thirteenth P0.
 
-CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. The other nine stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
+CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit `99f5a27`. The other eight stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
 
 Order is the critical path. A prerequisite is another P0 the next bar actually waits on. The catalog records no extra prerequisite inside the kernel, because those rows are already PROVEN or READY. That does not make the deployed observation done.
 
@@ -45,14 +45,14 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 
 ## 4. CAP-CORE-01 — Organisation Registry
 
-- Current state: SYSTEM PROVEN (0.80). `scripts/core/organisation.py` and `test_org_registry.py`. D1 kept PROVEN. `GET /api/core/entities/ENT-NOPE` is HTTP 404.
-- Exact missing evidence: the live org UI on Beta under a verified person. Deployed-route proof is FAIL. A development-subject 200 is not that proof.
-- Cursor work: after a real session, record the org route status on Beta. Do not send `X-Wolf-Subject`.
-- Human work: the session is CAP-CORE-02. No separate org acceptance.
+- Current state: SYSTEM PROVEN (0.80). The entity list was already fail-closed. On Beta `:8788` pid 59914, an unsigned read of a real entity, its brands, locations, departments, and a brand returned 200. A missing id returned 404 with no identity. Commit `99f5a27` uses the same `organisation.entity.read` gate as the list. On pid 64196 those eight paths are 403 for unsigned, a spoofed email, `X-Wolf-Subject`, and a bad JWT. There is no separate org UI page. Catalog projection, not a session: `PERS-HAIKAL` and `PERS-DEVI` lack the grant. `PERS-MATT` holds it. No seated 200 was observed.
+- Exact missing evidence: the Beta status of these routes under a real Cloudflare session. Allow for a person who holds the grant. Deny for a person who does not. The catalog projection is not that status.
+- Cursor work: done for the unsigned slice in commit `99f5a27`. Evidence: `docs/wolf/p0/P0-CAP-CORE-01-RESULT.md`. After a real session, record `/api/core/entities` and one entity read. Do not send `X-Wolf-Subject`. Do not raise the ledger. Do not mark CLOSED from the unsigned deny.
+- Human work: the session is CAP-CORE-02. No separate org acceptance. No organisation page was added.
 - External dependency: none.
 - Prerequisite: CAP-CORE-02.
-- Closure test: the Beta status under the real session is recorded, including a denial for a person without organisation read. Unsigned stays fail-closed.
-- Target: CLOSED. Status: OPEN.
+- Closure test: the Beta status under the real session is recorded, including a denial for a person without organisation read. Unsigned stays fail-closed. The unsigned half passed (`SUMMARY pass=123 fail=0`). The seated half is absent, so the row stays OPEN. `test_org_registry.py` is not this closure. It is pass=35 fail=3. The three fails are the pre-existing census checks (brands 12, Habitat present, GGV owns 5). They were not repaired.
+- Target: CLOSED. Status: OPEN. Commit: `99f5a27`. Remaining: the seated read.
 
 ## 5. CAP-CORE-03 — Role / Position / Assignment
 

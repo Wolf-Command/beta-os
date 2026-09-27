@@ -25,7 +25,7 @@
     "WAITING_EXTERNAL": 0,
     "BLOCKED_OWNER": 1
   },
-  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-MSC-02 stays OPEN. The deny prove on the live Beta gate is recorded in commit 025dd13. CLOSED still needs a review note that is not this queue. The ledger stays BUILT. Staff ready, human commissioned, and operating adoption stay unset. The other nine P0 items stay OPEN.",
+  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-MSC-02 stays OPEN. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit 99f5a27. The seated org read was not observed. The ledger stays PROVEN. Staff ready, human commissioned, and operating adoption stay unset. The other eight P0 items stay OPEN.",
   "items": [
     {
       "order": 1,
@@ -88,15 +88,21 @@
       "order": 4,
       "id": "CAP-CORE-01",
       "title": "Organisation Registry",
-      "current_state": "SYSTEM PROVEN (0.80). Implementation is scripts/core/organisation.py plus test_org_registry.py. D1 kept PROVEN. Direct GET /api/core/entities/ENT-NOPE is HTTP 404.",
-      "exact_missing_evidence": "Deployed-route proof of the live org UI on Beta :8788 under a verified person. DEPLOYED-ROUTE-PROOF-20260927 is FAIL. A development-subject 200 is not that proof. A human walk is not this bar.",
-      "cursor_work": "After a real Cloudflare session exists, record the HTTP status of the org registry route on Beta for that person. Do not send X-Wolf-Subject. Do not raise the ledger in the queue.",
-      "human_work": "The session itself is CAP-CORE-02. No separate org acceptance.",
+      "current_state": "SYSTEM PROVEN (0.80). The entity list was already fail-closed. On Beta :8788 pid 59914, unsigned GET of a real entity, its brands, locations, departments, and a brand returned 200. ENT-NOPE and a missing brand returned 404 with no identity. Commit 99f5a27 gates those reads with the same organisation.entity.read check as the list. On pid 64196, unsigned, a spoofed email, X-Wolf-Subject, and Cf-Access-Jwt-Assertion a.b.c are 403 on all eight paths, with no registry body. There is no separate org UI page. Catalog projection, not an HTTP session: PERS-HAIKAL and PERS-DEVI lack the grant. PERS-MATT holds it. No seated 200 was observed. The ledger was not raised.",
+      "exact_missing_evidence": "The Beta status of these routes under a real Cloudflare session: allow for a person who holds organisation.entity.read, deny for a person who does not. A catalog projection is not that status. A development-subject 200 is not that proof.",
+      "cursor_work": "Done for the unsigned slice in commit 99f5a27. After a real Cloudflare session exists, record the HTTP status of /api/core/entities and one entity read on Beta for that person. Do not send X-Wolf-Subject. Do not raise the ledger. Do not mark CLOSED from the unsigned deny alone.",
+      "human_work": "The session itself is CAP-CORE-02. No separate org acceptance. No organisation page was added for a person to click.",
+      "remaining": "Seated allow and deny on Beta under the CAP-CORE-02 session. Unsigned fail-closed is recorded. The row stays OPEN until those seated statuses exist.",
       "external_dependency": "none",
       "prerequisite": ["CAP-CORE-02"],
-      "closure_test": "The Beta response for the org route under the real session is recorded with status and denial for a person who lacks organisation read. Unsigned stays fail-closed. Repository tests staying green do not close this item.",
+      "closure_test": "The Beta response for the org route under the real session is recorded with status and denial for a person who lacks organisation read. Unsigned stays fail-closed. Repository tests staying green do not close this item. The unsigned half passed (SUMMARY pass=123 fail=0). The seated half is absent, so the row stays OPEN.",
       "target_final_state": "CLOSED",
-      "status": "OPEN"
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/p0/P0-CAP-CORE-01-RESULT.md",
+        "scripts/tests/test_cap_core_01_live_gate.py"
+      ],
+      "commit": "99f5a27"
     },
     {
       "order": 5,

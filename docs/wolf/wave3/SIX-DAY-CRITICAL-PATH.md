@@ -35,10 +35,10 @@ Production `:8787` is out of this path. Beta `:8788` is the boundary for any dep
 ### 4. CAP-CORE-01 — Organisation Registry
 
 - Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
-- Next bar: Deployed-route / live org UI prove for READY
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Next bar: Seated allow and deny under a real Cloudflare session. The unsigned deny is recorded in commit 99f5a27. Ledger stays PROVEN.
+- Dependency: CAP-CORE-02 is READY_FOR_HUMAN. That session was not observed.
 - Responsible role: Owner.
-- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- In six days: Unsigned, spoofed, and bad-JWT callers are 403 on the eight organisation reads. There is no separate org UI page. A seated allow was not observed. A development-subject 200 is not that proof.
 
 ### 5. CAP-CORE-03 — Role / Position / Assignment
 

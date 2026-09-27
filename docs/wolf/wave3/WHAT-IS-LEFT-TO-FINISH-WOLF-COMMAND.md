@@ -47,14 +47,14 @@ P0 or P1, and the SYSTEM state is not READY. The next bar is Wolf-side work. Sev
 - What it is: Canonical Group→Entity→Brand→Location→Dept hierarchy.
 - Why it matters: Wolf cannot enforce or refuse an action without this.
 - Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: Deployed-route / live org UI prove for READY
+- Exact remaining work: Seated allow and deny on the organisation reads under a real Cloudflare session. The unsigned deny is recorded in commit 99f5a27. There is no separate org UI page. Ledger stays PROVEN. See docs/wolf/p0/P0-CAP-CORE-01-RESULT.md.
 - Work classes: local_deterministic, human_commissioning.
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Dependency: CAP-CORE-02 is READY_FOR_HUMAN. That session was not observed.
 - Responsible role: Owner.
 - Evidence required to close: Deployed or runtime proof on the intended Beta boundary for READY. A repository test is not a deployed-route test. A human walk is not this bar.
-- Six-day note: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- Six-day note: Unsigned, spoofed, and bad-JWT callers are 403 on the eight organisation reads. A seated allow was not observed. A development-subject 200 is not that proof. Ledger stays PROVEN.
 - Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
+- Deployed proof: Unsigned deny on Beta :8788 pid 64196 is recorded. DEPLOYED-ROUTE-PROOF-20260927 stays FAIL for a seated allow. No real Cloudflare Access JWT was presented. The local verifier suite is not that proof.
 
 ### CAP-CORE-03 — Role / Position / Assignment
 

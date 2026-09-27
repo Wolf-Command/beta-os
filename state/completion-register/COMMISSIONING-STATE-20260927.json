@@ -11,10 +11,10 @@
     {
       "id": "CAP-CORE-01",
       "system_state": "PROVEN",
-      "staff_readiness": "Not claimed. Unsigned Beta entity list is fail-closed.",
-      "human_commissioning": "Not commissioned. No staff walk of the org UI.",
+      "staff_readiness": "No. Unsigned organisation reads on Beta :8788 are 403. No seated session was walked.",
+      "human_commissioning": "Not commissioned. No staff walk of the org routes.",
       "operating_adoption": "Not scored. Not adopted.",
-      "gap": "Next SYSTEM bar remains a deployed org UI prove for READY. That bar is not this register."
+      "gap": "Seated allow and deny under a real Cloudflare session remain. Commit 99f5a27 records the unsigned deny. There is no separate org UI page. That bar is not this register."
     },
     {
       "id": "CAP-CORE-02",

@@ -262,10 +262,10 @@
       "operating_adoption": "NOT MEASURED",
       "staff_ready": false,
       "human_commissioned": false,
-      "gap": "Deployed-route / live org UI prove for READY",
+      "gap": "Unsigned deny recorded in commit 99f5a27. Eight organisation reads are 403 on Beta :8788 for unsigned, a spoofed email, a spoofed subject, and a bad JWT. There is no separate org UI page. A seated allow was not observed. Ledger stays PROVEN. This is not staff ready and not human commissioned.",
       "owner_role": "Owner",
       "effort_class": "S",
-      "dependency": "No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY."
+      "dependency": "CAP-CORE-02 is READY_FOR_HUMAN. That session was not observed."
     },
     {
       "id": "CAP-CORE-02",
