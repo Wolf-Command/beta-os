@@ -103,7 +103,10 @@
   function metric(label, row) {
     const state = (row && row.state) || "UNKNOWN";
     const value = row && row.value != null ? String(row.value) : state;
-    return `<p>${esc(label)}: ${mark(state)} <strong>${esc(value)}</strong></p>`;
+    const invalid = row && row.invalid_test != null
+      ? ` <span class="meta">INVALID/TEST ${esc(String(row.invalid_test))}</span>`
+      : "";
+    return `<p>${esc(label)}: ${mark(state)} <strong>${esc(value)}</strong>${invalid}</p>`;
   }
 
   function link(href, label) {
@@ -178,7 +181,11 @@
       : `<div class="wolf-empty" data-state="empty">${esc(needs.empty_message || "Needs you could not be read. Nothing was invented.")}</div>`;
     const ex = data.exceptions || {};
     const cadence = ex.cadence_done === true ? "done" : "not done";
-    const exHead = `<p class="meta">Stored: ${esc(ex.stored_count)} · Open: ${esc(ex.open_count)} · Cadence: ${esc(cadence)}</p>`;
+    const led = data.ledger_classification || {};
+    const ev = led.evidence || {};
+    const dec = led.approval_decisions || {};
+    const exHead = `<p class="meta">Stored: ${esc(ex.stored_count)} · Valid operational: ${esc(ex.valid_operational_count)} · INVALID/TEST: ${esc(ex.invalid_test_count)} · Open: ${esc(ex.open_count)} · Cadence: ${esc(cadence)}</p>`
+      + `<p class="meta">Evidence valid operational ${esc(ev.valid_operational)} · INVALID/TEST ${esc(ev.invalid_test)}. Approval decisions valid operational ${esc(dec.valid_operational)} · INVALID/TEST ${esc(dec.invalid_test)}.</p>`;
     const exBody = (ex.items || []).length
       ? exHead + ex.items.map((item) => `<article class="card wolf-card">
           <p>${esc(item.id)} · ${mark(item.company)} ${esc(item.issue)}</p>

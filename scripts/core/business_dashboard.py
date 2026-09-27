@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from core import dashboard_truth as truth
+from core import ledger_class
 from core import owner_empire_pack as empire
 from core import staff_home as home
 from core import wolf_shell as shell
@@ -255,6 +256,13 @@ def _person_maps(conn: sqlite3.Connection) -> tuple[dict[str, str], dict[str, st
     return names, roles
 
 
+def _ledger_counts(conn: sqlite3.Connection) -> dict[str, Any]:
+    try:
+        return ledger_class.summarize(conn)
+    except sqlite3.Error:
+        return {"read": "UNAVAILABLE"}
+
+
 def read_snapshot(conn: sqlite3.Connection | None = None) -> dict[str, Any]:
     """One canonical snapshot. Dashboards do not read past this object."""
     own = conn is None
@@ -402,6 +410,7 @@ def read_snapshot(conn: sqlite3.Connection | None = None) -> dict[str, Any]:
                 "approvals": "core_approval_requests" in tables,
                 "activity": "core_audit_events" in tables,
             },
+            "ledger_classification": _ledger_counts(db),
         }
         return snapshot
     finally:
@@ -738,11 +747,24 @@ def _sections(snapshot: dict[str, Any], spec: dict[str, Any]) -> list[dict[str, 
                 for row in snapshot["exceptions"]
                 if row["entity_id"] == entity_id and row.get("status") in {"REQUESTED", "AUTHORISED"}
             ]
+            ledger = snapshot.get("ledger_classification") or {}
+            ex_split = ledger.get("exceptions") or {}
+            ev_split = ledger.get("evidence") or {}
+            dec_split = ledger.get("approval_decisions") or {}
             exceptions = _section(
                 "exceptions",
                 "Exceptions",
                 "READ",
-                "REQUESTED and AUTHORISED rows on this legal entity. Severity has no column, so it stays MISSING.",
+                (
+                    "REQUESTED and AUTHORISED rows on this legal entity. "
+                    f"Valid operational exceptions: {ex_split.get('valid_operational', 'UNKNOWN')}. "
+                    f"INVALID/TEST exceptions: {ex_split.get('invalid_test', 'UNKNOWN')}. "
+                    f"Valid operational evidence: {ev_split.get('valid_operational', 'UNKNOWN')}. "
+                    f"INVALID/TEST evidence: {ev_split.get('invalid_test', 'UNKNOWN')}. "
+                    f"Valid operational approval decisions: {dec_split.get('valid_operational', 'UNKNOWN')}. "
+                    f"INVALID/TEST approval decisions: {dec_split.get('invalid_test', 'UNKNOWN')}. "
+                    "Severity has no column, so it stays MISSING."
+                ),
                 value=len(open_ex),
                 items=[
                     {

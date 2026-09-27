@@ -201,7 +201,11 @@ def test_read_shows_stored(live_before: tuple[int, tuple[tuple[str, str, str], .
     )
     cards = {card.get("code"): card for card in report.get("companies") or []}
     ggv = ((cards.get("GGV") or {}).get("exceptions") or {})
-    check("GGV card count is the stored rows", ggv.get("state") == "READ" and ggv.get("value") == 3, str(ggv))
+    check(
+        "GGV card valid operational count is 0",
+        ggv.get("state") == "READ" and ggv.get("value") == 0 and ggv.get("invalid_test") == 3,
+        str(ggv),
+    )
     for code in ("AMG", "BZG"):
         card = ((cards.get(code) or {}).get("exceptions") or {})
         check(
@@ -219,9 +223,26 @@ def test_read_shows_stored(live_before: tuple[int, tuple[tuple[str, str, str], .
     check("human commissioned stays false", report.get("human_commissioned") is False)
     wrong = next((row.get("answer") for row in report.get("answers") or [] if row.get("id") == "wrong"), "")
     check(
-        "answer names the stored count",
-        wrong.startswith("3 governance exceptions are on record."),
-        wrong[:120],
+        "answer separates valid operational from INVALID/TEST",
+        wrong.startswith(
+            "0 valid operational governance exceptions are on record. "
+            "3 are INVALID/TEST and are not operational."
+        ),
+        wrong[:180],
+    )
+    ledger = report.get("ledger_classification") or {}
+    check(
+        "evidence split keeps the invalidated history out of the operational count",
+        (ledger.get("evidence") or {}).get("valid_operational") == 0
+        and (ledger.get("evidence") or {}).get("invalid_test") == 4
+        and (ledger.get("evidence") or {}).get("total") == 4,
+        str(ledger.get("evidence")),
+    )
+    check(
+        "approval decisions from the test runs are INVALID/TEST",
+        (ledger.get("approval_decisions") or {}).get("valid_operational") == 0
+        and (ledger.get("approval_decisions") or {}).get("invalid_test") == 9,
+        str(ledger.get("approval_decisions")),
     )
     page = PAGE.read_text(encoding="utf-8")
     check("page shows the exception id", "esc(item.id)" in page)

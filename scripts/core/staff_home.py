@@ -317,6 +317,11 @@ def _evidence_rows(conn, entities: set[str]) -> list[dict[str, Any]]:
         WHERE entity_id IN ({_placeholders(len(entities))})
           AND status = 'ACTIVE'
           AND verification_status = 'VERIFIED'
+          AND IFNULL(submitted_by_person_id, '') NOT LIKE 'PERS-P4-%'
+          AND IFNULL(source_type, '') != 'TEST'
+          AND evidence_id NOT LIKE '%DEMO%'
+          AND IFNULL(source_reference, '') NOT LIKE '%fixture%'
+          AND IFNULL(source_reference, '') NOT LIKE '%P4-TEST%'
         ORDER BY verified_at DESC, submitted_at DESC
         LIMIT 20
     """

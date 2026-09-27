@@ -354,13 +354,10 @@ def test_static_and_caps() -> None:
 
 def test_api() -> None:
     ra._ENV_LOADED = True
-    os.environ["WOLF_ALLOW_LIVE_AUDIT"] = "1"
-    try:
-        sale.ensure_operator_depth_rbac(commit=True)
-    finally:
-        os.environ.pop("WOLF_ALLOW_LIVE_AUDIT", None)
-
     import serve_beta as sb
+    from core.canonical_guard import isolate_runtime_catalog
+    isolate_runtime_catalog()
+    sale.ensure_operator_depth_rbac(commit=True)
 
     Handler = None
     for _, obj in __import__("inspect").getmembers(sb, __import__("inspect").isclass):

@@ -105,11 +105,11 @@ def _under_test_process() -> bool:
 def assert_catalog_writable(db_path: Path) -> None:
     """Fail closed: refuse accidental live catalog writes from tests.
 
-    Prefer explicit temp CATALOG_DB wiring. Override only with WOLF_ALLOW_LIVE_AUDIT=1.
+    Prefer a temp CATALOG_DB. WOLF_ALLOW_LIVE_AUDIT does not authorize a test write.
     """
     resolved = Path(db_path).resolve()
-    if (os.environ.get("WOLF_ALLOW_LIVE_AUDIT") or "").strip() == "1":
-        return
+    from core.canonical_guard import assert_write_allowed
+    assert_write_allowed(resolved)
     if resolved == LIVE_CATALOG_DB and _under_test_process():
         raise AuditValidationError(
             "test mode refuses writes to live catalog DB; point CATALOG_DB at a temp copy"

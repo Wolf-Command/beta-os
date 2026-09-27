@@ -259,8 +259,8 @@ def gaps() -> list[str]:
 
 def assert_db_writable(db_path: Path) -> None:
     resolved = Path(db_path).resolve()
-    if (os.environ.get("WOLF_ALLOW_LIVE_INTEL_RULE") or "").strip() == "1":
-        return
+    from core.canonical_guard import assert_write_allowed
+    assert_write_allowed(resolved)
     if resolved == LIVE_DEFAULT_DB and _under_test_process():
         raise IntelRuleError(
             "test mode refuses writes to the live approve-to-rule ledger; "

@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from core import dashboard_truth as truth
+from core import ledger_class
 from core import owner_empire_pack as empire
 from core import staff_home as home
 from core import work_loop as loop
@@ -449,19 +450,29 @@ def _fill_exception_approval_counts(
         try:
             rows = conn.execute(
                 f"""
-                SELECT exception_id, entity_id, reason, requested_by_person_id
+                SELECT exception_id, entity_id, status, reason, reject_reason,
+                       control_reference, requested_by_person_id
                 FROM core_governance_exceptions
                 WHERE entity_id IN ({marks})
                 """,
                 entities,
             ).fetchall()
             counts = {eid: 0 for eid in entities}
+            invalid_counts = {eid: 0 for eid in entities}
             for row in rows:
-                if _demo(row["exception_id"], row["reason"], row["requested_by_person_id"]):
+                eid = str(row["entity_id"])
+                if ledger_class.is_invalid_or_test("core_governance_exceptions", row) or _demo(
+                    row["exception_id"], row["reason"], row["requested_by_person_id"]
+                ):
+                    invalid_counts[eid] = invalid_counts.get(eid, 0) + 1
                     continue
-                counts[str(row["entity_id"])] = counts.get(str(row["entity_id"]), 0) + 1
+                counts[eid] = counts.get(eid, 0) + 1
             for eid, card in by_entity.items():
-                card["exceptions"] = {"state": "READ", "value": counts.get(eid, 0)}
+                card["exceptions"] = {
+                    "state": "READ",
+                    "value": counts.get(eid, 0),
+                    "invalid_test": invalid_counts.get(eid, 0),
+                }
         except sqlite3.Error:
             for card in cards:
                 card["exceptions"] = {"state": "UNAVAILABLE", "value": None}
@@ -647,7 +658,8 @@ def _exceptions(conn: sqlite3.Connection, cards: list[dict[str, Any]]) -> dict[s
     try:
         counted = conn.execute(
             f"""
-            SELECT exception_id, status, reason, requested_by_person_id
+            SELECT exception_id, status, reason, reject_reason, control_reference,
+                   requested_by_person_id
             FROM core_governance_exceptions
             WHERE entity_id IN ({marks})
             """,
@@ -681,7 +693,16 @@ def _exceptions(conn: sqlite3.Connection, cards: list[dict[str, Any]]) -> dict[s
         if not _demo(row["exception_id"], row["reason"], row["requested_by_person_id"])
     ]
     stored_count = len(visible)
-    open_count = sum(1 for row in visible if str(row["status"] or "") in {"REQUESTED", "AUTHORISED"})
+    invalid_test_count = sum(
+        1 for row in visible if ledger_class.is_invalid_or_test("core_governance_exceptions", row)
+    )
+    valid_operational_count = stored_count - invalid_test_count
+    open_count = sum(
+        1
+        for row in visible
+        if str(row["status"] or "") in {"REQUESTED", "AUTHORISED"}
+        and not ledger_class.is_invalid_or_test("core_governance_exceptions", row)
+    )
     roles: dict[str, str] = {}
     items = []
     for row in rows:
@@ -698,6 +719,7 @@ def _exceptions(conn: sqlite3.Connection, cards: list[dict[str, Any]]) -> dict[s
                 "age": _age(row["created_at"]),
                 "current_action": "MISSING",
                 "state": _text(row["status"]) or "MISSING",
+                "record_class": ledger_class.record_class("core_governance_exceptions", row),
                 "escalation_state": "MISSING",
                 "evidence": _text(evidence) if evidence else None,
                 "evidence_state": "READ" if evidence else "EMPTY",
@@ -708,6 +730,8 @@ def _exceptions(conn: sqlite3.Connection, cards: list[dict[str, Any]]) -> dict[s
         "read": "READ",
         "items": items,
         "stored_count": stored_count,
+        "valid_operational_count": valid_operational_count,
+        "invalid_test_count": invalid_test_count,
         "open_count": open_count,
         "cadence_done": False,
         "empty_message": (
@@ -718,7 +742,10 @@ def _exceptions(conn: sqlite3.Connection, cards: list[dict[str, Any]]) -> dict[s
         "why": (
             "Severity, current action, and escalation are not columns on this record, so they stay MISSING. "
             "stored_count is every non-demo row for these companies. "
-            "open_count is REQUESTED or AUTHORISED. A review cadence is not marked done."
+            "valid_operational_count excludes INVALID/TEST rows. "
+            "invalid_test_count is those rows, still stored. "
+            "open_count is REQUESTED or AUTHORISED among valid operational rows. "
+            "A review cadence is not marked done."
         ),
     }
 
@@ -734,20 +761,40 @@ def _changed(conn: sqlite3.Connection, cards: list[dict[str, Any]]) -> dict[str,
             "items": [],
             "why": "The audit record could not be read. Nothing was invented.",
         }
-    wanted = [name for name in ("occurred_at", "action", "result", "entity_id", "source") if name in cols]
+    wanted = [
+        name
+        for name in ("occurred_at", "action", "result", "entity_id", "source", "actor_person_id")
+        if name in cols
+    ]
     order = "occurred_at DESC" if "occurred_at" in cols else "rowid DESC"
     marks = ",".join("?" for _ in entities)
+    actor_filter = ""
+    if "actor_person_id" in cols:
+        actor_filter = " AND IFNULL(actor_person_id, '') NOT LIKE 'PERS-P4-%'"
     try:
         rows = conn.execute(
             f"""
             SELECT {", ".join(wanted)}
             FROM core_audit_events
-            WHERE entity_id IN ({marks})
+            WHERE entity_id IN ({marks}){actor_filter}
             ORDER BY {order}
             LIMIT 8
             """,
             entities,
         ).fetchall()
+        invalid_audit = 0
+        if "actor_person_id" in cols:
+            invalid_audit = int(
+                conn.execute(
+                    f"""
+                    SELECT COUNT(*)
+                    FROM core_audit_events
+                    WHERE entity_id IN ({marks})
+                      AND actor_person_id LIKE 'PERS-P4-%'
+                    """,
+                    entities,
+                ).fetchone()[0]
+            )
     except sqlite3.Error:
         return {
             "ok": True,
@@ -771,8 +818,10 @@ def _changed(conn: sqlite3.Connection, cards: list[dict[str, Any]]) -> dict[str,
         "ok": True,
         "read": "READ",
         "items": items,
+        "invalid_test_count": invalid_audit,
         "empty_message": (
-            "No audit events are on record for these companies. Empty is not 'nothing happened in the world'."
+            "No valid operational audit events are on record for these companies. "
+            "INVALID/TEST rows stay stored and are not this list."
             if not items
             else None
         ),
@@ -935,19 +984,29 @@ def _answers(
     elif changed.get("items"):
         newest = changed["items"][0]
         changed_answer = (
-            f"{len(changed['items'])} recent audit events are on record for these companies. "
+            f"{len(changed['items'])} recent operational audit events are on record for these companies. "
             f"The newest is {newest.get('action')} ({newest.get('company')})."
         )
+        excluded = changed.get("invalid_test_count")
+        if isinstance(excluded, int) and excluded:
+            changed_answer += (
+                f" {excluded} INVALID/TEST audit events are stored and excluded from this list."
+            )
     else:
         changed_answer = changed.get("empty_message") or "No audit events are on record."
     if exceptions.get("read") != "READ":
         wrong = "What is going wrong could not be read from the exception record."
-    elif exceptions.get("items"):
-        stored = exceptions.get("stored_count")
-        shown = stored if isinstance(stored, int) else len(exceptions["items"])
-        wrong = f"{shown} governance exceptions are on record. Severity is MISSING on each row."
     else:
-        wrong = "No governance exceptions are on record. Empty is not unknown."
+        valid = exceptions.get("valid_operational_count")
+        invalid = exceptions.get("invalid_test_count")
+        if isinstance(valid, int) and isinstance(invalid, int):
+            wrong = (
+                f"{valid} valid operational governance exceptions are on record. "
+                f"{invalid} are INVALID/TEST and are not operational. "
+                "Severity is MISSING on each row."
+            )
+        else:
+            wrong = "What is going wrong could not be read from the exception record."
     waiting = [item for item in needs.get("items") or [] if item.get("kind") != "commissioning"]
     commissioning = [item for item in needs.get("items") or [] if item.get("kind") == "commissioning"]
     if needs.get("approvals_read") != "READ" or needs.get("exceptions_read") != "READ":
@@ -1056,6 +1115,7 @@ def _envelope(
     founder: dict[str, Any],
     *,
     read: str,
+    ledger: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "ok": True,
@@ -1083,6 +1143,7 @@ def _envelope(
         "green_kpi": False,
         "ledger_write": False,
         "external_writes": False,
+        "ledger_classification": ledger or {"read": "UNAVAILABLE"},
     }
 
 
@@ -1100,7 +1161,13 @@ def build_command(*, verified_person_id: str) -> dict[str, Any]:
         founder = _founder()
         finance = cards[0]["financial_position"]["state"] if cards else "UNAVAILABLE"
         answers = _answers(cards, changed, needs, exceptions, blocked, founder, finance)
-        return _envelope(cards, answers, needs, exceptions, changed, blocked, founder, read="READ")
+        try:
+            ledger = ledger_class.summarize(conn)
+        except sqlite3.Error:
+            ledger = {"read": "UNAVAILABLE"}
+        return _envelope(
+            cards, answers, needs, exceptions, changed, blocked, founder, read="READ", ledger=ledger
+        )
     except empire.EmpirePackError:
         raise
     except Exception as exc:  # noqa: BLE001

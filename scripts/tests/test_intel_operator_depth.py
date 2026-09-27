@@ -365,13 +365,10 @@ def test_serve_routes_source() -> None:
 def test_http_anon_and_seat(td: Path) -> None:
     """serve_beta Handler: anon 403; Matt can depth; outsider 403."""
     ra._ENV_LOADED = True
-    os.environ["WOLF_ALLOW_LIVE_AUDIT"] = "1"
-    try:
-        ic.ensure_operator_depth_rbac(commit=True)
-    finally:
-        os.environ.pop("WOLF_ALLOW_LIVE_AUDIT", None)
-
     import serve_beta as sb
+    from core.canonical_guard import isolate_runtime_catalog
+    isolate_runtime_catalog()
+    ic.ensure_operator_depth_rbac(commit=True)
 
     Handler = None
     for _, obj in __import__("inspect").getmembers(sb, __import__("inspect").isclass):

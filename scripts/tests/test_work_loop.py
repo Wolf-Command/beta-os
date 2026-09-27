@@ -25,7 +25,8 @@ SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 os.environ["WOLF_TEST_MODE"] = "1"
-os.environ["WOLF_ALLOW_LIVE_AUDIT"] = "1"
+os.environ.pop("WOLF_ALLOW_LIVE_AUDIT", None)
+os.environ.pop("WOLF_CANONICAL_WRITE_OVERRIDE", None)
 os.environ["BETA_AUTH_MODE"] = "development_assertion"
 
 from core import delegation as dlg  # noqa: E402
@@ -311,7 +312,12 @@ def _has_title(payload: dict, key: str, title: str) -> bool:
 
 
 def main() -> int:
-    global PASS, FAIL
+    global PASS, FAIL, CATALOG
+    from core.canonical_guard import backup_catalog, bind_loaded_catalogs, install
+
+    install()
+    CATALOG = backup_catalog()
+    bind_loaded_catalogs(CATALOG)
     prod_before = _listen_pid(8787)
     check("prod listener unchanged at start", prod_before == PROD_PID, prod_before or "down")
     limits_before = evr_before = sod_before = 0
@@ -341,6 +347,8 @@ def main() -> int:
 
     ra._ENV_LOADED = True
     import serve_beta as sb
+
+    bind_loaded_catalogs(CATALOG)
 
     Handler = None
     for _, obj in __import__("inspect").getmembers(sb, __import__("inspect").isclass):

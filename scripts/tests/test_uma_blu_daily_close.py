@@ -217,10 +217,12 @@ def main() -> int:
     live_pre.close()
 
     mig = load_mig()
-    mig.DB = LIVE_DB
+    from core.canonical_guard import backup_catalog
+
+    mig.DB = backup_catalog()
     prove_ended_scope_upsert(mig)
-    check("live migrate exit 0", mig.main() == 0)
-    check("live migrate idempotent", mig.main() == 0)
+    check("isolated migrate exit 0", mig.main() == 0)
+    check("isolated migrate idempotent", mig.main() == 0)
 
     after = live_snapshot()
     check("live variance policies=0", after["policies"] == 0, str(after["policies"]))

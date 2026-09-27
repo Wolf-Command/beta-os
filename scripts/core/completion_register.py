@@ -254,6 +254,11 @@ def _refuse_live_mutation(conn: sqlite3.Connection) -> None:
 
 
 def ensure_schema(conn: sqlite3.Connection) -> None:
+    present = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='wolf_completion_items'"
+    ).fetchone()
+    if present:
+        return
     conn.executescript(
         """
         CREATE TABLE IF NOT EXISTS wolf_completion_items (

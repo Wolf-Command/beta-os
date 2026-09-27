@@ -129,7 +129,8 @@
       <p class="score" data-system-line="${esc(data.system_line)}">${esc(data.system_line)}</p>
       <p>STAFF READY = ${esc(data.staff_ready_count)}. HUMAN COMMISSIONED = ${esc(data.human_commissioned_count)}. OPERATING ADOPTION = ${esc(data.operating_adoption)}.</p>
       <p class="meta">ABSENT ${esc(counts.ABSENT)} · SPECIFIED ${esc(counts.SPECIFIED)} · BUILT ${esc(counts.BUILT)} · PROVEN ${esc(counts.PROVEN)} · READY ${esc(counts.READY)}. Progress rounds this same sum to ${esc(data.system_pct_1dp)}%.</p>
-      <p class="meta">${esc(data.formula || "")}. Rule ${esc(data.rule || "")}.</p>`;
+      <p class="meta">${esc(data.formula || "")}. Rule ${esc(data.rule || "")}.</p>
+      <p class="meta">Ledger valid operational / INVALID/TEST — evidence ${esc((data.ledger_classification && data.ledger_classification.evidence && data.ledger_classification.evidence.valid_operational))} / ${esc((data.ledger_classification && data.ledger_classification.evidence && data.ledger_classification.evidence.invalid_test))}; exceptions ${esc((data.ledger_classification && data.ledger_classification.exceptions && data.ledger_classification.exceptions.valid_operational))} / ${esc((data.ledger_classification && data.ledger_classification.exceptions && data.ledger_classification.exceptions.invalid_test))}; approval decisions ${esc((data.ledger_classification && data.ledger_classification.approval_decisions && data.ledger_classification.approval_decisions.valid_operational))} / ${esc((data.ledger_classification && data.ledger_classification.approval_decisions && data.ledger_classification.approval_decisions.invalid_test))}.</p>`;
     document.body.setAttribute("data-war-room-ready", "1");
     paint();
   }

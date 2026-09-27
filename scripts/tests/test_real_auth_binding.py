@@ -306,6 +306,10 @@ def main() -> int:
     try:
         import serve_beta as sb
         import inspect
+        from core.canonical_guard import bind_loaded_catalogs, isolate_runtime_catalog
+
+        iso = isolate_runtime_catalog()
+        bind_loaded_catalogs(iso)
 
         Handler = None
         for _, obj in inspect.getmembers(sb, inspect.isclass):

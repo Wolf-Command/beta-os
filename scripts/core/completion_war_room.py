@@ -545,6 +545,15 @@ def human_acts(by_id: dict[str, dict[str, Any]]) -> list[dict[str, str]]:
     return acts
 
 
+def _ledger_classification() -> dict:
+    try:
+        from core import ledger_class
+
+        return ledger_class.summarize_live()
+    except Exception:  # noqa: BLE001
+        return {"read": "UNAVAILABLE"}
+
+
 def build_war_room(
     *,
     ledger_path: Path | None = None,
@@ -695,6 +704,7 @@ def build_war_room(
         "human_acts": human_acts(by_id),
         "raise_refusals": raise_refusals(),
         "raises": [],
+        "ledger_classification": _ledger_classification(),
         "headline": (
             f"SYSTEM = {sum_credits:.2f} / 77 = {pct_2:.2f}% ; "
             "STAFF READY = 0 ; HUMAN COMMISSIONED = 0 ; "

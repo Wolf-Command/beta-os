@@ -331,8 +331,8 @@ def _under_test_process() -> bool:
 def assert_catalog_writable(db_path: Path | str | None = None) -> None:
     path = Path(db_path) if db_path else CATALOG_DB
     resolved = Path(path).resolve()
-    if (os.environ.get("WOLF_ALLOW_LIVE_AUDIT") or "").strip() == "1":
-        return
+    from core.canonical_guard import assert_write_allowed
+    assert_write_allowed(resolved)
     if resolved == LIVE_CATALOG_DB and _under_test_process():
         raise ContentOpsError(
             "test mode refuses writes to live catalog DB; point catalog at a temp copy",
@@ -343,8 +343,8 @@ def assert_catalog_writable(db_path: Path | str | None = None) -> None:
 def assert_operator_writable(db_path: Path | str | None = None) -> None:
     path = Path(db_path) if db_path else DEFAULT_OPERATOR_DB
     resolved = Path(path).resolve()
-    if (os.environ.get("WOLF_ALLOW_LIVE_AUDIT") or "").strip() == "1":
-        return
+    from core.canonical_guard import assert_write_allowed
+    assert_write_allowed(resolved)
     if resolved == LIVE_OPERATOR_DB and _under_test_process():
         raise ContentOpsError(
             "test mode refuses writes to live content operator DB; "

@@ -405,6 +405,9 @@ def test_framework_and_succession() -> None:
 def test_http_and_headless() -> None:
     ra._ENV_LOADED = True
     import serve_beta as sb
+    from core.canonical_guard import bind_loaded_catalogs
+
+    bind_loaded_catalogs(CATALOG)
 
     Handler = None
     for _, obj in __import__("inspect").getmembers(sb, __import__("inspect").isclass):
@@ -603,6 +606,11 @@ def test_http_and_headless() -> None:
 
 
 def main() -> int:
+    global CATALOG
+    from core.canonical_guard import backup_catalog, bind_loaded_catalogs
+
+    CATALOG = backup_catalog()
+    bind_loaded_catalogs(CATALOG)
     test_framework_and_succession()
     test_http_and_headless()
     print(f"PASS={PASS} FAIL={FAIL}")

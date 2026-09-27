@@ -229,8 +229,8 @@ def assert_catalog_writable(db_path: Path) -> None:
     text = str(resolved)
     if "wolf-system" in text or "/Production" in text or text.endswith("money.sqlite"):
         raise FinanceNotaError("refusing production database", code="production_refused", http_status=500)
-    if (os.environ.get("WOLF_ALLOW_LIVE_AUDIT") or "").strip() == "1":
-        return
+    from core.canonical_guard import assert_write_allowed
+    assert_write_allowed(resolved)
     if resolved == LIVE_CATALOG_DB and _under_test():
         raise FinanceNotaError(
             "test mode refuses writes to the live catalog",

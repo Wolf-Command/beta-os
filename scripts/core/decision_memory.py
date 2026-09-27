@@ -89,8 +89,8 @@ def _under_test_process() -> bool:
 def assert_db_writable(db_path: Path) -> None:
     """Refuse accidental live default DB writes from tests."""
     resolved = Path(db_path).resolve()
-    if (os.environ.get("WOLF_ALLOW_LIVE_DECISION_MEMORY") or "").strip() == "1":
-        return
+    from core.canonical_guard import assert_write_allowed
+    assert_write_allowed(resolved)
     if resolved == LIVE_DEFAULT_DB and _under_test_process():
         raise DecisionMemoryError(
             "test mode refuses writes to live decision_memory DB; "
@@ -1345,9 +1345,8 @@ def main(argv: list[str] | None = None) -> int:
     if "--db" in args:
         i = args.index("--db")
         db = Path(args[i + 1])
-    # Live seed from CLI is outside test mode; allow live decision DB + audit.
-    os.environ.setdefault("WOLF_ALLOW_LIVE_DECISION_MEMORY", "1")
-    os.environ.setdefault("WOLF_ALLOW_LIVE_AUDIT", "1")
+    # CLI seed is not a test process. The canonical guard still refuses this
+    # if the caller is a test. WOLF_ALLOW_LIVE_AUDIT does not bypass that.
     result = seed_owner_decisions(db_path=db)
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
