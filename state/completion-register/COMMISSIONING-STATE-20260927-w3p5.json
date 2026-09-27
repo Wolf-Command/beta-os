@@ -296,10 +296,10 @@
       "operating_adoption": "NOT MEASURED",
       "staff_ready": false,
       "human_commissioned": false,
-      "gap": "Runtime board prove for READY",
+      "gap": "P0 queue stays OPEN after commit 5a814fe. Unsigned callers are 403 on the assignment board. The seated read was not observed. Ledger stays PROVEN. This is not staff ready and not human commissioned.",
       "owner_role": "Owner",
       "effort_class": "S",
-      "dependency": "No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY."
+      "dependency": "The queue lists CAP-CORE-01 and CAP-CORE-02. The seated org read was not observed. This slice does not use it."
     },
     {
       "id": "CAP-CORE-04",

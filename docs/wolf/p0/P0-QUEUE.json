@@ -25,7 +25,7 @@
     "WAITING_EXTERNAL": 0,
     "BLOCKED_OWNER": 2
   },
-  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED. The empty-table deny is commit fcae665. Live org_authority_limits stayed 0. The ledger stays PROVEN. CAP-MSC-02 stays OPEN. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit 99f5a27. CAP-CORE-06 stays OPEN after the temporary trail in commit 2229b21. CAP-CORE-07 stays OPEN after the approval-route prove in commit ab4af72. Live core_approval_requests stayed 0. No policy row was inserted. CAP-CORE-08 is BLOCKED_OWNER. The self-close deny is commit e2cab4f. Live core_sod_constraints stayed 0. No finance pack was inserted. CAP-CORE-09 stays OPEN after the gate list in commit 9d0b83c. Live core_evidence_records is 4, not 3, after test_work_loop.py left an invalidated row. No requirement was inserted. CAP-CORE-03, CAP-CORE-04, and CAP-CORE-10 stay OPEN without a new slice. Staff ready, human commissioned, and operating adoption stay unset.",
+  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED. The empty-table deny is commit fcae665. Live org_authority_limits stayed 0. The ledger stays PROVEN. CAP-MSC-02 stays OPEN. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit 99f5a27. CAP-CORE-06 stays OPEN after the temporary trail in commit 2229b21. CAP-CORE-07 stays OPEN after the approval-route prove in commit ab4af72. Live core_approval_requests stayed 0. No policy row was inserted. CAP-CORE-08 is BLOCKED_OWNER. The self-close deny is commit e2cab4f. Live core_sod_constraints stayed 0. No finance pack was inserted. CAP-CORE-09 stays OPEN after the gate list in commit 9d0b83c. Live core_evidence_records is 4, not 3, after test_work_loop.py left an invalidated row. No requirement was inserted. CAP-CORE-03 stays OPEN after the unsigned board deny in commit 5a814fe. No grant was added. No person was created. CAP-CORE-04 and CAP-CORE-10 stay OPEN without a new slice. Staff ready, human commissioned, and operating adoption stay unset.",
   "items": [
     {
       "order": 1,
@@ -108,15 +108,22 @@
       "order": 5,
       "id": "CAP-CORE-03",
       "title": "Role / Position / Assignment",
-      "current_state": "SYSTEM PROVEN (0.80). test_role_position_assignment.py kept the row at D1. ASG-HAIKAL-VE-1 is ended. Active seat is ASG-HAIKAL-CD-1. People are not roles.",
-      "exact_missing_evidence": "Runtime board prove on Beta under a verified person. The gap says that prove for READY remains open.",
-      "cursor_work": "After CAP-CORE-02, record the assignment board on Beta for an existing person. Do not create a person. Do not move a primary assignment. The Misa primary choice stays an owner decision and is not this prove.",
-      "human_work": "none for the board observation. Changing a primary assignment is a separate owner decision and is not required to close the prove.",
+      "current_state": "SYSTEM PROVEN (0.80). On Beta :8788 pid 64196 the role list, the position list, a missing role, a missing position, and a missing person's assignments did not check identity. Commit 5a814fe gates those reads, the real role, the real position, and a person's assignments with organisation.role.read. On pid 74540, unsigned, a spoofed email, X-Wolf-Subject, and Cf-Access-Jwt-Assertion a.b.c are 403 on those paths. /api/core/me/assignments was already 403. The public hostname returns 302 to the Access login. Catalog projection, not a session: PERS-MATT and PERS-AMANDA hold organisation.role.read. PERS-HAIKAL, PERS-DEVI, PERS-MISA, and PERS-LEAD-DEMO lack it. Stored ASG-HAIKAL-CD-1 is ACTIVE and primary. Stored ASG-HAIKAL-VE-1 is ENDED. Live persons stayed 6. Live assignments stayed 10. No grant was added. No seated 200 was observed. The ledger stays PROVEN.",
+      "exact_missing_evidence": "The Beta status of GET /api/core/persons/PERS-HAIKAL/assignments under a real Cloudflare session for a person who holds organisation.role.read, and a denial for a person who does not. The stored rows are not that status. A development-subject 200 is not that proof.",
+      "cursor_work": "Done for the unsigned slice in commit 5a814fe. Do not add a grant. Do not create a person. Do not move a primary assignment. After a real session, record the status and whether ASG-HAIKAL-CD-1 is active and ASG-HAIKAL-VE-1 is not. Do not raise the ledger. Do not mark CLOSED from the unsigned deny.",
+      "human_work": "The session itself is CAP-CORE-02. No separate assignment acceptance. Changing a primary assignment is a separate owner decision and is not this prove.",
+      "remaining": "Seated allow for a person who holds organisation.role.read, and deny for a person who does not, on the Haikal assignment read. Unsigned fail-closed is recorded. The row stays OPEN until those seated statuses exist.",
       "external_dependency": "none",
       "prerequisite": ["CAP-CORE-01", "CAP-CORE-02"],
-      "closure_test": "Beta shows the stored active assignment and does not show the ended assignment as active. No new person row. Unsigned board stays denied.",
+      "prerequisite_note": "The queue lists CAP-CORE-01. That seated org read was not observed. This slice does not use it. The critical path records no extra prerequisite.",
+      "closure_test": "Beta shows the stored active assignment and does not show the ended assignment as active. No new person row. Unsigned board stays denied. The unsigned half passed (SUMMARY pass=172 fail=0). Live persons stayed 6. Live assignments stayed 10. The seated half is absent, so the row stays OPEN.",
       "target_final_state": "CLOSED",
-      "status": "OPEN"
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/p0/P0-CAP-CORE-03-RESULT.md",
+        "scripts/tests/test_cap_core_03_live_gate.py"
+      ],
+      "commit": "5a814fe"
     },
     {
       "order": 6,

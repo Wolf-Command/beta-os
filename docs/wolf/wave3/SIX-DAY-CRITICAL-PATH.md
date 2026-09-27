@@ -43,10 +43,10 @@ Production `:8787` is out of this path. Beta `:8788` is the boundary for any dep
 ### 5. CAP-CORE-03 — Role / Position / Assignment
 
 - Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
-- Next bar: Runtime board prove for READY
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Next bar: Seated read of the Haikal assignment list. The unsigned deny is commit 5a814fe. Ledger stays PROVEN.
+- Dependency: The queue lists CAP-CORE-01 and CAP-CORE-02. The seated org read was not observed. This slice does not use it.
 - Responsible role: Owner.
-- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- In six days: Unsigned, spoofed, and bad-JWT callers are 403 on the assignment board. Commit 5a814fe. ASG-HAIKAL-CD-1 stays ACTIVE. ASG-HAIKAL-VE-1 stays ENDED. A seated allow was not observed. Do not add a grant. Ledger stays PROVEN.
 
 ### 6. CAP-CORE-04 — Permission & Authority Engine
 

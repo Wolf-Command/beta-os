@@ -120,6 +120,16 @@
       "at": "2026-09-27T10:12:00Z",
       "tests": "PASS=69 FAIL=0",
       "checked": false
+    },
+    {
+      "id": "p0-s2-cap-core-03-board-20260927",
+      "claim": "Beta role, position, and assignment reads require identity plus organisation.role.read. Unsigned, a spoofed email, X-Wolf-Subject, and Cf-Access-Jwt-Assertion a.b.c are 403 on /api/core/roles, a missing role, ROLE-GGV-CREATIVE-DIRECTOR, /api/core/positions, a missing position, POS-GGV-CREATIVE-DIRECTOR-1, both assignment lists, PERS-HAIKAL assignments, a missing person, and /api/core/me/assignments. CAP-CORE-03 stays PROVEN. No CAP-CORE-03 completion row was inserted. Live org_persons stays 6 and org_assignments stays 10. ASG-HAIKAL-CD-1 stays ACTIVE and ASG-HAIKAL-VE-1 stays ENDED. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false. A seated allow was not observed.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_cap_core_03_live_gate.py | tail -2; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-CORE-03'][0], len(d))\"; python3 -c \"import sqlite3; c=sqlite3.connect('file:catalog/content_library.sqlite?mode=ro', uri=True); print(c.execute('SELECT COUNT(*) FROM org_persons').fetchone()[0]); print(c.execute('SELECT COUNT(*) FROM org_assignments').fetchone()[0]); print(c.execute(\\\"SELECT status FROM org_assignments WHERE assignment_id='ASG-HAIKAL-CD-1'\\\").fetchone()[0]); print(c.execute(\\\"SELECT status FROM org_assignments WHERE assignment_id='ASG-HAIKAL-VE-1'\\\").fetchone()[0]); print(c.execute(\\\"SELECT COUNT(*) FROM wolf_completion_items WHERE capability='CAP-CORE-03'\\\").fetchone()[0])\"; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "SUMMARY pass=172 fail=0; EXIT: SUCCESS; PROVEN 77; 6; 10; ACTIVE; ENDED; 0; 8787 True; 8788 True",
+      "by": "cursor-p0-s2-cap-core-03",
+      "at": "2026-09-27T10:18:43Z",
+      "tests": "PASS=172 FAIL=0",
+      "checked": false
     }
   ]
 }

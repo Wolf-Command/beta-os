@@ -61,14 +61,14 @@ P0 or P1, and the SYSTEM state is not READY. The next bar is Wolf-side work. Sev
 - What it is: Jobs change without losing history.
 - Why it matters: Wolf cannot enforce or refuse an action without this.
 - Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: Runtime board prove for READY
+- Exact remaining work: Seated allow and deny on GET /api/core/persons/PERS-HAIKAL/assignments under a real Cloudflare session. The unsigned deny is commit 5a814fe. ASG-HAIKAL-CD-1 stays ACTIVE. ASG-HAIKAL-VE-1 stays ENDED. No grant was added. Ledger stays PROVEN. See docs/wolf/p0/P0-CAP-CORE-03-RESULT.md.
 - Work classes: local_deterministic, human_commissioning.
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Dependency: The queue lists CAP-CORE-01 and CAP-CORE-02. The seated org read was not observed. This slice does not use it.
 - Responsible role: Owner.
-- Evidence required to close: Deployed or runtime proof on the intended Beta boundary for READY. A repository test is not a deployed-route test. A human walk is not this bar.
-- Six-day note: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- Evidence required to close: The Beta status under the real session, including a denial for a person without organisation.role.read. The unsigned deny is not that session. A repository test is not a deployed-route test. A human walk is not this bar.
+- Six-day note: Unsigned, spoofed, and bad-JWT callers are 403 on the assignment board. Commit 5a814fe. A seated allow was not observed. Do not add a grant. Ledger stays PROVEN.
 - Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
+- Deployed proof: Unsigned deny on Beta :8788 pid 74540 is recorded. DEPLOYED-ROUTE-PROOF-20260927 stays FAIL for a seated allow. No real Cloudflare Access JWT was presented. The unsigned deny is not that seated proof.
 
 ### CAP-CORE-04 — Permission & Authority Engine
 

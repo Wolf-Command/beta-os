@@ -30,7 +30,7 @@
       "staff_readiness": "Not claimed.",
       "human_commissioning": "Not commissioned. Seating a person is a human act and is not this score.",
       "operating_adoption": "Not scored.",
-      "gap": "Runtime board prove for READY remains open. ASG-HAIKAL-VE-1 is ENDED as of 2026-09-24T17:34:12+08:00. Active seat is ASG-HAIKAL-CD-1."
+      "gap": "P0 queue stays OPEN after commit 5a814fe. Unsigned callers are 403 on the assignment board. ASG-HAIKAL-CD-1 stays ACTIVE. ASG-HAIKAL-VE-1 stays ENDED. No grant was added. The seated read was not observed. Ledger stays PROVEN. This is not staff ready and not human commissioned."
     },
     {
       "id": "CAP-CORE-04",
