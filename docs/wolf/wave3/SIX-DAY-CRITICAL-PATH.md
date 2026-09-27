@@ -1,0 +1,269 @@
+# Six-day critical path
+
+SYSTEM = 19.65 / 77 = 25.52% ; STAFF READY = 0 ; HUMAN COMMISSIONED = 0 ; OPERATING ADOPTION = NOT MEASURED
+
+Order is dependency order under rule W3-P5-PRIORITY-v1: the sign-in boundary, environment separation, Access posture, the rest of the control kernel, then the owner picture, then each business loop after the connector it names. Maturity state does not reorder this list.
+
+This path does not promise that every step reaches READY in six days. The note on each step says what those six days can and cannot close. Nothing here moves money, writes a bank, or marks a human commissioning.
+
+Production `:8787` is out of this path. Beta `:8788` is the boundary for any deployed-route prove.
+
+### 1. CAP-CORE-02 — Person & Auth Identity
+
+- Priority P0. SYSTEM READY. Effort none. Group: commission.
+- Next bar: None for technical READY; adoption separate
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: Commissioning only. Not a build. A sign-in does not raise SYSTEM.
+
+### 2. CAP-INTG-07 — Secrets & Environment Separation
+
+- Priority P0. SYSTEM SPECIFIED. Effort L. Group: finish.
+- Next bar: Deterministic vault/rotation/separation prove for PROVEN; vault product for READY
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: Not at BUILT. Six days does not stand in for the missing implementation.
+
+### 3. CAP-MSC-02 — Access & Cloudflare Posture
+
+- Priority P0. SYSTEM BUILT. Effort M. Group: finish.
+- Next bar: CAP-bound automated posture prove as READY
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: A local prove can be attempted. PROVEN still needs the review the scoring rules require. This pack does not supply that review.
+
+### 4. CAP-CORE-01 — Organisation Registry
+
+- Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
+- Next bar: Deployed-route / live org UI prove for READY
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+
+### 5. CAP-CORE-03 — Role / Position / Assignment
+
+- Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
+- Next bar: Runtime board prove for READY
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+
+### 6. CAP-CORE-04 — Permission & Authority Engine
+
+- Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
+- Next bar: Full seat-matrix deployed prove not re-run this audit
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+
+### 7. CAP-CORE-05 — Authority Limits Evaluator
+
+- Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
+- Next bar: Broader runtime prove for READY; live limits at 0 is config
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+
+### 8. CAP-CORE-06 — Work Items / Promises / Decisions
+
+- Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
+- Next bar: End-to-end operator trail across all domains for READY
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+
+### 9. CAP-CORE-07 — Approval Engine
+
+- Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
+- Next bar: Wide production policy packs
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+
+### 10. CAP-CORE-08 — Segregation of Duties
+
+- Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
+- Next bar: Broader finance SoD live packs for READY
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+
+### 11. CAP-CORE-09 — Evidence Requirements
+
+- Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
+- Next bar: Universal evidence packs on all material actions for READY
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+
+### 12. CAP-CORE-10 — Exception / Override Governance
+
+- Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
+- Next bar: Operating exception review cadence for READY
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+
+### 13. CAP-STRAT-02 — Owner Radar / Mission Control
+
+- Priority P1. SYSTEM BUILT. Effort M. Group: finish.
+- Next bar: CAP-bound Model C prove; Progress is not this CAP alone
+- Dependency: Requires CAP-CORE-01, CAP-CORE-06, CAP-CORE-07.
+- Responsible role: Owner.
+- In six days: A local prove can be attempted. PROVEN still needs the review the scoring rules require. This pack does not supply that review.
+
+### 14. CAP-INTG-01 — Yanolja Connector
+
+- Priority P1. SYSTEM ABSENT. Effort XL. Group: external.
+- Next bar: Connector code/tests/contract
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: The outside system has no Wolf connector at BUILT. Do not invent its feed.
+
+### 15. CAP-AMG-01 — Hotel PMS Orchestration
+
+- Priority P1. SYSTEM SPECIFIED. Effort L. Group: finish.
+- Next bar: Yanolja connector + orchestration code/tests
+- Dependency: Requires CAP-INTG-01.
+- Responsible role: ROLE-AMG-GM.
+- In six days: Not at BUILT. Six days does not stand in for the missing implementation.
+
+### 16. CAP-AMG-04 — Daily Hotel Operating State
+
+- Priority P1. SYSTEM SPECIFIED. Effort L. Group: finish.
+- Next bar: Machine-generated daily ops
+- Dependency: Requires CAP-INTG-01, CAP-AMG-01.
+- Responsible role: ROLE-AMG-GM.
+- In six days: Not at BUILT. Six days does not stand in for the missing implementation.
+
+### 17. CAP-INTG-02 — ESB Connector
+
+- Priority P1. SYSTEM BUILT. Effort M. Group: finish.
+- Next bar: Full ESB connector CAP + contract tests
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: A local prove can be attempted. PROVEN still needs the review the scoring rules require. This pack does not supply that review.
+
+### 18. CAP-BZG-01 — F&B POS Orchestration
+
+- Priority P1. SYSTEM BUILT. Effort M. Group: finish.
+- Next bar: Full POS orchestration + ESB connector maturity
+- Dependency: Requires CAP-INTG-02.
+- Responsible role: ROLE-BZG-FB-OPS-LEAD.
+- In six days: A local prove can be attempted. PROVEN still needs the review the scoring rules require. This pack does not supply that review.
+
+### 19. CAP-BZG-03 — Venue Daily Close
+
+- Priority P1. SYSTEM READY. Effort none. Group: commission.
+- Next bar: Other venues are ADOPTION not SYSTEM
+- Dependency: Requires CAP-INTG-02, CAP-BZG-01.
+- Responsible role: ROLE-BZG-CLOSER.
+- In six days: Commissioning only. Not a build. A sign-in does not raise SYSTEM.
+
+### 20. CAP-INTG-04 — Bank Statement Connector
+
+- Priority P1. SYSTEM BUILT. Effort M. Group: finish.
+- Next bar: CAP-bound connector tests
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: A local prove can be attempted. PROVEN still needs the review the scoring rules require. This pack does not supply that review.
+
+### 21. CAP-FIN-02 — Bank Statement Ingest & Reconcile
+
+- Priority P1. SYSTEM BUILT. Effort M. Group: finish.
+- Next bar: CAP-bound tests + connector honesty prove
+- Dependency: Requires CAP-INTG-04.
+- Responsible role: Owner.
+- In six days: A local prove can be attempted. PROVEN still needs the review the scoring rules require. This pack does not supply that review.
+
+### 22. CAP-FIN-01 — Wolf Accounting Core
+
+- Priority P1. SYSTEM BUILT. Effort M. Group: finish.
+- Next bar: Deterministic Core tests + red-team as Model C CAP
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: A local prove can be attempted. PROVEN still needs the review the scoring rules require. This pack does not supply that review.
+
+### 23. CAP-FIN-03 — Entity Finance Boards
+
+- Priority P1. SYSTEM BUILT. Effort M. Group: finish.
+- Next bar: Shared CAP prove matrix all entities
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: A local prove can be attempted. PROVEN still needs the review the scoring rules require. This pack does not supply that review.
+
+### 24. CAP-FIN-05 — Management Reporting
+
+- Priority P1. SYSTEM SPECIFIED. Effort L. Group: finish.
+- Next bar: Full P&L/BS/CF management pack
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: Not at BUILT. Six days does not stand in for the missing implementation.
+
+### 25. CAP-GGV-02 — Publish Gate & Operator Loop
+
+- Priority P1. SYSTEM READY. Effort none. Group: commission.
+- Next bar: Human commissioning is ADOPTION; Metricool write still off
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: ROLE-GGV-CREATIVE-DIRECTOR.
+- In six days: Commissioning only. Not a build. A sign-in does not raise SYSTEM.
+
+### 26. CAP-GGV-01 — Content Machine
+
+- Priority P1. SYSTEM BUILT. Effort M. Group: finish.
+- Next bar: Full strategy-plan-asset-workflow-learn as one governed machine + tests
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: ROLE-GGV-CREATIVE-DIRECTOR.
+- In six days: A local prove can be attempted. PROVEN still needs the review the scoring rules require. This pack does not supply that review.
+
+### 27. CAP-GGV-04 — Lead Triage & Speed-to-Lead
+
+- Priority P1. SYSTEM BUILT. Effort M. Group: finish.
+- Next bar: Governed speed-to-lead capability with tests/red-team
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: A local prove can be attempted. PROVEN still needs the review the scoring rules require. This pack does not supply that review.
+
+### 28. CAP-CRM-01 — Lead CRM
+
+- Priority P1. SYSTEM BUILT. Effort M. Group: finish.
+- Next bar: CAP-bound tests/red-team
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: A local prove can be attempted. PROVEN still needs the review the scoring rules require. This pack does not supply that review.
+
+### 29. CAP-HR-01 — People Master Record
+
+- Priority P1. SYSTEM BUILT. Effort M. Group: finish.
+- Next bar: Canonical People Master per legal entity with CAP-bound tests
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: A local prove can be attempted. PROVEN still needs the review the scoring rules require. This pack does not supply that review.
+
+### 30. CAP-HR-04 — Payroll Inputs
+
+- Priority P1. SYSTEM SPECIFIED. Effort L. Group: finish.
+- Next bar: Clean payroll-inputs CAP prove
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: Not at BUILT. Six days does not stand in for the missing implementation.
+
+### 31. CAP-CORE-11 — SOP Factory
+
+- Priority P1. SYSTEM SPECIFIED. Effort L. Group: finish.
+- Next bar: Build SOP loop evidence-learn-approve-version-train-use
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: Not at BUILT. Six days does not stand in for the missing implementation.
+
+### 32. CAP-CORE-12 — Delegation & Escalation Burn-down
+
+- Priority P1. SYSTEM BUILT. Effort M. Group: finish.
+- Next bar: Escalation burn-down + 7/30/90/365 independence tests
+- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Responsible role: Owner.
+- In six days: A local prove can be attempted. PROVEN still needs the review the scoring rules require. This pack does not supply that review.
+
+## Not on this path
+
+P2 and P3 stay in the follow-after list. They are not blockers for the first operating loop. Sale capabilities are P2 because sale readiness is a named factor and can follow commissioning. Brand social performance, service-improvement capture, review capture, and the buyer room surfaces are P3.

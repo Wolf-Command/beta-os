@@ -1,0 +1,630 @@
+{
+  "CAP-CORE-01": [
+    "PROVEN",
+    "scripts/core/organisation.py + test_org_registry.py + docs/canon/ORG-REGISTRY-TRANSITIONAL.md",
+    "Deployed-route / live org UI prove for READY",
+    "UNKNOWN",
+    "HIGH",
+    "Org registry implemented+tested; transitional canon",
+    "D1-20260927: kept PROVEN. Red checks are the 2026-09-16 slice census (brands 12 not 7, Habitat org row, GGV brands 5) plus a mislabeled 403 on the unsigned entity list. Hierarchy and content org_brand_id NULL checks passed. Direct GET /api/core/entities/ENT-NOPE is HTTP 404. Not a human-walk downgrade."
+  ],
+  "CAP-CORE-02": [
+    "READY",
+    "f829f0c real auth JWT binding; test_real_auth_binding.py; test_person_auth_identity.py; scripts/core/identity.py cf_access.py; Beta :8788 200",
+    "None for technical READY; adoption separate",
+    "HEALTHY",
+    "HIGH",
+    "CF JWT to Person on Beta; READY is not staff commissioning",
+    "D1-20260927: kept READY. test_real_auth_binding.py PASS=44 FAIL=0. person_auth reds are person-count drift, the negative org_roles slice guard, and a 403 on the unsigned persons list recorded as person 404. Direct GET /api/core/persons/PERS-NOPE is HTTP 404. Staff Cloudflare sign-in is commissioning, not SYSTEM. See COMMISSIONING-STATE-20260927.json."
+  ],
+  "CAP-CORE-03": [
+    "PROVEN",
+    "test_role_position_assignment.py + ROLE-POSITION-ASSIGNMENT-TRANSITIONAL.md",
+    "Runtime board prove for READY",
+    "UNKNOWN",
+    "HIGH",
+    "Role/position/assignment tests green",
+    "D1-20260927: kept PROVEN. Red checks are grown seat counts (positions 12, assignments 10, GGV positions 8) and negative guards that scope/RBAC tables must not exist. Those tables exist because later core slices were built. Duplicate-primary and history checks passed."
+  ],
+  "CAP-CORE-04": [
+    "PROVEN",
+    "scripts/core/rbac.py + test_rbac_permissions.py + test_phase2_5a_permissions.py + RBAC canon",
+    "Full seat-matrix deployed prove not re-run this audit",
+    "UNKNOWN",
+    "HIGH",
+    "Server RBAC exists+tested; conservative PROVEN",
+    "D1-20260927: kept PROVEN. test_rbac_permissions.py PASS=39 FAIL=4 map to active seats (SCOPE-WOLF-CONTENT-ALL-BRANDS includes BZG-UMA; ASG-INTEL-OPERATOR-MATT still covers DEPT-GGV-CONTENT; ASG-HAIKAL-VE-1 ended 2026-09-24 so ROLE-GGV-EDIT grants do not apply). phase2_5a FAIL includes stale pid 3758 and content email flags, not rbac.evaluate. Staff sign-in is not this score."
+  ],
+  "CAP-CORE-05": [
+    "PROVEN",
+    "f7d1874 authority limits; test_authority_limits.py; AUTHORITY-LIMITS canon",
+    "Broader runtime prove for READY; live limits at 0 is config",
+    "UNKNOWN",
+    "HIGH",
+    "Evaluator built+tested; limit values are not maturity",
+    "D1-20260927: kept PROVEN. The one red check ends scopes only on ASG-MATT-OWNER-1. ASG-INTEL-OPERATOR-MATT remains and its entity scope covers DEPT-GGV-CONTENT, so within_authority still allows. PASS=48 includes inactive-assignment denied. Live limits stay 0."
+  ],
+  "CAP-CORE-06": [
+    "PROVEN",
+    "7114b95 work items; test_core_work_items.py; WORK-ITEMS.md; audit spine",
+    "End-to-end operator trail across all domains for READY",
+    "UNKNOWN",
+    "HIGH",
+    "Work item primitive + tests",
+    "D1-20260927: kept PROVEN. Migrate exit 2 is the non-Matt work.* warning after later role grants. HTTP assign 400 is ASG-HAIKAL-VE-1 ended. Lifecycle checks passed. Staff-usable is not PROVEN's definition."
+  ],
+  "CAP-CORE-07": [
+    "PROVEN",
+    "dd039b2 approval engine + dual c054ac3 + policy 09d1c07; tests; Grok PASS after APR-RT-001",
+    "Wide production policy packs",
+    "UNKNOWN",
+    "HIGH",
+    "Approval+dual+policy proven; Dual is requirement class",
+    "D1-20260927: kept PROVEN. test_approval_engine.py pass=57 fail=3 are live decision counts 6 not 0. Dual and policy suites' FAIL lines are the same empty-db guard; they then abort because the fixture grants ROLE-GGV-EDIT and Haikal's active seat is ROLE-GGV-CREATIVE-DIRECTOR. Dual rules that ran passed."
+  ],
+  "CAP-CORE-08": [
+    "PROVEN",
+    "aa4ec07 SoD; test_sod_constraints.py; SEGREGATION-OF-DUTIES.md; Grok PASS",
+    "Broader finance SoD live packs for READY",
+    "UNKNOWN",
+    "HIGH",
+    "",
+    "D1-20260927: kept PROVEN. SoD conflict checks passed (PASS=42 before abort). FAIL lines are live approval counts. Abort is the same ended-role permission denial, not a failed SoD rule."
+  ],
+  "CAP-CORE-09": [
+    "PROVEN",
+    "1f71765 evidence requirements; test_evidence_requirements.py; EVIDENCE-REQUIREMENTS.md; Grok PASS",
+    "Universal evidence packs on all material actions for READY",
+    "UNKNOWN",
+    "HIGH",
+    "",
+    "D1-20260927: kept PROVEN. pass=65 fail=8 are live evidence-record and approval-count guards. Migrate REFUSE: live evidence records must stay 0, got 3. Behavioral checks passed."
+  ],
+  "CAP-CORE-10": [
+    "PROVEN",
+    "b83d1d6 exception override; test_exception_override.py; EXCEPTION-OVERRIDE.md; Grok PASS",
+    "Operating exception review cadence for READY",
+    "UNKNOWN",
+    "HIGH",
+    "",
+    "D1-20260927: kept PROVEN. pass=77 fail=11 are live exception/evidence/approval count guards. Migrate REFUSE: live governance exceptions must stay 0, got 2. Behavioral checks passed."
+  ],
+  "CAP-CORE-11": [
+    "SPECIFIED",
+    "Master Spec + catalog SOP Factory full-loop intent; no complete SOP Factory implementation in scripts/core",
+    "Build SOP loop evidence-learn-approve-version-train-use",
+    "UNKNOWN",
+    "MED",
+    "Catalog/Spec only \u2014 not BUILT"
+  ],
+  "CAP-CORE-12": [
+    "BUILT",
+    "8c4285a delegation + test_delegation.py + DELEGATION.md + DLG-RT-001 fix; Grok re-review PASS",
+    "Escalation burn-down + 7/30/90/365 independence tests",
+    "UNKNOWN",
+    "HIGH",
+    "Delegation module strong; full CAP intent incomplete so BUILT"
+  ],
+  "CAP-GGV-01": [
+    "BUILT",
+    "Content boards/scripts/skills (Metricool, smart upload, phase2 content) exist",
+    "Full strategy-plan-asset-workflow-learn as one governed machine + tests",
+    "UNKNOWN",
+    "MED",
+    "Partial content stack"
+  ],
+  "CAP-GGV-02": [
+    "READY",
+    "f833f37 publish gate + 3f9a838 operator UI; tests; HABITAT-PUBLISH-GATE.md; Grok reviews; Beta serve 200",
+    "Human commissioning is ADOPTION; Metricool write still off",
+    "HEALTHY",
+    "HIGH",
+    "SYSTEM READY; human loop not SYSTEM; write-lock does not auto-block READY",
+    "D1-20260927: kept READY. Publish-gate behavior passed (46 passed, 5 failed on live exceptions=2 and the migrate guard). /api/planner/publish-gate returns HTTP 400 id required; /habitat-operator returns HTTP 403. staff_ready false is staff readiness, not SYSTEM. See commissioning file."
+  ],
+  "CAP-GGV-03": [
+    "SPECIFIED",
+    "Catalog + GGV margin targets; no Client P&L machinery found",
+    "Build client/contract P&L allocation",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-GGV-04": [
+    "BUILT",
+    "Lead boards/ingest patterns (Habitat leads, Ivy stale) \u2014 partial triage",
+    "Governed speed-to-lead capability with tests/red-team",
+    "UNKNOWN",
+    "MED",
+    "Leads UI/ingest is not full CAP PROVEN"
+  ],
+  "CAP-GGV-05": [
+    "BUILT",
+    "metricool_read_client.py; sync_metricool_*; analyze_metricool_performance; test_metricool_isolation.py",
+    "Governed DERIVE views + PROVEN red-team",
+    "UNKNOWN",
+    "MED",
+    "DERIVE/read path partial; Metricool existence is not mature"
+  ],
+  "CAP-GGV-06": [
+    "SPECIFIED",
+    "Catalog + Matt IN SCOPE near-term decision; explicit non-build this mission",
+    "Intercompany client mode implementation",
+    "UNKNOWN",
+    "HIGH",
+    "Specified in canon; not built"
+  ],
+  "CAP-AMG-01": [
+    "SPECIFIED",
+    "Catalog OWN+INTEGRATE boundary; Master Spec hotel OS; no Wolf Yanolja connector implementation found",
+    "Yanolja connector + orchestration code/tests",
+    "UNKNOWN",
+    "HIGH",
+    "Yanolja product existence is not Wolf maturity"
+  ],
+  "CAP-AMG-02": [
+    "SPECIFIED",
+    "Catalog guest journey intent; discovery docs only",
+    "Journey workflow implementation",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-AMG-03": [
+    "SPECIFIED",
+    "Catalog packages-as-products",
+    "Package product machinery",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-AMG-04": [
+    "SPECIFIED",
+    "Catalog daily hotel operating state",
+    "Machine-generated daily ops",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-AMG-05": [
+    "SPECIFIED",
+    "Catalog hotel revenue and yield",
+    "Yield machinery",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-AMG-06": [
+    "SPECIFIED",
+    "Catalog guest experience loop",
+    "SLA/incident trail",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-AMG-07": [
+    "SPECIFIED",
+    "Catalog service improvement loop",
+    "Review-to-improve loop",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-BZG-01": [
+    "BUILT",
+    "esb_close_snapshot.py used by Uma close; F&B POS orchestration partial via ESB facts",
+    "Full POS orchestration + ESB connector maturity",
+    "UNKNOWN",
+    "MED",
+    "Snapshot is not full orchestration CAP"
+  ],
+  "CAP-BZG-02": [
+    "SPECIFIED",
+    "Catalog venue P&L + rollup",
+    "Venue P&L dashboards as capability",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-BZG-03": [
+    "READY",
+    "909954d Uma Blu daily close; venue_close.py; esb_close_snapshot.py; test_uma_blu_daily_close.py; UMA-BLU-DAILY-CLOSE.md; Grok review PASS",
+    "Other venues are ADOPTION not SYSTEM",
+    "HEALTHY",
+    "HIGH",
+    "Shared CAP READY; Uma adoption separate",
+    "D1-20260927: kept READY. test_uma_blu_daily_close.py 70 passed, 0 failed; test_uma_daily_loop_finish.py PASS=44 FAIL=0. /bzg/uma-blu returns HTTP 403 fail-closed. Variance policies 0, no ROLE-BZG-CLOSER occupant, and settlement_api UNAVAILABLE are commissioning/adoption and the no-payment boundary, not a SYSTEM downgrade. Scoring rules section 7."
+  ],
+  "CAP-BZG-04": [
+    "SPECIFIED",
+    "Catalog inventory and stock; ESB SoT noted",
+    "Variance/waste analysis machinery",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-BZG-05": [
+    "SPECIFIED",
+    "Catalog central kitchen allocation",
+    "Allocation engine",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-BZG-06": [
+    "SPECIFIED",
+    "Catalog recipe/cost standards",
+    "BOM/yield machinery",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-BZG-07": [
+    "SPECIFIED",
+    "Catalog OBSERVE reviews",
+    "Observe/ingest path",
+    "UNKNOWN",
+    "LOW",
+    ""
+  ],
+  "CAP-HR-01": [
+    "BUILT",
+    "HR desk/people records patterns; org/person core overlaps",
+    "Canonical People Master per legal entity with CAP-bound tests",
+    "UNKNOWN",
+    "MED",
+    "Partial HR surfaces"
+  ],
+  "CAP-HR-02": [
+    "SPECIFIED",
+    "Catalog hiring/onboarding",
+    "Workflows",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-HR-03": [
+    "SPECIFIED",
+    "Catalog training/competency; SOP Factory link",
+    "Training ack machinery",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-HR-04": [
+    "SPECIFIED",
+    "Catalog payroll inputs; atrium payroll banners exist as UI fragments",
+    "Clean payroll-inputs CAP prove",
+    "UNKNOWN",
+    "MED",
+    "UI fragments are not CAP PROVEN"
+  ],
+  "CAP-HR-05": [
+    "SPECIFIED",
+    "Catalog retention/succession",
+    "Signals machinery",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-FIN-01": [
+    "BUILT",
+    "Accounting core scripts/boards (atrium-finance, journals, CoA config missions)",
+    "Deterministic Core tests + red-team as Model C CAP",
+    "UNKNOWN",
+    "MED",
+    "Substantial finance UI/API; conservative BUILT"
+  ],
+  "CAP-FIN-02": [
+    "BUILT",
+    "Bank statement ingest/reconcile path; Aug statements ingested historically",
+    "CAP-bound tests + connector honesty prove",
+    "UNKNOWN",
+    "MED",
+    "INTEGRATE workflow partial"
+  ],
+  "CAP-FIN-03": [
+    "BUILT",
+    "Entity finance boards (GGV/Atrium/Uma surfaces) on Beta stack",
+    "Shared CAP prove matrix all entities",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-FIN-04": [
+    "BUILT",
+    "Invoicing Save-Issue paths (Amanda Habitat invoices)",
+    "CAP-bound tests/red-team; Amanda human prove is ADOPTION",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-FIN-05": [
+    "SPECIFIED",
+    "Catalog management reporting; Reports sections exist partially",
+    "Full P&L/BS/CF management pack",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-FIN-06": [
+    "SPECIFIED",
+    "Catalog intercompany billing paired with GGV-06",
+    "Implementation",
+    "UNKNOWN",
+    "HIGH",
+    ""
+  ],
+  "CAP-FIN-07": [
+    "SPECIFIED",
+    "Catalog budget/forecast/cash",
+    "13-week cash machinery",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-FIN-08": [
+    "SPECIFIED",
+    "Catalog profit leakage intelligence",
+    "Leakage engine",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-PROC-01": [
+    "SPECIFIED",
+    "Catalog supplier register",
+    "Implementation",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-PROC-02": [
+    "SPECIFIED",
+    "Catalog purchase and approval flow",
+    "PO-match-pay with SoD",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-PROC-03": [
+    "SPECIFIED",
+    "Catalog payment tracking; Alchemist payment tracking known gap",
+    "Payment runs + settlement evidence",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-CRM-01": [
+    "BUILT",
+    "Lead CRM boards (Habitat/Atrium leads)",
+    "CAP-bound tests/red-team",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-CRM-02": [
+    "SPECIFIED",
+    "Catalog customer identity/memory",
+    "Identity graph",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-CRM-03": [
+    "SPECIFIED",
+    "Catalog package intelligence",
+    "Implementation",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-CRM-04": [
+    "BUILT",
+    "Klaviyo/AC wiring distinctions in rules; Numbers tiles",
+    "Honest connector prove",
+    "UNKNOWN",
+    "MED",
+    "INTEGRATE partial"
+  ],
+  "CAP-MSC-01": [
+    "SPECIFIED",
+    "Catalog asset/maintenance",
+    "Register",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-MSC-02": [
+    "BUILT",
+    "Cloudflare Access posture managed; Cipher sweeps; Matt-owned flips preserved",
+    "CAP-bound automated posture prove as READY",
+    "UNKNOWN",
+    "MED",
+    "Operational CF practice; not Model C PROVEN pack"
+  ],
+  "CAP-MSC-03": [
+    "SPECIFIED",
+    "Catalog compliance pack",
+    "Licence/statutory evidence pack",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-MSC-04": [
+    "SPECIFIED",
+    "Catalog cybersecurity baseline",
+    "MFA/device posture CAP",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-MSC-05": [
+    "SPECIFIED",
+    "Catalog documents/records/legal; legal files dashboards exist partially",
+    "Callable records + legal hold CAP",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-STRAT-01": [
+    "BUILT",
+    "12WY/Radar/Helm cadence surfaces",
+    "Deterministic CAP prove",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-STRAT-02": [
+    "BUILT",
+    "radar.html / Owner Radar / Progress cockpit adjacent",
+    "CAP-bound Model C prove; Progress is not this CAP alone",
+    "UNKNOWN",
+    "MED",
+    "Do not inflate via Progress Dashboard"
+  ],
+  "CAP-INTEL-01": [
+    "BUILT",
+    "scripts/core/intel_orchestration.py + GET /api/intel/orchestrate + progress intel-sample panel + scripts/tests/test_intel_orchestration.py; docs/deliveries/CAP-INTEL-01-EVIDENCE-BIND-2026-09-19.md",
+    "PROVEN needs sustained Owner use of the orchestration surface, not this slice",
+    "UNKNOWN",
+    "MED",
+    "BUILT only. Not PROVEN. Not READY. Does not claim Cloudflare JWT as evidence."
+  ],
+  "CAP-INTEL-02": [
+    "PROVEN",
+    "c4ba95a live Habitat registry + NAS PDF page/hash provenance + test_authorised_knowledge_live.py green + fixture PASS=51; Matt ACCEPTED PROVEN 2026-09-18 (not READY)",
+    "READY needs sustained human workflow use, not another fixture",
+    "HIGH",
+    "HIGH",
+    "Accepted PROVEN 2026-09-18 owner audit; not READY. Prior BUILT kept in state/model-c-score-history.jsonl"
+  ],
+  "CAP-INTEL-03": [
+    "PROVEN",
+    "c4ba95a real headline_case CONFLICTED + empty canonical NOT_CANONICAL + NOT_FOUND attempt_log + lane split; Matt ACCEPTED PROVEN 2026-09-18 (not READY)",
+    "READY needs sustained human workflow use, not another fixture",
+    "HIGH",
+    "HIGH",
+    "Accepted PROVEN 2026-09-18 owner audit; not READY. Prior BUILT kept in state/model-c-score-history.jsonl"
+  ],
+  "CAP-INTEL-04": [
+    "PROVEN",
+    "d50f74c Owner seed of 4 decisions + DR/INTG correction pair + exact recall + RBAC fail-closed + audit bind; review PASS 4095310; Matt ACCEPTED PROVEN 2026-09-18 (not READY)",
+    "READY needs an owner screen and a real person using recall. Not this write.",
+    "HIGH",
+    "HIGH",
+    "Accepted PROVEN 2026-09-18 owner audit; not READY. Prior BUILT kept in state/model-c-score-history.jsonl"
+  ],
+  "CAP-INTEL-05": [
+    "SPECIFIED",
+    "Catalog learning/experiments policy",
+    "Approve-to-rule learning loop",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-INTG-01": [
+    "ABSENT",
+    "Catalog INTEGRATE Yanolja; search found no Wolf Yanolja connector implementation",
+    "Connector code/tests/contract",
+    "UNKNOWN",
+    "HIGH",
+    "Vendor is not Wolf; ABSENT after search"
+  ],
+  "CAP-INTG-02": [
+    "BUILT",
+    "esb_close_snapshot.py + Uma close integration of ESB facts",
+    "Full ESB connector CAP + contract tests",
+    "UNKNOWN",
+    "MED",
+    "Close snapshot is not complete ESB connector"
+  ],
+  "CAP-INTG-03": [
+    "BUILT",
+    "Gmail/Drive/Calendar connectors used operationally across Wolf",
+    "CAP-bound INTEGRATE prove pack",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-INTG-04": [
+    "BUILT",
+    "Bank statement file import path (ingest registry)",
+    "CAP-bound connector tests",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-INTG-05": [
+    "BUILT",
+    "metricool_read_client + sync + isolation tests; write fail-closed",
+    "PROVEN red-team of connector contract",
+    "UNKNOWN",
+    "HIGH",
+    "Read path built; write-lock OK if boundary honest"
+  ],
+  "CAP-INTG-06": [
+    "SPECIFIED",
+    "Catalog technology and capability registries",
+    "Tech inventory + exit conditions product",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-INTG-07": [
+    "SPECIFIED",
+    ".env.example + .gitignore env globs + RULE-Beta-Construction-Production-Sacred; scripts/tests/test_cap_intg_07_environment_separation.py; Matt REJECTED PROVEN 2026-09-18 \u2014 repo checks are evidence not PROVEN",
+    "Deterministic vault/rotation/separation prove for PROVEN; vault product for READY",
+    "UNKNOWN",
+    "HIGH",
+    "Owner audit 2026-09-18: remains SPECIFIED"
+  ],
+  "CAP-DR-01": [
+    "SPECIFIED",
+    "restore-drill.py + 38-restore-drill.sh; B2-RESTORE-DRILL-2026-08-29 sha256 match retained as historical evidence; backup_status.json 2026-09-17 b2_ok; docs/deliveries/CAP-DR-01-EVIDENCE-BIND-2026-09-17.md; Matt REJECTED PROVEN 2026-09-18",
+    "Deterministic canonical restore-drill proof for PROVEN; fresh CAP-bound Beta drill for READY",
+    "UNKNOWN",
+    "HIGH",
+    "Owner audit 2026-09-18: remains SPECIFIED until deterministic canonical restore-drill proof"
+  ],
+  "CAP-DR-02": [
+    "SPECIFIED",
+    "Catalog crown jewel protection; Matt-only playbook default in Spec",
+    "Independent failure domains prove",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-SALE-01": [
+    "SPECIFIED",
+    "Catalog Continuous Sale Evidence Pack; 60 cells are controls not caps",
+    "Evidence pack automation consuming domains",
+    "UNKNOWN",
+    "HIGH",
+    "Controls must not inflate SYSTEM"
+  ],
+  "CAP-SALE-02": [
+    "SPECIFIED",
+    "Catalog Buyer Data Room; Vault helper exists historically",
+    "Continuously updated VDR product",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-SALE-03": [
+    "SPECIFIED",
+    "Catalog Buyer Mode / Controlled Export",
+    "Buyer mode implementation",
+    "UNKNOWN",
+    "MED",
+    ""
+  ],
+  "CAP-SALE-04": [
+    "SPECIFIED",
+    "Catalog Buyer Attack and Transition",
+    "Attack audit + transition pack",
+    "UNKNOWN",
+    "MED",
+    ""
+  ]
+}

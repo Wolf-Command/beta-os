@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Finish war room · Beta</title>
+<link rel="stylesheet" href="/wolf-tokens.css" />
+<link rel="stylesheet" href="/assets/wolf-truth.css?v=20260927-w3p5" />
+<style>
+  :root {
+    --bg: #10140f; --bg2: #182018; --bg3: #243024; --border: #314033;
+    --text: #f3f7f1; --muted: #a8b5a6; --accent: #d7e26a; --warn: #e0b15a; --danger: #f04438;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 960px; padding: 16px 16px 80px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  h1 { font-size: 1.35rem; margin: 0 0 4px; }
+  h1 span { color: var(--accent); }
+  h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
+  .lede, .note, .meta { color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
+  .card { border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; padding: 12px; margin-top: 8px; }
+  .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.75rem; margin: 0 4px 4px 0; color: var(--muted); }
+  a.action { display: inline-flex; align-items: center; min-height: 44px; margin: 8px 8px 0 0; text-decoration: none; border-radius: 10px; padding: 10px 12px; border: 1px solid #5d6b2a; background: #2d3816; color: var(--text); font-weight: 650; }
+  .err { color: var(--danger); white-space: pre-wrap; font-size: 0.85rem; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; }
+  select { width: 100%; min-height: 44px; background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 8px; }
+  .score { font-size: 1.4rem; margin: 4px 0; }
+  @media (max-width: 860px) {
+    body { max-width: 100%; padding: 12px 12px 80px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body data-wolf-page-type="DASHBOARD" data-wolf-org="WOLF/GROUP" data-wolf-shell="global" data-bound="beta-owner-safe">
+  <nav class="wolf-crumb" aria-label="Org context" style="font-size:0.75rem;color:var(--muted);margin:0 0 8px">WOLF › GROUP › Finish war room</nav>
+  <h1>Finish war room <span>· Beta</span></h1>
+  <p class="lede">Bound beta-owner-safe. All 77 capabilities from the canonical ledger. SYSTEM is separate from staff readiness, human commissioning, and operating adoption. Unknown stays unknown. No payment on this desk.</p>
+  <p><a class="action" href="/wolf">Owner Command</a></p>
+  <div id="headline" class="card"><p>Loading the ledger…</p></div>
+  <div class="grid">
+    <div>
+      <label for="filter-priority">Priority</label>
+      <select id="filter-priority">
+        <option value="">All priorities</option>
+        <option value="P0">P0</option>
+        <option value="P1">P1</option>
+        <option value="P2">P2</option>
+        <option value="P3">P3</option>
+      </select>
+    </div>
+    <div>
+      <label for="filter-state">SYSTEM state</label>
+      <select id="filter-state">
+        <option value="">All states</option>
+        <option>ABSENT</option>
+        <option>SPECIFIED</option>
+        <option>BUILT</option>
+        <option>PROVEN</option>
+        <option>READY</option>
+      </select>
+    </div>
+  </div>
+  <p id="shown" class="note"></p>
+  <div id="rows"></div>
+  <div id="msg"></div>
+  <h2>Data truth</h2>
+  <div id="wolf-truth" data-wolf-truth data-surface="empire"></div>
+<script src="/assets/wolf-truth.js?v=20260927-w3p5"></script>
+<script>
+(function () {
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+  let room = null;
+
+  function markOverflow() {
+    const over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
+    document.body.setAttribute("data-overflow", over ? "yes" : "no");
+  }
+
+  function paint() {
+    const priority = document.getElementById("filter-priority").value;
+    const state = document.getElementById("filter-state").value;
+    const rows = (room.capabilities || []).filter((row) => {
+      if (priority && row.priority !== priority) return false;
+      if (state && row.system_state !== state) return false;
+      return true;
+    });
+    document.getElementById("shown").textContent = rows.length + " shown. Empty filter result is not a finished Wolf.";
+    document.getElementById("rows").innerHTML = rows.map((row) => {
+      const classes = (row.work_classes || []).join(", ");
+      return `<article class="card" data-cap="${esc(row.id)}" data-priority="${esc(row.priority)}" data-system-state="${esc(row.system_state)}">
+        <h2>${esc(row.id)} · ${esc(row.name)}</h2>
+        <span class="pill">${esc(row.priority)}</span>
+        <span class="pill">${esc(row.system_state)} ${esc(row.score)}</span>
+        <span class="pill">${esc(row.effort_class)}</span>
+        <p>${esc(row.domain)}</p>
+        <p class="meta">Evidence: ${esc(row.evidence || "No evidence line is stored.")}</p>
+        <p>Deployed proof: ${esc(row.deployed_proof)}</p>
+        <p>Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.</p>
+        <p>Blocker: ${esc(row.blocker)}</p>
+        <p>Next action: ${esc(row.next_action)}</p>
+        <p>Dependency: ${esc(row.dependency)}</p>
+        <p>Responsible role: ${esc(row.owner_role)}. Work: ${esc(classes)}.</p>
+      </article>`;
+    }).join("") || `<div class="card wolf-empty" data-state="empty">No capability matches this filter. Nothing was invented.</div>`;
+    markOverflow();
+  }
+
+  async function load() {
+    const res = await fetch("/api/owner/war-room", { headers: { Accept: "application/json" } });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 403 || (data.ui && data.ui.component === "permission-denied")) {
+      document.getElementById("headline").innerHTML = `<p data-component="permission-denied">You do not have access to this.</p>`;
+      document.body.setAttribute("data-war-room-ready", "0");
+      markOverflow();
+      return;
+    }
+    if (!res.ok || data.ok !== true) {
+      document.getElementById("msg").innerHTML = `<p class="err">${esc(data.message || "The ledger could not be read. Nothing was invented.")}</p>`;
+      document.body.setAttribute("data-war-room-ready", "0");
+      markOverflow();
+      return;
+    }
+    room = data;
+    const counts = data.counts || {};
+    document.getElementById("headline").innerHTML = `
+      <p class="score" data-system-line="${esc(data.system_line)}">${esc(data.system_line)}</p>
+      <p>STAFF READY = ${esc(data.staff_ready_count)}. HUMAN COMMISSIONED = ${esc(data.human_commissioned_count)}. OPERATING ADOPTION = ${esc(data.operating_adoption)}.</p>
+      <p class="meta">ABSENT ${esc(counts.ABSENT)} · SPECIFIED ${esc(counts.SPECIFIED)} · BUILT ${esc(counts.BUILT)} · PROVEN ${esc(counts.PROVEN)} · READY ${esc(counts.READY)}. Progress rounds this same sum to ${esc(data.system_pct_1dp)}%.</p>
+      <p class="meta">${esc(data.formula || "")}. Rule ${esc(data.rule || "")}.</p>`;
+    document.body.setAttribute("data-war-room-ready", "1");
+    paint();
+  }
+
+  document.getElementById("filter-priority").addEventListener("change", () => { if (room) paint(); });
+  document.getElementById("filter-state").addEventListener("change", () => { if (room) paint(); });
+  load().catch((err) => {
+    document.getElementById("msg").innerHTML = `<p class="err">${esc(err && err.message ? err.message : "The ledger could not be read.")}</p>`;
+    document.body.setAttribute("data-war-room-ready", "0");
+    markOverflow();
+  });
+})();
+</script>
+</body>
+</html>

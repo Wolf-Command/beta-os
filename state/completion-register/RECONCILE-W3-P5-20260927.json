@@ -1,0 +1,49 @@
+{
+  "register_id": "RECONCILE-W3-P5-20260927",
+  "as_of": "2026-09-27T09:40:00+08:00",
+  "ledger": "state/model-c-baseline-assessments.json",
+  "backup": "state/model-c-baseline-assessments.backup-20260927-w3p5.json",
+  "ledger_rewritten": false,
+  "raises": [],
+  "system_line": "19.65 / 77 = 25.52%",
+  "staff_ready_count": 0,
+  "human_commissioned_count": 0,
+  "operating_adoption": "NOT MEASURED",
+  "refusals": [
+    {
+      "id": "CAP-STRAT-02",
+      "ledger_state": "BUILT",
+      "considered": "PROVEN",
+      "decision": "not raised",
+      "reason": "Owner Command is a read model with test_owner_command.py. The ledger next bar is a CAP-bound Model C prove, and the row says not to inflate this capability via the Progress dashboard. PROVEN requires material red-team or review evidence. No review artifact binds this desk to CAP-STRAT-02."
+    },
+    {
+      "id": "CAP-INTEL-02",
+      "ledger_state": "PROVEN",
+      "considered": "READY",
+      "decision": "not raised",
+      "reason": "Accepted PROVEN on 2026-09-18. The next bar on the row is sustained human workflow use. Wave 3 did not add a deployed route proof for this capability. DEPLOYED-ROUTE-PROOF-20260927 is FAIL."
+    },
+    {
+      "id": "CAP-INTEL-03",
+      "ledger_state": "PROVEN",
+      "considered": "READY",
+      "decision": "not raised",
+      "reason": "The truth layer is a display classifier. It is not the provenance capability's deployed-route bar. An ephemeral development-subject 200 is not the Cloudflare route proof. D3 result is FAIL."
+    },
+    {
+      "id": "CAP-INTEL-04",
+      "ledger_state": "PROVEN",
+      "considered": "READY",
+      "decision": "not raised",
+      "reason": "The row already says READY needs an owner screen and a real person using recall. Wave 3 did not record that person."
+    },
+    {
+      "id": "CAP-INTG-06",
+      "ledger_state": "SPECIFIED",
+      "considered": "BUILT",
+      "decision": "not raised",
+      "reason": "A tech-registry route exists in the Beta server. This reconciliation did not verify inventory, ownership of truth, lifecycle, and exit conditions against the catalog intent. Unverified presence is not BUILT."
+    }
+  ]
+}
