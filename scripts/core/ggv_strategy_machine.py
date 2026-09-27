@@ -18,6 +18,7 @@ PROVEN and READY are not invented.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sqlite3
@@ -474,6 +475,412 @@ def build_framework(
         "framework_skeleton": "BUILT",
         **_quiet_read(),
         "cr_resolved": flags["cr_resolved"] if flags["cr_state"] == "RESOLVED" else False,
+        "honesty": flags,
+    }
+
+
+def _open_catalog_ro(catalog_db: Path | str | None) -> sqlite3.Connection:
+    path = Path(catalog_db) if catalog_db else CATALOG_DB
+    resolved = path.resolve()
+    _assert_beta_path(resolved)
+    if not resolved.is_file():
+        raise StrategyMachineError(
+            "content catalog is not on disk",
+            code="catalog_absent",
+        )
+    uri = resolved.as_uri() + "?mode=ro"
+    try:
+        return sqlite3.connect(uri, uri=True)
+    except sqlite3.Error as exc:
+        raise StrategyMachineError(
+            "content catalog could not be opened read-only",
+            code="catalog_unreadable",
+        ) from exc
+
+
+def _table_names(conn: sqlite3.Connection) -> set[str]:
+    rows = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'"
+    ).fetchall()
+    return {str(row[0]) for row in rows}
+
+
+def _learn_from_strategy_json(raw: str | None) -> dict[str, Any]:
+    """Count stored learning items. Does not keep the statement text."""
+    empty = {
+        "parse": "blank",
+        "nonempty": False,
+        "items": 0,
+        "sources": [],
+        "surfaces": [],
+        "digests": [],
+        "performance_label": None,
+    }
+    if raw is None or not str(raw).strip():
+        return empty
+    try:
+        obj = json.loads(raw)
+    except json.JSONDecodeError:
+        return {
+            "parse": "UNKNOWN",
+            "nonempty": False,
+            "items": "UNKNOWN",
+            "sources": [],
+            "surfaces": [],
+            "digests": [],
+            "performance_label": "UNKNOWN",
+        }
+    if not isinstance(obj, dict):
+        return {
+            "parse": "UNKNOWN",
+            "nonempty": False,
+            "items": "UNKNOWN",
+            "sources": [],
+            "surfaces": [],
+            "digests": [],
+            "performance_label": "UNKNOWN",
+        }
+    items = obj.get("important_learnings")
+    sources: list[str] = []
+    surfaces: list[str] = []
+    digests: list[str] = []
+    if items is None:
+        count: int | str = 0
+    elif not isinstance(items, list):
+        count = "UNKNOWN"
+    else:
+        count = 0
+        for item in items:
+            if not isinstance(item, dict):
+                count = "UNKNOWN"
+                break
+            count += 1
+            source = item.get("source")
+            surface = item.get("surface")
+            if isinstance(source, str) and source.strip():
+                sources.append(source.strip())
+            if isinstance(surface, str) and surface.strip():
+                surfaces.append(surface.strip())
+            text = item.get("text")
+            if isinstance(text, str) and text.strip():
+                digests.append(hashlib.sha256(text.strip().encode("utf-8")).hexdigest())
+    label = None
+    disconnected = obj.get("disconnected")
+    if isinstance(disconnected, dict):
+        raw_label = disconnected.get("performance_data")
+        if isinstance(raw_label, str):
+            label = raw_label.strip() or None
+    return {
+        "parse": "ok" if count != "UNKNOWN" else "UNKNOWN",
+        "nonempty": bool(obj),
+        "items": count,
+        "sources": sources,
+        "surfaces": surfaces,
+        "digests": digests if count != "UNKNOWN" else [],
+        "performance_label": label,
+    }
+
+
+def read_content_path(
+    catalog_db: Path | str | None = None,
+    ledger_path: Path | str | None = None,
+) -> dict[str, Any]:
+    """Read the existing content catalog onto the five kinds.
+
+    Does not fill the skeleton, write the catalog, call Metricool, or raise
+    the ledger. Test-lane plans are not operational. A stored performance
+    label is not a Metricool call. No learning-library table means governed
+    learning stays false. Publish stays on CAP-GGV-02.
+    """
+    flags = honesty_flags(ledger_path, catalog_db)
+    conn = _open_catalog_ro(catalog_db)
+    try:
+        names = _table_names(conn)
+        required = (
+            "content_plans",
+            "content_cards",
+            "assets",
+            "content_planner",
+            "plan_revisions",
+            "brands",
+        )
+        missing = [name for name in required if name not in names]
+        if missing:
+            return {
+                "ok": False,
+                "cap": CAP_ID,
+                "read": "content_path",
+                "missing_tables": missing,
+                "operational_count": "UNKNOWN",
+                "strategy_score": None,
+                "revenue": None,
+                "learn_outcome": None,
+                "live_strategy_machine": False,
+                "governed_learning": False,
+                "metricool_called": False,
+                "metricool_write": False,
+                "payment_executed": False,
+                "catalog_write": False,
+                "ledger_write": False,
+                "skeleton_filled": False,
+                "publish_cap": "CAP-GGV-02",
+                "publish_tested_here": False,
+                "honesty": flags,
+            }
+        learning_tables = sorted(
+            name for name in names if "learn" in name.lower()
+        )
+        plan_rows = conn.execute(
+            """
+            SELECT data_lane, status, COUNT(*)
+            FROM content_plans
+            GROUP BY data_lane, status
+            ORDER BY data_lane, status
+            """
+        ).fetchall()
+        strategy_rows = conn.execute(
+            """
+            SELECT id, data_lane, status, review_state, strategy_json
+            FROM content_plans
+            ORDER BY id
+            """
+        ).fetchall()
+        card_rows = conn.execute(
+            """
+            SELECT data_lane, card_type, status, COUNT(*)
+            FROM content_cards
+            GROUP BY data_lane, card_type, status
+            ORDER BY data_lane, card_type, status
+            """
+        ).fetchall()
+        asset_rows = conn.execute(
+            """
+            SELECT brand, status, COUNT(*)
+            FROM assets
+            GROUP BY brand, status
+            ORDER BY brand, status
+            """
+        ).fetchall()
+        planner_rows = conn.execute(
+            """
+            SELECT brand, status, COUNT(*),
+                   SUM(CASE WHEN raw_asset_id IS NOT NULL THEN 1 ELSE 0 END),
+                   SUM(CASE
+                         WHEN raw_asset_id IS NOT NULL
+                          AND EXISTS (
+                            SELECT 1 FROM assets AS a WHERE a.id = content_planner.raw_asset_id
+                          )
+                         THEN 1 ELSE 0 END),
+                   SUM(CASE
+                         WHEN core_approval_request_id IS NOT NULL
+                          AND length(trim(core_approval_request_id)) > 0
+                         THEN 1 ELSE 0 END)
+            FROM content_planner
+            GROUP BY brand, status
+            ORDER BY brand, status
+            """
+        ).fetchall()
+        revision_rows = conn.execute(
+            """
+            SELECT data_lane, role, COUNT(*)
+            FROM plan_revisions
+            GROUP BY data_lane, role
+            ORDER BY data_lane, role
+            """
+        ).fetchall()
+        brand_rows = conn.execute(
+            "SELECT id, status FROM brands ORDER BY id"
+        ).fetchall()
+    finally:
+        conn.close()
+
+    operational_plans = 0
+    test_plans = 0
+    other_plans = 0
+    operational_with_strategy = 0
+    test_with_strategy = 0
+    learn_items = 0
+    learn_unknown = False
+    learn_sources: set[str] = set()
+    learn_surfaces: set[str] = set()
+    learn_digests: set[str] = set()
+    performance_connected_plans = 0
+    review_counts: dict[str, int] = {}
+    operational_status: dict[str, int] = {}
+    for row in strategy_rows:
+        lane = row[1] or ""
+        status = row[2] or ""
+        review = row[3] if row[3] else "blank"
+        parsed = _learn_from_strategy_json(row[4])
+        if lane == "operational":
+            operational_plans += 1
+            operational_status[status] = operational_status.get(status, 0) + 1
+            review_key = f"{status}:{review}"
+            review_counts[review_key] = review_counts.get(review_key, 0) + 1
+            if parsed["nonempty"] and parsed["parse"] == "ok":
+                operational_with_strategy += 1
+            if parsed["items"] == "UNKNOWN":
+                learn_unknown = True
+            elif isinstance(parsed["items"], int):
+                learn_items += parsed["items"]
+                learn_digests.update(parsed["digests"])
+            learn_sources.update(parsed["sources"])
+            learn_surfaces.update(parsed["surfaces"])
+            if parsed["performance_label"] == "connected":
+                performance_connected_plans += 1
+        elif lane == "test":
+            test_plans += 1
+            if parsed["nonempty"] and parsed["parse"] == "ok":
+                test_with_strategy += 1
+        else:
+            other_plans += 1
+
+    def _sum_lane(rows: list[tuple], lane: str) -> int:
+        return sum(int(row[-1]) for row in rows if row[0] == lane)
+
+    operational_cards = _sum_lane(card_rows, "operational")
+    test_cards = _sum_lane(card_rows, "test")
+    operational_revisions = _sum_lane(revision_rows, "operational")
+    test_revisions = _sum_lane(revision_rows, "test")
+    asset_count = sum(int(row[2]) for row in asset_rows)
+    planner_count = sum(int(row[2]) for row in planner_rows)
+    planner_linked = sum(int(row[3] or 0) for row in planner_rows)
+    planner_linked_existing = sum(int(row[4] or 0) for row in planner_rows)
+    planner_core_approval = sum(int(row[5] or 0) for row in planner_rows)
+
+    plan_groups = [
+        {"data_lane": row[0], "status": row[1], "n": int(row[2])}
+        for row in plan_rows
+    ]
+    card_groups = [
+        {
+            "data_lane": row[0],
+            "card_type": row[1],
+            "status": row[2],
+            "n": int(row[3]),
+        }
+        for row in card_rows
+    ]
+    asset_groups = [
+        {"brand": row[0], "status": row[1], "n": int(row[2])}
+        for row in asset_rows
+    ]
+    planner_groups = [
+        {
+            "brand": row[0],
+            "status": row[1],
+            "n": int(row[2]),
+            "raw_asset_id_set": int(row[3] or 0),
+            "raw_asset_exists": int(row[4] or 0),
+            "core_approval_request_set": int(row[5] or 0),
+        }
+        for row in planner_rows
+    ]
+    revision_groups = [
+        {"data_lane": row[0], "role": row[1], "n": int(row[2])}
+        for row in revision_rows
+    ]
+
+    learn_count: int | str = "UNKNOWN" if learn_unknown else learn_items
+    kinds = [
+        {
+            "kind": "strategy",
+            "source": "content_plans.strategy_json",
+            "lane": "operational",
+            "stored_count": operational_with_strategy,
+            "test_lane_excluded": test_with_strategy,
+            "strategy_score": None,
+        },
+        {
+            "kind": "plan",
+            "source": "content_plans",
+            "lane": "operational",
+            "stored_count": operational_plans,
+            "test_lane_excluded": test_plans,
+            "other_lane": other_plans,
+            "status_counts": operational_status,
+            "review_counts": review_counts,
+            "operational_cards": operational_cards,
+            "test_cards_excluded": test_cards,
+        },
+        {
+            "kind": "asset",
+            "source": "assets",
+            "lane": "UNKNOWN",
+            "stored_count": asset_count,
+            "by_brand_status": asset_groups,
+            "planner_raw_asset_id_set": planner_linked,
+            "planner_raw_asset_exists": planner_linked_existing,
+        },
+        {
+            "kind": "workflow",
+            "source": "plan_revisions",
+            "lane": "operational",
+            "stored_count": operational_revisions,
+            "test_lane_excluded": test_revisions,
+            "by_role": [
+                row for row in revision_groups if row["data_lane"] == "operational"
+            ],
+            "planner_lane": "UNKNOWN",
+            "planner_source": "content_planner",
+            "planner_stored_count": planner_count,
+            "planner_by_brand_status": planner_groups,
+            "planner_core_approval_request_set": planner_core_approval,
+            "approved_is_published": False,
+        },
+        {
+            "kind": "learn",
+            "source": "content_plans.strategy_json.important_learnings",
+            "lane": "operational",
+            "stored_count": learn_count,
+            "distinct_statements": (
+                "UNKNOWN" if learn_unknown else len(learn_digests)
+            ),
+            "sources": sorted(learn_sources),
+            "surfaces": sorted(learn_surfaces),
+            "learning_library": "NOT CONNECTED" if not learning_tables else "UNKNOWN",
+            "learning_tables": learning_tables,
+            "governed_learning": False,
+            "learn_outcome": None,
+            "stored_performance_label_connected_plans": performance_connected_plans,
+        },
+    ]
+    return {
+        "ok": True,
+        "cap": CAP_ID,
+        "read": "content_path",
+        "bound": BOUND,
+        "kinds": kinds,
+        "plan_groups": plan_groups,
+        "card_groups": card_groups,
+        "asset_groups": asset_groups,
+        "planner_groups": planner_groups,
+        "revision_groups": revision_groups,
+        "brands": [{"id": row[0], "status": row[1]} for row in brand_rows],
+        "skeleton_filled": False,
+        "live_strategy_machine": False,
+        "governed_learning": False,
+        "proved": False,
+        "current": False,
+        "strategy_score": None,
+        "revenue": None,
+        "learn_outcome": None,
+        "metricool_called": False,
+        "metricool_write": False,
+        "payment": None,
+        "payment_executed": False,
+        "bank_write": False,
+        "books_write": False,
+        "catalog_write": False,
+        "ledger_write": False,
+        "cr_resolved": False,
+        "publish_cap": "CAP-GGV-02",
+        "publish_tested_here": False,
+        "approved_is_published": False,
+        "staff_ready": False,
+        "human_commissioned": False,
+        "operating_adoption": "NOT MEASURED",
+        "ledger_maturity": flags.get("ledger_maturity"),
         "honesty": flags,
     }
 
