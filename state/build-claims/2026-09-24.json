@@ -1,0 +1,72 @@
+{
+  "date": "2026-09-24",
+  "claims": [
+    {
+      "id": "bf-content-engine-staff-ux-20260924",
+      "claim": "Beta Content desk /content-2.0 on :8788 is a staff workflow: CONTENT PLAN, LIBRARY, UPLOAD, plus the brand selector. Wolf Intelligence stays in the file for the owner and is removed from the staff nav by the fail-repair pack. Global shell chrome is visually secondary. SPECIALIST_CONTENT HTML omits the engineering library blocks and Decision Memory / AKR grammar. Library is search-first with a thumbnail grid, select, deselect, selection count, and download progress. Upload stages are Select file, Uploading, Processing, Saving to NAS, Indexing, Generating thumbnail/preview, Available in Library, and Complete. Unknown status stays In progress. CAP stays SPECIFIED. staff_ready, proven, and ready stay false. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_content_engine_staff_ux.py | tail -2; python3 -c \"import json; d=json.load(open('state/completion-register/content-engine-staff-ux-20260924.json')); print(d['cap_state'], d['staff_ready'], d['proven'], d['ready'])\"; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "PASS=53 FAIL=0; EXIT: SUCCESS; SPECIFIED False False False; 8787 True; 8788 True",
+      "by": "cursor-content-engine-staff-ux",
+      "at": "2026-09-24T01:32:00Z",
+      "tests": "PASS=53 FAIL=0",
+      "review": "docs/deliveries/GROK-REVIEW-Content-Engine-Staff-UX-2026-09-24.md",
+      "staff_ready": false,
+      "proven": false,
+      "ready": false
+    },
+    {
+      "id": "bf-ggv-finance-mobile-nota-20260924",
+      "claim": "Beta GGV Finance at /ggv/finance on :8788 is a four-tab nota desk (Overview, Notas / Bills, Vendors, History) for people who hold finance.nota.* and vendor.* through the auth chain. Upload keeps the file if reading fails. Extraction does not invent amounts. Duplicate vendor and nota choices are audited. Save/submit does not pay, approve payment, or verify bank details. CAP stays SPECIFIED. staff_ready, proven, ready, and commissioned stay false. Telegram is not retired. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_ggv_finance_mobile_nota.py | tail -2; python3 -c \"import json; d=json.load(open('state/completion-register/ggv-finance-mobile-nota-20260924.json')); print(d['cap_state'], d['staff_ready'], d['proven'], d['ready'], d['commissioned'], d['telegram_retired'])\"; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "PASS=138 FAIL=0; EXIT: SUCCESS; SPECIFIED False False False False False; 8787 True; 8788 True",
+      "by": "cursor-ggv-finance-mobile-nota",
+      "at": "2026-09-24T03:12:00Z",
+      "tests": "PASS=138 FAIL=0",
+      "review": "docs/deliveries/GROK-REVIEW-GGV-Finance-Mobile-Nota-2026-09-24.md",
+      "staff_ready": false,
+      "proven": false,
+      "ready": false,
+      "commissioned": false
+    },
+    {
+      "id": "bf-ggv-finance-nota-storage-accountant-20260924",
+      "claim": "Beta GGV Finance nota files are canonical on the media library at Finance/GGV/Notas/YYYY/MM, with Wolf DB as index and metadata only. backup_state stays PENDING or UNKNOWN until real backup proof; BACKED_UP is refused. Year/month views do not move files. A month evidence pack ZIP is a download, not NAS storage. ROLE-GGV-EXTERNAL-ACCOUNTANT is seeded for GGV Finance only, with no person assigned. Page, API, search, and export outside that scope are denied. CAP stays SPECIFIED. staff_ready, proven, ready, commissioned, and telegram_retired stay false. Matt/Amanda commissioning stays HOLD. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_ggv_finance_nota_storage_accountant.py | tail -2; python3 scripts/tests/test_ggv_finance_mobile_nota.py | tail -2; python3 -c \"import json; d=json.load(open('state/completion-register/ggv-finance-nota-storage-accountant-20260924.json')); print(d['cap_state'], d['staff_ready'], d['proven'], d['ready'], d['commissioned'], d['telegram_retired'], d['human_commissioning'], d['accountant_person_seeded'], d['backup_proven'])\"; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "PASS=100 FAIL=0; EXIT: SUCCESS; PASS=138 FAIL=0; EXIT: SUCCESS; SPECIFIED False False False False False HOLD False False; 8787 True; 8788 True",
+      "by": "cursor-ggv-finance-nota-storage-accountant",
+      "at": "2026-09-24T05:20:00Z",
+      "tests": "PASS=100 FAIL=0; parent PASS=138 FAIL=0",
+      "review": "docs/deliveries/GROK-REVIEW-GGV-Finance-Nota-Storage-Accountant-2026-09-24.md",
+      "staff_ready": false,
+      "proven": false,
+      "ready": false,
+      "commissioned": false
+    },
+    {
+      "id": "bf-content-engine-haikal-fail-repair-20260924",
+      "claim": "Beta Content Engine on :8788 paints upload Complete only when the asset is Library-available (NAS file, hash, index, thumbnail). Brand choices come from org_brands plus aliases and the Person→Role→Assignment→Scope chain. Haikal cannot select Atrium. Habitat NAS media is indexed in place without moving files. Wolf Intelligence is hidden from the staff nav. CAP stays SPECIFIED. staff_ready, proven, and ready stay false. Human commissioning stays FAILED / RETEST REQUIRED. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_content_engine_haikal_fail_repair.py | tail -2; python3 -c \"import json; d=json.load(open('state/completion-register/content-engine-haikal-fail-repair-20260924.json')); print(d['cap_state'], d['staff_ready'], d['proven'], d['ready'], d['human_status'])\"; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "PASS=68 FAIL=0; EXIT: SUCCESS; SPECIFIED False False False FAILED_RETEST_REQUIRED; 8787 True; 8788 True",
+      "by": "cursor-content-engine-haikal-fail-repair",
+      "at": "2026-09-24T05:35:00Z",
+      "tests": "PASS=68 FAIL=0; staff ux PASS=53 FAIL=0; shell cleanup PASS=44 FAIL=0; wave1 PASS=21 FAIL=0",
+      "review": "docs/deliveries/GROK-REVIEW-Content-Engine-Haikal-Fail-Repair-2026-09-24.md",
+      "staff_ready": false,
+      "proven": false,
+      "ready": false
+    },
+    {
+      "id": "bf-content-engine-haikal-fail-repair-20260924-shell",
+      "claim": "Beta Content Engine staff shell on :8788 uses menu, brand selector, CONTENT ENGINE, Content Plan, Library, Upload, and Hi {first name} plus profile. Staff view omits Boards, Wolf, Up, Back, Home, Dev identity, role codes, raw email, the permanent seven-stage upload strip, and a healthy-storage green banner. Media type is Photo, Video, Audio, or Graphic. Subject and detail stay the title. broll is not a staff media kind. Library cards show thumb, human title, brand, media type, and date. Wolf Intelligence stays off the staff nav. Creative Director assignment ASG-HAIKAL-CD-1 is unchanged. CAP stays SPECIFIED. staff_ready stays false. Not READY FOR HAIKAL RETEST. Production :8787 untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_content_engine_staff_shell_cleanup.py | tail -2; python3 scripts/tests/test_content_engine_haikal_fail_repair.py | tail -2; python3 scripts/tests/test_content_engine_staff_ux.py | tail -2; python3 -c \"import json; d=json.load(open('state/completion-register/content-engine-haikal-fail-repair-20260924.json')); print(d['cap_state'], d['staff_ready'], d['human_status'])\"; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "PASS=44 FAIL=0; EXIT: SUCCESS; PASS=68 FAIL=0; EXIT: SUCCESS; PASS=53 FAIL=0; EXIT: SUCCESS; SPECIFIED False FAILED_RETEST_REQUIRED; 8787 True; 8788 True",
+      "by": "cursor-content-engine-staff-shell-cleanup",
+      "at": "2026-09-24T09:50:00Z",
+      "tests": "shell PASS=44 FAIL=0; repair PASS=68 FAIL=0; staff ux PASS=53 FAIL=0; wave1 PASS=21 FAIL=0",
+      "review": "docs/deliveries/GROK-REVIEW-Content-Engine-Haikal-Fail-Repair-2026-09-24.md",
+      "staff_ready": false,
+      "proven": false,
+      "ready": false
+    }
+  ]
+}

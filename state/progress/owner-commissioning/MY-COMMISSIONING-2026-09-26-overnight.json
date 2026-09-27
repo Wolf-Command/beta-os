@@ -1,0 +1,38 @@
+{
+  "as_of": "2026-09-26T07:03:59+08:00",
+  "source": "overnight-20260926-morning-report",
+  "my_commissioning": [
+    {
+      "id": "NAS-STALE-MOUNTS-DENIED",
+      "title": "Remount / fix NAS access for denied volumes",
+      "why": "Discovery could not read 00-Editing-Workspace, 00-Editing-Workspace-1, 00-Editing-Workspace-2, 02-Stock-Assets (DENIED). Index used -3 / -1 / 01-Media-Library only.",
+      "blocks": "Full NAS library + Haikal Round 3 readiness",
+      "owner": "Matt",
+      "status": "OPEN"
+    },
+    {
+      "id": "CONTENT-ENGINE-HAIKAL-R3-HOLD",
+      "title": "Haikal Content Engine Round 3 \u2014 NOT READY",
+      "why": "staff_ready=false. Overnight index: SEARCHABLE=0, thumbs near-zero, 41886 FAILED (mostly missing_file). Do not start Round 3 yet.",
+      "blocks": "Staff Library prove",
+      "owner": "Matt/Haikal",
+      "status": "BLOCKED"
+    },
+    {
+      "id": "ATRIUM-B2-REAL-TEST",
+      "title": "Atrium Finance B2 backup \u2014 real upload/restore test",
+      "why": "Pack4 built B2 engineering only. Upload BUILT/NOT TESTED. Restore NOT DONE. Needs creds + Matt gate. No auto test overnight.",
+      "blocks": "DR claim for atrium-finance SQLite",
+      "owner": "Matt",
+      "status": "OPEN"
+    },
+    {
+      "id": "CMQ-GGV-FINANCE-NOTA-PHONE",
+      "title": "GGV Finance Nota phone commissioning (Matt + Amanda)",
+      "why": "Already READY_TO_TEST in commissioning queue. Still human. Telegram retirement only after both pass.",
+      "blocks": "Telegram nota retirement",
+      "owner": "Matt/Amanda",
+      "status": "READY_TO_TEST"
+    }
+  ]
+}

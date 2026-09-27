@@ -1,0 +1,141 @@
+{
+  "date": "2026-09-22",
+  "mode": "COMPRESSED_SPRINT_2",
+  "mission": "compressed-sprint-2-20260922",
+  "armed": "state/build-factory/COMPRESSED-SPRINT-2-ARMED.json",
+  "gap_attack": "docs/deliveries/GROK-GAP-ATTACK-SPRINT-2-2026-09-22.md",
+  "cursor_now": {
+    "run_id": "BF-sprint2-p3-amg-operator-depth-20260922",
+    "lane": "sprint2-p3-amg-operator-depth-20260922",
+    "stage": "DONE",
+    "plan": "docs/deliveries/GROK-PLAN-SPRINT2-P3-AMG-OPERATOR-DEPTH-2026-09-22.md"
+  },
+  "p5_claim": "bf-sprint2-p5-owner-packgen-20260922",
+  "p5_proposal": "state/build-factory/PACK-PROPOSAL-LATEST.json",
+  "p5_plan": "docs/deliveries/GROK-PLAN-AUTO-PACK-BZG-CLUSTER-2026-09-22.md",
+  "p2_claim": "bf-sprint2-p2-ggv-loop-closure-20260922",
+  "p2_review": "docs/deliveries/GROK-REVIEW-SPRINT2-P2-GGV-LOOP-CLOSURE-2026-09-22.md",
+  "p2_result": "PASS",
+  "active_run": "BF-sprint2-p3-amg-operator-depth-20260922",
+  "updated_at": "2026-09-22T06:18:45Z",
+  "mission_id": "compressed-sprint-2-20260922",
+  "wita": "2026-09-22 14:07 WITA",
+  "completed": [
+    "AUTO-BZG",
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P6",
+    "G",
+    "P1",
+    "P7",
+    "BF-sprint2-p7-derivation-prove-v2-20260922",
+    "BF-sprint2-p1-bzg-operator-depth-20260922",
+    "BF-sprint2-p2-ggv-operator-depth-20260922",
+    "BF-sprint2-p3-amg-operator-depth-20260922"
+  ],
+  "parked": [],
+  "active": [],
+  "pending": [],
+  "p3": {
+    "run_id": "BF-sprint2-p3-amg-day-loop-20260922",
+    "result": "PASS",
+    "tests": "PASS=100 FAIL=0",
+    "review": "docs/deliveries/GROK-REVIEW-SPRINT2-P3-AMG-DAY-LOOP-2026-09-22.md",
+    "cr": "CR-bc5785d66c981fd4 OPEN",
+    "caps": "CAP-AMG-01..07 SPECIFIED"
+  },
+  "p4": {
+    "run_id": "BF-sprint2-p4-intel-connective-20260922",
+    "result": "PASS",
+    "tests": "PASS=96 FAIL=0",
+    "review": "docs/deliveries/GROK-REVIEW-SPRINT2-P4-INTEL-CONNECTIVE-2026-09-22.md",
+    "claim": "bf-sprint2-p4-intel-connective-20260922",
+    "bound": "beta-intel-connect-safe",
+    "caps": "CAP-INTEL-01 BUILT; CAP-INTEL-05 SPECIFIED"
+  },
+  "p6": {
+    "run_id": "BF-sprint2-p6-staff-ready-ux-20260922",
+    "result": "PASS",
+    "tests": "PASS=86 FAIL=0",
+    "claim": "bf-sprint2-p6-staff-ready-ux-20260922",
+    "bound": "beta-staff-ready-safe"
+  },
+  "auto_pack_bzg": {
+    "run_id": "BF-auto-pack-bzg-20260922",
+    "result": "PASS",
+    "tests": "PASS=111 FAIL=0",
+    "claim": "bf-auto-pack-bzg-20260922",
+    "bound": "beta-bzg-loop-safe",
+    "review": "docs/deliveries/GROK-REVIEW-AUTO-PACK-BZG-CLUSTER-2026-09-22.md",
+    "caps": "CAP-BZG-01 BUILT; 02/04/05/06/07 SPECIFIED; 03 READY prior",
+    "crs": "6 OPEN unchanged"
+  },
+  "track_g": {
+    "run_id": "BF-sprint-2-track-g-staff-ops-routing-20260922",
+    "stage": "DONE",
+    "result": "PASS",
+    "tests": "PASS=87 FAIL=0",
+    "claim": "bf-staff-ops-routing-20260922",
+    "bound": "beta-connective-safe",
+    "plan": "docs/deliveries/GROK-PLAN-SPRINT-2-TRACK-G-STAFF-OPS-ROUTING-2026-09-22.md",
+    "live": "anon api/page/money 403; :8788 up; :8787 untouched"
+  },
+  "p1": {
+    "run_id": "BF-sprint2-p1-bzg-loop-v2-20260922",
+    "result": "PASS",
+    "tests": "PASS=117 FAIL=0",
+    "claim": "bf-sprint2-p1-bzg-loop-v2-20260922",
+    "bound": "beta-bzg-loop-safe",
+    "plan": "docs/deliveries/GROK-PLAN-SPRINT2-P1-BZG-LOOP-CLOSURE-V2-2026-09-22.md",
+    "note": "v2 new run_id \u2014 not silent unpark of parked BF-sprint2-p1-bzg-loop-closure-20260922"
+  },
+  "p7": {
+    "run_id": "BF-sprint2-p7-derivation-prove-v2-20260922",
+    "result": "PASS",
+    "tests": "PASS=62 FAIL=0",
+    "claim": "bf-sprint2-p7-derivation-v2-20260922",
+    "bound": "beta-derive-prove-safe",
+    "review": "docs/deliveries/GROK-REVIEW-SPRINT2-P7-DERIVATION-PROVE-2026-09-22.md",
+    "prior_parked": "BF-sprint2-p7-derivation-prove-20260922"
+  },
+  "runs": [
+    "BF-sprint2-p2-ggv-operator-depth-20260922",
+    "BF-sprint2-p3-amg-operator-depth-20260922"
+  ],
+  "p2_operator_depth": {
+    "run_id": "BF-sprint2-p2-ggv-operator-depth-20260922",
+    "result": "PASS",
+    "tests": "PASS=80 FAIL=0",
+    "claim": "bf-sprint2-p2-ggv-operator-depth-20260922",
+    "bound": "beta-ggv-loop-safe",
+    "review": "docs/deliveries/GROK-REVIEW-SPRINT2-P2-GGV-OPERATOR-DEPTH-2026-09-22.md",
+    "cr": "CR-f089b11530ab4673 OPEN",
+    "caps": "CAP-GGV-04/01/05 BUILT; CAP-GGV-02 READY; CAP-GGV-03/06 SPECIFIED",
+    "system": "25.5 n=77",
+    "commit": "deferred-shared-serve_beta-f3ab8f7"
+  },
+  "p2_opdepth_result": "PASS",
+  "milestone": "FINISHED_P2_GGV_OPERATOR_DEPTH_STAFF_READY",
+  "p3_operator_depth": {
+    "run_id": "BF-sprint2-p3-amg-operator-depth-20260922",
+    "result": "PASS",
+    "tests": "PASS=81 FAIL=0",
+    "claim": "bf-sprint2-p3-amg-operator-depth-20260922",
+    "bound": "beta-amg-day-safe",
+    "cr": "CR-bc5785d66c981fd4 OPEN",
+    "caps": "CAP-AMG-01..07 SPECIFIED"
+  },
+  "p4_operator_depth": {
+    "run_id": "BF-sprint2-p4-intel-operator-depth-20260922",
+    "result": "PASS",
+    "tests": "PASS=79 FAIL=0",
+    "claim": "bf-sprint2-p4-intel-operator-depth-20260922",
+    "bound": "beta-intel-connect-safe",
+    "cr": "CR-be51980bd1194448 OPEN",
+    "caps": "CAP-INTEL-01 BUILT; CAP-INTEL-05 SPECIFIED",
+    "review": "docs/deliveries/GROK-REVIEW-SPRINT2-P4-INTEL-OPERATOR-DEPTH-2026-09-22.md",
+    "commit": "deferred-shared-serve_beta-f3ab8f7"
+  }
+}

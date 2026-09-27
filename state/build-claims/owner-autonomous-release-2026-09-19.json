@@ -1,18 +1,14 @@
 {
   "claim_id": "owner-autonomous-release-2026-09-19",
-  "status": "ACTIVE",
-  "mode": "EXTENDED_AUTONOMOUS_BETA",
+  "status": "RUNNING",
+  "mode": "COMPRESSED_VERTICAL_SPRINT",
   "first_slice": "BF-completion-register-20260919",
-  "notify_matt": [
-    "NEEDS_MATT_REAL",
-    "MAJOR_MILESTONE",
-    "GLOBAL_SAFETY_STOP"
-  ],
+  "notify_matt": "milestones_only",
   "started_wita": "2026-09-19T12:48:00+08:00",
-  "updated_wita": "2026-09-19T16:43:30+08:00",
-  "active_mission": "owner-autonomous-20260919",
-  "current_run": "BF-progress-system-pct-owner-prove-20260919",
-  "current_lane": "progress-system-pct-owner-prove",
+  "updated_wita": "2026-09-21T18:34:22+08:00",
+  "active_mission": "owner-autonomous-20260920-w12",
+  "current_run": null,
+  "current_lane": null,
   "owner_correction_2026-09-19": {
     "keep_building_without_matt": true,
     "devi_retest_is_not_mission_end": true,
@@ -50,14 +46,332 @@
     "system_pct": 25.5,
     "sum_credits": 19.65,
     "ledger_write": null,
-    "at": "2026-09-19T16:43:30+08:00"
+    "at": "2026-09-19T16:43:30+08:00",
+    "completion_commit": "b2bb94af6dca6cd591b9e2b51522ca5c5599f156",
+    "review": "docs/deliveries/GROK-REVIEW-PROGRESS-SYSTEM-PCT-OWNER-PROVE-f51a866-2026-09-19.md"
   },
-  "mission_status": "CURSOR_DONE",
+  "core_sop_factory_v1": {
+    "status": "FINISHED",
+    "lane": "core-sop-factory-v1",
+    "run_id": "BF-core-sop-factory-v1-20260919",
+    "where": "docs/deliveries/CURSOR-MISSION-CORE-SOP-FACTORY-V1-2026-09-19.md",
+    "tests": "PASS=109 FAIL=0",
+    "cap": "CAP-CORE-11",
+    "ledger_maturity": "SPECIFIED",
+    "cr_id": "CR-c4ed4e3fa9f15a40",
+    "cr_state": "OPEN",
+    "ledger_write": null,
+    "at": "2026-09-19T18:43:47+08:00"
+  },
+  "intg_tech_capability_registry": {
+    "status": "FINISHED",
+    "lane": "intg-tech-capability-registry",
+    "run_id": "BF-intg-tech-capability-registry-20260919",
+    "completion_commit": "918e4be3587216d6af5029707cf8f354c738180e",
+    "review": "docs/deliveries/GROK-REVIEW-INTG-TECH-CAPABILITY-REGISTRY-2026-09-19.md",
+    "where": "docs/deliveries/CURSOR-MISSION-INTG-TECH-CAPABILITY-REGISTRY-2026-09-19.md",
+    "tests": "PASS=96 FAIL=0",
+    "cap": "CAP-INTG-06",
+    "ledger_maturity": "SPECIFIED",
+    "cr_id": "CR-44ffb6a57469ff25",
+    "cr_state": "OPEN",
+    "ledger_write": null,
+    "at": "2026-09-19T19:13:59+08:00"
+  },
+  "mission_status": "PARKED",
   "mission_idle_reason": null,
-  "next_pending_lanes": [
-    "intel-eval-cost-ledger",
-    "bzg-fb-today-ops-polish",
-    "ggv-speed-to-lead-ops",
-    "integration-health-readonly"
-  ]
+  "next_pending_lanes": [],
+  "wave3": {
+    "armed_at": "2026-09-19T10:21:03Z",
+    "mission": "owner-autonomous-20260919-w3",
+    "lanes": [
+      "core-sop-factory-v1",
+      "intg-tech-capability-registry",
+      "strat-12wy-cap-prove",
+      "core-escalation-burndown",
+      "sale-evidence-pack-framework",
+      "dr-restore-drill-framework"
+    ],
+    "reason": "KEEP_BUILDING \u2014 eng debt 63 after wave1 DONE",
+    "status": "DONE",
+    "finished_at": "2026-09-19T13:18:59Z"
+  },
+  "strat_12wy_cap_prove": {
+    "status": "WAITING_CURSOR",
+    "lane": "strat-12wy-cap-prove",
+    "run_id": "BF-strat-12wy-cap-prove-20260919",
+    "plan": "docs/deliveries/GROK-PLAN-STRAT-12WY-CAP-PROVE-2026-09-19.md",
+    "at": "2026-09-19T19:13:59+08:00"
+  },
+  "sale_evidence_pack_framework": {
+    "status": "FINISHED",
+    "lane": "sale-evidence-pack-framework",
+    "run_id": "BF-sale-evidence-pack-framework-20260919",
+    "completion_commit": "219e89952ea2f330d3c8e2696fe38ae02407751b",
+    "review": "docs/deliveries/GROK-REVIEW-SALE-EVIDENCE-PACK-FRAMEWORK-2026-09-19.md",
+    "where": "docs/deliveries/CURSOR-MISSION-SALE-EVIDENCE-PACK-FRAMEWORK-2026-09-19.md",
+    "plan": "docs/deliveries/GROK-PLAN-SALE-EVIDENCE-PACK-FRAMEWORK-2026-09-19.md",
+    "tests": "PASS=116 FAIL=0",
+    "cap": "CAP-SALE-01",
+    "ledger_maturity": "SPECIFIED",
+    "framework_skeleton": "BUILT",
+    "cr_id": "CR-b7ce6d6668848b6e",
+    "cr_state": "OPEN",
+    "ledger_write": null,
+    "vdr_export": false,
+    "at": "2026-09-19T20:47:17+08:00"
+  },
+  "dr_restore_drill_framework": {
+    "status": "COMPLETED",
+    "lane": "dr-restore-drill-framework",
+    "run_id": "BF-dr-restore-drill-framework-20260919",
+    "plan": "docs/deliveries/GROK-PLAN-DR-RESTORE-DRILL-FRAMEWORK-2026-09-19.md",
+    "where": "docs/deliveries/CURSOR-MISSION-DR-RESTORE-DRILL-FRAMEWORK-2026-09-19.md",
+    "review": "docs/deliveries/GROK-REVIEW-DR-RESTORE-DRILL-FRAMEWORK-2026-09-19.md",
+    "completion_commit": "2e126dccce5f77d86fd5913882e5ee9d7a4f5f2c",
+    "tests": "PASS=128 FAIL=0",
+    "cap": "CAP-DR-01",
+    "ledger_maturity": "SPECIFIED",
+    "framework_skeleton": "BUILT",
+    "cr_id": "CR-667f31959d1bbe82",
+    "cr_state": "OPEN",
+    "ledger_write": false,
+    "live_restore": false,
+    "at": "2026-09-19T21:17:47+08:00"
+  },
+  "strat_radar_cap_prove": {
+    "status": "IMPLEMENTED",
+    "lane": "strat-radar-cap-prove",
+    "run_id": "BF-strat-radar-cap-prove-20260919",
+    "plan": "docs/deliveries/GROK-PLAN-STRAT-RADAR-CAP-PROVE-2026-09-19.md",
+    "where": "docs/deliveries/CURSOR-MISSION-STRAT-RADAR-CAP-PROVE-2026-09-19.md",
+    "tests": "PASS=125 FAIL=0",
+    "cap": "CAP-STRAT-02",
+    "ledger_maturity": "BUILT",
+    "cr_id": "CR-7a145ad69d8bf3c5",
+    "cr_state": "OPEN",
+    "ledger_write": null,
+    "at": "2026-09-19T22:06:25+08:00"
+  },
+  "crm_lead_cap_bound_prove": {
+    "status": "IMPLEMENTED",
+    "lane": "crm-lead-cap-bound-prove",
+    "run_id": "BF-crm-lead-cap-bound-prove-20260919",
+    "plan": "docs/deliveries/GROK-PLAN-CRM-LEAD-CAP-BOUND-PROVE-2026-09-19.md",
+    "where": "docs/deliveries/CURSOR-MISSION-CRM-LEAD-CAP-BOUND-PROVE-2026-09-19.md",
+    "tests": "PASS=114 FAIL=0",
+    "cap": "CAP-CRM-01",
+    "ledger_maturity": "BUILT",
+    "cr_id": "CR-ff42f3a7c49caa79",
+    "cr_state": "OPEN",
+    "ledger_write": null,
+    "at": "2026-09-19T21:44:40+08:00"
+  },
+  "crm_identity_memory_v1": {
+    "status": "COMPLETED",
+    "lane": "crm-identity-memory-v1",
+    "run_id": "BF-crm-identity-memory-v1-20260919",
+    "plan": "docs/deliveries/GROK-PLAN-CRM-IDENTITY-MEMORY-V1-2026-09-19.md",
+    "where": "docs/deliveries/CURSOR-MISSION-CRM-IDENTITY-MEMORY-V1-2026-09-19.md",
+    "tests": "PASS=103 FAIL=0",
+    "cap": "CAP-CRM-02",
+    "ledger_maturity": "SPECIFIED",
+    "slice_ceiling": "BUILT",
+    "identity_graph_complete": false,
+    "cr_id": "CR-820682ce791563fa",
+    "cr_state": "OPEN",
+    "ledger_write": null,
+    "at": "2026-09-19T23:18:25+08:00",
+    "completion_commit": "d02fd0820488fd939686073f160bb7803f69554a",
+    "review": "PASS",
+    "review_ref": "docs/deliveries/GROK-REVIEW-CRM-IDENTITY-MEMORY-V1-2026-09-19.md"
+  },
+  "bzg_reputation_observe_v1": {
+    "status": "COMPLETED",
+    "lane": "bzg-reputation-observe-v1",
+    "run_id": "BF-bzg-reputation-observe-v1-20260919",
+    "plan": "docs/deliveries/GROK-PLAN-BZG-REPUTATION-OBSERVE-V1-2026-09-19.md",
+    "where": "docs/deliveries/CURSOR-MISSION-BZG-REPUTATION-OBSERVE-V1-2026-09-19.md",
+    "tests": "PASS=112 FAIL=0",
+    "cap": "CAP-BZG-07",
+    "ledger_maturity": "SPECIFIED",
+    "slice_ceiling": "BUILT",
+    "source_connected": false,
+    "five_star_invented": false,
+    "scraped": false,
+    "auto_reply": false,
+    "cr_id": "CR-d1aacda59180eba7",
+    "cr_state": "OPEN",
+    "ledger_write": null,
+    "at": "2026-09-19T23:37:25+08:00",
+    "completion_commit": "b88f274b6a0cf8c4b5e4bb25caa3f744d3fbf5cb",
+    "review": "PASS",
+    "review_ref": "docs/deliveries/GROK-REVIEW-BZG-REPUTATION-OBSERVE-V1-2026-09-19.md",
+    "completed_at": "2026-09-19T23:46:58+08:00"
+  },
+  "wave4": {
+    "armed_at": "2026-09-19T13:18:59Z",
+    "mission": "owner-autonomous-20260919-w4",
+    "lanes": [
+      "crm-lead-cap-bound-prove",
+      "strat-radar-cap-prove",
+      "crm-identity-memory-v1",
+      "bzg-reputation-observe-v1",
+      "ggv-social-derive-views",
+      "sale-buyer-dataroom-framework"
+    ],
+    "reason": "KEEP_BUILDING \u2014 eng debt after w3 IDLE",
+    "status": "DONE",
+    "finished_at": "2026-09-19T16:29:47Z"
+  },
+  "ggv_social_derive_views": {
+    "status": "FINISHED",
+    "lane": "ggv-social-derive-views",
+    "run_id": "BF-ggv-social-derive-views-20260919",
+    "plan": "docs/deliveries/GROK-PLAN-GGV-SOCIAL-DERIVE-VIEWS-2026-09-19.md",
+    "cap": "CAP-GGV-05",
+    "ledger_maturity": "BUILT",
+    "slice_ceiling": "BUILT",
+    "cr_id": "CR-e20099e21930b9a6",
+    "cr_state": "OPEN",
+    "ledger_write": null,
+    "tests": "PASS=104 FAIL=0",
+    "at": "2026-09-20T00:09:24+08:00",
+    "cursor_at": "2026-09-20T00:01:39+08:00",
+    "completion_commit": "444a95ba830cb2b4c1409c3e5303973cb9b94d13",
+    "review": "docs/deliveries/GROK-REVIEW-GGV-SOCIAL-DERIVE-VIEWS-2026-09-19.md"
+  },
+  "sale_buyer_dataroom_framework": {
+    "status": "FINISHED",
+    "lane": "sale-buyer-dataroom-framework",
+    "run_id": "BF-sale-buyer-dataroom-framework-20260919",
+    "completion_commit": "23ed1aa8a13eaf5ea604cdc983e84f9ba2ba7477",
+    "tests": "PASS=148 FAIL=0",
+    "cap": "CAP-SALE-02",
+    "ledger_maturity": "SPECIFIED",
+    "cr_id": "CR-766f242208e401ad",
+    "cr_state": "OPEN",
+    "review": "docs/deliveries/GROK-REVIEW-SALE-BUYER-DATAROOM-FRAMEWORK-2026-09-19.md",
+    "ledger_write": null
+  },
+  "wave5": {
+    "armed_at": "2026-09-19T16:29:47Z",
+    "mission": "owner-autonomous-20260919-w5",
+    "lanes": [
+      "crm-email-wire-prove",
+      "intg-gws-integrate-prove",
+      "intel-learning-policy-v1",
+      "crm-package-intel-v1",
+      "dr-crown-jewel-framework",
+      "msc-asset-register-v1"
+    ],
+    "reason": "KEEP_BUILDING \u2014 eng debt after w4 IDLE",
+    "canonical": true,
+    "orphan_superseded": "owner-autonomous-20260920-w5",
+    "updated_at": "2026-09-19T16:56:13Z"
+  },
+  "wave8": {
+    "mission": "owner-autonomous-20260920-w8",
+    "status": "DONE",
+    "finished_at": "2026-09-20T07:39:25+08:00",
+    "last_commit": "4a35fb195db7e6ed1e850e58cb8a4624d0b2616a"
+  },
+  "wave9": {
+    "armed_at": "2026-09-20T07:41:00+08:00",
+    "mission": "owner-autonomous-20260920-w9",
+    "lanes": [
+      "amg-daily-ops-state-v1",
+      "amg-packages-products-v1",
+      "amg-revenue-yield-v1",
+      "ggv-intercompany-client-v1",
+      "bzg-venue-pnl-v1"
+    ],
+    "reason": "KEEP_BUILDING \u2014 eng debt after w8 IDLE",
+    "status": "RUNNING"
+  },
+  "wave10": {
+    "mission": "owner-autonomous-20260920-w10",
+    "status": "DONE",
+    "finished_at": "2026-09-20T11:02:17+08:00",
+    "last_commit": "6e33bb4e56001e2902b9b6807bc872220d71379d"
+  },
+  "wave11": {
+    "armed_at": "2026-09-20T11:02:17+08:00",
+    "mission": "owner-autonomous-20260920-w11",
+    "lanes": [
+      "amg-pms-orchestration-v1",
+      "hr-hiring-onboarding-v1",
+      "hr-training-competency-v1",
+      "hr-payroll-inputs-v1",
+      "hr-retention-signals-v1"
+    ],
+    "reason": "KEEP_BUILDING \u2014 eng debt after w10 IDLE",
+    "status": "RUNNING"
+  },
+  "hr_payroll_inputs_v1": {
+    "status": "IMPLEMENTED",
+    "lane": "hr-payroll-inputs-v1",
+    "run_id": "BF-hr-payroll-inputs-v1-20260920",
+    "plan": "docs/deliveries/GROK-PLAN-HR-PAYROLL-INPUTS-V1-2026-09-20.md",
+    "where": "docs/deliveries/CURSOR-MISSION-HR-PAYROLL-INPUTS-V1-2026-09-20.md",
+    "tests": "PASS=289 FAIL=0",
+    "cap": "CAP-HR-04",
+    "ledger_maturity": "SPECIFIED",
+    "slice_ceiling": "BUILT",
+    "cr_id": "CR-482b3b453867189f",
+    "cr_state": "OPEN",
+    "ledger_write": null,
+    "at": "2026-09-20T12:05:06+08:00"
+  },
+  "hr_retention_signals_v1": {
+    "status": "IMPLEMENTED",
+    "lane": "hr-retention-signals-v1",
+    "run_id": "BF-hr-retention-signals-v1-20260920",
+    "plan": "docs/deliveries/GROK-PLAN-HR-RETENTION-SIGNALS-V1-2026-09-20.md",
+    "where": "docs/deliveries/CURSOR-MISSION-HR-RETENTION-SIGNALS-V1-2026-09-20.md",
+    "tests": "PASS=291 FAIL=0",
+    "cap": "CAP-HR-05",
+    "ledger_maturity": "SPECIFIED",
+    "slice_ceiling": "BUILT",
+    "cr_id": "CR-1ade9354d7443ed5",
+    "cr_state": "OPEN",
+    "ledger_write": null,
+    "at": "2026-09-20T12:16:45+08:00"
+  },
+  "cost_control_option_a": false,
+  "auto_rearm": true,
+  "keep_building": true,
+  "do_not_start_next": false,
+  "wave12": {
+    "mission": "owner-autonomous-20260920-w12",
+    "status": "PARKED",
+    "closed": [
+      "fin-mgmt-reporting-v1",
+      "fin-intercompany-billing-v1",
+      "fin-budget-forecast-cash-v1"
+    ],
+    "parked_pending": [
+      "fin-profit-leakage-v1",
+      "proc-supplier-register-v1"
+    ],
+    "last_commit": "01606f3940e403cd5c9542a1c4381a78bd39369a",
+    "parked_at": "2026-09-20T05:29:20.397440+00:00"
+  },
+  "compressed_sprint": true,
+  "compressed_sprint_armed_wita": "2026-09-21T18:34:22+08:00",
+  "unit_of_work": "vertical_capability_packs",
+  "tracks": [
+    "A_BZG_OPS",
+    "B_GGV_OPS",
+    "C_AMG_OPS",
+    "D_WOLF_INTEL",
+    "E_OWNER_EMPIRE",
+    "F_CORE_HARDEN"
+  ],
+  "reserved": [
+    "FINANCE_ZAYEN",
+    "HR_TISA",
+    "TRADING_FLINT"
+  ],
+  "sprint_directive": "Owner 21 Sep: days not weeks; Grok Eng Lead; large packs; continuous CR factory; Production sacred"
 }

@@ -1,0 +1,26 @@
+{
+  "run_id": "BF-content-engine-haikal-fail-repair-20260924",
+  "subject": "haikalqilbari123@gmail.com",
+  "person_id": "PERS-HAIKAL",
+  "registration": {
+    "upload": "ok",
+    "nas_file": true,
+    "hash": "probehash",
+    "indexed": true,
+    "brand": "habitat",
+    "scope_allowed": true,
+    "library": true,
+    "thumbnail": true
+  },
+  "library_available": true,
+  "failed_stage_when_nas_missing": "saving_nas",
+  "habitat_index": {
+    "slug": "habitat",
+    "display_name": "Habitat",
+    "index_state": "SEARCHABLE",
+    "files_indexed": 3,
+    "message": "3 files indexed in place. This is not the whole library."
+  },
+  "staff_ready": false,
+  "note": "Probe uses a generated PNG so the thumbnail stage is real. It is not a Haikal human PASS."
+}

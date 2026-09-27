@@ -1,0 +1,119 @@
+{
+  "mission_id": "OVERNIGHT-BETA-BUILD-2026-09-17",
+  "started_at": "2026-09-17T13:51:20.645435+00:00",
+  "authority": "Matt APPROVED LOCK DENOMINATOR + OVERNIGHT BUILD",
+  "denominator_locked": true,
+  "required_aus": 26,
+  "starting_system_baseline_pct": 22.3,
+  "priority": 4,
+  "current_lane": "P4_DECISION_MEMORY_FINISHED",
+  "p1_caps": [
+    "CAP-FIN-05",
+    "CAP-HR-04",
+    "CAP-INTEL-02",
+    "CAP-INTEL-03",
+    "CAP-INTG-07",
+    "CAP-MSC-05",
+    "CAP-DR-01"
+  ],
+  "p1_status": {
+    "CAP-FIN-05": "RETAINED_SPECIFIED",
+    "CAP-HR-04": "RETAINED_SPECIFIED",
+    "CAP-INTEL-02": "RAISED_TO_BUILT",
+    "CAP-INTEL-03": "RAISED_TO_BUILT",
+    "CAP-INTG-07": "RAISED_TO_PROVEN",
+    "CAP-MSC-05": "RETAINED_SPECIFIED",
+    "CAP-DR-01": "RAISED_TO_PROVEN"
+  },
+  "slices_completed": [
+    {
+      "id": "P2-UMA-NITS",
+      "commit": "4259d31",
+      "tests": "68/0",
+      "grok": "PASS",
+      "finished_at": "2026-09-17T22:08:34.348231+00:00"
+    },
+    {
+      "id": "P3-AKR-V1",
+      "commit": "2908dad",
+      "tests": "51/0",
+      "grok": "PASS",
+      "finished_at": "2026-09-17T22:47:25Z"
+    },
+    {
+      "id": "P4-DECISION-MEMORY-V1",
+      "commit": "7ff5208",
+      "tests": "54/0",
+      "grok": "PASS",
+      "finished_at": "2026-09-17T23:10:24Z"
+    }
+  ],
+  "cap_maturity_changes": [
+    {
+      "cap": "CAP-DR-01",
+      "from": "SPECIFIED",
+      "to": "PROVEN",
+      "evidence": "docs/deliveries/CAP-DR-01-EVIDENCE-BIND-2026-09-17.md"
+    },
+    {
+      "cap": "CAP-INTG-07",
+      "from": "SPECIFIED",
+      "to": "PROVEN",
+      "evidence": "docs/deliveries/CAP-INTG-07-EVIDENCE-BIND-2026-09-17.md + test PASS"
+    },
+    {
+      "cap": "CAP-INTEL-02",
+      "from": "SPECIFIED",
+      "to": "BUILT",
+      "evidence": "docs/deliveries/CAP-INTEL-02-03-EVIDENCE-BIND-2026-09-18.md"
+    },
+    {
+      "cap": "CAP-INTEL-03",
+      "from": "SPECIFIED",
+      "to": "BUILT",
+      "evidence": "docs/deliveries/CAP-INTEL-02-03-EVIDENCE-BIND-2026-09-18.md"
+    }
+  ],
+  "blocked": [],
+  "habitat_commissioning": "UNDISTURBED",
+  "uma_commissioning": "UNDISTURBED",
+  "production": "READ_ONLY",
+  "external_writes": "BLOCKED",
+  "status": "COMPLETE",
+  "candidate_system_pct": 24.8,
+  "p2_status": "FINISHED",
+  "factory_repair": {
+    "commit": "c0e51c5",
+    "status": "DONE",
+    "disappearance_test": "FAIL",
+    "note": "CURSOR_DONE+bf_advance+weekday 24h watch"
+  },
+  "p3": {
+    "run_id": "BF-akr-v1-20260918",
+    "stage": "FINISHED",
+    "commit": "2908dad",
+    "tests": "PASS=51 FAIL=0",
+    "grok": "PASS",
+    "finished_at": "2026-09-17T22:47:25Z",
+    "plan": "docs/deliveries/GROK-PLAN-AUTHORISED-KNOWLEDGE-RESOLVER-2026-09-18.md",
+    "mission": "docs/deliveries/CURSOR-MISSION-AUTHORISED-KNOWLEDGE-RESOLVER-2026-09-18.md",
+    "review": "docs/deliveries/GROK-REVIEW-AKR-2908dad-2026-09-18.md"
+  },
+  "p3_status": "FINISHED",
+  "updated_at": "2026-09-17T23:10:24Z",
+  "p4": {
+    "run_id": "BF-decision-memory-v1-20260918",
+    "cap": "CAP-INTEL-04",
+    "why": "Next safe SPECIFIED software after AKR. No money, payroll, legal opinion, or commissioning touch.",
+    "stage": "FINISHED",
+    "commit": "7ff5208",
+    "tests": "PASS=54 FAIL=0",
+    "grok": "PASS",
+    "finished_at": "2026-09-17T23:10:24Z",
+    "plan": "docs/deliveries/GROK-PLAN-DECISION-MEMORY-2026-09-18.md",
+    "mission": "docs/deliveries/CURSOR-MISSION-DECISION-MEMORY-2026-09-18.md",
+    "review": "docs/deliveries/GROK-REVIEW-DECISION-MEMORY-7ff5208-2026-09-18.md"
+  },
+  "p4_status": "FINISHED",
+  "note": "P3 AKR + P4 Decision Memory FINISHED under Matt overnight continue. No P5 authorised in overnight state \u2014 do not auto-start next slice."
+}

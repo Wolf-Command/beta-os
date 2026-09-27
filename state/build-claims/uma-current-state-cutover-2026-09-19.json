@@ -1,0 +1,21 @@
+{
+  "claim_id": "uma-current-state-cutover-2026-09-19",
+  "owner_release": true,
+  "status": "DEVI_READY_TO_TEST",
+  "devi_commission": "WAITING_HUMAN_PHONE",
+  "cutover_at": null,
+  "started_wita": "2026-09-19T11:32:00+08:00",
+  "notes": "Owner Release: projection not bulk import; no invent float/closer; DEVI READY TO TEST only after P7 PASS",
+  "alchemist_live": {
+    "petty_cash": 386,
+    "pr_orders": 424,
+    "ledger": 377,
+    "awaiting_devi": 25,
+    "unpaid_ledger": 10,
+    "unpaid_rp": 7276000,
+    "verified_wita": "2026-09-19T11:40+08:00"
+  },
+  "projection_commit": "704e6ec",
+  "p7_phone": "PASS",
+  "ready_wita": "2026-09-19T12:17+08:00"
+}

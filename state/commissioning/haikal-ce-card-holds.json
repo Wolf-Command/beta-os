@@ -1,0 +1,25 @@
+{
+  "at": "2026-09-24T13:00:51+08:00",
+  "staff_ready": false,
+  "human_status": "FAILED_RETEST_REQUIRED",
+  "holds": [
+    {
+      "id": "CMQ-NAS-HAIKAL",
+      "action": "HOLD",
+      "do_not_pass": true,
+      "reason": "Haikal REAL CE commissioning FAILED/RETEST REQUIRED"
+    },
+    {
+      "id": "CMQ-SMART-UPLOAD-RETEST",
+      "action": "HOLD",
+      "do_not_pass": true,
+      "reason": "Follows CE fail repair; human fail overrides"
+    }
+  ],
+  "next_allowed_label_after_repair_and_peaches": "CONTENT ENGINE READY FOR HAIKAL RETEST",
+  "never_from_this_pack": [
+    "PASS",
+    "staff_ready=true",
+    "commissioned"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "cards": {
+    "CMQ-GGV-FINANCE-NOTA-MATT": {
+      "status": "READY_TO_TEST",
+      "hold": false,
+      "paused": false,
+      "pause_reason": null,
+      "hold_reason": null,
+      "hold_note": "Storage arch ENGINEERING_PASS verified; phone commissioning resumed",
+      "hold_set_at": "2026-09-24T12:56:00+08:00",
+      "hold_released_at": "2026-09-24T13:12:42+08:00",
+      "hold_release_reason": "STORAGE_ARCH_ENGINEERING_PASS_PEACHES_VERIFY"
+    },
+    "CMQ-GGV-FINANCE-NOTA-AMANDA": {
+      "status": "READY_TO_TEST",
+      "hold": false,
+      "paused": false,
+      "pause_reason": null,
+      "hold_reason": null,
+      "hold_note": "Storage arch ENGINEERING_PASS verified; phone commissioning resumed",
+      "hold_set_at": "2026-09-24T12:56:00+08:00",
+      "hold_released_at": "2026-09-24T13:12:42+08:00",
+      "hold_release_reason": "STORAGE_ARCH_ENGINEERING_PASS_PEACHES_VERIFY"
+    }
+  },
+  "retests": [],
+  "as_of": "2026-09-24T05:12:42Z",
+  "hold_note": "GGV Finance Nota Matt/Amanda HOLD released after storage arch ENGINEERING_PASS"
+}

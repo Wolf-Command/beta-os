@@ -1,0 +1,83 @@
+{
+  "id": "wolf-people-are-not-roles-20260924",
+  "title": "Wolf People Are Not Roles \u2014 RULE lock + person-name coupling audit",
+  "status": "RULE_LOCKED + AUDIT_DONE + SEAT_RESOLVED",
+  "cap_state": "SPECIFIED",
+  "capability": "Identity / Role / Position / Assignment succession architecture",
+  "opened_at": "2026-09-24T15:44:00+08:00",
+  "updated_at": "2026-09-24T17:35:00+08:00",
+  "owner_directive": "OWNER LOCK 2026-09-24 ~15:44 WITA \u2014 WOLF ROLE ARCHITECTURE \u2014 PEOPLE ARE NOT ROLES",
+  "rule": "docs/RULE-Wolf-People-Are-Not-Roles-2026-09-24.md",
+  "audit": "docs/deliveries/AUDIT-Wolf-Person-Name-Coupling-2026-09-24.md",
+  "fold_note": "docs/deliveries/NOTE-CE-Haikal-Repair-People-Are-Not-Roles-Fold-2026-09-24.md",
+  "canon_pointers": [
+    "docs/canon/ROLE-POSITION-ASSIGNMENT-TRANSITIONAL.md",
+    "docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md"
+  ],
+  "run_id": null,
+  "cursor_pack_launched": false,
+  "credit_conservation": true,
+  "production_touched": false,
+  "staff_ready": false,
+  "proven": false,
+  "ready": false,
+  "soft_head_preserved": "f3ab8f7",
+  "active_ce_pack": {
+    "run_id": "BF-content-engine-haikal-fail-repair-20260924",
+    "do_not_kill": true,
+    "fold_note": "docs/deliveries/NOTE-CE-Haikal-Repair-People-Are-Not-Roles-Fold-2026-09-24.md",
+    "note": "Do not interrupt Cursor; fold Assignment\u2192Role authz check before final Peaches verify if safe"
+  },
+  "haikal_role_reconcile": {
+    "status": "SEAT_RESOLVED",
+    "seat_resolved": true,
+    "owner_answer": "Seat Haikal on Creative Director (ROLE-GGV-CREATIVE-DIRECTOR)",
+    "resolved_at": "2026-09-24T17:34:12+08:00",
+    "role_id": "ROLE-GGV-CREATIVE-DIRECTOR",
+    "position_id": "POS-GGV-CREATIVE-DIRECTOR-1",
+    "assignment_id_active": "ASG-HAIKAL-CD-1",
+    "assignment_id_ended": "ASG-HAIKAL-VE-1",
+    "do_not_create": [
+      "ROLE-CONTENT-DIRECTOR",
+      "ROLE-HAIKAL"
+    ],
+    "amanda_untouched": "ASG-AMANDA-CM-1 \u2192 ROLE-CONTENT-MGMT",
+    "permissions_copied": false,
+    "permissions_note": "ROLE-GGV-CREATIVE-DIRECTOR already had 2 ALLOW rows (not zero); gap vs EDIT/CONTENT-MGMT documented; CE ACL still email-based (People\u2260Roles debt)",
+    "evidence": "docs/deliveries/NOTE-Haikal-Creative-Director-Assignment-2026-09-24.md",
+    "db_mutated": true,
+    "scopes_migrated": [
+      "SCOPE-GGV-CONTENT",
+      "SCOPE-GGV-HABITAT-LEAD",
+      "SCOPE-CRM-HABITAT-LEAD",
+      "SCOPE-GGV-CONTENT-LIBRARY"
+    ]
+  },
+  "open_debt_invalid_p0": [
+    "CE/Content Machine email-subject permissions still live authz",
+    "brands.default_assignee Habitat = haikal email",
+    "wolf_shell PERSON_AUDIENCE/ASSIGNMENTS hard-map by person_id",
+    "ggv_ops_pack READ_SEATS/OPERATOR_STAGES person frozensets",
+    "serve_beta NAS index sample PERS-MATT|PERS-HAIKAL allowlist",
+    "migrations reference ROLE-HAIKAL/ROLE-AMANDA (not in org_roles)",
+    "phase2.5A email permission seed still live"
+  ],
+  "open_debt_invalid_p1": [
+    "ROLE-MATT person-named role id (display already Owner/Executive)",
+    "staff_ops / pack PERS-* seat constants",
+    "CMQ-*-PERSON ids risk if used as workflow owner class (commissioning subject = valid)",
+    "progress/harden who fallback Haikal/Amanda",
+    "Primary Haikal nav RULE/UX architecture wording",
+    "Global Nav rule people-as-audience wording",
+    "nas-haikal-prep endpoint / haikal-nas-next UI naming",
+    "founder_dep staff_seats person map",
+    "Identity_Roles.csv Matt/Owner role label mix"
+  ],
+  "do_not_promote": [
+    "PROVEN",
+    "READY",
+    "STAFF_READY",
+    "COMMISSIONED"
+  ],
+  "note": "RULE locked + audit done. Owner settled Haikal \u2192 Creative Director seat (ASG-HAIKAL-CD-1). No Cursor pack for seat. No broad refactor. No prod. Active CE Cursor left running. Remainder = Completion Register succession debt (email ACL etc.)."
+}

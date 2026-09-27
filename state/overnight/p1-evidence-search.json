@@ -1,0 +1,816 @@
+{
+  "CAP-FIN-05": {
+    "name": "Management Reporting",
+    "current": "SPECIFIED",
+    "hit_count": 9,
+    "top_hits": [
+      {
+        "path": "docs/deliveries/MODEL-C-SYSTEM-EVIDENCE-LEDGER-2026-09-17.md",
+        "score": 3,
+        "matched": [
+          "management report",
+          "p&l",
+          "reports section"
+        ]
+      },
+      {
+        "path": "docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+        "score": 2,
+        "matched": [
+          "management report",
+          "p&l"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-CAPABILITY-CATALOG-DRAFT-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "management report",
+          "p&l"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-CAPABILITY-CATALOG-DRAFT-v2-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "management report",
+          "p&l"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-EVIDENCE-REMEDIATION-BACKLOG-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "management report",
+          "p&l"
+        ]
+      },
+      {
+        "path": "docs/MODEL-C-CAPABILITY-CATALOG.md",
+        "score": 2,
+        "matched": [
+          "management report",
+          "p&l"
+        ]
+      },
+      {
+        "path": "docs/canon/MASTER-BUILD-DASHBOARD-README.md",
+        "score": 1,
+        "matched": [
+          "p&l"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-CATALOG-v1-to-v2-DELTA-2026-09-17.md",
+        "score": 1,
+        "matched": [
+          "p&l"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-CATALOG-CONSTITUTIONAL-REVIEW-2026-09-17.md",
+        "score": 1,
+        "matched": [
+          "p&l"
+        ]
+      }
+    ]
+  },
+  "CAP-HR-04": {
+    "name": "Payroll Inputs",
+    "current": "SPECIFIED",
+    "hit_count": 7,
+    "top_hits": [
+      {
+        "path": "docs/deliveries/MODEL-C-CAPABILITY-CATALOG-DRAFT-2026-09-17.md",
+        "score": 3,
+        "matched": [
+          "payroll",
+          "npwp",
+          "staff id"
+        ]
+      },
+      {
+        "path": "docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+        "score": 1,
+        "matched": [
+          "payroll"
+        ]
+      },
+      {
+        "path": "docs/deliveries/GROK-PLAN-UMA-BLU-DAILY-CLOSE-2026-09-17.md",
+        "score": 1,
+        "matched": [
+          "payroll"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-CAPABILITY-CATALOG-DRAFT-v2-2026-09-17.md",
+        "score": 1,
+        "matched": [
+          "payroll"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-SYSTEM-EVIDENCE-LEDGER-2026-09-17.md",
+        "score": 1,
+        "matched": [
+          "payroll"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-EVIDENCE-REMEDIATION-BACKLOG-2026-09-17.md",
+        "score": 1,
+        "matched": [
+          "payroll"
+        ]
+      },
+      {
+        "path": "docs/MODEL-C-CAPABILITY-CATALOG.md",
+        "score": 1,
+        "matched": [
+          "payroll"
+        ]
+      }
+    ]
+  },
+  "CAP-INTEL-02": {
+    "name": "Authorised Retrieval & Institutional Memory",
+    "current": "SPECIFIED",
+    "hit_count": 20,
+    "top_hits": [
+      {
+        "path": "docs/RULE-Authorised-Knowledge-Resolution-2026-09-17.md",
+        "score": 4.0,
+        "matched": [
+          "authorised knowledge",
+          "authorised retrieval",
+          "knowledge resolution"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-E-ADOPTION-UNIT-REGISTRY-DISCOVERY-2026-09-17.md",
+        "score": 3,
+        "matched": [
+          "authorised knowledge",
+          "authorised retrieval",
+          "institutional memory"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-SYSTEM-EVIDENCE-LEDGER-2026-09-17.md",
+        "score": 3,
+        "matched": [
+          "authorised retrieval",
+          "institutional memory",
+          "knowledge sweep"
+        ]
+      },
+      {
+        "path": "docs/deliveries/ARCH-LOCK-AUTHORISED-KNOWLEDGE-RESOLUTION-2026-09-17.md",
+        "score": 3.0,
+        "matched": [
+          "authorised knowledge",
+          "knowledge resolution"
+        ]
+      },
+      {
+        "path": "docs/deliveries/HABITAT-FULL-AUTHORISED-KNOWLEDGE-SWEEP-2026-09-17.md",
+        "score": 3.0,
+        "matched": [
+          "authorised knowledge",
+          "knowledge sweep"
+        ]
+      },
+      {
+        "path": "docs/canon/PROGRESS-DASHBOARD.md",
+        "score": 2,
+        "matched": [
+          "authorised knowledge",
+          "knowledge resolution"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-CAPABILITY-CATALOG-DRAFT-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "authorised knowledge",
+          "knowledge resolution"
+        ]
+      },
+      {
+        "path": "docs/deliveries/BZG-UMA-BLU-OPERATIONS-DISCOVERY-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "authorised knowledge",
+          "knowledge resolution"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-SYSTEM-SCORING-DESIGN-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "authorised knowledge",
+          "knowledge resolution"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-SYSTEM-EVIDENCE-BASELINE-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "authorised knowledge",
+          "knowledge resolution"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-CAPABILITY-CATALOG-DRAFT-v2-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "authorised retrieval",
+          "institutional memory"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-EVIDENCE-REMEDIATION-BACKLOG-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "authorised retrieval",
+          "institutional memory"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-E-ADOPTION-DENOMINATOR-AUDIT-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "authorised knowledge",
+          "authorised retrieval"
+        ]
+      },
+      {
+        "path": "docs/deliveries/PROGRESS-V21-SEMANTIC-AUDIT-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "authorised knowledge",
+          "knowledge resolution"
+        ]
+      },
+      {
+        "path": "docs/MODEL-C-CAPABILITY-CATALOG.md",
+        "score": 2,
+        "matched": [
+          "authorised retrieval",
+          "institutional memory"
+        ]
+      }
+    ]
+  },
+  "CAP-INTEL-03": {
+    "name": "Provenance / Confidence / Conflict Resolution",
+    "current": "SPECIFIED",
+    "hit_count": 45,
+    "top_hits": [
+      {
+        "path": "docs/RULE-Authorised-Knowledge-Resolution-2026-09-17.md",
+        "score": 5.5,
+        "matched": [
+          "provenance",
+          "confidence",
+          "conflicted",
+          "NOT CANONICAL",
+          "SOURCE FOUND"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-CAPABILITY-CATALOG-DRAFT-v2-2026-09-17.md",
+        "score": 3,
+        "matched": [
+          "provenance",
+          "confidence",
+          "conflict resolution"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-SYSTEM-EVIDENCE-LEDGER-2026-09-17.md",
+        "score": 3,
+        "matched": [
+          "provenance",
+          "confidence",
+          "conflict resolution"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-EVIDENCE-REMEDIATION-BACKLOG-2026-09-17.md",
+        "score": 3,
+        "matched": [
+          "provenance",
+          "confidence",
+          "conflict resolution"
+        ]
+      },
+      {
+        "path": "docs/MODEL-C-CAPABILITY-CATALOG.md",
+        "score": 3,
+        "matched": [
+          "provenance",
+          "confidence",
+          "conflict resolution"
+        ]
+      },
+      {
+        "path": "docs/deliveries/HABITAT-FULL-AUTHORISED-KNOWLEDGE-SWEEP-2026-09-17.md",
+        "score": 2.5,
+        "matched": [
+          "provenance",
+          "NOT CANONICAL"
+        ]
+      },
+      {
+        "path": "scripts/serve_beta.py",
+        "score": 2,
+        "matched": [
+          "provenance",
+          "confidence"
+        ]
+      },
+      {
+        "path": "scripts/tests/test_progress_dashboard.py",
+        "score": 2,
+        "matched": [
+          "provenance",
+          "confidence"
+        ]
+      },
+      {
+        "path": "docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+        "score": 2,
+        "matched": [
+          "provenance",
+          "confidence"
+        ]
+      },
+      {
+        "path": "docs/canon/PROGRESS-DASHBOARD.md",
+        "score": 2,
+        "matched": [
+          "provenance",
+          "confidence"
+        ]
+      },
+      {
+        "path": "docs/deliveries/GROK-PLAN-PROGRESS-DASHBOARD-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "provenance",
+          "confidence"
+        ]
+      },
+      {
+        "path": "scripts/wolf_intelligence.py",
+        "score": 1,
+        "matched": [
+          "confidence"
+        ]
+      },
+      {
+        "path": "scripts/stage_inspector.py",
+        "score": 1,
+        "matched": [
+          "confidence"
+        ]
+      },
+      {
+        "path": "scripts/migrations/import_habitat_memory.py",
+        "score": 1,
+        "matched": [
+          "confidence"
+        ]
+      },
+      {
+        "path": "scripts/core/esb_close_snapshot.py",
+        "score": 1,
+        "matched": [
+          "provenance"
+        ]
+      }
+    ]
+  },
+  "CAP-INTG-07": {
+    "name": "Secrets & Environment Separation",
+    "current": "SPECIFIED",
+    "hit_count": 83,
+    "top_hits": [
+      {
+        "path": "docs/RULE-Beta-Construction-Production-Sacred-2026-09-16.md",
+        "score": 4,
+        "matched": [
+          "secrets",
+          "production sacred",
+          "beta only",
+          "secret"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-SYSTEM-EVIDENCE-LEDGER-2026-09-17.md",
+        "score": 4,
+        "matched": [
+          ".env",
+          "secrets",
+          "env.example",
+          "secret"
+        ]
+      },
+      {
+        "path": "scripts/metricool_read_client.py",
+        "score": 3,
+        "matched": [
+          ".env",
+          "secrets",
+          "secret"
+        ]
+      },
+      {
+        "path": "scripts/serve_beta.py",
+        "score": 3,
+        "matched": [
+          ".env",
+          "secrets",
+          "secret"
+        ]
+      },
+      {
+        "path": "scripts/core/audit.py",
+        "score": 3,
+        "matched": [
+          ".env",
+          "secrets",
+          "secret"
+        ]
+      },
+      {
+        "path": "scripts/core/evidence.py",
+        "score": 3,
+        "matched": [
+          ".env",
+          "secrets",
+          "secret"
+        ]
+      },
+      {
+        "path": "scripts/tests/test_core_audit.py",
+        "score": 3,
+        "matched": [
+          ".env",
+          "secrets",
+          "secret"
+        ]
+      },
+      {
+        "path": "scripts/tests/test_core_work_items.py",
+        "score": 3,
+        "matched": [
+          ".env",
+          "secrets",
+          "secret"
+        ]
+      },
+      {
+        "path": "scripts/tests/test_evidence_requirements.py",
+        "score": 3,
+        "matched": [
+          ".env",
+          "secrets",
+          "secret"
+        ]
+      },
+      {
+        "path": "docs/canon/PROGRESS-DASHBOARD.md",
+        "score": 3,
+        "matched": [
+          "secrets",
+          "beta only",
+          "secret"
+        ]
+      },
+      {
+        "path": "docs/deliveries/HABITAT-METRICOOL-READONLY-DISCOVERY-2026-09-17.md",
+        "score": 3,
+        "matched": [
+          ".env",
+          "secrets",
+          "secret"
+        ]
+      },
+      {
+        "path": "scripts/sync_metricool_performance.py",
+        "score": 2,
+        "matched": [
+          "secrets",
+          "secret"
+        ]
+      },
+      {
+        "path": "scripts/tests/test_phase2_metricool.py",
+        "score": 2,
+        "matched": [
+          "secrets",
+          "secret"
+        ]
+      },
+      {
+        "path": "scripts/skills/analyze_metricool_performance.py",
+        "score": 2,
+        "matched": [
+          "secrets",
+          "secret"
+        ]
+      },
+      {
+        "path": "docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+        "score": 2,
+        "matched": [
+          "secrets",
+          "secret"
+        ]
+      }
+    ]
+  },
+  "CAP-MSC-05": {
+    "name": "Documents / Records / Legal Defensibility",
+    "current": "SPECIFIED",
+    "hit_count": 72,
+    "top_hits": [
+      {
+        "path": "docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+        "score": 4,
+        "matched": [
+          "legal",
+          "document",
+          "records",
+          "defensib"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-CAPABILITY-CATALOG-DRAFT-v2-2026-09-17.md",
+        "score": 4,
+        "matched": [
+          "legal",
+          "document",
+          "records",
+          "defensib"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-SYSTEM-EVIDENCE-LEDGER-2026-09-17.md",
+        "score": 4,
+        "matched": [
+          "legal",
+          "document",
+          "records",
+          "defensib"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-EVIDENCE-REMEDIATION-BACKLOG-2026-09-17.md",
+        "score": 4,
+        "matched": [
+          "legal",
+          "document",
+          "records",
+          "defensib"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-CATALOG-v1-to-v2-DELTA-2026-09-17.md",
+        "score": 4,
+        "matched": [
+          "legal",
+          "document",
+          "records",
+          "defensib"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-CATALOG-CONSTITUTIONAL-REVIEW-2026-09-17.md",
+        "score": 4,
+        "matched": [
+          "legal",
+          "document",
+          "records",
+          "defensib"
+        ]
+      },
+      {
+        "path": "docs/MODEL-C-CAPABILITY-CATALOG.md",
+        "score": 4,
+        "matched": [
+          "legal",
+          "document",
+          "records",
+          "defensib"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-CAPABILITY-CATALOG-DRAFT-2026-09-17.md",
+        "score": 3,
+        "matched": [
+          "legal",
+          "document",
+          "records"
+        ]
+      },
+      {
+        "path": "scripts/migrations/migrate_evidence_requirements.py",
+        "score": 2,
+        "matched": [
+          "document",
+          "records"
+        ]
+      },
+      {
+        "path": "scripts/migrations/migrate_uma_blu_daily_close.py",
+        "score": 2,
+        "matched": [
+          "legal",
+          "records"
+        ]
+      },
+      {
+        "path": "scripts/core/scope.py",
+        "score": 2,
+        "matched": [
+          "legal",
+          "document"
+        ]
+      },
+      {
+        "path": "scripts/tests/test_exception_override.py",
+        "score": 2,
+        "matched": [
+          "document",
+          "records"
+        ]
+      },
+      {
+        "path": "scripts/tests/test_evidence_requirements.py",
+        "score": 2,
+        "matched": [
+          "document",
+          "records"
+        ]
+      },
+      {
+        "path": "scripts/tests/test_uma_blu_daily_close.py",
+        "score": 2,
+        "matched": [
+          "legal",
+          "document"
+        ]
+      },
+      {
+        "path": "docs/canon/MASTER-BUILD-DASHBOARD-README.md",
+        "score": 2,
+        "matched": [
+          "legal",
+          "document"
+        ]
+      }
+    ]
+  },
+  "CAP-DR-01": {
+    "name": "Backup / Restore Testing / Disaster Recovery",
+    "current": "SPECIFIED",
+    "hit_count": 68,
+    "top_hits": [
+      {
+        "path": "docs/deliveries/MODEL-C-SYSTEM-EVIDENCE-LEDGER-2026-09-17.md",
+        "score": 5,
+        "matched": [
+          "backup",
+          "restore",
+          "disaster",
+          "b2",
+          "phoenix"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-CAPABILITY-CATALOG-DRAFT-2026-09-17.md",
+        "score": 4.5,
+        "matched": [
+          "backup",
+          "disaster",
+          "reimport",
+          "offsite"
+        ]
+      },
+      {
+        "path": "docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+        "score": 4,
+        "matched": [
+          "backup",
+          "restore",
+          "disaster",
+          "b2"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-CAPABILITY-CATALOG-DRAFT-v2-2026-09-17.md",
+        "score": 3.5,
+        "matched": [
+          "backup",
+          "restore",
+          "disaster"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-EVIDENCE-REMEDIATION-BACKLOG-2026-09-17.md",
+        "score": 3,
+        "matched": [
+          "backup",
+          "restore",
+          "disaster"
+        ]
+      },
+      {
+        "path": "docs/MODEL-C-CAPABILITY-CATALOG.md",
+        "score": 3,
+        "matched": [
+          "backup",
+          "restore",
+          "disaster"
+        ]
+      },
+      {
+        "path": "scripts/tests/test_dual_approval.py",
+        "score": 2,
+        "matched": [
+          "backup",
+          "restore"
+        ]
+      },
+      {
+        "path": "scripts/tests/test_core_audit.py",
+        "score": 2,
+        "matched": [
+          "backup",
+          "restore"
+        ]
+      },
+      {
+        "path": "scripts/tests/test_progress_dashboard.py",
+        "score": 2,
+        "matched": [
+          "backup",
+          "b2"
+        ]
+      },
+      {
+        "path": "docs/canon/AUTHORITY-LIMITS-TRANSITIONAL.md",
+        "score": 2,
+        "matched": [
+          "backup",
+          "b2"
+        ]
+      },
+      {
+        "path": "docs/RULE-Beta-Construction-Production-Sacred-2026-09-16.md",
+        "score": 2,
+        "matched": [
+          "backup",
+          "b2"
+        ]
+      },
+      {
+        "path": "docs/RULE-Local-Cursor-Build-Path-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "backup",
+          "disaster"
+        ]
+      },
+      {
+        "path": "docs/deliveries/CURSOR-MISSION-AUDIT-EVIDENCE-SPINE-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "backup",
+          "b2"
+        ]
+      },
+      {
+        "path": "docs/deliveries/GROK-REVIEW-HABITAT-PUBLISH-GATE-f833f37-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "backup",
+          "b2"
+        ]
+      },
+      {
+        "path": "docs/deliveries/MODEL-C-CSV-ROW-MAP-v2-2026-09-17.md",
+        "score": 2,
+        "matched": [
+          "backup",
+          "disaster"
+        ]
+      }
+    ]
+  }
+}

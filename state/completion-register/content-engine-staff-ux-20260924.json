@@ -1,0 +1,32 @@
+{
+  "id": "content-engine-staff-ux-20260924",
+  "title": "Content Engine Staff UX Redesign",
+  "status": "OPEN",
+  "cap_state": "SPECIFIED",
+  "capability": "Content Engine staff desk (Haikal)",
+  "opened_at": "2026-09-24T09:18:30+08:00",
+  "owner_directive": "P0 CONTENT ENGINE UX REDESIGN 24 Sep 2026 ~09:15 WITA",
+  "rule": "docs/RULE-Content-Engine-Staff-UX-2026-09-24.md",
+  "gate": "state/build-factory/GATE-content-engine-staff-ux-20260924.json",
+  "spec": "docs/deliveries/SPEC-Content-Engine-Staff-UX-Redesign-2026-09-24.md",
+  "audit": "docs/deliveries/AUDIT-Content-Engine-Staff-Jargon-Leak-2026-09-24.md",
+  "commissioning": "state/commissioning/CONTENT-ENGINE-UX-2026-09-24.md",
+  "run_id": "BF-content-engine-staff-ux-20260924",
+  "staff_ready": false,
+  "proven": false,
+  "ready": false,
+  "production_touched": false,
+  "maturity_claim": "SPECIFIED",
+  "do_not_promote": [
+    "PROVEN",
+    "READY",
+    "STAFF_READY",
+    "COMMISSIONED"
+  ],
+  "note": "Haikal REAL human commissioning FAILED/RETEST REQUIRED. Engineering PASS does not set staff_ready. Repair via BF-content-engine-haikal-fail-repair-20260924.",
+  "updated_at": "2026-09-24T12:59:13+08:00",
+  "human_status": "FAILED_RETEST_REQUIRED",
+  "human_commissioning": "state/commissioning/CONTENT-ENGINE-HAIKAL-2026-09-24.md",
+  "human_override_at": "2026-09-24T12:59:13+08:00",
+  "repair_run_id": "BF-content-engine-haikal-fail-repair-20260924"
+}

@@ -1,0 +1,57 @@
+{
+  "id": "content-engine-haikal-fail-repair-20260924",
+  "title": "Content Engine Haikal Fail Repair (P0 shared roots)",
+  "status": "ENGINEERING_PASS_AWAITING_HAIKAL_RETEST",
+  "cap_state": "SPECIFIED",
+  "capability": "Content Engine staff desk (Haikal)",
+  "opened_at": "2026-09-24T12:59:13+08:00",
+  "owner_directive": "P0 Haikal REAL commissioning FAILED / RETEST REQUIRED \u2014 smallest coherent Beta repair",
+  "rule": "docs/RULE-Content-Engine-Haikal-Fail-Repair-2026-09-24.md",
+  "gate": "state/build-factory/GATE-content-engine-haikal-fail-repair-20260924.json",
+  "spec": "docs/deliveries/SPEC-Content-Engine-Haikal-Fail-Repair-2026-09-24.md",
+  "audit": "docs/deliveries/AUDIT-Content-Engine-Deployed-Route-Truth-2026-09-24.md",
+  "commissioning": "state/commissioning/CONTENT-ENGINE-HAIKAL-2026-09-24.md",
+  "parent_cr": "content-engine-staff-ux-20260924",
+  "run_id": "BF-content-engine-haikal-fail-repair-20260924",
+  "human_status": "FAILED_RETEST_REQUIRED",
+  "staff_ready": false,
+  "proven": false,
+  "ready": false,
+  "production_touched": false,
+  "maturity_claim": "SPECIFIED",
+  "do_not_promote": [
+    "PROVEN",
+    "READY",
+    "STAFF_READY",
+    "COMMISSIONED"
+  ],
+  "preserve": [
+    "ZIP/download PASS path",
+    "Content Plan PASS",
+    "Library search structural PASS",
+    "multi-select PASS",
+    "soft head f3ab8f7"
+  ],
+  "note": "Peaches independent verify PASS. Repair+shell ADDENDUM satisfied on Beta. Engineering PASS only \u2014 not commissioned. Next honest human label: CONTENT ENGINE READY FOR HAIKAL RETEST. staff_ready stays false until Haikal passes and Owner accepts.",
+  "tests": "PASS=68+53+44+21 FAIL=0 (Peaches independent re-run: repair 68/0, staff_ux 53/0, shell_cleanup 44/0, wave1 21/0)",
+  "review": "docs/deliveries/GROK-REVIEW-Content-Engine-Haikal-Fail-Repair-2026-09-24.md",
+  "updated_at": "2026-09-24T18:08:19+08:00",
+  "staff_shell_cleanup": {
+    "folded": true,
+    "status": "PASS",
+    "addendum": "docs/deliveries/ADDENDUM-Content-Engine-Staff-Shell-Cleanup-2026-09-24.md",
+    "tests": "PASS=44 FAIL=0",
+    "verified_at": "2026-09-24T18:08:19+08:00"
+  },
+  "haikal_assignment_seat": {
+    "seat_resolved": true,
+    "assignment_id": "ASG-HAIKAL-CD-1",
+    "role_id": "ROLE-GGV-CREATIVE-DIRECTOR",
+    "evidence": "docs/deliveries/NOTE-Haikal-Creative-Director-Assignment-2026-09-24.md"
+  },
+  "shell_cleanup_stage": "WAITING_CURSOR",
+  "prior_engineering": "PASS",
+  "peaches_verify": "PASS independent re-run Repair PASS=68 FAIL=0 + Staff UX PASS=53 FAIL=0 + Shell cleanup PASS=44 FAIL=0 + Wave1 PASS=21 FAIL=0; ADDENDUM staff shell criteria PASS (header menu|brand|CONTENT ENGINE|Content Plan|Library|Upload + Hi/profile; Boards/Wolf/Up/Back/Home/Dev identity/role codes/raw email/WI hidden from normal staff view; 7-stage upload starts hidden; MEDIA Photo/Video/Audio/Graphic; broll not offered; library thumb+human title; ZIP/retry preserved; ASG-HAIKAL-CD-1 seed kept; repair-status staff_ready=false wi_staff_hidden=true); child 63752 dead EXIT 0; soft head f3ab8f7; Beta :8788 pid 64587; prod :8787 pid 15975 untouched; staff_ready=false locked; human_status FAILED_RETEST_REQUIRED; next human label CONTENT ENGINE READY FOR HAIKAL RETEST; no breadth armed; PEACHES_VETO_CREDIT_CONSERVATION",
+  "peaches_verify_at": "2026-09-24T18:08:19+08:00",
+  "ready_for_haikal_retest_label": true
+}

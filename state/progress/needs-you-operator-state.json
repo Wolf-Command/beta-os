@@ -1,0 +1,61 @@
+{
+  "items": {
+    "CM-PROGRESS-UX": {
+      "operator_status": "ACKNOWLEDGED",
+      "last_action": "acknowledge",
+      "last_note": "live ack",
+      "last_at": "2026-09-23T10:04:58+08:00",
+      "last_event_id": "nye-dc7ce99397e2",
+      "person_id": "PERS-MATT",
+      "proven": false,
+      "ready": false,
+      "staff_ready": false,
+      "haikal_human": "not_started",
+      "devi_retest": "parked",
+      "commissioned": false
+    },
+    "CMQ-AMANDA-GGV": {
+      "operator_status": "ACKNOWLEDGED",
+      "last_action": "acknowledge",
+      "last_note": "ggv connective prove",
+      "last_at": "2026-09-23T10:46:38+08:00",
+      "last_event_id": "nye-013567248a7a",
+      "person_id": "PERS-AMANDA",
+      "proven": false,
+      "ready": false,
+      "staff_ready": false,
+      "haikal_human": "not_started",
+      "devi_retest": "parked",
+      "commissioned": false
+    },
+    "CMQ-AMG-DAY": {
+      "operator_status": "ACKNOWLEDGED",
+      "last_action": "acknowledge",
+      "last_note": "amg connective prove",
+      "last_at": "2026-09-23T11:11:09+08:00",
+      "last_event_id": "nye-446bd00d0906",
+      "person_id": "PERS-MISA",
+      "proven": false,
+      "ready": false,
+      "staff_ready": false,
+      "haikal_human": "not_started",
+      "devi_retest": "parked",
+      "commissioned": false
+    },
+    "CMQ-DEVI-UMA-MOBILE": {
+      "operator_status": "ACKNOWLEDGED",
+      "last_action": "acknowledge",
+      "last_note": "bzg connective http prove",
+      "last_at": "2026-09-27T08:02:56+08:00",
+      "last_event_id": "nye-a47af863e5ac",
+      "person_id": "PERS-DEVI",
+      "proven": false,
+      "ready": false,
+      "staff_ready": false,
+      "haikal_human": "not_started",
+      "devi_retest": "parked",
+      "commissioned": false
+    }
+  },
+  "as_of": "2026-09-27T08:02:56+08:00"
+}

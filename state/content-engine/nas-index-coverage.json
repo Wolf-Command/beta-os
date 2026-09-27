@@ -1,0 +1,72 @@
+{
+  "ok": true,
+  "started": true,
+  "whole_nas": false,
+  "destructive": false,
+  "message": "6 files indexed in place. This is not the whole library.",
+  "brands": [
+    {
+      "slug": "atrium",
+      "display_name": "Atrium",
+      "index_state": "SEARCHABLE",
+      "files_indexed": 6,
+      "message": "6 files indexed in place. This is not the whole library."
+    },
+    {
+      "slug": "umablu",
+      "display_name": "Uma Blu",
+      "index_state": "SEARCHABLE",
+      "files_indexed": 6,
+      "message": "6 files indexed in place. This is not the whole library."
+    },
+    {
+      "slug": "selo",
+      "display_name": "Selo Group",
+      "index_state": "UNKNOWN",
+      "files_indexed": 0,
+      "message": "Folder mapping unknown. Nothing was moved or invented."
+    },
+    {
+      "slug": "habitat",
+      "display_name": "Habitat",
+      "index_state": "SEARCHABLE",
+      "files_indexed": 6,
+      "message": "6 files indexed in place. This is not the whole library."
+    },
+    {
+      "slug": "tropik",
+      "display_name": "Tropik",
+      "index_state": "UNKNOWN",
+      "files_indexed": 0,
+      "message": "Folder mapping unknown. Nothing was moved or invented."
+    },
+    {
+      "slug": "theone",
+      "display_name": "The One",
+      "index_state": "UNKNOWN",
+      "files_indexed": 0,
+      "message": "Folder mapping unknown. Nothing was moved or invented."
+    },
+    {
+      "slug": "rainforest",
+      "display_name": "Blu Zone Rainforest Resto",
+      "index_state": "DISCOVERED",
+      "files_indexed": 0,
+      "message": "Root seen. No media indexed in this pass."
+    },
+    {
+      "slug": "goss",
+      "display_name": "Goss Group",
+      "index_state": "UNKNOWN",
+      "files_indexed": 0,
+      "message": "Folder mapping unknown. Nothing was moved or invented."
+    }
+  ],
+  "staff_ready": false,
+  "proven": false,
+  "ready": false,
+  "commissioned": false,
+  "nas_destructive": false,
+  "wi_connected": false,
+  "wi_staff_hidden": true
+}
