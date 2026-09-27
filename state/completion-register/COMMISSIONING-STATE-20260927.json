@@ -67,10 +67,10 @@
     {
       "id": "CAP-CORE-08",
       "system_state": "PROVEN",
-      "staff_readiness": "Not claimed.",
-      "human_commissioning": "Not commissioned.",
-      "operating_adoption": "Not scored.",
-      "gap": "Broader finance SoD packs remain the READY bar. A temporary P4 constraint is not this row."
+      "staff_readiness": "No. Unsigned close reads on Beta :8788 are 403. No seated session was walked.",
+      "human_commissioning": "Not commissioned. A finance SoD pack stays an owner decision. None was inserted.",
+      "operating_adoption": "Not scored. Not adopted.",
+      "gap": "P0 queue row BLOCKED_OWNER in commit e2cab4f. A submitter cannot verify their own resolved close. Live core_sod_constraints stayed 0. That 0 is the absence of a pack, not a finance rule. Ledger stays PROVEN. This is not staff ready and not human commissioned."
     },
     {
       "id": "CAP-CORE-09",

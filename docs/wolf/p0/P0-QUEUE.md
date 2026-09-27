@@ -6,7 +6,7 @@ Pack S2. Owner brief 27 Sep 2026 16:32 WITA. This is the one execution queue. Ru
 
 Register count is **12**. `build_war_room()` in S1 returned P0 12, P1 20, P2 42, P3 3. The closed set is CAP-CORE-01 through CAP-CORE-10, plus CAP-MSC-02 and CAP-INTG-07. There is no thirteenth P0.
 
-CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED after the empty-table deny in commit `fcae665`. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit `99f5a27`. CAP-CORE-06 stays OPEN after the temporary trail in commit `2229b21`. CAP-CORE-07 stays OPEN after the approval-route prove in commit `ab4af72`. The other five stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
+CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED after the empty-table deny in commit `fcae665`. CAP-CORE-08 is BLOCKED_OWNER after the self-close deny in commit `e2cab4f`. Live `core_sod_constraints` stayed 0. No finance pack was inserted. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit `99f5a27`. CAP-CORE-06 stays OPEN after the temporary trail in commit `2229b21`. CAP-CORE-07 stays OPEN after the approval-route prove in commit `ab4af72`. The other four stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
 
 Order is the critical path. A prerequisite is another P0 the next bar actually waits on. The catalog records no extra prerequisite inside the kernel, because those rows are already PROVEN or READY. That does not make the deployed observation done.
 
@@ -111,14 +111,14 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 
 ## 10. CAP-CORE-08 — Segregation of Duties
 
-- Current state: SYSTEM PROVEN (0.80). Broader finance SoD live packs are the READY bar.
-- Exact missing evidence: those finance packs on the live path, plus deployed proof. None was added.
-- Cursor work: show the existing deny (a submitter cannot verify their own close) on a temporary catalog. Do not add a finance pack. Do not move money.
-- Human work: a broader finance pack, if one is required, is Matt's policy.
+- Current state: SYSTEM PROVEN (0.80). The queue row is BLOCKED_OWNER. On a deleted catalog copy, `PERS-MATT` holds `venue.close.verify` through `ROLE-MATT` and `ASG-MATT-OWNER-1`. A resolved close submitted by `PERS-MATT` and resolved by `PERS-DEVI` stayed `RESOLVED` when `PERS-MATT` verified (`sod_self_close`). A display name and an email string were `forbidden`. `PERS-DEVI` on `ROLE-BZG-FB-OPS-LEAD` does not hold verify, so her verify was `forbidden`. `PERS-HAIKAL` was `forbidden`. The copy had no cash amount. Live `core_sod_constraints` stayed 0. Live `venue_daily_closes` stayed 0. `ROLE-BZG-CLOSER` has no active assignment. On Beta `:8788` pid 64196, unsigned, a spoofed email, `X-Wolf-Subject`, and a bad JWT are 403 on `GET /api/venue-close/list` and `POST /api/venue-close/verify`. The public hostname redirects the list GET to the Access login.
+- Exact missing evidence: a broader finance SoD pack only if Matt authors one, or a record that no pack is authorised. The self-close deny is not that pack. The live count 0 is the absence of a pack. It is not a chosen finance rule.
+- Cursor work: done in commit `e2cab4f`. Evidence: `docs/wolf/p0/P0-CAP-CORE-08-RESULT.md`. No constraint was inserted. No cash amount was written. The ledger was not raised. Do not seat a closer.
+- Human work: Matt decides whether a broader finance SoD pack is required. If it is, he authors it. Cursor does not write the pack.
 - External dependency: none.
-- Prerequisite: CAP-CORE-04, CAP-CORE-07.
-- Closure test: the temporary self-close deny still fails closed, and no new SoD pack was written to the live catalog.
-- Target: BLOCKED_OWNER. Status: OPEN.
+- Prerequisite: CAP-CORE-04, CAP-CORE-07. The critical path records no extra prerequisite. This slice does not use the seat matrix or the approval seated read.
+- Closure test: the temporary self-close deny still fails closed, and no new SoD pack was written to the live catalog. That test passed (`SUMMARY pass=73 fail=0`). The live constraint count stayed 0. `test_sod_constraints.py` is exit 1, PASS=42 FAIL=2, then `ApprovalError: required permission denied: test.spend.approve`. D1 already recorded that abort. It was not repaired.
+- Target: BLOCKED_OWNER. Status: BLOCKED_OWNER. Commit: `e2cab4f`.
 
 ## 11. CAP-CORE-09 — Evidence Requirements
 

@@ -19,13 +19,13 @@
   "human_commissioned": 0,
   "operating_adoption": "NOT MEASURED",
   "final_status_count": {
-    "OPEN": 9,
+    "OPEN": 8,
     "CLOSED": 1,
     "READY_FOR_HUMAN": 1,
     "WAITING_EXTERNAL": 0,
-    "BLOCKED_OWNER": 1
+    "BLOCKED_OWNER": 2
   },
-  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED. The empty-table deny is commit fcae665. Live org_authority_limits stayed 0. The ledger stays PROVEN. CAP-MSC-02 stays OPEN. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit 99f5a27. CAP-CORE-06 stays OPEN after the temporary trail in commit 2229b21. CAP-CORE-07 stays OPEN after the approval-route prove in commit ab4af72. Live core_approval_requests stayed 0. No policy row was inserted. Staff ready, human commissioned, and operating adoption stay unset. The other five P0 items stay OPEN.",
+  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED. The empty-table deny is commit fcae665. Live org_authority_limits stayed 0. The ledger stays PROVEN. CAP-MSC-02 stays OPEN. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit 99f5a27. CAP-CORE-06 stays OPEN after the temporary trail in commit 2229b21. CAP-CORE-07 stays OPEN after the approval-route prove in commit ab4af72. Live core_approval_requests stayed 0. No policy row was inserted. CAP-CORE-08 is BLOCKED_OWNER. The self-close deny is commit e2cab4f. Live core_sod_constraints stayed 0. No finance pack was inserted. Staff ready, human commissioned, and operating adoption stay unset. The other four P0 items stay OPEN.",
   "items": [
     {
       "order": 1,
@@ -195,15 +195,21 @@
       "order": 10,
       "id": "CAP-CORE-08",
       "title": "Segregation of Duties",
-      "current_state": "SYSTEM PROVEN (0.80). test_sod_constraints.py. Broader finance SoD live packs are the READY bar. A temporary constraint is not this row.",
-      "exact_missing_evidence": "Finance SoD packs on the live path, plus deployed proof. No broader finance pack was added.",
-      "cursor_work": "Show the existing SoD deny (submitter cannot verify own close) still holds on a temporary catalog. Do not add a finance SoD pack. Do not move money.",
-      "human_work": "A broader finance pack, if one is required, is Matt's policy. It is not invented here.",
+      "current_state": "SYSTEM PROVEN (0.80). The queue row is BLOCKED_OWNER. On a deleted catalog copy, PERS-MATT holds venue.close.verify through ROLE-MATT and ASG-MATT-OWNER-1. A resolved close submitted by PERS-MATT and resolved by PERS-DEVI stayed RESOLVED when PERS-MATT verified: sod_self_close. A display name and an email string were forbidden. PERS-DEVI on ROLE-BZG-FB-OPS-LEAD does not hold venue.close.verify, so her verify was forbidden. PERS-HAIKAL was forbidden. The copy had no cash amount. Live core_sod_constraints stayed 0. Live core_sod_participation stayed 0. Live venue_daily_closes stayed 0. Live venue_close_variance_policies stayed 0. ROLE-BZG-CLOSER has no active assignment. No SoD constraint was inserted. On Beta :8788 pid 64196, unsigned, a spoofed email, X-Wolf-Subject, and Cf-Access-Jwt-Assertion a.b.c are 403 on GET /api/venue-close/list and POST /api/venue-close/verify. The public hostname returns 302 to the Access login for the list GET. The ledger stays PROVEN. No money was written. Beta was not restarted. Production pid 15975 was not restarted.",
+      "exact_missing_evidence": "A broader finance SoD pack only if Matt authors one, or a record that no pack is authorised. The self-close deny is not that pack. Live core_sod_constraints is 0. That count is the absence of a pack. It is not a chosen finance rule.",
+      "cursor_work": "Done in commit e2cab4f. No constraint was inserted. No cash amount was written. Do not raise the ledger. Do not seat a closer.",
+      "human_work": "Matt decides whether a broader finance SoD pack is required. If it is, he authors it. Cursor does not write the pack and does not invent a threshold.",
       "external_dependency": "none",
       "prerequisite": ["CAP-CORE-04", "CAP-CORE-07"],
-      "closure_test": "The temporary SoD self-close deny still fails closed, and no new SoD pack row was written to the live catalog.",
+      "prerequisite_note": "The critical path records no extra prerequisite. This slice does not use the seat matrix that keeps CAP-CORE-04 OPEN or the approval seated read that keeps CAP-CORE-07 OPEN.",
+      "closure_test": "The temporary SoD self-close deny still fails closed, and no new SoD pack row was written to the live catalog. That test passed (SUMMARY pass=73 fail=0). The live constraint count stayed 0. The ledger was not raised. The finance pack is Matt's decision, so the row is BLOCKED_OWNER.",
       "target_final_state": "BLOCKED_OWNER",
-      "status": "OPEN"
+      "status": "BLOCKED_OWNER",
+      "evidence": [
+        "docs/wolf/p0/P0-CAP-CORE-08-RESULT.md",
+        "scripts/tests/test_cap_core_08_self_close.py"
+      ],
+      "commit": "e2cab4f"
     },
     {
       "order": 11,

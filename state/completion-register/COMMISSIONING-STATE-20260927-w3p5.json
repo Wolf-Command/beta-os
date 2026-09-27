@@ -381,10 +381,10 @@
       "operating_adoption": "NOT MEASURED",
       "staff_ready": false,
       "human_commissioned": false,
-      "gap": "Broader finance SoD live packs for READY",
+      "gap": "P0 queue BLOCKED_OWNER in commit e2cab4f. PERS-MATT was denied sod_self_close on a deleted catalog copy. Live core_sod_constraints stayed 0. No finance pack was inserted. Unsigned callers are 403 on Beta :8788. A seated check was not observed. Ledger stays PROVEN. The live count 0 is the absence of a pack, not a finance rule. This is not staff ready and not human commissioned.",
       "owner_role": "Owner",
       "effort_class": "S",
-      "dependency": "No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY."
+      "dependency": "The queue lists CAP-CORE-04 and CAP-CORE-07. Those seated reads were not observed. This slice does not use them."
     },
     {
       "id": "CAP-CORE-09",

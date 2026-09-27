@@ -83,10 +83,10 @@ Production `:8787` is out of this path. Beta `:8788` is the boundary for any dep
 ### 10. CAP-CORE-08 — Segregation of Duties
 
 - Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
-- Next bar: Broader finance SoD live packs for READY
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Next bar: P0 queue BLOCKED_OWNER in commit e2cab4f. Self-close deny recorded. Live core_sod_constraints stayed 0. A finance pack exists only if Matt authors it. Ledger stays PROVEN.
+- Dependency: The queue lists CAP-CORE-04 and CAP-CORE-07. Those seated reads were not observed. This slice does not use them. The critical path records no extra prerequisite.
 - Responsible role: Owner.
-- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- In six days: The submitter of a resolved close cannot verify it. Commit e2cab4f. Live core_sod_constraints stayed 0. Unsigned callers are 403 on Beta :8788 pid 64196. A seated check was not observed. Ledger stays PROVEN. Do not insert a finance pack. Do not read 0 as a finance rule.
 
 ### 11. CAP-CORE-09 — Evidence Requirements
 

@@ -130,15 +130,15 @@ P0 or P1, and the SYSTEM state is not READY. The next bar is Wolf-side work. Sev
 
 - What it is: Conflicting duties cannot combine end-to-end.
 - Why it matters: Wolf cannot enforce or refuse an action without this.
-- Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: Broader finance SoD live packs for READY
-- Work classes: local_deterministic, human_commissioning.
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S. P0 queue BLOCKED_OWNER.
+- Exact remaining work: Matt decides whether a broader finance SoD pack is required. The self-close deny is recorded in commit e2cab4f. Live core_sod_constraints stayed 0. That count is the absence of a pack. Ledger stays PROVEN.
+- Work classes: local_deterministic, human_commissioning, owner_decision.
+- Dependency: The queue lists CAP-CORE-04 and CAP-CORE-07. Those seated reads were not observed. This slice does not use them.
 - Responsible role: Owner.
-- Evidence required to close: Deployed or runtime proof on the intended Beta boundary for READY. A repository test is not a deployed-route test. A human walk is not this bar.
-- Six-day note: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- Evidence required to close: The P0 closure test is the temporary self-close deny plus live constraint count 0. That test passed. A finance pack exists only if Matt authored it. Raising the ledger to READY still wants that pack on the live path. A repository test is not that pack. A human walk is not this bar.
+- Six-day note: The submitter of a resolved close cannot verify it. Commit e2cab4f. Live core_sod_constraints stayed 0. Unsigned callers are 403 on Beta :8788 pid 64196. A seated check was not observed. Ledger stays PROVEN. Do not insert a pack.
 - Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
+- Deployed proof: Unsigned deny on Beta :8788 pid 64196 is recorded for the close list and unsigned POST /api/venue-close/verify. DEPLOYED-ROUTE-PROOF-20260927 stays FAIL for a seated allow. No real Cloudflare Access JWT was presented. The temporary deny is not that seated proof.
 
 ### CAP-CORE-09 — Evidence Requirements
 
