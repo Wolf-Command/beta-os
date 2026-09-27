@@ -451,6 +451,34 @@ def build_report(
     ]
     for item in connectors:
         item["status"] = _status(item.get("status") or "")
+
+    # Owner 2026-09-22: ClickUp + Telegram RETIRED / HISTORICAL ONLY (not waiting to commission).
+    try:
+        from core import nas_library as _nas
+
+        retired = _nas.retired_systems()
+    except Exception:  # noqa: BLE001
+        retired = [
+            {
+                "source_id": "clickup",
+                "name": "ClickUp",
+                "lifecycle": "RETIRED",
+                "status": "RETIRED",
+                "evidence": "Owner Connection Commissioning: ClickUp RETIRED / HISTORICAL ONLY.",
+                "commission": False,
+                "external_writes": False,
+            },
+            {
+                "source_id": "telegram",
+                "name": "Telegram",
+                "lifecycle": "RETIRED",
+                "status": "RETIRED",
+                "evidence": "Owner Connection Commissioning: Telegram RETIRED / HISTORICAL ONLY.",
+                "commission": False,
+                "external_writes": False,
+            },
+        ]
+
     return {
         "ok": True,
         "bound": "beta-integration-health-readonly",
@@ -460,4 +488,11 @@ def build_report(
         "network_probes": False,
         "connectors": connectors,
         "sources": [cf, alchemist],
+        "retired": retired,
+        "honesty": {
+            "proven": False,
+            "ready": False,
+            "staff_ready": False,
+            "clickup_telegram": "RETIRED",
+        },
     }

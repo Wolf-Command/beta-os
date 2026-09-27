@@ -558,6 +558,18 @@ def _amg_handoff() -> dict[str, Any]:
 
 def handoffs() -> dict[str, Any]:
     cards = [_bzg_handoff(), _ggv_handoff(), _amg_handoff()]
+    # Sprint2 P5: founder-dep ELIMINATE/AUTOMATE/AUGMENT labels (routing only).
+    try:
+        from core import founder_dep_routing as _fdr
+    except Exception:  # noqa: BLE001
+        _fdr = None
+    if _fdr is not None:
+        for card in cards:
+            labels = _fdr.label_for_pack_handoff(
+                str(card.get("pack") or ""),
+                card.get("attention_count") if isinstance(card.get("attention_count"), int) else None,
+            )
+            card.update(labels)
     return {
         "ok": True,
         "cards": cards,

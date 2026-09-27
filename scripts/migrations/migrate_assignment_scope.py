@@ -106,7 +106,10 @@ def main() -> int:
         upsert_asg_scope(conn, "ASG-MATT-OWNER-1", "SCOPE-GGV-ALL", start, None, "ACTIVE", ts)
         upsert_asg_scope(conn, "ASG-MATT-OWNER-1", "SCOPE-GGV-CONTENT", start, None, "ACTIVE", ts)
         upsert_asg_scope(conn, "ASG-AMANDA-CM-1", "SCOPE-GGV-CONTENT", start, None, "ACTIVE", ts)
-        upsert_asg_scope(conn, "ASG-HAIKAL-VE-1", "SCOPE-GGV-CONTENT", start, None, "ACTIVE", ts)
+        # Haikal seat moved to Creative Director 2026-09-24 — do not revive VE scopes (revive=False default).
+        haikal_ve_end = "2026-09-24T17:34:12+08:00"
+        upsert_asg_scope(conn, "ASG-HAIKAL-VE-1", "SCOPE-GGV-CONTENT", start, haikal_ve_end, "ENDED", ts)
+        upsert_asg_scope(conn, "ASG-HAIKAL-CD-1", "SCOPE-GGV-CONTENT", haikal_ve_end, None, "ACTIVE", ts)
         upsert_asg_scope(conn, "ASG-MISA-CC-1", "SCOPE-GGV-CONTENT", start, None, "ACTIVE", ts)
 
         conn.execute(

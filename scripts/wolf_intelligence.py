@@ -266,6 +266,45 @@ def fortnight_bounds(anchor: date | None = None) -> tuple[str, str]:
     return monday.isoformat(), end.isoformat()
 
 
+BRAND_TITLE_NAMES = {
+    "habitat": "Habitat",
+    "umablu": "Uma Blu",
+    "atrium": "Atrium",
+    "selo": "Selo",
+    "tropik": "Tropik",
+}
+
+
+def brand_title_name(brand_id: str, display_name: str | None = None) -> str:
+    """Short brand name for human plan titles."""
+    bid = (brand_id or "").strip().lower()
+    if bid in BRAND_TITLE_NAMES:
+        return BRAND_TITLE_NAMES[bid]
+    if display_name:
+        return str(display_name).split("/")[0].strip() or (bid.title() if bid else "Brand")
+    return bid.title() if bid else "Brand"
+
+
+def format_fortnight_title(
+    brand_id: str,
+    period_start: str,
+    period_end: str,
+    display_name: str | None = None,
+) -> str:
+    """Human plan title, e.g. Habitat Fortnight Sep 14—27."""
+    name = brand_title_name(brand_id, display_name)
+    try:
+        start = date.fromisoformat(str(period_start)[:10])
+        end = date.fromisoformat(str(period_end)[:10])
+    except ValueError:
+        return f"{name} Fortnight"
+    if start.month == end.month and start.year == end.year:
+        span = f"{start.strftime('%b')} {start.day}—{end.day}"
+    else:
+        span = f"{start.strftime('%b')} {start.day}—{end.strftime('%b')} {end.day}"
+    return f"{name} Fortnight {span}"
+
+
 def content_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 

@@ -57,6 +57,11 @@ WHY_CLOSE_NOT_LOADED = (
     "Daily Close could not be loaded. No substitute figures were invented."
 )
 WHY_ISSUES = "Issues are open and need a human."
+WHY_PARTIAL = (
+    "Part of this order has been received. The rest is still outstanding. "
+    "This is not a verified stock count."
+)
+WHY_DRAFT = "This purchase request is still a draft and has not been submitted."
 WHY_UNMATCHED = (
     "No deterministic explanation template matches this blocker, "
     "so it is not treated as an owner task."
@@ -81,6 +86,8 @@ _TEMPLATES: dict[str, tuple[str, str]] = {
     "close_policy_required": (WHY_CLOSE_POLICY, CLASS_NEEDS_POLICY),
     "close_not_loaded": (WHY_CLOSE_NOT_LOADED, CLASS_NEEDS_STAFF),
     "issues_open": (WHY_ISSUES, CLASS_NEEDS_STAFF),
+    "partial_receive": (WHY_PARTIAL, CLASS_NEEDS_STAFF),
+    "draft_not_submitted": (WHY_DRAFT, CLASS_NEEDS_STAFF),
 }
 
 _KIND_ALIAS = {

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sqlite3
 import uuid
 from datetime import date, datetime, timedelta, timezone
@@ -23,6 +24,8 @@ from core.blocker_explain import (
     explain_operating_blocker,
 )
 from core import evidence as _evidence
+from core import intel_connective as _intel_connect
+from core import staff_ready_ux as _staff_ready
 from core import uma_alchemist_ro as _legacy_alc
 from core import venue_close as _venue_close
 from core import work_items as _work_items
@@ -147,6 +150,76 @@ ALLOWED_TRANSITIONS: dict[str, frozenset[str]] = {
     "OPS_CLOSED": frozenset(),
 }
 
+CONNECTIVE_SCHEMA_ID = "wolf.bzg-ops-needs-you-connective.v1"
+CONNECTIVE_SLICE = "bzg_ops_needs_you_connective"
+CONNECTIVE_RUN_ID = "BF-bzg-ops-needs-you-connective-20260923"
+CONNECTIVE_CLAIM_ID = "bf-bzg-ops-needs-you-connective-20260923"
+CONNECTIVE_BOUND = "beta-bzg-loop-safe"
+CONNECTIVE_KINDS: tuple[str, ...] = (
+    "morning_seed",
+    "waiting_others",
+    "needs_you",
+    "ops_loop",
+)
+CONNECTIVE_DEPTH_KINDS = frozenset({"morning_seed", "waiting_others", "needs_you"})
+BZG_TARGET_CRS: tuple[str, ...] = (
+    "CR-080362c384f2bf36",  # PR operator path — Devi human commissioning parked
+    "CR-b979d19a6ce4b9ce",  # Receiving input — Devi human commissioning parked
+    "CR-215a379980f228e8",  # AU-BZG-03-UMA — Devi retest parked
+)
+CAP_IDS: tuple[str, ...] = tuple(f"CAP-BZG-0{i}" for i in range(1, 8))
+LEDGER_JSON = BETA_ROOT / "state" / "model-c-baseline-assessments.json"
+OWNER = "PERS-MATT"
+DEVI = "PERS-DEVI"
+
+LOOP_BOUND = "beta-bzg-loop-safe"
+LOOP_SCHEMA_ID = "wolf.bzg-loop-closure.v2"
+LOOP_SLICE = "bzg_loop_closure_v2"
+# Sprint2 P1 operator depth — PR detail/action + real goods-receipt input (same bound).
+OPERATOR_DEPTH_SCHEMA_ID = "wolf.bzg-operator-depth.v1"
+OPERATOR_DEPTH_SLICE = "bzg_operator_depth"
+OPERATOR_DEPTH_CRS = ("CR-080362c384f2bf36", "CR-b979d19a6ce4b9ce")
+ROLE_FB_OPS_LEAD = "ROLE-BZG-FB-OPS-LEAD"
+PERS_DEVI_FIXTURE = "PERS-DEVI"
+PERM_PR_OPERATOR = "bzg.pr.operator"
+PERM_PR_OPERATOR_ID = "PERM-BZG-PR-OPERATOR"
+PR_OPERATOR_ACTION_KINDS = frozenset({"note", "correction", "quality"})
+# Today → PR → approval → order → receive/partial → stock/bill → petty → close →
+# exception → handover → manager → Owner. Empty stages stay EMPTY — not invent.
+LOOP_STAGES: tuple[str, ...] = (
+    "today",
+    "purchase_request",
+    "approval_boundary",
+    "ordering_state",
+    "receiving",
+    "partial_receiving",
+    "stock_consequence",
+    "supplier_bill_consequence",
+    "petty_cash_record",
+    "daily_close",
+    "exception",
+    "handover",
+    "manager_visibility",
+    "owner_exception",
+)
+LOOP_STAGE_LABELS = {
+    "today": "Today",
+    "purchase_request": "Purchase request",
+    "approval_boundary": "Approval boundary",
+    "ordering_state": "Ordering state",
+    "receiving": "Receiving",
+    "partial_receiving": "Partial receiving",
+    "stock_consequence": "Stock consequence",
+    "supplier_bill_consequence": "Supplier / bill consequence",
+    "petty_cash_record": "Petty / cash record",
+    "daily_close": "Daily close",
+    "exception": "Exception",
+    "handover": "Handover",
+    "manager_visibility": "Manager visibility",
+    "owner_exception": "Owner exception",
+}
+LOOP_NOTE_KINDS = frozenset({"handover", "exception", "manager", "owner"})
+
 HONESTY = {
     "payment_execution": "NOT_BUILT",
     "paid_claim_is_not_verified": True,
@@ -162,6 +235,43 @@ HONESTY = {
     "proven": False,
     "ready": False,
     "cap_bzg_03_rewritten": False,
+    "bound": LOOP_BOUND,
+    "loop_bound": LOOP_BOUND,
+    "loop_slice": LOOP_SLICE,
+    "loop_schema_id": LOOP_SCHEMA_ID,
+    "empty_stock_is_not_live_inventory": True,
+    "esb_write": False,
+    "esb_mutated": False,
+    "payment_executed": False,
+    "money": None,
+    "zayen_write": False,
+    "cloudflare_mutated": False,
+    "access_mutated": False,
+    "production_write": False,
+    "secret_exfil": False,
+    "invented_proven": False,
+    "invented_ready": False,
+    "cr_resolved": False,
+    "anon_fail_closed": True,
+    "operator_depth_schema_id": OPERATOR_DEPTH_SCHEMA_ID,
+    "operator_depth_slice": OPERATOR_DEPTH_SLICE,
+    "live_devi_commission": False,
+    "human_commissioning_required_for_prove": False,
+    "staff_ready": False,
+    "haikal_human": "not_started",
+    "devi_retest": "parked",
+    "invented_haikal_human": False,
+    "invented_devi_done": False,
+    "invented_staff_ready": False,
+    "duplicate_mutate_surface": False,
+    "false_resolve_cr": False,
+    "bzg_compose": False,
+    "money": None,
+    "connective_schema": CONNECTIVE_SCHEMA_ID,
+    "connective_bound": CONNECTIVE_BOUND,
+    "connective_claim_id": CONNECTIVE_CLAIM_ID,
+    "connective_run_id": CONNECTIVE_RUN_ID,
+    "bzg_ops_needs_you_connective": True,
 }
 
 
@@ -950,6 +1060,32 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
           closed_by TEXT NOT NULL,
           created_at TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS bzg_ops_loop_notes (
+          note_id TEXT PRIMARY KEY,
+          venue TEXT NOT NULL,
+          kind TEXT NOT NULL,
+          source_id TEXT,
+          note TEXT NOT NULL,
+          status TEXT NOT NULL,
+          created_by TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_bzg_ops_loop_notes_kind
+          ON bzg_ops_loop_notes(venue, kind, status);
+        CREATE TABLE IF NOT EXISTS bzg_ops_pr_operator_actions (
+          action_id TEXT PRIMARY KEY,
+          venue TEXT NOT NULL,
+          pr_key TEXT NOT NULL,
+          kind TEXT NOT NULL CHECK (kind IN ('note', 'correction', 'quality')),
+          note TEXT NOT NULL,
+          corrects_receipt_id TEXT,
+          created_by TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'RECORDED'
+        );
+        CREATE INDEX IF NOT EXISTS idx_bzg_ops_pr_operator_actions_pr
+          ON bzg_ops_pr_operator_actions(venue, pr_key, created_at);
         """
     )
 
@@ -2090,8 +2226,10 @@ def today_cards(
         ) -> None:
             if not items:
                 return
-            public = [
-                {
+            public = []
+            for p in items:
+                key = str(p.get("pr_id") or p.get("pr_num") or "").strip()
+                row = {
                     "label": _pr_human_label(p),
                     "example": bool(p.get("example")),
                     "pr_id": p.get("pr_id"),  # click-through only; UI shows pr_num
@@ -2101,8 +2239,9 @@ def today_cards(
                     "provenance": p.get("provenance"),
                     "display_status": p.get("display_status"),
                 }
-                for p in items
-            ]
+                if key and not row["example"]:
+                    row["href"] = pr_operator_href(key)
+                public.append(row)
             attention_count, example_count = _item_counts(public)
             explain_kind = PR_CARD_EXPLAIN.get(kind, kind)
             blocked = explain_kind in BLOCKED_EXPLAIN_KINDS
@@ -2262,6 +2401,27 @@ def today_cards(
                 "href": lead.get("href"),
                 "kind": lead.get("kind"),
             }
+        # Sprint2 P4: AKR + Decision Memory + provider fail-safe on BZG next action.
+        base_next = {
+            "code": str((now or {}).get("kind") or "today"),
+            "label": str((now or {}).get("title") or "Review Uma Blu Today"),
+            "hook": "today",
+            "invented": False,
+        }
+        intel_next = _intel_connect.attach_to_next_action("bzg", base_next)
+        intel_strip = _intel_connect.desk_intel_strip("bzg", base_next=base_next)
+        if now is not None:
+            now["next_action_base"] = base_next
+            now["next_action"] = {
+                "code": intel_next.get("code"),
+                "label": intel_next.get("label"),
+                "hook": intel_next.get("hook"),
+            }
+            now["intel_recommendation"] = intel_next.get("intel_recommendation")
+            # When intel changes work, surface the effective label as what to do now.
+            rec = intel_next.get("intel_recommendation") or {}
+            if rec.get("changes_work") and intel_next.get("label"):
+                now["title"] = str(intel_next["label"])
         all_days = list_petty_days(conn=c)
         float_status = (
             "PROVIDED"
@@ -2294,6 +2454,16 @@ def today_cards(
             "stock": stock,
             "payment_execution": False,
             "human_commissioning": "NOT_DONE",
+            "intel_connective": intel_strip,
+            "intel_bound": _intel_connect.BOUND,
+            "next_action": {
+                "code": intel_next.get("code"),
+                "label": intel_next.get("label"),
+                "hook": intel_next.get("hook"),
+                "changes_work": bool(
+                    (intel_next.get("intel_recommendation") or {}).get("changes_work")
+                ),
+            },
         }
         if (person_id or "").strip():
             from core import uma_devi_p0 as _p0
@@ -2320,6 +2490,32 @@ def today_cards(
                 "empty": True,
                 "empty_message": "Sign in to see earlier closes.",
             }
+        # Sprint2 P6: phone-first staff surface after closes/permissions attached.
+        payload["staff_ready"] = _staff_ready.staff_surface_bzg(payload)
+        payload["staff_ready_bound"] = _staff_ready.BOUND
+        # Sprint2 P1 v2: continuous loop desk on the same Today phone path.
+        try:
+            loop = loop_desk(person_id=person_id, conn=c)
+        except Exception:  # noqa: BLE001
+            loop = {
+                "ok": False,
+                "bound": LOOP_BOUND,
+                "stages": [],
+                "order": list(LOOP_STAGES),
+                "empty_stock_is_not_live_inventory": True,
+                "payment_execution": False,
+                "esb_mutated": False,
+            }
+        payload["loop"] = loop
+        payload["loop_bound"] = LOOP_BOUND
+        _attach_needs_you_connective(payload, person_id=person_id, conn=c)
+        payload["ordering_state"] = loop.get("ordering_state")
+        payload["stock_consequence"] = loop.get("stock_consequence")
+        payload["supplier_bill_consequence"] = loop.get("supplier_bill_consequence")
+        payload["exception_strip"] = loop.get("exception")
+        payload["handover_strip"] = loop.get("handover")
+        payload["manager_visibility"] = loop.get("manager_visibility")
+        payload["owner_exception"] = loop.get("owner_exception")
         return payload
     finally:
         if own:
@@ -2448,6 +2644,12 @@ def list_issues(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
                         "example": False,
                         "close_id": cl.get("close_id"),
                         "href": "/uma-blu-close",
+                        "work_item_id": cl.get("work_item_id"),
+                        "work_href": (
+                            f"/my-work/item/{cl.get('work_item_id')}"
+                            if cl.get("work_item_id")
+                            else "/my-work"
+                        ),
                     }
                 )
         except Exception:  # noqa: BLE001
@@ -2808,8 +3010,2360 @@ def write_commissioning_readiness(path: Path | None = None) -> Path:
 
 
 def honesty_flags() -> dict[str, Any]:
-    return dict(HONESTY)
+    flags = dict(HONESTY)
+    flags["loop_stages"] = list(LOOP_STAGES)
+    flags["loop_schema_id"] = LOOP_SCHEMA_ID
+    flags["bound"] = LOOP_BOUND
+    flags["loop_bound"] = LOOP_BOUND
+    return flags
+
+
+def schema_document() -> dict[str, Any]:
+    """Loop schema. Empty slots are not live inventory, ESB write, or payment."""
+    return {
+        "schema_id": LOOP_SCHEMA_ID,
+        "bound": LOOP_BOUND,
+        "loop_stages": list(LOOP_STAGES),
+        "loop_stage_labels": dict(LOOP_STAGE_LABELS),
+        "loop_note_kinds": sorted(LOOP_NOTE_KINDS),
+        "empty_stock_is_not_live_inventory": True,
+        "esb_write": False,
+        "payment_execution": False,
+        "proven_property": False,
+        "ready_property": False,
+        "additionalProperties": False,
+    }
+
+
+def refuse_proven(_body: dict[str, Any] | None = None) -> None:
+    raise UmaOpsError(
+        "BZG loop closure refuses inventing PROVEN.",
+        code="proven_refused",
+        http_status=405,
+    )
+
+
+def refuse_ready(_body: dict[str, Any] | None = None) -> None:
+    raise UmaOpsError(
+        "BZG loop closure refuses inventing READY.",
+        code="ready_refused",
+        http_status=405,
+    )
+
+
+def refuse_staff_ready(_body: dict[str, Any] | None = None) -> None:
+    raise UmaOpsError(
+        "BZG Uma desk refuses inventing staff_ready.",
+        code="staff_ready_refused",
+        http_status=405,
+    )
+
+
+def refuse_haikal_done(_body: dict[str, Any] | None = None) -> None:
+    raise UmaOpsError(
+        "BZG Uma desk refuses inventing Haikal human done.",
+        code="haikal_done_refused",
+        http_status=405,
+    )
+
+
+def refuse_devi_done(_body: dict[str, Any] | None = None) -> None:
+    raise UmaOpsError(
+        "BZG Uma desk refuses inventing Devi done. Devi retest stays parked.",
+        code="devi_done_refused",
+        http_status=405,
+    )
+
+
+def connective_refuse_code(path: str) -> str | None:
+    """Refuse invent paths. GET /staff-ready stays the existing read surface."""
+    refused = {
+        "/api/bzg/uma-blu/haikal-done": "haikal_done",
+        "/api/bzg/uma-blu/haikal_done": "haikal_done",
+        "/api/bzg/uma-blu/devi-done": "devi_done",
+        "/api/bzg/uma-blu/devi_done": "devi_done",
+        "/api/bzg/uma-blu/staff_ready": "staff_ready",
+        "/api/bzg/uma-blu/needs-you/staff-ready": "staff_ready",
+        "/api/bzg/uma-blu/needs-you/haikal-done": "haikal_done",
+        "/api/bzg/uma-blu/needs-you/devi-done": "devi_done",
+        "/api/bzg/uma-blu/needs-you/proven": "proven",
+        "/api/bzg/uma-blu/needs-you/ready": "ready",
+        "/api/bzg/uma-blu/needs-you/money": "money",
+        "/api/bzg/uma-blu/needs-you/payment": "payment",
+    }
+    return refused.get(path)
+
+
+def _apply_connective_refuse(code: str) -> None:
+    if code == "staff_ready":
+        refuse_staff_ready()
+    elif code == "haikal_done":
+        refuse_haikal_done()
+    elif code == "devi_done":
+        refuse_devi_done()
+    elif code == "proven":
+        refuse_proven()
+    elif code == "ready":
+        refuse_ready()
+    elif code in {"money", "payment"}:
+        refuse_money()
+    else:
+        raise UmaOpsError(f"refused: {code}", code="refused", http_status=405)
+
+
+def refuse_money(_body: dict[str, Any] | None = None) -> None:
+    raise UmaOpsError(
+        "BZG loop closure refuses money / bank / payment execution.",
+        code="money_refused",
+        http_status=405,
+    )
+
+
+def refuse_payment_exec(_body: dict[str, Any] | None = None) -> None:
+    raise UmaOpsError(
+        "BZG loop closure refuses payment execution.",
+        code="payment_execution_refused",
+        http_status=405,
+    )
+
+
+def refuse_esb_write(_body: dict[str, Any] | None = None) -> None:
+    raise UmaOpsError(
+        "BZG loop closure refuses ESB write. ESB remains stock SoT (read note only).",
+        code="esb_write_refused",
+        http_status=405,
+    )
+
+
+def refuse_production(_body: dict[str, Any] | None = None) -> None:
+    raise UmaOpsError(
+        "BZG loop closure refuses Production mutation.",
+        code="production_refused",
+        http_status=405,
+    )
+
+
+def refuse_cloudflare(_body: dict[str, Any] | None = None) -> None:
+    raise UmaOpsError(
+        "BZG loop closure refuses Cloudflare / Access mutation.",
+        code="cloudflare_refused",
+        http_status=405,
+    )
+
+
+def refuse_secret_exfil(_body: dict[str, Any] | None = None) -> None:
+    raise UmaOpsError(
+        "BZG loop closure refuses secret exfiltration.",
+        code="secret_exfil_refused",
+        http_status=405,
+    )
+
+
+def refuse_resolve(_body: dict[str, Any] | None = None) -> None:
+    raise UmaOpsError(
+        "BZG loop closure refuses resolving completion rows / false-resolve.",
+        code="resolve_refused",
+        http_status=405,
+    )
+
+
+def refuse_zayen(_body: dict[str, Any] | None = None) -> None:
+    raise UmaOpsError(
+        "BZG loop closure refuses Zayen / books write.",
+        code="zayen_refused",
+        http_status=405,
+    )
+
+
+def refuse_code(path: str) -> str | None:
+    """Map refuse path tails to refuse helpers for serve_beta."""
+    tail = path.rstrip("/").rsplit("/", 1)[-1].lower()
+    mapping = {
+        "proven": "proven",
+        "prove": "proven",
+        "ready": "ready",
+        "payment": "payment",
+        "money": "money",
+        "bank": "money",
+        "pay": "payment",
+        "esb": "esb",
+        "esb-write": "esb",
+        "zayen": "zayen",
+        "books": "zayen",
+        "production": "production",
+        "cloudflare": "cloudflare",
+        "cf": "cloudflare",
+        "access": "cloudflare",
+        "secret": "secret",
+        "secret-exfil": "secret",
+        "resolve": "resolve",
+    }
+    return mapping.get(tail)
+
+
+def _apply_refuse(code: str) -> None:
+    if code == "proven":
+        refuse_proven()
+    elif code == "ready":
+        refuse_ready()
+    elif code in ("money",):
+        refuse_money()
+    elif code == "payment":
+        refuse_payment_exec()
+    elif code == "esb":
+        refuse_esb_write()
+    elif code == "production":
+        refuse_production()
+    elif code == "cloudflare":
+        refuse_cloudflare()
+    elif code == "secret":
+        refuse_secret_exfil()
+    elif code == "resolve":
+        refuse_resolve()
+    elif code == "zayen":
+        refuse_zayen()
+    else:
+        raise UmaOpsError(f"refused: {code}", code="refused", http_status=405)
+
+
+def _live_prs(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    """Wolf PRs only for loop objects — exclude example fixtures from attention."""
+    return [p for p in _wolf_prs(conn, venue=VENUE_UMA, state=None, limit=200) if not p.get("example")]
+
+
+def _pr_summaries(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out = []
+    for p in rows:
+        out.append(
+            {
+                "pr_id": p.get("pr_id"),
+                "state": p.get("state"),
+                "label": _pr_human_label(p),
+                "supplier_name": p.get("supplier_name"),
+                "purpose": p.get("purpose"),
+            }
+        )
+    return out
+
+
+def _loop_notes(
+    conn: sqlite3.Connection,
+    *,
+    kind: str | None = None,
+    status: str = "OPEN",
+    limit: int = 40,
+) -> list[dict[str, Any]]:
+    ensure_schema(conn)
+    if kind:
+        rows = conn.execute(
+            """
+            SELECT note_id, kind, source_id, note, status, created_by, created_at
+            FROM bzg_ops_loop_notes
+            WHERE venue=? AND kind=? AND status=?
+            ORDER BY created_at DESC LIMIT ?
+            """,
+            (VENUE_UMA, kind, status, limit),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """
+            SELECT note_id, kind, source_id, note, status, created_by, created_at
+            FROM bzg_ops_loop_notes
+            WHERE venue=? AND status=?
+            ORDER BY created_at DESC LIMIT ?
+            """,
+            (VENUE_UMA, status, limit),
+        ).fetchall()
+    return [
+        {
+            "note_id": r["note_id"],
+            "kind": r["kind"],
+            "source_id": r["source_id"],
+            "note": r["note"],
+            "status": r["status"],
+            "created_by": r["created_by"],
+            "created_at": r["created_at"],
+            "invented": False,
+        }
+        for r in rows
+    ]
+
+
+def record_loop_note(
+    *,
+    person_id: str,
+    kind: str,
+    note: str,
+    source_id: str | None = None,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Record handover / exception / manager / Owner note. Not money. Not ESB."""
+    k = (kind or "").strip().lower()
+    if k not in LOOP_NOTE_KINDS:
+        raise UmaOpsError(
+            f"kind must be one of {sorted(LOOP_NOTE_KINDS)}",
+            code="invalid_kind",
+        )
+    text = (note or "").strip()
+    if not text:
+        raise UmaOpsError("note required", code="missing_note")
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        assert_catalog_writable(Path(CATALOG_DB))
+        ensure_schema(c)
+        _require_ops_permission(c, person_id, "work.create")
+        ts = now_utc_iso()
+        note_id = f"LOOP-UMA-{uuid.uuid4().hex[:10].upper()}"
+        c.execute(
+            """
+            INSERT INTO bzg_ops_loop_notes (
+              note_id, venue, kind, source_id, note, status, created_by, created_at
+            ) VALUES (?, ?, ?, ?, ?, 'OPEN', ?, ?)
+            """,
+            (
+                note_id,
+                VENUE_UMA,
+                k,
+                (source_id or "").strip() or None,
+                text,
+                person_id.strip(),
+                ts,
+            ),
+        )
+        _audit_ops(
+            action=f"bzg.loop.{k}",
+            result="SUCCEEDED",
+            resource_type="bzg_ops_loop_note",
+            resource_id=note_id,
+            conn=c,
+            metadata={"status": "OPEN", "note": text, "kind": k, "payment_execution": False},
+            actor_type="PERSON",
+            verified_person_id=person_id,
+            identity=identity,
+        )
+        if commit:
+            c.commit()
+        return {
+            "ok": True,
+            "note_id": note_id,
+            "kind": k,
+            "note": text,
+            "status": "OPEN",
+            "source_id": (source_id or "").strip() or None,
+            "payment_execution": False,
+            "esb_mutated": False,
+            "invented": False,
+            "bound": LOOP_BOUND,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def ordering_state(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
+    """First-class ordering state after approval. APPROVED awaiting order + ORDERED."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        ensure_schema(c)
+        prs = _live_prs(c)
+        awaiting_order = [p for p in prs if p.get("state") == "APPROVED"]
+        ordered = [p for p in prs if p.get("state") == "ORDERED"]
+        rows = _pr_summaries(awaiting_order + ordered)
+        empty = len(rows) == 0
+        return {
+            "ok": True,
+            "bound": LOOP_BOUND,
+            "stage": "ordering_state",
+            "awaiting_order": _pr_summaries(awaiting_order),
+            "ordered_not_received": _pr_summaries(ordered),
+            "rows": rows,
+            "count": len(rows),
+            "empty": empty,
+            "status": "EMPTY" if empty else "ACTIVE",
+            "why": (
+                "No approved or ordered purchase requests in Wolf."
+                if empty
+                else "Ordering state after approval. Approved awaits order; ordered awaits receive."
+            ),
+            "payment_execution": False,
+            "esb_mutated": False,
+            "invented": False,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def partial_receiving_state(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
+    """Part-received PRs awaiting remainder. Not a stock count."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        ensure_schema(c)
+        partial = [p for p in _live_prs(c) if p.get("state") == "PARTIALLY_RECEIVED"]
+        rows = _pr_summaries(partial)
+        empty = len(rows) == 0
+        return {
+            "ok": True,
+            "bound": LOOP_BOUND,
+            "stage": "partial_receiving",
+            "rows": rows,
+            "count": len(rows),
+            "empty": empty,
+            "status": "EMPTY" if empty else "ACTIVE",
+            "why": (
+                "No partial receives recorded."
+                if empty
+                else "Part received — remainder still out. Shortfall is not a verified stock count."
+            ),
+            "verified_stock_count": False,
+            "live_perpetual_inventory": False,
+            "payment_execution": False,
+            "esb_mutated": False,
+            "invented": False,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def stock_consequence(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
+    """Stock consequence of partial/short receive. EMPTY ≠ live inventory. No ESB write."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        stock = stock_framework(conn=c)
+        partial = partial_receiving_state(conn=c)
+        hooks = list(stock.get("variance_hooks") or [])
+        linked = []
+        for row in partial.get("rows") or []:
+            linked.append(
+                {
+                    "pr_id": row.get("pr_id"),
+                    "label": row.get("label"),
+                    "consequence": "partial_receive_shortfall",
+                    "verified_stock_count": False,
+                    "live_inventory": False,
+                    "note": (
+                        "Partial receive implies a shortfall hook only. "
+                        "Empty on-hand is not a live inventory count. ESB remains SoT."
+                    ),
+                }
+            )
+        empty = len(hooks) == 0 and len(linked) == 0
+        return {
+            "ok": True,
+            "bound": LOOP_BOUND,
+            "stage": "stock_consequence",
+            "on_hand": None,
+            "on_hand_status": "EMPTY",
+            "empty_is_not_live_inventory": True,
+            "live_perpetual_inventory": False,
+            "verified_stock_count": False,
+            "esb_remains_stock_sot": True,
+            "esb_mutated": False,
+            "variance_hooks": hooks,
+            "partial_links": linked,
+            "count": len(hooks) + len(linked),
+            "empty": empty,
+            "status": "EMPTY" if empty else "WAITING_DATA",
+            "why": (
+                "No stock consequence yet. Empty framework is not live inventory."
+                if empty
+                else "Stock consequence from receipt shortfalls / partial receives only. Not perpetual inventory."
+            ),
+            "payment_execution": False,
+            "invented": False,
+            "honesty": {
+                "empty_stock_is_not_live_inventory": True,
+                "esb_write": False,
+                "proven": False,
+                "ready": False,
+            },
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def supplier_bill_consequence(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
+    """Supplier/bill consequence after receive/partial. Not payment execution."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        ensure_schema(c)
+        prs = _live_prs(c)
+        awaiting_bill = [
+            p
+            for p in prs
+            if p.get("state") in ("PARTIALLY_RECEIVED", "RECEIVED", "OPS_CLOSED")
+            and not (p.get("bill_reference") or "").strip()
+        ]
+        bill_in = [p for p in prs if p.get("state") == "BILL_RECEIVED"]
+        rows = []
+        for p in awaiting_bill:
+            rows.append(
+                {
+                    **_pr_summaries([p])[0],
+                    "consequence": "awaiting_supplier_bill",
+                    "payment_execution": False,
+                    "note": (
+                        "Goods path recorded. Supplier bill not yet on the Wolf record. "
+                        "This is not a payment."
+                    ),
+                }
+            )
+        for p in bill_in:
+            rows.append(
+                {
+                    **_pr_summaries([p])[0],
+                    "consequence": "bill_received_awaiting_payment_path",
+                    "payment_execution": False,
+                    "note": (
+                        "Bill received on the ops path. Payment execution stays off this screen."
+                    ),
+                }
+            )
+        empty = len(rows) == 0
+        return {
+            "ok": True,
+            "bound": LOOP_BOUND,
+            "stage": "supplier_bill_consequence",
+            "rows": rows,
+            "awaiting_bill_count": len(awaiting_bill),
+            "bill_received_count": len(bill_in),
+            "count": len(rows),
+            "empty": empty,
+            "status": "EMPTY" if empty else "ACTIVE",
+            "why": (
+                "No supplier/bill consequence objects yet."
+                if empty
+                else "Bill consequence from receive/partial path. Not money movement."
+            ),
+            "payment_execution": False,
+            "esb_mutated": False,
+            "invented": False,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def list_daily_evidence(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
+    """Close evidence already stored on venue_daily_closes. No new table. No amounts invented."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        ensure_schema(c)
+        rows: list[dict[str, Any]] = []
+        try:
+            closes = _venue_close.list_closes(limit=30, conn=c)
+        except Exception:  # noqa: BLE001
+            closes = []
+        for cl in closes:
+            date = cl.get("business_date") or "date unknown"
+            cash_id = cl.get("declared_cash_evidence_id")
+            if cash_id:
+                rows.append(
+                    {
+                        "kind": "cash_count",
+                        "label": f"Cash count · {date}",
+                        "business_date": cl.get("business_date"),
+                        "evidence_id": cash_id,
+                        "href": "/uma-blu-close",
+                    }
+                )
+            note_id = cl.get("resolve_evidence_id")
+            if note_id:
+                rows.append(
+                    {
+                        "kind": "exception_note",
+                        "label": f"Exception note · {date}",
+                        "business_date": cl.get("business_date"),
+                        "evidence_id": note_id,
+                        "href": "/uma-blu-close",
+                    }
+                )
+        empty = len(rows) == 0
+        return {
+            "ok": True,
+            "bound": LOOP_BOUND,
+            "rows": rows,
+            "count": len(rows),
+            "empty": empty,
+            "empty_message": "No close evidence recorded in Wolf yet." if empty else None,
+            "esb_mutated": False,
+            "payment_execution": False,
+            "invented": False,
+            "staff_ready": False,
+            "human_commissioned": False,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def exception_strip(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
+    """Exception strip from issues + loop exception notes. No invent."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        issues_payload = list_issues(conn=c)
+        issue_rows = list(issues_payload.get("issues") or [])
+        notes = _loop_notes(c, kind="exception")
+        rows: list[dict[str, Any]] = []
+        for iss in issue_rows:
+            rows.append(
+                {
+                    "kind": iss.get("kind"),
+                    "label": iss.get("label"),
+                    "source": "issue",
+                    "href": iss.get("href"),
+                    "work_href": iss.get("work_href"),
+                    "work_item_id": iss.get("work_item_id"),
+                    "why": iss.get("why"),
+                    "classification": iss.get("classification"),
+                }
+            )
+        for n in notes:
+            rows.append(
+                {
+                    "kind": "loop_exception",
+                    "label": n.get("note"),
+                    "source": "loop_note",
+                    "note_id": n.get("note_id"),
+                    "source_id": n.get("source_id"),
+                }
+            )
+        empty = len(rows) == 0
+        return {
+            "ok": True,
+            "bound": LOOP_BOUND,
+            "stage": "exception",
+            "exceptions": rows,
+            "count": len(rows),
+            "empty": empty,
+            "status": "EMPTY" if empty else "ACTIVE",
+            "why": (
+                "No open exceptions."
+                if empty
+                else "Exceptions from ops issues and recorded loop exception notes."
+            ),
+            "invented": False,
+            "payment_execution": False,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def handover_strip(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
+    """Handover strip from recorded handover notes + Today lead. Empty stays empty."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        notes = _loop_notes(c, kind="handover")
+        items = [
+            {
+                "kind": "handover",
+                "note": n.get("note"),
+                "note_id": n.get("note_id"),
+                "source_id": n.get("source_id"),
+                "created_at": n.get("created_at"),
+            }
+            for n in notes
+        ]
+        empty = len(items) == 0
+        return {
+            "ok": True,
+            "bound": LOOP_BOUND,
+            "stage": "handover",
+            "items": items,
+            "count": len(items),
+            "empty": empty,
+            "status": "EMPTY" if empty else "ACTIVE",
+            "why": (
+                "No handover note recorded yet."
+                if empty
+                else "Handover notes for the next Uma Blu operator. Not a payment."
+            ),
+            "invented": False,
+            "payment_execution": False,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def manager_visibility(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
+    """Manager visibility from exceptions + manager notes + partial/policy attention."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        exc = exception_strip(conn=c)
+        partial = partial_receiving_state(conn=c)
+        ordering = ordering_state(conn=c)
+        mgr_notes = _loop_notes(c, kind="manager")
+        rows: list[dict[str, Any]] = []
+        for e in exc.get("exceptions") or []:
+            rows.append({**e, "visibility": "manager", "reasons": ["exception"]})
+        for p in partial.get("rows") or []:
+            rows.append(
+                {
+                    "kind": "partial_receive",
+                    "label": p.get("label"),
+                    "pr_id": p.get("pr_id"),
+                    "visibility": "manager",
+                    "reasons": ["partial_receive"],
+                }
+            )
+        for p in ordering.get("awaiting_order") or []:
+            rows.append(
+                {
+                    "kind": "awaiting_order",
+                    "label": p.get("label"),
+                    "pr_id": p.get("pr_id"),
+                    "visibility": "manager",
+                    "reasons": ["ordering_state"],
+                }
+            )
+        for n in mgr_notes:
+            rows.append(
+                {
+                    "kind": "manager_note",
+                    "label": n.get("note"),
+                    "note_id": n.get("note_id"),
+                    "visibility": "manager",
+                    "reasons": ["operator_raised"],
+                }
+            )
+        empty = len(rows) == 0
+        return {
+            "ok": True,
+            "bound": LOOP_BOUND,
+            "stage": "manager_visibility",
+            "rows": rows,
+            "count": len(rows),
+            "empty": empty,
+            "status": "EMPTY" if empty else "ACTIVE",
+            "why": (
+                "No manager visibility items from loop objects."
+                if empty
+                else "Manager strip from exceptions, partial receives, ordering, and manager notes."
+            ),
+            "invented_sla": False,
+            "sla_breached": None,
+            "payment_execution": False,
+            "esb_mutated": False,
+            "invented": False,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def owner_exception_strip(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
+    """Owner exception strip from manager visibility + Owner notes. No invent money."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        mgmt = manager_visibility(conn=c)
+        owner_notes = _loop_notes(c, kind="owner")
+        rows = list(mgmt.get("rows") or [])
+        for n in owner_notes:
+            rows.append(
+                {
+                    "kind": "owner_note",
+                    "label": n.get("note"),
+                    "note_id": n.get("note_id"),
+                    "visibility": "owner",
+                    "reasons": ["owner_raised"],
+                }
+            )
+        # Prefer escalated / policy / close exception for Owner attention ranking.
+        ranked = sorted(
+            rows,
+            key=lambda r: (
+                0 if "owner_raised" in (r.get("reasons") or []) else 1,
+                0 if r.get("kind") in ("policy_required", "close_exception", "loop_exception") else 1,
+                str(r.get("label") or ""),
+            ),
+        )
+        empty = len(ranked) == 0
+        return {
+            "ok": True,
+            "bound": LOOP_BOUND,
+            "stage": "owner_exception",
+            "exceptions": ranked,
+            "count": len(ranked),
+            "empty": empty,
+            "status": "EMPTY" if empty else "ACTIVE",
+            "why": (
+                "No Owner exceptions from the Uma Blu loop."
+                if empty
+                else "Owner exception strip fed from manager visibility and Owner notes. Not money."
+            ),
+            "on_hand": None,
+            "live_inventory": False,
+            "payment_execution": False,
+            "esb_mutated": False,
+            "invented": False,
+            "money": None,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def _stage_blob(
+    stage: str,
+    *,
+    status: str,
+    count: int = 0,
+    empty: bool = True,
+    why: str = "",
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    blob: dict[str, Any] = {
+        "stage": stage,
+        "label": LOOP_STAGE_LABELS.get(stage, stage),
+        "status": status,
+        "count": count,
+        "empty": empty,
+        "why": why,
+        "invented": False,
+        "payment_execution": False,
+        "esb_mutated": False,
+    }
+    if extra:
+        blob.update(extra)
+    return blob
+
+
+def loop_desk(
+    *,
+    person_id: str | None = None,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    """One continuous desk: Today→…→Owner exception. Empty stays EMPTY."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        ensure_schema(c)
+        prs = _live_prs(c)
+        by_state: dict[str, list[dict[str, Any]]] = {}
+        for p in prs:
+            by_state.setdefault(str(p.get("state") or ""), []).append(p)
+
+        ordering = ordering_state(conn=c)
+        partial = partial_receiving_state(conn=c)
+        stock = stock_consequence(conn=c)
+        bill = supplier_bill_consequence(conn=c)
+        exc = exception_strip(conn=c)
+        hand = handover_strip(conn=c)
+        mgr = manager_visibility(conn=c)
+        owner = owner_exception_strip(conn=c)
+
+        try:
+            petty_days = list_petty_days(conn=c)
+            petty_attn = [d for d in petty_days if d.get("state") in PETTY_TODAY_ATTENTION]
+        except Exception:  # noqa: BLE001
+            petty_attn = []
+        close_info = _safe_close_for_today(conn=c)
+
+        draft_n = len(by_state.get("DRAFT", []))
+        req_n = len(by_state.get("REQUESTED", []))
+        recv_n = len(by_state.get("RECEIVED", [])) + len(by_state.get("ORDERED", []))
+
+        stages = [
+            _stage_blob(
+                "today",
+                status="ACTIVE",
+                count=1,
+                empty=False,
+                why="Uma Blu Today is the phone entry. Attention cards drive the loop.",
+                extra={"href": "/bzg/uma-blu"},
+            ),
+            _stage_blob(
+                "purchase_request",
+                status="EMPTY" if (draft_n + req_n + len(prs)) == 0 else "ACTIVE",
+                count=len(prs),
+                empty=len(prs) == 0,
+                why=(
+                    "No purchase requests in Wolf."
+                    if not prs
+                    else "Purchase requests exist. Requested is not approved."
+                ),
+                extra={"href": "/bzg/uma-blu/bills", "draft": draft_n, "requested": req_n},
+            ),
+            _stage_blob(
+                "approval_boundary",
+                status="EMPTY" if req_n == 0 else "WAITING",
+                count=req_n,
+                empty=req_n == 0,
+                why=(
+                    "No PRs waiting approval."
+                    if req_n == 0
+                    else "Approval boundary: REQUESTED awaits APPROVED. Not payment."
+                ),
+                extra={"href": "/bzg/uma-blu/bills"},
+            ),
+            _stage_blob(
+                "ordering_state",
+                status=str(ordering.get("status") or "EMPTY"),
+                count=int(ordering.get("count") or 0),
+                empty=bool(ordering.get("empty")),
+                why=str(ordering.get("why") or ""),
+                extra={"object": ordering},
+            ),
+            _stage_blob(
+                "receiving",
+                status="EMPTY" if recv_n == 0 else "ACTIVE",
+                count=recv_n,
+                empty=recv_n == 0,
+                why=(
+                    "Nothing ordered or received yet."
+                    if recv_n == 0
+                    else "Receiving path after ORDERED. Partial receive is a first-class stage."
+                ),
+                extra={"href": "/bzg/uma-blu/bills"},
+            ),
+            _stage_blob(
+                "partial_receiving",
+                status=str(partial.get("status") or "EMPTY"),
+                count=int(partial.get("count") or 0),
+                empty=bool(partial.get("empty")),
+                why=str(partial.get("why") or ""),
+                extra={"object": partial},
+            ),
+            _stage_blob(
+                "stock_consequence",
+                status=str(stock.get("status") or "EMPTY"),
+                count=int(stock.get("count") or 0),
+                empty=bool(stock.get("empty")),
+                why=str(stock.get("why") or ""),
+                extra={
+                    "object": stock,
+                    "empty_is_not_live_inventory": True,
+                    "on_hand_status": "EMPTY",
+                },
+            ),
+            _stage_blob(
+                "supplier_bill_consequence",
+                status=str(bill.get("status") or "EMPTY"),
+                count=int(bill.get("count") or 0),
+                empty=bool(bill.get("empty")),
+                why=str(bill.get("why") or ""),
+                extra={"object": bill},
+            ),
+            _stage_blob(
+                "petty_cash_record",
+                status="EMPTY" if not petty_attn else "ACTIVE",
+                count=len(petty_attn),
+                empty=not petty_attn,
+                why=(
+                    "No petty tin attention today."
+                    if not petty_attn
+                    else "Petty/cash record needs attention. Opening float stays NOT FOUND unless provided."
+                ),
+                extra={"href": "/bzg/uma-blu/petty", "float": "NOT_FOUND"},
+            ),
+            _stage_blob(
+                "daily_close",
+                status="ACTIVE",
+                count=1,
+                empty=False,
+                why=str(
+                    (close_info.get("label") if isinstance(close_info, dict) else None)
+                    or "Daily close path is on the phone pack."
+                ),
+                extra={
+                    "href": "/uma-blu-close",
+                    "close": {
+                        k: close_info.get(k)
+                        for k in ("status", "business_date", "state")
+                        if isinstance(close_info, dict) and close_info.get(k) not in (None, "")
+                    },
+                },
+            ),
+            _stage_blob(
+                "exception",
+                status=str(exc.get("status") or "EMPTY"),
+                count=int(exc.get("count") or 0),
+                empty=bool(exc.get("empty")),
+                why=str(exc.get("why") or ""),
+                extra={"object": exc, "href": "/bzg/uma-blu/issues"},
+            ),
+            _stage_blob(
+                "handover",
+                status=str(hand.get("status") or "EMPTY"),
+                count=int(hand.get("count") or 0),
+                empty=bool(hand.get("empty")),
+                why=str(hand.get("why") or ""),
+                extra={"object": hand},
+            ),
+            _stage_blob(
+                "manager_visibility",
+                status=str(mgr.get("status") or "EMPTY"),
+                count=int(mgr.get("count") or 0),
+                empty=bool(mgr.get("empty")),
+                why=str(mgr.get("why") or ""),
+                extra={"object": mgr},
+            ),
+            _stage_blob(
+                "owner_exception",
+                status=str(owner.get("status") or "EMPTY"),
+                count=int(owner.get("count") or 0),
+                empty=bool(owner.get("empty")),
+                why=str(owner.get("why") or ""),
+                extra={"object": owner},
+            ),
+        ]
+
+        # Desk next action from first non-empty attention stage (no invent).
+        base_next: dict[str, Any]
+        if not exc.get("empty"):
+            top = (exc.get("exceptions") or [{}])[0]
+            base_next = {
+                "code": "loop-exception",
+                "label": f"Handle exception: {top.get('label') or 'open exception'}",
+                "hook": "exception",
+                "invented": False,
+            }
+        elif not partial.get("empty"):
+            top = (partial.get("rows") or [{}])[0]
+            base_next = {
+                "code": "loop-partial",
+                "label": f"Finish partial receive: {top.get('label') or 'remainder'}",
+                "hook": "partial_receiving",
+                "invented": False,
+            }
+        elif not ordering.get("empty"):
+            if ordering.get("awaiting_order"):
+                top = ordering["awaiting_order"][0]
+                base_next = {
+                    "code": "loop-order",
+                    "label": f"Mark ordered: {top.get('label') or 'approved PR'}",
+                    "hook": "ordering_state",
+                    "invented": False,
+                }
+            else:
+                top = (ordering.get("ordered_not_received") or [{}])[0]
+                base_next = {
+                    "code": "loop-receive",
+                    "label": f"Receive goods: {top.get('label') or 'ordered PR'}",
+                    "hook": "receiving",
+                    "invented": False,
+                }
+        elif req_n:
+            base_next = {
+                "code": "loop-approve",
+                "label": "Work PRs waiting approval",
+                "hook": "approval_boundary",
+                "invented": False,
+            }
+        else:
+            base_next = {
+                "code": "loop-today",
+                "label": "Review Uma Blu Today",
+                "hook": "today",
+                "invented": False,
+            }
+        intel_next = _intel_connect.attach_to_next_action("bzg", base_next)
+        intel_strip = _intel_connect.desk_intel_strip("bzg", base_next=base_next)
+
+        desk = {
+            "ok": True,
+            "bound": LOOP_BOUND,
+            "schema_id": LOOP_SCHEMA_ID,
+            "slice": LOOP_SLICE,
+            "person_id": (person_id or "").strip() or None,
+            "venue": VENUE_UMA,
+            "stages": stages,
+            "order": list(LOOP_STAGES),
+            "ordering_state": ordering,
+            "partial_receiving": partial,
+            "stock_consequence": stock,
+            "supplier_bill_consequence": bill,
+            "exception": exc,
+            "handover": hand,
+            "manager_visibility": mgr,
+            "owner_exception": owner,
+            "loop_next_action_base": base_next,
+            "loop_next_action": intel_next,
+            "intel_recommendation": intel_next.get("intel_recommendation"),
+            "intel_connective": intel_strip,
+            "empty_stock_is_not_live_inventory": True,
+            "on_hand": None,
+            "on_hand_status": "EMPTY",
+            "live_perpetual_inventory": False,
+            "esb_mutated": False,
+            "payment_execution": False,
+            "proven": False,
+            "ready": False,
+            "why": (
+                "BZG / Uma Blu loop closure desk. Stages are first-class objects from "
+                "recorded Wolf facts. Empty stock is not live inventory. No ESB write. "
+                "No payment execution."
+            ),
+            "honesty": honesty_flags(),
+        }
+        _attach_needs_you_connective(desk, person_id=person_id, conn=c)
+        return desk
+    finally:
+        if own:
+            c.close()
+
+
+def pr_operator_href(pr_key: str) -> str:
+    """Phone deep-link into PR operator detail/action path."""
+    key = (pr_key or "").strip()
+    if not key:
+        return "/bzg/uma-blu/bills"
+    return f"/bzg/uma-blu/bills/{key}"
+
+
+def ensure_operator_depth_rbac(
+    *,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Idempotent grant: venue.receive + bzg.pr.operator on ROLE-BZG-FB-OPS-LEAD.
+
+    Beta catalog only. Does not mint CF Access seats. Does not commission live Devi.
+    Read-only when grants already present (safe under WOLF_TEST_MODE on live DB).
+    """
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        ensure_schema(c)
+        ts = now_utc_iso()
+        row = c.execute(
+            "SELECT permission_id, status FROM org_permissions WHERE code='venue.receive'"
+        ).fetchone()
+        receive_id = str(row["permission_id"]) if row else "PERM-VENUE-RECEIVE"
+        existing_op = c.execute(
+            "SELECT permission_id, status FROM org_permissions WHERE code=?",
+            (PERM_PR_OPERATOR,),
+        ).fetchone()
+        op_id = str(existing_op["permission_id"]) if existing_op else PERM_PR_OPERATOR_ID
+
+        def _role_has(perm_id: str) -> bool:
+            r = c.execute(
+                """
+                SELECT 1 FROM org_role_permissions
+                WHERE role_id=? AND permission_id=? AND effect='ALLOW'
+                """,
+                (ROLE_FB_OPS_LEAD, perm_id),
+            ).fetchone()
+            return bool(r)
+
+        already = (
+            bool(row)
+            and str(row["status"] or "") == "ACTIVE"
+            and bool(existing_op)
+            and str(existing_op["status"] or "") == "ACTIVE"
+            and _role_has(receive_id)
+            and _role_has(op_id)
+        )
+        if already:
+            return {
+                "ok": True,
+                "role_id": ROLE_FB_OPS_LEAD,
+                "grants": ["venue.receive", PERM_PR_OPERATOR],
+                "permission_ids": {"venue.receive": receive_id, PERM_PR_OPERATOR: op_id},
+                "unchanged": True,
+                "live_devi_commission": False,
+                "bound": LOOP_BOUND,
+            }
+
+        assert_catalog_writable(Path(CATALOG_DB))
+        if not row:
+            c.execute(
+                """
+                INSERT INTO org_permissions (
+                  permission_id, code, resource, action, description,
+                  status, created_at, updated_at
+                ) VALUES (?, 'venue.receive', 'venue', 'receive',
+                  'Receive goods against a BZG venue order in scope',
+                  'ACTIVE', ?, ?)
+                """,
+                (receive_id, ts, ts),
+            )
+        elif str(row["status"] or "") != "ACTIVE":
+            c.execute(
+                "UPDATE org_permissions SET status='ACTIVE', updated_at=? WHERE permission_id=?",
+                (ts, receive_id),
+            )
+        c.execute(
+            """
+            INSERT INTO org_permissions (
+              permission_id, code, resource, action, description,
+              status, created_at, updated_at
+            ) VALUES (?, ?, 'bzg.pr', 'operator',
+              'PR operator detail, notes, and non-money corrections on Uma Blu',
+              'ACTIVE', ?, ?)
+            ON CONFLICT(permission_id) DO UPDATE SET
+              code=excluded.code,
+              status='ACTIVE',
+              updated_at=excluded.updated_at
+            """,
+            (op_id, PERM_PR_OPERATOR, ts, ts),
+        )
+        c.execute(
+            """
+            UPDATE org_permissions
+               SET status='ACTIVE', updated_at=?
+             WHERE code=? AND status!='ACTIVE'
+            """,
+            (ts, PERM_PR_OPERATOR),
+        )
+        role = c.execute(
+            "SELECT role_id, status FROM org_roles WHERE role_id=?",
+            (ROLE_FB_OPS_LEAD,),
+        ).fetchone()
+        if not role:
+            raise UmaOpsError(
+                f"{ROLE_FB_OPS_LEAD} missing — run Devi F&B Ops Lead migration first",
+                code="role_missing",
+                http_status=500,
+            )
+        for perm_id in (receive_id, op_id):
+            c.execute(
+                """
+                INSERT INTO org_role_permissions (
+                  role_id, permission_id, effect, created_at, updated_at
+                ) VALUES (?, ?, 'ALLOW', ?, ?)
+                ON CONFLICT(role_id, permission_id) DO UPDATE SET
+                  effect='ALLOW', updated_at=excluded.updated_at
+                """,
+                (ROLE_FB_OPS_LEAD, perm_id, ts, ts),
+            )
+        if commit:
+            c.commit()
+        return {
+            "ok": True,
+            "role_id": ROLE_FB_OPS_LEAD,
+            "grants": ["venue.receive", PERM_PR_OPERATOR],
+            "permission_ids": {"venue.receive": receive_id, PERM_PR_OPERATOR: op_id},
+            "unchanged": False,
+            "live_devi_commission": False,
+            "bound": LOOP_BOUND,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def prove_fb_ops_lead_operator(
+    *,
+    person_id: str = PERS_DEVI_FIXTURE,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    """Fixture prove PERS-DEVI on ROLE-BZG-FB-OPS-LEAD can receive + PR-detail.
+
+    No live Devi phone commission. No CF Access mint.
+    """
+    from core import rbac as _rbac
+    from core import uma_devi_p0 as _p0
+
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        ensure_operator_depth_rbac(conn=c, commit=True)
+        pid = (person_id or "").strip() or PERS_DEVI_FIXTURE
+        target = {"entity_id": ENTITY_BZG, "brand_id": VENUE_UMA}
+        receive_code = _p0.discover_receive_permission(c) or "venue.receive"
+        can_receive = _rbac.can(pid, receive_code, target, conn=c)
+        can_operator = _rbac.can(pid, PERM_PR_OPERATOR, target, conn=c) or _rbac.can(
+            pid, "work.update", target, conn=c
+        )
+        caps = _p0.pr_actions(pid, conn=c)
+        asg = c.execute(
+            """
+            SELECT a.assignment_id, po.role_id, a.status
+            FROM org_assignments a
+            JOIN org_positions po ON po.position_id = a.position_id
+            WHERE a.person_id=? AND po.role_id=? AND a.status='ACTIVE' AND a.end_at IS NULL
+            LIMIT 1
+            """,
+            (pid, ROLE_FB_OPS_LEAD),
+        ).fetchone()
+        return {
+            "ok": True,
+            "bound": LOOP_BOUND,
+            "schema_id": OPERATOR_DEPTH_SCHEMA_ID,
+            "person_id": pid,
+            "role_id": ROLE_FB_OPS_LEAD,
+            "assignment_active": bool(asg),
+            "can_receive": bool(can_receive),
+            "can_pr_operator": bool(can_operator),
+            "actions": {
+                "receive": bool(caps.get("receive")),
+                "pr_operator": bool(caps.get("pr_operator")),
+                "correction": bool(caps.get("correction")),
+                "payment_approve": False,
+                "payment_execution": False,
+            },
+            "live_devi_commission": False,
+            "human_commissioning": "NOT_DONE",
+            "target_crs": list(OPERATOR_DEPTH_CRS),
+            "proven": False,
+            "ready": False,
+            "esb_mutated": False,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def list_pr_operator_actions(
+    pr_key: str,
+    *,
+    conn: sqlite3.Connection | None = None,
+    limit: int = 40,
+) -> list[dict[str, Any]]:
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        ensure_schema(c)
+        key = (pr_key or "").strip()
+        if not key:
+            return []
+        rows = c.execute(
+            """
+            SELECT action_id, pr_key, kind, note, corrects_receipt_id,
+                   created_by, created_at, status
+            FROM bzg_ops_pr_operator_actions
+            WHERE venue=? AND pr_key=?
+            ORDER BY created_at DESC LIMIT ?
+            """,
+            (VENUE_UMA, key, int(limit)),
+        ).fetchall()
+        return [
+            {
+                "action_id": r["action_id"],
+                "pr_key": r["pr_key"],
+                "kind": r["kind"],
+                "note": r["note"],
+                "corrects_receipt_id": r["corrects_receipt_id"],
+                "created_by": r["created_by"],
+                "created_at": r["created_at"],
+                "status": r["status"],
+                "payment_execution": False,
+                "invented": False,
+            }
+            for r in rows
+        ]
+    finally:
+        if own:
+            c.close()
+
+
+def operator_pr_detail(
+    pr_key: str,
+    *,
+    person_id: str | None = None,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    """PR operator detail/action path. No payment. No ESB write."""
+    from core import uma_devi_p0 as _p0
+
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        ensure_schema(c)
+        ensure_operator_depth_rbac(conn=c, commit=True)
+        detail = _p0.pr_detail(pr_key, conn=c)
+        if not detail:
+            raise UmaOpsError("Purchase request not found", code="not_found", http_status=404)
+        pid = (person_id or "").strip() or None
+        actions: dict[str, Any] = {}
+        if pid:
+            actions = _p0.pr_actions(pid, conn=c)
+        key = str(detail.get("pr_id") or detail.get("pr_num") or pr_key).strip()
+        prior = list_pr_operator_actions(key, conn=c)
+        flags = honesty_flags()
+        return {
+            "ok": True,
+            "bound": LOOP_BOUND,
+            "schema_id": OPERATOR_DEPTH_SCHEMA_ID,
+            "slice": OPERATOR_DEPTH_SLICE,
+            "pr": detail,
+            "actions": actions,
+            "operator_actions": prior,
+            "href": pr_operator_href(key),
+            "payment_approve": False,
+            "payment_execution": False,
+            "esb_mutated": False,
+            "live_devi_commission": False,
+            "empty_stock_is_not_live_inventory": True,
+            "proven": False,
+            "ready": False,
+            "honesty": flags,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def record_pr_operator_action(
+    *,
+    person_id: str,
+    pr_key: str,
+    kind: str,
+    note: str,
+    corrects_receipt_id: str | None = None,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Record allowed PR operator note/correction. No money. No ESB write."""
+    from core import rbac as _rbac
+    from core import uma_devi_p0 as _p0
+
+    k = (kind or "").strip().lower()
+    if k not in PR_OPERATOR_ACTION_KINDS:
+        raise UmaOpsError(
+            f"kind must be one of {sorted(PR_OPERATOR_ACTION_KINDS)}",
+            code="invalid_kind",
+        )
+    text = (note or "").strip()
+    if not text:
+        raise UmaOpsError("note required", code="missing_note")
+    pid = (person_id or "").strip()
+    if not pid:
+        raise UmaOpsError("verified_person_id required", code="missing_verified_person")
+    key = (pr_key or "").strip()
+    if not key:
+        raise UmaOpsError("pr required", code="missing_pr")
+
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        assert_catalog_writable(Path(CATALOG_DB))
+        ensure_schema(c)
+        ensure_operator_depth_rbac(conn=c, commit=False)
+        target = {"entity_id": ENTITY_BZG, "brand_id": VENUE_UMA}
+        allowed = _rbac.can(pid, PERM_PR_OPERATOR, target, conn=c) or _rbac.can(
+            pid, "work.update", target, conn=c
+        )
+        if not allowed:
+            raise UmaOpsError(
+                f"permission denied: {PERM_PR_OPERATOR}",
+                code="forbidden",
+                http_status=403,
+            )
+        detail = _p0.pr_detail(key, conn=c)
+        if not detail:
+            raise UmaOpsError("PR not found", code="not_found", http_status=404)
+        corrects = (corrects_receipt_id or "").strip() or None
+        if corrects:
+            prior = c.execute(
+                "SELECT receipt_id FROM bzg_ops_receipt_events WHERE receipt_id=?",
+                (corrects,),
+            ).fetchone()
+            if not prior:
+                raise UmaOpsError(
+                    "correction target not found",
+                    code="not_found",
+                    http_status=404,
+                )
+        ts = now_utc_iso()
+        action_id = f"PROA-{uuid.uuid4().hex[:12].upper()}"
+        c.execute(
+            """
+            INSERT INTO bzg_ops_pr_operator_actions (
+              action_id, venue, pr_key, kind, note, corrects_receipt_id,
+              created_by, created_at, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'RECORDED')
+            """,
+            (action_id, VENUE_UMA, key, k, text, corrects, pid, ts),
+        )
+        _audit_ops(
+            action=f"bzg.pr.operator.{k}",
+            result="SUCCEEDED",
+            resource_type="bzg_ops_pr_operator_action",
+            resource_id=action_id,
+            conn=c,
+            metadata={
+                "pr_key": key,
+                "kind": k,
+                "corrects_receipt_id": corrects,
+                "payment_execution": False,
+                "esb_mutated": False,
+            },
+            actor_type="PERSON",
+            verified_person_id=pid,
+            identity=identity,
+        )
+        if commit:
+            c.commit()
+        return {
+            "ok": True,
+            "action_id": action_id,
+            "pr_key": key,
+            "kind": k,
+            "note": text,
+            "corrects_receipt_id": corrects,
+            "status": "RECORDED",
+            "bound": LOOP_BOUND,
+            "payment_execution": False,
+            "esb_mutated": False,
+            "invented": False,
+            "live_devi_commission": False,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def goods_receipt(
+    *,
+    person_id: str,
+    pr_key: str,
+    lines: list[dict[str, Any]],
+    notes: str | None = None,
+    corrects_receipt_id: str | None = None,
+    evidence_note_id: str | None = None,
+    evidence_photo_id: str | None = None,
+    require_evidence: bool = True,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Real goods-receipt / partial-receive input. Refreshes stock + bill projections.
+
+    Empty stock remains not live inventory. No ESB write. No payment.
+    """
+    from core import uma_devi_p0 as _p0
+
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        ensure_operator_depth_rbac(conn=c, commit=False)
+        receipt = _p0.receive_goods(
+            person_id=person_id,
+            pr_key=pr_key,
+            lines=lines,
+            notes=notes,
+            corrects_receipt_id=corrects_receipt_id,
+            evidence_note_id=evidence_note_id,
+            evidence_photo_id=evidence_photo_id,
+            require_evidence=require_evidence,
+            identity=identity,
+            conn=c,
+            commit=False,
+        )
+        stock = stock_consequence(conn=c)
+        bill = supplier_bill_consequence(conn=c)
+        partial = partial_receiving_state(conn=c)
+        if commit:
+            c.commit()
+        return {
+            "ok": True,
+            "bound": LOOP_BOUND,
+            "schema_id": OPERATOR_DEPTH_SCHEMA_ID,
+            "receipt": receipt,
+            "stock_consequence": stock,
+            "supplier_bill_consequence": bill,
+            "partial_receiving": partial,
+            "empty_stock_is_not_live_inventory": True,
+            "on_hand": None,
+            "on_hand_status": "EMPTY",
+            "live_perpetual_inventory": False,
+            "esb_mutated": False,
+            "payment_execution": False,
+            "live_devi_commission": False,
+            "proven": False,
+            "ready": False,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def operator_depth_desk(
+    *,
+    person_id: str | None = None,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    """Operator depth desk: RBAC prove + PR/receive path honesty."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        ensure_schema(c)
+        prove = prove_fb_ops_lead_operator(
+            person_id=(person_id or "").strip() or PERS_DEVI_FIXTURE,
+            conn=c,
+        )
+        ordering = ordering_state(conn=c)
+        partial = partial_receiving_state(conn=c)
+        stock = stock_consequence(conn=c)
+        bill = supplier_bill_consequence(conn=c)
+        receive_candidates = list(ordering.get("ordered_not_received") or []) + list(
+            partial.get("rows") or []
+        )
+        return {
+            "ok": True,
+            "bound": LOOP_BOUND,
+            "schema_id": OPERATOR_DEPTH_SCHEMA_ID,
+            "slice": OPERATOR_DEPTH_SLICE,
+            "rbac": prove,
+            "receive_candidates": receive_candidates[:20],
+            "receive_candidate_count": len(receive_candidates),
+            "stock_consequence": stock,
+            "supplier_bill_consequence": bill,
+            "partial_receiving": partial,
+            "target_crs": list(OPERATOR_DEPTH_CRS),
+            "empty_stock_is_not_live_inventory": True,
+            "live_perpetual_inventory": False,
+            "esb_mutated": False,
+            "payment_execution": False,
+            "live_devi_commission": False,
+            "proven": False,
+            "ready": False,
+            "why": (
+                "BZG operator depth: PR detail/action path + real goods-receipt input "
+                "for F&B Ops Lead fixture. Empty stock is not live inventory. "
+                "No live Devi commission on this path."
+            ),
+            "honesty": honesty_flags(),
+        }
+    finally:
+        if own:
+            c.close()
 
 
 def module_source_path() -> Path:
     return Path(__file__).resolve()
+
+
+_NAME_RE = re.compile(r"[a-z]+")
+_SEAT_NAME_TOKENS: dict[str, frozenset[str]] = {
+    OWNER: frozenset({"matt", "owner"}),
+    DEVI: frozenset({"devi"}),
+}
+
+
+def _name_tokens(*parts: Any) -> set[str]:
+    blob = " ".join(str(p or "") for p in parts).lower()
+    return set(_NAME_RE.findall(blob))
+
+
+def _needs_you_module():
+    from core import owner_progress_needs_you_depth as nye
+
+    return nye
+
+
+def _morning_meta() -> dict[str, dict[str, Any]]:
+    from core import owner_commissioning_queue as ocq
+
+    return {str(t.get("id")): t for t in ocq.seed_templates() if t.get("id")}
+
+
+def _cr_state(catalog_db: Path | str | None, cr_id: str) -> str:
+    path = Path(catalog_db) if catalog_db else CATALOG_DB
+    if not path.is_file():
+        return "OPEN"
+    try:
+        conn = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+    except (OSError, sqlite3.Error):
+        return "OPEN"
+    try:
+        row = conn.execute(
+            "SELECT state FROM wolf_completion_items WHERE id=?",
+            (cr_id,),
+        ).fetchone()
+    except sqlite3.Error:
+        return "OPEN"
+    finally:
+        conn.close()
+    if not row or not row[0]:
+        return "OPEN"
+    return str(row[0])
+
+
+def _devi_already_authorised(catalog_db: Path | str | None = None) -> bool:
+    """True only when the existing Uma F&B ops-lead assignment is already active.
+
+    Does not insert a role, scope, or commission.
+    """
+    path = Path(catalog_db) if catalog_db else CATALOG_DB
+    if not path.is_file():
+        return False
+    try:
+        conn = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+    except (OSError, sqlite3.Error):
+        return False
+    try:
+        row = conn.execute(
+            """
+            SELECT 1
+            FROM org_assignments a
+            JOIN org_positions p ON p.position_id = a.position_id
+            JOIN org_assignment_scopes s ON s.assignment_id = a.assignment_id
+            WHERE a.person_id = ?
+              AND a.status = 'ACTIVE' AND a.end_at IS NULL
+              AND p.role_id = ?
+              AND s.status = 'ACTIVE' AND (s.end_at IS NULL OR s.end_at = '')
+              AND s.scope_id IN ('SCOPE-BZG-UMA', 'SCOPE-BZG-FB')
+            LIMIT 1
+            """,
+            (DEVI, ROLE_FB_OPS_LEAD),
+        ).fetchone()
+    except sqlite3.Error:
+        return False
+    finally:
+        conn.close()
+    return bool(row)
+
+
+def require_connective_seat(
+    person_id: str | None,
+    catalog_db: Path | str | None = None,
+) -> dict[str, Any]:
+    """Owner, or Devi only when her Uma seat is already authorised."""
+    pid = (person_id or "").strip()
+    if pid == OWNER:
+        return {
+            "person_id": pid,
+            "seat": "owner",
+            "sees_full_bzg": True,
+            "authorised": True,
+            "invented_commission": False,
+            "live_devi_commission": False,
+        }
+    if pid == DEVI and _devi_already_authorised(catalog_db):
+        return {
+            "person_id": pid,
+            "seat": "uma_ops",
+            "sees_full_bzg": False,
+            "authorised": True,
+            "invented_commission": False,
+            "live_devi_commission": False,
+        }
+    if pid == DEVI:
+        raise UmaOpsError(
+            "Devi Uma seat is not authorised on this catalog. Commission is not invented.",
+            code="forbidden",
+            http_status=403,
+        )
+    raise UmaOpsError(
+        "BZG Needs-You is for the Owner and the existing Uma F&B ops lead.",
+        code="forbidden",
+        http_status=403,
+    )
+
+
+def _is_bzg_scoped(item: dict[str, Any]) -> bool:
+    """BZG / Uma commissioning or Uma ops-loop rows. Other businesses stay out."""
+    kind = str(item.get("kind") or "")
+    if kind == "ops_loop":
+        return True
+    cap = str(item.get("capability") or "")
+    if cap.startswith("CAP-BZG"):
+        return True
+    if str(item.get("business") or "").upper() == "BZG":
+        return True
+    if str(item.get("domain") or "").upper() == "BZG":
+        return True
+    if str(item.get("brand_id") or "") in {VENUE_UMA, "BZG"}:
+        return True
+    surface = str(item.get("surface") or "").lower()
+    if surface in {"uma_ops", "bzg_ops", "uma_blu"}:
+        return True
+    blob = " ".join(
+        str(item.get(k) or "")
+        for k in ("title", "source", "open_href", "route", "object_id", "href")
+    ).lower()
+    if "/bzg/uma-blu" in blob or "/bzg-uma" in blob:
+        return True
+    return False
+
+
+def _in_scope_for_seat(item: dict[str, Any], seat: dict[str, Any]) -> bool:
+    """Owner sees every BZG-scoped row. Devi sees named rows and Uma ops-loop rows."""
+    if seat.get("person_id") == OWNER or seat.get("seat") == "owner":
+        return True
+    audience = str(item.get("audience") or "").upper()
+    if audience == "NEEDS_MATT":
+        return False
+    kind = str(item.get("kind") or "")
+    if kind == "ops_loop" and seat.get("seat") == "uma_ops":
+        return True
+    owner_pid = str(item.get("owner_person_id") or item.get("opened_by") or "").strip()
+    if owner_pid and owner_pid == seat.get("person_id"):
+        return True
+    allowed = set(_SEAT_NAME_TOKENS.get(seat.get("person_id") or "", frozenset()))
+    if not allowed:
+        return False
+    tokens = _name_tokens(
+        item.get("who"),
+        item.get("audience"),
+        item.get("person_to_test"),
+        item.get("title"),
+    )
+    return bool(tokens & allowed)
+
+
+def _handoff_block(item: dict[str, Any]) -> dict[str, Any]:
+    oid = str(item.get("object_id") or "")
+    kind = str(item.get("kind") or "")
+    block: dict[str, Any] = {
+        "duplicate_mutate_surface": False,
+        "reuse_needs_you_depth": kind in CONNECTIVE_DEPTH_KINDS,
+        "reuse_ops_loop": kind == "ops_loop",
+        "payment_execution": False,
+        "money": None,
+    }
+    if kind in CONNECTIVE_DEPTH_KINDS:
+        block.update(
+            {
+                "detail": f"/api/progress/needs-you/items/{oid}",
+                "acknowledge": f"/api/progress/needs-you/items/{oid}/acknowledge",
+                "staff_detail": f"/api/staff/ops-routing/needs-you/items/{oid}",
+                "staff_acknowledge": f"/api/staff/ops-routing/needs-you/items/{oid}/acknowledge",
+                "bzg_detail": f"/api/bzg/uma-blu/needs-you/items/{oid}",
+                "bzg_acknowledge": f"/api/bzg/uma-blu/needs-you/items/{oid}/acknowledge",
+            }
+        )
+    elif kind == "ops_loop":
+        block.update(
+            {
+                "detail": item.get("href") or "/bzg/uma-blu/loop",
+                "loop": "/api/bzg/uma-blu/loop",
+                "read_only_here": True,
+            }
+        )
+    return block
+
+
+def _project_row(item: dict[str, Any]) -> dict[str, Any]:
+    oid = str(item.get("object_id") or "")
+    href = item.get("open_href") or item.get("href") or "/bzg/uma-blu"
+    return {
+        "object_id": oid,
+        "kind": item.get("kind"),
+        "title": item.get("title"),
+        "who": item.get("who"),
+        "audience": item.get("audience"),
+        "priority": item.get("priority"),
+        "status": item.get("operator_status") or item.get("status"),
+        "href": href,
+        "owner_person_id": item.get("owner_person_id"),
+        "invented": False,
+        "staff_ready": False,
+        "proven": False,
+        "ready": False,
+        "haikal_human": "not_started",
+        "devi_retest": "parked",
+        "human_done": False,
+        "payment_execution": False,
+        "money": None,
+        "live_devi_commission": False,
+        "handoff": _handoff_block(item),
+    }
+
+
+def _connective_next(item: dict[str, Any]) -> dict[str, Any]:
+    href = item.get("open_href") or item.get("href") or "/bzg/uma-blu"
+    return {
+        "code": "needs_you_connective",
+        "label": item.get("title") or "Open in-scope BZG Needs-You item",
+        "href": href,
+        "object_id": item.get("object_id"),
+        "kind": item.get("kind"),
+        "invented": False,
+        "state": "READ",
+        "source": "bzg_ops_needs_you_connective",
+        "preferred_over_pack": True,
+        "staff_ready": False,
+        "proven": False,
+        "ready": False,
+        "haikal_human": "not_started",
+        "devi_retest": "parked",
+        "payment_execution": False,
+        "money": None,
+        "live_devi_commission": False,
+    }
+
+
+def _pack_href_next() -> dict[str, Any]:
+    return {
+        "code": "pack_href",
+        "label": "Open Uma Blu Today",
+        "href": "/bzg/uma-blu",
+        "invented": False,
+        "state": "READ",
+        "preferred_over_pack": False,
+        "staff_ready": False,
+        "proven": False,
+        "ready": False,
+        "payment_execution": False,
+        "money": None,
+    }
+
+
+def _empty_connective(*, why: str) -> dict[str, Any]:
+    return {
+        "ok": True,
+        "bound": CONNECTIVE_BOUND,
+        "schema": CONNECTIVE_SCHEMA_ID,
+        "slice": CONNECTIVE_SLICE,
+        "run_id": CONNECTIVE_RUN_ID,
+        "claim_id": CONNECTIVE_CLAIM_ID,
+        "empty": True,
+        "count": 0,
+        "by_kind": {k: 0 for k in CONNECTIVE_KINDS},
+        "items": [],
+        "next_action": None,
+        "empty_message": why,
+        "invented": False,
+        "invented_count": False,
+        "staff_ready": False,
+        "proven": False,
+        "ready": False,
+        "haikal_human": "not_started",
+        "devi_retest": "parked",
+        "payment_execution": False,
+        "money": None,
+        "live_devi_commission": False,
+        "bzg_compose": False,
+        "duplicate_mutate_surface": False,
+        "reuse_needs_you_depth": True,
+        "false_resolve_cr": False,
+    }
+
+
+def _sort_connective(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def sort_key(it: dict[str, Any]) -> tuple[Any, ...]:
+        kind_rank = {
+            "morning_seed": 0,
+            "waiting_others": 1,
+            "needs_you": 2,
+            "ops_loop": 3,
+        }.get(str(it.get("kind") or ""), 9)
+        pri = {"P0": 0, "P1": 1, "P2": 2}.get(str(it.get("priority") or ""), 5)
+        return (kind_rank, pri, str(it.get("object_id") or ""))
+
+    items.sort(key=sort_key)
+    return items
+
+
+def _commissioning_rows(*, state_path=None) -> list[dict[str, Any]]:
+    nye = _needs_you_module()
+    meta = _morning_meta()
+    rows = nye.collect_candidates(state_path=state_path, include_parked=False)
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        if row.get("kind") not in CONNECTIVE_DEPTH_KINDS:
+            continue
+        merged = dict(row)
+        extra = meta.get(str(row.get("object_id") or "")) or {}
+        for key in (
+            "business",
+            "surface",
+            "capability",
+            "person_to_test",
+            "route",
+            "audience",
+        ):
+            if extra.get(key) and not merged.get(key):
+                merged[key] = extra[key]
+        if not merged.get("who") and extra.get("person_to_test"):
+            merged["who"] = extra.get("person_to_test")
+        if not _is_bzg_scoped(merged):
+            continue
+        merged["business"] = merged.get("business") or "BZG"
+        out.append(merged)
+    return out
+
+
+def _ops_loop_rows(*, conn: sqlite3.Connection | None = None) -> list[dict[str, Any]]:
+    """Recorded Uma loop attention only. An empty loop is not invented work."""
+    out: list[dict[str, Any]] = []
+    try:
+        ordering = ordering_state(conn=conn)
+        partial = partial_receiving_state(conn=conn)
+        exc = exception_strip(conn=conn)
+    except Exception:  # noqa: BLE001
+        return []
+    for row in list(ordering.get("awaiting_order") or []) + list(
+        ordering.get("ordered_not_received") or []
+    ):
+        oid = str(row.get("pr_id") or "").strip()
+        if not oid:
+            continue
+        out.append(
+            {
+                "object_id": f"LOOP-ORD-{oid}",
+                "kind": "ops_loop",
+                "title": row.get("label") or oid,
+                "who": None,
+                "audience": "NEEDS_STAFF",
+                "priority": "P1",
+                "status": row.get("state") or "OPEN",
+                "business": "BZG",
+                "brand_id": VENUE_UMA,
+                "href": "/bzg/uma-blu/bills",
+                "open_href": "/bzg/uma-blu",
+                "invented": False,
+                "payment_execution": False,
+                "money": None,
+            }
+        )
+    for row in partial.get("rows") or []:
+        oid = str(row.get("pr_id") or "").strip()
+        if not oid:
+            continue
+        out.append(
+            {
+                "object_id": f"LOOP-PART-{oid}",
+                "kind": "ops_loop",
+                "title": row.get("label") or oid,
+                "who": None,
+                "audience": "NEEDS_STAFF",
+                "priority": "P1",
+                "status": "PARTIALLY_RECEIVED",
+                "business": "BZG",
+                "brand_id": VENUE_UMA,
+                "href": "/bzg/uma-blu/bills",
+                "open_href": "/bzg/uma-blu",
+                "invented": False,
+                "payment_execution": False,
+                "money": None,
+            }
+        )
+    for row in exc.get("exceptions") or []:
+        oid = str(row.get("note_id") or row.get("issue_id") or "").strip()
+        if not oid:
+            continue
+        out.append(
+            {
+                "object_id": f"LOOP-EXC-{oid}",
+                "kind": "ops_loop",
+                "title": row.get("label") or oid,
+                "who": None,
+                "audience": "NEEDS_STAFF",
+                "priority": "P0",
+                "status": "OPEN",
+                "business": "BZG",
+                "brand_id": VENUE_UMA,
+                "href": row.get("href") or "/bzg/uma-blu/issues",
+                "open_href": "/bzg/uma-blu",
+                "invented": False,
+                "payment_execution": False,
+                "money": None,
+            }
+        )
+    return out
+
+
+def _bzg_candidates(
+    *,
+    state_path=None,
+    conn: sqlite3.Connection | None = None,
+) -> list[dict[str, Any]]:
+    items = _commissioning_rows(state_path=state_path)
+    items.extend(_ops_loop_rows(conn=conn))
+    return _sort_connective(items)
+
+
+def connective_cap_honesty(*, catalog_db: Path | str | None = None) -> dict[str, Any]:
+    try:
+        data = json.loads(LEDGER_JSON.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        data = {}
+    caps = {}
+    for cap in CAP_IDS:
+        row = data.get(cap)
+        caps[cap] = str(row[0]) if isinstance(row, list) and row else "UNKNOWN"
+    nye = _needs_you_module()
+    progress = {cr: _cr_state(catalog_db, cr) for cr in nye.TARGET_CRS}
+    bzg = {cr: _cr_state(catalog_db, cr) for cr in BZG_TARGET_CRS}
+    return {
+        "caps": caps,
+        "bzg_crs": bzg,
+        "progress_core_crs": progress,
+        "false_resolve_cr": False,
+        "proven": False,
+        "ready": False,
+        "staff_ready": False,
+        "haikal_human": "not_started",
+        "devi_retest": "parked",
+        "live_devi_commission": False,
+        "bzg_compose": False,
+        "money": None,
+    }
+
+
+def needs_you_connective_strip(
+    *,
+    verified_person_id: str,
+    state_path=None,
+    catalog_db: Path | str | None = None,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    """BZG/Uma-scoped Needs-You / Morning seed / ops-loop projection.
+
+    Owner sees the full BZG-scoped set. Devi sees in-scope rows only when her
+    Uma seat is already authorised. EMPTY honesty when none. Counts are the
+    in-scope length.
+    """
+    seat = require_connective_seat(verified_person_id, catalog_db)
+    try:
+        rows = _bzg_candidates(state_path=state_path, conn=conn)
+    except Exception as exc:  # noqa: BLE001
+        empty = _empty_connective(
+            why=(
+                "BZG Needs-You connective read failed "
+                f"({exc}). Count stays EMPTY. No work invented."
+            )
+        )
+        empty["seat"] = {
+            "person_id": seat.get("person_id"),
+            "seat": seat.get("seat"),
+        }
+        return empty
+    visible = [row for row in rows if _in_scope_for_seat(row, seat)]
+    projected = [_project_row(it) for it in visible]
+    by_kind = {k: 0 for k in CONNECTIVE_KINDS}
+    for it in visible:
+        kind = str(it.get("kind") or "")
+        if kind in by_kind:
+            by_kind[kind] += 1
+    empty = len(visible) == 0
+    return {
+        "ok": True,
+        "bound": CONNECTIVE_BOUND,
+        "schema": CONNECTIVE_SCHEMA_ID,
+        "slice": CONNECTIVE_SLICE,
+        "run_id": CONNECTIVE_RUN_ID,
+        "claim_id": CONNECTIVE_CLAIM_ID,
+        "seat": {
+            "person_id": seat.get("person_id"),
+            "seat": seat.get("seat"),
+            "sees_full_bzg": seat.get("person_id") == OWNER,
+            "invented_commission": False,
+            "live_devi_commission": False,
+        },
+        "empty": empty,
+        "count": len(visible),
+        "by_kind": by_kind,
+        "items": projected,
+        "next_action": None if empty else _connective_next(visible[0]),
+        "empty_message": (
+            "No BZG/Uma-scoped Needs-You / Morning seed / ops-loop rows "
+            "in this seat's scope — EMPTY honesty."
+            if empty
+            else None
+        ),
+        "invented": False,
+        "invented_count": False,
+        "source": "bzg_scoped_needs_you_morning_ops_loop",
+        "kinds": list(CONNECTIVE_KINDS),
+        "caps": connective_cap_honesty(catalog_db=catalog_db),
+        "staff_ready": False,
+        "proven": False,
+        "ready": False,
+        "haikal_human": "not_started",
+        "devi_retest": "parked",
+        "invented_haikal_human": False,
+        "invented_devi_done": False,
+        "payment_execution": False,
+        "money": None,
+        "live_devi_commission": False,
+        "bzg_compose": False,
+        "duplicate_mutate_surface": False,
+        "reuse_needs_you_depth": True,
+        "false_resolve_cr": False,
+        "why": (
+            "Derived BZG/Uma-scoped commissioning and recorded ops-loop rows. "
+            "Owner sees the full BZG-scoped projection. The existing Uma seat "
+            "sees only in-scope rows. Counts are the in-scope length. Empty is "
+            "not invented work. Devi retest stays parked."
+        ),
+    }
+
+
+def _find_bzg_item(
+    object_id: str,
+    *,
+    state_path=None,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any] | None:
+    oid = (object_id or "").strip()
+    for row in _bzg_candidates(state_path=state_path, conn=conn):
+        if str(row.get("object_id") or "") == oid:
+            return row
+    return None
+
+
+def connective_item_detail(
+    object_id: str,
+    *,
+    verified_person_id: str,
+    state_path=None,
+    catalog_db: Path | str | None = None,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    """Thin detail. Out of BZG seat scope is 403. Reuses existing handoffs."""
+    seat = require_connective_seat(verified_person_id, catalog_db)
+    found = _find_bzg_item(object_id, state_path=state_path, conn=conn)
+    if found is None:
+        raise UmaOpsError(
+            f"BZG Needs-You item '{object_id}' not found.",
+            code="not_found",
+            http_status=404,
+        )
+    if not _in_scope_for_seat(found, seat):
+        raise UmaOpsError(
+            "BZG Needs-You item is outside this seat's scope.",
+            code="forbidden",
+            http_status=403,
+        )
+    return {
+        "ok": True,
+        "bound": CONNECTIVE_BOUND,
+        "schema": CONNECTIVE_SCHEMA_ID,
+        "slice": CONNECTIVE_SLICE,
+        "seat": {
+            "person_id": seat.get("person_id"),
+            "seat": seat.get("seat"),
+        },
+        "object": _project_row(found),
+        "handoff": _handoff_block(found),
+        "reuse_needs_you_depth": str(found.get("kind") or "") in CONNECTIVE_DEPTH_KINDS,
+        "duplicate_mutate_surface": False,
+        "staff_ready": False,
+        "proven": False,
+        "ready": False,
+        "haikal_human": "not_started",
+        "devi_retest": "parked",
+        "human_done": False,
+        "payment_execution": False,
+        "money": None,
+        "live_devi_commission": False,
+        "caps": connective_cap_honesty(catalog_db=catalog_db),
+    }
+
+
+def acknowledge_handoff(
+    object_id: str,
+    *,
+    verified_person_id: str,
+    note: str | None = None,
+    state_path=None,
+    events_path=None,
+    catalog_db: Path | str | None = None,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    """Acknowledge via the existing Needs-You operator state.
+
+    Ops-loop rows keep the existing Uma loop surfaces. This route does not
+    open a second mutate store. Wrong-scope seats are refused.
+    """
+    seat = require_connective_seat(verified_person_id, catalog_db)
+    found = _find_bzg_item(object_id, state_path=state_path, conn=conn)
+    if found is None:
+        raise UmaOpsError(
+            f"BZG Needs-You item '{object_id}' not found.",
+            code="not_found",
+            http_status=404,
+        )
+    if not _in_scope_for_seat(found, seat):
+        raise UmaOpsError(
+            "BZG Needs-You item is outside this seat's scope.",
+            code="forbidden",
+            http_status=403,
+        )
+    kind = str(found.get("kind") or "")
+    if kind not in CONNECTIVE_DEPTH_KINDS:
+        raise UmaOpsError(
+            "Uma ops-loop rows use their existing loop surface. "
+            "This route does not open a second mutate surface and does not move money.",
+            code="handoff_only",
+            http_status=405,
+        )
+    nye = _needs_you_module()
+    recorded = nye.record_operator_action(
+        str(found.get("object_id") or ""),
+        verified_person_id=None,
+        kind="acknowledge",
+        note=note,
+        state_path=state_path,
+        events_path=events_path,
+        catalog_db=catalog_db,
+        connective_actor=seat["person_id"],
+    )
+    strip = needs_you_connective_strip(
+        verified_person_id=seat["person_id"],
+        state_path=state_path,
+        catalog_db=catalog_db,
+        conn=conn,
+    )
+    return {
+        "ok": True,
+        "bound": CONNECTIVE_BOUND,
+        "recorded": True,
+        "action": "acknowledge",
+        "object_id": found.get("object_id"),
+        "seat": {
+            "person_id": seat.get("person_id"),
+            "seat": seat.get("seat"),
+        },
+        "handoff": _handoff_block(found),
+        "reuse_needs_you_depth": True,
+        "duplicate_mutate_surface": False,
+        "event": recorded.get("event"),
+        "needs_you_connective": strip,
+        "staff_ready": False,
+        "proven": False,
+        "ready": False,
+        "haikal_human": "not_started",
+        "devi_retest": "parked",
+        "human_done": False,
+        "commissioned": False,
+        "cr_resolved": False,
+        "payment_execution": False,
+        "money": None,
+        "live_devi_commission": False,
+        "bzg_compose": False,
+        "caps": recorded.get("caps"),
+        "message": (
+            "Acknowledge recorded on the Needs-You operator state. "
+            "No second mutate surface. staff_ready, PROVEN, READY, Haikal done, "
+            "and Devi done stay uninvented. No money."
+        ),
+    }
+
+
+def _attach_needs_you_connective(
+    payload: dict[str, Any],
+    *,
+    person_id: str | None,
+    conn: sqlite3.Connection | None = None,
+) -> None:
+    """Prefer an in-scope Needs-You row over the generic pack href."""
+    pid = (person_id or "").strip()
+    if not pid:
+        return
+    try:
+        strip = needs_you_connective_strip(verified_person_id=pid, conn=conn)
+    except UmaOpsError:
+        return
+    pack_next = payload.get("next_action")
+    if not isinstance(pack_next, dict):
+        pack_next = payload.get("loop_next_action")
+    if not isinstance(pack_next, dict):
+        pack_next = _pack_href_next()
+    payload["needs_you_connective"] = strip
+    payload["pack_next_action"] = pack_next
+    preferred = strip.get("next_action") if strip.get("count") else None
+    payload["next_action"] = preferred if isinstance(preferred, dict) else pack_next

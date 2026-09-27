@@ -30,7 +30,22 @@ from typing import Any
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 BUILD_DASH = BETA_ROOT / "docs" / "canon" / "build-dashboard"
 OVERLAY_PATH = BETA_ROOT / "state" / "progress" / "v1_overlay.json"
-FACTORY_RUNS = BETA_ROOT / "state" / "build-factory" / "runs"
+FACTORY_ROOT = BETA_ROOT / "state" / "build-factory"
+FACTORY_RUNS = FACTORY_ROOT / "runs"
+# In-flight factory stages that mean Owner Progress "In progress" cannot be a silent 0.
+FACTORY_IN_FLIGHT_STAGES = frozenset(
+    {
+        "ACTIVE",
+        "WAITING_CURSOR",
+        "WAITING_GROK",
+        "GROK_REVIEW",
+        "IN_FLIGHT",
+        "BUILDING",
+    }
+)
+FACTORY_DONE_STAGES = frozenset(
+    {"DONE", "SHIPPED", "COMPLETE", "VERIFIED", "FINISHED"}
+)
 MODEL_C_LEDGER = BETA_ROOT / "state" / "model-c-baseline-assessments.json"
 MODEL_C_HISTORY = BETA_ROOT / "state" / "model-c-score-history.jsonl"
 MODEL_C_CATALOG = BETA_ROOT / "docs" / "MODEL-C-CAPABILITY-CATALOG.md"
@@ -747,9 +762,23 @@ def integrations_items() -> list[dict[str, Any]]:
     return items
 
 
-def sale_readiness_items() -> list[dict[str, Any]]:
+def sale_readiness_items(
+    *,
+    csv_path: Path | None = None,
+) -> list[dict[str, Any]]:
+    """Sale Readiness projection from canon CSV. Optional csv_path for fixture proves."""
     items = []
-    for i, r in enumerate(_read_csv("Sale_Readiness.csv")):
+    if csv_path is not None:
+        path = Path(csv_path)
+        rows: list[dict[str, str]] = []
+        if path.is_file():
+            with path.open(encoding="utf-8", newline="") as f:
+                rows = list(csv.DictReader(f))
+        source = str(path)
+    else:
+        rows = _read_csv("Sale_Readiness.csv")
+        source = "docs/canon/build-dashboard/Sale_Readiness.csv"
+    for i, r in enumerate(rows):
         entity = (r.get("Entity") or "").strip()
         area = (r.get("Area") or "").strip()
         if not entity and not area:
@@ -767,18 +796,22 @@ def sale_readiness_items() -> list[dict[str, Any]]:
                 "commissioned": False,
                 "live": False,
                 "confidence": "DERIVED",
-                "source": "docs/canon/build-dashboard/Sale_Readiness.csv",
+                "source": source,
                 "target_profit_note": "TARGET ≠ ACTUAL — ACTUAL NOT YET TRUSTWORTHY",
             }
         )
     return items
 
 
-def factory_health_items() -> list[dict[str, Any]]:
+def factory_health_items(
+    *,
+    runs_dir: Path | None = None,
+) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
-    if not FACTORY_RUNS.is_dir():
+    root = runs_dir or FACTORY_RUNS
+    if not root.is_dir():
         return items
-    for path in sorted(FACTORY_RUNS.glob("BF-*.json")):
+    for path in sorted(root.glob("BF-*.json")):
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -786,12 +819,17 @@ def factory_health_items() -> list[dict[str, Any]]:
         if not isinstance(data, dict):
             continue
         stage = (data.get("stage") or "UNKNOWN").strip()
-        if stage in ("DONE", "SHIPPED", "COMPLETE", "VERIFIED"):
+        if stage in ("DONE", "SHIPPED", "COMPLETE", "VERIFIED", "FINISHED"):
             lifecycle = "TESTED"
-        elif stage in ("WAITING_CURSOR", "WAITING_GROK", "ACTIVE", "BUILDING"):
+        elif stage in FACTORY_IN_FLIGHT_STAGES:
             lifecycle = "BUILDING"
         else:
             lifecycle = "SPECIFIED"
+        rel = str(path)
+        try:
+            rel = str(path.relative_to(BETA_ROOT))
+        except ValueError:
+            pass
         items.append(
             {
                 "id": data.get("run_id") or path.stem,
@@ -804,12 +842,260 @@ def factory_health_items() -> list[dict[str, Any]]:
                 "commissioned": False,
                 "live": False,
                 "confidence": "DERIVED",
-                "source": str(path.relative_to(BETA_ROOT)),
+                "source": rel,
                 "stage": stage,
                 "as_of": data.get("updated_at"),
             }
         )
     return items
+
+
+def _factory_pack_card(data: dict[str, Any], *, path: Path | None = None) -> dict[str, Any]:
+    run_id = str(data.get("run_id") or (path.stem if path else "") or "").strip()
+    return {
+        "run_id": run_id,
+        "slice": str(data.get("slice") or data.get("lane_id") or run_id).strip(),
+        "stage": str(data.get("stage") or "").strip(),
+        "updated_at": data.get("updated_at"),
+        "mission_id": data.get("mission_id"),
+    }
+
+
+def _read_json_obj(path: Path) -> dict[str, Any] | None:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def factory_work_surface(
+    *,
+    factory_root: Path | None = None,
+    runs_dir: Path | None = None,
+) -> dict[str, Any]:
+    """Owner-facing factory activity — not an engineering dump, not SYSTEM%."""
+    root = factory_root or FACTORY_ROOT
+    runs = runs_dir or (root / "runs")
+    in_flight: list[dict[str, Any]] = []
+    completed: list[dict[str, Any]] = []
+    stage_counts: Counter[str] = Counter()
+
+    if runs.is_dir():
+        for path in sorted(runs.glob("BF-*.json")):
+            data = _read_json_obj(path)
+            if not data:
+                continue
+            stage = str(data.get("stage") or "").strip()
+            if not stage:
+                continue
+            stage_counts[stage] += 1
+            card = _factory_pack_card(data, path=path)
+            if stage in FACTORY_IN_FLIGHT_STAGES:
+                in_flight.append(card)
+            elif stage in FACTORY_DONE_STAGES:
+                completed.append(card)
+
+    def _ts(card: dict[str, Any]) -> str:
+        return str(card.get("updated_at") or "")
+
+    in_flight.sort(key=_ts, reverse=True)
+    completed.sort(key=_ts, reverse=True)
+
+    active_ptr = ""
+    active_path = root / "ACTIVE"
+    if active_path.is_file():
+        try:
+            active_ptr = active_path.read_text(encoding="utf-8").strip()
+        except OSError:
+            active_ptr = ""
+
+    idle = _read_json_obj(root / "IDLE-REASON.json") or {}
+    current: dict[str, Any] | None = None
+    if active_ptr:
+        for card in in_flight:
+            if card.get("run_id") == active_ptr:
+                current = dict(card)
+                current["source"] = "ACTIVE"
+                break
+        if current is None:
+            run_file = runs / f"{active_ptr}.json"
+            data = _read_json_obj(run_file)
+            if data:
+                current = _factory_pack_card(data, path=run_file)
+                current["source"] = "ACTIVE"
+    if current is None and idle.get("active_run"):
+        for card in in_flight:
+            if card.get("run_id") == idle.get("active_run"):
+                current = dict(card)
+                current["source"] = "IDLE-REASON"
+                break
+    if current is None:
+        for card in in_flight:
+            if card.get("stage") == "ACTIVE":
+                current = dict(card)
+                current["source"] = "stage"
+                break
+    if current is None and in_flight:
+        current = dict(in_flight[0])
+        current["source"] = "newest_in_flight"
+
+    current_id = (current or {}).get("run_id")
+    queued = [
+        c
+        for c in in_flight
+        if c.get("run_id") != current_id
+        and c.get("stage") in ("WAITING_CURSOR", "WAITING_GROK", "IN_FLIGHT", "BUILDING")
+    ][:8]
+    # Also surface GROK_REVIEW backlog briefly (not the whole eng queue)
+    grok_queue = [
+        c
+        for c in in_flight
+        if c.get("run_id") != current_id and c.get("stage") == "GROK_REVIEW"
+    ][:5]
+    for g in grok_queue:
+        if g not in queued and all(g.get("run_id") != q.get("run_id") for q in queued):
+            queued.append(g)
+    queued = queued[:8]
+
+    blocked_human: list[dict[str, Any]] = []
+    parked = idle.get("parked") if isinstance(idle.get("parked"), list) else []
+    for label in parked:
+        text = str(label or "").strip()
+        if not text:
+            continue
+        low = text.lower()
+        if "devi" in low or "habitat" in low:
+            blocked_human.append(
+                {
+                    "branch": text,
+                    "status": "PARKED",
+                    "source": "IDLE-REASON.parked",
+                }
+            )
+    # Compressed sprint flags that explicitly park Devi / Habitat waits
+    compressed = _read_json_obj(root / "COMPRESSED-SPRINT-2-ARMED.json") or {}
+    if compressed.get("no_wait_devi") and not any(
+        "devi" in str(b.get("branch") or "").lower() for b in blocked_human
+    ):
+        blocked_human.append(
+            {
+                "branch": "Devi",
+                "status": "PARKED_BY_SPRINT",
+                "source": "COMPRESSED-SPRINT-2-ARMED.no_wait_devi",
+            }
+        )
+    if compressed.get("no_wait_habitat") and not any(
+        "habitat" in str(b.get("branch") or "").lower() for b in blocked_human
+    ):
+        blocked_human.append(
+            {
+                "branch": "Habitat",
+                "status": "PARKED_BY_SPRINT",
+                "source": "COMPRESSED-SPRINT-2-ARMED.no_wait_habitat",
+            }
+        )
+
+    last_advance: dict[str, Any] | None = None
+    ticks_path = root / "supervisor-ticks.jsonl"
+    if ticks_path.is_file():
+        try:
+            lines = [
+                ln.strip()
+                for ln in ticks_path.read_text(encoding="utf-8").splitlines()
+                if ln.strip()
+            ]
+            if lines:
+                tick = json.loads(lines[-1])
+                if isinstance(tick, dict):
+                    last_advance = {
+                        "at": tick.get("at"),
+                        "action": tick.get("action") or tick.get("next_action"),
+                        "run_id": tick.get("run_id"),
+                        "stage": tick.get("stage"),
+                        "source": "supervisor-ticks",
+                    }
+        except (OSError, json.JSONDecodeError):
+            last_advance = None
+    if last_advance is None and completed:
+        last_advance = {
+            "at": completed[0].get("updated_at"),
+            "action": "PACK_DONE",
+            "run_id": completed[0].get("run_id"),
+            "stage": completed[0].get("stage"),
+            "source": "recent_completed",
+        }
+
+    mission_ptr = ""
+    mission_path = root / "ACTIVE_MISSION"
+    if mission_path.is_file():
+        try:
+            mission_ptr = mission_path.read_text(encoding="utf-8").strip()
+        except OSError:
+            mission_ptr = ""
+
+    in_flight_count = len(in_flight)
+    return {
+        "ok": True,
+        "in_flight_count": in_flight_count,
+        "in_flight_stages": dict(stage_counts),
+        "active_pointer": active_ptr or None,
+        "active_mission": mission_ptr or None,
+        "current_active_pack": current,
+        "queued_packs": queued,
+        "recently_completed": completed[:5],
+        "blocked_human_branches": blocked_human,
+        "last_factory_advance": last_advance,
+        "idle_reason": (idle.get("reason") if idle else None),
+    }
+
+
+def project_open_loops_with_factory(
+    loops: dict[str, Any],
+    factory: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Combine completion-register IN_PROGRESS with factory in-flight lanes.
+
+    Silent zero while factory is ACTIVE / WAITING_CURSOR / GROK_REVIEW / IN_FLIGHT
+    is a projection lie — either count factory work or mark PROJECTION STALE.
+    Does not invent SYSTEM%.
+    """
+    out = dict(loops or {})
+    fac = factory if isinstance(factory, dict) else factory_work_surface()
+    reg_ip = int(out.get("in_progress") or 0)
+    fac_ip = int(fac.get("in_flight_count") or 0)
+    projected = reg_ip + fac_ip
+    stale = bool(fac_ip > 0 and projected < 1)
+    if stale:
+        # Unreachable when fac_ip is counted correctly; keep as honesty backstop.
+        projected = max(projected, 1)
+
+    out["register_in_progress"] = reg_ip
+    out["factory_in_flight"] = fac_ip
+    out["in_progress"] = projected
+    out["projection_stale"] = stale
+    if stale:
+        out["projection_stale_label"] = "PROJECTION STALE"
+        out["projection_note"] = (
+            "Factory in-flight lanes present but In progress could not be projected"
+        )
+    else:
+        out["projection_note"] = (
+            "In progress = completion-register IN_PROGRESS + factory in-flight lanes"
+            if fac_ip
+            else "In progress from completion register (no factory in-flight)"
+        )
+    out["factory_work"] = {
+        "current_active_pack": fac.get("current_active_pack"),
+        "queued_packs": fac.get("queued_packs") or [],
+        "recently_completed": fac.get("recently_completed") or [],
+        "blocked_human_branches": fac.get("blocked_human_branches") or [],
+        "last_factory_advance": fac.get("last_factory_advance"),
+        "in_flight_count": fac_ip,
+        "active_mission": fac.get("active_mission"),
+        "idle_reason": fac.get("idle_reason"),
+    }
+    return out
 
 
 def backlog_items() -> list[dict[str, Any]]:
@@ -1847,8 +2133,11 @@ def open_loops_summary(
     *,
     db_path: Path | None = None,
     view_key: str | None = None,
+    factory_root: Path | None = None,
+    factory_runs_dir: Path | None = None,
+    include_factory: bool = True,
 ) -> dict[str, Any]:
-    """Owner Open Loops from the completion register. Numbers at read time."""
+    """Owner Open Loops from completion register + factory in-flight projection."""
     import sys
 
     scripts_dir = str(Path(__file__).resolve().parents[1])
@@ -1856,7 +2145,14 @@ def open_loops_summary(
         sys.path.insert(0, scripts_dir)
     from core import completion_register as _cr
 
-    return _cr.summary_for_owner(db_path=db_path, view_key=view_key)
+    base = _cr.summary_for_owner(db_path=db_path, view_key=view_key)
+    if not include_factory:
+        return base
+    factory = factory_work_surface(
+        factory_root=factory_root,
+        runs_dir=factory_runs_dir,
+    )
+    return project_open_loops_with_factory(base, factory)
 
 
 def build_read_model(
@@ -1868,6 +2164,9 @@ def build_read_model(
     catalog_path: Path | None = None,
     html_path: Path | None = None,
     register_db_path: Path | None = None,
+    factory_root: Path | None = None,
+    factory_runs_dir: Path | None = None,
+    sale_csv_path: Path | None = None,
 ) -> dict[str, Any]:
     overlay = load_overlay(overlay_path)
     master = load_master_build_rows()
@@ -1880,9 +2179,13 @@ def build_read_model(
 
     merged = merge_overlay(master, overlay)
     integ = integrations_items()
-    sale = sale_readiness_items()
-    factory = factory_health_items()
+    sale = sale_readiness_items(csv_path=sale_csv_path)
+    factory = factory_health_items(runs_dir=factory_runs_dir)
     backlog = backlog_items()
+    factory_work = factory_work_surface(
+        factory_root=factory_root,
+        runs_dir=factory_runs_dir,
+    )
 
     # Mission-scored items EXCLUDE factory (LEGACY overall)
     all_scored = merged + integ + sale
@@ -1926,6 +2229,37 @@ def build_read_model(
     needs_staff = missions.get("needs_staff") or []
     needs_policy = missions.get("needs_policy") or []
     needs_external_access = missions.get("needs_external_access") or []
+    try:
+        from core.content_engine_repair import read_library_exceptions
+
+        library_preview_exceptions = read_library_exceptions()
+    except Exception:  # noqa: BLE001
+        library_preview_exceptions = {
+            "ok": False,
+            "count": 0,
+            "items": [],
+            "note": "Preview exceptions could not be read.",
+            "staff_ready": False,
+            "read_only": True,
+            "human_commissioned": False,
+        }
+    try:
+        from core import owner_commissioning_queue as _ocq
+
+        my_commissioning = _ocq.build_for_progress()
+    except Exception as _ocq_exc:  # noqa: BLE001
+        my_commissioning = {
+            "ok": False,
+            "error": str(_ocq_exc)[:200],
+            "cards": [],
+            "active_cards": [],
+            "counters": {},
+            "honesty": {
+                "proven": False,
+                "ready": False,
+                "invented_human_commissioned": False,
+            },
+        }
     owner_pulse = _build_owner_pulse(
         overlay,
         factory_health,
@@ -1970,7 +2304,9 @@ def build_read_model(
                 "needs_staff": needs_staff,
                 "needs_policy": needs_policy,
                 "needs_external_access": needs_external_access,
+                "library_preview_exceptions": library_preview_exceptions,
                 "waiting_on_others": waiting_on_others,
+                "my_commissioning": my_commissioning,
                 "policy_decisions": policy_decisions,
                 "owner_pulse": owner_pulse,
                 "next_moves": next_moves,
@@ -2064,19 +2400,26 @@ def build_read_model(
                 "items": items,
             }
 
-    loop_cache: dict[str | None, dict[str, Any]] = {}
+    loop_cache: dict[tuple[str | None, bool], dict[str, Any]] = {}
 
     def loops_for(view_name: str) -> dict[str, Any]:
         key = REGISTER_VIEW_KEY.get(view_name)
-        if key not in loop_cache:
-            loop_cache[key] = open_loops_summary(
+        include_factory = view_name == "Empire"
+        cache_key = (key, include_factory)
+        if cache_key not in loop_cache:
+            loop_cache[cache_key] = open_loops_summary(
                 db_path=register_db_path,
                 view_key=key,
+                factory_root=factory_root,
+                factory_runs_dir=factory_runs_dir,
+                include_factory=include_factory,
             )
-        return loop_cache[key]
+        return loop_cache[cache_key]
 
     for view_name, payload in views.items():
         payload["open_loops"] = loops_for(view_name)
+        if view_name == "Empire":
+            payload["factory_work"] = factory_work
     open_loops = loops_for("Empire")
 
     primary_menu = [n["label"] for n in PRIMARY_NAV]
@@ -2102,13 +2445,16 @@ def build_read_model(
         "needs_staff": needs_staff,
         "needs_policy": needs_policy,
         "needs_external_access": needs_external_access,
+        "library_preview_exceptions": library_preview_exceptions,
         "waiting_on_others": waiting_on_others,
+        "my_commissioning": my_commissioning,
         "policy_decisions": policy_decisions,
         "owner_pulse": owner_pulse,
         "next_moves": next_moves,
         "recent_wins": recent_wins,
         "milestone_road": milestone_road,
         "open_loops": open_loops,
+        "factory_work": factory_work,
         "factory_health": factory_health,
         "domain_weights": {
             d: {"weight": w, "label": "ESTIMATED", "pct_display": WEIGHT_PCT_DISPLAY.get(d)}
@@ -2197,7 +2543,7 @@ def get_view(
 
 
 def honesty_flags() -> dict[str, Any]:
-    return {
+    flags = {
         "progress_type": "SYSTEM_FROM_LEDGER",
         "legacy_progress_type": "PARTIAL_ESTIMATE",
         "master_build_csv_staleness": "KNOWN",
@@ -2211,7 +2557,15 @@ def honesty_flags() -> dict[str, Any]:
         "no_metricool_writes": True,
         "no_habitat_planner_mutations": True,
         "no_production_writes": True,
+        "proven": False,
+        "ready": False,
+        "invented_human_commissioned": False,
+        "human_commissioned_requires_submit_evidence": True,
+        "clickup_retired": True,
+        "telegram_retired": True,
+        "owner_commissioning_bound": "beta-owner-commissioning-safe",
     }
+    return flags
 
 
 if __name__ == "__main__":

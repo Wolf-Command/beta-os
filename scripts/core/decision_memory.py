@@ -916,16 +916,9 @@ def install_owner_seed_rbac_fixture(conn: sqlite3.Connection) -> dict[str, str]:
         """,
         (scope_id, entity_id, ts),
     )
-    conn.execute(
-        """
-        INSERT INTO org_assignment_scopes (
-          assignment_id, scope_id, start_at, end_at, status, created_at, updated_at
-        ) VALUES (?, ?, ?, NULL, 'ACTIVE', ?, ?)
-        ON CONFLICT(assignment_id, scope_id, start_at) DO UPDATE SET
-          status='ACTIVE', end_at=NULL, updated_at=excluded.updated_at
-        """,
-        (assignment_id, scope_id, ts, ts, ts),
-    )
+    from core.scope import upsert_assignment_scope
+
+    upsert_assignment_scope(conn, assignment_id, scope_id, ts, ts)
     for perm_id, code, resource, action, desc in (
         (
             "PERM-DECISION-MEMORY-READ",

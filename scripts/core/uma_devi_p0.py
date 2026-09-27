@@ -214,6 +214,8 @@ def _caps(person_id: str, conn: sqlite3.Connection) -> dict[str, bool]:
         "close_ops": allow("work.complete"),
         "petty": allow("work.create"),
         "issue": allow("work.create"),
+        # Sprint2 P1 operator depth — PR detail/correction affordance.
+        "pr_operator": allow(_ops.PERM_PR_OPERATOR) or allow("work.update"),
     }
 
 
@@ -557,6 +559,10 @@ def pr_actions(person_id: str, *, conn: sqlite3.Connection) -> dict[str, Any]:
     else:
         actions["receive"] = False
         actions["receive_waiting"] = waiting_copy("policy" if not caps.get("receive_permission") else "receiver")
+    actions["pr_operator"] = bool(caps.get("pr_operator"))
+    actions["correction"] = bool(caps.get("pr_operator"))
+    if not caps.get("pr_operator"):
+        actions["pr_operator_waiting"] = waiting_copy("staff")
     if not caps["submit_pr"]:
         actions["submit_waiting"] = waiting_copy("staff")
     if not caps["approve_ops"]:
@@ -604,27 +610,40 @@ def _waiting_subject(conn: sqlite3.Connection, role: str, person_id: str) -> str
     return token
 
 
+def _first_pr_href(card: dict[str, Any], fallback: str = "/bzg/uma-blu/bills") -> str:
+    """Deep-link to the first live PR on the card. List href is fallback only."""
+    for item in card.get("items") or []:
+        if item.get("example"):
+            continue
+        if item.get("href"):
+            return str(item["href"])
+        key = str(item.get("pr_id") or item.get("pr_num") or "").strip()
+        if key:
+            return f"/bzg/uma-blu/bills/{key}"
+    return str(card.get("href") or fallback)
+
+
 def _perform_action(kind: str, card: dict[str, Any], caps: dict[str, Any]) -> dict[str, str] | None:
     """Verb the operator can perform. Verify is never a Today action."""
     if kind == "ordered_not_received" and caps.get("receive"):
         return {
             "label": ACTION_RECEIVE,
-            "href": str(card.get("href") or "/bzg/uma-blu/bills"),
+            "href": _first_pr_href(card),
         }
     if kind == "awaiting_remainder" and caps.get("receive"):
         return {
             "label": ACTION_RECEIVE,
-            "href": str(card.get("href") or "/bzg/uma-blu/bills"),
+            "href": _first_pr_href(card),
         }
     if kind == "prs_waiting_approval" and caps.get("approve_ops"):
         return {
             "label": ACTION_APPROVE,
-            "href": str(card.get("href") or "/bzg/uma-blu/bills"),
+            "href": _first_pr_href(card),
         }
     if kind == "draft_pr" and caps.get("submit_pr"):
         return {
             "label": ACTION_SUBMIT,
-            "href": str(card.get("href") or "/bzg/uma-blu/bills"),
+            "href": _first_pr_href(card),
         }
     if kind != "daily_close":
         return None
@@ -1136,6 +1155,22 @@ def receive_goods(
 
 
 OWNER_PERSON = "PERS-MATT"
+
+
+def _seat_line(view: str, buttons: dict[str, bool]) -> str:
+    """Plain sentence from capabilities. The person's name is not an input."""
+    if view == "owner":
+        return "You can read the day. This screen does not pay anyone."
+    if buttons.get("perform_close") and not buttons.get("receive"):
+        return (
+            "You count the till and record the day. "
+            "You cannot pay, change a bank, or verify your own close."
+        )
+    if buttons.get("receive") or buttons.get("perform_close"):
+        return "You run the day's operations. You cannot pay or change a bank."
+    return "Sign-in decides what you can do. Payment is not on this screen."
+
+
 _OPS_DEST_CAP = {
     "REQUESTED": "submit_pr",
     "APPROVED": "approve_ops",
@@ -1160,22 +1195,28 @@ def operator_view(person_id: str, *, conn: sqlite3.Connection) -> dict[str, Any]
         "petty_count": bool(caps.get("submit_pr")),
         "create_issue": bool(caps.get("issue")),
         "perform_close": bool(caps.get("submit")),
+        "pr_operator": bool(caps.get("pr_operator")),
+        "correction": bool(caps.get("pr_operator")),
         "payment_approve": False,
         "payment_execution": False,
         "verify_close": False,
         "progress": False,
     }
+    view = "owner" if owner else "operator"
     return {
         "ok": True,
-        "view": "owner" if owner else "operator",
+        "view": view,
         "person_id": pid or None,
         "manager_read": owner,
+        "seat_line": _seat_line(view, buttons),
         "buttons": buttons,
         "payment_execution": False,
         "sees_money_controls": False,
         "human_commissioning": "NOT_DONE",
+        "live_devi_commission": False,
         "proven": False,
         "ready": False,
+        "operator_depth_bound": _ops.LOOP_BOUND,
     }
 
 

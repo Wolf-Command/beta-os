@@ -9,6 +9,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from wolf_intelligence import (  # noqa: E402
+    format_fortnight_title,
     fortnight_bounds,
     log_skill_run,
     now_iso,
@@ -159,7 +160,7 @@ def orchestrate_build_next(conn, brand_id: str, subject: str) -> dict[str, Any]:
         """,
         (
             brand_id,
-            f"{brand_id} fortnight {period_start} → {period_end}",
+            format_fortnight_title(brand_id, period_start, period_end),
             period_start,
             period_end,
             json.dumps(strategy),

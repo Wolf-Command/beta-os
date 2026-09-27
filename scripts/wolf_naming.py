@@ -56,9 +56,23 @@ def normalize_stage(raw: str | None) -> str:
     return stage
 
 
+def allowed_brands() -> set[str]:
+    """Naming slugs. Registry slugs extend the historical tuple; HTML must not copy them."""
+    brands = set(BRANDS)
+    try:
+        from core.content_engine_repair import registry_slugs
+
+        brands.update(registry_slugs())
+    except Exception:
+        pass
+    return brands
+
+
 def normalize_brand(raw: str | None) -> str:
     brand = (raw or "").strip().lower()
-    if brand not in BRANDS:
+    if not brand:
+        raise ValueError("brand required")
+    if brand not in allowed_brands():
         raise ValueError(f"invalid brand {brand!r}")
     return brand
 

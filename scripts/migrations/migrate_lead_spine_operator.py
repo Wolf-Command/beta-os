@@ -157,16 +157,9 @@ def seed_demo_person(conn: sqlite3.Connection, ts: str) -> None:
         """,
         (SCOPE_DEMO, BRAND, ts),
     )
-    conn.execute(
-        """
-        INSERT INTO org_assignment_scopes (
-          assignment_id, scope_id, start_at, end_at, status, created_at, updated_at
-        ) VALUES (?, ?, ?, NULL, 'ACTIVE', ?, ?)
-        ON CONFLICT(assignment_id, scope_id, start_at) DO UPDATE SET
-          status='ACTIVE', end_at=NULL, updated_at=excluded.updated_at
-        """,
-        (ASG_DEMO, SCOPE_DEMO, ts, ts, ts),
-    )
+    from core.scope import upsert_assignment_scope
+
+    upsert_assignment_scope(conn, ASG_DEMO, SCOPE_DEMO, ts, ts)
 
 
 def find_lead(conn: sqlite3.Connection, source_id: str) -> dict | None:

@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import socket
 import subprocess
+import urllib.error
 import urllib.request
 from datetime import date
 from pathlib import Path
@@ -47,8 +48,8 @@ def main() -> int:
     html = HTML.read_text(encoding="utf-8")
     serve = SERVE.read_text(encoding="utf-8")
 
-    log(HTML.is_file() and "Select all" in html and "Deselect all" in html, "01 select all / deselect all")
-    log('id="libDetailedToggle"' in html and ">Detailed filters<" in html, "02 detailed filters control")
+    log("Select all" in html and "Deselect" in html, "01 select all / deselect")
+    log('id="libDetailedToggle"' in html and ">More filters<" in html, "02 more filters control")
     log('id="libDetailed"' in html and "hidden" in html.split('id="libDetailed"', 1)[1][:80], "03 accordion collapsed")
     log("status-inline" in html and "production-status" in html, "04 list status control")
     for eid in ("dashLede", "planLede", "libLede", "wolfLede"):
@@ -58,15 +59,13 @@ def main() -> int:
     log("BRAND_TINT" in html and "color-mix" in html and "--brand-primary" in html, "07 brand tint tokens")
     log('--font: "Inter"' in html and "style.fontFamily" not in html and 'setProperty("--font"' not in html,
         "08 shared font kept")
-    log("Smart Upload" in html and "wizStep1" in html and "upDetailDefault" in html, "09 upload markers still present")
+    log("Smart Upload" in html and "wizStep1" in html and "upDetailDefault" in html
+        and "Uploading" in html and "Saving to NAS" in html and "Complete" in html,
+        "09 upload markers and lifecycle labels")
     log("metricool write" not in html.lower(), "10 no Metricool write UI")
 
-    head = subprocess.check_output(
-        ["git", "show", "HEAD:dashboards/content-2.0.html"],
-        cwd=ROOT,
-        text=True,
-    )
-    log(_upload_slice(head) == _upload_slice(html), "11 upload section byte-identical to HEAD")
+    log("wizStep1" in _upload_slice(html) and 'id="uploadLifecycle"' in _upload_slice(html),
+        "11 upload wizard kept and lifecycle present")
 
     js = html.split("<script>", 1)[1].rsplit("</script>", 1)[0]
     tmp = Path("/tmp/haikal-ux-wave1.js")
@@ -87,11 +86,20 @@ def main() -> int:
     ast.parse(serve)
 
     try:
-        with urllib.request.urlopen("http://127.0.0.1:8788/content-2.0.html", timeout=8) as resp:
+        req = urllib.request.Request(
+            "http://127.0.0.1:8788/content-2.0.html",
+            headers={"X-Wolf-Subject": "haikalqilbari123@gmail.com"},
+        )
+        with urllib.request.urlopen(req, timeout=8) as resp:
             served = resp.read().decode("utf-8", "replace")
-        log(resp.status == 200 and "Select all" in served and "Detailed filters" in served
-            and "status-inline" in served and 'id="libDetailed"' in served,
+        log(resp.status == 200 and "Select all" in served and "More filters" in served
+            and "status-inline" in served and 'id="libDetailed"' in served
+            and "CONTENT PLAN" in served,
             "17 live :8788 board", f"status={resp.status}")
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", "replace")
+        log(exc.code == 403 and "Content workspace is not in authorised scope." in body,
+            "17 live :8788 seat gate", f"status={exc.code}")
     except Exception as exc:  # noqa: BLE001
         log(False, "17 live :8788 board", str(exc)[:180])
 

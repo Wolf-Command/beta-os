@@ -21,6 +21,8 @@ BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 CATALOG_DB = BETA_ROOT / "catalog" / "content_library.sqlite"
 
 WOLF_STAGES = frozenset({"OPEN", "ACTIVE", "PARKED", "CLOSED"})
+# GGV ops pack seat check is the authority. Org lead grants stay fixture-only.
+PACK_OPERATOR_AUTH = "ggv-ops-pack-seat"
 EVENT_TYPES = frozenset(
     {
         "observed",
@@ -34,6 +36,17 @@ EVENT_TYPES = frozenset(
         "correction",
         "match_candidate_recorded",
         "match_candidate_revoked",
+        # Sprint2 P2 GGV loop closure — operator-recorded loop facts only.
+        "identity_contact_noted",
+        "qualification_recorded",
+        "engagement_recorded",
+        "due_recorded",
+        "mgmt_exception_raised",
+        # Sprint2 P2 GGV lead operator depth.
+        "ownership_touch_recorded",
+        # Sprint2 P8 CRM lead operator depth.
+        "handover_touch_recorded",
+        "dismiss_noise_recorded",
     }
 )
 ACTOR_TYPES = frozenset({"PERSON", "SYSTEM"})
@@ -679,6 +692,7 @@ def assign_owner(
     verified_person_id: str,
     conn: sqlite3.Connection | None = None,
     db_path: Path | str | None = None,
+    operator_auth: str | None = None,
 ) -> dict[str, Any]:
     own = conn is None
     c = conn or _open(db_path)
@@ -686,13 +700,17 @@ def assign_owner(
         lead = get_lead(lead_id, conn=c)
         if not lead:
             raise LeadSpineError("lead not found", code="not_found")
-        _require_perm(
-            c,
-            verified_person_id=verified_person_id,
-            permission_code="lead.assign",
-            brand_id=lead["brand_id"],
-            entity_id=lead["entity_id"],
-        )
+        pack_seat = operator_auth == PACK_OPERATOR_AUTH
+        if not pack_seat:
+            _require_perm(
+                c,
+                verified_person_id=verified_person_id,
+                permission_code="lead.assign",
+                brand_id=lead["brand_id"],
+                entity_id=lead["entity_id"],
+            )
+        elif not (verified_person_id or "").strip():
+            raise LeadSpineError("verified_person_id required", code="denied")
         # Blank stays null — never write UNKNOWN
         oid = (owner_person_id or "").strip() or None
         if oid and oid.upper() == "UNKNOWN":
@@ -1254,6 +1272,7 @@ def set_wolf_stage(
     actor_person_id: str | None = None,
     conn: sqlite3.Connection | None = None,
     db_path: Path | str | None = None,
+    operator_auth: str | None = None,
 ) -> dict[str, Any]:
     """Set Wolf lifecycle only. Never rewrites source_stage."""
     ws = (wolf_stage or "").strip().upper()
@@ -1268,7 +1287,8 @@ def set_wolf_stage(
         lead = get_lead(lead_id, conn=c)
         if not lead:
             raise LeadSpineError("lead not found", code="not_found")
-        if actor_type == "PERSON":
+        pack_seat = operator_auth == PACK_OPERATOR_AUTH
+        if actor_type == "PERSON" and not pack_seat:
             _require_perm(
                 c,
                 verified_person_id=verified_person_id,
@@ -1277,6 +1297,10 @@ def set_wolf_stage(
                 entity_id=lead["entity_id"],
             )
             actor_person_id = (verified_person_id or "").strip()
+        elif actor_type == "PERSON" and pack_seat:
+            actor_person_id = (verified_person_id or "").strip()
+            if not actor_person_id:
+                raise LeadSpineError("verified_person_id required", code="denied")
 
         before_src = lead["source_stage"]
         before_wolf = lead["wolf_stage"]
@@ -1446,7 +1470,7 @@ def api_list_leads(
     c = conn or _open(db_path)
     try:
         cards = [lead_operator_card(r, conn=c) for r in rows]
-        return {
+        payload = {
             "ok": True,
             "brand_id": brand_id,
             "leads": cards,
@@ -1461,6 +1485,8 @@ def api_list_leads(
                 "demo_data": True,
             },
         }
+        _attach_needs_you_connective(payload, person_id=verified_person_id, conn=c)
+        return payload
     finally:
         if own:
             c.close()
@@ -1568,6 +1594,319 @@ def speed_to_lead_signal(
     }
 
 
+def latest_event_payload(
+    lead_id: str,
+    event_type: str,
+    *,
+    conn: sqlite3.Connection,
+) -> dict[str, Any] | None:
+    """Latest append-only event payload for a lead. None if never recorded."""
+    if event_type not in EVENT_TYPES:
+        return None
+    row = conn.execute(
+        """
+        SELECT payload_json FROM core_lead_events
+        WHERE lead_id=? AND event_type=?
+        ORDER BY recorded_at DESC, event_id DESC
+        LIMIT 1
+        """,
+        (lead_id, event_type),
+    ).fetchone()
+    if not row or not row[0]:
+        return None
+    try:
+        payload = json.loads(row[0])
+    except (TypeError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def has_event(
+    lead_id: str,
+    event_type: str,
+    *,
+    conn: sqlite3.Connection,
+) -> bool:
+    if event_type not in EVENT_TYPES:
+        return False
+    row = conn.execute(
+        """
+        SELECT 1 FROM core_lead_events
+        WHERE lead_id=? AND event_type=?
+        LIMIT 1
+        """,
+        (lead_id, event_type),
+    ).fetchone()
+    return row is not None
+
+
+def _pack_or_perm_append(
+    c: sqlite3.Connection,
+    lead: dict[str, Any],
+    *,
+    verified_person_id: str | None,
+    operator_auth: str | None,
+    permission_code: str = "lead.event.append",
+) -> str:
+    """Return actor person id. Pack seat skips RBAC; org path still requires perm."""
+    pack_seat = operator_auth == PACK_OPERATOR_AUTH
+    vpid = (verified_person_id or "").strip()
+    if not vpid:
+        raise LeadSpineError("verified_person_id required", code="denied")
+    if not pack_seat:
+        _require_perm(
+            c,
+            verified_person_id=vpid,
+            permission_code=permission_code,
+            brand_id=lead["brand_id"],
+            entity_id=lead["entity_id"],
+        )
+    return vpid
+
+
+def record_identity_contact(
+    lead_id: str,
+    note: str,
+    *,
+    contact_kind: str = "contact",
+    verified_person_id: str,
+    conn: sqlite3.Connection | None = None,
+    db_path: Path | str | None = None,
+    operator_auth: str | None = None,
+) -> dict[str, Any]:
+    """Operator identity/contact note. Does not merge people or write external CRM."""
+    text = (note or "").strip()
+    if not text:
+        raise LeadSpineError("identity/contact note required", code="invalid")
+    kind = (contact_kind or "contact").strip().lower() or "contact"
+    if kind not in {"contact", "identity", "match_note"}:
+        raise LeadSpineError("contact_kind invalid", code="invalid")
+    own = conn is None
+    c = conn or _open(db_path)
+    try:
+        lead = get_lead(lead_id, conn=c)
+        if not lead:
+            raise LeadSpineError("lead not found", code="not_found")
+        actor = _pack_or_perm_append(
+            c, lead, verified_person_id=verified_person_id, operator_auth=operator_auth
+        )
+        evt = append_event(
+            lead_id,
+            "identity_contact_noted",
+            payload={"note": text, "contact_kind": kind, "external_crm_write": False},
+            actor_type="PERSON",
+            actor_person_id=actor,
+            verified_person_id=actor,
+            require_perm=False,
+            conn=c,
+        )
+        c.commit()
+        return {"lead": get_lead(lead_id, conn=c), "event": evt}
+    finally:
+        if own:
+            c.close()
+
+
+def record_qualification(
+    lead_id: str,
+    decision: str,
+    note: str,
+    *,
+    verified_person_id: str,
+    conn: sqlite3.Connection | None = None,
+    db_path: Path | str | None = None,
+    operator_auth: str | None = None,
+) -> dict[str, Any]:
+    """Record qualification. Does not invent pipeline value or a sale."""
+    dec = (decision or "").strip().lower()
+    if dec not in {"qualified", "not_qualified", "needs_info"}:
+        raise LeadSpineError(
+            "decision must be qualified, not_qualified, or needs_info",
+            code="invalid",
+        )
+    text = (note or "").strip()
+    if not text:
+        raise LeadSpineError("qualification note required", code="invalid")
+    own = conn is None
+    c = conn or _open(db_path)
+    try:
+        lead = get_lead(lead_id, conn=c)
+        if not lead:
+            raise LeadSpineError("lead not found", code="not_found")
+        actor = _pack_or_perm_append(
+            c, lead, verified_person_id=verified_person_id, operator_auth=operator_auth
+        )
+        evt = append_event(
+            lead_id,
+            "qualification_recorded",
+            payload={
+                "decision": dec,
+                "note": text,
+                "is_sale": False,
+                "closed_is_not_a_sale": True,
+            },
+            actor_type="PERSON",
+            actor_person_id=actor,
+            verified_person_id=actor,
+            require_perm=False,
+            conn=c,
+        )
+        c.commit()
+        return {"lead": get_lead(lead_id, conn=c), "event": evt}
+    finally:
+        if own:
+            c.close()
+
+
+def record_engagement(
+    lead_id: str,
+    kind: str,
+    note: str,
+    *,
+    verified_person_id: str,
+    conn: sqlite3.Connection | None = None,
+    db_path: Path | str | None = None,
+    operator_auth: str | None = None,
+) -> dict[str, Any]:
+    """Proposal/engagement scaffold note. Empty money — not a contract or revenue."""
+    k = (kind or "").strip().lower()
+    if k not in {"proposal", "engagement", "scope", "decline"}:
+        raise LeadSpineError(
+            "kind must be proposal, engagement, scope, or decline",
+            code="invalid",
+        )
+    text = (note or "").strip()
+    if not text:
+        raise LeadSpineError("engagement note required", code="invalid")
+    own = conn is None
+    c = conn or _open(db_path)
+    try:
+        lead = get_lead(lead_id, conn=c)
+        if not lead:
+            raise LeadSpineError("lead not found", code="not_found")
+        actor = _pack_or_perm_append(
+            c, lead, verified_person_id=verified_person_id, operator_auth=operator_auth
+        )
+        evt = append_event(
+            lead_id,
+            "engagement_recorded",
+            payload={
+                "kind": k,
+                "note": text,
+                "revenue": None,
+                "contract": False,
+                "live_engagement": False,
+            },
+            actor_type="PERSON",
+            actor_person_id=actor,
+            verified_person_id=actor,
+            require_perm=False,
+            conn=c,
+        )
+        c.commit()
+        return {"lead": get_lead(lead_id, conn=c), "event": evt}
+    finally:
+        if own:
+            c.close()
+
+
+def record_due(
+    lead_id: str,
+    due_at: str,
+    note: str,
+    *,
+    verified_person_id: str,
+    conn: sqlite3.Connection | None = None,
+    db_path: Path | str | None = None,
+    operator_auth: str | None = None,
+) -> dict[str, Any]:
+    """Operator-set due clock. Not an invented SLA target."""
+    due = (due_at or "").strip()
+    if not due:
+        raise LeadSpineError("due_at required", code="invalid")
+    try:
+        _parse_ts(due)
+    except (TypeError, ValueError) as exc:
+        raise LeadSpineError("due_at unparseable", code="invalid") from exc
+    text = (note or "").strip()
+    if not text:
+        raise LeadSpineError("due note required", code="invalid")
+    own = conn is None
+    c = conn or _open(db_path)
+    try:
+        lead = get_lead(lead_id, conn=c)
+        if not lead:
+            raise LeadSpineError("lead not found", code="not_found")
+        actor = _pack_or_perm_append(
+            c, lead, verified_person_id=verified_person_id, operator_auth=operator_auth
+        )
+        evt = append_event(
+            lead_id,
+            "due_recorded",
+            payload={
+                "due_at": due,
+                "note": text,
+                "sla_target_seconds": None,
+                "sla_breached": None,
+                "invented_sla": False,
+            },
+            actor_type="PERSON",
+            actor_person_id=actor,
+            verified_person_id=actor,
+            require_perm=False,
+            conn=c,
+        )
+        c.commit()
+        return {"lead": get_lead(lead_id, conn=c), "event": evt}
+    finally:
+        if own:
+            c.close()
+
+
+def record_mgmt_exception(
+    lead_id: str,
+    reason: str,
+    *,
+    verified_person_id: str,
+    conn: sqlite3.Connection | None = None,
+    db_path: Path | str | None = None,
+    operator_auth: str | None = None,
+) -> dict[str, Any]:
+    """Raise a management exception on facts already known. Does not invent SLA."""
+    text = (reason or "").strip()
+    if not text:
+        raise LeadSpineError("exception reason required", code="invalid")
+    own = conn is None
+    c = conn or _open(db_path)
+    try:
+        lead = get_lead(lead_id, conn=c)
+        if not lead:
+            raise LeadSpineError("lead not found", code="not_found")
+        actor = _pack_or_perm_append(
+            c, lead, verified_person_id=verified_person_id, operator_auth=operator_auth
+        )
+        evt = append_event(
+            lead_id,
+            "mgmt_exception_raised",
+            payload={
+                "reason": text,
+                "sla_breached": None,
+                "sla_target_seconds": None,
+                "invented_sla": False,
+            },
+            actor_type="PERSON",
+            actor_person_id=actor,
+            verified_person_id=actor,
+            require_perm=False,
+            conn=c,
+        )
+        c.commit()
+        return {"lead": get_lead(lead_id, conn=c), "event": evt}
+    finally:
+        if own:
+            c.close()
+
+
 def next_action_for_lead(lead: dict[str, Any]) -> dict[str, Any]:
     """One next step from facts already on the lead. Hooks are existing spine actions."""
     touch = (lead.get("first_human_touch_at") or "").strip() or None
@@ -1592,6 +1931,50 @@ def next_action_for_lead(lead: dict[str, Any]) -> dict[str, Any]:
         "label": label,
         "hook": hook,
         "creates_work_item": False,
+    }
+
+
+def loop_next_action_for_lead(
+    lead: dict[str, Any],
+    *,
+    conn: sqlite3.Connection,
+) -> dict[str, Any]:
+    """GGV loop next step from lead fields + recorded loop events. Never invents."""
+    lead_id = str(lead.get("lead_id") or "")
+    touch = (lead.get("first_human_touch_at") or "").strip() or None
+    owner = (lead.get("owner_person_id") or "").strip() or None
+    wolf = (lead.get("wolf_stage") or "").strip().upper()
+    conv = (lead.get("conversion_status") or "").strip().upper()
+    has_identity = has_event(lead_id, "identity_contact_noted", conn=conn) or has_event(
+        lead_id, "match_candidate_recorded", conn=conn
+    )
+    has_qual = has_event(lead_id, "qualification_recorded", conn=conn)
+    has_next = has_event(lead_id, "next_action_linked", conn=conn)
+    has_engage = has_event(lead_id, "engagement_recorded", conn=conn)
+    if not touch:
+        code, label, hook = "touch", "Record touch", "touch"
+    elif not has_identity:
+        code, label, hook = "identity", "Note identity or contact", "identity-contact"
+    elif not owner:
+        code, label, hook = "assign", "Assign owner", "assign"
+    elif not has_qual:
+        code, label, hook = "qualify", "Record qualification", "qualify"
+    elif not has_next:
+        code, label, hook = "next-action", "Record next action via lifecycle", "lifecycle"
+    elif wolf in ("", "OPEN"):
+        code, label, hook = "pipeline", "Move pipeline lifecycle", "lifecycle"
+    elif wolf == "ACTIVE" and not has_engage:
+        code, label, hook = "engagement", "Record proposal or engagement", "engagement"
+    elif wolf == "CLOSED" and conv not in ("CLAIMED", "VERIFIED"):
+        code, label, hook = "claim", "Claim conversion", "claim"
+    else:
+        code, label, hook = "none", "No further loop action", None
+    return {
+        "code": code,
+        "label": label,
+        "hook": hook,
+        "creates_work_item": False,
+        "invented": False,
     }
 
 
@@ -1694,7 +2077,7 @@ def api_triage_board(
             triage_card(row, conn=c, now=clock) for row in rows if needs_triage(row)
         ]
         queue.sort(key=_triage_sort_key)
-        return {
+        payload = {
             "ok": True,
             "brand_id": brand_id,
             "queue": queue,
@@ -1717,6 +2100,26 @@ def api_triage_board(
                 ),
             },
         }
+        _attach_needs_you_connective(payload, person_id=verified_person_id, conn=c)
+        return payload
     finally:
         if own:
             c.close()
+
+def _attach_needs_you_connective(
+    payload: dict[str, Any],
+    *,
+    person_id: str | None,
+    conn: sqlite3.Connection | None = None,
+    db_path: Path | str | None = None,
+) -> None:
+    """Prefer an in-scope CRM Needs-You row over the generic Lead Spine href.
+
+    Imported lazily so Lead Spine load does not cycle through the connective module.
+    A seat outside CRM scope leaves the desk payload unchanged.
+    """
+    from core import crm_ops_needs_you_connective as crm_nye
+
+    crm_nye._attach_needs_you_connective(
+        payload, person_id=person_id, conn=conn, db_path=db_path
+    )

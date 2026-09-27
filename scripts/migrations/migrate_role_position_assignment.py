@@ -116,6 +116,7 @@ def main() -> int:
         upsert_role(conn, "ROLE-AMG-GM", "General Manager", "DEPT-AMG-EXEC", "OPERATING", "SPECIFIED", ts)
         upsert_role(conn, "ROLE-BZG-HFB", "Head of F&B", "DEPT-BZG-FB", "OPERATING", "SPECIFIED", ts)
         upsert_role(conn, "ROLE-GGV-EDIT", "Video Editor", "DEPT-GGV-CONTENT", "OPERATING", "SPECIFIED", ts)
+        upsert_role(conn, "ROLE-GGV-CREATIVE-DIRECTOR", "Creative Director", "DEPT-GGV-CONTENT", "OPERATING", "SPECIFIED", ts)
         upsert_role(conn, "ROLE-ENG", "Engineering (shared service)", None, "SHARED_SERVICE", "SPECIFIED", ts)
         # Conservative Beta content seats — titles TBD where canon lacks employment titles
         upsert_role(
@@ -145,15 +146,23 @@ def main() -> int:
             "Video Editor #1", "ACTIVE", 1.0, ts,
         )
         upsert_position(
+            conn, "POS-GGV-CREATIVE-DIRECTOR-1", "ROLE-GGV-CREATIVE-DIRECTOR", "ENT-GGV",
+            None, None, "DEPT-GGV-CONTENT",
+            "Creative Director #1", "ACTIVE", 1.0, ts,
+        )
+        upsert_position(
             conn, "POS-CONTENT-CREW-1", "ROLE-CONTENT-CREW", "ENT-GGV",
             None, None, "DEPT-GGV-CONTENT",
             "Content Crew #1 (TBD)", "ACTIVE", 1.0, ts,
         )
 
         # --- Assignments for known Persons ---
+        # Owner settled 2026-09-24: Haikal on Creative Director (not Video Editor).
+        haikal_ve_end = "2026-09-24T17:34:12+08:00"
         upsert_assignment(conn, "ASG-MATT-OWNER-1", "PERS-MATT", "POS-OWNER-EXEC-1", start, None, "ACTIVE", 1, ts)
         upsert_assignment(conn, "ASG-AMANDA-CM-1", "PERS-AMANDA", "POS-CONTENT-MGMT-1", start, None, "ACTIVE", 1, ts)
-        upsert_assignment(conn, "ASG-HAIKAL-VE-1", "PERS-HAIKAL", "POS-VIDEO-EDITOR-1", start, None, "ACTIVE", 1, ts)
+        upsert_assignment(conn, "ASG-HAIKAL-VE-1", "PERS-HAIKAL", "POS-VIDEO-EDITOR-1", start, haikal_ve_end, "ENDED", 0, ts)
+        upsert_assignment(conn, "ASG-HAIKAL-CD-1", "PERS-HAIKAL", "POS-GGV-CREATIVE-DIRECTOR-1", haikal_ve_end, None, "ACTIVE", 1, ts)
         upsert_assignment(conn, "ASG-MISA-CC-1", "PERS-MISA", "POS-CONTENT-CREW-1", start, None, "ACTIVE", 1, ts)
 
         conn.execute(

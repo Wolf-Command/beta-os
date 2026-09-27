@@ -83,12 +83,23 @@ from core import uma_ops_console as _uma_ops
 from core import uma_devi_p0 as _uma_p0
 from core import esb_close_snapshot as _esb_close_snapshot
 from core import progress_read_model as _progress
+from core import owner_commissioning_queue as _owner_cmq
+from core import owner_commissioning_operator_depth as _owner_cmq_depth
 from core import intel_orchestration as _intel
 from core import intel_eval_cost as _intel_cost
 from core import intel_approve_to_rule as _intel_rule
+from core import intel_learning_policy as _intel_learn
 from core import lead_spine as _lead_spine
+from core import crm_ops_needs_you_connective as _crm_nye
 from core import integration_health as _integration_health
 from core import dashboard_truth as _dashboard_truth
+from core import nas_library as _nas_library
+from core import content_engine_repair as _ce_repair
+from core import nas_index_operator_depth as _nas_index_ops
+from core import ggv_content_nas_haikal_prep as _ggv_nas_haikal
+from core import ggv_content_ops_depth as _ggv_content_ops
+from core import amg_day_ops_operator_depth as _amg_day_ops
+from core import owner_progress_needs_you_depth as _owner_nye
 from core import tech_capability_registry as _tech_registry
 from core import sop_factory as _sop
 from core import strat_12wy_prove as _strat_12wy
@@ -103,19 +114,27 @@ from core import dr_crown_jewel as _crown_jewel
 from core import crm_connector_prove as _crm_connector
 from core import gws_integrate_prove as _gws_prove
 from core import crm_package_intel as _pkg_intel
+from core import crm_package_intel_operator_depth as _crm_pkg_depth
 from core import msc_asset_register as _msc_assets
 from core import msc_compliance_pack as _msc_compliance
+from core import msc_compliance_operator_depth as _msc_comp_depth
 from core import msc_cyber_baseline as _msc_cyber
 from core import msc_records_defensibility as _msc_records
 from core import intg_secrets_env as _intg_secrets
 from core import ggv_client_profitability as _ggv_pnl
+from core import ggv_client_profitability_operator_depth as _ggv_pnl_depth
 from core import ggv_strategy_machine as _ggv_strategy
 from core import amg_journey_workflow as _amg_journey
 from core import amg_daily_ops_state as _amg_ops
 from core import amg_packages_products as _amg_packages
+from core import amg_packages_operator_depth as _amg_pkg_depth
 from core import amg_revenue_yield as _amg_yield
+from core import amg_revenue_yield_operator_depth as _amg_yield_depth
+from core import amg_journey_operator_depth as _amg_journey_depth
 from core import amg_service_improve as _amg_improve
+from core import amg_service_improve_operator_depth as _amg_svc_depth
 from core import amg_sla_incident as _amg_sla
+from core import amg_sla_incident_operator_depth as _amg_sla_depth
 from core import amg_pms_orchestration as _amg_pms
 from core import amg_ops_pack as _amg_pack
 from core import hr_hiring_onboarding as _hr_hire
@@ -126,6 +145,7 @@ from core import fin_mgmt_reporting as _fin_mgmt
 from core import fin_intercompany_billing as _fin_ic
 from core import fin_budget_forecast_cash as _fin_bfc
 from core import ggv_intercompany_client as _ggv_ic
+from core import ggv_intercompany_client_operator_depth as _ggv_ic_depth
 from core import bzg_venue_pnl as _bzg_pnl
 from core import bzg_variance_waste as _bzg_var
 from core import bzg_allocation_engine as _bzg_alloc
@@ -137,12 +157,41 @@ from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
 from core import ggv_speed_to_lead_prove as _ggv_speed
 from core import ggv_ops_pack as _ggv_ops
+from core import ggv_finance_nota as _ggv_fin
 from core import crm_identity_memory as _crm_ident
+from core import crm_identity_operator_depth as _crm_ident_depth
 from core import bzg_reputation_observe as _bzg_rep
 from core import ggv_social_derive as _ggv_social
 from core import owner_empire_pack as _owner_empire
+from core import owner_command as _owner_command
+from core import business_dashboard as _business_dashboard
+from core import completion_war_room as _completion_war_room
 from core import core_harden_pack as _core_harden
 from core import intel_ops_pack as _intel_ops
+from core import intel_connective as _intel_connect
+from core import staff_ready_ux as _staff_ready
+from core import staff_ops_routing as _staff_ops
+from core import staff_home as _staff_home
+from core import work_loop as _work_loop
+from core import wolf_shell as _wolf_shell
+from core import amg_mgmt_cluster as _amg_mgmt
+from core import bzg_mgmt_cluster as _bzg_mgmt
+from core import core_mgmt_cluster as _core_mgmt
+from core import crm_mgmt_cluster as _crm_mgmt
+from core import ggv_mgmt_cluster as _ggv_mgmt
+from core import intel_mgmt_cluster as _intel_mgmt
+from core import msc_mgmt_cluster as _msc_mgmt
+from core import strat_mgmt_cluster as _strat_mgmt
+from core import dr_mgmt_cluster as _dr_mgmt
+from core import sale_mgmt_cluster as _sale_mgmt
+from core import sale_ops_needs_you_connective as _sale_nye
+from core import intg_mgmt_cluster as _intg_mgmt
+from core import intg_ops_needs_you_connective as _intg_nye
+from core import msc_ops_needs_you_connective as _msc_nye
+from core import msc_asset_operator_depth as _msc_asset_depth
+from core import strat_ops_needs_you_connective as _strat_nye
+from core import dr_ops_needs_you_connective as _dr_nye
+from core import core_ops_needs_you_connective as _core_nye
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DASHBOARDS = BETA_ROOT / "dashboards"
@@ -1003,9 +1052,10 @@ def commit_staged_item(item: dict) -> dict:
 
 def db_connect() -> sqlite3.Connection:
     _ensure_under_beta(CATALOG_DB)
-    conn = sqlite3.connect(str(CATALOG_DB))
+    conn = sqlite3.connect(str(CATALOG_DB), timeout=30)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys=ON")
+    conn.execute("PRAGMA busy_timeout=30000")
     return conn
 
 
@@ -1161,14 +1211,11 @@ def query_assets(qs: dict) -> list[dict]:
             params.append(status)
 
     media = ((qs.get("media_type") or qs.get("type") or [""])[0] or "").strip().lower()
-    if media in ("video", "photo", "image"):
-        if media == "photo":
-            media = "image"
-        clauses.append("lower(ifnull(media_type, type)) IN (?, ?)" if media == "image" else "lower(ifnull(media_type, type)) = ?")
-        if media == "image":
-            params.extend(["image", "graphic"])
-        else:
-            params.append(media)
+    if media == "photo":
+        media = "image"
+    if media in ("video", "image", "audio", "graphic"):
+        clauses.append("lower(ifnull(media_type, type)) = ?")
+        params.append(media)
     elif media:
         clauses.append("lower(ifnull(media_type, type)) = ?")
         params.append(media)
@@ -1209,38 +1256,57 @@ def query_assets(qs: dict) -> list[dict]:
         "shoot_date, sequence_token, media_type, uploaded_by, uploaded_at, "
         "content_plan_id, content_card_id, processing_status, library_status, "
         "data_lane, batch_id, content_hash, file_size, detail_tags_json, "
-        "readiness, readiness_note "
+        "readiness, readiness_note, "
+        "nas_rel, nas_received, nas_received_at, provenance_json "
         f"FROM assets{where} "
         "ORDER BY date_added DESC, id DESC"
     )
     conn = db_connect()
     try:
-        rows = [dict(r) for r in conn.execute(sql, params).fetchall()]
+        # Schema may predate NAS columns — migrate additively then re-query if needed
+        try:
+            rows = [dict(r) for r in conn.execute(sql, params).fetchall()]
+        except Exception:
+            _nas_library.migrate_schema(conn)
+            conn.commit()
+            rows = [dict(r) for r in conn.execute(sql, params).fetchall()]
         out = []
         for r in rows:
             typ = (r.get("media_type") or r.get("type") or "").lower()
-            if typ in ("video", "broll"):
+            media_label = _ce_repair.staff_media_label(typ)
+            if typ == "video":
                 thumb = "video"
-                media_label = "Video"
             elif typ in ("image", "graphic"):
                 thumb = "image"
-                media_label = "Photo" if typ == "image" else "Graphic"
             elif typ == "audio":
                 thumb = "audio"
-                media_label = "Audio"
             else:
+                # broll is content-class debt, not Photo/Video/Audio/Graphic.
                 thumb = "file"
-                media_label = typ or "File"
+                media_label = ""
             ready, note = _p26.readiness_from_row(r)
             tags = []
             try:
                 tags = json.loads(r.get("detail_tags_json") or "[]") or []
             except (TypeError, json.JSONDecodeError):
                 tags = _p26.parse_detail_tags(r.get("detail"))
+            prov = {}
+            try:
+                prov = json.loads(r.get("provenance_json") or "{}") or {}
+            except (TypeError, json.JSONDecodeError):
+                prov = {}
+            nas_recv = bool(r.get("nas_received"))
+            brand_names = {row["slug"]: row["display_name"] for row in _ce_repair.REQUIRED_BRANDS}
             out.append({
                 "id": r.get("id"),
                 "brand": r.get("brand"),
-                "brand_badge": (r.get("brand") or "").title(),
+                "brand_badge": brand_names.get(r.get("brand") or "", (r.get("brand") or "").replace("-", " ").title()),
+                "staff_title": _ce_repair.library_display_title(
+                    r.get("subject"), r.get("detail"), r.get("original_filename")
+                ),
+                "content_class": prov.get("content_class") or "",
+                "content_class_label": _ce_repair.content_class_label(prov.get("content_class")),
+                "content_class_debt": "broll" if typ == "broll" else None,
                 "stage": r.get("stage"),
                 "canonical_name": r.get("canonical_filename") or r.get("filename") or r.get("slug"),
                 "original_name": r.get("original_filename") or "",
@@ -1260,9 +1326,20 @@ def query_assets(qs: dict) -> list[dict]:
                 "date_added": r.get("date_added"),
                 "file_size": r.get("file_size"),
                 "batch_id": r.get("batch_id"),
+                "nas_received": nas_recv,
+                "nas_rel": r.get("nas_rel") if nas_recv else None,
+                "nas_received_at": r.get("nas_received_at") if nas_recv else None,
+                "provenance": {
+                    "original_filename": r.get("original_filename"),
+                    "canonical_filename": r.get("canonical_filename"),
+                    "nas_rel": r.get("nas_rel") if nas_recv else None,
+                    "nas_received": nas_recv,
+                    "source_system": r.get("source_system") or prov.get("source_system"),
+                    "data_lane": r.get("data_lane"),
+                },
                 "preview_url": f"/api/assets/{r.get('id')}/preview" if r.get("id") else None,
                 "download_url": f"/api/assets/{r.get('id')}/download" if r.get("id") else None,
-                # never paths
+                # never absolute FS paths
             })
         return out
     finally:
@@ -1567,11 +1644,119 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_json({"ok": True, "root": "beta-os", "planner": "sqlite"})
             return
 
+        if self._accountant_scope_wall():
+            return
+
+        if self._ggv_finance_dispatch():
+            return
+
+        if path == "/api/wolf/shell-whoami":
+            self._wolf_shell_whoami()
+            return
+
+        if path == "/api/content/repair-status":
+            self._send_json(_ce_repair.public_status())
+            return
+
+        if path == "/api/content/brand-registry":
+            self._content_brand_registry()
+            return
+
+        if path == "/api/content/nas-coverage":
+            self._content_nas_coverage(qs)
+            return
+
+        m_nas_media = re.match(r"^/api/content/nas-media/(\d+)/preview$", path)
+        if m_nas_media:
+            self._content_nas_media(int(m_nas_media.group(1)), qs)
+            return
+
         if path == "/api/assets":
             try:
+                identity = self._resolve_identity()
+                if not identity.get("ok"):
+                    self._send_identity_deny(identity, required_permission="can_view_plan|can_upload")
+                    return
+                who = _wolf_shell.whoami_from_identity(identity)
+                scopes = list(who.get("scopes") or [])
+                brand = ((qs.get("brand") or [""])[0] or "").strip().lower()
+                if brand in ("all", "*"):
+                    brand = ""
+                    qs = {k: v for k, v in qs.items() if k != "brand"}
+                if brand and not _nas_library.scopes_allow_brand(scopes, brand):
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "forbidden",
+                            "message": f"subject lacks scope for brand {brand}",
+                            "required_scope_for_brand": brand,
+                            "hidden_ne_permission": True,
+                        },
+                        status=403,
+                    )
+                    return
                 rows = query_assets(qs)
-                # Phase 2.6: query_assets already strips FS paths
-                self._send_json({"ok": True, "assets": rows, "count": len(rows)})
+                allowed = set(_nas_library.brands_for_scopes(scopes))
+                if allowed:
+                    rows = [r for r in rows if (r.get("brand") or "") in allowed]
+                else:
+                    rows = []
+                for row in rows:
+                    row["zip_eligible"] = True
+                q_text = ((qs.get("q") or qs.get("search") or [""])[0] or "").strip()
+                media = ((qs.get("media_type") or qs.get("type") or [""])[0] or "").strip().lower()
+                try:
+                    nas_limit = int((qs.get("nas_limit") or ["48"])[0])
+                except (TypeError, ValueError):
+                    nas_limit = 48
+                try:
+                    nas_offset = int((qs.get("nas_offset") or ["0"])[0])
+                except (TypeError, ValueError):
+                    nas_offset = 0
+                nas_page = {
+                    "cards": [],
+                    "matched": 0,
+                    "limit": nas_limit,
+                    "offset": nas_offset,
+                }
+                try:
+                    conn = db_connect()
+                    try:
+                        nas_page = _ce_repair.nas_library_search(
+                            conn,
+                            scopes,
+                            brand or "all",
+                            q=q_text,
+                            media_type=media,
+                            limit=nas_limit,
+                            offset=nas_offset,
+                        )
+                    finally:
+                        conn.close()
+                except Exception:
+                    nas_page = {"cards": [], "matched": 0, "limit": nas_limit, "offset": max(0, nas_offset)}
+                nas_cards = list(nas_page.get("cards") or [])
+                # Uploaded assets stay on the first page so later NAS pages are not repeated.
+                if nas_offset <= 0:
+                    rows = nas_cards + rows
+                else:
+                    rows = nas_cards
+                # Phase 2.6 + NAS P0: query_assets already strips absolute FS paths
+                payload = {
+                    "ok": True,
+                    "assets": rows,
+                    "count": len(rows),
+                    "nas_matched": int(nas_page.get("matched") or 0),
+                    "nas_offset": int(nas_page.get("offset") or 0),
+                    "nas_limit": int(nas_page.get("limit") or nas_limit),
+                    "nas_index": _ce_repair.read_coverage(),
+                    "full_tree_indexed": False,
+                    "full_nas_complete": False,
+                    "staff_ready": False,
+                }
+                if _ce_repair.library_exception_audience(who):
+                    payload["nas_exceptions"] = _ce_repair.read_library_exceptions()
+                self._send_json(payload)
             except Exception as exc:  # noqa: BLE001
                 self._send_err(500, str(exc))
             return
@@ -1584,6 +1769,69 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/nas/status":
             self._send_json({"ok": True, **_smart_upload.nas_status()})
+            return
+
+        if path == "/api/content/nas-haikal-prep":
+            self._content_nas_haikal_prep()
+            return
+
+        # GGV Content Machine ops depth — library operator detail/action (no publish).
+        if path in (
+            "/api/content/ops-depth",
+            "/api/content/ops-depth/operator-depth",
+            "/api/ggv/content-ops/operator-depth",
+        ):
+            self._ggv_content_ops_operator_depth()
+            return
+        if path in (
+            "/api/content/ops-depth/rbac",
+            "/api/content/ops-depth/operator-depth/rbac",
+            "/api/ggv/content-ops/operator-depth/rbac",
+        ):
+            self._ggv_content_ops_operator_depth_rbac()
+            return
+        m_content_op = re.match(
+            r"^/api/(?:content/ops-depth|ggv/content-ops)/objects/([^/]+)/operator$",
+            path,
+        )
+        if m_content_op:
+            self._ggv_content_ops_object_operator_detail(m_content_op.group(1))
+            return
+        if path.startswith("/api/content/ops-depth/") or path.startswith(
+            "/api/ggv/content-ops/"
+        ):
+            code = _ggv_content_ops.refuse_code(path)
+            if code:
+                self._ggv_content_ops_write_refused(path)
+                return
+
+        if path == "/api/nas/registry":
+            self._nas_registry_get()
+            return
+
+        if path == "/api/nas/index/search":
+            self._nas_index_search(qs)
+            return
+
+        # NAS index operator depth — browse/filter/facets/detail (rel-only).
+        if path in (
+            "/api/nas/index/operator-depth",
+            "/api/nas/index/ops",
+        ):
+            self._nas_index_operator_depth(qs)
+            return
+        if path == "/api/nas/index/browse":
+            self._nas_index_browse(qs)
+            return
+        if path == "/api/nas/index/facets":
+            self._nas_index_facets(qs)
+            return
+        m_nas_obj = re.match(r"^/api/nas/index/objects/([^/]+)$", path)
+        if m_nas_obj:
+            self._nas_index_object_detail(m_nas_obj.group(1))
+            return
+        if path.startswith("/api/nas/index/") and _nas_index_ops.refuse_code(path):
+            self._nas_index_ops_write_refused(path)
             return
 
         if path == "/api/upload/recent":
@@ -1620,6 +1868,22 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/bzg/uma-blu" or path.startswith("/api/bzg/uma-blu/"):
             if self._require_uma_ops() is None:
                 return
+            nye_refuse = _uma_ops.connective_refuse_code(path)
+            if nye_refuse:
+                self._uma_ops_connective_refuse(path, nye_refuse)
+                return
+            if path in (
+                "/api/bzg/uma-blu/needs-you",
+                "/api/bzg/uma-blu/needs-you-connective",
+            ):
+                self._uma_ops_needs_you()
+                return
+            m_bzg_nye = re.match(r"^/api/bzg/uma-blu/needs-you/items/([^/]+)$", path)
+            if m_bzg_nye:
+                from urllib.parse import unquote
+
+                self._uma_ops_needs_you_detail(unquote(m_bzg_nye.group(1)))
+                return
             if path == "/api/bzg/uma-blu/today":
                 self._uma_ops_today()
                 return
@@ -1651,6 +1915,95 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if path == "/api/bzg/uma-blu/closes":
                 self._uma_ops_closes()
                 return
+            if path == "/api/bzg/uma-blu/evidence":
+                self._send_json(_uma_ops.list_daily_evidence())
+                return
+            if path == "/api/bzg/uma-blu/staff-ready":
+                self._staff_ready_pack("bzg")
+                return
+            # Sprint2 P1 v2 BZG loop closure — additive reads on Uma phone path.
+            if path in (
+                "/api/bzg/uma-blu/loop",
+                "/api/bzg/uma-blu/loop-desk",
+            ):
+                self._uma_ops_loop()
+                return
+            if path == "/api/bzg/uma-blu/ordering-state":
+                self._uma_ops_loop_view("ordering_state")
+                return
+            if path in (
+                "/api/bzg/uma-blu/partial-receiving",
+                "/api/bzg/uma-blu/partial-receive",
+            ):
+                self._uma_ops_loop_view("partial_receiving")
+                return
+            if path == "/api/bzg/uma-blu/stock-consequence":
+                self._uma_ops_loop_view("stock_consequence")
+                return
+            if path in (
+                "/api/bzg/uma-blu/bill-consequence",
+                "/api/bzg/uma-blu/supplier-bill-consequence",
+            ):
+                self._uma_ops_loop_view("supplier_bill_consequence")
+                return
+            if path in (
+                "/api/bzg/uma-blu/exceptions",
+                "/api/bzg/uma-blu/exception",
+            ):
+                self._uma_ops_loop_view("exception")
+                return
+            if path == "/api/bzg/uma-blu/handover":
+                self._uma_ops_loop_view("handover")
+                return
+            if path in (
+                "/api/bzg/uma-blu/manager-visibility",
+                "/api/bzg/uma-blu/management-exceptions",
+            ):
+                self._uma_ops_loop_view("manager_visibility")
+                return
+            if path in (
+                "/api/bzg/uma-blu/owner-exception",
+                "/api/bzg/uma-blu/owner-visibility",
+            ):
+                self._uma_ops_loop_view("owner_exception")
+                return
+            if path == "/api/bzg/uma-blu/loop-schema":
+                self._send_json({"ok": True, **_uma_ops.schema_document()})
+                return
+            # Sprint2 P1 operator depth — PR detail/action + goods-receipt (additive).
+            if path in (
+                "/api/bzg/uma-blu/operator-depth",
+                "/api/bzg/uma-blu/operator-depth/desk",
+            ):
+                self._uma_ops_operator_depth()
+                return
+            if path == "/api/bzg/uma-blu/operator-depth/rbac":
+                self._uma_ops_operator_depth_rbac()
+                return
+            m_pr_op = re.match(r"^/api/bzg/uma-blu/prs/([^/]+)/operator$", path)
+            if m_pr_op:
+                self._uma_ops_pr_operator_detail(m_pr_op.group(1))
+                return
+            refuse = _uma_ops.refuse_code(path)
+            if refuse:
+                self._uma_ops_loop_refuse(path, refuse)
+                return
+            if path in (
+                "/api/bzg/uma-blu/auto-promote",
+                "/api/bzg/uma-blu/auto-execute",
+                "/api/bzg/uma-blu/intel-promote",
+                "/api/bzg/uma-blu/intel-execute",
+            ):
+                self._intel_connect_refuse(path)
+                return
+            if path in (
+                "/api/bzg/uma-blu/proven",
+                "/api/bzg/uma-blu/ready",
+                "/api/bzg/uma-blu/payment",
+                "/api/bzg/uma-blu/money",
+            ):
+                self._staff_ready_write_refused(path)
+                return
             self._send_json(
                 {
                     "ok": False,
@@ -1659,6 +2012,41 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 },
                 status=404,
             )
+            return
+
+        # Sprint2 P6 Staff-Ready UX — cross-pack phone-first read. Fail-closed.
+        if path == "/api/staff/ready-ux" or path.startswith("/api/staff/ready-ux/"):
+            if path in (
+                "/api/staff/ready-ux/proven",
+                "/api/staff/ready-ux/ready",
+                "/api/staff/ready-ux/payment",
+                "/api/staff/ready-ux/money",
+                "/api/staff/ready-ux/production",
+            ):
+                self._staff_ready_write_refused(path)
+                return
+            self._staff_ready_board(qs, path)
+            return
+
+        # Sprint2 Track G Staff Ops Routing — seat → pack Today + next_action.
+        if self._staff_ops_refuse_code(path):
+            self._staff_ops_write_refused(path)
+            return
+        if path == "/api/staff/home" or path.startswith("/api/staff/home/"):
+            self._staff_home_get(path)
+            return
+        if path == "/api/progress/governance-loop":
+            self._progress_governance_loop()
+            return
+        m_loop_item = re.match(r"^/api/work-loop/items/([^/]+)$", path)
+        if m_loop_item:
+            self._work_loop_open(m_loop_item.group(1))
+            return
+        if path == "/api/work-loop" or path.startswith("/api/work-loop/"):
+            self._work_loop_refused(path)
+            return
+        if path == "/api/staff/ops-routing" or path.startswith("/api/staff/ops-routing/"):
+            self._staff_ops_get(path)
             return
 
         # Uma Blu daily close (Beta — read)
@@ -1685,6 +2073,26 @@ class BetaHandler(SimpleHTTPRequestHandler):
         # CAP-INTEL-05 approve-to-rule skeleton. Owner or role. Not a production rule.
         if self._intel_rule_handled(path, "GET"):
             return
+        # CAP-INTEL-05 learning policy v2 — stub list/get + operator next-action read.
+        if self._intel_learning_handled(path, "GET", qs):
+            return
+        # Sprint2 P4 INTEL Operator Depth — recommendation detail/action (additive).
+        if path in {
+            "/api/intel/connective/operator-depth",
+            "/api/intel/connective/operator-depth/desk",
+        }:
+            self._intel_connect_operator_depth()
+            return
+        if path == "/api/intel/connective/operator-depth/rbac":
+            self._intel_connect_operator_depth_rbac()
+            return
+        m_intel_rec_op = re.match(
+            r"^/api/intel/connective/recommendations/([^/]+)/operator$",
+            path,
+        )
+        if m_intel_rec_op:
+            self._intel_connect_recommendation_detail(m_intel_rec_op.group(1))
+            return
         # Track D Intel Ops desk. Owner / intel.rule / decision.memory. No money.
         if self._intel_ops_refuse_code(path):
             self._intel_ops_write_refused(path)
@@ -1699,11 +2107,70 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/progress/calculation":
             self._progress_calculation()
             return
+        # Owner commissioning operator depth. Owner only. PASS submit stays the only commission evidence.
+        if path.startswith("/api/progress/commissioning/operator-depth") and _owner_cmq_depth.refuse_code(path):
+            self._owner_cmq_depth_refused(path)
+            return
+        if path in {
+            "/api/progress/commissioning/operator-depth",
+            "/api/progress/commissioning/operator-depth/desk",
+        }:
+            self._owner_cmq_operator_depth()
+            return
+        if path == "/api/progress/commissioning/operator-depth/rbac":
+            self._owner_cmq_operator_depth_rbac()
+            return
+        m_cmq_depth = re.match(
+            r"^/api/progress/commissioning/operator-depth/objects/([^/]+)$",
+            path,
+        )
+        if m_cmq_depth:
+            self._owner_cmq_operator_detail(m_cmq_depth.group(1))
+            return
+        if path == "/api/progress/commissioning/history":
+            self._progress_commissioning_history(qs)
+            return
+        if path == "/api/progress/commissioning":
+            self._progress_commissioning()
+            return
+        # Owner Progress Needs-You operator depth — Needs-You / Waiting-Others /
+        # Policy / Morning seed loop on existing Progress surface.
+        if path.startswith("/api/progress/needs-you/") and _owner_nye.refuse_code(path):
+            self._owner_nye_write_refused(path)
+            return
+        if path in {
+            "/api/progress/needs-you/operator-depth",
+            "/api/progress/needs-you/operator-depth/desk",
+        }:
+            self._owner_nye_operator_depth(qs)
+            return
+        if path == "/api/progress/needs-you/operator-depth/rbac":
+            self._owner_nye_operator_depth_rbac()
+            return
+        if path == "/api/progress/needs-you/kinds":
+            self._owner_nye_kinds()
+            return
+        m_nye_item = re.match(r"^/api/progress/needs-you/items/([^/]+)$", path)
+        if m_nye_item:
+            self._owner_nye_item_detail(m_nye_item.group(1))
+            return
         if path == "/api/progress/view":
             self._progress_view(qs)
             return
         if path == "/api/progress":
             self._progress_empire()
+            return
+        # Owner Command Centre. Owner only. Read model over Wolf Core. No writes.
+        if path == "/api/owner/command" or path.startswith("/api/owner/command/"):
+            self._owner_command_get(path)
+            return
+        # Finish war room. Owner only. Read model over the 77 ledger. No writes.
+        if path == "/api/owner/war-room" or path.startswith("/api/owner/war-room/"):
+            self._war_room_get(path)
+            return
+        # Business dashboards under Owner Command. Read model. No writes.
+        if path == "/api/business" or path.startswith("/api/business/"):
+            self._business_dashboard_get(path, qs)
             return
         # Owner Empire command desk. Owner only. Reads Progress, Radar, and 12WY.
         if self._owner_empire_refuse_code(path):
@@ -1938,6 +2405,29 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/gws-integrate-prove/"):
             self._gws_prove_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-CRM-03 package operator depth. Existing CRM seats. Empty is not a census.
+        if path.startswith("/api/crm/package-intel/operator-depth") and _crm_pkg_depth.refuse_code(path):
+            self._crm_pkg_depth_refused(path)
+            return
+        if path in {
+            "/api/crm/package-intel/operator-depth",
+            "/api/crm/package-intel/operator-depth/desk",
+        }:
+            self._crm_pkg_operator_depth()
+            return
+        if path == "/api/crm/package-intel/operator-depth/rbac":
+            self._crm_pkg_operator_depth_rbac()
+            return
+        m_crm_pkg_depth = re.match(
+            r"^/api/crm/package-intel/operator-depth/objects/([^/]+)$",
+            path,
+        )
+        if m_crm_pkg_depth:
+            self._crm_pkg_operator_detail(m_crm_pkg_depth.group(1))
+            return
+        if path.startswith("/api/crm/package-intel/operator-depth"):
+            self._crm_pkg_depth_unknown(path)
+            return
         # CAP-CRM-03 package register. Owner read. Empty is not a price. No booking.
         if self._pkg_intel_refuse_code(path):
             self._pkg_intel_write_refused(path)
@@ -1957,6 +2447,31 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/crm/package-intel/"):
             self._pkg_intel_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # MSC asset operator depth. Owner only. Empty is not an inventory count.
+        if path.startswith("/api/msc/") and _msc_asset_depth.refuse_code(path):
+            self._msc_asset_depth_refused(path)
+            return
+        if path in {
+            "/api/msc/assets/operator-depth",
+            "/api/msc/assets/operator-depth/desk",
+            "/api/msc/mgmt-cluster/operator-depth",
+            "/api/msc/mgmt-cluster/operator-depth/desk",
+        }:
+            self._msc_asset_operator_depth()
+            return
+        if path in {
+            "/api/msc/assets/operator-depth/rbac",
+            "/api/msc/mgmt-cluster/operator-depth/rbac",
+        }:
+            self._msc_asset_operator_depth_rbac()
+            return
+        m_msc_depth = re.match(
+            r"^/api/msc/(?:assets|mgmt-cluster)/operator-depth/objects/([^/]+)$",
+            path,
+        )
+        if m_msc_depth:
+            self._msc_asset_operator_detail(m_msc_depth.group(1))
+            return
         # CAP-MSC-01 asset register. Owner read. Empty is not an inventory count. No payment.
         if self._msc_assets_refuse_code(path):
             self._msc_assets_write_refused(path)
@@ -1975,6 +2490,29 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path.startswith("/api/msc/assets/"):
             self._msc_assets_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
+        # CAP-MSC-03 compliance operator depth. Owner only. Empty is not a current licence.
+        if path.startswith("/api/msc/compliance/operator-depth") and _msc_comp_depth.refuse_code(path):
+            self._msc_comp_depth_refused(path)
+            return
+        if path in {
+            "/api/msc/compliance/operator-depth",
+            "/api/msc/compliance/operator-depth/desk",
+        }:
+            self._msc_comp_operator_depth()
+            return
+        if path == "/api/msc/compliance/operator-depth/rbac":
+            self._msc_comp_operator_depth_rbac()
+            return
+        m_msc_comp_depth = re.match(
+            r"^/api/msc/compliance/operator-depth/objects/([^/]+)$",
+            path,
+        )
+        if m_msc_comp_depth:
+            self._msc_comp_operator_detail(m_msc_comp_depth.group(1))
+            return
+        if path.startswith("/api/msc/compliance/operator-depth"):
+            self._msc_comp_depth_unknown(path)
             return
         # CAP-MSC-03 compliance pack. Owner read. Empty is not proof. No payment. No Cloudflare mutate.
         if self._msc_compliance_refuse_code(path):
@@ -2055,6 +2593,29 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/intg/secrets/"):
             self._intg_secrets_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-GGV-03 client profitability operator depth. Existing GGV seats. Empty is not a live P&L.
+        if path.startswith("/api/ggv/client-profitability/operator-depth") and _ggv_pnl_depth.refuse_code(path):
+            self._ggv_pnl_depth_refused(path)
+            return
+        if path in {
+            "/api/ggv/client-profitability/operator-depth",
+            "/api/ggv/client-profitability/operator-depth/desk",
+        }:
+            self._ggv_pnl_operator_depth()
+            return
+        if path == "/api/ggv/client-profitability/operator-depth/rbac":
+            self._ggv_pnl_operator_depth_rbac()
+            return
+        m_ggv_pnl_depth = re.match(
+            r"^/api/ggv/client-profitability/operator-depth/objects/([^/]+)$",
+            path,
+        )
+        if m_ggv_pnl_depth:
+            self._ggv_pnl_operator_detail(m_ggv_pnl_depth.group(1))
+            return
+        if path.startswith("/api/ggv/client-profitability/operator-depth"):
+            self._ggv_pnl_depth_unknown(path)
+            return
         # CAP-GGV-03 client/contract P&L skeleton. Owner read. Empty is not a live P&L. No invented numbers.
         if self._ggv_pnl_refuse_code(path):
             self._ggv_pnl_write_refused(path)
@@ -2103,14 +2664,45 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/ggv/ops-pack/exceptions":
             self._ggv_ops_get(qs, view="exceptions")
             return
+        if path == "/api/ggv/ops-pack/management-exceptions":
+            self._ggv_ops_get(qs, view="management-exceptions")
+            return
+        if path == "/api/ggv/ops-pack/loop":
+            self._ggv_ops_get(qs, view="loop")
+            return
+        if path in {
+            "/api/ggv/ops-pack/operator-depth",
+            "/api/ggv/ops-pack/operator-depth/desk",
+        }:
+            self._ggv_ops_operator_depth()
+            return
+        if path == "/api/ggv/ops-pack/operator-depth/rbac":
+            self._ggv_ops_operator_depth_rbac()
+            return
+        m_lead_op = re.match(r"^/api/ggv/ops-pack/leads/([^/]+)/operator$", path)
+        if m_lead_op:
+            self._ggv_ops_lead_operator_detail(m_lead_op.group(1))
+            return
         if path == "/api/ggv/ops-pack/isolation":
             self._ggv_ops_get(qs, view="isolation")
             return
         if path == "/api/ggv/ops-pack/framework":
             self._ggv_ops_get(qs, view="framework")
             return
+        if path == "/api/ggv/ops-pack/client-visibility":
+            self._ggv_ops_get(qs, view="client-visibility")
+            return
         if path == "/api/ggv/ops-pack/publish-gate":
             self._ggv_ops_get(qs, view="publish-gate")
+            return
+        if path == "/api/ggv/ops-pack/content-work":
+            self._ggv_ops_get(qs, view="content-work")
+            return
+        if path == "/api/ggv/ops-pack/performance":
+            self._ggv_ops_get(qs, view="performance")
+            return
+        if path == "/api/ggv/ops-pack/engagement":
+            self._ggv_ops_get(qs, view="engagement")
             return
         if path == "/api/ggv/ops-pack/permissions":
             self._ggv_ops_get(qs, view="permissions")
@@ -2118,12 +2710,95 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/ggv/ops-pack/schema":
             self._ggv_ops_get(qs, view="schema")
             return
+        if path == "/api/ggv/ops-pack/staff-ready":
+            self._ggv_ops_get(qs, view="staff-ready")
+            return
+        if path in {
+            "/api/ggv/ops-pack/needs-you",
+            "/api/ggv/ops-pack/needs-you-connective",
+        }:
+            self._ggv_ops_needs_you()
+            return
+        m_ggv_nye = re.match(r"^/api/ggv/ops-pack/needs-you/items/([^/]+)$", path)
+        if m_ggv_nye:
+            from urllib.parse import unquote
+
+            self._ggv_ops_needs_you_detail(unquote(m_ggv_nye.group(1)))
+            return
+        # AMG day-ops operator depth — HK/maint/incident/recovery/handover loop.
+        if path.startswith("/api/amg/day-ops/") and _amg_day_ops.refuse_code(path):
+            self._amg_day_ops_write_refused(path)
+            return
+        if path in {
+            "/api/amg/day-ops/operator-depth",
+            "/api/amg/day-ops/operator-depth/desk",
+        }:
+            self._amg_day_ops_operator_depth(qs)
+            return
+        if path == "/api/amg/day-ops/operator-depth/rbac":
+            self._amg_day_ops_operator_depth_rbac()
+            return
+        if path == "/api/amg/day-ops/kinds":
+            self._amg_day_ops_kinds()
+            return
+        m_amg_day_ops_obj = re.match(r"^/api/amg/day-ops/objects/([^/]+)$", path)
+        if m_amg_day_ops_obj:
+            self._amg_day_ops_object_detail(m_amg_day_ops_obj.group(1))
+            return
         # AMG ops pack. Owner and Atrium hotel-ops. Desk loop, not hotel facts.
         if self._amg_pack_refuse_code(path):
             self._amg_pack_write_refused(path)
             return
+        if path in {
+            "/api/amg/ops-pack/operator-depth",
+            "/api/amg/ops-pack/operator-depth/desk",
+        }:
+            self._amg_pack_operator_depth()
+            return
+        if path == "/api/amg/ops-pack/operator-depth/rbac":
+            self._amg_pack_operator_depth_rbac()
+            return
+        m_day_op = re.match(r"^/api/amg/ops-pack/day-objects/([^/]+)/operator$", path)
+        if m_day_op:
+            self._amg_pack_day_operator_detail(m_day_op.group(1))
+            return
+        if path in {
+            "/api/amg/ops-pack/needs-you",
+            "/api/amg/ops-pack/needs-you-connective",
+        }:
+            self._amg_ops_needs_you()
+            return
+        m_amg_nye = re.match(r"^/api/amg/ops-pack/needs-you/items/([^/]+)$", path)
+        if m_amg_nye:
+            from urllib.parse import unquote
+
+            self._amg_ops_needs_you_detail(unquote(m_amg_nye.group(1)))
+            return
         if path == "/api/amg/ops-pack" or path.startswith("/api/amg/ops-pack/"):
             self._amg_pack_get(qs, path)
+            return
+        # CAP-AMG-02 guest journey operator depth. Existing AMG seats. Empty is not a live journey.
+        if path.startswith("/api/amg/journey-workflow/operator-depth") and _amg_journey_depth.refuse_code(path):
+            self._amg_journey_depth_refused(path)
+            return
+        if path in {
+            "/api/amg/journey-workflow/operator-depth",
+            "/api/amg/journey-workflow/operator-depth/desk",
+        }:
+            self._amg_journey_operator_depth()
+            return
+        if path == "/api/amg/journey-workflow/operator-depth/rbac":
+            self._amg_journey_operator_depth_rbac()
+            return
+        m_amg_journey_depth = re.match(
+            r"^/api/amg/journey-workflow/operator-depth/objects/([^/]+)$",
+            path,
+        )
+        if m_amg_journey_depth:
+            self._amg_journey_operator_detail(m_amg_journey_depth.group(1))
+            return
+        if path.startswith("/api/amg/journey-workflow/operator-depth"):
+            self._amg_journey_depth_unknown(path)
             return
         # CAP-AMG-02 guest journey. Owner read. Empty is not a live journey workflow.
         if self._amg_journey_refuse_code(path):
@@ -2163,6 +2838,26 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/amg/daily-ops-state/"):
             self._amg_ops_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-AMG-03 packages operator depth. Existing AMG seats. Empty is not a catalog.
+        if path.startswith("/api/amg/packages/operator-depth") and _amg_pkg_depth.refuse_code(path):
+            self._amg_pkg_depth_refused(path)
+            return
+        if path in {
+            "/api/amg/packages/operator-depth",
+            "/api/amg/packages/operator-depth/desk",
+        }:
+            self._amg_pkg_operator_depth()
+            return
+        if path == "/api/amg/packages/operator-depth/rbac":
+            self._amg_pkg_operator_depth_rbac()
+            return
+        m_amg_pkg_depth = re.match(
+            r"^/api/amg/packages/operator-depth/objects/([^/]+)$",
+            path,
+        )
+        if m_amg_pkg_depth:
+            self._amg_pkg_operator_detail(m_amg_pkg_depth.group(1))
+            return
         # CAP-AMG-03 packages as products. Owner read. Empty is not a live catalog.
         if self._amg_packages_refuse_code(path):
             self._amg_packages_write_refused(path)
@@ -2181,6 +2876,29 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path.startswith("/api/amg/packages-products/"):
             self._amg_packages_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
+        # CAP-AMG-05 revenue/yield operator depth. Existing AMG seats. Empty is not live yield.
+        if path.startswith("/api/amg/revenue-yield/operator-depth") and _amg_yield_depth.refuse_code(path):
+            self._amg_yield_depth_refused(path)
+            return
+        if path in {
+            "/api/amg/revenue-yield/operator-depth",
+            "/api/amg/revenue-yield/operator-depth/desk",
+        }:
+            self._amg_yield_operator_depth()
+            return
+        if path == "/api/amg/revenue-yield/operator-depth/rbac":
+            self._amg_yield_operator_depth_rbac()
+            return
+        m_amg_yield_depth = re.match(
+            r"^/api/amg/revenue-yield/operator-depth/objects/([^/]+)$",
+            path,
+        )
+        if m_amg_yield_depth:
+            self._amg_yield_operator_detail(m_amg_yield_depth.group(1))
+            return
+        if path.startswith("/api/amg/revenue-yield/operator-depth"):
+            self._amg_yield_depth_unknown(path)
             return
         # CAP-AMG-05 hotel revenue and yield. Owner read. Empty is not live yield.
         if self._amg_yield_refuse_code(path):
@@ -2201,6 +2919,29 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/amg/revenue-yield/"):
             self._amg_yield_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # CAP-GGV-06 intercompany client operator depth. Existing GGV seats. Empty is not live billing.
+        if path.startswith("/api/ggv/intercompany-client/operator-depth") and _ggv_ic_depth.refuse_code(path):
+            self._ggv_ic_depth_refused(path)
+            return
+        if path in {
+            "/api/ggv/intercompany-client/operator-depth",
+            "/api/ggv/intercompany-client/operator-depth/desk",
+        }:
+            self._ggv_ic_operator_depth()
+            return
+        if path == "/api/ggv/intercompany-client/operator-depth/rbac":
+            self._ggv_ic_operator_depth_rbac()
+            return
+        m_ggv_ic_depth = re.match(
+            r"^/api/ggv/intercompany-client/operator-depth/objects/([^/]+)$",
+            path,
+        )
+        if m_ggv_ic_depth:
+            self._ggv_ic_operator_detail(m_ggv_ic_depth.group(1))
+            return
+        if path.startswith("/api/ggv/intercompany-client/operator-depth"):
+            self._ggv_ic_depth_unknown(path)
+            return
         # CAP-GGV-06 intercompany client mode. Owner read. Empty is not live billing.
         if self._ggv_ic_refuse_code(path):
             self._ggv_ic_write_refused(path)
@@ -2219,6 +2960,231 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path.startswith("/api/ggv/intercompany-client/"):
             self._ggv_ic_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
+        # GGV Management Cluster — partial WIP; handlers guarded until Auto-GGV recovery.
+        if hasattr(self, "_ggv_mgmt_refuse_code"):
+            if self._ggv_mgmt_refuse_code(path):
+                self._ggv_mgmt_write_refused(path)
+                return
+            if path == "/api/ggv/mgmt-cluster" or path.startswith("/api/ggv/mgmt-cluster/"):
+                self._ggv_mgmt_get(path, qs)
+                return
+        # BZG Management Cluster — compose venue P&L / variance / allocation / BOM / POS / reputation.
+        if self._bzg_mgmt_refuse_code(path):
+            self._bzg_mgmt_write_refused(path)
+            return
+        if path == "/api/bzg/mgmt-cluster" or path.startswith("/api/bzg/mgmt-cluster/"):
+            self._bzg_mgmt_get(path, qs)
+            return
+        # AMG Management Cluster — compose service improve / yield / daily ops / journey / PMS / SLA.
+        if self._amg_mgmt_refuse_code(path):
+            self._amg_mgmt_write_refused(path)
+            return
+        if path == "/api/amg/mgmt-cluster" or path.startswith("/api/amg/mgmt-cluster/"):
+            self._amg_mgmt_get(path, qs)
+            return
+        # INTEL Learning Policy Management Cluster — compose approve-to-rule / ops / connective.
+        if self._intel_mgmt_refuse_code(path):
+            self._intel_mgmt_write_refused(path)
+            return
+        if path == "/api/intel/mgmt-cluster" or path.startswith("/api/intel/mgmt-cluster/"):
+            self._intel_mgmt_get(path, qs)
+            return
+        # CORE Ops Needs-You connective on the existing Core desk.
+        core_nye_refuse = _core_nye.connective_refuse_code(path)
+        if core_nye_refuse:
+            self._core_needs_you_refuse(path, core_nye_refuse)
+            return
+        if path in (
+            "/api/core/mgmt-cluster/needs-you",
+            "/api/core/mgmt-cluster/needs-you-connective",
+        ):
+            self._core_needs_you()
+            return
+        m_core_nye = re.match(r"^/api/core/mgmt-cluster/needs-you/items/([^/]+)$", path)
+        if m_core_nye:
+            from urllib.parse import unquote
+
+            self._core_needs_you_detail(unquote(m_core_nye.group(1)))
+            return
+        # Core Management Cluster — compose SOP factory / escalation / harden.
+        if self._core_mgmt_refuse_code(path):
+            self._core_mgmt_write_refused(path)
+            return
+        if path in (
+            "/api/core/mgmt-cluster/operator-depth",
+            "/api/core/mgmt-cluster/operator-depth/desk",
+        ):
+            self._core_mgmt_operator_depth()
+            return
+        if path == "/api/core/mgmt-cluster/operator-depth/rbac":
+            self._core_mgmt_operator_depth_rbac()
+            return
+        m_core_obj_op = re.match(
+            r"^/api/core/mgmt-cluster/objects/([^/]+)/operator$", path
+        )
+        if m_core_obj_op:
+            self._core_mgmt_object_operator_detail(m_core_obj_op.group(1))
+            return
+        if path == "/api/core/mgmt-cluster" or path.startswith("/api/core/mgmt-cluster/"):
+            self._core_mgmt_get(path, qs)
+            return
+        # CRM Management Cluster — compose lead spine / identity / package / klaviyo read.
+        if self._crm_mgmt_refuse_code(path):
+            self._crm_mgmt_write_refused(path)
+            return
+        if path in (
+            "/api/crm/mgmt-cluster/operator-depth",
+            "/api/crm/mgmt-cluster/operator-depth/desk",
+        ):
+            self._crm_mgmt_operator_depth()
+            return
+        if path == "/api/crm/mgmt-cluster/operator-depth/rbac":
+            self._crm_mgmt_operator_depth_rbac()
+            return
+        m_crm_lead_op = re.match(
+            r"^/api/crm/mgmt-cluster/leads/([^/]+)/operator$", path
+        )
+        if m_crm_lead_op:
+            self._crm_mgmt_lead_operator_detail(m_crm_lead_op.group(1))
+            return
+        if path == "/api/crm/mgmt-cluster" or path.startswith("/api/crm/mgmt-cluster/"):
+            self._crm_mgmt_get(path, qs)
+            return
+        # MSC Ops Needs-You connective on the existing MSC desk.
+        msc_nye_refuse = _msc_nye.connective_refuse_code(path)
+        if msc_nye_refuse:
+            self._msc_needs_you_refuse(path, msc_nye_refuse)
+            return
+        if path in (
+            "/api/msc/mgmt-cluster/needs-you",
+            "/api/msc/mgmt-cluster/needs-you-connective",
+        ):
+            self._msc_needs_you()
+            return
+        m_msc_nye = re.match(r"^/api/msc/mgmt-cluster/needs-you/items/([^/]+)$", path)
+        if m_msc_nye:
+            from urllib.parse import unquote
+
+            self._msc_needs_you_detail(unquote(m_msc_nye.group(1)))
+            return
+        # MSC Management Cluster — compose assets / posture / compliance / cyber / records.
+        if self._msc_mgmt_refuse_code(path):
+            self._msc_mgmt_write_refused(path)
+            return
+        if path == "/api/msc/mgmt-cluster" or path.startswith("/api/msc/mgmt-cluster/"):
+            self._msc_mgmt_get(path, qs)
+            return
+        # STRAT Ops Needs-You connective on the existing Strategy desk.
+        strat_nye_refuse = _strat_nye.connective_refuse_code(path)
+        if strat_nye_refuse:
+            self._strat_needs_you_refuse(path, strat_nye_refuse)
+            return
+        if path in (
+            "/api/strat/mgmt-cluster/needs-you",
+            "/api/strat/mgmt-cluster/needs-you-connective",
+        ):
+            self._strat_needs_you()
+            return
+        m_strat_nye = re.match(r"^/api/strat/mgmt-cluster/needs-you/items/([^/]+)$", path)
+        if m_strat_nye:
+            from urllib.parse import unquote
+
+            self._strat_needs_you_detail(unquote(m_strat_nye.group(1)))
+            return
+        # STRAT Management Cluster — compose 12wy prove + radar prove.
+        if self._strat_mgmt_refuse_code(path):
+            self._strat_mgmt_write_refused(path)
+            return
+        if path == "/api/strat/mgmt-cluster" or path.startswith("/api/strat/mgmt-cluster/"):
+            self._strat_mgmt_get(path, qs)
+            return
+        # DR Ops Needs-You connective on the existing DR desk.
+        dr_nye_refuse = _dr_nye.connective_refuse_code(path)
+        if dr_nye_refuse:
+            self._dr_needs_you_refuse(path, dr_nye_refuse)
+            return
+        if path in (
+            "/api/dr/mgmt-cluster/needs-you",
+            "/api/dr/mgmt-cluster/needs-you-connective",
+        ):
+            self._dr_needs_you()
+            return
+        m_dr_nye = re.match(r"^/api/dr/mgmt-cluster/needs-you/items/([^/]+)$", path)
+        if m_dr_nye:
+            from urllib.parse import unquote
+
+            self._dr_needs_you_detail(unquote(m_dr_nye.group(1)))
+            return
+        # DR Management Cluster — compose restore drill / failure domains / crown jewels.
+        if self._dr_mgmt_refuse_code(path):
+            self._dr_mgmt_write_refused(path)
+            return
+        if path == "/api/dr/mgmt-cluster" or path.startswith("/api/dr/mgmt-cluster/"):
+            self._dr_mgmt_get(path, qs)
+            return
+        # Sale Ops Needs-You connective on the existing Sale desk.
+        sale_nye_refuse = _sale_nye.connective_refuse_code(path)
+        if sale_nye_refuse:
+            self._sale_needs_you_refuse(path, sale_nye_refuse)
+            return
+        if path in (
+            "/api/sale/mgmt-cluster/needs-you",
+            "/api/sale/mgmt-cluster/needs-you-connective",
+        ):
+            self._sale_needs_you()
+            return
+        m_sale_nye = re.match(r"^/api/sale/mgmt-cluster/needs-you/items/([^/]+)$", path)
+        if m_sale_nye:
+            from urllib.parse import unquote
+
+            self._sale_needs_you_detail(unquote(m_sale_nye.group(1)))
+            return
+        # SALE Management Cluster — compose evidence / dataroom / buyer mode / attack audit.
+        if self._sale_mgmt_refuse_code(path):
+            self._sale_mgmt_write_refused(path)
+            return
+        if path in (
+            "/api/sale/mgmt-cluster/operator-depth",
+            "/api/sale/mgmt-cluster/operator-depth/desk",
+        ):
+            self._sale_mgmt_operator_depth()
+            return
+        if path == "/api/sale/mgmt-cluster/operator-depth/rbac":
+            self._sale_mgmt_operator_depth_rbac()
+            return
+        m_sale_obj_op = re.match(
+            r"^/api/sale/mgmt-cluster/objects/([^/]+)/operator$", path
+        )
+        if m_sale_obj_op:
+            self._sale_mgmt_object_operator_detail(m_sale_obj_op.group(1))
+            return
+        if path == "/api/sale/mgmt-cluster" or path.startswith("/api/sale/mgmt-cluster/"):
+            self._sale_mgmt_get(path, qs)
+            return
+        # INTG Ops Needs-You connective on the existing INTG desk.
+        intg_nye_refuse = _intg_nye.connective_refuse_code(path)
+        if intg_nye_refuse:
+            self._intg_needs_you_refuse(path, intg_nye_refuse)
+            return
+        if path in (
+            "/api/intg/mgmt-cluster/needs-you",
+            "/api/intg/mgmt-cluster/needs-you-connective",
+        ):
+            self._intg_needs_you()
+            return
+        m_intg_nye = re.match(r"^/api/intg/mgmt-cluster/needs-you/items/([^/]+)$", path)
+        if m_intg_nye:
+            from urllib.parse import unquote
+
+            self._intg_needs_you_detail(unquote(m_intg_nye.group(1)))
+            return
+        # INTG Management Cluster — compose contract / cap-tests / gws / tech / secrets.
+        if self._intg_mgmt_refuse_code(path):
+            self._intg_mgmt_write_refused(path)
+            return
+        if path == "/api/intg/mgmt-cluster" or path.startswith("/api/intg/mgmt-cluster/"):
+            self._intg_mgmt_get(path, qs)
             return
         # CAP-BZG-02 venue P&L / management rollup. Owner read. Empty is not a live venue P&L.
         if self._bzg_pnl_refuse_code(path):
@@ -2300,6 +3266,29 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
             return
+        # CAP-AMG-07 service-improve operator depth. Existing AMG seats. Empty is not a live review.
+        if path.startswith("/api/amg/service-improve/operator-depth") and _amg_svc_depth.refuse_code(path):
+            self._amg_svc_depth_refused(path)
+            return
+        if path in {
+            "/api/amg/service-improve/operator-depth",
+            "/api/amg/service-improve/operator-depth/desk",
+        }:
+            self._amg_svc_operator_depth()
+            return
+        if path == "/api/amg/service-improve/operator-depth/rbac":
+            self._amg_svc_operator_depth_rbac()
+            return
+        m_amg_svc_depth = re.match(
+            r"^/api/amg/service-improve/operator-depth/objects/([^/]+)$",
+            path,
+        )
+        if m_amg_svc_depth:
+            self._amg_svc_operator_detail(m_amg_svc_depth.group(1))
+            return
+        if path.startswith("/api/amg/service-improve/operator-depth"):
+            self._amg_svc_depth_unknown(path)
+            return
         if path == "/api/amg/service-improve":
             self._amg_improve_get(qs)
             return
@@ -2314,6 +3303,29 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path.startswith("/api/amg/service-improve/"):
             self._amg_improve_get(qs, ref_id=path.rsplit("/", 1)[-1])
+            return
+        # CAP-AMG-06 SLA / incident operator depth. Existing AMG seats. Empty is not a live incident.
+        if path.startswith("/api/amg/sla-incident/operator-depth") and _amg_sla_depth.refuse_code(path):
+            self._amg_sla_depth_refused(path)
+            return
+        if path in {
+            "/api/amg/sla-incident/operator-depth",
+            "/api/amg/sla-incident/operator-depth/desk",
+        }:
+            self._amg_sla_operator_depth()
+            return
+        if path == "/api/amg/sla-incident/operator-depth/rbac":
+            self._amg_sla_operator_depth_rbac()
+            return
+        m_amg_sla_depth = re.match(
+            r"^/api/amg/sla-incident/operator-depth/objects/([^/]+)$",
+            path,
+        )
+        if m_amg_sla_depth:
+            self._amg_sla_operator_detail(m_amg_sla_depth.group(1))
+            return
+        if path.startswith("/api/amg/sla-incident/operator-depth"):
+            self._amg_sla_depth_unknown(path)
             return
         # CAP-AMG-06 SLA / incident trail. Owner read. Empty is not a live trail.
         if self._amg_sla_refuse_code(path):
@@ -2585,11 +3597,36 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._crm_identity_blast_refused()
             return
+        if path.startswith("/api/crm/identity/") and _crm_ident_depth.refuse_code(path):
+            self._crm_identity_depth_refused(path)
+            return
+        if path in {
+            "/api/crm/identity/operator-depth",
+            "/api/crm/identity/operator-depth/desk",
+        }:
+            self._crm_identity_operator_depth()
+            return
+        if path == "/api/crm/identity/operator-depth/rbac":
+            self._crm_identity_operator_depth_rbac()
+            return
+        m_crm_depth = re.match(
+            r"^/api/crm/identity/operator-depth/objects/([^/]+)$",
+            path,
+        )
+        if m_crm_depth:
+            self._crm_identity_operator_detail(m_crm_depth.group(1))
+            return
         if path == "/api/crm/identity":
             self._crm_identity_list(qs)
             return
         m_crm = re.match(r"^/api/crm/identity/([^/]+)$", path)
-        if m_crm and m_crm.group(1) not in {"note", "link", "merge", "blast"}:
+        if m_crm and m_crm.group(1) not in {
+            "note",
+            "link",
+            "merge",
+            "blast",
+            "operator-depth",
+        }:
             self._crm_identity_read(m_crm.group(1))
             return
         # CAP-CORE-11 SOP Factory v1. Owner or role. Anon → 403. Not live without approve.
@@ -2804,16 +3841,44 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/leads":
             self._get_leads(qs)
             return
-        # Before /api/leads/<id> so "triage" is not treated as a lead id.
+        # Before /api/leads/<id> so "triage" and "needs-you" are not lead ids.
         if path == "/api/leads/triage":
             self._get_leads_triage(qs)
+            return
+        nye_refuse = _crm_nye.connective_refuse_code(path)
+        if nye_refuse:
+            self._crm_needs_you_refuse(path, nye_refuse)
+            return
+        if path in ("/api/leads/needs-you", "/api/leads/needs-you-connective"):
+            self._crm_needs_you()
+            return
+        m_crm_nye = re.match(r"^/api/leads/needs-you/items/([^/]+)$", path)
+        if m_crm_nye:
+            from urllib.parse import unquote
+
+            self._crm_needs_you_detail(unquote(m_crm_nye.group(1)))
             return
         m_lead = re.match(r"^/api/leads/([^/]+)$", path)
         if m_lead:
             self._get_lead(m_lead.group(1))
             return
 
+        # Route merge / retire / redirect (Beta :8788) — redirect > delete.
+        # mgmt-cluster → BU parents; legacy uma; dashboards/*.html → clean;
+        # radar → Empire priorities; content brand peers → content-2.0.
+        # APIs untouched. ACTIVE pack HTML on disk preserved.
+        _merge_dest = _wolf_shell.route_merge_redirect_target(path)
+        if _merge_dest:
+            self.send_response(302)
+            self.send_header("Location", _merge_dest)
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            return
+
         if path in ("/", "/index.html"):
+            self.path = "/content-2.0.html"
+        elif path in ("/content-2.0", "/content-2.0/"):
+            # Wave 6: clean Content hub under Intelligence→Content (no sprawl page).
             self.path = "/content-2.0.html"
         elif path in ("/progress", "/progress/"):
             self.path = "/progress.html"
@@ -2821,7 +3886,6 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/integration-health",
             "/integration-health/",
             "/integration-health.html",
-            "/dashboards/integration-health.html",
         ):
             self._integration_health_page()
             return
@@ -3014,8 +4078,45 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/owner-empire-pack/",
             "/owner-empire-pack.html",
             "/dashboards/owner-empire-pack.html",
+            "/wolf",
+            "/wolf/",
         ):
             self._owner_empire_page()
+            return
+        elif path in (
+            "/business",
+            "/business/",
+            "/business-dashboard.html",
+            "/dashboards/business-dashboard.html",
+        ) or re.match(r"^/business/[a-z0-9-]+/?$", path):
+            self._business_dashboard_page()
+            return
+        elif path in (
+            "/finish-war-room",
+            "/finish-war-room/",
+            "/finish-war-room.html",
+            "/dashboards/finish-war-room.html",
+        ):
+            self._war_room_page()
+            return
+        elif path in (
+            "/my-work",
+            "/my-work/",
+            "/my-work.html",
+            "/dashboards/my-work.html",
+        ):
+            self._staff_home_page()
+            return
+        elif re.match(r"^/my-work/item/([^/]+)$", path):
+            self._work_loop_page()
+            return
+        elif path in (
+            "/staff-ops-routing",
+            "/staff-ops-routing/",
+            "/staff-ops-routing.html",
+            "/dashboards/staff-ops-routing.html",
+        ):
+            self._staff_ops_page()
             return
         elif path in (
             "/core-harden-pack",
@@ -3072,6 +4173,100 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/dashboards/ggv-intercompany-client.html",
         ):
             self._ggv_ic_page()
+            return
+        elif path in (
+            "/ggv-mgmt-cluster",
+            "/ggv-mgmt-cluster/",
+            "/ggv-mgmt-cluster.html",
+            "/dashboards/ggv-mgmt-cluster.html",
+        ):
+            if hasattr(self, "_ggv_mgmt_page"):
+                self._ggv_mgmt_page()
+            else:
+                self._send_json(
+                    {"ok": False, "error": "not_wired", "message": "GGV mgmt cluster handlers not wired."},
+                    status=404,
+                )
+            return
+        elif path in (
+            "/bzg-mgmt-cluster",
+            "/bzg-mgmt-cluster/",
+            "/bzg-mgmt-cluster.html",
+            "/dashboards/bzg-mgmt-cluster.html",
+        ):
+            self._bzg_mgmt_page()
+            return
+        elif path in (
+            "/amg-mgmt-cluster",
+            "/amg-mgmt-cluster/",
+            "/amg-mgmt-cluster.html",
+            "/dashboards/amg-mgmt-cluster.html",
+        ):
+            self._amg_mgmt_page()
+            return
+        elif path in (
+            "/intel-mgmt-cluster",
+            "/intel-mgmt-cluster/",
+            "/intel-mgmt-cluster.html",
+            "/dashboards/intel-mgmt-cluster.html",
+        ):
+            self._intel_mgmt_page()
+            return
+        elif path in (
+            "/core-mgmt-cluster",
+            "/core-mgmt-cluster/",
+            "/core-mgmt-cluster.html",
+            "/dashboards/core-mgmt-cluster.html",
+        ):
+            self._core_mgmt_page()
+            return
+        elif path in (
+            "/crm-mgmt-cluster",
+            "/crm-mgmt-cluster/",
+            "/crm-mgmt-cluster.html",
+            "/dashboards/crm-mgmt-cluster.html",
+        ):
+            self._crm_mgmt_page()
+            return
+        elif path in (
+            "/msc-mgmt-cluster",
+            "/msc-mgmt-cluster/",
+            "/msc-mgmt-cluster.html",
+            "/dashboards/msc-mgmt-cluster.html",
+        ):
+            self._msc_mgmt_page()
+            return
+        elif path in (
+            "/strat-mgmt-cluster",
+            "/strat-mgmt-cluster/",
+            "/strat-mgmt-cluster.html",
+            "/dashboards/strat-mgmt-cluster.html",
+        ):
+            self._strat_mgmt_page()
+            return
+        elif path in (
+            "/dr-mgmt-cluster",
+            "/dr-mgmt-cluster/",
+            "/dr-mgmt-cluster.html",
+            "/dashboards/dr-mgmt-cluster.html",
+        ):
+            self._dr_mgmt_page()
+            return
+        elif path in (
+            "/sale-mgmt-cluster",
+            "/sale-mgmt-cluster/",
+            "/sale-mgmt-cluster.html",
+            "/dashboards/sale-mgmt-cluster.html",
+        ):
+            self._sale_mgmt_page()
+            return
+        elif path in (
+            "/intg-mgmt-cluster",
+            "/intg-mgmt-cluster/",
+            "/intg-mgmt-cluster.html",
+            "/dashboards/intg-mgmt-cluster.html",
+        ):
+            self._intg_mgmt_page()
             return
         elif path in (
             "/bzg-venue-pnl",
@@ -3258,11 +4453,57 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._crm_identity_page()
             return
         elif path in ("/uma-blu-close", "/uma-blu-close/"):
+            identity = self._resolve_identity(emit_audit=False)
+            person_id = str(identity.get("person_id") or "")
+            close_roles = {
+                "ROLE-BZG-CLOSER",
+                "ROLE-BZG-FB-OPS-LEAD",
+                "ROLE-BZG-HFB",
+                "ROLE-MATT",
+                "ROLE-OWNER",
+            }
+            allowed = False
+            if identity.get("ok") and person_id:
+                conn = _work_items.db_connect()
+                try:
+                    allowed = bool(_ggv_fin.active_role_ids(person_id, conn) & close_roles)
+                finally:
+                    conn.close()
+            if not allowed:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "forbidden",
+                        "message": "This close is not on your assignment.",
+                        "ui": {
+                            "component": "permission-denied",
+                            "message": "You do not have access to this.",
+                        },
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                    },
+                    status=403,
+                )
+                return
             self.path = "/uma-blu-close.html"
+        elif path in _wolf_shell.SPECIALIST_SOFT_REDIRECT_PATHS or (
+            _wolf_shell.specialist_soft_redirect_target(path) is not None
+        ):
+            # Wave 8 — specialist boards not primary; soft-land Empire (no sprawl page).
+            dest = _wolf_shell.specialist_soft_redirect_target(path) or "/wolf"
+            self.send_response(302)
+            self.send_header("Location", dest)
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            return
         elif path in ("/bzg", "/bzg/"):
             self.path = "/bzg.html"
-        elif path in ("/bzg/uma-blu", "/bzg/uma-blu/"):
-            self.path = "/bzg-uma-blu.html"
+        elif path in (
+            "/bzg/uma-blu",
+            "/bzg/uma-blu/",
+        ):
+            self._uma_ops_page()
+            return
         elif path in ("/bzg/uma-blu/bills", "/bzg/uma-blu/bills/") and (qs.get("pr") or [""])[0].strip():
             self.path = "/bzg-uma-blu-pr.html"
         elif path in ("/bzg/uma-blu/bills", "/bzg/uma-blu/bills/"):
@@ -3271,36 +4512,97 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self.path = "/bzg-uma-blu-pr.html"
         elif path in ("/bzg/uma-blu/issues", "/bzg/uma-blu/issues/"):
             self.path = "/bzg-uma-blu-issues.html"
+        elif path in ("/bzg/uma-blu/evidence", "/bzg/uma-blu/evidence/"):
+            self._uma_staff_page("bzg-uma-blu-evidence.html")
+            return
+        elif path in ("/bzg/uma-blu/exceptions", "/bzg/uma-blu/exceptions/"):
+            self._uma_staff_page("bzg-uma-blu-exceptions.html")
+            return
         elif path in ("/bzg/uma-blu/petty", "/bzg/uma-blu/petty/"):
             self.path = "/bzg-uma-blu-petty.html"
         elif path in ("/habitat-operator", "/habitat-operator/"):
             self.path = "/habitat-operator.html"
         elif path in ("/lead-spine", "/lead-spine/"):
             self.path = "/lead-spine.html"
-        elif path == "/dashboards/progress.html":
-            self.path = "/progress.html"
-        elif path == "/dashboards/uma-blu-close.html":
-            self.path = "/uma-blu-close.html"
-        elif path == "/dashboards/bzg.html":
-            self.path = "/bzg.html"
-        elif path == "/dashboards/bzg-uma-blu.html":
-            self.path = "/bzg-uma-blu.html"
-        elif path == "/dashboards/bzg-uma-blu-bills.html":
-            self.path = "/bzg-uma-blu-bills.html"
-        elif path == "/dashboards/bzg-uma-blu-issues.html":
-            self.path = "/bzg-uma-blu-issues.html"
-        elif path == "/dashboards/bzg-uma-blu-petty.html":
-            self.path = "/bzg-uma-blu-petty.html"
-        elif path == "/dashboards/habitat-operator.html":
-            self.path = "/habitat-operator.html"
-        elif path == "/dashboards/lead-spine.html":
-            self.path = "/lead-spine.html"
+        # /dashboards/*.html duplicates + legacy uma + mgmt-cluster → early
+        # route_merge_redirect_target 302 (redirect > delete). No path rewrite here.
+        if self._try_serve_shell_html():
+            return
         return SimpleHTTPRequestHandler.do_GET(self)
 
     def do_POST(self) -> None:
         path = urlparse(self.path).path
         if path == "/api/dashboard-truth" or path.startswith("/api/dashboard-truth/"):
             self._dashboard_truth_write_refused()
+            return
+        if self._accountant_scope_wall():
+            return
+        if self._ggv_finance_dispatch():
+            return
+        if path == "/api/progress/commissioning/submit":
+            self._progress_commissioning_submit()
+            return
+        if path == "/api/progress/commissioning/retest":
+            self._progress_commissioning_retest()
+            return
+        if path in (
+            "/api/progress/commissioning/proven",
+            "/api/progress/commissioning/ready",
+            "/api/progress/commissioning/staff-ready",
+            "/api/progress/commissioning/human-commissioned",
+        ):
+            self._progress_commissioning_refuse(path)
+            return
+        if path.startswith("/api/progress/commissioning/operator-depth") and _owner_cmq_depth.refuse_code(path):
+            self._owner_cmq_depth_refused(path)
+            return
+        m_cmq_depth_act = re.match(
+            r"^/api/progress/commissioning/operator-depth/objects/([^/]+)/(operator-action|next-action-touch|handoff-touch|dismiss-noise|note|review-decision)$",
+            path,
+        )
+        if m_cmq_depth_act:
+            self._owner_cmq_operator_action(
+                m_cmq_depth_act.group(1),
+                m_cmq_depth_act.group(2),
+            )
+            return
+        m_nye_touch = re.match(
+            r"^/api/progress/needs-you/items/([^/]+)/(next-action-touch|acknowledge|park)$",
+            path,
+        )
+        if m_nye_touch:
+            self._owner_nye_action(m_nye_touch.group(1), m_nye_touch.group(2))
+            return
+        if path.startswith("/api/progress/needs-you/") and _owner_nye.refuse_code(path):
+            self._owner_nye_write_refused(path)
+            return
+        if path == "/api/staff/ready-ux" or path.startswith("/api/staff/ready-ux/"):
+            self._staff_ready_write_refused(path)
+            return
+        if path == "/api/staff/home" or path.startswith("/api/staff/home/"):
+            self._staff_home_write_refused(path)
+            return
+        if path == "/api/work-loop" or path.startswith("/api/work-loop/"):
+            self._work_loop_post(path)
+            return
+        m_staff_ack = re.match(
+            r"^/api/staff/ops-routing/needs-you/items/([^/]+)/acknowledge$",
+            path,
+        )
+        if m_staff_ack:
+            self._staff_ops_acknowledge(m_staff_ack.group(1))
+            return
+        if self._staff_ops_refuse_code(path) or path == "/api/staff/ops-routing" or path.startswith("/api/staff/ops-routing/"):
+            self._staff_ops_write_refused(path)
+            return
+        if path == "/api/owner/command" or path.startswith("/api/owner/command/"):
+            self._owner_command_write_refused()
+            return
+        if path == "/api/owner/war-room" or path.startswith("/api/owner/war-room/"):
+            self._war_room_write_refused()
+            return
+        if path == "/api/business" or path.startswith("/api/business/"):
+            self._business_dashboard_write_refused()
             return
         if path == "/api/owner/empire-pack" or path.startswith("/api/owner/empire-pack/"):
             self._owner_empire_write_refused(path)
@@ -3311,8 +4613,57 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._intel_ops_refuse_code(path):
             self._intel_ops_write_refused(path)
             return
+        m_intel_rec_act = re.match(
+            r"^/api/intel/connective/recommendations/([^/]+)/operator-action$",
+            path,
+        )
+        if m_intel_rec_act:
+            self._intel_connect_recommendation_action(m_intel_rec_act.group(1))
+            return
         if path == "/api/intel/ops-pack" or path.startswith("/api/intel/ops-pack/"):
             self._intel_ops_post(path)
+            return
+        m_amg_day_ops_touch = re.match(
+            r"^/api/amg/day-ops/objects/([^/]+)/next-action-touch$",
+            path,
+        )
+        if m_amg_day_ops_touch:
+            self._amg_day_ops_next_action_touch(m_amg_day_ops_touch.group(1))
+            return
+        if path.startswith("/api/amg/day-ops/") and _amg_day_ops.refuse_code(path):
+            self._amg_day_ops_write_refused(path)
+            return
+        if path.startswith("/api/amg/packages/operator-depth") and _amg_pkg_depth.refuse_code(path):
+            self._amg_pkg_depth_refused(path)
+            return
+        m_amg_pkg_depth_act = re.match(
+            r"^/api/amg/packages/operator-depth/objects/([^/]+)/(operator-action|next-action-touch|handoff-touch|dismiss-noise|note|review-decision)$",
+            path,
+        )
+        if m_amg_pkg_depth_act:
+            self._amg_pkg_operator_action(
+                m_amg_pkg_depth_act.group(1),
+                m_amg_pkg_depth_act.group(2),
+            )
+            return
+        if path.startswith("/api/amg/packages/operator-depth"):
+            self._amg_pkg_depth_method_refused(path)
+            return
+        m_amg_day_op = re.match(
+            r"^/api/amg/ops-pack/day-objects/([^/]+)/operator-action$",
+            path,
+        )
+        if m_amg_day_op:
+            self._amg_pack_day_operator_action(m_amg_day_op.group(1))
+            return
+        m_amg_ack = re.match(
+            r"^/api/amg/ops-pack/needs-you/items/([^/]+)/acknowledge$",
+            path,
+        )
+        if m_amg_ack:
+            from urllib.parse import unquote
+
+            self._amg_ops_needs_you_acknowledge(unquote(m_amg_ack.group(1)))
             return
         if path == "/api/amg/ops-pack" or path.startswith("/api/amg/ops-pack/"):
             self._amg_pack_post(path)
@@ -3320,6 +4671,29 @@ class BetaHandler(SimpleHTTPRequestHandler):
         m_ops_life = re.match(r"^/api/ggv/ops-pack/leads/([^/]+)/lifecycle$", path)
         if m_ops_life:
             self._ggv_ops_lifecycle(m_ops_life.group(1))
+            return
+        m_ops_operator = re.match(
+            r"^/api/ggv/ops-pack/leads/([^/]+)/operator-action$",
+            path,
+        )
+        if m_ops_operator:
+            self._ggv_ops_lead_operator_action(m_ops_operator.group(1))
+            return
+        m_ops_loop = re.match(
+            r"^/api/ggv/ops-pack/leads/([^/]+)/(identity-contact|qualify|engagement|due|assign|mgmt-exception)$",
+            path,
+        )
+        if m_ops_loop:
+            self._ggv_ops_loop_action(m_ops_loop.group(1), m_ops_loop.group(2))
+            return
+        m_ggv_ack = re.match(
+            r"^/api/ggv/ops-pack/needs-you/items/([^/]+)/acknowledge$",
+            path,
+        )
+        if m_ggv_ack:
+            from urllib.parse import unquote
+
+            self._ggv_ops_needs_you_acknowledge(unquote(m_ggv_ack.group(1)))
             return
         if path == "/api/integration-health":
             self._integration_health_write_refused()
@@ -3369,6 +4743,22 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/ggv/speed-to-lead-prove" or path.startswith("/api/ggv/speed-to-lead-prove/"):
             self._ggv_speed_write_refused(path)
             return
+        if path.startswith("/api/crm/package-intel/operator-depth") and _crm_pkg_depth.refuse_code(path):
+            self._crm_pkg_depth_refused(path)
+            return
+        m_crm_pkg_depth_act = re.match(
+            r"^/api/crm/package-intel/operator-depth/objects/([^/]+)/(operator-action|next-action-touch|handoff-touch|dismiss-noise|note|review-decision)$",
+            path,
+        )
+        if m_crm_pkg_depth_act:
+            self._crm_pkg_operator_action(
+                m_crm_pkg_depth_act.group(1),
+                m_crm_pkg_depth_act.group(2),
+            )
+            return
+        if path.startswith("/api/crm/package-intel/operator-depth"):
+            self._crm_pkg_depth_method_refused(path)
+            return
         if self._pkg_intel_refuse_code(path):
             self._pkg_intel_write_refused(path)
             return
@@ -3378,6 +4768,19 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/crm/package-intel" or path.startswith("/api/crm/package-intel/"):
             self._pkg_intel_write_refused(path)
             return
+        if path.startswith("/api/msc/") and _msc_asset_depth.refuse_code(path):
+            self._msc_asset_depth_refused(path)
+            return
+        m_msc_depth_act = re.match(
+            r"^/api/msc/(?:assets|mgmt-cluster)/operator-depth/objects/([^/]+)/(operator-action|next-action-touch|handoff-touch|dismiss-noise|note|review-decision)$",
+            path,
+        )
+        if m_msc_depth_act:
+            self._msc_asset_operator_action(
+                m_msc_depth_act.group(1),
+                m_msc_depth_act.group(2),
+            )
+            return
         if self._msc_assets_refuse_code(path):
             self._msc_assets_write_refused(path)
             return
@@ -3386,6 +4789,22 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/msc/assets" or path.startswith("/api/msc/assets/"):
             self._msc_assets_write_refused(path)
+            return
+        if path.startswith("/api/msc/compliance/operator-depth") and _msc_comp_depth.refuse_code(path):
+            self._msc_comp_depth_refused(path)
+            return
+        m_msc_comp_depth_act = re.match(
+            r"^/api/msc/compliance/operator-depth/objects/([^/]+)/(operator-action|next-action-touch|handoff-touch|dismiss-noise|note|review-decision)$",
+            path,
+        )
+        if m_msc_comp_depth_act:
+            self._msc_comp_operator_action(
+                m_msc_comp_depth_act.group(1),
+                m_msc_comp_depth_act.group(2),
+            )
+            return
+        if path.startswith("/api/msc/compliance/operator-depth"):
+            self._msc_comp_depth_method_refused(path)
             return
         if self._msc_compliance_refuse_code(path):
             self._msc_compliance_write_refused(path)
@@ -3411,6 +4830,22 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/intg/secrets" or path.startswith("/api/intg/secrets/"):
             self._intg_secrets_write_refused(path)
             return
+        if path.startswith("/api/ggv/client-profitability/operator-depth") and _ggv_pnl_depth.refuse_code(path):
+            self._ggv_pnl_depth_refused(path)
+            return
+        m_ggv_pnl_depth_act = re.match(
+            r"^/api/ggv/client-profitability/operator-depth/objects/([^/]+)/(operator-action|next-action-touch|handoff-touch|dismiss-noise|note|review-decision)$",
+            path,
+        )
+        if m_ggv_pnl_depth_act:
+            self._ggv_pnl_operator_action(
+                m_ggv_pnl_depth_act.group(1),
+                m_ggv_pnl_depth_act.group(2),
+            )
+            return
+        if path.startswith("/api/ggv/client-profitability/operator-depth"):
+            self._ggv_pnl_depth_method_refused(path)
+            return
         if self._ggv_pnl_refuse_code(path):
             self._ggv_pnl_write_refused(path)
             return
@@ -3425,6 +4860,22 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if self._ggv_ops_refuse_code(path) or path == "/api/ggv/ops-pack" or path.startswith("/api/ggv/ops-pack/"):
             self._ggv_ops_write_refused(path)
+            return
+        if path.startswith("/api/amg/journey-workflow/operator-depth") and _amg_journey_depth.refuse_code(path):
+            self._amg_journey_depth_refused(path)
+            return
+        m_amg_journey_depth_act = re.match(
+            r"^/api/amg/journey-workflow/operator-depth/objects/([^/]+)/(operator-action|next-action-touch|handoff-touch|dismiss-noise|note|review-decision)$",
+            path,
+        )
+        if m_amg_journey_depth_act:
+            self._amg_journey_operator_action(
+                m_amg_journey_depth_act.group(1),
+                m_amg_journey_depth_act.group(2),
+            )
+            return
+        if path.startswith("/api/amg/journey-workflow/operator-depth"):
+            self._amg_journey_depth_method_refused(path)
             return
         if self._amg_journey_refuse_code(path):
             self._amg_journey_write_refused(path)
@@ -3444,17 +4895,226 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/amg/packages-products" or path.startswith("/api/amg/packages-products/"):
             self._amg_packages_write_refused(path)
             return
+        if path.startswith("/api/amg/revenue-yield/operator-depth") and _amg_yield_depth.refuse_code(path):
+            self._amg_yield_depth_refused(path)
+            return
+        m_amg_yield_depth_act = re.match(
+            r"^/api/amg/revenue-yield/operator-depth/objects/([^/]+)/(operator-action|next-action-touch|handoff-touch|dismiss-noise|note|review-decision)$",
+            path,
+        )
+        if m_amg_yield_depth_act:
+            self._amg_yield_operator_action(
+                m_amg_yield_depth_act.group(1),
+                m_amg_yield_depth_act.group(2),
+            )
+            return
+        if path.startswith("/api/amg/revenue-yield/operator-depth"):
+            self._amg_yield_depth_method_refused(path)
+            return
         if self._amg_yield_refuse_code(path):
             self._amg_yield_write_refused(path)
             return
         if path == "/api/amg/revenue-yield" or path.startswith("/api/amg/revenue-yield/"):
             self._amg_yield_write_refused(path)
             return
+        if path.startswith("/api/ggv/intercompany-client/operator-depth") and _ggv_ic_depth.refuse_code(path):
+            self._ggv_ic_depth_refused(path)
+            return
+        m_ggv_ic_depth_act = re.match(
+            r"^/api/ggv/intercompany-client/operator-depth/objects/([^/]+)/(operator-action|next-action-touch|handoff-touch|dismiss-noise|note|review-decision)$",
+            path,
+        )
+        if m_ggv_ic_depth_act:
+            self._ggv_ic_operator_action(
+                m_ggv_ic_depth_act.group(1),
+                m_ggv_ic_depth_act.group(2),
+            )
+            return
+        if path.startswith("/api/ggv/intercompany-client/operator-depth"):
+            self._ggv_ic_depth_method_refused(path)
+            return
         if self._ggv_ic_refuse_code(path):
             self._ggv_ic_write_refused(path)
             return
         if path == "/api/ggv/intercompany-client" or path.startswith("/api/ggv/intercompany-client/"):
             self._ggv_ic_write_refused(path)
+            return
+        if self._ggv_mgmt_refuse_code(path):
+            self._ggv_mgmt_write_refused(path)
+            return
+        if path == "/api/ggv/mgmt-cluster" or path.startswith("/api/ggv/mgmt-cluster/"):
+            self._ggv_mgmt_write_refused(path)
+            return
+        if self._bzg_mgmt_refuse_code(path):
+            self._bzg_mgmt_write_refused(path)
+            return
+        if path == "/api/bzg/mgmt-cluster" or path.startswith("/api/bzg/mgmt-cluster/"):
+            self._bzg_mgmt_write_refused(path)
+            return
+        if self._amg_mgmt_refuse_code(path):
+            self._amg_mgmt_write_refused(path)
+            return
+        if path == "/api/amg/mgmt-cluster" or path.startswith("/api/amg/mgmt-cluster/"):
+            self._amg_mgmt_write_refused(path)
+            return
+        if self._intel_mgmt_refuse_code(path):
+            self._intel_mgmt_write_refused(path)
+            return
+        if path == "/api/intel/mgmt-cluster" or path.startswith("/api/intel/mgmt-cluster/"):
+            self._intel_mgmt_write_refused(path)
+            return
+        m_core_ack = re.match(
+            r"^/api/core/mgmt-cluster/needs-you/items/([^/]+)/acknowledge$",
+            path,
+        )
+        if m_core_ack:
+            from urllib.parse import unquote
+
+            self._core_needs_you_acknowledge(unquote(m_core_ack.group(1)))
+            return
+        core_nye_refuse = _core_nye.connective_refuse_code(path)
+        if core_nye_refuse:
+            self._core_needs_you_refuse(path, core_nye_refuse)
+            return
+        if self._core_mgmt_refuse_code(path):
+            self._core_mgmt_write_refused(path)
+            return
+        m_core_op_act = re.match(
+            r"^/api/core/mgmt-cluster/objects/([^/]+)/operator-action$",
+            path,
+        )
+        if m_core_op_act:
+            self._core_mgmt_object_operator_action(m_core_op_act.group(1))
+            return
+        if path == "/api/core/mgmt-cluster" or path.startswith("/api/core/mgmt-cluster/"):
+            self._core_mgmt_write_refused(path)
+            return
+        if self._crm_mgmt_refuse_code(path):
+            self._crm_mgmt_write_refused(path)
+            return
+        m_crm_op_act = re.match(
+            r"^/api/crm/mgmt-cluster/leads/([^/]+)/operator-action$",
+            path,
+        )
+        if m_crm_op_act:
+            self._crm_mgmt_lead_operator_action(m_crm_op_act.group(1))
+            return
+        if path == "/api/crm/mgmt-cluster" or path.startswith("/api/crm/mgmt-cluster/"):
+            self._crm_mgmt_write_refused(path)
+            return
+        m_msc_ack = re.match(
+            r"^/api/msc/mgmt-cluster/needs-you/items/([^/]+)/acknowledge$",
+            path,
+        )
+        if m_msc_ack:
+            from urllib.parse import unquote
+
+            self._msc_needs_you_acknowledge(unquote(m_msc_ack.group(1)))
+            return
+        msc_nye_refuse = _msc_nye.connective_refuse_code(path)
+        if msc_nye_refuse:
+            self._msc_needs_you_refuse(path, msc_nye_refuse)
+            return
+        if self._msc_mgmt_refuse_code(path):
+            self._msc_mgmt_write_refused(path)
+            return
+        if path == "/api/msc/mgmt-cluster" or path.startswith("/api/msc/mgmt-cluster/"):
+            self._msc_mgmt_write_refused(path)
+            return
+        m_strat_ack = re.match(
+            r"^/api/strat/mgmt-cluster/needs-you/items/([^/]+)/acknowledge$",
+            path,
+        )
+        if m_strat_ack:
+            from urllib.parse import unquote
+
+            self._strat_needs_you_acknowledge(unquote(m_strat_ack.group(1)))
+            return
+        strat_nye_refuse = _strat_nye.connective_refuse_code(path)
+        if strat_nye_refuse:
+            self._strat_needs_you_refuse(path, strat_nye_refuse)
+            return
+        if self._strat_mgmt_refuse_code(path):
+            self._strat_mgmt_write_refused(path)
+            return
+        if path == "/api/strat/mgmt-cluster" or path.startswith("/api/strat/mgmt-cluster/"):
+            self._strat_mgmt_write_refused(path)
+            return
+        m_dr_ack = re.match(
+            r"^/api/dr/mgmt-cluster/needs-you/items/([^/]+)/acknowledge$",
+            path,
+        )
+        if m_dr_ack:
+            from urllib.parse import unquote
+
+            self._dr_needs_you_acknowledge(unquote(m_dr_ack.group(1)))
+            return
+        dr_nye_refuse = _dr_nye.connective_refuse_code(path)
+        if dr_nye_refuse:
+            self._dr_needs_you_refuse(path, dr_nye_refuse)
+            return
+        if self._dr_mgmt_refuse_code(path):
+            self._dr_mgmt_write_refused(path)
+            return
+        if path == "/api/dr/mgmt-cluster" or path.startswith("/api/dr/mgmt-cluster/"):
+            self._dr_mgmt_write_refused(path)
+            return
+        m_sale_ack = re.match(
+            r"^/api/sale/mgmt-cluster/needs-you/items/([^/]+)/acknowledge$",
+            path,
+        )
+        if m_sale_ack:
+            from urllib.parse import unquote
+
+            self._sale_needs_you_acknowledge(unquote(m_sale_ack.group(1)))
+            return
+        sale_nye_refuse = _sale_nye.connective_refuse_code(path)
+        if sale_nye_refuse:
+            self._sale_needs_you_refuse(path, sale_nye_refuse)
+            return
+        if self._sale_mgmt_refuse_code(path):
+            self._sale_mgmt_write_refused(path)
+            return
+        m_sale_op_act = re.match(
+            r"^/api/sale/mgmt-cluster/objects/([^/]+)/operator-action$",
+            path,
+        )
+        if m_sale_op_act:
+            self._sale_mgmt_object_operator_action(m_sale_op_act.group(1))
+            return
+        m_content_op_act = re.match(
+            r"^/api/(?:content/ops-depth|ggv/content-ops)/objects/([^/]+)/operator-action$",
+            path,
+        )
+        if m_content_op_act:
+            self._ggv_content_ops_object_operator_action(m_content_op_act.group(1))
+            return
+        if path.startswith("/api/content/ops-depth") or path.startswith(
+            "/api/ggv/content-ops"
+        ):
+            self._ggv_content_ops_write_refused(path)
+            return
+        if path == "/api/sale/mgmt-cluster" or path.startswith("/api/sale/mgmt-cluster/"):
+            self._sale_mgmt_write_refused(path)
+            return
+        m_intg_ack = re.match(
+            r"^/api/intg/mgmt-cluster/needs-you/items/([^/]+)/acknowledge$",
+            path,
+        )
+        if m_intg_ack:
+            from urllib.parse import unquote
+
+            self._intg_needs_you_acknowledge(unquote(m_intg_ack.group(1)))
+            return
+        intg_nye_refuse = _intg_nye.connective_refuse_code(path)
+        if intg_nye_refuse:
+            self._intg_needs_you_refuse(path, intg_nye_refuse)
+            return
+        if self._intg_mgmt_refuse_code(path):
+            self._intg_mgmt_write_refused(path)
+            return
+        if path == "/api/intg/mgmt-cluster" or path.startswith("/api/intg/mgmt-cluster/"):
+            self._intg_mgmt_write_refused(path)
             return
         if self._bzg_pnl_refuse_code(path):
             self._bzg_pnl_write_refused(path)
@@ -3483,8 +5143,40 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
             return
+        if path.startswith("/api/amg/service-improve/operator-depth") and _amg_svc_depth.refuse_code(path):
+            self._amg_svc_depth_refused(path)
+            return
+        m_amg_svc_depth_act = re.match(
+            r"^/api/amg/service-improve/operator-depth/objects/([^/]+)/(operator-action|next-action-touch|handoff-touch|dismiss-noise|note|review-decision)$",
+            path,
+        )
+        if m_amg_svc_depth_act:
+            self._amg_svc_operator_action(
+                m_amg_svc_depth_act.group(1),
+                m_amg_svc_depth_act.group(2),
+            )
+            return
+        if path.startswith("/api/amg/service-improve/operator-depth"):
+            self._amg_svc_depth_method_refused(path)
+            return
         if path == "/api/amg/service-improve" or path.startswith("/api/amg/service-improve/"):
             self._amg_improve_write_refused(path)
+            return
+        if path.startswith("/api/amg/sla-incident/operator-depth") and _amg_sla_depth.refuse_code(path):
+            self._amg_sla_depth_refused(path)
+            return
+        m_amg_sla_depth_act = re.match(
+            r"^/api/amg/sla-incident/operator-depth/objects/([^/]+)/(operator-action|next-action-touch|handoff-touch|dismiss-noise|note|review-decision)$",
+            path,
+        )
+        if m_amg_sla_depth_act:
+            self._amg_sla_operator_action(
+                m_amg_sla_depth_act.group(1),
+                m_amg_sla_depth_act.group(2),
+            )
+            return
+        if path.startswith("/api/amg/sla-incident/operator-depth"):
+            self._amg_sla_depth_method_refused(path)
             return
         if self._amg_sla_refuse_code(path):
             self._amg_sla_write_refused(path)
@@ -3579,12 +5271,36 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/staging/commit":
             self._staging_commit()
             return
+        if path == "/api/content/brand-suggest":
+            self._content_brand_suggest()
+            return
+
         if path == "/api/upload/preview-names":
             self._upload_preview_names()
             return
 
         if path == "/api/upload/smart":
             self._upload_smart()
+            return
+
+        if path == "/api/nas/index/sample":
+            self._nas_index_sample_post()
+            return
+        if path in (
+            "/api/nas/index/needs-sorting-sample",
+            "/api/nas/index/needs_sorting_sample",
+        ):
+            self._nas_index_needs_sorting_sample_post()
+            return
+        m_nas_touch = re.match(
+            r"^/api/nas/index/objects/([^/]+)/next-action-touch$",
+            path,
+        )
+        if m_nas_touch:
+            self._nas_index_next_action_touch(m_nas_touch.group(1))
+            return
+        if path.startswith("/api/nas/index/") and _nas_index_ops.refuse_code(path):
+            self._nas_index_ops_write_refused(path)
             return
 
         if path == "/api/upload/remote":
@@ -3598,8 +5314,29 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/bzg/uma-blu" or path.startswith("/api/bzg/uma-blu/"):
             if self._require_uma_ops() is None:
                 return
+            m_bzg_ack = re.match(
+                r"^/api/bzg/uma-blu/needs-you/items/([^/]+)/acknowledge$",
+                path,
+            )
+            if m_bzg_ack:
+                from urllib.parse import unquote
+
+                self._uma_ops_needs_you_acknowledge(unquote(m_bzg_ack.group(1)))
+                return
+            nye_refuse = _uma_ops.connective_refuse_code(path)
+            if nye_refuse:
+                self._uma_ops_connective_refuse(path, nye_refuse)
+                return
             if path in ("/api/bzg/uma-blu/pay", "/api/bzg/uma-blu/payment"):
                 self._uma_ops_payment_refused()
+                return
+            if path in (
+                "/api/bzg/uma-blu/auto-promote",
+                "/api/bzg/uma-blu/auto-execute",
+                "/api/bzg/uma-blu/intel-promote",
+                "/api/bzg/uma-blu/intel-execute",
+            ):
+                self._intel_connect_refuse(path)
                 return
             if path == "/api/bzg/uma-blu/prs":
                 self._uma_ops_pr_create()
@@ -3622,6 +5359,30 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 return
             if path == "/api/bzg/uma-blu/receive":
                 self._uma_ops_receive_post()
+                return
+            if path in (
+                "/api/bzg/uma-blu/goods-receipt",
+                "/api/bzg/uma-blu/partial-receive-input",
+            ):
+                self._uma_ops_goods_receipt_post()
+                return
+            m_pr_op_act = re.match(
+                r"^/api/bzg/uma-blu/prs/([^/]+)/operator-action$",
+                path,
+            )
+            if m_pr_op_act:
+                self._uma_ops_pr_operator_action_post(m_pr_op_act.group(1))
+                return
+            if path in (
+                "/api/bzg/uma-blu/loop-note",
+                "/api/bzg/uma-blu/handover-note",
+                "/api/bzg/uma-blu/exception-note",
+            ):
+                self._uma_ops_loop_note_post(path)
+                return
+            refuse = _uma_ops.refuse_code(path)
+            if refuse:
+                self._uma_ops_loop_refuse(path, refuse)
                 return
             self._send_json(
                 {
@@ -3773,6 +5534,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._post_core_delegation_revoke(m_dlg_revoke.group(1))
             return
 
+        # CRM Needs-You connective on the existing Lead Spine desk.
+        m_crm_ack = re.match(
+            r"^/api/leads/needs-you/items/([^/]+)/acknowledge$",
+            path,
+        )
+        if m_crm_ack:
+            from urllib.parse import unquote
+
+            self._crm_needs_you_acknowledge(unquote(m_crm_ack.group(1)))
+            return
+        nye_refuse = _crm_nye.connective_refuse_code(path)
+        if nye_refuse:
+            self._crm_needs_you_refuse(path, nye_refuse)
+            return
+
         # Lead Spine operator mutations (Beta fixtures)
         m_lead_act = re.match(
             r"^/api/leads/([^/]+)/(touch|note|stage|assign|unassign|work-item|claim)$",
@@ -3815,6 +5591,19 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._crm_identity_blast(path):
             self._crm_identity_blast_refused()
             return
+        if path.startswith("/api/crm/identity/") and _crm_ident_depth.refuse_code(path):
+            self._crm_identity_depth_refused(path)
+            return
+        m_crm_depth_act = re.match(
+            r"^/api/crm/identity/operator-depth/objects/([^/]+)/(operator-action|next-action-touch|handoff-touch|dismiss-noise|note|review-decision)$",
+            path,
+        )
+        if m_crm_depth_act:
+            self._crm_identity_operator_action(
+                m_crm_depth_act.group(1),
+                m_crm_depth_act.group(2),
+            )
+            return
         if path == "/api/crm/identity":
             self._crm_identity_post("register", _crm_ident.register_customer)
             return
@@ -3833,6 +5622,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if self._intel_rule_handled(path, "POST"):
             return
+        if self._intel_learning_handled(path, "POST"):
+            return
 
         self._send_err(404, "not found")
 
@@ -3840,6 +5631,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == "/api/dashboard-truth" or path.startswith("/api/dashboard-truth/"):
             self._dashboard_truth_write_refused()
+            return
+        if path == "/api/staff/home" or path.startswith("/api/staff/home/"):
+            self._staff_home_write_refused(path)
+            return
+        if self._staff_ops_refuse_code(path) or path == "/api/staff/ops-routing" or path.startswith("/api/staff/ops-routing/"):
+            self._staff_ops_write_refused(path)
+            return
+        if path == "/api/owner/command" or path.startswith("/api/owner/command/"):
+            self._owner_command_write_refused()
+            return
+        if path == "/api/owner/war-room" or path.startswith("/api/owner/war-room/"):
+            self._war_room_write_refused()
+            return
+        if path == "/api/business" or path.startswith("/api/business/"):
+            self._business_dashboard_write_refused()
             return
         if path == "/api/owner/empire-pack" or path.startswith("/api/owner/empire-pack/"):
             self._owner_empire_write_refused(path)
@@ -3853,7 +5659,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/amg/ops-pack" or path.startswith("/api/amg/ops-pack/"):
             self._amg_pack_write_refused(path)
             return
+        if path.startswith("/api/amg/day-ops/"):
+            self._amg_day_ops_write_refused(path)
+            return
+        if path.startswith("/api/amg/packages/operator-depth"):
+            self._amg_pkg_depth_method_refused(path)
+            return
         if self._intel_rule_handled(path, "PATCH"):
+            return
+        if self._intel_learning_handled(path, "PATCH"):
             return
         if path == "/api/tech-registry" or path.startswith("/api/tech-registry/"):
             self._tech_registry_write_refused()
@@ -3909,6 +5723,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/ggv/social" or path.startswith("/api/ggv/social/"):
             self._ggv_social_write_refused(path)
             return
+        if path.startswith("/api/crm/package-intel/operator-depth") and _crm_pkg_depth.refuse_code(path):
+            self._crm_pkg_depth_refused(path)
+            return
+        if path.startswith("/api/crm/package-intel/operator-depth"):
+            self._crm_pkg_depth_method_refused(path)
+            return
         if self._pkg_intel_refuse_code(path):
             self._pkg_intel_write_refused(path)
             return
@@ -3920,6 +5740,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/msc/assets" or path.startswith("/api/msc/assets/"):
             self._msc_assets_write_refused(path)
+            return
+        if path.startswith("/api/msc/compliance/operator-depth") and _msc_comp_depth.refuse_code(path):
+            self._msc_comp_depth_refused(path)
+            return
+        if path.startswith("/api/msc/compliance/operator-depth"):
+            self._msc_comp_depth_method_refused(path)
             return
         if self._msc_compliance_refuse_code(path):
             self._msc_compliance_write_refused(path)
@@ -3945,6 +5771,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/intg/secrets" or path.startswith("/api/intg/secrets/"):
             self._intg_secrets_write_refused(path)
             return
+        if path.startswith("/api/ggv/client-profitability/operator-depth") and _ggv_pnl_depth.refuse_code(path):
+            self._ggv_pnl_depth_refused(path)
+            return
+        if path.startswith("/api/ggv/client-profitability/operator-depth"):
+            self._ggv_pnl_depth_method_refused(path)
+            return
         if self._ggv_pnl_refuse_code(path):
             self._ggv_pnl_write_refused(path)
             return
@@ -3959,6 +5791,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if self._ggv_ops_refuse_code(path) or path == "/api/ggv/ops-pack" or path.startswith("/api/ggv/ops-pack/"):
             self._ggv_ops_write_refused(path)
+            return
+        if path.startswith("/api/amg/journey-workflow/operator-depth"):
+            self._amg_journey_depth_method_refused(path)
             return
         if self._amg_journey_refuse_code(path):
             self._amg_journey_write_refused(path)
@@ -3978,17 +5813,98 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/amg/packages-products" or path.startswith("/api/amg/packages-products/"):
             self._amg_packages_write_refused(path)
             return
+        if path.startswith("/api/amg/revenue-yield/operator-depth"):
+            self._amg_yield_depth_method_refused(path)
+            return
         if self._amg_yield_refuse_code(path):
             self._amg_yield_write_refused(path)
             return
         if path == "/api/amg/revenue-yield" or path.startswith("/api/amg/revenue-yield/"):
             self._amg_yield_write_refused(path)
             return
+        if path.startswith("/api/ggv/intercompany-client/operator-depth") and _ggv_ic_depth.refuse_code(path):
+            self._ggv_ic_depth_refused(path)
+            return
+        if path.startswith("/api/ggv/intercompany-client/operator-depth"):
+            self._ggv_ic_depth_method_refused(path)
+            return
         if self._ggv_ic_refuse_code(path):
             self._ggv_ic_write_refused(path)
             return
         if path == "/api/ggv/intercompany-client" or path.startswith("/api/ggv/intercompany-client/"):
             self._ggv_ic_write_refused(path)
+            return
+        if self._ggv_mgmt_refuse_code(path):
+            self._ggv_mgmt_write_refused(path)
+            return
+        if path == "/api/ggv/mgmt-cluster" or path.startswith("/api/ggv/mgmt-cluster/"):
+            self._ggv_mgmt_write_refused(path)
+            return
+        if self._bzg_mgmt_refuse_code(path):
+            self._bzg_mgmt_write_refused(path)
+            return
+        if path == "/api/bzg/mgmt-cluster" or path.startswith("/api/bzg/mgmt-cluster/"):
+            self._bzg_mgmt_write_refused(path)
+            return
+        if self._amg_mgmt_refuse_code(path):
+            self._amg_mgmt_write_refused(path)
+            return
+        if path == "/api/amg/mgmt-cluster" or path.startswith("/api/amg/mgmt-cluster/"):
+            self._amg_mgmt_write_refused(path)
+            return
+        if self._intel_mgmt_refuse_code(path):
+            self._intel_mgmt_write_refused(path)
+            return
+        if path == "/api/intel/mgmt-cluster" or path.startswith("/api/intel/mgmt-cluster/"):
+            self._intel_mgmt_write_refused(path)
+            return
+        if self._core_mgmt_refuse_code(path):
+            self._core_mgmt_write_refused(path)
+            return
+        if path == "/api/core/mgmt-cluster" or path.startswith("/api/core/mgmt-cluster/"):
+            self._core_mgmt_write_refused(path)
+            return
+        if self._crm_mgmt_refuse_code(path):
+            self._crm_mgmt_write_refused(path)
+            return
+        if path == "/api/crm/mgmt-cluster" or path.startswith("/api/crm/mgmt-cluster/"):
+            self._crm_mgmt_write_refused(path)
+            return
+        if self._msc_mgmt_refuse_code(path):
+            self._msc_mgmt_write_refused(path)
+            return
+        if path == "/api/msc/mgmt-cluster" or path.startswith("/api/msc/mgmt-cluster/"):
+            self._msc_mgmt_write_refused(path)
+            return
+        if self._strat_mgmt_refuse_code(path):
+            self._strat_mgmt_write_refused(path)
+            return
+        if path == "/api/strat/mgmt-cluster" or path.startswith("/api/strat/mgmt-cluster/"):
+            self._strat_mgmt_write_refused(path)
+            return
+        if self._dr_mgmt_refuse_code(path):
+            self._dr_mgmt_write_refused(path)
+            return
+        if path == "/api/dr/mgmt-cluster" or path.startswith("/api/dr/mgmt-cluster/"):
+            self._dr_mgmt_write_refused(path)
+            return
+        if self._sale_mgmt_refuse_code(path):
+            self._sale_mgmt_write_refused(path)
+            return
+        if path == "/api/sale/mgmt-cluster" or path.startswith("/api/sale/mgmt-cluster/"):
+            self._sale_mgmt_write_refused(path)
+            return
+        if path.startswith("/api/content/ops-depth") or path.startswith("/api/ggv/content-ops"):
+            self._ggv_content_ops_write_refused(path)
+            return
+        if path.startswith("/api/nas/index/") and _nas_index_ops.refuse_code(path):
+            self._nas_index_ops_write_refused(path)
+            return
+        if self._intg_mgmt_refuse_code(path):
+            self._intg_mgmt_write_refused(path)
+            return
+        if path == "/api/intg/mgmt-cluster" or path.startswith("/api/intg/mgmt-cluster/"):
+            self._intg_mgmt_write_refused(path)
             return
         if self._bzg_pnl_refuse_code(path):
             self._bzg_pnl_write_refused(path)
@@ -4017,8 +5933,17 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
             return
+        if path.startswith("/api/amg/service-improve/operator-depth") and _amg_svc_depth.refuse_code(path):
+            self._amg_svc_depth_refused(path)
+            return
+        if path.startswith("/api/amg/service-improve/operator-depth"):
+            self._amg_svc_depth_method_refused(path)
+            return
         if path == "/api/amg/service-improve" or path.startswith("/api/amg/service-improve/"):
             self._amg_improve_write_refused(path)
+            return
+        if path.startswith("/api/amg/sla-incident/operator-depth"):
+            self._amg_sla_depth_method_refused(path)
             return
         if self._amg_sla_refuse_code(path):
             self._amg_sla_write_refused(path)
@@ -4169,14 +6094,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_json({"ok": False, "error": str(exc)}, status=500)
 
     def _upload_smart(self) -> None:
-        """POST multipart smart upload — Wolf naming + library ingest.
+        """POST multipart smart upload — Wolf naming + library + NAS placement.
 
-        Phase 2.5B: gated by can_upload. Never overwrites. Stores original_filename.
-        Response omits filesystem paths. NAS status is honest (nas_received always false).
+        Phase 2.5B + NAS P0: gated by can_upload + brand scope. Never overwrites.
+        Response omits absolute filesystem paths. nas_received true only when
+        the file is verified under _Imports/Wolf-Library on NAS.
         """
         subject = self._require_permission("can_upload", {})
         if subject is None:
             return
+        identity = self._resolve_identity()
+        who = _wolf_shell.whoami_from_identity(identity if identity.get("ok") else None)
+        scopes = list(who.get("scopes") or [])
         try:
             length = int(self.headers.get("Content-Length") or 0)
             if length > MAX_UPLOAD_BYTES:
@@ -4187,7 +6116,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 return
             fields = parse_multipart(self.headers, self.rfile)
             result = _smart_upload.handle_smart_upload(
-                fields, subject=subject, serve_mod=sys.modules[__name__]
+                fields, subject=subject, serve_mod=sys.modules[__name__], scopes=scopes
             )
             self._send_json(result["body"], status=int(result["http"]))
         except UploadTooLarge as exc:
@@ -4198,6 +6127,635 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_json({"ok": False, "status": "error", "error": str(exc), "ui_status": "FAILED"}, status=400)
         except Exception as exc:  # noqa: BLE001
             self._send_json({"ok": False, "status": "error", "error": str(exc), "ui_status": "FAILED"}, status=500)
+
+    def _nas_registry_get(self) -> None:
+        """Read-only NAS source registry. Owner Integration Health / content crew."""
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="can_view_plan|can_upload")
+            return
+        subject = identity.get("permission_subject") or identity.get("email")
+        if not subject or not (
+            _wi.has_permission(subject, "can_upload")
+            or _wi.has_permission(subject, "can_view_plan")
+            or identity.get("person_id") == "PERS-MATT"
+        ):
+            self._send_json(
+                {"ok": False, "error": "forbidden", "required_permission": "can_view_plan|can_upload"},
+                status=403,
+            )
+            return
+        self._send_json(_nas_library.registry())
+
+    def _content_nas_haikal_prep(self) -> None:
+        """GGV Content / Smart Upload operator path via NAS — Haikal prep desk."""
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="can_view_plan|can_upload")
+            return
+        subject = identity.get("permission_subject") or identity.get("email")
+        if not subject or not (
+            _wi.has_permission(subject, "can_upload")
+            or _wi.has_permission(subject, "can_view_plan")
+            or identity.get("person_id") == "PERS-MATT"
+        ):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "required_permission": "can_view_plan|can_upload",
+                    **_ggv_nas_haikal.honesty_flags(),
+                },
+                status=403,
+            )
+            return
+        who = _wolf_shell.whoami_from_identity(identity)
+        can_upload = bool(_wi.has_permission(subject, "can_upload"))
+        desk = _ggv_nas_haikal.operator_desk(
+            person_id=who.get("person_id") or identity.get("person_id"),
+            subject=subject,
+            permissions=["can_upload"] if can_upload else [],
+            scopes=who.get("scopes") or [],
+            can_upload=can_upload,
+        )
+        # Never invent staff go-live or human PASS on this endpoint.
+        desk["staff_ready"] = False
+        desk["proven"] = False
+        desk["ready"] = False
+        desk["honesty"] = _ggv_nas_haikal.honesty_flags()
+        self._send_json(desk)
+
+    def _ggv_content_ops_quiet(self) -> dict:
+        return {
+            "bound": _ggv_content_ops.BOUND,
+            "schema_id": _ggv_content_ops.OPERATOR_DEPTH_SCHEMA_ID,
+            "proven": False,
+            "ready": False,
+            "staff_ready": False,
+            "metricool_publish": False,
+            "klaviyo_publish": False,
+            "nas_destroy": False,
+            "cr_resolved": False,
+        }
+
+    def _require_ggv_content_ops_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(
+                identity, required_permission=_ggv_content_ops.PERM_CONTENT_OPERATOR
+            )
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _ggv_content_ops.require_actor(person_id)
+        except _ggv_content_ops.ContentOpsError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    **self._ggv_content_ops_quiet(),
+                    **_ggv_content_ops.honesty_flags(),
+                },
+                status=403,
+            )
+            return None
+        return {
+            "person_id": person_id,
+            "email": identity.get("email") or identity.get("permission_subject"),
+            "seat": seat,
+            "identity": identity,
+        }
+
+    def _ggv_content_ops_fail(self, exc: _ggv_content_ops.ContentOpsError) -> None:
+        status = int(getattr(exc, "http_status", 400) or 400)
+        if exc.code in (
+            "forbidden",
+            "proven_refused",
+            "ready_refused",
+            "staff_ready_refused",
+            "haikal_human_refused",
+            "metricool_refused",
+            "klaviyo_refused",
+            "nas_destroy_refused",
+            "invent_asset_refused",
+            "production_refused",
+            "resolve_refused",
+        ):
+            status = 403
+        if exc.code == "not_found":
+            status = 404
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._ggv_content_ops_quiet(),
+                **_ggv_content_ops.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _ggv_content_ops_write_refused(self, path: str) -> None:
+        identity = self._require_ggv_content_ops_seat()
+        if identity is None:
+            return
+        code = _ggv_content_ops.refuse_code(path) or "writes"
+        try:
+            if code == "proven":
+                _ggv_content_ops.refuse_proven({})
+            elif code == "ready":
+                _ggv_content_ops.refuse_ready({})
+            elif code == "staff_ready":
+                _ggv_content_ops.refuse_staff_ready({})
+            elif code == "haikal_human":
+                _ggv_content_ops.refuse_haikal_human({})
+            elif code == "metricool":
+                _ggv_content_ops.refuse_metricool({})
+            elif code == "klaviyo":
+                _ggv_content_ops.refuse_klaviyo({})
+            elif code == "nas_destroy":
+                _ggv_content_ops.refuse_nas_destroy({})
+            elif code == "invent_asset":
+                _ggv_content_ops.refuse_invent_asset({})
+            elif code == "production":
+                _ggv_content_ops.refuse_production({})
+            elif code == "resolve":
+                _ggv_content_ops.refuse_resolve({})
+            else:
+                _ggv_content_ops.refuse_metricool({})
+        except _ggv_content_ops.ContentOpsError as exc:
+            self._ggv_content_ops_fail(exc)
+
+    def _ggv_content_ops_operator_depth(self) -> None:
+        identity = self._require_ggv_content_ops_seat()
+        if identity is None:
+            return
+        try:
+            desk = _ggv_content_ops.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _ggv_content_ops.ContentOpsError as exc:
+            self._ggv_content_ops_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        self._send_json(desk)
+
+    def _ggv_content_ops_operator_depth_rbac(self) -> None:
+        identity = self._require_ggv_content_ops_seat()
+        if identity is None:
+            return
+        try:
+            prove = _ggv_content_ops.prove_content_operator(
+                person_id=identity["person_id"] or _ggv_content_ops.HAIKAL,
+            )
+        except _ggv_content_ops.ContentOpsError as exc:
+            self._ggv_content_ops_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        self._send_json(prove)
+
+    def _ggv_content_ops_object_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_ggv_content_ops_seat()
+        if identity is None:
+            return
+        try:
+            detail = _ggv_content_ops.operator_object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _ggv_content_ops.ContentOpsError as exc:
+            self._ggv_content_ops_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        self._send_json(detail)
+
+    def _ggv_content_ops_object_operator_action(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        if any(
+            body.get(k)
+            for k in (
+                "metricool",
+                "metricool_publish",
+                "klaviyo",
+                "klaviyo_publish",
+                "nas_destroy",
+                "destroy",
+                "proven",
+                "ready",
+                "staff_ready",
+                "haikal_human",
+                "haikal_human_pass",
+                "invent_asset",
+                "production",
+                "resolve",
+            )
+        ):
+            refused = (
+                "/api/content/ops-depth/metricool"
+                if body.get("metricool") or body.get("metricool_publish")
+                else "/api/content/ops-depth/klaviyo"
+                if body.get("klaviyo") or body.get("klaviyo_publish")
+                else "/api/content/ops-depth/nas-destroy"
+                if body.get("nas_destroy") or body.get("destroy")
+                else "/api/content/ops-depth/proven"
+                if body.get("proven")
+                else "/api/content/ops-depth/ready"
+                if body.get("ready")
+                else "/api/content/ops-depth/staff-ready"
+                if body.get("staff_ready")
+                else "/api/content/ops-depth/haikal-human"
+                if body.get("haikal_human") or body.get("haikal_human_pass")
+                else "/api/content/ops-depth/invent-asset"
+                if body.get("invent_asset")
+                else "/api/content/ops-depth/production"
+                if body.get("production")
+                else "/api/content/ops-depth/resolve"
+            )
+            self._ggv_content_ops_write_refused(refused)
+            return
+        identity = self._require_ggv_content_ops_seat(body)
+        if identity is None:
+            return
+        try:
+            result = _ggv_content_ops.record_content_operator_action(
+                verified_person_id=identity["person_id"],
+                object_id=unquote(object_id),
+                kind=str(body.get("kind") or ""),
+                note=body.get("note"),
+            )
+        except _ggv_content_ops.ContentOpsError as exc:
+            self._ggv_content_ops_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        self._send_json(result)
+
+    def _nas_index_search(self, qs: dict) -> None:
+        """Search Beta nas_index (sample). Relative paths only — no absolute leak."""
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="can_view_plan|can_upload")
+            return
+        subject = identity.get("permission_subject") or identity.get("email")
+        if not subject or not (
+            _wi.has_permission(subject, "can_upload")
+            or _wi.has_permission(subject, "can_view_plan")
+            or identity.get("person_id") == "PERS-MATT"
+        ):
+            self._send_json(
+                {"ok": False, "error": "forbidden", "required_permission": "can_view_plan|can_upload"},
+                status=403,
+            )
+            return
+        q = ((qs.get("q") or qs.get("search") or [""])[0] or "").strip()
+        folder = ((qs.get("folder") or [""])[0] or "").strip() or None
+        brand_token = ((qs.get("brand_token") or qs.get("brand") or [""])[0] or "").strip() or None
+        media_type = ((qs.get("media_type") or qs.get("type") or [""])[0] or "").strip() or None
+        extension = ((qs.get("extension") or qs.get("ext") or [""])[0] or "").strip() or None
+        recent_raw = ((qs.get("recent") or ["1"])[0] or "1").strip().lower()
+        recent = recent_raw not in ("0", "false", "no")
+        try:
+            limit = int((qs.get("limit") or ["50"])[0])
+        except ValueError:
+            limit = 50
+        who = _wolf_shell.whoami_from_identity(identity)
+        scopes = list(who.get("scopes") or [])
+        conn = db_connect()
+        try:
+            _nas_library.migrate_schema(conn)
+            try:
+                items = _nas_library.search_nas_index(
+                    conn,
+                    q=q,
+                    limit=limit,
+                    folder=folder,
+                    brand_token=brand_token,
+                    media_type=media_type,
+                    extension=extension,
+                    recent=recent,
+                    scopes=scopes,
+                )
+            except _nas_library.NasLibraryError as exc:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": exc.code,
+                        "message": str(exc),
+                        "hidden_ne_permission": True,
+                        **_nas_library.HONESTY,
+                    },
+                    status=exc.http,
+                )
+                return
+            blob = {
+                "ok": True,
+                "items": items,
+                "count": len(items),
+                "folder": folder,
+                "brand_token": brand_token,
+                "media_type": media_type,
+                "extension": extension,
+                "recent": recent,
+                "destructive": False,
+                "full_tree_indexed": False,
+                **_nas_library.HONESTY,
+            }
+            # Defence: never leak absolute Volumes paths
+            if "/Volumes/" in json.dumps(blob):
+                for it in items:
+                    it.pop("original_path", None)
+            self._send_json(blob)
+        finally:
+            conn.close()
+
+    def _require_nas_index_ops_seat(self) -> dict | None:
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(
+                identity, required_permission=_ggv_content_ops.PERM_CONTENT_OPERATOR
+            )
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _nas_index_ops.require_operator_person(person_id)
+        except _nas_index_ops.NasIndexOpsError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    **_nas_index_ops.honesty_flags(),
+                },
+                status=exc.http,
+            )
+            return None
+        who = _wolf_shell.whoami_from_identity(identity)
+        return {
+            "person_id": person_id,
+            "email": identity.get("email") or identity.get("permission_subject"),
+            "seat": seat,
+            "identity": identity,
+            "scopes": list(who.get("scopes") or []),
+        }
+
+    def _nas_index_ops_fail(self, exc: _nas_index_ops.NasIndexOpsError) -> None:
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **_nas_index_ops.honesty_flags(),
+            },
+            status=int(exc.http or 400),
+        )
+
+    def _nas_index_ops_write_refused(self, path: str) -> None:
+        body = _nas_index_ops.refuse(path)
+        self._send_json(body, status=403)
+
+    def _nas_index_operator_depth(self, qs: dict) -> None:
+        actor = self._require_nas_index_ops_seat()
+        if actor is None:
+            return
+        try:
+            desk = _nas_index_ops.operator_depth_desk(
+                verified_person_id=actor["person_id"],
+                scopes=actor.get("scopes"),
+                q=((qs.get("q") or [""])[0] or "").strip(),
+                folder=((qs.get("folder") or [""])[0] or "").strip() or None,
+                brand_token=((qs.get("brand_token") or qs.get("brand") or [""])[0] or "").strip()
+                or None,
+                media_type=((qs.get("media_type") or qs.get("type") or [""])[0] or "").strip()
+                or None,
+                extension=((qs.get("extension") or qs.get("ext") or [""])[0] or "").strip()
+                or None,
+                limit=int((qs.get("limit") or ["40"])[0] or 40),
+            )
+        except _nas_index_ops.NasIndexOpsError as exc:
+            self._nas_index_ops_fail(exc)
+            return
+        except (TypeError, ValueError):
+            desk = _nas_index_ops.operator_depth_desk(
+                verified_person_id=actor["person_id"],
+                scopes=actor.get("scopes"),
+            )
+        self._send_json(desk)
+
+    def _nas_index_browse(self, qs: dict) -> None:
+        actor = self._require_nas_index_ops_seat()
+        if actor is None:
+            return
+        recent_raw = ((qs.get("recent") or ["1"])[0] or "1").strip().lower()
+        try:
+            result = _nas_index_ops.browse(
+                verified_person_id=actor["person_id"],
+                scopes=actor.get("scopes"),
+                q=((qs.get("q") or qs.get("search") or [""])[0] or "").strip(),
+                folder=((qs.get("folder") or [""])[0] or "").strip() or None,
+                brand_token=((qs.get("brand_token") or qs.get("brand") or [""])[0] or "").strip()
+                or None,
+                media_type=((qs.get("media_type") or qs.get("type") or [""])[0] or "").strip()
+                or None,
+                extension=((qs.get("extension") or qs.get("ext") or [""])[0] or "").strip()
+                or None,
+                limit=int((qs.get("limit") or ["50"])[0] or 50),
+                recent=recent_raw not in ("0", "false", "no"),
+            )
+        except _nas_index_ops.NasIndexOpsError as exc:
+            self._nas_index_ops_fail(exc)
+            return
+        except (TypeError, ValueError) as exc:
+            self._send_json(
+                {"ok": False, "error": "bad_request", "message": str(exc), **_nas_index_ops.honesty_flags()},
+                status=400,
+            )
+            return
+        self._send_json(result)
+
+    def _nas_index_facets(self, qs: dict) -> None:
+        actor = self._require_nas_index_ops_seat()
+        if actor is None:
+            return
+        conn = db_connect()
+        try:
+            facets = _nas_library.nas_index_facets(conn, scopes=actor.get("scopes"))
+            facets.update(_nas_index_ops.honesty_flags())
+            self._send_json(facets)
+        finally:
+            conn.close()
+
+    def _nas_index_object_detail(self, object_id: str) -> None:
+        actor = self._require_nas_index_ops_seat()
+        if actor is None:
+            return
+        try:
+            detail = _nas_index_ops.object_detail(
+                object_id,
+                verified_person_id=actor["person_id"],
+                scopes=actor.get("scopes"),
+            )
+        except _nas_index_ops.NasIndexOpsError as exc:
+            self._nas_index_ops_fail(exc)
+            return
+        self._send_json(detail)
+
+    def _nas_index_next_action_touch(self, object_id: str) -> None:
+        actor = self._require_nas_index_ops_seat()
+        if actor is None:
+            return
+        try:
+            body = self._read_json() if int(self.headers.get("Content-Length") or 0) else {}
+        except Exception:
+            body = {}
+        body = body or {}
+        try:
+            result = _nas_index_ops.next_action_touch(
+                object_id,
+                verified_person_id=actor["person_id"],
+                note=body.get("note"),
+                scopes=actor.get("scopes"),
+            )
+        except _nas_index_ops.NasIndexOpsError as exc:
+            self._nas_index_ops_fail(exc)
+            return
+        self._send_json(result)
+
+    def _nas_index_needs_sorting_sample_post(self) -> None:
+        actor = self._require_nas_index_ops_seat()
+        if actor is None:
+            return
+        try:
+            body = self._read_json() if int(self.headers.get("Content-Length") or 0) else {}
+        except Exception:
+            body = {}
+        body = body or {}
+        # Refuse inventing AMG files / archive / recycle via this endpoint
+        folder = str(body.get("folder") or "").strip()
+        if folder and folder not in ("", _nas_library.NEEDS_SORTING_TOP):
+            if folder in _nas_library.REFUSED_SAMPLE_TOPS or folder.startswith("#"):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "nas_folder_refused",
+                        "message": f"folder refused: {folder}",
+                        **_nas_index_ops.honesty_flags(),
+                    },
+                    status=403,
+                )
+                return
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "nas_folder_not_safe",
+                    "message": "needs-sorting sample only accepts _needs_sorting",
+                    **_nas_index_ops.honesty_flags(),
+                },
+                status=403,
+            )
+            return
+        try:
+            cap = min(100, max(1, int(body.get("cap") or 25)))
+        except (TypeError, ValueError):
+            cap = 25
+        ingest = bool(body.get("ingest") or body.get("persist"))
+        try:
+            result = _nas_index_ops.needs_sorting_sample(
+                verified_person_id=actor["person_id"],
+                cap=cap,
+                ingest=ingest,
+            )
+        except _nas_index_ops.NasIndexOpsError as exc:
+            self._nas_index_ops_fail(exc)
+            return
+        self._send_json(result)
+
+    def _nas_index_sample_post(self) -> None:
+        """POST — READ-only sample index into Beta catalog (Brand-Assets or continue)."""
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission="can_upload")
+            return
+        if identity.get("person_id") not in ("PERS-MATT", "PERS-HAIKAL") and not _wi.has_permission(
+            identity.get("permission_subject") or identity.get("email") or "", "can_upload"
+        ):
+            self._send_json({"ok": False, "error": "forbidden"}, status=403)
+            return
+        try:
+            body = self._read_json() if int(self.headers.get("Content-Length") or 0) else {}
+        except Exception:
+            body = {}
+        body = body or {}
+        mode = str(body.get("mode") or "").strip().lower()
+        continue_mode = mode in ("continue", "index-continue", "multi") or bool(
+            body.get("continue")
+        )
+        folders = body.get("folders")
+        if isinstance(folders, str):
+            folders = [folders]
+        if not isinstance(folders, list):
+            folders = None
+        single_folder = str(body.get("folder") or "").strip() or None
+        per_folder_cap = 25
+        try:
+            per_folder_cap = min(100, max(1, int(body.get("per_folder_cap") or body.get("cap") or 25)))
+        except (TypeError, ValueError):
+            per_folder_cap = 25
+        cap = 200
+        try:
+            cap = min(500, max(1, int(body.get("cap") or 200)))
+        except (TypeError, ValueError):
+            cap = 200
+        conn = db_connect()
+        try:
+            if continue_mode or folders:
+                sample = _nas_library.inventory_continue(
+                    folders=folders, per_folder_cap=per_folder_cap
+                )
+                persisted = _nas_library.persist_continue_index(
+                    sample, per_folder_cap=per_folder_cap
+                )
+                ingested = _nas_library.ingest_sample_to_catalog(conn, sample, cap=per_folder_cap)
+            elif single_folder:
+                try:
+                    name = _nas_library._safe_top_folder_name(single_folder)
+                except _nas_library.NasLibraryError as exc:
+                    self._send_json(
+                        {"ok": False, "error": exc.code, "message": str(exc), **_nas_library.HONESTY},
+                        status=exc.http,
+                    )
+                    return
+                sample = _nas_library.inventory_sample(
+                    folder=_nas_library.MEDIA_LIBRARY / name, cap=cap
+                )
+                persisted = _nas_library.persist_sample_index(sample, cap=cap)
+                ingested = _nas_library.ingest_sample_to_catalog(conn, sample, cap=cap)
+            else:
+                sample = _nas_library.inventory_sample(cap=cap)
+                persisted = _nas_library.persist_sample_index(sample, cap=cap)
+                ingested = _nas_library.ingest_sample_to_catalog(conn, sample, cap=cap)
+            self._send_json(
+                {
+                    "ok": True,
+                    "mode": "continue" if (continue_mode or folders) else ("folder" if single_folder else "brand-assets"),
+                    "persisted": {k: v for k, v in persisted.items() if k != "items"},
+                    "ingested": ingested,
+                    "by_folder": sample.get("by_folder"),
+                    "files_indexed": sample.get("files_indexed"),
+                    "destructive": False,
+                    **_nas_library.HONESTY,
+                }
+            )
+        finally:
+            conn.close()
 
     def _upload_remote(self) -> None:
         """POST multipart → incoming_drop + staged_assets (STAGED). No library_v2.
@@ -4268,6 +6826,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/dashboard-truth" or path.startswith("/api/dashboard-truth/"):
             self._dashboard_truth_write_refused()
             return
+        if path == "/api/staff/home" or path.startswith("/api/staff/home/"):
+            self._staff_home_write_refused(path)
+            return
+        if self._staff_ops_refuse_code(path) or path == "/api/staff/ops-routing" or path.startswith("/api/staff/ops-routing/"):
+            self._staff_ops_write_refused(path)
+            return
+        if path == "/api/owner/command" or path.startswith("/api/owner/command/"):
+            self._owner_command_write_refused()
+            return
+        if path == "/api/owner/war-room" or path.startswith("/api/owner/war-room/"):
+            self._war_room_write_refused()
+            return
+        if path == "/api/business" or path.startswith("/api/business/"):
+            self._business_dashboard_write_refused()
+            return
         if path == "/api/owner/empire-pack" or path.startswith("/api/owner/empire-pack/"):
             self._owner_empire_write_refused(path)
             return
@@ -4280,7 +6853,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/amg/ops-pack" or path.startswith("/api/amg/ops-pack/"):
             self._amg_pack_write_refused(path)
             return
+        if path.startswith("/api/amg/day-ops/"):
+            self._amg_day_ops_write_refused(path)
+            return
+        if path.startswith("/api/amg/packages/operator-depth"):
+            self._amg_pkg_depth_method_refused(path)
+            return
         if self._intel_rule_handled(path, "PUT"):
+            return
+        if self._intel_learning_handled(path, "PUT"):
             return
         if path == "/api/tech-registry" or path.startswith("/api/tech-registry/"):
             self._tech_registry_write_refused()
@@ -4336,6 +6917,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/ggv/social" or path.startswith("/api/ggv/social/"):
             self._ggv_social_write_refused(path)
             return
+        if path.startswith("/api/crm/package-intel/operator-depth") and _crm_pkg_depth.refuse_code(path):
+            self._crm_pkg_depth_refused(path)
+            return
+        if path.startswith("/api/crm/package-intel/operator-depth"):
+            self._crm_pkg_depth_method_refused(path)
+            return
         if self._pkg_intel_refuse_code(path):
             self._pkg_intel_write_refused(path)
             return
@@ -4347,6 +6934,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/msc/assets" or path.startswith("/api/msc/assets/"):
             self._msc_assets_write_refused(path)
+            return
+        if path.startswith("/api/msc/compliance/operator-depth") and _msc_comp_depth.refuse_code(path):
+            self._msc_comp_depth_refused(path)
+            return
+        if path.startswith("/api/msc/compliance/operator-depth"):
+            self._msc_comp_depth_method_refused(path)
             return
         if self._msc_compliance_refuse_code(path):
             self._msc_compliance_write_refused(path)
@@ -4372,6 +6965,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/intg/secrets" or path.startswith("/api/intg/secrets/"):
             self._intg_secrets_write_refused(path)
             return
+        if path.startswith("/api/ggv/client-profitability/operator-depth") and _ggv_pnl_depth.refuse_code(path):
+            self._ggv_pnl_depth_refused(path)
+            return
+        if path.startswith("/api/ggv/client-profitability/operator-depth"):
+            self._ggv_pnl_depth_method_refused(path)
+            return
         if self._ggv_pnl_refuse_code(path):
             self._ggv_pnl_write_refused(path)
             return
@@ -4386,6 +6985,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if self._ggv_ops_refuse_code(path) or path == "/api/ggv/ops-pack" or path.startswith("/api/ggv/ops-pack/"):
             self._ggv_ops_write_refused(path)
+            return
+        if path.startswith("/api/amg/journey-workflow/operator-depth"):
+            self._amg_journey_depth_method_refused(path)
             return
         if self._amg_journey_refuse_code(path):
             self._amg_journey_write_refused(path)
@@ -4405,17 +7007,98 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/amg/packages-products" or path.startswith("/api/amg/packages-products/"):
             self._amg_packages_write_refused(path)
             return
+        if path.startswith("/api/amg/revenue-yield/operator-depth"):
+            self._amg_yield_depth_method_refused(path)
+            return
         if self._amg_yield_refuse_code(path):
             self._amg_yield_write_refused(path)
             return
         if path == "/api/amg/revenue-yield" or path.startswith("/api/amg/revenue-yield/"):
             self._amg_yield_write_refused(path)
             return
+        if path.startswith("/api/ggv/intercompany-client/operator-depth") and _ggv_ic_depth.refuse_code(path):
+            self._ggv_ic_depth_refused(path)
+            return
+        if path.startswith("/api/ggv/intercompany-client/operator-depth"):
+            self._ggv_ic_depth_method_refused(path)
+            return
         if self._ggv_ic_refuse_code(path):
             self._ggv_ic_write_refused(path)
             return
         if path == "/api/ggv/intercompany-client" or path.startswith("/api/ggv/intercompany-client/"):
             self._ggv_ic_write_refused(path)
+            return
+        if self._ggv_mgmt_refuse_code(path):
+            self._ggv_mgmt_write_refused(path)
+            return
+        if path == "/api/ggv/mgmt-cluster" or path.startswith("/api/ggv/mgmt-cluster/"):
+            self._ggv_mgmt_write_refused(path)
+            return
+        if self._bzg_mgmt_refuse_code(path):
+            self._bzg_mgmt_write_refused(path)
+            return
+        if path == "/api/bzg/mgmt-cluster" or path.startswith("/api/bzg/mgmt-cluster/"):
+            self._bzg_mgmt_write_refused(path)
+            return
+        if self._amg_mgmt_refuse_code(path):
+            self._amg_mgmt_write_refused(path)
+            return
+        if path == "/api/amg/mgmt-cluster" or path.startswith("/api/amg/mgmt-cluster/"):
+            self._amg_mgmt_write_refused(path)
+            return
+        if self._intel_mgmt_refuse_code(path):
+            self._intel_mgmt_write_refused(path)
+            return
+        if path == "/api/intel/mgmt-cluster" or path.startswith("/api/intel/mgmt-cluster/"):
+            self._intel_mgmt_write_refused(path)
+            return
+        if self._core_mgmt_refuse_code(path):
+            self._core_mgmt_write_refused(path)
+            return
+        if path == "/api/core/mgmt-cluster" or path.startswith("/api/core/mgmt-cluster/"):
+            self._core_mgmt_write_refused(path)
+            return
+        if self._crm_mgmt_refuse_code(path):
+            self._crm_mgmt_write_refused(path)
+            return
+        if path == "/api/crm/mgmt-cluster" or path.startswith("/api/crm/mgmt-cluster/"):
+            self._crm_mgmt_write_refused(path)
+            return
+        if self._msc_mgmt_refuse_code(path):
+            self._msc_mgmt_write_refused(path)
+            return
+        if path == "/api/msc/mgmt-cluster" or path.startswith("/api/msc/mgmt-cluster/"):
+            self._msc_mgmt_write_refused(path)
+            return
+        if self._strat_mgmt_refuse_code(path):
+            self._strat_mgmt_write_refused(path)
+            return
+        if path == "/api/strat/mgmt-cluster" or path.startswith("/api/strat/mgmt-cluster/"):
+            self._strat_mgmt_write_refused(path)
+            return
+        if self._dr_mgmt_refuse_code(path):
+            self._dr_mgmt_write_refused(path)
+            return
+        if path == "/api/dr/mgmt-cluster" or path.startswith("/api/dr/mgmt-cluster/"):
+            self._dr_mgmt_write_refused(path)
+            return
+        if self._sale_mgmt_refuse_code(path):
+            self._sale_mgmt_write_refused(path)
+            return
+        if path == "/api/sale/mgmt-cluster" or path.startswith("/api/sale/mgmt-cluster/"):
+            self._sale_mgmt_write_refused(path)
+            return
+        if path.startswith("/api/content/ops-depth") or path.startswith("/api/ggv/content-ops"):
+            self._ggv_content_ops_write_refused(path)
+            return
+        if path.startswith("/api/nas/index/") and _nas_index_ops.refuse_code(path):
+            self._nas_index_ops_write_refused(path)
+            return
+        if self._intg_mgmt_refuse_code(path):
+            self._intg_mgmt_write_refused(path)
+            return
+        if path == "/api/intg/mgmt-cluster" or path.startswith("/api/intg/mgmt-cluster/"):
+            self._intg_mgmt_write_refused(path)
             return
         if self._bzg_pnl_refuse_code(path):
             self._bzg_pnl_write_refused(path)
@@ -4444,8 +7127,17 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
             return
+        if path.startswith("/api/amg/service-improve/operator-depth") and _amg_svc_depth.refuse_code(path):
+            self._amg_svc_depth_refused(path)
+            return
+        if path.startswith("/api/amg/service-improve/operator-depth"):
+            self._amg_svc_depth_method_refused(path)
+            return
         if path == "/api/amg/service-improve" or path.startswith("/api/amg/service-improve/"):
             self._amg_improve_write_refused(path)
+            return
+        if path.startswith("/api/amg/sla-incident/operator-depth"):
+            self._amg_sla_depth_method_refused(path)
             return
         if self._amg_sla_refuse_code(path):
             self._amg_sla_write_refused(path)
@@ -5238,6 +7930,146 @@ class BetaHandler(SimpleHTTPRequestHandler):
             emit_audit=emit_audit,
         )
 
+    # ----- Wolf Global Shell (Wave 1) — visibility chrome only -----
+
+    def _wolf_shell_identity_quiet(self) -> dict | None:
+        """Resolve identity for shell bake without failing the page render."""
+        try:
+            identity = self._resolve_identity(emit_audit=False)
+        except Exception:  # noqa: BLE001
+            return None
+        if identity and identity.get("ok"):
+            return identity
+        return None
+
+    def _wolf_shell_whoami(self) -> None:
+        """GET /api/wolf/shell-whoami — chrome projection. Anon → empty pages (not a grant)."""
+        identity = self._wolf_shell_identity_quiet()
+        payload = _wolf_shell.shell_whoami_payload(identity)
+        # Fail closed for anon: still 200 with empty pages so sidenav can hide.
+        # Does not authorise any API. Hidden ≠ permission.
+        self._send_json(payload)
+
+    def _send_html_shell(self, body: bytes, *, rel: str) -> None:
+        who = None
+        identity = self._wolf_shell_identity_quiet()
+        if identity is not None:
+            who = _wolf_shell.whoami_from_identity(identity)
+        raw = _wolf_shell.inject_shell(body, rel=rel, whoami=who)
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(raw)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(raw)
+
+    def _try_serve_shell_html(self) -> bool:
+        """Serve dashboard HTML through shell inject (additive Wave 1)."""
+        p = urlparse(self.path).path
+        rel = p.lstrip("/")
+        if not _wolf_shell.should_inject(rel):
+            return False
+        page = DASHBOARDS / rel
+        if not page.is_file():
+            return False
+        # Clearance (RHC): Hidden ≠ permission. SYSTEM Progress fails closed
+        # when /progress is not in the identity's authorised page set.
+        if rel == "progress.html":
+            identity = self._wolf_shell_identity_quiet()
+            who = _wolf_shell.whoami_from_identity(identity)
+            if "/progress" not in _wolf_shell.filter_hrefs(who):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "forbidden",
+                        "message": "Progress is SYSTEM — not in authorised scope.",
+                        "required_href": "/progress",
+                        "hidden_ne_permission": True,
+                        "api_auth_canonical": True,
+                        **_wolf_shell.honesty_flags(),
+                    },
+                    status=403,
+                )
+                return True
+        # Wave 3: BZG Overview fail-closed for anon / non-BZG audiences.
+        if rel == "bzg.html":
+            identity = self._wolf_shell_identity_quiet()
+            who = _wolf_shell.whoami_from_identity(identity)
+            if "/bzg" not in _wolf_shell.filter_hrefs(who):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "forbidden",
+                        "message": "BZG Overview is not in authorised scope.",
+                        "required_href": "/bzg",
+                        "hidden_ne_permission": True,
+                        "api_auth_canonical": True,
+                        **_wolf_shell.honesty_flags(),
+                    },
+                    status=403,
+                )
+                return True
+        # Wave 4: Habitat / Lead Spine fail-closed — GGV clearance proxy (not client).
+        if rel in ("habitat-operator.html", "lead-spine.html"):
+            identity = self._wolf_shell_identity_quiet()
+            who = _wolf_shell.whoami_from_identity(identity)
+            if "/ggv-ops-pack" not in _wolf_shell.filter_hrefs(who):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "forbidden",
+                        "message": "GGV Habitat/Lead surfaces are not in authorised scope.",
+                        "required_href": "/ggv-ops-pack",
+                        "hidden_ne_permission": True,
+                        "api_auth_canonical": True,
+                        **_wolf_shell.honesty_flags(),
+                    },
+                    status=403,
+                )
+                return True
+        # Wave 5: AMG Daily Ops fail-closed — AMG clearance proxy (HTML alias path).
+        if rel == "amg-daily-ops-state.html":
+            identity = self._wolf_shell_identity_quiet()
+            who = _wolf_shell.whoami_from_identity(identity)
+            if "/amg-ops-pack" not in _wolf_shell.filter_hrefs(who):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "forbidden",
+                        "message": "AMG Daily Ops is not in authorised scope.",
+                        "required_href": "/amg-ops-pack",
+                        "hidden_ne_permission": True,
+                        "api_auth_canonical": True,
+                        **_wolf_shell.honesty_flags(),
+                    },
+                    status=403,
+                )
+                return True
+        # Wave 6: Content hub fail-closed — Content clearance (not Owner Intel side door).
+        if rel == "content-2.0.html":
+            identity = self._wolf_shell_identity_quiet()
+            who = _wolf_shell.whoami_from_identity(identity)
+            if "/content-2.0" not in _wolf_shell.filter_hrefs(who):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "forbidden",
+                        "message": "Content workspace is not in authorised scope.",
+                        "required_href": "/content-2.0",
+                        "hidden_ne_permission": True,
+                        "api_auth_canonical": True,
+                        **_wolf_shell.honesty_flags(),
+                    },
+                    status=403,
+                )
+                return True
+        try:
+            body = page.read_bytes()
+        except OSError:
+            return False
+        self._send_html_shell(body, rel=rel)
+        return True
+
     def _send_identity_deny(self, identity: dict, *, required_permission: str | None = None) -> None:
         payload = {
             "ok": False,
@@ -5437,13 +8269,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 status=500,
             )
             return
-        data = page.read_bytes()
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", str(len(data)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(data)
+        # Wave 7: inject global #wolfnav — SYSTEM › Integrations soft-land.
+        self._send_html_shell(page.read_bytes(), rel="integration-health.html")
 
     def _integration_health_get(self) -> None:
         identity = self._require_integration_health_owner()
@@ -5451,6 +8278,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         try:
             report = _integration_health.build_report()
+            _intg_nye._attach_needs_you_connective(
+                report, person_id=identity.get("person_id")
+            )
         except Exception as exc:  # noqa: BLE001
             self._send_json(
                 {
@@ -6426,13 +9256,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 status=500,
             )
             return
-        data = page.read_bytes()
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", str(len(data)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(data)
+        # Wave 7: inject global #wolfnav — SYSTEM › Sale soft-land.
+        self._send_html_shell(page.read_bytes(), rel="sale-evidence-pack.html")
 
     def _sale_pack_get(self, qs: dict, control_id: str | None = None, domains_only: bool = False) -> None:
         identity = self._require_sale_pack_owner()
@@ -6462,6 +9287,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 report = _sale_pack.read_control(control_id)
             else:
                 report = _sale_pack.build_pack(entity=entity, domain=domain)
+                _sale_nye._attach_needs_you_connective(
+                    report, person_id=identity.get("person_id")
+                )
         except _sale_pack.SalePackError as exc:
             status = 404 if exc.code == "not_found" else 400
             if exc.code in {
@@ -8485,6 +11313,176 @@ class BetaHandler(SimpleHTTPRequestHandler):
             status=405,
         )
 
+    def _crm_pkg_depth_quiet(self) -> dict:
+        return {
+            "staff_ready": False,
+            "proven": False,
+            "ready": False,
+            "haikal_human": "not_started",
+            "devi_retest": "parked",
+            "price": None,
+            "margin": None,
+            "pricing_is_truth": False,
+            "price_as_market": False,
+            "market_package_count": None,
+            "live_census": False,
+            "invented_live_census": False,
+            "live_booking_write": False,
+            "booking_mutated": False,
+            "habitat_commissioned": False,
+            "habitat_cutover": False,
+            "klaviyo_write": False,
+            "guest_blast": False,
+            "public_post": False,
+            "bzg_compose": False,
+            "money": None,
+            "secret_mint": False,
+            "cf_access_include_mutated": False,
+            "register_mutated": False,
+            "duplicate_mutate_surface": False,
+            "production": False,
+            "false_resolve_cr": False,
+        }
+
+    def _require_crm_pkg_depth_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _crm_pkg_depth.require_seat(person_id)
+        except _crm_pkg_depth.PackageDepthError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._crm_pkg_depth_quiet(),
+                    **_crm_pkg_depth.honesty_flags(),
+                },
+                status=int(exc.http_status or 403),
+            )
+            return None
+        identity["package_depth_seat"] = seat
+        return identity
+
+    def _crm_pkg_depth_fail(self, exc: _crm_pkg_depth.PackageDepthError) -> None:
+        status = int(getattr(exc, "http_status", None) or 400)
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._crm_pkg_depth_quiet(),
+                **_crm_pkg_depth.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _crm_pkg_depth_refused(self, path: str) -> None:
+        identity = self._require_crm_pkg_depth_seat()
+        if identity is None:
+            return
+        body = _crm_pkg_depth.refuse(path)
+        body.update(self._crm_pkg_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _crm_pkg_depth_method_refused(self, path: str) -> None:
+        identity = self._require_crm_pkg_depth_seat()
+        if identity is None:
+            return
+        if _crm_pkg_depth.refuse_code(path):
+            body = _crm_pkg_depth.refuse(path)
+        else:
+            body = _crm_pkg_depth.refuse_write()
+        body.update(self._crm_pkg_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _crm_pkg_depth_unknown(self, path: str) -> None:
+        identity = self._require_crm_pkg_depth_seat()
+        if identity is None:
+            return
+        body = _crm_pkg_depth.not_found_read(path)
+        body.update(self._crm_pkg_depth_quiet())
+        self._send_json(body, status=404)
+
+    def _crm_pkg_operator_depth(self) -> None:
+        identity = self._require_crm_pkg_depth_seat()
+        if identity is None:
+            return
+        try:
+            desk = _crm_pkg_depth.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _crm_pkg_depth.PackageDepthError as exc:
+            self._crm_pkg_depth_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._crm_pkg_depth_quiet())
+        self._send_json(desk)
+
+    def _crm_pkg_operator_depth_rbac(self) -> None:
+        identity = self._require_crm_pkg_depth_seat()
+        if identity is None:
+            return
+        try:
+            prove = _crm_pkg_depth.prove_rbac(person_id=identity["person_id"])
+        except _crm_pkg_depth.PackageDepthError as exc:
+            self._crm_pkg_depth_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._crm_pkg_depth_quiet())
+        self._send_json(prove)
+
+    def _crm_pkg_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_crm_pkg_depth_seat()
+        if identity is None:
+            return
+        try:
+            detail = _crm_pkg_depth.object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _crm_pkg_depth.PackageDepthError as exc:
+            self._crm_pkg_depth_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._crm_pkg_depth_quiet())
+        self._send_json(detail)
+
+    def _crm_pkg_operator_action(self, object_id: str, action: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_crm_pkg_depth_seat(body)
+        if identity is None:
+            return
+        kind = str(body.get("kind") or action or "")
+        try:
+            result = _crm_pkg_depth.record_operator_action(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+                kind=kind,
+                note=str(body.get("note") or body.get("body") or ""),
+                decision=str(body.get("decision") or ""),
+                body=body,
+            )
+        except _crm_pkg_depth.PackageDepthError as exc:
+            self._crm_pkg_depth_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._crm_pkg_depth_quiet())
+        self._send_json(result)
+
     def _require_pkg_intel_owner(self) -> dict | None:
         """CF JWT → Person; only PERS-MATT. Package register is Owner read."""
         identity = self._resolve_identity(None)
@@ -8630,7 +11628,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
         )
 
     def _pkg_intel_page(self) -> None:
-        identity = self._require_pkg_intel_owner()
+        identity = self._require_crm_pkg_depth_seat()
         if identity is None:
             return
         page = DASHBOARDS / "crm-package-intel.html"
@@ -8752,6 +11750,147 @@ class BetaHandler(SimpleHTTPRequestHandler):
         out["person_id"] = identity.get("person_id")
         out["honesty"] = _pkg_intel.honesty_flags()
         self._send_json(out)
+
+    def _msc_asset_depth_quiet(self) -> dict:
+        return {
+            "staff_ready": False,
+            "proven": False,
+            "ready": False,
+            "haikal_human": "not_started",
+            "devi_retest": "parked",
+            "inventory_complete": False,
+            "inventory_count": None,
+            "compliance_done": False,
+            "mfa_live": False,
+            "legal_hold_active": False,
+            "bzg_compose": False,
+            "money": None,
+            "secret_mint": False,
+            "cf_access_include_mutated": False,
+            "register_mutated": False,
+            "duplicate_mutate_surface": False,
+            "production": False,
+        }
+
+    def _require_msc_asset_depth_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _msc_asset_depth.require_seat(person_id)
+        except _msc_asset_depth.AssetDepthError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._msc_asset_depth_quiet(),
+                    **_msc_asset_depth.honesty_flags(),
+                },
+                status=int(exc.http_status or 403),
+            )
+            return None
+        identity["asset_depth_seat"] = seat
+        return identity
+
+    def _msc_asset_depth_fail(self, exc: _msc_asset_depth.AssetDepthError) -> None:
+        status = int(getattr(exc, "http_status", None) or 400)
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._msc_asset_depth_quiet(),
+                **_msc_asset_depth.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _msc_asset_depth_refused(self, path: str) -> None:
+        identity = self._require_msc_asset_depth_seat()
+        if identity is None:
+            return
+        body = _msc_asset_depth.refuse(path)
+        body.update(self._msc_asset_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _msc_asset_operator_depth(self) -> None:
+        identity = self._require_msc_asset_depth_seat()
+        if identity is None:
+            return
+        try:
+            desk = _msc_asset_depth.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _msc_asset_depth.AssetDepthError as exc:
+            self._msc_asset_depth_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._msc_asset_depth_quiet())
+        self._send_json(desk)
+
+    def _msc_asset_operator_depth_rbac(self) -> None:
+        identity = self._require_msc_asset_depth_seat()
+        if identity is None:
+            return
+        try:
+            prove = _msc_asset_depth.prove_rbac(person_id=identity["person_id"])
+        except _msc_asset_depth.AssetDepthError as exc:
+            self._msc_asset_depth_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._msc_asset_depth_quiet())
+        self._send_json(prove)
+
+    def _msc_asset_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_msc_asset_depth_seat()
+        if identity is None:
+            return
+        try:
+            detail = _msc_asset_depth.object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _msc_asset_depth.AssetDepthError as exc:
+            self._msc_asset_depth_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._msc_asset_depth_quiet())
+        self._send_json(detail)
+
+    def _msc_asset_operator_action(self, object_id: str, action: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_msc_asset_depth_seat(body)
+        if identity is None:
+            return
+        kind = str(body.get("kind") or action or "")
+        try:
+            result = _msc_asset_depth.record_operator_action(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+                kind=kind,
+                note=str(body.get("note") or body.get("body") or ""),
+                decision=str(body.get("decision") or ""),
+                body=body,
+            )
+        except _msc_asset_depth.AssetDepthError as exc:
+            self._msc_asset_depth_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._msc_asset_depth_quiet())
+        self._send_json(result)
 
     def _require_msc_assets_owner(self) -> dict | None:
         """CF JWT → Person; only PERS-MATT. Asset register is Owner read."""
@@ -9062,6 +12201,170 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return None
         return identity
+
+    def _msc_comp_depth_quiet(self) -> dict:
+        return {
+            "staff_ready": False,
+            "proven": False,
+            "ready": False,
+            "haikal_human": "not_started",
+            "devi_retest": "parked",
+            "licence_status": None,
+            "current": False,
+            "compliance_proved": False,
+            "payment": None,
+            "money": None,
+            "empty_is_compliance": False,
+            "guest_blast": False,
+            "public_post": False,
+            "bzg_compose": False,
+            "secret_mint": False,
+            "cf_access_include_mutated": False,
+            "register_mutated": False,
+            "pack_mutated": False,
+            "duplicate_mutate_surface": False,
+            "production": False,
+            "false_resolve_cr": False,
+        }
+
+    def _require_msc_comp_depth_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _msc_comp_depth.require_seat(person_id)
+        except _msc_comp_depth.ComplianceDepthError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._msc_comp_depth_quiet(),
+                    **_msc_comp_depth.honesty_flags(),
+                },
+                status=int(exc.http_status or 403),
+            )
+            return None
+        identity["compliance_depth_seat"] = seat
+        return identity
+
+    def _msc_comp_depth_fail(self, exc: _msc_comp_depth.ComplianceDepthError) -> None:
+        status = int(getattr(exc, "http_status", None) or 400)
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._msc_comp_depth_quiet(),
+                **_msc_comp_depth.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _msc_comp_depth_refused(self, path: str) -> None:
+        identity = self._require_msc_comp_depth_seat()
+        if identity is None:
+            return
+        body = _msc_comp_depth.refuse(path)
+        body.update(self._msc_comp_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _msc_comp_depth_method_refused(self, path: str) -> None:
+        identity = self._require_msc_comp_depth_seat()
+        if identity is None:
+            return
+        if _msc_comp_depth.refuse_code(path):
+            body = _msc_comp_depth.refuse(path)
+        else:
+            body = _msc_comp_depth.refuse_write()
+        body.update(self._msc_comp_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _msc_comp_depth_unknown(self, path: str) -> None:
+        identity = self._require_msc_comp_depth_seat()
+        if identity is None:
+            return
+        body = _msc_comp_depth.not_found_read(path)
+        body.update(self._msc_comp_depth_quiet())
+        self._send_json(body, status=404)
+
+    def _msc_comp_operator_depth(self) -> None:
+        identity = self._require_msc_comp_depth_seat()
+        if identity is None:
+            return
+        try:
+            desk = _msc_comp_depth.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _msc_comp_depth.ComplianceDepthError as exc:
+            self._msc_comp_depth_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._msc_comp_depth_quiet())
+        self._send_json(desk)
+
+    def _msc_comp_operator_depth_rbac(self) -> None:
+        identity = self._require_msc_comp_depth_seat()
+        if identity is None:
+            return
+        try:
+            prove = _msc_comp_depth.prove_rbac(person_id=identity["person_id"])
+        except _msc_comp_depth.ComplianceDepthError as exc:
+            self._msc_comp_depth_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._msc_comp_depth_quiet())
+        self._send_json(prove)
+
+    def _msc_comp_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_msc_comp_depth_seat()
+        if identity is None:
+            return
+        try:
+            detail = _msc_comp_depth.object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _msc_comp_depth.ComplianceDepthError as exc:
+            self._msc_comp_depth_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._msc_comp_depth_quiet())
+        self._send_json(detail)
+
+    def _msc_comp_operator_action(self, object_id: str, action: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_msc_comp_depth_seat(body)
+        if identity is None:
+            return
+        kind = str(body.get("kind") or action or "")
+        try:
+            result = _msc_comp_depth.record_operator_action(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+                kind=kind,
+                note=str(body.get("note") or body.get("body") or ""),
+                decision=str(body.get("decision") or ""),
+                body=body,
+            )
+        except _msc_comp_depth.ComplianceDepthError as exc:
+            self._msc_comp_depth_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._msc_comp_depth_quiet())
+        self._send_json(result)
 
     def _msc_compliance_refuse_code(self, path: str) -> str | None:
         if path in {"/api/msc/compliance/payment", "/api/msc/compliance/money"}:
@@ -10424,6 +13727,111 @@ class BetaHandler(SimpleHTTPRequestHandler):
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
 
+    def _accountant_scope_wall(self) -> bool:
+        """GGV external accountant, and only that role, cannot leave GGV Finance."""
+        parsed = urlparse(self.path)
+        if _ggv_fin.matches(parsed.path):
+            return False
+        base = (parsed.path or "").split("?")[0].rstrip("/") or "/"
+        if base in _ggv_fin.SHELL_CHROME_PATHS:
+            return False
+        try:
+            identity = self._resolve_identity(None, emit_audit=False)
+        except Exception:  # noqa: BLE001
+            return False
+        if not identity.get("ok") or not identity.get("person_id"):
+            return False
+        try:
+            conn = _ggv_fin.db_connect()
+            try:
+                deny = _ggv_fin.accountant_must_deny(str(identity.get("person_id")), parsed.path, conn)
+            finally:
+                conn.close()
+        except Exception:  # noqa: BLE001
+            return False
+        if not deny:
+            return False
+        self._send_json(
+            {
+                "ok": False,
+                "error": "forbidden",
+                "message": "This account is limited to GGV Finance.",
+                **_ggv_fin.HONESTY,
+            },
+            status=403,
+        )
+        return True
+
+    def _ggv_finance_dispatch(self) -> bool:
+        parsed = urlparse(self.path)
+        if not _ggv_fin.matches(parsed.path):
+            return False
+        qs = parse_qs(parsed.query)
+        body = None
+        if self.command == "POST":
+            try:
+                body = self._read_json()
+            except Exception:  # noqa: BLE001
+                body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok") or not identity.get("person_id"):
+            self._send_identity_deny(identity)
+            return True
+        person_id = str(identity.get("person_id"))
+        for key in ("person_id", "verified_person_id", "actor_person_id"):
+            spoof = body.get(key)
+            if spoof and str(spoof).strip() != person_id:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "person_id_spoof",
+                        "message": "Person id from the browser body is refused.",
+                        **_ggv_fin.HONESTY,
+                    },
+                    status=400,
+                )
+                return True
+        try:
+            result = _ggv_fin.dispatch(self.command, parsed.path, qs, body, person_id)
+        except _ggv_fin.FinanceNotaError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "preserved": bool((exc.extra or {}).get("preserved")),
+                    "upload_id": (exc.extra or {}).get("upload_id"),
+                    "retry": (exc.extra or {}).get("retry"),
+                    **_ggv_fin.HONESTY,
+                },
+                status=exc.http_status,
+            )
+            return True
+        if result.get("_html"):
+            page = DASHBOARDS / "ggv-finance.html"
+            if not page.is_file():
+                self._send_json({"ok": False, "error": "not_found", "message": "GGV Finance page is missing.", **_ggv_fin.HONESTY}, status=404)
+                return True
+            self._send_html_shell(page.read_bytes(), rel="ggv-finance.html")
+            return True
+        blob = result.get("_file")
+        if blob:
+            data = blob["data"]
+            self.send_response(200)
+            self.send_header("Content-Type", blob.get("content_type") or "application/octet-stream")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store")
+            disposition = blob.get("disposition") or "inline"
+            self.send_header("Content-Disposition", f"{disposition}; filename=\"{blob.get('filename') or 'nota'}\"")
+            self.end_headers()
+            self.wfile.write(data)
+            return True
+        status = int(result.pop("_status", 200) or 200)
+        self._send_json(result, status=status)
+        return True
+
     def _ggv_ops_quiet(self) -> dict:
         return {
             "invented_leads": False,
@@ -10444,6 +13852,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "ready": False,
             "closed_is_not_a_sale": True,
             "bound": "beta-ggv-ops-safe",
+            "loop_bound": "beta-ggv-loop-safe",
         }
 
     def _require_ggv_ops_seat(self, body: dict | None = None) -> dict | None:
@@ -10491,8 +13900,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/api/ggv/ops-pack/ready": "ready",
             "/api/ggv/ops-pack/resolve": "resolve",
             "/api/ggv/ops-pack/production": "production",
+            "/api/ggv/ops-pack/auto-promote": "promote",
+            "/api/ggv/ops-pack/auto-execute": "execute",
+            "/api/ggv/ops-pack/intel-promote": "promote",
+            "/api/ggv/ops-pack/intel-execute": "execute",
         }
-        return refused.get(path)
+        return refused.get(path) or _ggv_ops.connective_refuse_code(path)
 
     def _ggv_ops_fail(self, exc: _ggv_ops.OpsPackError) -> None:
         status = 400
@@ -10507,6 +13920,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "production_refused",
             "writes_refused",
             "not_beta",
+            "staff_ready_refused",
+            "haikal_done_refused",
+            "devi_done_refused",
+            "handoff_only",
         }:
             status = 405
         elif exc.code in {"forbidden", "brand_isolated", "denied"}:
@@ -10545,10 +13962,744 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 _ggv_ops.refuse_resolve({})
             elif code == "production":
                 _ggv_ops.refuse_production({})
+            elif code == "staff_ready":
+                _ggv_ops.refuse_staff_ready({})
+            elif code == "haikal_done":
+                _ggv_ops.refuse_haikal_done({})
+            elif code == "devi_done":
+                _ggv_ops.refuse_devi_done({})
+            elif code == "promote":
+                _intel_connect.refuse_auto_promote({})
+            elif code == "execute":
+                _intel_connect.refuse_auto_execute({})
             else:
                 _ggv_ops.refuse_external_write({})
         except _ggv_ops.OpsPackError as exc:
             self._ggv_ops_fail(exc)
+        except _intel_connect.IntelConnectiveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "bound": _intel_connect.BOUND,
+                    "auto_promote": False,
+                    "auto_execute": False,
+                    **self._ggv_ops_quiet(),
+                },
+                status=405,
+            )
+
+    def _staff_ready_quiet(self) -> dict:
+        return {
+            "bound": _staff_ready.BOUND,
+            "proven": False,
+            "ready": False,
+            "money_actions": False,
+            "production_mutate": False,
+            "additive_only": True,
+        }
+
+    def _require_staff_ready_seat(self) -> dict | None:
+        """Any BZG Uma / GGV / AMG pack seat may read staff-ready UX."""
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Staff-ready UX requires a signed-in pack seat.",
+                    **self._staff_ready_quiet(),
+                },
+                status=403,
+            )
+            return None
+        person_id = identity.get("person_id")
+        if (
+            _ggv_ops.seat_for(person_id) is not None
+            or _amg_pack.seat_for(person_id) is not None
+            or person_id in {"PERS-MATT", "PERS-DEVI"}
+        ):
+            return identity
+        self._send_json(
+            {
+                "ok": False,
+                "error": "forbidden",
+                "message": "Staff-ready UX is for BZG, GGV, or AMG pack seats.",
+                "person_id": person_id,
+                **self._staff_ready_quiet(),
+            },
+            status=403,
+        )
+        return None
+
+    def _staff_ready_write_refused(self, path: str) -> None:
+        identity = self._require_staff_ready_seat()
+        if identity is None:
+            return
+        tail = path.rstrip("/").rsplit("/", 1)[-1].lower()
+        try:
+            if tail == "proven":
+                _staff_ready.refuse_proven({})
+            elif tail == "ready":
+                _staff_ready.refuse_ready({})
+            elif tail in {"payment", "money"}:
+                _staff_ready.refuse_money({})
+            else:
+                _staff_ready.refuse_production({})
+        except _staff_ready.StaffReadyError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    **self._staff_ready_quiet(),
+                },
+                status=405,
+            )
+
+    def _staff_ready_pack(self, pack: str) -> None:
+        """Staff-ready strip for one pack (BZG path already auth'd)."""
+        p = (pack or "").strip().lower()
+        if p == "bzg":
+            # Caller already passed _require_uma_ops() before routing here.
+            try:
+                identity = self._resolve_identity(emit_audit=False)
+                person_id = identity.get("person_id") if identity.get("ok") else None
+                today = _uma_ops.today_cards(person_id=person_id)
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "uma_today_failed",
+                        "message": str(exc),
+                        **self._staff_ready_quiet(),
+                    },
+                    status=500,
+                )
+                return
+            surface = today.get("staff_ready") or _staff_ready.staff_surface_bzg(today)
+            self._send_json(
+                {
+                    "ok": True,
+                    "pack": "bzg",
+                    "bound": _staff_ready.BOUND,
+                    "staff_ready": surface,
+                    "honesty": _staff_ready.honesty_flags(),
+                    "person_id": person_id,
+                }
+            )
+            return
+        self._send_json(
+            {"ok": False, "error": "unknown_pack", "message": f"Unknown pack {pack}", **self._staff_ready_quiet()},
+            status=404,
+        )
+
+    def _staff_ready_board(self, qs: dict, path: str) -> None:
+        identity = self._require_staff_ready_seat()
+        if identity is None:
+            return
+        pack = ((qs.get("pack") or [None])[0] or "").strip().lower()
+        if path.rstrip("/").endswith("/ggv"):
+            pack = "ggv"
+        elif path.rstrip("/").endswith("/amg"):
+            pack = "amg"
+        elif path.rstrip("/").endswith("/bzg"):
+            pack = "bzg"
+        person_id = identity.get("person_id")
+        try:
+            if pack == "ggv":
+                if _ggv_ops.seat_for(person_id) is None:
+                    raise _staff_ready.StaffReadyError("GGV seat required.", code="forbidden")
+                board = _ggv_ops.build_board(verified_person_id=person_id)
+                surface = board.get("staff_ready") or _staff_ready.staff_surface_ggv(board)
+            elif pack == "amg":
+                if _amg_pack.seat_for(person_id) is None:
+                    raise _staff_ready.StaffReadyError("AMG seat required.", code="forbidden")
+                board = _amg_pack.build_board(verified_person_id=person_id)
+                surface = board.get("staff_ready") or _staff_ready.staff_surface_amg(board)
+            elif pack == "bzg":
+                board = _uma_ops.today_cards(person_id=person_id)
+                surface = board.get("staff_ready") or _staff_ready.staff_surface_bzg(board)
+            else:
+                # Cross-pack summary for Owner — honesty + nav only, no invent.
+                surface = {
+                    "ok": True,
+                    "bound": _staff_ready.BOUND,
+                    "packs": {
+                        "bzg": {"nav": _staff_ready.phone_nav("bzg"), "href": "/bzg/uma-blu"},
+                        "ggv": {"nav": _staff_ready.phone_nav("ggv"), "href": "/ggv-ops-pack"},
+                        "amg": {"nav": _staff_ready.phone_nav("amg"), "href": "/amg-ops-pack"},
+                    },
+                    "lede": "Staff-ready UX overlays for BZG, GGV, and AMG desks.",
+                    "honesty": _staff_ready.honesty_flags(),
+                }
+            self._send_json(
+                {
+                    "ok": True,
+                    "bound": _staff_ready.BOUND,
+                    "pack": pack or "all",
+                    "staff_ready": surface,
+                    "schema": _staff_ready.schema_document(),
+                    "honesty": _staff_ready.honesty_flags(),
+                    "person_id": person_id,
+                }
+            )
+        except _staff_ready.StaffReadyError as exc:
+            status = 403 if exc.code == "forbidden" else 400
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    **self._staff_ready_quiet(),
+                },
+                status=status,
+            )
+        except (_ggv_ops.OpsPackError, _amg_pack.OpsPackError) as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": getattr(exc, "code", "pack_error"),
+                    "message": str(exc),
+                    **self._staff_ready_quiet(),
+                },
+                status=403 if getattr(exc, "code", "") == "forbidden" else 400,
+            )
+
+    def _staff_ops_quiet(self) -> dict:
+        return {
+            "bound": _staff_ops.BOUND,
+            "proven": False,
+            "ready": False,
+            "money": None,
+            "payment_executed": False,
+            "bank_write": False,
+            "folio_write": False,
+            "production_mutate": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_hotel_ops_person": False,
+            "second_scoring_table": False,
+            "additive_only": True,
+            "staff_ready": False,
+            "haikal_human": "not_started",
+            "devi_retest": "parked",
+            "duplicate_mutate_surface": False,
+            "staff_ops_needs_you_connective": True,
+        }
+
+    def _staff_ops_refuse_code(self, path: str) -> str | None:
+        return _staff_ops.refuse_code(path)
+
+    def _require_staff_ops_seat(self) -> dict | None:
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Staff Ops Routing requires a signed-in pack seat.",
+                    **self._staff_ops_quiet(),
+                },
+                status=403,
+            )
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _staff_ops.require_seat(person_id)
+        except _staff_ops.StaffOpsRoutingError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._staff_ops_quiet(),
+                },
+                status=403,
+            )
+            return None
+        identity = dict(identity)
+        identity["routing_seat"] = seat
+        return identity
+
+    def _staff_ops_fail(self, exc: _staff_ops.StaffOpsRoutingError) -> None:
+        status = 405 if exc.code.endswith("_refused") else 400
+        if exc.code == "forbidden":
+            status = 403
+        elif exc.code == "not_found":
+            status = 404
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._staff_ops_quiet(),
+            },
+            status=status,
+        )
+
+    def _staff_ops_write_refused(self, path: str) -> None:
+        identity = self._require_staff_ops_seat()
+        if identity is None:
+            return
+        code = self._staff_ops_refuse_code(path) or "writes"
+        try:
+            if code == "proven":
+                _staff_ops.refuse_proven({})
+            elif code == "ready":
+                _staff_ops.refuse_ready({})
+            elif code == "staff_ready":
+                _staff_ops.refuse_staff_ready({})
+            elif code == "haikal_done":
+                _staff_ops.refuse_haikal_done({})
+            elif code == "devi_done":
+                _staff_ops.refuse_devi_done({})
+            elif code == "money":
+                _staff_ops.refuse_money({})
+            elif code == "resolve":
+                _staff_ops.refuse_resolve({})
+            elif code == "production":
+                _staff_ops.refuse_production({})
+            else:
+                _staff_ops.refuse_external_write({})
+        except _staff_ops.StaffOpsRoutingError as exc:
+            self._staff_ops_fail(exc)
+
+    def _loop_identity(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body if isinstance(body, dict) else None, emit_audit=False)
+        if not identity.get("ok") or not identity.get("person_id"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Sign in required.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=403,
+            )
+            return None
+        identity = dict(identity)
+        identity["correlation_id"] = getattr(self, "_wolf_correlation_id", None) or _audit.mint_correlation_id()
+        return identity
+
+    def _work_loop_fail(self, exc: Exception) -> None:
+        if isinstance(exc, _work_loop.WorkLoopError):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "exception": exc.exception,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=int(exc.http_status),
+            )
+            return
+        code = getattr(exc, "code", None)
+        status = getattr(exc, "http_status", None)
+        if code and status:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": code,
+                    "message": str(exc),
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=int(status),
+            )
+            return
+        self._send_json(
+            {"ok": False, "error": "server_error", "message": str(exc), "staff_ready": False, "human_commissioned": False},
+            status=500,
+        )
+
+    def _work_loop_refused(self, path: str) -> None:
+        code = _work_loop.refuse_code(path)
+        self._send_json(
+            {
+                "ok": False,
+                "error": f"{code or 'refused'}_refused",
+                "message": "This loop does not move money, change a bank, or mark work proven.",
+                "staff_ready": False,
+                "human_commissioned": False,
+            },
+            status=405,
+        )
+
+    def _work_loop_page(self) -> None:
+        if self._loop_identity() is None:
+            return
+        page = DASHBOARDS / "my-work-item.html"
+        if not page.is_file():
+            self._send_json({"ok": False, "error": "not_found", "message": "Work page is missing."}, status=404)
+            return
+        self._send_html_shell(page.read_bytes(), rel="my-work-item.html")
+
+    def _work_loop_open(self, work_item_id: str) -> None:
+        identity = self._loop_identity()
+        if identity is None:
+            return
+        try:
+            self._send_json(_work_loop.open_item(work_item_id, verified_person_id=identity["person_id"]))
+        except Exception as exc:  # noqa: BLE001
+            self._work_loop_fail(exc)
+
+    def _work_loop_post(self, path: str) -> None:
+        if _work_loop.refuse_code(path):
+            self._work_loop_refused(path)
+            return
+        try:
+            body = self._read_json() if int(self.headers.get("Content-Length") or 0) > 0 else {}
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": "invalid_json", "message": str(exc)}, status=400)
+            return
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._loop_identity(body)
+        if identity is None:
+            return
+        person_id = identity["person_id"]
+        try:
+            if path == "/api/work-loop/items":
+                out = _work_loop.create_assigned(
+                    title=body.get("title") or "",
+                    owning_entity_id=body.get("owning_entity_id") or "",
+                    role_id=body.get("role_id") or "",
+                    scope_id=body.get("scope_id") or "",
+                    description=body.get("description"),
+                    work_type=body.get("work_type") or "GENERAL",
+                    verified_person_id=person_id,
+                    identity=identity,
+                )
+                self._send_json(out, status=201)
+                return
+            m_ev = re.match(r"^/api/work-loop/items/([^/]+)/evidence$", path)
+            if m_ev:
+                self._send_json(
+                    _work_loop.attach_evidence(
+                        m_ev.group(1),
+                        note=body.get("note") or "",
+                        verified_person_id=person_id,
+                        identity=identity,
+                    )
+                )
+                return
+            m_sub = re.match(r"^/api/work-loop/items/([^/]+)/submit$", path)
+            if m_sub:
+                self._send_json(
+                    _work_loop.submit_item(
+                        m_sub.group(1),
+                        verified_person_id=person_id,
+                        required_permission_code=body.get("required_permission_code") or "approval.decide",
+                        request_type=body.get("request_type") or "GENERAL",
+                        material_amount=body.get("material_amount"),
+                        currency=body.get("currency"),
+                        identity=identity,
+                    )
+                )
+                return
+            m_dec = re.match(r"^/api/work-loop/items/([^/]+)/decide$", path)
+            if m_dec:
+                self._send_json(
+                    _work_loop.decide_item(
+                        m_dec.group(1),
+                        decision=body.get("decision") or "",
+                        reason=body.get("reason"),
+                        verified_person_id=person_id,
+                        identity=identity,
+                    )
+                )
+                return
+        except Exception as exc:  # noqa: BLE001
+            self._work_loop_fail(exc)
+            return
+        self._send_json({"ok": False, "error": "not_found", "message": "Unknown work loop route."}, status=404)
+
+    def _progress_governance_loop(self) -> None:
+        identity = self._require_progress_owner()
+        if identity is None:
+            return
+        self._send_json(_work_loop.live_outcomes())
+
+    def _staff_home_fail(self, exc: _staff_home.StaffHomeError) -> None:
+        status = 405 if exc.code.endswith("_refused") else 400
+        if exc.code == "forbidden":
+            status = 403
+        body = {
+            "ok": False,
+            "error": exc.code,
+            "message": str(exc),
+            "staff_ready": False,
+            "human_commissioned": False,
+            "money_movement": False,
+        }
+        if status == 403:
+            body["ui"] = {
+                "component": "permission-denied",
+                "message": "You do not have access to this.",
+            }
+        self._send_json(body, status=status)
+
+    def _staff_home_identity(self) -> dict | None:
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok") or not identity.get("person_id"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Sign in required.",
+                    "ui": {
+                        "component": "permission-denied",
+                        "message": "You do not have access to this.",
+                    },
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _staff_home_write_refused(self, path: str) -> None:
+        try:
+            _staff_home.refuse_path(path)
+        except _staff_home.StaffHomeError as exc:
+            self._staff_home_fail(exc)
+
+    def _staff_home_page(self) -> None:
+        if self._staff_home_identity() is None:
+            return
+        page = DASHBOARDS / "my-work.html"
+        if not page.is_file():
+            self._send_json(
+                {"ok": False, "error": "not_found", "message": "My Work is missing."},
+                status=404,
+            )
+            return
+        self._send_html_shell(page.read_bytes(), rel="my-work.html")
+
+    def _staff_home_get(self, path: str) -> None:
+        if path != "/api/staff/home":
+            self._send_json(
+                {"ok": False, "error": "not_found", "message": "Unknown My Work view."},
+                status=404,
+            )
+            return
+        identity = self._staff_home_identity()
+        if identity is None:
+            return
+        try:
+            report = _staff_home.build_home(identity.get("person_id"))
+        except _staff_home.StaffHomeError as exc:
+            self._staff_home_fail(exc)
+            return
+        self._send_json(report)
+
+    def _staff_ops_page(self) -> None:
+        identity = self._require_staff_ops_seat()
+        if identity is None:
+            return
+        page = DASHBOARDS / "staff-ops-routing.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Staff Ops Routing page is missing.",
+                    **self._staff_ops_quiet(),
+                },
+                status=404,
+            )
+            return
+        body = page.read_bytes()
+        self._send_html_shell(body, rel="staff-ops-routing.html")
+
+    def _staff_ops_get(self, path: str) -> None:
+        identity = self._require_staff_ops_seat()
+        if identity is None:
+            return
+        person_id = identity.get("person_id")
+        view = path[len("/api/staff/ops-routing") :].strip("/") or None
+        try:
+            if view in {None, "desk"}:
+                report = _staff_ops.build_desk(verified_person_id=person_id)
+            elif view == "home":
+                desk = _staff_ops.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _staff_ops.BOUND,
+                    "home": desk.get("home"),
+                    "next_action": desk.get("next_action"),
+                    "seat": desk.get("seat"),
+                }
+            elif view in {"disappearance", "owner-disappearance"}:
+                seat = identity.get("routing_seat") or {}
+                if seat.get("seat") != "owner":
+                    raise _staff_ops.StaffOpsRoutingError(
+                        "Owner disappearance strip is Owner only.",
+                        code="forbidden",
+                    )
+                report = _staff_ops.disappearance_strip()
+            elif view in {"needs-you", "needs-you-connective"}:
+                report = _staff_ops.needs_you_connective_strip(
+                    verified_person_id=person_id
+                )
+            elif view.startswith("needs-you/items/"):
+                object_id = view[len("needs-you/items/") :]
+                if not object_id or "/" in object_id:
+                    raise _staff_ops.StaffOpsRoutingError(
+                        "Unknown Staff Ops Routing view.",
+                        code="not_found",
+                    )
+                from urllib.parse import unquote
+
+                report = _staff_ops.connective_item_detail(
+                    unquote(object_id),
+                    verified_person_id=person_id,
+                )
+            elif view == "attention":
+                report = _staff_ops.attention_projection(verified_person_id=person_id)
+            elif view == "honesty":
+                report = {"ok": True, "honesty": _staff_ops.honesty_flags()}
+            elif view == "schema":
+                report = {"ok": True, "schema": _staff_ops.schema_document()}
+            elif view == "seats":
+                # Read-only honesty matrix — no invent hotel-ops person.
+                hotel = _amg_pack.hotel_ops_ids()
+                report = {
+                    "ok": True,
+                    "bound": _staff_ops.BOUND,
+                    "named": {
+                        "owner": _staff_ops.OWNER,
+                        "amanda": _staff_ops.AMANDA,
+                        "haikal": _staff_ops.HAIKAL,
+                        "misa": _staff_ops.MISA,
+                        "devi": _staff_ops.DEVI,
+                    },
+                    "hotel_ops_ids": hotel,
+                    "hotel_ops_state": "ASSIGNED" if hotel else "WAITING_ASSIGNMENT",
+                    "invented_hotel_ops_person": False,
+                    "why": (
+                        "Named seats only. Hotel-ops ids come from catalog assignment. "
+                        "Empty assignment is WAITING_ASSIGNMENT — person not invented."
+                    ),
+                }
+            else:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "not_found",
+                        "message": "Unknown Staff Ops Routing view.",
+                        **self._staff_ops_quiet(),
+                    },
+                    status=404,
+                )
+                return
+        except _staff_ops.StaffOpsRoutingError as exc:
+            self._staff_ops_fail(exc)
+            return
+        report = dict(report)
+        report["person_id"] = person_id
+        kept_bound = report.get("bound")
+        report.update(self._staff_ops_quiet())
+        if kept_bound == _staff_ops.CONNECTIVE_BOUND:
+            report["bound"] = kept_bound
+        self._send_json(report)
+
+    def _staff_ops_acknowledge(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_staff_ops_seat()
+        if identity is None:
+            return
+        note = str(body.get("note") or body.get("body") or "")
+        try:
+            result = _staff_ops.acknowledge_handoff(
+                unquote(object_id),
+                verified_person_id=identity.get("person_id"),
+                note=note,
+            )
+        except _staff_ops.StaffOpsRoutingError as exc:
+            self._staff_ops_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._staff_ops_quiet())
+        result["bound"] = _staff_ops.CONNECTIVE_BOUND
+        self._send_json(result)
+
+    def _ggv_ops_needs_you_payload(self, report: dict, identity: dict) -> None:
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report.update(self._ggv_ops_quiet())
+        report["bound"] = _ggv_ops.LOOP_BOUND
+        report["staff_ready"] = False
+        report["proven"] = False
+        report["ready"] = False
+        report["haikal_human"] = "not_started"
+        report["devi_retest"] = "parked"
+        report["metricool_publish"] = False
+        report["duplicate_mutate_surface"] = False
+        self._send_json(report)
+
+    def _ggv_ops_needs_you(self) -> None:
+        identity = self._require_ggv_ops_seat()
+        if identity is None:
+            return
+        try:
+            report = _ggv_ops.needs_you_connective_strip(
+                verified_person_id=identity["person_id"]
+            )
+        except _ggv_ops.OpsPackError as exc:
+            self._ggv_ops_fail(exc)
+            return
+        self._ggv_ops_needs_you_payload(report, identity)
+
+    def _ggv_ops_needs_you_detail(self, object_id: str) -> None:
+        identity = self._require_ggv_ops_seat()
+        if identity is None:
+            return
+        try:
+            report = _ggv_ops.connective_item_detail(
+                object_id,
+                verified_person_id=identity["person_id"],
+            )
+        except _ggv_ops.OpsPackError as exc:
+            self._ggv_ops_fail(exc)
+            return
+        self._ggv_ops_needs_you_payload(report, identity)
+
+    def _ggv_ops_needs_you_acknowledge(self, object_id: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_ggv_ops_seat(body)
+        if identity is None:
+            return
+        note = str(body.get("note") or body.get("body") or "")
+        try:
+            report = _ggv_ops.acknowledge_handoff(
+                object_id,
+                verified_person_id=identity["person_id"],
+                note=note,
+            )
+        except _ggv_ops.OpsPackError as exc:
+            self._ggv_ops_fail(exc)
+            return
+        self._ggv_ops_needs_you_payload(report, identity)
 
     def _ggv_ops_page(self) -> None:
         identity = self._require_ggv_ops_seat()
@@ -10561,13 +14712,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 status=404,
             )
             return
-        body = page.read_bytes()
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(body)
+        # Wave 4: inject global #wolfnav shell (additive) — same chrome as other surfaces.
+        self._send_html_shell(page.read_bytes(), rel="ggv-ops-pack.html")
 
     def _ggv_ops_get(self, qs: dict, view: str | None = None) -> None:
         identity = self._require_ggv_ops_seat()
@@ -10582,23 +14728,57 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if view == "exceptions":
             report = full["exceptions"]
+        elif view == "management-exceptions":
+            report = full["management_exceptions"]
+        elif view == "loop":
+            report = full["loop"]
         elif view == "isolation":
             report = full["isolation"]
         elif view == "framework":
             report = full["framework"]
+        elif view == "client-visibility":
+            report = full["client_visibility"]
         elif view == "publish-gate":
             report = full["publish_gate"]
+        elif view == "content-work":
+            report = full["content_work"]
+        elif view == "performance":
+            report = full["performance"]
+        elif view == "engagement":
+            report = full["engagement_scaffold"]
         elif view == "permissions":
             report = {"ok": True, "permissions": full["permissions"], "seat": full["seat"]}
         elif view == "schema":
             report = {"ok": True, "schema": full["schema"]}
+        elif view == "staff-ready":
+            report = {
+                "ok": True,
+                "bound": _staff_ready.BOUND,
+                "staff_ready": full.get("staff_ready") or _staff_ready.staff_surface_ggv(full),
+                "honesty": _staff_ready.honesty_flags(),
+            }
         else:
             report = full
         report = dict(report)
         report["person_id"] = identity.get("person_id")
         report.update(self._ggv_ops_quiet())
+        if view in {
+            "loop",
+            "management-exceptions",
+            "performance",
+            "client-visibility",
+            "content-work",
+            "engagement",
+            "staff-ready",
+        }:
+            report["loop_bound"] = "beta-ggv-loop-safe"
+        if view == "loop":
+            report["bound"] = "beta-ggv-loop-safe"
+        if view == "staff-ready":
+            report["bound"] = _staff_ready.BOUND
         if view is None:
             report["honesty"] = full["honesty"]
+            report["loop_bound"] = "beta-ggv-loop-safe"
         self._send_json(report)
 
     def _ggv_ops_lifecycle(self, lead_id: str) -> None:
@@ -10626,6 +14806,196 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 str(body.get("wolf_stage") or ""),
                 str(body.get("next_action") or ""),
                 verified_person_id=identity["person_id"],
+            )
+        except _ggv_ops.OpsPackError as exc:
+            self._ggv_ops_fail(exc)
+            return
+        except _lead_spine.LeadSpineError as exc:
+            self._ggv_ops_fail(_ggv_ops.OpsPackError(str(exc), code=exc.code))
+            return
+        result["person_id"] = identity.get("person_id")
+        self._send_json(result)
+
+    def _ggv_ops_loop_action(self, lead_id: str, action: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        if any(
+            body.get(k)
+            for k in (
+                "metricool",
+                "klaviyo",
+                "crm_write",
+                "external_crm",
+                "proven",
+                "ready",
+                "resolve",
+                "production",
+                "invent_lead",
+            )
+        ):
+            identity = self._require_ggv_ops_seat(body)
+            if identity is None:
+                return
+            try:
+                _ggv_ops.refuse_external_write(body)
+            except _ggv_ops.OpsPackError as exc:
+                self._ggv_ops_fail(exc)
+            return
+        identity = self._require_ggv_ops_seat(body)
+        if identity is None:
+            return
+        pid = identity["person_id"]
+        try:
+            if action == "identity-contact":
+                result = _ggv_ops.note_identity_contact(
+                    lead_id,
+                    str(body.get("note") or ""),
+                    contact_kind=str(body.get("contact_kind") or "contact"),
+                    verified_person_id=pid,
+                )
+            elif action == "qualify":
+                result = _ggv_ops.qualify_lead(
+                    lead_id,
+                    str(body.get("decision") or ""),
+                    str(body.get("note") or ""),
+                    verified_person_id=pid,
+                )
+            elif action == "engagement":
+                result = _ggv_ops.record_proposal_engagement(
+                    lead_id,
+                    str(body.get("kind") or ""),
+                    str(body.get("note") or ""),
+                    verified_person_id=pid,
+                )
+            elif action == "due":
+                result = _ggv_ops.set_due(
+                    lead_id,
+                    str(body.get("due_at") or ""),
+                    str(body.get("note") or ""),
+                    verified_person_id=pid,
+                )
+            elif action == "assign":
+                result = _ggv_ops.assign_loop_owner(
+                    lead_id,
+                    str(body.get("owner_person_id") or ""),
+                    verified_person_id=pid,
+                )
+            elif action == "mgmt-exception":
+                result = _ggv_ops.raise_management_exception(
+                    lead_id,
+                    str(body.get("reason") or ""),
+                    verified_person_id=pid,
+                )
+            else:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "invalid",
+                        "message": f"Unknown loop action {action}.",
+                        **self._ggv_ops_quiet(),
+                    },
+                    status=400,
+                )
+                return
+        except _ggv_ops.OpsPackError as exc:
+            self._ggv_ops_fail(exc)
+            return
+        except _lead_spine.LeadSpineError as exc:
+            self._ggv_ops_fail(_ggv_ops.OpsPackError(str(exc), code=exc.code))
+            return
+        result["person_id"] = pid
+        self._send_json(result)
+
+    def _ggv_ops_operator_depth(self) -> None:
+        identity = self._require_ggv_ops_seat()
+        if identity is None:
+            return
+        try:
+            desk = _ggv_ops.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _ggv_ops.OpsPackError as exc:
+            self._ggv_ops_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        self._send_json(desk)
+
+    def _ggv_ops_operator_depth_rbac(self) -> None:
+        identity = self._require_ggv_ops_seat()
+        if identity is None:
+            return
+        try:
+            prove = _ggv_ops.prove_lead_operator(
+                person_id=identity["person_id"] or _ggv_ops.AMANDA,
+            )
+        except _ggv_ops.OpsPackError as exc:
+            self._ggv_ops_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        self._send_json(prove)
+
+    def _ggv_ops_lead_operator_detail(self, lead_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_ggv_ops_seat()
+        if identity is None:
+            return
+        try:
+            detail = _ggv_ops.operator_lead_detail(
+                unquote(lead_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _ggv_ops.OpsPackError as exc:
+            self._ggv_ops_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        self._send_json(detail)
+
+    def _ggv_ops_lead_operator_action(self, lead_id: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        if any(
+            body.get(k)
+            for k in (
+                "metricool",
+                "klaviyo",
+                "crm_write",
+                "external_crm",
+                "proven",
+                "ready",
+                "resolve",
+                "production",
+                "invent_lead",
+            )
+        ):
+            identity = self._require_ggv_ops_seat(body)
+            if identity is None:
+                return
+            try:
+                _ggv_ops.refuse_external_write(body)
+            except _ggv_ops.OpsPackError as exc:
+                self._ggv_ops_fail(exc)
+            return
+        identity = self._require_ggv_ops_seat(body)
+        if identity is None:
+            return
+        try:
+            result = _ggv_ops.record_lead_operator_action(
+                verified_person_id=identity["person_id"],
+                lead_id=unquote(lead_id),
+                kind=str(body.get("kind") or "note"),
+                note=str(body.get("note") or body.get("next_action") or ""),
+                touched_at=body.get("touched_at"),
             )
         except _ggv_ops.OpsPackError as exc:
             self._ggv_ops_fail(exc)
@@ -11236,6 +15606,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "cr_resolved": False,
             "ledger_write": False,
             "bound": "beta-amg-ops-safe",
+            "day_bound": "beta-amg-day-safe",
         }
 
     def _amg_pack_refuse_code(self, path: str) -> str | None:
@@ -11261,8 +15632,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/api/amg/ops-pack/cf": "cloudflare",
             "/api/amg/ops-pack/guest-blast": "guest_blast",
             "/api/amg/ops-pack/fill": "fill",
+            "/api/amg/ops-pack/auto-promote": "promote",
+            "/api/amg/ops-pack/auto-execute": "execute",
+            "/api/amg/ops-pack/intel-promote": "promote",
+            "/api/amg/ops-pack/intel-execute": "execute",
         }
-        return refused.get(path)
+        return refused.get(path) or _amg_pack.connective_refuse_code(path)
 
     def _require_amg_pack_seat(self, body: dict | None = None) -> dict | None:
         identity = self._resolve_identity(body, emit_audit=False)
@@ -11299,7 +15674,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
         return identity
 
     def _amg_pack_fail(self, exc: _amg_pack.OpsPackError) -> None:
-        status = 400
+        status = int(getattr(exc, "http_status", None) or 400)
         if exc.code in {
             "payment_refused",
             "bank_refused",
@@ -11317,6 +15692,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "slots_refused",
             "writes_refused",
             "not_beta",
+            "staff_ready_refused",
+            "haikal_done_refused",
+            "devi_done_refused",
+            "handoff_only",
         }:
             status = 405
         elif exc.code in {"forbidden", "denied"}:
@@ -11332,6 +15711,239 @@ class BetaHandler(SimpleHTTPRequestHandler):
             },
             status=status,
         )
+
+    def _amg_pack_operator_depth(self) -> None:
+        identity = self._require_amg_pack_seat()
+        if identity is None:
+            return
+        try:
+            desk = _amg_pack.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _amg_pack.OpsPackError as exc:
+            self._amg_pack_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._amg_pack_quiet())
+        desk["bound"] = "beta-amg-day-safe"
+        desk["day_bound"] = "beta-amg-day-safe"
+        self._send_json(desk)
+
+    def _amg_pack_operator_depth_rbac(self) -> None:
+        identity = self._require_amg_pack_seat()
+        if identity is None:
+            return
+        try:
+            prove = _amg_pack.prove_day_operator(
+                person_id=identity["person_id"] or _amg_pack.MISA,
+            )
+        except _amg_pack.OpsPackError as exc:
+            self._amg_pack_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._amg_pack_quiet())
+        self._send_json(prove)
+
+    def _amg_pack_day_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_amg_pack_seat()
+        if identity is None:
+            return
+        try:
+            detail = _amg_pack.operator_day_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _amg_pack.OpsPackError as exc:
+            self._amg_pack_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._amg_pack_quiet())
+        self._send_json(detail)
+
+    def _amg_pack_day_operator_action(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        if any(
+            body.get(key) not in (None, "", False)
+            for key in _amg_pack.FACT_KEYS
+        ):
+            identity = self._require_amg_pack_seat(body)
+            if identity is None:
+                return
+            try:
+                _amg_pack.refuse_external_write(body)
+            except _amg_pack.OpsPackError as exc:
+                self._amg_pack_fail(exc)
+            return
+        identity = self._require_amg_pack_seat(body)
+        if identity is None:
+            return
+        try:
+            result = _amg_pack.record_day_operator_action(
+                verified_person_id=identity["person_id"],
+                object_id=unquote(object_id),
+                kind=str(body.get("kind") or "note"),
+                note=str(body.get("note") or body.get("body") or ""),
+                status=body.get("status"),
+            )
+        except _amg_pack.OpsPackError as exc:
+            self._amg_pack_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._amg_pack_quiet())
+        self._send_json(result)
+
+    def _amg_day_ops_quiet(self) -> dict:
+        return {
+            **self._amg_pack_quiet(),
+            "bound": _amg_day_ops.BOUND,
+            "schema_id": _amg_day_ops.SCHEMA_ID,
+            "slice": _amg_day_ops.SLICE,
+            "staff_ready": False,
+            "amg_day_ops_operator_depth": True,
+        }
+
+    def _require_amg_day_ops_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _amg_day_ops.require_day_ops_operator(person_id)
+        except _amg_day_ops.DayOpsDepthError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._amg_day_ops_quiet(),
+                    **_amg_day_ops.honesty_flags(),
+                },
+                status=int(exc.http_status or 403),
+            )
+            return None
+        identity["day_ops_seat"] = seat
+        return identity
+
+    def _amg_day_ops_fail(self, exc: _amg_day_ops.DayOpsDepthError) -> None:
+        status = int(getattr(exc, "http_status", None) or 400)
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._amg_day_ops_quiet(),
+                **_amg_day_ops.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _amg_day_ops_write_refused(self, path: str) -> None:
+        identity = self._require_amg_day_ops_seat()
+        if identity is None:
+            return
+        body = _amg_day_ops.refuse(path)
+        self._send_json(body, status=403)
+
+    def _amg_day_ops_operator_depth(self, qs: dict) -> None:
+        identity = self._require_amg_day_ops_seat()
+        if identity is None:
+            return
+        kind = ((qs.get("kind") or [None])[0] or "").strip() or None
+        try:
+            limit = int(((qs.get("limit") or ["40"])[0] or "40"))
+        except (TypeError, ValueError):
+            limit = 40
+        day = ((qs.get("service_day") or [None])[0] or "").strip() or None
+        try:
+            desk = _amg_day_ops.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+                kind=kind,
+                service_day_value=day,
+                limit=limit,
+            )
+        except _amg_day_ops.DayOpsDepthError as exc:
+            self._amg_day_ops_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._amg_day_ops_quiet())
+        self._send_json(desk)
+
+    def _amg_day_ops_operator_depth_rbac(self) -> None:
+        identity = self._require_amg_day_ops_seat()
+        if identity is None:
+            return
+        try:
+            prove = _amg_day_ops.prove_rbac(person_id=identity["person_id"])
+        except _amg_day_ops.DayOpsDepthError as exc:
+            self._amg_day_ops_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._amg_day_ops_quiet())
+        self._send_json(prove)
+
+    def _amg_day_ops_kinds(self) -> None:
+        identity = self._require_amg_day_ops_seat()
+        if identity is None:
+            return
+        report = _amg_day_ops.kind_catalog()
+        report["person_id"] = identity.get("person_id")
+        report.update(self._amg_day_ops_quiet())
+        self._send_json(report)
+
+    def _amg_day_ops_object_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_amg_day_ops_seat()
+        if identity is None:
+            return
+        try:
+            detail = _amg_day_ops.object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _amg_day_ops.DayOpsDepthError as exc:
+            self._amg_day_ops_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._amg_day_ops_quiet())
+        self._send_json(detail)
+
+    def _amg_day_ops_next_action_touch(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_amg_day_ops_seat(body)
+        if identity is None:
+            return
+        try:
+            result = _amg_day_ops.next_action_touch(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+                note=str(body.get("note") or body.get("body") or ""),
+                kind=str(body.get("kind") or "next_action"),
+            )
+        except _amg_day_ops.DayOpsDepthError as exc:
+            self._amg_day_ops_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._amg_day_ops_quiet())
+        self._send_json(result)
 
     def _amg_pack_write_refused(self, path: str) -> None:
         identity = self._require_amg_pack_seat()
@@ -11369,10 +15981,98 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 _amg_pack.refuse_guest_blast({})
             elif code == "fill":
                 _amg_pack.refuse_fill({})
+            elif code == "staff_ready":
+                _amg_pack.refuse_staff_ready({})
+            elif code == "haikal_done":
+                _amg_pack.refuse_haikal_done({})
+            elif code == "devi_done":
+                _amg_pack.refuse_devi_done({})
+            elif code == "promote":
+                _intel_connect.refuse_auto_promote({})
+            elif code == "execute":
+                _intel_connect.refuse_auto_execute({})
             else:
                 _amg_pack.refuse_external_write({})
         except _amg_pack.OpsPackError as exc:
             self._amg_pack_fail(exc)
+        except _intel_connect.IntelConnectiveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "bound": _intel_connect.BOUND,
+                    "auto_promote": False,
+                    "auto_execute": False,
+                    **self._amg_pack_quiet(),
+                },
+                status=405,
+            )
+
+    def _amg_ops_needs_you_payload(self, report: dict, identity: dict) -> None:
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report.update(self._amg_pack_quiet())
+        report["bound"] = _amg_pack.CONNECTIVE_BOUND
+        report["staff_ready"] = False
+        report["proven"] = False
+        report["ready"] = False
+        report["haikal_human"] = "not_started"
+        report["devi_retest"] = "parked"
+        report["occupancy"] = None
+        report["live_hotel"] = False
+        report["invented_occupancy"] = False
+        report["invented_sla"] = False
+        report["duplicate_mutate_surface"] = False
+        self._send_json(report)
+
+    def _amg_ops_needs_you(self) -> None:
+        identity = self._require_amg_pack_seat()
+        if identity is None:
+            return
+        try:
+            report = _amg_pack.needs_you_connective_strip(
+                verified_person_id=identity["person_id"]
+            )
+        except _amg_pack.OpsPackError as exc:
+            self._amg_pack_fail(exc)
+            return
+        self._amg_ops_needs_you_payload(report, identity)
+
+    def _amg_ops_needs_you_detail(self, object_id: str) -> None:
+        identity = self._require_amg_pack_seat()
+        if identity is None:
+            return
+        try:
+            report = _amg_pack.connective_item_detail(
+                object_id,
+                verified_person_id=identity["person_id"],
+            )
+        except _amg_pack.OpsPackError as exc:
+            self._amg_pack_fail(exc)
+            return
+        self._amg_ops_needs_you_payload(report, identity)
+
+    def _amg_ops_needs_you_acknowledge(self, object_id: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_amg_pack_seat(body)
+        if identity is None:
+            return
+        try:
+            report = _amg_pack.acknowledge_handoff(
+                object_id,
+                verified_person_id=identity["person_id"],
+                note=str(body.get("note") or body.get("body") or ""),
+            )
+        except _amg_pack.OpsPackError as exc:
+            self._amg_pack_fail(exc)
+            return
+        self._amg_ops_needs_you_payload(report, identity)
 
     def _amg_pack_page(self) -> None:
         identity = self._require_amg_pack_seat()
@@ -11391,12 +16091,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return
         body = page.read_bytes()
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(body)
+        # Wave 5: inject global #wolfnav shell (additive) — same chrome as GGV/BZG.
+        self._send_html_shell(body, rel="amg-ops-pack.html")
 
     def _amg_pack_get(self, qs: dict, path: str) -> None:
         identity = self._require_amg_pack_seat()
@@ -11420,6 +16116,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             report = full["sla"]
         elif view == "handoff":
             report = full["handoff"]
+        elif view == "day-loop" or view == "loop":
+            report = full["day_loop"]
+        elif view == "management-exceptions":
+            report = full["management_exceptions"]
+        elif view == "owner-visibility":
+            report = full["owner_visibility"]
         elif view == "framework":
             report = full["framework"]
         elif view == "pms":
@@ -11430,6 +16132,13 @@ class BetaHandler(SimpleHTTPRequestHandler):
             report = {"ok": True, "permissions": full["permissions"], "seat": full["seat"]}
         elif view == "schema":
             report = {"ok": True, "schema": full["schema"]}
+        elif view == "staff-ready":
+            report = {
+                "ok": True,
+                "bound": _staff_ready.BOUND,
+                "staff_ready": full.get("staff_ready") or _staff_ready.staff_surface_amg(full),
+                "honesty": _staff_ready.honesty_flags(),
+            }
         else:
             self._send_json(
                 {
@@ -11444,16 +16153,28 @@ class BetaHandler(SimpleHTTPRequestHandler):
         report = dict(report)
         report["person_id"] = identity.get("person_id")
         report.update(self._amg_pack_quiet())
+        if view in {"day-loop", "loop", "management-exceptions", "owner-visibility"}:
+            report["bound"] = "beta-amg-day-safe"
+            report["day_bound"] = "beta-amg-day-safe"
+        if view == "staff-ready":
+            report["bound"] = _staff_ready.BOUND
         if view in {None, "today"}:
             report["honesty"] = full["honesty"]
             report["today"] = full["today"]
             report["journey"] = full["journey"]
             report["sla"] = full["sla"]
             report["handoff"] = full["handoff"]
+            report["day_loop"] = full["day_loop"]
+            report["management_exceptions"] = full["management_exceptions"]
+            report["owner_visibility"] = full["owner_visibility"]
             report["pms"] = full["pms"]
             report["seat"] = full["seat"]
             report["permissions"] = full["permissions"]
             report["finance_controls"] = False
+            report["bound"] = full.get("bound") or "beta-amg-ops-safe"
+            report["day_bound"] = full.get("day_bound") or "beta-amg-day-safe"
+            report["staff_ready"] = full.get("staff_ready")
+            report["staff_ready_bound"] = full.get("staff_ready_bound")
         self._send_json(report)
 
     def _amg_pack_post(self, path: str) -> None:
@@ -11487,6 +16208,19 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 result = _amg_pack.open_journey(body, verified_person_id=identity["person_id"])
             elif path == "/api/amg/ops-pack/handoff":
                 result = _amg_pack.open_handoff(body, verified_person_id=identity["person_id"])
+            elif path == "/api/amg/ops-pack/day-object":
+                result = _amg_pack.open_day_object(body, verified_person_id=identity["person_id"])
+            elif path == "/api/amg/ops-pack/day-object-status":
+                result = _amg_pack.set_day_object_status(
+                    body, verified_person_id=identity["person_id"]
+                )
+            elif path in {
+                "/api/amg/ops-pack/mgmt-exception",
+                "/api/amg/ops-pack/management-exception",
+            }:
+                result = _amg_pack.raise_day_mgmt_exception(
+                    body, verified_person_id=identity["person_id"]
+                )
             else:
                 _amg_pack.refuse_external_write(body)
                 return
@@ -11722,13 +16456,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 status=500,
             )
             return
-        data = page.read_bytes()
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", str(len(data)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(data)
+        # Wave 5: inject global #wolfnav shell on AMG Daily Ops child (additive).
+        self._send_html_shell(page.read_bytes(), rel="amg-daily-ops-state.html")
 
     def _amg_ops_get(self, qs: dict, ref_id: str | None = None, view: str | None = None) -> None:
         identity = self._require_amg_ops_owner()
@@ -11801,6 +16530,1164 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
+
+    def _amg_pkg_depth_quiet(self) -> dict:
+        return {
+            "staff_ready": False,
+            "proven": False,
+            "ready": False,
+            "haikal_human": "not_started",
+            "devi_retest": "parked",
+            "packages": None,
+            "sold_count": None,
+            "margin_idr": None,
+            "live_catalog": False,
+            "live_hotel": False,
+            "yanolja_write": False,
+            "bzg_compose": False,
+            "money": None,
+            "secret_mint": False,
+            "cf_access_include_mutated": False,
+            "framework_mutated": False,
+            "duplicate_mutate_surface": False,
+            "production": False,
+            "false_resolve_cr": False,
+        }
+
+    def _require_amg_pkg_depth_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _amg_pkg_depth.require_seat(person_id)
+        except _amg_pkg_depth.PackagesDepthError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._amg_pkg_depth_quiet(),
+                    **_amg_pkg_depth.honesty_flags(),
+                },
+                status=int(exc.http_status or 403),
+            )
+            return None
+        identity["packages_depth_seat"] = seat
+        return identity
+
+    def _amg_pkg_depth_fail(self, exc: _amg_pkg_depth.PackagesDepthError) -> None:
+        status = int(getattr(exc, "http_status", None) or 400)
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._amg_pkg_depth_quiet(),
+                **_amg_pkg_depth.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _amg_pkg_depth_refused(self, path: str) -> None:
+        identity = self._require_amg_pkg_depth_seat()
+        if identity is None:
+            return
+        body = _amg_pkg_depth.refuse(path)
+        body.update(self._amg_pkg_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _amg_pkg_depth_method_refused(self, path: str) -> None:
+        identity = self._require_amg_pkg_depth_seat()
+        if identity is None:
+            return
+        if _amg_pkg_depth.refuse_code(path):
+            body = _amg_pkg_depth.refuse(path)
+        else:
+            body = _amg_pkg_depth.refuse_write()
+        body.update(self._amg_pkg_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _amg_pkg_operator_depth(self) -> None:
+        identity = self._require_amg_pkg_depth_seat()
+        if identity is None:
+            return
+        try:
+            desk = _amg_pkg_depth.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _amg_pkg_depth.PackagesDepthError as exc:
+            self._amg_pkg_depth_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._amg_pkg_depth_quiet())
+        self._send_json(desk)
+
+    def _amg_pkg_operator_depth_rbac(self) -> None:
+        identity = self._require_amg_pkg_depth_seat()
+        if identity is None:
+            return
+        try:
+            prove = _amg_pkg_depth.prove_rbac(person_id=identity["person_id"])
+        except _amg_pkg_depth.PackagesDepthError as exc:
+            self._amg_pkg_depth_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._amg_pkg_depth_quiet())
+        self._send_json(prove)
+
+    def _amg_pkg_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_amg_pkg_depth_seat()
+        if identity is None:
+            return
+        try:
+            detail = _amg_pkg_depth.object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _amg_pkg_depth.PackagesDepthError as exc:
+            self._amg_pkg_depth_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._amg_pkg_depth_quiet())
+        self._send_json(detail)
+
+    def _amg_pkg_operator_action(self, object_id: str, action: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_amg_pkg_depth_seat(body)
+        if identity is None:
+            return
+        kind = str(body.get("kind") or action or "")
+        try:
+            result = _amg_pkg_depth.record_operator_action(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+                kind=kind,
+                note=str(body.get("note") or body.get("body") or ""),
+                decision=str(body.get("decision") or ""),
+                body=body,
+            )
+        except _amg_pkg_depth.PackagesDepthError as exc:
+            self._amg_pkg_depth_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._amg_pkg_depth_quiet())
+        self._send_json(result)
+
+    def _amg_yield_depth_quiet(self) -> dict:
+        return {
+            "staff_ready": False,
+            "proven": False,
+            "ready": False,
+            "haikal_human": "not_started",
+            "devi_retest": "parked",
+            "rates": None,
+            "occupancy": None,
+            "adr": None,
+            "revpar": None,
+            "yield_idr": None,
+            "live_rates": False,
+            "live_hotel": False,
+            "yanolja_write": False,
+            "bzg_compose": False,
+            "money": None,
+            "secret_mint": False,
+            "cf_access_include_mutated": False,
+            "framework_mutated": False,
+            "duplicate_mutate_surface": False,
+            "production": False,
+            "false_resolve_cr": False,
+        }
+
+    def _require_amg_yield_depth_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _amg_yield_depth.require_seat(person_id)
+        except _amg_yield_depth.RevenueYieldDepthError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._amg_yield_depth_quiet(),
+                    **_amg_yield_depth.honesty_flags(),
+                },
+                status=int(exc.http_status or 403),
+            )
+            return None
+        identity["yield_depth_seat"] = seat
+        return identity
+
+    def _amg_yield_depth_fail(self, exc: _amg_yield_depth.RevenueYieldDepthError) -> None:
+        status = int(getattr(exc, "http_status", None) or 400)
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._amg_yield_depth_quiet(),
+                **_amg_yield_depth.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _amg_yield_depth_refused(self, path: str) -> None:
+        identity = self._require_amg_yield_depth_seat()
+        if identity is None:
+            return
+        body = _amg_yield_depth.refuse(path)
+        body.update(self._amg_yield_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _amg_yield_depth_method_refused(self, path: str) -> None:
+        identity = self._require_amg_yield_depth_seat()
+        if identity is None:
+            return
+        if _amg_yield_depth.refuse_code(path):
+            body = _amg_yield_depth.refuse(path)
+        else:
+            body = _amg_yield_depth.refuse_write()
+        body.update(self._amg_yield_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _amg_yield_depth_unknown(self, path: str) -> None:
+        identity = self._require_amg_yield_depth_seat()
+        if identity is None:
+            return
+        body = _amg_yield_depth.not_found_read(path)
+        body.update(self._amg_yield_depth_quiet())
+        self._send_json(body, status=404)
+
+    def _amg_yield_operator_depth(self) -> None:
+        identity = self._require_amg_yield_depth_seat()
+        if identity is None:
+            return
+        try:
+            desk = _amg_yield_depth.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _amg_yield_depth.RevenueYieldDepthError as exc:
+            self._amg_yield_depth_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._amg_yield_depth_quiet())
+        self._send_json(desk)
+
+    def _amg_yield_operator_depth_rbac(self) -> None:
+        identity = self._require_amg_yield_depth_seat()
+        if identity is None:
+            return
+        try:
+            prove = _amg_yield_depth.prove_rbac(person_id=identity["person_id"])
+        except _amg_yield_depth.RevenueYieldDepthError as exc:
+            self._amg_yield_depth_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._amg_yield_depth_quiet())
+        self._send_json(prove)
+
+    def _amg_yield_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_amg_yield_depth_seat()
+        if identity is None:
+            return
+        try:
+            detail = _amg_yield_depth.object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _amg_yield_depth.RevenueYieldDepthError as exc:
+            self._amg_yield_depth_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._amg_yield_depth_quiet())
+        self._send_json(detail)
+
+    def _amg_yield_operator_action(self, object_id: str, action: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_amg_yield_depth_seat(body)
+        if identity is None:
+            return
+        kind = str(body.get("kind") or action or "")
+        try:
+            result = _amg_yield_depth.record_operator_action(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+                kind=kind,
+                note=str(body.get("note") or body.get("body") or ""),
+                decision=str(body.get("decision") or ""),
+                body=body,
+            )
+        except _amg_yield_depth.RevenueYieldDepthError as exc:
+            self._amg_yield_depth_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._amg_yield_depth_quiet())
+        self._send_json(result)
+
+    def _amg_journey_depth_quiet(self) -> dict:
+        return {
+            "staff_ready": False,
+            "proven": False,
+            "ready": False,
+            "haikal_human": "not_started",
+            "devi_retest": "parked",
+            "booking_count": None,
+            "occupancy": None,
+            "live_journey": False,
+            "live_hotel": False,
+            "guest_operations": False,
+            "yanolja_write": False,
+            "bzg_compose": False,
+            "money": None,
+            "secret_mint": False,
+            "cf_access_include_mutated": False,
+            "framework_mutated": False,
+            "duplicate_mutate_surface": False,
+            "production": False,
+            "false_resolve_cr": False,
+        }
+
+    def _require_amg_journey_depth_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _amg_journey_depth.require_seat(person_id)
+        except _amg_journey_depth.JourneyDepthError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._amg_journey_depth_quiet(),
+                    **_amg_journey_depth.honesty_flags(),
+                },
+                status=int(exc.http_status or 403),
+            )
+            return None
+        identity["journey_depth_seat"] = seat
+        return identity
+
+    def _amg_journey_depth_fail(self, exc: _amg_journey_depth.JourneyDepthError) -> None:
+        status = int(getattr(exc, "http_status", None) or 400)
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._amg_journey_depth_quiet(),
+                **_amg_journey_depth.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _amg_journey_depth_refused(self, path: str) -> None:
+        identity = self._require_amg_journey_depth_seat()
+        if identity is None:
+            return
+        body = _amg_journey_depth.refuse(path)
+        body.update(self._amg_journey_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _amg_journey_depth_method_refused(self, path: str) -> None:
+        identity = self._require_amg_journey_depth_seat()
+        if identity is None:
+            return
+        if _amg_journey_depth.refuse_code(path):
+            body = _amg_journey_depth.refuse(path)
+        else:
+            body = _amg_journey_depth.refuse_write()
+        body.update(self._amg_journey_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _amg_journey_depth_unknown(self, path: str) -> None:
+        identity = self._require_amg_journey_depth_seat()
+        if identity is None:
+            return
+        body = _amg_journey_depth.not_found_read(path)
+        body.update(self._amg_journey_depth_quiet())
+        self._send_json(body, status=404)
+
+    def _amg_journey_operator_depth(self) -> None:
+        identity = self._require_amg_journey_depth_seat()
+        if identity is None:
+            return
+        try:
+            desk = _amg_journey_depth.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _amg_journey_depth.JourneyDepthError as exc:
+            self._amg_journey_depth_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._amg_journey_depth_quiet())
+        self._send_json(desk)
+
+    def _amg_journey_operator_depth_rbac(self) -> None:
+        identity = self._require_amg_journey_depth_seat()
+        if identity is None:
+            return
+        try:
+            prove = _amg_journey_depth.prove_rbac(person_id=identity["person_id"])
+        except _amg_journey_depth.JourneyDepthError as exc:
+            self._amg_journey_depth_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._amg_journey_depth_quiet())
+        self._send_json(prove)
+
+    def _amg_journey_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_amg_journey_depth_seat()
+        if identity is None:
+            return
+        try:
+            detail = _amg_journey_depth.object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _amg_journey_depth.JourneyDepthError as exc:
+            self._amg_journey_depth_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._amg_journey_depth_quiet())
+        self._send_json(detail)
+
+    def _amg_journey_operator_action(self, object_id: str, action: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_amg_journey_depth_seat(body)
+        if identity is None:
+            return
+        kind = str(body.get("kind") or action or "")
+        try:
+            result = _amg_journey_depth.record_operator_action(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+                kind=kind,
+                note=str(body.get("note") or body.get("body") or ""),
+                decision=str(body.get("decision") or ""),
+                body=body,
+            )
+        except _amg_journey_depth.JourneyDepthError as exc:
+            self._amg_journey_depth_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._amg_journey_depth_quiet())
+        self._send_json(result)
+
+    def _ggv_pnl_depth_quiet(self) -> dict:
+        return {
+            "staff_ready": False,
+            "proven": False,
+            "ready": False,
+            "haikal_human": "not_started",
+            "devi_retest": "parked",
+            "revenue": None,
+            "cost": None,
+            "margin": None,
+            "fx": None,
+            "payment": None,
+            "money": None,
+            "live_pnl": False,
+            "profitability_proved": False,
+            "alchemist_write": False,
+            "books_write": False,
+            "bank_write": False,
+            "zayen_write": False,
+            "guest_blast": False,
+            "public_post": False,
+            "bzg_compose": False,
+            "secret_mint": False,
+            "cf_access_include_mutated": False,
+            "framework_mutated": False,
+            "duplicate_mutate_surface": False,
+            "production": False,
+            "false_resolve_cr": False,
+        }
+
+    def _require_ggv_pnl_depth_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _ggv_pnl_depth.require_seat(person_id)
+        except _ggv_pnl_depth.ProfitDepthError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._ggv_pnl_depth_quiet(),
+                    **_ggv_pnl_depth.honesty_flags(),
+                },
+                status=int(exc.http_status or 403),
+            )
+            return None
+        identity["profit_depth_seat"] = seat
+        return identity
+
+    def _ggv_pnl_depth_fail(self, exc: _ggv_pnl_depth.ProfitDepthError) -> None:
+        status = int(getattr(exc, "http_status", None) or 400)
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._ggv_pnl_depth_quiet(),
+                **_ggv_pnl_depth.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _ggv_pnl_depth_refused(self, path: str) -> None:
+        identity = self._require_ggv_pnl_depth_seat()
+        if identity is None:
+            return
+        body = _ggv_pnl_depth.refuse(path)
+        body.update(self._ggv_pnl_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _ggv_pnl_depth_method_refused(self, path: str) -> None:
+        identity = self._require_ggv_pnl_depth_seat()
+        if identity is None:
+            return
+        if _ggv_pnl_depth.refuse_code(path):
+            body = _ggv_pnl_depth.refuse(path)
+        else:
+            body = _ggv_pnl_depth.refuse_write()
+        body.update(self._ggv_pnl_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _ggv_pnl_depth_unknown(self, path: str) -> None:
+        identity = self._require_ggv_pnl_depth_seat()
+        if identity is None:
+            return
+        body = _ggv_pnl_depth.not_found_read(path)
+        body.update(self._ggv_pnl_depth_quiet())
+        self._send_json(body, status=404)
+
+    def _ggv_pnl_operator_depth(self) -> None:
+        identity = self._require_ggv_pnl_depth_seat()
+        if identity is None:
+            return
+        try:
+            desk = _ggv_pnl_depth.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _ggv_pnl_depth.ProfitDepthError as exc:
+            self._ggv_pnl_depth_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._ggv_pnl_depth_quiet())
+        self._send_json(desk)
+
+    def _ggv_pnl_operator_depth_rbac(self) -> None:
+        identity = self._require_ggv_pnl_depth_seat()
+        if identity is None:
+            return
+        try:
+            prove = _ggv_pnl_depth.prove_rbac(person_id=identity["person_id"])
+        except _ggv_pnl_depth.ProfitDepthError as exc:
+            self._ggv_pnl_depth_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._ggv_pnl_depth_quiet())
+        self._send_json(prove)
+
+    def _ggv_pnl_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_ggv_pnl_depth_seat()
+        if identity is None:
+            return
+        try:
+            detail = _ggv_pnl_depth.object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _ggv_pnl_depth.ProfitDepthError as exc:
+            self._ggv_pnl_depth_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._ggv_pnl_depth_quiet())
+        self._send_json(detail)
+
+    def _ggv_pnl_operator_action(self, object_id: str, action: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_ggv_pnl_depth_seat(body)
+        if identity is None:
+            return
+        kind = str(body.get("kind") or action or "")
+        try:
+            result = _ggv_pnl_depth.record_operator_action(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+                kind=kind,
+                note=str(body.get("note") or body.get("body") or ""),
+                decision=str(body.get("decision") or ""),
+                body=body,
+            )
+        except _ggv_pnl_depth.ProfitDepthError as exc:
+            self._ggv_pnl_depth_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._ggv_pnl_depth_quiet())
+        self._send_json(result)
+
+    def _ggv_ic_depth_quiet(self) -> dict:
+        return {
+            "staff_ready": False,
+            "proven": False,
+            "ready": False,
+            "haikal_human": "not_started",
+            "devi_retest": "parked",
+            "service_record": None,
+            "invoice": None,
+            "allocation": None,
+            "arms_length": None,
+            "ar_ap": None,
+            "tax_treatment": None,
+            "tax_claimed": False,
+            "payment": None,
+            "money": None,
+            "live_billing": False,
+            "client_machinery": False,
+            "invented_invoice": False,
+            "invented_allocation": False,
+            "invented_ar_ap": False,
+            "invented_tax": False,
+            "alchemist_write": False,
+            "books_write": False,
+            "bank_write": False,
+            "zayen_write": False,
+            "guest_blast": False,
+            "public_post": False,
+            "bzg_compose": False,
+            "secret_mint": False,
+            "cf_access_include_mutated": False,
+            "framework_mutated": False,
+            "duplicate_mutate_surface": False,
+            "production": False,
+            "false_resolve_cr": False,
+        }
+
+    def _require_ggv_ic_depth_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _ggv_ic_depth.require_seat(person_id)
+        except _ggv_ic_depth.IntercoDepthError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._ggv_ic_depth_quiet(),
+                    **_ggv_ic_depth.honesty_flags(),
+                },
+                status=int(exc.http_status or 403),
+            )
+            return None
+        identity["interco_depth_seat"] = seat
+        return identity
+
+    def _ggv_ic_depth_fail(self, exc: _ggv_ic_depth.IntercoDepthError) -> None:
+        status = int(getattr(exc, "http_status", None) or 400)
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._ggv_ic_depth_quiet(),
+                **_ggv_ic_depth.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _ggv_ic_depth_refused(self, path: str) -> None:
+        identity = self._require_ggv_ic_depth_seat()
+        if identity is None:
+            return
+        body = _ggv_ic_depth.refuse(path)
+        body.update(self._ggv_ic_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _ggv_ic_depth_method_refused(self, path: str) -> None:
+        identity = self._require_ggv_ic_depth_seat()
+        if identity is None:
+            return
+        if _ggv_ic_depth.refuse_code(path):
+            body = _ggv_ic_depth.refuse(path)
+        else:
+            body = _ggv_ic_depth.refuse_write()
+        body.update(self._ggv_ic_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _ggv_ic_depth_unknown(self, path: str) -> None:
+        identity = self._require_ggv_ic_depth_seat()
+        if identity is None:
+            return
+        body = _ggv_ic_depth.not_found_read(path)
+        body.update(self._ggv_ic_depth_quiet())
+        self._send_json(body, status=404)
+
+    def _ggv_ic_operator_depth(self) -> None:
+        identity = self._require_ggv_ic_depth_seat()
+        if identity is None:
+            return
+        try:
+            desk = _ggv_ic_depth.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _ggv_ic_depth.IntercoDepthError as exc:
+            self._ggv_ic_depth_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._ggv_ic_depth_quiet())
+        self._send_json(desk)
+
+    def _ggv_ic_operator_depth_rbac(self) -> None:
+        identity = self._require_ggv_ic_depth_seat()
+        if identity is None:
+            return
+        try:
+            prove = _ggv_ic_depth.prove_rbac(person_id=identity["person_id"])
+        except _ggv_ic_depth.IntercoDepthError as exc:
+            self._ggv_ic_depth_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._ggv_ic_depth_quiet())
+        self._send_json(prove)
+
+    def _ggv_ic_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_ggv_ic_depth_seat()
+        if identity is None:
+            return
+        try:
+            detail = _ggv_ic_depth.object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _ggv_ic_depth.IntercoDepthError as exc:
+            self._ggv_ic_depth_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._ggv_ic_depth_quiet())
+        self._send_json(detail)
+
+    def _ggv_ic_operator_action(self, object_id: str, action: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_ggv_ic_depth_seat(body)
+        if identity is None:
+            return
+        kind = str(body.get("kind") or action or "")
+        try:
+            result = _ggv_ic_depth.record_operator_action(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+                kind=kind,
+                note=str(body.get("note") or body.get("body") or ""),
+                decision=str(body.get("decision") or ""),
+                body=body,
+            )
+        except _ggv_ic_depth.IntercoDepthError as exc:
+            self._ggv_ic_depth_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._ggv_ic_depth_quiet())
+        self._send_json(result)
+
+    def _amg_svc_depth_quiet(self) -> dict:
+        return {
+            "staff_ready": False,
+            "proven": False,
+            "ready": False,
+            "haikal_human": "not_started",
+            "devi_retest": "parked",
+            "review_score": None,
+            "action_outcome": None,
+            "improve_outcome": None,
+            "live_review": False,
+            "live_improve": False,
+            "live_hotel": False,
+            "improve_machinery": False,
+            "guest_blast": False,
+            "public_post": False,
+            "yanolja_write": False,
+            "bzg_compose": False,
+            "money": None,
+            "secret_mint": False,
+            "cf_access_include_mutated": False,
+            "framework_mutated": False,
+            "duplicate_mutate_surface": False,
+            "production": False,
+            "false_resolve_cr": False,
+        }
+
+    def _require_amg_svc_depth_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _amg_svc_depth.require_seat(person_id)
+        except _amg_svc_depth.ServiceDepthError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._amg_svc_depth_quiet(),
+                    **_amg_svc_depth.honesty_flags(),
+                },
+                status=int(exc.http_status or 403),
+            )
+            return None
+        identity["service_depth_seat"] = seat
+        return identity
+
+    def _amg_svc_depth_fail(self, exc: _amg_svc_depth.ServiceDepthError) -> None:
+        status = int(getattr(exc, "http_status", None) or 400)
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._amg_svc_depth_quiet(),
+                **_amg_svc_depth.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _amg_svc_depth_refused(self, path: str) -> None:
+        identity = self._require_amg_svc_depth_seat()
+        if identity is None:
+            return
+        body = _amg_svc_depth.refuse(path)
+        body.update(self._amg_svc_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _amg_svc_depth_method_refused(self, path: str) -> None:
+        identity = self._require_amg_svc_depth_seat()
+        if identity is None:
+            return
+        if _amg_svc_depth.refuse_code(path):
+            body = _amg_svc_depth.refuse(path)
+        else:
+            body = _amg_svc_depth.refuse_write()
+        body.update(self._amg_svc_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _amg_svc_depth_unknown(self, path: str) -> None:
+        identity = self._require_amg_svc_depth_seat()
+        if identity is None:
+            return
+        body = _amg_svc_depth.not_found_read(path)
+        body.update(self._amg_svc_depth_quiet())
+        self._send_json(body, status=404)
+
+    def _amg_svc_operator_depth(self) -> None:
+        identity = self._require_amg_svc_depth_seat()
+        if identity is None:
+            return
+        try:
+            desk = _amg_svc_depth.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _amg_svc_depth.ServiceDepthError as exc:
+            self._amg_svc_depth_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._amg_svc_depth_quiet())
+        self._send_json(desk)
+
+    def _amg_svc_operator_depth_rbac(self) -> None:
+        identity = self._require_amg_svc_depth_seat()
+        if identity is None:
+            return
+        try:
+            prove = _amg_svc_depth.prove_rbac(person_id=identity["person_id"])
+        except _amg_svc_depth.ServiceDepthError as exc:
+            self._amg_svc_depth_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._amg_svc_depth_quiet())
+        self._send_json(prove)
+
+    def _amg_svc_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_amg_svc_depth_seat()
+        if identity is None:
+            return
+        try:
+            detail = _amg_svc_depth.object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _amg_svc_depth.ServiceDepthError as exc:
+            self._amg_svc_depth_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._amg_svc_depth_quiet())
+        self._send_json(detail)
+
+    def _amg_svc_operator_action(self, object_id: str, action: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_amg_svc_depth_seat(body)
+        if identity is None:
+            return
+        kind = str(body.get("kind") or action or "")
+        try:
+            result = _amg_svc_depth.record_operator_action(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+                kind=kind,
+                note=str(body.get("note") or body.get("body") or ""),
+                decision=str(body.get("decision") or ""),
+                body=body,
+            )
+        except _amg_svc_depth.ServiceDepthError as exc:
+            self._amg_svc_depth_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._amg_svc_depth_quiet())
+        self._send_json(result)
+
+    def _amg_sla_depth_quiet(self) -> dict:
+        return {
+            "staff_ready": False,
+            "proven": False,
+            "ready": False,
+            "haikal_human": "not_started",
+            "devi_retest": "parked",
+            "incident_number": None,
+            "sla_timer": None,
+            "escalation_outcome": None,
+            "live_request": False,
+            "live_incident": False,
+            "live_sla": False,
+            "live_hotel": False,
+            "guest_experience_machinery": False,
+            "guest_blast": False,
+            "public_post": False,
+            "yanolja_write": False,
+            "bzg_compose": False,
+            "money": None,
+            "secret_mint": False,
+            "cf_access_include_mutated": False,
+            "framework_mutated": False,
+            "duplicate_mutate_surface": False,
+            "production": False,
+            "false_resolve_cr": False,
+        }
+
+    def _require_amg_sla_depth_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _amg_sla_depth.require_seat(person_id)
+        except _amg_sla_depth.SlaDepthError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._amg_sla_depth_quiet(),
+                    **_amg_sla_depth.honesty_flags(),
+                },
+                status=int(exc.http_status or 403),
+            )
+            return None
+        identity["sla_depth_seat"] = seat
+        return identity
+
+    def _amg_sla_depth_fail(self, exc: _amg_sla_depth.SlaDepthError) -> None:
+        status = int(getattr(exc, "http_status", None) or 400)
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._amg_sla_depth_quiet(),
+                **_amg_sla_depth.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _amg_sla_depth_refused(self, path: str) -> None:
+        identity = self._require_amg_sla_depth_seat()
+        if identity is None:
+            return
+        body = _amg_sla_depth.refuse(path)
+        body.update(self._amg_sla_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _amg_sla_depth_method_refused(self, path: str) -> None:
+        identity = self._require_amg_sla_depth_seat()
+        if identity is None:
+            return
+        if _amg_sla_depth.refuse_code(path):
+            body = _amg_sla_depth.refuse(path)
+        else:
+            body = _amg_sla_depth.refuse_write()
+        body.update(self._amg_sla_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _amg_sla_depth_unknown(self, path: str) -> None:
+        identity = self._require_amg_sla_depth_seat()
+        if identity is None:
+            return
+        body = _amg_sla_depth.not_found_read(path)
+        body.update(self._amg_sla_depth_quiet())
+        self._send_json(body, status=404)
+
+    def _amg_sla_operator_depth(self) -> None:
+        identity = self._require_amg_sla_depth_seat()
+        if identity is None:
+            return
+        try:
+            desk = _amg_sla_depth.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _amg_sla_depth.SlaDepthError as exc:
+            self._amg_sla_depth_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._amg_sla_depth_quiet())
+        self._send_json(desk)
+
+    def _amg_sla_operator_depth_rbac(self) -> None:
+        identity = self._require_amg_sla_depth_seat()
+        if identity is None:
+            return
+        try:
+            prove = _amg_sla_depth.prove_rbac(person_id=identity["person_id"])
+        except _amg_sla_depth.SlaDepthError as exc:
+            self._amg_sla_depth_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._amg_sla_depth_quiet())
+        self._send_json(prove)
+
+    def _amg_sla_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_amg_sla_depth_seat()
+        if identity is None:
+            return
+        try:
+            detail = _amg_sla_depth.object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _amg_sla_depth.SlaDepthError as exc:
+            self._amg_sla_depth_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._amg_sla_depth_quiet())
+        self._send_json(detail)
+
+    def _amg_sla_operator_action(self, object_id: str, action: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_amg_sla_depth_seat(body)
+        if identity is None:
+            return
+        kind = str(body.get("kind") or action or "")
+        try:
+            result = _amg_sla_depth.record_operator_action(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+                kind=kind,
+                note=str(body.get("note") or body.get("body") or ""),
+                decision=str(body.get("decision") or ""),
+                body=body,
+            )
+        except _amg_sla_depth.SlaDepthError as exc:
+            self._amg_sla_depth_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._amg_sla_depth_quiet())
+        self._send_json(result)
 
     def _amg_packages_quiet(self) -> dict:
         return {
@@ -16160,6 +22047,3365 @@ class BetaHandler(SimpleHTTPRequestHandler):
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
 
+    # ----- GGV Management Cluster (compose-only) -----
+
+    def _ggv_mgmt_quiet(self) -> dict:
+        return {
+            "bound": _ggv_mgmt.BOUND,
+            "proven": False,
+            "ready": False,
+            "money": None,
+            "payment_executed": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "production": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "cr_resolved": False,
+            "crm_external_write": False,
+            "compose_only": True,
+        }
+
+    def _ggv_mgmt_refuse_code(self, path: str) -> str | None:
+        if not (
+            path == "/api/ggv/mgmt-cluster"
+            or path.startswith("/api/ggv/mgmt-cluster/")
+        ):
+            return None
+        return _ggv_mgmt.refuse_code(path)
+
+    def _require_ggv_mgmt_seat(self) -> dict | None:
+        """Owner or GGV seats (Amanda / Haikal / Misa). Anon / outsider → 403."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "GGV Management Cluster requires a signed-in GGV seat.",
+                    **self._ggv_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _ggv_mgmt.require_actor(person_id)
+        except _ggv_mgmt.MgmtClusterError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._ggv_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return {**identity, "seat": seat}
+
+    def _ggv_mgmt_fail(self, exc: _ggv_mgmt.MgmtClusterError) -> None:
+        status = 400
+        if exc.code.endswith("_refused") or exc.code == "writes_refused":
+            status = 405
+        elif exc.code in {"forbidden", "denied"}:
+            status = 403
+        elif exc.code == "not_found":
+            status = 404
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._ggv_mgmt_quiet(),
+                **_ggv_mgmt.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _ggv_mgmt_write_refused(self, path: str) -> None:
+        identity = self._require_ggv_mgmt_seat()
+        if identity is None:
+            return
+        code = self._ggv_mgmt_refuse_code(path) or "writes"
+        try:
+            if code == "proven":
+                _ggv_mgmt.refuse_proven({})
+            elif code == "ready":
+                _ggv_mgmt.refuse_ready({})
+            elif code == "money":
+                _ggv_mgmt.refuse_money({})
+            elif code == "resolve":
+                _ggv_mgmt.refuse_resolve({})
+            elif code == "production":
+                _ggv_mgmt.refuse_production({})
+            elif code == "cloudflare":
+                _ggv_mgmt.refuse_cloudflare({})
+            elif code == "crm":
+                _ggv_mgmt.refuse_crm_write({})
+            else:
+                _ggv_mgmt.refuse_external_write({})
+        except _ggv_mgmt.MgmtClusterError as exc:
+            self._ggv_mgmt_fail(exc)
+
+    def _ggv_mgmt_page(self) -> None:
+        identity = self._require_ggv_mgmt_seat()
+        if identity is None:
+            return
+        page = DASHBOARDS / "ggv-mgmt-cluster.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "GGV Management Cluster page is missing.",
+                    **self._ggv_mgmt_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _ggv_mgmt_get(self, path: str, qs: dict) -> None:
+        identity = self._require_ggv_mgmt_seat()
+        if identity is None:
+            return
+        person_id = identity.get("person_id")
+        view = path[len("/api/ggv/mgmt-cluster") :].strip("/") or ""
+        try:
+            if view == "":
+                report = _ggv_mgmt.build_desk(verified_person_id=person_id)
+            elif view == "schema":
+                report = {
+                    "ok": True,
+                    "schema": _ggv_mgmt.schema_document(),
+                    "honesty": _ggv_mgmt.honesty_flags(),
+                    **self._ggv_mgmt_quiet(),
+                }
+            elif view == "honesty":
+                report = {
+                    "ok": True,
+                    "honesty": _ggv_mgmt.honesty_flags(),
+                    **self._ggv_mgmt_quiet(),
+                }
+            elif view == "staff-ready":
+                desk = _ggv_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _staff_ready.BOUND,
+                    "staff_ready": desk.get("staff_ready"),
+                    "honesty": _staff_ready.honesty_flags(),
+                    "cluster_bound": _ggv_mgmt.BOUND,
+                }
+            elif view.startswith("modules/"):
+                mid = view.split("/", 1)[1]
+                report = _ggv_mgmt.module_strip(
+                    mid, verified_person_id=person_id
+                )
+            elif view == "modules":
+                desk = _ggv_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _ggv_mgmt.BOUND,
+                    "modules": desk.get("modules"),
+                    "honesty": _ggv_mgmt.honesty_flags(),
+                }
+            else:
+                raise _ggv_mgmt.MgmtClusterError(
+                    f"Unknown mgmt-cluster view: {view}",
+                    code="not_found",
+                )
+        except _ggv_mgmt.MgmtClusterError as exc:
+            self._ggv_mgmt_fail(exc)
+            return
+        report["person_id"] = person_id
+        self._send_json(report)
+
+    # ----- BZG Management Cluster (compose-only) -----
+
+    def _bzg_mgmt_quiet(self) -> dict:
+        return {
+            "bound": _bzg_mgmt.BOUND,
+            "proven": False,
+            "ready": False,
+            "money": None,
+            "payment_executed": False,
+            "cloudflare_mutated": False,
+            "production": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "cr_resolved": False,
+            "compose_only": True,
+        }
+
+    def _bzg_mgmt_refuse_code(self, path: str) -> str | None:
+        if not (
+            path == "/api/bzg/mgmt-cluster"
+            or path.startswith("/api/bzg/mgmt-cluster/")
+        ):
+            return None
+        return _bzg_mgmt.refuse_code(path)
+
+    def _require_bzg_mgmt_seat(self) -> dict | None:
+        """Owner or Uma/BZG ops (PERS-DEVI). Anon / outsider → 403."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "BZG Management Cluster requires a signed-in Uma/BZG ops seat.",
+                    **self._bzg_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _bzg_mgmt.require_actor(person_id)
+        except _bzg_mgmt.MgmtClusterError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._bzg_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return {**identity, "seat": seat}
+
+    def _bzg_mgmt_fail(self, exc: _bzg_mgmt.MgmtClusterError) -> None:
+        status = 400
+        if exc.code.endswith("_refused") or exc.code == "writes_refused":
+            status = 405
+        elif exc.code in {"forbidden", "denied"}:
+            status = 403
+        elif exc.code == "not_found":
+            status = 404
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._bzg_mgmt_quiet(),
+                **_bzg_mgmt.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _bzg_mgmt_write_refused(self, path: str) -> None:
+        identity = self._require_bzg_mgmt_seat()
+        if identity is None:
+            return
+        code = self._bzg_mgmt_refuse_code(path) or "writes"
+        try:
+            if code == "proven":
+                _bzg_mgmt.refuse_proven({})
+            elif code == "ready":
+                _bzg_mgmt.refuse_ready({})
+            elif code == "money":
+                _bzg_mgmt.refuse_money({})
+            elif code == "resolve":
+                _bzg_mgmt.refuse_resolve({})
+            elif code == "production":
+                _bzg_mgmt.refuse_production({})
+            elif code == "cloudflare":
+                _bzg_mgmt.refuse_cloudflare({})
+            else:
+                _bzg_mgmt.refuse_external_write({})
+        except _bzg_mgmt.MgmtClusterError as exc:
+            self._bzg_mgmt_fail(exc)
+
+    def _bzg_mgmt_page(self) -> None:
+        identity = self._require_bzg_mgmt_seat()
+        if identity is None:
+            return
+        page = DASHBOARDS / "bzg-mgmt-cluster.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "BZG Management Cluster page is missing.",
+                    **self._bzg_mgmt_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _bzg_mgmt_get(self, path: str, qs: dict) -> None:
+        identity = self._require_bzg_mgmt_seat()
+        if identity is None:
+            return
+        person_id = identity.get("person_id")
+        view = path[len("/api/bzg/mgmt-cluster") :].strip("/") or ""
+        try:
+            if view == "":
+                report = _bzg_mgmt.build_desk(verified_person_id=person_id)
+            elif view == "schema":
+                report = {
+                    "ok": True,
+                    "schema": _bzg_mgmt.schema_document(),
+                    "honesty": _bzg_mgmt.honesty_flags(),
+                    **self._bzg_mgmt_quiet(),
+                }
+            elif view == "honesty":
+                report = {
+                    "ok": True,
+                    "honesty": _bzg_mgmt.honesty_flags(),
+                    **self._bzg_mgmt_quiet(),
+                }
+            elif view == "staff-ready":
+                desk = _bzg_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _staff_ready.BOUND,
+                    "staff_ready": desk.get("staff_ready"),
+                    "honesty": _staff_ready.honesty_flags(),
+                    "cluster_bound": _bzg_mgmt.BOUND,
+                }
+            elif view.startswith("modules/"):
+                mid = view.split("/", 1)[1]
+                report = _bzg_mgmt.module_strip(
+                    mid, verified_person_id=person_id
+                )
+            elif view == "modules":
+                desk = _bzg_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _bzg_mgmt.BOUND,
+                    "modules": desk.get("modules"),
+                    "honesty": _bzg_mgmt.honesty_flags(),
+                }
+            else:
+                raise _bzg_mgmt.MgmtClusterError(
+                    f"Unknown mgmt-cluster view: {view}",
+                    code="not_found",
+                )
+        except _bzg_mgmt.MgmtClusterError as exc:
+            self._bzg_mgmt_fail(exc)
+            return
+        report["person_id"] = person_id
+        self._send_json(report)
+
+    def _amg_mgmt_quiet(self) -> dict:
+        return {
+            "bound": _amg_mgmt.BOUND,
+            "invented_proven": False,
+            "invented_ready": False,
+            "cr_resolved": False,
+            "compose_only": True,
+            "occupancy": None,
+            "adr": None,
+            "revpar": None,
+            "invented_hotel_facts": False,
+        }
+
+    def _amg_mgmt_refuse_code(self, path: str) -> str | None:
+        if not (
+            path == "/api/amg/mgmt-cluster"
+            or path.startswith("/api/amg/mgmt-cluster/")
+        ):
+            return None
+        return _amg_mgmt.refuse_code(path)
+
+    def _require_amg_mgmt_seat(self) -> dict | None:
+        """Owner or active Atrium hotel-ops seat. Anon / outsider → 403."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "AMG Management Cluster requires Owner or hotel-ops seat.",
+                    **self._amg_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _amg_mgmt.require_actor(person_id)
+        except _amg_mgmt.MgmtClusterError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._amg_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return {**identity, "seat": seat}
+
+    def _amg_mgmt_fail(self, exc: _amg_mgmt.MgmtClusterError) -> None:
+        status = 400
+        if exc.code.endswith("_refused") or exc.code == "writes_refused":
+            status = 405
+        elif exc.code in {"forbidden", "denied"}:
+            status = 403
+        elif exc.code == "not_found":
+            status = 404
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._amg_mgmt_quiet(),
+                **_amg_mgmt.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _amg_mgmt_write_refused(self, path: str) -> None:
+        identity = self._require_amg_mgmt_seat()
+        if identity is None:
+            return
+        code = self._amg_mgmt_refuse_code(path) or "writes"
+        try:
+            if code == "proven":
+                _amg_mgmt.refuse_proven({})
+            elif code == "ready":
+                _amg_mgmt.refuse_ready({})
+            elif code == "money":
+                _amg_mgmt.refuse_money({})
+            elif code == "resolve":
+                _amg_mgmt.refuse_resolve({})
+            elif code == "production":
+                _amg_mgmt.refuse_production({})
+            elif code == "cloudflare":
+                _amg_mgmt.refuse_cloudflare({})
+            elif code == "yanolja":
+                _amg_mgmt.refuse_yanolja({})
+            else:
+                _amg_mgmt.refuse_external_write({})
+        except _amg_mgmt.MgmtClusterError as exc:
+            self._amg_mgmt_fail(exc)
+
+    def _amg_mgmt_page(self) -> None:
+        identity = self._require_amg_mgmt_seat()
+        if identity is None:
+            return
+        page = DASHBOARDS / "amg-mgmt-cluster.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "AMG Management Cluster page is missing.",
+                    **self._amg_mgmt_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _amg_mgmt_get(self, path: str, qs: dict) -> None:
+        identity = self._require_amg_mgmt_seat()
+        if identity is None:
+            return
+        person_id = identity.get("person_id")
+        view = path[len("/api/amg/mgmt-cluster") :].strip("/") or ""
+        try:
+            if view == "":
+                report = _amg_mgmt.build_desk(verified_person_id=person_id)
+            elif view == "schema":
+                report = {
+                    "ok": True,
+                    "schema": _amg_mgmt.schema_document(),
+                    "honesty": _amg_mgmt.honesty_flags(),
+                    **self._amg_mgmt_quiet(),
+                }
+            elif view == "honesty":
+                report = {
+                    "ok": True,
+                    "honesty": _amg_mgmt.honesty_flags(),
+                    **self._amg_mgmt_quiet(),
+                }
+            elif view == "staff-ready":
+                desk = _amg_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _staff_ready.BOUND,
+                    "staff_ready": desk.get("staff_ready"),
+                    "honesty": _staff_ready.honesty_flags(),
+                    "cluster_bound": _amg_mgmt.BOUND,
+                }
+            elif view.startswith("modules/"):
+                mid = view.split("/", 1)[1]
+                report = _amg_mgmt.module_strip(
+                    mid, verified_person_id=person_id
+                )
+            elif view == "modules":
+                desk = _amg_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _amg_mgmt.BOUND,
+                    "modules": desk.get("modules"),
+                    "honesty": _amg_mgmt.honesty_flags(),
+                }
+            else:
+                raise _amg_mgmt.MgmtClusterError(
+                    f"Unknown mgmt-cluster view: {view}",
+                    code="not_found",
+                )
+        except _amg_mgmt.MgmtClusterError as exc:
+            self._amg_mgmt_fail(exc)
+            return
+        report["person_id"] = person_id
+        self._send_json(report)
+
+    def _intel_mgmt_quiet(self) -> dict:
+        return {
+            "bound": _intel_mgmt.BOUND,
+            "invented_proven": False,
+            "invented_ready": False,
+            "cr_resolved": False,
+            "compose_only": True,
+            "auto_promote": False,
+            "auto_execute": False,
+            "learning_proof": None,
+            "adopted_rule": None,
+            "invented_learning": False,
+        }
+
+    def _intel_mgmt_refuse_code(self, path: str) -> str | None:
+        if not (
+            path == "/api/intel/mgmt-cluster"
+            or path.startswith("/api/intel/mgmt-cluster/")
+        ):
+            return None
+        return _intel_mgmt.refuse_code(path)
+
+    def _require_intel_mgmt_seat(self) -> dict | None:
+        """Owner or intel-authorised seat. Anon / outsider → 403."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": (
+                        "INTEL Management Cluster requires Owner or an "
+                        "intel.rule / decision.memory holder."
+                    ),
+                    **self._intel_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _intel_mgmt.require_actor(person_id)
+        except _intel_mgmt.MgmtClusterError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._intel_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return {**identity, "seat": seat}
+
+    def _intel_mgmt_fail(self, exc: _intel_mgmt.MgmtClusterError) -> None:
+        status = 400
+        if exc.code.endswith("_refused") or exc.code == "writes_refused":
+            status = 405
+        elif exc.code in {"forbidden", "denied"}:
+            status = 403
+        elif exc.code == "not_found":
+            status = 404
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._intel_mgmt_quiet(),
+                **_intel_mgmt.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _intel_mgmt_write_refused(self, path: str) -> None:
+        identity = self._require_intel_mgmt_seat()
+        if identity is None:
+            return
+        code = self._intel_mgmt_refuse_code(path) or "writes"
+        try:
+            if code == "proven":
+                _intel_mgmt.refuse_proven({})
+            elif code == "ready":
+                _intel_mgmt.refuse_ready({})
+            elif code == "money":
+                _intel_mgmt.refuse_money({})
+            elif code == "resolve":
+                _intel_mgmt.refuse_resolve({})
+            elif code == "production":
+                _intel_mgmt.refuse_production({})
+            elif code == "cloudflare":
+                _intel_mgmt.refuse_cloudflare({})
+            elif code == "auto_promote":
+                _intel_mgmt.refuse_auto_promote({})
+            elif code == "auto_execute":
+                _intel_mgmt.refuse_auto_execute({})
+            else:
+                _intel_mgmt.refuse_external_write({})
+        except _intel_mgmt.MgmtClusterError as exc:
+            self._intel_mgmt_fail(exc)
+
+    def _intel_mgmt_page(self) -> None:
+        identity = self._require_intel_mgmt_seat()
+        if identity is None:
+            return
+        page = DASHBOARDS / "intel-mgmt-cluster.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "INTEL Management Cluster page is missing.",
+                    **self._intel_mgmt_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _intel_mgmt_get(self, path: str, qs: dict) -> None:
+        identity = self._require_intel_mgmt_seat()
+        if identity is None:
+            return
+        person_id = identity.get("person_id")
+        view = path[len("/api/intel/mgmt-cluster") :].strip("/") or ""
+        try:
+            if view == "":
+                report = _intel_mgmt.build_desk(verified_person_id=person_id)
+            elif view == "schema":
+                report = {
+                    "ok": True,
+                    "schema": _intel_mgmt.schema_document(),
+                    "honesty": _intel_mgmt.honesty_flags(),
+                    **self._intel_mgmt_quiet(),
+                }
+            elif view == "honesty":
+                report = {
+                    "ok": True,
+                    "honesty": _intel_mgmt.honesty_flags(),
+                    **self._intel_mgmt_quiet(),
+                }
+            elif view == "staff-ready":
+                desk = _intel_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _staff_ready.BOUND,
+                    "staff_ready": desk.get("staff_ready"),
+                    "honesty": _staff_ready.honesty_flags(),
+                    "cluster_bound": _intel_mgmt.BOUND,
+                }
+            elif view.startswith("modules/"):
+                mid = view.split("/", 1)[1]
+                report = _intel_mgmt.module_strip(
+                    mid, verified_person_id=person_id
+                )
+            elif view == "modules":
+                desk = _intel_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _intel_mgmt.BOUND,
+                    "modules": desk.get("modules"),
+                    "honesty": _intel_mgmt.honesty_flags(),
+                }
+            else:
+                raise _intel_mgmt.MgmtClusterError(
+                    f"Unknown mgmt-cluster view: {view}",
+                    code="not_found",
+                )
+        except _intel_mgmt.MgmtClusterError as exc:
+            self._intel_mgmt_fail(exc)
+            return
+        report["person_id"] = person_id
+        self._send_json(report)
+
+    def _core_needs_you_identity(self, body: dict | None = None) -> dict | None:
+        """Verified Person for the CORE Needs-You strip. Body person id is refused."""
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": identity.get("error") or "unauthorized",
+                    "message": identity.get("message")
+                    or "You must be signed in to use the Core desk.",
+                    "bound": _core_nye.CONNECTIVE_BOUND,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "access_mutated": False,
+                    "secret_mint": False,
+                    "money": None,
+                    "bzg_compose": False,
+                },
+                status=403,
+            )
+            return None
+        if not identity.get("person_id"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "no_person",
+                    "message": "CORE Needs-You requires a verified Person binding.",
+                    "bound": _core_nye.CONNECTIVE_BOUND,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "money": None,
+                },
+                status=403,
+            )
+            return None
+        if isinstance(body, dict):
+            for key in ("person_id", "verified_person_id", "actor_person_id"):
+                spoof = body.get(key)
+                if spoof and str(spoof).strip() != str(identity.get("person_id")).strip():
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "person_id_spoof",
+                            "message": "Person id from the browser body is refused.",
+                            "bound": _core_nye.CONNECTIVE_BOUND,
+                        },
+                        status=400,
+                    )
+                    return None
+        return identity
+
+    def _core_needs_you_payload(self, report: dict, identity: dict) -> None:
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report["bound"] = _core_nye.CONNECTIVE_BOUND
+        report["staff_ready"] = False
+        report["proven"] = False
+        report["ready"] = False
+        report["haikal_human"] = "not_started"
+        report["devi_retest"] = "parked"
+        report["commissioned"] = False
+        report["adopted"] = False
+        report["auto_approve_sop"] = False
+        report["access_mutated"] = False
+        report["secret_mint"] = False
+        report["cf_seat_mint"] = False
+        report["money"] = None
+        report["bzg_compose"] = False
+        report["duplicate_mutate_surface"] = False
+        self._send_json(report)
+
+    def _core_needs_you_fail(self, exc: _core_nye.ConnectiveError) -> None:
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "bound": _core_nye.CONNECTIVE_BOUND,
+                "staff_ready": False,
+                "proven": False,
+                "ready": False,
+                "haikal_human": "not_started",
+                "devi_retest": "parked",
+                "access_mutated": False,
+                "secret_mint": False,
+                "money": None,
+                "bzg_compose": False,
+            },
+            status=int(getattr(exc, "http_status", 400) or 400),
+        )
+
+    def _core_needs_you_refuse(self, path: str, code: str) -> None:
+        try:
+            _core_nye._apply_connective_refuse(code)
+        except _core_nye.ConnectiveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "bound": _core_nye.CONNECTIVE_BOUND,
+                    "path": path,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "haikal_human": "not_started",
+                    "devi_retest": "parked",
+                    "secret_mint": False,
+                    "money": None,
+                    "bzg_compose": False,
+                },
+                status=int(getattr(exc, "http_status", 405) or 405),
+            )
+
+    def _core_needs_you(self) -> None:
+        identity = self._core_needs_you_identity()
+        if identity is None:
+            return
+        try:
+            report = _core_nye.needs_you_connective_strip(
+                verified_person_id=identity["person_id"]
+            )
+        except _core_nye.ConnectiveError as exc:
+            self._core_needs_you_fail(exc)
+            return
+        self._core_needs_you_payload(report, identity)
+
+    def _core_needs_you_detail(self, object_id: str) -> None:
+        identity = self._core_needs_you_identity()
+        if identity is None:
+            return
+        try:
+            report = _core_nye.connective_item_detail(
+                object_id,
+                verified_person_id=identity["person_id"],
+            )
+        except _core_nye.ConnectiveError as exc:
+            self._core_needs_you_fail(exc)
+            return
+        self._core_needs_you_payload(report, identity)
+
+    def _core_needs_you_acknowledge(self, object_id: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._core_needs_you_identity(body)
+        if identity is None:
+            return
+        try:
+            report = _core_nye.acknowledge_handoff(
+                object_id,
+                verified_person_id=identity["person_id"],
+                note=str(body.get("note") or body.get("body") or ""),
+            )
+        except _core_nye.ConnectiveError as exc:
+            self._core_needs_you_fail(exc)
+            return
+        self._core_needs_you_payload(report, identity)
+
+    def _core_mgmt_quiet(self) -> dict:
+        return {
+            "bound": _core_mgmt.BOUND,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_commissioned": False,
+            "invented_adopted": False,
+            "cr_resolved": False,
+            "compose_only": True,
+            "money": None,
+            "commission_flip": False,
+        }
+
+    def _core_mgmt_refuse_code(self, path: str) -> str | None:
+        if not (
+            path == "/api/core/mgmt-cluster"
+            or path.startswith("/api/core/mgmt-cluster/")
+        ):
+            return None
+        return _core_mgmt.refuse_code(path)
+
+    def _require_core_mgmt_seat(self) -> dict | None:
+        """Owner only. Anon / staff / outsider → 403."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Core Management Cluster requires Owner seat.",
+                    **self._core_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _core_mgmt.require_actor(person_id)
+        except _core_mgmt.MgmtClusterError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._core_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return {**identity, "seat": seat}
+
+    def _core_mgmt_fail(self, exc: _core_mgmt.MgmtClusterError) -> None:
+        status = 400
+        if exc.code.endswith("_refused") or exc.code == "writes_refused":
+            status = 405
+        elif exc.code in {"forbidden", "denied"}:
+            status = 403
+        elif exc.code == "not_found":
+            status = 404
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._core_mgmt_quiet(),
+                **_core_mgmt.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _core_mgmt_write_refused(self, path: str) -> None:
+        identity = self._require_core_mgmt_seat()
+        if identity is None:
+            return
+        code = self._core_mgmt_refuse_code(path) or "writes"
+        try:
+            if code == "proven":
+                _core_mgmt.refuse_proven({})
+            elif code == "ready":
+                _core_mgmt.refuse_ready({})
+            elif code == "money":
+                _core_mgmt.refuse_money({})
+            elif code == "resolve":
+                _core_mgmt.refuse_resolve({})
+            elif code == "production":
+                _core_mgmt.refuse_production({})
+            elif code == "cloudflare":
+                _core_mgmt.refuse_cloudflare({})
+            elif code == "commission":
+                _core_mgmt.refuse_commission({})
+            else:
+                _core_mgmt.refuse_external_write({})
+        except _core_mgmt.MgmtClusterError as exc:
+            self._core_mgmt_fail(exc)
+
+    def _core_mgmt_page(self) -> None:
+        identity = self._require_core_mgmt_seat()
+        if identity is None:
+            return
+        page = DASHBOARDS / "core-mgmt-cluster.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Core Management Cluster page is missing.",
+                    **self._core_mgmt_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _core_mgmt_get(self, path: str, qs: dict) -> None:
+        identity = self._require_core_mgmt_seat()
+        if identity is None:
+            return
+        person_id = identity.get("person_id")
+        view = path[len("/api/core/mgmt-cluster") :].strip("/") or ""
+        try:
+            if view == "":
+                report = _core_mgmt.build_desk(verified_person_id=person_id)
+            elif view == "schema":
+                report = {
+                    "ok": True,
+                    "schema": _core_mgmt.schema_document(),
+                    "honesty": _core_mgmt.honesty_flags(),
+                    **self._core_mgmt_quiet(),
+                }
+            elif view == "honesty":
+                report = {
+                    "ok": True,
+                    "honesty": _core_mgmt.honesty_flags(),
+                    **self._core_mgmt_quiet(),
+                }
+            elif view == "staff-ready":
+                desk = _core_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _staff_ready.BOUND,
+                    "staff_ready": desk.get("staff_ready"),
+                    "honesty": _staff_ready.honesty_flags(),
+                    "cluster_bound": _core_mgmt.BOUND,
+                }
+            elif view.startswith("modules/"):
+                mid = view.split("/", 1)[1]
+                report = _core_mgmt.module_strip(
+                    mid, verified_person_id=person_id
+                )
+            elif view == "modules":
+                desk = _core_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _core_mgmt.BOUND,
+                    "modules": desk.get("modules"),
+                    "honesty": _core_mgmt.honesty_flags(),
+                }
+            elif view in {"operator-depth", "operator-depth/desk"}:
+                report = _core_mgmt.operator_depth_desk(
+                    verified_person_id=person_id,
+                )
+            elif view == "operator-depth/rbac":
+                report = _core_mgmt.prove_core_operator(person_id=person_id)
+            else:
+                raise _core_mgmt.MgmtClusterError(
+                    f"Unknown mgmt-cluster view: {view}",
+                    code="not_found",
+                )
+        except _core_mgmt.MgmtClusterError as exc:
+            self._core_mgmt_fail(exc)
+            return
+        report["person_id"] = person_id
+        self._send_json(report)
+
+    def _core_mgmt_operator_depth(self) -> None:
+        identity = self._require_core_mgmt_seat()
+        if identity is None:
+            return
+        try:
+            desk = _core_mgmt.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _core_mgmt.MgmtClusterError as exc:
+            self._core_mgmt_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        self._send_json(desk)
+
+    def _core_mgmt_operator_depth_rbac(self) -> None:
+        identity = self._require_core_mgmt_seat()
+        if identity is None:
+            return
+        try:
+            prove = _core_mgmt.prove_core_operator(
+                person_id=identity["person_id"] or _core_mgmt.OWNER,
+            )
+        except _core_mgmt.MgmtClusterError as exc:
+            self._core_mgmt_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        self._send_json(prove)
+
+    def _core_mgmt_object_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_core_mgmt_seat()
+        if identity is None:
+            return
+        try:
+            detail = _core_mgmt.operator_object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _core_mgmt.MgmtClusterError as exc:
+            self._core_mgmt_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        self._send_json(detail)
+
+    def _core_mgmt_object_operator_action(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        if any(
+            body.get(k)
+            for k in (
+                "proven",
+                "ready",
+                "production",
+                "money",
+                "payment",
+                "esb_write",
+                "auto_approve",
+                "commission",
+                "cloudflare",
+            )
+        ):
+            self._core_mgmt_write_refused(
+                "/api/core/mgmt-cluster/proven"
+                if body.get("proven")
+                else "/api/core/mgmt-cluster/ready"
+                if body.get("ready")
+                else "/api/core/mgmt-cluster/production"
+                if body.get("production")
+                else "/api/core/mgmt-cluster/money"
+                if body.get("money") or body.get("payment") or body.get("esb_write")
+                else "/api/core/mgmt-cluster/commission"
+                if body.get("commission") or body.get("auto_approve")
+                else "/api/core/mgmt-cluster/cloudflare"
+                if body.get("cloudflare")
+                else "/api/core/mgmt-cluster/proven"
+            )
+            return
+        identity = self._require_core_mgmt_seat()
+        if identity is None:
+            return
+        try:
+            result = _core_mgmt.record_core_operator_action(
+                verified_person_id=identity["person_id"],
+                object_id=unquote(object_id),
+                kind=str(body.get("kind") or body.get("action") or ""),
+                note=body.get("note"),
+            )
+        except _core_mgmt.MgmtClusterError as exc:
+            self._core_mgmt_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        self._send_json(result)
+
+    def _crm_mgmt_quiet(self) -> dict:
+        return {
+            "bound": _crm_mgmt.BOUND,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_commissioned": False,
+            "invented_adopted": False,
+            "cr_resolved": False,
+            "compose_only": True,
+            "money": None,
+            "commission_flip": False,
+            "klaviyo_send": False,
+            "klaviyo_called": False,
+            "crm_external_write": False,
+        }
+
+    def _crm_mgmt_refuse_code(self, path: str) -> str | None:
+        if not (
+            path == "/api/crm/mgmt-cluster"
+            or path.startswith("/api/crm/mgmt-cluster/")
+        ):
+            return None
+        return _crm_mgmt.refuse_code(path)
+
+    def _require_crm_mgmt_seat(self) -> dict | None:
+        """Owner or Amanda/Haikal/Misa. Anon / outsider / Devi → 403."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "CRM Management Cluster requires Owner or GGV staff seat.",
+                    **self._crm_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _crm_mgmt.require_actor(person_id)
+        except _crm_mgmt.MgmtClusterError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._crm_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return {**identity, "seat": seat}
+
+    def _crm_mgmt_fail(self, exc: _crm_mgmt.MgmtClusterError) -> None:
+        status = 400
+        if exc.code.endswith("_refused") or exc.code == "writes_refused":
+            status = 405
+        elif exc.code in {"forbidden", "denied", "brand_isolated"}:
+            status = 403
+        elif exc.code == "not_found":
+            status = 404
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._crm_mgmt_quiet(),
+                **_crm_mgmt.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _crm_mgmt_write_refused(self, path: str) -> None:
+        identity = self._require_crm_mgmt_seat()
+        if identity is None:
+            return
+        code = self._crm_mgmt_refuse_code(path) or "writes"
+        try:
+            if code == "proven":
+                _crm_mgmt.refuse_proven({})
+            elif code == "ready":
+                _crm_mgmt.refuse_ready({})
+            elif code == "money":
+                _crm_mgmt.refuse_money({})
+            elif code == "resolve":
+                _crm_mgmt.refuse_resolve({})
+            elif code == "production":
+                _crm_mgmt.refuse_production({})
+            elif code == "cloudflare":
+                _crm_mgmt.refuse_cloudflare({})
+            elif code == "commission":
+                _crm_mgmt.refuse_commission({})
+            elif code == "klaviyo":
+                _crm_mgmt.refuse_klaviyo_send({})
+            elif code == "crm":
+                _crm_mgmt.refuse_crm_write({})
+            else:
+                _crm_mgmt.refuse_external_write({})
+        except _crm_mgmt.MgmtClusterError as exc:
+            self._crm_mgmt_fail(exc)
+
+    def _crm_mgmt_page(self) -> None:
+        identity = self._require_crm_mgmt_seat()
+        if identity is None:
+            return
+        page = DASHBOARDS / "crm-mgmt-cluster.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "CRM Management Cluster page is missing.",
+                    **self._crm_mgmt_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _crm_mgmt_get(self, path: str, qs: dict) -> None:
+        identity = self._require_crm_mgmt_seat()
+        if identity is None:
+            return
+        person_id = identity.get("person_id")
+        view = path[len("/api/crm/mgmt-cluster") :].strip("/") or ""
+        try:
+            if view == "":
+                report = _crm_mgmt.build_desk(verified_person_id=person_id)
+            elif view == "schema":
+                report = {
+                    "ok": True,
+                    "schema": _crm_mgmt.schema_document(),
+                    "honesty": _crm_mgmt.honesty_flags(),
+                    **self._crm_mgmt_quiet(),
+                }
+            elif view == "honesty":
+                report = {
+                    "ok": True,
+                    "honesty": _crm_mgmt.honesty_flags(),
+                    **self._crm_mgmt_quiet(),
+                }
+            elif view == "staff-ready":
+                desk = _crm_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _staff_ready.BOUND,
+                    "staff_ready": desk.get("staff_ready"),
+                    "honesty": _staff_ready.honesty_flags(),
+                    "cluster_bound": _crm_mgmt.BOUND,
+                }
+            elif view.startswith("modules/"):
+                mid = view.split("/", 1)[1]
+                report = _crm_mgmt.module_strip(
+                    mid, verified_person_id=person_id
+                )
+            elif view == "modules":
+                desk = _crm_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _crm_mgmt.BOUND,
+                    "modules": desk.get("modules"),
+                    "honesty": _crm_mgmt.honesty_flags(),
+                }
+            elif view in {"operator-depth", "operator-depth/desk"}:
+                report = _crm_mgmt.operator_depth_desk(
+                    verified_person_id=person_id,
+                )
+            elif view == "operator-depth/rbac":
+                report = _crm_mgmt.prove_crm_operator(person_id=person_id)
+            else:
+                raise _crm_mgmt.MgmtClusterError(
+                    f"Unknown mgmt-cluster view: {view}",
+                    code="not_found",
+                )
+        except _crm_mgmt.MgmtClusterError as exc:
+            self._crm_mgmt_fail(exc)
+            return
+        report["person_id"] = person_id
+        self._send_json(report)
+
+    def _crm_mgmt_operator_depth(self) -> None:
+        identity = self._require_crm_mgmt_seat()
+        if identity is None:
+            return
+        try:
+            desk = _crm_mgmt.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _crm_mgmt.MgmtClusterError as exc:
+            self._crm_mgmt_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        self._send_json(desk)
+
+    def _crm_mgmt_operator_depth_rbac(self) -> None:
+        identity = self._require_crm_mgmt_seat()
+        if identity is None:
+            return
+        try:
+            prove = _crm_mgmt.prove_crm_operator(
+                person_id=identity["person_id"] or _crm_mgmt.AMANDA,
+            )
+        except _crm_mgmt.MgmtClusterError as exc:
+            self._crm_mgmt_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        self._send_json(prove)
+
+    def _crm_mgmt_lead_operator_detail(self, lead_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_crm_mgmt_seat()
+        if identity is None:
+            return
+        try:
+            detail = _crm_mgmt.operator_lead_detail(
+                unquote(lead_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _crm_mgmt.MgmtClusterError as exc:
+            self._crm_mgmt_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        self._send_json(detail)
+
+    def _crm_mgmt_lead_operator_action(self, lead_id: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        if any(
+            body.get(k)
+            for k in (
+                "metricool",
+                "klaviyo",
+                "crm_write",
+                "external_crm",
+                "proven",
+                "ready",
+                "invent_lead",
+                "production",
+            )
+        ):
+            self._crm_mgmt_write_refused(
+                "/api/crm/mgmt-cluster/crm"
+                if body.get("crm_write") or body.get("external_crm")
+                else "/api/crm/mgmt-cluster/proven"
+                if body.get("proven")
+                else "/api/crm/mgmt-cluster/ready"
+                if body.get("ready")
+                else "/api/crm/mgmt-cluster/production"
+                if body.get("production")
+                else "/api/crm/mgmt-cluster/klaviyo"
+                if body.get("klaviyo")
+                else "/api/crm/mgmt-cluster/metricool"
+                if body.get("metricool")
+                else "/api/crm/mgmt-cluster/invent-lead"
+            )
+            return
+        identity = self._require_crm_mgmt_seat()
+        if identity is None:
+            return
+        try:
+            result = _crm_mgmt.record_crm_lead_operator_action(
+                verified_person_id=identity["person_id"],
+                lead_id=unquote(lead_id),
+                kind=str(body.get("kind") or ""),
+                note=body.get("note"),
+                touched_at=body.get("touched_at"),
+            )
+        except _crm_mgmt.MgmtClusterError as exc:
+            self._crm_mgmt_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        self._send_json(result)
+
+    def _msc_needs_you_identity(self, body: dict | None = None) -> dict | None:
+        """Verified Person for the MSC Needs-You strip. Body person id is refused."""
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": identity.get("error") or "unauthorized",
+                    "message": identity.get("message")
+                    or "You must be signed in to use the MSC desk.",
+                    "bound": _msc_nye.CONNECTIVE_BOUND,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "live_mfa": False,
+                    "compliance_done": False,
+                    "legal_hold": False,
+                    "access_mutated": False,
+                    "secret_mint": False,
+                    "money": None,
+                    "bzg_compose": False,
+                },
+                status=403,
+            )
+            return None
+        if not identity.get("person_id"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "no_person",
+                    "message": "MSC Needs-You requires a verified Person binding.",
+                    "bound": _msc_nye.CONNECTIVE_BOUND,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "live_mfa": False,
+                    "money": None,
+                },
+                status=403,
+            )
+            return None
+        if isinstance(body, dict):
+            for key in ("person_id", "verified_person_id", "actor_person_id"):
+                spoof = body.get(key)
+                if spoof and str(spoof).strip() != str(identity.get("person_id")).strip():
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "person_id_spoof",
+                            "message": "Person id from the browser body is refused.",
+                            "bound": _msc_nye.CONNECTIVE_BOUND,
+                        },
+                        status=400,
+                    )
+                    return None
+        return identity
+
+    def _msc_needs_you_payload(self, report: dict, identity: dict) -> None:
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report["bound"] = _msc_nye.CONNECTIVE_BOUND
+        report["staff_ready"] = False
+        report["proven"] = False
+        report["ready"] = False
+        report["haikal_human"] = "not_started"
+        report["devi_retest"] = "parked"
+        report["live_mfa"] = False
+        report["compliance_done"] = False
+        report["legal_hold"] = False
+        report["access_mutated"] = False
+        report["secret_mint"] = False
+        report["money"] = None
+        report["bzg_compose"] = False
+        report["duplicate_mutate_surface"] = False
+        self._send_json(report)
+
+    def _msc_needs_you_fail(self, exc: _msc_nye.ConnectiveError) -> None:
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "bound": _msc_nye.CONNECTIVE_BOUND,
+                "staff_ready": False,
+                "proven": False,
+                "ready": False,
+                "haikal_human": "not_started",
+                "devi_retest": "parked",
+                "live_mfa": False,
+                "compliance_done": False,
+                "legal_hold": False,
+                "access_mutated": False,
+                "secret_mint": False,
+                "money": None,
+                "bzg_compose": False,
+            },
+            status=int(getattr(exc, "http_status", 400) or 400),
+        )
+
+    def _msc_needs_you_refuse(self, path: str, code: str) -> None:
+        try:
+            _msc_nye._apply_connective_refuse(code)
+        except _msc_nye.ConnectiveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "bound": _msc_nye.CONNECTIVE_BOUND,
+                    "path": path,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "haikal_human": "not_started",
+                    "devi_retest": "parked",
+                    "live_mfa": False,
+                    "compliance_done": False,
+                    "legal_hold": False,
+                    "secret_mint": False,
+                    "money": None,
+                    "bzg_compose": False,
+                },
+                status=int(getattr(exc, "http_status", 405) or 405),
+            )
+
+    def _msc_needs_you(self) -> None:
+        identity = self._msc_needs_you_identity()
+        if identity is None:
+            return
+        try:
+            report = _msc_nye.needs_you_connective_strip(
+                verified_person_id=identity["person_id"]
+            )
+        except _msc_nye.ConnectiveError as exc:
+            self._msc_needs_you_fail(exc)
+            return
+        self._msc_needs_you_payload(report, identity)
+
+    def _msc_needs_you_detail(self, object_id: str) -> None:
+        identity = self._msc_needs_you_identity()
+        if identity is None:
+            return
+        try:
+            report = _msc_nye.connective_item_detail(
+                object_id,
+                verified_person_id=identity["person_id"],
+            )
+        except _msc_nye.ConnectiveError as exc:
+            self._msc_needs_you_fail(exc)
+            return
+        self._msc_needs_you_payload(report, identity)
+
+    def _msc_needs_you_acknowledge(self, object_id: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._msc_needs_you_identity(body)
+        if identity is None:
+            return
+        try:
+            report = _msc_nye.acknowledge_handoff(
+                object_id,
+                verified_person_id=identity["person_id"],
+                note=str(body.get("note") or body.get("body") or ""),
+            )
+        except _msc_nye.ConnectiveError as exc:
+            self._msc_needs_you_fail(exc)
+            return
+        self._msc_needs_you_payload(report, identity)
+
+    def _msc_mgmt_quiet(self) -> dict:
+        return {
+            "bound": _msc_mgmt.BOUND,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_commissioned": False,
+            "invented_adopted": False,
+            "cr_resolved": False,
+            "compose_only": True,
+            "money": None,
+            "commission_flip": False,
+            "secret_exfil": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "external_write": False,
+        }
+
+    def _msc_mgmt_refuse_code(self, path: str) -> str | None:
+        if not (
+            path == "/api/msc/mgmt-cluster"
+            or path.startswith("/api/msc/mgmt-cluster/")
+        ):
+            return None
+        return _msc_mgmt.refuse_code(path)
+
+    def _require_msc_mgmt_seat(self) -> dict | None:
+        """Owner only. Anon / staff / outsider → 403."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "MSC Management Cluster requires Owner seat.",
+                    **self._msc_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _msc_mgmt.require_actor(person_id)
+        except _msc_mgmt.MgmtClusterError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._msc_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return {**identity, "seat": seat}
+
+    def _msc_mgmt_fail(self, exc: _msc_mgmt.MgmtClusterError) -> None:
+        status = 400
+        if exc.code.endswith("_refused") or exc.code == "writes_refused":
+            status = 405
+        elif exc.code in {"forbidden", "denied"}:
+            status = 403
+        elif exc.code == "not_found":
+            status = 404
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._msc_mgmt_quiet(),
+                **_msc_mgmt.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _msc_mgmt_write_refused(self, path: str) -> None:
+        identity = self._require_msc_mgmt_seat()
+        if identity is None:
+            return
+        code = self._msc_mgmt_refuse_code(path) or "writes"
+        try:
+            if code == "proven":
+                _msc_mgmt.refuse_proven({})
+            elif code == "ready":
+                _msc_mgmt.refuse_ready({})
+            elif code == "money":
+                _msc_mgmt.refuse_money({})
+            elif code == "resolve":
+                _msc_mgmt.refuse_resolve({})
+            elif code == "production":
+                _msc_mgmt.refuse_production({})
+            elif code == "cloudflare":
+                _msc_mgmt.refuse_cloudflare({})
+            elif code == "commission":
+                _msc_mgmt.refuse_commission({})
+            elif code == "secret":
+                _msc_mgmt.refuse_secret_exfil({})
+            else:
+                _msc_mgmt.refuse_external_write({})
+        except _msc_mgmt.MgmtClusterError as exc:
+            self._msc_mgmt_fail(exc)
+
+    def _msc_mgmt_page(self) -> None:
+        identity = self._require_msc_mgmt_seat()
+        if identity is None:
+            return
+        page = DASHBOARDS / "msc-mgmt-cluster.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "MSC Management Cluster page is missing.",
+                    **self._msc_mgmt_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _msc_mgmt_get(self, path: str, qs: dict) -> None:
+        identity = self._require_msc_mgmt_seat()
+        if identity is None:
+            return
+        person_id = identity.get("person_id")
+        view = path[len("/api/msc/mgmt-cluster") :].strip("/") or ""
+        try:
+            if view == "":
+                report = _msc_mgmt.build_desk(verified_person_id=person_id)
+            elif view == "schema":
+                report = {
+                    "ok": True,
+                    "schema": _msc_mgmt.schema_document(),
+                    "honesty": _msc_mgmt.honesty_flags(),
+                    **self._msc_mgmt_quiet(),
+                }
+            elif view == "honesty":
+                report = {
+                    "ok": True,
+                    "honesty": _msc_mgmt.honesty_flags(),
+                    **self._msc_mgmt_quiet(),
+                }
+            elif view == "staff-ready":
+                desk = _msc_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _staff_ready.BOUND,
+                    "staff_ready": desk.get("staff_ready"),
+                    "honesty": _staff_ready.honesty_flags(),
+                    "cluster_bound": _msc_mgmt.BOUND,
+                }
+            elif view.startswith("modules/"):
+                mid = view.split("/", 1)[1]
+                report = _msc_mgmt.module_strip(
+                    mid, verified_person_id=person_id
+                )
+            elif view == "modules":
+                desk = _msc_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _msc_mgmt.BOUND,
+                    "modules": desk.get("modules"),
+                    "honesty": _msc_mgmt.honesty_flags(),
+                }
+            else:
+                raise _msc_mgmt.MgmtClusterError(
+                    f"Unknown mgmt-cluster view: {view}",
+                    code="not_found",
+                )
+        except _msc_mgmt.MgmtClusterError as exc:
+            self._msc_mgmt_fail(exc)
+            return
+        report["person_id"] = person_id
+        self._send_json(report)
+
+    def _strat_needs_you_identity(self, body: dict | None = None) -> dict | None:
+        """Verified Person for the STRAT Needs-You strip. Body person id is refused."""
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": identity.get("error") or "unauthorized",
+                    "message": identity.get("message")
+                    or "You must be signed in to use the Strategy desk.",
+                    "bound": _strat_nye.CONNECTIVE_BOUND,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "au_started": False,
+                    "au_adoption_done": False,
+                    "invented_au_adoption": False,
+                    "access_mutated": False,
+                    "secret_mint": False,
+                    "money": None,
+                    "bzg_compose": False,
+                },
+                status=403,
+            )
+            return None
+        if not identity.get("person_id"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "no_person",
+                    "message": "STRAT Needs-You requires a verified Person binding.",
+                    "bound": _strat_nye.CONNECTIVE_BOUND,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "au_started": False,
+                    "money": None,
+                },
+                status=403,
+            )
+            return None
+        if isinstance(body, dict):
+            for key in ("person_id", "verified_person_id", "actor_person_id"):
+                spoof = body.get(key)
+                if spoof and str(spoof).strip() != str(identity.get("person_id")).strip():
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "person_id_spoof",
+                            "message": "Person id from the browser body is refused.",
+                            "bound": _strat_nye.CONNECTIVE_BOUND,
+                        },
+                        status=400,
+                    )
+                    return None
+        return identity
+
+    def _strat_needs_you_payload(self, report: dict, identity: dict) -> None:
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report["bound"] = _strat_nye.CONNECTIVE_BOUND
+        report["staff_ready"] = False
+        report["proven"] = False
+        report["ready"] = False
+        report["haikal_human"] = "not_started"
+        report["devi_retest"] = "parked"
+        report["au_started"] = False
+        report["au_adoption_done"] = False
+        report["invented_au_adoption"] = False
+        report["invented_mission_scores"] = False
+        report["aus_not_started"] = True
+        report["access_mutated"] = False
+        report["secret_mint"] = False
+        report["money"] = None
+        report["bzg_compose"] = False
+        report["duplicate_mutate_surface"] = False
+        self._send_json(report)
+
+    def _strat_needs_you_fail(self, exc: _strat_nye.ConnectiveError) -> None:
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "bound": _strat_nye.CONNECTIVE_BOUND,
+                "staff_ready": False,
+                "proven": False,
+                "ready": False,
+                "haikal_human": "not_started",
+                "devi_retest": "parked",
+                "au_started": False,
+                "au_adoption_done": False,
+                "invented_au_adoption": False,
+                "access_mutated": False,
+                "secret_mint": False,
+                "money": None,
+                "bzg_compose": False,
+            },
+            status=int(getattr(exc, "http_status", 400) or 400),
+        )
+
+    def _strat_needs_you_refuse(self, path: str, code: str) -> None:
+        try:
+            _strat_nye._apply_connective_refuse(code)
+        except _strat_nye.ConnectiveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "bound": _strat_nye.CONNECTIVE_BOUND,
+                    "path": path,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "haikal_human": "not_started",
+                    "devi_retest": "parked",
+                    "au_started": False,
+                    "au_adoption_done": False,
+                    "secret_mint": False,
+                    "money": None,
+                    "bzg_compose": False,
+                },
+                status=int(getattr(exc, "http_status", 405) or 405),
+            )
+
+    def _strat_needs_you(self) -> None:
+        identity = self._strat_needs_you_identity()
+        if identity is None:
+            return
+        try:
+            report = _strat_nye.needs_you_connective_strip(
+                verified_person_id=identity["person_id"]
+            )
+        except _strat_nye.ConnectiveError as exc:
+            self._strat_needs_you_fail(exc)
+            return
+        self._strat_needs_you_payload(report, identity)
+
+    def _strat_needs_you_detail(self, object_id: str) -> None:
+        identity = self._strat_needs_you_identity()
+        if identity is None:
+            return
+        try:
+            report = _strat_nye.connective_item_detail(
+                object_id,
+                verified_person_id=identity["person_id"],
+            )
+        except _strat_nye.ConnectiveError as exc:
+            self._strat_needs_you_fail(exc)
+            return
+        self._strat_needs_you_payload(report, identity)
+
+    def _strat_needs_you_acknowledge(self, object_id: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._strat_needs_you_identity(body)
+        if identity is None:
+            return
+        try:
+            report = _strat_nye.acknowledge_handoff(
+                object_id,
+                verified_person_id=identity["person_id"],
+                note=str(body.get("note") or body.get("body") or ""),
+            )
+        except _strat_nye.ConnectiveError as exc:
+            self._strat_needs_you_fail(exc)
+            return
+        self._strat_needs_you_payload(report, identity)
+
+    def _strat_mgmt_quiet(self) -> dict:
+        return {
+            "bound": _strat_mgmt.BOUND,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_commissioned": False,
+            "invented_adopted": False,
+            "invented_mission_scores": False,
+            "invented_au_adoption": False,
+            "cr_resolved": False,
+            "compose_only": True,
+            "money": None,
+            "commission_flip": False,
+            "secret_exfil": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "external_write": False,
+            "aus_not_started": True,
+        }
+
+    def _strat_mgmt_refuse_code(self, path: str) -> str | None:
+        if not (
+            path == "/api/strat/mgmt-cluster"
+            or path.startswith("/api/strat/mgmt-cluster/")
+        ):
+            return None
+        return _strat_mgmt.refuse_code(path)
+
+    def _require_strat_mgmt_seat(self) -> dict | None:
+        """Owner only. Anon / staff / outsider → 403."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "STRAT Management Cluster requires Owner seat.",
+                    **self._strat_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _strat_mgmt.require_actor(person_id)
+        except _strat_mgmt.MgmtClusterError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._strat_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return {**identity, "seat": seat}
+
+    def _strat_mgmt_fail(self, exc: _strat_mgmt.MgmtClusterError) -> None:
+        status = 400
+        if exc.code.endswith("_refused") or exc.code == "writes_refused":
+            status = 405
+        elif exc.code in {"forbidden", "denied"}:
+            status = 403
+        elif exc.code == "not_found":
+            status = 404
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._strat_mgmt_quiet(),
+                **_strat_mgmt.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _strat_mgmt_write_refused(self, path: str) -> None:
+        identity = self._require_strat_mgmt_seat()
+        if identity is None:
+            return
+        code = self._strat_mgmt_refuse_code(path) or "writes"
+        try:
+            if code == "proven":
+                _strat_mgmt.refuse_proven({})
+            elif code == "ready":
+                _strat_mgmt.refuse_ready({})
+            elif code == "money":
+                _strat_mgmt.refuse_money({})
+            elif code == "resolve":
+                _strat_mgmt.refuse_resolve({})
+            elif code == "production":
+                _strat_mgmt.refuse_production({})
+            elif code == "cloudflare":
+                _strat_mgmt.refuse_cloudflare({})
+            elif code == "commission":
+                _strat_mgmt.refuse_commission({})
+            elif code == "secret":
+                _strat_mgmt.refuse_secret_exfil({})
+            else:
+                _strat_mgmt.refuse_external_write({})
+        except _strat_mgmt.MgmtClusterError as exc:
+            self._strat_mgmt_fail(exc)
+
+    def _strat_mgmt_page(self) -> None:
+        identity = self._require_strat_mgmt_seat()
+        if identity is None:
+            return
+        page = DASHBOARDS / "strat-mgmt-cluster.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "STRAT Management Cluster page is missing.",
+                    **self._strat_mgmt_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _strat_mgmt_get(self, path: str, qs: dict) -> None:
+        identity = self._require_strat_mgmt_seat()
+        if identity is None:
+            return
+        person_id = identity.get("person_id")
+        view = path[len("/api/strat/mgmt-cluster") :].strip("/") or ""
+        try:
+            if view == "":
+                report = _strat_mgmt.build_desk(verified_person_id=person_id)
+            elif view == "schema":
+                report = {
+                    "ok": True,
+                    "schema": _strat_mgmt.schema_document(),
+                    "honesty": _strat_mgmt.honesty_flags(),
+                    **self._strat_mgmt_quiet(),
+                }
+            elif view == "honesty":
+                report = {
+                    "ok": True,
+                    "honesty": _strat_mgmt.honesty_flags(),
+                    **self._strat_mgmt_quiet(),
+                }
+            elif view == "staff-ready":
+                desk = _strat_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _staff_ready.BOUND,
+                    "staff_ready": desk.get("staff_ready"),
+                    "honesty": _staff_ready.honesty_flags(),
+                    "cluster_bound": _strat_mgmt.BOUND,
+                }
+            elif view.startswith("modules/"):
+                mid = view.split("/", 1)[1]
+                report = _strat_mgmt.module_strip(
+                    mid, verified_person_id=person_id
+                )
+            elif view == "modules":
+                desk = _strat_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _strat_mgmt.BOUND,
+                    "modules": desk.get("modules"),
+                    "honesty": _strat_mgmt.honesty_flags(),
+                }
+            else:
+                raise _strat_mgmt.MgmtClusterError(
+                    f"Unknown mgmt-cluster view: {view}",
+                    code="not_found",
+                )
+        except _strat_mgmt.MgmtClusterError as exc:
+            self._strat_mgmt_fail(exc)
+            return
+        report["person_id"] = person_id
+        self._send_json(report)
+
+    def _dr_needs_you_identity(self, body: dict | None = None) -> dict | None:
+        """Verified Person for the DR Needs-You strip. Body person id is refused."""
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": identity.get("error") or "unauthorized",
+                    "message": identity.get("message")
+                    or "You must be signed in to use the DR desk.",
+                    "bound": _dr_nye.CONNECTIVE_BOUND,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "live_restore": False,
+                    "b2_mutate": False,
+                    "access_mutated": False,
+                    "secret_mint": False,
+                    "money": None,
+                    "bzg_compose": False,
+                },
+                status=403,
+            )
+            return None
+        if not identity.get("person_id"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "no_person",
+                    "message": "DR Needs-You requires a verified Person binding.",
+                    "bound": _dr_nye.CONNECTIVE_BOUND,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "live_restore": False,
+                    "money": None,
+                },
+                status=403,
+            )
+            return None
+        if isinstance(body, dict):
+            for key in ("person_id", "verified_person_id", "actor_person_id"):
+                spoof = body.get(key)
+                if spoof and str(spoof).strip() != str(identity.get("person_id")).strip():
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "person_id_spoof",
+                            "message": "Person id from the browser body is refused.",
+                            "bound": _dr_nye.CONNECTIVE_BOUND,
+                        },
+                        status=400,
+                    )
+                    return None
+        return identity
+
+    def _dr_needs_you_payload(self, report: dict, identity: dict) -> None:
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report["bound"] = _dr_nye.CONNECTIVE_BOUND
+        report["staff_ready"] = False
+        report["proven"] = False
+        report["ready"] = False
+        report["haikal_human"] = "not_started"
+        report["devi_retest"] = "parked"
+        report["live_restore"] = False
+        report["b2_mutate"] = False
+        report["invented_restore_proof"] = False
+        report["invented_backup_facts"] = False
+        report["access_mutated"] = False
+        report["secret_mint"] = False
+        report["money"] = None
+        report["bzg_compose"] = False
+        report["duplicate_mutate_surface"] = False
+        self._send_json(report)
+
+    def _dr_needs_you_fail(self, exc: _dr_nye.ConnectiveError) -> None:
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "bound": _dr_nye.CONNECTIVE_BOUND,
+                "staff_ready": False,
+                "proven": False,
+                "ready": False,
+                "haikal_human": "not_started",
+                "devi_retest": "parked",
+                "live_restore": False,
+                "b2_mutate": False,
+                "invented_restore_proof": False,
+                "access_mutated": False,
+                "secret_mint": False,
+                "money": None,
+                "bzg_compose": False,
+            },
+            status=int(getattr(exc, "http_status", 400) or 400),
+        )
+
+    def _dr_needs_you_refuse(self, path: str, code: str) -> None:
+        try:
+            _dr_nye._apply_connective_refuse(code)
+        except _dr_nye.ConnectiveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "bound": _dr_nye.CONNECTIVE_BOUND,
+                    "path": path,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "haikal_human": "not_started",
+                    "devi_retest": "parked",
+                    "live_restore": False,
+                    "b2_mutate": False,
+                    "secret_mint": False,
+                    "money": None,
+                    "bzg_compose": False,
+                },
+                status=int(getattr(exc, "http_status", 405) or 405),
+            )
+
+    def _dr_needs_you(self) -> None:
+        identity = self._dr_needs_you_identity()
+        if identity is None:
+            return
+        try:
+            report = _dr_nye.needs_you_connective_strip(
+                verified_person_id=identity["person_id"]
+            )
+        except _dr_nye.ConnectiveError as exc:
+            self._dr_needs_you_fail(exc)
+            return
+        self._dr_needs_you_payload(report, identity)
+
+    def _dr_needs_you_detail(self, object_id: str) -> None:
+        identity = self._dr_needs_you_identity()
+        if identity is None:
+            return
+        try:
+            report = _dr_nye.connective_item_detail(
+                object_id,
+                verified_person_id=identity["person_id"],
+            )
+        except _dr_nye.ConnectiveError as exc:
+            self._dr_needs_you_fail(exc)
+            return
+        self._dr_needs_you_payload(report, identity)
+
+    def _dr_needs_you_acknowledge(self, object_id: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._dr_needs_you_identity(body)
+        if identity is None:
+            return
+        try:
+            report = _dr_nye.acknowledge_handoff(
+                object_id,
+                verified_person_id=identity["person_id"],
+                note=str(body.get("note") or body.get("body") or ""),
+            )
+        except _dr_nye.ConnectiveError as exc:
+            self._dr_needs_you_fail(exc)
+            return
+        self._dr_needs_you_payload(report, identity)
+
+    def _dr_mgmt_quiet(self) -> dict:
+        return {
+            "bound": _dr_mgmt.BOUND,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_commissioned": False,
+            "invented_adopted": False,
+            "invented_restore_proof": False,
+            "invented_backup_facts": False,
+            "cr_resolved": False,
+            "compose_only": True,
+            "money": None,
+            "commission_flip": False,
+            "secret_exfil": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "external_write": False,
+            "live_restore": False,
+            "b2_mutated": False,
+            "b2_destructive": False,
+            "nas_destructive": False,
+        }
+
+    def _dr_mgmt_refuse_code(self, path: str) -> str | None:
+        if not (
+            path == "/api/dr/mgmt-cluster"
+            or path.startswith("/api/dr/mgmt-cluster/")
+        ):
+            return None
+        return _dr_mgmt.refuse_code(path)
+
+    def _require_dr_mgmt_seat(self) -> dict | None:
+        """Owner only. Anon / staff / outsider → 403."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "DR Management Cluster requires Owner seat.",
+                    **self._dr_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _dr_mgmt.require_actor(person_id)
+        except _dr_mgmt.MgmtClusterError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._dr_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return {**identity, "seat": seat}
+
+    def _dr_mgmt_fail(self, exc: _dr_mgmt.MgmtClusterError) -> None:
+        status = 400
+        if exc.code.endswith("_refused") or exc.code == "writes_refused":
+            status = 405
+        elif exc.code in {"forbidden", "denied"}:
+            status = 403
+        elif exc.code == "not_found":
+            status = 404
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._dr_mgmt_quiet(),
+                **_dr_mgmt.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _dr_mgmt_write_refused(self, path: str) -> None:
+        identity = self._require_dr_mgmt_seat()
+        if identity is None:
+            return
+        code = self._dr_mgmt_refuse_code(path) or "writes"
+        try:
+            if code == "proven":
+                _dr_mgmt.refuse_proven({})
+            elif code == "ready":
+                _dr_mgmt.refuse_ready({})
+            elif code == "money":
+                _dr_mgmt.refuse_money({})
+            elif code == "resolve":
+                _dr_mgmt.refuse_resolve({})
+            elif code == "production":
+                _dr_mgmt.refuse_production({})
+            elif code == "cloudflare":
+                _dr_mgmt.refuse_cloudflare({})
+            elif code == "commission":
+                _dr_mgmt.refuse_commission({})
+            elif code == "secret":
+                _dr_mgmt.refuse_secret_exfil({})
+            elif code == "b2":
+                _dr_mgmt.refuse_b2({})
+            elif code == "nas":
+                _dr_mgmt.refuse_nas({})
+            elif code == "restore":
+                _dr_mgmt.refuse_live_restore({})
+            else:
+                _dr_mgmt.refuse_external_write({})
+        except _dr_mgmt.MgmtClusterError as exc:
+            self._dr_mgmt_fail(exc)
+
+    def _dr_mgmt_page(self) -> None:
+        identity = self._require_dr_mgmt_seat()
+        if identity is None:
+            return
+        page = DASHBOARDS / "dr-mgmt-cluster.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "DR Management Cluster page is missing.",
+                    **self._dr_mgmt_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _dr_mgmt_get(self, path: str, qs: dict) -> None:
+        identity = self._require_dr_mgmt_seat()
+        if identity is None:
+            return
+        person_id = identity.get("person_id")
+        view = path[len("/api/dr/mgmt-cluster") :].strip("/") or ""
+        try:
+            if view == "":
+                report = _dr_mgmt.build_desk(verified_person_id=person_id)
+            elif view == "schema":
+                report = {
+                    "ok": True,
+                    "schema": _dr_mgmt.schema_document(),
+                    "honesty": _dr_mgmt.honesty_flags(),
+                    **self._dr_mgmt_quiet(),
+                }
+            elif view == "honesty":
+                report = {
+                    "ok": True,
+                    "honesty": _dr_mgmt.honesty_flags(),
+                    **self._dr_mgmt_quiet(),
+                }
+            elif view == "staff-ready":
+                desk = _dr_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _staff_ready.BOUND,
+                    "staff_ready": desk.get("staff_ready"),
+                    "honesty": _staff_ready.honesty_flags(),
+                    "cluster_bound": _dr_mgmt.BOUND,
+                }
+            elif view.startswith("modules/"):
+                mid = view.split("/", 1)[1]
+                report = _dr_mgmt.module_strip(
+                    mid, verified_person_id=person_id
+                )
+            elif view == "modules":
+                desk = _dr_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _dr_mgmt.BOUND,
+                    "modules": desk.get("modules"),
+                    "honesty": _dr_mgmt.honesty_flags(),
+                }
+            else:
+                raise _dr_mgmt.MgmtClusterError(
+                    f"Unknown mgmt-cluster view: {view}",
+                    code="not_found",
+                )
+        except _dr_mgmt.MgmtClusterError as exc:
+            self._dr_mgmt_fail(exc)
+            return
+        report["person_id"] = person_id
+        self._send_json(report)
+
+
+    def _sale_mgmt_quiet(self) -> dict:
+        return {
+            "bound": _sale_mgmt.BOUND,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_commissioned": False,
+            "invented_adopted": False,
+            "invented_buyer_grant": False,
+            "invented_live_attack": False,
+            "invented_transition_pack": False,
+            "invented_controlled_export": False,
+            "cr_resolved": False,
+            "compose_only": True,
+            "money": None,
+            "commission_flip": False,
+            "secret_exfil": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "external_write": False,
+            "buyer_grant": False,
+            "live_attack": False,
+            "attack_run": False,
+            "controlled_export": False,
+            "export_written": False,
+            "transition_pack_filled": False,
+        }
+
+    def _sale_mgmt_refuse_code(self, path: str) -> str | None:
+        if not (
+            path == "/api/sale/mgmt-cluster"
+            or path.startswith("/api/sale/mgmt-cluster/")
+        ):
+            return None
+        return _sale_mgmt.refuse_code(path)
+
+    def _require_sale_mgmt_seat(self) -> dict | None:
+        """Owner only. Anon / staff / outsider → 403."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "SALE Management Cluster requires Owner seat.",
+                    **self._sale_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _sale_mgmt.require_actor(person_id)
+        except _sale_mgmt.MgmtClusterError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._sale_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return {**identity, "seat": seat}
+
+    def _sale_mgmt_fail(self, exc: _sale_mgmt.MgmtClusterError) -> None:
+        status = 400
+        if exc.code.endswith("_refused") or exc.code == "writes_refused":
+            status = 405
+        elif exc.code in {"forbidden", "denied"}:
+            status = 403
+        elif exc.code == "not_found":
+            status = 404
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._sale_mgmt_quiet(),
+                **_sale_mgmt.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _sale_mgmt_write_refused(self, path: str) -> None:
+        identity = self._require_sale_mgmt_seat()
+        if identity is None:
+            return
+        code = self._sale_mgmt_refuse_code(path) or "writes"
+        try:
+            if code == "proven":
+                _sale_mgmt.refuse_proven({})
+            elif code == "ready":
+                _sale_mgmt.refuse_ready({})
+            elif code == "money":
+                _sale_mgmt.refuse_money({})
+            elif code == "resolve":
+                _sale_mgmt.refuse_resolve({})
+            elif code == "production":
+                _sale_mgmt.refuse_production({})
+            elif code == "cloudflare":
+                _sale_mgmt.refuse_cloudflare({})
+            elif code == "commission":
+                _sale_mgmt.refuse_commission({})
+            elif code == "secret":
+                _sale_mgmt.refuse_secret_exfil({})
+            elif code == "buyer_grant":
+                _sale_mgmt.refuse_buyer_grant({})
+            elif code == "live_attack":
+                _sale_mgmt.refuse_live_attack({})
+            elif code == "export":
+                _sale_mgmt.refuse_export({})
+            else:
+                _sale_mgmt.refuse_external_write({})
+        except _sale_mgmt.MgmtClusterError as exc:
+            self._sale_mgmt_fail(exc)
+
+    def _sale_needs_you_identity(self, body: dict | None = None) -> dict | None:
+        """Verified Person for the Sale Needs-You strip. Body person id is refused."""
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": identity.get("error") or "unauthorized",
+                    "message": identity.get("message")
+                    or "You must be signed in to use the Sale desk.",
+                    "bound": _sale_nye.CONNECTIVE_BOUND,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "buyer_live": False,
+                    "controlled_export": False,
+                    "money": None,
+                    "bzg_compose": False,
+                },
+                status=403,
+            )
+            return None
+        if not identity.get("person_id"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "no_person",
+                    "message": "Sale Needs-You requires a verified Person binding.",
+                    "bound": _sale_nye.CONNECTIVE_BOUND,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "money": None,
+                },
+                status=403,
+            )
+            return None
+        if isinstance(body, dict):
+            for key in ("person_id", "verified_person_id", "actor_person_id"):
+                spoof = body.get(key)
+                if spoof and str(spoof).strip() != str(identity.get("person_id")).strip():
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "person_id_spoof",
+                            "message": "Person id from the browser body is refused.",
+                            "bound": _sale_nye.CONNECTIVE_BOUND,
+                        },
+                        status=400,
+                    )
+                    return None
+        return identity
+
+    def _sale_needs_you_payload(self, report: dict, identity: dict) -> None:
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report["bound"] = _sale_nye.CONNECTIVE_BOUND
+        report["staff_ready"] = False
+        report["proven"] = False
+        report["ready"] = False
+        report["haikal_human"] = "not_started"
+        report["devi_retest"] = "parked"
+        report["buyer_live"] = False
+        report["buyer_dataroom_live"] = False
+        report["controlled_export"] = False
+        report["controlled_export_send"] = False
+        report["money"] = None
+        report["bzg_compose"] = False
+        report["duplicate_mutate_surface"] = False
+        self._send_json(report)
+
+    def _sale_needs_you_fail(self, exc: _sale_nye.ConnectiveError) -> None:
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "bound": _sale_nye.CONNECTIVE_BOUND,
+                "staff_ready": False,
+                "proven": False,
+                "ready": False,
+                "haikal_human": "not_started",
+                "devi_retest": "parked",
+                "buyer_live": False,
+                "controlled_export": False,
+                "money": None,
+                "bzg_compose": False,
+            },
+            status=int(getattr(exc, "http_status", 400) or 400),
+        )
+
+    def _sale_needs_you_refuse(self, path: str, code: str) -> None:
+        try:
+            _sale_nye._apply_connective_refuse(code)
+        except _sale_nye.ConnectiveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "bound": _sale_nye.CONNECTIVE_BOUND,
+                    "path": path,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "haikal_human": "not_started",
+                    "devi_retest": "parked",
+                    "buyer_live": False,
+                    "controlled_export": False,
+                    "money": None,
+                    "bzg_compose": False,
+                },
+                status=int(getattr(exc, "http_status", 405) or 405),
+            )
+
+    def _sale_needs_you(self) -> None:
+        identity = self._sale_needs_you_identity()
+        if identity is None:
+            return
+        try:
+            report = _sale_nye.needs_you_connective_strip(
+                verified_person_id=identity["person_id"]
+            )
+        except _sale_nye.ConnectiveError as exc:
+            self._sale_needs_you_fail(exc)
+            return
+        self._sale_needs_you_payload(report, identity)
+
+    def _sale_needs_you_detail(self, object_id: str) -> None:
+        identity = self._sale_needs_you_identity()
+        if identity is None:
+            return
+        try:
+            report = _sale_nye.connective_item_detail(
+                object_id,
+                verified_person_id=identity["person_id"],
+            )
+        except _sale_nye.ConnectiveError as exc:
+            self._sale_needs_you_fail(exc)
+            return
+        self._sale_needs_you_payload(report, identity)
+
+    def _sale_needs_you_acknowledge(self, object_id: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._sale_needs_you_identity(body)
+        if identity is None:
+            return
+        try:
+            report = _sale_nye.acknowledge_handoff(
+                object_id,
+                verified_person_id=identity["person_id"],
+                note=str(body.get("note") or body.get("body") or ""),
+            )
+        except _sale_nye.ConnectiveError as exc:
+            self._sale_needs_you_fail(exc)
+            return
+        self._sale_needs_you_payload(report, identity)
+
+    def _intg_needs_you_identity(self, body: dict | None = None) -> dict | None:
+        """Verified Person for the INTG Needs-You strip. Body person id is refused."""
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": identity.get("error") or "unauthorized",
+                    "message": identity.get("message")
+                    or "You must be signed in to use the INTG desk.",
+                    "bound": _intg_nye.CONNECTIVE_BOUND,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "connector_live": False,
+                    "au_adoption_done": False,
+                    "secret_mint": False,
+                    "money": None,
+                    "bzg_compose": False,
+                },
+                status=403,
+            )
+            return None
+        if not identity.get("person_id"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "no_person",
+                    "message": "INTG Needs-You requires a verified Person binding.",
+                    "bound": _intg_nye.CONNECTIVE_BOUND,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "connector_live": False,
+                    "money": None,
+                },
+                status=403,
+            )
+            return None
+        if isinstance(body, dict):
+            for key in ("person_id", "verified_person_id", "actor_person_id"):
+                spoof = body.get(key)
+                if spoof and str(spoof).strip() != str(identity.get("person_id")).strip():
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "person_id_spoof",
+                            "message": "Person id from the browser body is refused.",
+                            "bound": _intg_nye.CONNECTIVE_BOUND,
+                        },
+                        status=400,
+                    )
+                    return None
+        return identity
+
+    def _intg_needs_you_payload(self, report: dict, identity: dict) -> None:
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report["bound"] = _intg_nye.CONNECTIVE_BOUND
+        report["staff_ready"] = False
+        report["proven"] = False
+        report["ready"] = False
+        report["haikal_human"] = "not_started"
+        report["devi_retest"] = "parked"
+        report["connector_live"] = False
+        report["au_adoption_done"] = False
+        report["esb_write"] = False
+        report["metricool_write"] = False
+        report["yanolja_write"] = False
+        report["bank_api"] = False
+        report["secret_mint"] = False
+        report["money"] = None
+        report["bzg_compose"] = False
+        report["duplicate_mutate_surface"] = False
+        self._send_json(report)
+
+    def _intg_needs_you_fail(self, exc: _intg_nye.ConnectiveError) -> None:
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "bound": _intg_nye.CONNECTIVE_BOUND,
+                "staff_ready": False,
+                "proven": False,
+                "ready": False,
+                "haikal_human": "not_started",
+                "devi_retest": "parked",
+                "connector_live": False,
+                "au_adoption_done": False,
+                "secret_mint": False,
+                "money": None,
+                "bzg_compose": False,
+            },
+            status=int(getattr(exc, "http_status", 400) or 400),
+        )
+
+    def _intg_needs_you_refuse(self, path: str, code: str) -> None:
+        try:
+            _intg_nye._apply_connective_refuse(code)
+        except _intg_nye.ConnectiveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "bound": _intg_nye.CONNECTIVE_BOUND,
+                    "path": path,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "haikal_human": "not_started",
+                    "devi_retest": "parked",
+                    "connector_live": False,
+                    "secret_mint": False,
+                    "money": None,
+                    "bzg_compose": False,
+                },
+                status=int(getattr(exc, "http_status", 405) or 405),
+            )
+
+    def _intg_needs_you(self) -> None:
+        identity = self._intg_needs_you_identity()
+        if identity is None:
+            return
+        try:
+            report = _intg_nye.needs_you_connective_strip(
+                verified_person_id=identity["person_id"]
+            )
+        except _intg_nye.ConnectiveError as exc:
+            self._intg_needs_you_fail(exc)
+            return
+        self._intg_needs_you_payload(report, identity)
+
+    def _intg_needs_you_detail(self, object_id: str) -> None:
+        identity = self._intg_needs_you_identity()
+        if identity is None:
+            return
+        try:
+            report = _intg_nye.connective_item_detail(
+                object_id,
+                verified_person_id=identity["person_id"],
+            )
+        except _intg_nye.ConnectiveError as exc:
+            self._intg_needs_you_fail(exc)
+            return
+        self._intg_needs_you_payload(report, identity)
+
+    def _intg_needs_you_acknowledge(self, object_id: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._intg_needs_you_identity(body)
+        if identity is None:
+            return
+        try:
+            report = _intg_nye.acknowledge_handoff(
+                object_id,
+                verified_person_id=identity["person_id"],
+                note=str(body.get("note") or body.get("body") or ""),
+            )
+        except _intg_nye.ConnectiveError as exc:
+            self._intg_needs_you_fail(exc)
+            return
+        self._intg_needs_you_payload(report, identity)
+
+    def _sale_mgmt_page(self) -> None:
+        identity = self._require_sale_mgmt_seat()
+        if identity is None:
+            return
+        page = DASHBOARDS / "sale-mgmt-cluster.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "SALE Management Cluster page is missing.",
+                    **self._sale_mgmt_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _sale_mgmt_get(self, path: str, qs: dict) -> None:
+        identity = self._require_sale_mgmt_seat()
+        if identity is None:
+            return
+        person_id = identity.get("person_id")
+        view = path[len("/api/sale/mgmt-cluster") :].strip("/") or ""
+        try:
+            if view == "":
+                report = _sale_mgmt.build_desk(verified_person_id=person_id)
+            elif view == "schema":
+                report = {
+                    "ok": True,
+                    "schema": _sale_mgmt.schema_document(),
+                    "honesty": _sale_mgmt.honesty_flags(),
+                    **self._sale_mgmt_quiet(),
+                }
+            elif view == "honesty":
+                report = {
+                    "ok": True,
+                    "honesty": _sale_mgmt.honesty_flags(),
+                    **self._sale_mgmt_quiet(),
+                }
+            elif view == "staff-ready":
+                desk = _sale_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _staff_ready.BOUND,
+                    "staff_ready": desk.get("staff_ready"),
+                    "honesty": _staff_ready.honesty_flags(),
+                    "cluster_bound": _sale_mgmt.BOUND,
+                }
+            elif view.startswith("modules/"):
+                mid = view.split("/", 1)[1]
+                report = _sale_mgmt.module_strip(
+                    mid, verified_person_id=person_id
+                )
+            elif view == "modules":
+                desk = _sale_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _sale_mgmt.BOUND,
+                    "modules": desk.get("modules"),
+                    "honesty": _sale_mgmt.honesty_flags(),
+                }
+            elif view in {"operator-depth", "operator-depth/desk"}:
+                report = _sale_mgmt.operator_depth_desk(
+                    verified_person_id=person_id,
+                )
+            elif view == "operator-depth/rbac":
+                report = _sale_mgmt.prove_sale_operator(person_id=person_id)
+            else:
+                raise _sale_mgmt.MgmtClusterError(
+                    f"Unknown mgmt-cluster view: {view}",
+                    code="not_found",
+                )
+        except _sale_mgmt.MgmtClusterError as exc:
+            self._sale_mgmt_fail(exc)
+            return
+        report["person_id"] = person_id
+        self._send_json(report)
+
+    def _sale_mgmt_operator_depth(self) -> None:
+        identity = self._require_sale_mgmt_seat()
+        if identity is None:
+            return
+        try:
+            desk = _sale_mgmt.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _sale_mgmt.MgmtClusterError as exc:
+            self._sale_mgmt_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        self._send_json(desk)
+
+    def _sale_mgmt_operator_depth_rbac(self) -> None:
+        identity = self._require_sale_mgmt_seat()
+        if identity is None:
+            return
+        try:
+            prove = _sale_mgmt.prove_sale_operator(
+                person_id=identity["person_id"] or _sale_mgmt.OWNER,
+            )
+        except _sale_mgmt.MgmtClusterError as exc:
+            self._sale_mgmt_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        self._send_json(prove)
+
+    def _sale_mgmt_object_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_sale_mgmt_seat()
+        if identity is None:
+            return
+        try:
+            detail = _sale_mgmt.operator_object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _sale_mgmt.MgmtClusterError as exc:
+            self._sale_mgmt_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        self._send_json(detail)
+
+    def _sale_mgmt_object_operator_action(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        if any(
+            body.get(k)
+            for k in (
+                "buyer_grant",
+                "live_attack",
+                "export",
+                "export_to_buyer",
+                "proven",
+                "ready",
+                "production",
+                "money",
+                "payment",
+            )
+        ):
+            self._sale_mgmt_write_refused(
+                "/api/sale/mgmt-cluster/buyer-grant"
+                if body.get("buyer_grant")
+                else "/api/sale/mgmt-cluster/live-attack"
+                if body.get("live_attack")
+                else "/api/sale/mgmt-cluster/export"
+                if body.get("export") or body.get("export_to_buyer")
+                else "/api/sale/mgmt-cluster/proven"
+                if body.get("proven")
+                else "/api/sale/mgmt-cluster/ready"
+                if body.get("ready")
+                else "/api/sale/mgmt-cluster/production"
+                if body.get("production")
+                else "/api/sale/mgmt-cluster/money"
+            )
+            return
+        identity = self._require_sale_mgmt_seat()
+        if identity is None:
+            return
+        try:
+            result = _sale_mgmt.record_sale_operator_action(
+                verified_person_id=identity["person_id"],
+                object_id=unquote(object_id),
+                kind=str(body.get("kind") or ""),
+                note=body.get("note"),
+            )
+        except _sale_mgmt.MgmtClusterError as exc:
+            self._sale_mgmt_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        self._send_json(result)
+
+    def _intg_mgmt_quiet(self) -> dict:
+        return {
+            "bound": _intg_mgmt.BOUND,
+            "invented_proven": False,
+            "invented_ready": False,
+            "invented_commissioned": False,
+            "invented_adopted": False,
+            "invented_connector_live": False,
+            "invented_secret_mint": False,
+            "cr_resolved": False,
+            "compose_only": True,
+            "money": None,
+            "commission_flip": False,
+            "secret_exfil": False,
+            "mint_secret": False,
+            "cloudflare_mutated": False,
+            "access_mutated": False,
+            "external_write": False,
+            "bank_api_called": False,
+            "yanolja_called": False,
+            "esb_called": False,
+            "metricool_write": False,
+            "cap_intg_01_absent": True,
+        }
+
+    def _intg_mgmt_refuse_code(self, path: str) -> str | None:
+        if not (
+            path == "/api/intg/mgmt-cluster"
+            or path.startswith("/api/intg/mgmt-cluster/")
+        ):
+            return None
+        return _intg_mgmt.refuse_code(path)
+
+    def _require_intg_mgmt_seat(self) -> dict | None:
+        """Owner only. Anon / staff / outsider → 403."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "INTG Management Cluster requires Owner seat.",
+                    **self._intg_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _intg_mgmt.require_actor(person_id)
+        except _intg_mgmt.MgmtClusterError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._intg_mgmt_quiet(),
+                },
+                status=403,
+            )
+            return None
+        return {**identity, "seat": seat}
+
+    def _intg_mgmt_fail(self, exc: _intg_mgmt.MgmtClusterError) -> None:
+        status = 400
+        if exc.code.endswith("_refused") or exc.code == "writes_refused":
+            status = 405
+        elif exc.code in {"forbidden", "denied"}:
+            status = 403
+        elif exc.code == "not_found":
+            status = 404
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._intg_mgmt_quiet(),
+                **_intg_mgmt.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _intg_mgmt_write_refused(self, path: str) -> None:
+        identity = self._require_intg_mgmt_seat()
+        if identity is None:
+            return
+        code = self._intg_mgmt_refuse_code(path) or "writes"
+        try:
+            if code == "proven":
+                _intg_mgmt.refuse_proven({})
+            elif code == "ready":
+                _intg_mgmt.refuse_ready({})
+            elif code == "money":
+                _intg_mgmt.refuse_money({})
+            elif code == "resolve":
+                _intg_mgmt.refuse_resolve({})
+            elif code == "production":
+                _intg_mgmt.refuse_production({})
+            elif code == "cloudflare":
+                _intg_mgmt.refuse_cloudflare({})
+            elif code == "commission":
+                _intg_mgmt.refuse_commission({})
+            elif code == "secret":
+                _intg_mgmt.refuse_secret_exfil({})
+            elif code == "mint_secret":
+                _intg_mgmt.refuse_mint_secret({})
+            elif code == "bank_api":
+                _intg_mgmt.refuse_bank_api({})
+            elif code == "yanolja":
+                _intg_mgmt.refuse_yanolja({})
+            elif code == "esb":
+                _intg_mgmt.refuse_esb({})
+            elif code == "metricool":
+                _intg_mgmt.refuse_metricool({})
+            else:
+                _intg_mgmt.refuse_external_write({})
+        except _intg_mgmt.MgmtClusterError as exc:
+            self._intg_mgmt_fail(exc)
+
+    def _intg_mgmt_page(self) -> None:
+        identity = self._require_intg_mgmt_seat()
+        if identity is None:
+            return
+        page = DASHBOARDS / "intg-mgmt-cluster.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "INTG Management Cluster page is missing.",
+                    **self._intg_mgmt_quiet(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _intg_mgmt_get(self, path: str, qs: dict) -> None:
+        identity = self._require_intg_mgmt_seat()
+        if identity is None:
+            return
+        person_id = identity.get("person_id")
+        view = path[len("/api/intg/mgmt-cluster") :].strip("/") or ""
+        try:
+            if view == "":
+                report = _intg_mgmt.build_desk(verified_person_id=person_id)
+            elif view == "schema":
+                report = {
+                    "ok": True,
+                    "schema": _intg_mgmt.schema_document(),
+                    "honesty": _intg_mgmt.honesty_flags(),
+                    **self._intg_mgmt_quiet(),
+                }
+            elif view == "honesty":
+                report = {
+                    "ok": True,
+                    "honesty": _intg_mgmt.honesty_flags(),
+                    **self._intg_mgmt_quiet(),
+                }
+            elif view == "staff-ready":
+                desk = _intg_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _staff_ready.BOUND,
+                    "staff_ready": desk.get("staff_ready"),
+                    "honesty": _staff_ready.honesty_flags(),
+                    "cluster_bound": _intg_mgmt.BOUND,
+                }
+            elif view.startswith("modules/"):
+                mid = view.split("/", 1)[1]
+                report = _intg_mgmt.module_strip(
+                    mid, verified_person_id=person_id
+                )
+            elif view == "modules":
+                desk = _intg_mgmt.build_desk(verified_person_id=person_id)
+                report = {
+                    "ok": True,
+                    "bound": _intg_mgmt.BOUND,
+                    "modules": desk.get("modules"),
+                    "honesty_pointers": desk.get("honesty_pointers"),
+                    "honesty": _intg_mgmt.honesty_flags(),
+                }
+            else:
+                raise _intg_mgmt.MgmtClusterError(
+                    f"Unknown mgmt-cluster view: {view}",
+                    code="not_found",
+                )
+        except _intg_mgmt.MgmtClusterError as exc:
+            self._intg_mgmt_fail(exc)
+            return
+        report["person_id"] = person_id
+        self._send_json(report)
 
     def _bzg_pnl_quiet(self) -> dict:
         return {
@@ -18514,7 +27760,485 @@ class BetaHandler(SimpleHTTPRequestHandler):
         identity = self._require_progress_owner()
         if identity is None:
             return
-        self._send_json({"ok": True, "person_id": identity.get("person_id"), **_progress.honesty_flags()})
+        self._send_json(
+            {
+                "ok": True,
+                "person_id": identity.get("person_id"),
+                **_progress.honesty_flags(),
+                **_owner_cmq.honesty_flags(),
+                **_owner_nye.honesty_flags(),
+            }
+        )
+
+    def _owner_nye_quiet(self) -> dict:
+        return {
+            "bound": _owner_nye.BOUND,
+            "schema_id": _owner_nye.SCHEMA_ID,
+            "slice": _owner_nye.SLICE,
+            "staff_ready": False,
+            "proven": False,
+            "ready": False,
+            "haikal_human": "not_started",
+            "devi_retest": "parked",
+            "owner_progress_needs_you_depth": True,
+        }
+
+    def _require_owner_nye_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._require_progress_owner(body)
+        if identity is None:
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _owner_nye.require_owner_operator(person_id)
+        except _owner_nye.NeedsYouDepthError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._owner_nye_quiet(),
+                    **_owner_nye.honesty_flags(),
+                },
+                status=int(exc.http_status or 403),
+            )
+            return None
+        identity["nye_seat"] = seat
+        return identity
+
+    def _owner_nye_fail(self, exc: _owner_nye.NeedsYouDepthError) -> None:
+        status = int(getattr(exc, "http_status", None) or 400)
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._owner_nye_quiet(),
+                **_owner_nye.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _owner_nye_write_refused(self, path: str) -> None:
+        identity = self._require_owner_nye_seat()
+        if identity is None:
+            return
+        body = _owner_nye.refuse(path)
+        self._send_json(body, status=403)
+
+    def _owner_nye_operator_depth(self, qs: dict) -> None:
+        identity = self._require_owner_nye_seat()
+        if identity is None:
+            return
+        kind = ((qs.get("kind") or [None])[0] or "").strip() or None
+        try:
+            limit = int(((qs.get("limit") or ["40"])[0] or "40"))
+        except (TypeError, ValueError):
+            limit = 40
+        try:
+            desk = _owner_nye.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+                kind=kind,
+                limit=limit,
+            )
+        except _owner_nye.NeedsYouDepthError as exc:
+            self._owner_nye_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._owner_nye_quiet())
+        self._send_json(desk)
+
+    def _owner_nye_operator_depth_rbac(self) -> None:
+        identity = self._require_owner_nye_seat()
+        if identity is None:
+            return
+        try:
+            prove = _owner_nye.prove_rbac(person_id=identity["person_id"])
+        except _owner_nye.NeedsYouDepthError as exc:
+            self._owner_nye_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._owner_nye_quiet())
+        self._send_json(prove)
+
+    def _owner_nye_kinds(self) -> None:
+        identity = self._require_owner_nye_seat()
+        if identity is None:
+            return
+        report = _owner_nye.kind_catalog()
+        report["person_id"] = identity.get("person_id")
+        report.update(self._owner_nye_quiet())
+        self._send_json(report)
+
+    def _owner_nye_item_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_owner_nye_seat()
+        if identity is None:
+            return
+        try:
+            detail = _owner_nye.object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _owner_nye.NeedsYouDepthError as exc:
+            self._owner_nye_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._owner_nye_quiet())
+        self._send_json(detail)
+
+    def _owner_nye_action(self, object_id: str, action: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_owner_nye_seat(body)
+        if identity is None:
+            return
+        kind = action
+        if action == "next-action-touch":
+            kind = str(body.get("kind") or "next_action")
+        note = str(body.get("note") or body.get("body") or "")
+        try:
+            if action == "acknowledge":
+                result = _owner_nye.acknowledge(
+                    unquote(object_id),
+                    verified_person_id=identity["person_id"],
+                    note=note,
+                )
+            elif action == "park":
+                result = _owner_nye.park(
+                    unquote(object_id),
+                    verified_person_id=identity["person_id"],
+                    note=note,
+                )
+            else:
+                result = _owner_nye.next_action_touch(
+                    unquote(object_id),
+                    verified_person_id=identity["person_id"],
+                    note=note,
+                    kind=kind,
+                )
+        except _owner_nye.NeedsYouDepthError as exc:
+            self._owner_nye_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._owner_nye_quiet())
+        self._send_json(result)
+
+    def _owner_cmq_depth_quiet(self) -> dict:
+        return {
+            "staff_ready": False,
+            "proven": False,
+            "ready": False,
+            "haikal_human": "not_started",
+            "devi_retest": "parked",
+            "human_commissioned": False,
+            "pass_submit_bypassed": False,
+            "bzg_compose": False,
+            "money": None,
+            "secret_mint": False,
+            "cf_access_include_mutated": False,
+            "queue_mutated": False,
+            "evidence_mutated": False,
+            "duplicate_mutate_surface": False,
+            "production": False,
+            "false_resolve_cr": False,
+        }
+
+    def _require_owner_cmq_depth_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._require_progress_owner(body)
+        if identity is None:
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _owner_cmq_depth.require_seat(person_id)
+        except _owner_cmq_depth.CommissionDepthError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._owner_cmq_depth_quiet(),
+                    **_owner_cmq_depth.honesty_flags(),
+                },
+                status=int(exc.http_status or 403),
+            )
+            return None
+        identity["cmq_depth_seat"] = seat
+        return identity
+
+    def _owner_cmq_depth_fail(self, exc: _owner_cmq_depth.CommissionDepthError) -> None:
+        status = int(getattr(exc, "http_status", None) or 400)
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._owner_cmq_depth_quiet(),
+                **_owner_cmq_depth.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _owner_cmq_depth_refused(self, path: str) -> None:
+        identity = self._require_owner_cmq_depth_seat()
+        if identity is None:
+            return
+        body = _owner_cmq_depth.refuse(path)
+        body.update(self._owner_cmq_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _owner_cmq_operator_depth(self) -> None:
+        identity = self._require_owner_cmq_depth_seat()
+        if identity is None:
+            return
+        try:
+            desk = _owner_cmq_depth.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _owner_cmq_depth.CommissionDepthError as exc:
+            self._owner_cmq_depth_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._owner_cmq_depth_quiet())
+        self._send_json(desk)
+
+    def _owner_cmq_operator_depth_rbac(self) -> None:
+        identity = self._require_owner_cmq_depth_seat()
+        if identity is None:
+            return
+        try:
+            prove = _owner_cmq_depth.prove_rbac(person_id=identity["person_id"])
+        except _owner_cmq_depth.CommissionDepthError as exc:
+            self._owner_cmq_depth_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._owner_cmq_depth_quiet())
+        self._send_json(prove)
+
+    def _owner_cmq_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_owner_cmq_depth_seat()
+        if identity is None:
+            return
+        try:
+            detail = _owner_cmq_depth.object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _owner_cmq_depth.CommissionDepthError as exc:
+            self._owner_cmq_depth_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._owner_cmq_depth_quiet())
+        self._send_json(detail)
+
+    def _owner_cmq_operator_action(self, object_id: str, action: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_owner_cmq_depth_seat(body)
+        if identity is None:
+            return
+        kind = str(body.get("kind") or action or "")
+        try:
+            result = _owner_cmq_depth.record_operator_action(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+                kind=kind,
+                note=str(body.get("note") or body.get("body") or ""),
+                decision=str(body.get("decision") or ""),
+                body=body,
+            )
+        except _owner_cmq_depth.CommissionDepthError as exc:
+            self._owner_cmq_depth_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._owner_cmq_depth_quiet())
+        self._send_json(result)
+
+    def _progress_commissioning(self) -> None:
+        identity = self._require_progress_owner()
+        if identity is None:
+            return
+        try:
+            payload = _owner_cmq.build_for_progress()
+            payload["person_id"] = identity.get("person_id")
+            self._send_json(payload)
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _progress_commissioning_history(self, qs: dict) -> None:
+        identity = self._require_progress_owner()
+        if identity is None:
+            return
+        try:
+            limit_raw = (qs.get("limit") or ["50"])[0]
+            try:
+                limit = int(limit_raw)
+            except (TypeError, ValueError):
+                limit = 50
+            payload = _owner_cmq.list_history(limit=limit)
+            payload["person_id"] = identity.get("person_id")
+            self._send_json(payload)
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _progress_commissioning_refuse(self, path: str) -> None:
+        identity = self._require_progress_owner()
+        if identity is None:
+            return
+        code = "refused"
+        try:
+            if path.endswith("/proven"):
+                _owner_cmq.refuse_proven({})
+            elif path.endswith("/ready"):
+                _owner_cmq.refuse_ready({})
+            elif path.endswith("/staff-ready"):
+                _owner_cmq.refuse_staff_ready({})
+            else:
+                _owner_cmq.refuse_human_commissioned_invent({})
+        except _owner_cmq.CommissioningQueueError as exc:
+            code = exc.code
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": code,
+                    "message": str(exc),
+                    "person_id": identity.get("person_id"),
+                    **_owner_cmq.honesty_flags(),
+                },
+                status=405,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": code,
+                "message": "refused",
+                **_owner_cmq.honesty_flags(),
+            },
+            status=405,
+        )
+
+    def _progress_commissioning_submit(self) -> None:
+        ctype = (self.headers.get("Content-Type") or "").lower()
+        body: dict = {}
+        files: list[dict] = []
+        if "multipart/form-data" in ctype:
+            try:
+                fields = parse_multipart(self.headers, self.rfile)
+            except UploadTooLarge as exc:
+                self._send_json(
+                    {"ok": False, "error": "upload_too_large", "message": str(exc)},
+                    status=413,
+                )
+                return
+            except ValueError as exc:
+                self._send_json(
+                    {"ok": False, "error": "invalid_multipart", "message": str(exc)},
+                    status=400,
+                )
+                return
+            for key, val in fields.items():
+                if isinstance(val, dict) and "data" in val:
+                    files.append(val)
+                else:
+                    body[key] = val
+        else:
+            body = self._read_json() or {}
+
+        identity = self._require_progress_owner(body)
+        if identity is None:
+            return
+        task_id = str(body.get("task_id") or body.get("id") or "").strip()
+        feedback = str(body.get("feedback") or "").strip()
+        comment = str(body.get("comment") or "").strip()
+        if not task_id or not feedback:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "missing_fields",
+                    "message": "task_id and feedback required",
+                    **_owner_cmq.honesty_flags(),
+                },
+                status=400,
+            )
+            return
+        try:
+            result = _owner_cmq.submit_feedback(
+                task_id=task_id,
+                feedback=feedback,
+                comment=comment,
+                identity=identity,
+                files=files,
+            )
+            result["person_id"] = identity.get("person_id")
+            self._send_json(result)
+        except _owner_cmq.CommissioningQueueError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": identity.get("person_id"),
+                    **_owner_cmq.honesty_flags(),
+                },
+                status=exc.http_status,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _progress_commissioning_retest(self) -> None:
+        body = self._read_json() or {}
+        identity = self._require_progress_owner(body)
+        if identity is None:
+            return
+        parent = str(body.get("parent_task_id") or body.get("task_id") or "").strip()
+        if not parent:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "missing_parent",
+                    "message": "parent_task_id required",
+                    **_owner_cmq.honesty_flags(),
+                },
+                status=400,
+            )
+            return
+        try:
+            result = _owner_cmq.emit_retest(
+                parent_task_id=parent,
+                work_item_id=body.get("work_item_id"),
+                cr_id=body.get("cr_id"),
+            )
+            result["person_id"] = identity.get("person_id")
+            self._send_json(result)
+        except _owner_cmq.CommissioningQueueError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    **_owner_cmq.honesty_flags(),
+                },
+                status=exc.http_status,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
 
     def _progress_calculation(self) -> None:
         identity = self._require_progress_owner()
@@ -18588,6 +28312,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     "message": "Owner Empire is Owner (PERS-MATT) only.",
                     "person_id": person_id,
                     "required_person": _progress.PERS_MATT,
+                    "ui": {
+                        "component": "permission-denied",
+                        "message": "You do not have access to this.",
+                    },
                     **self._owner_empire_quiet(),
                 },
                 status=403,
@@ -18601,6 +28329,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     "error": "forbidden",
                     "message": "subject lacks progress.read",
                     "person_id": person_id,
+                    "ui": {
+                        "component": "permission-denied",
+                        "message": "You do not have access to this.",
+                    },
                     **self._owner_empire_quiet(),
                 },
                 status=403,
@@ -18670,12 +28402,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return
         body = page.read_bytes()
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(body)
+        self._send_html_shell(body, rel="owner-empire-pack.html")
 
     def _owner_empire_get(self, path: str) -> None:
         identity = self._require_owner_empire()
@@ -18719,6 +28446,385 @@ class BetaHandler(SimpleHTTPRequestHandler):
         report = dict(report)
         report["person_id"] = identity.get("person_id")
         report.update(self._owner_empire_quiet())
+        self._send_json(report)
+
+    def _owner_command_denied(self, message: str) -> None:
+        self._send_json(
+            {
+                "ok": False,
+                "error": "forbidden",
+                "message": message,
+                "ui": {
+                    "component": "permission-denied",
+                    "message": "You do not have access to this.",
+                },
+                "staff_ready": False,
+                "human_commissioned": False,
+                "money": None,
+                "external_writes": False,
+                "ledger_write": False,
+            },
+            status=403,
+        )
+
+    def _require_owner_command(self) -> dict | None:
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._owner_command_denied(identity.get("message") or "You do not have access to this.")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._owner_command_denied("Owner Command is Owner only.")
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._owner_command_denied("You do not have access to this.")
+            return None
+        return identity
+
+    def _owner_command_write_refused(self) -> None:
+        identity = self._require_owner_command()
+        if identity is None:
+            return
+        try:
+            _owner_command.refuse_external_write({})
+        except _owner_command.CommandError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "money": None,
+                    "payment_executed": False,
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=405,
+            )
+
+    def _owner_command_get(self, path: str) -> None:
+        identity = self._require_owner_command()
+        if identity is None:
+            return
+        view = path[len("/api/owner/command") :].strip("/") or None
+        if _owner_command.write_view(view):
+            self._owner_command_write_refused()
+            return
+        if view not in {None, "desk"}:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Unknown Owner Command view.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "ledger_write": False,
+                },
+                status=404,
+            )
+            return
+        try:
+            report = _owner_command.build_command(verified_person_id=identity["person_id"])
+        except _owner_empire.EmpirePackError as exc:
+            self._owner_empire_fail(exc)
+            return
+        except _owner_command.CommandError as exc:
+            status = 403 if exc.code == "forbidden" else 400
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "ledger_write": False,
+                },
+                status=status,
+            )
+            return
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report["staff_ready"] = False
+        report["human_commissioned"] = False
+        report["money"] = None
+        report["ledger_write"] = False
+        self._send_json(report)
+
+    def _war_room_denied(self, message: str) -> None:
+        self._send_json(
+            {
+                "ok": False,
+                "error": "forbidden",
+                "message": message,
+                "ui": {
+                    "component": "permission-denied",
+                    "message": "You do not have access to this.",
+                },
+                "staff_ready": False,
+                "human_commissioned": False,
+                "operating_adoption": "NOT MEASURED",
+                "money": None,
+                "external_writes": False,
+                "ledger_write": False,
+            },
+            status=403,
+        )
+
+    def _require_war_room(self) -> dict | None:
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._war_room_denied(identity.get("message") or "You do not have access to this.")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._war_room_denied("Finish war room is Owner only.")
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._war_room_denied("You do not have access to this.")
+            return None
+        return identity
+
+    def _war_room_write_refused(self) -> None:
+        identity = self._require_war_room()
+        if identity is None:
+            return
+        try:
+            _completion_war_room.refuse_external_write({})
+        except _completion_war_room.WarRoomError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "operating_adoption": "NOT MEASURED",
+                    "money": None,
+                    "payment_executed": False,
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=405,
+            )
+
+    def _war_room_get(self, path: str) -> None:
+        identity = self._require_war_room()
+        if identity is None:
+            return
+        view = path[len("/api/owner/war-room") :].strip("/") or None
+        if view not in {None, "desk"}:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Unknown finish war room view.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "ledger_write": False,
+                },
+                status=404,
+            )
+            return
+        try:
+            report = _completion_war_room.build_war_room()
+        except _completion_war_room.WarRoomError as exc:
+            status = 403 if exc.code == "forbidden" else 400
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "ledger_write": False,
+                },
+                status=status,
+            )
+            return
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report["staff_ready"] = False
+        report["human_commissioned"] = False
+        report["staff_ready_count"] = 0
+        report["human_commissioned_count"] = 0
+        report["operating_adoption"] = "NOT MEASURED"
+        report["money"] = None
+        report["ledger_write"] = False
+        self._send_json(report)
+
+    def _war_room_page(self) -> None:
+        identity = self._require_war_room()
+        if identity is None:
+            return
+        page = DASHBOARDS / "finish-war-room.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Finish war room page is missing.",
+                    "ui": {"component": "error", "message": "This could not be loaded. Nothing was invented."},
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "ledger_write": False,
+                },
+                status=500,
+            )
+            return
+        self._send_html_shell(page.read_bytes(), rel="finish-war-room.html")
+
+    def _business_dashboard_denied(self, message: str) -> None:
+        self._send_json(
+            {
+                "ok": False,
+                "error": "forbidden",
+                "message": message,
+                "ui": {
+                    "component": "permission-denied",
+                    "message": "You do not have access to this.",
+                },
+                "staff_ready": False,
+                "human_commissioned": False,
+                "money": None,
+                "external_writes": False,
+                "ledger_write": False,
+            },
+            status=403,
+        )
+
+    def _require_business_dashboard(self) -> dict | None:
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._business_dashboard_denied(identity.get("message") or "You do not have access to this.")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._business_dashboard_denied("Business dashboards are Owner only.")
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._business_dashboard_denied("You do not have access to this.")
+            return None
+        return identity
+
+    def _business_dashboard_write_refused(self) -> None:
+        identity = self._require_business_dashboard()
+        if identity is None:
+            return
+        try:
+            _business_dashboard.refuse_external_write({})
+        except _business_dashboard.DashboardError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "money": None,
+                    "payment_executed": False,
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=405,
+            )
+
+    def _business_dashboard_page(self) -> None:
+        identity = self._require_business_dashboard()
+        if identity is None:
+            return
+        path = urlparse(self.path).path.rstrip("/") or "/"
+        if path.startswith("/business/"):
+            code = path.split("/")[-1]
+            if code not in _business_dashboard.CODES:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "not_found",
+                        "message": "Unknown business dashboard.",
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "ledger_write": False,
+                    },
+                    status=404,
+                )
+                return
+        page = DASHBOARDS / "business-dashboard.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Business dashboard page is missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "ledger_write": False,
+                },
+                status=404,
+            )
+            return
+        self._send_html_shell(page.read_bytes(), rel="business-dashboard.html")
+
+    def _business_dashboard_get(self, path: str, qs: dict) -> None:
+        identity = self._require_business_dashboard()
+        if identity is None:
+            return
+        rest = path[len("/api/business") :].strip("/")
+        parts = [part for part in rest.split("/") if part] if rest else []
+        code = parts[0] if parts else None
+        view = parts[1] if len(parts) > 1 else None
+        if view and _business_dashboard.write_view(view):
+            self._business_dashboard_write_refused()
+            return
+        if len(parts) > 1:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Unknown business dashboard view.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "ledger_write": False,
+                },
+                status=404,
+            )
+            return
+        held = None
+        raw_held = (qs.get("projected") or [None])[0]
+        if isinstance(raw_held, str) and raw_held.strip():
+            held = raw_held.strip()
+        try:
+            report = _business_dashboard.build_dashboards(
+                verified_person_id=identity["person_id"],
+                code=code,
+                held=held,
+            )
+        except _owner_empire.EmpirePackError as exc:
+            self._owner_empire_fail(exc)
+            return
+        except _business_dashboard.DashboardError as exc:
+            status = 404 if exc.code == "not_found" else 403 if exc.code == "forbidden" else 400
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "ledger_write": False,
+                },
+                status=status,
+            )
+            return
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report["staff_ready"] = False
+        report["human_commissioned"] = False
+        report["money"] = None
+        report["ledger_write"] = False
         self._send_json(report)
 
     def _core_harden_quiet(self) -> dict:
@@ -18912,7 +29018,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
         }
 
     def _intel_ops_refuse_code(self, path: str) -> str | None:
-        return _intel_ops.refuse_code(path)
+        return _intel_ops.connective_refuse_code(path) or _intel_ops.refuse_code(path)
 
     def _require_intel_ops(self, body: dict | None = None) -> dict | None:
         identity = self._resolve_identity(body)
@@ -18930,9 +29036,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
         return {**identity, "seat": seat}
 
     def _intel_ops_fail(self, exc: _intel_ops.IntelOpsPackError) -> None:
-        status = 405 if exc.code.endswith("_refused") or exc.code == "writes_refused" else 400
-        if exc.code in {"forbidden", "denied"}:
-            status = 403
+        status = int(getattr(exc, "http_status", None) or 0)
+        if not status:
+            status = (
+                405
+                if exc.code.endswith("_refused")
+                or exc.code in {"writes_refused", "handoff_only"}
+                else 400
+            )
+            if exc.code in {"forbidden", "denied"}:
+                status = 403
+            if exc.code == "not_found":
+                status = 404
         self._send_json(
             {
                 "ok": False,
@@ -18971,6 +29086,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 _intel_ops.refuse_execute({})
             elif code == "production":
                 _intel_ops.refuse_production({})
+            elif code == "haikal_done":
+                _intel_ops.refuse_haikal_done({})
+            elif code == "devi_done":
+                _intel_ops.refuse_devi_done({})
+            elif code == "staff_ready":
+                _intel_ops.refuse_staff_ready({})
             else:
                 _intel_ops.refuse_external_write({})
         except _intel_ops.IntelOpsPackError as exc:
@@ -18993,12 +29114,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return
         raw = page.read_bytes()
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", str(len(raw)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(raw)
+        # Wave 6: inject global #wolfnav shell (additive) — same chrome as GGV/AMG.
+        self._send_html_shell(raw, rel="intel-ops-pack.html")
 
     def _intel_ops_get(self, path: str, qs: dict) -> None:
         identity = self._require_intel_ops()
@@ -19039,6 +29156,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             elif view == "permissions":
                 seat = identity.get("seat") or _intel_ops.seat_for(person_id)
                 report = {"ok": True, "person_id": person_id, "seat": seat}
+            elif view in {"needs-you", "needs-you-connective"}:
+                report = _intel_ops.needs_you_connective_strip(
+                    verified_person_id=person_id
+                )
+            elif view.startswith("needs-you/items/"):
+                object_id = view[len("needs-you/items/") :].split("/", 1)[0]
+                from urllib.parse import unquote
+
+                report = _intel_ops.connective_item_detail(
+                    unquote(object_id),
+                    verified_person_id=person_id,
+                )
             else:
                 self._send_json(
                     {
@@ -19083,7 +29212,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if not isinstance(body, dict):
             body = {}
         try:
-            if view == "ask":
+            ack = re.match(r"^needs-you/items/([^/]+)/acknowledge$", view)
+            if ack:
+                from urllib.parse import unquote
+
+                report = _intel_ops.acknowledge_handoff(
+                    unquote(ack.group(1)),
+                    verified_person_id=person_id,
+                    note=str(body.get("note") or body.get("body") or ""),
+                )
+            elif view == "ask":
                 report = _intel_ops.ask_question(
                     question=str(body.get("question") or ""),
                     scope=body.get("scope") or "Wolf system",
@@ -19477,6 +29615,252 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         self._send_json({"ok": True, "person_id": person_id, **out})
 
+    def _intel_learning_fail(self, exc: Exception) -> None:
+        code = getattr(exc, "code", "invalid")
+        if code == "denied":
+            status = 403
+        elif code == "not_found":
+            status = 404
+        elif code == "writes_refused":
+            status = 405
+        else:
+            status = 400
+        self._send_json(
+            {
+                "ok": False,
+                "error": code,
+                "message": str(exc),
+                "appended": False,
+                "promoted": False,
+                "executed": False,
+                "applied": False,
+                "live": False,
+                **_intel_learn.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _intel_learning_refuse(self, kind: str) -> None:
+        actor = self._intel_rule_actor("read")
+        if actor is None:
+            return
+        fn = {
+            "promote": _intel_learn.refuse_promote,
+            "proven": _intel_learn.refuse_proven,
+            "execute": _intel_learn.refuse_execute,
+            "production": _intel_learn.refuse_production,
+            "apply": _intel_learn.refuse_apply,
+        }.get(kind, _intel_learn.refuse_method)
+        try:
+            fn({})
+        except (_intel_learn.LearningPolicyError, _intel_rule.IntelRuleError) as exc:
+            self._intel_learning_fail(exc)
+
+    def _intel_learning_writes_refused(self) -> None:
+        actor = self._intel_rule_actor("read")
+        if actor is None:
+            return
+        try:
+            _intel_learn.refuse_method({})
+        except _intel_learn.LearningPolicyError as exc:
+            self._intel_learning_fail(exc)
+
+    def _intel_learning_handled(
+        self, path: str, method: str, qs: dict | None = None
+    ) -> bool:
+        if path != "/api/intel/learning-policy" and not path.startswith(
+            "/api/intel/learning-policy/"
+        ):
+            return False
+        kind = _intel_learn.refuse_code(path)
+        if method in {"PUT", "PATCH"}:
+            if kind:
+                self._intel_learning_refuse(kind)
+            else:
+                self._intel_learning_writes_refused()
+            return True
+        if method == "POST":
+            if kind:
+                self._intel_learning_refuse(kind)
+                return True
+            self._intel_learning_writes_refused()
+            return True
+        if method == "GET":
+            if kind:
+                self._intel_learning_refuse(kind)
+                return True
+            if path == "/api/intel/learning-policy":
+                self._intel_learning_desk(qs or {})
+                return True
+            if path == "/api/intel/learning-policy/stubs":
+                self._intel_learning_list_stubs(qs or {})
+                return True
+            if path == "/api/intel/learning-policy/recommendations":
+                self._intel_learning_recommendations(qs or {})
+                return True
+            if path == "/api/intel/learning-policy/next-action":
+                self._intel_learning_next_action()
+                return True
+            match = re.match(
+                r"^/api/intel/learning-policy/stubs/([^/]+)$", path
+            )
+            reserved = {
+                "stubs",
+                "recommendations",
+                "next-action",
+                "promote",
+                "auto-promote",
+                "proven",
+                "ready",
+                "execute",
+                "run",
+                "production",
+                "apply",
+                "auto-apply",
+            }
+            if match and match.group(1) not in reserved:
+                self._intel_learning_get_stub(match.group(1))
+                return True
+            self._send_err(404, "not found")
+            return True
+        return False
+
+    def _intel_learning_desk(self, qs: dict) -> None:
+        actor = self._intel_rule_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            out = _intel_learn.build_desk(
+                person_id,
+                role_allowed=role_allowed,
+                experiment_id=(qs.get("experiment_id") or [None])[0],
+                note_id=(qs.get("note_id") or [None])[0],
+                limit=int((qs.get("limit") or ["50"])[0] or 50),
+            )
+        except (_intel_learn.LearningPolicyError, ValueError) as exc:
+            if isinstance(exc, ValueError) and not isinstance(
+                exc, _intel_learn.LearningPolicyError
+            ):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "invalid",
+                        "message": str(exc),
+                        **_intel_learn.honesty_flags(),
+                    },
+                    status=400,
+                )
+                return
+            self._intel_learning_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"ok": True, "person_id": person_id, **out})
+
+    def _intel_learning_list_stubs(self, qs: dict) -> None:
+        actor = self._intel_rule_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            out = _intel_learn.list_stubs(
+                person_id,
+                role_allowed=role_allowed,
+                experiment_id=(qs.get("experiment_id") or [None])[0],
+                note_id=(qs.get("note_id") or [None])[0],
+                limit=int((qs.get("limit") or ["50"])[0] or 50),
+            )
+        except (_intel_learn.LearningPolicyError, ValueError) as exc:
+            if isinstance(exc, ValueError) and not isinstance(
+                exc, _intel_learn.LearningPolicyError
+            ):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "invalid",
+                        "message": str(exc),
+                        **_intel_learn.honesty_flags(),
+                    },
+                    status=400,
+                )
+                return
+            self._intel_learning_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"ok": True, "person_id": person_id, **out})
+
+    def _intel_learning_get_stub(self, stub_id: str) -> None:
+        actor = self._intel_rule_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            out = _intel_learn.get_stub(
+                stub_id, person_id, role_allowed=role_allowed
+            )
+        except _intel_learn.LearningPolicyError as exc:
+            self._intel_learning_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"ok": True, "person_id": person_id, **out})
+
+    def _intel_learning_recommendations(self, qs: dict) -> None:
+        actor = self._intel_rule_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            out = _intel_learn.stub_recommendations(
+                person_id,
+                role_allowed=role_allowed,
+                experiment_id=(qs.get("experiment_id") or [None])[0],
+                note_id=(qs.get("note_id") or [None])[0],
+                limit=int((qs.get("limit") or ["50"])[0] or 50),
+            )
+        except (_intel_learn.LearningPolicyError, ValueError) as exc:
+            if isinstance(exc, ValueError) and not isinstance(
+                exc, _intel_learn.LearningPolicyError
+            ):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "invalid",
+                        "message": str(exc),
+                        **_intel_learn.honesty_flags(),
+                    },
+                    status=400,
+                )
+                return
+            self._intel_learning_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"ok": True, "person_id": person_id, **out})
+
+    def _intel_learning_next_action(self) -> None:
+        actor = self._intel_rule_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            out = _intel_learn.operator_next_action(
+                person_id, role_allowed=role_allowed
+            )
+        except _intel_learn.LearningPolicyError as exc:
+            self._intel_learning_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"ok": True, "person_id": person_id, **out})
+
     def _sop_actor(self, action: str, body: dict | None = None) -> tuple[str, bool] | None:
         """Identity required. Owner always. Role only if rbac.can already grants it.
 
@@ -19686,9 +30070,182 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
         )
 
+    def _crm_identity_depth_quiet(self) -> dict:
+        return {
+            "staff_ready": False,
+            "proven": False,
+            "ready": False,
+            "haikal_human": "not_started",
+            "devi_retest": "parked",
+            "identity_graph_complete": False,
+            "merged": False,
+            "silent_merge": False,
+            "bzg_compose": False,
+            "money": None,
+            "production": False,
+            "lead_spine_mutated": False,
+            "habitat_mutated": False,
+            "duplicate_mutate_surface": False,
+        }
+
+    def _require_crm_identity_depth_seat(self, body: dict | None = None) -> dict | None:
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return None
+        person_id = identity.get("person_id")
+        try:
+            seat = _crm_ident_depth.require_seat(person_id)
+        except _crm_ident_depth.IdentityDepthError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "person_id": person_id,
+                    **self._crm_identity_depth_quiet(),
+                    **_crm_ident_depth.honesty_flags(),
+                },
+                status=int(exc.http_status or 403),
+            )
+            return None
+        identity["identity_seat"] = seat
+        return identity
+
+    def _crm_identity_depth_fail(self, exc: _crm_ident_depth.IdentityDepthError) -> None:
+        status = int(getattr(exc, "http_status", None) or 400)
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._crm_identity_depth_quiet(),
+                **_crm_ident_depth.honesty_flags(),
+            },
+            status=status,
+        )
+
+    def _crm_identity_depth_refused(self, path: str) -> None:
+        identity = self._require_crm_identity_depth_seat()
+        if identity is None:
+            return
+        body = _crm_ident_depth.refuse(path)
+        body.update(self._crm_identity_depth_quiet())
+        self._send_json(body, status=403)
+
+    def _crm_identity_operator_depth(self) -> None:
+        identity = self._require_crm_identity_depth_seat()
+        if identity is None:
+            return
+        try:
+            desk = _crm_ident_depth.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _crm_ident_depth.IdentityDepthError as exc:
+            self._crm_identity_depth_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._crm_identity_depth_quiet())
+        self._send_json(desk)
+
+    def _crm_identity_operator_depth_rbac(self) -> None:
+        identity = self._require_crm_identity_depth_seat()
+        if identity is None:
+            return
+        try:
+            prove = _crm_ident_depth.prove_rbac(person_id=identity["person_id"])
+        except _crm_ident_depth.IdentityDepthError as exc:
+            self._crm_identity_depth_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._crm_identity_depth_quiet())
+        self._send_json(prove)
+
+    def _crm_identity_operator_detail(self, object_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_crm_identity_depth_seat()
+        if identity is None:
+            return
+        try:
+            detail = _crm_ident_depth.object_detail(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _crm_ident_depth.IdentityDepthError as exc:
+            self._crm_identity_depth_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._crm_identity_depth_quiet())
+        self._send_json(detail)
+
+    def _crm_identity_operator_action(self, object_id: str, action: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._require_crm_identity_depth_seat(body)
+        if identity is None:
+            return
+        kind = str(body.get("kind") or action or "")
+        try:
+            result = _crm_ident_depth.record_operator_action(
+                unquote(object_id),
+                verified_person_id=identity["person_id"],
+                kind=kind,
+                note=str(body.get("note") or body.get("body") or ""),
+                decision=str(body.get("decision") or ""),
+                body=body,
+            )
+        except _crm_ident_depth.IdentityDepthError as exc:
+            self._crm_identity_depth_fail(exc)
+            return
+        except _crm_ident.CrmIdentityError as exc:
+            self._crm_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._crm_identity_depth_quiet())
+        self._send_json(result)
+
     def _crm_identity_page(self) -> None:
-        actor = self._crm_actor("read")
-        if actor is None:
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(
+                identity, required_permission=_crm_ident.permission_for("read")
+            )
+            return
+        person_id = (identity.get("person_id") or "").strip()
+        allowed = False
+        if person_id == _crm_ident.OWNER_PERSON:
+            allowed = True
+        else:
+            try:
+                _crm_ident_depth.require_seat(person_id)
+                allowed = True
+            except _crm_ident_depth.IdentityDepthError:
+                allowed = False
+            if not allowed:
+                try:
+                    allowed = bool(
+                        _rbac.can(person_id, _crm_ident.permission_for("read"))
+                    )
+                except Exception:  # noqa: BLE001
+                    allowed = False
+        if not allowed:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "denied",
+                    "message": "customer identity is Owner or an existing CRM seat only",
+                    **self._crm_identity_depth_quiet(),
+                    **_crm_ident.honesty_flags(),
+                },
+                status=403,
+            )
             return
         page = DASHBOARDS / "crm-identity.html"
         if not page.is_file():
@@ -20243,6 +30800,355 @@ class BetaHandler(SimpleHTTPRequestHandler):
     def _uma_ops_honesty(self) -> None:
         self._send_json({"ok": True, **_uma_ops.honesty_flags()})
 
+    def _uma_ops_page(self) -> None:
+        """Uma Blu Today phone page — fail-closed. Anon → 403 not 404."""
+        if self._require_uma_ops() is None:
+            return
+        page = DASHBOARDS / "bzg-uma-blu.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Uma Blu Today page is missing.",
+                    "bound": _uma_ops.LOOP_BOUND,
+                },
+                status=404,
+            )
+            return
+        body = page.read_bytes()
+        self._send_html_shell(body, rel="bzg-uma-blu.html")
+
+    def _uma_staff_page(self, filename: str) -> None:
+        """Phone page on the Uma day. Same gate as Today. Anon → 403."""
+        if self._require_uma_ops() is None:
+            return
+        page = DASHBOARDS / filename
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Uma Blu page is missing.",
+                    "bound": _uma_ops.LOOP_BOUND,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return
+        self._send_html_shell(page.read_bytes(), rel=filename)
+
+    def _intel_connect_refuse(self, path: str) -> None:
+        """Additive refuse for auto-promote / auto-execute on desk surfaces."""
+        try:
+            if "promote" in path:
+                _intel_connect.refuse_auto_promote({})
+            else:
+                _intel_connect.refuse_auto_execute({})
+        except _intel_connect.IntelConnectiveError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "bound": _intel_connect.BOUND,
+                    "auto_promote": False,
+                    "auto_execute": False,
+                    "path": path,
+                },
+                status=405,
+            )
+
+    def _intel_connect_quiet(self) -> dict:
+        flags = _intel_connect.honesty_flags()
+        return {
+            "bound": _intel_connect.BOUND,
+            "auto_promote": False,
+            "auto_execute": False,
+            "proven": False,
+            "ready": False,
+            "cr_resolved": False,
+            "invented_proven": False,
+            "invented_ready": False,
+            "money": None,
+            "payment_executed": False,
+            "honesty": flags,
+        }
+
+    def _intel_connect_fail(self, exc: _intel_connect.IntelConnectiveError) -> None:
+        status = 400
+        if exc.code in {"forbidden", "denied"}:
+            status = 403
+        elif exc.code.endswith("_refused"):
+            status = 405
+        elif exc.code in {"not_found", "bad_recommendation"}:
+            status = 404 if exc.code == "not_found" else 400
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **self._intel_connect_quiet(),
+            },
+            status=status,
+        )
+
+    def _require_intel_connect_operator(self, body: dict | None = None) -> dict | None:
+        """Owner or intel.connective.operator / intel ops seat. Anon → 403."""
+        identity = self._resolve_identity(body)
+        if not identity.get("ok"):
+            self._send_identity_deny(
+                identity, required_permission=_intel_connect.PERM_INTEL_OPERATOR
+            )
+            return None
+        person_id = (identity.get("person_id") or "").strip()
+        if not person_id:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Intel connective operator requires a known person seat.",
+                    **self._intel_connect_quiet(),
+                },
+                status=403,
+            )
+            return None
+        try:
+            prove = _intel_connect.prove_intel_operator(person_id=person_id)
+            if not prove.get("can_intel_operator"):
+                seat = _intel_ops.seat_for(person_id)
+                if seat is None:
+                    raise _intel_connect.IntelConnectiveError(
+                        f"permission denied: {_intel_connect.PERM_INTEL_OPERATOR}",
+                        code="forbidden",
+                    )
+                # Intel ops seat may read depth; mutating still needs operator prove.
+                if not prove.get("pack_seat") and not prove.get("can_intel_operator"):
+                    raise _intel_connect.IntelConnectiveError(
+                        f"permission denied: {_intel_connect.PERM_INTEL_OPERATOR}",
+                        code="forbidden",
+                    )
+            return {**identity, "prove": prove}
+        except _intel_connect.IntelConnectiveError as exc:
+            self._intel_connect_fail(exc)
+            return None
+
+    def _intel_connect_operator_depth(self) -> None:
+        identity = self._require_intel_connect_operator()
+        if identity is None:
+            return
+        try:
+            desk = _intel_connect.operator_depth_desk(
+                verified_person_id=identity["person_id"],
+            )
+        except _intel_connect.IntelConnectiveError as exc:
+            self._intel_connect_fail(exc)
+            return
+        desk["person_id"] = identity.get("person_id")
+        desk.update(self._intel_connect_quiet())
+        self._send_json(desk)
+
+    def _intel_connect_operator_depth_rbac(self) -> None:
+        identity = self._require_intel_connect_operator()
+        if identity is None:
+            return
+        try:
+            prove = _intel_connect.prove_intel_operator(
+                person_id=identity["person_id"] or _intel_connect.OWNER,
+            )
+        except _intel_connect.IntelConnectiveError as exc:
+            self._intel_connect_fail(exc)
+            return
+        prove["person_id"] = identity.get("person_id")
+        prove.update(self._intel_connect_quiet())
+        self._send_json(prove)
+
+    def _intel_connect_recommendation_detail(self, recommendation_id: str) -> None:
+        from urllib.parse import unquote
+
+        identity = self._require_intel_connect_operator()
+        if identity is None:
+            return
+        try:
+            detail = _intel_connect.operator_recommendation_detail(
+                unquote(recommendation_id),
+                verified_person_id=identity["person_id"],
+            )
+        except _intel_connect.IntelConnectiveError as exc:
+            self._intel_connect_fail(exc)
+            return
+        detail["person_id"] = identity.get("person_id")
+        detail.update(self._intel_connect_quiet())
+        self._send_json(detail)
+
+    def _intel_connect_recommendation_action(self, recommendation_id: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        if any(body.get(key) not in (None, "", False) for key in _intel_connect.FACT_KEYS):
+            identity = self._require_intel_connect_operator(body)
+            if identity is None:
+                return
+            try:
+                if body.get("promote") or body.get("auto_promote"):
+                    _intel_connect.refuse_auto_promote(body)
+                elif body.get("execute") or body.get("auto_execute"):
+                    _intel_connect.refuse_auto_execute(body)
+                elif body.get("proven"):
+                    _intel_connect.refuse_proven(body)
+                elif body.get("ready"):
+                    _intel_connect.refuse_ready(body)
+                elif body.get("production"):
+                    _intel_connect.refuse_production(body)
+                else:
+                    _intel_connect.refuse_money(body)
+            except _intel_connect.IntelConnectiveError as exc:
+                self._intel_connect_fail(exc)
+            return
+        identity = self._require_intel_connect_operator(body)
+        if identity is None:
+            return
+        try:
+            result = _intel_connect.record_recommendation_operator_action(
+                verified_person_id=identity["person_id"],
+                recommendation_id=unquote(recommendation_id),
+                kind=str(body.get("kind") or "note"),
+                note=str(body.get("note") or body.get("body") or ""),
+            )
+        except _intel_connect.IntelConnectiveError as exc:
+            self._intel_connect_fail(exc)
+            return
+        result["person_id"] = identity.get("person_id")
+        result.update(self._intel_connect_quiet())
+        self._send_json(result)
+
+    def _uma_ops_needs_you_payload(self, report: dict, identity: dict) -> None:
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report["bound"] = _uma_ops.CONNECTIVE_BOUND
+        report["staff_ready"] = False
+        report["proven"] = False
+        report["ready"] = False
+        report["haikal_human"] = "not_started"
+        report["devi_retest"] = "parked"
+        report["payment_execution"] = False
+        report["money"] = None
+        report["live_devi_commission"] = False
+        report["bzg_compose"] = False
+        report["duplicate_mutate_surface"] = False
+        self._send_json(report)
+
+    def _uma_ops_connective_fail(self, exc: _uma_ops.UmaOpsError) -> None:
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "bound": _uma_ops.CONNECTIVE_BOUND,
+                "staff_ready": False,
+                "proven": False,
+                "ready": False,
+                "haikal_human": "not_started",
+                "devi_retest": "parked",
+                "payment_execution": False,
+                "money": None,
+                "live_devi_commission": False,
+            },
+            status=int(getattr(exc, "http_status", 400) or 400),
+        )
+
+    def _uma_ops_connective_refuse(self, path: str, code: str) -> None:
+        try:
+            _uma_ops._apply_connective_refuse(code)
+        except _uma_ops.UmaOpsError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "bound": _uma_ops.CONNECTIVE_BOUND,
+                    "path": path,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "haikal_human": "not_started",
+                    "devi_retest": "parked",
+                    "payment_execution": False,
+                    "money": None,
+                },
+                status=int(getattr(exc, "http_status", 405) or 405),
+            )
+
+    def _uma_ops_needs_you_identity(self) -> dict | None:
+        identity = self._resolve_identity(emit_audit=False)
+        person_id = (identity.get("person_id") or "").strip() if identity.get("ok") else ""
+        if not person_id:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "BZG Needs-You requires a known person seat.",
+                    "bound": _uma_ops.CONNECTIVE_BOUND,
+                },
+                status=403,
+            )
+            return None
+        return identity
+
+    def _uma_ops_needs_you(self) -> None:
+        identity = self._uma_ops_needs_you_identity()
+        if identity is None:
+            return
+        try:
+            report = _uma_ops.needs_you_connective_strip(
+                verified_person_id=identity["person_id"]
+            )
+        except _uma_ops.UmaOpsError as exc:
+            self._uma_ops_connective_fail(exc)
+            return
+        self._uma_ops_needs_you_payload(report, identity)
+
+    def _uma_ops_needs_you_detail(self, object_id: str) -> None:
+        identity = self._uma_ops_needs_you_identity()
+        if identity is None:
+            return
+        try:
+            report = _uma_ops.connective_item_detail(
+                object_id,
+                verified_person_id=identity["person_id"],
+            )
+        except _uma_ops.UmaOpsError as exc:
+            self._uma_ops_connective_fail(exc)
+            return
+        self._uma_ops_needs_you_payload(report, identity)
+
+    def _uma_ops_needs_you_acknowledge(self, object_id: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._uma_ops_needs_you_identity()
+        if identity is None:
+            return
+        try:
+            report = _uma_ops.acknowledge_handoff(
+                object_id,
+                verified_person_id=identity["person_id"],
+                note=str(body.get("note") or body.get("body") or ""),
+            )
+        except _uma_ops.UmaOpsError as exc:
+            self._uma_ops_connective_fail(exc)
+            return
+        self._uma_ops_needs_you_payload(report, identity)
+
     def _uma_ops_today(self) -> None:
         try:
             identity = self._resolve_identity(emit_audit=False)
@@ -20299,7 +31205,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return
         try:
-            out = _uma_p0.receive_goods(
+            # Prefer goods_receipt so stock/bill consequence projections refresh.
+            out = _uma_ops.goods_receipt(
                 person_id=person_id,
                 pr_key=str(body.get("pr") or body.get("pr_key") or ""),
                 lines=body.get("lines") or [],
@@ -20310,7 +31217,84 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 require_evidence=True,
                 identity=identity,
             )
-            self._send_json({"ok": True, "receipt": out, "payment_approve": False})
+            self._send_json({"ok": True, "payment_approve": False, **out})
+        except _uma_ops.UmaOpsError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_goods_receipt_post(self) -> None:
+        """Sprint2 P1 operator depth — real goods-receipt / partial-receive input."""
+        self._uma_ops_receive_post()
+
+    def _uma_ops_operator_depth(self) -> None:
+        try:
+            identity = self._resolve_identity(emit_audit=False)
+            person_id = identity.get("person_id") if identity.get("ok") else None
+            self._send_json(_uma_ops.operator_depth_desk(person_id=person_id))
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_operator_depth_rbac(self) -> None:
+        try:
+            identity = self._resolve_identity(emit_audit=False)
+            person_id = identity.get("person_id") if identity.get("ok") else None
+            self._send_json(
+                _uma_ops.prove_fb_ops_lead_operator(
+                    person_id=person_id or _uma_ops.PERS_DEVI_FIXTURE
+                )
+            )
+        except _uma_ops.UmaOpsError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_pr_operator_detail(self, key: str) -> None:
+        try:
+            from urllib.parse import unquote
+
+            identity = self._resolve_identity(emit_audit=False)
+            person_id = identity.get("person_id") if identity.get("ok") else None
+            out = _uma_ops.operator_pr_detail(unquote(key), person_id=person_id)
+            self._send_json(out)
+        except _uma_ops.UmaOpsError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_pr_operator_action_post(self, key: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if not isinstance(body, dict):
+            body = {}
+        actor = self._uma_ops_actor(body)
+        if actor is None:
+            return
+        person_id, identity = actor
+        from urllib.parse import unquote
+
+        try:
+            out = _uma_ops.record_pr_operator_action(
+                person_id=person_id,
+                pr_key=unquote(key),
+                kind=str(body.get("kind") or "note"),
+                note=str(body.get("note") or ""),
+                corrects_receipt_id=body.get("corrects_receipt_id"),
+                identity=identity,
+            )
+            self._send_json(out)
         except _uma_ops.UmaOpsError as exc:
             self._send_json(
                 {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
@@ -20376,6 +31360,94 @@ class BetaHandler(SimpleHTTPRequestHandler):
     def _uma_ops_stock(self) -> None:
         try:
             self._send_json(_uma_ops.stock_framework())
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_loop(self) -> None:
+        """Sprint2 P1 v2 — continuous Uma Blu loop desk."""
+        try:
+            identity = self._resolve_identity(emit_audit=False)
+            person_id = identity.get("person_id") if identity.get("ok") else None
+            self._send_json(_uma_ops.loop_desk(person_id=person_id))
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_loop_view(self, view: str) -> None:
+        try:
+            if view == "ordering_state":
+                self._send_json(_uma_ops.ordering_state())
+            elif view == "partial_receiving":
+                self._send_json(_uma_ops.partial_receiving_state())
+            elif view == "stock_consequence":
+                self._send_json(_uma_ops.stock_consequence())
+            elif view == "supplier_bill_consequence":
+                self._send_json(_uma_ops.supplier_bill_consequence())
+            elif view == "exception":
+                self._send_json(_uma_ops.exception_strip())
+            elif view == "handover":
+                self._send_json(_uma_ops.handover_strip())
+            elif view == "manager_visibility":
+                self._send_json(_uma_ops.manager_visibility())
+            elif view == "owner_exception":
+                self._send_json(_uma_ops.owner_exception_strip())
+            else:
+                self._send_json(
+                    {"ok": False, "error": "not_found", "message": f"Unknown loop view: {view}"},
+                    status=404,
+                )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_loop_refuse(self, path: str, code: str) -> None:
+        try:
+            _uma_ops._apply_refuse(code)
+        except _uma_ops.UmaOpsError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "bound": _uma_ops.LOOP_BOUND,
+                    "path": path,
+                    "payment_execution": False,
+                    "esb_mutated": False,
+                    "proven": False,
+                    "ready": False,
+                },
+                status=int(getattr(exc, "http_status", 405) or 405),
+            )
+
+    def _uma_ops_loop_note_post(self, path: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        actor = self._uma_ops_actor(body)
+        if actor is None:
+            return
+        person_id, identity = actor
+        kind = str(body.get("kind") or "").strip().lower()
+        if path.endswith("/handover-note"):
+            kind = "handover"
+        elif path.endswith("/exception-note"):
+            kind = kind or "exception"
+        if not kind:
+            kind = "handover"
+        try:
+            out = _uma_ops.record_loop_note(
+                person_id=person_id,
+                kind=kind,
+                note=str(body.get("note") or ""),
+                source_id=body.get("source_id") or body.get("pr_id"),
+                identity=identity,
+            )
+            self._send_json(out)
+        except _uma_ops.UmaOpsError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
         except Exception as exc:  # noqa: BLE001
             self._send_err(500, str(exc))
 
@@ -21177,6 +32249,112 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_lead_error(exc)
             return
         self._send_json(payload)
+
+    def _crm_needs_you_payload(self, report: dict, identity: dict) -> None:
+        report = dict(report)
+        report["person_id"] = identity.get("person_id")
+        report["bound"] = _crm_nye.CONNECTIVE_BOUND
+        report["staff_ready"] = False
+        report["proven"] = False
+        report["ready"] = False
+        report["haikal_human"] = "not_started"
+        report["devi_retest"] = "parked"
+        report["live_habitat_commission"] = False
+        report["crm_cutover"] = False
+        report["klaviyo_write"] = False
+        report["metricool_write"] = False
+        report["money"] = None
+        report["bzg_compose"] = False
+        report["duplicate_mutate_surface"] = False
+        self._send_json(report)
+
+    def _crm_needs_you_fail(self, exc: _lead_spine.LeadSpineError) -> None:
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "bound": _crm_nye.CONNECTIVE_BOUND,
+                "staff_ready": False,
+                "proven": False,
+                "ready": False,
+                "haikal_human": "not_started",
+                "devi_retest": "parked",
+                "live_habitat_commission": False,
+                "money": None,
+                "bzg_compose": False,
+            },
+            status=int(getattr(exc, "http_status", 400) or 400),
+        )
+
+    def _crm_needs_you_refuse(self, path: str, code: str) -> None:
+        try:
+            _crm_nye._apply_connective_refuse(code)
+        except _lead_spine.LeadSpineError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "bound": _crm_nye.CONNECTIVE_BOUND,
+                    "path": path,
+                    "staff_ready": False,
+                    "proven": False,
+                    "ready": False,
+                    "haikal_human": "not_started",
+                    "devi_retest": "parked",
+                    "money": None,
+                },
+                status=int(getattr(exc, "http_status", 405) or 405),
+            )
+
+    def _crm_needs_you(self) -> None:
+        identity = self._lead_identity()
+        if identity is None:
+            return
+        try:
+            report = _crm_nye.needs_you_connective_strip(
+                verified_person_id=identity["person_id"]
+            )
+        except _lead_spine.LeadSpineError as exc:
+            self._crm_needs_you_fail(exc)
+            return
+        self._crm_needs_you_payload(report, identity)
+
+    def _crm_needs_you_detail(self, object_id: str) -> None:
+        identity = self._lead_identity()
+        if identity is None:
+            return
+        try:
+            report = _crm_nye.connective_item_detail(
+                object_id,
+                verified_person_id=identity["person_id"],
+            )
+        except _lead_spine.LeadSpineError as exc:
+            self._crm_needs_you_fail(exc)
+            return
+        self._crm_needs_you_payload(report, identity)
+
+    def _crm_needs_you_acknowledge(self, object_id: str) -> None:
+        try:
+            body = self._read_json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._lead_identity(body)
+        if identity is None:
+            return
+        try:
+            report = _crm_nye.acknowledge_handoff(
+                object_id,
+                verified_person_id=identity["person_id"],
+                note=str(body.get("note") or body.get("body") or ""),
+            )
+        except _lead_spine.LeadSpineError as exc:
+            self._crm_needs_you_fail(exc)
+            return
+        self._crm_needs_you_payload(report, identity)
 
     def _get_lead(self, lead_id: str) -> None:
         identity = self._lead_identity()
@@ -22295,11 +33473,176 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     r["theme"] = theme
                     r["default_assignee"] = r.get("default_assignee") or theme.get("default_assignee") or ""
                     r.pop("theme_json", None)
-                self._send_json({"ok": True, "brands": rows, "count": len(rows)})
+                self._send_json({"ok": True, "brands": rows, "count": len(rows), "source": "content_brands_table"})
             finally:
                 conn.close()
         except Exception as exc:  # noqa: BLE001
             self._send_err(500, str(exc))
+
+    def _content_identity_scopes(self, permission: str = "can_view_plan") -> tuple[dict, list[str]] | None:
+        identity = self._resolve_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity, required_permission=permission)
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if not subject or not (
+            _wi.has_permission(subject, "can_view_plan")
+            or _wi.has_permission(subject, "can_upload")
+            or identity.get("person_id") == "PERS-MATT"
+        ):
+            self._send_json(
+                {"ok": False, "error": "forbidden", "required_permission": "can_view_plan|can_upload", "staff_ready": False},
+                status=403,
+            )
+            return None
+        who = _wolf_shell.whoami_from_identity(identity)
+        return identity, list(who.get("scopes") or [])
+
+    def _content_brand_registry(self) -> None:
+        seat = self._content_identity_scopes()
+        if seat is None:
+            return
+        _identity, scopes = seat
+        conn = db_connect()
+        try:
+            brands = _ce_repair.authorised_brands(conn, scopes)
+        finally:
+            conn.close()
+        self._send_json({
+            "ok": True,
+            "source": "org_brands+aliases",
+            "brands": brands,
+            "all_brands": _ce_repair.all_brands_authorised(len(brands)),
+            "chain": "Person→Role→Assignment→Scope→Permission→Audience",
+            "staff_ready": False,
+            "wi_connected": False,
+        })
+
+    def _content_brand_suggest(self) -> None:
+        seat = self._content_identity_scopes("can_upload")
+        if seat is None:
+            return
+        _identity, scopes = seat
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": str(exc), "applied": False}, status=400)
+            return
+        name = ""
+        files = body.get("files") or []
+        if isinstance(files, list) and files:
+            first = files[0]
+            if isinstance(first, str):
+                name = first
+            elif isinstance(first, dict):
+                name = str(first.get("original_filename") or first.get("name") or "")
+        name = name or str(body.get("filename") or "")
+        conn = db_connect()
+        try:
+            self._send_json(_ce_repair.suggest_brand(name, scopes, conn))
+        finally:
+            conn.close()
+
+    def _content_nas_coverage(self, qs: dict) -> None:
+        seat = self._content_identity_scopes()
+        if seat is None:
+            return
+        _identity, scopes = seat
+        start = ((qs.get("start") or ["0"])[0] or "").strip().lower() in ("1", "true", "yes")
+        conn = db_connect()
+        try:
+            if start:
+                payload = _ce_repair.start_inplace_index(conn, scopes)
+            else:
+                payload = _ce_repair.read_coverage()
+        finally:
+            conn.close()
+        payload["staff_ready"] = False
+        payload["whole_nas"] = False
+        self._send_json(payload)
+
+    def _content_nas_media(self, nas_id: int, qs: dict) -> None:
+        seat = self._content_identity_scopes()
+        if seat is None:
+            return
+        _identity, scopes = seat
+        conn = db_connect()
+        try:
+            try:
+                path = _ce_repair.resolve_nas_media(conn, nas_id, scopes)
+            except _ce_repair.RepairError as exc:
+                self._send_json(
+                    {"ok": False, "error": exc.code, "message": str(exc), "staff_ready": False},
+                    status=exc.http,
+                )
+                return
+        finally:
+            conn.close()
+        if path is None:
+            self._send_json(
+                {"ok": False, "error": "preview_unavailable", "message": "Indexed file is not readable.", "staff_ready": False},
+                status=404,
+            )
+            return
+        play = ((qs.get("play") or ["0"])[0] or "").strip().lower() in ("1", "true", "yes")
+        download = ((qs.get("download") or ["0"])[0] or "").strip().lower() in ("1", "true", "yes")
+        self._send_media_bytes(
+            path,
+            nas_id=nas_id,
+            play=play,
+            download=download,
+            filename=path.name,
+        )
+
+    def _send_jpeg_file(self, path: Path) -> None:
+        data = path.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "image/jpeg")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "private, max-age=60")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _send_media_bytes(self, path: Path, *, nas_id: int | None = None, asset_id: int | None = None, play: bool = False, download: bool = False, filename: str | None = None) -> None:
+        ext = path.suffix.lower()
+        if not play and not download:
+            dest = _ce_repair.nas_thumb_path(nas_id) if nas_id is not None else _ce_repair.asset_thumb_path(int(asset_id or 0))
+            if not dest.is_file():
+                _ce_repair.write_jpeg_thumb(path, dest)
+            if dest.is_file():
+                self._send_jpeg_file(dest)
+                return
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "preview_unavailable",
+                    "message": "Thumbnail is not ready yet.",
+                    "staff_ready": False,
+                },
+                status=404,
+            )
+            return
+        mime = {
+            ".mp4": "video/mp4", ".mov": "video/quicktime", ".webm": "video/webm", ".m4v": "video/mp4",
+            ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
+            ".gif": "image/gif", ".webp": "image/webp",
+            ".mp3": "audio/mpeg", ".wav": "audio/wav", ".m4a": "audio/mp4",
+        }.get(ext, "application/octet-stream")
+        size = path.stat().st_size
+        disp = "attachment" if download else "inline"
+        shown = filename or path.name
+        self.send_response(200)
+        self.send_header("Content-Type", mime)
+        self.send_header("Content-Length", str(size))
+        self.send_header("Content-Disposition", f'{disp}; filename="{shown}"')
+        self.send_header("Cache-Control", "private, max-age=60")
+        self.end_headers()
+        with path.open("rb") as handle:
+            while True:
+                chunk = handle.read(256 * 1024)
+                if not chunk:
+                    break
+                self.wfile.write(chunk)
 
     def _get_intel_plan(self, plan_id: int, qs: dict | None = None) -> None:
         qs = qs or {}
@@ -22895,18 +34238,43 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "identity_assurance": identity.get("identity_assurance"),
             }, status=403)
             return
+        who = _wolf_shell.whoami_from_identity(identity)
+        scopes = list(who.get("scopes") or [])
         conn = db_connect()
         try:
-            row = conn.execute(
-                "SELECT id, brand, stage, filename, v2_path, canonical_filename, original_filename, media_type, type, data_lane "
-                "FROM assets WHERE id=?",
-                (asset_id,),
-            ).fetchone()
+            try:
+                row = conn.execute(
+                    "SELECT id, brand, stage, filename, v2_path, nas_path, nas_received, "
+                    "canonical_filename, original_filename, media_type, type, data_lane "
+                    "FROM assets WHERE id=?",
+                    (asset_id,),
+                ).fetchone()
+            except Exception:
+                _nas_library.migrate_schema(conn)
+                conn.commit()
+                row = conn.execute(
+                    "SELECT id, brand, stage, filename, v2_path, nas_path, nas_received, "
+                    "canonical_filename, original_filename, media_type, type, data_lane "
+                    "FROM assets WHERE id=?",
+                    (asset_id,),
+                ).fetchone()
             if not row:
                 self._send_err(404, "asset not found")
                 return
             d = dict(row)
-            # Resolve under beta library only
+            brand = (d.get("brand") or "").strip().lower()
+            if brand and not _nas_library.scopes_allow_brand(scopes, brand):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "forbidden",
+                        "message": f"subject lacks scope for brand {brand}",
+                        "required_scope_for_brand": brand,
+                    },
+                    status=403,
+                )
+                return
+            # Resolve: prefer Beta library_v2 mirror; fall back to Wolf-Library NAS jail
             v2 = d.get("v2_path") or ""
             stage = d.get("stage") or "RAW"
             fname = d.get("canonical_filename") or d.get("filename") or ""
@@ -22929,6 +34297,13 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 if p.exists() and p.is_file():
                     fpath = p
                     break
+            if not fpath and d.get("nas_received") and d.get("nas_path"):
+                try:
+                    np = _nas_library._ensure_under_write_prefix(Path(d["nas_path"]))
+                    if np.is_file():
+                        fpath = np
+                except Exception:
+                    fpath = None
             if not fpath:
                 # hover preview not ready — honest
                 self._send_json({
@@ -22938,24 +34313,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     "readiness": "CHECKING",
                 }, status=404)
                 return
-            data = fpath.read_bytes()
-            # MIME
-            ext = fpath.suffix.lower()
-            mime = {
-                ".mp4": "video/mp4", ".mov": "video/quicktime", ".webm": "video/webm",
-                ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
-                ".webp": "image/webp", ".gif": "image/gif",
-                ".mp3": "audio/mpeg", ".m4a": "audio/mp4",
-            }.get(ext, "application/octet-stream")
-            disp = "attachment" if mode == "download" else "inline"
+            play = ((qs.get("play") or ["0"])[0] or "").strip().lower() in ("1", "true", "yes")
             name = d.get("canonical_filename") or d.get("original_filename") or fpath.name
-            self.send_response(200)
-            self.send_header("Content-Type", mime)
-            self.send_header("Content-Length", str(len(data)))
-            self.send_header("Content-Disposition", f'{disp}; filename="{name}"')
-            self.send_header("Cache-Control", "private, max-age=60")
-            self.end_headers()
-            self.wfile.write(data)
+            self._send_media_bytes(
+                fpath,
+                asset_id=asset_id,
+                play=play or mode == "download",
+                download=mode == "download",
+                filename=name,
+            )
         finally:
             conn.close()
 
@@ -22984,11 +34350,31 @@ class BetaHandler(SimpleHTTPRequestHandler):
         conn = db_connect()
         buf = io.BytesIO()
         added = 0
+        identity = self._resolve_identity()
+        scopes: list[str] = []
+        if identity.get("ok"):
+            who = _wolf_shell.whoami_from_identity(identity)
+            scopes = list(who.get("scopes") or [])
         try:
             with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
                 for raw_id in ids:
+                    text = str(raw_id).strip()
+                    if text.startswith("nas:"):
+                        try:
+                            nas_id = int(text.split(":", 1)[1])
+                        except ValueError:
+                            continue
+                        try:
+                            media = _ce_repair.resolve_nas_media(conn, nas_id, scopes)
+                        except _ce_repair.RepairError:
+                            continue
+                        if media is None or not media.is_file():
+                            continue
+                        zf.write(media, arcname=f"{nas_id}-{media.name}")
+                        added += 1
+                        continue
                     try:
-                        aid = int(raw_id)
+                        aid = int(text)
                     except (TypeError, ValueError):
                         continue
                     row = conn.execute(

@@ -71,6 +71,9 @@ _EXP_RE = re.compile(
 _NOTE_RE = re.compile(
     r"^NOTE-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 )
+_STUB_RE = re.compile(
+    r"^RULE-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+)
 _SECRET_RE = re.compile(
     r"(secret|password|token|api[_-]?key|bearer|cookie)",
     re.IGNORECASE,
@@ -525,6 +528,13 @@ def _note_id(value: Any) -> str:
     text = str(value or "").strip()
     if not _NOTE_RE.match(text):
         raise IntelRuleError("note_id is not an approve-to-rule id", code="invalid")
+    return text
+
+
+def _stub_id(value: Any) -> str:
+    text = str(value or "").strip()
+    if not _STUB_RE.match(text):
+        raise IntelRuleError("stub_id is not an approve-to-rule id", code="invalid")
     return text
 
 
@@ -1069,5 +1079,158 @@ def stub_rule(
         "live": False,
         "production": False,
         "gate": gate,
+        "honesty": honesty_flags(),
+    }
+
+
+def _stub_row_dict(row: sqlite3.Row) -> dict[str, Any]:
+    return {
+        "stub_id": row["stub_id"],
+        "experiment_id": row["experiment_id"],
+        "note_id": row["note_id"],
+        "approval_id": row["approval_id"],
+        "version_n": int(row["version_n"]),
+        "rule_text": row["rule_text"],
+        "state": row["state"],
+        "promoted": bool(row["promoted"]),
+        "executed": bool(row["executed"]),
+        "live": False,
+        "production": False,
+        "auto_promote": False,
+        "created_by": row["created_by"],
+        "created_at": row["created_at"],
+    }
+
+
+def list_stubs(
+    person_id: str | None,
+    *,
+    role_allowed: bool = False,
+    experiment_id: str | None = None,
+    note_id: str | None = None,
+    limit: int = 50,
+    db_path: Path | str | None = None,
+) -> dict[str, Any]:
+    """List versioned rule stubs. Filterable. A stub is not a live rule."""
+    _require_actor(person_id, role_allowed=role_allowed)
+    try:
+        lim = int(limit)
+    except (TypeError, ValueError) as exc:
+        raise IntelRuleError("limit must be an integer", code="invalid") from exc
+    if lim < 1 or lim > 200:
+        raise IntelRuleError("limit must be 1..200", code="invalid")
+    exp_filter: str | None = None
+    if experiment_id is not None and str(experiment_id).strip():
+        exp_filter = _optional_experiment_id(experiment_id)
+        if exp_filter is None:
+            raise IntelRuleError(
+                "experiment_id is not an approve-to-rule id",
+                code="invalid",
+            )
+    note_filter: str | None = None
+    if note_id is not None and str(note_id).strip():
+        note_filter = _note_id(note_id)
+    conn, _path = _open_read(db_path)
+    if conn is None:
+        return {
+            "count": 0,
+            "stubs": [],
+            "filters": {
+                "experiment_id": exp_filter,
+                "note_id": note_filter,
+                "limit": lim,
+            },
+            "promoted_count": 0,
+            "executed_count": 0,
+            "auto_promote": False,
+            "live": False,
+            "gaps": gaps(),
+            "red_team": red_team_table(),
+            "honesty": honesty_flags(),
+        }
+    try:
+        clauses: list[str] = []
+        args: list[Any] = []
+        if exp_filter is not None:
+            clauses.append("experiment_id=?")
+            args.append(exp_filter)
+        if note_filter is not None:
+            clauses.append("note_id=?")
+            args.append(note_filter)
+        where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+        rows = conn.execute(
+            f"""
+            SELECT stub_id, experiment_id, note_id, approval_id, version_n,
+                   rule_text, state, promoted, executed, created_by, created_at
+            FROM intel_rule_stubs
+            {where}
+            ORDER BY created_at DESC, version_n DESC
+            LIMIT ?
+            """,
+            (*args, lim),
+        ).fetchall()
+        stubs = [_stub_row_dict(row) for row in rows]
+        promoted_count = int(
+            conn.execute(
+                "SELECT COALESCE(SUM(promoted), 0) FROM intel_rule_stubs"
+            ).fetchone()[0]
+        )
+        executed_count = int(
+            conn.execute(
+                "SELECT COALESCE(SUM(executed), 0) FROM intel_rule_stubs"
+            ).fetchone()[0]
+        )
+    finally:
+        conn.close()
+    return {
+        "count": len(stubs),
+        "stubs": stubs,
+        "filters": {
+            "experiment_id": exp_filter,
+            "note_id": note_filter,
+            "limit": lim,
+        },
+        "promoted_count": promoted_count,
+        "executed_count": executed_count,
+        "auto_promote": False,
+        "live": False,
+        "gaps": gaps(),
+        "red_team": red_team_table(),
+        "honesty": honesty_flags(),
+    }
+
+
+def get_stub(
+    stub_id: str,
+    person_id: str | None,
+    *,
+    role_allowed: bool = False,
+    db_path: Path | str | None = None,
+) -> dict[str, Any]:
+    """Read one versioned rule stub. Not promoted. Not executed."""
+    _require_actor(person_id, role_allowed=role_allowed)
+    sid = _stub_id(stub_id)
+    conn, _path = _open_read(db_path)
+    if conn is None:
+        raise IntelRuleError("rule stub not found", code="not_found")
+    try:
+        row = conn.execute(
+            """
+            SELECT stub_id, experiment_id, note_id, approval_id, version_n,
+                   rule_text, state, promoted, executed, created_by, created_at
+            FROM intel_rule_stubs WHERE stub_id=?
+            """,
+            (sid,),
+        ).fetchone()
+        if row is None:
+            raise IntelRuleError("rule stub not found", code="not_found")
+        out = _stub_row_dict(row)
+    finally:
+        conn.close()
+    return {
+        **out,
+        "gaps": gaps(),
+        "red_team": red_team_table(),
+        "owner_prove_path": OWNER_PROVE_PATH,
         "honesty": honesty_flags(),
     }

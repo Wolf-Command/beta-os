@@ -118,14 +118,60 @@ def find_duplicates(conn, *, content_hash: str | None, file_size: int | None,
     return hits
 
 
+# Brand chrome colours (shared Inter/system font — do not swap typefaces in UI).
+# Habitat kit: Warm Brown / Alt / Cream. Other brands: distinct restrained tokens.
+BRAND_THEME_DEFAULTS: dict[str, dict[str, str]] = {
+    "habitat": {
+        "primary": "#79755B",
+        "accent": "#A6A28B",
+        "neutral": "#EAE6D7",
+        "logo_text": "Habitat",
+    },
+    "umablu": {
+        "primary": "#2B6CB0",
+        "accent": "#63B3ED",
+        "neutral": "#8B95A8",
+        "logo_text": "Uma Blu",
+    },
+    "atrium": {
+        "primary": "#8B6914",
+        "accent": "#C4A574",
+        "neutral": "#8B95A8",
+        "logo_text": "Atrium",
+    },
+    "selo": {
+        "primary": "#2F5D50",
+        "accent": "#6B9B8A",
+        "neutral": "#8B95A8",
+        "logo_text": "Selo",
+    },
+    "tropik": {
+        "primary": "#0D9488",
+        "accent": "#F59E0B",
+        "neutral": "#8B95A8",
+        "logo_text": "Tropik",
+    },
+}
+
+_SHARED_FONT = "Inter, SF Pro Text, system-ui, sans-serif"
+_LEGACY_BLUE = {"#6ea8ff", "#6EA8FF", "#8b7cff", "#8B7CFF"}
+
+
 def brand_theme_payload(row: dict | None) -> dict:
+    bid = ((row or {}).get("id") or "").strip().lower()
+    defaults = dict(BRAND_THEME_DEFAULTS.get(bid) or {
+        "primary": "#6ea8ff",
+        "accent": "#8b7cff",
+        "neutral": "#8b95a8",
+        "logo_text": bid.title() if bid else "",
+    })
     if not row:
         return {
-            "primary": "#6ea8ff",
-            "accent": "#8b7cff",
-            "neutral": "#8b95a8",
-            "font": "Inter, SF Pro Text, system-ui, sans-serif",
-            "logo_text": "",
+            "primary": defaults["primary"],
+            "accent": defaults["accent"],
+            "neutral": defaults["neutral"],
+            "font": _SHARED_FONT,
+            "logo_text": defaults.get("logo_text") or "",
             "logo_url": "",
             "default_assignee": "",
         }
@@ -134,12 +180,19 @@ def brand_theme_payload(row: dict | None) -> dict:
         theme = json.loads(row.get("theme_json") or "{}") or {}
     except (TypeError, json.JSONDecodeError):
         theme = {}
+    primary = theme.get("primary") or defaults["primary"]
+    accent = theme.get("accent") or defaults["accent"]
+    # Replace Phase 2.6 generic blue seed with brand kit colours
+    if primary in _LEGACY_BLUE and bid in BRAND_THEME_DEFAULTS:
+        primary = defaults["primary"]
+        accent = defaults["accent"]
     return {
-        "primary": theme.get("primary") or "#6ea8ff",
-        "accent": theme.get("accent") or "#8b7cff",
-        "neutral": theme.get("neutral") or "#8b95a8",
-        "font": theme.get("font") or "Inter, SF Pro Text, system-ui, sans-serif",
-        "logo_text": theme.get("logo_text") or row.get("display_name") or row.get("id") or "",
+        "primary": primary,
+        "accent": accent,
+        "neutral": theme.get("neutral") or defaults.get("neutral") or "#8b95a8",
+        "font": _SHARED_FONT,  # never brand-swap typeface
+        "logo_text": theme.get("logo_text") or defaults.get("logo_text")
+        or row.get("display_name") or row.get("id") or "",
         "logo_url": row.get("logo_url") or theme.get("logo_url") or "",
         "default_assignee": row.get("default_assignee") or "",
     }

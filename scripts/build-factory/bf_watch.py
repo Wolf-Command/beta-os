@@ -69,6 +69,70 @@ def log_cursor_done(log_path: str | None) -> bool:
     return "CURSOR_DONE" in p.read_text(encoding="utf-8", errors="replace")
 
 
+
+
+def credit_conservation_status() -> dict:
+    """CREDIT_CONSERVATION_GATE_V1 — surface conservation for IDLE / arm decisions."""
+    mode_path = BF / "CREDIT-CONSERVATION.json"
+    gate_path = BF / "GATE-credit-conservation-20260923.json"
+    mode = {}
+    gate = {}
+    if mode_path.exists():
+        try:
+            mode = json.loads(mode_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            mode = {}
+    if gate_path.exists():
+        try:
+            gate = json.loads(gate_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            gate = {}
+    enabled = bool(mode.get("enabled")) or bool(gate.get("enabled"))
+    return {
+        "enabled": enabled,
+        "mode": mode.get("mode") or ("CREDIT_CONSERVATION" if enabled else None),
+        "veto_code": mode.get("veto_code")
+        or gate.get("veto_code")
+        or "PEACHES_VETO_CREDIT_CONSERVATION",
+        "allow_finish_run_id": mode.get("allow_finish_run_id"),
+        "auto_chain_operator_depth": bool(mode.get("auto_chain_operator_depth")),
+        "auto_chain_management_depth": bool(mode.get("auto_chain_management_depth")),
+        "auto_chain_connective": bool(mode.get("auto_chain_connective")),
+        "idle_acceptable_when_only_breadth": bool(
+            mode.get("idle_acceptable_when_only_breadth", True)
+        ),
+        "after_msc_policy": "RECOMPUTE_HIGHEST_VALUE_NO_AUTO_BREADTH",
+        "veto_if_pack_class_in": gate.get("veto_if_pack_class_in")
+        or ["operator-depth", "management-depth", "connective"],
+    }
+
+
+def breadth_arm_blocked(pack_hint: str | None = None) -> dict:
+    """True when conservation enabled and hint is breadth without allow_finish."""
+    cc = credit_conservation_status()
+    if not cc["enabled"]:
+        return {"blocked": False, "enabled": False}
+    hint = (pack_hint or "").lower()
+    classes = [c.lower().replace("_", "-") for c in (cc.get("veto_if_pack_class_in") or [])]
+    is_breadth = any(c in hint for c in classes) or any(
+        tok in hint for tok in ("operator-depth", "management-depth", "connective")
+    )
+    allow = cc.get("allow_finish_run_id") or ""
+    if allow and allow.lower() in hint:
+        return {"blocked": False, "enabled": True, "reason": "allow_finish_exception"}
+    if not is_breadth:
+        return {"blocked": False, "enabled": True, "reason": "not_breadth"}
+    if cc.get("auto_chain_operator_depth") or cc.get("auto_chain_management_depth") or cc.get(
+        "auto_chain_connective"
+    ):
+        return {"blocked": False, "enabled": True, "reason": "auto_chain_flag_true"}
+    return {
+        "blocked": True,
+        "enabled": True,
+        "veto_code": cc["veto_code"],
+        "reason": "PEACHES_VETO_CREDIT_CONSERVATION",
+    }
+
 def advise(run: dict) -> dict:
     stage = run.get("stage") or "UNKNOWN"
     pid = run.get("cursor_pid") or run.get("child_pid")
@@ -96,6 +160,7 @@ def advise(run: dict) -> dict:
     elif stage == "REPORT":
         next_action = "FINISH"
 
+    cc = credit_conservation_status()
     return {
         "run_id": run.get("run_id"),
         "slice": run.get("slice"),
@@ -108,6 +173,15 @@ def advise(run: dict) -> dict:
         "blocker": run.get("blocker"),
         "head_commit": run.get("head_commit"),
         "updated_at": run.get("updated_at"),
+        "credit_conservation": cc,
+        "next_breadth_arm": "BLOCKED_PEACHES_VETO_CREDIT_CONSERVATION"
+        if cc.get("enabled")
+        and not (
+            (run.get("run_id") or "") == (cc.get("allow_finish_run_id") or "")
+            and next_action in ("CONTINUE_PEACHES", "ADVANCE", "FINISH", "WAIT")
+        )
+        and next_action in ("IDLE", "FINISH")
+        else ("ALLOW_FINISH_ONLY" if cc.get("enabled") else "N/A"),
     }
 
 
@@ -149,7 +223,7 @@ def main() -> int:
         if miss.get("active_mission"):
             print(json.dumps(miss, indent=2))
             return 0
-        print(json.dumps({"ok": True, "active": False, "next_action": "IDLE"}))
+        print(json.dumps({"ok": True, "active": False, "next_action": "IDLE", "credit_conservation": credit_conservation_status(), "next_breadth_arm": "BLOCKED_PEACHES_VETO_CREDIT_CONSERVATION" if credit_conservation_status().get("enabled") else "N/A"}))
         return 0
     out = {"ok": True, "active": True, **advise(run)}
     print(json.dumps(out, indent=2))

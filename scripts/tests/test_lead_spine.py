@@ -187,21 +187,14 @@ def seed_fixture_org(conn: sqlite3.Connection) -> None:
             """,
             (sid, ttype, tid, TS),
         )
+    from core.scope import upsert_assignment_scope
+
     for asg, sid in (
         (ASG_HAB, SCOPE_HAB),
         (ASG_SELO, SCOPE_SELO),
         (ASG_ENT, SCOPE_ENT),
     ):
-        conn.execute(
-            """
-            INSERT INTO org_assignment_scopes (
-              assignment_id, scope_id, start_at, end_at, status, created_at, updated_at
-            ) VALUES (?, ?, ?, NULL, 'ACTIVE', ?, ?)
-            ON CONFLICT(assignment_id, scope_id, start_at) DO UPDATE SET
-              status='ACTIVE', end_at=NULL, updated_at=excluded.updated_at
-            """,
-            (asg, sid, TS, TS, TS),
-        )
+        upsert_assignment_scope(conn, asg, sid, TS, TS)
     conn.commit()
 
 

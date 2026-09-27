@@ -94,9 +94,9 @@ def main() -> int:
     add_col(conn, "brands", "default_assignee", "TEXT")
     add_col(conn, "brands", "logo_url", "TEXT")
 
-    # Habitat restrained theme (logo + primary + accent; one common font via app)
+    # Habitat kit colours (Warm Brown / Alt / Cream); shared Inter font in app — do not swap typeface
     habitat_theme = (
-        '{"primary":"#6ea8ff","accent":"#8b7cff","neutral":"#8b95a8",'
+        '{"primary":"#79755B","accent":"#A6A28B","neutral":"#EAE6D7",'
         '"font":"Inter, SF Pro Text, system-ui, sans-serif","logo_text":"Habitat"}'
     )
     conn.execute(
@@ -108,6 +108,17 @@ def main() -> int:
         WHERE id='habitat'
         """,
         (habitat_theme, HAIKAL, now_iso()),
+    )
+    # Wave 1: replace legacy generic blue seed with Habitat kit colours
+    conn.execute(
+        """
+        UPDATE brands
+        SET theme_json=?, updated_at=?
+        WHERE id='habitat' AND (
+          theme_json IS NULL OR theme_json='' OR theme_json LIKE '%6ea8ff%' OR theme_json LIKE '%6EA8FF%'
+        )
+        """,
+        (habitat_theme, now_iso()),
     )
 
     # --- plan review state (UI: APPROVED / CHANGES PENDING REVIEW) ---

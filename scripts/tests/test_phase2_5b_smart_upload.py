@@ -219,7 +219,7 @@ def main() -> int:
     check("17 original preserved", up1.get("original_filename") in ("IMG_0001.JPG", "IMG_0001.jpg"), str(up1.get("original_filename")))
     check("18 canonical wolf name", bool(up1.get("canonical_filename")) and "habitat_RAW_image_phase25b-test-villa" in (up1.get("canonical_filename") or ""))
     check("19 no FS path in response keys", "saved_path" not in up1 and "v2_path" not in up1)
-    check("20 nas_received false", up1.get("nas_received") is False)
+    check("20 nas_received when NAS connected", up1.get("nas_received") is True, str(up1.get("nas_message") or up1.get("nas_received")))
     check("21 test lane tagged", up1.get("data_lane") == "test")
     canon1 = up1.get("canonical_filename")
     asset1 = up1.get("asset_id")
@@ -257,16 +257,16 @@ def main() -> int:
     check("26 unsafe ext rejected", st in (400, 415) and bad_up.get("ok") is not True, f"st={st} {bad_up}")
 
     # 27 ops library listing excludes test lane
-    st, assets = http("GET", "/api/assets?brand=habitat")
+    st, assets = http("GET", "/api/assets?brand=habitat", headers={"X-Wolf-Subject": HAIKAL})
     check("27 assets list 200", st == 200)
     ids = {a.get("id") for a in (assets.get("assets") or [])}
     check("28 test asset NOT in ops library", asset1 not in ids, f"asset1={asset1}")
     # confirm no paths
     blob = json.dumps(assets)
-    check("29 no FS paths in assets JSON", "/Users/" not in blob and "library_v2/" not in blob)
+    check("29 no FS paths in assets JSON", "/Users/" not in blob and "library_v2/" not in blob and "/Volumes/" not in blob)
 
     # 30 test lane query includes them
-    st, tassets = http("GET", "/api/assets?brand=habitat&data_lane=test")
+    st, tassets = http("GET", "/api/assets?brand=habitat&data_lane=test", headers={"X-Wolf-Subject": HAIKAL})
     tids = {a.get("id") for a in (tassets.get("assets") or [])}
     check("30 test lane query includes", asset1 in tids)
 
@@ -301,11 +301,26 @@ def main() -> int:
     recent_ids = {i.get("id") for i in (recent.get("items") or [])}
     check("34 test not in ops recent", asset1 not in recent_ids)
 
-    # 35 UI page serves
+    # 35 UI page: live Beta denies the content workspace until a commissioned
+    # session is in scope. Markers stay on the dashboard file the handler
+    # serves after that gate. Unsigned direct URL must stay 403.
     req = urllib.request.Request(BASE + "/content-2.0.html")
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        html = resp.read().decode()
-    check("35 content-2.0.html serves", "Smart Upload" in html and "wizStep1" in html)
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            live_code = resp.status
+            live_body = resp.read().decode()
+    except urllib.error.HTTPError as exc:
+        live_code = exc.code
+        live_body = exc.read().decode()
+    html = (BETA / "dashboards" / "content-2.0.html").read_text(encoding="utf-8")
+    check(
+        "35 content page fail-closed and markers present",
+        live_code == 403
+        and "Content workspace is not in authorised scope." in live_body
+        and "Smart Upload" in html
+        and "wizStep1" in html,
+        f"status={live_code}",
+    )
     check("36 no :8787 in HTML", ":8787" not in html)
 
     print(f"\nRESULT  pass={PASS} fail={FAIL}")
