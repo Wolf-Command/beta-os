@@ -192,6 +192,8 @@ EXTERNAL_SOT = frozenset(
 )
 
 # Owner still has to decide. This does not by itself move the row.
+# CAP-INTG-07 is omitted. The 28 Sep 2026 credential search found the
+# working store. It is not a request for Matt to name a vault product.
 OWNER_DECISION = frozenset(
     {
         "CAP-CORE-02",
@@ -200,7 +202,6 @@ OWNER_DECISION = frozenset(
         "CAP-STRAT-02",
         "CAP-MSC-02",
         "CAP-INTG-01",
-        "CAP-INTG-07",
         "CAP-FIN-01",
         "CAP-FIN-02",
         "CAP-FIN-03",

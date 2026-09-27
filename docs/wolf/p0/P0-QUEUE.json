@@ -22,13 +22,13 @@
   "human_commissioned": 0,
   "operating_adoption": "NOT MEASURED",
   "final_status_count": {
-    "OPEN": 2,
+    "OPEN": 3,
     "CLOSED": 1,
     "READY_FOR_HUMAN": 6,
     "WAITING_EXTERNAL": 0,
-    "BLOCKED_OWNER": 3
+    "BLOCKED_OWNER": 2
   },
-  "final_status_note": "F2 on 28 Sep 2026. SYSTEM stays 19.65 / 77. Staff ready 0. Human commissioned 0. Operating adoption NOT MEASURED. Beta :8788 was restarted from pid 17892 to pid 22379 so the F1 classification code is the process that serves the routes. Production pid 15975 was not restarted. CAP-CORE-02 stays READY_FOR_HUMAN. CAP-CORE-01, CAP-CORE-03, CAP-CORE-04, CAP-CORE-06, and CAP-CORE-10 are READY_FOR_HUMAN: the machine half passed on pid 22379 and on an isolated catalog copy. No seated 200 was observed. CAP-CORE-07 is BLOCKED_OWNER. The isolated approval lifecycle passed. Live core_approval_requests stayed 0. No wide policy row was inserted. CAP-CORE-09 stays OPEN. Classification is valid operational 0 and INVALID/TEST 4, including preserved EVD-50e827bd. Six actions stay not gated. No requirement was inserted. CAP-MSC-02 stays OPEN. CAP-CORE-05 stays CLOSED. CAP-CORE-08 and CAP-INTG-07 stay BLOCKED_OWNER. Live core_evidence_records 4, core_governance_exceptions 3, core_approval_decisions 9, core_work_items 0. Cadence was not marked done.",
+  "final_status_note": "F2 on 28 Sep 2026. SYSTEM stays 19.65 / 77. Staff ready 0. Human commissioned 0. Operating adoption NOT MEASURED. Beta :8788 was restarted from pid 17892 to pid 22379 so the F1 classification code is the process that serves the routes. Production pid 15975 was not restarted. CAP-CORE-02 stays READY_FOR_HUMAN. CAP-CORE-01, CAP-CORE-03, CAP-CORE-04, CAP-CORE-06, and CAP-CORE-10 are READY_FOR_HUMAN: the machine half passed on pid 22379 and on an isolated catalog copy. No seated 200 was observed. CAP-CORE-07 is BLOCKED_OWNER. The isolated approval lifecycle passed. Live core_approval_requests stayed 0. No wide policy row was inserted. CAP-CORE-09 stays OPEN. Classification is valid operational 0 and INVALID/TEST 4, including preserved EVD-50e827bd. Six actions stay not gated. No requirement was inserted. CAP-MSC-02 stays OPEN. CAP-CORE-05 stays CLOSED. CAP-CORE-08 stays BLOCKED_OWNER. F3 on 28 Sep 2026 moved CAP-INTG-07 from BLOCKED_OWNER to OPEN: the credential search found the working store, and no vault-product ask remains. Dev/Beta/Prod separation is still unproved. The ledger stays SPECIFIED. Live core_evidence_records 4, core_governance_exceptions 3, core_approval_decisions 9, core_work_items 0. Cadence was not marked done.",
   "items": [
     {
       "order": 1,
@@ -58,20 +58,25 @@
       "order": 2,
       "id": "CAP-INTG-07",
       "title": "Secrets & Environment Separation",
-      "current_state": "SYSTEM SPECIFIED (0.05). The 27 Sep search named the 2026-07-21 plaintext directory ~/.openclaw/credentials/ (30 JSON files, INDEX.md). That decision says 1Password is dead. op 2.35.0 has no account. The keychain service wolf-secrets-vault is the passphrase for encrypted off-site copies, not a vault product. Footage crypt, rclone, and the Atrium scratch backup were not treated as this capability. No second vault was built. Ledger was not raised.",
-      "exact_missing_evidence": "A vault product Matt names, then a deterministic vault, rotation, and Dev/Beta/Prod separation prove. The plaintext directory and the repo-check test are not that prove.",
-      "cursor_work": "Done for this pack. The search is recorded. Stopped. No second vault.",
-      "human_work": "Matt names the vault product for Dev, Beta, and Production, or records that none is authorised. Cursor does not choose it.",
+      "current_state": "SYSTEM SPECIFIED (0.05). F3 on 28 Sep 2026 searched the authorised stores again. The working mechanism is ~/.openclaw/credentials/ (37 files, 30 JSON) plus ~/.openclaw/wolf-secrets.env, with keychain service wolf-secrets-vault holding the passphrase for encrypted copies under ~/.openclaw/secrets-vault/. 1Password has no account. No second vault was built. The ledger was not raised. Dev, Beta, and Production separation is still not proved.",
+      "exact_missing_evidence": "A separation and rotation prove against the store that already exists. A new vault product is not the missing evidence.",
+      "cursor_work": "Discovery is recorded in docs/wolf/five/CREDENTIAL-DISCOVERY.md and docs/wolf/five/VAULT-FINDING.md. The separation prove is not done in F3.",
+      "human_work": "None for a vault product. Keep the working store. Do not ask Matt to name one.",
       "external_dependency": "none",
       "prerequisite": [],
-      "closure_test": "The search names the store it found, or it records that no authorised vault exists, without a secret value in the note. The ledger stays SPECIFIED until a vault prove exists. A passing repo-check test does not close this item.",
-      "target_final_state": "BLOCKED_OWNER",
-      "status": "BLOCKED_OWNER",
+      "closure_test": "The search names the store without a secret value. The ledger stays SPECIFIED until a separation prove exists. A passing repo-check test does not close this item.",
+      "target_final_state": "OPEN",
+      "status": "OPEN",
+      "classification": "CURSOR CAN CLOSE",
+      "credential_ask": null,
+      "owner_product_decision": "none — keep the existing credential directory and the keychain off-site passphrase",
       "evidence": [
-        "docs/wolf/p0/P0-CAP-INTG-07-RESULT.md"
+        "docs/wolf/p0/P0-CAP-INTG-07-RESULT.md",
+        "docs/wolf/five/VAULT-FINDING.md",
+        "docs/wolf/five/CREDENTIAL-DISCOVERY.md"
       ],
       "commit": "44cd296",
-      "machine_half": "UNCHANGED_THIS_PACK"
+      "machine_half": "DISCOVERY_COMPLETE_SEPARATION_NOT_PROVED"
     },
     {
       "order": 3,

@@ -10,6 +10,16 @@
       "at": "2026-09-27T23:04:25Z",
       "tests": "guard PASS=20 FAIL=0; role dashboard PASS=142 FAIL=2",
       "checked": false
+    },
+    {
+      "id": "five-f3-policy-credentials-20260928",
+      "claim": "Finance, wide-approval, and Uma variance proposals are documents only. Live governance policies stay 1, SoD constraints stay 0, authority limits stay 0, variance policies stay 0. CAP-INTG-07 is not in the war-room owner-decision set. Unsigned /api/owner/war-room on Beta :8788 is 403. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/run_guarded.py scripts/tests/test_completion_war_room.py | tail -3; PYTHONPATH=scripts python3 -c \"from core.completion_war_room import OWNER_DECISION; print('intg07_in_owner_decision', 'CAP-INTG-07' in OWNER_DECISION)\"; python3 -c \"import sqlite3; c=sqlite3.connect('file:catalog/content_library.sqlite?mode=ro', uri=True); print('policies', c.execute('select count(*) from core_governance_policies').fetchone()[0]); print('sod', c.execute('select count(*) from core_sod_constraints').fetchone()[0]); print('limits', c.execute('select count(*) from org_authority_limits').fetchone()[0]); print('variance', c.execute('select count(*) from venue_close_variance_policies').fetchone()[0])\"; curl -sS -o /dev/null -w 'war-room:%{http_code}\\n' http://127.0.0.1:8788/api/owner/war-room; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "PASS=227 FAIL=0; EXIT: SUCCESS; intg07_in_owner_decision False; policies 1; sod 0; limits 0; variance 0; war-room:403; 8787 True; 8788 True",
+      "by": "cursor-five-f3",
+      "at": "2026-09-28T00:30:00Z",
+      "tests": "war room PASS=227 FAIL=0; intg-07 PASS=12 FAIL=0",
+      "checked": false
     }
   ]
 }

@@ -6,7 +6,7 @@ Pack S2. Owner brief 27 Sep 2026 16:32 WITA. This is the one execution queue. Ru
 
 Register count is **12**. `build_war_room()` in S1 returned P0 12, P1 20, P2 42, P3 3. The closed set is CAP-CORE-01 through CAP-CORE-10, plus CAP-MSC-02 and CAP-INTG-07. There is no thirteenth P0.
 
-F2 on 28 Sep 2026 updated `P0-QUEUE.json`. SYSTEM stays 19.65 / 77. Staff ready 0. Human commissioned 0. Operating adoption is not measured. CAP-CORE-02, CAP-CORE-01, CAP-CORE-03, CAP-CORE-04, CAP-CORE-06, and CAP-CORE-10 are READY_FOR_HUMAN. CAP-CORE-07, CAP-CORE-08, and CAP-INTG-07 are BLOCKED_OWNER. CAP-CORE-05 is CLOSED. CAP-MSC-02 and CAP-CORE-09 stay OPEN. The machine half is `docs/wolf/five/F2-CORE-RESULT.md`. The human session is `docs/wolf/five/ONE-WALK.md`. No seated 200 was observed. The sections below are the 27 Sep write-up. Where a status sentence disagrees with the JSON, the JSON is the later status.
+F3 on 28 Sep 2026 updated `P0-QUEUE.json`. SYSTEM stays 19.65 / 77. Staff ready 0. Human commissioned 0. Operating adoption is not measured. CAP-CORE-02, CAP-CORE-01, CAP-CORE-03, CAP-CORE-04, CAP-CORE-06, and CAP-CORE-10 are READY_FOR_HUMAN. CAP-CORE-07 and CAP-CORE-08 are BLOCKED_OWNER. CAP-INTG-07 is OPEN: the credential search found the working store, and there is no vault-product ask. CAP-CORE-05 is CLOSED. CAP-MSC-02 and CAP-CORE-09 stay OPEN. The machine half of core is `docs/wolf/five/F2-CORE-RESULT.md`. The human session is `docs/wolf/five/ONE-WALK.md`. Credential discovery is `docs/wolf/five/CREDENTIAL-DISCOVERY.md`. No seated 200 was observed. The sections below are the 27 Sep write-up except section 2. Where a status sentence disagrees with the JSON, the JSON is the later status.
 
 Order is the critical path. A prerequisite is another P0 the next bar actually waits on. The catalog records no extra prerequisite inside the kernel, because those rows are already PROVEN or READY. That does not make the deployed observation done.
 
@@ -23,14 +23,15 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 
 ## 2. CAP-INTG-07 — Secrets & Environment Separation
 
-- Current state: SYSTEM SPECIFIED (0.05). The 27 Sep search named `~/.openclaw/credentials/` (decision 2026-07-21, plaintext, 30 JSON files). 1Password has no account. The keychain service `wolf-secrets-vault` encrypts off-site copies. It is not a vault product. Footage crypt, rclone, and the Atrium scratch backup are not this capability. No second vault was built.
-- Exact missing evidence: a vault product Matt names, then a rotation and Dev/Beta/Prod separation prove. The repo-check test is not that prove.
-- Cursor work: done. Evidence: `docs/wolf/p0/P0-CAP-INTG-07-RESULT.md`. The ledger was not edited.
-- Human work: Matt names the vault product, or records that none is authorised.
+- Current state: SYSTEM SPECIFIED (0.05). F3 found the working store: `~/.openclaw/credentials/` (37 files, 30 JSON) and `~/.openclaw/wolf-secrets.env`. Keychain service `wolf-secrets-vault` is the passphrase for encrypted copies under `~/.openclaw/secrets-vault/`. 1Password has no account. No second vault was built. The ledger was not edited.
+- Exact missing evidence: a separation and rotation prove against that store. A new vault product is not the missing evidence.
+- Cursor work: discovery is `docs/wolf/five/VAULT-FINDING.md`. The separation prove is not done.
+- Human work: none for a vault product. Keep the working store.
+- Classification: CURSOR CAN CLOSE. Credential ask: none.
 - External dependency: none.
 - Prerequisite: none.
 - Closure test: the search names the store, with no secret value in the note. The ledger stays SPECIFIED. A passing repo-check test does not close this item.
-- Target: BLOCKED_OWNER. Status: BLOCKED_OWNER. Commit: `44cd296`.
+- Target: OPEN. Status: OPEN. Commit: `44cd296`. Classification: CURSOR CAN CLOSE.
 
 ## 3. CAP-MSC-02 — Access & Cloudflare Posture
 
