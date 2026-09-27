@@ -16,16 +16,16 @@
   "staff_ready": 0,
   "human_commissioned": 0,
   "operating_adoption": "NOT MEASURED",
-  "wave_started": false,
-  "wave_note": "Not started. CAP-MSC-02 still needs a review this pack does not write. CAP-CORE-01, CAP-CORE-03, CAP-CORE-04, CAP-CORE-06, CAP-CORE-07, and CAP-CORE-10 still need a real seated session. CAP-CORE-09 still has live evidence count 4. None of those were repaired here.",
+  "wave_started": true,
+  "wave_note": "S4 read the owner statement archive on CAP-INTG-04 and left the row CLOSED. The ledger stays BUILT. CONNECTED stays false. CAP-MSC-02 still needs a review. CAP-CORE-01, CAP-CORE-03, CAP-CORE-04, CAP-CORE-06, CAP-CORE-07, and CAP-CORE-10 still need a real seated session. CAP-CORE-09 still has live evidence count 4. None of those were repaired here.",
   "final_status_count": {
-    "OPEN": 17,
-    "CLOSED": 0,
+    "OPEN": 16,
+    "CLOSED": 1,
     "READY_FOR_HUMAN": 1,
     "WAITING_EXTERNAL": 1,
     "BLOCKED_OWNER": 1
   },
-  "final_status_note": "CAP-GGV-02 is READY_FOR_HUMAN. CAP-BZG-03 is BLOCKED_OWNER because no variance policy is approved. CAP-INTG-01 is WAITING_EXTERNAL until Yanolja authorises an API. The other 17 stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. The ledger was not raised.",
+  "final_status_note": "CAP-GGV-02 is READY_FOR_HUMAN. CAP-BZG-03 is BLOCKED_OWNER because no variance policy is approved. CAP-INTG-01 is WAITING_EXTERNAL until Yanolja authorises an API. CAP-INTG-04 is CLOSED on the file read in commit 80b8a3e. The ledger stays BUILT. The other 16 stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. The ledger was not raised.",
   "items": [
     {
       "order": 1,
@@ -70,19 +70,20 @@
       "order": 3,
       "id": "CAP-INTG-04",
       "title": "Bank Statement Connector",
-      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: CAP-bound connector tests. Banks own account truth. Wolf ingests files.",
-      "exact_missing_evidence": "CAP-bound connector tests on authorised read, import, reconcile, and report. A payment or a bank mutation is not that evidence.",
-      "cursor_work": "Not started. When started, read and import only.",
-      "human_work": "none until a real statement file is supplied by the owner.",
-      "external_dependency": "Banks. No payment and no bank mutation.",
+      "current_state": "SYSTEM BUILT (0.25). Queue CLOSED on the file read. This session opened 54 files in the owner archive (30 pdf, 16 csv, 8 spreadsheet, 4210187 bytes). Manifest sha256 7436bd97bc6f33195f71a5df3756b55730b079833dc72ed4cc87a37992eb74e2. configured true, connected false, tested true, commissioned false. No amount was parsed. Nothing was written to the books. Banks still own account truth.",
+      "exact_missing_evidence": "None for this row's closure test. Reconcile and a management report stay on CAP-FIN-02. A bank API is not missing evidence: the 2026-07-30 decision says there is no feed.",
+      "cursor_work": "Done for this row. The existing connector reads the owner archive and refuses a payment. The ledger was not raised.",
+      "human_work": "none for this read. Monthly filing stays the existing practice. This file does not commission anyone.",
+      "external_dependency": "Banks own the accounts. No payment and no bank mutation. A file on disk is not a connection.",
       "prerequisite": [],
       "closure_test": "A connector test reads an authorised file and does not move money. CONFIGURED is not CONNECTED, TESTED, or COMMISSIONED.",
       "target_final_state": "CLOSED",
-      "status": "OPEN",
+      "status": "CLOSED",
       "evidence": [
-        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+        "docs/wolf/p0/P1-CAP-INTG-04-RESULT.md",
+        "scripts/tests/test_cap_intg_04_file_read.py"
       ],
-      "commit": null
+      "commit": "80b8a3e"
     },
     {
       "order": 4,

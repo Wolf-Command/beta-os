@@ -150,6 +150,16 @@
       "at": "2026-09-27T10:40:00Z",
       "tests": "PASS=47 FAIL=0",
       "checked": false
+    },
+    {
+      "id": "p0-s4-cap-intg-04-file-read-20260927",
+      "claim": "Beta GET /api/intg/connector-cap-tests/file-read is 403 unsigned, with a spoofed email, with X-Wolf-Subject, and with Cf-Access-Jwt-Assertion a.b.c. POST /api/intg/connector-cap-tests/payment is 403 unsigned. The statement reader does not call a bank, parse an amount, or write books. CAP-INTG-04 stays BUILT. CR-859e7cad64e7e4ad stays unresolved. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_cap_intg_04_file_read.py | tail -3; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-INTG-04'][0], len(d))\"; python3 -c \"import sqlite3; c=sqlite3.connect('file:catalog/content_library.sqlite?mode=ro', uri=True); print(c.execute(\\\"SELECT state FROM wolf_completion_items WHERE id='CR-859e7cad64e7e4ad'\\\").fetchone()[0])\"; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "fail=0; EXIT: SUCCESS; BUILT 77; OPEN; 8787 True; 8788 True",
+      "by": "cursor-p0-s4-cap-intg-04",
+      "at": "2026-09-27T11:00:00Z",
+      "tests": "SUMMARY pass=38 fail=0 when the owner archive is mounted; the suite still exits 0 when it is not",
+      "checked": false
     }
   ]
 }
