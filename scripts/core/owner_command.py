@@ -452,7 +452,6 @@ def _fill_exception_approval_counts(
                 SELECT exception_id, entity_id, reason, requested_by_person_id
                 FROM core_governance_exceptions
                 WHERE entity_id IN ({marks})
-                  AND status IN ('REQUESTED', 'AUTHORISED')
                 """,
                 entities,
             ).fetchall()
@@ -646,13 +645,20 @@ def _exceptions(conn: sqlite3.Connection, cards: list[dict[str, Any]]) -> dict[s
         }
     marks = ",".join("?" for _ in entities)
     try:
+        counted = conn.execute(
+            f"""
+            SELECT exception_id, status, reason, requested_by_person_id
+            FROM core_governance_exceptions
+            WHERE entity_id IN ({marks})
+            """,
+            entities,
+        ).fetchall()
         rows = conn.execute(
             f"""
             SELECT exception_id, entity_id, reason, status, control_type,
                    requested_by_person_id, evidence_id, created_at
             FROM core_governance_exceptions
             WHERE entity_id IN ({marks})
-              AND status IN ('REQUESTED', 'AUTHORISED')
             ORDER BY created_at DESC
             LIMIT 20
             """,
@@ -663,9 +669,19 @@ def _exceptions(conn: sqlite3.Connection, cards: list[dict[str, Any]]) -> dict[s
             "ok": True,
             "read": "UNAVAILABLE",
             "items": [],
+            "stored_count": None,
+            "open_count": None,
+            "cadence_done": False,
             "empty_message": None,
             "why": "The exception record could not be read. Nothing was invented.",
         }
+    visible = [
+        row
+        for row in counted
+        if not _demo(row["exception_id"], row["reason"], row["requested_by_person_id"])
+    ]
+    stored_count = len(visible)
+    open_count = sum(1 for row in visible if str(row["status"] or "") in {"REQUESTED", "AUTHORISED"})
     roles: dict[str, str] = {}
     items = []
     for row in rows:
@@ -691,12 +707,19 @@ def _exceptions(conn: sqlite3.Connection, cards: list[dict[str, Any]]) -> dict[s
         "ok": True,
         "read": "READ",
         "items": items,
+        "stored_count": stored_count,
+        "open_count": open_count,
+        "cadence_done": False,
         "empty_message": (
             "No governance exceptions are on record. Empty is not unknown."
-            if not items
+            if stored_count == 0
             else None
         ),
-        "why": "Severity, current action, and escalation are not columns on this record, so they stay MISSING.",
+        "why": (
+            "Severity, current action, and escalation are not columns on this record, so they stay MISSING. "
+            "stored_count is every non-demo row for these companies. "
+            "open_count is REQUESTED or AUTHORISED. A review cadence is not marked done."
+        ),
     }
 
 
@@ -920,7 +943,9 @@ def _answers(
     if exceptions.get("read") != "READ":
         wrong = "What is going wrong could not be read from the exception record."
     elif exceptions.get("items"):
-        wrong = f"{len(exceptions['items'])} governance exceptions are on record. Severity is MISSING on each row."
+        stored = exceptions.get("stored_count")
+        shown = stored if isinstance(stored, int) else len(exceptions["items"])
+        wrong = f"{shown} governance exceptions are on record. Severity is MISSING on each row."
     else:
         wrong = "No governance exceptions are on record. Empty is not unknown."
     waiting = [item for item in needs.get("items") or [] if item.get("kind") != "commissioning"]

@@ -177,14 +177,16 @@
         </article>`).join("")
       : `<div class="wolf-empty" data-state="empty">${esc(needs.empty_message || "Needs you could not be read. Nothing was invented.")}</div>`;
     const ex = data.exceptions || {};
+    const cadence = ex.cadence_done === true ? "done" : "not done";
+    const exHead = `<p class="meta">Stored: ${esc(ex.stored_count)} · Open: ${esc(ex.open_count)} · Cadence: ${esc(cadence)}</p>`;
     const exBody = (ex.items || []).length
-      ? ex.items.map((item) => `<article class="card wolf-card">
-          <p>${mark(item.company)} ${esc(item.issue)}</p>
+      ? exHead + ex.items.map((item) => `<article class="card wolf-card">
+          <p>${esc(item.id)} · ${mark(item.company)} ${esc(item.issue)}</p>
           <p class="meta">Severity: ${mark(item.severity)} · Owner role: ${esc(item.owner_role)} · Age: ${esc(item.age)}</p>
           <p class="meta">State: ${esc(item.state)} · Current action: ${mark(item.current_action)} · Escalation: ${mark(item.escalation_state)}</p>
           <p class="meta">Evidence: ${item.evidence ? esc(item.evidence) : mark(item.evidence_state || "EMPTY")}</p>
         </article>`).join("")
-      : `<div class="wolf-empty" data-state="empty">${esc(ex.empty_message || ex.why || "Exceptions were not read.")}</div>`;
+      : exHead + `<div class="wolf-empty" data-state="empty">${esc(ex.empty_message || ex.why || "Exceptions were not read.")}</div>`;
     const changed = data.changed || {};
     const changedBody = (changed.items || []).length
       ? changed.items.map((item) => `<p>${esc(item.when)} · ${esc(item.company)} · ${esc(item.action)} · ${esc(item.result)}</p>`).join("")
