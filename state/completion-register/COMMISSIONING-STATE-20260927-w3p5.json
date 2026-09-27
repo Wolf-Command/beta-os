@@ -398,10 +398,10 @@
       "operating_adoption": "NOT MEASURED",
       "staff_ready": false,
       "human_commissioned": false,
-      "gap": "Universal evidence packs on all material actions for READY",
+      "gap": "P0 queue stays OPEN after commit 9d0b83c. The gate list names eight gated actions and six that stay not gated. Live core_evidence_records is 4, not 3. EVD-50e827bd is invalidated P4-TEST cleanup. No requirement was inserted. Ledger stays PROVEN. This is not staff ready and not human commissioned.",
       "owner_role": "Owner",
       "effort_class": "S",
-      "dependency": "No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY."
+      "dependency": "The queue lists CAP-CORE-07. That seated read was not observed. This list does not use it."
     },
     {
       "id": "CAP-CORE-10",

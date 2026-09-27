@@ -91,10 +91,10 @@ Production `:8787` is out of this path. Beta `:8788` is the boundary for any dep
 ### 11. CAP-CORE-09 — Evidence Requirements
 
 - Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
-- Next bar: Universal evidence packs on all material actions for READY
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Next bar: Live core_evidence_records is 4, not 3. The gate list is commit 9d0b83c. Six actions stay not gated. No requirement was inserted. Ledger stays PROVEN.
+- Dependency: The queue lists CAP-CORE-07. That seated read was not observed. This list does not use it.
 - Responsible role: Owner.
-- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- In six days: The list names gated and not-gated actions. Commit 9d0b83c. test_work_loop.py left EVD-50e827bd invalidated. The count is 4. The no-delete trigger was not dropped. Do not mark CLOSED from that count. Ledger stays PROVEN.
 
 ### 12. CAP-CORE-10 — Exception / Override Governance
 

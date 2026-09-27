@@ -145,12 +145,12 @@ P0 or P1, and the SYSTEM state is not READY. The next bar is Wolf-side work. Sev
 - What it is: Mandatory evidence before approve/live.
 - Why it matters: Wolf cannot enforce or refuse an action without this.
 - Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: Universal evidence packs on all material actions for READY
+- Exact remaining work: Live core_evidence_records is 4, not 3. The gate list is commit 9d0b83c. Six actions stay not gated. EVD-50e827bd is invalidated P4-TEST cleanup. The no-delete trigger was not dropped. No requirement was inserted. Ledger stays PROVEN.
 - Work classes: local_deterministic, human_commissioning.
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Dependency: The queue lists CAP-CORE-07. That seated read was not observed. This list does not use it.
 - Responsible role: Owner.
-- Evidence required to close: Deployed or runtime proof on the intended Beta boundary for READY. A repository test is not a deployed-route test. A human walk is not this bar.
-- Six-day note: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- Evidence required to close: The list names each material action as gated or not gated, and the live evidence count is still 3. The list half passed. The count half failed. A repository test is not a deployed-route test. A human walk is not this bar.
+- Six-day note: The list is commit 9d0b83c. test_work_loop.py left one invalidated row. The count is 4. core_approval_decisions is 9. Do not drop the trigger. Do not mark CLOSED. Ledger stays PROVEN.
 - Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
 - Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
 

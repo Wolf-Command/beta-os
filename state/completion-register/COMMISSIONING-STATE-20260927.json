@@ -78,7 +78,7 @@
       "staff_readiness": "Not claimed.",
       "human_commissioning": "Not commissioned.",
       "operating_adoption": "Not scored.",
-      "gap": "Live core_evidence_records count is 3. Universal evidence packs remain the READY bar."
+      "gap": "P0 queue stays OPEN after commit 9d0b83c. The gate list names eight gated actions and six that stay not gated. Live core_evidence_records is 4, not 3, after test_work_loop.py left EVD-50e827bd invalidated. No requirement was inserted. Ledger stays PROVEN. This is not staff ready and not human commissioned."
     },
     {
       "id": "CAP-CORE-10",

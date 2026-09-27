@@ -6,7 +6,7 @@ Pack S2. Owner brief 27 Sep 2026 16:32 WITA. This is the one execution queue. Ru
 
 Register count is **12**. `build_war_room()` in S1 returned P0 12, P1 20, P2 42, P3 3. The closed set is CAP-CORE-01 through CAP-CORE-10, plus CAP-MSC-02 and CAP-INTG-07. There is no thirteenth P0.
 
-CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED after the empty-table deny in commit `fcae665`. CAP-CORE-08 is BLOCKED_OWNER after the self-close deny in commit `e2cab4f`. Live `core_sod_constraints` stayed 0. No finance pack was inserted. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit `99f5a27`. CAP-CORE-06 stays OPEN after the temporary trail in commit `2229b21`. CAP-CORE-07 stays OPEN after the approval-route prove in commit `ab4af72`. The other four stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
+CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED after the empty-table deny in commit `fcae665`. CAP-CORE-08 is BLOCKED_OWNER after the self-close deny in commit `e2cab4f`. Live `core_sod_constraints` stayed 0. No finance pack was inserted. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit `99f5a27`. CAP-CORE-06 stays OPEN after the temporary trail in commit `2229b21`. CAP-CORE-07 stays OPEN after the approval-route prove in commit `ab4af72`. CAP-CORE-09 stays OPEN after the gate list in commit `9d0b83c`. Live `core_evidence_records` is 4, not 3. No requirement was inserted. CAP-CORE-03, CAP-CORE-04, and CAP-CORE-10 stay OPEN without a new slice. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
 
 Order is the critical path. A prerequisite is another P0 the next bar actually waits on. The catalog records no extra prerequisite inside the kernel, because those rows are already PROVEN or READY. That does not make the deployed observation done.
 
@@ -122,14 +122,14 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 
 ## 11. CAP-CORE-09 — Evidence Requirements
 
-- Current state: SYSTEM PROVEN (0.80). Live `core_evidence_records` is 3. Universal evidence packs on all material actions are the READY bar.
-- Exact missing evidence: which material actions already require evidence, and which do not. The three stored records are not that list.
-- Cursor work: write that list from the code and the tests. Do not invent evidence rows.
-- Human work: none until the list exists.
+- Current state: SYSTEM PROVEN (0.80). The gate list is commit `9d0b83c`. Eight actions call the gate: `approval.request`, `approval.decide`, `work.loop.submit`, `HABITAT.CONTENT.PUBLISH`, `HABITAT.CONTENT.PUBLISH.submit`, `SPEND_APPROVE`, `EXCEPTION`, `GENERAL_MATERIAL`. Six stay not gated: `venue.close.declare_cash`, `venue.close.resolve_exception`, `venue.close.verify`, `ggv.nota.submit`, `uma.receive_goods`, `work.item.complete`. The only ACTIVE requirement is `EVR-HABITAT-CONTENT-PUBLISH`. Before `scripts/tests/test_work_loop.py` the live `core_evidence_records` count was 3. That suite left `EVD-50e827bd` invalidated, reason `P4-TEST cleanup`, at `2026-09-27T10:06:44Z`. Hard delete is refused. The count is 4. `core_approval_decisions` is 9. The no-delete triggers were not dropped. No requirement was inserted. The ledger stays PROVEN. Beta `:8788` stayed pid 64196. Production pid 15975 was not restarted.
+- Exact missing evidence: the closure test asked for the live evidence count to stay 3. It is 4. The six not-gated actions stay open. Universal packs were not inserted.
+- Cursor work: the list is done. Evidence: `docs/wolf/p0/P0-CAP-CORE-09-RESULT.md`. Do not drop the no-delete trigger. Do not delete `EVD-50e827bd`. Do not insert a requirement. Do not mark CLOSED from a count of 4.
+- Human work: none for the list. Accepting the residue as the new count, or authorising a delete past the trigger, was not done.
 - External dependency: none.
-- Prerequisite: CAP-CORE-07.
-- Closure test: every material action is named as gated or not gated, and the live evidence count is still 3.
-- Target: CLOSED. Status: OPEN.
+- Prerequisite: CAP-CORE-07. The critical path records no extra prerequisite. This list does not use the approval seated read.
+- Closure test: every material action is named as gated or not gated, and the live evidence count is still 3. An ungated action stays listed as open. The list half passed (`SUMMARY pass=69 fail=0`) against the count of 4. The count half failed. The ledger was not raised.
+- Target: CLOSED. Status: OPEN. Commit: `9d0b83c`. Remaining: the live count is 4, not 3.
 
 ## 12. CAP-CORE-10 — Exception / Override Governance
 
