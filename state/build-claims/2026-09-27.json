@@ -50,6 +50,16 @@
       "at": "2026-09-27T00:42:00Z",
       "tests": "PASS=66 FAIL=0",
       "checked": false
+    },
+    {
+      "id": "p0-s2-cap-core-02-signout-20260927",
+      "claim": "Beta GET /signout and /signout/ return 302 to https://beta.wolfcommand.net/cdn-cgi/access/logout and set no origin cookie. A next query, X-Wolf-Subject, and an email header do not change that location. Unsigned and Cf-Access-Jwt-Assertion a.b.c on /api/core/me stay 403. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_real_auth_binding.py | tail -1; python3 -c \"from http.client import HTTPConnection\\n\\ndef get(path, headers=None):\\n c=HTTPConnection('127.0.0.1',8788,timeout=8); c.request('GET',path,headers=headers or {}); r=c.getresponse(); loc=r.getheader('Location'); body=r.read(); print(path, r.status, loc or '-', 'cookie' if r.getheader('Set-Cookie') else 'nocookie');\\n import json\\n try:\\n  print('err', json.loads(body).get('error'))\\n except Exception:\\n  pass\\n c.close()\\nget('/signout')\\nget('/api/core/me')\\nget('/api/core/me', {'Cf-Access-Jwt-Assertion':'a.b.c'})\\n\"; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "SUMMARY pass=51 fail=0; /signout 302 https://beta.wolfcommand.net/cdn-cgi/access/logout nocookie; /api/core/me 403 err missing_auth; /api/core/me 403 err invalid_token; 8787 True; 8788 True",
+      "by": "cursor-p0-s2-cap-core-02",
+      "at": "2026-09-27T09:10:00Z",
+      "tests": "PASS=51 FAIL=0",
+      "checked": false
     }
   ]
 }

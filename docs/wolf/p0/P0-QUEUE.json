@@ -1,5 +1,5 @@
 {
-  "pack": "S1",
+  "pack": "S2",
   "as_of": "2026-09-27",
   "decision": "Owner brief 27 Sep 2026 16:32 WITA. One execution queue for the canonical P0 register. Not a second plan.",
   "rule": "W3-P5-PRIORITY-v1",
@@ -19,27 +19,32 @@
   "human_commissioned": 0,
   "operating_adoption": "NOT MEASURED",
   "final_status_count": {
-    "OPEN": 12,
+    "OPEN": 11,
     "CLOSED": 0,
-    "READY_FOR_HUMAN": 0,
+    "READY_FOR_HUMAN": 1,
     "WAITING_EXTERNAL": 0,
     "BLOCKED_OWNER": 0
   },
-  "final_status_note": "No P0 is in a final state. Each one still has Cursor work or a deployed observation that is not on record. Targets are the end state after that work. Staff ready, human commissioned, and operating adoption stay unset.",
+  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. Sign-out is deployed. The seated walk is not done. Staff ready, human commissioned, and operating adoption stay unset. The other eleven P0 items stay OPEN.",
   "items": [
     {
       "order": 1,
       "id": "CAP-CORE-02",
       "title": "Person & Auth Identity",
-      "current_state": "SYSTEM READY (1.00). Staff ready no. Human commissioned no. Local verifier test_real_auth_binding.py PASS=44. Unsigned and a bad JWT are 403 on Beta. Deployed allow path was not observed (D3 RESULT FAIL). No ROLE-OWNER row. Authorization is person_id plus assignment, not a name.",
-      "exact_missing_evidence": "A real Cloudflare Access session on Beta for the three seated people, plus a sign-out that leaves the next request denied. GET /signout on Beta :8788 is HTTP 404 after the restart to pid 58953. The shell links to /signout. That is not a proven logout.",
-      "cursor_work": "Prove sign-out. The origin has no /signout handler; unsigned GET /signout is 404. A working sign-out must end the Access session and the next request to a protected route must be denied. Do not mint a stand-in JWT. Do not mark anyone commissioned.",
+      "current_state": "SYSTEM READY (1.00). Staff ready no. Human commissioned no. Sign-out is deployed. test_real_auth_binding.py PASS=51. Unsigned GET /signout on Beta :8788 pid 59914 is 302 to the Access application logout. Unsigned and a bad JWT stay 403 on /api/core/me. No seated session was observed. No ROLE-OWNER row. Authorization is person_id plus assignment, not a name.",
+      "exact_missing_evidence": "A real Cloudflare Access session for Haikal, Devi, and Matt, the landing and cross-role statuses, and the same route denied after Sign out. The origin redirect and the public cookie clear are recorded. The seated hop is not.",
+      "cursor_work": "Done for this pack. Sign-out redirects to the Access application logout. No stand-in JWT was minted. Nobody was marked commissioned.",
       "human_work": "One minute, after sign-out exists. On https://beta.wolfcommand.net, Haikal signs in and expects /content-2.0, denied on /bzg/uma-blu, /wolf, and /ggv/finance. Devi signs in and expects /bzg/uma-blu, denied on /content-2.0, /wolf, and /ggv/finance. Matt signs in and expects /wolf. Each person signs out and the same route is denied. Record the statuses. This walk does not raise SYSTEM and is not staff ready or human commissioned.",
       "external_dependency": "none",
       "prerequisite": [],
       "closure_test": "Unsigned and Cf-Access-Jwt-Assertion a.b.c stay 403 on /api/core/me. After each real session, the landing and the cross-role denials match the human test. After sign-out, the same route is denied. test_real_auth_binding.py is not this test.",
       "target_final_state": "READY_FOR_HUMAN",
-      "status": "OPEN"
+      "status": "READY_FOR_HUMAN",
+      "evidence": [
+        "docs/wolf/p0/P0-CAP-CORE-02-RESULT.md",
+        "docs/wolf/p0/HUMAN-TESTS.md"
+      ],
+      "commit": "8247252"
     },
     {
       "order": 2,

@@ -19,10 +19,10 @@
     {
       "id": "CAP-CORE-02",
       "system_state": "READY",
-      "staff_readiness": "No. P3, P4, and P5 did not walk a Cloudflare staff session on :8788.",
+      "staff_readiness": "No. Sign-out is deployed. P3, P4, P5, and S2 did not walk a Cloudflare staff session on :8788.",
       "human_commissioning": "Not commissioned.",
       "operating_adoption": "Not scored. JWT binding is not people using the seat.",
-      "gap": "A person with a Cloudflare seat still has to sign in on Beta :8788. That walk does not change this SYSTEM row."
+      "gap": "Sign-out on Beta :8788 is a 302 to the Access application logout (commit 8247252). Haikal, Devi, and Matt still have to sign in on https://beta.wolfcommand.net, use their page, sign out, and see that page refuse them. That walk does not change this SYSTEM row."
     },
     {
       "id": "CAP-CORE-03",

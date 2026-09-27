@@ -2,24 +2,24 @@
 
 SYSTEM = 19.65 / 77 = 25.52% ; STAFF READY = 0 ; HUMAN COMMISSIONED = 0 ; OPERATING ADOPTION = NOT MEASURED
 
-Pack S1. Owner brief 27 Sep 2026 16:32 WITA. This is the one execution queue. Rule W3-P5-PRIORITY-v1. The ledger was not rewritten.
+Pack S2. Owner brief 27 Sep 2026 16:32 WITA. This is the one execution queue. Rule W3-P5-PRIORITY-v1. The ledger score was not raised.
 
-Register count is **12**. `build_war_room()` this session returned P0 12, P1 20, P2 42, P3 3. The closed set is CAP-CORE-01 through CAP-CORE-10, plus CAP-MSC-02 and CAP-INTG-07. There is no thirteenth P0.
+Register count is **12**. `build_war_room()` in S1 returned P0 12, P1 20, P2 42, P3 3. The closed set is CAP-CORE-01 through CAP-CORE-10, plus CAP-MSC-02 and CAP-INTG-07. There is no thirteenth P0.
 
-No item is in a final state. Each one still has Cursor work, or a deployed observation that is not on record. The target is the end state after that work. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
+CAP-CORE-02 is READY_FOR_HUMAN. The other eleven stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
 
 Order is the critical path. A prerequisite is another P0 the next bar actually waits on. The catalog records no extra prerequisite inside the kernel, because those rows are already PROVEN or READY. That does not make the deployed observation done.
 
 ## 1. CAP-CORE-02 — Person & Auth Identity
 
-- Current state: SYSTEM READY (1.00). Staff ready no. Human commissioned no. `test_real_auth_binding.py` PASS=44. Unsigned and a bad JWT are 403 on Beta. D3 did not observe a seated 200. There is no `ROLE-OWNER` row. Authorization is `person_id` plus assignment, not a name.
-- Exact missing evidence: a real Cloudflare session for the three seated people, and a sign-out that leaves the next request denied. `GET /signout` on Beta `:8788` is HTTP 404 (pid 58953). The shell links to `/signout`.
-- Cursor work: prove sign-out. Do not mint a stand-in JWT. Do not mark anyone commissioned.
+- Current state: SYSTEM READY (1.00). Staff ready no. Human commissioned no. `test_real_auth_binding.py` PASS=51. Unsigned `GET /signout` on Beta `:8788` pid 59914 is 302 to the Access application logout. Unsigned and a bad JWT stay 403 on `/api/core/me`. No seated 200 was observed. There is no `ROLE-OWNER` row. Authorization is `person_id` plus assignment, not a name.
+- Exact missing evidence: a real Cloudflare session for Haikal, Devi, and Matt, the landing and cross-role statuses, and the same route denied after Sign out.
+- Cursor work: done in commit `8247252`. Evidence: `docs/wolf/p0/P0-CAP-CORE-02-RESULT.md`. Human test: `docs/wolf/p0/HUMAN-TESTS.md`. Do not mark anyone commissioned.
 - Human work: one minute, after sign-out exists, on `https://beta.wolfcommand.net`. Haikal signs in and expects `/content-2.0`, denied on `/bzg/uma-blu`, `/wolf`, and `/ggv/finance`. Devi signs in and expects `/bzg/uma-blu`, denied on `/content-2.0`, `/wolf`, and `/ggv/finance`. Matt signs in and expects `/wolf`. Each person signs out. Record the statuses. The walk does not raise SYSTEM.
 - External dependency: none.
 - Prerequisite: none.
 - Closure test: unsigned and a bad JWT stay 403 on `/api/core/me`. After each real session, landing and cross-role denial match the walk. After sign-out, the same route is denied. The local verifier is not this test.
-- Target: READY_FOR_HUMAN. Status: OPEN.
+- Target: READY_FOR_HUMAN. Status: READY_FOR_HUMAN. Commit: `8247252`.
 
 ## 2. CAP-INTG-07 — Secrets & Environment Separation
 
