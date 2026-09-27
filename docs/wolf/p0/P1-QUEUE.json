@@ -19,14 +19,14 @@
   "wave_started": true,
   "wave_note": "S4 read the owner statement archive on CAP-INTG-04 and left the row CLOSED. The ledger stays BUILT. CONNECTED stays false. CAP-MSC-02 still needs a review. CAP-CORE-01, CAP-CORE-03, CAP-CORE-04, CAP-CORE-06, CAP-CORE-07, and CAP-CORE-10 still need a real seated session. CAP-CORE-09 still has live evidence count 4. None of those were repaired here.",
   "final_status_count": {
-    "OPEN": 15,
-    "CLOSED": 2,
+    "OPEN": 14,
+    "CLOSED": 3,
     "READY_FOR_HUMAN": 1,
     "WAITING_EXTERNAL": 1,
     "BLOCKED_OWNER": 1
   },
-  "f6_note": "F6 closed CAP-GGV-01 on the content-path tests in commit e982a90. The ledger stays BUILT. SYSTEM was not raised.",
-  "final_status_note": "CAP-GGV-02 is READY_FOR_HUMAN. CAP-BZG-03 is BLOCKED_OWNER because no variance policy is approved. CAP-INTG-01 is WAITING_EXTERNAL until Yanolja authorises an API. CAP-INTG-04 is CLOSED on the file read in commit 80b8a3e. The ledger stays BUILT. The other 16 stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. The ledger was not raised.",
+  "f6_note": "F6 closed CAP-GGV-01 on the content-path tests in commit e982a90 and CAP-GGV-04 on the stored-lead tests in commit cdfd870. Both ledgers stay BUILT. SYSTEM was not raised. The eight stored leads are demo fixtures. Operational speed-to-lead is empty.",
+  "final_status_note": "CAP-GGV-02 is READY_FOR_HUMAN. CAP-BZG-03 is BLOCKED_OWNER because no variance policy is approved. CAP-INTG-01 is WAITING_EXTERNAL until Yanolja authorises an API. CAP-INTG-04 is CLOSED on the file read in commit 80b8a3e. CAP-GGV-01 and CAP-GGV-04 are CLOSED on their queue tests. The ledger stays BUILT. The other 14 stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. The ledger was not raised.",
   "items": [
     {
       "order": 1,
@@ -220,19 +220,20 @@
       "order": 11,
       "id": "CAP-GGV-04",
       "title": "Lead Triage & Speed-to-Lead",
-      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: a governed speed-to-lead capability with tests and red-team.",
-      "exact_missing_evidence": "Those tests on leads that are already stored. A demo lead is not that evidence.",
-      "cursor_work": "Not started. Do not invent a lead.",
-      "human_work": "none until the tests name a real gap.",
+      "current_state": "SYSTEM BUILT (0.25). The stored-lead tests passed. All 8 stored rows are demo fixtures, so operational speed-to-lead is empty. The ledger stays BUILT. CAP-CRM-01 is a different row.",
+      "exact_missing_evidence": "None for this queue test. A review that would raise PROVEN was not supplied. The demo fixtures are not an operating board.",
+      "cursor_work": "Done in commit cdfd870. Read-only tests of leads already stored. No demo lead and no person created.",
+      "human_work": "none for this queue test.",
       "external_dependency": "none",
       "prerequisite": [],
       "closure_test": "Speed-to-lead tests use stored leads and create no demo person.",
       "target_final_state": "CLOSED",
-      "status": "OPEN",
+      "status": "CLOSED",
       "evidence": [
-        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md",
+        "docs/wolf/five/P1-CAP-GGV-04-RESULT.md"
       ],
-      "commit": null
+      "commit": "cdfd870"
     },
     {
       "order": 12,
