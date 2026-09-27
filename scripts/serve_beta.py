@@ -31990,6 +31990,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._venue_close_err(exc)
 
     def _get_core_permissions(self) -> None:
+        """Role-grant catalog. Identity plus organisation.role.read.
+
+        The actor is person_id plus assignment. A display name is not the
+        allow reason. No grant is added here. Unsigned callers do not
+        receive the permission list or the role grants.
+        """
+        if self._require_org_role_read() is None:
+            return
         self._send_json({
             "ok": True,
             "permissions": _rbac.list_permissions(),
