@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Business · Beta</title>
+<link rel="stylesheet" href="/wolf-tokens.css" />
+<link rel="stylesheet" href="/assets/wolf-truth.css?v=20260927-w3p2" />
+<style>
+  :root {
+    --bg: #10140f; --bg2: #182018; --bg3: #243024; --border: #314033;
+    --text: #f3f7f1; --muted: #a8b5a6; --accent: #d7e26a; --warn: #e0b15a; --danger: #f04438;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 960px; padding: 16px 16px 80px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  h1 { font-size: 1.35rem; margin: 0 0 4px; }
+  h1 span { color: var(--accent); }
+  h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
+  h3 { font-size: 1rem; margin: 0 0 6px; }
+  .lede, .note, .meta { color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
+  .card { border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; padding: 12px; margin-top: 8px; }
+  .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.75rem; margin: 0 4px 4px 0; color: var(--muted); }
+  a.action { display: inline-flex; align-items: center; min-height: 44px; margin: 8px 8px 0 0; text-decoration: none; border-radius: 10px; padding: 10px 12px; border: 1px solid #5d6b2a; background: #2d3816; color: var(--text); font-weight: 650; }
+  .err { color: var(--danger); white-space: pre-wrap; font-size: 0.85rem; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 860px) {
+    body { max-width: 100%; padding: 12px 12px 80px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body data-wolf-page-type="DASHBOARD" data-wolf-org="WOLF/GROUP" data-wolf-shell="global" data-bound="beta-owner-safe">
+  <nav class="wolf-crumb" id="crumb" aria-label="Org context">WOLF › GROUP</nav>
+  <h1 id="title">Business <span>· Beta</span></h1>
+  <p class="lede">Bound beta-owner-safe. One projection of canonical state. Unknown stays UNKNOWN. Missing stays MISSING. A stale read is not shown as current. No payment on this desk.</p>
+  <div id="desk"></div>
+  <div id="msg"></div>
+  <h2>Data truth</h2>
+  <div id="wolf-truth" data-wolf-truth data-surface="empire"></div>
+<script src="/assets/wolf-truth.js?v=20260927-w3p2"></script>
+<script>
+(function () {
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+  const TRUTH = ["LIVE", "CURRENT", "STALE", "UNKNOWN", "UNAVAILABLE", "NEEDS REVIEW"];
+  const path = location.pathname.replace(/\/$/, "");
+  const match = path.match(/^\/business\/([a-z0-9-]+)$/);
+  const code = match ? match[1] : "";
+  const held = new URLSearchParams(location.search).get("projected");
+  const surfaces = { amg: "amg", bzg: "bzg", "uma-blu": "bzg", ggv: "ggv" };
+  if (code && surfaces[code]) {
+    const stamp = document.getElementById("wolf-truth");
+    if (stamp) stamp.setAttribute("data-surface", surfaces[code]);
+  }
+
+  function mark(state) {
+    const label = String(state || "UNKNOWN");
+    if (TRUTH.indexOf(label) >= 0 && window.WolfTruth) return window.WolfTruth.chip(label);
+    return `<span class="pill" data-mark="${esc(label)}">${esc(label)}</span>`;
+  }
+
+  function link(href, label) {
+    if (!href) return "";
+    return `<a class="action" href="${esc(href)}">${esc(label)}</a>`;
+  }
+
+  async function api(url) {
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 403 || (data.ui && data.ui.component === "permission-denied")) {
+      const err = new Error("denied");
+      err.denied = true;
+      err.payload = data;
+      throw err;
+    }
+    if (!res.ok || data.ok === false) {
+      const err = new Error(data.message || data.error || ("HTTP " + res.status));
+      err.payload = data;
+      throw err;
+    }
+    return data;
+  }
+
+  function sectionBody(row) {
+    const items = row.items || [];
+    const lines = items.slice(0, 8).map((item) => {
+      if (item.title) return `<p>${esc(item.title)}</p>`;
+      if (item.issue) return `<p>${esc(item.issue)} · Severity ${esc(item.severity || "MISSING")}</p>`;
+      if (item.work) return `<p>${esc(item.work)} · ${esc(item.role || "MISSING")} · ${esc(item.person || "MISSING")}</p>`;
+      if (item.action) return `<p>${esc(item.when)} · ${esc(item.action)} · ${esc(item.result)} · Role ${esc(item.owner_role || "MISSING")}</p>`;
+      if (item.name && item.href) return `<p>${esc(item.name)}</p>${link(item.href, "Open workspace")}`;
+      if (item.guest_issues) return `<p>Guest issues: ${mark(item.guest_issues)}</p>`;
+      return `<p>${esc(item.name || item.id || "")}</p>`;
+    }).join("");
+    const value = row.value == null ? "" : `<p class="meta">Read: ${esc(typeof row.value === "object" ? JSON.stringify(row.value) : row.value)}</p>`;
+    return `${mark(row.state)}<p>${esc(row.why || "")}</p>${value}${lines}`;
+  }
+
+  function boardHtml(board, full) {
+    const projection = board.projection || {};
+    const state = projection.display_state || "UNKNOWN";
+    if (board.sections_shown_as_current !== true) {
+      return `<article class="card wolf-card" data-business="${esc(board.code)}" data-projection-state="${esc(state)}" data-sections="withheld">
+        <h3>${esc(board.label)}</h3>
+        ${mark(state)}
+        <p>${esc(board.withheld_why || "Figures are not shown as current.")}</p>
+      </article>`;
+    }
+    const hierarchy = (board.hierarchy || []).map((level) => {
+      const bits = (level.items || []).map((item) => {
+        const extra = item.legal_name ? ` · ${esc(item.legal_name)}` : "";
+        const jump = item.href ? link(item.href, "Open") : "";
+        return `<p>${esc(item.name || "MISSING")}${extra} <span class="pill" data-mark="${esc(item.status || "MISSING")}">${esc(item.status || "MISSING")}</span></p>${jump}`;
+      }).join("");
+      return `<div class="card" data-level="${esc(level.level)}"><h3>${esc(level.level)}</h3>${mark(level.state)}<p class="meta">${esc(level.why || "")}</p>${bits || ""}</div>`;
+    }).join("");
+    const sections = (board.sections || []).map((row) =>
+      `<article class="card wolf-card" data-section="${esc(row.key)}"><h3>${esc(row.title)}</h3>${sectionBody(row)}</article>`
+    ).join("");
+    const work = ((board.hierarchy || []).find((level) => level.level === "WORKSPACE") || {}).items || [];
+    const spaces = work.filter((item) => item.href).map((item) => link(item.href, item.name)).join("");
+    return `<article data-business="${esc(board.code)}" data-projection-state="${esc(state)}">
+      ${full ? "" : `<h3>${esc(board.label)}</h3>${link(board.href, "Open " + board.label)}`}
+      <p>${mark(state)} Canonical ${esc((projection.canonical || "").slice(0, 12))}</p>
+      ${full ? `<h2>Where this sits</h2>${hierarchy}<h2>Desk</h2><div class="grid">${sections}</div><h2>Specialist workspaces</h2><div>${spaces || mark("EMPTY")}</div>` : ""}
+    </article>`;
+  }
+
+  function finish() {
+    const over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
+    document.body.setAttribute("data-overflow", over ? "yes" : "no");
+    document.body.setAttribute("data-business-ready", "1");
+  }
+
+  function show(data) {
+    const boards = data.businesses || [];
+    if (code) {
+      const board = boards[0];
+      if (!board) {
+        document.getElementById("msg").innerHTML = window.WolfTruth
+          ? window.WolfTruth.errorBox("This business was not returned.")
+          : `<p class="err">This business was not returned.</p>`;
+        finish();
+        return;
+      }
+      document.getElementById("title").innerHTML = `${esc(board.label)} <span>· Beta</span>`;
+      document.getElementById("crumb").textContent = "WOLF › GROUP › " + board.label;
+      const surface = board.surface || "empire";
+      const stamp = document.getElementById("wolf-truth");
+      if (stamp) stamp.setAttribute("data-surface", surface);
+      document.getElementById("desk").innerHTML = boardHtml(board, true);
+    } else {
+      document.getElementById("crumb").textContent = "WOLF › GROUP › Businesses";
+      document.getElementById("desk").innerHTML = `<p class="note">Open a business from Owner Command, or from the list.</p>` +
+        boards.map((board) => `<div class="card">${boardHtml(board, false)}</div>`).join("");
+    }
+    finish();
+  }
+
+  let url = code ? "/api/business/" + encodeURIComponent(code) : "/api/business";
+  if (held) url += "?projected=" + encodeURIComponent(held);
+  api(url).then(show).catch((err) => {
+    const box = document.getElementById("msg");
+    if (err.denied && window.WolfTruth) {
+      box.innerHTML = window.WolfTruth.denied((err.payload && err.payload.message) || "You do not have access to this.");
+    } else if (window.WolfTruth) {
+      box.innerHTML = window.WolfTruth.errorBox(err.message || "This could not be loaded.");
+    } else {
+      box.innerHTML = `<p class="err">${esc(err.message || "This could not be loaded.")}</p>`;
+    }
+    finish();
+  });
+})();
+</script>
+</body>
+</html>

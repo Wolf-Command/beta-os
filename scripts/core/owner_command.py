@@ -33,21 +33,21 @@ COMPANIES: tuple[dict[str, str], ...] = (
     {
         "code": "GGV",
         "entity_id": "ENT-GGV",
-        "href": "/ggv-ops-pack",
+        "href": "/business/ggv",
         "surface": "ggv",
         "pack": "GGV",
     },
     {
         "code": "AMG",
         "entity_id": "ENT-AMG",
-        "href": "/amg-ops-pack",
+        "href": "/business/amg",
         "surface": "amg",
         "pack": "AMG",
     },
     {
         "code": "BZG",
         "entity_id": "ENT-BZG",
-        "href": "/bzg",
+        "href": "/business/bzg",
         "surface": "bzg",
         "pack": "BZG",
     },
@@ -221,7 +221,7 @@ def _brands(conn: sqlite3.Connection, entity_id: str) -> tuple[str, list[dict[st
         if not bid and not name:
             continue
         blob = f"{bid} {name}".lower()
-        href = "/bzg/uma-blu" if "uma" in blob else None
+        href = "/business/uma-blu" if "uma" in blob else None
         found.append(
             {
                 "id": bid or "MISSING",
