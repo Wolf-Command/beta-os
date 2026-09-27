@@ -248,6 +248,71 @@ def brand_search_cases(log) -> None:
             os.environ.pop("NAS_THUMB_DIR", None)
 
 
+def live_catalog_cases(log) -> None:
+    """Read-only proof of the Beta catalog search count and the exception list."""
+    catalog = ROOT / "catalog" / "content_library.sqlite"
+    conn = sqlite3.connect(f"file:{catalog}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    try:
+        hashed = int(conn.execute("SELECT COUNT(*) FROM nas_index WHERE index_state='HASHED'").fetchone()[0])
+        searchable = int(
+            conn.execute(
+                "SELECT COUNT(*) FROM nas_index WHERE index_state IN ('SEARCHABLE','HASHED')"
+            ).fetchone()[0]
+        )
+        genuine = int(
+            conn.execute(
+                """
+                SELECT COUNT(*) FROM nas_index
+                WHERE index_state='FAILED' AND ifnull(fail_reason,'') NOT LIKE 'missing_file%'
+                """
+            ).fetchone()[0]
+        )
+        outside = int(
+            conn.execute(
+                """
+                SELECT COUNT(*) FROM nas_index
+                WHERE index_state='HASHED'
+                  AND brand_slug IN ('SHARED_STOCK', 'UNKNOWN')
+                """
+            ).fetchone()[0]
+        )
+        page = repair.nas_library_search(conn, ["SCOPE-WOLF-GROUP"], "all", limit=1)
+    finally:
+        conn.close()
+    matched = int(page.get("matched") or 0)
+    log(
+        hashed == 63246 and searchable == 63246,
+        "search count 63246",
+        f"hashed={hashed} searchable={searchable}",
+    )
+    log(
+        matched == hashed - outside,
+        "library search count is the eight brands",
+        f"matched={matched} eight={hashed - outside} shared_or_unknown={outside}",
+    )
+    log(page.get("staff_ready") is False, "live search stays unready")
+    listed = repair.read_library_exceptions()
+    log(
+        listed.get("count") == genuine == 124 and listed.get("read_only") is True and listed.get("staff_ready") is False,
+        "124 genuine failures listed",
+        str(listed.get("count")),
+    )
+    log("/Volumes/" not in json.dumps(listed), "exception list hides volume paths")
+    log(repair.library_exception_audience({"audience": "OWNER", "roles": []}) is True, "owner sees exceptions")
+    log(
+        repair.library_exception_audience(
+            {"audience": "SPECIALIST_CONTENT", "roles": ["ROLE-GGV-CREATIVE-DIRECTOR"]}
+        )
+        is True,
+        "creative director role sees exceptions",
+    )
+    log(
+        repair.library_exception_audience({"audience": "SPECIALIST_CONTENT", "roles": ["ROLE-CONTENT"]}) is False,
+        "other content seats do not get the exception list",
+    )
+
+
 def main() -> None:
     aliases = {"atrium": "atrium", "selo": "selo", "habitat": "habitat", "tropik": "tropik"}
     slug, conf = idx.brand_for(["Atrium", "Footage"], aliases, "01-Media-Library")
@@ -461,6 +526,7 @@ def main() -> None:
 
     path_cases(log)
     brand_search_cases(log)
+    live_catalog_cases(log)
 
     print(f"EXIT: {'SUCCESS' if FAIL == 0 else 'FAIL'} PASS={PASS} FAIL={FAIL}")
     if FAIL:

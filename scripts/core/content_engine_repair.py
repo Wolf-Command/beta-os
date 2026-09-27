@@ -881,6 +881,88 @@ def _write_coverage(payload: dict[str, Any]) -> None:
     COVERAGE_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
+_PLAIN_FAIL = {
+    "thumb_failed": "Preview failed",
+    "thumb_timeout": "Preview timed out",
+}
+
+
+def plain_fail_reason(reason: str) -> str:
+    """Staff/owner label for a stored fail reason. Does not invent a new failure."""
+    text = (reason or "").strip()
+    if text in _PLAIN_FAIL:
+        return _PLAIN_FAIL[text]
+    if text.startswith("hash_error:"):
+        return "File could not be read"
+    return "Preview failed"
+
+
+def read_library_exceptions(path: Path | None = None) -> dict[str, Any]:
+    """Read-only genuine preview/hash failures. missing_file rows are not included."""
+    src = path or (BETA_ROOT / "state" / "nas-estate" / "exceptions.json")
+    empty: dict[str, Any] = {
+        "ok": True,
+        "count": 0,
+        "items": [],
+        "note": "",
+        "as_of": "",
+        "staff_ready": False,
+        "read_only": True,
+        "human_commissioned": False,
+    }
+    if not src.is_file():
+        return empty
+    try:
+        data = json.loads(src.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return empty
+    names = {row["slug"]: row["display_name"] for row in REQUIRED_BRANDS}
+    items: list[dict[str, Any]] = []
+    for row in data.get("items") or []:
+        if not isinstance(row, dict):
+            continue
+        slug = str(row.get("brand_slug") or "UNKNOWN")
+        reason = str(row.get("reason") or "")
+        items.append(
+            {
+                "id": row.get("id"),
+                "filename": str(row.get("filename") or ""),
+                "brand_slug": slug,
+                "brand": names.get(slug, slug),
+                "source_root": str(row.get("source_root") or ""),
+                "reason": reason,
+                "reason_plain": plain_fail_reason(reason),
+            }
+        )
+    return {
+        "ok": True,
+        "count": len(items),
+        "as_of": str(data.get("as_of") or ""),
+        "note": (
+            "These files have no preview. They stay out of the library grid. "
+            "The other files are still searchable."
+        ),
+        "items": items,
+        "staff_ready": False,
+        "read_only": True,
+        "human_commissioned": False,
+    }
+
+
+def library_exception_audience(who: dict[str, Any] | None) -> bool:
+    """Owner and the Creative Director role. Not every content seat."""
+    if not isinstance(who, dict):
+        return False
+    audience = str(who.get("audience") or "")
+    if audience in {"OWNER", "SYSTEM"}:
+        return True
+    roles = {str(role) for role in (who.get("roles") or []) if str(role)}
+    active = who.get("active_assignment") or {}
+    if isinstance(active, dict) and active.get("role"):
+        roles.add(str(active.get("role")))
+    return CONTENT_DIRECTOR_ROLE in roles
+
+
 def read_coverage() -> dict[str, Any]:
     if not COVERAGE_PATH.is_file():
         return {

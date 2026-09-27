@@ -2894,6 +2894,29 @@
     } catch (e) { toast(e.message || "Save failed"); }
   }
 
+  function paintLibraryExceptions(data) {
+    let box = $("libExceptions");
+    const pack = data && data.nas_exceptions;
+    const items = (pack && pack.items) || [];
+    if (!items.length) {
+      if (box) box.hidden = true;
+      return;
+    }
+    if (!box) {
+      box = document.createElement("details");
+      box.id = "libExceptions";
+      const note = $("libIndexNote");
+      if (note && note.parentNode) note.parentNode.insertBefore(box, note.nextSibling);
+      else return;
+    }
+    box.hidden = false;
+    box.open = false;
+    const rows = items.map((it) =>
+      `<li>${esc(it.filename || "file")} · ${esc(it.brand || it.brand_slug || "")} · ${esc(it.reason_plain || "Preview failed")}</li>`
+    ).join("");
+    box.innerHTML = `<summary>Preview exceptions (${items.length})</summary><p class="sub">${esc(pack.note || "")}</p><ul class="sub">${rows}</ul>`;
+  }
+
   function syncLibSel() {
     const sc = $("libSelCount");
     if (sc) sc.textContent = `${state.libSelected.size} selected`;
@@ -2939,6 +2962,7 @@
           note.textContent = pageNote;
         }
       }
+      paintLibraryExceptions(data);
       const pager = $("libPager");
       const pagerNote = $("libPageNote");
       if (pager) {
