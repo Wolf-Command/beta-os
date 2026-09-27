@@ -1,8 +1,8 @@
 # What is left to finish Wolf Command
 
-SYSTEM = 19.65 / 77 = 25.52% ; STAFF READY = 0 ; HUMAN COMMISSIONED = 0 ; OPERATING ADOPTION = NOT MEASURED
+SYSTEM = 19.65 / 77 = 25.52% ; STAFF READY = 0/77 ; HUMAN COMMISSIONED = 0/77 ; OPERATING ADOPTION = 0/77 (NOT MEASURED)
 
-As of the Wave 3 Pack 5 reconciliation on 27 Sep 2026. SYSTEM is the machinery score from `state/model-c-baseline-assessments.json`. Staff readiness, human commissioning, and operating adoption are not added into it.
+As of the P0 closure reconcile on 27 Sep 2026. SYSTEM is the machinery score from `state/model-c-baseline-assessments.json`. Staff readiness, human commissioning, and operating adoption are not added into it. The twelve P0 rows are one table. No capability was added.
 
 Priority rule: W3-P5-PRIORITY-v1. Progress dial rounds the same sum to 25.5%. That 1-decimal figure is the same credit total, not a second score.
 
@@ -10,163 +10,30 @@ Counts: ABSENT 1, SPECIFIED 41, BUILT 20, PROVEN 12, READY 3. Priorities: P0 12,
 
 No capability in this list is staff ready. None is human commissioned. Operating adoption is NOT MEASURED. A rendered desk is not a walk.
 
+## P0 queue
+
+Twelve rows. No thirteenth. This table replaces the long P0 entries. It is the same canonical register. No requirement was added. The write-up is `docs/wolf/p0/P0-CLOSURE-REPORT.md`.
+
+| ID | Queue state | What is still left |
+| --- | --- | --- |
+| CAP-CORE-02 | READY_FOR_HUMAN | Haikal, Devi, and Matt have not signed in. The walk is `docs/wolf/p0/HUMAN-TESTS.md`. |
+| CAP-INTG-07 | BLOCKED_OWNER | Matt names the vault product, or writes that none is authorised. |
+| CAP-MSC-02 | OPEN | The deny prove is recorded. A review note that is not this queue is absent. |
+| CAP-CORE-01 | OPEN | Seated organisation read on Beta was not observed. |
+| CAP-CORE-03 | OPEN | Seated assignment read on Beta was not observed. |
+| CAP-CORE-04 | OPEN | Seated allow and deny on the four routes were not observed. |
+| CAP-CORE-05 | CLOSED | Empty-table deny passed. Live authority-limit count stayed 0. Ledger stays PROVEN. |
+| CAP-CORE-06 | OPEN | Seated read of the empty work-item list was not observed. |
+| CAP-CORE-07 | OPEN | Seated read of the empty approval list was not observed. A wide policy pack was not authored. |
+| CAP-CORE-08 | BLOCKED_OWNER | Matt decides whether a finance segregation pack is required. Live constraint count stayed 0. |
+| CAP-CORE-09 | OPEN | Live evidence count is 4, not 3. The invalidated residue was not deleted. |
+| CAP-CORE-10 | OPEN | Live exception count is 3, not 2. The seated Wolf read and the cadence were not done. |
+
+Eight of these twelve are OPEN. OPEN is not a finished state. Staff ready, human commissioned, and operating adoption stay unset.
+
 ## Must finish in the next 6 days
 
-P0 or P1, and the SYSTEM state is not READY. The next bar is Wolf-side work. Several of these still wait on a person for the deployed-route half. That wait is named on the item and under Waiting on a human. It is not a second copy of the capability.
-
-### CAP-INTG-07 — Secrets & Environment Separation
-
-- What it is: Secrets management; Dev/Beta/Prod separation; no secrets in SOPs/chats; sanitised test data preference.
-- Why it matters: Wolf cannot enforce or refuse an action without this.
-- Current state: SYSTEM SPECIFIED (0.05). Domain D-INTG — Integrations / Infrastructure. Priority P0. Effort L.
-- Exact remaining work: Matt names the vault product. The 27 Sep 2026 search found the plaintext credential directory and no vault. Ledger stays SPECIFIED. See docs/wolf/p0/P0-CAP-INTG-07-RESULT.md.
-- Work classes: cursor_build, local_deterministic, human_commissioning, owner_decision.
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
-- Responsible role: Owner.
-- Evidence required to close: Locatable implementation for BUILT. PROVEN still needs deterministic tests and material red-team or review evidence.
-- Six-day note: Not at BUILT. Six days does not stand in for the missing implementation.
-- Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
-
-### CAP-MSC-02 — Access & Cloudflare Posture
-
-- What it is: Seats, doors, Access includes; Matt-owned flips preserved.
-- Why it matters: Wolf cannot enforce or refuse an action without this.
-- Current state: SYSTEM BUILT (0.25). Domain D-MSC — Maintenance / Security / Compliance. Priority P0. Effort M.
-- Exact remaining work: The live-gate deny prove is recorded (commit 025dd13). CLOSED still needs a review note that is not this queue. The 2026-09-20 empty-framework review does not bind it. Ledger stays BUILT. Seated allow was not observed. See docs/wolf/p0/P0-CAP-MSC-02-RESULT.md.
-- Work classes: local_deterministic, human_commissioning, owner_decision.
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
-- Responsible role: Owner.
-- Evidence required to close: Deterministic verification plus material red-team or review evidence. BUILT is not PROVEN. A rendered desk is not that review.
-- Six-day note: Deny prove exits 0. PROVEN still needs a review this pack does not supply. Ledger stays BUILT. Do not call Grok.
-- Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
-
-### CAP-CORE-01 — Organisation Registry
-
-- What it is: Canonical Group→Entity→Brand→Location→Dept hierarchy.
-- Why it matters: Wolf cannot enforce or refuse an action without this.
-- Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: Seated allow and deny on the organisation reads under a real Cloudflare session. The unsigned deny is recorded in commit 99f5a27. There is no separate org UI page. Ledger stays PROVEN. See docs/wolf/p0/P0-CAP-CORE-01-RESULT.md.
-- Work classes: local_deterministic, human_commissioning.
-- Dependency: CAP-CORE-02 is READY_FOR_HUMAN. That session was not observed.
-- Responsible role: Owner.
-- Evidence required to close: Deployed or runtime proof on the intended Beta boundary for READY. A repository test is not a deployed-route test. A human walk is not this bar.
-- Six-day note: Unsigned, spoofed, and bad-JWT callers are 403 on the eight organisation reads. A seated allow was not observed. A development-subject 200 is not that proof. Ledger stays PROVEN.
-- Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: Unsigned deny on Beta :8788 pid 64196 is recorded. DEPLOYED-ROUTE-PROOF-20260927 stays FAIL for a seated allow. No real Cloudflare Access JWT was presented. The local verifier suite is not that proof.
-
-### CAP-CORE-03 — Role / Position / Assignment
-
-- What it is: Jobs change without losing history.
-- Why it matters: Wolf cannot enforce or refuse an action without this.
-- Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: Seated allow and deny on GET /api/core/persons/PERS-HAIKAL/assignments under a real Cloudflare session. The unsigned deny is commit 5a814fe. ASG-HAIKAL-CD-1 stays ACTIVE. ASG-HAIKAL-VE-1 stays ENDED. No grant was added. Ledger stays PROVEN. See docs/wolf/p0/P0-CAP-CORE-03-RESULT.md.
-- Work classes: local_deterministic, human_commissioning.
-- Dependency: The queue lists CAP-CORE-01 and CAP-CORE-02. The seated org read was not observed. This slice does not use it.
-- Responsible role: Owner.
-- Evidence required to close: The Beta status under the real session, including a denial for a person without organisation.role.read. The unsigned deny is not that session. A repository test is not a deployed-route test. A human walk is not this bar.
-- Six-day note: Unsigned, spoofed, and bad-JWT callers are 403 on the assignment board. Commit 5a814fe. A seated allow was not observed. Do not add a grant. Ledger stays PROVEN.
-- Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: Unsigned deny on Beta :8788 pid 74540 is recorded. DEPLOYED-ROUTE-PROOF-20260927 stays FAIL for a seated allow. No real Cloudflare Access JWT was presented. The unsigned deny is not that seated proof.
-
-### CAP-CORE-04 — Permission & Authority Engine
-
-- What it is: Deterministic server-enforced RBAC.
-- Why it matters: Wolf cannot enforce or refuse an action without this.
-- Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: Seated allow and deny on /content-2.0, /bzg/uma-blu, /wolf, and /ggv/finance under a real Cloudflare session. The unsigned catalog deny is commit c49237f. No grant was added. Ledger stays PROVEN. See docs/wolf/p0/P0-CAP-CORE-04-RESULT.md.
-- Work classes: local_deterministic, human_commissioning.
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
-- Responsible role: Owner.
-- Evidence required to close: Deployed or runtime proof on the intended Beta boundary for READY. A repository test is not a deployed-route test. A human walk is not this bar.
-- Six-day note: Unsigned, spoofed, and bad-JWT callers are 403 on GET /api/core/permissions and on the four seat routes. Commit c49237f. No grant was added. A seated allow was not observed. Ledger stays PROVEN.
-- Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: Unsigned deny on Beta :8788 pid 76910 is recorded for the permission catalog and the four seat routes. DEPLOYED-ROUTE-PROOF-20260927 stays FAIL for a seated allow. No real Cloudflare Access JWT was presented. The unsigned deny is not that seated proof.
-
-### CAP-CORE-05 — Authority Limits Evaluator
-
-- What it is: Amount/scope limits on actions.
-- Why it matters: Wolf cannot enforce or refuse an action without this.
-- Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: The P0 queue row is CLOSED. Commit fcae665 denies an action when the catalog copy has no authority-limit row, and live org_authority_limits stayed 0. That 0 is the row count, not a tolerance. Ledger stays PROVEN. The broader Beta runtime prove that would raise READY was not observed. See docs/wolf/p0/P0-CAP-CORE-05-RESULT.md. Staff ready stays no.
-- Work classes: local_deterministic, human_commissioning, owner_decision.
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
-- Responsible role: Owner.
-- Evidence required to close: The P0 closure test is the empty-table deny plus live count 0. That test passed. Raising the ledger to READY still wants a broader runtime prove on Beta. That prove was not observed. A repository test is not a seated session. A human walk is not this bar.
-- Six-day note: The empty-table deny exits 0. Commit fcae665. Live org_authority_limits stayed 0. Unsigned callers are 403 on Beta :8788 pid 64196. A seated check was not observed. Ledger stays PROVEN. Do not insert a limit.
-- Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: Unsigned deny on Beta :8788 pid 64196 is recorded for the authority check and the limits list. DEPLOYED-ROUTE-PROOF-20260927 stays FAIL for a seated allow. No real Cloudflare Access JWT was presented. The empty-table deny is not that seated proof.
-
-### CAP-CORE-06 — Work Items / Promises / Decisions
-
-- What it is: Material promises leave a defensible trail.
-- Why it matters: Wolf cannot enforce or refuse an action without this.
-- Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: Seated GET /api/core/work-items under a real Cloudflare session. The temporary trail is recorded in commit 2229b21. Live core_work_items stayed 0, so the read must match an empty list. Do not create a live work item to fill it. Ledger stays PROVEN.
-- Work classes: local_deterministic, human_commissioning.
-- Dependency: CAP-CORE-02 is READY_FOR_HUMAN. That session was not observed.
-- Responsible role: Owner.
-- Evidence required to close: The Beta status and count under the real session, matching the stored empty list. The temporary trail is not that read. A human walk is not this bar.
-- Six-day note: One item on a deleted catalog copy walked OPEN, IN_PROGRESS, BLOCKED, IN_PROGRESS, COMPLETED, VERIFIED. Commit 2229b21. Unsigned callers are 403 on Beta :8788 pid 64196. A seated read was not observed. Ledger stays PROVEN.
-- Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
-
-### CAP-CORE-07 — Approval Engine
-
-- What it is: Human authority for material decisions; Dual Approval is a requirement class inside this capability when policy demands two persons.
-- Why it matters: Wolf cannot enforce or refuse an action without this.
-- Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: Seated GET /api/core/approvals under a real Cloudflare session. The copy read is recorded in commit ab4af72. Live core_approval_requests stayed 0, so the read must match an empty list. Do not create a request to fill it. A wide production policy pack was not authored. GPO-HABITAT-CONTENT-PUBLISH and the six stored decisions are not that pack. Ledger stays PROVEN.
-- Work classes: local_deterministic, human_commissioning, owner_decision.
-- Dependency: The queue lists CAP-CORE-06. That seated read was not observed. This slice does not use the work-item trail.
-- Responsible role: Owner.
-- Evidence required to close: The Beta status and count under the real session, matching the stored empty request list, and a wide production policy pack only if Matt authored it. The copy read is not that session. A human walk is not this bar.
-- Six-day note: The copy read lists zero requests for PERS-MATT and inserts no policy. Commit ab4af72. Live core_approval_requests stayed 0. Unsigned callers are 403 on Beta :8788 pid 64196. A seated read was not observed. Ledger stays PROVEN.
-- Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: Unsigned deny on Beta :8788 pid 64196 is recorded for the approval list, one missing id, and unsigned POST. DEPLOYED-ROUTE-PROOF-20260927 stays FAIL for a seated allow. No real Cloudflare Access JWT was presented. The copy read is not that seated proof.
-
-### CAP-CORE-08 — Segregation of Duties
-
-- What it is: Conflicting duties cannot combine end-to-end.
-- Why it matters: Wolf cannot enforce or refuse an action without this.
-- Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S. P0 queue BLOCKED_OWNER.
-- Exact remaining work: Matt decides whether a broader finance SoD pack is required. The self-close deny is recorded in commit e2cab4f. Live core_sod_constraints stayed 0. That count is the absence of a pack. Ledger stays PROVEN.
-- Work classes: local_deterministic, human_commissioning, owner_decision.
-- Dependency: The queue lists CAP-CORE-04 and CAP-CORE-07. Those seated reads were not observed. This slice does not use them.
-- Responsible role: Owner.
-- Evidence required to close: The P0 closure test is the temporary self-close deny plus live constraint count 0. That test passed. A finance pack exists only if Matt authored it. Raising the ledger to READY still wants that pack on the live path. A repository test is not that pack. A human walk is not this bar.
-- Six-day note: The submitter of a resolved close cannot verify it. Commit e2cab4f. Live core_sod_constraints stayed 0. Unsigned callers are 403 on Beta :8788 pid 64196. A seated check was not observed. Ledger stays PROVEN. Do not insert a pack.
-- Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: Unsigned deny on Beta :8788 pid 64196 is recorded for the close list and unsigned POST /api/venue-close/verify. DEPLOYED-ROUTE-PROOF-20260927 stays FAIL for a seated allow. No real Cloudflare Access JWT was presented. The temporary deny is not that seated proof.
-
-### CAP-CORE-09 — Evidence Requirements
-
-- What it is: Mandatory evidence before approve/live.
-- Why it matters: Wolf cannot enforce or refuse an action without this.
-- Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: Live core_evidence_records is 4, not 3. The gate list is commit 9d0b83c. Six actions stay not gated. EVD-50e827bd is invalidated P4-TEST cleanup. The no-delete trigger was not dropped. No requirement was inserted. Ledger stays PROVEN.
-- Work classes: local_deterministic, human_commissioning.
-- Dependency: The queue lists CAP-CORE-07. That seated read was not observed. This list does not use it.
-- Responsible role: Owner.
-- Evidence required to close: The list names each material action as gated or not gated, and the live evidence count is still 3. The list half passed. The count half failed. A repository test is not a deployed-route test. A human walk is not this bar.
-- Six-day note: The list is commit 9d0b83c. test_work_loop.py left one invalidated row. The count is 4. core_approval_decisions is 9. Do not drop the trigger. Do not mark CLOSED. Ledger stays PROVEN.
-- Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
-
-### CAP-CORE-10 — Exception / Override Governance
-
-- What it is: Break-glass logged and reviewable.
-- Why it matters: Wolf cannot enforce or refuse an action without this.
-- Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: Seated GET /api/owner/command showing the three stored REJECTED ids. Live core_governance_exceptions is 3, not 2. The list is commit b0fa859. Cadence was not marked done. Ledger stays PROVEN.
-- Work classes: local_deterministic, human_commissioning.
-- Dependency: The queue lists CAP-CORE-09. That evidence-count gap was not used. The critical path records no extra prerequisite.
-- Responsible role: Owner.
-- Evidence required to close: Beta shows the stored exceptions under a real session, and the live count matches the closure figure. The read half passed in commit b0fa859. The count is 3, not 2. A repository test is not a deployed-route test. A human walk is not this bar.
-- Six-day note: The stored list is commit b0fa859. Unsigned callers are 403 on Beta :8788 pid 78725. A seated read was not observed. Do not insert a fourth row. Do not mark the cadence done. Ledger stays PROVEN.
-- Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
+P1 whose SYSTEM state is not READY. The P0 rows are the table above and are not copied here. No capability was added.
 
 ### CAP-STRAT-02 — Owner Radar / Mission Control
 
@@ -412,17 +279,9 @@ SYSTEM is READY. The remaining work is a human commissioning. It does not raise 
 
 ### CAP-CORE-02 — Person & Auth Identity
 
-- What it is: Permanent Person; CF JWT → Person binding.
-- Why it matters: Wolf cannot enforce or refuse an action without this.
-- Current state: SYSTEM READY (1.00). Domain D-CORE — Wolf Core. Priority P0. Effort none.
-- Exact remaining work: None for technical READY; adoption separate
-- Work classes: human_commissioning, owner_decision.
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
-- Responsible role: Owner.
-- Evidence required to close: Human commissioning evidence recorded on the commissioning register. That evidence does not change this SYSTEM row. Operating adoption is a separate measurement and is not on record.
-- Six-day note: Commissioning only. Not a build. A sign-in does not raise SYSTEM.
-- Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
+- Queue state: READY_FOR_HUMAN. SYSTEM READY (1.00). Staff ready no. Human commissioned no.
+- Exact remaining work: Haikal, Devi, and Matt sign in on https://beta.wolfcommand.net and sign out. The walk is `docs/wolf/p0/HUMAN-TESTS.md`. A seated 200 was not observed.
+- Evidence: `docs/wolf/p0/P0-CAP-CORE-02-RESULT.md`. On Beta :8788 pid 78725, unsigned `GET /signout` is 302 to the Access application logout, and unsigned `GET /api/core/me` is 403.
 
 ### CAP-BZG-03 — Venue Daily Close
 
@@ -496,8 +355,8 @@ These are acts already recorded in Day 2 and Wave 3. They are not new tasks and 
 
 - What it is: Seat a closer and, separately, write a variance policy if cash must mismatch
 - Why it matters: The close machine is SYSTEM READY. Nobody is on the closer position. Policy count was 0.
-- Current state: SYSTEM READY. Human commissioning no. venue_daily_closes 0.
-- Exact remaining work: Assign a real person to POS-BZG-CLOSER-UMA-1. Do not invent a policy to force a green close.
+- Current state: SYSTEM READY. Human commissioning no. venue_daily_closes 0. The operator sentence is BLOCKED BY BUSINESS POLICY. The policy row count is 0.
+- Exact remaining work: Assign a real person to POS-BZG-CLOSER-UMA-1. Write a variance rule only if a cash mismatch must be closable.
 - Dependency: Owner decision. ESB settlement_api stays UNAVAILABLE. No payment is added.
 - Responsible role: Owner.
 - Evidence required to close: An active assignment on ROLE-BZG-CLOSER, plus a real variance policy only if a mismatch must be closable.

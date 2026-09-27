@@ -1,0 +1,400 @@
+{
+  "pack": "S3",
+  "as_of": "2026-09-27",
+  "decision": "Owner brief 27 Sep 2026 16:32 WITA. P1 wave queued after the P0 reconcile. Not started. Eight P0 rows are still OPEN. Sort is the brief: remove Matt from daily work, close money controls, let staff run the day, connect a real source. Sale readiness is P2 and is not in this file.",
+  "rule": "W3-P5-PRIORITY-v1",
+  "sources": [
+    "state/model-c-baseline-assessments.json",
+    "docs/wolf/p0/P0-CLOSURE-REPORT.md",
+    "docs/wolf/p0/P0-QUEUE.json",
+    "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md",
+    "docs/wolf/wave3/W3-P5-WARROOM-RESULT.md"
+  ],
+  "register_count": 20,
+  "register_count_note": "Exactly 20. build_war_room() this session returned priority_counts P0 12, P1 20, P2 42, P3 3. This file is the P1 set. No P2 and no P3.",
+  "system": "19.65 / 77 = 25.52%",
+  "staff_ready": 0,
+  "human_commissioned": 0,
+  "operating_adoption": "NOT MEASURED",
+  "wave_started": false,
+  "wave_note": "Not started. CAP-MSC-02 still needs a review this pack does not write. CAP-CORE-01, CAP-CORE-03, CAP-CORE-04, CAP-CORE-06, CAP-CORE-07, and CAP-CORE-10 still need a real seated session. CAP-CORE-09 still has live evidence count 4. None of those were repaired here.",
+  "final_status_count": {
+    "OPEN": 17,
+    "CLOSED": 0,
+    "READY_FOR_HUMAN": 1,
+    "WAITING_EXTERNAL": 1,
+    "BLOCKED_OWNER": 1
+  },
+  "final_status_note": "CAP-GGV-02 is READY_FOR_HUMAN. CAP-BZG-03 is BLOCKED_OWNER because no variance policy is approved. CAP-INTG-01 is WAITING_EXTERNAL until Yanolja authorises an API. The other 17 stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. The ledger was not raised.",
+  "items": [
+    {
+      "order": 1,
+      "id": "CAP-GGV-02",
+      "title": "Publish Gate & Operator Loop",
+      "current_state": "SYSTEM READY (1.00). Staff ready no. Human commissioned no. Ledger next bar: human commissioning is adoption; Metricool write still off. The round-3 walk is the human gate named in the owner brief.",
+      "exact_missing_evidence": "Haikal signs in, selects a brand, finds old media, searches, previews a photo, previews a video, multi-selects, downloads a ZIP, uploads new footage, and confirms NAS library arrival. That walk was not observed.",
+      "cursor_work": "None for this queue row. Do not hold the walk for The One = 0, 4,787 unknown brand, or 124 preview failures. Those stay visible data-quality exceptions.",
+      "human_work": "The round-3 walk. PASS records commissioning evidence. FAIL becomes a repair pack. Do not mark commissioned from this file.",
+      "external_dependency": "none",
+      "prerequisite": [],
+      "closure_test": "A real session completes the round-3 steps and the statuses are written down. A repository test does not close this item. SYSTEM stays READY either way.",
+      "target_final_state": "READY_FOR_HUMAN",
+      "status": "READY_FOR_HUMAN",
+      "evidence": [
+        "docs/wolf/p0/P0-QUEUE.json",
+        "state/build-factory/p0/BRIEF.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 2,
+      "id": "CAP-BZG-03",
+      "title": "Venue Daily Close",
+      "current_state": "SYSTEM READY (1.00). Staff ready no. Human commissioned no. This session GET /api/venue-close/honesty on Beta :8788 pid 78725 is 200. variance_policy_display is BLOCKED BY BUSINESS POLICY. live_variance_threshold is 0. That 0 is the policy row count. ROLE-BZG-CLOSER has no active assignment. venue_daily_closes stayed 0 in the SoD pack.",
+      "exact_missing_evidence": "An approved variance policy, if a cash mismatch must be closable, and a real person on the closer seat. Neither was recorded.",
+      "cursor_work": "Done for the sentence. Do not invent a threshold. Do not seat a closer. Do not write ESB. Do not run a live close.",
+      "human_work": "Matt writes the variance rule only if a mismatch must be closable, and names the closer, or leaves the seat empty. Devi's BZG F&B operations lead authority stays.",
+      "external_dependency": "none",
+      "prerequisite": ["CAP-INTG-02", "CAP-BZG-01"],
+      "prerequisite_note": "The catalog requires those two. SYSTEM is already READY, so this row does not wait on a new build of them. ESB settlement stays unavailable.",
+      "closure_test": "The honesty route keeps BLOCKED BY BUSINESS POLICY while the policy table is empty, and no closer is invented. A live close is not this test.",
+      "target_final_state": "BLOCKED_OWNER",
+      "status": "BLOCKED_OWNER",
+      "evidence": [
+        "docs/wolf/p0/P0-QUEUE.md",
+        "docs/wolf/day2/D4-UMA-RESULT.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 3,
+      "id": "CAP-INTG-04",
+      "title": "Bank Statement Connector",
+      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: CAP-bound connector tests. Banks own account truth. Wolf ingests files.",
+      "exact_missing_evidence": "CAP-bound connector tests on authorised read, import, reconcile, and report. A payment or a bank mutation is not that evidence.",
+      "cursor_work": "Not started. When started, read and import only.",
+      "human_work": "none until a real statement file is supplied by the owner.",
+      "external_dependency": "Banks. No payment and no bank mutation.",
+      "prerequisite": [],
+      "closure_test": "A connector test reads an authorised file and does not move money. CONFIGURED is not CONNECTED, TESTED, or COMMISSIONED.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 4,
+      "id": "CAP-FIN-02",
+      "title": "Bank Statement Ingest & Reconcile",
+      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: CAP-bound tests plus a connector honesty prove.",
+      "exact_missing_evidence": "Those tests, against CAP-INTG-04, without a payment.",
+      "cursor_work": "Not started. Do not start ahead of CAP-INTG-04.",
+      "human_work": "none beyond the statement file named on CAP-INTG-04.",
+      "external_dependency": "Banks, through CAP-INTG-04. No payment and no bank mutation.",
+      "prerequisite": ["CAP-INTG-04"],
+      "closure_test": "Reconcile output matches the ingested file and writes no payment. A typed balance does not close this item.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 5,
+      "id": "CAP-FIN-01",
+      "title": "Wolf Accounting Core",
+      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: deterministic Core tests plus red-team as a Model C capability. Desks say finance UNAVAILABLE. That sentence is not cash.",
+      "exact_missing_evidence": "The Core tests, and a books source only if Matt opens one. UNAVAILABLE stays until that source exists.",
+      "cursor_work": "Not started. Do not type a balance.",
+      "human_work": "Matt opens the real books, or confirms they stay unavailable.",
+      "external_dependency": "none",
+      "prerequisite": [],
+      "closure_test": "Tests pass without a typed balance. Opening the books is Matt's act and is not implied by a green test.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/W3-P1-OWNER-RESULT.md",
+        "docs/wolf/p0/P0-QUEUE.json"
+      ],
+      "commit": null
+    },
+    {
+      "order": 6,
+      "id": "CAP-FIN-03",
+      "title": "Entity Finance Boards",
+      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: a shared prove matrix for all entities. POS-GGV-EXT-ACCT has no person.",
+      "exact_missing_evidence": "The prove matrix, and a real person on the accountant seat only if Matt names one.",
+      "cursor_work": "Not started. Do not invent an accountant.",
+      "human_work": "Matt names the external accountant, or writes that the seat stays empty. Amanda's content grant is not that seat.",
+      "external_dependency": "none",
+      "prerequisite": [],
+      "closure_test": "The matrix runs without a new person row. An empty seat stays empty unless Matt assigns a real person.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/W3-P3-STAFF-RESULT.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 7,
+      "id": "CAP-FIN-05",
+      "title": "Management Reporting",
+      "current_state": "SYSTEM SPECIFIED (0.05). Ledger next bar: a full P&L, balance sheet, and cash-flow pack.",
+      "exact_missing_evidence": "That pack, from a real books source. A sample statement is not it.",
+      "cursor_work": "Not started. Do not invent a statement.",
+      "human_work": "The books decision on CAP-FIN-01. This row does not ask Matt for a second decision.",
+      "external_dependency": "none",
+      "prerequisite": [],
+      "prerequisite_note": "No catalog prerequisite is recorded. The books source on CAP-FIN-01 is the practical gate. Do not treat UNAVAILABLE as zero.",
+      "closure_test": "A management pack renders from an opened books source. If the books stay unavailable, the report says unavailable.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 8,
+      "id": "CAP-INTG-02",
+      "title": "ESB Connector",
+      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: full ESB connector capability plus contract tests. The war room human act says ESB settlement stays unavailable.",
+      "exact_missing_evidence": "A read-only prove of what is actually connected. Settlement unavailable is not a connected settlement feed.",
+      "cursor_work": "Not started. Read-only. Do not write ESB.",
+      "human_work": "none for the read-only prove.",
+      "external_dependency": "ESB. Read-only truth. No ESB write.",
+      "prerequisite": [],
+      "closure_test": "The prove names the connected read and leaves settlement unavailable if it is unavailable. CONFIGURED is not CONNECTED.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/W3-P4-TRUTH-RESULT.md",
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 9,
+      "id": "CAP-BZG-01",
+      "title": "F&B POS Orchestration",
+      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: full POS orchestration plus ESB connector maturity. ESB owns detailed F&B stock and transaction truth.",
+      "exact_missing_evidence": "That orchestration prove, after the ESB read on CAP-INTG-02.",
+      "cursor_work": "Not started. Do not invent POS totals.",
+      "human_work": "none until the ESB read exists.",
+      "external_dependency": "ESB, through CAP-INTG-02. No ESB write.",
+      "prerequisite": ["CAP-INTG-02"],
+      "closure_test": "Orchestration follows the ESB read that was actually proved. A sample till tape does not close this item.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 10,
+      "id": "CAP-GGV-01",
+      "title": "Content Machine",
+      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: strategy, plan, asset, workflow, and learn as one governed machine, plus tests.",
+      "exact_missing_evidence": "Those tests. The CAP-GGV-02 walk is not this machine.",
+      "cursor_work": "Not started. Do not start a second content system.",
+      "human_work": "The publish-gate walk stays on CAP-GGV-02.",
+      "external_dependency": "none",
+      "prerequisite": [],
+      "closure_test": "The governed machine tests pass on the existing content path. A new content product does not close this item.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 11,
+      "id": "CAP-GGV-04",
+      "title": "Lead Triage & Speed-to-Lead",
+      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: a governed speed-to-lead capability with tests and red-team.",
+      "exact_missing_evidence": "Those tests on leads that are already stored. A demo lead is not that evidence.",
+      "cursor_work": "Not started. Do not invent a lead.",
+      "human_work": "none until the tests name a real gap.",
+      "external_dependency": "none",
+      "prerequisite": [],
+      "closure_test": "Speed-to-lead tests use stored leads and create no demo person.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 12,
+      "id": "CAP-CRM-01",
+      "title": "Lead CRM",
+      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: CAP-bound tests and red-team.",
+      "exact_missing_evidence": "Those tests. CAP-GGV-04 does not replace this row.",
+      "cursor_work": "Not started. Do not build a second CRM.",
+      "human_work": "none until the tests name a real gap.",
+      "external_dependency": "none",
+      "prerequisite": [],
+      "closure_test": "CRM tests pass on the existing lead store. A new CRM does not close this item.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 13,
+      "id": "CAP-HR-01",
+      "title": "People Master Record",
+      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: a canonical people master per legal entity, with CAP-bound tests.",
+      "exact_missing_evidence": "Those tests. A new demo person is not that evidence. People are not roles.",
+      "cursor_work": "Not started. Do not create a person.",
+      "human_work": "none until a missing real person is an owner identity decision.",
+      "external_dependency": "none",
+      "prerequisite": [],
+      "closure_test": "People-master tests use stored persons and add none.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 14,
+      "id": "CAP-HR-04",
+      "title": "Payroll Inputs",
+      "current_state": "SYSTEM SPECIFIED (0.05). Ledger next bar: a clean payroll-inputs prove.",
+      "exact_missing_evidence": "That prove. A sample payslip is not it.",
+      "cursor_work": "Not started. Do not invent pay figures.",
+      "human_work": "none until a real payroll source is an owner decision.",
+      "external_dependency": "none",
+      "prerequisite": [],
+      "prerequisite_note": "No catalog prerequisite is recorded. The people master on CAP-HR-01 is the practical gate.",
+      "closure_test": "Payroll inputs render from a real source or stay unavailable. A typed wage does not close this item.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 15,
+      "id": "CAP-CORE-12",
+      "title": "Delegation & Escalation Burn-down",
+      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: escalation burn-down plus 7/30/90/365 independence tests.",
+      "exact_missing_evidence": "Those tests. They are how Matt stops being the daily path. They were not run for this queue.",
+      "cursor_work": "Not started. Do not mark an independence day as done.",
+      "human_work": "Matt only where a delegation is an authority decision. The tests themselves are not that decision.",
+      "external_dependency": "none",
+      "prerequisite": [],
+      "closure_test": "The independence tests name what still requires Matt. A calendar claim without the test does not close this item.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 16,
+      "id": "CAP-CORE-11",
+      "title": "SOP Factory",
+      "current_state": "SYSTEM SPECIFIED (0.05). Ledger next bar: the SOP loop of evidence, learn, approve, version, train, and use.",
+      "exact_missing_evidence": "A locatable implementation of that loop. A document on disk is not the loop.",
+      "cursor_work": "Not started. Do not silent-rewrite history.",
+      "human_work": "Approval inside the loop, once the loop exists. Not before.",
+      "external_dependency": "none",
+      "prerequisite": [],
+      "closure_test": "The loop stores a versioned SOP change with an approver. A rewritten file with no version does not close this item.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 17,
+      "id": "CAP-STRAT-02",
+      "title": "Owner Radar / Mission Control",
+      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: a CAP-bound Model C prove. Progress is not this capability alone.",
+      "exact_missing_evidence": "That prove, after seated reads exist for CAP-CORE-01, CAP-CORE-06, and CAP-CORE-07. Those three P0 rows are OPEN. A rendered desk is not the prove.",
+      "cursor_work": "Not started. Do not start while those three seated reads are absent.",
+      "human_work": "The seated reads are the CAP-CORE-02 session. They are not commissioning of this row.",
+      "external_dependency": "none",
+      "prerequisite": ["CAP-CORE-01", "CAP-CORE-06", "CAP-CORE-07"],
+      "closure_test": "The prove runs after those three P0 rows leave OPEN. This queue does not raise the ledger.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/W3-P1-OWNER-RESULT.md",
+        "docs/wolf/p0/P0-CLOSURE-REPORT.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 18,
+      "id": "CAP-INTG-01",
+      "title": "Yanolja Connector",
+      "current_state": "SYSTEM ABSENT (0.00). Ledger next bar: connector code, tests, and a contract. There is no Wolf reader.",
+      "exact_missing_evidence": "An authorised Yanolja API. A vendor existing is not that API. No feed was invented.",
+      "cursor_work": "Leave it. Do not write a connector against a guessed API.",
+      "human_work": "Matt authorises the API, or records that none is authorised.",
+      "external_dependency": "Yanolja. Named provider. No authorised API on record.",
+      "prerequisite": [],
+      "closure_test": "The row stays WAITING_EXTERNAL until a real authorised API exists. A fixture feed does not close this item.",
+      "target_final_state": "WAITING_EXTERNAL",
+      "status": "WAITING_EXTERNAL",
+      "evidence": [
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md",
+        "docs/wolf/p0/P0-QUEUE.json"
+      ],
+      "commit": null
+    },
+    {
+      "order": 19,
+      "id": "CAP-AMG-01",
+      "title": "Hotel PMS Orchestration",
+      "current_state": "SYSTEM SPECIFIED (0.05). Ledger next bar: Yanolja connector plus orchestration code and tests. Yanolja owns reservation truth.",
+      "exact_missing_evidence": "CAP-INTG-01 at a real API, then orchestration tests. A hotel number was not invented.",
+      "cursor_work": "Not started. Do not start ahead of CAP-INTG-01.",
+      "human_work": "none until Yanolja authorises the API.",
+      "external_dependency": "Yanolja, through CAP-INTG-01.",
+      "prerequisite": ["CAP-INTG-01"],
+      "closure_test": "Orchestration follows a real Yanolja read. A sample occupancy figure does not close this item.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+      ],
+      "commit": null
+    },
+    {
+      "order": 20,
+      "id": "CAP-AMG-04",
+      "title": "Daily Hotel Operating State",
+      "current_state": "SYSTEM SPECIFIED (0.05). Ledger next bar: machine-generated daily ops.",
+      "exact_missing_evidence": "That daily state, after CAP-INTG-01 and CAP-AMG-01. No daily hotel figure was invented.",
+      "cursor_work": "Not started. Do not start ahead of those two.",
+      "human_work": "none until the Yanolja read exists.",
+      "external_dependency": "Yanolja, through CAP-INTG-01 and CAP-AMG-01.",
+      "prerequisite": ["CAP-INTG-01", "CAP-AMG-01"],
+      "closure_test": "Daily ops render from the Yanolja read that was actually proved. A typed occupancy does not close this item.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+      ],
+      "commit": null
+    }
+  ]
+}
