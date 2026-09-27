@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>My Work</title>
+<link rel="stylesheet" href="/assets/wolf-truth.css?v=20260927-w3p3" />
 <style>
   :root {
     --bg: #f4f1ea; --card: #fffdf8; --text: #1c1915; --muted: #5c564c;
@@ -31,6 +32,10 @@
   }
   a.card { display: block; text-decoration: none; color: inherit; }
   a.card:active { border-color: var(--accent); }
+  .prompt { margin: 0 0 8px; }
+  .wolf-card, .wolf-empty {
+    background: var(--card); color: var(--text); border-color: var(--line);
+  }
   .err { color: #8d1d1d; }
   @media (max-width: 420px) {
     body { padding: 12px 12px 88px; font-size: 16px; }
@@ -58,17 +63,41 @@
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
 
+  function cards(items) {
+    return (items || []).map((it) => {
+      const inner = `<p>${esc(it.title)}</p>${it.status ? `<p class="role">${esc(it.status)}</p>` : ""}`;
+      if (it.href) {
+        const klass = it.href.indexOf("/my-work/") === 0 ? "card wolf-card" : "action";
+        return `<a class="${klass}" href="${esc(it.href)}">${inner}</a>`;
+      }
+      return `<div class="card wolf-card">${inner}</div>`;
+    }).join("");
+  }
+
+  function part(block) {
+    const items = block.items || [];
+    const body = items.length
+      ? cards(items)
+      : `<div class="wolf-empty">${esc(block.empty_message || "Nothing here.")}</div>`;
+    const prompt = block.prompt ? `<p class="prompt">${esc(block.prompt)}</p>` : "";
+    return `${prompt}${body}`;
+  }
+
+  function framework(sections) {
+    return (sections || []).filter((block) => block && block.show !== false).map((block) => {
+      const body = (block.parts && block.parts.length)
+        ? block.parts.map(part).join("")
+        : part(block);
+      const score = block.performance && block.performance.shown_as_score === false
+        ? `<p class="wolf-empty" data-performance="${esc(block.performance.state || "MISSING")}">${esc(block.performance.message || "")}</p>`
+        : "";
+      return `<section data-section="${esc(block.key || "")}"><h2>${esc(block.title || "")}</h2>${body}${score}</section>`;
+    }).join("");
+  }
+
   function list(block) {
     if (!block) return "";
-    const items = block.items || [];
-    const body = block.empty
-      ? `<div class="card">${esc(block.empty_message || "Nothing here.")}</div>`
-      : items.map((it) => {
-          const inner = `<p>${esc(it.title)}</p>${it.status ? `<p class="role">${esc(it.status)}</p>` : ""}`;
-          if (it.href) return `<a class="card" href="${esc(it.href)}">${inner}</a>`;
-          return `<div class="card">${inner}</div>`;
-        }).join("");
-    return `<h2>${esc(block.title || "")}</h2>${body}`;
+    return `<h2>${esc(block.title || "")}</h2>${part(block)}`;
   }
 
   fetch("/api/staff/home", { headers: { Accept: "application/json" } })
@@ -85,10 +114,18 @@
       const covers = data.covers || [];
       $("covers").textContent = covers.length ? covers.join(", ") : "";
       $("boundary").textContent = data.boundary || "";
-      $("sections").innerHTML = (data.sections || []).map(list).join("");
+      const dash = data.dashboard || {};
+      if (dash.sections && dash.sections.length) {
+        $("sections").innerHTML = framework(dash.sections);
+        document.body.setAttribute("data-dashboard", "1");
+        if (dash.representative) document.body.setAttribute("data-representative", String(dash.representative));
+      } else {
+        $("sections").innerHTML = (data.sections || []).map(list).join("");
+      }
       const notes = data.notifications || {};
       $("notes").textContent = notes.empty_message || "";
-      $("desk").innerHTML = (data.desk || []).map((link) => (
+      const deskLinks = (dash.sections && dash.sections.length) ? [] : (data.desk || []);
+      $("desk").innerHTML = deskLinks.map((link) => (
         `<a class="action" href="${esc(link.href)}">${esc(link.label)}</a>`
       )).join("");
       const over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;

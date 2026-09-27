@@ -91,6 +91,18 @@ def _bzg_lead_role(row: dict[str, Any]) -> bool:
     return role.endswith("FB-OPS-LEAD") or ("f&b" in label and "lead" in label)
 
 
+def _closer_role(row: dict[str, Any]) -> bool:
+    role = str(row.get("role_id") or "")
+    label = str(row.get("role_label") or "").strip().lower()
+    return role.endswith("CLOSER") or "closing operator" in label or label == "closer"
+
+
+def _manager_role(row: dict[str, Any]) -> bool:
+    role = str(row.get("role_id") or "")
+    label = str(row.get("role_label") or "").strip().lower()
+    return role.endswith("-GM") or label == "general manager"
+
+
 def _assignments(conn, person_id: str) -> list[dict[str, Any]]:
     rows = conn.execute(
         """
@@ -191,6 +203,10 @@ def _pick(rows: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
         return "creative_director", primary
     if _bzg_lead_role(primary):
         return "bzg_fb_ops", primary
+    if _closer_role(primary):
+        return "closer", primary
+    if _manager_role(primary):
+        return "manager", primary
     return "staff", primary
 
 
@@ -331,6 +347,14 @@ def _desk(experience: str, role: dict[str, Any], brands: list[dict[str, str]]) -
             if pair:
                 links.append({"label": pair[0], "href": pair[1]})
         return links
+    if experience == "closer":
+        links = []
+        for brand in brands:
+            if brand["id"] == "BZG-UMA":
+                links.append({"label": "Open today's close", "href": "/uma-blu-close"})
+        return links
+    if experience == "manager" and str(role.get("role_id") or "").startswith("ROLE-AMG-"):
+        return [{"label": "Open the hotel desk", "href": "/amg-ops-pack"}]
     pair = _GENERIC_DESK.get(str(role.get("role_id") or ""))
     if pair:
         return [{"label": pair[0], "href": pair[1]}]
@@ -345,6 +369,11 @@ def _covers(experience: str, brands: list[dict[str, str]], scopes: list[dict[str
         return labels or ["Finance notes"]
     if experience == "bzg_fb_ops":
         return [b["name"] for b in brands] or ["No venue is on this assignment yet"]
+    if experience == "closer":
+        return [b["name"] for b in brands] or ["No venue is on this assignment yet"]
+    if experience == "manager":
+        labels = [s["label"] for s in scopes if s.get("label")]
+        return labels or ["No site is on this assignment yet"]
     if experience == "owner_pulse":
         return []
     return []
@@ -360,6 +389,16 @@ def _boundary(experience: str) -> str | None:
         return (
             "You run food and beverage operations for the venues on your assignment. "
             "You cannot pay, change a bank account, or authorise a governance exception."
+        )
+    if experience == "closer":
+        return (
+            "You record today's close for the venues on your assignment. "
+            "You cannot pay, change a bank account, verify your own close, or change a governance rule."
+        )
+    if experience == "manager":
+        return (
+            "You run the hotel day for the sites on your assignment. "
+            "You cannot pay, change a bank account, or change a governance rule."
         )
     return None
 
@@ -534,6 +573,33 @@ def build_home(person_id: str | None, *, conn=None) -> dict[str, Any]:
         else:
             sections = _staff_sections(c, pid, entities, codes)
         display = str(person.get("display_name") or "").strip() or "there"
+        role_label = str(role.get("role_label") or role.get("position_label") or "Your role")
+        covers = _covers(experience, brands, scope_rows)
+        desk = _desk(experience, role, brands)
+        boundary = _boundary(experience)
+        authority = {
+            "move_money": bool(codes & _MONEY),
+            "change_bank": bool(codes & _BANK),
+            "authorise_governance": bool(codes & _GOVERN),
+            "finance_read": "finance.nota.read" in codes,
+            "finance_review": "finance.nota.review" in codes,
+            "finance_edit": "finance.nota.create" in codes or "finance.nota.edit" in codes,
+            "unrestricted": False,
+        }
+        from core import role_dashboard as _dashboard
+
+        audience = _dashboard.audience_for(str(role.get("role_id") or ""), pid)
+        dashboard = _dashboard.project(
+            experience=experience,
+            role_id=role.get("role_id"),
+            role_label=role_label,
+            covers=covers,
+            desk=desk,
+            boundary=boundary,
+            sections=sections,
+            audience=audience,
+            authority=authority,
+        )
         return {
             "ok": True,
             "bound": BOUND,
@@ -544,26 +610,19 @@ def build_home(person_id: str | None, *, conn=None) -> dict[str, Any]:
             "display_name": display,
             "role": {
                 "id": role.get("role_id"),
-                "label": role.get("role_label") or role.get("position_label") or "Your role",
+                "label": role_label,
             },
             "scopes": [s["id"] for s in scope_rows],
-            "covers": _covers(experience, brands, scope_rows),
-            "desk": _desk(experience, role, brands),
-            "boundary": _boundary(experience),
+            "covers": covers,
+            "desk": desk,
+            "boundary": boundary,
+            "dashboard": dashboard,
             "notifications": {
                 "empty": True,
                 "empty_message": "No notifications.",
                 "items": [],
             },
-            "authority": {
-                "move_money": bool(codes & _MONEY),
-                "change_bank": bool(codes & _BANK),
-                "authorise_governance": bool(codes & _GOVERN),
-                "finance_read": "finance.nota.read" in codes,
-                "finance_review": "finance.nota.review" in codes,
-                "finance_edit": "finance.nota.create" in codes or "finance.nota.edit" in codes,
-                "unrestricted": False,
-            },
+            "authority": authority,
             "sections": sections,
             "founder_dependency": _founder(experience),
             "staff_ready": False,
@@ -597,5 +656,16 @@ def fingerprint(home: dict[str, Any]) -> dict[str, Any]:
                 "titles": [i.get("title") for i in (s.get("items") or [])],
             }
             for s in (home.get("sections") or [])
+        ],
+        "representative": (home.get("dashboard") or {}).get("representative"),
+        "audience": (home.get("dashboard") or {}).get("audience"),
+        "dashboard_sections": [
+            {
+                "key": s.get("key"),
+                "title": s.get("title"),
+                "empty": s.get("empty"),
+                "titles": [i.get("title") for i in (s.get("items") or [])],
+            }
+            for s in ((home.get("dashboard") or {}).get("sections") or [])
         ],
     }
