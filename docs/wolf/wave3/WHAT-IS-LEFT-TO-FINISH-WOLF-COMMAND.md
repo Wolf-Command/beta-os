@@ -75,14 +75,14 @@ P0 or P1, and the SYSTEM state is not READY. The next bar is Wolf-side work. Sev
 - What it is: Deterministic server-enforced RBAC.
 - Why it matters: Wolf cannot enforce or refuse an action without this.
 - Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: Full seat-matrix deployed prove not re-run this audit
+- Exact remaining work: Seated allow and deny on /content-2.0, /bzg/uma-blu, /wolf, and /ggv/finance under a real Cloudflare session. The unsigned catalog deny is commit c49237f. No grant was added. Ledger stays PROVEN. See docs/wolf/p0/P0-CAP-CORE-04-RESULT.md.
 - Work classes: local_deterministic, human_commissioning.
 - Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
 - Responsible role: Owner.
 - Evidence required to close: Deployed or runtime proof on the intended Beta boundary for READY. A repository test is not a deployed-route test. A human walk is not this bar.
-- Six-day note: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- Six-day note: Unsigned, spoofed, and bad-JWT callers are 403 on GET /api/core/permissions and on the four seat routes. Commit c49237f. No grant was added. A seated allow was not observed. Ledger stays PROVEN.
 - Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
+- Deployed proof: Unsigned deny on Beta :8788 pid 76910 is recorded for the permission catalog and the four seat routes. DEPLOYED-ROUTE-PROOF-20260927 stays FAIL for a seated allow. No real Cloudflare Access JWT was presented. The unsigned deny is not that seated proof.
 
 ### CAP-CORE-05 — Authority Limits Evaluator
 

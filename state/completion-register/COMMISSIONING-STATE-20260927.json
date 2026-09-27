@@ -38,7 +38,7 @@
       "staff_readiness": "Not claimed. Unsigned :8788 routes return 403 missing_auth.",
       "human_commissioning": "Not commissioned.",
       "operating_adoption": "Not scored.",
-      "gap": "ROLE-GGV-CREATIVE-DIRECTOR does not hold organisation.entity.read. ROLE-GGV-EDIT does, and that assignment is ended. Full seat-matrix deployed prove was already the next bar."
+      "gap": "P0 queue stays OPEN after commit c49237f. Unsigned callers are 403 on GET /api/core/permissions and on the four seat routes. No grant was added. The seated read was not observed. Ledger stays PROVEN. This is not staff ready and not human commissioned."
     },
     {
       "id": "CAP-CORE-05",

@@ -25,7 +25,7 @@
     "WAITING_EXTERNAL": 0,
     "BLOCKED_OWNER": 2
   },
-  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED. The empty-table deny is commit fcae665. Live org_authority_limits stayed 0. The ledger stays PROVEN. CAP-MSC-02 stays OPEN. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit 99f5a27. CAP-CORE-06 stays OPEN after the temporary trail in commit 2229b21. CAP-CORE-07 stays OPEN after the approval-route prove in commit ab4af72. Live core_approval_requests stayed 0. No policy row was inserted. CAP-CORE-08 is BLOCKED_OWNER. The self-close deny is commit e2cab4f. Live core_sod_constraints stayed 0. No finance pack was inserted. CAP-CORE-09 stays OPEN after the gate list in commit 9d0b83c. Live core_evidence_records is 4, not 3, after test_work_loop.py left an invalidated row. No requirement was inserted. CAP-CORE-03 stays OPEN after the unsigned board deny in commit 5a814fe. No grant was added. No person was created. CAP-CORE-04 and CAP-CORE-10 stay OPEN without a new slice. Staff ready, human commissioned, and operating adoption stay unset.",
+  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED. The empty-table deny is commit fcae665. Live org_authority_limits stayed 0. The ledger stays PROVEN. CAP-MSC-02 stays OPEN. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit 99f5a27. CAP-CORE-06 stays OPEN after the temporary trail in commit 2229b21. CAP-CORE-07 stays OPEN after the approval-route prove in commit ab4af72. Live core_approval_requests stayed 0. No policy row was inserted. CAP-CORE-08 is BLOCKED_OWNER. The self-close deny is commit e2cab4f. Live core_sod_constraints stayed 0. No finance pack was inserted. CAP-CORE-09 stays OPEN after the gate list in commit 9d0b83c. Live core_evidence_records is 4, not 3, after test_work_loop.py left an invalidated row. No requirement was inserted. CAP-CORE-03 stays OPEN after the unsigned board deny in commit 5a814fe. No grant was added. No person was created. CAP-CORE-04 stays OPEN after the unsigned catalog deny in commit c49237f. No grant was added. No seated 200 was observed. CAP-CORE-10 stays OPEN without a new slice. Staff ready, human commissioned, and operating adoption stay unset.",
   "items": [
     {
       "order": 1,
@@ -129,15 +129,22 @@
       "order": 6,
       "id": "CAP-CORE-04",
       "title": "Permission & Authority Engine",
-      "current_state": "SYSTEM PROVEN (0.80). scripts/core/rbac.py. Full seat-matrix deployed prove was not re-run. ROLE-GGV-CREATIVE-DIRECTOR does not hold organisation.entity.read. The ended ROLE-GGV-EDIT grant does not apply.",
-      "exact_missing_evidence": "The seat matrix on Beta: each seated role allowed on its route and denied on the others, under a verified person. Local projection in D3 is not that HTTP proof.",
-      "cursor_work": "After the real session, record allow and deny for the existing seats only: PERS-HAIKAL, PERS-DEVI, PERS-MATT. Do not add a grant. Do not authorize by display name.",
-      "human_work": "The three sign-ins are CAP-CORE-02. This item consumes those statuses. It does not commission the people.",
+      "current_state": "SYSTEM PROVEN (0.80). On Beta :8788 pid 74540, GET /api/core/permissions did not check identity and returned the permission list and the role grants. Commit c49237f gates that read with organisation.role.read. On pid 76910, unsigned, a spoofed email, X-Wolf-Subject, and Cf-Access-Jwt-Assertion a.b.c are 403 on that path, with no catalog body. /api/core/me/permissions was already 403. /content-2.0, /bzg/uma-blu, /wolf, and /ggv/finance stay 403 for those four callers. The public hostname returns 302 to the Access login. Catalog projection, not a session: PERS-HAIKAL holds content.plan.read and lacks venue.close.read, finance.nota.read, and progress.read. PERS-DEVI holds venue.close.read on Uma and lacks those other three. PERS-MATT holds all four. ROLE-GGV-CREATIVE-DIRECTOR does not hold organisation.entity.read. ROLE-GGV-EDIT does, and ASG-HAIKAL-VE-1 is ENDED, so that grant does not allow PERS-HAIKAL. Live org_permissions stayed 79. Live org_role_permissions stayed 139. No grant was added. No seated 200 was observed. The ledger stays PROVEN.",
+      "exact_missing_evidence": "The Beta status of /content-2.0, /bzg/uma-blu, /wolf, and /ggv/finance under a real Cloudflare session for PERS-HAIKAL, PERS-DEVI, and PERS-MATT. Allow where the stored grant allows. Deny where it does not. The catalog projection is not that status. A development-subject 200 is not that proof.",
+      "cursor_work": "Done for the unsigned slice in commit c49237f. Do not add a grant. Do not authorize by display name. After a real session, record the four route statuses for those three people. Do not raise the ledger. Do not mark CLOSED from the unsigned deny.",
+      "human_work": "The three sign-ins are CAP-CORE-02. This item records the statuses. It does not commission the people.",
+      "remaining": "Seated allow and deny on the four routes under the CAP-CORE-02 session. Unsigned fail-closed is recorded, including the permission catalog. The row stays OPEN until those seated statuses exist.",
       "external_dependency": "none",
       "prerequisite": ["CAP-CORE-03"],
-      "closure_test": "Recorded Beta statuses match the grants already on those assignments. A name string is not the allow reason. Unsigned stays 403.",
+      "prerequisite_note": "The queue lists CAP-CORE-03. That seated assignment read was not observed. This slice does not use it. The critical path records no extra prerequisite.",
+      "closure_test": "Recorded Beta statuses match the grants already on those assignments. A name string is not the allow reason. Unsigned stays 403. The unsigned half passed (SUMMARY pass=116 fail=0). Live org_role_permissions stayed 139. The seated half is absent, so the row stays OPEN.",
       "target_final_state": "CLOSED",
-      "status": "OPEN"
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/p0/P0-CAP-CORE-04-RESULT.md",
+        "scripts/tests/test_cap_core_04_live_gate.py"
+      ],
+      "commit": "c49237f"
     },
     {
       "order": 7,

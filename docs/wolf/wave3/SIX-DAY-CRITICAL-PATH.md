@@ -51,10 +51,10 @@ Production `:8787` is out of this path. Beta `:8788` is the boundary for any dep
 ### 6. CAP-CORE-04 — Permission & Authority Engine
 
 - Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
-- Next bar: Full seat-matrix deployed prove not re-run this audit
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Next bar: Seated allow and deny on the four seat routes. The unsigned catalog deny is commit c49237f. Ledger stays PROVEN.
+- Dependency: The queue lists CAP-CORE-03. That seated assignment read was not observed. This slice does not use it. The critical path records no extra prerequisite.
 - Responsible role: Owner.
-- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- In six days: Unsigned, spoofed, and bad-JWT callers are 403 on GET /api/core/permissions and on /content-2.0, /bzg/uma-blu, /wolf, and /ggv/finance. Commit c49237f. No grant was added. A seated allow was not observed. Do not authorize by display name. Ledger stays PROVEN.
 
 ### 7. CAP-CORE-05 — Authority Limits Evaluator
 

@@ -6,7 +6,7 @@ Pack S2. Owner brief 27 Sep 2026 16:32 WITA. This is the one execution queue. Ru
 
 Register count is **12**. `build_war_room()` in S1 returned P0 12, P1 20, P2 42, P3 3. The closed set is CAP-CORE-01 through CAP-CORE-10, plus CAP-MSC-02 and CAP-INTG-07. There is no thirteenth P0.
 
-CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED after the empty-table deny in commit `fcae665`. CAP-CORE-08 is BLOCKED_OWNER after the self-close deny in commit `e2cab4f`. Live `core_sod_constraints` stayed 0. No finance pack was inserted. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit `99f5a27`. CAP-CORE-06 stays OPEN after the temporary trail in commit `2229b21`. CAP-CORE-07 stays OPEN after the approval-route prove in commit `ab4af72`. CAP-CORE-09 stays OPEN after the gate list in commit `9d0b83c`. Live `core_evidence_records` is 4, not 3. No requirement was inserted. CAP-CORE-03 stays OPEN after the unsigned board deny in commit `5a814fe`. No grant was added. No person was created. CAP-CORE-04 and CAP-CORE-10 stay OPEN without a new slice. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
+CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED after the empty-table deny in commit `fcae665`. CAP-CORE-08 is BLOCKED_OWNER after the self-close deny in commit `e2cab4f`. Live `core_sod_constraints` stayed 0. No finance pack was inserted. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit `99f5a27`. CAP-CORE-06 stays OPEN after the temporary trail in commit `2229b21`. CAP-CORE-07 stays OPEN after the approval-route prove in commit `ab4af72`. CAP-CORE-09 stays OPEN after the gate list in commit `9d0b83c`. Live `core_evidence_records` is 4, not 3. No requirement was inserted. CAP-CORE-03 stays OPEN after the unsigned board deny in commit `5a814fe`. No grant was added. No person was created. CAP-CORE-04 stays OPEN after the unsigned catalog deny in commit `c49237f`. No grant was added. CAP-CORE-10 stays OPEN without a new slice. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
 
 Order is the critical path. A prerequisite is another P0 the next bar actually waits on. The catalog records no extra prerequisite inside the kernel, because those rows are already PROVEN or READY. That does not make the deployed observation done.
 
@@ -67,14 +67,14 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 
 ## 6. CAP-CORE-04 — Permission & Authority Engine
 
-- Current state: SYSTEM PROVEN (0.80). The full seat matrix was not re-run on Beta. `ROLE-GGV-CREATIVE-DIRECTOR` does not hold `organisation.entity.read`. The ended edit grant does not apply.
-- Exact missing evidence: allow and deny on Beta for the existing seats, under a verified person. The D3 catalog projection is not that HTTP proof.
-- Cursor work: record allow and deny for `PERS-HAIKAL`, `PERS-DEVI`, and `PERS-MATT` only. Do not add a grant. Do not authorize by display name.
+- Current state: SYSTEM PROVEN (0.80). On Beta `:8788` pid 74540, `GET /api/core/permissions` did not check identity. Commit `c49237f` uses `organisation.role.read`. On pid 76910, unsigned, a spoofed email, `X-Wolf-Subject`, and a bad JWT are 403 on that path. `/api/core/me/permissions` was already 403. `/content-2.0`, `/bzg/uma-blu`, `/wolf`, and `/ggv/finance` stay 403 for those four callers. The public hostname redirects those paths to the Access login. Catalog projection, not a session: `PERS-HAIKAL` holds `content.plan.read` and lacks `venue.close.read`, `finance.nota.read`, and `progress.read`. `PERS-DEVI` holds `venue.close.read` on Uma and lacks those other three. `PERS-MATT` holds all four. `ROLE-GGV-CREATIVE-DIRECTOR` does not hold `organisation.entity.read`. `ROLE-GGV-EDIT` does, and `ASG-HAIKAL-VE-1` is ENDED, so that grant does not allow `PERS-HAIKAL`. Live `org_permissions` stayed 79. Live `org_role_permissions` stayed 139. No seated 200 was observed.
+- Exact missing evidence: the Beta status of those four routes under a real Cloudflare session for `PERS-HAIKAL`, `PERS-DEVI`, and `PERS-MATT`. The catalog projection is not that status.
+- Cursor work: done for the unsigned slice in commit `c49237f`. Evidence: `docs/wolf/p0/P0-CAP-CORE-04-RESULT.md`. Do not add a grant. Do not authorize by display name. After a real session, record the four statuses. Do not raise the ledger. Do not mark CLOSED from the unsigned deny.
 - Human work: the three sign-ins are CAP-CORE-02. This item records the statuses. It does not commission the people.
 - External dependency: none.
-- Prerequisite: CAP-CORE-03.
-- Closure test: recorded statuses match the grants already on those assignments. Unsigned stays 403.
-- Target: CLOSED. Status: OPEN.
+- Prerequisite: CAP-CORE-03. The seated assignment read that keeps CAP-CORE-03 OPEN was not used. The critical path records no extra prerequisite.
+- Closure test: recorded statuses match the grants already on those assignments. Unsigned stays 403. The unsigned half passed (`SUMMARY pass=116 fail=0`). The seated half is absent, so the row stays OPEN. `test_rbac_permissions.py` is exit 1, pass=39 fail=4. The fails are the pre-existing scope and entity-read checks. They were not repaired. The catalog smoke check passed.
+- Target: CLOSED. Status: OPEN. Commit: `c49237f`. Remaining: the seated read of the four routes.
 
 ## 7. CAP-CORE-05 — Authority Limits Evaluator
 

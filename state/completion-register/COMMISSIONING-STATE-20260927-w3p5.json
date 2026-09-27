@@ -313,7 +313,7 @@
       "operating_adoption": "NOT MEASURED",
       "staff_ready": false,
       "human_commissioned": false,
-      "gap": "Full seat-matrix deployed prove not re-run this audit",
+      "gap": "P0 queue stays OPEN after commit c49237f. Unsigned callers are 403 on GET /api/core/permissions and on the four seat routes. No grant was added. The seated read was not observed. Ledger stays PROVEN. This is not staff ready and not human commissioned.",
       "owner_role": "Owner",
       "effort_class": "S",
       "dependency": "No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY."
