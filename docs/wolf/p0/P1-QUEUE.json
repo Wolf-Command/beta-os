@@ -19,12 +19,13 @@
   "wave_started": true,
   "wave_note": "S4 read the owner statement archive on CAP-INTG-04 and left the row CLOSED. The ledger stays BUILT. CONNECTED stays false. CAP-MSC-02 still needs a review. CAP-CORE-01, CAP-CORE-03, CAP-CORE-04, CAP-CORE-06, CAP-CORE-07, and CAP-CORE-10 still need a real seated session. CAP-CORE-09 still has live evidence count 4. None of those were repaired here.",
   "final_status_count": {
-    "OPEN": 16,
-    "CLOSED": 1,
+    "OPEN": 15,
+    "CLOSED": 2,
     "READY_FOR_HUMAN": 1,
     "WAITING_EXTERNAL": 1,
     "BLOCKED_OWNER": 1
   },
+  "f6_note": "F6 closed CAP-GGV-01 on the content-path tests in commit e982a90. The ledger stays BUILT. SYSTEM was not raised.",
   "final_status_note": "CAP-GGV-02 is READY_FOR_HUMAN. CAP-BZG-03 is BLOCKED_OWNER because no variance policy is approved. CAP-INTG-01 is WAITING_EXTERNAL until Yanolja authorises an API. CAP-INTG-04 is CLOSED on the file read in commit 80b8a3e. The ledger stays BUILT. The other 16 stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. The ledger was not raised.",
   "items": [
     {
@@ -200,19 +201,20 @@
       "order": 10,
       "id": "CAP-GGV-01",
       "title": "Content Machine",
-      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: strategy, plan, asset, workflow, and learn as one governed machine, plus tests.",
-      "exact_missing_evidence": "Those tests. The CAP-GGV-02 walk is not this machine.",
-      "cursor_work": "Not started. Do not start a second content system.",
+      "current_state": "SYSTEM BUILT (0.25). The content-path tests passed on the stored catalog. The skeleton stays empty. The ledger stays BUILT. Learning library stays NOT CONNECTED.",
+      "exact_missing_evidence": "None for this queue test. A review that would raise PROVEN was not supplied. The publish walk stays on CAP-GGV-02.",
+      "cursor_work": "Done in commit e982a90. Read-only tests of the existing content path. No second content system.",
       "human_work": "The publish-gate walk stays on CAP-GGV-02.",
       "external_dependency": "none",
       "prerequisite": [],
       "closure_test": "The governed machine tests pass on the existing content path. A new content product does not close this item.",
       "target_final_state": "CLOSED",
-      "status": "OPEN",
+      "status": "CLOSED",
       "evidence": [
-        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md",
+        "docs/wolf/five/P1-CAP-GGV-01-RESULT.md"
       ],
-      "commit": null
+      "commit": "e982a90"
     },
     {
       "order": 11,
