@@ -113,22 +113,25 @@
   }
 </style>
 </head>
-<body>
-  <p class="crumb"><a href="/bzg">BZG</a> · Uma Blu</p>
+<body data-wolf-page-type="WORKSPACE" data-wolf-org="BZG/UMA" data-wolf-shell="global">
+  <p class="crumb">WOLF · Blu Zone · Uma Blu · Today</p>
   <h1 class="brand">Uma Blu <em>Today</em></h1>
-  <p class="sub">What needs you today</p>
+  <p class="sub">What to do on this shift. Sales stay in ESB. This screen records the close, not a payment.</p>
 
   <div class="banner hidden" id="fixtureBanner">Some rows are practice only — not live Uma Blu work.</div>
   <div class="banner info" id="roleBanner">Checking what you can do…</div>
   <div class="banner info" id="stockBanner">Stock on hand is empty. An empty framework is not a live inventory count.</div>
 
-  <nav class="uma">
+  <nav class="uma" aria-label="Uma Blu day">
     <a class="active" href="/bzg/uma-blu">Today</a>
-    <a href="/bzg/uma-blu/bills">Bills</a>
-    <a href="/bzg/uma-blu/petty">Petty</a>
-    <a href="/uma-blu-close">Close</a>
+    <a href="/uma-blu-close">Daily Close</a>
     <a href="/bzg/uma-blu/issues">Issues</a>
-    <a href="/bzg/uma-blu#history">History</a>
+    <a href="/bzg/uma-blu/bills">Bills</a>
+    <a href="/bzg/uma-blu/bills#purchasing">Purchasing</a>
+    <a href="/bzg/uma-blu/evidence">Evidence</a>
+    <a href="/bzg/uma-blu/exceptions">Exceptions</a>
+    <a href="/my-work">My Work</a>
+    <a href="/bzg/uma-blu/petty">Petty cash</a>
   </nav>
 
   <div class="panel" id="now">
@@ -146,6 +149,53 @@
   <div class="panel" id="history">
     <h2>History</h2>
     <ul class="hist" id="hist"><li class="muted">Loading…</li></ul>
+  </div>
+
+  <div id="engineering-record" hidden>
+  <span class="disabled" title="No page yet">Overview · EMPTY</span>
+  <span class="disabled" title="No page yet">Operations · EMPTY</span>
+  <div class="panel" id="needs-you-connective">
+    <h2>Needs-You connective</h2>
+    <p class="muted" style="margin:0 0 8px">BZG / Uma commissioning and recorded ops-loop rows for this seat. Counts are the in-scope length. EMPTY when none. Not staff_ready. Not money. Haikal human is not started. Devi retest stays parked.</p>
+    <div id="connective"><p class="muted">Loading…</p></div>
+  </div>
+
+  <div class="panel" id="handover">
+    <h2>Handover</h2>
+    <div id="handoverBody"><p class="muted">Loading…</p></div>
+  </div>
+
+  <div class="panel" id="loop">
+    <h2>Loop</h2>
+    <p class="muted" style="margin:0 0 8px">Bound beta-bzg-loop-safe. Empty stock is not live inventory. No payment on this screen.</p>
+    <div id="loopBody"><p class="muted">Loading…</p></div>
+  </div>
+
+  <div class="panel" id="operatorDepth">
+    <h2>Operator depth</h2>
+    <p class="muted" style="margin:0 0 8px">PR detail + goods-receipt for F&amp;B Ops Lead fixture. No live Devi commission. Empty stock is not live inventory.</p>
+    <div id="operatorDepthBody"><p class="muted">Loading…</p></div>
+  </div>
+
+  <div class="panel" id="stockConsequence">
+    <h2>Stock consequence</h2>
+    <div id="stockConsequenceBody"><p class="muted">Loading…</p></div>
+  </div>
+
+  <div class="panel" id="billConsequence">
+    <h2>Supplier / bill consequence</h2>
+    <div id="billConsequenceBody"><p class="muted">Loading…</p></div>
+  </div>
+
+  <div class="panel" id="managerVis">
+    <h2>Manager visibility</h2>
+    <div id="managerVisBody"><p class="muted">Loading…</p></div>
+  </div>
+
+  <div class="panel" id="ownerExc">
+    <h2>Owner exception</h2>
+    <div id="ownerExcBody"><p class="muted">Loading…</p></div>
+  </div>
   </div>
 
 <script>
@@ -206,21 +256,68 @@
         }
         function paintAction(parent, c) {
           if (!c || c.actionable === false || !c.action || !c.action.label) return;
+          var href = c.action.href || c.href || "";
+          if (href) {
+            var link = el("a", "act", c.action.label);
+            link.href = href;
+            parent.appendChild(link);
+            return;
+          }
           var btn = el("span", "act", c.action.label);
           parent.appendChild(btn);
         }
         var cards = data.cards || [];
+        var connBox = document.getElementById("connective");
+        if (connBox) {
+          var conn = data.needs_you_connective || {};
+          var rowsC = conn.items || [];
+          connBox.innerHTML = "";
+          if (conn.empty || !rowsC.length) {
+            connBox.appendChild(el("p", "empty", conn.empty_message || "No in-scope BZG Needs-You rows. EMPTY — not invented work."));
+          } else {
+            var kinds = ["morning_seed", "waiting_others", "needs_you", "ops_loop"];
+            var kindLine = document.createElement("p");
+            kindLine.className = "muted";
+            kindLine.textContent = kinds.map(function (k) {
+              var n = (conn.by_kind || {})[k];
+              return k + " " + (n == null ? "0" : String(n));
+            }).join(" · ") + " · " + String(conn.count) + " in scope";
+            connBox.appendChild(kindLine);
+            rowsC.forEach(function (row) {
+              var card = el("div", "card");
+              card.appendChild(el("div", "kind", row.kind || ""));
+              card.appendChild(el("p", "now-title", row.title || row.object_id || ""));
+              if (row.href) {
+                var open = el("a", "act", "Open");
+                open.href = row.href;
+                card.appendChild(open);
+              }
+              connBox.appendChild(card);
+            });
+          }
+        }
         var nowBox = document.getElementById("nowBody");
         if (nowBox) {
           nowBox.innerHTML = "";
           var now = data.now;
           if (!now) {
             nowBox.appendChild(el("p", "empty", "Nothing live needs you right now."));
+            var nowEmpty = (data.staff_ready && data.staff_ready.empty_states && data.staff_ready.empty_states.now) || null;
+            if (nowEmpty && nowEmpty.next_action && nowEmpty.next_action.label) {
+              var idle = el("a", "act", nowEmpty.next_action.label);
+              idle.href = nowEmpty.next_action.href || "#history";
+              nowBox.appendChild(idle);
+            }
           } else {
             if (operatorChip(now)) {
               nowBox.appendChild(el("div", "kind", operatorChip(now)));
             }
             nowBox.appendChild(el("p", "now-title", humanTitle(now.title) || "Attention"));
+            if (now.next_action && now.next_action.label && now.intel_recommendation && now.intel_recommendation.changes_work) {
+              nowBox.appendChild(el("div", "why", "Intel next action: " + now.next_action.label));
+            } else if (data.next_action && data.next_action.changes_work && data.next_action.label) {
+              nowBox.appendChild(el("div", "why", "Intel next action: " + data.next_action.label));
+            }
             if (now.actionable === false && now.waiting_copy) {
               nowBox.appendChild(el("div", "why", now.waiting_copy));
             } else if (now.why) {
@@ -239,6 +336,15 @@
               nowBox.appendChild(go);
             }
           }
+          var preferred = data.next_action || {};
+          if (preferred.code === "needs_you_connective" && preferred.label) {
+            nowBox.appendChild(el("div", "why", "Needs-You: " + preferred.label));
+            if (preferred.href) {
+              var nyeGo = el("a", "act", "Open Needs-You");
+              nyeGo.href = preferred.href;
+              nowBox.appendChild(nyeGo);
+            }
+          }
         }
         var stock = data.stock || {};
         var stockBox = document.getElementById("stockBanner");
@@ -253,13 +359,10 @@
         var roleBox = document.getElementById("roleBanner");
         var perm = data.permissions || {};
         if (roleBox) {
-          if (perm.view === "owner") {
-            roleBox.textContent = "Owner view. You can read the day. This screen does not execute payment.";
-          } else if (perm.view === "operator") {
-            roleBox.textContent = "Ops view. Buttons you cannot use stay hidden. Payment is not on this screen.";
-          } else {
-            roleBox.textContent = "Sign-in decides which buttons you see. Payment is not on this screen.";
-          }
+          roleBox.textContent = perm.seat_line
+            || (perm.view === "owner"
+              ? "You can read the day. This screen does not pay anyone."
+              : "Sign-in decides what you can do. Payment is not on this screen.");
         }
         var closesBox = document.getElementById("closesBody");
         if (closesBox) {
@@ -267,13 +370,119 @@
           var prev = data.previous_closes || {};
           var rows = prev.closes || [];
           if (!rows.length) {
-            closesBox.appendChild(el("p", "empty", prev.empty_message || "No earlier closes recorded in Wolf yet."));
+            var emptyClose = (data.staff_ready && data.staff_ready.empty_states && data.staff_ready.empty_states.history)
+              || null;
+            if (emptyClose && emptyClose.next_action) {
+              closesBox.appendChild(el("p", "empty", emptyClose.message || prev.empty_message || "No earlier closes recorded in Wolf yet."));
+              var goClose = el("a", "act", emptyClose.next_action.label || "Open Daily Close");
+              goClose.href = emptyClose.next_action.href || "/uma-blu-close";
+              closesBox.appendChild(goClose);
+            } else {
+              closesBox.appendChild(el("p", "empty", prev.empty_message || "No earlier closes recorded in Wolf yet."));
+            }
           } else {
             rows.forEach(function (cl) {
               var line = el("div", "meta", (cl.business_date || "Date unknown") + " — " + (cl.state || "recorded"));
               closesBox.appendChild(line);
             });
           }
+        }
+        var handBox = document.getElementById("handoverBody");
+        if (handBox) {
+          handBox.innerHTML = "";
+          var heh = (data.staff_ready && data.staff_ready.history_evidence_handover) || {};
+          var hand = heh.handover || {};
+          var loopHand = data.handover_strip || (data.loop && data.loop.handover) || {};
+          if (loopHand && loopHand.items && loopHand.items.length) {
+            loopHand.items.forEach(function (row) {
+              handBox.appendChild(el("div", "why", row.note || row.label || "Handover"));
+            });
+          } else if (hand.empty) {
+            var es = hand.empty_state || {};
+            handBox.appendChild(el("p", "empty", (es.message) || "Nothing to hand over right now."));
+            if (es.next_action && es.next_action.label) {
+              var ha = el("a", "act", es.next_action.label);
+              ha.href = es.next_action.href || "/bzg/uma-blu/bills";
+              handBox.appendChild(ha);
+            }
+          } else {
+            (hand.items || []).forEach(function (row) {
+              handBox.appendChild(el("div", "why", row.note || row.label || "Handover"));
+            });
+          }
+        }
+        function paintStrip(boxId, payload, emptyMsg) {
+          var box = document.getElementById(boxId);
+          if (!box) return;
+          box.innerHTML = "";
+          var rows = (payload && (payload.rows || payload.exceptions || payload.partial_links || payload.items)) || [];
+          if (!payload || payload.empty || !rows.length) {
+            box.appendChild(el("p", "empty", (payload && payload.why) || emptyMsg));
+            return;
+          }
+          rows.slice(0, 12).forEach(function (row) {
+            box.appendChild(el("div", "meta", row.label || row.note || row.consequence || row.kind || "Item"));
+          });
+        }
+        var loopBox = document.getElementById("loopBody");
+        if (loopBox) {
+          loopBox.innerHTML = "";
+          var loop = data.loop || {};
+          var stages = loop.stages || [];
+          if (!stages.length) {
+            loopBox.appendChild(el("p", "empty", "Loop stages not loaded."));
+          } else {
+            stages.forEach(function (st) {
+              var line = (st.label || st.stage) + " — " + (st.status || "?");
+              if (st.count) line += " · " + st.count;
+              loopBox.appendChild(el("div", "meta", line));
+            });
+            var nxt = (loop.loop_next_action && loop.loop_next_action.label) || (loop.loop_next_action_base && loop.loop_next_action_base.label);
+            if (nxt) loopBox.appendChild(el("div", "why", "Next: " + nxt));
+          }
+        }
+        paintStrip("stockConsequenceBody", data.stock_consequence || (data.loop && data.loop.stock_consequence), "No stock consequence yet. Empty is not live inventory.");
+        paintStrip("billConsequenceBody", data.supplier_bill_consequence || (data.loop && data.loop.supplier_bill_consequence), "No supplier/bill consequence yet.");
+        paintStrip("managerVisBody", data.manager_visibility || (data.loop && data.loop.manager_visibility), "No manager visibility items.");
+        paintStrip("ownerExcBody", data.owner_exception || (data.loop && data.loop.owner_exception), "No Owner exceptions.");
+        var depthBox = document.getElementById("operatorDepthBody");
+        if (depthBox) {
+          depthBox.innerHTML = "";
+          fetch("/api/bzg/uma-blu/operator-depth")
+            .then(function (r) { return r.json(); })
+            .then(function (depth) {
+              depthBox.innerHTML = "";
+              if (!depth || !depth.ok) {
+                depthBox.appendChild(el("p", "empty", "Operator depth not loaded."));
+                return;
+              }
+              var rbac = depth.rbac || {};
+              depthBox.appendChild(el("div", "meta",
+                "RBAC " + (rbac.role_id || "ROLE-BZG-FB-OPS-LEAD")
+                + " · receive " + (rbac.can_receive ? "yes" : "no")
+                + " · PR operator " + (rbac.can_pr_operator ? "yes" : "no")
+                + " · live Devi commission no"
+              ));
+              var cands = depth.receive_candidates || [];
+              if (!cands.length) {
+                depthBox.appendChild(el("p", "empty", "No ordered / partial PRs waiting for goods-receipt input."));
+              } else {
+                cands.slice(0, 6).forEach(function (row) {
+                  var key = row.pr_id || row.pr_num;
+                  var link = el("a", "meta", (row.label || key || "PR") + " → open detail");
+                  link.href = key ? ("/bzg/uma-blu/bills/" + encodeURIComponent(key)) : "/bzg/uma-blu/bills";
+                  link.style.display = "block";
+                  link.style.color = "var(--accent)";
+                  link.style.textDecoration = "none";
+                  link.style.marginTop = "6px";
+                  depthBox.appendChild(link);
+                });
+              }
+            })
+            .catch(function () {
+              depthBox.innerHTML = "";
+              depthBox.appendChild(el("p", "empty", "Operator depth not loaded."));
+            });
         }
         var live = [];
         var nowKind = (data.now && data.now.kind) || "";
@@ -313,7 +522,14 @@
             if (it.example) return; // keep example lines out of live cards
             if (shown >= 8) return;
             shown += 1;
-            var line = el("div", "meta");
+            var line = el(it.href && c.actionable !== false ? "a" : "div", "meta");
+            if (it.href && c.actionable !== false) {
+              line.href = it.href;
+              line.style.display = "block";
+              line.style.color = "var(--accent)";
+              line.style.textDecoration = "none";
+              line.style.marginTop = "4px";
+            }
             if (it.legacy) line.appendChild(el("span", "chip", "Existing"));
             line.appendChild(document.createTextNode(it.label || ""));
             a.appendChild(line);
@@ -332,6 +548,11 @@
           live.forEach(function (c) { box.appendChild(paintCard(c)); });
         }
 
+        // Paint history empty next-action from staff_ready when event list is blank.
+        window.__umaStaffReady = data.staff_ready || null;
+        document.body.setAttribute("data-ready", "1");
+        var over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
+        document.body.setAttribute("data-overflow", over ? "yes" : "no");
       })
       .catch(function () {
         document.getElementById("cards").textContent = "Could not load Today.";
@@ -346,6 +567,17 @@
         var ev = data.events || [];
         if (!ev.length) {
           ul.appendChild(el("li", "muted", "No history yet."));
+          var sr = window.__umaStaffReady || {};
+          var es = (sr.history_evidence_handover && sr.history_evidence_handover.history_empty_state)
+            || (sr.empty_states && sr.empty_states.history)
+            || null;
+          if (es && es.next_action && es.next_action.label) {
+            var li = el("li");
+            var a = el("a", "act", es.next_action.label);
+            a.href = es.next_action.href || "/uma-blu-close";
+            li.appendChild(a);
+            ul.appendChild(li);
+          }
           return;
         }
         ev.forEach(function (e) {

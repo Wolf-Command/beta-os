@@ -1,0 +1,114 @@
+/**
+ * wolf-tokens.css — Wave 1 shared design tokens + RHC responsive media.
+ * Extracted from wolf-system dashboards/assets/style.css :root
+ * (petrol + gold command-center). Pages keep local CSS; new UI
+ * must prefer these vars. Do not invent PROVEN/READY in copy.
+ *
+ * Owner correction 2026-09-22: responsive everywhere by default.
+ * No horizontal-table dependency for normal work — use .wolf-stack
+ * / .wolf-card-row patterns under the mobile breakpoint.
+ * RHC V1 prove 2026-09-22: desktop/tablet/mobile breakpoints + touch-safe
+ * mins — one shell adapts; evidence under docs/deliveries/evidence/wolf-rhc-v1-20260922/.
+ */
+:root {
+  --bg: #08171a;
+  --panel: #0e2125;
+  --panel-2: #123036;
+  --border: #1e3f44;
+  --text: #eaf3f2;
+  --muted: #8aa6a6;
+  --petrol: #0d4a4d;
+  --gold: #b8893f;
+  --gold-l: #d4af6a;
+  --accent: #d4af6a;
+  --ok: #3fbf86;
+  --warn: #d4af6a;
+  --bad: #e5683f;
+  --stale: #b8893f;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 10px 30px rgba(0, 0, 0, 0.35);
+  --radius: 14px;
+  --nav-w: 260px;
+  --wolf-nav-h: 56px;
+  --wolf-touch-min: 44px;
+  --wolf-content-pad: 16px;
+  --wolf-bp-phone: 860px;
+  --wolf-bp-tablet: 1100px;
+}
+
+/* Desktop — room for side chrome + dense tables when opted in */
+@media (min-width: 1101px) {
+  :root {
+    --wolf-content-max: 1100px;
+    --wolf-content-pad: 20px;
+  }
+  .wolf-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Tablet — adaptive mid layout; touch-safe controls */
+@media (min-width: 861px) and (max-width: 1100px) {
+  :root {
+    --wolf-content-max: 920px;
+    --wolf-content-pad: 16px;
+    --wolf-touch-min: 44px;
+  }
+}
+
+/* Mobile — stacked cards/lists; no horizontal-table dependency for normal work */
+@media (max-width: 860px) {
+  :root {
+    --wolf-content-max: 100%;
+    --wolf-content-pad: 12px;
+    --wolf-touch-min: 44px;
+    --nav-w: 100%;
+  }
+
+  /* Opt-in: hide wide tables; show stacked card rows instead */
+  .wolf-table-desktop {
+    display: none !important;
+  }
+  .wolf-stack-mobile {
+    display: flex !important;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .wolf-card-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--panel);
+    min-height: var(--wolf-touch-min);
+  }
+  .wolf-card-row .wolf-card-key {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .wolf-card-row .wolf-card-val {
+    font-size: 14px;
+    font-weight: 650;
+    color: var(--text);
+  }
+
+  /* Prevent accidental page-wide horizontal scroll from legacy tables */
+  .wolf-no-hscroll,
+  body.wolfnav-on {
+    overflow-x: hidden;
+  }
+}
+
+/* Desktop default: stack-mobile helper hidden unless phone */
+@media (min-width: 861px) {
+  .wolf-stack-mobile {
+    display: none !important;
+  }
+  .wolf-table-desktop {
+    display: table;
+  }
+}

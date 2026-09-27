@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Core Management Cluster · Beta</title>
+<style>
+  :root {
+    --bg: #101318;
+    --bg2: #171c24;
+    --bg3: #222933;
+    --line: #334050;
+    --text: #e8edf2;
+    --muted: #8b9aab;
+    --accent: #7a9e8a;
+    --warn: #d4a85a;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background:
+      radial-gradient(ellipse 80% 50% at 100% 0%, #1a2830 0%, transparent 50%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+  }
+  .wrap { max-width: 440px; margin: 0 auto; padding: 16px 14px 88px; }
+  h1 {
+    font-family: var(--display); font-weight: 500; font-size: 1.55rem;
+    margin: 0 0 4px; letter-spacing: -0.01em;
+  }
+  h1 span { color: var(--accent); }
+  .lede { color: var(--muted); font-size: 0.88rem; line-height: 1.4; margin: 0 0 12px; }
+  h2 {
+    font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin: 20px 0 8px;
+  }
+  .banner {
+    border: 1px solid var(--line); background: var(--bg2);
+    border-left: 3px solid var(--accent); padding: 10px 12px;
+    font-size: 0.88rem; margin: 8px 0;
+  }
+  .banner.warn { border-left-color: var(--warn); color: var(--warn); }
+  .card {
+    border: 1px solid var(--line); background: var(--bg2);
+    padding: 12px; margin: 0 0 8px; border-radius: 10px;
+  }
+  .k { color: var(--muted); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .title { font-family: var(--display); font-size: 1.15rem; margin: 4px 0 6px; }
+  .note { color: var(--muted); font-size: 0.84rem; line-height: 1.4; margin: 0; }
+  .pill {
+    display: inline-block; border: 1px solid var(--line); padding: 2px 8px;
+    font-size: 0.72rem; color: var(--muted); margin: 0 4px 4px 0; border-radius: 999px;
+  }
+  .pill.loud { color: var(--warn); border-color: rgba(212,168,90,0.55); }
+  .next {
+    display: block; margin-top: 10px; padding: 10px 12px;
+    border: 1px solid #3d5a48; background: #1a2a22; color: var(--text);
+    text-decoration: none; font-weight: 600; font-size: 0.9rem; border-radius: 8px;
+  }
+  .nav {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: rgba(16,19,24,0.94); border-top: 1px solid var(--line);
+    display: flex; justify-content: space-around; padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+    backdrop-filter: blur(8px);
+  }
+  .nav a {
+    color: var(--muted); text-decoration: none; font-size: 0.72rem;
+    letter-spacing: 0.04em; text-transform: uppercase; padding: 6px 8px;
+  }
+  .err { color: #e07070; font-size: 0.88rem; white-space: pre-wrap; }
+  .ok { color: var(--accent); font-size: 0.88rem; margin: 8px 0; }
+  label { display: block; color: var(--muted); font-size: 0.72rem; margin-top: 8px; }
+  input.opnote {
+    width: 100%; margin-top: 4px; padding: 8px 10px;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg3); color: var(--text); font: inherit;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  button {
+    border: 1px solid #3d5a48; background: #1a2a22; color: var(--text);
+    padding: 8px 10px; border-radius: 8px; font: inherit; font-size: 0.84rem;
+    font-weight: 600; cursor: pointer;
+  }
+  button.secondary {
+    border-color: var(--line); background: var(--bg3); font-weight: 500;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Core Management <span>· Cluster</span></h1>
+  <p class="lede">Bound beta-core-safe. Composes SOP factory, escalation burn-down, and commissioning honesty. Empty stays empty — no invented PROVEN, READY, COMMISSIONED, ADOPTED, or money facts. Operator depth records note / next-action / acknowledge / escalate / handover / dismiss only — no invent maturity, no auto-approve.</p>
+  <div class="banner warn" id="who">Loading…</div>
+  <div id="msg"></div>
+
+  <h2 id="now">Now</h2>
+  <div id="nowBox"></div>
+
+  <h2 id="needs-you-connective">Needs-You connective</h2>
+  <div id="connectiveBox"></div>
+
+  <h2 id="operator-depth">Operator depth</h2>
+  <div id="operatorDepth"></div>
+
+  <h2 id="modules">Modules</h2>
+  <div id="mods"></div>
+
+  <h2 id="handoff">Owner / Empire handoff</h2>
+  <div id="hand"></div>
+</div>
+<nav class="nav" id="nav" aria-label="Cluster"></nav>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+
+  async function api(path, opts) {
+    const res = await fetch(path, Object.assign({
+      headers: { Accept: "application/json" },
+    }, opts || {}));
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) {
+      const err = new Error(data.message || data.error || ("HTTP " + res.status));
+      err.payload = data;
+      throw err;
+    }
+    return data;
+  }
+
+  function pills(tags) {
+    return (tags || []).map((t) =>
+      `<span class="pill loud">${esc(t)}</span>`
+    ).join(" ");
+  }
+
+  function render(desk) {
+    const sr = desk.staff_ready || {};
+    $("who").textContent = (sr.who_line || "Signed in")
+      + " · empty modules " + (desk.empty_count ?? "?")
+      + " · proven=false · ready=false · money=null · no invent maturity";
+
+    const next = desk.primary_next || sr.primary_next || {};
+    const nye = desk.needs_you_connective || {};
+    const nyeItems = nye.items || [];
+    let nyeHtml = `<div class="card">
+      <div class="k">CORE / SOP / escalation / harden</div>
+      <p class="note">${nye.empty ? esc(nye.empty_message || "EMPTY") : esc(String(nye.count ?? nyeItems.length) + " in scope")}</p>
+      <p class="note">Counts are the in-scope length. Not staff_ready. Not PROVEN. Not READY. Not Access mutate. Not a secret mint. Not BZG compose. Haikal human is not started. Devi retest stays parked. CAP-CORE-11 stays SPECIFIED. CAP-CORE-12 stays BUILT.</p>
+    </div>`;
+    if (!nyeItems.length) {
+      nyeHtml += `<p class="note">No CORE-scoped Needs-You rows — EMPTY.</p>`;
+    } else {
+      nyeHtml += nyeItems.map((row) => `<article class="card">
+        <div class="k">${esc(row.kind || "needs_you")}</div>
+        <div class="title">${esc(row.title || row.object_id)}</div>
+        <p class="note">${esc(row.object_id || "")} · invented=false · proven=false · ready=false</p>
+        ${row.href ? `<a class="next" href="${esc(row.href)}">${esc(row.title || "Open")}</a>` : ""}
+      </article>`).join("");
+    }
+    const connectiveBox = $("connectiveBox");
+    if (connectiveBox) connectiveBox.innerHTML = nyeHtml;
+    $("nowBox").innerHTML = `<div class="card">
+      <div class="k">Primary next</div>
+      <div class="title">${esc(next.label || "No further action")}</div>
+      <p class="note">Derived from live module state. Not invented.</p>
+      ${next.href ? `<a class="next" href="${esc(next.href)}">${esc(next.label)}</a>` : ""}
+    </div>`;
+
+    $("mods").innerHTML = (desk.modules || []).map((m) => {
+      const strip = m.honesty_strip || {};
+      const tags = strip.status_tags || [strip.status || "EMPTY"];
+      const nxt = m.primary_next || strip.next_action || {};
+      return `<article class="card" id="mod-${esc(m.id)}">
+        <div class="k">${esc(m.staff_title || m.title)}</div>
+        <div class="title">${esc(m.staff_title || m.title)}</div>
+        <div>${pills(tags)}</div>
+        <p class="note">${esc(strip.message || "")}</p>
+        <p class="note">Numbers: none · invented=false · money=null</p>
+        ${nxt.href ? `<a class="next" href="${esc(nxt.href)}">${esc(nxt.label || "Open")}</a>` : ""}
+      </article>`;
+    }).join("");
+
+    const hand = desk.owner_empire_handoff || {};
+    $("hand").innerHTML = `<div class="card">
+      <div>${pills([hand.founder_dep_class || "RETAIN"])}</div>
+      <p class="note">${esc(hand.label || hand.founder_dep_reason || "")}</p>
+      <p class="note">Routing label only — Owner controls not invented away.</p>
+    </div>`;
+
+    const nav = desk.nav || sr.nav || [];
+    $("nav").innerHTML = nav.map((n) =>
+      `<a href="${esc(n.href)}">${esc(n.label)}</a>`
+    ).join("");
+  }
+
+  async function paintOperatorDepth() {
+    const box = $("operatorDepth");
+    if (!box) return;
+    try {
+      const depth = await api("/api/core/mgmt-cluster/operator-depth");
+      const rbac = depth.rbac || {};
+      const empire = depth.owner_empire || {};
+      const needs = depth.staff_needs_you || {};
+      const desk = depth.core_desk_next_action || {};
+      const nxt = desk.next_action || {};
+      let html = `<div class="card">
+        <div class="k">CORE operator</div>
+        <p class="note">${esc(depth.why || "")}</p>
+        <div class="note">RBAC ${esc(rbac.role_id || "Owner")} · core operator ${rbac.can_core_operator ? "yes" : "no"} · CF seat mint no</div>
+        <div class="note">Desk next: ${esc(nxt.label || "EMPTY")} · Empire attention: ${esc(String(empire.count || 0))} · Needs-You: ${esc(String(needs.count || 0))}</div>
+        <div class="note">No invent PROVEN/READY · no auto-approve · no money</div>
+      </div>`;
+      const cands = depth.object_candidates || [];
+      if (!cands.length) {
+        html += `<p class="note">${esc(depth.empty_message || "No CORE depth objects.")}</p>`;
+      } else {
+        html += cands.map((row) =>
+          `<article class="card" data-object="${esc(row.object_id)}" id="core-obj-${esc(row.object_id)}">
+            <strong>${esc(row.staff_title || row.title || row.object_id)}</strong>
+            <span class="pill">${esc(row.kind || "")}</span>
+            <span class="pill">${esc(row.cap || "")}</span>
+            <div class="note">next: ${esc(row.recorded_next_action || ((row.primary_next || {}).label) || "none")} · last: ${esc(row.last_kind || "none")}</div>
+            <label>Note / next / acknowledge / escalate / handover</label>
+            <input class="opnote" type="text" placeholder="Operator note" />
+            <div class="row">
+              <button type="button" class="opnote-btn">Note</button>
+              <button type="button" class="opnext-btn">Next action</button>
+            </div>
+            <div class="row">
+              <button type="button" class="secondary opack-btn">Acknowledge</button>
+              <button type="button" class="secondary opescalate-btn">Escalate</button>
+            </div>
+            <div class="row">
+              <button type="button" class="secondary ophandover-btn">Handover</button>
+              <button type="button" class="secondary opdismiss-btn">Dismiss noise</button>
+            </div>
+            <div class="note rowmsg"></div>
+          </article>`
+        ).join("");
+      }
+      box.innerHTML = html;
+      box.querySelectorAll(".opnote-btn").forEach((btn) => {
+        btn.addEventListener("click", () => operatorAction(btn.closest("article"), "note"));
+      });
+      box.querySelectorAll(".opnext-btn").forEach((btn) => {
+        btn.addEventListener("click", () => operatorAction(btn.closest("article"), "next-action-touch"));
+      });
+      box.querySelectorAll(".opack-btn").forEach((btn) => {
+        btn.addEventListener("click", () => operatorAction(btn.closest("article"), "acknowledge"));
+      });
+      box.querySelectorAll(".opescalate-btn").forEach((btn) => {
+        btn.addEventListener("click", () => operatorAction(btn.closest("article"), "escalate-touch"));
+      });
+      box.querySelectorAll(".ophandover-btn").forEach((btn) => {
+        btn.addEventListener("click", () => operatorAction(btn.closest("article"), "handover-touch"));
+      });
+      box.querySelectorAll(".opdismiss-btn").forEach((btn) => {
+        btn.addEventListener("click", () => operatorAction(btn.closest("article"), "dismiss-noise"));
+      });
+    } catch (err) {
+      box.innerHTML = `<p class="err">${esc(err.message || "Operator depth not loaded.")}</p>`;
+    }
+  }
+
+  async function operatorAction(article, kind) {
+    if (!article) return;
+    const msg = article.querySelector(".rowmsg");
+    const note = (article.querySelector(".opnote") || {}).value || "";
+    msg.className = "note rowmsg";
+    try {
+      await api("/api/core/mgmt-cluster/objects/" + encodeURIComponent(article.dataset.object) + "/operator-action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ kind: kind, note: note }),
+      });
+      $("msg").className = "ok";
+      $("msg").textContent = "Recorded. CORE desk next-action + Owner Empire / Needs-You refreshed. No invent PROVEN/READY / auto-approve / money.";
+      await paintOperatorDepth();
+    } catch (err) {
+      msg.className = "err rowmsg";
+      msg.textContent = err.message;
+    }
+  }
+
+  api("/api/core/mgmt-cluster").then((desk) => {
+    render(desk);
+    return paintOperatorDepth();
+  }).catch((err) => {
+    $("who").textContent = "Denied or unavailable";
+    $("msg").innerHTML = `<p class="err">${esc(err.message || err)}</p>`;
+  });
+})();
+</script>
+</body>
+</html>

@@ -47,13 +47,31 @@
   .k { color: var(--muted); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
   .v { font-family: var(--display); font-size: 28px; margin: 4px 0; }
   .note { color: var(--muted); font-size: 14px; }
+  .crumb { font-size: 0.78rem; color: var(--muted); margin: 0 0 8px; }
+  nav.grammar { margin: 0 0 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.grammar a, nav.grammar span.empty {
+    display: inline-flex; align-items: center; padding: 8px 10px; min-height: 44px;
+    border: 1px solid var(--line); border-radius: 10px;
+    color: var(--muted); text-decoration: none; font-size: 0.78rem; font-weight: 650;
+  }
+  nav.grammar a.active { color: var(--accent); border-color: rgba(196,165,116,0.55); }
+  nav.grammar span.empty { opacity: 0.75; font-weight: 550; }
 </style>
 </head>
-<body>
+<body data-wolf-page-type="SYSTEM" data-wolf-org="WOLF/SYSTEM" data-wolf-shell="global">
 <div class="wrap">
+  <p class="crumb">WOLF · System · Sale</p>
+  <nav class="grammar" aria-label="System grammar">
+    <a href="/progress">Progress</a>
+    <a href="/integration-health">Integrations</a>
+    <a class="active" href="/sale-evidence-pack">Sale Readiness</a>
+    <span class="empty">Factory / Health · EMPTY</span>
+  </nav>
   <h1>Sale evidence pack</h1>
   <p class="lede">CAP-SALE-01 is a framework skeleton. Empty slots stay empty. Buyer export is refused. No data room file is written. This page does not prove the pack.</p>
   <div id="banner" class="banner">Reading the framework…</div>
+  <h2 id="needs-you-connective">Needs-You connective</h2>
+  <div id="connective" class="card"><p class="note">Sale / Evidence / Buyer rows for this seat. EMPTY when none.</p></div>
   <h2>Required domains</h2>
   <div id="domains" class="grid">
     <article class="card"><div class="k">Finance</div><div class="v">EMPTY</div><p class="note">Evidence is not filled here.</p></article>
@@ -87,6 +105,18 @@ function paint(pack) {
       + '<div class="v">' + esc(row.slot || "EMPTY") + '</div>'
       + '<p class="note">' + esc(row.why) + '</p></article>';
   });
+  var nye = pack.needs_you_connective || {};
+  var nyeBox = document.getElementById("connective");
+  if (nyeBox) {
+    var nyeItems = nye.items || [];
+    var nyeHtml = "<p class=\"note\">"
+      + (nye.empty ? esc(nye.empty_message || "EMPTY") : esc(String(nye.count == null ? nyeItems.length : nye.count) + " in scope"))
+      + ". Not staff_ready. Not PROVEN. Not READY. Not a live buyer data room. Not a controlled export. Not BZG compose.</p>";
+    nyeItems.forEach(function (row) {
+      nyeHtml += "<p class=\"note\">" + esc(row.kind || "") + " · " + esc(row.title || row.object_id) + "</p>";
+    });
+    nyeBox.innerHTML = nyeHtml;
+  }
   if (html) document.getElementById("domains").innerHTML = html;
   var unmapped = pack.unmapped || {};
   document.getElementById("controls").innerHTML = '<p class="note">Controls shown '

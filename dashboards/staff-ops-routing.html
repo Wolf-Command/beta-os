@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Staff Ops Routing · Beta</title>
+<style>
+  :root {
+    --bg: #0f1418; --bg2: #172028; --bg3: #1f2a33; --border: #2d3c48;
+    --text: #eef3f6; --muted: #9aadb8; --accent: #7ec8e3; --ok: #3dd68c;
+    --warn: #e0b15a; --danger: #f04438;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0 auto; max-width: 640px; padding: 12px 14px 80px;
+    background: var(--bg); color: var(--text); font-family: var(--font);
+  }
+  h1 { font-size: 1.2rem; margin: 0 0 4px; }
+  h1 span { color: var(--accent); }
+  h2 {
+    font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--muted); margin: 18px 0 8px;
+  }
+  .lede, .note, .meta { color: var(--muted); font-size: 0.85rem; }
+  .banner {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: 0.88rem;
+  }
+  .banner.warn { border-color: rgba(224,177,90,0.55); color: var(--warn); }
+  .card {
+    border: 1px solid var(--border); background: var(--bg2);
+    border-radius: 12px; padding: 12px; margin-top: 8px;
+  }
+  .card.loud { border-color: rgba(224,177,90,0.7); }
+  .pill {
+    display: inline-block; border: 1px solid var(--border); border-radius: 999px;
+    padding: 2px 8px; font-size: 0.72rem; margin: 0 4px 4px 0; color: var(--muted);
+  }
+  .pill.loud { color: var(--warn); border-color: rgba(224,177,90,0.55); }
+  .pill.ok { color: var(--ok); border-color: rgba(61,214,140,0.45); }
+  .pill.elim { color: #9fd4a5; border-color: rgba(61,214,140,0.4); }
+  .pill.auto { color: var(--accent); border-color: rgba(126,200,227,0.45); }
+  .pill.aug { color: var(--warn); border-color: rgba(224,177,90,0.55); }
+  a.action {
+    display: block; margin-top: 8px; text-decoration: none; border-radius: 10px;
+    padding: 10px 12px; border: 1px solid #3a5a6a; background: #1a303c;
+    color: var(--text); font-weight: 650;
+  }
+  a.action.primary { border-color: var(--accent); }
+  .err { color: var(--danger); white-space: pre-wrap; font-size: 0.85rem; }
+</style>
+</head>
+<body data-wolf-page-type="WORKSPACE" data-wolf-org="WOLF/GROUP" data-wolf-shell="global">
+  <h1>Needs You <span>· Staff Ops</span></h1>
+  <p class="lede">Bound beta-connective-safe. Your seat lands on the live pack Today with a derived next action. EMPTY and WAITING_ASSIGNMENT stay honest. No money, bank, folio, or invented hotel-ops person. HOME · Needs You stub (Wave 2).</p>
+  <div class="banner warn" id="who">Loading…</div>
+  <div id="msg"></div>
+
+  <h2>Next action</h2>
+  <div id="next"></div>
+
+  <h2>Home pack</h2>
+  <div id="home"></div>
+
+  <h2>Routed desks</h2>
+  <div id="cards"></div>
+
+  <div id="disappear-wrap" hidden>
+    <h2>Owner disappearance</h2>
+    <p class="note">ELIMINATE routes to a staff seat. AUTOMATE is system work. AUGMENT keeps Owner. Never fake ELIMINATE without a seat.</p>
+    <div id="disappear"></div>
+  </div>
+
+  <h2>Needs-You connective</h2>
+  <p class="note">Derived from Owner Progress Needs-You depth. Owner sees the full projection. Your seat sees only in-scope rows. EMPTY when none. Counts are not invented. staff_ready stays false. Haikal human is not started. Devi retest stays parked.</p>
+  <div id="connective"></div>
+
+  <h2>Attention projection</h2>
+  <p class="note">Dashboard derivative — pack state only. No second scoring table. SYSTEM% not invented here.</p>
+  <div id="attention"></div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+
+  async function api(path) {
+    const res = await fetch(path, { headers: { Accept: "application/json" } });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) {
+      const err = new Error(data.message || data.error || ("HTTP " + res.status));
+      err.payload = data;
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
+  function pill(text, cls) {
+    return `<span class="pill${cls ? " " + cls : ""}">${esc(text)}</span>`;
+  }
+
+  function link(href, label, primary) {
+    if (!href) return "";
+    return `<a class="action${primary ? " primary" : ""}" href="${esc(href)}">${esc(label)}</a>`;
+  }
+
+  function depClass(cls) {
+    if (cls === "ELIMINATE") return "elim";
+    if (cls === "AUTOMATE") return "auto";
+    if (cls === "AUGMENT") return "aug";
+    return "loud";
+  }
+
+  function show(data) {
+    const seat = data.seat || {};
+    $("who").textContent =
+      "Signed in as " + (seat.label || data.person_id || seat.person_id || "seat") +
+      " · " + (seat.seat || "unknown") +
+      ". Money, bank, folio, and Production are off this desk.";
+
+    const next = data.next_action || {};
+    $("next").innerHTML = next.label
+      ? `<div class="card">${pill(next.state || next.code || "Next", next.state === "WAITING_ASSIGNMENT" || next.state === "EMPTY" ? "loud" : "ok")}
+         <p>${esc(next.label)}</p>${link(next.href || (data.home || {}).href, "Go", true)}</div>`
+      : `<div class="card loud">No next action. EMPTY — not invented work.</div>`;
+
+    const home = data.home || {};
+    $("home").innerHTML = home.href
+      ? `<div class="card">${pill(home.pack || "home", "ok")}<p>${esc(home.label || "")}</p>
+         ${link(home.href, "Open home pack", true)}</div>`
+      : `<div class="card loud">No home pack for this seat.</div>`;
+
+    const cards = data.cards || [];
+    $("cards").innerHTML = cards.map((card) => {
+      const count = card.attention_count == null ? "EMPTY" : String(card.attention_count);
+      const nxt = card.next_action || {};
+      return `<div class="card${card.loud ? " loud" : ""}">
+        ${pill(card.pack || "", false)} ${pill(card.state || "EMPTY", card.loud ? "loud" : "ok")}
+        <p><strong>${esc(card.label || "")}</strong> · attention ${esc(count)}</p>
+        <p>${esc(card.why || "")}</p>
+        ${nxt.label ? `<p class="meta">Next: ${esc(nxt.label)}</p>` : ""}
+        ${card.staff_seat_state === "WAITING_ASSIGNMENT" ? `<p class="meta">${esc(card.staff_seat_why || "WAITING_ASSIGNMENT")}</p>` : ""}
+        ${link(card.href, "Open " + (card.label || "desk"), false)}
+      </div>`;
+    }).join("") || `<div class="card loud">No routed desks.</div>`;
+
+    const extras = data.extra_links || [];
+    if (extras.length) {
+      $("cards").innerHTML += extras.map((x) =>
+        `<div class="card">${pill(x.pack || "link")} ${link(x.href, "Open " + (x.label || "board"), false)}</div>`
+      ).join("");
+    }
+
+    const strip = data.disappearance;
+    if (strip && strip.cards && strip.cards.length) {
+      $("disappear-wrap").hidden = false;
+      $("disappear").innerHTML = strip.cards.map((c) => {
+        const cls = c.founder_dep_class || "AUGMENT";
+        return `<div class="card">
+          ${pill(c.pack || "", false)} ${pill(cls, depClass(cls))}
+          <p>${esc(c.label || "")}</p>
+          <p class="meta">${esc(c.why_routing || c.founder_dep_reason || "")}</p>
+          ${c.staff_seat_state === "WAITING_ASSIGNMENT" ? pill("WAITING_ASSIGNMENT", "loud") : ""}
+          ${link(c.href, "Open " + (c.label || "desk"), false)}
+        </div>`;
+      }).join("");
+    }
+
+    const conn = data.needs_you_connective || {};
+    const rowsC = conn.items || [];
+    const byKind = conn.by_kind || {};
+    if (conn.empty || !rowsC.length) {
+      $("connective").innerHTML = `<div class="card loud">${esc(conn.empty_message || "No in-scope Needs-You rows. EMPTY — not invented work.")}</div>`;
+    } else {
+      const kinds = ["needs_you", "waiting_others", "morning_seed"].map((k) =>
+        pill(k + " " + (byKind[k] == null ? "EMPTY" : String(byKind[k])), "ok")
+      ).join("");
+      $("connective").innerHTML = `<div class="card">${kinds}
+        <p class="meta">${esc(conn.count)} in scope · staff_ready false · Haikal ${esc(conn.haikal_human || "not_started")} · Devi ${esc(conn.devi_retest || "parked")}</p>
+        ${rowsC.map((row) => `<div class="card">
+          ${pill(row.kind || "", false)} ${pill(row.priority || row.status || "open", "ok")}
+          <p><strong>${esc(row.title || row.object_id)}</strong></p>
+          <p class="meta">${esc(row.who || row.audience || "")}</p>
+          ${link(row.href, "Open", false)}
+        </div>`).join("")}
+      </div>`;
+    }
+
+    const att = data.attention || {};
+    const rows = att.cards || [];
+    $("attention").innerHTML = rows.map((r) => {
+      const n = r.attention_count == null ? "EMPTY" : String(r.attention_count);
+      const na = (r.next_action || {}).label || "—";
+      return `<div class="card">${pill(r.pack || "")} ${pill(r.state || "EMPTY", r.state === "EMPTY" || r.state === "WAITING_ASSIGNMENT" ? "loud" : "ok")}
+        <p>attention ${esc(n)}</p><p class="meta">${esc(na)}</p></div>`;
+    }).join("") || `<div class="card loud">Attention projection EMPTY.</div>`;
+  }
+
+  api("/api/staff/ops-routing")
+    .then(show)
+    .catch((err) => {
+      $("who").textContent = "Access denied or routing unavailable.";
+      $("msg").innerHTML = `<div class="err">${esc(err.message || err)}${err.status ? " (" + err.status + ")" : ""}</div>`;
+    });
+})();
+</script>
+</body>
+</html>

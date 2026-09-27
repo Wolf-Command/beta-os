@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>AMG ops pack · Beta</title>
+<title>Atrium desk · Beta</title>
 <style>
   :root {
     --bg: #14110c; --bg2: #1e1912; --bg3: #2a241b; --border: #3d3426;
@@ -12,76 +12,171 @@
     --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
-  body { margin: 0 auto; max-width: 720px; padding: 12px 14px 72px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  body { margin: 0 auto; max-width: 480px; padding: 12px 14px 88px; background: var(--bg); color: var(--text); font-family: var(--font); overflow-wrap: anywhere; }
   h1 { font-size: 1.25rem; margin: 0 0 4px; }
   h1 span { color: var(--accent); }
   h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
-  .lede, .note { color: var(--muted); font-size: 0.85rem; }
+  .lede, .note { color: var(--muted); font-size: 0.85rem; line-height: 1.35; }
   .banner { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: 0.88rem; }
   .banner.warn { border-color: rgba(224,177,90,0.55); color: var(--warn); }
+  .banner.next { border-color: rgba(196,165,116,0.55); }
   .card { border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; padding: 12px; margin-top: 8px; }
   .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.75rem; margin-right: 4px; color: var(--muted); }
   .pill.look { color: var(--warn); border-color: rgba(224,177,90,0.55); }
   label { display: block; font-size: 0.75rem; color: var(--muted); margin: 8px 0 4px; }
   input, select, textarea { width: 100%; background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px; font: inherit; }
   textarea { min-height: 72px; }
-  button { margin-top: 8px; width: 100%; border-radius: 10px; padding: 10px; border: 1px solid #8B6914; background: #6e5310; color: #fff; font-weight: 650; }
+  button, .act {
+    margin-top: 8px; width: 100%; border-radius: 10px; padding: 12px; min-height: 44px;
+    border: 1px solid #8B6914; background: #6e5310; color: #fff; font-weight: 650; font: inherit;
+  }
+  button.secondary { background: var(--bg3); border-color: var(--border); color: var(--text); }
   button:disabled { opacity: 0.45; }
+  details.more { margin-top: 10px; }
+  details.more > summary {
+    list-style: none; cursor: pointer; color: var(--accent); font-size: 0.85rem;
+    min-height: 44px; display: flex; align-items: center;
+  }
+  details.more > summary::-webkit-details-marker { display: none; }
   .err { color: var(--danger); white-space: pre-wrap; font-size: 0.85rem; }
   .ok { color: var(--ok); font-size: 0.85rem; }
   .meta { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+  .empty-next { margin-top: 8px; }
+  .empty-next a.act { display: flex; align-items: center; justify-content: center; text-decoration: none; }
+  nav.phone {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    display: flex; gap: 4px; justify-content: space-around;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--bg) 92%, #000); border-top: 1px solid var(--border);
+    max-width: 480px; margin: 0 auto;
+  }
+  nav.phone a {
+    flex: 1; text-align: center; text-decoration: none; color: var(--muted);
+    font-size: 0.72rem; font-weight: 650; padding: 8px 4px; min-height: 44px;
+    display: flex; align-items: center; justify-content: center; border-radius: 8px;
+  }
+  nav.phone a:hover { color: var(--accent); }
+  .honesty { margin-top: 24px; font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
+  .hist { list-style: none; padding: 0; margin: 0; }
+  .hist li { border-top: 1px solid var(--border); padding: 8px 0; font-size: 0.88rem; }
+  .hist li:first-child { border-top: 0; padding-top: 0; }
+  .hidden { display: none !important; }
+  .crumb { font-size: 0.78rem; color: var(--muted); margin: 0 0 8px; }
+  nav.grammar { margin: 0 0 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.grammar a, nav.grammar span.empty {
+    display: inline-block; padding: 8px 10px; min-height: 44px;
+    border: 1px solid var(--border); border-radius: 10px;
+    color: var(--muted); text-decoration: none; font-size: 0.78rem; font-weight: 650;
+    display: inline-flex; align-items: center;
+  }
+  nav.grammar a.active { color: var(--accent); border-color: rgba(196,165,116,0.55); }
+  nav.grammar span.empty { opacity: 0.75; font-weight: 550; }
 </style>
 </head>
-<body>
-  <h1>Atrium desk <span>· Beta</span></h1>
-  <p class="lede">Bound beta-amg-ops-safe. Today, journey, SLA, and service handoff. Not PROVEN. Not READY. CAP-AMG-04 stays SPECIFIED. CR-bc5785d66c981fd4 stays OPEN. An empty slot is not live occupancy, ADR, or RevPAR. Yanolja is not called. This desk has no payment, folio, bank, or settlement action.</p>
+<body data-wolf-page-type="DASHBOARD" data-wolf-org="AMG" data-wolf-shell="global">
+  <p class="crumb">WOLF · Atrium Management · AMG</p>
+  <h1>AMG <span>Today</span> · Atrium desk</h1>
+  <nav class="grammar" aria-label="AMG grammar">
+    <a class="active" href="/amg-ops-pack">Overview</a>
+    <a href="/amg-ops-pack">Operations</a>
+    <span class="empty">People · EMPTY</span>
+    <span class="empty">Customers · EMPTY</span>
+    <span class="empty">Finance · EMPTY</span>
+    <span class="empty">Standards · EMPTY</span>
+    <span class="empty">Issues · EMPTY</span>
+    <span class="empty">Intelligence · EMPTY</span>
+  </nav>
   <div id="wolf-truth" data-wolf-truth data-surface="amg"></div>
+  <p class="lede" id="lede">Loading…</p>
   <div class="banner warn" id="who">Loading…</div>
+  <div class="banner next" id="primaryNext" hidden></div>
   <div id="msg"></div>
 
-  <h2>Today</h2>
+  <h2 id="needs-you-connective">Needs-You connective</h2>
+  <p class="note">AMG commissioning, day-ops, and recorded SLA rows for this seat. Counts are the in-scope length. EMPTY when none. Not staff_ready. Not live hotel occupancy. Haikal human is not started. Devi retest stays parked.</p>
+  <div id="connective"></div>
+
+  <section id="ownerSection" class="hidden">
+    <h2 id="now">Owner visibility</h2>
+    <p class="note" id="owner-why"></p>
+    <div id="owner"></div>
+  </section>
+
+  <h2>Management exceptions</h2>
+  <p class="note">From recorded day objects. No invented SLA breach.</p>
+  <div id="mgmt"></div>
+
+  <h2 id="day">Day loop</h2>
+  <p class="note" id="day-why"></p>
+  <div id="day-stages"></div>
+  <div class="card" id="dayForm">
+    <label>Kind</label>
+    <select id="day-kind"></select>
+    <label>Title</label>
+    <input id="day-title" type="text" placeholder="What needs doing?" />
+    <label>Note</label>
+    <textarea id="day-note" placeholder="Operator words only. Not occupancy."></textarea>
+    <button type="button" id="open-day">Open day object</button>
+  </div>
+  <div id="day-items"></div>
+
+  <h2>Operator depth</h2>
+  <p class="note">Day-object detail + status / note / recovery / handover-touch. Refreshes management + Owner strips. No folio. No payment.</p>
+  <div id="operatorDepth"></div>
+
+  <h2 id="day-ops-depth">Day-ops operator depth</h2>
+  <p class="note">HK · maint · incident · recovery · handover — filter today's objects, open detail, next-action-touch. EMPTY honesty. No invent occupancy/ADR.</p>
+  <div class="card" id="dayOpsFilterCard">
+    <label>Kind filter</label>
+    <select id="day-ops-kind">
+      <option value="">All</option>
+      <option value="hk">Housekeeping (hk)</option>
+      <option value="maint">Maintenance (maint)</option>
+      <option value="incident">Incident</option>
+      <option value="recovery">Recovery</option>
+      <option value="handover">Handover</option>
+    </select>
+    <button type="button" class="secondary" id="day-ops-reload">Reload day-ops desk</button>
+  </div>
+  <div id="dayOpsDepth"></div>
+
+  <h2 id="today">Today slots</h2>
   <p class="note" id="today-why"></p>
   <div id="slots"></div>
 
-  <h2>Desk note</h2>
-  <p class="note">A note is a desk word. It does not fill occupancy.</p>
-  <div class="card">
-    <label>Slot</label>
-    <select id="note-slot"></select>
-    <label>Note</label>
-    <textarea id="note-body" placeholder="What should the next person know?"></textarea>
-    <button type="button" id="save-note">Save note</button>
-  </div>
-  <div id="notes"></div>
-
-  <h2>Needs a look</h2>
-  <p class="note">Marking a slot does not invent a hotel number.</p>
-  <div class="card">
-    <label>Slot</label>
-    <select id="look-slot"></select>
-    <label>Reason</label>
-    <input id="look-reason" type="text" placeholder="Why does this slot need a look?" />
-    <button type="button" id="mark-look">Mark for a look</button>
-  </div>
-
-  <h2>Journey today</h2>
-  <p class="note">A journey item is a task. It is not a booking.</p>
-  <div class="card">
-    <label>Kind</label>
-    <select id="journey-kind"></select>
-    <label>Title</label>
-    <input id="journey-title" type="text" placeholder="What is the task?" />
-    <button type="button" id="open-journey">Open journey item</button>
-  </div>
-  <div id="journey"></div>
+  <details class="more" id="deskMore">
+    <summary>Desk note · look · journey</summary>
+    <div class="card" id="noteForm">
+      <label>Slot</label>
+      <select id="note-slot"></select>
+      <label>Note</label>
+      <textarea id="note-body" placeholder="What should the next person know?"></textarea>
+      <button type="button" id="save-note">Save note</button>
+    </div>
+    <div id="notes"></div>
+    <div class="card" id="lookForm">
+      <label>Slot</label>
+      <select id="look-slot"></select>
+      <label>Reason</label>
+      <input id="look-reason" type="text" placeholder="Why does this slot need a look?" />
+      <button type="button" id="mark-look">Mark for a look</button>
+    </div>
+    <div class="card" id="journeyForm">
+      <label>Kind</label>
+      <select id="journey-kind"></select>
+      <label>Title</label>
+      <input id="journey-title" type="text" placeholder="What is the task?" />
+      <button type="button" id="open-journey">Open journey item</button>
+    </div>
+    <div id="journey"></div>
+  </details>
 
   <h2>SLA</h2>
-  <p class="note">No open incident is invented. An empty slot is not an SLA timer.</p>
   <div id="sla"></div>
 
-  <h2>Service handoff</h2>
+  <h2 id="handover">Shift handoff</h2>
   <p class="note">A handoff is a note to the next shift. It is not a review score.</p>
-  <div class="card">
+  <div class="card" id="handoffForm">
     <label>Kind</label>
     <select id="handoff-kind"></select>
     <label>Handoff</label>
@@ -90,8 +185,11 @@
   </div>
   <div id="handoffs"></div>
 
-  <h2>Seats</h2>
-  <div id="seats"></div>
+  <h2 id="history">History · evidence</h2>
+  <div id="heh"></div>
+
+  <p class="honesty" id="honesty">Bound beta-amg-ops-safe · day loop beta-amg-day-safe · connective beta-amg-loop-safe. Not PROVEN. Not READY. CAP-AMG-04 stays SPECIFIED. CR-bc5785d66c981fd4 stays OPEN. staff_ready false. Haikal human not started. Devi retest parked. An empty slot is not live occupancy, ADR, or RevPAR. Empty SLA is not a live incident. This desk has no payment, folio, bank, or settlement action.</p>
+  <nav class="phone" id="phoneNav" aria-label="Atrium desk"></nav>
 
 <script>
 (function () {
@@ -99,6 +197,14 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
+
+  function emptyNext(state) {
+    if (!state) return "";
+    const na = state.next_action || {};
+    const href = na.href || "#day";
+    return `<div class="card"><p class="note">${esc(state.message || "")}</p>
+      <div class="empty-next"><a class="act" href="${esc(href)}">${esc(na.label || "What next?")}</a></div></div>`;
+  }
 
   async function api(path, opts) {
     const res = await fetch(path, Object.assign({ headers: { Accept: "application/json" } }, opts || {}));
@@ -119,9 +225,183 @@
     }).join("");
   }
 
+  function setExposed(actions) {
+    const waiting = actions.waiting_assignment === true;
+    const show = (el, on) => { if (el) el.classList.toggle("hidden", !on); };
+    show($("dayForm"), actions.open_day_object && !waiting);
+    show($("noteForm"), actions.save_note && !waiting);
+    show($("lookForm"), actions.mark_look && !waiting);
+    show($("journeyForm"), actions.open_journey && !waiting);
+    show($("handoffForm"), actions.save_handoff && !waiting);
+    show($("ownerSection"), actions.show_owner_visibility === true);
+    show($("deskMore"), !waiting);
+    if (waiting) {
+      $("msg").className = "err";
+      $("msg").textContent = "Waiting for hotel-ops assignment. Desk actions stay hidden.";
+    }
+  }
+
   function paint(data) {
-    const seat = data.seat || {};
-    $("who").textContent = (seat.seat || "seat") + " · " + (seat.person_id || "") + " · Atrium desk · no money actions";
+    const sr = data.staff_ready || {};
+    const actions = sr.exposed_actions || {};
+    $("lede").textContent = sr.lede || "Atrium desk.";
+    $("who").textContent = sr.who_line || ((data.seat || {}).seat || "seat");
+    const nav = sr.phone_nav || [];
+    $("phoneNav").innerHTML = nav.map((n) =>
+      `<a href="${esc(n.href)}">${esc(n.label)}</a>`
+    ).join("");
+    setExposed(actions);
+
+    const preferred = data.next_action || {};
+    const pn = (preferred.code === "needs_you_connective" ? preferred : null) || sr.primary_next || {};
+    if (pn.label) {
+      $("primaryNext").hidden = false;
+      $("primaryNext").innerHTML = `<strong>Do now</strong><div class="meta">${esc(pn.label)}</div>`
+        + (pn.href ? `<div class="empty-next"><a class="act" href="${esc(pn.href)}">Go</a></div>` : "");
+    }
+    const conn = data.needs_you_connective || {};
+    const rowsC = conn.items || [];
+    const byKind = conn.by_kind || {};
+    if (!$("connective")) {
+      /* strip missing */
+    } else if (conn.empty || !rowsC.length) {
+      $("connective").innerHTML = `<div class="card"><p class="note">${esc(conn.empty_message || "No in-scope AMG Needs-You rows. EMPTY — not invented work.")}</p></div>`;
+    } else {
+      const kinds = ["morning_seed", "waiting_others", "needs_you", "day_ops", "sla"].map((k) =>
+        `<span class="pill">${esc(k)} ${esc(byKind[k] == null ? "0" : String(byKind[k]))}</span>`
+      ).join("");
+      $("connective").innerHTML = `<div class="card">${kinds}
+        <p class="meta">${esc(conn.count)} in scope · staff_ready false · occupancy empty · Haikal ${esc(conn.haikal_human || "not_started")} · Devi ${esc(conn.devi_retest || "parked")}</p>
+        ${rowsC.map((row) => `<div class="card">
+          <span class="pill">${esc(row.kind || "")}</span>
+          <p><strong>${esc(row.title || row.object_id)}</strong></p>
+          <p class="meta">${esc(row.who || row.audience || "")}</p>
+          ${row.href ? `<div class="empty-next"><a class="act" href="${esc(row.href)}">Open</a></div>` : ""}
+        </div>`).join("")}
+      </div>`;
+    }
+
+    const empties = sr.empty_states || {};
+    const owner = data.owner_visibility || {};
+    $("owner-why").textContent = owner.why || "";
+    const ownerRows = owner.exceptions || [];
+    $("owner").innerHTML = ownerRows.length
+      ? ownerRows.map((row) => `<div class="card"><span class="pill look">Owner</span>
+          <strong>${esc(row.title || row.object_id)}</strong>
+          <span class="pill">${esc(row.kind)}</span>
+          <div class="meta">${esc((row.reasons || []).join(", "))} · not a hotel fact</div></div>`).join("")
+      : `<p class="note">${esc(owner.empty_message || owner.why || "No Owner exception.")}</p>`;
+
+    const mgmt = data.management_exceptions || {};
+    const mgmtRows = mgmt.exceptions || [];
+    $("mgmt").innerHTML = mgmtRows.length
+      ? mgmtRows.map((row) => `<div class="card"><span class="pill look">Management</span>
+          <strong>${esc(row.title || row.object_id)}</strong>
+          <span class="pill">${esc(row.status)}</span>
+          <div class="meta">${esc((row.reasons || []).join(", "))}</div></div>`).join("")
+      : `<p class="note">${esc(mgmt.empty_message || "No management exception.")}</p>`;
+
+    const day = data.day_loop || {};
+    $("day-why").textContent = day.why || "";
+    const dayNext = day.day_next_action || {};
+    const ir = day.intel_recommendation || dayNext.intel_recommendation || {};
+    const nextLabel = dayNext.label || "";
+    const intelLine = nextLabel
+      ? `<div class="card"><strong>Next step</strong><div class="meta">${esc(nextLabel)}</div>
+          ${ir.changes_work
+            ? `<div class="meta">Intel changed this next step · no auto-execute</div>`
+            : `<div class="meta">Intel checked</div>`}</div>`
+      : "";
+    const stages = day.stages || [];
+    $("day-stages").innerHTML = intelLine + stages.map((st) =>
+      `<div class="card"><strong>${esc(st.label)}</strong>
+        <span class="pill">${esc(st.open || 0)} open</span>
+        <span class="pill">${esc(st.escalated || 0)} escalated</span>
+        <div class="meta">${esc(st.why || "")}</div></div>`
+    ).join("");
+    options($("day-kind"), day.kinds || stages);
+
+    const dayItems = day.items || [];
+    if (!dayItems.length) {
+      $("day-items").innerHTML = emptyNext(empties.day) || `<p class="note">${esc(day.why || "No day-loop object yet.")}</p>`;
+    } else {
+      $("day-items").innerHTML = dayItems.map((item) => {
+        let btns = "";
+        if (actions.raise_exception) {
+          btns += `<label>Raise management exception</label>
+            <input class="mgmt-reason" type="text" placeholder="Why escalate?" />
+            <button type="button" class="raise-mgmt">Raise exception</button>`;
+        }
+        if (actions.mark_day_done) {
+          btns += `<button type="button" class="mark-done secondary" style="margin-top:6px">Mark done</button>`;
+        }
+        btns += `<label>Operator note</label>
+          <input class="opnote" type="text" placeholder="Status / note / recovery / handover words" />
+          <button type="button" class="opnote-btn secondary">Record note</button>
+          <button type="button" class="opstatus-btn secondary">Mark done (status)</button>
+          <button type="button" class="oprecovery-btn secondary">Recovery touch</button>
+          <button type="button" class="ophandover-btn secondary">Handover touch</button>
+          <button type="button" class="opdetail-btn secondary">Open operator detail</button>
+          <div class="meta rowmsg"></div>`;
+        return `<div class="card" data-object="${esc(item.object_id)}" id="day-${esc(item.object_id)}">
+          <strong>${esc(item.title)}</strong>
+          <span class="pill">${esc(item.label || item.kind)}</span>
+          <span class="pill">${esc(item.status)}</span>
+          <div class="meta">${esc(item.note)}</div>
+          <div class="meta">Not occupancy. Not a hotel-system write.</div>
+          ${btns}</div>`;
+      }).join("");
+      $("day-items").querySelectorAll(".raise-mgmt").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const card = btn.closest("[data-object]");
+          const reason = (card.querySelector(".mgmt-reason").value || "").trim();
+          if (!reason) {
+            $("msg").className = "err";
+            $("msg").textContent = "A management exception needs a reason.";
+            return;
+          }
+          post("/api/amg/ops-pack/mgmt-exception",
+            { object_id: card.getAttribute("data-object"), reason: reason },
+            "Exception raised. Not an SLA invent.");
+        });
+      });
+      $("day-items").querySelectorAll(".mark-done").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const card = btn.closest("[data-object]");
+          post("/api/amg/ops-pack/day-object-status",
+            { object_id: card.getAttribute("data-object"), status: "DONE" },
+            "Day object marked done. Not a hotel fact.");
+        });
+      });
+      $("day-items").querySelectorAll(".opnote-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const card = btn.closest("[data-object]");
+          dayOperatorAction(card, "note", (card.querySelector(".opnote") || {}).value || "");
+        });
+      });
+      $("day-items").querySelectorAll(".opstatus-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const card = btn.closest("[data-object]");
+          dayOperatorAction(card, "status", (card.querySelector(".opnote") || {}).value || "", "DONE");
+        });
+      });
+      $("day-items").querySelectorAll(".oprecovery-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const card = btn.closest("[data-object]");
+          dayOperatorAction(card, "recovery", (card.querySelector(".opnote") || {}).value || "");
+        });
+      });
+      $("day-items").querySelectorAll(".ophandover-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const card = btn.closest("[data-object]");
+          dayOperatorAction(card, "handover_touch", (card.querySelector(".opnote") || {}).value || "");
+        });
+      });
+      $("day-items").querySelectorAll(".opdetail-btn").forEach((btn) => {
+        btn.addEventListener("click", () => openDayDetail(btn.closest("[data-object]")));
+      });
+    }
+
     const today = data.today || {};
     $("today-why").textContent = today.why || "";
     const slots = today.slots || [];
@@ -129,37 +409,211 @@
     options($("look-slot"), slots);
     $("slots").innerHTML = slots.map((slot) => {
       const look = slot.attention ? '<span class="pill look">Needs a look</span>' : "";
-      return `<article class="card"><strong>${esc(slot.label)}</strong> ${look}<span class="pill">${esc(slot.slot)}</span><div class="meta">${esc(slot.why)}</div></article>`;
+      return `<article class="card"><strong>${esc(slot.label)}</strong> ${look}
+        <div class="meta">${esc(slot.why)}</div></article>`;
     }).join("");
+
     const notes = today.notes || [];
     $("notes").innerHTML = notes.length
-      ? notes.map((note) => `<div class="card"><strong>${esc(note.slot_kind || "Desk")}</strong><div class="meta">${esc(note.body)}</div><div class="meta">${esc(note.updated_by)} · not a hotel fact</div></div>`).join("")
-      : `<p class="note">No desk note yet.</p>`;
+      ? notes.map((note) => `<div class="card"><strong>${esc(note.slot_kind || "Desk")}</strong>
+          <div class="meta">${esc(note.body)}</div>
+          <div class="meta">Not a hotel fact</div></div>`).join("")
+      : emptyNext(empties.notes) || `<p class="note">No desk note yet.</p>`;
+
     const journey = data.journey || {};
     options($("journey-kind"), journey.kinds || []);
     const items = journey.items || [];
     $("journey").innerHTML = items.length
-      ? items.map((item) => `<div class="card"><strong>${esc(item.title)}</strong> <span class="pill">${esc(item.kind)}</span> <span class="pill">${esc(item.status)}</span><div class="meta">${esc(journey.why || "")}</div></div>`).join("")
-      : `<p class="note">${esc(journey.why || "No journey item for today.")}</p>`;
+      ? items.map((item) => `<div class="card"><strong>${esc(item.title)}</strong>
+          <span class="pill">${esc(item.kind)}</span>
+          <span class="pill">${esc(item.status)}</span></div>`).join("")
+      : emptyNext(empties.journey) || `<p class="note">${esc(journey.why || "No journey item for today.")}</p>`;
+
     const sla = data.sla || {};
     const open = sla.open || [];
     const kinds = sla.kinds || [];
-    $("sla").innerHTML = `<div class="banner">${esc(sla.why || "")}</div>` + (open.length
-      ? open.map((row) => `<div class="card">${esc(row)}</div>`).join("")
-      : `<p class="note">Open incident list is empty.</p>`) + kinds.map((kind) => `<div class="card"><strong>${esc(kind.label)}</strong> <span class="pill">${esc(kind.slot)}</span><div class="meta">${esc(kind.why)}</div></div>`).join("");
+    $("sla").innerHTML = `<div class="banner">${esc(sla.why || "")}</div>`
+      + (open.length
+        ? open.map((row) => `<div class="card">${esc(row)}</div>`).join("")
+        : emptyNext(empties.sla) || `<p class="note">Open incident list is empty.</p>`)
+      + kinds.map((kind) => `<div class="card"><strong>${esc(kind.label)}</strong>
+          <div class="meta">${esc(kind.why)}</div></div>`).join("");
+
     const handoff = data.handoff || {};
     options($("handoff-kind"), handoff.kinds || []);
     const hands = handoff.items || [];
+    const heh = sr.history_evidence_handover || {};
     $("handoffs").innerHTML = hands.length
-      ? hands.map((row) => `<div class="card"><strong>${esc(row.kind)}</strong> <span class="pill">${esc(row.status)}</span><div class="meta">${esc(row.note)}</div><div class="meta">Desk handoff. Not a review score.</div></div>`).join("")
-      : `<p class="note">${esc(handoff.why || "")}</p>`;
-    const perms = data.permissions || [];
-    $("seats").innerHTML = perms.map((row) => `<div class="card"><strong>${esc(row.seat)}</strong> <span class="pill">${esc(row.person_id || "unassigned")}</span><div class="meta">${row.assigned === false ? esc(row.why || "") : "Read and desk actions. Money stays off."}</div></div>`).join("");
+      ? hands.map((row) => `<div class="card"><strong>${esc(row.kind)}</strong>
+          <span class="pill">${esc(row.status)}</span>
+          <div class="meta">${esc(row.note)}</div>
+          <div class="meta">Desk handoff. Not a review score.</div></div>`).join("")
+      : emptyNext((heh.handover || {}).empty_state) || `<p class="note">${esc(handoff.why || "")}</p>`;
+
+    const hist = heh.history || [];
+    if (hist.length) {
+      $("heh").innerHTML = `<ul class="hist">${hist.map((h) =>
+        `<li>${h.when ? `<span class="meta">${esc(h.when)}</span> ` : ""}${esc(h.sentence)}</li>`
+      ).join("")}</ul>
+      <p class="meta">${esc(String(heh.evidence_count || 0))} evidence row(s)</p>`;
+    } else {
+      $("heh").innerHTML = emptyNext(heh.history_empty_state) || `<p class="note">No history yet.</p>`;
+    }
+
+    $("honesty").textContent =
+      "Bound beta-amg-ops-safe · day loop beta-amg-day-safe. Beta only. Not PROVEN. Not READY. Empty slots are not occupancy, ADR, or RevPAR. This desk has no payment, folio, bank, or settlement action.";
+  }
+
+  async function paintOperatorDepth() {
+    const box = $("operatorDepth");
+    if (!box) return;
+    try {
+      const depth = await api("/api/amg/ops-pack/operator-depth");
+      const rbac = depth.rbac || {};
+      const mgmt = depth.mgmt_consequence || {};
+      const owner = depth.owner_consequence || {};
+      let html = `<div class="card">
+        <div class="meta">RBAC ${esc(rbac.role_id || "AMG staff")} · day operator ${rbac.can_day_operator ? "yes" : "no"} · live hotel commission no</div>
+        <div class="meta">${esc(depth.why || "")}</div>
+        <div class="meta">Mgmt exceptions: ${esc(String(mgmt.count || 0))} · Owner rows: ${esc(String(owner.count || 0))} · empty day loop is not live</div>
+      </div>`;
+      const cands = depth.day_candidates || [];
+      if (!cands.length) {
+        html += `<p class="note">${esc(mgmt.empty_message || owner.empty_message || "No open day-loop objects for operator depth.")}</p>`;
+      } else {
+        html += cands.slice(0, 6).map((row) =>
+          `<div class="card"><strong>${esc(row.title || row.object_id)}</strong>
+            <span class="pill">${esc(row.label || row.kind)}</span>
+            <span class="pill">${esc(row.status)}</span>
+            <div class="empty-next"><a class="act" href="${esc(row.href || "#day")}">Open day object</a></div>
+          </div>`
+        ).join("");
+      }
+      box.innerHTML = html;
+    } catch (err) {
+      box.innerHTML = `<p class="err">${esc(err.message || "Operator depth not loaded.")}</p>`;
+    }
+  }
+
+  async function paintDayOpsDepth() {
+    const box = $("dayOpsDepth");
+    if (!box) return;
+    const kind = ($("day-ops-kind") && $("day-ops-kind").value) || "";
+    const q = kind ? ("?kind=" + encodeURIComponent(kind)) : "";
+    try {
+      const depth = await api("/api/amg/day-ops/operator-depth" + q);
+      const readiness = depth.day_ops_readiness || {};
+      const needs = depth.day_ops_needs_you || {};
+      let html = `<div class="card">
+        <div class="meta">Day-ops depth · filter ${esc(depth.kind_filter || "all")} · open ${esc(String(depth.day_candidate_count || 0))}</div>
+        <div class="meta">Readiness open ${esc(String(readiness.open_count || 0))} · Needs-You ${esc(String(needs.count || 0))} · staff_ready false · CAP-AMG SPECIFIED</div>
+        <div class="meta">${esc(depth.why || "")}</div>
+      </div>`;
+      const cands = depth.day_candidates || [];
+      if (!cands.length) {
+        html += `<p class="note">${esc(depth.empty_message || "No open day-ops objects — EMPTY honesty.")}</p>`;
+      } else {
+        html += cands.slice(0, 8).map((row) =>
+          `<div class="card" data-day-ops-id="${esc(row.object_id)}">
+            <strong>${esc(row.title || row.object_id)}</strong>
+            <span class="pill">${esc(row.filter || row.kind)}</span>
+            <span class="pill">${esc(row.status)}</span>
+            <div class="meta">${esc(row.note || "")}</div>
+            <button type="button" class="secondary day-ops-detail">Open detail</button>
+            <button type="button" class="day-ops-touch">Next-action touch</button>
+            <div class="meta rowmsg"></div>
+          </div>`
+        ).join("");
+      }
+      box.innerHTML = html;
+      box.querySelectorAll(".day-ops-detail").forEach((btn) => {
+        btn.addEventListener("click", () => dayOpsOpenDetail(btn.closest(".card")));
+      });
+      box.querySelectorAll(".day-ops-touch").forEach((btn) => {
+        btn.addEventListener("click", () => dayOpsNextTouch(btn.closest(".card")));
+      });
+    } catch (err) {
+      box.innerHTML = `<p class="err">${esc(err.message || "Day-ops depth not loaded.")}</p>`;
+    }
+  }
+
+  async function dayOpsOpenDetail(card) {
+    const msg = card.querySelector(".rowmsg") || $("msg");
+    msg.className = "meta rowmsg";
+    try {
+      const id = card.getAttribute("data-day-ops-id");
+      const detail = await api("/api/amg/day-ops/objects/" + encodeURIComponent(id));
+      const obj = detail.object || {};
+      const needs = detail.day_ops_needs_you || {};
+      msg.textContent =
+        (obj.title || id) + " · " + (obj.filter || obj.kind || "") +
+        " · Needs-You " + String(needs.count || 0) +
+        " · occupancy not invented · ADR not invented";
+    } catch (err) {
+      msg.className = "err rowmsg";
+      msg.textContent = err.message;
+    }
+  }
+
+  async function dayOpsNextTouch(card) {
+    const msg = card.querySelector(".rowmsg") || $("msg");
+    msg.className = "meta rowmsg";
+    try {
+      const id = card.getAttribute("data-day-ops-id");
+      const touch = await api("/api/amg/day-ops/objects/" + encodeURIComponent(id) + "/next-action-touch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ kind: "next_action", note: "day-ops next-action touch" }),
+      });
+      msg.className = "ok rowmsg";
+      msg.textContent = touch.message || "Next-action touch recorded. Strips refreshed.";
+      await paintDayOpsDepth();
+    } catch (err) {
+      msg.className = "err rowmsg";
+      msg.textContent = err.message;
+    }
+  }
+
+  async function dayOperatorAction(card, kind, note, status) {
+    const msg = card.querySelector(".rowmsg") || $("msg");
+    msg.className = "meta rowmsg";
+    try {
+      const body = { kind: kind, note: note || "" };
+      if (status) body.status = status;
+      await api("/api/amg/ops-pack/day-objects/" + encodeURIComponent(card.getAttribute("data-object")) + "/operator-action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(body),
+      });
+      await reload("Recorded. Management + Owner strips refreshed. No folio. No payment.");
+    } catch (err) {
+      msg.className = "err rowmsg";
+      msg.textContent = err.message;
+    }
+  }
+
+  async function openDayDetail(card) {
+    const msg = card.querySelector(".rowmsg") || $("msg");
+    msg.className = "meta rowmsg";
+    try {
+      const detail = await api("/api/amg/ops-pack/day-objects/" + encodeURIComponent(card.getAttribute("data-object")) + "/operator");
+      const obj = detail.object || {};
+      const mgmt = detail.mgmt_consequence || {};
+      msg.className = "ok rowmsg";
+      msg.textContent = "Detail · " + (obj.status || "?")
+        + " · mgmt " + (mgmt.count || 0)
+        + " · folio no · payment no";
+      if (detail.href) location.hash = detail.href.split("#")[1] || "";
+    } catch (err) {
+      msg.className = "err rowmsg";
+      msg.textContent = err.message;
+    }
   }
 
   async function reload(okText) {
     const data = await api("/api/amg/ops-pack");
     paint(data);
+    await paintOperatorDepth();
     if (okText) {
       $("msg").className = "ok";
       $("msg").textContent = okText;
@@ -218,12 +672,37 @@
     }
     post("/api/amg/ops-pack/handoff", { kind: $("handoff-kind").value, note: note }, "Handoff saved. It is not a review score.");
   });
+  $("open-day").addEventListener("click", () => {
+    const title = $("day-title").value.trim();
+    const note = $("day-note").value.trim();
+    if (!title) {
+      $("msg").className = "err";
+      $("msg").textContent = "A day object needs a title.";
+      return;
+    }
+    if (!note) {
+      $("msg").className = "err";
+      $("msg").textContent = "A day object needs words.";
+      return;
+    }
+    post("/api/amg/ops-pack/day-object", { kind: $("day-kind").value, title: title, note: note }, "Day object opened. Not a hotel fact.");
+  });
 
-  api("/api/amg/ops-pack").then(paint).catch((err) => {
+  api("/api/amg/ops-pack").then((data) => {
+    paint(data);
+    return paintOperatorDepth().then(() => paintDayOpsDepth());
+  }).catch((err) => {
     $("who").textContent = "Cannot open the desk.";
     $("msg").className = "err";
     $("msg").textContent = err.message;
   });
+
+  if ($("day-ops-reload")) {
+    $("day-ops-reload").addEventListener("click", () => paintDayOpsDepth());
+  }
+  if ($("day-ops-kind")) {
+    $("day-ops-kind").addEventListener("change", () => paintDayOpsDepth());
+  }
 })();
 </script>
 <script src="/assets/wolf-truth.js?v=20260927-w3p4"></script>

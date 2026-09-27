@@ -53,6 +53,15 @@
   <h1>Package register</h1>
   <p class="lede">An empty register is not a market count and not a price. No booking is changed. CAP-CRM-03 stays at the ledger value. The ceiling label is BUILT. This page does not resolve the completion row.</p>
   <div id="banner" class="banner">Reading the register… Empty until an evidenced row exists. Not a price.</div>
+  <h2 id="package-intel-depth">Operator depth</h2>
+  <div id="packageDepthBox" class="card">
+    <p class="note" id="depth-summary">Loading package intelligence operator depth… Empty is not a market census, a price, or a booking. CAP-CRM-03 stays SPECIFIED.</p>
+    <div id="depth-list"></div>
+    <label for="depth-note">Operator note</label>
+    <textarea id="depth-note" rows="3" style="width:100%;margin-top:6px;background:#101418;color:var(--text);border:1px solid var(--line);padding:8px;"></textarea>
+    <div id="depth-actions" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
+    <p class="note" id="depth-result"></p>
+  </div>
   <h2>Recorded products</h2>
   <div id="products" class="grid">
     <article class="card"><div class="k">Products</div><div class="v">EMPTY</div><p class="note">No evidenced row. This is not a price and not a booking.</p></article>
@@ -100,6 +109,87 @@ function paint(pack) {
   });
   if (brands) document.getElementById("brands").innerHTML = brands;
 }
+
+var selectedDepthId = "";
+function depthPost(kind, extra) {
+  if (!selectedDepthId) {
+    document.getElementById("depth-result").textContent = "Open a package slot or the empty placeholder first.";
+    return;
+  }
+  var note = document.getElementById("depth-note").value || "";
+  var body = Object.assign({ kind: kind, note: note }, extra || {});
+  fetch("/api/crm/package-intel/operator-depth/objects/" + encodeURIComponent(selectedDepthId) + "/operator-action", {
+    method: "POST",
+    headers: { "Accept": "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  }).then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
+    .then(function (res) {
+      document.getElementById("depth-result").textContent = [
+        "HTTP " + res.status,
+        (res.body && (res.body.kind || res.body.error)) || "",
+        "price " + String(res.body && res.body.price),
+        "margin " + String(res.body && res.body.margin),
+        "live_census " + String(res.body && res.body.live_census === true),
+        "register mutated " + String(res.body && res.body.register_mutated === true)
+      ].join(" · ");
+      loadDepth();
+    })
+    .catch(function () {
+      document.getElementById("depth-result").textContent = "Operator action could not be recorded.";
+    });
+}
+function renderDepth(body) {
+  var summary = document.getElementById("depth-summary");
+  var list = document.getElementById("depth-list");
+  var actions = document.getElementById("depth-actions");
+  if (!body || body.ok !== true) {
+    summary.textContent = "Operator depth " + ((body && body.error) || "unavailable") + ". Empty is not a price. CAP-CRM-03 stays SPECIFIED.";
+    return;
+  }
+  summary.textContent = [
+    body.empty ? (body.empty_message || "EMPTY") : "slots " + body.slot_count,
+    "CAP-CRM-03 " + ((body.honesty || {}).cap_crm_03 || "—"),
+    "price " + String(body.price),
+    "margin " + String(body.margin),
+    "live_census " + String(body.live_census === true),
+    "staff_ready " + String(body.staff_ready === true)
+  ].join(" · ");
+  list.innerHTML = "";
+  (body.objects || []).forEach(function (row) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.style.display = "block";
+    btn.style.width = "100%";
+    btn.style.textAlign = "left";
+    btn.style.marginTop = "8px";
+    btn.textContent = (row.object_kind || "object") + " " + (row.object_id || "");
+    btn.addEventListener("click", function () { selectedDepthId = row.object_id; });
+    list.appendChild(btn);
+  });
+  actions.innerHTML = "";
+  [
+    ["note", "Note", null],
+    ["next_action", "Next action", null],
+    ["handoff_touch", "Handoff", null],
+    ["dismiss_noise", "Dismiss noise", null],
+    ["review_decision", "Still specified", { decision: "still_specified" }]
+  ].forEach(function (spec) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.textContent = spec[1];
+    b.addEventListener("click", function () { depthPost(spec[0], spec[2]); });
+    actions.appendChild(b);
+  });
+}
+function loadDepth() {
+  fetch("/api/crm/package-intel/operator-depth", { headers: { "Accept": "application/json" } })
+    .then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
+    .then(function (res) { renderDepth(res.body); })
+    .catch(function () {
+      document.getElementById("depth-summary").textContent = "Package intelligence operator depth could not be read. CAP-CRM-03 stays SPECIFIED.";
+    });
+}
+loadDepth();
 
 fetch("/api/crm/package-intel", { headers: { "Accept": "application/json" } })
   .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })

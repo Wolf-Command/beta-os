@@ -21,7 +21,7 @@
   .sub, .muted { color: var(--muted); font-size: 0.86rem; line-height: 1.4; }
   nav.uma { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 16px; }
   nav.uma a {
-    min-height: 40px; display: inline-flex; align-items: center;
+    min-height: 44px; display: inline-flex; align-items: center;
     padding: 10px 12px; border-radius: 999px; border: 1px solid var(--line);
     color: var(--muted); text-decoration: none; font-size: 0.84rem; font-weight: 650;
   }
@@ -54,12 +54,16 @@
   <p class="muted"><a href="/bzg/uma-blu/bills" style="color:var(--muted)">Bills</a></p>
   <h1 class="brand">Purchase <em>detail</em></h1>
   <p class="sub">Existing records stay as recorded. Wolf does not mark them verified.</p>
-  <nav class="uma">
+  <nav class="uma" aria-label="Uma Blu day">
     <a href="/bzg/uma-blu">Today</a>
-    <a href="/bzg/uma-blu/bills">Bills</a>
-    <a href="/bzg/uma-blu/petty">Petty</a>
-    <a href="/uma-blu-close">Close</a>
+    <a href="/uma-blu-close">Daily Close</a>
     <a href="/bzg/uma-blu/issues">Issues</a>
+    <a href="/bzg/uma-blu/bills">Bills</a>
+    <a href="/bzg/uma-blu/bills#purchasing">Purchasing</a>
+    <a href="/bzg/uma-blu/evidence">Evidence</a>
+    <a href="/bzg/uma-blu/exceptions">Exceptions</a>
+    <a href="/my-work">My Work</a>
+    <a href="/bzg/uma-blu/petty">Petty cash</a>
   </nav>
   <div id="body"><p class="muted">Loading…</p></div>
 <script>
@@ -85,8 +89,13 @@
     document.getElementById("body").textContent = "No purchase selected.";
     return;
   }
-  fetch("/api/bzg/uma-blu/prs/" + encodeURIComponent(key))
-    .then(function (r) { return r.json(); })
+  fetch("/api/bzg/uma-blu/prs/" + encodeURIComponent(key) + "/operator")
+    .then(function (r) {
+      if (r.status === 404) {
+        return fetch("/api/bzg/uma-blu/prs/" + encodeURIComponent(key)).then(function (r2) { return r2.json(); });
+      }
+      return r.json();
+    })
     .then(function (data) {
       var box = document.getElementById("body");
       box.innerHTML = "";
@@ -217,7 +226,7 @@
             return;
           }
           btn.disabled = true;
-          fetch("/api/bzg/uma-blu/receive", {
+          fetch("/api/bzg/uma-blu/goods-receipt", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ pr: key, lines: payload, evidence_note_id: evid })
@@ -229,8 +238,15 @@
               return;
             }
             var receipt = out.receipt || {};
+            var stock = out.stock_consequence || {};
+            var bill = out.supplier_bill_consequence || {};
             msg.className = "muted";
-            msg.textContent = "Recorded " + (receipt.status || "") + (receipt.variance_flag ? ". Shortfall noted — not a stock count." : ".") + " Existing record was not rewritten.";
+            msg.textContent = "Recorded " + (receipt.status || "")
+              + (receipt.variance_flag ? ". Shortfall noted — not a stock count." : ".")
+              + " Stock consequence " + (stock.status || (stock.empty ? "EMPTY" : "updated"))
+              + "; bill consequence " + (bill.status || (bill.empty ? "EMPTY" : "updated"))
+              + ". Empty stock is not live inventory. Existing record was not rewritten.";
+            setTimeout(function () { location.reload(); }, 900);
           }).catch(function () {
             btn.disabled = false;
             msg.className = "err";
@@ -240,6 +256,52 @@
         act.appendChild(form);
       } else if (actions.receive_waiting && (state === "ORDERED" || state === "PARTIALLY_RECEIVED")) {
         act.appendChild(el("p", "muted", actions.receive_waiting));
+      }
+      if (actions.pr_operator || actions.correction) {
+        var corr = el("div", "panel");
+        corr.appendChild(el("h2", null, "Operator note / correction"));
+        corr.appendChild(el("p", "muted", "Non-money corrections only. Does not rewrite Alchemist or execute payment."));
+        var corrNote = el("input");
+        corrNote.placeholder = "Note or correction";
+        var corrKind = el("input");
+        corrKind.placeholder = "kind: note | correction | quality";
+        corrKind.value = "note";
+        var corrBtn = el("button", "btn", "Record operator action");
+        corrBtn.type = "button";
+        var corrMsg = el("p", "muted", "");
+        corrBtn.onclick = function () {
+          var text = corrNote.value.trim();
+          if (!text) {
+            corrMsg.className = "err";
+            corrMsg.textContent = "A note is required.";
+            return;
+          }
+          corrBtn.disabled = true;
+          fetch("/api/bzg/uma-blu/prs/" + encodeURIComponent(key) + "/operator-action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ kind: (corrKind.value || "note").trim() || "note", note: text })
+          }).then(function (r) { return r.json(); }).then(function (out) {
+            corrBtn.disabled = false;
+            if (!out.ok) {
+              corrMsg.className = "err";
+              corrMsg.textContent = out.error || out.message || "Not recorded.";
+              return;
+            }
+            corrMsg.className = "muted";
+            corrMsg.textContent = "Recorded " + (out.kind || "note") + ". Payment was not executed.";
+            corrNote.value = "";
+          }).catch(function () {
+            corrBtn.disabled = false;
+            corrMsg.className = "err";
+            corrMsg.textContent = "Not recorded.";
+          });
+        };
+        corr.appendChild(corrKind);
+        corr.appendChild(corrNote);
+        corr.appendChild(corrBtn);
+        corr.appendChild(corrMsg);
+        box.appendChild(corr);
       }
       if (actions.close_ops && (state === "RECEIVED" || state === "PARTIALLY_RECEIVED")) {
         var closeNote = el("input");

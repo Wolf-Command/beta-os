@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MSC Management Cluster · Beta</title>
+<style>
+  :root {
+    --bg: #101318;
+    --bg2: #171c24;
+    --bg3: #222933;
+    --line: #334050;
+    --text: #e8edf2;
+    --muted: #8b9aab;
+    --accent: #7a9e8a;
+    --warn: #d4a85a;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background:
+      radial-gradient(ellipse 80% 50% at 100% 0%, #1a2830 0%, transparent 50%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+  }
+  .wrap { max-width: 440px; margin: 0 auto; padding: 16px 14px 88px; }
+  h1 {
+    font-family: var(--display); font-weight: 500; font-size: 1.55rem;
+    margin: 0 0 4px; letter-spacing: -0.01em;
+  }
+  h1 span { color: var(--accent); }
+  .lede { color: var(--muted); font-size: 0.88rem; line-height: 1.4; margin: 0 0 12px; }
+  h2 {
+    font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin: 20px 0 8px;
+  }
+  .banner {
+    border: 1px solid var(--line); background: var(--bg2);
+    border-left: 3px solid var(--accent); padding: 10px 12px;
+    font-size: 0.88rem; margin: 8px 0;
+  }
+  .banner.warn { border-left-color: var(--warn); color: var(--warn); }
+  .card {
+    border: 1px solid var(--line); background: var(--bg2);
+    padding: 12px; margin: 0 0 8px; border-radius: 10px;
+  }
+  .k { color: var(--muted); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .title { font-family: var(--display); font-size: 1.15rem; margin: 4px 0 6px; }
+  .note { color: var(--muted); font-size: 0.84rem; line-height: 1.4; margin: 0; }
+  .pill {
+    display: inline-block; border: 1px solid var(--line); padding: 2px 8px;
+    font-size: 0.72rem; color: var(--muted); margin: 0 4px 4px 0; border-radius: 999px;
+  }
+  .pill.loud { color: var(--warn); border-color: rgba(212,168,90,0.55); }
+  .next {
+    display: block; margin-top: 10px; padding: 10px 12px;
+    border: 1px solid #3d5a48; background: #1a2a22; color: var(--text);
+    text-decoration: none; font-weight: 600; font-size: 0.9rem; border-radius: 8px;
+  }
+  .nav {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: rgba(16,19,24,0.94); border-top: 1px solid var(--line);
+    display: flex; justify-content: space-around; padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+    backdrop-filter: blur(8px);
+  }
+  .nav a {
+    color: var(--muted); text-decoration: none; font-size: 0.72rem;
+    letter-spacing: 0.04em; text-transform: uppercase; padding: 6px 8px;
+  }
+  .err { color: #e07070; font-size: 0.88rem; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>MSC Management <span>· Cluster</span></h1>
+  <p class="lede">Bound beta-core-safe. Composes Asset Register, Posture Prove, Compliance Pack, Cyber Baseline, and Records Defensibility. Empty stays empty — no invented PROVEN, READY, MFA, legal hold, money, or Cloudflare mutate. Not proven. Not ready. No secret exfil.</p>
+  <div class="banner warn" id="who">Loading…</div>
+  <div id="msg"></div>
+
+  <h2 id="now">Now</h2>
+  <div id="nowBox"></div>
+
+  <h2 id="needs-you-connective">Needs-You connective</h2>
+  <div id="connectiveBox"></div>
+
+  <h2 id="asset-depth">Asset operator depth</h2>
+  <div id="assetDepthBox" class="card">
+    <p class="note" id="depth-summary">Loading asset operator depth…</p>
+    <div id="depth-list"></div>
+    <label for="depth-note" class="k">Operator note</label>
+    <textarea id="depth-note" rows="3" style="width:100%;margin-top:6px;background:#101318;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;"></textarea>
+    <div id="depth-actions" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
+    <p class="note" id="depth-result"></p>
+  </div>
+
+  <h2 id="modules">Modules</h2>
+  <p class="note"><a href="/msc-compliance#compliance-depth">Compliance operator depth</a> — licence, statutory, policy, evidence, owner, due. Empty is not a current licence.</p>
+  <div id="mods"></div>
+
+  <h2 id="handoff">Owner / Empire handoff</h2>
+  <div id="hand"></div>
+</div>
+<nav class="nav" id="nav" aria-label="Cluster"></nav>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+
+  async function api(path) {
+    const res = await fetch(path, { headers: { Accept: "application/json" } });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) {
+      const err = new Error(data.message || data.error || ("HTTP " + res.status));
+      err.payload = data;
+      throw err;
+    }
+    return data;
+  }
+
+  function pills(tags) {
+    return (tags || []).map((t) =>
+      `<span class="pill loud">${esc(t)}</span>`
+    ).join(" ");
+  }
+
+  function render(desk) {
+    const sr = desk.staff_ready || {};
+    $("who").textContent = (sr.who_line || "Signed in")
+      + " · empty modules " + (desk.empty_count ?? "?")
+      + " · proven=false · ready=false · money=null · no secret exfil";
+
+    const next = desk.primary_next || sr.primary_next || {};
+    const nye = desk.needs_you_connective || {};
+    const nyeItems = nye.items || [];
+    let nyeHtml = `<div class="card">
+      <div class="k">MSC / asset / posture / compliance / cyber / records</div>
+      <p class="note">${nye.empty ? esc(nye.empty_message || "EMPTY") : esc(String(nye.count ?? nyeItems.length) + " in scope")}</p>
+      <p class="note">Counts are the in-scope length. Not staff_ready. Not PROVEN. Not READY. Not live MFA. Not compliance-done. Not a legal hold. Not Access mutate. Not a secret mint. Not BZG compose. Haikal human is not started. Devi retest stays parked.</p>
+    </div>`;
+    if (!nyeItems.length) {
+      nyeHtml += `<p class="note">No MSC-scoped Needs-You rows — EMPTY.</p>`;
+    } else {
+      nyeHtml += nyeItems.map((row) => `<article class="card">
+        <div class="k">${esc(row.kind || "needs_you")}</div>
+        <div class="title">${esc(row.title || row.object_id)}</div>
+        <p class="note">${esc(row.object_id || "")} · invented=false · live-mfa=false · legal-hold=false</p>
+        ${row.href ? `<a class="next" href="${esc(row.href)}">${esc(row.title || "Open")}</a>` : ""}
+      </article>`).join("");
+    }
+    const connectiveBox = $("connectiveBox");
+    if (connectiveBox) connectiveBox.innerHTML = nyeHtml;
+    $("nowBox").innerHTML = `<div class="card">
+      <div class="k">Primary next</div>
+      <div class="title">${esc(next.label || "No further action")}</div>
+      <p class="note">Derived from live module state. Not invented. Empty stays empty.</p>
+      ${next.href ? `<a class="next" href="${esc(next.href)}">${esc(next.label)}</a>` : ""}
+    </div>`;
+
+    $("mods").innerHTML = (desk.modules || []).map((m) => {
+      const strip = m.honesty_strip || {};
+      const tags = strip.status_tags || [strip.status || "EMPTY"];
+      const nxt = m.primary_next || strip.next_action || {};
+      return `<article class="card" id="mod-${esc(m.id)}">
+        <div class="k">${esc(m.staff_title || m.title)}</div>
+        <div class="title">${esc(m.staff_title || m.title)}</div>
+        <div>${pills(tags)}</div>
+        <p class="note">${esc(strip.message || "")}</p>
+        <p class="note">Numbers: none · invented=false · money=null · no invented MFA / legal hold</p>
+        ${nxt.href ? `<a class="next" href="${esc(nxt.href)}">${esc(nxt.label || "Open")}</a>` : ""}
+        ${m.operator_depth_href ? `<a class="next" href="${esc(m.operator_depth_href)}">Compliance operator depth</a>` : ""}
+      </article>`;
+    }).join("");
+
+    const hand = desk.owner_empire_handoff || {};
+    $("hand").innerHTML = `<div class="card">
+      <div>${pills([hand.founder_dep_class || "RETAIN"])}</div>
+      <p class="note">${esc(hand.label || hand.founder_dep_reason || "")}</p>
+      <p class="note">Routing label only — Owner controls not invented away.</p>
+    </div>`;
+
+    const nav = desk.nav || sr.nav || [];
+    $("nav").innerHTML = nav.map((n) =>
+      `<a href="${esc(n.href)}">${esc(n.label)}</a>`
+    ).join("");
+  }
+
+  var selectedDepthId = "";
+  function depthPost(kind, extra) {
+    if (!selectedDepthId) {
+      $("depth-result").textContent = "Open an asset, maintenance note, or MSC desk object first.";
+      return;
+    }
+    var note = $("depth-note").value || "";
+    var body = Object.assign({ kind: kind, note: note }, extra || {});
+    fetch("/api/msc/mgmt-cluster/operator-depth/objects/" + encodeURIComponent(selectedDepthId) + "/operator-action", {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    }).then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
+      .then(function (res) {
+        var desk = (res.body && res.body.asset_desk) || {};
+        $("depth-result").textContent = [
+          "HTTP " + res.status,
+          res.body && res.body.kind ? res.body.kind : (res.body && res.body.error) || "",
+          "open " + (desk.open_count == null ? "—" : desk.open_count),
+          "inventory " + String(res.body && res.body.inventory_count),
+          "register mutated " + String(res.body && res.body.register_mutated === true)
+        ].join(" · ");
+        loadDepth();
+      })
+      .catch(function () {
+        $("depth-result").textContent = "Operator action could not be recorded.";
+      });
+  }
+  function renderDepth(body) {
+    var summary = $("depth-summary");
+    var list = $("depth-list");
+    var actions = $("depth-actions");
+    if (!body || body.ok !== true) {
+      summary.textContent = "Operator depth " + ((body && body.error) || "unavailable") + ". Empty is not an inventory count.";
+      return;
+    }
+    var caps = (body.honesty || {}).caps || {};
+    summary.textContent = [
+      body.empty ? (body.empty_message || "EMPTY") : "assets " + body.asset_count,
+      "open " + body.open_count,
+      "inventory count unread",
+      "CAP-MSC-01 " + (caps["CAP-MSC-01"] || "—"),
+      "CAP-MSC-02 " + (caps["CAP-MSC-02"] || "—"),
+      "staff_ready " + String(body.staff_ready === true)
+    ].join(" · ");
+    list.innerHTML = "";
+    var rows = body.objects || [];
+    if (!rows.length) {
+      var empty = document.createElement("p");
+      empty.className = "note";
+      empty.textContent = body.empty_message || "No asset rows.";
+      list.appendChild(empty);
+    }
+    rows.forEach(function (row) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.style.display = "block";
+      btn.style.width = "100%";
+      btn.style.textAlign = "left";
+      btn.style.marginTop = "8px";
+      btn.style.background = "#101318";
+      btn.style.color = "var(--text)";
+      btn.style.border = "1px solid var(--line)";
+      btn.style.borderRadius = "8px";
+      btn.style.padding = "8px";
+      btn.textContent = (row.object_kind || "object") + " " + (row.object_id || "")
+        + (row.dismissed_noise ? " · dismissed" : "");
+      btn.addEventListener("click", function () { selectedDepthId = row.object_id; });
+      list.appendChild(btn);
+    });
+    actions.innerHTML = "";
+    [
+      ["note", "Note", null],
+      ["next_action", "Next action", null],
+      ["handoff_touch", "Handoff", null],
+      ["dismiss_noise", "Dismiss noise", null],
+      ["review_decision", "Keep as note", { decision: "keep_as_note" }]
+    ].forEach(function (spec) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = spec[1];
+      b.addEventListener("click", function () { depthPost(spec[0], spec[2]); });
+      actions.appendChild(b);
+    });
+  }
+  function loadDepth() {
+    fetch("/api/msc/mgmt-cluster/operator-depth", { headers: { Accept: "application/json" } })
+      .then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
+      .then(function (res) { renderDepth(res.body); })
+      .catch(function () {
+        $("depth-summary").textContent = "Asset operator depth could not be read.";
+      });
+  }
+  loadDepth();
+
+  api("/api/msc/mgmt-cluster").then(render).catch((err) => {
+    $("who").textContent = "Denied or unavailable";
+    $("msg").innerHTML = `<p class="err">${esc(err.message || err)}</p>`;
+  });
+})();
+</script>
+</body>
+</html>

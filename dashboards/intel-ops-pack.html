@@ -20,6 +20,7 @@
   .meta { font-size: 0.78rem; margin-top: 4px; }
   .banner { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: 0.88rem; }
   .banner.warn { border-color: rgba(224,177,90,0.55); color: var(--warn); }
+  .banner.next { border-color: rgba(126,200,227,0.55); }
   .card { border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; padding: 12px; margin-top: 8px; }
   .card.loud { border-color: rgba(224,177,90,0.7); }
   .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.75rem; margin-right: 4px; color: var(--muted); }
@@ -37,13 +38,36 @@
   .err { color: var(--danger); white-space: pre-wrap; font-size: 0.85rem; }
   ul { margin: 8px 0 0; padding-left: 18px; }
   li { margin: 4px 0; }
+  .crumb { font-size: 0.78rem; color: var(--muted); margin: 0 0 8px; }
+  nav.grammar { margin: 0 0 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.grammar a, nav.grammar span.empty {
+    display: inline-block; padding: 8px 10px; min-height: 44px;
+    border: 1px solid var(--border); border-radius: 10px;
+    color: var(--muted); text-decoration: none; font-size: 0.78rem; font-weight: 650;
+    display: inline-flex; align-items: center;
+  }
+  nav.grammar a.active { color: var(--accent); border-color: rgba(126,200,227,0.55); }
+  nav.grammar span.empty { opacity: 0.75; font-weight: 550; }
 </style>
 </head>
-<body>
+<body data-wolf-page-type="DASHBOARD" data-wolf-org="INTEL" data-wolf-shell="global">
+  <p class="crumb">WOLF · Intelligence</p>
   <h1>Intel Ops <span>· Beta</span></h1>
+  <nav class="grammar" aria-label="Intelligence grammar">
+    <a class="active" href="/intel-ops-pack">Home</a>
+    <a href="/content-2.0">Content</a>
+    <span class="empty">Brand / Competitive · EMPTY</span>
+    <span class="empty">Decision Memory · EMPTY</span>
+    <span class="empty">AKR · EMPTY</span>
+  </nav>
   <p class="lede">Bound beta-intel-safe. Ask → provenance → Decision Memory recall → approve-to-rule experiment note. CAP-INTEL-01 stays BUILT. CAP-INTEL-05 stays SPECIFIED. Stub ≠ live rule. No auto-promote. No money, bank, payment, Zayen, HR, or trading.</p>
   <div class="banner warn" id="who">Loading…</div>
   <div id="msg"></div>
+
+  <h2 id="needs-you-connective">Needs-You connective</h2>
+  <p class="note">Intel-scoped commissioning, intel connective, and learning-policy rows for this seat. Counts are the in-scope length. EMPTY when none. Not staff_ready. Not PROVEN. Not READY. Haikal human is not started. Devi retest stays parked. No auto-promote.</p>
+  <div class="banner next" id="primaryNext" hidden></div>
+  <div id="connective"></div>
 
   <h2>Today · last ask</h2>
   <div id="today"></div>
@@ -79,6 +103,12 @@
     <p class="meta">Writes an approve-to-rule NOTED row only. Does not approve, stub, promote, or execute.</p>
     <div id="noteOut"></div>
   </div>
+
+  <h2 id="operator-depth">Operator depth · connective</h2>
+  <p class="note">Recommendation detail + note / accept-for-desk / dismiss / handover-touch. Refreshes desk next-action + Owner/staff attention. Bound beta-intel-connect-safe. No auto-promote. No auto-execute. Empty stays empty.</p>
+  <div id="opDepth"></div>
+  <div id="opDetail"></div>
+  <div id="opAttn"></div>
 
 <script>
 (function () {
@@ -148,9 +178,126 @@
     </div>`;
   }
 
+  function renderAttention(owner, staff) {
+    const oEmpty = !owner || owner.empty;
+    const sEmpty = !staff || staff.empty;
+    $("opAttn").innerHTML = `<div class="card${oEmpty ? " loud" : ""}">
+      ${pill("Owner attention", false)} ${oEmpty ? pill("EMPTY", true) : pill(String(owner.count || 0), false)}
+      <p class="meta">${esc((owner && (owner.empty_message || owner.why)) || "")}</p>
+      ${pill("Staff attention", false)} ${sEmpty ? pill("EMPTY", true) : pill(String(staff.count || 0), false)}
+      <p class="meta">${esc((staff && (staff.empty_message || staff.why)) || "")}</p>
+      <p class="meta">auto_promote=false · auto_execute=false · not invent</p>
+    </div>`;
+  }
+
+  async function recAction(recId, kind, note) {
+    await api("/api/intel/connective/recommendations/" + encodeURIComponent(recId) + "/operator-action", {
+      method: "POST",
+      body: JSON.stringify({ kind: kind, note: note || "" })
+    });
+    await loadOperatorDepth();
+  }
+
+  async function openDetail(recId) {
+    try {
+      const detail = await api("/api/intel/connective/recommendations/" + encodeURIComponent(recId) + "/operator");
+      const rec = detail.recommendation || {};
+      const nxt = (rec.effective_next || {}).label || "";
+      $("opDetail").innerHTML = `<div class="card" id="rec-${esc(String(recId || "").toLowerCase())}">
+        ${pill(rec.recommendation_id || recId, false)} ${pill(rec.surface || "", false)} ${pill(rec.disposition || "open", rec.disposition === "dismissed")}
+        <p>${esc(rec.why || "")}</p>
+        <p class="meta">effective: ${esc(nxt)}</p>
+        <p class="meta">Q: ${esc(rec.question || "(none)")} · status=${esc(rec.status || "")} · changes_work=${esc(rec.changes_work)}</p>
+        <label>Operator note</label>
+        <input id="opNote" type="text" placeholder="Note / accept / dismiss / handover words" value="${esc(rec.note || "")}" />
+        <div class="row" style="margin-top:8px">
+          <button type="button" class="primary" id="opNoteBtn">Note</button>
+          <button type="button" id="opAcceptBtn">Accept for desk</button>
+          <button type="button" id="opDismissBtn">Dismiss</button>
+          <button type="button" class="secondary" id="opHandoverBtn">Handover touch</button>
+        </div>
+        <p class="meta">No auto-promote. No auto-execute. CAP-INTEL-05 stays SPECIFIED.</p>
+      </div>`;
+      const noteEl = () => ($("opNote") || {}).value || "";
+      $("opNoteBtn").onclick = () => recAction(recId, "note", noteEl());
+      $("opAcceptBtn").onclick = () => recAction(recId, "accept_for_desk", noteEl());
+      $("opDismissBtn").onclick = () => recAction(recId, "dismiss", noteEl());
+      $("opHandoverBtn").onclick = () => recAction(recId, "handover_touch", noteEl());
+      renderAttention(detail.owner_attention, detail.staff_attention);
+    } catch (err) {
+      $("opDetail").innerHTML = `<p class="err">${esc(err.message || "detail failed")}</p>`;
+    }
+  }
+
+  async function loadOperatorDepth() {
+    try {
+      const depth = await api("/api/intel/connective/operator-depth");
+      const cands = depth.recommendation_candidates || [];
+      let html = `<div class="card${depth.empty ? " loud" : ""}">
+        ${pill(depth.bound || "beta-intel-connect-safe", false)}
+        ${depth.empty ? pill("EMPTY", true) : pill(String(depth.recommendation_candidate_count || 0) + " candidates", false)}
+        <p class="meta">${esc(depth.empty_message || depth.why || "")}</p>`;
+      if (!cands.length) {
+        html += `<p class="note">${esc(depth.empty_message || "No open connective recommendations for operator depth.")}</p>`;
+      } else {
+        html += `<ul>${cands.map((c) => {
+          const id = c.recommendation_id || "";
+          const label = (c.effective_next || {}).label || c.kind || id;
+          return `<li><a href="#rec-${esc(String(id).toLowerCase())}" data-rec="${esc(id)}" class="op-rec-link"><strong>${esc(id)}</strong></a>
+            · ${esc(c.surface || "")} · ${esc(c.disposition || "open")}
+            <div class="meta">${esc(label)}</div></li>`;
+        }).join("")}</ul>`;
+      }
+      html += `</div>`;
+      $("opDepth").innerHTML = html;
+      $("opDepth").querySelectorAll(".op-rec-link").forEach((a) => {
+        a.addEventListener("click", (ev) => {
+          ev.preventDefault();
+          openDetail(a.getAttribute("data-rec"));
+        });
+      });
+      renderAttention(depth.owner_attention, depth.staff_attention);
+      if (cands.length === 1) {
+        openDetail(cands[0].recommendation_id);
+      }
+    } catch (err) {
+      $("opDepth").innerHTML = `<p class="err">${esc(err.message || "Operator depth not loaded.")}</p>`;
+    }
+  }
+
+  function renderConnective(data) {
+    const preferred = data.next_action || {};
+    if (preferred.label && $("primaryNext")) {
+      $("primaryNext").hidden = false;
+      $("primaryNext").innerHTML = `<strong>Do now</strong><div class="meta">${esc(preferred.label)}</div>`
+        + (preferred.href ? `<div class="row"><a class="action" href="${esc(preferred.href)}">Open</a></div>` : "");
+    }
+    const conn = data.needs_you_connective || {};
+    const rowsC = conn.items || [];
+    const byKind = conn.by_kind || {};
+    if (!$("connective")) return;
+    if (conn.empty || !rowsC.length) {
+      $("connective").innerHTML = `<div class="card loud">${pill("EMPTY", true)}<p>${esc(conn.empty_message || "No in-scope Intel Needs-You rows. EMPTY — not invented work.")}</p></div>`;
+      return;
+    }
+    const kinds = ["morning_seed", "waiting_others", "needs_you", "policy", "intel_connective", "learning_policy"].map((k) =>
+      pill(k + " " + (byKind[k] == null ? "0" : String(byKind[k])), false)
+    ).join(" ");
+    $("connective").innerHTML = `<div class="card">${kinds}
+      <p class="meta">${esc(conn.count)} in scope · staff_ready false · proven false · ready false · Haikal ${esc(conn.haikal_human || "not_started")} · Devi ${esc(conn.devi_retest || "parked")} · auto_promote false</p>
+      ${rowsC.map((row) => `<div class="card">
+        ${pill(row.kind || "", false)}
+        <p><strong>${esc(row.title || row.object_id)}</strong></p>
+        <p class="meta">${esc(row.who || row.audience || "")}</p>
+        ${row.href ? `<div class="row"><a class="action" href="${esc(row.href)}">Open</a></div>` : ""}
+      </div>`).join("")}
+    </div>`;
+  }
+
   function show(data) {
     const seat = data.seat || {};
     const honesty = data.honesty || {};
+    renderConnective(data);
     $("who").textContent = "Signed in as " + (data.person_id || seat.person_id || "caller")
       + ". Money, finance, Zayen, HR, and trading are hidden. Caps: INTEL-01 "
       + (honesty.cap_intel_01 || "?") + " · 02–04 "
@@ -164,6 +311,7 @@
   async function reload() {
     const data = await api("/api/intel/ops-pack");
     show(data);
+    await loadOperatorDepth();
   }
 
   $("askBtn").addEventListener("click", async () => {

@@ -33,8 +33,111 @@
     <h1>Customer identity</h1>
     <p>CAP-CRM-02 on Beta. A customer is not a lead. Memory notes are append-only. This is not a complete identity graph. People are not merged without evidence. There is no marketing blast.</p>
     <div class="card" id="status">Loading…</div>
+    <div class="card" id="identity-depth">
+      <h2 style="font-family:var(--display);font-weight:500;font-size:22px;margin:0 0 8px;">Confidence match</h2>
+      <p id="depth-summary">Loading operator depth…</p>
+      <div id="depth-list"></div>
+      <label for="depth-note" style="display:block;margin-top:12px;">Operator note</label>
+      <textarea id="depth-note" rows="3" style="width:100%;margin-top:6px;background:#0c1014;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;"></textarea>
+      <div id="depth-actions" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
+      <p id="depth-result"></p>
+    </div>
   </div>
   <script>
+    var selectedId = "";
+    function depthPost(kind, extra) {
+      if (!selectedId) {
+        document.getElementById("depth-result").textContent = "Open a customer or link candidate first.";
+        return;
+      }
+      var note = document.getElementById("depth-note").value || "";
+      var body = Object.assign({ kind: kind, note: note }, extra || {});
+      fetch("/api/crm/identity/operator-depth/objects/" + encodeURIComponent(selectedId) + "/operator-action", {
+        method: "POST",
+        headers: { "Accept": "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }).then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
+        .then(function (res) {
+          var desk = (res.body && res.body.identity_desk) || {};
+          document.getElementById("depth-result").textContent = [
+            "HTTP " + res.status,
+            res.body && res.body.kind ? res.body.kind : (res.body && res.body.error) || "",
+            "open review " + (desk.open_review_count == null ? "—" : desk.open_review_count),
+            "merged " + String(res.body && res.body.merged === true),
+            "graph " + String(res.body && res.body.identity_graph_complete === true)
+          ].join(" · ");
+          loadDepth();
+        })
+        .catch(function () {
+          document.getElementById("depth-result").textContent = "Operator action could not be recorded.";
+        });
+    }
+    function renderDepth(body) {
+      var summary = document.getElementById("depth-summary");
+      var list = document.getElementById("depth-list");
+      var actions = document.getElementById("depth-actions");
+      if (!body || body.ok !== true) {
+        summary.textContent = "Operator depth " + ((body && body.error) || "unavailable") + ". Empty is not a graph.";
+        return;
+      }
+      summary.textContent = [
+        body.empty ? (body.empty_message || "EMPTY") : "candidates " + body.candidate_count,
+        "open review " + body.open_review_count,
+        "confidence " + (body.match_confidence_band || "uncertain"),
+        "graph complete " + String(body.identity_graph_complete === true),
+        "CAP " + (((body.honesty || {}).caps || {})["CAP-CRM-02"] || "—")
+      ].join(" · ");
+      list.innerHTML = "";
+      var rows = (body.link_candidates || []).concat((body.customers || []).map(function (c) {
+        return { object_id: c.customer_id, object_kind: "customer", display_name: c.display_name, match_confidence: null, human_review_required: false };
+      }));
+      if (!rows.length) {
+        var empty = document.createElement("p");
+        empty.textContent = body.empty_message || "No customers and no link candidates.";
+        list.appendChild(empty);
+      }
+      rows.forEach(function (row) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.style.display = "block";
+        btn.style.width = "100%";
+        btn.style.textAlign = "left";
+        btn.style.marginTop = "8px";
+        btn.style.background = "#0c1014";
+        btn.style.color = "var(--text)";
+        btn.style.border = "1px solid var(--line)";
+        btn.style.borderRadius = "8px";
+        btn.style.padding = "8px";
+        var conf = row.match_confidence || "—";
+        var review = row.human_review_required ? "human review required" : "review not required";
+        btn.textContent = (row.object_kind || "object") + " " + (row.object_id || "") + " · " + conf + " · " + review;
+        btn.addEventListener("click", function () { selectedId = row.object_id; btn.style.outline = "1px solid #eef2f5"; });
+        list.appendChild(btn);
+      });
+      actions.innerHTML = "";
+      [
+        ["note", "Note", null],
+        ["next_action", "Next action", null],
+        ["handoff_touch", "Handoff", null],
+        ["dismiss_noise", "Dismiss noise", null],
+        ["review_decision", "Keep separate", { decision: "keep_separate" }]
+      ].forEach(function (spec) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.textContent = spec[1];
+        b.addEventListener("click", function () { depthPost(spec[0], spec[2]); });
+        actions.appendChild(b);
+      });
+    }
+    function loadDepth() {
+      fetch("/api/crm/identity/operator-depth", { headers: { "Accept": "application/json" } })
+        .then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
+        .then(function (res) { renderDepth(res.body); })
+        .catch(function () {
+          document.getElementById("depth-summary").textContent = "Operator depth could not be read.";
+        });
+    }
+    loadDepth();
     fetch("/api/crm/identity", { headers: { "Accept": "application/json" } })
       .then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
       .then(function (res) {

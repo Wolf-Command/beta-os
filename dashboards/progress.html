@@ -80,6 +80,68 @@
   .mission .n { color: var(--muted); font-size: 0.8rem; margin-top: 3px; line-height: 1.35; }
   .mission .who { color: var(--accent); font-size: 0.72rem; letter-spacing: 0.04em; margin-top: 4px; }
   .empty-ok { color: var(--ok); font-size: 0.88rem; margin: 0; }
+  .cmq-card {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+    margin: 12px 0 0;
+    background: var(--bg3);
+  }
+  .cmq-card.primary { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+  .cmq-card .cmq-task { font-family: var(--display); font-size: 1.15rem; font-weight: 600; margin: 0 0 6px; }
+  .cmq-card .cmq-meta { color: var(--muted); font-size: 0.78rem; margin: 0 0 8px; }
+  .cmq-card ol { margin: 6px 0 10px; padding-left: 1.2rem; color: var(--text); font-size: 0.88rem; line-height: 1.4; }
+  .cmq-card .check { color: var(--accent); font-size: 0.82rem; margin: 0 0 10px; }
+  .cmq-form label { display: block; font-size: 0.72rem; letter-spacing: 0.04em; color: var(--muted); margin: 10px 0 4px; text-transform: uppercase; }
+  .cmq-form select, .cmq-form textarea, .cmq-form input[type="file"] {
+    width: 100%; border: 1px solid var(--line); background: var(--bg2); color: var(--text);
+    border-radius: 8px; padding: 10px; font: inherit;
+  }
+  .cmq-form textarea { min-height: 72px; resize: vertical; }
+  .cmq-form .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .cmq-form button {
+    appearance: none; border: 1px solid var(--accent); background: #2a2620; color: var(--text);
+    border-radius: 10px; padding: 12px 16px; font-weight: 650; cursor: pointer; min-height: 44px;
+  }
+  .cmq-form button.secondary { border-color: var(--line); background: var(--bg2); color: var(--muted); }
+  .cmq-form .msg { font-size: 0.82rem; margin-top: 8px; }
+  .cmq-form .msg.ok { color: var(--ok); }
+  .cmq-form .msg.err { color: var(--danger); }
+  .cmq-retired { font-size: 0.78rem; color: var(--muted); margin: 8px 0 0; }
+  .cmq-depth .cmq-depth-note {
+    width: 100%; box-sizing: border-box; margin: 6px 0 0;
+    border: 1px solid var(--line); background: var(--bg3); color: var(--text);
+    border-radius: 8px; padding: 10px 12px; min-height: 44px; font-size: 0.88rem;
+  }
+  .nye-depth .nye-toolbar {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px;
+  }
+  .nye-depth select {
+    appearance: none; border: 1px solid var(--line); background: var(--bg3); color: var(--text);
+    border-radius: 8px; padding: 10px 12px; min-height: 44px; font-size: 0.88rem;
+  }
+  .nye-depth .nye-row {
+    border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 0 0 10px;
+    background: color-mix(in srgb, var(--bg2) 88%, transparent);
+  }
+  .nye-depth .nye-row .t { font-weight: 650; margin: 0 0 4px; }
+  .nye-depth .nye-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .nye-depth .nye-actions button {
+    appearance: none; border: 1px solid var(--accent); background: #2a2620; color: var(--text);
+    border-radius: 10px; padding: 10px 14px; font-weight: 650; cursor: pointer; min-height: 44px;
+    font-size: 0.82rem;
+  }
+  .nye-depth .nye-actions button.secondary {
+    border-color: var(--line); background: var(--bg2); color: var(--muted);
+  }
+  .nye-depth .rowmsg { font-size: 0.82rem; margin-top: 8px; color: var(--muted); }
+  .nye-depth .rowmsg.ok { color: var(--ok); }
+  .nye-depth .rowmsg.err { color: var(--danger); }
+  @media (max-width: 640px) {
+    .cmq-card .cmq-task { font-size: 1.05rem; }
+    .cmq-form button { width: 100%; }
+    .nye-depth .nye-actions button { width: 100%; }
+  }
   .nav {
     display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px;
   }
@@ -258,10 +320,27 @@
   .bzg-pulse { margin-top: 8px; font-size: 0.88rem; color: var(--muted); line-height: 1.45; }
   .bzg-pulse strong { color: var(--text); font-weight: 650; }
   .legacy-note { font-size: 0.75rem; color: var(--muted); margin-top: 10px; }
+  .crumb { font-size: 0.78rem; color: var(--muted); margin: 0 0 8px; }
+  nav.grammar { margin: 0 0 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.grammar a, nav.grammar span.empty {
+    display: inline-block; padding: 8px 10px; min-height: 44px;
+    border: 1px solid var(--line); border-radius: 10px;
+    color: var(--muted); text-decoration: none; font-size: 0.78rem; font-weight: 650;
+    display: inline-flex; align-items: center;
+  }
+  nav.grammar a.active { color: var(--accent); border-color: rgba(196,165,116,0.55); }
+  nav.grammar span.empty { opacity: 0.75; font-weight: 550; }
 </style>
 </head>
-<body>
+<body data-wolf-page-type="SYSTEM" data-wolf-org="WOLF/SYSTEM" data-wolf-shell="global">
   <div class="wrap" id="app">
+    <p class="crumb">WOLF · System · Progress</p>
+    <nav class="grammar" aria-label="System grammar">
+      <a class="active" href="/progress">Progress</a>
+      <a href="/integration-health">Integrations</a>
+      <a href="/sale-evidence-pack">Sale Readiness</a>
+      <span class="empty">Factory / Health · EMPTY</span>
+    </nav>
     <p class="muted">Loading progress…</p>
   </div>
 <script>
@@ -340,6 +419,12 @@
     const ol = loops || {};
     const oldest = Array.isArray(ol.oldest_material) ? ol.oldest_material : [];
     const recent = Array.isArray(ol.recently_resolved) ? ol.recently_resolved : [];
+    const fw = ol.factory_work || {};
+    const active = fw.current_active_pack || null;
+    const queued = Array.isArray(fw.queued_packs) ? fw.queued_packs : [];
+    const done = Array.isArray(fw.recently_completed) ? fw.recently_completed : [];
+    const blocked = Array.isArray(fw.blocked_human_branches) ? fw.blocked_human_branches : [];
+    const advance = fw.last_factory_advance || null;
     const blockerLabel = {
       NEEDS_MATT: "Needs Matt",
       NEEDS_STAFF: "Needs staff",
@@ -367,11 +452,57 @@
         </div>
       `).join("")
       : `<p class="muted">Nothing resolved in this view yet.</p>`;
+    const packLine = (p) => {
+      if (!p) return "";
+      const label = p.slice || p.run_id || "";
+      const stage = p.stage ? ` · ${p.stage}` : "";
+      const when = p.updated_at ? ` · ${p.updated_at}` : "";
+      return `${esc(label)}${esc(stage)}${esc(when)}`;
+    };
+    const listOrDash = (arr, mapFn) =>
+      arr.length
+        ? `<ul>${arr.map((x) => `<li>${mapFn(x)}</li>`).join("")}</ul>`
+        : `<p class="muted" style="margin:4px 0 0">—</p>`;
+    const factoryHtml = `
+      <div class="factory-work" data-section="factory-work">
+        <h3 style="font-size:0.95rem;margin:14px 0 8px">Factory now</h3>
+        <p class="muted" style="margin:0 0 8px">Active pack, queue, recent completions, parked human branches — not SYSTEM%.</p>
+        <div class="mission">
+          <div class="t">Current active</div>
+          <div class="n">${active ? packLine(active) : "None"}</div>
+        </div>
+        <div class="mission">
+          <div class="t">Queued</div>
+          ${listOrDash(queued, packLine)}
+        </div>
+        <div class="mission">
+          <div class="t">Recently completed</div>
+          ${listOrDash(done, packLine)}
+        </div>
+        <div class="mission">
+          <div class="t">Blocked human branches</div>
+          ${listOrDash(blocked, (b) => `${esc(b.branch || "")}${b.status ? ` · ${esc(b.status)}` : ""}`)}
+        </div>
+        <div class="mission">
+          <div class="t">Last factory advance</div>
+          <div class="n">${
+            advance
+              ? `${esc(advance.action || "advance")}${advance.run_id ? ` · ${esc(advance.run_id)}` : ""}${advance.at ? ` · ${esc(advance.at)}` : ""}`
+              : "—"
+          }</div>
+        </div>
+      </div>
+    `;
     const eng = loopCount(ol, "engineering_debt");
+    const staleBanner = ol.projection_stale
+      ? `<div class="stale-banner" role="status">PROJECTION STALE</div>
+         <p class="muted" style="margin:8px 0 0">${esc(ol.projection_note || "Open / In progress projection disagrees with factory state.")}</p>`
+      : "";
     return `
       <div class="panel" id="open-loops" data-section="open-loops">
         <h2>Open Loops</h2>
-        <p class="muted" style="margin-top:0">From the completion register at read time. Needs Matt counts NEEDS_MATT only.</p>
+        <p class="muted" style="margin-top:0">Completion register at read time, plus factory in-flight lanes in In progress. Needs Matt counts NEEDS_MATT only.</p>
+        ${staleBanner}
         <div class="chips" aria-label="Open Loops summary">
           <span class="chip">Open <strong>${esc(loopCount(ol, "total_open"))}</strong></span>
           <span class="chip">In progress <strong>${esc(loopCount(ol, "in_progress"))}</strong></span>
@@ -382,6 +513,7 @@
           <span class="chip">Needs external <strong>${esc(loopCount(ol, "needs_external"))}</strong></span>
           <span class="chip">Commissioning / adoption <strong>${esc(loopCount(ol, "commissioning_adoption_debt"))}</strong></span>
         </div>
+        ${factoryHtml}
         <h3 style="font-size:0.95rem;margin:14px 0 8px">Oldest material</h3>
         ${oldestHtml}
         <p class="muted">Engineering debt is counted, not listed: ${esc(eng)}</p>
@@ -412,6 +544,8 @@
     const needsExternal = (v.needs_external_access || model.needs_external_access || []).filter(isException);
     const waitingOthers = v.waiting_on_others || model.waiting_on_others || [];
     const policies = v.policy_decisions || model.policy_decisions || [];
+    const cmq = v.my_commissioning || model.my_commissioning || {};
+    const libraryExceptions = v.library_preview_exceptions || model.library_preview_exceptions || {};
 
     const firstMove = moves[0];
     const stale = system.status && system.status !== "OK";
@@ -470,6 +604,20 @@
       `).join("");
     }
 
+    function renderLibraryExceptions(pack) {
+      const items = (pack && pack.items) || [];
+      if (!items.length) return "";
+      const rows = items.map((it) =>
+        `<li>${esc(it.filename || "file")} · ${esc(it.brand || it.brand_slug || "")} · ${esc(it.reason_plain || "Preview failed")}</li>`
+      ).join("");
+      return `
+        <div class="panel" id="library-preview-exceptions">
+          <h2>Library preview exceptions</h2>
+          <p class="muted">${esc(pack.note || "")} ${esc(items.length)} files.</p>
+          <ul>${rows}</ul>
+        </div>`;
+    }
+
     function renderPolicyCards(list) {
       if (!list.length) return `<p class="empty-ok">No open policy decisions curated.</p>`;
       return list.map((p) => `
@@ -479,6 +627,79 @@
           ${p.note ? `<div class="n">${esc(p.note)}</div>` : ""}
         </div>
       `).join("");
+    }
+
+    function renderMyCommissioning(q) {
+      const counts = q.counters || {};
+      const cards = (q.active_cards && q.active_cards.length)
+        ? q.active_cards
+        : (q.cards || []).filter((c) => c.status !== "COMMISSIONED");
+      const retired = q.retired_systems || [];
+      const chip = (label, n) => `<span class="chip">${esc(label)} <strong>${esc(n == null ? 0 : n)}</strong></span>`;
+      if (!q || q.ok === false) {
+        return `
+          <div class="panel" id="my-commissioning" data-section="my-commissioning">
+            <h2>MY COMMISSIONING</h2>
+            <p class="muted">Queue unavailable. proven=false · ready=false · no invented HUMAN COMMISSIONED.</p>
+            <div class="nye-depth cmq-depth" id="cmq-operator-depth" data-section="cmq-operator-depth">
+              <h3 style="font-size:0.95rem;margin:14px 0 8px">Commissioning operator depth</h3>
+              <p class="muted" style="margin-top:0">Owner card detail. PASS submit remains the only commission evidence.</p>
+              <div id="cmq-depth-body"><p class="muted">Loading commissioning depth…</p></div>
+            </div>
+          </div>`;
+      }
+      const cardHtml = cards.length ? cards.map((c, idx) => {
+        const opts = (c.feedback_options || ["PASS","PROBLEM","CONFUSING","MISSING","WRONG DATA","PERMISSION PROBLEM","MOBILE PROBLEM","OTHER"]);
+        const steps = (c.do_this || []).map((s) => `<li>${esc(s)}</li>`).join("");
+        return `
+          <div class="cmq-card ${idx === 0 ? "primary" : ""}" data-task-id="${esc(c.id)}">
+            <div class="cmq-meta">${esc(c.priority || "")} · ${esc(c.business || "")} · ${esc(c.status || "")} · ${esc(c.audience || "")}</div>
+            <p class="cmq-task">${esc(c.task || "")}</p>
+            <div class="who">Person to test: ${esc(c.person_to_test || "")}</div>
+            ${c.open_href ? `<p style="margin:8px 0"><a class="back" href="${esc(c.open_href)}">OPEN →</a></p>` : ""}
+            <div class="n" style="font-weight:650;margin-top:6px">DO THIS</div>
+            <ol>${steps || "<li class='muted'>—</li>"}</ol>
+            <p class="check">CHECK: ${esc(c.check || "")}</p>
+            <form class="cmq-form" data-cmq-form="${esc(c.id)}">
+              <label for="fb-${esc(c.id)}">Feedback</label>
+              <select id="fb-${esc(c.id)}" name="feedback" required>
+                <option value="">Select…</option>
+                ${opts.map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join("")}
+              </select>
+              <label for="cm-${esc(c.id)}">Comment</label>
+              <textarea id="cm-${esc(c.id)}" name="comment" placeholder="What happened"></textarea>
+              <label for="ev-${esc(c.id)}">Screenshot / evidence</label>
+              <input id="ev-${esc(c.id)}" type="file" name="evidence" accept="image/*,.pdf,.txt,.png,.jpg,.jpeg,.webp" />
+              <div class="actions">
+                <button type="submit">Submit</button>
+                ${idx === 0 ? `<button type="button" class="secondary" data-start-first="1">Start Task 1</button>` : ""}
+              </div>
+              <p class="msg" data-msg hidden></p>
+            </form>
+          </div>`;
+      }).join("") : `<p class="empty-ok">No open commissioning tasks — queue clear (except active retest while iterating).</p>`;
+      return `
+        <div class="panel" id="my-commissioning" data-section="my-commissioning">
+          <h2>MY COMMISSIONING</h2>
+          <p class="muted" style="margin-top:0">${esc(q.subtitle || "Needs Matt ordered queue inside Progress — not a new database.")}</p>
+          <div class="chips" aria-label="Commissioning counters">
+            ${chip("Needs Matt", counts.NEEDS_MATT)}
+            ${chip("Needs staff", counts.NEEDS_STAFF)}
+            ${chip("Ready to test", counts.READY_TO_TEST)}
+            ${chip("Retest", counts.RETEST)}
+            ${chip("Blocked external", counts.BLOCKED_EXTERNAL)}
+            ${chip("Engineering", counts.ENGINEERING)}
+            ${chip("Commissioned", counts.COMMISSIONED)}
+          </div>
+          <p class="cmq-retired">Honesty: proven=false · ready=false · staff_ready=${esc(String(q.nas_staff_ready === true))} · ClickUp RETIRED · Telegram RETIRED · HUMAN COMMISSIONED only via submit evidence.</p>
+          ${retired.length ? `<p class="cmq-retired">Retired (not queued): ${retired.map((r) => esc(r.name || r.source_id)).join(" · ")}</p>` : ""}
+          ${cardHtml}
+          <div class="nye-depth cmq-depth" id="cmq-operator-depth" data-section="cmq-operator-depth">
+            <h3 style="font-size:0.95rem;margin:14px 0 8px">Commissioning operator depth</h3>
+            <p class="muted" style="margin-top:0">Open a commissioning card, or the EMPTY placeholder when the queue is clear. Note / next-action / handoff / dismiss-noise / review-decision refresh Needs-You and commissioning counters. PASS submit remains the only commission evidence. proven=false · staff_ready=false · Haikal not_started · Devi retest parked.</p>
+            <div id="cmq-depth-body"><p class="muted">Loading commissioning depth…</p></div>
+          </div>
+        </div>`;
     }
 
     function renderBzgPulse(bp) {
@@ -523,6 +744,25 @@
             `).join("")}
           </ul>
           <p class="legacy-note">Legacy PARTIAL ESTIMATE (Master_Build mix) is retired as the primary dial — history only${overall.overall_pct != null ? ` (was ~${esc(overall.overall_pct)}%)` : ""}.</p>
+        </div>
+
+        ${renderMyCommissioning(cmq)}
+
+        <div class="panel nye-depth" id="needs-you-depth" data-section="needs-you-depth">
+          <h2>Needs-You operator depth</h2>
+          <p class="muted" style="margin-top:0">Usable Owner loop: Needs-You · Waiting-Others · Policy · Morning Commissioning seed. Touch next-action / acknowledge / park — strips refresh. Authorised staff seats see the derived Needs-You / Waiting-Others / Morning seed next-action on <a href="/staff-ops-routing">Staff Ops Routing</a>. proven=false · staff_ready=false · Haikal not_started · Devi retest parked.</p>
+          <div class="nye-toolbar">
+            <label for="nye-kind" class="muted" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em">Filter</label>
+            <select id="nye-kind" aria-label="Needs-You kind filter">
+              <option value="">All</option>
+              <option value="needs_you">Needs You</option>
+              <option value="waiting_others">Waiting Others</option>
+              <option value="policy">Policy</option>
+              <option value="morning_seed">Morning seed</option>
+            </select>
+            <button type="button" class="secondary" id="nye-refresh" style="appearance:none;border:1px solid var(--line);background:var(--bg2);color:var(--muted);border-radius:10px;padding:10px 14px;font-weight:650;cursor:pointer;min-height:44px">Refresh</button>
+          </div>
+          <div id="nye-body"><p class="muted">Loading operator depth…</p></div>
         </div>
 
         ${renderOpenLoops(v.open_loops || model.open_loops)}
@@ -574,6 +814,7 @@
           <h2>Needs external access</h2>
           ${renderExceptionCards(needsExternal, "No external-access exceptions.")}
         </div>
+        ${renderLibraryExceptions(libraryExceptions)}
         <div class="panel">
           <h2>Waiting on others</h2>
           ${renderMissionCards(waitingOthers, "No curated waiting-on-others missions.")}
@@ -786,14 +1027,25 @@
     const fh = model.factory_health || {};
     const navItems = model.nav || (model.menu || []).map((m) => ({ id: m, label: m, kind: "view" }));
     app.innerHTML = `
+      <p class="crumb">WOLF · System · Progress</p>
+      <nav class="grammar" aria-label="System grammar">
+        <a class="active" href="/progress">Progress</a>
+        <a href="/integration-health">Integrations</a>
+        <a href="/sale-evidence-pack">Sale Readiness</a>
+        <span class="empty">Factory / Health · EMPTY</span>
+      </nav>
       <header>
         <div>
-          <p style="margin:0 0 6px"><a class="back" href="/content-2.0.html">← Content Engine</a></p>
+          <p style="margin:0 0 6px"><a class="back" href="/wolf">← Empire</a></p>
           <h1 class="brand">Wolf <em>Progress</em></h1>
           <p class="sub">Owner cockpit. SYSTEM from the Model C ledger. BUILT ≠ COMMISSIONED ≠ LIVE. Factory health separate.</p>
         </div>
         <div class="who" id="who">Owner surface</div>
       </header>
+      <div class="panel" id="governance-loop" style="margin-bottom:14px">
+        <h2>Work outcomes</h2>
+        <p class="muted">Loading Wolf Core…</p>
+      </div>
       <button type="button" class="nav-toggle" id="navToggle">Menu · ${esc(view)}</button>
       <nav class="nav" id="nav" aria-label="Progress views">
         ${navItems.map((n) => {
@@ -835,6 +1087,374 @@
       });
     });
     if (view === "Empire") loadIntelSample();
+    loadGovernanceLoop();
+    if (view === "Empire") bindCommissioningForms();
+    if (view === "Empire") paintNeedsYouDepth();
+    if (view === "Empire") paintCommissioningDepth();
+    if (view === "Empire" && (location.hash === "#my-commissioning" || location.hash === "#commissioning")) {
+      const el = document.getElementById("my-commissioning");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    if (view === "Empire" && (location.hash === "#needs-you-depth" || location.hash.startsWith("#needs-you-depth"))) {
+      const el = document.getElementById("needs-you-depth");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  async function loadGovernanceLoop() {
+    const box = document.getElementById("governance-loop");
+    if (!box) return;
+    try {
+      const res = await fetch("/api/progress/governance-loop", { headers: { Accept: "application/json" } });
+      const data = await res.json();
+      if (!res.ok || data.freshness !== "LIVE") {
+        box.innerHTML = `<h2>Work outcomes</h2><div class="stale-banner" role="status">STALE</div><p class="muted">${esc((data && data.empty_message) || "Work outcomes were not on this read.")}</p>`;
+        return;
+      }
+      const done = data.completed || [];
+      const open = data.open || [];
+      const line = (row) => `<div class="mission"><div class="t">${esc(row.title)}</div><div class="n">${esc(row.status)}</div></div>`;
+      const doneHtml = done.length ? done.map(line).join("") : `<p class="muted">${esc(data.empty && !open.length ? (data.empty_message || "No work outcomes are on record.") : "Nothing completed is on this read.")}</p>`;
+      box.innerHTML = `<h2>Work outcomes</h2><p class="muted">LIVE · Wolf Core · ${esc(data.as_of || "")}</p><h3 style="font-size:0.95rem">Done</h3>${doneHtml}<h3 style="font-size:0.95rem">Still open</h3>${open.length ? open.map(line).join("") : `<p class="muted">Nothing open is on this read.</p>`}`;
+    } catch (err) {
+      box.innerHTML = `<h2>Work outcomes</h2><div class="stale-banner" role="status">STALE</div><p class="muted">${esc(err.message || "Work outcomes could not be read.")}</p>`;
+    }
+  }
+
+  async function paintNeedsYouDepth() {
+    const body = document.getElementById("nye-body");
+    const kindSel = document.getElementById("nye-kind");
+    const refreshBtn = document.getElementById("nye-refresh");
+    if (!body) return;
+    if (kindSel && !kindSel.dataset.bound) {
+      kindSel.dataset.bound = "1";
+      kindSel.addEventListener("change", () => paintNeedsYouDepth());
+    }
+    if (refreshBtn && !refreshBtn.dataset.bound) {
+      refreshBtn.dataset.bound = "1";
+      refreshBtn.addEventListener("click", () => paintNeedsYouDepth());
+    }
+    const kind = (kindSel && kindSel.value) || "";
+    const q = kind ? ("?kind=" + encodeURIComponent(kind)) : "";
+    try {
+      const res = await fetch("/api/progress/needs-you/operator-depth" + q, {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+      });
+      const depth = await res.json().catch(() => ({}));
+      if (!res.ok || !depth.ok) {
+        body.innerHTML = `<p class="empty-ok">${esc((depth && depth.message) || ("Depth unavailable " + res.status))}</p>`;
+        return;
+      }
+      const needs = depth.needs_you_strip || {};
+      const waiting = depth.waiting_others_strip || {};
+      const morning = depth.morning_seed_strip || {};
+      const readiness = depth.progress_readiness || {};
+      let html = `<div class="chips" aria-label="Needs-You depth strips">
+        <span class="chip">Needs-You <strong>${esc(String(needs.count || 0))}</strong></span>
+        <span class="chip">Waiting-Others <strong>${esc(String(waiting.count || 0))}</strong></span>
+        <span class="chip">Morning seed <strong>${esc(String(morning.count || 0))}</strong></span>
+        <span class="chip">Open <strong>${esc(String(readiness.open_count || 0))}</strong></span>
+        <span class="chip">staff_ready <strong>false</strong></span>
+      </div>`;
+      html += `<p class="cmq-retired">${esc(depth.why || "")}</p>`;
+      const cands = depth.candidates || [];
+      if (!cands.length) {
+        html += `<p class="empty-ok">${esc(depth.empty_message || "EMPTY honesty — no open rows for this filter.")}</p>`;
+      } else {
+        html += cands.slice(0, 12).map((row) => `
+          <div class="nye-row" data-nye-id="${esc(row.object_id || row.id || "")}">
+            <div class="cmq-meta">${esc(row.filter || row.kind || "")} · ${esc(row.status || "")}${row.priority ? " · " + esc(row.priority) : ""}${row.audience ? " · " + esc(row.audience) : ""}</div>
+            <div class="t">${esc(row.title || row.task || row.object_id || "")}</div>
+            ${row.who ? `<div class="who">${esc(row.who)}</div>` : ""}
+            ${row.note ? `<div class="n">${esc(row.note)}</div>` : ""}
+            <div class="nye-actions">
+              <button type="button" class="secondary nye-detail">Open detail</button>
+              <button type="button" class="nye-touch">Next-action</button>
+              <button type="button" class="secondary nye-ack">Acknowledge</button>
+              <button type="button" class="secondary nye-park">Park</button>
+            </div>
+            <div class="rowmsg"></div>
+          </div>`).join("");
+      }
+      body.innerHTML = html;
+      body.querySelectorAll(".nye-detail").forEach((btn) => {
+        btn.addEventListener("click", () => nyeOpenDetail(btn.closest(".nye-row")));
+      });
+      body.querySelectorAll(".nye-touch").forEach((btn) => {
+        btn.addEventListener("click", () => nyeAction(btn.closest(".nye-row"), "next-action-touch"));
+      });
+      body.querySelectorAll(".nye-ack").forEach((btn) => {
+        btn.addEventListener("click", () => nyeAction(btn.closest(".nye-row"), "acknowledge"));
+      });
+      body.querySelectorAll(".nye-park").forEach((btn) => {
+        btn.addEventListener("click", () => nyeAction(btn.closest(".nye-row"), "park"));
+      });
+    } catch (err) {
+      body.innerHTML = `<p class="empty-ok">${esc((err && err.message) || "Needs-You depth failed to load.")}</p>`;
+    }
+  }
+
+  async function nyeOpenDetail(row) {
+    if (!row) return;
+    const msg = row.querySelector(".rowmsg");
+    const id = row.getAttribute("data-nye-id");
+    if (msg) { msg.className = "rowmsg"; msg.textContent = "Loading detail…"; }
+    try {
+      const res = await fetch("/api/progress/needs-you/items/" + encodeURIComponent(id), {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+      });
+      const detail = await res.json().catch(() => ({}));
+      if (!res.ok || !detail.ok) {
+        if (msg) { msg.className = "rowmsg err"; msg.textContent = detail.message || ("Detail " + res.status); }
+        return;
+      }
+      const obj = detail.object || {};
+      const needs = detail.needs_you_strip || {};
+      if (msg) {
+        msg.className = "rowmsg ok";
+        msg.textContent =
+          (obj.title || id) + " · " + (obj.filter || obj.kind || "") +
+          " · Needs-You " + String(needs.count || 0) +
+          " · haikal not_started · Devi parked · staff_ready false";
+      }
+    } catch (err) {
+      if (msg) { msg.className = "rowmsg err"; msg.textContent = (err && err.message) || "detail failed"; }
+    }
+  }
+
+  async function nyeAction(row, action) {
+    if (!row) return;
+    const msg = row.querySelector(".rowmsg");
+    const id = row.getAttribute("data-nye-id");
+    if (msg) { msg.className = "rowmsg"; msg.textContent = "Recording…"; }
+    try {
+      const res = await fetch(
+        "/api/progress/needs-you/items/" + encodeURIComponent(id) + "/" + action,
+        {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ note: "Owner Progress Needs-You " + action, kind: "next_action" }),
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        if (msg) { msg.className = "rowmsg err"; msg.textContent = data.message || data.error || ("Action " + res.status); }
+        return;
+      }
+      if (msg) {
+        msg.className = "rowmsg ok";
+        msg.textContent = data.message || "Recorded. Strips refreshed.";
+      }
+      await paintNeedsYouDepth();
+    } catch (err) {
+      if (msg) { msg.className = "rowmsg err"; msg.textContent = (err && err.message) || "action failed"; }
+    }
+  }
+
+  async function paintCommissioningDepth() {
+    const body = document.getElementById("cmq-depth-body");
+    if (!body) return;
+    try {
+      const res = await fetch("/api/progress/commissioning/operator-depth", {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+      });
+      const depth = await res.json().catch(() => ({}));
+      if (!res.ok || !depth.ok) {
+        body.innerHTML = `<p class="empty-ok">${esc((depth && depth.message) || ("Depth unavailable " + res.status))}</p>`;
+        return;
+      }
+      const counts = depth.counters || {};
+      const needs = (depth.needs_you || {}).needs_you_strip || {};
+      let html = `<div class="chips" aria-label="Commissioning operator counters">
+        <span class="chip">Needs-You <strong>${esc(String(needs.count || 0))}</strong></span>
+        <span class="chip">Ready to test <strong>${esc(String(counts.READY_TO_TEST || 0))}</strong></span>
+        <span class="chip">Retest <strong>${esc(String(counts.RETEST || 0))}</strong></span>
+        <span class="chip">Commissioned <strong>${esc(String(counts.COMMISSIONED || 0))}</strong></span>
+        <span class="chip">staff_ready <strong>false</strong></span>
+      </div>`;
+      html += `<p class="cmq-retired">${esc(depth.empty_message || "PASS submit remains the only commission evidence. Haikal not_started. Devi retest parked.")}</p>`;
+      const rows = depth.empty ? [depth.empty_placeholder].filter(Boolean) : (depth.cards || []);
+      if (!rows.length) {
+        html += `<p class="empty-ok">EMPTY honesty — no open commissioning cards.</p>`;
+      } else {
+        html += rows.slice(0, 12).map((row) => `
+          <div class="nye-row" data-cmq-id="${esc(row.object_id || "")}">
+            <div class="cmq-meta">${esc(row.empty ? "EMPTY" : (row.priority || ""))} · ${esc(row.status || (row.empty ? "queue clear" : ""))}${row.audience ? " · " + esc(row.audience) : ""}${row.person_to_test ? " · " + esc(row.person_to_test) : ""}</div>
+            <div class="t">${esc(row.task || row.empty_message || row.object_id || "")}</div>
+            ${row.check ? `<div class="n">${esc(row.check)}</div>` : ""}
+            <label class="muted" style="font-size:0.72rem">Operator note</label>
+            <input class="cmq-depth-note" type="text" placeholder="Note only — not a PASS" />
+            <div class="nye-actions">
+              <button type="button" class="secondary cmq-detail">Open detail</button>
+              <button type="button" class="cmq-note">Note</button>
+              <button type="button" class="secondary cmq-next">Next-action</button>
+              <button type="button" class="secondary cmq-handoff">Handoff</button>
+              <button type="button" class="secondary cmq-dismiss">Dismiss noise</button>
+              <button type="button" class="secondary cmq-review" data-decision="still_open">Still open</button>
+              <button type="button" class="secondary cmq-review" data-decision="not_commissioned">Not commissioned</button>
+              <button type="button" class="secondary cmq-review" data-decision="keep_as_note">Keep as note</button>
+            </div>
+            <div class="rowmsg"></div>
+          </div>`).join("");
+      }
+      body.innerHTML = html;
+      body.querySelectorAll(".cmq-detail").forEach((btn) => {
+        btn.addEventListener("click", () => cmqOpenDetail(btn.closest(".nye-row")));
+      });
+      body.querySelectorAll(".cmq-note").forEach((btn) => {
+        btn.addEventListener("click", () => cmqAction(btn.closest(".nye-row"), "note"));
+      });
+      body.querySelectorAll(".cmq-next").forEach((btn) => {
+        btn.addEventListener("click", () => cmqAction(btn.closest(".nye-row"), "next-action-touch"));
+      });
+      body.querySelectorAll(".cmq-handoff").forEach((btn) => {
+        btn.addEventListener("click", () => cmqAction(btn.closest(".nye-row"), "handoff-touch"));
+      });
+      body.querySelectorAll(".cmq-dismiss").forEach((btn) => {
+        btn.addEventListener("click", () => cmqAction(btn.closest(".nye-row"), "dismiss-noise"));
+      });
+      body.querySelectorAll(".cmq-review").forEach((btn) => {
+        btn.addEventListener("click", () => cmqAction(btn.closest(".nye-row"), "review-decision", btn.getAttribute("data-decision")));
+      });
+    } catch (err) {
+      body.innerHTML = `<p class="empty-ok">${esc((err && err.message) || "Commissioning depth failed to load.")}</p>`;
+    }
+  }
+
+  async function cmqOpenDetail(row) {
+    if (!row) return;
+    const msg = row.querySelector(".rowmsg");
+    const id = row.getAttribute("data-cmq-id");
+    if (msg) { msg.className = "rowmsg"; msg.textContent = "Loading detail…"; }
+    try {
+      const res = await fetch("/api/progress/commissioning/operator-depth/objects/" + encodeURIComponent(id), {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+      });
+      const detail = await res.json().catch(() => ({}));
+      if (!res.ok || !detail.ok) {
+        if (msg) { msg.className = "rowmsg err"; msg.textContent = detail.message || ("Detail " + res.status); }
+        return;
+      }
+      const counts = detail.counters || {};
+      const needs = (detail.needs_you || {}).count;
+      if (msg) {
+        msg.className = "rowmsg ok";
+        msg.textContent =
+          (detail.object_id || id) + " · Needs-You " + String(needs == null ? 0 : needs) +
+          " · commissioned counter " + String(counts.COMMISSIONED || 0) +
+          " · PASS submit only · haikal not_started · Devi parked · staff_ready false";
+      }
+    } catch (err) {
+      if (msg) { msg.className = "rowmsg err"; msg.textContent = (err && err.message) || "detail failed"; }
+    }
+  }
+
+  async function cmqAction(row, action, decision) {
+    if (!row) return;
+    const msg = row.querySelector(".rowmsg");
+    const id = row.getAttribute("data-cmq-id");
+    const noteEl = row.querySelector(".cmq-depth-note");
+    const note = (noteEl && noteEl.value) || "Owner commissioning operator touch.";
+    if (msg) { msg.className = "rowmsg"; msg.textContent = "Recording…"; }
+    try {
+      const res = await fetch(
+        "/api/progress/commissioning/operator-depth/objects/" + encodeURIComponent(id) + "/" + action,
+        {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ note: note, kind: action, decision: decision || "" }),
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        if (msg) { msg.className = "rowmsg err"; msg.textContent = data.message || data.error || ("Action " + res.status); }
+        return;
+      }
+      const counts = data.counters || {};
+      const needs = ((data.needs_you || {}).needs_you_strip || {}).count;
+      if (msg) {
+        msg.className = "rowmsg ok";
+        msg.textContent =
+          "Recorded " + (data.kind || action) +
+          ". Needs-You " + String(needs == null ? 0 : needs) +
+          " · ready " + String(counts.READY_TO_TEST || 0) +
+          " · commissioned " + String(counts.COMMISSIONED || 0) +
+          " · evidence unchanged · staff_ready false";
+      }
+      await paintNeedsYouDepth();
+    } catch (err) {
+      if (msg) { msg.className = "rowmsg err"; msg.textContent = (err && err.message) || "action failed"; }
+    }
+  }
+
+  function bindCommissioningForms() {
+    document.querySelectorAll("form[data-cmq-form]").forEach((form) => {
+      form.addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const taskId = form.getAttribute("data-cmq-form");
+        const feedback = (form.querySelector('[name="feedback"]') || {}).value || "";
+        const comment = (form.querySelector('[name="comment"]') || {}).value || "";
+        const fileInput = form.querySelector('[name="evidence"]');
+        const msg = form.querySelector("[data-msg]");
+        if (!feedback) {
+          if (msg) { msg.hidden = false; msg.className = "msg err"; msg.textContent = "Select feedback."; }
+          return;
+        }
+        const fd = new FormData();
+        fd.append("task_id", taskId);
+        fd.append("feedback", feedback);
+        fd.append("comment", comment);
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+          fd.append("evidence", fileInput.files[0], fileInput.files[0].name);
+        }
+        if (msg) { msg.hidden = false; msg.className = "msg"; msg.textContent = "Submitting…"; }
+        try {
+          const res = await fetch("/api/progress/commissioning/submit", {
+            method: "POST",
+            body: fd,
+            credentials: "same-origin",
+            headers: { Accept: "application/json" },
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.ok) {
+            if (msg) {
+              msg.className = "msg err";
+              msg.textContent = data.message || data.error || ("Submit failed " + res.status);
+            }
+            return;
+          }
+          if (msg) {
+            msg.className = "msg ok";
+            const path = (data.effects || {}).path || feedback;
+            msg.textContent = path === "PASS"
+              ? "PASS recorded — human-test criterion satisfied for this card (proven/ready stay false)."
+              : "PROBLEM recorded — engineering lane + evidence saved. Retest after Beta fix.";
+          }
+          const prog = await api("/api/progress");
+          if (prog.status === 200 && prog.data && prog.data.ok) {
+            model = prog.data;
+            render();
+          }
+        } catch (err) {
+          if (msg) { msg.className = "msg err"; msg.textContent = String(err && err.message || err); }
+        }
+      });
+      const startBtn = form.querySelector("[data-start-first]");
+      if (startBtn) {
+        startBtn.addEventListener("click", () => {
+          const card = form.closest(".cmq-card");
+          const link = card && card.querySelector("a.back");
+          if (link) link.click();
+          else form.querySelector('[name="feedback"]').focus();
+        });
+      }
+    });
   }
 
   async function loadIntelSample() {

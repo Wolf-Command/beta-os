@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GGV Finance · Notas</title>
+<style>
+  :root {
+    --bg: #08171a; --panel: #0e2125; --panel-2: #123036; --border: #1e3f44;
+    --text: #eaf3f2; --muted: #8aa6a6; --gold: #d4af6a; --ok: #3fbf86;
+    --bad: #e5683f; --touch: 44px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font: 16px/1.4 "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    max-width: 960px; margin: 0 auto; padding: 16px 20px 108px;
+    overflow-x: clip;
+  }
+  h1 { font-size: 1.45rem; margin: 0 0 6px; }
+  h1 span { color: var(--gold); }
+  h2 { font-size: 1rem; margin: 18px 0 8px; }
+  p.note, .meta { color: var(--muted); }
+  .banner {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 12px 14px; margin: 10px 0;
+  }
+  .banner strong { color: var(--gold); }
+  nav.tabs {
+    display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px;
+  }
+  nav.tabs button, button, .file-btn, a.back {
+    min-height: var(--touch); border-radius: 12px; border: 1px solid var(--border);
+    background: var(--panel-2); color: var(--text); font: inherit; font-weight: 650;
+    padding: 10px 14px; cursor: pointer; text-decoration: none;
+  }
+  nav.tabs button { flex: 1 1 140px; }
+  nav.tabs button.active { border-color: var(--gold); color: var(--gold); }
+  button.primary, .file-btn {
+    background: #6e5310; border-color: #8B6914; color: #fff; width: 100%; margin-top: 8px;
+  }
+  button.secondary { width: 100%; margin-top: 8px; }
+  label { display: block; margin: 10px 0 4px; color: var(--muted); font-size: 0.92rem; }
+  input, select, textarea {
+    width: 100%; min-height: var(--touch); border-radius: 12px; border: 1px solid var(--border);
+    background: #0b1c20; color: var(--text); font: inherit; padding: 10px 12px;
+  }
+  textarea { min-height: 88px; }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  @media (min-width: 900px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+    body { padding-top: 20px; }
+  }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px;
+  }
+  .card button { width: auto; }
+  .count { font-size: 1.6rem; margin: 0; }
+  .hidden { display: none !important; }
+  .row { display: flex; flex-direction: column; gap: 4px; padding: 10px 0; border-top: 1px solid var(--border); }
+  .check { color: var(--gold); }
+  .ok { color: var(--ok); }
+  .bad { color: var(--bad); }
+  .progress { list-style: none; padding: 0; margin: 8px 0; }
+  .progress li { padding: 6px 0; }
+  .file-btn input { display: none; }
+  .warn { border-color: var(--gold); }
+  a.inline { color: var(--gold); }
+  @media (max-width: 860px) {
+    nav.tabs {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+      margin: 0; padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+      background: #08171a; border-top: 1px solid var(--border);
+    }
+    nav.tabs button { flex: 1 1 18%; font-size: 0.78rem; padding: 8px 4px; }
+  }
+</style>
+</head>
+<body data-wolf-page-type="WORKSPACE" data-wolf-org="GGV" data-wolf-shell="global">
+  <p class="meta">WOLF · Goss Group · GGV · Finance</p>
+  <h1>GGV <span>Finance</span></h1>
+  <div class="banner">
+    <strong>Entering a nota is not the same as paying it.</strong>
+    <p class="note" id="boundary">Payment and full books live with Finance reconciliation later — here you capture notas and vendors.</p>
+    <p class="note">Bank details seen on a document are not verified.</p>
+  </div>
+  <nav class="tabs" aria-label="Finance">
+    <button type="button" data-tab="overview" class="active">Overview</button>
+    <button type="button" data-tab="notas">Notas / Bills</button>
+    <button type="button" data-tab="vendors">Vendors</button>
+    <button type="button" data-tab="history">History</button>
+    <button type="button" data-tab="accountant">Accountant</button>
+  </nav>
+
+  <section id="overview">
+    <div class="grid" id="overview-cards"></div>
+    <h2>Recently added</h2>
+    <div id="recent"></div>
+  </section>
+
+  <section id="notas" class="hidden">
+    <div id="nota-list-wrap">
+      <button type="button" class="primary" id="start-upload">+ Upload Nota</button>
+      <div id="nota-list"></div>
+    </div>
+    <div id="upload-panel" class="hidden">
+      <button type="button" class="secondary" id="cancel-upload">Back to notas</button>
+      <h2>Upload nota</h2>
+      <label class="file-btn">Take photo<input id="cam" type="file" accept="image/*" capture="environment" /></label>
+      <label class="file-btn">Choose photo or PDF<input id="file" type="file" accept="image/*,.pdf,application/pdf" /></label>
+      <label class="file-btn">Add more photos<input id="more" type="file" accept="image/*" multiple /></label>
+      <p class="meta" id="file-names">No file chosen yet.</p>
+      <button type="button" class="primary" id="run-upload">Upload and read</button>
+      <ol class="progress" id="progress">
+        <li>Uploading</li>
+        <li>Reading document</li>
+        <li>Checking vendor</li>
+        <li>Ready for review</li>
+        <li>✓ Saved</li>
+      </ol>
+      <p id="upload-msg"></p>
+      <div id="review" class="hidden">
+        <h2>Review</h2>
+        <p class="note" id="review-hint"></p>
+        <div id="vendor-box"></div>
+        <label>Invoice number<input id="f-invoice" /></label>
+        <label>Date<input id="f-date" placeholder="2026-09-01" /></label>
+        <label>Amount<input id="f-amount" inputmode="decimal" placeholder="Type the amount, or leave blank" /></label>
+        <label>Tax<input id="f-tax" inputmode="decimal" placeholder="Leave blank if not shown" /></label>
+        <label>Currency<input id="f-currency" placeholder="IDR" /></label>
+        <label>Category<input id="f-category" /></label>
+        <label>Notes<textarea id="f-notes"></textarea></label>
+        <div id="preview"></div>
+        <p class="meta" id="confidence"></p>
+        <div id="dup-box"></div>
+        <button type="button" class="primary" id="save-nota">Save</button>
+        <button type="button" class="secondary" id="submit-nota" disabled>Submit</button>
+      </div>
+    </div>
+    <div id="nota-detail" class="hidden"></div>
+  </section>
+
+  <section id="vendors" class="hidden">
+    <label>Search vendors<input id="vendor-q" placeholder="Name, phone, email" /></label>
+    <button type="button" class="secondary" id="vendor-search">Search</button>
+    <div id="vendor-list"></div>
+    <div id="vendor-detail" class="hidden"></div>
+  </section>
+
+  <section id="history" class="hidden">
+    <label>Search<input id="hist-q" placeholder="Vendor, invoice, note" /></label>
+    <label>Date<input id="hist-date" placeholder="2026-09" /></label>
+    <label>Amount<input id="hist-amount" inputmode="decimal" /></label>
+    <label>Status
+      <select id="hist-status">
+        <option value="">Any</option>
+        <option>Needs review</option>
+        <option>Ready</option>
+        <option>Waiting approval</option>
+      </select>
+    </label>
+    <label>Invoice number<input id="hist-invoice" /></label>
+    <label>Category<input id="hist-category" /></label>
+    <label>Year<input id="hist-year" inputmode="numeric" placeholder="2026" /></label>
+    <label>Month<input id="hist-month" inputmode="numeric" placeholder="09" /></label>
+    <button type="button" class="primary" id="hist-go">Search history</button>
+    <p class="note">Year, then month, then each nota. Filtering does not move the original files.</p>
+    <div id="hist-results"></div>
+    <button type="button" class="secondary" id="export-month">Download month evidence pack</button>
+    <p class="note">This download is a copy for the month. Each original file stays separate.</p>
+  </section>
+
+  <section id="accountant" class="hidden">
+    <p class="note" id="acct-note">No accounting total. The books are not complete on this screen.</p>
+    <label>Year<input id="acct-year" inputmode="numeric" placeholder="2026" /></label>
+    <label>Month<input id="acct-month" inputmode="numeric" placeholder="09" /></label>
+    <button type="button" class="secondary" id="acct-export">Download month evidence pack</button>
+    <h2>This month</h2>
+    <div id="acct-current"></div>
+    <h2>Missing evidence</h2>
+    <div id="acct-missing"></div>
+    <h2>Unreviewed</h2>
+    <div id="acct-unreviewed"></div>
+    <h2>Vendor issues</h2>
+    <div id="acct-vendors"></div>
+  </section>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const tabs = ["overview", "notas", "vendors", "history", "accountant"];
+let chosen = [];
+let uploadId = null;
+let notaId = null;
+let proposals = {};
+let dupDecision = null;
+let dupReason = "";
+let existingNotaId = null;
+
+function showTab(name) {
+  tabs.forEach((tab) => {
+    $(tab).classList.toggle("hidden", tab !== name);
+    document.querySelector(`[data-tab="${tab}"]`).classList.toggle("active", tab === name);
+  });
+  if (name === "overview") loadOverview();
+  if (name === "notas") loadNotas();
+  if (name === "vendors") searchVendors();
+  if (name === "accountant") loadAccountant();
+}
+document.querySelectorAll("nav.tabs button").forEach((btn) => {
+  btn.addEventListener("click", () => showTab(btn.dataset.tab));
+});
+
+async function api(path, options) {
+  const res = await fetch(path, Object.assign({ credentials: "same-origin", headers: { "Content-Type": "application/json" } }, options || {}));
+  const type = res.headers.get("content-type") || "";
+  if (!type.includes("json")) {
+    if (!res.ok) throw new Error("Could not open that page.");
+    return {};
+  }
+  const data = await res.json();
+  if (!res.ok && data && data.error && String(data.error).indexOf("possible_duplicate") === 0) return data;
+  if (!res.ok) throw new Error((data && data.message) || "Something went wrong.");
+  return data;
+}
+
+function esc(value) {
+  return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+}
+
+function renderProgress(steps) {
+  $("progress").innerHTML = (steps || []).map((step) => {
+    const mark = step.status === "done" ? "✓" : step.status === "failed" ? "!" : "·";
+    return `<li class="${step.status === "failed" ? "bad" : ""}">${mark} ${esc(step.label)}</li>`;
+  }).join("");
+}
+
+async function loadOverview() {
+  const data = await api("/api/ggv/finance/overview");
+  const cards = [
+    ["Needs review", data.needs_review],
+    ["Waiting approval", data.waiting_approval],
+    ["Payment not verified", data.payment_unverified],
+    ["Vendor issues", data.vendor_issues],
+  ];
+  $("overview-cards").innerHTML = cards.map(([label, count]) =>
+    `<article class="card"><p class="meta">${esc(label)}</p><p class="count">${esc(count)}</p></article>`
+  ).join("");
+  const recent = data.recently_added || [];
+  $("recent").innerHTML = recent.length ? recent.map(notaCard).join("") : `<p class="note">Nothing added yet.</p>`;
+  if (data.boundary_note) $("boundary").textContent = data.boundary_note;
+}
+
+function notaCard(nota) {
+  const who = nota.vendor && nota.vendor.name ? nota.vendor.name : "No vendor yet";
+  const amount = nota.amount ? esc(nota.amount) + " " + esc(nota.currency || "") : "Amount not confirmed";
+  return `<article class="card row"><button type="button" data-open="${esc(nota.nota_id)}"><strong>${esc(who)}</strong><br>${esc(nota.invoice_no || "No invoice number")} · ${esc(nota.date || "No date")}<br>${amount}<br>${esc(nota.state_label || "")}</button></article>`;
+}
+
+async function loadNotas() {
+  const data = await api("/api/ggv/finance/notas");
+  const rows = data.notas || [];
+  $("nota-list").innerHTML = rows.length ? rows.map(notaCard).join("") : `<p class="note">No notas yet. Upload one from your phone.</p>`;
+  $("nota-list").querySelectorAll("[data-open]").forEach((btn) => btn.addEventListener("click", () => openNota(btn.dataset.open)));
+}
+
+async function openNota(id) {
+  const data = await api("/api/ggv/finance/notas/" + encodeURIComponent(id));
+  const nota = data.nota;
+  $("nota-list-wrap").classList.add("hidden");
+  $("upload-panel").classList.add("hidden");
+  $("nota-detail").classList.remove("hidden");
+  const files = (nota.files || []).map((file) => `<p><a class="inline" href="/api/ggv/finance/files/${esc(file.file_id)}">${esc(file.original_filename || file.filename || "Attachment")}</a> <span class="meta">Backup: ${esc(file.backup_label || "Unknown")}</span></p>`).join("");
+  const history = (nota.history || []).map((item) => `<li>${esc(item.at)} · ${esc(item.action)}</li>`).join("");
+  const bank = nota.bank_details && nota.bank_details.text
+    ? `<p class="warn">Bank details observed: ${esc(nota.bank_details.text)}. Not verified. This does not pay anyone.</p>`
+    : "";
+  $("nota-detail").innerHTML = `
+    <button type="button" class="secondary" id="detail-back">Back to notas</button>
+    <article class="card">
+      <h2>${esc(nota.vendor && nota.vendor.name || "No vendor yet")}</h2>
+      <p>${esc(nota.state_label)} · ${esc(nota.invoice_no || "")}</p>
+      <p>Date ${esc(nota.date || "—")} · Amount ${esc(nota.amount || "not confirmed")} ${esc(nota.currency || "")}</p>
+      <p class="note">Entering this nota is not approval, not payment, and not payment verified.</p>
+      ${bank}
+      ${files}
+      <h2>History</h2>
+      <ul>${history}</ul>
+    </article>`;
+  $("detail-back").addEventListener("click", () => {
+    $("nota-detail").classList.add("hidden");
+    $("nota-list-wrap").classList.remove("hidden");
+    loadNotas();
+  });
+}
+
+function rememberFiles(list, reset) {
+  if (reset) chosen = [];
+  Array.from(list || []).forEach((file) => chosen.push(file));
+  $("file-names").textContent = chosen.length ? chosen.map((file) => file.name).join(", ") : "No file chosen yet.";
+}
+$("cam").addEventListener("change", () => rememberFiles($("cam").files, true));
+$("file").addEventListener("change", () => rememberFiles($("file").files, true));
+$("more").addEventListener("change", () => rememberFiles($("more").files, false));
+$("start-upload").addEventListener("click", () => {
+  uploadId = null; notaId = null; dupDecision = null; chosen = [];
+  $("review").classList.add("hidden");
+  $("nota-list-wrap").classList.add("hidden");
+  $("nota-detail").classList.add("hidden");
+  $("upload-panel").classList.remove("hidden");
+  $("file-names").textContent = "No file chosen yet.";
+  $("progress").innerHTML = "";
+  $("upload-msg").textContent = "";
+});
+$("cancel-upload").addEventListener("click", () => {
+  $("upload-panel").classList.add("hidden");
+  $("nota-list-wrap").classList.remove("hidden");
+  loadNotas();
+});
+
+function fileToPayload(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const raw = String(reader.result || "");
+      const comma = raw.indexOf(",");
+      resolve({ filename: file.name, content_type: file.type || "application/octet-stream", data_base64: comma >= 0 ? raw.slice(comma + 1) : raw });
+    };
+    reader.onerror = () => reject(new Error("Could not read " + file.name));
+    reader.readAsDataURL(file);
+  });
+}
+
+function fillReview(data) {
+  proposals = (data && data.proposals) || proposals || {};
+  const fields = proposals.fields || {};
+  $("f-invoice").value = fields.invoice_no || "";
+  $("f-date").value = fields.nota_date || "";
+  $("f-amount").value = fields.amount || "";
+  $("f-tax").value = fields.tax || "";
+  $("f-currency").value = fields.currency || "";
+  const low = proposals.low_confidence || [];
+  $("confidence").textContent = low.length ? "Check this: " + low.join(", ") : "";
+  $("review-hint").textContent = data.message || proposals.message || "Check the reading, then correct anything that is wrong.";
+  const matches = data.vendor_matches || [];
+  const box = $("vendor-box");
+  if (matches.length) {
+    box.innerHTML = `<div class="card warn"><p>We think this is: <strong>${esc(matches[0].name)}</strong></p>
+      <button type="button" class="primary" id="use-vendor">Use existing</button>
+      <button type="button" class="secondary" id="new-vendor">+ Create new</button>
+      <div id="vendor-form" class="hidden"></div></div>`;
+    $("use-vendor").addEventListener("click", () => { box.dataset.vendorId = matches[0].vendor_id; box.dataset.confirmed = "1"; $("upload-msg").textContent = "Using " + matches[0].name; });
+  } else {
+    box.innerHTML = `<div class="card"><p>Vendor not found.</p><div id="vendor-form"></div></div>`;
+    box.dataset.vendorId = "";
+    renderVendorForm(fields.vendor_name || "");
+  }
+  const formBtn = $("new-vendor");
+  if (formBtn) formBtn.addEventListener("click", () => renderVendorForm(fields.vendor_name || ""));
+  $("review").classList.remove("hidden");
+  $("preview").innerHTML = chosen[0] ? `<p class="meta">Attachment: ${esc(chosen[0].name)}</p>` : "";
+}
+
+function renderVendorForm(prefill) {
+  const host = $("vendor-form");
+  host.classList.remove("hidden");
+  host.innerHTML = `
+    <label>Vendor name<input id="v-name" value="${esc(prefill)}" /></label>
+    <label>Category<input id="v-category" placeholder="Unknown is fine" /></label>
+    <label>Contact<input id="v-contact" /></label>
+    <label>Phone<input id="v-phone" /></label>
+    <label>Email<input id="v-email" /></label>
+    <label>Tax id<input id="v-tax" /></label>
+    <label>Address<textarea id="v-address"></textarea></label>
+    <label>Notes<textarea id="v-notes"></textarea></label>
+    <button type="button" class="primary" id="v-save">Create vendor</button>
+    <div id="v-dup"></div>`;
+  $("v-save").addEventListener("click", saveVendor);
+}
+
+async function saveVendor() {
+  const payload = {
+    display_name: $("v-name").value,
+    category: $("v-category").value,
+    contact_name: $("v-contact").value,
+    phone: $("v-phone").value,
+    email: $("v-email").value,
+    tax_id: $("v-tax").value,
+    address: $("v-address").value,
+    notes: $("v-notes").value,
+    duplicate_decision: $("vendor-form").dataset.decision || null,
+    duplicate_reason: $("v-reason") ? $("v-reason").value : "",
+    existing_vendor_id: $("vendor-form").dataset.existing || null,
+  };
+  const data = await api("/api/ggv/finance/vendors", { method: "POST", body: JSON.stringify(payload) });
+  if (data.error === "possible_duplicate_vendor") {
+    const matches = data.matches || [];
+    $("v-dup").innerHTML = `<div class="card warn"><p>${esc(data.message)}</p>
+      ${matches.map((row) => `<button type="button" data-existing="${esc(row.vendor_id)}">Use ${esc(row.name)}</button>`).join("")}
+      <label>Why this is a separate vendor<input id="v-reason" /></label>
+      <button type="button" id="v-separate">Create separate</button></div>`;
+    $("v-dup").querySelectorAll("[data-existing]").forEach((btn) => btn.addEventListener("click", () => {
+      $("vendor-form").dataset.decision = "use_existing";
+      $("vendor-form").dataset.existing = btn.dataset.existing;
+      saveVendor();
+    }));
+    $("v-separate").addEventListener("click", () => {
+      $("vendor-form").dataset.decision = "create_separate";
+      saveVendor();
+    });
+    return;
+  }
+  const vendor = data.vendor;
+  $("vendor-box").dataset.vendorId = vendor.vendor_id;
+  $("vendor-box").dataset.confirmed = "1";
+  $("upload-msg").textContent = "Vendor created. You are still on the same nota. " + vendor.vendor_id;
+}
+
+$("run-upload").addEventListener("click", async () => {
+  $("upload-msg").textContent = "";
+  if (!chosen.length) { $("upload-msg").textContent = "Choose a photo or PDF first."; return; }
+  try {
+    const files = [];
+    for (const file of chosen) files.push(await fileToPayload(file));
+    const uploaded = uploadId
+      ? { upload_id: uploadId, progress: [{ id: "uploading", label: "Uploading", status: "done" }] }
+      : await api("/api/ggv/finance/uploads", { method: "POST", body: JSON.stringify({ files }) });
+    uploadId = uploaded.upload_id;
+    renderProgress(uploaded.progress);
+    const read = await api("/api/ggv/finance/uploads/" + encodeURIComponent(uploadId) + "/read", { method: "POST", body: "{}" });
+    renderProgress(read.progress);
+    proposals = read.proposals || {};
+    const checked = await api("/api/ggv/finance/uploads/" + encodeURIComponent(uploadId) + "/check-vendor", { method: "POST", body: "{}" });
+    renderProgress(checked.progress);
+    fillReview(checked);
+  } catch (err) {
+    $("upload-msg").textContent = err.message + (uploadId ? " Your upload is still saved. Retry reading — do not upload the nota again." : "");
+    if (uploadId) {
+      $("upload-msg").innerHTML = esc(err.message) + ` <button type="button" id="retry-read">Retry reading</button>`;
+      $("retry-read").addEventListener("click", () => $("run-upload").click());
+    }
+  }
+});
+
+function reviewBody() {
+  return {
+    upload_id: uploadId,
+    vendor_id: $("vendor-box").dataset.vendorId || "",
+    invoice_no: $("f-invoice").value,
+    date: $("f-date").value,
+    amount: $("f-amount").value,
+    tax: $("f-tax").value,
+    currency: $("f-currency").value,
+    category: $("f-category").value,
+    notes: $("f-notes").value,
+    items: [],
+    confirm: {
+      vendor: $("vendor-box").dataset.confirmed === "1",
+      invoice_no: true,
+      date: !!$("f-date").value,
+      amount: !!$("f-amount").value,
+      tax: !!$("f-tax").value,
+      currency: !!$("f-currency").value,
+      category: !!$("f-category").value,
+    },
+    duplicate_decision: dupDecision,
+    duplicate_reason: dupReason,
+    existing_nota_id: existingNotaId,
+  };
+}
+
+$("save-nota").addEventListener("click", async () => {
+  try {
+    const data = await api("/api/ggv/finance/notas", { method: "POST", body: JSON.stringify(reviewBody()) });
+    if (data.error === "possible_duplicate_nota") {
+      const matches = data.matches || [];
+      $("dup-box").innerHTML = `<div class="card warn"><p>${esc(data.message)}</p>
+        ${matches.map((row) => `<button type="button" data-nota="${esc(row.nota_id)}">Open ${esc(row.invoice_no || row.nota_id)}</button>`).join("")}
+        <label>Why save a separate copy<input id="dup-reason" /></label>
+        <button type="button" id="dup-separate">Save separate</button></div>`;
+      $("dup-box").querySelectorAll("[data-nota]").forEach((btn) => btn.addEventListener("click", () => {
+        dupDecision = "use_existing"; existingNotaId = btn.dataset.nota; $("save-nota").click();
+      }));
+      $("dup-separate").addEventListener("click", () => {
+        dupDecision = "create_separate"; dupReason = $("dup-reason").value; $("save-nota").click();
+      });
+      return;
+    }
+    renderProgress(data.progress);
+    notaId = data.nota.nota_id;
+    $("upload-msg").textContent = "Saved. " + notaId;
+    $("submit-nota").disabled = data.nota.state !== "ready" && data.nota.state !== "waiting_approval";
+    if (data.nota.state === "ready") $("submit-nota").disabled = false;
+  } catch (err) {
+    $("upload-msg").textContent = err.message;
+  }
+});
+
+$("submit-nota").addEventListener("click", async () => {
+  if (!notaId) { $("upload-msg").textContent = "Save the nota before you submit."; return; }
+  try {
+    const data = await api("/api/ggv/finance/notas/" + encodeURIComponent(notaId) + "/submit", { method: "POST", body: "{}" });
+    $("upload-msg").textContent = data.message || "Submitted. This is not a payment.";
+  } catch (err) {
+    $("upload-msg").textContent = err.message;
+  }
+});
+
+async function searchVendors() {
+  const q = $("vendor-q").value || "";
+  const data = await api("/api/ggv/finance/vendors?q=" + encodeURIComponent(q));
+  const rows = data.vendors || [];
+  $("vendor-list").innerHTML = rows.length ? rows.map((row) =>
+    `<article class="card"><button type="button" data-vendor="${esc(row.vendor_id)}"><strong>${esc(row.name)}</strong><br>${esc(row.phone || "")} ${esc(row.email || "")}</button></article>`
+  ).join("") : `<p class="note">No vendors yet.</p>`;
+  $("vendor-list").querySelectorAll("[data-vendor]").forEach((btn) => btn.addEventListener("click", () => openVendor(btn.dataset.vendor)));
+}
+$("vendor-search").addEventListener("click", searchVendors);
+
+async function openVendor(id) {
+  const data = await api("/api/ggv/finance/vendors/" + encodeURIComponent(id));
+  const vendor = data.vendor;
+  const banks = (data.bank_observations || []).map((row) => `<p>Observed, not verified: ${esc(row.text)}</p>`).join("");
+  const notas = (data.notas || []).map((row) => `<li>${esc(row.invoice_no || row.nota_id)} · ${esc(row.state_label)}</li>`).join("");
+  $("vendor-detail").classList.remove("hidden");
+  $("vendor-detail").innerHTML = `<article class="card"><button type="button" class="secondary" id="vendor-back">Back</button>
+    <h2>${esc(vendor.name)}</h2><p>${esc(vendor.vendor_id)}</p><p>${esc(vendor.category || "")}</p>${banks}<ul>${notas}</ul></article>`;
+  $("vendor-back").addEventListener("click", () => $("vendor-detail").classList.add("hidden"));
+}
+
+function periodCards(rows) {
+  return (rows || []).map((row) => `<article class="card"><strong>${esc(row.vendor || "No vendor yet")}</strong><br>${esc(row.invoice_no || "No invoice number")} · ${esc(row.date || "No date")}<br>${esc(row.state_label || "")}</article>`).join("");
+}
+
+function renderGroups(data) {
+  const groups = data.groups || [];
+  if (!groups.length) return `<p class="note">Nothing matches.</p>`;
+  return groups.map((year) => `<h2>${esc(year.year)}</h2>` + (year.months || []).map((month) =>
+    `<h2>${esc(year.year)}-${esc(month.month)}</h2>` + (month.notas || []).map(notaCard).join("")
+  ).join("")).join("");
+}
+
+$("hist-go").addEventListener("click", async () => {
+  const params = new URLSearchParams({
+    q: $("hist-q").value, date: $("hist-date").value, amount: $("hist-amount").value,
+    status: $("hist-status").value, invoice: $("hist-invoice").value, category: $("hist-category").value,
+    year: $("hist-year").value, month: $("hist-month").value,
+  });
+  const data = await api("/api/ggv/finance/history?" + params.toString());
+  $("hist-results").innerHTML = renderGroups(data);
+  $("hist-results").querySelectorAll("[data-open]").forEach((btn) => btn.addEventListener("click", () => { showTab("notas"); openNota(btn.dataset.open); }));
+});
+
+async function downloadPack(year, month, messageEl) {
+  const res = await fetch("/api/ggv/finance/export/month?year=" + encodeURIComponent(year) + "&month=" + encodeURIComponent(month), { credentials: "same-origin" });
+  if (!res.ok) {
+    let message = "Could not download that month.";
+    try { message = (await res.json()).message || message; } catch (err) { /* keep */ }
+    if (messageEl) messageEl.textContent = message;
+    return;
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "ggv-month-evidence-" + year + "-" + month + ".zip";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+$("export-month").addEventListener("click", () => downloadPack($("hist-year").value, $("hist-month").value, $("hist-results")));
+
+async function loadAccountant() {
+  const data = await api("/api/ggv/finance/accountant");
+  $("acct-note").textContent = data.note || "No accounting total. The books are not complete on this screen.";
+  const period = data.current_period || "";
+  if (!$("acct-year").value && period.length >= 4) $("acct-year").value = period.slice(0, 4);
+  if (!$("acct-month").value && period.length >= 7) $("acct-month").value = period.slice(5, 7);
+  $("acct-current").innerHTML = periodCards(data.current_month) || `<p class="note">Nothing in this month yet.</p>`;
+  $("acct-missing").innerHTML = periodCards(data.missing_evidence) || `<p class="note">No missing files.</p>`;
+  $("acct-unreviewed").innerHTML = periodCards(data.unreviewed) || `<p class="note">Nothing waiting for review.</p>`;
+  $("acct-vendors").innerHTML = periodCards(data.vendor_issues) || `<p class="note">No vendor issues.</p>`;
+}
+
+$("acct-export").addEventListener("click", () => downloadPack($("acct-year").value, $("acct-month").value, $("acct-note")));
+
+loadOverview().catch((err) => { $("recent").textContent = err.message; });
+</script>
+</body>
+</html>

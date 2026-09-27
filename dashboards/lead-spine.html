@@ -91,9 +91,11 @@
   .events li { margin: 4px 0; }
   .triage-note { color: var(--muted); font-size: 0.82rem; margin: 0 0 8px; }
   .card .btn { width: 100%; }
+  .crumb { font-size: 0.78rem; color: var(--muted); margin: 0 0 8px; }
 </style>
 </head>
-<body>
+<body data-wolf-page-type="WORKSPACE" data-wolf-org="GGV" data-wolf-shell="global">
+  <p class="crumb">WOLF · Goss Group · GGV · Lead Spine</p>
   <div class="banner demo" id="demoBanner">
     Demo data. Not live leads.
   </div>
@@ -107,6 +109,11 @@
   </div>
 
   <section id="listView">
+    <div class="sep" id="needs-you-connective">Needs-You connective</div>
+    <p class="triage-note">CRM / Lead / Habitat commissioning and recorded lead-loop rows for this seat. Counts are the in-scope length. EMPTY when none. Not staff_ready. Not a CRM cutover. Not Klaviyo or Metricool. Haikal human is not started. Devi retest stays parked. Habitat is not commissioned.</p>
+    <div id="connectiveMsg" class="empty">Loading Needs-You…</div>
+    <div id="connectiveList"></div>
+
     <div class="sep" id="triageHeading">Needs triage</div>
     <p class="triage-note" id="triageNote">Open Habitat leads that still need a person. Speed uses the source time already on the lead. No SLA number is invented.</p>
     <div id="triageMsg" class="empty">Loading triage…</div>
@@ -357,6 +364,44 @@
     });
   }
 
+  async function loadConnective() {
+    $("connectiveMsg").textContent = "Loading Needs-You…";
+    const { res, data } = await api("/api/leads/needs-you");
+    const box = $("connectiveList");
+    const msg = $("connectiveMsg");
+    if (!res.ok) {
+      box.innerHTML = "";
+      msg.className = "err";
+      msg.textContent = (data && data.message) || "CRM Needs-You is outside this seat.";
+      return;
+    }
+    const rows = (data && data.items) || [];
+    const preferred = (data && data.next_action) || {};
+    if (data && data.empty) {
+      box.innerHTML = "";
+      msg.className = "empty";
+      msg.textContent = data.empty_message || "No in-scope CRM Needs-You rows. EMPTY — not invented work.";
+      return;
+    }
+    const kinds = ["morning_seed", "waiting_others", "needs_you", "lead_loop"];
+    const counts = kinds.map((k) => k + " " + String(((data.by_kind || {})[k]) || 0)).join(" · ");
+    msg.className = "triage-note";
+    msg.textContent = counts + " · " + String(data.count) + " in scope";
+    if (preferred.code === "needs_you_connective" && preferred.label) {
+      msg.textContent += " · Next: " + preferred.label;
+    }
+    box.innerHTML = rows.map((row) => `
+      <div class="card" style="cursor:default">
+        <h3>${esc(row.title || row.object_id)}</h3>
+        <div>
+          <span class="status-pill source">${esc(row.kind || "")}</span>
+          <span class="status-pill wait">${esc(row.priority || "")}</span>
+        </div>
+        <div class="meta">${esc(row.href || "/lead-spine")}</div>
+        <div class="id">${esc(row.object_id)}</div>
+      </div>`).join("");
+  }
+
   async function loadTriage() {
     $("triageMsg").textContent = "Loading triage…";
     const { res, data } = await api(`/api/leads/triage?brand=${encodeURIComponent(BRAND)}`);
@@ -505,6 +550,7 @@
 
   (async function init() {
     await loadMe();
+    await loadConnective();
     await loadTriage();
     await loadList();
   })();

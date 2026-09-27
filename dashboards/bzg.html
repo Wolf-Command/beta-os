@@ -33,18 +33,18 @@
   .brand { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 2px; }
   .brand em { font-style: normal; color: var(--accent); }
   .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 18px; line-height: 1.35; }
-  nav { margin-bottom: 16px; }
-  nav a {
+  .crumb { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
+  nav.grammar { margin-bottom: 16px; }
+  nav.grammar a, nav.grammar span.empty {
     display: block; padding: 14px 16px; margin-bottom: 8px;
     background: color-mix(in srgb, var(--bg2) 92%, #000);
     border: 1px solid var(--line); border-radius: 12px;
     color: var(--text); text-decoration: none; font-weight: 650;
   }
-  nav a:hover { border-color: var(--accent); }
-  nav a.active { border-color: var(--accent); color: var(--accent); }
-  .disabled {
-    display: block; padding: 12px 16px; margin-bottom: 6px;
-    color: var(--muted); font-size: 0.88rem; opacity: 0.55;
+  nav.grammar a:hover { border-color: var(--accent); }
+  nav.grammar a.active { border-color: var(--accent); color: var(--accent); }
+  nav.grammar span.empty {
+    color: var(--muted); font-size: 0.88rem; font-weight: 550; opacity: 0.75;
   }
   .panel {
     background: color-mix(in srgb, var(--bg2) 92%, #000);
@@ -54,28 +54,34 @@
     margin: 0 0 8px; font-size: 0.78rem; text-transform: uppercase;
     letter-spacing: 0.06em; color: var(--muted); font-weight: 650;
   }
+  .panel a {
+    display: block; padding: 12px 0; color: var(--accent); text-decoration: none; font-weight: 650;
+  }
   .muted { color: var(--muted); font-size: 0.82rem; line-height: 1.4; }
 </style>
 </head>
-<body>
-  <h1 class="brand">BZG <em>Overview</em></h1>
-  <p class="sub">Blu Zone Group · venues you can open today</p>
+<body data-wolf-page-type="DASHBOARD" data-wolf-org="BZG" data-wolf-shell="global">
+  <p class="crumb">WOLF · Blu Zone</p>
+  <h1 class="brand">Blu Zone <em>Overview</em></h1>
+  <p class="sub">BZG · venues you can open today. Missing grammar = EMPTY — never a fake %.</p>
   <div id="wolf-truth" data-wolf-truth data-surface="bzg"></div>
 
-  <nav>
+  <nav class="grammar" aria-label="BZG grammar">
     <a class="active" href="/bzg">Overview</a>
-    <a href="/bzg/uma-blu">Uma Blu</a>
+    <span class="empty">Operations · EMPTY</span>
+    <span class="empty">Issues · EMPTY</span>
+    <span class="empty">Finance · EMPTY</span>
+    <span class="empty">People · EMPTY</span>
+    <span class="empty">Customers · EMPTY</span>
+    <span class="empty">Standards · EMPTY</span>
+    <span class="empty">Intelligence · EMPTY</span>
   </nav>
 
   <div class="panel">
-    <h2>Later</h2>
-    <span class="disabled">Finance — later</span>
-    <span class="disabled">Venues list — later</span>
-    <span class="disabled">Procurement catalog — later</span>
-    <span class="disabled">People admin — later</span>
+    <h2>Venues</h2>
+    <a href="/bzg/uma-blu">Uma Blu · Today</a>
+    <p class="muted">Open Uma Blu for today’s work, bills, daily close, and issues.</p>
   </div>
-
-  <p class="muted">Open Uma Blu for today’s work, bills, daily close, and issues.</p>
 <script src="/assets/wolf-truth.js?v=20260927-w3p4"></script>
 </body>
 </html>

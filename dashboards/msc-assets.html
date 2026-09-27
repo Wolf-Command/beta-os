@@ -53,6 +53,15 @@
   <h1>Asset register</h1>
   <p class="lede">An empty register is not an inventory count and not a payment. A location is not an asset. CAP-MSC-01 stays at the ledger value. The ceiling label is BUILT. This page does not resolve the completion row.</p>
   <div id="banner" class="banner">Reading the register… Empty until a noted row exists. Not an inventory count. Not a payment.</div>
+  <h2 id="asset-depth">Operator depth</h2>
+  <div id="assetDepthBox" class="card">
+    <p class="note" id="depth-summary">Loading asset operator depth… Empty is not an inventory count.</p>
+    <div id="depth-list"></div>
+    <label for="depth-note">Operator note</label>
+    <textarea id="depth-note" rows="3" style="width:100%;margin-top:6px;background:#101418;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;"></textarea>
+    <div id="depth-actions" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
+    <p class="note" id="depth-result"></p>
+  </div>
   <h2>Recorded notes</h2>
   <div id="rows" class="grid">
     <article class="card"><div class="k">Notes</div><div class="v">EMPTY</div><p class="note">No noted row. This is not an inventory count and not a payment.</p></article>
@@ -100,6 +109,82 @@ function paint(pack) {
   });
   if (venues) document.getElementById("venues").innerHTML = venues;
 }
+
+var selectedDepthId = "";
+function depthPost(kind, extra) {
+  if (!selectedDepthId) {
+    document.getElementById("depth-result").textContent = "Open an asset or the empty placeholder first.";
+    return;
+  }
+  var note = document.getElementById("depth-note").value || "";
+  var body = Object.assign({ kind: kind, note: note }, extra || {});
+  fetch("/api/msc/assets/operator-depth/objects/" + encodeURIComponent(selectedDepthId) + "/operator-action", {
+    method: "POST",
+    headers: { "Accept": "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  }).then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
+    .then(function (res) {
+      document.getElementById("depth-result").textContent = [
+        "HTTP " + res.status,
+        (res.body && (res.body.kind || res.body.error)) || "",
+        "inventory " + String(res.body && res.body.inventory_count),
+        "register mutated " + String(res.body && res.body.register_mutated === true)
+      ].join(" · ");
+      loadDepth();
+    })
+    .catch(function () {
+      document.getElementById("depth-result").textContent = "Operator action could not be recorded.";
+    });
+}
+function renderDepth(body) {
+  var summary = document.getElementById("depth-summary");
+  var list = document.getElementById("depth-list");
+  var actions = document.getElementById("depth-actions");
+  if (!body || body.ok !== true) {
+    summary.textContent = "Operator depth " + ((body && body.error) || "unavailable") + ". Empty is not an inventory count.";
+    return;
+  }
+  summary.textContent = [
+    body.empty ? (body.empty_message || "EMPTY") : "assets " + body.asset_count,
+    "CAP-MSC-01 " + (((body.honesty || {}).caps || {})["CAP-MSC-01"] || "—"),
+    "inventory complete " + String(body.inventory_complete === true)
+  ].join(" · ");
+  list.innerHTML = "";
+  (body.objects || []).forEach(function (row) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.style.display = "block";
+    btn.style.width = "100%";
+    btn.style.textAlign = "left";
+    btn.style.marginTop = "8px";
+    btn.textContent = (row.object_kind || "object") + " " + (row.object_id || "");
+    btn.addEventListener("click", function () { selectedDepthId = row.object_id; });
+    list.appendChild(btn);
+  });
+  actions.innerHTML = "";
+  [
+    ["note", "Note", null],
+    ["next_action", "Next action", null],
+    ["handoff_touch", "Handoff", null],
+    ["dismiss_noise", "Dismiss noise", null],
+    ["review_decision", "Keep as note", { decision: "keep_as_note" }]
+  ].forEach(function (spec) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.textContent = spec[1];
+    b.addEventListener("click", function () { depthPost(spec[0], spec[2]); });
+    actions.appendChild(b);
+  });
+}
+function loadDepth() {
+  fetch("/api/msc/assets/operator-depth", { headers: { "Accept": "application/json" } })
+    .then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
+    .then(function (res) { renderDepth(res.body); })
+    .catch(function () {
+      document.getElementById("depth-summary").textContent = "Asset operator depth could not be read.";
+    });
+}
+loadDepth();
 
 fetch("/api/msc/assets", { headers: { "Accept": "application/json" } })
   .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })

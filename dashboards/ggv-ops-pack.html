@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>GGV ops pack · Beta</title>
+<title>Habitat desk · Beta</title>
 <style>
   :root {
     --bg: #0b0d12; --bg2: #12151d; --bg3: #1a1f2b; --border: #2a3142;
@@ -12,49 +12,121 @@
     --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
-  body { margin: 0 auto; max-width: 720px; padding: 12px 14px 64px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  body { margin: 0 auto; max-width: 480px; padding: 12px 14px 88px; background: var(--bg); color: var(--text); font-family: var(--font); overflow-wrap: anywhere; }
   h1 { font-size: 1.25rem; margin: 0 0 4px; }
   h1 span { color: var(--accent); }
   h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
-  .lede, .note { color: var(--muted); font-size: 0.85rem; }
+  .lede, .note { color: var(--muted); font-size: 0.85rem; line-height: 1.35; }
   .banner { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: 0.88rem; }
   .banner.warn { border-color: rgba(245,165,36,0.45); color: var(--warn); }
+  .banner.next { border-color: rgba(110,168,255,0.45); }
   .card { border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; padding: 12px; margin-top: 8px; }
   .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.75rem; margin-right: 4px; color: var(--muted); }
   .pill.you { color: var(--warn); border-color: rgba(245,165,36,0.45); }
+  .pill.done { color: var(--ok); border-color: rgba(61,214,140,0.45); }
   label { display: block; font-size: 0.75rem; color: var(--muted); margin: 8px 0 4px; }
-  input, select { width: 100%; background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px; font: inherit; }
-  button { margin-top: 8px; width: 100%; border-radius: 10px; padding: 10px; border: 1px solid #3b6fd0; background: #2a5bb8; color: #fff; font-weight: 650; }
+  input, select, textarea { width: 100%; background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px; font: inherit; }
+  button, .act {
+    margin-top: 8px; width: 100%; border-radius: 10px; padding: 12px; min-height: 44px;
+    border: 1px solid #3b6fd0; background: #2a5bb8; color: #fff; font-weight: 650; font: inherit;
+  }
+  button.secondary { background: var(--bg3); border-color: var(--border); color: var(--text); }
   button:disabled { opacity: 0.45; }
+  details.more { margin-top: 10px; }
+  details.more > summary {
+    list-style: none; cursor: pointer; color: var(--accent); font-size: 0.85rem;
+    min-height: 44px; display: flex; align-items: center;
+  }
+  details.more > summary::-webkit-details-marker { display: none; }
   .err { color: var(--danger); white-space: pre-wrap; font-size: 0.85rem; }
   .ok { color: var(--ok); font-size: 0.85rem; }
   .meta { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stages { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .empty-next { margin-top: 8px; }
+  .empty-next a.act { display: flex; align-items: center; justify-content: center; text-decoration: none; }
+  nav.phone {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    display: flex; gap: 4px; justify-content: space-around;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--bg) 92%, #000); border-top: 1px solid var(--border);
+    max-width: 480px; margin: 0 auto;
+  }
+  nav.phone a {
+    flex: 1; text-align: center; text-decoration: none; color: var(--muted);
+    font-size: 0.72rem; font-weight: 650; padding: 8px 4px; min-height: 44px;
+    display: flex; align-items: center; justify-content: center; border-radius: 8px;
+  }
+  nav.phone a:hover { color: var(--accent); }
+  .honesty { margin-top: 24px; font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
+  .hist { list-style: none; padding: 0; margin: 0; }
+  .hist li { border-top: 1px solid var(--border); padding: 8px 0; font-size: 0.88rem; }
+  .hist li:first-child { border-top: 0; padding-top: 0; }
+  .crumb { font-size: 0.78rem; color: var(--muted); margin: 0 0 8px; }
+  nav.grammar { margin: 0 0 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.grammar a, nav.grammar span.empty {
+    display: inline-block; padding: 8px 10px; min-height: 44px;
+    border: 1px solid var(--border); border-radius: 10px;
+    color: var(--muted); text-decoration: none; font-size: 0.78rem; font-weight: 650;
+    display: inline-flex; align-items: center;
+  }
+  nav.grammar a.active { color: var(--accent); border-color: rgba(110,168,255,0.55); }
+  nav.grammar span.empty { opacity: 0.75; font-weight: 550; }
 </style>
 </head>
-<body>
-  <h1>GGV ops <span>· Beta</span></h1>
-  <p class="lede">Bound beta-ggv-ops-safe. Habitat operator loop. Not PROVEN. Not READY. CAP-GGV-04 stays BUILT. Closed is not a sale. An empty client/project framework is not live profitability. Publish-gate status is a read. This page does not write Metricool. This page does not write Klaviyo. This page does not write an external CRM. This page does not resolve the completion row.</p>
+<body data-wolf-page-type="DASHBOARD" data-wolf-org="GGV" data-wolf-shell="global">
+  <p class="crumb">WOLF · Goss Group · GGV</p>
+  <h1>GGV <span>Overview</span> · Habitat desk</h1>
+  <nav class="grammar" aria-label="GGV grammar">
+    <a class="active" href="/ggv-ops-pack">Overview</a>
+    <span class="empty">Operations · EMPTY</span>
+    <span class="empty">People · EMPTY</span>
+    <span class="empty">Customers · EMPTY</span>
+    <a href="/ggv/finance">Finance</a>
+    <span class="empty">Standards · EMPTY</span>
+    <span class="empty">Issues · EMPTY</span>
+    <span class="empty">Intelligence · EMPTY</span>
+  </nav>
   <div id="wolf-truth" data-wolf-truth data-surface="ggv"></div>
+  <p class="lede" id="lede">Loading…</p>
   <div class="banner warn" id="who">Loading…</div>
+  <div class="banner next" id="primaryNext" hidden></div>
   <div id="msg"></div>
 
-  <h2>Needs you</h2>
-  <p class="note">Waiting uses the source time already on the lead. A missing clock is not an SLA breach.</p>
-  <div id="exceptions"></div>
+  <h2 id="needs-you-connective">Needs-You connective</h2>
+  <p class="note">GGV commissioning, content, and lead rows for this seat. Counts are the in-scope length. EMPTY when none. Not staff_ready. Haikal human is not started. Devi retest stays parked.</p>
+  <div id="connective"></div>
 
-  <h2>Lead lifecycle</h2>
-  <p class="note">OPEN, ACTIVE, PARKED, CLOSED. A next action is required. Haikal and Misa cannot close.</p>
+  <h2 id="now">Needs you</h2>
+  <p class="note">Management exceptions and waiting leads. No invented SLA breach.</p>
+  <div id="mgmt"></div>
+
+  <h2 id="loop">Lead loop</h2>
+  <p class="note">Lead → contact → qualify → next step → owner → pipeline → engagement.</p>
   <div id="board"></div>
+
+  <h2 id="depth">Operator depth</h2>
+  <p class="note">Open a lead, record next step / note / ownership touch. No CRM write. Empty pipeline is not live.</p>
+  <div id="operatorDepth"></div>
 
   <h2>Client / project</h2>
   <div id="framework"></div>
 
-  <h2>Habitat publish gate</h2>
-  <p class="note">Read only. Metricool write stays off.</p>
+  <h2>Client visibility</h2>
+  <div id="clientvis"></div>
+
+  <h2 id="content">Content → approval → publish</h2>
+  <p class="note">Read only. Approved is not published.</p>
   <div id="gates"></div>
 
-  <h2>Seats</h2>
-  <div id="seats"></div>
+  <h2>Performance</h2>
+  <div id="perf"></div>
+
+  <h2 id="history">History · evidence · handover</h2>
+  <div id="heh"></div>
+
+  <p class="honesty" id="honesty">Bound beta-ggv-ops-safe · loop beta-ggv-loop-safe. Not PROVEN. Not READY. staff_ready false. Haikal human not started. Devi retest parked. Performance is a DERIVE read. Closed is not a sale. This page does not write Metricool, Klaviyo, or an external CRM. This page does not resolve the completion row.</p>
+  <nav class="phone" id="phoneNav" aria-label="Habitat desk"></nav>
 
 <script>
 (function () {
@@ -62,6 +134,33 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
+
+  const PERSON = {
+    "PERS-AMANDA": "Amanda", "PERS-HAIKAL": "Haikal",
+    "PERS-MISA": "Misa", "PERS-MATT": "Owner"
+  };
+  const STAGE = {
+    lead: "Lead", identity_contact: "Contact", qualification: "Qualified",
+    next_action: "Next step", ownership: "Owner", pipeline: "Pipeline",
+    client_project: "Client / project", proposal_engagement: "Engagement",
+    content_work: "Content", approval: "Approval", publish_read: "Publish read",
+    performance: "Performance", client_visibility: "Client visibility",
+    mgmt_exception: "Needs management", empty: "Not started", done: "Done",
+    read: "Read", raised: "Raised", due: "Due"
+  };
+  const LIFE = { OPEN: "Open", ACTIVE: "Active", PARKED: "Parked", CLOSED: "Closed" };
+
+  function humanPerson(id) { return PERSON[id] || String(id || "Unassigned").replace(/^PERS-/, ""); }
+  function humanStage(k) { return STAGE[k] || String(k || "").replace(/_/g, " "); }
+  function humanLife(s) { return LIFE[s] || s; }
+
+  function emptyNext(state) {
+    if (!state) return "";
+    const na = state.next_action || {};
+    const href = na.href || "#loop";
+    return `<div class="card"><p class="note">${esc(state.message || "")}</p>
+      <div class="empty-next"><a class="act" href="${esc(href)}">${esc(na.label || "What next?")}</a></div></div>`;
+  }
 
   async function api(path, opts) {
     const res = await fetch(path, Object.assign({ headers: { Accept: "application/json" } }, opts || {}));
@@ -74,59 +173,352 @@
     return data;
   }
 
-  function cardHtml(lead, canClose) {
+  function loopPills(loop, labels) {
+    const stages = (loop && loop.stages) || {};
+    const order = (loop && loop.order) || Object.keys(stages);
+    const map = labels || STAGE;
+    return `<div class="stages">${order.map((k) => {
+      const st = (stages[k] && stages[k].status) || "empty";
+      const cls = st === "done" || st === "read" ? "done" : (st === "raised" || st === "due" ? "you" : "");
+      return `<span class="pill ${cls}">${esc(map[k] || humanStage(k))}: ${esc(map[st] || humanStage(st))}</span>`;
+    }).join("")}</div>`;
+  }
+
+  function cardHtml(lead, actions, terms) {
     const aging = lead.aging || {};
     const you = aging.needs_you ? '<span class="pill you">Needs you</span>' : "";
-    const stages = ["OPEN", "ACTIVE", "PARKED"].concat(canClose ? ["CLOSED"] : []);
-    const opts = stages.map((s) => `<option value="${s}"${s === lead.wolf_lifecycle ? " selected" : ""}>${s}</option>`).join("");
-    return `<article class="card" data-lead="${esc(lead.lead_id)}">
+    const lifeVals = actions.lifecycle_values || ["OPEN", "ACTIVE", "PARKED"];
+    const opts = lifeVals.map((s) =>
+      `<option value="${esc(s)}"${s === lead.wolf_lifecycle ? " selected" : ""}>${esc(humanLife(s))}</option>`
+    ).join("");
+    const loopNext = (lead.loop_next_action || {}).label || "";
+    const stageLabels = (terms && terms.stage_labels) || STAGE;
+    let more = "";
+    if (actions.note_contact || actions.qualify || actions.assign_owner || actions.record_engagement || actions.raise_exception || actions.lead_operator) {
+      more = `<details class="more"><summary>More actions</summary>`;
+      if (actions.lead_operator || actions.record_next_action) {
+        more += `<label>Operator next step</label><input class="opnext" type="text" placeholder="Next step (no CRM write)" />
+          <button type="button" class="secondary opnextbtn">Record next step</button>
+          <label>Operator note</label><input class="opnote" type="text" placeholder="Note for this lead" />
+          <button type="button" class="secondary opnotebtn">Record note</button>
+          <button type="button" class="secondary optouch">Record ownership touch</button>
+          <button type="button" class="secondary opdetail">Open operator detail</button>`;
+      }
+      if (actions.note_contact) {
+        more += `<label>Contact note</label><input class="idnote" type="text" placeholder="Contact note" />
+          <button type="button" class="secondary identity">Note contact</button>`;
+      }
+      if (actions.qualify) {
+        more += `<label>Qualification</label>
+          <select class="qual"><option value="qualified">Qualified</option>
+          <option value="needs_info">Needs info</option><option value="not_qualified">Not qualified</option></select>
+          <input class="qualnote" type="text" placeholder="Qualification note" />
+          <button type="button" class="secondary qualify">Record qualification</button>`;
+      }
+      if (actions.assign_owner) {
+        more += `<label>Assign owner</label><select class="owner">
+          <option value="PERS-AMANDA">Amanda</option><option value="PERS-HAIKAL">Haikal</option>
+          <option value="PERS-MISA">Misa</option><option value="PERS-MATT">Owner</option></select>
+          <button type="button" class="secondary assign">Assign owner</button>`;
+      }
+      if (actions.record_engagement) {
+        more += `<label>Proposal / engagement</label><select class="engage">
+          <option value="proposal">Proposal</option><option value="engagement">Engagement</option>
+          <option value="scope">Scope</option><option value="decline">Decline</option></select>
+          <input class="engagenote" type="text" placeholder="Engagement note" />
+          <button type="button" class="secondary engagebtn">Record engagement</button>`;
+      }
+      if (actions.raise_exception) {
+        more += `<label>Raise management exception</label>
+          <input class="mgmtreason" type="text" placeholder="Why escalate?" />
+          <button type="button" class="secondary mgmt">Raise exception</button>`;
+      }
+      more += `</details>`;
+    }
+    const updateBlock = actions.update_lifecycle
+      ? `<label>Lifecycle</label><select class="stage">${opts}</select>
+         <label>Next step</label><input class="next" type="text" placeholder="What happens next?" />
+         <button type="button" class="move">Update</button>`
+      : `<p class="note">Read only on this seat.</p>`;
+    return `<article class="card" data-lead="${esc(lead.lead_id)}" id="lead-${esc(lead.lead_id)}">
       <strong>${esc(lead.demo_label || lead.lead_id)}</strong>
       ${you}
-      <span class="pill">${esc(lead.wolf_lifecycle)}</span>
-      <div class="meta">${esc(lead.owner)} · ${esc((lead.speed || {}).words || "")}</div>
-      <div class="meta">Next action: ${esc(lead.recorded_next_action || "none recorded")}</div>
+      <span class="pill">${esc(humanLife(lead.wolf_lifecycle))}</span>
+      <div class="meta">${esc(humanPerson(lead.owner))} · ${esc((lead.speed || {}).words || "")}</div>
+      <div class="meta">Next step: ${esc(lead.recorded_next_action || "none recorded")}</div>
+      <div class="meta">Loop next: ${esc(loopNext || "—")}</div>
+      ${(() => {
+        const ir = lead.intel_recommendation || (lead.loop_next_action || {}).intel_recommendation;
+        if (!ir) return "";
+        const tip = ir.changes_work
+          ? "Intel changed the next step"
+          : "Intel checked · no change";
+        return `<div class="meta">${esc(tip)}</div>`;
+      })()}
       <div class="meta">${esc(aging.reason || "")}</div>
-      <label>Wolf lifecycle</label>
-      <select class="stage">${opts}</select>
-      <label>Next action</label>
-      <input class="next" type="text" placeholder="What happens next?" />
-      <button type="button" class="move">Update lifecycle</button>
+      ${loopPills(lead.loop, stageLabels)}
+      ${updateBlock}
+      ${more}
       <div class="meta rowmsg"></div>
     </article>`;
   }
 
   function paint(data) {
-    const seat = data.seat || {};
-    $("who").textContent = (seat.seat || "seat") + " · " + (seat.person_id || "") + " · Habitat only";
-    const ex = (data.exceptions && data.exceptions.exceptions) || [];
-    $("exceptions").innerHTML = ex.length
-      ? ex.map((row) => `<div class="card"><span class="pill you">Needs you</span> <strong>${esc(row.demo_label || row.lead_id)}</strong><div class="meta">${esc((row.aging || {}).words || "")} · SLA breach not recorded</div></div>`).join("")
-      : `<p class="note">${esc((data.exceptions || {}).empty_message || "No exception.")}</p>`;
+    const sr = data.staff_ready || {};
+    const actions = sr.exposed_actions || {};
+    const terms = sr.terminology || {};
+    $("lede").textContent = sr.lede || "Habitat desk.";
+    $("who").textContent = sr.who_line || ((data.seat || {}).seat || "seat");
+    const nav = sr.phone_nav || [];
+    $("phoneNav").innerHTML = nav.map((n) =>
+      `<a href="${esc(n.href)}">${esc(n.label)}</a>`
+    ).join("");
+    const preferred = data.next_action || {};
+    const pn = (preferred.code === "needs_you_connective" ? preferred : null) || sr.primary_next || {};
+    if (pn.label) {
+      $("primaryNext").hidden = false;
+      $("primaryNext").innerHTML = `<strong>Do now</strong><div class="meta">${esc(pn.label)}</div>`
+        + (pn.href ? `<div class="empty-next"><a class="act" href="${esc(pn.href)}">Go</a></div>` : "");
+    }
+    const conn = data.needs_you_connective || {};
+    const rowsC = conn.items || [];
+    const byKind = conn.by_kind || {};
+    if (conn.empty || !rowsC.length) {
+      $("connective").innerHTML = `<div class="card"><p class="note">${esc(conn.empty_message || "No in-scope GGV Needs-You rows. EMPTY — not invented work.")}</p></div>`;
+    } else {
+      const kinds = ["morning_seed", "waiting_others", "needs_you", "content", "lead"].map((k) =>
+        `<span class="pill">${esc(k)} ${esc(byKind[k] == null ? "0" : String(byKind[k]))}</span>`
+      ).join("");
+      $("connective").innerHTML = `<div class="card">${kinds}
+        <p class="meta">${esc(conn.count)} in scope · staff_ready false · Haikal ${esc(conn.haikal_human || "not_started")} · Devi ${esc(conn.devi_retest || "parked")}</p>
+        ${rowsC.map((row) => `<div class="card">
+          <span class="pill">${esc(row.kind || "")}</span>
+          <p><strong>${esc(row.title || row.object_id)}</strong></p>
+          <p class="meta">${esc(row.who || row.audience || "")}</p>
+          ${row.href ? `<div class="empty-next"><a class="act" href="${esc(row.href)}">Open</a></div>` : ""}
+        </div>`).join("")}
+      </div>`;
+    }
+    const empties = sr.empty_states || {};
+    const mgmt = (data.management_exceptions && data.management_exceptions.exceptions) || [];
+    const speed = (data.exceptions && data.exceptions.exceptions) || [];
+    // Merge needs-you into one strip — no duplicate nav sections.
+    const merged = [];
+    const seen = new Set();
+    mgmt.forEach((row) => {
+      const id = row.lead_id || row.demo_label;
+      if (id) seen.add(id);
+      merged.push({ ...row, tag: "Management" });
+    });
+    speed.forEach((row) => {
+      const id = row.lead_id || row.demo_label;
+      if (id && seen.has(id)) return;
+      merged.push({ ...row, tag: "Needs you" });
+    });
+    $("mgmt").innerHTML = merged.length
+      ? merged.map((row) => `<div class="card"><span class="pill you">${esc(row.tag)}</span>
+          <strong>${esc(row.demo_label || row.lead_id)}</strong>
+          <div class="meta">${esc(((row.reasons || []).join(", ")) || ((row.aging || {}).words || ""))}</div></div>`).join("")
+      : emptyNext(empties.mgmt) || `<p class="note">Nothing waiting.</p>`;
+
     const leads = data.leads || [];
     $("board").innerHTML = leads.length
-      ? leads.map((lead) => cardHtml(lead, seat.can_close === true)).join("")
-      : `<p class="note">No Habitat leads on this board.</p>`;
+      ? leads.map((lead) => cardHtml(lead, actions, terms)).join("")
+      : emptyNext(empties.leads) || `<p class="note">No Habitat leads on this board.</p>`;
+
     const kinds = (data.framework && data.framework.kinds) || [];
-    $("framework").innerHTML = `<div class="banner">${esc((data.framework || {}).why || "")}</div>` + kinds.map((k) => `<div class="card"><strong>${esc(k.label)}</strong> <span class="pill">${esc(k.slot)}</span><div class="meta">${esc(k.why)}</div></div>`).join("");
-    const items = (data.publish_gate && data.publish_gate.items) || [];
+    $("framework").innerHTML = `<div class="banner">${esc((data.framework || {}).why || "")}</div>`
+      + kinds.map((k) => `<div class="card"><strong>${esc(k.label)}</strong>
+        <div class="meta">${esc(k.why)}</div></div>`).join("");
+
+    const cv = data.client_visibility || {};
+    $("clientvis").innerHTML = emptyNext(empties.client_visibility)
+      || `<div class="banner">${esc(cv.why || "Client visibility empty.")}</div>
+         <div class="card"><div class="meta">Empty is not live profitability.</div></div>`;
+
+    const items = ((data.content_work && data.content_work.items) || (data.publish_gate && data.publish_gate.items) || []);
     $("gates").innerHTML = items.length
-      ? items.map((item) => `<div class="card"><strong>${esc(item.title_slug || item.slot_id)}</strong> <span class="pill">${esc(item.gate_stage)}</span><div class="meta">${esc(item.reason || "")} · Metricool write off</div></div>`).join("")
+      ? items.map((item) => `<div class="card"><strong>${esc(item.title_slug || item.slot_id)}</strong>
+          <span class="pill">${esc(item.gate_stage)}</span>
+          <div class="meta">${esc(item.reason || "")}</div></div>`).join("")
       : `<p class="note">No Habitat planner rows to read.</p>`;
-    const perms = data.permissions || [];
-    $("seats").innerHTML = perms.map((p) => `<div class="card"><strong>${esc(p.seat)}</strong> <span class="pill">${esc(p.person_id)}</span><div class="meta">Lifecycle ${esc((p.lifecycle || []).join(", "))} · close ${p.can_close ? "yes" : "no"}</div></div>`).join("");
+
+    const perf = data.performance || {};
+    $("perf").innerHTML = empties.performance
+      ? emptyNext(empties.performance)
+      : `<div class="card"><strong>Habitat performance</strong>
+          <span class="pill">${perf.available ? "available" : "empty"}</span>
+          <div class="meta">${esc(perf.why || "")}</div>
+          <div class="meta">Metricool write stays off. Empty is not zero.</div></div>`;
+
+    const heh = sr.history_evidence_handover || {};
+    const hist = heh.history || [];
+    let hehHtml = "";
+    if (hist.length) {
+      hehHtml += `<ul class="hist">${hist.map((h) =>
+        `<li>${h.when ? `<span class="meta">${esc(h.when)}</span> ` : ""}${esc(h.sentence)}</li>`
+      ).join("")}</ul>`;
+      hehHtml += `<p class="meta">${esc(String(heh.evidence_count || 0))} evidence row(s)</p>`;
+    } else {
+      hehHtml += emptyNext(heh.history_empty_state) || `<p class="note">No history yet.</p>`;
+    }
+    const hand = heh.handover || {};
+    if (hand.empty) {
+      hehHtml += `<h2>Handover</h2>` + (emptyNext(hand.empty_state) || `<p class="note">${esc(hand.why || "")}</p>`);
+    } else if ((hand.items || []).length) {
+      hehHtml += `<h2>Handover</h2>` + (hand.items || []).map((row) =>
+        `<div class="card"><strong>${esc(row.label || row.kind || "Handover")}</strong>
+         <div class="meta">${esc(row.note || "")}</div></div>`
+      ).join("");
+    }
+    $("heh").innerHTML = hehHtml;
+
+    $("honesty").textContent =
+      "Bound beta-ggv-ops-safe · loop beta-ggv-loop-safe. Beta only. Not PROVEN. Not READY. Closed is not a sale. Performance is a DERIVE read. Operator depth records next step/note/ownership touch only — no Metricool, Klaviyo, or external CRM write. Empty pipeline is not live.";
+
     document.querySelectorAll("button.move").forEach((btn) => {
-      btn.addEventListener("click", () => move(btn.closest("article"), seat));
+      btn.addEventListener("click", () => move(btn.closest("article")));
+    });
+    document.querySelectorAll("button.identity").forEach((btn) => {
+      btn.addEventListener("click", () => loopPost(btn.closest("article"), "identity-contact", {
+        note: btn.closest("article").querySelector(".idnote").value,
+      }));
+    });
+    document.querySelectorAll("button.qualify").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const a = btn.closest("article");
+        loopPost(a, "qualify", {
+          decision: a.querySelector(".qual").value,
+          note: a.querySelector(".qualnote").value,
+        });
+      });
+    });
+    document.querySelectorAll("button.assign").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const a = btn.closest("article");
+        loopPost(a, "assign", { owner_person_id: a.querySelector(".owner").value });
+      });
+    });
+    document.querySelectorAll("button.engagebtn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const a = btn.closest("article");
+        loopPost(a, "engagement", {
+          kind: a.querySelector(".engage").value,
+          note: a.querySelector(".engagenote").value,
+        });
+      });
+    });
+    document.querySelectorAll("button.mgmt").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const a = btn.closest("article");
+        loopPost(a, "mgmt-exception", { reason: a.querySelector(".mgmtreason").value });
+      });
+    });
+    document.querySelectorAll("button.opnextbtn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const a = btn.closest("article");
+        operatorAction(a, "next_action", a.querySelector(".opnext").value);
+      });
+    });
+    document.querySelectorAll("button.opnotebtn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const a = btn.closest("article");
+        operatorAction(a, "note", a.querySelector(".opnote").value);
+      });
+    });
+    document.querySelectorAll("button.optouch").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const a = btn.closest("article");
+        operatorAction(a, "ownership_touch", (a.querySelector(".opnote") || {}).value || "");
+      });
+    });
+    document.querySelectorAll("button.opdetail").forEach((btn) => {
+      btn.addEventListener("click", () => openDetail(btn.closest("article")));
     });
   }
 
-  async function move(article, seat) {
+  async function paintOperatorDepth() {
+    const box = $("operatorDepth");
+    if (!box) return;
+    try {
+      const depth = await api("/api/ggv/ops-pack/operator-depth");
+      const rbac = depth.rbac || {};
+      const speed = depth.speed_consequence || {};
+      const pipe = depth.pipeline_consequence || {};
+      let html = `<div class="card">
+        <div class="meta">RBAC ${esc(rbac.role_id || "GGV staff")} · lead operator ${rbac.can_lead_operator ? "yes" : "no"} · live Habitat commission no</div>
+        <div class="meta">${esc(depth.why || "")}</div>
+        <div class="meta">Speed waiting: ${esc(String(speed.waiting_count || 0))} · Pipeline open missing next: ${esc(String(pipe.missing_next_action || 0))}</div>
+      </div>`;
+      const cands = depth.lead_candidates || [];
+      if (!cands.length) {
+        html += `<p class="note">${esc(speed.empty_message || pipe.empty_message || "No open Habitat leads for operator depth.")}</p>`;
+      } else {
+        html += cands.slice(0, 6).map((row) =>
+          `<div class="card"><strong>${esc(row.demo_label || row.lead_id)}</strong>
+            <span class="pill">${esc(humanLife(row.wolf_lifecycle))}</span>
+            <div class="meta">${esc(humanPerson(row.owner))} · ${esc(((row.speed || {}).words) || "")}</div>
+            <div class="meta">Next: ${esc(row.recorded_next_action || ((row.loop_next_action || {}).label) || "none")}</div>
+            <div class="empty-next"><a class="act" href="${esc(row.href || "#loop")}">Open lead</a></div>
+          </div>`
+        ).join("");
+      }
+      box.innerHTML = html;
+    } catch (err) {
+      box.innerHTML = `<p class="err">${esc(err.message || "Operator depth not loaded.")}</p>`;
+    }
+  }
+
+  async function operatorAction(article, kind, note) {
+    const msg = article.querySelector(".rowmsg");
+    msg.className = "meta rowmsg";
+    try {
+      await api("/api/ggv/ops-pack/leads/" + encodeURIComponent(article.dataset.lead) + "/operator-action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ kind: kind, note: note || "" }),
+      });
+      await reload();
+      $("msg").className = "ok";
+      $("msg").textContent = "Recorded. Speed/pipeline refreshed. External CRM not written.";
+    } catch (err) {
+      msg.className = "err rowmsg";
+      msg.textContent = err.message;
+    }
+  }
+
+  async function openDetail(article) {
+    const msg = article.querySelector(".rowmsg");
+    msg.className = "meta rowmsg";
+    try {
+      const detail = await api("/api/ggv/ops-pack/leads/" + encodeURIComponent(article.dataset.lead) + "/operator");
+      const lead = detail.lead || {};
+      const pipe = detail.pipeline_consequence || {};
+      msg.className = "ok rowmsg";
+      msg.textContent = "Detail · next " + (lead.recorded_next_action || "none")
+        + " · pipeline rows " + (pipe.count || 0)
+        + " · CRM write no";
+      if (detail.href) location.hash = detail.href.split("#")[1] || "";
+    } catch (err) {
+      msg.className = "err rowmsg";
+      msg.textContent = err.message;
+    }
+  }
+
+  async function reload() {
+    const data = await api("/api/ggv/ops-pack");
+    paint(data);
+    await paintOperatorDepth();
+  }
+
+  async function move(article) {
     const msg = article.querySelector(".rowmsg");
     const next = article.querySelector(".next").value.trim();
     const stage = article.querySelector(".stage").value;
     msg.className = "meta rowmsg";
     if (!next) {
       msg.className = "err rowmsg";
-      msg.textContent = "A next action is required.";
+      msg.textContent = "A next step is required.";
       return;
     }
     try {
@@ -135,20 +527,40 @@
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ wolf_stage: stage, next_action: next }),
       });
-      const data = await api("/api/ggv/ops-pack");
-      paint(data);
+      await reload();
       $("msg").className = "ok";
       $("msg").textContent = stage === "CLOSED"
-        ? "Lifecycle updated. Closed is not a sale."
-        : "Lifecycle updated.";
+        ? "Updated. Closed is not a sale."
+        : "Updated.";
     } catch (err) {
       msg.className = "err rowmsg";
       msg.textContent = err.message;
     }
   }
 
-  api("/api/ggv/ops-pack").then(paint).catch((err) => {
-    $("who").textContent = "Cannot open the pack.";
+  async function loopPost(article, action, body) {
+    const msg = article.querySelector(".rowmsg");
+    msg.className = "meta rowmsg";
+    try {
+      await api("/api/ggv/ops-pack/leads/" + encodeURIComponent(article.dataset.lead) + "/" + action, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(body || {}),
+      });
+      await reload();
+      $("msg").className = "ok";
+      $("msg").textContent = "Recorded. External CRM not written.";
+    } catch (err) {
+      msg.className = "err rowmsg";
+      msg.textContent = err.message;
+    }
+  }
+
+  api("/api/ggv/ops-pack").then((data) => {
+    paint(data);
+    return paintOperatorDepth();
+  }).catch((err) => {
+    $("who").textContent = "Cannot open the desk.";
     $("msg").className = "err";
     $("msg").textContent = err.message;
   });
