@@ -33405,11 +33405,17 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "note": identity.get("note"),
         })
 
-    def _get_core_entities(self) -> None:
+    def _require_org_entity_read(self) -> dict | None:
+        """Identity plus organisation.entity.read. Sends 403 and returns None on deny.
+
+        Same gate as the entity list. The actor is person_id plus assignment.
+        A display name is not the allow reason. Missing rows are checked only
+        after this gate, so an unsigned caller does not learn whether an id exists.
+        """
         identity = self._resolve_identity()
         if not identity.get("ok"):
-            self._send_identity_deny(identity)
-            return
+            self._send_identity_deny(identity, required_permission="organisation.entity.read")
+            return None
         person_id = identity.get("person_id")
         if not person_id or not _rbac.can(
             person_id, "organisation.entity.read", _rbac.default_content_target()
@@ -33421,10 +33427,17 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "identity_assurance": identity.get("identity_assurance"),
                 "real_authentication": identity.get("real_authentication"),
             }, status=403)
+            return None
+        return identity
+
+    def _get_core_entities(self) -> None:
+        if self._require_org_entity_read() is None:
             return
         self._send_json({"ok": True, "entities": _org.list_entities()})
 
     def _get_core_entity(self, entity_id: str) -> None:
+        if self._require_org_entity_read() is None:
+            return
         ent = _org.get_entity(entity_id)
         if not ent:
             self._send_json({"ok": False, "error": "not_found", "entity_id": entity_id}, status=404)
@@ -33432,6 +33445,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
         self._send_json({"ok": True, "entity": ent})
 
     def _get_core_entity_brands(self, entity_id: str) -> None:
+        if self._require_org_entity_read() is None:
+            return
         if not _org.get_entity(entity_id):
             self._send_json({"ok": False, "error": "not_found", "entity_id": entity_id}, status=404)
             return
@@ -33442,6 +33457,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
         })
 
     def _get_core_entity_locations(self, entity_id: str) -> None:
+        if self._require_org_entity_read() is None:
+            return
         if not _org.get_entity(entity_id):
             self._send_json({"ok": False, "error": "not_found", "entity_id": entity_id}, status=404)
             return
@@ -33452,6 +33469,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
         })
 
     def _get_core_entity_departments(self, entity_id: str) -> None:
+        if self._require_org_entity_read() is None:
+            return
         if not _org.get_entity(entity_id):
             self._send_json({"ok": False, "error": "not_found", "entity_id": entity_id}, status=404)
             return
@@ -33462,6 +33481,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
         })
 
     def _get_core_brand(self, brand_id: str) -> None:
+        if self._require_org_entity_read() is None:
+            return
         brand = _org.get_brand(brand_id)
         if not brand:
             self._send_json({"ok": False, "error": "not_found", "brand_id": brand_id}, status=404)

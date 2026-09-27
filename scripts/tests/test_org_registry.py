@@ -2,7 +2,6 @@
 """Organisation Registry acceptance tests — Beta only."""
 from __future__ import annotations
 
-import json
 import sqlite3
 import sys
 import urllib.error
@@ -139,18 +138,27 @@ def main() -> int:
     check("get_brand BZG-UMA", org.get_brand("BZG-UMA")["entity_id"] == "ENT-BZG")
     check("get_brand invalid None", org.get_brand("NOPE") is None)
 
-    # Optional live API if :8788 up
-    try:
-        with urllib.request.urlopen("http://127.0.0.1:8788/api/core/entities", timeout=2) as r:
-            payload = json.loads(r.read().decode())
-        check("API /api/core/entities ok", payload.get("ok") is True and len(payload.get("entities", [])) == 3)
-        with urllib.request.urlopen("http://127.0.0.1:8788/api/core/entities/ENT-NOPE", timeout=2) as r:
-            pass
-        check("API invalid entity 404", False, "expected 404")
-    except urllib.error.HTTPError as e:
-        check("API invalid entity 404", e.code == 404)
-    except Exception as e:
-        check("API skip (serve not required for unit layer)", True, f"skipped: {e}")
+    # Live origin, unsigned. A 200 here is not the registry prove.
+    def _live_status(path: str) -> int:
+        try:
+            with urllib.request.urlopen("http://127.0.0.1:8788" + path, timeout=2) as r:
+                return int(r.status)
+        except urllib.error.HTTPError as e:
+            return int(e.code)
+        except Exception:
+            return 0
+
+    list_status = _live_status("/api/core/entities")
+    nope_status = _live_status("/api/core/entities/ENT-NOPE")
+    if list_status == 0 and nope_status == 0:
+        check("API skip (serve not required for unit layer)", True, "skipped")
+    else:
+        check("unsigned /api/core/entities fail-closed", list_status == 403, str(list_status))
+        check(
+            "unsigned /api/core/entities/ENT-NOPE fail-closed",
+            nope_status == 403,
+            str(nope_status),
+        )
 
     # Content brands API still works if serve up
     try:
