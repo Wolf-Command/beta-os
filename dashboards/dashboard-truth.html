@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Data truth · Beta</title>
+<link rel="stylesheet" href="/wolf-tokens.css" />
+<link rel="stylesheet" href="/assets/wolf-truth.css?v=20260927-w3p4" />
+<style>
+  body {
+    margin: 0 auto;
+    max-width: 720px;
+    padding: 16px 16px 72px;
+    background: var(--bg, #08171a);
+    color: var(--text, #eaf3f2);
+    font-family: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  h1 { font-size: 1.35rem; margin: 0 0 6px; }
+  .lede { color: var(--muted, #8aa6a6); font-size: 0.9rem; line-height: 1.4; }
+  ul.rules { padding-left: 18px; color: var(--muted, #8aa6a6); font-size: 0.85rem; }
+  @media (max-width: 860px) {
+    body { padding: 12px 12px 72px; max-width: 100%; }
+  }
+</style>
+</head>
+<body data-wolf-page-type="DASHBOARD" data-wolf-shell="global" data-wolf-org="WOLF/GROUP">
+  <h1>Data truth</h1>
+  <p class="lede">Where a fact comes from, and whether it is current. Stale is not current. Empty is not unknown. An uncommissioned connector says so.</p>
+  <ul class="rules">
+    <li>CLAIMED is not VERIFIED</li>
+    <li>SOURCE FOUND is not AUTHORITATIVE</li>
+    <li>EMPTY is not UNKNOWN</li>
+    <li>HISTORICAL is not CURRENT</li>
+    <li>ESTIMATE is not ACTUAL</li>
+    <li>DESIGNED is not BUILT is not TESTED is not LIVE</li>
+  </ul>
+  <div id="wolf-truth" data-wolf-truth data-mode="registry" data-surface="empire"></div>
+  <noscript><p class="wolf-error" data-state="error">This page needs a browser that can load the source register. Nothing was invented.</p></noscript>
+<script src="/assets/wolf-truth.js?v=20260927-w3p4"></script>
+</body>
+</html>

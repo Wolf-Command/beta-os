@@ -88,6 +88,7 @@ from core import intel_eval_cost as _intel_cost
 from core import intel_approve_to_rule as _intel_rule
 from core import lead_spine as _lead_spine
 from core import integration_health as _integration_health
+from core import dashboard_truth as _dashboard_truth
 from core import tech_capability_registry as _tech_registry
 from core import sop_factory as _sop
 from core import strat_12wy_prove as _strat_12wy
@@ -1721,6 +1722,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/integration-health":
             self._integration_health_get()
             return
+        if path == "/api/dashboard-truth":
+            self._dashboard_truth_get()
+            return
+        if path == "/api/dashboard-truth/stamp":
+            self._dashboard_truth_stamp(qs)
+            return
         # CAP-INTG-06 Tech & Capability Registry. Owner read. Writes refused.
         if path == "/api/tech-registry":
             self._tech_registry_get(qs)
@@ -2819,6 +2826,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._integration_health_page()
             return
         elif path in (
+            "/dashboard-truth",
+            "/dashboard-truth/",
+            "/dashboard-truth.html",
+            "/dashboards/dashboard-truth.html",
+        ):
+            self._dashboard_truth_page()
+            return
+        elif path in (
             "/tech-registry",
             "/tech-registry/",
             "/tech-registry.html",
@@ -3284,6 +3299,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = urlparse(self.path).path
+        if path == "/api/dashboard-truth" or path.startswith("/api/dashboard-truth/"):
+            self._dashboard_truth_write_refused()
+            return
         if path == "/api/owner/empire-pack" or path.startswith("/api/owner/empire-pack/"):
             self._owner_empire_write_refused(path)
             return
@@ -3820,6 +3838,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_PATCH(self) -> None:
         path = urlparse(self.path).path
+        if path == "/api/dashboard-truth" or path.startswith("/api/dashboard-truth/"):
+            self._dashboard_truth_write_refused()
+            return
         if path == "/api/owner/empire-pack" or path.startswith("/api/owner/empire-pack/"):
             self._owner_empire_write_refused(path)
             return
@@ -4244,6 +4265,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_PUT(self) -> None:
         path = urlparse(self.path).path
+        if path == "/api/dashboard-truth" or path.startswith("/api/dashboard-truth/"):
+            self._dashboard_truth_write_refused()
+            return
         if path == "/api/owner/empire-pack" or path.startswith("/api/owner/empire-pack/"):
             self._owner_empire_write_refused(path)
             return
@@ -5441,6 +5465,156 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
+
+    def _dashboard_truth_denied(self, message: str) -> None:
+        self._send_json(
+            {
+                "ok": False,
+                "error": "forbidden",
+                "message": message,
+                "ui": {
+                    "component": "permission-denied",
+                    "message": "You do not have access to this.",
+                },
+                "staff_ready": False,
+                "human_commissioned": False,
+                "external_writes": False,
+                "ledger_write": False,
+            },
+            status=403,
+        )
+
+    def _require_dashboard_truth_owner(self) -> dict | None:
+        """Owner register only. Same person gate as Integration Health."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._dashboard_truth_denied(identity.get("message") or "You do not have access to this.")
+            return None
+        person_id = identity.get("person_id")
+        if person_id != _progress.PERS_MATT:
+            self._dashboard_truth_denied("Data truth register is Owner only.")
+            return None
+        subject = identity.get("permission_subject") or identity.get("email")
+        if subject and not _wi.has_permission(subject, "progress.read"):
+            self._dashboard_truth_denied("Data truth register is Owner only.")
+            return None
+        return identity
+
+    def _dashboard_truth_page(self) -> None:
+        identity = self._require_dashboard_truth_owner()
+        if identity is None:
+            return
+        page = DASHBOARDS / "dashboard-truth.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "Data truth page is missing.",
+                    "ui": {"component": "error", "message": "This could not be loaded. Nothing was invented."},
+                },
+                status=500,
+            )
+            return
+        self._send_html_shell(page.read_bytes(), rel="dashboard-truth.html")
+
+    def _dashboard_truth_get(self) -> None:
+        identity = self._require_dashboard_truth_owner()
+        if identity is None:
+            return
+        try:
+            report = _dashboard_truth.source_registry()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "read_failed",
+                    "message": type(exc).__name__,
+                    "ui": {"component": "error", "message": "This could not be loaded. Nothing was invented."},
+                    "external_writes": False,
+                    "ledger_write": False,
+                },
+                status=500,
+            )
+            return
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _dashboard_truth_stamp(self, qs: dict) -> None:
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._dashboard_truth_denied(identity.get("message") or "You do not have access to this.")
+            return
+        surface = ((qs.get("surface") or ["my-work"])[0] or "my-work").strip().lower()
+        if surface not in _dashboard_truth.SURFACES:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "unknown_surface",
+                    "message": "That surface is not in the truth register.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=400,
+            )
+            return
+        who = _wolf_shell.whoami_from_identity(identity)
+        hrefs = set(_wolf_shell.filter_hrefs(who))
+        owner = identity.get("person_id") == _progress.PERS_MATT
+        allowed = {
+            "my-work": True,
+            "empire": owner,
+            "amg": owner or "/amg-ops-pack" in hrefs,
+            "bzg": owner or "/bzg" in hrefs,
+            "ggv": owner or "/ggv-ops-pack" in hrefs,
+        }
+        if not allowed.get(surface):
+            self._dashboard_truth_denied("You do not have access to this.")
+            return
+        try:
+            payload = _dashboard_truth.stamp(surface)
+        except _dashboard_truth.TruthError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=400,
+            )
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "read_failed",
+                    "message": type(exc).__name__,
+                    "ui": {"component": "error", "message": "This could not be loaded. Nothing was invented."},
+                },
+                status=500,
+            )
+            return
+        payload["person_id"] = identity.get("person_id")
+        self._send_json(payload)
+
+    def _dashboard_truth_write_refused(self) -> None:
+        identity = self._require_dashboard_truth_owner()
+        if identity is None:
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "Data truth is read-only. No external writes.",
+                "external_writes": False,
+                "ledger_write": False,
+                "staff_ready": False,
+                "human_commissioned": False,
+            },
+            status=405,
+        )
 
     def _integration_health_write_refused(self) -> None:
         identity = self._require_integration_health_owner()

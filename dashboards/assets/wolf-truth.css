@@ -1,0 +1,65 @@
+/**
+ * Shared truth components. States: LIVE CURRENT STALE UNKNOWN UNAVAILABLE NEEDS REVIEW.
+ * Header and nav stay on #wolfnav. This file is cards, status, empty, error, denied.
+ */
+.wolf-truth {
+  margin: 12px 0 16px;
+  color: var(--text, #eaf3f2);
+  font-family: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+}
+.wolf-truth h2,
+.wolf-card h3 {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted, #8aa6a6);
+}
+.wolf-card {
+  border: 1px solid var(--border, #1e3f44);
+  background: var(--panel, #0e2125);
+  border-radius: var(--radius, 14px);
+  padding: 12px;
+  margin-top: 8px;
+}
+.wolf-state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border, #1e3f44);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.wolf-state-live { color: var(--ok, #3fbf86); border-color: var(--ok, #3fbf86); }
+.wolf-state-current { color: var(--text, #eaf3f2); }
+.wolf-state-stale { color: var(--stale, #b8893f); border-color: var(--stale, #b8893f); }
+.wolf-state-unknown { color: var(--muted, #8aa6a6); }
+.wolf-state-unavailable { color: var(--bad, #e5683f); border-color: var(--bad, #e5683f); }
+.wolf-state-needs-review { color: var(--warn, #d4af6a); border-color: var(--warn, #d4af6a); }
+.wolf-empty,
+.wolf-error,
+.wolf-denied {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border, #1e3f44);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+.wolf-empty { color: var(--muted, #8aa6a6); }
+.wolf-error,
+.wolf-denied { color: var(--bad, #e5683f); border-color: var(--bad, #e5683f); }
+.wolf-truth a {
+  color: var(--gold-l, #d4af6a);
+  min-height: var(--wolf-touch-min, 44px);
+  display: inline-flex;
+  align-items: center;
+}
+.wolf-truth p { margin: 6px 0 0; font-size: 0.88rem; line-height: 1.4; }
+@media (max-width: 860px) {
+  .wolf-truth { max-width: 100%; }
+  .wolf-card { min-height: var(--wolf-touch-min, 44px); }
+}
