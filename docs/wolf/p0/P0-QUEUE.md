@@ -30,7 +30,7 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 - External dependency: none.
 - Prerequisite: none.
 - Closure test: the search names the store, with no secret value in the note. The ledger stays SPECIFIED. A passing repo-check test does not close this item.
-- Target: BLOCKED_OWNER. Status: BLOCKED_OWNER.
+- Target: BLOCKED_OWNER. Status: BLOCKED_OWNER. Commit: `44cd296`.
 
 ## 3. CAP-MSC-02 — Access & Cloudflare Posture
 

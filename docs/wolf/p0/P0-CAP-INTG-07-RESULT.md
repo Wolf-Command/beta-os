@@ -26,6 +26,8 @@ The Beta skeleton was left empty. No slot was filled.
 
 ## EVIDENCE
 
+Commit `44cd296`.
+
 Ledger file `state/model-c-baseline-assessments.json` was not edited. SHA256 `852f267a4bc71fe86f8972d077ec1c83f93a2de64735a2b2c8713488ddea3305`. `CAP-INTG-07` is still `SPECIFIED`. Row count 77. Score was not raised. `staff_ready` and `human_commissioned` stay false. Completion row `CR-273f30371bd52c8a` was not resolved.
 
 ```
