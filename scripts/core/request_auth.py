@@ -70,6 +70,22 @@ def team_domain() -> str:
     return cf_access._norm_domain(raw) if raw else cf_access.DEFAULT_TEAM_DOMAIN
 
 
+# Public Beta hostname. Not a secret. Sign-out sends the browser here so
+# Cloudflare clears the application authorization cookie.
+BETA_PUBLIC_HOST = "beta.wolfcommand.net"
+
+
+def access_logout_url() -> str:
+    """Cloudflare Access end-user logout for the Beta application.
+
+    Documented at session management: visiting <app>/cdn-cgi/access/logout
+    revokes the Access session and clears that host's authorization cookie.
+    The next request to a protected route has no cookie, so Access denies it.
+    The URL is fixed. It does not read a query, a name, or a token.
+    """
+    return f"https://{BETA_PUBLIC_HOST}/cdn-cgi/access/logout"
+
+
 def access_audience() -> str:
     _load_auth_env()
     return (os.environ.get("BETA_CF_ACCESS_AUD") or "").strip()
@@ -353,6 +369,7 @@ def auth_mode_payload() -> dict[str, Any]:
         "development_assertion_allowed": mode == AUTH_MODE_DEVELOPMENT,
         "cloudflare_aud_configured": bool(access_audience()),
         "team_domain": team_domain(),
+        "access_logout_url": access_logout_url(),
         "identity_assurance_default": (
             _identity.IDENTITY_ASSURANCE_DEVELOPMENT
             if mode == AUTH_MODE_DEVELOPMENT

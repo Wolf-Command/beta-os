@@ -14,6 +14,7 @@ import sys
 import tempfile
 import threading
 import time
+from http.client import HTTPConnection
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError
@@ -334,10 +335,71 @@ def main() -> int:
                             data = {"raw": body}
                         return e.code, data
 
+                def call_noredir(path, headers=None):
+                    conn = HTTPConnection("127.0.0.1", port, timeout=8)
+                    try:
+                        conn.request("GET", path, headers=headers or {})
+                        resp = conn.getresponse()
+                        loc = resp.getheader("Location")
+                        set_cookie = resp.getheader("Set-Cookie")
+                        raw = resp.read()
+                        return resp.status, loc, set_cookie, raw
+                    finally:
+                        conn.close()
+
+                logout = ra.access_logout_url()
+                check(
+                    "logout url is the Beta application Access logout",
+                    logout == "https://beta.wolfcommand.net/cdn-cgi/access/logout",
+                )
+
                 st_code, data = call("/api/core/me")
                 check(
                     "local origin without JWT DENY",
                     st_code == 403 and data.get("error") in ("missing_auth", "auth_misconfigured"),
+                    str(data.get("error")),
+                )
+
+                so_code, so_loc, so_cookie, so_body = call_noredir("/signout")
+                check(
+                    "unsigned /signout redirects to Access logout",
+                    so_code == 302 and so_loc == logout and so_cookie is None and so_body == b"",
+                    f"{so_code} {so_loc}",
+                )
+                so_code, so_loc, _, _ = call_noredir("/signout/")
+                check("unsigned /signout/ same logout", so_code == 302 and so_loc == logout)
+                so_code, so_loc, _, _ = call_noredir(
+                    "/signout?next=https://evil.example/phish",
+                    headers={"X-Wolf-Subject": MATT, "Cf-Access-Authenticated-User-Email": MATT},
+                )
+                check(
+                    "sign-out ignores subject, email header, and next",
+                    so_code == 302 and so_loc == logout,
+                    str(so_loc),
+                )
+                so_code, so_loc, _, _ = call_noredir(
+                    "/signout",
+                    headers={"Cf-Access-Jwt-Assertion": "a.b.c"},
+                )
+                check(
+                    "bad JWT /signout still logout, not an allow",
+                    so_code == 302 and so_loc == logout,
+                )
+                so_code, so_loc, _, _ = call_noredir(
+                    "/signout",
+                    headers={"Cf-Access-Jwt-Assertion": matt_tok},
+                )
+                check(
+                    "valid test JWT /signout is logout, not a private page",
+                    so_code == 302 and so_loc == logout and MATT not in (so_loc or ""),
+                )
+                st_code, data = call(
+                    "/api/core/me",
+                    headers={"Cf-Access-Jwt-Assertion": "a.b.c"},
+                )
+                check(
+                    "bad JWT /api/core/me stays denied",
+                    st_code == 403 and data.get("error") in ("invalid_token", "missing_auth"),
                     str(data.get("error")),
                 )
 

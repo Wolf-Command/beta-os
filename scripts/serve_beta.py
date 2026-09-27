@@ -1631,6 +1631,26 @@ class BetaHandler(SimpleHTTPRequestHandler):
     def _send_err(self, status: int, message: str) -> None:
         self._send_json({"ok": False, "error": message}, status=status)
 
+    def _access_signout(self) -> None:
+        """Redirect to Cloudflare Access logout. Identity is not read.
+
+        The origin holds no session cookie. Ending the session is the Access
+        logout URL, which clears the application authorization cookie. A name,
+        an email header, or a JWT does not choose the destination.
+        """
+        self.send_response(302)
+        self.send_header("Location", _request_auth.access_logout_url())
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def do_HEAD(self) -> None:
+        path = urlparse(self.path).path
+        if path in ("/signout", "/signout/"):
+            self._access_signout()
+            return
+        super().do_HEAD()
+
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         path = parsed.path
@@ -1642,6 +1662,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/health":
             self._send_json({"ok": True, "root": "beta-os", "planner": "sqlite"})
+            return
+
+        if path in ("/signout", "/signout/"):
+            self._access_signout()
             return
 
         if self._accountant_scope_wall():
