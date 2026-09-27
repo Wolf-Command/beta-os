@@ -6,7 +6,7 @@ Pack S2. Owner brief 27 Sep 2026 16:32 WITA. This is the one execution queue. Ru
 
 Register count is **12**. `build_war_room()` in S1 returned P0 12, P1 20, P2 42, P3 3. The closed set is CAP-CORE-01 through CAP-CORE-10, plus CAP-MSC-02 and CAP-INTG-07. There is no thirteenth P0.
 
-CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED after the empty-table deny in commit `fcae665`. CAP-CORE-08 is BLOCKED_OWNER after the self-close deny in commit `e2cab4f`. Live `core_sod_constraints` stayed 0. No finance pack was inserted. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit `99f5a27`. CAP-CORE-06 stays OPEN after the temporary trail in commit `2229b21`. CAP-CORE-07 stays OPEN after the approval-route prove in commit `ab4af72`. CAP-CORE-09 stays OPEN after the gate list in commit `9d0b83c`. Live `core_evidence_records` is 4, not 3. No requirement was inserted. CAP-CORE-03 stays OPEN after the unsigned board deny in commit `5a814fe`. No grant was added. No person was created. CAP-CORE-04 stays OPEN after the unsigned catalog deny in commit `c49237f`. No grant was added. CAP-CORE-10 stays OPEN after the stored-exception read in commit `b0fa859`. Live `core_governance_exceptions` is 3, not 2. All three are REJECTED. No fourth row was inserted. Cadence was not marked done. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
+F2 on 28 Sep 2026 updated `P0-QUEUE.json`. SYSTEM stays 19.65 / 77. Staff ready 0. Human commissioned 0. Operating adoption is not measured. CAP-CORE-02, CAP-CORE-01, CAP-CORE-03, CAP-CORE-04, CAP-CORE-06, and CAP-CORE-10 are READY_FOR_HUMAN. CAP-CORE-07, CAP-CORE-08, and CAP-INTG-07 are BLOCKED_OWNER. CAP-CORE-05 is CLOSED. CAP-MSC-02 and CAP-CORE-09 stay OPEN. The machine half is `docs/wolf/five/F2-CORE-RESULT.md`. The human session is `docs/wolf/five/ONE-WALK.md`. No seated 200 was observed. The sections below are the 27 Sep write-up. Where a status sentence disagrees with the JSON, the JSON is the later status.
 
 Order is the critical path. A prerequisite is another P0 the next bar actually waits on. The catalog records no extra prerequisite inside the kernel, because those rows are already PROVEN or READY. That does not make the deployed observation done.
 
@@ -52,7 +52,7 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 - External dependency: none.
 - Prerequisite: CAP-CORE-02.
 - Closure test: the Beta status under the real session is recorded, including a denial for a person without organisation read. Unsigned stays fail-closed. The unsigned half passed (`SUMMARY pass=123 fail=0`). The seated half is absent, so the row stays OPEN. `test_org_registry.py` is not this closure. It is pass=35 fail=3. The three fails are the pre-existing census checks (brands 12, Habitat present, GGV owns 5). They were not repaired.
-- Target: CLOSED. Status: OPEN. Commit: `99f5a27`. Remaining: the seated read.
+- Target: CLOSED. F2 status: READY_FOR_HUMAN. Commit: `99f5a27`. Remaining: the seated read in `docs/wolf/five/ONE-WALK.md`.
 
 ## 5. CAP-CORE-03 — Role / Position / Assignment
 
@@ -63,7 +63,7 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 - External dependency: none.
 - Prerequisite: CAP-CORE-01, CAP-CORE-02. The seated org read that keeps CAP-CORE-01 OPEN was not used. The critical path records no extra prerequisite.
 - Closure test: Beta shows the stored active assignment and does not show the ended assignment as active. No new person row. Unsigned board stays denied. The unsigned half passed (`SUMMARY pass=172 fail=0`). The seated half is absent, so the row stays OPEN. `test_role_position_assignment.py` is exit 1, pass=33 fail=5. The fails are the pre-existing census checks (positions 12, assignments 10, GGV positions, scope NOT_BUILT, org_scopes present). They were not repaired. The suite's temporary rows were removed. Live assignments stayed 10.
-- Target: CLOSED. Status: OPEN. Commit: `5a814fe`. Remaining: the seated read.
+- Target: CLOSED. F2 status: READY_FOR_HUMAN. Commit: `5a814fe`. Remaining: the seated assignment read in `docs/wolf/five/ONE-WALK.md`.
 
 ## 6. CAP-CORE-04 — Permission & Authority Engine
 
@@ -74,7 +74,7 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 - External dependency: none.
 - Prerequisite: CAP-CORE-03. The seated assignment read that keeps CAP-CORE-03 OPEN was not used. The critical path records no extra prerequisite.
 - Closure test: recorded statuses match the grants already on those assignments. Unsigned stays 403. The unsigned half passed (`SUMMARY pass=116 fail=0`). The seated half is absent, so the row stays OPEN. `test_rbac_permissions.py` is exit 1, pass=39 fail=4. The fails are the pre-existing scope and entity-read checks. They were not repaired. The catalog smoke check passed.
-- Target: CLOSED. Status: OPEN. Commit: `c49237f`. Remaining: the seated read of the four routes.
+- Target: CLOSED. F2 status: READY_FOR_HUMAN. Commit: `c49237f`. Remaining: the seated read of the four routes in `docs/wolf/five/ONE-WALK.md`.
 
 ## 7. CAP-CORE-05 — Authority Limits Evaluator
 
@@ -96,7 +96,7 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 - External dependency: none.
 - Prerequisite: CAP-CORE-02.
 - Closure test: the temporary trail has the stored states, the live work-item count is unchanged, and the Beta read under the real session matches the stored row. The temporary half passed (`SUMMARY pass=48 fail=0`). The live count stayed 0. The seated half is absent, so the row stays OPEN.
-- Target: CLOSED. Status: OPEN. Commit: `2229b21`. Remaining: the seated read of the empty live list.
+- Target: CLOSED. F2 status: READY_FOR_HUMAN. Commit: `2229b21`. Remaining: the seated read of the empty live list in `docs/wolf/five/ONE-WALK.md`.
 
 ## 9. CAP-CORE-07 — Approval Engine
 
@@ -107,7 +107,7 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 - External dependency: none.
 - Prerequisite: CAP-CORE-06. The copy read does not use the work-item trail that keeps CAP-CORE-06 OPEN. The critical path records no extra prerequisite.
 - Closure test: Beta shows the engine, live `core_approval_requests` is still 0, and a pack exists only if Matt authored it. The copy half passed (`SUMMARY pass=56 fail=0`). The live request count stayed 0. The policy count stayed 1. The seated half is absent, so the row stays OPEN. `test_approval_engine.py` is pass=57 fail=3. The fails are the live decision count 6, already recorded in D1. They were not repaired.
-- Target: BLOCKED_OWNER. Status: OPEN. Commit: `ab4af72`. Remaining: the seated read of the empty request list, then Matt's pack decision.
+- Target: BLOCKED_OWNER. F2 status: BLOCKED_OWNER. Commit: `ab4af72`. Remaining: Matt's wide policy decision. The seated empty-list read is in `docs/wolf/five/ONE-WALK.md`. No policy row was inserted.
 
 ## 10. CAP-CORE-08 — Segregation of Duties
 
@@ -129,7 +129,7 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 - External dependency: none.
 - Prerequisite: CAP-CORE-07. The critical path records no extra prerequisite. This list does not use the approval seated read.
 - Closure test: every material action is named as gated or not gated, and the live evidence count is still 3. An ungated action stays listed as open. The list half passed (`SUMMARY pass=69 fail=0`) against the count of 4. The count half failed. The ledger was not raised.
-- Target: CLOSED. Status: OPEN. Commit: `9d0b83c`. Remaining: the live count is 4, not 3.
+- Target: CLOSED. F2 status: OPEN. Commit: `9d0b83c`. Remaining: six actions stay not gated. The live total is 4. Valid operational is 0. INVALID/TEST is 4. `EVD-50e827bd` stays.
 
 ## 12. CAP-CORE-10 — Exception / Override Governance
 
@@ -140,7 +140,7 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 - External dependency: none.
 - Prerequisite: CAP-CORE-09. The evidence-count gap that keeps CAP-CORE-09 OPEN was not used. The critical path records no extra prerequisite.
 - Closure test: Beta shows the stored exceptions under a real session, the live count is still 2, and the cadence is not marked done without a person having run it. The read half passed (`SUMMARY pass=47 fail=0`). The live count is 3. The seated half is absent, so the row stays OPEN.
-- Target: READY_FOR_HUMAN. Status: OPEN. Commit: `b0fa859`. Remaining: the seated read, the count of 3, and the cadence.
+- Target: READY_FOR_HUMAN. F2 status: READY_FOR_HUMAN. Commit: `b0fa859`. Remaining: the seated read in `docs/wolf/five/ONE-WALK.md`, and the cadence. The stored count is 3. Valid operational is 0. INVALID/TEST is 3. Cadence is not done.
 
 ## Cheap independent P1
 
