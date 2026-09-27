@@ -55,5 +55,33 @@ dashboards/*.bak
 
 # Build-factory runtime state (ACTIVE runs / logs)
 state/build-factory/
+state/ggv-finance-nota/blobs/
 state/content-thumbs/
 state/commissioning/cf-sim-public.jwk.json
+
+# Watch tick stamps
+LAST-WATCH-TICK.txt
+
+# Runtime SQLite backups
+state/backups/
+
+# Generated packs
+state/*.tgz
+
+# Generated delivery screenshots
+docs/deliveries/**/*.png
+docs/deliveries/*.png
+
+# NAS estate runtime dumps (large caches, pid/progress stamps, scan checkpoint)
+state/nas-estate/*.jsonl
+state/nas-estate/*.tsv
+state/nas-estate/*.status
+state/nas-estate/progress.txt
+state/nas-estate/discovery.json
+state/nas-estate/index-checkpoint.json
+
+# Append-only operator event logs
+state/**/*operator-events.jsonl
+
+# Generated NAS index sample dumps
+state/nas-index/sample-*
