@@ -114,6 +114,9 @@ Core hierarchy: Group -> Legal Entity -> Brand / Business Unit -> Location -> De
 
 # 6. Identity, Access and User Experience
 
+> **LOCK 2026-09-24 (ADD-only):** People Are Not Roles — `docs/RULE-Wolf-People-Are-Not-Roles-2026-09-24.md`. Chain: PERSON → ROLE/POSITION → ASSIGNMENT → SCOPE → PERMISSION → AUDIENCE. No workflow/permission/dashboard may depend on a person's name when it means their job.
+
+
 - Operational staff generally authenticate with their own personal email/identity; company email is not required merely to access Wolf.
 
 - Generic role/business email addresses remain where customers/vendors need them. Shareholders may retain named company addresses.

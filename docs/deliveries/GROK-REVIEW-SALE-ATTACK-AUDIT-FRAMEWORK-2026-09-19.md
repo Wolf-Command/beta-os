@@ -57,4 +57,4 @@ Do not false-resolve `CR-c6e1a48e4a3e8a91`. Delivery evidence is the completion 
 Production, CAP PROVEN promotions, live attack / pack fill / buyer grant, Devi human retest (PARKED), Alchemist writes, finance/HR money paths, score gaming, unrelated dirty trees.
 
 ## Mission
-Lane `sale-attack-audit-framework` → COMPLETED at completion commit. Then close_slice → next eligible (`ggv-speed-to-lead-cap-prove`) / mission_continue_if_idle.
+Lane `sale-attack-audit-framework` → COMPLETED at `efe7a05` (`efe7a05dcdf0f00176ffafe175283b635733907c`). Then close_slice → next eligible (`ggv-speed-to-lead-cap-prove`) / mission_continue_if_idle.

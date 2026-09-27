@@ -38,4 +38,4 @@ Do not false-resolve `CR-7a145ad69d8bf3c5`. Delivery evidence is the completion 
 Production, CAP PROVEN promotions, Devi human retest (PARKED), Alchemist writes, finance/HR money paths, score gaming, Progress dashboard as this CAP.
 
 ## Mission
-Lane `strat-radar-cap-prove` → COMPLETED at completion commit (this review). Then close_slice → next eligible `crm-identity-memory-v1`.
+Lane `strat-radar-cap-prove` → COMPLETED at `93dc865` (`93dc8659c26dff791fb0bc73e40a5b4cec94a09b`). Then close_slice → next eligible `crm-identity-memory-v1`.

@@ -1,0 +1,12 @@
+{
+  "breadcrumb_back_up_proof": true,
+  "breadcrumb_back_up_proof_evidence": "test_breadcrumb_direction UP/BACK/HOME",
+  "context_switch_proof": true,
+  "context_switch_proof_evidence": "test_context_switch multi-assignment Matt only",
+  "desktop_png_count": 3,
+  "mobile_png_count": 3,
+  "role_matrix_proof": true,
+  "role_matrix_proof_evidence": "test_role_matrix + live whoami Matt/Devi/Haikal/client/unauth",
+  "url_api_denial_proof": true,
+  "url_api_denial_proof_evidence": "test_http_deny_matrix Progress/API/Integrations/Sale + BU"
+}

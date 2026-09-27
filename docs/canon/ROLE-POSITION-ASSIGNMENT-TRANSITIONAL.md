@@ -39,3 +39,13 @@ Unique index: one `ACTIVE` + `is_primary=1` + `end_at IS NULL` per Position.
 Content Machine permissions remain email-subject based.  
 Resolve chain available: development assertion → AuthIdentity → Person → Assignment → Position → org Role.  
 Permission decisions are **not** yet Role-based.
+
+## LOCK note — 2026-09-24 ~15:44 WITA (ADD-only)
+
+**Owner LOCK: People Are Not Roles.** People occupy roles; roles do not belong to people.  
+Canonical chain: PERSON → ROLE/POSITION → ASSIGNMENT → SCOPE → PERMISSION → AUDIENCE.  
+Governing RULE (do not rewrite this transitional history): `docs/RULE-Wolf-People-Are-Not-Roles-2026-09-24.md`  
+Audit: `docs/deliveries/AUDIT-Wolf-Person-Name-Coupling-2026-09-24.md`  
+Haikal seed remains Video Editor; Creative Director role exists unoccupied — **RECONCILE NEEDED** (do not invent `ROLE-CONTENT-DIRECTOR` / `ROLE-HAIKAL`).  
+Email-subject Content Machine permissions remain transitional until Assignment→Role cutover.
+

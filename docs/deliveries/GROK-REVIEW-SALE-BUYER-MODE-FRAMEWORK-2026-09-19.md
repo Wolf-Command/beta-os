@@ -55,4 +55,4 @@ Do not false-resolve `CR-b428ac5cbc8986b5`. Delivery evidence is the completion 
 Production, CAP PROVEN promotions, live buyer grant/share/export, Devi human retest (PARKED), Alchemist writes, finance/HR money paths, score gaming, unrelated dirty trees.
 
 ## Mission
-Lane `sale-buyer-mode-framework` → COMPLETED at completion commit. Then close_slice → next eligible (`sale-attack-audit-framework`) / mission_continue_if_idle.
+Lane `sale-buyer-mode-framework` → COMPLETED at `3154f15` (`3154f15b946e1f96881acdbaaed117d07a649b9a`). Then close_slice → next eligible (`sale-attack-audit-framework`) / mission_continue_if_idle.
