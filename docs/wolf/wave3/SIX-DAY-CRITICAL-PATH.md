@@ -99,10 +99,10 @@ Production `:8787` is out of this path. Beta `:8788` is the boundary for any dep
 ### 12. CAP-CORE-10 — Exception / Override Governance
 
 - Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
-- Next bar: Operating exception review cadence for READY
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Next bar: Seated read of the three stored exceptions. The Owner Command list is commit b0fa859. Live core_governance_exceptions is 3, not 2. Cadence is not done.
+- Dependency: The queue lists CAP-CORE-09. That evidence-count gap was not used. The critical path records no extra prerequisite.
 - Responsible role: Owner.
-- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- In six days: Owner Command lists the three REJECTED rows. Commit b0fa859. Unsigned callers are 403 on Beta :8788 pid 78725. A seated read was not observed. Ledger stays PROVEN. Do not insert a fourth row. Do not mark the cadence done.
 
 ### 13. CAP-STRAT-02 — Owner Radar / Mission Control
 

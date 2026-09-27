@@ -25,7 +25,7 @@
     "WAITING_EXTERNAL": 0,
     "BLOCKED_OWNER": 2
   },
-  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED. The empty-table deny is commit fcae665. Live org_authority_limits stayed 0. The ledger stays PROVEN. CAP-MSC-02 stays OPEN. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit 99f5a27. CAP-CORE-06 stays OPEN after the temporary trail in commit 2229b21. CAP-CORE-07 stays OPEN after the approval-route prove in commit ab4af72. Live core_approval_requests stayed 0. No policy row was inserted. CAP-CORE-08 is BLOCKED_OWNER. The self-close deny is commit e2cab4f. Live core_sod_constraints stayed 0. No finance pack was inserted. CAP-CORE-09 stays OPEN after the gate list in commit 9d0b83c. Live core_evidence_records is 4, not 3, after test_work_loop.py left an invalidated row. No requirement was inserted. CAP-CORE-03 stays OPEN after the unsigned board deny in commit 5a814fe. No grant was added. No person was created. CAP-CORE-04 stays OPEN after the unsigned catalog deny in commit c49237f. No grant was added. No seated 200 was observed. CAP-CORE-10 stays OPEN without a new slice. Staff ready, human commissioned, and operating adoption stay unset.",
+  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED. The empty-table deny is commit fcae665. Live org_authority_limits stayed 0. The ledger stays PROVEN. CAP-MSC-02 stays OPEN. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit 99f5a27. CAP-CORE-06 stays OPEN after the temporary trail in commit 2229b21. CAP-CORE-07 stays OPEN after the approval-route prove in commit ab4af72. Live core_approval_requests stayed 0. No policy row was inserted. CAP-CORE-08 is BLOCKED_OWNER. The self-close deny is commit e2cab4f. Live core_sod_constraints stayed 0. No finance pack was inserted. CAP-CORE-09 stays OPEN after the gate list in commit 9d0b83c. Live core_evidence_records is 4, not 3, after test_work_loop.py left an invalidated row. No requirement was inserted. CAP-CORE-03 stays OPEN after the unsigned board deny in commit 5a814fe. No grant was added. No person was created. CAP-CORE-04 stays OPEN after the unsigned catalog deny in commit c49237f. No grant was added. No seated 200 was observed. CAP-CORE-10 stays OPEN after the stored-exception read in commit b0fa859. Live core_governance_exceptions is 3, not 2. All three are REJECTED. No fourth row was inserted. Cadence was not marked done. Staff ready, human commissioned, and operating adoption stay unset.",
   "items": [
     {
       "order": 1,
@@ -250,15 +250,22 @@
       "order": 12,
       "id": "CAP-CORE-10",
       "title": "Exception / Override Governance",
-      "current_state": "SYSTEM PROVEN (0.80). test_exception_override.py. Live core_governance_exceptions count is 2. Operating review cadence is the READY bar.",
-      "exact_missing_evidence": "A review cadence for exceptions, and a deployed view of the existing two exceptions. The cadence is not on record. The two rows are not a cadence.",
-      "cursor_work": "After the real session, show the existing exception read on Beta without adding a row. Do not invent a third exception.",
-      "human_work": "The operating review cadence is a person looking at the real exceptions on a repeating basis. That is not commissioning of the capability, and it is not done.",
+      "current_state": "SYSTEM PROVEN (0.80). Commit b0fa859 makes Owner Command list every stored governance exception for GGV, AMG, and BZG. Live core_governance_exceptions is 3, not 2. The ids are GEX-a8165674-68a6-4033-ab5b-d310d7ded0cd, GEX-0973743f-c838-4545-92c5-25fea51f21c8, and GEX-41967006-311f-4ab0-9802-1e6db54ce18e. All three are REJECTED on ENT-GGV. The third timestamp matches the work-loop residue at 2026-09-27T10:06:44Z. The no-delete trigger remains. stored_count is 3. open_count is 0. cadence_done is false. Needs you does not list the rejected rows. On Beta :8788 pid 78725, unsigned, a spoofed email, X-Wolf-Subject, and Cf-Access-Jwt-Assertion a.b.c are 403 on GET /api/owner/command (forbidden) and GET /wolf (missing_auth, or invalid_token for the bad JWT). The public hostname returns 302 to the Access login. No seated 200 was observed. The ledger stays PROVEN. Production pid 15975 was not restarted.",
+      "exact_missing_evidence": "GET /api/owner/command on Beta under a real Cloudflare session, showing these three ids and statuses. The in-process PERS-MATT read is not that status. A development-subject 200 is not that proof. The closure test asked for live count 2. It is 3. Accepting 3 as the count, or authorising a delete past the trigger, was not done. The operating review cadence has not been run by a person.",
+      "cursor_work": "Done for the stored-read slice in commit b0fa859. Do not insert a fourth exception. Do not drop the no-delete trigger. Do not mark cadence_done. Do not raise the ledger. Do not mark READY_FOR_HUMAN from the in-process read.",
+      "human_work": "Matt signs in on https://beta.wolfcommand.net, opens Wolf, and writes down the three exception ids and their statuses. Repeating that look is the cadence. One look is not the cadence, and it is not commissioning.",
+      "remaining": "Seated GET /api/owner/command on Beta under the CAP-CORE-02 session. The stored list is the three REJECTED rows. Live count is 3, not 2. The cadence has not been run. The row stays OPEN.",
       "external_dependency": "none",
       "prerequisite": ["CAP-CORE-09"],
-      "closure_test": "Beta shows the stored exceptions under a real session, live core_governance_exceptions is still 2, and no cadence is marked done without a person having run it.",
+      "prerequisite_note": "The queue lists CAP-CORE-09. The evidence-count gap that keeps CAP-CORE-09 OPEN was not used. The critical path records no extra prerequisite. This slice does not use the evidence gate list.",
+      "closure_test": "Beta shows the stored exceptions under a real session, live core_governance_exceptions is still 2, and no cadence is marked done without a person having run it. The read half passed (SUMMARY pass=47 fail=0). The live count is 3, not 2. The cadence flag is false. The seated half is absent, so the row stays OPEN.",
       "target_final_state": "READY_FOR_HUMAN",
-      "status": "OPEN"
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/p0/P0-CAP-CORE-10-RESULT.md",
+        "scripts/tests/test_cap_core_10_read.py"
+      ],
+      "commit": "b0fa859"
     }
   ],
   "cheap_independent_p1": [

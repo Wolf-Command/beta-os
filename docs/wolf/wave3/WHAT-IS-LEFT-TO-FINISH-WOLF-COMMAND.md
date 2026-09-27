@@ -159,12 +159,12 @@ P0 or P1, and the SYSTEM state is not READY. The next bar is Wolf-side work. Sev
 - What it is: Break-glass logged and reviewable.
 - Why it matters: Wolf cannot enforce or refuse an action without this.
 - Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: Operating exception review cadence for READY
+- Exact remaining work: Seated GET /api/owner/command showing the three stored REJECTED ids. Live core_governance_exceptions is 3, not 2. The list is commit b0fa859. Cadence was not marked done. Ledger stays PROVEN.
 - Work classes: local_deterministic, human_commissioning.
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Dependency: The queue lists CAP-CORE-09. That evidence-count gap was not used. The critical path records no extra prerequisite.
 - Responsible role: Owner.
-- Evidence required to close: Deployed or runtime proof on the intended Beta boundary for READY. A repository test is not a deployed-route test. A human walk is not this bar.
-- Six-day note: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- Evidence required to close: Beta shows the stored exceptions under a real session, and the live count matches the closure figure. The read half passed in commit b0fa859. The count is 3, not 2. A repository test is not a deployed-route test. A human walk is not this bar.
+- Six-day note: The stored list is commit b0fa859. Unsigned callers are 403 on Beta :8788 pid 78725. A seated read was not observed. Do not insert a fourth row. Do not mark the cadence done. Ledger stays PROVEN.
 - Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
 - Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
 
