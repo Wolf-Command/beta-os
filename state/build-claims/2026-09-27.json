@@ -80,6 +80,16 @@
       "at": "2026-09-27T09:20:00Z",
       "tests": "PASS=123 FAIL=0",
       "checked": false
+    },
+    {
+      "id": "p0-s2-cap-core-06-trail-20260927",
+      "claim": "A temporary catalog copy walks one work item OPEN, IN_PROGRESS, BLOCKED, IN_PROGRESS, COMPLETED, VERIFIED, then the copy is removed. Live core_work_items stays 0. Unsigned, a spoofed email, X-Wolf-Subject, and Cf-Access-Jwt-Assertion a.b.c are 403 on GET /api/core/work-items and GET /api/core/work-items/WI-NONE. Unsigned POST /api/core/work-items is 403. CAP-CORE-06 stays PROVEN. CR-3cd31e220f788bc6 and CR-4b78e43ab35126a8 stay OPEN. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false. A seated allow was not observed.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_cap_core_06_trail.py | tail -2; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-CORE-06'][0], len(d))\"; python3 -c \"import sqlite3; c=sqlite3.connect('file:catalog/content_library.sqlite?mode=ro', uri=True); print(c.execute('SELECT COUNT(*) FROM core_work_items').fetchone()[0]); print(' '.join(r[0] for r in c.execute(\\\"SELECT state FROM wolf_completion_items WHERE id IN ('CR-3cd31e220f788bc6','CR-4b78e43ab35126a8')\\\")))\"; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "SUMMARY pass=48 fail=0; EXIT: SUCCESS; PROVEN 77; 0; OPEN OPEN; 8787 True; 8788 True",
+      "by": "cursor-p0-s2-cap-core-06",
+      "at": "2026-09-27T09:32:00Z",
+      "tests": "PASS=48 FAIL=0",
+      "checked": false
     }
   ]
 }

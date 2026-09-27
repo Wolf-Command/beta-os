@@ -25,7 +25,7 @@
     "WAITING_EXTERNAL": 0,
     "BLOCKED_OWNER": 1
   },
-  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-MSC-02 stays OPEN. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit 99f5a27. The seated org read was not observed. The ledger stays PROVEN. Staff ready, human commissioned, and operating adoption stay unset. The other eight P0 items stay OPEN.",
+  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-MSC-02 stays OPEN. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit 99f5a27. CAP-CORE-06 stays OPEN after the temporary trail in commit 2229b21. The seated work-item read was not observed. Live core_work_items stayed 0. The ledger stays PROVEN. Staff ready, human commissioned, and operating adoption stay unset. The other seven P0 items stay OPEN.",
   "items": [
     {
       "order": 1,
@@ -150,15 +150,21 @@
       "order": 8,
       "id": "CAP-CORE-06",
       "title": "Work Items / Promises / Decisions",
-      "current_state": "SYSTEM PROVEN (0.80). Work-item primitive and tests exist. D1 kept PROVEN. Staff-usable is not the definition of PROVEN.",
-      "exact_missing_evidence": "An end-to-end operator trail across domains on the Beta runtime. The gap says that trail remains the READY bar.",
-      "cursor_work": "Trace one existing work item from creation through its stored states on a temporary catalog, then show that same read on Beta under a real session. Do not create a live work item for the prove.",
-      "human_work": "none beyond the CAP-CORE-02 session used to open the Beta read",
+      "current_state": "SYSTEM PROVEN (0.80). On a deleted catalog copy, one item walked OPEN, IN_PROGRESS, BLOCKED, IN_PROGRESS, COMPLETED, VERIFIED. Verify from IN_PROGRESS was denied and left IN_PROGRESS. Live core_work_items stayed 0. Live audits with source work_items stayed 44. On Beta :8788 pid 64196, unsigned, a spoofed email, X-Wolf-Subject, and Cf-Access-Jwt-Assertion a.b.c are 403 on GET /api/core/work-items and GET /api/core/work-items/WI-NONE. Unsigned POST is 403. The public hostname returns 302 to the Access login for those two GETs. No seated read was observed. The ledger stays PROVEN. Beta was not restarted. Production pid 15975 was not restarted.",
+      "exact_missing_evidence": "GET /api/core/work-items on Beta under a real Cloudflare session. The live table is empty, so that read must match count 0. The temporary trail is not that read. A development-subject 200 is not that read.",
+      "cursor_work": "Done for the temporary trail in commit 2229b21. Do not create a live work item. Do not mint a JWT. After a real session, record the status and count. Do not raise the ledger. Do not mark CLOSED from the temporary trail.",
+      "human_work": "none beyond the CAP-CORE-02 session used to open the Beta read. That walk is not commissioning of this row.",
+      "remaining": "Seated GET /api/core/work-items on Beta under the CAP-CORE-02 session. The stored live list is empty. The row stays OPEN until that status is recorded. Do not create a live work item to fill the list.",
       "external_dependency": "none",
       "prerequisite": ["CAP-CORE-02"],
-      "closure_test": "The temporary trail has the stored states, the live catalog work-item count is unchanged, and the Beta read under the real session matches the stored row. A repository test alone does not close this item.",
+      "closure_test": "The temporary trail has the stored states, the live catalog work-item count is unchanged, and the Beta read under the real session matches the stored row. A repository test alone does not close this item. The temporary half passed (SUMMARY pass=48 fail=0). The live count stayed 0. The seated half is absent, so the row stays OPEN.",
       "target_final_state": "CLOSED",
-      "status": "OPEN"
+      "status": "OPEN",
+      "evidence": [
+        "docs/wolf/p0/P0-CAP-CORE-06-RESULT.md",
+        "scripts/tests/test_cap_core_06_trail.py"
+      ],
+      "commit": "2229b21"
     },
     {
       "order": 9,

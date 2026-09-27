@@ -67,10 +67,10 @@ Production `:8787` is out of this path. Beta `:8788` is the boundary for any dep
 ### 8. CAP-CORE-06 — Work Items / Promises / Decisions
 
 - Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
-- Next bar: End-to-end operator trail across all domains for READY
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Next bar: Seated read of the live work-item list. The temporary trail is commit 2229b21. Live core_work_items stayed 0.
+- Dependency: CAP-CORE-02 is READY_FOR_HUMAN. That session was not observed.
 - Responsible role: Owner.
-- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- In six days: One item on a deleted catalog copy walked OPEN, IN_PROGRESS, BLOCKED, IN_PROGRESS, COMPLETED, VERIFIED. Unsigned Beta stays 403. A seated read was not observed. Ledger stays PROVEN. Do not create a live work item for the prove.
 
 ### 9. CAP-CORE-07 — Approval Engine
 

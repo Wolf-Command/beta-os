@@ -51,10 +51,10 @@
     {
       "id": "CAP-CORE-06",
       "system_state": "PROVEN",
-      "staff_readiness": "No. P4 staff ready is no. test_work_loop.py is not a staff walk.",
-      "human_commissioning": "Not commissioned.",
-      "operating_adoption": "Not scored.",
-      "gap": "End-to-end operator trail across domains remains the READY bar."
+      "staff_readiness": "No. Unsigned work-item reads on Beta :8788 are 403. No seated session was walked.",
+      "human_commissioning": "Not commissioned. No staff walk of the work-item route.",
+      "operating_adoption": "Not scored. Not adopted.",
+      "gap": "Seated GET /api/core/work-items remains. Commit 2229b21 records the temporary trail. Live core_work_items stayed 0. That bar is not this register."
     },
     {
       "id": "CAP-CORE-07",

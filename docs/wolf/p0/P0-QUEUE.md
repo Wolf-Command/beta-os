@@ -6,7 +6,7 @@ Pack S2. Owner brief 27 Sep 2026 16:32 WITA. This is the one execution queue. Ru
 
 Register count is **12**. `build_war_room()` in S1 returned P0 12, P1 20, P2 42, P3 3. The closed set is CAP-CORE-01 through CAP-CORE-10, plus CAP-MSC-02 and CAP-INTG-07. There is no thirteenth P0.
 
-CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit `99f5a27`. The other eight stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
+CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit `99f5a27`. CAP-CORE-06 stays OPEN after the temporary trail in commit `2229b21`. The other seven stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
 
 Order is the critical path. A prerequisite is another P0 the next bar actually waits on. The catalog records no extra prerequisite inside the kernel, because those rows are already PROVEN or READY. That does not make the deployed observation done.
 
@@ -89,14 +89,14 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 
 ## 8. CAP-CORE-06 — Work Items / Promises / Decisions
 
-- Current state: SYSTEM PROVEN (0.80). The work-item primitive and its tests exist. Staff-usable is not the definition of PROVEN.
-- Exact missing evidence: an operator trail across domains on the Beta runtime.
-- Cursor work: trace one existing work item on a temporary catalog, then read that same shape on Beta under a real session. Do not create a live work item for the prove.
-- Human work: none beyond the CAP-CORE-02 session used for the Beta read.
+- Current state: SYSTEM PROVEN (0.80). On a deleted catalog copy, one item walked OPEN, IN_PROGRESS, BLOCKED, IN_PROGRESS, COMPLETED, VERIFIED. Verify from IN_PROGRESS was denied and left IN_PROGRESS. Live `core_work_items` stayed 0. On Beta `:8788` pid 64196, unsigned, a spoofed email, `X-Wolf-Subject`, and a bad JWT are 403 on `GET /api/core/work-items` and `GET /api/core/work-items/WI-NONE`. Unsigned POST is 403. The public hostname redirects those two GETs to the Access login. No seated read was observed.
+- Exact missing evidence: `GET /api/core/work-items` on Beta under a real Cloudflare session. The live table is empty, so that read must match count 0. The temporary trail is not that read.
+- Cursor work: done for the temporary trail in commit `2229b21`. Evidence: `docs/wolf/p0/P0-CAP-CORE-06-RESULT.md`. Do not create a live work item. Do not mint a JWT. After a real session, record the status and count. Do not raise the ledger. Do not mark CLOSED from the temporary trail.
+- Human work: none beyond the CAP-CORE-02 session used for the Beta read. That walk is not commissioning of this row.
 - External dependency: none.
 - Prerequisite: CAP-CORE-02.
-- Closure test: the temporary trail has the stored states, the live work-item count is unchanged, and the Beta read matches the stored row.
-- Target: CLOSED. Status: OPEN.
+- Closure test: the temporary trail has the stored states, the live work-item count is unchanged, and the Beta read under the real session matches the stored row. The temporary half passed (`SUMMARY pass=48 fail=0`). The live count stayed 0. The seated half is absent, so the row stays OPEN.
+- Target: CLOSED. Status: OPEN. Commit: `2229b21`. Remaining: the seated read of the empty live list.
 
 ## 9. CAP-CORE-07 — Approval Engine
 

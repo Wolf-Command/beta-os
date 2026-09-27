@@ -103,12 +103,12 @@ P0 or P1, and the SYSTEM state is not READY. The next bar is Wolf-side work. Sev
 - What it is: Material promises leave a defensible trail.
 - Why it matters: Wolf cannot enforce or refuse an action without this.
 - Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: End-to-end operator trail across all domains for READY
+- Exact remaining work: Seated GET /api/core/work-items under a real Cloudflare session. The temporary trail is recorded in commit 2229b21. Live core_work_items stayed 0, so the read must match an empty list. Do not create a live work item to fill it. Ledger stays PROVEN.
 - Work classes: local_deterministic, human_commissioning.
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Dependency: CAP-CORE-02 is READY_FOR_HUMAN. That session was not observed.
 - Responsible role: Owner.
-- Evidence required to close: Deployed or runtime proof on the intended Beta boundary for READY. A repository test is not a deployed-route test. A human walk is not this bar.
-- Six-day note: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- Evidence required to close: The Beta status and count under the real session, matching the stored empty list. The temporary trail is not that read. A human walk is not this bar.
+- Six-day note: One item on a deleted catalog copy walked OPEN, IN_PROGRESS, BLOCKED, IN_PROGRESS, COMPLETED, VERIFIED. Commit 2229b21. Unsigned callers are 403 on Beta :8788 pid 64196. A seated read was not observed. Ledger stays PROVEN.
 - Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
 - Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
 

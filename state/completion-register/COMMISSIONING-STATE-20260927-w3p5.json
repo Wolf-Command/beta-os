@@ -347,10 +347,10 @@
       "operating_adoption": "NOT MEASURED",
       "staff_ready": false,
       "human_commissioned": false,
-      "gap": "End-to-end operator trail across all domains for READY",
+      "gap": "Temporary trail recorded in commit 2229b21. One item on a deleted catalog copy walked OPEN, IN_PROGRESS, BLOCKED, IN_PROGRESS, COMPLETED, VERIFIED. Live core_work_items stayed 0. Unsigned callers are 403 on Beta :8788. A seated read was not observed. Ledger stays PROVEN. This is not staff ready and not human commissioned.",
       "owner_role": "Owner",
       "effort_class": "S",
-      "dependency": "No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY."
+      "dependency": "CAP-CORE-02 is READY_FOR_HUMAN. That session was not observed."
     },
     {
       "id": "CAP-CORE-07",
