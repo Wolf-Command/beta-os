@@ -1058,9 +1058,16 @@ def honesty_flags(conn: sqlite3.Connection | None = None) -> dict[str, Any]:
             """,
             (ROLE_CLOSER,),
         ).fetchone()[0]
+        policy_rows = int(n_pol)
         return {
             **HONESTY,
-            "live_variance_threshold": int(n_pol),
+            # Row count. Zero rows is not a tolerance of 0.
+            "live_variance_threshold": policy_rows,
+            "variance_policy_display": (
+                "BLOCKED BY BUSINESS POLICY"
+                if policy_rows == 0
+                else "POLICY_ON_FILE"
+            ),
             "live_monetary_authority": int(n_auth),
             "closer_active_assignments": int(closer_n),
             "closer_commissioning": (

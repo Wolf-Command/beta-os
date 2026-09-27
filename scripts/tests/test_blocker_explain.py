@@ -14,6 +14,7 @@ sys.path.insert(0, str(SCRIPTS))
 from core import knowledge_resolution as kr  # noqa: E402
 from core import progress_read_model as prm  # noqa: E402
 from core.blocker_explain import (  # noqa: E402
+    WHY_CLOSE_POLICY,
     WHY_CLOSER,
     WHY_OPENING_FLOAT,
     WHY_POLICY_REQUIRED,
@@ -63,6 +64,19 @@ def test_templates() -> None:
         str(policy.get("why")),
     )
     check("policy why has no invented limit", "25" not in (policy.get("why") or ""))
+
+    close_policy = explain_operating_blocker("close_policy_required", {})
+    check(
+        "close policy says blocked by business policy",
+        close_policy.get("why") == WHY_CLOSE_POLICY
+        and str(close_policy.get("why") or "").startswith("BLOCKED BY BUSINESS POLICY"),
+        str(close_policy.get("why")),
+    )
+    check(
+        "close policy is not a zero tolerance",
+        close_policy.get("classification") == "NEEDS_POLICY"
+        and "threshold of 0" not in str(close_policy.get("why") or "").lower(),
+    )
 
     floated = explain_operating_blocker(
         "opening_balance_required",

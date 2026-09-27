@@ -2974,6 +2974,7 @@ def commissioning_readiness() -> dict[str, Any]:
                 "status": "NOT_CONFIGURED",
                 "classification": "NEEDS_POLICY",
                 "why": (
+                    "BLOCKED BY BUSINESS POLICY. "
                     "No authorised variance policy exists. "
                     "No threshold was invented."
                 ),

@@ -173,7 +173,7 @@
 
   <div class="panel">
     <h2>What this screen can and cannot do</h2>
-    <div class="muted" id="honesty">No variance policy set. A till that does not match ESB stops. No threshold was invented. Closer seat is waiting. No person is assigned to the closing role. This screen does not pay or change a bank.</div>
+    <div class="muted" id="honesty">BLOCKED BY BUSINESS POLICY. A till that does not match ESB stops. No threshold was invented. Closer seat is waiting. No person is assigned to the closing role. This screen does not pay or change a bank.</div>
   </div>
 
 <script>
@@ -265,7 +265,7 @@
       `<div class="fig">${totals.finished_count ?? "—"}<small>Finished bills</small></div>` +
       `</div>` +
       (st === "VARIANCE_REQUIRES_POLICY" && policyCount === 0
-        ? `<p class="muted" style="margin-top:8px">No variance policy set. Open an exception. It shows in <a href="/my-work">My Work</a>.</p>`
+        ? `<p class="muted" style="margin-top:8px">BLOCKED BY BUSINESS POLICY. Open an exception. It shows in <a href="/my-work">My Work</a>.</p>`
         : "") +
       (close.work_item_id
         ? `<p class="muted" style="margin-top:8px"><a href="/my-work">Open in My Work</a></p>`
@@ -293,8 +293,9 @@
     try {
       const h = await api("/api/venue-close/honesty");
       policyCount = Number(h.live_variance_threshold);
-      const policyLine = policyCount === 0
-        ? "No variance policy set. A till that does not match ESB stops. No threshold was invented."
+      const policyBlocked = h.variance_policy_display === "BLOCKED BY BUSINESS POLICY" || policyCount === 0;
+      const policyLine = policyBlocked
+        ? "BLOCKED BY BUSINESS POLICY. A till that does not match ESB stops. No threshold was invented."
         : "An authorised variance policy is on file. This screen does not show a threshold amount.";
       const closerLine = h.closer_commissioning === "WAITING FOR VERIFIED CLOSING OPERATOR"
         ? "Closer seat is waiting. No person is assigned to the closing role."
@@ -304,7 +305,7 @@
     } catch (e) {
       policyCount = 0;
       $("honesty").textContent =
-        "No variance policy set. Could not confirm the policy table. " +
+        "BLOCKED BY BUSINESS POLICY. Could not confirm the policy table. " +
         (e.message || e);
     }
   }
@@ -337,7 +338,7 @@
               : `<p class="muted">No further action on this row.</p>`;
           const policyNote =
             r.state === "VARIANCE_REQUIRES_POLICY" && policyCount === 0
-              ? `<p class="muted">No variance policy set. Opening an exception puts it in <a href="/my-work">My Work</a>.</p>`
+              ? `<p class="muted">BLOCKED BY BUSINESS POLICY. Opening an exception puts it in <a href="/my-work">My Work</a>.</p>`
               : r.state === "EXCEPTION" || r.work_item_id
               ? `<p class="muted"><a href="/my-work">Open in My Work</a></p>`
               : "";
@@ -547,7 +548,7 @@
         close.state === "VERIFIED_CLOSED"
           ? "Clean day — closed and verified."
           : (policyCount === 0
-          ? "No variance policy set. Open an exception. It shows in My Work."
+          ? "BLOCKED BY BUSINESS POLICY. Open an exception. It shows in My Work."
           : "Variance needs an exception handover. Acceptance is not built on this screen."),
         close.state === "VERIFIED_CLOSED"
       );

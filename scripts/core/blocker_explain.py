@@ -50,6 +50,7 @@ WHY_ORDERED = "An order has been placed and the goods have not been received."
 WHY_BILL_WAITING = "A bill is waiting for payment approval."
 WHY_CLOSE_NOT_STARTED = "Daily Close has not been started."
 WHY_CLOSE_POLICY = (
+    "BLOCKED BY BUSINESS POLICY. "
     "Daily Close is blocked because no variance policy is authorised. "
     "No threshold was invented."
 )

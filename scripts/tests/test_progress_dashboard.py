@@ -330,6 +330,12 @@ def main() -> int:
         "Empire uma_owner stages",
         len((empire.get("uma_owner") or {}).get("stages") or []) == 6,
     )
+    check(
+        "Empire uma variance blocked by business policy",
+        (empire.get("uma_owner") or {}).get("variance_plain")
+        == "BLOCKED BY BUSINESS POLICY. No threshold was invented.",
+        str((empire.get("uma_owner") or {}).get("variance_plain")),
+    )
 
     bf = (model.get("views") or {}).get("Build Factory") or {}
     check("Build Factory has factory_health", (bf.get("factory_health") or {}).get("status") in ("HEALTHY", "DEGRADED", "FAILING"))

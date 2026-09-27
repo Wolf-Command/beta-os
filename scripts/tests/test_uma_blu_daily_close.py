@@ -747,6 +747,11 @@ def main() -> int:
     # honesty flags on temp
     flags = vc.honesty_flags()
     check("honesty live_variance_threshold 0", flags["live_variance_threshold"] == 0)
+    check(
+        "honesty variance display blocked not zero tolerance",
+        flags.get("variance_policy_display") == "BLOCKED BY BUSINESS POLICY",
+        str(flags.get("variance_policy_display")),
+    )
     check("honesty live_monetary_authority 0", flags["live_monetary_authority"] == 0)
     check("honesty settlement UNAVAILABLE", flags["settlement_api"] == "UNAVAILABLE")
     check(

@@ -1,0 +1,247 @@
+{
+  "pack": "S1",
+  "as_of": "2026-09-27",
+  "decision": "Owner brief 27 Sep 2026 16:32 WITA. One execution queue for the canonical P0 register. Not a second plan.",
+  "rule": "W3-P5-PRIORITY-v1",
+  "sources": [
+    "state/model-c-baseline-assessments.json",
+    "state/completion-register/GAP-REGISTER-20260927.json",
+    "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md",
+    "docs/wolf/wave3/SIX-DAY-CRITICAL-PATH.md",
+    "docs/wolf/wave3/W3-P5-WARROOM-RESULT.md",
+    "docs/wolf/day2/D3-AUTH-RESULT.md",
+    "docs/wolf/day2/D4-UMA-RESULT.md"
+  ],
+  "register_count": 12,
+  "register_count_note": "Exactly 12. build_war_room() this session returned priority_counts P0 12, P1 20, P2 42, P3 3. The closed set is CAP-CORE-01 through CAP-CORE-10, plus CAP-MSC-02 and CAP-INTG-07. No thirteenth P0.",
+  "system": "19.65 / 77 = 25.52%",
+  "staff_ready": 0,
+  "human_commissioned": 0,
+  "operating_adoption": "NOT MEASURED",
+  "final_status_count": {
+    "OPEN": 12,
+    "CLOSED": 0,
+    "READY_FOR_HUMAN": 0,
+    "WAITING_EXTERNAL": 0,
+    "BLOCKED_OWNER": 0
+  },
+  "final_status_note": "No P0 is in a final state. Each one still has Cursor work or a deployed observation that is not on record. Targets are the end state after that work. Staff ready, human commissioned, and operating adoption stay unset.",
+  "items": [
+    {
+      "order": 1,
+      "id": "CAP-CORE-02",
+      "title": "Person & Auth Identity",
+      "current_state": "SYSTEM READY (1.00). Staff ready no. Human commissioned no. Local verifier test_real_auth_binding.py PASS=44. Unsigned and a bad JWT are 403 on Beta. Deployed allow path was not observed (D3 RESULT FAIL). No ROLE-OWNER row. Authorization is person_id plus assignment, not a name.",
+      "exact_missing_evidence": "A real Cloudflare Access session on Beta for the three seated people, plus a sign-out that leaves the next request denied. GET /signout on Beta :8788 is HTTP 404 after the restart to pid 58953. The shell links to /signout. That is not a proven logout.",
+      "cursor_work": "Prove sign-out. The origin has no /signout handler; unsigned GET /signout is 404. A working sign-out must end the Access session and the next request to a protected route must be denied. Do not mint a stand-in JWT. Do not mark anyone commissioned.",
+      "human_work": "One minute, after sign-out exists. On https://beta.wolfcommand.net, Haikal signs in and expects /content-2.0, denied on /bzg/uma-blu, /wolf, and /ggv/finance. Devi signs in and expects /bzg/uma-blu, denied on /content-2.0, /wolf, and /ggv/finance. Matt signs in and expects /wolf. Each person signs out and the same route is denied. Record the statuses. This walk does not raise SYSTEM and is not staff ready or human commissioned.",
+      "external_dependency": "none",
+      "prerequisite": [],
+      "closure_test": "Unsigned and Cf-Access-Jwt-Assertion a.b.c stay 403 on /api/core/me. After each real session, the landing and the cross-role denials match the human test. After sign-out, the same route is denied. test_real_auth_binding.py is not this test.",
+      "target_final_state": "READY_FOR_HUMAN",
+      "status": "OPEN"
+    },
+    {
+      "order": 2,
+      "id": "CAP-INTG-07",
+      "title": "Secrets & Environment Separation",
+      "current_state": "SYSTEM SPECIFIED (0.05). Owner audit 2026-09-18 rejected PROVEN. Repository checks and test_cap_intg_07_environment_separation.py are evidence, not the vault prove. Ledger was not raised.",
+      "exact_missing_evidence": "A deterministic vault, rotation, and Dev/Beta/Prod separation prove that is not a file-exists check, and a vault product for READY. No such prove is in the gap register.",
+      "cursor_work": "Search the existing authorised secret and config infrastructure first. Do not print values. Do not treat footage crypt, rclone remotes, or the Atrium scratch backup as this capability. If that search finds no authorised vault, stop and leave the row SPECIFIED. Do not build a second vault.",
+      "human_work": "none until that search is recorded",
+      "external_dependency": "none",
+      "prerequisite": [],
+      "closure_test": "The search names the store it found, or it records that no authorised vault exists, without a secret value in the note. The ledger stays SPECIFIED until a vault prove exists. A passing repo-check test does not close this item.",
+      "target_final_state": "BLOCKED_OWNER",
+      "status": "OPEN"
+    },
+    {
+      "order": 3,
+      "id": "CAP-MSC-02",
+      "title": "Access & Cloudflare Posture",
+      "current_state": "SYSTEM BUILT (0.25). Public hostname beta.wolfcommand.net returns 302 to Cloudflare Access login (D3). Matt-owned include flips stay with the owner. No CAP-bound automated posture prove. No review artifact binds this row.",
+      "exact_missing_evidence": "Deterministic posture verification plus the material review the scoring rules require before PROVEN, then the READY bar. Deployed seated 200 and cross-role denial were not observed. Do not call Grok for that review.",
+      "cursor_work": "Write the CAP-bound posture prove against the live Beta gate: unsigned denied, spoofed email header denied, bad JWT denied, and the public login redirect. Seated allow and cross-role denial wait on CAP-CORE-02. Do not change Access includes.",
+      "human_work": "none for the local deny prove. A seated allow observation uses the same human session as CAP-CORE-02 and is not commissioning.",
+      "external_dependency": "none",
+      "prerequisite": ["CAP-CORE-02"],
+      "closure_test": "A posture test exits 0 on the deny cases above, and a review note that is not this queue binds the result to CAP-MSC-02. A rendered desk is not that review. The ledger is not raised by this queue.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN"
+    },
+    {
+      "order": 4,
+      "id": "CAP-CORE-01",
+      "title": "Organisation Registry",
+      "current_state": "SYSTEM PROVEN (0.80). Implementation is scripts/core/organisation.py plus test_org_registry.py. D1 kept PROVEN. Direct GET /api/core/entities/ENT-NOPE is HTTP 404.",
+      "exact_missing_evidence": "Deployed-route proof of the live org UI on Beta :8788 under a verified person. DEPLOYED-ROUTE-PROOF-20260927 is FAIL. A development-subject 200 is not that proof. A human walk is not this bar.",
+      "cursor_work": "After a real Cloudflare session exists, record the HTTP status of the org registry route on Beta for that person. Do not send X-Wolf-Subject. Do not raise the ledger in the queue.",
+      "human_work": "The session itself is CAP-CORE-02. No separate org acceptance.",
+      "external_dependency": "none",
+      "prerequisite": ["CAP-CORE-02"],
+      "closure_test": "The Beta response for the org route under the real session is recorded with status and denial for a person who lacks organisation read. Unsigned stays fail-closed. Repository tests staying green do not close this item.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN"
+    },
+    {
+      "order": 5,
+      "id": "CAP-CORE-03",
+      "title": "Role / Position / Assignment",
+      "current_state": "SYSTEM PROVEN (0.80). test_role_position_assignment.py kept the row at D1. ASG-HAIKAL-VE-1 is ended. Active seat is ASG-HAIKAL-CD-1. People are not roles.",
+      "exact_missing_evidence": "Runtime board prove on Beta under a verified person. The gap says that prove for READY remains open.",
+      "cursor_work": "After CAP-CORE-02, record the assignment board on Beta for an existing person. Do not create a person. Do not move a primary assignment. The Misa primary choice stays an owner decision and is not this prove.",
+      "human_work": "none for the board observation. Changing a primary assignment is a separate owner decision and is not required to close the prove.",
+      "external_dependency": "none",
+      "prerequisite": ["CAP-CORE-01", "CAP-CORE-02"],
+      "closure_test": "Beta shows the stored active assignment and does not show the ended assignment as active. No new person row. Unsigned board stays denied.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN"
+    },
+    {
+      "order": 6,
+      "id": "CAP-CORE-04",
+      "title": "Permission & Authority Engine",
+      "current_state": "SYSTEM PROVEN (0.80). scripts/core/rbac.py. Full seat-matrix deployed prove was not re-run. ROLE-GGV-CREATIVE-DIRECTOR does not hold organisation.entity.read. The ended ROLE-GGV-EDIT grant does not apply.",
+      "exact_missing_evidence": "The seat matrix on Beta: each seated role allowed on its route and denied on the others, under a verified person. Local projection in D3 is not that HTTP proof.",
+      "cursor_work": "After the real session, record allow and deny for the existing seats only: PERS-HAIKAL, PERS-DEVI, PERS-MATT. Do not add a grant. Do not authorize by display name.",
+      "human_work": "The three sign-ins are CAP-CORE-02. This item consumes those statuses. It does not commission the people.",
+      "external_dependency": "none",
+      "prerequisite": ["CAP-CORE-03"],
+      "closure_test": "Recorded Beta statuses match the grants already on those assignments. A name string is not the allow reason. Unsigned stays 403.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN"
+    },
+    {
+      "order": 7,
+      "id": "CAP-CORE-05",
+      "title": "Authority Limits Evaluator",
+      "current_state": "SYSTEM PROVEN (0.80). test_authority_limits.py. Live org_authority_limits count is 0. The ledger already says that zero is configuration, not maturity.",
+      "exact_missing_evidence": "Broader runtime prove on Beta for READY. No approved limit rows exist. A displayed 0 must not be read as a tolerance that was chosen.",
+      "cursor_work": "Prove the evaluator still denies an action when no limit row exists, on a temporary catalog, then record that the live table is empty. Do not insert a limit.",
+      "human_work": "none",
+      "external_dependency": "none",
+      "prerequisite": ["CAP-CORE-04"],
+      "closure_test": "An action with no authority-limit row is denied, and the live org_authority_limits count is still 0 after the prove. No amount was written. The empty table is configuration. It is not a tolerance Matt must fill in before this item can close.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN"
+    },
+    {
+      "order": 8,
+      "id": "CAP-CORE-06",
+      "title": "Work Items / Promises / Decisions",
+      "current_state": "SYSTEM PROVEN (0.80). Work-item primitive and tests exist. D1 kept PROVEN. Staff-usable is not the definition of PROVEN.",
+      "exact_missing_evidence": "An end-to-end operator trail across domains on the Beta runtime. The gap says that trail remains the READY bar.",
+      "cursor_work": "Trace one existing work item from creation through its stored states on a temporary catalog, then show that same read on Beta under a real session. Do not create a live work item for the prove.",
+      "human_work": "none beyond the CAP-CORE-02 session used to open the Beta read",
+      "external_dependency": "none",
+      "prerequisite": ["CAP-CORE-02"],
+      "closure_test": "The temporary trail has the stored states, the live catalog work-item count is unchanged, and the Beta read under the real session matches the stored row. A repository test alone does not close this item.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN"
+    },
+    {
+      "order": 9,
+      "id": "CAP-CORE-07",
+      "title": "Approval Engine",
+      "current_state": "SYSTEM PROVEN (0.80). Approval, dual approval, and policy tests exist. Live core_approval_requests count is 0. Live core_approval_decisions count is 6. Wide production policy packs are the READY bar.",
+      "exact_missing_evidence": "Production policy packs, and a deployed observation of the approval route. Pack contents were not authored. Inventing a pack would be a fake policy.",
+      "cursor_work": "After the real session, record the approval route on Beta. Do not insert a policy row. Do not treat the six stored decisions as a new pack.",
+      "human_work": "Matt approves any production policy pack, or records that no pack is authorised. Cursor does not write the pack.",
+      "external_dependency": "none",
+      "prerequisite": ["CAP-CORE-06"],
+      "closure_test": "Beta shows the approval engine without a new policy row, and live core_approval_requests is still 0. A pack exists only if Matt authored it.",
+      "target_final_state": "BLOCKED_OWNER",
+      "status": "OPEN"
+    },
+    {
+      "order": 10,
+      "id": "CAP-CORE-08",
+      "title": "Segregation of Duties",
+      "current_state": "SYSTEM PROVEN (0.80). test_sod_constraints.py. Broader finance SoD live packs are the READY bar. A temporary constraint is not this row.",
+      "exact_missing_evidence": "Finance SoD packs on the live path, plus deployed proof. No broader finance pack was added.",
+      "cursor_work": "Show the existing SoD deny (submitter cannot verify own close) still holds on a temporary catalog. Do not add a finance SoD pack. Do not move money.",
+      "human_work": "A broader finance pack, if one is required, is Matt's policy. It is not invented here.",
+      "external_dependency": "none",
+      "prerequisite": ["CAP-CORE-04", "CAP-CORE-07"],
+      "closure_test": "The temporary SoD self-close deny still fails closed, and no new SoD pack row was written to the live catalog.",
+      "target_final_state": "BLOCKED_OWNER",
+      "status": "OPEN"
+    },
+    {
+      "order": 11,
+      "id": "CAP-CORE-09",
+      "title": "Evidence Requirements",
+      "current_state": "SYSTEM PROVEN (0.80). Evidence-requirement tests exist. Live core_evidence_records count is 3. Universal evidence packs on all material actions are the READY bar.",
+      "exact_missing_evidence": "Evidence required on every material action, observed on Beta. The three stored records are not that universal pack.",
+      "cursor_work": "List the material actions that already call the evidence gate, and the ones that do not, from the code and the tests. Do not invent evidence rows to close the gap.",
+      "human_work": "none until that list exists. Accepting a pack is not this step.",
+      "external_dependency": "none",
+      "prerequisite": ["CAP-CORE-07"],
+      "closure_test": "The list names each material action as gated or not gated, and live core_evidence_records is still 3. An ungated action stays listed as open.",
+      "target_final_state": "CLOSED",
+      "status": "OPEN"
+    },
+    {
+      "order": 12,
+      "id": "CAP-CORE-10",
+      "title": "Exception / Override Governance",
+      "current_state": "SYSTEM PROVEN (0.80). test_exception_override.py. Live core_governance_exceptions count is 2. Operating review cadence is the READY bar.",
+      "exact_missing_evidence": "A review cadence for exceptions, and a deployed view of the existing two exceptions. The cadence is not on record. The two rows are not a cadence.",
+      "cursor_work": "After the real session, show the existing exception read on Beta without adding a row. Do not invent a third exception.",
+      "human_work": "The operating review cadence is a person looking at the real exceptions on a repeating basis. That is not commissioning of the capability, and it is not done.",
+      "external_dependency": "none",
+      "prerequisite": ["CAP-CORE-09"],
+      "closure_test": "Beta shows the stored exceptions under a real session, live core_governance_exceptions is still 2, and no cadence is marked done without a person having run it.",
+      "target_final_state": "READY_FOR_HUMAN",
+      "status": "OPEN"
+    }
+  ],
+  "cheap_independent_p1": [
+    {
+      "id": "CAP-GGV-02",
+      "title": "Publish Gate & Operator Loop",
+      "why_cheap": "SYSTEM READY. No build. The round-3 content walk is the human test already named in the owner brief.",
+      "cannot_interfere": "It does not edit identity, assignments, permissions, secrets, or Access posture.",
+      "do_not": "Do not hold the walk for The One = 0, 4,787 unknown brand, or 124 preview failures. Those stay visible data-quality exceptions. Do not mark commissioned from the queue."
+    },
+    {
+      "id": "CAP-BZG-03",
+      "title": "Venue Daily Close",
+      "why_cheap": "SYSTEM READY. The absent variance policy now displays BLOCKED BY BUSINESS POLICY. No policy row was inserted.",
+      "cannot_interfere": "The sentence change is in the close page, the honesty payload, and the owner variance line. It does not change the P0 kernel.",
+      "do_not": "Do not invent a threshold. Do not seat a closer. Do not write ESB. Do not run a live close."
+    },
+    {
+      "id": "CAP-INTG-01",
+      "title": "Yanolja Connector",
+      "why_cheap": "SYSTEM ABSENT. The cheap act is to leave it waiting. There is no Wolf reader.",
+      "cannot_interfere": "No connector code, so it cannot touch the kernel.",
+      "do_not": "Do not invent an occupancy feed or a hotel number."
+    },
+    {
+      "id": "CAP-FIN-03",
+      "title": "Entity Finance Boards",
+      "why_cheap": "The external accountant position POS-GGV-EXT-ACCT has no person. Leaving it empty is the cheap act.",
+      "cannot_interfere": "No assignment write, so CAP-CORE-03 is untouched.",
+      "do_not": "Do not invent an accountant. Amanda's content-management grant is not that seat."
+    },
+    {
+      "id": "CAP-FIN-01",
+      "title": "Wolf Accounting Core",
+      "why_cheap": "Books stay UNAVAILABLE until the owner opens them. No code is required to keep that sentence.",
+      "cannot_interfere": "No ledger write and no payment, so CAP-CORE-08 is untouched.",
+      "do_not": "Do not type a balance. UNAVAILABLE is not cash."
+    }
+  ],
+  "variance_policy_truth_fix": {
+    "change": "When venue_close_variance_policies has no rows, the operator sentence is BLOCKED BY BUSINESS POLICY. The honesty field live_variance_threshold remains the row count, which is 0. That count is not a tolerance.",
+    "beta": {
+      "pid": 58953,
+      "restarted_from": 35844,
+      "prod_pid_unchanged": 15975,
+      "GET /api/venue-close/honesty": "200 variance_policy_display BLOCKED BY BUSINESS POLICY, live_variance_threshold 0",
+      "GET /uma-blu-close": "403 unsigned",
+      "GET /uma-blu-close.html": "200 unsigned, phrase present, old sentence absent"
+    }
+  }
+}
