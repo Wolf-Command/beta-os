@@ -120,7 +120,7 @@
 
   <div class="banner hidden" id="fixtureBanner">Some rows are practice only — not live Uma Blu work.</div>
   <div class="banner info" id="roleBanner">Checking what you can do…</div>
-  <div class="banner info" id="stockBanner">Stock on hand is empty. An empty framework is not a live inventory count.</div>
+  <div class="banner info" id="stockBanner">No stock count is on this screen. Stock stays in ESB.</div>
 
   <nav class="uma" aria-label="Uma Blu day">
     <a class="active" href="/bzg/uma-blu">Today</a>
@@ -338,10 +338,11 @@
           }
           var preferred = data.next_action || {};
           if (preferred.code === "needs_you_connective" && preferred.label) {
-            nowBox.appendChild(el("div", "why", "Needs-You: " + preferred.label));
-            if (preferred.href) {
-              var nyeGo = el("a", "act", "Open Needs-You");
-              nyeGo.href = preferred.href;
+            nowBox.appendChild(el("div", "why", preferred.label));
+            var openHref = String(preferred.href || "");
+            if (openHref.indexOf("/") === 0 && openHref.indexOf("/api/") !== 0) {
+              var nyeGo = el("a", "act", "Open");
+              nyeGo.href = openHref;
               nowBox.appendChild(nyeGo);
             }
           }
@@ -351,10 +352,8 @@
         if (stockBox) {
           var hooks = (stock.variance_hooks || []).length;
           stockBox.textContent = hooks
-            ? "Stock framework only. " + hooks + " receipt shortfall"
-              + (hooks === 1 ? "" : "s")
-              + " — not a verified on-hand count. ESB stays the stock record."
-            : "Stock on hand is empty. An empty framework is not a live inventory count. ESB stays the stock record.";
+            ? "A delivery was short of the order. This is not a stock count. Stock stays in ESB."
+            : "No stock count is on this screen. Stock stays in ESB.";
         }
         var roleBox = document.getElementById("roleBanner");
         var perm = data.permissions || {};
@@ -514,7 +513,6 @@
           } else if (c.attention_count != null) {
             var n = c.attention_count;
             var line2 = n === 1 ? "1 needing attention" : n + " needing attention";
-            if (c.example_count) line2 += " · " + c.example_count + " practice example";
             a.appendChild(el("div", "meta", line2));
           }
           var shown = 0;

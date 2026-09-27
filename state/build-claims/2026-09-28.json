@@ -20,6 +20,16 @@
       "at": "2026-09-28T00:30:00Z",
       "tests": "war room PASS=227 FAIL=0; intg-07 PASS=12 FAIL=0",
       "checked": false
+    },
+    {
+      "id": "five-f4-surfaces-20260928",
+      "claim": "Unsigned Beta :8788 pid 28954 returns 403 on /content-2.0, /bzg/uma-blu, /bzg/uma-blu/bills, /bzg/uma-blu/issues, /ggv/finance, and /amg-ops-pack. Petty HTML stays 200 unsigned and the petty API stays 403. Production :8787 pid 15975 was not restarted. Live notas stay 0, vendors stay 0, example purchase requests stay 3, evidence stays 4. staff_ready and human_commissioned stay false. Atrium books were not opened.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/run_guarded.py scripts/tests/test_f4_surfaces.py | tail -3; for p in /content-2.0 /bzg/uma-blu /bzg/uma-blu/bills /bzg/uma-blu/issues /ggv/finance /amg-ops-pack /bzg/uma-blu/petty; do curl -sS -o /dev/null -w \"$p:%{http_code}\\n\" --max-time 5 http://127.0.0.1:8788$p; done; python3 -c \"import sqlite3; c=sqlite3.connect('file:catalog/content_library.sqlite?mode=ro', uri=True); print('notas', c.execute('select count(*) from ggv_notas').fetchone()[0]); print('vendors', c.execute('select count(*) from ggv_vendors').fetchone()[0]); print('example_prs', c.execute('select count(*) from bzg_ops_purchase_requests where example=1').fetchone()[0]); print('evidence', c.execute('select count(*) from core_evidence_records').fetchone()[0])\"; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "PASS=79 FAIL=0; EXIT: SUCCESS; each gated path 403; petty 200; notas 0; vendors 0; example_prs 3; evidence 4; 8787 True; 8788 True",
+      "by": "cursor-five-f4",
+      "at": "2026-09-28T00:45:00Z",
+      "tests": "f4 PASS=79 FAIL=0; content staff ux PASS=54 FAIL=0; petty PASS=53 FAIL=0; amg nav PASS=144 FAIL=3 on prior-wave children",
+      "checked": false
     }
   ]
 }

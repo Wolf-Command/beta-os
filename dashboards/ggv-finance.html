@@ -239,7 +239,7 @@ async function loadOverview() {
   const cards = [
     ["Needs review", data.needs_review],
     ["Waiting approval", data.waiting_approval],
-    ["Payment not verified", data.payment_unverified],
+    ["Not paid from this screen", data.payment_unverified],
     ["Vendor issues", data.vendor_issues],
   ];
   $("overview-cards").innerHTML = cards.map(([label, count]) =>
@@ -583,7 +583,14 @@ async function loadAccountant() {
 
 $("acct-export").addEventListener("click", () => downloadPack($("acct-year").value, $("acct-month").value, $("acct-note")));
 
-loadOverview().catch((err) => { $("recent").textContent = err.message; });
+loadOverview().then(function () {
+  document.body.setAttribute("data-ready", "1");
+  var over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
+  document.body.setAttribute("data-overflow", over ? "yes" : "no");
+}).catch((err) => {
+  $("recent").textContent = err.message;
+  document.body.setAttribute("data-ready", "1");
+});
 </script>
 </body>
 </html>

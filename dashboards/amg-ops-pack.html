@@ -12,7 +12,7 @@
     --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
-  body { margin: 0 auto; max-width: 480px; padding: 12px 14px 88px; background: var(--bg); color: var(--text); font-family: var(--font); overflow-wrap: anywhere; }
+  body { margin: 0 auto; max-width: 480px; padding: 12px 14px 88px; background: var(--bg); color: var(--text); font-family: var(--font); overflow-wrap: anywhere; overflow-x: clip; }
   h1 { font-size: 1.25rem; margin: 0 0 4px; }
   h1 span { color: var(--accent); }
   h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
@@ -81,11 +81,12 @@
     <a href="/amg-ops-pack">Operations</a>
     <span class="empty">People · EMPTY</span>
     <span class="empty">Customers · EMPTY</span>
-    <span class="empty">Finance · EMPTY</span>
+    <span class="empty" id="financeClosed" title="Hotel books are not open on this desk.">Finance · EMPTY</span>
     <span class="empty">Standards · EMPTY</span>
     <span class="empty">Issues · EMPTY</span>
     <span class="empty">Intelligence · EMPTY</span>
   </nav>
+  <p class="note" id="financeClosedNote">Hotel books are not open on this desk.</p>
   <div id="wolf-truth" data-wolf-truth data-surface="amg"></div>
   <p class="lede" id="lede">Loading…</p>
   <div class="banner warn" id="who">Loading…</div>
@@ -706,5 +707,12 @@
 })();
 </script>
 <script src="/assets/wolf-truth.js?v=20260927-w3p4"></script>
+<script>
+window.addEventListener("load", function () {
+  var over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
+  document.body.setAttribute("data-overflow", over ? "yes" : "no");
+  document.body.setAttribute("data-ready", "1");
+});
+</script>
 </body>
 </html>

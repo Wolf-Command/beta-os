@@ -23,6 +23,7 @@
   }
   body {
     padding: 16px 16px 64px; max-width: 480px; margin: 0 auto;
+    overflow-x: clip;
     background:
       radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
       radial-gradient(ellipse 90% 60% at 100% 0%, #163028 0%, transparent 50%),
@@ -74,8 +75,6 @@
   <p class="crumb"><a href="/bzg">BZG</a> · <a href="/bzg/uma-blu">Uma Blu</a> · PR and bills</p>
   <h1 class="brand">PR <em>and bills</em></h1>
   <p class="sub">Request is not approval. A paid claim is not a verified payment.</p>
-
-  <div class="banner hidden" id="fixtureBanner">These rows are examples — not live purchase orders.</div>
 
     <nav class="uma" aria-label="Uma Blu day">
     <a href="/bzg/uma-blu">Today</a>
@@ -141,18 +140,12 @@
       var box = document.getElementById("list");
       box.innerHTML = "";
       var rows = data.prs || [];
-      var hasLegacy = rows.some(function (p) { return p.legacy; });
       var liveRows = rows.filter(function (p) { return !p.example; });
-      var exRows = hasLegacy ? [] : rows.filter(function (p) { return p.example; });
-      if (data.fixture_notice && exRows.length && !hasLegacy) {
-        document.getElementById("fixtureBanner").classList.remove("hidden");
-      }
-      if (!liveRows.length && !exRows.length) {
-        box.appendChild(el("p", "empty", "No purchase requests yet."));
-        return;
-      }
       if (!liveRows.length) {
-        box.appendChild(el("p", "empty", "No live purchase requests yet."));
+        box.appendChild(el("p", "empty", "No purchase requests yet."));
+        document.body.setAttribute("data-ready", "1");
+        document.body.setAttribute("data-overflow", document.documentElement.scrollWidth > document.documentElement.clientWidth + 1 ? "yes" : "no");
+        return;
       }
       liveRows.forEach(function (p) {
         var key = p.pr_num || p.pr_id;
@@ -180,28 +173,14 @@
         }
         if (p.bill_reference) bits.push("Bill " + p.bill_reference);
         if (bits.length) d.appendChild(el("div", "meta", bits.join(" · ")));
-        if (p.example) d.appendChild(el("div", "ex", "Example"));
-        // staff UI: do not show raw PR ids
-        if (p.example) d.appendChild(el("div", "ex", "Practice example — not live"));
         box.appendChild(d);
       });
-      if (exRows.length) {
-        box.appendChild(el("p", "muted", "Practice examples (not live Uma Blu work)"));
-        exRows.forEach(function (p) {
-          var d = el("div", "row");
-          var st = p.state || "";
-          var pill = el("span", "state" + (st === "POLICY_REQUIRED" || st === "PAID_CLAIMED" ? " warn" : ""), STATE_LABEL[st] || st);
-          d.appendChild(pill);
-          var title = (p.supplier_name || "Purchase request");
-          if (p.purpose) title += " · " + p.purpose;
-          d.appendChild(el("h3", null, title));
-          d.appendChild(el("div", "ex", "Practice example — not live"));
-          box.appendChild(d);
-        });
-      }
+      document.body.setAttribute("data-ready", "1");
+      document.body.setAttribute("data-overflow", document.documentElement.scrollWidth > document.documentElement.clientWidth + 1 ? "yes" : "no");
     })
     .catch(function () {
       document.getElementById("list").textContent = "Could not load bills.";
+      document.body.setAttribute("data-ready", "1");
     });
 })();
 </script>

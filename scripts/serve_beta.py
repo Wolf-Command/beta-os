@@ -4529,13 +4529,17 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._uma_ops_page()
             return
         elif path in ("/bzg/uma-blu/bills", "/bzg/uma-blu/bills/") and (qs.get("pr") or [""])[0].strip():
-            self.path = "/bzg-uma-blu-pr.html"
+            self._uma_staff_page("bzg-uma-blu-pr.html")
+            return
         elif path in ("/bzg/uma-blu/bills", "/bzg/uma-blu/bills/"):
-            self.path = "/bzg-uma-blu-bills.html"
+            self._uma_staff_page("bzg-uma-blu-bills.html")
+            return
         elif re.match(r"^/bzg/uma-blu/bills/([^/]+)/?$", path):
-            self.path = "/bzg-uma-blu-pr.html"
+            self._uma_staff_page("bzg-uma-blu-pr.html")
+            return
         elif path in ("/bzg/uma-blu/issues", "/bzg/uma-blu/issues/"):
-            self.path = "/bzg-uma-blu-issues.html"
+            self._uma_staff_page("bzg-uma-blu-issues.html")
+            return
         elif path in ("/bzg/uma-blu/evidence", "/bzg/uma-blu/evidence/"):
             self._uma_staff_page("bzg-uma-blu-evidence.html")
             return

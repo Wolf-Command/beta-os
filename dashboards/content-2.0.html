@@ -520,6 +520,12 @@
     .brand-select { margin-left: 0; width: 100%; }
     .topbar { align-items: stretch; }
   }
+  @media (max-width: 430px) {
+    body { overflow-x: clip; }
+    .topbar { padding: 10px 12px; }
+    .brand-select select { min-width: 0; max-width: 100%; }
+    main { padding: 16px 12px 48px; }
+  }
 
 </style>
 </head>
@@ -1285,7 +1291,7 @@
       } else {
         const p = ux.plan;
         const pr = p.progress || {};
-        $("dashSub").textContent = `${(p.brand_id || state.brand).toUpperCase()} · ${p.period_start || "?"} → ${p.period_end || "?"}${p.is_test_lane ? " · DEV fixture" : ""}`;
+        $("dashSub").textContent = `${(p.brand_id || state.brand).toUpperCase()} · ${p.period_start || "?"} → ${p.period_end || "?"}${p.is_test_lane ? " · Practice plan" : ""}`;
         $("dashStats").innerHTML = [
           stat("Posts", `${pr.posts_done || 0}/${pr.posts_target || 3}`, "complete this fortnight"),
           stat("Stories", `${pr.stories_done || 0}/${pr.stories_target || 14}`, "complete this fortnight"),
@@ -1440,7 +1446,7 @@
     state.plans = data.plans || [];
     const box = $("planList");
     if (!state.plans.length) {
-      box.innerHTML = `<div class="empty">No plans in the database for this brand.</div>`;
+      box.innerHTML = `<div class="empty">No content plan for this brand yet.</div>`;
       return;
     }
     box.innerHTML = state.plans.map((p) => `
@@ -1449,7 +1455,7 @@
           <div class="t">${esc(displayPlanTitle(p))}</div>
           <div class="d">${esc(p.period_start || "?")} → ${esc(p.period_end || "?")} · ${esc(planStatusLabel(p.status_label || p.status))} · ${p.posts || 0} posts / ${p.stories || 0} stories</div>
         </div>
-        <div>${p.is_test_lane ? '<span class="badge dev">DEV</span>' : ""}<span class="badge">${esc(p.data_lane || "operational")}</span></div>
+        <div>${p.is_test_lane ? '<span class="badge dev">Practice plan</span>' : ""}</div>
       </button>`).join("");
     box.querySelectorAll(".plan-pick").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -1494,7 +1500,7 @@
         `<span class="badge">${esc(planStatusLabel(p.status_label || p.status))}</span>`,
         `<span class="badge">${esc(ux.counts.posts)} posts</span>`,
         `<span class="badge">${esc(ux.counts.stories)} stories</span>`,
-        p.is_test_lane ? `<span class="badge dev">DEV fixture</span>` : "",
+        p.is_test_lane ? `<span class="badge dev">Practice plan</span>` : "",
       ].join("");
       $("preparedLine").textContent = p.prepared_note || "Plan prepared using available brand, historical and performance information.";
       $("preparedDetail").innerHTML = "Brand memory, previous plans, and available performance context were used where present. Trend and inspiration lanes are not connected yet.";
@@ -3282,6 +3288,11 @@
     applyBrandTheme26((state.brandMeta && state.brandMeta[state.brand]) || { id: state.brand });
   }
   wire26();
+  window.addEventListener("load", function () {
+    var over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
+    document.body.setAttribute("data-overflow", over ? "yes" : "no");
+    document.body.setAttribute("data-ready", "1");
+  });
 
 })();
 </script>

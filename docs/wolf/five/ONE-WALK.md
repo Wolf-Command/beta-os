@@ -8,6 +8,8 @@ Capture: one text note per person, dated, with the fields below. Keep the note. 
 
 Amanda is not in this walk. Matt's session is the allow side for organisation, assignments, work items, approvals, and Owner Command. Haikal and Devi are the deny side for those reads.
 
+The job on each desk is in `docs/wolf/five/HUMAN-SCENARIOS.md`. Do that job in this same sign-in. Do not sign in a second time for the same person. Haikal does the content steps after step 1, before step 2. Devi does the Uma steps after step 1, before step 2. Matt does the finance steps after step 4, before step 11. Amanda is a separate sign-in only if she is the one holding the nota photo. Do not open the Atrium books in this walk.
+
 ## Haikal
 
 Sign in. You should land on Content.
