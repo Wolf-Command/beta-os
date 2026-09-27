@@ -90,6 +90,16 @@
       "at": "2026-09-27T09:32:00Z",
       "tests": "PASS=48 FAIL=0",
       "checked": false
+    },
+    {
+      "id": "p0-s2-cap-core-07-route-20260927",
+      "claim": "A temporary catalog copy lists zero approval requests for PERS-MATT on ENT-BZG and ENT-GGV, then the copy is removed. No approval request and no governance policy are inserted. Live core_approval_requests stays 0, core_approval_decisions stays 6, and core_governance_policies stays 1. Unsigned, a spoofed email, X-Wolf-Subject, and Cf-Access-Jwt-Assertion a.b.c are 403 on GET /api/core/approvals and GET /api/core/approvals/APR-NONE. Unsigned POST /api/core/approvals is 403. CAP-CORE-07 stays PROVEN. CR-fb1af5c252e28d77 stays OPEN. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false. A seated allow was not observed.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_cap_core_07_route.py | tail -2; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-CORE-07'][0], len(d))\"; python3 -c \"import sqlite3; c=sqlite3.connect('file:catalog/content_library.sqlite?mode=ro', uri=True); print(c.execute('SELECT COUNT(*) FROM core_approval_requests').fetchone()[0]); print(c.execute('SELECT COUNT(*) FROM core_approval_decisions').fetchone()[0]); print(c.execute('SELECT COUNT(*) FROM core_governance_policies').fetchone()[0]); print(c.execute(\\\"SELECT state FROM wolf_completion_items WHERE id='CR-fb1af5c252e28d77'\\\").fetchone()[0])\"; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "SUMMARY pass=56 fail=0; EXIT: SUCCESS; PROVEN 77; 0; 6; 1; OPEN; 8787 True; 8788 True",
+      "by": "cursor-p0-s2-cap-core-07",
+      "at": "2026-09-27T09:46:32Z",
+      "tests": "PASS=56 FAIL=0",
+      "checked": false
     }
   ]
 }

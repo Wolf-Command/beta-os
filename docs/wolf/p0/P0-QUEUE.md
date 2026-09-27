@@ -6,7 +6,7 @@ Pack S2. Owner brief 27 Sep 2026 16:32 WITA. This is the one execution queue. Ru
 
 Register count is **12**. `build_war_room()` in S1 returned P0 12, P1 20, P2 42, P3 3. The closed set is CAP-CORE-01 through CAP-CORE-10, plus CAP-MSC-02 and CAP-INTG-07. There is no thirteenth P0.
 
-CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED after the empty-table deny in commit `fcae665`. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit `99f5a27`. CAP-CORE-06 stays OPEN after the temporary trail in commit `2229b21`. The other six stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
+CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-CORE-05 is CLOSED after the empty-table deny in commit `fcae665`. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. CAP-CORE-01 stays OPEN after the unsigned registry deny in commit `99f5a27`. CAP-CORE-06 stays OPEN after the temporary trail in commit `2229b21`. CAP-CORE-07 stays OPEN after the approval-route prove in commit `ab4af72`. The other five stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
 
 Order is the critical path. A prerequisite is another P0 the next bar actually waits on. The catalog records no extra prerequisite inside the kernel, because those rows are already PROVEN or READY. That does not make the deployed observation done.
 
@@ -100,14 +100,14 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 
 ## 9. CAP-CORE-07 — Approval Engine
 
-- Current state: SYSTEM PROVEN (0.80). Live `core_approval_requests` is 0. Live `core_approval_decisions` is 6. Wide production policy packs are the READY bar.
-- Exact missing evidence: those packs, and a deployed observation. Inventing a pack would be a fake policy.
-- Cursor work: record the approval route on Beta after the real session. Do not insert a policy row.
-- Human work: Matt approves a production policy pack, or records that none is authorised.
+- Current state: SYSTEM PROVEN (0.80). On a deleted catalog copy, `PERS-MATT` resolved `ENT-BZG` and `ENT-GGV` and the engine listed zero requests. The copy was not written. Live `core_approval_requests` stayed 0. Live `core_approval_decisions` stayed 6. Live `core_governance_policies` stayed 1, id `GPO-HABITAT-CONTENT-PUBLISH`. That row is not a wide production pack. On Beta `:8788` pid 64196, unsigned, a spoofed email, `X-Wolf-Subject`, and a bad JWT are 403 on `GET /api/core/approvals` and `GET /api/core/approvals/APR-NONE`. Unsigned POST is 403. The public hostname redirects those two GETs to the Access login. No seated read was observed.
+- Exact missing evidence: `GET /api/core/approvals` on Beta under a real Cloudflare session. The live request table is empty, so that read must match count 0. A wide production policy pack was not authored. The stored Habitat policy and the six decisions are not that pack.
+- Cursor work: done for the copy read and the unsigned deny in commit `ab4af72`. Evidence: `docs/wolf/p0/P0-CAP-CORE-07-RESULT.md`. Do not insert a policy row. Do not mint a JWT. After a real session, record the status and count. Do not raise the ledger. Do not mark BLOCKED_OWNER from this prove.
+- Human work: Matt authors a wide production policy pack, or records that none is authorised. The seated read uses the CAP-CORE-02 session. It is not commissioning.
 - External dependency: none.
-- Prerequisite: CAP-CORE-06.
-- Closure test: Beta shows the engine, live `core_approval_requests` is still 0, and a pack exists only if Matt authored it.
-- Target: BLOCKED_OWNER. Status: OPEN.
+- Prerequisite: CAP-CORE-06. The copy read does not use the work-item trail that keeps CAP-CORE-06 OPEN. The critical path records no extra prerequisite.
+- Closure test: Beta shows the engine, live `core_approval_requests` is still 0, and a pack exists only if Matt authored it. The copy half passed (`SUMMARY pass=56 fail=0`). The live request count stayed 0. The policy count stayed 1. The seated half is absent, so the row stays OPEN. `test_approval_engine.py` is pass=57 fail=3. The fails are the live decision count 6, already recorded in D1. They were not repaired.
+- Target: BLOCKED_OWNER. Status: OPEN. Commit: `ab4af72`. Remaining: the seated read of the empty request list, then Matt's pack decision.
 
 ## 10. CAP-CORE-08 — Segregation of Duties
 

@@ -117,14 +117,14 @@ P0 or P1, and the SYSTEM state is not READY. The next bar is Wolf-side work. Sev
 - What it is: Human authority for material decisions; Dual Approval is a requirement class inside this capability when policy demands two persons.
 - Why it matters: Wolf cannot enforce or refuse an action without this.
 - Current state: SYSTEM PROVEN (0.80). Domain D-CORE — Wolf Core. Priority P0. Effort S.
-- Exact remaining work: Wide production policy packs
-- Work classes: local_deterministic, human_commissioning.
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Exact remaining work: Seated GET /api/core/approvals under a real Cloudflare session. The copy read is recorded in commit ab4af72. Live core_approval_requests stayed 0, so the read must match an empty list. Do not create a request to fill it. A wide production policy pack was not authored. GPO-HABITAT-CONTENT-PUBLISH and the six stored decisions are not that pack. Ledger stays PROVEN.
+- Work classes: local_deterministic, human_commissioning, owner_decision.
+- Dependency: The queue lists CAP-CORE-06. That seated read was not observed. This slice does not use the work-item trail.
 - Responsible role: Owner.
-- Evidence required to close: Deployed or runtime proof on the intended Beta boundary for READY. A repository test is not a deployed-route test. A human walk is not this bar.
-- Six-day note: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- Evidence required to close: The Beta status and count under the real session, matching the stored empty request list, and a wide production policy pack only if Matt authored it. The copy read is not that session. A human walk is not this bar.
+- Six-day note: The copy read lists zero requests for PERS-MATT and inserts no policy. Commit ab4af72. Live core_approval_requests stayed 0. Unsigned callers are 403 on Beta :8788 pid 64196. A seated read was not observed. Ledger stays PROVEN.
 - Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
-- Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
+- Deployed proof: Unsigned deny on Beta :8788 pid 64196 is recorded for the approval list, one missing id, and unsigned POST. DEPLOYED-ROUTE-PROOF-20260927 stays FAIL for a seated allow. No real Cloudflare Access JWT was presented. The copy read is not that seated proof.
 
 ### CAP-CORE-08 — Segregation of Duties
 

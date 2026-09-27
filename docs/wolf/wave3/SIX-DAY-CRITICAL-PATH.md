@@ -75,10 +75,10 @@ Production `:8787` is out of this path. Beta `:8788` is the boundary for any dep
 ### 9. CAP-CORE-07 — Approval Engine
 
 - Priority P0. SYSTEM PROVEN. Effort S. Group: finish.
-- Next bar: Wide production policy packs
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Next bar: Seated GET /api/core/approvals. The copy read is commit ab4af72. Live core_approval_requests stayed 0. A wide production policy pack was not authored.
+- Dependency: The queue lists CAP-CORE-06. That seated read was not observed. This slice does not use the work-item trail.
 - Responsible role: Owner.
-- In six days: Deployed-route bar is open. Unsigned Beta stays fail-closed. A development-subject 200 is not that proof.
+- In six days: The copy read lists zero requests for PERS-MATT and inserts no policy. Commit ab4af72. Unsigned callers are 403 on Beta :8788 pid 64196. A seated read was not observed. Ledger stays PROVEN. Do not insert a pack. Do not treat GPO-HABITAT-CONTENT-PUBLISH or the six stored decisions as that pack.
 
 ### 10. CAP-CORE-08 — Segregation of Duties
 

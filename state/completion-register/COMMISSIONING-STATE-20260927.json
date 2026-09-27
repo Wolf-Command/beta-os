@@ -59,10 +59,10 @@
     {
       "id": "CAP-CORE-07",
       "system_state": "PROVEN",
-      "staff_readiness": "Not claimed.",
-      "human_commissioning": "Not commissioned. A material decision still needs the authorised person.",
-      "operating_adoption": "Not scored.",
-      "gap": "Live core_approval_decisions count is 6. core_approval_requests count is 0. Wide policy packs remain the READY bar."
+      "staff_readiness": "No. Unsigned approval reads on Beta :8788 are 403. No seated session was walked.",
+      "human_commissioning": "Not commissioned. A material decision still needs the authorised person. No policy pack was authored by this pack.",
+      "operating_adoption": "Not scored. Not adopted.",
+      "gap": "Seated GET /api/core/approvals remains. Commit ab4af72 records the copy read. Live core_approval_requests stayed 0. No policy row was inserted. GPO-HABITAT-CONTENT-PUBLISH is one stored policy, not a wide production pack. That bar is not this register."
     },
     {
       "id": "CAP-CORE-08",

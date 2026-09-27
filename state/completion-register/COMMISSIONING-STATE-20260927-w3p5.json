@@ -364,10 +364,10 @@
       "operating_adoption": "NOT MEASURED",
       "staff_ready": false,
       "human_commissioned": false,
-      "gap": "Wide production policy packs",
+      "gap": "Copy read recorded in commit ab4af72. PERS-MATT listed zero requests on a deleted catalog copy. Live core_approval_requests stayed 0. No policy row was inserted. Unsigned callers are 403 on Beta :8788. A seated read was not observed. Ledger stays PROVEN. GPO-HABITAT-CONTENT-PUBLISH is one stored policy, not a wide production pack. This is not staff ready and not human commissioned.",
       "owner_role": "Owner",
       "effort_class": "S",
-      "dependency": "No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY."
+      "dependency": "The queue lists CAP-CORE-06. That seated read was not observed. This slice does not use the work-item trail."
     },
     {
       "id": "CAP-CORE-08",
