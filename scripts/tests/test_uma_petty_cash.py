@@ -51,6 +51,31 @@ FORBIDDEN_WRITE_TERMS = (
 )
 
 
+def esb_refusal_only(src_lower: str) -> tuple[bool, str]:
+    """The substring esb_write is the off-flag and the refusal, not a writer.
+
+    test_bzg_loop_closure.py requires def refuse_esb_write, code
+    esb_write_refused, and \"esb_write\": False. A bare substring ban
+    cannot be true at the same time. Anything outside those forms fails.
+    """
+    if "def refuse_esb_write" not in src_lower:
+        return False, "refuse_esb_write missing"
+    if '"esb_write": true' in src_lower or "'esb_write': true" in src_lower:
+        return False, "esb_write set true"
+    residual = src_lower
+    for allowed in (
+        '"esb_write": false',
+        "def refuse_esb_write",
+        "refuse_esb_write(",
+        "esb_write_refused",
+    ):
+        residual = residual.replace(allowed, "")
+    if "esb_write" in residual:
+        i = residual.find("esb_write")
+        return False, residual[max(0, i - 40) : i + 48]
+    return True, ""
+
+
 def check(name: str, cond: bool, detail: str = "") -> None:
     global PASS, FAIL
     if cond:
@@ -82,7 +107,11 @@ def main() -> int:
     serve_text = SERVE.read_text(encoding="utf-8")
     serve_src = serve_text.lower()
     for term in FORBIDDEN_WRITE_TERMS:
-        check(f"ops no write helper {term}", term not in src)
+        if term == "esb_write":
+            ok, detail = esb_refusal_only(src)
+            check("ops no write helper esb_write", ok, detail)
+        else:
+            check(f"ops no write helper {term}", term not in src)
     # Petty handlers must not grow forbidden write helpers
     petty_block = ""
     if "def _uma_ops_petty" in serve_text:

@@ -402,6 +402,7 @@ def test_phone() -> None:
             return
         for label, subject, path, needle in (
             ("lead-today", DEVI, "/bzg/uma-blu", "You run the day's operations"),
+            ("lead-close", DEVI, "/uma-blu-close", "No variance policy set"),
             ("lead-evidence", DEVI, "/bzg/uma-blu/evidence", "No close evidence recorded in Wolf yet."),
             ("lead-exceptions", DEVI, "/bzg/uma-blu/exceptions", "Exceptions"),
             ("closer-today", CLOSER_EMAIL, "/bzg/uma-blu", "You count the till"),

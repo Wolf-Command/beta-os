@@ -173,7 +173,7 @@
 
   <div class="panel">
     <h2>What this screen can and cannot do</h2>
-    <div class="muted" id="honesty">…</div>
+    <div class="muted" id="honesty">No variance policy set. A till that does not match ESB stops. No threshold was invented. Closer seat is waiting. No person is assigned to the closing role. This screen does not pay or change a bank.</div>
   </div>
 
 <script>
@@ -181,6 +181,7 @@
   const $ = (id) => document.getElementById(id);
   let close = null;
   let me = null;
+  let policyCount = null;
   let caps = {
     open: false, capture: false, declare: false, reconcile: false,
     exception: false, resolve: false, verify: false, submit: false
@@ -263,7 +264,12 @@
       `<div class="fig">${money(close.variance_cash_amount)}<small>Variance</small></div>` +
       `<div class="fig">${totals.finished_count ?? "—"}<small>Finished bills</small></div>` +
       `</div>` +
-      (close.work_item_id ? `<p class="muted" style="margin-top:8px">Work item ${close.work_item_id}</p>` : "");
+      (st === "VARIANCE_REQUIRES_POLICY" && policyCount === 0
+        ? `<p class="muted" style="margin-top:8px">No variance policy set. Open an exception. It shows in <a href="/my-work">My Work</a>.</p>`
+        : "") +
+      (close.work_item_id
+        ? `<p class="muted" style="margin-top:8px"><a href="/my-work">Open in My Work</a></p>`
+        : "");
 
     esb.textContent = totals.cash_label
       ? `ESB basis: ${totals.cash_label} — not settlement. Settlement API unavailable.`
@@ -286,14 +292,20 @@
   async function loadHonesty() {
     try {
       const h = await api("/api/venue-close/honesty");
-      $("honesty").textContent =
-        `settlement_api: ${h.settlement_api}\n` +
-        `esb_cash_basis: ${h.esb_cash_basis}\n` +
-        `live_variance_threshold: ${h.live_variance_threshold}\n` +
-        `live_monetary_authority: ${h.live_monetary_authority}\n` +
-        `closer: ${h.closer_commissioning}`;
+      policyCount = Number(h.live_variance_threshold);
+      const policyLine = policyCount === 0
+        ? "No variance policy set. A till that does not match ESB stops. No threshold was invented."
+        : "An authorised variance policy is on file. This screen does not show a threshold amount.";
+      const closerLine = h.closer_commissioning === "WAITING FOR VERIFIED CLOSING OPERATOR"
+        ? "Closer seat is waiting. No person is assigned to the closing role."
+        : "A closing operator is assigned.";
+      const payLine = "Settlement API is unavailable. ESB is read for sales only. This screen does not pay or change a bank.";
+      $("honesty").textContent = [policyLine, closerLine, payLine].join(" ");
     } catch (e) {
-      $("honesty").textContent = String(e.message || e);
+      policyCount = 0;
+      $("honesty").textContent =
+        "No variance policy set. Could not confirm the policy table. " +
+        (e.message || e);
     }
   }
 
@@ -323,10 +335,17 @@
               : !caps.submit
               ? `<p class="muted">Waiting on closer — no action needed from you.</p>`
               : `<p class="muted">No further action on this row.</p>`;
+          const policyNote =
+            r.state === "VARIANCE_REQUIRES_POLICY" && policyCount === 0
+              ? `<p class="muted">No variance policy set. Opening an exception puts it in <a href="/my-work">My Work</a>.</p>`
+              : r.state === "EXCEPTION" || r.work_item_id
+              ? `<p class="muted"><a href="/my-work">Open in My Work</a></p>`
+              : "";
           return (
             `<div class="exc">` +
             `<strong>${r.business_date}</strong> · ${humanState(r.state)}` +
             `<div class="muted">Variance ${money(r.variance_cash_amount)}</div>` +
+            policyNote +
             actions +
             `</div>`
           );
@@ -439,7 +458,14 @@
     await loadHonesty();
     await loadExceptions();
     renderClose();
+    markOverflow();
   }
+
+  function markOverflow() {
+    var over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
+    document.body.setAttribute("data-overflow", over ? "yes" : "no");
+  }
+  window.addEventListener("load", markOverflow);
 
   $("tabToday").onclick = () => showTab("today");
   $("tabPrevious").onclick = () => showTab("previous");
@@ -520,7 +546,9 @@
       setMsg(
         close.state === "VERIFIED_CLOSED"
           ? "Clean day — closed and verified."
-          : "Variance needs policy / exception handover.",
+          : (policyCount === 0
+          ? "No variance policy set. Open an exception. It shows in My Work."
+          : "Variance needs an exception handover. Acceptance is not built on this screen."),
         close.state === "VERIFIED_CLOSED"
       );
       await loadExceptions();

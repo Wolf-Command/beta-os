@@ -20,6 +20,16 @@
       "at": "2026-09-26T19:26:00Z",
       "tests": "PASS=52 FAIL=0",
       "checked": false
+    },
+    {
+      "id": "day2-d4-uma-close-20260927",
+      "claim": "Uma petty and BZG nav suites pass. Daily Close on Beta says no variance policy is set and links My Work. ROLE-BZG-CLOSER stays unseated. venue_close_variance_policies stays 0. Anon Today and My Work on :8788 are 403. Production :8787 pid 15975 was not restarted. Not staff ready. Not human commissioned.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_uma_petty_cash.py | tail -2; python3 scripts/tests/test_wolf_bzg_uma_nav.py | tail -3; curl -sS -o /dev/null -w 'today:%{http_code}\\n' http://127.0.0.1:8788/bzg/uma-blu; curl -sS -o /dev/null -w 'close:%{http_code}\\n' http://127.0.0.1:8788/uma-blu-close; curl -sS http://127.0.0.1:8788/uma-blu-close | grep -c 'No variance policy set'; curl -sS http://127.0.0.1:8788/api/venue-close/honesty; python3 -c \"import sqlite3; c=sqlite3.connect('catalog/content_library.sqlite'); print('closer', c.execute(\\\"SELECT COUNT(*) FROM org_assignments a JOIN org_positions p ON p.position_id=a.position_id WHERE p.role_id='ROLE-BZG-CLOSER' AND a.status='ACTIVE' AND a.end_at IS NULL\\\").fetchone()[0]); print('policies', c.execute('SELECT COUNT(*) FROM venue_close_variance_policies').fetchone()[0])\"; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "PASS=53 FAIL=0; PASS=111 FAIL=0; EXIT: SUCCESS; today:403; close:200; grep count 1; live_variance_threshold 0 and closer_commissioning WAITING; closer 0; policies 0; 8787 True; 8788 True",
+      "by": "cursor-day2-d4-uma",
+      "at": "2026-09-27T00:04:01Z",
+      "tests": "petty PASS=53 FAIL=0; nav PASS=111 FAIL=0; loop PASS=47 FAIL=0",
+      "checked": false
     }
   ]
 }

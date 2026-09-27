@@ -84,7 +84,7 @@
   <h1 class="brand">Petty <em>cash</em></h1>
   <p class="sub">Tin movements only.</p>
 
-  <div class="banner" id="floatBanner">Opening cash balance needed. Uma Blu has no approved opening balance yet. You can view movements, but the tin total cannot be verified.</div>
+  <div class="banner" id="floatBanner">Opening float NOT FOUND. Opening cash balance needed. Uma Blu has no approved opening balance yet. You can view movements, but the tin total cannot be verified.</div>
   <div class="banner hidden" id="fixtureBanner">Practice examples — not live Uma Blu tin activity.</div>
 
     <nav class="uma" aria-label="Uma Blu day">
@@ -150,7 +150,7 @@
       var floatStatus = (data.float_status || (data.honesty && data.honesty.float) || "NOT_FOUND");
       var floatEl = document.getElementById("floatBanner");
       if (floatStatus === "NOT_FOUND" || floatStatus === "NOT_IN_SLICE") {
-        var banner = "Opening cash balance needed. Uma Blu has no approved opening balance yet. You can view movements, but the tin total cannot be verified.";
+        var banner = "Opening float NOT FOUND. Opening cash balance needed. Uma Blu has no approved opening balance yet. You can view movements, but the tin total cannot be verified.";
         if ((data.movements || []).length) {
           banner += " Past movements stay listed under this notice. They do not set an opening balance.";
         }
