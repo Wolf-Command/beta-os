@@ -913,3 +913,248 @@ def build_prove(
             "cr": False,
         },
     }
+
+
+def _speed_counts(rows: list[dict[str, Any]], clock: datetime) -> dict[str, Any]:
+    """Bucket timestamps already on the rows. Does not fill a missing touch."""
+    waiting = measured = unavailable = 0
+    present = absent = unreadable = 0
+    for row in rows:
+        speed, receipt = _bucket(row, clock)
+        if speed == "WAITING":
+            waiting += 1
+        elif speed == "MEASURED":
+            measured += 1
+        else:
+            unavailable += 1
+        if receipt == "PRESENT":
+            present += 1
+        elif receipt == "UNREADABLE":
+            unreadable += 1
+        else:
+            absent += 1
+    return {
+        "status": "READ",
+        "rows": len(rows),
+        "waiting": waiting,
+        "measured": measured,
+        "unavailable": unavailable,
+        "receipt_present": present,
+        "receipt_absent": absent,
+        "receipt_unreadable": unreadable,
+        "empty": len(rows) == 0,
+    }
+
+
+def _group_counts(rows: list[dict[str, Any]], key: str) -> list[dict[str, Any]]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        token = str(row.get(key) or "")
+        counts[token] = counts.get(token, 0) + 1
+    return [{key: token, "rows": counts[token]} for token in sorted(counts)]
+
+
+def read_stored_leads(
+    catalog_db: Path | str | None = None,
+    ledger_path: Path | str | None = None,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Read leads already in core_leads. Writes nothing and creates no person.
+
+    Demo rows stay out of the operational counts. A demo row is not an
+    operating board. No SLA, sale, or lead is invented. CAP-CRM-01 is a
+    different row. The ledger stays unread for writes.
+    """
+    flags = honesty_flags(ledger_path, catalog_db)
+    clock = now or datetime.now(timezone.utc)
+    if clock.tzinfo is None:
+        raise ProveError("now must be timezone-aware", code="invalid")
+    base: dict[str, Any] = {
+        "ok": False,
+        "cap": CAP_ID,
+        "read": "stored_leads",
+        "data_lane": "UNKNOWN",
+        "lane_column": False,
+        "stored_rows": "UNKNOWN",
+        "demo_rows": "UNKNOWN",
+        "operational_rows": "UNKNOWN",
+        "demo_counted_as_operational": False,
+        "leads_created": 0,
+        "persons_created": 0,
+        "persons_stored": "UNKNOWN",
+        "person_id_listed": False,
+        "operating_board": False,
+        "proved": False,
+        "current": False,
+        "sla_target_seconds": None,
+        "sla_breached": None,
+        "sales": None,
+        "closed_is_not_a_sale": True,
+        "closed_rows": "UNKNOWN",
+        "receipts_invented": 0,
+        "leads_invented": False,
+        "owner_set_rows": "UNKNOWN",
+        "owner_matches_stored_person": "UNKNOWN",
+        "work_item_set_rows": "UNKNOWN",
+        "event_rows": "UNKNOWN",
+        "crm_cap": "CAP-CRM-01",
+        "crm_tested_here": False,
+        "staff_ready": False,
+        "human_commissioned": False,
+        "operating_adoption": "NOT MEASURED",
+        "catalog_write": False,
+        "ledger_write": False,
+        "klaviyo_called": False,
+        "klaviyo_write": False,
+        "metricool_write": False,
+        "activecampaign_called": False,
+        "activecampaign_write": False,
+        "external_crm_write": False,
+        "payment_executed": False,
+        "esb_write": False,
+        "cr_resolved": False,
+        "honesty": flags,
+        "why": "Stored leads were not read. Absence is not zero and not an invented lead.",
+    }
+    path = Path(catalog_db) if catalog_db else CATALOG_DB
+    _guard_read(path)
+    conn = _ro(path)
+    if conn is None:
+        return base
+    try:
+        if not _table_exists(conn, "core_leads"):
+            return base
+        fetched = conn.execute(
+            """
+            SELECT entity_id, brand_id, source_system,
+                   source_observed_at, first_human_touch_at,
+                   wolf_stage, source_stage, conversion_status,
+                   CASE
+                     WHEN owner_person_id IS NOT NULL AND length(trim(owner_person_id)) > 0
+                     THEN 1 ELSE 0
+                   END,
+                   CASE
+                     WHEN current_work_item_id IS NOT NULL
+                      AND length(trim(current_work_item_id)) > 0
+                     THEN 1 ELSE 0
+                   END,
+                   CASE
+                     WHEN provenance_json LIKE '%"demo": true%'
+                       OR provenance_json LIKE '%"demo":true%'
+                     THEN 1 ELSE 0
+                   END
+            FROM core_leads
+            """
+        ).fetchall()
+        event_rows: list[tuple] = []
+        event_lead_count = None
+        if _table_exists(conn, "core_lead_events"):
+            event_rows = conn.execute(
+                """
+                SELECT event_type, COUNT(*)
+                FROM core_lead_events
+                GROUP BY event_type
+                ORDER BY event_type
+                """
+            ).fetchall()
+            event_lead_count = conn.execute(
+                "SELECT COUNT(DISTINCT lead_id) FROM core_lead_events"
+            ).fetchone()
+        persons_stored: int | str = "UNKNOWN"
+        owner_matches: int | str = "UNKNOWN"
+        if _table_exists(conn, "org_persons"):
+            persons_stored = int(conn.execute("SELECT COUNT(*) FROM org_persons").fetchone()[0])
+            owner_matches = int(
+                conn.execute(
+                    """
+                    SELECT COUNT(*) FROM core_leads AS lead
+                    WHERE lead.owner_person_id IS NOT NULL
+                      AND length(trim(lead.owner_person_id)) > 0
+                      AND EXISTS (
+                        SELECT 1 FROM org_persons AS person
+                        WHERE person.person_id = lead.owner_person_id
+                      )
+                    """
+                ).fetchone()[0]
+            )
+    except sqlite3.Error:
+        return base
+    finally:
+        conn.close()
+
+    stored: list[dict[str, Any]] = []
+    for item in fetched:
+        stored.append(
+            {
+                "entity_id": item[0],
+                "brand_id": item[1],
+                "source_system": item[2] or "",
+                "source_observed_at": item[3],
+                "first_human_touch_at": item[4],
+                "wolf_stage": item[5] or "",
+                "source_stage": item[6] or "",
+                "conversion_status": item[7] or "",
+                "owner_set": bool(item[8]),
+                "work_item_set": bool(item[9]),
+                "demo": bool(item[10]),
+            }
+        )
+    demo_rows = [row for row in stored if row["demo"]]
+    operational_rows = [row for row in stored if not row["demo"]]
+    stored_speed = _speed_counts(stored, clock)
+    operational_speed = _speed_counts(operational_rows, clock)
+    brand_counts: dict[str, dict[str, int]] = {}
+    for row in stored:
+        brand = str(row["brand_id"] or "")
+        slot = brand_counts.setdefault(brand, {"rows": 0, "demo": 0, "operational": 0})
+        slot["rows"] += 1
+        if row["demo"]:
+            slot["demo"] += 1
+        else:
+            slot["operational"] += 1
+    brands = [
+        {"brand_id": brand, **brand_counts[brand]}
+        for brand in sorted(brand_counts)
+    ]
+    if not stored:
+        why = "No stored leads. Empty is not an invented lead and not an operating board."
+    elif len(demo_rows) == len(stored):
+        why = (
+            "Every stored lead is a demo fixture. Operational speed-to-lead is empty. "
+            "Empty is not an invented lead and not an operating board."
+        )
+    else:
+        why = (
+            "Stored leads were read. A non-demo row is not commissioning and is not a higher maturity."
+        )
+    report = dict(base)
+    report.update(
+        {
+            "ok": True,
+            "stored_rows": len(stored),
+            "demo_rows": len(demo_rows),
+            "operational_rows": len(operational_rows),
+            "persons_stored": persons_stored,
+            "closed_rows": sum(1 for row in stored if str(row["wolf_stage"]).upper() == "CLOSED"),
+            "stored_speed": stored_speed,
+            "operational_speed": operational_speed,
+            "brands": brands,
+            "other_brand_rows": sum(1 for row in stored if str(row["brand_id"] or "").strip().lower() != HABITAT),
+            "source_systems": _group_counts(stored, "source_system"),
+            "wolf_stages": _group_counts(stored, "wolf_stage"),
+            "source_stages": _group_counts(stored, "source_stage"),
+            "conversion_statuses": _group_counts(stored, "conversion_status"),
+            "owner_set_rows": sum(1 for row in stored if row["owner_set"]),
+            "owner_matches_stored_person": owner_matches,
+            "work_item_set_rows": sum(1 for row in stored if row["work_item_set"]),
+            "events": [
+                {"event_type": row[0] or "", "rows": int(row[1])}
+                for row in event_rows
+            ],
+            "event_rows": sum(int(row[1]) for row in event_rows),
+            "event_leads": None if event_lead_count is None else int(event_lead_count[0]),
+            "ivy": ivy_surface(brand_count(catalog_db, IVY)),
+            "why": why,
+        }
+    )
+    return report
