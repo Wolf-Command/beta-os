@@ -19,13 +19,13 @@
   "human_commissioned": 0,
   "operating_adoption": "NOT MEASURED",
   "final_status_count": {
-    "OPEN": 11,
+    "OPEN": 10,
     "CLOSED": 0,
     "READY_FOR_HUMAN": 1,
     "WAITING_EXTERNAL": 0,
-    "BLOCKED_OWNER": 0
+    "BLOCKED_OWNER": 1
   },
-  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. Sign-out is deployed. The seated walk is not done. Staff ready, human commissioned, and operating adoption stay unset. The other eleven P0 items stay OPEN.",
+  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. The 27 Sep search found the 2026-07-21 plaintext credential directory and no vault product. The ledger stays SPECIFIED. Staff ready, human commissioned, and operating adoption stay unset. The other ten P0 items stay OPEN.",
   "items": [
     {
       "order": 1,
@@ -50,15 +50,19 @@
       "order": 2,
       "id": "CAP-INTG-07",
       "title": "Secrets & Environment Separation",
-      "current_state": "SYSTEM SPECIFIED (0.05). Owner audit 2026-09-18 rejected PROVEN. Repository checks and test_cap_intg_07_environment_separation.py are evidence, not the vault prove. Ledger was not raised.",
-      "exact_missing_evidence": "A deterministic vault, rotation, and Dev/Beta/Prod separation prove that is not a file-exists check, and a vault product for READY. No such prove is in the gap register.",
-      "cursor_work": "Search the existing authorised secret and config infrastructure first. Do not print values. Do not treat footage crypt, rclone remotes, or the Atrium scratch backup as this capability. If that search finds no authorised vault, stop and leave the row SPECIFIED. Do not build a second vault.",
-      "human_work": "none until that search is recorded",
+      "current_state": "SYSTEM SPECIFIED (0.05). The 27 Sep search named the 2026-07-21 plaintext directory ~/.openclaw/credentials/ (30 JSON files, INDEX.md). That decision says 1Password is dead. op 2.35.0 has no account. The keychain service wolf-secrets-vault is the passphrase for encrypted off-site copies, not a vault product. Footage crypt, rclone, and the Atrium scratch backup were not treated as this capability. No second vault was built. Ledger was not raised.",
+      "exact_missing_evidence": "A vault product Matt names, then a deterministic vault, rotation, and Dev/Beta/Prod separation prove. The plaintext directory and the repo-check test are not that prove.",
+      "cursor_work": "Done for this pack. The search is recorded. Stopped. No second vault.",
+      "human_work": "Matt names the vault product for Dev, Beta, and Production, or records that none is authorised. Cursor does not choose it.",
       "external_dependency": "none",
       "prerequisite": [],
       "closure_test": "The search names the store it found, or it records that no authorised vault exists, without a secret value in the note. The ledger stays SPECIFIED until a vault prove exists. A passing repo-check test does not close this item.",
       "target_final_state": "BLOCKED_OWNER",
-      "status": "OPEN"
+      "status": "BLOCKED_OWNER",
+      "evidence": [
+        "docs/wolf/p0/P0-CAP-INTG-07-RESULT.md"
+      ],
+      "commit": ""
     },
     {
       "order": 3,

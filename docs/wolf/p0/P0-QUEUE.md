@@ -6,7 +6,7 @@ Pack S2. Owner brief 27 Sep 2026 16:32 WITA. This is the one execution queue. Ru
 
 Register count is **12**. `build_war_room()` in S1 returned P0 12, P1 20, P2 42, P3 3. The closed set is CAP-CORE-01 through CAP-CORE-10, plus CAP-MSC-02 and CAP-INTG-07. There is no thirteenth P0.
 
-CAP-CORE-02 is READY_FOR_HUMAN. The other eleven stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
+CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. The other ten stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
 
 Order is the critical path. A prerequisite is another P0 the next bar actually waits on. The catalog records no extra prerequisite inside the kernel, because those rows are already PROVEN or READY. That does not make the deployed observation done.
 
@@ -23,14 +23,14 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 
 ## 2. CAP-INTG-07 — Secrets & Environment Separation
 
-- Current state: SYSTEM SPECIFIED (0.05). The 2026-09-18 owner audit rejected PROVEN. Repository checks are not the vault prove.
-- Exact missing evidence: a deterministic vault, rotation, and Dev/Beta/Prod separation prove, and a vault product for READY.
-- Cursor work: search the existing authorised secret infrastructure first. Do not print values. Do not treat footage crypt, rclone, or the Atrium scratch backup as this capability. If no authorised vault exists, stop and leave the row SPECIFIED. Do not build a second vault.
-- Human work: none until that search is recorded.
+- Current state: SYSTEM SPECIFIED (0.05). The 27 Sep search named `~/.openclaw/credentials/` (decision 2026-07-21, plaintext, 30 JSON files). 1Password has no account. The keychain service `wolf-secrets-vault` encrypts off-site copies. It is not a vault product. Footage crypt, rclone, and the Atrium scratch backup are not this capability. No second vault was built.
+- Exact missing evidence: a vault product Matt names, then a rotation and Dev/Beta/Prod separation prove. The repo-check test is not that prove.
+- Cursor work: done. Evidence: `docs/wolf/p0/P0-CAP-INTG-07-RESULT.md`. The ledger was not edited.
+- Human work: Matt names the vault product, or records that none is authorised.
 - External dependency: none.
 - Prerequisite: none.
-- Closure test: the search names the store, or records that none exists, with no secret value in the note. A passing repo-check test does not close this item.
-- Target: BLOCKED_OWNER. Status: OPEN.
+- Closure test: the search names the store, with no secret value in the note. The ledger stays SPECIFIED. A passing repo-check test does not close this item.
+- Target: BLOCKED_OWNER. Status: BLOCKED_OWNER.
 
 ## 3. CAP-MSC-02 — Access & Cloudflare Posture
 

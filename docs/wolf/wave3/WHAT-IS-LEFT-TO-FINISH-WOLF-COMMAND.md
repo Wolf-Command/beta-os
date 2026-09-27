@@ -19,7 +19,7 @@ P0 or P1, and the SYSTEM state is not READY. The next bar is Wolf-side work. Sev
 - What it is: Secrets management; Dev/Beta/Prod separation; no secrets in SOPs/chats; sanitised test data preference.
 - Why it matters: Wolf cannot enforce or refuse an action without this.
 - Current state: SYSTEM SPECIFIED (0.05). Domain D-INTG — Integrations / Infrastructure. Priority P0. Effort L.
-- Exact remaining work: Deterministic vault/rotation/separation prove for PROVEN; vault product for READY
+- Exact remaining work: Matt names the vault product. The 27 Sep 2026 search found the plaintext credential directory and no vault. Ledger stays SPECIFIED. See docs/wolf/p0/P0-CAP-INTG-07-RESULT.md.
 - Work classes: cursor_build, local_deterministic, human_commissioning, owner_decision.
 - Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
 - Responsible role: Owner.

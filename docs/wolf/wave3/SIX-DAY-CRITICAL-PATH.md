@@ -19,10 +19,10 @@ Production `:8787` is out of this path. Beta `:8788` is the boundary for any dep
 ### 2. CAP-INTG-07 — Secrets & Environment Separation
 
 - Priority P0. SYSTEM SPECIFIED. Effort L. Group: finish.
-- Next bar: Deterministic vault/rotation/separation prove for PROVEN; vault product for READY
+- Next bar: Matt names the vault product. Search on 27 Sep 2026 found no vault. Ledger stays SPECIFIED.
 - Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
 - Responsible role: Owner.
-- In six days: Not at BUILT. Six days does not stand in for the missing implementation.
+- In six days: BLOCKED_OWNER. Cursor does not build a second vault. A sign-in does not close this row.
 
 ### 3. CAP-MSC-02 — Access & Cloudflare Posture
 
