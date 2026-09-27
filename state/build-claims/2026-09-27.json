@@ -60,6 +60,16 @@
       "at": "2026-09-27T09:10:00Z",
       "tests": "PASS=51 FAIL=0",
       "checked": false
+    },
+    {
+      "id": "p0-s2-cap-msc-02-live-gate-20260927",
+      "claim": "Beta :8788 denies unsigned, a spoofed Cf-Access-Authenticated-User-Email, X-Wolf-Subject, and Cf-Access-Jwt-Assertion a.b.c on /api/core/me, /api/msc/posture, and /wolf. https://beta.wolfcommand.net redirects those three paths to the Cloudflare Access login. CAP-MSC-02 stays BUILT. CR-80296d7bc9c35452 stays OPEN. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false. A seated allow was not observed.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_cap_msc_02_live_gate.py | tail -2; python3 -c \"import json; d=json.load(open('state/model-c-baseline-assessments.json')); print(d['CAP-MSC-02'][0], len(d))\"; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "SUMMARY pass=38 fail=0; EXIT: SUCCESS; BUILT 77; 8787 True; 8788 True",
+      "by": "cursor-p0-s2-cap-msc-02",
+      "at": "2026-09-27T09:10:45Z",
+      "tests": "PASS=38 FAIL=0",
+      "checked": false
     }
   ]
 }

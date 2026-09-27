@@ -33,12 +33,12 @@ P0 or P1, and the SYSTEM state is not READY. The next bar is Wolf-side work. Sev
 - What it is: Seats, doors, Access includes; Matt-owned flips preserved.
 - Why it matters: Wolf cannot enforce or refuse an action without this.
 - Current state: SYSTEM BUILT (0.25). Domain D-MSC — Maintenance / Security / Compliance. Priority P0. Effort M.
-- Exact remaining work: CAP-bound automated posture prove as READY
+- Exact remaining work: The live-gate deny prove is recorded (commit 025dd13). CLOSED still needs a review note that is not this queue. The 2026-09-20 empty-framework review does not bind it. Ledger stays BUILT. Seated allow was not observed. See docs/wolf/p0/P0-CAP-MSC-02-RESULT.md.
 - Work classes: local_deterministic, human_commissioning, owner_decision.
 - Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
 - Responsible role: Owner.
 - Evidence required to close: Deterministic verification plus material red-team or review evidence. BUILT is not PROVEN. A rendered desk is not that review.
-- Six-day note: A local prove can be attempted. PROVEN still needs the review the scoring rules require. This pack does not supply that review.
+- Six-day note: Deny prove exits 0. PROVEN still needs a review this pack does not supply. Ledger stays BUILT. Do not call Grok.
 - Staff ready: No. Human commissioned: No. Operating adoption: NOT MEASURED.
 - Deployed proof: DEPLOYED-ROUTE-PROOF-20260927 result is FAIL. No real Cloudflare Access JWT was presented to Beta :8788. Seated-role HTTP 200 landings and cross-role denials under a verified person were not observed. The local verifier suite is not that proof. That file is not a per-capability pass.
 

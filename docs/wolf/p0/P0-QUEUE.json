@@ -25,7 +25,7 @@
     "WAITING_EXTERNAL": 0,
     "BLOCKED_OWNER": 1
   },
-  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. The 27 Sep search found the 2026-07-21 plaintext credential directory and no vault product. The ledger stays SPECIFIED. Staff ready, human commissioned, and operating adoption stay unset. The other ten P0 items stay OPEN.",
+  "final_status_note": "CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-MSC-02 stays OPEN. The deny prove on the live Beta gate is recorded in commit 025dd13. CLOSED still needs a review note that is not this queue. The ledger stays BUILT. Staff ready, human commissioned, and operating adoption stay unset. The other nine P0 items stay OPEN.",
   "items": [
     {
       "order": 1,
@@ -68,15 +68,21 @@
       "order": 3,
       "id": "CAP-MSC-02",
       "title": "Access & Cloudflare Posture",
-      "current_state": "SYSTEM BUILT (0.25). Public hostname beta.wolfcommand.net returns 302 to Cloudflare Access login (D3). Matt-owned include flips stay with the owner. No CAP-bound automated posture prove. No review artifact binds this row.",
-      "exact_missing_evidence": "Deterministic posture verification plus the material review the scoring rules require before PROVEN, then the READY bar. Deployed seated 200 and cross-role denial were not observed. Do not call Grok for that review.",
-      "cursor_work": "Write the CAP-bound posture prove against the live Beta gate: unsigned denied, spoofed email header denied, bad JWT denied, and the public login redirect. Seated allow and cross-role denial wait on CAP-CORE-02. Do not change Access includes.",
-      "human_work": "none for the local deny prove. A seated allow observation uses the same human session as CAP-CORE-02 and is not commissioning.",
+      "current_state": "SYSTEM BUILT (0.25). Deny prove recorded. On Beta :8788 pid 59914, unsigned, a spoofed email header, X-Wolf-Subject, and Cf-Access-Jwt-Assertion a.b.c are 403 on /api/core/me, /api/msc/posture, and /wolf. The public hostname returns 302 to the Access login for those three paths. Ledger stays BUILT. Access includes were not changed. No seated 200 was observed. No review note that is not this queue binds this prove.",
+      "exact_missing_evidence": "A review note that is not this queue, binding the deny prove to CAP-MSC-02. The 2026-09-20 review covers the empty framework and does not bind this prove. Seated allow and cross-role denial remain unobserved until the CAP-CORE-02 walk. Do not call Grok. Do not raise the ledger from this queue.",
+      "cursor_work": "Done for the deny slice in commit 025dd13. Do not repeat the curl. Do not write the review. Do not change Access includes. Do not mark CLOSED.",
+      "human_work": "none for the deny prove. A seated allow observation uses the same human session as CAP-CORE-02 and is not commissioning. The review is not that walk.",
       "external_dependency": "none",
       "prerequisite": ["CAP-CORE-02"],
-      "closure_test": "A posture test exits 0 on the deny cases above, and a review note that is not this queue binds the result to CAP-MSC-02. A rendered desk is not that review. The ledger is not raised by this queue.",
+      "closure_test": "A posture test exits 0 on the deny cases above, and a review note that is not this queue binds the result to CAP-MSC-02. A rendered desk is not that review. The ledger is not raised by this queue. The test half passed. The review half is absent, so the row stays OPEN.",
       "target_final_state": "CLOSED",
-      "status": "OPEN"
+      "status": "OPEN",
+      "remaining": "Review note that is not this queue, binding docs/wolf/p0/P0-CAP-MSC-02-RESULT.md to CAP-MSC-02. Then the row can be CLOSED without raising the ledger. Seated allow stays outside this prove.",
+      "evidence": [
+        "docs/wolf/p0/P0-CAP-MSC-02-RESULT.md",
+        "scripts/tests/test_cap_msc_02_live_gate.py"
+      ],
+      "commit": "025dd13"
     },
     {
       "order": 4,

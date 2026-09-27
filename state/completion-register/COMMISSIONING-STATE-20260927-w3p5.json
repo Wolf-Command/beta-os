@@ -1112,7 +1112,7 @@
       "operating_adoption": "NOT MEASURED",
       "staff_ready": false,
       "human_commissioned": false,
-      "gap": "CAP-bound automated posture prove as READY",
+      "gap": "Deny prove recorded in commit 025dd13. Unsigned, spoofed email, spoofed subject, and a bad JWT are 403 on Beta :8788. The public hostname redirects to Access login. CLOSED still needs a review note that is not this queue. Ledger stays BUILT. Seated allow was not observed. This is not staff ready and not human commissioned.",
       "owner_role": "Owner",
       "effort_class": "M",
       "dependency": "No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY."

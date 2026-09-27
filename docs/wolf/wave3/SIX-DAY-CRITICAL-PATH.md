@@ -27,10 +27,10 @@ Production `:8787` is out of this path. Beta `:8788` is the boundary for any dep
 ### 3. CAP-MSC-02 — Access & Cloudflare Posture
 
 - Priority P0. SYSTEM BUILT. Effort M. Group: finish.
-- Next bar: CAP-bound automated posture prove as READY
-- Dependency: No extra prerequisite is recorded. The control kernel (CAP-CORE-01 through CAP-CORE-04) is already PROVEN or READY.
+- Next bar: Review note that is not this queue. The deny prove is recorded in commit 025dd13. Ledger stays BUILT.
+- Dependency: CAP-CORE-02 is READY_FOR_HUMAN. That does not supply the review.
 - Responsible role: Owner.
-- In six days: A local prove can be attempted. PROVEN still needs the review the scoring rules require. This pack does not supply that review.
+- In six days: Deny cases exit 0. PROVEN still needs the review. This pack does not supply it. Do not call Grok. Seated allow was not observed.
 
 ### 4. CAP-CORE-01 — Organisation Registry
 

@@ -6,7 +6,7 @@ Pack S2. Owner brief 27 Sep 2026 16:32 WITA. This is the one execution queue. Ru
 
 Register count is **12**. `build_war_room()` in S1 returned P0 12, P1 20, P2 42, P3 3. The closed set is CAP-CORE-01 through CAP-CORE-10, plus CAP-MSC-02 and CAP-INTG-07. There is no thirteenth P0.
 
-CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. The other ten stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
+CAP-CORE-02 is READY_FOR_HUMAN. CAP-INTG-07 is BLOCKED_OWNER. CAP-MSC-02 stays OPEN after the deny prove in commit `025dd13`. The other nine stay OPEN. Staff ready, human commissioned, and operating adoption stay unset. None of these twelve is waiting on a named external provider.
 
 Order is the critical path. A prerequisite is another P0 the next bar actually waits on. The catalog records no extra prerequisite inside the kernel, because those rows are already PROVEN or READY. That does not make the deployed observation done.
 
@@ -34,14 +34,14 @@ Order is the critical path. A prerequisite is another P0 the next bar actually w
 
 ## 3. CAP-MSC-02 — Access & Cloudflare Posture
 
-- Current state: SYSTEM BUILT (0.25). The public hostname redirects to Cloudflare Access login. Matt-owned include flips stay with the owner. No CAP-bound posture prove. No review binds this row. Do not call Grok.
-- Exact missing evidence: deterministic posture verification, then the review the scoring rules require before PROVEN. Seated allow was not observed.
-- Cursor work: prove unsigned denied, spoofed email denied, bad JWT denied, and the public login redirect. Seated allow waits on CAP-CORE-02. Do not change Access includes.
-- Human work: none for the deny prove. A seated observation uses the CAP-CORE-02 session and is not commissioning.
+- Current state: SYSTEM BUILT (0.25). The deny prove is recorded. On Beta `:8788` pid 59914, unsigned, a spoofed email header, `X-Wolf-Subject`, and `Cf-Access-Jwt-Assertion: a.b.c` are 403 on `/api/core/me`, `/api/msc/posture`, and `/wolf`. The public hostname returns 302 to the Access login for those three paths. Access includes were not changed. No seated 200 was observed.
+- Exact missing evidence: a review note that is not this queue, binding that deny prove to CAP-MSC-02. The 2026-09-20 review covers the empty framework and does not bind this prove. Seated allow and cross-role denial wait on the CAP-CORE-02 walk.
+- Cursor work: done for the deny slice in commit `025dd13`. Evidence: `docs/wolf/p0/P0-CAP-MSC-02-RESULT.md`. Do not repeat the curl. Do not write the review. Do not call Grok. Do not raise the ledger.
+- Human work: none for the deny prove. A seated observation uses the CAP-CORE-02 session and is not commissioning. The review is not that walk.
 - External dependency: none.
 - Prerequisite: CAP-CORE-02.
-- Closure test: the deny cases exit 0, and a review note that is not this queue binds the result to CAP-MSC-02. This queue does not raise the ledger.
-- Target: CLOSED. Status: OPEN.
+- Closure test: the deny cases exit 0, and a review note that is not this queue binds the result to CAP-MSC-02. The test half passed (`SUMMARY pass=38 fail=0`). The review half is absent, so the row stays OPEN. This queue does not raise the ledger.
+- Target: CLOSED. Status: OPEN. Commit: `025dd13`. Remaining: the review note.
 
 ## 4. CAP-CORE-01 — Organisation Registry
 
