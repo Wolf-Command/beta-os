@@ -72,6 +72,7 @@ Do not add `laluzayen@gmail.com` until a Person is bound.
 | `test_staff_home.py` | The checks through the owner pulse passed. The suite then deletes a scratch row in the live catalog. The guard refused that write (`not authorized`) and the process stopped. Not re-run a second time |
 | `test_wolf_intel_nav.py` | PASS=160 FAIL=5. Misa landing checks passed. Remaining: content crumb string is not in `content-2.0.html` (that file was not edited), and three prior-wave child suites |
 | `test_wolf_amg_nav.py` | PASS=142 FAIL=3. Misa landing and bake checks passed. Remaining fails are prior-wave child suites |
+| `test_wolf_specialist_nav.py` | PASS=222 FAIL=10. The guarded run started at 10:26 WITA. Coral landing and coral whoami landing failed in that run. A later read of `build_whoami` for PERS-MISA is audience SPECIALIST_CONTENT and landing `/content-2.0`. The honesty-slice checks fail because the current slice is `wolf_ggv_content_nas_haikal_prep`. Six prior-wave child suites failed on guard write-refusal noise. Wave 3 passed |
 
 `test_rbac_permissions.py` was not run. It writes the live catalog. The inactive-assignment check now ends every active Misa assignment, then restores those rows, so a second seat cannot leave access on.
 
