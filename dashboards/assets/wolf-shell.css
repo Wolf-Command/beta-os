@@ -360,11 +360,14 @@ body.staff-content-desk #wolfnav .nv-footer a {
   font-weight: 550 !important;
 }
 
-html.wolfnav-phone #wolfnav .nv-hello { display: none; }
 html.wolfnav-phone #wolfnav .nv-ctx-label { display: none; }
 html.wolfnav-phone #wolfnav .nv-crumbs {
-  flex: 1 1 100%;
-  order: 5;
+  flex: 0 1 auto;
+  order: 0;
+  width: auto;
+  max-width: 100%;
+  overflow: visible;
+  flex-wrap: wrap;
   padding: 2px 4px 4px;
   font-size: 11px;
 }
@@ -374,6 +377,7 @@ html.wolfnav-phone #wolfnav .nv-dir-btn {
 }
 
 @media (max-width: 430px) {
+  html, body { overflow-x: clip; }
   #wolfnav-t {
     min-height: 44px;
     min-width: 44px;
@@ -381,7 +385,27 @@ html.wolfnav-phone #wolfnav .nv-dir-btn {
     touch-action: manipulation;
   }
   #wolf-boards a { min-height: 44px; box-sizing: border-box; }
-  #wolfnav .nv-hello { display: none; }
+  #wolfnav .nv-row { align-items: center; row-gap: 2px; }
+  #wolfnav .nv-footer { margin-left: 0; border-left: 0; padding-left: 4px; }
+  #wolfnav .nv-hello,
+  html.wolfnav-phone #wolfnav .nv-hello {
+    display: block !important;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: 100%;
+    min-width: 0;
+    flex: 1 1 8rem;
+    line-height: 1.25;
+    padding: 4px 6px;
+  }
+  #wolfnav .nv-crumbs,
+  html.wolfnav-phone #wolfnav .nv-crumbs {
+    flex: 0 1 auto;
+    order: 0;
+    width: auto;
+    overflow: visible;
+  }
 }
 
 @media print {

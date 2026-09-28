@@ -140,6 +140,16 @@
       "at": "2026-09-28T13:55:44Z",
       "tests": "umareal PASS=85 FAIL=0; staff access PASS=274 FAIL=0; role routing PASS=84 FAIL=0; atrium full mount PASS=79 FAIL=0; bzg recon OK",
       "checked": false
+    },
+    {
+      "id": "opsfix-1-20260928",
+      "claim": "OPSFIX-1 on Beta :8788 pid 19288. Unsigned /api/health is 200, /wolf is 403, /favicon.ico is 200. core_work_items stays 0. Production :8787 pid 15975 was not restarted. Atrium sidecar pid 96416 was not restarted. staff_ready and human_commissioned stay false.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_opsfix1_20260928.py | tail -2; curl -sS -o /dev/null -w 'health:%{http_code}\\n' --max-time 5 http://127.0.0.1:8788/api/health; curl -sS -o /dev/null -w 'wolf:%{http_code}\\n' --max-time 5 http://127.0.0.1:8788/wolf; curl -sS -o /dev/null -w 'favicon:%{http_code}\\n' --max-time 5 http://127.0.0.1:8788/favicon.ico; python3 -c \"import sqlite3,subprocess; c=sqlite3.connect('file:catalog/content_library.sqlite?mode=ro', uri=True); print('work', c.execute('select count(*) from core_work_items').fetchone()[0]); print('prod', subprocess.check_output(['ps','-p','15975','-o','pid='], text=True).strip()); print('beta', subprocess.check_output(['ps','-p','19288','-o','pid='], text=True).strip()); print('sidecar', subprocess.check_output(['ps','-p','96416','-o','pid='], text=True).strip())\"",
+      "expect": "SUMMARY pass=41 fail=0; RESULT: PASS; health:200; wolf:403; favicon:200; work 0; prod 15975; beta 19288; sidecar 96416",
+      "by": "cursor-opsfix-1",
+      "at": "2026-09-28T14:40:17Z",
+      "tests": "opsfix1 PASS=41 FAIL=0; staff access PASS=274 FAIL=0; role routing PASS=84 FAIL=0; atrium full mount PASS=79 FAIL=0; umareal PASS=85 FAIL=0; opsaudit PASS=91 FAIL=0",
+      "checked": false
     }
   ]
 }

@@ -15,6 +15,7 @@ from typing import Any
 
 from core import identity
 from core import work_items as wi
+from core.nas_library import BRAND_SCOPES
 
 BOUND = "beta-staff-home"
 SCHEMA_ID = "wolf.staff-home.v1"
@@ -479,6 +480,52 @@ def _today_empty(experience: str) -> str:
     return "Nothing is assigned to you for today."
 
 
+def _plan_in_scope(brand_id: str, scope_ids: set[str]) -> bool:
+    brand = (brand_id or "").strip()
+    needed = BRAND_SCOPES.get(brand.lower())
+    if needed and scope_ids & set(needed):
+        return True
+    return brand in scope_ids or brand.lower() in {item.lower() for item in scope_ids}
+
+
+def _stored_plan_items(conn, scope_ids: set[str]) -> list[dict[str, Any]]:
+    """Read stored content plans. Does not insert a work item."""
+    try:
+        rows = conn.execute(
+            """
+            SELECT id, brand_id, title, status, created_at, updated_at, data_lane
+            FROM content_plans
+            WHERE lower(brand_id) = 'habitat'
+            ORDER BY id
+            """
+        ).fetchall()
+    except Exception:
+        return []
+    items: list[dict[str, Any]] = []
+    for row in rows:
+        brand = str(row["brand_id"] or "")
+        if not _plan_in_scope(brand, scope_ids):
+            continue
+        plan_id = row["id"]
+        items.append(
+            {
+                "id": f"content-plan-{plan_id}",
+                "title": str(row["title"] or f"Habitat plan {plan_id}"),
+                "href": f"/content-2.0?plan={plan_id}#plan",
+                "status": str(row["status"] or ""),
+                "brand_id": brand,
+                "source_system": "content_plans",
+                "source_id": str(plan_id),
+                "source_timestamp": row["updated_at"] or row["created_at"],
+                "import_timestamp": row["created_at"],
+                "origin": "historical",
+                "verified_by_wolf": False,
+                "data_lane": str(row["data_lane"] or "operational"),
+            }
+        )
+    return items
+
+
 def _staff_sections(
     conn,
     person_id: str,
@@ -486,6 +533,8 @@ def _staff_sections(
     codes: set[str],
     *,
     today_empty: str,
+    experience: str = "",
+    scope_ids: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     mine = _clean_work(_work_rows(conn, entities, ("OPEN", "IN_PROGRESS", "BLOCKED"), person_id))
     today = [
@@ -506,6 +555,8 @@ def _staff_sections(
         for r in done_rows[:8]
     ]
     mine_ids = {str(r["work_item_id"]) for r in mine}
+    if experience in {"creative_director", "content_creator"}:
+        today = _stored_plan_items(conn, scope_ids or set()) + today
     for ev in _evidence_rows(conn, entities):
         if str(ev.get("submitted_by_person_id") or "") != person_id:
             continue
@@ -627,7 +678,13 @@ def build_home(person_id: str | None, *, conn=None) -> dict[str, Any]:
             sections = _owner_sections(c, entities, codes, pid)
         else:
             sections = _staff_sections(
-                c, pid, entities, codes, today_empty=_today_empty(experience)
+                c,
+                pid,
+                entities,
+                codes,
+                today_empty=_today_empty(experience),
+                experience=experience,
+                scope_ids={str(s["id"]) for s in scope_rows},
             )
         display = str(person.get("display_name") or "").strip() or "there"
         role_label = str(role.get("role_label") or role.get("position_label") or "Your role")

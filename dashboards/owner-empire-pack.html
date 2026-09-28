@@ -227,14 +227,33 @@
     document.body.setAttribute("data-command-ready", "1");
   }
 
-  api("/api/owner/command").then(show).catch((err) => {
+  function paintAnswers(reason) {
+    document.querySelectorAll("[data-answer]").forEach((slot) => {
+      if (/^Loading/.test(slot.textContent || "")) slot.textContent = reason;
+    });
+    document.body.setAttribute("data-command-ready", "1");
+  }
+
+  const commandTimer = window.setTimeout(() => {
+    paintAnswers("UNKNOWN. The command read did not finish within 3 seconds. Nothing was invented.");
+  }, 3000);
+
+  api("/api/owner/command").then((data) => {
+    window.clearTimeout(commandTimer);
+    show(data);
+    paintAnswers("UNKNOWN. This card has no answer on the command read.");
+  }).catch((err) => {
+    window.clearTimeout(commandTimer);
+    const reason = err.denied
+      ? "MISSING. This seat cannot read Owner Command."
+      : "UNKNOWN. " + (err.message || "The command read failed.") + " Nothing was invented.";
+    paintAnswers(reason);
     if (err.denied && window.WolfTruth) {
       $("command").innerHTML = window.WolfTruth.denied();
       return;
     }
     const box = window.WolfTruth ? window.WolfTruth.error(err.message) : `<p class="err">${esc(err.message || "failed")}</p>`;
     $("command").innerHTML = box;
-    document.body.setAttribute("data-command-ready", "0");
   });
 })();
 </script>

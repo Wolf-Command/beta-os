@@ -97,7 +97,7 @@
 <body data-wolf-page-type="WORKSPACE" data-wolf-org="GGV" data-wolf-shell="global">
   <p class="crumb">WOLF · Goss Group · GGV · Lead Spine</p>
   <div class="banner demo" id="demoBanner">
-    Demo data. Not live leads.
+    NOT WIRED. Real leads are not on this board. Demo data. Not live leads.
   </div>
 
   <h1>Lead Spine <span>· Beta</span></h1>
@@ -191,6 +191,12 @@
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]
   );
 
+  function isDemoRow(row) {
+    if (!row || row.is_demo === true) return true;
+    const label = String(row.demo_label || "");
+    return label === "DEMO" || label.indexOf("DEMO ") === 0;
+  }
+
   function toast(msg) {
     const t = $("toast");
     t.textContent = msg;
@@ -238,7 +244,7 @@
     if (!state.leads.length) {
       box.innerHTML = "";
       msg.className = "empty";
-      msg.textContent = "No leads for this brand yet.";
+      msg.textContent = "NOT WIRED. Real leads are not on this board.";
       return;
     }
     msg.textContent = "";
@@ -271,16 +277,15 @@
     const { res, data } = await api(`/api/leads?brand=${encodeURIComponent(BRAND)}`);
     if (!res.ok) {
       $("leadList").innerHTML = "";
-      $("listMsg").className = "err";
-      $("listMsg").textContent =
-        (data && data.message) || "You do not have permission to view leads for this brand.";
+      $("listMsg").className = "empty";
+      $("listMsg").textContent = "NOT WIRED. Real leads are not on this board.";
       return;
     }
-    state.leads = (data && data.leads) || [];
-    if (data && data.empty) {
+    state.leads = ((data && data.leads) || []).filter((row) => !isDemoRow(row));
+    if (!state.leads.length) {
       $("leadList").innerHTML = "";
       $("listMsg").className = "empty";
-      $("listMsg").textContent = data.empty_message || "No leads for this brand yet.";
+      $("listMsg").textContent = (data && data.empty_message) || "NOT WIRED. Real leads are not on this board.";
       return;
     }
     renderList();
@@ -407,13 +412,12 @@
     const { res, data } = await api(`/api/leads/triage?brand=${encodeURIComponent(BRAND)}`);
     if (!res.ok) {
       $("triageList").innerHTML = "";
-      $("triageMsg").className = "err";
-      $("triageMsg").textContent =
-        (data && data.message) || "You do not have permission to view leads for this brand.";
+      $("triageMsg").className = "empty";
+      $("triageMsg").textContent = "NOT WIRED. Real leads are not on this board.";
       return;
     }
-    state.triage = (data && data.queue) || [];
-    if (data && data.empty) {
+    state.triage = ((data && data.queue) || []).filter((row) => !isDemoRow(row));
+    if (!state.triage.length) {
       $("triageList").innerHTML = "";
       $("triageMsg").className = "empty";
       $("triageMsg").textContent = data.empty_message || "No open leads need triage.";

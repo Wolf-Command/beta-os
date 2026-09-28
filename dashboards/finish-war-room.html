@@ -26,6 +26,8 @@
   label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; }
   select { width: 100%; min-height: 44px; background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 8px; }
   .score { font-size: 1.4rem; margin: 4px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  th, td { border: 1px solid var(--border); padding: 6px; vertical-align: top; text-align: left; }
   @media (max-width: 860px) {
     body { max-width: 100%; padding: 12px 12px 80px; }
     .grid { grid-template-columns: 1fr; }
@@ -37,6 +39,12 @@
   <h1>Finish war room <span>· Beta</span></h1>
   <p class="lede">Bound beta-owner-safe. All 77 capabilities from the canonical ledger. SYSTEM is separate from staff readiness, human commissioning, and operating adoption. Unknown stays unknown. No payment on this desk.</p>
   <p><a class="action" href="/wolf">Owner Command</a></p>
+  <section id="testability" aria-label="Operational testability">
+    <h2 id="give-human" style="font-size:1.15rem;color:var(--warn);letter-spacing:0.04em">GIVE THIS TO A HUMAN NOW</h2>
+    <div id="give-now"></div>
+    <h2>Operational testability</h2>
+    <div id="test-table" style="overflow-x:auto;max-width:100%"></div>
+  </section>
   <div id="headline" class="card"><p>Loading the ledger…</p></div>
   <div class="grid">
     <div>
@@ -135,12 +143,42 @@
     paint();
   }
 
+  const COLS = ["surface", "route", "real_data", "core_actions", "permissions", "desktop", "phone", "human_tester", "last_human_result", "blocker", "next_repair", "ready_to_test_now"];
+
+  function testRow(row) {
+    return `<tr>${COLS.map((key) => `<td>${esc(row[key])}</td>`).join("")}</tr>`;
+  }
+
+  async function loadTestability() {
+    const res = await fetch("/api/owner/war-room/testability", { headers: { Accept: "application/json" } });
+    const data = await res.json().catch(() => ({}));
+    const give = document.getElementById("give-now");
+    const table = document.getElementById("test-table");
+    if (!res.ok || data.ok !== true) {
+      give.innerHTML = `<p class="err">${esc(data.message || "The testability matrix could not be read.")}</p>`;
+      document.body.setAttribute("data-testability-ready", "0");
+      return;
+    }
+    const queue = data.queue || [];
+    give.innerHTML = queue.length
+      ? queue.map((row) => `<article class="card"><p><strong>${esc(row.surface)}</strong> · ${esc(row.human_tester)}</p><p class="meta">${esc(row.route)} · ${esc(row.next_repair)}</p></article>`).join("")
+      : `<p class="note">Nothing is marked ready to test.</p>`;
+    const head = `<tr>${COLS.map((key) => `<th>${esc(key.replaceAll("_", " "))}</th>`).join("")}</tr>`;
+    table.innerHTML = `<table><thead>${head}</thead><tbody>${(data.surfaces || []).map(testRow).join("")}</tbody></table>`;
+    document.body.setAttribute("data-testability-ready", "1");
+    markOverflow();
+  }
+
   document.getElementById("filter-priority").addEventListener("change", () => { if (room) paint(); });
   document.getElementById("filter-state").addEventListener("change", () => { if (room) paint(); });
   load().catch((err) => {
     document.getElementById("msg").innerHTML = `<p class="err">${esc(err && err.message ? err.message : "The ledger could not be read.")}</p>`;
     document.body.setAttribute("data-war-room-ready", "0");
     markOverflow();
+  });
+  loadTestability().catch(() => {
+    document.getElementById("give-now").innerHTML = `<p class="err">The testability matrix could not be read.</p>`;
+    document.body.setAttribute("data-testability-ready", "0");
   });
 })();
 </script>

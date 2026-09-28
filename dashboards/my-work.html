@@ -65,7 +65,10 @@
 
   function cards(items) {
     return (items || []).map((it) => {
-      const inner = `<p>${esc(it.title)}</p>${it.status ? `<p class="role">${esc(it.status)}</p>` : ""}`;
+      const prov = it.origin
+        ? `<p class="role">origin ${esc(it.origin)} · verified_by_wolf ${esc(String(it.verified_by_wolf))} · ${esc(it.source_system || "")} ${esc(it.source_id || "")}${it.data_lane ? " · " + esc(it.data_lane) : ""}</p>`
+        : "";
+      const inner = `<p>${esc(it.title)}</p>${it.status ? `<p class="role">${esc(it.status)}</p>` : ""}${prov}`;
       if (it.href) {
         const klass = it.href.indexOf("/my-work/") === 0 ? "card wolf-card" : "action";
         return `<a class="${klass}" href="${esc(it.href)}">${inner}</a>`;

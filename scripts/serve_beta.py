@@ -305,6 +305,58 @@ def _ensure_under_incoming(path: Path) -> Path:
     return resolved
 
 
+_ATRIUM_SETUP_CHIP = b"""<script id="opsfix1-live-chip">
+(function () {
+  function paint(configured, force) {
+    var btn = document.getElementById("btn-db-status");
+    if (!btn) return false;
+    if (configured) {
+      btn.setAttribute("data-live-truth", "Live");
+      return true;
+    }
+    var nodes = btn.querySelectorAll("span");
+    var hit = false;
+    for (var i = 0; i < nodes.length; i++) {
+      if ((nodes[i].textContent || "").replace(/\\s+/g, " ").trim() === "Live") {
+        nodes[i].textContent = "SETUP INCOMPLETE";
+        hit = true;
+      }
+    }
+    if (!hit && !force) return false;
+    if (!hit) {
+      var mark = document.createElement("span");
+      mark.textContent = "SETUP INCOMPLETE";
+      btn.appendChild(mark);
+    }
+    btn.setAttribute("data-live-truth", "SETUP INCOMPLETE");
+    btn.title = "Property profile is not set. This is not a live hotel record.";
+    return true;
+  }
+  fetch("/amg/finance/api/dashboard", { headers: { Accept: "application/json" } })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      var metrics = (data && (data.metrics || data)) || {};
+      var configured = metrics.propertyConfigured === true;
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries += 1;
+        if (paint(configured, tries > 30) || tries > 40) clearInterval(timer);
+      }, 200);
+    })
+    .catch(function () {});
+})();
+</script>"""
+
+
+def _atrium_setup_chip(payload: bytes) -> bytes:
+    """Property profile unset is not a live hotel. The SQLite chip must say so."""
+    if b'id="opsfix1-live-chip"' in payload:
+        return payload
+    if b"</body>" in payload:
+        return payload.replace(b"</body>", _ATRIUM_SETUP_CHIP + b"</body>", 1)
+    return payload + _ATRIUM_SETUP_CHIP
+
+
 class UploadTooLarge(Exception):
     """Raised when upload exceeds MAX_UPLOAD_BYTES → HTTP 413."""
 
@@ -1810,6 +1862,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/health":
             self._send_json({"ok": True, "root": "beta-os", "planner": "sqlite"})
+            return
+
+        if path in ("/favicon.ico", "/favicon.svg"):
+            self._send_favicon()
             return
 
         if path in ("/signout", "/signout/"):
@@ -14109,6 +14165,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return True
         finally:
             upstream.close()
+        if "html" in out_type.lower():
+            payload = _atrium_setup_chip(payload)
         self.send_response(status)
         self.send_header("Content-Type", out_type)
         self.send_header("Cache-Control", "no-store")
@@ -14162,6 +14220,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
         conn = _ggv_fin.db_connect()
         try:
             allowed = _rbac.can(person_id, "atrium.board.read", {"entity_id": "ENT-AMG"}, conn=conn)
+            if not allowed:
+                from core import atrium_full_mount as _mount
+
+                allowed, _role = _mount.seat_allowed(person_id, conn)
         finally:
             conn.close()
         if not allowed:
@@ -16764,6 +16826,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return
         body = page.read_bytes()
+        person_id = str(identity.get("person_id") or "")
+        conn = _ggv_fin.db_connect()
+        try:
+            from core import atrium_full_mount as _mount
+
+            finance_allowed, _role = _mount.seat_allowed(person_id, conn)
+        finally:
+            conn.close()
+        if finance_allowed:
+            text = body.decode("utf-8")
+            text = text.replace(
+                '<span class="empty" id="financeClosed" title="Hotel books are not open on this desk.">Finance · EMPTY</span>',
+                '<a href="/amg/finance" id="financeSlot">Finance</a>',
+            )
+            text = text.replace(
+                '<p class="note" id="financeClosedNote">Hotel books are not open on this desk.</p>',
+                '<p class="note" id="financeClosedNote">Atrium Finance is open for this seat.</p>',
+            )
+            body = text.encode("utf-8")
         # Wave 5: inject global #wolfnav shell (additive) — same chrome as GGV/BZG.
         self._send_html_shell(body, rel="amg-ops-pack.html")
 
@@ -29305,6 +29386,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if identity is None:
             return
         view = path[len("/api/owner/war-room") :].strip("/") or None
+        if view == "testability":
+            self._war_room_testability(identity)
+            return
         if view not in {None, "desk"}:
             self._send_json(
                 {
@@ -29365,6 +29449,67 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return
         self._send_html_shell(page.read_bytes(), rel="finish-war-room.html")
+
+    def _war_room_testability(self, identity: dict) -> None:
+        matrix_path = BETA_ROOT / "state" / "ops" / "testability-matrix.json"
+        try:
+            matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "unavailable",
+                    "message": "The testability matrix could not be read.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "ledger_write": False,
+                },
+                status=500,
+            )
+            return
+        surfaces = matrix.get("surfaces") if isinstance(matrix, dict) else []
+        if not isinstance(surfaces, list):
+            surfaces = []
+        queue = [row for row in surfaces if isinstance(row, dict) and row.get("ready_to_test_now") == "yes"]
+        self._send_json(
+            {
+                "ok": True,
+                "title": "GIVE THIS TO A HUMAN NOW",
+                "queue": queue,
+                "surfaces": surfaces,
+                "columns": [
+                    "surface",
+                    "route",
+                    "real_data",
+                    "core_actions",
+                    "permissions",
+                    "desktop",
+                    "phone",
+                    "human_tester",
+                    "last_human_result",
+                    "blocker",
+                    "next_repair",
+                    "ready_to_test_now",
+                ],
+                "person_id": identity.get("person_id"),
+                "staff_ready": False,
+                "human_commissioned": False,
+                "ledger_write": False,
+            }
+        )
+
+    def _send_favicon(self) -> None:
+        icon = DASHBOARDS / "favicon.ico"
+        if not icon.is_file():
+            self._send_err(404, "favicon missing")
+            return
+        raw = icon.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "image/x-icon")
+        self.send_header("Content-Length", str(len(raw)))
+        self.send_header("Cache-Control", "public, max-age=86400")
+        self.end_headers()
+        self.wfile.write(raw)
 
     def _business_dashboard_denied(self, message: str) -> None:
         self._send_json(
@@ -33054,6 +33199,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             payload = _lead_spine.api_list_leads(
                 verified_person_id=identity["person_id"],
                 brand_id=brand,
+                hide_demo=True,
             )
         except Exception as exc:  # noqa: BLE001
             self._send_lead_error(exc)
@@ -33076,6 +33222,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             payload = _lead_spine.api_triage_board(
                 verified_person_id=identity["person_id"],
                 brand_id=brand,
+                hide_demo=True,
             )
         except Exception as exc:  # noqa: BLE001
             self._send_lead_error(exc)

@@ -1458,6 +1458,7 @@ def api_list_leads(
     brand_id: str,
     conn: sqlite3.Connection | None = None,
     db_path: Path | str | None = None,
+    hide_demo: bool = False,
 ) -> dict[str, Any]:
     """API used by GET /api/leads — raises LeadSpineError(code=denied) → 403."""
     rows = list_leads(
@@ -1466,23 +1467,30 @@ def api_list_leads(
         conn=conn,
         db_path=db_path,
     )
+    if hide_demo:
+        rows = [row for row in rows if not _row_is_demo(row)]
     own = conn is None
     c = conn or _open(db_path)
     try:
         cards = [lead_operator_card(r, conn=c) for r in rows]
+        if hide_demo and not cards:
+            empty_message = "NOT WIRED. Real leads are not on this board."
+        elif not cards:
+            empty_message = "No leads for this brand yet."
+        else:
+            empty_message = None
         payload = {
             "ok": True,
             "brand_id": brand_id,
             "leads": cards,
             "count": len(cards),
             "empty": len(cards) == 0,
-            "empty_message": (
-                "No leads for this brand yet." if len(cards) == 0 else None
-            ),
+            "empty_message": empty_message,
             "honesty": {
                 "closed_is_not_a_sale": True,
                 "closed_is_not_verified_revenue": True,
-                "demo_data": True,
+                "demo_data": not hide_demo,
+                "demo_rows_withheld": hide_demo,
             },
         }
         _attach_needs_you_connective(payload, person_id=verified_person_id, conn=c)
@@ -2059,6 +2067,7 @@ def api_triage_board(
     conn: sqlite3.Connection | None = None,
     db_path: Path | str | None = None,
     now: datetime | None = None,
+    hide_demo: bool = False,
 ) -> dict[str, Any]:
     """Hot/open triage queue. Empty is valid. Never inserts a lead."""
     clock = now or datetime.now(timezone.utc)
@@ -2070,6 +2079,8 @@ def api_triage_board(
         conn=conn,
         db_path=db_path,
     )
+    if hide_demo:
+        rows = [row for row in rows if not _row_is_demo(row)]
     own = conn is None
     c = conn or _open(db_path)
     try:
@@ -2077,15 +2088,19 @@ def api_triage_board(
             triage_card(row, conn=c, now=clock) for row in rows if needs_triage(row)
         ]
         queue.sort(key=_triage_sort_key)
+        if hide_demo and not queue:
+            empty_message = "NOT WIRED. Real leads are not on this board."
+        elif not queue:
+            empty_message = "No open leads need triage."
+        else:
+            empty_message = None
         payload = {
             "ok": True,
             "brand_id": brand_id,
             "queue": queue,
             "count": len(queue),
             "empty": len(queue) == 0,
-            "empty_message": (
-                "No open leads need triage." if len(queue) == 0 else None
-            ),
+            "empty_message": empty_message,
             "honesty": {
                 "invented_leads": False,
                 "invented_sla": False,
@@ -2098,6 +2113,7 @@ def api_triage_board(
                 "all_listed_rows_are_demo": (
                     all(_row_is_demo(row) for row in rows) if rows else None
                 ),
+                "demo_rows_withheld": hide_demo,
             },
         }
         _attach_needs_you_connective(payload, person_id=verified_person_id, conn=c)

@@ -197,7 +197,23 @@ def test_permissions() -> None:
             home = build_home(pid, conn=conn)
             check(f"{pid} my work is content creator", home.get("experience") == "content_creator")
             today = home["sections"][0]
-            check(f"{pid} today names the empty seat", today.get("empty") is True and "this role" in str(today.get("empty_message")))
+            items = today.get("items") or []
+            if items:
+                check(
+                    f"{pid} today is brand-scoped stored plans",
+                    all(
+                        it.get("origin") == "historical"
+                        and it.get("verified_by_wolf") is False
+                        and str(it.get("brand_id") or "").lower() == "habitat"
+                        and pid not in str(it.get("id"))
+                        for it in items
+                    ),
+                )
+            else:
+                check(
+                    f"{pid} today names the empty seat",
+                    today.get("empty") is True and "this role" in str(today.get("empty_message")),
+                )
         misa_home = build_home(MISA_PERSON, conn=conn)
         check("Misa my work is creative director", misa_home.get("experience") == "creative_director")
         check(
