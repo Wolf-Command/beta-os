@@ -258,19 +258,20 @@
       "order": 13,
       "id": "CAP-HR-01",
       "title": "People Master Record",
-      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: a canonical people master per legal entity, with CAP-bound tests.",
-      "exact_missing_evidence": "Those tests. A new demo person is not that evidence. People are not roles.",
-      "cursor_work": "Not started. Do not create a person.",
-      "human_work": "none until a missing real person is an owner identity decision.",
+      "current_state": "SYSTEM BUILT (0.25). The stored-person tests passed. 1 of 6 stored persons is a demo fixture, so the operational count is 5. People are not roles. The ledger stays BUILT.",
+      "exact_missing_evidence": "None for this queue test. A review that would raise PROVEN was not supplied.",
+      "cursor_work": "Done in commit 8394a49. Read-only tests of persons already stored. No second people master. No person created.",
+      "human_work": "none for this queue test.",
       "external_dependency": "none",
       "prerequisite": [],
       "closure_test": "People-master tests use stored persons and add none.",
       "target_final_state": "CLOSED",
-      "status": "OPEN",
+      "status": "CLOSED",
       "evidence": [
-        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md",
+        "docs/wolf/five/P1-CAP-HR-01-RESULT.md"
       ],
-      "commit": null
+      "commit": "8394a49"
     },
     {
       "order": 14,
