@@ -12,12 +12,15 @@ CR-20b4dd71cc0fcc88 stays OPEN. Bound beta-fin-safe.
 Names the pnl, balance_sheet, cash_flow, checklist, and notes slots and
 leaves every slot empty. An empty framework is not a live
 management-reporting pack and not proof of P&L/BS/CF machinery.
-This module does not invent P&L, BS, or CF numbers. It does not execute
-money move, payment, or bank write. It does not guest-blast, staff-blast,
-or public-post. It does not write Production, Alchemist, Zayen books,
-Cloudflare, Access, the Model C ledger, or the completion row.
-CAP-FIN-05 stays SPECIFIED. The ceiling label is BUILT. PROVEN and READY
-are not invented.
+read_management_report reuses that framework and the accounting-core
+books read. While that read leaves the books source unopened, the report
+state is UNAVAILABLE. UNAVAILABLE is not a P&L, a balance sheet, a cash
+figure, or zero. This module does not invent P&L, BS, or CF numbers. It
+does not execute money move, payment, or bank write. It does not
+guest-blast, staff-blast, or public-post. It does not write Production,
+Alchemist, Zayen books, Cloudflare, Access, the Model C ledger, or the
+completion row. CAP-FIN-05 stays SPECIFIED. The ceiling label is BUILT.
+PROVEN and READY are not invented.
 """
 from __future__ import annotations
 
@@ -859,3 +862,148 @@ def guard_query(
         refuse_fill({})
     if _present(write):
         refuse_external_write({})
+
+
+def _figure_typed(value: Any) -> bool:
+    """A supplied number, including zero. An empty string is not a figure."""
+    if value is None or isinstance(value, bool):
+        return False
+    if isinstance(value, (int, float)):
+        return True
+    return str(value).strip() != ""
+
+
+def _flag_set(value: Any) -> bool:
+    if value is None or isinstance(value, bool):
+        return bool(value)
+    return str(value).strip() != ""
+
+
+def _resolved_rows(catalog: Path) -> int | None:
+    if not catalog.is_file():
+        return None
+    uri = catalog.resolve().as_uri() + "?mode=ro"
+    try:
+        conn = sqlite3.connect(uri, uri=True)
+    except sqlite3.Error:
+        return None
+    try:
+        row = conn.execute(
+            """
+            SELECT COUNT(*) FROM wolf_completion_items
+            WHERE capability=? AND state='RESOLVED'
+            """,
+            (CAP_ID,),
+        ).fetchone()
+    except sqlite3.Error:
+        return None
+    finally:
+        conn.close()
+    if row is None:
+        return None
+    return int(row[0])
+
+
+def read_management_report(
+    catalog_db: Path | str | None = None,
+    ledger_path: Path | str | None = None,
+    *,
+    pnl: Any = None,
+    pnl_number: Any = None,
+    balance_sheet: Any = None,
+    balance_sheet_number: Any = None,
+    cash_flow: Any = None,
+    cash_flow_number: Any = None,
+    cash: Any = None,
+    statement: Any = None,
+    trial_balance: Any = None,
+    balance: Any = None,
+    amount: Any = None,
+    payment: Any = None,
+    open_books: Any = None,
+) -> dict[str, Any]:
+    """Report UNAVAILABLE while the books source stays unopened.
+
+    Reuses the accounting-core read and this module's empty framework.
+    A typed P&L, balance sheet, cash-flow, cash, or statement figure,
+    including zero, is refused. Opening the books is refused. No slot is
+    filled. CAP-FIN-05 stays SPECIFIED.
+    """
+    from core import fin_accounting_core as books
+
+    if _flag_set(payment):
+        refuse_payment({})
+    if any(
+        _figure_typed(item)
+        for item in (
+            pnl,
+            pnl_number,
+            balance_sheet,
+            balance_sheet_number,
+            cash_flow,
+            cash_flow_number,
+            cash,
+            statement,
+            trial_balance,
+            balance,
+            amount,
+        )
+    ):
+        refuse_current({})
+    if _flag_set(open_books):
+        raise FinMgmtReportingError(
+            "Opening the books is an owner act. This report does not open them.",
+            code="books_open_refused",
+        )
+
+    catalog = Path(catalog_db) if catalog_db else CATALOG_DB
+    ledger = Path(ledger_path) if ledger_path else LEDGER_JSON
+    core = books.read_accounting_core(catalog, ledger)
+    framework = build_framework(ledger, catalog)
+    flags = framework["honesty"]
+    books_source = str(core.get("books_source") or "UNKNOWN")
+    report_state = "UNAVAILABLE" if core.get("books_opened") is not True else "UNKNOWN"
+    return {
+        "ok": True,
+        "cap": CAP_ID,
+        "bound": BOUND,
+        "report_state": report_state,
+        "unavailable_is_a_statement": False,
+        "books_source": books_source,
+        "books_opened": False,
+        "statements_rendered": False,
+        "green_test_renders_pack": False,
+        "typed_figure_closes_row": False,
+        "pnl": None,
+        "pnl_number": None,
+        "balance_sheet": None,
+        "balance_sheet_number": None,
+        "cash_flow": None,
+        "cash_flow_number": None,
+        "cash": None,
+        "trial_balance": None,
+        "statement": None,
+        "kinds": framework["kinds"],
+        "recorded_count": framework["recorded_count"],
+        "empty_is_management_reporting": False,
+        "finance_display": core.get("finance_display"),
+        "finance_shown_as_current": core.get("finance_shown_as_current") is True,
+        "commissioned_books_present": core.get("commissioned_books_present") is True,
+        "sample_present": core.get("sample_present") is True,
+        "sample_opened": False,
+        "payment_executed": False,
+        "books_written": False,
+        "ledger_state": flags.get("ledger_maturity"),
+        "ledger_write": False,
+        "cr_id": flags.get("cr_id"),
+        "cr_present": flags.get("cr_present") is True,
+        "cr_state": flags.get("cr_state"),
+        "cr_resolved": False,
+        "resolved_rows": _resolved_rows(catalog),
+        "staff_ready": False,
+        "human_commissioned": False,
+        "operating_adoption": "NOT MEASURED",
+        "proven": False,
+        "ready": False,
+        "score_changed": False,
+    }
