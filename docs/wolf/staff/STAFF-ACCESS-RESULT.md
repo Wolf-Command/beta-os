@@ -77,6 +77,6 @@ Do not add `laluzayen@gmail.com` until a Person is bound.
 
 ## Commits
 
-Local only. Not pushed. Recorded after this file is committed.
+Local only. Not pushed. `4270103` seats the identities. This file's hash follows that commit.
 
 RESULT: PASS
