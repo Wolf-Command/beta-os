@@ -23,7 +23,7 @@ Who: Yudi, Gery, Alam, TJ, Nata, Rapp. One card. Each person uses their own Gmai
 
 ## Creative Director
 
-Who: Haikal and Misa. Each person uses their own Gmail.
+Who: Haikal, Misa, Zarah, and Frail. Each person uses their own Gmail. Zarah is zarah.lestrange@gmail.com. Frail is frail.bongat@icloud.com. This is the same card.
 
 1. Do every Content Creator step above, on your own sign-in.
 2. My Work should say Creative Director. Today is empty. Leave it empty.
@@ -57,6 +57,8 @@ Zayen Atrium Finance Officer — HUMAN FAIL 28 Sep 13:18 WITA — raw JSON on /;
 | --- | --- | --- |
 | Haikal | Creative Director | PENDING |
 | Misa | Creative Director | PENDING |
+| Zarah | Creative Director | PENDING |
+| Frail | Creative Director | PENDING |
 | Yudi | Content Creator | PENDING |
 | Gery | Content Creator | PENDING |
 | Alam | Content Creator | PENDING |

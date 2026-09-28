@@ -259,6 +259,31 @@ MISA_CD_POSITION = "POS-GGV-CREATIVE-DIRECTOR-2"
 MISA_CD_ASSIGNMENT = "ASG-MISA-CD-1"
 MISA_CREW_ASSIGNMENT = "ASG-MISA-CC-1"
 HAIKAL_CD_ASSIGNMENT = "ASG-HAIKAL-CD-1"
+HAIKAL_PERSON = "PERS-HAIKAL"
+
+# Same role as Haikal and Misa. Not a person-named role.
+CREATIVE_DIRECTORS: tuple[dict[str, Any], ...] = (
+    {
+        "person_id": "PERS-ZARAH",
+        "display_name": "Zarah",
+        "email": "zarah.lestrange@gmail.com",
+        "name_tokens": ("zarah", "lestrange"),
+        "position_id": "POS-GGV-CREATIVE-DIRECTOR-3",
+        "position_label": "Creative Director #3",
+        "assignment_id": "ASG-ZARAH-CD-1",
+        "auth_identity_id": "AUTH-ZARAH-EMAIL",
+    },
+    {
+        "person_id": "PERS-FRAIL",
+        "display_name": "Frail",
+        "email": "frail.bongat@icloud.com",
+        "name_tokens": ("frail", "bongat"),
+        "position_id": "POS-GGV-CREATIVE-DIRECTOR-4",
+        "position_label": "Creative Director #4",
+        "assignment_id": "ASG-FRAIL-CD-1",
+        "auth_identity_id": "AUTH-FRAIL-EMAIL",
+    },
+)
 
 
 def now_iso() -> str:
@@ -502,8 +527,7 @@ def _seat(
         """,
         (assignment_id, person_id, position_id, ts, 1 if primary else 0, ts, ts),
     )
-    for scope_id in scopes:
-        upsert_assignment_scope(conn, assignment_id, scope_id, ts, ts)
+    _attach_scopes_once(conn, assignment_id, scopes, ts)
 
 
 def officer_must_deny(person_id: str | None, path: str, conn: sqlite3.Connection) -> bool:
@@ -732,7 +756,7 @@ def _seat_zayen(conn: sqlite3.Connection, ts: str) -> None:
         """,
         (ZAYEN_ASSIGNMENT, ZAYEN_PERSON, ZAYEN_POSITION, ts, ts, ts),
     )
-    upsert_assignment_scope(conn, ZAYEN_ASSIGNMENT, SCOPE_AMG_FINANCE, ts, ts)
+    _attach_scopes_once(conn, ZAYEN_ASSIGNMENT, [SCOPE_AMG_FINANCE], ts)
 
 
 def _seat_ggv_finance_operator(conn: sqlite3.Connection, ts: str) -> str:
@@ -789,8 +813,224 @@ def _seat_ggv_finance_operator(conn: sqlite3.Connection, ts: str) -> str:
         """,
         (AMANDA_FINANCE_ASSIGNMENT, AMANDA_PERSON, AMANDA_FINANCE_POSITION, ts, ts, ts),
     )
-    upsert_assignment_scope(conn, AMANDA_FINANCE_ASSIGNMENT, "SCOPE-GGV-FINANCE", ts, ts)
+    _attach_scopes_once(conn, AMANDA_FINANCE_ASSIGNMENT, ["SCOPE-GGV-FINANCE"], ts)
     return AMANDA_FINANCE_ASSIGNMENT
+
+
+def _search_person(conn: sqlite3.Connection, email: str, name_tokens: tuple[str, ...]) -> dict[str, Any]:
+    """Existing Person by email or name. Does not insert."""
+    email_l = email.lower()
+    by_email = conn.execute(
+        """
+        SELECT person_id FROM org_auth_identities
+        WHERE provider='email' AND lower(identifier)=?
+        """,
+        (email_l,),
+    ).fetchone()
+    clauses: list[str] = []
+    params: list[str] = []
+    for token in name_tokens:
+        tok = token.lower()
+        clauses.append("lower(display_name)=?")
+        params.append(tok)
+        clauses.append("lower(ifnull(legal_name, ''))=?")
+        params.append(tok)
+        clauses.append("lower(display_name) LIKE ?")
+        params.append(f"%{tok}%")
+        clauses.append("lower(ifnull(legal_name, '')) LIKE ?")
+        params.append(f"%{tok}%")
+    rows = conn.execute(
+        f"SELECT person_id FROM org_persons WHERE {' OR '.join(clauses)}",
+        tuple(params),
+    ).fetchall()
+    names: list[str] = []
+    seen: set[str] = set()
+    for row in rows:
+        pid = str(row[0])
+        if pid not in seen:
+            seen.add(pid)
+            names.append(pid)
+    return {
+        "email": email_l,
+        "person_by_email": None if by_email is None else str(by_email[0]),
+        "name_matches": names,
+    }
+
+
+def _attach_scopes_once(
+    conn: sqlite3.Connection, assignment_id: str, scopes: list[str], ts: str
+) -> None:
+    """Attach missing scopes. A second apply does not add a second row."""
+    start = conn.execute(
+        "SELECT start_at FROM org_assignments WHERE assignment_id=?",
+        (assignment_id,),
+    ).fetchone()
+    start_at = str(start[0]) if start and start[0] else ts
+    for scope_id in scopes:
+        existing = conn.execute(
+            """
+            SELECT 1 FROM org_assignment_scopes
+            WHERE assignment_id=? AND scope_id=? AND status='ACTIVE' AND end_at IS NULL
+            """,
+            (assignment_id, scope_id),
+        ).fetchone()
+        if existing is not None:
+            continue
+        upsert_assignment_scope(conn, assignment_id, scope_id, start_at, ts)
+
+
+def _seat_creative_directors(
+    conn: sqlite3.Connection, scopes: list[str], ts: str
+) -> list[dict[str, Any]]:
+    """Seat Zarah and Frail on the existing Creative Director role.
+
+    Search email and name first. Reuse a person. Do not add a role or a grant.
+    """
+    reports: list[dict[str, Any]] = []
+    for seat in CREATIVE_DIRECTORS:
+        found = _search_person(conn, seat["email"], tuple(seat["name_tokens"]))
+        email_pid = found["person_by_email"]
+        names = list(found["name_matches"])
+        if email_pid and any(pid != email_pid for pid in names):
+            raise RuntimeError(
+                f"{found['email']} is bound to {email_pid} but the name also matches {names}"
+            )
+        if email_pid:
+            person_id = email_pid
+            reused = True
+        elif len(names) > 1:
+            raise RuntimeError(f"{seat['display_name']} matches more than one person: {names}")
+        elif len(names) == 1:
+            person_id = names[0]
+            reused = True
+        else:
+            person_id = str(seat["person_id"])
+            reused = False
+            clash = conn.execute(
+                "SELECT person_id FROM org_persons WHERE person_id=?",
+                (person_id,),
+            ).fetchone()
+            if clash is not None:
+                raise RuntimeError(f"{person_id} already exists without this email or name")
+            conn.execute(
+                """
+                INSERT INTO org_persons (
+                  person_id, display_name, legal_name, status, created_at, updated_at
+                ) VALUES (?, ?, NULL, 'ACTIVE', ?, ?)
+                """,
+                (person_id, seat["display_name"], ts, ts),
+            )
+        bound = conn.execute(
+            """
+            SELECT person_id, auth_identity_id FROM org_auth_identities
+            WHERE provider='email' AND lower(identifier)=?
+            """,
+            (found["email"],),
+        ).fetchone()
+        if bound is None:
+            taken = conn.execute(
+                "SELECT identifier FROM org_auth_identities WHERE auth_identity_id=?",
+                (seat["auth_identity_id"],),
+            ).fetchone()
+            if taken is not None:
+                raise RuntimeError(f"{seat['auth_identity_id']} is already an AuthIdentity")
+            conn.execute(
+                """
+                INSERT INTO org_auth_identities (
+                  auth_identity_id, person_id, provider, identifier, status,
+                  is_primary, created_at, updated_at
+                ) VALUES (?, ?, 'email', ?, 'ACTIVE', 1, ?, ?)
+                """,
+                (seat["auth_identity_id"], person_id, found["email"], ts, ts),
+            )
+            auth_identity_id = str(seat["auth_identity_id"])
+        else:
+            if str(bound[0]) != person_id:
+                raise RuntimeError(f"{found['email']} is already bound to {bound[0]}")
+            auth_identity_id = str(bound[1])
+        active = conn.execute(
+            """
+            SELECT a.assignment_id
+            FROM org_assignments a
+            JOIN org_positions p ON p.position_id = a.position_id
+            WHERE a.person_id=? AND p.role_id=? AND a.status='ACTIVE' AND a.end_at IS NULL
+            """,
+            (person_id, ROLE_CREATIVE_DIRECTOR),
+        ).fetchone()
+        ended = False
+        if active is not None:
+            assignment_id = str(active[0])
+        else:
+            assignment_id = str(seat["assignment_id"])
+            owner = conn.execute(
+                "SELECT person_id, status FROM org_assignments WHERE assignment_id=?",
+                (assignment_id,),
+            ).fetchone()
+            if owner is not None and str(owner[0]) != person_id:
+                raise RuntimeError(f"{assignment_id} belongs to {owner[0]}")
+            if owner is not None and str(owner[1] or "") == "ENDED":
+                ended = True
+            else:
+                pos_owner = conn.execute(
+                    "SELECT role_id FROM org_positions WHERE position_id=?",
+                    (seat["position_id"],),
+                ).fetchone()
+                if pos_owner is not None and str(pos_owner[0]) != ROLE_CREATIVE_DIRECTOR:
+                    raise RuntimeError(f"{seat['position_id']} is not the Creative Director role")
+                conn.execute(
+                    """
+                    INSERT INTO org_positions (
+                      position_id, role_id, entity_id, department_id, position_label,
+                      status, fte, created_at, updated_at
+                    ) VALUES (?, ?, 'ENT-GGV', 'DEPT-GGV-CONTENT', ?, 'ACTIVE', 1.0, ?, ?)
+                    ON CONFLICT(position_id) DO NOTHING
+                    """,
+                    (seat["position_id"], ROLE_CREATIVE_DIRECTOR, seat["position_label"], ts, ts),
+                )
+                conn.execute(
+                    """
+                    INSERT INTO org_assignments (
+                      assignment_id, person_id, position_id, start_at, end_at, status,
+                      is_primary, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, NULL, 'ACTIVE', 1, ?, ?)
+                    ON CONFLICT(assignment_id) DO NOTHING
+                    """,
+                    (assignment_id, person_id, seat["position_id"], ts, ts, ts),
+                )
+        if not ended:
+            conn.execute(
+                """
+                UPDATE org_assignments
+                SET is_primary=0, updated_at=?
+                WHERE person_id=? AND assignment_id!=? AND status='ACTIVE' AND end_at IS NULL
+                """,
+                (ts, person_id, assignment_id),
+            )
+            conn.execute(
+                """
+                UPDATE org_assignments
+                SET is_primary=1, updated_at=?
+                WHERE assignment_id=? AND status='ACTIVE' AND end_at IS NULL
+                """,
+                (ts, assignment_id),
+            )
+            _attach_scopes_once(conn, assignment_id, scopes, ts)
+        reports.append(
+            {
+                "display_name": seat["display_name"],
+                "email": found["email"],
+                "existed": found,
+                "reused": reused,
+                "person_id": person_id,
+                "auth_identity_id": auth_identity_id,
+                "assignment_id": assignment_id,
+                "position_id": seat["position_id"],
+                "role_id": ROLE_CREATIVE_DIRECTOR,
+                "scopes": list(scopes),
+                "ended": ended,
+            }
+        )
+    return reports
 
 
 def apply(conn: sqlite3.Connection) -> dict[str, Any]:
@@ -866,6 +1106,7 @@ def apply(conn: sqlite3.Connection) -> dict[str, Any]:
         """,
         (ts, MISA_CD_ASSIGNMENT),
     )
+    creative_directors = _seat_creative_directors(conn, cd_scopes, ts)
 
     ensure_mailbox_table(conn)
     for box in HR_MAILBOXES:
@@ -925,6 +1166,7 @@ def apply(conn: sqlite3.Connection) -> dict[str, Any]:
         else {"status": haikal[0], "is_primary": haikal[1], "end_at": haikal[2]},
         "creators": [row["person_id"] for row in CREATORS],
         "misa_assignment": MISA_CD_ASSIGNMENT,
+        "creative_directors": creative_directors,
         "misa_crew_ended": MISA_CREW_ASSIGNMENT,
         "misa_day_ended": MISA_DAY_ASSIGNMENT,
         "zayen_assignment": ZAYEN_ASSIGNMENT,

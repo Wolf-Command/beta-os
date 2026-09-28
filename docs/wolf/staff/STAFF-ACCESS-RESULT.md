@@ -12,6 +12,8 @@ The first Beta restart loaded the old role seed and put Misa's Content Crew assi
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Haikal | Creative Director, primary | Existing Creative Director scopes | PENDING OWNER | `/content-2.0` | Content floor already on that role: read and update work, assign work, submit evidence, request approval | Finance, payment, bank, Owner, system admin | PENDING |
 | Misa | Creative Director, primary | Same Creative Director scopes as that role | PENDING OWNER | `/content-2.0` | Creative Director grants. Content read still allowed | Payment, bank, Owner, the ended crew grants, hotel day operator | PENDING |
+| Zarah | Creative Director, primary | Same Creative Director scopes as Haikal | OWNER ADDED | `/content-2.0` | Same Creative Director grants as Haikal: content read and update, upload, assign, review, submit evidence, request approval | Finance, HR, payment, bank, Owner, system admin, hotel day, BZG ops. Publish stays on the Publish Gate | PENDING |
+| Frail | Creative Director, primary | Same Creative Director scopes as Haikal | OWNER ADDED | `/content-2.0` | same as Zarah | same as Zarah | PENDING |
 | Yudi | Content Creator, primary | GGV content and the content library | PENDING OWNER | `/content-2.0` | Read plans, upload, submit evidence, request approval, read and update work | Approve, publish, assign work, finance, payment, bank, Owner, system admin | PENDING |
 | Gery | Content Creator, primary | same as Yudi | PENDING OWNER | `/content-2.0` | same as Yudi | same as Yudi | PENDING |
 | Alam | Content Creator, primary | same as Yudi | PENDING OWNER | `/content-2.0` | same as Yudi | same as Yudi | PENDING |
@@ -20,7 +22,7 @@ The first Beta restart loaded the old role seed and put Misa's Content Crew assi
 | Rapp | Content Creator, primary | same as Yudi | PENDING OWNER | `/content-2.0` | same as Yudi | same as Yudi | PENDING |
 | Zayen | Atrium Finance Officer, primary. The role is not named for her | Atrium only (`ENT-AMG`) | PENDING OWNER | `/amg/finance` | Read the board, read the ledger, save a draft journal in the ledger app's terms, read reports, read the chart, submit for approval | Post or approve a journal, pay, approve a payment, bank change, GGV, Blu Zone, Owner, system admin, role admin, hotel day desk. No limit was granted | PENDING/FAIL |
 
-Login cards are `docs/wolf/staff/HUMAN-COMMISSIONING-28SEP.md`. Every human result there is PENDING except Zayen, who is PENDING/FAIL until she retests.
+Login cards are `docs/wolf/staff/HUMAN-COMMISSIONING-28SEP.md`. Every human result there is PENDING except Zayen, who is PENDING/FAIL until she retests. Zarah and Frail use the existing Creative Director card.
 
 Zayen Atrium Finance Officer — HUMAN FAIL 28 Sep 13:18 WITA — raw JSON on /; repair ZAYENFIX-1; retest PENDING
 
@@ -74,5 +76,22 @@ The count includes the allow and deny matrix, direct-URL denies, the Content Cre
 ## Commits
 
 Local only. Not pushed. Parent remains `d97ea20`. This pack is not committed.
+
+## STAFF-3 — Zarah and Frail
+
+Owner directive 28 Sep 2026 13:34 WITA. Extends this staff registry. Not a new role and not a new system. Beta `:8788` only. Production `:8787` stayed pid 15975. No Cloudflare edit. The Owner had already added both emails to the Beta Access include list.
+
+No Person and no AuthIdentity existed for either email or for the names Zarah, Frail, Lestrange, or Bongat. New rows were created. They were not duplicates.
+
+| Person | AuthIdentity | Assignment | Position |
+| --- | --- | --- | --- |
+| Zarah `PERS-ZARAH` | `AUTH-ZARAH-EMAIL` `zarah.lestrange@gmail.com` | `ASG-ZARAH-CD-1` primary ACTIVE | `POS-GGV-CREATIVE-DIRECTOR-3` |
+| Frail `PERS-FRAIL` | `AUTH-FRAIL-EMAIL` `frail.bongat@icloud.com` | `ASG-FRAIL-CD-1` primary ACTIVE | `POS-GGV-CREATIVE-DIRECTOR-4` |
+
+Both sit on `ROLE-GGV-CREATIVE-DIRECTOR`. That role was not changed. Haikal `ASG-HAIKAL-CD-1` stays ACTIVE and primary. Detail is `docs/wolf/staff/ZARAH-FRAIL-RESULT.md`.
+
+Beta was restarted from pid 68812 to pid 71613 (`state/build-factory/detach.py` then `scripts/serve_beta.py`). Health on `:8788` is HTTP 200. Unsigned `/` is HTTP 403. Production `:8787` stayed pid 15975.
+
+STAFF READY is false. HUMAN COMMISSIONED is false. Commissioning stays PENDING.
 
 RESULT: PASS
