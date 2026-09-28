@@ -136,10 +136,43 @@ The page-header Sign out is gone. The shell Sign out remains. The Boards control
 
 ## Deployed route
 
-Filled after the restart that follows the commit of this desk. Live Beta stays `BETA_AUTH_MODE=cloudflare_access`.
+Desk commit `d528c3c`. Beta listener pid 78592, started Mon Sep 28 14:58:39 2026, `scripts/serve_beta.py`, port 8788. That start is after `d528c3c`. Production pid 15975 on 8787 was still that process. Live Beta stayed `cloudflare_access`. `X-Wolf-Subject: laluzayen@gmail.com` on `GET /amg/finance` is 403. Auth mode was not switched.
+
+Unsigned requests on pid 78592, each registered route 403 and not 404:
+
+| Method | Path | Status |
+| --- | --- | --- |
+| GET | `/amg/finance` | 403 HTML |
+| GET | `/amg/finance/ledger` | 403 HTML |
+| GET | `/amg/finance/accounts` | 403 HTML |
+| GET | `/amg/finance/journals` | 403 HTML |
+| GET | `/amg/finance/reports` | 403 HTML |
+| GET | `/amg/finance/approvals` | 403 HTML |
+| GET | `/api/amg/finance` | 403 JSON |
+| GET | `/api/amg/finance/ledger` | 403 JSON |
+| GET | `/api/amg/finance/accounts` | 403 JSON |
+| GET | `/api/amg/finance/journals` | 403 JSON |
+| GET | `/api/amg/finance/reports` | 403 JSON |
+| GET | `/api/amg/finance/approvals` | 403 JSON |
+| POST | `/api/amg/finance` | 403 JSON |
+| POST | `/api/amg/finance/approvals` | 403 JSON |
+| POST | `/api/amg/finance/journals` | 403 JSON |
+| GET | `/api/amg/finance/journals/JRN-sample0001` | 403 JSON |
+| POST | `/api/amg/finance/journals/JRN-sample0001` | 403 JSON |
+| POST | `/api/amg/finance/journals/JRN-sample0001/validate` | 403 JSON |
+| POST | `/api/amg/finance/journals/JRN-sample0001/approve` | 403 JSON |
+| POST | `/api/amg/finance/journals/JRN-sample0001/post` | 403 JSON |
+
+`GET /amg/finance/no-such` and `GET /api/amg/finance/no-such` are 404. `GET /api/health` is 200.
+
+The staff page is one HTML file for every tab. A signed handler on this same commit (`BETA_AUTH_MODE=development_assertion`, header `X-Wolf-Subject: laluzayen@gmail.com`) returns 200 for `/amg/finance`, `/amg/finance/ledger`, and `/amg/finance/journals`. Those three bodies are the same 26381 bytes, sha256 `1a2926772312b7b7c0948ea4f3ffe84eda17bd99a61c7bf15f0baaa646ac0dbf`. The listener does not return that body: unsigned `GET /amg/finance` is the 403 page, 240 bytes, sha256 `ef2c65039174178b584f285f47b7181e86e5f27a6a7f2f92281b8ba0bb07bf4b`. That difference is the Cloudflare gate, which was left on.
 
 ## Screenshots
 
-Filled with the deployed-process proof.
+Headless Chrome at the signed handler on this commit, same page bytes as the hash above. Layout measured in the page:
+
+- `docs/wolf/staff/shots/atrium-finance-v2-desktop.png` — 1440×900. `scrollWidth` 1440, `clientWidth` 1440. Shell height 57. Crumb "Atrium Finance". Boards control `display: none`. One Sign out. Side panel: 190 accounts, no draft, no balance.
+- `docs/wolf/staff/shots/atrium-finance-v2-phone.png` — 390×844. `scrollWidth` 390, `clientWidth` 390. Shell height 57, one line, crumb "Atrium Finance". Desk tabs in two rows of three.
+- `docs/wolf/staff/shots/atrium-finance-v2-ledger.png` — 1440×900. General ledger, nothing posted.
 
 RESULT: PASS
