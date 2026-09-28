@@ -11,10 +11,10 @@
   "priority_counts": {"P0": 12, "P1": 20, "P2": 42, "P3": 3},
   "queue_status_counts": {
     "P0": {"CLOSED": 1, "READY_FOR_HUMAN": 6, "BLOCKED_OWNER": 2, "WAITING_EXTERNAL": 0, "OPEN": 3},
-    "P1": {"CLOSED": 6, "READY_FOR_HUMAN": 1, "BLOCKED_OWNER": 1, "WAITING_EXTERNAL": 1, "OPEN": 11}
+    "P1": {"CLOSED": 7, "READY_FOR_HUMAN": 1, "BLOCKED_OWNER": 1, "WAITING_EXTERNAL": 1, "OPEN": 10}
   },
-  "closed_omitted": ["CAP-CORE-05", "CAP-INTG-04", "CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01", "CAP-CORE-12"],
-  "closed_this_pack": ["CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01", "CAP-CORE-12"],
+  "closed_omitted": ["CAP-CORE-05", "CAP-INTG-04", "CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01", "CAP-CORE-12", "CAP-CORE-11"],
+  "closed_this_pack": ["CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01", "CAP-CORE-12", "CAP-CORE-11"],
   "unlabeled": ["CAP-MSC-02"],
   "unlabeled_note": "CAP-MSC-02 stays OPEN. The deny prove is recorded. The missing review note is not this queue, not a staff walk, not a named provider, and not operating data. The 27 Sep pack refused BLOCKED_OWNER. This file does not give it one of the five labels.",
   "next": [
@@ -109,10 +109,10 @@
       "title": "SOP Factory",
       "bucket": "founder_dependency_removal",
       "classification": "CURSOR CAN CLOSE",
-      "queue_status": "OPEN",
+      "queue_status": "CLOSED",
       "system_state": "SPECIFIED",
       "system_score": "0.05",
-      "why": "The next bar is the SOP loop. Approval inside the loop comes after the loop exists.",
+      "why": "F6 tests stored a versioned change and an approver on a temp factory file. A file rewrite stored no version. The ledger stays SPECIFIED. Acknowledgement is not staff readiness.",
       "prerequisite": [],
       "bounds": "A rewritten file with no version does not close this row."
     },

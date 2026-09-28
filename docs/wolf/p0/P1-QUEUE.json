@@ -315,19 +315,20 @@
       "order": 16,
       "id": "CAP-CORE-11",
       "title": "SOP Factory",
-      "current_state": "SYSTEM SPECIFIED (0.05). Ledger next bar: the SOP loop of evidence, learn, approve, version, train, and use.",
-      "exact_missing_evidence": "A locatable implementation of that loop. A document on disk is not the loop.",
-      "cursor_work": "Not started. Do not silent-rewrite history.",
-      "human_work": "Approval inside the loop, once the loop exists. Not before.",
+      "current_state": "SYSTEM SPECIFIED (0.05). The queue test stored a versioned change and an approver on a temp factory file. The prior version body stayed. A file rewrite stored no version. The ledger stays SPECIFIED. Acknowledgement is not staff readiness. A use row is not operating adoption.",
+      "exact_missing_evidence": "None for this queue test. A review that would raise BUILT or PROVEN was not written into the ledger. No person was marked trained.",
+      "cursor_work": "Done in commit 08f480a. The existing factory now stores learning, approval, acknowledgement, and use. No second SOP system. No ledger write.",
+      "human_work": "A real session can approve inside the loop. This file does not record that session and does not commission anyone.",
       "external_dependency": "none",
       "prerequisite": [],
       "closure_test": "The loop stores a versioned SOP change with an approver. A rewritten file with no version does not close this item.",
       "target_final_state": "CLOSED",
-      "status": "OPEN",
+      "status": "CLOSED",
       "evidence": [
-        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md",
+        "docs/wolf/five/P1-CAP-CORE-11-RESULT.md"
       ],
-      "commit": null
+      "commit": "08f480a"
     },
     {
       "order": 17,
