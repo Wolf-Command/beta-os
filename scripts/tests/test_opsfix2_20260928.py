@@ -100,13 +100,19 @@ def test_contrast_and_plans() -> None:
         home = build_home("PERS-HAIKAL", conn=conn)
         items = home["sections"][0]["items"]
         ids = [row["source_id"] for row in items]
-        check("staff list hides test plans", ids == [str(n) for n in range(4, 10)], str(ids))
+        check("staff list hides test plans", all(int(i) >= 4 for i in ids) and not any(i in {"1", "2", "3"} for i in ids), str(ids))
+        # OPSFIX-3: same title+period+status collapses; Working_Draft and Human_Approved both stay.
+        check("duplicate fortnight drafts collapse to one status each", len(ids) == 2, str(ids))
         check(
             "cards say what to do",
             all(row.get("next_step") == "Open plan" and row.get("date_range") and row.get("status_label") for row in items),
         )
         check("provenance stays on the row", all(row.get("origin") == "historical" and row.get("verified_by_wolf") is False for row in items))
         check("data lane is not on the staff row", all("data_lane" not in row for row in items))
+        check(
+            "staff footnote is plain",
+            all(row.get("staff_footnote") and "verified_by_wolf" not in (row.get("staff_footnote") or "") for row in items),
+        )
     finally:
         conn.close()
 
@@ -118,8 +124,11 @@ def test_owner_words() -> None:
     wrong = answers.get("wrong") or ""
     check("changed is plain english", "ggv.invoice" not in changed and "INVALID/TEST" not in changed and "GGV" in changed, changed[:180])
     check("changed names the invoice number", "next invoice number was set" in changed, changed[:180])
-    check("wrong hides practice rows when none are valid", wrong == "Nothing is going wrong on the operating record.", wrong[:180])
-
+    check(
+        "wrong never pretends green while exceptions are open",
+        "Nothing is going wrong" not in wrong and "exceptions are open" in wrong,
+        wrong[:220],
+    )
 
 def test_uma_and_invoices() -> None:
     day = real.operating_day()
@@ -315,7 +324,7 @@ def test_http_and_shots() -> None:
         status, raw, _ctype = call(port, "GET", "/api/staff/home", HAIKAL)
         home = json.loads(raw.decode() or "{}")
         today = ((home.get("sections") or [{}])[0]).get("items") or []
-        check("haikal api hides test plans", status == 200 and len(today) == 6 and "1" not in [row.get("source_id") for row in today])
+        check("haikal api hides test plans", status == 200 and len(today) == 2 and "1" not in [row.get("source_id") for row in today], str([row.get("source_id") for row in today]))
         status, raw, _ctype = call(port, "GET", "/api/owner/command", OWNER)
         body = json.loads(raw.decode() or "{}")
         answers = {row.get("id"): row.get("answer") or "" for row in body.get("answers") or []}

@@ -155,6 +155,7 @@ def projection() -> dict[str, Any]:
                 "import_timestamp": None,
                 "origin": "historical",
                 "verified_by_wolf": False,
+                "staff_footnote": "From the branded PDF on disk. Not yet checked in Wolf.",
             }
         )
     numbers = [row["invoice_number"] for row in invoices]

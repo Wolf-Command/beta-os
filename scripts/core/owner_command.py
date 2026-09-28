@@ -18,6 +18,7 @@ from typing import Any
 from core import dashboard_truth as truth
 from core import ledger_class
 from core import owner_empire_pack as empire
+from core import owner_operational_exceptions as ops_ex
 from core import staff_home as home
 from core import work_loop as loop
 
@@ -992,6 +993,17 @@ def _plain_change(item: dict[str, Any]) -> str:
     return f"On {_plain_when(item.get('when'))}, {company}: {action}."
 
 
+def _top_lines(rows: list[dict[str, Any]], *, limit: int = 3) -> str:
+    tops = []
+    for row in rows[:limit]:
+        title = str(row.get("title") or "").strip()
+        if title:
+            tops.append(title)
+    if not tops:
+        return ""
+    return " Top: " + "; ".join(tops) + "."
+
+
 def _answers(
     cards: list[dict[str, Any]],
     changed: dict[str, Any],
@@ -1000,6 +1012,7 @@ def _answers(
     blocked: dict[str, Any],
     founder: dict[str, Any],
     finance_state: str,
+    operational: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
     unread = [card["code"] for card in cards if card.get("desk_state") != "READ"]
     if unread:
@@ -1024,7 +1037,17 @@ def _answers(
             changed_answer = f"{newest} {count} recent changes are on record for these companies."
     else:
         changed_answer = changed.get("empty_message") or "No recent changes are on record for these companies."
-    if exceptions.get("read") != "READ":
+    ops = operational or {}
+    ops_items = list(ops.get("items") or [])
+    ops_count = int(ops.get("count") or len(ops_items) or 0)
+    gov_valid = exceptions.get("valid_operational_count") if exceptions.get("read") == "READ" else None
+    if ops.get("read") != "READ" and exceptions.get("read") != "READ":
+        wrong = "What is going wrong could not be read from the operating and exception records."
+    elif ops_count > 0:
+        wrong = f"{ops_count} material exceptions are open." + _top_lines(ops_items)
+        if isinstance(gov_valid, int) and gov_valid > 0:
+            wrong += f" {gov_valid} governance exceptions are also on the operating record."
+    elif exceptions.get("read") != "READ":
         wrong = "What is going wrong could not be read from the exception record."
     else:
         valid = exceptions.get("valid_operational_count")
@@ -1049,21 +1072,30 @@ def _answers(
         )
     else:
         decision = needs.get("empty_message") or "Nothing is waiting for your authority."
-    money_items = [item for item in needs.get("items") or [] if item.get("kind") == "financial"]
-    if money_items:
+    money_core = [item for item in needs.get("items") or [] if item.get("kind") == "financial"]
+    money_ops = list(ops.get("money_items") or [])
+    money_total = len(money_core) + len(money_ops)
+    if money_total > 0:
         money = (
-            f"{len(money_items)} items on record are flagged as money or control. "
-            f"Finance books are {finance_state}. That is not a cash position."
+            f"{money_total} items flag money or control risk. "
+            f"Finance books are {finance_state}."
+            + _top_lines(money_ops or money_core)
+            + " That is not a cash position."
         )
     else:
         money = (
             f"Nothing on record is flagged as money or control. Finance books are {finance_state}. "
             "Unavailable is not a zero balance."
         )
-    if blocked.get("read") != "READ":
+    blocked_core = list(blocked.get("items") or []) if blocked.get("read") == "READ" else []
+    blocked_ops = list(ops.get("blocked_items") or [])
+    if blocked.get("read") != "READ" and ops.get("read") != "READ":
         blocked_answer = "Blocked work could not be read."
-    elif blocked.get("items"):
-        blocked_answer = f"{len(blocked['items'])} work items are blocked. The owner role is on each row."
+    elif blocked_ops or blocked_core:
+        total = len(blocked_ops) + len(blocked_core)
+        blocked_answer = f"{total} blockers are open." + _top_lines(blocked_ops or blocked_core)
+    elif blocked.get("read") != "READ":
+        blocked_answer = "Blocked work could not be read."
     else:
         blocked_answer = "No blocked work is on record."
     return [
@@ -1146,6 +1178,7 @@ def _envelope(
     *,
     read: str,
     ledger: dict[str, Any] | None = None,
+    operational: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "ok": True,
@@ -1156,9 +1189,12 @@ def _envelope(
         "companies": cards,
         "needs_you": needs,
         "exceptions": exceptions,
+        "operational_exceptions": operational
+        or {"ok": True, "read": "UNAVAILABLE", "count": 0, "items": []},
         "changed": changed,
         "blocked": blocked,
         "founder_dependency": founder,
+        "data_quality_href": "/owner/data-quality",
         "system_health": {
             "secondary": True,
             "href": "/dashboard-truth",
@@ -1190,13 +1226,35 @@ def build_command(*, verified_person_id: str) -> dict[str, Any]:
         blocked = _blocked(conn, cards)
         founder = _founder()
         finance = cards[0]["financial_position"]["state"] if cards else "UNAVAILABLE"
-        answers = _answers(cards, changed, needs, exceptions, blocked, founder, finance)
+        try:
+            operational = ops_ex.collect(cards=cards)
+        except Exception:  # noqa: BLE001
+            operational = {
+                "ok": True,
+                "read": "UNAVAILABLE",
+                "count": 0,
+                "items": [],
+                "money_items": [],
+                "blocked_items": [],
+            }
+        answers = _answers(
+            cards, changed, needs, exceptions, blocked, founder, finance, operational=operational
+        )
         try:
             ledger = ledger_class.summarize(conn)
         except sqlite3.Error:
             ledger = {"read": "UNAVAILABLE"}
         return _envelope(
-            cards, answers, needs, exceptions, changed, blocked, founder, read="READ", ledger=ledger
+            cards,
+            answers,
+            needs,
+            exceptions,
+            changed,
+            blocked,
+            founder,
+            read="READ",
+            ledger=ledger,
+            operational=operational,
         )
     except empire.EmpirePackError:
         raise

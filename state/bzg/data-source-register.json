@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-28T21:50:55+08:00",
+  "generated_at": "2026-09-28T22:11:01.212403+08:00",
   "pack": "UMAREAL-1",
   "staff_ready": false,
   "human_commissioned": false,
@@ -174,12 +174,12 @@
       "source": "alchemist/notas jpg files",
       "contains": "local evidence photos",
       "date_range": "file mtime",
-      "record_count": 450,
+      "record_count": 451,
       "role": "HISTORICAL",
       "safe_to_project": "y",
       "read_access_how": "directory listing, files opened only by exact filename under the notas directory",
       "transformation": "serve the file if it resolves; otherwise EVIDENCE FILE NOT RECOVERABLE",
-      "conflicts": "prefixes {'nota': 2, 'petty': 373, 'topup': 75}; earlier note said 448 jpg; this query counted 450",
+      "conflicts": "prefixes {'petty': 373, 'topup': 76, 'nota': 2}; earlier note said 448 jpg; pack EXIT counted 450; Peaches watch tick free/local bump to 451 after post-EXIT file mtime 2026-09-28T21:59:53 (pack EXIT 21:58:05); serve path is live directory listing",
       "read_access_verified": "y",
       "provenance": "source_system, source_id, source_timestamp, import_timestamp, verified_by_wolf=false, origin=historical"
     },
@@ -291,7 +291,7 @@
       "source": "esb.sqlite sales",
       "contains": "ESB bills",
       "date_range": "2026-04-05 .. 2026-09-27",
-      "record_count": 8762,
+      "record_count": 8823,
       "role": "AUTHORITATIVE",
       "safe_to_project": "y",
       "transformation": "read-through; customer phone, email, and member fields are not projected",
@@ -417,5 +417,6 @@
       "read_access_verified": "y",
       "provenance": "source_system, source_id, source_timestamp, import_timestamp, verified_by_wolf=false, origin=historical"
     }
-  ]
+  ],
+  "peaches_verify_note": "UMAREAL-1 EXIT PASS; register nota count refreshed free/local after one post-EXIT jpg landed; staff_ready remains false"
 }

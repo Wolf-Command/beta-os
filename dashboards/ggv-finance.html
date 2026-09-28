@@ -809,7 +809,7 @@ async function loadInvoices() {
   const hist = data.historical || {};
   const earlier = hist.invoices || [];
   const historyHtml = earlier.length
-    ? earlier.slice().reverse().map((row) => `<article class="card"><strong>${esc(row.number_label || row.invoice_number)}</strong><br>${esc(row.customer_name || "Customer not read from the file")}<br>${esc(row.invoice_date || "")} · ${esc(row.grand_total_idr || "")} · ${esc(row.status_label)}<br><a class="inline" href="${esc(row.href)}">Open file</a><p class="note">origin ${esc(row.origin)} · verified_by_wolf ${esc(String(row.verified_by_wolf))} · ${esc(row.source_path || "")}</p></article>`).join("")
+    ? earlier.slice().reverse().map((row) => `<article class="card"><strong>${esc(row.number_label || row.invoice_number)}</strong><br>${esc(row.customer_name || "Customer not read from the file")}<br>${esc(row.invoice_date || "")} · ${esc(row.grand_total_idr || "")} · ${esc(row.status_label)}<br><a class="inline" href="${esc(row.href)}">Open file</a><p class="note">${esc(row.staff_footnote || "From the branded PDF on disk. Not yet checked in Wolf.")}</p></article>`).join("")
     : (hist.message ? `<p class="note">${esc(hist.message)}</p>` : "");
   const rows = data.invoices || [];
   const wolfHtml = rows.length

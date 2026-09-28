@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Data-quality exceptions · Owner</title>
+<link rel="stylesheet" href="/wolf-tokens.css" />
+<link rel="stylesheet" href="/assets/wolf-truth.css?v=20260929-opsfix3" />
+<style>
+  :root {
+    --bg: #10140f; --bg2: #182018; --border: #314033;
+    --text: #f3f7f1; --muted: #a8b5a6; --warn: #e0b15a; --danger: #f04438;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 920px; padding: 16px 16px 80px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  h1 { font-size: 1.35rem; margin: 0 0 4px; }
+  h2 { font-size: 1rem; margin: 20px 0 8px; color: var(--warn); }
+  .lede, .meta, .note { color: var(--muted); font-size: 0.88rem; line-height: 1.45; }
+  .card { border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; padding: 14px; margin-top: 10px; }
+  .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.75rem; margin: 0 4px 4px 0; color: var(--muted); }
+  a.action { display: inline-flex; min-height: 44px; align-items: center; margin: 8px 8px 0 0; text-decoration: none; border-radius: 10px; padding: 10px 12px; border: 1px solid #5d6b2a; background: #2d3816; color: var(--text); font-weight: 650; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-top: 8px; }
+  th, td { border: 1px solid var(--border); padding: 6px; vertical-align: top; text-align: left; }
+  .err { color: var(--danger); }
+</style>
+</head>
+<body data-wolf-page-type="DASHBOARD" data-wolf-org="WOLF/GROUP" data-wolf-shell="global" data-bound="beta-owner-safe">
+  <nav class="wolf-crumb" aria-label="Org context" style="font-size:0.75rem;color:var(--muted);margin:0 0 8px">WOLF › GROUP › Data quality</nav>
+  <h1>Data-quality exceptions</h1>
+  <p class="lede">Trace and flag only. Do not act on these numbers until the source is established. Bank data proves bank transactions only and does not establish an AP liability.</p>
+  <p><a class="action" href="/wolf">Owner Command</a><a class="action" href="/finish-war-room">War Room</a></p>
+  <div id="msg"></div>
+  <div id="items"></div>
+<script>
+(function () {
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+
+  function traceBlock(trace) {
+    if (!trace) return "";
+    return Object.keys(trace).map((key) =>
+      `<p class="meta"><strong>${esc(key.replaceAll("_", " "))}:</strong> ${esc(trace[key])}</p>`
+    ).join("");
+  }
+
+  function brokenTable(broken) {
+    if (!broken || !broken.records) return "";
+    const counts = broken.counts || {};
+    const head = `<p class="meta">Broken ${esc(broken.count)} · ESTABLISHED ${esc(counts.ESTABLISHED)} · PARTIAL ${esc(counts.PARTIAL)} · NO EVIDENCE ${esc(counts.NO_EVIDENCE || counts["NO EVIDENCE"])}</p>
+      <p class="note">${esc(broken.rule || "")}</p>`;
+    const rows = (broken.records || []).map((row) =>
+      `<tr><td>${esc(row.pr_num)}</td><td>${esc(row.vendor)}</td><td>${esc(row.amount_label || row.amount_idr)}</td><td>${esc(row.classification)}</td><td>${esc(row.reason)}</td></tr>`
+    ).join("");
+    return head + `<div style="overflow-x:auto"><table><thead><tr><th>PR</th><th>Vendor</th><th>Amount</th><th>Class</th><th>Reason</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+
+  fetch("/api/owner/data-quality", { headers: { Accept: "application/json" } })
+    .then((res) => res.json().then((data) => ({ ok: res.ok, status: res.status, data })))
+    .then(({ ok, status, data }) => {
+      if (status === 403 || (data.ui && data.ui.component === "permission-denied")) {
+        document.getElementById("msg").innerHTML = `<p class="err">You do not have access to this.</p>`;
+        document.body.setAttribute("data-dq-ready", "0");
+        return;
+      }
+      if (!ok || data.ok === false) {
+        document.getElementById("msg").innerHTML = `<p class="err">${esc(data.message || "The register could not be read.")}</p>`;
+        document.body.setAttribute("data-dq-ready", "0");
+        return;
+      }
+      const items = data.items || [];
+      document.getElementById("items").innerHTML = items.map((item) => `
+        <article class="card" id="${esc(item.id)}">
+          <h2>${esc(item.title)}</h2>
+          <span class="pill">${esc(item.status)}</span>
+          <span class="pill">${esc(item.owner_role)}</span>
+          <p><strong>${esc(item.displayed_value)}</strong></p>
+          <p>${esc(item.plain_english)}</p>
+          <p class="note">${esc(item.do_not_act)}</p>
+          ${traceBlock(item.trace)}
+          ${item.broken ? brokenTable(item.broken) : ""}
+        </article>`).join("") || `<p class="note">No open data-quality exceptions.</p>`;
+      document.body.setAttribute("data-dq-ready", "1");
+      document.body.setAttribute("data-dq-count", String(items.length));
+    })
+    .catch((err) => {
+      document.getElementById("msg").innerHTML = `<p class="err">${esc(err && err.message ? err.message : "The register could not be read.")}</p>`;
+      document.body.setAttribute("data-dq-ready", "0");
+    });
+})();
+</script>
+</body>
+</html>

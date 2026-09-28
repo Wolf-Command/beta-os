@@ -38,7 +38,7 @@
   <nav class="wolf-crumb" aria-label="Org context" style="font-size:0.75rem;color:var(--muted);margin:0 0 8px">WOLF › GROUP › Finish war room</nav>
   <h1>Finish war room <span>· Beta</span></h1>
   <p class="lede">Bound beta-owner-safe. All 77 capabilities from the canonical ledger. SYSTEM is separate from staff readiness, human commissioning, and operating adoption. Unknown stays unknown. No payment on this desk.</p>
-  <p><a class="action" href="/wolf">Owner Command</a></p>
+  <p><a class="action" href="/wolf">Owner Command</a> <a class="action" href="/owner/data-quality">Data-quality register</a></p>
   <section id="testability" aria-label="Operational testability">
     <h2 id="give-human" style="font-size:1.15rem;color:var(--warn);letter-spacing:0.04em">GIVE THIS TO A HUMAN NOW</h2>
     <div id="give-now"></div>
@@ -160,8 +160,27 @@
       return;
     }
     const queue = data.queue || [];
+    const feedback = data.feedback_href || "/progress#commissioning";
     give.innerHTML = queue.length
-      ? queue.map((row) => `<article class="card"><p><strong>${esc(row.surface)}</strong> · ${esc(row.human_tester)}</p><p class="meta">${esc(row.route)} · ${esc(row.next_repair)}</p></article>`).join("")
+      ? queue.map((row) => {
+          const card = row.test_card || {};
+          const steps = (card.steps || []).map((step, idx) => `<li>${esc(idx + 1)}. ${esc(step)}</li>`).join("");
+          const urls = (card.urls || [row.route]).filter(Boolean).map((u) =>
+            `<p class="meta"><a class="action" href="${esc(u)}">${esc(u)}</a></p>`
+          ).join("");
+          const pass = card.pass_looks_like
+            ? `<p><strong>PASS looks like:</strong> ${esc(card.pass_looks_like)}</p>`
+            : "";
+          const who = card.who || row.human_tester || "";
+          return `<article class="card" data-test-card="${esc(row.surface)}">
+            <p><strong>${esc(row.surface)}</strong> · ${esc(who)}</p>
+            ${urls || `<p class="meta">${esc(row.route)} · ${esc(row.next_repair)}</p>`}
+            ${steps ? `<ol style="margin:8px 0;padding-left:18px;color:var(--muted);font-size:0.85rem">${steps}</ol>` : `<p class="meta">${esc(row.next_repair)}</p>`}
+            ${pass}
+            <p class="meta">Record PASS / FAIL / wrong number / missing function / confusing label / suggestion in MY COMMISSIONING.</p>
+            <a class="action" href="${esc(feedback)}">Open feedback</a>
+          </article>`;
+        }).join("")
       : `<p class="note">Nothing is marked ready to test.</p>`;
     const head = `<tr>${COLS.map((key) => `<th>${esc(key.replaceAll("_", " "))}</th>`).join("")}</tr>`;
     table.innerHTML = `<table><thead>${head}</thead><tbody>${(data.surfaces || []).map(testRow).join("")}</tbody></table>`;

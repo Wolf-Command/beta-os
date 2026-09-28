@@ -1,0 +1,12 @@
+{
+  "date": "2026-09-29",
+  "claims": [
+    {
+      "id": "opsfix3-owner-not-falsely-green",
+      "claim": "Owner Command wrong/blocked/money cards roll up material Beta exceptions and never say nothing is going wrong while Uma close, data-quality, finance UNAVAILABLE, month-end statements, or commissioning FAILs are open.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import owner_command as o; a={x['id']:x['answer'] for x in o.build_command(verified_person_id='PERS-MATT')['answers']}; import sys; sys.exit(0 if ('Nothing is going wrong' not in a.get('wrong','') and 'exceptions are open' in a.get('wrong','')) else 1)\"",
+      "expect": "exit 0",
+      "by": "opsfix3-20260929"
+    }
+  ]
+}

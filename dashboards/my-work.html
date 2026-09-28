@@ -97,8 +97,8 @@
       const status = it.status_label || it.status;
       const state = status ? `<p>${esc(status)}</p>` : "";
       const next = it.next_step ? `<p class="next">${esc(it.next_step)}</p>` : "";
-      const foot = it.origin
-        ? `<p class="footnote">origin ${esc(it.origin)} · verified_by_wolf ${esc(String(it.verified_by_wolf))} · ${esc(it.source_system || "")} ${esc(it.source_id || "")}</p>`
+      const foot = it.staff_footnote
+        ? `<p class="footnote">${esc(it.staff_footnote)}</p>`
         : "";
       const inner = `${title}${range}${state}${next}${foot}`;
       if (it.href) {

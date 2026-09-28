@@ -252,7 +252,7 @@
           } else {
             body.appendChild(el("p", "now-title", latest.label_day || latest.biz_date));
             body.appendChild(el("p", null, (latest.bills == null ? "0" : latest.bills) + " bills · " + (latest.covers == null ? "0" : latest.covers) + " covers · " + (latest.net_sales_idr || idr(latest.net_sales))));
-            body.appendChild(el("p", "meta", "ESB read-only · historical · verified_by_wolf false"));
+            body.appendChild(el("p", "meta", "From the ESB sales warehouse. Read-only. Not yet checked in Wolf."));
             var trend = el("div");
             (sales.trend || []).forEach(function (day) {
               trend.appendChild(el("div", "meta", (day.label_day || day.biz_date) + " · " + day.bills + " bills · " + (day.net_sales_idr || idr(day.net_sales))));

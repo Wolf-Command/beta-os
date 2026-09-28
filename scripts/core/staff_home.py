@@ -511,6 +511,38 @@ def _plan_in_scope(brand_id: str, scope_ids: set[str]) -> bool:
     return brand in scope_ids or brand.lower() in {item.lower() for item in scope_ids}
 
 
+def _plan_footnote(row: Any) -> str:
+    start = _staff_date(row["period_start"] if hasattr(row, "keys") else None)
+    if start:
+        return f"From the Habitat plan, {start}. Not yet checked in Wolf."
+    return "From the Habitat plan. Not yet checked in Wolf."
+
+
+def _dedupe_plan_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep one card per title+period+status. True duplicates collapse; differing status stays."""
+    kept: dict[tuple[str, str, str, str], dict[str, Any]] = {}
+    order: list[tuple[str, str, str, str]] = []
+    for item in items:
+        key = (
+            str(item.get("title") or ""),
+            str(item.get("date_range") or ""),
+            str(item.get("status") or ""),
+            str(item.get("brand_id") or ""),
+        )
+        prior = kept.get(key)
+        if prior is None:
+            kept[key] = item
+            order.append(key)
+            continue
+        # Prefer the higher source id (later stamp) when content is the same shape.
+        try:
+            if int(item.get("source_id") or 0) >= int(prior.get("source_id") or 0):
+                kept[key] = item
+        except (TypeError, ValueError):
+            kept[key] = item
+    return [kept[key] for key in order]
+
+
 def _stored_plan_items(conn, scope_ids: set[str]) -> list[dict[str, Any]]:
     """Read stored content plans. Does not insert a work item."""
     try:
@@ -557,9 +589,10 @@ def _stored_plan_items(conn, scope_ids: set[str]) -> list[dict[str, Any]]:
                 "import_timestamp": row["created_at"],
                 "origin": "historical",
                 "verified_by_wolf": False,
+                "staff_footnote": _plan_footnote(row),
             }
         )
-    return items
+    return _dedupe_plan_items(items)
 
 
 def _staff_sections(

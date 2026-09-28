@@ -735,11 +735,29 @@
     };
   }
 
+  function roleForActiveContext(who) {
+    var asg = (who && who.assignments) || [];
+    var path = (location && location.pathname) || "";
+    var i;
+    for (i = 0; i < asg.length; i += 1) {
+      var href = String((asg[i] && asg[i].href) || "");
+      if (!href) continue;
+      if (path === href || path.indexOf(href + "/") === 0) {
+        return String(asg[i].role || asg[i].label || "");
+      }
+    }
+    var active = who && who.active_assignment;
+    if (active && (active.role || active.label)) {
+      return String(active.role || active.label);
+    }
+    var roles = (who && who.roles) || ((who && who.chain) || {}).roles || [];
+    return roles.length ? String(roles[0]) : "";
+  }
+
   function paintHello(hello, who) {
     if (!hello) return;
     var chain = (who && who.chain) || {};
-    var roles = (who && who.roles) || chain.roles || [];
-    var roleHint = roles.length ? String(roles[0]) : "";
+    var roleHint = roleForActiveContext(who);
     var label =
       (who && (who.hello || who.given_name || who.role_label || who.email)) || "";
     var aud = (who && who.audience) || chain.audience || "";

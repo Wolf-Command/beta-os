@@ -202,6 +202,18 @@
     const blockedBody = (blocked.items || []).length
       ? blocked.items.map((item) => `<article class="card"><p>${esc(item.company)} · ${esc(item.what)}</p><p class="meta">Owner role: ${esc(item.owner_role)} · Age: ${esc(item.age)}</p>${link(item.href, "Open work")}</article>`).join("")
       : `<div class="wolf-empty" data-state="empty">${esc(blocked.empty_message || blocked.why || "Blocked work was not read.")}</div>`;
+    const ops = data.operational_exceptions || {};
+    const opsItems = ops.items || [];
+    const opsBody = opsItems.length
+      ? `<p class="meta">${esc(String(ops.count || opsItems.length))} material exceptions are open. Do not treat a quiet governance count as a green business.</p>`
+        + opsItems.map((item) => `<article class="card wolf-card" data-ops-kind="${esc(item.kind)}">
+          <p><strong>${esc(item.title)}</strong></p>
+          <p>${esc(item.detail)}</p>
+          <p class="meta">Owner role: ${esc(item.owner_role || "Owner")}</p>
+          ${link(item.href, "Open")}
+        </article>`).join("")
+        + link(data.data_quality_href || "/owner/data-quality", "Data-quality register")
+      : `<div class="wolf-empty" data-state="empty">${esc(ops.empty_message || "No material operational exceptions are open.")}</div>`;
     const founder = data.founder_dependency || {};
     const founderItems = (founder.items || []).map((item) =>
       `<article class="card"><p>${mark(item.class)} ${esc(item.name)}</p><p class="meta">${esc(item.reason || "")}</p></article>`
@@ -215,6 +227,8 @@
       <div id="needs-you">${needBody}</div>
       <h2>Business pulse</h2>
       <p class="note">The company cards above are the pulse. Open a company to leave this screen.</p>
+      <h2>What is going wrong</h2>
+      <div id="operational-exceptions">${opsBody}</div>
       <h2>Exceptions</h2>
       <div id="exceptions">${exBody}</div>
       <h2>Who or what is blocked</h2>

@@ -223,8 +223,8 @@ def test_read_shows_stored(live_before: tuple[int, tuple[tuple[str, str, str], .
     check("human commissioned stays false", report.get("human_commissioned") is False)
     wrong = next((row.get("answer") for row in report.get("answers") or [] if row.get("id") == "wrong"), "")
     check(
-        "zero valid exceptions do not mention INVALID/TEST",
-        wrong == "Nothing is going wrong on the operating record." and "INVALID/TEST" not in wrong,
+        "owner wrong answer stays honest about open material exceptions",
+        "Nothing is going wrong" not in (wrong or "") and "INVALID/TEST" not in (wrong or ""),
         wrong[:180],
     )
     ledger = report.get("ledger_classification") or {}

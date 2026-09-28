@@ -166,6 +166,7 @@ from core import bzg_reputation_observe as _bzg_rep
 from core import ggv_social_derive as _ggv_social
 from core import owner_empire_pack as _owner_empire
 from core import owner_command as _owner_command
+from core import data_quality_exceptions as _data_quality
 from core import business_dashboard as _business_dashboard
 from core import completion_war_room as _completion_war_room
 from core import core_harden_pack as _core_harden
@@ -2435,6 +2436,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/owner/war-room" or path.startswith("/api/owner/war-room/"):
             self._war_room_get(path)
             return
+        if path == "/api/owner/data-quality":
+            self._owner_data_quality_get()
+            return
         # Business dashboards under Owner Command. Read model. No writes.
         if path == "/api/business" or path.startswith("/api/business/"):
             self._business_dashboard_get(path, qs)
@@ -4369,6 +4373,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._war_room_page()
             return
         elif path in (
+            "/owner/data-quality",
+            "/owner/data-quality/",
+            "/owner-data-quality.html",
+            "/dashboards/owner-data-quality.html",
+        ):
+            self._owner_data_quality_page()
+            return
+        elif path in (
             "/my-work",
             "/my-work/",
             "/my-work.html",
@@ -4892,6 +4904,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._owner_command_write_refused()
             return
         if path == "/api/owner/war-room" or path.startswith("/api/owner/war-room/"):
+            self._war_room_write_refused()
+            return
+        if path == "/api/owner/data-quality":
             self._war_room_write_refused()
             return
         if path == "/api/business" or path.startswith("/api/business/"):
@@ -5955,6 +5970,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._owner_command_write_refused()
             return
         if path == "/api/owner/war-room" or path.startswith("/api/owner/war-room/"):
+            self._war_room_write_refused()
+            return
+        if path == "/api/owner/data-quality":
             self._war_room_write_refused()
             return
         if path == "/api/business" or path.startswith("/api/business/"):
@@ -7153,6 +7171,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._owner_command_write_refused()
             return
         if path == "/api/owner/war-room" or path.startswith("/api/owner/war-room/"):
+            self._war_room_write_refused()
+            return
+        if path == "/api/owner/data-quality":
             self._war_room_write_refused()
             return
         if path == "/api/business" or path.startswith("/api/business/"):
@@ -29471,12 +29492,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if not isinstance(surfaces, list):
             surfaces = []
         queue = [row for row in surfaces if isinstance(row, dict) and row.get("ready_to_test_now") == "yes"]
+        human_cards = [
+            row for row in surfaces
+            if isinstance(row, dict) and row.get("test_card") and row.get("ready_to_test_now") == "yes"
+        ]
         self._send_json(
             {
                 "ok": True,
                 "title": "GIVE THIS TO A HUMAN NOW",
                 "queue": queue,
+                "human_test_cards": human_cards,
                 "surfaces": surfaces,
+                "feedback_href": "/progress#commissioning",
                 "columns": [
                     "surface",
                     "route",
@@ -29497,6 +29524,49 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "ledger_write": False,
             }
         )
+
+    def _owner_data_quality_get(self) -> None:
+        identity = self._require_war_room()
+        if not identity:
+            return
+        try:
+            register = _data_quality.load_register(refresh=True)
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "unavailable",
+                    "message": f"Data-quality register could not be read: {type(exc).__name__}",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "ledger_write": False,
+                },
+                status=500,
+            )
+            return
+        self._send_json(
+            {
+                "ok": True,
+                "generated": register.get("generated"),
+                "open_count": register.get("open_count"),
+                "note": register.get("note"),
+                "items": register.get("items") or [],
+                "staff_ready": False,
+                "human_commissioned": False,
+                "ledger_write": False,
+                "person_id": identity.get("person_id"),
+            }
+        )
+
+    def _owner_data_quality_page(self) -> None:
+        identity = self._require_war_room()
+        if not identity:
+            return
+        page = DASHBOARDS / "owner-data-quality.html"
+        if not page.is_file():
+            self._send_err(404, "data-quality page missing")
+            return
+        self._send_html_shell(page.read_bytes(), rel="owner-data-quality.html")
 
     def _send_favicon(self) -> None:
         icon = DASHBOARDS / "favicon.ico"
