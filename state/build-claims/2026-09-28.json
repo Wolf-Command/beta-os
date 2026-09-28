@@ -40,6 +40,16 @@
       "at": "2026-09-28T01:10:00Z",
       "tests": "loop PASS=61 FAIL=0; sop factory PASS=113 FAIL=0; core mgmt cluster PASS=116 FAIL=0",
       "checked": false
+    },
+    {
+      "id": "staff-access-20260928",
+      "claim": "Beta catalog binds six Content Creator identities and seats Misa on Creative Director without a second Misa person. Haikal CD assignment stays ACTIVE and primary. laluzayen@gmail.com is not bound. hr@ and recruitment@ are function mailboxes with no AuthIdentity. Unsigned Beta :8788 is 403 on /content-2.0, /my-work, /ggv/finance, and /wolf. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/run_guarded.py scripts/tests/test_staff_access_20260928.py | tail -2; python3 -c \"import sqlite3; c=sqlite3.connect('file:catalog/content_library.sqlite?mode=ro', uri=True); print('persons', c.execute('select count(*) from org_persons').fetchone()[0]); print('haikal', c.execute(\\\"select status from org_assignments where assignment_id='ASG-HAIKAL-CD-1'\\\").fetchone()[0]); print('misa_cd', c.execute(\\\"select is_primary from org_assignments where assignment_id='ASG-MISA-CD-1'\\\").fetchone()[0]); print('finance', c.execute(\\\"select count(*) from org_auth_identities where lower(identifier)='laluzayen@gmail.com'\\\").fetchone()[0]); print('hr_login', c.execute(\\\"select count(*) from org_auth_identities where lower(identifier) in ('hr@atriumlombok.com','recruitment@atriumlombok.com')\\\").fetchone()[0])\"; curl -sS -o /dev/null -w 'content:%{http_code}\\n' http://127.0.0.1:8788/content-2.0; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "SUMMARY pass=204 fail=0; persons 12; haikal ACTIVE; misa_cd 1; finance 0; hr_login 0; content:403; 8787 True; 8788 True",
+      "by": "cursor-staff-access",
+      "at": "2026-09-28T02:31:56Z",
+      "tests": "staff access PASS=204 FAIL=0; canonical guard PASS=20 FAIL=0",
+      "checked": false
     }
   ]
 }

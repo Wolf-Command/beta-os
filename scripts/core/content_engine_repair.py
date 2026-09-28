@@ -394,47 +394,67 @@ def ensure_content_all_brands_scope(conn: sqlite3.Connection) -> dict[str, Any]:
             """,
             (scope_id, row["org_brand_id"], stamp),
         )
-    asg = conn.execute(
-        "SELECT start_at, status FROM org_assignments WHERE assignment_id=?",
-        (CONTENT_ALL_ASSIGNMENT,),
-    ).fetchone()
+    assignment_ids = [CONTENT_ALL_ASSIGNMENT]
+    role_rows = conn.execute(
+        """
+        SELECT a.assignment_id
+        FROM org_assignments a
+        JOIN org_positions p ON p.position_id = a.position_id
+        WHERE p.role_id = ?
+          AND a.status = 'ACTIVE'
+          AND a.end_at IS NULL
+        ORDER BY a.assignment_id
+        """,
+        (CONTENT_DIRECTOR_ROLE,),
+    ).fetchall()
+    for row in role_rows:
+        aid = row["assignment_id"] if hasattr(row, "keys") else row[0]
+        if aid and aid not in assignment_ids:
+            assignment_ids.append(aid)
     attached = False
-    if asg is not None:
+    for assignment_id in assignment_ids:
+        asg = conn.execute(
+            "SELECT start_at, status FROM org_assignments WHERE assignment_id=?",
+            (assignment_id,),
+        ).fetchone()
+        if asg is None:
+            continue
         asg_status = asg["status"] if hasattr(asg, "keys") else asg[1]
         asg_start = asg["start_at"] if hasattr(asg, "keys") else asg[0]
-        if str(asg_status or "") == "ACTIVE":
-            existing = conn.execute(
+        if str(asg_status or "") != "ACTIVE":
+            continue
+        existing = conn.execute(
+            """
+            SELECT start_at, status, end_at FROM org_assignment_scopes
+            WHERE assignment_id=? AND scope_id=?
+            ORDER BY start_at DESC LIMIT 1
+            """,
+            (assignment_id, scope_id),
+        ).fetchone()
+        if existing is None:
+            conn.execute(
                 """
-                SELECT start_at, status, end_at FROM org_assignment_scopes
-                WHERE assignment_id=? AND scope_id=?
-                ORDER BY start_at DESC LIMIT 1
+                INSERT INTO org_assignment_scopes (
+                  assignment_id, scope_id, start_at, end_at, status, created_at, updated_at
+                ) VALUES (?, ?, ?, NULL, 'ACTIVE', ?, ?)
                 """,
-                (CONTENT_ALL_ASSIGNMENT, scope_id),
-            ).fetchone()
-            if existing is None:
-                conn.execute(
-                    """
-                    INSERT INTO org_assignment_scopes (
-                      assignment_id, scope_id, start_at, end_at, status, created_at, updated_at
-                    ) VALUES (?, ?, ?, NULL, 'ACTIVE', ?, ?)
-                    """,
-                    (CONTENT_ALL_ASSIGNMENT, scope_id, asg_start, stamp, stamp),
-                )
-                attached = True
-            else:
-                ex_start = existing["start_at"] if hasattr(existing, "keys") else existing[0]
-                ex_status = existing["status"] if hasattr(existing, "keys") else existing[1]
-                ex_end = existing["end_at"] if hasattr(existing, "keys") else existing[2]
-                if str(ex_status or "") != "ACTIVE" or ex_end:
-                    conn.execute(
-                        """
-                        UPDATE org_assignment_scopes
-                        SET status='ACTIVE', end_at=NULL, updated_at=?
-                        WHERE assignment_id=? AND scope_id=? AND start_at=?
-                        """,
-                        (stamp, CONTENT_ALL_ASSIGNMENT, scope_id, ex_start),
-                    )
-                attached = True
+                (assignment_id, scope_id, asg_start, stamp, stamp),
+            )
+            attached = True
+            continue
+        ex_start = existing["start_at"] if hasattr(existing, "keys") else existing[0]
+        ex_status = existing["status"] if hasattr(existing, "keys") else existing[1]
+        ex_end = existing["end_at"] if hasattr(existing, "keys") else existing[2]
+        if str(ex_status or "") != "ACTIVE" or ex_end:
+            conn.execute(
+                """
+                UPDATE org_assignment_scopes
+                SET status='ACTIVE', end_at=NULL, updated_at=?
+                WHERE assignment_id=? AND scope_id=? AND start_at=?
+                """,
+                (stamp, assignment_id, scope_id, ex_start),
+            )
+        attached = True
     for permission_id in CONTENT_DESK_PERMISSIONS:
         conn.execute(
             """

@@ -14,6 +14,7 @@ from typing import Any
 
 REPRESENTATIVES: dict[str, str] = {
     "creative_director": "creative_director",
+    "content_creator": "content_creator",
     "bzg_fb_ops": "bzg_fb_ops",
     "finance": "external_accountant",
     "closer": "closer",

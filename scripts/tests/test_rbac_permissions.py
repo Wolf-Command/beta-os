@@ -122,13 +122,22 @@ def main() -> int:
 
     # inactive assignment
     conn.execute(
-        "UPDATE org_assignments SET end_at=?, status='ENDED' WHERE assignment_id='ASG-MISA-CC-1'",
+        """
+        UPDATE org_assignments
+        SET end_at=?, status='ENDED'
+        WHERE person_id='PERS-MISA' AND status='ACTIVE' AND end_at IS NULL
+        """,
         (ts,),
     )
     conn.commit()
     check("inactive assignment denied", not rb.can("PERS-MISA", "content.plan.read", tgt, conn=conn))
     conn.execute(
-        "UPDATE org_assignments SET end_at=NULL, status='ACTIVE' WHERE assignment_id='ASG-MISA-CC-1'",
+        """
+        UPDATE org_assignments
+        SET end_at=NULL, status='ACTIVE'
+        WHERE person_id='PERS-MISA' AND end_at=?
+        """,
+        (ts,),
     )
     conn.commit()
 

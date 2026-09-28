@@ -90,7 +90,7 @@ def test_module() -> None:
         or "nas" in slice_s or "library" in slice_s,
         slice_s,
     )
-    check("coral landing flag", flags.get("coral_landing_amg_today") is True)
+    check("coral amg landing retired", flags.get("coral_landing_amg_today") is False)
     check("amg crumbs flag", flags.get("amg_crumbs_wolf_atrium_amg") is True)
     check("finance nested flag", flags.get("amg_finance_nested_visible_only") is True)
     check("amanda landing retained", flags.get("amanda_landing_ggv_overview") is True)
@@ -129,22 +129,21 @@ def test_module() -> None:
     )
 
     coral = shell.build_whoami(person_id="PERS-MISA", email=CORAL)
-    check("coral landing AMG", coral.get("landing") == "/amg-ops-pack")
-    check("coral see AMG", "/amg-ops-pack" in (coral.get("pages") or []))
-    check("coral hide Progress", "/progress" not in (coral.get("pages") or []))
-    check("coral hide Empire", "/owner-empire-pack" not in (coral.get("pages") or []))
-    check("coral hide GGV depth", "/ggv-ops-pack" not in (coral.get("pages") or []))
-    check("coral hide Uma depth", "/bzg/uma-blu" not in (coral.get("pages") or []))
-    check("coral hide BZG", "/bzg" not in (coral.get("pages") or []))
+    check("misa landing content", coral.get("landing") == "/content-2.0")
+    check("misa hide AMG", "/amg-ops-pack" not in (coral.get("pages") or []))
+    check("misa hide Progress", "/progress" not in (coral.get("pages") or []))
+    check("misa hide Empire", "/owner-empire-pack" not in (coral.get("pages") or []))
+    check("misa see content", "/content-2.0" in (coral.get("pages") or []))
+    check("misa hide Uma", "/bzg/uma-blu" not in (coral.get("pages") or []))
+    check("misa hide BZG", "/bzg" not in (coral.get("pages") or []))
     ctree = shell.filter_ia_tree(coral)
     hrefs = [it["href"] for s in ctree for it in s["items"]]
-    check("coral IA has AMG", "/amg-ops-pack" in hrefs)
-    check("coral IA no progress", "/progress" not in hrefs)
-    check("coral IA no empire", "/owner-empire-pack" not in hrefs)
-    check("coral IA no ggv", "/ggv-ops-pack" not in hrefs)
-    check("coral IA no uma", "/bzg/uma-blu" not in hrefs)
-    check("coral no SYSTEM", not any(s.get("id") == "system" for s in ctree))
-    check("coral no INTELLIGENCE", not any(s.get("id") == "intelligence" for s in ctree))
+    check("misa IA has content", "/content-2.0" in hrefs)
+    check("misa IA no AMG", "/amg-ops-pack" not in hrefs)
+    check("misa IA no progress", "/progress" not in hrefs)
+    check("misa IA no empire", "/owner-empire-pack" not in hrefs)
+    check("misa IA no uma", "/bzg/uma-blu" not in hrefs)
+    check("misa no SYSTEM", not any(s.get("id") == "system" for s in ctree))
 
     crumbs = shell.breadcrumbs_for_path("/amg-ops-pack", coral)
     labs = _labels(crumbs)
@@ -157,10 +156,10 @@ def test_module() -> None:
         str(labs),
     )
     c_dir = shell.direction_for_path("/amg-ops-pack", coral)
-    check("coral HOME → AMG", c_dir.get("home") == "/amg-ops-pack")
+    check("misa HOME is content", c_dir.get("home") == "/content-2.0")
     check(
-        "coral UP soft-land (no Empire)",
-        c_dir.get("up") in ("/amg-ops-pack", None) or c_dir.get("up") == coral.get("landing"),
+        "misa UP from AMG is content landing",
+        c_dir.get("up") == "/content-2.0",
         str(c_dir),
     )
 
@@ -334,7 +333,7 @@ def test_http() -> None:
         )
         check("honesty proven false", h.get("proven") is False)
         check("honesty ready false", h.get("ready") is False)
-        check("honesty coral flag", h.get("coral_landing_amg_today") is True)
+        check("honesty coral amg landing retired", h.get("coral_landing_amg_today") is False)
         check("honesty amg crumbs flag", h.get("amg_crumbs_wolf_atrium_amg") is True)
         check("honesty amanda retained", h.get("amanda_landing_ggv_overview") is True)
         check("honesty devi retained", h.get("devi_landing_uma_today") is True)
@@ -346,15 +345,14 @@ def test_http() -> None:
 
         st, payload, _ = call("GET", "/api/wolf/shell-whoami", CORAL)
         who = payload.get("whoami") or {}
-        check("coral whoami landing", who.get("landing") == "/amg-ops-pack")
-        check("coral whoami hide progress", "/progress" not in (who.get("pages") or []))
-        check("coral whoami hide empire", "/owner-empire-pack" not in (who.get("pages") or []))
-        check("coral whoami hide ggv", "/ggv-ops-pack" not in (who.get("pages") or []))
-        check("coral whoami hide uma", "/bzg/uma-blu" not in (who.get("pages") or []))
-        check("coral whoami see amg", "/amg-ops-pack" in (who.get("pages") or []))
+        check("misa whoami landing content", who.get("landing") == "/content-2.0")
+        check("misa whoami hide progress", "/progress" not in (who.get("pages") or []))
+        check("misa whoami hide empire", "/owner-empire-pack" not in (who.get("pages") or []))
+        check("misa whoami hide uma", "/bzg/uma-blu" not in (who.get("pages") or []))
+        check("misa whoami hide amg", "/amg-ops-pack" not in (who.get("pages") or []))
+        check("misa whoami see content", "/content-2.0" in (who.get("pages") or []))
         ia = payload.get("ia") or []
-        check("coral no SYSTEM", not any(s.get("id") == "system" for s in ia))
-        check("coral no INTELLIGENCE", not any(s.get("id") == "intelligence" for s in ia))
+        check("misa no SYSTEM", not any(s.get("id") == "system" for s in ia))
 
         st, payload, _ = call("GET", "/api/wolf/shell-whoami", MATT)
         who = payload.get("whoami") or {}
@@ -395,11 +393,11 @@ def test_http() -> None:
             check("coral amg crumbs", 'id="wolfnav-crumbs"' in html)
             if "__WOLF_WHOAMI__" in html:
                 blob = html.split("__WOLF_WHOAMI__=")[1][:2500]
-                check("coral bake no progress", '"/progress"' not in blob)
-                check("coral bake no empire", '"/owner-empire-pack"' not in blob)
-                check("coral bake no ggv", '"/ggv-ops-pack"' not in blob)
-                check("coral bake no uma", '"/bzg/uma-blu"' not in blob)
-                check("coral bake landing amg", '"/amg-ops-pack"' in blob)
+                check("misa bake no progress", '"/progress"' not in blob)
+                check("misa bake no empire", '"/owner-empire-pack"' not in blob)
+                check("misa bake no uma", '"/bzg/uma-blu"' not in blob)
+                check("misa bake no amg desk", '"/amg-ops-pack"' not in blob)
+                check("misa bake landing content", '"/content-2.0"' in blob)
 
         st, html, _ = call("GET", "/amg-daily-ops-state", MATT)
         check(

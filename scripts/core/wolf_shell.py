@@ -460,6 +460,7 @@ ROLE_AUDIENCE: dict[str, str] = {
     "ROLE-CONTENT": "SPECIALIST_CONTENT",
     "ROLE-CONTENT-MGMT": "SPECIALIST_CONTENT",
     "ROLE-CONTENT-CREW": "SPECIALIST_CONTENT",
+    "ROLE-CONTENT-CREATOR": "SPECIALIST_CONTENT",
     "ROLE-BZG-FB-OPS-LEAD": "OPERATOR",
     "ROLE-BZG-HFB": "OPERATOR",
     "ROLE-BZG-CLOSER": "OPERATOR",
@@ -779,7 +780,7 @@ HONESTY_BASE: dict[str, Any] = {
     "owner_landing_empire": True,
     "devi_landing_uma_today": True,
     "amanda_landing_ggv_overview": True,
-    "coral_landing_amg_today": True,
+    "coral_landing_amg_today": False,
     "haikal_landing_content": True,
     "intel_home_soft_land": True,
     "content_under_intelligence": True,
@@ -1057,14 +1058,34 @@ def specialist_not_in_primary_ia(tree: list[dict[str, Any]] | None = None) -> bo
     return len(primary_ia_specialist_leaks(tree)) == 0
 
 
+# Primary seat wins over the old person fixture map for these jobs.
+_ASSIGNMENT_AUDIENCE_ROLES = frozenset(
+    {
+        "ROLE-GGV-CREATIVE-DIRECTOR",
+        "ROLE-CONTENT-CREATOR",
+        "ROLE-GGV-EXTERNAL-ACCOUNTANT",
+    }
+)
+
+
 def audience_for_person(person_id: str | None) -> str:
     if not person_id:
         return "CLIENT"
     pid = str(person_id)
+    rows = _org_assignments(pid)
+    if rows:
+        primary = [
+            row for row in rows
+            if int(row.get("is_primary") or 0) == 1
+            and str(row.get("role") or "") in _ASSIGNMENT_AUDIENCE_ROLES
+        ]
+        chosen = primary[0] if primary else rows[0]
+        role = str(chosen.get("role") or "")
+        if role in _ASSIGNMENT_AUDIENCE_ROLES and role in ROLE_AUDIENCE:
+            return ROLE_AUDIENCE[role]
     mapped = PERSON_AUDIENCE.get(pid)
     if mapped:
         return mapped
-    rows = _org_assignments(pid)
     if not rows:
         return "CLIENT"
     role = str(rows[0].get("role") or "")
@@ -1123,6 +1144,7 @@ _ROLE_HREF: dict[str, str] = {
     "ROLE-CONTENT": CONTENT_HREF,
     "ROLE-CONTENT-MGMT": CONTENT_HREF,
     "ROLE-CONTENT-CREW": CONTENT_HREF,
+    "ROLE-CONTENT-CREATOR": CONTENT_HREF,
     "ROLE-BZG-FB-OPS-LEAD": "/bzg/uma-blu",
     "ROLE-GGV-LEAD": "/ggv-ops-pack",
     "ROLE-AMG-OPS": "/amg-ops-pack",
@@ -1199,6 +1221,7 @@ def _org_assignments(person_id: str) -> list[dict[str, Any]]:
                     "scopes": scopes,
                     "href": href,
                     "position_id": row["position_id"],
+                    "is_primary": int(row["is_primary"] or 0),
                     "source": "org_assignments",
                 }
             )
@@ -1339,7 +1362,15 @@ def filter_assignments(
             out.append(dict(a))
         elif is_empire_path(href) and (EMPIRE_HREF in allowed or any(is_empire_path(x) for x in allowed)):
             out.append(dict(a))
-    return out
+    seen: set[str] = set()
+    deduped: list[dict[str, Any]] = []
+    for item in out:
+        href = _norm_path(str(item.get("href") or ""))
+        if href in seen:
+            continue
+        seen.add(href)
+        deduped.append(item)
+    return deduped
 
 
 def breadcrumbs_for_path(
@@ -1492,6 +1523,23 @@ def direction_for_path(
     }
 
 
+def _hello_for(person_id: str | None, audience: str) -> str:
+    mapped = PERSON_HELLO.get(str(person_id or ""))
+    if mapped:
+        return mapped
+    if person_id:
+        try:
+            from core import identity as _identity
+
+            person = _identity.get_person(person_id)
+            name = str((person or {}).get("display_name") or "").strip()
+            if name:
+                return name
+        except Exception:
+            pass
+    return audience
+
+
 def build_whoami(
     *,
     person_id: str | None = None,
@@ -1514,7 +1562,7 @@ def build_whoami(
         "email": email,
         "audience": aud,
         "role_label": aud,
-        "hello": PERSON_HELLO.get(str(person_id or ""), aud),
+        "hello": _hello_for(person_id, aud),
         "wolf_authorized": owner,
         "scoped": not owner,
         "pages": pages,

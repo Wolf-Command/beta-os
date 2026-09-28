@@ -89,7 +89,7 @@ def test_module() -> None:
     check("intel home soft-land", flags.get("intel_home_soft_land") is True)
     check("content under intelligence", flags.get("content_under_intelligence") is True)
     check("intel crumbs flag", flags.get("intel_crumbs_wolf_intelligence") is True)
-    check("coral landing retained", flags.get("coral_landing_amg_today") is True)
+    check("coral amg landing retired", flags.get("coral_landing_amg_today") is False)
     check("amanda landing retained", flags.get("amanda_landing_ggv_overview") is True)
     check("devi landing retained", flags.get("devi_landing_uma_today") is True)
     check("amg crumbs retained", flags.get("amg_crumbs_wolf_atrium_amg") is True)
@@ -199,13 +199,18 @@ def test_module() -> None:
         shell.parent_for_path("/content-2.0", owner) == "/intel-ops-pack",
     )
 
-    # Wave5 regression — Coral still AMG
+    # Primary seat is Creative Director. Landing follows that role.
     coral = shell.build_whoami(person_id="PERS-MISA", email=CORAL)
-    check("coral landing AMG", coral.get("landing") == "/amg-ops-pack")
-    check("coral hide Intel", "/intel-ops-pack" not in (coral.get("pages") or []))
-    check("coral hide Content", "/content-2.0" not in (coral.get("pages") or []))
-    check("coral hide Progress", "/progress" not in (coral.get("pages") or []))
-    check("coral no INTELLIGENCE IA", not any(s.get("id") == "intelligence" for s in shell.filter_ia_tree(coral)))
+    check("misa landing content", coral.get("landing") == "/content-2.0")
+    check("misa hide Intel home", "/intel-ops-pack" not in (coral.get("pages") or []))
+    check("misa see Content", "/content-2.0" in (coral.get("pages") or []))
+    check("misa hide Progress", "/progress" not in (coral.get("pages") or []))
+    intel_ia = next((s for s in shell.filter_ia_tree(coral) if s.get("id") == "intelligence"), None)
+    check(
+        "misa IA Content under Intel",
+        intel_ia is not None
+        and any(it.get("href") == "/content-2.0" for it in intel_ia.get("items") or []),
+    )
 
     # Wave4 regression — Amanda still GGV
     amanda = shell.build_whoami(person_id="PERS-AMANDA", email=AMANDA)
@@ -350,7 +355,7 @@ def test_http() -> None:
         check("honesty haikal flag", h.get("haikal_landing_content") is True)
         check("honesty intel crumbs", h.get("intel_crumbs_wolf_intelligence") is True)
         check("honesty content under intel", h.get("content_under_intelligence") is True)
-        check("honesty coral retained", h.get("coral_landing_amg_today") is True)
+        check("honesty coral amg landing retired", h.get("coral_landing_amg_today") is False)
         check("honesty amanda retained", h.get("amanda_landing_ggv_overview") is True)
         check("honesty devi retained", h.get("devi_landing_uma_today") is True)
         check("honesty client fail-closed", h.get("client_projection_fail_closed") is True)
@@ -386,8 +391,9 @@ def test_http() -> None:
 
         st, payload, _ = call("GET", "/api/wolf/shell-whoami", CORAL)
         who = payload.get("whoami") or {}
-        check("coral whoami landing amg", who.get("landing") == "/amg-ops-pack")
-        check("coral whoami hide intel", "/intel-ops-pack" not in (who.get("pages") or []))
+        check("misa whoami landing content", who.get("landing") == "/content-2.0")
+        check("misa whoami hide intel", "/intel-ops-pack" not in (who.get("pages") or []))
+        check("misa whoami see content", "/content-2.0" in (who.get("pages") or []))
 
         st, payload, _ = call("GET", "/api/wolf/shell-whoami", AMANDA)
         who = payload.get("whoami") or {}

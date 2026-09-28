@@ -30,6 +30,7 @@ _BRAND_DESK = {
 _GENERIC_DESK = {
     "ROLE-CONTENT-MGMT": ("Open content", "/content-2.0"),
     "ROLE-CONTENT-CREW": ("Open content", "/content-2.0"),
+    "ROLE-CONTENT-CREATOR": ("Open content", "/content-2.0"),
     "ROLE-CONTENT": ("Open content", "/content-2.0"),
     "ROLE-AMG-GM": ("Open the hotel desk", "/amg-ops-pack"),
     "ROLE-AMG-OPS": ("Open the hotel desk", "/amg-ops-pack"),
@@ -77,6 +78,12 @@ def _owner_role(row: dict[str, Any]) -> bool:
 def _finance_role(row: dict[str, Any]) -> bool:
     blob = f"{row.get('role_id') or ''} {row.get('role_label') or ''}".lower()
     return "accountant" in blob or "finance" in blob
+
+
+def _content_creator_role(row: dict[str, Any]) -> bool:
+    role = str(row.get("role_id") or "")
+    label = str(row.get("role_label") or "").strip().lower()
+    return role == "ROLE-CONTENT-CREATOR" or label == "content creator"
 
 
 def _creative_role(row: dict[str, Any]) -> bool:
@@ -201,6 +208,8 @@ def _pick(rows: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
         return "finance", primary
     if _creative_role(primary):
         return "creative_director", primary
+    if _content_creator_role(primary):
+        return "content_creator", primary
     if _bzg_lead_role(primary):
         return "bzg_fb_ops", primary
     if _closer_role(primary):
@@ -341,7 +350,7 @@ def _clean_work(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 def _desk(experience: str, role: dict[str, Any], brands: list[dict[str, str]]) -> list[dict[str, str]]:
     if experience == "owner_pulse":
         return []
-    if experience == "creative_director":
+    if experience in {"creative_director", "content_creator"}:
         return [{"label": "Open the content library", "href": "/content-2.0"}]
     if experience == "finance":
         return [{"label": "Open finance notes", "href": "/ggv/finance"}]
@@ -367,7 +376,7 @@ def _desk(experience: str, role: dict[str, Any], brands: list[dict[str, str]]) -
 
 
 def _covers(experience: str, brands: list[dict[str, str]], scopes: list[dict[str, str]]) -> list[str]:
-    if experience == "creative_director":
+    if experience in {"creative_director", "content_creator"}:
         return ["Content library"]
     if experience == "finance":
         labels = [s["label"] for s in scopes if "finance" in s["label"].lower()]
@@ -385,6 +394,18 @@ def _covers(experience: str, brands: list[dict[str, str]], scopes: list[dict[str
 
 
 def _boundary(experience: str) -> str | None:
+    if experience == "content_creator":
+        return (
+            "You can work in the content library for the brands on your assignment: "
+            "view, upload, and submit for review. "
+            "You cannot approve, publish, open finance, HR, payroll, or Owner command."
+        )
+    if experience == "creative_director":
+        return (
+            "You review and coordinate content work for the brands on your assignment. "
+            "Publish stays on the existing publish gate. "
+            "You cannot pay, change a bank account, or open Owner command."
+        )
     if experience == "finance":
         return (
             "You can read and review finance notes. "
@@ -431,11 +452,23 @@ def _founder(experience: str) -> dict[str, str]:
     }
 
 
+def _today_empty(experience: str) -> str:
+    if experience in {"creative_director", "content_creator"}:
+        return (
+            "No content work is assigned to this seat yet. "
+            "Plans, submissions, and production tasks for this role will appear here "
+            "when they are stored on the assignment."
+        )
+    return "Nothing is assigned to you for today."
+
+
 def _staff_sections(
     conn,
     person_id: str,
     entities: set[str],
     codes: set[str],
+    *,
+    today_empty: str,
 ) -> list[dict[str, Any]]:
     mine = _clean_work(_work_rows(conn, entities, ("OPEN", "IN_PROGRESS", "BLOCKED"), person_id))
     today = [
@@ -481,7 +514,7 @@ def _staff_sections(
             attention.append(_item(str(ap["approval_request_id"]), title, href=href, status="PENDING"))
 
     return [
-        _section("today", "What do I need to do today?", today[:12], "Nothing is assigned to you for today."),
+        _section("today", "What do I need to do today?", today[:12], today_empty),
         _section("attention", "What needs my attention?", attention[:12], "Nothing needs your attention."),
         _section("waiting", "What am I waiting for?", waiting[:12], "You are not waiting on anyone."),
         _section("completed", "What did I recently complete?", done[:8], "Nothing completed recently."),
@@ -576,7 +609,9 @@ def build_home(person_id: str | None, *, conn=None) -> dict[str, Any]:
         if experience == "owner_pulse":
             sections = _owner_sections(c, entities, codes, pid)
         else:
-            sections = _staff_sections(c, pid, entities, codes)
+            sections = _staff_sections(
+                c, pid, entities, codes, today_empty=_today_empty(experience)
+            )
         display = str(person.get("display_name") or "").strip() or "there"
         role_label = str(role.get("role_label") or role.get("position_label") or "Your role")
         covers = _covers(experience, brands, scope_rows)

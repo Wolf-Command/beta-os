@@ -115,7 +115,7 @@ def test_module() -> None:
     check("system crumbs retained", flags.get("system_crumbs_wolf_system") is True)
     check("progress under system only", flags.get("progress_under_system_only") is True)
     check("haikal landing retained", flags.get("haikal_landing_content") is True)
-    check("coral landing retained", flags.get("coral_landing_amg_today") is True)
+    check("coral amg landing retired", flags.get("coral_landing_amg_today") is False)
     check("amanda landing retained", flags.get("amanda_landing_ggv_overview") is True)
     check("devi landing retained", flags.get("devi_landing_uma_today") is True)
     check("intel crumbs retained", flags.get("intel_crumbs_wolf_intelligence") is True)
@@ -173,7 +173,7 @@ def test_module() -> None:
 
     for label, person, email, landing in (
         ("haikal", "PERS-HAIKAL", HAIKAL, "/content-2.0"),
-        ("coral", "PERS-MISA", CORAL, "/amg-ops-pack"),
+        ("coral", "PERS-MISA", CORAL, "/content-2.0"),
         ("amanda", "PERS-AMANDA", AMANDA, "/ggv-ops-pack"),
         ("devi", "PERS-DEVI", DEVI, "/bzg/uma-blu"),
     ):
@@ -344,7 +344,7 @@ def test_http() -> None:
         check("honesty system soft-land", h.get("system_home_soft_land_progress") is True)
         check("honesty staff hide", h.get("staff_hide_system_admin") is True)
         check("honesty haikal retained", h.get("haikal_landing_content") is True)
-        check("honesty coral retained", h.get("coral_landing_amg_today") is True)
+        check("honesty coral amg landing retired", h.get("coral_landing_amg_today") is False)
         check("honesty amanda retained", h.get("amanda_landing_ggv_overview") is True)
         check("honesty devi retained", h.get("devi_landing_uma_today") is True)
         check("honesty client fail-closed", h.get("client_projection_fail_closed") is True)
@@ -373,7 +373,7 @@ def test_http() -> None:
 
         for label, subject, landing in (
             ("haikal", HAIKAL, "/content-2.0"),
-            ("coral", CORAL, "/amg-ops-pack"),
+            ("coral", CORAL, "/content-2.0"),
             ("amanda", AMANDA, "/ggv-ops-pack"),
             ("devi", DEVI, "/bzg/uma-blu"),
         ):

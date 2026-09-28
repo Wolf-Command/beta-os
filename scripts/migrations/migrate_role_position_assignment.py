@@ -163,7 +163,8 @@ def main() -> int:
         upsert_assignment(conn, "ASG-AMANDA-CM-1", "PERS-AMANDA", "POS-CONTENT-MGMT-1", start, None, "ACTIVE", 1, ts)
         upsert_assignment(conn, "ASG-HAIKAL-VE-1", "PERS-HAIKAL", "POS-VIDEO-EDITOR-1", start, haikal_ve_end, "ENDED", 0, ts)
         upsert_assignment(conn, "ASG-HAIKAL-CD-1", "PERS-HAIKAL", "POS-GGV-CREATIVE-DIRECTOR-1", haikal_ve_end, None, "ACTIVE", 1, ts)
-        upsert_assignment(conn, "ASG-MISA-CC-1", "PERS-MISA", "POS-CONTENT-CREW-1", start, None, "ACTIVE", 1, ts)
+        # 2026-09-28: Creative Director is the primary seat. Crew stays active, not primary.
+        upsert_assignment(conn, "ASG-MISA-CC-1", "PERS-MISA", "POS-CONTENT-CREW-1", start, None, "ACTIVE", 0, ts)
 
         conn.execute(
             """
