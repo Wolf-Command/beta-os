@@ -27281,6 +27281,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "score_refused",
             "slots_refused",
             "writes_refused",
+            "balance_refused",
             "rewrite_refused",
             "alchemist_refused",
             "ledger_write_refused",
@@ -27400,6 +27401,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 write=(qs.get("write") or [""])[0],
                 score=(qs.get("score") or [""])[0],
                 rewrite=(qs.get("rewrite") or [""])[0],
+                balance=(qs.get("balance") or [""])[0],
+                amount=(qs.get("amount") or [""])[0],
+                books=(qs.get("books") or [""])[0],
+                opening=(qs.get("opening") or [""])[0],
+                closing=(qs.get("closing") or [""])[0],
             )
             if view == "schema":
                 full = _intg_cap_tests.build_framework()
@@ -27434,6 +27440,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 }
             elif ref_id == "file-read" or view == "file-read":
                 report = _intg_cap_tests.read_authorised_files()
+            elif ref_id == "reconcile" or view == "reconcile":
+                report = _intg_cap_tests.reconcile_ingested_files(
+                    payment=(qs.get("payment") or [""])[0],
+                    balance=(qs.get("balance") or [""])[0],
+                    amount=(qs.get("amount") or [""])[0],
+                    books=(qs.get("books") or [""])[0],
+                    opening=(qs.get("opening") or [""])[0],
+                    closing=(qs.get("closing") or [""])[0],
+                )
             elif ref_id:
                 report = _intg_cap_tests.read_kind(ref_id)
             else:

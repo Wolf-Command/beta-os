@@ -36,6 +36,7 @@ CONTRACT_DB = BETA_ROOT / "catalog" / "intg_connector_contract.sqlite"
 OWNER_PERSON = "PERS-MATT"
 CR_ID = "CR-859e7cad64e7e4ad"
 CAP_ID = "CAP-INTG-04"
+FIN_CAP_ID = "CAP-FIN-02"
 # 2026-07-30 decision: no bank feed. Statements are files the owner already filed.
 OWNER_ARCHIVE = Path.home() / ".openclaw" / "state" / "bank"
 STATEMENT_SUFFIXES = frozenset({".pdf", ".csv", ".xls", ".xlsx", ".ofx", ".qfx", ".mt940"})
@@ -453,6 +454,25 @@ def refuse_payment(_body: dict | None = None) -> None:
     )
 
 
+def refuse_balance(_body: dict | None = None) -> None:
+    raise ConnectorCapTestsError(
+        "A typed balance does not close this row. No amount is parsed into the books.",
+        code="balance_refused",
+    )
+
+
+def _typed_money(value: Any) -> bool:
+    """A supplied number, including zero. An empty string is not a balance."""
+    if value is None or isinstance(value, bool):
+        return False
+    if isinstance(value, (int, float)):
+        return True
+    return str(value).strip() != ""
+
+
+_MONEY_KEYS = ("balance", "amount", "books", "opening", "closing")
+
+
 def refuse_bank(_body: dict | None = None) -> None:
     raise ConnectorCapTestsError(
         "A live bank API call is refused. An empty framework is not a live bank-connector prove.",
@@ -551,6 +571,8 @@ def refuse_external_write(body: dict | None = None) -> None:
             token = str(key).strip().lower().replace("_", "-")
             if token in {"payment", "payments", "money", "price", "amount", "invoice", "paid"}:
                 refuse_payment(payload)
+            if token in {"balance", "books", "opening", "closing"}:
+                refuse_balance(payload)
             if token in {"bank", "bank-api", "live-bank", "plaid", "open-banking"}:
                 refuse_bank(payload)
             if token in {"feed", "bank-feed", "live-feed"}:
@@ -830,6 +852,103 @@ def read_authorised_files(
     return report
 
 
+def _file_identity(report: dict[str, Any]) -> tuple[Any, ...]:
+    """File identity only. Counts, manifest, and row hashes. Not an amount."""
+    raw_rows = report.get("rows")
+    rows = raw_rows if isinstance(raw_rows, list) else []
+    hashes = tuple(
+        str(row.get("sha256") or "")
+        for row in rows
+        if isinstance(row, dict)
+    )
+    return (
+        report.get("opened"),
+        report.get("pdf"),
+        report.get("csv"),
+        report.get("spreadsheet"),
+        report.get("bytes"),
+        report.get("manifest_sha256"),
+        hashes,
+        bool(report.get("file_read")),
+        bool(report.get("authorised")),
+    )
+
+
+def reconcile_ingested_files(
+    root: Path | str | None = None,
+    ingest: dict[str, Any] | None = None,
+    *,
+    payment: str | None = None,
+    balance: Any = None,
+    amount: Any = None,
+    books: Any = None,
+    opening: Any = None,
+    closing: Any = None,
+) -> dict[str, Any]:
+    """Match a second file read to the ingest. Do not parse an amount.
+
+    The match is the statement file identity from CAP-INTG-04. It does not
+    write a payment, a book, or a balance. A typed balance is refused and
+    does not close the row. A temp directory can match itself and still
+    is not the authorised archive.
+    """
+    if _present(payment):
+        refuse_payment({})
+    if any(_typed_money(item) for item in (balance, amount, books, opening, closing)):
+        refuse_balance({})
+    if isinstance(ingest, dict):
+        for key in _MONEY_KEYS:
+            if key in ingest and _typed_money(ingest.get(key)):
+                refuse_balance({})
+    source = read_authorised_files(root) if ingest is None else ingest
+    if not isinstance(source, dict):
+        raise ConnectorCapTestsError(
+            "Reconcile needs the ingested file report.",
+            code="invalid",
+        )
+    fresh = read_authorised_files(root)
+    match = _file_identity(source) == _file_identity(fresh)
+    authorised_read = bool(fresh.get("file_read")) and bool(fresh.get("authorised"))
+    source_read = bool(source.get("file_read")) and bool(source.get("authorised"))
+    return {
+        "ok": True,
+        "cap": FIN_CAP_ID,
+        "source_cap": CAP_ID,
+        "ingest_manifest_sha256": source.get("manifest_sha256"),
+        "reconcile_manifest_sha256": fresh.get("manifest_sha256"),
+        "opened": fresh.get("opened"),
+        "pdf": fresh.get("pdf"),
+        "csv": fresh.get("csv"),
+        "spreadsheet": fresh.get("spreadsheet"),
+        "bytes": fresh.get("bytes"),
+        "rows": fresh.get("rows"),
+        "match": match,
+        "reconciled": bool(match and authorised_read and source_read),
+        "file_identity_only": True,
+        "books_reconciled": False,
+        "amounts_parsed": False,
+        "books_written": False,
+        "payment_executed": False,
+        "money_moved": False,
+        "balance": None,
+        "typed_balance_closes_row": False,
+        "persisted": False,
+        "management_report": False,
+        "ledger_write": False,
+        "bank_api_called": False,
+        "bank_feed_called": False,
+        "external_write": False,
+        "connected": False,
+        "commissioned": False,
+        "configured": fresh.get("configured"),
+        "tested": True,
+        "authorised": fresh.get("authorised"),
+        "archive_present": fresh.get("archive_present"),
+        "file_read": fresh.get("file_read"),
+        "states_collapsed": False,
+    }
+
+
 def guard_query(
     *,
     payment: str | None = None,
@@ -849,9 +968,16 @@ def guard_query(
     write: str | None = None,
     score: str | None = None,
     rewrite: str | None = None,
+    balance: Any = None,
+    amount: Any = None,
+    books: Any = None,
+    opening: Any = None,
+    closing: Any = None,
 ) -> None:
     if _present(payment) or _present(money):
         refuse_payment({})
+    if any(_typed_money(item) for item in (balance, amount, books, opening, closing)):
+        refuse_balance({})
     if _present(bank):
         refuse_bank({})
     if _present(feed):
