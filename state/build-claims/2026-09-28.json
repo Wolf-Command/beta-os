@@ -30,6 +30,16 @@
       "at": "2026-09-28T00:45:00Z",
       "tests": "f4 PASS=79 FAIL=0; content staff ux PASS=54 FAIL=0; petty PASS=53 FAIL=0; amg nav PASS=144 FAIL=3 on prior-wave children",
       "checked": false
+    },
+    {
+      "id": "five-f6-cap-core-11-20260928",
+      "claim": "CAP-CORE-11 SOP loop on the existing factory stores a versioned change with an approver on a temp file. A rewritten file is not a version. Unsigned POST /api/sop/learn, /api/sop/acknowledge, and /api/sop/use on Beta :8788 are 403. catalog/sop_factory.sqlite stays absent. CAP-CORE-11 stays SPECIFIED. CR-c4ed4e3fa9f15a40 stays OPEN. Evidence stays 4, exceptions stay 3, approval decisions stay 9. EVD-50e827bd-2a51-4ed2-8e3b-4e88a1fff153 stays INVALIDATED. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/run_guarded.py scripts/tests/test_cap_core_11_loop.py | tail -3; python3 -c \"import json,sqlite3; from pathlib import Path; print('ledger', json.load(open('state/model-c-baseline-assessments.json'))['CAP-CORE-11'][0]); print('live_sop', Path('catalog/sop_factory.sqlite').exists()); c=sqlite3.connect('file:catalog/content_library.sqlite?mode=ro', uri=True); print('cr', c.execute(\\\"select state from wolf_completion_items where id='CR-c4ed4e3fa9f15a40'\\\").fetchone()[0]); print('evidence', c.execute('select count(*) from core_evidence_records').fetchone()[0]); print('exceptions', c.execute('select count(*) from core_governance_exceptions').fetchone()[0]); print('decisions', c.execute('select count(*) from core_approval_decisions').fetchone()[0]); print('status', c.execute(\\\"select status from core_evidence_records where evidence_id='EVD-50e827bd-2a51-4ed2-8e3b-4e88a1fff153'\\\").fetchone()[0])\"; curl -sS -o /dev/null -w 'learn:%{http_code}\\n' -X POST -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:8788/api/sop/learn; curl -sS -o /dev/null -w 'ack:%{http_code}\\n' -X POST -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:8788/api/sop/acknowledge; curl -sS -o /dev/null -w 'use:%{http_code}\\n' -X POST -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:8788/api/sop/use; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "PASS=61 FAIL=0; EXIT: SUCCESS; ledger SPECIFIED; live_sop False; cr OPEN; evidence 4; exceptions 3; decisions 9; status INVALIDATED; learn:403; ack:403; use:403; 8787 True; 8788 True",
+      "by": "cursor-five-f6",
+      "at": "2026-09-28T01:10:00Z",
+      "tests": "loop PASS=61 FAIL=0; sop factory PASS=113 FAIL=0; core mgmt cluster PASS=116 FAIL=0",
+      "checked": false
     }
   ]
 }

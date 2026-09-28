@@ -5595,6 +5595,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/sop/approve":
             self._sop_approve_post()
             return
+        if path == "/api/sop/learn":
+            self._sop_learn_post()
+            return
+        if path == "/api/sop/acknowledge":
+            self._sop_acknowledge_post()
+            return
+        if path == "/api/sop/use":
+            self._sop_use_post()
+            return
         if self._bzg_reputation_scrape(path):
             self._bzg_reputation_scrape_refused()
             return
@@ -30008,6 +30017,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def _sop_approve_post(self) -> None:
         self._sop_post("approve", _sop.approve)
+
+    def _sop_learn_post(self) -> None:
+        self._sop_post("learn", _sop.record_learning)
+
+    def _sop_acknowledge_post(self) -> None:
+        self._sop_post("acknowledge", _sop.acknowledge)
+
+    def _sop_use_post(self) -> None:
+        self._sop_post("use", _sop.record_use)
 
     def _crm_identity_blast(self, path: str) -> bool:
         low = (path or "").lower()

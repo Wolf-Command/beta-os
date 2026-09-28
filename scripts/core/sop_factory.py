@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
-"""SOP Factory v1 (Beta only) — CAP-CORE-11 slice, not the full loop.
+"""SOP Factory (Beta only) — CAP-CORE-11 loop on the existing factory.
 
-Decision served: 2026-09-19 PICK, SOP Factory v1 on Beta only
-(docs/deliveries/GROK-PLAN-CORE-SOP-FACTORY-V1-2026-09-19.md).
+Decision served: 2026-09-19 PICK, SOP Factory v1 on Beta only, extended by
+the 28 Sep 2026 owner brief item 5. This is the same factory, not a second
+SOP system.
 
-Draft from an evidence note → append-only version → Owner/role approve →
-list/read. A version is not live until an approval row exists. Versions and
-approvals are append-only. Anonymous callers fail closed.
+Evidence note → learning note → append-only proposed version → approval →
+acknowledgement of that approved version → use of the current live version.
+A version is not live until an approval row exists. A newer unapproved
+version does not replace it. Versions, learnings, approvals, acknowledgements,
+and uses are append-only. A rewritten file is not a version. Anonymous
+callers fail closed.
 
-Does not train staff, mark a draft live, write Model C, or resolve
-CR-c4ed4e3fa9f15a40. Honesty is bound to that CR and to the ledger row.
-Maturity is never raised here. PROVEN and READY are not invented.
+Acknowledgement is not staff training and not staff readiness. A use row is
+not operating adoption and not human commissioning. Does not write Model C
+or resolve CR-c4ed4e3fa9f15a40. Maturity is never raised here.
 """
 from __future__ import annotations
 
@@ -45,12 +49,26 @@ GATE_ROLE = "role"
 
 HIGHER_THAN_BUILT = frozenset({"PROVEN", "READY"})
 FAKE_NOTES = frozenset(
-    {"PROVEN", "READY", "BUILT", "SPECIFIED", "ABSENT", "LIVE", "APPROVED"}
+    {
+        "PROVEN",
+        "READY",
+        "BUILT",
+        "SPECIFIED",
+        "ABSENT",
+        "LIVE",
+        "APPROVED",
+        "STAFF_READY",
+        "COMMISSIONED",
+        "ADOPTED",
+    }
 )
 
 DRAFT_KEYS = frozenset({"title", "body", "evidence_note"})
 VERSION_KEYS = frozenset({"sop_id", "title", "body", "evidence_note"})
 APPROVE_KEYS = frozenset({"version_id"})
+LEARN_KEYS = frozenset({"version_id", "learning_note"})
+ACK_KEYS = frozenset({"version_id"})
+USE_KEYS = frozenset({"version_id", "use_note"})
 BANNED_KEYS = frozenset(
     {
         "state",
@@ -74,6 +92,9 @@ _SOP_RE = re.compile(
 _VER_RE = re.compile(
     r"^VER-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 )
+RESERVED_SOPS = frozenset(
+    {"draft", "version", "approve", "learn", "acknowledge", "use"}
+)
 _SECRET_RE = re.compile(
     r"(secret|password|token|api[_-]?key|bearer|cookie)",
     re.IGNORECASE,
@@ -81,11 +102,15 @@ _SECRET_RE = re.compile(
 
 HONESTY = {
     "cap": CAP_ID,
-    "slice": "sop_factory_v1",
+    "slice": "sop_loop",
     "append_only": True,
-    "full_loop": False,
+    "full_loop": True,
     "train_staff": False,
     "auto_train": False,
+    "staff_ready": False,
+    "human_commissioned": False,
+    "operating_adoption": False,
+    "file_rewrite_is_version": False,
     "live_without_approve": False,
     "score_changed": False,
     "production": False,
@@ -111,7 +136,7 @@ def permission_for(action: str) -> str:
     act = (action or "").strip().lower()
     if act == "approve":
         return PERM_APPROVE
-    if act in {"draft", "version"}:
+    if act in {"draft", "version", "learn"}:
         return PERM_DRAFT
     return PERM_READ
 
@@ -300,6 +325,75 @@ CREATE TRIGGER IF NOT EXISTS trg_sop_approvals_no_delete
 BEFORE DELETE ON sop_approvals
 BEGIN
   SELECT RAISE(ABORT, 'sop_approvals is append-only');
+END;
+
+CREATE TABLE IF NOT EXISTS sop_learnings (
+  learning_id TEXT PRIMARY KEY,
+  sop_id TEXT NOT NULL,
+  version_id TEXT NOT NULL,
+  learning_note TEXT NOT NULL,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sop_learnings_version ON sop_learnings(version_id);
+
+CREATE TABLE IF NOT EXISTS sop_acknowledgements (
+  acknowledgement_id TEXT PRIMARY KEY,
+  version_id TEXT NOT NULL,
+  sop_id TEXT NOT NULL,
+  person_id TEXT NOT NULL,
+  acknowledged_at TEXT NOT NULL,
+  UNIQUE(version_id, person_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sop_ack_version ON sop_acknowledgements(version_id);
+
+CREATE TABLE IF NOT EXISTS sop_uses (
+  use_id TEXT PRIMARY KEY,
+  version_id TEXT NOT NULL,
+  sop_id TEXT NOT NULL,
+  use_note TEXT NOT NULL,
+  recorded_by TEXT NOT NULL,
+  recorded_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sop_uses_version ON sop_uses(version_id);
+
+CREATE TRIGGER IF NOT EXISTS trg_sop_learnings_no_update
+BEFORE UPDATE ON sop_learnings
+BEGIN
+  SELECT RAISE(ABORT, 'sop_learnings is append-only');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_sop_learnings_no_delete
+BEFORE DELETE ON sop_learnings
+BEGIN
+  SELECT RAISE(ABORT, 'sop_learnings is append-only');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_sop_acknowledgements_no_update
+BEFORE UPDATE ON sop_acknowledgements
+BEGIN
+  SELECT RAISE(ABORT, 'sop_acknowledgements is append-only');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_sop_acknowledgements_no_delete
+BEFORE DELETE ON sop_acknowledgements
+BEGIN
+  SELECT RAISE(ABORT, 'sop_acknowledgements is append-only');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_sop_uses_no_update
+BEFORE UPDATE ON sop_uses
+BEGIN
+  SELECT RAISE(ABORT, 'sop_uses is append-only');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_sop_uses_no_delete
+BEFORE DELETE ON sop_uses
+BEGIN
+  SELECT RAISE(ABORT, 'sop_uses is append-only');
 END;
 """
 
@@ -646,6 +740,364 @@ def approve(
     }
 
 
+def refuse_unversioned_rewrite(body: dict) -> None:
+    """A file path or a raw rewrite is not a SOP version. Writes nothing."""
+    if not isinstance(body, dict):
+        raise SopFactoryError("payload must be an object", code="unversioned")
+    raise SopFactoryError(
+        "a rewritten file is not a version; append a version",
+        code="unversioned",
+    )
+
+
+def _open_existing(db_path: Path | str | None) -> sqlite3.Connection:
+    resolved = _resolve_db(db_path)
+    if not resolved.exists():
+        raise SopFactoryError("SOP version not found", code="not_found")
+    conn, _path = _open_write(db_path)
+    return conn
+
+
+def _version_row(conn: sqlite3.Connection, version_id: str) -> sqlite3.Row:
+    if not _VER_RE.match(version_id):
+        raise SopFactoryError("version_id is not a SOP factory id", code="invalid")
+    row = conn.execute(
+        """
+        SELECT version_id, sop_id, version_n, title, body, evidence_note, state,
+               created_by, created_at
+        FROM sop_versions WHERE version_id=?
+        """,
+        (version_id,),
+    ).fetchone()
+    if row is None:
+        raise SopFactoryError("SOP version not found", code="not_found")
+    return row
+
+
+def _approval_row(conn: sqlite3.Connection, version_id: str) -> sqlite3.Row | None:
+    return conn.execute(
+        "SELECT approval_id, decided_by, gate FROM sop_approvals WHERE version_id=?",
+        (version_id,),
+    ).fetchone()
+
+
+def _unchanged(before: sqlite3.Row, after: sqlite3.Row | None) -> None:
+    if after is None or tuple(after) != tuple(before):
+        raise SopFactoryError(
+            "the loop must not rewrite the version",
+            code="invalid",
+        )
+
+
+def _loop_flags() -> dict[str, bool]:
+    return {
+        "staff_ready": False,
+        "human_commissioned": False,
+        "operating_adoption": False,
+        "version_unchanged": True,
+    }
+
+
+def record_learning(
+    body: dict,
+    *,
+    person_id: str | None,
+    role_allowed: bool = False,
+    db_path: Path | str | None = None,
+) -> dict[str, Any]:
+    gate = _require_actor(person_id, role_allowed=role_allowed)
+    _reject_keys(body, LEARN_KEYS)
+    version_id = str(body.get("version_id") or "").strip()
+    note = _evidence_note(body.get("learning_note"))
+    learning_id = f"LRN-{uuid.uuid4()}"
+    conn = _open_existing(db_path)
+    try:
+        before = _version_row(conn, version_id)
+        if not str(before["evidence_note"] or "").strip():
+            raise SopFactoryError(
+                "cannot learn from a version with no evidence note",
+                code="missing_evidence",
+            )
+        conn.execute("BEGIN IMMEDIATE")
+        conn.execute(
+            """
+            INSERT INTO sop_learnings (
+              learning_id, sop_id, version_id, learning_note, created_by, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                learning_id,
+                before["sop_id"],
+                version_id,
+                note,
+                person_id,
+                now_utc_iso(),
+            ),
+        )
+        _unchanged(before, _version_row(conn, version_id))
+        conn.commit()
+        sop_id = str(before["sop_id"])
+    except SopFactoryError:
+        conn.rollback()
+        raise
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return {
+        "appended": True,
+        "learning_id": learning_id,
+        "version_id": version_id,
+        "sop_id": sop_id,
+        "gate": gate,
+        "live": False,
+        **_loop_flags(),
+        "honesty": honesty_flags(),
+    }
+
+
+def acknowledge(
+    body: dict,
+    *,
+    person_id: str | None,
+    role_allowed: bool = False,
+    db_path: Path | str | None = None,
+) -> dict[str, Any]:
+    gate = _require_actor(person_id, role_allowed=role_allowed)
+    _reject_keys(body, ACK_KEYS)
+    version_id = str(body.get("version_id") or "").strip()
+    acknowledgement_id = f"ACK-{uuid.uuid4()}"
+    conn = _open_existing(db_path)
+    try:
+        before = _version_row(conn, version_id)
+        approval = _approval_row(conn, version_id)
+        if approval is None:
+            raise SopFactoryError(
+                "cannot acknowledge a version with no approver",
+                code="not_approved",
+            )
+        conn.execute("BEGIN IMMEDIATE")
+        conn.execute(
+            """
+            INSERT INTO sop_acknowledgements (
+              acknowledgement_id, version_id, sop_id, person_id, acknowledged_at
+            ) VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                acknowledgement_id,
+                version_id,
+                before["sop_id"],
+                person_id,
+                now_utc_iso(),
+            ),
+        )
+        _unchanged(before, _version_row(conn, version_id))
+        conn.commit()
+        sop_id = str(before["sop_id"])
+    except SopFactoryError:
+        conn.rollback()
+        raise
+    except sqlite3.IntegrityError as exc:
+        conn.rollback()
+        raise SopFactoryError(
+            "this person already acknowledged this version",
+            code="already_acknowledged",
+        ) from exc
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return {
+        "appended": True,
+        "acknowledgement_id": acknowledgement_id,
+        "version_id": version_id,
+        "sop_id": sop_id,
+        "gate": gate,
+        "approver_recorded": True,
+        "trains_staff": False,
+        **_loop_flags(),
+        "honesty": honesty_flags(),
+    }
+
+
+def record_use(
+    body: dict,
+    *,
+    person_id: str | None,
+    role_allowed: bool = False,
+    db_path: Path | str | None = None,
+) -> dict[str, Any]:
+    gate = _require_actor(person_id, role_allowed=role_allowed)
+    _reject_keys(body, USE_KEYS)
+    version_id = str(body.get("version_id") or "").strip()
+    note = _evidence_note(body.get("use_note"))
+    use_id = f"USE-{uuid.uuid4()}"
+    conn = _open_existing(db_path)
+    try:
+        before = _version_row(conn, version_id)
+        live_id = _live_version_id(conn, str(before["sop_id"]))
+        if live_id != version_id:
+            raise SopFactoryError(
+                "use records the current live version only",
+                code="not_live",
+            )
+        conn.execute("BEGIN IMMEDIATE")
+        conn.execute(
+            """
+            INSERT INTO sop_uses (
+              use_id, version_id, sop_id, use_note, recorded_by, recorded_at
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                use_id,
+                version_id,
+                before["sop_id"],
+                note,
+                person_id,
+                now_utc_iso(),
+            ),
+        )
+        _unchanged(before, _version_row(conn, version_id))
+        conn.commit()
+        sop_id = str(before["sop_id"])
+    except SopFactoryError:
+        conn.rollback()
+        raise
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return {
+        "appended": True,
+        "use_id": use_id,
+        "version_id": version_id,
+        "sop_id": sop_id,
+        "gate": gate,
+        "live": True,
+        **_loop_flags(),
+        "honesty": honesty_flags(),
+    }
+
+
+def _table_names(conn: sqlite3.Connection) -> set[str]:
+    rows = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'"
+    ).fetchall()
+    return {str(row[0]) for row in rows}
+
+
+def _stage_count(conn: sqlite3.Connection, table: str, sop_id: str) -> int | None:
+    if table not in _table_names(conn):
+        return None
+    row = conn.execute(
+        f"SELECT COUNT(*) FROM {table} WHERE sop_id=?",
+        (sop_id,),
+    ).fetchone()
+    return int(row[0]) if row else 0
+
+
+def loop_status(
+    sop_id: str,
+    person_id: str | None,
+    *,
+    role_allowed: bool = False,
+    db_path: Path | str | None = None,
+) -> dict[str, Any]:
+    """Read the loop stages for one SOP. Does not insert a row."""
+    _require_actor(person_id, role_allowed=role_allowed)
+    sid = (sop_id or "").strip()
+    if not _SOP_RE.match(sid):
+        raise SopFactoryError("sop_id is not a SOP factory id", code="invalid")
+    absent = {
+        "evidence": "ABSENT",
+        "learning": "ABSENT",
+        "proposed_change": "ABSENT",
+        "approval": "ABSENT",
+        "versioning": "ABSENT",
+        "acknowledgement": "ABSENT",
+        "use": "ABSENT",
+    }
+    conn, path = _open_read(db_path)
+    if conn is None:
+        return {
+            "sop_id": sid,
+            "db_exists": False,
+            "found": False,
+            "version_count": None,
+            "learning_count": None,
+            "approval_count": None,
+            "acknowledgement_count": None,
+            "use_count": None,
+            "approver_recorded": False,
+            "prior_body_retained": None,
+            "live_version_id": None,
+            "stages": absent,
+            **_loop_flags(),
+            "honesty": honesty_flags(),
+        }
+    try:
+        versions = conn.execute(
+            """
+            SELECT version_id, version_n, body, evidence_note
+            FROM sop_versions WHERE sop_id=?
+            ORDER BY version_n ASC
+            """,
+            (sid,),
+        ).fetchall()
+        if not versions:
+            raise SopFactoryError("SOP not found", code="not_found")
+        names = _table_names(conn)
+        learning_count = _stage_count(conn, "sop_learnings", sid)
+        approval_count = _stage_count(conn, "sop_approvals", sid)
+        ack_count = _stage_count(conn, "sop_acknowledgements", sid)
+        use_count = _stage_count(conn, "sop_uses", sid)
+        evidence_ok = all(str(row["evidence_note"] or "").strip() for row in versions)
+        prior_retained = None
+        if len(versions) >= 2:
+            prior_retained = int(versions[0]["version_n"]) < int(versions[-1]["version_n"])
+        live_id = _live_version_id(conn, sid) if "sop_approvals" in names else None
+
+        def _mark(count: int | None, *, present_if: bool) -> str:
+            if count is None:
+                return "ABSENT"
+            if present_if and count > 0:
+                return "PRESENT"
+            if count == 0:
+                return "EMPTY"
+            return "EMPTY"
+
+        stages = {
+            "evidence": "PRESENT" if evidence_ok else "EMPTY",
+            "learning": _mark(learning_count, present_if=True),
+            "proposed_change": "PRESENT" if len(versions) >= 1 else "EMPTY",
+            "approval": _mark(approval_count, present_if=True),
+            "versioning": "PRESENT" if len(versions) >= 2 else "EMPTY",
+            "acknowledgement": _mark(ack_count, present_if=True),
+            "use": _mark(use_count, present_if=True),
+        }
+    finally:
+        conn.close()
+    return {
+        "sop_id": sid,
+        "db_exists": path.exists(),
+        "found": True,
+        "version_count": len(versions),
+        "learning_count": learning_count,
+        "approval_count": approval_count,
+        "acknowledgement_count": ack_count,
+        "use_count": use_count,
+        "approver_recorded": bool(approval_count and approval_count > 0),
+        "prior_body_retained": prior_retained,
+        "live_version_id": live_id,
+        "stages": stages,
+        **_loop_flags(),
+        "honesty": honesty_flags(),
+    }
+
+
 def _summary_row(conn: sqlite3.Connection, sop_id: str) -> dict[str, Any]:
     latest = conn.execute(
         """
@@ -709,8 +1161,9 @@ def list_sops(
         "sops": sops,
         "db_exists": path.exists(),
         "summary": (
-            "v1 lists drafts and the highest approved version. "
-            "Training and operational use are not this slice."
+            "Lists drafts and the highest approved version. "
+            "An acknowledgement is not staff readiness. "
+            "A use row is not operating adoption."
         ),
         "honesty": honesty_flags(),
     }
@@ -725,7 +1178,7 @@ def read_sop(
 ) -> dict[str, Any]:
     _require_actor(person_id, role_allowed=role_allowed)
     sid = (sop_id or "").strip()
-    if sid in {"draft", "version", "approve"}:
+    if sid in RESERVED_SOPS:
         raise SopFactoryError("reserved path", code="not_found")
     if not _SOP_RE.match(sid):
         raise SopFactoryError("sop_id is not a SOP factory id", code="invalid")

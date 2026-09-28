@@ -576,7 +576,7 @@ def _sop_card(
             "empty": empty,
             "live_sop": False,
             "train_staff": False,
-            "full_loop": False,
+            "full_loop": sop.honesty_flags().get("full_loop") is True,
             "numbers": None,
         },
     }
