@@ -31756,6 +31756,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     )
                 )
                 return
+            if path in ("/api/bzg/uma-blu/real/operating-day", "/api/bzg/uma-blu/real/operating-day/"):
+                self._send_json(_uma_real.operating_day())
+                return
             if path in ("/api/bzg/uma-blu/real/menu-map", "/api/bzg/uma-blu/real/menu-map/"):
                 self._send_json(_uma_real.menu_map_report())
                 return

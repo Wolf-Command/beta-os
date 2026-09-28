@@ -11,7 +11,7 @@ missing. A desk read is not a green business score.
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -820,8 +820,7 @@ def _changed(conn: sqlite3.Connection, cards: list[dict[str, Any]]) -> dict[str,
         "items": items,
         "invalid_test_count": invalid_audit,
         "empty_message": (
-            "No valid operational audit events are on record for these companies. "
-            "INVALID/TEST rows stay stored and are not this list."
+            "No recent changes are on record for these companies."
             if not items
             else None
         ),
@@ -958,6 +957,41 @@ def _founder() -> dict[str, Any]:
     }
 
 
+_COMPANY_WORDS = {"GGV": "GGV", "AMG": "Atrium", "BZG": "Blu Zone"}
+_ACTION_WORDS = {
+    "ggv.invoice.sequence.seed": "the next invoice number was set",
+    "delegation.created": "a delegation was recorded",
+    "authority.check": "an authority check was recorded",
+}
+_WITA = timezone(timedelta(hours=8))
+
+
+def _plain_when(value: str | None) -> str:
+    text = (value or "").strip()
+    if not text or text == "MISSING":
+        return "a date that was not recorded"
+    try:
+        stamp = text.replace("Z", "+00:00")
+        moment = datetime.fromisoformat(stamp)
+        if moment.tzinfo is None:
+            moment = moment.replace(tzinfo=timezone.utc)
+        local = moment.astimezone(_WITA)
+        return f"{local.day} {local.strftime('%b %Y')}"
+    except ValueError:
+        day = text[:10]
+        try:
+            parsed = datetime.strptime(day, "%Y-%m-%d")
+        except ValueError:
+            return "a date that was not recorded"
+        return f"{parsed.day} {parsed.strftime('%b %Y')}"
+
+
+def _plain_change(item: dict[str, Any]) -> str:
+    company = _COMPANY_WORDS.get(str(item.get("company") or ""), "a company")
+    action = _ACTION_WORDS.get(str(item.get("action") or ""), "a change was recorded")
+    return f"On {_plain_when(item.get('when'))}, {company}: {action}."
+
+
 def _answers(
     cards: list[dict[str, Any]],
     changed: dict[str, Any],
@@ -982,31 +1016,27 @@ def _answers(
     if changed.get("read") != "READ":
         changed_answer = "What changed could not be read. Nothing was invented."
     elif changed.get("items"):
-        newest = changed["items"][0]
-        changed_answer = (
-            f"{len(changed['items'])} recent operational audit events are on record for these companies. "
-            f"The newest is {newest.get('action')} ({newest.get('company')})."
-        )
-        excluded = changed.get("invalid_test_count")
-        if isinstance(excluded, int) and excluded:
-            changed_answer += (
-                f" {excluded} INVALID/TEST audit events are stored and excluded from this list."
-            )
+        newest = _plain_change(changed["items"][0])
+        count = len(changed["items"])
+        if count == 1:
+            changed_answer = newest
+        else:
+            changed_answer = f"{newest} {count} recent changes are on record for these companies."
     else:
-        changed_answer = changed.get("empty_message") or "No audit events are on record."
+        changed_answer = changed.get("empty_message") or "No recent changes are on record for these companies."
     if exceptions.get("read") != "READ":
         wrong = "What is going wrong could not be read from the exception record."
     else:
         valid = exceptions.get("valid_operational_count")
         invalid = exceptions.get("invalid_test_count")
-        if isinstance(valid, int) and isinstance(invalid, int):
-            wrong = (
-                f"{valid} valid operational governance exceptions are on record. "
-                f"{invalid} are INVALID/TEST and are not operational. "
-                "Severity is MISSING on each row."
-            )
-        else:
+        if not isinstance(valid, int):
             wrong = "What is going wrong could not be read from the exception record."
+        elif valid <= 0:
+            wrong = "Nothing is going wrong on the operating record."
+        else:
+            wrong = f"{valid} exceptions are on the operating record."
+            if isinstance(invalid, int) and invalid > 0:
+                wrong += " Some stored practice rows are not counted."
     waiting = [item for item in needs.get("items") or [] if item.get("kind") != "commissioning"]
     commissioning = [item for item in needs.get("items") or [] if item.get("kind") == "commissioning"]
     if needs.get("approvals_read") != "READ" or needs.get("exceptions_read") != "READ":

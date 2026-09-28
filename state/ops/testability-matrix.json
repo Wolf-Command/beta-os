@@ -2,7 +2,7 @@
   "generated": "2026-09-28",
   "staff_ready": false,
   "human_commissioned": false,
-  "note": "OPSFIX-1 updated the rows this pack repaired. Earlier FAIL text stays in human_results. staff_ready and human_commissioned stay false.",
+  "note": "OPSFIX-2 appended results for the surfaces it repaired. Earlier FAIL text stays in human_results. staff_ready and human_commissioned stay false.",
   "surfaces": [
     {
       "surface": "Content Library",
@@ -12,7 +12,7 @@
       "permissions": "Creative Directors hold all-brands scope, including Atrium. Content Creators hold GGV content brands (Habitat, Selo, Tropik, The One) and are refused Atrium.",
       "desktop": "Renders for Haikal.",
       "phone": "Fits at 390px for the library view.",
-      "human_tester": "Creative Director \u2014 Haikal. Same library for Misa, Zarah, Frail. Creators: Yudi, Gery, Alam, TJ, Nata, Rapp on their brands.",
+      "human_tester": "Creative Director — Haikal. Same library for Misa, Zarah, Frail. Creators: Yudi, Gery, Alam, TJ, Nata, Rapp on their brands.",
       "last_human_result": "Haikal PASS on 28 Sep 2026 for search, finding Atrium footage, and download only. Pagination and other library actions have no human result.",
       "blocker": "124 preview exceptions are listed on the library. Creators cannot open Atrium.",
       "next_repair": "Give Haikal the numbered pages to retest. Keep creator brands limited to their scope.",
@@ -27,7 +27,7 @@
       "permissions": "Creative Directors and Content Creators land here. Owner can open it. Zayen and Devi are refused.",
       "desktop": "Renders.",
       "phone": "Fits at 390px. The plan header and buttons wrap.",
-      "human_tester": "Creative Director \u2014 Haikal, Misa, Zarah, Frail. Content Creator \u2014 Yudi and the other five creators.",
+      "human_tester": "Creative Director — Haikal, Misa, Zarah, Frail. Content Creator — Yudi and the other five creators.",
       "last_human_result": "OPSFIX-1 wrapped the plan header. The earlier line that no person has written PASS or FAIL is kept.",
       "blocker": "A person has not yet retested the wrapped plan header.",
       "next_repair": "Haikal opens Content Plan at 390px and confirms the header stays inside the screen.",
@@ -52,7 +52,7 @@
       "permissions": "Same content seats as the library.",
       "desktop": "Not shot. The view is on the same page that returns 200.",
       "phone": "Upload view renders for Haikal at 390px.",
-      "human_tester": "Content Creator \u2014 Yudi. Creative Director \u2014 Haikal.",
+      "human_tester": "Content Creator — Yudi. Creative Director — Haikal.",
       "last_human_result": "No human upload result in the 28 Sep record.",
       "blocker": "None for opening the view. A real upload still needs a person and a real file.",
       "next_repair": "Human upload of one real file, then stop.",
@@ -62,15 +62,15 @@
     {
       "surface": "My Work",
       "route": "/my-work",
-      "real_data": "Nine stored Habitat content plans are projected for the Creative Director role, and for a Content Creator only when Habitat is in that seat's brand scope. core_work_items stays 0. Each row is origin=historical and verified_by_wolf=false.",
+      "real_data": "Six operational Habitat plans are on Today for the Creative Director role, and for a Content Creator when Habitat is in scope. Plans 1–3 stay stored with data_lane=test and are not shown. core_work_items stays 0. Each shown row is origin=historical and verified_by_wolf=false.",
       "core_actions": "Read Today. Open a stored plan. The library link remains.",
       "permissions": "Every seated person can open My Work. Zayen is allowed this page and still lands on Atrium Finance.",
       "desktop": "Haikal sees the stored Habitat plans on Today.",
       "phone": "The same projection is on the page at 390px.",
-      "human_tester": "Creative Director \u2014 Haikal. Content Creator \u2014 Yudi.",
-      "last_human_result": "OPSFIX-1 projects the nine stored Habitat plans. No new human PASS.",
+      "human_tester": "Creative Director — Haikal. Content Creator — Yudi.",
+      "last_human_result": "OPSFIX-2 hides test-lane plans 1–3 from staff and keeps them stored. The six operational Habitat plans say what to do next. No new human PASS.",
       "blocker": "The plans are a read of stored rows. They are not commissioned.",
-      "next_repair": "Haikal opens My Work and checks the nine Habitat plans and their provenance.",
+      "next_repair": "Haikal opens My Work and reads the six plans, the contrast, and Open plan.",
       "ready_to_test_now": "yes",
       "classification": "WORKING BUT NOT COMMISSIONED",
       "human_results": [
@@ -81,6 +81,10 @@
         {
           "recorded": "2026-09-28",
           "result": "OPSFIX-1 projects the nine stored Habitat plans. No new human PASS."
+        },
+        {
+          "recorded": "2026-09-28",
+          "result": "OPSFIX-2 hides test-lane plans 1–3 from staff and keeps them stored. The six operational Habitat plans say what to do next. No new human PASS."
         }
       ]
     },
@@ -92,7 +96,7 @@
       "permissions": "Haikal, Misa, Zarah, Frail. Creators cannot assign.",
       "desktop": "Empty Today.",
       "phone": "Same empty state.",
-      "human_tester": "Creative Director \u2014 Haikal, Misa, Zarah, Frail.",
+      "human_tester": "Creative Director — Haikal, Misa, Zarah, Frail.",
       "last_human_result": "OPSFIX-1 put the stored plans on the Creative Director role. No new human PASS.",
       "blocker": "No creator submission is stored as a separate assignment.",
       "next_repair": "Haikal reads the projected plans. Do not invent a submission.",
@@ -117,7 +121,7 @@
       "permissions": "Owner, Haikal, and Yudi all receive 200. The Content Engine menu does not link here.",
       "desktop": "Page returns 200. Not in the content header.",
       "phone": "Not shot.",
-      "human_tester": "Creative Director \u2014 Haikal.",
+      "human_tester": "Creative Director — Haikal.",
       "last_human_result": "No human result. The commissioning card says to stop if the gate refuses you.",
       "blocker": "Metricool publish is disabled. The gate is not in the content menu.",
       "next_repair": "Put a Publish Gate link on the content desk only after Metricool is an approved dependency.",
@@ -132,7 +136,7 @@
       "permissions": "Zayen and Owner receive 200. Amanda, Haikal, Yudi, and Devi receive an HTML denial.",
       "desktop": "Zayen lands on Command Centre.",
       "phone": "Zayen Command Centre renders at 390px.",
-      "human_tester": "Atrium Finance Officer \u2014 Zayen.",
+      "human_tester": "Atrium Finance Officer — Zayen.",
       "last_human_result": "OPSFIX-1 makes the chip follow the property profile. The earlier commissioning FAIL is kept. No new human PASS.",
       "blocker": "Property profile is unset, so the status chip says SETUP INCOMPLETE rather than Live. No Financial Controller is seated.",
       "next_repair": "Zayen retests Command Centre and confirms SETUP INCOMPLETE until the property profile is set.",
@@ -157,7 +161,7 @@
       "permissions": "Zayen and Owner receive 200. The same seats that can open /amg/finance can open the reduced desk. Other seats stay refused.",
       "desktop": "Owner and Zayen can open it.",
       "phone": "Not shot for Zayen. Owner denial is the same 403.",
-      "human_tester": "Atrium Finance Officer \u2014 Zayen. Owner \u2014 Matthew Goss for the denial.",
+      "human_tester": "Atrium Finance Officer — Zayen. Owner — Matthew Goss for the denial.",
       "last_human_result": "OPSFIX-1 allows Owner on the reduced desk. Zayen's earlier FAIL is kept. No new human PASS.",
       "blocker": "None for the Owner denial. The reduced desk is still not the full product.",
       "next_repair": "Owner opens /amg/finance/lite and confirms it loads. Zayen can still open it.",
@@ -177,17 +181,17 @@
     {
       "surface": "Uma Blu Today",
       "route": "/bzg/uma-blu",
-      "real_data": "Today says the daily close has not started. ESB sales exist in the warehouse and are not on this card.",
+      "real_data": "Finished BLZ sales from the ESB warehouse. Latest day 2026-09-27: 61 bills, 94 covers, Rp 19,252,190. Seven-day trend is on the page. The stale banner stays off because that day is yesterday. Exceptions list missing cost, sold items with no recipe, stale prices, and the duplicate supplier Bake House.",
       "core_actions": "Read today. Links to close, issues, bills, petty, evidence, exceptions, and My Work.",
       "permissions": "Devi and Owner. Content seats and Zayen are refused with HTML.",
       "desktop": "Renders for Devi.",
       "phone": "Renders at 390px. The top nav keeps Sign out and Here on the same wrapping row.",
-      "human_tester": "BZG F&B Operations Lead \u2014 Devi.",
-      "last_human_result": "OPSFIX-1 tidies the phone top nav. No new human PASS.",
-      "blocker": "Live sales are in the ESB warehouse, not on this board.",
-      "next_repair": "Read ESB into Today. Do not type a stand-in day.",
+      "human_tester": "BZG F&B Operations Lead — Devi.",
+      "last_human_result": "OPSFIX-2 puts the ESB sales day and the exceptions on Today. The daily close branch stays BLOCKED. No new human PASS.",
+      "blocker": "Daily close is BLOCKED because Matt has not set the variance policy or named a closer. The Today page stays open.",
+      "next_repair": "Devi reads Today, the sales figures, and the blocked close. Do not seat a closer until Matt names one.",
       "ready_to_test_now": "yes",
-      "classification": "REAL DATA NOT WIRED",
+      "classification": "WORKING BUT NOT COMMISSIONED",
       "human_results": [
         {
           "recorded": "2026-09-28",
@@ -196,23 +200,37 @@
         {
           "recorded": "2026-09-28",
           "result": "OPSFIX-1 tidies the phone top nav. No new human PASS."
+        },
+        {
+          "recorded": "2026-09-28",
+          "result": "OPSFIX-2 puts the ESB sales day and the exceptions on Today. The daily close branch stays BLOCKED. No new human PASS."
         }
       ]
     },
     {
       "surface": "Uma Blu bills and purchasing",
       "route": "/bzg/uma-blu/bills",
-      "real_data": "The page says no purchase requests yet. Three example rows in the catalog are hidden. Alchemist holds the real request book.",
+      "real_data": "504 Alchemist purchase requests, labelled historical. Example catalog rows stay hidden. Nota files on disk are linked. Drive-only photos say EVIDENCE FILE NOT RECOVERABLE.",
       "core_actions": "New request form is on the page. This audit did not save a draft.",
       "permissions": "Devi and Owner.",
-      "desktop": "Devi sees an empty list.",
+      "desktop": "Devi sees the historical request book.",
       "phone": "Not shot.",
-      "human_tester": "BZG F&B Operations Lead \u2014 Devi.",
-      "last_human_result": "No human result on file.",
-      "blocker": "Real requests, notas, and supplier names live in Alchemist and are not read here.",
-      "next_repair": "Read-only mount of the Alchemist request book onto this page.",
+      "human_tester": "BZG F&B Operations Lead — Devi.",
+      "last_human_result": "OPSFIX-2 shows the Alchemist purchase request book, read only, with a nota link or EVIDENCE FILE NOT RECOVERABLE. No new human PASS.",
+      "blocker": "Most nota photos are Drive links. The file is not on disk, so the row says the evidence is not recoverable.",
+      "next_repair": "Devi opens Bills and checks a request and the missing-nota line. Do not save a draft.",
       "ready_to_test_now": "yes",
-      "classification": "REAL DATA NOT WIRED"
+      "classification": "WORKING BUT NOT COMMISSIONED",
+      "human_results": [
+        {
+          "recorded": "2026-09-28",
+          "result": "No human result on file."
+        },
+        {
+          "recorded": "2026-09-28",
+          "result": "OPSFIX-2 shows the Alchemist purchase request book, read only, with a nota link or EVIDENCE FILE NOT RECOVERABLE. No new human PASS."
+        }
+      ]
     },
     {
       "surface": "Uma Blu daily close",
@@ -222,7 +240,7 @@
       "permissions": "Devi and Owner can open it. The closer position has no person.",
       "desktop": "Not shot.",
       "phone": "Devi can open it at 390px.",
-      "human_tester": "Vacant. Closing Operator \u00b7 Uma Blu has no person. Devi can look.",
+      "human_tester": "Vacant. Closing Operator · Uma Blu has no person. Devi can look.",
       "last_human_result": "No human result on file.",
       "blocker": "No closer is seated and there is no variance policy. Settlement from ESB is still unavailable.",
       "next_repair": "Seat a closer only when a person is named, and add the variance rule Matt chooses.",
@@ -237,7 +255,7 @@
       "permissions": "Devi and Owner.",
       "desktop": "Not shot. HTTP 200.",
       "phone": "Not shot.",
-      "human_tester": "BZG F&B Operations Lead \u2014 Devi.",
+      "human_tester": "BZG F&B Operations Lead — Devi.",
       "last_human_result": "No human result on file.",
       "blocker": "Real petty, issues, and nota files are not in these tables.",
       "next_repair": "Point evidence at the existing nota files. Do not copy them into the repo.",
@@ -252,7 +270,7 @@
       "permissions": "Owner. Devi is on Uma, not this grammar's empty slots.",
       "desktop": "Owner page renders.",
       "phone": "Not shot.",
-      "human_tester": "Owner \u2014 Matthew Goss.",
+      "human_tester": "Owner — Matthew Goss.",
       "last_human_result": "No human result on file.",
       "blocker": "Six BZG nav slots have no destination.",
       "next_repair": "Do not build those slots until Uma Today is fed by ESB.",
@@ -262,17 +280,27 @@
     {
       "surface": "GGV Finance desk",
       "route": "/ggv/finance",
-      "real_data": "No invoices, notas, vendors, or customers in the catalog. Next invoice number is 067A. Historical 064A\u2013066A were not imported.",
+      "real_data": "40 branded invoice files from the local PDF folder are listed read-only, including 064A, 065A, and 066A. They are not rows in ggv_invoices. Next number stays 067A, issued by the system.",
       "core_actions": "Overview, invoices, notas, vendors, customers, history, reports. New invoice is on the page. Issue, PDF, and pay were not submitted.",
       "permissions": "Amanda and Owner. Haikal, Yudi, Zayen, and Devi get an HTML denial.",
       "desktop": "Amanda overview renders.",
       "phone": "Invoices at 390px show + New Invoice and the tabs. No horizontal overflow.",
-      "human_tester": "GGV Finance Operator \u2014 Amanda. Her primary seat is still Content Management, so sign-in lands on Content.",
-      "last_human_result": "No human result. The finance note says the desk is ready for Amanda to test. That is not a pass.",
-      "blocker": "History before 067A is not in the catalog. Gmail draft-with-PDF is not built.",
-      "next_repair": "Amanda looks at an empty invoice list. Import 064A\u2013066A only if Owner uses the import action.",
+      "human_tester": "GGV Finance Operator — Amanda. Her primary seat is still Content Management, so sign-in lands on Content.",
+      "last_human_result": "OPSFIX-2 projects the local branded invoice files, including 064A, 065A, and 066A. They were not inserted. Next number stays 067A. No new human PASS.",
+      "blocker": "The catalog sequence does not hold 064A–066A as issued Wolf invoices. Gmail draft-with-PDF is not built. No Gmail export of those invoices was on disk.",
+      "next_repair": "Amanda opens Invoices, reads 064A–066A and the file link, and confirms she does not type the next number.",
       "ready_to_test_now": "yes",
-      "classification": "WORKING BUT NOT COMMISSIONED"
+      "classification": "WORKING BUT NOT COMMISSIONED",
+      "human_results": [
+        {
+          "recorded": "2026-09-28",
+          "result": "No human result. The finance note says the desk is ready for Amanda to test. That is not a pass."
+        },
+        {
+          "recorded": "2026-09-28",
+          "result": "OPSFIX-2 projects the local branded invoice files, including 064A, 065A, and 066A. They were not inserted. Next number stays 067A. No new human PASS."
+        }
+      ]
     },
     {
       "surface": "HR",
@@ -297,7 +325,7 @@
       "permissions": "Matthew Goss. Every other probed seat is refused with HTML.",
       "desktop": "Renders.",
       "phone": "Fits at 390px. The owner role chip wraps and is not clipped.",
-      "human_tester": "Owner \u2014 Matthew Goss.",
+      "human_tester": "Owner — Matthew Goss.",
       "last_human_result": "OPSFIX-1 stops the cards staying on Loading. No new human PASS.",
       "blocker": "None for a card stuck on Loading.",
       "next_repair": "Owner reads the seven cards and writes what is still missing.",
@@ -322,7 +350,7 @@
       "permissions": "Owner. Haikal is refused.",
       "desktop": "Renders.",
       "phone": "Not shot.",
-      "human_tester": "Owner \u2014 Matthew Goss.",
+      "human_tester": "Owner — Matthew Goss.",
       "last_human_result": "OPSFIX-1 adds the operational testability view on this page. No new human PASS.",
       "blocker": "None for a read.",
       "next_repair": "Leave it as a read-only owner page.",
@@ -347,7 +375,7 @@
       "permissions": "Owner receives 200.",
       "desktop": "HTTP 200. Not shot.",
       "phone": "Not shot.",
-      "human_tester": "Owner \u2014 Matthew Goss.",
+      "human_tester": "Owner — Matthew Goss.",
       "last_human_result": "No human result on file.",
       "blocker": "None recorded.",
       "next_repair": "Owner confirms the queue matches real work.",
@@ -362,7 +390,7 @@
       "permissions": "Owner.",
       "desktop": "HTTP 200. Not shot.",
       "phone": "Fits at 390px. The owner role chip wraps and is not clipped.",
-      "human_tester": "Owner \u2014 Matthew Goss.",
+      "human_tester": "Owner — Matthew Goss.",
       "last_human_result": "OPSFIX-1 stops the sideways overflow and shows the role chip. No new human PASS.",
       "blocker": "Factory / Health has no page.",
       "next_repair": "Owner reads Progress on a phone and confirms the role chip is visible.",
@@ -387,7 +415,7 @@
       "permissions": "Owner and Amanda.",
       "desktop": "HTTP 200.",
       "phone": "Not shot.",
-      "human_tester": "Content Management \u2014 Amanda, and Owner.",
+      "human_tester": "Content Management — Amanda, and Owner.",
       "last_human_result": "No human result on file.",
       "blocker": "Five GGV slots go nowhere.",
       "next_repair": "Leave the empty slots empty.",
@@ -427,7 +455,7 @@
       "permissions": "Owner. Content staff are kept off this admin home.",
       "desktop": "HTTP 200.",
       "phone": "Not shot.",
-      "human_tester": "Owner \u2014 Matthew Goss.",
+      "human_tester": "Owner — Matthew Goss.",
       "last_human_result": "No human result on file.",
       "blocker": "Three intelligence slots have no page.",
       "next_repair": "Leave them empty.",
@@ -442,7 +470,7 @@
       "permissions": "Owner receives 200. The demo person has no email login.",
       "desktop": "HTTP 200.",
       "phone": "Not shot.",
-      "human_tester": "Owner \u2014 Matthew Goss. Do not treat the demo operator as staff.",
+      "human_tester": "Owner — Matthew Goss. Do not treat the demo operator as staff.",
       "last_human_result": "OPSFIX-1 hides demo rows and shows NOT WIRED. No new human PASS.",
       "blocker": "Real Habitat leads are not the source.",
       "next_repair": "Mount real Habitat leads before anyone treats this as the pipeline.",
@@ -461,18 +489,32 @@
     },
     {
       "surface": "Uma recipes",
-      "route": null,
-      "real_data": "Yes, on production. The recipe book and cost cards are not on Beta.",
-      "core_actions": "None on Beta.",
-      "permissions": "No Beta route.",
-      "desktop": "Not mounted.",
-      "phone": "Not mounted.",
-      "human_tester": "BZG F&B Operations Lead \u2014 Devi, once a route exists.",
-      "last_human_result": "No human result on file.",
-      "blocker": "The page and database live on the production tree only.",
-      "next_repair": "Mount the existing recipe reader. Do not start a second recipe book.",
-      "ready_to_test_now": "no",
-      "classification": "EXISTING IMPLEMENTATION NOT MOUNTED"
+      "route": "/bzg/uma-blu/recipes",
+      "real_data": "127 dishes from the historical recipe store. Food cost is in rupiah. 19 dishes are incomplete. Missing cost stays a badge, not a made-up number.",
+      "core_actions": "Open the list and one dish. A draft note does not overwrite the historical recipe.",
+      "permissions": "Devi and Owner. GGV and Atrium Finance seats are refused.",
+      "desktop": "Renders for Devi.",
+      "phone": "Renders at 390px.",
+      "human_tester": "BZG F&B Operations Lead — Devi, once a route exists.",
+      "last_human_result": "OPSFIX-2 leaves the mounted recipe book on /bzg/uma-blu/recipes with rupiah costs. No new human PASS.",
+      "blocker": "Wolf is not the authoritative recipe book. The commissioning date is not set.",
+      "next_repair": "Devi opens Recipes and one dish and checks the rupiah cost or the missing-cost badge.",
+      "ready_to_test_now": "yes",
+      "classification": "WORKING BUT NOT COMMISSIONED",
+      "human_results": [
+        {
+          "recorded": "2026-09-28",
+          "result": "No human result on file."
+        },
+        {
+          "recorded": "2026-09-28",
+          "result": "Earlier line kept: Yes, on production. The recipe book and cost cards are not on Beta."
+        },
+        {
+          "recorded": "2026-09-28",
+          "result": "OPSFIX-2 leaves the mounted recipe book on /bzg/uma-blu/recipes with rupiah costs. No new human PASS."
+        }
+      ]
     },
     {
       "surface": "Shareholder reports",
@@ -512,7 +554,7 @@
       "permissions": "Owner only. Other seats receive 403 on /api/owner/war-room/testability.",
       "desktop": "The queue is at the top of the war room.",
       "phone": "Not shot.",
-      "human_tester": "Owner \u2014 Matthew Goss.",
+      "human_tester": "Owner — Matthew Goss.",
       "last_human_result": "No human result on file.",
       "human_results": [
         {
@@ -524,6 +566,48 @@
       "next_repair": "Hand the queue to the named tester. Do not mark a PASS from this repair.",
       "ready_to_test_now": "yes",
       "classification": "WORKING BUT NOT COMMISSIONED"
+    },
+    {
+      "surface": "Uma Blu purchasing",
+      "route": "/bzg/uma-blu/purchasing",
+      "real_data": "103 Alchemist suppliers and 504 purchase orders, read only. Duplicate supplier names are flagged on Today.",
+      "core_actions": "Read suppliers and recent orders. Do not create a supplier.",
+      "permissions": "Devi and Owner.",
+      "desktop": "Renders for Devi.",
+      "phone": "Renders at 390px.",
+      "human_tester": "BZG F&B Operations Lead — Devi.",
+      "last_human_result": "OPSFIX-2 leaves the purchasing read on the board. No new human PASS.",
+      "blocker": "Prices and supplier names stay in Alchemist. Wolf does not become the purchasing system.",
+      "next_repair": "Devi opens Purchasing and checks the supplier count.",
+      "ready_to_test_now": "yes",
+      "classification": "WORKING BUT NOT COMMISSIONED",
+      "human_results": [
+        {
+          "recorded": "2026-09-28",
+          "result": "OPSFIX-2 leaves the purchasing read on the board. No new human PASS."
+        }
+      ]
+    },
+    {
+      "surface": "GGV invoice history",
+      "route": "/ggv/finance/invoices",
+      "real_data": "Local branded PDFs 021A through 066A, including 064A, 065A, and 066A. Read only. Not inserted into the invoice table. Next number stays 067A.",
+      "core_actions": "Read the list and open a file. Do not issue 067A unless Matt asks.",
+      "permissions": "Amanda and Owner. Devi is refused the file.",
+      "desktop": "Amanda sees the historical list.",
+      "phone": "Not shot in this pack.",
+      "human_tester": "GGV Finance Operator — Amanda.",
+      "last_human_result": "OPSFIX-2 projects the files that are on disk. No new human PASS.",
+      "blocker": "Xero mirror copies stop at 061A. No Gmail export was found. The PDF is the source for 064A–066A.",
+      "next_repair": "Amanda confirms 064A, 065A, and 066A and that the next number is still issued by the system.",
+      "ready_to_test_now": "yes",
+      "classification": "WORKING BUT NOT COMMISSIONED",
+      "human_results": [
+        {
+          "recorded": "2026-09-28",
+          "result": "OPSFIX-2 projects the files that are on disk. No new human PASS."
+        }
+      ]
     }
   ]
 }

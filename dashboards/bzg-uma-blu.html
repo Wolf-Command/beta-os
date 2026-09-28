@@ -122,10 +122,19 @@
   <div class="banner info" id="roleBanner">Checking what you can do…</div>
   <div class="banner info" id="stockBanner">No stock count is on this screen. Stock stays in ESB.</div>
   <p class="banner info" id="umarealCut">Historical source stays authoritative. Wolf commissioning date is not set.</p>
+  <div class="banner hidden" id="salesStale"></div>
+  <div class="panel" id="salesDay">
+    <h2>Sales</h2>
+    <div id="salesBody"><p class="muted">Loading sales…</p></div>
+  </div>
+  <div class="panel" id="exceptions">
+    <h2>Exceptions</h2>
+    <div id="exceptionsBody"><p class="muted">Loading exceptions…</p></div>
+  </div>
 
   <nav class="uma" aria-label="Uma Blu day">
     <a class="active" href="/bzg/uma-blu">Today</a>
-    <a href="/uma-blu-close">Daily Close</a>
+    <a id="closeLink" href="/uma-blu-close">Daily Close</a>
     <a href="/bzg/uma-blu/issues">Issues</a>
     <a href="/bzg/uma-blu/bills">Bills</a>
     <a href="/bzg/uma-blu/recipes">Recipes</a>
@@ -204,6 +213,113 @@
 
 <script>
 (function () {
+  var readyBits = { today: 0, sales: 0 };
+  function markReady(which) {
+    readyBits[which] = 1;
+    if (readyBits.today && readyBits.sales) {
+      document.body.setAttribute("data-ready", "1");
+      var over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
+      document.body.setAttribute("data-overflow", over ? "yes" : "no");
+    }
+  }
+  function idr(n) {
+    if (n == null || n === "") return "";
+    var whole = Math.round(Number(n));
+    if (!isFinite(whole)) return "";
+    var sign = whole < 0 ? "-" : "";
+    return "Rp " + sign + String(Math.abs(whole)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+  function loadOperatingDay() {
+    fetch("/api/bzg/uma-blu/real/operating-day")
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var sales = data.sales || {};
+        var latest = sales.latest || {};
+        var stale = document.getElementById("salesStale");
+        if (stale) {
+          if (sales.stale && sales.stale_banner) {
+            stale.textContent = sales.stale_banner;
+            stale.classList.remove("hidden");
+          } else {
+            stale.classList.add("hidden");
+          }
+        }
+        var body = document.getElementById("salesBody");
+        if (body) {
+          body.innerHTML = "";
+          if (!latest.biz_date) {
+            body.appendChild(el("p", "empty", "No sales day is in the warehouse."));
+          } else {
+            body.appendChild(el("p", "now-title", latest.label_day || latest.biz_date));
+            body.appendChild(el("p", null, (latest.bills == null ? "0" : latest.bills) + " bills · " + (latest.covers == null ? "0" : latest.covers) + " covers · " + (latest.net_sales_idr || idr(latest.net_sales))));
+            body.appendChild(el("p", "meta", "ESB read-only · historical · verified_by_wolf false"));
+            var trend = el("div");
+            (sales.trend || []).forEach(function (day) {
+              trend.appendChild(el("div", "meta", (day.label_day || day.biz_date) + " · " + day.bills + " bills · " + (day.net_sales_idr || idr(day.net_sales))));
+            });
+            body.appendChild(trend);
+          }
+        }
+        var ex = data.exceptions || {};
+        var exBody = document.getElementById("exceptionsBody");
+        if (exBody) {
+          exBody.innerHTML = "";
+          var missing = ex.missing_cost || {};
+          var miss = el("a", "card", null);
+          miss.href = missing.href || "/bzg/uma-blu/recipes";
+          miss.appendChild(el("h3", null, "Missing cost"));
+          miss.appendChild(el("p", null, missing.sentence || "Missing cost was not read."));
+          exBody.appendChild(miss);
+          var sold = ex.no_recipe || {};
+          var soldCard = el("div", "card");
+          soldCard.appendChild(el("h3", null, "Sold with no recipe"));
+          var items = sold.items || [];
+          if (!items.length) {
+            soldCard.appendChild(el("p", "meta", "No sold item without a recipe on the latest day."));
+          } else {
+            items.forEach(function (item) {
+              soldCard.appendChild(el("p", null, item.menu_name + " · " + item.qty));
+            });
+            var mapLink = el("a", "act", "Open menu map");
+            mapLink.href = sold.href || "/bzg/uma-blu/menu-map";
+            soldCard.appendChild(mapLink);
+          }
+          exBody.appendChild(soldCard);
+          var stalePrices = ex.stale_prices || {};
+          var staleCard = el("a", "card");
+          staleCard.href = stalePrices.href || "/bzg/uma-blu/recipes";
+          staleCard.appendChild(el("h3", null, "Stale prices"));
+          staleCard.appendChild(el("p", null, stalePrices.sentence || "Stale prices were not read."));
+          exBody.appendChild(staleCard);
+          var dupes = ex.duplicate_suppliers || [];
+          var dupeCard = el("div", "card");
+          dupeCard.appendChild(el("h3", null, "Duplicate supplier names"));
+          if (!dupes.length) {
+            dupeCard.appendChild(el("p", "meta", "No duplicate supplier names."));
+          } else {
+            dupes.forEach(function (row) {
+              dupeCard.appendChild(el("p", null, row.sentence || row.name));
+            });
+          }
+          exBody.appendChild(dupeCard);
+          var close = ex.daily_close || {};
+          var closeCard = el("div", "card");
+          closeCard.appendChild(el("h3", null, close.status === "BLOCKED" ? "Daily close BLOCKED" : "Daily close"));
+          closeCard.appendChild(el("p", null, close.reason || ""));
+          exBody.appendChild(closeCard);
+          var closeLink = document.getElementById("closeLink");
+          if (closeLink && close.branch_blocked) {
+            closeLink.textContent = "Daily Close · BLOCKED";
+          }
+        }
+        markReady("sales");
+      })
+      .catch(function () {
+        var body = document.getElementById("salesBody");
+        if (body) body.textContent = "Sales could not be read. Nothing was invented.";
+        markReady("sales");
+      });
+  }
   fetch("/api/bzg/uma-blu/real/cut-lines").then(function (r) { return r.json(); }).then(function (d) {
     var elCut = document.getElementById("umarealCut");
     if (elCut && d && d.banner) elCut.textContent = d.banner;
@@ -556,14 +672,14 @@
 
         // Paint history empty next-action from staff_ready when event list is blank.
         window.__umaStaffReady = data.staff_ready || null;
-        document.body.setAttribute("data-ready", "1");
-        var over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
-        document.body.setAttribute("data-overflow", over ? "yes" : "no");
+        markReady("today");
       })
       .catch(function () {
         document.getElementById("cards").textContent = "Could not load Today.";
+        markReady("today");
       });
   }
+  loadOperatingDay();
   function loadHist() {
     fetch("/api/bzg/uma-blu/history")
       .then(function (r) { return r.json(); })

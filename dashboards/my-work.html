@@ -33,9 +33,36 @@
   a.card { display: block; text-decoration: none; color: inherit; }
   a.card:active { border-color: var(--accent); }
   .prompt { margin: 0 0 8px; }
-  .wolf-card, .wolf-empty {
-    background: var(--card); color: var(--text); border-color: var(--line);
+  #wolf-truth,
+  #wolf-truth .wolf-card,
+  #wolf-truth .wolf-empty,
+  #wolf-truth h2,
+  #wolf-truth h3,
+  #wolf-truth p,
+  #wolf-truth .wolf-state {
+    color: #1c1915 !important;
+    background-color: #fffdf8 !important;
   }
+  #wolf-truth .wolf-card,
+  #wolf-truth .wolf-empty {
+    border: 1px solid #8a8175 !important;
+  }
+  #sections a.action,
+  #sections a.card,
+  #sections .work-card {
+    background: #f4e4c4 !important;
+    color: #1c1408 !important;
+    border: 1px solid #8a5a12;
+  }
+  #sections a.action .footnote,
+  #sections a.card .footnote,
+  #sections .footnote {
+    color: #3f3422 !important;
+    font-size: 0.78rem;
+    margin-top: 8px;
+  }
+  .work-title { font-weight: 700; margin: 0 0 4px; }
+  .next { font-weight: 650; margin: 8px 0 0; }
   .err { color: #8d1d1d; }
   @media (max-width: 420px) {
     body { padding: 12px 12px 88px; font-size: 16px; }
@@ -65,15 +92,19 @@
 
   function cards(items) {
     return (items || []).map((it) => {
-      const prov = it.origin
-        ? `<p class="role">origin ${esc(it.origin)} · verified_by_wolf ${esc(String(it.verified_by_wolf))} · ${esc(it.source_system || "")} ${esc(it.source_id || "")}${it.data_lane ? " · " + esc(it.data_lane) : ""}</p>`
+      const title = `<p class="work-title">${esc(it.title)}</p>`;
+      const range = it.date_range ? `<p>${esc(it.date_range)}</p>` : "";
+      const status = it.status_label || it.status;
+      const state = status ? `<p>${esc(status)}</p>` : "";
+      const next = it.next_step ? `<p class="next">${esc(it.next_step)}</p>` : "";
+      const foot = it.origin
+        ? `<p class="footnote">origin ${esc(it.origin)} · verified_by_wolf ${esc(String(it.verified_by_wolf))} · ${esc(it.source_system || "")} ${esc(it.source_id || "")}</p>`
         : "";
-      const inner = `<p>${esc(it.title)}</p>${it.status ? `<p class="role">${esc(it.status)}</p>` : ""}${prov}`;
+      const inner = `${title}${range}${state}${next}${foot}`;
       if (it.href) {
-        const klass = it.href.indexOf("/my-work/") === 0 ? "card wolf-card" : "action";
-        return `<a class="${klass}" href="${esc(it.href)}">${inner}</a>`;
+        return `<a class="action work-card" href="${esc(it.href)}">${inner}</a>`;
       }
-      return `<div class="card wolf-card">${inner}</div>`;
+      return `<div class="card work-card">${inner}</div>`;
     }).join("");
   }
 

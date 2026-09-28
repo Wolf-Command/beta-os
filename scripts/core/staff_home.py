@@ -11,6 +11,7 @@ No notification table is invented.
 """
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from core import identity
@@ -480,6 +481,28 @@ def _today_empty(experience: str) -> str:
     return "Nothing is assigned to you for today."
 
 
+def _staff_date(value: str | None) -> str:
+    text = (value or "").strip()[:10]
+    try:
+        day = datetime.strptime(text, "%Y-%m-%d")
+    except ValueError:
+        return ""
+    return f"{day.day} {day.strftime('%b %Y')}"
+
+
+def _plan_status_words(status: str) -> str:
+    words = {
+        "Working_Draft": "Working draft",
+        "Human_Approved": "Approved",
+        "Submitted": "Submitted",
+        "Changes_Requested": "Changes requested",
+    }
+    if status in words:
+        return words[status]
+    cleaned = status.replace("_", " ").strip()
+    return cleaned[:1].upper() + cleaned[1:] if cleaned else "Status not recorded"
+
+
 def _plan_in_scope(brand_id: str, scope_ids: set[str]) -> bool:
     brand = (brand_id or "").strip()
     needed = BRAND_SCOPES.get(brand.lower())
@@ -493,9 +516,11 @@ def _stored_plan_items(conn, scope_ids: set[str]) -> list[dict[str, Any]]:
     try:
         rows = conn.execute(
             """
-            SELECT id, brand_id, title, status, created_at, updated_at, data_lane
+            SELECT id, brand_id, title, status, period_start, period_end,
+                   created_at, updated_at, data_lane
             FROM content_plans
             WHERE lower(brand_id) = 'habitat'
+              AND ifnull(data_lane, 'operational') != 'test'
             ORDER BY id
             """
         ).fetchall()
@@ -507,12 +532,24 @@ def _stored_plan_items(conn, scope_ids: set[str]) -> list[dict[str, Any]]:
         if not _plan_in_scope(brand, scope_ids):
             continue
         plan_id = row["id"]
+        status = str(row["status"] or "")
+        start = _staff_date(row["period_start"])
+        end = _staff_date(row["period_end"])
+        if start and end:
+            date_range = f"{start} to {end}"
+        elif start or end:
+            date_range = start or end
+        else:
+            date_range = ""
         items.append(
             {
                 "id": f"content-plan-{plan_id}",
                 "title": str(row["title"] or f"Habitat plan {plan_id}"),
                 "href": f"/content-2.0?plan={plan_id}#plan",
-                "status": str(row["status"] or ""),
+                "status": status,
+                "status_label": _plan_status_words(status),
+                "date_range": date_range,
+                "next_step": "Open plan",
                 "brand_id": brand,
                 "source_system": "content_plans",
                 "source_id": str(plan_id),
@@ -520,7 +557,6 @@ def _stored_plan_items(conn, scope_ids: set[str]) -> list[dict[str, Any]]:
                 "import_timestamp": row["created_at"],
                 "origin": "historical",
                 "verified_by_wolf": False,
-                "data_lane": str(row["data_lane"] or "operational"),
             }
         )
     return items

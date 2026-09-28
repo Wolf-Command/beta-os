@@ -88,7 +88,10 @@
   }
   function money(n) {
     if (n == null || n === "") return "INCOMPLETE";
-    return String(n);
+    var whole = Math.round(Number(n));
+    if (!isFinite(whole)) return "INCOMPLETE";
+    var sign = whole < 0 ? "-" : "";
+    return "Rp " + sign + String(Math.abs(whole)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
   function ready() {
     document.body.setAttribute("data-ready", "1");
@@ -154,7 +157,7 @@
         var tr = el("tr");
         tr.appendChild(el("td", null, line.name));
         tr.appendChild(el("td", null, (line.qty == null ? "" : line.qty) + " " + (line.unit || "")));
-        tr.appendChild(el("td", null, line.extended_cost == null ? "INCOMPLETE" : String(line.extended_cost)));
+        tr.appendChild(el("td", null, line.extended_cost == null ? "INCOMPLETE" : money(line.extended_cost)));
         var td = el("td");
         var b = badge(line.cost_badge);
         if (b) td.appendChild(b);
@@ -208,7 +211,7 @@
       (orders.orders || []).slice(0, 8).forEach(function (row) {
         var card = el("div", "card");
         card.appendChild(el("strong", null, (row.pr_num || row.order_id) + " · " + (row.vendor || "")));
-        card.appendChild(el("div", "meta", (row.status || "") + " · " + (row.order_date || "") + " · " + row.label));
+        card.appendChild(el("div", "meta", (row.status || "") + " · " + (row.order_date || "") + " · " + (row.invoice_total_idr || money(row.invoice_total)) + " · " + row.label));
         if (row.photo && row.photo.message) card.appendChild(el("div", "meta", row.photo.message + " · " + (row.photo.source_path_id || "")));
         app.appendChild(card);
       });
@@ -266,7 +269,7 @@
       (data.sales || []).forEach(function (row) {
         var card = el("div", "card");
         card.appendChild(el("strong", null, (row.sales_num || row.source_id) + " · " + row.biz_date));
-        card.appendChild(el("div", "meta", (row.status || "") + " · total " + (row.grand_total == null ? "" : row.grand_total) + " · " + row.label));
+        card.appendChild(el("div", "meta", (row.status || "") + " · total " + money(row.grand_total) + " · " + row.label));
         app.appendChild(card);
       });
       get("/api/bzg/uma-blu/real/closes").then(function (close) {

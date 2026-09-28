@@ -134,6 +134,49 @@
     if (text != null) n.textContent = text;
     return n;
   }
+  function idr(n) {
+    if (n == null || n === "") return "";
+    var whole = Math.round(Number(n));
+    if (!isFinite(whole)) return "";
+    var sign = whole < 0 ? "-" : "";
+    return "Rp " + sign + String(Math.abs(whole)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+  function finish() {
+    document.body.setAttribute("data-ready", "1");
+    document.body.setAttribute("data-overflow", document.documentElement.scrollWidth > document.documentElement.clientWidth + 1 ? "yes" : "no");
+  }
+  function paintHistorical(box, data) {
+    var orders = data.orders || [];
+    box.appendChild(el("p", "meta", "Alchemist historical · read only · " + (data.count == null ? orders.length : data.count) + " purchase requests"));
+    if (!orders.length) {
+      box.appendChild(el("p", "empty", "No purchase requests yet."));
+      return;
+    }
+    orders.forEach(function (p) {
+      var d = el("div", "row");
+      var head = el("div");
+      head.appendChild(el("span", "state", "Historical"));
+      d.appendChild(head);
+      var title = (p.pr_num || "Request") + (p.vendor ? " · " + p.vendor : "");
+      d.appendChild(el("h3", null, title));
+      var bits = [];
+      if (p.status) bits.push(String(p.status));
+      if (p.order_date) bits.push(String(p.order_date));
+      if (p.invoice_total_idr) bits.push(p.invoice_total_idr);
+      else if (p.invoice_total != null) bits.push(idr(p.invoice_total));
+      if (bits.length) d.appendChild(el("div", "meta", bits.join(" · ")));
+      var photo = p.photo || {};
+      if (photo.recoverable && photo.href) {
+        var link = el("a", null, "Open nota");
+        link.href = photo.href;
+        d.appendChild(link);
+      } else {
+        d.appendChild(el("p", null, "EVIDENCE FILE NOT RECOVERABLE"));
+      }
+      d.appendChild(el("p", "meta", "origin historical · verified_by_wolf false · " + (p.source_system || "alchemist.db") + " " + (p.source_id || "")));
+      box.appendChild(d);
+    });
+  }
   fetch("/api/bzg/uma-blu/prs")
     .then(function (r) { return r.json(); })
     .then(function (data) {
@@ -141,12 +184,6 @@
       box.innerHTML = "";
       var rows = data.prs || [];
       var liveRows = rows.filter(function (p) { return !p.example; });
-      if (!liveRows.length) {
-        box.appendChild(el("p", "empty", "No purchase requests yet."));
-        document.body.setAttribute("data-ready", "1");
-        document.body.setAttribute("data-overflow", document.documentElement.scrollWidth > document.documentElement.clientWidth + 1 ? "yes" : "no");
-        return;
-      }
       liveRows.forEach(function (p) {
         var key = p.pr_num || p.pr_id;
         var d = key ? el("a", "row") : el("div", "row");
@@ -165,8 +202,8 @@
         if (p.pr_num && !/^\d+$/.test(String(p.pr_num))) bits.push(String(p.pr_num));
         if (p.requester_label) bits.push("Requested by " + p.requester_label);
         if (p.expected_value != null) {
-          var amt = String(p.expected_value);
-          if (p.currency) amt += " " + p.currency;
+          var amt = (p.currency === "IDR" || !p.currency) ? idr(p.expected_value) : String(p.expected_value);
+          if (p.currency && p.currency !== "IDR") amt += " " + p.currency;
           bits.push(amt);
         } else if (p.currency) {
           bits.push(p.currency);
@@ -175,12 +212,14 @@
         if (bits.length) d.appendChild(el("div", "meta", bits.join(" · ")));
         box.appendChild(d);
       });
-      document.body.setAttribute("data-ready", "1");
-      document.body.setAttribute("data-overflow", document.documentElement.scrollWidth > document.documentElement.clientWidth + 1 ? "yes" : "no");
+      return fetch("/api/bzg/uma-blu/real/orders?limit=40").then(function (r) { return r.json(); }).then(function (book) {
+        paintHistorical(box, book || {});
+        finish();
+      });
     })
     .catch(function () {
       document.getElementById("list").textContent = "Could not load bills.";
-      document.body.setAttribute("data-ready", "1");
+      finish();
     });
 })();
 </script>

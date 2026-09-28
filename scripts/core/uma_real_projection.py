@@ -141,6 +141,19 @@ def stamp(row: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
     return row
 
 
+def format_idr(value: Any) -> str | None:
+    """Rupiah for staff: Rp, thousand separators, no decimals."""
+    if value is None or value == "":
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    whole = int(round(number))
+    sign = "-" if whole < 0 else ""
+    return f"Rp {sign}{abs(whole):,}"
+
+
 def cut_lines() -> dict[str, Any]:
     return {
         "ok": True,
@@ -696,8 +709,7 @@ def list_orders(*, limit: int = 40, offset: int = 0) -> dict[str, Any]:
         conn.close()
     items = []
     for row in rows:
-        photo = (row["receipt_photo_url"] or "").strip()
-        drive = _drive_id(photo)
+        photo = _order_photo(row["receipt_photo_url"] or "")
         items.append(
             stamp(
                 {
@@ -709,12 +721,10 @@ def list_orders(*, limit: int = 40, offset: int = 0) -> dict[str, Any]:
                     "order_date": row["order_date"],
                     "status": row["status"],
                     "invoice_total": row["invoice_total"],
+                    "invoice_total_idr": format_idr(row["invoice_total"]),
                     "label": "Alchemist historical",
-                    "photo": {
-                        "recoverable": False,
-                        "source_path_id": drive,
-                        "message": "EVIDENCE FILE NOT RECOVERABLE" if drive else None,
-                    },
+                    "read_only": True,
+                    "photo": photo,
                 },
                 source_system="alchemist.db",
                 source_id=f"pr_orders:{row['id']}",
@@ -778,6 +788,39 @@ def list_receipts(*, limit: int = 40, offset: int = 0) -> dict[str, Any]:
         "staff_ready": False,
         "human_commissioned": False,
         "receipts": items,
+    }
+
+
+def _order_photo(url: str) -> dict[str, Any]:
+    """Link a local nota when the file is on disk. Never invent a photo."""
+    photo = (url or "").strip()
+    files = _evidence_files()
+    by_name = {path.name: path.name for path in files}
+    chosen = None
+    base = Path(photo.split("?", 1)[0]).name
+    if base in by_name:
+        chosen = base
+    drive = _drive_id(photo)
+    token = (drive or "").split(":", 1)[-1] if drive else ""
+    if chosen is None and token:
+        for path in files:
+            if token in path.name:
+                chosen = path.name
+                break
+    if chosen:
+        return {
+            "recoverable": True,
+            "filename": chosen,
+            "href": f"/bzg/uma-blu/notas/{chosen}",
+            "message": None,
+            "source_path_id": drive or chosen,
+        }
+    return {
+        "recoverable": False,
+        "filename": None,
+        "href": None,
+        "message": "EVIDENCE FILE NOT RECOVERABLE",
+        "source_path_id": drive,
     }
 
 
@@ -1029,6 +1072,245 @@ def list_sales(*, date_from: str | None = None, date_to: str | None = None, limi
     }
     payload.update(_inline_status())
     return payload
+
+
+def _finished_blz(raw: str | None) -> dict[str, Any] | None:
+    try:
+        bill = json.loads(raw or "{}")
+    except json.JSONDecodeError:
+        return None
+    if (bill.get("branchCode") or "").strip().upper() != BRANCH:
+        return None
+    if (bill.get("statusName") or "").strip() != "Finished":
+        return None
+    return bill
+
+
+def _staff_day(value: str) -> str:
+    try:
+        day = datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError:
+        return value
+    return f"{day.day} {day.strftime('%b %Y')}"
+
+
+def _close_branch() -> dict[str, Any]:
+    policies = _table_count(CATALOG_DB, "venue_close_variance_policies") or 0
+    closer = 0
+    if CATALOG_DB.is_file():
+        conn = _connect_ro(CATALOG_DB)
+        try:
+            closer = int(
+                conn.execute(
+                    """
+                    SELECT COUNT(*) FROM org_assignments a
+                    JOIN org_positions p ON p.position_id = a.position_id
+                    WHERE p.role_id = ? AND a.status = 'ACTIVE' AND a.end_at IS NULL
+                    """,
+                    ("ROLE-BZG-CLOSER",),
+                ).fetchone()[0]
+            )
+        except sqlite3.Error:
+            closer = 0
+        finally:
+            conn.close()
+    missing = []
+    if policies == 0:
+        missing.append("the variance policy is not set")
+    if closer == 0:
+        missing.append("a closer is not named")
+    blocked = bool(missing)
+    reason = (
+        "Daily close is BLOCKED. Matt has not set them. " + " and ".join(missing) + ". The rest of this page stays open."
+        if blocked
+        else "Daily close can be opened."
+    )
+    return {
+        "status": "BLOCKED" if blocked else "OPEN",
+        "branch_blocked": blocked,
+        "page_blocked": False,
+        "policy_count": policies,
+        "closer_count": closer,
+        "reason": reason,
+        "href": "/uma-blu-close",
+    }
+
+
+def _duplicate_suppliers() -> list[dict[str, Any]]:
+    conn = _connect_ro(ALCHEMIST_DB)
+    try:
+        rows = conn.execute(
+            """
+            SELECT lower(trim(name)) AS key, GROUP_CONCAT(id) AS ids, GROUP_CONCAT(name) AS names, COUNT(*) AS n
+            FROM suppliers
+            GROUP BY lower(trim(name))
+            HAVING COUNT(*) > 1
+            ORDER BY n DESC, key
+            """
+        ).fetchall()
+    finally:
+        conn.close()
+    items = []
+    for row in rows:
+        ids = [part.strip() for part in str(row["ids"] or "").split(",") if part.strip()]
+        label = str(row["names"] or row["key"] or "supplier").split(",")[0].strip()
+        items.append(
+            stamp(
+                {
+                    "name": label,
+                    "supplier_ids": ids,
+                    "count": int(row["n"]),
+                    "sentence": f"{label} is stored {int(row['n'])} times (suppliers {' and '.join(ids)}).",
+                },
+                source_system="alchemist.db",
+                source_id=f"suppliers:{','.join(ids)}",
+                source_timestamp=None,
+                import_timestamp=None,
+            )
+        )
+    return items
+
+
+def operating_day() -> dict[str, Any]:
+    """Latest ESB business day plus the exceptions a manager can act on. Read only."""
+    today = datetime.now(WITA).date()
+    yesterday = today - timedelta(days=1)
+    conn = _connect_ro(ESB_DB)
+    try:
+        latest = conn.execute("SELECT MAX(biz_date) FROM sales").fetchone()[0]
+        rows = []
+        if latest:
+            start = (datetime.strptime(str(latest), "%Y-%m-%d").date() - timedelta(days=6)).isoformat()
+            rows = conn.execute(
+                """
+                SELECT biz_date, raw, nk, pulled_at
+                FROM sales
+                WHERE biz_date >= ? AND biz_date <= ?
+                """,
+                (start, latest),
+            ).fetchall()
+    finally:
+        conn.close()
+    buckets: dict[str, dict[str, Any]] = {}
+    sold_latest: dict[str, float] = {}
+    pulled = None
+    for row in rows:
+        bill = _finished_blz(row["raw"])
+        if bill is None:
+            continue
+        day = str(row["biz_date"])
+        bucket = buckets.setdefault(day, {"bills": 0, "covers": 0, "net": 0.0})
+        bucket["bills"] += 1
+        try:
+            bucket["covers"] += int(float(bill.get("paxTotal") or 0))
+        except (TypeError, ValueError):
+            pass
+        try:
+            bucket["net"] += float(bill.get("grandTotal") or 0)
+        except (TypeError, ValueError):
+            pass
+        pulled = row["pulled_at"] or pulled
+        if day == str(latest):
+            for menu in bill.get("salesMenus") or []:
+                name = str(menu.get("menuName") or "").strip()
+                if not name:
+                    continue
+                try:
+                    qty = float(menu.get("qty") or 0)
+                except (TypeError, ValueError):
+                    continue
+                sold_latest[name] = sold_latest.get(name, 0.0) + qty
+    trend = []
+    if latest:
+        end = datetime.strptime(str(latest), "%Y-%m-%d").date()
+        for offset in range(6, -1, -1):
+            day = (end - timedelta(days=offset)).isoformat()
+            bucket = buckets.get(day) or {"bills": 0, "covers": 0, "net": 0.0}
+            trend.append(
+                stamp(
+                    {
+                        "biz_date": day,
+                        "label_day": _staff_day(day),
+                        "bills": bucket["bills"],
+                        "covers": bucket["covers"],
+                        "net_sales": round(bucket["net"], 2),
+                        "net_sales_idr": format_idr(bucket["net"]),
+                    },
+                    source_system="esb.sqlite",
+                    source_id=f"sales-day:{day}",
+                    source_timestamp=day,
+                    import_timestamp=pulled,
+                )
+            )
+    latest_row = trend[-1] if trend else None
+    stale = False
+    stale_banner = None
+    if latest:
+        latest_day = datetime.strptime(str(latest), "%Y-%m-%d").date()
+        stale = latest_day < yesterday
+        if stale:
+            stale_banner = f"STALE. The last day in the sales record is {_staff_day(str(latest))}."
+    recipes, line_map = _recipe_rows()
+    known = {_norm(recipe["name"]) for recipe in recipes}
+    missing = []
+    stale_prices = 0
+    for recipe in recipes:
+        dish = _dish_payload(recipe, line_map.get(recipe["id"], []))
+        if dish.get("food_cost_status") != "COMPLETE":
+            missing.append({"recipe_id": recipe["id"], "name": recipe["name"]})
+        stale_prices += sum(1 for line in dish.get("lines") or [] if line.get("cost_badge") == "STALE")
+    unmapped = []
+    for name, qty in sorted(sold_latest.items(), key=lambda item: item[1], reverse=True):
+        if _norm(name) in known:
+            continue
+        unmapped.append(
+            stamp(
+                {"menu_name": name, "qty": round(qty, 2), "map_status": "no_recipe"},
+                source_system="esb.sqlite",
+                source_id=f"unmapped:{latest}:{_norm(name) or 'blank'}",
+                source_timestamp=str(latest),
+                import_timestamp=pulled,
+            )
+        )
+        if len(unmapped) >= 8:
+            break
+    duplicates = _duplicate_suppliers()
+    close = _close_branch()
+    return {
+        "ok": True,
+        "staff_ready": False,
+        "human_commissioned": False,
+        "banner": cut_lines()["banner"],
+        "sales": {
+            "latest": latest_row,
+            "biz_date_max": latest,
+            "stale": stale,
+            "stale_banner": stale_banner,
+            "trend": trend,
+            "branch": BRANCH,
+            "finished_only": True,
+        },
+        "exceptions": {
+            "missing_cost": {
+                "count": len(missing),
+                "href": "/bzg/uma-blu/recipes",
+                "sentence": f"{len(missing)} dishes have a missing cost.",
+            },
+            "no_recipe": {
+                "count": len(unmapped),
+                "href": "/bzg/uma-blu/menu-map",
+                "items": unmapped,
+                "sentence": "Dishes sold with no recipe, highest first.",
+            },
+            "stale_prices": {
+                "count": stale_prices,
+                "href": "/bzg/uma-blu/recipes",
+                "sentence": f"{stale_prices} prices are stale.",
+            },
+            "duplicate_suppliers": duplicates,
+            "daily_close": close,
+        },
+    }
 
 
 def menu_map_report() -> dict[str, Any]:

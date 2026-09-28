@@ -98,11 +98,12 @@ def test_plans() -> None:
         h_items = haikal["sections"][0]["items"]
         m_items = misa["sections"][0]["items"]
         y_items = yudi["sections"][0]["items"]
-        check("creative director sees nine plans", haikal["experience"] == "creative_director" and len(h_items) == 9, str(len(h_items)))
+        check("creative director sees operational plans", haikal["experience"] == "creative_director" and len(h_items) == 6, str(len(h_items)))
         check(
             "same plans for every creative director",
-            [row["source_id"] for row in h_items] == [row["source_id"] for row in m_items] == [str(n) for n in range(1, 10)],
+            [row["source_id"] for row in h_items] == [row["source_id"] for row in m_items] == [str(n) for n in range(4, 10)],
         )
+        check("test lane plans stay off the staff list", all(row["source_id"] not in {"1", "2", "3"} for row in h_items))
         check(
             "plans are historical and not verified",
             all(row.get("origin") == "historical" and row.get("verified_by_wolf") is False for row in h_items),
@@ -110,7 +111,7 @@ def test_plans() -> None:
         check("plans are not person-hardcoded", "PERS-HAIKAL" not in json.dumps(h_items) and "PERS-MISA" not in json.dumps(m_items))
         check(
             "creator sees habitat scope only",
-            yudi["experience"] == "content_creator" and [row["brand_id"] for row in y_items] == ["habitat"] * 9,
+            yudi["experience"] == "content_creator" and [row["brand_id"] for row in y_items] == ["habitat"] * 6,
         )
         check("atrium is outside a creator scope", _plan_in_scope("atrium", {"SCOPE-GGV-CONTENT"}) is False)
         check("habitat is inside a creator scope", _plan_in_scope("habitat", {"SCOPE-GGV-CONTENT"}) is True)
@@ -182,7 +183,7 @@ def test_http(port: int) -> None:
     status, raw, _ctype = call(port, "GET", "/api/staff/home", HAIKAL)
     home = json.loads(raw.decode() or "{}")
     today = ((home.get("sections") or [{}])[0]).get("items") or []
-    check("haikal home has nine plans", status == 200 and len(today) == 9 and today[0].get("origin") == "historical", str(len(today)))
+    check("haikal home has operational plans", status == 200 and len(today) == 6 and today[0].get("origin") == "historical", str(len(today)))
     status, raw, ctype = call(port, "GET", "/amg/finance", ZAYEN, accept="text/html")
     page = raw.decode("utf-8", "replace")
     check(

@@ -801,12 +801,22 @@ function mountImport(can) {
 
 async function loadInvoices() {
   const data = await api("/api/ggv/finance/invoices");
-  $("number-note").textContent = "Number assigned on issue.";
+  const next = data.numbering && data.numbering.next ? data.numbering.next : "";
+  $("number-note").textContent = next
+    ? "Next number " + next + " is issued by the system. You do not type it."
+    : "Number assigned on issue.";
   mountImport(Boolean(data.numbering && data.numbering.can_import));
+  const hist = data.historical || {};
+  const earlier = hist.invoices || [];
+  const historyHtml = earlier.length
+    ? earlier.slice().reverse().map((row) => `<article class="card"><strong>${esc(row.number_label || row.invoice_number)}</strong><br>${esc(row.customer_name || "Customer not read from the file")}<br>${esc(row.invoice_date || "")} · ${esc(row.grand_total_idr || "")} · ${esc(row.status_label)}<br><a class="inline" href="${esc(row.href)}">Open file</a><p class="note">origin ${esc(row.origin)} · verified_by_wolf ${esc(String(row.verified_by_wolf))} · ${esc(row.source_path || "")}</p></article>`).join("")
+    : (hist.message ? `<p class="note">${esc(hist.message)}</p>` : "");
   const rows = data.invoices || [];
-  $("invoice-list").innerHTML = rows.length
+  const wolfHtml = rows.length
     ? rows.map((row) => `<article class="card"><button type="button" data-invoice="${esc(row.invoice_id)}"><strong>${esc(row.number_label || row.invoice_number || "Number assigned on issue")}</strong><br>${esc((row.customer || {}).legal_name || "")}<br>${esc(row.status_label)} · ${esc(row.grand_total)} ${esc(row.currency)}</button></article>`).join("")
-    : `<p class="note">No invoices yet.</p>`;
+    : `<p class="note">No invoices issued in Wolf yet.</p>`;
+  $("invoice-list").innerHTML = historyHtml + wolfHtml;
+  document.body.setAttribute("data-historical", earlier.length ? "found" : "missing");
   $("invoice-list").querySelectorAll("[data-invoice]").forEach((btn) => {
     btn.addEventListener("click", () => openInvoice(btn.dataset.invoice));
   });

@@ -1232,7 +1232,20 @@ def list_invoices(person_id: str, conn: sqlite3.Connection, qs: dict[str, list[s
                 ]
             ).lower()
         ]
-    return nota.public_payload({"ok": True, "invoices": public, "numbering": numbering_status(conn, person_id)})
+    from core import ggv_invoice_history as history
+
+    pack = history.projection()
+    historical = {
+        "found": pack["found"],
+        "invoices": pack["invoices"],
+        "searched": pack["searched"],
+        "message": pack["message"],
+        "inserted": False,
+        "read_only": True,
+    }
+    return nota.public_payload(
+        {"ok": True, "invoices": public, "numbering": numbering_status(conn, person_id), "historical": historical}
+    )
 
 
 def get_invoice(person_id: str, invoice_id: str, conn: sqlite3.Connection) -> dict[str, Any]:
@@ -1674,8 +1687,29 @@ def try_dispatch(
         ("GET", "/reports"),
         ("GET", "/entities"),
     }
+    hist_file = re.fullmatch(r"/invoices/historical/(\d{3}A)/file", rest)
     invoice_match = re.fullmatch(r"/invoices/([^/]+)(?:/(ready|issue|void|claim|pdf|draft-email))?", rest)
     customer_match = re.fullmatch(r"/customers/([^/]+)", rest)
+    if hist_file and method == "GET":
+        from core import ggv_invoice_history as history
+
+        conn = nota._open_ready()
+        try:
+            nota.require(person_id, "finance.invoice.read", conn)
+        finally:
+            conn.close()
+        found = history.file_bytes(hist_file.group(1))
+        if found is None:
+            return {"ok": False, "error": "not_found", "message": "That invoice file is not on disk.", "_status": 404}
+        data, filename = found
+        return {
+            "_file": {
+                "data": data,
+                "content_type": "application/pdf",
+                "filename": filename,
+                "disposition": "inline",
+            }
+        }
     if (method, rest) not in routes and not invoice_match and not customer_match:
         return None
     conn = nota._open_ready()
