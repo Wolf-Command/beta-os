@@ -423,3 +423,228 @@ def build_report(
         "needs_matt_auto_cleared": False,
         "operating_test": False,
     }
+
+
+_AUDIT_ACTIONS = ("delegation.created", "delegation.used", "delegation.revoked")
+
+
+def _table_exists(conn: sqlite3.Connection, name: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+        (name,),
+    ).fetchone()
+    return row is not None
+
+
+def _open_ro(path: Path) -> sqlite3.Connection | None:
+    _guard_read(path)
+    if not path.is_file():
+        return None
+    try:
+        return sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
+    except sqlite3.Error:
+        return None
+
+
+def _retain_names() -> list[dict[str, Any]]:
+    """Intentional owner authority already named in Wolf Core. Not a measurement."""
+    from core.staff_home import _founder
+    from core.work_loop import founder_dependency
+
+    rows: list[dict[str, Any]] = []
+    for name, label in founder_dependency().items():
+        if label != "RETAIN":
+            continue
+        rows.append(
+            {
+                "name": name,
+                "label": label,
+                "source": "work_loop",
+                "measured": False,
+                "independence_day_done": False,
+            }
+        )
+    for name, label in _founder("owner_pulse").items():
+        if label != "RETAIN":
+            continue
+        rows.append(
+            {
+                "name": name,
+                "label": label,
+                "source": "owner_pulse",
+                "measured": False,
+                "independence_day_done": False,
+            }
+        )
+    return rows
+
+
+def _mark_days_undone(windows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    marked: list[dict[str, Any]] = []
+    for row in windows:
+        copy = dict(row)
+        copy["independence_day_done"] = False
+        marked.append(copy)
+    return marked
+
+
+def read_owner_independence(
+    catalog_db: Path | str | None = None,
+    now: datetime | None = None,
+    ledger_path: Path | str | None = None,
+) -> dict[str, Any]:
+    """Name what still requires the owner. Mark no 7/30/90/365 day done.
+
+    A CLEAR window means the register has no unresolved NEEDS_MATT row.
+    That is not an independence day. A RETAIN label is intentional owner
+    authority already in Wolf Core. Zero stored delegations do not evidence
+    the ELIMINATE label on delegated_decision. Policy rows stay NEEDS_POLICY.
+    """
+    path = Path(catalog_db) if catalog_db else CATALOG_DB
+    _guard_read(path)
+    report = build_report(path, now=now, ledger_path=ledger_path)
+    windows = _mark_days_undone(list(report.get("windows") or []))
+    retain = _retain_names()
+    distinct = []
+    for row in retain:
+        if row["name"] not in distinct:
+            distinct.append(row["name"])
+
+    needs_items: list[dict[str, Any]] | None = None
+    policy_items: list[dict[str, Any]] | None = None
+    audit: dict[str, int] | None = None
+    if path.is_file():
+        conn = _open_ro(path)
+        if conn is not None:
+            try:
+                if _table_exists(conn, "wolf_completion_items"):
+                    needs_items = [
+                        {
+                            "id": str(row[0]),
+                            "capability": None if row[1] is None else str(row[1]),
+                            "state": None if row[2] is None else str(row[2]),
+                            "dated": bool(row[3]),
+                            "independence_day_done": False,
+                        }
+                        for row in conn.execute(
+                            """
+                            SELECT id, capability, state,
+                                   CASE
+                                     WHEN first_seen IS NULL OR trim(first_seen) = '' THEN 0
+                                     ELSE 1
+                                   END
+                            FROM wolf_completion_items
+                            WHERE blocker_class = 'NEEDS_MATT'
+                              AND state != 'RESOLVED'
+                            ORDER BY id
+                            """
+                        )
+                    ]
+                    policy_items = [
+                        {
+                            "id": str(row[0]),
+                            "domain": None if row[1] is None else str(row[1]),
+                            "item_type": None if row[2] is None else str(row[2]),
+                            "reclassified": False,
+                        }
+                        for row in conn.execute(
+                            """
+                            SELECT id, domain, item_type
+                            FROM wolf_completion_items
+                            WHERE blocker_class = 'NEEDS_POLICY'
+                              AND state != 'RESOLVED'
+                            ORDER BY id
+                            """
+                        )
+                    ]
+                if _table_exists(conn, "core_audit_events"):
+                    found = {
+                        str(row[0]): int(row[1])
+                        for row in conn.execute(
+                            """
+                            SELECT action, COUNT(*)
+                            FROM core_audit_events
+                            WHERE action IN ('delegation.created', 'delegation.used', 'delegation.revoked')
+                            GROUP BY action
+                            """
+                        )
+                    }
+                    audit = {action: int(found.get(action, 0)) for action in _AUDIT_ACTIONS}
+            except sqlite3.Error:
+                needs_items = None
+                policy_items = None
+                audit = None
+            finally:
+                conn.close()
+
+    stored = report.get("delegation_rows")
+    status = report.get("delegation_status")
+    unbounded = report.get("unbounded_delegations")
+    intentional = 0
+    for row in windows:
+        count = row.get("intentional_time_bounded")
+        if isinstance(count, int):
+            intentional += count
+    evidenced = bool(
+        status == "READ"
+        and isinstance(stored, int)
+        and stored > 0
+        and unbounded == 0
+        and intentional > 0
+    )
+    from core.work_loop import founder_dependency
+
+    loop_label = str(founder_dependency().get("delegated_decision") or "UNKNOWN")
+    if needs_items is None:
+        still_requires: list[str] | None = None
+    else:
+        still_requires = distinct + [
+            str(item["capability"] or item["id"]) for item in needs_items
+        ]
+
+    return {
+        "ok": True,
+        "cap": CAP_ID,
+        "slice": "core_owner_independence",
+        "read_only": True,
+        "as_of": report.get("as_of"),
+        "windows": windows,
+        "independence_days_done": [],
+        "any_independence_day_done": False,
+        "needs_matt_open": report.get("needs_matt_open"),
+        "needs_matt_items": needs_items,
+        "needs_matt_labeled": None if needs_items is None else len(needs_items),
+        "empty_needs_matt_is_independence": False,
+        "policy_items": policy_items,
+        "policy_not_reclassified": None if policy_items is None else len(policy_items),
+        "retain": retain,
+        "retain_names": distinct,
+        "still_requires_owner": still_requires,
+        "delegated_decision": {
+            "name": "delegated_decision",
+            "label": loop_label,
+            "source": "work_loop",
+            "stored_delegations": stored,
+            "delegation_status": status,
+            "unbounded_delegations": unbounded,
+            "evidenced": evidenced,
+            "audit_is_current_grant": False,
+            "independence_day_done": False,
+        },
+        "delegation_audit": audit,
+        "delegation_audit_status": "NOT_READ" if audit is None else "READ",
+        "completion_rows": report.get("completion_rows"),
+        "completion_status": report.get("completion_status"),
+        "delegation_rows": stored,
+        "delegation_status": status,
+        "honesty": report.get("honesty"),
+        "staff_ready": False,
+        "human_commissioned": False,
+        "operating_adoption": "NOT MEASURED",
+        "catalog_write": False,
+        "ledger_write": False,
+        "needs_matt_auto_cleared": False,
+        "operating_test": False,
+        "proven": False,
+        "cr_resolved": False,
+    }
