@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atrium Finance</title>
+</head>
+<body>
+  <main>
+    <h1>Atrium Finance</h1>
+    <p id="entity">Finance · AMG</p>
+    <p>This is Atrium Finance for Atrium.</p>
+    <p id="board">Hotel books are not open on this desk.</p>
+    <p id="report">No report figure is on this page.</p>
+    <p>You can open this board. A draft journal is not saved here. Do not type an amount.</p>
+    <p>You cannot approve a payment, pay, or open GGV, Blu Zone, or Owner command.</p>
+  </main>
+  <script>
+    fetch("/api/amg/finance", { credentials: "same-origin" }).then(function (res) {
+      return res.json();
+    }).then(function (data) {
+      var rows = data.finance_entities || [];
+      var box = document.getElementById("entity");
+      if (!rows.length) {
+        box.textContent = "Finance · AMG";
+        return;
+      }
+      if (rows.length === 1) {
+        box.textContent = "Finance · " + rows[0].label;
+        return;
+      }
+      box.textContent = "Finance · " + rows.map(function (row) { return row.label; }).join(" · ");
+    }).catch(function () {});
+  </script>
+</body>
+</html>

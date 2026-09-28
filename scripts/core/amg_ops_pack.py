@@ -623,6 +623,7 @@ def hotel_ops_ids(catalog_db: Path | str | None = None) -> list[str]:
             WHERE a.status = 'ACTIVE'
               AND a.end_at IS NULL
               AND p.status = 'ACTIVE'
+              AND pos.role_id != 'ROLE-AMG-FINANCE-OFFICER'
               AND (
                 pos.entity_id = ?
                 OR pos.brand_id = ?
@@ -1857,6 +1858,9 @@ def ensure_operator_depth_rbac(
             and str(asg["status"] or "") == "ACTIVE"
             and asg["end_at"] is None
         )
+        seat_closed = bool(
+            asg and (str(asg["status"] or "") == "ENDED" or asg["end_at"] is not None)
+        )
         scope_linked = bool(
             asg_active
             and c.execute(
@@ -1961,7 +1965,6 @@ def ensure_operator_depth_rbac(
                 (role_id, op_id, ts, ts),
             )
 
-        # Beta fixture seat — ROLE-AMG-GM on Atrium. Not live hotel commissioning.
         c.execute(
             """
             INSERT INTO org_positions (
@@ -1981,29 +1984,31 @@ def ensure_operator_depth_rbac(
             """,
             (POS_DAY_FIXTURE, ROLE_DAY_OPERATOR, ENTITY, LOCATION, BRAND, ts, ts),
         )
-        c.execute(
-            """
-            INSERT INTO org_assignments (
-              assignment_id, person_id, position_id, start_at, end_at,
-              status, is_primary, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, NULL, 'ACTIVE', 0, ?, ?)
-            ON CONFLICT(assignment_id) DO UPDATE SET
-              person_id=excluded.person_id,
-              position_id=excluded.position_id,
-              status='ACTIVE',
-              end_at=NULL,
-              updated_at=excluded.updated_at
-            """,
-            (ASG_DAY_MISA, MISA, POS_DAY_FIXTURE, ts, ts, ts),
-        )
-        c.execute(
-            """
-            INSERT OR IGNORE INTO org_assignment_scopes (
-              assignment_id, scope_id, start_at, end_at, status, created_at, updated_at
-            ) VALUES (?, ?, ?, NULL, 'ACTIVE', ?, ?)
-            """,
-            (ASG_DAY_MISA, SCOPE_ATR_DAY, ts, ts, ts),
-        )
+        # An ended fixture stays ended. The role grant remains for a later assignment.
+        if not seat_closed:
+            c.execute(
+                """
+                INSERT INTO org_assignments (
+                  assignment_id, person_id, position_id, start_at, end_at,
+                  status, is_primary, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, NULL, 'ACTIVE', 0, ?, ?)
+                ON CONFLICT(assignment_id) DO UPDATE SET
+                  person_id=excluded.person_id,
+                  position_id=excluded.position_id,
+                  status='ACTIVE',
+                  end_at=NULL,
+                  updated_at=excluded.updated_at
+                """,
+                (ASG_DAY_MISA, MISA, POS_DAY_FIXTURE, ts, ts, ts),
+            )
+            c.execute(
+                """
+                INSERT OR IGNORE INTO org_assignment_scopes (
+                  assignment_id, scope_id, start_at, end_at, status, created_at, updated_at
+                ) VALUES (?, ?, ?, NULL, 'ACTIVE', ?, ?)
+                """,
+                (ASG_DAY_MISA, SCOPE_ATR_DAY, ts, ts, ts),
+            )
         if commit:
             c.commit()
         return {

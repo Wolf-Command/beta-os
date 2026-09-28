@@ -1671,6 +1671,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._accountant_scope_wall():
             return
 
+        if self._atrium_finance_wall():
+            return
+
         if self._ggv_finance_dispatch():
             return
 
@@ -4090,6 +4093,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._ggv_ops_page()
             return
         elif path in (
+            "/amg/finance",
+            "/amg/finance/",
+            "/amg-finance",
+            "/amg-finance.html",
+            "/dashboards/amg-finance.html",
+        ):
+            self._amg_finance_page()
+            return
+        elif path == "/api/amg/finance":
+            self._amg_finance_read()
+            return
+        elif path in (
             "/amg-ops-pack",
             "/amg-ops-pack/",
             "/amg-ops-pack.html",
@@ -4564,6 +4579,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._dashboard_truth_write_refused()
             return
         if self._accountant_scope_wall():
+            return
+        if self._atrium_finance_wall():
+            return
+        if path == "/api/amg/finance":
+            self._amg_finance_write_refused()
             return
         if self._ggv_finance_dispatch():
             return
@@ -5666,6 +5686,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_PATCH(self) -> None:
         path = urlparse(self.path).path
+        if self._atrium_finance_wall():
+            return
         if path == "/api/dashboard-truth" or path.startswith("/api/dashboard-truth/"):
             self._dashboard_truth_write_refused()
             return
@@ -6860,6 +6882,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_PUT(self) -> None:
         path = urlparse(self.path).path
+        if self._atrium_finance_wall():
+            return
         if path == "/api/dashboard-truth" or path.startswith("/api/dashboard-truth/"):
             self._dashboard_truth_write_refused()
             return
@@ -13763,6 +13787,120 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
+
+    def _atrium_finance_wall(self) -> bool:
+        """Atrium Finance Officer, and only that role, cannot leave Atrium Finance."""
+        from core.staff_access import officer_must_deny
+
+        try:
+            identity = self._resolve_identity(None, emit_audit=False)
+        except Exception:  # noqa: BLE001
+            return False
+        if not identity.get("ok") or not identity.get("person_id"):
+            return False
+        try:
+            conn = _ggv_fin.db_connect()
+            try:
+                deny = officer_must_deny(str(identity.get("person_id")), urlparse(self.path).path, conn)
+            finally:
+                conn.close()
+        except Exception:  # noqa: BLE001
+            return False
+        if not deny:
+            return False
+        self._send_json(
+            {
+                "ok": False,
+                "error": "forbidden",
+                "message": "This account is limited to Atrium Finance.",
+                "staff_ready": False,
+                "human_commissioned": False,
+                "money_movement": False,
+            },
+            status=403,
+        )
+        return True
+
+    def _amg_finance_guard(self) -> str | None:
+        from core import rbac as _rbac
+
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok") or not identity.get("person_id"):
+            self._send_identity_deny(identity)
+            return None
+        person_id = str(identity.get("person_id"))
+        conn = _ggv_fin.db_connect()
+        try:
+            allowed = _rbac.can(person_id, "atrium.board.read", {"entity_id": "ENT-AMG"}, conn=conn)
+        finally:
+            conn.close()
+        if not allowed:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Atrium Finance is not on this assignment.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=403,
+            )
+            return None
+        return person_id
+
+    def _amg_finance_page(self) -> None:
+        if self._amg_finance_guard() is None:
+            return
+        page = DASHBOARDS / "amg-finance.html"
+        if not page.is_file():
+            self._send_json(
+                {"ok": False, "error": "not_found", "message": "Atrium Finance page is missing."},
+                status=404,
+            )
+            return
+        self._send_html_shell(page.read_bytes(), rel="amg-finance.html")
+
+    def _amg_finance_read(self) -> None:
+        person_id = self._amg_finance_guard()
+        if person_id is None:
+            return
+        from core import ggv_finance_invoice as _inv
+
+        conn = _ggv_fin.db_connect()
+        try:
+            entities = _inv.finance_entities(person_id, conn)
+        finally:
+            conn.close()
+        self._send_json(
+            {
+                "ok": True,
+                "board": "Hotel books are not open on this desk.",
+                "report": "No report figure is on this page.",
+                "finance_entities": entities,
+                "books_opened": False,
+                "journal_saved": False,
+                "money_movement": False,
+                "staff_ready": False,
+                "human_commissioned": False,
+            }
+        )
+
+    def _amg_finance_write_refused(self) -> None:
+        if self._amg_finance_guard() is None:
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "writes_refused",
+                "message": "This page does not save a journal, post, or pay.",
+                "books_opened": False,
+                "journal_saved": False,
+                "money_movement": False,
+                "staff_ready": False,
+                "human_commissioned": False,
+            },
+            status=405,
+        )
 
     def _accountant_scope_wall(self) -> bool:
         """GGV external accountant, and only that role, cannot leave GGV Finance."""

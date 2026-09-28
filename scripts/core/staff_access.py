@@ -20,6 +20,16 @@ TZ = ZoneInfo("Asia/Makassar")
 ROLE_CONTENT_CREATOR = "ROLE-CONTENT-CREATOR"
 ROLE_CREATIVE_DIRECTOR = "ROLE-GGV-CREATIVE-DIRECTOR"
 ROLE_FINANCE = "ROLE-GGV-EXTERNAL-ACCOUNTANT"
+ROLE_ATRIUM_FINANCE = "ROLE-AMG-FINANCE-OFFICER"
+ROLE_GGV_FINANCE_OPERATOR = "ROLE-GGV-FINANCE-OPERATOR"
+GGV_FINANCE_HREF = "/ggv/finance"
+AMANDA_PERSON = "PERS-AMANDA"
+AMANDA_EMAIL = "amanda@wolfcommand.net"
+AMANDA_FINANCE_POSITION = "POS-GGV-FINANCE-OPERATOR-1"
+AMANDA_FINANCE_ASSIGNMENT = "ASG-AMANDA-GGV-FIN-1"
+ATRIUM_FINANCE_HREF = "/amg/finance"
+SCOPE_AMG_FINANCE = "SCOPE-AMG-FINANCE"
+ENTITY_AMG = "ENT-AMG"
 
 CREATOR_PERMISSIONS: tuple[str, ...] = (
     "content.plan.read",
@@ -60,6 +70,122 @@ CREATOR_DENIED: tuple[str, ...] = (
 )
 
 FINANCE_EMAIL = "laluzayen@gmail.com"
+ZAYEN_PERSON = "PERS-ZAYEN"
+ZAYEN_POSITION = "POS-AMG-FINANCE-OFFICER-1"
+ZAYEN_ASSIGNMENT = "ASG-ZAYEN-FIN-1"
+ZAYEN_AUTH = "AUTH-ZAYEN-EMAIL"
+
+# Route map is atrium-finance server/routeAccess.ts plus the General Accountant
+# pillar flags. Only the actions named for this seat are granted.
+# Source-document upload has no /api route, so no upload grant is created.
+ATRIUM_GRANTS: tuple[tuple[str, str, str, str, str], ...] = (
+    (
+        "PERM-ATRIUM-BOARD-READ",
+        "atrium.board.read",
+        "atrium.board",
+        "read",
+        "GET /api/dashboard. Command centre view only.",
+    ),
+    (
+        "PERM-ATRIUM-LEDGER-READ",
+        "atrium.ledger.read",
+        "atrium.ledger",
+        "read",
+        "GET /api/journals, /api/journals/:id, /api/ledger, /api/trial-balance.",
+    ),
+    (
+        "PERM-ATRIUM-JOURNAL-DRAFT",
+        "atrium.journal.draft",
+        "atrium.journal",
+        "draft",
+        "POST /api/journals and POST /api/journals/:id/validate. Not approve, post, or reverse.",
+    ),
+    (
+        "PERM-ATRIUM-REPORT-READ",
+        "atrium.report.read",
+        "atrium.report",
+        "read",
+        "GET /api/reports/financial-statements, /api/reports/usali, /api/reports/drilldown.",
+    ),
+    (
+        "PERM-ATRIUM-COA-READ",
+        "atrium.coa.read",
+        "atrium.coa",
+        "read",
+        "GET /api/accounts. Chart read only.",
+    ),
+)
+ATRIUM_HELD_BACK: tuple[tuple[str, str, str, str, str], ...] = (
+    (
+        "PERM-ATRIUM-JOURNAL-APPROVE",
+        "atrium.journal.approve",
+        "atrium.journal",
+        "approve",
+        "POST /api/journals/:id/approve. Not granted.",
+    ),
+    (
+        "PERM-ATRIUM-JOURNAL-POST",
+        "atrium.journal.post",
+        "atrium.journal",
+        "post",
+        "POST /api/journals/:id/post. Not granted.",
+    ),
+)
+ATRIUM_SUBMIT = "approval.request"
+ATRIUM_DENIED: tuple[str, ...] = (
+    "atrium.journal.approve",
+    "atrium.journal.post",
+    "payment.approve",
+    "payment.execute",
+    "vendor.bank.change",
+    "finance.policy.admin",
+    "finance.nota.read",
+    "finance.nota.create",
+    "organisation.role.read",
+    "organisation.person.read",
+    "progress.read",
+    "amg.day.operator",
+    "core.operator",
+    "approval.decide",
+    "content.plan.read",
+    "governance.exception.authorise",
+)
+
+CREW_END_REASON = (
+    "Content Crew is a 16 Sep 2026 TBD seed. Creative Director is the live seat. "
+    "The crew grants are not on that role. Ended so the old seat does not keep access."
+)
+DAY_END_REASON = (
+    "Atrium day-operator seat is a Beta fixture from 22 Sep 2026, not a live hotel assignment. "
+    "Ended so hotel day access does not stay on this person."
+)
+MISA_DAY_ASSIGNMENT = "ASG-AMG-DAY-MISA"
+
+ATRIUM_PAGE_PATHS = frozenset(
+    {
+        "/amg/finance",
+        "/amg-finance",
+        "/amg-finance.html",
+        "/dashboards/amg-finance.html",
+        "/api/amg/finance",
+    }
+)
+ATRIUM_CHROME_PATHS = frozenset(
+    {
+        "/api/health",
+        "/api/wolf/shell-whoami",
+        "/api/staff/home",
+        "/my-work",
+        "/my-work.html",
+        "/signout",
+        "/wolf-tokens.css",
+        "/assets/wolf-shell.css",
+        "/assets/sidenav.js",
+        "/assets/wolf-truth.css",
+        "/assets/wolf-truth.js",
+        "/api/dashboard-truth/stamp",
+    }
+)
 
 # Role mailboxes. Not AuthIdentities. Not Persons.
 HR_MAILBOXES: tuple[dict[str, str], ...] = (
@@ -186,20 +312,87 @@ def finance_search(conn: sqlite3.Connection) -> dict[str, Any]:
     ).fetchall()
     role = conn.execute(
         "SELECT role_id, display_name FROM org_roles WHERE role_id=?",
-        (ROLE_FINANCE,),
+        (ROLE_ATRIUM_FINANCE,),
     ).fetchone()
+    bound = by_email is not None
     return {
         "email": email,
         "person_by_email": None if by_email is None else by_email[0],
         "name_matches": [row[0] for row in by_name],
         "finance_role_id": None if role is None else role[0],
         "finance_role_label": None if role is None else role[1],
-        "bound": False,
+        "bound": bound,
         "reason": (
-            "No stored person matches this email or a Zayen / Atrium Finance name. "
-            "Display name was not invented. AuthIdentity was not created."
+            "AuthIdentity is stored. Access follows the active Atrium Finance Officer assignment."
+            if bound
+            else (
+                "No stored person matches this email or a Zayen / Atrium Finance name. "
+                "Display name was not invented. AuthIdentity was not created."
+            )
         ),
     }
+
+
+def _ensure_end_reason(conn: sqlite3.Connection) -> None:
+    cols = {str(row[1]) for row in conn.execute("PRAGMA table_info(org_assignments)")}
+    if "end_reason" not in cols:
+        conn.execute("ALTER TABLE org_assignments ADD COLUMN end_reason TEXT")
+
+
+def _end_assignment(conn: sqlite3.Connection, assignment_id: str, reason: str, ts: str) -> None:
+    row = conn.execute(
+        "SELECT status, end_at, end_reason FROM org_assignments WHERE assignment_id=?",
+        (assignment_id,),
+    ).fetchone()
+    if row is None:
+        return
+    if str(row[0] or "") == "ENDED" or row[1]:
+        if not str(row[2] or "").strip():
+            conn.execute(
+                "UPDATE org_assignments SET end_reason=?, updated_at=? WHERE assignment_id=?",
+                (reason, ts, assignment_id),
+            )
+        return
+    conn.execute(
+        """
+        UPDATE org_assignments
+        SET status='ENDED', end_at=?, is_primary=0, end_reason=?, updated_at=?
+        WHERE assignment_id=? AND status='ACTIVE' AND end_at IS NULL
+        """,
+        (ts, reason, ts, assignment_id),
+    )
+    conn.execute(
+        """
+        UPDATE org_assignment_scopes
+        SET status='ENDED', end_at=?, updated_at=?
+        WHERE assignment_id=? AND status='ACTIVE' AND end_at IS NULL
+        """,
+        (ts, ts, assignment_id),
+    )
+
+
+def _ensure_permission(
+    conn: sqlite3.Connection,
+    permission_id: str,
+    code: str,
+    resource: str,
+    action: str,
+    description: str,
+    ts: str,
+) -> None:
+    conn.execute(
+        """
+        INSERT INTO org_permissions (
+          permission_id, code, resource, action, description, status, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, 'ACTIVE', ?, ?)
+        ON CONFLICT(permission_id) DO UPDATE SET
+          code=excluded.code,
+          description=excluded.description,
+          status='ACTIVE',
+          updated_at=excluded.updated_at
+        """,
+        (permission_id, code, resource, action, description, ts, ts),
+    )
 
 
 def _grant(conn: sqlite3.Connection, role_id: str, code: str, ts: str) -> None:
@@ -313,6 +506,200 @@ def _seat(
         upsert_assignment_scope(conn, assignment_id, scope_id, ts, ts)
 
 
+def officer_must_deny(person_id: str | None, path: str, conn: sqlite3.Connection) -> bool:
+    """Atrium Finance Officer, and only that role, cannot leave Atrium Finance."""
+    pid = (person_id or "").strip()
+    if not pid:
+        return False
+    rows = conn.execute(
+        """
+        SELECT DISTINCT pos.role_id
+        FROM org_assignments a
+        JOIN org_positions pos ON pos.position_id = a.position_id
+        WHERE a.person_id=? AND a.status='ACTIVE' AND a.end_at IS NULL
+        """,
+        (pid,),
+    ).fetchall()
+    roles = {str(row[0]) for row in rows if row[0]}
+    if roles != {ROLE_ATRIUM_FINANCE}:
+        return False
+    raw = (path or "").split("?")[0]
+    if not raw.startswith("/"):
+        raw = "/" + raw
+    base = raw.rstrip("/") or "/"
+    if base in ATRIUM_PAGE_PATHS or raw in ATRIUM_PAGE_PATHS:
+        return False
+    if base in ATRIUM_CHROME_PATHS or raw in ATRIUM_CHROME_PATHS:
+        return False
+    if base.startswith("/assets/"):
+        return False
+    return True
+
+
+def _seat_zayen(conn: sqlite3.Connection, ts: str) -> None:
+    conn.execute(
+        """
+        INSERT INTO org_roles (
+          role_id, display_name, department_id, role_type, status, created_at, updated_at
+        ) VALUES (?, 'Atrium Finance Officer', NULL, 'OPERATING', 'SPECIFIED', ?, ?)
+        ON CONFLICT(role_id) DO UPDATE SET
+          display_name='Atrium Finance Officer',
+          role_type='OPERATING',
+          updated_at=excluded.updated_at
+        """,
+        (ROLE_ATRIUM_FINANCE, ts, ts),
+    )
+    for row in ATRIUM_GRANTS + ATRIUM_HELD_BACK:
+        _ensure_permission(conn, row[0], row[1], row[2], row[3], row[4], ts)
+    for row in ATRIUM_GRANTS:
+        _grant(conn, ROLE_ATRIUM_FINANCE, row[1], ts)
+    _grant(conn, ROLE_ATRIUM_FINANCE, ATRIUM_SUBMIT, ts)
+    held_ids = [row[0] for row in ATRIUM_HELD_BACK]
+    conn.execute(
+        f"""
+        DELETE FROM org_role_permissions
+        WHERE role_id=? AND permission_id IN ({",".join("?" for _ in held_ids)})
+        """,
+        (ROLE_ATRIUM_FINANCE, *held_ids),
+    )
+    conn.execute(
+        """
+        INSERT INTO org_scopes (
+          scope_id, scope_type, display_name, status, created_at, updated_at
+        ) VALUES (?, 'structural', 'Atrium Finance only', 'ACTIVE', ?, ?)
+        ON CONFLICT(scope_id) DO UPDATE SET
+          display_name='Atrium Finance only', status='ACTIVE', updated_at=excluded.updated_at
+        """,
+        (SCOPE_AMG_FINANCE, ts, ts),
+    )
+    conn.execute(
+        """
+        INSERT INTO org_scope_targets (scope_id, target_type, target_id, created_at)
+        VALUES (?, 'entity', ?, ?)
+        ON CONFLICT(scope_id, target_type, target_id) DO NOTHING
+        """,
+        (SCOPE_AMG_FINANCE, ENTITY_AMG, ts),
+    )
+    conn.execute(
+        """
+        INSERT INTO org_persons (
+          person_id, display_name, legal_name, status, created_at, updated_at
+        ) VALUES (?, 'Zayen', NULL, 'ACTIVE', ?, ?)
+        ON CONFLICT(person_id) DO NOTHING
+        """,
+        (ZAYEN_PERSON, ts, ts),
+    )
+    existing = conn.execute(
+        """
+        SELECT person_id FROM org_auth_identities
+        WHERE provider='email' AND lower(identifier)=?
+        """,
+        (FINANCE_EMAIL,),
+    ).fetchone()
+    if existing is None:
+        conn.execute(
+            """
+            INSERT INTO org_auth_identities (
+              auth_identity_id, person_id, provider, identifier, status,
+              is_primary, created_at, updated_at
+            ) VALUES (?, ?, 'email', ?, 'ACTIVE', 1, ?, ?)
+            """,
+            (ZAYEN_AUTH, ZAYEN_PERSON, FINANCE_EMAIL, ts, ts),
+        )
+    elif str(existing[0]) != ZAYEN_PERSON:
+        raise RuntimeError(f"{FINANCE_EMAIL} is already bound to {existing[0]}")
+    conn.execute(
+        """
+        INSERT INTO org_positions (
+          position_id, role_id, entity_id, location_id, brand_id, department_id,
+          position_label, status, fte, created_at, updated_at
+        ) VALUES (?, ?, ?, NULL, NULL, NULL, 'Atrium Finance Officer', 'ACTIVE', 1.0, ?, ?)
+        ON CONFLICT(position_id) DO UPDATE SET
+          role_id=excluded.role_id,
+          entity_id=excluded.entity_id,
+          brand_id=NULL,
+          location_id=NULL,
+          position_label='Atrium Finance Officer',
+          status='ACTIVE',
+          updated_at=excluded.updated_at
+        """,
+        (ZAYEN_POSITION, ROLE_ATRIUM_FINANCE, ENTITY_AMG, ts, ts),
+    )
+    conn.execute(
+        """
+        INSERT INTO org_assignments (
+          assignment_id, person_id, position_id, start_at, end_at, status,
+          is_primary, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, NULL, 'ACTIVE', 1, ?, ?)
+        ON CONFLICT(assignment_id) DO UPDATE SET
+          status='ACTIVE',
+          end_at=NULL,
+          is_primary=1,
+          updated_at=excluded.updated_at
+        """,
+        (ZAYEN_ASSIGNMENT, ZAYEN_PERSON, ZAYEN_POSITION, ts, ts, ts),
+    )
+    upsert_assignment_scope(conn, ZAYEN_ASSIGNMENT, SCOPE_AMG_FINANCE, ts, ts)
+
+
+def _seat_ggv_finance_operator(conn: sqlite3.Connection, ts: str) -> str:
+    """Bind the existing Amanda person to the generic GGV Finance Operator role.
+
+    The role is not named for her. Her content seat stays primary.
+    """
+    from core import ggv_finance_invoice as invoices
+
+    invoices.seed_operator_role(conn)
+    bound = conn.execute(
+        """
+        SELECT person_id FROM org_auth_identities
+        WHERE provider='email' AND lower(identifier)=?
+        """,
+        (AMANDA_EMAIL,),
+    ).fetchone()
+    if bound is None:
+        raise RuntimeError(f"{AMANDA_EMAIL} has no AuthIdentity. Not creating a person.")
+    if str(bound[0]) != AMANDA_PERSON:
+        raise RuntimeError(f"{AMANDA_EMAIL} is already bound to {bound[0]}")
+    person = conn.execute(
+        "SELECT person_id FROM org_persons WHERE person_id=?",
+        (AMANDA_PERSON,),
+    ).fetchone()
+    if person is None:
+        raise RuntimeError(f"{AMANDA_PERSON} is missing. Not creating a second person.")
+    conn.execute(
+        """
+        INSERT INTO org_positions (
+          position_id, role_id, entity_id, location_id, brand_id, department_id,
+          position_label, status, fte, created_at, updated_at
+        ) VALUES (?, ?, 'ENT-GGV', NULL, NULL, NULL, 'GGV Finance Operator', 'ACTIVE', 1.0, ?, ?)
+        ON CONFLICT(position_id) DO UPDATE SET
+          role_id=excluded.role_id,
+          entity_id='ENT-GGV',
+          position_label='GGV Finance Operator',
+          status='ACTIVE',
+          updated_at=excluded.updated_at
+        """,
+        (AMANDA_FINANCE_POSITION, ROLE_GGV_FINANCE_OPERATOR, ts, ts),
+    )
+    conn.execute(
+        """
+        INSERT INTO org_assignments (
+          assignment_id, person_id, position_id, start_at, end_at, status,
+          is_primary, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, NULL, 'ACTIVE', 0, ?, ?)
+        ON CONFLICT(assignment_id) DO UPDATE SET
+          status='ACTIVE',
+          end_at=NULL,
+          is_primary=0,
+          updated_at=excluded.updated_at
+        """,
+        (AMANDA_FINANCE_ASSIGNMENT, AMANDA_PERSON, AMANDA_FINANCE_POSITION, ts, ts, ts),
+    )
+    upsert_assignment_scope(conn, AMANDA_FINANCE_ASSIGNMENT, "SCOPE-GGV-FINANCE", ts, ts)
+    return AMANDA_FINANCE_ASSIGNMENT
+
+
 def apply(conn: sqlite3.Connection) -> dict[str, Any]:
     """Idempotent registry write. Does not invent a finance person."""
     ts = now_iso()
@@ -424,10 +811,19 @@ def apply(conn: sqlite3.Connection) -> dict[str, Any]:
             ),
         )
 
+    _ensure_end_reason(conn)
+    _end_assignment(conn, MISA_CREW_ASSIGNMENT, CREW_END_REASON, ts)
+    _end_assignment(conn, MISA_DAY_ASSIGNMENT, DAY_END_REASON, ts)
+    _seat_zayen(conn, ts)
+    ggv_finance_assignment = _seat_ggv_finance_operator(conn, ts)
+    finance = finance_search(conn)
+
     haikal = conn.execute(
         "SELECT status, is_primary, end_at FROM org_assignments WHERE assignment_id=?",
         (HAIKAL_CD_ASSIGNMENT,),
     ).fetchone()
+    limits = conn.execute("SELECT COUNT(*) FROM org_authority_limits").fetchone()[0]
+    sod = conn.execute("SELECT COUNT(*) FROM core_sod_constraints").fetchone()[0]
     conn.commit()
     return {
         "finance": finance,
@@ -436,6 +832,14 @@ def apply(conn: sqlite3.Connection) -> dict[str, Any]:
         else {"status": haikal[0], "is_primary": haikal[1], "end_at": haikal[2]},
         "creators": [row["person_id"] for row in CREATORS],
         "misa_assignment": MISA_CD_ASSIGNMENT,
+        "misa_crew_ended": MISA_CREW_ASSIGNMENT,
+        "misa_day_ended": MISA_DAY_ASSIGNMENT,
+        "zayen_assignment": ZAYEN_ASSIGNMENT,
+        "zayen_role": ROLE_ATRIUM_FINANCE,
+        "ggv_finance_assignment": ggv_finance_assignment,
+        "ggv_finance_role": ROLE_GGV_FINANCE_OPERATOR,
+        "authority_limits": limits,
+        "sod_constraints": sod,
         "hr_mailboxes": [box["address"].lower() for box in HR_MAILBOXES],
         "staff_ready": False,
         "human_commissioned": False,

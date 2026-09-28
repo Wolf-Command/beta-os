@@ -80,11 +80,21 @@ def upsert_assignment(conn, assignment_id, person_id, position_id, start_at, end
         ON CONFLICT(assignment_id) DO UPDATE SET
           person_id=excluded.person_id,
           position_id=excluded.position_id,
-          start_at=excluded.start_at,
-          end_at=excluded.end_at,
-          status=excluded.status,
-          is_primary=excluded.is_primary,
-          updated_at=excluded.updated_at
+          start_at=CASE
+            WHEN org_assignments.status='ENDED' OR org_assignments.end_at IS NOT NULL
+            THEN org_assignments.start_at ELSE excluded.start_at END,
+          end_at=CASE
+            WHEN org_assignments.status='ENDED' OR org_assignments.end_at IS NOT NULL
+            THEN org_assignments.end_at ELSE excluded.end_at END,
+          status=CASE
+            WHEN org_assignments.status='ENDED' OR org_assignments.end_at IS NOT NULL
+            THEN org_assignments.status ELSE excluded.status END,
+          is_primary=CASE
+            WHEN org_assignments.status='ENDED' OR org_assignments.end_at IS NOT NULL
+            THEN org_assignments.is_primary ELSE excluded.is_primary END,
+          updated_at=CASE
+            WHEN org_assignments.status='ENDED' OR org_assignments.end_at IS NOT NULL
+            THEN org_assignments.updated_at ELSE excluded.updated_at END
         """,
         (assignment_id, person_id, position_id, start_at, end_at, status, is_primary, ts, ts),
     )

@@ -66,6 +66,13 @@
   .file-btn input { display: none; }
   .warn { border-color: var(--gold); }
   a.inline { color: var(--gold); }
+  .line-card { display: block; margin-top: 10px; }
+  .totals p { margin: 4px 0; }
+  @media (max-width: 430px) {
+    body { padding: 12px 12px 140px; }
+    nav.tabs button { flex: 1 1 46%; font-size: 0.85rem; }
+    .line-card, .totals, .grid { display: block; }
+  }
   @media (max-width: 860px) {
     nav.tabs {
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
@@ -78,24 +85,80 @@
 </head>
 <body data-wolf-page-type="WORKSPACE" data-wolf-org="GGV" data-wolf-shell="global">
   <p class="meta">WOLF · Goss Group · GGV · Finance</p>
+  <p class="meta" id="entity-switch">This page is GGV.</p>
   <h1>GGV <span>Finance</span></h1>
   <div class="banner">
     <strong>Entering a nota is not the same as paying it.</strong>
     <p class="note" id="boundary">Payment and full books live with Finance reconciliation later — here you capture notas and vendors.</p>
     <p class="note">Bank details seen on a document are not verified.</p>
+    <p class="note">An issued invoice is not a paid invoice. A claimed payment is not a verified payment.</p>
   </div>
   <nav class="tabs" aria-label="Finance">
     <button type="button" data-tab="overview" class="active">Overview</button>
+    <button type="button" data-tab="invoices">Invoices</button>
     <button type="button" data-tab="notas">Notas / Bills</button>
     <button type="button" data-tab="vendors">Vendors</button>
+    <button type="button" data-tab="customers">Customers</button>
     <button type="button" data-tab="history">History</button>
-    <button type="button" data-tab="accountant">Accountant</button>
+    <button type="button" data-tab="reports">Reports</button>
   </nav>
 
   <section id="overview">
     <div class="grid" id="overview-cards"></div>
     <h2>Recently added</h2>
     <div id="recent"></div>
+    <h2>Recent activity</h2>
+    <div id="activity"></div>
+  </section>
+
+  <section id="invoices" class="hidden">
+    <button type="button" class="primary" id="new-invoice">+ New invoice</button>
+    <div id="invoice-list"></div>
+    <div id="invoice-form" class="hidden">
+      <button type="button" class="secondary" id="invoice-back">Back to invoices</button>
+      <h2 id="invoice-heading">New invoice</h2>
+      <p class="note" id="number-note"></p>
+      <label>Customer
+        <select id="inv-customer"></select>
+      </label>
+      <button type="button" class="secondary" id="show-customer">Create customer</button>
+      <div id="customer-create" class="hidden">
+        <label>Legal name<input id="cust-legal" /></label>
+        <label>Trading name<input id="cust-trading" /></label>
+        <label>Tax or company id<input id="cust-tax" /></label>
+        <label>Billing address<textarea id="cust-address"></textarea></label>
+        <label>Contact<input id="cust-contact" /></label>
+        <label>Email<input id="cust-email" type="email" /></label>
+        <label>Default terms<input id="cust-terms" /></label>
+        <label>Notes<textarea id="cust-notes"></textarea></label>
+        <button type="button" class="primary" id="save-customer">Save customer</button>
+      </div>
+      <label>Invoice number<input id="inv-number" /></label>
+      <label><input id="inv-number-ok" type="checkbox" /> I confirm this invoice number</label>
+      <label>Invoice date<input id="inv-date" placeholder="YYYY-MM-DD" /></label>
+      <label>Due date<input id="inv-due" placeholder="YYYY-MM-DD" /></label>
+      <label>Terms<input id="inv-terms" /></label>
+      <div id="inv-lines"></div>
+      <button type="button" class="secondary" id="add-line">Add line</button>
+      <label>Notes<textarea id="inv-notes"></textarea></label>
+      <label>Reference<input id="inv-ref" /></label>
+      <label>Payment method<input id="inv-pay-method" /></label>
+      <label>Payment reference<input id="inv-pay-ref" /></label>
+      <p class="note">Payment details print on the invoice. They do not collect money.</p>
+      <div class="totals" id="inv-totals"></div>
+      <div id="inv-preview"></div>
+      <button type="button" class="secondary" id="preview-invoice">Preview</button>
+      <button type="button" class="primary" id="save-draft">Save draft</button>
+      <button type="button" class="secondary" id="issue-invoice" disabled>Issue</button>
+      <p id="invoice-msg"></p>
+      <div id="draft-email"></div>
+    </div>
+  </section>
+
+  <section id="customers" class="hidden">
+    <label>Search customers<input id="customer-q" placeholder="Legal name or email" /></label>
+    <button type="button" class="secondary" id="customer-search">Search</button>
+    <div id="customer-list"></div>
   </section>
 
   <section id="notas" class="hidden">
@@ -170,7 +233,8 @@
     <p class="note">This download is a copy for the month. Each original file stays separate.</p>
   </section>
 
-  <section id="accountant" class="hidden">
+  <section id="reports" class="hidden">
+    <p class="note">Accountant evidence stays in Reports. Cash, profit, ageing, margin, and tax position are not on this page.</p>
     <p class="note" id="acct-note">No accounting total. The books are not complete on this screen.</p>
     <label>Year<input id="acct-year" inputmode="numeric" placeholder="2026" /></label>
     <label>Month<input id="acct-month" inputmode="numeric" placeholder="09" /></label>
@@ -187,7 +251,18 @@
 
 <script>
 const $ = (id) => document.getElementById(id);
-const tabs = ["overview", "notas", "vendors", "history", "accountant"];
+const tabs = ["overview", "invoices", "notas", "vendors", "customers", "history", "reports"];
+const pathTab = {
+  "/ggv/finance": "overview",
+  "/ggv/finance/invoices": "invoices",
+  "/ggv/finance/notas": "notas",
+  "/ggv/finance/vendors": "vendors",
+  "/ggv/finance/customers": "customers",
+  "/ggv/finance/history": "history",
+  "/ggv/finance/reports": "reports"
+};
+let invoiceLines = [];
+let editingInvoice = null;
 let chosen = [];
 let uploadId = null;
 let notaId = null;
@@ -202,9 +277,12 @@ function showTab(name) {
     document.querySelector(`[data-tab="${tab}"]`).classList.toggle("active", tab === name);
   });
   if (name === "overview") loadOverview();
+  if (name === "invoices") loadInvoices();
   if (name === "notas") loadNotas();
   if (name === "vendors") searchVendors();
-  if (name === "accountant") loadAccountant();
+  if (name === "customers") searchCustomers();
+  if (name === "history") return;
+  if (name === "reports") loadAccountant();
 }
 document.querySelectorAll("nav.tabs button").forEach((btn) => {
   btn.addEventListener("click", () => showTab(btn.dataset.tab));
@@ -242,12 +320,36 @@ async function loadOverview() {
     ["Not paid from this screen", data.payment_unverified],
     ["Vendor issues", data.vendor_issues],
   ];
+  const desk = data.invoice_desk || {};
+  if (desk.invoice_access) {
+    cards.push(["Invoices awaiting action", desk.awaiting_action]);
+    cards.push(["Overdue invoices", desk.overdue]);
+    cards.push(["Payment claimed, not verified", desk.payment_unverified]);
+  }
   $("overview-cards").innerHTML = cards.map(([label, count]) =>
     `<article class="card"><p class="meta">${esc(label)}</p><p class="count">${esc(count)}</p></article>`
   ).join("");
   const recent = data.recently_added || [];
   $("recent").innerHTML = recent.length ? recent.map(notaCard).join("") : `<p class="note">Nothing added yet.</p>`;
+  const activity = desk.recent_activity || [];
+  $("activity").innerHTML = activity.length
+    ? activity.map((item) => `<article class="card">${esc(item.at)} · ${esc(item.action)}</article>`).join("")
+    : `<p class="note">No invoice activity yet.</p>`;
+  renderEntities(data.finance_entities || desk.finance_entities || []);
   if (data.boundary_note) $("boundary").textContent = data.boundary_note;
+}
+
+function renderEntities(rows) {
+  const box = $("entity-switch");
+  if (!rows || !rows.length) {
+    box.textContent = "This page is GGV.";
+    return;
+  }
+  if (rows.length === 1) {
+    box.textContent = "Finance · " + rows[0].label;
+    return;
+  }
+  box.innerHTML = "Finance · " + rows.map((row) => `<a class="inline" href="${esc(row.href)}">${esc(row.label)}</a>`).join(" · ");
 }
 
 function notaCard(nota) {
@@ -583,7 +685,213 @@ async function loadAccountant() {
 
 $("acct-export").addEventListener("click", () => downloadPack($("acct-year").value, $("acct-month").value, $("acct-note")));
 
+function blankLine() {
+  return { description: "", qty: "1", unit_price: "", tax_rate: "" };
+}
+
+function renderLines() {
+  $("inv-lines").innerHTML = invoiceLines.map((line, index) => `
+    <article class="card line-card">
+      <label>Description<input data-line="${index}" data-field="description" value="${esc(line.description)}" /></label>
+      <label>Qty<input data-line="${index}" data-field="qty" inputmode="decimal" value="${esc(line.qty)}" /></label>
+      <label>Unit price<input data-line="${index}" data-field="unit_price" inputmode="decimal" value="${esc(line.unit_price)}" /></label>
+      <label>Tax % <span class="meta">blank if none</span><input data-line="${index}" data-field="tax_rate" inputmode="decimal" value="${esc(line.tax_rate)}" /></label>
+      <button type="button" data-remove="${index}">Delete line</button>
+    </article>
+  `).join("");
+  $("inv-lines").querySelectorAll("input").forEach((input) => {
+    input.addEventListener("input", () => {
+      invoiceLines[Number(input.dataset.line)][input.dataset.field] = input.value;
+    });
+  });
+  $("inv-lines").querySelectorAll("[data-remove]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      invoiceLines.splice(Number(btn.dataset.remove), 1);
+      renderLines();
+    });
+  });
+}
+
+function invoiceBody() {
+  return {
+    customer_id: $("inv-customer").value,
+    invoice_number: $("inv-number").value,
+    number_confirmed: $("inv-number-ok").checked,
+    invoice_date: $("inv-date").value,
+    due_date: $("inv-due").value,
+    terms: $("inv-terms").value,
+    notes: $("inv-notes").value,
+    reference: $("inv-ref").value,
+    payment_method: $("inv-pay-method").value,
+    payment_reference: $("inv-pay-ref").value,
+    lines: invoiceLines
+  };
+}
+
+function showTotals(data) {
+  const row = data.preview || data.invoice || data;
+  $("inv-totals").innerHTML = `
+    <p>Subtotal ${esc(row.subtotal)} ${esc(row.currency)}</p>
+    <p>Tax ${esc(row.tax_total)} ${esc(row.currency)}</p>
+    <p><strong>Total ${esc(row.grand_total)} ${esc(row.currency)}</strong></p>
+    <p class="note">${esc((row.rounding || {}).order || "")}</p>
+  `;
+}
+
+async function loadCustomers(selected) {
+  const data = await api("/api/ggv/finance/customers");
+  const rows = data.customers || [];
+  $("inv-customer").innerHTML = rows.map((row) =>
+    `<option value="${esc(row.customer_id)}">${esc(row.legal_name)}</option>`
+  ).join("") || `<option value="">No customer yet</option>`;
+  if (selected) $("inv-customer").value = selected;
+  $("customer-list").innerHTML = rows.length
+    ? rows.map((row) => `<article class="card"><strong>${esc(row.legal_name)}</strong><br>${esc(row.email || "No email")}<br>${esc(row.billing_address || "Address unknown")}</article>`).join("")
+    : `<p class="note">No customers yet.</p>`;
+}
+
+async function loadInvoices() {
+  const data = await api("/api/ggv/finance/invoices");
+  const note = data.numbering && data.numbering.confirmation_required
+    ? data.numbering.reason
+    : "The next number can be assigned from the stored series.";
+  $("number-note").textContent = note || "";
+  const rows = data.invoices || [];
+  $("invoice-list").innerHTML = rows.length
+    ? rows.map((row) => `<article class="card"><button type="button" data-invoice="${esc(row.invoice_id)}"><strong>${esc(row.invoice_number || "Draft")}</strong><br>${esc((row.customer || {}).legal_name || "")}<br>${esc(row.status_label)} · ${esc(row.grand_total)} ${esc(row.currency)}</button></article>`).join("")
+    : `<p class="note">No invoices yet.</p>`;
+  $("invoice-list").querySelectorAll("[data-invoice]").forEach((btn) => {
+    btn.addEventListener("click", () => openInvoice(btn.dataset.invoice));
+  });
+}
+
+async function openInvoice(id) {
+  const data = await api("/api/ggv/finance/invoices/" + encodeURIComponent(id));
+  const row = data.invoice;
+  editingInvoice = row.invoice_id;
+  $("invoice-form").classList.remove("hidden");
+  $("invoice-heading").textContent = row.invoice_number || "Draft";
+  await loadCustomers(row.customer.customer_id);
+  $("inv-number").value = row.invoice_number || "";
+  $("inv-number-ok").checked = true;
+  $("inv-date").value = row.invoice_date || "";
+  $("inv-due").value = row.due_date || "";
+  $("inv-terms").value = row.terms || "";
+  $("inv-notes").value = row.notes || "";
+  $("inv-ref").value = row.reference || "";
+  $("inv-pay-method").value = row.payment_method || "";
+  $("inv-pay-ref").value = row.payment_reference || "";
+  invoiceLines = (row.lines || []).map((line) => ({
+    description: line.description,
+    qty: line.qty,
+    unit_price: line.unit_price,
+    tax_rate: line.tax_rate || ""
+  }));
+  renderLines();
+  showTotals(data);
+  $("issue-invoice").disabled = row.status !== "DRAFT" && row.status !== "READY";
+  $("save-draft").disabled = row.status !== "DRAFT";
+  const pdf = row.documents && row.documents.length
+    ? `<p><a class="inline" href="/api/ggv/finance/invoices/${esc(row.invoice_id)}/pdf">Open PDF</a></p>`
+    : "";
+  $("draft-email").innerHTML = pdf;
+}
+
+$("new-invoice").addEventListener("click", async () => {
+  editingInvoice = null;
+  invoiceLines = [blankLine(), blankLine(), blankLine(), blankLine()];
+  $("invoice-form").classList.remove("hidden");
+  $("invoice-heading").textContent = "New invoice";
+  $("invoice-msg").textContent = "";
+  $("draft-email").innerHTML = "";
+  $("inv-totals").innerHTML = "";
+  $("inv-preview").innerHTML = "";
+  ["inv-number", "inv-date", "inv-due", "inv-terms", "inv-notes", "inv-ref", "inv-pay-method", "inv-pay-ref"].forEach((id) => { $(id).value = ""; });
+  $("inv-number-ok").checked = false;
+  $("save-draft").disabled = false;
+  $("issue-invoice").disabled = true;
+  renderLines();
+  await loadCustomers();
+  const numbering = await api("/api/ggv/finance/numbering");
+  $("number-note").textContent = (numbering.numbering && numbering.numbering.reason) || "";
+});
+$("add-line").addEventListener("click", () => { invoiceLines.push(blankLine()); renderLines(); });
+$("invoice-back").addEventListener("click", () => { $("invoice-form").classList.add("hidden"); loadInvoices(); });
+$("show-customer").addEventListener("click", () => $("customer-create").classList.toggle("hidden"));
+$("save-customer").addEventListener("click", async () => {
+  try {
+    const data = await api("/api/ggv/finance/customers", { method: "POST", body: JSON.stringify({
+      legal_name: $("cust-legal").value,
+      trading_name: $("cust-trading").value,
+      tax_id: $("cust-tax").value,
+      billing_address: $("cust-address").value,
+      contact_name: $("cust-contact").value,
+      email: $("cust-email").value,
+      default_terms: $("cust-terms").value,
+      notes: $("cust-notes").value
+    })});
+    $("invoice-msg").textContent = data.reused ? "Using the existing customer." : "Customer saved.";
+    await loadCustomers(data.customer.customer_id);
+  } catch (err) {
+    $("invoice-msg").textContent = err.message;
+  }
+});
+$("preview-invoice").addEventListener("click", async () => {
+  try {
+    const data = await api("/api/ggv/finance/invoices/preview", { method: "POST", body: JSON.stringify(invoiceBody()) });
+    showTotals(data);
+    const lines = (data.lines || []).map((line) => `<p>${esc(line.description)} · ${esc(line.total)} ${esc(data.currency)}</p>`).join("");
+    $("inv-preview").innerHTML = `<article class="card"><strong>Preview</strong>${lines}<p>From ${esc((data.from || {}).legal_name || "GGV")}</p><p>Not saved.</p></article>`;
+  } catch (err) {
+    $("invoice-msg").textContent = err.message;
+  }
+});
+$("save-draft").addEventListener("click", async () => {
+  try {
+    const path = editingInvoice ? "/api/ggv/finance/invoices/" + encodeURIComponent(editingInvoice) : "/api/ggv/finance/invoices";
+    const data = await api(path, { method: "POST", body: JSON.stringify(invoiceBody()) });
+    editingInvoice = data.invoice.invoice_id;
+    $("issue-invoice").disabled = false;
+    $("invoice-msg").textContent = "Draft saved. The total was calculated here.";
+    showTotals(data);
+  } catch (err) {
+    $("invoice-msg").textContent = err.message;
+  }
+});
+$("issue-invoice").addEventListener("click", async () => {
+  if (!editingInvoice) return;
+  try {
+    const data = await api("/api/ggv/finance/invoices/" + encodeURIComponent(editingInvoice) + "/issue", { method: "POST", body: "{}" });
+    const draft = data.draft_email || {};
+    $("draft-email").innerHTML = `
+      <article class="card">
+        <p>PDF ready. It was not emailed.</p>
+        <p><a class="inline" href="/api/ggv/finance/invoices/${esc(editingInvoice)}/pdf">Open PDF</a></p>
+        <p>To: ${esc(draft.to || "UNKNOWN")}</p>
+        <p>Subject: ${esc(draft.subject || "")}</p>
+        <pre>${esc(draft.body || "")}</pre>
+      </article>`;
+    $("invoice-msg").textContent = "Issued. Issued is not paid.";
+    $("issue-invoice").disabled = true;
+    $("save-draft").disabled = true;
+  } catch (err) {
+    $("invoice-msg").textContent = err.message;
+  }
+});
+$("customer-search").addEventListener("click", () => searchCustomers());
+
+async function searchCustomers() {
+  const q = new URLSearchParams({ q: $("customer-q").value });
+  const data = await api("/api/ggv/finance/customers?" + q.toString());
+  const rows = data.customers || [];
+  $("customer-list").innerHTML = rows.length
+    ? rows.map((row) => `<article class="card"><strong>${esc(row.legal_name)}</strong><br>${esc(row.trading_name || "")}<br>${esc(row.email || "No email")}</article>`).join("")
+    : `<p class="note">No matching customer.</p>`;
+}
+
 loadOverview().then(function () {
+  const tab = pathTab[location.pathname.replace(/\/$/, "")] || "overview";
+  if (tab !== "overview") showTab(tab);
   document.body.setAttribute("data-ready", "1");
   var over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
   document.body.setAttribute("data-overflow", over ? "yes" : "no");

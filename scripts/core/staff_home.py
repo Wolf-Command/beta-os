@@ -75,6 +75,10 @@ def _owner_role(row: dict[str, Any]) -> bool:
     return kind == "EXECUTIVE" and "owner" in label
 
 
+def _atrium_finance_role(row: dict[str, Any]) -> bool:
+    return str(row.get("role_id") or "") == "ROLE-AMG-FINANCE-OFFICER"
+
+
 def _finance_role(row: dict[str, Any]) -> bool:
     blob = f"{row.get('role_id') or ''} {row.get('role_label') or ''}".lower()
     return "accountant" in blob or "finance" in blob
@@ -204,6 +208,8 @@ def _pick(rows: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
         if _owner_role(row):
             return "owner_pulse", row
     primary = rows[0]
+    if _atrium_finance_role(primary):
+        return "atrium_finance", primary
     if _finance_role(primary):
         return "finance", primary
     if _creative_role(primary):
@@ -352,6 +358,8 @@ def _desk(experience: str, role: dict[str, Any], brands: list[dict[str, str]]) -
         return []
     if experience in {"creative_director", "content_creator"}:
         return [{"label": "Open the content library", "href": "/content-2.0"}]
+    if experience == "atrium_finance":
+        return [{"label": "Open Atrium Finance", "href": "/amg/finance"}]
     if experience == "finance":
         return [{"label": "Open finance notes", "href": "/ggv/finance"}]
     if experience == "bzg_fb_ops":
@@ -378,6 +386,9 @@ def _desk(experience: str, role: dict[str, Any], brands: list[dict[str, str]]) -
 def _covers(experience: str, brands: list[dict[str, str]], scopes: list[dict[str, str]]) -> list[str]:
     if experience in {"creative_director", "content_creator"}:
         return ["Content library"]
+    if experience == "atrium_finance":
+        labels = [s["label"] for s in scopes if s.get("label")]
+        return labels or ["Atrium Finance"]
     if experience == "finance":
         labels = [s["label"] for s in scopes if "finance" in s["label"].lower()]
         return labels or ["Finance notes"]
@@ -405,6 +416,12 @@ def _boundary(experience: str) -> str | None:
             "You review and coordinate content work for the brands on your assignment. "
             "Publish stays on the existing publish gate. "
             "You cannot pay, change a bank account, or open Owner command."
+        )
+    if experience == "atrium_finance":
+        return (
+            "You work in Atrium Finance. "
+            "You can open the board, read the ledger and the chart, and send work for approval. "
+            "You cannot approve or post a journal, pay, change a bank account, or open another company."
         )
     if experience == "finance":
         return (
@@ -616,6 +633,9 @@ def build_home(person_id: str | None, *, conn=None) -> dict[str, Any]:
         role_label = str(role.get("role_label") or role.get("position_label") or "Your role")
         covers = _covers(experience, brands, scope_rows)
         desk = _desk(experience, role, brands)
+        if any(str(row.get("role_id") or "") == "ROLE-GGV-FINANCE-OPERATOR" for row in rows):
+            if not any(item.get("href") == "/ggv/finance" for item in desk):
+                desk.append({"label": "Open GGV Finance", "href": "/ggv/finance"})
         boundary = _boundary(experience)
         authority = {
             "move_money": bool(codes & _MONEY),

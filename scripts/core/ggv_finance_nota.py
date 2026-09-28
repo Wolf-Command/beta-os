@@ -134,6 +134,12 @@ STAGE_LABEL = {
 PAGE_PATHS = frozenset(
     {
         "/ggv/finance",
+        "/ggv/finance/invoices",
+        "/ggv/finance/notas",
+        "/ggv/finance/vendors",
+        "/ggv/finance/customers",
+        "/ggv/finance/history",
+        "/ggv/finance/reports",
         "/ggv-finance",
         "/ggv-finance.html",
         "/dashboards/ggv-finance.html",
@@ -2284,6 +2290,13 @@ def overview(person_id: str, *, conn: sqlite3.Connection | None = None) -> dict[
             "SELECT * FROM ggv_notas WHERE entity_id=? ORDER BY created_at DESC LIMIT 8",
             (ENTITY_GGV,),
         ).fetchall()
+        invoice_desk: dict[str, Any] = {}
+        try:
+            from core import ggv_finance_invoice as _inv
+
+            invoice_desk = _inv.desk_snapshot(person_id, c)
+        except Exception:
+            invoice_desk = {}
         return public_payload(
             {
                 "ok": True,
@@ -2292,9 +2305,12 @@ def overview(person_id: str, *, conn: sqlite3.Connection | None = None) -> dict[
                 "payment_unverified": unverified,
                 "vendor_issues": vendor_issues,
                 "recently_added": [_nota_public(c, row) for row in recent_rows],
+                "invoice_desk": invoice_desk,
+                "finance_entities": invoice_desk.get("finance_entities") or [],
                 "boundary_note": ZAYEN_NOTE,
                 "payment_note": "Entering a nota is not the same as paying it.",
                 "bank_note": "Bank details seen on a document are not verified.",
+                "issued_is_not_paid": True,
             }
         )
     finally:
@@ -2819,6 +2835,11 @@ def dispatch(method: str, path: str, qs: dict[str, list[str]], body: dict | None
             refuse_money(trimmed)
     rest = trimmed[len("/api/ggv/finance"):] or "/"
     body = body or {}
+    from core import ggv_finance_invoice as _inv
+
+    invoice_result = _inv.try_dispatch(method, rest, qs, body, person_id)
+    if invoice_result is not None:
+        return invoice_result
     if method == "GET" and rest in {"", "/"}:
         return overview(person_id)
     if method == "GET" and rest == "/overview":

@@ -357,6 +357,7 @@ LANDING_BY_AUDIENCE: dict[str, str | None] = {
     "SPECIALIST_AMG": "/amg-ops-pack",
     "SPECIALIST_CONTENT": CONTENT_HREF,
     "SPECIALIST_FINANCE": MY_WORK_HREF,
+    "SPECIALIST_ATRIUM_FINANCE": "/amg/finance",
     "CLIENT": None,
 }
 
@@ -448,6 +449,7 @@ AUDIENCE_PAGES: dict[str, list[str]] = {
     # Never Owner Intelligence Home (/intel-ops-pack) via nav alone.
     "SPECIALIST_CONTENT": [NEEDS_YOU_HREF, CONTENT_HREF, "/ggv-ops-pack"],
     "SPECIALIST_FINANCE": [MY_WORK_HREF, "/ggv/finance"],
+    "SPECIALIST_ATRIUM_FINANCE": [MY_WORK_HREF, "/amg/finance"],
     "CLIENT": [],  # controlled projection — never inherit operator Boards
     "SYSTEM": list(ALL_HREFS),
 }
@@ -468,6 +470,8 @@ ROLE_AUDIENCE: dict[str, str] = {
     "ROLE-AMG-OPS": "SPECIALIST_AMG",
     "ROLE-AMG-GM": "SPECIALIST_AMG",
     "ROLE-GGV-EXTERNAL-ACCOUNTANT": "SPECIALIST_FINANCE",
+    "ROLE-GGV-FINANCE-OPERATOR": "SPECIALIST_FINANCE",
+    "ROLE-AMG-FINANCE-OFFICER": "SPECIALIST_ATRIUM_FINANCE",
 }
 
 PERSON_AUDIENCE: dict[str, str] = {
@@ -676,6 +680,48 @@ ROUTE_CRUMBS: dict[str, list[dict[str, Any]]] = {
         {"label": "Goss Group", "href": None},
         {"label": "GGV", "href": "/ggv-ops-pack"},
         {"label": "Finance", "href": None},
+    ],
+    "/ggv/finance/invoices": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Goss Group", "href": None},
+        {"label": "GGV", "href": "/ggv-ops-pack"},
+        {"label": "Finance", "href": "/ggv/finance"},
+        {"label": "Invoices", "href": None},
+    ],
+    "/ggv/finance/notas": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Goss Group", "href": None},
+        {"label": "GGV", "href": "/ggv-ops-pack"},
+        {"label": "Finance", "href": "/ggv/finance"},
+        {"label": "Notas / Bills", "href": None},
+    ],
+    "/ggv/finance/vendors": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Goss Group", "href": None},
+        {"label": "GGV", "href": "/ggv-ops-pack"},
+        {"label": "Finance", "href": "/ggv/finance"},
+        {"label": "Vendors", "href": None},
+    ],
+    "/ggv/finance/customers": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Goss Group", "href": None},
+        {"label": "GGV", "href": "/ggv-ops-pack"},
+        {"label": "Finance", "href": "/ggv/finance"},
+        {"label": "Customers", "href": None},
+    ],
+    "/ggv/finance/history": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Goss Group", "href": None},
+        {"label": "GGV", "href": "/ggv-ops-pack"},
+        {"label": "Finance", "href": "/ggv/finance"},
+        {"label": "History", "href": None},
+    ],
+    "/ggv/finance/reports": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Goss Group", "href": None},
+        {"label": "GGV", "href": "/ggv-ops-pack"},
+        {"label": "Finance", "href": "/ggv/finance"},
+        {"label": "Reports", "href": None},
     ],
     "/amg-ops-pack": [
         {"label": "WOLF", "href": WOLF_ALIAS},
@@ -1064,6 +1110,7 @@ _ASSIGNMENT_AUDIENCE_ROLES = frozenset(
         "ROLE-GGV-CREATIVE-DIRECTOR",
         "ROLE-CONTENT-CREATOR",
         "ROLE-GGV-EXTERNAL-ACCOUNTANT",
+        "ROLE-AMG-FINANCE-OFFICER",
     }
 )
 
@@ -1151,6 +1198,9 @@ _ROLE_HREF: dict[str, str] = {
     "ROLE-AMG-GM": "/amg-ops-pack",
     "ROLE-MATT": WOLF_ALIAS,
     "ROLE-OWNER": WOLF_ALIAS,
+    "ROLE-AMG-FINANCE-OFFICER": "/amg/finance",
+    "ROLE-GGV-FINANCE-OPERATOR": "/ggv/finance",
+    "ROLE-GGV-EXTERNAL-ACCOUNTANT": "/ggv/finance",
 }
 
 

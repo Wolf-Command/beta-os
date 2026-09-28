@@ -1,83 +1,76 @@
 # STAFF ACCESS — 28 Sep 2026
 
-Decision served: owner brief 28 Sep 2026 10:09 WITA. Extends Wolf Core. Beta `:8788` only. Production `:8787` stayed pid 15975. Beta was restarted from pid 40318 to pid 52888 (`scripts/serve_beta.py`) and came back HTTP 200 on `/api/health`. No money, bank, payment, ESB, or NAS write. No Cloudflare Access edit. No push. Grok was not called.
+Decision served: owner brief 28 Sep 2026 11:28 WITA. Extends STAFF-1 on commit `d97ea20`. Beta `:8788` only. Production `:8787` stayed pid 15975. Beta was restarted from pid 52888 to pid 58853 (`state/build-factory/detach.py` then `scripts/serve_beta.py`). Health on `:8788` is HTTP 200. No money, bank, payment, ESB, or NAS write. No Cloudflare Access edit. No push. Grok was not called. Atrium books were not opened. Authority limits stay 0. SoD constraints stay 0.
 
-TECHNICAL PROOF is `scripts/tests/test_staff_access_20260928.py` through `scripts/tests/run_guarded.py`. DEPLOYED ROUTE PROOF is unsigned and spoofed deny on pid 52888, plus `GET /signout` → 302. A seated Cloudflare 200 was not observed. STAFF READINESS stays no. HUMAN COMMISSIONING stays no. OPERATING ADOPTION stays not measured.
+STAFF READY is false for every person. HUMAN COMMISSIONED is false for every person. This pack is not a new git commit.
 
-## STAFF ACCESS — READY FOR HUMAN SIGN-IN
+The first Beta restart loaded the old role seed and put Misa's Content Crew assignment back to ACTIVE. The seed now leaves an ended assignment ended. The assignment was ended again, Beta was restarted once more, and the row stayed ENDED.
 
-| Person | AuthIdentity | Role | Scope | Allowed | Explicitly denied | Human test required |
-| --- | --- | --- | --- | --- | --- | --- |
-| Haikal (`PERS-HAIKAL`, unchanged) | `haikalqilbari123@gmail.com` (existing) | Creative Director, primary `ASG-HAIKAL-CD-1` still ACTIVE. Video Editor stays ENDED | Existing Creative Director scopes, including all content brands | Existing Creative Director grants, plus the content floor: `work.read`, `work.update`, `work.assign`, `evidence.record.submit`, `approval.request` | Finance, payment, bank change, Owner command, system admin. `content.plan.approve` stays off this role | Sign in. Expect Content (`/content-2.0`) and My Work as Creative Director. No finance, HR, or Owner command |
-| Misa (`PERS-MISA`, not duplicated) | `mlsary111@gmail.com` (existing; case-normalised) | Creative Director primary `ASG-MISA-CD-1` on `POS-GGV-CREATIVE-DIRECTOR-2`. Content Crew `ASG-MISA-CC-1` stays ACTIVE and is not primary. AMG day fixture stays ACTIVE and is not primary | Creative Director scopes already on that role: GGV content, content library, all content brands, Habitat lead, CRM Habitat lead | Creative Director role grants. The still-active Content Crew assignment still adds that role's older grants. A replacement seated only on Creative Director does not receive the crew grants | `payment.approve`, `payment.execute`, `finance.nota.read`, progress, Owner command | Sign in. Expect Content, not the hotel desk. My Work says Creative Director. Crew and the AMG fixture are still on the person |
-| Yudi | `widiatmika.11@gmail.com` | Content Creator, primary | `SCOPE-GGV-CONTENT`, `SCOPE-GGV-CONTENT-LIBRARY` | `content.plan.read`, `content.asset.upload`, `evidence.record.submit`, `approval.request`, `work.read`, `work.update` | Approve, publish, `work.assign`, finance, payment, bank, HR, governance, Owner, system admin, Uma close, AMG day operator | Sign in. Expect Content and My Work as Content Creator. Today is empty until work is stored on the assignment |
-| Gery | `mr.gerryarfanata@gmail.com` | Content Creator, primary | same as Yudi | same as Yudi | same as Yudi | same as Yudi |
-| Alam | `alamprojects26@gmail.com` | Content Creator, primary | same as Yudi | same as Yudi | same as Yudi | same as Yudi |
-| TJ | `tejasaputra.wahyuhidayat@gmail.com` | Content Creator, primary | same as Yudi | same as Yudi | same as Yudi | same as Yudi |
-| Nata | `omnia.folio@gmail.com` | Content Creator, primary | same as Yudi | same as Yudi | same as Yudi | same as Yudi |
-| Rapp | `evetrovert@gmail.com` | Content Creator, primary | same as Yudi | same as Yudi | same as Yudi | same as Yudi |
-| Not in the registry | `laluzayen@gmail.com` — not created | Not assigned. No person matched this email or a stored Zayen / Atrium Finance name. Display name was not invented. The only finance seat remains `ROLE-GGV-EXTERNAL-ACCOUNTANT` / `POS-GGV-EXT-ACCT`, still empty. There is no Atrium finance role | none | none | n/a — no identity | Confirm the existing person, or authorise a display name, before this email is bound. Do not add it to Cloudflare Access until then |
+## STAFF ACCESS — HUMAN TESTING OPEN
 
-Legal names were not invented. Content Creator display names are the short names given.
+| Person | Role | Scope | Beta Access (CF include: PENDING OWNER unless verified) | Landing Page | Allowed | Denied | Commissioning Status (PENDING) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Haikal | Creative Director, primary | Existing Creative Director scopes | PENDING OWNER | `/content-2.0` | Content floor already on that role: read and update work, assign work, submit evidence, request approval | Finance, payment, bank, Owner, system admin | PENDING |
+| Misa | Creative Director, primary | Same Creative Director scopes as that role | PENDING OWNER | `/content-2.0` | Creative Director grants. Content read still allowed | Payment, bank, Owner, the ended crew grants, hotel day operator | PENDING |
+| Yudi | Content Creator, primary | GGV content and the content library | PENDING OWNER | `/content-2.0` | Read plans, upload, submit evidence, request approval, read and update work | Approve, publish, assign work, finance, payment, bank, Owner, system admin | PENDING |
+| Gery | Content Creator, primary | same as Yudi | PENDING OWNER | `/content-2.0` | same as Yudi | same as Yudi | PENDING |
+| Alam | Content Creator, primary | same as Yudi | PENDING OWNER | `/content-2.0` | same as Yudi | same as Yudi | PENDING |
+| TJ | Content Creator, primary | same as Yudi | PENDING OWNER | `/content-2.0` | same as Yudi | same as Yudi | PENDING |
+| Nata | Content Creator, primary | same as Yudi | PENDING OWNER | `/content-2.0` | same as Yudi | same as Yudi | PENDING |
+| Rapp | Content Creator, primary | same as Yudi | PENDING OWNER | `/content-2.0` | same as Yudi | same as Yudi | PENDING |
+| Zayen | Atrium Finance Officer, primary. The role is not named for her | Atrium only (`ENT-AMG`) | PENDING OWNER | `/amg/finance` | Read the board, read the ledger, save a draft journal in the ledger app's terms, read reports, read the chart, submit for approval | Post or approve a journal, pay, approve a payment, bank change, GGV, Blu Zone, Owner, system admin, role admin, hotel day desk. No limit was granted | PENDING |
 
-## HR mailbox rows
+Login cards are `docs/wolf/staff/HUMAN-COMMISSIONING-28SEP.md`. Every human result there is PENDING.
 
-These are function mailboxes in `org_function_mailboxes`. They are not Persons, not AuthIdentities, and not Wolf logins. No HR role exists, so no human was granted HR.
+## Zayen
 
-| Function | Address | Wolf login | Person | AuthIdentity |
-| --- | --- | --- | --- | --- |
-| HR | `hr@atriumlombok.com` | no | none | none |
-| RECRUITMENT | `recruitment@atriumlombok.com` | no | none | none |
+Person `PERS-ZAYEN`. Display name Zayen. No surname. Email `laluzayen@gmail.com`.
 
-Do not add these two addresses to Cloudflare Access as Wolf users. Access to HR work has to come from an authorised human's active HR assignment. That assignment does not exist yet.
+No Atrium finance role was already in Wolf. The ledger app's General Accountant is a role inside that app, not a Wolf assignment. One Wolf role was created: `ROLE-AMG-FINANCE-OFFICER`, label Atrium Finance Officer. Position `POS-AMG-FINANCE-OFFICER-1`. Assignment `ASG-ZAYEN-FIN-1`. Scope `SCOPE-AMG-FINANCE` targets `ENT-AMG` only.
 
-## Succession
+Grants follow the ledger routes in `atrium-finance/server/routeAccess.ts`:
 
-On a temp copy of the catalog, not the live file: Yudi's active assignment was ended and `content.plan.read` became deny. The ended row stayed. A replacement person on a new Content Creator seat with the same role and the same two scopes could read and was denied `finance.nota.read`. The original person no longer had an active seat. My Work for the replacement was Content Creator.
+- Board read is `GET /api/dashboard`.
+- Ledger read is `GET /api/journals`, `GET /api/journals/:id`, `GET /api/ledger`, and `GET /api/trial-balance`.
+- Draft save is `POST /api/journals` and `POST /api/journals/:id/validate`.
+- Report read is `GET /api/reports/financial-statements`, `GET /api/reports/usali`, and `GET /api/reports/drilldown`.
+- Chart read is `GET /api/accounts`.
+- Submit for approval is the existing `approval.request` on Atrium only.
+
+Journal approve and journal post exist as codes and are not granted. Those routes require approve. The ledger app has no source-document upload route, so no upload grant was created. The Wolf page does not open the books and does not save a journal.
+
+On a temp copy of the catalog: ending Zayen's assignment removed access and kept the row on her. A replacement on the same role and the same scope could read the board and was denied payment and GGV.
+
+## Misa
+
+Content Crew `ASG-MISA-CC-1` was created `2026-09-16T21:47:39+08:00` by the role seed. Role `ROLE-CONTENT-CREW`, position `POS-CONTENT-CREW-1`, label Content Crew (TBD title). It was not primary. Scopes were GGV content, the content library, Habitat lead, and CRM Habitat lead. Its grants included publish request, lead operator, and organisation read. The Creative Director role does not have those grants. Haikal, who is only on Creative Director, does not have them. No live Creative Director step depends on the crew seat. It is ended. End `2026-09-28T11:47:45+08:00`. The row remains. Reason: Content Crew is a 16 Sep 2026 TBD seed. Creative Director is the live seat. The crew grants are not on that role. Ended so the old seat does not keep access.
+
+The hotel day seat `ASG-AMG-DAY-MISA` was created `2026-09-22T14:17:42+08:00` by the day-operator fixture. Role General Manager, position Atrium day-operator Beta fixture, scope AMG Atrium day operator. The only grant was `amg.day.operator`. The code says it is not live hotel commissioning. It is ended. End `2026-09-28T11:44:52+08:00`. The row remains. A later day-operator ensure does not put the ended row back. Reason: Atrium day-operator seat is a Beta fixture from 22 Sep 2026, not a live hotel assignment. Ended so hotel day access does not stay on this person.
+
+Misa's primary is still Creative Director. She still lands on Content. She can still read content. Payment and the hotel day permission are denied.
 
 ## My Work
 
-No work item is stored (`core_work_items` count stayed 0). Content Creator and Creative Director Today says: no content work is assigned to this seat yet; plans, submissions, and production tasks for this role will appear when they are stored on the assignment. Stored content plans were not copied into the queue. They are not assigned to these seats.
+`core_work_items` stays 0. The nine stored content plans were not assigned to these seats. Today stays empty.
 
-## Deployed Beta pid 52888
+## Deployed Beta pid 58853
 
-Unsigned `GET` is 403 on `/content-2.0`, `/my-work`, `/api/staff/home`, `/ggv/finance`, `/wolf`, `/api/owner/command`, `/bzg/uma-blu`, `/amg-ops-pack`, and `/progress`. A spoofed `X-Wolf-Subject` and a spoofed `Cf-Access-Authenticated-User-Email` are 403. `GET /signout` is 302 to the Access logout. A seated allow was not minted.
-
-## Cloudflare Access include list
-
-Human / Owner step. This pack did not edit Cloudflare.
-
-Add these bound personal emails if they are not already on the Beta Access include list:
-
-- `haikalqilbari123@gmail.com`
-- `mlsary111@gmail.com`
-- `widiatmika.11@gmail.com`
-- `mr.gerryarfanata@gmail.com`
-- `alamprojects26@gmail.com`
-- `tejasaputra.wahyuhidayat@gmail.com`
-- `omnia.folio@gmail.com`
-- `evetrovert@gmail.com`
+Unsigned `GET` is 403 on `/amg/finance`, `/content-2.0`, `/ggv/finance`, `/bzg/uma-blu`, `/wolf`, and `/amg-ops-pack`. A spoofed subject and a spoofed access email are 403. `GET /signout` is 302. A seated Cloudflare allow was not minted.
 
 Do not add `hr@atriumlombok.com` or `recruitment@atriumlombok.com`.
 
-Do not add `laluzayen@gmail.com` until a Person is bound.
+Add `laluzayen@gmail.com` to the Beta Access include list only when the Owner does that step. This pack did not.
 
 ## Tests
 
 | suite | result |
 | --- | --- |
-| `test_staff_access_20260928.py` | SUMMARY pass=204 fail=0 |
-| `test_canonical_guard.py` | PASS=20 FAIL=0 |
-| `test_role_dashboard.py` | PASS=142 FAIL=2. Owner succession fingerprint and the HTTP owner succession. The same two were already recorded this morning. Creative, F&B, finance, closer, and manager fingerprints passed. Misa's primary page is not the manager page |
-| `test_staff_home.py` | The checks through the owner pulse passed. The suite then deletes a scratch row in the live catalog. The guard refused that write (`not authorized`) and the process stopped. Not re-run a second time |
-| `test_wolf_intel_nav.py` | PASS=160 FAIL=5. Misa landing checks passed. Remaining: content crumb string is not in `content-2.0.html` (that file was not edited), and three prior-wave child suites |
-| `test_wolf_amg_nav.py` | PASS=142 FAIL=3. Misa landing and bake checks passed. Remaining fails are prior-wave child suites |
-| `test_wolf_specialist_nav.py` | PASS=222 FAIL=10. The guarded run started at 10:26 WITA. Coral landing and coral whoami landing failed in that run. A later read of `build_whoami` for PERS-MISA is audience SPECIALIST_CONTENT and landing `/content-2.0`. The honesty-slice checks fail because the current slice is `wolf_ggv_content_nas_haikal_prep`. Six prior-wave child suites failed on guard write-refusal noise. Wave 3 passed |
+| `test_staff_access_20260928.py` | SUMMARY pass=274 fail=0 |
 
-`test_rbac_permissions.py` was not run. It writes the live catalog. The inactive-assignment check now ends every active Misa assignment, then restores those rows, so a second seat cannot leave access on.
+The count includes the allow and deny matrix, direct-URL denies, the Content Creator succession, and the Atrium Finance Officer succession.
 
 ## Commits
 
-Local only. Not pushed. `4270103` seats the identities. This file's hash follows that commit.
+Local only. Not pushed. Parent remains `d97ea20`. This pack is not committed.
 
 RESULT: PASS

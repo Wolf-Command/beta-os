@@ -17,6 +17,7 @@ REPRESENTATIVES: dict[str, str] = {
     "content_creator": "content_creator",
     "bzg_fb_ops": "bzg_fb_ops",
     "finance": "external_accountant",
+    "atrium_finance": "atrium_finance_officer",
     "closer": "closer",
     "manager": "manager",
     "owner_pulse": "owner",

@@ -13,6 +13,10 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from core import identity, rbac  # noqa: E402
 from core.staff_access import (  # noqa: E402
+    ATRIUM_DENIED,
+    ATRIUM_FINANCE_HREF,
+    ATRIUM_GRANTS,
+    ATRIUM_SUBMIT,
     CREATOR_DENIED,
     CREATOR_PERMISSIONS,
     CREATORS,
@@ -20,16 +24,24 @@ from core.staff_access import (  # noqa: E402
     HAIKAL_CD_ASSIGNMENT,
     HR_MAILBOXES,
     MISA_CD_ASSIGNMENT,
+    MISA_CREW_ASSIGNMENT,
+    MISA_DAY_ASSIGNMENT,
     MISA_EMAIL,
     MISA_PERSON,
+    ROLE_ATRIUM_FINANCE,
     ROLE_CONTENT_CREATOR,
     ROLE_CREATIVE_DIRECTOR,
+    SCOPE_AMG_FINANCE,
+    ZAYEN_ASSIGNMENT,
+    ZAYEN_PERSON,
 )
 from core.staff_home import StaffHomeError, build_home  # noqa: E402
 from core.wolf_shell import build_whoami  # noqa: E402
 
 CATALOG = ROOT / "catalog" / "content_library.sqlite"
 CONTENT = {"entity_id": "ENT-GGV", "department_id": "DEPT-GGV-CONTENT"}
+AMG = {"entity_id": "ENT-AMG"}
+BZG = {"entity_id": "ENT-BZG"}
 PASS = 0
 FAIL = 0
 
@@ -85,7 +97,49 @@ def test_registry() -> None:
             and primary["role_id"] == ROLE_CREATIVE_DIRECTOR,
         )
         finance = identity.resolve_person_from_email(FINANCE_EMAIL, conn=conn)
-        check("finance email is not bound", finance is None)
+        check(
+            "Zayen email binds Zayen",
+            finance is not None
+            and finance["person_id"] == ZAYEN_PERSON
+            and finance["display_name"] == "Zayen"
+            and not finance.get("legal_name"),
+        )
+        seat = conn.execute(
+            """
+            SELECT p.role_id, p.position_label, a.is_primary, a.end_at
+            FROM org_assignments a
+            JOIN org_positions p ON p.position_id = a.position_id
+            WHERE a.assignment_id=? AND a.status='ACTIVE'
+            """,
+            (ZAYEN_ASSIGNMENT,),
+        ).fetchone()
+        check(
+            "Zayen seat is Atrium Finance Officer",
+            seat is not None
+            and seat["role_id"] == ROLE_ATRIUM_FINANCE
+            and seat["position_label"] == "Atrium Finance Officer"
+            and seat["is_primary"] == 1
+            and seat["end_at"] is None,
+        )
+        named = conn.execute(
+            "SELECT COUNT(*) FROM org_roles WHERE role_id LIKE '%ZAYEN%' OR display_name LIKE '%Zayen%'"
+        ).fetchone()[0]
+        check("role name is not the person", named == 0)
+        for assignment_id in (MISA_CREW_ASSIGNMENT, MISA_DAY_ASSIGNMENT):
+            ended = conn.execute(
+                "SELECT status, end_at, end_reason FROM org_assignments WHERE assignment_id=?",
+                (assignment_id,),
+            ).fetchone()
+            check(
+                f"{assignment_id} ended and kept",
+                ended is not None
+                and ended["status"] == "ENDED"
+                and ended["end_at"]
+                and str(ended["end_reason"] or "").strip(),
+            )
+        limits = conn.execute("SELECT COUNT(*) FROM org_authority_limits").fetchone()[0]
+        sod = conn.execute("SELECT COUNT(*) FROM core_sod_constraints").fetchone()[0]
+        check("no authority limit added", limits == 0 and sod == 0)
         for box in HR_MAILBOXES:
             address = box["address"].lower()
             row = conn.execute(
@@ -154,6 +208,48 @@ def test_permissions() -> None:
         )
         who = build_whoami(person_id=MISA_PERSON)
         check("Misa lands on content", who.get("landing") == "/content-2.0")
+        check(
+            "Misa crew grant is gone",
+            rbac.can(MISA_PERSON, "content.habitat.publish.request", CONTENT, conn=conn) is False
+            and rbac.can(MISA_PERSON, "amg.day.operator", {"entity_id": "ENT-AMG", "brand_id": "AMG-ATR"}, conn=conn) is False,
+        )
+        check("Misa still reads content", rbac.can(MISA_PERSON, "content.plan.read", CONTENT, conn=conn))
+        for row in ATRIUM_GRANTS:
+            check(
+                f"Zayen allows {row[1]}",
+                rbac.can(ZAYEN_PERSON, row[1], AMG, conn=conn),
+            )
+            check(
+                f"Zayen denies {row[1]} on GGV",
+                rbac.can(ZAYEN_PERSON, row[1], CONTENT, conn=conn) is False,
+            )
+            check(
+                f"Zayen denies {row[1]} on BZG",
+                rbac.can(ZAYEN_PERSON, row[1], BZG, conn=conn) is False,
+            )
+        check(
+            "Zayen can submit for approval on Atrium",
+            rbac.can(ZAYEN_PERSON, ATRIUM_SUBMIT, AMG, conn=conn),
+        )
+        check(
+            "Zayen cannot submit for approval on GGV",
+            rbac.can(ZAYEN_PERSON, ATRIUM_SUBMIT, CONTENT, conn=conn) is False,
+        )
+        for code in ATRIUM_DENIED:
+            check(
+                f"Zayen denies {code}",
+                rbac.can(ZAYEN_PERSON, code, AMG, conn=conn) is False,
+            )
+        zwho = build_whoami(person_id=ZAYEN_PERSON)
+        check("Zayen lands on Atrium Finance", zwho.get("landing") == ATRIUM_FINANCE_HREF)
+        pages = set(zwho.get("pages") or [])
+        check("Zayen page set is Atrium Finance and My Work", pages == {ATRIUM_FINANCE_HREF, "/my-work"})
+        for hidden in ("/ggv/finance", "/bzg/uma-blu", "/wolf", "/amg-ops-pack", "/content-2.0", "/progress"):
+            check(f"Zayen hides {hidden}", hidden not in pages)
+        home = build_home(ZAYEN_PERSON, conn=conn)
+        check("Zayen my work is atrium finance", home.get("experience") == "atrium_finance")
+        check("Zayen cannot move money", home.get("authority", {}).get("move_money") is False)
+        check("Zayen staff flags stay false", home.get("staff_ready") is False and home.get("human_commissioned") is False)
     finally:
         conn.close()
 
@@ -240,10 +336,162 @@ def test_succession() -> None:
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def test_zayen_succession() -> None:
+    tmp = Path(tempfile.mkdtemp(prefix="staff-zayen-"))
+    copy = tmp / "catalog.sqlite"
+    shutil.copy(CATALOG, copy)
+    conn = sqlite3.connect(copy)
+    conn.row_factory = sqlite3.Row
+    try:
+        check("Zayen can read the board before end", rbac.can(ZAYEN_PERSON, "atrium.board.read", AMG, conn=conn))
+        conn.execute(
+            """
+            UPDATE org_assignments
+            SET status='ENDED', end_at='2026-09-28T12:00:00+08:00', is_primary=0,
+                end_reason='succession test'
+            WHERE assignment_id=?
+            """,
+            (ZAYEN_ASSIGNMENT,),
+        )
+        conn.commit()
+        check(
+            "ended Zayen assignment removes access",
+            rbac.can(ZAYEN_PERSON, "atrium.board.read", AMG, conn=conn) is False,
+        )
+        kept = conn.execute(
+            "SELECT person_id, status, end_reason FROM org_assignments WHERE assignment_id=?",
+            (ZAYEN_ASSIGNMENT,),
+        ).fetchone()
+        check(
+            "Zayen history stays with Zayen",
+            kept is not None and kept["person_id"] == ZAYEN_PERSON and kept["status"] == "ENDED",
+        )
+        ts = "2026-09-28T12:01:00+08:00"
+        conn.execute(
+            """
+            INSERT INTO org_persons (person_id, display_name, legal_name, status, created_at, updated_at)
+            VALUES ('PERS-FIN-REPLACEMENT', 'Replacement', NULL, 'ACTIVE', ?, ?)
+            """,
+            (ts, ts),
+        )
+        conn.execute(
+            """
+            INSERT INTO org_positions (
+              position_id, role_id, entity_id, position_label, status, fte, created_at, updated_at
+            ) VALUES ('POS-AMG-FINANCE-OFFICER-REPL', ?, 'ENT-AMG',
+                      'Atrium Finance Officer', 'ACTIVE', 1.0, ?, ?)
+            """,
+            (ROLE_ATRIUM_FINANCE, ts, ts),
+        )
+        conn.execute(
+            """
+            INSERT INTO org_assignments (
+              assignment_id, person_id, position_id, start_at, end_at, status,
+              is_primary, created_at, updated_at
+            ) VALUES ('ASG-FIN-REPLACEMENT', 'PERS-FIN-REPLACEMENT', 'POS-AMG-FINANCE-OFFICER-REPL',
+                      ?, NULL, 'ACTIVE', 1, ?, ?)
+            """,
+            (ts, ts, ts),
+        )
+        conn.execute(
+            """
+            INSERT INTO org_assignment_scopes (
+              assignment_id, scope_id, start_at, end_at, status, created_at, updated_at
+            ) VALUES ('ASG-FIN-REPLACEMENT', ?, ?, NULL, 'ACTIVE', ?, ?)
+            """,
+            (SCOPE_AMG_FINANCE, ts, ts, ts),
+        )
+        conn.commit()
+        check(
+            "replacement with the same role can read the board",
+            rbac.can("PERS-FIN-REPLACEMENT", "atrium.board.read", AMG, conn=conn),
+        )
+        check(
+            "replacement is denied payment",
+            rbac.can("PERS-FIN-REPLACEMENT", "payment.approve", AMG, conn=conn) is False,
+        )
+        check(
+            "replacement is denied GGV",
+            rbac.can("PERS-FIN-REPLACEMENT", "atrium.board.read", CONTENT, conn=conn) is False,
+        )
+        home = build_home("PERS-FIN-REPLACEMENT", conn=conn)
+        check("replacement reaches atrium finance", home.get("experience") == "atrium_finance")
+        try:
+            build_home(ZAYEN_PERSON, conn=conn)
+            check("Zayen no longer has an active seat", False)
+        except StaffHomeError:
+            check("Zayen no longer has an active seat", True)
+    finally:
+        conn.close()
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_direct_urls() -> None:
+    import os
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    from urllib.error import HTTPError
+    from urllib.request import Request, urlopen
+
+    os.environ["BETA_AUTH_MODE"] = "development_assertion"
+    import serve_beta as sb
+
+    handler = None
+    for obj in vars(sb).values():
+        if isinstance(obj, type) and issubclass(obj, BaseHTTPRequestHandler) and obj.__name__ == "BetaHandler":
+            handler = obj
+            break
+    check("beta handler found", handler is not None)
+    if handler is None:
+        return
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    port = httpd.server_address[1]
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+
+    def call(path: str, subject: str | None = None, method: str = "GET") -> int:
+        headers = {"Accept": "*/*"}
+        if subject:
+            headers["X-Wolf-Subject"] = subject
+        req = Request(f"http://127.0.0.1:{port}{path}", headers=headers, method=method)
+        try:
+            with urlopen(req, timeout=30) as resp:
+                return resp.status
+        except HTTPError as exc:
+            return exc.code
+
+    email = FINANCE_EMAIL
+    check("Zayen direct Atrium Finance", call(ATRIUM_FINANCE_HREF, email) == 200)
+    check("unsigned Atrium Finance denied", call(ATRIUM_FINANCE_HREF) == 403)
+    for path in (
+        "/ggv/finance",
+        "/bzg/uma-blu",
+        "/wolf",
+        "/amg-ops-pack",
+        "/content-2.0",
+        "/api/ggv/finance/pay",
+    ):
+        check(f"Zayen direct deny {path}", call(path, email) == 403)
+    check("Zayen cannot post on Atrium Finance", call("/api/amg/finance", email, "POST") == 405)
+    spoof = Request(
+        f"http://127.0.0.1:{port}/ggv/finance",
+        headers={"Cf-Access-Authenticated-User-Email": email},
+        method="GET",
+    )
+    try:
+        with urlopen(spoof, timeout=30) as resp:
+            spoof_code = resp.status
+    except HTTPError as exc:
+        spoof_code = exc.code
+    check("spoofed access email does not open GGV", spoof_code == 403)
+    httpd.shutdown()
+
+
 def main() -> None:
     test_registry()
     test_permissions()
     test_succession()
+    test_zayen_succession()
+    test_direct_urls()
     print(f"SUMMARY pass={PASS} fail={FAIL}")
     if FAIL:
         raise SystemExit(1)
