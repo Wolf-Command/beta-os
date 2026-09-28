@@ -154,6 +154,19 @@ def _maturity(value: str) -> str:
     return "UNKNOWN"
 
 
+def ledger_row_count(ledger_path: Path | str | None = None) -> int | None:
+    """Count ledger rows. Does not add or remove one."""
+    path = Path(ledger_path) if ledger_path else LEDGER_JSON
+    _guard_read(path)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    return len(data)
+
+
 def ledger_cap_state(ledger_path: Path | str | None = None) -> str:
     """Read CAP-CRM-01 from the ledger. Does not write it."""
     path = Path(ledger_path) if ledger_path else LEDGER_JSON
@@ -699,3 +712,300 @@ def build_prove(
             "cr": False,
         },
     }
+
+
+def _flag(value: Any) -> bool:
+    return bool(str(value or "").strip())
+
+
+def _bound_block(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Same predicates as classify_bound. No age window and no follow policy."""
+    owned = unowned = aged = not_aged = followed = not_followed = 0
+    for row in rows:
+        if row["owner_set"]:
+            owned += 1
+        else:
+            unowned += 1
+        if row["aged"]:
+            aged += 1
+        else:
+            not_aged += 1
+        if row["followed"]:
+            followed += 1
+        else:
+            not_followed += 1
+    count = len(rows)
+    return {
+        "status": "READ",
+        "rows": count,
+        "owned": owned,
+        "unowned": unowned,
+        "aged": aged,
+        "not_aged": not_aged,
+        "followed": followed,
+        "not_followed": not_followed,
+        "empty": count == 0,
+        "operating_board": False,
+        "age_threshold_days": None,
+        "follow_policy": None,
+        "aged_definition": "source_observed_at present",
+        "followed_definition": "first_human_touch_at present",
+    }
+
+
+def read_stored_crm(
+    catalog_db: Path | str | None = None,
+    ledger_path: Path | str | None = None,
+) -> dict[str, Any]:
+    """Read leads already in core_leads for CAP-CRM-01. Writes nothing.
+
+    Owned, aged, and followed use the stored columns only. Demo rows stay
+    out of the operational counts. Person ids and assignment ids are not
+    listed. CAP-GGV-04 is a different row. The ledger stays unread for writes.
+    """
+    flags = honesty_flags(ledger_path, catalog_db)
+    flags["ledger_rows"] = ledger_row_count(ledger_path)
+    base: dict[str, Any] = {
+        "ok": False,
+        "cap": CAP_ID,
+        "read": "stored_crm",
+        "data_lane": "UNKNOWN",
+        "lane_column": False,
+        "email_column": "UNKNOWN",
+        "stored_rows": "UNKNOWN",
+        "demo_rows": "UNKNOWN",
+        "operational_rows": "UNKNOWN",
+        "demo_counted_as_operational": False,
+        "leads_created": 0,
+        "persons_created": 0,
+        "assignments_created": 0,
+        "persons_stored": "UNKNOWN",
+        "assignments_stored": "UNKNOWN",
+        "person_id_listed": False,
+        "assignment_id_listed": False,
+        "identity_fields_selected": False,
+        "operating_board": False,
+        "proved": False,
+        "current": False,
+        "sales": None,
+        "closed_is_not_a_sale": True,
+        "closed_rows": "UNKNOWN",
+        "boundary": "NOT_READ",
+        "rows_missing_entity": "UNKNOWN",
+        "rows_missing_brand": "UNKNOWN",
+        "ggv_cap": "CAP-GGV-04",
+        "ggv_tested_here": False,
+        "speed_tested_here": False,
+        "staff_ready": False,
+        "human_commissioned": False,
+        "operating_adoption": "NOT MEASURED",
+        "catalog_write": False,
+        "ledger_write": False,
+        "klaviyo_called": False,
+        "klaviyo_write": False,
+        "metricool_write": False,
+        "external_crm_write": False,
+        "payment_executed": False,
+        "esb_write": False,
+        "cr_resolved": False,
+        "honesty": flags,
+        "why": "Stored leads were not read. Absence is not zero and not an invented lead.",
+    }
+    path = Path(catalog_db) if catalog_db else CATALOG_DB
+    _guard_read(path)
+    conn = _ro(path)
+    if conn is None:
+        return base
+    try:
+        if not _table_exists(conn, "core_leads"):
+            return base
+        columns = [str(col[1]) for col in conn.execute("PRAGMA table_info(core_leads)").fetchall()]
+        fetched = conn.execute(
+            """
+            SELECT
+              CASE
+                WHEN entity_id IS NOT NULL AND length(trim(entity_id)) > 0
+                THEN entity_id ELSE ''
+              END,
+              CASE
+                WHEN brand_id IS NOT NULL AND length(trim(brand_id)) > 0
+                THEN brand_id ELSE ''
+              END,
+              source_system,
+              CASE
+                WHEN owner_person_id IS NOT NULL AND length(trim(owner_person_id)) > 0
+                THEN 1 ELSE 0
+              END,
+              CASE
+                WHEN owner_assignment_id IS NOT NULL AND length(trim(owner_assignment_id)) > 0
+                THEN 1 ELSE 0
+              END,
+              CASE
+                WHEN source_observed_at IS NOT NULL AND length(trim(source_observed_at)) > 0
+                THEN 1 ELSE 0
+              END,
+              CASE
+                WHEN first_human_touch_at IS NOT NULL AND length(trim(first_human_touch_at)) > 0
+                THEN 1 ELSE 0
+              END,
+              wolf_stage,
+              conversion_status,
+              CASE
+                WHEN provenance_json LIKE '%"demo": true%'
+                  OR provenance_json LIKE '%"demo":true%'
+                THEN 1 ELSE 0
+              END
+            FROM core_leads
+            """
+        ).fetchall()
+        persons_stored: int | str = "UNKNOWN"
+        assignments_stored: int | str = "UNKNOWN"
+        owner_matches: int | str = "UNKNOWN"
+        assignment_matches: int | str = "UNKNOWN"
+        if _table_exists(conn, "org_persons"):
+            persons_stored = int(conn.execute("SELECT COUNT(*) FROM org_persons").fetchone()[0])
+            owner_matches = int(
+                conn.execute(
+                    """
+                    SELECT COUNT(*) FROM core_leads AS lead
+                    WHERE lead.owner_person_id IS NOT NULL
+                      AND length(trim(lead.owner_person_id)) > 0
+                      AND EXISTS (
+                        SELECT 1 FROM org_persons AS person
+                        WHERE person.person_id = lead.owner_person_id
+                      )
+                    """
+                ).fetchone()[0]
+            )
+        if _table_exists(conn, "org_assignments"):
+            assignments_stored = int(
+                conn.execute("SELECT COUNT(*) FROM org_assignments").fetchone()[0]
+            )
+            assignment_matches = int(
+                conn.execute(
+                    """
+                    SELECT COUNT(*) FROM core_leads AS lead
+                    WHERE lead.owner_assignment_id IS NOT NULL
+                      AND length(trim(lead.owner_assignment_id)) > 0
+                      AND EXISTS (
+                        SELECT 1 FROM org_assignments AS assignment
+                        WHERE assignment.assignment_id = lead.owner_assignment_id
+                      )
+                    """
+                ).fetchone()[0]
+            )
+    except sqlite3.Error:
+        return base
+    finally:
+        conn.close()
+
+    stored: list[dict[str, Any]] = []
+    for item in fetched:
+        stored.append(
+            {
+                "entity_id": item[0] or "",
+                "brand_id": item[1] or "",
+                "source_system": item[2] or "",
+                "owner_set": bool(item[3]),
+                "assignment_set": bool(item[4]),
+                "aged": bool(item[5]),
+                "followed": bool(item[6]),
+                "wolf_stage": item[7] or "",
+                "conversion_status": item[8] or "",
+                "demo": bool(item[9]),
+            }
+        )
+    demo_rows = [row for row in stored if row["demo"]]
+    operational_rows = [row for row in stored if not row["demo"]]
+    missing_entity = sum(1 for row in stored if not _flag(row["entity_id"]))
+    missing_brand = sum(1 for row in stored if not _flag(row["brand_id"]))
+    brand_counts: dict[str, dict[str, int]] = {}
+    entity_counts: dict[str, dict[str, int]] = {}
+    for row in stored:
+        brand = str(row["brand_id"])
+        slot = brand_counts.setdefault(brand, {"rows": 0, "demo": 0, "operational": 0})
+        slot["rows"] += 1
+        entity = str(row["entity_id"])
+        entity_slot = entity_counts.setdefault(entity, {"rows": 0, "demo": 0, "operational": 0})
+        entity_slot["rows"] += 1
+        if row["demo"]:
+            slot["demo"] += 1
+            entity_slot["demo"] += 1
+        else:
+            slot["operational"] += 1
+            entity_slot["operational"] += 1
+    habitat_rows = [row for row in stored if row["brand_id"] == HABITAT]
+    if not stored:
+        why = "No stored leads. Empty is not an invented lead and not an operating board."
+    elif len(demo_rows) == len(stored):
+        why = (
+            "Every stored lead is a demo fixture. Operational CRM is empty. "
+            "Empty is not an invented lead and not an operating board."
+        )
+    else:
+        why = (
+            "Stored leads were read. A non-demo row is not commissioning and is not a higher maturity."
+        )
+    if missing_entity or missing_brand:
+        why = "A stored row is missing entity_id or brand_id. The client boundary is not held."
+    claimed = sum(1 for row in stored if str(row["conversion_status"]).strip().upper() == "CLAIMED")
+    verified = sum(1 for row in stored if str(row["conversion_status"]).strip().upper() == "VERIFIED")
+    report = dict(base)
+    report.update(
+        {
+            "ok": True,
+            "data_lane": "UNKNOWN" if "data_lane" not in columns else "PRESENT",
+            "lane_column": "data_lane" in columns,
+            "email_column": any("email" in name.lower() for name in columns),
+            "stored_rows": len(stored),
+            "demo_rows": len(demo_rows),
+            "operational_rows": len(operational_rows),
+            "persons_stored": persons_stored,
+            "assignments_stored": assignments_stored,
+            "closed_rows": sum(1 for row in stored if str(row["wolf_stage"]).strip().upper() == "CLOSED"),
+            "claimed_conversion": claimed,
+            "verified_conversion": verified,
+            "stored_bound": _bound_block(stored),
+            "operational_bound": _bound_block(operational_rows),
+            "habitat_bound": _bound_block(habitat_rows),
+            "operational_habitat_bound": _bound_block(
+                [row for row in habitat_rows if not row["demo"]]
+            ),
+            "brands": [
+                {"brand_id": brand, **brand_counts[brand]}
+                for brand in sorted(brand_counts)
+            ],
+            "entities": [
+                {"entity_id": entity, **entity_counts[entity]}
+                for entity in sorted(entity_counts)
+            ],
+            "other_brand_rows": sum(1 for row in stored if row["brand_id"] != HABITAT),
+            "source_systems": [
+                {"source_system": token, "rows": count}
+                for token, count in sorted(
+                    {
+                        str(row["source_system"]): sum(
+                            1 for item in stored if item["source_system"] == row["source_system"]
+                        )
+                        for row in stored
+                    }.items()
+                )
+            ],
+            "owner_person_set_rows": sum(1 for row in stored if row["owner_set"]),
+            "owner_assignment_set_rows": sum(1 for row in stored if row["assignment_set"]),
+            "person_without_assignment_rows": sum(
+                1 for row in stored if row["owner_set"] and not row["assignment_set"]
+            ),
+            "assignment_without_person_rows": sum(
+                1 for row in stored if row["assignment_set"] and not row["owner_set"]
+            ),
+            "owner_matches_stored_person": owner_matches,
+            "assignment_matches_stored": assignment_matches,
+            "boundary": "BREACHED" if missing_entity or missing_brand else "HELD",
+            "rows_missing_entity": missing_entity,
+            "rows_missing_brand": missing_brand,
+            "atrium": atrium_surface(sum(1 for row in stored if row["brand_id"] == ATRIUM)),
+            "why": why,
+        }
+    )
+    return report
