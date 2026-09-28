@@ -90,19 +90,20 @@
       "order": 4,
       "id": "CAP-FIN-02",
       "title": "Bank Statement Ingest & Reconcile",
-      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: CAP-bound tests plus a connector honesty prove.",
-      "exact_missing_evidence": "Those tests, against CAP-INTG-04, without a payment.",
-      "cursor_work": "Not started. Do not start ahead of CAP-INTG-04.",
-      "human_work": "none beyond the statement file named on CAP-INTG-04.",
+      "current_state": "SYSTEM BUILT (0.25). The queue test matched the second file read to the CAP-INTG-04 ingest. 54 files, manifest 7436bd97bc6f33195f71a5df3756b55730b079833dc72ed4cc87a37992eb74e2. A typed balance was refused. No amount was parsed into the books. The ledger stays BUILT.",
+      "exact_missing_evidence": "None for this queue test. A books reconcile was not performed. A review that would raise PROVEN was not written into the ledger.",
+      "cursor_work": "Done in commit 0fda620. The existing connector now matches the ingested file. No second bank system. No ledger write. No payment.",
+      "human_work": "none for this file match. This file does not commission anyone.",
       "external_dependency": "Banks, through CAP-INTG-04. No payment and no bank mutation.",
       "prerequisite": ["CAP-INTG-04"],
       "closure_test": "Reconcile output matches the ingested file and writes no payment. A typed balance does not close this item.",
       "target_final_state": "CLOSED",
-      "status": "OPEN",
+      "status": "CLOSED",
       "evidence": [
-        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md",
+        "docs/wolf/five/P1-CAP-FIN-02-RESULT.md"
       ],
-      "commit": null
+      "commit": "0fda620"
     },
     {
       "order": 5,
