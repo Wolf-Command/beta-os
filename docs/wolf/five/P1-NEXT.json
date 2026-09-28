@@ -11,10 +11,10 @@
   "priority_counts": {"P0": 12, "P1": 20, "P2": 42, "P3": 3},
   "queue_status_counts": {
     "P0": {"CLOSED": 1, "READY_FOR_HUMAN": 6, "BLOCKED_OWNER": 2, "WAITING_EXTERNAL": 0, "OPEN": 3},
-    "P1": {"CLOSED": 10, "READY_FOR_HUMAN": 1, "BLOCKED_OWNER": 1, "WAITING_EXTERNAL": 1, "OPEN": 7}
+    "P1": {"CLOSED": 11, "READY_FOR_HUMAN": 1, "BLOCKED_OWNER": 1, "WAITING_EXTERNAL": 1, "OPEN": 6}
   },
-  "closed_omitted": ["CAP-CORE-05", "CAP-INTG-04", "CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01", "CAP-CORE-12", "CAP-CORE-11", "CAP-FIN-02", "CAP-FIN-01", "CAP-FIN-03"],
-  "closed_this_pack": ["CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01", "CAP-CORE-12", "CAP-CORE-11", "CAP-FIN-02", "CAP-FIN-01", "CAP-FIN-03"],
+  "closed_omitted": ["CAP-CORE-05", "CAP-INTG-04", "CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01", "CAP-CORE-12", "CAP-CORE-11", "CAP-FIN-02", "CAP-FIN-01", "CAP-FIN-03", "CAP-FIN-05"],
+  "closed_this_pack": ["CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01", "CAP-CORE-12", "CAP-CORE-11", "CAP-FIN-02", "CAP-FIN-01", "CAP-FIN-03", "CAP-FIN-05"],
   "unlabeled": ["CAP-MSC-02"],
   "unlabeled_note": "CAP-MSC-02 stays OPEN. The deny prove is recorded. The missing review note is not this queue, not a staff walk, not a named provider, and not operating data. The 27 Sep pack refused BLOCKED_OWNER. This file does not give it one of the five labels.",
   "next": [
@@ -165,10 +165,10 @@
       "title": "Management Reporting",
       "bucket": "financial_control",
       "classification": "CURSOR CAN CLOSE",
-      "queue_status": "OPEN",
+      "queue_status": "CLOSED",
       "system_state": "SPECIFIED",
       "system_score": "0.05",
-      "why": "While the books stay unopened, the closure test is a report that says unavailable. This row does not ask for a second books decision.",
+      "why": "F6 read the existing framework. Books stay unopened, so the report says UNAVAILABLE. No statement figure was typed. The ledger stays SPECIFIED.",
       "prerequisite": [],
       "bounds": "Invent no statement, no P&L figure, and no cash figure."
     },

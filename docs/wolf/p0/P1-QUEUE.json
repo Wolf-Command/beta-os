@@ -148,20 +148,21 @@
       "order": 7,
       "id": "CAP-FIN-05",
       "title": "Management Reporting",
-      "current_state": "SYSTEM SPECIFIED (0.05). Ledger next bar: a full P&L, balance sheet, and cash-flow pack.",
-      "exact_missing_evidence": "That pack, from a real books source. A sample statement is not it.",
-      "cursor_work": "Not started. Do not invent a statement.",
+      "current_state": "SYSTEM SPECIFIED (0.05). The queue test read the existing framework. Books stay unopened, so the report says UNAVAILABLE. No statement figure was typed. The ledger stays SPECIFIED.",
+      "exact_missing_evidence": "None for this queue test. A full P&L, balance sheet, and cash-flow pack still needs an opened books source. A sample statement is not that pack. A review that would raise the ledger was not written.",
+      "cursor_work": "Done in commit 089e8a7. The existing framework was read. No statement was invented.",
       "human_work": "The books decision on CAP-FIN-01. This row does not ask Matt for a second decision.",
       "external_dependency": "none",
       "prerequisite": [],
       "prerequisite_note": "No catalog prerequisite is recorded. The books source on CAP-FIN-01 is the practical gate. Do not treat UNAVAILABLE as zero.",
       "closure_test": "A management pack renders from an opened books source. If the books stay unavailable, the report says unavailable.",
       "target_final_state": "CLOSED",
-      "status": "OPEN",
+      "status": "CLOSED",
       "evidence": [
-        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md",
+        "docs/wolf/five/P1-CAP-FIN-05-RESULT.md"
       ],
-      "commit": null
+      "commit": "089e8a7"
     },
     {
       "order": 8,
