@@ -11,10 +11,10 @@
   "priority_counts": {"P0": 12, "P1": 20, "P2": 42, "P3": 3},
   "queue_status_counts": {
     "P0": {"CLOSED": 1, "READY_FOR_HUMAN": 6, "BLOCKED_OWNER": 2, "WAITING_EXTERNAL": 0, "OPEN": 3},
-    "P1": {"CLOSED": 3, "READY_FOR_HUMAN": 1, "BLOCKED_OWNER": 1, "WAITING_EXTERNAL": 1, "OPEN": 14}
+    "P1": {"CLOSED": 4, "READY_FOR_HUMAN": 1, "BLOCKED_OWNER": 1, "WAITING_EXTERNAL": 1, "OPEN": 13}
   },
-  "closed_omitted": ["CAP-CORE-05", "CAP-INTG-04", "CAP-GGV-01", "CAP-GGV-04"],
-  "closed_this_pack": ["CAP-GGV-01", "CAP-GGV-04"],
+  "closed_omitted": ["CAP-CORE-05", "CAP-INTG-04", "CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01"],
+  "closed_this_pack": ["CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01"],
   "unlabeled": ["CAP-MSC-02"],
   "unlabeled_note": "CAP-MSC-02 stays OPEN. The deny prove is recorded. The missing review note is not this queue, not a staff walk, not a named provider, and not operating data. The 27 Sep pack refused BLOCKED_OWNER. This file does not give it one of the five labels.",
   "next": [
@@ -67,10 +67,10 @@
       "title": "Lead CRM",
       "bucket": "real_staff_operation",
       "classification": "CURSOR CAN CLOSE",
-      "queue_status": "OPEN",
+      "queue_status": "CLOSED",
       "system_state": "BUILT",
       "system_score": "0.25",
-      "why": "The next bar is tests on the existing lead store. CAP-GGV-04 does not replace this row.",
+      "why": "F6 tests read the 8 stored leads. All 8 are demo fixtures, so the operational CRM count is 0. The ledger stays BUILT. CAP-GGV-04 stays closed and was not re-tested as this row.",
       "prerequisite": [],
       "bounds": "No second CRM."
     },

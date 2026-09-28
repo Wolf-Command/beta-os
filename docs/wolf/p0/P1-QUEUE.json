@@ -239,19 +239,20 @@
       "order": 12,
       "id": "CAP-CRM-01",
       "title": "Lead CRM",
-      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: CAP-bound tests and red-team.",
-      "exact_missing_evidence": "Those tests. CAP-GGV-04 does not replace this row.",
-      "cursor_work": "Not started. Do not build a second CRM.",
-      "human_work": "none until the tests name a real gap.",
+      "current_state": "SYSTEM BUILT (0.25). The stored-lead tests passed. All 8 stored rows are demo fixtures, so the operational CRM count is 0. The ledger stays BUILT. CAP-GGV-04 is a different row.",
+      "exact_missing_evidence": "None for this queue test. A review that would raise PROVEN was not supplied. The demo fixtures are not an operating board.",
+      "cursor_work": "Done in commit 8fe76f2. Read-only tests of leads already stored. No second CRM. No lead and no person created.",
+      "human_work": "none for this queue test.",
       "external_dependency": "none",
       "prerequisite": [],
       "closure_test": "CRM tests pass on the existing lead store. A new CRM does not close this item.",
       "target_final_state": "CLOSED",
-      "status": "OPEN",
+      "status": "CLOSED",
       "evidence": [
-        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md",
+        "docs/wolf/five/P1-CAP-CRM-01-RESULT.md"
       ],
-      "commit": null
+      "commit": "8fe76f2"
     },
     {
       "order": 13,
