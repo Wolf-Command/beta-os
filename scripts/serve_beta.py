@@ -4242,22 +4242,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._ggv_ops_page()
             return
-        elif path in (
-            "/amg/finance",
-            "/amg/finance/",
-            "/amg/finance/approvals",
-            "/amg/finance/approvals/",
-            "/amg-finance",
-            "/amg-finance.html",
-            "/dashboards/amg-finance.html",
-        ):
-            self._amg_finance_page()
-            return
-        elif path == "/api/amg/finance":
-            self._amg_finance_read()
-            return
-        elif path == "/api/amg/finance/approvals":
-            self._amg_finance_read()
+        elif self._amg_finance_get(path):
             return
         elif path in (
             "/amg-ops-pack",
@@ -4737,11 +4722,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if self._atrium_finance_wall():
             return
-        if path == "/api/amg/finance":
-            self._amg_finance_write_refused()
-            return
-        if path == "/api/amg/finance/approvals":
-            self._amg_finance_approvals_post()
+        if self._amg_finance_post(path):
             return
         if self._ggv_finance_dispatch():
             return
@@ -14030,6 +14011,129 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return
         self._send_html_shell(page.read_bytes(), rel="amg-finance.html")
+
+    def _amg_finance_get(self, path: str) -> bool:
+        from core import atrium_finance_desk as _desk
+
+        kind = _desk.route_kind("GET", path)
+        if kind is None and path.rstrip("/") not in {
+            "/amg-finance",
+            "/amg-finance.html",
+            "/dashboards/amg-finance.html",
+        }:
+            return False
+        if kind == "page" or path.rstrip("/") in {
+            "/amg-finance",
+            "/amg-finance.html",
+            "/dashboards/amg-finance.html",
+        }:
+            self._amg_finance_page()
+            return True
+        person_id = self._amg_finance_guard()
+        if person_id is None:
+            return True
+        conn = _ggv_fin.db_connect()
+        try:
+            try:
+                if kind == "workspace":
+                    payload = _desk.workspace(person_id, conn)
+                    status = 200
+                elif kind == "ledger":
+                    payload = _desk.read_ledger(person_id, conn)
+                    status = 200
+                elif kind == "accounts":
+                    payload = _desk.read_accounts(person_id, conn)
+                    status = 200
+                elif kind == "journals":
+                    payload = _desk.read_journals(person_id, conn)
+                    status = 200
+                elif kind == "journal-read":
+                    payload = _desk.read_journal(person_id, _desk.journal_id_from(path) or "", conn)
+                    status = 200
+                elif kind == "reports":
+                    payload = _desk.read_reports(person_id, conn)
+                    status = 200
+                else:
+                    return False
+            except _desk.DeskError as exc:
+                self._amg_finance_error(exc)
+                return True
+        finally:
+            conn.close()
+        payload["ok"] = True
+        payload["staff_ready"] = False
+        payload["human_commissioned"] = False
+        self._send_json(payload, status=status)
+        return True
+
+    def _amg_finance_post(self, path: str) -> bool:
+        from core import atrium_finance_desk as _desk
+
+        kind = _desk.route_kind("POST", path)
+        if kind is None:
+            return False
+        if kind == "board-write":
+            self._amg_finance_write_refused()
+            return True
+        if kind == "approval":
+            self._amg_finance_approvals_post()
+            return True
+        person_id = self._amg_finance_guard()
+        if person_id is None:
+            return True
+        try:
+            body = self._read_json()
+        except Exception:
+            self._send_json(
+                {"ok": False, "error": "invalid_json", "message": "The request could not be read."},
+                status=400,
+            )
+            return True
+        if not isinstance(body, dict):
+            body = {}
+        conn = _ggv_fin.db_connect()
+        try:
+            try:
+                if kind == "journal-create":
+                    payload = _desk.save_journal(person_id, body, conn)
+                    status = 201
+                elif kind == "journal-save":
+                    payload = _desk.save_journal(person_id, body, conn, _desk.journal_id_from(path))
+                    status = 200
+                elif kind == "journal-validate":
+                    payload = _desk.validate_journal(
+                        person_id, body, _desk.journal_id_from(path) or "", conn
+                    )
+                    status = 200
+                elif kind in {"journal-approve", "journal-post"}:
+                    _desk.refuse_journal_decision(person_id, kind.split("-", 1)[1], conn)
+                    return True
+                else:
+                    return False
+            except _desk.DeskError as exc:
+                self._amg_finance_error(exc)
+                return True
+        finally:
+            conn.close()
+        payload["ok"] = True
+        payload["staff_ready"] = False
+        payload["human_commissioned"] = False
+        self._send_json(payload, status=status)
+        return True
+
+    def _amg_finance_error(self, exc) -> None:
+        self._send_json(
+            {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                "money_movement": False,
+                "posted": False,
+                "staff_ready": False,
+                "human_commissioned": False,
+            },
+            status=exc.http_status,
+        )
 
     def _amg_finance_read(self) -> None:
         person_id = self._amg_finance_guard()

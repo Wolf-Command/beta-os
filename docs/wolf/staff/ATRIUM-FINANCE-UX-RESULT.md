@@ -82,3 +82,64 @@ Report only, in `docs/wolf/staff/STAFF-PLACEHOLDER-AUDIT.md`. Same class of copy
 Zayen's card in `docs/wolf/staff/HUMAN-COMMISSIONING-28SEP.md` is RETEST #2 PENDING. FAIL #1 and FAIL #2 stay on record. No human login was recorded.
 
 RESULT: PASS
+
+# ATRIUMFIN-UX-2 — Atrium Finance desk
+
+Decision served: owner brief 28 Sep 2026 11:28 WITA (staff access), extended on the existing Atrium Finance desk. Beta `:8788` only. Production `:8787` was not edited and was not restarted. No grant, role, or person was added. `staff_ready` and `human_commissioned` stay false. Zayen's card stays RETEST #2 PENDING. No human login was recorded.
+
+UX-1 history above stays as written. This section is the repair after Peaches marked that desk not ready.
+
+## What she can do
+
+| Desk | Grant already on the seat | Route |
+| --- | --- | --- |
+| Board | `atrium.board.read` | `GET /amg/finance`, `GET /api/amg/finance` |
+| Ledger | `atrium.ledger.read` | `GET /amg/finance/ledger`, `GET /api/amg/finance/ledger` |
+| Chart of Accounts | `atrium.coa.read` | `GET /amg/finance/accounts`, `GET /api/amg/finance/accounts` |
+| Journals | `atrium.journal.draft` | `GET/POST /amg/finance/journals`, `GET/POST /api/amg/finance/journals` and `POST /api/amg/finance/journals/{id}` |
+| Reports | `atrium.report.read` | `GET /amg/finance/reports`, `GET /api/amg/finance/reports` |
+| Approvals | `approval.request` | unchanged from UX-1 |
+
+The chart is the production Atrium chart, entity `ent-atrium` only: 190 accounts, structure only. GGV chart rows were not copied. No production journal, balance, bank row, or payment was copied. Drafts are stored in Beta-local `state/atrium-books/amg.sqlite` (gitignored). A saved draft stays `DRAFT`. It does not appear on the ledger and it does not create a statement figure.
+
+Journal approve and journal post answer 403. `POST /api/amg/finance` stays 405.
+
+## Left off the nav
+
+| Feature | Why it is not on this desk |
+| --- | --- |
+| Cash and bank, card monitor | Needs a bank position or a money movement. |
+| Configuration | `finance.policy.admin` is not granted. |
+| Night audit | Imports revenue and writes a journal. That is a posting path. |
+| Procurement and the payment run | End in a payment. `payment.execute` is not granted. |
+| Payroll and service charge | Posts pay. |
+| Tax, month-end close, owner pack | Posting, lock, or an owner decision. |
+| Journal approve and post | Still in `ATRIUM_HELD_BACK`. |
+
+## Layout
+
+The page-header Sign out is gone. The shell Sign out remains. The Boards control is hidden on this staff desk. The crumb is "Atrium Finance", and the phone bar stays on one line at 390px. The desk is centred to 1120px. At 1024px and wider the board is two columns: the balance panel and a side panel for the chart count and drafts.
+
+## Tests
+
+`python3 scripts/tests/run_guarded.py` on 28 Sep 2026:
+
+| Suite | Result |
+| --- | --- |
+| `scripts/tests/test_atrium_finance_ux_20260928.py` | SUMMARY pass=218 fail=0 |
+| `scripts/tests/test_role_routing_20260928.py` | SUMMARY pass=84 fail=0 |
+| `scripts/tests/test_staff_access_20260928.py` | SUMMARY pass=274 fail=0 |
+| `scripts/tests/test_ggv_finance_invoice_20260928.py` | PASS=92 FAIL=0 |
+| `scripts/tests/test_ggv_finance_mobile_nota.py` | PASS=138 FAIL=0 |
+| `scripts/tests/test_ggv_finance_nota_storage_accountant.py` | PASS=100 FAIL=0 |
+| `scripts/tests/test_zarah_frail_cd_20260928.py` | SUMMARY pass=150 fail=0 |
+
+## Deployed route
+
+Filled after the restart that follows the commit of this desk. Live Beta stays `BETA_AUTH_MODE=cloudflare_access`.
+
+## Screenshots
+
+Filled with the deployed-process proof.
+
+RESULT: PASS

@@ -626,6 +626,12 @@ ROUTE_PARENT: dict[str, str | None] = {
     "/lead-spine": "/ggv-ops-pack",
     "/amg-ops-pack": EMPIRE_HREF,
     "/amg-daily-ops-state": "/amg-ops-pack",
+    "/amg/finance": None,
+    "/amg/finance/ledger": "/amg/finance",
+    "/amg/finance/accounts": "/amg/finance",
+    "/amg/finance/journals": "/amg/finance",
+    "/amg/finance/reports": "/amg/finance",
+    "/amg/finance/approvals": "/amg/finance",
     "/bzg": EMPIRE_HREF,
     "/bzg/uma-blu": "/bzg",
     "/bzg/uma-blu/bills": "/bzg/uma-blu",
@@ -733,6 +739,29 @@ ROUTE_CRUMBS: dict[str, list[dict[str, Any]]] = {
         {"label": "Atrium Management", "href": None},
         {"label": "AMG", "href": "/amg-ops-pack"},
         {"label": "Daily Ops", "href": None},
+    ],
+    "/amg/finance": [
+        {"label": "Atrium Finance", "href": None},
+    ],
+    "/amg/finance/ledger": [
+        {"label": "Atrium Finance", "href": "/amg/finance"},
+        {"label": "Ledger", "href": None},
+    ],
+    "/amg/finance/accounts": [
+        {"label": "Atrium Finance", "href": "/amg/finance"},
+        {"label": "Chart of Accounts", "href": None},
+    ],
+    "/amg/finance/journals": [
+        {"label": "Atrium Finance", "href": "/amg/finance"},
+        {"label": "Journals", "href": None},
+    ],
+    "/amg/finance/reports": [
+        {"label": "Atrium Finance", "href": "/amg/finance"},
+        {"label": "Reports", "href": None},
+    ],
+    "/amg/finance/approvals": [
+        {"label": "Atrium Finance", "href": "/amg/finance"},
+        {"label": "Approvals", "href": None},
     ],
     "/bzg": [
         {"label": "WOLF", "href": WOLF_ALIAS},

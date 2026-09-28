@@ -92,6 +92,12 @@
     "/lead-spine": "/ggv-ops-pack",
     "/amg-ops-pack": "/owner-empire-pack",
     "/amg-daily-ops-state": "/amg-ops-pack",
+    "/amg/finance": null,
+    "/amg/finance/ledger": "/amg/finance",
+    "/amg/finance/accounts": "/amg/finance",
+    "/amg/finance/journals": "/amg/finance",
+    "/amg/finance/reports": "/amg/finance",
+    "/amg/finance/approvals": "/amg/finance",
     "/bzg": "/owner-empire-pack",
     "/bzg/uma-blu": "/bzg",
     "/bzg/uma-blu/bills": "/bzg/uma-blu",
@@ -145,6 +151,29 @@
       { label: "Atrium Management", href: null },
       { label: "AMG", href: "/amg-ops-pack" },
       { label: "Daily Ops", href: null }
+    ],
+    "/amg/finance": [
+      { label: "Atrium Finance", href: null }
+    ],
+    "/amg/finance/ledger": [
+      { label: "Atrium Finance", href: "/amg/finance" },
+      { label: "Ledger", href: null }
+    ],
+    "/amg/finance/accounts": [
+      { label: "Atrium Finance", href: "/amg/finance" },
+      { label: "Chart of Accounts", href: null }
+    ],
+    "/amg/finance/journals": [
+      { label: "Atrium Finance", href: "/amg/finance" },
+      { label: "Journals", href: null }
+    ],
+    "/amg/finance/reports": [
+      { label: "Atrium Finance", href: "/amg/finance" },
+      { label: "Reports", href: null }
+    ],
+    "/amg/finance/approvals": [
+      { label: "Atrium Finance", href: "/amg/finance" },
+      { label: "Approvals", href: null }
     ],
     "/bzg": [
       { label: "WOLF", href: "/wolf" },

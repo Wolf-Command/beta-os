@@ -164,11 +164,19 @@ MISA_DAY_ASSIGNMENT = "ASG-AMG-DAY-MISA"
 ATRIUM_PAGE_PATHS = frozenset(
     {
         "/amg/finance",
+        "/amg/finance/ledger",
+        "/amg/finance/accounts",
+        "/amg/finance/journals",
+        "/amg/finance/reports",
         "/amg/finance/approvals",
         "/amg-finance",
         "/amg-finance.html",
         "/dashboards/amg-finance.html",
         "/api/amg/finance",
+        "/api/amg/finance/ledger",
+        "/api/amg/finance/accounts",
+        "/api/amg/finance/journals",
+        "/api/amg/finance/reports",
         "/api/amg/finance/approvals",
     }
 )
@@ -554,6 +562,10 @@ def officer_must_deny(person_id: str | None, path: str, conn: sqlite3.Connection
         raw = "/" + raw
     base = raw.rstrip("/") or "/"
     if base in ATRIUM_PAGE_PATHS or raw in ATRIUM_PAGE_PATHS:
+        return False
+    if ".." not in base and (
+        base.startswith("/amg/finance/") or base.startswith("/api/amg/finance/")
+    ):
         return False
     if base in ATRIUM_CHROME_PATHS or raw in ATRIUM_CHROME_PATHS:
         return False

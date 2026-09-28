@@ -37,21 +37,25 @@ Who: Haikal, Misa, Zarah, and Frail. Each person uses their own Gmail. Zarah is 
 
 Who: Zayen. Gmail laluzayen@gmail.com.
 
-FAIL #1 (13:18, raw JSON on `/`) and ZAYENFIX-1 stay on record. FAIL #2 (14:16, engineering placeholder on `/amg/finance`) stays on record. This card is the retest after ATRIUMFIN-UX-1. It does not mark her ready and it does not mark her commissioned.
+FAIL #1 (13:18, raw JSON on `/`) and ZAYENFIX-1 stay on record. FAIL #2 (14:16, engineering placeholder on `/amg/finance`) stays on record. ATRIUMFIN-UX-2 is the desk for this retest. It does not mark her ready and it does not mark her commissioned.
 
 1. Open https://beta.wolfcommand.net.
 2. Sign in with that Gmail and the email code.
-3. You should land on Atrium Finance. The header is Atrium Finance. The entity is Atrium.
-4. Open Board. There is no balance yet, because the Atrium books are not open. That empty state is the board.
-5. Open Approvals. You can describe a decision and send it. Approvals are handled by the Finance Controller.
-6. Open one GGV page or one Blu Zone page. You should be refused.
-7. Write PASS or FAIL, and the exact words on the screen if it fails.
+3. You should land on Atrium Finance. The header is Atrium Finance. The entity is Atrium. The desk tabs are Board, Ledger, Chart of Accounts, Journals, Reports, and Approvals.
+4. Open Board. There is no balance yet. The chart can be open beside it. A draft does not change the balance.
+5. Open Ledger. There are no posted lines until the Finance Controller posts a journal.
+6. Open Chart of Accounts. The Atrium account names are listed. There is no balance on the chart.
+7. Open Journals. You can save a balanced draft. You cannot approve it or post it.
+8. Open Reports. The statement names are listed. There are no figures until a period is posted.
+9. Open Approvals. You can describe a decision and send it. Approvals are handled by the Finance Controller.
+10. Open one GGV page or one Blu Zone page. You should be refused.
+11. Write PASS or FAIL, and the exact words on the screen if it fails.
 
 ## PASS / FAIL record
 
 Every row stays PENDING until that person writes the result. Do not fill these in from a test run.
 
-Zayen Atrium Finance Officer — RETEST #2 PENDING. FAIL #1 13:18 raw JSON on / (ZAYENFIX-1). FAIL #2 14:16 engineering placeholder on /amg/finance (ATRIUMFIN-UX-1).
+Zayen Atrium Finance Officer — RETEST #2 PENDING. FAIL #1 13:18 raw JSON on / (ZAYENFIX-1). FAIL #2 14:16 engineering placeholder on /amg/finance (ATRIUMFIN-UX-1). ATRIUMFIN-UX-2 is on the desk and is not a pass.
 
 | Person | Role | Result |
 | --- | --- | --- |
@@ -70,4 +74,4 @@ Zayen Atrium Finance Officer — RETEST #2 PENDING. FAIL #1 13:18 raw JSON on / 
 ### Zayen — HUMAN FAIL #2 — 28 Sep 2026 ~14:16 WITA
 - FAIL #1 (13:18, raw JSON on `/`) and its repair ZAYENFIX-1 (`ff60204`) stay on record. Routing repair worked: Zayen reached `/amg/finance`.
 - FAIL #2: `/amg/finance` renders an engineering placeholder, not a staff finance workspace. Evidence is Zayen's screenshot, supplied by Matt in chat on 28 Sep 14:16 (image not stored on disk). The visible text includes "Hotel books are not open on this desk.", "No report figure is on this page.", "Do not type an amount." and "You cannot approve a payment…".
-- Repair ATRIUMFIN-UX-1 is on the desk. Status: staff_ready=false, human_commissioned=false. Retest #2 is PENDING.
+- Repair ATRIUMFIN-UX-1 is on the desk. ATRIUMFIN-UX-2 adds the ledger, the chart, draft journals, and the statement list. Status: staff_ready=false, human_commissioned=false. Retest #2 is PENDING.

@@ -56,6 +56,8 @@ dashboards/*.bak
 # Build-factory runtime state (ACTIVE runs / logs)
 state/build-factory/
 state/ggv-finance-nota/blobs/
+state/atrium-books/*.sqlite
+state/atrium-books/*.sqlite-*
 state/content-thumbs/
 state/commissioning/cf-sim-public.jwk.json
 
