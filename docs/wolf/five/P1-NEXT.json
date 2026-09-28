@@ -11,10 +11,10 @@
   "priority_counts": {"P0": 12, "P1": 20, "P2": 42, "P3": 3},
   "queue_status_counts": {
     "P0": {"CLOSED": 1, "READY_FOR_HUMAN": 6, "BLOCKED_OWNER": 2, "WAITING_EXTERNAL": 0, "OPEN": 3},
-    "P1": {"CLOSED": 8, "READY_FOR_HUMAN": 1, "BLOCKED_OWNER": 1, "WAITING_EXTERNAL": 1, "OPEN": 9}
+    "P1": {"CLOSED": 9, "READY_FOR_HUMAN": 1, "BLOCKED_OWNER": 1, "WAITING_EXTERNAL": 1, "OPEN": 8}
   },
-  "closed_omitted": ["CAP-CORE-05", "CAP-INTG-04", "CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01", "CAP-CORE-12", "CAP-CORE-11", "CAP-FIN-02"],
-  "closed_this_pack": ["CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01", "CAP-CORE-12", "CAP-CORE-11", "CAP-FIN-02"],
+  "closed_omitted": ["CAP-CORE-05", "CAP-INTG-04", "CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01", "CAP-CORE-12", "CAP-CORE-11", "CAP-FIN-02", "CAP-FIN-01"],
+  "closed_this_pack": ["CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01", "CAP-CORE-12", "CAP-CORE-11", "CAP-FIN-02", "CAP-FIN-01"],
   "unlabeled": ["CAP-MSC-02"],
   "unlabeled_note": "CAP-MSC-02 stays OPEN. The deny prove is recorded. The missing review note is not this queue, not a staff walk, not a named provider, and not operating data. The 27 Sep pack refused BLOCKED_OWNER. This file does not give it one of the five labels.",
   "next": [
@@ -137,10 +137,10 @@
       "title": "Wolf Accounting Core",
       "bucket": "financial_control",
       "classification": "CURSOR CAN CLOSE",
-      "queue_status": "OPEN",
+      "queue_status": "CLOSED",
       "system_state": "BUILT",
       "system_score": "0.25",
-      "why": "The queue closure test is the core tests without a typed balance. Opening the books is a later owner act and is not implied by a green test.",
+      "why": "F6 read the 3 stored legal entities. Finance display is UNAVAILABLE. The commissioned books file is absent. The uncommissioned sample was not opened. A typed balance was refused. The ledger stays BUILT.",
       "prerequisite": [],
       "bounds": "Type no balance. Open no Atrium book. UNAVAILABLE stays until a real books source exists."
     },

@@ -109,20 +109,21 @@
       "order": 5,
       "id": "CAP-FIN-01",
       "title": "Wolf Accounting Core",
-      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: deterministic Core tests plus red-team as a Model C capability. Desks say finance UNAVAILABLE. That sentence is not cash.",
-      "exact_missing_evidence": "The Core tests, and a books source only if Matt opens one. UNAVAILABLE stays until that source exists.",
-      "cursor_work": "Not started. Do not type a balance.",
-      "human_work": "Matt opens the real books, or confirms they stay unavailable.",
+      "current_state": "SYSTEM BUILT (0.25). The queue test read 3 stored legal entities. Finance display is UNAVAILABLE. The commissioned books file is absent. The uncommissioned sample was not opened. A typed balance was refused. The ledger stays BUILT.",
+      "exact_missing_evidence": "None for this queue test. A books source was not opened. A review that would raise PROVEN was not written into the ledger.",
+      "cursor_work": "Done in commit 7af6446. The existing finance display was read. No second ledger. No book was opened. No balance was typed.",
+      "human_work": "Matt opens the real books, or confirms they stay unavailable. This file does not commission anyone.",
       "external_dependency": "none",
       "prerequisite": [],
       "closure_test": "Tests pass without a typed balance. Opening the books is Matt's act and is not implied by a green test.",
       "target_final_state": "CLOSED",
-      "status": "OPEN",
+      "status": "CLOSED",
       "evidence": [
         "docs/wolf/wave3/W3-P1-OWNER-RESULT.md",
-        "docs/wolf/p0/P0-QUEUE.json"
+        "docs/wolf/p0/P0-QUEUE.json",
+        "docs/wolf/five/P1-CAP-FIN-01-RESULT.md"
       ],
-      "commit": null
+      "commit": "7af6446"
     },
     {
       "order": 6,
