@@ -4,7 +4,7 @@
 
 `staff_ready` and `human_commissioned` stay false. Nothing here is commissioned.
 
-Beta `:8788` pid 13651, started Mon Sep 28 21:55:44 2026, `scripts/serve_beta.py`. The previous listener was pid 96450. Production `:8787` stayed pid 15975. Atrium sidecar `:8790` stayed pid 96416. Live Beta has `BETA_PORT=8788` and no `BETA_AUTH_MODE`. Auth mode was not switched. `GET /api/health` is 200. Unsigned `GET /bzg/uma-blu` and `/bzg/uma-blu/recipes` are 403.
+Code commit `926cb78` at 21:57:16 +0800. Beta `:8788` pid 13943, started Mon Sep 28 21:57:30 2026, `scripts/serve_beta.py`. That start is after `926cb78`. The previous listener was pid 96450. Production `:8787` stayed pid 15975. Atrium sidecar `:8790` stayed pid 96416. Live Beta has `BETA_PORT=8788` and no `BETA_AUTH_MODE`. Auth mode was not switched. `GET /api/health` is 200. Unsigned `GET /bzg/uma-blu` and `/bzg/uma-blu/recipes` are 403.
 
 ## 1. REAL DATA NOW VISIBLE IN BETA
 
@@ -92,7 +92,7 @@ The register is `docs/wolf/bzg/UMA-BLU-DATA-SOURCE-REGISTER.md` and `state/bzg/d
 | --- | --- | --- |
 | Production `serve.py` :8787 | 15975 | Mon Sep 21 16:59:38 2026 |
 | Atrium sidecar :8790 | 96416 | Mon Sep 28 17:36:58 2026 |
-| Beta `serve_beta.py` :8788 | 13651 | Mon Sep 28 21:55:44 2026 |
+| Beta `serve_beta.py` :8788 | 13943 | Mon Sep 28 21:57:30 2026 |
 
 No push. No production write. No ESB write. No Alchemist write.
 
