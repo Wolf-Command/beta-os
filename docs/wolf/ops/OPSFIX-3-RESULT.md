@@ -67,4 +67,7 @@ What would settle it: PO + receiving + nota on disk + consistent ledger per PR. 
 
 Local only. No push.
 
+- `7cfc7215cccbebbe7c246aad7bedeb62089250d4` — Operate Wolf: honest Owner Command, data-quality exceptions, human test cards.
+- atrium-finance `74756a8669b5a89852d1f693375f54cedbc29545` — Format ledger, trial balance, and journal money as IDR without decimals.
+
 RESULT: PASS
