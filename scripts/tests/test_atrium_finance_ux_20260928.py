@@ -195,15 +195,22 @@ def test_http() -> None:
     port = httpd.server_address[1]
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     try:
-        status, raw = call(port, "/amg/finance", EMAIL)
+        status, raw = call(port, "/amg/finance/lite", EMAIL)
         text = raw.decode("utf-8", "replace")
         check("board page 200", status == 200 and "Atrium Finance" in text, f"status={status}")
         for banned in desk.BANNED_UI:
             check(f"served page omits {banned[:32]}", banned not in text)
         check("served page has one sign out", text.lower().count("sign out") == 1, str(text.lower().count("sign out")))
         for row in desk.navigation():
-            check(f"served nav {row['href']}", f'href="{row["href"]}"' in text)
-        status, raw = call(port, "/amg/finance/approvals", EMAIL)
+            href = row["href"]
+            if href == "/amg/finance":
+                expect = "/amg/finance/lite"
+            elif href.startswith("/amg/finance/"):
+                expect = "/amg/finance/lite/" + href[len("/amg/finance/") :]
+            else:
+                expect = href
+            check(f"served nav {row['href']}", f'href="{expect}"' in text)
+        status, raw = call(port, "/amg/finance/lite/approvals", EMAIL)
         approvals_html = raw.decode("utf-8", "replace")
         check("approvals page 200", status == 200 and "Approvals" in approvals_html, f"status={status}")
         for banned in desk.BANNED_UI:
@@ -224,7 +231,7 @@ def test_http() -> None:
         check("api does not move money", body.get("money_movement") is False and body.get("books_opened") is False)
         check("api chart is loaded", (body.get("chart") or {}).get("count") == 190, str(body.get("chart")))
         for section in ("/ledger", "/accounts", "/journals", "/reports"):
-            status, raw = call(port, "/amg/finance" + section, EMAIL)
+            status, raw = call(port, "/amg/finance/lite" + section, EMAIL)
             page = raw.decode("utf-8", "replace")
             check(f"section {section} 200", status == 200 and "Atrium Finance" in page, f"status={status}")
             status, raw = call(port, "/api/amg/finance" + section, EMAIL, accept="application/json")
@@ -253,7 +260,7 @@ def test_http() -> None:
         for banned in desk.BANNED_UI:
             check(f"api omits {banned[:32]}", banned not in blob)
         check("served page has one sign out", text.lower().count("sign out") == 1, text.lower().count("sign out"))
-        for href in ("/amg/finance/ledger", "/amg/finance/accounts", "/amg/finance/journals", "/amg/finance/reports"):
+        for href in ("/amg/finance/lite/ledger", "/amg/finance/lite/accounts", "/amg/finance/lite/journals", "/amg/finance/lite/reports"):
             status, raw = call(port, href, EMAIL)
             page = raw.decode("utf-8", "replace")
             check(f"page 200 {href}", status == 200 and "Atrium Finance" in page, f"status={status}")
@@ -298,7 +305,8 @@ def test_http() -> None:
             ("Devi", "deviputu236@gmail.com"),
             ("Haikal", "haikalqilbari123@gmail.com"),
         )
-        for name, email in outsiders:
+        page_outsiders = tuple(pair for pair in outsiders if pair[0] != "Owner")
+        for name, email in page_outsiders:
             for outsider_path in (
                 "/amg/finance",
                 "/amg/finance/ledger",
@@ -318,6 +326,15 @@ def test_http() -> None:
             ):
                 status, _raw = call(port, outsider_path, email, accept="application/json")
                 check(f"{name} api 403 {outsider_path}", status == 403, f"status={status}")
+        for outsider_path in (
+            "/api/amg/finance",
+            "/api/amg/finance/ledger",
+            "/api/amg/finance/accounts",
+            "/api/amg/finance/journals",
+            "/api/amg/finance/reports",
+        ):
+            status, _raw = call(port, outsider_path, "mrwolf@wolfcommand.net", accept="application/json")
+            check(f"Owner api 403 {outsider_path}", status == 403, f"status={status}")
         status, _raw = call(port, "/api/amg/finance", EMAIL, method="POST", body={}, accept="application/json")
         check("POST board stays 405", status == 405, f"status={status}")
         refused_payloads = (

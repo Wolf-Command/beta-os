@@ -1824,6 +1824,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._atrium_finance_wall():
             return
 
+        if self._atrium_product_dispatch():
+            return
+
         if self._ggv_finance_dispatch():
             return
 
@@ -4749,6 +4752,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if self._atrium_finance_wall():
             return
+        if self._atrium_product_dispatch():
+            return
         if self._amg_finance_post(path):
             return
         if self._ggv_finance_dispatch():
@@ -5853,6 +5858,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
     def do_PATCH(self) -> None:
         path = urlparse(self.path).path
         if self._atrium_finance_wall():
+            return
+        if self._atrium_product_dispatch():
             return
         if path == "/api/dashboard-truth" or path.startswith("/api/dashboard-truth/"):
             self._dashboard_truth_write_refused()
@@ -7049,6 +7056,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
     def do_PUT(self) -> None:
         path = urlparse(self.path).path
         if self._atrium_finance_wall():
+            return
+        if self._atrium_product_dispatch():
             return
         if path == "/api/dashboard-truth" or path.startswith("/api/dashboard-truth/"):
             self._dashboard_truth_write_refused()
@@ -13967,6 +13976,123 @@ class BetaHandler(SimpleHTTPRequestHandler):
         report["person_id"] = identity.get("person_id")
         self._send_json(report)
 
+    def do_DELETE(self) -> None:
+        if self._atrium_finance_wall():
+            return
+        if self._atrium_product_dispatch():
+            return
+        self._send_err(404, "not found")
+
+    def _atrium_product_dispatch(self) -> bool:
+        """Proxy Zayen's product after Wolf auth. The old desk stays on /lite."""
+        import http.client
+
+        from core import atrium_full_mount as _mount
+
+        path = urlparse(self.path).path
+        if not _mount.is_product_path(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok") or not identity.get("person_id"):
+            self._send_identity_deny(identity)
+            return True
+        person_id = str(identity.get("person_id"))
+        conn = _ggv_fin.db_connect()
+        try:
+            allowed, wolf_role = _mount.seat_allowed(person_id, conn)
+        finally:
+            conn.close()
+        if not allowed or not wolf_role:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Atrium Finance is not on this assignment.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "money_movement": False,
+                },
+                status=403,
+            )
+            return True
+        if _mount.is_sensitive(self.command, path, wolf_role):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "This seat cannot approve, post, pay, change a bank, or administer users.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "money_movement": False,
+                },
+                status=403,
+            )
+            return True
+        try:
+            secret = _mount.load_assertion_secret()
+        except OSError:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "sidecar_unconfigured",
+                    "message": "Atrium Finance sidecar secret is not configured.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=503,
+            )
+            return True
+        token = _mount.sign_assertion(
+            secret,
+            self.command,
+            path,
+            person_id,
+            str(identity.get("email") or ""),
+            wolf_role,
+        )
+        length = int(self.headers.get("Content-Length") or 0)
+        body = self.rfile.read(length) if length else None
+        headers = {
+            "X-Wolf-Assertion": token,
+            "Accept": self.headers.get("Accept") or "*/*",
+            "Host": f"{_mount.UPSTREAM_HOST}:{_mount.UPSTREAM_PORT}",
+            "Connection": "close",
+        }
+        content_type = self.headers.get("Content-Type")
+        if content_type:
+            headers["Content-Type"] = content_type
+        if body is not None:
+            headers["Content-Length"] = str(len(body))
+        upstream = http.client.HTTPConnection(_mount.UPSTREAM_HOST, _mount.UPSTREAM_PORT, timeout=120)
+        try:
+            upstream.request(self.command, self.path, body=body, headers=headers)
+            upstream_resp = upstream.getresponse()
+            payload = upstream_resp.read()
+            status = upstream_resp.status
+            out_type = upstream_resp.getheader("Content-Type") or "application/octet-stream"
+        except OSError:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "sidecar_unavailable",
+                    "message": "Atrium Finance is not running on 127.0.0.1:8790.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=502,
+            )
+            return True
+        finally:
+            upstream.close()
+        self.send_response(status)
+        self.send_header("Content-Type", out_type)
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+        return True
+
     def _atrium_finance_wall(self) -> bool:
         """Atrium Finance Officer, and only that role, cannot leave Atrium Finance."""
         from core.staff_access import officer_must_deny
@@ -14027,7 +14153,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return None
         return person_id
 
-    def _amg_finance_page(self) -> None:
+    def _amg_finance_page(self, lite: bool = False) -> None:
         if self._amg_finance_guard() is None:
             return
         page = DASHBOARDS / "amg-finance.html"
@@ -14037,11 +14163,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 status=404,
             )
             return
-        self._send_html_shell(page.read_bytes(), rel="amg-finance.html")
+        raw = page.read_bytes()
+        if lite:
+            raw = raw.replace(b'href="/amg/finance/', b'href="/amg/finance/lite/')
+            raw = raw.replace(b'href="/amg/finance"', b'href="/amg/finance/lite"')
+        self._send_html_shell(raw, rel="amg-finance.html")
 
     def _amg_finance_get(self, path: str) -> bool:
         from core import atrium_finance_desk as _desk
 
+        lite = False
+        if path.rstrip("/") == "/amg/finance/lite" or path.startswith("/amg/finance/lite/"):
+            lite = True
+            suffix = path[len("/amg/finance/lite") :]
+            path = ("/amg/finance" + suffix).rstrip("/") or "/amg/finance"
         kind = _desk.route_kind("GET", path)
         if kind is None and path.rstrip("/") not in {
             "/amg-finance",
@@ -14054,7 +14189,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/amg-finance.html",
             "/dashboards/amg-finance.html",
         }:
-            self._amg_finance_page()
+            self._amg_finance_page(lite=lite)
             return True
         person_id = self._amg_finance_guard()
         if person_id is None:
