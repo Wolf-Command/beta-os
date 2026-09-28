@@ -136,9 +136,9 @@ The page-header Sign out is gone. The shell Sign out remains. The Boards control
 
 ## Deployed route
 
-Desk commit `d528c3c`. Proof commit `a440089` at 15:01:35. Beta listener pid 78891, started Mon Sep 28 15:01:45 2026, `scripts/serve_beta.py`, port 8788. That start is after `a440089`. Production pid 15975 on 8787 was still that process. Live Beta stayed `cloudflare_access`. `X-Wolf-Subject: laluzayen@gmail.com` on `GET /amg/finance` is 403. Auth mode was not switched.
+Desk commit `d528c3c`. Proof commit `a440089` at 15:01:35. The listener record in `ffcc756` (15:02:19) named the process that was then replaced. Beta listener pid 79018, started Mon Sep 28 15:02:26 2026, `scripts/serve_beta.py`, port 8788. That start is after `ffcc756`. This pid line is left in the working tree so the commit time stays before the start. Production pid 15975 on 8787 was still that process. Live Beta stayed `cloudflare_access` (no `BETA_AUTH_MODE` in the process environment). `X-Wolf-Subject: laluzayen@gmail.com` on `GET /amg/finance` is 403. Auth mode was not switched.
 
-Unsigned requests on pid 78891, each registered route 403 and not 404:
+Unsigned requests on pid 79018, each registered route 403 and not 404:
 
 | Method | Path | Status |
 | --- | --- | --- |
@@ -174,5 +174,44 @@ Headless Chrome at the signed handler on this commit, same page bytes as the has
 - `docs/wolf/staff/shots/atrium-finance-v2-desktop.png` — 1440×900. `scrollWidth` 1440, `clientWidth` 1440. Shell height 57. Crumb "Atrium Finance". Boards control `display: none`. One Sign out. Side panel: 190 accounts, no draft, no balance.
 - `docs/wolf/staff/shots/atrium-finance-v2-phone.png` — 390×844. `scrollWidth` 390, `clientWidth` 390. Shell height 57, one line, crumb "Atrium Finance". Desk tabs in two rows of three.
 - `docs/wolf/staff/shots/atrium-finance-v2-ledger.png` — 1440×900. General ledger, nothing posted.
+
+RESULT: PASS
+
+# ATRIUMFIN-UX-3 — visual proof of the remaining tabs
+
+Decision served: owner brief 28 Sep 2026 11:28 WITA (staff access), extended on the existing Atrium Finance desk. Beta `:8788` only. Production `:8787` was not edited and was not restarted. No grant, role, route, or person was added. `ATRIUM_DENIED` and `ATRIUM_HELD_BACK` are unchanged. `staff_ready` and `human_commissioned` stay false. Zayen's card stays RETEST #2 PENDING. No human login was recorded.
+
+The live listener stayed `cloudflare_access`. Screenshots were taken on a separate signed handler (`BETA_AUTH_MODE=development_assertion`, header `X-Wolf-Subject: laluzayen@gmail.com`) with headless Chrome device metrics. The draft in the saved shot was written to a temp books file. `state/atrium-books/amg.sqlite` stayed sha256 `334cfa3541ce8ae597d0bd07e6c89b87cf4d67867c37bda685c47ef0923f2a64`.
+
+## What the shots show
+
+Headless Chrome, same signed handler. Layout measured in the page.
+
+- `docs/wolf/staff/shots/atrium-finance-v2-coa-desktop.png` — 1440×900. `scrollWidth` 1425, `clientWidth` 1425 (the difference from 1440 is the vertical scrollbar). Shell height 57. 190 account rows, first row 1000 Cash and Equivalents. No balance column.
+- `docs/wolf/staff/shots/atrium-finance-v2-coa-phone.png` — 390×844. `scrollWidth` 390, `clientWidth` 390. Shell height 57. Crumb "Chart of Accounts". Codes, class, and Posting stay on one line. Account names wrap on spaces.
+- `docs/wolf/staff/shots/atrium-finance-v2-journals-desktop.png` — 1440×900. `scrollWidth` 1440, `clientWidth` 1440. New draft form. Line 1210 debit 150000. Line 4110 credit 150000.
+- `docs/wolf/staff/shots/atrium-finance-v2-journals-phone.png` — 390×844. `scrollWidth` 390, `clientWidth` 390. Same two lines, both in view. Add a line is inside the frame.
+- `docs/wolf/staff/shots/atrium-finance-v2-journals-saved-desktop.png` — 1440×900. After Save draft on the temp books file. The row reads DRAFT · 2026-09-28. No approve button and no post button.
+- `docs/wolf/staff/shots/atrium-finance-v2-reports-desktop.png` — 1440×900. `scrollWidth` 1440, `clientWidth` 1440. The five statements, no figures.
+- `docs/wolf/staff/shots/atrium-finance-v2-reports-phone.png` — 390×844. `scrollWidth` 390, `clientWidth` 390. Same statements, names intact.
+- `docs/wolf/staff/shots/atrium-finance-v2-approvals-phone.png` — 390×844. `scrollWidth` 390, `clientWidth` 390. Shell height 57. Crumb "Approvals". The decision form is in view. Send for approval is inside the frame.
+
+## Visual repair
+
+The first phone chart broke "1000" and "Posting" in the middle of the word, and the shell crumb was cut to "Chart of ...". The chart columns now keep the code, the class, and Posting on one line, and the phone crumb shows the current section. Saving a draft left "No draft yet" on screen. The list now shows the stored status DRAFT and clears that empty state. Journal approve and journal post are still not on the page.
+
+## Tests
+
+`python3 scripts/tests/run_guarded.py` on 28 Sep 2026:
+
+| Suite | Result |
+| --- | --- |
+| `scripts/tests/test_atrium_finance_ux_20260928.py` | SUMMARY pass=218 fail=0 |
+| `scripts/tests/test_role_routing_20260928.py` | SUMMARY pass=84 fail=0 |
+| `scripts/tests/test_staff_access_20260928.py` | SUMMARY pass=274 fail=0 |
+
+## Deployed route
+
+The listener pid is recorded after this commit, once Beta has been restarted from the commit. Unsigned `GET /amg/finance/accounts`, `/amg/finance/journals`, and `/amg/finance/reports` are checked on that process. Auth mode is not switched.
 
 RESULT: PASS

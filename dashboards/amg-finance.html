@@ -107,6 +107,27 @@
     table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
     th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
     th { color: var(--muted); font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; }
+    #chart-table table { table-layout: fixed; }
+    #chart-table th, #chart-table td { overflow-wrap: normal; word-break: normal; }
+    #chart-table th:nth-child(1), #chart-table td:nth-child(1) { width: 3.4rem; white-space: nowrap; }
+    #chart-table th:nth-child(2), #chart-table td:nth-child(2) { overflow-wrap: break-word; }
+    #chart-table th:nth-child(3), #chart-table td:nth-child(3) { width: 6.8rem; white-space: nowrap; }
+    #chart-table th:nth-child(4), #chart-table td:nth-child(4) { width: 4.6rem; white-space: nowrap; }
+    @media (max-width: 860px) {
+      #journals.panel { padding: 12px; }
+      #journals h2 { margin-bottom: 4px; }
+      #journals .blank { padding: 8px 10px; }
+      #journals .blank strong { margin-bottom: 2px; }
+      #journals label { margin: 6px 0 2px; }
+      #journals p { margin-bottom: 6px; }
+      #journals .line { margin-top: 6px; gap: 6px; }
+      #chart-table table { font-size: 0.8rem; }
+      #chart-table th, #chart-table td { padding: 8px 3px; }
+      #chart-table th { letter-spacing: 0; font-size: 0.68rem; }
+      #chart-table th:nth-child(1), #chart-table td:nth-child(1) { width: 2.7rem; }
+      #chart-table th:nth-child(3), #chart-table td:nth-child(3) { width: 5.7rem; font-size: 0.68rem; }
+      #chart-table th:nth-child(4), #chart-table td:nth-child(4) { width: 4rem; }
+    }
     td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
     .line {
       display: grid;
@@ -258,6 +279,15 @@
       body.atrium-finance-desk #wolfnav .nv-footer a {
         min-width: 0 !important;
         padding: 8px 8px !important;
+        font-size: 12px !important;
+      }
+      body.atrium-finance-desk #wolfnav .nv-crumb:not(.here),
+      body.atrium-finance-desk #wolfnav .nv-crumb-sep { display: none !important; }
+      body.atrium-finance-desk #wolfnav .nv-crumbs { overflow: hidden !important; }
+      body.atrium-finance-desk #wolfnav .nv-crumb.here {
+        max-width: none !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
         font-size: 12px !important;
       }
     }
@@ -459,14 +489,17 @@
           paintLines(2);
         }).catch(function () { paintLines(2); });
 
-        fetch("/api/amg/finance/journals", { credentials: "same-origin" }).then(function (res) {
-          return res.ok ? res.json() : null;
-        }).then(function (data) {
+        function paintJournals(data) {
           var items = (data && data.journals) || [];
-          if (data && data.message) text("journal-copy", data.message);
+          if (data && data.message && !items.length) text("journal-copy", data.message);
           var blank = document.getElementById("journal-blank");
           var host = document.getElementById("journal-list");
-          if (!items.length) return;
+          if (!host) return;
+          host.textContent = "";
+          if (!items.length) {
+            if (blank) blank.hidden = false;
+            return;
+          }
           if (blank) blank.hidden = true;
           items.forEach(function (item) {
             var row = document.createElement("div");
@@ -474,12 +507,20 @@
             var title = document.createElement("b");
             title.textContent = item.memo || "Draft";
             var meta = document.createElement("span");
-            meta.textContent = "Draft · " + (item.journal_date || "");
+            meta.textContent = (item.status || "DRAFT") + " · " + (item.journal_date || "");
             row.appendChild(title);
             row.appendChild(meta);
             host.appendChild(row);
           });
-        }).catch(function () {});
+        }
+
+        function loadJournals() {
+          return fetch("/api/amg/finance/journals", { credentials: "same-origin" }).then(function (res) {
+            return res.ok ? res.json() : null;
+          }).then(paintJournals).catch(function () {});
+        }
+
+        loadJournals();
 
         document.getElementById("add-line").addEventListener("click", function () {
           document.getElementById("journal-lines").appendChild(lineRow());
@@ -507,6 +548,7 @@
             }
             editing = (out.body.journal && out.body.journal.journal_id) || editing;
             result.textContent = "Draft saved. It is not posted.";
+            loadJournals();
           }).catch(function () {
             result.textContent = "That draft was not saved.";
           });
