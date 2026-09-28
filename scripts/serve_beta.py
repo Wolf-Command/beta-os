@@ -1882,19 +1882,29 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     row["zip_eligible"] = True
                 q_text = ((qs.get("q") or qs.get("search") or [""])[0] or "").strip()
                 media = ((qs.get("media_type") or qs.get("type") or [""])[0] or "").strip().lower()
+                page_spec = (qs.get("page") or qs.get("nas_page") or [None])[0]
+                page_arg = None
+                if page_spec not in (None, ""):
+                    try:
+                        page_arg = int(page_spec)
+                    except (TypeError, ValueError):
+                        page_arg = 1
                 try:
-                    nas_limit = int((qs.get("nas_limit") or ["48"])[0])
+                    nas_limit = int((qs.get("nas_limit") or qs.get("limit") or ["48"])[0])
                 except (TypeError, ValueError):
                     nas_limit = 48
                 try:
-                    nas_offset = int((qs.get("nas_offset") or ["0"])[0])
+                    nas_offset = int((qs.get("nas_offset") or qs.get("offset") or ["0"])[0])
                 except (TypeError, ValueError):
                     nas_offset = 0
                 nas_page = {
                     "cards": [],
                     "matched": 0,
-                    "limit": nas_limit,
-                    "offset": nas_offset,
+                    "total": 0,
+                    "limit": max(1, min(48, nas_limit)),
+                    "offset": max(0, nas_offset),
+                    "page": 1,
+                    "pages": 0,
                 }
                 try:
                     conn = db_connect()
@@ -1907,14 +1917,26 @@ class BetaHandler(SimpleHTTPRequestHandler):
                             media_type=media,
                             limit=nas_limit,
                             offset=nas_offset,
+                            page=page_arg,
                         )
                     finally:
                         conn.close()
                 except Exception:
-                    nas_page = {"cards": [], "matched": 0, "limit": nas_limit, "offset": max(0, nas_offset)}
+                    nas_page = {
+                        "cards": [],
+                        "matched": 0,
+                        "total": 0,
+                        "limit": max(1, min(48, nas_limit)),
+                        "offset": 0,
+                        "page": 1,
+                        "pages": 0,
+                    }
                 nas_cards = list(nas_page.get("cards") or [])
+                shown_offset = int(nas_page.get("offset") or 0)
+                nas_total = int(nas_page.get("total") if nas_page.get("total") is not None else (nas_page.get("matched") or 0))
+                nas_page_n = int(nas_page.get("page") or 1)
                 # Uploaded assets stay on the first page so later NAS pages are not repeated.
-                if nas_offset <= 0:
+                if shown_offset <= 0:
                     rows = nas_cards + rows
                 else:
                     rows = nas_cards
@@ -1924,8 +1946,13 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     "assets": rows,
                     "count": len(rows),
                     "nas_matched": int(nas_page.get("matched") or 0),
-                    "nas_offset": int(nas_page.get("offset") or 0),
+                    "nas_total": nas_total,
+                    "nas_offset": shown_offset,
                     "nas_limit": int(nas_page.get("limit") or nas_limit),
+                    "nas_page": nas_page_n,
+                    "nas_pages": int(nas_page.get("pages") or 0),
+                    "total": nas_total,
+                    "page": nas_page_n,
                     "nas_index": _ce_repair.read_coverage(),
                     "full_tree_indexed": False,
                     "full_nas_complete": False,
@@ -34131,7 +34158,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
         conn = db_connect()
         try:
             if start:
-                payload = _ce_repair.start_inplace_index(conn, scopes)
+                try:
+                    payload = _ce_repair.start_inplace_index(conn, scopes)
+                except sqlite3.DatabaseError:
+                    payload = _ce_repair.read_coverage()
             else:
                 payload = _ce_repair.read_coverage()
         finally:

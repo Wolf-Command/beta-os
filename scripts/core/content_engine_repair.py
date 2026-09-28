@@ -301,8 +301,13 @@ def _ensure_alias_table(conn: sqlite3.Connection) -> None:
 
 
 def _nas_index_columns(conn: sqlite3.Connection) -> None:
-    _nas.migrate_schema(conn)
+    try:
+        _nas.migrate_schema(conn)
+    except sqlite3.DatabaseError:
+        pass
     have = {r[1] for r in conn.execute("PRAGMA table_info(nas_index)").fetchall()}
+    if not have:
+        return
     adds = {
         "brand_slug": "TEXT",
         "index_state": "TEXT",
@@ -313,13 +318,18 @@ def _nas_index_columns(conn: sqlite3.Connection) -> None:
     }
     for name, typ in adds.items():
         if name not in have:
-            conn.execute(f"ALTER TABLE nas_index ADD COLUMN {name} {typ}")
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_nas_index_brand_state ON nas_index(brand_slug, index_state)"
-    )
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_nas_index_name_size ON nas_index(original_filename, size)"
-    )
+            try:
+                conn.execute(f"ALTER TABLE nas_index ADD COLUMN {name} {typ}")
+            except sqlite3.DatabaseError:
+                pass
+    for sql in (
+        "CREATE INDEX IF NOT EXISTS idx_nas_index_brand_state ON nas_index(brand_slug, index_state)",
+        "CREATE INDEX IF NOT EXISTS idx_nas_index_name_size ON nas_index(original_filename, size)",
+    ):
+        try:
+            conn.execute(sql)
+        except sqlite3.DatabaseError:
+            pass
 
 
 def ensure_registry(conn: sqlite3.Connection) -> dict[str, Any]:
@@ -479,7 +489,10 @@ def ensure_content_all_brands_scope(conn: sqlite3.Connection) -> dict[str, Any]:
 
 def authorised_brands(conn: sqlite3.Connection, scopes: list[str] | set[str] | None) -> list[dict[str, Any]]:
     """Person→Role→Assignment→Scope filter over the canonical registry."""
-    ensure_registry(conn)
+    try:
+        ensure_registry(conn)
+    except sqlite3.DatabaseError:
+        pass
     try:
         ensure_content_all_brands_scope(conn)
     except sqlite3.Error:
@@ -1070,6 +1083,102 @@ def _nas_card(row: sqlite3.Row | dict[str, Any], names: dict[str, str]) -> dict[
     }
 
 
+def clamp_library_page(page: int, pages: int) -> int:
+    """1-based page clamped into 1..pages. An empty result is page 1."""
+    try:
+        page_n = int(page)
+    except (TypeError, ValueError):
+        page_n = 1
+    pages_n = int(pages or 0)
+    if pages_n < 1:
+        return 1
+    if page_n < 1:
+        return 1
+    if page_n > pages_n:
+        return pages_n
+    return page_n
+
+
+def library_page_window(current: int, pages: int, neighbours: int = 2) -> list[int | str]:
+    """First and last page, neighbours around the current page, ellipsis for gaps."""
+    pages_n = int(pages or 0)
+    if pages_n <= 0:
+        return []
+    current_n = clamp_library_page(current, pages_n)
+    span = int(neighbours if neighbours is not None else 2)
+    if span < 0:
+        span = 0
+    if pages_n == 1:
+        return [1]
+    wanted = {1, pages_n}
+    for n in range(current_n - span, current_n + span + 1):
+        if 1 <= n <= pages_n:
+            wanted.add(n)
+    ordered = sorted(wanted)
+    out: list[int | str] = []
+    prev = 0
+    for n in ordered:
+        if prev and n - prev > 1:
+            if n - prev == 2:
+                out.append(prev + 1)
+            else:
+                out.append("ellipsis")
+        out.append(n)
+        prev = n
+    return out
+
+
+def _library_page_bounds(matched: int, limit: int, offset: int, page: int | None) -> tuple[int, int, int, int]:
+    """Return page, pages, offset, limit. page wins over offset. Out of range clamps."""
+    limit_n = max(1, min(48, int(limit or 48)))
+    matched_n = max(0, int(matched or 0))
+    pages_n = (matched_n + limit_n - 1) // limit_n if matched_n else 0
+    if page is not None:
+        page_n = clamp_library_page(page, pages_n if pages_n else 1)
+        offset_n = (page_n - 1) * limit_n if matched_n else 0
+        if pages_n == 0:
+            page_n = 1
+            offset_n = 0
+        return page_n, pages_n, offset_n, limit_n
+    try:
+        offset_n = int(offset or 0)
+    except (TypeError, ValueError):
+        offset_n = 0
+    if offset_n < 0:
+        offset_n = 0
+    if matched_n == 0:
+        return 1, 0, 0, limit_n
+    last = (pages_n - 1) * limit_n
+    if offset_n > last:
+        offset_n = last
+    page_n = (offset_n // limit_n) + 1
+    return page_n, pages_n, offset_n, limit_n
+
+
+def _library_page_body(
+    cards: list[dict[str, Any]],
+    matched: int,
+    *,
+    limit: int,
+    offset: int,
+    page: int,
+    pages: int,
+) -> dict[str, Any]:
+    return {
+        "cards": cards,
+        "matched": matched,
+        "total": matched,
+        "limit": limit,
+        "offset": offset,
+        "page": page,
+        "pages": pages,
+        "page_window": library_page_window(page, pages) if pages else [],
+        "staff_ready": False,
+        "full_tree_indexed": False,
+        "full_nas_complete": False,
+    }
+
+
 def nas_library_search(
     conn: sqlite3.Connection,
     scopes: list[str] | set[str] | None,
@@ -1079,21 +1188,17 @@ def nas_library_search(
     media_type: str | None = None,
     limit: int = 48,
     offset: int = 0,
+    page: int | None = None,
 ) -> dict[str, Any]:
     """Search every indexed nas_index row the caller may see. One page comes back; matched is the full count."""
     _nas_index_columns(conn)
-    limit = max(1, min(48, int(limit)))
-    offset = max(0, int(offset))
+    try:
+        limit_n = int(limit)
+    except (TypeError, ValueError):
+        limit_n = 48
+    limit_n = max(1, min(48, limit_n))
     slugs = _library_slugs(scopes, brand)
-    empty = {
-        "cards": [],
-        "matched": 0,
-        "limit": limit,
-        "offset": offset,
-        "staff_ready": False,
-        "full_tree_indexed": False,
-        "full_nas_complete": False,
-    }
+    empty = _library_page_body([], 0, limit=limit_n, offset=0, page=1, pages=0)
     if not slugs:
         return empty
     q = (q or "").strip().lower()
@@ -1123,6 +1228,7 @@ def nas_library_search(
         matched = int(
             conn.execute(f"SELECT COUNT(*) FROM nas_index WHERE {clause}", params).fetchone()[0]
         )
+        page_n, pages_n, offset_n, limit_n = _library_page_bounds(matched, limit_n, offset, page)
         rows = conn.execute(
             f"""
             SELECT id, original_filename, rel, size, brand_slug, index_state,
@@ -1132,7 +1238,7 @@ def nas_library_search(
             ORDER BY id DESC
             LIMIT ? OFFSET ?
             """,
-            [*params, limit, offset],
+            [*params, limit_n, offset_n],
         ).fetchall()
     except sqlite3.OperationalError:
         return empty
@@ -1142,7 +1248,7 @@ def nas_library_search(
         if card is None or card["brand"] not in wanted:
             continue
         cards.append(card)
-    if offset == 0 and len(cards) < limit:
+    if offset_n == 0 and len(cards) < limit_n:
         try:
             legacy = conn.execute(
                 """
@@ -1158,7 +1264,7 @@ def nas_library_search(
             legacy = []
         seen = {c["nas_index_id"] for c in cards}
         for row in legacy:
-            if len(cards) >= limit:
+            if len(cards) >= limit_n:
                 break
             d = dict(row)
             inferred = (
@@ -1176,15 +1282,14 @@ def nas_library_search(
                 continue
             cards.append(card)
             seen.add(card["nas_index_id"])
-    return {
-        "cards": cards,
-        "matched": matched,
-        "limit": limit,
-        "offset": offset,
-        "staff_ready": False,
-        "full_tree_indexed": False,
-        "full_nas_complete": False,
-    }
+    return _library_page_body(
+        cards,
+        matched,
+        limit=limit_n,
+        offset=offset_n,
+        page=page_n,
+        pages=pages_n,
+    )
 
 
 def nas_library_cards(

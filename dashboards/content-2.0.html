@@ -499,6 +499,21 @@
   .lib-thumb.thumb-missing .thumb-fallback { display: flex; }
   .lib-thumb.thumb-missing img { visibility: hidden; }
   .lib-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .lib-pager { display: flex; flex-direction: column; gap: 8px; margin: 0 0 14px; max-width: 100%; }
+  .lib-pager[hidden] { display: none; }
+  .lib-pager-row, .lib-page-nums {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center; max-width: 100%;
+  }
+  .lib-pager .btn {
+    min-width: 44px; min-height: 44px; padding: 0 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .lib-page-btn[aria-current="page"] {
+    background: var(--brand-primary, var(--accent));
+    border-color: transparent; color: #fff; font-weight: 700;
+  }
+  .lib-page-gap { min-width: 24px; text-align: center; color: var(--muted); }
+  #libPageNote { margin: 0; }
   .download-progress { margin: 0 0 12px; }
   .download-progress[hidden] { display: none; }
   .upload-lifecycle {
@@ -522,9 +537,14 @@
   }
   @media (max-width: 430px) {
     body { overflow-x: clip; }
-    .topbar { padding: 10px 12px; }
+    .topbar { padding: 10px 12px; max-width: 100%; }
     .brand-select select { min-width: 0; max-width: 100%; }
-    main { padding: 16px 12px 48px; }
+    main { padding: 16px 12px 48px; max-width: 100%; }
+    #view-library { max-width: 100%; overflow-x: clip; }
+    .lib-search-hero input[type="search"],
+    .lib-search-row input[type="search"],
+    .filter-bar input[type="search"] { min-width: 0; max-width: 100%; }
+    .lib-pager, .lib-pager-row, .lib-page-nums { max-width: 100%; }
   }
 
 </style>
@@ -708,12 +728,15 @@
         <div class="progress"><div id="libDownloadBar"></div></div>
         <p id="libDownloadStatus" class="sub" style="margin:8px 0 0">Preparing download…</p>
       </div>
+      <nav id="libPager" class="lib-pager" aria-label="Library pages" hidden>
+        <p class="sub" id="libPageNote"></p>
+        <div class="lib-pager-row">
+          <button type="button" class="btn" id="libPrev" aria-label="Previous page">PREV</button>
+          <span id="libPageNums" class="lib-page-nums"></span>
+          <button type="button" class="btn" id="libNext" aria-label="Next page">NEXT</button>
+        </div>
+      </nav>
       <div id="libGrid" class="lib-grid"></div>
-      <div id="libPager" class="lib-toolbar" hidden>
-        <button type="button" class="btn" id="libPrev">Previous</button>
-        <span class="sub" id="libPageNote" style="margin:0"></span>
-        <button type="button" class="btn" id="libNext">Next</button>
-      </div>
     </section>
 
     <!-- UPLOAD -->
@@ -2473,18 +2496,18 @@
   $("briefBackdrop").addEventListener("click", (e) => {
     if (e.target === $("briefBackdrop")) $("briefBackdrop").classList.remove("open");
   });
-  $("libRefresh").addEventListener("click", () => { state.libNasOffset = 0; state.libFilterSig = ""; loadLibrary(); });
+  $("libRefresh").addEventListener("click", () => {
+    state.libPage = 1;
+    state.libNasOffset = 0;
+    state.libFilterSig = libraryFilterSig();
+    state.libHistory = "replace";
+    loadLibrary();
+  });
   $("libSearch").addEventListener("input", () => loadLibrary());
   const libPrev = $("libPrev");
-  if (libPrev) libPrev.addEventListener("click", () => {
-    state.libNasOffset = Math.max(0, (state.libNasOffset || 0) - 48);
-    loadLibrary();
-  });
+  if (libPrev) libPrev.addEventListener("click", () => goLibPage((state.libPage || 1) - 1));
   const libNext = $("libNext");
-  if (libNext) libNext.addEventListener("click", () => {
-    state.libNasOffset = (state.libNasOffset || 0) + 48;
-    loadLibrary();
-  });
+  if (libNext) libNext.addEventListener("click", () => goLibPage((state.libPage || 1) + 1));
   $("libType").addEventListener("change", loadLibrary);
   $("libStatus").addEventListener("change", loadLibrary);
   const nasIdxRefresh = $("nasIdxRefresh");
@@ -2930,56 +2953,240 @@
     if (dl) dl.disabled = state.libSelected.size === 0;
   }
 
+  function libraryClampPage(page, pages) {
+    let n = parseInt(page, 10);
+    if (!isFinite(n)) n = 1;
+    pages = pages | 0;
+    if (pages < 1) return 1;
+    if (n < 1) return 1;
+    if (n > pages) return pages;
+    return n;
+  }
+
+  function libraryPageWindow(current, pages, neighbours) {
+    pages = pages | 0;
+    if (pages <= 0) return [];
+    current = libraryClampPage(current, pages);
+    neighbours = neighbours == null ? 2 : (neighbours | 0);
+    if (neighbours < 0) neighbours = 0;
+    if (pages === 1) return [1];
+    const wanted = new Set([1, pages]);
+    for (let n = current - neighbours; n <= current + neighbours; n++) {
+      if (n >= 1 && n <= pages) wanted.add(n);
+    }
+    const ordered = Array.from(wanted).sort((a, b) => a - b);
+    const out = [];
+    let prev = 0;
+    ordered.forEach((n) => {
+      if (prev && n - prev > 1) {
+        if (n - prev === 2) out.push(prev + 1);
+        else out.push("ellipsis");
+      }
+      out.push(n);
+      prev = n;
+    });
+    return out;
+  }
+
+  function libraryUrlQuery(fields) {
+    const src = fields || {};
+    const p = new URLSearchParams();
+    ["q", "brand", "media_type", "stage", "readiness", "shoot_date", "subject", "location", "sort"].forEach((k) => {
+      const v = src[k];
+      if (v != null && String(v) !== "") p.set(k, String(v));
+    });
+    let page = parseInt(src.page, 10);
+    if (!isFinite(page) || page < 1) page = 1;
+    if (page > 1) p.set("page", String(page));
+    return p.toString();
+  }
+
+  function libraryFieldsFromForm() {
+    const brandEl = $("libBrand");
+    const chosen = (brandEl && brandEl.value) || state.brand || "";
+    const mt = ($("libType") && $("libType").value) || "";
+    return {
+      q: ($("libSearch") && $("libSearch").value.trim()) || "",
+      brand: chosen,
+      media_type: mt === "photo" ? "image" : mt,
+      stage: ($("libStage") && $("libStage").value) || "",
+      readiness: ($("libStatus") && $("libStatus").value) || "",
+      shoot_date: ($("libShoot") && $("libShoot").value) || "",
+      subject: ($("libSubject") && $("libSubject").value.trim()) || "",
+      location: ($("libLocation") && $("libLocation").value.trim()) || "",
+      sort: state.libSort || "newest",
+      page: state.libPage || 1,
+    };
+  }
+
+  function libraryFilterSig() {
+    const fields = libraryFieldsFromForm();
+    return ["q", "brand", "media_type", "stage", "readiness", "shoot_date", "subject", "location", "sort"]
+      .map((k) => fields[k] || "").join("\n");
+  }
+
+  function applyLibraryUrl() {
+    const p = new URLSearchParams(location.search);
+    const set = (id, key) => {
+      const el = $(id);
+      if (!el || !p.has(key)) return;
+      el.value = p.get(key) || "";
+    };
+    set("libSearch", "q");
+    set("libType", "media_type");
+    set("libStage", "stage");
+    set("libStatus", "readiness");
+    set("libShoot", "shoot_date");
+    set("libSubject", "subject");
+    set("libLocation", "location");
+    state.libSort = p.get("sort") || state.libSort || "newest";
+    const brand = p.get("brand") || "";
+    if (brand) {
+      const desk = $("brandSelect");
+      if (desk && [...desk.options].some((o) => o.value === brand)) {
+        state.brand = brand;
+        desk.value = brand;
+      }
+      const libBrand = $("libBrand");
+      if (libBrand && [...libBrand.options].some((o) => o.value === brand)) libBrand.value = brand;
+    }
+    const rawPage = parseInt(p.get("page") || "1", 10);
+    state.libPage = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
+    state.libNasOffset = (state.libPage - 1) * 48;
+    state.libFilterSig = libraryFilterSig();
+  }
+
+  function writeLibraryHistory() {
+    const fields = libraryFieldsFromForm();
+    fields.page = state.libPage || 1;
+    const built = new URLSearchParams(libraryUrlQuery(fields));
+    const url = new URL(location.href);
+    ["q", "brand", "media_type", "stage", "readiness", "shoot_date", "subject", "location", "sort", "page"].forEach((key) => {
+      if (built.has(key)) url.searchParams.set(key, built.get(key));
+      else url.searchParams.delete(key);
+    });
+    if (state.view === "library" || (location.hash || "").toLowerCase() === "#library") url.hash = "library";
+    const next = url.pathname + url.search + url.hash;
+    const cur = location.pathname + location.search + location.hash;
+    const mode = state.libHistory || "replace";
+    state.libHistory = "replace";
+    if (next === cur || mode === "none") return;
+    if (mode === "push") history.pushState({ libraryPage: fields.page }, "", next);
+    else history.replaceState({ libraryPage: fields.page }, "", next);
+  }
+
+  function goLibPage(page) {
+    const known = state.libPages || 0;
+    const ceiling = known > 0 ? known : Math.max(1, parseInt(page, 10) || 1);
+    const next = libraryClampPage(page, ceiling);
+    if (known > 0 && next === (state.libPage || 1)) return;
+    state.libPage = next;
+    state.libNasOffset = (next - 1) * 48;
+    state.libHistory = "push";
+    loadLibrary();
+  }
+
+  function paintLibPager(matched, shown, page, pages) {
+    const pager = $("libPager");
+    const note = $("libPageNote");
+    const text = matched
+      ? `${Number(matched).toLocaleString("en-US")} indexed files match · Showing ${shown} on this page`
+      : "";
+    if (note) note.textContent = text;
+    if (!pager) return;
+    if (!matched) {
+      pager.hidden = true;
+      return;
+    }
+    pager.hidden = false;
+    const safePages = pages > 0 ? pages : 1;
+    const prev = $("libPrev");
+    const next = $("libNext");
+    if (prev) prev.disabled = page <= 1;
+    if (next) next.disabled = page >= safePages;
+    const narrow = window.matchMedia && window.matchMedia("(max-width: 430px)").matches;
+    const tokens = libraryPageWindow(page, safePages, narrow ? 1 : 2);
+    const box = $("libPageNums");
+    if (!box) return;
+    if (!box.dataset.bound) {
+      box.dataset.bound = "1";
+      box.addEventListener("click", (ev) => {
+        const btn = ev.target.closest("[data-page]");
+        if (!btn) return;
+        goLibPage(btn.getAttribute("data-page"));
+      });
+    }
+    box.innerHTML = tokens.map((tok) => {
+      if (tok === "ellipsis") return `<span class="lib-page-gap" aria-hidden="true">…</span>`;
+      const n = Number(tok);
+      const cur = n === page ? ` aria-current="page"` : "";
+      return `<button type="button" class="btn lib-page-btn" data-page="${n}"${cur} aria-label="Page ${n}">${n}</button>`;
+    }).join("");
+  }
+
+  window.addEventListener("popstate", () => {
+    const hash = (location.hash || "").replace(/^#/, "").toLowerCase();
+    if (hash !== "library" && state.view !== "library") return;
+    applyLibraryUrl();
+    state.libHistory = "none";
+    if (state.view !== "library") setView("library");
+    else loadLibrary();
+  });
+
   // Library override
   loadLibrary = async function () {
     try {
-      const q = new URLSearchParams();
-      const brandEl = $("libBrand");
-      const chosen = (brandEl && brandEl.value) || state.brand || "all";
-      q.set("brand", chosen === "all" ? "all" : chosen);
-      if ($("libSearch").value.trim()) q.set("q", $("libSearch").value.trim());
-      const mt = $("libType").value; if (mt) q.set("media_type", mt === "photo" ? "image" : mt);
-      const st = $("libStage"); if (st && st.value) q.set("stage", st.value);
-      if ($("libStatus").value) q.set("readiness", $("libStatus").value);
-      const sh = $("libShoot"); if (sh && sh.value) q.set("shoot_date", sh.value);
-      const sj = $("libSubject"); if (sj && sj.value.trim()) q.set("subject", sj.value.trim());
-      const loc = $("libLocation"); if (loc && loc.value.trim()) q.set("location", loc.value.trim());
-      const filterSig = q.toString();
-      if (state.libFilterSig !== filterSig) {
-        state.libFilterSig = filterSig;
-        state.libNasOffset = 0;
+      if (!state.libUrlBound) {
+        state.libUrlBound = true;
+        applyLibraryUrl();
       }
-      q.set("nas_limit", "48");
-      q.set("nas_offset", String(state.libNasOffset || 0));
-      const data = await api("/api/assets?" + q.toString());
-      const assets = data.assets || [];
-      const nasMatched = Number(data.nas_matched || 0);
-      const nasOffset = Number(data.nas_offset || 0);
-      const nasOnPage = assets.filter((a) => String(a.id).indexOf("nas:") === 0).length;
-      const note = $("libIndexNote");
-      const pageNote = nasMatched
-        ? `${nasMatched} indexed files match. Showing ${nasOnPage} on this page. The whole NAS is not complete.`
-        : "";
-      if (note) {
-        if (isOwnerDesk()) {
-          const msg = (data.nas_index && data.nas_index.message) || "";
-          note.textContent = [msg, pageNote].filter(Boolean).join(" ");
-        } else {
-          note.textContent = pageNote;
+      const filterSig = libraryFilterSig();
+      if (state.libFilterSig !== filterSig) {
+        const fromPop = state.libHistory === "none";
+        state.libFilterSig = filterSig;
+        if (!fromPop) {
+          state.libPage = 1;
+          state.libNasOffset = 0;
         }
       }
-      paintLibraryExceptions(data);
-      const pager = $("libPager");
-      const pagerNote = $("libPageNote");
-      if (pager) {
-        const showPager = nasMatched > Number(data.nas_limit || 48);
-        pager.hidden = !showPager;
-        if (pagerNote) pagerNote.textContent = pageNote;
-        const prev = $("libPrev");
-        const next = $("libNext");
-        if (prev) prev.disabled = nasOffset <= 0;
-        if (next) next.disabled = nasOffset + nasOnPage >= nasMatched;
+      const requested = state.libPage || 1;
+      const q = new URLSearchParams();
+      const fields = libraryFieldsFromForm();
+      if (fields.brand) q.set("brand", fields.brand);
+      if (fields.q) q.set("q", fields.q);
+      if (fields.media_type) q.set("media_type", fields.media_type);
+      if (fields.stage) q.set("stage", fields.stage);
+      if (fields.readiness) q.set("readiness", fields.readiness);
+      if (fields.shoot_date) q.set("shoot_date", fields.shoot_date);
+      if (fields.subject) q.set("subject", fields.subject);
+      if (fields.location) q.set("location", fields.location);
+      q.set("nas_limit", "48");
+      q.set("limit", "48");
+      q.set("page", String(requested));
+      q.set("nas_offset", String((requested - 1) * 48));
+      const data = await api("/api/assets?" + q.toString());
+      const assets = data.assets || [];
+      const nasMatched = Number(
+        data.nas_total != null ? data.nas_total : (data.total != null ? data.total : (data.nas_matched || 0))
+      );
+      const limit = Number(data.nas_limit || 48);
+      let pages = Number(data.nas_pages || 0);
+      if (!pages && nasMatched) pages = Math.ceil(nasMatched / limit);
+      let page = Number(data.page || data.nas_page || 1);
+      if (!page) page = 1;
+      if (page !== requested) state.libHistory = "replace";
+      state.libPage = page;
+      state.libPages = pages;
+      state.libNasOffset = Number(data.nas_offset || 0);
+      const shown = assets.length;
+      const note = $("libIndexNote");
+      if (note) {
+        if (isOwnerDesk()) note.textContent = (data.nas_index && data.nas_index.message) || "";
+        else note.textContent = "";
       }
+      paintLibraryExceptions(data);
+      paintLibPager(nasMatched, shown, page, pages);
+      writeLibraryHistory();
       if (!state.nasIndexStarted) {
         state.nasIndexStarted = true;
         api("/api/content/nas-coverage?start=1").then((cov) => {

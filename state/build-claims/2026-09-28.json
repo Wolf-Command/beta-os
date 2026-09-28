@@ -110,6 +110,16 @@
       "at": "2026-09-28T06:34:23Z",
       "tests": "atrium finance ux PASS=77 FAIL=0; role routing PASS=84 FAIL=0; staff access PASS=274 FAIL=0; ggv invoice PASS=92 FAIL=0; nota PASS=138 FAIL=0; nota storage PASS=100 FAIL=0; zarah frail PASS=150 FAIL=0",
       "checked": false
+    },
+    {
+      "id": "libpage-1-20260928",
+      "claim": "Library search returns one page from the index and keeps the index total. Unsigned Beta :8788 /content-2.0 and /api/assets are 403. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/run_guarded.py scripts/tests/test_library_pagination_20260928.py | tail -1; curl -sS -o /dev/null -w 'content:%{http_code}\\n' --max-time 8 -H 'Accept: text/html' http://127.0.0.1:8788/content-2.0; curl -sS -o /dev/null -w 'assets:%{http_code}\\n' --max-time 8 http://127.0.0.1:8788/api/assets?brand=atrium&page=1; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "SUMMARY pass=53 fail=0; content:403; assets:403; 8787 True; 8788 True",
+      "by": "cursor-libpage-1",
+      "at": "2026-09-28T08:54:54Z",
+      "tests": "pagination PASS=53 FAIL=0; staff access PASS=274 FAIL=0; role routing PASS=84 FAIL=0; content staff ux PASS=54 FAIL=0; shell PASS=45 FAIL=0; round3 PASS=19 FAIL=0; nas estate PASS=59 FAIL=0; nota storage PASS=100 FAIL=0",
+      "checked": false
     }
   ]
 }
