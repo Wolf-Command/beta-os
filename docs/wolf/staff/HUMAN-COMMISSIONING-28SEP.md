@@ -33,25 +33,25 @@ Who: Haikal, Misa, Zarah, and Frail. Each person uses their own Gmail. Zarah is 
 6. Publishing stays on the Publish Gate. If the gate refuses you, write the words and stop.
 7. Write PASS or FAIL, your name, and the exact words on the screen if it fails.
 
-## Zayen — Atrium Finance
+## Zayen — Atrium Finance — RETEST #2 PENDING
 
 Who: Zayen. Gmail laluzayen@gmail.com.
 
+FAIL #1 (13:18, raw JSON on `/`) and ZAYENFIX-1 stay on record. FAIL #2 (14:16, engineering placeholder on `/amg/finance`) stays on record. This card is the retest after ATRIUMFIN-UX-1. It does not mark her ready and it does not mark her commissioned.
+
 1. Open https://beta.wolfcommand.net.
 2. Sign in with that Gmail and the email code.
-3. You should land on Atrium Finance.
-4. Read the board. It says the books are not open on this desk.
-5. Read the report line. It says no report figure is on this page.
-6. Do not type an amount. This page does not save a journal and does not pay.
-7. Open one GGV page or one Blu Zone page. You should be refused.
-8. Open one payment approve. You should be refused.
-9. Write PASS or FAIL and the exact words on the screen if it fails.
+3. You should land on Atrium Finance. The header is Atrium Finance. The entity is Atrium.
+4. Open Board. There is no balance yet, because the Atrium books are not open. That empty state is the board.
+5. Open Approvals. You can describe a decision and send it. Approvals are handled by the Finance Controller.
+6. Open one GGV page or one Blu Zone page. You should be refused.
+7. Write PASS or FAIL, and the exact words on the screen if it fails.
 
 ## PASS / FAIL record
 
 Every row stays PENDING until that person writes the result. Do not fill these in from a test run.
 
-Zayen Atrium Finance Officer — HUMAN FAIL 28 Sep 13:18 WITA — raw JSON on /; repair ZAYENFIX-1; retest PENDING
+Zayen Atrium Finance Officer — RETEST #2 PENDING. FAIL #1 13:18 raw JSON on / (ZAYENFIX-1). FAIL #2 14:16 engineering placeholder on /amg/finance (ATRIUMFIN-UX-1).
 
 | Person | Role | Result |
 | --- | --- | --- |
@@ -65,4 +65,9 @@ Zayen Atrium Finance Officer — HUMAN FAIL 28 Sep 13:18 WITA — raw JSON on /;
 | TJ | Content Creator | PENDING |
 | Nata | Content Creator | PENDING |
 | Rapp | Content Creator | PENDING |
-| Zayen | Atrium Finance Officer | PENDING/FAIL |
+| Zayen | Atrium Finance Officer | RETEST #2 PENDING |
+
+### Zayen — HUMAN FAIL #2 — 28 Sep 2026 ~14:16 WITA
+- FAIL #1 (13:18, raw JSON on `/`) and its repair ZAYENFIX-1 (`ff60204`) stay on record. Routing repair worked: Zayen reached `/amg/finance`.
+- FAIL #2: `/amg/finance` renders an engineering placeholder, not a staff finance workspace. Evidence is Zayen's screenshot, supplied by Matt in chat on 28 Sep 14:16 (image not stored on disk). The visible text includes "Hotel books are not open on this desk.", "No report figure is on this page.", "Do not type an amount." and "You cannot approve a payment…".
+- Repair ATRIUMFIN-UX-1 is on the desk. Status: staff_ready=false, human_commissioned=false. Retest #2 is PENDING.

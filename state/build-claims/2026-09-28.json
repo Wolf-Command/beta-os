@@ -50,6 +50,66 @@
       "at": "2026-09-28T02:31:56Z",
       "tests": "staff access PASS=204 FAIL=0; canonical guard PASS=20 FAIL=0",
       "checked": false
+    },
+    {
+      "id": "staff-access-finalise-20260928",
+      "claim": "Zayen is PERS-ZAYEN with laluzayen@gmail.com on ROLE-AMG-FINANCE-OFFICER scoped to ENT-AMG. Authority limits stay 0 and SoD stays 0. ASG-MISA-CC-1 and ASG-AMG-DAY-MISA stay ENDED. core_work_items stays 0. Unsigned Beta :8788 pid 58853 is 403 on /amg/finance. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/run_guarded.py scripts/tests/test_staff_access_20260928.py | tail -2; python3 -c \"import sqlite3; c=sqlite3.connect('file:catalog/content_library.sqlite?mode=ro', uri=True); print('zayen', c.execute(\\\"select identifier from org_auth_identities where person_id='PERS-ZAYEN'\\\").fetchone()[0]); print('crew', c.execute(\\\"select status from org_assignments where assignment_id='ASG-MISA-CC-1'\\\").fetchone()[0]); print('day', c.execute(\\\"select status from org_assignments where assignment_id='ASG-AMG-DAY-MISA'\\\").fetchone()[0]); print('limits', c.execute('select count(*) from org_authority_limits').fetchone()[0]); print('sod', c.execute('select count(*) from core_sod_constraints').fetchone()[0]); print('work', c.execute('select count(*) from core_work_items').fetchone()[0])\"; curl -sS -o /dev/null -w 'atrium:%{http_code}\\n' http://127.0.0.1:8788/amg/finance; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "SUMMARY pass=274 fail=0; zayen laluzayen@gmail.com; crew ENDED; day ENDED; limits 0; sod 0; work 0; atrium:403; 8787 True; 8788 True",
+      "by": "cursor-staff-access-finalise",
+      "at": "2026-09-28T03:48:00Z",
+      "tests": "staff access PASS=274 FAIL=0",
+      "checked": false
+    },
+    {
+      "id": "ggv-finance-amanda-20260928",
+      "claim": "Amanda PERS-AMANDA keeps amanda@wolfcommand.net and gains non-primary assignment ASG-AMANDA-GGV-FIN-1 on ROLE-GGV-FINANCE-OPERATOR scoped to ENT-GGV. Live ggv_invoices and fin_counterparties stay 0. Authority limits stay 0. Unsigned Beta :8788 /ggv/finance is 403. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/run_guarded.py scripts/tests/test_ggv_finance_invoice_20260928.py | tail -1; python3 -c \"import sqlite3; c=sqlite3.connect('file:catalog/content_library.sqlite?mode=ro', uri=True); print('seat', c.execute(\\\"select a.status, a.is_primary, p.entity_id from org_assignments a join org_positions p on p.position_id=a.position_id where a.assignment_id='ASG-AMANDA-GGV-FIN-1'\\\").fetchone()); print('invoices', c.execute('select count(*) from ggv_invoices').fetchone()[0]); print('customers', c.execute('select count(*) from fin_counterparties').fetchone()[0]); print('limits', c.execute('select count(*) from org_authority_limits').fetchone()[0])\"; curl -sS -o /dev/null -w 'ggv:%{http_code}\\n' --max-time 5 http://127.0.0.1:8788/ggv/finance; python3 -c \"import socket\\n\\ndef up(p):\\n s=socket.socket(); s.settimeout(1.5); print(p, s.connect_ex(('127.0.0.1',p))==0); s.close()\\nup(8787); up(8788)\"",
+      "expect": "PASS=66 FAIL=0; seat ('ACTIVE', 0, 'ENT-GGV'); invoices 0; customers 0; limits 0; ggv:403; 8787 True; 8788 True",
+      "by": "cursor-ggv-finance",
+      "at": "2026-09-28T04:07:40Z",
+      "tests": "ggv invoice PASS=66 FAIL=0; staff access PASS=274 FAIL=0; ggv nota PASS=138 FAIL=0",
+      "checked": false
+    },
+    {
+      "id": "zayenfix-1-routing-20260928",
+      "claim": "Signed-in GET / on Beta :8788 pid 66899 redirects to the primary assignment page. Zayen laluzayen@gmail.com goes to /amg/finance. Browser page denials are HTML. /api/* stays JSON 403. Unsigned / is 403. /api/health is 200. Grants unchanged. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false. Zayen human retest stays PENDING/FAIL.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_role_routing_20260928.py | tail -1; python3 scripts/tests/test_staff_access_20260928.py | tail -1; python3 scripts/tests/test_ggv_finance_invoice_20260928.py | tail -1; python3 scripts/tests/test_ggv_finance_mobile_nota.py | tail -2; curl -sS -o /dev/null -w 'health:%{http_code}\\n' --max-time 5 http://127.0.0.1:8788/api/health; curl -sS -o /dev/null -w 'root:%{http_code}\\n' --max-time 5 -H 'Accept: text/html' http://127.0.0.1:8788/; python3 -c \"import os; print('prod', os.path.exists('/proc/15975') if False else ''); import subprocess; print(subprocess.check_output(['ps','-p','15975','-o','pid='], text=True).strip()); print(subprocess.check_output(['lsof','-nP','-iTCP:8788','-sTCP:LISTEN'], text=True).splitlines()[-1])\"",
+      "expect": "SUMMARY pass=84 fail=0; SUMMARY pass=274 fail=0; PASS=66 FAIL=0; PASS=138 FAIL=0; health:200; root:403; prod pid 15975; beta listener on 8788",
+      "by": "cursor-zayenfix-1",
+      "at": "2026-09-28T05:29:24Z",
+      "tests": "role routing PASS=84 FAIL=0; staff access PASS=274 FAIL=0; ggv invoice PASS=66 FAIL=0; ggv nota PASS=138 FAIL=0",
+      "checked": false
+    },
+    {
+      "id": "ggvfin-2-numbering-20260928",
+      "claim": "GGV invoice numbers are assigned at issue from fin_invoice_sequences. ENT-GGV next_value is 67 and format is {n:03d}A. Live ggv_invoices stay 0. 064A, 065A, and 066A were not created. Unsigned Beta :8788 pid 68812 is 403 on /ggv/finance and 200 on /api/health. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false. CR-8f20b066fac63445 and CR-214e370b5b96cbd1 stay OPEN.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_ggv_finance_invoice_20260928.py | tail -1; python3 scripts/tests/test_staff_access_20260928.py | tail -1; python3 scripts/tests/test_ggv_finance_mobile_nota.py | tail -2; python3 -c \"import sqlite3; c=sqlite3.connect('file:catalog/content_library.sqlite?mode=ro', uri=True); print('next', c.execute(\\\"select next_value from fin_invoice_sequences where entity_id='ENT-GGV'\\\").fetchone()[0]); print('invoices', c.execute('select count(*) from ggv_invoices').fetchone()[0]); print('hist', c.execute(\\\"select count(*) from ggv_invoices where invoice_number in ('064A','065A','066A')\\\").fetchone()[0]); print('limits', c.execute('select count(*) from org_authority_limits').fetchone()[0]); print('cr', c.execute(\\\"select state from wolf_completion_items where id='CR-214e370b5b96cbd1'\\\").fetchone()[0])\"; curl -sS -o /dev/null -w 'health:%{http_code}\\n' --max-time 5 http://127.0.0.1:8788/api/health; curl -sS -o /dev/null -w 'ggv:%{http_code}\\n' --max-time 5 http://127.0.0.1:8788/ggv/finance; python3 -c \"import subprocess; print('prod', subprocess.check_output(['ps','-p','15975','-o','pid='], text=True).strip())\"",
+      "expect": "PASS=92 FAIL=0; SUMMARY pass=274 fail=0; PASS=138 FAIL=0; next 67; invoices 0; hist 0; limits 0; cr OPEN; health:200; ggv:403; prod 15975",
+      "by": "cursor-ggvfin-2",
+      "at": "2026-09-28T05:45:34Z",
+      "tests": "ggv invoice PASS=92 FAIL=0; staff access PASS=274 FAIL=0; ggv nota PASS=138 FAIL=0; nota storage PASS=100 FAIL=0",
+      "checked": false
+    },
+    {
+      "id": "staff-3-zarah-frail-20260928",
+      "claim": "Zarah PERS-ZARAH and Frail PERS-FRAIL are primary on ROLE-GGV-CREATIVE-DIRECTOR. No person or AuthIdentity existed for those emails or names before this seat. The role grants stay the eleven Creative Director codes. Unsigned Beta :8788 pid 71613 is 403 on / and 200 on /api/health. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_zarah_frail_cd_20260928.py | tail -1; python3 scripts/tests/test_role_routing_20260928.py | tail -1; python3 scripts/tests/test_staff_access_20260928.py | tail -1; python3 -c \"import sqlite3; c=sqlite3.connect('file:catalog/content_library.sqlite?mode=ro', uri=True); print('zarah', c.execute(\\\"select person_id from org_auth_identities where lower(identifier)='zarah.lestrange@gmail.com'\\\").fetchone()[0]); print('frail', c.execute(\\\"select person_id from org_auth_identities where lower(identifier)='frail.bongat@icloud.com'\\\").fetchone()[0]); print('grants', c.execute(\\\"select count(*) from org_role_permissions where role_id='ROLE-GGV-CREATIVE-DIRECTOR' and effect='ALLOW'\\\").fetchone()[0])\"; curl -sS -o /dev/null -w 'health:%{http_code}\\n' --max-time 5 http://127.0.0.1:8788/api/health; curl -sS -o /dev/null -w 'root:%{http_code}\\n' --max-time 5 -H 'Accept: text/html' http://127.0.0.1:8788/; python3 -c \"import subprocess; print('prod', subprocess.check_output(['ps','-p','15975','-o','pid='], text=True).strip()); print(subprocess.check_output(['ps','-p','71613','-o','pid='], text=True).strip())\"",
+      "expect": "SUMMARY pass=150 fail=0; SUMMARY pass=84 fail=0; SUMMARY pass=274 fail=0; zarah PERS-ZARAH; frail PERS-FRAIL; grants 11; health:200; root:403; prod 15975; beta 71613",
+      "by": "cursor-staff-3",
+      "at": "2026-09-28T06:08:00Z",
+      "tests": "zarah frail PASS=150 FAIL=0; role routing PASS=84 FAIL=0; staff access PASS=274 FAIL=0; ggv invoice PASS=92 FAIL=0; nota PASS=138 FAIL=0; nota storage PASS=100 FAIL=0",
+      "checked": false
+    },
+    {
+      "id": "atriumfin-ux-1-20260928",
+      "claim": "Atrium Finance desk on Beta :8788 pid 73997 shows Board and Approvals only. Unsigned /amg/finance is 403. Grants on ROLE-AMG-FINANCE-OFFICER are unchanged. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false. Zayen human retest #2 stays PENDING.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/run_guarded.py scripts/tests/test_atrium_finance_ux_20260928.py | tail -1; python3 scripts/tests/run_guarded.py scripts/tests/test_role_routing_20260928.py | tail -1; curl -sS -o /dev/null -w 'health:%{http_code}\\n' --max-time 5 http://127.0.0.1:8788/api/health; curl -sS -o /dev/null -w 'atrium:%{http_code}\\n' --max-time 5 -H 'Accept: text/html' http://127.0.0.1:8788/amg/finance; python3 -c \"import subprocess; print('prod', subprocess.check_output(['ps','-p','15975','-o','pid='], text=True).strip()); print('beta', subprocess.check_output(['ps','-p','73997','-o','pid='], text=True).strip())\"",
+      "expect": "SUMMARY pass=77 fail=0; SUMMARY pass=84 fail=0; health:200; atrium:403; prod 15975; beta 73997",
+      "by": "cursor-atriumfin-ux-1",
+      "at": "2026-09-28T06:34:23Z",
+      "tests": "atrium finance ux PASS=77 FAIL=0; role routing PASS=84 FAIL=0; staff access PASS=274 FAIL=0; ggv invoice PASS=92 FAIL=0; nota PASS=138 FAIL=0; nota storage PASS=100 FAIL=0; zarah frail PASS=150 FAIL=0",
+      "checked": false
     }
   ]
 }

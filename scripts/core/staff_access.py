@@ -164,10 +164,12 @@ MISA_DAY_ASSIGNMENT = "ASG-AMG-DAY-MISA"
 ATRIUM_PAGE_PATHS = frozenset(
     {
         "/amg/finance",
+        "/amg/finance/approvals",
         "/amg-finance",
         "/amg-finance.html",
         "/dashboards/amg-finance.html",
         "/api/amg/finance",
+        "/api/amg/finance/approvals",
     }
 )
 ATRIUM_CHROME_PATHS = frozenset(

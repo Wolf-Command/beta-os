@@ -4,33 +4,264 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Atrium Finance</title>
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --bg2: #12151d;
+      --bg3: #1a1f2b;
+      --border: #2a3142;
+      --text: #e8ecf4;
+      --muted: #c5cedd;
+      --accent: #6ea8ff;
+      --radius: 12px;
+      --font: "Inter", "SF Pro Text", system-ui, -apple-system, sans-serif;
+      --touch: 44px;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      max-width: 100%;
+    }
+    main, .panel, .empty, p, span, h1, h2, label {
+      overflow-wrap: anywhere;
+      max-width: 100%;
+    }
+    body { padding: 76px 16px 32px; }
+    a { color: var(--accent); }
+    h1 { font-size: 1.45rem; letter-spacing: -0.02em; margin: 0 0 4px; }
+    h2 { font-size: 1.05rem; margin: 0 0 8px; }
+    p { margin: 0 0 10px; }
+    .crumb { color: var(--muted); font-size: 0.78rem; margin: 0 0 8px; }
+    .entity {
+      display: inline-flex;
+      align-items: center;
+      min-height: var(--touch);
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg3);
+      font-weight: 650;
+    }
+    .top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    nav.desk {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px;
+      margin: 0 0 16px;
+      width: 100%;
+    }
+    nav.desk a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: var(--touch);
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg2);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 700;
+    }
+    nav.desk a.active { border-color: var(--accent); color: var(--accent); }
+    .panel {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .empty {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 20px 16px;
+      color: var(--muted);
+    }
+    .empty strong { display: block; color: var(--text); margin-bottom: 6px; }
+    .quiet { color: var(--muted); font-size: 0.92rem; }
+    label { display: block; margin: 12px 0 6px; font-weight: 650; }
+    input, textarea, button {
+      font: inherit;
+      color: var(--text);
+      width: 100%;
+      min-height: var(--touch);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      padding: 10px 12px;
+    }
+    textarea { min-height: 96px; }
+    button {
+      margin-top: 12px;
+      background: #243044;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .request {
+      padding: 12px 0;
+      border-top: 1px solid var(--border);
+    }
+    .request b { display: block; }
+    .signout {
+      display: inline-flex;
+      align-items: center;
+      min-height: var(--touch);
+      color: var(--muted);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    @media (min-width: 900px) {
+      body { padding: 84px 28px 40px; }
+      main { max-width: 880px; }
+      nav.desk { grid-template-columns: 220px 220px; }
+    }
+    @media (max-width: 860px) {
+      body { padding-top: 148px; }
+    }
+  </style>
 </head>
-<body>
+<body class="atrium-finance-desk" data-wolf-page-type="WORKSPACE" data-wolf-org="AMG" data-wolf-shell="global">
   <main>
-    <h1>Atrium Finance</h1>
-    <p id="entity">Finance · AMG</p>
-    <p>This is Atrium Finance for Atrium.</p>
-    <p id="board">Hotel books are not open on this desk.</p>
-    <p id="report">No report figure is on this page.</p>
-    <p>You can open this board. A draft journal is not saved here. Do not type an amount.</p>
-    <p>You cannot approve a payment, pay, or open GGV, Blu Zone, or Owner command.</p>
+    <p class="crumb">Wolf Command</p>
+    <div class="top">
+      <div>
+        <h1>Atrium Finance</h1>
+        <p id="entity" class="entity">Atrium</p>
+      </div>
+      <a class="signout" href="/signout">Sign out</a>
+    </div>
+    <nav class="desk" aria-label="Atrium Finance" data-nav="board approvals">
+      <a id="nav-board" href="/amg/finance">Board</a>
+      <a id="nav-approvals" href="/amg/finance/approvals">Approvals</a>
+    </nav>
+
+    <section class="panel" id="board" aria-labelledby="board-title">
+      <h2 id="board-title">Board</h2>
+      <div class="empty" id="summary">
+        <strong>No balance yet</strong>
+        <span id="board-copy">The Atrium books are not open yet, so there is no balance to show. When the books are open, the hotel position will appear here.</span>
+      </div>
+    </section>
+
+    <section class="panel" id="approvals" aria-labelledby="approvals-title">
+      <h2 id="approvals-title">Approvals</h2>
+      <p class="quiet" id="controller">Approvals are handled by the Finance Controller.</p>
+      <div id="approval-list">
+        <div class="empty" id="approval-empty">
+          <strong>Nothing waiting</strong>
+          <span>No approval request is waiting. Describe the decision you need and send it.</span>
+        </div>
+      </div>
+      <form id="approval-form">
+        <label for="approval-title">What needs a decision</label>
+        <input id="approval-title" name="title" maxlength="180" autocomplete="off" required>
+        <label for="approval-note">Note</label>
+        <textarea id="approval-note" name="description" maxlength="2000"></textarea>
+        <button type="submit">Send for approval</button>
+        <p id="approval-result" class="quiet" role="status"></p>
+      </form>
+    </section>
   </main>
+  <style>
+    html, body { width: 100% !important; max-width: 100% !important; overflow-x: clip !important; }
+    #wolfnav, #wolfnav .nv-row { max-width: 100vw !important; }
+    #wolfnav .nv-hello { display: none !important; }
+    #wolfnav-t, #wolfnav .nv-dir-btn, #wolfnav .nv-footer a {
+      min-height: 44px !important;
+      display: inline-flex !important;
+      align-items: center;
+    }
+  </style>
   <script>
-    fetch("/api/amg/finance", { credentials: "same-origin" }).then(function (res) {
-      return res.json();
-    }).then(function (data) {
-      var rows = data.finance_entities || [];
-      var box = document.getElementById("entity");
-      if (!rows.length) {
-        box.textContent = "Finance · AMG";
-        return;
+    (function () {
+      var path = (location.pathname || "").replace(/\/$/, "") || "/";
+      var onApprovals = path.endsWith("/approvals");
+      document.getElementById("nav-board").classList.toggle("active", !onApprovals);
+      document.getElementById("nav-approvals").classList.toggle("active", onApprovals);
+      if (onApprovals && window.matchMedia("(min-width: 900px)").matches) {
+        var section = document.getElementById("approvals");
+        if (section && section.scrollIntoView) section.scrollIntoView();
       }
-      if (rows.length === 1) {
-        box.textContent = "Finance · " + rows[0].label;
-        return;
+
+      function text(id, value) {
+        var node = document.getElementById(id);
+        if (node && value) node.textContent = value;
       }
-      box.textContent = "Finance · " + rows.map(function (row) { return row.label; }).join(" · ");
-    }).catch(function () {});
+
+      fetch("/api/amg/finance", { credentials: "same-origin" }).then(function (res) {
+        if (!res.ok) throw new Error("closed");
+        return res.json();
+      }).then(function (data) {
+        var rows = data.finance_entities || [];
+        var onlyAtrium = rows.length === 1 && rows[0].id === "AMG";
+        text("entity", onlyAtrium || (data.entity && data.entity.label === "Atrium") ? "Atrium" : "Atrium");
+        var board = data.board || {};
+        var summary = document.getElementById("summary");
+        if (board.figure != null && board.empty === false) {
+          summary.innerHTML = "<strong>Atrium position</strong><span></span>";
+          summary.querySelector("span").textContent = String(board.figure);
+        } else if (board.message) {
+          text("board-copy", board.message);
+        }
+        var box = data.approvals || {};
+        if (box.controller) text("controller", box.controller);
+        var list = document.getElementById("approval-list");
+        var items = box.items || [];
+        if (!items.length) return;
+        list.textContent = "";
+        items.forEach(function (item) {
+          var row = document.createElement("div");
+          row.className = "request";
+          var title = document.createElement("b");
+          title.textContent = item.title || "Request";
+          var meta = document.createElement("span");
+          meta.textContent = item.status || "";
+          row.appendChild(title);
+          row.appendChild(meta);
+          list.appendChild(row);
+        });
+      }).catch(function () {});
+
+      document.getElementById("approval-form").addEventListener("submit", function (event) {
+        event.preventDefault();
+        var result = document.getElementById("approval-result");
+        result.textContent = "Sending…";
+        var body = {
+          title: document.getElementById("approval-title").value,
+          description: document.getElementById("approval-note").value,
+          owning_entity_id: "ENT-AMG",
+          request_type: "GENERAL"
+        };
+        fetch("/api/amg/finance/approvals", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        }).then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        }).then(function (out) {
+          if (!out.ok) {
+            result.textContent = (out.data && out.data.message) || "That request was not sent.";
+            return;
+          }
+          result.textContent = "Sent. The Finance Controller has the request.";
+          document.getElementById("approval-title").value = "";
+          document.getElementById("approval-note").value = "";
+        }).catch(function () {
+          result.textContent = "That request was not sent.";
+        });
+      });
+    })();
   </script>
 </body>
 </html>

@@ -53,3 +53,11 @@ Checked against the live assignments. Direct `/`, `/index.html`, refresh of the 
 | Owner (`PERS-MATT`) | `ASG-MATT-OWNER-1` Owner / Executive | `/wolf` | `/wolf` | `/content-2.0` | — | — |
 
 Unsigned `/` stays 403. `GET /api/health` stays 200.
+
+## FAIL #2 — 28 Sep 2026 14:16 WITA
+
+FAIL #1 stays as written above. ZAYENFIX-1 (`ff60204`) is unchanged. After that repair she reached `/amg/finance`. The page she landed on was still the engineering placeholder in `dashboards/amg-finance.html` (36 lines), the board sentence in `scripts/core/fin_entity_boards.py`, and the same two sentences on `GET /api/amg/finance`.
+
+She saw "Hotel books are not open on this desk.", "No report figure is on this page.", "Do not type an amount." and "You cannot approve a payment…". The screenshot was supplied in chat and is not stored on disk.
+
+ATRIUMFIN-UX-1 replaces that page with the Atrium Finance desk. Grants are unchanged. Retest #2 is PENDING. `staff_ready` and `human_commissioned` stay false. The full repair record is `docs/wolf/staff/ATRIUM-FINANCE-UX-RESULT.md`.

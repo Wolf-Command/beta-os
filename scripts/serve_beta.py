@@ -4245,6 +4245,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
         elif path in (
             "/amg/finance",
             "/amg/finance/",
+            "/amg/finance/approvals",
+            "/amg/finance/approvals/",
             "/amg-finance",
             "/amg-finance.html",
             "/dashboards/amg-finance.html",
@@ -4252,6 +4254,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._amg_finance_page()
             return
         elif path == "/api/amg/finance":
+            self._amg_finance_read()
+            return
+        elif path == "/api/amg/finance/approvals":
             self._amg_finance_read()
             return
         elif path in (
@@ -4734,6 +4739,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/amg/finance":
             self._amg_finance_write_refused()
+            return
+        if path == "/api/amg/finance/approvals":
+            self._amg_finance_approvals_post()
             return
         if self._ggv_finance_dispatch():
             return
@@ -14027,25 +14035,60 @@ class BetaHandler(SimpleHTTPRequestHandler):
         person_id = self._amg_finance_guard()
         if person_id is None:
             return
-        from core import ggv_finance_invoice as _inv
+        from core import atrium_finance_desk as _desk
 
         conn = _ggv_fin.db_connect()
         try:
-            entities = _inv.finance_entities(person_id, conn)
+            payload = _desk.workspace(person_id, conn)
+        finally:
+            conn.close()
+        self._send_json(payload)
+
+    def _amg_finance_approvals_post(self) -> None:
+        person_id = self._amg_finance_guard()
+        if person_id is None:
+            return
+        try:
+            body = self._read_json()
+        except Exception:
+            self._send_json(
+                {"ok": False, "error": "invalid_json", "message": "The request could not be read."},
+                status=400,
+            )
+            return
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._resolve_identity(body, emit_audit=False)
+        from core import atrium_finance_desk as _desk
+
+        conn = _ggv_fin.db_connect()
+        try:
+            try:
+                item = _desk.submit_approval(person_id, body, conn, identity=identity)
+            except _desk.DeskError as exc:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": exc.code,
+                        "message": str(exc),
+                        "money_movement": False,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                    },
+                    status=exc.http_status,
+                )
+                return
         finally:
             conn.close()
         self._send_json(
             {
                 "ok": True,
-                "board": "Hotel books are not open on this desk.",
-                "report": "No report figure is on this page.",
-                "finance_entities": entities,
-                "books_opened": False,
-                "journal_saved": False,
+                "approval": item,
                 "money_movement": False,
                 "staff_ready": False,
                 "human_commissioned": False,
-            }
+            },
+            status=201,
         )
 
     def _amg_finance_write_refused(self) -> None:
