@@ -68,6 +68,8 @@
   a.inline { color: var(--gold); }
   .line-card { display: block; margin-top: 10px; }
   .totals p { margin: 4px 0; }
+  .brand-preview { border-color: var(--gold); }
+  .brand-preview .brand { color: var(--gold); font-weight: 700; letter-spacing: 0.06em; }
   @media (max-width: 430px) {
     body { padding: 12px 12px 140px; }
     nav.tabs button { flex: 1 1 46%; font-size: 0.85rem; }
@@ -112,12 +114,12 @@
   </section>
 
   <section id="invoices" class="hidden">
-    <button type="button" class="primary" id="new-invoice">+ New invoice</button>
+    <button type="button" class="primary" id="new-invoice">+ New Invoice</button>
     <div id="invoice-list"></div>
     <div id="invoice-form" class="hidden">
       <button type="button" class="secondary" id="invoice-back">Back to invoices</button>
       <h2 id="invoice-heading">New invoice</h2>
-      <p class="note" id="number-note"></p>
+      <p class="note" id="number-note">Number assigned on issue.</p>
       <label>Customer
         <select id="inv-customer"></select>
       </label>
@@ -133,8 +135,6 @@
         <label>Notes<textarea id="cust-notes"></textarea></label>
         <button type="button" class="primary" id="save-customer">Save customer</button>
       </div>
-      <label>Invoice number<input id="inv-number" /></label>
-      <label><input id="inv-number-ok" type="checkbox" /> I confirm this invoice number</label>
       <label>Invoice date<input id="inv-date" placeholder="YYYY-MM-DD" /></label>
       <label>Due date<input id="inv-due" placeholder="YYYY-MM-DD" /></label>
       <label>Terms<input id="inv-terms" /></label>
@@ -702,6 +702,7 @@ function renderLines() {
   $("inv-lines").querySelectorAll("input").forEach((input) => {
     input.addEventListener("input", () => {
       invoiceLines[Number(input.dataset.line)][input.dataset.field] = input.value;
+      schedulePreview();
     });
   });
   $("inv-lines").querySelectorAll("[data-remove]").forEach((btn) => {
@@ -715,8 +716,6 @@ function renderLines() {
 function invoiceBody() {
   return {
     customer_id: $("inv-customer").value,
-    invoice_number: $("inv-number").value,
-    number_confirmed: $("inv-number-ok").checked,
     invoice_date: $("inv-date").value,
     due_date: $("inv-due").value,
     terms: $("inv-terms").value,
@@ -750,15 +749,63 @@ async function loadCustomers(selected) {
     : `<p class="note">No customers yet.</p>`;
 }
 
+function renderBrand(data) {
+  const from = data.from || {};
+  const lines = (data.lines || []).map((line) => `<p>${esc(line.description)} · ${esc(line.total)} ${esc(data.currency)}</p>`).join("");
+  $("inv-preview").innerHTML = `<article class="card brand-preview"><p class="brand">${esc(from.display_name || "GGV")}</p><strong>${esc(from.legal_name || "GGV")}</strong><p>Number assigned on issue.</p>${lines}<p class="note">Preview only. Not saved.</p></article>`;
+}
+
+let previewTimer = null;
+function schedulePreview() {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => { runPreview(false); }, 280);
+}
+
+async function runPreview(showError) {
+  try {
+    const data = await api("/api/ggv/finance/invoices/preview", { method: "POST", body: JSON.stringify(invoiceBody()) });
+    showTotals(data);
+    renderBrand(data);
+  } catch (err) {
+    if (showError) $("invoice-msg").textContent = err.message;
+  }
+}
+
+function mountImport(can) {
+  const existing = document.getElementById("historical-import");
+  if (!can) {
+    if (existing) existing.remove();
+    return;
+  }
+  if (existing) return;
+  const box = document.createElement("div");
+  box.id = "historical-import";
+  box.innerHTML = `
+    <h2>Historical import</h2>
+    <p class="note">Owner only. The original number is kept. The sequence does not go backwards.</p>
+    <label>Original number<input id="import-number" /></label>
+    <button type="button" class="secondary" id="run-import">Import historical invoice</button>
+    <p id="import-msg"></p>`;
+  $("invoices").appendChild(box);
+  $("run-import").addEventListener("click", async () => {
+    try {
+      const body = invoiceBody();
+      body.invoice_number = $("import-number").value;
+      const data = await api("/api/ggv/finance/invoices/import", { method: "POST", body: JSON.stringify(body) });
+      $("import-msg").textContent = "Imported " + (data.invoice.invoice_number || "") + ".";
+    } catch (err) {
+      $("import-msg").textContent = err.message;
+    }
+  });
+}
+
 async function loadInvoices() {
   const data = await api("/api/ggv/finance/invoices");
-  const note = data.numbering && data.numbering.confirmation_required
-    ? data.numbering.reason
-    : "The next number can be assigned from the stored series.";
-  $("number-note").textContent = note || "";
+  $("number-note").textContent = "Number assigned on issue.";
+  mountImport(Boolean(data.numbering && data.numbering.can_import));
   const rows = data.invoices || [];
   $("invoice-list").innerHTML = rows.length
-    ? rows.map((row) => `<article class="card"><button type="button" data-invoice="${esc(row.invoice_id)}"><strong>${esc(row.invoice_number || "Draft")}</strong><br>${esc((row.customer || {}).legal_name || "")}<br>${esc(row.status_label)} · ${esc(row.grand_total)} ${esc(row.currency)}</button></article>`).join("")
+    ? rows.map((row) => `<article class="card"><button type="button" data-invoice="${esc(row.invoice_id)}"><strong>${esc(row.number_label || row.invoice_number || "Number assigned on issue")}</strong><br>${esc((row.customer || {}).legal_name || "")}<br>${esc(row.status_label)} · ${esc(row.grand_total)} ${esc(row.currency)}</button></article>`).join("")
     : `<p class="note">No invoices yet.</p>`;
   $("invoice-list").querySelectorAll("[data-invoice]").forEach((btn) => {
     btn.addEventListener("click", () => openInvoice(btn.dataset.invoice));
@@ -770,10 +817,9 @@ async function openInvoice(id) {
   const row = data.invoice;
   editingInvoice = row.invoice_id;
   $("invoice-form").classList.remove("hidden");
-  $("invoice-heading").textContent = row.invoice_number || "Draft";
+  $("invoice-heading").textContent = row.number_label || row.invoice_number || "Number assigned on issue";
+  $("number-note").textContent = row.invoice_number ? "" : "Number assigned on issue.";
   await loadCustomers(row.customer.customer_id);
-  $("inv-number").value = row.invoice_number || "";
-  $("inv-number-ok").checked = true;
   $("inv-date").value = row.invoice_date || "";
   $("inv-due").value = row.due_date || "";
   $("inv-terms").value = row.terms || "";
@@ -806,14 +852,15 @@ $("new-invoice").addEventListener("click", async () => {
   $("draft-email").innerHTML = "";
   $("inv-totals").innerHTML = "";
   $("inv-preview").innerHTML = "";
-  ["inv-number", "inv-date", "inv-due", "inv-terms", "inv-notes", "inv-ref", "inv-pay-method", "inv-pay-ref"].forEach((id) => { $(id).value = ""; });
-  $("inv-number-ok").checked = false;
+  ["inv-date", "inv-due", "inv-terms", "inv-notes", "inv-ref", "inv-pay-method", "inv-pay-ref"].forEach((id) => { $(id).value = ""; });
+  $("number-note").textContent = "Number assigned on issue.";
   $("save-draft").disabled = false;
   $("issue-invoice").disabled = true;
   renderLines();
   await loadCustomers();
   const numbering = await api("/api/ggv/finance/numbering");
-  $("number-note").textContent = (numbering.numbering && numbering.numbering.reason) || "";
+  $("number-note").textContent = "Number assigned on issue.";
+  mountImport(Boolean(numbering.numbering && numbering.numbering.can_import));
 });
 $("add-line").addEventListener("click", () => { invoiceLines.push(blankLine()); renderLines(); });
 $("invoice-back").addEventListener("click", () => { $("invoice-form").classList.add("hidden"); loadInvoices(); });
@@ -836,16 +883,7 @@ $("save-customer").addEventListener("click", async () => {
     $("invoice-msg").textContent = err.message;
   }
 });
-$("preview-invoice").addEventListener("click", async () => {
-  try {
-    const data = await api("/api/ggv/finance/invoices/preview", { method: "POST", body: JSON.stringify(invoiceBody()) });
-    showTotals(data);
-    const lines = (data.lines || []).map((line) => `<p>${esc(line.description)} · ${esc(line.total)} ${esc(data.currency)}</p>`).join("");
-    $("inv-preview").innerHTML = `<article class="card"><strong>Preview</strong>${lines}<p>From ${esc((data.from || {}).legal_name || "GGV")}</p><p>Not saved.</p></article>`;
-  } catch (err) {
-    $("invoice-msg").textContent = err.message;
-  }
-});
+$("preview-invoice").addEventListener("click", () => runPreview(true));
 $("save-draft").addEventListener("click", async () => {
   try {
     const path = editingInvoice ? "/api/ggv/finance/invoices/" + encodeURIComponent(editingInvoice) : "/api/ggv/finance/invoices";
@@ -871,7 +909,9 @@ $("issue-invoice").addEventListener("click", async () => {
         <p>Subject: ${esc(draft.subject || "")}</p>
         <pre>${esc(draft.body || "")}</pre>
       </article>`;
-    $("invoice-msg").textContent = "Issued. Issued is not paid.";
+    $("invoice-heading").textContent = data.invoice.invoice_number || "Issued";
+    $("invoice-msg").textContent = "Issued " + (data.invoice.invoice_number || "") + ". Issued is not paid.";
+    $("draft-email").insertAdjacentHTML("beforeend", `<p class="note">${esc(draft.next_integration || "Generate Gmail draft with PDF attachment — human review/send, never automatic")}. This step is not built. Do not send unless the owner says so.</p>`);
     $("issue-invoice").disabled = true;
     $("save-draft").disabled = true;
   } catch (err) {

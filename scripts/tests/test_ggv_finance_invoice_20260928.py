@@ -58,11 +58,9 @@ def lines(count: int = 1, **over):
     return [dict(row) for _ in range(count)]
 
 
-def draft_body(customer_id: str, number: str, items: list | None = None) -> dict:
+def draft_body(customer_id: str, items: list | None = None) -> dict:
     return {
         "customer_id": customer_id,
-        "invoice_number": number,
-        "number_confirmed": True,
         "invoice_date": "2026-09-28",
         "due_date": "2026-10-12",
         "terms": "14 days",
@@ -86,7 +84,7 @@ def test_static() -> None:
         "Customers",
         "History",
         "Reports",
-        "+ New invoice",
+        "+ New Invoice",
         "Add line",
         "Preview",
         "Save draft",
@@ -97,6 +95,12 @@ def test_static() -> None:
     check("no data table", "<table" not in html.lower())
     check("accountant word kept", "Accountant" in html)
     check("no person name", "Amanda" not in html and "Matt" not in html)
+    check("number assigned on issue", "Number assigned on issue" in html)
+    check("operator number field removed", 'id="inv-number"' not in html)
+    check(
+        "gmail next step named",
+        "Generate Gmail draft with PDF attachment — human review/send, never automatic" in html,
+    )
     amg = (ROOT / "dashboards" / "amg-finance.html").read_text(encoding="utf-8")
     check("amg entity slot", 'id="entity"' in amg)
 
@@ -149,8 +153,29 @@ def test_flow(conn) -> None:
         "my work links GGV finance",
         any(item.get("href") == "/ggv/finance" for item in home.get("desk") or []),
     )
-    numbering = inv.numbering_status(conn)
-    check("number series not proven", numbering["proven"] is False and numbering["confirmation_required"] is True)
+    inv.ensure_schema(conn)
+    from migrations.migrate_ggv_invoice_sequences import apply as apply_sequence
+
+    apply_sequence(conn)
+    conn.commit()
+    apply_sequence(conn)
+    conn.commit()
+    numbering = inv.numbering_status(conn, AMANDA)
+    check("sequence starts at 067A", numbering["next"] == "067A" and numbering["next_value"] == 67)
+    check("number assigned at issue", numbering["assignment"] == "issue" and numbering["operator_types_number"] is False)
+    check("operator cannot import", numbering["can_import"] is False)
+    owner_audit = conn.execute(
+        "SELECT COUNT(*) FROM fin_invoice_sequence_audit WHERE actor=? AND reason LIKE ?",
+        ("Matthew", "%13:17%"),
+    ).fetchone()[0]
+    check("owner decision audited once", owner_audit == 1)
+    invented = conn.execute(
+        """
+        SELECT COUNT(*) FROM ggv_invoices
+        WHERE entity_id='ENT-GGV' AND invoice_number IN ('064A', '065A', '066A')
+        """
+    ).fetchone()[0]
+    check("historical numbers not created", invented == 0)
     known = inv.known_customer_links(conn)
     check("the one not invented", known["the_one"] is None and known["seeded"] is False)
     check("keen eye not invented", known["keen_eye"] is None)
@@ -163,10 +188,10 @@ def test_flow(conn) -> None:
     except fin.FinanceNotaError as exc:
         check("duplicate customer refused", exc.code == "duplicate_customer")
     try:
-        inv.create_invoice(AMANDA, draft_body(cid, "070A") | {"number_confirmed": False}, conn)
-        check("number confirmation required", False)
+        inv.create_invoice(AMANDA, draft_body(cid) | {"invoice_number": "070A", "number_confirmed": True}, conn)
+        check("operator cannot set number", False)
     except fin.FinanceNotaError as exc:
-        check("number confirmation required", exc.code == "number_confirmation_required")
+        check("operator cannot set number", exc.code == "number_assigned_on_issue")
 
     priced = inv.price_lines(
         [{"description": "Design fee", "qty": "1", "unit_price": "10.5", "tax_rate": ""}],
@@ -196,11 +221,12 @@ def test_flow(conn) -> None:
     four[1]["description"] = "Hosting"
     four[2]["description"] = "Photo"
     four[3]["description"] = "Travel"
-    saved = inv.create_invoice(AMANDA, draft_body(cid, "070A", four), conn)
+    saved = inv.create_invoice(AMANDA, draft_body(cid, four), conn)
     invoice = saved["invoice"]
     check("typed total ignored", invoice["grand_total"] != "1")
     check("four lines", len(invoice["lines"]) == 4)
     check("draft status", invoice["status"] == "DRAFT")
+    check("draft has no number", invoice["invoice_number"] is None and invoice["number_label"] == "Number assigned on issue")
     check("created by amanda", invoice["created_by"] == AMANDA)
     edited_lines = invoice["lines"][:3]
     for row in edited_lines:
@@ -208,22 +234,26 @@ def test_flow(conn) -> None:
     edited = inv.edit_invoice(
         AMANDA,
         invoice["invoice_id"],
-        draft_body(cid, "070A", edited_lines),
+        draft_body(cid, edited_lines),
         conn,
     )
     check("line deleted", len(edited["invoice"]["lines"]) == 3)
     check("total changed after delete", edited["invoice"]["grand_total"] != invoice["grand_total"])
-    try:
-        inv.create_invoice(AMANDA, draft_body(cid, "070A"), conn)
-        check("duplicate number refused", False)
-    except fin.FinanceNotaError as exc:
-        check("duplicate number refused", exc.code == "duplicate_number")
+    second = inv.create_invoice(AMANDA, draft_body(cid), conn)
+    check("second draft has no number", second["invoice"]["invoice_number"] is None)
 
     issued = inv.issue_invoice(AMANDA, invoice["invoice_id"], conn)
+    check("first issue is 067A", issued["invoice"]["invoice_number"] == "067A" and issued["invoice"]["number_source"] == "sequence")
     check("issued", issued["invoice"]["status"] == "ISSUED")
     check("finalised by", issued["invoice"]["finalised_by"] == AMANDA)
     check("pdf reproducible", issued["pdf_reproducible"] is True)
     check("email not sent", issued["email_sent"] is False and issued["draft_email"]["gmail_called"] is False)
+    check(
+        "gmail step not built",
+        issued["draft_email"].get("next_integration")
+        == "Generate Gmail draft with PDF attachment — human review/send, never automatic"
+        and issued["draft_email"]["gmail_draft_created"] is False,
+    )
     pdf = inv.invoice_pdf(AMANDA, invoice["invoice_id"], conn)
     check("pdf bytes", pdf["_file"]["data"].startswith(b"%PDF"))
     import hashlib
@@ -233,10 +263,55 @@ def test_flow(conn) -> None:
     history = issued["invoice"]["history"]
     check("history kept", any(item["action"] == "issue" for item in history))
     try:
-        inv.edit_invoice(AMANDA, invoice["invoice_id"], draft_body(cid, "070A", edited_lines), conn)
+        inv.edit_invoice(AMANDA, invoice["invoice_id"], draft_body(cid, edited_lines), conn)
         check("issued edit refused", False)
     except fin.FinanceNotaError:
         check("issued edit refused", True)
+    try:
+        inv.edit_invoice(
+            AMANDA,
+            invoice["invoice_id"],
+            draft_body(cid, edited_lines) | {"invoice_number": "099A"},
+            conn,
+        )
+        check("issued number immutable", False)
+    except fin.FinanceNotaError as exc:
+        check("issued number immutable", exc.code == "number_immutable")
+    issued_again = inv.issue_invoice(AMANDA, second["invoice"]["invoice_id"], conn)
+    check("second issue is 068A", issued_again["invoice"]["invoice_number"] == "068A")
+    voided = inv.void_invoice(AMANDA, second["invoice"]["invoice_id"], conn)
+    after_void = inv.numbering_status(conn)
+    check(
+        "void keeps number",
+        voided["invoice"]["invoice_number"] == "068A" and voided["invoice"]["status"] == "VOID",
+    )
+    check("void does not recycle", after_void["next"] == "069A" and after_void["next_value"] == 69)
+    third = inv.create_invoice(AMANDA, draft_body(cid), conn)
+    third_issued = inv.issue_invoice(AMANDA, third["invoice"]["invoice_id"], conn)
+    check("next after void is 069A", third_issued["invoice"]["invoice_number"] == "069A")
+    try:
+        inv.import_historical(AMANDA, draft_body(cid) | {"invoice_number": "064A"}, conn)
+        check("amanda import denied", False)
+    except fin.FinanceNotaError as exc:
+        check("amanda import denied", exc.http_status == 403)
+    imported = inv.import_historical("PERS-MATT", draft_body(cid) | {"invoice_number": "064A"}, conn)
+    kept = inv.numbering_status(conn)
+    check(
+        "import preserves 064A",
+        imported["invoice"]["invoice_number"] == "064A" and imported["invoice"]["number_source"] == "imported",
+    )
+    check("import does not rewind", kept["next_value"] == 70)
+    try:
+        inv.import_historical("PERS-MATT", draft_body(cid) | {"invoice_number": "064A"}, conn)
+        check("import conflict", False)
+    except fin.FinanceNotaError as exc:
+        check("import conflict", exc.code == "duplicate_number" and (exc.extra or {}).get("conflict") is True)
+    advanced = inv.import_historical("PERS-MATT", draft_body(cid) | {"invoice_number": "090A"}, conn)
+    check("import advances past number", advanced["numbering"]["next_value"] == 91 and advanced["invoice"]["invoice_number"] == "090A")
+    still = conn.execute(
+        "SELECT COUNT(*) FROM ggv_invoices WHERE invoice_number IN ('065A', '066A')"
+    ).fetchone()[0]
+    check("065A and 066A still absent", still == 0)
     claimed = inv.claim_paid(AMANDA, invoice["invoice_id"], conn)
     check("claimed is not verified", claimed["invoice"]["status"] == "PAID_CLAIMED" and claimed["verified"] is False)
     try:
@@ -255,7 +330,7 @@ def test_flow(conn) -> None:
     except fin.FinanceNotaError as exc:
         check("part paid refused", exc.http_status == 405)
     try:
-        inv.create_invoice(ZAYEN, draft_body(cid, "071A"), conn)
+        inv.create_invoice(ZAYEN, draft_body(cid), conn)
         check("zayen invoice denied", False)
     except fin.FinanceNotaError as exc:
         check("zayen invoice denied", exc.http_status == 403)
@@ -295,7 +370,8 @@ def test_http(db_path: Path) -> None:
     try:
         status, raw = call(base, "GET", "/ggv/finance/invoices", "amanda@wolfcommand.net")
         text = raw.decode("utf-8", "replace")
-        check("desktop invoice page", status == 200 and "+ New invoice" in text and "Add line" in text)
+        check("desktop invoice page", status == 200 and "+ New Invoice" in text and "Add line" in text)
+        check("served page hides operator number", 'id="inv-number"' not in text and "Number assigned on issue" in text)
         check("mobile css served", status == 200 and "max-width: 430px" in text)
         status, _raw = call(base, "GET", "/amg/finance", "amanda@wolfcommand.net")
         check("amanda atrium denied", status == 403)
@@ -320,6 +396,48 @@ def test_http(db_path: Path) -> None:
         httpd.server_close()
 
 
+def test_concurrency(db_path: Path) -> None:
+    wire(db_path)
+    conn = fin.db_connect(db_path)
+    try:
+        start = int(inv.numbering_status(conn)["next_value"])
+        cid = conn.execute(
+            "SELECT counterparty_id FROM fin_counterparties WHERE entity_id='ENT-GGV' LIMIT 1"
+        ).fetchone()[0]
+        ids = []
+        for _ in range(6):
+            made = inv.create_invoice(AMANDA, draft_body(cid), conn)
+            ids.append(made["invoice"]["invoice_id"])
+    finally:
+        conn.close()
+    numbers: list[str] = []
+    errors: list[str] = []
+    lock = threading.Lock()
+
+    def worker(invoice_id: str) -> None:
+        local = fin.db_connect(db_path)
+        try:
+            result = inv.issue_invoice(AMANDA, invoice_id, local)
+            with lock:
+                numbers.append(str(result["invoice"]["invoice_number"]))
+        except Exception as exc:  # noqa: BLE001
+            with lock:
+                errors.append(f"{type(exc).__name__}: {exc}")
+        finally:
+            local.close()
+
+    threads = [threading.Thread(target=worker, args=(invoice_id,)) for invoice_id in ids]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=30)
+    expected = [f"{start + offset:03d}A" for offset in range(6)]
+    check("concurrency finished", all(not thread.is_alive() for thread in threads))
+    check("concurrency no errors", errors == [], " | ".join(errors))
+    check("concurrency no duplicates", len(numbers) == 6 and len(set(numbers)) == 6, str(numbers))
+    check("concurrency matches sequence", sorted(numbers) == expected, f"{sorted(numbers)} != {expected}")
+
+
 def main() -> int:
     test_static()
     tmp = ROOT / "state" / ".tmp-ggv-finance-invoice"
@@ -334,6 +452,7 @@ def main() -> int:
         test_flow(conn)
     finally:
         conn.close()
+    test_concurrency(db_path)
     test_http(db_path)
     shutil.rmtree(tmp, ignore_errors=True)
     print(f"PASS={PASS} FAIL={FAIL}")

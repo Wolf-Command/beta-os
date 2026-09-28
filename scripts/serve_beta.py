@@ -524,6 +524,11 @@ def ensure_schema() -> None:
             mod_a.main()
         except Exception:
             pass
+    try:
+        from migrations.migrate_ggv_invoice_sequences import main as _mig_inv_seq
+        _mig_inv_seq()
+    except Exception:
+        pass
     for _stage in ("RAW", "EDIT", "FINAL"):
         (LIBRARY_V2 / _stage).mkdir(parents=True, exist_ok=True)
 
@@ -14137,6 +14142,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     "preserved": bool((exc.extra or {}).get("preserved")),
                     "upload_id": (exc.extra or {}).get("upload_id"),
                     "retry": (exc.extra or {}).get("retry"),
+                    "conflict": bool((exc.extra or {}).get("conflict")),
                     **_ggv_fin.HONESTY,
                 },
                 status=exc.http_status,

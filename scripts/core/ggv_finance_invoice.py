@@ -1,8 +1,17 @@
 #!/usr/bin/env python3
 """GGV customer invoices on the existing GGV Finance desk.
 
-Decision served: owner directive 28 Sep 2026 11:52 WITA. Extends
-scripts/core/ggv_finance_nota.py. Not a second finance system.
+Decision served: owner decision (Matthew, 28 Sep 2026 13:17 WITA): the next
+GGV invoice number is 067A and Wolf owns issuance. Extends the same desk as
+the 28 Sep 2026 11:52 WITA invoice work in scripts/core/ggv_finance_nota.py.
+Not a second finance system.
+
+Numbering rule: the number is assigned at issue, inside one BEGIN IMMEDIATE
+transaction. A draft has no number and shows "Number assigned on issue".
+Issued numbers are immutable. Void keeps the number. The sequence never
+goes backwards and a voided number is not recycled. An operator does not
+type a number. Owner historical import keeps the original number, marks
+source imported, and refuses a number already stored.
 
 Reused, not forked
 ------------------
@@ -91,15 +100,30 @@ OPERATOR_EXISTING: tuple[str, ...] = (
     "finance.evidence.export",
     "work.read",
 )
+IMPORT_PERM = ("PERM-FIN-INV-IMPORT", "finance.invoice.import", "finance.invoice", "import")
 HELD_BACK: tuple[str, ...] = (
     "payment.approve",
     "payment.execute",
     "vendor.bank.change",
     "finance.policy.admin",
     "finance.invoice.verify",
+    "finance.invoice.import",
     "atrium.board.read",
     "organisation.role.read",
 )
+SEQUENCE_FORMAT = "{n:03d}A"
+SEQUENCE_NEXT = 67
+SEQUENCE_ACTOR = "Matthew"
+SEQUENCE_REASON = (
+    "Owner decision (Matthew, 28 Sep 2026 13:17 WITA): next GGV invoice number is 067A. "
+    "Wolf owns issuance from now on. Historical 064A, 065A, and 066A stay provenance only "
+    "and are not created."
+)
+DRAFT_NUMBER_LABEL = "Number assigned on issue"
+NEXT_INTEGRATION = (
+    "Generate Gmail draft with PDF attachment — human review/send, never automatic"
+)
+OWNER_PERSON = "PERS-MATT"
 
 FINANCE_ENTITIES: dict[str, dict[str, str]] = {
     "ROLE-GGV-FINANCE-OPERATOR": {
@@ -128,8 +152,15 @@ _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _CURRENCY = re.compile(r"^[A-Z]{3}$")
 
 
-def _fail(message: str, *, code: str = "invalid", status: int = 400) -> None:
-    raise nota.FinanceNotaError(message, code=code, http_status=status)
+def _fail(
+    message: str,
+    *,
+    code: str = "invalid",
+    status: int = 400,
+    extra_conflict: bool = False,
+) -> None:
+    extra = {"conflict": True} if extra_conflict else None
+    raise nota.FinanceNotaError(message, code=code, http_status=status, extra=extra)
 
 
 def ensure_schema(conn: sqlite3.Connection) -> None:
@@ -207,8 +238,33 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
         );
         CREATE UNIQUE INDEX IF NOT EXISTS idx_ggv_invoice_doc_ver
           ON ggv_invoice_documents(invoice_id, version);
+        CREATE TABLE IF NOT EXISTS fin_invoice_sequences (
+          entity_id TEXT PRIMARY KEY,
+          format TEXT NOT NULL,
+          next_value INTEGER NOT NULL,
+          updated_by TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS fin_invoice_sequence_audit (
+          audit_id TEXT PRIMARY KEY,
+          entity_id TEXT NOT NULL,
+          actor TEXT NOT NULL,
+          reason TEXT NOT NULL,
+          previous_value INTEGER,
+          next_value INTEGER NOT NULL,
+          format TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        );
+        CREATE TRIGGER IF NOT EXISTS fin_invoice_sequences_no_rewind
+        BEFORE UPDATE ON fin_invoice_sequences
+        FOR EACH ROW
+        WHEN NEW.next_value < OLD.next_value
+        BEGIN
+          SELECT RAISE(ABORT, 'invoice sequence cannot go backwards');
+        END;
         """
     )
+    seed_ggv_sequence(conn)
     conn.commit()
 
 
@@ -254,6 +310,7 @@ def seed_operator_role(conn: sqlite3.Connection) -> None:
     ensure_schema(conn)
     for row in OPERATOR_PERMS:
         _perm(conn, row[0], row[1], row[2], row[3], ts)
+    _perm(conn, IMPORT_PERM[0], IMPORT_PERM[1], IMPORT_PERM[2], IMPORT_PERM[3], ts)
     conn.execute(
         """
         INSERT INTO org_roles (
@@ -270,7 +327,7 @@ def seed_operator_role(conn: sqlite3.Connection) -> None:
     codes = [row[1] for row in OPERATOR_PERMS] + list(OPERATOR_EXISTING)
     for code in codes:
         _allow(conn, ROLE_OPERATOR, code, ts)
-    for code in ("finance.invoice.read", "finance.invoice.create", "finance.invoice.edit", "finance.invoice.issue", "finance.customer.read", "finance.customer.create"):
+    for code in ("finance.invoice.read", "finance.invoice.create", "finance.invoice.edit", "finance.invoice.issue", "finance.customer.read", "finance.customer.create", "finance.invoice.import"):
         _allow(conn, ROLE_OWNER, code, ts)
     _allow(conn, nota.ROLE_EXTERNAL_ACCOUNTANT, "finance.invoice.read", ts)
     held = conn.execute(
@@ -451,85 +508,262 @@ def _date(value: Any, label: str, *, required: bool) -> str | None:
     return text
 
 
-def numbering_status(conn: sqlite3.Connection) -> dict[str, Any]:
-    """Prove a series only from numbers already stored. Otherwise a person confirms."""
-    numbers: list[str] = []
-    try:
-        for row in conn.execute(
-            "SELECT invoice_no FROM ggv_notas WHERE entity_id=? AND invoice_no IS NOT NULL",
-            (nota.ENTITY_GGV,),
-        ):
-            if row[0]:
-                numbers.append(str(row[0]).strip().upper())
-    except sqlite3.Error:
-        pass
-    try:
-        for row in conn.execute(
-            "SELECT invoice_number FROM ggv_invoices WHERE entity_id=? AND invoice_number IS NOT NULL",
-            (nota.ENTITY_GGV,),
-        ):
-            if row[0]:
-                numbers.append(str(row[0]).strip().upper())
-    except sqlite3.Error:
-        pass
-    series = []
-    for number in numbers:
-        match = _SERIES.fullmatch(number)
-        if match:
-            series.append(int(match.group(1)))
-    series = sorted(set(series))
-    proven = False
-    if len(series) >= 2:
-        proven = all(series[i] + 1 == series[i + 1] for i in range(len(series) - 1))
-    nxt = None
-    if proven:
-        nxt = f"{series[-1] + 1:03d}A"
-    return {
-        "proven": proven,
-        "pattern": "NNNA" if proven else None,
-        "samples": len(numbers),
-        "next": nxt,
-        "confirmation_required": not proven,
-        "reason": None
-        if proven
-        else "No consecutive GGV invoice series is stored. A person must confirm the number.",
-    }
-
-
-def _resolve_number(conn: sqlite3.Connection, body: dict[str, Any]) -> tuple[str, str]:
-    status = numbering_status(conn)
-    supplied = str(body.get("invoice_number") or "").strip().upper()
-    if status["proven"] and not supplied:
-        number = str(status["next"])
-        source = "system"
-    else:
-        if body.get("number_confirmed") is not True:
-            _fail(
-                "The invoice number is not proven from history. Confirm the number before saving.",
-                code="number_confirmation_required",
-            )
-        if not _NUMBER.fullmatch(supplied):
-            _fail("Enter the invoice number to confirm.")
-        number = supplied
-        source = "human"
-    taken = conn.execute(
+def _sequence_audit(
+    conn: sqlite3.Connection,
+    *,
+    actor: str,
+    reason: str,
+    previous: int | None,
+    nxt: int,
+    fmt: str,
+) -> None:
+    conn.execute(
         """
-        SELECT invoice_id FROM ggv_invoices
-        WHERE entity_id=? AND invoice_number=? AND status!='VOID'
+        INSERT INTO fin_invoice_sequence_audit (
+          audit_id, entity_id, actor, reason, previous_value, next_value, format, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (nota.ENTITY_GGV, number),
+        (nota._mint("SEQ"), nota.ENTITY_GGV, actor, reason, previous, nxt, fmt, nota._now()),
+    )
+
+
+def seed_ggv_sequence(conn: sqlite3.Connection) -> str:
+    """Idempotent GGV seed. Never rewinds. Does not create invoices. Returns inserted, advanced, or kept."""
+    row = conn.execute(
+        "SELECT format, next_value FROM fin_invoice_sequences WHERE entity_id=?",
+        (nota.ENTITY_GGV,),
     ).fetchone()
-    # Unique index also covers VOID so a voided number cannot be reused.
-    any_taken = conn.execute(
+    if row is None:
+        ts = nota._now()
+        conn.execute(
+            """
+            INSERT INTO fin_invoice_sequences (
+              entity_id, format, next_value, updated_by, updated_at
+            ) VALUES (?, ?, ?, ?, ?)
+            """,
+            (nota.ENTITY_GGV, SEQUENCE_FORMAT, SEQUENCE_NEXT, SEQUENCE_ACTOR, ts),
+        )
+        _sequence_audit(
+            conn,
+            actor=SEQUENCE_ACTOR,
+            reason=SEQUENCE_REASON,
+            previous=None,
+            nxt=SEQUENCE_NEXT,
+            fmt=SEQUENCE_FORMAT,
+        )
+        if conn.execute("SELECT person_id FROM org_persons WHERE person_id=?", (OWNER_PERSON,)).fetchone():
+            nota._audit(
+                conn,
+                person_id=OWNER_PERSON,
+                action="ggv.invoice.sequence.seed",
+                resource_type="fin_invoice_sequence",
+                resource_id=nota.ENTITY_GGV,
+                metadata={"actor": SEQUENCE_ACTOR, "reason": SEQUENCE_REASON, "next_value": SEQUENCE_NEXT},
+            )
+        return "inserted"
+    current = int(row["next_value"])
+    fmt = str(row["format"] or SEQUENCE_FORMAT)
+    if current < SEQUENCE_NEXT:
+        ts = nota._now()
+        conn.execute(
+            """
+            UPDATE fin_invoice_sequences
+            SET next_value=?, format=?, updated_by=?, updated_at=?
+            WHERE entity_id=? AND next_value=?
+            """,
+            (SEQUENCE_NEXT, SEQUENCE_FORMAT, SEQUENCE_ACTOR, ts, nota.ENTITY_GGV, current),
+        )
+        _sequence_audit(
+            conn,
+            actor=SEQUENCE_ACTOR,
+            reason=SEQUENCE_REASON,
+            previous=current,
+            nxt=SEQUENCE_NEXT,
+            fmt=SEQUENCE_FORMAT,
+        )
+        return "advanced"
+    if fmt != SEQUENCE_FORMAT:
+        conn.execute(
+            "UPDATE fin_invoice_sequences SET format=? WHERE entity_id=? AND next_value>=?",
+            (SEQUENCE_FORMAT, nota.ENTITY_GGV, current),
+        )
+    return "kept"
+
+
+def _format_number(fmt: str, value: int) -> str:
+    try:
+        rendered = str(fmt).format(n=int(value))
+    except (IndexError, KeyError, ValueError):
+        _fail("Invoice sequence format is not usable.", code="sequence_missing", status=500)
+    if not _SERIES.fullmatch(rendered):
+        _fail("Invoice sequence format must render NNNA.", code="sequence_missing", status=500)
+    return rendered
+
+
+def _series_value(number: str) -> int | None:
+    match = _SERIES.fullmatch(number)
+    if not match:
+        return None
+    return int(match.group(1))
+
+
+def _begin_immediate(conn: sqlite3.Connection) -> None:
+    conn.execute("PRAGMA busy_timeout=8000")
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+    except sqlite3.OperationalError as exc:
+        if "within a transaction" not in str(exc).lower():
+            raise
+        conn.rollback()
+        conn.execute("BEGIN IMMEDIATE")
+
+
+def _sequence_row(conn: sqlite3.Connection) -> sqlite3.Row:
+    row = conn.execute(
+        "SELECT format, next_value FROM fin_invoice_sequences WHERE entity_id=?",
+        (nota.ENTITY_GGV,),
+    ).fetchone()
+    if row is None:
+        seed_ggv_sequence(conn)
+        row = conn.execute(
+            "SELECT format, next_value FROM fin_invoice_sequences WHERE entity_id=?",
+            (nota.ENTITY_GGV,),
+        ).fetchone()
+    if row is None:
+        _fail("GGV invoice sequence is not seeded.", code="sequence_missing", status=500)
+    return row
+
+
+def _number_taken(conn: sqlite3.Connection, number: str, ignore: str = "") -> bool:
+    row = conn.execute(
         "SELECT invoice_id FROM ggv_invoices WHERE entity_id=? AND invoice_number=?",
         (nota.ENTITY_GGV, number),
     ).fetchone()
-    ignore = str(body.get("_ignore_invoice_id") or "")
-    if any_taken and str(any_taken[0]) != ignore:
+    return row is not None and str(row[0]) != ignore
+
+
+def _allocate_locked(conn: sqlite3.Connection, person_id: str) -> str:
+    """Caller holds BEGIN IMMEDIATE. Increments next. Does not commit."""
+    row = _sequence_row(conn)
+    current = int(row["next_value"])
+    fmt = str(row["format"])
+    number = _format_number(fmt, current)
+    if _number_taken(conn, number):
         _fail("That invoice number is already used.", code="duplicate_number", status=409)
-    if taken and str(taken[0]) != ignore:
-        _fail("That invoice number is already used.", code="duplicate_number", status=409)
-    return number, source
+    ts = nota._now()
+    updated = conn.execute(
+        """
+        UPDATE fin_invoice_sequences
+        SET next_value=?, updated_by=?, updated_at=?
+        WHERE entity_id=? AND next_value=?
+        """,
+        (current + 1, person_id, ts, nota.ENTITY_GGV, current),
+    )
+    if updated.rowcount != 1:
+        _fail("Invoice number allocation collided.", code="duplicate_number", status=409)
+    _sequence_audit(
+        conn,
+        actor=person_id,
+        reason=f"Allocated {number} at issue.",
+        previous=current,
+        nxt=current + 1,
+        fmt=fmt,
+    )
+    return number
+
+
+def _advance_past_import(conn: sqlite3.Connection, number: str, person_id: str) -> int:
+    """Move next past an imported series number. Never decreases next. Caller holds the transaction."""
+    series = _series_value(number)
+    row = _sequence_row(conn)
+    current = int(row["next_value"])
+    fmt = str(row["format"])
+    if series is None or series < current:
+        _sequence_audit(
+            conn,
+            actor=person_id,
+            reason=f"Imported {number}. Sequence left at {current}.",
+            previous=current,
+            nxt=current,
+            fmt=fmt,
+        )
+        return current
+    nxt = series + 1
+    ts = nota._now()
+    updated = conn.execute(
+        """
+        UPDATE fin_invoice_sequences
+        SET next_value=?, updated_by=?, updated_at=?
+        WHERE entity_id=? AND next_value<=?
+        """,
+        (nxt, person_id, ts, nota.ENTITY_GGV, series),
+    )
+    if updated.rowcount != 1:
+        fresh = int(_sequence_row(conn)["next_value"])
+        if fresh > series:
+            return fresh
+        _fail("Invoice sequence did not advance.", code="duplicate_number", status=409)
+    _sequence_audit(
+        conn,
+        actor=person_id,
+        reason=f"Imported {number}. Sequence advanced from {current} to {nxt}.",
+        previous=current,
+        nxt=nxt,
+        fmt=fmt,
+    )
+    return nxt
+
+
+def numbering_status(conn: sqlite3.Connection, person_id: str | None = None) -> dict[str, Any]:
+    """Next number comes from fin_invoice_sequences. It is assigned at issue, not typed."""
+    row = None
+    try:
+        row = conn.execute(
+            "SELECT format, next_value FROM fin_invoice_sequences WHERE entity_id=?",
+            (nota.ENTITY_GGV,),
+        ).fetchone()
+    except sqlite3.Error:
+        row = None
+    if row is None:
+        return {
+            "proven": False,
+            "pattern": "NNNA",
+            "format": SEQUENCE_FORMAT,
+            "next": None,
+            "next_value": None,
+            "assignment": "issue",
+            "draft_label": DRAFT_NUMBER_LABEL,
+            "confirmation_required": False,
+            "operator_types_number": False,
+            "can_import": False,
+            "reason": "GGV invoice sequence is not seeded.",
+        }
+    nxt = _format_number(str(row["format"]), int(row["next_value"]))
+    can_import = bool(person_id) and nota.person_can(person_id, "finance.invoice.import", conn)
+    return {
+        "proven": True,
+        "pattern": "NNNA",
+        "format": str(row["format"]),
+        "next": nxt,
+        "next_value": int(row["next_value"]),
+        "assignment": "issue",
+        "draft_label": DRAFT_NUMBER_LABEL,
+        "confirmation_required": False,
+        "operator_types_number": False,
+        "can_import": can_import,
+        "historical_not_created": ["064A", "065A", "066A"],
+        "reason": DRAFT_NUMBER_LABEL + ".",
+    }
+
+
+def _reject_typed_number(body: dict[str, Any], *, status: str) -> None:
+    supplied = str(body.get("invoice_number") or "").strip()
+    confirmed = body.get("number_confirmed") is True
+    if not supplied and not confirmed:
+        return
+    if status not in EDITABLE and status != "NEW":
+        _fail("An issued invoice number cannot be changed.", code="number_immutable", status=409)
+    _fail("The invoice number is assigned on issue.", code="number_assigned_on_issue")
 
 
 def _norm(value: str | None) -> str:
@@ -803,6 +1037,7 @@ def _invoice_public(conn: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any
     return {
         "invoice_id": row["invoice_id"],
         "invoice_number": row["invoice_number"],
+        "number_label": row["invoice_number"] or DRAFT_NUMBER_LABEL,
         "invoice_date": row["invoice_date"],
         "due_date": row["due_date"],
         "terms": row["terms"],
@@ -874,7 +1109,7 @@ def preview_invoice(person_id: str, body: dict[str, Any], conn: sqlite3.Connecti
             "saved": False,
             "customer": customer,
             "from": _from_party(conn),
-            "numbering": numbering_status(conn),
+            "numbering": numbering_status(conn, person_id),
             **header,
         }
     )
@@ -882,9 +1117,9 @@ def preview_invoice(person_id: str, body: dict[str, Any], conn: sqlite3.Connecti
 
 def create_invoice(person_id: str, body: dict[str, Any], conn: sqlite3.Connection) -> dict[str, Any]:
     nota.require(person_id, "finance.invoice.create", conn)
+    _reject_typed_number(body, status="NEW")
     customer = _customer_or_404(conn, str(body.get("customer_id") or ""))
     header = _header(body)
-    number, source = _resolve_number(conn, body)
     invoice_id = nota._mint("INV")
     ts = nota._now()
     try:
@@ -902,7 +1137,7 @@ def create_invoice(person_id: str, body: dict[str, Any], conn: sqlite3.Connectio
                 invoice_id,
                 nota.ENTITY_GGV,
                 customer["counterparty_id"],
-                number,
+                None,
                 header["invoice_date"],
                 header["due_date"],
                 header["terms"],
@@ -916,7 +1151,7 @@ def create_invoice(person_id: str, body: dict[str, Any], conn: sqlite3.Connectio
                 header["tax_total"],
                 header["grand_total"],
                 json.dumps(ROUNDING),
-                source,
+                "assigned_on_issue",
                 person_id,
                 ts,
                 ts,
@@ -924,7 +1159,7 @@ def create_invoice(person_id: str, body: dict[str, Any], conn: sqlite3.Connectio
         )
     except sqlite3.IntegrityError:
         _fail("That invoice number is already used.", code="duplicate_number", status=409)
-    _history(conn, invoice_id, "draft", person_id, {"invoice_number": number})
+    _history(conn, invoice_id, "draft", person_id, {"invoice_number": None, "number_label": DRAFT_NUMBER_LABEL})
     conn.commit()
     row = _invoice_or_404(conn, invoice_id)
     return nota.public_payload({"ok": True, "invoice": _invoice_public(conn, row)})
@@ -933,17 +1168,13 @@ def create_invoice(person_id: str, body: dict[str, Any], conn: sqlite3.Connectio
 def edit_invoice(person_id: str, invoice_id: str, body: dict[str, Any], conn: sqlite3.Connection) -> dict[str, Any]:
     nota.require(person_id, "finance.invoice.edit", conn)
     row = _invoice_or_404(conn, invoice_id)
+    _reject_typed_number(body, status=str(row["status"]))
     if row["status"] not in EDITABLE:
         _fail("Only a draft can be edited.")
     customer_id = str(body.get("customer_id") or row["customer_id"])
     customer = _customer_or_404(conn, customer_id)
     header = _header(body)
-    number_body = dict(body)
-    number_body["_ignore_invoice_id"] = invoice_id
-    if body.get("invoice_number"):
-        number, source = _resolve_number(conn, number_body)
-    else:
-        number, source = row["invoice_number"], row["number_source"]
+    number, source = row["invoice_number"], row["number_source"]
     ts = nota._now()
     try:
         conn.execute(
@@ -1001,7 +1232,7 @@ def list_invoices(person_id: str, conn: sqlite3.Connection, qs: dict[str, list[s
                 ]
             ).lower()
         ]
-    return nota.public_payload({"ok": True, "invoices": public, "numbering": numbering_status(conn)})
+    return nota.public_payload({"ok": True, "invoices": public, "numbering": numbering_status(conn, person_id)})
 
 
 def get_invoice(person_id: str, invoice_id: str, conn: sqlite3.Connection) -> dict[str, Any]:
@@ -1026,8 +1257,6 @@ def mark_ready(person_id: str, invoice_id: str, conn: sqlite3.Connection) -> dic
 
 
 def _header_from_row(row: sqlite3.Row) -> None:
-    if not row["invoice_number"]:
-        _fail("Confirm an invoice number before this step.", code="number_confirmation_required")
     if not row["due_date"] and not row["terms"]:
         _fail("Enter a due date or payment terms.")
     lines = json.loads(row["lines_json"] or "[]")
@@ -1119,6 +1348,7 @@ def _draft_email(invoice: dict[str, Any]) -> dict[str, Any]:
         "gmail_called": False,
         "gmail_draft_created": False,
         "reason": "No sanctioned Gmail draft path is called. Copy this draft.",
+        "next_integration": NEXT_INTEGRATION,
         "to": recipient,
         "subject": subject,
         "body": body,
@@ -1133,35 +1363,61 @@ def issue_invoice(person_id: str, invoice_id: str, conn: sqlite3.Connection) -> 
     if row["status"] not in ISSUE_FROM:
         _fail("This invoice cannot be issued from its current state.")
     _header_from_row(row)
-    public = _invoice_public(conn, row)
-    pdf = render_pdf(public)
-    digest = hashlib.sha256(pdf).hexdigest()
-    email = _draft_email(public)
-    ts = nota._now()
-    version = int(
+    _begin_immediate(conn)
+    try:
+        locked = _invoice_or_404(conn, invoice_id)
+        if locked["status"] not in ISSUE_FROM:
+            _fail("This invoice cannot be issued from its current state.")
+        if locked["invoice_number"]:
+            _fail("An issued invoice number cannot be changed.", code="number_immutable", status=409)
+        number = _allocate_locked(conn, person_id)
+        public = _invoice_public(conn, locked)
+        public["invoice_number"] = number
+        public["number_label"] = number
+        public["number_source"] = "sequence"
+        pdf = render_pdf(public)
+        digest = hashlib.sha256(pdf).hexdigest()
+        email = _draft_email(public)
+        ts = nota._now()
+        version = int(
+            conn.execute(
+                "SELECT COALESCE(MAX(version), 0) FROM ggv_invoice_documents WHERE invoice_id=?",
+                (invoice_id,),
+            ).fetchone()[0]
+        ) + 1
+        updated = conn.execute(
+            """
+            UPDATE ggv_invoices SET
+              invoice_number=?, number_source='sequence', status='ISSUED',
+              finalised_by_person_id=?, issued_at=?, updated_at=?, draft_email_json=?
+            WHERE invoice_id=? AND status IN ('DRAFT', 'READY') AND invoice_number IS NULL
+            """,
+            (number, person_id, ts, ts, json.dumps(email), invoice_id),
+        )
+        if updated.rowcount != 1:
+            _fail("This invoice cannot be issued from its current state.")
         conn.execute(
-            "SELECT COALESCE(MAX(version), 0) FROM ggv_invoice_documents WHERE invoice_id=?",
-            (invoice_id,),
-        ).fetchone()[0]
-    ) + 1
-    conn.execute(
-        """
-        UPDATE ggv_invoices SET
-          status='ISSUED', finalised_by_person_id=?, issued_at=?, updated_at=?, draft_email_json=?
-        WHERE invoice_id=?
-        """,
-        (person_id, ts, ts, json.dumps(email), invoice_id),
-    )
-    conn.execute(
-        """
-        INSERT INTO ggv_invoice_documents (
-          document_id, invoice_id, version, sha256, pdf, created_by_person_id, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-        """,
-        (nota._mint("PDF"), invoice_id, version, digest, pdf, person_id, ts),
-    )
-    _history(conn, invoice_id, "issue", person_id, {"sha256": digest, "email_sent": False})
-    conn.commit()
+            """
+            INSERT INTO ggv_invoice_documents (
+              document_id, invoice_id, version, sha256, pdf, created_by_person_id, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (nota._mint("PDF"), invoice_id, version, digest, pdf, person_id, ts),
+        )
+        _history(
+            conn,
+            invoice_id,
+            "issue",
+            person_id,
+            {"sha256": digest, "email_sent": False, "invoice_number": number, "gmail_called": False},
+        )
+        conn.commit()
+    except Exception:
+        try:
+            conn.rollback()
+        except sqlite3.Error:
+            pass
+        raise
     fresh = _invoice_public(conn, _invoice_or_404(conn, invoice_id))
     again = render_pdf(fresh)
     return nota.public_payload(
@@ -1182,13 +1438,101 @@ def void_invoice(person_id: str, invoice_id: str, conn: sqlite3.Connection) -> d
     if row["status"] not in VOID_FROM:
         _fail("This invoice cannot be voided from its current state.")
     ts = nota._now()
+    kept = row["invoice_number"]
     conn.execute(
-        "UPDATE ggv_invoices SET status='VOID', updated_at=? WHERE invoice_id=?",
-        (ts, invoice_id),
+        "UPDATE ggv_invoices SET status='VOID', invoice_number=?, updated_at=? WHERE invoice_id=?",
+        (kept, ts, invoice_id),
     )
-    _history(conn, invoice_id, "void", person_id, {})
+    _history(
+        conn,
+        invoice_id,
+        "void",
+        person_id,
+        {"invoice_number": kept, "recycled": False, "sequence_rewound": False},
+    )
     conn.commit()
     return nota.public_payload({"ok": True, "invoice": _invoice_public(conn, _invoice_or_404(conn, invoice_id))})
+
+
+def import_historical(person_id: str, body: dict[str, Any], conn: sqlite3.Connection) -> dict[str, Any]:
+    """Owner-only. Keeps the original number. Does not rewind the sequence."""
+    nota.require(person_id, "finance.invoice.import", conn)
+    number = str(body.get("invoice_number") or "").strip().upper()
+    if not _NUMBER.fullmatch(number):
+        _fail("Enter the historical invoice number to import.")
+    customer = _customer_or_404(conn, str(body.get("customer_id") or ""))
+    header = _header(body)
+    invoice_id = nota._mint("INV")
+    _begin_immediate(conn)
+    try:
+        if _number_taken(conn, number):
+            _fail(
+                "That invoice number is already used.",
+                code="duplicate_number",
+                status=409,
+                extra_conflict=True,
+            )
+        ts = nota._now()
+        conn.execute(
+            """
+            INSERT INTO ggv_invoices (
+              invoice_id, entity_id, customer_id, invoice_number, invoice_date, due_date, terms,
+              currency, notes, reference, payment_method, payment_reference, lines_json,
+              subtotal, tax_total, grand_total, rounding_json, status, number_source,
+              created_by_person_id, finalised_by_person_id, created_at, updated_at, issued_at,
+              draft_email_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ISSUED', 'imported', ?, ?, ?, ?, ?, NULL)
+            """,
+            (
+                invoice_id,
+                nota.ENTITY_GGV,
+                customer["counterparty_id"],
+                number,
+                header["invoice_date"],
+                header["due_date"],
+                header["terms"],
+                header["currency"],
+                header["notes"],
+                header["reference"],
+                header["payment_method"],
+                header["payment_reference"],
+                json.dumps(header["lines"]),
+                header["subtotal"],
+                header["tax_total"],
+                header["grand_total"],
+                json.dumps(ROUNDING),
+                person_id,
+                person_id,
+                ts,
+                ts,
+                ts,
+            ),
+        )
+        nxt = _advance_past_import(conn, number, person_id)
+        _history(
+            conn,
+            invoice_id,
+            "import",
+            person_id,
+            {"invoice_number": number, "number_source": "imported", "next_value": nxt, "conflict": False},
+        )
+        conn.commit()
+    except Exception:
+        try:
+            conn.rollback()
+        except sqlite3.Error:
+            pass
+        raise
+    fresh = _invoice_public(conn, _invoice_or_404(conn, invoice_id))
+    return nota.public_payload(
+        {
+            "ok": True,
+            "invoice": fresh,
+            "imported": True,
+            "conflict": False,
+            "numbering": numbering_status(conn, person_id),
+        }
+    )
 
 
 def claim_paid(person_id: str, invoice_id: str, conn: sqlite3.Connection) -> dict[str, Any]:
@@ -1323,6 +1667,7 @@ def try_dispatch(
         ("GET", "/invoices"),
         ("POST", "/invoices"),
         ("POST", "/invoices/preview"),
+        ("POST", "/invoices/import"),
         ("GET", "/customers"),
         ("POST", "/customers"),
         ("GET", "/numbering"),
@@ -1341,7 +1686,7 @@ def try_dispatch(
             return nota.public_payload({"ok": True, "finance_entities": finance_entities(person_id, conn)})
         if method == "GET" and rest == "/numbering":
             nota.require(person_id, "finance.invoice.read", conn)
-            return nota.public_payload({"ok": True, "numbering": numbering_status(conn)})
+            return nota.public_payload({"ok": True, "numbering": numbering_status(conn, person_id)})
         if method == "GET" and rest == "/reports":
             return reports(person_id or "", conn)
         if method == "GET" and rest == "/customers":
@@ -1350,6 +1695,8 @@ def try_dispatch(
             return create_customer(person_id or "", body, conn)
         if method == "POST" and rest == "/invoices/preview":
             return preview_invoice(person_id or "", body, conn)
+        if method == "POST" and rest == "/invoices/import":
+            return import_historical(person_id or "", body, conn)
         if method == "POST" and rest == "/invoices":
             return create_invoice(person_id or "", body, conn)
         if method == "GET" and rest == "/invoices":

@@ -1,8 +1,8 @@
 # GGV FINANCE — READY FOR AMANDA TEST
 
-Decision served: owner directive 28 Sep 2026 11:52 WITA. Extends the GGV nota desk and the 28 Sep staff seats. Beta `:8788` only. Production `:8787` stayed pid 15975 (`serve.py`). Beta was restarted from pid 58853 to pid 61134 (`state/build-factory/detach.py` then `scripts/serve_beta.py`). Health on `:8788` is HTTP 200. Unsigned `/ggv/finance` and `/ggv/finance/invoices` are 403. No money movement, no bank write, no payment execution, no Xero write, no customer email send. No Cloudflare edit. No push. Grok was not called. Atrium books were not opened. Authority limits stay 0. SoD constraints stay 0. STAFF READY is false. HUMAN COMMISSIONED is false. No git commit was made. HEAD stays `d97ea20` on `build/wolf-command-rebuild`.
+Decision served: owner decision (Matthew, 28 Sep 2026 13:17 WITA). The next GGV invoice number is 067A. Wolf owns issuance. This extends the same GGV invoice desk from the 28 Sep 2026 11:52 WITA directive. Beta `:8788` only. Production `:8787` stayed pid 15975 (`serve.py`). Beta was restarted from pid 66899 to pid 68812 (`state/build-factory/detach.py` then `scripts/serve_beta.py`). Health on `:8788` is HTTP 200. Unsigned `/ggv/finance` and `/ggv/finance/invoices` are 403. No money movement, no bank write, no payment execution, no Xero write, no Gmail call, no customer email send. No Cloudflare edit. No push. Grok was not called. Atrium books were not opened. Authority limits stay 0. SoD constraints stay 0. STAFF READY is false. HUMAN COMMISSIONED is false.
 
-Live catalog after the seat: invoices 0, customers 0. Nothing was invented for cash, profit, ageing, margin, or tax.
+Live catalog: invoices 0, customers 0. The sequence row is `ENT-GGV`, format `{n:03d}A`, next value 67. Nothing was invented for cash, profit, ageing, margin, or tax. Historical invoices 064A, 065A, and 066A were not created.
 
 ## Amanda assignment
 
@@ -16,7 +16,7 @@ Her content assignment still chooses the existing GGV specialist pages. Those pa
 
 Allowed on that role, through the existing RBAC check: read, create, and edit draft invoices; mark ready; issue; void a document; record paid-claimed; read and create customers; read, create, and edit notas; read and create vendors; create evidence; export finance evidence; read work.
 
-Not granted: `payment.approve`, `payment.execute`, `vendor.bank.change`, `finance.policy.admin`, `finance.invoice.verify`, `atrium.board.read`, `organisation.role.read`.
+Not granted: `payment.approve`, `payment.execute`, `vendor.bank.change`, `finance.policy.admin`, `finance.invoice.verify`, `finance.invoice.import`, `atrium.board.read`, `organisation.role.read`. Historical import is on `ROLE-MATT` only.
 
 Checked on a catalog copy: Amanda can create a GGV invoice. She cannot execute a payment. She cannot read the Atrium board. Zayen cannot create a GGV invoice.
 
@@ -28,9 +28,9 @@ The finance switcher lists entities from an active finance assignment. Amanda’
 
 ## Mobile and desktop
 
-The invoice form is the same page at both widths. At 430px the lines are stacked cards, not a table. The page has no `<table>`. Controls present: + New invoice, customer select, create customer, four line slots, edit a line, delete a line, preview, save draft, issue, PDF link, history, and customer search.
+The path is GGV → Finance → Invoices → + New Invoice. The invoice form is the same page at both widths. At 430px the lines are stacked cards, not a table, and + New Invoice is a full-width control. The page has no `<table>`. The operator form has no invoice-number field. Controls present: + New Invoice, customer select, create customer, line items, edit a line, delete a line, live server preview, save draft, issue, PDF link, and a copy-ready email draft.
 
-Proof is the Beta handler on a catalog copy: `GET /ggv/finance/invoices` returned 200 and the HTML contained `+ New invoice`, `Add line`, and `max-width: 430px`. A signed browser click-through on the live Beta session was not done.
+Proof is the Beta handler on a catalog copy: `GET /ggv/finance/invoices` returned 200 and the HTML contained `+ New Invoice`, `Number assigned on issue`, `Add line`, and `max-width: 430px`. It did not contain `id="inv-number"`. A signed browser click-through on the live Beta session was not done.
 
 ## Invoice maths
 
@@ -50,11 +50,21 @@ Four separate lines were saved. Deleting one line changed the total. A descripti
 
 ## Numbering
 
-Stored GGV notas are 0 and stored GGV invoices are 0. No consecutive series such as 064A, 065A, 066A is on record, so the next number is not automatic. Saving requires a person to confirm the number. The same number on a second invoice was refused. The unique index is `(entity_id, invoice_number)`.
+Wolf assigns the number at issue. A draft stores no number and shows “Number assigned on issue”. The operator does not type a number. The first issue on an empty sequence is 067A. The next issue is 068A.
+
+The sequence lives in `fin_invoice_sequences` (`entity_id`, `format`, `next_value`, `updated_by`, `updated_at`). GGV is seeded at next value 67 and format `{n:03d}A`. Migration `031_ggv_invoice_sequences` is idempotent. Re-running it left next at 67. The owner decision is one row in `fin_invoice_sequence_audit`: actor Matthew, reason text for 28 Sep 2026 13:17 WITA. A second run did not add a second owner row.
+
+Allocation is one `BEGIN IMMEDIATE` transaction. The row update accepts only the current `next_value`, then the invoice update stores that number. Six parallel issues produced six different numbers and no errors. A database trigger aborts any update that would set `next_value` lower. The unique index remains `(entity_id, invoice_number)`.
+
+An issued number cannot be changed. The API returns `number_immutable`. Void keeps the number, writes the void on the invoice history, and leaves the sequence where it is. After 067A was issued and 068A was voided, the next issue was 069A. 068A was not used again.
+
+Historical import is owner-only (`finance.invoice.import` on `ROLE-MATT`). It stores the original number, sets `number_source` to `imported`, and refuses a number that is already stored (`duplicate_number`, `conflict` true). Import of 064A on a sequence already at 70 left next at 70. Import of 090A advanced next to 91. Import does not go backwards. 064A, 065A, and 066A were not created on the live catalog. The 064A and 090A rows exist only on the test copy.
 
 ## PDF and email
 
-Issue writes a PDF from the stored invoice. The same record rendered the same SHA-256. The PDF starts with `%PDF`. Amanda has no PDF editor. There is no sanctioned Gmail draft call on this desk, so issue returns a ready-to-copy draft with `gmail_called` false and `email_sent` false. The draft was not sent.
+Issue writes a PDF from the stored invoice, including the number assigned in that same transaction. The same record rendered the same SHA-256. The PDF starts with `%PDF`. Amanda has no PDF editor. Issue still returns a copy-ready draft with `gmail_called` false, `gmail_draft_created` false, and `email_sent` false. The draft was not sent.
+
+Next integration step, not built: Generate Gmail draft with PDF attachment — human review/send, never automatic. The same sentence is on `CR-8f20b066fac63445` and `CR-214e370b5b96cbd1` `next_action`. Both rows stay OPEN. No Gmail API call was made.
 
 ## Customers
 
@@ -92,7 +102,7 @@ Each save writes `ggv_invoice_history` and an audit event with the person id. Th
 | Atrium seat and page | Zayen’s existing Atrium Finance assignment and `/amg/finance` |
 | Books, cash, profit, bank | Not opened. `fin_accounting_core` was not given a new writer |
 
-New rows are entity-scoped on the same catalog: `fin_counterparties`, `ggv_invoices`, `ggv_invoice_history`, `ggv_invoice_documents`.
+New rows are entity-scoped on the same catalog: `fin_counterparties`, `ggv_invoices`, `ggv_invoice_history`, `ggv_invoice_documents`, `fin_invoice_sequences`, `fin_invoice_sequence_audit`.
 
 ## BZG
 
@@ -104,12 +114,13 @@ Human test, all PENDING: [GGV-INVOICE-HUMAN-TEST.md](GGV-INVOICE-HUMAN-TEST.md).
 
 | Suite | Result |
 | --- | --- |
-| `scripts/tests/test_ggv_finance_invoice_20260928.py` | PASS=66 FAIL=0 |
+| `scripts/tests/test_ggv_finance_invoice_20260928.py` | PASS=92 FAIL=0 |
 | `scripts/tests/test_staff_access_20260928.py` | PASS=274 FAIL=0 |
 | `scripts/tests/test_ggv_finance_mobile_nota.py` | PASS=138 FAIL=0 |
+| `scripts/tests/test_ggv_finance_nota_storage_accountant.py` | PASS=100 FAIL=0 |
 
 ## Commits
 
-No commit. HEAD `d97ea20`.
+Local commit on `build/wolf-command-rebuild`. Not pushed.
 
 RESULT: PASS
