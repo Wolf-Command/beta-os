@@ -120,6 +120,17 @@
 <body>
   <h1 class="brand">Uma Blu <em>Daily Close</em></h1>
   <p class="sub">Count the till. We pull ESB sales. Variance only when numbers disagree.</p>
+  <p class="banner info" id="umarealCut">Daily close history: checking the register.</p>
+  <script>
+    fetch("/api/bzg/uma-blu/real/closes").then(function (r) { return r.json(); }).then(function (d) {
+      var el = document.getElementById("umarealCut");
+      if (!el || !d) return;
+      el.textContent = "Daily close history: " + (d.status || "NONE FOUND") + ". " + (d.policy || "");
+    }).catch(function () {
+      var el = document.getElementById("umarealCut");
+      if (el) el.textContent = "Daily close history: NONE FOUND";
+    });
+  </script>
     <nav class="uma" aria-label="Uma Blu day">
     <a href="/bzg/uma-blu">Today</a>
     <a class="active" href="/uma-blu-close">Daily Close</a>

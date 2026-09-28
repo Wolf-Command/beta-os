@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Uma Blu · Real data</title>
+<style>
+  :root {
+    --bg: #0f1c24; --bg2: #162833; --line: #2a4554; --text: #eef4f7;
+    --muted: #8aa0ad; --accent: #3db8a0; --warn: #e0a045; --danger: #e05a4c;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
+  body { padding: 16px 16px 72px; max-width: 1100px; margin: 0 auto; overflow-wrap: anywhere; }
+  h1 { font-size: 1.45rem; margin: 0 0 6px; }
+  h1 em { font-style: normal; color: var(--accent); }
+  a { color: var(--accent); }
+  nav.uma { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+  nav.uma a {
+    min-height: 44px; display: inline-flex; align-items: center; padding: 8px 12px;
+    border-radius: 999px; border: 1px solid var(--line); color: var(--muted);
+    text-decoration: none; font-size: 0.84rem; font-weight: 650;
+  }
+  .banner {
+    background: rgba(61,184,160,0.10); border: 1px solid rgba(61,184,160,0.35);
+    color: var(--accent); border-radius: 12px; padding: 10px 12px; font-size: 0.86rem;
+  }
+  .card, .panel {
+    background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin: 8px 0;
+  }
+  .card { display: block; color: inherit; text-decoration: none; }
+  .meta, .muted { color: var(--muted); font-size: 0.82rem; }
+  .badge {
+    display: inline-block; margin-right: 6px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid var(--warn); color: var(--warn); font-size: 0.72rem; font-weight: 700;
+  }
+  .badge.bad { border-color: var(--danger); color: var(--danger); }
+  .badge.ok { border-color: var(--accent); color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  img.nota { max-width: 100%; height: auto; border-radius: 12px; }
+  button, .btn {
+    min-height: 44px; border-radius: 12px; border: 1px solid #2a8a76; background: #1f6b5c;
+    color: #fff; font-weight: 650; padding: 10px 14px;
+  }
+  input, textarea {
+    width: 100%; border: 1px solid var(--line); background: #1e3542; color: var(--text);
+    border-radius: 10px; padding: 10px; font: inherit;
+  }
+  @media (max-width: 720px) {
+    table, thead, tbody, tr, th, td { display: block; }
+    thead { display: none; }
+    td { border-bottom: 0; padding: 4px 0; }
+    tr { border-bottom: 1px solid var(--line); padding: 8px 0; }
+  }
+</style>
+</head>
+<body data-wolf-page-type="WORKSPACE" data-wolf-org="BZG/UMA">
+  <p class="muted"><a href="/bzg/uma-blu">Uma Blu Today</a></p>
+  <h1 id="title">Uma Blu</h1>
+  <p class="banner" id="cutLine">Historical source stays authoritative. Wolf commissioning date is not set.</p>
+  <nav class="uma" aria-label="Uma Blu real data">
+    <a href="/bzg/uma-blu/recipes">Recipes</a>
+    <a href="/bzg/uma-blu/purchasing">Purchasing</a>
+    <a href="/bzg/uma-blu/sales">ESB sales</a>
+    <a href="/bzg/uma-blu/menu-map">Menu map</a>
+    <a href="/uma-blu-close">Daily Close</a>
+  </nav>
+  <div id="app"><p class="muted">Loading…</p></div>
+<script>
+(function () {
+  var app = document.getElementById("app");
+  var title = document.getElementById("title");
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function badge(text) {
+    if (!text) return null;
+    var cls = "badge";
+    if (text === "MISSING COST" || text === "INCOMPLETE" || text === "INCOMPLETE COST") cls += " bad";
+    if (text === "COMPLETE" || text === "confirmed") cls += " ok";
+    return el("span", cls, text);
+  }
+  function money(n) {
+    if (n == null || n === "") return "INCOMPLETE";
+    return String(n);
+  }
+  function ready() {
+    document.body.setAttribute("data-ready", "1");
+  }
+  function fail(err) {
+    app.innerHTML = "";
+    app.appendChild(el("p", "muted", err || "Could not load this view."));
+    ready();
+  }
+  function get(url) {
+    return fetch(url).then(function (r) {
+      if (r.status === 403) throw new Error("You do not have access to Uma Blu.");
+      if (!r.ok) throw new Error("Could not load this view.");
+      return r.json();
+    });
+  }
+  fetch("/api/bzg/uma-blu/real/cut-lines").then(function (r) { return r.json(); }).then(function (d) {
+    if (d && d.banner) document.getElementById("cutLine").textContent = d.banner;
+  }).catch(function () {});
+
+  var path = location.pathname.replace(/\/$/, "");
+  var parts = path.split("/").filter(Boolean);
+
+  function recipeList() {
+    title.textContent = "Recipes";
+    get("/api/bzg/uma-blu/real/recipes?limit=127").then(function (data) {
+      app.innerHTML = "";
+      app.appendChild(el("p", "meta", data.count + " dishes · historical recipe store · verified_by_wolf false"));
+      (data.recipes || []).forEach(function (row) {
+        var a = el("a", "card");
+        a.href = "/bzg/uma-blu/recipes/" + encodeURIComponent(row.recipe_id);
+        a.appendChild(el("strong", null, row.name));
+        var meta = el("div", "meta", (row.group_name || "") + " · " + row.line_count + " lines · yield " + row.yield_n);
+        var mark = badge(row.food_cost_status === "COMPLETE" ? "COMPLETE" : "INCOMPLETE");
+        if (mark) meta.appendChild(document.createTextNode(" "));
+        if (mark) meta.appendChild(mark);
+        a.appendChild(meta);
+        a.appendChild(el("div", "meta", "Food cost " + money(row.food_cost)));
+        app.appendChild(a);
+      });
+      ready();
+    }).catch(function (e) { fail(e.message); });
+  }
+
+  function recipeDetail(id) {
+    title.textContent = "Recipe";
+    get("/api/bzg/uma-blu/real/recipes/" + encodeURIComponent(id)).then(function (row) {
+      app.innerHTML = "";
+      app.appendChild(el("h2", null, row.name));
+      app.appendChild(el("p", "meta", "Source " + row.source_system + " · " + row.source_id + " · origin " + row.origin));
+      var head = el("p", "meta", "Food cost " + money(row.food_cost) + " · portion " + money(row.portion_cost) + " · margin " + money(row.margin));
+      var mark = badge(row.food_cost_status);
+      if (mark) head.appendChild(mark);
+      app.appendChild(head);
+      var table = el("table");
+      var thead = el("thead");
+      var hr = el("tr");
+      ["Ingredient", "Qty", "Cost", "Badge", "Match"].forEach(function (h) { hr.appendChild(el("th", null, h)); });
+      thead.appendChild(hr);
+      table.appendChild(thead);
+      var body = el("tbody");
+      (row.lines || []).forEach(function (line) {
+        var tr = el("tr");
+        tr.appendChild(el("td", null, line.name));
+        tr.appendChild(el("td", null, (line.qty == null ? "" : line.qty) + " " + (line.unit || "")));
+        tr.appendChild(el("td", null, line.extended_cost == null ? "INCOMPLETE" : String(line.extended_cost)));
+        var td = el("td");
+        var b = badge(line.cost_badge);
+        if (b) td.appendChild(b);
+        if (line.cost_date) td.appendChild(el("div", "meta", "cost date " + line.cost_date));
+        tr.appendChild(td);
+        var match = line.purchase_match || {};
+        var label = match.match_status || "unmatched";
+        if (match.match_method) label += " · " + match.match_method;
+        if (match.confidence) label += " · " + match.confidence;
+        tr.appendChild(el("td", null, label));
+        body.appendChild(tr);
+      });
+      table.appendChild(body);
+      app.appendChild(table);
+      var form = el("form", "panel");
+      form.appendChild(el("p", "meta", "A new note saves a Wolf draft. The historical recipe is not overwritten."));
+      var area = el("textarea");
+      area.name = "note";
+      area.rows = 3;
+      form.appendChild(area);
+      var button = el("button", null, "Save Wolf draft");
+      button.type = "submit";
+      form.appendChild(button);
+      form.addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        fetch("/api/bzg/uma-blu/real/recipes/" + encodeURIComponent(id) + "/draft", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({note: area.value})
+        }).then(function (r) { return r.json(); }).then(function (saved) {
+          form.appendChild(el("p", "meta", saved.ok ? ("Draft " + saved.draft_id + " saved. Historical record unchanged.") : (saved.message || "Draft was not saved.")));
+        });
+      });
+      app.appendChild(form);
+      ready();
+    }).catch(function (e) { fail(e.message); });
+  }
+
+  function purchasing() {
+    title.textContent = "Purchasing";
+    Promise.all([
+      get("/api/bzg/uma-blu/real/suppliers?limit=103"),
+      get("/api/bzg/uma-blu/real/orders?limit=40"),
+      get("/api/bzg/uma-blu/real/receipts?limit=1"),
+      get("/api/bzg/uma-blu/real/evidence?limit=5")
+    ]).then(function (parts) {
+      var suppliers = parts[0], orders = parts[1], receipts = parts[2], evidence = parts[3];
+      app.innerHTML = "";
+      app.appendChild(el("p", "meta", "Alchemist historical · " + suppliers.count + " suppliers · " + orders.count + " purchase orders · " + receipts.count + " receipt lines"));
+      app.appendChild(el("h2", null, "Purchase orders"));
+      (orders.orders || []).slice(0, 8).forEach(function (row) {
+        var card = el("div", "card");
+        card.appendChild(el("strong", null, (row.pr_num || row.order_id) + " · " + (row.vendor || "")));
+        card.appendChild(el("div", "meta", (row.status || "") + " · " + (row.order_date || "") + " · " + row.label));
+        if (row.photo && row.photo.message) card.appendChild(el("div", "meta", row.photo.message + " · " + (row.photo.source_path_id || "")));
+        app.appendChild(card);
+      });
+      app.appendChild(el("h2", null, "Suppliers"));
+      (suppliers.suppliers || []).slice(0, 8).forEach(function (row) {
+        var card = el("div", "card");
+        card.appendChild(el("strong", null, row.name));
+        card.appendChild(el("div", "meta", row.label + " · " + row.source_id));
+        app.appendChild(card);
+      });
+      var files = (evidence.files || []).filter(function (f) { return f.prefix === "nota"; });
+      var link = files[0] || (evidence.files || [])[0];
+      if (link) {
+        var a = el("a", "card");
+        a.href = "/bzg/uma-blu/notas/" + encodeURIComponent(link.evidence_id);
+        a.appendChild(el("strong", null, "Open evidence " + link.evidence_id));
+        app.appendChild(a);
+      }
+      var lost = (evidence.unrecoverable || [])[0];
+      if (lost) app.appendChild(el("p", "meta", lost.message + " · " + lost.source_id));
+      ready();
+    }).catch(function (e) { fail(e.message); });
+  }
+
+  function nota(id) {
+    title.textContent = "Evidence";
+    get("/api/bzg/uma-blu/real/evidence/" + encodeURIComponent(id)).then(function (row) {
+      app.innerHTML = "";
+      app.appendChild(el("h2", null, row.evidence_id || id));
+      app.appendChild(el("p", "meta", "Alchemist historical · " + (row.source_id || id)));
+      if (!row.recoverable) {
+        app.appendChild(el("p", null, "EVIDENCE FILE NOT RECOVERABLE"));
+        app.appendChild(el("p", "meta", row.source_id || id));
+        ready();
+        return;
+      }
+      var img = el("img", "nota");
+      img.alt = "Evidence file";
+      img.onload = ready;
+      img.onerror = function () {
+        app.appendChild(el("p", null, "EVIDENCE FILE NOT RECOVERABLE"));
+        ready();
+      };
+      img.src = "/api/bzg/uma-blu/real/evidence/" + encodeURIComponent(id) + "/file";
+      app.appendChild(img);
+    }).catch(function (e) { fail(e.message); });
+  }
+
+  function sales() {
+    title.textContent = "ESB sales";
+    get("/api/bzg/uma-blu/real/sales?limit=20").then(function (data) {
+      app.innerHTML = "";
+      app.appendChild(el("p", "meta", "ESB read-only · " + data.count + " bills · " + data.biz_date_min + " through " + data.biz_date_max));
+      app.appendChild(el("p", "meta", "Inline pull was not re-issued. Latest inline log day " + (data.inline_log_last_biz_date || "unknown") + " · bills " + (data.inline_log_bills == null ? "unknown" : data.inline_log_bills)));
+      (data.sales || []).forEach(function (row) {
+        var card = el("div", "card");
+        card.appendChild(el("strong", null, (row.sales_num || row.source_id) + " · " + row.biz_date));
+        card.appendChild(el("div", "meta", (row.status || "") + " · total " + (row.grand_total == null ? "" : row.grand_total) + " · " + row.label));
+        app.appendChild(card);
+      });
+      get("/api/bzg/uma-blu/real/closes").then(function (close) {
+        var panel = el("div", "panel");
+        panel.appendChild(el("h2", null, "Daily close history"));
+        panel.appendChild(el("p", null, close.status));
+        panel.appendChild(el("p", "meta", close.policy));
+        app.appendChild(panel);
+        ready();
+      });
+    }).catch(function (e) { fail(e.message); });
+  }
+
+  function menuMap() {
+    title.textContent = "Menu map";
+    var from = "2026-09-21";
+    var to = "2026-09-27";
+    Promise.all([
+      get("/api/bzg/uma-blu/real/menu-map"),
+      get("/api/bzg/uma-blu/real/theoretical?from=" + from + "&to=" + to)
+    ]).then(function (parts) {
+      var report = parts[0], theory = parts[1];
+      app.innerHTML = "";
+      app.appendChild(el("p", "meta", "Match method " + report.match_method + ". Guessed mappings confirmed: " + report.guessed_confirmed));
+      app.appendChild(el("p", null, "Mapped " + report.mapped + " · ambiguous " + report.ambiguous + " · unmapped ESB " + report.unmapped_esb_items + " · recipes with no ESB item " + report.recipes_without_esb_item));
+      app.appendChild(el("h2", null, "THEORETICAL consumption"));
+      app.appendChild(el("p", "meta", theory.label + " · " + theory.date_from + " to " + theory.date_to + " · finished bills " + theory.finished_bills));
+      (theory.lines || []).slice(0, 25).forEach(function (line) {
+        var card = el("div", "card");
+        card.appendChild(el("strong", null, line.ingredient));
+        card.appendChild(el("div", "meta", line.qty + " " + (line.unit || "") + " · " + line.label));
+        app.appendChild(card);
+      });
+      ready();
+    }).catch(function (e) { fail(e.message); });
+  }
+
+  if (parts[0] === "bzg" && parts[1] === "uma-blu" && parts[2] === "recipes" && parts[3]) recipeDetail(decodeURIComponent(parts[3]));
+  else if (path === "/bzg/uma-blu/recipes") recipeList();
+  else if (path === "/bzg/uma-blu/purchasing") purchasing();
+  else if (parts[2] === "notas" && parts[3]) nota(decodeURIComponent(parts[3]));
+  else if (path === "/bzg/uma-blu/sales") sales();
+  else if (path === "/bzg/uma-blu/menu-map") menuMap();
+  else fail("Unknown Uma Blu view.");
+})();
+</script>
+</body>
+</html>

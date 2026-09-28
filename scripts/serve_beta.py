@@ -81,6 +81,7 @@ from core import delegation as _delegation
 from core import content_publish as _content_publish
 from core import venue_close as _venue_close
 from core import uma_ops_console as _uma_ops
+from core import uma_real_projection as _uma_real
 from core import uma_devi_p0 as _uma_p0
 from core import esb_close_snapshot as _esb_close_snapshot
 from core import progress_read_model as _progress
@@ -2210,6 +2211,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "/api/bzg/uma-blu/money",
             ):
                 self._staff_ready_write_refused(path)
+                return
+            if path.startswith("/api/bzg/uma-blu/real"):
+                self._uma_real_get(path, qs)
                 return
             self._send_json(
                 {
@@ -4733,6 +4737,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         elif path in ("/bzg/uma-blu/petty", "/bzg/uma-blu/petty/"):
             self.path = "/bzg-uma-blu-petty.html"
+        elif path in (
+            "/bzg/uma-blu/recipes",
+            "/bzg/uma-blu/recipes/",
+            "/bzg/uma-blu/purchasing",
+            "/bzg/uma-blu/purchasing/",
+            "/bzg/uma-blu/sales",
+            "/bzg/uma-blu/sales/",
+            "/bzg/uma-blu/menu-map",
+            "/bzg/uma-blu/menu-map/",
+        ) or re.match(r"^/bzg/uma-blu/recipes/[^/]+/?$", path) or re.match(
+            r"^/bzg/uma-blu/notas/[^/]+/?$", path
+        ):
+            self._uma_staff_page("bzg-uma-blu-real.html")
+            return
         elif path in ("/habitat-operator", "/habitat-operator/"):
             self.path = "/habitat-operator.html"
         elif path in ("/lead-spine", "/lead-spine/"):
@@ -5598,6 +5616,13 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "/api/bzg/uma-blu/exception-note",
             ):
                 self._uma_ops_loop_note_post(path)
+                return
+            m_real_draft = re.match(
+                r"^/api/bzg/uma-blu/real/recipes/([^/]+)/draft$",
+                path,
+            )
+            if m_real_draft:
+                self._uma_real_draft(m_real_draft.group(1))
                 return
             refuse = _uma_ops.refuse_code(path)
             if refuse:
@@ -31512,6 +31537,131 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return
         self._send_html_shell(page.read_bytes(), rel=filename)
+
+    def _uma_real_get(self, path: str, qs: dict) -> None:
+        """Read-through Uma Blu history. Does not call ESB and does not write Alchemist."""
+        from urllib.parse import unquote
+
+        def one(name: str, default: str = "") -> str:
+            return ((qs.get(name) or [default])[0] or default).strip()
+
+        try:
+            if path in ("/api/bzg/uma-blu/real/cut-lines", "/api/bzg/uma-blu/real/cut-lines/"):
+                self._send_json(_uma_real.cut_lines())
+                return
+            if path in ("/api/bzg/uma-blu/real/recipes", "/api/bzg/uma-blu/real/recipes/"):
+                self._send_json(
+                    _uma_real.list_recipes(
+                        limit=int(one("limit", "40") or "40"),
+                        offset=int(one("offset", "0") or "0"),
+                    )
+                )
+                return
+            m_recipe = re.match(r"^/api/bzg/uma-blu/real/recipes/([^/]+)$", path)
+            if m_recipe:
+                row = _uma_real.get_recipe(unquote(m_recipe.group(1)))
+                if row is None:
+                    self._send_json({"ok": False, "error": "not_found"}, status=404)
+                    return
+                row["ok"] = True
+                self._send_json(row)
+                return
+            if path in ("/api/bzg/uma-blu/real/suppliers", "/api/bzg/uma-blu/real/suppliers/"):
+                self._send_json(_uma_real.list_suppliers(limit=int(one("limit", "200") or "200")))
+                return
+            if path in ("/api/bzg/uma-blu/real/orders", "/api/bzg/uma-blu/real/orders/"):
+                self._send_json(
+                    _uma_real.list_orders(
+                        limit=int(one("limit", "40") or "40"),
+                        offset=int(one("offset", "0") or "0"),
+                    )
+                )
+                return
+            if path in ("/api/bzg/uma-blu/real/receipts", "/api/bzg/uma-blu/real/receipts/"):
+                self._send_json(_uma_real.list_receipts(limit=int(one("limit", "40") or "40")))
+                return
+            if path in ("/api/bzg/uma-blu/real/evidence", "/api/bzg/uma-blu/real/evidence/"):
+                self._send_json(_uma_real.list_evidence(limit=int(one("limit", "40") or "40")))
+                return
+            m_file = re.match(r"^/api/bzg/uma-blu/real/evidence/([^/]+)/file$", path)
+            if m_file:
+                target = _uma_real.resolve_evidence_file(unquote(m_file.group(1)))
+                if target is None:
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "message": "EVIDENCE FILE NOT RECOVERABLE",
+                            "source_id": unquote(m_file.group(1)),
+                        },
+                        status=404,
+                    )
+                    return
+                self._send_jpeg_file(target)
+                return
+            m_ev = re.match(r"^/api/bzg/uma-blu/real/evidence/([^/]+)$", path)
+            if m_ev:
+                self._send_json(_uma_real.evidence_meta(unquote(m_ev.group(1))))
+                return
+            if path in ("/api/bzg/uma-blu/real/sales", "/api/bzg/uma-blu/real/sales/"):
+                self._send_json(
+                    _uma_real.list_sales(
+                        date_from=one("from") or None,
+                        date_to=one("to") or None,
+                        limit=int(one("limit", "30") or "30"),
+                    )
+                )
+                return
+            if path in ("/api/bzg/uma-blu/real/menu-map", "/api/bzg/uma-blu/real/menu-map/"):
+                self._send_json(_uma_real.menu_map_report())
+                return
+            if path in ("/api/bzg/uma-blu/real/theoretical", "/api/bzg/uma-blu/real/theoretical/"):
+                self._send_json(
+                    _uma_real.theoretical_consumption(
+                        date_from=one("from", "2026-09-21"),
+                        date_to=one("to", "2026-09-27"),
+                    )
+                )
+                return
+            if path in ("/api/bzg/uma-blu/real/closes", "/api/bzg/uma-blu/real/closes/"):
+                self._send_json(_uma_real.daily_close_history())
+                return
+            if path in ("/api/bzg/uma-blu/real/inventory", "/api/bzg/uma-blu/real/inventory/"):
+                self._send_json(_uma_real.list_inventory())
+                return
+        except FileNotFoundError:
+            self._send_json(
+                {"ok": False, "error": "source_unavailable", "staff_ready": False},
+                status=404,
+            )
+            return
+        except ValueError:
+            self._send_json({"ok": False, "error": "bad_query"}, status=400)
+            return
+        self._send_json({"ok": False, "error": "not_found", "message": "Unknown Uma Blu route."}, status=404)
+
+    def _uma_real_draft(self, recipe_id: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._resolve_identity(body, emit_audit=False)
+        try:
+            saved = _uma_real.create_draft(
+                unquote(recipe_id),
+                str((body or {}).get("note") or ""),
+                created_by=identity.get("person_id"),
+            )
+        except KeyError:
+            self._send_json({"ok": False, "error": "not_found"}, status=404)
+            return
+        except FileNotFoundError:
+            self._send_json({"ok": False, "error": "source_unavailable"}, status=404)
+            return
+        saved["ok"] = True
+        self._send_json(saved)
 
     def _intel_connect_refuse(self, path: str) -> None:
         """Additive refuse for auto-promote / auto-execute on desk surfaces."""
