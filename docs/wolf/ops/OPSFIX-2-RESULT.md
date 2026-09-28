@@ -43,6 +43,7 @@ Beta listener pid **24551** started Mon Sep 28 23:39:48 2026, parent pid 1, from
 | `scripts/tests/test_atrium_full_mount_20260928.py` | SUMMARY pass=79 fail=0 |
 | `scripts/tests/test_umareal_20260928.py` | SUMMARY pass=85 fail=0 |
 | `scripts/tests/test_opsaudit_20260928.py` | SUMMARY pass=97 fail=0, RESULT: PASS |
+| `scripts/tests/test_cap_core_10_read.py` | SUMMARY pass=49 fail=0 |
 
 `state/ops/testability-matrix.json` keeps earlier FAIL text ("Commissioning FAIL on the earlier small desk", "Zayen's FAIL was about the earlier desk"). `staff_ready` and `human_commissioned` stay false. Ready for a human now includes Devi on Uma Blu Today, Uma recipes, and Uma Blu purchasing, and Amanda on GGV invoice history.
 
@@ -58,6 +59,6 @@ Beta listener pid **24551** started Mon Sep 28 23:39:48 2026, parent pid 1, from
 
 Local only. No push.
 
-- Commit hash is recorded in the follow-up line after this file is committed.
+- `f35fdac9fefb5ddcbdc0cfbe018272041a2fdcd1` — Show staff the real Uma day and GGV invoice files, and make My Work and Owner Command readable.
 
 RESULT: PASS
