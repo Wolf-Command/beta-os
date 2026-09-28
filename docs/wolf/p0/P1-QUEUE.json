@@ -296,19 +296,20 @@
       "order": 15,
       "id": "CAP-CORE-12",
       "title": "Delegation & Escalation Burn-down",
-      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: escalation burn-down plus 7/30/90/365 independence tests.",
-      "exact_missing_evidence": "Those tests. They are how Matt stops being the daily path. They were not run for this queue.",
-      "cursor_work": "Not started. Do not mark an independence day as done.",
+      "current_state": "SYSTEM BUILT (0.25). The independence read names the retain set. Needs Matt labels are 0. Stored delegations are 0. No 7/30/90/365 day was marked done. The ledger stays BUILT.",
+      "exact_missing_evidence": "None for this queue test. A review that would raise PROVEN was not supplied. An independence day was not marked done.",
+      "cursor_work": "Done in commit f683bd3. Read-only independence naming on the existing burn-down. No day marked done.",
       "human_work": "Matt only where a delegation is an authority decision. The tests themselves are not that decision.",
       "external_dependency": "none",
       "prerequisite": [],
       "closure_test": "The independence tests name what still requires Matt. A calendar claim without the test does not close this item.",
       "target_final_state": "CLOSED",
-      "status": "OPEN",
+      "status": "CLOSED",
       "evidence": [
-        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md"
+        "docs/wolf/wave3/WHAT-IS-LEFT-TO-FINISH-WOLF-COMMAND.md",
+        "docs/wolf/five/P1-CAP-CORE-12-RESULT.md"
       ],
-      "commit": null
+      "commit": "f683bd3"
     },
     {
       "order": 16,

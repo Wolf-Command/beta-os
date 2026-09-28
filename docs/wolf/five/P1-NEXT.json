@@ -11,10 +11,10 @@
   "priority_counts": {"P0": 12, "P1": 20, "P2": 42, "P3": 3},
   "queue_status_counts": {
     "P0": {"CLOSED": 1, "READY_FOR_HUMAN": 6, "BLOCKED_OWNER": 2, "WAITING_EXTERNAL": 0, "OPEN": 3},
-    "P1": {"CLOSED": 5, "READY_FOR_HUMAN": 1, "BLOCKED_OWNER": 1, "WAITING_EXTERNAL": 1, "OPEN": 12}
+    "P1": {"CLOSED": 6, "READY_FOR_HUMAN": 1, "BLOCKED_OWNER": 1, "WAITING_EXTERNAL": 1, "OPEN": 11}
   },
-  "closed_omitted": ["CAP-CORE-05", "CAP-INTG-04", "CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01"],
-  "closed_this_pack": ["CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01"],
+  "closed_omitted": ["CAP-CORE-05", "CAP-INTG-04", "CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01", "CAP-CORE-12"],
+  "closed_this_pack": ["CAP-GGV-01", "CAP-GGV-04", "CAP-CRM-01", "CAP-HR-01", "CAP-CORE-12"],
   "unlabeled": ["CAP-MSC-02"],
   "unlabeled_note": "CAP-MSC-02 stays OPEN. The deny prove is recorded. The missing review note is not this queue, not a staff walk, not a named provider, and not operating data. The 27 Sep pack refused BLOCKED_OWNER. This file does not give it one of the five labels.",
   "next": [
@@ -95,10 +95,10 @@
       "title": "Delegation & Escalation Burn-down",
       "bucket": "founder_dependency_removal",
       "classification": "CURSOR CAN CLOSE",
-      "queue_status": "OPEN",
+      "queue_status": "CLOSED",
       "system_state": "BUILT",
       "system_score": "0.25",
-      "why": "The next bar is the independence tests. They name what still requires the owner. The tests are not an authority decision.",
+      "why": "F6 read the register. Needs Matt labels are 0 and stored delegations are 0. The retain names stay. No independence day was marked done. The ledger stays BUILT.",
       "prerequisite": [],
       "bounds": "Mark no independence day as done."
     },
