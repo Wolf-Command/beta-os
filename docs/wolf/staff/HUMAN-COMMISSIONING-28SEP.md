@@ -51,6 +51,8 @@ Who: Zayen. Gmail laluzayen@gmail.com.
 
 Every row stays PENDING until that person writes the result. Do not fill these in from a test run.
 
+Zayen Atrium Finance Officer — HUMAN FAIL 28 Sep 13:18 WITA — raw JSON on /; repair ZAYENFIX-1; retest PENDING
+
 | Person | Role | Result |
 | --- | --- | --- |
 | Haikal | Creative Director | PENDING |
@@ -61,4 +63,4 @@ Every row stays PENDING until that person writes the result. Do not fill these i
 | TJ | Content Creator | PENDING |
 | Nata | Content Creator | PENDING |
 | Rapp | Content Creator | PENDING |
-| Zayen | Atrium Finance Officer | PENDING |
+| Zayen | Atrium Finance Officer | PENDING/FAIL |

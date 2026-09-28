@@ -536,6 +536,99 @@ def officer_must_deny(person_id: str | None, path: str, conn: sqlite3.Connection
     return True
 
 
+# Human page for the active primary assignment. Scope stays on the assignment.
+# This does not add a grant. Owner stays on /wolf.
+HUMAN_PAGE_BY_ROLE: dict[str, str] = {
+    "ROLE-GGV-CREATIVE-DIRECTOR": "/content-2.0",
+    "ROLE-CONTENT": "/content-2.0",
+    "ROLE-CONTENT-MGMT": "/content-2.0",
+    "ROLE-CONTENT-CREW": "/content-2.0",
+    "ROLE-CONTENT-CREATOR": "/content-2.0",
+    "ROLE-BZG-FB-OPS-LEAD": "/bzg/uma-blu",
+    "ROLE-GGV-LEAD": "/ggv-ops-pack",
+    "ROLE-AMG-OPS": "/amg-ops-pack",
+    "ROLE-AMG-GM": "/amg-ops-pack",
+    "ROLE-MATT": "/wolf",
+    "ROLE-OWNER": "/wolf",
+    "ROLE-AMG-FINANCE-OFFICER": ATRIUM_FINANCE_HREF,
+    "ROLE-GGV-FINANCE-OPERATOR": GGV_FINANCE_HREF,
+    "ROLE-GGV-EXTERNAL-ACCOUNTANT": GGV_FINANCE_HREF,
+}
+
+HUMAN_PAGE_LABEL: dict[str, str] = {
+    "/amg/finance": "Atrium Finance",
+    "/content-2.0": "Content",
+    "/bzg/uma-blu": "Uma Blu",
+    "/ggv/finance": "GGV Finance",
+    "/ggv-ops-pack": "GGV",
+    "/wolf": "Owner",
+    "/amg-ops-pack": "Atrium",
+    "/my-work": "My Work",
+}
+
+ENTRY_PATHS = frozenset({"/", "/index.html"})
+
+
+def normalise_human_page(path: str | None) -> str:
+    raw = (path or "").split("?")[0].split("#")[0]
+    if not raw.startswith("/"):
+        raw = "/" + raw
+    if raw.startswith("/dashboards/"):
+        raw = raw[len("/dashboards"):] or "/"
+    if raw.endswith(".html"):
+        raw = raw[: -len(".html")] or "/"
+    return raw.rstrip("/") or "/"
+
+
+def active_assignment_pages(person_id: str | None, conn: sqlite3.Connection) -> list[dict[str, str]]:
+    """Active assignments, primary first. One human page per role. No new grant."""
+    pid = (person_id or "").strip()
+    if not pid:
+        return []
+    rows = conn.execute(
+        """
+        SELECT a.assignment_id, a.is_primary, pos.role_id
+        FROM org_assignments a
+        JOIN org_positions pos ON pos.position_id = a.position_id
+        WHERE a.person_id=? AND a.status='ACTIVE' AND a.end_at IS NULL
+        ORDER BY a.is_primary DESC, a.assignment_id
+        """,
+        (pid,),
+    ).fetchall()
+    out: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for row in rows:
+        role = str(row[2] or "")
+        href = HUMAN_PAGE_BY_ROLE.get(role)
+        if not href or href in seen:
+            continue
+        seen.add(href)
+        out.append(
+            {
+                "assignment_id": str(row[0]),
+                "role_id": role,
+                "href": href,
+                "label": HUMAN_PAGE_LABEL.get(href, "your workspace"),
+                "primary": "1" if int(row[1] or 0) == 1 else "0",
+            }
+        )
+    return out
+
+
+def primary_human_landing(person_id: str | None, conn: sqlite3.Connection) -> str | None:
+    """AuthIdentity is already resolved to person_id. Primary assignment picks the page."""
+    pages = active_assignment_pages(person_id, conn)
+    if not pages:
+        return None
+    primary = next((page for page in pages if page["primary"] == "1"), pages[0])
+    return primary["href"]
+
+
+def assignment_allows_page(person_id: str | None, path: str, conn: sqlite3.Connection) -> bool:
+    want = normalise_human_page(path)
+    return any(normalise_human_page(page["href"]) == want for page in active_assignment_pages(person_id, conn))
+
+
 def _seat_zayen(conn: sqlite3.Connection, ts: str) -> None:
     conn.execute(
         """

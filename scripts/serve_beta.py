@@ -41,6 +41,7 @@ HARD GATES:
 
 from __future__ import annotations
 
+import html
 import json
 import os
 import re
@@ -1619,7 +1620,148 @@ class BetaHandler(SimpleHTTPRequestHandler):
         self._wolf_body_cache = body
         return body
 
+    def _browser_document_request(self) -> bool:
+        """A page navigation. /api/* stays JSON even when the browser asks for HTML."""
+        path = urlparse(self.path).path or "/"
+        if path == "/api" or path.startswith("/api/"):
+            return False
+        accept = (self.headers.get("Accept") or "").lower()
+        return "text/html" in accept
+
+    def _plain_deny_sentence(self, message: str) -> str:
+        text = " ".join((message or "").split())
+        lowered = text.lower()
+        if (
+            not text
+            or text in {"forbidden", "unauthorized"}
+            or "{" in text
+            or "subject lacks" in lowered
+            or "pers-" in lowered
+            or "required_" in lowered
+        ):
+            return "This page is not on your assignment."
+        return text
+
+    def _send_access_denied_page(self, message: str) -> None:
+        """Human page for a denied navigation. Names the signed-in person and their workspace."""
+        from core import staff_access as _staff_access
+
+        name = ""
+        email = ""
+        href = ""
+        label = "your workspace"
+        try:
+            identity = self._resolve_identity(None, emit_audit=False)
+        except Exception:  # noqa: BLE001
+            identity = {}
+        if isinstance(identity, dict) and identity.get("ok"):
+            email = str(identity.get("email") or "").strip()
+            person = identity.get("person") if isinstance(identity.get("person"), dict) else {}
+            name = str(person.get("display_name") or "").strip()
+            person_id = str(identity.get("person_id") or "").strip()
+            if person_id:
+                try:
+                    conn = _ggv_fin.db_connect()
+                    try:
+                        pages = _staff_access.active_assignment_pages(person_id, conn)
+                    finally:
+                        conn.close()
+                    primary = next((page for page in pages if page.get("primary") == "1"), None)
+                    chosen = primary or (pages[0] if pages else None)
+                    if chosen:
+                        href = str(chosen.get("href") or "")
+                        label = str(chosen.get("label") or label)
+                except Exception:  # noqa: BLE001
+                    href = ""
+        if name and email:
+            who = f"You are signed in as {name} ({email})."
+        elif email:
+            who = f"You are signed in as {email}."
+        elif name:
+            who = f"You are signed in as {name}."
+        else:
+            who = "You are not signed in."
+        reason = self._plain_deny_sentence(message)
+        button = ""
+        if href.startswith("/") and not href.startswith("//"):
+            button = (
+                f'<p><a href="{html.escape(href, quote=True)}">Back to your workspace</a></p>'
+            )
+            where = f"<p>Your workspace is {html.escape(label)}.</p>"
+        else:
+            where = ""
+        page = (
+            "<!DOCTYPE html>\n"
+            '<html lang="en">\n'
+            "<head>\n"
+            '<meta charset="utf-8">\n'
+            '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+            "<title>Access denied</title>\n"
+            '<link rel="stylesheet" href="/wolf-tokens.css">\n'
+            "<style>\n"
+            "body{margin:0 auto;max-width:32rem;padding:2rem 1.25rem;"
+            "font-family:var(--font,system-ui,sans-serif);"
+            "background:var(--bg,#10140f);color:var(--text,#f3f7f1);}\n"
+            "a{display:inline-block;margin-top:0.5rem;padding:0.65rem 1rem;"
+            "background:var(--accent,#d7e26a);color:#10140f;text-decoration:none;}\n"
+            "</style>\n"
+            "</head>\n"
+            "<body>\n"
+            "<main>\n"
+            "<h1>Access denied</h1>\n"
+            f"<p>{html.escape(who)}</p>\n"
+            f"<p>{html.escape(reason)}</p>\n"
+            f"{where}\n"
+            f"{button}\n"
+            "</main>\n"
+            "</body>\n"
+            "</html>\n"
+        )
+        raw = page.encode("utf-8")
+        self.send_response(403)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(raw)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(raw)
+
+    def _redirect_entry_home(self) -> bool:
+        """Signed-in / and /index.html go to the primary assignment's human page."""
+        from core import staff_access as _staff_access
+
+        path = urlparse(self.path).path or "/"
+        if path not in _staff_access.ENTRY_PATHS:
+            return False
+        try:
+            identity = self._resolve_identity(None, emit_audit=False)
+        except Exception:  # noqa: BLE001
+            return False
+        if not isinstance(identity, dict) or not identity.get("ok") or not identity.get("person_id"):
+            return False
+        try:
+            conn = _ggv_fin.db_connect()
+            try:
+                href = _staff_access.primary_human_landing(str(identity.get("person_id")), conn)
+            finally:
+                conn.close()
+        except Exception:  # noqa: BLE001
+            return False
+        if not href or href in _staff_access.ENTRY_PATHS:
+            return False
+        self.send_response(302)
+        self.send_header("Location", href)
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+        return True
+
     def _send_json(self, payload, status: int = 200) -> None:
+        if status == 403 and self._browser_document_request():
+            message = ""
+            if isinstance(payload, dict):
+                message = str(payload.get("message") or "")
+            self._send_access_denied_page(message)
+            return
         body = json.dumps(payload, default=str).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -1666,6 +1808,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
         if path in ("/signout", "/signout/"):
             self._access_signout()
+            return
+
+        if path in ("/", "/index.html") and self._redirect_entry_home():
             return
 
         if self._accountant_scope_wall():
@@ -8110,7 +8255,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if rel == "content-2.0.html":
             identity = self._wolf_shell_identity_quiet()
             who = _wolf_shell.whoami_from_identity(identity)
-            if "/content-2.0" not in _wolf_shell.filter_hrefs(who):
+            content_allowed = "/content-2.0" in _wolf_shell.filter_hrefs(who)
+            person_id = (identity or {}).get("person_id") if isinstance(identity, dict) else None
+            if not content_allowed and person_id:
+                try:
+                    from core.staff_access import assignment_allows_page
+
+                    conn = _ggv_fin.db_connect()
+                    try:
+                        content_allowed = assignment_allows_page(str(person_id), "/content-2.0", conn)
+                    finally:
+                        conn.close()
+                except Exception:  # noqa: BLE001
+                    content_allowed = False
+            if not content_allowed:
                 self._send_json(
                     {
                         "ok": False,

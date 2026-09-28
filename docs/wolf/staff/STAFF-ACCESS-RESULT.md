@@ -18,9 +18,11 @@ The first Beta restart loaded the old role seed and put Misa's Content Crew assi
 | TJ | Content Creator, primary | same as Yudi | PENDING OWNER | `/content-2.0` | same as Yudi | same as Yudi | PENDING |
 | Nata | Content Creator, primary | same as Yudi | PENDING OWNER | `/content-2.0` | same as Yudi | same as Yudi | PENDING |
 | Rapp | Content Creator, primary | same as Yudi | PENDING OWNER | `/content-2.0` | same as Yudi | same as Yudi | PENDING |
-| Zayen | Atrium Finance Officer, primary. The role is not named for her | Atrium only (`ENT-AMG`) | PENDING OWNER | `/amg/finance` | Read the board, read the ledger, save a draft journal in the ledger app's terms, read reports, read the chart, submit for approval | Post or approve a journal, pay, approve a payment, bank change, GGV, Blu Zone, Owner, system admin, role admin, hotel day desk. No limit was granted | PENDING |
+| Zayen | Atrium Finance Officer, primary. The role is not named for her | Atrium only (`ENT-AMG`) | PENDING OWNER | `/amg/finance` | Read the board, read the ledger, save a draft journal in the ledger app's terms, read reports, read the chart, submit for approval | Post or approve a journal, pay, approve a payment, bank change, GGV, Blu Zone, Owner, system admin, role admin, hotel day desk. No limit was granted | PENDING/FAIL |
 
-Login cards are `docs/wolf/staff/HUMAN-COMMISSIONING-28SEP.md`. Every human result there is PENDING.
+Login cards are `docs/wolf/staff/HUMAN-COMMISSIONING-28SEP.md`. Every human result there is PENDING except Zayen, who is PENDING/FAIL until she retests.
+
+Zayen Atrium Finance Officer — HUMAN FAIL 28 Sep 13:18 WITA — raw JSON on /; repair ZAYENFIX-1; retest PENDING
 
 ## Zayen
 
