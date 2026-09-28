@@ -129,19 +129,20 @@
       "order": 6,
       "id": "CAP-FIN-03",
       "title": "Entity Finance Boards",
-      "current_state": "SYSTEM BUILT (0.25). Ledger next bar: a shared prove matrix for all entities. POS-GGV-EXT-ACCT has no person.",
-      "exact_missing_evidence": "The prove matrix, and a real person on the accountant seat only if Matt names one.",
-      "cursor_work": "Not started. Do not invent an accountant.",
-      "human_work": "Matt names the external accountant, or writes that the seat stays empty. Amanda's content grant is not that seat.",
+      "current_state": "SYSTEM BUILT (0.25). The queue test read the three stored desks. POS-GGV-EXT-ACCT has no active assignment. The content-management assignment is not that seat. Books stay UNAVAILABLE. The ledger stays BUILT.",
+      "exact_missing_evidence": "None for this queue test. A person was not seated. A review that would raise PROVEN was not written into the ledger.",
+      "cursor_work": "Done in commit 888226a. The existing desks were read. No accountant was invented. No book was opened.",
+      "human_work": "The seat stays empty unless Matt assigns a real person. This file does not commission anyone and does not ask for that assignment.",
       "external_dependency": "none",
       "prerequisite": [],
       "closure_test": "The matrix runs without a new person row. An empty seat stays empty unless Matt assigns a real person.",
       "target_final_state": "CLOSED",
-      "status": "OPEN",
+      "status": "CLOSED",
       "evidence": [
-        "docs/wolf/wave3/W3-P3-STAFF-RESULT.md"
+        "docs/wolf/wave3/W3-P3-STAFF-RESULT.md",
+        "docs/wolf/five/P1-CAP-FIN-03-RESULT.md"
       ],
-      "commit": null
+      "commit": "888226a"
     },
     {
       "order": 7,
