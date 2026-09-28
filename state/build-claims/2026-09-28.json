@@ -120,6 +120,16 @@
       "at": "2026-09-28T08:54:54Z",
       "tests": "pagination PASS=53 FAIL=0; staff access PASS=274 FAIL=0; role routing PASS=84 FAIL=0; content staff ux PASS=54 FAIL=0; shell PASS=45 FAIL=0; round3 PASS=19 FAIL=0; nas estate PASS=59 FAIL=0; nota storage PASS=100 FAIL=0",
       "checked": false
+    },
+    {
+      "id": "atriumfin-full-1-20260928",
+      "claim": "Zayen's Atrium Finance (atrium-finance 7ec34a5) is the Beta /amg/finance product, proxied to 127.0.0.1:8790 after Wolf auth. Sidecar listener pid 96416 and Beta pid 96450 started after beta-os commit 47536c2. Fresh beta sqlite has 200 accounts, 0 journals, 0 owners, 0 stock, and no usr-controller-1. Unsigned /amg/finance is 403. Production :8787 pid 15975 was not restarted. staff_ready and human_commissioned stay false.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_atrium_full_mount_20260928.py | tail -1; curl -sS -o /dev/null -w 'health:%{http_code}\\n' --max-time 5 http://127.0.0.1:8788/api/health; curl -sS -o /dev/null -w 'atrium:%{http_code}\\n' --max-time 8 -H 'Accept: text/html' http://127.0.0.1:8788/amg/finance; curl -sS -o /dev/null -w 'sidecar_health:%{http_code}\\n' --max-time 5 http://127.0.0.1:8790/api/health; curl -sS -o /dev/null -w 'sidecar_unsigned:%{http_code}\\n' --max-time 5 http://127.0.0.1:8790/amg/finance/api/journals; python3 -c \"import sqlite3,subprocess; c=sqlite3.connect('file:/Users/wolfterminal/atrium-finance/data/beta/atrium.sqlite?mode=ro', uri=True); print('accounts', c.execute('select count(*) from accounts').fetchone()[0]); print('journals', c.execute('select count(*) from journal_headers').fetchone()[0]); print('owners', c.execute('select count(*) from owner_pool_units').fetchone()[0]); print('stock', c.execute('select count(*) from inventory_items').fetchone()[0]); print('fc', c.execute(\\\"select count(*) from users where id='usr-controller-1'\\\").fetchone()[0]); print('prod', subprocess.check_output(['ps','-p','15975','-o','pid='], text=True).strip()); print('beta', subprocess.check_output(['ps','-p','96450','-o','pid='], text=True).strip()); print('sidecar', subprocess.check_output(['ps','-p','96416','-o','pid='], text=True).strip()); listen=subprocess.check_output(['lsof','-nP','-iTCP:8790','-sTCP:LISTEN'], text=True, stderr=subprocess.DEVNULL); print('loopback', '127.0.0.1:8790' in listen and '*:8790' not in listen)\"",
+      "expect": "SUMMARY pass=79 fail=0; health:200; atrium:403; sidecar_health:200; sidecar_unsigned:403; accounts 200; journals 0; owners 0; stock 0; fc 0; prod 15975; beta 96450; sidecar 96416; loopback True",
+      "by": "cursor-atriumfin-full-1",
+      "at": "2026-09-28T09:37:09Z",
+      "tests": "atrium-finance npm test 14 pass 0 fail; tsc 0; full mount PASS=79 FAIL=0; ux PASS=212 FAIL=0; staff access PASS=274 FAIL=0; role routing PASS=84 FAIL=0; zarah frail PASS=150 FAIL=0; ggv invoice PASS=92 FAIL=0; nota PASS=138 FAIL=0; nota storage PASS=100 FAIL=0",
+      "checked": false
     }
   ]
 }
