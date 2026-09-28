@@ -136,9 +136,9 @@ The page-header Sign out is gone. The shell Sign out remains. The Boards control
 
 ## Deployed route
 
-Desk commit `d528c3c`. Beta listener pid 78592, started Mon Sep 28 14:58:39 2026, `scripts/serve_beta.py`, port 8788. That start is after `d528c3c`. Production pid 15975 on 8787 was still that process. Live Beta stayed `cloudflare_access`. `X-Wolf-Subject: laluzayen@gmail.com` on `GET /amg/finance` is 403. Auth mode was not switched.
+Desk commit `d528c3c`. Proof commit `a440089` at 15:01:35. Beta listener pid 78891, started Mon Sep 28 15:01:45 2026, `scripts/serve_beta.py`, port 8788. That start is after `a440089`. Production pid 15975 on 8787 was still that process. Live Beta stayed `cloudflare_access`. `X-Wolf-Subject: laluzayen@gmail.com` on `GET /amg/finance` is 403. Auth mode was not switched.
 
-Unsigned requests on pid 78592, each registered route 403 and not 404:
+Unsigned requests on pid 78891, each registered route 403 and not 404:
 
 | Method | Path | Status |
 | --- | --- | --- |
