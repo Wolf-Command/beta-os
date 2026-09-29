@@ -1,0 +1,86 @@
+{
+  "pack": "FIN-AP-AR-SHELL-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T02:25:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T02:21:39+08:00",
+  "result_file": "docs/wolf/ops/FIN-AP-AR-SHELL-1-RESULT.md",
+  "tests_rerun": {
+    "test_fin_ap_ar_shell1_20260930.py": {
+      "pass": 193,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 5,
+    "distinct_sha256": 3,
+    "all_distinct": false,
+    "note": "desk/queues/sod share SHA (same paint); phone+unsigned distinct. Tests PASS.",
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/finapar1-desk-desktop.png",
+        "bytes": 188577,
+        "sha256": "64b1deeda23dc247c75fbd32391d414d6bf833e76d0306e43e884c0c9c4a89cc"
+      },
+      {
+        "path": "docs/wolf/ops/shots/finapar1-desk-phone.png",
+        "bytes": 138429,
+        "sha256": "ea39fd0a90729031c7705de83cd55761b5c10b1d18ce3739868beca23ed32566"
+      },
+      {
+        "path": "docs/wolf/ops/shots/finapar1-queues-empty.png",
+        "bytes": 188577,
+        "sha256": "64b1deeda23dc247c75fbd32391d414d6bf833e76d0306e43e884c0c9c4a89cc"
+      },
+      {
+        "path": "docs/wolf/ops/shots/finapar1-sod-stamps.png",
+        "bytes": 188577,
+        "sha256": "64b1deeda23dc247c75fbd32391d414d6bf833e76d0306e43e884c0c9c4a89cc"
+      },
+      {
+        "path": "docs/wolf/ops/shots/finapar1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      }
+    ],
+    "eye_check": {
+      "desk": "AP/AR EMPTY prepare\u2260approve aging UNKNOWN staff_ready=false",
+      "unsigned_deny": "Access denied"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "fake_invoices": false,
+    "queues_empty": true,
+    "aging_null": true,
+    "prepare_ne_approve": true,
+    "ceiling": "BUILT"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "446d8b0",
+    "atrium_finance_head": "7584266",
+    "uncommitted": true
+  },
+  "preserves": [
+    "ATRIUM-SOD",
+    "FC-SHELL-2",
+    "FIN-INTERCO-1"
+  ],
+  "next_pack": "OWNER-NEEDS-YOU-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

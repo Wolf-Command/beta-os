@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T02:18:00+08:00",
+  "at_wita": "2026-09-30T02:25:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -586,9 +586,17 @@
       ],
       "estimated_effort": "L",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "synthesized_from": "wave3",
-      "armed_at": "2026-09-30T02:18:00+08:00"
+      "armed_at": "2026-09-30T02:18:00+08:00",
+      "cursor_pid": 24591,
+      "launched_at": "2026-09-30T02:18:30+08:00",
+      "exited_at": "2026-09-30T02:20:47+08:00",
+      "tests": {
+        "pass": 193,
+        "fail": 0
+      },
+      "verified_at": "2026-09-30T02:25:00+08:00"
     },
     {
       "pack_id": "OWNER-NEEDS-YOU-1",
@@ -613,8 +621,9 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
-      "synthesized_from": "wave3"
+      "status": "WAITING_CURSOR",
+      "synthesized_from": "wave3",
+      "armed_at": "2026-09-30T02:25:00+08:00"
     },
     {
       "pack_id": "ESB-TRUTH-1",

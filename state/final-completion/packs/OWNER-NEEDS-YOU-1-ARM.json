@@ -1,0 +1,39 @@
+{
+  "run_id": "OWNER-NEEDS-YOU-1",
+  "pack": "OWNER-NEEDS-YOU-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 3,
+  "status": "WAITING_CURSOR",
+  "armed_at": "2026-09-30T02:25:00+08:00",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "prior_pack_verified": "FIN-AP-AR-SHELL-1",
+  "beta_os_head_at_arm": "PENDING",
+  "brief": "state/build-factory/briefs/BRIEF-OWNER-NEEDS-YOU-1.md",
+  "log": "state/build-factory/logs/OWNER-NEEDS-YOU-1.log",
+  "result_file": "docs/wolf/ops/OWNER-NEEDS-YOU-1-RESULT.md",
+  "next_pack_for_parent": "ESB-TRUTH-1",
+  "closes_toward": [
+    "CAP-CORE needs-you"
+  ],
+  "forbids": [
+    "fake urgency counts",
+    "HEADCHEF",
+    "Exit Report",
+    "push"
+  ],
+  "depends_on": [
+    "MYWORK-PROVE-1",
+    "DASH-LIVE-1"
+  ],
+  "preserves": [
+    "MYWORK-PROVE-1",
+    "DASH-LIVE-1"
+  ]
+}

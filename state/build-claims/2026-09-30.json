@@ -212,6 +212,22 @@
       "expect": "exit 0",
       "by": "cursor-bzg-waste-yield-1",
       "at": "2026-09-30T02:14:32+08:00"
+    },
+    {
+      "id": "FIN-AP-AR-SHELL-1-desk",
+      "claim": "FIN-AP-AR-SHELL-1: AP/AR queues EMPTY; prepare\neq approve; no fake invoices/aging/balances; FC-SHELL-2/FIN-INTERCO-1/ATRIUM-SOD preserved; CAP-FIN-04 not proven; staff_ready/human_commissioned false; next pack parent-only OWNER-NEEDS-YOU-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import fin_ap_ar_shell1 as a; p=a.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('queues_empty') is True and p.get('prepare_equals_approve') is False and p.get('invented_invoice') is False and a.honesty_flags().get('next_pack_for_parent_only')=='OWNER-NEEDS-YOU-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-fin-ap-ar-shell-1",
+      "at": "2026-09-30T02:20:47+08:00"
+    },
+    {
+      "id": "FIN-AP-AR-SHELL-1-surface",
+      "claim": "FIN-AP-AR-SHELL-1 page/API/shots/RESULT present; unsigned deny + suite PASS=193; next pack parent-only OWNER-NEEDS-YOU-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import fin_ap_ar_shell1 as a; from pathlib import Path; html=Path('dashboards/fin-ap-ar-shell-1.html').read_text(); import sys; sys.exit(0 if (a.api_matches('/api/fin/ap-ar-shell-1') and a.page_matches('/fin/ap-ar-shell-1') and 'staff_ready=false' in html and 'prepare' in html and Path('docs/wolf/ops/shots/finapar1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/FIN-AP-AR-SHELL-1-RESULT.md').is_file() and a.honesty_flags().get('next_pack_for_parent_only')=='OWNER-NEEDS-YOU-1' and a.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-fin-ap-ar-shell-1",
+      "at": "2026-09-30T02:20:47+08:00"
     }
   ]
 }

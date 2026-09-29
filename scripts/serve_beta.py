@@ -173,6 +173,7 @@ from core import crm_identity_memory as _crm_ident
 from core import crm_identity_operator_depth as _crm_ident_depth
 from core import fin_interco1 as _fin_interco1
 from core import fin_recon_shell1 as _fin_recon_shell1
+from core import fin_ap_ar_shell1 as _fin_ap_ar_shell1
 from core import intel_learn1 as _intel_learn1
 from core import bzg_ops_desk1 as _bzg_ops_desk1
 from core import bzg_waste_yield1 as _bzg_waste_yield1
@@ -2031,6 +2032,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._fin_recon_shell1_dispatch():
+            return
+
+        if self._fin_ap_ar_shell1_dispatch():
             return
 
         if self._intel_learn1_dispatch():
@@ -5134,6 +5138,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._fin_recon_shell1_dispatch():
                 return
         elif path in (
+            "/fin/ap-ar-shell-1",
+            "/fin/ap-ar-shell-1/",
+            "/fin-ap-ar-shell-1",
+            "/fin-ap-ar-shell-1/",
+            "/fin-ap-ar-shell-1.html",
+            "/dashboards/fin-ap-ar-shell-1.html",
+        ):
+            if self._fin_ap_ar_shell1_dispatch():
+                return
+        elif path in (
             "/intel/learning",
             "/intel/learning/",
             "/ops/intel-learning",
@@ -5928,6 +5942,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/recon-shell-1" or path.startswith("/api/fin/recon-shell-1/"):
             self._fin_recon_shell1_write_refused(path)
+            return
+        if path == "/api/fin/ap-ar-shell-1" or path.startswith("/api/fin/ap-ar-shell-1/"):
+            self._fin_ap_ar_shell1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -6753,6 +6770,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/recon-shell-1" or path.startswith("/api/fin/recon-shell-1/"):
             self._fin_recon_shell1_write_refused(path)
+            return
+        if path == "/api/fin/ap-ar-shell-1" or path.startswith("/api/fin/ap-ar-shell-1/"):
+            self._fin_ap_ar_shell1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -7983,6 +8003,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/recon-shell-1" or path.startswith("/api/fin/recon-shell-1/"):
             self._fin_recon_shell1_write_refused(path)
+            return
+        if path == "/api/fin/ap-ar-shell-1" or path.startswith("/api/fin/ap-ar-shell-1/"):
+            self._fin_ap_ar_shell1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -15750,6 +15773,106 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "ok": False,
                 "error": "write_refused",
                 "message": "FIN-RECON-SHELL-1 is file-import recon shell only. Writes refused.",
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+            },
+            status=403,
+        )
+
+    def _fin_ap_ar_shell1_dispatch(self) -> bool:
+        """FIN-AP-AR-SHELL-1 — AP/AR desks SoD honesty; no fake invoices."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _fin_ap_ar_shell1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _fin_ap_ar_shell1.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "ap_ar_shell_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "live_ap": False,
+                        "live_ar": False,
+                        "invented_invoice": False,
+                        "invented_aging": False,
+                        "invented_balance": False,
+                        "prepare_equals_approve": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _fin_ap_ar_shell1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "fin-ap-ar-shell-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "FIN AP/AR Shell-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="fin-ap-ar-shell-1.html")
+        return True
+
+    def _fin_ap_ar_shell1_write_refused(self, path: str) -> None:
+        """Refuse fake invoice / aging / balance / self-approve on FIN-AP-AR-SHELL-1."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _fin_ap_ar_shell1.refuse_external_write(body if isinstance(body, dict) else {})
+        except _fin_ap_ar_shell1.FinApArShell1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "live_ap": False,
+                    "live_ar": False,
+                    "invented_invoice": False,
+                    "invented_aging": False,
+                    "invented_balance": False,
+                    "prepare_equals_approve": False,
+                    "payment_executed": False,
+                    "payment_write": False,
+                    "invoice_write": False,
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": "FIN-AP-AR-SHELL-1 is AP/AR shell only. Writes refused.",
                 "path": path,
                 "staff_ready": False,
                 "human_commissioned": False,
