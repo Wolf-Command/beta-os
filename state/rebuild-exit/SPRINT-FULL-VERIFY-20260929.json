@@ -1,0 +1,33 @@
+{
+  "as_of_wita": "2026-09-29T22:45:06+08:00",
+  "status": "PASS",
+  "suites": {
+    "test_core_ent1_20260929.py": {
+      "pass": 49,
+      "fail": 0
+    },
+    "test_bzg_outlet1_20260929.py": {
+      "pass": 82,
+      "fail": 0
+    },
+    "test_core_books1_20260929.py": {
+      "pass": 64,
+      "fail": 0
+    },
+    "test_bzg_xoutlet1_20260929.py": {
+      "pass": 89,
+      "fail": 0
+    },
+    "test_v1_sweep1_20260929.py": {
+      "pass": 67,
+      "fail": 0
+    },
+    "test_atrium_sod1_20260929.py": {
+      "pass": 69,
+      "fail": 0
+    }
+  },
+  "prod_8787_pid": 15975,
+  "staff_ready": false,
+  "human_commissioned": false
+}
