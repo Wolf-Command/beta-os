@@ -4,7 +4,7 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 3,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T02:11:00+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
@@ -30,5 +30,29 @@
   ],
   "depends_on": [
     "BZG-OPS-DESK-1"
-  ]
+  ],
+  "launched_at": "2026-09-30T02:11:30+08:00",
+  "cursor_pid": 23017,
+  "child_alive": false,
+  "exited_at": "2026-09-30T02:14:32+08:00",
+  "tests": {
+    "pass": 137,
+    "fail": 0
+  },
+  "shots": [
+    "docs/wolf/ops/shots/bzgwasteyield1-desk-desktop.png",
+    "docs/wolf/ops/shots/bzgwasteyield1-desk-phone.png",
+    "docs/wolf/ops/shots/bzgwasteyield1-unknown-desktop.png",
+    "docs/wolf/ops/shots/bzgwasteyield1-unknown-phone.png",
+    "docs/wolf/ops/shots/bzgwasteyield1-amanda-deny-desktop.png",
+    "docs/wolf/ops/shots/bzgwasteyield1-amanda-deny-phone.png",
+    "docs/wolf/ops/shots/bzgwasteyield1-unsigned-deny-desktop.png",
+    "docs/wolf/ops/shots/bzgwasteyield1-unsigned-deny-phone.png"
+  ],
+  "cursor_did_not_auto_start_next": true,
+  "peaches_verified_at": "2026-09-30T02:18:00+08:00",
+  "peaches_verify": "state/final-completion/packs/BZG-WASTE-YIELD-1-PEACHES-VERIFY.json",
+  "exit_code": 0,
+  "tests_pass": 137,
+  "tests_fail": 0
 }

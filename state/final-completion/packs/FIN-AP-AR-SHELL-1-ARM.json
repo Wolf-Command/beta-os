@@ -1,0 +1,41 @@
+{
+  "run_id": "FIN-AP-AR-SHELL-1",
+  "pack": "FIN-AP-AR-SHELL-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 3,
+  "status": "WAITING_CURSOR",
+  "armed_at": "2026-09-30T02:18:00+08:00",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "prior_pack_verified": "BZG-WASTE-YIELD-1",
+  "beta_os_head_at_arm": "PENDING",
+  "brief": "state/build-factory/briefs/BRIEF-FIN-AP-AR-SHELL-1.md",
+  "log": "state/build-factory/logs/FIN-AP-AR-SHELL-1.log",
+  "result_file": "docs/wolf/ops/FIN-AP-AR-SHELL-1-RESULT.md",
+  "next_pack_for_parent": "OWNER-NEEDS-YOU-1",
+  "closes_toward": [
+    "CAP-FIN AP/AR"
+  ],
+  "forbids": [
+    "fake invoices",
+    "prod mutate",
+    "HEADCHEF",
+    "Exit Report",
+    "push"
+  ],
+  "depends_on": [
+    "FC-SHELL-2",
+    "FIN-INTERCO-1"
+  ],
+  "preserves": [
+    "ATRIUM-SOD",
+    "FC-SHELL-2",
+    "FIN-INTERCO-1"
+  ]
+}

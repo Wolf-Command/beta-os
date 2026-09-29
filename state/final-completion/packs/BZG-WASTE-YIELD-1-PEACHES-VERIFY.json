@@ -1,0 +1,102 @@
+{
+  "pack": "BZG-WASTE-YIELD-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T02:18:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T02:14:58+08:00",
+  "result_file": "docs/wolf/ops/BZG-WASTE-YIELD-1-RESULT.md",
+  "tests_rerun": {
+    "test_bzg_waste_yield1_20260930.py": {
+      "pass": 137,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 8,
+    "distinct_sha256": 8,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/bzgwasteyield1-amanda-deny-desktop.png",
+        "bytes": 35469,
+        "sha256": "53326ea8c599857bf6cfa51990dc0a8eb2630db5ba5f6649af75e7651763c642"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgwasteyield1-amanda-deny-phone.png",
+        "bytes": 30298,
+        "sha256": "3617680e3e66a36b0651ceabf9fb43a4e81e946c80822debe94f189a7107d52c"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgwasteyield1-desk-desktop.png",
+        "bytes": 179830,
+        "sha256": "b7f8990d8eef69be35daf85d9d4c3f596afdd07e3d29b3e64a0c015fbf2bf31e"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgwasteyield1-desk-phone.png",
+        "bytes": 123048,
+        "sha256": "f0b984c71f58b9a4bb15e4a68c8dcce072be70887f845c93e9753363240bbcb8"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgwasteyield1-unknown-desktop.png",
+        "bytes": 169855,
+        "sha256": "0d95b5f03dcf6db7b689d7c023e9f4668ba30d3ac421aa75f11d0f2b1ed46961"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgwasteyield1-unknown-phone.png",
+        "bytes": 113478,
+        "sha256": "03c4e663229564743a161b4c94a93ea2aa8226d344b5c2fb24b234eed62c17b2"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgwasteyield1-unsigned-deny-desktop.png",
+        "bytes": 21556,
+        "sha256": "d93308c496dd94de8d90429199ab21b04953836d101d5124209da3037ac2c33e"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgwasteyield1-unsigned-deny-phone.png",
+        "bytes": 17708,
+        "sha256": "25eb8e2017e90dbdf8ace2f7d2f5c78437b5302bc9bdfc9fad78cde0210f111d"
+      }
+    ],
+    "eye_check": {
+      "desk": "all UNKNOWN invented_*=false staff_ready=false",
+      "unknown": "CAP-BZG-04/06 empty UNKNOWN not zero",
+      "unsigned_deny": "Access denied waste/yield desk"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "invented_waste": false,
+    "invented_yield": false,
+    "invented_variance": false,
+    "all_unknown": true,
+    "ceiling": "BUILT"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "b193cb4",
+    "atrium_finance_head": "7584266",
+    "uncommitted": true
+  },
+  "preserves": [
+    "BZG-OPS-DESK-1",
+    "BZG-VENUEPL-1",
+    "variance",
+    "bom-yield"
+  ],
+  "next_pack": "FIN-AP-AR-SHELL-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

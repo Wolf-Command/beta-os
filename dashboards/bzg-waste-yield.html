@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wolf · BZG Waste / Yield Desk</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1c1a16;
+      --muted: #5c574e;
+      --paper: #f3f1ec;
+      --card: #fffdf8;
+      --line: #ddd6c8;
+      --amber: #6a4d12;
+      --ok: #1e5a2a;
+      --warn: #8a1f1f;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(ellipse 65% 35% at 100% 0%, #e8ebe3 0%, transparent 50%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 920px; margin: 0 auto; padding: 24px 16px 80px; }
+    h1 {
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: 1.75rem;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #fff8e8; border: 1px solid #e2d0a0; border-left: 3px solid #8a6a2f;
+      border-radius: 10px; padding: 12px 14px; margin: 0 0 16px;
+      font-size: 0.9rem; line-height: 1.45;
+    }
+    .meta { font-size: 0.85rem; color: var(--muted); margin: 0 0 12px; }
+    h2 {
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin: 22px 0 10px;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+    .panel p { margin: 0 0 8px; line-height: 1.45; font-size: 0.92rem; }
+    .panel p:last-child { margin-bottom: 0; }
+    .UNKNOWN { color: var(--amber); font-weight: 600; }
+    .EMPTY { color: var(--amber); font-weight: 600; }
+    .FACT { color: var(--ok); font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #ebe4d6; vertical-align: top; }
+    th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    .err { color: var(--warn); }
+    .empty { color: var(--muted); font-size: 0.88rem; }
+    a { color: #3d4f2f; }
+    .links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>BZG Waste / Yield Desk</h1>
+  <p class="sub" id="sub">Loading variance + BOM/yield honesty surfaces…</p>
+  <p class="meta" id="meta"></p>
+  <div class="banner" id="banner">Honesty: facts only. UNKNOWN when slots are empty. Not READY.</div>
+  <div id="body">
+    <p class="empty">Checking access…</p>
+  </div>
+</main>
+<script>
+(function () {
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+  function renderSlots(slots) {
+    if (!slots || !slots.length) {
+      return "<p class='empty'>No slots listed — UNKNOWN.</p>";
+    }
+    const rows = slots.map(function (s) {
+      const st = s.status || "UNKNOWN";
+      const val = (s.value == null || s.value === "") ? "UNKNOWN" : s.value;
+      return "<tr>" +
+        "<td><strong>" + esc(s.label || s.kind) + "</strong>" +
+        "<div class='empty'>" + esc(s.kind || "") + "</div></td>" +
+        "<td><span class='" + esc(st) + "'>" + esc(st) + "</span></td>" +
+        "<td class='" + (val === "UNKNOWN" ? "UNKNOWN" : "") + "'>" + esc(val) + "</td>" +
+        "</tr>";
+    }).join("");
+    return "<table><thead><tr><th>Slot</th><th>Status</th><th>Value</th></tr></thead><tbody>" +
+      rows + "</tbody></table>";
+  }
+  function renderVariance(panel) {
+    if (!panel) return "";
+    return [
+      "<h2>Variance / waste skeleton</h2>",
+      "<div class='panel' id='variance-panel'>",
+      "<p>" + esc(panel.message || "") + "</p>",
+      "<p class='empty'>cap " + esc(panel.cap || "CAP-BZG-04") +
+        " · recorded_count=" + esc(panel.recorded_count || 0) +
+        " · empty=" + (panel.empty !== false) +
+        " · live_variance_waste=false · pack " + esc(panel.pack || "") + "</p>",
+      renderSlots(panel.slots),
+      "<div class='links'><a href='/bzg-variance-waste'>Open /bzg-variance-waste</a></div>",
+      "</div>",
+    ].join("");
+  }
+  function renderBom(panel) {
+    if (!panel) return "";
+    return [
+      "<h2>BOM / yield skeleton</h2>",
+      "<div class='panel' id='bom-panel'>",
+      "<p>" + esc(panel.message || "") + "</p>",
+      "<p class='empty'>cap " + esc(panel.cap || "CAP-BZG-06") +
+        " · recorded_count=" + esc(panel.recorded_count || 0) +
+        " · empty=" + (panel.empty !== false) +
+        " · live_bom_yield_machinery=false · pack " + esc(panel.pack || "") + "</p>",
+      renderSlots(panel.slots),
+      "<div class='links'><a href='/bzg-bom-yield'>Open /bzg-bom-yield</a></div>",
+      "</div>",
+    ].join("");
+  }
+  fetch("/api/bzg/waste-yield", { credentials: "same-origin", headers: { Accept: "application/json" } })
+    .then(function (r) {
+      return r.json().then(function (j) { return { status: r.status, body: j }; });
+    })
+    .then(function (res) {
+      const data = res.body || {};
+      const body = document.getElementById("body");
+      const sub = document.getElementById("sub");
+      const meta = document.getElementById("meta");
+      const banner = document.getElementById("banner");
+      if (res.status === 403 || data.ok === false) {
+        sub.textContent = "Access denied";
+        banner.className = "banner";
+        banner.innerHTML = "<span class='err'>" + esc(data.message || "Access denied") + "</span>";
+        body.innerHTML = "<p class='err'>BZG waste/yield desk is not on this assignment. staff_ready=false · human_commissioned=false.</p>";
+        return;
+      }
+      sub.textContent = data.message || "BZG waste/yield desk";
+      meta.textContent =
+        "pack " + (data.pack || "BZG-WASTE-YIELD-1") +
+        " · caps CAP-BZG-04 + CAP-BZG-06" +
+        " · staff_ready=false · human_commissioned=false · live_variance_waste=false";
+      const h = data.honesty || {};
+      const sc = data.status_checks || {};
+      banner.textContent =
+        "Honesty: invented_waste=" + (h.invented_waste === true) +
+        " · invented_yield=" + (h.invented_yield === true) +
+        " · invented_variance=" + (h.invented_variance === true) +
+        " · unknown_when_facts_missing=" + (h.unknown_when_facts_missing !== false) +
+        " · all_unknown=" + (sc.all_unknown !== false) +
+        " · proven=" + (h.proven === true) +
+        " · ready=" + (h.ready === true) +
+        " · preserves BZG-OPS-DESK-1 / VENUEPL / variance / bom-yield.";
+      body.innerHTML =
+        renderVariance(data.variance_panel) +
+        renderBom(data.bom_yield_panel) +
+        "<p class='empty' id='honesty-foot'>staff_ready=false · human_commissioned=false · next pack parent-only FIN-AP-AR-SHELL-1 (Cursor does not auto-chain).</p>";
+    })
+    .catch(function (err) {
+      document.getElementById("sub").textContent = "Failed to load";
+      document.getElementById("body").innerHTML =
+        "<p class='err'>" + esc(err && err.message ? err.message : "load error") + "</p>";
+    });
+})();
+</script>
+</body>
+</html>

@@ -89,8 +89,8 @@
     "RELIABILITY-1",
     "CONTENT-ENGINE-LIVE-1"
   ],
-  "last_pack_verified": "CONTENT-ENGINE-LIVE-1",
-  "last_verified_at": "2026-09-30T02:11:00+08:00",
-  "pass_verified_count": 15,
-  "next_pack": "BZG-WASTE-YIELD-1"
+  "last_pack_verified": "BZG-WASTE-YIELD-1",
+  "last_verified_at": "2026-09-30T02:18:00+08:00",
+  "pass_verified_count": 16,
+  "next_pack": "FIN-AP-AR-SHELL-1"
 }

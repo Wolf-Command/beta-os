@@ -411,6 +411,7 @@ BZG_GRAMMAR: list[dict[str, Any]] = [
     {"key": "operations", "label": "Operations", "href": "/bzg/ops-desk", "state": "live"},
     {"key": "outlets", "label": "Outlets", "href": "/bzg/outlets", "state": "live"},
     {"key": "venue_pnl", "label": "Venue P&L", "href": "/bzg/venue-pnl", "state": "live"},
+    {"key": "waste_yield", "label": "Waste / Yield", "href": "/bzg/waste-yield", "state": "live"},
     {"key": "issues", "label": "Issues", "href": None, "state": "EMPTY"},
     {"key": "finance", "label": "Finance", "href": "/bzg/finance", "state": "live"},
     {"key": "people", "label": "People", "href": None, "state": "EMPTY"},
@@ -700,6 +701,8 @@ ROUTE_PARENT: dict[str, str | None] = {
     "/bzg/ops-desk": "/bzg",
     "/bzg/ops": "/bzg",
     "/bzg/venue-pnl": "/bzg",
+    "/bzg/waste-yield": "/bzg",
+    "/bzg/waste-yield-desk": "/bzg",
     "/bzg/uma-blu": "/bzg",
     "/bzg/uma-blu/bills": "/bzg/uma-blu",
     "/bzg/uma-blu/issues": "/bzg/uma-blu",
@@ -893,6 +896,16 @@ ROUTE_CRUMBS: dict[str, list[dict[str, Any]]] = {
         {"label": "WOLF", "href": WOLF_ALIAS},
         {"label": "Blu Zone", "href": "/bzg"},
         {"label": "Venue P&L", "href": None},
+    ],
+    "/bzg/waste-yield": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Blu Zone", "href": "/bzg"},
+        {"label": "Waste / Yield", "href": None},
+    ],
+    "/bzg/waste-yield-desk": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Blu Zone", "href": "/bzg"},
+        {"label": "Waste / Yield", "href": None},
     ],
     "/bzg/uma-blu": [
         {"label": "WOLF", "href": WOLF_ALIAS},

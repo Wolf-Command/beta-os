@@ -196,6 +196,22 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import content_engine_live1 as c; from pathlib import Path; html=Path('dashboards/content-engine-live.html').read_text(); import sys; sys.exit(0 if (c.api_matches('/api/ops/content-engine-live') and c.page_matches('/ops/content-engine-live') and 'staff_ready=false' in html and 'NOT_RUNTIME' in html and Path('docs/wolf/ops/shots/contentenginelive1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/CONTENT-ENGINE-LIVE-1-RESULT.md').is_file() and c.honesty_flags().get('next_pack_for_parent_only')=='BZG-WASTE-YIELD-1' and c.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
       "expect": "exit 0",
       "by": "content-engine-live1-20260930"
+    },
+    {
+      "id": "BZG-WASTE-YIELD-1-desk",
+      "claim": "BZG-WASTE-YIELD-1 unifies empty CAP-BZG-04 variance + CAP-BZG-06 BOM/yield skeletons; all slots UNKNOWN; invented_waste/yield/variance false; staff_ready/human_commissioned false; next pack parent-only FIN-AP-AR-SHELL-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import bzg_waste_yield1 as d; p=d.build_desk('PERS-MATT'); import sys; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and (p.get('status_checks') or {}).get('all_unknown') is True and d.honesty_flags().get('invented_waste') is False and d.honesty_flags().get('next_pack_for_parent_only')=='FIN-AP-AR-SHELL-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-bzg-waste-yield-1",
+      "at": "2026-09-30T02:14:32+08:00"
+    },
+    {
+      "id": "BZG-WASTE-YIELD-1-surface",
+      "claim": "BZG-WASTE-YIELD-1 page/API/shots/RESULT present; unsigned deny + suite PASS=137; next pack parent-only FIN-AP-AR-SHELL-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import bzg_waste_yield1 as d; from pathlib import Path; html=Path('dashboards/bzg-waste-yield.html').read_text(); import sys; sys.exit(0 if (d.api_matches('/api/bzg/waste-yield') and d.page_matches('/bzg/waste-yield') and 'staff_ready=false' in html and 'UNKNOWN' in html and Path('docs/wolf/ops/shots/bzgwasteyield1-unsigned-deny-desktop.png').is_file() and Path('docs/wolf/ops/BZG-WASTE-YIELD-1-RESULT.md').is_file() and d.honesty_flags().get('next_pack_for_parent_only')=='FIN-AP-AR-SHELL-1' and d.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-bzg-waste-yield-1",
+      "at": "2026-09-30T02:14:32+08:00"
     }
   ]
 }
