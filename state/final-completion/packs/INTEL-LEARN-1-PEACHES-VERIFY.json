@@ -1,0 +1,76 @@
+{
+  "pack": "INTEL-LEARN-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T01:18:00+08:00",
+  "verifier": "Peaches-executor",
+  "exit_code": 0,
+  "result_file": "docs/wolf/ops/INTEL-LEARN-1-RESULT.md",
+  "tests_rerun": {
+    "test_intel_learn1_20260930.py": {
+      "pass": 129,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 8,
+    "distinct_sha256": 6,
+    "all_distinct": false,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/intellearn1-amanda-deny-desktop.png",
+        "bytes": 37004,
+        "sha256": "caf0a88fb9f1b7fa0609910826e325a40646e1bbfad319e9f34a91582903ae77"
+      },
+      {
+        "path": "docs/wolf/ops/shots/intellearn1-amanda-deny-phone.png",
+        "bytes": 30870,
+        "sha256": "c6d6b9795b2915e2421f896e2cf979ba14ddf4fc567bc77e4b368aa27012f5ae"
+      },
+      {
+        "path": "docs/wolf/ops/shots/intellearn1-demo-desktop.png",
+        "bytes": 209103,
+        "sha256": "6114b35d72c86ca6c780c935370615d0d06cec21946032668710a525255193a9"
+      },
+      {
+        "path": "docs/wolf/ops/shots/intellearn1-demo-phone.png",
+        "bytes": 211619,
+        "sha256": "afc4524ccff031a299ae72f917a59eba56a35c75a73259021e5944de32bca26a"
+      },
+      {
+        "path": "docs/wolf/ops/shots/intellearn1-queue-desktop.png",
+        "bytes": 209103,
+        "sha256": "6114b35d72c86ca6c780c935370615d0d06cec21946032668710a525255193a9"
+      },
+      {
+        "path": "docs/wolf/ops/shots/intellearn1-queue-phone.png",
+        "bytes": 211619,
+        "sha256": "afc4524ccff031a299ae72f917a59eba56a35c75a73259021e5944de32bca26a"
+      },
+      {
+        "path": "docs/wolf/ops/shots/intellearn1-unsigned-deny-desktop.png",
+        "bytes": 20169,
+        "sha256": "c7f41dc884d7c5f8a898a2fe7a32d279a9bdb2734c4b94a2bc2dde317503e598"
+      },
+      {
+        "path": "docs/wolf/ops/shots/intellearn1-unsigned-deny-phone.png",
+        "bytes": 16944,
+        "sha256": "c75a51d3c33c1139003a8eae8811cff610ec1e53ad17222dd5eb23e63696c78c"
+      }
+    ]
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "no_push": true,
+  "beta_only": true,
+  "next_pack": "BZG-OPS-DESK-1"
+}

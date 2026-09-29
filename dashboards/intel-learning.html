@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wolf · Intel Learning (human review gate)</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1a1f24;
+      --muted: #5a6570;
+      --paper: #f1f3f5;
+      --card: #fbfcfd;
+      --line: #d3dae0;
+      --warn: #8a1f1f;
+      --amber: #6a4d12;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(ellipse 70% 40% at 0% 0%, #e6edf3 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 920px; margin: 0 auto; padding: 24px 16px 80px; }
+    .crumb { font-size: 0.78rem; color: var(--muted); margin: 0 0 8px; }
+    h1 {
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: 1.75rem;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #eef3f7; border: 1px solid #c5d0d9; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner.warn { background: #f8eaea; border-color: #e0b8b8; color: var(--warn); }
+    .meta { font-size: 0.85rem; color: var(--muted); margin: 0 0 12px; }
+    h2 {
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin: 22px 0 10px;
+    }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    article {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    article.demo { border-color: #e2d0a0; background: #fffdf8; }
+    .name { font-weight: 600; font-size: 1.05rem; }
+    .oid { color: var(--muted); font-size: 0.8rem; margin-top: 2px; word-break: break-all; }
+    .status {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .PENDING_REVIEW { background: #efe4c8; color: var(--amber); }
+    .APPROVED { background: #d7ead7; color: #1e5a2a; }
+    .DENIED { background: #f0d6d6; color: var(--warn); }
+    .demo-tag {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: #efe4c8;
+      color: var(--amber);
+    }
+    .note { margin-top: 10px; font-size: 0.9rem; line-height: 1.45; }
+    .k { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .actions { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+    button {
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 7px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      cursor: pointer;
+    }
+    button.approve { background: #e6f2e8; border-color: #b5d4ba; color: #1e5a2a; }
+    button.deny { background: #f8eaea; border-color: #e0b8b8; color: var(--warn); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    .empty { color: var(--muted); font-size: 0.88rem; margin-top: 8px; }
+    .err { color: var(--warn); }
+    a { color: #2f4a3a; }
+    #honesty {
+      margin-top: 28px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <p class="crumb">CAP-INTEL-05 · INTEL-LEARN-1 · ties SOP-FACTORY-1</p>
+  <h1>Intel Learning</h1>
+  <p class="sub" id="sub">Lesson candidates from SOP factory · human review gate required</p>
+  <p class="meta" id="meta"></p>
+  <div id="banner" class="banner">Loading learning board…</div>
+
+  <h2>Human review queue</h2>
+  <div id="queue" class="grid"></div>
+  <p class="empty" id="queue-empty" hidden>No pending lesson candidates.</p>
+
+  <h2>All lesson candidates</h2>
+  <div id="candidates" class="grid"></div>
+  <p class="empty" id="cand-empty" hidden>No candidates yet.</p>
+
+  <p id="honesty"></p>
+</main>
+<script>
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function card(c, withActions) {
+  var demo = c.demo || c.demo_label;
+  var cls = demo ? " demo" : "";
+  var tag = demo
+    ? '<span class="demo-tag">DEMO / NOT LIVE STAFF ADOPTION</span>'
+    : "";
+  var actions = "";
+  if (withActions && c.review_status === "PENDING_REVIEW") {
+    actions =
+      '<div class="actions">' +
+      '<button type="button" class="approve" data-act="APPROVE" data-id="' +
+      esc(c.candidate_id) +
+      '">Human APPROVE</button>' +
+      '<button type="button" class="deny" data-act="DENY" data-id="' +
+      esc(c.candidate_id) +
+      '">DENY</button>' +
+      '<span class="empty">Posts to /api/sop/review-decision · auto-approve off</span>' +
+      "</div>";
+  }
+  return (
+    '<article class="' + cls.trim() + '" data-candidate="' + esc(c.candidate_id) + '">' +
+    '<div class="name">' + esc(c.title || "Untitled") + tag + "</div>" +
+    '<div class="oid">' + esc(c.candidate_id) + " · " + esc(c.version_id) +
+    " · source " + esc(c.source || "sop_factory") + "</div>" +
+    '<span class="status ' + esc(c.review_status) + '">' + esc(c.review_status) + "</span>" +
+    '<div class="note"><div class="k">Evidence</div>' + esc(c.evidence_note) + "</div>" +
+    '<div class="note"><div class="k">Lesson candidate</div>' + esc(c.lesson_note) + "</div>" +
+    '<p class="empty" style="margin-top:8px">' +
+    (c.approved_rule
+      ? "Approved rule on this version (still not staff_ready / not operating adoption)."
+      : "Not an approved rule until human APPROVE. Auto-approve is off. " +
+        "No fake performance metrics.") +
+    "</p>" + actions + "</article>"
+  );
+}
+
+function paint(pack) {
+  var h = (pack && pack.honesty) || {};
+  document.getElementById("sub").textContent =
+    (pack && pack.summary) ||
+    "Lesson candidates from SOP factory · human review gate required";
+  document.getElementById("meta").textContent =
+    "CAP-INTEL-05 · pack INTEL-LEARN-1 · pending " +
+    ((pack && pack.pending_count) || 0) +
+    " · candidates " +
+    ((pack && pack.candidate_count) || 0) +
+    " · staff_ready=" + String(h.staff_ready === true) +
+    " · human_commissioned=" + String(h.human_commissioned === true) +
+    " · auto_approve=" + String(h.auto_approve === true);
+
+  document.getElementById("banner").textContent =
+    "Human review gate required before any approved rule. " +
+    "DEMO rows are fixtures — NOT LIVE STAFF ADOPTION. " +
+    "CAP-INTEL-05 stays SPECIFIED. Not PROVEN. Not READY. " +
+    "Reuse SOP factory review-decision. Auto-approve off. " +
+    "staff_ready=false · human_commissioned=false · no fake performance.";
+
+  var q = (pack && pack.review_queue) || [];
+  var qEl = document.getElementById("queue");
+  var qEmpty = document.getElementById("queue-empty");
+  if (!q.length) {
+    qEl.innerHTML = "";
+    qEmpty.hidden = false;
+  } else {
+    qEmpty.hidden = true;
+    qEl.innerHTML = q.map(function (c) { return card(c, true); }).join("");
+  }
+
+  var all = (pack && pack.lesson_candidates) || [];
+  var cEl = document.getElementById("candidates");
+  var cEmpty = document.getElementById("cand-empty");
+  if (!all.length) {
+    cEl.innerHTML = "";
+    cEmpty.hidden = false;
+  } else {
+    cEmpty.hidden = true;
+    cEl.innerHTML = all.map(function (c) { return card(c, false); }).join("");
+  }
+
+  document.getElementById("honesty").textContent =
+    "Honesty: extends SOP-FACTORY-1 · no second SOP system · " +
+    "no auto-approve · no fake experiment success · " +
+    "acknowledgement ≠ training · DEMO ≠ live adoption · " +
+    "staff_ready=false · human_commissioned=false.";
+
+  bindActions();
+}
+
+function bindActions() {
+  document.querySelectorAll("button[data-act]").forEach(function (btn) {
+    btn.onclick = function () {
+      var id = btn.getAttribute("data-id");
+      var act = btn.getAttribute("data-act");
+      btn.disabled = true;
+      fetch("/api/sop/review-decision", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          candidate_id: id,
+          decision: act,
+          decision_note:
+            act === "APPROVE"
+              ? "Owner human APPROVE from INTEL-LEARN-1 board. Not staff_ready."
+              : "Owner DENY from INTEL-LEARN-1 board. Rule refused.",
+        }),
+      })
+        .then(function (r) {
+          return r.json().then(function (j) {
+            return { status: r.status, body: j };
+          });
+        })
+        .then(function (res) {
+          if (res.status >= 400 || (res.body && res.body.ok === false)) {
+            document.getElementById("banner").innerHTML =
+              '<span class="err">' +
+              esc((res.body && res.body.message) || "Review decision failed") +
+              "</span>";
+            btn.disabled = false;
+            return;
+          }
+          load();
+        })
+        .catch(function (err) {
+          document.getElementById("banner").innerHTML =
+            '<span class="err">' + esc(err && err.message ? err.message : err) + "</span>";
+          btn.disabled = false;
+        });
+    };
+  });
+}
+
+function load() {
+  fetch("/api/intel/learning", { credentials: "same-origin" })
+    .then(function (r) {
+      return r.json().then(function (j) {
+        return { status: r.status, body: j };
+      });
+    })
+    .then(function (res) {
+      if (res.status === 403) {
+        document.getElementById("banner").className = "banner warn";
+        document.getElementById("banner").innerHTML =
+          '<span class="err">Access denied / unsigned refused (403). ' +
+          "Intel learning board fails closed for anonymous callers.</span>";
+        document.getElementById("queue-empty").hidden = false;
+        document.getElementById("cand-empty").hidden = false;
+        document.getElementById("honesty").textContent =
+          "staff_ready=false · human_commissioned=false · auto_approve=false";
+        return;
+      }
+      if (!res.body || res.body.ok === false) {
+        document.getElementById("banner").className = "banner warn";
+        document.getElementById("banner").innerHTML =
+          '<span class="err">' +
+          esc((res.body && res.body.message) || "Board load failed") +
+          "</span>";
+        return;
+      }
+      paint(res.body);
+    })
+    .catch(function (err) {
+      document.getElementById("banner").className = "banner warn";
+      document.getElementById("banner").innerHTML =
+        '<span class="err">' + esc(err && err.message ? err.message : err) + "</span>";
+    });
+}
+load();
+</script>
+</body>
+</html>

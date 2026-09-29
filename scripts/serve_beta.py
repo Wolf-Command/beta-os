@@ -170,6 +170,7 @@ from core import ggv_content_prove1 as _ggv_content_prove
 from core import crm_identity_memory as _crm_ident
 from core import crm_identity_operator_depth as _crm_ident_depth
 from core import fin_interco1 as _fin_interco1
+from core import intel_learn1 as _intel_learn1
 from core import bzg_reputation_observe as _bzg_rep
 from core import ggv_social_derive as _ggv_social
 from core import owner_empire_pack as _owner_empire
@@ -2015,6 +2016,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._fin_interco1_dispatch():
+            return
+
+        if self._intel_learn1_dispatch():
             return
 
         if path == "/api/wolf/shell-whoami":
@@ -5077,6 +5081,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._fin_interco1_dispatch():
                 return
         elif path in (
+            "/intel/learning",
+            "/intel/learning/",
+            "/ops/intel-learning",
+            "/ops/intel-learning/",
+            "/intel-learning",
+            "/intel-learning/",
+            "/intel-learning.html",
+            "/dashboards/intel-learning.html",
+        ):
+            if self._intel_learn1_dispatch():
+                return
+        elif path in (
             "/bzg/outlets",
             "/bzg/outlets/",
             "/bzg-outlets",
@@ -5832,6 +5848,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/interco-1" or path.startswith("/api/fin/interco-1/"):
             self._fin_interco1_write_refused(path)
+            return
+        if path == "/api/intel/learning" or (
+            path.startswith("/api/intel/learning/")
+            and not path.startswith("/api/intel/learning-policy")
+        ):
+            self._intel_learn1_write_refused(path)
             return
         if self._fin_bfc_refuse_code(path):
             self._fin_bfc_write_refused(path)
@@ -6634,6 +6656,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/interco-1" or path.startswith("/api/fin/interco-1/"):
             self._fin_interco1_write_refused(path)
+            return
+        if path == "/api/intel/learning" or (
+            path.startswith("/api/intel/learning/")
+            and not path.startswith("/api/intel/learning-policy")
+        ):
+            self._intel_learn1_write_refused(path)
             return
         if self._fin_bfc_refuse_code(path):
             self._fin_bfc_write_refused(path)
@@ -7841,6 +7869,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/interco-1" or path.startswith("/api/fin/interco-1/"):
             self._fin_interco1_write_refused(path)
+            return
+        if path == "/api/intel/learning" or (
+            path.startswith("/api/intel/learning/")
+            and not path.startswith("/api/intel/learning-policy")
+        ):
+            self._intel_learn1_write_refused(path)
             return
         if self._fin_bfc_refuse_code(path):
             self._fin_bfc_write_refused(path)
@@ -15297,6 +15331,173 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "path": path,
                 "staff_ready": False,
                 "human_commissioned": False,
+            },
+            status=403,
+        )
+
+    def _intel_learn1_dispatch(self) -> bool:
+        """INTEL-LEARN-1 — learning board over SOP factory candidates; no auto-approve."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _intel_learn1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            person_id = (identity.get("person_id") or "").strip()
+            if not person_id:
+                self._send_identity_deny(identity)
+                return True
+            role_allowed = False
+            if person_id != _intel_learn1.OWNER_PERSON:
+                try:
+                    role_allowed = bool(
+                        _rbac.can(person_id, _intel_learn1.PERM_READ)
+                        or _rbac.can(person_id, _intel_learn1.PERM_SOP_READ)
+                    )
+                except Exception:  # noqa: BLE001
+                    role_allowed = False
+            if not _intel_learn1.person_may_view(person_id, role_allowed=role_allowed):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "denied",
+                        "message": (
+                            "Intel learning board is Owner or an authorised "
+                            "intel.rule.read / core.sop.read role only. "
+                            "Not staff readiness or human commissioning."
+                        ),
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "auto_approve": False,
+                        "human_review_gate": True,
+                    },
+                    status=403,
+                )
+                return True
+            try:
+                payload = _intel_learn1.public_payload(
+                    person_id, role_allowed=role_allowed
+                )
+            except _intel_learn1.IntelLearn1Error as exc:
+                status = 403 if getattr(exc, "code", "") == "denied" else 400
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": getattr(exc, "code", "invalid"),
+                        "message": str(exc),
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "auto_approve": False,
+                        **_intel_learn1.honesty_flags(),
+                    },
+                    status=status,
+                )
+                return True
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "intel_learn_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "auto_approve": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _intel_learn1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_access_denied_page(
+                "Intel learning board requires a signed-in person. "
+                "Unsigned callers are refused."
+            )
+            return True
+        person_id = (identity.get("person_id") or "").strip()
+        if not person_id:
+            self._send_access_denied_page(
+                "Intel learning board requires a signed-in person. "
+                "Unsigned callers are refused."
+            )
+            return True
+        role_allowed = False
+        if person_id != _intel_learn1.OWNER_PERSON:
+            try:
+                role_allowed = bool(
+                    _rbac.can(person_id, _intel_learn1.PERM_READ)
+                    or _rbac.can(person_id, _intel_learn1.PERM_SOP_READ)
+                )
+            except Exception:  # noqa: BLE001
+                role_allowed = False
+        if not _intel_learn1.person_may_view(person_id, role_allowed=role_allowed):
+            self._send_access_denied_page(
+                "Intel learning board is Owner or an authorised "
+                "intel.rule.read / core.sop.read role only. "
+                "This is not staff readiness or human commissioning."
+            )
+            return True
+        page = DASHBOARDS / "intel-learning.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Intel learning page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="intel-learning.html")
+        return True
+
+    def _intel_learn1_write_refused(self, path: str) -> None:
+        """Refuse auto-approve / fake metrics / promote on INTEL-LEARN-1."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _intel_learn1.refuse_external_write(body if isinstance(body, dict) else {})
+        except _intel_learn1.IntelLearn1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "auto_approve": False,
+                    "fake_performance": False,
+                    "human_review_gate": True,
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": (
+                    "INTEL-LEARN-1 is a read board. Use POST "
+                    "/api/sop/review-decision for human APPROVE/DENY."
+                ),
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "auto_approve": False,
             },
             status=403,
         )
