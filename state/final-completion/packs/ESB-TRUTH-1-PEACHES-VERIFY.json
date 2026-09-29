@@ -1,0 +1,85 @@
+{
+  "pack": "ESB-TRUTH-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T02:45:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T02:43:03+08:00",
+  "result_file": "docs/wolf/ops/ESB-TRUTH-1-RESULT.md",
+  "tests_rerun": {
+    "test_esb_truth1_20260930.py": {
+      "pass": 152,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 5,
+    "distinct_sha256": 3,
+    "all_distinct": false,
+    "note": "board/partial/inventory share SHA; phone+unsigned distinct",
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/esbtruth1-board-desktop.png",
+        "bytes": 220177,
+        "sha256": "b1adb7085b1b3c3bcd42fb5c6708eabb114593cd9c2044e52d92805655e6025c"
+      },
+      {
+        "path": "docs/wolf/ops/shots/esbtruth1-board-phone.png",
+        "bytes": 152181,
+        "sha256": "ee168b4c6fc05f2283d0b12c2df092ae91038802e9c2b7ca42b6860668a2fcd0"
+      },
+      {
+        "path": "docs/wolf/ops/shots/esbtruth1-partial-stamps.png",
+        "bytes": 220177,
+        "sha256": "b1adb7085b1b3c3bcd42fb5c6708eabb114593cd9c2044e52d92805655e6025c"
+      },
+      {
+        "path": "docs/wolf/ops/shots/esbtruth1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      },
+      {
+        "path": "docs/wolf/ops/shots/esbtruth1-warehouse-inventory.png",
+        "bytes": 220177,
+        "sha256": "b1adb7085b1b3c3bcd42fb5c6708eabb114593cd9c2044e52d92805655e6025c"
+      }
+    ],
+    "eye_check": {
+      "board": "PARTIAL_IN_BETA settlement UNAVAILABLE pnl UNKNOWN last_success null",
+      "unsigned_deny": "Access denied"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "audit_status": "PARTIAL_IN_BETA",
+    "fake_settlement": false,
+    "pnl_invented": false,
+    "esb_write": false,
+    "ceiling": "BUILT"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "1949845",
+    "atrium_finance_head": "7584266",
+    "uncommitted": true
+  },
+  "preserves": [
+    "INTG-TRUTH-1",
+    "BZG-VENUEPL-1"
+  ],
+  "next_pack": "BACKUP-HEALTH-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

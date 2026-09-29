@@ -175,6 +175,7 @@ from core import fin_interco1 as _fin_interco1
 from core import fin_recon_shell1 as _fin_recon_shell1
 from core import fin_ap_ar_shell1 as _fin_ap_ar_shell1
 from core import owner_needs_you1 as _owner_needs_you1
+from core import esb_truth1 as _esb_truth1
 from core import intel_learn1 as _intel_learn1
 from core import bzg_ops_desk1 as _bzg_ops_desk1
 from core import bzg_waste_yield1 as _bzg_waste_yield1
@@ -2039,6 +2040,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._owner_needs_you1_dispatch():
+            return
+
+        if self._esb_truth1_dispatch():
             return
 
         if self._intel_learn1_dispatch():
@@ -5162,6 +5166,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._owner_needs_you1_dispatch():
                 return
         elif path in (
+            "/ops/esb-truth-1",
+            "/ops/esb-truth-1/",
+            "/esb-truth-1",
+            "/esb-truth-1/",
+            "/esb-truth-1.html",
+            "/dashboards/esb-truth-1.html",
+        ):
+            if self._esb_truth1_dispatch():
+                return
+        elif path in (
             "/intel/learning",
             "/intel/learning/",
             "/ops/intel-learning",
@@ -5962,6 +5976,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/owner/needs-you-1" or path.startswith("/api/owner/needs-you-1/"):
             self._owner_needs_you1_write_refused(path)
+            return
+        if path == "/api/ops/esb-truth-1" or path.startswith("/api/ops/esb-truth-1/"):
+            self._esb_truth1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -6793,6 +6810,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/owner/needs-you-1" or path.startswith("/api/owner/needs-you-1/"):
             self._owner_needs_you1_write_refused(path)
+            return
+        if path == "/api/ops/esb-truth-1" or path.startswith("/api/ops/esb-truth-1/"):
+            self._esb_truth1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -8029,6 +8049,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/owner/needs-you-1" or path.startswith("/api/owner/needs-you-1/"):
             self._owner_needs_you1_write_refused(path)
+            return
+        if path == "/api/ops/esb-truth-1" or path.startswith("/api/ops/esb-truth-1/"):
+            self._esb_truth1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -15988,6 +16011,101 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "ok": False,
                 "error": "write_refused",
                 "message": "OWNER-NEEDS-YOU-1 is connective prove only. Writes refused.",
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+            },
+            status=403,
+        )
+
+    def _esb_truth1_dispatch(self) -> bool:
+        """ESB-TRUTH-1 — warehouse RO truth board; no fake settlement / ESB write."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _esb_truth1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _esb_truth1.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "esb_truth_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "pnl_invented": False,
+                        "settlement_invented": False,
+                        "esb_write": False,
+                        "audit_status": "PARTIAL_IN_BETA",
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _esb_truth1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "esb-truth-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "ESB-TRUTH-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="esb-truth-1.html")
+        return True
+
+    def _esb_truth1_write_refused(self, path: str) -> None:
+        """Refuse ESB write / fake settlement / invent P&L on ESB-TRUTH-1."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _esb_truth1.refuse_external_write(body if isinstance(body, dict) else {})
+        except _esb_truth1.EsbTruth1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "pnl_invented": False,
+                    "settlement_invented": False,
+                    "fake_settlement": False,
+                    "esb_write": False,
+                    "esb_mutated": False,
+                    "audit_status": "PARTIAL_IN_BETA",
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": "ESB-TRUTH-1 is warehouse RO only. Writes refused.",
                 "path": path,
                 "staff_ready": False,
                 "human_commissioned": False,

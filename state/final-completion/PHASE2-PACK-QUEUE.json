@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T02:37:00+08:00",
+  "at_wita": "2026-09-30T02:45:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -559,7 +559,10 @@
       "tests": {
         "pass": 137,
         "fail": 0
-      }
+      },
+      "matt_finished_ping": true,
+      "matt_finished_ping_at": "2026-09-30T02:39:17+08:00",
+      "matt_finished_covered_by": "OWNER-NEEDS-YOU-1"
     },
     {
       "pack_id": "FIN-AP-AR-SHELL-1",
@@ -596,7 +599,10 @@
         "pass": 193,
         "fail": 0
       },
-      "verified_at": "2026-09-30T02:25:00+08:00"
+      "verified_at": "2026-09-30T02:25:00+08:00",
+      "matt_finished_ping": true,
+      "matt_finished_ping_at": "2026-09-30T02:39:17+08:00",
+      "matt_finished_covered_by": "OWNER-NEEDS-YOU-1"
     },
     {
       "pack_id": "OWNER-NEEDS-YOU-1",
@@ -633,7 +639,10 @@
         "fail": 0
       },
       "cursor_did_not_auto_start_next": true,
-      "verified_at": "2026-09-30T02:37:00+08:00"
+      "verified_at": "2026-09-30T02:37:00+08:00",
+      "peaches_verify": "PASS_VERIFIED",
+      "matt_finished_ping": true,
+      "matt_finished_ping_at": "2026-09-30T02:39:17+08:00"
     },
     {
       "pack_id": "ESB-TRUTH-1",
@@ -660,9 +669,21 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "synthesized_from": "wave3",
-      "armed_at": "2026-09-30T02:37:00+08:00"
+      "armed_at": "2026-09-30T02:37:00+08:00",
+      "cursor_pid": 27705,
+      "launched_at": "2026-09-30T02:37:30+08:00",
+      "child_alive": true,
+      "probed_at": "2026-09-30T02:39:17+08:00",
+      "exited_at": "2026-09-30T02:42:55+08:00",
+      "tests": {
+        "pass": 152,
+        "fail": 0
+      },
+      "cursor_did_not_auto_start_next": true,
+      "result_file": "docs/wolf/ops/ESB-TRUTH-1-RESULT.md",
+      "verified_at": "2026-09-30T02:45:00+08:00"
     },
     {
       "pack_id": "BACKUP-HEALTH-1",
@@ -687,8 +708,117 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
+      "status": "WAITING_CURSOR",
+      "synthesized_from": "wave3",
+      "armed_at": "2026-09-30T02:45:00+08:00"
+    },
+    {
+      "pack_id": "FIN-CASH-TRUTH-1",
+      "title": "Cash / bank truth desk deepen (file-import only, no invented balances)",
+      "closes": [
+        "CAP-FIN cash"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "PARTIAL"
+      ],
+      "priority_bucket": "finance_loops",
+      "scope": [
+        "Bank/cash honesty over FIN-RECON-SHELL-1",
+        "Empty/UNKNOWN when no import"
+      ],
+      "forbids": [
+        "fake balances",
+        "live bank scrape invent"
+      ],
+      "depends_on": [
+        "FIN-RECON-SHELL-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
       "status": "QUEUED",
-      "synthesized_from": "wave3"
+      "synthesized_from": "wave4 MISSING finance_loops"
+    },
+    {
+      "pack_id": "BZG-LABOR-COST-1",
+      "title": "BZG labor cost honesty shell (no fake payroll)",
+      "closes": [
+        "CAP-BZG labor"
+      ],
+      "targets_classes": [
+        "MISSING"
+      ],
+      "priority_bucket": "bzg_ops",
+      "scope": [
+        "Labor cost desk UNKNOWN when no facts",
+        "Preserve HR deferred"
+      ],
+      "forbids": [
+        "fake payroll",
+        "staff_ready true"
+      ],
+      "depends_on": [
+        "BZG-OPS-DESK-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "synthesized_from": "wave4 MISSING bzg_ops"
+    },
+    {
+      "pack_id": "GGV-PIPELINE-TRUTH-1",
+      "title": "GGV sales pipeline truth board (no fake deals)",
+      "closes": [
+        "CAP-GGV pipeline"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "PARTIAL"
+      ],
+      "priority_bucket": "dashboards",
+      "scope": [
+        "Pipeline stages from real CRM facts only",
+        "UNKNOWN when empty"
+      ],
+      "forbids": [
+        "fake deals",
+        "fake conversion"
+      ],
+      "depends_on": [
+        "CRM-IDENTITY-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "synthesized_from": "wave4 MISSING dashboards"
+    },
+    {
+      "pack_id": "CONN-HEALTH-BOARD-1",
+      "title": "Connections health board deepen (INTG + BLOCKED honesty)",
+      "closes": [
+        "connections"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "PARTIAL"
+      ],
+      "priority_bucket": "connections",
+      "scope": [
+        "Surface connection stamps without inventing last_success",
+        "Yanolja stays BLOCKED"
+      ],
+      "forbids": [
+        "fake last_success",
+        "unblock Yanolja"
+      ],
+      "depends_on": [
+        "INTG-TRUTH-1",
+        "ESB-TRUTH-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "synthesized_from": "wave4 MISSING connections"
     }
   ],
   "first_pack": "DASH-LIVE-1",
@@ -718,12 +848,14 @@
     "INTEL-LEARN-1",
     "BZG-OPS-DESK-1",
     "FIN-RECON-SHELL-1",
-    "DASH-LIVE-1"
+    "DASH-LIVE-1",
+    "BZG-WASTE-YIELD-1",
+    "FIN-AP-AR-SHELL-1",
+    "OWNER-NEEDS-YOU-1",
+    "RELIABILITY-1",
+    "CONTENT-ENGINE-LIVE-1"
   ],
-  "exited_awaiting_peaches": [
-    "BZG-VENUEPL-1",
-    "INTEL-LEARN-1"
-  ],
+  "exited_awaiting_peaches": [],
   "synthesized_after_queue_head": true,
   "synthesis_note": "Appended after INTG-TRUTH-1 PASS; do not reorder ahead of AMG-OS-SHELL-1",
   "priority_bucket_counts": {
@@ -736,9 +868,11 @@
   },
   "synthesis_wave2_at": "2026-09-30T00:45:44+08:00",
   "synthesis_wave3_at": "2026-09-30T01:19:01+08:00",
-  "last_verified": "DASH-LIVE-1",
-  "next_to_arm": "BZG-WASTE-YIELD-1",
-  "heavy_in_flight": null,
-  "last_exited": "CONTENT-ENGINE-LIVE-1",
-  "next_to_arm_note": "parent/Peaches only \u2014 Cursor did not auto-arm"
+  "last_verified": "OWNER-NEEDS-YOU-1",
+  "next_to_arm": "BACKUP-HEALTH-1",
+  "heavy_in_flight": "ESB-TRUTH-1",
+  "last_exited": "OWNER-NEEDS-YOU-1",
+  "next_to_arm_note": "parent/Peaches only after ESB-TRUTH-1 PASS_VERIFIED \u2014 Cursor must not auto-arm; HEADCHEF veto",
+  "wave4_synthesized_at": "2026-09-30T02:45:00+08:00",
+  "wave4_count": 4
 }

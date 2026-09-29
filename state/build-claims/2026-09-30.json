@@ -244,6 +244,22 @@
       "expect": "exit 0",
       "by": "cursor-owner-needs-you-1",
       "at": "2026-09-30T02:30:48+08:00"
+    },
+    {
+      "id": "ESB-TRUTH-1-desk",
+      "claim": "ESB-TRUTH-1: PARTIAL_IN_BETA warehouse truth board; settlement_api UNAVAILABLE; pnl/settlement null; pnl_invented/fake_settlement/esb_write false; last_success null; INTG-TRUTH-1/BZG-VENUEPL-1 preserved; staff_ready/human_commissioned false; next pack parent-only BACKUP-HEALTH-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import esb_truth1 as e; p=e.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('audit_status')=='PARTIAL_IN_BETA' and p.get('settlement_api')=='UNAVAILABLE' and p.get('pnl') is None and p.get('settlement') is None and p.get('pnl_invented') is False and p.get('fake_settlement') is False and p.get('esb_write') is False and p.get('last_success') is None and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('intg_truth1_preserved') is True and p.get('bzg_venuepl1_preserved') is True and e.honesty_flags().get('next_pack_for_parent_only')=='BACKUP-HEALTH-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-esb-truth-1",
+      "at": "2026-09-30T02:42:55+08:00"
+    },
+    {
+      "id": "ESB-TRUTH-1-surface",
+      "claim": "ESB-TRUTH-1 page/API/shots/RESULT present; unsigned deny + suite PASS=152; next pack parent-only BACKUP-HEALTH-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import esb_truth1 as e; from pathlib import Path; html=Path('dashboards/esb-truth-1.html').read_text(); import sys; sys.exit(0 if (e.api_matches('/api/ops/esb-truth-1') and e.page_matches('/ops/esb-truth-1') and 'staff_ready=false' in html and 'PARTIAL_IN_BETA' in html and Path('docs/wolf/ops/shots/esbtruth1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/ESB-TRUTH-1-RESULT.md').is_file() and e.honesty_flags().get('next_pack_for_parent_only')=='BACKUP-HEALTH-1' and e.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-esb-truth-1",
+      "at": "2026-09-30T02:42:55+08:00"
     }
   ]
 }
