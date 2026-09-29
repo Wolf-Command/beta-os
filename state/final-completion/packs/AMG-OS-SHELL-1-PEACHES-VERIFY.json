@@ -1,0 +1,62 @@
+{
+  "pack": "AMG-OS-SHELL-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T00:41:00+08:00",
+  "verifier": "Peaches-executor",
+  "exit_code": 0,
+  "result_file": "docs/wolf/ops/AMG-OS-SHELL-1-RESULT.md",
+  "tests_rerun": {
+    "test_amg_os_shell1_20260930.py": {
+      "pass": 97,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/amgoshell1-shell-desktop.png",
+        "bytes": 172129,
+        "sha256": "035ec596bc7f3a24ec55a22eb2009444ed4e582ec5bda51530727e9c1a178bc0"
+      },
+      {
+        "path": "docs/wolf/ops/shots/amgoshell1-shell-phone.png",
+        "bytes": 136103,
+        "sha256": "7a8a76cc7ab3110e77009085bad600dd95a1203fb47f2399214db58c20263a64"
+      },
+      {
+        "path": "docs/wolf/ops/shots/amgoshell1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      },
+      {
+        "path": "docs/wolf/ops/shots/amgoshell1-yanolja-blocked.png",
+        "bytes": 172108,
+        "sha256": "320e34dbc4699b6a7af8fc566982c8e14255a034ddb4ad1ce17ae7b59acb17ac"
+      }
+    ],
+    "eye_check": {
+      "shell_desktop": "PASS \u2014 all PMS tiles UNKNOWN+BLOCKED_EXTERNAL; Yanolja blocked; flags false; no fake occupancy"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "cap_amg_01_unblocked": false,
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "no_push": true,
+  "no_fake_ops_data": true,
+  "beta_only": true,
+  "next_pack": "GGV-CONTENT-PROVE-1",
+  "sidecar_note": "8790 flaky across session (starts then drops); packs not blocked; prod untouched"
+}

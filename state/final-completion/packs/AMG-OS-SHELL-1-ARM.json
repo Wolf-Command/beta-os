@@ -1,0 +1,67 @@
+{
+  "run_id": "AMG-OS-SHELL-1",
+  "pack": "AMG-OS-SHELL-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "armed_at": "2026-09-30T00:35:11+08:00",
+  "exited_at": "2026-09-30T00:39:45+08:00",
+  "brief": "state/build-factory/briefs/BRIEF-AMG-OS-SHELL-1.md",
+  "log": "state/build-factory/logs/AMG-OS-SHELL-1.log",
+  "result_file": "docs/wolf/ops/AMG-OS-SHELL-1-RESULT.md",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "depends_on": [
+    "INTG-TRUTH-1"
+  ],
+  "prior_pack_verified": "INTG-TRUTH-1",
+  "beta_os_head_at_arm": "dbcd8e5",
+  "launch_method": "python_detach+daemon.sh",
+  "does_not_unblock": [
+    "CAP-AMG-01",
+    "Yanolja"
+  ],
+  "cursor_pid": 2511,
+  "launched_at": "2026-09-30T00:35:20+08:00",
+  "tests": {
+    "suite": "scripts/tests/test_amg_os_shell1_20260930.py",
+    "pass": 97,
+    "fail": 0
+  },
+  "shots": [
+    "docs/wolf/ops/shots/amgoshell1-shell-desktop.png",
+    "docs/wolf/ops/shots/amgoshell1-shell-phone.png",
+    "docs/wolf/ops/shots/amgoshell1-yanolja-blocked.png",
+    "docs/wolf/ops/shots/amgoshell1-unsigned-deny.png"
+  ],
+  "surfaces": {
+    "page": "/amg/os-shell",
+    "api": "/api/amg/os-shell",
+    "honesty_board": "/ops/integrations-status"
+  },
+  "honesty": {
+    "yanolja": "BLOCKED_EXTERNAL",
+    "pms_tiles": "BLOCKED_EXTERNAL",
+    "display_policy": "UNKNOWN_or_BLOCKED_never_zero_as_success",
+    "cap_amg_01_unblocked": false,
+    "fake_pms_data": false,
+    "invented_occupancy": false,
+    "invented_arrivals": false
+  },
+  "closes_toward": [
+    "CAP-AMG-02",
+    "CAP-AMG-04",
+    "MB-008"
+  ],
+  "cursor_did_not_auto_start_next_pack": true,
+  "next_pack_for_parent": "GGV-CONTENT-PROVE-1",
+  "exit": 0,
+  "exit_code": 0,
+  "verified_at": "2026-09-30T00:41:00+08:00",
+  "peaches_verify": "state/final-completion/packs/AMG-OS-SHELL-1-PEACHES-VERIFY.json"
+}

@@ -165,6 +165,7 @@ from core import bzg_finance_desk as _bzg_fin_desk
 from core import bzg_outlet_registry as _bzg_outlets
 from core import v1_status_register as _v1_status
 from core import intg_truth_board as _intg_truth
+from core import amg_os_shell as _amg_os_shell
 from core import crm_identity_memory as _crm_ident
 from core import crm_identity_operator_depth as _crm_ident_depth
 from core import bzg_reputation_observe as _bzg_rep
@@ -2000,6 +2001,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._intg_truth_dispatch():
+            return
+
+        if self._amg_os_shell_dispatch():
             return
 
         if path == "/api/wolf/shell-whoami":
@@ -5020,6 +5024,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/dashboards/integrations-status.html",
         ):
             if self._intg_truth_dispatch():
+                return
+        elif path in (
+            "/amg/os-shell",
+            "/amg/os-shell/",
+            "/amg-os-shell",
+            "/amg-os-shell/",
+            "/amg-os-shell.html",
+            "/dashboards/amg-os-shell.html",
+        ):
+            if self._amg_os_shell_dispatch():
                 return
         elif path in (
             "/bzg/outlets",
@@ -14974,6 +14988,55 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return True
         self._send_html_shell(page.read_bytes(), rel="integrations-status.html")
+        return True
+
+    def _amg_os_shell_dispatch(self) -> bool:
+        """AMG-OS-SHELL-1 — operating shell with BLOCKED_EXTERNAL PMS tiles."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _amg_os_shell.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _amg_os_shell.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "shell_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "cap_amg_01_unblocked": False,
+                        "fake_pms_data": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _amg_os_shell.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "amg-os-shell.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "AMG OS shell page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="amg-os-shell.html")
         return True
 
     def _bzg_outlets_dispatch(self) -> bool:

@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T00:34:10+08:00",
+  "at_wita": "2026-09-30T00:41:00+08:00",
   "phase": 3,
   "status": "BOARD_SYNCED_READ_ONLY",
   "note": "Read-only audit; never expand write authority; never expose secrets. Does not block Phase 2.",
@@ -41,7 +41,7 @@
       ],
       "evidence_notes": [
         "Yanolja credentials/API not seated; owner external",
-        "Yanolja BLOCKED_EXTERNAL — no fake live feed"
+        "Yanolja BLOCKED_EXTERNAL \u2014 no fake live feed"
       ],
       "last_success": null,
       "owner": "AMG",
@@ -67,14 +67,14 @@
         "INT-ESB-WOLF"
       ],
       "evidence_notes": [
-        "ESB/outlet projection from BZG-OUTLET/XOUTLET packs — read surfaces only"
+        "ESB/outlet projection from BZG-OUTLET/XOUTLET packs \u2014 read surfaces only"
       ],
       "last_success": null,
       "owner": "BZG",
       "criticality": "CRITICAL",
       "fallback": "ESB reports/export",
       "last_probed_at": "2026-09-30T00:34:10+08:00",
-      "probe_notes": "ESB warehouse RO status=READ_OK. venue_daily_closes=0. PARTIAL_IN_BETA — warehouse facts only; P&L not invented; settlement_api UNAVAILABLE."
+      "probe_notes": "ESB warehouse RO status=READ_OK. venue_daily_closes=0. PARTIAL_IN_BETA \u2014 warehouse facts only; P&L not invented; settlement_api UNAVAILABLE."
     },
     {
       "integration_id": "INT-GWS-WOLF",
@@ -151,7 +151,7 @@
       "criticality": "MEDIUM",
       "fallback": "Manual report export",
       "last_probed_at": "2026-09-30T00:34:10+08:00",
-      "probe_notes": "Wolf Metricool status()=NOT_CONFIGURED (no creds loaded, no network). Agent-host MCP-Metricool ≠ Wolf runtime connector."
+      "probe_notes": "Wolf Metricool status()=NOT_CONFIGURED (no creds loaded, no network). Agent-host MCP-Metricool \u2260 Wolf runtime connector."
     },
     {
       "integration_id": "CAP-INTG-05",
@@ -176,7 +176,7 @@
       "criticality": null,
       "fallback": null,
       "last_probed_at": "2026-09-30T00:34:10+08:00",
-      "probe_notes": "Wolf Metricool status()=NOT_CONFIGURED (no creds loaded, no network). Agent-host MCP-Metricool ≠ Wolf runtime connector."
+      "probe_notes": "Wolf Metricool status()=NOT_CONFIGURED (no creds loaded, no network). Agent-host MCP-Metricool \u2260 Wolf runtime connector."
     },
     {
       "integration_id": "CAP-INTG-01",
@@ -195,7 +195,7 @@
       ],
       "evidence_notes": [
         "Seeded from Model C catalog; not yet live-probed",
-        "Yanolja BLOCKED_EXTERNAL — no fake live feed"
+        "Yanolja BLOCKED_EXTERNAL \u2014 no fake live feed"
       ],
       "last_success": null,
       "owner": null,
@@ -227,7 +227,7 @@
       "criticality": null,
       "fallback": null,
       "last_probed_at": "2026-09-30T00:34:10+08:00",
-      "probe_notes": "ESB warehouse RO status=READ_OK. venue_daily_closes=0. PARTIAL_IN_BETA — warehouse facts only; P&L not invented; settlement_api UNAVAILABLE."
+      "probe_notes": "ESB warehouse RO status=READ_OK. venue_daily_closes=0. PARTIAL_IN_BETA \u2014 warehouse facts only; P&L not invented; settlement_api UNAVAILABLE."
     },
     {
       "integration_id": "CAP-INTG-04",
@@ -271,7 +271,7 @@
       ],
       "evidence_notes": [
         "Seeded from Model C catalog; not yet live-probed",
-        "Yanolja BLOCKED_EXTERNAL — no fake live feed"
+        "Yanolja BLOCKED_EXTERNAL \u2014 no fake live feed"
       ],
       "last_success": null,
       "owner": null,
@@ -303,7 +303,7 @@
       "criticality": null,
       "fallback": null,
       "last_probed_at": "2026-09-30T00:34:10+08:00",
-      "probe_notes": "ESB warehouse RO status=READ_OK. venue_daily_closes=0. PARTIAL_IN_BETA — warehouse facts only; P&L not invented; settlement_api UNAVAILABLE."
+      "probe_notes": "ESB warehouse RO status=READ_OK. venue_daily_closes=0. PARTIAL_IN_BETA \u2014 warehouse facts only; P&L not invented; settlement_api UNAVAILABLE."
     },
     {
       "integration_id": "CAP-INTG-03",
@@ -378,7 +378,7 @@
       "criticality": null,
       "fallback": null,
       "last_probed_at": "2026-09-30T00:34:10+08:00",
-      "probe_notes": "Wolf Metricool status()=NOT_CONFIGURED (no creds loaded, no network). Agent-host MCP-Metricool ≠ Wolf runtime connector."
+      "probe_notes": "Wolf Metricool status()=NOT_CONFIGURED (no creds loaded, no network). Agent-host MCP-Metricool \u2260 Wolf runtime connector."
     },
     {
       "integration_id": "CAP-INTG-06",
@@ -434,7 +434,7 @@
       "integration_id": "MCP-Gmail",
       "source": "MCP-Gmail",
       "target": "AgentHost",
-      "purpose": "Operator/agent tooling — not Wolf staff runtime connector",
+      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
@@ -452,13 +452,13 @@
       "criticality": "low",
       "fallback": null,
       "last_probed_at": "2026-09-30T00:34:10+08:00",
-      "probe_notes": "Agent-host MCP only — not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
+      "probe_notes": "Agent-host MCP only \u2014 not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
     },
     {
       "integration_id": "MCP-Slack",
       "source": "MCP-Slack",
       "target": "AgentHost",
-      "purpose": "Operator/agent tooling — not Wolf staff runtime connector",
+      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
@@ -475,13 +475,13 @@
       "criticality": "low",
       "fallback": null,
       "last_probed_at": "2026-09-30T00:34:10+08:00",
-      "probe_notes": "Agent-host MCP only — not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
+      "probe_notes": "Agent-host MCP only \u2014 not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
     },
     {
       "integration_id": "MCP-Notion",
       "source": "MCP-Notion",
       "target": "AgentHost",
-      "purpose": "Operator/agent tooling — not Wolf staff runtime connector",
+      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
@@ -498,13 +498,13 @@
       "criticality": "low",
       "fallback": null,
       "last_probed_at": "2026-09-30T00:34:10+08:00",
-      "probe_notes": "Agent-host MCP only — not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
+      "probe_notes": "Agent-host MCP only \u2014 not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
     },
     {
       "integration_id": "MCP-Google-Drive",
       "source": "MCP-Google-Drive",
       "target": "AgentHost",
-      "purpose": "Operator/agent tooling — not Wolf staff runtime connector",
+      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
@@ -521,13 +521,13 @@
       "criticality": "low",
       "fallback": null,
       "last_probed_at": "2026-09-30T00:34:10+08:00",
-      "probe_notes": "Agent-host MCP only — not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
+      "probe_notes": "Agent-host MCP only \u2014 not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
     },
     {
       "integration_id": "MCP-Google-Calendar",
       "source": "MCP-Google-Calendar",
       "target": "AgentHost",
-      "purpose": "Operator/agent tooling — not Wolf staff runtime connector",
+      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
@@ -544,13 +544,13 @@
       "criticality": "low",
       "fallback": null,
       "last_probed_at": "2026-09-30T00:34:10+08:00",
-      "probe_notes": "Agent-host MCP only — not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
+      "probe_notes": "Agent-host MCP only \u2014 not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
     },
     {
       "integration_id": "MCP-Metricool",
       "source": "MCP-Metricool",
       "target": "AgentHost",
-      "purpose": "Operator/agent tooling — not Wolf staff runtime connector",
+      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
@@ -569,13 +569,13 @@
       "criticality": "low",
       "fallback": null,
       "last_probed_at": "2026-09-30T00:34:10+08:00",
-      "probe_notes": "Agent-host MCP only — not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
+      "probe_notes": "Agent-host MCP only \u2014 not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
     },
     {
       "integration_id": "MCP-ClickUp",
       "source": "MCP-ClickUp",
       "target": "AgentHost",
-      "purpose": "Operator/agent tooling — not Wolf staff runtime connector",
+      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
@@ -592,7 +592,7 @@
       "criticality": "low",
       "fallback": null,
       "last_probed_at": "2026-09-30T00:34:10+08:00",
-      "probe_notes": "Agent-host MCP only — not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
+      "probe_notes": "Agent-host MCP only \u2014 not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
     }
   ],
   "cap_intg_lines_seen": 11,
@@ -617,11 +617,12 @@
   "config_path_catalog": [
     {
       "path": ".env",
-      "note": "exists — content NOT read into audit"
+      "note": "exists \u2014 content NOT read into audit"
     }
   ],
   "secrets_exposed": false,
   "write_authority_expanded": false,
   "board_pack": "INTG-TRUTH-1",
-  "board_schema": "wolf.intg-truth-board.v1"
+  "board_schema": "wolf.intg-truth-board.v1",
+  "sidecar_8790_note": "Flaky: process announces listen then drops; multiple restart attempts this session; do not block Phase2; never touch prod 15975"
 }
