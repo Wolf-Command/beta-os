@@ -1,0 +1,66 @@
+{
+  "pack": "FIN-INTERCO-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T01:09:39+08:00",
+  "verifier": "Peaches-executor",
+  "exit_code": 0,
+  "result_file": "docs/wolf/ops/FIN-INTERCO-1-RESULT.md",
+  "tests_rerun": {
+    "test_fin_interco1_20260930.py": {
+      "pass": 166,
+      "fail": 0
+    },
+    "test_fc_shell2_20260929.py": {
+      "pass": 72,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 5,
+    "distinct_sha256": 3,
+    "all_distinct": false,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/fininterco1-desk-desktop.png",
+        "bytes": 200755,
+        "sha256": "72cf9197e84b6b8f572563c9a2aa55aa75adca733dad001652fc2788a4da7a61"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fininterco1-desk-phone.png",
+        "bytes": 141028,
+        "sha256": "8a3b1c95d9b3b201ad28da39bb69b5595548314854434d559e476cc48434a37c"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fininterco1-entity-pairs.png",
+        "bytes": 200755,
+        "sha256": "72cf9197e84b6b8f572563c9a2aa55aa75adca733dad001652fc2788a4da7a61"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fininterco1-fc-shell2-preserved.png",
+        "bytes": 200755,
+        "sha256": "72cf9197e84b6b8f572563c9a2aa55aa75adca733dad001652fc2788a4da7a61"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fininterco1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      }
+    ]
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": "EMPTY stubs amount=null journal=null; FC-SHELL-2 preserved",
+  "no_push": true,
+  "beta_only": true,
+  "next_pack": "INTEL-LEARN-1"
+}

@@ -169,6 +169,7 @@ from core import amg_os_shell as _amg_os_shell
 from core import ggv_content_prove1 as _ggv_content_prove
 from core import crm_identity_memory as _crm_ident
 from core import crm_identity_operator_depth as _crm_ident_depth
+from core import fin_interco1 as _fin_interco1
 from core import bzg_reputation_observe as _bzg_rep
 from core import ggv_social_derive as _ggv_social
 from core import owner_empire_pack as _owner_empire
@@ -2011,6 +2012,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._crm_identity1_dispatch():
+            return
+
+        if self._fin_interco1_dispatch():
             return
 
         if path == "/api/wolf/shell-whoami":
@@ -5063,6 +5067,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._crm_identity1_dispatch():
                 return
         elif path in (
+            "/fin/interco-1",
+            "/fin/interco-1/",
+            "/fin-interco-1",
+            "/fin-interco-1/",
+            "/fin-interco-1.html",
+            "/dashboards/fin-interco-1.html",
+        ):
+            if self._fin_interco1_dispatch():
+                return
+        elif path in (
             "/bzg/outlets",
             "/bzg/outlets/",
             "/bzg-outlets",
@@ -5815,6 +5829,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/intercompany-billing" or path.startswith("/api/fin/intercompany-billing/"):
             self._fin_ic_write_refused(path)
+            return
+        if path == "/api/fin/interco-1" or path.startswith("/api/fin/interco-1/"):
+            self._fin_interco1_write_refused(path)
             return
         if self._fin_bfc_refuse_code(path):
             self._fin_bfc_write_refused(path)
@@ -6614,6 +6631,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/intercompany-billing" or path.startswith("/api/fin/intercompany-billing/"):
             self._fin_ic_write_refused(path)
+            return
+        if path == "/api/fin/interco-1" or path.startswith("/api/fin/interco-1/"):
+            self._fin_interco1_write_refused(path)
             return
         if self._fin_bfc_refuse_code(path):
             self._fin_bfc_write_refused(path)
@@ -7818,6 +7838,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/intercompany-billing" or path.startswith("/api/fin/intercompany-billing/"):
             self._fin_ic_write_refused(path)
+            return
+        if path == "/api/fin/interco-1" or path.startswith("/api/fin/interco-1/"):
+            self._fin_interco1_write_refused(path)
             return
         if self._fin_bfc_refuse_code(path):
             self._fin_bfc_write_refused(path)
@@ -15184,6 +15207,99 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return True
         self._send_html_shell(page.read_bytes(), rel="crm-identity-1.html")
         return True
+
+    def _fin_interco1_dispatch(self) -> bool:
+        """FIN-INTERCO-1 — intercompany stubs GGV↔AMG/BZG; no fake amounts."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _fin_interco1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _fin_interco1.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "interco_slice_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "live_billing": False,
+                        "invented_amount": False,
+                        "invented_journal": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _fin_interco1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "fin-interco-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "FIN Interco-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="fin-interco-1.html")
+        return True
+
+    def _fin_interco1_write_refused(self, path: str) -> None:
+        """Refuse amount/journal/settlement/payment writes on FIN-INTERCO-1."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _fin_interco1.refuse_external_write(body if isinstance(body, dict) else {})
+        except _fin_interco1.FinInterco1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "live_billing": False,
+                    "invented_amount": False,
+                    "invented_journal": False,
+                    "payment_executed": False,
+                    "books_write": False,
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": "FIN-INTERCO-1 is structure only. Writes refused.",
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+            },
+            status=403,
+        )
 
     def _bzg_outlets_dispatch(self) -> bool:
         """BZG-OUTLET-1 canonical outlet registry — hierarchy scopes; no fake ops."""
