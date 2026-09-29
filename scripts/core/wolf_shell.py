@@ -396,7 +396,7 @@ LANDING_BY_AUDIENCE: dict[str, str | None] = {
 # Business grammar labels — stable. Missing pages = EMPTY (never fake %).
 BZG_GRAMMAR: list[dict[str, Any]] = [
     {"key": "overview", "label": "Overview", "href": "/bzg", "state": "live"},
-    {"key": "operations", "label": "Operations", "href": None, "state": "EMPTY"},
+    {"key": "operations", "label": "Operations", "href": "/bzg/ops-desk", "state": "live"},
     {"key": "outlets", "label": "Outlets", "href": "/bzg/outlets", "state": "live"},
     {"key": "venue_pnl", "label": "Venue P&L", "href": "/bzg/venue-pnl", "state": "live"},
     {"key": "issues", "label": "Issues", "href": None, "state": "EMPTY"},
@@ -683,6 +683,8 @@ ROUTE_PARENT: dict[str, str | None] = {
     "/bzg": EMPIRE_HREF,
     "/bzg/finance": "/bzg",
     "/bzg/outlets": "/bzg",
+    "/bzg/ops-desk": "/bzg",
+    "/bzg/ops": "/bzg",
     "/bzg/venue-pnl": "/bzg",
     "/bzg/uma-blu": "/bzg",
     "/bzg/uma-blu/bills": "/bzg/uma-blu",
@@ -851,6 +853,16 @@ ROUTE_CRUMBS: dict[str, list[dict[str, Any]]] = {
         {"label": "WOLF", "href": WOLF_ALIAS},
         {"label": "Blu Zone", "href": "/bzg"},
         {"label": "Outlets", "href": None},
+    ],
+    "/bzg/ops-desk": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Blu Zone", "href": "/bzg"},
+        {"label": "Ops Desk", "href": None},
+    ],
+    "/bzg/ops": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Blu Zone", "href": "/bzg"},
+        {"label": "Ops Desk", "href": None},
     ],
     "/bzg/venue-pnl": [
         {"label": "WOLF", "href": WOLF_ALIAS},

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wolf · BZG Ops Desk</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1c1a16;
+      --muted: #5c574e;
+      --paper: #f3f1ec;
+      --card: #fffdf8;
+      --line: #ddd6c8;
+      --amber: #6a4d12;
+      --ok: #1e5a2a;
+      --warn: #8a1f1f;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(ellipse 65% 35% at 100% 0%, #e8ebe3 0%, transparent 50%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 920px; margin: 0 auto; padding: 24px 16px 80px; }
+    h1 {
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: 1.75rem;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #fff8e8; border: 1px solid #e2d0a0; border-left: 3px solid #8a6a2f;
+      border-radius: 10px; padding: 12px 14px; margin: 0 0 16px;
+      font-size: 0.9rem; line-height: 1.45;
+    }
+    .meta { font-size: 0.85rem; color: var(--muted); margin: 0 0 12px; }
+    h2 {
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin: 22px 0 10px;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+    .panel p { margin: 0 0 8px; line-height: 1.45; font-size: 0.92rem; }
+    .panel p:last-child { margin-bottom: 0; }
+    .k { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .v { font-size: 1.2rem; margin: 2px 0 8px; letter-spacing: -0.02em; }
+    .UNKNOWN { color: var(--amber); font-weight: 600; }
+    .FACT { color: var(--ok); font-weight: 600; }
+    .status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .OPEN { background: #d7ead7; color: var(--ok); }
+    .PRE-OPENING { background: #efe4c8; color: var(--amber); }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #ebe4d6; vertical-align: top; }
+    th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    .hooks { list-style: none; padding: 0; margin: 8px 0 0; }
+    .hooks li { padding: 8px 0; border-top: 1px solid #ebe4d6; font-size: 0.88rem; }
+    .hooks li:first-child { border-top: none; padding-top: 0; }
+    .err { color: var(--warn); }
+    .empty { color: var(--muted); font-size: 0.88rem; }
+    a { color: #3d4f2f; }
+    .links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>BZG Ops Desk</h1>
+  <p class="sub" id="sub">Loading outlets + venue P&amp;L + foundations…</p>
+  <p class="meta" id="meta"></p>
+  <div class="banner" id="banner">Honesty: facts only. UNKNOWN when closes are absent. Not READY.</div>
+  <div id="body">
+    <p class="empty">Checking access…</p>
+  </div>
+</main>
+<script>
+(function () {
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+  function statusClass(s) {
+    if (!s) return "";
+    if (String(s).indexOf("TEMPORARILY") === 0) return "TEMPORARILY";
+    return String(s).replace(/\s+/g, "-");
+  }
+  function renderOutlets(panel) {
+    if (!panel) return "";
+    const rows = (panel.outlets || []).map(function (o) {
+      return "<tr>" +
+        "<td><strong>" + esc(o.display_name) + "</strong><div class='empty'>" + esc(o.outlet_id) + "</div></td>" +
+        "<td><span class='status " + statusClass(o.status) + "'>" + esc(o.status) + "</span></td>" +
+        "<td class='empty'>" + esc(o.outlet_kind || "") + "</td>" +
+        "</tr>";
+    }).join("");
+    return [
+      "<h2>Outlet registry</h2>",
+      "<div class='panel' id='outlets-panel'>",
+      "<p>" + esc(panel.message || "") + "</p>",
+      "<p class='empty'>Uma OPEN=" + (panel.uma_open ? "yes" : "no") +
+        " · Rainforest PRE-OPENING=" + (panel.rainforest_pre_opening ? "yes" : "no") +
+        " · Pool Bar PRE-OPENING=" + (panel.pool_bar_pre_opening ? "yes" : "no") +
+        " · pack " + esc(panel.pack || "BZG-OUTLET-1") + "</p>",
+      "<table><thead><tr><th>Outlet</th><th>Status</th><th>Kind</th></tr></thead><tbody>",
+      rows || "<tr><td colspan='3' class='empty'>No outlets</td></tr>",
+      "</tbody></table>",
+      "<div class='links'><a href='/bzg/outlets'>Open /bzg/outlets</a></div>",
+      "</div>",
+    ].join("");
+  }
+  function renderVenue(panel) {
+    if (!panel) return "";
+    const closes = panel.venue_daily_closes;
+    const unknown = panel.closes_unknown || closes === 0;
+    return [
+      "<h2>Venue P&amp;L rollup</h2>",
+      "<div class='panel' id='venuepl-panel'>",
+      "<div class='k'>Master status</div>",
+      "<div class='v' id='master-status'><span class='" + (unknown ? "UNKNOWN" : "FACT") + "'>" +
+        esc(panel.master_status || "insufficient_facts") + "</span></div>",
+      "<p>" + esc(panel.message || "") + "</p>",
+      "<p class='empty'>" + esc(panel.master_message || "") + "</p>",
+      "<p>venue_daily_closes: <strong id='closes-count'>" + esc(closes == null ? "UNKNOWN" : closes) + "</strong>" +
+        (unknown ? " → revenue/cost/contribution <span class='UNKNOWN'>UNKNOWN</span> (not zero)" : "") +
+        "</p>",
+      "<p class='empty'>Numeric facts " + esc(panel.outlets_with_numeric_facts || 0) +
+        "/" + esc(panel.outlet_count || 0) +
+        " · live_pnl=false · pack " + esc(panel.pack || "BZG-VENUEPL-1") + "</p>",
+      "<div class='links'><a href='/bzg/venue-pnl'>Open /bzg/venue-pnl</a></div>",
+      "</div>",
+    ].join("");
+  }
+  function renderFoundations(panel) {
+    if (!panel) return "";
+    const hooks = (panel.hooks || []).map(function (h) {
+      return "<li><span class='hook-title'><strong>" + esc(h.hook_id) + "</strong></span>" +
+        " · outlet_id nullable=" + (h.outlet_id_nullable ? "yes" : "no") +
+        (h.row_count != null ? " · rows=" + esc(h.row_count) : " · empty OK") +
+        "<div class='empty'>" + esc(h.message || "") + "</div></li>";
+    }).join("");
+    return [
+      "<h2>Cross-outlet foundations</h2>",
+      "<div class='panel' id='foundations-panel'>",
+      "<p>" + esc(panel.message || "") + "</p>",
+      "<p class='empty'>Hierarchy usable · centres not populated · no multi-outlet P&amp;L · pack " +
+        esc(panel.pack || "BZG-XOUTLET-1") + "</p>",
+      "<ul class='hooks'>" + (hooks || "<li class='empty'>No hooks listed</li>") + "</ul>",
+      "<div class='links'><a href='/bzg/outlets'>Foundations on /bzg/outlets</a></div>",
+      "</div>",
+    ].join("");
+  }
+  fetch("/api/bzg/ops-desk", { credentials: "same-origin", headers: { Accept: "application/json" } })
+    .then(function (r) {
+      return r.json().then(function (j) { return { status: r.status, body: j }; });
+    })
+    .then(function (res) {
+      const data = res.body || {};
+      const body = document.getElementById("body");
+      const sub = document.getElementById("sub");
+      const meta = document.getElementById("meta");
+      const banner = document.getElementById("banner");
+      if (res.status === 403 || data.ok === false) {
+        sub.textContent = "Access denied";
+        banner.className = "banner";
+        banner.innerHTML = "<span class='err'>" + esc(data.message || "Access denied") + "</span>";
+        body.innerHTML = "<p class='err'>BZG ops desk is not on this assignment. staff_ready=false · human_commissioned=false.</p>";
+        return;
+      }
+      sub.textContent = data.message || "BZG ops desk";
+      meta.textContent =
+        "pack " + (data.pack || "BZG-OPS-DESK-1") +
+        " · cap " + (data.cap || "CAP-BZG-02") +
+        " · staff_ready=false · human_commissioned=false · live_pnl=false";
+      const h = data.honesty || {};
+      banner.textContent =
+        "Honesty: invented_sales=" + (h.invented_sales === true) +
+        " · unknown_when_facts_missing=" + (h.unknown_when_facts_missing !== false) +
+        " · proven=" + (h.proven === true) +
+        " · ready=" + (h.ready === true) +
+        " · preserves BZG-OUTLET / XOUTLET / VENUEPL / FC-SHELL-2.";
+      body.innerHTML =
+        renderOutlets(data.outlets_panel) +
+        renderVenue(data.venue_pnl_panel) +
+        renderFoundations(data.foundations_panel) +
+        "<p class='empty' id='honesty-foot'>staff_ready=false · human_commissioned=false · next pack parent-only FIN-RECON-SHELL-1 (Cursor does not auto-chain).</p>";
+    })
+    .catch(function (err) {
+      document.getElementById("sub").textContent = "Failed to load";
+      document.getElementById("body").innerHTML =
+        "<p class='err'>" + esc(err && err.message ? err.message : "load error") + "</p>";
+    });
+})();
+</script>
+</body>
+</html>

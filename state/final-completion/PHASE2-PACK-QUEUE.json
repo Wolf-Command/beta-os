@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T01:18:00+08:00",
+  "at_wita": "2026-09-30T01:28:55+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -368,7 +368,10 @@
       "estimated_effort": "M",
       "matt_blocker": false,
       "synthesized_from": "MISSING/PARTIAL priority buckets",
-      "status": "NEXT_TO_ARM"
+      "status": "PASS_VERIFIED",
+      "armed_at": "2026-09-30T01:18:00+08:00",
+      "cursor_pid": 11271,
+      "verified_at": "2026-09-30T01:28:55+08:00"
     },
     {
       "pack_id": "FIN-RECON-SHELL-1",
@@ -399,7 +402,7 @@
       "estimated_effort": "L",
       "matt_blocker": false,
       "synthesized_from": "MISSING/PARTIAL priority buckets",
-      "status": "QUEUED"
+      "status": "NEXT_TO_ARM"
     },
     {
       "pack_id": "DASH-LIVE-1",
@@ -488,9 +491,143 @@
       "matt_blocker": false,
       "synthesized_from": "MISSING/PARTIAL priority buckets",
       "status": "QUEUED"
+    },
+    {
+      "pack_id": "BZG-WASTE-YIELD-1",
+      "title": "BZG waste/yield variance honesty desk (facts only)",
+      "closes": [
+        "CAP-BZG variance"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "PARTIAL"
+      ],
+      "priority_bucket": "bzg_ops",
+      "scope": [
+        "Beta waste/yield surfaces from existing modules",
+        "UNKNOWN when empty \u2014 no invented variance"
+      ],
+      "forbids": [
+        "fake waste numbers"
+      ],
+      "depends_on": [
+        "BZG-OPS-DESK-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "synthesized_from": "wave3"
+    },
+    {
+      "pack_id": "FIN-AP-AR-SHELL-1",
+      "title": "AP/AR desk shells with SoD honesty (no fake invoices)",
+      "closes": [
+        "CAP-FIN AP/AR"
+      ],
+      "targets_classes": [
+        "PARTIAL",
+        "BUILT_NOT_PROVEN"
+      ],
+      "priority_bucket": "finance_loops",
+      "scope": [
+        "Thin AP/AR Beta desks over entity books",
+        "Empty queues honest; preserve ATRIUM-SOD"
+      ],
+      "forbids": [
+        "fake invoices",
+        "prod mutate"
+      ],
+      "depends_on": [
+        "FC-SHELL-2",
+        "FIN-INTERCO-1"
+      ],
+      "estimated_effort": "L",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "synthesized_from": "wave3"
+    },
+    {
+      "pack_id": "OWNER-NEEDS-YOU-1",
+      "title": "Owner Needs You connective prove (no fake urgency)",
+      "closes": [
+        "CAP-CORE needs-you"
+      ],
+      "targets_classes": [
+        "PARTIAL",
+        "BUILT_NOT_PROVEN"
+      ],
+      "priority_bucket": "dashboards_live",
+      "scope": [
+        "Prove Needs You boards across arms with honesty stamps"
+      ],
+      "forbids": [
+        "fake urgency counts"
+      ],
+      "depends_on": [
+        "MYWORK-PROVE-1",
+        "DASH-LIVE-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "synthesized_from": "wave3"
+    },
+    {
+      "pack_id": "ESB-TRUTH-1",
+      "title": "ESB warehouse truth board (PARTIAL_IN_BETA deepen)",
+      "closes": [
+        "INT-ESB",
+        "CAP-BZG ESB"
+      ],
+      "targets_classes": [
+        "PARTIAL"
+      ],
+      "priority_bucket": "connections",
+      "scope": [
+        "Read-only ESB warehouse status on Beta",
+        "Never invent settlement/P&L"
+      ],
+      "forbids": [
+        "fake settlement",
+        "write ESB"
+      ],
+      "depends_on": [
+        "INTG-TRUTH-1",
+        "BZG-VENUEPL-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "synthesized_from": "wave3"
+    },
+    {
+      "pack_id": "BACKUP-HEALTH-1",
+      "title": "Backup/recovery health stamps (Beta catalog + atrium RO)",
+      "closes": [
+        "reliability backup"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "PARTIAL"
+      ],
+      "priority_bucket": "reliability",
+      "scope": [
+        "Surface last-backup / restore-drill honesty without inventing success"
+      ],
+      "forbids": [
+        "fake backup success",
+        "prod mutate"
+      ],
+      "depends_on": [
+        "RELIABILITY-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "synthesized_from": "wave3"
     }
   ],
-  "first_pack": "BZG-OPS-DESK-1",
+  "first_pack": "FIN-RECON-SHELL-1",
   "hr_deferred_not_in_queue": true,
   "blocked_external_not_auto_solved": [
     "MB-008",
@@ -514,7 +651,8 @@
     "GGV-CONTENT-PROVE-1",
     "CRM-IDENTITY-1",
     "FIN-INTERCO-1",
-    "INTEL-LEARN-1"
+    "INTEL-LEARN-1",
+    "BZG-OPS-DESK-1"
   ],
   "exited_awaiting_peaches": [
     "BZG-VENUEPL-1",
@@ -530,5 +668,6 @@
     "connections": 28,
     "reliability": 40
   },
-  "synthesis_wave2_at": "2026-09-30T00:45:44+08:00"
+  "synthesis_wave2_at": "2026-09-30T00:45:44+08:00",
+  "synthesis_wave3_at": "2026-09-30T01:19:01+08:00"
 }

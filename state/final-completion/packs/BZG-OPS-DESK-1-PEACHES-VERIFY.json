@@ -1,0 +1,83 @@
+{
+  "pack": "BZG-OPS-DESK-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T01:28:55+08:00",
+  "verifier": "Peaches-executor",
+  "exit_code": 0,
+  "result_file": "docs/wolf/ops/BZG-OPS-DESK-1-RESULT.md",
+  "tests_rerun": {
+    "test_bzg_ops_desk1_20260930.py": {
+      "pass": 114,
+      "fail": 0
+    },
+    "test_bzg_venuepl1_20260929.py": {
+      "pass": 86,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 8,
+    "distinct_sha256": 8,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/bzgopsdesk1-amanda-deny-desktop.png",
+        "bytes": 34118,
+        "sha256": "293f87b95b34f07363576d3612a0f5865fe45cc3146829288c41e4b8d396dc86"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgopsdesk1-amanda-deny-phone.png",
+        "bytes": 29453,
+        "sha256": "ab29455defbe9fef8dab9d7f5b7f9b3f848a885ec40c1f280a7468d6ea8b32e8"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgopsdesk1-desk-desktop.png",
+        "bytes": 177366,
+        "sha256": "93ac34e4cc4a0fa01348e6d33fcea745c5ef79b29e2c08ae8c02f33d5fa289fe"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgopsdesk1-desk-phone.png",
+        "bytes": 117365,
+        "sha256": "3dee671862c82679618b4190202c02430191143507d8a8a3758cdf8497408b26"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgopsdesk1-unknown-desktop.png",
+        "bytes": 160822,
+        "sha256": "4f7b455ce09de3dc6451450ae28cd681f0c26068fa412262215ffa77a2922d89"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgopsdesk1-unknown-phone.png",
+        "bytes": 107372,
+        "sha256": "a7307ed4e6cffef6621d6dddfcbc488b8d4cdac0c4ce7bc7c0cc92d59896d8b1"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgopsdesk1-unsigned-deny-desktop.png",
+        "bytes": 20104,
+        "sha256": "2125d27badc289423275776ef444d7d3a4fbd7386a6d04d0eebad8b671cdce9f"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgopsdesk1-unsigned-deny-phone.png",
+        "bytes": 16336,
+        "sha256": "ed11365c186a483dfb12761e801dd7343ce7077e263f670e5c5a2cde87406fb0"
+      }
+    ],
+    "eye_check": {
+      "desk": "PASS \u2014 insufficient_facts P&L, Uma OPEN, flags false, no invented sales"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "no_push": true,
+  "beta_only": true,
+  "next_pack": "FIN-RECON-SHELL-1"
+}
