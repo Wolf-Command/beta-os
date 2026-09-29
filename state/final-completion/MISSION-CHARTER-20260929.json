@@ -89,8 +89,8 @@
     "RELIABILITY-1",
     "CONTENT-ENGINE-LIVE-1"
   ],
-  "last_pack_verified": "GGV-PIPELINE-TRUTH-1",
-  "last_verified_at": "2026-09-30T03:30:00+08:00",
-  "pass_verified_count": 23,
-  "next_pack": "CONN-HEALTH-BOARD-1"
+  "last_pack_verified": "CONN-HEALTH-BOARD-1",
+  "last_verified_at": "2026-09-30T03:39:00+08:00",
+  "pass_verified_count": 24,
+  "next_pack": "AMG-OCC-TRUTH-1"
 }

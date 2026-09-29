@@ -322,6 +322,22 @@
       "expect": "exit 0",
       "by": "ggv-pipeline-truth1-20260930",
       "at": "2026-09-30T03:27:09+08:00"
+    },
+    {
+      "id": "CONN-HEALTH-BOARD-1-desk",
+      "claim": "CONN-HEALTH-BOARD-1: connection stamps without inventing last_success; Yanolja BLOCKED_EXTERNAL; INTG-TRUTH-1/ESB-TRUTH-1 preserved; staff_ready/human_commissioned false; next pack parent-only AMG-OCC-TRUTH-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import conn_health_board1 as c; p=c.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('invented_last_success') is False and p.get('yanolja_blocked') is True and p.get('yanolja_unblocked') is False and p.get('last_success') is None and p.get('intg_truth1_preserved') is True and p.get('esb_truth1_preserved') is True and c.yanolja_stays_blocked(p) and c.all_last_success_null(p) and c.honesty_flags().get('next_pack_for_parent_only')=='AMG-OCC-TRUTH-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "conn-health-board1-20260930",
+      "at": "2026-09-30T03:36:20+08:00"
+    },
+    {
+      "id": "CONN-HEALTH-BOARD-1-surface",
+      "claim": "CONN-HEALTH-BOARD-1 page/API/shots/RESULT present; unsigned deny + suite PASS=142; next pack parent-only AMG-OCC-TRUTH-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import conn_health_board1 as c; from pathlib import Path; html=Path('dashboards/conn-health-1.html').read_text(); import sys; sys.exit(0 if (c.api_matches('/api/ops/conn-health-1') and c.page_matches('/ops/conn-health-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/connhealth1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/CONN-HEALTH-BOARD-1-RESULT.md').is_file() and c.honesty_flags().get('next_pack_for_parent_only')=='AMG-OCC-TRUTH-1' and c.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "conn-health-board1-20260930",
+      "at": "2026-09-30T03:36:20+08:00"
     }
   ]
 }

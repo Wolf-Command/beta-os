@@ -1,0 +1,84 @@
+{
+  "pack": "CONN-HEALTH-BOARD-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T03:39:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T03:36:20+08:00",
+  "result_file": "docs/wolf/ops/CONN-HEALTH-BOARD-1-RESULT.md",
+  "tests_rerun": {
+    "test_conn_health_board1_20260930.py": {
+      "pass": 143,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 5,
+    "distinct_sha256": 3,
+    "all_distinct": false,
+    "note": "desk/blocked/registry share SHA; phone+unsigned distinct",
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/connhealth1-blocked-stamps.png",
+        "bytes": 233484,
+        "sha256": "b99f8079a31efcfc66eadcbc2d020c8e414f81e9e8ef058ef42ba339d9306f67"
+      },
+      {
+        "path": "docs/wolf/ops/shots/connhealth1-desk-desktop.png",
+        "bytes": 233484,
+        "sha256": "b99f8079a31efcfc66eadcbc2d020c8e414f81e9e8ef058ef42ba339d9306f67"
+      },
+      {
+        "path": "docs/wolf/ops/shots/connhealth1-desk-phone.png",
+        "bytes": 168815,
+        "sha256": "d3e423db720bc168d95cf9f305cf27ffdcb1b12bd83e983114429f153a98d777"
+      },
+      {
+        "path": "docs/wolf/ops/shots/connhealth1-registry.png",
+        "bytes": 233484,
+        "sha256": "b99f8079a31efcfc66eadcbc2d020c8e414f81e9e8ef058ef42ba339d9306f67"
+      },
+      {
+        "path": "docs/wolf/ops/shots/connhealth1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      }
+    ],
+    "eye_check": {
+      "desk": "Yanolja BLOCKED_EXTERNAL last_success null no unblock",
+      "unsigned_deny": "Access denied"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "yanolja": "BLOCKED_EXTERNAL",
+    "invented_last_success": false,
+    "yanolja_unblocked": false,
+    "ceiling": "BUILT"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "2962dae",
+    "atrium_finance_head": "7584266",
+    "uncommitted": true
+  },
+  "preserves": [
+    "INTG-TRUTH-1",
+    "ESB-TRUTH-1"
+  ],
+  "next_pack": "AMG-OCC-TRUTH-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

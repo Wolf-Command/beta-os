@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T03:30:00+08:00",
+  "at_wita": "2026-09-30T03:39:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -862,9 +862,20 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "synthesized_from": "wave4 MISSING connections",
-      "armed_at": "2026-09-30T03:30:00+08:00"
+      "armed_at": "2026-09-30T03:30:00+08:00",
+      "cursor_pid": 36635,
+      "launched_at": "2026-09-30T03:30:30+08:00",
+      "exited_at": "2026-09-30T03:36:20+08:00",
+      "suite_result": "PASS=142 FAIL=0",
+      "result_file": "docs/wolf/ops/CONN-HEALTH-BOARD-1-RESULT.md",
+      "tests": {
+        "pass": 143,
+        "fail": 0
+      },
+      "awaiting_peaches_verify": true,
+      "verified_at": "2026-09-30T03:39:00+08:00"
     },
     {
       "pack_id": "AMG-OCC-TRUTH-1",
@@ -890,8 +901,9 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
-      "synthesized_from": "wave5 MISSING dashboards"
+      "status": "WAITING_CURSOR",
+      "synthesized_from": "wave5 MISSING dashboards",
+      "armed_at": "2026-09-30T03:39:00+08:00"
     },
     {
       "pack_id": "SOP-LESSON-LIVE-1",
@@ -997,13 +1009,13 @@
   },
   "synthesis_wave2_at": "2026-09-30T00:45:44+08:00",
   "synthesis_wave3_at": "2026-09-30T01:19:01+08:00",
-  "last_verified": "BZG-LABOR-COST-1",
-  "next_to_arm": "CONN-HEALTH-BOARD-1",
-  "heavy_in_flight": "GGV-PIPELINE-TRUTH-1",
-  "last_exited": "BZG-LABOR-COST-1",
-  "next_to_arm_note": "parent/Peaches only after GGV-PIPELINE-TRUTH-1 PASS_VERIFIED \u2014 Cursor must not auto-arm; HEADCHEF veto",
+  "last_verified": "GGV-PIPELINE-TRUTH-1",
+  "next_to_arm": "AMG-OCC-TRUTH-1",
+  "heavy_in_flight": null,
+  "last_exited": "CONN-HEALTH-BOARD-1",
+  "next_to_arm_note": "parent/Peaches only after CONN-HEALTH-BOARD-1 PASS_VERIFIED \u2014 Cursor must not auto-arm; HEADCHEF veto",
   "wave4_synthesized_at": "2026-09-30T02:45:00+08:00",
   "wave4_count": 4,
-  "updated_at": "2026-09-30T03:22:12+08:00",
+  "updated_at": "2026-09-30T03:36:20+08:00",
   "wave5_synthesized_at": "2026-09-30T03:30:00+08:00"
 }
