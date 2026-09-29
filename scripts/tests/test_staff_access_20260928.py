@@ -229,10 +229,18 @@ def test_permissions() -> None:
                     ),
                 )
             else:
+                # HUMFIX-1C: current-window may be empty while commissioning work remains.
+                # Still forbid stale plan cards; empty-seat copy only when TODAY is truly empty.
                 check(
-                    f"{pid} today names the empty seat",
-                    today.get("empty") is True and "this role" in str(today.get("empty_message")),
+                    f"{pid} today has no stale plan cards",
+                    all("2026-09-14" not in str(it.get("title") or "") for it in (today.get("items") or [])),
+                    str([it.get("title") for it in (today.get("items") or [])[:4]]),
                 )
+                if today.get("empty") is True:
+                    check(
+                        f"{pid} today names the empty seat",
+                        "this role" in str(today.get("empty_message")),
+                    )
         misa_home = build_home(MISA_PERSON, conn=conn)
         check("Misa my work is creative director", misa_home.get("experience") == "creative_director")
         check(

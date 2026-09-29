@@ -103,18 +103,49 @@ def test_contrast_and_plans() -> None:
             if row.get("origin") == "historical" or row.get("source_system") == "content_plans"
         ]
         ids = [row["source_id"] for row in items]
-        check("staff list hides test plans", all(int(i) >= 4 for i in ids) and not any(i in {"1", "2", "3"} for i in ids), str(ids))
-        # OPSFIX-3: same title+period+status collapses; Working_Draft and Human_Approved both stay.
-        check("duplicate fortnight drafts collapse to one status each", len(ids) == 2, str(ids))
+        check(
+            "staff list hides test plans",
+            all(not ids or (int(i) >= 4 and str(i) not in {"1", "2", "3"}) for i in ids),
+            str(ids),
+        )
+        # HUMFIX-1C: current-window only; stale fortnight absent; no duplicate source ids.
+        check(
+            "stale fortnight absent and duplicates collapsed",
+            all("2026-09-14" not in str(row.get("title") or "") for row in items)
+            and len(ids) == len(set(ids)),
+            str([(r.get("title"), r.get("source_id")) for r in items]),
+        )
         check(
             "cards say what to do",
-            all(row.get("next_step") == "Open plan" and row.get("date_range") and row.get("status_label") for row in items),
+            all(
+                not items
+                or (
+                    row.get("next_step") == "Open plan"
+                    and row.get("date_range")
+                    and row.get("status_label")
+                )
+                for row in items
+            ),
         )
-        check("provenance stays on the row", all(row.get("origin") == "historical" and row.get("verified_by_wolf") is False for row in items))
+        check(
+            "provenance stays on the row",
+            all(
+                not items
+                or (row.get("origin") == "historical" and row.get("verified_by_wolf") is False)
+                for row in items
+            ),
+        )
         check("data lane is not on the staff row", all("data_lane" not in row for row in items))
         check(
             "staff footnote is plain",
-            all(row.get("staff_footnote") and "verified_by_wolf" not in (row.get("staff_footnote") or "") for row in items),
+            all(
+                not items
+                or (
+                    row.get("staff_footnote")
+                    and "verified_by_wolf" not in (row.get("staff_footnote") or "")
+                )
+                for row in items
+            ),
         )
     finally:
         conn.close()
@@ -346,9 +377,11 @@ def test_http_and_shots() -> None:
             if row.get("origin") == "historical" or row.get("source_system") == "content_plans"
         ]
         check(
-            "haikal api hides test plans",
-            status == 200 and len(today) == 2 and "1" not in [row.get("source_id") for row in today],
-            str([row.get("source_id") for row in today]),
+            "haikal api hides test and stale plans",
+            status == 200
+            and "1" not in [str(row.get("source_id")) for row in today]
+            and all("2026-09-14" not in str(row.get("title") or "") for row in today),
+            str([(row.get("source_id"), row.get("title")) for row in today]),
         )
         status, raw, _ctype = call(port, "GET", "/api/owner/command", OWNER)
         body = json.loads(raw.decode() or "{}")

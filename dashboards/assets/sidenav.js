@@ -735,7 +735,30 @@
     };
   }
 
+  function roleTitleForStaff(who) {
+    /* Plain seat title only — never ROLE-* / SPECIALIST_* codes for staff. */
+    var asg = (who && who.assignments) || [];
+    var path = (location && location.pathname) || "";
+    var i;
+    for (i = 0; i < asg.length; i += 1) {
+      var href = String((asg[i] && asg[i].href) || "");
+      if (!href) continue;
+      if (path === href || path.indexOf(href + "/") === 0) {
+        return String((asg[i] && asg[i].label) || "");
+      }
+    }
+    var active = who && who.active_assignment;
+    if (active && active.label) return String(active.label);
+    if (asg.length && asg[0] && asg[0].label) return String(asg[0].label);
+    var rl = (who && who.role_label) || "";
+    if (rl && rl.indexOf("SPECIALIST_") !== 0 && rl.indexOf("ROLE-") !== 0) {
+      return String(rl);
+    }
+    return "";
+  }
+
   function roleForActiveContext(who) {
+    /* Prefer ROLE-* codes for owner/debug chrome. Staff paintHello uses roleTitleForStaff. */
     var asg = (who && who.assignments) || [];
     var path = (location && location.pathname) || "";
     var i;
@@ -757,13 +780,32 @@
   function paintHello(hello, who) {
     if (!hello) return;
     var chain = (who && who.chain) || {};
-    var roleHint = roleForActiveContext(who);
-    var label =
-      (who && (who.hello || who.given_name || who.role_label || who.email)) || "";
     var aud = (who && who.audience) || chain.audience || "";
-    if (label && aud && roleHint) hello.textContent = label + " · " + aud + " · " + roleHint;
-    else if (label && aud) hello.textContent = label + " · " + aud;
-    else if (label) hello.textContent = String(label);
+    var isOwner =
+      who &&
+      (who.wolf_authorized === true || aud === "OWNER" || aud === "SYSTEM");
+    var name =
+      (who && (who.hello || who.given_name || who.email)) || "";
+    if (isOwner) {
+      /* Owner / debug: codes may stay (audience · ROLE-*). */
+      var roleHint = roleForActiveContext(who);
+      var ownerLabel = name || (who && who.role_label) || "";
+      if (ownerLabel && aud && roleHint) {
+        hello.textContent = ownerLabel + " · " + aud + " · " + roleHint;
+      } else if (ownerLabel && aud) {
+        hello.textContent = ownerLabel + " · " + aud;
+      } else if (ownerLabel) {
+        hello.textContent = String(ownerLabel);
+      } else {
+        hello.textContent = "";
+      }
+      return;
+    }
+    /* Staff: plain role title only (optional name · title). Never SPECIALIST_/ROLE- codes. */
+    var roleTitle = roleTitleForStaff(who);
+    if (name && roleTitle) hello.textContent = name + " · " + roleTitle;
+    else if (roleTitle) hello.textContent = roleTitle;
+    else if (name) hello.textContent = String(name);
     else hello.textContent = "";
   }
 

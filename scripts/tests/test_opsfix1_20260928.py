@@ -103,12 +103,19 @@ def test_plans() -> None:
         h_items = _plans(haikal["sections"][0]["items"])
         m_items = _plans(misa["sections"][0]["items"])
         y_items = _plans(yudi["sections"][0]["items"])
-        check("creative director sees operational plans", haikal["experience"] == "creative_director" and len(h_items) == 2, str(len(h_items)))
+        # HUMFIX-1C: only plans whose window covers Asia/Makassar today.
+        # On 29 Sep 2026 habitat fortnight 14–27 is stale — zero plan cards in TODAY.
         check(
-            "same plans for every creative director",
-            [row["source_id"] for row in h_items] == [row["source_id"] for row in m_items] and len(h_items) == 2,
+            "creative director current-window plans only",
+            haikal["experience"] == "creative_director"
+            and all("2026-09-14" not in str(row.get("title") or "") for row in h_items),
+            str([(r.get("title"), r.get("date_range")) for r in h_items]),
         )
-        check("test lane plans stay off the staff list", all(row["source_id"] not in {"1", "2", "3"} for row in h_items))
+        check(
+            "same current-window plans for every creative director",
+            [row.get("source_id") for row in h_items] == [row.get("source_id") for row in m_items],
+        )
+        check("test lane plans stay off the staff list", all(str(row.get("source_id")) not in {"1", "2", "3"} for row in h_items))
         check(
             "plans are historical and not verified",
             all(row.get("origin") == "historical" and row.get("verified_by_wolf") is False for row in h_items),
@@ -116,7 +123,10 @@ def test_plans() -> None:
         check("plans are not person-hardcoded", "PERS-HAIKAL" not in json.dumps(h_items) and "PERS-MISA" not in json.dumps(m_items))
         check(
             "creator sees habitat scope only",
-            yudi["experience"] == "content_creator" and [row["brand_id"] for row in y_items] == ["habitat"] * len(y_items) and len(y_items) == 2,
+            yudi["experience"] == "content_creator"
+            and all(row.get("brand_id") == "habitat" for row in y_items)
+            and all("2026-09-14" not in str(row.get("title") or "") for row in y_items),
+            str([(r.get("brand_id"), r.get("title")) for r in y_items]),
         )
         check("atrium is outside a creator scope", _plan_in_scope("atrium", {"SCOPE-GGV-CONTENT"}) is False)
         check("habitat is inside a creator scope", _plan_in_scope("habitat", {"SCOPE-GGV-CONTENT"}) is True)
@@ -191,7 +201,14 @@ def test_http(port: int) -> None:
         row for row in (((home.get("sections") or [{}])[0]).get("items") or [])
         if row.get("origin") == "historical" or row.get("source_system") == "content_plans"
     ]
-    check("haikal home has operational plans", status == 200 and len(today) == 2 and today[0].get("origin") == "historical", str(len(today)))
+    # HUMFIX-1C: TODAY only surfaces plans whose window covers Asia/Makassar today.
+    # Habitat fortnight 14–27 Sep is stale on 29 Sep — must not appear.
+    stale = [row for row in today if "2026-09-14" in str(row.get("title") or "") or "14 Sep" in str(row.get("date_range") or "")]
+    check(
+        "haikal home has no stale habitat plan cards",
+        status == 200 and len(stale) == 0,
+        str([(r.get("title"), r.get("date_range")) for r in today]),
+    )
     status, raw, ctype = call(port, "GET", "/amg/finance", ZAYEN, accept="text/html")
     page = raw.decode("utf-8", "replace")
     check(

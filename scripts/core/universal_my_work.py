@@ -349,7 +349,9 @@ def build_universal_sections(
 ) -> list[dict[str, Any]]:
     """TODAY / DO THIS NEXT / NEEDS ATTENTION / WAITING / COMPLETED.
 
-    HUMANCOMM-1: first 3 active items in TODAY; the rest in DO THIS NEXT.
+    HUMANCOMM-1: first 3 non-retest active items in TODAY; the rest in DO THIS NEXT.
+    HUMFIX-1C: open commissioning-retest cards always lead TODAY (all of them),
+    so RETEST work is never pushed out by plan cards or the 3-slot cadence.
     """
     own = conn is None
     c = conn or wi.db_connect()
@@ -365,8 +367,19 @@ def build_universal_sections(
         active_sorted = sorted(
             active, key=lambda x: (x.get("priority") or 3, x.get("due") or "9999")
         )
-        today = active_sorted[:3]
-        do_next = active_sorted[3:8]
+        retests = [
+            card
+            for card in active_sorted
+            if card.get("origin") == "commissioning-retest"
+        ]
+        routine = [
+            card
+            for card in active_sorted
+            if card.get("origin") != "commissioning-retest"
+        ]
+        filler = list(extra_today or []) + routine
+        today = retests + filler[:3]
+        do_next = filler[3:8]
         attention = [
             card
             for card in cards
@@ -391,9 +404,6 @@ def build_universal_sections(
             for card in cards
             if card["status"] in {"COMPLETED", "AWAITING_VERIFY", "VERIFIED"}
         ][:12]
-        if extra_today:
-            today = list(extra_today) + today
-            today = today[:3]
         return [
             {
                 "key": "today",

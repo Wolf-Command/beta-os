@@ -64,6 +64,13 @@
       "expect": "SUMMARY pass=48 fail=0; PREP2 VALIDATED; posted_journals=0; 12 RETESTs OPEN not HELD; 8787 pid 15975",
       "by": "humfix1b",
       "at": "2026-09-29T04:54:01Z"
+    },
+    {
+      "id": "humfix1c-20260929",
+      "claim": "HUMFIX-1C: My Work TODAY current-window only + RETESTs lead; FC boundary from permissions; staff header plain titles; Atrium title wraps on phone/desktop",
+      "check": "PYTHONPATH=scripts python3 scripts/tests/test_humfix1c_20260929.py",
+      "expect": "SUMMARY pass=51 fail=0",
+      "by": "composer"
     }
   ]
 }

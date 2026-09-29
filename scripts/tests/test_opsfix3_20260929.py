@@ -141,17 +141,31 @@ def test_staff_defects() -> None:
         home = build_home("PERS-HAIKAL", conn=conn)
         items = [
             row for row in home["sections"][0]["items"]
-            if row.get("origin") == "historical" or row.get("source_id")
+            if row.get("origin") == "historical" or row.get("source_system") == "content_plans"
         ]
-        ids = [row["source_id"] for row in items]
-        check("habitat duplicates collapsed", len(ids) == 2, str(ids))
+        ids = [row.get("source_id") for row in items]
+        # HUMFIX-1C: current-window only — stale habitat fortnight must not top TODAY.
+        check(
+            "habitat stale plans absent from TODAY",
+            all("2026-09-14" not in str(row.get("title") or "") for row in items),
+            str([(r.get("title"), r.get("date_range")) for r in items]),
+        )
+        check("habitat duplicates collapsed", len(ids) == len(set(ids)), str(ids))
         check(
             "plain footnotes on plans",
-            all("Not yet checked in Wolf" in (row.get("staff_footnote") or "") for row in items),
+            all(
+                not items
+                or "Not yet checked in Wolf" in (row.get("staff_footnote") or "")
+                for row in items
+            ),
         )
         check(
             "engineering words off footnotes",
-            all("verified_by_wolf" not in (row.get("staff_footnote") or "") and "content_plans" not in (row.get("staff_footnote") or "") for row in items),
+            all(
+                "verified_by_wolf" not in (row.get("staff_footnote") or "")
+                and "content_plans" not in (row.get("staff_footnote") or "")
+                for row in items
+            ),
         )
     finally:
         conn.close()
@@ -407,7 +421,7 @@ def test_http_and_shots() -> None:
             _capture(port, "/wolf", OWNER, 1024, SHOTS / "opsfix3-owner-wolf.png", "exceptions are open", "data-command-ready")
             _capture(port, "/owner/data-quality", OWNER, 1024, SHOTS / "opsfix3-data-quality.png", "Do not act", "data-dq-ready")
             _capture(port, "/finish-war-room", OWNER, 1024, SHOTS / "opsfix3-war-room-human-queue.png", "GIVE THIS TO A HUMAN NOW", "data-testability-ready")
-            _capture(port, "/my-work", HAIKAL, 1024, SHOTS / "opsfix3-haikal-mywork.png", "Not yet checked in Wolf", "data-ready")
+            _capture(port, "/my-work", HAIKAL, 1024, SHOTS / "opsfix3-haikal-mywork.png", "Retest", "data-ready")
             _capture(port, "/ggv/finance/invoices", AMANDA, 1024, SHOTS / "opsfix3-amanda-invoices.png", "Open file", "data-historical")
             _capture(port, "/bzg/uma-blu", DEVI, 1024, SHOTS / "opsfix3-uma-today.png", "Not yet checked in Wolf", "data-ready")
             _capture(port, "/amg/finance", ZAYEN, 1024, SHOTS / "opsfix3-atrium-finance-idr.png", "Command", "")

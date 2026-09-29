@@ -14,10 +14,13 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from core import identity
 from core import work_items as wi
 from core.nas_library import BRAND_SCOPES
+
+STAFF_TZ = ZoneInfo("Asia/Makassar")
 
 BOUND = "beta-staff-home"
 SCHEMA_ID = "wolf.staff-home.v1"
@@ -411,7 +414,49 @@ def _covers(experience: str, brands: list[dict[str, str]], scopes: list[dict[str
     return []
 
 
-def _boundary(experience: str) -> str | None:
+def _staff_today_iso() -> str:
+    """Calendar day for My Work plan windows — Asia/Makassar, not UTC."""
+    return datetime.now(STAFF_TZ).date().isoformat()
+
+
+def _atrium_finance_boundary(codes: set[str]) -> str:
+    """Boundary copy from the live permission matrix — not hardcoded per person."""
+    can_draft = "atrium.journal.draft" in codes
+    can_approve = "atrium.journal.approve" in codes
+    can_reject = "atrium.journal.reject" in codes
+    can_post = "atrium.journal.post" in codes
+    can_pay = bool(codes & _MONEY)
+    can_bank = bool(codes & _BANK)
+
+    can_parts: list[str] = ["open the board", "read the ledger and the chart"]
+    if can_draft:
+        can_parts.append("prepare a journal")
+    if can_approve or can_reject:
+        can_parts.append(
+            "approve or reject a journal prepared by someone else (not your own)"
+        )
+
+    cannot_parts: list[str] = []
+    if not can_post:
+        cannot_parts.append("post a journal")
+    if not can_pay:
+        cannot_parts.append("pay")
+    if not can_bank:
+        cannot_parts.append("change a bank account")
+    cannot_parts.append("open another company")
+
+    can_line = ", ".join(can_parts[:-1]) + (", and " + can_parts[-1] if len(can_parts) > 1 else can_parts[0])
+    cannot_line = ", ".join(cannot_parts[:-1]) + (
+        ", or " + cannot_parts[-1] if len(cannot_parts) > 1 else cannot_parts[0]
+    )
+    return (
+        f"You work in Atrium Finance. You can {can_line}. "
+        f"You cannot {cannot_line}."
+    )
+
+
+def _boundary(experience: str, codes: set[str] | None = None) -> str | None:
+    codes = codes or set()
     if experience == "content_creator":
         return (
             "You can work in the content library for the brands on your assignment: "
@@ -425,11 +470,7 @@ def _boundary(experience: str) -> str | None:
             "You cannot pay, change a bank account, or open Owner command."
         )
     if experience == "atrium_finance":
-        return (
-            "You work in Atrium Finance. "
-            "You can open the board, read the ledger and the chart, and send work for approval. "
-            "You cannot approve or post a journal, pay, change a bank account, or open another company."
-        )
+        return _atrium_finance_boundary(codes)
     if experience == "finance":
         return (
             "You can read and review finance notes. "
@@ -523,15 +564,21 @@ def _plan_footnote(row: Any) -> str:
     return "From the Habitat plan. Not yet checked in Wolf."
 
 
+_PLAN_STATUS_RANK = {
+    "Ready_for_Render": 3,
+    "Human_Approved": 2,
+    "Working_Draft": 1,
+}
+
+
 def _dedupe_plan_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Keep one card per title+period+status. True duplicates collapse; differing status stays."""
-    kept: dict[tuple[str, str, str, str], dict[str, Any]] = {}
-    order: list[tuple[str, str, str, str]] = []
+    """One card per title+period+brand. Prefer Approved/Ready over Working draft."""
+    kept: dict[tuple[str, str, str], dict[str, Any]] = {}
+    order: list[tuple[str, str, str]] = []
     for item in items:
         key = (
             str(item.get("title") or ""),
             str(item.get("date_range") or ""),
-            str(item.get("status") or ""),
             str(item.get("brand_id") or ""),
         )
         prior = kept.get(key)
@@ -539,7 +586,13 @@ def _dedupe_plan_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
             kept[key] = item
             order.append(key)
             continue
-        # Prefer the higher source id (later stamp) when content is the same shape.
+        rank_new = _PLAN_STATUS_RANK.get(str(item.get("status") or ""), 0)
+        rank_old = _PLAN_STATUS_RANK.get(str(prior.get("status") or ""), 0)
+        if rank_new > rank_old:
+            kept[key] = item
+            continue
+        if rank_new < rank_old:
+            continue
         try:
             if int(item.get("source_id") or 0) >= int(prior.get("source_id") or 0):
                 kept[key] = item
@@ -548,11 +601,17 @@ def _dedupe_plan_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [kept[key] for key in order]
 
 
+def _plan_covers_today(period_start: str | None, period_end: str | None, today: str) -> bool:
+    start = (period_start or "").strip()[:10]
+    end = (period_end or "").strip()[:10]
+    if not start or not end:
+        return False
+    return start <= today <= end
+
+
 def _stored_plan_card_items(conn, person_id: str, scope_ids: set[str]) -> list[dict[str, Any]]:
     """Plan cards assigned to this person on CURRENT plans only → My Work today."""
-    from datetime import date
-
-    today = date.today().isoformat()
+    today = _staff_today_iso()
     try:
         person = conn.execute(
             "SELECT display_name FROM org_persons WHERE person_id=?",
@@ -637,7 +696,11 @@ def _stored_plan_card_items(conn, person_id: str, scope_ids: set[str]) -> list[d
 
 
 def _stored_plan_items(conn, scope_ids: set[str]) -> list[dict[str, Any]]:
-    """Read active content plans in brand scope. Same canonical store as Content Engine."""
+    """Current-window content plans in brand scope only (Asia/Makassar today).
+
+    Stale plans (window ended before today, or not yet started) never appear in TODAY.
+    """
+    today = _staff_today_iso()
     try:
         rows = conn.execute(
             """
@@ -648,8 +711,11 @@ def _stored_plan_items(conn, scope_ids: set[str]) -> list[dict[str, Any]]:
               AND lower(ifnull(status,'')) IN (
                 'working_draft', 'human_approved', 'ready_for_render'
               )
+              AND ifnull(period_start,'') <= ?
+              AND ifnull(period_end,'') >= ?
             ORDER BY lower(brand_id), id
-            """
+            """,
+            (today, today),
         ).fetchall()
     except Exception:
         return []
@@ -657,6 +723,8 @@ def _stored_plan_items(conn, scope_ids: set[str]) -> list[dict[str, Any]]:
     for row in rows:
         brand = str(row["brand_id"] or "")
         if not _plan_in_scope(brand, scope_ids):
+            continue
+        if not _plan_covers_today(row["period_start"], row["period_end"], today):
             continue
         plan_id = row["id"]
         status = str(row["status"] or "")
@@ -925,7 +993,7 @@ def build_home(person_id: str | None, *, conn=None) -> dict[str, Any]:
         if any(str(row.get("role_id") or "") == "ROLE-GGV-FINANCE-OPERATOR" for row in rows):
             if not any(item.get("href") == "/ggv/finance" for item in desk):
                 desk.append({"label": "Open GGV Finance", "href": "/ggv/finance"})
-        boundary = _boundary(experience)
+        boundary = _boundary(experience, codes)
         authority = {
             "move_money": bool(codes & _MONEY),
             "change_bank": bool(codes & _BANK),
