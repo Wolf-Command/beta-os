@@ -1475,10 +1475,19 @@
   /* ----- Content Plan ----- */
   async function loadPlanList() {
     const data = await api(`/api/planner/plans?brand=${encodeURIComponent(state.brand)}&active=1`);
-    state.plans = data.plans || [];
+    state.plans = data.plans || data.current || [];
+    state.planHistory = data.history || [];
+    state.noCurrentPlan = !!data.no_current_plan;
+    state.planNextStep = data.next_step || "";
     const box = $("planList");
+    if (!box) return;
     if (!state.plans.length) {
-      box.innerHTML = `<div class="empty">No active content plan for this brand yet.</div>`;
+      box.innerHTML = `<div class="empty">${esc(state.planNextStep || "No current content plan for this brand covering today.")}</div>`;
+      if (state.planHistory.length) {
+        box.innerHTML += `<button type="button" class="btn" id="btnPlanHistory">Plan history (${state.planHistory.length})</button>`;
+        const bh = $("btnPlanHistory");
+        if (bh) bh.onclick = () => showPlanHistory();
+      }
       return;
     }
     box.innerHTML = state.plans.map((p) => `
@@ -1489,6 +1498,11 @@
         </div>
         <div>${p.is_test_lane ? '<span class="badge dev">Practice plan</span>' : ""}</div>
       </button>`).join("");
+    if (state.planHistory.length) {
+      box.innerHTML += `<button type="button" class="btn" id="btnPlanHistory">Older plans (${state.planHistory.length})</button>`;
+      const bh = $("btnPlanHistory");
+      if (bh) bh.onclick = () => showPlanHistory();
+    }
     box.querySelectorAll(".plan-pick").forEach((btn) => {
       btn.addEventListener("click", () => {
         state.planId = Number(btn.dataset.id);
@@ -1496,6 +1510,28 @@
         loadPlanView();
       });
     });
+  }
+
+  function showPlanHistory() {
+    const box = $("planList");
+    if (!box) return;
+    const rows = state.planHistory || [];
+    box.innerHTML = `<div class="empty">Older plans (not current for today)</div>` + rows.map((p) => `
+      <button type="button" class="plan-pick" data-id="${p.id}">
+        <div>
+          <div class="t">${esc(displayPlanTitle(p))}</div>
+          <div class="d">${esc(p.period_start || "?")} → ${esc(p.period_end || "?")} · ${esc(planStatusLabel(p.status_label || p.status))}</div>
+        </div>
+      </button>`).join("") + `<button type="button" class="btn" id="btnPlanCurrent">Back to current</button>`;
+    box.querySelectorAll(".plan-pick").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.planId = Number(btn.dataset.id);
+        $("planListPanel").style.display = "none";
+        loadPlanView();
+      });
+    });
+    const back = $("btnPlanCurrent");
+    if (back) back.onclick = () => { state.planId = null; loadPlanList(); };
   }
 
   async function loadPlanView() {
@@ -2722,13 +2758,26 @@
     try {
       if (!state.planId) {
         await loadPlanList();
+        // Only auto-open a CURRENT plan (date window). Never treat history as current.
         if (state.plans.length) state.planId = state.plans[0].id;
       }
       if (!state.planId) {
         $("planEmpty").style.display = "block";
         $("planBody").style.display = "none";
-        $("planTitle").textContent = "Content Plan";
+        $("planTitle").textContent = "No current plan";
         $("planMeta").innerHTML = "";
+        const empty = $("planEmpty");
+        if (empty) {
+          empty.innerHTML = `<p>${esc(state.planNextStep || "No content plan covers today for this brand.")}</p>`
+            + (state.planHistory && state.planHistory.length
+              ? `<p><button type="button" class="btn" id="btnPlanHistoryEmpty">Open plan history (${state.planHistory.length})</button></p>`
+              : `<p>Next step: create the next fortnight plan for this brand.</p>`);
+          const bh = $("btnPlanHistoryEmpty");
+          if (bh) bh.onclick = () => {
+            $("planListPanel").style.display = "block";
+            showPlanHistory();
+          };
+        }
         return;
       }
       await openPlan(state.planId);

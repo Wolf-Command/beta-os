@@ -80,7 +80,7 @@ def test_static() -> None:
     check("favicon file exists", icon.is_file() and icon.stat().st_size > 20)
     check("lead list withholds demo rows", "hide_demo=True" in (ROOT / "scripts" / "serve_beta.py").read_text(encoding="utf-8"))
     chip = sb._ATRIUM_SETUP_CHIP.decode("utf-8")
-    check("atrium chip script", "SETUP INCOMPLETE" in chip and "propertyConfigured" in chip)
+    check("atrium chip script", "Property unset" in chip and "propertyConfigured" in chip)
 
 
 def test_plans() -> None:
@@ -196,7 +196,7 @@ def test_http(port: int) -> None:
     page = raw.decode("utf-8", "replace")
     check(
         "zayen shell carries the setup chip",
-        status == 200 and "opsfix1-live-chip" in page and "SETUP INCOMPLETE" in page and "html" in ctype,
+        status == 200 and "opsfix1-live-chip" in page and "Property unset" in page and "html" in ctype,
         f"status={status} type={ctype}",
     )
 

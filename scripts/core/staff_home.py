@@ -11,6 +11,7 @@ No notification table is invented.
 """
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from typing import Any
 
@@ -547,6 +548,94 @@ def _dedupe_plan_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [kept[key] for key in order]
 
 
+def _stored_plan_card_items(conn, person_id: str, scope_ids: set[str]) -> list[dict[str, Any]]:
+    """Plan cards assigned to this person on CURRENT plans only → My Work today."""
+    from datetime import date
+
+    today = date.today().isoformat()
+    try:
+        person = conn.execute(
+            "SELECT display_name FROM org_persons WHERE person_id=?",
+            (person_id,),
+        ).fetchone()
+        display = str(person[0] or "").strip() if person else ""
+        emails = [
+            str(r[0] or "").strip().lower()
+            for r in conn.execute(
+                """
+                SELECT identifier FROM org_auth_identities
+                WHERE person_id=? AND status='ACTIVE' AND provider='email'
+                """,
+                (person_id,),
+            ).fetchall()
+        ]
+    except Exception:
+        return []
+    if not display and not emails:
+        return []
+    try:
+        cards = conn.execute(
+            """
+            SELECT c.id, c.plan_id, c.title, c.card_type, c.body_json, c.status,
+                   p.brand_id, p.period_start, p.period_end, p.title AS plan_title
+            FROM content_cards c
+            JOIN content_plans p ON p.id = c.plan_id
+            WHERE ifnull(p.data_lane, 'operational') != 'test'
+              AND lower(ifnull(p.status,'')) IN (
+                'working_draft', 'human_approved', 'ready_for_render'
+              )
+              AND ifnull(p.period_start,'') <= ?
+              AND ifnull(p.period_end,'') >= ?
+            ORDER BY c.id DESC
+            LIMIT 200
+            """,
+            (today, today),
+        ).fetchall()
+    except Exception:
+        return []
+    items: list[dict[str, Any]] = []
+    for row in cards:
+        brand = str(row["brand_id"] or "")
+        if not _plan_in_scope(brand, scope_ids):
+            continue
+        try:
+            body = json.loads(row["body_json"] or "{}")
+        except Exception:
+            body = {}
+        assignee = str(body.get("assignee") or "").strip()
+        if not assignee:
+            continue
+        al = assignee.lower()
+        matched = False
+        if display and (al == display.lower() or display.lower() in al):
+            matched = True
+        if any(al == e or e in al for e in emails if e):
+            matched = True
+        if not matched:
+            continue
+        plan_id = row["plan_id"]
+        card_id = row["id"]
+        title = str(row["title"] or body.get("hook") or f"Plan item {card_id}")
+        items.append(
+            {
+                "id": f"content-card-{card_id}",
+                "title": title,
+                "href": f"/content-2.0?plan={plan_id}&brand={brand}#plan",
+                "status": str(row["status"] or "OPEN"),
+                "status_label": str(row["status"] or "Assigned"),
+                "date_range": "",
+                "next_step": "Open plan item",
+                "brand_id": brand,
+                "source_system": "content_cards",
+                "source_id": str(card_id),
+                "origin": "content-plan-assignment",
+                "verified_by_wolf": False,
+                "staff_footnote": f"Assigned on the {brand} content plan.",
+            }
+        )
+    return items[:20]
+
+
 def _stored_plan_items(conn, scope_ids: set[str]) -> list[dict[str, Any]]:
     """Read active content plans in brand scope. Same canonical store as Content Engine."""
     try:
@@ -618,6 +707,9 @@ def _staff_sections(
     extra_today: list[dict[str, Any]] = []
     if experience in {"creative_director", "content_creator"}:
         extra_today = _stored_plan_items(conn, scope_ids or set())
+        extra_today.extend(
+            _stored_plan_card_items(conn, person_id, scope_ids or set())
+        )
     sections = umw.build_universal_sections(
         person_id, conn=conn, extra_today=extra_today
     )

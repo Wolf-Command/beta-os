@@ -319,19 +319,20 @@ _ATRIUM_SETUP_CHIP = b"""<script id="opsfix1-live-chip">
     var nodes = btn.querySelectorAll("span");
     var hit = false;
     for (var i = 0; i < nodes.length; i++) {
-      if ((nodes[i].textContent || "").replace(/\\s+/g, " ").trim() === "Live") {
-        nodes[i].textContent = "SETUP INCOMPLETE";
+      var t = (nodes[i].textContent || "").replace(/\\s+/g, " ").trim();
+      if (t === "Live" || t === "SETUP INCOMPLETE") {
+        nodes[i].textContent = "Property unset";
         hit = true;
       }
     }
     if (!hit && !force) return false;
     if (!hit) {
       var mark = document.createElement("span");
-      mark.textContent = "SETUP INCOMPLETE";
+      mark.textContent = "Property unset";
       btn.appendChild(mark);
     }
-    btn.setAttribute("data-live-truth", "SETUP INCOMPLETE");
-    btn.title = "Property profile is not set. This is not a live hotel record.";
+    btn.setAttribute("data-live-truth", "Property unset");
+    btn.title = "Property profile is not set. SQLite is connected; this is not a live hotel record.";
     return true;
   }
   fetch("/amg/finance/api/dashboard", { headers: { Accept: "application/json" } })
@@ -1575,6 +1576,80 @@ def _ux_card_brief(card: dict) -> dict:
     }
 
 
+def _resolve_assignee_display(conn, raw: str) -> str:
+    """Map email / identifier to org_persons.display_name. Never invent."""
+    token = (raw or "").strip()
+    if not token:
+        return ""
+    if "@" not in token and " " not in token and token.islower() is False:
+        # Already looks like a display name (Haikal) — keep
+        pass
+    try:
+        row = conn.execute(
+            """
+            SELECT p.display_name
+            FROM org_auth_identities i
+            JOIN org_persons p ON p.person_id = i.person_id
+            WHERE lower(i.identifier)=lower(?) AND i.status='ACTIVE'
+            LIMIT 1
+            """,
+            (token,),
+        ).fetchone()
+        if row and row[0]:
+            return str(row[0]).strip()
+        row2 = conn.execute(
+            """
+            SELECT display_name FROM org_persons
+            WHERE lower(display_name)=lower(?) AND status='ACTIVE'
+            LIMIT 1
+            """,
+            (token,),
+        ).fetchone()
+        if row2 and row2[0]:
+            return str(row2[0]).strip()
+    except Exception:
+        pass
+    # Do not show raw email in UI — fall back to local-part only if unresolved.
+    if "@" in token:
+        return token.split("@", 1)[0]
+    return token
+
+
+def _plan_covers_today(period_start: str | None, period_end: str | None, today: str) -> bool:
+    ps = (period_start or "")[:10]
+    pe = (period_end or "")[:10]
+    if not ps or not pe:
+        return False
+    return ps <= today <= pe
+
+
+def _rank_current_plans(rows: list[dict], today: str) -> tuple[list[dict], list[dict]]:
+    """Split into current (date window) + history. Prefer approved/active within window."""
+    status_rank = {
+        "human_approved": 0,
+        "ready_for_render": 1,
+        "working_draft": 2,
+    }
+    current: list[dict] = []
+    history: list[dict] = []
+    for r in rows:
+        if _plan_covers_today(r.get("period_start"), r.get("period_end"), today):
+            current.append(r)
+        else:
+            history.append(r)
+    current.sort(
+        key=lambda r: (
+            status_rank.get(str(r.get("status") or "").lower(), 9),
+            -(int(r.get("id") or 0)),
+        )
+    )
+    history.sort(
+        key=lambda r: (str(r.get("period_end") or ""), int(r.get("id") or 0)),
+        reverse=True,
+    )
+    return current, history
+
+
 def _ux_shape_plan(draft: dict) -> dict:
     """Order posts then stories; posts/stories progress; review_state labels for team."""
     plan = dict(draft.get("plan") or {})
@@ -1585,9 +1660,9 @@ def _ux_shape_plan(draft: dict) -> dict:
     # Brand-level default assignee inheritance (display + empty fields); human override preserved when set
     try:
         brand_id = (plan.get("brand_id") or "").strip().lower()
-        if brand_id:
-            _bc = db_connect()
-            try:
+        _bc = db_connect()
+        try:
+            if brand_id:
                 brow = _bc.execute(
                     "SELECT default_assignee, theme_json, display_name, id, logo_url FROM brands WHERE id=?",
                     (brand_id,),
@@ -1601,8 +1676,19 @@ def _ux_shape_plan(draft: dict) -> dict:
                             c["assignee"] = default_asg
                             if isinstance(c.get("brief"), dict):
                                 c["brief"]["assignee"] = default_asg
-            finally:
-                _bc.close()
+            # HUMFIX-1B: show display name from org_persons, never raw email
+            for c in posts + story_cards:
+                raw = (c.get("assignee") or "").strip()
+                if not raw:
+                    continue
+                display = _resolve_assignee_display(_bc, raw)
+                c["assignee_raw"] = raw
+                c["assignee"] = display
+                if isinstance(c.get("brief"), dict):
+                    c["brief"]["assignee"] = display
+                    c["brief"]["assignee_raw"] = raw
+        finally:
+            _bc.close()
     except Exception:
         pass
     strategy = draft.get("strategy") or {}
@@ -35128,7 +35214,47 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     counts = {row["card_type"]: row["n"] for row in cc}
                     r["posts"] = int(counts.get("feed") or counts.get("post") or 0)
                     r["stories"] = int(counts.get("story") or 0)
-                self._send_json({"ok": True, "plans": rows, "count": len(rows), "brand": brand or None, "data_lane": lane_q or "operational", "active_only": active_only})
+                today = today_makassar().isoformat()
+                current, history = _rank_current_plans(rows, today)
+                # HUMFIX-1B: active=1 returns current window first; history separate.
+                if active_only:
+                    payload_plans = current
+                    self._send_json(
+                        {
+                            "ok": True,
+                            "plans": payload_plans,
+                            "current": current,
+                            "history": history,
+                            "count": len(payload_plans),
+                            "brand": brand or None,
+                            "data_lane": lane_q or "operational",
+                            "active_only": active_only,
+                            "as_of": today,
+                            "no_current_plan": len(current) == 0,
+                            "next_step": (
+                                None
+                                if current
+                                else (
+                                    "No content plan covers today for this brand. "
+                                    "Open Plan history for older fortnights, or create the next plan."
+                                )
+                            ),
+                        }
+                    )
+                else:
+                    self._send_json(
+                        {
+                            "ok": True,
+                            "plans": rows,
+                            "current": current,
+                            "history": history,
+                            "count": len(rows),
+                            "brand": brand or None,
+                            "data_lane": lane_q or "operational",
+                            "active_only": active_only,
+                            "as_of": today,
+                        }
+                    )
             finally:
                 conn.close()
         except Exception as exc:  # noqa: BLE001

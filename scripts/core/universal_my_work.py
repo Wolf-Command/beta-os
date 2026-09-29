@@ -35,6 +35,7 @@ BOUND = "beta-universal-my-work"
 # Engineering repair queue — not a Person. owner/executor stay null.
 ENGINEERING_QUEUE = "ENGINEERING"
 ROUTING_NEEDS = "NEEDS_ROUTING"
+ROUTING_HELD = "HELD"  # HUMFIX-1B: premature RETEST held while repair finishes
 
 # Presentation labels (plain words). DB statuses stay machine codes.
 STATUS_LABEL = {
@@ -316,12 +317,12 @@ def enrich_card(conn, item: dict[str, Any]) -> dict[str, Any]:
 
 
 def _mine_rows(conn, person_id: str) -> list[dict[str, Any]]:
-    """Personal My Work — exclude NEEDS_ROUTING and engineering-queue repairs."""
+    """Personal My Work — exclude NEEDS_ROUTING, HELD retests, and engineering-queue repairs."""
     rows = conn.execute(
         """
         SELECT * FROM core_work_items
         WHERE status != 'CANCELLED'
-          AND COALESCE(routing_state, '') != ?
+          AND COALESCE(routing_state, '') NOT IN (?, ?)
           AND (
             owner_person_id = ?
             OR executor_person_id = ?
@@ -335,7 +336,7 @@ def _mine_rows(conn, person_id: str) -> list[dict[str, Any]]:
         ORDER BY priority ASC, due_at IS NULL, due_at ASC, updated_at DESC
         LIMIT 80
         """,
-        (ROUTING_NEEDS, person_id, person_id, person_id),
+        (ROUTING_NEEDS, ROUTING_HELD, person_id, person_id, person_id),
     ).fetchall()
     return [dict(r) for r in rows]
 
