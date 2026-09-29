@@ -14,7 +14,7 @@
   "no_push": true,
   "matt_auto_continue": true,
   "prior_pack_verified": "BZG-WASTE-YIELD-1",
-  "beta_os_head_at_arm": "PENDING",
+  "beta_os_head_at_arm": "651ce38",
   "brief": "state/build-factory/briefs/BRIEF-FIN-AP-AR-SHELL-1.md",
   "log": "state/build-factory/logs/FIN-AP-AR-SHELL-1.log",
   "result_file": "docs/wolf/ops/FIN-AP-AR-SHELL-1-RESULT.md",
