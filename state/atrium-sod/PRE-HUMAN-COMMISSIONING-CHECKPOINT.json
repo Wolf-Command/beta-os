@@ -1,0 +1,175 @@
+{
+  "checkpoint": "ATRIUM-SOD-1 pre-human-commissioning",
+  "at_wita": "2026-09-29T17:07:31+08:00",
+  "timezone": "Asia/Makassar (WITA)",
+  "beta_os": {
+    "repo": "/Users/wolfterminal/beta-os",
+    "branch": "build/wolf-command-rebuild",
+    "sha": "80f5729a6148b820e278aad34b0636617da2443a",
+    "files_committed": 39,
+    "files": [
+      "docs/deliveries/GROK-REVIEW-ATRIUM-SOD-1C-2026-09-29.md",
+      "docs/wolf/finance/ATRIUM-FC-AUTHORITY-MATRIX.md",
+      "docs/wolf/ops/ATRIUM-SOD-1-RESULT.md",
+      "docs/wolf/ops/shots/atriumsod1-ap-prepare-desktop.png",
+      "docs/wolf/ops/shots/atriumsod1-ap-prepare-phone.png",
+      "docs/wolf/ops/shots/atriumsod1-gl-history-desktop.png",
+      "docs/wolf/ops/shots/atriumsod1-gl-history-phone.png",
+      "docs/wolf/ops/shots/atriumsod1-preparer-desktop.png",
+      "docs/wolf/ops/shots/atriumsod1-preparer-phone.png",
+      "docs/wolf/ops/shots/atriumsod1-sod-self-deny-desktop.png",
+      "docs/wolf/ops/shots/atriumsod1-sod-self-deny-phone.png",
+      "docs/wolf/ops/shots/atriumsod1-zayen-mywork-desktop.png",
+      "docs/wolf/ops/shots/atriumsod1-zayen-mywork-phone.png",
+      "docs/wolf/ops/shots/atriumsod1-zayen-posted-gl-desktop.png",
+      "docs/wolf/ops/shots/atriumsod1-zayen-posted-gl-phone.png",
+      "docs/wolf/ops/shots/atriumsod1-zayen-review-desktop.png",
+      "docs/wolf/ops/shots/atriumsod1-zayen-review-phone.png",
+      "scripts/audit/atriumsod1_shots.py",
+      "scripts/core/atrium_fc_authority.py",
+      "scripts/core/atrium_finance_desk.py",
+      "scripts/core/atrium_full_mount.py",
+      "scripts/core/atrium_historical.py",
+      "scripts/core/staff_access.py",
+      "scripts/core/staff_home.py",
+      "scripts/core/universal_my_work.py",
+      "scripts/core/wolf_shell.py",
+      "scripts/migrations/migrate_atrium_sod1_20260929.py",
+      "scripts/tests/test_atrium_finance_ux_20260928.py",
+      "scripts/tests/test_atrium_full_mount_20260928.py",
+      "scripts/tests/test_atrium_sod1_20260929.py",
+      "scripts/tests/test_staff_access_20260928.py",
+      "state/access-evidence/cf-beta-allow-20260929.json",
+      "state/atrium-sod/PEACHES-VERIFY.json",
+      "state/atrium-sod/PEACHES-VERIFY.md",
+      "state/atrium-sod/ap-activate-20260929.json",
+      "state/atrium-sod/commissioning-memo-atriumsod1.png",
+      "state/atrium-sod/commissioning-memo-atriumsod1.txt",
+      "state/atrium-sod/discovery.md",
+      "state/atrium-sod/findings.md"
+    ],
+    "status_short_after": [
+      "M docs/wolf/bzg/UMA-BLU-REAL-DATA-PROJECTION-RESULT.md",
+      " M docs/wolf/ops/shots/humancomm1-amanda-mywork.png",
+      " M docs/wolf/ops/shots/humancomm1-commissioning-live.png",
+      " M docs/wolf/ops/shots/humancomm1-devi-commissioning-phone.png",
+      " M docs/wolf/ops/shots/humancomm1-haikal-mywork.png",
+      " M docs/wolf/ops/shots/humancomm1-header-1024.png",
+      " M docs/wolf/ops/shots/humancomm1-needs-routing.png",
+      " M docs/wolf/ops/shots/humancomm1-owner-overwatch.png",
+      " M docs/wolf/ops/shots/humancomm1-zayen-mywork.png",
+      " M docs/wolf/ops/shots/mywork1-amanda-mywork.png",
+      " M docs/wolf/ops/shots/mywork1-delegation-chain.png",
+      " M docs/wolf/ops/shots/mywork1-devi-mywork-phone.png",
+      " M docs/wolf/ops/shots/mywork1-execution-report.png",
+      " M docs/wolf/ops/shots/mywork1-haikal-mywork.png",
+      " M docs/wolf/ops/shots/mywork1-owner-command-exceptions.png",
+      " M docs/wolf/ops/shots/mywork1-task-evidence.png",
+      " M docs/wolf/ops/shots/mywork1-war-room-tasks.png",
+      " M docs/wolf/ops/shots/mywork1-zayen-mywork.png",
+      " M docs/wolf/ops/shots/mywork1b-delegation-chain.png",
+      " M docs/wolf/ops/shots/mywork1b-devi-mywork-phone.png",
+      " M docs/wolf/ops/shots/mywork1b-execution-report.png",
+      " M docs/wolf/ops/shots/mywork1b-owner-header-1024.png",
+      " M docs/wolf/ops/shots/mywork1b-owner-header-390.png",
+      " M docs/wolf/ops/shots/mywork1b-war-room-tasks.png",
+      " M docs/wolf/ops/shots/opsfix2-amanda-invoices.png",
+      " M docs/wolf/ops/shots/opsfix2-haikal-mywork.png",
+      " M docs/wolf/ops/shots/opsfix2-owner-wolf.png",
+      " M docs/wolf/ops/shots/opsfix2-uma-bills.png",
+      " M docs/wolf/ops/shots/opsfix2-uma-today-desktop.png",
+      " M docs/wolf/ops/shots/opsfix2-uma-today-phone.png",
+      " M docs/wolf/ops/shots/opsfix3-amanda-invoices.png",
+      " M docs/wolf/ops/shots/opsfix3-atrium-finance-idr.png",
+      " M docs/wolf/ops/shots/opsfix3-data-quality.png",
+      " M docs/wolf/ops/shots/opsfix3-owner-wolf.png",
+      " M docs/wolf/ops/shots/opsfix3-uma-today.png",
+      " M docs/wolf/ops/shots/opsfix3-war-room-human-queue.png",
+      " M docs/wolf/staff/ATRIUM-FINANCE-UX-RESULT.md",
+      " M docs/wolf/staff/HUMAN-COMMISSIONING-28SEP.md",
+      " M docs/wolf/staff/LIBRARY-PAGINATION-RESULT.md",
+      " M docs/wolf/staff/shots/atrium-full-ap-desktop.png"
+    ]
+  },
+  "atrium_finance": {
+    "repo": "/Users/wolfterminal/atrium-finance",
+    "branch": "wolf/beta-mount-20260928",
+    "sha": "a2a0909ee4f68f950295a650893fa5572b77923e",
+    "files_committed": 12,
+    "files": [
+      "server.ts",
+      "server/betaBooks.ts",
+      "server/betaMount.ts",
+      "server/routeAccess.ts",
+      "server/sqlitePersistence.ts",
+      "server/store.ts",
+      "src/App.tsx",
+      "src/components/GeneralLedgerView.tsx",
+      "src/components/JournalWorkbenchView.tsx",
+      "src/services/api.ts",
+      "src/types.ts",
+      "tests/betaMount.test.ts"
+    ],
+    "status_short_after": []
+  },
+  "no_push": true,
+  "no_prod_promote": true,
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "untouched": true
+  },
+  "staff_ready": false,
+  "human_commissioned": false,
+  "wi_status": {
+    "ap": [
+      {
+        "id": "WI-c8ca39bc-cc75-49b7-be9e-588105eb6a33",
+        "capability": "COMM-AP-SOD-PREPARE",
+        "status": "OPEN",
+        "title": "Prepare commissioning journal (Accounts Payable)"
+      },
+      {
+        "id": "WI-d3bc4a01-fcbb-4677-8730-32efd50ea411",
+        "capability": "COMM-AP-SOD-SUBMIT",
+        "status": "OPEN",
+        "title": "Submit commissioning journal for Controller review"
+      }
+    ],
+    "zayen_sod": [
+      {
+        "id": "WI-966bb52d-b0fc-44a8-8a25-461e6945a5d1",
+        "capability": "COMM-ZAYEN-SOD-APPROVE",
+        "status": "OPEN",
+        "title": "Approve commissioning journal (SoD)"
+      },
+      {
+        "id": "WI-235143eb-1ada-4df0-963b-2ada5687bd27",
+        "capability": "COMM-ZAYEN-SOD-AR-TEMP",
+        "status": "OPEN",
+        "title": "Temporary Accounts Receivable tasks (plain language)"
+      },
+      {
+        "id": "WI-c08bbde7-2010-4f49-bde5-49232a016d08",
+        "capability": "COMM-ZAYEN-SOD-GL",
+        "status": "OPEN",
+        "title": "Confirm posted lines in General Ledger"
+      },
+      {
+        "id": "WI-b46960da-af56-4092-af7d-dcb441d4f985",
+        "capability": "COMM-ZAYEN-SOD-POST",
+        "status": "OPEN",
+        "title": "Post approved commissioning journal"
+      },
+      {
+        "id": "WI-ee3ba9ae-a502-49bf-8b19-a7d5ca2dbbf7",
+        "capability": "COMM-ZAYEN-SOD-REVIEW",
+        "status": "OPEN",
+        "title": "Review / return commissioning journal"
+      }
+    ],
+    "note": "All AP + Zayen SOD commissioning WIs remain OPEN/active. No PASS invented. Not closed."
+  },
+  "ordered_by": "Matthew via Peaches 2026-09-29 ~17:01 WITA",
+  "credit_conservation": true
+}

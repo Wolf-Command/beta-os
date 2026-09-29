@@ -1,0 +1,26 @@
+{
+  "engineering_simulation_success_path": false,
+  "engineering_simulation_stopped": true,
+  "ap_commissioning_live": true,
+  "zayen_commissioning_live": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "preserve_all_human_pass_fail": true,
+  "repair_then_same_human_retest": true,
+  "continue_automatically": true,
+  "committed_checkpoint": {
+    "beta_os": {
+      "branch": "build/wolf-command-rebuild",
+      "sha": "80f5729a6148b820e278aad34b0636617da2443a"
+    },
+    "atrium_finance": {
+      "branch": "wolf/beta-mount-20260928",
+      "sha": "a2a0909ee4f68f950295a650893fa5572b77923e"
+    }
+  },
+  "at_wita": "2026-09-29T17:07:31+08:00",
+  "no_push": true,
+  "no_prod": true,
+  "prod_pid": 15975,
+  "evidence_path": "state/atrium-sod/PRE-HUMAN-COMMISSIONING-CHECKPOINT.json"
+}
