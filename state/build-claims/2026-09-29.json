@@ -56,6 +56,14 @@
       "check": "PYTHONPATH=scripts python3 scripts/tests/test_humfix1_20260929.py 2>&1 | tail -1 | grep -q 'fail=0'",
       "expect": "exit 0",
       "by": "humfix1-20260929"
+    },
+    {
+      "id": "humfix1b-20260929",
+      "claim": "HUMFIX-1B: Beta GL shows truthful empty (0 POSTED lines, no invented numbers); chip Property unset; Zayen title Atrium Financial Controller from ASG-ZAYEN-FC-1; Post UI gated with Owner-policy reason while server 403; JRN-HUMFIX-PREP2 VALIDATED for SoD approve retest; content plans current-by-window; 10 content people have 8 brands; 12 RETESTs re-opened after HELD; staff_ready/human_commissioned false; prod 15975 untouched.",
+      "check": "PYTHONPATH=scripts python3 scripts/tests/test_humfix1b_20260929.py 2>&1 | tail -1 | grep -q 'fail=0'",
+      "expect": "SUMMARY pass=48 fail=0; PREP2 VALIDATED; posted_journals=0; 12 RETESTs OPEN not HELD; 8787 pid 15975",
+      "by": "humfix1b",
+      "at": "2026-09-29T04:54:01Z"
     }
   ]
 }

@@ -125,12 +125,12 @@ All under `docs/wolf/ops/shots/`:
 | Beta `:8788` | **2302** |
 | Atrium `:8790` | **9496** (restarted after npm/suite collision; DB journals preserved) |
 
-### Commits (local only — filled after commit)
+### Commits (local only)
 
 | Repo | Commit |
 |------|--------|
-| beta-os | _(see git log)_ |
-| atrium-finance | _(see git log)_ |
+| beta-os | `fa1858f` |
+| atrium-finance | `b6008cd` |
 
 ### Migration
 ```
