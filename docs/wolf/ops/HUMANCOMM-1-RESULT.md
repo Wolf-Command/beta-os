@@ -85,4 +85,4 @@ PYTHONPATH=scripts python3 scripts/ops/commissioning_tick.py --json
 ```
 
 ## Commit
-Local only: `5bb9353` — Ship HUMANCOMM-1 (+ follow-up result pins).
+Local only: `db38de2` (feature `918a15d`).
