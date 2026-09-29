@@ -66,4 +66,6 @@ Local only. No push.
 - `d474c7303a167130ce296ce3dce3a3da5aa643f2` — List full MYWORK-1B result commit SHAs.
 - `711abfe2bb0abe1d85cb05571d3bd126df7be74a` — Close MYWORK-1B result commit list.
 
+-  — Fix MYWORK-1B result commit hashes.
+
 RESULT: PASS (Alchemist live-count drift on opsfix2/umareal noted; unrelated to this pack)
