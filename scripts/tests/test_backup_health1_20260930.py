@@ -155,12 +155,14 @@ def test_module_honesty() -> None:
 
     restore = by_id["restore_drill"]
     check(
-        "restore NOT_RUN or UNKNOWN",
-        str(restore.get("status") or "").upper() in ("NOT_RUN", "UNKNOWN", "MISSING"),
+        "restore honest status",
+        str(restore.get("status") or "").upper()
+        in ("NOT_RUN", "UNKNOWN", "MISSING", "DRILL_RAN_NON_DESTRUCTIVE", "FAIL"),
         str(restore.get("status")),
     )
     check("restore not PASS", str(restore.get("status") or "").upper() not in (
         "SUCCESS", "PASS", "PASSED", "RESTORED", "OK", "DONE", "COMPLETE", "COMPLETED",
+        "READY", "PROVEN",
     ))
     check("restore live_restore false", restore.get("live_restore") is False)
     check("restore pass_invented false", restore.get("pass_invented") is False)
@@ -294,8 +296,11 @@ def test_http_api_and_page() -> None:
             "no fake backup success" in text.lower() or "fake backup" in text.lower(),
         )
         check(
-            "page restore NOT_RUN honesty",
-            "NOT_RUN" in text or "restore-drill" in text.lower(),
+            "page restore honesty banner",
+            "restore-drill" in text.lower()
+            or "NOT_RUN" in text
+            or "DRILL_RAN_NON_DESTRUCTIVE" in text
+            or "non-destructive" in text.lower(),
         )
 
         status, _ = call(port, "GET", "/ops/backup-health-1")
@@ -520,7 +525,8 @@ def test_shots() -> None:
             "  && ht.includes('staff_ready=false') && ht.includes('human_commissioned=false')"
             "  && t.includes('last_backup') && t.includes('restore_drill') && t.includes('cap_dr_01'),"
             " text:t.slice(0,500), honesty:ht, restoreStatus:restoreStatus,"
-            " hasNotRun: (restoreStatus==='NOT_RUN') || t.includes('NOT_RUN')};"
+            " hasHonestRestore: ['NOT_RUN','UNKNOWN','MISSING','DRILL_RAN_NON_DESTRUCTIVE','FAIL']"
+            ".includes(restoreStatus)};"
             "})()"
         )
         for width, name in (
@@ -533,8 +539,8 @@ def test_shots() -> None:
                 check(f"board ready {name}", bool(value and value.get("ok")), str(value)[:220])
                 if value:
                     check(
-                        f"NOT_RUN visible {name}",
-                        value.get("hasNotRun") is True,
+                        f"honest restore visible {name}",
+                        value.get("hasHonestRestore") is True,
                         str(value.get("restoreStatus")),
                     )
                 shot = cdp("Page.captureScreenshot", {"format": "png", "fromSurface": True})
@@ -552,8 +558,15 @@ def test_shots() -> None:
             check("stamps shot ready", bool(value and value.get("ok")), str(value)[:200])
             if value:
                 check(
-                    "restore NOT_RUN on stamps shot",
-                    value.get("restoreStatus") in ("NOT_RUN", "UNKNOWN", "MISSING"),
+                    "restore honest on stamps shot",
+                    value.get("restoreStatus")
+                    in (
+                        "NOT_RUN",
+                        "UNKNOWN",
+                        "MISSING",
+                        "DRILL_RAN_NON_DESTRUCTIVE",
+                        "FAIL",
+                    ),
                     str(value.get("restoreStatus")),
                 )
             shot = cdp("Page.captureScreenshot", {"format": "png", "fromSurface": True})

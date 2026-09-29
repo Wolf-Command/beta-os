@@ -1,0 +1,38 @@
+{
+  "run_id": "PIPE-RELIABILITY-AUTO-1",
+  "pack": "PIPE-RELIABILITY-AUTO-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 7,
+  "status": "WAITING_CURSOR",
+  "armed_at": "2026-09-30T07:46:00+08:00",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "prior_pack_verified": "BACKUP-RESTORE-DRILL-1",
+  "beta_os_head_at_arm": "PENDING",
+  "brief": "state/build-factory/briefs/BRIEF-PIPE-RELIABILITY-AUTO-1.md",
+  "log": "state/build-factory/logs/PIPE-RELIABILITY-AUTO-1.log",
+  "result_file": "docs/wolf/ops/PIPE-RELIABILITY-AUTO-1-RESULT.md",
+  "next_pack_for_parent": "METRICOOL-RUNTIME-WIRE-1",
+  "classification": "INTERNALLY_SOLVABLE",
+  "forbids": [
+    "fake uptime",
+    "fake pipe UP",
+    "prod mutate",
+    "HEADCHEF",
+    "Exit Report",
+    "push"
+  ],
+  "depends_on": [
+    "RELIABILITY-1"
+  ],
+  "preserves": [
+    "RELIABILITY-1",
+    "BACKUP-HEALTH-1"
+  ]
+}

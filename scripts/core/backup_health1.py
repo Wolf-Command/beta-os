@@ -376,7 +376,50 @@ def _stamp_last_backup() -> dict[str, Any]:
 
 
 def _stamp_restore_drill() -> dict[str, Any]:
-    """Restore-drill stamp from Beta framework. NOT_RUN stays NOT_RUN."""
+    """Restore-drill stamp.
+
+    Prefer BACKUP-RESTORE-DRILL-1 non-destructive log when present
+    (lifts NOT_RUN → DRILL_RAN_NON_DESTRUCTIVE). Otherwise framework NOT_RUN.
+    Never invent SUCCESS/PASS/READY without that authorised drill log.
+    """
+    # Lazy import avoids circular import with backup_restore_drill1.
+    try:
+        from core import backup_restore_drill1 as _brd  # noqa: PLC0415
+
+        log = _brd.load_drill_log()
+    except Exception:  # noqa: BLE001
+        log = None
+
+    if isinstance(log, dict) and str(log.get("status") or "").upper() == "SUCCESS":
+        sha_ok = log.get("sha256_match") is True
+        prod_mut = log.get("production_mutated") is True
+        if sha_ok and not prod_mut:
+            return {
+                "id": "restore_drill",
+                "label": "Restore drill (Beta)",
+                "status": "DRILL_RAN_NON_DESTRUCTIVE",
+                "source": "core.backup_restore_drill1",
+                "drill_status": "SUCCESS",
+                "honesty_status": "DRILL_RAN_NON_DESTRUCTIVE",
+                "last_drill_at": log.get("recorded_at"),
+                "target_path": log.get("target_path"),
+                "source_path": log.get("source_path"),
+                "production_mutated": False,
+                "live_restore": False,
+                "sha256_match": True,
+                "framework_skeleton": "BUILT",
+                "historical_is_this_drill": False,
+                "full_dr_ready_claimed": False,
+                "proven_scope": "non_destructive_temp_only",
+                "notes": (
+                    "BACKUP-RESTORE-DRILL-1 authorised non-destructive temp-dir drill "
+                    "ran with sha256 match. Not full DR READY (NAS/B2)."
+                ),
+                "probe_mode": "non_destructive_temp",
+                "success_invented": False,
+                "pass_invented": False,
+            }
+
     try:
         framework = _restore_drill.build_framework()
     except Exception as exc:  # noqa: BLE001
@@ -396,9 +439,8 @@ def _stamp_restore_drill() -> dict[str, Any]:
         }
 
     status = str(framework.get("status") or "NOT_RUN").upper()
-    # Absolute honesty: never promote to SUCCESS/PASS from this pack.
+    # Absolute honesty: never promote to SUCCESS/PASS from this pack alone.
     if status in _restore_drill._SUCCESS_STATUS:  # noqa: SLF001
-        # If somehow elevated, refuse to surface as PASS — force UNKNOWN + flag.
         return {
             "id": "restore_drill",
             "label": "Restore drill (Beta)",
@@ -425,7 +467,7 @@ def _stamp_restore_drill() -> dict[str, Any]:
         "status": status if status else "NOT_RUN",
         "source": "core.restore_drill",
         "drill_status": status if status else "NOT_RUN",
-        "live_restore": False,  # this pack never runs a live restore
+        "live_restore": False,
         "framework_skeleton": framework.get("framework_skeleton"),
         "checklist_executed": framework.get("checklist_executed"),
         "checklist_count": framework.get("checklist_count"),
@@ -603,24 +645,29 @@ def build_board() -> dict[str, Any]:
     ]
 
     # Absolute honesty pins on every stamp.
+    _allowed_restore = {
+        "NOT_RUN",
+        "UNKNOWN",
+        "MISSING",
+        "DRILL_RAN_NON_DESTRUCTIVE",
+        "FAIL",
+    }
     for row in stamps:
         row["success_invented"] = False
         row.setdefault("fake_backup_success", False)
         row.setdefault("pass_invented", False)
-        # Never paint restore as SUCCESS on this board.
-        if row.get("id") == "restore_drill" and str(row.get("status") or "").upper() in {
-            "SUCCESS",
-            "PASS",
-            "PASSED",
-            "RESTORED",
-            "OK",
-            "DONE",
-            "COMPLETE",
-            "COMPLETED",
-        }:
-            row["status"] = "UNKNOWN"
-            row["pass_invented"] = False
-            row["refused_elevated_pass"] = True
+        # Never paint restore as bare SUCCESS/PASS/READY on this board.
+        # DRILL_RAN_NON_DESTRUCTIVE is the authorised honesty lift.
+        if row.get("id") == "restore_drill":
+            st = str(row.get("status") or "").upper()
+            if st in _restore_drill._SUCCESS_STATUS or st in {"READY", "PROVEN"}:  # noqa: SLF001
+                row["status"] = "UNKNOWN"
+                row["pass_invented"] = False
+                row["refused_elevated_pass"] = True
+            elif st not in _allowed_restore and st:
+                row["status"] = "UNKNOWN"
+                row["pass_invented"] = False
+                row["refused_elevated_pass"] = True
 
     by_status: dict[str, int] = {}
     for row in stamps:
@@ -630,6 +677,7 @@ def build_board() -> dict[str, Any]:
     restore = next((s for s in stamps if s.get("id") == "restore_drill"), {})
     last_backup = next((s for s in stamps if s.get("id") == "last_backup"), {})
     flags = honesty_flags()
+    restore_status = str(restore.get("status") or "").upper()
 
     return {
         "ok": True,
@@ -651,6 +699,8 @@ def build_board() -> dict[str, Any]:
         "secrets_exposed": False,
         "ceiling": CEILING,
         "closes_toward": list(CLOSES_TOWARD),
+        "last_drill_at": restore.get("last_drill_at"),
+        "production_mutated": False,
         "counts": {
             "total": len(stamps),
             "by_status": by_status,
@@ -659,11 +709,17 @@ def build_board() -> dict[str, Any]:
         "honesty": {
             "last_backup_is_not_restore": True,
             "restore_drill_status": restore.get("status"),
-            "restore_drill_not_pass": str(restore.get("status") or "").upper()
+            "restore_drill_not_pass": restore_status
             not in _restore_drill._SUCCESS_STATUS,  # noqa: SLF001
+            "restore_drill_lifted_non_destructive": restore_status
+            == "DRILL_RAN_NON_DESTRUCTIVE",
+            "last_drill_at": restore.get("last_drill_at"),
+            "target_path": restore.get("target_path"),
+            "production_mutated": False,
+            "full_dr_ready_claimed": False,
             "historical_not_this_drill": True,
             "backup_status_source": "atrium_ro_monitoring_snapshot",
-            "catalog_source": "beta_ledger+restore_drill",
+            "catalog_source": "beta_ledger+restore_drill+backup_restore_drill1",
             "missing_stays_missing": True,
             "uptime_policy_from_reliability1": "null_never_invent",
             "prod_probe": "read_only",
@@ -690,7 +746,11 @@ def public_payload() -> dict[str, Any]:
 
 
 def restore_drill_is_honest(payload: dict[str, Any] | None = None) -> bool:
-    """True when restore-drill is not painted PASS and success is not invented."""
+    """True when restore-drill is not painted PASS and success is not invented.
+
+    DRILL_RAN_NON_DESTRUCTIVE is honest only when backed by a real
+    BACKUP-RESTORE-DRILL-1 log (sha256 match, production_mutated=false).
+    """
     pack = payload if payload is not None else build_board()
     if pack.get("fake_backup_success") is True:
         return False
@@ -708,6 +768,14 @@ def restore_drill_is_honest(payload: dict[str, Any] | None = None) -> bool:
     if restore.get("pass_invented") is True or restore.get("success_invented") is True:
         return False
     status = str(restore.get("status") or "").upper()
-    if status in _restore_drill._SUCCESS_STATUS:  # noqa: SLF001
+    if status in _restore_drill._SUCCESS_STATUS or status in {"READY", "PROVEN"}:  # noqa: SLF001
         return False
-    return status in ("NOT_RUN", "UNKNOWN", "MISSING")
+    if status == "DRILL_RAN_NON_DESTRUCTIVE":
+        return (
+            restore.get("sha256_match") is True
+            and restore.get("production_mutated") is False
+            and restore.get("live_restore") is False
+            and bool(restore.get("last_drill_at"))
+            and bool(restore.get("target_path"))
+        )
+    return status in ("NOT_RUN", "UNKNOWN", "MISSING", "FAIL")

@@ -181,6 +181,7 @@ from core import owner_needs_you1 as _owner_needs_you1
 from core import owner_exceptions_live1 as _owner_exceptions_live1
 from core import esb_truth1 as _esb_truth1
 from core import backup_health1 as _backup_health1
+from core import backup_restore_drill1 as _backup_restore_drill1
 from core import intel_learn1 as _intel_learn1
 from core import sop_lesson_live1 as _sop_lesson_live1
 from core import bzg_ops_desk1 as _bzg_ops_desk1
@@ -2060,6 +2061,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._backup_health1_dispatch():
+            return
+
+        if self._backup_restore_drill1_dispatch():
             return
 
         if self._fin_cash_truth1_dispatch():
@@ -5304,6 +5308,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._backup_health1_dispatch():
                 return
         elif path in (
+            "/ops/backup-restore-drill-1",
+            "/ops/backup-restore-drill-1/",
+            "/ops/backup-restore-drill",
+            "/ops/backup-restore-drill/",
+            "/backup-restore-drill-1",
+            "/backup-restore-drill-1/",
+            "/backup-restore-drill-1.html",
+            "/dashboards/backup-restore-drill-1.html",
+        ):
+            if self._backup_restore_drill1_dispatch():
+                return
+        elif path in (
             "/intel/learning",
             "/intel/learning/",
             "/ops/intel-learning",
@@ -6204,6 +6220,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/ops/backup-health-1" or path.startswith("/api/ops/backup-health-1/"):
             self._backup_health1_write_refused(path)
             return
+        if path == "/api/ops/backup-restore-drill-1" or path.startswith(
+            "/api/ops/backup-restore-drill-1/"
+        ):
+            self._backup_restore_drill1_write_refused(path)
+            return
         if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
             self._fin_cash_truth1_write_refused(path)
             return
@@ -7077,6 +7098,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ops/backup-health-1" or path.startswith("/api/ops/backup-health-1/"):
             self._backup_health1_write_refused(path)
+            return
+        if path == "/api/ops/backup-restore-drill-1" or path.startswith(
+            "/api/ops/backup-restore-drill-1/"
+        ):
+            self._backup_restore_drill1_write_refused(path)
             return
         if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
             self._fin_cash_truth1_write_refused(path)
@@ -8356,6 +8382,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ops/backup-health-1" or path.startswith("/api/ops/backup-health-1/"):
             self._backup_health1_write_refused(path)
+            return
+        if path == "/api/ops/backup-restore-drill-1" or path.startswith(
+            "/api/ops/backup-restore-drill-1/"
+        ):
+            self._backup_restore_drill1_write_refused(path)
             return
         if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
             self._fin_cash_truth1_write_refused(path)
@@ -16733,6 +16764,105 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "human_commissioned": False,
                 "fake_backup_success": False,
                 "invented_restore_pass": False,
+            },
+            status=403,
+        )
+
+    def _backup_restore_drill1_dispatch(self) -> bool:
+        """BACKUP-RESTORE-DRILL-1 — non-destructive temp drill board."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _backup_restore_drill1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _backup_restore_drill1.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "backup_restore_drill_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "production_mutated": False,
+                        "live_restore": False,
+                        "full_dr_ready_claimed": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _backup_restore_drill1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "backup-restore-drill-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "BACKUP-RESTORE-DRILL-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="backup-restore-drill-1.html")
+        return True
+
+    def _backup_restore_drill1_write_refused(self, path: str) -> None:
+        """Refuse live/prod/NAS/B2 restore and full DR READY claims."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _backup_restore_drill1.refuse_external_write(
+                body if isinstance(body, dict) else {}
+            )
+        except _backup_restore_drill1.BackupRestoreDrill1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "production_mutated": False,
+                    "live_restore": False,
+                    "full_dr_ready_claimed": False,
+                    "prod_pid_held": _backup_restore_drill1.PROD_PID_HELD,
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": (
+                    "BACKUP-RESTORE-DRILL-1 board is read-only after the authorised "
+                    "temp drill. Writes refused."
+                ),
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "production_mutated": False,
+                "full_dr_ready_claimed": False,
             },
             status=403,
         )

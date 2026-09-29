@@ -1,0 +1,86 @@
+{
+  "pack": "BACKUP-RESTORE-DRILL-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T07:46:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T07:45:06+08:00",
+  "result_file": "docs/wolf/ops/BACKUP-RESTORE-DRILL-1-RESULT.md",
+  "tests_rerun": {
+    "test_backup_restore_drill1_20260930.py": {
+      "pass": 118,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/backuprestore1-desk-desktop.png",
+        "bytes": 218139,
+        "sha256": "d76869f9a8e1d27c83d126ecf534faeb5dd88c4a491d1cede829a44f19e0ad31"
+      },
+      {
+        "path": "docs/wolf/ops/shots/backuprestore1-desk-phone.png",
+        "bytes": 102546,
+        "sha256": "2d176758b65a05e0febc428b876ad721586c6ed09683576b843a2b936863c5d1"
+      },
+      {
+        "path": "docs/wolf/ops/shots/backuprestore1-health-lift.png",
+        "bytes": 163907,
+        "sha256": "3d41d07e9450f2ed9728fce66060d1a7018a2d30391db30e01f28990a3dfbd75"
+      },
+      {
+        "path": "docs/wolf/ops/shots/backuprestore1-unsigned-deny.png",
+        "bytes": 24471,
+        "sha256": "7df206a8cc673a3bc5593cc1ec6f49e9b4799764c6a5130d7590ace9de8fbded"
+      }
+    ]
+  },
+  "drill": {
+    "status": "SUCCESS",
+    "honesty_status": "DRILL_RAN_NON_DESTRUCTIVE",
+    "production_mutated": false,
+    "sha256_match": true,
+    "source": "state/backups/content_library.sqlite.pre-devi-scope-narrow-20260919-081414"
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "restore_drill": "DRILL_RAN_NON_DESTRUCTIVE",
+    "lifted_from": "NOT_RUN",
+    "full_dr_ready": false,
+    "ceiling": "PROVEN_NON_DESTRUCTIVE_ONLY"
+  },
+  "classification": {
+    "non_destructive_drill": "INTERNALLY_SOLVABLE",
+    "nas_b2_full_dr": "EXTERNAL_BLOCKER_OR_HUMAN",
+    "shell_ne_complete": true,
+    "note": "NOT_RUN lifted; full DR READY not claimed"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "670f57bdc192e34a92466bcafc8191ce9dd592ad",
+    "uncommitted": true
+  },
+  "preserves": [
+    "BACKUP-HEALTH-1",
+    "RELIABILITY-1"
+  ],
+  "next_pack": "PIPE-RELIABILITY-AUTO-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

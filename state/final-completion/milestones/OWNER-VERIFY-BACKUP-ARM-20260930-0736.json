@@ -1,0 +1,28 @@
+{
+  "milestone_id": "OWNER-VERIFY-BACKUP-ARM-20260930-0736",
+  "at_wita": "2026-09-30T07:36:10+08:00",
+  "mac_pipe": "PIPE_OK",
+  "pass_verified_count": 30,
+  "last_verified": {
+    "pack": "OWNER-EXCEPTIONS-LIVE-1",
+    "tests": "245/0",
+    "commit": "670f57b"
+  },
+  "active": {
+    "pack": "BACKUP-RESTORE-DRILL-1",
+    "cursor_pid": 54408
+  },
+  "next_after": "PIPE-RELIABILITY-AUTO-1",
+  "queued_deepens": [
+    "METRICOOL-RUNTIME-WIRE-1",
+    "ESB-SETTLEMENT-PATH-1",
+    "SOP-CATALOG-SEED-ROUTE-1",
+    "FIN-BANK-CREDS-ROUTE-1",
+    "INV-CASH-FACTS-ROUTE-1"
+  ],
+  "standards_lock": true,
+  "staff_ready": false,
+  "no_push": true,
+  "prod_pid": 15975,
+  "note": "GGV-METRIC already PASS \u2014 not re-pinged"
+}

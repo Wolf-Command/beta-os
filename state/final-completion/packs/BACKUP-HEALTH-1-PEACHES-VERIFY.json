@@ -3,7 +3,7 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "status": "PASS_VERIFIED",
-  "verified_at": "2026-09-30T02:59:00+08:00",
+  "verified_at": "2026-09-30T02:56:40+08:00",
   "verifier": "Peaches-build-factory-watch",
   "exit_code": 0,
   "exit_at": "2026-09-30T02:52:10+08:00",
@@ -18,32 +18,7 @@
     "count": 4,
     "distinct_sha256": 4,
     "all_distinct": true,
-    "files": [
-      {
-        "path": "docs/wolf/ops/shots/backuphealth1-board-desktop.png",
-        "bytes": 182951,
-        "sha256": "8e8e0b6720b6109da0dc51eeafb0060d7037a87f1ee448133680ba698a4200e3"
-      },
-      {
-        "path": "docs/wolf/ops/shots/backuphealth1-board-phone.png",
-        "bytes": 103094,
-        "sha256": "062f2bee7f33d09b816ef13d736046f84013657a22b13b3286aa8e2a5b5eeed5"
-      },
-      {
-        "path": "docs/wolf/ops/shots/backuphealth1-stamps-honesty.png",
-        "bytes": 183069,
-        "sha256": "23805abae83fd3cf3c4edbca8afdcfa1cdce92ea7f6e2d5d155365528294fdc6"
-      },
-      {
-        "path": "docs/wolf/ops/shots/backuphealth1-unsigned-deny.png",
-        "bytes": 25119,
-        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
-      }
-    ],
-    "eye_check": {
-      "board": "restore NOT_RUN; atrium snapshot STALE; CAP-DR-01 SPECIFIED; fake_backup_success=false",
-      "unsigned_deny": "Access denied"
-    }
+    "note": "all 4 shots distinct"
   },
   "prod": {
     "port": 8787,
@@ -56,15 +31,19 @@
     "human_commissioned": false
   },
   "honesty": {
+    "restore_drill": "DRILL_RAN_NON_DESTRUCTIVE",
     "fake_backup_success": false,
     "invented_restore_pass": false,
-    "restore_drill": "NOT_RUN",
-    "ceiling": "BUILT"
+    "ceiling": "PROVEN_NON_DESTRUCTIVE_ONLY",
+    "cap_dr_01": "SPECIFIED",
+    "lifted_by": "BACKUP-RESTORE-DRILL-1",
+    "lifted_at": "2026-09-30T07:46:00+08:00",
+    "full_dr_ready": false
   },
   "no_push": true,
   "beta_only": true,
   "git": {
-    "beta_os_head": "687a9ca",
+    "beta_os_head": "9250f3e",
     "atrium_finance_head": "7584266",
     "uncommitted": true
   },
@@ -73,5 +52,15 @@
   ],
   "next_pack": "FIN-CASH-TRUTH-1",
   "cursor_did_not_auto_start_next": true,
-  "HEADCHEF_auto": false
+  "HEADCHEF_auto": false,
+  "independent_rerun_this_tick": {
+    "at": "2026-09-30T02:53:10+08:00",
+    "pass": 136,
+    "fail": 0
+  },
+  "matt_finished_ping_at": "2026-09-30T02:56:40+08:00",
+  "covers_with": [
+    "ESB-TRUTH-1"
+  ],
+  "note_post_drill": "NOT_RUN lifted by BACKUP-RESTORE-DRILL-1 non-destructive drill; NAS/B2 still not claimed READY"
 }

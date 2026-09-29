@@ -1,0 +1,5 @@
+BACKUP-RESTORE-DRILL-1 fixture
+pack=BACKUP-RESTORE-DRILL-1
+cap=CAP-DR-01
+non_destructive=true
+created=2026-09-30T07:36:00+08:00

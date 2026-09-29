@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T07:36:00+08:00",
+  "at_wita": "2026-09-30T07:46:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -1124,10 +1124,23 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "classification": "INTERNALLY_SOLVABLE",
       "synthesized_from": "Matt CONTINUE standards 20260930",
-      "armed_at": "2026-09-30T07:36:00+08:00"
+      "armed_at": "2026-09-30T07:36:00+08:00",
+      "exited_at": "2026-09-30T07:43:30+08:00",
+      "honesty_status": "DRILL_RAN_NON_DESTRUCTIVE",
+      "suite": {
+        "pass": 118,
+        "fail": 0
+      },
+      "shell_ne_complete": true,
+      "result_file": "docs/wolf/ops/BACKUP-RESTORE-DRILL-1-RESULT.md",
+      "verified_at": "2026-09-30T07:46:00+08:00",
+      "tests": {
+        "pass": 118,
+        "fail": 0
+      }
     },
     {
       "pack_id": "PIPE-RELIABILITY-AUTO-1",
@@ -1153,9 +1166,10 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
+      "status": "WAITING_CURSOR",
       "classification": "INTERNALLY_SOLVABLE",
-      "synthesized_from": "Matt CONTINUE standards 20260930"
+      "synthesized_from": "Matt CONTINUE standards 20260930",
+      "armed_at": "2026-09-30T07:46:00+08:00"
     },
     {
       "pack_id": "METRICOOL-RUNTIME-WIRE-1",

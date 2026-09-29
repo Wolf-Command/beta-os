@@ -53,9 +53,10 @@
     {
       "surface": "Backup restore NOT_RUN",
       "classification": "INTERNALLY_SOLVABLE",
-      "evidence": "BACKUP-HEALTH-1 left restore NOT_RUN; scripts/core/restore_drill.py exists; Matt authorised non-destructive drill",
-      "next_pack": "BACKUP-RESTORE-DRILL-1",
-      "action": "Run approved non-destructive restore drill; lift NOT_RUN"
+      "evidence": "BACKUP-RESTORE-DRILL-1 ran non-destructive temp drill; sha256 match; honesty DRILL_RAN_NON_DESTRUCTIVE; full DR READY still shell_ne_complete",
+      "next_pack": "PIPE-RELIABILITY-AUTO-1",
+      "action": "DONE this pack — lift NOT_RUN; NAS/B2 full DR remains EXTERNAL_HUMAN if unauthorised",
+      "status_after": "DRILL_RAN_NON_DESTRUCTIVE"
     },
     {
       "surface": "Mac local-exec pipe outage",
@@ -65,7 +66,7 @@
       "action": "Detect/recover Mac local-exec under reliability board"
     }
   ],
-  "updated_at": "2026-09-30T07:29:30+08:00",
+  "updated_at": "2026-09-30T07:37:00+08:00",
   "metricool_runtime_probe": {
     "getBrandSettings": "6 brands",
     "getAnalyticsAvailableMetrics_instagram_posts": "29 fields incl engagement/likes/reach",
@@ -76,5 +77,12 @@
     "at_wita": "2026-09-30T07:28:40+08:00",
     "note": "local-exec briefly unreachable then PIPE_OK again \u2014 reinforces PIPE-RELIABILITY-AUTO-1",
     "classification": "INTERNALLY_SOLVABLE"
-  }
+  },
+  "pipe_flaps": [
+    {
+      "at_wita": "2026-09-30T07:36:40+08:00",
+      "during": "BACKUP-RESTORE-DRILL-1 babysit",
+      "recovered": true
+    }
+  ]
 }

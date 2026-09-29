@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Backup Restore Drill — Non-destructive</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1c1915;
+      --muted: #5c574e;
+      --paper: #f3f1ec;
+      --card: #fffdf8;
+      --line: #ddd6c8;
+      --bad: #8a1f1f;
+      --ok: #2a4a28;
+      --warn: #6b4a18;
+      --drill: #1f4a3a;
+    }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(ellipse 70% 40% at 0% 0%, #e4ebe8 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 72px; }
+    h1 { font-size: 1.65rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #eef5f1; border: 1px solid #b9cfc4; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner strong { color: #1f4a3a; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+    .chip {
+      display: inline-block; padding: 5px 10px; border-radius: 6px;
+      background: #ebe4d6; font-size: 0.75rem; font-weight: 600;
+    }
+    .chip.DRILL_RAN_NON_DESTRUCTIVE, .chip.PRESERVED, .chip.PROVEN_NON_DESTRUCTIVE_ONLY {
+      background: #d7e8df; color: var(--drill);
+    }
+    .chip.FAIL, .chip.BROKEN, .chip.MISSING { background: #f5e0e0; color: var(--bad); }
+    .chip.NOT_RUN, .chip.UNKNOWN, .chip.BUILT { background: #f5ead8; color: var(--warn); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+    table { width: 100%; border-collapse: collapse; min-width: 680px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #ebe4d6; vertical-align: top; font-size: 0.86rem; }
+    th { background: #f0ebe2; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    tr:last-child td { border-bottom: 0; }
+    tr.DRILL_RAN_NON_DESTRUCTIVE, tr.PRESERVED, tr.PROVEN_NON_DESTRUCTIVE_ONLY { background: #f4faf7; }
+    tr.FAIL, tr.BROKEN { background: #fff5f3; }
+    tr.NOT_RUN, tr.UNKNOWN, tr.BUILT { background: #fffaf0; }
+    .status { font-weight: 700; white-space: nowrap; }
+    .status.DRILL_RAN_NON_DESTRUCTIVE, .status.PRESERVED { color: var(--drill); }
+    .status.FAIL, .status.BROKEN { color: var(--bad); }
+    .status.NOT_RUN, .status.UNKNOWN { color: var(--warn); }
+    .muted { color: var(--muted); font-size: 0.8rem; line-height: 1.4; }
+    .null { color: #9a9488; font-style: italic; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; word-break: break-all; }
+    .facts { margin: 0 0 18px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+    .facts dl { display: grid; grid-template-columns: 160px 1fr; gap: 6px 12px; margin: 0; font-size: 0.88rem; }
+    .facts dt { color: var(--muted); }
+    .facts dd { margin: 0; }
+    @media (max-width: 520px) {
+      h1 { font-size: 1.35rem; }
+      main { padding: 16px 12px 64px; }
+      .facts dl { grid-template-columns: 1fr; }
+      th, td { padding: 8px 8px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body data-ready="0" data-pack="BACKUP-RESTORE-DRILL-1">
+  <main>
+    <h1>Backup Restore Drill</h1>
+    <p class="sub" id="sub">Non-destructive temp-dir drill · pack BACKUP-RESTORE-DRILL-1 · loading…</p>
+    <div class="banner" id="honesty">
+      <strong>Honesty:</strong>
+      staff_ready=false · human_commissioned=false ·
+      production_mutated=false · live_restore=false ·
+      DRILL_RAN_NON_DESTRUCTIVE ≠ full DR READY ·
+      shell_ne_complete until NAS/B2 · prod pid 15975 READ-ONLY
+    </div>
+    <div class="facts" id="facts">
+      <dl>
+        <dt>status</dt><dd id="f-status" class="null">—</dd>
+        <dt>last_drill_at</dt><dd id="f-last" class="null">—</dd>
+        <dt>target_path</dt><dd id="f-target" class="null">—</dd>
+        <dt>production_mutated</dt><dd id="f-prod">false</dd>
+        <dt>sha256_match</dt><dd id="f-sha" class="null">—</dd>
+        <dt>ceiling</dt><dd id="f-ceil">PROVEN_NON_DESTRUCTIVE_ONLY</dd>
+      </dl>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Stamp</th>
+            <th>Status</th>
+            <th>Key facts</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <tr><td colspan="4" class="muted">Loading non-destructive drill board…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    function setText(id, value, isNull) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = value == null || value === "" ? "—" : String(value);
+      el.className = (value == null || value === "" || isNull) ? "null" : "";
+    }
+    function factsFor(row) {
+      var id = row.id || "";
+      if (id === "restore_drill_non_destructive") {
+        return "last=" + esc(row.last_drill_at || "—") +
+          " · sha256_match=" + esc(row.sha256_match) +
+          " · production_mutated=false · target=<code>" +
+          esc((row.target_path || "").toString().slice(0, 72)) + "</code>";
+      }
+      if (id === "cap_dr_01_scope") {
+        return "shell_ne_complete=true · full_dr_ready_claimed=false";
+      }
+      if (id === "restore_drill_guards") {
+        return "refuse_live/prod/nas/b2 preserved";
+      }
+      if (id === "backup_health1" || id === "reliability1") {
+        return "honest=" + esc(row.honest != null ? row.honest : row.sidecar_honest);
+      }
+      return "—";
+    }
+    function render(data) {
+      document.getElementById("sub").textContent =
+        "Non-destructive temp-dir drill · pack " + (data.pack || "BACKUP-RESTORE-DRILL-1") +
+        " · as of " + (data.as_of_wita || "—") +
+        " · ceiling " + (data.ceiling || "PROVEN_NON_DESTRUCTIVE_ONLY");
+      setText("f-status", data.status || (data.drill && data.drill.status));
+      setText("f-last", data.last_drill_at);
+      setText("f-target", data.target_path);
+      setText("f-prod", "false");
+      setText("f-sha", data.sha256_match == null ? null : String(data.sha256_match));
+      setText("f-ceil", data.ceiling || "PROVEN_NON_DESTRUCTIVE_ONLY");
+      var chips = [];
+      chips.push('<span class="chip ' + esc(data.status || "") + '">status=' + esc(data.status || "—") + "</span>");
+      chips.push('<span class="chip">production_mutated=false</span>');
+      chips.push('<span class="chip">staff_ready=false</span>');
+      chips.push('<span class="chip">shell_ne_complete=true</span>');
+      chips.push('<span class="chip">full_dr_ready_claimed=false</span>');
+      document.getElementById("chips").innerHTML = chips.join("");
+      var stamps = data.stamps || [];
+      var body = stamps.map(function (row) {
+        var st = row.status || "UNKNOWN";
+        return '<tr class="' + esc(st) + '" data-id="' + esc(row.id) + '" data-status="' + esc(st) + '">' +
+          "<td><strong>" + esc(row.label || row.id) + "</strong><div class=\"muted\"><code>" + esc(row.id) + "</code></div></td>" +
+          '<td class="status ' + esc(st) + '">' + esc(st) + "</td>" +
+          "<td>" + factsFor(row) + "</td>" +
+          '<td class="muted">' + esc(row.notes || "") + "</td>" +
+          "</tr>";
+      }).join("");
+      document.getElementById("rows").innerHTML = body ||
+        '<tr><td colspan="4" class="muted">No stamps</td></tr>';
+      document.body.setAttribute("data-ready", "1");
+      document.body.setAttribute("data-drill-status", data.status || "UNKNOWN");
+      document.body.setAttribute("data-production-mutated", "false");
+    }
+    fetch("/api/ops/backup-restore-drill-1", { credentials: "same-origin" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(render)
+      .catch(function (err) {
+        document.getElementById("rows").innerHTML =
+          '<tr><td colspan="4" class="muted">Failed to load: ' + esc(err.message) + "</td></tr>";
+        document.body.setAttribute("data-ready", "0");
+      });
+  </script>
+</body>
+</html>

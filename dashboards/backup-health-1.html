@@ -40,8 +40,9 @@
       display: inline-block; padding: 5px 10px; border-radius: 6px;
       background: #ebe4d6; font-size: 0.75rem; font-weight: 600;
     }
-    .chip.PRESENT, .chip.PRESERVED, .chip.SPECIFIED, .chip.BUILT { background: #dde8dc; color: var(--ok); }
-    .chip.MISSING, .chip.BROKEN { background: #f5e0e0; color: var(--bad); }
+    .chip.PRESENT, .chip.PRESERVED, .chip.SPECIFIED, .chip.BUILT,
+    .chip.DRILL_RAN_NON_DESTRUCTIVE { background: #dde8dc; color: var(--ok); }
+    .chip.MISSING, .chip.BROKEN, .chip.FAIL { background: #f5e0e0; color: var(--bad); }
     .chip.UNKNOWN, .chip.STALE, .chip.PARTIAL, .chip.NOT_RUN { background: #f5ead8; color: var(--warn); }
     .chip.HISTORICAL { background: #e0e6ec; color: var(--hist); }
     .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
@@ -49,15 +50,16 @@
     th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #ebe4d6; vertical-align: top; font-size: 0.86rem; }
     th { background: #f0ebe2; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
     tr:last-child td { border-bottom: 0; }
-    tr.MISSING, tr.BROKEN { background: #fff5f3; }
+    tr.MISSING, tr.BROKEN, tr.FAIL { background: #fff5f3; }
     tr.NOT_RUN, tr.STALE, tr.PARTIAL, tr.UNKNOWN { background: #fffaf0; }
     tr.HISTORICAL { background: #f4f7fa; }
-    tr.PRESENT, tr.PRESERVED, tr.SPECIFIED { background: #f6faf6; }
+    tr.PRESENT, tr.PRESERVED, tr.SPECIFIED, tr.DRILL_RAN_NON_DESTRUCTIVE { background: #f6faf6; }
     .status { font-weight: 700; white-space: nowrap; }
-    .status.MISSING, .status.BROKEN { color: var(--bad); }
+    .status.MISSING, .status.BROKEN, .status.FAIL { color: var(--bad); }
     .status.NOT_RUN, .status.STALE, .status.PARTIAL, .status.UNKNOWN { color: var(--warn); }
     .status.HISTORICAL { color: var(--hist); }
-    .status.PRESENT, .status.PRESERVED, .status.SPECIFIED, .status.BUILT { color: var(--ok); }
+    .status.PRESENT, .status.PRESERVED, .status.SPECIFIED, .status.BUILT,
+    .status.DRILL_RAN_NON_DESTRUCTIVE { color: var(--ok); }
     .muted { color: var(--muted); font-size: 0.8rem; line-height: 1.4; }
     .null { color: #9a9488; font-style: italic; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
@@ -75,8 +77,8 @@
     <div class="banner" id="honesty">
       <strong>Honesty:</strong>
       staff_ready=false · human_commissioned=false ·
-      no fake backup success · restore-drill NOT_RUN stays NOT_RUN ·
-      last-backup stamp ≠ restore · prod pid 15975 READ-ONLY · write_authority=NONE
+      no fake backup success · restore-drill lifts only via authorised non-destructive log ·
+      last-backup stamp ≠ restore · prod pid 15975 READ-ONLY · write_authority=NONE · full DR READY not claimed
     </div>
     <div class="chips" id="chips"></div>
     <div class="table-wrap">
@@ -114,9 +116,16 @@
         return bits.length ? bits.join(" · ") : '<span class="null">MISSING</span>';
       }
       if (id === "restore_drill") {
-        return "drill=" + esc(row.drill_status || row.status) +
-          " · skeleton=" + esc(row.framework_skeleton || "—") +
-          " · live_restore=false";
+        var bits = [
+          "drill=" + esc(row.drill_status || row.status),
+          "live_restore=false",
+          "production_mutated=false"
+        ];
+        if (row.last_drill_at) bits.push("last_drill_at " + esc(row.last_drill_at));
+        if (row.target_path) bits.push("target=" + esc(String(row.target_path).slice(0, 48)));
+        if (row.sha256_match != null) bits.push("sha256_match=" + esc(row.sha256_match));
+        if (row.framework_skeleton) bits.push("skeleton=" + esc(row.framework_skeleton));
+        return bits.join(" · ");
       }
       if (id === "cap_dr_01") {
         return "maturity=" + esc(row.maturity || row.status);

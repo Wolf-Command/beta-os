@@ -263,8 +263,8 @@
     },
     {
       "id": "BACKUP-HEALTH-1-desk",
-      "claim": "BACKUP-HEALTH-1: backup/recovery stamps board; restore_drill NOT_RUN; fake_backup_success/invented_restore_pass false; CAP-DR-01 not raised; RELIABILITY-1 preserved; staff_ready/human_commissioned false; next pack parent-only FIN-CASH-TRUTH-1.",
-      "check": "PYTHONPATH=scripts python3 -c \"from core import backup_health1 as b; p=b.build_board(); r=next(s for s in p['stamps'] if s['id']=='restore_drill'); import sys; sys.exit(0 if (p.get('ok') and p.get('fake_backup_success') is False and p.get('invented_restore_pass') is False and str(r.get('status')).upper()=='NOT_RUN' and b.restore_drill_is_honest(p) and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('reliability1_preserved') is True and b.honesty_flags().get('next_pack_for_parent_only')=='FIN-CASH-TRUTH-1') else 1)\"",
+      "claim": "BACKUP-HEALTH-1: backup/recovery stamps board; restore_drill honesty NOT_RUN or DRILL_RAN_NON_DESTRUCTIVE (post BACKUP-RESTORE-DRILL-1); fake_backup_success/invented_restore_pass false; CAP-DR-01 not raised to READY; RELIABILITY-1 preserved; staff_ready/human_commissioned false; next pack parent-only FIN-CASH-TRUTH-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import backup_health1 as b; p=b.build_board(); r=next(s for s in p['stamps'] if s['id']=='restore_drill'); import sys; sys.exit(0 if (p.get('ok') and p.get('fake_backup_success') is False and p.get('invented_restore_pass') is False and str(r.get('status')).upper() in ('NOT_RUN','DRILL_RAN_NON_DESTRUCTIVE') and b.restore_drill_is_honest(p) and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('reliability1_preserved') is True and b.honesty_flags().get('next_pack_for_parent_only')=='FIN-CASH-TRUTH-1') else 1)\"",
       "expect": "exit 0",
       "by": "cursor-backup-health-1",
       "at": "2026-09-30T02:51:45+08:00"
@@ -426,6 +426,20 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import owner_exceptions_live1 as o; from pathlib import Path; html=Path('dashboards/owner-exceptions-live-1.html').read_text(); import sys; sys.exit(0 if (o.api_matches('/api/owner/exceptions-live-1') and o.page_matches('/owner/exceptions-live-1') and 'staff_ready=false' in html and 'MISSING' in html and Path('docs/wolf/ops/shots/ownerexceptions1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/OWNER-EXCEPTIONS-LIVE-1-RESULT.md').is_file() and o.honesty_flags().get('next_pack_for_parent_only')=='BACKUP-RESTORE-DRILL-1' and o.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
       "expect": "exit 0",
       "by": "cursor-owner-exceptions-live-1"
+    },
+    {
+      "id": "backup-restore-drill1-desk",
+      "claim": "BACKUP-RESTORE-DRILL-1: non-destructive temp restore drill SUCCESS with sha256 match; honesty DRILL_RAN_NON_DESTRUCTIVE; production_mutated/live_restore/full_dr_ready false; BACKUP-HEALTH-1 + RELIABILITY-1 + restore_drill guards preserved; staff_ready/human_commissioned false; next pack parent-only PIPE-RELIABILITY-AUTO-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import backup_restore_drill1 as d; from core import backup_health1 as b; p=d.build_board(); r=next(s for s in b.build_board()['stamps'] if s['id']=='restore_drill'); import sys; sys.exit(0 if (p.get('ok') and p.get('status')=='DRILL_RAN_NON_DESTRUCTIVE' and p.get('sha256_match') is True and p.get('production_mutated') is False and p.get('full_dr_ready_claimed') is False and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('shell_ne_complete') is True and r.get('status')=='DRILL_RAN_NON_DESTRUCTIVE' and d.drill_is_honest(p) and d.honesty_flags().get('next_pack_for_parent_only')=='PIPE-RELIABILITY-AUTO-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-backup-restore-drill-1"
+    },
+    {
+      "id": "backup-restore-drill1-surfaces",
+      "claim": "BACKUP-RESTORE-DRILL-1 page/API/shots/RESULT/log present; unsigned deny + live/prod/nas/b2/ready refuse; suite PASS=118; next pack parent-only PIPE-RELIABILITY-AUTO-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import backup_restore_drill1 as d; from pathlib import Path; html=Path('dashboards/backup-restore-drill-1.html').read_text(); import sys; sys.exit(0 if (d.api_matches('/api/ops/backup-restore-drill-1') and d.page_matches('/ops/backup-restore-drill-1') and 'staff_ready=false' in html and 'production_mutated=false' in html and Path('docs/wolf/ops/shots/backuprestore1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/BACKUP-RESTORE-DRILL-1-RESULT.md').is_file() and Path('state/final-completion/packs/BACKUP-RESTORE-DRILL-1-LOG.json').is_file() and d.honesty_flags().get('next_pack_for_parent_only')=='PIPE-RELIABILITY-AUTO-1' and d.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-backup-restore-drill-1"
     }
   ]
 }
