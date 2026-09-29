@@ -171,5 +171,9 @@
     "note": "All AP + Zayen SOD commissioning WIs remain OPEN/active. No PASS invented. Not closed."
   },
   "ordered_by": "Matthew via Peaches 2026-09-29 ~17:01 WITA",
-  "credit_conservation": true
+  "credit_conservation": true,
+  "evidence_commit_sha": "e86bfe36a2dd0397681e4a4f5aab8b27b22ad517",
+  "checkpoint_commit_sha_beta_os": "80f5729a6148b820e278aad34b0636617da2443a",
+  "note": "Primary SOD checkpoint = beta-os 80f5729 + atrium-finance a2a0909. Evidence/gate JSON landed in follow-up e86bfe3. No push. Prod :8787 pid 15975 untouched.",
+  "recorded_at_wita": "2026-09-29T17:07:54+08:00"
 }

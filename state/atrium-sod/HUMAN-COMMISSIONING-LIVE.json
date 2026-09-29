@@ -22,5 +22,6 @@
   "no_push": true,
   "no_prod": true,
   "prod_pid": 15975,
-  "evidence_path": "state/atrium-sod/PRE-HUMAN-COMMISSIONING-CHECKPOINT.json"
+  "evidence_path": "state/atrium-sod/PRE-HUMAN-COMMISSIONING-CHECKPOINT.json",
+  "evidence_commit_sha": "e86bfe36a2dd0397681e4a4f5aab8b27b22ad517"
 }
