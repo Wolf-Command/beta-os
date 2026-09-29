@@ -3,10 +3,10 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "status": "PASS_VERIFIED",
-  "verified_at": "2026-09-30T01:54:33+08:00",
+  "verified_at": "2026-09-30T01:56:10+08:00",
   "verifier": "Peaches-build-factory-watch",
   "exit_code": 0,
-  "exit_at": "2026-09-30T01:50:49+08:00",
+  "exit_at": "2026-09-30T01:49:57+08:00",
   "result_file": "docs/wolf/ops/DASH-LIVE-1-RESULT.md",
   "tests_rerun": {
     "test_dash_live1_20260930.py": {
@@ -49,7 +49,12 @@
         "bytes": 159928,
         "sha256": "1edab81e3403c6a82a331340e0fe14c5ffbef6fbcc9f584bc80b822e6fc6ef05"
       }
-    ]
+    ],
+    "eye_check": {
+      "owner_desktop": "STALE badge + staff_ready=false human_commissioned=false no invented KPIs",
+      "war_stale_badge": "STALE model_c_ledger stale_shown_as_current=false",
+      "unsigned_deny": "Access denied unsigned"
+    }
   },
   "prod": {
     "port": 8787,
@@ -62,7 +67,6 @@
     "pid": 13405,
     "listening": true
   },
-  "sidecar_8790": "DOWN",
   "flags": {
     "staff_ready": false,
     "human_commissioned": false
@@ -82,7 +86,7 @@
   "no_push": true,
   "beta_only": true,
   "git": {
-    "beta_os_head": "9701bb1",
+    "beta_os_head": "49e9dc6",
     "atrium_finance_head": "7584266",
     "uncommitted": true
   },
@@ -95,5 +99,5 @@
   "next_pack": "RELIABILITY-1",
   "cursor_did_not_auto_start_next": true,
   "HEADCHEF_auto": false,
-  "unsigned_freshness_403": true
+  "sidecar_8790": "DOWN"
 }

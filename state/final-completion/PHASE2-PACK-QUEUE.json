@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T01:54:33+08:00",
+  "at_wita": "2026-09-30T01:56:10+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -443,7 +443,11 @@
       "result_file": "docs/wolf/ops/DASH-LIVE-1-RESULT.md",
       "tests_pass": 156,
       "tests_fail": 0,
-      "verified_at": "2026-09-30T01:54:33+08:00"
+      "verified_at": "2026-09-30T01:55:30+08:00",
+      "tests": {
+        "pass": 156,
+        "fail": 0
+      }
     },
     {
       "pack_id": "RELIABILITY-1",
@@ -472,8 +476,9 @@
       "estimated_effort": "M",
       "matt_blocker": false,
       "synthesized_from": "MISSING/PARTIAL priority buckets",
-      "status": "WAITING_CURSOR",
-      "armed_at": "2026-09-30T01:54:33+08:00"
+      "status": "ARMED_RELAUNCH",
+      "armed_at": "2026-09-30T01:54:33+08:00",
+      "relaunch_reason": "cursor died before EXIT"
     },
     {
       "pack_id": "CONTENT-ENGINE-LIVE-1",

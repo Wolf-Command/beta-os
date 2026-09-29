@@ -72,10 +72,11 @@
   "test_suite": "scripts/tests/test_dash_live1_20260930.py",
   "test_result": "PASS=156 FAIL=0",
   "verified_at": "2026-09-30T01:54:33+08:00",
-  "peaches_verify": "PASS_VERIFIED",
+  "peaches_verify": "state/final-completion/packs/DASH-LIVE-1-PEACHES-VERIFY.json",
   "matt_finished_ping": true,
   "matt_finished_ping_at": "2026-09-30T01:54:33+08:00",
   "peaches_tests_rerun": "156/0",
   "shots_count": 6,
-  "shots_distinct_sha256": 6
+  "shots_distinct_sha256": 6,
+  "peaches_verified_at": "2026-09-30T01:55:30+08:00"
 }
