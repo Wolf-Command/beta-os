@@ -2313,6 +2313,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/my-work/derived-status":
             self._mywork_derived_status(qs)
             return
+        if path == "/api/commissioning/live-results":
+            self._commissioning_live_results()
+            return
         if path == "/api/progress/governance-loop":
             self._progress_governance_loop()
             return
@@ -4417,6 +4420,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         elif re.match(r"^/my-work/item/([^/]+)$", path):
             self._work_loop_page()
+            return
+        elif path in (
+            "/commissioning-live",
+            "/commissioning-live/",
+            "/commissioning-live.html",
+            "/dashboards/commissioning-live.html",
+        ):
+            page = DASHBOARDS / "commissioning-live.html"
+            if page.is_file():
+                self._send_html_shell(page.read_bytes(), rel="commissioning-live.html")
+            else:
+                self._send_json({"ok": False, "error": "not_found"}, status=404)
             return
         elif path in (
             "/staff-ops-routing",
@@ -15137,6 +15152,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             item = out.get("work_item") or {}
             conn = _work_items.db_connect()
             try:
+                # HUMANCOMM-1: first open by owner/executor stamps opened_at.
+                stamped = _umw.record_opened(
+                    work_item_id,
+                    viewer_person_id=identity["person_id"],
+                    conn=conn,
+                    commit=True,
+                )
+                item = stamped.get("work_item") or item
+                out["work_item"] = item
+                out["opened_stamped"] = stamped.get("opened_stamped")
                 out["card"] = _umw.enrich_card(conn, item) if item else {}
                 out["delegation_chain"] = _umw.delegation_chain(work_item_id, conn=conn)
                 out["freshness"] = _umw.derived_view_status("my-work", conn=conn)
@@ -15145,6 +15170,41 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_json(out)
         except Exception as exc:  # noqa: BLE001
             self._work_loop_fail(exc)
+
+    def _commissioning_live_results(self) -> None:
+        identity = self._loop_identity()
+        if identity is None:
+            return
+        person_id = identity["person_id"]
+        # Owner or work.verify on any held entity.
+        allowed = person_id == "PERS-MATT"
+        if not allowed:
+            try:
+                conn = _work_items.db_connect()
+                try:
+                    for eid in ("ENT-AMG", "ENT-BZG", "ENT-GGV"):
+                        if _rbac.evaluate(
+                            person_id, "work.verify", {"entity_id": eid}, conn=conn
+                        ).get("allowed"):
+                            allowed = True
+                            break
+                finally:
+                    conn.close()
+            except Exception:
+                allowed = False
+        if not allowed:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Owner or work.verify only.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=403,
+            )
+            return
+        self._send_json(_umw.live_commissioning_results())
 
     def _mywork_receivers(self) -> None:
         identity = self._loop_identity()
@@ -15221,6 +15281,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     m_done.group(1),
                     verified_person_id=person_id,
                     outcome=body.get("outcome"),
+                    human_result=body.get("human_result"),
+                    human_comment=body.get("human_comment"),
+                    repair_commit_ref=body.get("repair_commit_ref") or body.get("commit_ref"),
+                    identity=identity,
+                )
+                _umw.mark_derived_views_stale()
+                self._send_json(out)
+                return
+            m_human = re.match(r"^/api/my-work/items/([^/]+)/human-result$", path)
+            if m_human:
+                out = _umw.set_human_result(
+                    m_human.group(1),
+                    person_id=person_id,
+                    result=body.get("result") or body.get("human_result") or "",
+                    comment=body.get("comment") or body.get("human_comment"),
                     identity=identity,
                 )
                 _umw.mark_derived_views_stale()

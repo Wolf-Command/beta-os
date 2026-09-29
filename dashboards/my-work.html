@@ -105,12 +105,22 @@
       const range = it.date_range ? `<p>${esc(it.date_range)}</p>` : "";
       const status = it.status_label || it.status;
       const state = status ? `<p>${esc(status)}</p>` : "";
+      const openBit = it.open_href
+        ? `<p class="meta">Open: ${esc(it.open_href)}</p>`
+        : "";
+      const steps = (it.is_commissioning && it.instructions)
+        ? `<p class="meta">${esc(String(it.instructions).split("\n").slice(0, 3).join(" · "))}</p>`
+        : "";
+      const pf = it.is_commissioning
+        ? `<p class="meta">Needs PASS/FAIL${it.human_result ? " · your result " + it.human_result : ""} · evidence before DONE</p>`
+        : "";
       const metaBits = [
         it.requested_by ? `Requested by ${it.requested_by}` : "",
         it.current_owner ? `Owner ${it.current_owner}` : "",
         it.due ? `Due ${it.due}` : "",
         it.company_site_department || "",
         it.priority != null ? `Priority ${it.priority}` : "",
+        it.routing_state ? it.routing_state : "",
         it.evidence_required ? `Evidence: ${it.evidence_required}` : "",
         it.evidence_files ? `${it.evidence_files} file(s) attached` : ""
       ].filter(Boolean);
@@ -123,7 +133,7 @@
       const foot = it.staff_footnote
         ? `<p class="footnote">${esc(it.staff_footnote)}</p>`
         : "";
-      const inner = `${title}${range}${state}${meta}${next}${foot}`;
+      const inner = `${title}${range}${state}${openBit}${steps}${pf}${meta}${next}${foot}`;
       if (it.href) {
         return `<a class="action work-card" href="${esc(it.href)}">${inner}</a>`;
       }

@@ -95,12 +95,24 @@ def test_projection() -> None:
     check("synthetic missing cost is not numeric", synthetic["food_cost"] is None)
     orders = real.list_orders(limit=50)
     blob = json.dumps(orders)
-    check("orders are alchemist historical", orders["count"] == 504 and "PR-UMA-EXAMPLE" not in blob, str(orders["count"]))
+    # HUMANCOMM-1: assert against live Alchemist/source counts, not a hardcoded snapshot.
+    live_orders = live_count(real.ALCHEMIST_DB, "SELECT COUNT(*) FROM pr_orders")
+    check(
+        "orders are alchemist historical",
+        orders["count"] == live_orders and "PR-UMA-EXAMPLE" not in blob,
+        f"api={orders['count']} live={live_orders}",
+    )
     suppliers = real.list_suppliers(limit=200)
-    check("103 suppliers", suppliers["count"] == 103, str(suppliers["count"]))
+    live_suppliers = live_count(real.ALCHEMIST_DB, "SELECT COUNT(*) FROM suppliers")
+    check("suppliers match live alchemist", suppliers["count"] == live_suppliers, f"api={suppliers['count']} live={live_suppliers}")
     check("supplier provenance", all(key in suppliers["suppliers"][0] for key in real.PROVENANCE_KEYS))
     receipts = real.list_receipts(limit=1)
-    check("452 receipt lines", receipts["count"] == 452, str(receipts["count"]))
+    live_receipts = live_count(real.ALCHEMIST_DB, "SELECT COUNT(*) FROM pr_receipt_lines")
+    check(
+        "receipt lines match live alchemist",
+        receipts["count"] == live_receipts,
+        f"api={receipts['count']} live={live_receipts}",
+    )
     sales = real.list_sales(limit=3)
     check(
         "sales warehouse is present",

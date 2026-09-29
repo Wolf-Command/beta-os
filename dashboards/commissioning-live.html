@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Commissioning live</title>
+<style>
+  :root {
+    --bg: #f4f1ea; --card: #fffdf8; --ink: #1c1915; --muted: #3f3422;
+    --line: #e4dccf; --accent: #1f4d3a;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0 auto; max-width: 1100px; padding: 16px 16px 80px;
+    background: var(--bg); color: var(--ink); font-family: var(--font);
+    font-size: 15px; line-height: 1.4;
+  }
+  h1 { font-size: 1.35rem; margin: 0 0 6px; }
+  .muted { color: var(--muted); }
+  .err { color: #8d1d1d; }
+  table {
+    width: 100%; border-collapse: collapse; margin-top: 14px;
+    background: var(--card); border: 1px solid var(--line);
+  }
+  th, td {
+    border-bottom: 1px solid var(--line);
+    padding: 8px 10px; text-align: left; vertical-align: top;
+    font-size: 13px;
+  }
+  th { font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .sum { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+  .sum span {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 8px 12px;
+  }
+  a.back { color: var(--accent); font-weight: 650; text-decoration: none; }
+  @media (max-width: 700px) {
+    table, thead, tbody, th, td, tr { display: block; }
+    thead { display: none; }
+    tr { border-bottom: 2px solid var(--line); padding: 8px 0; }
+    td { border: 0; padding: 2px 0; }
+    td::before { content: attr(data-label) ": "; font-weight: 700; }
+  }
+</style>
+</head>
+<body data-wolf-page-type="WORKSPACE" data-wolf-shell="global">
+  <a class="back" href="/my-work">My Work</a>
+  <h1>Commissioning live</h1>
+  <p class="muted" id="asof">Loading…</p>
+  <div class="sum" id="sum"></div>
+  <div id="msg"></div>
+  <div id="table"></div>
+<script>
+(function () {
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+  fetch("/api/commissioning/live-results", { headers: { Accept: "application/json" } })
+    .then((r) => r.json().then((body) => ({ ok: r.ok, body })))
+    .then(({ ok, body }) => {
+      if (!ok || body.ok === false) {
+        document.getElementById("msg").innerHTML =
+          `<p class="err">${esc(body.message || "Not allowed or failed to load.")}</p>`;
+        document.getElementById("asof").textContent = "";
+        return;
+      }
+      document.getElementById("asof").textContent = "As of " + (body.as_of || "");
+      const c = body.counts || {};
+      document.getElementById("sum").innerHTML = [
+        ["Awaiting verify", c.awaiting_verify],
+        ["FAIL without repair", c.fails_without_repair],
+        ["Repair fixed, no retest", c.repairs_fixed_without_retest],
+        ["Person × capability rows", c.people_capabilities]
+      ].map(([k, v]) => `<span><strong>${esc(v ?? 0)}</strong> ${esc(k)}</span>`).join("");
+      const rows = body.rows || [];
+      if (!rows.length) {
+        document.getElementById("table").innerHTML = `<p class="muted">No commissioning rows yet.</p>`;
+        document.body.setAttribute("data-ready", "1");
+        return;
+      }
+      const cols = [
+        ["person_name", "Person"],
+        ["capability_id", "Capability"],
+        ["assigned", "Assigned"],
+        ["opened", "Opened"],
+        ["in_progress", "In progress"],
+        ["done", "Done"],
+        ["human_pass", "Human PASS"],
+        ["human_fail", "Human FAIL"],
+        ["evidence_attached", "Evidence"],
+        ["verified", "Verified"],
+        ["repair_created", "Repair"],
+        ["retest_issued", "Retest"],
+        ["capability_state_changed", "State changed"],
+        ["awaiting_verify", "Awaiting"]
+      ];
+      const head = cols.map(([, label]) => `<th>${esc(label)}</th>`).join("");
+      const bodyHtml = rows.map((row) => {
+        const tds = cols.map(([key, label]) =>
+          `<td data-label="${esc(label)}">${esc(row[key] ?? 0)}</td>`
+        ).join("");
+        return `<tr>${tds}</tr>`;
+      }).join("");
+      document.getElementById("table").innerHTML =
+        `<table><thead><tr>${head}</tr></thead><tbody>${bodyHtml}</tbody></table>`;
+      document.body.setAttribute("data-ready", "1");
+    })
+    .catch((err) => {
+      document.getElementById("msg").innerHTML = `<p class="err">${esc(err.message)}</p>`;
+    });
+})();
+</script>
+</body>
+</html>

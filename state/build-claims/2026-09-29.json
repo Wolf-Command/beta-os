@@ -35,6 +35,20 @@
       "check": "python3 -c \"from pathlib import Path; t=Path(\"dashboards/my-work-item.html\").read_text(); assert \"--work-ink: #1c1915\" in t and \"--work-muted: #3f3422\" in t\"",
       "expect": "exit 0",
       "by": "MYWORK-1B"
+    },
+    {
+      "id": "humancomm1-done-gate",
+      "claim": "Commissioning DONE requires evidence + employee PASS/FAIL; PASS goes AWAITING_VERIFY; FAIL creates ENGINEERING repair not owned by the employee; staff_ready/human_commissioned stay false.",
+      "check": "PYTHONPATH=scripts python3 scripts/tests/test_humancomm1_20260929.py 2>&1 | tail -1 | grep -q 'FAIL=0'",
+      "expect": "exit 0",
+      "by": "humancomm1-20260929"
+    },
+    {
+      "id": "humancomm1-legacy-routing",
+      "claim": "Legacy NEEDS_ROUTING queue exists with null owners; commissioning count stays 28.",
+      "check": "PYTHONPATH=scripts python3 -c \"import sqlite3; c=sqlite3.connect('catalog/content_library.sqlite'); n=c.execute(\\\"select count(*) from core_work_items where origin='legacy' and routing_state='NEEDS_ROUTING'\\\").fetchone()[0]; m=c.execute(\\\"select count(*) from core_work_items where origin='commissioning'\\\").fetchone()[0]; import sys; sys.exit(0 if n>=1 and m==28 else 1)\"",
+      "expect": "exit 0",
+      "by": "humancomm1-20260929"
     }
   ]
 }

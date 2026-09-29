@@ -164,7 +164,13 @@ def test_uma_and_invoices() -> None:
     close = ex.get("daily_close") or {}
     check("close branch is blocked and the page is not", close.get("branch_blocked") is True and close.get("page_blocked") is False and close.get("status") == "BLOCKED")
     orders = real.list_orders(limit=5)
-    check("order book is the alchemist history", orders.get("count") == 504 and orders.get("orders"), str(orders.get("count")))
+    # HUMANCOMM-1: read live Alchemist count — do not hardcode a drifting register figure.
+    live_pr = real._table_count(real.ALCHEMIST_DB, "pr_orders")
+    check(
+        "order book is the alchemist history",
+        live_pr is not None and orders.get("count") == live_pr and orders.get("orders"),
+        f"api={orders.get('count')} live={live_pr}",
+    )
     check(
         "each order names its nota or says the file is missing",
         all((row.get("photo") or {}).get("href") or (row.get("photo") or {}).get("message") == "EVIDENCE FILE NOT RECOVERABLE" for row in orders["orders"]),

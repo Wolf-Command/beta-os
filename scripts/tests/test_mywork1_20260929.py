@@ -286,7 +286,20 @@ def test_part_e_commissioning_flow() -> None:
         conn=c,
         commit=False,
     )
-    umw.mark_done(wid, verified_person_id="PERS-HAIKAL", conn=c, commit=False)
+    # HUMANCOMM-1: DONE needs evidence + employee PASS/FAIL → AWAITING_VERIFY.
+    done = umw.mark_done(
+        wid,
+        verified_person_id="PERS-HAIKAL",
+        human_result="PASS",
+        human_comment="",
+        conn=c,
+        commit=False,
+    )
+    check(
+        "pass path awaits verify",
+        (done.get("work_item") or {}).get("status") == "AWAITING_VERIFY",
+        str((done.get("work_item") or {}).get("status")),
+    )
     before_pct_note = "system_percent_unchanged"
     ver = umw.verify_commissioning(
         wid, verifier_person_id="PERS-MATT", result="PASS", note="ok", conn=c, commit=False
@@ -296,7 +309,7 @@ def test_part_e_commissioning_flow() -> None:
     check("still not staff_ready", ver.get("staff_ready") is False)
     check("still not human_commissioned", ver.get("human_commissioned") is False)
     check(before_pct_note, ver.get("system_percent_unchanged") is True)
-    # FAIL path
+    # FAIL path — employee FAIL creates ENGINEERING repair (not owned by employee).
     row2 = c.execute(
         """
         SELECT work_item_id FROM core_work_items
@@ -306,13 +319,38 @@ def test_part_e_commissioning_flow() -> None:
     ).fetchone()
     wid2 = row2["work_item_id"]
     wi.start_work_item(wid2, verified_person_id="PERS-DEVI", conn=c, commit=False)
-    umw.mark_done(wid2, verified_person_id="PERS-DEVI", conn=c, commit=False)
-    fail = umw.verify_commissioning(
-        wid2, verifier_person_id="PERS-MATT", result="FAIL", note="broken", conn=c, commit=False
+    umw.store_evidence_file(
+        wid2,
+        filename="fail.txt",
+        content=b"broken screen",
+        uploaded_by_person_id="PERS-DEVI",
+        conn=c,
+        commit=False,
     )
-    check("fail result", fail.get("commissioning_result") == "FAIL")
-    check("repair item created", bool(fail.get("repair_item")))
-    check("failed item RETURNED", (fail.get("work_item") or {}).get("status") == "RETURNED")
+    fail_done = umw.mark_done(
+        wid2,
+        verified_person_id="PERS-DEVI",
+        human_result="FAIL",
+        human_comment="Numbers look wrong",
+        conn=c,
+        commit=False,
+    )
+    repair = fail_done.get("repair_item") or {}
+    check("fail result on item", (fail_done.get("work_item") or {}).get("commissioning_result") == "FAIL"
+          or (fail_done.get("work_item") or {}).get("human_result") == "FAIL")
+    check("repair item created", bool(repair.get("work_item_id")))
+    check(
+        "repair owned by engineering queue",
+        repair.get("owner_person_id") in (None, "")
+        and repair.get("origin") == "commissioning-repair",
+        str(repair.get("owner_person_id")),
+    )
+    check(
+        "repair not owned by employee",
+        repair.get("owner_person_id") != "PERS-DEVI"
+        and repair.get("executor_person_id") != "PERS-DEVI",
+        str((repair.get("owner_person_id"), repair.get("executor_person_id"))),
+    )
     c.commit()
     c.close()
     if prev_blobs is None:
@@ -596,9 +634,19 @@ def test_http_and_shots() -> None:
             AMANDA,
             {"note": "invoice check", "filename": "n.txt", "content_base64": base64.b64encode(b"ok").decode()},
         )
-        status, body = call(port, "POST", f"/api/my-work/items/{wid}/done", AMANDA, {"outcome": "done"})
+        status, body = call(
+            port,
+            "POST",
+            f"/api/my-work/items/{wid}/done",
+            AMANDA,
+            {"outcome": "done", "human_result": "PASS", "human_comment": ""},
+        )
         done = json.loads(body.decode())
-        check("api DONE", status == 200 and (done.get("work_item") or {}).get("status") == "COMPLETED", str(status))
+        check(
+            "api DONE",
+            status == 200 and (done.get("work_item") or {}).get("status") == "AWAITING_VERIFY",
+            f"{status} {(done.get('work_item') or {}).get('status')} {done.get('message')}",
+        )
         check("api DONE not verified", done.get("verified") is False)
 
         if CHROME.is_file():

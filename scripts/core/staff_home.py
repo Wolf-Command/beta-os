@@ -762,16 +762,38 @@ def build_home(person_id: str | None, *, conn=None) -> dict[str, Any]:
 
             pulse = _owner_sections(c, entities, codes, pid)
             by = {str(s.get("key")): s for s in sections}
-            attn = list(by.get("attention", {}).get("items") or [])
-            for block in pulse:
-                if block.get("key") in {"wrong", "blocked", "authority", "money"}:
-                    for item in block.get("items") or []:
-                        attn.append(item)
-            for exc in umw.owner_work_exceptions(c):
-                attn.append(exc)
-            by["attention"]["items"] = attn[:24]
-            by["attention"]["empty"] = not attn
-            by["attention"]["empty_message"] = None if attn else "Nothing needs your attention."
+            # HUMANCOMM-1: Overwatch is the exception surface — not a routine work list.
+            overwatch_items = umw.owner_work_exceptions(c)
+            awaiting_n = sum(
+                1 for it in overwatch_items if it.get("status") == "AWAITING_VERIFY"
+            )
+            needs_routing_n = sum(
+                1 for it in overwatch_items if it.get("routing_state") == "NEEDS_ROUTING"
+            )
+            fail_n = sum(
+                1
+                for it in overwatch_items
+                if it.get("commissioning_result") == "FAIL"
+                or it.get("origin") == "commissioning-repair"
+            )
+            # Owner attention = same exception set (capped), not personal routine backlog.
+            by["attention"]["items"] = overwatch_items[:24]
+            by["attention"]["empty"] = not overwatch_items
+            by["attention"]["empty_message"] = (
+                None if overwatch_items else "Nothing needs your attention."
+            )
+            # Owner TODAY should not be a dump of everyone else's routine work.
+            by["today"]["items"] = [
+                it
+                for it in (by["today"].get("items") or [])
+                if it.get("current_owner_person_id") == pid
+                or it.get("is_commissioning")
+                or it.get("routing_state") == "NEEDS_ROUTING"
+            ][:8]
+            by["today"]["empty"] = not by["today"]["items"]
+            by["do_this_next"]["items"] = []
+            by["do_this_next"]["empty"] = True
+            by["do_this_next"]["empty_message"] = "Routine work does not route through Owner."
             sections = [
                 by["today"],
                 by["do_this_next"],
@@ -779,17 +801,24 @@ def build_home(person_id: str | None, *, conn=None) -> dict[str, Any]:
                 by["waiting"],
                 by["completed"],
             ]
-            # Keep pulse available for Owner Command compatibility.
             sections.append(
                 {
                     "key": "owner_overwatch",
                     "title": "OVERWATCH",
-                    "empty": False,
-                    "empty_message": None,
-                    "items": [],
+                    "empty": not overwatch_items,
+                    "empty_message": None
+                    if overwatch_items
+                    else "No commissioning FAILs, overdue, NEEDS ROUTING, or AWAITING VERIFY.",
+                    "items": overwatch_items[:40],
+                    "summary": {
+                        "awaiting_verify": awaiting_n,
+                        "needs_routing": needs_routing_n,
+                        "commissioning_fails": fail_n,
+                        "total": len(overwatch_items),
+                    },
                     "note": (
-                        "Visibility and exception awareness across company scopes. "
-                        "Routine work does not route through the Owner."
+                        "Commissioning FAILs, overdue, NEEDS ROUTING, owner-authority items, "
+                        "and AWAITING VERIFY. Routine work does not route through the Owner."
                     ),
                     "pulse": pulse,
                 }

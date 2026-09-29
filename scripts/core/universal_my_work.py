@@ -27,9 +27,14 @@ CATALOG_DB = BETA_ROOT / "catalog" / "content_library.sqlite"
 BLOB_LOCAL = BETA_ROOT / "state" / "work-evidence" / "blobs"
 BLOB_NAS = Path("/Volumes/05-Wolf-Vault-Mirror/wolf-command/work-evidence")
 LEGACY_PROPOSAL = BETA_ROOT / "state" / "legacy" / "proposed-migration.json"
+LEGACY_CANDIDATES = BETA_ROOT / "state" / "legacy" / "legacy-work-candidates.json"
 TZ8 = timezone(timedelta(hours=8))
 WITA = ZoneInfo("Asia/Makassar")
 BOUND = "beta-universal-my-work"
+
+# Engineering repair queue — not a Person. owner/executor stay null.
+ENGINEERING_QUEUE = "ENGINEERING"
+ROUTING_NEEDS = "NEEDS_ROUTING"
 
 # Presentation labels (plain words). DB statuses stay machine codes.
 STATUS_LABEL = {
@@ -40,12 +45,42 @@ STATUS_LABEL = {
     "RETURNED": "RETURNED",
     "REASSIGNED": "REASSIGNED",
     "COMPLETED": "DONE",
+    "AWAITING_VERIFY": "AWAITING VERIFY",
     "VERIFIED": "VERIFIED",
     "CANCELLED": "CANCELLED",
 }
 
 ACTIVE_WORK = frozenset(
     {"OPEN", "IN_PROGRESS", "BLOCKED", "WAITING", "RETURNED", "REASSIGNED"}
+)
+
+# assignee_in_source → person_id (reliable name map only)
+_SOURCE_ASSIGNEE_MAP = {
+    "devi": "PERS-DEVI",
+    "ni putu devi parwati": "PERS-DEVI",
+    "amanda": "PERS-AMANDA",
+    "haikal": "PERS-HAIKAL",
+    "zayen": "PERS-ZAYEN",
+    "mr wolf / owner": "PERS-MATT",
+    "mr_wolf": "PERS-MATT",
+    "mr wolf": "PERS-MATT",
+    "matt": "PERS-MATT",
+}
+
+_OWNER_AUTHORITY_HINTS = (
+    "decide",
+    "approve",
+    "payment",
+    "bank",
+    "credential",
+    "owner",
+    "authority",
+    "policy",
+    "payroll",
+    "hire",
+    "fire",
+    "salary",
+    "contract sign",
 )
 
 SECTION_TITLES = {
@@ -182,8 +217,20 @@ def list_work_receivers(conn=None) -> list[dict[str, Any]]:
             c.close()
 
 
+def _checklist_href(item: dict[str, Any]) -> str:
+    try:
+        steps = json.loads(item["checklist_json"]) if item.get("checklist_json") else []
+    except (TypeError, json.JSONDecodeError):
+        steps = []
+    if isinstance(steps, list):
+        for step in steps:
+            if isinstance(step, dict) and step.get("href"):
+                return str(step["href"])
+    return ""
+
+
 def enrich_card(conn, item: dict[str, Any]) -> dict[str, Any]:
-    """Card fields required by MYWORK-1 Part B."""
+    """Card fields required by MYWORK-1 Part B + HUMANCOMM-1 commissioning."""
     wid = str(item.get("work_item_id") or "")
     owner = item.get("executor_person_id") or item.get("owner_person_id")
     accountable = item.get("accountable_person_id") or item.get("owner_person_id")
@@ -194,12 +241,21 @@ def enrich_card(conn, item: dict[str, Any]) -> dict[str, Any]:
     ).fetchone()[0]
     chain = delegation_chain(wid, conn=conn)
     status = str(item.get("status") or "")
+    origin = str(item.get("origin") or "")
+    is_commissioning = origin in {"commissioning", "commissioning-retest"}
+    open_href = _checklist_href(item)
     next_step = (item.get("what_happens_next") or "").strip()
     if not next_step:
         if status == "OPEN":
             next_step = "Accept and start, or open the instructions."
         elif status == "IN_PROGRESS":
-            next_step = "Attach evidence, then mark DONE."
+            next_step = (
+                "Attach evidence, choose PASS or FAIL, then mark DONE."
+                if is_commissioning
+                else "Attach evidence, then mark DONE."
+            )
+        elif status == "AWAITING_VERIFY":
+            next_step = "Waiting for Owner / verifier. Your PASS is recorded."
         elif status == "COMPLETED":
             next_step = "Waiting for verification. DONE is not VERIFIED."
         elif status == "VERIFIED":
@@ -212,6 +268,9 @@ def enrich_card(conn, item: dict[str, Any]) -> dict[str, Any]:
             next_step = "Returned — fix and resubmit with evidence."
         else:
             next_step = "Open the task."
+    queue_label = ""
+    if origin == "commissioning-repair" and not owner:
+        queue_label = ENGINEERING_QUEUE
     return {
         "id": wid,
         "work_item_id": wid,
@@ -219,7 +278,7 @@ def enrich_card(conn, item: dict[str, Any]) -> dict[str, Any]:
         "what": item.get("title") or "",
         "requested_by": _person_name(conn, requested),
         "requested_by_person_id": requested,
-        "current_owner": _person_name(conn, owner),
+        "current_owner": _person_name(conn, owner) or queue_label or "Unassigned",
         "current_owner_person_id": owner,
         "accountable": _person_name(conn, accountable),
         "accountable_person_id": accountable,
@@ -229,6 +288,7 @@ def enrich_card(conn, item: dict[str, Any]) -> dict[str, Any]:
         "priority": item.get("priority"),
         "instructions": item.get("instructions") or item.get("description") or "",
         "checklist": json.loads(item["checklist_json"]) if item.get("checklist_json") else [],
+        "open_href": open_href,
         "evidence_required": item.get("evidence_required") or "",
         "evidence_files": int(ev_files or 0),
         "status": status,
@@ -241,25 +301,41 @@ def enrich_card(conn, item: dict[str, Any]) -> dict[str, Any]:
         "import_label": item.get("import_label"),
         "commissioning_capability_id": item.get("commissioning_capability_id"),
         "commissioning_result": item.get("commissioning_result"),
+        "human_result": item.get("human_result"),
+        "human_comment": item.get("human_comment"),
+        "opened_at": item.get("opened_at"),
+        "opened_at_display": format_wita(item.get("opened_at")),
+        "routing_state": item.get("routing_state"),
+        "routing_reason": item.get("routing_reason"),
+        "is_commissioning": is_commissioning,
+        "requires_human_result": is_commissioning,
+        "engineering_queue": origin == "commissioning-repair" and not owner,
         "staff_ready": False,
         "human_commissioned": False,
     }
 
 
 def _mine_rows(conn, person_id: str) -> list[dict[str, Any]]:
+    """Personal My Work — exclude NEEDS_ROUTING and engineering-queue repairs."""
     rows = conn.execute(
         """
         SELECT * FROM core_work_items
         WHERE status != 'CANCELLED'
+          AND COALESCE(routing_state, '') != ?
           AND (
             owner_person_id = ?
             OR executor_person_id = ?
             OR accountable_person_id = ?
           )
+          AND NOT (
+            origin = 'commissioning-repair'
+            AND (owner_person_id IS NULL OR owner_person_id = '')
+            AND (executor_person_id IS NULL OR executor_person_id = '')
+          )
         ORDER BY priority ASC, due_at IS NULL, due_at ASC, updated_at DESC
         LIMIT 80
         """,
-        (person_id, person_id, person_id),
+        (ROUTING_NEEDS, person_id, person_id, person_id),
     ).fetchall()
     return [dict(r) for r in rows]
 
@@ -270,19 +346,26 @@ def build_universal_sections(
     conn=None,
     extra_today: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
-    """TODAY / DO THIS NEXT / NEEDS ATTENTION / WAITING / COMPLETED."""
+    """TODAY / DO THIS NEXT / NEEDS ATTENTION / WAITING / COMPLETED.
+
+    HUMANCOMM-1: first 3 active items in TODAY; the rest in DO THIS NEXT.
+    """
     own = conn is None
     c = conn or wi.db_connect()
     try:
         mine = _mine_rows(c, person_id)
         cards = [enrich_card(c, r) for r in mine]
-        today = [
+        active = [
             card
             for card in cards
             if card["status"] in {"OPEN", "IN_PROGRESS", "RETURNED"}
             and card.get("current_owner_person_id") == person_id
         ]
-        do_next = sorted(today, key=lambda x: (x.get("priority") or 3, x.get("due") or "9999"))[:5]
+        active_sorted = sorted(
+            active, key=lambda x: (x.get("priority") or 3, x.get("due") or "9999")
+        )
+        today = active_sorted[:3]
+        do_next = active_sorted[3:8]
         attention = [
             card
             for card in cards
@@ -293,7 +376,6 @@ def build_universal_sections(
             )
         ]
         waiting = [card for card in cards if card["status"] == "WAITING"]
-        # Also waiting when accountable but someone else is executor.
         for card in cards:
             if (
                 card.get("accountable_person_id") == person_id
@@ -304,17 +386,20 @@ def build_universal_sections(
                 if card not in waiting:
                     waiting.append(card)
         completed = [
-            card for card in cards if card["status"] in {"COMPLETED", "VERIFIED"}
+            card
+            for card in cards
+            if card["status"] in {"COMPLETED", "AWAITING_VERIFY", "VERIFIED"}
         ][:12]
         if extra_today:
             today = list(extra_today) + today
+            today = today[:3]
         return [
             {
                 "key": "today",
                 "title": SECTION_TITLES["today"],
                 "empty": not today,
                 "empty_message": None if today else "Nothing is assigned to you for today.",
-                "items": today[:20],
+                "items": today,
             },
             {
                 "key": "do_this_next",
@@ -564,10 +649,17 @@ def store_evidence_file(
         if not _rbac.evaluate(
             uploaded_by_person_id, "evidence.record.submit", {"entity_id": entity}, conn=c
         ).get("allowed"):
-            # Soft path: owner of the item may attach a note/file for commissioning.
-            if item.get("owner_person_id") != uploaded_by_person_id and item.get(
-                "executor_person_id"
-            ) != uploaded_by_person_id:
+            # Soft path: owner/executor/accountable, or Owner on engineering repairs.
+            holders = {
+                item.get("owner_person_id"),
+                item.get("executor_person_id"),
+                item.get("accountable_person_id"),
+            }
+            eng_repair = (
+                item.get("origin") == "commissioning-repair"
+                and uploaded_by_person_id == "PERS-MATT"
+            )
+            if uploaded_by_person_id not in holders and not eng_repair:
                 raise MyWorkError(
                     "evidence.record.submit denied",
                     code="rbac_denied",
@@ -657,34 +749,542 @@ def store_evidence_file(
             c.close()
 
 
+def _evidence_count(conn, work_item_id: str) -> int:
+    row = conn.execute(
+        "SELECT COUNT(*) FROM core_work_evidence_files WHERE work_item_id=?",
+        (work_item_id,),
+    ).fetchone()
+    return int(row[0] or 0)
+
+
+def _is_commissioning_origin(origin: str | None) -> bool:
+    return str(origin or "") in {"commissioning", "commissioning-retest"}
+
+
+def record_opened(
+    work_item_id: str,
+    *,
+    viewer_person_id: str,
+    conn=None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """First detail open by owner/executor stamps opened_at once."""
+    own = conn is None
+    c = conn or wi.db_connect()
+    try:
+        item = wi.get_work_item(work_item_id, conn=c)
+        if not item:
+            raise MyWorkError("Work item not found.", code="not_found", http_status=404)
+        viewer = (viewer_person_id or "").strip()
+        is_holder = viewer in {
+            item.get("owner_person_id"),
+            item.get("executor_person_id"),
+        }
+        stamped = False
+        if is_holder and not item.get("opened_at"):
+            ts = wi.now_utc_iso()
+            c.execute(
+                "UPDATE core_work_items SET opened_at=?, updated_at=? WHERE work_item_id=?",
+                (ts, ts, work_item_id),
+            )
+            stamped = True
+            _audit.safe_record(
+                action="work.opened",
+                result="SUCCEEDED",
+                source="universal_my_work",
+                actor_type="PERSON",
+                verified_person_id=viewer,
+                actor_person_id=viewer,
+                entity_id=item.get("owning_entity_id"),
+                resource_type="work_item",
+                resource_id=work_item_id,
+                metadata={"opened_at": ts},
+                conn=c,
+                commit=False,
+            )
+            if commit:
+                c.commit()
+            item = wi.get_work_item(work_item_id, conn=c) or item
+        return {"ok": True, "work_item": item, "opened_stamped": stamped}
+    finally:
+        if own:
+            c.close()
+
+
+def set_human_result(
+    work_item_id: str,
+    *,
+    person_id: str,
+    result: str,
+    comment: str | None = None,
+    identity: dict[str, Any] | None = None,
+    conn=None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Employee PASS/FAIL — separate from Peaches/Owner verification."""
+    res = (result or "").strip().upper()
+    if res not in {"PASS", "FAIL"}:
+        raise MyWorkError("human_result must be PASS or FAIL", code="invalid_result")
+    note = (comment or "").strip()
+    if res == "FAIL" and not note:
+        raise MyWorkError(
+            "When you choose FAIL, say what is wrong or could be better.",
+            code="comment_required",
+        )
+    own = conn is None
+    c = conn or wi.db_connect()
+    try:
+        item = wi.get_work_item(work_item_id, conn=c)
+        if not item:
+            raise MyWorkError("Work item not found.", code="not_found", http_status=404)
+        if not _is_commissioning_origin(item.get("origin")):
+            raise MyWorkError(
+                "PASS/FAIL is only for commissioning items.",
+                code="not_commissioning",
+            )
+        if person_id not in {
+            item.get("owner_person_id"),
+            item.get("executor_person_id"),
+        }:
+            raise MyWorkError(
+                "Only the person doing this work can choose PASS or FAIL.",
+                code="rbac_denied",
+                http_status=403,
+            )
+        if item["status"] in wi.TERMINAL:
+            raise MyWorkError("This item is closed.", code="terminal")
+        ts = wi.now_utc_iso()
+        c.execute(
+            """
+            UPDATE core_work_items
+            SET human_result=?, human_comment=?, updated_at=?
+            WHERE work_item_id=?
+            """,
+            (res, note or None, ts, work_item_id),
+        )
+        _audit.safe_record(
+            action="work.human_result",
+            result="SUCCEEDED",
+            source="universal_my_work",
+            actor_type="PERSON",
+            verified_person_id=person_id,
+            actor_person_id=person_id,
+            entity_id=item.get("owning_entity_id"),
+            resource_type="work_item",
+            resource_id=work_item_id,
+            metadata={"human_result": res, "has_comment": bool(note)},
+            conn=c,
+            commit=False,
+        )
+        if commit:
+            c.commit()
+        return {
+            "ok": True,
+            "work_item": wi.get_work_item(work_item_id, conn=c),
+            "human_result": res,
+            "staff_ready": False,
+            "human_commissioned": False,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def _find_linked_repair(conn, parent_id: str) -> dict[str, Any] | None:
+    row = conn.execute(
+        """
+        SELECT * FROM core_work_items
+        WHERE parent_work_item_id=? AND origin='commissioning-repair'
+          AND status NOT IN ('CANCELLED')
+        ORDER BY created_at DESC LIMIT 1
+        """,
+        (parent_id,),
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def create_engineering_repair(
+    parent: dict[str, Any],
+    *,
+    note: str | None = None,
+    conn=None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """FAIL → repair owned by ENGINEERING queue (not the employee)."""
+    own = conn is None
+    c = conn or wi.db_connect()
+    try:
+        parent_id = str(parent["work_item_id"])
+        existing = _find_linked_repair(c, parent_id)
+        if existing:
+            return existing
+        entity = str(parent["owning_entity_id"])
+        ts = wi.now_utc_iso()
+        repair = wi.create_work_item(
+            title=f"Repair: {parent.get('title')}",
+            description=(
+                f"Engineering repair for failed commissioning {parent_id}. "
+                f"Human FAIL comment: {(note or parent.get('human_comment') or '').strip() or '—'}. "
+                f"Evidence: {parent.get('completion_evidence_reference') or 'see attachments'}."
+            ),
+            owning_entity_id=entity,
+            work_type="EXCEPTION",
+            source_type="SYSTEM",
+            created_by_actor_type="SYSTEM",
+            owner_person_id=None,
+            owner_org_assignment_id=None,
+            parent_work_item_id=parent_id,
+            source_id=f"commissioning-repair:{parent_id}",
+            priority=1,
+            conn=c,
+            commit=False,
+        )
+        c.execute(
+            """
+            UPDATE core_work_items
+            SET origin='commissioning-repair',
+                owner_person_id=NULL,
+                owner_org_assignment_id=NULL,
+                executor_person_id=NULL,
+                accountable_person_id='PERS-MATT',
+                scope_label=?,
+                import_label=?,
+                commissioning_capability_id=?,
+                evidence_required='Commit ref + test evidence that the defect is fixed.',
+                instructions=?,
+                what_happens_next='Engineering fixes the defect, attaches commit/test evidence, marks DONE. A retest is then issued to the same person.',
+                updated_at=?
+            WHERE work_item_id=?
+            """,
+            (
+                ENGINEERING_QUEUE,
+                f"{ENGINEERING_QUEUE} queue — not staff",
+                parent.get("commissioning_capability_id"),
+                (
+                    "This is an engineering repair. Do not assign it back to the employee. "
+                    "Fix the defect, attach a commit reference and test evidence, then mark DONE."
+                ),
+                ts,
+                repair["work_item_id"],
+            ),
+        )
+        repair = wi.get_work_item(repair["work_item_id"], conn=c) or repair
+        _audit.safe_record(
+            action="work.commissioning.repair_created",
+            result="SUCCEEDED",
+            source="universal_my_work",
+            actor_type="SYSTEM",
+            entity_id=entity,
+            resource_type="work_item",
+            resource_id=repair["work_item_id"],
+            metadata={
+                "parent": parent_id,
+                "queue": ENGINEERING_QUEUE,
+                "capability": parent.get("commissioning_capability_id"),
+            },
+            conn=c,
+            commit=False,
+        )
+        if commit:
+            c.commit()
+        return repair
+    finally:
+        if own:
+            c.close()
+
+
+def create_retest_for_repair(
+    repair_item_id: str,
+    *,
+    commit_ref: str | None = None,
+    actor_person_id: str | None = None,
+    identity: dict[str, Any] | None = None,
+    conn=None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """When a repair is fixed with evidence, issue RETEST to the original person."""
+    own = conn is None
+    c = conn or wi.db_connect()
+    try:
+        repair = wi.get_work_item(repair_item_id, conn=c)
+        if not repair or repair.get("origin") != "commissioning-repair":
+            raise MyWorkError("Not a commissioning repair item.", code="not_repair")
+        parent_id = repair.get("parent_work_item_id")
+        parent = wi.get_work_item(parent_id, conn=c) if parent_id else None
+        if not parent:
+            raise MyWorkError("Parent commissioning item missing.", code="no_parent")
+        existing = c.execute(
+            """
+            SELECT work_item_id FROM core_work_items
+            WHERE origin='commissioning-retest'
+              AND parent_work_item_id=?
+              AND status NOT IN ('CANCELLED')
+            ORDER BY created_at DESC LIMIT 1
+            """,
+            (repair_item_id,),
+        ).fetchone()
+        if existing:
+            return wi.get_work_item(str(existing[0]), conn=c) or {}
+        person = parent.get("owner_person_id") or parent.get("executor_person_id")
+        if not person:
+            raise MyWorkError("Original person unknown for retest.", code="no_person")
+        asg = parent.get("owner_org_assignment_id") or _asg(c, person)
+        href = _checklist_href(parent) or "/my-work"
+        instructions = (
+            f"Retest after engineering repair.\n"
+            f"1. Open the same surface again: {href}\n"
+            f"2. Repeat the original check.\n"
+            f"3. Attach a fresh screenshot or photo.\n"
+            f"4. Choose PASS or FAIL.\n"
+            f"5. Tap DONE.\n"
+            f"Repair: {repair_item_id}."
+            + (f" Commit: {commit_ref}." if commit_ref else "")
+        )
+        item = wi.create_work_item(
+            title=f"Retest: {parent.get('title')}",
+            description=instructions,
+            owning_entity_id=str(parent["owning_entity_id"]),
+            work_type="AUDIT_FINDING",
+            source_type="SYSTEM",
+            created_by_actor_type="SYSTEM",
+            owner_person_id=person,
+            owner_org_assignment_id=asg,
+            parent_work_item_id=repair_item_id,
+            source_id=f"commissioning-retest:{repair_item_id}",
+            priority=2,
+            conn=c,
+            commit=False,
+        )
+        ts = wi.now_utc_iso()
+        c.execute(
+            """
+            UPDATE core_work_items
+            SET origin='commissioning-retest',
+                accountable_person_id=?,
+                executor_person_id=?,
+                requested_by_person_id='PERS-MATT',
+                instructions=?,
+                evidence_required=?,
+                checklist_json=?,
+                scope_label=?,
+                commissioning_capability_id=?,
+                what_happens_next=?,
+                updated_at=?
+            WHERE work_item_id=?
+            """,
+            (
+                person,
+                person,
+                instructions,
+                parent.get("evidence_required") or "Fresh screenshot after the fix",
+                json.dumps([{"step": "Retest the surface", "href": href}]),
+                parent.get("scope_label"),
+                parent.get("commissioning_capability_id"),
+                "Retest is in your My Work TODAY. Attach evidence, choose PASS/FAIL, mark DONE.",
+                ts,
+                item["work_item_id"],
+            ),
+        )
+        if commit_ref:
+            c.execute(
+                "UPDATE core_work_items SET repair_commit_ref=?, updated_at=? WHERE work_item_id=?",
+                (commit_ref.strip(), ts, repair_item_id),
+            )
+        retest = wi.get_work_item(item["work_item_id"], conn=c) or item
+        _audit.safe_record(
+            action="work.commissioning.retest_issued",
+            result="SUCCEEDED",
+            source="universal_my_work",
+            actor_type="PERSON" if actor_person_id else "SYSTEM",
+            verified_person_id=actor_person_id,
+            actor_person_id=actor_person_id,
+            entity_id=parent.get("owning_entity_id"),
+            resource_type="work_item",
+            resource_id=retest["work_item_id"],
+            metadata={
+                "repair": repair_item_id,
+                "original": parent_id,
+                "person": person,
+                "commit_ref": commit_ref,
+            },
+            conn=c,
+            commit=False,
+        )
+        if commit:
+            c.commit()
+        return retest
+    finally:
+        if own:
+            c.close()
+
+
 def mark_done(
     work_item_id: str,
     *,
     verified_person_id: str,
     outcome: str | None = None,
+    human_result: str | None = None,
+    human_comment: str | None = None,
+    repair_commit_ref: str | None = None,
     identity: dict[str, Any] | None = None,
     conn=None,
     commit: bool = True,
 ) -> dict[str, Any]:
-    """DONE = COMPLETED claim. Does not verify. Does not move SYSTEM %."""
-    item = wi.claim_complete(
-        work_item_id,
-        verified_person_id=verified_person_id,
-        outcome=outcome,
-        identity=identity,
-        conn=conn,
-        commit=commit,
-    )
-    # Commissioning: DONE creates evidence of attempt; VERIFIED is separate.
-    return {
-        "ok": True,
-        "work_item": item,
-        "status_label": "DONE",
-        "verified": False,
-        "staff_ready": False,
-        "human_commissioned": False,
-        "system_percent_unchanged": True,
-    }
+    """DONE = completion claim. Commissioning gates evidence + PASS/FAIL.
+
+    Does not verify. Does not flip staff_ready / human_commissioned. Does not
+    move SYSTEM %.
+    """
+    own = conn is None
+    c = conn or wi.db_connect()
+    try:
+        item = wi.get_work_item(work_item_id, conn=c)
+        if not item:
+            raise MyWorkError("Work item not found.", code="not_found", http_status=404)
+        origin = str(item.get("origin") or "")
+        repair_out = None
+        retest_out = None
+
+        if _is_commissioning_origin(origin):
+            hr = (human_result or item.get("human_result") or "").strip().upper()
+            comment = (
+                human_comment
+                if human_comment is not None
+                else item.get("human_comment")
+            )
+            missing: list[str] = []
+            if _evidence_count(c, work_item_id) < 1 and not (
+                item.get("completion_evidence_reference") or ""
+            ).strip():
+                missing.append("required evidence (screenshot, photo, document, or note file)")
+            if hr not in {"PASS", "FAIL"}:
+                missing.append("PASS or FAIL choice")
+            if hr == "FAIL" and not (comment or "").strip():
+                missing.append("comment explaining what is wrong or could be better")
+            if missing:
+                raise MyWorkError(
+                    "DONE is blocked until you add: " + "; ".join(missing) + ".",
+                    code="done_blocked",
+                )
+            set_human_result(
+                work_item_id,
+                person_id=verified_person_id,
+                result=hr,
+                comment=comment,
+                identity=identity,
+                conn=c,
+                commit=False,
+            )
+            item = wi.get_work_item(work_item_id, conn=c) or item
+            if hr == "PASS":
+                item = wi.claim_awaiting_verify(
+                    work_item_id,
+                    verified_person_id=verified_person_id,
+                    outcome=outcome or "Employee PASS — awaiting verify",
+                    identity=identity,
+                    conn=c,
+                    commit=False,
+                )
+                ts = wi.now_utc_iso()
+                c.execute(
+                    """
+                    UPDATE core_work_items
+                    SET what_happens_next=?, updated_at=?
+                    WHERE work_item_id=?
+                    """,
+                    (
+                        "AWAITING VERIFY — Owner or work.verify will confirm HUMAN PASS.",
+                        ts,
+                        work_item_id,
+                    ),
+                )
+            else:
+                item = wi.claim_complete(
+                    work_item_id,
+                    verified_person_id=verified_person_id,
+                    outcome=outcome or "Employee FAIL",
+                    identity=identity,
+                    conn=c,
+                    commit=False,
+                )
+                ts = wi.now_utc_iso()
+                c.execute(
+                    """
+                    UPDATE core_work_items
+                    SET commissioning_result='FAIL',
+                        what_happens_next=?,
+                        updated_at=?
+                    WHERE work_item_id=?
+                    """,
+                    (
+                        "FAIL recorded. Engineering repair created. You do not own the repair.",
+                        ts,
+                        work_item_id,
+                    ),
+                )
+                item = wi.get_work_item(work_item_id, conn=c) or item
+                repair_out = create_engineering_repair(
+                    item,
+                    note=item.get("human_comment"),
+                    conn=c,
+                    commit=False,
+                )
+        elif origin == "commissioning-repair":
+            if _evidence_count(c, work_item_id) < 1 and not (
+                repair_commit_ref or item.get("repair_commit_ref") or ""
+            ).strip():
+                raise MyWorkError(
+                    "DONE is blocked until repair evidence or a commit ref is attached.",
+                    code="done_blocked",
+                )
+            item = wi.claim_complete(
+                work_item_id,
+                verified_person_id=verified_person_id,
+                outcome=outcome or "Repair fixed",
+                identity=identity,
+                conn=c,
+                commit=False,
+            )
+            if repair_commit_ref:
+                c.execute(
+                    "UPDATE core_work_items SET repair_commit_ref=?, updated_at=? WHERE work_item_id=?",
+                    (repair_commit_ref.strip(), wi.now_utc_iso(), work_item_id),
+                )
+            retest_out = create_retest_for_repair(
+                work_item_id,
+                commit_ref=repair_commit_ref or item.get("repair_commit_ref"),
+                actor_person_id=verified_person_id,
+                identity=identity,
+                conn=c,
+                commit=False,
+            )
+        else:
+            item = wi.claim_complete(
+                work_item_id,
+                verified_person_id=verified_person_id,
+                outcome=outcome,
+                identity=identity,
+                conn=c,
+                commit=False,
+            )
+
+        if commit:
+            c.commit()
+        final = wi.get_work_item(work_item_id, conn=c) or item
+        return {
+            "ok": True,
+            "work_item": final,
+            "status_label": status_label(final.get("status")),
+            "verified": False,
+            "repair_item": repair_out,
+            "retest_item": retest_out,
+            "staff_ready": False,
+            "human_commissioned": False,
+            "system_percent_unchanged": True,
+        }
+    finally:
+        if own:
+            c.close()
 
 
 def verify_commissioning(
@@ -697,22 +1297,24 @@ def verify_commissioning(
     conn=None,
     commit: bool = True,
 ) -> dict[str, Any]:
-    """PASS → VERIFIED HUMAN PASS on commissioning record. FAIL → repair item."""
+    """Owner/work.verify only. PASS→VERIFIED HUMAN PASS. REJECT→person. FAIL→repair."""
     res = (result or "").strip().upper()
-    if res not in {"PASS", "FAIL"}:
-        raise MyWorkError("result must be PASS or FAIL", code="invalid_result")
+    if res not in {"PASS", "FAIL", "REJECT", "RETURN"}:
+        raise MyWorkError(
+            "result must be PASS, FAIL, or REJECT",
+            code="invalid_result",
+        )
     own = conn is None
     c = conn or wi.db_connect()
     try:
         item = wi.get_work_item(work_item_id, conn=c)
         if not item:
             raise MyWorkError("Work item not found.", code="not_found", http_status=404)
-        if item["status"] != "COMPLETED":
+        if item["status"] not in {"AWAITING_VERIFY", "COMPLETED"}:
             raise MyWorkError(
-                "Only DONE (COMPLETED) commissioning tasks can be verified.",
-                code="not_done",
+                "Only AWAITING VERIFY (or DONE) commissioning tasks can be verified.",
+                code="not_awaiting",
             )
-        # Owner / Peaches-style verifier: work.verify permission or Owner role.
         entity = str(item["owning_entity_id"])
         allowed = _rbac.evaluate(
             verifier_person_id, "work.verify", {"entity_id": entity}, conn=c
@@ -720,77 +1322,74 @@ def verify_commissioning(
         if not allowed and verifier_person_id != "PERS-MATT":
             raise MyWorkError("work.verify denied", code="rbac_denied", http_status=403)
         ts = wi.now_utc_iso()
+        repair = None
         if res == "PASS":
-            updated = wi.verify_work_item(
-                work_item_id,
-                verified_person_id=verifier_person_id,
-                identity=identity,
-                conn=c,
-                commit=False,
-            )
+            if item["status"] == "COMPLETED":
+                # Allow verify from COMPLETED for non-loop legacy path.
+                updated = wi.verify_work_item(
+                    work_item_id,
+                    verified_person_id=verifier_person_id,
+                    identity=identity,
+                    conn=c,
+                    commit=False,
+                )
+            else:
+                updated = wi.verify_work_item(
+                    work_item_id,
+                    verified_person_id=verifier_person_id,
+                    identity=identity,
+                    conn=c,
+                    commit=False,
+                )
             c.execute(
                 """
                 UPDATE core_work_items
                 SET commissioning_result='PASS',
                     outcome=COALESCE(?, outcome),
-                    what_happens_next='VERIFIED HUMAN PASS recorded. Not staff_ready. Not human_commissioned.',
+                    what_happens_next='VERIFIED HUMAN PASS recorded. Not staff_ready. Not human_commissioned. SYSTEM % unchanged.',
                     updated_at=?
                 WHERE work_item_id=?
                 """,
                 ((note or "VERIFIED HUMAN PASS").strip(), ts, work_item_id),
             )
-            repair = None
+        elif res in {"REJECT", "RETURN"}:
+            c.execute(
+                """
+                UPDATE core_work_items
+                SET status='RETURNED',
+                    outcome=?,
+                    what_happens_next=?,
+                    updated_at=?
+                WHERE work_item_id=?
+                """,
+                (
+                    (note or "Needs better evidence").strip(),
+                    f"Returned for better evidence: {(note or 'please attach clearer proof').strip()}",
+                    ts,
+                    work_item_id,
+                ),
+            )
+            updated = wi.get_work_item(work_item_id, conn=c)
         else:
             c.execute(
                 """
                 UPDATE core_work_items
                 SET commissioning_result='FAIL',
-                    status='RETURNED',
+                    status='COMPLETED',
                     outcome=?,
-                    what_happens_next='FAIL — repair item issued. Retest will follow.',
+                    what_happens_next='Verifier FAIL — engineering repair issued.',
                     updated_at=?
                 WHERE work_item_id=?
                 """,
-                ((note or "FAIL").strip(), ts, work_item_id),
+                ((note or "Verifier FAIL").strip(), ts, work_item_id),
             )
             updated = wi.get_work_item(work_item_id, conn=c)
-            repair = wi.create_work_item(
-                title=f"Repair: {item.get('title')}",
-                description=(
-                    f"Repair linked to failed commissioning {work_item_id}. "
-                    f"Evidence: {item.get('completion_evidence_reference') or 'see attachments'}."
-                ),
-                owning_entity_id=entity,
-                work_type="EXCEPTION",
-                source_type="SYSTEM",
-                created_by_actor_type="SYSTEM",
-                owner_person_id=item.get("owner_person_id"),
-                owner_org_assignment_id=item.get("owner_org_assignment_id"),
-                parent_work_item_id=work_item_id,
-                source_id=f"commissioning-repair:{work_item_id}",
+            repair = create_engineering_repair(
+                updated or item,
+                note=note,
                 conn=c,
                 commit=False,
             )
-            c.execute(
-                """
-                UPDATE core_work_items
-                SET origin='commissioning-repair',
-                    accountable_person_id=?,
-                    executor_person_id=owner_person_id,
-                    commissioning_capability_id=?,
-                    evidence_required='Show the fix with a photo, screenshot, or document.',
-                    what_happens_next='Fix the defect, attach evidence, mark DONE, then a retest task will be issued.',
-                    updated_at=?
-                WHERE work_item_id=?
-                """,
-                (
-                    item.get("accountable_person_id") or item.get("owner_person_id"),
-                    item.get("commissioning_capability_id"),
-                    ts,
-                    repair["work_item_id"],
-                ),
-            )
-            repair = wi.get_work_item(repair["work_item_id"], conn=c)
         _audit.safe_record(
             action="work.commissioning.verify",
             result="SUCCEEDED",
@@ -1125,12 +1724,143 @@ def _create_commission_task(
             json.dumps([{"step": instructions, "href": href_hint}]),
             scope_label,
             capability_id,
-            "Open the surface, do the work, attach evidence, mark DONE. Verification is separate.",
+            "Open the link, follow the steps, attach evidence, choose PASS or FAIL, then DONE. Verification is separate.",
             ts,
             item["work_item_id"],
         ),
     )
     return wi.get_work_item(item["work_item_id"], conn=conn) or item
+
+
+def _commissioning_specs() -> list[tuple]:
+    """Plain employee steps — no Matt required to explain the test. Ids kept via capability."""
+    return [
+        # Devi
+        ("PERS-DEVI", "ROLE-BZG-FB-OPS-LEAD", "ENT-BZG", "COMM-DEVI-UMA-TODAY",
+         "Commission Uma Today",
+         "1. Open Uma Today (link below).\n"
+         "2. Look at today's bills and sales.\n"
+         "3. Take a phone screenshot that shows the real numbers.\n"
+         "4. Attach the screenshot.\n"
+         "5. Choose PASS if it looks right, or FAIL if something is wrong — and say what.\n"
+         "6. Tap DONE.",
+         "Phone screenshot of Uma Today", "/bzg/uma-blu", "BZG · Uma Blu"),
+        ("PERS-DEVI", "ROLE-BZG-FB-OPS-LEAD", "ENT-BZG", "COMM-DEVI-RECIPES",
+         "Commission Recipes",
+         "1. Open Recipes (link below).\n"
+         "2. Open one real recipe.\n"
+         "3. Take a screenshot of that recipe.\n"
+         "4. Attach it, choose PASS or FAIL, tap DONE.",
+         "Screenshot of a real recipe", "/bzg/uma-blu#recipes", "BZG · Uma Blu"),
+        ("PERS-DEVI", "ROLE-BZG-FB-OPS-LEAD", "ENT-BZG", "COMM-DEVI-PURCHASING",
+         "Commission Purchasing",
+         "1. Open Purchasing (link below).\n"
+         "2. Confirm you see real purchase rows (not an empty demo).\n"
+         "3. Screenshot the list, attach it, choose PASS or FAIL, tap DONE.",
+         "Screenshot of purchasing queue", "/bzg/uma-blu#purchasing", "BZG · Uma Blu"),
+        ("PERS-DEVI", "ROLE-BZG-FB-OPS-LEAD", "ENT-BZG", "COMM-DEVI-ESB-SALES",
+         "Commission ESB sales view",
+         "1. Open Sales for Uma Blu (link below).\n"
+         "2. Find a real day with totals.\n"
+         "3. Screenshot it, attach it, choose PASS or FAIL, tap DONE.",
+         "Screenshot of ESB sales", "/bzg/uma-blu#sales", "BZG · Uma Blu"),
+        ("PERS-DEVI", "ROLE-BZG-CLOSER", "ENT-BZG", "COMM-DEVI-DAILY-CLOSE",
+         "Commission Daily Close workflow (tolerance UNSET)",
+         "1. Open Daily Close (link below).\n"
+         "2. Cash-variance tolerance is UNSET — do not invent a number.\n"
+         "3. Run only the parts that do not need a tolerance number.\n"
+         "4. Screenshot the screen showing UNSET / blocked variance, attach it, choose PASS or FAIL, tap DONE.",
+         "Screenshot of Daily Close with UNSET policy control visible",
+         "/uma-blu-close", "BZG · Uma Blu · Closer"),
+        # Zayen
+        ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-COMMAND",
+         "Commission Atrium Command Centre",
+         "1. Open Atrium Finance Command Centre (link below).\n"
+         "2. Confirm the page loads with real finance tiles.\n"
+         "3. Screenshot, attach, choose PASS or FAIL, tap DONE.",
+         "Screenshot of Command Centre", "/amg/finance", "AMG · Atrium Finance"),
+        ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-JOURNAL",
+         "Commission Journal (draft only)",
+         "1. Open Journal (link below).\n"
+         "2. Draft only — do not post or approve.\n"
+         "3. Screenshot the draft view, attach, choose PASS or FAIL, tap DONE.",
+         "Screenshot of Journal draft view", "/amg/finance#journal", "AMG · Atrium Finance"),
+        ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-LEDGER",
+         "Commission Ledger",
+         "1. Open General Ledger (link below).\n"
+         "2. Confirm amounts show in IDR.\n"
+         "3. Screenshot, attach, choose PASS or FAIL, tap DONE.",
+         "Screenshot of Ledger", "/amg/finance#ledger", "AMG · Atrium Finance"),
+        ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-TRIAL",
+         "Commission Trial Balance",
+         "1. Open Trial Balance (link below).\n"
+         "2. Screenshot the balance view, attach, choose PASS or FAIL, tap DONE.",
+         "Screenshot of Trial Balance", "/amg/finance#trial", "AMG · Atrium Finance"),
+        ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-ARAP",
+         "Commission AR/AP",
+         "1. Open AR and AP (link below).\n"
+         "2. Screenshot both views (or one clear photo of each).\n"
+         "3. Attach, choose PASS or FAIL, tap DONE.",
+         "Screenshots of AR and AP", "/amg/finance", "AMG · Atrium Finance"),
+        ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-INVENTORY",
+         "Commission Inventory",
+         "1. Open Inventory (link below).\n"
+         "2. Screenshot, attach, choose PASS or FAIL, tap DONE.",
+         "Screenshot of Inventory", "/amg/finance#inventory", "AMG · Atrium Finance"),
+        ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-REPORTS",
+         "Commission Reports",
+         "1. Open financial reports (link below).\n"
+         "2. Screenshot, attach, choose PASS or FAIL, tap DONE.",
+         "Screenshot of Reports", "/amg/finance#reports", "AMG · Atrium Finance"),
+        ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-CONTROLS",
+         "Confirm approval/posting controls denied",
+         "1. Open Atrium Finance (link below).\n"
+         "2. Try (or open) approve/post journal, pay, or bank-detail change — you should be denied.\n"
+         "3. Attach a denial screenshot or a short written note of what was blocked.\n"
+         "4. Choose PASS if denied correctly, FAIL if you could do something you should not. Tap DONE.",
+         "Evidence of denied approve/post/pay/bank", "/amg/finance", "AMG · Atrium Finance"),
+        # Amanda
+        ("PERS-AMANDA", "ROLE-GGV-FINANCE-OPERATOR", "ENT-GGV", "COMM-AMANDA-064A-066A",
+         "Verify GGV invoices 064A–066A",
+         "1. Open GGV Finance (link below).\n"
+         "2. Find invoices 064A, 065A, and 066A.\n"
+         "3. Check each against the source file.\n"
+         "4. Attach notes or screenshots, choose PASS or FAIL, tap DONE.",
+         "Verification notes for 064A–066A", "/ggv/finance", "GGV · Finance"),
+        ("PERS-AMANDA", "ROLE-GGV-FINANCE-OPERATOR", "ENT-GGV", "COMM-AMANDA-067A",
+         "Next genuine invoice through draft (067A if due)",
+         "1. Open GGV Finance (link below).\n"
+         "2. Only if a real invoice is due: prepare draft 067A. Do not invent one.\n"
+         "3. Attach draft evidence, or a note that none is due.\n"
+         "4. Choose PASS or FAIL, tap DONE.",
+         "Draft invoice 067A or note that none is due", "/ggv/finance", "GGV · Finance"),
+        # Haikal
+        ("PERS-HAIKAL", "ROLE-GGV-CREATIVE-DIRECTOR", "ENT-GGV", "COMM-HAIKAL-MYWORK",
+         "Commission My Work",
+         "1. Open My Work on your phone (link below).\n"
+         "2. Confirm you see TODAY, DO THIS NEXT, NEEDS ATTENTION, WAITING, COMPLETED.\n"
+         "3. Screenshot, attach, choose PASS or FAIL, tap DONE.",
+         "Phone screenshot of My Work", "/my-work", "GGV · Content"),
+        ("PERS-HAIKAL", "ROLE-GGV-CREATIVE-DIRECTOR", "ENT-GGV", "COMM-HAIKAL-PLAN",
+         "Commission Content Plan",
+         "1. Open Content Plan (link below).\n"
+         "2. Confirm the header fits on a phone-width screen.\n"
+         "3. Screenshot, attach, choose PASS or FAIL, tap DONE.",
+         "Phone screenshot of Content Plan", "/content-2.0#plan", "GGV · Content"),
+        ("PERS-HAIKAL", "ROLE-GGV-CREATIVE-DIRECTOR", "ENT-GGV", "COMM-HAIKAL-LIBRARY",
+         "Commission Library pagination/preview/download/upload",
+         "1. Open the library (link below).\n"
+         "2. Use the page numbers, preview one file, download one file, open upload.\n"
+         "3. Attach screenshots of those steps, choose PASS or FAIL, tap DONE.",
+         "Screenshots of pagination, preview, download, upload", "/content-2.0#library", "GGV · Content"),
+        ("PERS-HAIKAL", "ROLE-GGV-CREATIVE-DIRECTOR", "ENT-GGV", "COMM-HAIKAL-HABITAT",
+         "Real Habitat work from My Work",
+         "1. Open My Work (link below).\n"
+         "2. Open a real Habitat plan from your list.\n"
+         "3. Note the next production step.\n"
+         "4. Screenshot, attach, choose PASS or FAIL, tap DONE.",
+         "Screenshot of Habitat plan from My Work", "/my-work", "GGV · Content"),
+    ]
 
 
 def _asg(conn, person_id: str, role_id: str | None = None) -> str | None:
@@ -1161,76 +1891,7 @@ def issue_commissioning_tasks(*, conn=None, commit: bool = True) -> dict[str, An
     c = conn or wi.db_connect()
     created: list[str] = []
     try:
-        specs = [
-            # Devi
-            ("PERS-DEVI", "ROLE-BZG-FB-OPS-LEAD", "ENT-BZG", "COMM-DEVI-UMA-TODAY",
-             "Commission Uma Today", "Open Uma Today on Beta. Walk the real bills and sales view. Attach a phone screenshot.",
-             "Phone screenshot of Uma Today", "/bzg/uma-blu", "BZG · Uma Blu"),
-            ("PERS-DEVI", "ROLE-BZG-FB-OPS-LEAD", "ENT-BZG", "COMM-DEVI-RECIPES",
-             "Commission Recipes", "Open Recipes, open one real recipe detail, attach screenshot.",
-             "Screenshot of a real recipe", "/bzg/uma-blu#recipes", "BZG · Uma Blu"),
-            ("PERS-DEVI", "ROLE-BZG-FB-OPS-LEAD", "ENT-BZG", "COMM-DEVI-PURCHASING",
-             "Commission Purchasing", "Open Purchasing / Alchemist projection. Confirm real PR rows. Attach screenshot.",
-             "Screenshot of purchasing queue", "/bzg/uma-blu#purchasing", "BZG · Uma Blu"),
-            ("PERS-DEVI", "ROLE-BZG-FB-OPS-LEAD", "ENT-BZG", "COMM-DEVI-ESB-SALES",
-             "Commission ESB sales view", "Open ESB sales projection for Uma Blu. Attach screenshot of real day totals.",
-             "Screenshot of ESB sales", "/bzg/uma-blu#sales", "BZG · Uma Blu"),
-            ("PERS-DEVI", "ROLE-BZG-CLOSER", "ENT-BZG", "COMM-DEVI-DAILY-CLOSE",
-             "Commission Daily Close workflow (tolerance UNSET)",
-             "Open Daily Close. Cash-variance tolerance is UNSET — do not invent a number. "
-             "Run the parts of the workflow that do not depend on tolerance. Attach screenshot.",
-             "Screenshot of Daily Close with UNSET policy control visible",
-             "/uma-blu-close", "BZG · Uma Blu · Closer"),
-            # Zayen
-            ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-COMMAND",
-             "Commission Atrium Command Centre", "Open Atrium Finance Command Centre. Attach screenshot.",
-             "Screenshot of Command Centre", "/amg/finance", "AMG · Atrium Finance"),
-            ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-JOURNAL",
-             "Commission Journal (draft only)", "Open Journal. Draft only as your matrix allows. Do not post or approve. Attach screenshot.",
-             "Screenshot of Journal draft view", "/amg/finance#journal", "AMG · Atrium Finance"),
-            ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-LEDGER",
-             "Commission Ledger", "Open General Ledger. Confirm IDR display. Attach screenshot.",
-             "Screenshot of Ledger", "/amg/finance#ledger", "AMG · Atrium Finance"),
-            ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-TRIAL",
-             "Commission Trial Balance", "Open Trial Balance. Attach screenshot.",
-             "Screenshot of Trial Balance", "/amg/finance#trial", "AMG · Atrium Finance"),
-            ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-ARAP",
-             "Commission AR/AP", "Open AR and AP views. Attach screenshots.",
-             "Screenshots of AR and AP", "/amg/finance", "AMG · Atrium Finance"),
-            ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-INVENTORY",
-             "Commission Inventory", "Open Inventory. Attach screenshot.",
-             "Screenshot of Inventory", "/amg/finance#inventory", "AMG · Atrium Finance"),
-            ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-REPORTS",
-             "Commission Reports", "Open financial reports. Attach screenshot.",
-             "Screenshot of Reports", "/amg/finance#reports", "AMG · Atrium Finance"),
-            ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-CONTROLS",
-             "Confirm approval/posting controls denied",
-             "Confirm you cannot approve/post journals, pay, or change bank details. Attach a denial screenshot or written note.",
-             "Evidence of denied approve/post/pay/bank", "/amg/finance", "AMG · Atrium Finance"),
-            # Amanda
-            ("PERS-AMANDA", "ROLE-GGV-FINANCE-OPERATOR", "ENT-GGV", "COMM-AMANDA-064A-066A",
-             "Verify GGV invoices 064A–066A", "Open GGV Finance. Verify invoices 064A through 066A against source. Attach notes/screenshots.",
-             "Verification notes for 064A–066A", "/ggv/finance", "GGV · Finance"),
-            ("PERS-AMANDA", "ROLE-GGV-FINANCE-OPERATOR", "ENT-GGV", "COMM-AMANDA-067A",
-             "Next genuine invoice through draft (067A if due)",
-             "Only if genuinely due: prepare the next invoice as draft. Next number 067A. Do not invent a due invoice. Attach draft evidence or a note that none is due.",
-             "Draft invoice 067A or note that none is due", "/ggv/finance", "GGV · Finance"),
-            # Haikal
-            ("PERS-HAIKAL", "ROLE-GGV-CREATIVE-DIRECTOR", "ENT-GGV", "COMM-HAIKAL-MYWORK",
-             "Commission My Work", "Open My Work on phone (390px). Confirm TODAY / DO THIS NEXT / NEEDS ATTENTION / WAITING / COMPLETED. Attach screenshot.",
-             "Phone screenshot of My Work", "/my-work", "GGV · Content"),
-            ("PERS-HAIKAL", "ROLE-GGV-CREATIVE-DIRECTOR", "ENT-GGV", "COMM-HAIKAL-PLAN",
-             "Commission Content Plan", "Open Content Plan. Confirm header fits at 390px. Attach screenshot.",
-             "Phone screenshot of Content Plan", "/content-2.0#plan", "GGV · Content"),
-            ("PERS-HAIKAL", "ROLE-GGV-CREATIVE-DIRECTOR", "ENT-GGV", "COMM-HAIKAL-LIBRARY",
-             "Commission Library pagination/preview/download/upload",
-             "On the library: use numbered pages, preview one file, download, open upload view. Attach screenshots.",
-             "Screenshots of pagination, preview, download, upload", "/content-2.0#library", "GGV · Content"),
-            ("PERS-HAIKAL", "ROLE-GGV-CREATIVE-DIRECTOR", "ENT-GGV", "COMM-HAIKAL-HABITAT",
-             "Real Habitat work from My Work", "Open a real Habitat plan from My Work and note the next production step. Attach screenshot.",
-             "Screenshot of Habitat plan from My Work", "/my-work", "GGV · Content"),
-        ]
-        # Other content staff — one My Work commissioning each.
+        specs = list(_commissioning_specs())
         for pid, role in (
             ("PERS-MISA", "ROLE-GGV-CREATIVE-DIRECTOR"),
             ("PERS-ZARAH", "ROLE-GGV-CREATIVE-DIRECTOR"),
@@ -1249,7 +1910,9 @@ def issue_commissioning_tasks(*, conn=None, commit: bool = True) -> dict[str, An
                     "ENT-GGV",
                     f"COMM-{pid.split('-')[1]}-MYWORK",
                     "Commission My Work for your seat",
-                    "Open My Work. Confirm your assignment work appears. Attach a screenshot.",
+                    "1. Open My Work (link below).\n"
+                    "2. Confirm work for your seat appears.\n"
+                    "3. Screenshot, attach, choose PASS or FAIL, tap DONE.",
                     "Screenshot of My Work",
                     "/my-work",
                     "GGV · Content",
@@ -1539,25 +2202,480 @@ def derived_view_status(view_id: str, *, conn=None) -> dict[str, Any]:
 
 
 def owner_work_exceptions(conn=None) -> list[dict[str, Any]]:
-    """Overdue / blocked / failed commissioning for Owner Command."""
+    """Overwatch: commissioning FAILs, overdue, NEEDS_ROUTING, owner-authority, AWAITING_VERIFY.
+
+    Routine OPEN work lists are not included.
+    """
     own = conn is None
     c = conn or wi.db_connect()
     try:
         rows = c.execute(
             """
             SELECT * FROM core_work_items
-            WHERE status IN ('BLOCKED', 'RETURNED')
-               OR commissioning_result = 'FAIL'
-               OR (
+            WHERE status != 'CANCELLED'
+              AND (
+                commissioning_result = 'FAIL'
+                OR origin = 'commissioning-repair'
+                OR routing_state = ?
+                OR status = 'AWAITING_VERIFY'
+                OR status IN ('BLOCKED', 'RETURNED')
+                OR (
                     status IN ('OPEN','IN_PROGRESS','WAITING')
                     AND due_at IS NOT NULL AND due_at < ?
-               )
+                )
+                OR (
+                    owner_person_id = 'PERS-MATT'
+                    AND origin = 'legacy'
+                    AND COALESCE(routing_state, '') != ?
+                    AND (
+                      lower(title) LIKE '%decide%'
+                      OR lower(title) LIKE '%approv%'
+                      OR lower(title) LIKE '%payment%'
+                      OR lower(title) LIKE '%bank%'
+                      OR lower(title) LIKE '%credential%'
+                      OR lower(import_label) LIKE '%owner%'
+                    )
+                )
+              )
             ORDER BY priority ASC, due_at IS NULL, due_at ASC
-            LIMIT 40
+            LIMIT 60
             """,
-            (now_iso(),),
+            (ROUTING_NEEDS, now_iso(), ROUTING_NEEDS),
         ).fetchall()
         return [enrich_card(c, dict(r)) for r in rows]
+    finally:
+        if own:
+            c.close()
+
+
+def refresh_commissioning_copy(*, conn=None, commit: bool = True) -> dict[str, Any]:
+    """Rewrite instructions on existing commissioning items (keep ids)."""
+    own = conn is None
+    c = conn or wi.db_connect()
+    updated = 0
+    try:
+        specs = list(_commissioning_specs())
+        for pid, role in (
+            ("PERS-MISA", "ROLE-GGV-CREATIVE-DIRECTOR"),
+            ("PERS-ZARAH", "ROLE-GGV-CREATIVE-DIRECTOR"),
+            ("PERS-FRAIL", "ROLE-GGV-CREATIVE-DIRECTOR"),
+            ("PERS-YUDI", "ROLE-CONTENT-CREATOR"),
+            ("PERS-GERY", "ROLE-CONTENT-CREATOR"),
+            ("PERS-ALAM", "ROLE-CONTENT-CREATOR"),
+            ("PERS-TJ", "ROLE-CONTENT-CREATOR"),
+            ("PERS-NATA", "ROLE-CONTENT-CREATOR"),
+            ("PERS-RAPP", "ROLE-CONTENT-CREATOR"),
+        ):
+            specs.append(
+                (
+                    pid,
+                    role,
+                    "ENT-GGV",
+                    f"COMM-{pid.split('-')[1]}-MYWORK",
+                    "Commission My Work for your seat",
+                    "1. Open My Work (link below).\n"
+                    "2. Confirm work for your seat appears.\n"
+                    "3. Screenshot, attach, choose PASS or FAIL, tap DONE.",
+                    "Screenshot of My Work",
+                    "/my-work",
+                    "GGV · Content",
+                )
+            )
+        by_cap = {s[3]: s for s in specs}
+        rows = c.execute(
+            """
+            SELECT work_item_id, commissioning_capability_id FROM core_work_items
+            WHERE origin='commissioning' AND status NOT IN ('CANCELLED','VERIFIED')
+            """
+        ).fetchall()
+        ts = wi.now_utc_iso()
+        for row in rows:
+            cap = row["commissioning_capability_id"]
+            spec = by_cap.get(cap)
+            if not spec:
+                continue
+            _pid, _role, _ent, _cap, title, instr, evid, href, scope = spec
+            c.execute(
+                """
+                UPDATE core_work_items
+                SET title=?,
+                    description=?,
+                    instructions=?,
+                    evidence_required=?,
+                    checklist_json=?,
+                    scope_label=?,
+                    what_happens_next=?,
+                    updated_at=?
+                WHERE work_item_id=?
+                """,
+                (
+                    title,
+                    instr,
+                    instr,
+                    evid,
+                    json.dumps([{"step": instr.split("\n")[0], "href": href}]),
+                    scope,
+                    "Open the link, follow the steps, attach evidence, choose PASS or FAIL, then DONE.",
+                    ts,
+                    row["work_item_id"],
+                ),
+            )
+            updated += 1
+        if commit:
+            c.commit()
+        return {"updated": updated}
+    finally:
+        if own:
+            c.close()
+
+
+def _person_has_active_assignment_for_entity(
+    conn, person_id: str, entity_id: str
+) -> bool:
+    if not person_id or not entity_id:
+        return False
+    asg = _asg(conn, person_id)
+    if not asg:
+        return False
+    return wi.person_can_see_entity(person_id, entity_id, conn=conn)
+
+
+def _needs_owner_authority(title: str, import_label: str, classification: str) -> bool:
+    blob = f"{title} {import_label} {classification}".lower()
+    return any(h in blob for h in _OWNER_AUTHORITY_HINTS)
+
+
+def audit_legacy_routing(*, conn=None, commit: bool = True) -> dict[str, Any]:
+    """Re-check legacy owners against provenance. Move unclear → NEEDS_ROUTING."""
+    own = conn is None
+    c = conn or wi.db_connect()
+    before: dict[str, int] = {}
+    after: dict[str, int] = {}
+    moved: list[dict[str, Any]] = []
+    kept: list[dict[str, Any]] = []
+    try:
+        proposal = {}
+        candidates_by_id: dict[str, dict] = {}
+        source_by_legacy: dict[str, dict] = {}
+        if LEGACY_PROPOSAL.exists():
+            proposal = json.loads(LEGACY_PROPOSAL.read_text(encoding="utf-8"))
+        if LEGACY_CANDIDATES.exists():
+            cand_doc = json.loads(LEGACY_CANDIDATES.read_text(encoding="utf-8"))
+            for cand in cand_doc.get("candidates") or []:
+                if isinstance(cand, dict) and cand.get("candidate_id"):
+                    candidates_by_id[str(cand["candidate_id"])] = cand
+        for row in proposal.get("items") or []:
+            if not isinstance(row, dict):
+                continue
+            pw = row.get("proposed_work_item") or {}
+            src = str(pw.get("source_id") or "")
+            if src:
+                source_by_legacy[src] = {
+                    "candidate_id": row.get("candidate_id"),
+                    "classification": row.get("classification"),
+                    "proposed_role": row.get("proposed_role"),
+                    "assignee_in_source": (
+                        candidates_by_id.get(str(row.get("candidate_id") or ""), {}).get(
+                            "assignee_in_source"
+                        )
+                    ),
+                    "source_system": (
+                        candidates_by_id.get(str(row.get("candidate_id") or ""), {}).get(
+                            "source_system"
+                        )
+                    ),
+                    "proposed_owner": pw.get("owner_person_id"),
+                }
+
+        rows = c.execute(
+            """
+            SELECT * FROM core_work_items
+            WHERE origin='legacy' AND status NOT IN ('CANCELLED')
+            """
+        ).fetchall()
+        for r in rows:
+            owner = r["owner_person_id"] or "NONE"
+            before[owner] = before.get(owner, 0) + 1
+
+        ts = wi.now_utc_iso()
+        for r in rows:
+            item = dict(r)
+            if str(item.get("import_label") or "").upper().find("OBSOLETE") >= 0:
+                after[item.get("owner_person_id") or "NONE"] = (
+                    after.get(item.get("owner_person_id") or "NONE", 0) + 1
+                )
+                continue
+            src = str(item.get("source_id") or "")
+            meta = source_by_legacy.get(src) or {}
+            assignee_raw = (meta.get("assignee_in_source") or "").strip()
+            mapped = _SOURCE_ASSIGNEE_MAP.get(assignee_raw.lower()) if assignee_raw else None
+            entity = str(item.get("owning_entity_id") or "")
+            title = str(item.get("title") or "")
+            reason = None
+            keep_owner = None
+
+            if mapped and _person_has_active_assignment_for_entity(c, mapped, entity):
+                if mapped == "PERS-MATT":
+                    if _needs_owner_authority(
+                        title,
+                        str(item.get("import_label") or ""),
+                        str(meta.get("classification") or ""),
+                    ):
+                        keep_owner = "PERS-MATT"
+                        reason = "Original assignee is Owner and item needs owner authority"
+                    else:
+                        reason = (
+                            "Original assignee is Owner but item does not need owner "
+                            "authority — NEEDS_ROUTING"
+                        )
+                else:
+                    keep_owner = mapped
+                    reason = f"Original assignee '{assignee_raw}' maps to {mapped} with active scope"
+            else:
+                if not assignee_raw:
+                    reason = "No reliable original assignee in provenance"
+                elif not mapped:
+                    reason = f"Original assignee '{assignee_raw}' does not map to a current Person"
+                else:
+                    reason = (
+                        f"Mapped person {mapped} has no active Assignment covering {entity}"
+                    )
+
+            wid = item["work_item_id"]
+            if keep_owner:
+                # Ensure owner matches mapped person; clear routing.
+                c.execute(
+                    """
+                    UPDATE core_work_items
+                    SET owner_person_id=?,
+                        executor_person_id=?,
+                        accountable_person_id=?,
+                        owner_org_assignment_id=?,
+                        routing_state=NULL,
+                        routing_reason=?,
+                        updated_at=?
+                    WHERE work_item_id=?
+                    """,
+                    (
+                        keep_owner,
+                        keep_owner,
+                        keep_owner,
+                        _asg(c, keep_owner),
+                        reason,
+                        ts,
+                        wid,
+                    ),
+                )
+                after[keep_owner] = after.get(keep_owner, 0) + 1
+                kept.append({"work_item_id": wid, "owner": keep_owner, "reason": reason})
+            else:
+                c.execute(
+                    """
+                    UPDATE core_work_items
+                    SET owner_person_id=NULL,
+                        executor_person_id=NULL,
+                        accountable_person_id='PERS-MATT',
+                        owner_org_assignment_id=NULL,
+                        routing_state=?,
+                        routing_reason=?,
+                        what_happens_next='NEEDS ROUTING — Owner Overwatch queue. Not in anyone''s My Work.',
+                        updated_at=?
+                    WHERE work_item_id=?
+                    """,
+                    (ROUTING_NEEDS, reason, ts, wid),
+                )
+                after["NEEDS_ROUTING"] = after.get("NEEDS_ROUTING", 0) + 1
+                moved.append(
+                    {
+                        "work_item_id": wid,
+                        "from": item.get("owner_person_id"),
+                        "reason": reason,
+                        "source_id": src,
+                        "assignee_in_source": assignee_raw or None,
+                    }
+                )
+
+        if commit:
+            c.commit()
+        return {
+            "before": before,
+            "after": after,
+            "kept": len(kept),
+            "moved_to_needs_routing": len(moved),
+            "moved_sample": moved[:20],
+            "kept_sample": kept[:10],
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def live_commissioning_results(*, conn=None) -> dict[str, Any]:
+    """Per person × capability counts for Owner live board."""
+    own = conn is None
+    c = conn or wi.db_connect()
+    try:
+        rows = c.execute(
+            """
+            SELECT * FROM core_work_items
+            WHERE origin IN ('commissioning', 'commissioning-retest', 'commissioning-repair')
+              AND status != 'CANCELLED'
+            """
+        ).fetchall()
+        by_key: dict[tuple[str, str], dict[str, Any]] = {}
+        for r in rows:
+            item = dict(r)
+            origin = item.get("origin")
+            person = (
+                item.get("owner_person_id")
+                or item.get("executor_person_id")
+                or ("ENGINEERING" if origin == "commissioning-repair" else "UNKNOWN")
+            )
+            cap = item.get("commissioning_capability_id") or "UNKNOWN"
+            key = (str(person), str(cap))
+            slot = by_key.get(key)
+            if not slot:
+                slot = {
+                    "person_id": person,
+                    "person_name": _person_name(c, person)
+                    if person.startswith("PERS-")
+                    else person,
+                    "capability_id": cap,
+                    "assigned": 0,
+                    "opened": 0,
+                    "in_progress": 0,
+                    "done": 0,
+                    "human_pass": 0,
+                    "human_fail": 0,
+                    "evidence_attached": 0,
+                    "verified": 0,
+                    "repair_created": 0,
+                    "retest_issued": 0,
+                    "capability_state_changed": 0,
+                    "awaiting_verify": 0,
+                }
+                by_key[key] = slot
+            if origin in {"commissioning", "commissioning-retest"}:
+                slot["assigned"] += 1
+                if item.get("opened_at"):
+                    slot["opened"] += 1
+                if item.get("status") == "IN_PROGRESS":
+                    slot["in_progress"] += 1
+                if item.get("status") in {"COMPLETED", "AWAITING_VERIFY", "VERIFIED"}:
+                    slot["done"] += 1
+                if item.get("human_result") == "PASS":
+                    slot["human_pass"] += 1
+                if item.get("human_result") == "FAIL":
+                    slot["human_fail"] += 1
+                if _evidence_count(c, item["work_item_id"]) > 0 or item.get(
+                    "completion_evidence_reference"
+                ):
+                    slot["evidence_attached"] += 1
+                if item.get("status") == "VERIFIED" or item.get("commissioning_result") == "PASS":
+                    slot["verified"] += 1
+                    slot["capability_state_changed"] += 1
+                if item.get("status") == "AWAITING_VERIFY":
+                    slot["awaiting_verify"] += 1
+                if item.get("commissioning_result") == "FAIL":
+                    slot["capability_state_changed"] += 1
+            if origin == "commissioning-repair":
+                slot["repair_created"] += 1
+            if origin == "commissioning-retest":
+                slot["retest_issued"] += 1
+
+        people = sorted(by_key.values(), key=lambda x: (x["person_name"], x["capability_id"]))
+        awaiting = [
+            enrich_card(c, dict(r))
+            for r in c.execute(
+                """
+                SELECT * FROM core_work_items
+                WHERE status='AWAITING_VERIFY' AND origin IN ('commissioning','commissioning-retest')
+                ORDER BY updated_at DESC LIMIT 40
+                """
+            ).fetchall()
+        ]
+        fails_no_repair = []
+        for r in c.execute(
+            """
+            SELECT * FROM core_work_items
+            WHERE origin IN ('commissioning','commissioning-retest')
+              AND (human_result='FAIL' OR commissioning_result='FAIL')
+              AND status != 'CANCELLED'
+            """
+        ).fetchall():
+            if not _find_linked_repair(c, r["work_item_id"]):
+                fails_no_repair.append(enrich_card(c, dict(r)))
+        repairs_no_retest = []
+        for r in c.execute(
+            """
+            SELECT * FROM core_work_items
+            WHERE origin='commissioning-repair' AND status='COMPLETED'
+            """
+        ).fetchall():
+            has_retest = c.execute(
+                """
+                SELECT 1 FROM core_work_items
+                WHERE origin='commissioning-retest' AND parent_work_item_id=?
+                  AND status NOT IN ('CANCELLED') LIMIT 1
+                """,
+                (r["work_item_id"],),
+            ).fetchone()
+            if not has_retest:
+                repairs_no_retest.append(enrich_card(c, dict(r)))
+
+        return {
+            "ok": True,
+            "as_of": now_iso(),
+            "rows": people,
+            "awaiting_verify": awaiting,
+            "fails_without_repair": fails_no_repair,
+            "repairs_fixed_without_retest": repairs_no_retest,
+            "counts": {
+                "people_capabilities": len(people),
+                "awaiting_verify": len(awaiting),
+                "fails_without_repair": len(fails_no_repair),
+                "repairs_fixed_without_retest": len(repairs_no_retest),
+            },
+            "staff_ready": False,
+            "human_commissioned": False,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def commissioning_tick_apply(*, conn=None, commit: bool = True) -> dict[str, Any]:
+    """Safe automatic steps only: missing repairs + retests. Never auto-verify PASS."""
+    own = conn is None
+    c = conn or wi.db_connect()
+    created_repairs: list[str] = []
+    created_retests: list[str] = []
+    try:
+        snap = live_commissioning_results(conn=c)
+        for card in snap.get("fails_without_repair") or []:
+            item = wi.get_work_item(card["work_item_id"], conn=c)
+            if not item:
+                continue
+            repair = create_engineering_repair(item, note=item.get("human_comment"), conn=c, commit=False)
+            created_repairs.append(repair["work_item_id"])
+        for card in snap.get("repairs_fixed_without_retest") or []:
+            retest = create_retest_for_repair(
+                card["work_item_id"],
+                commit_ref=None,
+                conn=c,
+                commit=False,
+            )
+            if retest.get("work_item_id"):
+                created_retests.append(retest["work_item_id"])
+        if commit:
+            c.commit()
+        return {
+            "ok": True,
+            "applied": True,
+            "repairs_created": created_repairs,
+            "retests_created": created_retests,
+            "auto_verify_pass": False,
+        }
     finally:
         if own:
             c.close()

@@ -52,6 +52,7 @@ STATUSES = frozenset(
         "RETURNED",
         "REASSIGNED",
         "COMPLETED",
+        "AWAITING_VERIFY",
         "VERIFIED",
         "CANCELLED",
     }
@@ -61,16 +62,28 @@ ACTOR_TYPES = frozenset({"PERSON", "SYSTEM"})
 
 # Explicit legal transitions (CLAIMED COMPLETED ≠ VERIFIED).
 # Presentation aliases: OPEN=ASSIGNED, COMPLETED=DONE.
+# HUMANCOMM-1: AWAITING_VERIFY = employee PASS + evidence, waiting Owner/work.verify.
 ALLOWED_TRANSITIONS: dict[str, frozenset[str]] = {
-    "OPEN": frozenset({"IN_PROGRESS", "WAITING", "REASSIGNED", "CANCELLED"}),
+    "OPEN": frozenset(
+        {"IN_PROGRESS", "WAITING", "REASSIGNED", "COMPLETED", "AWAITING_VERIFY", "CANCELLED"}
+    ),
     "IN_PROGRESS": frozenset(
-        {"BLOCKED", "WAITING", "RETURNED", "COMPLETED", "REASSIGNED", "CANCELLED"}
+        {
+            "BLOCKED",
+            "WAITING",
+            "RETURNED",
+            "COMPLETED",
+            "AWAITING_VERIFY",
+            "REASSIGNED",
+            "CANCELLED",
+        }
     ),
     "BLOCKED": frozenset({"IN_PROGRESS", "CANCELLED"}),
     "WAITING": frozenset({"IN_PROGRESS", "CANCELLED"}),
-    "RETURNED": frozenset({"IN_PROGRESS", "COMPLETED", "CANCELLED"}),
+    "RETURNED": frozenset({"IN_PROGRESS", "COMPLETED", "AWAITING_VERIFY", "CANCELLED"}),
     "REASSIGNED": frozenset({"OPEN", "IN_PROGRESS", "CANCELLED"}),
     "COMPLETED": frozenset({"VERIFIED", "RETURNED", "CANCELLED"}),
+    "AWAITING_VERIFY": frozenset({"VERIFIED", "RETURNED", "COMPLETED", "CANCELLED"}),
     "VERIFIED": frozenset(),
     "CANCELLED": frozenset(),
 }
@@ -778,7 +791,7 @@ def transition_status(
         if dest == "IN_PROGRESS" and not item.get("started_at"):
             sets.append("started_at=?")
             params.append(ts)
-        if dest == "COMPLETED":
+        if dest in {"COMPLETED", "AWAITING_VERIFY"}:
             sets.append("completed_at=?")
             params.append(ts)
             if outcome is not None:
@@ -791,6 +804,9 @@ def transition_status(
             sets.append("verified_at=?")
             params.append(ts)
         if outcome is not None and dest == "CANCELLED":
+            sets.append("outcome=?")
+            params.append((outcome or "").strip() or None)
+        if outcome is not None and dest == "RETURNED":
             sets.append("outcome=?")
             params.append((outcome or "").strip() or None)
 
@@ -891,13 +907,37 @@ def verify_work_item(
     conn: sqlite3.Connection | None = None,
     commit: bool = True,
 ) -> dict[str, Any]:
-    """VERIFIED — only from COMPLETED via this helper (not raw status update)."""
+    """VERIFIED — from COMPLETED or AWAITING_VERIFY (HUMANCOMM-1)."""
     return transition_status(
         work_item_id,
         "VERIFIED",
         verified_person_id=verified_person_id,
         identity=identity,
         audit_action="work.verify",
+        conn=conn,
+        commit=commit,
+    )
+
+
+def claim_awaiting_verify(
+    work_item_id: str,
+    *,
+    verified_person_id: str,
+    outcome: str | None = None,
+    completion_evidence_reference: str | None = None,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Employee PASS path — DONE with evidence, waiting Owner/work.verify."""
+    return transition_status(
+        work_item_id,
+        "AWAITING_VERIFY",
+        verified_person_id=verified_person_id,
+        outcome=outcome,
+        completion_evidence_reference=completion_evidence_reference,
+        identity=identity,
+        audit_action="work.awaiting_verify",
         conn=conn,
         commit=commit,
     )

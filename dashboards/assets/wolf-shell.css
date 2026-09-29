@@ -167,7 +167,9 @@ html, body { overflow-x: visible; }
   font: 700 10px/1 inherit;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted, #8aa6a6);
+  /* HUMANCOMM-1: readable on dark nav (was dark-on-dark at ~1024). */
+  color: #eaf3f2 !important;
+  opacity: 1 !important;
   white-space: nowrap;
   flex: 0 0 auto;
 }
@@ -189,14 +191,15 @@ html, body { overflow-x: visible; }
 }
 
 #wolfnav .nv-hello {
-  flex: 0 1 18ch;
-  min-width: 8ch;
-  max-width: min(36ch, 30vw);
+  /* HUMANCOMM-1: show full name/role; wrap instead of truncating to "R…". */
+  flex: 1 1 22ch;
+  min-width: 12ch;
+  max-width: min(48ch, 42vw);
   font: 800 13px/1.25 inherit;
   color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
   padding: 0 14px 0 8px;
   position: relative;
   z-index: 2;
@@ -393,15 +396,23 @@ html.wolfnav-phone #wolfnav .nv-dir-btn {
   #wolfnav .nv-ctx:not([hidden]) {
     order: 8;
     flex: 1 1 auto;
-    width: calc(100% - 12rem);
-    max-width: calc(100% - 12rem);
+    width: 100%;
+    max-width: 100%;
     min-width: 0;
+  }
+  #wolfnav .nv-ctx-label {
+    color: #eaf3f2 !important;
+    opacity: 1 !important;
   }
   #wolfnav .nv-hello {
     order: 9;
-    flex: 0 1 11rem;
-    max-width: 14rem;
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 100%;
     min-width: 0;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
   }
   #wolfnav .nv-footer {
     order: 10;

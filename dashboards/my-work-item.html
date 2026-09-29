@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Work</title>
 <style>
-  /* MYWORK-1B: pin work-ink tokens so wolf-tokens.css pale --text/--muted
-     cannot wash out cream card copy (WCAG AA ≥ 4.5:1). */
   :root {
     --work-bg: #f4f1ea;
     --work-card: #fffdf8;
@@ -28,6 +26,11 @@
   }
   h1 { font-size: 1.35rem; margin: 8px 0; color: var(--work-ink) !important; }
   a.back { color: var(--work-accent) !important; text-decoration: none; font-weight: 650; }
+  a.open {
+    display: block; margin-top: 10px; text-decoration: none;
+    background: var(--work-accent); color: #fff !important;
+    border-radius: 12px; padding: 14px 16px; font-weight: 650; min-height: 48px;
+  }
   .card {
     background: var(--work-card) !important;
     border: 1px solid var(--work-line);
@@ -37,16 +40,15 @@
   .card p, .card strong, .card label, .card .chain-hop, .card .next {
     color: var(--work-ink) !important;
   }
-  .muted, .card .muted, #status {
-    color: var(--work-muted) !important;
-  }
+  .muted, .card .muted, #status { color: var(--work-muted) !important; }
   .err { color: var(--work-danger) !important; }
   .stale { color: var(--work-danger) !important; font-weight: 700; }
+  .steps { white-space: pre-wrap; margin: 0; }
   label {
     display: block; margin-top: 10px; font-weight: 650;
     color: var(--work-ink) !important;
   }
-  button, textarea, input {
+  button, textarea, input, select {
     font: inherit; width: 100%; margin-top: 8px;
   }
   button {
@@ -57,7 +59,20 @@
     background: #fff; color: var(--work-ink) !important;
     border: 1px solid var(--work-line);
   }
-  textarea, input {
+  button.choice {
+    background: #fff; color: var(--work-ink) !important;
+    border: 2px solid var(--work-line);
+  }
+  button.choice.on {
+    border-color: var(--work-accent);
+    background: #e8f2ed;
+  }
+  button.choice.fail.on {
+    border-color: var(--work-danger);
+    background: #f8e8e8;
+  }
+  .choice-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  textarea, input, select {
     min-height: 44px; border-radius: 12px;
     border: 1px solid var(--work-line); padding: 10px;
     color: var(--work-ink) !important; background: #fff;
@@ -68,6 +83,8 @@
     border-left: 3px solid var(--work-accent);
     color: var(--work-ink) !important;
   }
+  .pf-box { display: none; }
+  .pf-box.on { display: block; }
 </style>
 </head>
 <body data-wolf-page-type="WORKSPACE" data-wolf-shell="global">
@@ -84,10 +101,24 @@
   }[c]));
   const parts = location.pathname.split("/").filter(Boolean);
   const id = decodeURIComponent(parts[parts.length - 1] || "");
+  let humanResult = "";
 
   function hopWhen(hop) {
     return hop.accepted_at_display || hop.offered_at_display
       || hop.accepted_at || hop.offered_at || "";
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const raw = String(reader.result || "");
+        const i = raw.indexOf(",");
+        resolve(i >= 0 ? raw.slice(i + 1) : raw);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   function paint(data) {
@@ -98,63 +129,116 @@
     const approval = data.approval || {};
     const evidence = data.evidence || {};
     const chain = data.delegation_chain || [];
+    const isComm = !!card.is_commissioning || card.origin === "commissioning"
+      || card.origin === "commissioning-retest";
+    humanResult = card.human_result || "";
     $("title").textContent = item.title || "Work";
     const fresh = (data.freshness || {}).status === "STALE" || progress.freshness === "STALE" ? "STALE" : "LIVE";
     $("status").textContent = [
       card.status_label || item.status || "",
+      card.human_result ? ("your result " + card.human_result) : "",
       approval.status ? "approval " + approval.status : "",
       fresh
     ].filter(Boolean).join(" · ");
     const missing = (evidence.missing || []).length
       ? "Evidence still required before this can be submitted."
       : (evidence.satisfied ? "Evidence requirement is met." : (card.evidence_required || "Attach evidence before DONE."));
+    const openLink = card.open_href
+      ? `<a class="open" id="open-surface" href="${esc(card.open_href)}">Open what to do →</a>`
+      : "";
     const chainHtml = chain.length
       ? `<div class="card" id="chain"><p><strong>Delegation chain</strong></p>${
           chain.map((hop) => `<p class="chain-hop">${esc(hop.from_name)} → ${esc(hop.to_name)} · ${esc(hop.status)} · ${esc(hopWhen(hop))}</p>`).join("")
         }<p class="muted">Accountable: ${esc(card.accountable || "")}. Current executor: ${esc(card.current_owner || "")}.</p></div>`
       : `<div class="card" id="chain"><p class="muted">No delegation hops yet. Accountable: ${esc(card.accountable || card.current_owner || "")}.</p></div>`;
+    const pfBlock = isComm ? `
+        <label>Did this pass or fail?</label>
+        <div class="choice-row">
+          <button type="button" class="choice${humanResult === "PASS" ? " on" : ""}" id="hpass">PASS</button>
+          <button type="button" class="choice fail${humanResult === "FAIL" ? " on" : ""}" id="hfail">FAIL</button>
+        </div>
+        <label for="comment">What is wrong or could be better?</label>
+        <textarea id="comment" placeholder="Required when you choose FAIL">${esc(card.human_comment || "")}</textarea>
+        <p class="muted">DONE needs evidence and your PASS/FAIL choice. FAIL also needs this comment.</p>
+      ` : `
+        <label for="comment">Evidence note</label>
+        <textarea id="comment" placeholder="What is true about this work">${esc(card.human_comment || "")}</textarea>
+      `;
+    const verifyBlock = isComm ? `
+        <button type="button" class="secondary" id="vpass">Verifier: HUMAN PASS</button>
+        <button type="button" class="secondary" id="vreject">Verifier: needs better evidence</button>
+        <button type="button" class="secondary" id="vfail">Verifier: FAIL → engineering repair</button>
+      ` : `
+        <button type="button" class="secondary" id="vpass">Verify HUMAN PASS</button>
+        <button type="button" class="secondary" id="vfail">Verify FAIL</button>
+      `;
     $("body").innerHTML = `
       <div class="card" id="detail">
-        <p>${esc(card.instructions || item.description || "")}</p>
+        <p class="steps">${esc(card.instructions || item.description || "")}</p>
+        ${openLink}
         <p class="muted">Requested by ${esc(card.requested_by || "—")} · Due ${esc(card.due || "—")} · ${esc(card.company_site_department || "")}</p>
-        <p class="muted">Priority ${esc(card.priority ?? "—")}</p>
-        <p id="evidence-line">${esc(missing)}</p>
+        <p class="muted">Priority ${esc(card.priority ?? "—")}${card.evidence_files ? " · " + card.evidence_files + " file(s) attached" : ""}</p>
+        <p id="evidence-line"><strong>Evidence required:</strong> ${esc(card.evidence_required || missing)}</p>
         <p class="next">${esc(card.what_happens_next || "")}</p>
-        <p class="${fresh === "STALE" ? "stale" : "muted"}">Progress: ${esc(fresh)} · DONE is not VERIFIED</p>
+        <p class="${fresh === "STALE" ? "stale" : "muted"}">Progress: ${esc(fresh)} · DONE is not VERIFIED · SYSTEM % unchanged</p>
       </div>
       ${chainHtml}
       <div class="card" id="act">
-        <label for="note">Evidence note / file text</label>
-        <textarea id="note" placeholder="What is true about this work"></textarea>
+        <label for="file">Attach evidence (photo, screenshot, or document)</label>
+        <input id="file" type="file" accept="image/*,application/pdf,text/plain" capture="environment" />
+        ${pfBlock}
+        <button type="button" id="start">Accept / start</button>
+        <button type="button" id="attach">Attach selected file / note</button>
+        <button type="button" id="done">Mark DONE</button>
         <label for="delegate">Delegate to person id (optional)</label>
         <input id="delegate" placeholder="PERS-…" />
-        <button type="button" id="start">Accept / start</button>
-        <button type="button" id="attach">Attach evidence</button>
-        <button type="button" id="done">Mark DONE</button>
         <button type="button" class="secondary" id="hand">Delegate</button>
         <button type="button" class="secondary" id="submit">Submit for approval</button>
         <button type="button" class="secondary" id="approve">Approve</button>
         <button type="button" class="secondary" id="reject">Reject / return</button>
-        <button type="button" class="secondary" id="vpass">Verify HUMAN PASS</button>
-        <button type="button" class="secondary" id="vfail">Verify FAIL</button>
+        ${verifyBlock}
       </div>`;
     const post = (path, payload) => fetch(path, {
       method: "POST",
       headers: { Accept: "application/json", "Content-Type": "application/json" },
       body: JSON.stringify(payload || {})
     }).then((res) => res.json().then((body) => ({ ok: res.ok, body })));
+
+    function setChoice(val) {
+      humanResult = val;
+      const pass = $("hpass");
+      const fail = $("hfail");
+      if (pass) pass.classList.toggle("on", val === "PASS");
+      if (fail) fail.classList.toggle("on", val === "FAIL");
+    }
+    if ($("hpass")) $("hpass").onclick = () => setChoice("PASS");
+    if ($("hfail")) $("hfail").onclick = () => setChoice("FAIL");
+
     $("start").onclick = () => post(`/api/my-work/items/${encodeURIComponent(id)}/start`, {}).then(reload);
-    $("attach").onclick = () => post(`/api/my-work/items/${encodeURIComponent(id)}/evidence-file`, {
-      note: $("note").value,
-      filename: "note.txt",
-      content_base64: btoa(unescape(encodeURIComponent($("note").value || "evidence")))
-    }).then(reload);
+    $("attach").onclick = async () => {
+      const fileEl = $("file");
+      const file = fileEl && fileEl.files && fileEl.files[0];
+      const note = ($("comment") && $("comment").value) || "";
+      let content_base64 = btoa(unescape(encodeURIComponent(note || "evidence")));
+      let filename = "note.txt";
+      let content_type = "text/plain";
+      if (file) {
+        content_base64 = await fileToBase64(file);
+        filename = file.name || "evidence.bin";
+        content_type = file.type || "application/octet-stream";
+      }
+      return post(`/api/my-work/items/${encodeURIComponent(id)}/evidence-file`, {
+        note, filename, content_base64, content_type
+      }).then(reload);
+    };
     $("done").onclick = () => post(`/api/my-work/items/${encodeURIComponent(id)}/done`, {
-      outcome: $("note").value || "DONE claimed"
+      outcome: ($("comment") && $("comment").value) || "DONE claimed",
+      human_result: isComm ? humanResult : undefined,
+      human_comment: ($("comment") && $("comment").value) || ""
     }).then(reload);
     $("hand").onclick = () => post(`/api/my-work/items/${encodeURIComponent(id)}/delegate`, {
       to_person_id: $("delegate").value,
-      note: $("note").value
+      note: ($("comment") && $("comment").value) || ""
     }).then(reload);
     $("submit").onclick = () => post(`/api/work-loop/items/${encodeURIComponent(id)}/submit`, {}).then(reload);
     $("approve").onclick = () => post(`/api/work-loop/items/${encodeURIComponent(id)}/decide`, {
@@ -165,10 +249,15 @@
       reason: "Returned to the assigned role."
     }).then(reload);
     $("vpass").onclick = () => post(`/api/my-work/items/${encodeURIComponent(id)}/commissioning-verify`, {
-      result: "PASS", note: $("note").value || "VERIFIED HUMAN PASS"
+      result: "PASS", note: ($("comment") && $("comment").value) || "VERIFIED HUMAN PASS"
     }).then(reload);
+    if ($("vreject")) {
+      $("vreject").onclick = () => post(`/api/my-work/items/${encodeURIComponent(id)}/commissioning-verify`, {
+        result: "REJECT", note: ($("comment") && $("comment").value) || "Needs better evidence"
+      }).then(reload);
+    }
     $("vfail").onclick = () => post(`/api/my-work/items/${encodeURIComponent(id)}/commissioning-verify`, {
-      result: "FAIL", note: $("note").value || "FAIL"
+      result: "FAIL", note: ($("comment") && $("comment").value) || "FAIL"
     }).then(reload);
     document.body.setAttribute("data-ready", "1");
     document.body.setAttribute(

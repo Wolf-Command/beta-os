@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-28T22:11:01.212403+08:00",
+  "generated_at": "2026-09-29T11:35:10+08:00",
   "pack": "UMAREAL-1",
   "staff_ready": false,
   "human_commissioned": false,
@@ -121,12 +121,12 @@
     {
       "source": "alchemist.db pr_orders",
       "contains": "purchase orders",
-      "date_range": "2026-07-27 .. 2026-09-27",
-      "record_count": 504,
+      "date_range": "2026-07-27 .. 2026-09-29",
+      "record_count": 514,
       "role": "AUTHORITATIVE",
       "safe_to_project": "y",
       "transformation": "read-through; example Beta PRs are not included",
-      "conflicts": "95 rows point at a Drive photo that is not a local file",
+      "conflicts": "98 rows point at a Drive photo that is not a local file",
       "read_access_verified": "y",
       "read_access_how": "sqlite mode=ro query_only",
       "provenance": "source_system, source_id, source_timestamp, import_timestamp, verified_by_wolf=false, origin=historical"
@@ -134,8 +134,8 @@
     {
       "source": "alchemist.db pr_order_lines",
       "contains": "PO lines",
-      "date_range": "2026-07-27 .. 2026-09-27",
-      "record_count": 1830,
+      "date_range": "2026-07-27 .. 2026-09-29",
+      "record_count": 1883,
       "role": "AUTHORITATIVE",
       "safe_to_project": "y",
       "transformation": "names used for stale-price dates only",
@@ -148,7 +148,7 @@
       "source": "alchemist.db pr_receipt_lines",
       "contains": "receipt lines",
       "date_range": "no date column; parent PO dates apply",
-      "record_count": 452,
+      "record_count": 466,
       "role": "AUTHORITATIVE",
       "safe_to_project": "y",
       "transformation": "shown as receipt evidence; not used as a confirmed unit cost",
@@ -161,7 +161,7 @@
       "source": "alchemist.db pr_vendor_items",
       "contains": "vendor item last price",
       "date_range": "last_seen on the row",
-      "record_count": 918,
+      "record_count": 924,
       "role": "REFERENCE",
       "safe_to_project": "y",
       "transformation": "exact normalised name match only",
@@ -179,15 +179,15 @@
       "safe_to_project": "y",
       "read_access_how": "directory listing, files opened only by exact filename under the notas directory",
       "transformation": "serve the file if it resolves; otherwise EVIDENCE FILE NOT RECOVERABLE",
-      "conflicts": "prefixes {'petty': 373, 'topup': 76, 'nota': 2}; earlier note said 448 jpg; pack EXIT counted 450; Peaches watch tick free/local bump to 451 after post-EXIT file mtime 2026-09-28T21:59:53 (pack EXIT 21:58:05); serve path is live directory listing",
+      "conflicts": "prefixes {'nota': 2, 'petty': 373, 'topup': 76}; earlier note said 448 jpg; this query counted 451",
       "read_access_verified": "y",
       "provenance": "source_system, source_id, source_timestamp, import_timestamp, verified_by_wolf=false, origin=historical"
     },
     {
       "source": "alchemist.db pr_orders receipt_photo_url",
       "contains": "Drive photo references",
-      "date_range": "2026-07-27 .. 2026-09-27",
-      "record_count": 95,
+      "date_range": "2026-07-27 .. 2026-09-29",
+      "record_count": 98,
       "role": "HISTORICAL",
       "safe_to_project": "y",
       "transformation": "source path id only; file not fetched",
@@ -199,8 +199,8 @@
     {
       "source": "alchemist.db ledger",
       "contains": "supplier bills",
-      "date_range": "2026-08-02 .. 2026-09-21",
-      "record_count": 420,
+      "date_range": "2026-08-02 .. 2026-09-29",
+      "record_count": 435,
       "role": "AUTHORITATIVE",
       "safe_to_project": "y",
       "transformation": "counted; bill page already reads Alchemist via the existing projection",
@@ -213,7 +213,7 @@
       "source": "alchemist.db petty_cash",
       "contains": "petty movements",
       "date_range": "2026-01-09 .. 2026-09-28",
-      "record_count": 432,
+      "record_count": 433,
       "role": "AUTHORITATIVE",
       "safe_to_project": "y",
       "transformation": "existing Beta petty projection",
@@ -290,7 +290,7 @@
     {
       "source": "esb.sqlite sales",
       "contains": "ESB bills",
-      "date_range": "2026-04-05 .. 2026-09-27",
+      "date_range": "2026-04-05 .. 2026-09-28",
       "record_count": 8823,
       "role": "AUTHORITATIVE",
       "safe_to_project": "y",
@@ -329,8 +329,8 @@
     {
       "source": "esb.sqlite material_usage",
       "contains": "ESB material usage",
-      "date_range": "2026-06-01 .. 2026-09-27",
-      "record_count": 18637,
+      "date_range": "2026-06-01 .. 2026-09-28",
+      "record_count": 18790,
       "role": "REFERENCE",
       "safe_to_project": "y",
       "transformation": "count only; theoretical consumption is calculated from sales x recipe lines",
@@ -355,8 +355,8 @@
     {
       "source": "esb.sqlite gl_journal",
       "contains": "ESB journal",
-      "date_range": "2026-04-01 .. 2026-09-27",
-      "record_count": 5917,
+      "date_range": "2026-04-01 .. 2026-09-28",
+      "record_count": 5937,
       "role": "REFERENCE",
       "safe_to_project": "n",
       "transformation": "counted only; not a Beta finance book",
@@ -368,8 +368,8 @@
     {
       "source": "esb.sqlite sales_menu_summary",
       "contains": "ESB menu sales summary",
-      "date_range": "2026-06-01 .. 2026-09-27",
-      "record_count": 119,
+      "date_range": "2026-06-01 .. 2026-09-28",
+      "record_count": 120,
       "role": "REFERENCE",
       "safe_to_project": "y",
       "transformation": "count only; line qty comes from sales.raw",
@@ -407,7 +407,7 @@
     {
       "source": "projection_generated_at",
       "contains": "timestamp of this register build",
-      "date_range": "2026-09-28T21:50:55+08:00",
+      "date_range": "2026-09-29T11:35:10+08:00",
       "record_count": 1,
       "role": "REFERENCE",
       "safe_to_project": "n",
@@ -417,6 +417,5 @@
       "read_access_verified": "y",
       "provenance": "source_system, source_id, source_timestamp, import_timestamp, verified_by_wolf=false, origin=historical"
     }
-  ],
-  "peaches_verify_note": "UMAREAL-1 EXIT PASS; register nota count refreshed free/local after one post-EXIT jpg landed; staff_ready remains false"
+  ]
 }
