@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T02:59:00+08:00",
+  "at_wita": "2026-09-30T03:08:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -683,7 +683,7 @@
       },
       "cursor_did_not_auto_start_next": true,
       "result_file": "docs/wolf/ops/ESB-TRUTH-1-RESULT.md",
-      "verified_at": "2026-09-30T02:54:10+08:00"
+      "verified_at": "2026-09-30T02:56:40+08:00"
     },
     {
       "pack_id": "BACKUP-HEALTH-1",
@@ -713,7 +713,7 @@
       "armed_at": "2026-09-30T02:45:00+08:00",
       "cursor_pid": 29018,
       "launched_at": "2026-09-30T02:45:30+08:00",
-      "verified_at": "2026-09-30T02:59:00+08:00",
+      "verified_at": "2026-09-30T02:56:40+08:00",
       "exited_at": "2026-09-30T02:52:10+08:00",
       "tests": {
         "pass": 136,
@@ -747,12 +747,24 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "synthesized_from": "wave4 MISSING finance_loops",
-      "armed_at": "2026-09-30T02:59:00+08:00",
-      "launched_at": "2026-09-30T02:54:10+08:00",
+      "armed_at": "2026-09-30T02:56:40+08:00",
+      "launched_at": "2026-09-30T02:56:40+08:00",
       "cursor_pid": 31184,
-      "child_alive": true
+      "child_alive": false,
+      "cursor_did_not_auto_start_next": true,
+      "result_file": "docs/wolf/ops/FIN-CASH-TRUTH-1-RESULT.md",
+      "exited_at": "2026-09-30T03:05:10+08:00",
+      "suite": {
+        "pass": 187,
+        "fail": 0
+      },
+      "verified_at": "2026-09-30T03:08:00+08:00",
+      "tests": {
+        "pass": 187,
+        "fail": 0
+      }
     },
     {
       "pack_id": "BZG-LABOR-COST-1",
@@ -777,8 +789,9 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
-      "synthesized_from": "wave4 MISSING bzg_ops"
+      "status": "WAITING_CURSOR",
+      "synthesized_from": "wave4 MISSING bzg_ops",
+      "armed_at": "2026-09-30T03:08:00+08:00"
     },
     {
       "pack_id": "GGV-PIPELINE-TRUTH-1",
@@ -887,10 +900,10 @@
   "synthesis_wave3_at": "2026-09-30T01:19:01+08:00",
   "last_verified": "BACKUP-HEALTH-1",
   "next_to_arm": "BZG-LABOR-COST-1",
-  "heavy_in_flight": "FIN-CASH-TRUTH-1",
+  "heavy_in_flight": null,
   "last_exited": "BACKUP-HEALTH-1",
   "next_to_arm_note": "parent/Peaches only after ESB-TRUTH-1 PASS_VERIFIED \u2014 Cursor must not auto-arm; HEADCHEF veto",
   "wave4_synthesized_at": "2026-09-30T02:45:00+08:00",
   "wave4_count": 4,
-  "updated_at": "2026-09-30T02:54:10+08:00"
+  "updated_at": "2026-09-30T02:56:40+08:00"
 }

@@ -173,6 +173,7 @@ from core import crm_identity_memory as _crm_ident
 from core import crm_identity_operator_depth as _crm_ident_depth
 from core import fin_interco1 as _fin_interco1
 from core import fin_recon_shell1 as _fin_recon_shell1
+from core import fin_cash_truth1 as _fin_cash_truth1
 from core import fin_ap_ar_shell1 as _fin_ap_ar_shell1
 from core import owner_needs_you1 as _owner_needs_you1
 from core import esb_truth1 as _esb_truth1
@@ -2047,6 +2048,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._backup_health1_dispatch():
+            return
+
+        if self._fin_cash_truth1_dispatch():
             return
 
         if self._intel_learn1_dispatch():
@@ -5150,6 +5154,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._fin_recon_shell1_dispatch():
                 return
         elif path in (
+            "/fin/cash-truth-1",
+            "/fin/cash-truth-1/",
+            "/fin/cash-truth",
+            "/fin/cash-truth/",
+            "/fin-cash-truth-1",
+            "/fin-cash-truth-1/",
+            "/fin-cash-truth",
+            "/fin-cash-truth/",
+            "/fin-cash-truth-1.html",
+            "/dashboards/fin-cash-truth-1.html",
+        ):
+            if self._fin_cash_truth1_dispatch():
+                return
+        elif path in (
             "/fin/ap-ar-shell-1",
             "/fin/ap-ar-shell-1/",
             "/fin-ap-ar-shell-1",
@@ -6001,6 +6019,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/ops/backup-health-1" or path.startswith("/api/ops/backup-health-1/"):
             self._backup_health1_write_refused(path)
             return
+        if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
+            self._fin_cash_truth1_write_refused(path)
+            return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
             return
@@ -6837,6 +6858,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ops/backup-health-1" or path.startswith("/api/ops/backup-health-1/"):
             self._backup_health1_write_refused(path)
+            return
+        if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
+            self._fin_cash_truth1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -8079,6 +8103,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ops/backup-health-1" or path.startswith("/api/ops/backup-health-1/"):
             self._backup_health1_write_refused(path)
+            return
+        if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
+            self._fin_cash_truth1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -16230,6 +16257,102 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "human_commissioned": False,
                 "fake_backup_success": False,
                 "invented_restore_pass": False,
+            },
+            status=403,
+        )
+
+    def _fin_cash_truth1_dispatch(self) -> bool:
+        """FIN-CASH-TRUTH-1 — cash/bank truth desk; no fake balances / scrape invent."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _fin_cash_truth1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _fin_cash_truth1.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "cash_truth_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "fake_balance": False,
+                        "invented_balance": False,
+                        "invented_scrape": False,
+                        "file_import_only": True,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _fin_cash_truth1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "fin-cash-truth-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "FIN-CASH-TRUTH-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="fin-cash-truth-1.html")
+        return True
+
+    def _fin_cash_truth1_write_refused(self, path: str) -> None:
+        """Refuse fake-balance / invent-scrape / payment / bank-write on FIN-CASH-TRUTH-1."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _fin_cash_truth1.refuse_external_write(body if isinstance(body, dict) else {})
+        except _fin_cash_truth1.FinCashTruth1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "fake_balance": False,
+                    "invented_balance": False,
+                    "invented_scrape": False,
+                    "file_import_only": True,
+                    "payment_write": False,
+                    "bank_write": False,
+                    "prod_pid_held": _fin_cash_truth1.PROD_PID_HELD,
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": "FIN-CASH-TRUTH-1 is file-import cash truth only. Writes refused.",
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
             },
             status=403,
         )

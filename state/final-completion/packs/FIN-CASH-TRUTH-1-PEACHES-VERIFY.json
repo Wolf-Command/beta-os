@@ -1,0 +1,85 @@
+{
+  "pack": "FIN-CASH-TRUTH-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T03:08:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T03:05:50+08:00",
+  "result_file": "docs/wolf/ops/FIN-CASH-TRUTH-1-RESULT.md",
+  "tests_rerun": {
+    "test_fin_cash_truth1_20260930.py": {
+      "pass": 187,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 5,
+    "distinct_sha256": 3,
+    "all_distinct": false,
+    "note": "desk/cash-unknown/recon share SHA; phone+unsigned distinct",
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/fincashtruth1-cash-unknown.png",
+        "bytes": 188535,
+        "sha256": "3f44f089c4f949d2741dd6d1f301358229ceb0db7621719a8ae776d0545e3148"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fincashtruth1-desk-desktop.png",
+        "bytes": 188535,
+        "sha256": "3f44f089c4f949d2741dd6d1f301358229ceb0db7621719a8ae776d0545e3148"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fincashtruth1-desk-phone.png",
+        "bytes": 142066,
+        "sha256": "55f7b4e53899eac5191fffeeb3195a16ff26ab96248826982a3b57256a08f083"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fincashtruth1-recon-preserved.png",
+        "bytes": 188535,
+        "sha256": "3f44f089c4f949d2741dd6d1f301358229ceb0db7621719a8ae776d0545e3148"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fincashtruth1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      }
+    ],
+    "eye_check": {
+      "desk": "FILE_IMPORT_ONLY positions UNKNOWN balances null invented_balance=false",
+      "unsigned_deny": "Access denied"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "file_import_only": true,
+    "invented_balance": false,
+    "live_scrape": false,
+    "ceiling": "BUILT"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "9250f3e",
+    "atrium_finance_head": "7584266",
+    "uncommitted": true
+  },
+  "preserves": [
+    "FIN-RECON-SHELL-1",
+    "FC-SHELL-2"
+  ],
+  "next_pack": "BZG-LABOR-COST-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false,
+  "note_exit143": "daemon logged EXIT:143 mid-run then completed EXIT:0 with suite green"
+}

@@ -1,0 +1,39 @@
+{
+  "run_id": "BZG-LABOR-COST-1",
+  "pack": "BZG-LABOR-COST-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 4,
+  "status": "WAITING_CURSOR",
+  "armed_at": "2026-09-30T03:08:00+08:00",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "prior_pack_verified": "FIN-CASH-TRUTH-1",
+  "beta_os_head_at_arm": "PENDING",
+  "brief": "state/build-factory/briefs/BRIEF-BZG-LABOR-COST-1.md",
+  "log": "state/build-factory/logs/BZG-LABOR-COST-1.log",
+  "result_file": "docs/wolf/ops/BZG-LABOR-COST-1-RESULT.md",
+  "next_pack_for_parent": "GGV-PIPELINE-TRUTH-1",
+  "closes_toward": [
+    "CAP-BZG labor"
+  ],
+  "forbids": [
+    "fake payroll",
+    "staff_ready true",
+    "HEADCHEF",
+    "Exit Report",
+    "push"
+  ],
+  "depends_on": [
+    "BZG-OPS-DESK-1"
+  ],
+  "preserves": [
+    "BZG-OPS-DESK-1",
+    "HR deferred"
+  ]
+}

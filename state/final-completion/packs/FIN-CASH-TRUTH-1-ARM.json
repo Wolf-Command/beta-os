@@ -4,8 +4,9 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 4,
-  "status": "WAITING_CURSOR",
-  "armed_at": "2026-09-30T02:59:00+08:00",
+  "status": "PASS_VERIFIED",
+  "armed_at": "2026-09-30T02:54:10+08:00",
+  "exited_at": "2026-09-30T03:05:10+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
   "prod_pid_held": 15975,
@@ -14,7 +15,8 @@
   "no_push": true,
   "matt_auto_continue": true,
   "prior_pack_verified": "BACKUP-HEALTH-1",
-  "beta_os_head_at_arm": "9a3653f",
+  "beta_os_head_at_arm": "687a9ca",
+  "beta_os_head_at_exit": "9250f3e",
   "brief": "state/build-factory/briefs/BRIEF-FIN-CASH-TRUTH-1.md",
   "log": "state/build-factory/logs/FIN-CASH-TRUTH-1.log",
   "result_file": "docs/wolf/ops/FIN-CASH-TRUTH-1-RESULT.md",
@@ -33,7 +35,42 @@
     "FIN-RECON-SHELL-1"
   ],
   "preserves": [
-    "FIN-RECON-SHELL-1",
-    "FC-SHELL-2"
-  ]
+    "FIN-RECON-SHELL-1"
+  ],
+  "launched_at": "2026-09-30T02:54:10+08:00",
+  "cursor_pid": 31184,
+  "child_alive": false,
+  "suite": {
+    "path": "scripts/tests/test_fin_cash_truth1_20260930.py",
+    "pass": 187,
+    "fail": 0
+  },
+  "shots": [
+    "docs/wolf/ops/shots/fincashtruth1-desk-desktop.png",
+    "docs/wolf/ops/shots/fincashtruth1-desk-phone.png",
+    "docs/wolf/ops/shots/fincashtruth1-cash-unknown.png",
+    "docs/wolf/ops/shots/fincashtruth1-recon-preserved.png",
+    "docs/wolf/ops/shots/fincashtruth1-unsigned-deny.png"
+  ],
+  "page": "/fin/cash-truth-1",
+  "api": "/api/fin/cash-truth-1",
+  "invented_balance": false,
+  "invented_scrape": false,
+  "live_scrape": false,
+  "file_import_only": true,
+  "positions_unknown": true,
+  "fin_recon_shell1_preserved": true,
+  "ceiling": "BUILT",
+  "cursor_did_not_auto_start_next": true,
+  "exit": 0,
+  "has_exit": true,
+  "exit_code": 0,
+  "tests_pass": 187,
+  "tests_fail": 0,
+  "independent_tests_this_tick": {
+    "pass": 187,
+    "fail": 0
+  },
+  "peaches_verified_at": "2026-09-30T03:08:00+08:00",
+  "peaches_verify": "state/final-completion/packs/FIN-CASH-TRUTH-1-PEACHES-VERIFY.json"
 }

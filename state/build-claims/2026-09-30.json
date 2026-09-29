@@ -276,6 +276,22 @@
       "expect": "exit 0",
       "by": "cursor-backup-health-1",
       "at": "2026-09-30T02:51:45+08:00"
+    },
+    {
+      "id": "FIN-CASH-TRUTH-1-desk",
+      "claim": "FIN-CASH-TRUTH-1: cash/bank truth desk deepen over FIN-RECON-SHELL-1; positions UNKNOWN import_count=0; balance/cash_on_hand/bank_available null; FILE_IMPORT_ONLY; invented_balance/live_scrape/payment_write false; FIN-RECON-SHELL-1 preserved; staff_ready/human_commissioned false; next pack parent-only BZG-LABOR-COST-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import fin_cash_truth1 as c; p=c.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('positions_unknown') is True and p.get('import_count')==0 and p.get('file_import_only') is True and p.get('last_success') is None and p.get('invented_balance') is False and p.get('live_scrape') is False and p.get('payment_write') is False and p.get('fin_recon_shell1_preserved') is True and c.all_cash_positions_unknown(p) and c.honesty_flags().get('next_pack_for_parent_only')=='BZG-LABOR-COST-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-fin-cash-truth-1",
+      "at": "2026-09-30T03:05:10+08:00"
+    },
+    {
+      "id": "FIN-CASH-TRUTH-1-surface",
+      "claim": "FIN-CASH-TRUTH-1 page/API/shots/RESULT present; unsigned deny + suite PASS=187; next pack parent-only BZG-LABOR-COST-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import fin_cash_truth1 as c; from pathlib import Path; html=Path('dashboards/fin-cash-truth-1.html').read_text(); import sys; sys.exit(0 if (c.api_matches('/api/fin/cash-truth-1') and c.page_matches('/fin/cash-truth-1') and 'staff_ready=false' in html and 'FILE_IMPORT_ONLY' in html and Path('docs/wolf/ops/shots/fincashtruth1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/FIN-CASH-TRUTH-1-RESULT.md').is_file() and c.honesty_flags().get('next_pack_for_parent_only')=='BZG-LABOR-COST-1' and c.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-fin-cash-truth-1",
+      "at": "2026-09-30T03:05:10+08:00"
     }
   ]
 }
