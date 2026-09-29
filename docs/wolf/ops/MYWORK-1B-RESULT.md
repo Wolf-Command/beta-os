@@ -61,4 +61,6 @@ Also: war-room / execution-report derived-view refresh is best-effort under the 
 
 Local only. No push.
 
+- `4998727b4081db4faf1bd5fae976cb2a15bf0296` — Repair My Work cream-card contrast, header overlap, and WITA times.
+
 RESULT: PASS (Alchemist live-count drift on opsfix2/umareal noted; unrelated to this pack)
