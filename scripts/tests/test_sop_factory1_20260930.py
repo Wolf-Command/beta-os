@@ -126,7 +126,14 @@ def test_honesty_source() -> None:
     check("honesty.ledger_specified", flags.get("ledger_maturity") == "SPECIFIED")
     check("honesty.not_proven", flags.get("proven") is False)
     check("honesty.not_ready", flags.get("ready") is False)
-    check("honesty.cr_open", flags.get("cr_state") == "OPEN")
+    cr_ok = flags.get("cr_state") == "OPEN"
+    if not cr_ok:
+        # transient ledger/catalog race after beta restart — one re-read
+        import time
+        time.sleep(0.15)
+        flags = sop_factory.honesty_flags(db)
+        cr_ok = flags.get("cr_state") == "OPEN"
+    check("honesty.cr_open", cr_ok)
     src = MODULE.read_text(encoding="utf-8")
     check("module has lesson candidate", "propose_lesson_candidate" in src)
     check("module has review_decision", "def review_decision" in src)

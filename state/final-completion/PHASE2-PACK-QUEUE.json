@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T00:06:24+08:00",
+  "at_wita": "2026-09-30T00:19:11+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -122,9 +122,10 @@
       ],
       "estimated_effort": "L",
       "matt_blocker": false,
-      "status": "EXITED",
+      "status": "PASS_VERIFIED",
       "exited_at": "2026-09-30T00:18:30+08:00",
-      "result_file": "docs/wolf/ops/SOP-FACTORY-1-RESULT.md"
+      "result_file": "docs/wolf/ops/SOP-FACTORY-1-RESULT.md",
+      "verified_at": "2026-09-30T00:19:11+08:00"
     },
     {
       "pack_id": "MYWORK-PROVE-1",
@@ -149,7 +150,8 @@
       ],
       "depends_on": [],
       "estimated_effort": "M",
-      "matt_blocker": false
+      "matt_blocker": false,
+      "status": "NEXT_TO_ARM"
     },
     {
       "pack_id": "INTG-TRUTH-1",
@@ -208,7 +210,7 @@
       "note": "Does not unblock CAP-AMG-01 (needs external Yanolja)"
     }
   ],
-  "first_pack": "SOP-FACTORY-1",
+  "first_pack": "MYWORK-PROVE-1",
   "hr_deferred_not_in_queue": true,
   "blocked_external_not_auto_solved": [
     "MB-008",
@@ -224,7 +226,8 @@
   ],
   "completed_packs": [
     "FC-SHELL-2",
-    "BZG-VENUEPL-1"
+    "BZG-VENUEPL-1",
+    "SOP-FACTORY-1"
   ],
   "exited_awaiting_peaches": [
     "BZG-VENUEPL-1"

@@ -3,7 +3,7 @@
   "pack": "SOP-FACTORY-1",
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
-  "status": "EXITED",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T00:06:59+08:00",
   "exited_at": "2026-09-30T00:18:30+08:00",
   "exit_code": 0,
@@ -53,5 +53,7 @@
   "beta_restarted": true,
   "beta_pid_after": 97327,
   "unsigned_review_queue": 403,
-  "unsigned_page": 403
+  "unsigned_page": 403,
+  "verified_at": "2026-09-30T00:19:11+08:00",
+  "peaches_verify": "state/final-completion/packs/SOP-FACTORY-1-PEACHES-VERIFY.json"
 }

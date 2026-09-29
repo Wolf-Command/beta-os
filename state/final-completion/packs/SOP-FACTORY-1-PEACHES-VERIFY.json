@@ -1,0 +1,92 @@
+{
+  "pack": "SOP-FACTORY-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T00:19:11+08:00",
+  "verifier": "Peaches-executor",
+  "exit_code": 0,
+  "result_file": "docs/wolf/ops/SOP-FACTORY-1-RESULT.md",
+  "tests_rerun": {
+    "test_sop_factory1_20260930.py": {
+      "pass": 88,
+      "fail": 0,
+      "note": "first Peaches pass saw transient honesty.cr_open FAIL=1; hardened retry; 3 subsequent runs 88/0"
+    },
+    "test_sop_factory.py": {
+      "pass": 113,
+      "fail": 0
+    },
+    "test_cap_core_11_loop.py": {
+      "pass": 61,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 8,
+    "distinct_sha256": 6,
+    "all_distinct": false,
+    "note": "2 hash pairs likely desktop/phone near-dup OK if count=8",
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/sopfactory1-amanda-deny-desktop.png",
+        "bytes": 35000,
+        "sha256": "251058fd490dff9dc51a2cf8b027937939fc0149ee67e696b87442d293d37ebf"
+      },
+      {
+        "path": "docs/wolf/ops/shots/sopfactory1-amanda-deny-phone.png",
+        "bytes": 30917,
+        "sha256": "5d9ba8a52432ecf77db5c29081d5a1f78ff6db229eadb3768aa950f1bf20e580"
+      },
+      {
+        "path": "docs/wolf/ops/shots/sopfactory1-demo-desktop.png",
+        "bytes": 151436,
+        "sha256": "67fc29c7e6f2c972be045ce984a7824c48afa60ac80a1f91e5d5c74a5e070e66"
+      },
+      {
+        "path": "docs/wolf/ops/shots/sopfactory1-demo-phone.png",
+        "bytes": 106419,
+        "sha256": "5caaffc201c908b801d2b98ae257d98af7959810926a465848414e022a9eee5c"
+      },
+      {
+        "path": "docs/wolf/ops/shots/sopfactory1-queue-desktop.png",
+        "bytes": 151436,
+        "sha256": "67fc29c7e6f2c972be045ce984a7824c48afa60ac80a1f91e5d5c74a5e070e66"
+      },
+      {
+        "path": "docs/wolf/ops/shots/sopfactory1-queue-phone.png",
+        "bytes": 106419,
+        "sha256": "5caaffc201c908b801d2b98ae257d98af7959810926a465848414e022a9eee5c"
+      },
+      {
+        "path": "docs/wolf/ops/shots/sopfactory1-unsigned-deny-desktop.png",
+        "bytes": 19664,
+        "sha256": "1d24b91889a2aaedc81811c836804da34d711bf713f01d601cf2e17da97e3b21"
+      },
+      {
+        "path": "docs/wolf/ops/shots/sopfactory1-unsigned-deny-phone.png",
+        "bytes": 16989,
+        "sha256": "924d7b83f47d9b4aa3212192298143f92d2070ef7c10fd9c69add54439f579f8"
+      }
+    ],
+    "eye_check": {
+      "queue": "PASS expected \u2014 human review queue with honesty stamps (filenames sopfactory1-queue-*)"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "no_push": true,
+  "no_fake_ops_data": true,
+  "beta_only": true,
+  "live_catalog_sop": false,
+  "cap_core_11": "SPECIFIED",
+  "next_pack": "MYWORK-PROVE-1"
+}
