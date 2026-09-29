@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wolf · SOP Lesson Live (human review required)</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1a1f24;
+      --muted: #5a6570;
+      --paper: #f1f3f5;
+      --card: #fbfcfd;
+      --line: #d3dae0;
+      --warn: #8a1f1f;
+      --amber: #6a4d12;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(ellipse 70% 40% at 0% 0%, #e6edf3 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 920px; margin: 0 auto; padding: 24px 16px 80px; }
+    .crumb { font-size: 0.78rem; color: var(--muted); margin: 0 0 8px; }
+    h1 {
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: 1.75rem;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #eef3f7; border: 1px solid #c5d0d9; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner.warn { background: #f8eaea; border-color: #e0b8b8; color: var(--warn); }
+    .meta { font-size: 0.85rem; color: var(--muted); margin: 0 0 12px; }
+    h2 {
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin: 22px 0 10px;
+    }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    article {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    article.demo { border-color: #e2d0a0; background: #fffdf8; }
+    .name { font-weight: 600; font-size: 1.05rem; }
+    .oid { color: var(--muted); font-size: 0.8rem; margin-top: 2px; word-break: break-all; }
+    .status {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .PENDING_REVIEW { background: #efe4c8; color: var(--amber); }
+    .APPROVED { background: #d7ead7; color: #1e5a2a; }
+    .DENIED { background: #f0d6d6; color: var(--warn); }
+    .demo-tag {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: #efe4c8;
+      color: var(--amber);
+    }
+    .stamp {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 4px 8px;
+      margin: 0 8px 8px 0;
+      font-size: 0.78rem;
+      background: #fff;
+    }
+    .stamp.bad { border-color: #e0b8b8; color: var(--warn); }
+    .note { margin-top: 10px; font-size: 0.9rem; line-height: 1.45; }
+    .k { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .actions { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+    button {
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 7px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      cursor: pointer;
+    }
+    button.approve { background: #e6f2e8; border-color: #b5d4ba; color: #1e5a2a; }
+    button.deny { background: #f8eaea; border-color: #e0b8b8; color: var(--warn); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    .empty { color: var(--muted); font-size: 0.88rem; margin-top: 8px; }
+    .err { color: var(--warn); }
+    a { color: #2f4a3a; }
+    #honesty {
+      margin-top: 28px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body
+  data-ready="0"
+  data-deny=""
+  data-pack="SOP-LESSON-LIVE-1"
+  data-wolf-page-type="WORKSPACE"
+  data-wolf-shell="global"
+  data-human-review="1"
+  data-auto-approve="0"
+  data-fake-lessons="0"
+  data-staff-ready="0"
+  data-human-commissioned="0"
+>
+<main>
+  <p class="crumb">CAP-INTEL lessons · SOP-LESSON-LIVE-1 · preserves SOP-FACTORY-1 + INTEL-LEARN-1</p>
+  <h1>SOP Lesson Live</h1>
+  <p class="sub" id="sub">Factory lessons without auto-approve · human review required · staff_ready=false · human_commissioned=false</p>
+  <p class="meta" id="meta">LIVE catalog ABSENT until the file exists · live_lesson_count=0 · invented_lessons=false</p>
+  <div id="banner" class="banner">
+    Human review required. Auto-approve off. LIVE catalog ABSENT — not invented.
+    DEMO / NOT LIVE STAFF ADOPTION. staff_ready=false · human_commissioned=false.
+  </div>
+  <div>
+    <span class="stamp bad">LIVE catalog ABSENT</span>
+    <span class="stamp bad">auto_approve=false</span>
+    <span class="stamp bad">invented_lessons=false</span>
+    <span class="stamp">human review required</span>
+  </div>
+
+  <h2>Live catalog lessons</h2>
+  <div id="live" class="grid"></div>
+  <p class="empty" id="live-empty">LIVE catalog ABSENT · live_lesson_count=0 · nothing invented.</p>
+
+  <h2>Factory DEMO lessons (not live adoption)</h2>
+  <div id="demo" class="grid"></div>
+  <p class="empty" id="demo-empty" hidden>No DEMO candidates yet.</p>
+
+  <h2>Human review queue</h2>
+  <div id="queue" class="grid"></div>
+  <p class="empty" id="queue-empty" hidden>No pending lesson candidates.</p>
+
+  <p id="honesty">
+    Honesty: extends SOP-FACTORY-1 + INTEL-LEARN-1 · no second SOP system ·
+    no auto-approve · no fake lessons · DEMO ≠ live adoption ·
+    staff_ready=false · human_commissioned=false.
+  </p>
+</main>
+<script>
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function card(c, withActions) {
+  var demo = c.demo || c.demo_label;
+  var cls = demo ? " demo" : "";
+  var tag = demo
+    ? '<span class="demo-tag">DEMO / NOT LIVE STAFF ADOPTION</span>'
+    : "";
+  var actions = "";
+  if (withActions && c.review_status === "PENDING_REVIEW") {
+    actions =
+      '<div class="actions">' +
+      '<button type="button" class="approve" data-act="APPROVE" data-id="' +
+      esc(c.candidate_id) +
+      '">Human APPROVE</button>' +
+      '<button type="button" class="deny" data-act="DENY" data-id="' +
+      esc(c.candidate_id) +
+      '">DENY</button>' +
+      '<span class="empty">Posts to /api/sop/review-decision · auto-approve off</span>' +
+      "</div>";
+  }
+  return (
+    '<article class="' + cls.trim() + '" data-candidate="' + esc(c.candidate_id) + '">' +
+    '<div class="name">' + esc(c.title || "Untitled") + tag + "</div>" +
+    '<div class="oid">' + esc(c.candidate_id) + " · " + esc(c.version_id) +
+    " · source " + esc(c.source || "sop_factory") + "</div>" +
+    '<span class="status ' + esc(c.review_status) + '">' + esc(c.review_status) + "</span>" +
+    '<div class="note"><div class="k">Evidence</div>' + esc(c.evidence_note) + "</div>" +
+    '<div class="note"><div class="k">Lesson candidate</div>' + esc(c.lesson_note) + "</div>" +
+    '<p class="empty" style="margin-top:8px">' +
+    "Human review required. Auto-approve is off. Not a live staff lesson. " +
+    "invented_lessons=false." +
+    "</p>" + actions + "</article>"
+  );
+}
+
+function paint(pack) {
+  var h = (pack && pack.honesty) || {};
+  document.getElementById("sub").textContent =
+    (pack && pack.summary) ||
+    "Factory lessons without auto-approve · human review required · staff_ready=false · human_commissioned=false";
+  document.getElementById("meta").textContent =
+    "LIVE catalog " + ((pack && pack.live_catalog_status) || "ABSENT") +
+    " · live_lesson_count=" + ((pack && pack.live_lesson_count) || 0) +
+    " · demo_lesson_count=" + ((pack && pack.demo_lesson_count) || 0) +
+    " · pending " + ((pack && pack.pending_count) || 0) +
+    " · staff_ready=" + String(h.staff_ready === true) +
+    " · human_commissioned=" + String(h.human_commissioned === true) +
+    " · auto_approve=" + String(h.auto_approve === true) +
+    " · invented_lessons=" + String(h.invented_lessons === true);
+
+  var liveAbsent = !pack || pack.live_catalog_sop_absent !== false;
+  document.getElementById("banner").textContent =
+    "Human review required. Auto-approve off. " +
+    (liveAbsent
+      ? "LIVE catalog ABSENT — live_lesson_count=0, nothing invented. "
+      : "Live catalog PRESENT — rows are factory-backed, not invented. ") +
+    "DEMO / NOT LIVE STAFF ADOPTION. CAP-INTEL-05 stays SPECIFIED. " +
+    "staff_ready=false · human_commissioned=false.";
+
+  var live = (pack && pack.live_lessons) || [];
+  var liveEl = document.getElementById("live");
+  var liveEmpty = document.getElementById("live-empty");
+  if (!live.length) {
+    liveEl.innerHTML = "";
+    liveEmpty.hidden = false;
+    liveEmpty.textContent =
+      "LIVE catalog ABSENT · live_lesson_count=0 · nothing invented.";
+  } else {
+    liveEmpty.hidden = true;
+    liveEl.innerHTML = live.map(function (c) { return card(c, false); }).join("");
+  }
+
+  var demo = (pack && pack.demo_lessons) || [];
+  var dEl = document.getElementById("demo");
+  var dEmpty = document.getElementById("demo-empty");
+  if (!demo.length) {
+    dEl.innerHTML = "";
+    dEmpty.hidden = false;
+  } else {
+    dEmpty.hidden = true;
+    dEl.innerHTML = demo.map(function (c) { return card(c, false); }).join("");
+  }
+
+  var q = (pack && pack.review_queue) || [];
+  var qEl = document.getElementById("queue");
+  var qEmpty = document.getElementById("queue-empty");
+  if (!q.length) {
+    qEl.innerHTML = "";
+    qEmpty.hidden = false;
+  } else {
+    qEmpty.hidden = true;
+    qEl.innerHTML = q.map(function (c) { return card(c, true); }).join("");
+  }
+
+  document.getElementById("honesty").textContent =
+    "Honesty: extends SOP-FACTORY-1 + INTEL-LEARN-1 · no second SOP system · " +
+    "no auto-approve · no fake lessons · LIVE catalog ABSENT unless the file exists · " +
+    "DEMO ≠ live adoption · staff_ready=false · human_commissioned=false.";
+
+  bindActions();
+}
+
+function bindActions() {
+  document.querySelectorAll("button[data-act]").forEach(function (btn) {
+    btn.onclick = function () {
+      var id = btn.getAttribute("data-id");
+      var act = btn.getAttribute("data-act");
+      btn.disabled = true;
+      fetch("/api/sop/review-decision", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          candidate_id: id,
+          decision: act,
+          decision_note:
+            act === "APPROVE"
+              ? "Owner human APPROVE from SOP-LESSON-LIVE-1 board. Not staff_ready."
+              : "Owner DENY from SOP-LESSON-LIVE-1 board. Rule refused.",
+        }),
+      })
+        .then(function (r) {
+          return r.json().then(function (j) {
+            return { status: r.status, body: j };
+          });
+        })
+        .then(function (res) {
+          if (res.status >= 400 || (res.body && res.body.ok === false)) {
+            document.getElementById("banner").innerHTML =
+              '<span class="err">' +
+              esc((res.body && res.body.message) || "Review decision failed") +
+              "</span>";
+            btn.disabled = false;
+            return;
+          }
+          load();
+        })
+        .catch(function (err) {
+          document.getElementById("banner").innerHTML =
+            '<span class="err">' + esc(err && err.message ? err.message : err) + "</span>";
+          btn.disabled = false;
+        });
+    };
+  });
+}
+
+function load() {
+  fetch("/api/ops/sop-lesson-live", { credentials: "same-origin" })
+    .then(function (r) {
+      return r.json().then(function (j) {
+        return { status: r.status, body: j };
+      });
+    })
+    .then(function (res) {
+      if (res.status === 403) {
+        document.getElementById("banner").className = "banner warn";
+        document.getElementById("banner").innerHTML =
+          '<span class="err">Access denied / unsigned refused (403). ' +
+          "SOP lesson live board fails closed for anonymous callers.</span>";
+        document.getElementById("live-empty").hidden = false;
+        document.getElementById("demo-empty").hidden = false;
+        document.getElementById("queue-empty").hidden = false;
+        document.getElementById("honesty").textContent =
+          "staff_ready=false · human_commissioned=false · auto_approve=false · invented_lessons=false";
+        return;
+      }
+      if (!res.body || res.body.ok === false) {
+        document.getElementById("banner").className = "banner warn";
+        document.getElementById("banner").innerHTML =
+          '<span class="err">' +
+          esc((res.body && res.body.message) || "Board load failed") +
+          "</span>";
+        return;
+      }
+      paint(res.body);
+    })
+    .catch(function (err) {
+      document.getElementById("banner").className = "banner warn";
+      document.getElementById("banner").innerHTML =
+        '<span class="err">' + esc(err && err.message ? err.message : err) + "</span>";
+    });
+}
+load();
+</script>
+</body>
+</html>

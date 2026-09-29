@@ -1,0 +1,89 @@
+{
+  "pack": "SOP-LESSON-LIVE-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T03:57:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T03:53:38+08:00",
+  "result_file": "docs/wolf/ops/SOP-LESSON-LIVE-1-RESULT.md",
+  "tests_rerun": {
+    "test_sop_lesson_live1_20260930.py": {
+      "pass": 150,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 6,
+    "distinct_sha256": 4,
+    "all_distinct": false,
+    "note": "desk/live-absent/human-review share SHA; phone+amanda+unsigned distinct",
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/soplessonlive1-amanda-deny.png",
+        "bytes": 35570,
+        "sha256": "549b51181ddef92bc45e99705de00ec830223d80037a169bf37d625b2a895e1d"
+      },
+      {
+        "path": "docs/wolf/ops/shots/soplessonlive1-desk-desktop.png",
+        "bytes": 229307,
+        "sha256": "999023b86752fc3b99cd44c141c20a093536aee8db9692cb26fa20bafaa3bb14"
+      },
+      {
+        "path": "docs/wolf/ops/shots/soplessonlive1-desk-phone.png",
+        "bytes": 235567,
+        "sha256": "9680a1de63d056233f973de273bae013329d9f3a6dfc5042a8d1e6f5f1112f21"
+      },
+      {
+        "path": "docs/wolf/ops/shots/soplessonlive1-human-review.png",
+        "bytes": 229307,
+        "sha256": "999023b86752fc3b99cd44c141c20a093536aee8db9692cb26fa20bafaa3bb14"
+      },
+      {
+        "path": "docs/wolf/ops/shots/soplessonlive1-live-absent.png",
+        "bytes": 229307,
+        "sha256": "999023b86752fc3b99cd44c141c20a093536aee8db9692cb26fa20bafaa3bb14"
+      },
+      {
+        "path": "docs/wolf/ops/shots/soplessonlive1-unsigned-deny.png",
+        "bytes": 20825,
+        "sha256": "23895aeef5616acba746ca2f8c4ecc051d6b7c43aceca05d48c5b55e4a290909"
+      }
+    ],
+    "eye_check": {
+      "desk": "LIVE ABSENT demo PENDING_REVIEW auto_approve=false invented=false",
+      "unsigned_deny": "Access denied"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "auto_approve": false,
+    "invented_lessons": false,
+    "live_catalog": "ABSENT",
+    "ceiling": "BUILT"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "b035e66",
+    "atrium_finance_head": "7584266",
+    "uncommitted": true
+  },
+  "preserves": [
+    "SOP-FACTORY-1",
+    "INTEL-LEARN-1"
+  ],
+  "next_pack": "FIN-TAX-SHELL-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

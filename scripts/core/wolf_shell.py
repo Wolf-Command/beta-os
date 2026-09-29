@@ -267,6 +267,16 @@ DASHBOARDS_HTML_CANONICAL: dict[str, str] = {
     "/amg-occ-truth-1/": "/amg/occ-truth-1",
     "/amg-occ-truth": "/amg/occ-truth-1",
     "/amg-occ-truth/": "/amg/occ-truth-1",
+    "/dashboards/sop-lesson-live.html": "/core/sop-lesson-live",
+    "/dashboards/sop-lesson-live-1.html": "/core/sop-lesson-live",
+    "/sop-lesson-live.html": "/core/sop-lesson-live",
+    "/sop-lesson-live-1.html": "/core/sop-lesson-live",
+    "/sop-lesson-live": "/core/sop-lesson-live",
+    "/sop-lesson-live/": "/core/sop-lesson-live",
+    "/sop-lesson-live-1": "/core/sop-lesson-live",
+    "/sop-lesson-live-1/": "/core/sop-lesson-live",
+    "/ops/sop-lesson-live": "/core/sop-lesson-live",
+    "/ops/sop-lesson-live/": "/core/sop-lesson-live",
     "/dashboards/ggv-content-prove.html": "/ggv/content-prove",
     "/ggv-content-prove.html": "/ggv/content-prove",
     "/ggv-content-prove": "/ggv/content-prove",
@@ -773,6 +783,8 @@ ROUTE_PARENT: dict[str, str | None] = {
     "/bzg/uma-blu/evidence": "/bzg/uma-blu",
     "/bzg/uma-blu/exceptions": "/bzg/uma-blu",
     INTEL_HREF: EMPIRE_HREF,
+    "/core/sop-lesson-live": INTEL_HREF,
+    "/ops/sop-lesson-live": INTEL_HREF,
     CONTENT_HREF: INTEL_HREF,
     # Wave 7: Progress = System soft-land home; children UP → Progress.
     PROGRESS_HREF: EMPIRE_HREF,
@@ -1064,6 +1076,16 @@ ROUTE_CRUMBS: dict[str, list[dict[str, Any]]] = {
     INTEL_HREF: [
         {"label": "WOLF", "href": WOLF_ALIAS},
         {"label": "Intelligence", "href": None},
+    ],
+    "/core/sop-lesson-live": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Intelligence", "href": INTEL_HREF},
+        {"label": "SOP Lessons", "href": None},
+    ],
+    "/ops/sop-lesson-live": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Intelligence", "href": INTEL_HREF},
+        {"label": "SOP Lessons", "href": None},
     ],
     CONTENT_HREF: [
         {"label": "WOLF", "href": WOLF_ALIAS},

@@ -352,6 +352,22 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import amg_occ_truth1 as o; from pathlib import Path; html=Path('dashboards/amg-occ-truth-1.html').read_text(); import sys; sys.exit(0 if (o.api_matches('/api/amg/occ-truth-1') and o.page_matches('/amg/occ-truth-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/amgocctruth1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/AMG-OCC-TRUTH-1-RESULT.md').is_file() and o.honesty_flags().get('next_pack_for_parent_only')=='SOP-LESSON-LIVE-1' and o.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
       "expect": "exit 0",
       "by": "amg-occ-truth1-20260930"
+    },
+    {
+      "id": "sop-lesson-live1-honesty",
+      "claim": "SOP-LESSON-LIVE-1: surfaces SOP factory DEMO lessons with human_review_gate; auto_approve/invented_lessons/fake_lessons false; live catalog ABSENT live_lesson_count=0; SOP-FACTORY-1+INTEL-LEARN-1 preserved; staff_ready/human_commissioned false; next pack parent-only FIN-TAX-SHELL-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import sop_lesson_live1 as l; p=l.build_board(l.OWNER_PERSON); import sys; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('auto_approve') is False and p.get('invented_lessons') is False and p.get('fake_lessons') is False and p.get('live_catalog_status')=='ABSENT' and int(p.get('live_lesson_count') or 0)==0 and p.get('sop_factory1_preserved') is True and p.get('intel_learn1_preserved') is True and l.no_invented_live_lessons(p) and l.human_review_required(p) and l.honesty_flags().get('next_pack_for_parent_only')=='FIN-TAX-SHELL-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "sop-lesson-live1-20260930",
+      "at": "2026-09-30T03:53:00+08:00"
+    },
+    {
+      "id": "sop-lesson-live1-routes-shots",
+      "claim": "SOP-LESSON-LIVE-1 page/API/shots/RESULT present; unsigned deny + suite PASS=150; next pack parent-only FIN-TAX-SHELL-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import sop_lesson_live1 as l; from pathlib import Path; html=Path('dashboards/sop-lesson-live.html').read_text(); import sys; sys.exit(0 if (l.api_matches('/api/ops/sop-lesson-live') and l.page_matches('/ops/sop-lesson-live') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/soplessonlive1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/SOP-LESSON-LIVE-1-RESULT.md').is_file() and l.honesty_flags().get('next_pack_for_parent_only')=='FIN-TAX-SHELL-1' and l.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "sop-lesson-live1-20260930",
+      "at": "2026-09-30T03:53:00+08:00"
     }
   ]
 }

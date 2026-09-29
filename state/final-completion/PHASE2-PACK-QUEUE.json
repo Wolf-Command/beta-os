@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T03:46:00+08:00",
+  "at_wita": "2026-09-30T03:57:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -939,9 +939,16 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "synthesized_from": "wave5 MISSING reliability",
-      "armed_at": "2026-09-30T03:46:00+08:00"
+      "armed_at": "2026-09-30T03:46:00+08:00",
+      "cursor_pid": 39252,
+      "launched_at": "2026-09-30T03:46:30+08:00",
+      "verified_at": "2026-09-30T03:57:00+08:00",
+      "tests": {
+        "pass": 150,
+        "fail": 0
+      }
     },
     {
       "pack_id": "FIN-TAX-SHELL-1",
@@ -966,8 +973,91 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
+      "status": "WAITING_CURSOR",
+      "synthesized_from": "wave5 MISSING finance_loops",
+      "armed_at": "2026-09-30T03:57:00+08:00"
+    },
+    {
+      "pack_id": "BZG-INVENTORY-TRUTH-1",
+      "title": "BZG inventory count honesty (no fake stock)",
+      "closes": [
+        "CAP-BZG inventory"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "PARTIAL"
+      ],
+      "priority_bucket": "bzg_ops",
+      "scope": [
+        "Inventory count desk UNKNOWN when empty",
+        "No invent stock levels"
+      ],
+      "forbids": [
+        "fake stock",
+        "fake counts"
+      ],
+      "depends_on": [
+        "BZG-OPS-DESK-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
       "status": "QUEUED",
-      "synthesized_from": "wave5 MISSING finance_loops"
+      "synthesized_from": "wave6 MISSING bzg_ops"
+    },
+    {
+      "pack_id": "GGV-METRIC-HONESTY-1",
+      "title": "GGV Metricool metric honesty deepen (NOT_RUNTIME holds)",
+      "closes": [
+        "CAP-GGV metrics"
+      ],
+      "targets_classes": [
+        "PARTIAL"
+      ],
+      "priority_bucket": "content",
+      "scope": [
+        "Engagement/publish metrics stay null when NOT_RUNTIME",
+        "Preserve CONTENT-ENGINE-LIVE-1"
+      ],
+      "forbids": [
+        "fake engagement",
+        "fake publish success"
+      ],
+      "depends_on": [
+        "CONTENT-ENGINE-LIVE-1",
+        "GGV-CONTENT-PROVE-1"
+      ],
+      "estimated_effort": "S",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "synthesized_from": "wave6 MISSING content"
+    },
+    {
+      "pack_id": "OWNER-EXCEPTIONS-LIVE-1",
+      "title": "Owner exceptions board deepen (no fake severity)",
+      "closes": [
+        "CAP-CORE exceptions"
+      ],
+      "targets_classes": [
+        "PARTIAL",
+        "BUILT_NOT_PROVEN"
+      ],
+      "priority_bucket": "dashboards",
+      "scope": [
+        "Exceptions from live stamps only",
+        "No invent severity/urgency"
+      ],
+      "forbids": [
+        "fake severity",
+        "fake exception counts"
+      ],
+      "depends_on": [
+        "DASH-LIVE-1",
+        "OWNER-NEEDS-YOU-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "synthesized_from": "wave6 MISSING dashboards"
     }
   ],
   "first_pack": "DASH-LIVE-1",
@@ -1029,5 +1119,6 @@
   "wave4_synthesized_at": "2026-09-30T02:45:00+08:00",
   "wave4_count": 4,
   "updated_at": "2026-09-30T03:46:32+08:00",
-  "wave5_synthesized_at": "2026-09-30T03:30:00+08:00"
+  "wave5_synthesized_at": "2026-09-30T03:30:00+08:00",
+  "wave6_synthesized_at": "2026-09-30T03:57:00+08:00"
 }

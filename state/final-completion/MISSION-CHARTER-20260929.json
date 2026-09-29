@@ -89,8 +89,8 @@
     "RELIABILITY-1",
     "CONTENT-ENGINE-LIVE-1"
   ],
-  "last_pack_verified": "AMG-OCC-TRUTH-1",
-  "last_verified_at": "2026-09-30T03:46:00+08:00",
-  "pass_verified_count": 25,
-  "next_pack": "SOP-LESSON-LIVE-1"
+  "last_pack_verified": "SOP-LESSON-LIVE-1",
+  "last_verified_at": "2026-09-30T03:57:00+08:00",
+  "pass_verified_count": 26,
+  "next_pack": "FIN-TAX-SHELL-1"
 }
