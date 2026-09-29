@@ -4,26 +4,70 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 2,
-  "status": "ARMED_RELAUNCH",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T01:54:34+08:00",
   "launched_at": "2026-09-30T01:54:34+08:00",
+  "exited_at": "2026-09-30T02:00:23+08:00",
+  "exit_code": 0,
+  "exit": 0,
+  "has_exit": true,
+  "result_present": true,
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
   "prod_pid_held": 15975,
+  "prod_15975_untouched": true,
   "staff_ready": false,
   "human_commissioned": false,
   "no_push": true,
   "matt_auto_continue": true,
   "prior_pack_verified": "DASH-LIVE-1",
   "beta_os_head_at_arm": "49e9dc6",
+  "beta_os_head_at_exit": "766e5f8",
   "brief": "state/build-factory/briefs/BRIEF-RELIABILITY-1.md",
   "log": "state/build-factory/logs/RELIABILITY-1.log",
   "result_file": "docs/wolf/ops/RELIABILITY-1-RESULT.md",
-  "next_pack_for_parent": "CONTENT-ENGINE-LIVE-1",
+  "depends_on": [
+    "INTG-TRUTH-1"
+  ],
+  "preserves": [
+    "INTG-TRUTH-1",
+    "DASH-LIVE-1"
+  ],
+  "tests_pass": 106,
+  "tests_fail": 0,
+  "fake_uptime": false,
+  "invented_uptime": false,
+  "sidecar_down_honest": true,
   "closes_toward": [
     "IL-R8",
     "MasterSpec reliability"
   ],
+  "ceiling": "BUILT",
+  "shots": [
+    "docs/wolf/ops/shots/reliability1-board-desktop.png",
+    "docs/wolf/ops/shots/reliability1-board-phone.png",
+    "docs/wolf/ops/shots/reliability1-sidecar-status.png",
+    "docs/wolf/ops/shots/reliability1-unsigned-deny.png"
+  ],
+  "shots_count": 4,
+  "shots_distinct_sha256": 4,
+  "pages": [
+    "/ops/reliability"
+  ],
+  "apis": [
+    "/api/ops/reliability"
+  ],
+  "probe_snapshot_at_exit": {
+    "beta_8788": "UP",
+    "sidecar_8790": "DOWN",
+    "prod_8787_pid_15975": "UP"
+  },
+  "next_pack_for_parent": "CONTENT-ENGINE-LIVE-1",
+  "cursor_did_not_auto_start_next": true,
+  "pass_count": 106,
+  "fail_count": 0,
+  "test_suite": "scripts/tests/test_reliability1_20260930.py",
+  "test_result": "PASS=106 FAIL=0",
   "forbids": [
     "prod mutate",
     "fake uptime",
@@ -31,11 +75,9 @@
     "Exit Report",
     "push"
   ],
-  "depends_on": [
-    "INTG-TRUTH-1"
-  ],
-  "cursor_pid": 19991,
+  "relaunch_reason": "cursor_pid_19991_died_before_EXIT_no_artifacts",
+  "relaunched_at": "2026-09-30T01:56:40+08:00",
   "child_alive": false,
-  "prior_cursor_pid_dead": 19991,
-  "relaunch_reason": "cursor_pid_19991_died_before_EXIT_no_artifacts"
+  "peaches_verified_at": "2026-09-30T02:04:00+08:00",
+  "peaches_verify": "state/final-completion/packs/RELIABILITY-1-PEACHES-VERIFY.json"
 }

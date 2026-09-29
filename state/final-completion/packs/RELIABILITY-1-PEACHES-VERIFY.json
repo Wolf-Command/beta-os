@@ -1,0 +1,91 @@
+{
+  "pack": "RELIABILITY-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T02:04:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T02:01:11+08:00",
+  "result_file": "docs/wolf/ops/RELIABILITY-1-RESULT.md",
+  "tests_rerun": {
+    "test_reliability1_20260930.py": {
+      "pass": 106,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/reliability1-board-desktop.png",
+        "bytes": 137102,
+        "sha256": "0e9bdf035fad7797b6987d74113dd9ed7e80767173a04d72cd0c3989486efaf7"
+      },
+      {
+        "path": "docs/wolf/ops/shots/reliability1-board-phone.png",
+        "bytes": 104885,
+        "sha256": "e88d9164791404c8997da4471f140b9ac6eb7539148667c0307ccc312ce0a021"
+      },
+      {
+        "path": "docs/wolf/ops/shots/reliability1-sidecar-status.png",
+        "bytes": 136965,
+        "sha256": "7f6f26f4391dbd53d081686bb6a371819a11ca1c4b5c55dfef7bf9d8fc4dbe3f"
+      },
+      {
+        "path": "docs/wolf/ops/shots/reliability1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      }
+    ],
+    "eye_check": {
+      "board_desktop": "UP=2 DOWN=1 sidecar DOWN honest uptime null staff_ready=false",
+      "sidecar_status": "sidecar_8790 DOWN not painted UP",
+      "unsigned_deny": "Access denied"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "beta": {
+    "port": 8788,
+    "pid": 13405,
+    "listening": true
+  },
+  "sidecar_8790": "DOWN",
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "fake_uptime": false,
+    "invented_uptime": false,
+    "sidecar_down_honest": true,
+    "prod_mutate": false,
+    "ceiling": "BUILT"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "766e5f8",
+    "atrium_finance_head": "7584266",
+    "uncommitted": true
+  },
+  "preserves": [
+    "INTG-TRUTH-1",
+    "DASH-LIVE-1"
+  ],
+  "next_pack": "CONTENT-ENGINE-LIVE-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false,
+  "relaunch": {
+    "prior_dead_pid": 19991,
+    "relaunched_at": "2026-09-30T01:56:40+08:00",
+    "exit_pid": 20611
+  }
+}

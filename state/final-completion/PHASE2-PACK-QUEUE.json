@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T01:56:10+08:00",
+  "at_wita": "2026-09-30T02:04:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -476,9 +476,16 @@
       "estimated_effort": "M",
       "matt_blocker": false,
       "synthesized_from": "MISSING/PARTIAL priority buckets",
-      "status": "ARMED_RELAUNCH",
+      "status": "PASS_VERIFIED",
       "armed_at": "2026-09-30T01:54:33+08:00",
-      "relaunch_reason": "cursor died before EXIT"
+      "relaunch_reason": "cursor died before EXIT",
+      "cursor_pid": 20611,
+      "relaunched_at": "2026-09-30T01:56:40+08:00",
+      "verified_at": "2026-09-30T02:04:00+08:00",
+      "tests": {
+        "pass": 106,
+        "fail": 0
+      }
     },
     {
       "pack_id": "CONTENT-ENGINE-LIVE-1",
@@ -508,7 +515,8 @@
       "estimated_effort": "L",
       "matt_blocker": false,
       "synthesized_from": "MISSING/PARTIAL priority buckets",
-      "status": "QUEUED"
+      "status": "WAITING_CURSOR",
+      "armed_at": "2026-09-30T02:04:00+08:00"
     },
     {
       "pack_id": "BZG-WASTE-YIELD-1",

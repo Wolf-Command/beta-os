@@ -165,6 +165,7 @@ from core import bzg_finance_desk as _bzg_fin_desk
 from core import bzg_outlet_registry as _bzg_outlets
 from core import v1_status_register as _v1_status
 from core import intg_truth_board as _intg_truth
+from core import reliability1 as _reliability1
 from core import amg_os_shell as _amg_os_shell
 from core import ggv_content_prove1 as _ggv_content_prove
 from core import crm_identity_memory as _crm_ident
@@ -2007,6 +2008,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._intg_truth_dispatch():
+            return
+
+        if self._reliability1_dispatch():
             return
 
         if self._amg_os_shell_dispatch():
@@ -5050,6 +5054,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._intg_truth_dispatch():
                 return
         elif path in (
+            "/ops/reliability",
+            "/ops/reliability/",
+            "/reliability",
+            "/reliability/",
+            "/reliability.html",
+            "/dashboards/reliability.html",
+        ):
+            if self._reliability1_dispatch():
+                return
+        elif path in (
             "/amg/os-shell",
             "/amg/os-shell/",
             "/amg-os-shell",
@@ -5883,6 +5897,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/fin/recon-shell-1" or path.startswith("/api/fin/recon-shell-1/"):
             self._fin_recon_shell1_write_refused(path)
             return
+        if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
+            self._reliability1_write_refused(path)
+            return
         if path == "/api/intel/learning" or (
             path.startswith("/api/intel/learning/")
             and not path.startswith("/api/intel/learning-policy")
@@ -6696,6 +6713,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/recon-shell-1" or path.startswith("/api/fin/recon-shell-1/"):
             self._fin_recon_shell1_write_refused(path)
+            return
+        if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
+            self._reliability1_write_refused(path)
             return
         if path == "/api/intel/learning" or (
             path.startswith("/api/intel/learning/")
@@ -7915,6 +7935,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/recon-shell-1" or path.startswith("/api/fin/recon-shell-1/"):
             self._fin_recon_shell1_write_refused(path)
+            return
+        if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
+            self._reliability1_write_refused(path)
             return
         if path == "/api/intel/learning" or (
             path.startswith("/api/intel/learning/")
@@ -15122,6 +15145,101 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return True
         self._send_html_shell(page.read_bytes(), rel="integrations-status.html")
         return True
+
+    def _reliability1_dispatch(self) -> bool:
+        """RELIABILITY-1 — listener/sidecar/prod RO health board (Beta only)."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _reliability1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _reliability1.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "board_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "fake_uptime": False,
+                        "prod_mutate": False,
+                        "secrets_exposed": False,
+                        "write_authority_expanded": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _reliability1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "reliability.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Reliability board page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="reliability.html")
+        return True
+
+    def _reliability1_write_refused(self, path: str) -> None:
+        """Refuse prod mutate / fake uptime / commissioning flips on RELIABILITY-1."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _reliability1.refuse_external_write(body if isinstance(body, dict) else {})
+        except _reliability1.Reliability1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "fake_uptime": False,
+                    "invented_uptime": False,
+                    "prod_mutate": False,
+                    "prod_pid_held": _reliability1.PROD_PID_HELD,
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": "RELIABILITY-1 is a read-only probe board. Writes refused.",
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "fake_uptime": False,
+                "prod_mutate": False,
+            },
+            status=403,
+        )
 
     def _amg_os_shell_dispatch(self) -> bool:
         """AMG-OS-SHELL-1 — operating shell with BLOCKED_EXTERNAL PMS tiles."""
