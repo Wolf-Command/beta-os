@@ -14,7 +14,7 @@
   "no_push": true,
   "matt_auto_continue": true,
   "prior_pack_verified": "FIN-AP-AR-SHELL-1",
-  "beta_os_head_at_arm": "PENDING",
+  "beta_os_head_at_arm": "ab4bd57",
   "brief": "state/build-factory/briefs/BRIEF-OWNER-NEEDS-YOU-1.md",
   "log": "state/build-factory/logs/OWNER-NEEDS-YOU-1.log",
   "result_file": "docs/wolf/ops/OWNER-NEEDS-YOU-1-RESULT.md",
