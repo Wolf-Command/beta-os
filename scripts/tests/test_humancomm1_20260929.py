@@ -146,10 +146,31 @@ def test_fail_repair_retest_loop() -> None:
             """
             SELECT work_item_id, owner_person_id, commissioning_capability_id
             FROM core_work_items
-            WHERE origin='commissioning' AND owner_person_id='PERS-ZAYEN' AND status='OPEN'
+            WHERE origin IN ('commissioning','commissioning-retest')
+              AND owner_person_id='PERS-ZAYEN' AND status='OPEN'
             LIMIT 1
             """
         ).fetchone()
+        if row is None:
+            # Temp catalog has completed FAILs from live — reset one Zayen item for the loop.
+            row = c.execute(
+                """
+                SELECT work_item_id, owner_person_id, commissioning_capability_id
+                FROM core_work_items
+                WHERE origin='commissioning' AND owner_person_id='PERS-ZAYEN'
+                ORDER BY created_at LIMIT 1
+                """
+            ).fetchone()
+            check("zayen commissioning available", row is not None)
+            c.execute(
+                """
+                UPDATE core_work_items
+                SET status='OPEN', human_result=NULL, human_comment=NULL,
+                    commissioning_result=NULL, completed_at=NULL, outcome=NULL
+                WHERE work_item_id=?
+                """,
+                (row["work_item_id"],),
+            )
         wid = row["work_item_id"]
         person = row["owner_person_id"]
         wi.start_work_item(wid, verified_person_id=person, conn=c, commit=False)

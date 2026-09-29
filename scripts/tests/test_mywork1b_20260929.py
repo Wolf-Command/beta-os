@@ -180,8 +180,15 @@ def test_live_store_clean() -> None:
     check("legacy untouched 148", legacy == 148, str(legacy))
     check("commissioning untouched 28", comm == 28, str(comm))
     blobs = ROOT / "state" / "work-evidence" / "blobs"
-    leftover = list(blobs.glob("WI-*")) if blobs.is_dir() else []
-    check("no orphan live evidence blobs", leftover == [], str(leftover))
+    live_ids = {
+        str(r[0])
+        for r in sqlite3.connect(str(CATALOG)).execute("SELECT work_item_id FROM core_work_items")
+    }
+    leftover = [
+        p for p in (blobs.glob("WI-*") if blobs.is_dir() else [])
+        if p.name not in live_ids
+    ]
+    check("no orphan live evidence blobs", leftover == [], str(leftover[:5]))
 
 
 def _ws_connect(host: str, port: int, path: str):

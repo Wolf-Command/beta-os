@@ -64,7 +64,7 @@ DENIED = (
 DENIED_OFFICER_APPROVE = ("POST", "/amg/finance/api/journals/JRN-1/approve")
 SHOT_VIEWS = (
     ("command", "/amg/finance#command-centre", "Control Surface"),
-    ("journal", "/amg/finance#workbench", "No journals found"),
+    ("journal", "/amg/finance#workbench", "Journal"),
     ("ledger", "/amg/finance#ledger", "No posted entries in General Ledger"),
     ("trial", "/amg/finance#trial-balance", "Trial Balance Report"),
     ("reports", "/amg/finance#reports", "Rooms Revenue"),

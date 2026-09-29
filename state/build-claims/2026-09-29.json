@@ -49,6 +49,13 @@
       "check": "PYTHONPATH=scripts python3 -c \"import sqlite3; c=sqlite3.connect('catalog/content_library.sqlite'); n=c.execute(\\\"select count(*) from core_work_items where origin='legacy' and routing_state='NEEDS_ROUTING'\\\").fetchone()[0]; m=c.execute(\\\"select count(*) from core_work_items where origin='commissioning'\\\").fetchone()[0]; import sys; sys.exit(0 if n>=1 and m==28 else 1)\"",
       "expect": "exit 0",
       "by": "humancomm1-20260929"
+    },
+    {
+      "id": "humfix1-content-brand-fc-approve",
+      "claim": "Content Creator+CD seats authorise all 8 active content brands via SCOPE-WOLF-CONTENT-ALL-BRANDS; Drone is a canonical media type; Zayen FC can approve/reject journals prepared by someone else with SoD and still cannot post/pay/bank; staff_ready and human_commissioned stay false.",
+      "check": "PYTHONPATH=scripts python3 scripts/tests/test_humfix1_20260929.py 2>&1 | tail -1 | grep -q 'fail=0'",
+      "expect": "exit 0",
+      "by": "humfix1-20260929"
     }
   ]
 }
