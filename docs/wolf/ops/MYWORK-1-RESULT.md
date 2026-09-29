@@ -87,6 +87,8 @@ Decision served: Matt 29 Sep 2026 07:20 — P0 UNIVERSAL MY WORK (extends OPSFIX
 
 ## Commits
 
-Local only. No push. (See git log for MYWORK-1 commit hashes on this branch.)
+Local only. No push.
+
+-  — Extend Wolf Core into universal My Work with real commissioning tasks.
 
 RESULT: PASS
