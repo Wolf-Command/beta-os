@@ -90,6 +90,7 @@ Decision served: Matt 29 Sep 2026 07:20 — P0 UNIVERSAL MY WORK (extends OPSFIX
 Local only. No push.
 
 - `61edfa6804cf731823922f9f9ae64bdbe763bd58` — Extend Wolf Core into universal My Work with real commissioning tasks.
-- `d2e2de73127ee4c585814552a2713f7500884e09` — Record MYWORK-1 commit hash in the result (this file corrected to list both SHAs).
+- `d2e2de73127ee4c585814552a2713f7500884e09` — Record MYWORK-1 commit hash in the result.
+- `9425a297752f4b821c267c6e200db58106671f51` — Fix MYWORK-1 result commit hashes.
 
 RESULT: PASS
