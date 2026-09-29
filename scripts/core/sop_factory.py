@@ -2,15 +2,16 @@
 """SOP Factory (Beta only) — CAP-CORE-11 loop on the existing factory.
 
 Decision served: 2026-09-19 PICK, SOP Factory v1 on Beta only, extended by
-the 28 Sep 2026 owner brief item 5. This is the same factory, not a second
-SOP system.
+the 28 Sep 2026 owner brief item 5 and SOP-FACTORY-1 (30 Sep 2026). This is
+the same factory, not a second SOP system.
 
-Evidence note → learning note → append-only proposed version → approval →
-acknowledgement of that approved version → use of the current live version.
-A version is not live until an approval row exists. A newer unapproved
-version does not replace it. Versions, learnings, approvals, acknowledgements,
+Evidence note → lesson candidate → human review gate → (only after APPROVE)
+versioned approved draft. Learning / acknowledgement / use remain on the
+same append-only spine. A version is not live until an approval row exists.
+Review DENY leaves the candidate refused and does not mint a live rule.
+Versions, learnings, candidates, review decisions, approvals, acknowledgements,
 and uses are append-only. A rewritten file is not a version. Anonymous
-callers fail closed.
+callers fail closed. No auto-approve of production rules.
 
 Acknowledgement is not staff training and not staff readiness. A use row is
 not operating adoption and not human commissioning. Does not write Model C
@@ -31,11 +32,15 @@ from typing import Any
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 DEFAULT_DB = BETA_ROOT / "catalog" / "sop_factory.sqlite"
 LIVE_DEFAULT_DB = DEFAULT_DB.resolve()
+DEMO_DB = (
+    BETA_ROOT / "state" / "build-factory" / "tmp-sop-factory-1" / "sop_factory.sqlite"
+)
 CATALOG_DB = BETA_ROOT / "catalog" / "content_library.sqlite"
 LEDGER_JSON = BETA_ROOT / "state" / "model-c-baseline-assessments.json"
 OWNER_PERSON = "PERS-MATT"
 CR_ID = "CR-c4ed4e3fa9f15a40"
 CAP_ID = "CAP-CORE-11"
+PACK_ID = "SOP-FACTORY-1"
 TZ_UTC = timezone.utc
 
 PERM_DRAFT = "core.sop.draft"
@@ -44,8 +49,14 @@ PERM_READ = "core.sop.read"
 
 STATE_DRAFT = "DRAFT"
 DECISION_APPROVED = "APPROVED"
+DECISION_APPROVE = "APPROVE"
+DECISION_DENY = "DENY"
+CANDIDATE_PENDING = "PENDING_REVIEW"
+CANDIDATE_APPROVED = "APPROVED"
+CANDIDATE_DENIED = "DENIED"
 GATE_OWNER = "owner"
 GATE_ROLE = "role"
+DEMO_LABEL = "DEMO / NOT LIVE STAFF ADOPTION"
 
 HIGHER_THAN_BUILT = frozenset({"PROVEN", "READY"})
 FAKE_NOTES = frozenset(
@@ -69,6 +80,10 @@ APPROVE_KEYS = frozenset({"version_id"})
 LEARN_KEYS = frozenset({"version_id", "learning_note"})
 ACK_KEYS = frozenset({"version_id"})
 USE_KEYS = frozenset({"version_id", "use_note"})
+CANDIDATE_KEYS = frozenset(
+    {"version_id", "lesson_note", "learning_id", "title", "demo"}
+)
+REVIEW_KEYS = frozenset({"candidate_id", "decision", "decision_note"})
 BANNED_KEYS = frozenset(
     {
         "state",
@@ -82,6 +97,9 @@ BANNED_KEYS = frozenset(
         "auto_train",
         "operational",
         "score",
+        "staff_ready",
+        "human_commissioned",
+        "operating_adoption",
     }
 )
 
@@ -93,7 +111,18 @@ _VER_RE = re.compile(
     r"^VER-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 )
 RESERVED_SOPS = frozenset(
-    {"draft", "version", "approve", "learn", "acknowledge", "use"}
+    {
+        "draft",
+        "version",
+        "approve",
+        "learn",
+        "acknowledge",
+        "use",
+        "lesson-candidate",
+        "review-decision",
+        "review-queue",
+        "candidates",
+    }
 )
 _SECRET_RE = re.compile(
     r"(secret|password|token|api[_-]?key|bearer|cookie)",
@@ -102,9 +131,12 @@ _SECRET_RE = re.compile(
 
 HONESTY = {
     "cap": CAP_ID,
+    "pack": PACK_ID,
     "slice": "sop_loop",
     "append_only": True,
     "full_loop": True,
+    "human_review_gate": True,
+    "auto_approve": False,
     "train_staff": False,
     "auto_train": False,
     "staff_ready": False,
@@ -121,6 +153,7 @@ HONESTY = {
     "cr_mutated": False,
     "model_c_write": False,
     "model_c_maturity_raised": False,
+    "demo_is_live_adoption": False,
 }
 
 
@@ -134,11 +167,25 @@ class SopFactoryError(ValueError):
 
 def permission_for(action: str) -> str:
     act = (action or "").strip().lower()
-    if act == "approve":
+    if act in {"approve", "review-decision", "review"}:
         return PERM_APPROVE
-    if act in {"draft", "version", "learn"}:
+    if act in {"draft", "version", "learn", "lesson-candidate", "candidate"}:
         return PERM_DRAFT
     return PERM_READ
+
+
+def runtime_db_path() -> Path:
+    """Prefer env override, then catalog DB if present, else DEMO fixture DB.
+
+    Never invents catalog/sop_factory.sqlite. Demo path is labeled
+    DEMO / NOT LIVE STAFF ADOPTION and is not staff readiness.
+    """
+    override = (os.environ.get("WOLF_SOP_FACTORY_DB") or "").strip()
+    if override:
+        return Path(override).resolve()
+    if DEFAULT_DB.is_file():
+        return LIVE_DEFAULT_DB
+    return DEMO_DB.resolve()
 
 
 def now_utc_iso() -> str:
@@ -394,6 +441,65 @@ CREATE TRIGGER IF NOT EXISTS trg_sop_uses_no_delete
 BEFORE DELETE ON sop_uses
 BEGIN
   SELECT RAISE(ABORT, 'sop_uses is append-only');
+END;
+
+CREATE TABLE IF NOT EXISTS sop_lesson_candidates (
+  candidate_id TEXT PRIMARY KEY,
+  sop_id TEXT NOT NULL,
+  version_id TEXT NOT NULL,
+  learning_id TEXT,
+  title TEXT NOT NULL,
+  lesson_note TEXT NOT NULL,
+  evidence_note TEXT NOT NULL,
+  demo_label TEXT NOT NULL,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sop_candidates_version
+  ON sop_lesson_candidates(version_id);
+CREATE INDEX IF NOT EXISTS idx_sop_candidates_sop
+  ON sop_lesson_candidates(sop_id);
+
+CREATE TABLE IF NOT EXISTS sop_review_decisions (
+  decision_id TEXT PRIMARY KEY,
+  candidate_id TEXT NOT NULL UNIQUE,
+  sop_id TEXT NOT NULL,
+  version_id TEXT NOT NULL,
+  decision TEXT NOT NULL,
+  decided_by TEXT NOT NULL,
+  gate TEXT NOT NULL,
+  decision_note TEXT NOT NULL,
+  decided_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sop_review_candidate
+  ON sop_review_decisions(candidate_id);
+CREATE INDEX IF NOT EXISTS idx_sop_review_sop
+  ON sop_review_decisions(sop_id);
+
+CREATE TRIGGER IF NOT EXISTS trg_sop_candidates_no_update
+BEFORE UPDATE ON sop_lesson_candidates
+BEGIN
+  SELECT RAISE(ABORT, 'sop_lesson_candidates is append-only');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_sop_candidates_no_delete
+BEFORE DELETE ON sop_lesson_candidates
+BEGIN
+  SELECT RAISE(ABORT, 'sop_lesson_candidates is append-only');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_sop_review_no_update
+BEFORE UPDATE ON sop_review_decisions
+BEGIN
+  SELECT RAISE(ABORT, 'sop_review_decisions is append-only');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_sop_review_no_delete
+BEFORE DELETE ON sop_review_decisions
+BEGIN
+  SELECT RAISE(ABORT, 'sop_review_decisions is append-only');
 END;
 """
 
@@ -1225,3 +1331,546 @@ def read_sop(
         "live": live_id is not None,
         "honesty": honesty_flags(),
     }
+
+
+_CAND_RE = re.compile(
+    r"^CND-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+)
+_LRN_RE = re.compile(
+    r"^LRN-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+)
+
+
+def _lesson_note(value: Any) -> str:
+    note = _clean_text(value, field="lesson_note", min_len=12, max_len=4000)
+    if note.upper() in FAKE_NOTES:
+        raise SopFactoryError(
+            "lesson note cannot be a maturity word",
+            code="missing_evidence",
+        )
+    return note
+
+
+def _decision_note(value: Any) -> str:
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return "human review decision recorded"
+    return _clean_text(value, field="decision_note", min_len=3, max_len=2000)
+
+
+def _candidate_review_status(
+    conn: sqlite3.Connection, candidate_id: str
+) -> tuple[str, dict[str, Any] | None]:
+    row = conn.execute(
+        """
+        SELECT decision_id, decision, decided_by, gate, decision_note, decided_at
+        FROM sop_review_decisions WHERE candidate_id=?
+        """,
+        (candidate_id,),
+    ).fetchone()
+    if row is None:
+        return CANDIDATE_PENDING, None
+    decision = str(row["decision"])
+    status = (
+        CANDIDATE_APPROVED if decision == DECISION_APPROVE else CANDIDATE_DENIED
+    )
+    return status, {
+        "decision_id": row["decision_id"],
+        "decision": decision,
+        "decided_by": row["decided_by"],
+        "gate": row["gate"],
+        "decision_note": row["decision_note"],
+        "decided_at": row["decided_at"],
+    }
+
+
+def propose_lesson_candidate(
+    body: dict,
+    *,
+    person_id: str | None,
+    role_allowed: bool = False,
+    db_path: Path | str | None = None,
+) -> dict[str, Any]:
+    """Evidence-backed version → lesson candidate awaiting human review.
+
+    Does not approve. Does not mark live. Does not train staff.
+    """
+    gate = _require_actor(person_id, role_allowed=role_allowed)
+    _reject_keys(body, CANDIDATE_KEYS)
+    version_id = str(body.get("version_id") or "").strip()
+    lesson = _lesson_note(body.get("lesson_note"))
+    learning_id = body.get("learning_id")
+    if learning_id is None or (
+        isinstance(learning_id, str) and not learning_id.strip()
+    ):
+        learning_id = None
+    else:
+        learning_id = str(learning_id).strip()
+        if not _LRN_RE.match(learning_id):
+            raise SopFactoryError("learning_id is not a factory id", code="invalid")
+    demo_flag = body.get("demo")
+    if demo_flag is True or (
+        isinstance(demo_flag, str) and demo_flag.strip().upper() in {"1", "TRUE", "DEMO"}
+    ):
+        demo_label = DEMO_LABEL
+    else:
+        demo_label = ""
+    title_override = body.get("title")
+    candidate_id = f"CND-{uuid.uuid4()}"
+    conn = _open_existing(db_path)
+    try:
+        before = _version_row(conn, version_id)
+        evidence = str(before["evidence_note"] or "").strip()
+        if not evidence:
+            raise SopFactoryError(
+                "cannot propose a lesson without an evidence note",
+                code="missing_evidence",
+            )
+        if learning_id is not None:
+            lrow = conn.execute(
+                "SELECT learning_id FROM sop_learnings WHERE learning_id=? AND version_id=?",
+                (learning_id, version_id),
+            ).fetchone()
+            if lrow is None:
+                raise SopFactoryError(
+                    "learning_id does not belong to this version",
+                    code="not_found",
+                )
+        title = (
+            _title(title_override)
+            if title_override is not None
+            else str(before["title"])
+        )
+        conn.execute("BEGIN IMMEDIATE")
+        conn.execute(
+            """
+            INSERT INTO sop_lesson_candidates (
+              candidate_id, sop_id, version_id, learning_id, title,
+              lesson_note, evidence_note, demo_label, created_by, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                candidate_id,
+                before["sop_id"],
+                version_id,
+                learning_id,
+                title,
+                lesson,
+                evidence,
+                demo_label,
+                person_id,
+                now_utc_iso(),
+            ),
+        )
+        _unchanged(before, _version_row(conn, version_id))
+        conn.commit()
+        sop_id = str(before["sop_id"])
+    except SopFactoryError:
+        conn.rollback()
+        raise
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return {
+        "appended": True,
+        "candidate_id": candidate_id,
+        "sop_id": sop_id,
+        "version_id": version_id,
+        "review_status": CANDIDATE_PENDING,
+        "demo_label": demo_label or None,
+        "live": False,
+        "approved_rule": False,
+        "gate": gate,
+        **_loop_flags(),
+        "honesty": honesty_flags(),
+    }
+
+
+def review_decision(
+    body: dict,
+    *,
+    person_id: str | None,
+    role_allowed: bool = False,
+    db_path: Path | str | None = None,
+) -> dict[str, Any]:
+    """Human review gate. APPROVE mints approval on the version; DENY refuses.
+
+    Append-only. Does not rewrite the candidate or version body. No auto-approve.
+    """
+    gate = _require_actor(person_id, role_allowed=role_allowed)
+    _reject_keys(body, REVIEW_KEYS)
+    candidate_id = str(body.get("candidate_id") or "").strip()
+    if not _CAND_RE.match(candidate_id):
+        raise SopFactoryError("candidate_id is not a factory id", code="invalid")
+    decision_raw = str(body.get("decision") or "").strip().upper()
+    if decision_raw in {DECISION_APPROVE, DECISION_APPROVED}:
+        decision = DECISION_APPROVE
+    elif decision_raw == DECISION_DENY:
+        decision = DECISION_DENY
+    else:
+        raise SopFactoryError(
+            "decision must be APPROVE or DENY",
+            code="invalid",
+        )
+    note = _decision_note(body.get("decision_note"))
+    decision_id = f"REV-{uuid.uuid4()}"
+    approval_id = None
+    conn = _open_existing(db_path)
+    try:
+        cand = conn.execute(
+            """
+            SELECT candidate_id, sop_id, version_id, lesson_note, evidence_note,
+                   demo_label, title
+            FROM sop_lesson_candidates WHERE candidate_id=?
+            """,
+            (candidate_id,),
+        ).fetchone()
+        if cand is None:
+            raise SopFactoryError("lesson candidate not found", code="not_found")
+        existing = conn.execute(
+            "SELECT decision_id FROM sop_review_decisions WHERE candidate_id=?",
+            (candidate_id,),
+        ).fetchone()
+        if existing is not None:
+            raise SopFactoryError(
+                "this candidate already has a review decision",
+                code="already_reviewed",
+            )
+        version_id = str(cand["version_id"])
+        before = _version_row(conn, version_id)
+        if not str(before["evidence_note"] or "").strip():
+            raise SopFactoryError(
+                "cannot review a version with no evidence note",
+                code="missing_evidence",
+            )
+        conn.execute("BEGIN IMMEDIATE")
+        conn.execute(
+            """
+            INSERT INTO sop_review_decisions (
+              decision_id, candidate_id, sop_id, version_id, decision,
+              decided_by, gate, decision_note, decided_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                decision_id,
+                candidate_id,
+                cand["sop_id"],
+                version_id,
+                decision,
+                person_id,
+                gate,
+                note,
+                now_utc_iso(),
+            ),
+        )
+        live_id = None
+        if decision == DECISION_APPROVE:
+            prior_apr = conn.execute(
+                "SELECT approval_id FROM sop_approvals WHERE version_id=?",
+                (version_id,),
+            ).fetchone()
+            if prior_apr is not None:
+                raise SopFactoryError(
+                    "this version is already approved",
+                    code="already_approved",
+                )
+            approval_id = f"APR-{uuid.uuid4()}"
+            conn.execute(
+                """
+                INSERT INTO sop_approvals (
+                  approval_id, version_id, sop_id, decision, decided_by, gate, decided_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    approval_id,
+                    version_id,
+                    cand["sop_id"],
+                    DECISION_APPROVED,
+                    person_id,
+                    gate,
+                    now_utc_iso(),
+                ),
+            )
+            live_id = _live_version_id(conn, str(cand["sop_id"]))
+        _unchanged(before, _version_row(conn, version_id))
+        # Candidate row must remain byte-identical (append-only; no status rewrite).
+        after_cand = conn.execute(
+            """
+            SELECT candidate_id, sop_id, version_id, lesson_note, evidence_note,
+                   demo_label, title
+            FROM sop_lesson_candidates WHERE candidate_id=?
+            """,
+            (candidate_id,),
+        ).fetchone()
+        if after_cand is None or tuple(after_cand) != tuple(cand):
+            raise SopFactoryError(
+                "review must not rewrite the candidate",
+                code="invalid",
+            )
+        conn.commit()
+        sop_id = str(cand["sop_id"])
+        demo_label_out = str(cand["demo_label"] or "") or None
+        status = (
+            CANDIDATE_APPROVED if decision == DECISION_APPROVE else CANDIDATE_DENIED
+        )
+    except SopFactoryError:
+        conn.rollback()
+        raise
+    except sqlite3.IntegrityError as exc:
+        conn.rollback()
+        raise SopFactoryError(
+            "this candidate already has a review decision",
+            code="already_reviewed",
+        ) from exc
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return {
+        "appended": True,
+        "decision_id": decision_id,
+        "candidate_id": candidate_id,
+        "sop_id": sop_id,
+        "version_id": version_id,
+        "decision": decision,
+        "review_status": status,
+        "approval_id": approval_id,
+        "approved_rule": decision == DECISION_APPROVE,
+        "live": bool(live_id == version_id) if decision == DECISION_APPROVE else False,
+        "live_version_id": live_id if decision == DECISION_APPROVE else None,
+        "version_unchanged": True,
+        "candidate_unchanged": True,
+        "gate": gate,
+        "demo_label": demo_label_out,
+        **_loop_flags(),
+        "honesty": honesty_flags(),
+    }
+
+
+def _candidate_payload(
+    conn: sqlite3.Connection, row: sqlite3.Row
+) -> dict[str, Any]:
+    cid = str(row["candidate_id"])
+    status, review = _candidate_review_status(conn, cid)
+    approved = _approved_ids(conn, str(row["sop_id"]))
+    live_id = _live_version_id(conn, str(row["sop_id"]))
+    vid = str(row["version_id"])
+    demo = str(row["demo_label"] or "")
+    return {
+        "candidate_id": cid,
+        "sop_id": row["sop_id"],
+        "version_id": vid,
+        "learning_id": row["learning_id"],
+        "title": row["title"],
+        "lesson_note": row["lesson_note"],
+        "evidence_note": row["evidence_note"],
+        "demo_label": demo or None,
+        "demo": bool(demo),
+        "created_by": row["created_by"],
+        "created_at": row["created_at"],
+        "review_status": status,
+        "review": review,
+        "version_approved": vid in approved,
+        "live": vid == live_id,
+        "approved_rule": status == CANDIDATE_APPROVED and vid in approved,
+    }
+
+
+def list_lesson_candidates(
+    person_id: str | None,
+    *,
+    role_allowed: bool = False,
+    db_path: Path | str | None = None,
+    pending_only: bool = False,
+) -> dict[str, Any]:
+    _require_actor(person_id, role_allowed=role_allowed)
+    conn, path = _open_read(db_path)
+    if conn is None:
+        return {
+            "count": 0,
+            "candidates": [],
+            "pending_count": 0,
+            "db_exists": False,
+            "db_path": str(path),
+            "demo_path": str(DEMO_DB),
+            "summary": (
+                "No SOP factory file yet. Nothing was invented. "
+                "A lesson candidate is not an approved rule."
+            ),
+            "honesty": honesty_flags(),
+        }
+    try:
+        names = _table_names(conn)
+        if "sop_lesson_candidates" not in names:
+            return {
+                "count": 0,
+                "candidates": [],
+                "pending_count": 0,
+                "db_exists": path.exists(),
+                "db_path": str(path),
+                "demo_path": str(DEMO_DB),
+                "summary": (
+                    "Factory file has no lesson-candidate table yet. "
+                    "A draft is not an approved rule."
+                ),
+                "honesty": honesty_flags(),
+            }
+        rows = conn.execute(
+            """
+            SELECT candidate_id, sop_id, version_id, learning_id, title,
+                   lesson_note, evidence_note, demo_label, created_by, created_at
+            FROM sop_lesson_candidates
+            ORDER BY created_at DESC
+            """
+        ).fetchall()
+        all_candidates = [_candidate_payload(conn, row) for row in rows]
+        pending_count = sum(
+            1 for c in all_candidates if c["review_status"] == CANDIDATE_PENDING
+        )
+        candidates = (
+            [c for c in all_candidates if c["review_status"] == CANDIDATE_PENDING]
+            if pending_only
+            else all_candidates
+        )
+    finally:
+        conn.close()
+    return {
+        "count": len(candidates),
+        "candidates": candidates,
+        "pending_count": pending_count,
+        "db_exists": path.exists(),
+        "db_path": str(path),
+        "demo_path": str(DEMO_DB),
+        "summary": (
+            "Lesson candidates await a human review decision. "
+            "APPROVE writes an approval; DENY refuses the rule. "
+            "DEMO rows are not live staff adoption."
+        ),
+        "honesty": honesty_flags(),
+    }
+
+
+def list_review_queue(
+    person_id: str | None,
+    *,
+    role_allowed: bool = False,
+    db_path: Path | str | None = None,
+) -> dict[str, Any]:
+    """Pending lesson candidates only — the human review gate inbox."""
+    out = list_lesson_candidates(
+        person_id,
+        role_allowed=role_allowed,
+        db_path=db_path,
+        pending_only=True,
+    )
+    out["queue"] = "human_review"
+    out["summary"] = (
+        "Human review queue. Nothing here is an approved rule until APPROVE. "
+        "Unsigned callers are refused. Auto-approve is off."
+    )
+    return out
+
+
+def seed_demo_vertical_slice(
+    *,
+    person_id: str | None = OWNER_PERSON,
+    db_path: Path | str | None = None,
+) -> dict[str, Any]:
+    """Seed one DEMO evidence → candidate → pending review path.
+
+    Writes only under the demo/tmp path by default. Does not create
+    catalog/sop_factory.sqlite. Not staff readiness. Not live adoption.
+    """
+    path = Path(db_path) if db_path is not None else DEMO_DB
+    resolved = path.resolve()
+    if resolved == LIVE_DEFAULT_DB:
+        raise SopFactoryError(
+            "demo seed refuses the live catalog SOP factory path",
+            code="live_guard",
+        )
+    if resolved.exists():
+        # Re-open and report existing pending demo candidates if any.
+        listed = list_review_queue(person_id, db_path=resolved)
+        if listed.get("pending_count", 0) > 0:
+            return {
+                "seeded": False,
+                "already_present": True,
+                "db_path": str(resolved),
+                "demo_label": DEMO_LABEL,
+                **listed,
+                "honesty": honesty_flags(),
+            }
+
+    draft = create_draft(
+        {
+            "title": "DEMO tin-count close line",
+            "body": (
+                "DEMO ONLY — Count the tin before the drawer is closed and "
+                "write the number on the close card. Not live staff adoption."
+            ),
+            "evidence_note": (
+                "DEMO evidence note: tin count was skipped on a fixture Uma close. "
+                "This is a factory demo path, not operating adoption."
+            ),
+        },
+        person_id=person_id,
+        db_path=resolved,
+    )
+    learned = record_learning(
+        {
+            "version_id": draft["version_id"],
+            "learning_note": (
+                "DEMO lesson precursor: the miss was the missing line on the "
+                "close card, not the count itself."
+            ),
+        },
+        person_id=person_id,
+        db_path=resolved,
+    )
+    candidate = propose_lesson_candidate(
+        {
+            "version_id": draft["version_id"],
+            "learning_id": learned["learning_id"],
+            "lesson_note": (
+                "DEMO lesson candidate: require the tin-count line on the close "
+                "card before lockup. Awaiting human review. Not an approved rule."
+            ),
+            "title": "DEMO tin-count close line",
+            "demo": True,
+        },
+        person_id=person_id,
+        db_path=resolved,
+    )
+    queue = list_review_queue(person_id, db_path=resolved)
+    return {
+        "seeded": True,
+        "already_present": False,
+        "db_path": str(resolved),
+        "demo_label": DEMO_LABEL,
+        "sop_id": draft["sop_id"],
+        "version_id": draft["version_id"],
+        "learning_id": learned["learning_id"],
+        "candidate_id": candidate["candidate_id"],
+        "review_status": CANDIDATE_PENDING,
+        "live": False,
+        "approved_rule": False,
+        "pending_count": queue.get("pending_count"),
+        "candidates": queue.get("candidates"),
+        **_loop_flags(),
+        "honesty": honesty_flags(),
+    }
+
+
+def refuse_history_rewrite(body: dict) -> None:
+    """Explicit refuse for update/delete that would rewrite SOP history."""
+    if not isinstance(body, dict):
+        raise SopFactoryError("payload must be an object", code="unversioned")
+    action = str(body.get("action") or body.get("op") or "rewrite").strip().lower()
+    raise SopFactoryError(
+        f"refused {action or 'rewrite'}: SOP factory history is append-only; "
+        "append a version or a review decision instead",
+        code="append_only",
+    )
+

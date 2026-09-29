@@ -4040,6 +4040,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/sop":
             self._sop_list()
             return
+        if path == "/api/sop/review-queue":
+            self._sop_review_queue()
+            return
+        if path == "/api/sop/candidates":
+            self._sop_candidates()
+            return
         m_sop = re.match(r"^/api/sop/([^/]+)$", path)
         if m_sop:
             self._sop_read(m_sop.group(1))
@@ -4719,6 +4725,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/dashboards/bzg-venue-pnl.html",
         ):
             self._bzg_pnl_page()
+            return
+        elif path in (
+            "/core/sop-factory",
+            "/core/sop-factory/",
+            "/ops/sop-factory",
+            "/ops/sop-factory/",
+            "/sop-factory",
+            "/sop-factory/",
+            "/sop-factory.html",
+            "/dashboards/sop-factory.html",
+        ):
+            self._sop_factory_page()
             return
         elif path in (
             "/bzg-variance-waste",
@@ -6092,6 +6110,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/sop/learn":
             self._sop_learn_post()
+            return
+        if path == "/api/sop/lesson-candidate":
+            self._sop_lesson_candidate_post()
+            return
+        if path == "/api/sop/review-decision":
+            self._sop_review_decision_post()
             return
         if path == "/api/sop/acknowledge":
             self._sop_acknowledge_post()
@@ -31355,6 +31379,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         self._send_json({"ok": True, "person_id": person_id, **out})
 
+    def _sop_db(self):
+        """Demo fixture DB when catalog SOP factory is absent. Not live adoption."""
+        return _sop.runtime_db_path()
+
     def _sop_actor(self, action: str, body: dict | None = None) -> tuple[str, bool] | None:
         """Identity required. Owner always. Role only if rbac.can already grants it.
 
@@ -31388,6 +31416,65 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 role_allowed = False
         return person_id, role_allowed
 
+    def _sop_may_view_page(self, person_id: str, role_allowed: bool) -> bool:
+        if person_id == _sop.OWNER_PERSON:
+            return True
+        return bool(role_allowed)
+
+    def _sop_factory_page(self) -> None:
+        """Staff-visible Beta page for candidates + human review queue."""
+        identity = self._resolve_identity(None)
+        if not identity.get("ok"):
+            self._send_access_denied_page(
+                "SOP Factory requires a signed-in person. Unsigned callers are refused."
+            )
+            return
+        person_id = (identity.get("person_id") or "").strip()
+        if not person_id:
+            self._send_access_denied_page(
+                "SOP Factory requires a signed-in person. Unsigned callers are refused."
+            )
+            return
+        role_allowed = False
+        if person_id != _sop.OWNER_PERSON:
+            try:
+                role_allowed = bool(_rbac.can(person_id, _sop.PERM_READ))
+            except Exception:  # noqa: BLE001
+                role_allowed = False
+        if not self._sop_may_view_page(person_id, role_allowed):
+            self._send_access_denied_page(
+                "SOP Factory is Owner or an authorised core.sop.read role only. "
+                "This is not staff readiness or human commissioning."
+            )
+            return
+        # Ensure DEMO fixture exists for the review-queue surface (tmp path only).
+        try:
+            if not _sop.DEFAULT_DB.is_file():
+                _sop.seed_demo_vertical_slice(
+                    person_id=_sop.OWNER_PERSON, db_path=_sop.DEMO_DB
+                )
+        except Exception:  # noqa: BLE001
+            pass
+        page = DASHBOARDS / "sop-factory.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "page_missing",
+                    "message": "SOP Factory page is missing.",
+                    **_sop.honesty_flags(),
+                },
+                status=500,
+            )
+            return
+        data = page.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
     def _sop_fail(self, exc: Exception) -> None:
         code = getattr(exc, "code", "invalid")
         if code == "denied":
@@ -31412,7 +31499,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         person_id, role_allowed = actor
         try:
-            out = _sop.list_sops(person_id, role_allowed=role_allowed)
+            out = _sop.list_sops(
+                person_id, role_allowed=role_allowed, db_path=self._sop_db()
+            )
         except _sop.SopFactoryError as exc:
             self._sop_fail(exc)
             return
@@ -31427,7 +31516,51 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         person_id, role_allowed = actor
         try:
-            out = _sop.read_sop(sop_id, person_id, role_allowed=role_allowed)
+            out = _sop.read_sop(
+                sop_id, person_id, role_allowed=role_allowed, db_path=self._sop_db()
+            )
+        except _sop.SopFactoryError as exc:
+            self._sop_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"ok": True, "person_id": person_id, **out})
+
+    def _sop_review_queue(self) -> None:
+        actor = self._sop_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            if not _sop.DEFAULT_DB.is_file():
+                _sop.seed_demo_vertical_slice(
+                    person_id=_sop.OWNER_PERSON, db_path=_sop.DEMO_DB
+                )
+            out = _sop.list_review_queue(
+                person_id, role_allowed=role_allowed, db_path=self._sop_db()
+            )
+        except _sop.SopFactoryError as exc:
+            self._sop_fail(exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+            return
+        self._send_json({"ok": True, "person_id": person_id, **out})
+
+    def _sop_candidates(self) -> None:
+        actor = self._sop_actor("read")
+        if actor is None:
+            return
+        person_id, role_allowed = actor
+        try:
+            if not _sop.DEFAULT_DB.is_file():
+                _sop.seed_demo_vertical_slice(
+                    person_id=_sop.OWNER_PERSON, db_path=_sop.DEMO_DB
+                )
+            out = _sop.list_lesson_candidates(
+                person_id, role_allowed=role_allowed, db_path=self._sop_db()
+            )
         except _sop.SopFactoryError as exc:
             self._sop_fail(exc)
             return
@@ -31455,7 +31588,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         person_id, role_allowed = actor
         try:
-            out = fn(body, person_id=person_id, role_allowed=role_allowed)
+            out = fn(
+                body,
+                person_id=person_id,
+                role_allowed=role_allowed,
+                db_path=self._sop_db(),
+            )
         except _sop.SopFactoryError as exc:
             self._sop_fail(exc)
             return
@@ -31475,6 +31613,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def _sop_learn_post(self) -> None:
         self._sop_post("learn", _sop.record_learning)
+
+    def _sop_lesson_candidate_post(self) -> None:
+        self._sop_post("lesson-candidate", _sop.propose_lesson_candidate)
+
+    def _sop_review_decision_post(self) -> None:
+        self._sop_post("review-decision", _sop.review_decision)
 
     def _sop_acknowledge_post(self) -> None:
         self._sop_post("acknowledge", _sop.acknowledge)

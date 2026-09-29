@@ -14,6 +14,20 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import bzg_venue_pnl as v; import sys; sys.exit(0 if (v.person_may_read_venue_pnl('PERS-ZAYEN') and not v.person_may_read_venue_pnl('PERS-AMANDA')) else 1)\"",
       "expect": "exit 0",
       "by": "bzg-venuepl1-20260930"
+    },
+    {
+      "id": "sop-factory1-review-gate-demo",
+      "claim": "SOP Factory vertical slice: evidence→lesson candidate→human review gate; DEMO fixture pending on tmp-sop-factory-1; catalog/sop_factory.sqlite absent; staff_ready/human_commissioned/operating_adoption false; CAP-CORE-11 stays SPECIFIED.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import sop_factory as s; from pathlib import Path; import json,sys; h=s.honesty_flags(); q=s.list_review_queue(s.OWNER_PERSON, db_path=s.DEMO_DB); live=s.DEFAULT_DB.exists(); led=json.loads(Path('state/model-c-baseline-assessments.json').read_text())['CAP-CORE-11'][0]; sys.exit(0 if (h.get('staff_ready') is False and h.get('human_commissioned') is False and h.get('operating_adoption') is False and h.get('human_review_gate') is True and h.get('auto_approve') is False and not live and (q.get('pending_count') or 0)>=1 and led=='SPECIFIED') else 1)\"",
+      "expect": "exit 0",
+      "by": "sop-factory1-20260930"
+    },
+    {
+      "id": "sop-factory1-unsigned-403",
+      "claim": "Live Beta :8788 unsigned GET /api/sop/review-queue and /core/sop-factory return 403 (fail closed).",
+      "check": "python3 -c \"from urllib.request import urlopen; from urllib.error import HTTPError; import sys\\n\\ndef code(url):\\n  try:\\n    with urlopen(url, timeout=5) as r: return r.status\\n  except HTTPError as e: return e.code\\nsys.exit(0 if code('http://127.0.0.1:8788/api/sop/review-queue')==403 and code('http://127.0.0.1:8788/core/sop-factory')==403 else 1)\"",
+      "expect": "exit 0",
+      "by": "sop-factory1-20260930"
     }
   ]
 }

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wolf · SOP Factory (review gate)</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root { color-scheme: light; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background: #f3f1ec;
+      color: #1c1a16;
+    }
+    main { max-width: 880px; margin: 0 auto; padding: 28px 20px 72px; }
+    h1 { font-size: 1.75rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+    h2 { font-size: 1.1rem; margin: 28px 0 10px; letter-spacing: -0.01em; }
+    .sub { color: #5c574e; margin: 0 0 16px; line-height: 1.45; }
+    .banner {
+      border: 1px solid #ddd6c8;
+      background: #fffdf8;
+      border-left: 3px solid #8a6a2f;
+      padding: 12px 14px;
+      margin: 0 0 18px;
+      line-height: 1.45;
+      font-size: 0.92rem;
+    }
+    .meta { font-size: 0.85rem; color: #6b655c; margin-bottom: 12px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    article {
+      border: 1px solid #ddd6c8;
+      background: #fffdf8;
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    article.demo { border-color: #e2d0a0; }
+    .name { font-weight: 600; font-size: 1.05rem; }
+    .oid { color: #6b655c; font-size: 0.8rem; margin-top: 2px; word-break: break-all; }
+    .status {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .PENDING_REVIEW { background: #efe4c8; color: #6a4d12; }
+    .APPROVED { background: #d7ead7; color: #1e5a2a; }
+    .DENIED { background: #f0d6d6; color: #8a1f1f; }
+    .demo-tag {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: #efe4c8;
+      color: #6a4d12;
+    }
+    .note { margin-top: 10px; font-size: 0.9rem; line-height: 1.45; }
+    .k { color: #6b655c; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .empty { color: #6b655c; font-size: 0.88rem; margin-top: 14px; }
+    .err { color: #8a1f1f; }
+    a { color: #3d4f2f; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>SOP Factory</h1>
+  <p class="sub" id="sub">Evidence → lesson candidate → human review gate</p>
+  <p class="meta" id="meta"></p>
+  <div id="banner" class="banner">Loading review queue…</div>
+
+  <h2>Human review queue</h2>
+  <div id="queue" class="grid"></div>
+  <p class="empty" id="queue-empty" hidden>No pending candidates.</p>
+
+  <h2>All lesson candidates</h2>
+  <div id="candidates" class="grid"></div>
+  <p class="empty" id="cand-empty" hidden>No candidates yet.</p>
+
+  <p class="empty" id="honesty"></p>
+</main>
+<script>
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function card(c) {
+  var demo = c.demo || c.demo_label;
+  var cls = demo ? " demo" : "";
+  var tag = demo
+    ? '<span class="demo-tag">DEMO / NOT LIVE STAFF ADOPTION</span>'
+    : "";
+  return (
+    '<article class="' + cls.trim() + '" data-candidate="' + esc(c.candidate_id) + '">' +
+    '<div class="name">' + esc(c.title || "Untitled") + tag + "</div>" +
+    '<div class="oid">' + esc(c.candidate_id) + " · " + esc(c.version_id) + "</div>" +
+    '<span class="status ' + esc(c.review_status) + '">' + esc(c.review_status) + "</span>" +
+    '<div class="note"><div class="k">Evidence</div>' + esc(c.evidence_note) + "</div>" +
+    '<div class="note"><div class="k">Lesson candidate</div>' + esc(c.lesson_note) + "</div>" +
+    '<p class="empty" style="margin-top:8px">' +
+    (c.approved_rule
+      ? "Approved rule on this version (still not staff_ready / not operating adoption)."
+      : "Not an approved rule until human APPROVE. Auto-approve is off.") +
+    "</p></article>"
+  );
+}
+
+function paint(queuePack, candPack) {
+  var h = (queuePack && queuePack.honesty) || (candPack && candPack.honesty) || {};
+  document.getElementById("sub").textContent =
+    (queuePack && queuePack.summary) ||
+    "Evidence → lesson candidate → human review gate";
+  document.getElementById("meta").textContent =
+    "CAP-CORE-11 · pack SOP-FACTORY-1 · pending " +
+    ((queuePack && queuePack.pending_count) || 0) +
+    " · candidates " +
+    ((candPack && candPack.count) || 0) +
+    " · staff_ready=" + String(h.staff_ready === true) +
+    " · human_commissioned=" + String(h.human_commissioned === true) +
+    " · operating_adoption=" + String(h.operating_adoption === true);
+
+  document.getElementById("banner").textContent =
+    "Human review gate required before any approved rule. " +
+    "DEMO rows are fixtures — NOT LIVE STAFF ADOPTION. " +
+    "CAP-CORE-11 stays SPECIFIED. Not PROVEN. Not READY. " +
+    "staff_ready=false · human_commissioned=false · operating_adoption=false.";
+
+  var q = (queuePack && queuePack.candidates) || [];
+  var qEl = document.getElementById("queue");
+  var qEmpty = document.getElementById("queue-empty");
+  if (!q.length) {
+    qEl.innerHTML = "";
+    qEmpty.hidden = false;
+  } else {
+    qEmpty.hidden = true;
+    qEl.innerHTML = q.map(card).join("");
+  }
+
+  var all = (candPack && candPack.candidates) || [];
+  var cEl = document.getElementById("candidates");
+  var cEmpty = document.getElementById("cand-empty");
+  if (!all.length) {
+    cEl.innerHTML = "";
+    cEmpty.hidden = false;
+  } else {
+    cEmpty.hidden = true;
+    cEl.innerHTML = all.map(card).join("");
+  }
+
+  document.getElementById("honesty").textContent =
+    "Honesty: append-only versions · no silent history rewrite · " +
+    "no auto-approve · acknowledgement ≠ training · use ≠ adoption.";
+}
+
+function load() {
+  Promise.all([
+    fetch("/api/sop/review-queue", { credentials: "same-origin" }).then(function (r) {
+      return r.json().then(function (j) { return { status: r.status, body: j }; });
+    }),
+    fetch("/api/sop/candidates", { credentials: "same-origin" }).then(function (r) {
+      return r.json().then(function (j) { return { status: r.status, body: j }; });
+    }),
+  ])
+    .then(function (pair) {
+      var q = pair[0];
+      var c = pair[1];
+      if (q.status === 403 || c.status === 403) {
+        document.getElementById("banner").innerHTML =
+          '<span class="err">Access denied / unsigned refused (403). ' +
+          "SOP Factory fails closed for anonymous callers.</span>";
+        document.getElementById("queue-empty").hidden = false;
+        document.getElementById("cand-empty").hidden = false;
+        document.getElementById("honesty").textContent =
+          "staff_ready=false · human_commissioned=false · operating_adoption=false";
+        return;
+      }
+      if (!q.body || q.body.ok === false) {
+        document.getElementById("banner").innerHTML =
+          '<span class="err">' + esc((q.body && q.body.message) || "Queue load failed") + "</span>";
+        return;
+      }
+      paint(q.body, c.body && c.body.ok !== false ? c.body : { candidates: [], count: 0 });
+    })
+    .catch(function (err) {
+      document.getElementById("banner").innerHTML =
+        '<span class="err">' + esc(err && err.message ? err.message : err) + "</span>";
+    });
+}
+load();
+</script>
+</body>
+</html>

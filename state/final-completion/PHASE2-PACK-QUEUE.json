@@ -122,7 +122,9 @@
       ],
       "estimated_effort": "L",
       "matt_blocker": false,
-      "status": "NEXT_TO_ARM"
+      "status": "EXITED",
+      "exited_at": "2026-09-30T00:18:30+08:00",
+      "result_file": "docs/wolf/ops/SOP-FACTORY-1-RESULT.md"
     },
     {
       "pack_id": "MYWORK-PROVE-1",
