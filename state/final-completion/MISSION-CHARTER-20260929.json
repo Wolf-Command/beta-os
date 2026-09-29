@@ -28,7 +28,7 @@
   "fake_ops_data": false,
   "auto_chain": true,
   "optimize_for": "actually_finish_wolf_not_speed_or_flattery",
-  "updated_at": "2026-09-30T00:26:28+08:00",
+  "updated_at": "2026-09-30T00:27:27+08:00",
   "phase0_box_prepared_at": "2026-09-29T23:28:13+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase0_mac_stamps_at": "2026-09-29T23:33:17+08:00",
@@ -50,7 +50,7 @@
   "last_exited_status": "EXITED",
   "last_verified_pack": "SOP-FACTORY-1",
   "last_verified_status": "PASS_VERIFIED",
-  "beta_os_head": "200ab1b",
+  "beta_os_head": "69848b8",
   "atrium_head": "7584266",
   "updated_at_exit": "2026-09-30T00:26:28+08:00",
   "completed_this_run": [

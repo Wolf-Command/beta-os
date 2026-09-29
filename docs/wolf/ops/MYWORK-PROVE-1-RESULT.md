@@ -48,6 +48,8 @@ Legacy **148** · commissioning origin **39** · no STALE probe / Chain view sho
 | `test_mywork1_20260929.py` | **PASS=111 FAIL=0** |
 | `test_mywork1b_20260929.py` | **PASS=53 FAIL=0** |
 
+Commit `69848b8`.
+
 ## Files
 
 - Core: `scripts/core/universal_my_work.py` (`list_evidence_files`)

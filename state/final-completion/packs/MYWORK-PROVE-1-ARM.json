@@ -26,7 +26,11 @@
   ],
   "prior_pack_verified": "SOP-FACTORY-1",
   "beta_os_head_at_arm": "200ab1b",
-  "beta_os_head_at_exit": "PENDING_COMMIT",
+  "beta_os_head_at_exit": "69848b8",
+  "beta_restarted": true,
+  "beta_pid_after": 99890,
+  "prod_pid_after": 15975,
+  "unsigned_evidence_files": 403,
   "decision_served": "2026-09-29 07:20 P0 UNIVERSAL MY WORK (prove harden)",
   "extends": "scripts/core/universal_my_work.py",
   "commissioning_holds_diagnosed": {
