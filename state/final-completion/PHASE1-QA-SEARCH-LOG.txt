@@ -1,0 +1,110 @@
+=== QA SEARCH START Tue Sep 29 23:42:44 WITA 2026 ===
+EXISTS /Users/wolfterminal/Downloads
+EXISTS /Users/wolfterminal/Desktop
+EXISTS /Users/wolfterminal/Documents
+EXISTS /Users/wolfterminal/.openclaw
+EXISTS /Users/wolfterminal/beta-os/docs
+EXISTS /Users/wolfterminal/beta-os/state
+EXISTS /Users/wolfterminal/WolfCommandSystem
+EXISTS /Users/wolfterminal/WolfRecoveryPoints
+EXISTS /Users/wolfterminal/Library/Mobile Documents
+EXISTS /Users/wolfterminal/Library/CloudStorage
+EXISTS /Volumes/05-Wolf-Vault-Mirror
+EXISTS /Volumes/00-Editing-Workspace
+EXISTS /Volumes/01-Media-Library
+MISSING /Volumes/Backups of Wolf's Mac Studio
+EXISTS /Users/wolfterminal/Library/Application Support/Claude
+EXISTS /Users/wolfterminal/agent-tools
+=== mdfind name patterns ===
+/System/Library/Perl/Extras/5.34/auto/share/dist/DateTime-Locale/sq-AL.pl
+/Users/wolfterminal/go/pkg/mod/golang.org/x/exp@v0.0.0-20250620022241-b7579e27df2b/trace/testdata/generators/go122-confuse-seq-across-generations.go
+/Users/wolfterminal/go/pkg/mod/golang.org/x/exp@v0.0.0-20250620022241-b7579e27df2b/trace/testdata/tests/go122-confuse-seq-across-generations.test
+/Users/wolfterminal/beta-os/docs/canon/build-dashboard/Interview_Ledger.csv
+/Users/wolfterminal/Desktop/THE ONE/THE_ONE_LOMBOK_GGV_Questionnaire_Completed.docx
+/Users/wolfterminal/WolfCommandSystem/WolfCommand/Craft-Learnings/Atrium/INTERVIEW.md
+/Users/wolfterminal/Library/Application Support/Claude/local-agent-mode-sessions/f91eb3db-4e15-4d26-9bfa-7c55e0c182ec/bdfb1996-635f-4c31-a8a8-c16c83c09b86/rpm/plugin_017zncz89kmhdPgdpZQZm5Dj/skills/job-post-builder/reference/interview-guide-structure.md
+=== mdfind content 1500 questions / design interview ===
+/Users/wolfterminal/Library/Application Support/Claude/local-agent-mode-sessions/f91eb3db-4e15-4d26-9bfa-7c55e0c182ec/bdfb1996-635f-4c31-a8a8-c16c83c09b86/local_eae3f401-08ee-4219-a679-2b82387507ea/outputs/habitat.docx
+/Users/wolfterminal/Library/Application Support/Claude/local-agent-mode-sessions/f91eb3db-4e15-4d26-9bfa-7c55e0c182ec/bdfb1996-635f-4c31-a8a8-c16c83c09b86/local_eae3f401-08ee-4219-a679-2b82387507ea/outputs/CLIENT-NOTES.md
+/Users/wolfterminal/Library/Application Support/Google/Chrome/ZxcvbnData/3/english_wikipedia.txt
+/Users/wolfterminal/Library/Application Support/Codex/ZxcvbnData/3/english_wikipedia.txt
+/Users/wolfterminal/Library/Application Support/Claude/local-agent-mode-sessions/f91eb3db-4e15-4d26-9bfa-7c55e0c182ec/bdfb1996-635f-4c31-a8a8-c16c83c09b86/local_eae3f401-08ee-4219-a679-2b82387507ea/outputs/_v3_archive/atrium.docx
+/Users/wolfterminal/Library/Application Support/Claude/local-agent-mode-sessions/f91eb3db-4e15-4d26-9bfa-7c55e0c182ec/bdfb1996-635f-4c31-a8a8-c16c83c09b86/local_eae3f401-08ee-4219-a679-2b82387507ea/outputs/_v3_archive/selo.docx
+/Users/wolfterminal/Library/Application Support/Claude/local-agent-mode-sessions/f91eb3db-4e15-4d26-9bfa-7c55e0c182ec/bdfb1996-635f-4c31-a8a8-c16c83c09b86/local_eae3f401-08ee-4219-a679-2b82387507ea/outputs/build_atrium.py
+/Users/wolfterminal/Library/Application Support/Claude/local-agent-mode-sessions/f91eb3db-4e15-4d26-9bfa-7c55e0c182ec/bdfb1996-635f-4c31-a8a8-c16c83c09b86/local_eae3f401-08ee-4219-a679-2b82387507ea/outputs/_v1_archive/uma_blu.html
+/Users/wolfterminal/Library/Application Support/Claude/local-agent-mode-sessions/f91eb3db-4e15-4d26-9bfa-7c55e0c182ec/bdfb1996-635f-4c31-a8a8-c16c83c09b86/local_eae3f401-08ee-4219-a679-2b82387507ea/outputs/_v1_archive/uma_blu.doc.html
+/Users/wolfterminal/Library/Application Support/Codex/ActorSafetyLists/9.8200.9609/listdata.json
+/Users/wolfterminal/WolfRecoveryPoints/2026-09-29_1220.partial/scripts/content-studio/footage_direction.py
+/Users/wolfterminal/WolfRecoveryPoints/2026-09-29_1220.partial/scripts/content-studio/reel_builder.py
+/Users/wolfterminal/agent-tools/34e862c4-a7f5-4874-add3-469f5df93f8d.txt
+/Users/wolfterminal/agent-tools/b0c367be-4469-44a3-809b-b6069f0d7ebf.txt
+/Users/wolfterminal/agent-tools/94478a01-81f8-4910-97c7-87c4e16efe0c.txt
+/Users/wolfterminal/agent-tools/e868c883-83b4-414b-97e3-ff540caa5781.txt
+/Users/wolfterminal/agent-tools/2f28b424-33de-48fc-be5c-cf0479f17e34.txt
+/Users/wolfterminal/agent-tools/d82e1f0b-0180-4088-bacb-910872908d1b.txt
+/Users/wolfterminal/agent-tools/c451caad-e23e-4e2c-9b1a-40a975c8ea25.txt
+/Users/wolfterminal/agent-tools/c5ed7ac2-2eee-41d1-a0f7-6daf5591dd77.txt
+/Users/wolfterminal/WolfRecoveryPoints/2026-09-29_1220.partial/scripts/edit-worker.py
+/Users/wolfterminal/agent-tools/a24d5029-4fbc-407c-bf8d-63991c48fb95.txt
+/Users/wolfterminal/agent-tools/06c38741-fb9e-43f8-a9f7-afdbb6fbb674.txt
+/Users/wolfterminal/WolfRecoveryPoints/2026-09-29_1220.partial/dashboards/data/content-plans/sources/habitat-2026-09-14-27.html
+/Users/wolfterminal/WolfRecoveryPoints/2026-09-29_1220.partial/archive/baks/pr82-20260906-170425/prove-out.txt
+/Users/wolfterminal/WolfRecoveryPoints/2026-09-29_1220.partial/archive/baks/pr82-20260906-170425/seed-tests.txt
+/Users/wolfterminal/agent-tools/2272ca70-f54f-42ac-a75d-270c2a226aaf.txt
+/Users/wolfterminal/agent-tools/538c3938-6b33-489c-a3e3-226deae36401.txt
+/Users/wolfterminal/agent-tools/68693162-b008-4e50-a486-e36cc9dbf2ab.txt
+/Users/wolfterminal/agent-tools/0facdce6-1992-4a15-8ead-e65b05aa79e6.txt
+/Users/wolfterminal/agent-tools/fd6dd95d-af3c-4cf8-8d0c-7a6545f7b2f1.txt
+/Users/wolfterminal/Downloads/Habitat_Content_Plan_Sep14-27.html
+/Users/wolfterminal/Downloads/Wolf_Command_Master_Specification_v1.docx
+/Users/wolfterminal/Downloads/Wolf_Command_Master_Specification_v1 (1).docx
+/Users/wolfterminal/beta-os/docs/canon/source/Wolf_Command_Master_Specification_v1.docx
+/Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md
+/Users/wolfterminal/beta-os/docs/canon/build-dashboard/README.csv
+/Users/wolfterminal/beta-os/docs/canon/build-dashboard/Interview_Ledger.csv
+/Users/wolfterminal/WolfCommandSystem/WolfCommand/01-Wolf-Command/System-Registry/NATE-HERK-GROK-HACKS-2026-08-19.md
+/Users/wolfterminal/agent-tools/38a6f807-3ad9-4d4f-8bfa-51c4a2a2ea97.txt
+/Users/wolfterminal/Downloads/GossGroupVentures_PebbleTec_Promo_Video_Brief.pdf
+/Users/wolfterminal/agent-tools/98e4e26d-9506-45d9-8fb4-1bc68262a3f7.txt
+/Users/wolfterminal/terminals/33260.txt
+/Users/wolfterminal/beta-os/docs/canon/MASTER-BUILD-DASHBOARD-README.md
+/Users/wolfterminal/agent-tools/757ff9ae-061a-42ba-b9b4-1db73fb101d8.txt
+/Users/wolfterminal/WolfCommandSystem/WolfCommand/01-Wolf-Command/Atlas-System/SOPs/Agent-Content.md
+/Users/wolfterminal/WolfRecoveryPoints/2026-09-29_1220.partial/briefs/learning/ln-4f773ea4b5d6.md
+/Users/wolfterminal/WolfRecoveryPoints/2026-09-29_1220.partial/briefs/learning/ln-a7a01742dc40.md
+/Users/wolfterminal/WolfRecoveryPoints/2026-09-29_1220.partial/briefs/learning/ln-0ae51c75f514.md
+/Users/wolfterminal/atrium-finance/node_modules/googleapis/build/src/apis/contactcenterinsights/v1.d.ts
+/Users/wolfterminal/agent-tools/77cc4465-5080-4b5a-b278-2b38e94a1124.txt
+/Users/wolfterminal/go/pkg/mod/modernc.org/sqlite@v1.42.2/testdata/tcl/fts1porter.test
+/Users/wolfterminal/agent-tools/aeacd739-a79f-472a-b9c3-67a645debe53.txt
+/Users/wolfterminal/agent-tools/aa57afb8-0235-4f01-a277-2786e704024d.txt
+/Users/wolfterminal/WolfRecoveryPoints/2026-09-29_1220.partial/archive/baks/pr80-test-out.txt
+/Users/wolfterminal/GO-LIVE-VERIFICATION.md
+/Users/wolfterminal/Library/Application Support/Google/Chrome/ActorSafetyLists/9.5220.3721/listdata.json
+/Users/wolfterminal/Library/Application Support/Google/Chrome/Profile 1/Extensions/mkpegjkblkkefacfnmkajcjmabijhclg/3.3.1_0/onboarding.js
+/Users/wolfterminal/Library/Application Support/Claude/local-agent-mode-sessions/f91eb3db-4e15-4d26-9bfa-7c55e0c182ec/bdfb1996-635f-4c31-a8a8-c16c83c09b86/local_eae3f401-08ee-4219-a679-2b82387507ea.json
+/Users/wolfterminal/Library/Application Support/Codex/ActorSafetyLists/9.5220.3721/listdata.json
+/Users/wolfterminal/Library/Application Support/Google/Chrome/ActorSafetyLists/9.8200.9609/listdata.json
+=== find filename under key trees (depth 6) ===
+/Users/wolfterminal/Desktop/THE ONE/THE_ONE_LOMBOK_GGV_Questionnaire_Completed.docx
+/Users/wolfterminal/.openclaw/workspace/wolf-system/state/u19-footage-vocab-verify/e_exclude_interview.plan.json
+/Users/wolfterminal/beta-os/docs/canon/build-dashboard/Interview_Ledger.csv
+/Users/wolfterminal/WolfCommandSystem/WolfCommand/Craft-Learnings/Atrium/INTERVIEW.md
+/Volumes/05-Wolf-Vault-Mirror/mac-studio/workspace/wolf-system/state/u19-footage-vocab-verify/e_exclude_interview.plan.json
+=== QA SEARCH PASS1 DONE Tue Sep 29 23:43:06 WITA 2026 ===
+=== PASS2 Telegram/iCloud/Gmail/Claude Sep16 ===
+/Users/wolfterminal/Library/Mobile Documents/com~apple~CloudDocs/Time Mastery (Part 2)_ Altcoin Discovery System.pdf
+/Users/wolfterminal/.claude/.last-update-result.json
+     375   33725
+agent-tools Sep10-20 Q hits [(141, 1859834, '/Users/wolfterminal/agent-tools/519c60c8-fa1d-4574-8871-eba90fb6d077.txt', '2026-09-14T19:30:50.033926')]
+=== PASS2 DONE ===
+
+=== FINAL VERDICT 2026-09-29T23:45:21+08:00 ===
+raw_1500_qa_status=NOT_FOUND_AFTER_EXHAUSTIVE_SEARCH
+Tried: Downloads, Desktop, Documents, ~/.openclaw, beta-os docs/state, WolfCommandSystem,
+  WolfRecoveryPoints, iCloud Mobile Documents, CloudStorage (empty), NAS 05-Wolf-Vault-Mirror,
+  NAS 00-Editing/01-Media, Claude local sessions, agent-tools (Sep10-20 Q-hit was false positive),
+  Grok sand-client-persistence blobs, Google Drive MCP (found GGV client intake 95q — NOT Wolf design interview),
+  ClickUp (0), Notion (Living Docs only), mdfind name+content, find depth-6 interview/questionnaire patterns.
+Authoritative condensed set: Interview_Ledger.csv (14 rounds) + Master Spec + Master Build Dashboard + Model C/GAP.
+Do NOT invent Q&A lines.

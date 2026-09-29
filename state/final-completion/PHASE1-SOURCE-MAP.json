@@ -1,0 +1,326 @@
+{
+  "at_wita": "2026-09-29T23:45:21+08:00",
+  "phase": 1,
+  "status": "COMPLETE",
+  "FINAL_WOLF_COMPLETION_MISSION": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "exit_report_allowed": false,
+  "raw_1500_qa_status": "NOT_FOUND_AFTER_EXHAUSTIVE_SEARCH",
+  "raw_1500_qa_best_proxy": "docs/canon/build-dashboard/Interview_Ledger.csv + docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md (prepared from full Wolf design interview 16 Sep 2026)",
+  "candidate_count": 25,
+  "candidates": [
+    {
+      "path": "/Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+      "exists": true,
+      "is_dir": false,
+      "file_count": 1,
+      "size_bytes": 35453,
+      "role": "MASTER_SPEC_MD",
+      "contains_qa": false,
+      "notes": "Canonical Master Spec v1 from design interview 16 Sep 2026",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/docs/canon/source/Wolf_Command_Master_Specification_v1.docx",
+      "exists": true,
+      "is_dir": false,
+      "file_count": 1,
+      "size_bytes": 53153,
+      "role": "MASTER_SPEC_DOCX_SOURCE",
+      "contains_qa": false,
+      "notes": "",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/docs/canon/MASTER-BUILD-DASHBOARD-README.md",
+      "exists": true,
+      "is_dir": false,
+      "file_count": 1,
+      "size_bytes": 4292,
+      "role": "MASTER_BUILD_DASHBOARD_README",
+      "contains_qa": false,
+      "notes": "",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/docs/canon/source/Wolf_Command_Master_Build_Dashboard_v1.xlsx",
+      "exists": true,
+      "is_dir": false,
+      "file_count": 1,
+      "size_bytes": 42546,
+      "role": "MASTER_BUILD_DASHBOARD_XLSX",
+      "contains_qa": false,
+      "notes": "",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/docs/canon/build-dashboard",
+      "exists": true,
+      "is_dir": true,
+      "file_count_shallow": 20,
+      "subdir_count_shallow": 0,
+      "size_bytes_shallow": 34413,
+      "note": "shallow only",
+      "role": "MASTER_BUILD_DASHBOARD_CSV_EXPORTS",
+      "contains_qa": false,
+      "notes": "19 CSV registry tabs",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/docs/canon/build-dashboard/Interview_Ledger.csv",
+      "exists": true,
+      "is_dir": false,
+      "file_count": 1,
+      "size_bytes": 6900,
+      "role": "INTERVIEW_LEDGER_14_ROUNDS",
+      "contains_qa": true,
+      "notes": "Condensed locked requirements from Wolf design interview 16 Sep 2026 (14 rounds). Proxy for raw 1500 Q&A pending location of full body.",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/docs/canon/build-dashboard/Master_Build.csv",
+      "exists": true,
+      "is_dir": false,
+      "file_count": 1,
+      "size_bytes": 4387,
+      "role": "MASTER_BUILD_BACKLOG",
+      "contains_qa": false,
+      "notes": "",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/docs/canon/build-dashboard/Capabilities.csv",
+      "exists": true,
+      "is_dir": false,
+      "file_count": 1,
+      "size_bytes": 1366,
+      "role": "CAPABILITIES_REGISTRY_TAB",
+      "contains_qa": false,
+      "notes": "",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/docs/MODEL-C-CAPABILITY-CATALOG.md",
+      "exists": true,
+      "is_dir": false,
+      "file_count": 1,
+      "size_bytes": 18466,
+      "role": "MODEL_C_CAPABILITY_CATALOG",
+      "contains_qa": false,
+      "notes": "",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/state/completion-register/GAP-REGISTER-20260927.json",
+      "exists": true,
+      "is_dir": false,
+      "file_count": 1,
+      "size_bytes": 179241,
+      "role": "GAP_REGISTER_77_CAPS",
+      "contains_qa": false,
+      "notes": "77 capabilities; as_of 2026-09-27; SYSTEM 19.65/77=25.52%",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/state/completion-register",
+      "exists": true,
+      "is_dir": true,
+      "file_count_shallow": 13,
+      "subdir_count_shallow": 0,
+      "size_bytes_shallow": 362988,
+      "note": "shallow only",
+      "role": "COMPLETION_REGISTER_DIR",
+      "contains_qa": false,
+      "notes": "",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/docs/canon/PROGRESS-DASHBOARD.md",
+      "exists": true,
+      "is_dir": false,
+      "file_count": 1,
+      "size_bytes": 6405,
+      "role": "PROGRESS_DASHBOARD_CANON",
+      "contains_qa": false,
+      "notes": "",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Users/wolfterminal/.openclaw/workspace/WOLF-COMMAND-MASTER.md",
+      "exists": true,
+      "is_dir": false,
+      "file_count": 1,
+      "size_bytes": 17026,
+      "role": "OPENCLAW_MASTER_STALE",
+      "contains_qa": false,
+      "notes": "Stale May 2026",
+      "priority": "LOW"
+    },
+    {
+      "path": "/Users/wolfterminal/.openclaw/workspace/wolf-system/docs",
+      "exists": true,
+      "is_dir": true,
+      "file_count_shallow": 37,
+      "subdir_count_shallow": 4,
+      "size_bytes_shallow": 256453,
+      "note": "shallow only",
+      "role": "WOLF_SYSTEM_DOCS",
+      "contains_qa": false,
+      "notes": "",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Users/wolfterminal/.openclaw/workspace/wolf-system/docs/WOLF-COMMAND-SYSTEM-BIBLE-2026-09-09.md",
+      "exists": true,
+      "is_dir": false,
+      "file_count": 1,
+      "size_bytes": 54137,
+      "role": "SYSTEM_BIBLE",
+      "contains_qa": false,
+      "notes": "",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Users/wolfterminal/WolfCommandSystem/WolfCommand/01-Wolf-Command/Living-Docs",
+      "exists": true,
+      "is_dir": true,
+      "file_count_shallow": 24,
+      "subdir_count_shallow": 0,
+      "size_bytes_shallow": 28865,
+      "note": "shallow only",
+      "role": "OBSIDIAN_LIVING_DOCS",
+      "contains_qa": false,
+      "notes": "",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Users/wolfterminal/Downloads/Wolf_Command_Master_Specification_v1.docx",
+      "exists": true,
+      "is_dir": false,
+      "file_count": 1,
+      "size_bytes": 53153,
+      "role": "DOWNLOADS_MASTER_SPEC_COPY",
+      "contains_qa": false,
+      "notes": "",
+      "priority": "HIGH"
+    },
+    {
+      "path": "/Volumes/05-Wolf-Vault-Mirror",
+      "exists": true,
+      "is_dir": true,
+      "file_count_shallow": 2,
+      "subdir_count_shallow": 3,
+      "size_bytes_shallow": 10524,
+      "note": "shallow only",
+      "role": "NAS_VAULT_MIRROR",
+      "contains_qa": false,
+      "notes": "Mounted; shallow \u2014 raw 1500 Q&A not yet found",
+      "priority": "MED"
+    },
+    {
+      "path": "/Users/wolfterminal/agent-tools",
+      "exists": true,
+      "is_dir": true,
+      "file_count_shallow": 1095,
+      "subdir_count_shallow": 1,
+      "size_bytes_shallow": 397287957,
+      "note": "shallow only",
+      "role": "AGENT_TOOLS_ARCHIVES",
+      "contains_qa": false,
+      "notes": "Large dumps; no confirmed 1500 Q&A body yet",
+      "priority": "MED"
+    },
+    {
+      "path": "/Users/wolfterminal/Library/Application Support/Claude/local-agent-mode-sessions",
+      "exists": true,
+      "is_dir": true,
+      "file_count_shallow": 0,
+      "subdir_count_shallow": 2,
+      "size_bytes_shallow": 0,
+      "note": "shallow only",
+      "role": "CLAUDE_LOCAL_SESSIONS",
+      "contains_qa": false,
+      "notes": "",
+      "priority": "MED"
+    },
+    {
+      "path": "/Users/wolfterminal/Library/Application Support/Grok Bot/sand-client-persistence",
+      "exists": true,
+      "is_dir": true,
+      "file_count_shallow": 35,
+      "subdir_count_shallow": 0,
+      "size_bytes_shallow": 1338936,
+      "note": "shallow only",
+      "role": "GROK_SAND_PERSISTENCE",
+      "contains_qa": false,
+      "notes": "Blob hits for Master Spec phrases; inspect ongoing",
+      "priority": "MED"
+    }
+  ],
+  "drive_remote_candidates": [
+    {
+      "id": "1wwsPAZZrVu1SrA9z7C0xElx-yPI7PRnLHsPRsz6XnC0",
+      "title": "GROK WOLF COMMAND \u2013 ULTIMATE MASTER PLAN",
+      "role": "DRIVE_GROK_ULTIMATE_MASTER_PLAN",
+      "contains_qa": false,
+      "fetched": true,
+      "note": "Fetched \u2014 NOT 1500 Q&A; older agent roster plan"
+    },
+    {
+      "id": "1CpdiLrLTpoiv_bvgrBK4aiYNQO3XYXIe2CGERRc5guE",
+      "title": "Wolf Command \u2014 Master System Reference 2026",
+      "role": "DRIVE_MASTER_SYSTEM_REFERENCE",
+      "contains_qa": "UNKNOWN_PENDING_FETCH"
+    },
+    {
+      "id": "1bbdC64LI5nmYpaArD19UaAd4CAEjByTZbe4XTWHK7kQ",
+      "title": "Wolf Command \u2014 Staff Rollout, Remaining Work & Completion Roadmap",
+      "role": "DRIVE_COMPLETION_ROADMAP",
+      "contains_qa": false
+    },
+    {
+      "id": "1-XAF7PDWnZtTtp-t6HWhLndnv6MZCtgF7zckTT1gf6Q",
+      "title": "Atlas 2.0",
+      "role": "DRIVE_ATLAS_2",
+      "contains_qa": "UNKNOWN_PENDING_FETCH"
+    }
+  ],
+  "searched_roots": {
+    "openclaw_wolf_system": true,
+    "beta_os_docs_state_canon": true,
+    "completion_register": true,
+    "NAS_05_Wolf_Vault_Mirror": "shallow",
+    "Dropbox_local": false,
+    "Google_Drive_local_cache": false,
+    "Google_Drive_MCP": true,
+    "ClickUp_search": "0_results",
+    "Notion_ai_search": "Living_Docs_HQ_not_1500_QA",
+    "Obsidian_WolfCommand": true,
+    "agent_tools_archives": "sampled_no_raw_1500_yet",
+    "Claude_local_sessions": "inventory_started",
+    "Grok_sand_persistence": "blob_hits_pending_decode"
+  },
+  "notes": [
+    "Prior Rebuild Exit Report SUPERSEDED \u2014 no Exit Report until Phase 13",
+    "Do not invent requirements; extract with citations",
+    "HR deferred next week",
+    "prod :8787 READ ONLY"
+  ],
+  "continuation_needed": [
+    "Locate raw 1500+ design-interview Q&A body (Interview Ledger is condensed proxy)",
+    "Fetch Drive Master System Reference + Completion Roadmap",
+    "Reclassify GAP seed vs post-sprint Beta evidence (finance-core packs)",
+    "Expand Zero-UNKNOWN class list across Master Build MB-001.. + Model C caps",
+    "Deeper NAS vault + Claude session scan for interview transcript"
+  ],
+  "requirement_count": 465,
+  "counts_by_class": {
+    "MISSING": 360,
+    "BUILT_NOT_PROVEN": 39,
+    "HR_DEFERRED": 33,
+    "PARTIAL": 20,
+    "BLOCKED_EXTERNAL": 10,
+    "SUPERSEDED": 3
+  }
+}

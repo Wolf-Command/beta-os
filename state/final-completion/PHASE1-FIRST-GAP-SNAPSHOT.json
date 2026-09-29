@@ -1,0 +1,36 @@
+{
+  "at_wita": "2026-09-29T23:41:26+08:00",
+  "status": "FIRST_SNAPSHOT_SEED_NOT_FINAL",
+  "from_gap_register_20260927": {
+    "system_score_then": "19.65/77=25.52%",
+    "system_state_counts": {
+      "SPECIFIED": 41,
+      "BUILT": 20,
+      "READY": 3,
+      "PROVEN": 12,
+      "ABSENT": 1
+    },
+    "staff_ready_then": 0,
+    "human_commissioned_then": 0
+  },
+  "phase1_class_seed_counts": {
+    "MISSING": 38,
+    "BUILT_NOT_PROVEN": 34,
+    "HR_DEFERRED": 5
+  },
+  "caveats": [
+    "GAP register 2 days old; finance-core sprint packs since then not yet reclassified",
+    "SPECIFIED\u2192MISSING; BUILT/PROVEN/READY\u2192BUILT_NOT_PROVEN pending prove+commission",
+    "HR_* \u2192 HR_DEFERRED",
+    "Raw 1500 Q&A file not yet located; Interview Ledger + Master Spec are working sources",
+    "staff_ready=false human_commissioned=false"
+  ],
+  "coherent_gap_themes_first_pass": [
+    "Human commissioning queue open (GGV/BZG/AMG/Content/NAS/Global Nav)",
+    "HR deferred next week",
+    "Many SPECIFIED caps never built",
+    "Finance core eng advanced 29 Sep but not staff-ready/human-commissioned",
+    "HEADCHEF-1 VERIFY_FAIL parked",
+    "Operating adoption NOT MEASURED"
+  ]
+}

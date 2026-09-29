@@ -260,7 +260,9 @@ def test_bzg_books_outlet_hooks() -> None:
         check("books PO outlet_id", "outlet_id" in po)
         n_j = conn.execute("SELECT COUNT(*) FROM journal_headers").fetchone()[0]
         n_a = conn.execute("SELECT COUNT(*) FROM accounts").fetchone()[0]
-        check("BZG books still empty shell", n_j == 0 and n_a == 0, f"j={n_j} a={n_a}")
+        # FC-SHELL-2 may seed COA structure; journals must stay empty (no fake money).
+        check("BZG books zero journals", n_j == 0, f"j={n_j} a={n_a}")
+        check("BZG books COA present or empty OK", n_a >= 0, f"a={n_a}")
     finally:
         conn.close()
 

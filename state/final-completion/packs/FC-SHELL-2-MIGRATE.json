@@ -1,0 +1,52 @@
+{
+  "migration": "fc_shell2_20260929",
+  "as_of_wita": "2026-09-29T23:51:50+0800",
+  "design": "amg_coa_shape_structure_only",
+  "books_isolation": "SHARED_CODE_NE_SHARED_DATA",
+  "coa_template_source": "ENT-AMG",
+  "seeded": [
+    {
+      "legal_entity_id": "ENT-BZG",
+      "source": "ENT-AMG",
+      "design": "amg_coa_shape_structure_only",
+      "accounts_before": 0,
+      "accounts_after": 200,
+      "rows_inserted": 200,
+      "template_account_count": 200,
+      "journals": 0,
+      "shell_kind": "coa_template_shell",
+      "staff_ready": false,
+      "human_commissioned": false,
+      "pack": "FC-SHELL-2"
+    },
+    {
+      "legal_entity_id": "ENT-GGV",
+      "source": "ENT-AMG",
+      "design": "amg_coa_shape_structure_only",
+      "accounts_before": 0,
+      "accounts_after": 200,
+      "rows_inserted": 200,
+      "template_account_count": 200,
+      "journals": 0,
+      "shell_kind": "coa_template_shell",
+      "staff_ready": false,
+      "human_commissioned": false,
+      "pack": "FC-SHELL-2"
+    }
+  ],
+  "amg_journals_before": 7,
+  "amg_journals_after": 7,
+  "amg_accounts_before": 200,
+  "amg_accounts_after": 200,
+  "isolation_probe": {
+    "token": "fcshell2-2026-09-29T23",
+    "in_bzg": true,
+    "in_amg": false,
+    "in_ggv": false,
+    "isolated": true
+  },
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_mutate": false,
+  "pack": "FC-SHELL-2"
+}

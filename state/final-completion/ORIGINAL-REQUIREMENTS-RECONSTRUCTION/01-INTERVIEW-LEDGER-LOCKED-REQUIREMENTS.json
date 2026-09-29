@@ -1,0 +1,107 @@
+{
+  "extracted_at": "2026-09-29T23:41:26+08:00",
+  "source": "docs/canon/build-dashboard/Interview_Ledger.csv",
+  "source_citation": "Wolf design interview - 16 Sep 2026 (14 rounds condensed)",
+  "note": "Approved condensed requirement ledger. Raw 1500+ Q&A body still being located.",
+  "round_count": 14,
+  "rounds": [
+    {
+      "Round": "1",
+      "Domain": "Round 1 - Ownership / destination",
+      "Locked decisions / requirements": "Businesses sold separately; Matt exits day-to-day; self-learning/simple system; shareholder reporting from facts; 70/20/20 margins; ~5x EBITDA; executable SOPs; bilingual staff; automated recruiting/HR/contracts/compliance/assets/incidents/projects/meetings/daily rhythm.",
+      "Build implication": "Treat as accepted constitutional requirement unless deliberately superseded.",
+      "Source": "Wolf design interview - 16 Sep 2026"
+    },
+    {
+      "Round": "2",
+      "Domain": "Round 2 - Finance / control",
+      "Locked decisions / requirements": "Official Wolf books per company; weekly bank statement ingestion; cash theft control; daily close; ESB/Yanolja revenue sources; client profitability; intercompany invoicing; budgets+rolling forecasts+13-week cash; fraud detection; universal approvals; capex ROI; payroll; month close by 5th; uncompromising evidence-based management reporting.",
+      "Build implication": "Treat as accepted constitutional requirement unless deliberately superseded.",
+      "Source": "Wolf design interview - 16 Sep 2026"
+    },
+    {
+      "Round": "3",
+      "Domain": "Round 3 - People",
+      "Locked decisions / requirements": "Canonical HR; headcount budget; demand-based scheduling; fingerprint attendance; seamless onboarding; living JDs; structured recruitment/probation/training; transparent performance; rewards; career paths; succession; employee voice; whistleblowing; frontline mobile/voice/photo/SOP execution.",
+      "Build implication": "Treat as accepted constitutional requirement unless deliberately superseded.",
+      "Source": "Wolf design interview - 16 Sep 2026"
+    },
+    {
+      "Round": "4",
+      "Domain": "Round 4 - AMG",
+      "Locked decisions / requirements": "Yanolja API-first; end-to-end automated guest journey; fast pre-check-in/out; packages; deep guest memory; Michelin Key ambition; staffing from PMS demand; trackable guest requests; housekeeping/room damage control; review themes -> training; hotel daily reporting automated.",
+      "Build implication": "Treat as accepted constitutional requirement unless deliberately superseded.",
+      "Source": "Wolf design interview - 16 Sep 2026"
+    },
+    {
+      "Round": "5",
+      "Domain": "Round 5 - BZG",
+      "Locked decisions / requirements": "Venue-as-mini-business structure; ESB outlet truth; menu engineering; stock risk controls; dynamic par; controlled receiving; kitchen/FOH SOPs; fob approvals; cash chain; loyalty; labour optimisation; 3 daily priorities; marketing closed loop; McDonald's consistency / Ritz hospitality; equal service-charge team pool philosophy.",
+      "Build implication": "Treat as accepted constitutional requirement unless deliberately superseded.",
+      "Source": "Wolf design interview - 16 Sep 2026"
+    },
+    {
+      "Round": "6",
+      "Domain": "Round 6 - GGV",
+      "Locked decisions / requirements": "Client/contract/profitability control; CRM pipeline; speed-to-lead; onboarding; competitor/brand intelligence; full content provenance; asset requirements; rights/security; Metricool; performance to business outcomes; website registry; client dashboards/reports; GGV shared marketing for AMG/BZG; GGV process IP and founder-dependency reduction.",
+      "Build implication": "Treat as accepted constitutional requirement unless deliberately superseded.",
+      "Source": "Wolf design interview - 16 Sep 2026"
+    },
+    {
+      "Round": "7",
+      "Domain": "Round 7 - Wolf autonomy",
+      "Locked decisions / requirements": "All-seeing cross-company intelligence; proactive risk/opportunity; Ask Wolf everywhere; evidence/uncertainty; action within authority; versioned memory; continuous learning; SOP Factory; self-building system proposals; AI-assisted code with human production gate; strategy ledger; one-more-action behaviour; accountability chains; system health; Matt Life+Command cockpit; destination = maximum governed autonomy.",
+      "Build implication": "Treat as accepted constitutional requirement unless deliberately superseded.",
+      "Source": "Wolf design interview - 16 Sep 2026"
+    },
+    {
+      "Round": "8",
+      "Domain": "Round 8 - Maintenance / security / compliance",
+      "Locked decisions / requirements": "Single cross-entity maintenance system with arm's-length economics; asset/barcode intelligence; tropical-condition PM; security/CCTV evidence; compliance/insurance/disaster registers; venue commissioning; preventability review; organisation risk register; promise register.",
+      "Build implication": "Treat as accepted constitutional requirement unless deliberately superseded.",
+      "Source": "Wolf design interview - 16 Sep 2026"
+    },
+    {
+      "Round": "9",
+      "Domain": "Round 9 - Customer / sales",
+      "Locked decisions / requirements": "Canonical customer identity graph; packages as products; memorable hospitality; consented photo commerce; omnichannel leads; hospital-triage speed; configurable pipelines; discount authority; CRM auto-capture; consent; CLV/referrals/partnerships/capacity; lightweight cross-platform guest portal; campfire-legend experience target.",
+      "Build implication": "Treat as accepted constitutional requirement unless deliberately superseded.",
+      "Source": "Wolf design interview - 16 Sep 2026"
+    },
+    {
+      "Round": "10",
+      "Domain": "Round 10 - Governance",
+      "Locked decisions / requirements": "Authority engine; delegated approval; decision cards; corporate governance; structured contract intelligence; court-battle evidence; separate ledgers; payroll/service charge controls; budgets/capex; shareholder scope; sale portability; Matt owns Wolf IP; businesses licence it; technology/provider secrets Matt-only; founder retains major direction/bottom-line decisions.",
+      "Build implication": "Treat as accepted constitutional requirement unless deliberately superseded.",
+      "Source": "Wolf design interview - 16 Sep 2026"
+    },
+    {
+      "Round": "11",
+      "Domain": "Round 11 - Strategy / executive",
+      "Locked decisions / requirements": "Vision -> 3y -> annual -> 12-week -> department -> individual -> daily 3 priorities; exact KPI definitions; leading indicators; owner-only margin guardrails; project/meeting architecture; founder interruption metrics; severity-based Pulse+Exceptions; private personal goals; sleep/recovery; independence drills; continuous sale-readiness; Mission-to-Mars gamification.",
+      "Build implication": "Treat as accepted constitutional requirement unless deliberately superseded.",
+      "Source": "Wolf design interview - 16 Sep 2026"
+    },
+    {
+      "Round": "12",
+      "Domain": "Round 12 - Information / technology",
+      "Locked decisions / requirements": "Work lives in Wolf despite external channels; native messaging/context; intelligent notifications; one search/Ask entry; authoritative sources; integration registry; capability truth; technology lifecycle/cost/exit; secrets/device/environment controls; backup/DR; Matt-only crown-jewel recovery; live data room; retention/legal hold; KISS UX.",
+      "Build implication": "Treat as accepted constitutional requirement unless deliberately superseded.",
+      "Source": "Wolf design interview - 16 Sep 2026"
+    },
+    {
+      "Round": "13",
+      "Domain": "Round 13 - Sale readiness",
+      "Locked decisions / requirements": "Independent sale of each company; continuity/exit mechanisms for shared services; optional Wolf licence after sale; evidence-based sale-readiness; normalised EBITDA; earnings quality; customer/supplier concentration; founder dependency burn-down; buyer mode/data room; buyer attack audit; transaction permissions; transition services and post-sale obligations.",
+      "Build implication": "Treat as accepted constitutional requirement unless deliberately superseded.",
+      "Source": "Wolf design interview - 16 Sep 2026"
+    },
+    {
+      "Round": "14",
+      "Domain": "Round 14 - Build philosophy",
+      "Locked decisions / requirements": "Vertical slices; core data model first; explicit sources of truth; controlled migration; lifecycle gates; real Beta; acceptance tests; red team; reversible releases; role onboarding; sunset parallel systems; mobile-first; bilingual; unified design; AI-assisted build with independent validation; observability/cost; buy-vs-build; architecture registry; technical debt; security Definition of Done; Master Build Dashboard; hard commissioning gate; deliberate NO/Not Yet register; Matt also accountable to system.",
+      "Build implication": "Treat as accepted constitutional requirement unless deliberately superseded.",
+      "Source": "Wolf design interview - 16 Sep 2026"
+    }
+  ]
+}

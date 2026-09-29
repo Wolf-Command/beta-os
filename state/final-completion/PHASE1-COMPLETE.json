@@ -1,0 +1,572 @@
+{
+  "at_wita": "2026-09-29T23:45:21+08:00",
+  "phase": 1,
+  "status": "COMPLETE",
+  "FINAL_WOLF_COMPLETION_MISSION": true,
+  "raw_1500_qa_status": "NOT_FOUND_AFTER_EXHAUSTIVE_SEARCH",
+  "requirements_path": "state/final-completion/ORIGINAL-REQUIREMENTS-RECONSTRUCTION/requirements.jsonl",
+  "requirement_count": 465,
+  "counts_by_class": {
+    "MISSING": 360,
+    "BUILT_NOT_PROVEN": 39,
+    "HR_DEFERRED": 33,
+    "PARTIAL": 20,
+    "BLOCKED_EXTERNAL": 10,
+    "SUPERSEDED": 3
+  },
+  "unknown_count": 0,
+  "hr_deferred": [
+    {
+      "id": "IL-R3-16f465f3",
+      "text": "Canonical HR",
+      "domain": "Round 3 - People"
+    },
+    {
+      "id": "IL-R3-fd154546",
+      "text": "headcount budget",
+      "domain": "Round 3 - People"
+    },
+    {
+      "id": "IL-R3-285d94e3",
+      "text": "demand-based scheduling",
+      "domain": "Round 3 - People"
+    },
+    {
+      "id": "IL-R3-902f1972",
+      "text": "fingerprint attendance",
+      "domain": "Round 3 - People"
+    },
+    {
+      "id": "IL-R3-36afeffe",
+      "text": "seamless onboarding",
+      "domain": "Round 3 - People"
+    },
+    {
+      "id": "IL-R3-e9476320",
+      "text": "living JDs",
+      "domain": "Round 3 - People"
+    },
+    {
+      "id": "IL-R3-99d7b28c",
+      "text": "structured recruitment/probation/training",
+      "domain": "Round 3 - People"
+    },
+    {
+      "id": "IL-R3-134c9e7d",
+      "text": "transparent performance",
+      "domain": "Round 3 - People"
+    },
+    {
+      "id": "IL-R3-efa5799d",
+      "text": "career paths",
+      "domain": "Round 3 - People"
+    },
+    {
+      "id": "IL-R3-a54f5d45",
+      "text": "succession",
+      "domain": "Round 3 - People"
+    },
+    {
+      "id": "IL-R3-8d91aefe",
+      "text": "employee voice",
+      "domain": "Round 3 - People"
+    },
+    {
+      "id": "IL-R3-fbd2ada9",
+      "text": "whistleblowing",
+      "domain": "Round 3 - People"
+    },
+    {
+      "id": "IL-R3-e1deceee",
+      "text": "frontline mobile/voice/photo/SOP execution.",
+      "domain": "Round 3 - People"
+    },
+    {
+      "id": "MB-011",
+      "text": "MB-011 Wolf HR: deliver capability per Master Build Dashboard",
+      "domain": "People"
+    },
+    {
+      "id": "CAP-HR-01",
+      "text": "CAP-HR-01 People Master Record: Canonical employee/position/assignment truth per legal entity.",
+      "domain": "D-HR \u2014 HR / People"
+    },
+    {
+      "id": "CAP-HR-02",
+      "text": "CAP-HR-02 Hiring & Onboarding: Manpower\u2192recruit\u2192onboard\u2192probation workflows.",
+      "domain": "D-HR \u2014 HR / People"
+    },
+    {
+      "id": "CAP-HR-03",
+      "text": "CAP-HR-03 Training & Competency: Training/acknowledgement after SOP changes; competency checks before LIVE.",
+      "domain": "D-HR \u2014 HR / People"
+    },
+    {
+      "id": "CAP-HR-04",
+      "text": "CAP-HR-04 Payroll Inputs: Clean attendance/leave/pay inputs to finance.",
+      "domain": "D-HR \u2014 HR / People"
+    },
+    {
+      "id": "CAP-HR-05",
+      "text": "CAP-HR-05 Retention & Succession Signals: People risk and succession visibility without accidental Matt dependency.",
+      "domain": "D-HR \u2014 HR / People"
+    },
+    {
+      "id": "MASTER-5f86426cb6",
+      "text": "Daily operating principle: fewer priorities, executed properly. Default to three needle-moving priorities per role/unit per day.",
+      "domain": "MasterSpec"
+    },
+    {
+      "id": "MASTER-bc93fe61c4",
+      "text": "Systems learn through governed progression: observation -> repeated pattern -> lesson candidate -> human review -> approved rule.",
+      "domain": "MasterSpec"
+    },
+    {
+      "id": "MASTER-4141ede8b1",
+      "text": "Every role is assessed through ELIMINATE -> AUTOMATE -> AUGMENT -> SIMPLIFY -> RETAIN.",
+      "domain": "MasterSpec"
+    },
+    {
+      "id": "MASTER-b20ffff83a",
+      "text": "Frontline is mobile-first: Today / briefing / three priorities / tasks / scan / Ask Wolf.",
+      "domain": "MasterSpec"
+    },
+    {
+      "id": "MASTER-9095c7dc04",
+      "text": "Ask Wolf exists throughout authorised dashboards and automatically uses role, context and permissions.",
+      "domain": "MasterSpec"
+    },
+    {
+      "id": "MASTER-d3d86fdc5c",
+      "text": "Wolf HR becomes canonical employee/position/assignment truth per legal entity.",
+      "domain": "MasterSpec"
+    },
+    {
+      "id": "MASTER-503683d3a8",
+      "text": "Credo: Excellence through the power of one more action.",
+      "domain": "MasterSpec"
+    },
+    {
+      "id": "MASTER-07bb51926f",
+      "text": "Three-way match by default: PO -> Goods Received -> Supplier Invoice. Material mismatches block/escalate payment.",
+      "domain": "MasterSpec"
+    },
+    {
+      "id": "MASTER-21ac7d1a44",
+      "text": "Above configurable thresholds, multiple quotes are required. Emergency purchase override is allowed with reason, evidence and retrospective review.",
+      "domain": "MasterSpec"
+    },
+    {
+      "id": "MASTER-cde80032a8",
+      "text": "Cash chain is tracked from opening float -> shift count -> safe -> deposit -> bank statement with timestamps and accountable people.",
+      "domain": "MasterSpec"
+    },
+    {
+      "id": "MASTER-df6b9d0804",
+      "text": "All business documents/records must be easily callable through Wolf according to sensitivity and approval.",
+      "domain": "MasterSpec"
+    },
+    {
+      "id": "MASTER-b15ae73db7",
+      "text": "Wolf can reconstruct a dispute chronology automatically from related records.",
+      "domain": "MasterSpec"
+    },
+    {
+      "id": "MASTER-f0caaa267c",
+      "text": "Strategy hierarchy: long-term vision -> 3-year -> annual -> 12-week company -> department -> individual commitments -> daily three priorities.",
+      "domain": "MasterSpec"
+    },
+    {
+      "id": "MASTER-7527011403",
+      "text": "Every KPI has versioned definition, formula, source, owner, frequency, target, thresholds, history, benchmark and evidence.",
+      "domain": "MasterSpec"
+    }
+  ],
+  "blocked_external": [
+    {
+      "id": "MB-008",
+      "text": "MB-008 Yanolja Operating Slice: deliver capability per Master Build Dashboard",
+      "notes": ""
+    },
+    {
+      "id": "CAP-AMG-01",
+      "text": "CAP-AMG-01 Hotel PMS Orchestration: Wolf orchestrates staffing, tasks, intelligence, reporting from PMS facts. Adoption: Yanolja owns reservation/PMS transactio",
+      "notes": "Requires Yanolja connector (CAP-INTG-01)"
+    },
+    {
+      "id": "CAP-INTG-01",
+      "text": "CAP-INTG-01 Yanolja Connector: Reservation/PMS facts into Wolf. Adoption: Yanolja owns transactional truth.",
+      "notes": "Yanolja API connector \u2014 external dependency"
+    },
+    {
+      "id": "CAP-INTG-07",
+      "text": "CAP-INTG-07 Secrets & Environment Separation: Secrets management; Dev/Beta/Prod separation; no secrets in SOPs/chats; sanitised test data preference.",
+      "notes": "Secrets vault product \u2014 owner must name; plaintext dir is not vault"
+    },
+    {
+      "id": "INT-YAN-WOLF",
+      "text": "INT-YAN-WOLF: Integrate Yanolja \u2192 Wolf for Hotel reservation/operations intelligence",
+      "notes": ""
+    },
+    {
+      "id": "MASTER-ebb4538861",
+      "text": "Hotel operations use Yanolja as the authoritative PMS/operational source where its APIs expose the required data.",
+      "notes": "Constitutional bullet from Master Spec"
+    },
+    {
+      "id": "MASTER-e34d9c67b6",
+      "text": "Yanolja owns reservation/PMS facts; Wolf uses APIs to orchestrate staffing, tasks, intelligence, reporting and cross-company workflows.",
+      "notes": "Constitutional bullet from Master Spec"
+    },
+    {
+      "id": "MASTER-a446a52134",
+      "text": "Wolf uses a canonical Customer ID / identity graph, with reversible confidence-based matching across Yanolja, ESB, CRM and channels. Human review is required wh",
+      "notes": "Constitutional bullet from Master Spec"
+    },
+    {
+      "id": "MASTER-18975d93a5",
+      "text": "Vertical Slice #3 candidate: AMG / Yanolja operations.",
+      "notes": "Constitutional bullet from Master Spec"
+    },
+    {
+      "id": "MASTER-160eec186d",
+      "text": "Historical Wolf documents may be useful as migration evidence, but current user-confirmed technology state overrides stale references. Xero, Airtable, n8n and C",
+      "notes": "Constitutional bullet from Master Spec"
+    }
+  ],
+  "missing_partial_prioritized_top40": [
+    {
+      "id": "IL-R1-0c2177c4",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "shareholder reporting from facts",
+      "domain": "Round 1 - Ownership / destination"
+    },
+    {
+      "id": "IL-R1-1c394ced",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "Matt exits day-to-day",
+      "domain": "Round 1 - Ownership / destination"
+    },
+    {
+      "id": "IL-R1-2f00dd1f",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "self-learning/simple system",
+      "domain": "Round 1 - Ownership / destination"
+    },
+    {
+      "id": "IL-R1-54ce3cbb",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "executable SOPs",
+      "domain": "Round 1 - Ownership / destination"
+    },
+    {
+      "id": "IL-R1-6a2c2508",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "~5x EBITDA",
+      "domain": "Round 1 - Ownership / destination"
+    },
+    {
+      "id": "IL-R1-72b3ee40",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "Businesses sold separately",
+      "domain": "Round 1 - Ownership / destination"
+    },
+    {
+      "id": "IL-R1-9d8b658c",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "bilingual staff",
+      "domain": "Round 1 - Ownership / destination"
+    },
+    {
+      "id": "IL-R1-ab2e3c8d",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "70/20/20 margins",
+      "domain": "Round 1 - Ownership / destination"
+    },
+    {
+      "id": "IL-R1-d1dddd09",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "automated recruiting/HR/contracts/compliance/assets/incidents/projects/meetings/daily rhythm.",
+      "domain": "Round 1 - Ownership / destination"
+    },
+    {
+      "id": "IL-R10-0852da32",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "sale portability",
+      "domain": "Round 10 - Governance"
+    },
+    {
+      "id": "IL-R10-263b0117",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "Authority engine",
+      "domain": "Round 10 - Governance"
+    },
+    {
+      "id": "IL-R10-32828cec",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "payroll/service charge controls",
+      "domain": "Round 10 - Governance"
+    },
+    {
+      "id": "IL-R10-37f0e0a1",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "court-battle evidence",
+      "domain": "Round 10 - Governance"
+    },
+    {
+      "id": "IL-R10-51a0bed7",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "businesses licence it",
+      "domain": "Round 10 - Governance"
+    },
+    {
+      "id": "IL-R10-866d47b9",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "separate ledgers",
+      "domain": "Round 10 - Governance"
+    },
+    {
+      "id": "IL-R10-8e4e46c5",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "founder retains major direction/bottom-line decisions.",
+      "domain": "Round 10 - Governance"
+    },
+    {
+      "id": "IL-R10-9e3b2b46",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "decision cards",
+      "domain": "Round 10 - Governance"
+    },
+    {
+      "id": "IL-R10-a24dbe45",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "Matt owns Wolf IP",
+      "domain": "Round 10 - Governance"
+    },
+    {
+      "id": "IL-R10-b0484b62",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "technology/provider secrets Matt-only",
+      "domain": "Round 10 - Governance"
+    },
+    {
+      "id": "IL-R10-bfe86e76",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "budgets/capex",
+      "domain": "Round 10 - Governance"
+    },
+    {
+      "id": "IL-R10-cf4b1b54",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "shareholder scope",
+      "domain": "Round 10 - Governance"
+    },
+    {
+      "id": "IL-R10-e95c10ce",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "delegated approval",
+      "domain": "Round 10 - Governance"
+    },
+    {
+      "id": "IL-R10-f42b6b63",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "corporate governance",
+      "domain": "Round 10 - Governance"
+    },
+    {
+      "id": "IL-R10-f71eb1a1",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "structured contract intelligence",
+      "domain": "Round 10 - Governance"
+    },
+    {
+      "id": "IL-R11-0af1bd08",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "project/meeting architecture",
+      "domain": "Round 11 - Strategy / executive"
+    },
+    {
+      "id": "IL-R11-1c27d9bd",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "independence drills",
+      "domain": "Round 11 - Strategy / executive"
+    },
+    {
+      "id": "IL-R11-1c40a4cb",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "sleep/recovery",
+      "domain": "Round 11 - Strategy / executive"
+    },
+    {
+      "id": "IL-R11-4ccf4212",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "leading indicators",
+      "domain": "Round 11 - Strategy / executive"
+    },
+    {
+      "id": "IL-R11-66c6eddc",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "private personal goals",
+      "domain": "Round 11 - Strategy / executive"
+    },
+    {
+      "id": "IL-R11-68887392",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "Mission-to-Mars gamification.",
+      "domain": "Round 11 - Strategy / executive"
+    },
+    {
+      "id": "IL-R11-81c87c4a",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "owner-only margin guardrails",
+      "domain": "Round 11 - Strategy / executive"
+    },
+    {
+      "id": "IL-R11-8a66a910",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "Vision -> 3y -> annual -> 12-week -> department -> individual -> daily 3 priorities",
+      "domain": "Round 11 - Strategy / executive"
+    },
+    {
+      "id": "IL-R11-9bab6252",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "severity-based Pulse+Exceptions",
+      "domain": "Round 11 - Strategy / executive"
+    },
+    {
+      "id": "IL-R11-a769d359",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "exact KPI definitions",
+      "domain": "Round 11 - Strategy / executive"
+    },
+    {
+      "id": "IL-R11-a9ba8244",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "continuous sale-readiness",
+      "domain": "Round 11 - Strategy / executive"
+    },
+    {
+      "id": "IL-R11-b5c2c7af",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "founder interruption metrics",
+      "domain": "Round 11 - Strategy / executive"
+    },
+    {
+      "id": "IL-R12-0ba1e36c",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "authoritative sources",
+      "domain": "Round 12 - Information / technology"
+    },
+    {
+      "id": "IL-R12-0c9e1b69",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "capability truth",
+      "domain": "Round 12 - Information / technology"
+    },
+    {
+      "id": "IL-R12-148eb5c9",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "Matt-only crown-jewel recovery",
+      "domain": "Round 12 - Information / technology"
+    },
+    {
+      "id": "IL-R12-1f9b54db",
+      "classification": "MISSING",
+      "priority": "P0",
+      "text": "backup/DR",
+      "domain": "Round 12 - Information / technology"
+    }
+  ],
+  "post_sprint_evidence": {
+    "sprint_verify": "PASS",
+    "packs": [
+      "CORE-ENT-1",
+      "BZG-OUTLET-1",
+      "CORE-BOOKS-1",
+      "BZG-XOUTLET-1",
+      "V1-SWEEP-1"
+    ],
+    "suites": {
+      "test_core_ent1_20260929.py": {
+        "pass": 49,
+        "fail": 0
+      },
+      "test_bzg_outlet1_20260929.py": {
+        "pass": 82,
+        "fail": 0
+      },
+      "test_core_books1_20260929.py": {
+        "pass": 64,
+        "fail": 0
+      },
+      "test_bzg_xoutlet1_20260929.py": {
+        "pass": 89,
+        "fail": 0
+      },
+      "test_v1_sweep1_20260929.py": {
+        "pass": 67,
+        "fail": 0
+      },
+      "test_atrium_sod1_20260929.py": {
+        "pass": 69,
+        "fail": 0
+      }
+    },
+    "staff_ready": false,
+    "human_commissioned": false,
+    "exit_report_superseded": true
+  },
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_mutate": false,
+  "exit_report_allowed": false,
+  "authoritative_sources_used": [
+    "docs/canon/build-dashboard/Interview_Ledger.csv",
+    "docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+    "docs/canon/source/Wolf_Command_Master_Build_Dashboard_v1.xlsx",
+    "docs/canon/build-dashboard/*.csv",
+    "docs/MODEL-C-CAPABILITY-CATALOG.md",
+    "state/completion-register/GAP-REGISTER-20260927.json",
+    "state/finance-core-sprint/* (post-sprint evidence)"
+  ],
+  "note": "Classifications rechecked against finance-core sprint Peaches PASS 2026-09-29. BUILT_PROVEN unused while staff/human false."
+}

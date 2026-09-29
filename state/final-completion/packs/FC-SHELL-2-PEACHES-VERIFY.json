@@ -1,0 +1,112 @@
+{
+  "pack": "FC-SHELL-2",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-29T23:54:44+08:00",
+  "verifier": "Peaches-executor",
+  "exit_code": 0,
+  "result_file": "docs/wolf/ops/FC-SHELL-2-RESULT.md",
+  "design": "amg_coa_shape_structure_only",
+  "entities": {
+    "ENT-AMG": {
+      "accounts": 200,
+      "journals": 7,
+      "shell_kind": "live"
+    },
+    "ENT-BZG": {
+      "accounts": 200,
+      "journals": 0,
+      "shell_kind": "coa_template_shell"
+    },
+    "ENT-GGV": {
+      "accounts": 200,
+      "journals": 0,
+      "shell_kind": "coa_template_shell"
+    }
+  },
+  "tests_rerun": {
+    "test_fc_shell2_20260929.py": {
+      "pass": 72,
+      "fail": 0
+    },
+    "test_core_books1_20260929.py": {
+      "pass": 64,
+      "fail": 0
+    },
+    "test_core_ent1_20260929.py": {
+      "pass": 49,
+      "fail": 0
+    },
+    "test_atrium_sod1_20260929.py": {
+      "pass": 69,
+      "fail": 0
+    },
+    "test_bzg_xoutlet1_20260929.py": {
+      "pass": 90,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 6,
+    "distinct_sha256": 6,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/fcshell2-amg-books-live-desktop.png",
+        "bytes": 71398,
+        "sha256": "5f137a565dc90a78375170777ebcb6e56812f60d4582f3c516c9b3c7a4c77b2c"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fcshell2-amg-books-live-phone.png",
+        "bytes": 39554,
+        "sha256": "94cb86d452d642e40b31eec0b65b282d039a2aa876ddb941bccfe235a0ccbe02"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fcshell2-bzg-coa-shell-desktop.png",
+        "bytes": 94659,
+        "sha256": "512bff2f79798403ec40731a773fa930b619b0a44d7b87f9d599772b435105e1"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fcshell2-bzg-coa-shell-phone.png",
+        "bytes": 76186,
+        "sha256": "caeb34f5a77d1f0036c940e0fe01da232eb5dedebf9e7663b79d6268b0ae363f"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fcshell2-ggv-coa-shell-desktop.png",
+        "bytes": 91328,
+        "sha256": "8e4715e35cfe2774f3afc7713beaf9c7d6f9a9a8b09619489ccaa9c7e22e65af"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fcshell2-ggv-coa-shell-phone.png",
+        "bytes": 75491,
+        "sha256": "9b37f544df11d9616cc4076c6d1b41831b9cc69a74d31126ed314e27e4db3595"
+      }
+    ],
+    "eye_check": {
+      "bzg_desktop": "PASS \u2014 COA 200, journals 0, coa_template_shell, staff_ready=false, human_commissioned=false, Not READY, structure-only copy",
+      "ggv_desktop": "PASS \u2014 atrium-ggv.sqlite coa_template_shell, COA 200 journals 0, flags false, Not READY",
+      "amg_desktop": "OBSERVED \u2014 Atrium Finance board live context; sidebar period copy may lag account count (UI board vs books slot). Isolation/SoD proven by tests. Not a FC-SHELL-2 regression on BZG/GGV goals."
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true,
+    "command_contains": "serve.py 8787"
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "no_push": true,
+  "no_fake_ops_data": true,
+  "beta_only": true,
+  "did_not_auto_start": [
+    "HEADCHEF",
+    "Exit Report",
+    "next queue packs by Cursor"
+  ],
+  "next_pack": "BZG-VENUEPL-1"
+}

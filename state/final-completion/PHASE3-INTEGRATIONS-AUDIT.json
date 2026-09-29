@@ -1,0 +1,551 @@
+{
+  "at_wita": "2026-09-29T23:51:16+08:00",
+  "phase": 3,
+  "status": "IN_PROGRESS_READ_ONLY",
+  "note": "Read-only audit; never expand write authority; never expose secrets. Does not block Phase 2.",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_mutate": false,
+  "source_files": [
+    "docs/canon/build-dashboard/Integrations.csv",
+    "docs/MODEL-C-CAPABILITY-CATALOG.md",
+    "state/final-completion/ORIGINAL-REQUIREMENTS-RECONSTRUCTION/requirements.jsonl"
+  ],
+  "counts": {
+    "total": 23,
+    "by_audit_status": {
+      "BLOCKED_EXTERNAL": 4,
+      "PARTIAL_IN_BETA": 1,
+      "MISSING_OR_UNPROVEN": 3,
+      "BUILT_NOT_PROVEN": 5,
+      "PARTIAL": 2,
+      "MISSING": 1,
+      "AGENT_HOST_ONLY": 7
+    }
+  },
+  "connectors": [
+    {
+      "integration_id": "INT-YAN-WOLF",
+      "source": "Yanolja",
+      "target": "Wolf",
+      "purpose": "Hotel reservation/operations intelligence",
+      "method": "API/webhook to verify",
+      "dashboard_status": "SPECIFIED",
+      "audit_status": "BLOCKED_EXTERNAL",
+      "probe_status": "DOCUMENTED_BLOCKER",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": true,
+      "related_requirement_ids": [
+        "CAP-INTG-01",
+        "INT-YAN-WOLF"
+      ],
+      "evidence_notes": [
+        "Yanolja credentials/API not seated; owner external"
+      ],
+      "last_success": null,
+      "owner": "AMG",
+      "criticality": "CRITICAL",
+      "fallback": "Manual/contingency PMS export"
+    },
+    {
+      "integration_id": "INT-ESB-WOLF",
+      "source": "ESB",
+      "target": "Wolf",
+      "purpose": "F&B sales/inventory/operational intelligence",
+      "method": "API to verify",
+      "dashboard_status": "SPECIFIED",
+      "audit_status": "PARTIAL_IN_BETA",
+      "probe_status": "SPRINT_EVIDENCE",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [
+        "CAP-INTG-02",
+        "INT-ESB-WOLF"
+      ],
+      "evidence_notes": [
+        "ESB/outlet projection from BZG-OUTLET/XOUTLET packs \u2014 read surfaces only"
+      ],
+      "last_success": null,
+      "owner": "BZG",
+      "criticality": "CRITICAL",
+      "fallback": "ESB reports/export"
+    },
+    {
+      "integration_id": "INT-GWS-WOLF",
+      "source": "Google Workspace",
+      "target": "Wolf",
+      "purpose": "Email/calendar/documents/auth",
+      "method": "API",
+      "dashboard_status": "SPECIFIED",
+      "audit_status": "MISSING_OR_UNPROVEN",
+      "probe_status": "CSV_ONLY",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [
+        "CAP-INTG-03",
+        "INT-GWS-WOLF"
+      ],
+      "evidence_notes": [
+        "Dashboard status='SPECIFIED'"
+      ],
+      "last_success": null,
+      "owner": "ALL",
+      "criticality": "HIGH",
+      "fallback": "Native Workspace access"
+    },
+    {
+      "integration_id": "INT-BANK-WOLF",
+      "source": "Mandiri/BNI/BRI statements",
+      "target": "Wolf Finance",
+      "purpose": "Cash/reconciliation",
+      "method": "File import",
+      "dashboard_status": "SPECIFIED",
+      "audit_status": "MISSING_OR_UNPROVEN",
+      "probe_status": "CSV_ONLY",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [
+        "INT-BANK-WOLF"
+      ],
+      "evidence_notes": [
+        "Dashboard status='SPECIFIED'"
+      ],
+      "last_success": null,
+      "owner": "Finance",
+      "criticality": "CRITICAL",
+      "fallback": "Manual controlled upload"
+    },
+    {
+      "integration_id": "INT-MET-WOLF",
+      "source": "Metricool",
+      "target": "Wolf Intelligence",
+      "purpose": "Social performance data",
+      "method": "API",
+      "dashboard_status": "SPECIFIED",
+      "audit_status": "MISSING_OR_UNPROVEN",
+      "probe_status": "CSV_ONLY",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [
+        "CAP-INTG-05",
+        "INT-MET-WOLF"
+      ],
+      "evidence_notes": [
+        "Dashboard status='SPECIFIED'"
+      ],
+      "last_success": null,
+      "owner": "GGV",
+      "criticality": "MEDIUM",
+      "fallback": "Manual report export"
+    },
+    {
+      "integration_id": "CAP-INTG-05",
+      "source": "Model-C",
+      "target": "Wolf",
+      "purpose": "CAP-INTG-05 (INTEGRATE); does not own Metricool. |",
+      "method": null,
+      "dashboard_status": null,
+      "audit_status": "BUILT_NOT_PROVEN",
+      "probe_status": "FROM_REQUIREMENTS",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [
+        "CAP-INTG-05"
+      ],
+      "evidence_notes": [
+        "Seeded from Model C catalog; not yet live-probed"
+      ],
+      "last_success": null,
+      "owner": null,
+      "criticality": null,
+      "fallback": null
+    },
+    {
+      "integration_id": "CAP-INTG-01",
+      "source": "Model-C",
+      "target": "Wolf",
+      "purpose": "CAP-INTG-01 INTEGRATE). Additional hotels = property adoption, not catalog clone. |",
+      "method": null,
+      "dashboard_status": null,
+      "audit_status": "BLOCKED_EXTERNAL",
+      "probe_status": "FROM_REQUIREMENTS",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": true,
+      "related_requirement_ids": [
+        "CAP-INTG-01"
+      ],
+      "evidence_notes": [
+        "Seeded from Model C catalog; not yet live-probed"
+      ],
+      "last_success": null,
+      "owner": null,
+      "criticality": null,
+      "fallback": null
+    },
+    {
+      "integration_id": "CAP-INTG-02",
+      "source": "Model-C",
+      "target": "Wolf",
+      "purpose": "CAP-INTG-02 INTEGRATE). |",
+      "method": null,
+      "dashboard_status": null,
+      "audit_status": "PARTIAL",
+      "probe_status": "FROM_REQUIREMENTS",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [
+        "CAP-INTG-02"
+      ],
+      "evidence_notes": [
+        "Seeded from Model C catalog; not yet live-probed"
+      ],
+      "last_success": null,
+      "owner": null,
+      "criticality": null,
+      "fallback": null
+    },
+    {
+      "integration_id": "CAP-INTG-04",
+      "source": "Model-C",
+      "target": "Wolf",
+      "purpose": "CAP-INTG-04). |",
+      "method": null,
+      "dashboard_status": null,
+      "audit_status": "BUILT_NOT_PROVEN",
+      "probe_status": "FROM_REQUIREMENTS",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [
+        "CAP-INTG-04"
+      ],
+      "evidence_notes": [
+        "Seeded from Model C catalog; not yet live-probed"
+      ],
+      "last_success": null,
+      "owner": null,
+      "criticality": null,
+      "fallback": null
+    },
+    {
+      "integration_id": "CAP-INTG-01",
+      "source": "Model-C",
+      "target": "Wolf",
+      "purpose": "CAP-INTG-01 | Yanolja Connector | INTEGRATE | SHARED | Reservation/PMS facts into Wolf. Adoption: Yanolja owns transactional truth. |",
+      "method": null,
+      "dashboard_status": null,
+      "audit_status": "BLOCKED_EXTERNAL",
+      "probe_status": "FROM_REQUIREMENTS",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": true,
+      "related_requirement_ids": [
+        "CAP-INTG-01"
+      ],
+      "evidence_notes": [
+        "Seeded from Model C catalog; not yet live-probed"
+      ],
+      "last_success": null,
+      "owner": null,
+      "criticality": null,
+      "fallback": null
+    },
+    {
+      "integration_id": "CAP-INTG-02",
+      "source": "Model-C",
+      "target": "Wolf",
+      "purpose": "CAP-INTG-02 | ESB Connector | INTEGRATE | SHARED | F&B sales/inventory/ops facts into Wolf. Adoption: ESB owns transactional truth. |",
+      "method": null,
+      "dashboard_status": null,
+      "audit_status": "PARTIAL",
+      "probe_status": "FROM_REQUIREMENTS",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [
+        "CAP-INTG-02"
+      ],
+      "evidence_notes": [
+        "Seeded from Model C catalog; not yet live-probed"
+      ],
+      "last_success": null,
+      "owner": null,
+      "criticality": null,
+      "fallback": null
+    },
+    {
+      "integration_id": "CAP-INTG-03",
+      "source": "Model-C",
+      "target": "Wolf",
+      "purpose": "CAP-INTG-03 | Google Workspace Connector | INTEGRATE | SHARED | Mail/calendar/documents/auth as authorised. |",
+      "method": null,
+      "dashboard_status": null,
+      "audit_status": "BUILT_NOT_PROVEN",
+      "probe_status": "FROM_REQUIREMENTS",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [
+        "CAP-INTG-03"
+      ],
+      "evidence_notes": [
+        "Seeded from Model C catalog; not yet live-probed"
+      ],
+      "last_success": null,
+      "owner": null,
+      "criticality": null,
+      "fallback": null
+    },
+    {
+      "integration_id": "CAP-INTG-04",
+      "source": "Model-C",
+      "target": "Wolf",
+      "purpose": "CAP-INTG-04 | Bank Statement Connector | INTEGRATE | SHARED | Statement file import path for finance reconcile. |",
+      "method": null,
+      "dashboard_status": null,
+      "audit_status": "BUILT_NOT_PROVEN",
+      "probe_status": "FROM_REQUIREMENTS",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [
+        "CAP-INTG-04"
+      ],
+      "evidence_notes": [
+        "Seeded from Model C catalog; not yet live-probed"
+      ],
+      "last_success": null,
+      "owner": null,
+      "criticality": null,
+      "fallback": null
+    },
+    {
+      "integration_id": "CAP-INTG-05",
+      "source": "Model-C",
+      "target": "Wolf",
+      "purpose": "CAP-INTG-05 | Metricool Connector | INTEGRATE | SHARED | Social performance data into Wolf. Adoption: Metricool owns platform analytics. |",
+      "method": null,
+      "dashboard_status": null,
+      "audit_status": "BUILT_NOT_PROVEN",
+      "probe_status": "FROM_REQUIREMENTS",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [
+        "CAP-INTG-05"
+      ],
+      "evidence_notes": [
+        "Seeded from Model C catalog; not yet live-probed"
+      ],
+      "last_success": null,
+      "owner": null,
+      "criticality": null,
+      "fallback": null
+    },
+    {
+      "integration_id": "CAP-INTG-06",
+      "source": "Model-C",
+      "target": "Wolf",
+      "purpose": "CAP-INTG-06 | Technology & Capability Registries | OWN | SHARED | Tech inventory, ownership of truth, lifecycle, exit conditions. |",
+      "method": null,
+      "dashboard_status": null,
+      "audit_status": "MISSING",
+      "probe_status": "FROM_REQUIREMENTS",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [
+        "CAP-INTG-06"
+      ],
+      "evidence_notes": [
+        "Seeded from Model C catalog; not yet live-probed"
+      ],
+      "last_success": null,
+      "owner": null,
+      "criticality": null,
+      "fallback": null
+    },
+    {
+      "integration_id": "CAP-INTG-07",
+      "source": "Model-C",
+      "target": "Wolf",
+      "purpose": "CAP-INTG-07 | Secrets & Environment Separation | OWN | SHARED | Secrets management; Dev/Beta/Prod separation; no secrets in SOPs/chats; sanitised test data preference. |",
+      "method": null,
+      "dashboard_status": null,
+      "audit_status": "BLOCKED_EXTERNAL",
+      "probe_status": "FROM_REQUIREMENTS",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": true,
+      "related_requirement_ids": [
+        "CAP-INTG-07"
+      ],
+      "evidence_notes": [
+        "Seeded from Model C catalog; not yet live-probed"
+      ],
+      "last_success": null,
+      "owner": null,
+      "criticality": null,
+      "fallback": null
+    },
+    {
+      "integration_id": "MCP-Gmail",
+      "source": "MCP-Gmail",
+      "target": "AgentHost",
+      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
+      "method": "MCP",
+      "dashboard_status": "agent_host",
+      "audit_status": "AGENT_HOST_ONLY",
+      "probe_status": "CATALOGED",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [],
+      "evidence_notes": [
+        "Agent-host MCP only",
+        "not product runtime"
+      ],
+      "last_success": null,
+      "owner": "platform",
+      "criticality": "low",
+      "fallback": null
+    },
+    {
+      "integration_id": "MCP-Slack",
+      "source": "MCP-Slack",
+      "target": "AgentHost",
+      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
+      "method": "MCP",
+      "dashboard_status": "agent_host",
+      "audit_status": "AGENT_HOST_ONLY",
+      "probe_status": "CATALOGED",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [],
+      "evidence_notes": [
+        "Agent-host MCP only"
+      ],
+      "last_success": null,
+      "owner": "platform",
+      "criticality": "low",
+      "fallback": null
+    },
+    {
+      "integration_id": "MCP-Notion",
+      "source": "MCP-Notion",
+      "target": "AgentHost",
+      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
+      "method": "MCP",
+      "dashboard_status": "agent_host",
+      "audit_status": "AGENT_HOST_ONLY",
+      "probe_status": "CATALOGED",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [],
+      "evidence_notes": [
+        "Agent-host MCP only"
+      ],
+      "last_success": null,
+      "owner": "platform",
+      "criticality": "low",
+      "fallback": null
+    },
+    {
+      "integration_id": "MCP-Google-Drive",
+      "source": "MCP-Google-Drive",
+      "target": "AgentHost",
+      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
+      "method": "MCP",
+      "dashboard_status": "agent_host",
+      "audit_status": "AGENT_HOST_ONLY",
+      "probe_status": "CATALOGED",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [],
+      "evidence_notes": [
+        "Agent-host MCP only"
+      ],
+      "last_success": null,
+      "owner": "platform",
+      "criticality": "low",
+      "fallback": null
+    },
+    {
+      "integration_id": "MCP-Google-Calendar",
+      "source": "MCP-Google-Calendar",
+      "target": "AgentHost",
+      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
+      "method": "MCP",
+      "dashboard_status": "agent_host",
+      "audit_status": "AGENT_HOST_ONLY",
+      "probe_status": "CATALOGED",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [],
+      "evidence_notes": [
+        "Agent-host MCP only"
+      ],
+      "last_success": null,
+      "owner": "platform",
+      "criticality": "low",
+      "fallback": null
+    },
+    {
+      "integration_id": "MCP-Metricool",
+      "source": "MCP-Metricool",
+      "target": "AgentHost",
+      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
+      "method": "MCP",
+      "dashboard_status": "agent_host",
+      "audit_status": "AGENT_HOST_ONLY",
+      "probe_status": "CATALOGED",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [],
+      "evidence_notes": [
+        "Agent-host MCP only",
+        "content scheduling"
+      ],
+      "last_success": null,
+      "owner": "platform",
+      "criticality": "low",
+      "fallback": null
+    },
+    {
+      "integration_id": "MCP-ClickUp",
+      "source": "MCP-ClickUp",
+      "target": "AgentHost",
+      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
+      "method": "MCP",
+      "dashboard_status": "agent_host",
+      "audit_status": "AGENT_HOST_ONLY",
+      "probe_status": "CATALOGED",
+      "write_authority": "NONE_EXPANDED",
+      "secrets_exposed": false,
+      "blocked_external": false,
+      "related_requirement_ids": [],
+      "evidence_notes": [
+        "Agent-host MCP only"
+      ],
+      "last_success": null,
+      "owner": "platform",
+      "criticality": "low",
+      "fallback": null
+    }
+  ],
+  "cap_intg_lines_seen": 11,
+  "intg_related_req_hits": 12
+}

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""CORE-BOOKS-1 — shared Finance Core opens per-entity SQLite books files.
+"""CORE-BOOKS-1 / FC-SHELL-2 — shared Finance Core opens per-entity SQLite books.
 
 ONE FINANCE PRODUCT · THREE ENTITY CONFIGS · SHARED CODE ≠ SHARED DATA.
 
-Decision served: Matt-ordered Owner sprint CORE-BOOKS-1 (2026-09-29).
+Decision served: Matt-ordered Owner sprint CORE-BOOKS-1 (2026-09-29);
+extended by FINAL_WOLF_COMPLETION_MISSION Phase 2 pack FC-SHELL-2.
 Prefer separate files under atrium-finance/data/beta/:
   ENT-AMG → atrium.sqlite (live, preserved)
-  ENT-BZG → atrium-bzg.sqlite (empty shell)
-  ENT-GGV → atrium-ggv.sqlite (empty shell)
+  ENT-BZG → atrium-bzg.sqlite (COA structure template; zero journals)
+  ENT-GGV → atrium-ggv.sqlite (COA structure template; zero journals)
 
 No fake journals, sales, P&L, invoices, customers, or go-live numbers.
 Never flips staff_ready / human_commissioned.
@@ -31,9 +32,15 @@ ENTITY_FILES: dict[str, str] = {
 
 ENTITY_LABELS: dict[str, str] = {
     "ENT-AMG": "Atrium (AMG) — live books",
-    "ENT-BZG": "Blu Zone Group — books shell (empty)",
-    "ENT-GGV": "GGV — books shell (empty)",
+    "ENT-BZG": "Blu Zone Group — COA template shell (zero journals)",
+    "ENT-GGV": "GGV — COA template shell (zero journals)",
 }
+
+# Structure-only Wolf COA template source: AMG account rows (codes/names/types).
+# Never copies journals, balances, or money facts into BZG/GGV.
+COA_TEMPLATE_SOURCE = "ENT-AMG"
+COA_TEMPLATE_SHELL = "coa_template_shell"
+PACK_FC_SHELL2 = "FC-SHELL-2"
 
 SOD_COLS = (
     ("preparer_person_id", "TEXT NOT NULL DEFAULT ''"),
@@ -167,6 +174,29 @@ def _ensure_sod(conn: sqlite3.Connection) -> None:
             conn.execute(f"ALTER TABLE journal_headers ADD COLUMN {name} {decl}")
 
 
+def _shell_kind_for(entity_id: str, accounts: int, journals: int) -> str:
+    if entity_id == "ENT-AMG":
+        return "live"
+    if accounts > 0 and journals == 0:
+        return COA_TEMPLATE_SHELL
+    if journals == 0:
+        return "empty_shell"
+    return "books_shell"
+
+
+def _meta_note(entity_id: str, shell: str) -> str:
+    if entity_id == "ENT-AMG":
+        return "AMG / Atrium live Beta books file. Existing journals preserved."
+    if shell == COA_TEMPLATE_SHELL:
+        return (
+            "Honest COA structure template (codes/names/types from AMG shape). "
+            "Zero journals, sales, P&L, invoices, or go-live numbers."
+        )
+    return (
+        "Honest empty books shell. No journals, sales, P&L, invoices, or go-live numbers."
+    )
+
+
 def _ensure_meta(conn: sqlite3.Connection, entity_id: str) -> None:
     conn.execute(
         """
@@ -183,12 +213,15 @@ def _ensure_meta(conn: sqlite3.Connection, entity_id: str) -> None:
         )
         """
     )
-    shell = "live" if entity_id == "ENT-AMG" else "empty_shell"
-    note = (
-        "AMG / Atrium live Beta books file. Existing journals preserved."
-        if entity_id == "ENT-AMG"
-        else "Honest empty books shell. No journals, sales, P&L, invoices, or go-live numbers."
-    )
+    accounts = 0
+    journals = 0
+    if _table_exists(conn, "accounts"):
+        accounts = int(conn.execute("SELECT COUNT(*) FROM accounts").fetchone()[0])
+    if _table_exists(conn, "journal_headers"):
+        journals = int(conn.execute("SELECT COUNT(*) FROM journal_headers").fetchone()[0])
+    shell = _shell_kind_for(entity_id, accounts, journals)
+    note = _meta_note(entity_id, shell)
+    pack = PACK_FC_SHELL2 if shell == COA_TEMPLATE_SHELL else "CORE-BOOKS-1"
     from datetime import datetime, timezone
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -197,16 +230,17 @@ def _ensure_meta(conn: sqlite3.Connection, entity_id: str) -> None:
         INSERT INTO books_slot_meta (
           legal_entity_id, books_enabled, shell_kind, db_file, note,
           staff_ready, human_commissioned, opened_at, pack
-        ) VALUES (?, 1, ?, ?, ?, 0, 0, ?, 'CORE-BOOKS-1')
+        ) VALUES (?, 1, ?, ?, ?, 0, 0, ?, ?)
         ON CONFLICT(legal_entity_id) DO UPDATE SET
           books_enabled=1,
           shell_kind=excluded.shell_kind,
           db_file=excluded.db_file,
           note=excluded.note,
           staff_ready=0,
-          human_commissioned=0
+          human_commissioned=0,
+          pack=excluded.pack
         """,
-        (entity_id, shell, ENTITY_FILES[entity_id], note, now),
+        (entity_id, shell, ENTITY_FILES[entity_id], note, now, pack),
     )
     if _table_exists(conn, "system_settings"):
         cols = _columns(conn, "system_settings")
@@ -256,7 +290,7 @@ def connect(legal_entity_id: str, *, readonly: bool = False) -> sqlite3.Connecti
 
 
 def ensure_shell(legal_entity_id: str) -> dict[str, Any]:
-    """Create/open entity books file. AMG preserved; BZG/GGV empty shells."""
+    """Create/open entity books file. AMG preserved; BZG/GGV shells (COA OK)."""
     eid = (legal_entity_id or "").strip()
     if eid not in ENTITY_FILES:
         raise EntityBooksError(f"Unknown legal_entity_id: {eid}")
@@ -270,7 +304,6 @@ def ensure_shell(legal_entity_id: str) -> dict[str, Any]:
             conn.executescript(schema)
         _ensure_legal_entity(conn, eid)
         _ensure_sod(conn)
-        _ensure_meta(conn, eid)
         # Pool Bar OU hook (registry only — no outlet totals).
         conn.execute(
             """
@@ -293,18 +326,20 @@ def ensure_shell(legal_entity_id: str) -> dict[str, Any]:
                 f"Refusing non-empty fresh shell for {eid}",
                 code="dirty_shell",
             )
+        _ensure_meta(conn, eid)
         jl_cols = _columns(conn, "journal_lines")
         conn.commit()
         meta = conn.execute(
             "SELECT * FROM books_slot_meta WHERE legal_entity_id=?",
             (eid,),
         ).fetchone()
+        shell = _shell_kind_for(eid, accounts, journals)
         return {
             "legal_entity_id": eid,
             "db_file": ENTITY_FILES[eid],
             "path": str(path),
             "books_enabled": True,
-            "shell_kind": "live" if eid == "ENT-AMG" else "empty_shell",
+            "shell_kind": shell,
             "accounts": accounts,
             "journals": journals,
             "outlet_id_nullable": "outlet_id" in jl_cols,
@@ -314,10 +349,98 @@ def ensure_shell(legal_entity_id: str) -> dict[str, Any]:
             "staff_ready": False,
             "human_commissioned": False,
             "note": dict(meta)["note"] if meta else "",
-            "pack": "CORE-BOOKS-1",
+            "pack": dict(meta)["pack"] if meta else "CORE-BOOKS-1",
         }
     finally:
         conn.close()
+
+
+def _read_amg_coa_structure() -> list[tuple[Any, ...]]:
+    """AMG account codes/names/types only — never journals or balances."""
+    amg = connect(COA_TEMPLATE_SOURCE, readonly=True)
+    try:
+        rows = amg.execute(
+            """
+            SELECT account_code, account_name, account_type, normal_balance,
+                   statutory_line, usali_line, active
+            FROM accounts
+            ORDER BY account_code
+            """
+        ).fetchall()
+        return [tuple(r) for r in rows]
+    finally:
+        amg.close()
+
+
+def seed_coa_template(legal_entity_id: str) -> dict[str, Any]:
+    """Seed Wolf COA *structure* into BZG/GGV from AMG shape. Zero journals.
+
+    Copies account_code / name / type / normal_balance / statutory_line /
+    usali_line / active only. Sets legal_entity_id to the target entity.
+    Idempotent: INSERT OR IGNORE. Refuses ENT-AMG. Never invents money facts.
+    """
+    eid = (legal_entity_id or "").strip()
+    if eid not in ("ENT-BZG", "ENT-GGV"):
+        raise EntityBooksError(
+            f"COA template seed only for ENT-BZG / ENT-GGV (got {eid})",
+            code="invalid",
+        )
+    ensure_shell(eid)
+    structure = _read_amg_coa_structure()
+    if not structure:
+        raise EntityBooksError("AMG COA source empty — refuse seed", code="no_source")
+    conn = connect(eid, readonly=False)
+    try:
+        before = int(conn.execute("SELECT COUNT(*) FROM accounts").fetchone()[0])
+        journals = int(conn.execute("SELECT COUNT(*) FROM journal_headers").fetchone()[0])
+        if journals != 0:
+            raise EntityBooksError(
+                f"Refusing COA seed into non-empty journals for {eid}",
+                code="dirty_shell",
+            )
+        inserted = 0
+        for row in structure:
+            cur = conn.execute(
+                """
+                INSERT OR IGNORE INTO accounts (
+                  account_code, account_name, account_type, normal_balance,
+                  statutory_line, usali_line, active, legal_entity_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (*row, eid),
+            )
+            inserted += cur.rowcount or 0
+        after = int(conn.execute("SELECT COUNT(*) FROM accounts").fetchone()[0])
+        journals_after = int(
+            conn.execute("SELECT COUNT(*) FROM journal_headers").fetchone()[0]
+        )
+        if journals_after != 0:
+            raise EntityBooksError(
+                f"Journal leak after COA seed for {eid}",
+                code="dirty_shell",
+            )
+        _ensure_meta(conn, eid)
+        conn.commit()
+        return {
+            "legal_entity_id": eid,
+            "source": COA_TEMPLATE_SOURCE,
+            "design": "amg_coa_shape_structure_only",
+            "accounts_before": before,
+            "accounts_after": after,
+            "rows_inserted": inserted,
+            "template_account_count": len(structure),
+            "journals": journals_after,
+            "shell_kind": COA_TEMPLATE_SHELL,
+            "staff_ready": False,
+            "human_commissioned": False,
+            "pack": PACK_FC_SHELL2,
+        }
+    finally:
+        conn.close()
+
+
+def seed_all_coa_templates() -> list[dict[str, Any]]:
+    return [seed_coa_template(eid) for eid in ("ENT-BZG", "ENT-GGV")]
 
 
 def ensure_all_shells() -> list[dict[str, Any]]:
@@ -345,21 +468,23 @@ def snapshot(legal_entity_id: str) -> dict[str, Any]:
                 (legal_entity_id,),
             ).fetchone()
         jl_cols = _columns(conn, "journal_lines")
+        shell = _shell_kind_for(legal_entity_id, accounts, journals)
+        meta_d = dict(meta) if meta else None
         return {
             "legal_entity_id": legal_entity_id,
             "exists": True,
             "db_file": ENTITY_FILES[legal_entity_id],
             "path": str(path),
             "books_enabled": True,
-            "shell_kind": "live" if legal_entity_id == "ENT-AMG" else "empty_shell",
+            "shell_kind": shell,
             "accounts": accounts,
             "journals": journals,
             "outlet_id_nullable": "outlet_id" in jl_cols,
             "operating_unit_id_nullable": "operating_unit_id" in jl_cols,
             "staff_ready": False,
             "human_commissioned": False,
-            "meta": dict(meta) if meta else None,
-            "pack": "CORE-BOOKS-1",
+            "meta": meta_d,
+            "pack": (meta_d or {}).get("pack") or "CORE-BOOKS-1",
         }
     finally:
         conn.close()
@@ -420,29 +545,43 @@ def prove_isolation(probe_token: str) -> dict[str, Any]:
 def desk_stamp(legal_entity_id: str) -> dict[str, Any]:
     """Honesty stamp for Beta finance desks — no READY / staff_ready claims."""
     snap = snapshot(legal_entity_id)
-    empty = legal_entity_id != "ENT-AMG" or int(snap.get("journals") or 0) == 0
+    accounts = int(snap.get("accounts") or 0)
+    journals = int(snap.get("journals") or 0)
+    shell = snap.get("shell_kind") or "empty_shell"
     if legal_entity_id == "ENT-AMG":
         message = (
             "AMG / Atrium books are live on the Beta sidecar file. "
             "Not staff_ready. Not human_commissioned."
         )
         empty = False
+        pack = "CORE-BOOKS-1"
     else:
-        message = (
-            f"{ENTITY_LABELS.get(legal_entity_id, legal_entity_id)} is open. "
-            "Empty shell — no journals or go-live figures. "
-            "Not staff_ready. Not human_commissioned."
-        )
-        empty = True
+        # empty = no journals/money facts (COA structure alone is OK)
+        empty = journals == 0
+        if shell == COA_TEMPLATE_SHELL or accounts > 0:
+            message = (
+                f"{ENTITY_LABELS.get(legal_entity_id, legal_entity_id)} is open. "
+                f"COA template: {accounts} accounts · journals: {journals} (none). "
+                "Structure only — no sales, P&L, or go-live figures. "
+                "Not staff_ready. Not human_commissioned."
+            )
+            pack = PACK_FC_SHELL2
+        else:
+            message = (
+                f"{ENTITY_LABELS.get(legal_entity_id, legal_entity_id)} is open. "
+                "Empty shell — no journals or go-live figures. "
+                "Not staff_ready. Not human_commissioned."
+            )
+            pack = "CORE-BOOKS-1"
     return {
         "ok": True,
         "legal_entity_id": legal_entity_id,
         "books_enabled": True,
         "books_opened": True,
-        "shell_kind": snap.get("shell_kind") or "empty_shell",
+        "shell_kind": shell,
         "empty": empty,
-        "accounts": snap.get("accounts", 0),
-        "journals": snap.get("journals", 0),
+        "accounts": accounts,
+        "journals": journals,
         "db_file": snap.get("db_file") or ENTITY_FILES.get(legal_entity_id),
         "staff_ready": False,
         "human_commissioned": False,
@@ -451,6 +590,7 @@ def desk_stamp(legal_entity_id: str) -> dict[str, Any]:
         "bank_write": False,
         "proven": False,
         "message": message,
-        "pack": "CORE-BOOKS-1",
+        "pack": pack,
         "outlet_id_nullable": snap.get("outlet_id_nullable", True),
+        "coa_template_source": COA_TEMPLATE_SOURCE if accounts > 0 and legal_entity_id != "ENT-AMG" else None,
     }

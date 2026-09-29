@@ -41,7 +41,11 @@
 | Entity | File | Shell |
 | --- | --- | --- |
 | ENT-AMG | `atrium.sqlite` | Live AMG books (preserved) |
-| ENT-BZG | `atrium-bzg.sqlite` | Empty/minimal shell |
-| ENT-GGV | `atrium-ggv.sqlite` | Empty/minimal shell |
+| ENT-BZG | `atrium-bzg.sqlite` | COA structure template (FC-SHELL-2); zero journals |
+| ENT-GGV | `atrium-ggv.sqlite` | COA structure template (FC-SHELL-2); zero journals |
 
-Shared code opens the correct file by `legal_entity_id`. Do not merge company data across files. `books_enabled=true` for all three config slots on the Beta mount. Empty shells carry schema + SoD columns (`preparer_person_id`) + nullable `outlet_id` / `operating_unit_id` — **no** fake journals, sales, P&L, invoices, customers, or go-live numbers. Authority stays separate (Zayen AMG+BZG / Amanda GGV only).
+Shared code opens the correct file by `legal_entity_id`. Do not merge company data across files. `books_enabled=true` for all three config slots on the Beta mount. Empty/COA shells carry schema + SoD columns (`preparer_person_id`) + nullable `outlet_id` / `operating_unit_id` — **no** fake journals, sales, P&L, invoices, customers, or go-live numbers. Authority stays separate (Zayen AMG+BZG / Amanda GGV only).
+
+## Addendum — FC-SHELL-2 (2026-09-29)
+
+BZG/GGV may hold a **Wolf COA structure template** copied from AMG account codes/names/types only (`shell_kind=coa_template_shell`). Journals and money facts stay zero until Owner-authorised seeding. See `docs/wolf/ops/FC-SHELL-2-RESULT.md`.

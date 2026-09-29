@@ -27,7 +27,7 @@ HONESTY = {
     "proven": False,
     "entity_id": ENTITY,
     "legal_entity_id": ENTITY,
-    "pack": "CORE-BOOKS-1",
+    "pack": "FC-SHELL-2",
 }
 
 
@@ -89,7 +89,7 @@ def overview(person_id: str, conn: sqlite3.Connection) -> dict[str, Any]:
         "ok": True,
         "title": "BZG Finance",
         "message": stamp.get("message") or (
-            "BZG books shell is open. Empty OK — no fake journals. "
+            "BZG books shell is open. COA template OK — zero journals. "
             "Outlet registry at /bzg/outlets."
         ),
         "finance_entities": entities,

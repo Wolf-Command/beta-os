@@ -29,6 +29,7 @@
     }
     .stamp.warn { background: #f5efe3; border-color: #d2c4a4; color: #5a4a28; }
     .err { color: #8a1f1f; }
+    .metric { font-size: 1.35rem; font-weight: 650; margin: 0 0 4px; letter-spacing: -0.02em; }
   </style>
 </head>
 <body>
@@ -39,6 +40,16 @@
       <h2>Books slot</h2>
       <p class="muted" id="status">Checking assignment…</p>
       <div id="stamps"></div>
+    </section>
+    <section class="card" id="coa-card">
+      <h2>Chart of accounts</h2>
+      <p class="metric" id="coa-count">—</p>
+      <p class="muted" id="coa-note">Structure template only. Zero balances. Zero journals.</p>
+    </section>
+    <section class="card">
+      <h2>Journals</h2>
+      <p class="metric" id="jrnl-count">—</p>
+      <p class="muted">Honest empty — no fake sales, P&amp;L, or invoices.</p>
     </section>
     <section class="card">
       <h2>Entities on this seat</h2>
@@ -60,6 +71,9 @@
       const status = document.getElementById("status");
       const stamps = document.getElementById("stamps");
       const entities = document.getElementById("entities");
+      const coaCount = document.getElementById("coa-count");
+      const coaNote = document.getElementById("coa-note");
+      const jrnlCount = document.getElementById("jrnl-count");
       try {
         const res = await fetch("/api/bzg/finance/overview", { headers: { Accept: "application/json" } });
         const body = await res.json();
@@ -72,12 +86,20 @@
         sub.textContent = body.message || "BZG Finance books shell";
         const kind = body.shell_kind || "empty_shell";
         const dbFile = body.db_file || "atrium-bzg.sqlite";
-        status.textContent = body.empty
-          ? `Honest empty shell (${dbFile}). Books slot open — zero journals. Not READY.`
-          : `Books live (${dbFile}). Not READY.`;
+        const accounts = Number(body.accounts || 0);
+        const journals = Number(body.journals || 0);
+        status.textContent =
+          `Books slot open (${dbFile}, ${kind}). COA ${accounts} · journals ${journals}. Not READY.`;
+        coaCount.textContent = String(accounts) + " accounts";
+        coaNote.textContent = accounts > 0
+          ? "Wolf COA structure template (AMG shape). Codes + names + types only — zero balances."
+          : "No COA rows yet.";
+        jrnlCount.textContent = String(journals) + " journals";
         stamps.innerHTML = [
           `<span class="stamp">books_enabled</span>`,
           `<span class="stamp">${kind}</span>`,
+          `<span class="stamp">COA ${accounts}</span>`,
+          `<span class="stamp">journals ${journals}</span>`,
           `<span class="stamp warn">staff_ready=false</span>`,
           `<span class="stamp warn">human_commissioned=false</span>`,
         ].join("");

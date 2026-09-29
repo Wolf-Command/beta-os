@@ -118,9 +118,9 @@
     },
     {
       "id": "BZG-XOUTLET-1",
-      "claim": "BZG-XOUTLET-1: shared foundations (vendors/PR/close/books PO) carry nullable outlet_id from org_outlet_registry; Uma OPEN; Rain+Pool PRE-OPENING; no fake multi-outlet P&L; Zayen BZG allow Amanda deny; staff_ready/human_commissioned false; did not auto-start V1-SWEEP; prod untouched.",
+      "claim": "BZG-XOUTLET-1: shared foundations (vendors/PR/close/books PO) carry nullable outlet_id from org_outlet_registry; Uma OPEN; Rain+Pool PRE-OPENING; no fake multi-outlet P&L; Zayen BZG allow Amanda deny; staff_ready/human_commissioned false; did not auto-start V1-SWEEP; prod untouched. (FC-SHELL-2 may seed COA structure; journals stay 0.)",
       "check": "cd /Users/wolfterminal/beta-os && PYTHONPATH=scripts python3 scripts/tests/test_bzg_xoutlet1_20260929.py | tail -1",
-      "expect": "PASS=89 FAIL=0",
+      "expect": "PASS=90 FAIL=0",
       "by": "composer-bzg-xoutlet1",
       "at": "2026-09-29T22:29:30+08:00"
     },
@@ -130,6 +130,14 @@
       "check": "cd /Users/wolfterminal/beta-os && PYTHONPATH=scripts python3 scripts/tests/test_v1_sweep1_20260929.py | tail -1",
       "expect": "PASS=67 FAIL=0",
       "by": "V1-SWEEP-1"
+    },
+    {
+      "id": "FC-SHELL-2",
+      "claim": "FC-SHELL-2: BZG+GGV atrium-*-sqlite hold Wolf COA structure templates (200 accounts from AMG shape, zero journals); isolation probe holds; Zayen GGV 403 Amanda GGV-only; SoD COMM1 on AMG intact; desks show COA count + empty journals; staff_ready/human_commissioned false; prod 15975 untouched; did not auto-chain next pack.",
+      "check": "PYTHONPATH=scripts python3 scripts/tests/test_fc_shell2_20260929.py 2>&1 | tail -1 | grep -q 'fail=0' && python3 -c \"import sqlite3,sys; from pathlib import Path; b=Path('/Users/wolfterminal/atrium-finance/data/beta'); c=lambda p: sqlite3.connect(f'file:{p}?mode=ro', uri=True); ba=c(b/'atrium-bzg.sqlite'); ga=c(b/'atrium-ggv.sqlite'); am=c(b/'atrium.sqlite'); ok=(ba.execute('select count(*) from accounts').fetchone()[0]==200 and ba.execute('select count(*) from journal_headers').fetchone()[0]==0 and ga.execute('select count(*) from accounts').fetchone()[0]==200 and ga.execute('select count(*) from journal_headers').fetchone()[0]==0 and am.execute(\\\"select status,preparer_person_id from journal_headers where journal_id='JRN-ATRIUMSOD1B-COMM1'\\\").fetchone()==('POSTED','PERS-ZENITALFATHAN')); sys.exit(0 if ok else 1)\"",
+      "expect": "SUMMARY pass=72 fail=0; BZG/GGV accounts=200 journals=0; COMM1 intact",
+      "by": "FC-SHELL-2",
+      "at": "2026-09-29T23:53:00+08:00"
     }
   ]
 }

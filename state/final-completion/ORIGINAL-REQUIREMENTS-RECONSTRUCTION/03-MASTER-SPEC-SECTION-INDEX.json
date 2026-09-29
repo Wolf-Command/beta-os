@@ -1,0 +1,169 @@
+{
+  "extracted_at": "2026-09-29T23:41:26+08:00",
+  "source": "docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+  "bytes": 35453,
+  "lines": 564,
+  "sections": [
+    {
+      "line": 1,
+      "heading": "Wolf Command Master Specification v1",
+      "level": 1
+    },
+    {
+      "line": 19,
+      "heading": "1. Purpose and North Star",
+      "level": 1
+    },
+    {
+      "line": 35,
+      "heading": "2. Ownership, Governance and IP",
+      "level": 1
+    },
+    {
+      "line": 39,
+      "heading": "3. Wolf Constitutional Principles",
+      "level": 1
+    },
+    {
+      "line": 71,
+      "heading": "4. Organisational Data Model",
+      "level": 1
+    },
+    {
+      "line": 75,
+      "heading": "5. Business Structure",
+      "level": 1
+    },
+    {
+      "line": 77,
+      "heading": "5.1 AMG - Atrium Management Group",
+      "level": 2
+    },
+    {
+      "line": 91,
+      "heading": "5.2 BZG - Blu Zone Group",
+      "level": 2
+    },
+    {
+      "line": 103,
+      "heading": "5.3 GGV - Goss Group Ventures",
+      "level": 2
+    },
+    {
+      "line": 115,
+      "heading": "6. Identity, Access and User Experience",
+      "level": 1
+    },
+    {
+      "line": 136,
+      "heading": "7. Wolf Intelligence",
+      "level": 1
+    },
+    {
+      "line": 158,
+      "heading": "8. SOP Factory, Training and Continuous Improvement",
+      "level": 1
+    },
+    {
+      "line": 172,
+      "heading": "9. HR and People Operating System",
+      "level": 1
+    },
+    {
+      "line": 196,
+      "heading": "10. Finance and Accounting",
+      "level": 1
+    },
+    {
+      "line": 220,
+      "heading": "11. Procurement and Suppliers",
+      "level": 1
+    },
+    {
+      "line": 234,
+      "heading": "12. BZG F&B Control System",
+      "level": 1
+    },
+    {
+      "line": 252,
+      "heading": "13. AMG Hotel Operating System",
+      "level": 1
+    },
+    {
+      "line": 268,
+      "heading": "14. Customer, CRM and Package Intelligence",
+      "level": 1
+    },
+    {
+      "line": 284,
+      "heading": "15. Maintenance, Assets, Security and Compliance",
+      "level": 1
+    },
+    {
+      "line": 304,
+      "heading": "16. Documents, Records and Legal Defensibility",
+      "level": 1
+    },
+    {
+      "line": 318,
+      "heading": "17. Strategy, 12-Week Year and Executive Command",
+      "level": 1
+    },
+    {
+      "line": 336,
+      "heading": "18. Personal Command Boundary",
+      "level": 1
+    },
+    {
+      "line": 348,
+      "heading": "19. Technology Stack - Current Target State",
+      "level": 1
+    },
+    {
+      "line": 350,
+      "heading": "20. Technology and Capability Governance",
+      "level": 1
+    },
+    {
+      "line": 366,
+      "heading": "21. Build and Commissioning Philosophy",
+      "level": 1
+    },
+    {
+      "line": 384,
+      "heading": "22. Mandatory Commissioning Gate",
+      "level": 1
+    },
+    {
+      "line": 416,
+      "heading": "23. Build Prioritisation",
+      "level": 1
+    },
+    {
+      "line": 420,
+      "heading": "24. Sale Readiness and Buyer Independence",
+      "level": 1
+    },
+    {
+      "line": 436,
+      "heading": "25. Security, Recovery and Crown Jewels",
+      "level": 1
+    },
+    {
+      "line": 450,
+      "heading": "26. Interview-Derived Operating Requirements - Decision Ledger",
+      "level": 1
+    },
+    {
+      "line": 454,
+      "heading": "27. Reference Sources",
+      "level": 1
+    },
+    {
+      "line": 462,
+      "heading": "28. Immediate Next Build",
+      "level": 1
+    }
+  ],
+  "preamble_citation": "Prepared from the full Wolf design interview and Content Machine / Wolf Intelligence architecture \u2014 16 September 2026"
+}

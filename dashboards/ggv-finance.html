@@ -341,9 +341,21 @@ async function loadOverview() {
   const shell = $("books-shell");
   if (shell) {
     const dbFile = data.db_file || (data.books_shell && data.books_shell.db_file) || "atrium-ggv.sqlite";
-    const kind = data.shell_kind || "empty_shell";
+    const kind = data.shell_kind || (data.books_shell && data.books_shell.shell_kind) || "empty_shell";
+    const accounts = Number(
+      (data.books_shell && data.books_shell.accounts != null)
+        ? data.books_shell.accounts
+        : (data.accounts != null ? data.accounts : 0)
+    );
+    const journals = Number(
+      (data.books_shell && data.books_shell.journals != null)
+        ? data.books_shell.journals
+        : (data.journals != null ? data.journals : 0)
+    );
     shell.textContent =
-      "GGV books slot open (" + dbFile + ", " + kind + "). Empty shell OK. staff_ready=false · human_commissioned=false. Not READY.";
+      "GGV books slot open (" + dbFile + ", " + kind + "). COA " + accounts +
+      " accounts · journals " + journals +
+      " (empty). Structure only — no fake P&L. staff_ready=false · human_commissioned=false. Not READY.";
   }
 }
 

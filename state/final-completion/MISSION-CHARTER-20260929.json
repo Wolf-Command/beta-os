@@ -20,7 +20,7 @@
     12,
     13
   ],
-  "active_phase": 0,
+  "active_phase": 2,
   "executor": "sand-subagent-b083e28c-40e1-e95c-9e97-c105f0fa1e3b",
   "staff_ready": false,
   "human_commissioned": false,
@@ -28,8 +28,21 @@
   "fake_ops_data": false,
   "auto_chain": true,
   "optimize_for": "actually_finish_wolf_not_speed_or_flattery",
-  "updated_at": "2026-09-29T23:33:17+08:00",
+  "updated_at": "2026-09-29T23:49:49+08:00",
   "phase0_box_prepared_at": "2026-09-29T23:28:13+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
-  "phase0_mac_stamps_at": "2026-09-29T23:33:17+08:00"
+  "phase0_mac_stamps_at": "2026-09-29T23:33:17+08:00",
+  "phase0_status": "DONE",
+  "phase1_status": "COMPLETE",
+  "phase2_status": "ARMED_RUNNING",
+  "phase": 2,
+  "active_pack": "FC-SHELL-2",
+  "cursor_pid": 89681,
+  "daemon_pid": 89677,
+  "raw_1500_qa_status": "NOT_FOUND_AFTER_EXHAUSTIVE_SEARCH",
+  "requirement_count": 465,
+  "unknown_count": 0,
+  "exit_report": "FORBIDDEN_UNTIL_PHASE_13_GATE",
+  "continue_flag": true,
+  "next": "Babysit FC-SHELL-2 \u2192 Peaches verify \u2192 auto-chain PHASE2-PACK-QUEUE"
 }

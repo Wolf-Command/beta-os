@@ -2332,9 +2332,11 @@ def overview(person_id: str, *, conn: sqlite3.Connection | None = None) -> dict[
                 "books_shell": books_stamp,
                 "shell_kind": books_stamp.get("shell_kind") or "empty_shell",
                 "db_file": books_stamp.get("db_file") or "atrium-ggv.sqlite",
+                "accounts": books_stamp.get("accounts", 0),
+                "journals": books_stamp.get("journals", 0),
                 "staff_ready": False,
                 "human_commissioned": False,
-                "pack": "CORE-BOOKS-1",
+                "pack": books_stamp.get("pack") or "FC-SHELL-2",
             }
         )
     finally:

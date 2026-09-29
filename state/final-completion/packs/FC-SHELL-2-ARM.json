@@ -1,0 +1,69 @@
+{
+  "run_id": "FC-SHELL-2",
+  "pack": "FC-SHELL-2",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "armed_at": "2026-09-29T23:45:45+08:00",
+  "exited_at": "2026-09-29T23:53:00+08:00",
+  "exit_code": 0,
+  "brief": "state/build-factory/briefs/BRIEF-FC-SHELL-2.md",
+  "log": "state/build-factory/logs/FC-SHELL-2.log",
+  "result_file": "docs/wolf/ops/FC-SHELL-2-RESULT.md",
+  "design": "amg_coa_shape_structure_only",
+  "coa_template_source": "ENT-AMG",
+  "entities": {
+    "ENT-AMG": {
+      "accounts": 200,
+      "journals": 7,
+      "shell_kind": "live"
+    },
+    "ENT-BZG": {
+      "accounts": 200,
+      "journals": 0,
+      "shell_kind": "coa_template_shell"
+    },
+    "ENT-GGV": {
+      "accounts": 200,
+      "journals": 0,
+      "shell_kind": "coa_template_shell"
+    }
+  },
+  "tests": {
+    "test_fc_shell2_20260929.py": "pass=72 fail=0",
+    "test_core_books1_20260929.py": "pass=64 fail=0",
+    "test_core_ent1_20260929.py": "pass=49 fail=0",
+    "test_atrium_sod1_20260929.py": "pass=69 fail=0",
+    "test_bzg_xoutlet1_20260929.py": "PASS=90 FAIL=0"
+  },
+  "shots": [
+    "docs/wolf/ops/shots/fcshell2-amg-books-live-desktop.png",
+    "docs/wolf/ops/shots/fcshell2-amg-books-live-phone.png",
+    "docs/wolf/ops/shots/fcshell2-bzg-coa-shell-desktop.png",
+    "docs/wolf/ops/shots/fcshell2-bzg-coa-shell-phone.png",
+    "docs/wolf/ops/shots/fcshell2-ggv-coa-shell-desktop.png",
+    "docs/wolf/ops/shots/fcshell2-ggv-coa-shell-phone.png"
+  ],
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "did_not_auto_start": [
+    "HEADCHEF",
+    "Exit Report",
+    "BZG-VENUEPL-1",
+    "random breadth"
+  ],
+  "depends_on": [
+    "CORE-BOOKS-1"
+  ],
+  "beta_os_head_at_arm": "b5faf71",
+  "atrium_head_at_arm": "1ecfc3c",
+  "isolation_probe": true,
+  "sod_comm1_intact": true,
+  "verified_at": "2026-09-29T23:54:44+08:00",
+  "peaches_verify": "state/final-completion/packs/FC-SHELL-2-PEACHES-VERIFY.json"
+}

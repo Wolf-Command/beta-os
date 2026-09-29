@@ -1,0 +1,222 @@
+{
+  "at_wita": "2026-09-29T23:54:44+08:00",
+  "FINAL_WOLF_COMPLETION_MISSION": true,
+  "phase": 2,
+  "status": "CHAINING",
+  "rules": {
+    "beta_only": true,
+    "prod_mutate": false,
+    "fake_ops_data": false,
+    "staff_ready": false,
+    "human_commissioned": false,
+    "no_push": true,
+    "auto_chain": true,
+    "stop_for": [
+      "matt_only_authority",
+      "external_blocker_requiring_owner",
+      "prod_risk"
+    ],
+    "veto": [
+      "HEADCHEF_auto",
+      "random_breadth"
+    ],
+    "credit_exception": "FINAL_WOLF_COMPLETION_MISSION"
+  },
+  "packs": [
+    {
+      "pack_id": "FC-SHELL-2",
+      "title": "Finance entity books shell depth \u2014 honest COA templates for BZG+GGV + desk honesty",
+      "closes": [
+        "MB-009",
+        "CAP-FIN-01",
+        "CAP-FIN-02",
+        "CAP-FIN-03",
+        "IL-R2 books"
+      ],
+      "targets_classes": [
+        "PARTIAL",
+        "BUILT_NOT_PROVEN"
+      ],
+      "why_first": "Post-sprint empty shells exist; biggest remaining internal finance gap is usable honest COA/template + desk clarity without fake journals. Pure Beta, no Matt blocker.",
+      "scope": [
+        "Seed standard Wolf COA *structure* templates into atrium-bzg.sqlite + atrium-ggv.sqlite (accounts only, zero balances, no journals/sales/P&L)",
+        "Prove entity isolation still holds (token probe) after seed",
+        "Thin desk honesty: BZG/GGV finance shells show COA count + empty journals without READY banners",
+        "Keep ATRIUM-SOD + AMG live books intact",
+        "Tests + shots desktop/phone; Peaches verify"
+      ],
+      "forbids": [
+        "prod :8787 mutate",
+        "fake journals/invoices/customers",
+        "staff_ready true",
+        "human_commissioned true",
+        "push",
+        "HEADCHEF"
+      ],
+      "depends_on": [
+        "CORE-BOOKS-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "PASS_VERIFIED",
+      "verified_at": "2026-09-29T23:54:44+08:00"
+    },
+    {
+      "pack_id": "BZG-VENUEPL-1",
+      "title": "BZG venue P&L rollup skeleton from ESB + outlet registry (read-only facts)",
+      "closes": [
+        "CAP-BZG-02",
+        "IL-R5 venue-as-mini-business"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "PARTIAL"
+      ],
+      "why_first": "Outlet registry + ESB projection exist; venue P&L is next coherent BZG vertical without inventing numbers.",
+      "scope": [
+        "Read-only rollup surfaces by outlet_id from ESB/projection facts already in Beta",
+        "Honest empty/UNKNOWN when ESB day missing \u2014 never invent",
+        "Wire to /bzg surfaces; no payment/write"
+      ],
+      "forbids": [
+        "fake sales",
+        "prod mutate",
+        "staff_ready true"
+      ],
+      "depends_on": [
+        "BZG-OUTLET-1",
+        "BZG-XOUTLET-1",
+        "UMAREAL-1",
+        "FC-SHELL-2"
+      ],
+      "estimated_effort": "L",
+      "matt_blocker": false,
+      "status": "NEXT_TO_ARM"
+    },
+    {
+      "pack_id": "SOP-FACTORY-1",
+      "title": "SOP Factory vertical slice \u2014 evidence\u2192lesson candidate\u2192human review gate (Beta)",
+      "closes": [
+        "CAP-CORE-11",
+        "MB-012",
+        "IL-R7 SOP Factory"
+      ],
+      "targets_classes": [
+        "MISSING"
+      ],
+      "why_first": "Constitutional P1 MISSING; no external API; builds learning loop without claiming LIVE adoption.",
+      "scope": [
+        "Schema + Beta API for SOP draft/lesson candidate",
+        "Human review gate required before 'approved rule'",
+        "One demo SOP path with fixtures \u2014 no fake staff performance claims"
+      ],
+      "forbids": [
+        "auto-approve production rules",
+        "staff_ready true"
+      ],
+      "depends_on": [
+        "FC-SHELL-2"
+      ],
+      "estimated_effort": "L",
+      "matt_blocker": false
+    },
+    {
+      "pack_id": "MYWORK-PROVE-1",
+      "title": "Universal My Work prove pack \u2014 regression + evidence trail hardening (no human commission claim)",
+      "closes": [
+        "CAP-CORE-12",
+        "MB-004"
+      ],
+      "targets_classes": [
+        "BUILT_NOT_PROVEN",
+        "PARTIAL"
+      ],
+      "why_first": "MYWORK eng-pass exists; harden prove suite + edge cases before human queue reliance.",
+      "scope": [
+        "Expand tests for delegation/evidence/commissioning WI holds",
+        "Fix any post-HEADCHEF WI hold regressions if still open (read-only diagnose first)",
+        "Shots refresh; never flip human_commissioned"
+      ],
+      "forbids": [
+        "human_commissioned true",
+        "fake WI completions"
+      ],
+      "depends_on": [],
+      "estimated_effort": "M",
+      "matt_blocker": false
+    },
+    {
+      "pack_id": "INTG-TRUTH-1",
+      "title": "Integration honesty board \u2014 connector status registry live on Beta (no fake live feeds)",
+      "closes": [
+        "MB-015",
+        "INT-* SPECIFIED honesty"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "PARTIAL",
+        "BLOCKED_EXTERNAL"
+      ],
+      "why_first": "Surfaces BLOCKED_EXTERNAL vs PARTIAL truth for Yanolja/ESB/Bank/Metricool without pretending connectors are live.",
+      "scope": [
+        "Beta /ops/integrations-status page + API from Integrations.csv + live probe where safe (ESB/Metricool read)",
+        "Yanolja/Bank marked BLOCKED_EXTERNAL or file-import-only honestly",
+        "No invented last-success timestamps"
+      ],
+      "forbids": [
+        "fake connector success",
+        "prod mutate"
+      ],
+      "depends_on": [
+        "FC-SHELL-2"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false
+    },
+    {
+      "pack_id": "AMG-OS-SHELL-1",
+      "title": "AMG operating shell without Yanolja live \u2014 structure + BLOCKED stamps only",
+      "closes": [
+        "CAP-AMG-02",
+        "CAP-AMG-04",
+        "MB-008"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "BLOCKED_EXTERNAL"
+      ],
+      "why_first": "Can build UX/shell + task structures; live PMS orchestration stays BLOCKED_EXTERNAL until Yanolja.",
+      "scope": [
+        "Beta AMG ops shell pages with explicit BLOCKED_EXTERNAL for PMS-dependent tiles",
+        "No fake occupancy/arrivals"
+      ],
+      "forbids": [
+        "fake PMS data",
+        "claim Yanolja connected"
+      ],
+      "depends_on": [
+        "INTG-TRUTH-1"
+      ],
+      "estimated_effort": "L",
+      "matt_blocker": false,
+      "note": "Does not unblock CAP-AMG-01 (needs external Yanolja)"
+    }
+  ],
+  "first_pack": "BZG-VENUEPL-1",
+  "hr_deferred_not_in_queue": true,
+  "blocked_external_not_auto_solved": [
+    "MB-008",
+    "CAP-AMG-01",
+    "CAP-INTG-01",
+    "CAP-INTG-07",
+    "INT-YAN-WOLF",
+    "MASTER-ebb4538861",
+    "MASTER-e34d9c67b6",
+    "MASTER-a446a52134",
+    "MASTER-18975d93a5",
+    "MASTER-160eec186d"
+  ],
+  "completed_packs": [
+    "FC-SHELL-2"
+  ]
+}
