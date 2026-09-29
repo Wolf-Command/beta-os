@@ -123,7 +123,7 @@ Doc: `docs/wolf/finance/ATRIUM-FC-AUTHORITY-MATRIX.md`. Server-side tests in `te
 ### Commits (local only)
 | Repo | Commit |
 |------|--------|
-| beta-os | `d950a98` (+ RESULT/shots follow-up) |
+| beta-os | `d950a98` (code) · `db29009` (RESULT/shots/claim) |
 | atrium-finance | `ad8239f` |
 
 ### Migration
