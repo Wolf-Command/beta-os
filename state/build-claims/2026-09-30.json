@@ -228,6 +228,22 @@
       "expect": "exit 0",
       "by": "cursor-fin-ap-ar-shell-1",
       "at": "2026-09-30T02:20:47+08:00"
+    },
+    {
+      "id": "OWNER-NEEDS-YOU-1-desk",
+      "claim": "OWNER-NEEDS-YOU-1: 12 arm Needs-You boards with honesty stamps; invented_urgency/fake_urgency false; EMPTY arms count=0; UNKNOWN count=null; MYWORK-PROVE-1/DASH-LIVE-1 preserved; staff_ready/human_commissioned false; next pack parent-only ESB-TRUTH-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import owner_needs_you1 as o; p=o.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('arm_count')==12 and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('invented_urgency') is False and p.get('fake_urgency') is False and p.get('mywork_prove1_preserved') is True and p.get('dash_live1_preserved') is True and o.honesty_flags().get('next_pack_for_parent_only')=='ESB-TRUTH-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-owner-needs-you-1",
+      "at": "2026-09-30T02:30:48+08:00"
+    },
+    {
+      "id": "OWNER-NEEDS-YOU-1-surface",
+      "claim": "OWNER-NEEDS-YOU-1 page/API/shots/RESULT present; unsigned deny + suite PASS=195; next pack parent-only ESB-TRUTH-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import owner_needs_you1 as o; from pathlib import Path; html=Path('dashboards/owner-needs-you-1.html').read_text(); import sys; sys.exit(0 if (o.api_matches('/api/owner/needs-you-1') and o.page_matches('/owner/needs-you-1') and 'staff_ready=false' in html and 'EMPTY' in html and Path('docs/wolf/ops/shots/ownerneedsyou1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/OWNER-NEEDS-YOU-1-RESULT.md').is_file() and o.honesty_flags().get('next_pack_for_parent_only')=='ESB-TRUTH-1' and o.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-owner-needs-you-1",
+      "at": "2026-09-30T02:30:48+08:00"
     }
   ]
 }

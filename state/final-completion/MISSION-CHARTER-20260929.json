@@ -89,8 +89,8 @@
     "RELIABILITY-1",
     "CONTENT-ENGINE-LIVE-1"
   ],
-  "last_pack_verified": "FIN-AP-AR-SHELL-1",
-  "last_verified_at": "2026-09-30T02:25:00+08:00",
-  "pass_verified_count": 17,
-  "next_pack": "OWNER-NEEDS-YOU-1"
+  "last_pack_verified": "OWNER-NEEDS-YOU-1",
+  "last_verified_at": "2026-09-30T02:37:00+08:00",
+  "pass_verified_count": 18,
+  "next_pack": "ESB-TRUTH-1"
 }

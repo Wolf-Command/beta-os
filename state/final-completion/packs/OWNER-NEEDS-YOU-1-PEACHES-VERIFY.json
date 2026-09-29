@@ -1,0 +1,84 @@
+{
+  "pack": "OWNER-NEEDS-YOU-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T02:37:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T02:31:54+08:00",
+  "result_file": "docs/wolf/ops/OWNER-NEEDS-YOU-1-RESULT.md",
+  "tests_rerun": {
+    "test_owner_needs_you1_20260930.py": {
+      "pass": 195,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 5,
+    "distinct_sha256": 3,
+    "all_distinct": false,
+    "note": "desk/arms/stamps share SHA; phone+unsigned distinct",
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/ownerneedsyou1-arms-honesty.png",
+        "bytes": 220201,
+        "sha256": "322b702edddc36dfff8c334a46be94274e2a36774a78ef7b369155a04e0d51c4"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ownerneedsyou1-desk-desktop.png",
+        "bytes": 220201,
+        "sha256": "322b702edddc36dfff8c334a46be94274e2a36774a78ef7b369155a04e0d51c4"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ownerneedsyou1-desk-phone.png",
+        "bytes": 157296,
+        "sha256": "344a34dbd89af53eb441ccb9e05c217042c7a924738f3b9136bd96accb04edec"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ownerneedsyou1-stamps.png",
+        "bytes": 220201,
+        "sha256": "322b702edddc36dfff8c334a46be94274e2a36774a78ef7b369155a04e0d51c4"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ownerneedsyou1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      }
+    ],
+    "eye_check": {
+      "desk": "EMPTY=5 CONNECTIVE=7 invented_urgency=false live strips only",
+      "unsigned_deny": "Access denied"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "invented_urgency": false,
+    "fake_urgency": false,
+    "empty_stays_empty": true,
+    "ceiling": "BUILT"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "d3aaa54",
+    "atrium_finance_head": "7584266",
+    "uncommitted": true
+  },
+  "preserves": [
+    "MYWORK-PROVE-1",
+    "DASH-LIVE-1"
+  ],
+  "next_pack": "ESB-TRUTH-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

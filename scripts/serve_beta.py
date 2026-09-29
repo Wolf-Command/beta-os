@@ -174,6 +174,7 @@ from core import crm_identity_operator_depth as _crm_ident_depth
 from core import fin_interco1 as _fin_interco1
 from core import fin_recon_shell1 as _fin_recon_shell1
 from core import fin_ap_ar_shell1 as _fin_ap_ar_shell1
+from core import owner_needs_you1 as _owner_needs_you1
 from core import intel_learn1 as _intel_learn1
 from core import bzg_ops_desk1 as _bzg_ops_desk1
 from core import bzg_waste_yield1 as _bzg_waste_yield1
@@ -2035,6 +2036,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._fin_ap_ar_shell1_dispatch():
+            return
+
+        if self._owner_needs_you1_dispatch():
             return
 
         if self._intel_learn1_dispatch():
@@ -5148,6 +5152,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._fin_ap_ar_shell1_dispatch():
                 return
         elif path in (
+            "/owner/needs-you-1",
+            "/owner/needs-you-1/",
+            "/owner-needs-you-1",
+            "/owner-needs-you-1/",
+            "/owner-needs-you-1.html",
+            "/dashboards/owner-needs-you-1.html",
+        ):
+            if self._owner_needs_you1_dispatch():
+                return
+        elif path in (
             "/intel/learning",
             "/intel/learning/",
             "/ops/intel-learning",
@@ -5945,6 +5959,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/ap-ar-shell-1" or path.startswith("/api/fin/ap-ar-shell-1/"):
             self._fin_ap_ar_shell1_write_refused(path)
+            return
+        if path == "/api/owner/needs-you-1" or path.startswith("/api/owner/needs-you-1/"):
+            self._owner_needs_you1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -6773,6 +6790,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/ap-ar-shell-1" or path.startswith("/api/fin/ap-ar-shell-1/"):
             self._fin_ap_ar_shell1_write_refused(path)
+            return
+        if path == "/api/owner/needs-you-1" or path.startswith("/api/owner/needs-you-1/"):
+            self._owner_needs_you1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -8006,6 +8026,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/ap-ar-shell-1" or path.startswith("/api/fin/ap-ar-shell-1/"):
             self._fin_ap_ar_shell1_write_refused(path)
+            return
+        if path == "/api/owner/needs-you-1" or path.startswith("/api/owner/needs-you-1/"):
+            self._owner_needs_you1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -15873,6 +15896,98 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "ok": False,
                 "error": "write_refused",
                 "message": "FIN-AP-AR-SHELL-1 is AP/AR shell only. Writes refused.",
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+            },
+            status=403,
+        )
+
+    def _owner_needs_you1_dispatch(self) -> bool:
+        """OWNER-NEEDS-YOU-1 — connective prove across arms; no fake urgency."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _owner_needs_you1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _owner_needs_you1.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "owner_needs_you_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_urgency": False,
+                        "fake_urgency": False,
+                        "invented_count": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _owner_needs_you1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "owner-needs-you-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Owner Needs You-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="owner-needs-you-1.html")
+        return True
+
+    def _owner_needs_you1_write_refused(self, path: str) -> None:
+        """Refuse fake urgency / invent Needs-You writes on OWNER-NEEDS-YOU-1."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _owner_needs_you1.refuse_external_write(body if isinstance(body, dict) else {})
+        except _owner_needs_you1.OwnerNeedsYou1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "invented_urgency": False,
+                    "fake_urgency": False,
+                    "invented_count": False,
+                    "invented_needs_you": False,
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": "OWNER-NEEDS-YOU-1 is connective prove only. Writes refused.",
                 "path": path,
                 "staff_ready": False,
                 "human_commissioned": False,

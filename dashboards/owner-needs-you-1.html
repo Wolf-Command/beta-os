@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OWNER Needs You-1 — connective prove, no fake urgency</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1a1f24;
+      --muted: #5a6570;
+      --paper: #f2f4f6;
+      --card: #fbfcfd;
+      --line: #d3dae0;
+      --warn: #8a1f1f;
+      --ok: #1f5a3a;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(ellipse 65% 35% at 100% 0%, #e4ebf1 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 80px; }
+    .crumb { font-size: 0.78rem; color: var(--muted); margin: 0 0 8px; }
+    h1 {
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: 1.75rem;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #eef3f7; border: 1px solid #c5d0d9; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner.warn {
+      background: #f8eaea; border-color: #e0b8b8; color: var(--warn);
+    }
+    .banner strong { color: #2a3a48; }
+    .banner.warn strong { color: var(--warn); }
+    h2 {
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin: 22px 0 10px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .tile {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 10px;
+      padding: 14px;
+      min-height: 120px;
+    }
+    .tile.warn {
+      border-color: #e0b8b8;
+      background: #fff5f3;
+    }
+    .tile .k {
+      font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .tile .v {
+      font-family: var(--display);
+      font-size: 1.25rem;
+      margin: 6px 0 4px;
+      font-weight: 600;
+    }
+    .tile.warn .v { color: var(--warn); }
+    .tile .why { font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
+    .tile .meta { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+    .stamp {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 4px 8px;
+      margin: 0 8px 8px 0;
+      font-size: 0.78rem;
+      background: #fff;
+    }
+    .stamp.bad { border-color: #e0b8b8; color: var(--warn); }
+    .links a {
+      display: block;
+      color: var(--ink);
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: var(--card);
+    }
+    .links a:hover { border-color: #9aa8b4; }
+    .links .note { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+  </style>
+</head>
+<body
+  data-ready="0"
+  data-deny=""
+  data-pack="OWNER-NEEDS-YOU-1"
+  data-wolf-page-type="WORKSPACE"
+  data-wolf-org="WOLF"
+  data-wolf-shell="global"
+  data-invented-urgency="0"
+  data-fake-urgency="0"
+  data-empty-honest="0"
+  data-unknown-honest="0"
+  data-mywork-preserved="0"
+  data-dash-live-preserved="0"
+  data-cap-proven="0"
+  data-staff-ready="0"
+  data-human-commissioned="0"
+>
+  <main>
+    <p class="crumb">WOLF · Owner · Needs You-1 (connective prove)</p>
+    <h1>Owner Needs You boards</h1>
+    <p class="sub">Connective prove across arms with honesty stamps. Empty stays empty; UNKNOWN stays UNKNOWN. No fake urgency counts. staff_ready=false · human_commissioned=false. Preserves MYWORK-PROVE-1 + DASH-LIVE-1.</p>
+
+    <div class="banner warn" id="honesty">
+      Loading honesty pins…
+    </div>
+
+    <div id="stamps" aria-label="Honesty stamps"></div>
+
+    <h2>Arm Needs-You boards</h2>
+    <div class="grid" id="arms"></div>
+
+    <h2>Honesty tiles</h2>
+    <div class="grid" id="tiles"></div>
+
+    <h2>Preserved packs</h2>
+    <div class="grid" id="preserved"></div>
+
+    <h2>Existing desks</h2>
+    <div class="links" id="links"></div>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function render(body) {
+      var banner = document.getElementById("honesty");
+      banner.className = "banner warn";
+      banner.innerHTML =
+        "<strong>Honesty:</strong> connective prove · " +
+        "invented_urgency=false · fake_urgency=false · " +
+        "EMPTY=" + esc(body.empty_arm_count) +
+        " · CONNECTIVE=" + esc(body.connective_arm_count) +
+        " · UNKNOWN=" + esc(body.unknown_arm_count) +
+        " · total_connective_count=" + esc(body.total_connective_count) +
+        " (live strips only) · staff_ready=false · human_commissioned=false · " +
+        "CAP-CORE needs-you " + esc(body.cap_core_needs_you_maturity || "BUILT") +
+        " (ceiling " + esc(body.cap_core_needs_you_ceiling || "BUILT") + ") · " +
+        "MYWORK-PROVE-1 " + (body.mywork_prove1_preserved ? "PRESERVED" : "CHECK") +
+        " · DASH-LIVE-1 " + (body.dash_live1_preserved ? "PRESERVED" : "CHECK") + ".";
+
+      var stamps = [
+        ["staff_ready=false", true],
+        ["human_commissioned=false", true],
+        ["invented_urgency=false", body.invented_urgency === false],
+        ["fake_urgency=false", body.fake_urgency === false],
+        ["empty stays empty", body.padded_empty === false],
+        ["UNKNOWN stays UNKNOWN", body.unknown_coerced_to_empty === false],
+        ["CAP-CORE needs-you not PROVEN", body.cap_core_needs_you_proven === false],
+        ["MYWORK-PROVE-1 preserved", body.mywork_prove1_preserved === true],
+        ["DASH-LIVE-1 preserved", body.dash_live1_preserved === true]
+      ];
+      document.getElementById("stamps").innerHTML = stamps.map(function (row) {
+        return '<span class="stamp' + (row[1] ? " bad" : "") + '">' + esc(row[0]) + "</span>";
+      }).join("");
+
+      document.getElementById("arms").innerHTML = (body.arm_boards || []).map(function (a) {
+        var warn = a.status === "EMPTY" || a.status === "UNKNOWN";
+        var countLabel = a.count == null ? "—" : String(a.count);
+        return (
+          '<div class="tile' + (warn ? " warn" : "") + '" data-arm="' + esc(a.id) + '">' +
+          '<div class="k">' + esc(a.label) + "</div>" +
+          '<div class="v">' + esc(a.status || "UNKNOWN") + "</div>" +
+          '<div class="meta">count=' + esc(countLabel) +
+          " · invented=" + (a.invented ? "true" : "false") +
+          " · matches=" + (a.count_matches_items ? "yes" : "n/a") + "</div>" +
+          '<div class="why">' + esc(a.why || "") + "</div>" +
+          "</div>"
+        );
+      }).join("");
+
+      document.getElementById("tiles").innerHTML = (body.honesty_tiles || []).map(function (t) {
+        return (
+          '<div class="tile warn" data-tile="' + esc(t.id) + '">' +
+          '<div class="k">' + esc(t.label) + "</div>" +
+          '<div class="v">' + esc(t.status || "EMPTY") + "</div>" +
+          '<div class="why">' + esc(t.why || "") + "</div>" +
+          "</div>"
+        );
+      }).join("");
+
+      var mywork = body.mywork_prove1 || {};
+      var dash = body.dash_live1 || {};
+      var rows = [
+        ["MYWORK-PROVE-1", mywork.ok ? "PRESERVED" : "CHECK", mywork.why || ""],
+        ["DASH-LIVE-1", dash.ok ? "PRESERVED" : "CHECK", dash.why || ""]
+      ];
+      document.getElementById("preserved").innerHTML = rows.map(function (row) {
+        return (
+          '<div class="tile" data-preserved="' + esc(row[0]) + '">' +
+          '<div class="k">' + esc(row[0]) + "</div>" +
+          '<div class="v">' + esc(row[1]) + "</div>" +
+          '<div class="why">' + esc(row[2]) + "</div></div>"
+        );
+      }).join("");
+
+      document.getElementById("links").innerHTML = (body.desk_links || []).map(function (l) {
+        return '<a href="' + esc(l.href) + '"><strong>' + esc(l.label) + "</strong>" +
+          '<div class="note">' + esc(l.note || "") + "</div></a>";
+      }).join("");
+
+      document.body.setAttribute("data-ready", body.ok === true ? "1" : "0");
+      document.body.setAttribute(
+        "data-invented-urgency",
+        body.invented_urgency === true ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-fake-urgency",
+        body.fake_urgency === true ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-empty-honest",
+        body.padded_empty === false ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-unknown-honest",
+        body.unknown_coerced_to_empty === false ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-mywork-preserved",
+        body.mywork_prove1_preserved === true ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-dash-live-preserved",
+        body.dash_live1_preserved === true ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-cap-proven",
+        body.cap_core_needs_you_proven === true ? "1" : "0"
+      );
+      document.body.setAttribute("data-staff-ready", body.staff_ready === true ? "1" : "0");
+      document.body.setAttribute(
+        "data-human-commissioned",
+        body.human_commissioned === true ? "1" : "0"
+      );
+    }
+
+    fetch("/api/owner/needs-you-1", { headers: { "Accept": "application/json" } })
+      .then(function (r) {
+        return r.json().then(function (j) { return { status: r.status, body: j }; });
+      })
+      .then(function (res) {
+        if (res.status === 403 || res.status === 401) {
+          document.body.setAttribute("data-deny", String(res.status));
+          document.getElementById("honesty").className = "banner warn";
+          document.getElementById("honesty").textContent =
+            "Denied (" + res.status + "). Sign in required. staff_ready=false · human_commissioned=false.";
+          return;
+        }
+        if (!res.body || res.body.ok !== true) {
+          document.getElementById("honesty").className = "banner warn";
+          document.getElementById("honesty").textContent =
+            "Needs-You prove unavailable. staff_ready=false · human_commissioned=false.";
+          return;
+        }
+        render(res.body);
+      })
+      .catch(function () {
+        document.getElementById("honesty").className = "banner warn";
+        document.getElementById("honesty").textContent =
+          "Fetch failed. staff_ready=false · human_commissioned=false.";
+      });
+  </script>
+</body>
+</html>

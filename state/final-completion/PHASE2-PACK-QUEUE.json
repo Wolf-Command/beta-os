@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T02:25:00+08:00",
+  "at_wita": "2026-09-30T02:37:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -621,9 +621,19 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "synthesized_from": "wave3",
-      "armed_at": "2026-09-30T02:25:00+08:00"
+      "armed_at": "2026-09-30T02:25:00+08:00",
+      "cursor_pid": 25469,
+      "launched_at": "2026-09-30T02:25:30+08:00",
+      "exited_at": "2026-09-30T02:30:48+08:00",
+      "result_file": "docs/wolf/ops/OWNER-NEEDS-YOU-1-RESULT.md",
+      "tests": {
+        "pass": 195,
+        "fail": 0
+      },
+      "cursor_did_not_auto_start_next": true,
+      "verified_at": "2026-09-30T02:37:00+08:00"
     },
     {
       "pack_id": "ESB-TRUTH-1",
@@ -650,8 +660,9 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
-      "synthesized_from": "wave3"
+      "status": "WAITING_CURSOR",
+      "synthesized_from": "wave3",
+      "armed_at": "2026-09-30T02:37:00+08:00"
     },
     {
       "pack_id": "BACKUP-HEALTH-1",
