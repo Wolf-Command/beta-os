@@ -166,6 +166,7 @@ from core import bzg_outlet_registry as _bzg_outlets
 from core import v1_status_register as _v1_status
 from core import intg_truth_board as _intg_truth
 from core import amg_os_shell as _amg_os_shell
+from core import ggv_content_prove1 as _ggv_content_prove
 from core import crm_identity_memory as _crm_ident
 from core import crm_identity_operator_depth as _crm_ident_depth
 from core import bzg_reputation_observe as _bzg_rep
@@ -2004,6 +2005,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._amg_os_shell_dispatch():
+            return
+
+        if self._ggv_content_prove_dispatch():
             return
 
         if path == "/api/wolf/shell-whoami":
@@ -5034,6 +5038,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/dashboards/amg-os-shell.html",
         ):
             if self._amg_os_shell_dispatch():
+                return
+        elif path in (
+            "/ggv/content-prove",
+            "/ggv/content-prove/",
+            "/ggv-content-prove",
+            "/ggv-content-prove/",
+            "/ggv-content-prove.html",
+            "/dashboards/ggv-content-prove.html",
+        ):
+            if self._ggv_content_prove_dispatch():
                 return
         elif path in (
             "/bzg/outlets",
@@ -15037,6 +15051,55 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return True
         self._send_html_shell(page.read_bytes(), rel="amg-os-shell.html")
+        return True
+
+    def _ggv_content_prove_dispatch(self) -> bool:
+        """GGV-CONTENT-PROVE-1 — Content Machine prove/harden; no fake metrics."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _ggv_content_prove.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _ggv_content_prove.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "prove_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "live_adoption": False,
+                        "fake_metrics": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _ggv_content_prove.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "ggv-content-prove.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "GGV Content Prove page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="ggv-content-prove.html")
         return True
 
     def _bzg_outlets_dispatch(self) -> bool:

@@ -1,0 +1,67 @@
+{
+  "pack": "GGV-CONTENT-PROVE-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T00:48:41+08:00",
+  "verifier": "Peaches-executor",
+  "exit_code": 0,
+  "result_file": "docs/wolf/ops/GGV-CONTENT-PROVE-1-RESULT.md",
+  "tests_rerun": {
+    "test_ggv_content_prove1_20260930.py": {
+      "pass": 106,
+      "fail": 0
+    }
+  },
+  "related_reruns_noted": {
+    "strategy": "238/0",
+    "social": "104/0",
+    "ops_pack": "97/0",
+    "cap_ggv_01": "preexisting_fail_1",
+    "ops_depth": "preexisting_haikal_fixture"
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/ggvcontentprove1-desk-desktop.png",
+        "bytes": 194282,
+        "sha256": "ace32a0f99d8d83289532c1302ff69f98b45aed02545974120ab16c4ae7a6230"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ggvcontentprove1-desk-phone.png",
+        "bytes": 150894,
+        "sha256": "408af9787867dc7b98d81a4f67901c013825568ad8a9afdd57236af2375c6022"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ggvcontentprove1-metricool-not-runtime.png",
+        "bytes": 194146,
+        "sha256": "ef2d742cbff8cf48f56c33a8092d47f9bafafa7d865f04032d470010aaf54e73"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ggvcontentprove1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      }
+    ],
+    "eye_check": {
+      "desk_desktop": "PASS \u2014 Metricool NOT_RUNTIME, publish UNKNOWN, live_adoption=false, flags false"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "no_push": true,
+  "no_fake_ops_data": true,
+  "beta_only": true,
+  "next_pack": "CRM-IDENTITY-1"
+}

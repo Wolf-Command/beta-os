@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T00:41:00+08:00",
+  "at_wita": "2026-09-30T00:48:41+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -240,7 +240,11 @@
       "estimated_effort": "M",
       "matt_blocker": false,
       "synthesized_from": "remaining MISSING/PARTIAL after queue head",
-      "status": "NEXT_TO_ARM"
+      "status": "PASS_VERIFIED",
+      "exited_at": "2026-09-30T00:46:20+08:00",
+      "tests_pass": 106,
+      "tests_fail": 0,
+      "verified_at": "2026-09-30T00:48:41+08:00"
     },
     {
       "pack_id": "CRM-IDENTITY-1",
@@ -267,7 +271,8 @@
       ],
       "estimated_effort": "L",
       "matt_blocker": false,
-      "synthesized_from": "CAP-CRM-02 MISSING"
+      "synthesized_from": "CAP-CRM-02 MISSING",
+      "status": "NEXT_TO_ARM"
     },
     {
       "pack_id": "FIN-INTERCO-1",
@@ -320,9 +325,158 @@
       "estimated_effort": "M",
       "matt_blocker": false,
       "synthesized_from": "CAP-INTEL-05"
+    },
+    {
+      "pack_id": "BZG-OPS-DESK-1",
+      "title": "BZG ops desk live surface harden (outlets+venue-pnl+foundations honesty)",
+      "closes": [
+        "CAP-BZG-02",
+        "IL-R5"
+      ],
+      "targets_classes": [
+        "PARTIAL",
+        "BUILT_NOT_PROVEN"
+      ],
+      "priority_bucket": "bzg_ops",
+      "why": "Outlet/venue packs landed; unify ops desk without fake sales",
+      "scope": [
+        "Single BZG ops desk linking outlets/venue-pnl/foundations",
+        "Honesty UNKNOWN where facts missing"
+      ],
+      "forbids": [
+        "fake sales",
+        "staff_ready true"
+      ],
+      "depends_on": [
+        "BZG-VENUEPL-1",
+        "BZG-XOUTLET-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "synthesized_from": "MISSING/PARTIAL priority buckets",
+      "status": "QUEUED"
+    },
+    {
+      "pack_id": "FIN-RECON-SHELL-1",
+      "title": "Finance reconciliation loop shell (bank file-import only, no payment write)",
+      "closes": [
+        "CAP-FIN-08",
+        "INT-BANK"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "PARTIAL"
+      ],
+      "priority_bucket": "finance_loops",
+      "why": "INTG marks bank FILE_IMPORT_ONLY; build recon shell without inventing statements",
+      "scope": [
+        "Beta recon queue UI for imported statement stubs",
+        "last_success null honesty"
+      ],
+      "forbids": [
+        "fake bank feed",
+        "payment write",
+        "prod mutate"
+      ],
+      "depends_on": [
+        "INTG-TRUTH-1",
+        "FC-SHELL-2"
+      ],
+      "estimated_effort": "L",
+      "matt_blocker": false,
+      "synthesized_from": "MISSING/PARTIAL priority buckets",
+      "status": "QUEUED"
+    },
+    {
+      "pack_id": "DASH-LIVE-1",
+      "title": "Owner/War-Room dashboards live-data honesty pass",
+      "closes": [
+        "MB-004",
+        "CAP-CORE-12"
+      ],
+      "targets_classes": [
+        "PARTIAL",
+        "BUILT_NOT_PROVEN"
+      ],
+      "priority_bucket": "dashboards_live",
+      "why": "Dashboards exist; prove live vs stale stamps without fake KPIs",
+      "scope": [
+        "Freshness/stale badges on Owner + War Room",
+        "No invented KPI numbers"
+      ],
+      "forbids": [
+        "fake KPIs",
+        "staff_ready true"
+      ],
+      "depends_on": [
+        "MYWORK-PROVE-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "synthesized_from": "MISSING/PARTIAL priority buckets",
+      "status": "QUEUED"
+    },
+    {
+      "pack_id": "RELIABILITY-1",
+      "title": "Beta health/reliability board (listeners, sidecar, prod RO probe)",
+      "closes": [
+        "IL-R8",
+        "MasterSpec reliability"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "PARTIAL"
+      ],
+      "priority_bucket": "reliability",
+      "why": "Sidecar flaky; surface health honestly for Beta ops",
+      "scope": [
+        "/ops/reliability board: 8788/8790/15975 RO status",
+        "Never mutate prod"
+      ],
+      "forbids": [
+        "prod mutate",
+        "fake uptime"
+      ],
+      "depends_on": [
+        "INTG-TRUTH-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "synthesized_from": "MISSING/PARTIAL priority buckets",
+      "status": "QUEUED"
+    },
+    {
+      "pack_id": "CONTENT-ENGINE-LIVE-1",
+      "title": "Content Engine live-data path (storage truth, no fake Metricool success)",
+      "closes": [
+        "CAP-GGV-01",
+        "MB content"
+      ],
+      "targets_classes": [
+        "PARTIAL",
+        "BUILT_NOT_PROVEN"
+      ],
+      "priority_bucket": "content_engine",
+      "why": "After GGV-CONTENT-PROVE; wire live library/NAS honesty without inventing engagement",
+      "scope": [
+        "Prove content library paths + publish queue honesty",
+        "Metricool NOT_RUNTIME stamp"
+      ],
+      "forbids": [
+        "fake engagement",
+        "auto-publish claim"
+      ],
+      "depends_on": [
+        "GGV-CONTENT-PROVE-1",
+        "INTG-TRUTH-1"
+      ],
+      "estimated_effort": "L",
+      "matt_blocker": false,
+      "synthesized_from": "MISSING/PARTIAL priority buckets",
+      "status": "QUEUED"
     }
   ],
-  "first_pack": "GGV-CONTENT-PROVE-1",
+  "first_pack": "CRM-IDENTITY-1",
   "hr_deferred_not_in_queue": true,
   "blocked_external_not_auto_solved": [
     "MB-008",
@@ -342,11 +496,21 @@
     "SOP-FACTORY-1",
     "MYWORK-PROVE-1",
     "INTG-TRUTH-1",
-    "AMG-OS-SHELL-1"
+    "AMG-OS-SHELL-1",
+    "GGV-CONTENT-PROVE-1"
   ],
   "exited_awaiting_peaches": [
     "BZG-VENUEPL-1"
   ],
   "synthesized_after_queue_head": true,
-  "synthesis_note": "Appended after INTG-TRUTH-1 PASS; do not reorder ahead of AMG-OS-SHELL-1"
+  "synthesis_note": "Appended after INTG-TRUTH-1 PASS; do not reorder ahead of AMG-OS-SHELL-1",
+  "priority_bucket_counts": {
+    "content_engine": 14,
+    "finance_loops": 90,
+    "bzg_ops": 55,
+    "dashboards_live": 27,
+    "connections": 28,
+    "reliability": 40
+  },
+  "synthesis_wave2_at": "2026-09-30T00:45:44+08:00"
 }
