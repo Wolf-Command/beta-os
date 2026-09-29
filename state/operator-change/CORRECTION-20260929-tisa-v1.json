@@ -1,0 +1,71 @@
+{
+  "kind": "OWNER_CORRECTION",
+  "at_wita": "2026-09-29T20:48:00+08:00",
+  "written_at_wita": "2026-09-29T20:54:35+08:00",
+  "from": "Matthew",
+  "via": "Peaches",
+  "subject": "Tisa HR activity is V1 (current HR OS), not Beta/Wolf",
+  "date_report": "2026-09-29",
+  "evidence_sources": [
+    "/Users/wolfterminal/.openclaw/workspace/wolf-system/state/operator-change-journal.jsonl",
+    "/Users/wolfterminal/.openclaw/workspace/wolf-system/state/hr-edit-journal.jsonl"
+  ],
+  "tisa": {
+    "operator": "Tisa",
+    "who_journal": "hr@atriumlombok.com",
+    "board": "hr",
+    "edits": 132,
+    "actions": {
+      "set_field": 115,
+      "add_employee": 17
+    },
+    "new_bzg_staff_ids": [
+      "BZG26090006",
+      "BZG26090007",
+      "BZG26090008",
+      "BZG26090009",
+      "BZG26090010",
+      "BZG26090011",
+      "BZG26090012",
+      "BZG26090013",
+      "BZG26090014",
+      "BZG26090015",
+      "BZG26090016",
+      "BZG26090017",
+      "BZG26090018",
+      "BZG26090019",
+      "BZG26090020",
+      "BZG26090021",
+      "BZG26090022"
+    ],
+    "new_bzg_staff_count": 17,
+    "new_bzg_staff_range": "BZG26090006→BZG26090022",
+    "source_system": "V1",
+    "source_label": "current HR OS (wolf-system HR board / V1)",
+    "authoritative": true,
+    "names": "NOT_INVENTED — report IDs only; do not invent staff names",
+    "not_counted_as": [
+      "BETA_ACTIVITY",
+      "WOLF_ADOPTION",
+      "STAFF_READY",
+      "HUMAN_COMMISSIONING",
+      "OPERATING_ADOPTION"
+    ],
+    "local_sync_ids_without_names": {
+      "rule": "retrieval_sync_gap_not_incomplete_tisa_records",
+      "note": "Do NOT treat local sync IDs-without-names as incomplete Tisa records. V1 is authoritative."
+    },
+    "preserve_as": "V1 operational history / future HR migration source data"
+  },
+  "hr_scope": {
+    "status": "OUTSIDE current migration/commissioning",
+    "until": "Owner explicitly moves HR into scope",
+    "commissioning_marked": false
+  },
+  "hr_migration_cut_line": {
+    "note": "When Owner moves HR into migration: reconcile latest V1 at cut line so interim V1 changes are not lost."
+  },
+  "taxonomy": "V1 ACTIVITY ≠ BETA ACTIVITY ≠ HUMAN COMMISSIONING ≠ OPERATING ADOPTION",
+  "corrected_operator_line_29sep": "Tisa (HR / SOURCE=V1): 132 edits (115 set_field + 17 add_employee). New BZG staff IDs BZG26090006→BZG26090022 (17). V1 ops history only. NOT Beta activity, NOT Wolf adoption, NOT staff_ready, NOT human_commissioning, NOT operating adoption. Local sync IDs-without-names = retrieval gap; V1 authoritative.",
+  "no_push_prod": true
+}

@@ -1,0 +1,28 @@
+{
+  "as_of": "2026-09-29T20:50:57+08:00",
+  "counts": {
+    "people_capabilities": 50,
+    "awaiting_verify": 0,
+    "fails_without_repair": 0,
+    "repairs_fixed_without_retest": 0
+  },
+  "awaiting_verify": [],
+  "fails_without_repair": [],
+  "repairs_fixed_without_retest": [],
+  "staff_ready": false,
+  "human_commissioned": false,
+  "standing": {
+    "haikal_fail_retest_open": 4,
+    "zayen_fail_retest_open": 8,
+    "engineering_repairs_present": 12,
+    "sod_opened_idle": {
+      "zayen_sod": 5,
+      "zenitalfathan_ap": 2
+    },
+    "devi_uma_today_opened_idle": true
+  },
+  "delta_vs_prior": "none",
+  "prior_as_of": "2026-09-29T19:47:14+08:00",
+  "action": "silent_no_change",
+  "refreshed_at": "2026-09-29T20:51:08+08:00"
+}

@@ -112,17 +112,12 @@ def _grant(conn: sqlite3.Connection, role_id: str, code: str, ts: str) -> None:
 
 
 def grant_fc_approve(conn: sqlite3.Connection) -> dict:
-    """Grant approve + reject to Financial Controller only. Post stays deleted."""
+    """Grant approve + reject to Financial Controller. Post left to ATRIUM-SOD-1."""
     ts = _ts()
     for perm in (FC_APPROVE_PERM, FC_REJECT_PERM):
         _ensure_permission(conn, *perm, ts)
         _grant(conn, ROLE_ATRIUM_FINANCIAL_CONTROLLER, perm[1], ts)
-    # Keep post held back for FC.
-    post_id = "PERM-ATRIUM-JOURNAL-POST"
-    conn.execute(
-        "DELETE FROM org_role_permissions WHERE role_id=? AND permission_id=?",
-        (ROLE_ATRIUM_FINANCIAL_CONTROLLER, post_id),
-    )
+    # ATRIUM-SOD-1 owns FC post grant — do not strip it here.
     # Ensure base ATRIUM_GRANTS remain.
     for _pid, code, *_rest in ATRIUM_GRANTS:
         _grant(conn, ROLE_ATRIUM_FINANCIAL_CONTROLLER, code, ts)
@@ -130,7 +125,7 @@ def grant_fc_approve(conn: sqlite3.Connection) -> dict:
     return {
         "role": ROLE_ATRIUM_FINANCIAL_CONTROLLER,
         "granted": [FC_APPROVE_PERM[1], FC_REJECT_PERM[1]],
-        "held_post": True,
+        "held_post": False,
     }
 
 

@@ -1,0 +1,64 @@
+{
+  "kind": "OPERATOR_CHANGE_DAILY_REPORT",
+  "date": "2026-09-29",
+  "timezone": "Asia/Makassar",
+  "corrected_at_wita": "2026-09-29T20:54:35+08:00",
+  "correction_ref": "state/operator-change/CORRECTION-20260929-tisa-v1.json",
+  "classification_rule": "state/operator-change/SOURCE-TAXONOMY.json",
+  "window": "2026-09-29 calendar day (journal board=hr); Owner correction applied ~20:48 WITA",
+  "sections": {
+    "tisa_hr": {
+      "source_system": "V1",
+      "source_class": "V1_ACTIVITY",
+      "counts_toward": [
+        "V1_OPERATIONAL_HISTORY",
+        "FUTURE_HR_MIGRATION_SOURCE"
+      ],
+      "does_not_count_toward": [
+        "BETA_ACTIVITY",
+        "WOLF_ADOPTION",
+        "STAFF_READY",
+        "HUMAN_COMMISSIONING",
+        "OPERATING_ADOPTION"
+      ],
+      "edits": 132,
+      "set_field": 115,
+      "add_employee": 17,
+      "new_staff_ids": [
+        "BZG26090006",
+        "BZG26090007",
+        "BZG26090008",
+        "BZG26090009",
+        "BZG26090010",
+        "BZG26090011",
+        "BZG26090012",
+        "BZG26090013",
+        "BZG26090014",
+        "BZG26090015",
+        "BZG26090016",
+        "BZG26090017",
+        "BZG26090018",
+        "BZG26090019",
+        "BZG26090020",
+        "BZG26090021",
+        "BZG26090022"
+      ],
+      "names_invented": false,
+      "line": "Tisa (HR / SOURCE=V1): 132 edits + 17 new BZG staff (BZG26090006→BZG26090022). V1 ops history only. Not Beta / Wolf adoption / staff_ready / human_commissioning / operating adoption.",
+      "sync_note": "IDs-without-names in local sync = retrieval/sync incompleteness, not incomplete Tisa records. V1 authoritative."
+    },
+    "hr_migration_scope": {
+      "in_current_migration_commissioning_scope": false,
+      "future_cut_line": "Reconcile latest V1 at cut so interim changes are not lost."
+    },
+    "commissioning": {
+      "any_marked": false,
+      "note": "No commissioning marked by this correction."
+    }
+  },
+  "prior_misclassification_to_avoid": [
+    "Do not classify Tisa V1 HR board edits as Beta activity",
+    "Do not count as Wolf adoption / staff_ready / human_commissioning / operating adoption",
+    "Do not treat sync ID-only rows as incomplete Tisa work"
+  ]
+}

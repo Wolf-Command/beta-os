@@ -1,0 +1,15 @@
+{
+  "at_wita": "2026-09-29T23:33:17+08:00",
+  "status": "SUPERSEDED_BY_FINAL_WOLF_COMPLETION_MISSION",
+  "prior_status": "EXIT_GATE_LOCKED",
+  "FINAL_WOLF_COMPLETION_MISSION": true,
+  "exit_gate_locked": false,
+  "post_sprint_major_arm": "ALLOW_FINAL_COMPLETION_PACKS_ONLY",
+  "prior_exit_report": "docs/wolf/ops/WOLF-COMMAND-REBUILD-COMPLETION-EXIT-REPORT-20260929.md",
+  "prior_exit_report_status": "SUPERSEDED_NOT_FINAL",
+  "new_exit_report_allowed": false,
+  "exit_report_gate": "PHASE_13_ONLY",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "note": "Matt 2026-09-29 ~23:25 WITA \u2014 prior Rebuild Exit Report SUPERSEDED. Factory unlocked for FINAL COMPLETION packs only."
+}

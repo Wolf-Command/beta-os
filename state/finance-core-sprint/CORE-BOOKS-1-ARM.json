@@ -64,7 +64,7 @@
   "human_commissioned": false,
   "prod_mutate": false,
   "pack": "CORE-BOOKS-1",
-  "status": "PASS_VERIFIED",
+  "status": "DONE_ENGINEERING_PASS",
   "exit_code": 0,
   "exited_at_wita": "2026-09-29T22:20:08+0800",
   "result": "docs/wolf/ops/CORE-BOOKS-1-RESULT.md",
@@ -74,6 +74,9 @@
     "HEADCHEF"
   ],
   "verified_at_wita": "2026-09-29T22:23:32+08:00",
-  "updated_at_wita": "2026-09-29T22:23:32+08:00",
-  "alive": false
+  "updated_at_wita": "2026-09-29T22:26:14.588825+08:00",
+  "alive": false,
+  "matt_finished_ping": true,
+  "matt_finished_ping_at": "2026-09-29T22:26:14.588825+08:00",
+  "next_in_flight": "BZG-XOUTLET-1"
 }

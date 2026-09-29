@@ -1,0 +1,1 @@
+[Matt relay 29 Sep 11:14 WITA] (1) General Ledger becomes blank when opened; (2) could not approve a journal entry; says his access/roles need fixing. evidence_pending: zayen-screenshots-via-matt

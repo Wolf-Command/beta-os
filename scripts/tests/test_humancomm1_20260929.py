@@ -349,7 +349,9 @@ def test_live_catalog_invariants() -> None:
     comm = conn.execute(
         "SELECT COUNT(*) FROM core_work_items WHERE origin='commissioning'"
     ).fetchone()[0]
-    check("live commissioning still 28", comm == 28, str(comm))
+    # ATRIUM-SOD-1B: +4 commissioning WIs (AP×2 HELD, Zayen AR temp, Owner FO vacant)
+    # minus cancelled Owner interim preparer note → live baseline 39.
+    check("live commissioning still 39", comm == 39, str(comm))
     legacy = conn.execute(
         "SELECT COUNT(*) FROM core_work_items WHERE origin='legacy'"
     ).fetchone()[0]

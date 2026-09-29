@@ -212,6 +212,6 @@ The first phone chart broke "1000" and "Posting" in the middle of the word, and 
 
 ## Deployed route
 
-The listener pid is recorded after this commit, once Beta has been restarted from the commit. Unsigned `GET /amg/finance/accounts`, `/amg/finance/journals`, and `/amg/finance/reports` are checked on that process. Auth mode is not switched.
+Proof commit `d9029f6` at 15:19:16. Beta listener pid 81793, started Mon Sep 28 15:19:26 2026, `scripts/serve_beta.py`, port 8788. That start is after `d9029f6`. This pid line is left in the working tree so the commit time stays before the start. Production pid 15975 on 8787 was still that process. Live Beta stayed `cloudflare_access` (no `BETA_AUTH_MODE` in the process environment). Auth mode was not switched. `GET /api/health` is 200. Unsigned `GET /amg/finance/accounts`, `/amg/finance/journals`, and `/amg/finance/reports` are 403 HTML Access denied.
 
 RESULT: PASS

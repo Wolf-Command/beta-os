@@ -313,12 +313,16 @@ def workspace(person_id: str, conn) -> dict[str, Any]:
             "empty_message": APPROVAL_EMPTY,
             "controller": CONTROLLER_LINE,
         },
-        "books_opened": False,
+        "books_opened": True,
+        "books_enabled": True,
+        "shell_kind": "live",
+        "db_file": "atrium.sqlite",
         "journal_saved": False,
         "posted": False,
         "money_movement": False,
         "staff_ready": False,
         "human_commissioned": False,
+        "pack": "CORE-BOOKS-1",
     }
 
 

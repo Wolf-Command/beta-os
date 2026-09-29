@@ -178,7 +178,9 @@ def test_live_store_clean() -> None:
     check("no STALE probe on live", probes == 0, str(probes))
     check("no Chain view shot on live", chain == 0, str(chain))
     check("legacy untouched 148", legacy == 148, str(legacy))
-    check("commissioning untouched 28", comm == 28, str(comm))
+    # ATRIUM-SOD-1 added 6 commissioning WIs (Zayen RETEST×4 + Owner vacant + finding); baseline 28→34.
+    # Live count: HEADCHEF held + ATRIUM-SOD-1B AP/AR seats → 39.
+    check("commissioning untouched 39", comm == 39, str(comm))
     blobs = ROOT / "state" / "work-evidence" / "blobs"
     live_ids = {
         str(r[0])

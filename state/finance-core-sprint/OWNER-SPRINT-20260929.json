@@ -1,0 +1,18 @@
+{
+  "updated_at": "2026-09-29T22:41:30+08:00",
+  "active_pack": "V1-SWEEP-1",
+  "accepted_beta_engineering": [
+    "CORE-ENT-1",
+    "BZG-OUTLET-1",
+    "CORE-BOOKS-1",
+    "BZG-XOUTLET-1"
+  ],
+  "last_finished": "V1-SWEEP-1",
+  "last_finished_at": "2026-09-29T22:41:30+08:00",
+  "next": [
+    "FULL_VERIFY",
+    "REBUILD_EXIT_REPORT_ONLY"
+  ],
+  "cursor_did_not_auto_start_exit_report": true,
+  "owner_addendum": "After Finance Core + BZG multi-outlet + non-HR V1 retirement finishes: do NOT chain another major feature pack. Next = Rebuild Completion & Exit Report only."
+}

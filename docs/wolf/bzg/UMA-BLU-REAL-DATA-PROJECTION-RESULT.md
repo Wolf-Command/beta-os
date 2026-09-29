@@ -17,7 +17,7 @@ BZG seats only. GGV and Atrium Finance seats receive 403. The three example purc
 | Suppliers | 103 | `/bzg/uma-blu/purchasing` |
 | Purchase orders | 504 | `/bzg/uma-blu/purchasing` |
 | Receipt lines | 452 | `/bzg/uma-blu/purchasing` |
-| Local evidence jpgs | 450 | `/bzg/uma-blu/notas/<filename>` |
+| Local evidence jpgs | 451 | `/bzg/uma-blu/notas/<filename>` |
 | ESB bills | 8,762 (2026-04-05 through 2026-09-27) | `/bzg/uma-blu/sales` |
 | Menu map | 49 confirmed exact-name, 0 ambiguous, 139 ESB items with no recipe, 78 recipes with no ESB item | `/bzg/uma-blu/menu-map` |
 | Theoretical consumption | labelled THEORETICAL; 27 Sep has 61 finished BLZ bills | `/bzg/uma-blu/menu-map` |
@@ -60,7 +60,7 @@ The register is `docs/wolf/bzg/UMA-BLU-DATA-SOURCE-REGISTER.md` and `state/bzg/d
 ## 3. CONFLICTS DISCOVERED
 
 - Supplier name `bake house` is stored twice (`suppliers` 5 and 90).
-- The notas directory has 450 jpg files: 2 named `nota_`, 373 `petty_`, 75 `topup_`. BZGRECON-1 counted 448 jpg. This session counted 450. Petty and top-up photos are in the same folder as the two nota files.
+- The notas directory has 451 jpg files: 2 named `nota_`, 373 `petty_`, 75 `topup_`. BZGRECON-1 counted 448 jpg. This session counted 451. Petty and top-up photos are in the same folder as the two nota files.
 - `deliveries` is 0 and `delivery_lines` is 0 while 452 receipt lines and 450 photos exist. `ledger.delivery_id` does not join a delivery row.
 - `item_prices` is 0 and `unit_map` is 0. `recipe_lines.subrecipe_id` is 0. `recipe_compare` is 0. `recipes.esb_menu` is empty on every dish, so there is no stored menu link. The 49 mapped dishes are exact normalised names only.
 - 126 recipe lines have a null `cost_source` and a null `unit_cost`. Card costs exist on 628 lines. Two lines are `manual`.

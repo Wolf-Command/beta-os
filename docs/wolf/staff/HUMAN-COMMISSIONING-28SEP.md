@@ -75,3 +75,17 @@ Zayen Atrium Finance Officer — RETEST #2 PENDING. FAIL #1 13:18 raw JSON on / 
 - FAIL #1 (13:18, raw JSON on `/`) and its repair ZAYENFIX-1 (`ff60204`) stay on record. Routing repair worked: Zayen reached `/amg/finance`.
 - FAIL #2: `/amg/finance` renders an engineering placeholder, not a staff finance workspace. Evidence is Zayen's screenshot, supplied by Matt in chat on 28 Sep 14:16 (image not stored on disk). The visible text includes "Hotel books are not open on this desk.", "No report figure is on this page.", "Do not type an amount." and "You cannot approve a payment…".
 - Repair ATRIUMFIN-UX-1 is on the desk. ATRIUMFIN-UX-2 adds the ledger, the chart, draft journals, and the statement list. Status: staff_ready=false, human_commissioned=false. Retest #2 is PENDING.
+
+## Haikal — Library human test (reported by Matt 28 Sep 2026 16:17 WITA)
+Original feedback, preserved verbatim-in-substance:
+- Library search is working.
+- He found the Atrium footage he needed.
+- He successfully downloaded footage for an Atrium video.
+RESULT: PASS for those three tested Library functions ONLY (search, find Atrium footage, download). Untested Library functions are NOT commissioned.
+Improvement request (Haikal): search results rely on Prev/Next only. Wants numbered pagination (e.g. "15,561 indexed files match · Showing 48 on this page" / PREV · 1 · 2 · 3 · … · NEXT). Tracked as LIBPAGE-1. This record is evidence and must not be overwritten by the fix.
+
+## Zayen — HUMAN RETEST #2 (reported by Matt 28 Sep 2026 16:18 WITA)
+- Routing: PASS. laluzayen@gmail.com signs in and reaches /amg/finance. FAIL #1 raw-JSON defect is fixed.
+- Atrium Finance human commissioning: FAIL. Zayen says the board is not the Atrium Finance system he expected: a very small surface with basic tabs and an approval area (UX-1/2/3, head d9029f6). He supplied a reference screenshot of the fuller operating dashboard and says his GitHub repo holds that implementation.
+- staff_ready=false, human_commissioned=false. FAIL #1, FAIL #2 and this retest stay in history.
+- Next: ATRIUMFIN-RECON-1 (reconciliation only, no build).

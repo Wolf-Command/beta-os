@@ -33,4 +33,4 @@ Screenshots, Haikal subject, ephemeral handler, `development_assertion` on that 
 
 Phone measure: scroll width 390, client width 390, page button height 44. The harness answers preview image requests with a stand-in JPEG so the shot does not read the NAS. The counts and page numbers come from the index. Live `:8788` auth mode was not changed.
 
-The listener pid and start time are recorded after the commit, in the working copy of this file, so the commit stays earlier than the process start.
+Commit `e14f55d` at 16:55:31 +0800. Beta listener pid 90435, started Mon Sep 28 16:55:49 2026, `scripts/serve_beta.py`, port 8788. That start is after `e14f55d`. This pid line is in the working tree so the commit time stays before the start. The previous listener was pid 81793. Production pid 15975 on 8787 was still that process. Live Beta has no `BETA_AUTH_MODE` in the process environment. Auth mode was not switched. `GET /api/health` is 200. Unsigned `GET /content-2.0`, `/api/assets?brand=atrium&page=1`, and `/api/assets?brand=atrium&page=3&limit=48` are 403.

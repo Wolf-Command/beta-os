@@ -16,9 +16,6 @@ PAGE_PATHS = frozenset(
     {
         "/bzg/finance",
         "/bzg/finance/",
-        "/bzg-finance",
-        "/bzg-finance.html",
-        "/dashboards/bzg-finance.html",
     }
 )
 HONESTY = {

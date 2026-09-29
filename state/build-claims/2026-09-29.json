@@ -45,9 +45,9 @@
     },
     {
       "id": "humancomm1-legacy-routing",
-      "claim": "Legacy NEEDS_ROUTING queue exists with null owners; commissioning count stays 28.",
-      "check": "PYTHONPATH=scripts python3 -c \"import sqlite3; c=sqlite3.connect('catalog/content_library.sqlite'); n=c.execute(\\\"select count(*) from core_work_items where origin='legacy' and routing_state='NEEDS_ROUTING'\\\").fetchone()[0]; m=c.execute(\\\"select count(*) from core_work_items where origin='commissioning'\\\").fetchone()[0]; import sys; sys.exit(0 if n>=1 and m==28 else 1)\"",
-      "expect": "exit 0",
+      "claim": "Legacy NEEDS_ROUTING queue exists with null owners; commissioning items include HEADCHEF-1 held WI.",
+      "check": "PYTHONPATH=scripts python3 -c \"import sqlite3; c=sqlite3.connect('catalog/content_library.sqlite'); n=c.execute(\\\"select count(*) from core_work_items where origin='legacy' and routing_state='NEEDS_ROUTING'\\\").fetchone()[0]; m=c.execute(\\\"select count(*) from core_work_items where origin='commissioning'\\\").fetchone()[0]; h=c.execute(\\\"select count(*) from core_work_items where commissioning_capability_id='COMM-HARIYANTO-RECIPE-BUILDER' and routing_state='HELD_UNTIL_CF_ACCESS'\\\").fetchone()[0]; import sys; sys.exit(0 if n>=1 and m>=28 and h==1 else 1)\"",
+      "expect": "exit 0; commissioning>=28; Hariyanto HELD=1",
       "by": "humancomm1-20260929"
     },
     {
@@ -71,6 +71,65 @@
       "check": "PYTHONPATH=scripts python3 scripts/tests/test_humfix1c_20260929.py",
       "expect": "SUMMARY pass=51 fail=0",
       "by": "composer"
+    },
+    {
+      "id": "headchef1-20260929",
+      "claim": "PERS-HARIYANTO Head Chef has recipe.* allow and payment/owner/finance deny; Recipe Builder serves real V1 recipes with cost-missing honesty; commissioning WI HELD_UNTIL_CF_ACCESS; Maciej auth-only 403; staff_ready false.",
+      "check": "PYTHONPATH=scripts python3 scripts/tests/run_guarded.py scripts/tests/test_headchef1_20260929.py 2>&1 | tail -1 | grep -q 'RESULT: PASS'",
+      "expect": "SUMMARY pass=92 fail=0; RESULT: PASS",
+      "by": "headchef1-20260929"
+    },
+    {
+      "id": "atriumsod1b-20260929",
+      "claim": "ATRIUM-SOD-1B: FO vacant; AP PERS-ZENITALFATHAN zenitalfathan@gmail.com ACTIVE; Zayen FC+temp AR; SoD preparer_person_id blocks self approve/post; JRN-ATRIUMSOD1B-COMM1 POSTED wolf_created by AP; staff_ready/human_commissioned false; prod 15975 untouched.",
+      "check": "PYTHONPATH=scripts python3 scripts/tests/test_atrium_sod1_20260929.py 2>&1 | tail -1 | grep -q 'fail=0' && python3 -c \"import sqlite3; c=sqlite3.connect('/Users/wolfterminal/atrium-finance/data/beta/atrium.sqlite'); r=c.execute(\\\"select status,preparer_person_id,wolf_created from journal_headers where journal_id='JRN-ATRIUMSOD1B-COMM1'\\\").fetchone(); import sys; sys.exit(0 if r and r[0]=='POSTED' and r[1]=='PERS-ZENITALFATHAN' and r[2]==1 else 1)\"",
+      "expect": "SUMMARY pass=69 fail=0; COMM1 POSTED by AP; FO vacant",
+      "by": "atriumsod1b-20260929"
+    },
+    {
+      "id": "atriumsod1c-20260929",
+      "claim": "ATRIUM-SOD-1C: CF confirmed zenitalfathan@gmail.com; AP COMM-AP-SOD-* active (not HELD); shots distinct (SoD self-deny vs review; GL 1020 posted vs 1000 empty history; Zayen My Work SOD plain-language cards); COMM1 POSTED; staff_ready/human_commissioned false; not commissioned; prod 15975 untouched.",
+      "check": "PYTHONPATH=scripts python3 scripts/tests/test_atrium_sod1_20260929.py 2>&1 | tail -1 | grep -q 'fail=0' && python3 -c \"import hashlib,pathlib,sqlite3,sys; r=pathlib.Path('docs/wolf/ops/shots'); h=lambda p: hashlib.md5((r/p).read_bytes()).hexdigest(); assert h('atriumsod1-sod-self-deny-desktop.png')!=h('atriumsod1-zayen-review-desktop.png'); assert h('atriumsod1-zayen-posted-gl-desktop.png')!=h('atriumsod1-gl-history-desktop.png'); c=sqlite3.connect('catalog/content_library.sqlite'); n=c.execute(\\\"select count(*) from core_work_items where commissioning_capability_id in ('COMM-AP-SOD-PREPARE','COMM-AP-SOD-SUBMIT') and status='OPEN' and coalesce(routing_state,'')=''\\\").fetchone()[0]; sys.exit(0 if n==2 else 1)\"",
+      "expect": "SUMMARY pass=69 fail=0; shot hashes distinct; AP WIs active=2",
+      "by": "atriumsod1c-20260929"
+    },
+    {
+      "id": "CORE-ENT-1",
+      "claim": "CORE-ENT-1: legal_entity_id additive on Beta sidecar; three entity configs; ASG-ZAYEN-BZG-FC-1 ACTIVE AMG+BZG zero GGV; Ext Accountant shells unseated; SoD preserved; staff_ready/human_commissioned false; prod untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && python3 scripts/tests/test_core_ent1_20260929.py | tail -1",
+      "expect": "SUMMARY pass=49 fail=0",
+      "by": "peaches-core-ent1",
+      "at": "2026-09-29T21:20:31+08:00"
+    },
+    {
+      "id": "BZG-OUTLET-1",
+      "claim": "BZG-OUTLET-1: org_outlet_registry 7 rows under ENT-BZG; Uma OPEN; Rainforest+Pool Bar PRE-OPENING (OU-BZG-RAIN-POOL under BZG-RAIN); Hariyanto/Devi scopes via hierarchy not outlet name lists; staff_ready/human_commissioned false; prod untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && PYTHONPATH=scripts python3 scripts/tests/test_bzg_outlet1_20260929.py | tail -1",
+      "expect": "PASS=82 FAIL=0",
+      "by": "composer-bzg-outlet1",
+      "at": "2026-09-29T21:41:33+08:00"
+    },
+    {
+      "id": "core-books1-three-entity-slots",
+      "claim": "CORE-BOOKS-1: books_enabled true for ENT-AMG/ENT-BZG/ENT-GGV via separate Beta files atrium.sqlite / atrium-bzg.sqlite / atrium-ggv.sqlite; BZG/GGV empty shells; AMG journals preserved; Zayen GGV 403; Amanda GGV-only; SoD COMM1 intact; staff_ready/human_commissioned false; prod untouched.",
+      "check": "PYTHONPATH=scripts python3 scripts/tests/test_core_books1_20260929.py 2>&1 | tail -1 | grep -q 'fail=0' && python3 -c \"import sqlite3,sys; from pathlib import Path; b=Path('/Users/wolfterminal/atrium-finance/data/beta'); assert (b/'atrium-bzg.sqlite').is_file() and (b/'atrium-ggv.sqlite').is_file(); c=sqlite3.connect(f'file:{b}/atrium.sqlite?mode=ro', uri=True); r=c.execute(\\\"select status,preparer_person_id from journal_headers where journal_id='JRN-ATRIUMSOD1B-COMM1'\\\").fetchone(); sys.exit(0 if r and r[0]=='POSTED' and r[1]=='PERS-ZENITALFATHAN' else 1)\"",
+      "expect": "exit 0",
+      "by": "CORE-BOOKS-1"
+    },
+    {
+      "id": "BZG-XOUTLET-1",
+      "claim": "BZG-XOUTLET-1: shared foundations (vendors/PR/close/books PO) carry nullable outlet_id from org_outlet_registry; Uma OPEN; Rain+Pool PRE-OPENING; no fake multi-outlet P&L; Zayen BZG allow Amanda deny; staff_ready/human_commissioned false; did not auto-start V1-SWEEP; prod untouched.",
+      "check": "cd /Users/wolfterminal/beta-os && PYTHONPATH=scripts python3 scripts/tests/test_bzg_xoutlet1_20260929.py | tail -1",
+      "expect": "PASS=89 FAIL=0",
+      "by": "composer-bzg-xoutlet1",
+      "at": "2026-09-29T22:29:30+08:00"
+    },
+    {
+      "id": "V1-SWEEP-1",
+      "claim": "V1-SWEEP-1: non-HR V1 status register complete (23 inventory ids); HR-DEFERRED; SUPERSEDED atrium\u2192/amg/finance + bzg aliases\u2192/bzg/finance on Beta only; MOUNTED RO (ESB/alchemist/GGV money/recipes) not deleted; staff_ready/human_commissioned false; prod :8787 untouched; did not auto-start Exit Report pack.",
+      "check": "cd /Users/wolfterminal/beta-os && PYTHONPATH=scripts python3 scripts/tests/test_v1_sweep1_20260929.py | tail -1",
+      "expect": "PASS=67 FAIL=0",
+      "by": "V1-SWEEP-1"
     }
   ]
 }

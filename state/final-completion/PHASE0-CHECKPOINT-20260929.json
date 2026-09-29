@@ -1,0 +1,67 @@
+{
+  "mission": "FINAL_WOLF_COMPLETION_MISSION",
+  "FINAL_WOLF_COMPLETION_MISSION": true,
+  "phase": 0,
+  "at_wita": "2026-09-29T23:33:17+08:00",
+  "matt_order_at": "2026-09-29T23:25:00+08:00",
+  "prior_exit_report": {
+    "path": "docs/wolf/ops/WOLF-COMMAND-REBUILD-COMPLETION-EXIT-REPORT-20260929.md",
+    "status": "SUPERSEDED_NOT_FINAL",
+    "note": "Prior Rebuild Exit Report is SUPERSEDED. Do NOT write a new Exit Report until Phase 13 gate."
+  },
+  "exit_report_allowed": false,
+  "repos": {
+    "beta-os": {
+      "path": "~/beta-os",
+      "branch": "build/wolf-command-rebuild",
+      "head_sha_full": "a5f8c3763446c82b0c4cc1a641a823cd8feb0d1e",
+      "head_sha_short": "a5f8c37",
+      "dirty_at_phase0_start": true,
+      "checkpoint_commit_message": "checkpoint: pre-FINAL-COMPLETION-MISSION 2026-09-29",
+      "checkpoint_commit_sha": null,
+      "push": false
+    },
+    "atrium-finance": {
+      "path": "~/atrium-finance",
+      "branch": "wolf/beta-mount-20260928",
+      "head_sha_full": "1ecfc3cef3d27c2050cf43c1d174c1e78d1e578d",
+      "head_sha_short": "1ecfc3c",
+      "dirty_at_phase0_start": false,
+      "checkpoint_commit_sha": null,
+      "note": "clean working tree \u2014 no checkpoint commit needed"
+    }
+  },
+  "pid_holds": {
+    "prod_8787": {
+      "pid": 15975,
+      "mutate": false,
+      "note": "READ ONLY \u2014 never mutate"
+    },
+    "beta_8788": {
+      "pid": 84289
+    },
+    "sidecar_8790": {
+      "pid": 80378
+    }
+  },
+  "staff_ready": false,
+  "human_commissioned": false,
+  "fake_ops_data": false,
+  "prod_mutate": false,
+  "hr": "DEFERRED_NEXT_WEEK",
+  "factory_unlock": {
+    "FINAL_WOLF_COMPLETION_MISSION": true,
+    "post_sprint_major_arm": "ALLOW_FINAL_COMPLETION_PACKS_ONLY",
+    "still_veto_random_breadth": true,
+    "still_veto_headchef_auto": true,
+    "allow_final_completion_packs": true,
+    "prior_post_sprint_major_arm": "FORBIDDEN_UNTIL_MATT_REVIEWS_EXIT_REPORT",
+    "prior_exit_gate_locked": true,
+    "note": "Unlock for FINAL COMPLETION packs only \u2014 not HEADCHEF random breadth"
+  },
+  "mirrored_to_box": true,
+  "mac_write_pending": false,
+  "mac_checkpoint_commit_pending": true,
+  "phase0_status": "MAC_STAMPS_WRITTEN_AWAITING_CHECKPOINT_COMMIT",
+  "next_phase": 1
+}

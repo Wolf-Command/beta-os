@@ -1,0 +1,59 @@
+{
+  "kind": "STANDING_TAXONOMY",
+  "id": "OPERATOR_CHANGE_SOURCE_TAXONOMY",
+  "locked_at_wita": "2026-09-29T20:54:35+08:00",
+  "locked_by": "Matthew via Peaches OWNER_CORRECTION 2026-09-29",
+  "applies_to": [
+    "Operator change daily report",
+    "operator-change evidence",
+    "adoption / commissioning counters"
+  ],
+  "classes": {
+    "V1_ACTIVITY": {
+      "definition": "Writes on current production / V1 systems (e.g. wolf-system HR board). Operational history.",
+      "counts_as_beta": false,
+      "counts_as_wolf_adoption": false,
+      "counts_as_staff_ready": false,
+      "counts_as_human_commissioning": false,
+      "counts_as_operating_adoption": false
+    },
+    "BETA_ACTIVITY": {
+      "definition": "Work inside Beta construction / beta-os live-in-beta surfaces.",
+      "not_equal_to": [
+        "V1_ACTIVITY",
+        "HUMAN_COMMISSIONING",
+        "OPERATING_ADOPTION"
+      ]
+    },
+    "HUMAN_COMMISSIONING": {
+      "definition": "Explicit human commissioning loop evidence for a Beta/Wolf capability.",
+      "not_equal_to": [
+        "V1_ACTIVITY",
+        "BETA_ACTIVITY",
+        "OPERATING_ADOPTION"
+      ]
+    },
+    "OPERATING_ADOPTION": {
+      "definition": "Measured operating adoption of a commissioned Wolf capability at the canonical boundary.",
+      "not_equal_to": [
+        "V1_ACTIVITY",
+        "BETA_ACTIVITY",
+        "HUMAN_COMMISSIONING"
+      ]
+    }
+  },
+  "standing_inequality": "V1 ACTIVITY ≠ BETA ACTIVITY ≠ HUMAN COMMISSIONING ≠ OPERATING ADOPTION",
+  "hr_special": {
+    "current_hr_os": "V1",
+    "hr_in_migration_commissioning_scope": false,
+    "until": "Owner explicitly moves HR into scope",
+    "migration_cut_line": "Reconcile latest V1 at cut line so interim V1 changes are not lost",
+    "local_sync_ids_without_names": "retrieval_sync_gap_not_incomplete_tisa_records"
+  },
+  "reporter_rules": [
+    "Every Operator change daily report line MUST set source_system / source_class.",
+    "HR board (hr@ / Tisa on V1) → SOURCE=V1 / V1_ACTIVITY unless Owner moves HR.",
+    "Never invent staff names; IDs only when names not in journal.",
+    "Never mark commissioning from V1 HR edits alone."
+  ]
+}

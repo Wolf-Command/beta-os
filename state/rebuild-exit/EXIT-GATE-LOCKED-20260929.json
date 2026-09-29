@@ -1,71 +1,15 @@
 {
-  "schema": "wolf.rebuild-exit.v1",
-  "report": "docs/wolf/ops/WOLF-COMMAND-REBUILD-COMPLETION-EXIT-REPORT-20260929.md",
-  "as_of_wita": "2026-09-29T22:45:06+08:00",
-  "exit_gate_locked": true,
+  "at_wita": "2026-09-29T23:33:17+08:00",
+  "status": "SUPERSEDED_BY_FINAL_WOLF_COMPLETION_MISSION",
+  "prior_status": "EXIT_GATE_LOCKED",
+  "FINAL_WOLF_COMPLETION_MISSION": true,
+  "exit_gate_locked": false,
+  "post_sprint_major_arm": "ALLOW_FINAL_COMPLETION_PACKS_ONLY",
+  "prior_exit_report": "docs/wolf/ops/WOLF-COMMAND-REBUILD-COMPLETION-EXIT-REPORT-20260929.md",
+  "prior_exit_report_status": "SUPERSEDED_NOT_FINAL",
+  "new_exit_report_allowed": false,
+  "exit_report_gate": "PHASE_13_ONLY",
   "staff_ready": false,
   "human_commissioned": false,
-  "no_push": true,
-  "prod_8787_pid": 15975,
-  "prod_untouched": true,
-  "scores": {
-    "SYSTEM_COMPLETION": {
-      "label": "PROVEN",
-      "score": 0.8
-    },
-    "STAFF_READY": {
-      "label": "ABSENT_CONTRACT_FALSE",
-      "score": 0.0
-    },
-    "HUMAN_COMMISSIONED": {
-      "label": "ABSENT_CONTRACT_FALSE",
-      "score": 0.0
-    },
-    "OPERATING_ADOPTION": {
-      "label": "BUILT_PARTIAL_PROVEN",
-      "score": 0.25
-    },
-    "V1_RETIREMENT_EX_HR": {
-      "label": "PROVEN_REGISTER_RO_REMAIN",
-      "score": 0.8
-    }
-  },
-  "packs_pass_verified": [
-    "CORE-ENT-1",
-    "BZG-OUTLET-1",
-    "CORE-BOOKS-1",
-    "BZG-XOUTLET-1",
-    "V1-SWEEP-1"
-  ],
-  "shas": {
-    "beta_os": "dcc80e98c5fbe329444a54604c1c0f955cd86c2d",
-    "atrium_finance": "1ecfc3cef3d27c2050cf43c1d174c1e78d1e578d"
-  },
-  "full_verify": {
-    "test_core_ent1_20260929.py": {
-      "pass": 49,
-      "fail": 0
-    },
-    "test_bzg_outlet1_20260929.py": {
-      "pass": 82,
-      "fail": 0
-    },
-    "test_core_books1_20260929.py": {
-      "pass": 64,
-      "fail": 0
-    },
-    "test_bzg_xoutlet1_20260929.py": {
-      "pass": 89,
-      "fail": 0
-    },
-    "test_v1_sweep1_20260929.py": {
-      "pass": 67,
-      "fail": 0
-    },
-    "test_atrium_sod1_20260929.py": {
-      "pass": 69,
-      "fail": 0
-    }
-  },
-  "next_action": "STOP_MAJOR_PACKS_HUMAN_COMMISSIONING_INDEPENDENT"
+  "note": "Matt 2026-09-29 ~23:25 WITA \u2014 prior Rebuild Exit Report SUPERSEDED. Factory unlocked for FINAL COMPLETION packs only."
 }

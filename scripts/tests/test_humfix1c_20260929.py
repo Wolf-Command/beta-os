@@ -151,7 +151,7 @@ def test_haikal_today_current_window_and_retests() -> None:
 
 
 def test_boundary_from_permissions() -> None:
-    # Matrix: draft+approve+reject, no post/pay/bank
+    # Matrix without post: draft+approve+reject, no post/pay/bank
     codes = {
         "atrium.journal.draft",
         "atrium.journal.approve",
@@ -162,8 +162,14 @@ def test_boundary_from_permissions() -> None:
     text = _atrium_finance_boundary(codes)
     check("boundary allows prepare", "prepare a journal" in text, text)
     check("boundary allows approve/reject with SoD", "approve or reject" in text and "not your own" in text, text)
-    check("boundary denies post", "cannot" in text and "post a journal" in text, text)
+    check("boundary denies post when no grant", "cannot" in text and "post a journal" in text, text)
     check("boundary does not say cannot approve", "cannot approve or post" not in text, text)
+
+    # ATRIUM-SOD-1 FC matrix: approve+post of others
+    fc_codes = codes | {"atrium.journal.post"}
+    fc_text = _atrium_finance_boundary(fc_codes)
+    check("FC boundary allows post of others", "post an approved journal prepared by someone else" in fc_text, fc_text)
+    check("FC boundary does not deny post verb as cannot-post", "cannot post a journal" not in fc_text, fc_text)
 
     # Officer-like: draft only
     officer = _atrium_finance_boundary({"atrium.journal.draft", "atrium.board.read"})
@@ -174,9 +180,11 @@ def test_boundary_from_permissions() -> None:
     try:
         home = build_home("PERS-ZAYEN", conn=c)
         boundary = home.get("boundary") or ""
-        check("live Zayen boundary from matrix", "approve or reject" in boundary and "post a journal" in boundary, boundary)
+        check("live Zayen boundary from matrix", "approve or reject" in boundary, boundary)
         check("live Zayen not old deny-approve copy", "cannot approve or post a journal" not in boundary, boundary)
-        # Rendered my-work page includes boundary via API JSON (server assert)
+        # After ATRIUM-SOD-1 migrate: post of others allowed in copy
+        if "atrium.journal.post" in (home.get("permission_codes") or set()) or "post an approved" in boundary:
+            check("live Zayen post SoD line", "post an approved journal" in boundary or "someone else" in boundary, boundary)
     finally:
         c.close()
 
@@ -240,7 +248,13 @@ def test_rendered_html_server() -> None:
         status, raw = call("/api/staff/home", "laluzayen@gmail.com")
         zhome = json.loads(raw or "{}")
         zb = zhome.get("boundary") or ""
-        check("api zayen boundary matrix", status == 200 and "approve or reject" in zb and "post a journal" in zb, zb)
+        check(
+            "api zayen boundary matrix",
+            status == 200
+            and "approve or reject" in zb
+            and "post an approved journal prepared by someone else" in zb,
+            zb,
+        )
 
         status, raw = call("/api/wolf/shell-whoami", "laluzayen@gmail.com")
         who = json.loads(raw or "{}")

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-29T07:34:18+0800",
+  "generated": "2026-09-29T14:23:30+0800",
   "schema": "wolf.data-quality-exceptions.v1",
   "staff_ready": false,
   "human_commissioned": false,
@@ -49,12 +49,12 @@
     {
       "id": "dq-alchemist-broken-payable",
       "title": "Alchemist payable \u2014 broken records",
-      "displayed_value": "Rp 62,950,910 unpaid \u00b7 broken 55",
+      "displayed_value": "Rp 93,366,283 unpaid \u00b7 broken 55",
       "status": "OPEN",
       "owner_role": "BZG F&B Operations / Owner",
       "do_not_act": "Do not act on this number until the source is established.",
       "href": "/owner/data-quality#dq-alchemist-broken-payable",
-      "plain_english": "The Alchemist tile shows unpaid payables Rp 62,950,910 and 55 broken rows. Broken means a purchase request is still status Received while its linked ledger row is already paid. That is a desync to investigate, not a bank-beats-Alchemist rule.",
+      "plain_english": "The Alchemist tile shows unpaid payables Rp 93,366,283 and 55 broken rows. Broken means a purchase request is still status Received while its linked ledger row is already paid. That is a desync to investigate, not a bank-beats-Alchemist rule.",
       "trace": {
         "displayed_value": "alchemist_tile compute_five(): unpaid SUM(amount) + broken count",
         "calculation": "owe = SUM(ledger.amount) WHERE payment_status='unpaid'; broken = COUNT pr_orders JOIN ledger WHERE status='Received' AND payment_status='paid'",

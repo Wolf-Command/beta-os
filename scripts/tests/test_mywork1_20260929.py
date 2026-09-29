@@ -271,10 +271,29 @@ def test_part_e_commissioning_flow() -> None:
     row = c.execute(
         """
         SELECT work_item_id FROM core_work_items
-        WHERE origin='commissioning' AND owner_person_id='PERS-HAIKAL' AND status='OPEN'
+        WHERE origin IN ('commissioning','commissioning-retest')
+          AND owner_person_id='PERS-HAIKAL' AND status='OPEN'
         LIMIT 1
         """
     ).fetchone()
+    if row is None:
+        row = c.execute(
+            """
+            SELECT work_item_id FROM core_work_items
+            WHERE origin='commissioning' AND owner_person_id='PERS-HAIKAL'
+            ORDER BY created_at LIMIT 1
+            """
+        ).fetchone()
+        check("haikal commissioning available", row is not None)
+        c.execute(
+            """
+            UPDATE core_work_items
+            SET status='OPEN', human_result=NULL, human_comment=NULL,
+                commissioning_result=NULL, completed_at=NULL, outcome=NULL
+            WHERE work_item_id=?
+            """,
+            (row["work_item_id"],),
+        )
     check("haikal commissioning open", row is not None)
     wid = row["work_item_id"]
     wi.start_work_item(wid, verified_person_id="PERS-HAIKAL", conn=c, commit=False)

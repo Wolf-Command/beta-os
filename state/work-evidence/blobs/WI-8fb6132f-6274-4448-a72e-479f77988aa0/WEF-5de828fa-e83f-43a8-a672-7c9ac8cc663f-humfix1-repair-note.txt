@@ -1,0 +1,1 @@
+HUMFIX-1 fixed. Commits beta-os d950a98, atrium-finance ad8239f. Brand scope: Content Creator+CD get all active content brands by role. Active plans mounted in Content Engine. Drone media type added. GL defensive load + FC approve/reject with SoD; post still denied.
