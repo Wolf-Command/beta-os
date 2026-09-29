@@ -14,7 +14,7 @@
   "no_push": true,
   "matt_auto_continue": true,
   "prior_pack_verified": "FIN-CASH-TRUTH-1",
-  "beta_os_head_at_arm": "PENDING",
+  "beta_os_head_at_arm": "0e750d9",
   "brief": "state/build-factory/briefs/BRIEF-BZG-LABOR-COST-1.md",
   "log": "state/build-factory/logs/BZG-LABOR-COST-1.log",
   "result_file": "docs/wolf/ops/BZG-LABOR-COST-1-RESULT.md",
