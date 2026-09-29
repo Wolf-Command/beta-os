@@ -270,10 +270,23 @@ DASHBOARDS_HTML_CANONICAL: dict[str, str] = {
     "/dashboards/bzg-uma-blu-exceptions.html": "/bzg/uma-blu/exceptions",
     "/dashboards/bzg-uma-blu-pr.html": "/bzg/uma-blu/bills",
     "/dashboards/uma-blu-close.html": "/uma-blu-close",
+    "/dashboards/v1-status.html": "/ops/v1-status",
     # Flat legacy filenames that used to sit next to clean routes
     "/bzg-uma-blu.html": "/bzg/uma-blu",
     "/bzg-uma-blu": "/bzg/uma-blu",
     "/bzg-uma-blu/": "/bzg/uma-blu",
+}
+
+# V1-SWEEP-1 — superseded / historical V1 finance board aliases → Beta canonical.
+# HR surfaces intentionally omitted. Does not delete wolf-system V1 files.
+V1_SUPERSEDED_BOARD_REDIRECTS: dict[str, str] = {
+    "/atrium-finance": "/amg/finance",
+    "/atrium-finance/": "/amg/finance",
+    "/atrium-finance.html": "/amg/finance",
+    "/dashboards/atrium-finance.html": "/amg/finance",
+    "/bzg-finance": "/bzg/finance",
+    "/bzg-finance.html": "/bzg/finance",
+    "/dashboards/bzg-finance.html": "/bzg/finance",
 }
 
 
@@ -294,6 +307,7 @@ def _build_route_merge_redirects() -> dict[str, str]:
     out.update(RADAR_REDIRECTS)
     out.update(CONTENT_BRAND_REDIRECTS)
     out.update(DASHBOARDS_HTML_CANONICAL)
+    out.update(V1_SUPERSEDED_BOARD_REDIRECTS)
     for slug, dest in MGMT_CLUSTER_REDIRECTS.items():
         out.update(_mgmt_cluster_path_variants(slug, dest))
     return out

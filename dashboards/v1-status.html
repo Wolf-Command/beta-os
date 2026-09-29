@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>V1 Status Register — Non-HR</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root { color-scheme: light; }
+    body { margin: 0; font-family: "IBM Plex Sans", "Segoe UI", sans-serif; background: #f3f1ec; color: #1c1a16; }
+    main { max-width: 920px; margin: 0 auto; padding: 28px 20px 72px; }
+    h1 { font-size: 1.7rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+    .sub { color: #5c574e; margin: 0 0 18px; line-height: 1.45; }
+    .banner {
+      background: #f5efe3; border: 1px solid #d2c4a4; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 18px; font-size: 0.92rem; line-height: 1.45;
+    }
+    .banner strong { color: #5a4a28; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+    .chip {
+      display: inline-block; padding: 5px 10px; border-radius: 6px;
+      background: #ebe4d6; font-size: 0.78rem; font-weight: 600;
+    }
+    .chip.ro { background: #e4ecf5; }
+    .chip.hr { background: #efe8f5; }
+    .chip.warn { background: #f5e8e3; }
+    table { width: 100%; border-collapse: collapse; background: #fffdf8; border: 1px solid #ddd6c8; border-radius: 10px; overflow: hidden; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #ebe4d6; vertical-align: top; font-size: 0.88rem; }
+    th { background: #f0ebe2; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: #5c574e; }
+    tr:last-child td { border-bottom: 0; }
+    .cls { font-weight: 700; white-space: nowrap; }
+    .cls.SUPERSEDED { color: #7a3b12; }
+    .cls.HISTORICAL\ ONLY, .cls.HISTORICAL { color: #5c574e; }
+    .cls.MOUNTED { color: #1f4f7a; }
+    .cls.REBUILT { color: #2a4a28; }
+    .cls.HR-DEFERRED { color: #5a3a6e; }
+    .cls.BLOCKED { color: #8a1f1f; }
+    .cls.DISCOVER-NEEDED { color: #6b4a18; }
+    .muted { color: #6b655c; font-size: 0.82rem; line-height: 1.4; }
+    .err { color: #8a1f1f; }
+    a { color: #1f4f7a; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>V1 Status Register</h1>
+    <p class="sub" id="sub">Non-HR retirement / status sweep · pack V1-SWEEP-1 · loading…</p>
+    <div class="banner" id="banner">
+      <strong>Honesty:</strong> staff_ready=false · human_commissioned=false · HR stays V1 (DEFERRED) ·
+      MOUNTED READ-ONLY warehouses not cut over · no prod · Exit Report is Peaches next (not auto-started).
+    </div>
+    <div class="chips" id="chips"></div>
+    <table>
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Class</th>
+          <th>Beta disposition</th>
+        </tr>
+      </thead>
+      <tbody id="rows">
+        <tr><td colspan="3" class="muted">Loading register…</td></tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    function classSlug(c) {
+      const t = String(c || "");
+      if (t.indexOf("MOUNTED") === 0) return "MOUNTED";
+      if (t.indexOf("REBUILT") === 0) return "REBUILT";
+      if (t.indexOf("HISTORICAL") === 0) return "HISTORICAL";
+      return t;
+    }
+    async function load() {
+      const sub = document.getElementById("sub");
+      const chips = document.getElementById("chips");
+      const rows = document.getElementById("rows");
+      try {
+        const resp = await fetch("/api/ops/v1-status", { headers: { Accept: "application/json" } });
+        const data = await resp.json();
+        if (!resp.ok || !data.ok) {
+          rows.innerHTML = `<tr><td colspan="3" class="err">Failed to load register (${resp.status})</td></tr>`;
+          return;
+        }
+        sub.textContent =
+          `Non-HR V1 status · ${data.pack || "V1-SWEEP-1"} · as of ${data.as_of_wita || "—"} · HR deferred · no destructive SoR cutover`;
+        const counts = data.class_counts || {};
+        chips.innerHTML = Object.keys(counts).map((k) => {
+          let cls = "chip";
+          if (k.indexOf("MOUNTED") === 0) cls += " ro";
+          if (k.indexOf("HR") === 0) cls += " hr";
+          if (k === "BLOCKED" || k === "DISCOVER-NEEDED") cls += " warn";
+          return `<span class="${cls}">${esc(k)} · ${esc(counts[k])}</span>`;
+        }).join("");
+        const items = data.items || [];
+        rows.innerHTML = items.map((it) => {
+          const beta = it.beta_path
+            ? ` <a href="${esc(it.beta_path)}">${esc(it.beta_path)}</a>`
+            : "";
+          return `<tr>
+            <td><code>${esc(it.id)}</code></td>
+            <td class="cls ${esc(classSlug(it.class))}">${esc(it.class)}</td>
+            <td class="muted">${esc(it.beta_disposition || "")}${beta}</td>
+          </tr>`;
+        }).join("");
+      } catch (e) {
+        rows.innerHTML = `<tr><td colspan="3" class="err">${esc(e && e.message ? e.message : e)}</td></tr>`;
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

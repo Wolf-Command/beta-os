@@ -1,0 +1,268 @@
+{
+  "schema": "wolf.finance-core-sprint.v1-status-register.v1",
+  "pack": "V1-SWEEP-1",
+  "as_of_wita": "2026-09-29T22:40:00+08:00",
+  "source_inventory": "state/finance-core-sprint/INVENTORY-20260929.json#C_v1_inventory",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_touched": false,
+  "destructive_sor_cutover": false,
+  "hr_deferred": true,
+  "cursor_did_not_auto_start_exit_report": true,
+  "beta_redirects": [
+    {
+      "from": ["/atrium-finance", "/atrium-finance/", "/atrium-finance.html", "/dashboards/atrium-finance.html"],
+      "to": "/amg/finance",
+      "class": "SUPERSEDED",
+      "inventory_id": "v1-atrium-finance-board"
+    },
+    {
+      "from": ["/bzg-finance", "/bzg-finance.html", "/dashboards/bzg-finance.html"],
+      "to": "/bzg/finance",
+      "class": "HISTORICAL ONLY",
+      "inventory_id": "v1-bzg-finance-board",
+      "note": "Beta aliases 302 to canonical /bzg/finance books shell (CORE-BOOKS-1). V1 wolf-system HTML untouched."
+    }
+  ],
+  "status_surface": {
+    "page": "/ops/v1-status",
+    "api": "/api/ops/v1-status"
+  },
+  "items": [
+    {
+      "id": "v1-atrium-finance-board",
+      "class": "SUPERSEDED",
+      "evidence_path": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/atrium-finance.html",
+      "evidence_exists": true,
+      "beta_disposition": "Operating UI is Beta sidecar + /amg/finance. Beta redirects /atrium-finance* → /amg/finance. V1 HTML retained on wolf-system disk (not deleted).",
+      "beta_path": "/amg/finance",
+      "destructive": false
+    },
+    {
+      "id": "v1-atrium-finance-sqlite",
+      "class": "HISTORICAL ONLY",
+      "evidence_path": "/Users/wolfterminal/.openclaw/workspace/wolf-system/atrium-finance/atrium_finance.sqlite",
+      "evidence_exists": true,
+      "evidence_counts": {"journal_header": 64, "coa_account": 245},
+      "beta_disposition": "Historical TEST CORE pattern only — not SoR. Live books = atrium-finance/data/beta/atrium.sqlite.",
+      "beta_path": null,
+      "destructive": false
+    },
+    {
+      "id": "v1-atrium-handoff-v1.1",
+      "class": "HISTORICAL ONLY",
+      "evidence_path": "/Users/wolfterminal/.openclaw/workspace/wolf-system/atrium-finance/handoff-v1.1",
+      "evidence_exists": true,
+      "beta_disposition": "COA seed + samples (Zayen 2026-08-19). Historical only; no go-live claim.",
+      "beta_path": null,
+      "destructive": false
+    },
+    {
+      "id": "sidecar-atrium-beta-books",
+      "class": "REBUILT IN WOLF",
+      "evidence_path": "/Users/wolfterminal/atrium-finance/data/beta/atrium.sqlite",
+      "evidence_exists": true,
+      "beta_disposition": "Beta SoR for AMG books (commissioning journals; business tables may be empty). Preserve ATRIUM-SOD-1C.",
+      "beta_path": "/amg/finance",
+      "destructive": false
+    },
+    {
+      "id": "beta-atrium-books-scaffold",
+      "class": "REBUILT IN WOLF",
+      "evidence_path": "/Users/wolfterminal/beta-os/state/atrium-books/amg.sqlite",
+      "evidence_exists": true,
+      "beta_disposition": "Empty COA scaffold in beta-os; live AMG books file is sidecar atrium.sqlite.",
+      "beta_path": "/amg/finance",
+      "destructive": false
+    },
+    {
+      "id": "v1-ggv-finance-board",
+      "class": "MOUNTED READ-ONLY",
+      "evidence_path": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/ggv-finance.html",
+      "evidence_exists": true,
+      "beta_disposition": "V1 board remains on disk RO. Beta rebuild path /ggv/finance (not a destructive cutover of V1).",
+      "beta_path": "/ggv/finance",
+      "destructive": false
+    },
+    {
+      "id": "v1-ggv-money-sqlite",
+      "class": "MOUNTED READ-ONLY",
+      "evidence_path": "/Users/wolfterminal/.openclaw/workspace/wolf-system/ggv-finance/money.sqlite",
+      "evidence_exists": true,
+      "evidence_counts": {
+        "sales_invoice": 41,
+        "bill": 605,
+        "bank_txn": 339,
+        "ggv_nota": 33,
+        "contact": 296
+      },
+      "beta_disposition": "Mounted RO remaining SoR for legacy GGV money rows. Xero write SUPERSEDED 2026-09-10. No delete/move.",
+      "beta_path": "/ggv/finance",
+      "destructive": false
+    },
+    {
+      "id": "beta-ggv-invoice-nota",
+      "class": "REBUILT IN WOLF",
+      "evidence_path": "/Users/wolfterminal/beta-os/dashboards/ggv-finance.html",
+      "evidence_exists": true,
+      "beta_disposition": "Beta /ggv/finance is rebuild path (Amanda seated). Not complete — live catalog invoices/customers may be 0. Not go-live.",
+      "beta_path": "/ggv/finance",
+      "destructive": false
+    },
+    {
+      "id": "v1-bzg-finance-board",
+      "class": "HISTORICAL ONLY",
+      "evidence_path": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/bzg-finance.html",
+      "evidence_exists": true,
+      "beta_disposition": "V1 board historical on wolf-system. Beta /bzg/finance books shell exists (CORE-BOOKS-1); aliases 302 → /bzg/finance. Empty shell OK — not complete ledger.",
+      "beta_path": "/bzg/finance",
+      "destructive": false
+    },
+    {
+      "id": "v1-bzg-shareholder-packs",
+      "class": "HISTORICAL ONLY",
+      "evidence_path": "bzg-shareholder-reports + bzg-june/july/august packs (wolf-system)",
+      "evidence_exists": null,
+      "beta_disposition": "Period packs only — not live ledger. No go-live claim.",
+      "beta_path": null,
+      "destructive": false
+    },
+    {
+      "id": "v1-uma-blu-ops",
+      "class": "MOUNTED READ-ONLY",
+      "evidence_path": "/Users/wolfterminal/.openclaw/workspace/wolf-system/uma-blu/recipes.sqlite",
+      "evidence_exists": true,
+      "evidence_counts": {"recipes": 127, "recipe_lines": 756},
+      "beta_disposition": "Mounted RO. Beta recipe routes exist as shells; V1 recipes DB not deleted.",
+      "beta_path": "/bzg/uma-blu/recipes",
+      "destructive": false
+    },
+    {
+      "id": "beta-uma-bzg-ops",
+      "class": "REBUILT IN WOLF",
+      "evidence_path": "/Users/wolfterminal/beta-os/dashboards/bzg-uma-blu.html",
+      "evidence_exists": true,
+      "beta_disposition": "Beta shells exist; Alchemist remains SoR for PRs. cutover_at null. Not complete.",
+      "beta_path": "/bzg/uma-blu",
+      "destructive": false
+    },
+    {
+      "id": "alchemist-pr-suppliers",
+      "class": "MOUNTED READ-ONLY",
+      "evidence_path": "/Users/wolfterminal/.openclaw/workspace/alchemist/data/alchemist.db",
+      "evidence_exists": true,
+      "beta_disposition": "SoR purchasing/suppliers — Wolf projects only. No destructive cutover.",
+      "beta_path": null,
+      "destructive": false
+    },
+    {
+      "id": "esb-warehouse",
+      "class": "MOUNTED READ-ONLY",
+      "evidence_path": "/Users/wolfterminal/.openclaw/data/esb.sqlite",
+      "evidence_exists": true,
+      "evidence_counts": {"sales": 8823, "products": 426, "goods_receipts": 0},
+      "beta_disposition": "POS sales truth. Mounted RO. No destructive cutover.",
+      "beta_path": null,
+      "destructive": false
+    },
+    {
+      "id": "v1-xero",
+      "class": "SUPERSEDED",
+      "evidence_path": "xero-snapshot-* + ggv_xero*.py (wolf-system)",
+      "evidence_exists": null,
+      "beta_disposition": "Cancelled 2026-09-10. AMG/BZG never in Xero. Do not revive. No Beta money write path via Xero.",
+      "beta_path": null,
+      "destructive": false
+    },
+    {
+      "id": "v1-bank-ingest",
+      "class": "MOUNTED READ-ONLY",
+      "evidence_path": "bank_* + ~/.openclaw/state/bank",
+      "evidence_exists": null,
+      "beta_disposition": "BZG+GGV sources mounted RO; AMG bank empty. Delayed monthly statement model stands.",
+      "beta_path": null,
+      "destructive": false
+    },
+    {
+      "id": "v1-money-board",
+      "class": "BLOCKED",
+      "evidence_path": "money_board.py + money_allow",
+      "evidence_exists": null,
+      "beta_disposition": "money_pending_accountant PENDING; money_allow owner-only. No Beta money movement from this pack.",
+      "beta_path": null,
+      "destructive": false
+    },
+    {
+      "id": "v1-atrium-sales-apartments",
+      "class": "HISTORICAL ONLY",
+      "evidence_path": "atrium-sales / atrium-payments",
+      "evidence_exists": null,
+      "beta_disposition": "Unit sales tracker — not hotel GL. Historical only.",
+      "beta_path": null,
+      "destructive": false
+    },
+    {
+      "id": "v1-owner-returns",
+      "class": "DISCOVER-NEEDED",
+      "evidence_path": "atrium_owner_returns + owner_return_*",
+      "evidence_exists": null,
+      "beta_disposition": "Config/units exist; no authoritative period returns SoR found this pass. Remains discover-needed.",
+      "beta_path": null,
+      "destructive": false
+    },
+    {
+      "id": "nas-finance-folders",
+      "class": "DISCOVER-NEEDED",
+      "evidence_path": "/Volumes NAS finance trees",
+      "evidence_exists": null,
+      "beta_disposition": "No deep Atrium finance crawl this pass; GGV Notas path contract on paper.",
+      "beta_path": null,
+      "destructive": false
+    },
+    {
+      "id": "pms-accounting-exports",
+      "class": "BLOCKED",
+      "evidence_path": "Cloudbeds/Yanolja/Mews/Accurate/Jurnal",
+      "evidence_exists": null,
+      "beta_disposition": "No accounting exports in authorised trees; PMS import empty payload.",
+      "beta_path": null,
+      "destructive": false
+    },
+    {
+      "id": "hr-surfaces",
+      "class": "HR-DEFERRED",
+      "evidence_path": "wolf-system/state/hr-* + ~/.openclaw/hr",
+      "evidence_exists": null,
+      "beta_disposition": "Explicitly deferred. HR stays V1. No retire/redirect of HR surfaces in this pack.",
+      "beta_path": null,
+      "destructive": false
+    },
+    {
+      "id": "v1-n8n-xero-bzg",
+      "class": "SUPERSEDED",
+      "evidence_path": "n8n-templates /*xero* /*bzg*",
+      "evidence_exists": null,
+      "beta_disposition": "Xero-era automation SUPERSEDED. Do not revive without decision.",
+      "beta_path": null,
+      "destructive": false
+    }
+  ],
+  "class_counts": {
+    "SUPERSEDED": 3,
+    "HISTORICAL ONLY": 5,
+    "MOUNTED READ-ONLY": 6,
+    "REBUILT IN WOLF": 4,
+    "HR-DEFERRED": 1,
+    "BLOCKED": 2,
+    "DISCOVER-NEEDED": 2
+  },
+  "remaining_mounted_read_only": [
+    "v1-ggv-finance-board",
+    "v1-ggv-money-sqlite",
+    "v1-uma-blu-ops",
+    "alchemist-pr-suppliers",
+    "esb-warehouse",
+    "v1-bank-ingest"
+  ],
+  "owner_addendum": "After Finance Core + BZG multi-outlet + non-HR V1 retirement finishes: do NOT chain another major feature pack. Next = Rebuild Completion & Exit Report only."
+}

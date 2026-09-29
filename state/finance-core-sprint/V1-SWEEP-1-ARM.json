@@ -1,0 +1,42 @@
+{
+  "pack": "V1-SWEEP-1",
+  "name": "Non-HR V1 retirement/status sweep",
+  "status": "PASS_VERIFIED",
+  "armed_at_wita": "2026-09-29T22:32:23+08:00",
+  "done_at_wita": "2026-09-29T22:41:30+08:00",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "brief": "/Users/wolfterminal/beta-os/state/build-factory/briefs/BRIEF-V1-SWEEP-1.md",
+  "log": "/Users/wolfterminal/beta-os/state/build-factory/logs/V1-SWEEP-1.log",
+  "run_json": "/Users/wolfterminal/beta-os/state/build-factory/runs/V1-SWEEP-1.json",
+  "result": "docs/wolf/ops/V1-SWEEP-1-RESULT.md",
+  "register": "state/finance-core-sprint/V1-STATUS-REGISTER-20260929.json",
+  "prior": "BZG-XOUTLET-1 PASS_VERIFIED",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "credit_conservation": "OVERRIDDEN_FOR_MATT_ORDERED_SPRINT_PACK",
+  "matt_auto_continue": true,
+  "cursor_did_not_auto_start_exit_report": true,
+  "cursor_must_not_auto_start_next": true,
+  "no_headchef": true,
+  "no_push": true,
+  "hr_deferred": true,
+  "no_destructive_sor_cutover": true,
+  "prod_touched": false,
+  "beta_recycled_pid": 84289,
+  "prod_pid_readonly": 15975,
+  "tests": {
+    "test_v1_sweep1_20260929": "PASS=65+ FAIL=0",
+    "test_core_books1_20260929": "pass=64 fail=0",
+    "test_core_ent1_20260929": "pass=49 fail=0",
+    "test_bzg_outlet1_20260929": "PASS=82 FAIL=0"
+  },
+  "next_after_this_in_map": [
+    "FULL_VERIFY",
+    "REBUILD_EXIT_REPORT_ONLY"
+  ],
+  "owner_addendum": "After Finance Core + BZG multi-outlet + non-HR V1 retirement finishes: do NOT chain another major feature pack. Next = Rebuild Completion & Exit Report only.",
+  "updated_at_wita": "2026-09-29T22:44:24+08:00",
+  "alive": false,
+  "exit": 0,
+  "verified_at_wita": "2026-09-29T22:44:24+08:00"
+}

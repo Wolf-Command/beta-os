@@ -163,6 +163,7 @@ from core import ggv_ops_pack as _ggv_ops
 from core import ggv_finance_nota as _ggv_fin
 from core import bzg_finance_desk as _bzg_fin_desk
 from core import bzg_outlet_registry as _bzg_outlets
+from core import v1_status_register as _v1_status
 from core import crm_identity_memory as _crm_ident
 from core import crm_identity_operator_depth as _crm_ident_depth
 from core import bzg_reputation_observe as _bzg_rep
@@ -1966,6 +1967,17 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path in ("/", "/index.html") and self._redirect_entry_home():
             return
 
+        # V1-SWEEP-1: board aliases → Beta canonical BEFORE finance walls so
+        # officer/accountant scope walls do not 403 the old path names.
+        # HR paths intentionally absent from this map.
+        _v1_dest = _v1_status.board_redirect_target(path)
+        if _v1_dest:
+            self.send_response(302)
+            self.send_header("Location", _v1_dest)
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            return
+
         if self._accountant_scope_wall():
             return
 
@@ -1981,6 +1993,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._bzg_finance_dispatch():
             return
         if self._bzg_outlets_dispatch():
+            return
+
+        if self._v1_status_dispatch():
             return
 
         if path == "/api/wolf/shell-whoami":
@@ -4948,12 +4963,19 @@ class BetaHandler(SimpleHTTPRequestHandler):
         elif path in (
             "/bzg/finance",
             "/bzg/finance/",
-            "/bzg-finance",
-            "/bzg-finance.html",
-            "/dashboards/bzg-finance.html",
         ):
-            # Routed via _bzg_finance_dispatch earlier in do_GET; keep alias for late path rewrite.
+            # V1 aliases (/bzg-finance*) 302 via _v1_status.board_redirect_target.
             if self._bzg_finance_dispatch():
+                return
+        elif path in (
+            "/ops/v1-status",
+            "/ops/v1-status/",
+            "/v1-status",
+            "/v1-status/",
+            "/v1-status.html",
+            "/dashboards/v1-status.html",
+        ):
+            if self._v1_status_dispatch():
                 return
         elif path in (
             "/bzg/outlets",
@@ -14812,6 +14834,47 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_html_shell(page.read_bytes(), rel="bzg-finance.html")
             return True
         self._send_json(result, status=200)
+        return True
+
+    def _v1_status_dispatch(self) -> bool:
+        """V1-SWEEP-1 — read-only non-HR V1 status register (Beta only)."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _v1_status.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _v1_status.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "register_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _v1_status.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "v1-status.html"
+        if not page.is_file():
+            self._send_json(
+                {"ok": False, "error": "not_found", "message": "V1 status page missing."},
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="v1-status.html")
         return True
 
     def _bzg_outlets_dispatch(self) -> bool:

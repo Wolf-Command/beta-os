@@ -1,0 +1,46 @@
+{
+  "pack": "V1-SWEEP-1",
+  "status": "PASS_VERIFIED",
+  "verified_at_wita": "2026-09-29T22:44:24+08:00",
+  "verifier": "Peaches-Mac-executor",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "prod_8787_pid": 15975,
+  "prod_untouched": true,
+  "hr_deferred": true,
+  "destructive_sor_cutover": false,
+  "tests_rerun_by_peaches": {
+    "test_v1_sweep1_20260929.py": {
+      "pass": 67,
+      "fail": 0
+    },
+    "test_core_books1_20260929.py": {
+      "pass": 64,
+      "fail": 0
+    },
+    "test_core_ent1_20260929.py": {
+      "pass": 49,
+      "fail": 0
+    },
+    "test_bzg_outlet1_20260929.py": {
+      "pass": 82,
+      "fail": 0
+    },
+    "test_bzg_xoutlet1_20260929.py": {
+      "pass": 89,
+      "fail": 0
+    },
+    "test_atrium_sod1_20260929.py": {
+      "pass": 69,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 6,
+    "all_distinct_phash": true,
+    "eye_check": "PASS register + atrium/bzg redirects"
+  },
+  "result": "docs/wolf/ops/V1-SWEEP-1-RESULT.md",
+  "next": "FULL_VERIFY_THEN_EXIT_REPORT"
+}
