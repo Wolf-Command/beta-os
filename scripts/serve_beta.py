@@ -2010,6 +2010,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._ggv_content_prove_dispatch():
             return
 
+        if self._crm_identity1_dispatch():
+            return
+
         if path == "/api/wolf/shell-whoami":
             self._wolf_shell_whoami()
             return
@@ -5048,6 +5051,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/dashboards/ggv-content-prove.html",
         ):
             if self._ggv_content_prove_dispatch():
+                return
+        elif path in (
+            "/crm/identity-1",
+            "/crm/identity-1/",
+            "/crm-identity-1",
+            "/crm-identity-1/",
+            "/crm-identity-1.html",
+            "/dashboards/crm-identity-1.html",
+        ):
+            if self._crm_identity1_dispatch():
                 return
         elif path in (
             "/bzg/outlets",
@@ -15100,6 +15113,76 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return True
         self._send_html_shell(page.read_bytes(), rel="ggv-content-prove.html")
+        return True
+
+    def _crm_identity1_dispatch(self) -> bool:
+        """CRM-IDENTITY-1 — identity/memory vertical slice; no cross-client leak."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _crm_ident.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            person_id = (identity.get("person_id") or "").strip()
+            if not person_id:
+                self._send_identity_deny(identity)
+                return True
+            role_allowed = False
+            if person_id != _crm_ident.OWNER_PERSON:
+                try:
+                    role_allowed = bool(
+                        _rbac.can(person_id, _crm_ident.PERM_READ)
+                    )
+                except Exception:  # noqa: BLE001
+                    role_allowed = False
+            qs = parse_qs(parsed.query or "")
+            client_scope = (qs.get("client_scope") or [None])[0]
+            try:
+                payload = _crm_ident.public_payload(
+                    person_id,
+                    role_allowed=role_allowed,
+                    client_scope=client_scope,
+                )
+            except _crm_ident.CrmIdentityError as exc:
+                self._crm_fail(exc)
+                return True
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "identity_slice_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "cross_client_leak": False,
+                        "yanolja_graph_merge": _crm_ident.YANOLJA_STATUS,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _crm_ident.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "crm-identity-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "CRM Identity-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="crm-identity-1.html")
         return True
 
     def _bzg_outlets_dispatch(self) -> bool:
@@ -31906,6 +31989,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
             status = 404
         elif code in {"marketing_refused", "append_only"}:
             status = 405
+        elif code in {"cross_client_refused", "yanolja_blocked_external"}:
+            status = 403
         else:
             status = 400
         self._send_json(
@@ -31915,7 +32000,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "message": str(exc),
                 "marketing_blast": False,
                 "merged": False,
+                "auto_merge": False,
                 "identity_graph_complete": False,
+                "cross_client_leak": False,
+                "yanolja_graph_merge": _crm_ident.YANOLJA_STATUS,
                 **_crm_ident.honesty_flags(),
             },
             status=status,

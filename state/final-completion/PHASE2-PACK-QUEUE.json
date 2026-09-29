@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T00:48:41+08:00",
+  "at_wita": "2026-09-30T01:02:08+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -272,7 +272,11 @@
       "estimated_effort": "L",
       "matt_blocker": false,
       "synthesized_from": "CAP-CRM-02 MISSING",
-      "status": "NEXT_TO_ARM"
+      "status": "PASS_VERIFIED",
+      "exited_at": "2026-09-30T01:01:00+08:00",
+      "tests_pass": 140,
+      "tests_fail": 0,
+      "verified_at": "2026-09-30T01:02:08+08:00"
     },
     {
       "pack_id": "FIN-INTERCO-1",
@@ -298,7 +302,8 @@
       ],
       "estimated_effort": "L",
       "matt_blocker": false,
-      "synthesized_from": "CAP-FIN-06 MISSING"
+      "synthesized_from": "CAP-FIN-06 MISSING",
+      "status": "NEXT_TO_ARM"
     },
     {
       "pack_id": "INTEL-LEARN-1",
@@ -476,7 +481,7 @@
       "status": "QUEUED"
     }
   ],
-  "first_pack": "CRM-IDENTITY-1",
+  "first_pack": "FIN-INTERCO-1",
   "hr_deferred_not_in_queue": true,
   "blocked_external_not_auto_solved": [
     "MB-008",
@@ -497,7 +502,8 @@
     "MYWORK-PROVE-1",
     "INTG-TRUTH-1",
     "AMG-OS-SHELL-1",
-    "GGV-CONTENT-PROVE-1"
+    "GGV-CONTENT-PROVE-1",
+    "CRM-IDENTITY-1"
   ],
   "exited_awaiting_peaches": [
     "BZG-VENUEPL-1"

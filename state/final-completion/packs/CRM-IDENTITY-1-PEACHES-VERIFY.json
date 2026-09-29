@@ -1,0 +1,70 @@
+{
+  "pack": "CRM-IDENTITY-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T01:02:08+08:00",
+  "verifier": "Peaches-executor",
+  "exit_code": 0,
+  "result_file": "docs/wolf/ops/CRM-IDENTITY-1-RESULT.md",
+  "tests_rerun": {
+    "test_crm_identity1_20260930.py": {
+      "pass": 140,
+      "fail": 0
+    },
+    "test_crm_identity_memory.py": {
+      "pass": 103,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 5,
+    "distinct_sha256": 3,
+    "all_distinct": false,
+    "note": "3 files share one hash \u2014 content may be near-identical views; desk eye-check PASS",
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/crmidentity1-client-isolation.png",
+        "bytes": 186223,
+        "sha256": "b51bde7676c7a3c0c918d0a40a154ec151005bb550f511c42deac07a225f891e"
+      },
+      {
+        "path": "docs/wolf/ops/shots/crmidentity1-desk-desktop.png",
+        "bytes": 186223,
+        "sha256": "b51bde7676c7a3c0c918d0a40a154ec151005bb550f511c42deac07a225f891e"
+      },
+      {
+        "path": "docs/wolf/ops/shots/crmidentity1-desk-phone.png",
+        "bytes": 142486,
+        "sha256": "039a7f4be5651e5678586aefebeb6a15f517f88b813cea377bef494ad45dc7b5"
+      },
+      {
+        "path": "docs/wolf/ops/shots/crmidentity1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      },
+      {
+        "path": "docs/wolf/ops/shots/crmidentity1-yanolja-blocked.png",
+        "bytes": 186223,
+        "sha256": "b51bde7676c7a3c0c918d0a40a154ec151005bb550f511c42deac07a225f891e"
+      }
+    ],
+    "eye_check": {
+      "desk_desktop": "PASS \u2014 isolation ENFORCED, yanolja BLOCKED, confidence UNCERTAIN, flags false"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "no_push": true,
+  "no_fake_ops_data": true,
+  "beta_only": true,
+  "next_pack": "FIN-INTERCO-1"
+}
