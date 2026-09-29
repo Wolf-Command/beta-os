@@ -14,7 +14,7 @@
   "no_push": true,
   "matt_auto_continue": true,
   "prior_pack_verified": "SOP-LESSON-LIVE-1",
-  "beta_os_head_at_arm": "PENDING",
+  "beta_os_head_at_arm": "df844bf",
   "brief": "state/build-factory/briefs/BRIEF-FIN-TAX-SHELL-1.md",
   "log": "state/build-factory/logs/FIN-TAX-SHELL-1.log",
   "result_file": "docs/wolf/ops/FIN-TAX-SHELL-1-RESULT.md",
