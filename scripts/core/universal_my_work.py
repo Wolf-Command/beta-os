@@ -36,6 +36,7 @@ BOUND = "beta-universal-my-work"
 ENGINEERING_QUEUE = "ENGINEERING"
 ROUTING_NEEDS = "NEEDS_ROUTING"
 ROUTING_HELD = "HELD"  # HUMFIX-1B: premature RETEST held while repair finishes
+ROUTING_HELD_CF = "HELD_UNTIL_CF_ACCESS"  # HEADCHEF-1: commissioning held for Peaches activate
 
 # Presentation labels (plain words). DB statuses stay machine codes.
 STATUS_LABEL = {
@@ -322,7 +323,7 @@ def _mine_rows(conn, person_id: str) -> list[dict[str, Any]]:
         """
         SELECT * FROM core_work_items
         WHERE status != 'CANCELLED'
-          AND COALESCE(routing_state, '') NOT IN (?, ?)
+          AND COALESCE(routing_state, '') NOT IN (?, ?, ?)
           AND (
             owner_person_id = ?
             OR executor_person_id = ?
@@ -336,7 +337,7 @@ def _mine_rows(conn, person_id: str) -> list[dict[str, Any]]:
         ORDER BY priority ASC, due_at IS NULL, due_at ASC, updated_at DESC
         LIMIT 80
         """,
-        (ROUTING_NEEDS, ROUTING_HELD, person_id, person_id, person_id),
+        (ROUTING_NEEDS, ROUTING_HELD, ROUTING_HELD_CF, person_id, person_id, person_id),
     ).fetchall()
     return [dict(r) for r in rows]
 
@@ -1646,8 +1647,10 @@ def war_room_commissioning_queue(conn=None) -> dict[str, Any]:
             SELECT * FROM core_work_items
             WHERE origin = 'commissioning'
               AND status NOT IN ('CANCELLED', 'VERIFIED')
+              AND COALESCE(routing_state, '') NOT IN (?, ?)
             ORDER BY priority ASC, created_at ASC
-            """
+            """,
+            (ROUTING_HELD, ROUTING_HELD_CF),
         ).fetchall()
         queue = [enrich_card(c, dict(r)) for r in rows]
         return {
@@ -1711,6 +1714,25 @@ def _create_commission_task(
         commit=False,
     )
     ts = wi.now_utc_iso()
+    routing_state = None
+    routing_reason = None
+    if capability_id in {
+        "COMM-HARIYANTO-RECIPE-BUILDER",
+        "COMM-AP-SOD-PREPARE",
+        "COMM-AP-SOD-SUBMIT",
+    }:
+        routing_state = ROUTING_HELD_CF
+        if capability_id.startswith("COMM-AP-"):
+            routing_reason = (
+                "activate when Peaches verifies zenitalfathan@gmail.com is in Beta Cloudflare "
+                "(Person/AuthIdentity + Accounts Payable Assignment ready; do not activate early)"
+            )
+        else:
+            routing_reason = (
+                "activate when Matt confirms carolus.haryanto@gmail.com is in Beta Cloudflare "
+                "(Peaches activates only after Person/AuthIdentity, Head Chef Assignment/Scope, "
+                "real Recipe Builder and all server-side allow/deny checks pass)"
+            )
     conn.execute(
         """
         UPDATE core_work_items
@@ -1724,6 +1746,8 @@ def _create_commission_task(
             scope_label = ?,
             commissioning_capability_id = ?,
             what_happens_next = ?,
+            routing_state = COALESCE(?, routing_state),
+            routing_reason = COALESCE(?, routing_reason),
             updated_at = ?
         WHERE work_item_id = ?
         """,
@@ -1735,7 +1759,11 @@ def _create_commission_task(
             json.dumps([{"step": instructions, "href": href_hint}]),
             scope_label,
             capability_id,
-            "Open the link, follow the steps, attach evidence, choose PASS or FAIL, then DONE. Verification is separate.",
+            "Open the link, follow the steps, attach evidence, choose PASS or FAIL, then DONE. Verification is separate."
+            if routing_state is None
+            else "HELD until Peaches activates after allow/deny pass. Not visible as active My Work.",
+            routing_state,
+            routing_reason,
             ts,
             item["work_item_id"],
         ),
@@ -1775,6 +1803,16 @@ def _commissioning_specs() -> list[tuple]:
          "2. Find a real day with totals.\n"
          "3. Screenshot it, attach it, choose PASS or FAIL, tap DONE.",
          "Screenshot of ESB sales", "/bzg/uma-blu#sales", "BZG · Uma Blu"),
+        # Hariyanto — created HELD by migrate_headchef1; kept here for idempotent re-issue
+        ("PERS-HARIYANTO", "ROLE-BZG-HEAD-CHEF", "ENT-BZG", "COMM-HARIYANTO-RECIPE-BUILDER",
+         "Commission Recipe Builder (Hariyanto)",
+         "1. Open Recipe Builder (link below).\n"
+         "2. Check one real recipe's cost (real purchase/card data, or 'cost missing').\n"
+         "3. Create or edit one recipe.\n"
+         "4. Attach evidence, choose PASS or FAIL, tap DONE.\n"
+         "Note: activate when Matt confirms carolus.haryanto@gmail.com is in Beta Cloudflare.",
+         "Screenshot of Recipe Builder with real cost or cost missing; create/edit evidence",
+         "/bzg/recipe-builder", "BZG · Head Chef · Recipe Builder"),
         ("PERS-DEVI", "ROLE-BZG-CLOSER", "ENT-BZG", "COMM-DEVI-DAILY-CLOSE",
          "Commission Daily Close workflow (tolerance UNSET)",
          "1. Open Daily Close (link below).\n"
@@ -1791,11 +1829,12 @@ def _commissioning_specs() -> list[tuple]:
          "3. Screenshot, attach, choose PASS or FAIL, tap DONE.",
          "Screenshot of Command Centre", "/amg/finance", "AMG · Atrium Finance"),
         ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-JOURNAL",
-         "Commission Journal (draft only)",
-         "1. Open Journal (link below).\n"
-         "2. Draft only — do not post or approve.\n"
-         "3. Screenshot the draft view, attach, choose PASS or FAIL, tap DONE.",
-         "Screenshot of Journal draft view", "/amg/finance#journal", "AMG · Atrium Finance"),
+         "Commission Journal workbench",
+         "1. Open Journal workbench (link below).\n"
+         "2. Confirm DRAFT→VALIDATED→SUBMITTED→APPROVED→POSTED workflow buttons match your seat.\n"
+         "3. Do not approve or post a journal you prepared (SoD).\n"
+         "4. Screenshot, attach, choose PASS or FAIL, tap DONE.",
+         "Screenshot of Journal workbench", "/amg/finance#workbench", "AMG · Atrium Finance"),
         ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-LEDGER",
          "Commission Ledger",
          "1. Open General Ledger (link below).\n"
@@ -1824,12 +1863,12 @@ def _commissioning_specs() -> list[tuple]:
          "2. Screenshot, attach, choose PASS or FAIL, tap DONE.",
          "Screenshot of Reports", "/amg/finance#reports", "AMG · Atrium Finance"),
         ("PERS-ZAYEN", "ROLE-AMG-FINANCIAL-CONTROLLER", "ENT-AMG", "COMM-ZAYEN-CONTROLS",
-         "Confirm approval/posting controls denied",
+         "Confirm SoD + money controls",
          "1. Open Atrium Finance (link below).\n"
-         "2. Try (or open) approve/post journal, pay, or bank-detail change — you should be denied.\n"
-         "3. Attach a denial screenshot or a short written note of what was blocked.\n"
-         "4. Choose PASS if denied correctly, FAIL if you could do something you should not. Tap DONE.",
-         "Evidence of denied approve/post/pay/bank", "/amg/finance", "AMG · Atrium Finance"),
+         "2. Confirm you can approve/post journals prepared by someone else, and cannot approve/post your own.\n"
+         "3. Confirm pay and bank-detail change are denied.\n"
+         "4. Attach evidence, choose PASS or FAIL, tap DONE.",
+         "Evidence of SoD allow/deny + denied pay/bank", "/amg/finance", "AMG · Atrium Finance"),
         # Amanda
         ("PERS-AMANDA", "ROLE-GGV-FINANCE-OPERATOR", "ENT-GGV", "COMM-AMANDA-064A-066A",
          "Verify GGV invoices 064A–066A",

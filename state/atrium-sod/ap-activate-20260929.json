@@ -1,0 +1,15 @@
+{
+  "at": "2026-09-29T15:31:47+08:00",
+  "action": "ACTIVATE_AP_COMMISSIONING",
+  "email": "zenitalfathan@gmail.com",
+  "person_id": "PERS-ZENITALFATHAN",
+  "assignment_id": "ASG-ZENITALFATHAN-AP-1",
+  "work_items": [
+    "WI-c8ca39bc-cc75-49b7-be9e-588105eb6a33",
+    "WI-d3bc4a01-fcbb-4677-8730-32efd50ea411"
+  ],
+  "cf_source": "Matt chat confirm 2026-09-29 ~15:28 WITA",
+  "gmail_onboarding": "already drafted by Matt \u2014 Peaches did not create another",
+  "staff_ready": false,
+  "human_commissioned": false
+}

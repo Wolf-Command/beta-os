@@ -1,0 +1,94 @@
+{
+  "run_id": "ATRIUM-SOD-1",
+  "pack_labels": [
+    "ATRIUM-SOD-1B",
+    "ATRIUM-SOD-1C"
+  ],
+  "at_wita": "2026-09-29T16:14:31.518232+08:00",
+  "verdict": "DONE_ENGINEERING_PASS",
+  "peaches_verify": "PASS_VERIFIED",
+  "exit_at": "2026-09-29T15:45:45+08:00",
+  "exit_code": 0,
+  "exit_log": "state/build-factory/logs/ATRIUM-SOD-1C.log",
+  "prior_1b_cursor_pid": 32267,
+  "prior_1b_status": "DEAD_NO_EXIT_THEN_1C_REPAIR",
+  "1c_cursor_pid": 40238,
+  "1c_status": "EXIT:0",
+  "head_commit": "eee9a75",
+  "atrium_finance_commit": "2f5d938",
+  "uncommitted": true,
+  "uncommitted_note": "ATRIUM-FINANCE +574/-166 working tree; beta-os SOD result/shots/tests untracked. HEAD unchanged. Honest \u2014 do not claim new commit.",
+  "shots_required_present": 12,
+  "shots_glob_count": 14,
+  "shot_distinctness": {
+    "sod_self_deny_vs_zayen_review_desktop": "DISTINCT",
+    "sod_self_deny_vs_zayen_review_phone": "DISTINCT",
+    "posted_gl_vs_gl_history_desktop": "DISTINCT",
+    "posted_gl_vs_gl_history_phone": "DISTINCT"
+  },
+  "independent_tests": {
+    "atrium_sod1": "69/0",
+    "humfix1c": "54/0",
+    "mywork1b": "53/0",
+    "humancomm1": "60/0",
+    "staff_access": "274/0"
+  },
+  "journal": {
+    "JRN-ATRIUMSOD1B-COMM1": {
+      "status": "POSTED",
+      "preparer_person_id": "PERS-ZENITALFATHAN",
+      "wolf_created": 1
+    },
+    "JRN-ATRIUMSOD1B-SELF": {
+      "status": "ARCHIVED",
+      "preparer_person_id": "PERS-ZAYEN"
+    },
+    "JRN-ATRIUMSOD1-COMM1": {
+      "status": "ARCHIVED",
+      "preparer_person_id": "PERS-MATT",
+      "note": "legacy Owner interim superseded"
+    }
+  },
+  "ap_wis_active": 2,
+  "ap_wis": [
+    "WI-c8ca39bc-cc75-49b7-be9e-588105eb6a33 COMM-AP-SOD-PREPARE OPEN",
+    "WI-d3bc4a01-fcbb-4677-8730-32efd50ea411 COMM-AP-SOD-SUBMIT OPEN"
+  ],
+  "cf_email": "zenitalfathan@gmail.com",
+  "cf_evidence": "state/access-evidence/cf-beta-allow-20260929.json (Matt-confirmed; not CF API verified)",
+  "health": {
+    "prod": {
+      "port": 8787,
+      "pid": 15975,
+      "http": 200,
+      "api": 200
+    },
+    "beta": {
+      "port": 8788,
+      "pid": 22575,
+      "http": 403,
+      "api": 200
+    },
+    "sidecar": {
+      "port": 8790,
+      "pid": 43398,
+      "http": 403,
+      "api": 200
+    },
+    "disk_free_gb": 181
+  },
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_mutated": false,
+  "covers_deferred": "ATRIUM-SOD-1B visual verify-fail repaired by 1C",
+  "credit_conservation": true,
+  "next_heavy_arm": "NOT_ARMED_CREDIT_CONSERVATION",
+  "headchef1_status": "VERIFY_FAIL_STILL_DEFERRED_NO_AUTO_ARM",
+  "grok_review": "docs/deliveries/GROK-REVIEW-ATRIUM-SOD-1C-2026-09-29.md",
+  "result_file": "docs/wolf/ops/ATRIUM-SOD-1-RESULT.md",
+  "require_wake_parent": false,
+  "wake_kind": "FINISHED",
+  "note": "# PEACHES VERIFY \u2014 ATRIUM-SOD-1 (1B+1C) | at: 2026-09-29T16:14:31.518232+08:00 | EXIT:0 @ 2026-09-29T15:45:45+08:00 (ATRIUM-SOD-1C.log) | RESULT docs/wolf/ops/ATRIUM-SOD-1-RESULT.md | head eee9a75 / atrium 2f5d938 UNCOMMITTED | prod :8787 pid 15975 HTTP200 api200 held | beta :8788 pid 22575 | sidecar :8790 pid 43398 | shots 12/12 required DISTINCT pairs | Independent: sod1 69/0, humfix1c 54/0, mywork1b 53/0, humancomm1 60/0, staff 274/0 | COMM1 POSTED by AP PERS-ZENITALFATHAN wolf_created=1 | AP WIs active 2 | staff_ready=false human_commissioned=false | Verdict PASS_VERIFIED / DONE_ENGINEERING_PASS | No auto breadth; HEADCHEF VERIFY_FAIL not auto-armed (credit conservation).",
+  "matt_finished_ping": true,
+  "matt_finished_ping_at": "2026-09-29T16:14:53.923604+08:00"
+}

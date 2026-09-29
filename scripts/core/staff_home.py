@@ -86,6 +86,8 @@ def _atrium_finance_role(row: dict[str, Any]) -> bool:
     return role in {
         "ROLE-AMG-FINANCE-OFFICER",
         "ROLE-AMG-FINANCIAL-CONTROLLER",
+        "ROLE-AMG-ACCOUNTS-PAYABLE",
+        "ROLE-AMG-ACCOUNTS-RECEIVABLE",
     }
 
 
@@ -434,6 +436,10 @@ def _atrium_finance_boundary(codes: set[str]) -> str:
     if can_approve or can_reject:
         can_parts.append(
             "approve or reject a journal prepared by someone else (not your own)"
+        )
+    if can_post:
+        can_parts.append(
+            "post an approved journal prepared by someone else (not your own)"
         )
 
     cannot_parts: list[str] = []

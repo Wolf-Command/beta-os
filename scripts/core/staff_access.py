@@ -22,9 +22,23 @@ ROLE_CREATIVE_DIRECTOR = "ROLE-GGV-CREATIVE-DIRECTOR"
 ROLE_FINANCE = "ROLE-GGV-EXTERNAL-ACCOUNTANT"
 ROLE_ATRIUM_FINANCE = "ROLE-AMG-FINANCE-OFFICER"
 ROLE_ATRIUM_FINANCIAL_CONTROLLER = "ROLE-AMG-FINANCIAL-CONTROLLER"
+ROLE_ATRIUM_AP = "ROLE-AMG-ACCOUNTS-PAYABLE"
+ROLE_ATRIUM_AR = "ROLE-AMG-ACCOUNTS-RECEIVABLE"
 ZAYEN_FC_ASSIGNMENT = "ASG-ZAYEN-FC-1"
 ZAYEN_FC_POSITION = "POS-AMG-FINANCIAL-CONTROLLER-1"
+ZAYEN_AR_ASSIGNMENT = "ASG-ZAYEN-AR-1"
+ZAYEN_AR_POSITION = "POS-AMG-ACCOUNTS-RECEIVABLE-1"
+AP_PERSON = "PERS-ZENITALFATHAN"
+AP_EMAIL = "zenitalfathan@gmail.com"
+AP_AUTH = "AUTH-ZENITALFATHAN-EMAIL"
+AP_POSITION = "POS-AMG-ACCOUNTS-PAYABLE-1"
+AP_ASSIGNMENT = "ASG-ZENITALFATHAN-AP-1"
 ROLE_GGV_FINANCE_OPERATOR = "ROLE-GGV-FINANCE-OPERATOR"
+# ATRIUM-SOD-1B: preparer seats (AP/AR) + vacant Officer. People ≠ roles.
+ATRIUM_PREPARER_ROLES = frozenset({ROLE_ATRIUM_FINANCE, ROLE_ATRIUM_AP, ROLE_ATRIUM_AR})
+ATRIUM_FINANCE_SEAT_ROLES = frozenset(
+    {ROLE_ATRIUM_FINANCE, ROLE_ATRIUM_FINANCIAL_CONTROLLER, ROLE_ATRIUM_AP, ROLE_ATRIUM_AR}
+)
 GGV_FINANCE_HREF = "/ggv/finance"
 AMANDA_PERSON = "PERS-AMANDA"
 AMANDA_EMAIL = "amanda@wolfcommand.net"
@@ -120,16 +134,18 @@ ATRIUM_GRANTS: tuple[tuple[str, str, str, str, str], ...] = (
         "GET /api/accounts. Chart read only.",
     ),
 )
+# ATRIUM-SOD-1: post granted to Financial Controller with SoD (not held).
+# Kept for Officer seed: Officer must not receive post/approve.
 ATRIUM_HELD_BACK: tuple[tuple[str, str, str, str, str], ...] = (
     (
         "PERM-ATRIUM-JOURNAL-POST",
         "atrium.journal.post",
         "atrium.journal",
         "post",
-        "POST /api/journals/:id/post. Held — open Matt policy (HUMFIX-1).",
+        "POST /api/journals/:id/post. FC only (ATRIUM-SOD-1); SoD preparer≠poster. Not on Officer.",
     ),
 )
-# Approve is granted to Financial Controller (HUMFIX-1) with SoD. Kept here for docs only.
+# Approve is granted to Financial Controller with SoD. Kept here for docs only.
 ATRIUM_APPROVE_PERM: tuple[str, str, str, str, str] = (
     "PERM-ATRIUM-JOURNAL-APPROVE",
     "atrium.journal.approve",
@@ -138,10 +154,9 @@ ATRIUM_APPROVE_PERM: tuple[str, str, str, str, str] = (
     "POST /api/journals/:id/approve. FC only; SoD preparer≠approver.",
 )
 ATRIUM_SUBMIT = "approval.request"
-# HUMFIX-1: approve removed from denied — granted to Financial Controller with SoD.
-# Post stays denied (open policy for Matt).
+# ATRIUM-SOD-1: FC has approve+post with SoD. Officer still denied post/approve/pay/bank.
+# ATRIUM_DENIED is the money/admin/other-entity wall for Atrium seats (not FC post).
 ATRIUM_DENIED: tuple[str, ...] = (
-    "atrium.journal.post",
     "payment.approve",
     "payment.execute",
     "vendor.bank.change",
@@ -156,6 +171,12 @@ ATRIUM_DENIED: tuple[str, ...] = (
     "approval.decide",
     "content.plan.read",
     "governance.exception.authorise",
+)
+# Officer-only deny (post/approve stay off that seat).
+ATRIUM_OFFICER_DENIED: tuple[str, ...] = (
+    "atrium.journal.approve",
+    "atrium.journal.reject",
+    "atrium.journal.post",
 )
 
 CREW_END_REASON = (
@@ -562,7 +583,10 @@ def officer_must_deny(person_id: str | None, path: str, conn: sqlite3.Connection
         (pid,),
     ).fetchall()
     roles = {str(row[0]) for row in rows if row[0]}
-    if roles not in ({ROLE_ATRIUM_FINANCE}, {ROLE_ATRIUM_FINANCIAL_CONTROLLER}):
+    # Single-seat Atrium finance humans stay on /amg/finance (Officer, FC, AP, or AR).
+    if not roles or not roles.issubset(ATRIUM_FINANCE_SEAT_ROLES):
+        return False
+    if roles & {"ROLE-OWNER", "ROLE-MATT"}:
         return False
     raw = (path or "").split("?")[0]
     if not raw.startswith("/"):
@@ -590,6 +614,7 @@ HUMAN_PAGE_BY_ROLE: dict[str, str] = {
     "ROLE-CONTENT-CREW": "/content-2.0",
     "ROLE-CONTENT-CREATOR": "/content-2.0",
     "ROLE-BZG-FB-OPS-LEAD": "/bzg/uma-blu",
+    "ROLE-BZG-HEAD-CHEF": "/bzg/recipe-builder",
     "ROLE-GGV-LEAD": "/ggv-ops-pack",
     "ROLE-AMG-OPS": "/amg-ops-pack",
     "ROLE-AMG-GM": "/amg-ops-pack",
@@ -597,6 +622,8 @@ HUMAN_PAGE_BY_ROLE: dict[str, str] = {
     "ROLE-OWNER": "/wolf",
     "ROLE-AMG-FINANCE-OFFICER": ATRIUM_FINANCE_HREF,
     "ROLE-AMG-FINANCIAL-CONTROLLER": ATRIUM_FINANCE_HREF,
+    "ROLE-AMG-ACCOUNTS-PAYABLE": ATRIUM_FINANCE_HREF,
+    "ROLE-AMG-ACCOUNTS-RECEIVABLE": ATRIUM_FINANCE_HREF,
     "ROLE-GGV-FINANCE-OPERATOR": GGV_FINANCE_HREF,
     "ROLE-GGV-EXTERNAL-ACCOUNTANT": GGV_FINANCE_HREF,
 }

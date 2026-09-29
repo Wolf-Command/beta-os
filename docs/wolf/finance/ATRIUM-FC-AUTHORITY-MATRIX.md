@@ -1,44 +1,49 @@
 # ATRIUM FC AUTHORITY MATRIX
 
-Decision served: HUMFIX-1 / Matt relay 29 Sep 2026 ~11:14 WITA.  
-Seat: `PERS-ZAYEN` · `ASG-ZAYEN-FC-1` · `ROLE-AMG-FINANCIAL-CONTROLLER` · ENT-AMG only.  
+Decision served: ATRIUM-SOD-1 / Matt APPROVED 29 Sep 2026 13:32 WITA;  
+**ATRIUM-SOD-1B UPDATE 29 Sep 14:10** — real AP/AR staffing (supersedes Matt-as-preparer).
+
 Surfaces: live `/amg/finance` (sidecar `:8790` via Wolf proxy) and lite `/amg/finance/lite`.
+
+## Seats (ENT-AMG)
+
+| Seat | Role / Position | Person | Notes |
+| --- | --- | --- | --- |
+| Financial Controller | `ROLE-AMG-FINANCIAL-CONTROLLER` / `POS-AMG-FINANCIAL-CONTROLLER-1` / `ASG-ZAYEN-FC-1` | Zayen | Approve + post others (SoD) |
+| Accounts Payable | `ROLE-AMG-ACCOUNTS-PAYABLE` / `POS-AMG-ACCOUNTS-PAYABLE-1` / `ASG-ZENITALFATHAN-AP-1` | `PERS-ZENITALFATHAN` · `zenitalfathan@gmail.com` | Prep/submit; CF allow pending |
+| Accounts Receivable | `ROLE-AMG-ACCOUNTS-RECEIVABLE` / `POS-AMG-ACCOUNTS-RECEIVABLE-1` / `ASG-ZAYEN-AR-1` | Zayen **temporary** | Separate assignment; end later = data only |
+| Finance Officer | `ROLE-AMG-FINANCE-OFFICER` / `POS-AMG-FINANCE-OFFICER-1` | **VACANT** | Keep; do not invent person |
+
+CF email to add: `zenitalfathan@gmail.com` (Peaches verifies before AP commissioning activate).
 
 ## Journal lifecycle
 
 | Step | Who | Wolf permission | Product behaviour |
 | --- | --- | --- | --- |
-| Prepare (draft) | FC or Officer with draft grant | `atrium.journal.draft` | Allowed |
-| Review / validate | Same preparer seat | `atrium.journal.draft` / canEdit | Allowed |
-| Approve | Financial Controller, **not** the preparer | `atrium.journal.approve` | Allowed for FC with SoD |
-| Reject / return | Financial Controller, **not** the preparer | `atrium.journal.reject` | Returns VALIDATED/APPROVED → DRAFT |
-| Post | — | `atrium.journal.post` | **DENIED** — open Matt policy (HUMFIX-1). Existing hold kept |
+| Prepare (draft) | AP / AR / Officer / FC with draft | `atrium.journal.draft` | Allowed |
+| Validate | Preparer seat | `atrium.journal.draft` | DRAFT\|RETURNED → VALIDATED |
+| Submit | Preparer seat | `atrium.journal.draft` | VALIDATED → SUBMITTED |
+| Approve | Financial Controller, **not** the preparer | `atrium.journal.approve` | SUBMITTED → APPROVED |
+| Return | Financial Controller, **not** the preparer | `atrium.journal.reject` | SUBMITTED\|APPROVED → RETURNED (reason required) |
+| Post | Financial Controller, **not** the preparer | `atrium.journal.post` | APPROVED → POSTED (SoD; no skips) |
 
 ## Segregation of duties
 
-- FC may **not** approve or reject a journal they prepared (`created_by` matches their identity / display name).
-- A different preparer is required. Record who prepared and who approved on the journal header.
-- Self-approve → 403 `sod_self_approve`.
+- Compare `journal.preparer_person_id` to `actor.person_id` — **never** the set of roles held.
+- If equal → 403 on approve and on post, even when the actor also holds Controller.
+- If Zayen prepares as AR, Approve/Post requires a different authorised approver (Owner Matt interim).
+- UI titles are plain language only (Accounts Payable / Accounts Receivable / Atrium Financial Controller).
 
-## Still denied on this seat
+## Still denied on preparer seats (AP / AR / Officer)
 
-| Action | Permission / gate |
+| Action | Gate |
 | --- | --- |
-| Post journal | `atrium.journal.post` + mount sensitive block |
-| Reverse journal | mount sensitive block |
+| Approve / post | role grant absent + mount sensitive |
 | Payments | `payment.execute` / `payment.approve` |
 | Bank-detail change | `vendor.bank.change` + `/bank` path block |
 | Owner / admin | `finance.policy.admin`, `/api/admin/*` |
-| Other companies | ENT-GGV / ENT-BZG routes 403 |
+| Other companies | non–ENT-AMG routes 403 |
 
-## Canonical matrix note
+## Historical data
 
-`docs/wolf/five/PROPOSED-FINANCE-CONTROL-MATRIX.md` was silent / UNRESOLVED on ENT-AMG journal approve for FC. HUMFIX-1 implements approve + reject/return only. **Post remaining denied is an open policy point for Matt — do not invent posting authority.**
-
-## Verification
-
-- Catalog: FC role has `atrium.journal.approve` + `atrium.journal.reject`; not `atrium.journal.post`.
-- Assertion: Wolf emits `ROLE-AMG-FINANCIAL-CONTROLLER` for `ASG-ZAYEN-FC-1`.
-- Sidecar maps that role to accountant pillar + `accounting-core.canApprove` override.
-- Approve of own journal → 403. Approve of another preparer’s VALIDATED journal → 200.
-- Post / pay / bank / admin → 403.
+No authoritative AMG ledger found (see `state/atrium-sod/discovery.md`). Import model present; import nothing. GL empty copy states sources searched + Wolf cutover date. Wolf-created commissioning lines are flagged `wolf_created=1`.

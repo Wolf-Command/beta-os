@@ -52,7 +52,6 @@ PAGES = (
     "/amg/finance/api/accounts",
 )
 DENIED = (
-    ("POST", "/amg/finance/api/journals/JRN-1/post"),
     ("POST", "/amg/finance/api/ap/payments"),
     ("POST", "/amg/finance/api/tax/payment"),
     ("POST", "/amg/finance/api/bank/transfer"),
@@ -60,8 +59,9 @@ DENIED = (
     ("POST", "/amg/finance/api/admin/access-control/switch-user"),
     ("POST", "/amg/finance/api/auth/login"),
 )
-# Officer assertion still blocks approve; FC assertion allows approve (HUMFIX-1).
+# Officer assertion still blocks approve/post; FC assertion allows both (SoD server-side).
 DENIED_OFFICER_APPROVE = ("POST", "/amg/finance/api/journals/JRN-1/approve")
+DENIED_OFFICER_POST = ("POST", "/amg/finance/api/journals/JRN-1/post")
 SHOT_VIEWS = (
     ("command", "/amg/finance#command-centre", "Control Surface"),
     ("journal", "/amg/finance#workbench", "Journal"),
@@ -123,7 +123,7 @@ def test_data() -> None:
         check("no owners", owners == 0, str(owners))
         check("no stock", items == 0, str(items))
         check("no financial controller user", "usr-controller-1" not in ids, str(sorted(ids)))
-        check("wolf seats exist", {"PERS-ZAYEN", "PERS-MATT"} <= ids)
+        check("wolf seats exist", {"PERS-ZAYEN", "PERS-MATT", "PERS-ZENITALFATHAN"} <= ids)
     finally:
         conn.close()
     text = (ROOT / "scripts" / "serve_atrium_finance.sh").read_text(encoding="utf-8")
@@ -164,7 +164,10 @@ def test_sidecar_gate() -> None:
     check("sidecar unsigned api is 403", status == 403, str(status))
     status, _ = sidecar_call("GET", "/amg/finance/api/journals", "v1.forged.sig")
     check("sidecar forged assertion is 403", status == 403, str(status))
-    token = mount.sign_assertion(secret, "GET", "/amg/finance/api/auth/me", "PERS-ZAYEN", ZAYEN, mount.FINANCE_ROLE)
+    # ATRIUM-SOD-1B: Zayen live seat is Financial Controller (not Officer).
+    token = mount.sign_assertion(
+        secret, "GET", "/amg/finance/api/auth/me", "PERS-ZAYEN", ZAYEN, mount.FINANCE_ROLE_CONTROLLER
+    )
     status, raw = sidecar_call(
         "GET",
         "/amg/finance/api/auth/me",
@@ -180,17 +183,30 @@ def test_sidecar_gate() -> None:
     for path in PAGES:
         if path == "/amg/finance":
             continue
-        token = mount.sign_assertion(secret, "GET", path, "PERS-ZAYEN", ZAYEN, mount.FINANCE_ROLE)
+        token = mount.sign_assertion(
+            secret, "GET", path, "PERS-ZAYEN", ZAYEN, mount.FINANCE_ROLE_CONTROLLER
+        )
         status, raw = sidecar_call("GET", path, token)
         check(f"sidecar zayen 200 {path}", status == 200 and b"18000000" not in raw and b"TEST CORE" not in raw, str(status))
     for method, path in DENIED:
-        token = mount.sign_assertion(secret, method, path, "PERS-ZAYEN", ZAYEN, mount.FINANCE_ROLE)
+        token = mount.sign_assertion(
+            secret, method, path, "PERS-ZAYEN", ZAYEN, mount.FINANCE_ROLE_CONTROLLER
+        )
         status, _ = sidecar_call(method, path, token)
         check(f"sidecar zayen 403 {method} {path}", status == 403, str(status))
     method, path = DENIED_OFFICER_APPROVE
-    token = mount.sign_assertion(secret, method, path, "PERS-ZAYEN", ZAYEN, mount.FINANCE_ROLE)
+    # Preparer seat assertion (Officer / AP) must not approve — use AP person.
+    token = mount.sign_assertion(
+        secret, method, path, "PERS-ZENITALFATHAN", "zenitalfathan@gmail.com", mount.FINANCE_ROLE_AP
+    )
     status, _ = sidecar_call(method, path, token)
-    check("sidecar officer still 403 approve", status == 403, str(status))
+    check("sidecar AP still 403 approve", status == 403, str(status))
+    method_p, path_p = DENIED_OFFICER_POST
+    token = mount.sign_assertion(
+        secret, method_p, path_p, "PERS-ZENITALFATHAN", "zenitalfathan@gmail.com", mount.FINANCE_ROLE_AP
+    )
+    status, _ = sidecar_call(method_p, path_p, token)
+    check("sidecar AP still 403 post", status == 403, str(status))
     token_fc = mount.sign_assertion(
         secret, method, path, "PERS-ZAYEN", ZAYEN, mount.FINANCE_ROLE_CONTROLLER
     )
@@ -200,6 +216,15 @@ def test_sidecar_gate() -> None:
         "sidecar FC approve not mount-blocked",
         status_fc in {200, 400, 404},
         f"status={status_fc} body={raw_fc[:120]!r}",
+    )
+    token_fc_post = mount.sign_assertion(
+        secret, method_p, path_p, "PERS-ZAYEN", ZAYEN, mount.FINANCE_ROLE_CONTROLLER
+    )
+    status_fc_post, raw_fc_post = sidecar_call(method_p, path_p, token_fc_post)
+    check(
+        "sidecar FC post not mount-blocked",
+        status_fc_post in {200, 400, 404},
+        f"status={status_fc_post} body={raw_fc_post[:120]!r}",
     )
     owner = mount.sign_assertion(
         secret, "GET", "/amg/finance/api/auth/me", "PERS-MATT", OWNER, mount.OWNER_ROLE
@@ -228,7 +253,7 @@ def test_beta(port: int) -> None:
         body = b"{}" if method == "POST" else None
         status, _ = call(port, method, path, headers, body)
         check(f"beta zayen 403 {method} {path}", status == 403, str(status))
-    # HUMFIX-1: FC approve is allowed through Beta (SoD enforced). Missing JRN-1 → not 403 mount block.
+    # HUMFIX-1 / ATRIUM-SOD-1: FC approve+post allowed through Beta (SoD enforced). Missing JRN-1 → not 403 mount block.
     status, raw = call(
         port,
         "POST",
@@ -238,6 +263,18 @@ def test_beta(port: int) -> None:
     )
     check(
         "beta FC approve not soft-blocked",
+        status in {200, 400, 404},
+        f"status={status} body={raw[:120]!r}",
+    )
+    status, raw = call(
+        port,
+        "POST",
+        "/amg/finance/api/journals/JRN-1/post",
+        {"X-Wolf-Subject": ZAYEN, "Accept": "application/json", "Content-Type": "application/json"},
+        b"{}",
+    )
+    check(
+        "beta FC post not soft-blocked",
         status in {200, 400, 404},
         f"status={status} body={raw[:120]!r}",
     )

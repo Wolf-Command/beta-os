@@ -390,26 +390,28 @@ def test_zayen_succession() -> None:
     conn = sqlite3.connect(copy)
     conn.row_factory = sqlite3.Row
     try:
-        from core.staff_access import ZAYEN_FC_ASSIGNMENT
+        from core.staff_access import ZAYEN_AR_ASSIGNMENT, ZAYEN_FC_ASSIGNMENT
 
         check("Zayen can read the board before end", rbac.can(ZAYEN_PERSON, "atrium.board.read", AMG, conn=conn))
-        conn.execute(
-            """
-            UPDATE org_assignments
-            SET status='ENDED', end_at='2026-09-28T12:00:00+08:00', is_primary=0,
-                end_reason='succession test'
-            WHERE assignment_id=?
-            """,
-            (ZAYEN_FC_ASSIGNMENT,),
-        )
-        conn.execute(
-            """
-            UPDATE org_assignment_scopes
-            SET status='ENDED', end_at='2026-09-28T12:00:00+08:00'
-            WHERE assignment_id=? AND status='ACTIVE'
-            """,
-            (ZAYEN_FC_ASSIGNMENT,),
-        )
+        # End every Zayen finance seat (FC + temporary AR). People ≠ roles; succession clears all.
+        for asg_id in (ZAYEN_FC_ASSIGNMENT, ZAYEN_AR_ASSIGNMENT):
+            conn.execute(
+                """
+                UPDATE org_assignments
+                SET status='ENDED', end_at='2026-09-28T12:00:00+08:00', is_primary=0,
+                    end_reason='succession test'
+                WHERE assignment_id=?
+                """,
+                (asg_id,),
+            )
+            conn.execute(
+                """
+                UPDATE org_assignment_scopes
+                SET status='ENDED', end_at='2026-09-28T12:00:00+08:00'
+                WHERE assignment_id=? AND status='ACTIVE'
+                """,
+                (asg_id,),
+            )
         conn.commit()
         check(
             "ended Zayen assignment removes access",

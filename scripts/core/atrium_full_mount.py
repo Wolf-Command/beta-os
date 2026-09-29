@@ -21,7 +21,18 @@ OWNER_PERSON = "PERS-MATT"
 # Sidecar assertion string (unchanged). Wolf Core seat may be Financial Controller.
 FINANCE_ROLE = "ROLE-AMG-FINANCE-OFFICER"
 FINANCE_ROLE_CONTROLLER = "ROLE-AMG-FINANCIAL-CONTROLLER"
-FINANCE_ROLES = frozenset({FINANCE_ROLE, FINANCE_ROLE_CONTROLLER})
+FINANCE_ROLE_AP = "ROLE-AMG-ACCOUNTS-PAYABLE"
+FINANCE_ROLE_AR = "ROLE-AMG-ACCOUNTS-RECEIVABLE"
+FINANCE_ROLES = frozenset(
+    {FINANCE_ROLE, FINANCE_ROLE_CONTROLLER, FINANCE_ROLE_AP, FINANCE_ROLE_AR}
+)
+# Prefer Controller when a person also holds a temporary preparer seat (Zayen FC+AR).
+_ROLE_PRIORITY = (
+    FINANCE_ROLE_CONTROLLER,
+    FINANCE_ROLE,
+    FINANCE_ROLE_AP,
+    FINANCE_ROLE_AR,
+)
 OWNER_ROLE = "ROLE-OWNER"
 ASSERTION_TTL = 60
 
@@ -58,13 +69,19 @@ def is_sensitive(method: str, path: str, wolf_role: str) -> bool:
     if wolf_role not in FINANCE_ROLES | {OWNER_ROLE}:
         return False
     api = api_path(path)
-    # HUMFIX-1: FC may approve/reject (SoD enforced server-side). Post stays denied.
+    # ATRIUM-SOD-1: FC may approve/reject/post (SoD enforced server-side).
     if wolf_role == FINANCE_ROLE_CONTROLLER:
         from core import atrium_fc_authority as _fc
 
         if _fc.fc_may_approve_path(wolf_role, method, api):
             return False
         return _fc.still_denied_sensitive(method, api)
+    # AP / AR / Officer: validate/submit own drafts only — never approve/post/pay/bank.
+    if wolf_role in {FINANCE_ROLE, FINANCE_ROLE_AP, FINANCE_ROLE_AR}:
+        if method.upper() == "POST" and (
+            api.endswith("/validate") or api.endswith("/submit")
+        ):
+            return False
     if api == "/api/admin" or api.startswith("/api/admin/"):
         return True
     if "/bank" in api:
@@ -131,11 +148,13 @@ def seat_allowed(person_id: str, conn) -> tuple[bool, str]:
         (pid,),
     ).fetchall()
     roles = {str(row[0]) for row in rows if row[0]}
-    if pid == ZAYEN_PERSON and (roles & FINANCE_ROLES):
-        if not rbac.can(pid, "atrium.board.read", {"entity_id": "ENT-AMG"}, conn=conn):
-            return False, ""
-        # Prefer live FC seat; fall back to Officer string for legacy seats.
-        if FINANCE_ROLE_CONTROLLER in roles:
-            return True, FINANCE_ROLE_CONTROLLER
-        return True, FINANCE_ROLE
-    return False, ""
+    finance = roles & FINANCE_ROLES
+    if not finance:
+        return False, ""
+    if not rbac.can(pid, "atrium.board.read", {"entity_id": "ENT-AMG"}, conn=conn):
+        return False, ""
+    # Prefer Controller when also holding temporary AR (or any preparer seat).
+    for role in _ROLE_PRIORITY:
+        if role in finance:
+            return True, role
+    return True, next(iter(finance))

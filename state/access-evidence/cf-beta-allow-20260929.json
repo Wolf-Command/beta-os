@@ -1,0 +1,52 @@
+{
+  "recorded_at": "2026-09-29T12:34:00+08:00",
+  "source": "Matt confirmation in chat (Cloudflare Beta Allow policy)",
+  "not_cf_api_verified": true,
+  "added_20260929": [
+    {
+      "email": "carolus.haryanto@gmail.com",
+      "person": "Hariyanto (Carolus Haryanto)",
+      "beta_person": "PERS-HARIYANTO",
+      "ops_access": "HEADCHEF-1 built; commissioning HELD_UNTIL_CF_ACCESS for Peaches"
+    },
+    {
+      "email": "barefeet14@hotmail.com",
+      "person": "Maciej",
+      "beta_person": "PERS-MACIEJ",
+      "ops_access": "AUTH ONLY \u2014 zero assignments; operational routes 403"
+    },
+    {
+      "email": "amanda@wolfcommand.net",
+      "person": "Amanda",
+      "beta_person": "PERS-AMANDA",
+      "ops_access": "existing GGV Finance commissioning"
+    },
+    {
+      "email": "zenitalfathan@gmail.com",
+      "person": "zenitalfathan (legal name not in authorised records)",
+      "beta_person": "PERS-ZENITALFATHAN",
+      "ops_access": "ATRIUM Accounts Payable; Person+Assignment ready; Peaches activating COMM-AP-SOD-* after Matt CF confirm 15:28 WITA"
+    }
+  ],
+  "previously_confirmed": [
+    "mrwolf@wolfcommand.net",
+    "haikalqilbari123@gmail.com",
+    "mlsary111@gmail.com",
+    "laluzayen@gmail.com",
+    "zarah.lestrange@gmail.com",
+    "frail.bongat@icloud.com",
+    "alamprojects26@gmail.com",
+    "mr.gerryarfanata@gmail.com",
+    "omnia.folio@gmail.com",
+    "evetrovert@gmail.com",
+    "tejasaputra.wahyuhidayat@gmail.com",
+    "widiatmika.11@gmail.com",
+    "deviputu236@gmail.com"
+  ],
+  "pending_matt_add": [],
+  "updated_at": "2026-09-29T15:31:47+08:00",
+  "notes": [
+    "2026-09-29 Matt: add zenitalfathan@gmail.com for Atrium AP (ATRIUM-SOD). Commissioning held until CF + Person/Assignment ready.",
+    "2026-09-29 15:28 WITA Matt confirmed zenitalfathan@gmail.com added to Beta Allow. Peaches activating AP commissioning."
+  ]
+}

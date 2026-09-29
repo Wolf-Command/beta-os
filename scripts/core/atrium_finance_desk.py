@@ -15,9 +15,19 @@ from core import atrium_books as _ledger
 from core import fin_accounting_core as _books
 from core import ggv_finance_invoice as _invoice
 from core import rbac as _rbac
-from core.staff_access import ROLE_ATRIUM_FINANCE, ROLE_ATRIUM_FINANCIAL_CONTROLLER
+from core.staff_access import (
+    ROLE_ATRIUM_AP,
+    ROLE_ATRIUM_AR,
+    ROLE_ATRIUM_FINANCE,
+    ROLE_ATRIUM_FINANCIAL_CONTROLLER,
+)
 
-_ATRIUM_FINANCE_ROLES = (ROLE_ATRIUM_FINANCIAL_CONTROLLER, ROLE_ATRIUM_FINANCE)
+_ATRIUM_FINANCE_ROLES = (
+    ROLE_ATRIUM_FINANCIAL_CONTROLLER,
+    ROLE_ATRIUM_FINANCE,
+    ROLE_ATRIUM_AP,
+    ROLE_ATRIUM_AR,
+)
 
 ENTITY = "ENT-AMG"
 ENTITY_LABEL = "Atrium"
@@ -65,7 +75,7 @@ WITHHELD: tuple[dict[str, str], ...] = (
     {
         "id": "journal-post",
         "grant": "atrium.journal.post",
-        "reason": "Journal posting stays ungranted pending Matt policy (HUMFIX-1 open point).",
+        "reason": "Journal posting is Financial Controller only, with segregation of duties (not the preparer).",
     },
 )
 

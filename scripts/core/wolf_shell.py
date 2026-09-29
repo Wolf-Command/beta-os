@@ -380,6 +380,7 @@ UMA_GRAMMAR: list[dict[str, Any]] = [
     {"key": "bills", "label": "Bills", "href": "/bzg/uma-blu/bills", "state": "live"},
     {"key": "issues", "label": "Issues", "href": "/bzg/uma-blu/issues", "state": "live"},
     {"key": "petty", "label": "Petty", "href": "/bzg/uma-blu/petty", "state": "live"},
+    {"key": "recipes", "label": "Recipes", "href": "/bzg/uma-blu/recipes", "state": "live"},
     {"key": "close", "label": "Close", "href": "/uma-blu-close", "state": "live"},
 ]
 
@@ -442,7 +443,7 @@ AUDIENCE_PAGES: dict[str, list[str]] = {
         INTEL_HREF,
         CONTENT_HREF,
     ],
-    "OPERATOR": [NEEDS_YOU_HREF, "/bzg/uma-blu", "/bzg"],
+    "OPERATOR": [NEEDS_YOU_HREF, "/bzg/uma-blu", "/bzg", "/bzg/recipe-builder"],
     "SPECIALIST_GGV": [NEEDS_YOU_HREF, "/ggv-ops-pack", "/ggv/finance"],
     "SPECIALIST_AMG": [NEEDS_YOU_HREF, "/amg-ops-pack"],
     # Content crew: Content under Intelligence→Content + Needs You + assigned GGV brands.
@@ -466,6 +467,7 @@ ROLE_AUDIENCE: dict[str, str] = {
     "ROLE-BZG-FB-OPS-LEAD": "OPERATOR",
     "ROLE-BZG-HFB": "OPERATOR",
     "ROLE-BZG-CLOSER": "OPERATOR",
+    "ROLE-BZG-HEAD-CHEF": "OPERATOR",
     "ROLE-GGV-LEAD": "SPECIALIST_GGV",
     "ROLE-AMG-OPS": "SPECIALIST_AMG",
     "ROLE-AMG-GM": "SPECIALIST_AMG",
@@ -473,6 +475,8 @@ ROLE_AUDIENCE: dict[str, str] = {
     "ROLE-GGV-FINANCE-OPERATOR": "SPECIALIST_FINANCE",
     "ROLE-AMG-FINANCE-OFFICER": "SPECIALIST_ATRIUM_FINANCE",
     "ROLE-AMG-FINANCIAL-CONTROLLER": "SPECIALIST_ATRIUM_FINANCE",
+    "ROLE-AMG-ACCOUNTS-PAYABLE": "SPECIALIST_ATRIUM_FINANCE",
+    "ROLE-AMG-ACCOUNTS-RECEIVABLE": "SPECIALIST_ATRIUM_FINANCE",
 }
 
 PERSON_AUDIENCE: dict[str, str] = {
@@ -1142,6 +1146,8 @@ _ASSIGNMENT_AUDIENCE_ROLES = frozenset(
         "ROLE-GGV-EXTERNAL-ACCOUNTANT",
         "ROLE-AMG-FINANCE-OFFICER",
         "ROLE-AMG-FINANCIAL-CONTROLLER",
+        "ROLE-AMG-ACCOUNTS-PAYABLE",
+        "ROLE-AMG-ACCOUNTS-RECEIVABLE",
     }
 )
 
@@ -1224,6 +1230,7 @@ _ROLE_HREF: dict[str, str] = {
     "ROLE-CONTENT-CREW": CONTENT_HREF,
     "ROLE-CONTENT-CREATOR": CONTENT_HREF,
     "ROLE-BZG-FB-OPS-LEAD": "/bzg/uma-blu",
+    "ROLE-BZG-HEAD-CHEF": "/bzg/recipe-builder",
     "ROLE-GGV-LEAD": "/ggv-ops-pack",
     "ROLE-AMG-OPS": "/amg-ops-pack",
     "ROLE-AMG-GM": "/amg-ops-pack",
@@ -1231,6 +1238,8 @@ _ROLE_HREF: dict[str, str] = {
     "ROLE-OWNER": WOLF_ALIAS,
     "ROLE-AMG-FINANCE-OFFICER": "/amg/finance",
     "ROLE-AMG-FINANCIAL-CONTROLLER": "/amg/finance",
+    "ROLE-AMG-ACCOUNTS-PAYABLE": "/amg/finance",
+    "ROLE-AMG-ACCOUNTS-RECEIVABLE": "/amg/finance",
     "ROLE-GGV-FINANCE-OPERATOR": "/ggv/finance",
     "ROLE-GGV-EXTERNAL-ACCOUNTANT": "/ggv/finance",
 }

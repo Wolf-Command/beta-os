@@ -128,10 +128,11 @@ def test_grants_unchanged() -> None:
         expected = {row[1] for row in ATRIUM_GRANTS} | {ATRIUM_SUBMIT} | {
             "atrium.journal.approve",
             "atrium.journal.reject",
+            "atrium.journal.post",
         }
         held = {row[1] for row in ATRIUM_HELD_BACK}
         check("grants include FC approve", "atrium.journal.approve" in codes, str(sorted(codes)))
-        check("post still held", "atrium.journal.post" not in codes)
+        check("FC post granted (ATRIUM-SOD-1)", "atrium.journal.post" in codes, str(sorted(codes)))
         check("board read on Atrium", rbac.can(ZAYEN_PERSON, "atrium.board.read", AMG, conn=conn) is True)
         for code in ("atrium.ledger.read", "atrium.coa.read", "atrium.report.read", "atrium.journal.draft"):
             check(f"existing grant {code}", rbac.can(ZAYEN_PERSON, code, AMG, conn=conn) is True)
@@ -141,8 +142,11 @@ def test_grants_unchanged() -> None:
             "FC approve granted",
             rbac.can(ZAYEN_PERSON, "atrium.journal.approve", AMG, conn=conn) is True,
         )
+        check(
+            "FC post granted on AMG",
+            rbac.can(ZAYEN_PERSON, "atrium.journal.post", AMG, conn=conn) is True,
+        )
         for code in (
-            "atrium.journal.post",
             "payment.approve",
             "payment.execute",
             "vendor.bank.change",
