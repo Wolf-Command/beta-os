@@ -1,0 +1,83 @@
+{
+  "pack": "GGV-PIPELINE-TRUTH-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T03:30:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T03:27:24+08:00",
+  "result_file": "docs/wolf/ops/GGV-PIPELINE-TRUTH-1-RESULT.md",
+  "tests_rerun": {
+    "test_ggv_pipeline_truth1_20260930.py": {
+      "pass": 196,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 5,
+    "distinct_sha256": 3,
+    "all_distinct": false,
+    "note": "desk/conversion/crm share SHA; phone+unsigned distinct",
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/ggvpipeline1-conversion-unknown.png",
+        "bytes": 187305,
+        "sha256": "558e4c2d5e7523889e0050c5fab8a74a35795b59b4d4403001268024eac4bddf"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ggvpipeline1-crm-preserved.png",
+        "bytes": 187305,
+        "sha256": "558e4c2d5e7523889e0050c5fab8a74a35795b59b4d4403001268024eac4bddf"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ggvpipeline1-desk-desktop.png",
+        "bytes": 187305,
+        "sha256": "558e4c2d5e7523889e0050c5fab8a74a35795b59b4d4403001268024eac4bddf"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ggvpipeline1-desk-phone.png",
+        "bytes": 132971,
+        "sha256": "93bf50eeaa9d43d6ab44b39a5b6f667fe269d3fab259168c5f4af6542c661b41"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ggvpipeline1-unsigned-deny.png",
+        "bytes": 21842,
+        "sha256": "f3f1f89e7a62df574ea16ded0e21b24047561bf18456470fc8238ec7fe5129b8"
+      }
+    ],
+    "eye_check": {
+      "desk": "FROM_CRM counts; conversion UNKNOWN; CLOSED\u2260sale; fake_deals=false",
+      "unsigned_deny": "Access denied"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "fake_deals": false,
+    "fake_conversion": false,
+    "live_pipeline": false,
+    "ceiling": "BUILT"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "d70b1d2",
+    "atrium_finance_head": "7584266",
+    "uncommitted": true
+  },
+  "preserves": [
+    "CRM-IDENTITY-1"
+  ],
+  "next_pack": "CONN-HEALTH-BOARD-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

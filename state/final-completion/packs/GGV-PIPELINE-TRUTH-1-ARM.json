@@ -4,7 +4,7 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 4,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T03:19:00+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
@@ -34,5 +34,24 @@
   ],
   "preserves": [
     "CRM-IDENTITY-1"
-  ]
+  ],
+  "launched_at": "2026-09-30T03:19:30+08:00",
+  "cursor_pid": 35130,
+  "child_alive": false,
+  "exit_code": 0,
+  "exited_at": "2026-09-30T03:27:09+08:00",
+  "suite": "scripts/tests/test_ggv_pipeline_truth1_20260930.py",
+  "suite_result": "PASS=196 FAIL=0",
+  "shots": [
+    "docs/wolf/ops/shots/ggvpipeline1-desk-desktop.png",
+    "docs/wolf/ops/shots/ggvpipeline1-desk-phone.png",
+    "docs/wolf/ops/shots/ggvpipeline1-conversion-unknown.png",
+    "docs/wolf/ops/shots/ggvpipeline1-crm-preserved.png",
+    "docs/wolf/ops/shots/ggvpipeline1-unsigned-deny.png"
+  ],
+  "cursor_did_not_auto_start_next": true,
+  "peaches_verified_at": "2026-09-30T03:30:00+08:00",
+  "peaches_verify": "state/final-completion/packs/GGV-PIPELINE-TRUTH-1-PEACHES-VERIFY.json",
+  "tests_pass": 196,
+  "tests_fail": 0
 }

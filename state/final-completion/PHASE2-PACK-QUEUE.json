@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T03:19:00+08:00",
+  "at_wita": "2026-09-30T03:30:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -794,7 +794,7 @@
       "armed_at": "2026-09-30T03:08:00+08:00",
       "cursor_pid": 33421,
       "launched_at": "2026-09-30T03:08:30+08:00",
-      "verified_at": "2026-09-30T03:19:00+08:00",
+      "verified_at": "2026-09-30T03:22:12+08:00",
       "tests": {
         "pass": 204,
         "fail": 0
@@ -824,9 +824,18 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "synthesized_from": "wave4 MISSING dashboards",
-      "armed_at": "2026-09-30T03:19:00+08:00"
+      "armed_at": "2026-09-30T03:19:00+08:00",
+      "cursor_pid": 35130,
+      "launched_at": "2026-09-30T03:19:30+08:00",
+      "exited_at": "2026-09-30T03:27:09+08:00",
+      "suite_result": "PASS=196 FAIL=0",
+      "verified_at": "2026-09-30T03:30:00+08:00",
+      "tests": {
+        "pass": 196,
+        "fail": 0
+      }
     },
     {
       "pack_id": "CONN-HEALTH-BOARD-1",
@@ -853,8 +862,88 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
+      "status": "WAITING_CURSOR",
+      "synthesized_from": "wave4 MISSING connections",
+      "armed_at": "2026-09-30T03:30:00+08:00"
+    },
+    {
+      "pack_id": "AMG-OCC-TRUTH-1",
+      "title": "AMG occupancy truth desk (UNKNOWN when PMS blocked)",
+      "closes": [
+        "CAP-AMG occupancy"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "BLOCKED_EXTERNAL"
+      ],
+      "priority_bucket": "dashboards",
+      "scope": [
+        "Occupancy honesty over AMG-OS-SHELL-1",
+        "UNKNOWN/BLOCKED not fake occ"
+      ],
+      "forbids": [
+        "fake occupancy",
+        "unblock PMS"
+      ],
+      "depends_on": [
+        "AMG-OS-SHELL-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
       "status": "QUEUED",
-      "synthesized_from": "wave4 MISSING connections"
+      "synthesized_from": "wave5 MISSING dashboards"
+    },
+    {
+      "pack_id": "SOP-LESSON-LIVE-1",
+      "title": "SOP lesson board live honesty (human review required)",
+      "closes": [
+        "CAP-INTEL lessons"
+      ],
+      "targets_classes": [
+        "PARTIAL"
+      ],
+      "priority_bucket": "reliability",
+      "scope": [
+        "Surface SOP factory lessons without auto-approve"
+      ],
+      "forbids": [
+        "auto-approve lessons",
+        "fake lessons"
+      ],
+      "depends_on": [
+        "SOP-FACTORY-1",
+        "INTEL-LEARN-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "synthesized_from": "wave5 MISSING reliability"
+    },
+    {
+      "pack_id": "FIN-TAX-SHELL-1",
+      "title": "Tax calendar shell honesty (no fake filings)",
+      "closes": [
+        "CAP-FIN tax"
+      ],
+      "targets_classes": [
+        "MISSING"
+      ],
+      "priority_bucket": "finance_loops",
+      "scope": [
+        "Tax calendar stubs UNKNOWN until facts",
+        "No invented due amounts"
+      ],
+      "forbids": [
+        "fake filings",
+        "fake tax amounts"
+      ],
+      "depends_on": [
+        "FC-SHELL-2"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "synthesized_from": "wave5 MISSING finance_loops"
     }
   ],
   "first_pack": "DASH-LIVE-1",
@@ -891,7 +980,9 @@
     "RELIABILITY-1",
     "CONTENT-ENGINE-LIVE-1",
     "ESB-TRUTH-1",
-    "BACKUP-HEALTH-1"
+    "BACKUP-HEALTH-1",
+    "FIN-CASH-TRUTH-1",
+    "BZG-LABOR-COST-1"
   ],
   "exited_awaiting_peaches": [],
   "synthesized_after_queue_head": true,
@@ -906,12 +997,13 @@
   },
   "synthesis_wave2_at": "2026-09-30T00:45:44+08:00",
   "synthesis_wave3_at": "2026-09-30T01:19:01+08:00",
-  "last_verified": "BACKUP-HEALTH-1",
-  "next_to_arm": "BZG-LABOR-COST-1",
-  "heavy_in_flight": null,
-  "last_exited": "BACKUP-HEALTH-1",
-  "next_to_arm_note": "parent/Peaches only after ESB-TRUTH-1 PASS_VERIFIED \u2014 Cursor must not auto-arm; HEADCHEF veto",
+  "last_verified": "BZG-LABOR-COST-1",
+  "next_to_arm": "CONN-HEALTH-BOARD-1",
+  "heavy_in_flight": "GGV-PIPELINE-TRUTH-1",
+  "last_exited": "BZG-LABOR-COST-1",
+  "next_to_arm_note": "parent/Peaches only after GGV-PIPELINE-TRUTH-1 PASS_VERIFIED \u2014 Cursor must not auto-arm; HEADCHEF veto",
   "wave4_synthesized_at": "2026-09-30T02:45:00+08:00",
   "wave4_count": 4,
-  "updated_at": "2026-09-30T02:56:40+08:00"
+  "updated_at": "2026-09-30T03:22:12+08:00",
+  "wave5_synthesized_at": "2026-09-30T03:30:00+08:00"
 }

@@ -306,6 +306,22 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import bzg_labor_cost1 as b; from pathlib import Path; html=Path('dashboards/bzg-labor-cost-1.html').read_text(); import sys; sys.exit(0 if (b.api_matches('/api/bzg/labor-cost-1') and b.page_matches('/bzg/labor-cost-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/bzglaborcost1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/BZG-LABOR-COST-1-RESULT.md').is_file() and b.honesty_flags().get('next_pack_for_parent_only')=='GGV-PIPELINE-TRUTH-1' and b.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
       "expect": "exit 0",
       "by": "bzg-labor-cost1-20260930"
+    },
+    {
+      "id": "GGV-PIPELINE-TRUTH-1-desk",
+      "claim": "GGV-PIPELINE-TRUTH-1: stages FROM_CRM or UNKNOWN; conversion UNKNOWN; fake_deals/fake_conversion false; CRM-IDENTITY-1 preserved; staff_ready/human_commissioned false; next pack parent-only CONN-HEALTH-BOARD-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import ggv_pipeline_truth1 as g; p=g.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('fake_deals') is False and p.get('fake_conversion') is False and p.get('conversion_unknown') is True and p.get('live_pipeline') is False and p.get('crm_identity1_preserved') is True and g.stages_crm_or_unknown(p) and g.all_conversion_slots_unknown(p) and g.honesty_flags().get('next_pack_for_parent_only')=='CONN-HEALTH-BOARD-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "ggv-pipeline-truth1-20260930",
+      "at": "2026-09-30T03:27:09+08:00"
+    },
+    {
+      "id": "GGV-PIPELINE-TRUTH-1-surface",
+      "claim": "GGV-PIPELINE-TRUTH-1 page/API/shots/RESULT present; unsigned deny + suite PASS=196; next pack parent-only CONN-HEALTH-BOARD-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import ggv_pipeline_truth1 as g; from pathlib import Path; html=Path('dashboards/ggv-pipeline-truth-1.html').read_text(); import sys; sys.exit(0 if (g.api_matches('/api/ggv/pipeline-truth-1') and g.page_matches('/ggv/pipeline-truth-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/ggvpipeline1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/GGV-PIPELINE-TRUTH-1-RESULT.md').is_file() and g.honesty_flags().get('next_pack_for_parent_only')=='CONN-HEALTH-BOARD-1' and g.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "ggv-pipeline-truth1-20260930",
+      "at": "2026-09-30T03:27:09+08:00"
     }
   ]
 }
