@@ -11,6 +11,7 @@
     body { margin: 0; font-family: "IBM Plex Sans", "Segoe UI", sans-serif; background: #f3f1ec; color: #1c1a16; }
     main { max-width: 820px; margin: 0 auto; padding: 28px 20px 64px; }
     h1 { font-size: 1.75rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+    h2 { font-size: 1.15rem; margin: 28px 0 10px; letter-spacing: -0.01em; }
     .sub { color: #5c574e; margin: 0 0 20px; line-height: 1.45; }
     .meta { font-size: 0.85rem; color: #6b655c; margin-bottom: 18px; }
     table { width: 100%; border-collapse: collapse; background: #fffdf8; border: 1px solid #ddd6c8; border-radius: 12px; overflow: hidden; }
@@ -27,6 +28,22 @@
     .err { color: #8a1f1f; }
     .note { color: #6b655c; font-size: 0.8rem; line-height: 1.35; max-width: 280px; }
     .empty { color: #6b655c; margin-top: 12px; font-size: 0.9rem; }
+    .panel {
+      margin-top: 8px; padding: 16px 18px; background: #fffdf8;
+      border: 1px solid #ddd6c8; border-radius: 12px;
+    }
+    .panel p { margin: 0 0 10px; line-height: 1.45; color: #3d3a34; font-size: 0.92rem; }
+    .hooks { list-style: none; padding: 0; margin: 0; }
+    .hooks li {
+      padding: 10px 0; border-top: 1px solid #ebe4d6; font-size: 0.9rem;
+    }
+    .hooks li:first-child { border-top: none; padding-top: 0; }
+    .hook-title { font-weight: 600; }
+    .badge {
+      display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 5px;
+      font-size: 0.72rem; font-weight: 600; background: #ebe4d6; color: #4a463f;
+    }
+    .badge.ok { background: #d7ead7; color: #1e5a2a; }
   </style>
 </head>
 <body>
@@ -37,12 +54,54 @@
     <div id="body">
       <p class="muted">Checking access…</p>
     </div>
+    <h2 id="foundations-heading" hidden>Cross-outlet foundations</h2>
+    <div id="foundations" hidden></div>
   </main>
   <script>
     function statusClass(s) {
       if (!s) return "";
       if (s.indexOf("TEMPORARILY") === 0) return "TEMPORARILY";
       return s.replace(/\s+/g, "-");
+    }
+    function renderFoundations(data) {
+      const heading = document.getElementById("foundations-heading");
+      const box = document.getElementById("foundations");
+      const f = data.cross_outlet_foundations;
+      if (!f) {
+        heading.hidden = true;
+        box.hidden = true;
+        return;
+      }
+      heading.hidden = false;
+      box.hidden = false;
+      const hooks = f.hooks || [];
+      const items = hooks.map((h) => {
+        const nullable = h.outlet_id_nullable
+          ? '<span class="badge ok">outlet_id nullable</span>'
+          : '<span class="badge">outlet_id missing</span>';
+        const count =
+          h.row_count != null
+            ? ` · rows ${h.row_count}`
+            : h.row_count_operational != null
+              ? ` · ops ${h.row_count_operational} · example ${h.row_count_example || 0}`
+              : "";
+        return (
+          `<li><div class="hook-title">${h.hook_id}${nullable}${count}</div>` +
+          `<div class="kind">${h.table || ""}</div>` +
+          `<div class="note">${h.message || ""}</div></li>`
+        );
+      });
+      box.innerHTML = [
+        `<div class="panel">`,
+        `<p>${f.message || ""}</p>`,
+        `<p class="kind">Hierarchy usable: ENTITY → OUTLET → centres (hooks). ` +
+          `Uma OPEN=${f.uma_open ? "yes" : "no"} · Rainforest PRE-OPENING=${f.rainforest_pre_opening ? "yes" : "no"} · ` +
+          `Pool Bar PRE-OPENING=${f.pool_bar_pre_opening ? "yes" : "no"}. ` +
+          `No multi-outlet P&amp;L. Centres not populated.</p>`,
+        `<ul class="hooks">${items.join("")}</ul>`,
+        `<p class="empty">Honesty: staff_ready=false · human_commissioned=false · ready=false · pack BZG-XOUTLET-1.</p>`,
+        `</div>`,
+      ].join("");
     }
     async function load() {
       const sub = document.getElementById("sub");
@@ -59,39 +118,41 @@
         sub.textContent = data.message || "Canonical BZG outlets";
         meta.textContent =
           `ENT-BZG · OPEN ${data.open_count || 0} · non-OPEN ${data.non_open_count || 0}` +
-          ` · no invented sales/costs/covers · Pool Bar = ${data.pool_bar_operating_unit_id} under ${data.pool_bar_parent_brand_id}`;
+          ` · no invented sales/costs/covers · Pool Bar = ${data.pool_bar_operating_unit_id} under ${data.pool_bar_parent_brand_id}` +
+          (data.pack_xoutlet ? ` · ${data.pack_xoutlet}` : "");
         const rows = data.outlets || [];
         if (!rows.length) {
           body.innerHTML = `<p class="empty">Registry empty — no outlets seeded.</p>`;
-          return;
+        } else {
+          const html = [
+            "<table><thead><tr>",
+            "<th>Outlet</th><th>Status</th><th>Brand / OU</th><th>Centres</th><th>Note</th>",
+            "</tr></thead><tbody>",
+          ];
+          for (const o of rows) {
+            const sc = statusClass(o.status);
+            const brandOu = o.outlet_kind === "OPERATING_UNIT"
+              ? `${o.operating_unit_id || o.outlet_id}<div class="kind">under ${o.parent_outlet_id || o.brand_id}</div>`
+              : `${o.brand_id || "—"}<div class="kind">${o.outlet_kind}</div>`;
+            const centres = [
+              o.cost_centre_id ? `CC ${o.cost_centre_id}` : "CC —",
+              o.revenue_centre_id ? `RC ${o.revenue_centre_id}` : "RC —",
+            ].join(" · ");
+            html.push(
+              `<tr>`,
+              `<td><strong>${o.display_name}</strong><div class="kind">${o.outlet_id}</div></td>`,
+              `<td><span class="status ${sc}">${o.status}</span></td>`,
+              `<td>${brandOu}</td>`,
+              `<td class="kind">${centres}</td>`,
+              `<td class="note">${o.note || ""}</td>`,
+              `</tr>`
+            );
+          }
+          html.push("</tbody></table>");
+          html.push(`<p class="empty">Honesty: empty ops metrics by design. staff_ready=false · human_commissioned=false.</p>`);
+          body.innerHTML = html.join("");
         }
-        const html = [
-          "<table><thead><tr>",
-          "<th>Outlet</th><th>Status</th><th>Brand / OU</th><th>Centres</th><th>Note</th>",
-          "</tr></thead><tbody>",
-        ];
-        for (const o of rows) {
-          const sc = statusClass(o.status);
-          const brandOu = o.outlet_kind === "OPERATING_UNIT"
-            ? `${o.operating_unit_id || o.outlet_id}<div class="kind">under ${o.parent_outlet_id || o.brand_id}</div>`
-            : `${o.brand_id || "—"}<div class="kind">${o.outlet_kind}</div>`;
-          const centres = [
-            o.cost_centre_id ? `CC ${o.cost_centre_id}` : "CC —",
-            o.revenue_centre_id ? `RC ${o.revenue_centre_id}` : "RC —",
-          ].join(" · ");
-          html.push(
-            `<tr>`,
-            `<td><strong>${o.display_name}</strong><div class="kind">${o.outlet_id}</div></td>`,
-            `<td><span class="status ${sc}">${o.status}</span></td>`,
-            `<td>${brandOu}</td>`,
-            `<td class="kind">${centres}</td>`,
-            `<td class="note">${o.note || ""}</td>`,
-            `</tr>`
-          );
-        }
-        html.push("</tbody></table>");
-        html.push(`<p class="empty">Honesty: empty ops metrics by design. staff_ready=false · human_commissioned=false.</p>`);
-        body.innerHTML = html.join("");
+        renderFoundations(data);
       } catch (err) {
         sub.textContent = "Could not load";
         body.innerHTML = `<p class="err">${String(err)}</p>`;

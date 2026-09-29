@@ -1,0 +1,49 @@
+{
+  "pack": "BZG-XOUTLET-1",
+  "name": "BZG cross-outlet foundations",
+  "status": "PASS_VERIFIED",
+  "armed_at_wita": "2026-09-29T22:24:04+08:00",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "brief": "/Users/wolfterminal/beta-os/state/build-factory/briefs/BRIEF-BZG-XOUTLET-1.md",
+  "log": "/Users/wolfterminal/beta-os/state/build-factory/logs/BZG-XOUTLET-1.log",
+  "run_json": "/Users/wolfterminal/beta-os/state/build-factory/runs/BZG-XOUTLET-1.json",
+  "prior": "CORE-BOOKS-1 PASS_VERIFIED",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "credit_conservation": "OVERRIDDEN_FOR_MATT_ORDERED_SPRINT_PACK",
+  "matt_auto_continue": true,
+  "next_after_this_in_map": [
+    "V1-SWEEP-1",
+    "FULL_VERIFY",
+    "REBUILD_EXIT_REPORT_ONLY"
+  ],
+  "cursor_must_not_auto_start_next": true,
+  "cursor_did_not_auto_start_v1_sweep": true,
+  "no_headchef": true,
+  "no_push": true,
+  "daemon_pid": 80787,
+  "cursor_pid": 80797,
+  "launch_method": "python_start_new_session+daemon.sh",
+  "launched_at_wita": "2026-09-29T22:24:04+08:00",
+  "updated_at_wita": "2026-09-29T22:31:50+08:00",
+  "finished_at_wita": "2026-09-29T22:29:30+08:00",
+  "alive": false,
+  "migration_id": "bzg_xoutlet1_20260929",
+  "foundations_doc": "state/finance-core-sprint/BZG-XOUTLET-FOUNDATIONS.json",
+  "hooks_ready": true,
+  "migrated_at_wita": "2026-09-29T22:27:54+08:00",
+  "result": "docs/wolf/ops/BZG-XOUTLET-1-RESULT.md",
+  "owner_addendum": "After Finance Core + BZG multi-outlet + non-HR V1 retirement finishes: do NOT chain another major feature pack. Next = Rebuild Completion & Exit Report only. Bug fixes + human commissioning OK.",
+  "do_not_auto_start": [
+    "V1-SWEEP-1",
+    "HEADCHEF"
+  ],
+  "tests": {
+    "test_bzg_xoutlet1_20260929.py": "PASS=89 FAIL=0",
+    "test_bzg_outlet1_20260929.py": "PASS=82 FAIL=0",
+    "test_core_books1_20260929.py": "pass=64 fail=0",
+    "test_core_ent1_20260929.py": "pass=49 fail=0"
+  },
+  "exit": 0,
+  "verified_at_wita": "2026-09-29T22:31:50+08:00"
+}

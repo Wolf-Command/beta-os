@@ -470,13 +470,18 @@ def overview(person_id: str, conn: sqlite3.Connection) -> dict[str, Any]:
     covered_ids = {o["outlet_id"] for o in covered}
     # Owner sees all; others see hierarchy-covered subset with full registry list
     # marked for membership (honest — no fake totals).
+    # BZG-XOUTLET-1: shared foundations panel (vendors / PR / close hooks).
+    from core import bzg_xoutlet_foundations as _xout  # local import avoids cycle
+
+    foundations = _xout.foundations_panel(conn)
     return {
         **HONESTY,
         "ok": True,
         "title": "BZG Outlet Registry",
         "message": (
             "Canonical BZG outlets under ENT-BZG. Statuses only — no invented "
-            "sales, costs, covers, or P&L. Pool Bar is OU-BZG-RAIN-POOL under BZG-RAIN."
+            "sales, costs, covers, or P&L. Pool Bar is OU-BZG-RAIN-POOL under BZG-RAIN. "
+            "Cross-outlet shared foundations carry nullable outlet_id (honest empty OK)."
         ),
         "hierarchy": "LEGAL_ENTITY → OUTLET → cost_centre_id / revenue_centre_id (nullable)",
         "allowed_statuses": sorted(ALLOWED_STATUSES),
@@ -487,6 +492,8 @@ def overview(person_id: str, conn: sqlite3.Connection) -> dict[str, Any]:
         "empty_ops_metrics": True,
         "pool_bar_operating_unit_id": "OU-BZG-RAIN-POOL",
         "pool_bar_parent_brand_id": "BZG-RAIN",
+        "cross_outlet_foundations": foundations,
+        "pack_xoutlet": "BZG-XOUTLET-1",
     }
 
 
@@ -512,9 +519,14 @@ def dispatch(
     rest = trimmed[len("/api/bzg/outlets") :] or "/"
     if rest in {"", "/", "/overview", "/list"}:
         return overview(person_id or "", conn)
+    if rest in {"/foundations", "/foundations/"}:
+        require_read(person_id, conn)
+        from core import bzg_xoutlet_foundations as _xout
+
+        return {**_xout.foundations_panel(conn), "ok": True}
     if rest.startswith("/"):
         oid = rest.strip("/")
-        if "/" not in oid and oid:
+        if "/" not in oid and oid and oid != "foundations":
             require_read(person_id, conn)
             row = get_outlet(oid, conn=conn)
             if not row:

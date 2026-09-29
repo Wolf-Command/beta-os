@@ -1,0 +1,32 @@
+{
+  "pack": "BZG-XOUTLET-1",
+  "status": "PASS_VERIFIED",
+  "verified_at_wita": "2026-09-29T22:31:50+08:00",
+  "verifier": "Peaches-Mac-executor",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "prod_8787_pid": 15975,
+  "prod_untouched": true,
+  "tests_rerun_by_peaches": {
+    "test_bzg_xoutlet1_20260929.py": {
+      "pass": 89,
+      "fail": 0
+    },
+    "test_bzg_outlet1_20260929.py": {
+      "pass": 82,
+      "fail": 0
+    },
+    "test_core_books1_20260929.py": {
+      "pass": 64,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 8,
+    "all_distinct_phash": true,
+    "eye_check": "PASS foundations + Uma OPEN + Rain/Pool PRE-OPENING + Amanda deny"
+  },
+  "result": "docs/wolf/ops/BZG-XOUTLET-1-RESULT.md",
+  "next": "V1-SWEEP-1"
+}

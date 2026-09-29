@@ -1,0 +1,78 @@
+{
+  "schema": "wolf.bzg.xoutlet-foundations.v1",
+  "as_of_wita": "2026-09-29T22:27:54+08:00",
+  "pack": "BZG-XOUTLET-1",
+  "legal_entity_id": "ENT-BZG",
+  "hierarchy": "LEGAL_ENTITY \u2192 OUTLET \u2192 cost_centre_id / revenue_centre_id (nullable hooks)",
+  "shared_foundations": [
+    "bzg_shared_vendors.outlet_id (nullable)",
+    "bzg_ops_purchase_requests.outlet_id (nullable)",
+    "venue_daily_closes.outlet_id (nullable)",
+    "journal_lines.outlet_id on atrium-bzg.sqlite (nullable, CORE-BOOKS-1)"
+  ],
+  "centres": {
+    "cost_centre_id": null,
+    "revenue_centre_id": null,
+    "note": "Hooks only \u2014 not populated; no invented centre allocations."
+  },
+  "statuses_preserved": {
+    "BZG-UMA": "OPEN",
+    "BZG-RAIN": "PRE-OPENING",
+    "OU-BZG-RAIN-POOL": "PRE-OPENING",
+    "BZG-MERAH": "PRE-OPENING",
+    "BZG-ROOF": "PRE-OPENING",
+    "BZG-RS": "PRE-OPENING",
+    "BZG-CAT": "PRE-OPENING"
+  },
+  "hooks": [
+    {
+      "hook_id": "vendors",
+      "table": "bzg_shared_vendors",
+      "outlet_id_nullable": true,
+      "cost_centre_id_nullable": true,
+      "revenue_centre_id_nullable": true,
+      "row_count": 0,
+      "empty_ok": true,
+      "message": "Shared BZG vendors across outlets. outlet_id null = entity-shared. Empty OK \u2014 no invented suppliers."
+    },
+    {
+      "hook_id": "purchase_requests",
+      "table": "bzg_ops_purchase_requests",
+      "outlet_id_nullable": true,
+      "cost_centre_id_nullable": true,
+      "revenue_centre_id_nullable": true,
+      "row_count_operational": 0,
+      "row_count_example": 3,
+      "empty_ok": true,
+      "message": "Purchase-request rows may carry nullable outlet_id from org_outlet_registry. No multi-outlet spend totals."
+    },
+    {
+      "hook_id": "daily_close",
+      "table": "venue_daily_closes",
+      "outlet_id_nullable": true,
+      "cost_centre_id_nullable": true,
+      "revenue_centre_id_nullable": true,
+      "row_count": 0,
+      "empty_ok": true,
+      "message": "Daily close hooks may carry nullable outlet_id. Uma close remains the live path; Rainforest/Pool Bar stay PRE-OPENING."
+    },
+    {
+      "hook_id": "books_journal_lines",
+      "table": "journal_lines (atrium-bzg.sqlite)",
+      "outlet_id_nullable": true,
+      "cost_centre_id_nullable": false,
+      "revenue_centre_id_nullable": false,
+      "row_count": null,
+      "empty_ok": true,
+      "message": "BZG books shell already carries nullable journal_lines.outlet_id (CORE-BOOKS-1). No fake journals."
+    }
+  ],
+  "no_fake_multi_outlet_pnl": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "owner_addendum": "After Finance Core + BZG multi-outlet + non-HR V1 retirement finishes: do NOT chain another major feature pack. Next = Rebuild Completion & Exit Report only. Bug fixes + human commissioning OK.",
+  "cursor_must_not_auto_start": [
+    "V1-SWEEP-1",
+    "HEADCHEF"
+  ]
+}
