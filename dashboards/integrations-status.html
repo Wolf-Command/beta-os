@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Integrations Status — Honesty Board</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1c1915;
+      --muted: #5c574e;
+      --paper: #f3f1ec;
+      --card: #fffdf8;
+      --line: #ddd6c8;
+      --warn: #8a1f1f;
+      --partial: #6b4a18;
+      --oksoft: #2a4a28;
+      --agent: #1f4f7a;
+    }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(ellipse 70% 40% at 0% 0%, #ebe4d6 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 72px; }
+    h1 { font-size: 1.65rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #f5efe3; border: 1px solid #d2c4a4; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner strong { color: #5a4a28; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+    .chip {
+      display: inline-block; padding: 5px 10px; border-radius: 6px;
+      background: #ebe4d6; font-size: 0.75rem; font-weight: 600;
+    }
+    .chip.blocked { background: #f5e0e0; color: var(--warn); }
+    .chip.partial { background: #f5ead8; color: var(--partial); }
+    .chip.agent { background: #e4ecf5; color: var(--agent); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #ebe4d6; vertical-align: top; font-size: 0.86rem; }
+    th { background: #f0ebe2; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    tr:last-child td { border-bottom: 0; }
+    tr.blocked { background: #fff5f3; }
+    tr.blocked td.id code { color: var(--warn); font-weight: 700; }
+    .id code { font-size: 0.82rem; }
+    .status { font-weight: 700; white-space: nowrap; }
+    .status.BLOCKED_EXTERNAL { color: var(--warn); }
+    .status.PARTIAL_IN_BETA, .status.PARTIAL { color: var(--partial); }
+    .status.AGENT_HOST_ONLY { color: var(--agent); }
+    .status.MISSING_OR_UNPROVEN, .status.MISSING, .status.BUILT_NOT_PROVEN { color: var(--muted); }
+    .muted { color: var(--muted); font-size: 0.8rem; line-height: 1.4; }
+    .null { color: #9a9488; font-style: italic; }
+    .err { color: var(--warn); }
+    .path { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem; }
+    @media (max-width: 520px) {
+      h1 { font-size: 1.35rem; }
+      main { padding: 16px 12px 64px; }
+      th, td { padding: 8px 8px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body data-ready="0" data-pack="INTG-TRUTH-1">
+  <main>
+    <h1>Integrations Status</h1>
+    <p class="sub" id="sub">Honesty board · pack INTG-TRUTH-1 · loading…</p>
+    <div class="banner" id="honesty">
+      <strong>Honesty:</strong>
+      staff_ready=false · human_commissioned=false ·
+      no invented last_success · no fake live feeds ·
+      write_authority=NONE_EXPANDED · secrets_exposed=false
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Integration</th>
+            <th>Source → Target</th>
+            <th>Audit</th>
+            <th>Probe</th>
+            <th>Last success</th>
+            <th>Flags</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <tr><td colspan="6" class="muted">Loading registry…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    function lastSuccess(v) {
+      if (v == null || v === "") return '<span class="null">null (unknown)</span>';
+      return esc(v);
+    }
+    async function load() {
+      const sub = document.getElementById("sub");
+      const chips = document.getElementById("chips");
+      const rows = document.getElementById("rows");
+      try {
+        const resp = await fetch("/api/ops/integrations-status", {
+          headers: { Accept: "application/json" }
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.ok) {
+          rows.innerHTML = `<tr><td colspan="6" class="err">Failed (${resp.status})</td></tr>`;
+          document.body.setAttribute("data-ready", "0");
+          return;
+        }
+        sub.textContent =
+          `Honesty board · ${data.pack || "INTG-TRUTH-1"} · as of ${data.as_of_wita || "—"} · ` +
+          `${(data.counts && data.counts.total) || 0} connectors · no fake live feeds`;
+        const counts = (data.counts && data.counts.by_audit_status) || {};
+        const chipHtml = Object.keys(counts).map((k) => {
+          let cls = "chip";
+          if (k === "BLOCKED_EXTERNAL") cls += " blocked";
+          else if (k === "PARTIAL_IN_BETA" || k === "PARTIAL") cls += " partial";
+          else if (k === "AGENT_HOST_ONLY") cls += " agent";
+          return `<span class="${cls}">${esc(k)} · ${esc(counts[k])}</span>`;
+        });
+        chipHtml.unshift(
+          `<span class="chip blocked">blocked_external · ${esc((data.counts && data.counts.blocked_external) || 0)}</span>`
+        );
+        chips.innerHTML = chipHtml.join("");
+        const items = data.connectors || [];
+        rows.innerHTML = items.map((it) => {
+          const blocked = it.blocked_external === true;
+          const audit = String(it.audit_status || "");
+          const trClass = blocked || audit === "BLOCKED_EXTERNAL" ? "blocked" : "";
+          const flags = [
+            blocked ? "blocked_external" : null,
+            "write=" + (it.write_authority || "NONE_EXPANDED"),
+            "secrets=" + String(it.secrets_exposed === true)
+          ].filter(Boolean).join(" · ");
+          return `<tr class="${trClass}" data-id="${esc(it.integration_id)}" data-blocked="${blocked ? "1" : "0"}">
+            <td class="id"><code>${esc(it.integration_id)}</code>
+              <div class="muted">${esc(it.purpose || "")}</div></td>
+            <td><span class="path">${esc(it.source || "—")} → ${esc(it.target || "—")}</span></td>
+            <td class="status ${esc(audit)}">${esc(audit)}</td>
+            <td><div>${esc(it.probe_status || "")}</div>
+              <div class="muted">${esc(it.probe_notes || "")}</div></td>
+            <td>${lastSuccess(it.last_success)}</td>
+            <td class="muted">${esc(flags)}</td>
+          </tr>`;
+        }).join("");
+        document.body.setAttribute("data-ready", "1");
+        document.body.setAttribute("data-count", String(items.length));
+      } catch (e) {
+        rows.innerHTML = `<tr><td colspan="6" class="err">${esc(e && e.message ? e.message : e)}</td></tr>`;
+        document.body.setAttribute("data-ready", "0");
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+{
+  "run_id": "INTG-TRUTH-1",
+  "pack": "INTG-TRUTH-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "armed_at": "2026-09-30T00:29:03+08:00",
+  "exited_at": "2026-09-30T00:33:30+08:00",
+  "brief": "state/build-factory/briefs/BRIEF-INTG-TRUTH-1.md",
+  "log": "state/build-factory/logs/INTG-TRUTH-1.log",
+  "result_file": "docs/wolf/ops/INTG-TRUTH-1-RESULT.md",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "depends_on": [
+    "MYWORK-PROVE-1"
+  ],
+  "prior_pack_verified": "MYWORK-PROVE-1",
+  "beta_os_head_at_arm": "71c3462",
+  "sidecar_8790": "restarted_healthy",
+  "launch_method": "python_detach+daemon.sh",
+  "cursor_pid": 1066,
+  "launched_at": "2026-09-30T00:29:08+08:00",
+  "tests": {
+    "suite": "scripts/tests/test_intg_truth1_20260930.py",
+    "pass": 130,
+    "fail": 0
+  },
+  "shots": [
+    "docs/wolf/ops/shots/intgtruth1-board-desktop.png",
+    "docs/wolf/ops/shots/intgtruth1-board-phone.png",
+    "docs/wolf/ops/shots/intgtruth1-yanolja-blocked.png",
+    "docs/wolf/ops/shots/intgtruth1-unsigned-deny.png"
+  ],
+  "surfaces": {
+    "page": "/ops/integrations-status",
+    "api": "/api/ops/integrations-status"
+  },
+  "honesty": {
+    "yanolja": "BLOCKED_EXTERNAL",
+    "esb": "PARTIAL_IN_BETA",
+    "bank": "FILE_IMPORT_ONLY",
+    "metricool_wolf": "NOT_RUNTIME",
+    "metricool_mcp": "AGENT_HOST_ONLY",
+    "invented_last_success": false,
+    "fake_live_feeds": false,
+    "write_authority_expanded": false,
+    "secrets_exposed": false
+  },
+  "cursor_did_not_auto_start_next_pack": true,
+  "next_pack_for_parent": "AMG-OS-SHELL-1",
+  "exit": 0,
+  "verified_at": "2026-09-30T00:34:49+08:00",
+  "exit_code": 0,
+  "peaches_verify": "state/final-completion/packs/INTG-TRUTH-1-PEACHES-VERIFY.json"
+}

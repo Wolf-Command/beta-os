@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T00:28:22+08:00",
+  "at_wita": "2026-09-30T00:34:49+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -181,7 +181,8 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "NEXT_TO_ARM"
+      "status": "PASS_VERIFIED",
+      "verified_at": "2026-09-30T00:34:49+08:00"
     },
     {
       "pack_id": "AMG-OS-SHELL-1",
@@ -209,10 +210,117 @@
       ],
       "estimated_effort": "L",
       "matt_blocker": false,
-      "note": "Does not unblock CAP-AMG-01 (needs external Yanolja)"
+      "note": "Does not unblock CAP-AMG-01 (needs external Yanolja)",
+      "status": "NEXT_TO_ARM"
+    },
+    {
+      "pack_id": "GGV-CONTENT-PROVE-1",
+      "title": "GGV Content Machine prove/harden on Beta (no fake publish metrics)",
+      "closes": [
+        "CAP-GGV-01",
+        "IL-R6 content"
+      ],
+      "targets_classes": [
+        "BUILT_NOT_PROVEN",
+        "PARTIAL"
+      ],
+      "why_first": "Content path has prior eng; harden prove + honesty without claiming LIVE adoption",
+      "scope": [
+        "Regression suite + honesty stamps on Beta GGV content desks",
+        "No fake engagement/publish success"
+      ],
+      "forbids": [
+        "fake metrics",
+        "staff_ready true"
+      ],
+      "depends_on": [
+        "SOP-FACTORY-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "synthesized_from": "remaining MISSING/PARTIAL after queue head"
+    },
+    {
+      "pack_id": "CRM-IDENTITY-1",
+      "title": "CRM identity/memory vertical slice (canonical customer stub, no cross-client leak)",
+      "closes": [
+        "CAP-CRM-02",
+        "IL-R9"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "PARTIAL"
+      ],
+      "why_first": "Largest safe CRM internal slice without messaging connectors",
+      "scope": [
+        "Beta customer identity stub + confidence fields",
+        "Boundary tests: GGV client isolation"
+      ],
+      "forbids": [
+        "cross-client data merge invent",
+        "fake pipeline"
+      ],
+      "depends_on": [
+        "MYWORK-PROVE-1"
+      ],
+      "estimated_effort": "L",
+      "matt_blocker": false,
+      "synthesized_from": "CAP-CRM-02 MISSING"
+    },
+    {
+      "pack_id": "FIN-INTERCO-1",
+      "title": "Intercompany billing skeleton GGV\u2194AMG/BZG (structure only, zero journals)",
+      "closes": [
+        "CAP-FIN-06",
+        "CAP-GGV-06"
+      ],
+      "targets_classes": [
+        "MISSING"
+      ],
+      "why_first": "Finance shells + entity books exist; intercompany structure is next coherent finance gap",
+      "scope": [
+        "Schema + Beta desk for intercompany invoice stubs",
+        "No fake amounts; honesty empty"
+      ],
+      "forbids": [
+        "fake invoices/amounts",
+        "prod mutate"
+      ],
+      "depends_on": [
+        "FC-SHELL-2"
+      ],
+      "estimated_effort": "L",
+      "matt_blocker": false,
+      "synthesized_from": "CAP-FIN-06 MISSING"
+    },
+    {
+      "pack_id": "INTEL-LEARN-1",
+      "title": "Wolf Intelligence learning loop board (ties SOP factory candidates)",
+      "closes": [
+        "CAP-INTEL-05"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "PARTIAL"
+      ],
+      "why_first": "SOP-FACTORY-1 landed review gate; expose intel learning board without auto-approve",
+      "scope": [
+        "Beta /intel/learning board listing lesson candidates",
+        "Human approve required"
+      ],
+      "forbids": [
+        "auto-approve",
+        "fake performance"
+      ],
+      "depends_on": [
+        "SOP-FACTORY-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "synthesized_from": "CAP-INTEL-05"
     }
   ],
-  "first_pack": "INTG-TRUTH-1",
+  "first_pack": "AMG-OS-SHELL-1",
   "hr_deferred_not_in_queue": true,
   "blocked_external_not_auto_solved": [
     "MB-008",
@@ -230,9 +338,12 @@
     "FC-SHELL-2",
     "BZG-VENUEPL-1",
     "SOP-FACTORY-1",
-    "MYWORK-PROVE-1"
+    "MYWORK-PROVE-1",
+    "INTG-TRUTH-1"
   ],
   "exited_awaiting_peaches": [
     "BZG-VENUEPL-1"
-  ]
+  ],
+  "synthesized_after_queue_head": true,
+  "synthesis_note": "Appended after INTG-TRUTH-1 PASS; do not reorder ahead of AMG-OS-SHELL-1"
 }

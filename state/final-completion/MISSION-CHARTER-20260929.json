@@ -28,7 +28,7 @@
   "fake_ops_data": false,
   "auto_chain": true,
   "optimize_for": "actually_finish_wolf_not_speed_or_flattery",
-  "updated_at": "2026-09-30T00:27:27+08:00",
+  "updated_at": "2026-09-30T00:29:03+08:00",
   "phase0_box_prepared_at": "2026-09-29T23:28:13+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase0_mac_stamps_at": "2026-09-29T23:33:17+08:00",
@@ -36,7 +36,7 @@
   "phase1_status": "COMPLETE",
   "phase2_status": "CHAINING",
   "phase": 2,
-  "active_pack": "MYWORK-PROVE-1",
+  "active_pack": "INTG-TRUTH-1",
   "active_pack_status": "EXITED",
   "cursor_pid": 95087,
   "daemon_pid": 89677,
@@ -45,17 +45,18 @@
   "unknown_count": 0,
   "exit_report": "FORBIDDEN_UNTIL_PHASE_13_GATE",
   "continue_flag": true,
-  "next": "Babysit MYWORK-PROVE-1 \u2192 verify \u2192 INTG-TRUTH-1",
+  "next": "Babysit INTG-TRUTH-1 \u2192 AMG-OS-SHELL-1",
   "last_exited_pack": "MYWORK-PROVE-1",
   "last_exited_status": "EXITED",
-  "last_verified_pack": "SOP-FACTORY-1",
+  "last_verified_pack": "MYWORK-PROVE-1",
   "last_verified_status": "PASS_VERIFIED",
-  "beta_os_head": "69848b8",
+  "beta_os_head": "71c3462",
   "atrium_head": "7584266",
   "updated_at_exit": "2026-09-30T00:26:28+08:00",
   "completed_this_run": [
     "BZG-VENUEPL-1",
     "SOP-FACTORY-1",
     "MYWORK-PROVE-1"
-  ]
+  ],
+  "sidecar_8790": "up"
 }

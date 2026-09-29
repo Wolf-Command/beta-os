@@ -1,7 +1,7 @@
 {
-  "at_wita": "2026-09-30T00:28:22+08:00",
+  "at_wita": "2026-09-30T00:34:10+08:00",
   "phase": 3,
-  "status": "IN_PROGRESS_READ_ONLY",
+  "status": "BOARD_SYNCED_READ_ONLY",
   "note": "Read-only audit; never expand write authority; never expose secrets. Does not block Phase 2.",
   "staff_ready": false,
   "human_commissioned": false,
@@ -15,10 +15,9 @@
     "total": 23,
     "by_audit_status": {
       "BLOCKED_EXTERNAL": 4,
-      "PARTIAL_IN_BETA": 1,
+      "PARTIAL_IN_BETA": 3,
       "MISSING_OR_UNPROVEN": 3,
       "BUILT_NOT_PROVEN": 5,
-      "PARTIAL": 2,
       "MISSING": 1,
       "AGENT_HOST_ONLY": 7
     }
@@ -41,14 +40,15 @@
         "INT-YAN-WOLF"
       ],
       "evidence_notes": [
-        "Yanolja credentials/API not seated; owner external"
+        "Yanolja credentials/API not seated; owner external",
+        "Yanolja BLOCKED_EXTERNAL — no fake live feed"
       ],
       "last_success": null,
       "owner": "AMG",
       "criticality": "CRITICAL",
       "fallback": "Manual/contingency PMS export",
-      "last_probed_at": "2026-09-29T23:56:57+08:00",
-      "probe_notes": "No live probe attempted (blocked external). Credentials not seated."
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "No live Yanolja probe attempted. Credentials not seated. BLOCKED_EXTERNAL stamp only."
     },
     {
       "integration_id": "INT-ESB-WOLF",
@@ -58,7 +58,7 @@
       "method": "API to verify",
       "dashboard_status": "SPECIFIED",
       "audit_status": "PARTIAL_IN_BETA",
-      "probe_status": "BETA_SURFACES_ONLY",
+      "probe_status": "WAREHOUSE_READ_OK_PARTIAL",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -67,14 +67,14 @@
         "INT-ESB-WOLF"
       ],
       "evidence_notes": [
-        "ESB/outlet projection from BZG-OUTLET/XOUTLET packs \u2014 read surfaces only"
+        "ESB/outlet projection from BZG-OUTLET/XOUTLET packs — read surfaces only"
       ],
       "last_success": null,
       "owner": "BZG",
       "criticality": "CRITICAL",
       "fallback": "ESB reports/export",
-      "last_probed_at": "2026-09-29T23:56:57+08:00",
-      "probe_notes": "Outlet/ESB projection via BZG packs; venue_daily_closes may be empty \u2014 honesty required."
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "ESB warehouse RO status=READ_OK. venue_daily_closes=0. PARTIAL_IN_BETA — warehouse facts only; P&L not invented; settlement_api UNAVAILABLE."
     },
     {
       "integration_id": "INT-GWS-WOLF",
@@ -99,7 +99,8 @@
       "owner": "ALL",
       "criticality": "HIGH",
       "fallback": "Native Workspace access",
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "No Beta-local GWS live probe in this pack. Dashboard SPECIFIED is not a live prove."
     },
     {
       "integration_id": "INT-BANK-WOLF",
@@ -109,7 +110,7 @@
       "method": "File import",
       "dashboard_status": "SPECIFIED",
       "audit_status": "MISSING_OR_UNPROVEN",
-      "probe_status": "CSV_ONLY",
+      "probe_status": "FILE_IMPORT_ONLY",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -123,7 +124,8 @@
       "owner": "Finance",
       "criticality": "CRITICAL",
       "fallback": "Manual controlled upload",
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "Bank path is file-import-only. No direct banking API assumed. No payment write. No live statement feed invented."
     },
     {
       "integration_id": "INT-MET-WOLF",
@@ -133,7 +135,7 @@
       "method": "API",
       "dashboard_status": "SPECIFIED",
       "audit_status": "MISSING_OR_UNPROVEN",
-      "probe_status": "CSV_ONLY",
+      "probe_status": "NOT_RUNTIME",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -148,7 +150,8 @@
       "owner": "GGV",
       "criticality": "MEDIUM",
       "fallback": "Manual report export",
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "Wolf Metricool status()=NOT_CONFIGURED (no creds loaded, no network). Agent-host MCP-Metricool ≠ Wolf runtime connector."
     },
     {
       "integration_id": "CAP-INTG-05",
@@ -158,7 +161,7 @@
       "method": null,
       "dashboard_status": null,
       "audit_status": "BUILT_NOT_PROVEN",
-      "probe_status": "FROM_REQUIREMENTS",
+      "probe_status": "NOT_RUNTIME",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -172,7 +175,8 @@
       "owner": null,
       "criticality": null,
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "Wolf Metricool status()=NOT_CONFIGURED (no creds loaded, no network). Agent-host MCP-Metricool ≠ Wolf runtime connector."
     },
     {
       "integration_id": "CAP-INTG-01",
@@ -182,7 +186,7 @@
       "method": null,
       "dashboard_status": null,
       "audit_status": "BLOCKED_EXTERNAL",
-      "probe_status": "FROM_REQUIREMENTS",
+      "probe_status": "DOCUMENTED_BLOCKER",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": true,
@@ -190,13 +194,15 @@
         "CAP-INTG-01"
       ],
       "evidence_notes": [
-        "Seeded from Model C catalog; not yet live-probed"
+        "Seeded from Model C catalog; not yet live-probed",
+        "Yanolja BLOCKED_EXTERNAL — no fake live feed"
       ],
       "last_success": null,
       "owner": null,
       "criticality": null,
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "No live Yanolja probe attempted. Credentials not seated. BLOCKED_EXTERNAL stamp only."
     },
     {
       "integration_id": "CAP-INTG-02",
@@ -205,8 +211,8 @@
       "purpose": "CAP-INTG-02 INTEGRATE). |",
       "method": null,
       "dashboard_status": null,
-      "audit_status": "PARTIAL",
-      "probe_status": "FROM_REQUIREMENTS",
+      "audit_status": "PARTIAL_IN_BETA",
+      "probe_status": "WAREHOUSE_READ_OK_PARTIAL",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -220,7 +226,8 @@
       "owner": null,
       "criticality": null,
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "ESB warehouse RO status=READ_OK. venue_daily_closes=0. PARTIAL_IN_BETA — warehouse facts only; P&L not invented; settlement_api UNAVAILABLE."
     },
     {
       "integration_id": "CAP-INTG-04",
@@ -230,7 +237,7 @@
       "method": null,
       "dashboard_status": null,
       "audit_status": "BUILT_NOT_PROVEN",
-      "probe_status": "FROM_REQUIREMENTS",
+      "probe_status": "FILE_IMPORT_ONLY",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -244,7 +251,8 @@
       "owner": null,
       "criticality": null,
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "Bank path is file-import-only. No direct banking API assumed. No payment write. No live statement feed invented."
     },
     {
       "integration_id": "CAP-INTG-01",
@@ -254,7 +262,7 @@
       "method": null,
       "dashboard_status": null,
       "audit_status": "BLOCKED_EXTERNAL",
-      "probe_status": "FROM_REQUIREMENTS",
+      "probe_status": "DOCUMENTED_BLOCKER",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": true,
@@ -262,13 +270,15 @@
         "CAP-INTG-01"
       ],
       "evidence_notes": [
-        "Seeded from Model C catalog; not yet live-probed"
+        "Seeded from Model C catalog; not yet live-probed",
+        "Yanolja BLOCKED_EXTERNAL — no fake live feed"
       ],
       "last_success": null,
       "owner": null,
       "criticality": null,
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "No live Yanolja probe attempted. Credentials not seated. BLOCKED_EXTERNAL stamp only."
     },
     {
       "integration_id": "CAP-INTG-02",
@@ -277,8 +287,8 @@
       "purpose": "CAP-INTG-02 | ESB Connector | INTEGRATE | SHARED | F&B sales/inventory/ops facts into Wolf. Adoption: ESB owns transactional truth. |",
       "method": null,
       "dashboard_status": null,
-      "audit_status": "PARTIAL",
-      "probe_status": "FROM_REQUIREMENTS",
+      "audit_status": "PARTIAL_IN_BETA",
+      "probe_status": "WAREHOUSE_READ_OK_PARTIAL",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -292,7 +302,8 @@
       "owner": null,
       "criticality": null,
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "ESB warehouse RO status=READ_OK. venue_daily_closes=0. PARTIAL_IN_BETA — warehouse facts only; P&L not invented; settlement_api UNAVAILABLE."
     },
     {
       "integration_id": "CAP-INTG-03",
@@ -316,7 +327,8 @@
       "owner": null,
       "criticality": null,
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "No Beta-local GWS live probe in this pack. Dashboard SPECIFIED is not a live prove."
     },
     {
       "integration_id": "CAP-INTG-04",
@@ -326,7 +338,7 @@
       "method": null,
       "dashboard_status": null,
       "audit_status": "BUILT_NOT_PROVEN",
-      "probe_status": "FROM_REQUIREMENTS",
+      "probe_status": "FILE_IMPORT_ONLY",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -340,7 +352,8 @@
       "owner": null,
       "criticality": null,
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "Bank path is file-import-only. No direct banking API assumed. No payment write. No live statement feed invented."
     },
     {
       "integration_id": "CAP-INTG-05",
@@ -350,7 +363,7 @@
       "method": null,
       "dashboard_status": null,
       "audit_status": "BUILT_NOT_PROVEN",
-      "probe_status": "FROM_REQUIREMENTS",
+      "probe_status": "NOT_RUNTIME",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -364,7 +377,8 @@
       "owner": null,
       "criticality": null,
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "Wolf Metricool status()=NOT_CONFIGURED (no creds loaded, no network). Agent-host MCP-Metricool ≠ Wolf runtime connector."
     },
     {
       "integration_id": "CAP-INTG-06",
@@ -388,7 +402,8 @@
       "owner": null,
       "criticality": null,
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "Catalogued only; no live credentialed probe."
     },
     {
       "integration_id": "CAP-INTG-07",
@@ -412,13 +427,14 @@
       "owner": null,
       "criticality": null,
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "Catalogued only; no live credentialed probe."
     },
     {
       "integration_id": "MCP-Gmail",
       "source": "MCP-Gmail",
       "target": "AgentHost",
-      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
+      "purpose": "Operator/agent tooling — not Wolf staff runtime connector",
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
@@ -435,13 +451,14 @@
       "owner": "platform",
       "criticality": "low",
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "Agent-host MCP only — not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
     },
     {
       "integration_id": "MCP-Slack",
       "source": "MCP-Slack",
       "target": "AgentHost",
-      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
+      "purpose": "Operator/agent tooling — not Wolf staff runtime connector",
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
@@ -457,13 +474,14 @@
       "owner": "platform",
       "criticality": "low",
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "Agent-host MCP only — not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
     },
     {
       "integration_id": "MCP-Notion",
       "source": "MCP-Notion",
       "target": "AgentHost",
-      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
+      "purpose": "Operator/agent tooling — not Wolf staff runtime connector",
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
@@ -479,13 +497,14 @@
       "owner": "platform",
       "criticality": "low",
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "Agent-host MCP only — not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
     },
     {
       "integration_id": "MCP-Google-Drive",
       "source": "MCP-Google-Drive",
       "target": "AgentHost",
-      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
+      "purpose": "Operator/agent tooling — not Wolf staff runtime connector",
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
@@ -501,13 +520,14 @@
       "owner": "platform",
       "criticality": "low",
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "Agent-host MCP only — not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
     },
     {
       "integration_id": "MCP-Google-Calendar",
       "source": "MCP-Google-Calendar",
       "target": "AgentHost",
-      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
+      "purpose": "Operator/agent tooling — not Wolf staff runtime connector",
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
@@ -523,13 +543,14 @@
       "owner": "platform",
       "criticality": "low",
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "Agent-host MCP only — not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
     },
     {
       "integration_id": "MCP-Metricool",
       "source": "MCP-Metricool",
       "target": "AgentHost",
-      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
+      "purpose": "Operator/agent tooling — not Wolf staff runtime connector",
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
@@ -540,19 +561,21 @@
       "related_requirement_ids": [],
       "evidence_notes": [
         "Agent-host MCP only",
-        "content scheduling"
+        "content scheduling",
+        "MCP-Metricool is AGENT_HOST_ONLY; INT-MET-WOLF Wolf runtime NOT_RUNTIME"
       ],
       "last_success": null,
       "owner": "platform",
       "criticality": "low",
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "Agent-host MCP only — not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
     },
     {
       "integration_id": "MCP-ClickUp",
       "source": "MCP-ClickUp",
       "target": "AgentHost",
-      "purpose": "Operator/agent tooling \u2014 not Wolf staff runtime connector",
+      "purpose": "Operator/agent tooling — not Wolf staff runtime connector",
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
@@ -568,7 +591,8 @@
       "owner": "platform",
       "criticality": "low",
       "fallback": null,
-      "last_probed_at": "2026-09-29T23:56:57+08:00"
+      "last_probed_at": "2026-09-30T00:34:10+08:00",
+      "probe_notes": "Agent-host MCP only — not Wolf staff runtime connector. NOT_RUNTIME for product surfaces."
     }
   ],
   "cap_intg_lines_seen": 11,
@@ -593,9 +617,11 @@
   "config_path_catalog": [
     {
       "path": ".env",
-      "note": "exists \u2014 content NOT read into audit"
+      "note": "exists — content NOT read into audit"
     }
   ],
   "secrets_exposed": false,
-  "write_authority_expanded": false
+  "write_authority_expanded": false,
+  "board_pack": "INTG-TRUTH-1",
+  "board_schema": "wolf.intg-truth-board.v1"
 }

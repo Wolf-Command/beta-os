@@ -164,6 +164,7 @@ from core import ggv_finance_nota as _ggv_fin
 from core import bzg_finance_desk as _bzg_fin_desk
 from core import bzg_outlet_registry as _bzg_outlets
 from core import v1_status_register as _v1_status
+from core import intg_truth_board as _intg_truth
 from core import crm_identity_memory as _crm_ident
 from core import crm_identity_operator_depth as _crm_ident_depth
 from core import bzg_reputation_observe as _bzg_rep
@@ -1996,6 +1997,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._v1_status_dispatch():
+            return
+
+        if self._intg_truth_dispatch():
             return
 
         if path == "/api/wolf/shell-whoami":
@@ -5006,6 +5010,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/dashboards/v1-status.html",
         ):
             if self._v1_status_dispatch():
+                return
+        elif path in (
+            "/ops/integrations-status",
+            "/ops/integrations-status/",
+            "/integrations-status",
+            "/integrations-status/",
+            "/integrations-status.html",
+            "/dashboards/integrations-status.html",
+        ):
+            if self._intg_truth_dispatch():
                 return
         elif path in (
             "/bzg/outlets",
@@ -14911,6 +14925,55 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return True
         self._send_html_shell(page.read_bytes(), rel="v1-status.html")
+        return True
+
+    def _intg_truth_dispatch(self) -> bool:
+        """INTG-TRUTH-1 — integration honesty board (Beta only; no fake feeds)."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _intg_truth.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _intg_truth.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "board_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "secrets_exposed": False,
+                        "write_authority_expanded": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _intg_truth.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "integrations-status.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Integrations status page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="integrations-status.html")
         return True
 
     def _bzg_outlets_dispatch(self) -> bool:

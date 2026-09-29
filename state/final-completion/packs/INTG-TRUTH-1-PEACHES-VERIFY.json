@@ -1,0 +1,64 @@
+{
+  "pack": "INTG-TRUTH-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T00:34:49+08:00",
+  "verifier": "Peaches-executor",
+  "exit_code": 0,
+  "result_file": "docs/wolf/ops/INTG-TRUTH-1-RESULT.md",
+  "tests_rerun": {
+    "test_intg_truth1_20260930.py": {
+      "pass": 130,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/intgtruth1-board-desktop.png",
+        "bytes": 222725,
+        "sha256": "0a2c8ef14873706169937a4cd002d71e80c999b441edf0dd092da9d9563088d4"
+      },
+      {
+        "path": "docs/wolf/ops/shots/intgtruth1-board-phone.png",
+        "bytes": 115243,
+        "sha256": "075ab79f9c8655ca59e3e9d4a3c9d4da008ba89a8d093e449885fe18dfaecc0f"
+      },
+      {
+        "path": "docs/wolf/ops/shots/intgtruth1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      },
+      {
+        "path": "docs/wolf/ops/shots/intgtruth1-yanolja-blocked.png",
+        "bytes": 222835,
+        "sha256": "03356d636d7df18c106272c1e1fd3139a900ffa4645a517a12f8781db8d0806d"
+      }
+    ],
+    "eye_check": {
+      "board_desktop": "PASS \u2014 Yanolja BLOCKED_EXTERNAL, ESB PARTIAL, last_success null, flags false, no fake feeds"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "sidecar_8790": {
+    "restarted_again": true,
+    "note": "flaky; restarted after INTG EXIT"
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "no_push": true,
+  "no_fake_ops_data": true,
+  "beta_only": true,
+  "next_pack": "AMG-OS-SHELL-1"
+}

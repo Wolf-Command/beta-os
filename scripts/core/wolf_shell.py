@@ -271,6 +271,8 @@ DASHBOARDS_HTML_CANONICAL: dict[str, str] = {
     "/dashboards/bzg-uma-blu-pr.html": "/bzg/uma-blu/bills",
     "/dashboards/uma-blu-close.html": "/uma-blu-close",
     "/dashboards/v1-status.html": "/ops/v1-status",
+    "/dashboards/integrations-status.html": "/ops/integrations-status",
+    "/integrations-status.html": "/ops/integrations-status",
     # Flat legacy filenames that used to sit next to clean routes
     "/bzg-uma-blu.html": "/bzg/uma-blu",
     "/bzg-uma-blu": "/bzg/uma-blu",
