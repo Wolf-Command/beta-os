@@ -85,4 +85,4 @@ PYTHONPATH=scripts python3 scripts/ops/commissioning_tick.py --json
 ```
 
 ## Commit
-Local only: `918a15d` — Ship HUMANCOMM-1: employee commissioning loop in My Work.
+Local only: `918a15d` (+ result pin `8ea6866`) — Ship HUMANCOMM-1: employee commissioning loop in My Work.
