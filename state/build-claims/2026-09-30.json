@@ -368,6 +368,22 @@
       "expect": "exit 0",
       "by": "sop-lesson-live1-20260930",
       "at": "2026-09-30T03:53:00+08:00"
+    },
+    {
+      "id": "fin-tax-shell1-unknown-no-fake-filings",
+      "claim": "FIN-TAX-SHELL-1: tax calendars/obligations UNKNOWN with null dues; invented_filing/invented_amount/fake_filings false; FC-SHELL-2 preserved; staff_ready/human_commissioned false; next pack parent-only BZG-INVENTORY-TRUTH-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import fin_tax_shell1 as t; p=t.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('invented_filing') is False and p.get('invented_amount') is False and p.get('fake_filings') is False and p.get('dues_unknown') is True and p.get('fc_shell2_preserved') is True and t.all_calendars_unknown(p) and t.all_obligations_unknown(p) and t.no_fake_filings(p) and t.honesty_flags().get('next_pack_for_parent_only')=='BZG-INVENTORY-TRUTH-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "fin-tax-shell1-20260930",
+      "at": "2026-09-30T04:01:12+08:00"
+    },
+    {
+      "id": "fin-tax-shell1-routes-shots",
+      "claim": "FIN-TAX-SHELL-1 page/API/shots/RESULT present; unsigned deny + suite PASS=161; next pack parent-only BZG-INVENTORY-TRUTH-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import fin_tax_shell1 as t; from pathlib import Path; html=Path('dashboards/fin-tax-shell-1.html').read_text(); import sys; sys.exit(0 if (t.api_matches('/api/fin/tax-shell-1') and t.page_matches('/fin/tax-shell-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/fintaxshell1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/FIN-TAX-SHELL-1-RESULT.md').is_file() and t.honesty_flags().get('next_pack_for_parent_only')=='BZG-INVENTORY-TRUTH-1' and t.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "fin-tax-shell1-20260930",
+      "at": "2026-09-30T04:01:12+08:00"
     }
   ]
 }

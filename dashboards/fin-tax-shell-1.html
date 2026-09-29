@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FIN Tax Shell-1 — UNKNOWN until facts</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1a1f24;
+      --muted: #5a6570;
+      --paper: #f2f4f6;
+      --card: #fbfcfd;
+      --line: #d3dae0;
+      --warn: #8a1f1f;
+      --ok: #1f5a3a;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(ellipse 65% 35% at 100% 0%, #e4ebf1 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 80px; }
+    .crumb { font-size: 0.78rem; color: var(--muted); margin: 0 0 8px; }
+    h1 {
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: 1.75rem;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #eef3f7; border: 1px solid #c5d0d9; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner.warn {
+      background: #f8eaea; border-color: #e0b8b8; color: var(--warn);
+    }
+    .banner strong { color: #2a3a48; }
+    .banner.warn strong { color: var(--warn); }
+    h2 {
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin: 22px 0 10px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .tile {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 10px;
+      padding: 14px;
+      min-height: 120px;
+    }
+    .tile.warn {
+      border-color: #e0b8b8;
+      background: #fff5f3;
+    }
+    .tile .k {
+      font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .tile .v {
+      font-family: var(--display);
+      font-size: 1.25rem;
+      margin: 6px 0 4px;
+      font-weight: 600;
+    }
+    .tile.warn .v { color: var(--warn); }
+    .tile .why { font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
+    .stamp {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 4px 8px;
+      margin: 0 8px 8px 0;
+      font-size: 0.78rem;
+      background: #fff;
+    }
+    .stamp.bad { border-color: #e0b8b8; color: var(--warn); }
+    .links a {
+      display: block;
+      color: var(--ink);
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: var(--card);
+    }
+    .links a:hover { border-color: #9aa8b4; }
+    .links .note { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+    .pair-meta { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+    .empty-queue {
+      border: 1px dashed #c5d0d9;
+      border-radius: 10px;
+      padding: 28px 18px;
+      text-align: center;
+      color: var(--muted);
+      background: #f7f9fb;
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+    .empty-queue strong { color: var(--warn); display: block; margin-bottom: 6px; font-size: 1.05rem; }
+  </style>
+</head>
+<body
+  data-ready="0"
+  data-deny=""
+  data-pack="FIN-TAX-SHELL-1"
+  data-wolf-page-type="WORKSPACE"
+  data-wolf-org="WOLF"
+  data-wolf-shell="global"
+  data-live-tax="0"
+  data-invented-filing="0"
+  data-invented-amount="0"
+  data-dues-unknown="0"
+  data-fc-preserved="0"
+  data-cap-proven="0"
+  data-staff-ready="0"
+  data-human-commissioned="0"
+>
+  <main>
+    <p class="crumb">WOLF · Finance · Tax Shell-1 (UNKNOWN until facts)</p>
+    <h1>Tax calendar shell</h1>
+    <p class="sub">Calendar stubs stay UNKNOWN until facts. No invented due amounts. No fake filings. staff_ready=false · human_commissioned=false. Preserves FC-SHELL-2.</p>
+
+    <div class="banner warn" id="honesty">
+      Loading honesty pins…
+    </div>
+
+    <div id="stamps" aria-label="Honesty stamps"></div>
+
+    <h2>Entity calendars</h2>
+    <div id="calendars"></div>
+
+    <h2>Obligation slots</h2>
+    <div class="grid" id="obligations"></div>
+
+    <h2>Honesty tiles</h2>
+    <div class="grid" id="tiles"></div>
+
+    <h2>Preserved packs</h2>
+    <div class="grid" id="preserved"></div>
+
+    <h2>Existing desks</h2>
+    <div class="links" id="links"></div>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function render(body) {
+      var banner = document.getElementById("honesty");
+      banner.className = "banner warn";
+      banner.innerHTML =
+        "<strong>Honesty:</strong> tax calendar UNKNOWN · due_amount=null · " +
+        "invented_filing=false · invented_amount=false · fake_filings=false · " +
+        "staff_ready=false · human_commissioned=false · " +
+        "CAP-FIN tax " + esc(body.cap_fin_tax_maturity || "SPECIFIED") +
+        " (ceiling " + esc(body.cap_fin_tax_ceiling || "BUILT") + ") · " +
+        "FC-SHELL-2 " + (body.fc_shell2_preserved ? "PRESERVED" : "CHECK") + ".";
+
+      var stamps = [
+        ["staff_ready=false", true],
+        ["human_commissioned=false", true],
+        ["dues UNKNOWN", true],
+        ["invented_filing=false", true],
+        ["invented_amount=false", true],
+        ["fake_filings=false", true],
+        ["CAP-FIN tax not PROVEN", true],
+        ["FC-SHELL-2 preserved", body.fc_shell2_preserved === true]
+      ];
+      document.getElementById("stamps").innerHTML = stamps.map(function (row) {
+        return '<span class="stamp' + (row[1] ? " bad" : "") + '">' + esc(row[0]) + "</span>";
+      }).join("");
+
+      var calendars = body.calendars || [];
+      if (!calendars.length || body.calendars_unknown === true) {
+        var calHtml =
+          "<div class='empty-queue' data-calendars='unknown'>" +
+          "<strong>UNKNOWN</strong>" +
+          "No filing facts. Empty/UNKNOWN is honest — not a fake tax calendar. " +
+          "filing_count=0 · due_amount=null · filed=false." +
+          "</div>" +
+          "<div class='grid' style='margin-top:10px'>";
+        calHtml += calendars.map(function (s) {
+          return (
+            '<div class="tile warn" data-calendar="' + esc(s.id) + '">' +
+            '<div class="k">' + esc(s.entity) + " · " + esc(s.label) + "</div>" +
+            '<div class="v">' + esc(s.status || "UNKNOWN") + "</div>" +
+            '<div class="pair-meta">due_amount=' + (s.due_amount == null ? "null" : esc(s.due_amount)) +
+            " · due_on=null · filed=false</div>" +
+            '<div class="why">' + esc(s.why || "") + "</div>" +
+            "</div>"
+          );
+        }).join("");
+        calHtml += "</div>";
+        document.getElementById("calendars").innerHTML = calHtml;
+      } else {
+        document.getElementById("calendars").innerHTML =
+          "<div class='grid'>" +
+          calendars.map(function (s) {
+            return (
+              '<div class="tile" data-calendar="' + esc(s.id) + '">' +
+              '<div class="k">' + esc(s.entity) + " · " + esc(s.label) + "</div>" +
+              '<div class="v">' + esc(s.status || "UNKNOWN") + "</div>" +
+              '<div class="why">' + esc(s.why || "") + "</div></div>"
+            );
+          }).join("") +
+          "</div>";
+      }
+
+      document.getElementById("obligations").innerHTML = (body.obligations || []).map(function (s) {
+        return (
+          '<div class="tile warn" data-obligation="' + esc(s.id) + '">' +
+          '<div class="k">' + esc(s.label) + "</div>" +
+          '<div class="v">' + esc(s.status || "UNKNOWN") + "</div>" +
+          '<div class="pair-meta">due_amount=' + (s.due_amount == null ? "null" : esc(s.due_amount)) +
+          " · filed=" + (s.filed === true ? "true" : "false") + "</div>" +
+          '<div class="why">' + esc(s.why || "") + "</div>" +
+          "</div>"
+        );
+      }).join("");
+
+      document.getElementById("tiles").innerHTML = (body.honesty_tiles || []).map(function (t) {
+        return (
+          '<div class="tile warn" data-tile="' + esc(t.id) + '">' +
+          '<div class="k">' + esc(t.label) + "</div>" +
+          '<div class="v">' + esc(t.status || "UNKNOWN") + "</div>" +
+          '<div class="why">' + esc(t.why || "") + "</div>" +
+          "</div>"
+        );
+      }).join("");
+
+      var books = body.fc_shell2_books || {};
+      var rows = [
+        ["FC-SHELL-2", books.ok ? "PRESERVED" : "CHECK", "BZG/GGV 200/0 · AMG live RO"]
+      ];
+      document.getElementById("preserved").innerHTML = rows.map(function (row) {
+        return (
+          '<div class="tile" data-preserved="' + esc(row[0]) + '">' +
+          '<div class="k">' + esc(row[0]) + "</div>" +
+          '<div class="v">' + esc(row[1]) + "</div>" +
+          '<div class="why">' + esc(row[2]) + "</div></div>"
+        );
+      }).join("");
+
+      document.getElementById("links").innerHTML = (body.desk_links || []).map(function (l) {
+        return '<a href="' + esc(l.href) + '"><strong>' + esc(l.label) + "</strong>" +
+          '<div class="note">' + esc(l.note || "") + "</div></a>";
+      }).join("");
+
+      document.body.setAttribute("data-ready", body.ok === true ? "1" : "0");
+      document.body.setAttribute("data-live-tax", body.live_tax === true ? "1" : "0");
+      document.body.setAttribute(
+        "data-invented-filing",
+        body.invented_filing === true ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-invented-amount",
+        body.invented_amount === true ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-dues-unknown",
+        body.dues_unknown === true ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-fc-preserved",
+        body.fc_shell2_preserved === true ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-cap-proven",
+        body.cap_fin_tax_proven === true ? "1" : "0"
+      );
+      document.body.setAttribute("data-staff-ready", body.staff_ready === true ? "1" : "0");
+      document.body.setAttribute(
+        "data-human-commissioned",
+        body.human_commissioned === true ? "1" : "0"
+      );
+    }
+
+    fetch("/api/fin/tax-shell-1", { headers: { "Accept": "application/json" } })
+      .then(function (r) {
+        return r.json().then(function (j) { return { status: r.status, body: j }; });
+      })
+      .then(function (res) {
+        if (res.status === 403 || res.status === 401) {
+          document.body.setAttribute("data-deny", String(res.status));
+          document.body.setAttribute("data-ready", "0");
+          document.getElementById("honesty").textContent =
+            "HTTP " + res.status + " — unsigned or unauthorised callers are refused.";
+          return;
+        }
+        render(res.body || {});
+      })
+      .catch(function () {
+        document.body.setAttribute("data-ready", "0");
+        document.getElementById("honesty").textContent =
+          "FIN-TAX-SHELL-1 slice could not be read.";
+      });
+  </script>
+</body>
+</html>

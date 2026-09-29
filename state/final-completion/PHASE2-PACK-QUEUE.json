@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T03:57:00+08:00",
+  "at_wita": "2026-09-30T04:05:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -948,7 +948,11 @@
       "tests": {
         "pass": 150,
         "fail": 0
-      }
+      },
+      "awaiting_peaches_verify": false,
+      "exited_at": "2026-09-30T03:53:38+08:00",
+      "suite_result": "PASS=150 FAIL=0",
+      "result_file": "docs/wolf/ops/SOP-LESSON-LIVE-1-RESULT.md"
     },
     {
       "pack_id": "FIN-TAX-SHELL-1",
@@ -973,9 +977,17 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "synthesized_from": "wave5 MISSING finance_loops",
-      "armed_at": "2026-09-30T03:57:00+08:00"
+      "armed_at": "2026-09-30T03:57:00+08:00",
+      "cursor_pid": 41175,
+      "launched_at": "2026-09-30T03:57:30+08:00",
+      "child_alive": true,
+      "verified_at": "2026-09-30T04:05:00+08:00",
+      "tests": {
+        "pass": 161,
+        "fail": 0
+      }
     },
     {
       "pack_id": "BZG-INVENTORY-TRUTH-1",
@@ -1001,8 +1013,9 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
-      "synthesized_from": "wave6 MISSING bzg_ops"
+      "status": "WAITING_CURSOR",
+      "synthesized_from": "wave6 MISSING bzg_ops",
+      "armed_at": "2026-09-30T04:05:00+08:00"
     },
     {
       "pack_id": "GGV-METRIC-HONESTY-1",
@@ -1111,14 +1124,14 @@
   },
   "synthesis_wave2_at": "2026-09-30T00:45:44+08:00",
   "synthesis_wave3_at": "2026-09-30T01:19:01+08:00",
-  "last_verified": "AMG-OCC-TRUTH-1",
-  "next_to_arm": "FIN-TAX-SHELL-1",
-  "heavy_in_flight": "SOP-LESSON-LIVE-1",
-  "last_exited": "AMG-OCC-TRUTH-1",
-  "next_to_arm_note": "parent/Peaches only after SOP-LESSON-LIVE-1 PASS_VERIFIED \u2014 Cursor must not auto-arm; HEADCHEF veto",
+  "last_verified": "SOP-LESSON-LIVE-1",
+  "next_to_arm": "BZG-INVENTORY-TRUTH-1",
+  "heavy_in_flight": "FIN-TAX-SHELL-1",
+  "last_exited": "SOP-LESSON-LIVE-1",
+  "next_to_arm_note": "parent/Peaches only after FIN-TAX-SHELL-1 PASS_VERIFIED \u2014 Cursor must not auto-arm; HEADCHEF veto",
   "wave4_synthesized_at": "2026-09-30T02:45:00+08:00",
   "wave4_count": 4,
-  "updated_at": "2026-09-30T03:46:32+08:00",
+  "updated_at": "2026-09-30T03:58:00+08:00",
   "wave5_synthesized_at": "2026-09-30T03:30:00+08:00",
   "wave6_synthesized_at": "2026-09-30T03:57:00+08:00"
 }
