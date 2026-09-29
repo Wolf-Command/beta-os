@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from core import dashboard_truth as truth
+from core import dash_live1
 from core import ledger_class
 from core import owner_empire_pack as empire
 from core import owner_operational_exceptions as ops_ex
@@ -1200,6 +1201,8 @@ def _envelope(
             "href": "/dashboard-truth",
             "why": "Source freshness sits under the businesses. Open Data truth for the register.",
         },
+        # DASH-LIVE-1 — ADD only: live vs stale from real Wolf Core / empire stamps.
+        "freshness": dash_live1.owner_command_freshness(),
         "staff_ready": False,
         "human_commissioned": False,
         "operating_adoption": False,

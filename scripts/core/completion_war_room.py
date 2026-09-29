@@ -41,6 +41,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from typing import Any
 
+from core import dash_live1
 from core.dashboard_truth import public_text
 from core.progress_read_model import (
     MODEL_C_CATALOG,
@@ -711,6 +712,8 @@ def build_war_room(
             "STAFF READY = 0 ; HUMAN COMMISSIONED = 0 ; "
             "OPERATING ADOPTION = NOT MEASURED"
         ),
+        # DASH-LIVE-1 — ADD only: live vs stale from ledger mtime + Wolf Core stamps.
+        "freshness": dash_live1.war_room_freshness(ledger_path=path),
     }
 
 

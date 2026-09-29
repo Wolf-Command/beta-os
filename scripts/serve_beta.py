@@ -180,6 +180,7 @@ from core import owner_command as _owner_command
 from core import data_quality_exceptions as _data_quality
 from core import business_dashboard as _business_dashboard
 from core import completion_war_room as _completion_war_room
+from core import dash_live1 as _dash_live1
 from core import core_harden_pack as _core_harden
 from core import intel_ops_pack as _intel_ops
 from core import intel_connective as _intel_connect
@@ -30825,6 +30826,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if _owner_command.write_view(view):
             self._owner_command_write_refused()
             return
+        # DASH-LIVE-1 — freshness view (auth Owner only; unsigned already 403).
+        if view == "freshness":
+            from core import dash_live1 as _dash_live1
+
+            report = _dash_live1.owner_command_freshness()
+            report = dict(report)
+            report["person_id"] = identity.get("person_id")
+            report["staff_ready"] = False
+            report["human_commissioned"] = False
+            report["ledger_write"] = False
+            self._send_json(report)
+            return
         if view not in {None, "desk"}:
             self._send_json(
                 {
@@ -30863,6 +30876,26 @@ class BetaHandler(SimpleHTTPRequestHandler):
         report["human_commissioned"] = False
         report["money"] = None
         report["ledger_write"] = False
+        # DASH-LIVE-1: real LIVE/STALE stamp — no invented KPI.
+        try:
+            report = _dash_live1.attach_owner_command(report, refresh=True)
+        except Exception:  # noqa: BLE001
+            report["freshness"] = {
+                "ok": True,
+                "pack": "DASH-LIVE-1",
+                "status": "STALE",
+                "display_state": "STALE",
+                "as_of_wita": None,
+                "view_id": "owner-command",
+                "primary_source": "wolf_core",
+                "plain": "Stale. Freshness stamp unavailable — fail closed.",
+                "sources": [],
+                "stale_shown_as_current": False,
+                "invented_kpi": False,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "why": "Freshness stamp unavailable — fail closed to STALE.",
+            }
         self._send_json(report)
 
     def _war_room_denied(self, message: str) -> None:
@@ -30931,6 +30964,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if view == "testability":
             self._war_room_testability(identity)
             return
+        # DASH-LIVE-1 — freshness view (auth Owner only; unsigned already 403).
+        if view == "freshness":
+            from core import dash_live1 as _dash_live1
+
+            report = _dash_live1.war_room_freshness()
+            report = dict(report)
+            report["person_id"] = identity.get("person_id")
+            report["staff_ready"] = False
+            report["human_commissioned"] = False
+            report["ledger_write"] = False
+            self._send_json(report)
+            return
         if view not in {None, "desk"}:
             self._send_json(
                 {
@@ -30969,6 +31014,26 @@ class BetaHandler(SimpleHTTPRequestHandler):
         report["operating_adoption"] = "NOT MEASURED"
         report["money"] = None
         report["ledger_write"] = False
+        # DASH-LIVE-1: real LIVE/STALE stamp + ledger mtime — no invented KPI.
+        try:
+            report = _dash_live1.attach_war_room(report, refresh=True)
+        except Exception:  # noqa: BLE001
+            report["freshness"] = {
+                "ok": True,
+                "pack": "DASH-LIVE-1",
+                "status": "STALE",
+                "display_state": "STALE",
+                "as_of_wita": None,
+                "view_id": "war-room",
+                "primary_source": "model_c_ledger",
+                "plain": "Stale. Freshness stamp unavailable — fail closed.",
+                "sources": [],
+                "stale_shown_as_current": False,
+                "invented_kpi": False,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "why": "Freshness stamp unavailable — fail closed to STALE.",
+            }
         self._send_json(report)
 
     def _war_room_page(self) -> None:

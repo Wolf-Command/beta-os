@@ -25,6 +25,10 @@
   .card.loud { border-color: rgba(224,177,90,0.7); }
   .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.75rem; margin: 0 4px 4px 0; color: var(--muted); }
   .pill.loud { color: var(--warn); border-color: rgba(224,177,90,0.55); }
+  .freshness { display: inline-flex; align-items: center; gap: 8px; margin: 8px 0 4px; font-size: 0.85rem; }
+  .freshness .badge { display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); }
+  .freshness .badge.live { color: var(--ok); border-color: rgba(61,214,140,0.55); }
+  .freshness .badge.stale { color: var(--danger); border-color: rgba(240,68,56,0.55); }
   a.action { display: inline-flex; align-items: center; min-height: 44px; margin-top: 8px; text-decoration: none; border-radius: 10px; padding: 10px 12px; border: 1px solid #5d6b2a; background: #2d3816; color: var(--text); font-weight: 650; }
   a.action.primary { border-color: var(--accent); }
   .err { color: var(--danger); white-space: pre-wrap; font-size: 0.85rem; }
@@ -34,6 +38,11 @@
   .q { font-weight: 700; margin: 0 0 4px; }
   details { margin-top: 16px; }
   summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--muted); }
+  #freshness-badge { margin: 10px 0 14px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg2); }
+  #freshness-badge .meta { margin: 6px 0 0; }
+  #freshness-badge[data-display-state="STALE"] { border-color: rgba(224,177,90,0.55); }
+  #freshness-badge[data-display-state="LIVE"],
+  #freshness-badge[data-display-state="CURRENT"] { border-color: rgba(61,214,140,0.4); }
   @media (max-width: 860px) {
     body { max-width: 100%; padding: 12px 12px 80px; }
     .grid { grid-template-columns: 1fr; }
@@ -44,6 +53,8 @@
   <nav class="wolf-crumb" aria-label="Org context" style="font-size:0.75rem;color:var(--muted);margin:0 0 8px;letter-spacing:0.02em">WOLF › GROUP › Owner Command</nav>
   <h1>Owner Command <span>· Beta</span></h1>
   <p class="lede">Bound beta-owner-safe. Pulse and exceptions for GGV, AMG, and BZG. Unknown stays UNKNOWN. Missing stays MISSING. No manufactured green KPI. No payment, bank, Zayen, HR, or trading on this desk.</p>
+  <p class="meta" id="honesty-flags">staff_ready=false · human_commissioned=false · freshness from real stamps only · no invented KPIs · DASH-LIVE-1</p>
+  <div id="freshness-badge" data-freshness-badge data-surface="owner-command" aria-live="polite"><p class="meta">Loading freshness…</p></div>
   <p><a class="action" href="/finish-war-room">Finish war room</a></p>
   <section id="answers" class="answers">
     <article class="card"><p class="q">Are my businesses okay?</p><p data-answer="okay">Loading…</p></article>
@@ -114,6 +125,31 @@
     return `<a class="action" href="${esc(href)}">${esc(label)}</a>`;
   }
 
+  function paintFreshness(fresh) {
+    const box = $("freshness-badge");
+    if (!box) return;
+    if (!fresh || fresh.ok === false) {
+      box.setAttribute("data-display-state", "UNKNOWN");
+      box.setAttribute("data-freshness-ready", "0");
+      box.innerHTML = `<p>${mark("UNKNOWN")} Freshness stamp was not on this read. Nothing was invented.</p>`;
+      return;
+    }
+    const state = fresh.display_state || "UNKNOWN";
+    box.setAttribute("data-display-state", state);
+    box.setAttribute("data-freshness-ready", "1");
+    box.setAttribute("data-primary-source", esc(fresh.primary_source || "wolf_core"));
+    const sources = (fresh.sources || []).slice(0, 8).map((src) =>
+      `${mark(src.display_state)} <span class="meta">${esc(src.name || src.source_id || "")}</span>`
+    ).join(" · ");
+    box.innerHTML = `
+      <p><strong>Data freshness</strong> ${mark(state)}
+        <span class="meta">primary ${esc(fresh.primary_source || "wolf_core")}</span></p>
+      <p class="meta">${esc(fresh.plain || "")}</p>
+      <p class="meta">observed_at ${esc(fresh.observed_at || "MISSING")} · as_of ${esc(fresh.as_of_wita || fresh.as_of || "MISSING")}</p>
+      <p class="meta">stale_shown_as_current=${esc(String(fresh.stale_shown_as_current === true))} · kpi_invented=false</p>
+      <p>${sources || mark("UNKNOWN")}</p>`;
+  }
+
   async function api(path) {
     const res = await fetch(path, { headers: { Accept: "application/json" } });
     const data = await res.json().catch(() => ({}));
@@ -132,6 +168,7 @@
   }
 
   function show(data) {
+    paintFreshness(data.freshness || null);
     (data.answers || []).forEach((row) => {
       const slot = document.querySelector('[data-answer="' + row.id + '"]');
       if (slot) slot.textContent = row.answer || "";
@@ -258,6 +295,7 @@
     paintAnswers("UNKNOWN. This card has no answer on the command read.");
   }).catch((err) => {
     window.clearTimeout(commandTimer);
+    paintFreshness(null);
     const reason = err.denied
       ? "MISSING. This seat cannot read Owner Command."
       : "UNKNOWN. " + (err.message || "The command read failed.") + " Nothing was invented.";

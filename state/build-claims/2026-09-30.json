@@ -17,7 +17,7 @@
     },
     {
       "id": "sop-factory1-review-gate-demo",
-      "claim": "SOP Factory vertical slice: evidence→lesson candidate→human review gate; DEMO fixture pending on tmp-sop-factory-1; catalog/sop_factory.sqlite absent; staff_ready/human_commissioned/operating_adoption false; CAP-CORE-11 stays SPECIFIED.",
+      "claim": "SOP Factory vertical slice: evidence\u2192lesson candidate\u2192human review gate; DEMO fixture pending on tmp-sop-factory-1; catalog/sop_factory.sqlite absent; staff_ready/human_commissioned/operating_adoption false; CAP-CORE-11 stays SPECIFIED.",
       "check": "PYTHONPATH=scripts python3 -c \"from core import sop_factory as s; from pathlib import Path; import json,sys; h=s.honesty_flags(); q=s.list_review_queue(s.OWNER_PERSON, db_path=s.DEMO_DB); live=s.DEFAULT_DB.exists(); led=json.loads(Path('state/model-c-baseline-assessments.json').read_text())['CAP-CORE-11'][0]; sys.exit(0 if (h.get('staff_ready') is False and h.get('human_commissioned') is False and h.get('operating_adoption') is False and h.get('human_review_gate') is True and h.get('auto_approve') is False and not live and (q.get('pending_count') or 0)>=1 and led=='SPECIFIED') else 1)\"",
       "expect": "exit 0",
       "by": "sop-factory1-20260930"
@@ -42,6 +42,132 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import universal_my_work as u; from pathlib import Path; import sys; html=Path('dashboards/my-work.html').read_text(); sys.exit(0 if (callable(u.list_evidence_files) and Path('scripts/tests/test_mywork_prove1_20260930.py').is_file() and 'human_commissioned' in html and 'id=\\\"honesty\\\"' in html) else 1)\"",
       "expect": "exit 0",
       "by": "mywork-prove1-20260930"
+    },
+    {
+      "id": "intg-truth1-board-honesty",
+      "claim": "INTG-TRUTH-1 honesty board: INT-YAN-WOLF BLOCKED_EXTERNAL with null last_success; INT-ESB-WOLF PARTIAL_IN_BETA with pnl_invented false; staff_ready/human_commissioned/secrets_exposed/write_authority_expanded false; no invented last_success.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import intg_truth_board as b; p=b.build_board(persist_audit=False); yan=next(c for c in p['connectors'] if c['integration_id']=='INT-YAN-WOLF'); esb=next(c for c in p['connectors'] if c['integration_id']=='INT-ESB-WOLF'); import sys; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('secrets_exposed') is False and p.get('write_authority_expanded') is False and p.get('invented_last_success') is False and yan.get('audit_status')=='BLOCKED_EXTERNAL' and yan.get('last_success') is None and esb.get('audit_status')=='PARTIAL_IN_BETA' and (esb.get('probe_facts') or {}).get('pnl_invented') is False) else 1)\"",
+      "expect": "exit 0",
+      "by": "intg-truth1-20260930"
+    },
+    {
+      "id": "intg-truth1-unsigned-403",
+      "claim": "INTG-TRUTH-1 route/API matchers + page HTML honesty present; unsigned deny proven in pack suite (PASS=130).",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import intg_truth_board as b; from pathlib import Path; html=Path('dashboards/integrations-status.html').read_text(); import sys; sys.exit(0 if (b.api_matches('/api/ops/integrations-status') and b.page_matches('/ops/integrations-status') and 'staff_ready=false' in html and 'human_commissioned=false' in html and Path('docs/wolf/ops/shots/intgtruth1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/INTG-TRUTH-1-RESULT.md').is_file()) else 1)\"",
+      "expect": "exit 0",
+      "by": "intg-truth1-20260930"
+    },
+    {
+      "id": "amg-os-shell1-pms-blocked",
+      "claim": "AMG-OS-SHELL-1: PMS tiles arrivals/departures/rooms/guest_requests/occupancy are BLOCKED_EXTERNAL with UNKNOWN display and null values; cap_amg_01_unblocked false; yanolja BLOCKED_EXTERNAL; staff_ready/human_commissioned false; no fake PMS.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import amg_os_shell as s; p=s.build_shell(); import sys; ids={t['id'] for t in p['pms_tiles']}; need={'arrivals','departures','rooms','guest_requests','occupancy'}; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('cap_amg_01_unblocked') is False and p.get('fake_pms_data') is False and need.issubset(ids) and s.all_pms_tiles_blocked(p) and p['yanolja']['audit_status']=='BLOCKED_EXTERNAL' and p['yanolja']['last_success'] is None) else 1)\"",
+      "expect": "exit 0",
+      "by": "amg-os-shell1-20260930"
+    },
+    {
+      "id": "amg-os-shell1-routes-shots",
+      "claim": "AMG-OS-SHELL-1 routes/page/shots present; unsigned deny proven in pack suite (PASS=97); RESULT written; CAP-AMG-01 not claimed unblocked.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import amg_os_shell as s; from pathlib import Path; html=Path('dashboards/amg-os-shell.html').read_text(); import sys; sys.exit(0 if (s.api_matches('/api/amg/os-shell') and s.page_matches('/amg/os-shell') and 'BLOCKED_EXTERNAL' in html and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/amgoshell1-shell-desktop.png').is_file() and Path('docs/wolf/ops/AMG-OS-SHELL-1-RESULT.md').is_file()) else 1)\"",
+      "expect": "exit 0",
+      "by": "amg-os-shell1-20260930"
+    },
+    {
+      "id": "ggv-content-prove1-honesty",
+      "claim": "GGV-CONTENT-PROVE-1: Metricool NOT_RUNTIME, publish tiles honest (null counts/no fake metrics), live_adoption false, staff_ready/human_commissioned false, CAP-GGV-01 ceiling BUILT not proven; extends existing Content path only.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import ggv_content_prove1 as p; x=p.build_prove(); import sys; sys.exit(0 if (x.get('ok') and x.get('staff_ready') is False and x.get('human_commissioned') is False and x.get('live_adoption') is False and x.get('fake_metrics') is False and x.get('cap_ggv_01_proven') is False and x.get('cap_ggv_01_ceiling')=='BUILT' and p.all_publish_tiles_honest(x) and p.metricool_not_runtime(x) and x['honesty'].get('second_content_system') is False) else 1)\"",
+      "expect": "exit 0",
+      "by": "ggv-content-prove1-20260930"
+    },
+    {
+      "id": "ggv-content-prove1-routes-shots",
+      "claim": "GGV-CONTENT-PROVE-1 routes/page/shots present; unsigned deny proven in pack suite (PASS=106); RESULT written; no fake Metricool success claimed.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import ggv_content_prove1 as p; from pathlib import Path; html=Path('dashboards/ggv-content-prove.html').read_text(); import sys; sys.exit(0 if (p.api_matches('/api/ggv/content-prove') and p.page_matches('/ggv/content-prove') and 'NOT_RUNTIME' in html and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/ggvcontentprove1-desk-desktop.png').is_file() and Path('docs/wolf/ops/GGV-CONTENT-PROVE-1-RESULT.md').is_file()) else 1)\"",
+      "expect": "exit 0",
+      "by": "ggv-content-prove1-20260930"
+    },
+    {
+      "id": "crm-identity1-honesty-isolation",
+      "claim": "CRM-IDENTITY-1: canonical stub + uncertain confidence + human_review_when_uncertain; GGV habitat/ivy isolation (cross-client refused); yanolja BLOCKED_EXTERNAL; CAP-CRM-02 not proven/ready; staff_ready/human_commissioned/auto_merge/fake_pipeline false; extends crm_identity_memory only.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import crm_identity_memory as m; import tempfile; from pathlib import Path; db=Path(tempfile.mkdtemp())/'t.sqlite'; h=m.register_customer({'display_name':'Hab Guest','entity_id':'GGV','provenance':'Owner recorded habitat guest fixture for CRM-IDENTITY-1 claim.','client_scope':'habitat'}, person_id='PERS-MATT', db_path=db, require_client_scope=True); i=m.register_customer({'display_name':'Ivy Guest','entity_id':'GGV','provenance':'Owner recorded ivy guest fixture for CRM-IDENTITY-1 claim.','client_scope':'ivy'}, person_id='PERS-MATT', db_path=db, require_client_scope=True); code=None\\ntry:\\n m.propose_link({'customer_id':h['customer_id'],'other_id':i['customer_id'],'other_kind':'CUSTOMER','evidence_ref':'Cross-client match attempt that must refuse on 2026-09-30.','provenance':'Owner proposed cross-client link for claim check.'}, person_id='PERS-MATT', db_path=db)\\nexcept m.CrmIdentityError as e: code=e.code\\np=m.build_identity_slice('PERS-MATT', db_path=db); import sys; sys.exit(0 if (code=='cross_client_refused' and p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('cap_crm_02_proven') is False and p.get('yanolja_graph_merge')=='BLOCKED_EXTERNAL' and p.get('cross_client_leak') is False and p.get('auto_merge') is False and p.get('fake_pipeline') is False and p.get('second_crm_system') is False and p.get('human_review_when_uncertain') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "crm-identity1-20260930"
+    },
+    {
+      "id": "crm-identity1-routes-shots",
+      "claim": "CRM-IDENTITY-1 routes/page/shots present; unsigned deny proven in pack suite (PASS=140); RESULT written; CAP-CRM-02 not claimed PROVEN.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import crm_identity_memory as m; from pathlib import Path; html=Path('dashboards/crm-identity-1.html').read_text(); import sys; sys.exit(0 if (m.api_matches('/api/crm/identity-1') and m.page_matches('/crm/identity-1') and 'BLOCKED_EXTERNAL' in html and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/crmidentity1-desk-desktop.png').is_file() and Path('docs/wolf/ops/CRM-IDENTITY-1-RESULT.md').is_file()) else 1)\"",
+      "expect": "exit 0",
+      "by": "crm-identity1-20260930"
+    },
+    {
+      "id": "fin-interco1-stubs-honesty",
+      "claim": "FIN-INTERCO-1: 4 GGV\u2194AMG/BZG entity-pair stubs EMPTY with null amounts/journals; FC-SHELL-2 BZG/GGV 200/0 preserved; CAP-FIN-06/CAP-GGV-06 not proven; staff_ready/human_commissioned/live_billing/second_billing_system false; extends existing CAP paths only.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import fin_interco1 as f; p=f.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('live_billing') is False and p.get('invented_amount') is False and p.get('invented_journal') is False and p.get('fc_shell2_preserved') is True and p.get('cap_fin_06_proven') is False and p.get('cap_ggv_06_proven') is False and p.get('second_billing_system') is False and f.all_stubs_empty(p) and len(p.get('entity_pair_stubs') or [])==4) else 1)\"",
+      "expect": "exit 0",
+      "by": "fin-interco1-20260930"
+    },
+    {
+      "id": "fin-interco1-routes-shots",
+      "claim": "FIN-INTERCO-1 routes/page/shots present; unsigned deny proven in pack suite (PASS=166); RESULT written; no fake amounts claimed.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import fin_interco1 as f; from pathlib import Path; html=Path('dashboards/fin-interco-1.html').read_text(); import sys; sys.exit(0 if (f.api_matches('/api/fin/interco-1') and f.page_matches('/fin/interco-1') and 'staff_ready=false' in html and 'UNKNOWN' in html and Path('docs/wolf/ops/shots/fininterco1-desk-desktop.png').is_file() and Path('docs/wolf/ops/FIN-INTERCO-1-RESULT.md').is_file()) else 1)\"",
+      "expect": "exit 0",
+      "by": "fin-interco1-20260930"
+    },
+    {
+      "id": "intel-learn1-board-sop-tie",
+      "claim": "INTEL-LEARN-1 board lists SOP factory DEMO lesson candidates with human_review_gate; auto_approve/fake_performance false; CAP-INTEL-05 SPECIFIED; staff_ready/human_commissioned false; live catalog sop absent.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import intel_learn1 as l; from pathlib import Path; import json,sys; b=l.build_board('PERS-MATT'); h=l.honesty_flags(); led=json.loads(Path('state/model-c-baseline-assessments.json').read_text())['CAP-INTEL-05'][0]; live=Path('catalog/sop_factory.sqlite').exists(); sys.exit(0 if (b.get('ok') and (b.get('pending_count') or 0)>=1 and b.get('human_review_gate') is True and b.get('auto_approve') is False and b.get('fake_performance') is False and b.get('staff_ready') is False and b.get('human_commissioned') is False and b.get('second_sop_system') is False and h.get('live_catalog_sop_absent') is True and not live and led=='SPECIFIED') else 1)\"",
+      "expect": "exit 0",
+      "by": "intel-learn1-20260930"
+    },
+    {
+      "id": "intel-learn1-routes-shots",
+      "claim": "INTEL-LEARN-1 routes/page/shots present; unsigned/Amanda deny proven in pack suite (PASS=129); RESULT written; no auto-approve; CAP-INTEL-05 not claimed PROVEN.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import intel_learn1 as l; from pathlib import Path; html=Path('dashboards/intel-learning.html').read_text(); import sys; sys.exit(0 if (l.api_matches('/api/intel/learning') and l.page_matches('/intel/learning') and 'staff_ready=false' in html and '/api/sop/review-decision' in html and Path('docs/wolf/ops/shots/intellearn1-queue-desktop.png').is_file() and Path('docs/wolf/ops/INTEL-LEARN-1-RESULT.md').is_file()) else 1)\"",
+      "expect": "exit 0",
+      "by": "intel-learn1-20260930"
+    },
+    {
+      "id": "bzg-ops-desk1-unify-honesty",
+      "claim": "BZG-OPS-DESK-1 unifies outlets+venue-pnl+foundations; master insufficient_facts when venue_daily_closes=0; Uma OPEN / Rain+Pool PRE-OPENING; invented_sales false; staff_ready/human_commissioned false; CAP-BZG-02 SPECIFIED.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import bzg_ops_desk1 as d; from pathlib import Path; import json,sys; p=d.build_desk('PERS-MATT'); h=d.honesty_flags(); led=json.loads(Path('state/model-c-baseline-assessments.json').read_text())['CAP-BZG-02'][0]; sc=p.get('status_checks') or {}; vpl=p.get('venue_pnl_panel') or {}; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and h.get('invented_sales') is False and h.get('unknown_when_facts_missing') is True and sc.get('uma_open') and sc.get('rainforest_pre_opening') and sc.get('pool_bar_pre_opening') and sc.get('master_insufficient_facts') and vpl.get('venue_daily_closes')==0 and led=='SPECIFIED' and not d.person_may_view('PERS-AMANDA')) else 1)\"",
+      "expect": "exit 0",
+      "by": "bzg-ops-desk1-20260930"
+    },
+    {
+      "id": "bzg-ops-desk1-routes-shots",
+      "claim": "BZG-OPS-DESK-1 routes/page/shots present; Amanda/unsigned deny proven in pack suite (PASS=114); RESULT written; preserves outlets/venue-pnl; no fake sales.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import bzg_ops_desk1 as d; from pathlib import Path; html=Path('dashboards/bzg-ops-desk.html').read_text(); import sys; sys.exit(0 if (d.api_matches('/api/bzg/ops-desk') and d.page_matches('/bzg/ops-desk') and 'staff_ready=false' in html and 'UNKNOWN' in html and Path('docs/wolf/ops/shots/bzgopsdesk1-desk-desktop.png').is_file() and Path('docs/wolf/ops/BZG-OPS-DESK-1-RESULT.md').is_file() and d.honesty_flags().get('replaces_outlets_page') is False) else 1)\"",
+      "expect": "exit 0",
+      "by": "bzg-ops-desk1-20260930"
+    },
+    {
+      "id": "fin-recon-shell1-queue-honesty",
+      "claim": "FIN-RECON-SHELL-1: recon queue EMPTY import_count=0; account stubs EMPTY with null balance/last_success; FILE_IMPORT_ONLY; payment_write/bank_api/invented_last_success false; FC-SHELL-2/FIN-INTERCO-1/ATRIUM-SOD preserved; CAP-FIN-02 not proven; staff_ready/human_commissioned false.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import fin_recon_shell1 as r; p=r.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('queue_empty') is True and p.get('import_count')==0 and p.get('file_import_only') is True and p.get('last_success') is None and p.get('invented_last_success') is False and p.get('payment_write') is False and p.get('bank_api') is False and p.get('fc_shell2_preserved') is True and p.get('fin_interco1_preserved') is True and p.get('atrium_sod_preserved') is True and p.get('cap_fin_02_proven') is False and r.all_account_stubs_empty(p) and r.queue_is_empty(p)) else 1)\"",
+      "expect": "exit 0",
+      "by": "fin-recon-shell1-20260930"
+    },
+    {
+      "id": "fin-recon-shell1-routes-shots",
+      "claim": "FIN-RECON-SHELL-1 routes/page/shots present; unsigned deny proven in pack suite (PASS=174); RESULT written; no invented last_success/payment claimed.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import fin_recon_shell1 as r; from pathlib import Path; html=Path('dashboards/fin-recon-shell-1.html').read_text(); import sys; sys.exit(0 if (r.api_matches('/api/fin/recon-shell-1') and r.page_matches('/fin/recon-shell-1') and 'staff_ready=false' in html and 'FILE_IMPORT_ONLY' in html and 'last_success=null' in html and Path('docs/wolf/ops/shots/finreconshell1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/FIN-RECON-SHELL-1-RESULT.md').is_file()) else 1)\"",
+      "expect": "exit 0",
+      "by": "fin-recon-shell1-20260930"
+    },
+    {
+      "id": "dash-live1-freshness-honesty",
+      "claim": "DASH-LIVE-1: Owner Command + War Room freshness from real derived-view stamps; kpi_invented/stale_shown_as_current false; staff_ready/human_commissioned false; ledger mtime honesty on war room sources.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import dash_live1 as d; o=d.owner_command_freshness(refresh=True); w=d.war_room_freshness(refresh=True); h=d.honesty_flags(); import sys; sys.exit(0 if (o.get('ok') and w.get('ok') and o.get('display_state') in ('LIVE','STALE') and w.get('display_state') in ('LIVE','STALE') and o.get('kpi_invented') is False and o.get('stale_shown_as_current') is False and h.get('staff_ready') is False and h.get('human_commissioned') is False and h.get('freshness_from_real_stamps_only') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "dash-live1-20260930"
+    },
+    {
+      "id": "dash-live1-routes-shots",
+      "claim": "DASH-LIVE-1 pages/APIs/shots/RESULT present; unsigned deny + suite PASS=156; next pack parent-only RELIABILITY-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import dash_live1 as d; from pathlib import Path; o=Path('dashboards/owner-empire-pack.html').read_text(); w=Path('dashboards/finish-war-room.html').read_text(); import sys; sys.exit(0 if (d.OWNER_PAGE=='/wolf' and d.WAR_ROOM_PAGE=='/finish-war-room' and 'freshness-badge' in o and 'freshness-badge' in w and 'staff_ready=false' in o and Path('docs/wolf/ops/shots/dashlive1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/DASH-LIVE-1-RESULT.md').is_file() and d.honesty_flags().get('next_pack_for_parent_only')=='RELIABILITY-1' and d.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "dash-live1-20260930"
     }
   ]
 }

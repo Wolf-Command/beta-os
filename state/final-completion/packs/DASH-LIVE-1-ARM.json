@@ -1,0 +1,81 @@
+{
+  "run_id": "DASH-LIVE-1",
+  "pack": "DASH-LIVE-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 2,
+  "status": "PASS_VERIFIED",
+  "armed_at": "2026-09-30T01:39:40+08:00",
+  "launched_at": "2026-09-30T01:39:40+08:00",
+  "exited_at": "2026-09-30T01:49:57+08:00",
+  "exit_code": 0,
+  "exit": 0,
+  "has_exit": true,
+  "result_present": true,
+  "launch_method": "python_detach+daemon.sh",
+  "cursor_pid": 16606,
+  "child_alive": false,
+  "result_file": "docs/wolf/ops/DASH-LIVE-1-RESULT.md",
+  "log": "state/build-factory/logs/DASH-LIVE-1.log",
+  "brief": "state/build-factory/briefs/BRIEF-DASH-LIVE-1.md",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "prod_15975_untouched": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "prior_pack_verified": "FIN-RECON-SHELL-1",
+  "beta_os_head_at_arm": "9701bb1",
+  "depends_on": [
+    "MYWORK-PROVE-1"
+  ],
+  "preserves": [
+    "MYWORK-PROVE-1",
+    "Owner Command",
+    "Finish war room",
+    "W3-P4-TRUTH"
+  ],
+  "tests_pass": 156,
+  "tests_fail": 0,
+  "freshness_from_real_stamps_only": true,
+  "kpi_invented": false,
+  "stale_shown_as_current": false,
+  "closes_toward": [
+    "MB-004",
+    "CAP-CORE-12"
+  ],
+  "ceiling": "BUILT",
+  "shots": [
+    "docs/wolf/ops/shots/dashlive1-owner-desktop.png",
+    "docs/wolf/ops/shots/dashlive1-owner-phone.png",
+    "docs/wolf/ops/shots/dashlive1-war-room-desktop.png",
+    "docs/wolf/ops/shots/dashlive1-war-room-phone.png",
+    "docs/wolf/ops/shots/dashlive1-war-stale-badge.png",
+    "docs/wolf/ops/shots/dashlive1-unsigned-deny.png"
+  ],
+  "pages": [
+    "/wolf",
+    "/finish-war-room"
+  ],
+  "apis": [
+    "/api/owner/command",
+    "/api/owner/command/freshness",
+    "/api/owner/war-room",
+    "/api/owner/war-room/freshness"
+  ],
+  "next_pack_for_parent": "RELIABILITY-1",
+  "cursor_did_not_auto_start_next": true,
+  "pass_count": 156,
+  "fail_count": 0,
+  "test_suite": "scripts/tests/test_dash_live1_20260930.py",
+  "test_result": "PASS=156 FAIL=0",
+  "verified_at": "2026-09-30T01:54:33+08:00",
+  "peaches_verify": "PASS_VERIFIED",
+  "matt_finished_ping": true,
+  "matt_finished_ping_at": "2026-09-30T01:54:33+08:00",
+  "peaches_tests_rerun": "156/0",
+  "shots_count": 6,
+  "shots_distinct_sha256": 6
+}

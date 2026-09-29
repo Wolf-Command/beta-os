@@ -28,6 +28,13 @@
   .score { font-size: 1.4rem; margin: 4px 0; }
   table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
   th, td { border: 1px solid var(--border); padding: 6px; vertical-align: top; text-align: left; }
+  #freshness-badge { margin: 10px 0 14px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg2); }
+  #freshness-badge .meta { margin: 6px 0 0; }
+  #freshness-badge[data-display-state="STALE"] { border-color: rgba(224,177,90,0.55); }
+  #freshness-badge[data-display-state="LIVE"],
+  #freshness-badge[data-display-state="CURRENT"] { border-color: rgba(61,214,140,0.4); }
+  .pill.fresh-live, .pill.fresh-current { color: #3dd68c; border-color: rgba(61,214,140,0.45); }
+  .pill.fresh-stale { color: var(--warn); border-color: rgba(224,177,90,0.55); }
   @media (max-width: 860px) {
     body { max-width: 100%; padding: 12px 12px 80px; }
     .grid { grid-template-columns: 1fr; }
@@ -38,6 +45,8 @@
   <nav class="wolf-crumb" aria-label="Org context" style="font-size:0.75rem;color:var(--muted);margin:0 0 8px">WOLF › GROUP › Finish war room</nav>
   <h1>Finish war room <span>· Beta</span></h1>
   <p class="lede">Bound beta-owner-safe. All 77 capabilities from the canonical ledger. SYSTEM is separate from staff readiness, human commissioning, and operating adoption. Unknown stays unknown. No payment on this desk.</p>
+  <p class="meta" id="honesty-flags">staff_ready=false · human_commissioned=false · freshness from real stamps only · no invented KPIs · DASH-LIVE-1</p>
+  <div id="freshness-badge" data-freshness-badge data-surface="finish-war-room" aria-live="polite"><p class="meta">Loading freshness…</p></div>
   <p><a class="action" href="/wolf">Owner Command</a> <a class="action" href="/owner/data-quality">Data-quality register</a></p>
   <section id="testability" aria-label="Operational testability">
     <h2 id="give-human" style="font-size:1.15rem;color:var(--warn);letter-spacing:0.04em">GIVE THIS TO A HUMAN NOW</h2>
@@ -81,6 +90,39 @@
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
   let room = null;
+  const TRUTH = ["LIVE", "CURRENT", "STALE", "UNKNOWN", "UNAVAILABLE", "NEEDS REVIEW"];
+
+  function mark(state) {
+    const label = String(state || "UNKNOWN");
+    if (TRUTH.indexOf(label) >= 0 && window.WolfTruth) return window.WolfTruth.chip(label);
+    const cls = label === "STALE" ? " fresh-stale" : (label === "LIVE" || label === "CURRENT" ? " fresh-live" : "");
+    return `<span class="pill${cls}" data-display-state="${esc(label)}">${esc(label)}</span>`;
+  }
+
+  function paintFreshness(fresh) {
+    const box = document.getElementById("freshness-badge");
+    if (!box) return;
+    if (!fresh || fresh.ok === false) {
+      box.setAttribute("data-display-state", "UNKNOWN");
+      box.setAttribute("data-freshness-ready", "0");
+      box.innerHTML = `<p>${mark("UNKNOWN")} Freshness stamp was not on this read. Nothing was invented.</p>`;
+      return;
+    }
+    const state = fresh.display_state || "UNKNOWN";
+    box.setAttribute("data-display-state", state);
+    box.setAttribute("data-freshness-ready", "1");
+    box.setAttribute("data-primary-source", esc(fresh.primary_source || "model_c_ledger"));
+    const sources = (fresh.sources || []).slice(0, 8).map((src) =>
+      `${mark(src.display_state)} <span class="meta">${esc(src.name || src.source_id || "")}</span>`
+    ).join(" · ");
+    box.innerHTML = `
+      <p><strong>Data freshness</strong> ${mark(state)}
+        <span class="meta">primary ${esc(fresh.primary_source || "model_c_ledger")}</span></p>
+      <p class="meta">${esc(fresh.plain || "")}</p>
+      <p class="meta">observed_at ${esc(fresh.observed_at || "MISSING")} · as_of ${esc(fresh.as_of_wita || fresh.as_of || "MISSING")}</p>
+      <p class="meta">stale_shown_as_current=${esc(String(fresh.stale_shown_as_current === true))} · kpi_invented=false · SYSTEM% not invented here</p>
+      <p>${sources || mark("UNKNOWN")}</p>`;
+  }
 
   function markOverflow() {
     const over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
@@ -121,17 +163,20 @@
     const data = await res.json().catch(() => ({}));
     if (res.status === 403 || (data.ui && data.ui.component === "permission-denied")) {
       document.getElementById("headline").innerHTML = `<p data-component="permission-denied">You do not have access to this.</p>`;
+      paintFreshness(null);
       document.body.setAttribute("data-war-room-ready", "0");
       markOverflow();
       return;
     }
     if (!res.ok || data.ok !== true) {
       document.getElementById("msg").innerHTML = `<p class="err">${esc(data.message || "The ledger could not be read. Nothing was invented.")}</p>`;
+      paintFreshness(null);
       document.body.setAttribute("data-war-room-ready", "0");
       markOverflow();
       return;
     }
     room = data;
+    paintFreshness(data.freshness || null);
     const counts = data.counts || {};
     document.getElementById("headline").innerHTML = `
       <p class="score" data-system-line="${esc(data.system_line)}">${esc(data.system_line)}</p>

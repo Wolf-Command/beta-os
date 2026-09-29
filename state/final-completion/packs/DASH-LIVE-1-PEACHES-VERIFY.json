@@ -1,0 +1,99 @@
+{
+  "pack": "DASH-LIVE-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T01:54:33+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T01:50:49+08:00",
+  "result_file": "docs/wolf/ops/DASH-LIVE-1-RESULT.md",
+  "tests_rerun": {
+    "test_dash_live1_20260930.py": {
+      "pass": 156,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 6,
+    "distinct_sha256": 6,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/dashlive1-owner-desktop.png",
+        "bytes": 140215,
+        "sha256": "a61264100978159b8c89bc6ea6839395d2861051c53d8d1203bff4b642052394"
+      },
+      {
+        "path": "docs/wolf/ops/shots/dashlive1-owner-phone.png",
+        "bytes": 108574,
+        "sha256": "b3b7a7099e321b18d6d5639069ac9c9c5b733b4a7fc0b13cf5a221e4ad0d417a"
+      },
+      {
+        "path": "docs/wolf/ops/shots/dashlive1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      },
+      {
+        "path": "docs/wolf/ops/shots/dashlive1-war-room-desktop.png",
+        "bytes": 169814,
+        "sha256": "9081136701a621d86a7a4b68e330701f52f22629dc58464b66e09a1072b028fe"
+      },
+      {
+        "path": "docs/wolf/ops/shots/dashlive1-war-room-phone.png",
+        "bytes": 124623,
+        "sha256": "e0e31d8cd34e18d6b9439c8bfcfd61c2eb5946275f92e54ea405bdad8b772052"
+      },
+      {
+        "path": "docs/wolf/ops/shots/dashlive1-war-stale-badge.png",
+        "bytes": 159928,
+        "sha256": "1edab81e3403c6a82a331340e0fe14c5ffbef6fbcc9f584bc80b822e6fc6ef05"
+      }
+    ]
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "beta": {
+    "port": 8788,
+    "pid": 13405,
+    "listening": true
+  },
+  "sidecar_8790": "DOWN",
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "freshness_from_real_stamps_only": true,
+    "kpi_invented": false,
+    "stale_shown_as_current": false,
+    "ceiling": "BUILT",
+    "closes_toward": [
+      "MB-004",
+      "CAP-CORE-12"
+    ],
+    "proven": false,
+    "ready": false
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "9701bb1",
+    "atrium_finance_head": "7584266",
+    "uncommitted": true
+  },
+  "preserves": [
+    "MYWORK-PROVE-1",
+    "Owner Command",
+    "Finish war room",
+    "W3-P4-TRUTH"
+  ],
+  "next_pack": "RELIABILITY-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false,
+  "unsigned_freshness_403": true
+}

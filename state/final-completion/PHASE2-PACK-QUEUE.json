@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T01:39:21+08:00",
+  "at_wita": "2026-09-30T01:54:33+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -405,8 +405,9 @@
       "synthesized_from": "MISSING/PARTIAL priority buckets",
       "status": "PASS_VERIFIED",
       "armed_at": "2026-09-30T01:28:55+08:00",
-      "cursor_pid": 14108,
-      "verified_at": "2026-09-30T01:39:21+08:00"
+      "verified_at": "2026-09-30T01:39:40+08:00",
+      "exited_at": "2026-09-30T01:35:15+08:00",
+      "result_file": "docs/wolf/ops/FIN-RECON-SHELL-1-RESULT.md"
     },
     {
       "pack_id": "DASH-LIVE-1",
@@ -435,7 +436,14 @@
       "estimated_effort": "M",
       "matt_blocker": false,
       "synthesized_from": "MISSING/PARTIAL priority buckets",
-      "status": "NEXT_TO_ARM"
+      "status": "PASS_VERIFIED",
+      "armed_at": "2026-09-30T01:39:40+08:00",
+      "cursor_pid": 16606,
+      "exited_at": "2026-09-30T01:49:00+08:00",
+      "result_file": "docs/wolf/ops/DASH-LIVE-1-RESULT.md",
+      "tests_pass": 156,
+      "tests_fail": 0,
+      "verified_at": "2026-09-30T01:54:33+08:00"
     },
     {
       "pack_id": "RELIABILITY-1",
@@ -464,7 +472,8 @@
       "estimated_effort": "M",
       "matt_blocker": false,
       "synthesized_from": "MISSING/PARTIAL priority buckets",
-      "status": "QUEUED"
+      "status": "WAITING_CURSOR",
+      "armed_at": "2026-09-30T01:54:33+08:00"
     },
     {
       "pack_id": "CONTENT-ENGINE-LIVE-1",
@@ -657,7 +666,8 @@
     "FIN-INTERCO-1",
     "INTEL-LEARN-1",
     "BZG-OPS-DESK-1",
-    "FIN-RECON-SHELL-1"
+    "FIN-RECON-SHELL-1",
+    "DASH-LIVE-1"
   ],
   "exited_awaiting_peaches": [
     "BZG-VENUEPL-1",
@@ -674,5 +684,9 @@
     "reliability": 40
   },
   "synthesis_wave2_at": "2026-09-30T00:45:44+08:00",
-  "synthesis_wave3_at": "2026-09-30T01:19:01+08:00"
+  "synthesis_wave3_at": "2026-09-30T01:19:01+08:00",
+  "last_verified": "DASH-LIVE-1",
+  "next_to_arm": "CONTENT-ENGINE-LIVE-1",
+  "heavy_in_flight": "RELIABILITY-1",
+  "last_exited": null
 }
