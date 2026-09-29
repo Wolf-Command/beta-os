@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T07:46:00+08:00",
+  "at_wita": "2026-09-30T07:54:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -1166,10 +1166,17 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "classification": "INTERNALLY_SOLVABLE",
       "synthesized_from": "Matt CONTINUE standards 20260930",
-      "armed_at": "2026-09-30T07:46:00+08:00"
+      "armed_at": "2026-09-30T07:46:00+08:00",
+      "suite_pass": 111,
+      "suite_fail": 0,
+      "verified_at": "2026-09-30T07:54:00+08:00",
+      "tests": {
+        "pass": 111,
+        "fail": 0
+      }
     },
     {
       "pack_id": "METRICOOL-RUNTIME-WIRE-1",
@@ -1198,9 +1205,10 @@
       ],
       "estimated_effort": "L",
       "matt_blocker": false,
-      "status": "QUEUED",
+      "status": "WAITING_CURSOR",
       "classification": "INTERNALLY_SOLVABLE",
-      "synthesized_from": "challenge Metricool ceiling \u2014 MCP ready 6 brands"
+      "synthesized_from": "challenge Metricool ceiling \u2014 MCP ready 6 brands",
+      "armed_at": "2026-09-30T07:54:00+08:00"
     },
     {
       "pack_id": "ESB-SETTLEMENT-PATH-1",

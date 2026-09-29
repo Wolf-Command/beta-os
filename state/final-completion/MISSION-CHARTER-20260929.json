@@ -89,11 +89,11 @@
     "RELIABILITY-1",
     "CONTENT-ENGINE-LIVE-1"
   ],
-  "last_pack_verified": "BACKUP-RESTORE-DRILL-1",
-  "last_verified_at": "2026-09-30T07:46:00+08:00",
-  "pass_verified_count": 31,
-  "next_pack": "PIPE-RELIABILITY-AUTO-1",
-  "mac_pipe": "PIPE_OK",
+  "last_pack_verified": "PIPE-RELIABILITY-AUTO-1",
+  "last_verified_at": "2026-09-30T07:54:00+08:00",
+  "pass_verified_count": 32,
+  "next_pack": "METRICOOL-RUNTIME-WIRE-1",
+  "mac_pipe": "GREEN_BOARD",
   "unparked_at": "2026-09-30T07:26:00+08:00",
   "standards_lock": true,
   "restore_drill": "DRILL_RAN_NON_DESTRUCTIVE"

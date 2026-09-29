@@ -299,6 +299,30 @@ def probe_prod_ro(*, expected_pid: int = PROD_PID_HELD) -> dict[str, Any]:
     }
 
 
+def _mac_pipe_surface() -> dict[str, Any]:
+    """PIPE-RELIABILITY-AUTO-1 surface on reliability board (lazy import)."""
+    try:
+        from core import pipe_reliability_auto1 as _pipe
+
+        return _pipe.mac_pipe_payload()
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "id": "mac_local_exec",
+            "role": "mac_local_exec_pipe",
+            "label": "Mac local-exec pipe",
+            "status": "UNKNOWN",
+            "last_probe_at": _now_wita(),
+            "uptime_pct": None,
+            "uptime_invented": False,
+            "painted_green": False,
+            "fake_pipe_up": False,
+            "probe": "hostname+date",
+            "notes": f"Pipe probe unavailable ({type(exc).__name__}). Honest UNKNOWN.",
+            "episodes": [],
+            "episode_count": 0,
+        }
+
+
 def build_board() -> dict[str, Any]:
     """Public reliability board. Auth gating is caller's responsibility."""
     probed_at = _now_wita()
@@ -306,6 +330,7 @@ def build_board() -> dict[str, Any]:
     sidecar = probe_listener(SIDECAR_PORT, label="sidecar_8790")
     prod = probe_prod_ro()
     targets = [beta, sidecar, prod]
+    mac_pipe = _mac_pipe_surface()
 
     # Absolute honesty pins — never invent uptime or flip DOWN→UP.
     for row in targets:
@@ -315,6 +340,13 @@ def build_board() -> dict[str, Any]:
             row["painted_up"] = False
         else:
             row["painted_up"] = False
+
+    # Mac pipe uses GREEN/DOWN/UNKNOWN — never invent uptime or paint GREEN.
+    if isinstance(mac_pipe, dict):
+        mac_pipe["uptime_pct"] = None
+        mac_pipe["uptime_invented"] = False
+        mac_pipe["painted_green"] = False
+        mac_pipe["fake_pipe_up"] = False
 
     by_status: dict[str, int] = {}
     for row in targets:
@@ -345,6 +377,7 @@ def build_board() -> dict[str, Any]:
             "by_status": by_status,
         },
         "targets": targets,
+        "mac_pipe": mac_pipe,
         "honesty": {
             "sidecar_down_stays_down": sidecar.get("status") != "UP"
             or sidecar.get("listening") is True,
@@ -354,6 +387,8 @@ def build_board() -> dict[str, Any]:
             "sidecar_port": SIDECAR_PORT,
             "prod_port": PROD_PORT,
             "prod_pid_held": PROD_PID_HELD,
+            "mac_pipe_status_vocab": "GREEN|DOWN|UNKNOWN",
+            "mac_pipe_pack": "PIPE-RELIABILITY-AUTO-1",
         },
         "preserved_packs": list(PRESERVED_PACKS),
         "next_pack_for_parent_only": "CONTENT-ENGINE-LIVE-1",

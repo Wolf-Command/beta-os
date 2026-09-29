@@ -182,6 +182,7 @@ from core import owner_exceptions_live1 as _owner_exceptions_live1
 from core import esb_truth1 as _esb_truth1
 from core import backup_health1 as _backup_health1
 from core import backup_restore_drill1 as _backup_restore_drill1
+from core import pipe_reliability_auto1 as _pipe_reliability_auto1
 from core import intel_learn1 as _intel_learn1
 from core import sop_lesson_live1 as _sop_lesson_live1
 from core import bzg_ops_desk1 as _bzg_ops_desk1
@@ -2064,6 +2065,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._backup_restore_drill1_dispatch():
+            return
+
+        if self._pipe_reliability_auto1_dispatch():
             return
 
         if self._fin_cash_truth1_dispatch():
@@ -5320,6 +5324,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._backup_restore_drill1_dispatch():
                 return
         elif path in (
+            "/ops/pipe-reliability-auto-1",
+            "/ops/pipe-reliability-auto-1/",
+            "/ops/pipe-reliability",
+            "/ops/pipe-reliability/",
+            "/pipe-reliability-auto-1",
+            "/pipe-reliability-auto-1/",
+            "/pipe-reliability-auto-1.html",
+            "/dashboards/pipe-reliability-auto-1.html",
+        ):
+            if self._pipe_reliability_auto1_dispatch():
+                return
+        elif path in (
             "/intel/learning",
             "/intel/learning/",
             "/ops/intel-learning",
@@ -6225,6 +6241,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._backup_restore_drill1_write_refused(path)
             return
+        if path == "/api/ops/pipe-reliability-auto-1" or path.startswith(
+            "/api/ops/pipe-reliability-auto-1/"
+        ):
+            self._pipe_reliability_auto1_write_refused(path)
+            return
         if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
             self._fin_cash_truth1_write_refused(path)
             return
@@ -7103,6 +7124,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/api/ops/backup-restore-drill-1/"
         ):
             self._backup_restore_drill1_write_refused(path)
+            return
+        if path == "/api/ops/pipe-reliability-auto-1" or path.startswith(
+            "/api/ops/pipe-reliability-auto-1/"
+        ):
+            self._pipe_reliability_auto1_write_refused(path)
             return
         if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
             self._fin_cash_truth1_write_refused(path)
@@ -8387,6 +8413,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/api/ops/backup-restore-drill-1/"
         ):
             self._backup_restore_drill1_write_refused(path)
+            return
+        if path == "/api/ops/pipe-reliability-auto-1" or path.startswith(
+            "/api/ops/pipe-reliability-auto-1/"
+        ):
+            self._pipe_reliability_auto1_write_refused(path)
             return
         if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
             self._fin_cash_truth1_write_refused(path)
@@ -16863,6 +16894,105 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "human_commissioned": False,
                 "production_mutated": False,
                 "full_dr_ready_claimed": False,
+            },
+            status=403,
+        )
+
+    def _pipe_reliability_auto1_dispatch(self) -> bool:
+        """PIPE-RELIABILITY-AUTO-1 — Mac local-exec pipe detect/recover board."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _pipe_reliability_auto1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _pipe_reliability_auto1.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "pipe_reliability_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "fake_uptime": False,
+                        "fake_pipe_up": False,
+                        "prod_mutate": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _pipe_reliability_auto1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "pipe-reliability-auto-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "PIPE-RELIABILITY-AUTO-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="pipe-reliability-auto-1.html")
+        return True
+
+    def _pipe_reliability_auto1_write_refused(self, path: str) -> None:
+        """Refuse fake uptime / fake GREEN / prod mutate / commissioning flips."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _pipe_reliability_auto1.refuse_external_write(
+                body if isinstance(body, dict) else {}
+            )
+        except _pipe_reliability_auto1.PipeReliabilityAuto1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "fake_uptime": False,
+                    "fake_pipe_up": False,
+                    "prod_mutate": False,
+                    "prod_pid_held": _pipe_reliability_auto1.PROD_PID_HELD,
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": (
+                    "PIPE-RELIABILITY-AUTO-1 is a read-only probe board. Writes refused."
+                ),
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "fake_uptime": False,
+                "fake_pipe_up": False,
+                "prod_mutate": False,
             },
             status=403,
         )

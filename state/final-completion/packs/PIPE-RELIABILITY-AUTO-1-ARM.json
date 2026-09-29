@@ -4,7 +4,7 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 7,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T07:46:00+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
@@ -14,7 +14,7 @@
   "no_push": true,
   "matt_auto_continue": true,
   "prior_pack_verified": "BACKUP-RESTORE-DRILL-1",
-  "beta_os_head_at_arm": "PENDING",
+  "beta_os_head_at_arm": "981fcf59a7316f6e5fa7171734ca5bfb04e46e53",
   "brief": "state/build-factory/briefs/BRIEF-PIPE-RELIABILITY-AUTO-1.md",
   "log": "state/build-factory/logs/PIPE-RELIABILITY-AUTO-1.log",
   "result_file": "docs/wolf/ops/PIPE-RELIABILITY-AUTO-1-RESULT.md",
@@ -34,5 +34,18 @@
   "preserves": [
     "RELIABILITY-1",
     "BACKUP-HEALTH-1"
-  ]
+  ],
+  "completed_at": "2026-09-30T07:51:30+08:00",
+  "suite": {
+    "pass": 111,
+    "fail": 0
+  },
+  "mac_pipe_status_at_exit": "GREEN",
+  "episodes_stamped": 3,
+  "fake_uptime": false,
+  "peaches_verified_at": "2026-09-30T07:54:00+08:00",
+  "exit_code": 0,
+  "tests_pass": 111,
+  "tests_fail": 0,
+  "peaches_verify": "state/final-completion/packs/PIPE-RELIABILITY-AUTO-1-PEACHES-VERIFY.json"
 }

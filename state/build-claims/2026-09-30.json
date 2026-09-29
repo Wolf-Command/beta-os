@@ -440,6 +440,20 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import backup_restore_drill1 as d; from pathlib import Path; html=Path('dashboards/backup-restore-drill-1.html').read_text(); import sys; sys.exit(0 if (d.api_matches('/api/ops/backup-restore-drill-1') and d.page_matches('/ops/backup-restore-drill-1') and 'staff_ready=false' in html and 'production_mutated=false' in html and Path('docs/wolf/ops/shots/backuprestore1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/BACKUP-RESTORE-DRILL-1-RESULT.md').is_file() and Path('state/final-completion/packs/BACKUP-RESTORE-DRILL-1-LOG.json').is_file() and d.honesty_flags().get('next_pack_for_parent_only')=='PIPE-RELIABILITY-AUTO-1' and d.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
       "expect": "exit 0",
       "by": "cursor-backup-restore-drill-1"
+    },
+    {
+      "id": "pipe-reliability-auto1-probe",
+      "claim": "PIPE-RELIABILITY-AUTO-1: Mac local-exec pipe GREEN/DOWN/UNKNOWN with last_probe_at on reliability + dedicated board; hostname+date probe; episodes PARKED_MAC_PIPE\u2192UNPARKED_PIPE_OK + flaps stamped without inventing uptime; recover path documented; RELIABILITY-1 + BACKUP-HEALTH-1 preserved; staff_ready/human_commissioned false; next pack parent-only METRICOOL-RUNTIME-WIRE-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import pipe_reliability_auto1 as p; from core import reliability1 as r; b=p.build_board(); m=r.build_board().get('mac_pipe') or {}; import sys; sys.exit(0 if (b.get('ok') and b.get('status') in ('GREEN','DOWN','UNKNOWN') and b.get('last_probe_at') and b.get('fake_uptime') is False and b.get('fake_pipe_up') is False and len(b.get('episodes') or [])==3 and b.get('staff_ready') is False and b.get('human_commissioned') is False and p.pipe_is_honest(b) and m.get('status') in ('GREEN','DOWN','UNKNOWN') and m.get('last_probe_at') and p.honesty_flags().get('next_pack_for_parent_only')=='METRICOOL-RUNTIME-WIRE-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-pipe-reliability-auto-1"
+    },
+    {
+      "id": "pipe-reliability-auto1-surfaces",
+      "claim": "PIPE-RELIABILITY-AUTO-1 page/API/shots/RESULT/episodes present; unsigned deny + uptime/green/prod refuse; suite PASS=111; next pack parent-only METRICOOL-RUNTIME-WIRE-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import pipe_reliability_auto1 as p; from pathlib import Path; html=Path('dashboards/pipe-reliability-auto-1.html').read_text(); import sys; sys.exit(0 if (p.api_matches('/api/ops/pipe-reliability-auto-1') and p.page_matches('/ops/pipe-reliability-auto-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/pipe1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/PIPE-RELIABILITY-AUTO-1-RESULT.md').is_file() and Path('state/final-completion/packs/PIPE-RELIABILITY-AUTO-1-EPISODES.json').is_file() and p.honesty_flags().get('next_pack_for_parent_only')=='METRICOOL-RUNTIME-WIRE-1' and p.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-pipe-reliability-auto-1"
     }
   ]
 }

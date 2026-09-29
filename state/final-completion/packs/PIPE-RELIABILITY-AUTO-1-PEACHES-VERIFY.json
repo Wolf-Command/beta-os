@@ -1,0 +1,78 @@
+{
+  "pack": "PIPE-RELIABILITY-AUTO-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T07:54:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T07:52:26+08:00",
+  "result_file": "docs/wolf/ops/PIPE-RELIABILITY-AUTO-1-RESULT.md",
+  "tests_rerun": {
+    "test_pipe_reliability_auto1_20260930.py": {
+      "pass": 111,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/pipe1-desk-desktop.png",
+        "bytes": 229441,
+        "sha256": "fcd97f906bee93de126f3ce35c890d2fd5548f1a814867dcc7d50aafad394cf3"
+      },
+      {
+        "path": "docs/wolf/ops/shots/pipe1-desk-phone.png",
+        "bytes": 100200,
+        "sha256": "e420a7a269d5ecd4bf699964ec7f4e571c6097fd5b2ccedae24d7b4d96f27c5b"
+      },
+      {
+        "path": "docs/wolf/ops/shots/pipe1-reliability-surface.png",
+        "bytes": 196264,
+        "sha256": "250da44e9e4021eb021a51e9469e3fdb42ed9660e023ae6a07423f77e11c1666"
+      },
+      {
+        "path": "docs/wolf/ops/shots/pipe1-unsigned-deny.png",
+        "bytes": 24471,
+        "sha256": "7df206a8cc673a3bc5593cc1ec6f49e9b4799764c6a5130d7590ace9de8fbded"
+      }
+    ]
+  },
+  "pipe": {
+    "status": "GREEN",
+    "hostname": "Wolfs-Mac-Studio.local",
+    "fake_uptime": false,
+    "episodes": 3
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "classification": {
+    "pipe_detect_recover": "INTERNALLY_SOLVABLE",
+    "shell_ne_complete": true
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "981fcf59a7316f6e5fa7171734ca5bfb04e46e53",
+    "uncommitted": true
+  },
+  "preserves": [
+    "RELIABILITY-1",
+    "BACKUP-HEALTH-1"
+  ],
+  "next_pack": "METRICOOL-RUNTIME-WIRE-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false,
+  "post_verify_flap": "another flap ~07:53 after EXIT \u2014 board must stay honest GREEN/DOWN"
+}

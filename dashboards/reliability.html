@@ -39,29 +39,41 @@
       display: inline-block; padding: 5px 10px; border-radius: 6px;
       background: #ebe4d6; font-size: 0.75rem; font-weight: 600;
     }
-    .chip.UP { background: #dde8dc; color: var(--up); }
+    .chip.UP, .chip.GREEN { background: #dde8dc; color: var(--up); }
     .chip.DOWN { background: #f5e0e0; color: var(--down); }
     .chip.UNKNOWN { background: #f5ead8; color: var(--unk); }
-    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); margin: 0 0 18px; }
     table { width: 100%; border-collapse: collapse; min-width: 640px; }
     th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #ebe4d6; vertical-align: top; font-size: 0.86rem; }
     th { background: #f0ebe2; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
     tr:last-child td { border-bottom: 0; }
     tr.DOWN { background: #fff5f3; }
-    tr.UP { background: #f6faf6; }
+    tr.UP, tr.GREEN { background: #f6faf6; }
     tr.UNKNOWN { background: #fffaf0; }
     .status { font-weight: 700; white-space: nowrap; }
-    .status.UP { color: var(--up); }
+    .status.UP, .status.GREEN { color: var(--up); }
     .status.DOWN { color: var(--down); }
     .status.UNKNOWN { color: var(--unk); }
     .muted { color: var(--muted); font-size: 0.8rem; line-height: 1.4; }
     .null { color: #9a9488; font-style: italic; }
     .err { color: var(--down); }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
+    h2.pipe-h { font-size: 1.05rem; margin: 8px 0 10px; letter-spacing: -0.01em; }
+    .pipe-box {
+      border: 1px solid var(--line); border-radius: 10px; background: var(--card);
+      padding: 12px 14px; margin: 0 0 18px;
+    }
+    .pipe-box dl {
+      display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px;
+      margin: 0 0 10px; font-size: 0.88rem;
+    }
+    .pipe-box dt { color: var(--muted); }
+    .pipe-box dd { margin: 0; }
     @media (max-width: 520px) {
       h1 { font-size: 1.35rem; }
       main { padding: 16px 12px 64px; }
       th, td { padding: 8px 8px; font-size: 0.8rem; }
+      .pipe-box dl { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -73,7 +85,7 @@
       <strong>Honesty:</strong>
       staff_ready=false · human_commissioned=false ·
       no fake uptime · sidecar DOWN stays DOWN ·
-      prod pid 15975 READ-ONLY · write_authority=NONE
+      Mac pipe GREEN/DOWN/UNKNOWN · prod pid 15975 READ-ONLY · write_authority=NONE
     </div>
     <div class="chips" id="chips"></div>
     <div class="table-wrap">
@@ -92,6 +104,18 @@
           <tr><td colspan="6" class="muted">Probing listeners…</td></tr>
         </tbody>
       </table>
+    </div>
+    <h2 class="pipe-h">Mac local-exec pipe</h2>
+    <div class="pipe-box" id="mac-pipe" data-pipe-status="">
+      <dl>
+        <dt>status</dt><dd id="pipe-status" class="null">—</dd>
+        <dt>last_probe_at</dt><dd id="pipe-probe" class="null">—</dd>
+        <dt>hostname</dt><dd id="pipe-host" class="null">—</dd>
+        <dt>uptime %</dt><dd class="null">null (never invent)</dd>
+        <dt>episodes</dt><dd id="pipe-eps" class="muted">—</dd>
+      </dl>
+      <p class="muted" id="pipe-notes">Loading Mac pipe probe…</p>
+      <p class="muted">Recover: <a href="/ops/pipe-reliability-auto-1">/ops/pipe-reliability-auto-1</a> · pack PIPE-RELIABILITY-AUTO-1</p>
     </div>
   </main>
   <script>
@@ -139,10 +163,13 @@
           (data.as_of_wita || "?") +
           " · ceiling " + (data.ceiling || "BUILT");
         const counts = (data.counts && data.counts.by_status) || {};
+        const pipe = data.mac_pipe || {};
+        const pipeSt = pipe.status || "UNKNOWN";
         chips.innerHTML = ["UP", "DOWN", "UNKNOWN"].map(function (st) {
           const n = counts[st] || 0;
           return '<span class="chip ' + st + '">' + st + "=" + n + "</span>";
         }).join("") +
+          '<span class="chip ' + esc(pipeSt) + '">mac_pipe=' + esc(pipeSt) + "</span>" +
           '<span class="chip">fake_uptime=false</span>' +
           '<span class="chip">prod_mutate=false</span>';
         const targets = data.targets || [];
@@ -162,11 +189,25 @@
             "</tr>"
           );
         }).join("") || '<tr><td colspan="6" class="muted">No targets</td></tr>';
+        const ps = document.getElementById("pipe-status");
+        const pp = document.getElementById("pipe-probe");
+        const ph = document.getElementById("pipe-host");
+        const pe = document.getElementById("pipe-eps");
+        const pn = document.getElementById("pipe-notes");
+        const box = document.getElementById("mac-pipe");
+        if (ps) { ps.textContent = pipeSt; ps.className = "status " + pipeSt; }
+        if (pp) pp.textContent = pipe.last_probe_at || "—";
+        if (ph) ph.textContent = pipe.hostname || "—";
+        if (pe) pe.textContent = String(pipe.episode_count != null ? pipe.episode_count : (pipe.episodes || []).length) +
+          " stamped (PARKED_MAC_PIPE → UNPARKED_PIPE_OK + flaps)";
+        if (pn) pn.textContent = pipe.notes || "";
+        if (box) box.setAttribute("data-pipe-status", pipeSt);
         document.body.setAttribute("data-ready", "1");
         document.body.setAttribute(
           "data-sidecar",
           ((targets.find(function (t) { return t.id === "sidecar_8790"; }) || {}).status) || ""
         );
+        document.body.setAttribute("data-mac-pipe", pipeSt);
       } catch (err) {
         rows.innerHTML = '<tr><td colspan="6" class="err">' + esc(err.message || err) + "</td></tr>";
         document.body.setAttribute("data-ready", "0");

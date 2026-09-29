@@ -55,7 +55,7 @@
       "classification": "INTERNALLY_SOLVABLE",
       "evidence": "BACKUP-RESTORE-DRILL-1 ran non-destructive temp drill; sha256 match; honesty DRILL_RAN_NON_DESTRUCTIVE; full DR READY still shell_ne_complete",
       "next_pack": "PIPE-RELIABILITY-AUTO-1",
-      "action": "DONE this pack — lift NOT_RUN; NAS/B2 full DR remains EXTERNAL_HUMAN if unauthorised",
+      "action": "DONE this pack \u2014 lift NOT_RUN; NAS/B2 full DR remains EXTERNAL_HUMAN if unauthorised",
       "status_after": "DRILL_RAN_NON_DESTRUCTIVE"
     },
     {
@@ -63,10 +63,11 @@
       "classification": "INTERNALLY_SOLVABLE",
       "evidence": "PIPE_OK proven 2026-09-30 ~07:23; overnight FAIL_CEILING; reliability reqs",
       "next_pack": "PIPE-RELIABILITY-AUTO-1",
-      "action": "Detect/recover Mac local-exec under reliability board"
+      "action": "DONE this pack \u2014 detect/recover on reliability board; episodes stamped; no fake uptime",
+      "status_after": "PIPE_OK_WITH_DETECT_RECOVER"
     }
   ],
-  "updated_at": "2026-09-30T07:37:00+08:00",
+  "updated_at": "2026-09-30T07:54:00+08:00",
   "metricool_runtime_probe": {
     "getBrandSettings": "6 brands",
     "getAnalyticsAvailableMetrics_instagram_posts": "29 fields incl engagement/likes/reach",
@@ -82,6 +83,16 @@
     {
       "at_wita": "2026-09-30T07:36:40+08:00",
       "during": "BACKUP-RESTORE-DRILL-1 babysit",
+      "recovered": true
+    },
+    {
+      "at_wita": "2026-09-30T07:46:30+08:00",
+      "during": "PIPE-RELIABILITY-AUTO-1 launch/babysit",
+      "recovered": true
+    },
+    {
+      "at_wita": "2026-09-30T07:53:00+08:00",
+      "during": "post PIPE EXIT Peaches",
       "recovered": true
     }
   ]

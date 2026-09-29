@@ -1,0 +1,15 @@
+{
+  "milestone_id": "MULTI-20260930-0746",
+  "at_wita": "2026-09-30T07:46:10+08:00",
+  "pass_verified_count": 31,
+  "active": {
+    "pack": "PIPE-RELIABILITY-AUTO-1",
+    "cursor_pid": 56364
+  },
+  "verified": [
+    "GGV-METRIC",
+    "OWNER-EXCEPTIONS",
+    "BACKUP-RESTORE"
+  ],
+  "standards_lock": true
+}

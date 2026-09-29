@@ -1,0 +1,71 @@
+{
+  "pack": "PIPE-RELIABILITY-AUTO-1",
+  "schema": "wolf.pipe-reliability-auto-1.episodes.v1",
+  "stamped_at_wita": "2026-09-30T07:53:47+08:00",
+  "honesty": {
+    "uptime_pct": null,
+    "invented_uptime": false,
+    "fake_pipe_up": false,
+    "note": "Episodes are evidence stamps only \u2014 not continuous uptime."
+  },
+  "overnight_transition": {
+    "from": "PARKED_MAC_PIPE",
+    "to": "UNPARKED_PIPE_OK",
+    "date": "2026-09-30",
+    "approx_wita": "07:23",
+    "hostname_proven": "Wolfs-Mac-Studio"
+  },
+  "episodes": [
+    {
+      "id": "ep-20260930-overnight-unpark",
+      "at_wita": "2026-09-30T07:23:00+08:00",
+      "at_wita_end": "2026-09-30T07:27:30+08:00",
+      "from_state": "PARKED_MAC_PIPE",
+      "to_state": "UNPARKED_PIPE_OK",
+      "hostname_proven": "Wolfs-Mac-Studio",
+      "evidence": [
+        "state/final-completion/milestones/UNPARK-20260930-0726.json",
+        "CLASSIFICATION-LOG-20260930 Mac local-exec pipe outage"
+      ],
+      "notes": "Overnight PARKED_MAC_PIPE \u2192 UNPARKED_PIPE_OK ~07:23 WITA; hostname Wolfs-Mac-Studio proven at unpark milestone.",
+      "uptime_pct": null,
+      "invented_uptime": false
+    },
+    {
+      "id": "ep-20260930-0728-brief-unreachable",
+      "at_wita": "2026-09-30T07:28:40+08:00",
+      "at_wita_end": "2026-09-30T07:29:30+08:00",
+      "from_state": "PIPE_OK",
+      "to_state": "PIPE_OK",
+      "flap": true,
+      "hostname_proven": "Wolfs-Mac-Studio",
+      "evidence": [
+        "state/final-completion/CLASSIFICATION-LOG-20260930.json#pipe_flap_observed"
+      ],
+      "notes": "Brief unreachable during unpark work ~07:28 WITA; recovered PIPE_OK. Not continuous uptime.",
+      "uptime_pct": null,
+      "invented_uptime": false
+    },
+    {
+      "id": "ep-20260930-0736-backup-babysit-flap",
+      "at_wita": "2026-09-30T07:36:40+08:00",
+      "at_wita_end": "2026-09-30T07:40:00+08:00",
+      "from_state": "PIPE_OK",
+      "to_state": "PIPE_OK",
+      "flap": true,
+      "during": "BACKUP-RESTORE-DRILL-1 babysit",
+      "hostname_proven": "Wolfs-Mac-Studio",
+      "evidence": [
+        "state/final-completion/CLASSIFICATION-LOG-20260930.json#pipe_flaps",
+        "state/final-completion/milestones/MULTI-20260930-0746.json mac_pipe=PIPE_OK_WITH_FLAPS"
+      ],
+      "notes": "Flap ~07:36\u201307:40 WITA during BACKUP-RESTORE-DRILL-1 babysit; recovered PIPE_OK. Stamp only \u2014 no uptime % invented.",
+      "uptime_pct": null,
+      "invented_uptime": false,
+      "recovered": true
+    }
+  ],
+  "episode_count": 3,
+  "staff_ready": false,
+  "human_commissioned": false
+}
