@@ -44,13 +44,18 @@ Under `docs/wolf/ops/shots/`:
 - `humfix1c-zayen-mywork-{desktop,phone}.png`
 - `humfix1c-zayen-header-{desktop,phone}.png`
 
-## PIDs
+## PIDs / commits
 
 | Process | PID |
 |---------|-----|
 | Prod `:8787` | **15975** (untouched) |
 | Beta `:8788` | **13176** |
 | Atrium `:8790` | **16059** (restarted after opsfix3 mid-suite death) |
+
+| Repo | Commit |
+|------|--------|
+| beta-os | `fcf5a83` |
+| atrium-finance | `2f5d938` |
 
 ## RETESTs (12 OPEN)
 
