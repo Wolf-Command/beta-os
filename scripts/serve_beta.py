@@ -178,6 +178,7 @@ from core import fin_cash_truth1 as _fin_cash_truth1
 from core import fin_tax_shell1 as _fin_tax_shell1
 from core import fin_ap_ar_shell1 as _fin_ap_ar_shell1
 from core import owner_needs_you1 as _owner_needs_you1
+from core import owner_exceptions_live1 as _owner_exceptions_live1
 from core import esb_truth1 as _esb_truth1
 from core import backup_health1 as _backup_health1
 from core import intel_learn1 as _intel_learn1
@@ -186,6 +187,7 @@ from core import bzg_ops_desk1 as _bzg_ops_desk1
 from core import bzg_waste_yield1 as _bzg_waste_yield1
 from core import bzg_labor_cost1 as _bzg_labor_cost1
 from core import bzg_inventory_truth1 as _bzg_inventory_truth1
+from core import ggv_metric_honesty1 as _ggv_metric_honesty1
 from core import ggv_pipeline_truth1 as _ggv_pipeline_truth1
 from core import conn_health_board1 as _conn_health_board1
 from core import bzg_reputation_observe as _bzg_rep
@@ -2051,6 +2053,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._owner_needs_you1_dispatch():
             return
 
+        if self._owner_exceptions_live1_dispatch():
+            return
+
         if self._esb_truth1_dispatch():
             return
 
@@ -2079,6 +2084,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._bzg_inventory_truth1_dispatch():
+            return
+
+        if self._ggv_metric_honesty1_dispatch():
             return
 
         if self._ggv_pipeline_truth1_dispatch():
@@ -5260,6 +5268,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._owner_needs_you1_dispatch():
                 return
         elif path in (
+            "/owner/exceptions-live-1",
+            "/owner/exceptions-live-1/",
+            "/owner/exceptions",
+            "/owner/exceptions/",
+            "/owner-exceptions-live-1",
+            "/owner-exceptions-live-1/",
+            "/owner-exceptions-live-1.html",
+            "/dashboards/owner-exceptions-live-1.html",
+        ):
+            if self._owner_exceptions_live1_dispatch():
+                return
+        elif path in (
             "/ops/esb-truth-1",
             "/ops/esb-truth-1/",
             "/esb-truth-1",
@@ -5362,6 +5382,22 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/dashboards/bzg-inventory-truth-1.html",
         ):
             if self._bzg_inventory_truth1_dispatch():
+                return
+        elif path in (
+            "/ggv/metric-honesty-1",
+            "/ggv/metric-honesty-1/",
+            "/ggv/metric-honesty",
+            "/ggv/metric-honesty/",
+            "/ggv/metrics",
+            "/ggv/metrics/",
+            "/ggv-metric-honesty-1",
+            "/ggv-metric-honesty-1/",
+            "/ggv-metric-honesty",
+            "/ggv-metric-honesty/",
+            "/ggv-metric-honesty-1.html",
+            "/dashboards/ggv-metric-honesty-1.html",
+        ):
+            if self._ggv_metric_honesty1_dispatch():
                 return
         elif path in (
             "/ggv/pipeline-truth-1",
@@ -6157,6 +6193,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/owner/needs-you-1" or path.startswith("/api/owner/needs-you-1/"):
             self._owner_needs_you1_write_refused(path)
             return
+        if path == "/api/owner/exceptions-live-1" or path.startswith(
+            "/api/owner/exceptions-live-1/"
+        ):
+            self._owner_exceptions_live1_write_refused(path)
+            return
         if path == "/api/ops/esb-truth-1" or path.startswith("/api/ops/esb-truth-1/"):
             self._esb_truth1_write_refused(path)
             return
@@ -6205,6 +6246,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/bzg/inventory-truth-1" or path.startswith("/api/bzg/inventory-truth-1/"):
             self._bzg_inventory_truth1_write_refused(path)
+            return
+        if path == "/api/ggv/metric-honesty-1" or path.startswith("/api/ggv/metric-honesty-1/"):
+            self._ggv_metric_honesty1_write_refused(path)
             return
         if path == "/api/ggv/pipeline-truth-1" or path.startswith("/api/ggv/pipeline-truth-1/"):
             self._ggv_pipeline_truth1_write_refused(path)
@@ -7023,6 +7067,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/owner/needs-you-1" or path.startswith("/api/owner/needs-you-1/"):
             self._owner_needs_you1_write_refused(path)
             return
+        if path == "/api/owner/exceptions-live-1" or path.startswith(
+            "/api/owner/exceptions-live-1/"
+        ):
+            self._owner_exceptions_live1_write_refused(path)
+            return
         if path == "/api/ops/esb-truth-1" or path.startswith("/api/ops/esb-truth-1/"):
             self._esb_truth1_write_refused(path)
             return
@@ -7071,6 +7120,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/bzg/inventory-truth-1" or path.startswith("/api/bzg/inventory-truth-1/"):
             self._bzg_inventory_truth1_write_refused(path)
+            return
+        if path == "/api/ggv/metric-honesty-1" or path.startswith("/api/ggv/metric-honesty-1/"):
+            self._ggv_metric_honesty1_write_refused(path)
             return
         if path == "/api/ggv/pipeline-truth-1" or path.startswith("/api/ggv/pipeline-truth-1/"):
             self._ggv_pipeline_truth1_write_refused(path)
@@ -8294,6 +8346,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/owner/needs-you-1" or path.startswith("/api/owner/needs-you-1/"):
             self._owner_needs_you1_write_refused(path)
             return
+        if path == "/api/owner/exceptions-live-1" or path.startswith(
+            "/api/owner/exceptions-live-1/"
+        ):
+            self._owner_exceptions_live1_write_refused(path)
+            return
         if path == "/api/ops/esb-truth-1" or path.startswith("/api/ops/esb-truth-1/"):
             self._esb_truth1_write_refused(path)
             return
@@ -8342,6 +8399,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/bzg/inventory-truth-1" or path.startswith("/api/bzg/inventory-truth-1/"):
             self._bzg_inventory_truth1_write_refused(path)
+            return
+        if path == "/api/ggv/metric-honesty-1" or path.startswith("/api/ggv/metric-honesty-1/"):
+            self._ggv_metric_honesty1_write_refused(path)
             return
         if path == "/api/ggv/pipeline-truth-1" or path.startswith("/api/ggv/pipeline-truth-1/"):
             self._ggv_pipeline_truth1_write_refused(path)
@@ -16389,6 +16449,105 @@ class BetaHandler(SimpleHTTPRequestHandler):
             status=403,
         )
 
+    def _owner_exceptions_live1_dispatch(self) -> bool:
+        """OWNER-EXCEPTIONS-LIVE-1 — exceptions board deepen; no fake severity."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _owner_exceptions_live1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _owner_exceptions_live1.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "owner_exceptions_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_severity": False,
+                        "fake_severity": False,
+                        "invented_count": False,
+                        "live_stamps_only": True,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _owner_exceptions_live1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "owner-exceptions-live-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Owner Exceptions-Live-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="owner-exceptions-live-1.html")
+        return True
+
+    def _owner_exceptions_live1_write_refused(self, path: str) -> None:
+        """Refuse invent-severity / fake urgency writes on OWNER-EXCEPTIONS-LIVE-1."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _owner_exceptions_live1.refuse_external_write(
+                body if isinstance(body, dict) else {}
+            )
+        except _owner_exceptions_live1.OwnerExceptionsLive1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "invented_severity": False,
+                    "fake_severity": False,
+                    "invented_urgency": False,
+                    "invented_count": False,
+                    "invented_exception": False,
+                    "prod_pid_held": _owner_exceptions_live1.PROD_PID_HELD,
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": (
+                    "OWNER-EXCEPTIONS-LIVE-1 is a read-only board deepen. Writes refused."
+                ),
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+            },
+            status=403,
+        )
+
     def _esb_truth1_dispatch(self) -> bool:
         """ESB-TRUTH-1 — warehouse RO truth board; no fake settlement / ESB write."""
         parsed = urlparse(self.path)
@@ -17677,6 +17836,157 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "ok": False,
                 "error": "write_refused",
                 "message": "BZG-INVENTORY-TRUTH-1 is a read honesty desk. Writes refused.",
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+            },
+            status=403,
+        )
+
+    def _ggv_metric_honesty1_dispatch(self) -> bool:
+        """GGV-METRIC-HONESTY-1 — Metricool metric honesty; no fake engagement."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _ggv_metric_honesty1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            person_id = (identity.get("person_id") or "").strip()
+            if not person_id:
+                self._send_identity_deny(identity)
+                return True
+            if not _ggv_metric_honesty1.person_may_view(person_id):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "forbidden",
+                        "message": (
+                            "GGV metric honesty desk is not on this assignment. "
+                            "Owner or GGV Habitat seats only. Not staff readiness "
+                            "or human commissioning."
+                        ),
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "fake_metrics": False,
+                        "invented_engagement": False,
+                        "invented_publish_success": False,
+                        "metricool_not_runtime": True,
+                    },
+                    status=403,
+                )
+                return True
+            try:
+                payload = _ggv_metric_honesty1.public_payload(person_id)
+            except _ggv_metric_honesty1.GgvMetricHonesty1Error as exc:
+                status = getattr(exc, "http_status", 403) or 403
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": getattr(exc, "code", "invalid"),
+                        "message": str(exc),
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        **_ggv_metric_honesty1.honesty_flags(),
+                    },
+                    status=status,
+                )
+                return True
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "ggv_metric_honesty_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "fake_metrics": False,
+                        "invented_engagement": False,
+                        "invented_publish_success": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _ggv_metric_honesty1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_access_denied_page(
+                "GGV metric honesty desk requires a signed-in person. "
+                "Unsigned callers are refused."
+            )
+            return True
+        person_id = (identity.get("person_id") or "").strip()
+        if not person_id:
+            self._send_access_denied_page(
+                "GGV metric honesty desk requires a signed-in person. "
+                "Unsigned callers are refused."
+            )
+            return True
+        if not _ggv_metric_honesty1.person_may_view(person_id):
+            self._send_access_denied_page(
+                "GGV metric honesty desk is Owner or GGV Habitat seats only. "
+                "This is not staff readiness or human commissioning."
+            )
+            return True
+        page = DASHBOARDS / "ggv-metric-honesty-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "GGV-METRIC-HONESTY-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="ggv-metric-honesty-1.html")
+        return True
+
+    def _ggv_metric_honesty1_write_refused(self, path: str) -> None:
+        """Refuse invent-metric / fake-engagement writes on GGV-METRIC-HONESTY-1."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _ggv_metric_honesty1.refuse_external_write(
+                body if isinstance(body, dict) else {}
+            )
+        except _ggv_metric_honesty1.GgvMetricHonesty1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "fake_metrics": False,
+                    "invented_engagement": False,
+                    "invented_publish_success": False,
+                    "invented_metric": False,
+                    "metric_write": False,
+                    "metricool_not_runtime": True,
+                    "prod_pid_held": _ggv_metric_honesty1.PROD_PID_HELD,
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": "GGV-METRIC-HONESTY-1 is a read honesty desk. Writes refused.",
                 "path": path,
                 "staff_ready": False,
                 "human_commissioned": False,

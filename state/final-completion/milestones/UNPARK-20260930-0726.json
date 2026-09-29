@@ -1,0 +1,17 @@
+{
+  "milestone_id": "UNPARK-20260930-0726",
+  "at_wita": "2026-09-30T07:27:30+08:00",
+  "mac_pipe": "PIPE_OK",
+  "hostname_proven": "Wolfs-Mac-Studio",
+  "actions": [
+    "GGV-METRIC-HONESTY-1 EXIT:0 re-verified PASS=214 FAIL=0 \u2192 PASS_VERIFIED @ 43bb500",
+    "Classification: Metricool NOT_RUNTIME \u2192 INTERNALLY_SOLVABLE (MCP 6 brands + IG posts metrics)",
+    "CLASSIFICATION-LOG-20260930 written",
+    "OWNER-EXCEPTIONS-LIVE-1 ARMED_CURSOR_RUNNING",
+    "Wave7 queued + briefs BACKUP/PIPE/METRICOOL",
+    "pass_verified_count ~29; queue 35; staff_ready=false; no Exit Report"
+  ],
+  "standards_lock": true,
+  "prod_8787_pid": 15975,
+  "no_push": true
+}

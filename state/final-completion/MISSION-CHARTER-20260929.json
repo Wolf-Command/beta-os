@@ -89,10 +89,10 @@
     "RELIABILITY-1",
     "CONTENT-ENGINE-LIVE-1"
   ],
-  "last_pack_verified": "GGV-METRIC-HONESTY-1",
-  "last_verified_at": "2026-09-30T07:26:00+08:00",
-  "pass_verified_count": 29,
-  "next_pack": "OWNER-EXCEPTIONS-LIVE-1",
+  "last_pack_verified": "OWNER-EXCEPTIONS-LIVE-1",
+  "last_verified_at": "2026-09-30T07:36:00+08:00",
+  "pass_verified_count": 30,
+  "next_pack": "BACKUP-RESTORE-DRILL-1",
   "mac_pipe": "PIPE_OK",
   "unparked_at": "2026-09-30T07:26:00+08:00",
   "standards_lock": true

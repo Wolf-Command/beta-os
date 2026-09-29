@@ -1,0 +1,92 @@
+{
+  "pack": "OWNER-EXCEPTIONS-LIVE-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T07:36:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T07:35:07+08:00",
+  "result_file": "docs/wolf/ops/OWNER-EXCEPTIONS-LIVE-1-RESULT.md",
+  "tests_rerun": {
+    "test_owner_exceptions_live1_20260930.py": {
+      "pass": 245,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 5,
+    "distinct_sha256": 3,
+    "all_distinct": false,
+    "note": "3 distinct of 5 \u2014 desk/boards/stamps share hash (variant duplicates OK if suite green)",
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/ownerexceptions1-boards-honesty.png",
+        "bytes": 250560,
+        "sha256": "5ebed94da7eda468451e30a1dbb4dcff0285d8ec77eeb68eb690b513e278b3c4"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ownerexceptions1-desk-desktop.png",
+        "bytes": 250560,
+        "sha256": "5ebed94da7eda468451e30a1dbb4dcff0285d8ec77eeb68eb690b513e278b3c4"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ownerexceptions1-desk-phone.png",
+        "bytes": 157638,
+        "sha256": "12b3095424adde9fb259a6e29429eea864d6dc95913c13658431c0c97d3537a3"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ownerexceptions1-stamps.png",
+        "bytes": 250560,
+        "sha256": "5ebed94da7eda468451e30a1dbb4dcff0285d8ec77eeb68eb690b513e278b3c4"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ownerexceptions1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      }
+    ]
+  },
+  "eye_check": {
+    "desk": "Owner exceptions board LIVE/OPEN/EMPTY honesty; severity MISSING; staff_ready=false",
+    "unsigned": "Access denied fail-closed"
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "invented_severity": false,
+    "fake_severity": false,
+    "live_stamps_only": true,
+    "severity_absent": "MISSING",
+    "ceiling": "BUILT"
+  },
+  "classification": {
+    "board_deepen": "INTERNALLY_SOLVABLE",
+    "severity_missing_honesty": "INTERNALLY_SOLVABLE",
+    "open_exceptions_disposition": "HUMAN_COMMISSIONING",
+    "exit_report_headchef": "MATT_ACTION",
+    "prod_mutate": "EXTERNAL_BLOCKER",
+    "shell_ne_complete": true
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "43bb5005e43e1b674011b426748e0862e3f41154",
+    "uncommitted": true
+  },
+  "preserves": [
+    "DASH-LIVE-1",
+    "OWNER-NEEDS-YOU-1"
+  ],
+  "next_pack": "BACKUP-RESTORE-DRILL-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

@@ -2228,7 +2228,9 @@ def mark_derived_views_stale(*, conn=None, commit: bool = True) -> None:
             "team-dashboard",
             "department-dashboard",
             "company-dashboard",
+            "owner-command",
             "owner-command-exceptions",
+            "war-room",
             "war-room-commissioning",
             "execution-report",
         ):

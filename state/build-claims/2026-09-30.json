@@ -412,6 +412,20 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import ggv_metric_honesty1 as m; from pathlib import Path; html=Path('dashboards/ggv-metric-honesty-1.html').read_text(); import sys; sys.exit(0 if (m.api_matches('/api/ggv/metric-honesty-1') and m.page_matches('/ggv/metric-honesty-1') and 'staff_ready=false' in html and 'NOT_RUNTIME' in html and Path('docs/wolf/ops/shots/ggvmetric1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/GGV-METRIC-HONESTY-1-RESULT.md').is_file() and m.honesty_flags().get('next_pack_for_parent_only')=='OWNER-EXCEPTIONS-LIVE-1' and m.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
       "expect": "exit 0",
       "by": "cursor-ggv-metric-honesty-1"
+    },
+    {
+      "id": "owner-exceptions-live1-desk",
+      "claim": "OWNER-EXCEPTIONS-LIVE-1: 10 exception boards from live stamps; invented_severity/fake_severity false; EMPTY boards count=0; severity MISSING when absent; DASH-LIVE-1 + OWNER-NEEDS-YOU-1 preserved; staff_ready/human_commissioned false; next pack parent-only BACKUP-RESTORE-DRILL-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import owner_exceptions_live1 as o; p=o.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('board_count')==10 and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('invented_severity') is False and p.get('fake_severity') is False and p.get('live_stamps_only') is True and p.get('dash_live1_preserved') is True and p.get('owner_needs_you1_preserved') is True and o.no_invented_severity(p) and o.honesty_flags().get('next_pack_for_parent_only')=='BACKUP-RESTORE-DRILL-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-owner-exceptions-live-1"
+    },
+    {
+      "id": "owner-exceptions-live1-surfaces",
+      "claim": "OWNER-EXCEPTIONS-LIVE-1 page/API/shots/RESULT present; unsigned deny + invent-severity refuse; suite PASS=245; next pack parent-only BACKUP-RESTORE-DRILL-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import owner_exceptions_live1 as o; from pathlib import Path; html=Path('dashboards/owner-exceptions-live-1.html').read_text(); import sys; sys.exit(0 if (o.api_matches('/api/owner/exceptions-live-1') and o.page_matches('/owner/exceptions-live-1') and 'staff_ready=false' in html and 'MISSING' in html and Path('docs/wolf/ops/shots/ownerexceptions1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/OWNER-EXCEPTIONS-LIVE-1-RESULT.md').is_file() and o.honesty_flags().get('next_pack_for_parent_only')=='BACKUP-RESTORE-DRILL-1' and o.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-owner-exceptions-live-1"
     }
   ]
 }

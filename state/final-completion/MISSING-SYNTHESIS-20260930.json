@@ -1,0 +1,22 @@
+{
+  "at_wita": "2026-09-30T07:29:30+08:00",
+  "requirements_total": 465,
+  "classes": {
+    "MISSING": 360,
+    "BUILT_NOT_PROVEN": 39,
+    "HR_DEFERRED": 33,
+    "PARTIAL": 20,
+    "BLOCKED_EXTERNAL": 10,
+    "SUPERSEDED": 3
+  },
+  "queued_deepens": [
+    "BACKUP-RESTORE-DRILL-1",
+    "PIPE-RELIABILITY-AUTO-1",
+    "METRICOOL-RUNTIME-WIRE-1",
+    "ESB-SETTLEMENT-PATH-1",
+    "SOP-CATALOG-SEED-ROUTE-1",
+    "FIN-BANK-CREDS-ROUTE-1",
+    "INV-CASH-FACTS-ROUTE-1"
+  ],
+  "note": "GGV-METRIC already PASS \u2014 do not re-ping; deepen via METRICOOL-RUNTIME-WIRE-1"
+}
