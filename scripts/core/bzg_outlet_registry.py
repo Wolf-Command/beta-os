@@ -474,6 +474,9 @@ def overview(person_id: str, conn: sqlite3.Connection) -> dict[str, Any]:
     from core import bzg_xoutlet_foundations as _xout  # local import avoids cycle
 
     foundations = _xout.foundations_panel(conn)
+    from core import bzg_venue_pnl as _vpnl
+
+    venue_pnl = _vpnl.rollup_panel_for_outlets()
     return {
         **HONESTY,
         "ok": True,
@@ -481,7 +484,8 @@ def overview(person_id: str, conn: sqlite3.Connection) -> dict[str, Any]:
         "message": (
             "Canonical BZG outlets under ENT-BZG. Statuses only — no invented "
             "sales, costs, covers, or P&L. Pool Bar is OU-BZG-RAIN-POOL under BZG-RAIN. "
-            "Cross-outlet shared foundations carry nullable outlet_id (honest empty OK)."
+            "Cross-outlet shared foundations carry nullable outlet_id (honest empty OK). "
+            "Venue P&L rollup at /bzg/venue-pnl (facts only; UNKNOWN when absent)."
         ),
         "hierarchy": "LEGAL_ENTITY → OUTLET → cost_centre_id / revenue_centre_id (nullable)",
         "allowed_statuses": sorted(ALLOWED_STATUSES),
@@ -493,7 +497,9 @@ def overview(person_id: str, conn: sqlite3.Connection) -> dict[str, Any]:
         "pool_bar_operating_unit_id": "OU-BZG-RAIN-POOL",
         "pool_bar_parent_brand_id": "BZG-RAIN",
         "cross_outlet_foundations": foundations,
+        "venue_pnl_rollup": venue_pnl,
         "pack_xoutlet": "BZG-XOUTLET-1",
+        "pack_venuepl": "BZG-VENUEPL-1",
     }
 
 

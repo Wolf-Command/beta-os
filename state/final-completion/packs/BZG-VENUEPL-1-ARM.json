@@ -1,0 +1,60 @@
+{
+  "run_id": "BZG-VENUEPL-1",
+  "pack": "BZG-VENUEPL-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "armed_at": "2026-09-29T23:55:52+08:00",
+  "exited_at": "2026-09-30T00:06:00+08:00",
+  "exit_code": 0,
+  "brief": "state/build-factory/briefs/BRIEF-BZG-VENUEPL-1.md",
+  "log": "state/build-factory/logs/BZG-VENUEPL-1.log",
+  "result_file": "docs/wolf/ops/BZG-VENUEPL-1-RESULT.md",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "cursor_did_not_auto_chain": true,
+  "next_pack_for_parent": "SOP-FACTORY-1",
+  "depends_on": [
+    "BZG-OUTLET-1",
+    "BZG-XOUTLET-1",
+    "FC-SHELL-2"
+  ],
+  "prior_pack_verified": "FC-SHELL-2",
+  "beta_os_head_at_arm": "f45ee18",
+  "atrium_head_at_arm": "7584266",
+  "atrium_untouched_this_pack": true,
+  "tests": {
+    "test_bzg_venuepl1_20260929.py": "PASS=86 FAIL=0",
+    "test_bzg_outlet1_20260929.py": "PASS=82 FAIL=0",
+    "test_bzg_xoutlet1_20260929.py": "PASS=90 FAIL=0",
+    "test_fc_shell2_20260929.py": "pass=72 fail=0"
+  },
+  "shots": [
+    "bzgvenuepl1-master-desktop.png",
+    "bzgvenuepl1-master-phone.png",
+    "bzgvenuepl1-uma-open-desktop.png",
+    "bzgvenuepl1-uma-open-phone.png",
+    "bzgvenuepl1-rain-preopening-desktop.png",
+    "bzgvenuepl1-rain-preopening-phone.png",
+    "bzgvenuepl1-amanda-deny-desktop.png",
+    "bzgvenuepl1-amanda-deny-phone.png"
+  ],
+  "facts": {
+    "venue_daily_closes": 0,
+    "bzg_journals": 0,
+    "bzg_accounts": 200,
+    "master_status": "insufficient_facts",
+    "uma_status": "OPEN",
+    "rainforest_status": "PRE-OPENING",
+    "pool_bar_status": "PRE-OPENING",
+    "esb_totals_in_pnl_slots": false
+  },
+  "sidecar_8790": "down_at_exit_auth_mount_fail_preexisting",
+  "verified_at": "2026-09-30T00:06:24+08:00",
+  "peaches_verify": "state/final-completion/packs/BZG-VENUEPL-1-PEACHES-VERIFY.json"
+}

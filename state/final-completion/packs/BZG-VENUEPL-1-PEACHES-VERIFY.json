@@ -1,0 +1,95 @@
+{
+  "pack": "BZG-VENUEPL-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T00:06:24+08:00",
+  "verifier": "Peaches-executor",
+  "exit_code": 0,
+  "result_file": "docs/wolf/ops/BZG-VENUEPL-1-RESULT.md",
+  "tests_rerun": {
+    "test_bzg_venuepl1_20260929.py": {
+      "pass": 86,
+      "fail": 0
+    },
+    "test_bzg_outlet1_20260929.py": {
+      "pass": 82,
+      "fail": 0
+    },
+    "test_bzg_xoutlet1_20260929.py": {
+      "pass": 90,
+      "fail": 0
+    },
+    "test_fc_shell2_20260929.py": {
+      "pass": 72,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 8,
+    "distinct_sha256": 8,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/bzgvenuepl1-amanda-deny-desktop.png",
+        "bytes": 28772,
+        "sha256": "d3f28009ad8ca2169e6e52eb09d3515d6e7739e4f57f98afa8fff83dd61c4cf7"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgvenuepl1-amanda-deny-phone.png",
+        "bytes": 25144,
+        "sha256": "fb6694ac19b4c803e9e9ebdeeaa94fbde8c15bef0575a0d4dc826e2f1577d51b"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgvenuepl1-master-desktop.png",
+        "bytes": 153197,
+        "sha256": "9a032babf69ff8bcddec091928f57091d4040896798018b156f8ceee48c9131f"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgvenuepl1-master-phone.png",
+        "bytes": 100687,
+        "sha256": "1b51cc13ffa5e55d9a3c46763902c9df7f555956e51b9893cf064459ca696009"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgvenuepl1-rain-preopening-desktop.png",
+        "bytes": 98713,
+        "sha256": "0de3bb0c6304a8190c86aaf240cd31efa82b88fb867ce8fd59e7b2f15141e92b"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgvenuepl1-rain-preopening-phone.png",
+        "bytes": 58586,
+        "sha256": "895de0c9c7728d6266af3d66990b713822ba0285aeb07ee7ec18fb06970a5f1e"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgvenuepl1-uma-open-desktop.png",
+        "bytes": 128287,
+        "sha256": "6c285f7d4f1de316f0d04b7a5e00e87e55e020768d16a6d4809fa431bb8b42b2"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzgvenuepl1-uma-open-phone.png",
+        "bytes": 75458,
+        "sha256": "d63c593b36ba811ed5c3be2f8cb5cbf79922776b9e86b6d5d751d4daef084201"
+      }
+    ],
+    "eye_check": {
+      "master_desktop": "PASS \u2014 insufficient_facts, UNKNOWN money, staff_ready=false, human_commissioned=false, not READY/PROVEN",
+      "uma_open_desktop": "PASS \u2014 Uma OPEN with UNKNOWN slots; ESB unbound honesty"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "no_push": true,
+  "no_fake_ops_data": true,
+  "beta_only": true,
+  "honesty": "ESB warehouse days not invented into P&L; master insufficient_facts",
+  "next_pack": "SOP-FACTORY-1",
+  "note_sidecar": "RESULT notes :8790 restart failed pre-existing; pack did not change atrium \u2014 non-blocking for this pack goals"
+}

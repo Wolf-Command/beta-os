@@ -3599,6 +3599,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/bzg/venue-pnl/framework":
             self._bzg_pnl_get(qs, view="framework")
             return
+        if path in {"/api/bzg/venue-pnl/rollup", "/api/bzg/venue-pnl/outlets"}:
+            self._bzg_pnl_get(qs, view="rollup")
+            return
+        if path.startswith("/api/bzg/venue-pnl/outlets/"):
+            self._bzg_pnl_get(qs, view="outlet", ref_id=path.rsplit("/", 1)[-1])
+            return
         if path.startswith("/api/bzg/venue-pnl/"):
             self._bzg_pnl_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
@@ -4705,6 +4711,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._intg_mgmt_page()
             return
         elif path in (
+            "/bzg/venue-pnl",
+            "/bzg/venue-pnl/",
             "/bzg-venue-pnl",
             "/bzg-venue-pnl/",
             "/bzg-venue-pnl.html",
@@ -26788,35 +26796,23 @@ class BetaHandler(SimpleHTTPRequestHandler):
         }
 
     def _require_bzg_pnl_owner(self) -> dict | None:
-        """CF JWT → Person; only PERS-MATT. Venue P&L framework is Owner read."""
+        """CF JWT → Person; Zayen BZG board + Owner progress.read. Amanda 403."""
         identity = self._resolve_identity(None)
         if not identity.get("ok"):
-            self._send_identity_deny(identity, required_permission="progress.read")
+            self._send_identity_deny(identity, required_permission="atrium.board.read")
             return None
         person_id = identity.get("person_id")
-        if person_id != _progress.PERS_MATT:
+        if not _bzg_pnl.person_may_read_venue_pnl(person_id):
             self._send_json(
                 {
                     "ok": False,
                     "error": "forbidden",
-                    "message": "Venue P&L is Owner (PERS-MATT) only.",
+                    "message": "BZG Venue P&L is not on this assignment.",
                     "person_id": person_id,
-                    "required_permission": "progress.read",
-                    "required_person": _progress.PERS_MATT,
-                    **self._bzg_pnl_quiet(),
-                },
-                status=403,
-            )
-            return None
-        subject = identity.get("permission_subject") or identity.get("email")
-        if subject and not _wi.has_permission(subject, "progress.read"):
-            self._send_json(
-                {
-                    "ok": False,
-                    "error": "forbidden",
-                    "message": "subject lacks progress.read",
-                    "person_id": person_id,
-                    "required_permission": "progress.read",
+                    "required_permission": "atrium.board.read",
+                    "required_entity": "ENT-BZG",
+                    "staff_ready": False,
+                    "human_commissioned": False,
                     **self._bzg_pnl_quiet(),
                 },
                 status=403,
@@ -27047,9 +27043,30 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     **self._bzg_pnl_quiet(),
                     "honesty": full["honesty"],
                 }
+            elif view == "rollup":
+                report = _bzg_pnl.build_outlet_rollup()
+            elif view == "outlet":
+                from core import bzg_outlet_registry as _bout
+
+                row = _bout.get_outlet(ref_id or "")
+                if not row:
+                    raise _bzg_pnl.VenuePnlError(
+                        "Outlet not found.", code="not_found"
+                    )
+                card = _bzg_pnl.outlet_card(row)
+                report = {
+                    "ok": True,
+                    "cap": _bzg_pnl.CAP_ID,
+                    "pack": _bzg_pnl.PACK,
+                    "outlet": card,
+                    **self._bzg_pnl_quiet(),
+                    "honesty": _bzg_pnl.honesty_flags(),
+                }
             elif ref_id:
                 report = _bzg_pnl.read_kind(ref_id)
             else:
+                # Empty framework skeleton (legacy CAP-BZG-02). Outlet rollup:
+                # GET /api/bzg/venue-pnl/rollup
                 report = _bzg_pnl.build_framework()
         except _bzg_pnl.VenuePnlError as exc:
             self._bzg_pnl_fail(exc)

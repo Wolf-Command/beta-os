@@ -1,63 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Wolf · Venue P&L / Management Rollup</title>
-<style>
-  :root {
-    --bg: #101418;
-    --bg2: #171d23;
-    --line: #2c3842;
-    --text: #eef2f5;
-    --muted: #8b9aa6;
-    --accent: #c4a574;
-    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
-    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  }
-  * { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0; min-height: 100%;
-    background:
-      radial-gradient(ellipse 90% 60% at 0% -10%, #243039 0%, transparent 55%),
-      var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-  }
-  .wrap { max-width: 820px; margin: 0 auto; padding: 20px 16px 64px; }
-  h1 { font-family: var(--display); font-weight: 500; font-size: 32px; margin: 0 0 6px; }
-  h2 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 28px 0 8px; }
-  p { line-height: 1.45; }
-  .lede { color: var(--muted); margin: 0 0 16px; }
-  .banner {
-    border: 1px solid var(--line);
-    background: var(--bg2);
-    border-left: 3px solid var(--accent);
-    padding: 12px 14px;
-    margin: 12px 0 8px;
-  }
-  .grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
-  .card {
-    border: 1px solid var(--line);
-    background: var(--bg2);
-    padding: 14px;
-    margin: 0;
-  }
-  .k { color: var(--muted); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
-  .v { font-family: var(--display); font-size: 28px; margin: 4px 0; }
-  .note { color: var(--muted); font-size: 14px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wolf · BZG Venue P&L rollup</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root { color-scheme: light; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background: #f3f1ec;
+      color: #1c1a16;
+    }
+    main { max-width: 880px; margin: 0 auto; padding: 28px 20px 72px; }
+    h1 { font-size: 1.75rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+    h2 { font-size: 1.1rem; margin: 28px 0 10px; letter-spacing: -0.01em; }
+    .sub { color: #5c574e; margin: 0 0 16px; line-height: 1.45; }
+    .banner {
+      border: 1px solid #ddd6c8;
+      background: #fffdf8;
+      border-left: 3px solid #8a6a2f;
+      padding: 12px 14px;
+      margin: 0 0 18px;
+      line-height: 1.45;
+      font-size: 0.92rem;
+    }
+    .master {
+      border: 1px solid #ddd6c8;
+      background: #fffdf8;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+    }
+    .master .k { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b655c; }
+    .master .v { font-size: 1.35rem; margin: 4px 0 8px; letter-spacing: -0.02em; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    @media (min-width: 720px) {
+      .grid { grid-template-columns: 1fr 1fr; }
+    }
+    article {
+      border: 1px solid #ddd6c8;
+      background: #fffdf8;
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    article.highlight-uma { border-color: #b7d4b7; }
+    article.highlight-rain { border-color: #e2d0a0; }
+    .name { font-weight: 600; font-size: 1.05rem; }
+    .oid { color: #6b655c; font-size: 0.8rem; margin-top: 2px; }
+    .status {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .OPEN { background: #d7ead7; color: #1e5a2a; }
+    .PRE-OPENING { background: #efe4c8; color: #6a4d12; }
+    .slots { margin-top: 10px; font-size: 0.88rem; line-height: 1.4; }
+    .slot-row { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-top: 1px solid #ebe4d6; }
+    .slot-row:first-child { border-top: none; }
+    .slot-k { color: #6b655c; }
+    .UNKNOWN { color: #8a6a2f; font-weight: 600; }
+    .FACT { color: #1e5a2a; font-weight: 600; }
+    .err { color: #8a1f1f; }
+    .empty { color: #6b655c; font-size: 0.88rem; margin-top: 14px; }
+    .meta { font-size: 0.85rem; color: #6b655c; margin-bottom: 12px; }
+    a { color: #3d4f2f; }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Venue P&L</h1>
-  <p class="lede">Bound beta-bzg-ops-safe. An empty framework is not a live venue P&L and not proof of management rollup machinery. Not PROVEN. Not READY. CAP-BZG-02 stays SPECIFIED. The ceiling label is BUILT. This page does not invent revenue. This page does not invent cost. This page does not invent contribution or rollup. This page does not claim tax treatment. This page does not move money. This page does not mutate Cloudflare or Access. This page does not resolve the completion row.</p>
-  <div id="banner" class="banner">Reading the framework… Empty until a slot is named. Not a live venue P&L. Not proof of management rollup machinery. Not READY.</div>
-  <h2>Venue P&L slots</h2>
-  <div id="kinds" class="grid">
-    <article class="card"><div class="k">Slots</div><div class="v">EMPTY</div><p class="note">No venue. No revenue. No cost. No contribution. No rollup. No notes. Empty is not a live venue P&L and not proof of management rollup machinery.</p></article>
-  </div>
-</div>
+<main>
+  <h1>BZG Venue P&L</h1>
+  <p class="sub" id="sub">Loading read-only rollup…</p>
+  <p class="meta" id="meta"></p>
+  <div id="banner" class="banner">Reading outlet registry + close/journal facts…</div>
+  <div id="master" class="master" hidden></div>
+  <h2>Outlets (venue mini-business cards)</h2>
+  <div id="grid" class="grid"></div>
+  <p class="empty" id="honesty"></p>
+</main>
 <script>
 function esc(s) {
   return String(s == null ? "" : s)
@@ -65,40 +90,100 @@ function esc(s) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 }
-
-function paint(pack) {
-  var banner = document.getElementById("banner");
-  var flags = pack.honesty || {};
-  banner.textContent = "Framework empty. Not a live venue P&L. Not proof of management rollup machinery. Not READY."
-    + " No revenue. No cost. No contribution. No rollup. No tax treatment. No payment."
-    + " Cloudflare not mutated. Access not mutated."
-    + " Ledger " + (flags.maturity || "unread")
-    + ". Ceiling " + (flags.maturity_ceiling || "BUILT")
-    + ". CAP-BZG-02 stays SPECIFIED. Row not resolved.";
-  var rows = "";
-  (pack.kinds || []).forEach(function (row) {
-    rows += '<article class="card"><div class="k">' + esc(row.kind) + '</div>'
-      + '<div class="v">EMPTY</div>'
-      + '<p class="note">' + esc(row.why) + " · not a live venue P&L · not proof of management rollup machinery · not READY</p></article>";
-  });
-  if (!rows) {
-    rows = '<article class="card"><div class="k">Slots</div><div class="v">EMPTY</div>'
-      + '<p class="note">No revenue. No cost. No contribution. No rollup. Empty is not a live venue P&L and not proof of management rollup machinery.</p></article>';
-  }
-  document.getElementById("kinds").innerHTML = rows;
+function statusClass(s) {
+  if (!s) return "";
+  if (String(s).indexOf("TEMPORARILY") === 0) return "TEMPORARILY";
+  return String(s).replace(/\s+/g, "-");
 }
+function slotVal(slot) {
+  if (!slot) return '<span class="UNKNOWN">UNKNOWN</span>';
+  if (slot.slot === "FACT" && slot.value != null && typeof slot.value !== "object") {
+    return '<span class="FACT">' + esc(slot.value) + "</span>";
+  }
+  if (slot.slot === "FACT" && slot.amount != null) {
+    return '<span class="FACT">' + esc(slot.amount) + "</span>";
+  }
+  return '<span class="UNKNOWN">UNKNOWN</span>';
+}
+function paint(pack) {
+  document.getElementById("sub").textContent = pack.message || "Read-only venue P&L rollup";
+  document.getElementById("meta").textContent =
+    "ENT-BZG · outlets " + (pack.outlet_count || 0) +
+    " · numeric facts " + (pack.outlets_with_numeric_facts || 0) +
+    " · pack " + (pack.pack || "BZG-VENUEPL-1") +
+    " · <a href='/bzg/outlets'>Outlet registry</a>".replace(/<[^>]+>/g, "");
+  document.getElementById("meta").innerHTML =
+    "ENT-BZG · outlets " + (pack.outlet_count || 0) +
+    " · numeric facts " + (pack.outlets_with_numeric_facts || 0) +
+    " · pack " + esc(pack.pack || "BZG-VENUEPL-1") +
+    " · <a href='/bzg/outlets'>Outlet registry</a>";
 
-fetch("/api/bzg/venue-pnl", { headers: { "Accept": "application/json" } })
-  .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
+  var master = pack.master || {};
+  var banner = document.getElementById("banner");
+  banner.textContent =
+    (master.message || "Insufficient facts.") +
+    " Not a live P&L. Not PROVEN. Not READY. CAP-BZG-02 stays SPECIFIED. " +
+    "staff_ready=false · human_commissioned=false.";
+
+  var mbox = document.getElementById("master");
+  mbox.hidden = false;
+  mbox.innerHTML =
+    '<div class="k">Master BZG rollup</div>' +
+    '<div class="v">' + esc(master.status || "insufficient_facts") + "</div>" +
+    "<div>Revenue: " + (master.revenue == null ? '<span class="UNKNOWN">UNKNOWN</span>' : '<span class="FACT">' + esc(master.revenue) + "</span>") +
+    " · Cost: <span class='UNKNOWN'>UNKNOWN</span> · Contribution: <span class='UNKNOWN'>UNKNOWN</span></div>" +
+    '<p class="empty" style="margin:8px 0 0">' + esc(master.message || "") + "</p>";
+
+  var rows = "";
+  (pack.outlets || []).forEach(function (card) {
+    var slots = card.slots || {};
+    var hl = "";
+    if (card.outlet_id === "BZG-UMA") hl = " highlight-uma";
+    if (card.outlet_id === "BZG-RAIN" || card.outlet_id === "OU-BZG-RAIN-POOL") hl = " highlight-rain";
+    var sc = statusClass(card.status);
+    rows +=
+      '<article class="' + hl.trim() + '" data-outlet="' + esc(card.outlet_id) + '">' +
+      '<div class="name">' + esc(card.display_name) + "</div>" +
+      '<div class="oid">' + esc(card.outlet_id) +
+      (card.outlet_kind === "OPERATING_UNIT" ? " · under " + esc(card.parent_outlet_id || "") : "") +
+      "</div>" +
+      '<span class="status ' + sc + '">' + esc(card.status) + "</span>" +
+      '<div class="slots">' +
+      '<div class="slot-row"><span class="slot-k">Revenue</span>' + slotVal(slots.revenue) + "</div>" +
+      '<div class="slot-row"><span class="slot-k">Cost</span>' + slotVal(slots.cost) + "</div>" +
+      '<div class="slot-row"><span class="slot-k">Contribution</span>' + slotVal(slots.contribution) + "</div>" +
+      '<div class="slot-row"><span class="slot-k">Rollup</span>' + slotVal(slots.rollup) + "</div>" +
+      "</div>" +
+      '<p class="empty" style="margin-top:8px">' +
+      esc((slots.revenue && slots.revenue.why) || "No close/journal facts.") +
+      "</p></article>";
+  });
+  document.getElementById("grid").innerHTML =
+    rows || '<p class="empty">No outlets in registry.</p>';
+  document.getElementById("honesty").textContent =
+    "Honesty: live_pnl=false · invented_*=false · ready=false · staff_ready=false · human_commissioned=false · pack BZG-VENUEPL-1.";
+}
+fetch("/api/bzg/venue-pnl/rollup", { headers: { Accept: "application/json" } })
+  .then(function (res) {
+    return res.json().then(function (body) {
+      return { ok: res.ok, body: body };
+    });
+  })
   .then(function (result) {
     if (!result.ok) {
-      document.getElementById("banner").textContent = "Read refused. Empty is not a live venue P&L and not proof of management rollup machinery. Not READY. No revenue. No cost. No contribution. No rollup. No tax treatment. No payment. Cloudflare and Access were not mutated. CAP-BZG-02 stays SPECIFIED. The completion row was not resolved.";
+      document.getElementById("sub").textContent = "Access denied";
+      document.getElementById("banner").textContent =
+        (result.body && result.body.message) ||
+        "BZG Venue P&L is not on this assignment.";
+      document.getElementById("grid").innerHTML =
+        '<p class="err">' + esc((result.body && result.body.message) || "Forbidden") + "</p>";
       return;
     }
     paint(result.body);
   })
-  .catch(function () {
-    document.getElementById("banner").textContent = "Read failed. No venue P&L was stored. No revenue. No tax treatment. No payment. CAP-BZG-02 stays SPECIFIED. The completion row was not resolved.";
+  .catch(function (err) {
+    document.getElementById("sub").textContent = "Could not load";
+    document.getElementById("banner").textContent = String(err);
   });
 </script>
 </body>

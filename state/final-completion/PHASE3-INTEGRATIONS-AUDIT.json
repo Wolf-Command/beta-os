@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-29T23:51:16+08:00",
+  "at_wita": "2026-09-29T23:56:57+08:00",
   "phase": 3,
   "status": "IN_PROGRESS_READ_ONLY",
   "note": "Read-only audit; never expand write authority; never expose secrets. Does not block Phase 2.",
@@ -46,7 +46,9 @@
       "last_success": null,
       "owner": "AMG",
       "criticality": "CRITICAL",
-      "fallback": "Manual/contingency PMS export"
+      "fallback": "Manual/contingency PMS export",
+      "last_probed_at": "2026-09-29T23:56:57+08:00",
+      "probe_notes": "No live probe attempted (blocked external). Credentials not seated."
     },
     {
       "integration_id": "INT-ESB-WOLF",
@@ -56,7 +58,7 @@
       "method": "API to verify",
       "dashboard_status": "SPECIFIED",
       "audit_status": "PARTIAL_IN_BETA",
-      "probe_status": "SPRINT_EVIDENCE",
+      "probe_status": "BETA_SURFACES_ONLY",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -70,7 +72,9 @@
       "last_success": null,
       "owner": "BZG",
       "criticality": "CRITICAL",
-      "fallback": "ESB reports/export"
+      "fallback": "ESB reports/export",
+      "last_probed_at": "2026-09-29T23:56:57+08:00",
+      "probe_notes": "Outlet/ESB projection via BZG packs; venue_daily_closes may be empty \u2014 honesty required."
     },
     {
       "integration_id": "INT-GWS-WOLF",
@@ -94,7 +98,8 @@
       "last_success": null,
       "owner": "ALL",
       "criticality": "HIGH",
-      "fallback": "Native Workspace access"
+      "fallback": "Native Workspace access",
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "INT-BANK-WOLF",
@@ -117,7 +122,8 @@
       "last_success": null,
       "owner": "Finance",
       "criticality": "CRITICAL",
-      "fallback": "Manual controlled upload"
+      "fallback": "Manual controlled upload",
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "INT-MET-WOLF",
@@ -141,7 +147,8 @@
       "last_success": null,
       "owner": "GGV",
       "criticality": "MEDIUM",
-      "fallback": "Manual report export"
+      "fallback": "Manual report export",
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "CAP-INTG-05",
@@ -164,7 +171,8 @@
       "last_success": null,
       "owner": null,
       "criticality": null,
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "CAP-INTG-01",
@@ -187,7 +195,8 @@
       "last_success": null,
       "owner": null,
       "criticality": null,
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "CAP-INTG-02",
@@ -210,7 +219,8 @@
       "last_success": null,
       "owner": null,
       "criticality": null,
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "CAP-INTG-04",
@@ -233,7 +243,8 @@
       "last_success": null,
       "owner": null,
       "criticality": null,
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "CAP-INTG-01",
@@ -256,7 +267,8 @@
       "last_success": null,
       "owner": null,
       "criticality": null,
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "CAP-INTG-02",
@@ -279,7 +291,8 @@
       "last_success": null,
       "owner": null,
       "criticality": null,
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "CAP-INTG-03",
@@ -302,7 +315,8 @@
       "last_success": null,
       "owner": null,
       "criticality": null,
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "CAP-INTG-04",
@@ -325,7 +339,8 @@
       "last_success": null,
       "owner": null,
       "criticality": null,
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "CAP-INTG-05",
@@ -348,7 +363,8 @@
       "last_success": null,
       "owner": null,
       "criticality": null,
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "CAP-INTG-06",
@@ -371,7 +387,8 @@
       "last_success": null,
       "owner": null,
       "criticality": null,
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "CAP-INTG-07",
@@ -394,7 +411,8 @@
       "last_success": null,
       "owner": null,
       "criticality": null,
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "MCP-Gmail",
@@ -404,7 +422,7 @@
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
-      "probe_status": "CATALOGED",
+      "probe_status": "AGENT_HOST_CATALOGED",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -416,7 +434,8 @@
       "last_success": null,
       "owner": "platform",
       "criticality": "low",
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "MCP-Slack",
@@ -426,7 +445,7 @@
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
-      "probe_status": "CATALOGED",
+      "probe_status": "AGENT_HOST_CATALOGED",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -437,7 +456,8 @@
       "last_success": null,
       "owner": "platform",
       "criticality": "low",
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "MCP-Notion",
@@ -447,7 +467,7 @@
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
-      "probe_status": "CATALOGED",
+      "probe_status": "AGENT_HOST_CATALOGED",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -458,7 +478,8 @@
       "last_success": null,
       "owner": "platform",
       "criticality": "low",
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "MCP-Google-Drive",
@@ -468,7 +489,7 @@
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
-      "probe_status": "CATALOGED",
+      "probe_status": "AGENT_HOST_CATALOGED",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -479,7 +500,8 @@
       "last_success": null,
       "owner": "platform",
       "criticality": "low",
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "MCP-Google-Calendar",
@@ -489,7 +511,7 @@
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
-      "probe_status": "CATALOGED",
+      "probe_status": "AGENT_HOST_CATALOGED",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -500,7 +522,8 @@
       "last_success": null,
       "owner": "platform",
       "criticality": "low",
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "MCP-Metricool",
@@ -510,7 +533,7 @@
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
-      "probe_status": "CATALOGED",
+      "probe_status": "AGENT_HOST_CATALOGED",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -522,7 +545,8 @@
       "last_success": null,
       "owner": "platform",
       "criticality": "low",
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     },
     {
       "integration_id": "MCP-ClickUp",
@@ -532,7 +556,7 @@
       "method": "MCP",
       "dashboard_status": "agent_host",
       "audit_status": "AGENT_HOST_ONLY",
-      "probe_status": "CATALOGED",
+      "probe_status": "AGENT_HOST_CATALOGED",
       "write_authority": "NONE_EXPANDED",
       "secrets_exposed": false,
       "blocked_external": false,
@@ -543,9 +567,35 @@
       "last_success": null,
       "owner": "platform",
       "criticality": "low",
-      "fallback": null
+      "fallback": null,
+      "last_probed_at": "2026-09-29T23:56:57+08:00"
     }
   ],
   "cap_intg_lines_seen": 11,
-  "intg_related_req_hits": 12
+  "intg_related_req_hits": 12,
+  "read_only_probes": {
+    "beta_8788_health": {
+      "http_status": 200,
+      "snippet": "{\"ok\": true, \"root\": \"beta-os\", \"planner\": \"sqlite\"}",
+      "write": false
+    },
+    "sidecar_8790_health": {
+      "http_status": null,
+      "snippet": "<urlopen error [Errno 61] Connection refused>",
+      "write": false
+    },
+    "prod_8787_health_RO": {
+      "http_status": 200,
+      "snippet": "{\"ok\": true, \"ts\": \"2026-09-29T15:56:57+00:00\", \"hr_updated\": \"2026-09-29T08:49:14+00:00\", \"port\": 8787}",
+      "write": false
+    }
+  },
+  "config_path_catalog": [
+    {
+      "path": ".env",
+      "note": "exists \u2014 content NOT read into audit"
+    }
+  ],
+  "secrets_exposed": false,
+  "write_authority_expanded": false
 }

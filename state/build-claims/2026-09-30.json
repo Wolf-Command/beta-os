@@ -1,0 +1,19 @@
+{
+  "date": "2026-09-30",
+  "claims": [
+    {
+      "id": "bzg-venuepl1-rollup-insufficient-facts",
+      "claim": "BZG venue P&L rollup lists 7 registry outlets with Uma OPEN / Rain+Pool PRE-OPENING; master status is insufficient_facts when venue_daily_closes=0; revenue slots UNKNOWN not zero; staff_ready and human_commissioned stay false.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import bzg_venue_pnl as v; r=v.build_outlet_rollup(); import sys; sys.exit(0 if (r.get('outlet_count')==7 and r['master']['status']=='insufficient_facts' and r['status_checks']['uma_open'] and r['status_checks']['rainforest_pre_opening'] and r.get('staff_ready') is False and r.get('human_commissioned') is False) else 1)\"",
+      "expect": "exit 0",
+      "by": "bzg-venuepl1-20260930"
+    },
+    {
+      "id": "bzg-venuepl1-amanda-deny-zayen-allow",
+      "claim": "Venue P&L read: PERS-ZAYEN allowed, PERS-AMANDA denied.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import bzg_venue_pnl as v; import sys; sys.exit(0 if (v.person_may_read_venue_pnl('PERS-ZAYEN') and not v.person_may_read_venue_pnl('PERS-AMANDA')) else 1)\"",
+      "expect": "exit 0",
+      "by": "bzg-venuepl1-20260930"
+    }
+  ]
+}

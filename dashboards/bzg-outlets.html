@@ -56,12 +56,38 @@
     </div>
     <h2 id="foundations-heading" hidden>Cross-outlet foundations</h2>
     <div id="foundations" hidden></div>
+    <h2 id="venuepl-heading" hidden>Venue P&amp;L rollup</h2>
+    <div id="venuepl" hidden></div>
   </main>
   <script>
     function statusClass(s) {
       if (!s) return "";
       if (s.indexOf("TEMPORARILY") === 0) return "TEMPORARILY";
       return s.replace(/\s+/g, "-");
+    }
+    function renderVenuePnl(data) {
+      const heading = document.getElementById("venuepl-heading");
+      const box = document.getElementById("venuepl");
+      const v = data.venue_pnl_rollup;
+      if (!v) {
+        heading.hidden = true;
+        box.hidden = true;
+        return;
+      }
+      heading.hidden = false;
+      box.hidden = false;
+      box.innerHTML = [
+        `<div class="panel">`,
+        `<p>${v.message || ""}</p>`,
+        `<p class="kind">Master status: <strong>${v.master_status || "insufficient_facts"}</strong> · ` +
+          `numeric facts ${v.outlets_with_numeric_facts || 0}/${v.outlet_count || 0}. ` +
+          `Uma OPEN=${v.uma_open ? "yes" : "no"} · Rainforest PRE-OPENING=${v.rainforest_pre_opening ? "yes" : "no"} · ` +
+          `Pool Bar PRE-OPENING=${v.pool_bar_pre_opening ? "yes" : "no"}.</p>`,
+        `<p class="kind">${v.master_message || ""}</p>`,
+        `<p><a href="${v.href || "/bzg/venue-pnl"}">Open /bzg/venue-pnl</a></p>`,
+        `<p class="empty">Honesty: staff_ready=false · human_commissioned=false · live_pnl=false · pack BZG-VENUEPL-1.</p>`,
+        `</div>`,
+      ].join("");
     }
     function renderFoundations(data) {
       const heading = document.getElementById("foundations-heading");
@@ -153,6 +179,7 @@
           body.innerHTML = html.join("");
         }
         renderFoundations(data);
+        renderVenuePnl(data);
       } catch (err) {
         sub.textContent = "Could not load";
         body.innerHTML = `<p class="err">${String(err)}</p>`;

@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-29T23:54:44+08:00",
+  "at_wita": "2026-09-30T00:06:24+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -91,7 +91,10 @@
       ],
       "estimated_effort": "L",
       "matt_blocker": false,
-      "status": "NEXT_TO_ARM"
+      "status": "PASS_VERIFIED",
+      "exited_at": "2026-09-30T00:06:00+08:00",
+      "result_file": "docs/wolf/ops/BZG-VENUEPL-1-RESULT.md",
+      "verified_at": "2026-09-30T00:06:24+08:00"
     },
     {
       "pack_id": "SOP-FACTORY-1",
@@ -118,7 +121,8 @@
         "FC-SHELL-2"
       ],
       "estimated_effort": "L",
-      "matt_blocker": false
+      "matt_blocker": false,
+      "status": "NEXT_TO_ARM"
     },
     {
       "pack_id": "MYWORK-PROVE-1",
@@ -202,7 +206,7 @@
       "note": "Does not unblock CAP-AMG-01 (needs external Yanolja)"
     }
   ],
-  "first_pack": "BZG-VENUEPL-1",
+  "first_pack": "SOP-FACTORY-1",
   "hr_deferred_not_in_queue": true,
   "blocked_external_not_auto_solved": [
     "MB-008",
@@ -217,6 +221,10 @@
     "MASTER-160eec186d"
   ],
   "completed_packs": [
-    "FC-SHELL-2"
+    "FC-SHELL-2",
+    "BZG-VENUEPL-1"
+  ],
+  "exited_awaiting_peaches": [
+    "BZG-VENUEPL-1"
   ]
 }

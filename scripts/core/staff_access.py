@@ -617,6 +617,9 @@ def officer_must_deny(person_id: str | None, path: str, conn: sqlite3.Connection
         or base.startswith("/api/bzg/finance")
         or base.startswith("/bzg/outlets")
         or base.startswith("/api/bzg/outlets")
+        or base.startswith("/bzg/venue-pnl")
+        or base.startswith("/api/bzg/venue-pnl")
+        or base.startswith("/bzg-venue-pnl")
         or base.startswith("/ggv/finance")
         or base.startswith("/api/ggv/finance")
     ):
