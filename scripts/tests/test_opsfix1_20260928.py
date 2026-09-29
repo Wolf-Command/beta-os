@@ -90,14 +90,19 @@ def test_plans() -> None:
         stored = conn.execute("SELECT COUNT(*) FROM content_plans WHERE lower(brand_id)='habitat'").fetchone()[0]
         work_count = conn.execute("SELECT COUNT(*) FROM core_work_items").fetchone()[0]
         check("nine habitat plans stored", stored == 9, str(stored))
-        check("core work items stay empty", work_count == 0, str(work_count))
+        # MYWORK-1 populates core_work_items (commissioning + legacy). Plans stay historical projections.
+        check("core work items populated by MYWORK-1", work_count >= 1, str(work_count))
         haikal = build_home("PERS-HAIKAL", conn=conn)
         misa = build_home("PERS-MISA", conn=conn)
         yudi = build_home("PERS-YUDI", conn=conn)
         devi = build_home("PERS-DEVI", conn=conn)
-        h_items = haikal["sections"][0]["items"]
-        m_items = misa["sections"][0]["items"]
-        y_items = yudi["sections"][0]["items"]
+
+        def _plans(items):
+            return [row for row in items if row.get("origin") == "historical" or row.get("source_system") == "content_plans"]
+
+        h_items = _plans(haikal["sections"][0]["items"])
+        m_items = _plans(misa["sections"][0]["items"])
+        y_items = _plans(yudi["sections"][0]["items"])
         check("creative director sees operational plans", haikal["experience"] == "creative_director" and len(h_items) == 2, str(len(h_items)))
         check(
             "same plans for every creative director",
@@ -182,7 +187,10 @@ def test_http(port: int) -> None:
     )
     status, raw, _ctype = call(port, "GET", "/api/staff/home", HAIKAL)
     home = json.loads(raw.decode() or "{}")
-    today = ((home.get("sections") or [{}])[0]).get("items") or []
+    today = [
+        row for row in (((home.get("sections") or [{}])[0]).get("items") or [])
+        if row.get("origin") == "historical" or row.get("source_system") == "content_plans"
+    ]
     check("haikal home has operational plans", status == 200 and len(today) == 2 and today[0].get("origin") == "historical", str(len(today)))
     status, raw, ctype = call(port, "GET", "/amg/finance", ZAYEN, accept="text/html")
     page = raw.decode("utf-8", "replace")

@@ -104,6 +104,22 @@ def test_registry() -> None:
             and finance["display_name"] == "Zayen"
             and not finance.get("legal_name"),
         )
+        # MYWORK-1: live seat is Financial Controller; prior Officer assignment is ENDED history.
+        from core.staff_access import ZAYEN_FC_ASSIGNMENT, ROLE_ATRIUM_FINANCIAL_CONTROLLER
+
+        ended_officer = conn.execute(
+            """
+            SELECT status, end_at, end_reason FROM org_assignments
+            WHERE assignment_id=?
+            """,
+            (ZAYEN_ASSIGNMENT,),
+        ).fetchone()
+        check(
+            "Zayen prior Officer assignment preserved ended",
+            ended_officer is not None
+            and (ended_officer["status"] == "ENDED" or ended_officer["end_at"])
+            and str(ended_officer["end_reason"] or "").strip(),
+        )
         seat = conn.execute(
             """
             SELECT p.role_id, p.position_label, a.is_primary, a.end_at
@@ -111,13 +127,13 @@ def test_registry() -> None:
             JOIN org_positions p ON p.position_id = a.position_id
             WHERE a.assignment_id=? AND a.status='ACTIVE'
             """,
-            (ZAYEN_ASSIGNMENT,),
+            (ZAYEN_FC_ASSIGNMENT,),
         ).fetchone()
         check(
-            "Zayen seat is Atrium Finance Officer",
+            "Zayen seat is Atrium Financial Controller",
             seat is not None
-            and seat["role_id"] == ROLE_ATRIUM_FINANCE
-            and seat["position_label"] == "Atrium Finance Officer"
+            and seat["role_id"] == ROLE_ATRIUM_FINANCIAL_CONTROLLER
+            and seat["position_label"] == "Atrium Financial Controller"
             and seat["is_primary"] == 1
             and seat["end_at"] is None,
         )
@@ -197,7 +213,10 @@ def test_permissions() -> None:
             home = build_home(pid, conn=conn)
             check(f"{pid} my work is content creator", home.get("experience") == "content_creator")
             today = home["sections"][0]
-            items = today.get("items") or []
+            items = [
+                it for it in (today.get("items") or [])
+                if it.get("origin") == "historical" or it.get("source_system") == "content_plans"
+            ]
             if items:
                 check(
                     f"{pid} today is brand-scoped stored plans",
@@ -359,6 +378,8 @@ def test_zayen_succession() -> None:
     conn = sqlite3.connect(copy)
     conn.row_factory = sqlite3.Row
     try:
+        from core.staff_access import ZAYEN_FC_ASSIGNMENT
+
         check("Zayen can read the board before end", rbac.can(ZAYEN_PERSON, "atrium.board.read", AMG, conn=conn))
         conn.execute(
             """
@@ -367,7 +388,15 @@ def test_zayen_succession() -> None:
                 end_reason='succession test'
             WHERE assignment_id=?
             """,
-            (ZAYEN_ASSIGNMENT,),
+            (ZAYEN_FC_ASSIGNMENT,),
+        )
+        conn.execute(
+            """
+            UPDATE org_assignment_scopes
+            SET status='ENDED', end_at='2026-09-28T12:00:00+08:00'
+            WHERE assignment_id=? AND status='ACTIVE'
+            """,
+            (ZAYEN_FC_ASSIGNMENT,),
         )
         conn.commit()
         check(
@@ -376,7 +405,7 @@ def test_zayen_succession() -> None:
         )
         kept = conn.execute(
             "SELECT person_id, status, end_reason FROM org_assignments WHERE assignment_id=?",
-            (ZAYEN_ASSIGNMENT,),
+            (ZAYEN_FC_ASSIGNMENT,),
         ).fetchone()
         check(
             "Zayen history stays with Zayen",

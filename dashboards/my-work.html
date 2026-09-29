@@ -56,10 +56,11 @@
   }
   #sections a.action .footnote,
   #sections a.card .footnote,
-  #sections .footnote {
+  #sections .footnote,
+  #sections .meta {
     color: #3f3422 !important;
     font-size: 0.78rem;
-    margin-top: 8px;
+    margin-top: 6px;
   }
   .work-title { font-weight: 700; margin: 0 0 4px; }
   .next { font-weight: 650; margin: 8px 0 0; }
@@ -92,15 +93,29 @@
 
   function cards(items) {
     return (items || []).map((it) => {
-      const title = `<p class="work-title">${esc(it.title)}</p>`;
+      const title = `<p class="work-title">${esc(it.title || it.what || "")}</p>`;
       const range = it.date_range ? `<p>${esc(it.date_range)}</p>` : "";
       const status = it.status_label || it.status;
       const state = status ? `<p>${esc(status)}</p>` : "";
-      const next = it.next_step ? `<p class="next">${esc(it.next_step)}</p>` : "";
+      const metaBits = [
+        it.requested_by ? `Requested by ${it.requested_by}` : "",
+        it.current_owner ? `Owner ${it.current_owner}` : "",
+        it.due ? `Due ${it.due}` : "",
+        it.company_site_department || "",
+        it.priority != null ? `Priority ${it.priority}` : "",
+        it.evidence_required ? `Evidence: ${it.evidence_required}` : "",
+        it.evidence_files ? `${it.evidence_files} file(s) attached` : ""
+      ].filter(Boolean);
+      const meta = metaBits.length
+        ? `<p class="meta">${esc(metaBits.join(" · "))}</p>`
+        : "";
+      const next = (it.next_step || it.what_happens_next)
+        ? `<p class="next">${esc(it.next_step || it.what_happens_next)}</p>`
+        : "";
       const foot = it.staff_footnote
         ? `<p class="footnote">${esc(it.staff_footnote)}</p>`
         : "";
-      const inner = `${title}${range}${state}${next}${foot}`;
+      const inner = `${title}${range}${state}${meta}${next}${foot}`;
       if (it.href) {
         return `<a class="action work-card" href="${esc(it.href)}">${inner}</a>`;
       }
@@ -131,7 +146,7 @@
 
   function list(block) {
     if (!block) return "";
-    return `<h2>${esc(block.title || "")}</h2>${part(block)}`;
+    return `<section data-section="${esc(block.key || "")}"><h2>${esc(block.title || "")}</h2>${part(block)}</section>`;
   }
 
   fetch("/api/staff/home", { headers: { Accept: "application/json" } })
@@ -159,7 +174,8 @@
       const notes = data.notifications || {};
       $("notes").textContent = notes.empty_message || "";
       const deskLinks = (dash.sections && dash.sections.length) ? [] : (data.desk || []);
-      $("desk").innerHTML = deskLinks.map((link) => (
+      const extra = [{ label: "Execution report", href: "/execution-report" }];
+      $("desk").innerHTML = [...deskLinks, ...extra].map((link) => (
         `<a class="action" href="${esc(link.href)}">${esc(link.label)}</a>`
       )).join("");
       const over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;

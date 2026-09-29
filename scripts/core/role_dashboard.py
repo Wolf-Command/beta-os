@@ -17,7 +17,7 @@ REPRESENTATIVES: dict[str, str] = {
     "content_creator": "content_creator",
     "bzg_fb_ops": "bzg_fb_ops",
     "finance": "external_accountant",
-    "atrium_finance": "atrium_finance_officer",
+    "atrium_finance": "atrium_financial_controller",
     "closer": "closer",
     "manager": "manager",
     "owner_pulse": "owner",
@@ -196,28 +196,55 @@ def project(
     """Framework sections. Does not read or write the catalog itself."""
     by = _by_key(sections)
     representative = REPRESENTATIVES.get(experience, "staff")
-    if experience == "owner_pulse":
+    if experience == "owner_pulse" and by.get("today") and by.get("do_this_next"):
+        # MYWORK-1 universal sections for Owner OVERWATCH.
+        today = by.get("today") or {}
+        do_next = by.get("do_this_next") or {}
+        attention = by.get("attention") or {}
+        waiting = by.get("waiting") or {}
+        completed = by.get("completed") or {}
+        blocks = [
+            _block("today", "TODAY", prompt="TODAY", items=_items(today),
+                   empty_message=str(today.get("empty_message") or "Nothing is assigned to you for today.")),
+            _block("do_this", "DO THIS NEXT", prompt="DO THIS NEXT", items=_items(do_next),
+                   empty_message=str(do_next.get("empty_message") or "Nothing to do next.")),
+            _block("attention", "NEEDS ATTENTION", prompt="NEEDS ATTENTION", items=_items(attention),
+                   empty_message=str(attention.get("empty_message") or "Nothing needs your attention.")),
+            _block("waiting", "WAITING", prompt="WAITING", items=_items(waiting),
+                   empty_message=str(waiting.get("empty_message") or "You are not waiting on anyone.")),
+            _block("completed", "COMPLETED", prompt="COMPLETED", items=_items(completed),
+                   empty_message=str(completed.get("empty_message") or "Nothing completed recently.")),
+            _responsibilities(
+                experience=experience,
+                role_label=role_label,
+                covers=covers,
+                boundary=boundary,
+                authority=authority,
+                money=None,
+            ),
+        ]
+    elif experience == "owner_pulse":
         wrong = _part("What's wrong", by.get("wrong"), "Nothing is marked wrong.")
         blocked = _part("What's blocked", by.get("blocked"), "Nothing is blocked.")
         attention_items = list(wrong["items"]) + list(blocked["items"])
         blocks = [
             _block(
                 "today",
-                "Today",
+                "TODAY",
                 prompt="What's happening",
                 items=_items(by.get("happening")),
                 empty_message=(by.get("happening") or {}).get("empty_message") or "Nothing open is on record.",
             ),
             _block(
                 "do_this",
-                "Do this",
+                "DO THIS NEXT",
                 prompt="What needs your decision",
                 items=_items(by.get("authority")),
                 empty_message=(by.get("authority") or {}).get("empty_message") or "Nothing is waiting for your decision.",
             ),
             _block(
                 "attention",
-                "Needs attention",
+                "NEEDS ATTENTION",
                 prompt=None,
                 items=attention_items,
                 empty_message="Nothing is marked wrong.",
@@ -225,14 +252,14 @@ def project(
             ),
             _block(
                 "waiting",
-                "Waiting",
+                "WAITING",
                 prompt="What am I waiting for?",
                 items=[],
                 empty_message="You are not waiting on anyone.",
             ),
             _block(
                 "completed",
-                "Recently completed",
+                "COMPLETED",
                 prompt="What improved",
                 items=_items(by.get("improving")),
                 empty_message=(by.get("improving") or {}).get("empty_message") or "Nothing new has been completed.",
@@ -248,43 +275,45 @@ def project(
         ]
     else:
         today = by.get("today") or {}
+        do_next = by.get("do_this_next") or {}
         attention = by.get("attention") or {}
         waiting = by.get("waiting") or {}
         completed = by.get("completed") or {}
         desk_items = _desk_items(desk)
+        do_items = _items(do_next) or desk_items
         blocks = [
             _block(
                 "today",
-                "Today",
-                prompt=str(today.get("title") or "What do I need to do today?"),
+                "TODAY",
+                prompt=str(today.get("title") or "TODAY"),
                 items=_items(today),
                 empty_message=str(today.get("empty_message") or "Nothing is assigned to you for today."),
             ),
             _block(
                 "do_this",
-                "Do this",
-                prompt=None,
-                items=desk_items,
-                empty_message="Nothing else to open from here.",
+                "DO THIS NEXT",
+                prompt=str(do_next.get("title") or "DO THIS NEXT"),
+                items=do_items,
+                empty_message=str(do_next.get("empty_message") or "Nothing to do next."),
             ),
             _block(
                 "attention",
-                "Needs attention",
-                prompt=str(attention.get("title") or "What needs my attention?"),
+                "NEEDS ATTENTION",
+                prompt=str(attention.get("title") or "NEEDS ATTENTION"),
                 items=_items(attention),
                 empty_message=str(attention.get("empty_message") or "Nothing needs your attention."),
             ),
             _block(
                 "waiting",
-                "Waiting",
-                prompt=str(waiting.get("title") or "What am I waiting for?"),
+                "WAITING",
+                prompt=str(waiting.get("title") or "WAITING"),
                 items=_items(waiting),
                 empty_message=str(waiting.get("empty_message") or "You are not waiting on anyone."),
             ),
             _block(
                 "completed",
-                "Recently completed",
-                prompt=str(completed.get("title") or "What did I recently complete?"),
+                "COMPLETED",
+                prompt=str(completed.get("title") or "COMPLETED"),
                 items=_items(completed),
                 empty_message=str(completed.get("empty_message") or "Nothing completed recently."),
             ),

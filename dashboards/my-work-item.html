@@ -26,7 +26,7 @@
   .muted { color: var(--muted); }
   .err { color: var(--danger); }
   .stale { color: var(--danger); font-weight: 700; }
-  button, textarea {
+  button, textarea, input {
     font: inherit; width: 100%; margin-top: 8px;
   }
   button {
@@ -34,7 +34,9 @@
     background: var(--accent); color: #fff; font-weight: 650;
   }
   button.secondary { background: #fff; color: var(--text); border: 1px solid var(--line); }
-  textarea { min-height: 88px; border-radius: 12px; border: 1px solid var(--line); padding: 10px; }
+  textarea, input { min-height: 44px; border-radius: 12px; border: 1px solid var(--line); padding: 10px; }
+  textarea { min-height: 88px; }
+  .chain-hop { margin-top: 6px; padding-left: 8px; border-left: 3px solid var(--accent); }
 </style>
 </head>
 <body data-wolf-page-type="WORKSPACE" data-wolf-shell="global">
@@ -54,59 +56,101 @@
 
   function paint(data) {
     const item = data.work_item || {};
+    const card = data.card || {};
     const place = data.placement || {};
     const progress = place.progress || {};
     const approval = data.approval || {};
     const evidence = data.evidence || {};
+    const chain = data.delegation_chain || [];
     $("title").textContent = item.title || "Work";
-    const fresh = progress.freshness === "STALE" ? "STALE" : "LIVE";
+    const fresh = (data.freshness || {}).status === "STALE" || progress.freshness === "STALE" ? "STALE" : "LIVE";
     $("status").textContent = [
-      item.status || "",
+      card.status_label || item.status || "",
       approval.status ? "approval " + approval.status : "",
       fresh
     ].filter(Boolean).join(" · ");
     const missing = (evidence.missing || []).length
       ? "Evidence still required before this can be submitted."
-      : (evidence.satisfied ? "Evidence requirement is met." : "No evidence requirement is on record.");
-    const basis = (data.decision || {}).authority_basis_type || "";
+      : (evidence.satisfied ? "Evidence requirement is met." : (card.evidence_required || "Attach evidence before DONE."));
+    const chainHtml = chain.length
+      ? `<div class="card" id="chain"><p><strong>Delegation chain</strong></p>${
+          chain.map((hop) => `<p class="chain-hop">${esc(hop.from_name)} → ${esc(hop.to_name)} · ${esc(hop.status)} · ${esc(hop.accepted_at || hop.offered_at || "")}</p>`).join("")
+        }<p class="muted">Accountable: ${esc(card.accountable || "")}. Current executor: ${esc(card.current_owner || "")}.</p></div>`
+      : `<div class="card" id="chain"><p class="muted">No delegation hops yet. Accountable: ${esc(card.accountable || card.current_owner || "")}.</p></div>`;
     $("body").innerHTML = `
       <div class="card">
+        <p>${esc(card.instructions || item.description || "")}</p>
+        <p class="muted">Requested by ${esc(card.requested_by || "—")} · Due ${esc(card.due || "—")} · ${esc(card.company_site_department || "")}</p>
+        <p class="muted">Priority ${esc(card.priority ?? "—")}</p>
         <p>${esc(missing)}</p>
-        <p class="muted">My Work: ${esc(place.my_work || "")}</p>
-        <p class="muted">Approver queue: ${esc(place.approver_queue || "")}</p>
-        <p class="muted">Owner pulse: ${esc(place.owner_pulse || "")}</p>
-        <p class="${fresh === "STALE" ? "stale" : "muted"}">Progress: ${esc(fresh)} · ${esc(progress.status || item.status || "")}</p>
-        ${basis ? `<p class="muted">Decision basis: ${esc(basis)}</p>` : ""}
+        <p class="next">${esc(card.what_happens_next || "")}</p>
+        <p class="${fresh === "STALE" ? "stale" : "muted"}">Progress: ${esc(fresh)} · DONE is not VERIFIED</p>
       </div>
+      ${chainHtml}
       <div class="card" id="act">
-        <label for="note">Evidence note</label>
+        <label for="note">Evidence note / file text</label>
         <textarea id="note" placeholder="What is true about this work"></textarea>
+        <label for="delegate">Delegate to person id (optional)</label>
+        <input id="delegate" placeholder="PERS-…" />
+        <button type="button" id="start">Accept / start</button>
         <button type="button" id="attach">Attach evidence</button>
-        <button type="button" id="submit">Submit for approval</button>
+        <button type="button" id="done">Mark DONE</button>
+        <button type="button" class="secondary" id="hand">Delegate</button>
+        <button type="button" class="secondary" id="submit">Submit for approval</button>
         <button type="button" class="secondary" id="approve">Approve</button>
-        <button type="button" class="secondary" id="reject">Reject</button>
+        <button type="button" class="secondary" id="reject">Reject / return</button>
+        <button type="button" class="secondary" id="vpass">Verify HUMAN PASS</button>
+        <button type="button" class="secondary" id="vfail">Verify FAIL</button>
       </div>`;
     const post = (path, payload) => fetch(path, {
       method: "POST",
       headers: { Accept: "application/json", "Content-Type": "application/json" },
       body: JSON.stringify(payload || {})
     }).then((res) => res.json().then((body) => ({ ok: res.ok, body })));
-    $("attach").onclick = () => post(`/api/work-loop/items/${encodeURIComponent(id)}/evidence`, {
+    $("start").onclick = () => post(`/api/my-work/items/${encodeURIComponent(id)}/start`, {}).then(reload);
+    $("attach").onclick = () => post(`/api/my-work/items/${encodeURIComponent(id)}/evidence-file`, {
+      note: $("note").value,
+      filename: "note.txt",
+      content_base64: btoa(unescape(encodeURIComponent($("note").value || "evidence")))
+    }).then(reload);
+    $("done").onclick = () => post(`/api/my-work/items/${encodeURIComponent(id)}/done`, {
+      outcome: $("note").value || "DONE claimed"
+    }).then(reload);
+    $("hand").onclick = () => post(`/api/my-work/items/${encodeURIComponent(id)}/delegate`, {
+      to_person_id: $("delegate").value,
       note: $("note").value
-    }).then(show);
-    $("submit").onclick = () => post(`/api/work-loop/items/${encodeURIComponent(id)}/submit`, {}).then(show);
+    }).then(reload);
+    $("submit").onclick = () => post(`/api/work-loop/items/${encodeURIComponent(id)}/submit`, {}).then(reload);
     $("approve").onclick = () => post(`/api/work-loop/items/${encodeURIComponent(id)}/decide`, {
       decision: "APPROVE"
-    }).then(show);
+    }).then(reload);
     $("reject").onclick = () => post(`/api/work-loop/items/${encodeURIComponent(id)}/decide`, {
       decision: "REJECT",
       reason: "Returned to the assigned role."
-    }).then(show);
+    }).then(reload);
+    $("vpass").onclick = () => post(`/api/my-work/items/${encodeURIComponent(id)}/commissioning-verify`, {
+      result: "PASS", note: $("note").value || "VERIFIED HUMAN PASS"
+    }).then(reload);
+    $("vfail").onclick = () => post(`/api/my-work/items/${encodeURIComponent(id)}/commissioning-verify`, {
+      result: "FAIL", note: $("note").value || "FAIL"
+    }).then(reload);
     document.body.setAttribute("data-ready", "1");
     document.body.setAttribute(
       "data-overflow",
       document.documentElement.scrollWidth > document.documentElement.clientWidth + 1 ? "yes" : "no"
     );
+  }
+
+  function reload(result) {
+    const data = result.body || {};
+    if (!result.ok || data.ok === false) {
+      $("msg").innerHTML = `<p class="err">${esc(data.message || "This did not go through.")}</p>`;
+    } else {
+      $("msg").innerHTML = "";
+    }
+    fetch(`/api/work-loop/items/${encodeURIComponent(id)}`, { headers: { Accept: "application/json" } })
+      .then((res) => res.json().then((body) => ({ ok: res.ok, body })))
+      .then(show);
   }
 
   function show(result) {

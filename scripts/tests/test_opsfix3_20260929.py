@@ -139,7 +139,10 @@ def test_staff_defects() -> None:
     conn.row_factory = __import__("sqlite3").Row
     try:
         home = build_home("PERS-HAIKAL", conn=conn)
-        items = home["sections"][0]["items"]
+        items = [
+            row for row in home["sections"][0]["items"]
+            if row.get("origin") == "historical" or row.get("source_id")
+        ]
         ids = [row["source_id"] for row in items]
         check("habitat duplicates collapsed", len(ids) == 2, str(ids))
         check(
@@ -380,8 +383,12 @@ def test_http_and_shots() -> None:
         check("testability 200", status == 200, str(status))
         room = json.loads(body.decode())
         check("give human title", room.get("title") == "GIVE THIS TO A HUMAN NOW")
-        card_surfaces = [row.get("surface") for row in room.get("queue") or [] if row.get("test_card")]
-        check("four human cards in queue", len(card_surfaces) >= 4, str(card_surfaces))
+        # MYWORK-1: queue is real commissioning Work Items (not OPSFIX-3 test_card list).
+        work_queue = [
+            row for row in (room.get("queue") or [])
+            if isinstance(row, dict) and (row.get("work_item_id") or row.get("href") or row.get("test_card"))
+        ]
+        check("commissioning work queue populated", len(work_queue) >= 4, str(len(work_queue)))
 
         status, body, _ = call(port, "GET", "/api/staff/home", HAIKAL)
         home = json.loads(body.decode())

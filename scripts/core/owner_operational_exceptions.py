@@ -243,6 +243,33 @@ def _commissioning_fails() -> list[dict[str, Any]]:
     return out
 
 
+def _work_item_exceptions() -> list[dict[str, Any]]:
+    """Overdue / blocked / failed commissioning work from the canonical work model."""
+    try:
+        from core import universal_my_work as umw
+
+        rows = umw.owner_work_exceptions()
+    except Exception:
+        return []
+    out: list[dict[str, Any]] = []
+    for row in rows[:12]:
+        out.append(
+            _item(
+                kind="work_item",
+                title=str(row.get("title") or "Work item"),
+                detail=(
+                    f"{row.get('status_label') or row.get('status')}: "
+                    f"{row.get('what_happens_next') or row.get('current_owner') or ''}"
+                )[:240],
+                href=str(row.get("href") or "/my-work"),
+                owner_role=str(row.get("company_site_department") or "Owner"),
+                blocked=str(row.get("status") or "") in {"BLOCKED", "RETURNED"}
+                or row.get("commissioning_result") == "FAIL",
+            )
+        )
+    return out
+
+
 def collect(*, cards: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """Build the material unresolved exception list for Owner Command."""
     # Ensure the data-quality register exists before rollup.
@@ -254,6 +281,7 @@ def collect(*, cards: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     items.extend(_failed_integrations())
     items.extend(_month_end_blockers())
     items.extend(_commissioning_fails())
+    items.extend(_work_item_exceptions())
     return {
         "ok": True,
         "read": "READ",

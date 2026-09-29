@@ -21,6 +21,9 @@ ROLE_CONTENT_CREATOR = "ROLE-CONTENT-CREATOR"
 ROLE_CREATIVE_DIRECTOR = "ROLE-GGV-CREATIVE-DIRECTOR"
 ROLE_FINANCE = "ROLE-GGV-EXTERNAL-ACCOUNTANT"
 ROLE_ATRIUM_FINANCE = "ROLE-AMG-FINANCE-OFFICER"
+ROLE_ATRIUM_FINANCIAL_CONTROLLER = "ROLE-AMG-FINANCIAL-CONTROLLER"
+ZAYEN_FC_ASSIGNMENT = "ASG-ZAYEN-FC-1"
+ZAYEN_FC_POSITION = "POS-AMG-FINANCIAL-CONTROLLER-1"
 ROLE_GGV_FINANCE_OPERATOR = "ROLE-GGV-FINANCE-OPERATOR"
 GGV_FINANCE_HREF = "/ggv/finance"
 AMANDA_PERSON = "PERS-AMANDA"
@@ -555,7 +558,7 @@ def officer_must_deny(person_id: str | None, path: str, conn: sqlite3.Connection
         (pid,),
     ).fetchall()
     roles = {str(row[0]) for row in rows if row[0]}
-    if roles != {ROLE_ATRIUM_FINANCE}:
+    if roles not in ({ROLE_ATRIUM_FINANCE}, {ROLE_ATRIUM_FINANCIAL_CONTROLLER}):
         return False
     raw = (path or "").split("?")[0]
     if not raw.startswith("/"):
@@ -589,6 +592,7 @@ HUMAN_PAGE_BY_ROLE: dict[str, str] = {
     "ROLE-MATT": "/wolf",
     "ROLE-OWNER": "/wolf",
     "ROLE-AMG-FINANCE-OFFICER": ATRIUM_FINANCE_HREF,
+    "ROLE-AMG-FINANCIAL-CONTROLLER": ATRIUM_FINANCE_HREF,
     "ROLE-GGV-FINANCE-OPERATOR": GGV_FINANCE_HREF,
     "ROLE-GGV-EXTERNAL-ACCOUNTANT": GGV_FINANCE_HREF,
 }
@@ -756,6 +760,25 @@ def _seat_zayen(conn: sqlite3.Connection, ts: str) -> None:
         """,
         (ZAYEN_POSITION, ROLE_ATRIUM_FINANCE, ENTITY_AMG, ts, ts),
     )
+    # MYWORK-1: Financial Controller is the live seat. Do not revive the ended Officer row.
+    fc = conn.execute(
+        """
+        SELECT status, end_at FROM org_assignments WHERE assignment_id=?
+        """,
+        (ZAYEN_FC_ASSIGNMENT,),
+    ).fetchone()
+    if fc and str(fc[0] or "") == "ACTIVE" and not fc[1]:
+        _attach_scopes_once(conn, ZAYEN_FC_ASSIGNMENT, [SCOPE_AMG_FINANCE], ts)
+        return
+    ended = conn.execute(
+        """
+        SELECT status, end_at FROM org_assignments WHERE assignment_id=?
+        """,
+        (ZAYEN_ASSIGNMENT,),
+    ).fetchone()
+    if ended and (str(ended[0] or "") == "ENDED" or ended[1]):
+        # History preserved — leave ended Officer assignment alone.
+        return
     conn.execute(
         """
         INSERT INTO org_assignments (

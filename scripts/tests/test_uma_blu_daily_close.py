@@ -294,7 +294,8 @@ def main() -> int:
         WHERE p.role_id='ROLE-BZG-CLOSER' AND a.status='ACTIVE' AND a.end_at IS NULL
         """
     ).fetchone()[0]
-    check("closer WAITING (0 live assignments)", closer_n == 0, str(closer_n))
+    # MYWORK-1: Devi holds the Uma Blu closer seat (configurable roster).
+    check("closer assigned (live >= 1)", closer_n >= 1, str(closer_n))
     for code in (
         "venue.close.read",
         "venue.close.submit",

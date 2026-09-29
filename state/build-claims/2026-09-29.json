@@ -7,6 +7,27 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import owner_command as o; a={x['id']:x['answer'] for x in o.build_command(verified_person_id='PERS-MATT')['answers']}; import sys; sys.exit(0 if ('Nothing is going wrong' not in a.get('wrong','') and 'exceptions are open' in a.get('wrong','')) else 1)\"",
       "expect": "exit 0",
       "by": "opsfix3-20260929"
+    },
+    {
+      "id": "mywork1-universal-sections",
+      "claim": "Every seated person gets My Work sections TODAY / DO THIS NEXT / NEEDS ATTENTION / WAITING / COMPLETED from core_work_items; staff_ready and human_commissioned stay false.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core.staff_home import build_home; h=build_home('PERS-DEVI'); k={s.get('key') for s in h.get('sections') or []}; import sys; sys.exit(0 if {'today','do_this_next','attention','waiting','completed'}<=k and h.get('staff_ready') is False else 1)\"",
+      "expect": "exit 0",
+      "by": "mywork1-20260929"
+    },
+    {
+      "id": "mywork1-done-not-verified",
+      "claim": "DONE (COMPLETED) on a work item is not VERIFIED; Zayen Financial Controller cannot payment.execute or vendor.bank.change.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import rbac; import sys; sys.exit(0 if (not rbac.can('PERS-ZAYEN','payment.execute',{'entity_id':'ENT-AMG'}) and not rbac.can('PERS-ZAYEN','vendor.bank.change',{'entity_id':'ENT-AMG'})) else 1)\"",
+      "expect": "exit 0",
+      "by": "mywork1-20260929"
+    },
+    {
+      "id": "mywork1-commissioning-queue",
+      "claim": "War Room GIVE THIS TO A HUMAN NOW queue is real commissioning core_work_items (not OPSFIX-3 passive test cards).",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import universal_my_work as u; q=u.war_room_commissioning_queue(); import sys; sys.exit(0 if q.get('source')=='core_work_items' and len(q.get('queue') or [])>=4 and q.get('human_test_cards')==[] else 1)\"",
+      "expect": "exit 0",
+      "by": "mywork1-20260929"
     }
   ]
 }

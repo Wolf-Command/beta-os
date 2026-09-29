@@ -44,17 +44,33 @@ SOURCE_TYPES = frozenset(
     }
 )
 STATUSES = frozenset(
-    {"OPEN", "IN_PROGRESS", "BLOCKED", "COMPLETED", "VERIFIED", "CANCELLED"}
+    {
+        "OPEN",
+        "IN_PROGRESS",
+        "BLOCKED",
+        "WAITING",
+        "RETURNED",
+        "REASSIGNED",
+        "COMPLETED",
+        "VERIFIED",
+        "CANCELLED",
+    }
 )
 TERMINAL = frozenset({"VERIFIED", "CANCELLED"})
 ACTOR_TYPES = frozenset({"PERSON", "SYSTEM"})
 
 # Explicit legal transitions (CLAIMED COMPLETED ≠ VERIFIED).
+# Presentation aliases: OPEN=ASSIGNED, COMPLETED=DONE.
 ALLOWED_TRANSITIONS: dict[str, frozenset[str]] = {
-    "OPEN": frozenset({"IN_PROGRESS", "CANCELLED"}),
-    "IN_PROGRESS": frozenset({"BLOCKED", "COMPLETED", "CANCELLED"}),
+    "OPEN": frozenset({"IN_PROGRESS", "WAITING", "REASSIGNED", "CANCELLED"}),
+    "IN_PROGRESS": frozenset(
+        {"BLOCKED", "WAITING", "RETURNED", "COMPLETED", "REASSIGNED", "CANCELLED"}
+    ),
     "BLOCKED": frozenset({"IN_PROGRESS", "CANCELLED"}),
-    "COMPLETED": frozenset({"VERIFIED", "CANCELLED"}),
+    "WAITING": frozenset({"IN_PROGRESS", "CANCELLED"}),
+    "RETURNED": frozenset({"IN_PROGRESS", "COMPLETED", "CANCELLED"}),
+    "REASSIGNED": frozenset({"OPEN", "IN_PROGRESS", "CANCELLED"}),
+    "COMPLETED": frozenset({"VERIFIED", "RETURNED", "CANCELLED"}),
     "VERIFIED": frozenset(),
     "CANCELLED": frozenset(),
 }
@@ -349,45 +365,93 @@ def create_work_item(
 
         wid = mint_work_item_id()
         ts = now_utc_iso()
-        c.execute(
-            """
-            INSERT INTO core_work_items (
-              work_item_id, title, description, work_type, status, priority,
-              owning_entity_id, source_type, source_id,
-              created_by_actor_type, created_by_person_id,
-              owner_person_id, owner_org_assignment_id, due_at,
-              started_at, completed_at, verified_at, outcome,
-              completion_evidence_reference, parent_work_item_id,
-              created_at, updated_at
-            ) VALUES (
-              ?, ?, ?, ?, 'OPEN', ?,
-              ?, ?, ?,
-              ?, ?,
-              ?, ?, ?,
-              NULL, NULL, NULL, NULL,
-              NULL, ?,
-              ?, ?
+        # accountable/executor default to owner (MYWORK-1); columns may be absent pre-migration.
+        cols = {str(r[1]) for r in c.execute("PRAGMA table_info(core_work_items)")}
+        if "accountable_person_id" in cols:
+            c.execute(
+                """
+                INSERT INTO core_work_items (
+                  work_item_id, title, description, work_type, status, priority,
+                  owning_entity_id, source_type, source_id,
+                  created_by_actor_type, created_by_person_id,
+                  owner_person_id, owner_org_assignment_id,
+                  accountable_person_id, executor_person_id, requested_by_person_id,
+                  due_at, started_at, completed_at, verified_at, outcome,
+                  completion_evidence_reference, parent_work_item_id,
+                  created_at, updated_at
+                ) VALUES (
+                  ?, ?, ?, ?, 'OPEN', ?,
+                  ?, ?, ?,
+                  ?, ?,
+                  ?, ?,
+                  ?, ?, ?,
+                  ?, NULL, NULL, NULL, NULL,
+                  NULL, ?,
+                  ?, ?
+                )
+                """,
+                (
+                    wid,
+                    t,
+                    (description or "").strip() or None,
+                    wt,
+                    pr,
+                    eid,
+                    st,
+                    (source_id or "").strip() or None,
+                    at,
+                    creator_person,
+                    owner,
+                    (owner_org_assignment_id or "").strip() or None,
+                    owner,
+                    owner,
+                    creator_person,
+                    (due_at or "").strip() or None,
+                    parent,
+                    ts,
+                    ts,
+                ),
             )
-            """,
-            (
-                wid,
-                t,
-                (description or "").strip() or None,
-                wt,
-                pr,
-                eid,
-                st,
-                (source_id or "").strip() or None,
-                at,
-                creator_person,
-                owner,
-                (owner_org_assignment_id or "").strip() or None,
-                (due_at or "").strip() or None,
-                parent,
-                ts,
-                ts,
-            ),
-        )
+        else:
+            c.execute(
+                """
+                INSERT INTO core_work_items (
+                  work_item_id, title, description, work_type, status, priority,
+                  owning_entity_id, source_type, source_id,
+                  created_by_actor_type, created_by_person_id,
+                  owner_person_id, owner_org_assignment_id, due_at,
+                  started_at, completed_at, verified_at, outcome,
+                  completion_evidence_reference, parent_work_item_id,
+                  created_at, updated_at
+                ) VALUES (
+                  ?, ?, ?, ?, 'OPEN', ?,
+                  ?, ?, ?,
+                  ?, ?,
+                  ?, ?, ?,
+                  NULL, NULL, NULL, NULL,
+                  NULL, ?,
+                  ?, ?
+                )
+                """,
+                (
+                    wid,
+                    t,
+                    (description or "").strip() or None,
+                    wt,
+                    pr,
+                    eid,
+                    st,
+                    (source_id or "").strip() or None,
+                    at,
+                    creator_person,
+                    owner,
+                    (owner_org_assignment_id or "").strip() or None,
+                    (due_at or "").strip() or None,
+                    parent,
+                    ts,
+                    ts,
+                ),
+            )
         item = get_work_item(wid, conn=c)
         assert item is not None
         _audit_work(

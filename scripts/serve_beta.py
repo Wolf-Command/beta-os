@@ -176,6 +176,7 @@ from core import staff_ready_ux as _staff_ready
 from core import staff_ops_routing as _staff_ops
 from core import staff_home as _staff_home
 from core import work_loop as _work_loop
+from core import universal_my_work as _umw
 from core import wolf_shell as _wolf_shell
 from core import amg_mgmt_cluster as _amg_mgmt
 from core import bzg_mgmt_cluster as _bzg_mgmt
@@ -2303,12 +2304,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/staff/home" or path.startswith("/api/staff/home/"):
             self._staff_home_get(path)
             return
+        if path == "/api/my-work/receivers":
+            self._mywork_receivers()
+            return
+        if path == "/api/my-work/execution-report":
+            self._mywork_execution_report(qs)
+            return
+        if path == "/api/my-work/derived-status":
+            self._mywork_derived_status(qs)
+            return
         if path == "/api/progress/governance-loop":
             self._progress_governance_loop()
             return
         m_loop_item = re.match(r"^/api/work-loop/items/([^/]+)$", path)
         if m_loop_item:
             self._work_loop_open(m_loop_item.group(1))
+            return
+        m_chain = re.match(r"^/api/my-work/items/([^/]+)/chain$", path)
+        if m_chain:
+            self._mywork_chain(m_chain.group(1))
             return
         if path == "/api/work-loop" or path.startswith("/api/work-loop/"):
             self._work_loop_refused(path)
@@ -4388,6 +4402,19 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._staff_home_page()
             return
+        elif path in (
+            "/execution-report",
+            "/execution-report/",
+            "/execution-report.html",
+            "/dashboards/execution-report.html",
+            "/my-work/execution-report",
+        ):
+            page = DASHBOARDS / "execution-report.html"
+            if page.is_file():
+                self._send_html_shell(page.read_bytes(), rel="execution-report.html")
+            else:
+                self._send_json({"ok": False, "error": "not_found"}, status=404)
+            return
         elif re.match(r"^/my-work/item/([^/]+)$", path):
             self._work_loop_page()
             return
@@ -4889,6 +4916,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/work-loop" or path.startswith("/api/work-loop/"):
             self._work_loop_post(path)
+            return
+        if path == "/api/my-work" or path.startswith("/api/my-work/"):
+            self._mywork_post(path)
             return
         m_staff_ack = re.match(
             r"^/api/staff/ops-routing/needs-you/items/([^/]+)/acknowledge$",
@@ -15101,9 +15131,171 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if identity is None:
             return
         try:
-            self._send_json(_work_loop.open_item(work_item_id, verified_person_id=identity["person_id"]))
+            out = dict(
+                _work_loop.open_item(work_item_id, verified_person_id=identity["person_id"])
+            )
+            item = out.get("work_item") or {}
+            conn = _work_items.db_connect()
+            try:
+                out["card"] = _umw.enrich_card(conn, item) if item else {}
+                out["delegation_chain"] = _umw.delegation_chain(work_item_id, conn=conn)
+                out["freshness"] = _umw.derived_view_status("my-work", conn=conn)
+            finally:
+                conn.close()
+            self._send_json(out)
         except Exception as exc:  # noqa: BLE001
             self._work_loop_fail(exc)
+
+    def _mywork_receivers(self) -> None:
+        identity = self._loop_identity()
+        if identity is None:
+            return
+        self._send_json(
+            {
+                "ok": True,
+                "receivers": _umw.list_work_receivers(),
+                "staff_ready": False,
+                "human_commissioned": False,
+            }
+        )
+
+    def _mywork_execution_report(self, qs) -> None:
+        identity = self._loop_identity()
+        if identity is None:
+            return
+        period = (qs.get("period") or ["week"])[0]
+        person = (qs.get("person_id") or [None])[0]
+        try:
+            report = _umw.execution_report(
+                person_id=person,
+                period=period,
+                viewer_person_id=identity["person_id"],
+            )
+            _umw.refresh_derived_view("execution-report")
+            report["freshness"] = _umw.derived_view_status("execution-report")
+            self._send_json(report)
+        except _umw.MyWorkError as exc:
+            self._send_json(
+                {"ok": False, "error": exc.code, "message": str(exc), "staff_ready": False},
+                status=exc.http_status,
+            )
+
+    def _mywork_derived_status(self, qs) -> None:
+        identity = self._loop_identity()
+        if identity is None:
+            return
+        view_id = (qs.get("view_id") or ["my-work"])[0]
+        self._send_json({"ok": True, **_umw.derived_view_status(view_id)})
+
+    def _mywork_chain(self, work_item_id: str) -> None:
+        identity = self._loop_identity()
+        if identity is None:
+            return
+        self._send_json(
+            {
+                "ok": True,
+                "work_item_id": work_item_id,
+                "chain": _umw.delegation_chain(work_item_id),
+            }
+        )
+
+    def _mywork_post(self, path: str) -> None:
+        try:
+            body = self._read_json() if int(self.headers.get("Content-Length") or 0) > 0 else {}
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": "invalid_json", "message": str(exc)}, status=400)
+            return
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._loop_identity(body)
+        if identity is None:
+            return
+        person_id = identity["person_id"]
+        try:
+            m_done = re.match(r"^/api/my-work/items/([^/]+)/done$", path)
+            if m_done:
+                out = _umw.mark_done(
+                    m_done.group(1),
+                    verified_person_id=person_id,
+                    outcome=body.get("outcome"),
+                    identity=identity,
+                )
+                _umw.mark_derived_views_stale()
+                self._send_json(out)
+                return
+            m_del = re.match(r"^/api/my-work/items/([^/]+)/delegate$", path)
+            if m_del:
+                out = _umw.delegate_work(
+                    m_del.group(1),
+                    from_person_id=person_id,
+                    to_person_id=body.get("to_person_id") or "",
+                    note=body.get("note"),
+                    identity=identity,
+                )
+                _umw.mark_derived_views_stale()
+                self._send_json(out)
+                return
+            m_ev = re.match(r"^/api/my-work/items/([^/]+)/evidence-file$", path)
+            if m_ev:
+                raw = body.get("content_base64") or ""
+                import base64
+
+                try:
+                    content = base64.b64decode(raw) if raw else (body.get("note") or "evidence").encode()
+                except Exception:
+                    content = (body.get("note") or "evidence").encode()
+                out = _umw.store_evidence_file(
+                    m_ev.group(1),
+                    filename=body.get("filename") or "note.txt",
+                    content=content,
+                    uploaded_by_person_id=person_id,
+                    content_type=body.get("content_type"),
+                    note=body.get("note"),
+                )
+                _umw.mark_derived_views_stale()
+                self._send_json(out)
+                return
+            m_ver = re.match(r"^/api/my-work/items/([^/]+)/commissioning-verify$", path)
+            if m_ver:
+                out = _umw.verify_commissioning(
+                    m_ver.group(1),
+                    verifier_person_id=person_id,
+                    result=body.get("result") or "",
+                    note=body.get("note"),
+                    identity=identity,
+                )
+                _umw.mark_derived_views_stale()
+                self._send_json(out)
+                return
+            m_start = re.match(r"^/api/my-work/items/([^/]+)/start$", path)
+            if m_start:
+                item = _work_items.start_work_item(
+                    m_start.group(1),
+                    verified_person_id=person_id,
+                    identity=identity,
+                )
+                _umw.mark_derived_views_stale()
+                self._send_json({"ok": True, "work_item": item, "status_label": "IN PROGRESS"})
+                return
+        except _umw.MyWorkError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=exc.http_status,
+            )
+            return
+        except _work_items.WorkItemError as exc:
+            self._send_json(
+                {"ok": False, "error": exc.code, "message": str(exc), "staff_ready": False},
+                status=exc.http_status,
+            )
+            return
+        self._send_json({"ok": False, "error": "not_found", "message": "Unknown my-work route."}, status=404)
 
     def _work_loop_post(self, path: str) -> None:
         if _work_loop.refuse_code(path):
@@ -29472,15 +29664,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
         self._send_html_shell(page.read_bytes(), rel="finish-war-room.html")
 
     def _war_room_testability(self, identity: dict) -> None:
-        matrix_path = BETA_ROOT / "state" / "ops" / "testability-matrix.json"
+        # MYWORK-1: real commissioning Work Items replace OPSFIX-3 passive test cards.
         try:
-            matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+            queue_payload = _umw.war_room_commissioning_queue()
+            _umw.refresh_derived_view("war-room-commissioning")
+        except Exception as exc:  # noqa: BLE001
             self._send_json(
                 {
                     "ok": False,
                     "error": "unavailable",
-                    "message": "The testability matrix could not be read.",
+                    "message": f"Commissioning work queue could not be read: {type(exc).__name__}",
                     "staff_ready": False,
                     "human_commissioned": False,
                     "ledger_write": False,
@@ -29488,40 +29681,39 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 status=500,
             )
             return
-        surfaces = matrix.get("surfaces") if isinstance(matrix, dict) else []
-        if not isinstance(surfaces, list):
+        matrix_path = BETA_ROOT / "state" / "ops" / "testability-matrix.json"
+        surfaces: list = []
+        try:
+            matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
+            surfaces = matrix.get("surfaces") if isinstance(matrix, dict) else []
+            if not isinstance(surfaces, list):
+                surfaces = []
+        except (OSError, json.JSONDecodeError):
             surfaces = []
-        queue = [row for row in surfaces if isinstance(row, dict) and row.get("ready_to_test_now") == "yes"]
-        human_cards = [
-            row for row in surfaces
-            if isinstance(row, dict) and row.get("test_card") and row.get("ready_to_test_now") == "yes"
-        ]
+        queue = queue_payload.get("queue") or []
         self._send_json(
             {
                 "ok": True,
                 "title": "GIVE THIS TO A HUMAN NOW",
                 "queue": queue,
-                "human_test_cards": human_cards,
+                "human_test_cards": [],
                 "surfaces": surfaces,
+                "source": "core_work_items",
                 "feedback_href": "/progress#commissioning",
+                "note": queue_payload.get("note"),
                 "columns": [
-                    "surface",
-                    "route",
-                    "real_data",
-                    "core_actions",
-                    "permissions",
-                    "desktop",
-                    "phone",
-                    "human_tester",
-                    "last_human_result",
-                    "blocker",
-                    "next_repair",
-                    "ready_to_test_now",
+                    "title",
+                    "current_owner",
+                    "status_label",
+                    "evidence_required",
+                    "what_happens_next",
+                    "href",
                 ],
                 "person_id": identity.get("person_id"),
                 "staff_ready": False,
                 "human_commissioned": False,
                 "ledger_write": False,
+                "freshness": _umw.derived_view_status("war-room-commissioning"),
             }
         )
 

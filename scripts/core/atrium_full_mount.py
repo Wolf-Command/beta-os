@@ -18,7 +18,10 @@ UPSTREAM_PORT = 8790
 SECRETS_PATH = Path("/Users/wolfterminal/atrium-finance/data/beta/secrets.env")
 ZAYEN_PERSON = "PERS-ZAYEN"
 OWNER_PERSON = "PERS-MATT"
+# Sidecar assertion string (unchanged). Wolf Core seat may be Financial Controller.
 FINANCE_ROLE = "ROLE-AMG-FINANCE-OFFICER"
+FINANCE_ROLE_CONTROLLER = "ROLE-AMG-FINANCIAL-CONTROLLER"
+FINANCE_ROLES = frozenset({FINANCE_ROLE, FINANCE_ROLE_CONTROLLER})
 OWNER_ROLE = "ROLE-OWNER"
 ASSERTION_TTL = 60
 
@@ -52,7 +55,7 @@ def api_path(path: str) -> str:
 
 
 def is_sensitive(method: str, path: str, wolf_role: str) -> bool:
-    if wolf_role not in {FINANCE_ROLE, OWNER_ROLE}:
+    if wolf_role not in FINANCE_ROLES | {OWNER_ROLE}:
         return False
     api = api_path(path)
     if api == "/api/admin" or api.startswith("/api/admin/"):
@@ -121,7 +124,7 @@ def seat_allowed(person_id: str, conn) -> tuple[bool, str]:
         (pid,),
     ).fetchall()
     roles = {str(row[0]) for row in rows if row[0]}
-    if pid == ZAYEN_PERSON and FINANCE_ROLE in roles:
+    if pid == ZAYEN_PERSON and (roles & FINANCE_ROLES):
         if rbac.can(pid, "atrium.board.read", {"entity_id": "ENT-AMG"}, conn=conn):
             return True, FINANCE_ROLE
     return False, ""

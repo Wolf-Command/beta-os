@@ -1064,10 +1064,11 @@ def honesty_flags(conn: sqlite3.Connection | None = None) -> dict[str, Any]:
             # Row count. Zero rows is not a tolerance of 0.
             "live_variance_threshold": policy_rows,
             "variance_policy_display": (
-                "BLOCKED BY BUSINESS POLICY"
+                "UNSET — open policy control (do not invent a number)"
                 if policy_rows == 0
                 else "POLICY_ON_FILE"
             ),
+            "cash_variance_tolerance": "UNSET" if policy_rows == 0 else "SET",
             "live_monetary_authority": int(n_auth),
             "closer_active_assignments": int(closer_n),
             "closer_commissioning": (

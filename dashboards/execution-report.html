@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Execution &amp; Delegation Report</title>
+<style>
+  :root {
+    --bg: #f4f1ea; --card: #fffdf8; --text: #1c1915; --muted: #5c564c;
+    --line: #e4dccf; --accent: #1f4d3a;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0 auto; max-width: 820px; padding: 16px 16px 88px;
+    background: var(--bg); color: var(--text); font-family: var(--font);
+    font-size: 17px; line-height: 1.4;
+  }
+  h1 { font-size: 1.35rem; margin: 0 0 8px; }
+  .muted { color: var(--muted); }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px; margin-top: 10px;
+  }
+  .err { color: #8d1d1d; }
+  select, button {
+    font: inherit; min-height: 44px; margin-top: 8px;
+  }
+  button {
+    border: 0; border-radius: 12px; background: var(--accent); color: #fff; padding: 0 16px;
+  }
+</style>
+</head>
+<body data-wolf-page-type="WORKSPACE" data-wolf-shell="global">
+  <h1>Execution &amp; Delegation Report</h1>
+  <p class="muted">Plain counts only. No judgement labels.</p>
+  <p class="muted" id="fresh"></p>
+  <label for="period">Period</label>
+  <select id="period">
+    <option value="day">Day</option>
+    <option value="week" selected>Week</option>
+    <option value="month">Month</option>
+  </select>
+  <button type="button" id="go">Refresh</button>
+  <div id="msg"></div>
+  <div id="rows"></div>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+  function load() {
+    const period = $("period").value;
+    fetch(`/api/my-work/execution-report?period=${encodeURIComponent(period)}`, {
+      headers: { Accept: "application/json" }
+    })
+      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok || data.ok === false) {
+          $("msg").innerHTML = `<p class="err">${esc(data.message || "Report denied.")}</p>`;
+          return;
+        }
+        $("msg").innerHTML = "";
+        const fresh = (data.freshness || {}).status || "";
+        $("fresh").textContent = fresh ? `View: ${fresh}` : "";
+        $("rows").innerHTML = (data.people || []).map((row) => `
+          <article class="card" data-person="${esc(row.person_id)}">
+            <p><strong>${esc(row.name)}</strong></p>
+            <p>${esc(row.sentence)}</p>
+            <p class="muted">Accepted ${esc(row.accepted)} · On time ${esc(row.on_time)} · Overdue ${esc(row.overdue)} · Blocked ${esc(row.blocked)} · Returned ${esc(row.returned)} · Unresolved ${esc(row.unresolved)}</p>
+            <p class="muted">Evidence files on completed ${esc(row.evidence_completeness_completed_with_file)} · Avg hours ${esc(row.average_completion_hours ?? "—")}</p>
+          </article>`).join("");
+        document.body.setAttribute("data-ready", "1");
+      })
+      .catch((err) => {
+        $("msg").innerHTML = `<p class="err">${esc(err.message || "Report failed.")}</p>`;
+      });
+  }
+  $("go").onclick = load;
+  load();
+})();
+</script>
+</body>
+</html>

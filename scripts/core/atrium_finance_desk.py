@@ -15,7 +15,9 @@ from core import atrium_books as _ledger
 from core import fin_accounting_core as _books
 from core import ggv_finance_invoice as _invoice
 from core import rbac as _rbac
-from core.staff_access import ROLE_ATRIUM_FINANCE
+from core.staff_access import ROLE_ATRIUM_FINANCE, ROLE_ATRIUM_FINANCIAL_CONTROLLER
+
+_ATRIUM_FINANCE_ROLES = (ROLE_ATRIUM_FINANCIAL_CONTROLLER, ROLE_ATRIUM_FINANCE)
 
 ENTITY = "ENT-AMG"
 ENTITY_LABEL = "Atrium"
@@ -207,17 +209,18 @@ def _require(person_id: str, code: str, conn, message: str) -> None:
 
 
 def _assignment_id(conn, person_id: str) -> str | None:
+    marks = ",".join("?" for _ in _ATRIUM_FINANCE_ROLES)
     row = conn.execute(
-        """
+        f"""
         SELECT a.assignment_id
         FROM org_assignments a
         JOIN org_positions p ON p.position_id = a.position_id
         WHERE a.person_id=? AND a.status='ACTIVE' AND a.end_at IS NULL
-          AND p.role_id=? AND p.status='ACTIVE'
+          AND p.role_id IN ({marks}) AND p.status='ACTIVE'
         ORDER BY a.is_primary DESC, a.assignment_id
         LIMIT 1
         """,
-        (person_id, ROLE_ATRIUM_FINANCE),
+        (person_id, *_ATRIUM_FINANCE_ROLES),
     ).fetchone()
     if row is None:
         return None

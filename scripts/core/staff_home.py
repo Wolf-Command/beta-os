@@ -78,7 +78,11 @@ def _owner_role(row: dict[str, Any]) -> bool:
 
 
 def _atrium_finance_role(row: dict[str, Any]) -> bool:
-    return str(row.get("role_id") or "") == "ROLE-AMG-FINANCE-OFFICER"
+    role = str(row.get("role_id") or "")
+    return role in {
+        "ROLE-AMG-FINANCE-OFFICER",
+        "ROLE-AMG-FINANCIAL-CONTROLLER",
+    }
 
 
 def _finance_role(row: dict[str, Any]) -> bool:
@@ -605,56 +609,56 @@ def _staff_sections(
     experience: str = "",
     scope_ids: set[str] | None = None,
 ) -> list[dict[str, Any]]:
-    mine = _clean_work(_work_rows(conn, entities, ("OPEN", "IN_PROGRESS", "BLOCKED"), person_id))
-    today = [
-        _item(r["work_item_id"], r["title"], href=_work_href(r["work_item_id"]), status=r["status"])
-        for r in mine
-        if r["status"] in {"OPEN", "IN_PROGRESS"}
-    ]
-    blocked = [
-        _item(r["work_item_id"], r["title"], href=_work_href(r["work_item_id"]), status=r["status"])
-        for r in mine
-        if r["status"] == "BLOCKED"
-    ]
-    done_rows = _clean_work(
-        _work_rows(conn, entities, ("COMPLETED", "VERIFIED"), person_id)
-    )
-    done = [
-        _item(r["work_item_id"], r["title"], href=_work_href(r["work_item_id"]), status=r["status"])
-        for r in done_rows[:8]
-    ]
-    mine_ids = {str(r["work_item_id"]) for r in mine}
-    if experience in {"creative_director", "content_creator"}:
-        today = _stored_plan_items(conn, scope_ids or set()) + today
-    for ev in _evidence_rows(conn, entities):
-        if str(ev.get("submitted_by_person_id") or "") != person_id:
-            continue
-        if _demo(ev.get("evidence_id"), ev.get("evidence_type"), person_id):
-            continue
-        done.append(_item(str(ev["evidence_id"]), f"Evidence recorded: {ev.get('evidence_type') or 'record'}"))
-        if len(done) >= 8:
-            break
+    """Universal My Work sections over core_work_items (+ Habitat plans for content)."""
+    from core import universal_my_work as umw
 
-    attention = list(blocked)
-    waiting = []
+    extra_today: list[dict[str, Any]] = []
+    if experience in {"creative_director", "content_creator"}:
+        extra_today = _stored_plan_items(conn, scope_ids or set())
+    sections = umw.build_universal_sections(
+        person_id, conn=conn, extra_today=extra_today
+    )
+    # Keep approval-queue attention/waiting from the prior projection.
+    mine = _clean_work(
+        _work_rows(
+            conn,
+            entities,
+            ("OPEN", "IN_PROGRESS", "BLOCKED", "WAITING", "RETURNED", "REASSIGNED"),
+            person_id,
+        )
+    )
+    mine_ids = {str(r["work_item_id"]) for r in mine}
+    by_key = {str(s.get("key")): s for s in sections}
+    attention = list(by_key.get("attention", {}).get("items") or [])
+    waiting = list(by_key.get("waiting", {}).get("items") or [])
     for ap in _approval_rows(conn, entities):
         if _demo(ap.get("approval_request_id"), ap.get("title"), ap.get("requested_by_person_id")):
             continue
         title = str(ap.get("title") or "Request")
         linked = str(ap.get("linked_work_item_id") or "")
         href = _work_href(linked) if linked else None
+        row = _item(str(ap["approval_request_id"]), title, href=href, status="PENDING")
         if str(ap.get("requested_by_person_id") or "") == person_id or (linked and linked in mine_ids):
-            waiting.append(_item(str(ap["approval_request_id"]), title, href=href, status="PENDING"))
+            waiting.append(row)
             continue
         needed = str(ap.get("required_permission_code") or "")
         if "approval.decide" in codes and (not needed or needed in codes):
-            attention.append(_item(str(ap["approval_request_id"]), title, href=href, status="PENDING"))
-
+            attention.append(row)
+    if not (by_key.get("today", {}).get("items")):
+        by_key["today"]["empty"] = True
+        by_key["today"]["empty_message"] = today_empty
+    by_key["attention"]["items"] = attention[:20]
+    by_key["attention"]["empty"] = not attention
+    by_key["attention"]["empty_message"] = None if attention else "Nothing needs your attention."
+    by_key["waiting"]["items"] = waiting[:20]
+    by_key["waiting"]["empty"] = not waiting
+    by_key["waiting"]["empty_message"] = None if waiting else "You are not waiting on anyone."
     return [
-        _section("today", "What do I need to do today?", today[:12], today_empty),
-        _section("attention", "What needs my attention?", attention[:12], "Nothing needs your attention."),
-        _section("waiting", "What am I waiting for?", waiting[:12], "You are not waiting on anyone."),
-        _section("completed", "What did I recently complete?", done[:8], "Nothing completed recently."),
+        by_key["today"],
+        by_key["do_this_next"],
+        by_key["attention"],
+        by_key["waiting"],
+        by_key["completed"],
     ]
 
 
@@ -743,17 +747,52 @@ def build_home(person_id: str | None, *, conn=None) -> dict[str, Any]:
         brands = _brands(c, [s["id"] for s in scope_rows])
         codes = _permission_codes(c, pid)
         entities = wi.visible_entity_ids_for_person(pid, conn=c)
+        # MYWORK-1: every seated person gets universal My Work sections.
+        sections = _staff_sections(
+            c,
+            pid,
+            entities,
+            codes,
+            today_empty=_today_empty(experience),
+            experience=experience,
+            scope_ids={str(s["id"]) for s in scope_rows},
+        )
         if experience == "owner_pulse":
-            sections = _owner_sections(c, entities, codes, pid)
-        else:
-            sections = _staff_sections(
-                c,
-                pid,
-                entities,
-                codes,
-                today_empty=_today_empty(experience),
-                experience=experience,
-                scope_ids={str(s["id"]) for s in scope_rows},
+            from core import universal_my_work as umw
+
+            pulse = _owner_sections(c, entities, codes, pid)
+            by = {str(s.get("key")): s for s in sections}
+            attn = list(by.get("attention", {}).get("items") or [])
+            for block in pulse:
+                if block.get("key") in {"wrong", "blocked", "authority", "money"}:
+                    for item in block.get("items") or []:
+                        attn.append(item)
+            for exc in umw.owner_work_exceptions(c):
+                attn.append(exc)
+            by["attention"]["items"] = attn[:24]
+            by["attention"]["empty"] = not attn
+            by["attention"]["empty_message"] = None if attn else "Nothing needs your attention."
+            sections = [
+                by["today"],
+                by["do_this_next"],
+                by["attention"],
+                by["waiting"],
+                by["completed"],
+            ]
+            # Keep pulse available for Owner Command compatibility.
+            sections.append(
+                {
+                    "key": "owner_overwatch",
+                    "title": "OVERWATCH",
+                    "empty": False,
+                    "empty_message": None,
+                    "items": [],
+                    "note": (
+                        "Visibility and exception awareness across company scopes. "
+                        "Routine work does not route through the Owner."
+                    ),
+                    "pulse": pulse,
+                }
             )
         display = str(person.get("display_name") or "").strip() or "there"
         role_label = str(role.get("role_label") or role.get("position_label") or "Your role")

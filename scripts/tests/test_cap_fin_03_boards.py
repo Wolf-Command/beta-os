@@ -259,7 +259,12 @@ def test_live(before_ledger: str, before_canon: tuple) -> None:
     check("atrium books file is absent and unopened", atrium["commissioned_books_present"] is False and atrium["sample_opened"] is False)
     check("uma desk is operations under ENT-BZG", uma["entity_id"] == "ENT-BZG" and uma["kind"] == "operations")
     check("uma sentence is present", uma["sentence_present"] is True)
-    check("uma closer stays unseated", uma["closer_active_assignments"] == 0 and uma["closer_seated_by_this_read"] is False)
+    # MYWORK-1 seated Devi on ROLE-BZG-CLOSER; this read still does not invent a seat.
+    check(
+        "uma closer roster is live and not invented by this read",
+        uma["closer_active_assignments"] >= 1 and uma["closer_seated_by_this_read"] is False,
+        str(uma.get("closer_active_assignments")),
+    )
     check("uma money is null", uma["money"] is None and uma["books_source"] == "UNAVAILABLE")
     check("accountant position is stored on GGV", report["accountant_position_stored"] is True and report["accountant_entity_id"] == "ENT-GGV")
     check("accountant seat is empty", report["accountant_seat_empty"] is True and report["accountant_active_assignments"] == 0)

@@ -1,0 +1,101 @@
+{
+  "migration_id": "030_mywork1_universal",
+  "ran_at": "2026-09-29T07:57:01+08:00",
+  "backup": "/Users/wolfterminal/beta-os/catalog/backups/content_library-mywork1-20260929-075701.sqlite",
+  "assignments": {
+    "zayen_ended": "ASG-ZAYEN-FIN-1",
+    "zayen_new": "ASG-ZAYEN-FC-1",
+    "devi_closer": "ASG-DEVI-CLOSER-UMA-1",
+    "matt_overwatch_scopes": [
+      "SCOPE-AMG-FINANCE",
+      "SCOPE-AMG-ATR-DAY"
+    ],
+    "cash_variance_tolerance": "UNSET",
+    "atrium_denied_unchanged": [
+      "atrium.journal.approve",
+      "atrium.journal.post",
+      "payment.approve",
+      "payment.execute",
+      "vendor.bank.change",
+      "finance.policy.admin",
+      "finance.nota.read",
+      "finance.nota.create",
+      "organisation.role.read",
+      "organisation.person.read",
+      "progress.read",
+      "amg.day.operator",
+      "core.operator",
+      "approval.decide",
+      "content.plan.read",
+      "governance.exception.authorise"
+    ]
+  },
+  "commissioning": {
+    "issued": 28,
+    "work_item_ids": [
+      "WI-981a3007-3077-46f5-9b56-972c912ffd43",
+      "WI-22cd520c-5a7a-46b5-8260-e880c6688e96",
+      "WI-f4736867-7366-4134-a1a7-c40e1b85e441",
+      "WI-a291f05b-7d97-4a75-b569-8391406885af",
+      "WI-be1c7183-b1cd-49fb-9dac-6158d5e9e8b5",
+      "WI-670059bd-a1d9-4935-9316-c1833493af3e",
+      "WI-271ea881-dbb9-4970-8d4d-fa74e697dd67",
+      "WI-98f729af-9fb5-479f-af71-22edffd96d04",
+      "WI-4d3b1a39-6e4b-4fcd-89ca-3eac3cf3c8c1",
+      "WI-ffd19414-d1d7-44d8-8bc9-4ba14119beff",
+      "WI-4fb5008e-7f14-4259-bf94-b4cf22462cac",
+      "WI-c741d019-39af-44d3-a2b3-98a2c9e0002b",
+      "WI-fd5b7dbd-8f9e-49c7-90cd-7d6936e181aa",
+      "WI-a7d94fbf-b1d8-42ac-8e55-5f26e3459964",
+      "WI-60aefde7-9774-4645-8198-e2eb67588156",
+      "WI-3d556095-4045-4182-9958-569ab4a6f462",
+      "WI-1e0bbaca-270b-48f6-84f7-4a7656581758",
+      "WI-dd562a5a-5d66-4184-ac25-b582e9bac4a7",
+      "WI-8daee1ef-bb0c-4700-ab7c-f8351cf5856a",
+      "WI-60770d1c-3071-4c6b-a46f-37c41780374d",
+      "WI-01247946-ee2b-4d78-b0dc-cb4ffc1b0f42",
+      "WI-89291c5e-8ca2-45b3-a5d6-95f6e42333a5",
+      "WI-bb0566f5-2527-46af-bdb3-bcd32369f3fe",
+      "WI-4cb9c3df-1a7a-4a34-9da3-02cd5578e4f7",
+      "WI-3164ba21-6233-47d5-b7c6-90724cc9fc0c",
+      "WI-1b75feef-e94a-4e14-a14a-eb1e22d27b4a",
+      "WI-54dcd441-5938-4ede-a4de-2c281ed520a9",
+      "WI-525fd269-7bfe-4f77-8b5a-393c09ac8a68"
+    ]
+  },
+  "legacy_import": {
+    "proposed": 148,
+    "imported": 148,
+    "duplicate_linked": 0,
+    "unknown_review": 5,
+    "skipped_obsolete": 0,
+    "skipped_existing": 0,
+    "failed": 0,
+    "status": "IMPORTED",
+    "proposal_path": "/Users/wolfterminal/beta-os/state/legacy/proposed-migration.json"
+  },
+  "clickup_cut_line": {
+    "brief": "MYWORK-1",
+    "as_of": "2026-09-29T07:57:01+08:00",
+    "status": "CUT_LINE_RECORDED",
+    "wolf_clickup_writes": false,
+    "wolf_new_clickup_dependencies": false,
+    "history_readable": true,
+    "nothing_deleted_in_clickup": true,
+    "live_open_inbox_ids_as_of_legacy1": [
+      "86exu7c40",
+      "86exuxtgv",
+      "86exvqrw6",
+      "86exx1kxq",
+      "86exzzn5a",
+      "z8wf5rf9ej",
+      "z8wf5rfh2a",
+      "z8wf5rfjc9",
+      "z8wf5rfptv",
+      "z8wf5rfqa8"
+    ],
+    "note": "ClickUp remains readable history. Wolf My Work is now the create path for new staff work. Do not delete ClickUp archive. Bridge may stay read-only."
+  },
+  "staff_ready": false,
+  "human_commissioned": false
+}
