@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AMG Occupancy Truth-1 — UNKNOWN when PMS blocked</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1c1915;
+      --muted: #5c574e;
+      --paper: #f3f1ec;
+      --card: #fffdf8;
+      --line: #ddd6c8;
+      --warn: #8a1f1f;
+      --accent: #6b4a18;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(ellipse 70% 40% at 0% 0%, #ebe4d6 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 80px; }
+    .crumb { font-size: 0.78rem; color: var(--muted); margin: 0 0 8px; }
+    h1 {
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: 1.75rem;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #f5efe3; border: 1px solid #d2c4a4; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner.warn {
+      background: #f8eaea; border-color: #e0b8b8; color: var(--warn);
+    }
+    .banner strong { color: #5a4a28; }
+    .banner.warn strong { color: var(--warn); }
+    h2 {
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin: 22px 0 10px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .tile {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 10px;
+      padding: 14px;
+      min-height: 120px;
+    }
+    .tile.blocked, .tile.warn {
+      border-color: #e0b8b8;
+      background: #fff5f3;
+    }
+    .tile .k {
+      font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .tile .v {
+      font-family: var(--display);
+      font-size: 1.45rem;
+      margin: 6px 0 4px;
+      font-weight: 600;
+      color: var(--warn);
+    }
+    .tile .stamp {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--warn);
+      border: 1px solid #e0b8b8;
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin: 4px 0;
+    }
+    .tile .why { font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
+    .stamp {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 4px 8px;
+      margin: 0 8px 8px 0;
+      font-size: 0.78rem;
+      background: #fff;
+    }
+    .stamp.bad { border-color: #e0b8b8; color: var(--warn); }
+    .links a {
+      display: block;
+      color: var(--ink);
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: var(--card);
+    }
+    .links a:hover { border-color: #b8a888; }
+    .links .note { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+    .empty-queue {
+      border: 1px dashed #e0b8b8;
+      border-radius: 10px;
+      padding: 28px 18px;
+      text-align: center;
+      color: var(--muted);
+      background: #fff5f3;
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+    .empty-queue strong { color: var(--warn); display: block; margin-bottom: 6px; font-size: 1.15rem; }
+  </style>
+</head>
+<body
+  data-ready="0"
+  data-deny=""
+  data-pack="AMG-OCC-TRUTH-1"
+  data-wolf-page-type="WORKSPACE"
+  data-wolf-org="AMG"
+  data-wolf-shell="global"
+  data-occupancy-unknown="0"
+  data-occupancy-blocked="0"
+  data-invented-occupancy="0"
+  data-cap-amg-01-unblocked="0"
+  data-yanolja-blocked="0"
+  data-shell-preserved="0"
+  data-staff-ready="0"
+  data-human-commissioned="0"
+>
+  <main>
+    <p class="crumb">WOLF · Atrium · Occupancy Truth-1 (UNKNOWN when PMS blocked)</p>
+    <h1>AMG occupancy truth desk</h1>
+    <p class="sub">Honesty over AMG-OS-SHELL-1 — UNKNOWN/BLOCKED when Yanolja PMS is blocked. No invented occupancy. Does not unblock CAP-AMG-01. staff_ready=false · human_commissioned=false. Preserves AMG-OS-SHELL-1.</p>
+
+    <div class="banner warn" id="honesty">
+      Loading honesty pins…
+    </div>
+
+    <div id="stamps" aria-label="Honesty stamps"></div>
+
+    <h2>Occupancy slots</h2>
+    <div id="slots"></div>
+
+    <h2>Honesty tiles</h2>
+    <div class="grid" id="tiles"></div>
+
+    <h2>Preserved packs</h2>
+    <div class="grid" id="preserved"></div>
+
+    <h2>Existing desks</h2>
+    <div class="links" id="links"></div>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function render(body) {
+      var yan = body.yanolja || {};
+      var banner = document.getElementById("honesty");
+      banner.className = "banner warn";
+      banner.innerHTML =
+        "<strong>Honesty:</strong> occupancy UNKNOWN · BLOCKED_EXTERNAL · " +
+        "invented_occupancy=false · cap_amg_01_unblocked=false · " +
+        "Yanolja " + esc(yan.audit_status || "BLOCKED_EXTERNAL") +
+        " · last_success=null · staff_ready=false · human_commissioned=false · " +
+        "CAP-AMG occupancy " + esc(body.cap_amg_occ_maturity || "SPECIFIED") +
+        " (ceiling " + esc(body.cap_amg_occ_ceiling || "BUILT") + ") · " +
+        "AMG-OS-SHELL-1 " + (body.amg_os_shell1_preserved ? "PRESERVED" : "CHECK") + ".";
+
+      var stamps = [
+        ["staff_ready=false", true],
+        ["human_commissioned=false", true],
+        ["occupancy UNKNOWN", true],
+        ["BLOCKED_EXTERNAL", true],
+        ["invented_occupancy=false", true],
+        ["cap_amg_01_unblocked=false", true],
+        ["CAP-AMG occupancy not PROVEN", true],
+        ["AMG-OS-SHELL-1 preserved", body.amg_os_shell1_preserved === true]
+      ];
+      document.getElementById("stamps").innerHTML = stamps.map(function (row) {
+        return '<span class="stamp' + (row[1] ? " bad" : "") + '">' + esc(row[0]) + "</span>";
+      }).join("");
+
+      var slots = body.occ_slots || [];
+      var slotHtml =
+        "<div class='empty-queue' data-occupancy='unknown'>" +
+        "<strong>UNKNOWN</strong>" +
+        "PMS blocked — occupancy is UNKNOWN, not zero, not invented. " +
+        "value=null · occupancy_pct=null · BLOCKED_EXTERNAL." +
+        "</div>" +
+        "<div class='grid' style='margin-top:10px'>";
+      slotHtml += slots.map(function (s) {
+        return (
+          '<div class="tile blocked" data-slot="' + esc(s.id) + '">' +
+          '<div class="k">' + esc(s.label) + "</div>" +
+          '<div class="v">' + esc(s.display || "UNKNOWN") + "</div>" +
+          '<span class="stamp">' + esc(s.status || "BLOCKED_EXTERNAL") + "</span>" +
+          '<div class="why">' + esc(s.why || "") + "</div>" +
+          "</div>"
+        );
+      }).join("");
+      slotHtml += "</div>";
+      document.getElementById("slots").innerHTML = slotHtml;
+
+      document.getElementById("tiles").innerHTML = (body.honesty_tiles || []).map(function (t) {
+        return (
+          '<div class="tile warn" data-tile="' + esc(t.id) + '">' +
+          '<div class="k">' + esc(t.label) + "</div>" +
+          '<div class="v">' + esc(t.status || "UNKNOWN") + "</div>" +
+          '<div class="why">' + esc(t.why || "") + "</div>" +
+          "</div>"
+        );
+      }).join("");
+
+      var shell = body.amg_os_shell1 || {};
+      var rows = [
+        ["AMG-OS-SHELL-1", shell.ok ? "PRESERVED" : "CHECK", "PMS tiles BLOCKED_EXTERNAL · UNKNOWN"]
+      ];
+      document.getElementById("preserved").innerHTML = rows.map(function (row) {
+        return (
+          '<div class="tile" data-preserved="' + esc(row[0]) + '">' +
+          '<div class="k">' + esc(row[0]) + "</div>" +
+          '<div class="v">' + esc(row[1]) + "</div>" +
+          '<div class="why">' + esc(row[2]) + "</div></div>"
+        );
+      }).join("");
+
+      document.getElementById("links").innerHTML = (body.desk_links || []).map(function (l) {
+        return '<a href="' + esc(l.href) + '"><strong>' + esc(l.label) + "</strong>" +
+          '<div class="note">' + esc(l.note || "") + "</div></a>";
+      }).join("");
+
+      document.body.setAttribute("data-ready", body.ok === true ? "1" : "0");
+      document.body.setAttribute(
+        "data-occupancy-unknown",
+        body.occupancy_unknown === true ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-occupancy-blocked",
+        body.occupancy_blocked === true ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-invented-occupancy",
+        body.invented_occupancy === true ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-cap-amg-01-unblocked",
+        body.cap_amg_01_unblocked === true ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-yanolja-blocked",
+        (yan.audit_status === "BLOCKED_EXTERNAL") ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-shell-preserved",
+        body.amg_os_shell1_preserved === true ? "1" : "0"
+      );
+      document.body.setAttribute("data-staff-ready", body.staff_ready === true ? "1" : "0");
+      document.body.setAttribute(
+        "data-human-commissioned",
+        body.human_commissioned === true ? "1" : "0"
+      );
+    }
+
+    fetch("/api/amg/occ-truth-1", { headers: { "Accept": "application/json" } })
+      .then(function (r) {
+        return r.json().then(function (j) { return { status: r.status, body: j }; });
+      })
+      .then(function (res) {
+        if (res.status === 403 || res.status === 401) {
+          document.body.setAttribute("data-deny", String(res.status));
+          document.body.setAttribute("data-ready", "0");
+          document.getElementById("honesty").textContent =
+            "HTTP " + res.status + " — unsigned or unauthorised callers are refused.";
+          return;
+        }
+        render(res.body || {});
+      })
+      .catch(function () {
+        document.body.setAttribute("data-ready", "0");
+        document.getElementById("honesty").textContent =
+          "AMG-OCC-TRUTH-1 slice could not be read.";
+      });
+  </script>
+</body>
+</html>

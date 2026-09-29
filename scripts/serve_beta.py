@@ -168,6 +168,7 @@ from core import intg_truth_board as _intg_truth
 from core import reliability1 as _reliability1
 from core import content_engine_live1 as _content_engine_live1
 from core import amg_os_shell as _amg_os_shell
+from core import amg_occ_truth1 as _amg_occ_truth1
 from core import ggv_content_prove1 as _ggv_content_prove
 from core import crm_identity_memory as _crm_ident
 from core import crm_identity_operator_depth as _crm_ident_depth
@@ -2072,6 +2073,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._conn_health_board1_dispatch():
+            return
+
+        if self._amg_occ_truth1_dispatch():
             return
 
         if path == "/api/wolf/shell-whoami":
@@ -5126,6 +5130,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._amg_os_shell_dispatch():
                 return
         elif path in (
+            "/amg/occ-truth-1",
+            "/amg/occ-truth-1/",
+            "/amg/occ-truth",
+            "/amg/occ-truth/",
+            "/amg-occ-truth-1",
+            "/amg-occ-truth-1/",
+            "/amg-occ-truth",
+            "/amg-occ-truth/",
+            "/amg-occ-truth-1.html",
+            "/dashboards/amg-occ-truth-1.html",
+        ):
+            if self._amg_occ_truth1_dispatch():
+                return
+        elif path in (
             "/ggv/content-prove",
             "/ggv/content-prove/",
             "/ggv-content-prove",
@@ -6076,6 +6094,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
             self._fin_cash_truth1_write_refused(path)
             return
+        if path == "/api/amg/occ-truth-1" or path.startswith("/api/amg/occ-truth-1/"):
+            self._amg_occ_truth1_write_refused(path)
+            return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
             return
@@ -6924,6 +6945,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
             self._fin_cash_truth1_write_refused(path)
+            return
+        if path == "/api/amg/occ-truth-1" or path.startswith("/api/amg/occ-truth-1/"):
+            self._amg_occ_truth1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -8178,6 +8202,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
             self._fin_cash_truth1_write_refused(path)
+            return
+        if path == "/api/amg/occ-truth-1" or path.startswith("/api/amg/occ-truth-1/"):
+            self._amg_occ_truth1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -15652,6 +15679,101 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return True
         self._send_html_shell(page.read_bytes(), rel="amg-os-shell.html")
         return True
+
+
+    def _amg_occ_truth1_dispatch(self) -> bool:
+        """AMG-OCC-TRUTH-1 — occupancy honesty; UNKNOWN when PMS blocked."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _amg_occ_truth1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _amg_occ_truth1.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "occ_truth_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "fake_pms_data": False,
+                        "invented_occupancy": False,
+                        "cap_amg_01_unblocked": False,
+                        "occupancy_unknown": True,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _amg_occ_truth1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "amg-occ-truth-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "AMG-OCC-TRUTH-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="amg-occ-truth-1.html")
+        return True
+
+    def _amg_occ_truth1_write_refused(self, path: str) -> None:
+        """Refuse invent-occupancy / unblock-PMS writes on AMG-OCC-TRUTH-1."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _amg_occ_truth1.refuse_external_write(body if isinstance(body, dict) else {})
+        except _amg_occ_truth1.AmgOccTruth1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "fake_pms_data": False,
+                    "invented_occupancy": False,
+                    "cap_amg_01_unblocked": False,
+                    "occupancy_unknown": True,
+                    "prod_pid_held": _amg_occ_truth1.PROD_PID_HELD,
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": "AMG-OCC-TRUTH-1 is occupancy honesty only. Writes refused.",
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+            },
+            status=403,
+        )
 
     def _ggv_content_prove_dispatch(self) -> bool:
         """GGV-CONTENT-PROVE-1 — Content Machine prove/harden; no fake metrics."""

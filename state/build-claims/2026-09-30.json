@@ -338,6 +338,20 @@
       "expect": "exit 0",
       "by": "conn-health-board1-20260930",
       "at": "2026-09-30T03:36:20+08:00"
+    },
+    {
+      "id": "amg-occ-truth1-unknown-blocked",
+      "claim": "AMG-OCC-TRUTH-1: occupancy slots UNKNOWN/BLOCKED_EXTERNAL with null values; Yanolja BLOCKED_EXTERNAL; cap_amg_01_unblocked false; invented_occupancy false; AMG-OS-SHELL-1 preserved; staff_ready/human_commissioned false; next pack parent-only SOP-LESSON-LIVE-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import amg_occ_truth1 as o; p=o.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('cap_amg_01_unblocked') is False and p.get('invented_occupancy') is False and p.get('occupancy_unknown') is True and p.get('amg_os_shell1_preserved') is True and o.all_occ_slots_unknown(p) and o.yanolja_stays_blocked(p) and o.honesty_flags().get('next_pack_for_parent_only')=='SOP-LESSON-LIVE-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "amg-occ-truth1-20260930"
+    },
+    {
+      "id": "amg-occ-truth1-routes-shots",
+      "claim": "AMG-OCC-TRUTH-1 page/API/shots/RESULT present; unsigned deny + suite PASS=187; next pack parent-only SOP-LESSON-LIVE-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import amg_occ_truth1 as o; from pathlib import Path; html=Path('dashboards/amg-occ-truth-1.html').read_text(); import sys; sys.exit(0 if (o.api_matches('/api/amg/occ-truth-1') and o.page_matches('/amg/occ-truth-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/amgocctruth1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/AMG-OCC-TRUTH-1-RESULT.md').is_file() and o.honesty_flags().get('next_pack_for_parent_only')=='SOP-LESSON-LIVE-1' and o.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "amg-occ-truth1-20260930"
     }
   ]
 }

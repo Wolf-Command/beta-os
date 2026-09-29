@@ -4,7 +4,7 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 5,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T03:39:00+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
@@ -34,5 +34,26 @@
   ],
   "preserves": [
     "AMG-OS-SHELL-1"
-  ]
+  ],
+  "launched_at": "2026-09-30T03:39:30+08:00",
+  "cursor_pid": 37564,
+  "child_alive": false,
+  "exited_at": "2026-09-30T03:43:13+08:00",
+  "suite_result": "PASS=187 FAIL=0",
+  "shots": [
+    "docs/wolf/ops/shots/amgocctruth1-desk-desktop.png",
+    "docs/wolf/ops/shots/amgocctruth1-desk-phone.png",
+    "docs/wolf/ops/shots/amgocctruth1-occ-unknown.png",
+    "docs/wolf/ops/shots/amgocctruth1-shell-preserved.png",
+    "docs/wolf/ops/shots/amgocctruth1-unsigned-deny.png"
+  ],
+  "cap_amg_01_unblocked": false,
+  "invented_occupancy": false,
+  "cursor_did_not_auto_start_next": true,
+  "awaiting_peaches_verify": false,
+  "exit_code": 0,
+  "tests_pass": 187,
+  "tests_fail": 0,
+  "peaches_verified_at": "2026-09-30T03:46:00+08:00",
+  "peaches_verify": "state/final-completion/packs/AMG-OCC-TRUTH-1-PEACHES-VERIFY.json"
 }
