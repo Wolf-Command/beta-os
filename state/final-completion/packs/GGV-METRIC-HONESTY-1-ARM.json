@@ -4,7 +4,7 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 6,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T04:12:00+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
@@ -36,5 +36,40 @@
   "preserves": [
     "CONTENT-ENGINE-LIVE-1",
     "GGV-CONTENT-PROVE-1"
-  ]
+  ],
+  "launched_at": "2026-09-30T04:12:30+08:00",
+  "cursor_pid": 42949,
+  "child_alive": true,
+  "exit_code": 0,
+  "exited_at": "2026-09-30T04:16:25+08:00",
+  "tests": {
+    "pass": 214,
+    "fail": 0
+  },
+  "suite": "scripts/tests/test_ggv_metric_honesty1_20260930.py",
+  "shots": [
+    "docs/wolf/ops/shots/ggvmetric1-desk-desktop.png",
+    "docs/wolf/ops/shots/ggvmetric1-desk-phone.png",
+    "docs/wolf/ops/shots/ggvmetric1-metricool-not-runtime.png",
+    "docs/wolf/ops/shots/ggvmetric1-packs-preserved.png",
+    "docs/wolf/ops/shots/ggvmetric1-unsigned-deny.png"
+  ],
+  "honesty": {
+    "metricool": "NOT_RUNTIME",
+    "engagement": null,
+    "publish_success": null,
+    "last_success": null,
+    "fake_metrics": false
+  },
+  "preserves_verified": [
+    "CONTENT-ENGINE-LIVE-1",
+    "GGV-CONTENT-PROVE-1"
+  ],
+  "cursor_did_not_auto_start_next": true,
+  "peaches_verified_at": "2026-09-30T07:26:00+08:00",
+  "peaches_verify": "state/final-completion/packs/GGV-METRIC-HONESTY-1-PEACHES-VERIFY.json",
+  "tests_pass": 214,
+  "tests_fail": 0,
+  "classification": "INTERNALLY_SOLVABLE",
+  "shell_ne_complete": true
 }

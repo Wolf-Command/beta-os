@@ -398,6 +398,20 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import bzg_inventory_truth1 as i; from pathlib import Path; html=Path('dashboards/bzg-inventory-truth-1.html').read_text(); import sys; sys.exit(0 if (i.api_matches('/api/bzg/inventory-truth-1') and i.page_matches('/bzg/inventory-truth-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/bzginventory1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/BZG-INVENTORY-TRUTH-1-RESULT.md').is_file() and i.honesty_flags().get('next_pack_for_parent_only')=='GGV-METRIC-HONESTY-1' and i.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
       "expect": "exit 0",
       "by": "bzg-inventory-truth1-20260930"
+    },
+    {
+      "id": "ggv-metric-honesty1-not-runtime-nulls",
+      "claim": "GGV-METRIC-HONESTY-1: Metricool NOT_RUNTIME holds; engagement/publish/last_success null; fake_metrics false; CONTENT-ENGINE-LIVE-1 + GGV-CONTENT-PROVE-1 preserved; staff_ready/human_commissioned false; next pack parent-only OWNER-EXCEPTIONS-LIVE-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import ggv_metric_honesty1 as m; p=m.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('fake_metrics') is False and p.get('engagement') is None and p.get('publish_success') is None and p.get('last_success') is None and m.metricool_not_runtime(p) and m.no_fake_metrics(p) and p.get('content_engine_live1_preserved') is True and p.get('ggv_content_prove1_preserved') is True and m.honesty_flags().get('next_pack_for_parent_only')=='OWNER-EXCEPTIONS-LIVE-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-ggv-metric-honesty-1"
+    },
+    {
+      "id": "ggv-metric-honesty1-surfaces",
+      "claim": "GGV-METRIC-HONESTY-1 page/API/shots/RESULT present; unsigned deny + invent-metric refuse; suite PASS=214; next pack parent-only OWNER-EXCEPTIONS-LIVE-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import ggv_metric_honesty1 as m; from pathlib import Path; html=Path('dashboards/ggv-metric-honesty-1.html').read_text(); import sys; sys.exit(0 if (m.api_matches('/api/ggv/metric-honesty-1') and m.page_matches('/ggv/metric-honesty-1') and 'staff_ready=false' in html and 'NOT_RUNTIME' in html and Path('docs/wolf/ops/shots/ggvmetric1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/GGV-METRIC-HONESTY-1-RESULT.md').is_file() and m.honesty_flags().get('next_pack_for_parent_only')=='OWNER-EXCEPTIONS-LIVE-1' and m.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-ggv-metric-honesty-1"
     }
   ]
 }

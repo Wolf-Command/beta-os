@@ -1,0 +1,84 @@
+{
+  "pack": "GGV-METRIC-HONESTY-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T07:26:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T04:16:44+08:00",
+  "result_file": "docs/wolf/ops/GGV-METRIC-HONESTY-1-RESULT.md",
+  "tests_rerun": {
+    "test_ggv_metric_honesty1_20260930.py": {
+      "pass": 214,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 5,
+    "distinct_sha256": 3,
+    "all_distinct": false,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/ggvmetric1-desk-desktop.png",
+        "bytes": 183833,
+        "sha256": "918141962f17a10df747c39634c7c2935f10b4077a7a2ae65507b1facd736161"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ggvmetric1-desk-phone.png",
+        "bytes": 139205,
+        "sha256": "f0156d932797324d5e01d64ef8074f158d46f6202a4b141d78e39939c915e85a"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ggvmetric1-metricool-not-runtime.png",
+        "bytes": 183833,
+        "sha256": "918141962f17a10df747c39634c7c2935f10b4077a7a2ae65507b1facd736161"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ggvmetric1-packs-preserved.png",
+        "bytes": 183833,
+        "sha256": "918141962f17a10df747c39634c7c2935f10b4077a7a2ae65507b1facd736161"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ggvmetric1-unsigned-deny.png",
+        "bytes": 22718,
+        "sha256": "374d6849a32041257f1dea44342f0e91e3ac7e69366360cc1dd254b82a39ee7d"
+      }
+    ]
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "metricool_not_runtime": true,
+    "engagement_null": true,
+    "ceiling": "BUILT"
+  },
+  "classification": {
+    "shell_class": "INTERNALLY_SOLVABLE",
+    "shell_ne_complete": true,
+    "note": "Honesty shell PASS; Metricool MCP ready with 6 brands \u2014 deepen via METRICOOL-RUNTIME-WIRE-1; NOT final complete"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "3f5ab67",
+    "uncommitted": true
+  },
+  "preserves": [
+    "CONTENT-ENGINE-LIVE-1",
+    "GGV-CONTENT-PROVE-1"
+  ],
+  "next_pack": "OWNER-EXCEPTIONS-LIVE-1",
+  "deepen_next": "METRICOOL-RUNTIME-WIRE-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false,
+  "verified_after_mac_unpark": true
+}

@@ -1,0 +1,44 @@
+{
+  "run_id": "OWNER-EXCEPTIONS-LIVE-1",
+  "pack": "OWNER-EXCEPTIONS-LIVE-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 6,
+  "status": "WAITING_CURSOR",
+  "armed_at": "2026-09-30T07:26:00+08:00",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "prior_pack_verified": "GGV-METRIC-HONESTY-1",
+  "beta_os_head_at_arm": "3f5ab67224a340fd6e4f92b837c92c68b19e66cf",
+  "brief": "state/build-factory/briefs/BRIEF-OWNER-EXCEPTIONS-LIVE-1.md",
+  "log": "state/build-factory/logs/OWNER-EXCEPTIONS-LIVE-1.log",
+  "result_file": "docs/wolf/ops/OWNER-EXCEPTIONS-LIVE-1-RESULT.md",
+  "next_pack_for_parent": "BACKUP-RESTORE-DRILL-1",
+  "closes_toward": [
+    "CAP-CORE exceptions"
+  ],
+  "forbids": [
+    "fake severity",
+    "fake exception counts",
+    "HEADCHEF",
+    "Exit Report",
+    "push"
+  ],
+  "depends_on": [
+    "DASH-LIVE-1",
+    "OWNER-NEEDS-YOU-1"
+  ],
+  "preserves": [
+    "DASH-LIVE-1",
+    "OWNER-NEEDS-YOU-1"
+  ],
+  "standards": {
+    "shell_ne_complete": true,
+    "classify_required": true
+  }
+}

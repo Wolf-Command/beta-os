@@ -1,0 +1,68 @@
+{
+  "at_wita": "2026-09-30T07:26:00+08:00",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "standards_lock": [
+    "SHELL_NE_COMPLETE",
+    "HONEST_EMPTY_NE_COMPLETE_WHERE_AUTHORISED",
+    "TESTS_NE_STAFF_READY_NE_HUMAN_COMMISSIONED_NE_OPERATING_ADOPTION",
+    "CLASSIFY_EVERY_SHELL",
+    "NO_EXIT_REPORT_UNTIL_PHASE_13"
+  ],
+  "ceilings": [
+    {
+      "surface": "Metricool NOT_RUNTIME (GGV-METRIC-HONESTY-1)",
+      "prior_pack_status": "PASS_VERIFIED_honesty_shell",
+      "classification": "INTERNALLY_SOLVABLE",
+      "evidence": "user-Metricool MCP serverStatus=ready; getBrandSettings returned 6 live brands (Atrium/Goss/Uma Blu/Habitat/Selo/Tropik)",
+      "next_pack": "METRICOOL-RUNTIME-WIRE-1",
+      "not_complete_until": "Beta board paints real last_success/engagement from authorised Metricool OR evidenced EXTERNAL_BLOCKER"
+    },
+    {
+      "surface": "ESB PARTIAL_IN_BETA / settlement UNAVAILABLE",
+      "classification": "EXTERNALLY_OR_HUMAN_TBD",
+      "evidence": "ESB-TRUTH-1 warehouse RO only; settlement_api UNAVAILABLE",
+      "next_pack": "ESB-SETTLEMENT-PATH-1",
+      "action": "Probe settlement path; if no creds \u2192 EXTERNAL_BLOCKER with evidence; else wire"
+    },
+    {
+      "surface": "Bank recon FILE_IMPORT_ONLY",
+      "classification": "HUMAN_COMMISSIONING_OR_EXTERNAL",
+      "evidence": "FIN-RECON/FIN-CASH file-import only; live scrape refused by design until bank creds commissioned",
+      "next_pack": "FIN-BANK-CREDS-ROUTE-1",
+      "action": "Route human commissioning for bank credentials; do not invent scrape"
+    },
+    {
+      "surface": "AMG occupancy UNKNOWN / Yanolja BLOCKED",
+      "classification": "EXTERNAL_BLOCKER",
+      "evidence": "Yanolja BLOCKED_EXTERNAL; CAP-AMG-01 not unblocked; Mews/Yanolja not available without owner/external",
+      "next_pack": null,
+      "action": "Hold EXTERNAL_BLOCKER; do not invent occupancy; Google NPWP remains Matt-only non-blocking"
+    },
+    {
+      "surface": "SOP live catalog ABSENT",
+      "classification": "INTERNALLY_SOLVABLE",
+      "evidence": "SOP-LESSON-LIVE-1 DEMO only; factory exists; seed-or-route human review without inventing live adoption",
+      "next_pack": "SOP-CATALOG-SEED-ROUTE-1"
+    },
+    {
+      "surface": "Inventory/cash UNKNOWN shells",
+      "classification": "HUMAN_COMMISSIONING_OR_INTERNAL",
+      "evidence": "BZG-INVENTORY / FIN-CASH honest UNKNOWN; deepen if count/bank systems exist with facts",
+      "next_pack": "INV-CASH-FACTS-ROUTE-1"
+    },
+    {
+      "surface": "Backup restore NOT_RUN",
+      "classification": "INTERNALLY_SOLVABLE",
+      "evidence": "BACKUP-HEALTH-1 left restore NOT_RUN; scripts/core/restore_drill.py exists; Matt authorised non-destructive drill",
+      "next_pack": "BACKUP-RESTORE-DRILL-1",
+      "action": "Run approved non-destructive restore drill; lift NOT_RUN"
+    },
+    {
+      "surface": "Mac local-exec pipe outage",
+      "classification": "INTERNALLY_SOLVABLE",
+      "evidence": "PIPE_OK proven 2026-09-30 ~07:23; overnight FAIL_CEILING; reliability reqs",
+      "next_pack": "PIPE-RELIABILITY-AUTO-1",
+      "action": "Detect/recover Mac local-exec under reliability board"
+    }
+  ]
+}

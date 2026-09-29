@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T04:12:00+08:00",
+  "at_wita": "2026-09-30T07:26:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -1048,9 +1048,18 @@
       ],
       "estimated_effort": "S",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "synthesized_from": "wave6 MISSING content",
-      "armed_at": "2026-09-30T04:12:00+08:00"
+      "armed_at": "2026-09-30T04:12:00+08:00",
+      "cursor_pid": 42949,
+      "launched_at": "2026-09-30T04:12:30+08:00",
+      "verified_at": "2026-09-30T07:26:00+08:00",
+      "tests": {
+        "pass": 214,
+        "fail": 0
+      },
+      "classification": "INTERNALLY_SOLVABLE",
+      "shell_ne_complete": true
     },
     {
       "pack_id": "OWNER-EXCEPTIONS-LIVE-1",
@@ -1077,8 +1086,152 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
+      "status": "WAITING_CURSOR",
+      "synthesized_from": "wave6 MISSING dashboards",
+      "armed_at": "2026-09-30T07:26:00+08:00"
+    },
+    {
+      "pack_id": "BACKUP-RESTORE-DRILL-1",
+      "title": "Non-destructive backup restore drill \u2014 lift NOT_RUN",
+      "closes": [
+        "reliability restore"
+      ],
+      "targets_classes": [
+        "PARTIAL",
+        "BUILT_NOT_PROVEN"
+      ],
+      "priority_bucket": "reliability",
+      "scope": [
+        "Run approved non-destructive restore drill via restore_drill.py",
+        "Stamp RESULT; lift BACKUP-HEALTH NOT_RUN"
+      ],
+      "forbids": [
+        "prod mutate",
+        "destructive wipe",
+        "fake restore PASS without drill"
+      ],
+      "depends_on": [
+        "BACKUP-HEALTH-1",
+        "RELIABILITY-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
       "status": "QUEUED",
-      "synthesized_from": "wave6 MISSING dashboards"
+      "classification": "INTERNALLY_SOLVABLE",
+      "synthesized_from": "Matt CONTINUE standards 20260930"
+    },
+    {
+      "pack_id": "PIPE-RELIABILITY-AUTO-1",
+      "title": "Mac local-exec pipe detect/recover under reliability",
+      "closes": [
+        "reliability pipe"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "PARTIAL"
+      ],
+      "priority_bucket": "reliability",
+      "scope": [
+        "Detect Mac pipe DOWN/GREEN on reliability board",
+        "Auto-recover hooks / documented recover path; no fake uptime"
+      ],
+      "forbids": [
+        "fake pipe UP",
+        "prod mutate"
+      ],
+      "depends_on": [
+        "RELIABILITY-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "classification": "INTERNALLY_SOLVABLE",
+      "synthesized_from": "Matt CONTINUE standards 20260930"
+    },
+    {
+      "pack_id": "METRICOOL-RUNTIME-WIRE-1",
+      "title": "Wire Metricool authorised runtime into Beta (MCP brands live)",
+      "closes": [
+        "CAP-GGV metrics",
+        "INT-MET-WOLF"
+      ],
+      "targets_classes": [
+        "PARTIAL",
+        "BUILT_NOT_PROVEN"
+      ],
+      "priority_bucket": "content",
+      "scope": [
+        "Replace NOT_RUNTIME with live Metricool brand/analytics stamps where MCP authorises",
+        "Never invent engagement"
+      ],
+      "forbids": [
+        "fake engagement",
+        "fake last_success"
+      ],
+      "depends_on": [
+        "GGV-METRIC-HONESTY-1",
+        "CONTENT-ENGINE-LIVE-1",
+        "INTG-TRUTH-1"
+      ],
+      "estimated_effort": "L",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "classification": "INTERNALLY_SOLVABLE",
+      "synthesized_from": "challenge Metricool ceiling \u2014 MCP ready 6 brands"
+    },
+    {
+      "pack_id": "ESB-SETTLEMENT-PATH-1",
+      "title": "ESB settlement path probe \u2014 wire or evidence EXTERNAL_BLOCKER",
+      "closes": [
+        "INT-ESB"
+      ],
+      "targets_classes": [
+        "PARTIAL"
+      ],
+      "priority_bucket": "connections",
+      "scope": [
+        "Probe settlement API path",
+        "Wire if authorised else stamp EXTERNAL_BLOCKER with evidence"
+      ],
+      "forbids": [
+        "fake settlement",
+        "invent P&L"
+      ],
+      "depends_on": [
+        "ESB-TRUTH-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "classification": "TBD_PROBE",
+      "synthesized_from": "challenge ESB partial ceiling"
+    },
+    {
+      "pack_id": "SOP-CATALOG-SEED-ROUTE-1",
+      "title": "SOP live catalog seed-or-route (no invent live adoption)",
+      "closes": [
+        "CAP-INTEL lessons"
+      ],
+      "targets_classes": [
+        "PARTIAL"
+      ],
+      "priority_bucket": "reliability",
+      "scope": [
+        "Seed live catalog from approved DEMO after human route OR route commissioning",
+        "auto_approve stays false"
+      ],
+      "forbids": [
+        "auto-approve",
+        "fake live lessons"
+      ],
+      "depends_on": [
+        "SOP-LESSON-LIVE-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "classification": "INTERNALLY_SOLVABLE",
+      "synthesized_from": "challenge empty SOP catalog"
     }
   ],
   "first_pack": "DASH-LIVE-1",
@@ -1141,5 +1294,14 @@
   "wave4_count": 4,
   "updated_at": "2026-09-30T03:58:00+08:00",
   "wave5_synthesized_at": "2026-09-30T03:30:00+08:00",
-  "wave6_synthesized_at": "2026-09-30T03:57:00+08:00"
+  "wave6_synthesized_at": "2026-09-30T03:57:00+08:00",
+  "unparked_at": "2026-09-30T07:26:00+08:00",
+  "mac_pipe": "PIPE_OK",
+  "standards_lock": [
+    "SHELL_NE_COMPLETE",
+    "HONEST_EMPTY_NE_COMPLETE_WHERE_AUTHORISED",
+    "TESTS_NE_STAFF_READY_NE_HUMAN_COMMISSIONED_NE_OPERATING_ADOPTION",
+    "CLASSIFY_EVERY_SHELL",
+    "NO_EXIT_REPORT_UNTIL_PHASE_13"
+  ]
 }
