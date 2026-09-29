@@ -39,6 +39,19 @@ ATRIUM_PREPARER_ROLES = frozenset({ROLE_ATRIUM_FINANCE, ROLE_ATRIUM_AP, ROLE_ATR
 ATRIUM_FINANCE_SEAT_ROLES = frozenset(
     {ROLE_ATRIUM_FINANCE, ROLE_ATRIUM_FINANCIAL_CONTROLLER, ROLE_ATRIUM_AP, ROLE_ATRIUM_AR}
 )
+# CORE-ENT-1: finance-only humans (AMG and/or BZG and/or GGV finance seats) stay
+# on finance surfaces + My Work chrome. Shared product ≠ shared authority across
+# ops packs.
+FINANCE_ONLY_SEAT_ROLES = frozenset(
+    ATRIUM_FINANCE_SEAT_ROLES
+    | {
+        "ROLE-BZG-FINANCIAL-CONTROLLER",
+        "ROLE-BZG-EXTERNAL-ACCOUNTANT",
+        "ROLE-AMG-EXTERNAL-ACCOUNTANT",
+        ROLE_GGV_FINANCE_OPERATOR,
+        ROLE_FINANCE,
+    }
+)
 GGV_FINANCE_HREF = "/ggv/finance"
 AMANDA_PERSON = "PERS-AMANDA"
 AMANDA_EMAIL = "amanda@wolfcommand.net"
@@ -569,7 +582,11 @@ def _seat(
 
 
 def officer_must_deny(person_id: str | None, path: str, conn: sqlite3.Connection) -> bool:
-    """Atrium Finance Officer, and only that role, cannot leave Atrium Finance."""
+    """Finance-only seats cannot leave their finance surfaces (+ My Work chrome).
+
+    CORE-ENT-1: AMG+BZG (or GGV) finance assignments still count as finance-only.
+    Ops packs, Owner, and other business boards stay denied.
+    """
     pid = (person_id or "").strip()
     if not pid:
         return False
@@ -583,8 +600,7 @@ def officer_must_deny(person_id: str | None, path: str, conn: sqlite3.Connection
         (pid,),
     ).fetchall()
     roles = {str(row[0]) for row in rows if row[0]}
-    # Single-seat Atrium finance humans stay on /amg/finance (Officer, FC, AP, or AR).
-    if not roles or not roles.issubset(ATRIUM_FINANCE_SEAT_ROLES):
+    if not roles or not roles.issubset(FINANCE_ONLY_SEAT_ROLES):
         return False
     if roles & {"ROLE-OWNER", "ROLE-MATT"}:
         return False
@@ -595,8 +611,17 @@ def officer_must_deny(person_id: str | None, path: str, conn: sqlite3.Connection
     if base in ATRIUM_PAGE_PATHS or raw in ATRIUM_PAGE_PATHS:
         return False
     if ".." not in base and (
-        base.startswith("/amg/finance/") or base.startswith("/api/amg/finance/")
+        base.startswith("/amg/finance/")
+        or base.startswith("/api/amg/finance/")
+        or base.startswith("/bzg/finance")
+        or base.startswith("/api/bzg/finance")
+        or base.startswith("/bzg/outlets")
+        or base.startswith("/api/bzg/outlets")
+        or base.startswith("/ggv/finance")
+        or base.startswith("/api/ggv/finance")
     ):
+        return False
+    if base in {"/my-work", "/my-work.html", "/api/staff/home", "/api/wolf/shell-whoami"}:
         return False
     if base in ATRIUM_CHROME_PATHS or raw in ATRIUM_CHROME_PATHS:
         return False
@@ -624,6 +649,9 @@ HUMAN_PAGE_BY_ROLE: dict[str, str] = {
     "ROLE-AMG-FINANCIAL-CONTROLLER": ATRIUM_FINANCE_HREF,
     "ROLE-AMG-ACCOUNTS-PAYABLE": ATRIUM_FINANCE_HREF,
     "ROLE-AMG-ACCOUNTS-RECEIVABLE": ATRIUM_FINANCE_HREF,
+    "ROLE-AMG-EXTERNAL-ACCOUNTANT": ATRIUM_FINANCE_HREF,
+    "ROLE-BZG-FINANCIAL-CONTROLLER": "/bzg/finance",
+    "ROLE-BZG-EXTERNAL-ACCOUNTANT": "/bzg/finance",
     "ROLE-GGV-FINANCE-OPERATOR": GGV_FINANCE_HREF,
     "ROLE-GGV-EXTERNAL-ACCOUNTANT": GGV_FINANCE_HREF,
 }
@@ -632,6 +660,7 @@ HUMAN_PAGE_LABEL: dict[str, str] = {
     "/amg/finance": "Atrium Finance",
     "/content-2.0": "Content",
     "/bzg/uma-blu": "Uma Blu",
+    "/bzg/finance": "BZG Finance",
     "/ggv/finance": "GGV Finance",
     "/ggv-ops-pack": "GGV",
     "/wolf": "Owner",

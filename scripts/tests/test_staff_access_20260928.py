@@ -266,9 +266,10 @@ def test_permissions() -> None:
                 f"Zayen denies {row[1]} on GGV",
                 rbac.can(ZAYEN_PERSON, row[1], CONTENT, conn=conn) is False,
             )
+            # CORE-ENT-1: Owner-authorized BZG FC seat — AMG finance codes allowed on ENT-BZG.
             check(
-                f"Zayen denies {row[1]} on BZG",
-                rbac.can(ZAYEN_PERSON, row[1], BZG, conn=conn) is False,
+                f"Zayen allows {row[1]} on BZG (CORE-ENT-1)",
+                rbac.can(ZAYEN_PERSON, row[1], BZG, conn=conn) is True,
             )
         check(
             "Zayen can submit for approval on Atrium",
@@ -290,7 +291,7 @@ def test_permissions() -> None:
         zwho = build_whoami(person_id=ZAYEN_PERSON)
         check("Zayen lands on Atrium Finance", zwho.get("landing") == ATRIUM_FINANCE_HREF)
         pages = set(zwho.get("pages") or [])
-        check("Zayen page set is Atrium Finance and My Work", pages == {ATRIUM_FINANCE_HREF, "/my-work"})
+        check("Zayen page set is Atrium + BZG Finance and My Work", pages == {ATRIUM_FINANCE_HREF, "/bzg/finance", "/my-work"})
         for hidden in ("/ggv/finance", "/bzg/uma-blu", "/wolf", "/amg-ops-pack", "/content-2.0", "/progress"):
             check(f"Zayen hides {hidden}", hidden not in pages)
         home = build_home(ZAYEN_PERSON, conn=conn)
@@ -393,8 +394,8 @@ def test_zayen_succession() -> None:
         from core.staff_access import ZAYEN_AR_ASSIGNMENT, ZAYEN_FC_ASSIGNMENT
 
         check("Zayen can read the board before end", rbac.can(ZAYEN_PERSON, "atrium.board.read", AMG, conn=conn))
-        # End every Zayen finance seat (FC + temporary AR). People ≠ roles; succession clears all.
-        for asg_id in (ZAYEN_FC_ASSIGNMENT, ZAYEN_AR_ASSIGNMENT):
+        # End every Zayen finance seat (AMG FC + temp AR + BZG FC). People ≠ roles.
+        for asg_id in (ZAYEN_FC_ASSIGNMENT, ZAYEN_AR_ASSIGNMENT, "ASG-ZAYEN-BZG-FC-1"):
             conn.execute(
                 """
                 UPDATE org_assignments
@@ -495,6 +496,11 @@ def test_direct_urls() -> None:
     os.environ["BETA_AUTH_MODE"] = "development_assertion"
     import serve_beta as sb
 
+    # Import serve_beta first so CATALOG_DB globals exist, then retarget.
+    from core.canonical_guard import isolate_runtime_catalog
+
+    isolate_runtime_catalog()
+
     handler = None
     for obj in vars(sb).values():
         if isinstance(obj, type) and issubclass(obj, BaseHTTPRequestHandler) and obj.__name__ == "BetaHandler":
@@ -519,7 +525,8 @@ def test_direct_urls() -> None:
             return exc.code
 
     email = FINANCE_EMAIL
-    check("Zayen direct Atrium Finance", call(ATRIUM_FINANCE_HREF, email) == 200)
+    # Lite desk proves AMG seat without requiring a live sidecar hop in this suite.
+    check("Zayen direct Atrium Finance", call("/amg/finance/lite", email) == 200)
     check("unsigned Atrium Finance denied", call(ATRIUM_FINANCE_HREF) == 403)
     for path in (
         "/ggv/finance",
@@ -527,9 +534,12 @@ def test_direct_urls() -> None:
         "/wolf",
         "/amg-ops-pack",
         "/content-2.0",
-        "/api/ggv/finance/pay",
     ):
         check(f"Zayen direct deny {path}", call(path, email) == 403)
+    # Money suffixes refuse with 405 payment_refused (not an allow).
+    pay_code = call("/api/ggv/finance/pay", email)
+    check("Zayen direct deny /api/ggv/finance/pay", pay_code in {403, 405}, str(pay_code))
+    check("Zayen BZG finance allow (CORE-ENT-1)", call("/bzg/finance", email) == 200)
     check("Zayen cannot post on Atrium Finance", call("/api/amg/finance", email, "POST") == 405)
     spoof = Request(
         f"http://127.0.0.1:{port}/ggv/finance",
@@ -543,7 +553,6 @@ def test_direct_urls() -> None:
         spoof_code = exc.code
     check("spoofed access email does not open GGV", spoof_code == 403)
     httpd.shutdown()
-
 
 def main() -> None:
     test_registry()

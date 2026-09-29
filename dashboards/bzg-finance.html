@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BZG Finance</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root { color-scheme: light; }
+    body { margin: 0; font-family: "IBM Plex Sans", "Segoe UI", sans-serif; background: #f3f1ec; color: #1c1a16; }
+    main { max-width: 720px; margin: 0 auto; padding: 28px 20px 64px; }
+    h1 { font-size: 1.75rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+    .sub { color: #5c574e; margin: 0 0 24px; line-height: 1.45; }
+    .card {
+      background: #fffdf8; border: 1px solid #ddd6c8; border-radius: 12px;
+      padding: 18px 18px 14px; margin-bottom: 16px;
+    }
+    .card h2 { font-size: 1rem; margin: 0 0 8px; }
+    .muted { color: #6b655c; font-size: 0.92rem; line-height: 1.45; }
+    .chip {
+      display: inline-block; margin: 4px 6px 0 0; padding: 4px 10px;
+      border-radius: 999px; background: #ebe4d6; font-size: 0.8rem;
+    }
+    .err { color: #8a1f1f; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>BZG Finance</h1>
+    <p class="sub" id="sub">Loading…</p>
+    <section class="card" id="status-card">
+      <h2>Status</h2>
+      <p class="muted" id="status">Checking assignment…</p>
+    </section>
+    <section class="card">
+      <h2>Entities on this seat</h2>
+      <div id="entities" class="muted">—</div>
+    </section>
+    <section class="card">
+      <h2>Outlet registry</h2>
+      <p class="muted">
+        Pool Bar is <strong>OU-BZG-RAIN-POOL</strong> under Rainforest
+        (<code>BZG-RAIN</code>) — not a second brand.
+        Canonical statuses: <a href="/bzg/outlets">/bzg/outlets</a>.
+      </p>
+    </section>
+  </main>
+  <script>
+    async function load() {
+      const sub = document.getElementById("sub");
+      const status = document.getElementById("status");
+      const entities = document.getElementById("entities");
+      try {
+        const res = await fetch("/api/bzg/finance/overview", { headers: { Accept: "application/json" } });
+        const body = await res.json();
+        if (!res.ok) {
+          sub.textContent = "Access denied";
+          status.innerHTML = `<span class="err">${body.message || "Forbidden"}</span>`;
+          return;
+        }
+        sub.textContent = body.message || "BZG Finance entry";
+        status.textContent = body.empty
+          ? "Honest empty — books not opened on this pack. Entry + authority only."
+          : "Ready";
+        const list = body.finance_entities || [];
+        if (!list.length) {
+          entities.textContent = "No finance entities on this seat.";
+          return;
+        }
+        entities.innerHTML = list.map((e) =>
+          `<a class="chip" href="${e.href}">${e.label || e.id}</a>`
+        ).join("");
+      } catch (err) {
+        sub.textContent = "Could not load";
+        status.innerHTML = `<span class="err">${String(err)}</span>`;
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

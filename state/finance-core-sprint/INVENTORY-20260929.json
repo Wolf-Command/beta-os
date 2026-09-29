@@ -1,0 +1,290 @@
+{
+  "schema": "wolf.finance-core-sprint.inventory.v1",
+  "as_of_wita": "2026-09-29T20:55:00+08:00",
+  "generated_at_wita": "2026-09-29T20:58:24+0800",
+  "sprint": "Owner sprint Matthew→Peaches EXECUTION MAP (discovery only)",
+  "feeds": "Rebuild Completion & Exit Report (Finance/BZG/V1) — evidence classifications only; no completion %; HR deferred",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "credit_conservation": true,
+  "mode": "discovery_only_no_cursor_launch",
+  "paths_scanned": [
+    "/Users/wolfterminal/beta-os",
+    "/Users/wolfterminal/atrium-finance",
+    "/Users/wolfterminal/.openclaw/workspace/wolf-system",
+    "/Users/wolfterminal/.openclaw/data/esb.sqlite",
+    "/Users/wolfterminal/.openclaw/workspace/alchemist/data/alchemist.db",
+    "/Users/wolfterminal/beta-os/catalog/content_library.sqlite"
+  ],
+  "A_reuse": {
+    "title": "Already exists to REUSE for shared Wolf Finance Core",
+    "bullets": [
+      "Atrium Finance sidecar ~/atrium-finance (branch wolf/beta-mount-20260928): SQLite books, COA, journals, AR/AP/inventory/tax/owner-pool, Wolf assertion Beta mount (betaMount.ts), SoD FC approve/post.",
+      "Entity IDs LIVE in Beta catalog: ENT-AMG, ENT-BZG, ENT-GGV (org_entities). Sidecar entityConfig: ENT-AMG active; ENT-GGV/ENT-BZG reserved disabled.",
+      "org_* + assignment model BUILT in catalog/content_library.sqlite (Person→Role→Assignment→Scope→Permission→Audience).",
+      "Finance seats: AMG-FC Zayen ASG-ZAYEN-FC-1; AMG-AR temp ASG-ZAYEN-AR-1; AMG-AP zenitalfathan; GGV Finance Operator Amanda ASG-AMANDA-GGV-FIN-1; ROLE-GGV-EXTERNAL-ACCOUNTANT + POS-GGV-EXT-ACCT unseated.",
+      "GGV Beta boards /ggv/finance (+ invoices/notas/vendors/customers/history/reports); cores ggv_finance_invoice.py, ggv_finance_nota.py, fin_entity_boards.py, fin_intercompany_billing.py, fin_mgmt_reporting.py; sequence ENT-GGV next 067A.",
+      "BZG/Uma Beta: /bzg/uma-blu* APIs, uma-blu-close, bzg-* packs. Devi ASG-DEVI-FB-OPS-1 + ASG-DEVI-CLOSER-UMA-1.",
+      "ATRIUM-SOD-1C SHAs local-only verified: beta-os 80f5729, atrium-finance a2a0909, evidence stamp 875f58b (after e86bfe3). staff_ready=false human_commissioned=false. Prod :8787 untouched.",
+      "ESB: ~/.openclaw/data/esb.sqlite (~66MB; sales 8823, products 426, goods_receipts 0); Beta esb_close_snapshot.py RO; V1 esb_* scripts. ESB = POS sales truth.",
+      "V1 atrium_finance.sqlite schema/COA pattern reusable; journals TEST only — not SoR.",
+      "docs/wolf/finance/BZG-FINANCE-REUSE-PLAN.md: reuse GGV nota/invoice/intercompany with entity_id; no second finance DB."
+    ],
+    "evidence": {
+      "sod_shas": {
+        "beta_os_checkpoint": "80f5729a6148b820e278aad34b0636617da2443a",
+        "atrium_finance_checkpoint": "a2a0909ee4f68f950295a650893fa5572b77923e",
+        "evidence_stamp": "875f58b08ee9a2bb4351d8eb15b7161b239a7285",
+        "evidence_commit_sha": "e86bfe36a2dd0397681e4a4f5aab8b27b22ad517"
+      },
+      "checkpoint_file": "state/atrium-sod/PRE-HUMAN-COMMISSIONING-CHECKPOINT.json",
+      "entity_config": "atrium-finance/server/entityConfig.ts",
+      "org_registry": "beta-os/catalog/content_library.sqlite org_*",
+      "esb_path": "/Users/wolfterminal/.openclaw/data/esb.sqlite"
+    }
+  },
+  "B_generalize": {
+    "title": "What must be GENERALIZED",
+    "bullets": [
+      "Hardcoded AMG/Atrium: sidecar one-live-entity; atrium_full_mount ENT-AMG gates; hotel property_name/room_count; ROLE-AMG-* not entity-neutral.",
+      "Missing entity_id on sidecar ledger tables (single-tenant AMG DB).",
+      "Missing outlet dimension: org_locations only LOC-ATRIUM-LOMBOK; BZG venues are brands not locations; no outlet_id on journal lines.",
+      "External Accountant is GGV-only (ROLE-GGV-EXTERNAL-ACCOUNTANT / SCOPE-GGV-FINANCE); need entity-parameterized pattern.",
+      "Zayen BZG without GGV: V1 zayen@atriumlombok.com on atrium_finance_allow + bzg_finance_allow, NOT ggv_finance_allow. Beta has no BZG finance role/assignment for Zayen (AMG FC+AR only). Must add BZG finance seat without GGV.",
+      "No ROLE/POS/SCOPE-BZG-FINANCE yet.",
+      "Live org_authority_limits=0; live SoD constraints=0 — entity-scope before money movement."
+    ]
+  },
+  "C_v1_inventory": {
+    "title": "V1 non-HR capability/data inventory sketch",
+    "note": "HR explicitly DEFERRED. Evidence-based classes only; no completion %. Unknowns = BLOCKED or DISCOVER-NEEDED.",
+    "items": [
+      {
+        "id": "v1-atrium-finance-board",
+        "path": "wolf-system/dashboards/atrium-finance.html + atrium_finance.py + atrium-finance/atrium_finance.sqlite",
+        "class": "SUPERSEDED",
+        "note": "Beta sidecar + /amg/finance replaces operating UI; V1 journals TEST CORE only."
+      },
+      {
+        "id": "v1-atrium-finance-sqlite",
+        "path": "wolf-system/atrium-finance/atrium_finance.sqlite",
+        "class": "HISTORICAL ONLY",
+        "note": "64 journal_header mostly TEST; COA 245 seed pattern; night_audit/pms empty payload."
+      },
+      {
+        "id": "v1-atrium-handoff-v1.1",
+        "path": "wolf-system/atrium-finance/handoff-v1.1/",
+        "class": "HISTORICAL ONLY",
+        "note": "COA seed + samples Zayen 2026-08-19."
+      },
+      {
+        "id": "sidecar-atrium-beta-books",
+        "path": "~/atrium-finance/data/beta/atrium.sqlite",
+        "class": "REBUILT IN WOLF",
+        "note": "Commissioning journals only; business tables empty."
+      },
+      {
+        "id": "beta-atrium-books-scaffold",
+        "path": "beta-os/state/atrium-books/amg.sqlite",
+        "class": "REBUILT IN WOLF",
+        "note": "Empty COA scaffold; 0 journals."
+      },
+      {
+        "id": "v1-ggv-finance-board",
+        "path": "wolf-system/dashboards/ggv-finance.html + ggv_*.py",
+        "class": "MOUNTED READ-ONLY",
+        "note": "V1 present; Beta /ggv/finance is rebuild path."
+      },
+      {
+        "id": "v1-ggv-money-sqlite",
+        "path": "wolf-system/ggv-finance/money.sqlite",
+        "class": "MOUNTED READ-ONLY",
+        "note": "sales_invoice 41, bill 605, bank_txn 339, ggv_nota 33, contact 296; Xero write SUPERSEDED 2026-09-10."
+      },
+      {
+        "id": "beta-ggv-invoice-nota",
+        "path": "scripts/core/ggv_finance_*.py + fin_* + dashboards/ggv-finance.html",
+        "class": "REBUILT IN WOLF",
+        "note": "Live catalog invoices 0 customers 0; sequence next 67; Amanda seated. Not complete."
+      },
+      {
+        "id": "v1-bzg-finance-board",
+        "path": "wolf-system/dashboards/bzg-finance.html",
+        "class": "HISTORICAL ONLY",
+        "note": "No Beta BZG finance desk yet (reuse plan only)."
+      },
+      {
+        "id": "v1-bzg-shareholder-packs",
+        "path": "bzg-shareholder-reports + bzg-june/july/august packs",
+        "class": "HISTORICAL ONLY",
+        "note": "Period packs; not live ledger."
+      },
+      {
+        "id": "v1-uma-blu-ops",
+        "path": "wolf-system uma-blu*.html + uma-blu/recipes.sqlite",
+        "class": "MOUNTED READ-ONLY",
+        "note": "recipes 127/756 lines; Beta recipe routes skeleton/absent."
+      },
+      {
+        "id": "beta-uma-bzg-ops",
+        "path": "beta-os bzg-uma-blu* + /api/bzg/uma-blu/*",
+        "class": "REBUILT IN WOLF",
+        "note": "Shells exist; Alchemist SoR for PRs; Beta PR rows mostly examples; cutover_at null. Not complete."
+      },
+      {
+        "id": "alchemist-pr-suppliers",
+        "path": "alchemist/data/alchemist.db",
+        "class": "MOUNTED READ-ONLY",
+        "note": "SoR purchasing/suppliers; Wolf projection only."
+      },
+      {
+        "id": "esb-warehouse",
+        "path": "~/.openclaw/data/esb.sqlite",
+        "class": "MOUNTED READ-ONLY",
+        "note": "POS sales truth; goods_receipts 0."
+      },
+      {
+        "id": "v1-xero",
+        "path": "xero-snapshot-* + ggv_xero*.py",
+        "class": "SUPERSEDED",
+        "note": "Cancelled 2026-09-10; AMG/BZG never in Xero."
+      },
+      {
+        "id": "v1-bank-ingest",
+        "path": "bank_* + ~/.openclaw/state/bank",
+        "class": "MOUNTED READ-ONLY",
+        "note": "BZG+GGV sources; AMG bank empty."
+      },
+      {
+        "id": "v1-money-board",
+        "path": "money_board.py + money_allow",
+        "class": "BLOCKED",
+        "note": "money_pending_accountant PENDING; money_allow owner-only."
+      },
+      {
+        "id": "v1-atrium-sales-apartments",
+        "path": "atrium-sales / atrium-payments",
+        "class": "HISTORICAL ONLY",
+        "note": "Unit sales tracker — not hotel GL."
+      },
+      {
+        "id": "v1-owner-returns",
+        "path": "atrium_owner_returns + owner_return_*",
+        "class": "DISCOVER-NEEDED",
+        "note": "Config/units exist; no authoritative period returns SoR found this pass."
+      },
+      {
+        "id": "nas-finance-folders",
+        "path": "/Volumes NAS finance trees",
+        "class": "DISCOVER-NEEDED",
+        "note": "No deep Atrium finance crawl this pass; GGV Notas path contract on paper."
+      },
+      {
+        "id": "pms-accounting-exports",
+        "path": "Cloudbeds/Yanolja/Mews/Accurate/Jurnal",
+        "class": "BLOCKED",
+        "note": "No accounting exports in authorised trees; PMS import empty payload."
+      },
+      {
+        "id": "hr-surfaces",
+        "path": "wolf-system/state/hr-* + ~/.openclaw/hr",
+        "class": "HR-DEFERRED",
+        "note": "Explicitly deferred."
+      },
+      {
+        "id": "v1-n8n-xero-bzg",
+        "path": "n8n-templates /*xero* /*bzg*",
+        "class": "SUPERSEDED",
+        "note": "Xero-era automation; do not revive without decision."
+      }
+    ]
+  },
+  "D_bzg_outlet_registry": {
+    "title": "BZG outlet registry status",
+    "bullets": [
+      "Uma Blu (BZG-UMA): LIVE; brand_location → LOC-ATRIUM-LOMBOK; primary operating outlet.",
+      "Rainforest (BZG-RAIN): APPROVED; canon says includes pool bar; target 7 Oct 2026. Not LIVE ops.",
+      "Pool Bar: NOT separate org_brands row — folded into Rainforest. Reuse plan lists as future allocation label.",
+      "Future APPROVED: BZG-MERAH, BZG-ROOF. SPECIFIED: BZG-CAT, BZG-RS.",
+      "org_locations: only LOC-ATRIUM-LOMBOK — no per-outlet location rows.",
+      "Hariyanto PERS-HARIYANTO: ASG-HARIYANTO-HEAD-CHEF-1, SCOPE-BZG-FB, recipe-builder (carolus.haryanto@gmail.com). Not finance.",
+      "Devi PERS-DEVI: ASG-DEVI-FB-OPS-1 (SCOPE-BZG-FB+UMA) + ASG-DEVI-CLOSER-UMA-1. HFB ended 2026-09-19. Ops/close — not finance."
+    ],
+    "brands_snapshot": [
+      {
+        "brand_id": "BZG-UMA",
+        "status": "LIVE"
+      },
+      {
+        "brand_id": "BZG-RAIN",
+        "status": "APPROVED",
+        "includes_pool_bar": true
+      },
+      {
+        "brand_id": "BZG-MERAH",
+        "status": "APPROVED"
+      },
+      {
+        "brand_id": "BZG-ROOF",
+        "status": "APPROVED"
+      },
+      {
+        "brand_id": "BZG-CAT",
+        "status": "SPECIFIED"
+      },
+      {
+        "brand_id": "BZG-RS",
+        "status": "SPECIFIED"
+      }
+    ]
+  },
+  "E_safe_first_cursor_packs": {
+    "title": "Safe first Cursor pack recommendations (Beta only, no prod, no fake data)",
+    "bullets": [
+      "PACK-FC-1: ROLE/POS/SCOPE-BZG-FINANCE + seat Zayen BZG finance without GGV; prove finance_entities() AMG+BZG for Zayen, GGV-only Amanda. No ledger writes.",
+      "PACK-FC-2: Parameterize nota/counterparties by entity_id for ENT-BZG behind BZG finance assignment; zero invented totals; no ESB write; no payment.",
+      "PACK-FC-3: Sidecar schema-only entity_id (+ optional outlet/brand_id); ENT-AMG only enabled; temp-DB tests.",
+      "PACK-FC-4: Uma close RO via esb_close_snapshot; refuse empty ESB day; no closer hire invention.",
+      "PACK-FC-5: External Accountant entity-generic template; do not seat real person without Matt email+CF allow.",
+      "DEFER: money movement, bank write, payment.execute, prod :8787, CF allow edits, fake invoices/customers, Rainforest/Pool Bar go-live numbers, HR."
+    ],
+    "largest_coherent_verticals": [
+      "GGV invoice/nota skeleton → entity-generic counterparty/nota",
+      "AMG SoD journal sidecar (checkpointed) → entity_id columns",
+      "BZG Uma ops + ESB close RO → finance allocation later"
+    ]
+  },
+  "F_matt_blockers": {
+    "title": "Matt blockers only if genuine authority/legal/destructive",
+    "bullets": [
+      "CF allow / identity for AP preparer zenitalfathan@gmail.com before AP human commissioning (FO still VACANT).",
+      "Who fills POS-AMG-FINANCE-OFFICER-1 — name/email; Mukharom only if HR confirms (V1 archived 2026-07-19).",
+      "Create BZG finance assignment for Zayen? (mirrors V1 bzg_finance_allow; must not grant GGV).",
+      "External Accountant real person email for GGV (role/position exist, unseated) — do not invent.",
+      "No destructive blockers for discovery/schema packs; money/CF/prod/push remain hard stops without explicit Matt order."
+    ],
+    "not_blockers": [
+      "Rainforest/Pool Bar not LIVE (APPROVED planned)",
+      "Empty GGV invoice catalog (sequence ready; Amanda seated)",
+      "Alchemist-as-SoR for PRs (intentional)"
+    ]
+  },
+  "class_counts": {
+    "note": "Row counts of inventory items only — not completion percentages",
+    "MIGRATED": 0,
+    "MOUNTED READ-ONLY": 6,
+    "REBUILT IN WOLF": 4,
+    "HISTORICAL ONLY": 6,
+    "SUPERSEDED": 3,
+    "BLOCKED": 2,
+    "DISCOVER-NEEDED": 2,
+    "HR-DEFERRED": 1
+  },
+  "execution_map_short": {
+    "A": "Reuse sidecar+Beta mount+SoD SHAs; ENT-* + org_assignment; GGV finance cores; Uma/BZG pages; ESB RO",
+    "B": "Generalize AMG hardcodes; entity_id+outlet; Ext Acct beyond GGV; Zayen BZG seat without GGV",
+    "C": "See C_v1_inventory.items — evidence classes only, no %",
+    "D": "Uma LIVE; Rainforest APPROVED (incl Pool Bar); Merah/Roof APPROVED; Hariyanto chef SCOPE-BZG-FB; Devi F&B Ops+Closer",
+    "E": "Safe Beta packs: BZG seat Zayen; entity nota; sidecar entity_id schema; Uma close RO; Ext Acct template",
+    "F": "Matt: CF/AP, FO hire, Zayen BZG yes/no, Ext Acct person — else no legal/destructive blockers for discovery packs"
+  }
+}

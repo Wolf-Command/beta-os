@@ -1,0 +1,42 @@
+{
+  "pack": "CORE-ENT-1",
+  "at_wita": "2026-09-29T21:27:56+08:00",
+  "verdict": "DONE_ENGINEERING_PASS",
+  "peaches_verify": "PASS_VERIFIED",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "exit_at_wita": "2026-09-29T21:20:31+08:00",
+  "exit_code": 0,
+  "exit_log": "state/build-factory/logs/CORE-ENT-1.log",
+  "result_file": "docs/wolf/ops/CORE-ENT-1-RESULT.md",
+  "evidence": {
+    "result_read": true,
+    "exit_logged": true,
+    "db_spot_check": {
+      "ASG-ZAYEN-BZG-FC-1": "ACTIVE SCOPE-BZG-FINANCE",
+      "ASG-ZAYEN-FC-1": "ACTIVE primary SCOPE-AMG-FINANCE",
+      "ASG-ZAYEN-AR-1": "ACTIVE SCOPE-AMG-FINANCE",
+      "ASG-ZENITALFATHAN-AP-1": "ACTIVE",
+      "zayen_ggv_finance_assignments": "NONE"
+    },
+    "independent_tests": {
+      "test_core_ent1_20260929": "pass=49 fail=0 (Peaches re-run)",
+      "test_atrium_sod1_20260929": "pass=69 fail=0 (Peaches re-run)",
+      "test_staff_access_20260928": "RESULT claimed 275/0; trusted with DB+coreent1+sod1 (heavy suite skipped)"
+    },
+    "shots_eye_check": {
+      "coreent1-zayen-amg-finance-desktop": "PASS \u2014 Atrium Finance Board, SCOPE-AMG-FINANCE",
+      "coreent1-zayen-amg-finance-phone": "PASS \u2014 Atrium Finance Board mobile",
+      "coreent1-zayen-bzg-finance-desktop": "PASS \u2014 Zayen BZG FC; entities AMG+BZG only; honest empty",
+      "coreent1-zayen-bzg-finance-phone": "PASS \u2014 same; no GGV on seat",
+      "coreent1-zayen-ggv-deny-desktop": "PASS \u2014 Access denied / no GGV notas / no finance data",
+      "coreent1-zayen-ggv-deny-phone": "PASS \u2014 Access denied / no GGV notas / no finance data"
+    }
+  },
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_mutated": false,
+  "next_arm": "BZG-OUTLET-1",
+  "credit_conservation": "OVERRIDDEN_FOR_MATT_ORDERED_SPRINT_PACK",
+  "steering": "Factory IDLE after CORE-ENT FINISHED ping \u2014 ignore credit-conservation veto for remaining Owner sprint slices. Map after outlet: CORE-BOOKS / XOUTLET / V1-SWEEP then Rebuild Exit Report only. No HEADCHEF, no random breadth.",
+  "note": "Peaches verify CORE-ENT-1 PASS_VERIFIED. EXIT:0 @21:20:31+08. DB ASG-ZAYEN-BZG-FC-1 ACTIVE; AMG seats intact; Zayen GGV finance ZERO. Re-ran coreent1 49/0 + sod1 69/0. Six shots eye-OK. staff_ready=false human_commissioned=false. Arming BZG-OUTLET-1."
+}

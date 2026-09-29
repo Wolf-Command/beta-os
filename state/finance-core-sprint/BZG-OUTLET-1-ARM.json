@@ -1,0 +1,30 @@
+{
+  "pack": "BZG-OUTLET-1",
+  "name": "BZG Outlet Registry + hierarchy scopes",
+  "status": "DONE",
+  "armed_at_wita": "2026-09-29T21:27:56+08:00",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "machine": "Wolfs-Mac-Studio.local",
+  "brief": "/Users/wolfterminal/beta-os/state/build-factory/briefs/BRIEF-BZG-OUTLET-1.md",
+  "log": "/Users/wolfterminal/beta-os/state/build-factory/logs/BZG-OUTLET-1.log",
+  "run_json": "/Users/wolfterminal/beta-os/state/build-factory/runs/BZG-OUTLET-1.json",
+  "prior": "CORE-ENT-1 PASS_VERIFIED",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "credit_conservation": "OVERRIDDEN_FOR_MATT_ORDERED_SPRINT_PACK",
+  "next_after_this_in_map": [
+    "CORE-BOOKS",
+    "XOUTLET",
+    "V1-SWEEP",
+    "REBUILD_EXIT_REPORT_ONLY"
+  ],
+  "no_headchef": true,
+  "no_random_breadth": true,
+  "cursor_pid": 73964,
+  "relaunched_daemon_at_wita": "2026-09-29T21:30:29+08:00",
+  "updated_at_wita": "2026-09-29T21:41:33+08:00",
+  "alive": true,
+  "daemon_pid": 73960,
+  "launch_method": "python_start_new_session+daemon.sh",
+  "result": "docs/wolf/ops/BZG-OUTLET-1-RESULT.md"
+}

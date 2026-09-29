@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wolf · Recipe Builder</title>
+<style>
+  :root {
+    --bg: #12161a;
+    --bg2: #1a2128;
+    --line: #2e3a44;
+    --text: #eef2f5;
+    --muted: #8b9aa6;
+    --accent: #c4a574;
+    --warn: #d4a017;
+    --ok: #6f9e7a;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background:
+      radial-gradient(ellipse 80% 50% at 100% 0%, #243039 0%, transparent 50%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 16px 14px 72px; }
+  h1 { font-family: var(--display); font-weight: 500; font-size: 28px; margin: 0 0 4px; }
+  h2 { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; }
+  .lede { color: var(--muted); margin: 0 0 14px; line-height: 1.4; font-size: 14px; }
+  .banner {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    border-left: 3px solid var(--accent);
+    padding: 10px 12px;
+    margin: 0 0 14px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
+  .tabs button {
+    background: var(--bg2); color: var(--text); border: 1px solid var(--line);
+    padding: 8px 12px; font: inherit; cursor: pointer;
+  }
+  .tabs button.active { border-color: var(--accent); color: var(--accent); }
+  .row {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    padding: 12px;
+    margin: 0 0 8px;
+    cursor: pointer;
+  }
+  .row:hover { border-color: var(--accent); }
+  .name { font-family: var(--display); font-size: 18px; margin: 0 0 4px; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .badge {
+    display: inline-block; margin-top: 6px; padding: 2px 8px;
+    border: 1px solid var(--line); font-size: 12px; color: var(--warn);
+  }
+  .badge.ok { color: var(--ok); }
+  .hidden { display: none; }
+  label { display: block; color: var(--muted); font-size: 12px; margin: 10px 0 4px; }
+  input, textarea, select {
+    width: 100%; background: #0e1216; color: var(--text);
+    border: 1px solid var(--line); padding: 10px; font: inherit;
+  }
+  textarea { min-height: 80px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .actions button, .primary {
+    background: var(--accent); color: #1a140c; border: 0;
+    padding: 10px 14px; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  .actions button.secondary {
+    background: transparent; color: var(--text); border: 1px solid var(--line);
+  }
+  .line {
+    display: grid; grid-template-columns: 1fr 70px 70px; gap: 6px;
+    margin-bottom: 6px;
+  }
+  @media (max-width: 420px) {
+    h1 { font-size: 24px; }
+    .line { grid-template-columns: 1fr; }
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; }
+  .money { font-variant-numeric: tabular-nums; }
+  .note { color: var(--muted); font-size: 13px; line-height: 1.4; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Recipe Builder</h1>
+  <p class="lede">Kitchen recipes for BZG. Costs come from real purchases. If a cost is not known, it says cost missing — never invents a number. Selling price is read-only here.</p>
+  <div id="banner" class="banner">Loading recipes…</div>
+  <div class="tabs">
+    <button type="button" class="active" data-view="list" id="tab-list">Recipes</button>
+    <button type="button" data-view="exceptions" id="tab-exceptions">Cost gaps</button>
+    <button type="button" data-view="create" id="tab-create">New recipe</button>
+  </div>
+
+  <section id="view-list">
+    <div id="list"></div>
+  </section>
+
+  <section id="view-detail" class="hidden">
+    <div class="actions">
+      <button type="button" class="secondary" id="back-list">Back to list</button>
+      <button type="button" id="edit-btn">Edit</button>
+    </div>
+    <h2 id="detail-title">Recipe</h2>
+    <div id="detail"></div>
+  </section>
+
+  <section id="view-exceptions" class="hidden">
+    <div id="exceptions"></div>
+  </section>
+
+  <section id="view-create" class="hidden">
+    <h2 id="form-title">New recipe</h2>
+    <form id="recipe-form">
+      <input type="hidden" id="f-id" value="" />
+      <label for="f-name">Dish name</label>
+      <input id="f-name" name="name" required maxlength="120" autocomplete="off" />
+      <label for="f-group">Group</label>
+      <input id="f-group" name="group_name" maxlength="80" />
+      <label for="f-yield">Portions</label>
+      <input id="f-yield" name="yield_n" type="number" step="any" min="0" />
+      <label for="f-yield-unit">Portion unit</label>
+      <input id="f-yield-unit" name="yield_unit" maxlength="40" placeholder="Pax" />
+      <label for="f-method">Method</label>
+      <textarea id="f-method" name="method" maxlength="4000"></textarea>
+      <h2>Ingredients</h2>
+      <p class="note">Add names, amounts and units. Unit cost is filled from real purchases when known. Do not type a guessed cost.</p>
+      <div id="lines"></div>
+      <div class="actions">
+        <button type="button" class="secondary" id="add-line">Add ingredient</button>
+        <button type="submit" class="primary" id="save-btn">Save</button>
+      </div>
+      <p id="form-msg" class="note"></p>
+    </form>
+  </section>
+</div>
+<script>
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+function money(v) {
+  if (v == null || v === "") return "—";
+  var n = Number(v);
+  if (!isFinite(n)) return "—";
+  return "Rp " + Math.round(n).toLocaleString("id-ID");
+}
+function pct(v) {
+  if (v == null || v === "") return "—";
+  return Number(v).toFixed(1) + "%";
+}
+
+var state = { recipes: [], current: null, editing: null };
+
+function show(view) {
+  ["list", "detail", "exceptions", "create"].forEach(function (v) {
+    document.getElementById("view-" + v).classList.toggle("hidden", v !== view);
+  });
+  document.querySelectorAll(".tabs button").forEach(function (b) {
+    b.classList.toggle("active", b.getAttribute("data-view") === view || (view === "detail" && b.id === "tab-list"));
+  });
+}
+
+function paintList(pack) {
+  state.recipes = pack.recipes || [];
+  var banner = document.getElementById("banner");
+  banner.textContent = (pack.count || 0) + " recipes in your BZG kitchens. Costs from real purchases. Selling price is read-only.";
+  var html = "";
+  state.recipes.forEach(function (r) {
+    var costLabel = r.food_cost_status === "COMPLETE"
+      ? ("Food cost " + money(r.food_cost))
+      : "cost missing";
+    var badgeClass = r.food_cost_status === "COMPLETE" ? "badge ok" : "badge";
+    html += '<article class="row" data-id="' + esc(r.recipe_id) + '">'
+      + '<div class="name">' + esc(r.name) + '</div>'
+      + '<div class="meta">' + esc(r.group_name || "Ungrouped")
+      + (r.brand_id ? " · " + esc(r.brand_id) : "")
+      + " · sell " + money(r.real_sell) + "</div>"
+      + '<span class="' + badgeClass + '">' + esc(costLabel) + '</span>'
+      + "</article>";
+  });
+  if (!html) html = '<p class="note">No recipes yet.</p>';
+  document.getElementById("list").innerHTML = html;
+  document.getElementById("list").onclick = function (ev) {
+    var row = ev.target.closest("[data-id]");
+    if (!row) return;
+    openDetail(row.getAttribute("data-id"));
+  };
+}
+
+function paintDetail(r) {
+  state.current = r;
+  document.getElementById("detail-title").textContent = r.name || "Recipe";
+  var lines = (r.lines || []).map(function (line) {
+    var cost = line.cost_badge === "cost missing" || line.extended_cost == null
+      ? "cost missing"
+      : money(line.extended_cost);
+    return "<tr><td>" + esc(line.name) + "</td><td>" + esc(line.qty) + " " + esc(line.unit || "")
+      + '</td><td class="money">' + esc(cost) + "</td></tr>";
+  }).join("");
+  var food = r.food_cost_status === "COMPLETE" ? money(r.food_cost) : "cost missing";
+  var html = ""
+    + '<p class="meta">' + esc(r.group_name || "") + (r.brand_id ? " · " + esc(r.brand_id) : "") + "</p>"
+    + '<p><strong>Sell price</strong> (read only): <span class="money">' + money(r.real_sell) + "</span></p>"
+    + "<p><strong>Food cost</strong>: <span class=\"money\">" + esc(food) + "</span>"
+    + (r.food_cost_pct != null ? " · " + pct(r.food_cost_pct) + " of sell" : "")
+    + (r.margin != null ? " · margin " + money(r.margin) : "")
+    + "</p>"
+    + (r.yield_n != null ? "<p><strong>Yield</strong>: " + esc(r.yield_n) + " " + esc(r.yield_unit || "") + "</p>" : "")
+    + (r.method ? "<p><strong>Method</strong><br>" + esc(r.method).replace(/\\n/g, "<br>") + "</p>" : "")
+    + "<h2>Ingredients</h2><table><thead><tr><th>Item</th><th>Amount</th><th>Cost</th></tr></thead><tbody>"
+    + (lines || "<tr><td colspan=3>No ingredients</td></tr>")
+    + "</tbody></table>"
+    + '<p class="note">Provenance: ' + esc((r.provenance && r.provenance.source) || "beta") + "</p>";
+  document.getElementById("detail").innerHTML = html;
+  show("detail");
+}
+
+function openDetail(id) {
+  fetch("/api/bzg/recipe-builder/recipes/" + encodeURIComponent(id), {
+    headers: { "Accept": "application/json" }
+  })
+    .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
+    .then(function (result) {
+      if (!result.ok) {
+        document.getElementById("banner").textContent = "Could not open that recipe.";
+        return;
+      }
+      paintDetail(result.body.recipe || result.body);
+    })
+    .catch(function () {
+      document.getElementById("banner").textContent = "Could not open that recipe.";
+    });
+}
+
+function paintExceptions(pack) {
+  var rows = pack.exceptions || [];
+  var html = rows.map(function (e) {
+    return '<article class="row" data-id="' + esc(e.recipe_id) + '">'
+      + '<div class="name">' + esc(e.name) + '</div>'
+      + '<div class="meta">' + esc(e.missing_cost_lines || 0) + " ingredient lines with cost missing</div>"
+      + '<span class="badge">cost missing</span></article>';
+  }).join("");
+  if (!html) html = '<p class="note">No cost gaps right now.</p>';
+  document.getElementById("exceptions").innerHTML = html || "";
+  document.getElementById("exceptions").onclick = function (ev) {
+    var row = ev.target.closest("[data-id]");
+    if (!row) return;
+    openDetail(row.getAttribute("data-id"));
+  };
+}
+
+function addLine(data) {
+  data = data || {};
+  var wrap = document.createElement("div");
+  wrap.className = "line";
+  wrap.innerHTML = ""
+    + '<input class="l-name" placeholder="Ingredient" value="' + esc(data.name || "") + '" />'
+    + '<input class="l-qty" placeholder="Qty" type="number" step="any" value="' + esc(data.qty != null ? data.qty : "") + '" />'
+    + '<input class="l-unit" placeholder="Unit" value="' + esc(data.unit || "") + '" />';
+  document.getElementById("lines").appendChild(wrap);
+}
+
+function collectLines() {
+  return Array.prototype.map.call(document.querySelectorAll("#lines .line"), function (row) {
+    return {
+      name: row.querySelector(".l-name").value,
+      qty: row.querySelector(".l-qty").value === "" ? null : Number(row.querySelector(".l-qty").value),
+      unit: row.querySelector(".l-unit").value,
+      line_kind: "ingredient"
+    };
+  }).filter(function (l) { return (l.name || "").trim(); });
+}
+
+function resetForm(recipe) {
+  state.editing = recipe || null;
+  document.getElementById("form-title").textContent = recipe ? "Edit recipe" : "New recipe";
+  document.getElementById("f-id").value = recipe ? recipe.recipe_id : "";
+  document.getElementById("f-name").value = recipe ? (recipe.name || "") : "";
+  document.getElementById("f-group").value = recipe ? (recipe.group_name || "") : "";
+  document.getElementById("f-yield").value = recipe && recipe.yield_n != null ? recipe.yield_n : "";
+  document.getElementById("f-yield-unit").value = recipe ? (recipe.yield_unit || "") : "Pax";
+  document.getElementById("f-method").value = recipe ? (recipe.method || "") : "";
+  document.getElementById("form-msg").textContent = "";
+  document.getElementById("lines").innerHTML = "";
+  var lines = (recipe && recipe.lines) || [{}, {}, {}];
+  if (!lines.length) lines = [{}, {}, {}];
+  lines.forEach(addLine);
+}
+
+document.querySelectorAll(".tabs button").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var view = btn.getAttribute("data-view");
+    if (view === "create") {
+      resetForm(null);
+      show("create");
+      return;
+    }
+    if (view === "exceptions") {
+      fetch("/api/bzg/recipe-builder/exceptions", { headers: { "Accept": "application/json" } })
+        .then(function (r) { return r.json(); })
+        .then(paintExceptions);
+      show("exceptions");
+      return;
+    }
+    show("list");
+  });
+});
+
+document.getElementById("back-list").addEventListener("click", function () { show("list"); });
+document.getElementById("add-line").addEventListener("click", function () { addLine({}); });
+document.getElementById("edit-btn").addEventListener("click", function () {
+  if (!state.current) return;
+  resetForm(state.current);
+  show("create");
+});
+
+document.getElementById("recipe-form").addEventListener("submit", function (ev) {
+  ev.preventDefault();
+  var id = document.getElementById("f-id").value;
+  var body = {
+    name: document.getElementById("f-name").value,
+    group_name: document.getElementById("f-group").value,
+    yield_n: document.getElementById("f-yield").value === "" ? null : Number(document.getElementById("f-yield").value),
+    yield_unit: document.getElementById("f-yield-unit").value,
+    method: document.getElementById("f-method").value,
+    lines: collectLines()
+  };
+  var url = id
+    ? "/api/bzg/recipe-builder/recipes/" + encodeURIComponent(id)
+    : "/api/bzg/recipe-builder/recipes";
+  var method = id ? "PUT" : "POST";
+  fetch(url, {
+    method: method,
+    headers: { "Accept": "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  })
+    .then(function (res) { return res.json().then(function (b) { return { ok: res.ok, body: b, status: res.status }; }); })
+    .then(function (result) {
+      var msg = document.getElementById("form-msg");
+      if (!result.ok) {
+        msg.textContent = (result.body && (result.body.message || result.body.error)) || ("Save failed (" + result.status + ")");
+        return;
+      }
+      msg.textContent = "Saved.";
+      loadList().then(function () {
+        var rid = (result.body.recipe && result.body.recipe.recipe_id) || (result.body.recipe_id) || id;
+        if (rid) openDetail(rid);
+      });
+    })
+    .catch(function () {
+      document.getElementById("form-msg").textContent = "Save failed.";
+    });
+});
+
+function loadList() {
+  return fetch("/api/bzg/recipe-builder/recipes", { headers: { "Accept": "application/json" } })
+    .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
+    .then(function (result) {
+      if (!result.ok) {
+        document.getElementById("banner").textContent = "Recipe Builder refused. You may not have access.";
+        return;
+      }
+      paintList(result.body);
+    })
+    .catch(function () {
+      document.getElementById("banner").textContent = "Could not load recipes.";
+    });
+}
+
+loadList();
+</script>
+</body>
+</html>

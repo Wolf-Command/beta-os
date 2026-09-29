@@ -365,8 +365,9 @@ LANDING_BY_AUDIENCE: dict[str, str | None] = {
 BZG_GRAMMAR: list[dict[str, Any]] = [
     {"key": "overview", "label": "Overview", "href": "/bzg", "state": "live"},
     {"key": "operations", "label": "Operations", "href": None, "state": "EMPTY"},
+    {"key": "outlets", "label": "Outlets", "href": "/bzg/outlets", "state": "live"},
     {"key": "issues", "label": "Issues", "href": None, "state": "EMPTY"},
-    {"key": "finance", "label": "Finance", "href": None, "state": "EMPTY"},
+    {"key": "finance", "label": "Finance", "href": "/bzg/finance", "state": "live"},
     {"key": "people", "label": "People", "href": None, "state": "EMPTY"},
     {"key": "customers", "label": "Customers", "href": None, "state": "EMPTY"},
     {"key": "standards", "label": "Standards", "href": None, "state": "EMPTY"},
@@ -450,7 +451,8 @@ AUDIENCE_PAGES: dict[str, list[str]] = {
     # Never Owner Intelligence Home (/intel-ops-pack) via nav alone.
     "SPECIALIST_CONTENT": [NEEDS_YOU_HREF, CONTENT_HREF, "/ggv-ops-pack"],
     "SPECIALIST_FINANCE": [MY_WORK_HREF, "/ggv/finance"],
-    "SPECIALIST_ATRIUM_FINANCE": [MY_WORK_HREF, "/amg/finance"],
+    # CORE-ENT-1: AMG primary + BZG finance entry; GGV stays off this audience.
+    "SPECIALIST_ATRIUM_FINANCE": [MY_WORK_HREF, "/amg/finance", "/bzg/finance"],
     "CLIENT": [],  # controlled projection — never inherit operator Boards
     "SYSTEM": list(ALL_HREFS),
 }
@@ -477,6 +479,9 @@ ROLE_AUDIENCE: dict[str, str] = {
     "ROLE-AMG-FINANCIAL-CONTROLLER": "SPECIALIST_ATRIUM_FINANCE",
     "ROLE-AMG-ACCOUNTS-PAYABLE": "SPECIALIST_ATRIUM_FINANCE",
     "ROLE-AMG-ACCOUNTS-RECEIVABLE": "SPECIALIST_ATRIUM_FINANCE",
+    "ROLE-AMG-EXTERNAL-ACCOUNTANT": "SPECIALIST_ATRIUM_FINANCE",
+    "ROLE-BZG-FINANCIAL-CONTROLLER": "SPECIALIST_ATRIUM_FINANCE",
+    "ROLE-BZG-EXTERNAL-ACCOUNTANT": "SPECIALIST_ATRIUM_FINANCE",
 }
 
 PERSON_AUDIENCE: dict[str, str] = {
@@ -638,6 +643,8 @@ ROUTE_PARENT: dict[str, str | None] = {
     "/amg/finance/reports": "/amg/finance",
     "/amg/finance/approvals": "/amg/finance",
     "/bzg": EMPIRE_HREF,
+    "/bzg/finance": "/bzg",
+    "/bzg/outlets": "/bzg",
     "/bzg/uma-blu": "/bzg",
     "/bzg/uma-blu/bills": "/bzg/uma-blu",
     "/bzg/uma-blu/issues": "/bzg/uma-blu",
@@ -771,6 +778,16 @@ ROUTE_CRUMBS: dict[str, list[dict[str, Any]]] = {
     "/bzg": [
         {"label": "WOLF", "href": WOLF_ALIAS},
         {"label": "Blu Zone", "href": None},
+    ],
+    "/bzg/finance": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Blu Zone", "href": "/bzg"},
+        {"label": "Finance", "href": None},
+    ],
+    "/bzg/outlets": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Blu Zone", "href": "/bzg"},
+        {"label": "Outlets", "href": None},
     ],
     "/bzg/uma-blu": [
         {"label": "WOLF", "href": WOLF_ALIAS},
@@ -1148,6 +1165,9 @@ _ASSIGNMENT_AUDIENCE_ROLES = frozenset(
         "ROLE-AMG-FINANCIAL-CONTROLLER",
         "ROLE-AMG-ACCOUNTS-PAYABLE",
         "ROLE-AMG-ACCOUNTS-RECEIVABLE",
+        "ROLE-AMG-EXTERNAL-ACCOUNTANT",
+        "ROLE-BZG-FINANCIAL-CONTROLLER",
+        "ROLE-BZG-EXTERNAL-ACCOUNTANT",
     }
 )
 
@@ -1240,6 +1260,9 @@ _ROLE_HREF: dict[str, str] = {
     "ROLE-AMG-FINANCIAL-CONTROLLER": "/amg/finance",
     "ROLE-AMG-ACCOUNTS-PAYABLE": "/amg/finance",
     "ROLE-AMG-ACCOUNTS-RECEIVABLE": "/amg/finance",
+    "ROLE-AMG-EXTERNAL-ACCOUNTANT": "/amg/finance",
+    "ROLE-BZG-FINANCIAL-CONTROLLER": "/bzg/finance",
+    "ROLE-BZG-EXTERNAL-ACCOUNTANT": "/bzg/finance",
     "ROLE-GGV-FINANCE-OPERATOR": "/ggv/finance",
     "ROLE-GGV-EXTERNAL-ACCOUNTANT": "/ggv/finance",
 }
@@ -1443,6 +1466,11 @@ def filter_assignments(
     ):
         return [dict(a) for a in assignments]
     allowed = set(filter_hrefs(whoami))
+    # Specialist landings (Atrium / BZG / GGV finance, My Work) may sit outside
+    # primary IA ALL_HREFS — still honour audience pages so multi-entity seats
+    # are not collapsed to the one href that happens to be in IA_TREE.
+    for page in whoami.get("pages") or [] if whoami else []:
+        allowed.add(_norm_path(str(page)))
     # Empire alias: /wolf allowed when empire pack is
     if EMPIRE_HREF in allowed:
         allowed |= set(EMPIRE_ALIASES)

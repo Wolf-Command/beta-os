@@ -152,6 +152,7 @@ from core import bzg_venue_pnl as _bzg_pnl
 from core import bzg_variance_waste as _bzg_var
 from core import bzg_allocation_engine as _bzg_alloc
 from core import bzg_bom_yield as _bzg_bom
+from core import recipe_builder as _recipe_builder
 from core import msc_posture_prove as _msc_posture
 from core import intg_connector_contract as _intg_contract
 from core import intg_connector_cap_tests as _intg_cap_tests
@@ -160,6 +161,8 @@ from core import strat_radar_prove as _strat_radar
 from core import ggv_speed_to_lead_prove as _ggv_speed
 from core import ggv_ops_pack as _ggv_ops
 from core import ggv_finance_nota as _ggv_fin
+from core import bzg_finance_desk as _bzg_fin_desk
+from core import bzg_outlet_registry as _bzg_outlets
 from core import crm_identity_memory as _crm_ident
 from core import crm_identity_operator_depth as _crm_ident_depth
 from core import bzg_reputation_observe as _bzg_rep
@@ -1975,6 +1978,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._ggv_finance_dispatch():
             return
 
+        if self._bzg_finance_dispatch():
+            return
+        if self._bzg_outlets_dispatch():
+            return
+
         if path == "/api/wolf/shell-whoami":
             self._wolf_shell_whoami()
             return
@@ -3636,6 +3644,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/api/bzg/bom-yield/"):
             self._bzg_bom_get(qs, ref_id=path.rsplit("/", 1)[-1])
             return
+        # HEADCHEF-1 Recipe Builder — Head Chef + recipe.* permissions (not Owner BOM skeleton).
+        if path.startswith("/api/bzg/recipe-builder"):
+            self._recipe_builder_get(path, qs)
+            return
         # CAP-AMG-07 service improvement / review-to-improve loop. Owner read. Empty is not a live loop.
         if self._amg_improve_refuse_code(path):
             self._amg_improve_write_refused(path)
@@ -4934,6 +4946,34 @@ class BetaHandler(SimpleHTTPRequestHandler):
         elif path in ("/bzg/uma-blu/petty", "/bzg/uma-blu/petty/"):
             self.path = "/bzg-uma-blu-petty.html"
         elif path in (
+            "/bzg/finance",
+            "/bzg/finance/",
+            "/bzg-finance",
+            "/bzg-finance.html",
+            "/dashboards/bzg-finance.html",
+        ):
+            # Routed via _bzg_finance_dispatch earlier in do_GET; keep alias for late path rewrite.
+            if self._bzg_finance_dispatch():
+                return
+        elif path in (
+            "/bzg/outlets",
+            "/bzg/outlets/",
+            "/bzg-outlets",
+            "/bzg-outlets.html",
+            "/dashboards/bzg-outlets.html",
+        ):
+            if self._bzg_outlets_dispatch():
+                return
+        elif path in (
+            "/bzg/recipe-builder",
+            "/bzg/recipe-builder/",
+            "/bzg-recipe-builder",
+            "/bzg-recipe-builder.html",
+            "/dashboards/bzg-recipe-builder.html",
+        ):
+            self._recipe_builder_page()
+            return
+        elif path in (
             "/bzg/uma-blu/recipes",
             "/bzg/uma-blu/recipes/",
             "/bzg/uma-blu/purchasing",
@@ -4971,6 +5011,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._amg_finance_post(path):
             return
         if self._ggv_finance_dispatch():
+            return
+        if self._bzg_finance_dispatch():
+            return
+        if self._bzg_outlets_dispatch():
             return
         if path == "/api/progress/commissioning/submit":
             self._progress_commissioning_submit()
@@ -5839,6 +5883,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 },
                 status=403,
             )
+            return
+        if path.startswith("/api/bzg/recipe-builder"):
+            self._recipe_builder_write(path, method="POST")
             return
         # Legacy aliases → same handlers
         if path == "/api/planner":
@@ -7285,6 +7332,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_PUT(self) -> None:
         path = urlparse(self.path).path
+        if path.startswith("/api/bzg/recipe-builder"):
+            self._recipe_builder_write(path, method="PUT")
+            return
         if self._atrium_finance_wall():
             return
         if self._atrium_product_dispatch():
@@ -14719,6 +14769,98 @@ class BetaHandler(SimpleHTTPRequestHandler):
         self._send_json(result, status=status)
         return True
 
+    def _bzg_finance_dispatch(self) -> bool:
+        """CORE-ENT-1 thin BZG Finance entry — entity-scoped; 403 without ENT-BZG board."""
+        parsed = urlparse(self.path)
+        if not _bzg_fin_desk.matches(parsed.path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok") or not identity.get("person_id"):
+            self._send_identity_deny(identity)
+            return True
+        person_id = str(identity.get("person_id"))
+        conn = _ggv_fin.db_connect()
+        try:
+            try:
+                result = _bzg_fin_desk.dispatch(self.command, parsed.path, person_id, conn)
+            except _bzg_fin_desk.BzgFinanceError as exc:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": exc.code,
+                        "message": str(exc),
+                        **_bzg_fin_desk.HONESTY,
+                    },
+                    status=exc.http_status,
+                )
+                return True
+        finally:
+            conn.close()
+        if result.get("_html"):
+            page = DASHBOARDS / "bzg-finance.html"
+            if not page.is_file():
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "not_found",
+                        "message": "BZG Finance page is missing.",
+                        **_bzg_fin_desk.HONESTY,
+                    },
+                    status=404,
+                )
+                return True
+            self._send_html_shell(page.read_bytes(), rel="bzg-finance.html")
+            return True
+        self._send_json(result, status=200)
+        return True
+
+    def _bzg_outlets_dispatch(self) -> bool:
+        """BZG-OUTLET-1 canonical outlet registry — hierarchy scopes; no fake ops."""
+        parsed = urlparse(self.path)
+        if not _bzg_outlets.matches(parsed.path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok") or not identity.get("person_id"):
+            self._send_identity_deny(identity)
+            return True
+        person_id = str(identity.get("person_id"))
+        conn = _bzg_outlets.db_connect()
+        try:
+            try:
+                result = _bzg_outlets.dispatch(
+                    self.command, parsed.path, person_id, conn
+                )
+            except _bzg_outlets.BzgOutletError as exc:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": exc.code,
+                        "message": str(exc),
+                        **_bzg_outlets.HONESTY,
+                    },
+                    status=exc.http_status,
+                )
+                return True
+        finally:
+            conn.close()
+        if result.get("_html"):
+            page = DASHBOARDS / "bzg-outlets.html"
+            if not page.is_file():
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "not_found",
+                        "message": "BZG Outlet Registry page is missing.",
+                        **_bzg_outlets.HONESTY,
+                    },
+                    status=404,
+                )
+                return True
+            self._send_html_shell(page.read_bytes(), rel="bzg-outlets.html")
+            return True
+        self._send_json(result, status=200)
+        return True
+
     def _ggv_ops_quiet(self) -> dict:
         return {
             "invented_leads": False,
@@ -15584,7 +15726,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._staff_home_fail(exc)
 
     def _staff_home_page(self) -> None:
-        if self._staff_home_identity() is None:
+        identity = self._staff_home_identity()
+        if identity is None:
+            return
+        # Auth-only persons (zero assignments) must not see My Work chrome.
+        try:
+            _staff_home.build_home(identity.get("person_id"))
+        except _staff_home.StaffHomeError as exc:
+            self._staff_home_fail(exc)
             return
         page = DASHBOARDS / "my-work.html"
         if not page.is_file():
@@ -32068,6 +32217,251 @@ class BetaHandler(SimpleHTTPRequestHandler):
             )
             return None
         return subject
+
+    def _require_recipe_builder(
+        self,
+        permission: str,
+        body: dict | None = None,
+    ) -> tuple[str | None, dict | None]:
+        """Head Chef Recipe Builder gate: recipe.* + SCOPE-BZG-FB. No email checks."""
+        subject = self._require_permission(
+            permission,
+            body,
+            target={"entity_id": "ENT-BZG"},
+        )
+        if subject is None:
+            return None, None
+        identity = self._resolve_identity(body, emit_audit=False)
+        person_id = identity.get("person_id")
+        scopes = _scope.list_active_scopes_for_person(person_id) if person_id else []
+        if not any(row.get("scope_id") == "SCOPE-BZG-FB" for row in scopes):
+            # Owner with progress.read may inspect for commissioning; still need recipe.*
+            # Fail closed for anyone without SCOPE-BZG-FB.
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "subject lacks SCOPE-BZG-FB",
+                    "subject": subject,
+                    "person_id": person_id,
+                    "required_permission": permission,
+                    "required_scope": "SCOPE-BZG-FB",
+                    "identity_assurance": identity.get("identity_assurance"),
+                    "real_authentication": identity.get("real_authentication"),
+                },
+                status=403,
+            )
+            return None, None
+        return subject, identity
+
+    def _recipe_builder_brands_in_scope(self, person_id: str | None) -> list[str]:
+        """Brands covered by SCOPE-BZG-FB via entity membership — no outlet hardcoding."""
+        if not person_id:
+            return []
+        scopes = _scope.list_active_scopes_for_person(person_id)
+        brands: list[str] = []
+        seen: set[str] = set()
+        for row in scopes:
+            if row.get("scope_id") != "SCOPE-BZG-FB":
+                continue
+            ctx = _scope.resolve_effective_scope_context("SCOPE-BZG-FB")
+            for bid in (ctx.get("structurally_covered") or {}).get("brands") or []:
+                if bid not in seen:
+                    seen.add(bid)
+                    brands.append(bid)
+        return brands
+
+    def _recipe_builder_page(self) -> None:
+        subject, _identity = self._require_recipe_builder("recipe.read")
+        if subject is None:
+            return
+        page = DASHBOARDS / "bzg-recipe-builder.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Recipe Builder page is missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return
+        self._send_html_shell(page.read_bytes(), rel="bzg-recipe-builder.html")
+
+    def _recipe_builder_get(self, path: str, qs: dict) -> None:
+        from urllib.parse import unquote
+
+        def one(name: str, default: str = "") -> str:
+            return ((qs.get(name) or [default])[0] or default).strip()
+
+        if path in (
+            "/api/bzg/recipe-builder",
+            "/api/bzg/recipe-builder/",
+            "/api/bzg/recipe-builder/honesty",
+        ):
+            subject, _identity = self._require_recipe_builder("recipe.read")
+            if subject is None:
+                return
+            self._send_json({"ok": True, **_recipe_builder.honesty()})
+            return
+
+        if path in (
+            "/api/bzg/recipe-builder/recipes",
+            "/api/bzg/recipe-builder/recipes/",
+        ):
+            subject, identity = self._require_recipe_builder("recipe.read")
+            if subject is None:
+                return
+            brands = self._recipe_builder_brands_in_scope(identity.get("person_id") if identity else None)
+            self._send_json(
+                _recipe_builder.list_recipes(
+                    brand_ids=brands,
+                    limit=int(one("limit", "100") or "100"),
+                    offset=int(one("offset", "0") or "0"),
+                )
+            )
+            return
+
+        m_recipe = re.match(r"^/api/bzg/recipe-builder/recipes/([^/]+)/?$", path)
+        if m_recipe:
+            subject, identity = self._require_recipe_builder("recipe.read")
+            if subject is None:
+                return
+            row = _recipe_builder.get_recipe(unquote(m_recipe.group(1)))
+            if row is None:
+                self._send_json({"ok": False, "error": "not_found"}, status=404)
+                return
+            brands = self._recipe_builder_brands_in_scope(
+                identity.get("person_id") if identity else None
+            )
+            if row.get("brand_id") and brands and row.get("brand_id") not in brands:
+                self._send_json({"ok": False, "error": "forbidden", "message": "out of scope"}, status=403)
+                return
+            self._send_json({"ok": True, "recipe": row, **_recipe_builder.honesty()})
+            return
+
+        if path in (
+            "/api/bzg/recipe-builder/exceptions",
+            "/api/bzg/recipe-builder/exceptions/",
+        ):
+            subject, identity = self._require_recipe_builder("recipe.exceptions.read")
+            if subject is None:
+                return
+            brands = self._recipe_builder_brands_in_scope(
+                identity.get("person_id") if identity else None
+            )
+            self._send_json(_recipe_builder.list_cost_exceptions(brand_ids=brands))
+            return
+
+        self._send_json(
+            {
+                "ok": False,
+                "error": "not_found",
+                "message": "Unknown Recipe Builder route.",
+                "staff_ready": False,
+            },
+            status=404,
+        )
+
+    def _recipe_builder_write(self, path: str, *, method: str) -> None:
+        from urllib.parse import unquote
+
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {"ok": False, "error": "bad_payload", "message": str(exc)},
+                status=400,
+            )
+            return
+        if not isinstance(body, dict):
+            body = {}
+
+        if method == "POST" and path in (
+            "/api/bzg/recipe-builder/recipes",
+            "/api/bzg/recipe-builder/recipes/",
+        ):
+            subject, identity = self._require_recipe_builder("recipe.create", body)
+            if subject is None:
+                return
+            brands = self._recipe_builder_brands_in_scope(
+                identity.get("person_id") if identity else None
+            )
+            brand_id = (body.get("brand_id") or "").strip() or (brands[0] if brands else None)
+            if brand_id and brands and brand_id not in brands:
+                self._send_json(
+                    {"ok": False, "error": "forbidden", "message": "brand out of scope"},
+                    status=403,
+                )
+                return
+            try:
+                recipe = _recipe_builder.create_recipe(
+                    body,
+                    created_by=identity.get("person_id") if identity else subject,
+                    brand_id=brand_id,
+                )
+            except PermissionError as exc:
+                self._send_json(
+                    {"ok": False, "error": "forbidden", "message": str(exc)},
+                    status=403,
+                )
+                return
+            except ValueError as exc:
+                self._send_json(
+                    {"ok": False, "error": "bad_payload", "message": str(exc)},
+                    status=400,
+                )
+                return
+            self._send_json({"ok": True, "recipe": recipe, **_recipe_builder.honesty()})
+            return
+
+        m_recipe = re.match(r"^/api/bzg/recipe-builder/recipes/([^/]+)/?$", path)
+        if method == "PUT" and m_recipe:
+            subject, identity = self._require_recipe_builder("recipe.edit", body)
+            if subject is None:
+                return
+            rid = unquote(m_recipe.group(1))
+            existing = _recipe_builder.get_recipe(rid)
+            if existing is None:
+                self._send_json({"ok": False, "error": "not_found"}, status=404)
+                return
+            brands = self._recipe_builder_brands_in_scope(
+                identity.get("person_id") if identity else None
+            )
+            if existing.get("brand_id") and brands and existing.get("brand_id") not in brands:
+                self._send_json(
+                    {"ok": False, "error": "forbidden", "message": "out of scope"},
+                    status=403,
+                )
+                return
+            try:
+                recipe = _recipe_builder.update_recipe(
+                    rid,
+                    body,
+                    updated_by=identity.get("person_id") if identity else subject,
+                )
+            except PermissionError as exc:
+                self._send_json(
+                    {"ok": False, "error": "forbidden", "message": str(exc)},
+                    status=403,
+                )
+                return
+            except KeyError:
+                self._send_json({"ok": False, "error": "not_found"}, status=404)
+                return
+            self._send_json({"ok": True, "recipe": recipe, **_recipe_builder.honesty()})
+            return
+
+        self._send_json(
+            {
+                "ok": False,
+                "error": "forbidden",
+                "message": "Recipe Builder mutation is not authorised on this route.",
+            },
+            status=403,
+        )
 
     # ----- Uma Blu daily close -----
 

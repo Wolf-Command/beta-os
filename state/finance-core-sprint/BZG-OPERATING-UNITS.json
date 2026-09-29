@@ -1,0 +1,24 @@
+{
+  "schema": "wolf.bzg.operating-units.v1",
+  "as_of_wita": "2026-09-29T21:35:36+08:00",
+  "pack": "BZG-OUTLET-1",
+  "rule": "measurable operating unit under parent brand \u2014 not a second brand_id",
+  "legal_entity_id": "ENT-BZG",
+  "supersedes": "CORE-ENT-1 HOOK",
+  "units": [
+    {
+      "operating_unit_id": "OU-BZG-RAIN-POOL",
+      "display_name": "Pool Bar",
+      "parent_brand_id": "BZG-RAIN",
+      "parent_brand_name": "Blu Zone Rainforest Restaurant & Bar",
+      "parent_outlet_id": "BZG-RAIN",
+      "status": "PRE-OPENING",
+      "note": "Canonical row also in org_outlet_registry. PRE-OPENING \u2014 no human F&B commissioning evidence; not a second brand_id."
+    }
+  ],
+  "sidecar_columns": [
+    "journal_lines.operating_unit_id (nullable)",
+    "journal_lines.outlet_id (nullable, additive BZG-OUTLET-1)"
+  ],
+  "registry": "catalog.org_outlet_registry + state/finance-core-sprint/BZG-OUTLET-REGISTRY.json"
+}

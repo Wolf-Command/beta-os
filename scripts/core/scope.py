@@ -185,8 +185,53 @@ def resolve_effective_scope_context(
             "brands": [],
             "locations": [],
             "departments": [],
+            "outlets": [],
+            "operating_units": [],
         }
         notes: list[str] = []
+        has_outlet_table = (
+            c.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='org_outlet_registry'"
+            ).fetchone()
+            is not None
+        )
+
+        def _append_outlets_for_entity(entity_id: str) -> None:
+            if not has_outlet_table:
+                return
+            rows = c.execute(
+                """
+                SELECT outlet_id, operating_unit_id FROM org_outlet_registry
+                WHERE legal_entity_id=? ORDER BY outlet_id
+                """,
+                (entity_id,),
+            ).fetchall()
+            for r in rows:
+                covered["outlets"].append(r[0])
+                if r[1]:
+                    covered["operating_units"].append(r[1])
+            notes.append(
+                f"entity {entity_id}: outlet registry children listed; not a permission grant"
+            )
+
+        def _append_outlets_for_brand(brand_id: str) -> None:
+            if not has_outlet_table:
+                return
+            rows = c.execute(
+                """
+                SELECT outlet_id, operating_unit_id FROM org_outlet_registry
+                WHERE brand_id=? ORDER BY outlet_id
+                """,
+                (brand_id,),
+            ).fetchall()
+            for r in rows:
+                covered["outlets"].append(r[0])
+                if r[1]:
+                    covered["operating_units"].append(r[1])
+            notes.append(
+                f"brand {brand_id}: outlets under brand listed via registry "
+                f"({len(rows)} rows); siblings not auto-included"
+            )
 
         for t in targets:
             tt = t["target_type"]
@@ -220,6 +265,7 @@ def resolve_effective_scope_context(
                 notes.append(
                     f"entity {tid}: structural children listed; not a permission grant"
                 )
+                _append_outlets_for_entity(tid)
             elif tt == "brand":
                 covered["brands"].append(tid)
                 # Explicitly do NOT add sibling brands
@@ -239,6 +285,7 @@ def resolve_effective_scope_context(
                     )
                 else:
                     notes.append(f"brand {tid}: no sibling expansion")
+                _append_outlets_for_brand(tid)
             elif tt == "location":
                 covered["locations"].append(tid)
                 notes.append(f"location {tid}: unrelated locations not covered")

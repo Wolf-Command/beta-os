@@ -144,6 +144,43 @@ FINANCE_ENTITIES: dict[str, dict[str, str]] = {
         "href": "/amg/finance",
         "entity_id": "ENT-AMG",
     },
+    # CORE-ENT-1 — AMG FC / AP / AR + BZG FC + External Accountant shells.
+    "ROLE-AMG-FINANCIAL-CONTROLLER": {
+        "id": "AMG",
+        "label": "AMG",
+        "href": "/amg/finance",
+        "entity_id": "ENT-AMG",
+    },
+    "ROLE-AMG-ACCOUNTS-PAYABLE": {
+        "id": "AMG",
+        "label": "AMG",
+        "href": "/amg/finance",
+        "entity_id": "ENT-AMG",
+    },
+    "ROLE-AMG-ACCOUNTS-RECEIVABLE": {
+        "id": "AMG",
+        "label": "AMG",
+        "href": "/amg/finance",
+        "entity_id": "ENT-AMG",
+    },
+    "ROLE-AMG-EXTERNAL-ACCOUNTANT": {
+        "id": "AMG",
+        "label": "AMG",
+        "href": "/amg/finance",
+        "entity_id": "ENT-AMG",
+    },
+    "ROLE-BZG-FINANCIAL-CONTROLLER": {
+        "id": "BZG",
+        "label": "BZG",
+        "href": "/bzg/finance",
+        "entity_id": "ENT-BZG",
+    },
+    "ROLE-BZG-EXTERNAL-ACCOUNTANT": {
+        "id": "BZG",
+        "label": "BZG",
+        "href": "/bzg/finance",
+        "entity_id": "ENT-BZG",
+    },
 }
 
 _NUMBER = re.compile(r"^[A-Z0-9][A-Z0-9./-]{0,31}$")
