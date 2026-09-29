@@ -26,6 +26,7 @@
   ],
   "prior_pack_verified": "BZG-VENUEPL-1",
   "beta_os_head_at_arm": "d36cc22",
+  "beta_os_head_at_exit": "c4f4453",
   "extends": "scripts/core/sop_factory.py",
   "decision_served": "2026-09-19 PICK SOP Factory v1 (core-sop-factory-v1)",
   "catalog_sop_factory_sqlite": "absent",

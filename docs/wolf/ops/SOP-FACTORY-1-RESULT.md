@@ -39,6 +39,8 @@ Closes toward CAP-CORE-11 / MB-012 / IL-R7 — **eng vertical slice only; not LI
 | `test_sop_factory.py` | **PASS=113 FAIL=0** |
 | `test_cap_core_11_loop.py` | **PASS=61 FAIL=0** |
 
+Commit `c4f4453`.
+
 ## Shots (8/8)
 
 Under `docs/wolf/ops/shots/`:
