@@ -69,6 +69,6 @@ Local only. No push.
 - `995c43c89b30d528d94fd146dd88e2b05bac5198` — Close MYWORK-1B result commit hashes.
 - `8cb6b789a741c16bd810160f539bcbe1e401bead` — Finalize MYWORK-1B result commit list.
 - `9ca3655de6ebc83410a614b7d394e10782eab95e` — Pin final MYWORK-1B result commit SHA.
-- `704c66cfd34a6237f49d94689053b107d0cc556f` — Stop MYWORK-1B result commit churn.
+- `254622db274c972814a6af4521c62aed535a1457` — Stop MYWORK-1B result commit churn.
 
 RESULT: PASS (Alchemist live-count drift on opsfix2/umareal noted; unrelated to this pack)
