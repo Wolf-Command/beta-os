@@ -1,0 +1,54 @@
+{
+  "pack": "CORE-BOOKS-1",
+  "status": "PASS_VERIFIED",
+  "verified_at_wita": "2026-09-29T22:23:32+08:00",
+  "verifier": "Peaches-Mac-executor",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "prod_8787_pid": 15975,
+  "prod_untouched": true,
+  "beta_8788_pid": 76242,
+  "sidecar_8790_pid": 80378,
+  "design": "separate_sqlite_files",
+  "db_files": {
+    "ENT-AMG": "data/beta/atrium.sqlite",
+    "ENT-BZG": "data/beta/atrium-bzg.sqlite",
+    "ENT-GGV": "data/beta/atrium-ggv.sqlite"
+  },
+  "tests_rerun_by_peaches": {
+    "test_core_books1_20260929.py": {
+      "pass": 64,
+      "fail": 0
+    },
+    "test_core_ent1_20260929.py": {
+      "pass": 49,
+      "fail": 0
+    },
+    "test_bzg_outlet1_20260929.py": {
+      "pass": 82,
+      "fail": 0
+    },
+    "test_atrium_sod1_20260929.py": {
+      "pass": 69,
+      "fail": 0
+    },
+    "test_staff_access_20260928.py": {
+      "pass": 275,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 8,
+    "all_distinct_phash": true,
+    "eye_check": {
+      "amg_books_live": "PASS \u2014 Atrium Finance board / AMG FC scope",
+      "bzg_books_shell": "PASS \u2014 empty shell atrium-bzg.sqlite + staff_ready=false",
+      "ggv_books_shell": "PASS \u2014 Amanda GGV empty shell atrium-ggv.sqlite",
+      "cross_entity_deny": "PASS \u2014 Zayen Access denied GGV notas"
+    }
+  },
+  "sidecar_health": "books_slots ENT-AMG live + ENT-BZG/GGV empty_shell; staff_ready/human_commissioned false",
+  "result": "docs/wolf/ops/CORE-BOOKS-1-RESULT.md",
+  "next": "BZG-XOUTLET-1"
+}

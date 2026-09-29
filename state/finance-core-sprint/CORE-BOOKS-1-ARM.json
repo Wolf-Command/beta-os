@@ -1,0 +1,79 @@
+{
+  "migration": "core_books1_20260929",
+  "as_of_wita": "2026-09-29T22:14:50+0800",
+  "design": "separate_sqlite_files",
+  "books_isolation": "SHARED_CODE_NE_SHARED_DATA",
+  "entities": [
+    {
+      "legal_entity_id": "ENT-AMG",
+      "db_file": "atrium.sqlite",
+      "path": "/Users/wolfterminal/atrium-finance/data/beta/atrium.sqlite",
+      "books_enabled": true,
+      "shell_kind": "live",
+      "accounts": 200,
+      "journals": 7,
+      "outlet_id_nullable": true,
+      "operating_unit_id_nullable": true,
+      "preparer_person_id": true,
+      "staff_ready": false,
+      "human_commissioned": false,
+      "note": "AMG / Atrium live Beta books file. Existing journals preserved.",
+      "pack": "CORE-BOOKS-1"
+    },
+    {
+      "legal_entity_id": "ENT-BZG",
+      "db_file": "atrium-bzg.sqlite",
+      "path": "/Users/wolfterminal/atrium-finance/data/beta/atrium-bzg.sqlite",
+      "books_enabled": true,
+      "shell_kind": "empty_shell",
+      "accounts": 0,
+      "journals": 0,
+      "outlet_id_nullable": true,
+      "operating_unit_id_nullable": true,
+      "preparer_person_id": true,
+      "staff_ready": false,
+      "human_commissioned": false,
+      "note": "Honest empty books shell. No journals, sales, P&L, invoices, or go-live numbers.",
+      "pack": "CORE-BOOKS-1"
+    },
+    {
+      "legal_entity_id": "ENT-GGV",
+      "db_file": "atrium-ggv.sqlite",
+      "path": "/Users/wolfterminal/atrium-finance/data/beta/atrium-ggv.sqlite",
+      "books_enabled": true,
+      "shell_kind": "empty_shell",
+      "accounts": 0,
+      "journals": 0,
+      "outlet_id_nullable": true,
+      "operating_unit_id_nullable": true,
+      "preparer_person_id": true,
+      "staff_ready": false,
+      "human_commissioned": false,
+      "note": "Honest empty books shell. No journals, sales, P&L, invoices, or go-live numbers.",
+      "pack": "CORE-BOOKS-1"
+    }
+  ],
+  "isolation_probe": {
+    "token": "corebooks1-2026-09-29T22",
+    "in_bzg": true,
+    "in_amg": false,
+    "in_ggv": false,
+    "isolated": true
+  },
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_mutate": false,
+  "pack": "CORE-BOOKS-1",
+  "status": "PASS_VERIFIED",
+  "exit_code": 0,
+  "exited_at_wita": "2026-09-29T22:20:08+0800",
+  "result": "docs/wolf/ops/CORE-BOOKS-1-RESULT.md",
+  "did_not_auto_start": [
+    "BZG-XOUTLET-1",
+    "V1-SWEEP-1",
+    "HEADCHEF"
+  ],
+  "verified_at_wita": "2026-09-29T22:23:32+08:00",
+  "updated_at_wita": "2026-09-29T22:23:32+08:00",
+  "alive": false
+}

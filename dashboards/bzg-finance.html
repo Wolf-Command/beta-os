@@ -22,6 +22,12 @@
       display: inline-block; margin: 4px 6px 0 0; padding: 4px 10px;
       border-radius: 999px; background: #ebe4d6; font-size: 0.8rem;
     }
+    .stamp {
+      display: inline-block; margin: 4px 6px 0 0; padding: 4px 10px;
+      border-radius: 6px; background: #e8f0e6; border: 1px solid #b7c9b2;
+      font-size: 0.78rem; font-weight: 600; color: #2a4a28;
+    }
+    .stamp.warn { background: #f5efe3; border-color: #d2c4a4; color: #5a4a28; }
     .err { color: #8a1f1f; }
   </style>
 </head>
@@ -30,8 +36,9 @@
     <h1>BZG Finance</h1>
     <p class="sub" id="sub">Loading…</p>
     <section class="card" id="status-card">
-      <h2>Status</h2>
+      <h2>Books slot</h2>
       <p class="muted" id="status">Checking assignment…</p>
+      <div id="stamps"></div>
     </section>
     <section class="card">
       <h2>Entities on this seat</h2>
@@ -43,6 +50,7 @@
         Pool Bar is <strong>OU-BZG-RAIN-POOL</strong> under Rainforest
         (<code>BZG-RAIN</code>) — not a second brand.
         Canonical statuses: <a href="/bzg/outlets">/bzg/outlets</a>.
+        Journal <code>outlet_id</code> stays nullable — no invented outlet totals.
       </p>
     </section>
   </main>
@@ -50,6 +58,7 @@
     async function load() {
       const sub = document.getElementById("sub");
       const status = document.getElementById("status");
+      const stamps = document.getElementById("stamps");
       const entities = document.getElementById("entities");
       try {
         const res = await fetch("/api/bzg/finance/overview", { headers: { Accept: "application/json" } });
@@ -57,12 +66,21 @@
         if (!res.ok) {
           sub.textContent = "Access denied";
           status.innerHTML = `<span class="err">${body.message || "Forbidden"}</span>`;
+          stamps.innerHTML = "";
           return;
         }
-        sub.textContent = body.message || "BZG Finance entry";
+        sub.textContent = body.message || "BZG Finance books shell";
+        const kind = body.shell_kind || "empty_shell";
+        const dbFile = body.db_file || "atrium-bzg.sqlite";
         status.textContent = body.empty
-          ? "Honest empty — books not opened on this pack. Entry + authority only."
-          : "Ready";
+          ? `Honest empty shell (${dbFile}). Books slot open — zero journals. Not READY.`
+          : `Books live (${dbFile}). Not READY.`;
+        stamps.innerHTML = [
+          `<span class="stamp">books_enabled</span>`,
+          `<span class="stamp">${kind}</span>`,
+          `<span class="stamp warn">staff_ready=false</span>`,
+          `<span class="stamp warn">human_commissioned=false</span>`,
+        ].join("");
         const list = body.finance_entities || [];
         if (!list.length) {
           entities.textContent = "No finance entities on this seat.";

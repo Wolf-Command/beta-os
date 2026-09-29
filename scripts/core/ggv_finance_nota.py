@@ -2297,6 +2297,22 @@ def overview(person_id: str, *, conn: sqlite3.Connection | None = None) -> dict[
             invoice_desk = _inv.desk_snapshot(person_id, c)
         except Exception:
             invoice_desk = {}
+        books_stamp: dict[str, Any] = {}
+        try:
+            from core import entity_books as _eb
+
+            books_stamp = _eb.desk_stamp(ENTITY_GGV)
+        except Exception:
+            books_stamp = {
+                "books_enabled": True,
+                "books_opened": True,
+                "empty": True,
+                "shell_kind": "empty_shell",
+                "db_file": "atrium-ggv.sqlite",
+                "staff_ready": False,
+                "human_commissioned": False,
+                "pack": "CORE-BOOKS-1",
+            }
         return public_payload(
             {
                 "ok": True,
@@ -2311,6 +2327,14 @@ def overview(person_id: str, *, conn: sqlite3.Connection | None = None) -> dict[
                 "payment_note": "Entering a nota is not the same as paying it.",
                 "bank_note": "Bank details seen on a document are not verified.",
                 "issued_is_not_paid": True,
+                "books_enabled": True,
+                "books_opened": True,
+                "books_shell": books_stamp,
+                "shell_kind": books_stamp.get("shell_kind") or "empty_shell",
+                "db_file": books_stamp.get("db_file") or "atrium-ggv.sqlite",
+                "staff_ready": False,
+                "human_commissioned": False,
+                "pack": "CORE-BOOKS-1",
             }
         )
     finally:

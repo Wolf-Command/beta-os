@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""CORE-ENT-1 — thin BZG Finance desk (entity-scoped entry; honest empty OK)."""
+"""CORE-ENT-1 / CORE-BOOKS-1 — thin BZG Finance desk (entity-scoped; books shell)."""
 from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
 from typing import Any
 
+from core import entity_books as _books
 from core import ggv_finance_invoice as _inv
 from core import rbac as _rbac
 
@@ -29,7 +30,7 @@ HONESTY = {
     "proven": False,
     "entity_id": ENTITY,
     "legal_entity_id": ENTITY,
-    "pack": "CORE-ENT-1",
+    "pack": "CORE-BOOKS-1",
 }
 
 
@@ -63,20 +64,40 @@ def require_board(person_id: str | None, conn: sqlite3.Connection) -> None:
 def overview(person_id: str, conn: sqlite3.Connection) -> dict[str, Any]:
     require_board(person_id, conn)
     entities = _inv.finance_entities(person_id, conn)
+    try:
+        stamp = _books.desk_stamp(ENTITY)
+    except Exception:
+        stamp = {
+            "books_enabled": True,
+            "books_opened": True,
+            "empty": True,
+            "shell_kind": "empty_shell",
+            "message": "BZG books shell (unavailable to read right now).",
+            "journals": 0,
+            "accounts": 0,
+            "db_file": "atrium-bzg.sqlite",
+        }
     return {
         **HONESTY,
+        **{k: stamp[k] for k in (
+            "books_enabled",
+            "books_opened",
+            "empty",
+            "shell_kind",
+            "journals",
+            "accounts",
+            "db_file",
+            "outlet_id_nullable",
+        ) if k in stamp},
         "ok": True,
         "title": "BZG Finance",
-        "message": (
-            "BZG Finance entry is live for authorised seats. "
-            "Outlet registry is at /bzg/outlets. "
-            "Pool Bar is OU-BZG-RAIN-POOL under BZG-RAIN (PRE-OPENING)."
+        "message": stamp.get("message") or (
+            "BZG books shell is open. Empty OK — no fake journals. "
+            "Outlet registry at /bzg/outlets."
         ),
         "finance_entities": entities,
-        "books_opened": False,
         "operating_unit_hook": "OU-BZG-RAIN-POOL",
         "outlet_registry": "/bzg/outlets",
-        "empty": True,
     }
 
 
@@ -95,13 +116,16 @@ def dispatch(
         raise BzgFinanceError("Not found.", code="not_found", http_status=404)
     if method != "GET":
         raise BzgFinanceError(
-            "BZG Finance writes are not opened on this pack.",
+            "BZG Finance money writes are not opened on this pack.",
             code="method_not_allowed",
             http_status=405,
         )
     rest = trimmed[len("/api/bzg/finance") :] or "/"
     if rest in {"", "/", "/overview"}:
         return overview(person_id or "", conn)
+    if rest == "/books":
+        require_board(person_id, conn)
+        return {**HONESTY, **_books.desk_stamp(ENTITY), "ok": True}
     raise BzgFinanceError("Not found.", code="not_found", http_status=404)
 
 

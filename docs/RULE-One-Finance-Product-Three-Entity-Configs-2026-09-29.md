@@ -30,5 +30,18 @@
 
 - Inventory: `state/finance-core-sprint/INVENTORY-20260929.json`
 - RESULT: `docs/wolf/ops/CORE-ENT-1-RESULT.md`
+- CORE-BOOKS-1 RESULT: `docs/wolf/ops/CORE-BOOKS-1-RESULT.md`
 - Operating units hook: `state/finance-core-sprint/BZG-OPERATING-UNITS.json`
-- Sidecar: `atrium-finance/server/entityConfig.ts`, `entityIsolation.ts`
+- Sidecar: `atrium-finance/server/entityConfig.ts`, `entityIsolation.ts`, `entityBooks.ts`
+
+## Addendum — CORE-BOOKS-1 (2026-09-29)
+
+**Books isolation = separate SQLite files per entity** under `atrium-finance/data/beta/`:
+
+| Entity | File | Shell |
+| --- | --- | --- |
+| ENT-AMG | `atrium.sqlite` | Live AMG books (preserved) |
+| ENT-BZG | `atrium-bzg.sqlite` | Empty/minimal shell |
+| ENT-GGV | `atrium-ggv.sqlite` | Empty/minimal shell |
+
+Shared code opens the correct file by `legal_entity_id`. Do not merge company data across files. `books_enabled=true` for all three config slots on the Beta mount. Empty shells carry schema + SoD columns (`preparer_person_id`) + nullable `outlet_id` / `operating_unit_id` — **no** fake journals, sales, P&L, invoices, customers, or go-live numbers. Authority stays separate (Zayen AMG+BZG / Amanda GGV only).

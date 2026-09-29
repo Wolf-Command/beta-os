@@ -92,6 +92,7 @@
   <div class="banner">
     <strong>Entering a nota is not the same as paying it.</strong>
     <p class="note" id="boundary">Payment and full books live with Finance reconciliation later — here you capture notas and vendors.</p>
+    <p class="note" id="books-shell">GGV books slot: loading…</p>
     <p class="note">Bank details seen on a document are not verified.</p>
     <p class="note">An issued invoice is not a paid invoice. A claimed payment is not a verified payment.</p>
   </div>
@@ -337,6 +338,13 @@ async function loadOverview() {
     : `<p class="note">No invoice activity yet.</p>`;
   renderEntities(data.finance_entities || desk.finance_entities || []);
   if (data.boundary_note) $("boundary").textContent = data.boundary_note;
+  const shell = $("books-shell");
+  if (shell) {
+    const dbFile = data.db_file || (data.books_shell && data.books_shell.db_file) || "atrium-ggv.sqlite";
+    const kind = data.shell_kind || "empty_shell";
+    shell.textContent =
+      "GGV books slot open (" + dbFile + ", " + kind + "). Empty shell OK. staff_ready=false · human_commissioned=false. Not READY.";
+  }
 }
 
 function renderEntities(rows) {

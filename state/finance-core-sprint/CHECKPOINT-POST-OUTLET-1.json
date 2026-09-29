@@ -1,0 +1,25 @@
+{
+  "schema": "wolf.finance-core-sprint.checkpoint.v1",
+  "name": "CHECKPOINT-POST-OUTLET-1",
+  "as_of_wita": "2026-09-29T22:07:50+0800",
+  "status": "COMMITTED_LOCAL",
+  "no_push": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_8787_pid": 15975,
+  "prod_mutate": false,
+  "packs_verified": ["CORE-ENT-1", "BZG-OUTLET-1"],
+  "note": "HEADCHEF-1 wiring co-staged in beta-os commit only because serve_beta intertwines; already PASS_VERIFIED separately; not a new HEADCHEF arm.",
+  "shas": {
+    "beta_os_branch": "build/wolf-command-rebuild",
+    "beta_os": "9e0da0467a38267ea6ce3b8fdc90262bfa1715db",
+    "atrium_finance_branch": "wolf/beta-mount-20260928",
+    "atrium_finance": "dda95676cc8b8fa0b92def721db170a09efad196"
+  },
+  "left_unstaged": [
+    "humancomm/mywork/opsfix/opsaudit shot + doc WIP",
+    "state/build-factory/* (gitignore)",
+    "unrelated catalog backups hashes"
+  ],
+  "next": "CORE-BOOKS-1"
+}
