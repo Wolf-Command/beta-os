@@ -123,13 +123,13 @@ All under `docs/wolf/ops/shots/`:
 |---------|-----|
 | Prod `:8787` | **15975** (untouched) |
 | Beta `:8788` | **2302** |
-| Atrium `:8790` | **9496** (restarted after npm/suite collision; DB journals preserved) |
+| Atrium `:8790` | **10456** (restarted after npm/suite collision; DB journals preserved; was 9496 during re-run) |
 
 ### Commits (local only)
 
 | Repo | Commit |
 |------|--------|
-| beta-os | `fa1858f` (code/shots/RESULT) · `8dbfbf6` (claim + commit SHAs) |
+| beta-os | `fa1858f` (code/shots/RESULT) · `8dbfbf6` (claim) · `308c15a` (RESULT refs) |
 | atrium-finance | `b6008cd` |
 
 ### Migration
