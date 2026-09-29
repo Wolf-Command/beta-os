@@ -384,6 +384,20 @@
       "expect": "exit 0",
       "by": "fin-tax-shell1-20260930",
       "at": "2026-09-30T04:01:12+08:00"
+    },
+    {
+      "id": "bzg-inventory-truth1-honesty",
+      "claim": "BZG-INVENTORY-TRUTH-1: inventory slots UNKNOWN fact_count=0; fake_stock/invented_stock/invented_count false; BZG-OPS-DESK-1 preserved; staff_ready/human_commissioned false; next pack parent-only GGV-METRIC-HONESTY-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import bzg_inventory_truth1 as i; p=i.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('fake_stock') is False and p.get('invented_stock') is False and p.get('invented_count') is False and p.get('inventory_unknown') is True and int(p.get('fact_count') or 0)==0 and p.get('bzg_ops_desk1_preserved') is True and i.all_inventory_slots_unknown(p) and i.no_fake_stock(p) and i.honesty_flags().get('next_pack_for_parent_only')=='GGV-METRIC-HONESTY-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "bzg-inventory-truth1-20260930"
+    },
+    {
+      "id": "bzg-inventory-truth1-surfaces",
+      "claim": "BZG-INVENTORY-TRUTH-1 page/API/shots/RESULT present; unsigned deny + suite PASS=193; next pack parent-only GGV-METRIC-HONESTY-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import bzg_inventory_truth1 as i; from pathlib import Path; html=Path('dashboards/bzg-inventory-truth-1.html').read_text(); import sys; sys.exit(0 if (i.api_matches('/api/bzg/inventory-truth-1') and i.page_matches('/bzg/inventory-truth-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/bzginventory1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/BZG-INVENTORY-TRUTH-1-RESULT.md').is_file() and i.honesty_flags().get('next_pack_for_parent_only')=='GGV-METRIC-HONESTY-1' and i.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "bzg-inventory-truth1-20260930"
     }
   ]
 }

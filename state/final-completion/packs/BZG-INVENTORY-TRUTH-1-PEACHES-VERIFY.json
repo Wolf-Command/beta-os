@@ -1,0 +1,82 @@
+{
+  "pack": "BZG-INVENTORY-TRUTH-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T04:12:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T04:10:41+08:00",
+  "result_file": "docs/wolf/ops/BZG-INVENTORY-TRUTH-1-RESULT.md",
+  "tests_rerun": {
+    "test_bzg_inventory_truth1_20260930.py": {
+      "pass": 193,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 5,
+    "distinct_sha256": 3,
+    "all_distinct": false,
+    "note": "desk/inventory/ops share SHA; phone+unsigned distinct",
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/bzginventory1-desk-desktop.png",
+        "bytes": 173625,
+        "sha256": "9b03386290eb975318a045ec5f3721c3352a4b4cac8323cc1c9511ea41ef5f5c"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzginventory1-desk-phone.png",
+        "bytes": 132130,
+        "sha256": "fbdfffd9eaeb9b47d54eba87398a43f0a015e111352d5288c1d68cf38104d0ca"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzginventory1-inventory-unknown.png",
+        "bytes": 173625,
+        "sha256": "9b03386290eb975318a045ec5f3721c3352a4b4cac8323cc1c9511ea41ef5f5c"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzginventory1-ops-desk-preserved.png",
+        "bytes": 173625,
+        "sha256": "9b03386290eb975318a045ec5f3721c3352a4b4cac8323cc1c9511ea41ef5f5c"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzginventory1-unsigned-deny.png",
+        "bytes": 22047,
+        "sha256": "11f3efdf96240ffd95b180e91af39991a300f64c4da617970e5c972744650bff"
+      }
+    ],
+    "eye_check": {
+      "desk": "slots UNKNOWN qty=null fake_stock=false BZG-OPS-DESK-1 preserved",
+      "unsigned_deny": "Access denied"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "fake_stock": false,
+    "invented_count": false,
+    "ceiling": "BUILT"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "770c288",
+    "atrium_finance_head": "7584266",
+    "uncommitted": true
+  },
+  "preserves": [
+    "BZG-OPS-DESK-1"
+  ],
+  "next_pack": "GGV-METRIC-HONESTY-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

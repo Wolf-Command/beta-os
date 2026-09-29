@@ -89,8 +89,8 @@
     "RELIABILITY-1",
     "CONTENT-ENGINE-LIVE-1"
   ],
-  "last_pack_verified": "FIN-TAX-SHELL-1",
-  "last_verified_at": "2026-09-30T04:05:00+08:00",
-  "pass_verified_count": 27,
-  "next_pack": "BZG-INVENTORY-TRUTH-1"
+  "last_pack_verified": "BZG-INVENTORY-TRUTH-1",
+  "last_verified_at": "2026-09-30T04:12:00+08:00",
+  "pass_verified_count": 28,
+  "next_pack": "GGV-METRIC-HONESTY-1"
 }

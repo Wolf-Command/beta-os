@@ -4,8 +4,9 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 6,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T04:05:00+08:00",
+  "exited_at": "2026-09-30T04:09:21+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
   "prod_pid_held": 15975,
@@ -15,6 +16,7 @@
   "matt_auto_continue": true,
   "prior_pack_verified": "FIN-TAX-SHELL-1",
   "beta_os_head_at_arm": "b1c5afe",
+  "beta_os_head_at_exit": "770c288",
   "brief": "state/build-factory/briefs/BRIEF-BZG-INVENTORY-TRUTH-1.md",
   "log": "state/build-factory/logs/BZG-INVENTORY-TRUTH-1.log",
   "result_file": "docs/wolf/ops/BZG-INVENTORY-TRUTH-1-RESULT.md",
@@ -34,5 +36,42 @@
   ],
   "preserves": [
     "BZG-OPS-DESK-1"
-  ]
+  ],
+  "launched_at": "2026-09-30T04:05:30+08:00",
+  "cursor_pid": 42116,
+  "child_alive": false,
+  "suite": {
+    "path": "scripts/tests/test_bzg_inventory_truth1_20260930.py",
+    "pass": 193,
+    "fail": 0
+  },
+  "shots": [
+    "docs/wolf/ops/shots/bzginventory1-desk-desktop.png",
+    "docs/wolf/ops/shots/bzginventory1-desk-phone.png",
+    "docs/wolf/ops/shots/bzginventory1-inventory-unknown.png",
+    "docs/wolf/ops/shots/bzginventory1-ops-desk-preserved.png",
+    "docs/wolf/ops/shots/bzginventory1-unsigned-deny.png"
+  ],
+  "page": "/bzg/inventory-truth-1",
+  "api": "/api/bzg/inventory-truth-1",
+  "fake_stock": false,
+  "invented_stock": false,
+  "invented_count": false,
+  "inventory_unknown": true,
+  "counts_unknown": true,
+  "bzg_ops_desk1_preserved": true,
+  "ceiling": "BUILT",
+  "cursor_did_not_auto_start_next": true,
+  "exit": 0,
+  "has_exit": true,
+  "exit_code": 0,
+  "tests_pass": 193,
+  "tests_fail": 0,
+  "independent_tests_this_tick": {
+    "pass": 193,
+    "fail": 0
+  },
+  "completed_at": "2026-09-30T04:09:21+08:00",
+  "peaches_verified_at": "2026-09-30T04:12:00+08:00",
+  "peaches_verify": "state/final-completion/packs/BZG-INVENTORY-TRUTH-1-PEACHES-VERIFY.json"
 }
