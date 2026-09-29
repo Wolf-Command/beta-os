@@ -1,0 +1,86 @@
+{
+  "pack": "CONTENT-ENGINE-LIVE-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T02:11:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T02:08:57+08:00",
+  "result_file": "docs/wolf/ops/CONTENT-ENGINE-LIVE-1-RESULT.md",
+  "tests_rerun": {
+    "test_content_engine_live1_20260930.py": {
+      "pass": 149,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/contentenginelive1-desk-desktop.png",
+        "bytes": 169426,
+        "sha256": "8fea0e2b47901801e1d8ee49a9616d43046ac9203013217a0f06e28100caba33"
+      },
+      {
+        "path": "docs/wolf/ops/shots/contentenginelive1-desk-phone.png",
+        "bytes": 123750,
+        "sha256": "a79411dbdfa7183f9d4a15f90ff370ba5fd3dfbb88d149343427d7a48dc236be"
+      },
+      {
+        "path": "docs/wolf/ops/shots/contentenginelive1-metricool-not-runtime.png",
+        "bytes": 169467,
+        "sha256": "4d05a944212bde4fdc9805ca6673875ef39273c46dd40a9cdf524a9cbd827a91"
+      },
+      {
+        "path": "docs/wolf/ops/shots/contentenginelive1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      }
+    ],
+    "eye_check": {
+      "desk_desktop": "Metricool NOT_RUNTIME NAS MOUNTED staff_ready=false no fake engagement",
+      "metricool_not_runtime": "NOT_RUNTIME banner + stamp visible",
+      "unsigned_deny": "Access denied"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "beta": {
+    "port": 8788,
+    "pid": 13405,
+    "listening": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "metricool_not_runtime": true,
+    "invented_engagement": false,
+    "invented_publish_success": false,
+    "invented_metricool_success": false,
+    "ceiling": "BUILT"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "7566a6c",
+    "atrium_finance_head": "7584266",
+    "uncommitted": true
+  },
+  "preserves": [
+    "GGV-CONTENT-PROVE-1",
+    "INTG-TRUTH-1",
+    "RELIABILITY-1"
+  ],
+  "next_pack": "BZG-WASTE-YIELD-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

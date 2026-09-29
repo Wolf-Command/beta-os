@@ -295,6 +295,12 @@ DASHBOARDS_HTML_CANONICAL: dict[str, str] = {
     "/integrations-status.html": "/ops/integrations-status",
     "/dashboards/reliability.html": "/ops/reliability",
     "/reliability.html": "/ops/reliability",
+    "/dashboards/content-engine-live.html": "/ops/content-engine-live",
+    "/content-engine-live.html": "/ops/content-engine-live",
+    "/content-engine-live": "/ops/content-engine-live",
+    "/content-engine-live/": "/ops/content-engine-live",
+    "/content/engine-live": "/ops/content-engine-live",
+    "/content/engine-live/": "/ops/content-engine-live",
     # Flat legacy filenames that used to sit next to clean routes
     "/bzg-uma-blu.html": "/bzg/uma-blu",
     "/bzg-uma-blu": "/bzg/uma-blu",
@@ -672,6 +678,7 @@ ROUTE_PARENT: dict[str, str | None] = {
     "/ggv-ops-pack": EMPIRE_HREF,
     "/ggv/finance": "/ggv-ops-pack",
     "/ggv/content-prove": "/ggv-ops-pack",
+    "/ops/content-engine-live": EMPIRE_HREF,
     "/crm/identity-1": EMPIRE_HREF,
     "/fin/interco-1": EMPIRE_HREF,
     "/fin/recon-shell-1": EMPIRE_HREF,
@@ -752,6 +759,11 @@ ROUTE_CRUMBS: dict[str, list[dict[str, Any]]] = {
         {"label": "Goss Group", "href": None},
         {"label": "GGV", "href": "/ggv-ops-pack"},
         {"label": "Content Prove", "href": None},
+    ],
+    "/ops/content-engine-live": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Ops", "href": None},
+        {"label": "Content Engine Live", "href": None},
     ],
     "/crm/identity-1": [
         {"label": "WOLF", "href": WOLF_ALIAS},

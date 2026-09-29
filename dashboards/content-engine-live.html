@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Content Engine Live — storage truth</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1c1915;
+      --muted: #5c574e;
+      --paper: #f3f1ec;
+      --card: #fffdf8;
+      --line: #ddd6c8;
+      --warn: #8a1f1f;
+      --ok: #2a4a28;
+      --unk: #6b4a18;
+    }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(ellipse 70% 40% at 0% 0%, #ebe4d6 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 72px; }
+    h1 { font-size: 1.65rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #f5efe3; border: 1px solid #d2c4a4; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner strong { color: #5a4a28; }
+    .banner.warn {
+      background: #f8eaea; border-color: #e0b8b8; color: var(--warn);
+    }
+    .banner.warn strong { color: var(--warn); }
+    h2 {
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin: 22px 0 10px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+    .chip {
+      display: inline-block; padding: 5px 10px; border-radius: 6px;
+      background: #ebe4d6; font-size: 0.75rem; font-weight: 600;
+    }
+    .chip.NOT_RUNTIME, .chip.UNKNOWN, .chip.EMPTY { background: #f5ead8; color: var(--unk); }
+    .chip.MOUNTED, .chip.PRESENT { background: #dde8dc; color: var(--ok); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); margin-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; min-width: 560px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #ebe4d6; vertical-align: top; font-size: 0.86rem; }
+    th { background: #f0ebe2; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    tr:last-child td { border-bottom: 0; }
+    .status { font-weight: 700; white-space: nowrap; }
+    .status.NOT_RUNTIME, .status.UNKNOWN, .status.EMPTY { color: var(--unk); }
+    .status.MOUNTED, .status.PRESENT { color: var(--ok); }
+    .muted { color: var(--muted); font-size: 0.8rem; line-height: 1.4; }
+    .null { color: #9a9488; font-style: italic; }
+    .err { color: var(--warn); }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem; word-break: break-all; }
+    .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .links a { color: var(--unk); font-size: 0.88rem; }
+    @media (max-width: 520px) {
+      h1 { font-size: 1.35rem; }
+      main { padding: 16px 12px 64px; }
+      th, td { padding: 8px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body data-ready="0" data-pack="CONTENT-ENGINE-LIVE-1">
+  <main>
+    <h1>Content Engine Live</h1>
+    <p class="sub" id="sub">Storage truth · pack CONTENT-ENGINE-LIVE-1 · loading…</p>
+    <div class="banner" id="honesty">
+      <strong>Honesty:</strong>
+      staff_ready=false · human_commissioned=false ·
+      Metricool NOT_RUNTIME · no fake engagement ·
+      approved ≠ published · write_authority=NONE
+    </div>
+    <div class="banner warn" id="metricool-banner">
+      <strong>Metricool:</strong> <span id="metricool-stamp">NOT_RUNTIME</span>
+      — no invented last_success / engagement / publish success.
+    </div>
+    <div class="chips" id="chips"></div>
+
+    <h2>Content library paths</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Surface</th>
+            <th>Path</th>
+            <th>Status</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="library-rows">
+          <tr><td colspan="4" class="muted">Loading library paths…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" id="library-counts"></p>
+
+    <h2>NAS mounts</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Mount</th>
+            <th>Path</th>
+            <th>Status</th>
+            <th>Evidence</th>
+          </tr>
+        </thead>
+        <tbody id="nas-rows">
+          <tr><td colspan="4" class="muted">Probing NAS mounts…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" id="nas-note"></p>
+
+    <h2>Publish queue</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Brand / Platform</th>
+            <th>Planner status</th>
+            <th>Published</th>
+            <th>Engagement</th>
+          </tr>
+        </thead>
+        <tbody id="queue-rows">
+          <tr><td colspan="5" class="muted">Loading publish queue…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" id="queue-note"></p>
+
+    <h2>Desk links</h2>
+    <div class="links" id="links"></div>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    function nullCell(v, label) {
+      if (v == null || v === "") return '<span class="null">' + esc(label || "null (never invent)") + "</span>";
+      return esc(v);
+    }
+    function statusClass(s) {
+      return esc(String(s || "UNKNOWN").replace(/\s+/g, "_"));
+    }
+    function paint(data) {
+      const surfaces = data.surfaces || {};
+      const library = surfaces.content_library || {};
+      const nas = surfaces.nas || {};
+      const queue = surfaces.publish_queue || {};
+      const met = surfaces.metricool || {};
+
+      document.getElementById("sub").textContent =
+        "Storage truth · pack " + (data.pack || "CONTENT-ENGINE-LIVE-1")
+        + " · as of " + (data.as_of_wita || "—")
+        + " · ceiling " + (data.ceiling || "BUILT");
+
+      const stamp = met.display || met.status || "NOT_RUNTIME";
+      document.getElementById("metricool-stamp").textContent = stamp;
+      document.getElementById("metricool-banner").setAttribute("data-status", stamp);
+
+      const chips = [];
+      chips.push('<span class="chip ' + statusClass(stamp) + '">Metricool ' + esc(stamp) + "</span>");
+      chips.push('<span class="chip ' + statusClass(nas.status) + '">NAS ' + esc(nas.status || "UNKNOWN") + "</span>");
+      chips.push('<span class="chip ' + statusClass(queue.status) + '">Queue ' + esc(queue.status || "UNKNOWN") + "</span>");
+      chips.push('<span class="chip">staff_ready=false</span>');
+      chips.push('<span class="chip">human_commissioned=false</span>');
+      document.getElementById("chips").innerHTML = chips.join("");
+
+      const libRows = (library.paths || []).map(function (p) {
+        return "<tr data-id=\"" + esc(p.id || p.role) + "\" data-status=\"" + esc(p.status) + "\">"
+          + "<td>" + esc(p.label || p.id) + "</td>"
+          + "<td><code>" + esc(p.path) + "</code></td>"
+          + "<td class=\"status " + statusClass(p.status) + "\">" + esc(p.status) + "</td>"
+          + "<td class=\"muted\">" + (p.empty ? "empty / missing" : (p.exists ? "present" : "UNKNOWN")) + "</td>"
+          + "</tr>";
+      });
+      document.getElementById("library-rows").innerHTML =
+        libRows.length ? libRows.join("") : "<tr><td colspan=\"4\" class=\"muted\">No path surfaces.</td></tr>";
+      const counts = library.counts || {};
+      document.getElementById("library-counts").textContent =
+        "Catalog counts — assets: " + (counts.assets == null ? "UNKNOWN" : counts.assets)
+        + " · nas_index: " + (counts.nas_index_rows == null ? "UNKNOWN" : counts.nas_index_rows)
+        + " · planner slots: " + (counts.content_planner_slots == null ? "UNKNOWN" : counts.content_planner_slots)
+        + " · " + (counts.why || library.why || "");
+
+      const nasRows = (nas.roots || []).map(function (r) {
+        return "<tr data-id=\"" + esc(r.id) + "\" data-status=\"" + esc(r.status) + "\">"
+          + "<td>" + esc(r.id) + "</td>"
+          + "<td><code>" + esc(r.path) + "</code></td>"
+          + "<td class=\"status " + statusClass(r.status) + "\">" + esc(r.status) + "</td>"
+          + "<td class=\"muted\">" + esc(r.evidence || "UNKNOWN") + "</td>"
+          + "</tr>";
+      });
+      document.getElementById("nas-rows").innerHTML =
+        nasRows.length ? nasRows.join("") : "<tr><td colspan=\"4\" class=\"muted\">NAS registry empty / UNKNOWN.</td></tr>";
+      const idx = nas.indexing || {};
+      document.getElementById("nas-note").textContent =
+        (nas.why || "") + " · full_tree_indexed=" + (idx.full_tree_indexed === true ? "true" : "false");
+
+      const slots = queue.slots || [];
+      const qRows = slots.map(function (s) {
+        return "<tr data-id=\"slot-" + esc(s.id) + "\">"
+          + "<td>" + esc(s.id) + "</td>"
+          + "<td>" + esc(s.brand) + " / " + esc(s.platform) + "</td>"
+          + "<td>" + esc(s.status) + "</td>"
+          + "<td>" + nullCell(null, "null (never invent)") + "</td>"
+          + "<td>" + nullCell(s.engagement, "null (never invent)") + "</td>"
+          + "</tr>";
+      });
+      document.getElementById("queue-rows").innerHTML =
+        qRows.length
+          ? qRows.join("")
+          : "<tr><td colspan=\"5\" class=\"muted\">Publish queue " + esc(queue.status || "EMPTY") + " — no invented success.</td></tr>";
+      document.getElementById("queue-note").textContent =
+        (queue.why || "")
+        + " · metricool_write=" + (queue.metricool_write_status || "DISABLED")
+        + " · published_count=null";
+
+      const links = (data.desk_links || []).map(function (l) {
+        return "<a href=\"" + esc(l.href) + "\">" + esc(l.label) + "</a>";
+      });
+      document.getElementById("links").innerHTML = links.join("") || "<span class=\"muted\">—</span>";
+
+      document.body.setAttribute("data-ready", "1");
+      document.body.setAttribute("data-metricool", stamp);
+      document.body.setAttribute("data-nas", nas.status || "UNKNOWN");
+      document.body.setAttribute("data-queue", queue.status || "UNKNOWN");
+    }
+    async function load() {
+      try {
+        const resp = await fetch("/api/ops/content-engine-live", {
+          headers: { "Accept": "application/json" },
+          credentials: "same-origin",
+        });
+        if (resp.status === 403) {
+          document.getElementById("sub").textContent = "403 — sign in required (unsigned deny).";
+          document.getElementById("library-rows").innerHTML =
+            "<tr><td colspan=\"4\" class=\"err\">Forbidden — identity required.</td></tr>";
+          document.body.setAttribute("data-ready", "0");
+          document.body.setAttribute("data-deny", "403");
+          return;
+        }
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        const data = await resp.json();
+        if (!data || data.ok === false) throw new Error((data && data.message) || "board unavailable");
+        paint(data);
+      } catch (e) {
+        document.getElementById("library-rows").innerHTML =
+          "<tr><td colspan=\"4\" class=\"err\">" + esc(e && e.message ? e.message : e) + "</td></tr>";
+        document.body.setAttribute("data-ready", "0");
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

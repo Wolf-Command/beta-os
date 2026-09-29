@@ -166,6 +166,7 @@ from core import bzg_outlet_registry as _bzg_outlets
 from core import v1_status_register as _v1_status
 from core import intg_truth_board as _intg_truth
 from core import reliability1 as _reliability1
+from core import content_engine_live1 as _content_engine_live1
 from core import amg_os_shell as _amg_os_shell
 from core import ggv_content_prove1 as _ggv_content_prove
 from core import crm_identity_memory as _crm_ident
@@ -2011,6 +2012,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._reliability1_dispatch():
+            return
+
+        if self._content_engine_live1_dispatch():
             return
 
         if self._amg_os_shell_dispatch():
@@ -5064,6 +5068,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._reliability1_dispatch():
                 return
         elif path in (
+            "/ops/content-engine-live",
+            "/ops/content-engine-live/",
+            "/content/engine-live",
+            "/content/engine-live/",
+            "/content-engine-live",
+            "/content-engine-live/",
+            "/content-engine-live.html",
+            "/dashboards/content-engine-live.html",
+        ):
+            if self._content_engine_live1_dispatch():
+                return
+        elif path in (
             "/amg/os-shell",
             "/amg/os-shell/",
             "/amg-os-shell",
@@ -5900,6 +5916,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
             return
+        if path == "/api/ops/content-engine-live" or path.startswith(
+            "/api/ops/content-engine-live/"
+        ):
+            self._content_engine_live1_write_refused(path)
+            return
         if path == "/api/intel/learning" or (
             path.startswith("/api/intel/learning/")
             and not path.startswith("/api/intel/learning-policy")
@@ -6716,6 +6737,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
+            return
+        if path == "/api/ops/content-engine-live" or path.startswith(
+            "/api/ops/content-engine-live/"
+        ):
+            self._content_engine_live1_write_refused(path)
             return
         if path == "/api/intel/learning" or (
             path.startswith("/api/intel/learning/")
@@ -7938,6 +7964,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
+            return
+        if path == "/api/ops/content-engine-live" or path.startswith(
+            "/api/ops/content-engine-live/"
+        ):
+            self._content_engine_live1_write_refused(path)
             return
         if path == "/api/intel/learning" or (
             path.startswith("/api/intel/learning/")
@@ -15237,6 +15268,109 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "human_commissioned": False,
                 "fake_uptime": False,
                 "prod_mutate": False,
+            },
+            status=403,
+        )
+
+    def _content_engine_live1_dispatch(self) -> bool:
+        """CONTENT-ENGINE-LIVE-1 — storage truth board; no fake Metricool."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _content_engine_live1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _content_engine_live1.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "board_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "fake_metrics": False,
+                        "invented_engagement": False,
+                        "invented_publish_success": False,
+                        "invented_metricool_success": False,
+                        "secrets_exposed": False,
+                        "write_authority_expanded": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _content_engine_live1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "content-engine-live.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "Content Engine Live page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="content-engine-live.html")
+        return True
+
+    def _content_engine_live1_write_refused(self, path: str) -> None:
+        """Refuse fake-publish / engagement invent / commissioning flips."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _content_engine_live1.refuse_external_write(
+                body if isinstance(body, dict) else {}
+            )
+        except _content_engine_live1.ContentEngineLive1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "fake_metrics": False,
+                    "invented_engagement": False,
+                    "invented_publish_success": False,
+                    "invented_metricool_success": False,
+                    "prod_mutate": False,
+                    "prod_pid_held": _content_engine_live1.PROD_PID_HELD,
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": (
+                    "CONTENT-ENGINE-LIVE-1 is a read-only storage-truth board. "
+                    "Writes refused."
+                ),
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "fake_metrics": False,
             },
             status=403,
         )

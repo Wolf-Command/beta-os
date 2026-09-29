@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T02:04:00+08:00",
+  "at_wita": "2026-09-30T02:11:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -515,8 +515,17 @@
       "estimated_effort": "L",
       "matt_blocker": false,
       "synthesized_from": "MISSING/PARTIAL priority buckets",
-      "status": "WAITING_CURSOR",
-      "armed_at": "2026-09-30T02:04:00+08:00"
+      "status": "PASS_VERIFIED",
+      "armed_at": "2026-09-30T02:04:00+08:00",
+      "cursor_pid": 21944,
+      "launched_at": "2026-09-30T02:04:30+08:00",
+      "exited_at": "2026-09-30T02:08:36+08:00",
+      "tests": {
+        "pass": 149,
+        "fail": 0
+      },
+      "result_file": "docs/wolf/ops/CONTENT-ENGINE-LIVE-1-RESULT.md",
+      "verified_at": "2026-09-30T02:11:00+08:00"
     },
     {
       "pack_id": "BZG-WASTE-YIELD-1",
@@ -541,8 +550,9 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
-      "synthesized_from": "wave3"
+      "status": "WAITING_CURSOR",
+      "synthesized_from": "wave3",
+      "armed_at": "2026-09-30T02:11:00+08:00"
     },
     {
       "pack_id": "FIN-AP-AR-SHELL-1",
@@ -699,7 +709,8 @@
   "synthesis_wave2_at": "2026-09-30T00:45:44+08:00",
   "synthesis_wave3_at": "2026-09-30T01:19:01+08:00",
   "last_verified": "DASH-LIVE-1",
-  "next_to_arm": "CONTENT-ENGINE-LIVE-1",
-  "heavy_in_flight": "RELIABILITY-1",
-  "last_exited": null
+  "next_to_arm": "BZG-WASTE-YIELD-1",
+  "heavy_in_flight": null,
+  "last_exited": "CONTENT-ENGINE-LIVE-1",
+  "next_to_arm_note": "parent/Peaches only \u2014 Cursor did not auto-arm"
 }

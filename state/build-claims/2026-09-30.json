@@ -17,7 +17,7 @@
     },
     {
       "id": "sop-factory1-review-gate-demo",
-      "claim": "SOP Factory vertical slice: evidence→lesson candidate→human review gate; DEMO fixture pending on tmp-sop-factory-1; catalog/sop_factory.sqlite absent; staff_ready/human_commissioned/operating_adoption false; CAP-CORE-11 stays SPECIFIED.",
+      "claim": "SOP Factory vertical slice: evidence\u2192lesson candidate\u2192human review gate; DEMO fixture pending on tmp-sop-factory-1; catalog/sop_factory.sqlite absent; staff_ready/human_commissioned/operating_adoption false; CAP-CORE-11 stays SPECIFIED.",
       "check": "PYTHONPATH=scripts python3 -c \"from core import sop_factory as s; from pathlib import Path; import json,sys; h=s.honesty_flags(); q=s.list_review_queue(s.OWNER_PERSON, db_path=s.DEMO_DB); live=s.DEFAULT_DB.exists(); led=json.loads(Path('state/model-c-baseline-assessments.json').read_text())['CAP-CORE-11'][0]; sys.exit(0 if (h.get('staff_ready') is False and h.get('human_commissioned') is False and h.get('operating_adoption') is False and h.get('human_review_gate') is True and h.get('auto_approve') is False and not live and (q.get('pending_count') or 0)>=1 and led=='SPECIFIED') else 1)\"",
       "expect": "exit 0",
       "by": "sop-factory1-20260930"
@@ -101,7 +101,7 @@
     },
     {
       "id": "fin-interco1-stubs-honesty",
-      "claim": "FIN-INTERCO-1: 4 GGV↔AMG/BZG entity-pair stubs EMPTY with null amounts/journals; FC-SHELL-2 BZG/GGV 200/0 preserved; CAP-FIN-06/CAP-GGV-06 not proven; staff_ready/human_commissioned/live_billing/second_billing_system false; extends existing CAP paths only.",
+      "claim": "FIN-INTERCO-1: 4 GGV\u2194AMG/BZG entity-pair stubs EMPTY with null amounts/journals; FC-SHELL-2 BZG/GGV 200/0 preserved; CAP-FIN-06/CAP-GGV-06 not proven; staff_ready/human_commissioned/live_billing/second_billing_system false; extends existing CAP paths only.",
       "check": "PYTHONPATH=scripts python3 -c \"from core import fin_interco1 as f; p=f.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('live_billing') is False and p.get('invented_amount') is False and p.get('invented_journal') is False and p.get('fc_shell2_preserved') is True and p.get('cap_fin_06_proven') is False and p.get('cap_ggv_06_proven') is False and p.get('second_billing_system') is False and f.all_stubs_empty(p) and len(p.get('entity_pair_stubs') or [])==4) else 1)\"",
       "expect": "exit 0",
       "by": "fin-interco1-20260930"
@@ -182,6 +182,20 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import reliability1 as r; from pathlib import Path; html=Path('dashboards/reliability.html').read_text(); import sys; sys.exit(0 if (r.api_matches('/api/ops/reliability') and r.page_matches('/ops/reliability') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/reliability1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/RELIABILITY-1-RESULT.md').is_file() and r.honesty_flags().get('next_pack_for_parent_only')=='CONTENT-ENGINE-LIVE-1' and r.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
       "expect": "exit 0",
       "by": "reliability1-20260930"
+    },
+    {
+      "id": "content-engine-live1-storage-truth",
+      "claim": "CONTENT-ENGINE-LIVE-1: library/NAS/publish-queue honesty surfaces; Metricool NOT_RUNTIME; no invented engagement/publish success; staff_ready/human_commissioned false; next pack parent-only BZG-WASTE-YIELD-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import content_engine_live1 as c; p=c.build_board(); import sys; sys.exit(0 if (p.get('ok') and p.get('staff_ready') is False and p.get('human_commissioned') is False and c.metricool_not_runtime(p) and c.storage_surfaces_honest(p) and p.get('next_pack_for_parent_only')=='BZG-WASTE-YIELD-1' and p.get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "content-engine-live1-20260930"
+    },
+    {
+      "id": "content-engine-live1-routes-shots",
+      "claim": "CONTENT-ENGINE-LIVE-1 page/API/shots/RESULT present; unsigned deny + suite PASS=149; next pack parent-only BZG-WASTE-YIELD-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import content_engine_live1 as c; from pathlib import Path; html=Path('dashboards/content-engine-live.html').read_text(); import sys; sys.exit(0 if (c.api_matches('/api/ops/content-engine-live') and c.page_matches('/ops/content-engine-live') and 'staff_ready=false' in html and 'NOT_RUNTIME' in html and Path('docs/wolf/ops/shots/contentenginelive1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/CONTENT-ENGINE-LIVE-1-RESULT.md').is_file() and c.honesty_flags().get('next_pack_for_parent_only')=='BZG-WASTE-YIELD-1' and c.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "content-engine-live1-20260930"
     }
   ]
 }
