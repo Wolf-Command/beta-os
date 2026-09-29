@@ -5,38 +5,69 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Work</title>
 <style>
+  /* MYWORK-1B: pin work-ink tokens so wolf-tokens.css pale --text/--muted
+     cannot wash out cream card copy (WCAG AA ≥ 4.5:1). */
   :root {
-    --bg: #f4f1ea; --card: #fffdf8; --text: #1c1915; --muted: #5c564c;
-    --line: #e4dccf; --accent: #1f4d3a; --danger: #8d1d1d;
+    --work-bg: #f4f1ea;
+    --work-card: #fffdf8;
+    --work-ink: #1c1915;
+    --work-muted: #3f3422;
+    --work-line: #e4dccf;
+    --work-accent: #1f4d3a;
+    --work-danger: #8d1d1d;
     --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
   html, body { max-width: 100%; overflow-x: hidden; }
   body {
     margin: 0 auto; max-width: 720px; padding: 16px 16px 88px;
-    background: var(--bg); color: var(--text); font-family: var(--font);
+    background: var(--work-bg) !important;
+    color: var(--work-ink) !important;
+    font-family: var(--font);
     font-size: 17px; line-height: 1.4;
   }
-  h1 { font-size: 1.35rem; margin: 8px 0; }
-  a.back { color: var(--accent); text-decoration: none; font-weight: 650; }
+  h1 { font-size: 1.35rem; margin: 8px 0; color: var(--work-ink) !important; }
+  a.back { color: var(--work-accent) !important; text-decoration: none; font-weight: 650; }
   .card {
-    background: var(--card); border: 1px solid var(--line);
+    background: var(--work-card) !important;
+    border: 1px solid var(--work-line);
     border-radius: 12px; padding: 12px 14px; margin-top: 10px;
+    color: var(--work-ink) !important;
   }
-  .muted { color: var(--muted); }
-  .err { color: var(--danger); }
-  .stale { color: var(--danger); font-weight: 700; }
+  .card p, .card strong, .card label, .card .chain-hop, .card .next {
+    color: var(--work-ink) !important;
+  }
+  .muted, .card .muted, #status {
+    color: var(--work-muted) !important;
+  }
+  .err { color: var(--work-danger) !important; }
+  .stale { color: var(--work-danger) !important; font-weight: 700; }
+  label {
+    display: block; margin-top: 10px; font-weight: 650;
+    color: var(--work-ink) !important;
+  }
   button, textarea, input {
     font: inherit; width: 100%; margin-top: 8px;
   }
   button {
     min-height: 48px; border-radius: 12px; border: 0;
-    background: var(--accent); color: #fff; font-weight: 650;
+    background: var(--work-accent); color: #fff; font-weight: 650;
   }
-  button.secondary { background: #fff; color: var(--text); border: 1px solid var(--line); }
-  textarea, input { min-height: 44px; border-radius: 12px; border: 1px solid var(--line); padding: 10px; }
+  button.secondary {
+    background: #fff; color: var(--work-ink) !important;
+    border: 1px solid var(--work-line);
+  }
+  textarea, input {
+    min-height: 44px; border-radius: 12px;
+    border: 1px solid var(--work-line); padding: 10px;
+    color: var(--work-ink) !important; background: #fff;
+  }
   textarea { min-height: 88px; }
-  .chain-hop { margin-top: 6px; padding-left: 8px; border-left: 3px solid var(--accent); }
+  .chain-hop {
+    margin-top: 6px; padding-left: 8px;
+    border-left: 3px solid var(--work-accent);
+    color: var(--work-ink) !important;
+  }
 </style>
 </head>
 <body data-wolf-page-type="WORKSPACE" data-wolf-shell="global">
@@ -53,6 +84,11 @@
   }[c]));
   const parts = location.pathname.split("/").filter(Boolean);
   const id = decodeURIComponent(parts[parts.length - 1] || "");
+
+  function hopWhen(hop) {
+    return hop.accepted_at_display || hop.offered_at_display
+      || hop.accepted_at || hop.offered_at || "";
+  }
 
   function paint(data) {
     const item = data.work_item || {};
@@ -74,15 +110,15 @@
       : (evidence.satisfied ? "Evidence requirement is met." : (card.evidence_required || "Attach evidence before DONE."));
     const chainHtml = chain.length
       ? `<div class="card" id="chain"><p><strong>Delegation chain</strong></p>${
-          chain.map((hop) => `<p class="chain-hop">${esc(hop.from_name)} → ${esc(hop.to_name)} · ${esc(hop.status)} · ${esc(hop.accepted_at || hop.offered_at || "")}</p>`).join("")
+          chain.map((hop) => `<p class="chain-hop">${esc(hop.from_name)} → ${esc(hop.to_name)} · ${esc(hop.status)} · ${esc(hopWhen(hop))}</p>`).join("")
         }<p class="muted">Accountable: ${esc(card.accountable || "")}. Current executor: ${esc(card.current_owner || "")}.</p></div>`
       : `<div class="card" id="chain"><p class="muted">No delegation hops yet. Accountable: ${esc(card.accountable || card.current_owner || "")}.</p></div>`;
     $("body").innerHTML = `
-      <div class="card">
+      <div class="card" id="detail">
         <p>${esc(card.instructions || item.description || "")}</p>
         <p class="muted">Requested by ${esc(card.requested_by || "—")} · Due ${esc(card.due || "—")} · ${esc(card.company_site_department || "")}</p>
         <p class="muted">Priority ${esc(card.priority ?? "—")}</p>
-        <p>${esc(missing)}</p>
+        <p id="evidence-line">${esc(missing)}</p>
         <p class="next">${esc(card.what_happens_next || "")}</p>
         <p class="${fresh === "STALE" ? "stale" : "muted"}">Progress: ${esc(fresh)} · DONE is not VERIFIED</p>
       </div>

@@ -80,7 +80,11 @@ def _data_quality() -> list[dict[str, Any]]:
 
 def _stale_authoritative(cards: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
-    day = uma.operating_day()
+    try:
+        day = uma.operating_day()
+    except Exception:  # noqa: BLE001
+        # Test guard may refuse prod recipes.sqlite — other exception sources still count.
+        day = {}
     sales = day.get("sales") or {}
     latest = sales.get("latest") or {}
     if sales.get("stale"):
@@ -94,7 +98,7 @@ def _stale_authoritative(cards: list[dict[str, Any]] | None = None) -> list[dict
                 money_risk=True,
             )
         )
-    elif not latest.get("biz_date"):
+    elif day and not latest.get("biz_date"):
         out.append(
             _item(
                 kind="missing_data",

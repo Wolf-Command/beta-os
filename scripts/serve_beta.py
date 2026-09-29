@@ -15171,7 +15171,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 period=period,
                 viewer_person_id=identity["person_id"],
             )
-            _umw.refresh_derived_view("execution-report")
+            try:
+                _umw.refresh_derived_view("execution-report")
+            except Exception:  # noqa: BLE001
+                pass
             report["freshness"] = _umw.derived_view_status("execution-report")
             self._send_json(report)
         except _umw.MyWorkError as exc:
@@ -29667,7 +29670,6 @@ class BetaHandler(SimpleHTTPRequestHandler):
         # MYWORK-1: real commissioning Work Items replace OPSFIX-3 passive test cards.
         try:
             queue_payload = _umw.war_room_commissioning_queue()
-            _umw.refresh_derived_view("war-room-commissioning")
         except Exception as exc:  # noqa: BLE001
             self._send_json(
                 {
@@ -29681,6 +29683,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 status=500,
             )
             return
+        # Derived stamp refresh is best-effort — test guard may refuse Beta writes.
+        try:
+            _umw.refresh_derived_view("war-room-commissioning")
+        except Exception:  # noqa: BLE001
+            pass
         matrix_path = BETA_ROOT / "state" / "ops" / "testability-matrix.json"
         surfaces: list = []
         try:

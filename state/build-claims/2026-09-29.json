@@ -28,6 +28,13 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import universal_my_work as u; q=u.war_room_commissioning_queue(); import sys; sys.exit(0 if q.get('source')=='core_work_items' and len(q.get('queue') or [])>=4 and q.get('human_test_cards')==[] else 1)\"",
       "expect": "exit 0",
       "by": "mywork1-20260929"
+    },
+    {
+      "id": "mywork1b-contrast-aa",
+      "claim": "My Work item + execution-report cream card text meets WCAG AA (work-ink #1c1915 / work-muted #3f3422 on #fffdf8)",
+      "check": "python3 -c \"from pathlib import Path; t=Path(\"dashboards/my-work-item.html\").read_text(); assert \"--work-ink: #1c1915\" in t and \"--work-muted: #3f3422\" in t\"",
+      "expect": "exit 0",
+      "by": "MYWORK-1B"
     }
   ]
 }

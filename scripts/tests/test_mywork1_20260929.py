@@ -166,6 +166,9 @@ def test_part_c_delegation_and_done_ne_verified() -> Path:
         shutil.rmtree(tmp)
     tmp.mkdir(parents=True)
     db = tmp / "catalog.sqlite"
+    blobs = tmp / "blobs"
+    blobs.mkdir(parents=True, exist_ok=True)
+    os.environ["WOLF_WORK_EVIDENCE_BLOBS"] = str(blobs)
     shutil.copy2(CATALOG, db)
     conn = wi.db_connect(db)
     # Create a chain Matt → (simulate GM as Haikal) → Yudi
@@ -228,6 +231,12 @@ def test_part_c_delegation_and_done_ne_verified() -> Path:
     check("system percent unchanged on DONE", done.get("system_percent_unchanged") is True)
     after = wi.get_work_item(wid, conn=conn)
     check("status not VERIFIED after DONE", after["status"] == "COMPLETED")
+    # Evidence landed only under the isolated blob root.
+    check(
+        "evidence under temp blobs",
+        any(blobs.rglob("*-proof.txt")),
+        str(blobs),
+    )
     conn.commit()
     conn.close()
     return tmp
@@ -251,11 +260,12 @@ def test_part_e_commissioning_flow() -> None:
     ).fetchone()[0]
     check("commissioning tasks issued", n >= 20, str(n))
     # Pick a Haikal task, DONE, then PASS verify — on a copy under beta-os (path guard).
-    tmp = ROOT / "state" / "tmp-mywork1-comm"
-    if tmp.exists():
-        shutil.rmtree(tmp)
-    tmp.mkdir(parents=True)
+    tmp = Path(tempfile.mkdtemp(prefix="tmp-mywork1-comm-", dir=str(ROOT / "state")))
     db = tmp / "c.sqlite"
+    blobs = tmp / "blobs"
+    blobs.mkdir(parents=True, exist_ok=True)
+    prev_blobs = os.environ.get("WOLF_WORK_EVIDENCE_BLOBS")
+    os.environ["WOLF_WORK_EVIDENCE_BLOBS"] = str(blobs)
     shutil.copy2(CATALOG, db)
     c = wi.db_connect(db)
     row = c.execute(
@@ -305,6 +315,10 @@ def test_part_e_commissioning_flow() -> None:
     check("failed item RETURNED", (fail.get("work_item") or {}).get("status") == "RETURNED")
     c.commit()
     c.close()
+    if prev_blobs is None:
+        os.environ.pop("WOLF_WORK_EVIDENCE_BLOBS", None)
+    else:
+        os.environ["WOLF_WORK_EVIDENCE_BLOBS"] = prev_blobs
     shutil.rmtree(tmp, ignore_errors=True)
     queue = umw.war_room_commissioning_queue()
     check("war room title", queue.get("title") == "GIVE THIS TO A HUMAN NOW")
@@ -331,11 +345,12 @@ def test_part_f_legacy_and_cutline() -> None:
 
 
 def test_part_g_derived_stale() -> None:
-    tmp = ROOT / "state" / "tmp-mywork1-stale"
-    if tmp.exists():
-        shutil.rmtree(tmp)
-    tmp.mkdir(parents=True)
+    tmp = Path(tempfile.mkdtemp(prefix="tmp-mywork1-stale-", dir=str(ROOT / "state")))
     db = tmp / "catalog.sqlite"
+    blobs = tmp / "blobs"
+    blobs.mkdir(parents=True, exist_ok=True)
+    prev_blobs = os.environ.get("WOLF_WORK_EVIDENCE_BLOBS")
+    os.environ["WOLF_WORK_EVIDENCE_BLOBS"] = str(blobs)
     shutil.copy2(CATALOG, db)
     conn = wi.db_connect(db)
     try:
@@ -361,8 +376,19 @@ def test_part_g_derived_stale() -> None:
             umw.derived_view_status("execution-report", conn=conn).get("status") == "STALE",
         )
         conn.commit()
+        # Isolation: probe must not exist on the live catalog.
+        live_conn = sqlite3.connect(str(CATALOG))
+        leaked = live_conn.execute(
+            "SELECT COUNT(*) FROM core_work_items WHERE title='STALE probe'"
+        ).fetchone()[0]
+        live_conn.close()
+        check("stale probe not leaked to live", leaked == 0, str(leaked))
     finally:
         conn.close()
+        if prev_blobs is None:
+            os.environ.pop("WOLF_WORK_EVIDENCE_BLOBS", None)
+        else:
+            os.environ["WOLF_WORK_EVIDENCE_BLOBS"] = prev_blobs
         shutil.rmtree(tmp, ignore_errors=True)
 
 
@@ -518,17 +544,22 @@ def _capture(port: int, path: str, email: str, width: int, dest: Path, marker: s
 
 
 def test_http_and_shots() -> None:
-    tmp = ROOT / "state" / "tmp-mywork1-http"
-    if tmp.exists():
-        shutil.rmtree(tmp)
-    tmp.mkdir(parents=True)
+    tmp = Path(tempfile.mkdtemp(prefix="tmp-mywork1-http-", dir=str(ROOT / "state")))
     db = tmp / "content_library.sqlite"
+    blobs = tmp / "blobs"
+    blobs.mkdir(parents=True, exist_ok=True)
     shutil.copy2(CATALOG, db)
-    # Point modules at temp catalog for HTTP handler process
+    # Point modules at temp catalog + isolated evidence blobs (never live store).
+    prev_catalog = getattr(sb, "CATALOG_DB", None)
+    prev_wi = wi.CATALOG_DB
+    prev_umw = getattr(umw, "CATALOG_DB", None)
+    prev_blobs = os.environ.get("WOLF_WORK_EVIDENCE_BLOBS")
+    prev_wolf_cat = os.environ.get("WOLF_CATALOG_DB")
     sb.CATALOG_DB = db  # type: ignore[attr-defined]
     wi.CATALOG_DB = db
     umw.CATALOG_DB = db  # type: ignore[attr-defined]
     os.environ["WOLF_CATALOG_DB"] = str(db)
+    os.environ["WOLF_WORK_EVIDENCE_BLOBS"] = str(blobs)
 
     server = ThreadingHTTPServer(("127.0.0.1", 0), sb.BetaHandler)
     port = server.server_address[1]
@@ -580,33 +611,53 @@ def test_http_and_shots() -> None:
             _capture(port, "/execution-report", OWNER, 1024, SHOTS / "mywork1-execution-report.png", "Assigned", "data-ready")
             _capture(port, "/finish-war-room", OWNER, 1024, SHOTS / "mywork1-war-room-tasks.png", "GIVE THIS TO A HUMAN NOW", "data-testability-ready")
             _capture(port, "/wolf", OWNER, 1024, SHOTS / "mywork1-owner-command-exceptions.png", "exception", "data-command-ready")
-            # Delegation chain view — use the fixture created in part C if present on temp db
-            drow = wi.db_connect(db).execute(
-                "SELECT work_item_id FROM core_work_items WHERE title LIKE 'MYWORK-1 delegation%' LIMIT 1"
-            ).fetchone()
-            # Create one quickly for shot
-            if not drow:
-                c2 = wi.db_connect(db)
-                it = wi.create_work_item(
-                    title="Chain view shot",
-                    owning_entity_id="ENT-GGV",
-                    source_type="SYSTEM",
-                    created_by_actor_type="SYSTEM",
-                    owner_person_id="PERS-MATT",
-                    conn=c2,
-                    commit=False,
-                )
-                umw.delegate_work(it["work_item_id"], from_person_id="PERS-MATT", to_person_id="PERS-HAIKAL", conn=c2, commit=True)
-                c2.close()
-                chain_id = it["work_item_id"]
-            else:
-                chain_id = drow[0]
+            # Delegation chain view — fixture stays on the isolated temp DB only.
+            c2 = wi.db_connect(db)
+            it = wi.create_work_item(
+                title="Chain view shot",
+                owning_entity_id="ENT-GGV",
+                source_type="SYSTEM",
+                created_by_actor_type="SYSTEM",
+                owner_person_id="PERS-MATT",
+                conn=c2,
+                commit=False,
+            )
+            c2.execute(
+                "UPDATE core_work_items SET origin='test' WHERE work_item_id=?",
+                (it["work_item_id"],),
+            )
+            umw.delegate_work(
+                it["work_item_id"],
+                from_person_id="PERS-MATT",
+                to_person_id="PERS-HAIKAL",
+                conn=c2,
+                commit=True,
+            )
+            c2.close()
+            chain_id = it["work_item_id"]
+            live_leak = sqlite3.connect(str(CATALOG)).execute(
+                "SELECT COUNT(*) FROM core_work_items WHERE title='Chain view shot'"
+            ).fetchone()[0]
+            check("chain shot fixture not on live", live_leak == 0, str(live_leak))
             _capture(port, f"/my-work/item/{chain_id}", OWNER, 1024, SHOTS / "mywork1-delegation-chain.png", "Delegation", "data-ready")
         else:
             check("chrome for shots", False, "missing")
     finally:
         server.shutdown()
         server.server_close()
+        if prev_catalog is not None:
+            sb.CATALOG_DB = prev_catalog  # type: ignore[attr-defined]
+        wi.CATALOG_DB = prev_wi
+        if prev_umw is not None:
+            umw.CATALOG_DB = prev_umw  # type: ignore[attr-defined]
+        if prev_blobs is None:
+            os.environ.pop("WOLF_WORK_EVIDENCE_BLOBS", None)
+        else:
+            os.environ["WOLF_WORK_EVIDENCE_BLOBS"] = prev_blobs
+        if prev_wolf_cat is None:
+            os.environ.pop("WOLF_CATALOG_DB", None)
+        else:
+            os.environ["WOLF_CATALOG_DB"] = prev_wolf_cat
         shutil.rmtree(tmp, ignore_errors=True)
 
 

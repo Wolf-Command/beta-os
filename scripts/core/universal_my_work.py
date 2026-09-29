@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from core import audit as _audit
 from core import evidence as _evidence
@@ -26,6 +28,7 @@ BLOB_LOCAL = BETA_ROOT / "state" / "work-evidence" / "blobs"
 BLOB_NAS = Path("/Volumes/05-Wolf-Vault-Mirror/wolf-command/work-evidence")
 LEGACY_PROPOSAL = BETA_ROOT / "state" / "legacy" / "proposed-migration.json"
 TZ8 = timezone(timedelta(hours=8))
+WITA = ZoneInfo("Asia/Makassar")
 BOUND = "beta-universal-my-work"
 
 # Presentation labels (plain words). DB statuses stay machine codes.
@@ -65,8 +68,36 @@ def now_iso() -> str:
     return datetime.now(TZ8).isoformat(timespec="seconds")
 
 
+def format_wita(value: str | None) -> str:
+    """Present a stored UTC/ISO stamp as Asia/Makassar local time with WITA label.
+
+    Store stays UTC. Empty/unparseable values pass through unchanged.
+    """
+    text = (value or "").strip()
+    if not text:
+        return ""
+    try:
+        stamp = text.replace("Z", "+00:00")
+        moment = datetime.fromisoformat(stamp)
+        if moment.tzinfo is None:
+            moment = moment.replace(tzinfo=timezone.utc)
+        local = moment.astimezone(WITA)
+        return local.strftime("%Y-%m-%d %H:%M") + " WITA"
+    except ValueError:
+        return text
+
+
 def blob_root() -> Path:
-    """NAS canonical when mounted; otherwise local Beta staging."""
+    """NAS canonical when mounted; otherwise local Beta staging.
+
+    Tests/shots may set WOLF_WORK_EVIDENCE_BLOBS to an isolated temp directory
+    so fixture files never land in the live Beta evidence tree.
+    """
+    override = (os.environ.get("WOLF_WORK_EVIDENCE_BLOBS") or "").strip()
+    if override:
+        path = Path(override).expanduser().resolve()
+        path.mkdir(parents=True, exist_ok=True)
+        return path
     try:
         if BLOB_NAS.parent.exists() and BLOB_NAS.parent.is_mount():
             BLOB_NAS.mkdir(parents=True, exist_ok=True)
@@ -192,7 +223,8 @@ def enrich_card(conn, item: dict[str, Any]) -> dict[str, Any]:
         "current_owner_person_id": owner,
         "accountable": _person_name(conn, accountable),
         "accountable_person_id": accountable,
-        "due": item.get("due_at"),
+        "due": format_wita(item.get("due_at")) or item.get("due_at"),
+        "due_at_utc": item.get("due_at"),
         "company_site_department": item.get("scope_label") or item.get("owning_entity_id"),
         "priority": item.get("priority"),
         "instructions": item.get("instructions") or item.get("description") or "",
@@ -487,6 +519,8 @@ def delegation_chain(work_item_id: str, *, conn=None) -> list[dict[str, Any]]:
         ).fetchall()
         out = []
         for r in rows:
+            offered_raw = r["offered_at"]
+            accepted_raw = r["accepted_at"]
             out.append(
                 {
                     "delegation_id": r["delegation_id"],
@@ -495,8 +529,11 @@ def delegation_chain(work_item_id: str, *, conn=None) -> list[dict[str, Any]]:
                     "to_person_id": r["to_person_id"],
                     "to_name": _person_name(c, r["to_person_id"]),
                     "status": r["status"],
-                    "offered_at": r["offered_at"],
-                    "accepted_at": r["accepted_at"],
+                    # Raw UTC kept for machines; *_display is Asia/Makassar + WITA.
+                    "offered_at": offered_raw,
+                    "accepted_at": accepted_raw,
+                    "offered_at_display": format_wita(offered_raw),
+                    "accepted_at_display": format_wita(accepted_raw),
                     "note": r["note"],
                 }
             )

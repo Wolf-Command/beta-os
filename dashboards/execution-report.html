@@ -5,35 +5,51 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Execution &amp; Delegation Report</title>
 <style>
+  /* MYWORK-1B: pin work-ink tokens so wolf-tokens.css pale --text/--muted
+     cannot wash out cream card copy (WCAG AA ≥ 4.5:1). */
   :root {
-    --bg: #f4f1ea; --card: #fffdf8; --text: #1c1915; --muted: #5c564c;
-    --line: #e4dccf; --accent: #1f4d3a;
+    --work-bg: #f4f1ea;
+    --work-card: #fffdf8;
+    --work-ink: #1c1915;
+    --work-muted: #3f3422;
+    --work-line: #e4dccf;
+    --work-accent: #1f4d3a;
     --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0 auto; max-width: 820px; padding: 16px 16px 88px;
-    background: var(--bg); color: var(--text); font-family: var(--font);
+    background: var(--work-bg) !important;
+    color: var(--work-ink) !important;
+    font-family: var(--font);
     font-size: 17px; line-height: 1.4;
   }
-  h1 { font-size: 1.35rem; margin: 0 0 8px; }
-  .muted { color: var(--muted); }
+  h1 { font-size: 1.35rem; margin: 0 0 8px; color: var(--work-ink) !important; }
+  .muted, #fresh { color: var(--work-muted) !important; }
+  label { color: var(--work-ink) !important; font-weight: 650; display: block; margin-top: 8px; }
   .card {
-    background: var(--card); border: 1px solid var(--line);
+    background: var(--work-card) !important;
+    border: 1px solid var(--work-line);
     border-radius: 12px; padding: 12px 14px; margin-top: 10px;
+    color: var(--work-ink) !important;
   }
+  .card p, .card strong, .card .sentence, .card .name {
+    color: var(--work-ink) !important;
+  }
+  .card .muted { color: var(--work-muted) !important; }
   .err { color: #8d1d1d; }
   select, button {
     font: inherit; min-height: 44px; margin-top: 8px;
+    color: var(--work-ink);
   }
   button {
-    border: 0; border-radius: 12px; background: var(--accent); color: #fff; padding: 0 16px;
+    border: 0; border-radius: 12px; background: var(--work-accent); color: #fff; padding: 0 16px;
   }
 </style>
 </head>
 <body data-wolf-page-type="WORKSPACE" data-wolf-shell="global">
   <h1>Execution &amp; Delegation Report</h1>
-  <p class="muted">Plain counts only. No judgement labels.</p>
+  <p class="muted">Plain counts only. No judgement labels. Times shown in Asia/Makassar (WITA).</p>
   <p class="muted" id="fresh"></p>
   <label for="period">Period</label>
   <select id="period">
@@ -66,8 +82,8 @@
         $("fresh").textContent = fresh ? `View: ${fresh}` : "";
         $("rows").innerHTML = (data.people || []).map((row) => `
           <article class="card" data-person="${esc(row.person_id)}">
-            <p><strong>${esc(row.name)}</strong></p>
-            <p>${esc(row.sentence)}</p>
+            <p class="name"><strong>${esc(row.name)}</strong></p>
+            <p class="sentence">${esc(row.sentence)}</p>
             <p class="muted">Accepted ${esc(row.accepted)} · On time ${esc(row.on_time)} · Overdue ${esc(row.overdue)} · Blocked ${esc(row.blocked)} · Returned ${esc(row.returned)} · Unresolved ${esc(row.unresolved)}</p>
             <p class="muted">Evidence files on completed ${esc(row.evidence_completeness_completed_with_file)} · Avg hours ${esc(row.average_completion_hours ?? "—")}</p>
           </article>`).join("");

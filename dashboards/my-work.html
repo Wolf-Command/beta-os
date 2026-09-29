@@ -9,6 +9,7 @@
   :root {
     --bg: #f4f1ea; --card: #fffdf8; --text: #1c1915; --muted: #5c564c;
     --line: #e4dccf; --accent: #1f4d3a;
+    --work-ink: #1c1408; --work-muted: #3f3422; --work-card: #f4e4c4;
     --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
@@ -32,7 +33,7 @@
   }
   a.card { display: block; text-decoration: none; color: inherit; }
   a.card:active { border-color: var(--accent); }
-  .prompt { margin: 0 0 8px; }
+  .prompt { margin: 0 0 8px; display: none; } /* MYWORK-1B: title is the only heading */
   #wolf-truth,
   #wolf-truth .wolf-card,
   #wolf-truth .wolf-empty,
@@ -53,6 +54,13 @@
     background: #f4e4c4 !important;
     color: #1c1408 !important;
     border: 1px solid #8a5a12;
+  }
+  #sections a.action p,
+  #sections a.card p,
+  #sections .work-card p,
+  #sections .work-title,
+  #sections .next {
+    color: #1c1408 !important;
   }
   #sections a.action .footnote,
   #sections a.card .footnote,

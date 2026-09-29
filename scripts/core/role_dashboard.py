@@ -203,16 +203,17 @@ def project(
         attention = by.get("attention") or {}
         waiting = by.get("waiting") or {}
         completed = by.get("completed") or {}
+        # prompt=None — section <h2> already carries the title (MYWORK-1B: no double TODAY).
         blocks = [
-            _block("today", "TODAY", prompt="TODAY", items=_items(today),
+            _block("today", "TODAY", prompt=None, items=_items(today),
                    empty_message=str(today.get("empty_message") or "Nothing is assigned to you for today.")),
-            _block("do_this", "DO THIS NEXT", prompt="DO THIS NEXT", items=_items(do_next),
+            _block("do_this", "DO THIS NEXT", prompt=None, items=_items(do_next),
                    empty_message=str(do_next.get("empty_message") or "Nothing to do next.")),
-            _block("attention", "NEEDS ATTENTION", prompt="NEEDS ATTENTION", items=_items(attention),
+            _block("attention", "NEEDS ATTENTION", prompt=None, items=_items(attention),
                    empty_message=str(attention.get("empty_message") or "Nothing needs your attention.")),
-            _block("waiting", "WAITING", prompt="WAITING", items=_items(waiting),
+            _block("waiting", "WAITING", prompt=None, items=_items(waiting),
                    empty_message=str(waiting.get("empty_message") or "You are not waiting on anyone.")),
-            _block("completed", "COMPLETED", prompt="COMPLETED", items=_items(completed),
+            _block("completed", "COMPLETED", prompt=None, items=_items(completed),
                    empty_message=str(completed.get("empty_message") or "Nothing completed recently.")),
             _responsibilities(
                 experience=experience,
@@ -281,39 +282,40 @@ def project(
         completed = by.get("completed") or {}
         desk_items = _desk_items(desk)
         do_items = _items(do_next) or desk_items
+        # prompt=None — avoid duplicate section titles (MYWORK-1B phone TODAY×2).
         blocks = [
             _block(
                 "today",
                 "TODAY",
-                prompt=str(today.get("title") or "TODAY"),
+                prompt=None,
                 items=_items(today),
                 empty_message=str(today.get("empty_message") or "Nothing is assigned to you for today."),
             ),
             _block(
                 "do_this",
                 "DO THIS NEXT",
-                prompt=str(do_next.get("title") or "DO THIS NEXT"),
+                prompt=None,
                 items=do_items,
                 empty_message=str(do_next.get("empty_message") or "Nothing to do next."),
             ),
             _block(
                 "attention",
                 "NEEDS ATTENTION",
-                prompt=str(attention.get("title") or "NEEDS ATTENTION"),
+                prompt=None,
                 items=_items(attention),
                 empty_message=str(attention.get("empty_message") or "Nothing needs your attention."),
             ),
             _block(
                 "waiting",
                 "WAITING",
-                prompt=str(waiting.get("title") or "WAITING"),
+                prompt=None,
                 items=_items(waiting),
                 empty_message=str(waiting.get("empty_message") or "You are not waiting on anyone."),
             ),
             _block(
                 "completed",
                 "COMPLETED",
-                prompt=str(completed.get("title") or "COMPLETED"),
+                prompt=None,
                 items=_items(completed),
                 empty_message=str(completed.get("empty_message") or "Nothing completed recently."),
             ),
