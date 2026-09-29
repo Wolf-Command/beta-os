@@ -46,9 +46,11 @@ CREATOR_PERMISSIONS: tuple[str, ...] = (
 # payment, finance, or owner authority.
 CD_FLOOR_PERMISSIONS: tuple[str, ...] = CREATOR_PERMISSIONS + ("work.assign",)
 
+# Team scopes + all active content brands (HUMFIX-1). Brand ACL is role-based.
 CREATOR_SCOPES: tuple[str, ...] = (
     "SCOPE-GGV-CONTENT",
     "SCOPE-GGV-CONTENT-LIBRARY",
+    nas.CONTENT_ALL_BRANDS_SCOPE,
 )
 
 CREATOR_DENIED: tuple[str, ...] = (
@@ -120,23 +122,25 @@ ATRIUM_GRANTS: tuple[tuple[str, str, str, str, str], ...] = (
 )
 ATRIUM_HELD_BACK: tuple[tuple[str, str, str, str, str], ...] = (
     (
-        "PERM-ATRIUM-JOURNAL-APPROVE",
-        "atrium.journal.approve",
-        "atrium.journal",
-        "approve",
-        "POST /api/journals/:id/approve. Not granted.",
-    ),
-    (
         "PERM-ATRIUM-JOURNAL-POST",
         "atrium.journal.post",
         "atrium.journal",
         "post",
-        "POST /api/journals/:id/post. Not granted.",
+        "POST /api/journals/:id/post. Held — open Matt policy (HUMFIX-1).",
     ),
 )
-ATRIUM_SUBMIT = "approval.request"
-ATRIUM_DENIED: tuple[str, ...] = (
+# Approve is granted to Financial Controller (HUMFIX-1) with SoD. Kept here for docs only.
+ATRIUM_APPROVE_PERM: tuple[str, str, str, str, str] = (
+    "PERM-ATRIUM-JOURNAL-APPROVE",
     "atrium.journal.approve",
+    "atrium.journal",
+    "approve",
+    "POST /api/journals/:id/approve. FC only; SoD preparer≠approver.",
+)
+ATRIUM_SUBMIT = "approval.request"
+# HUMFIX-1: approve removed from denied — granted to Financial Controller with SoD.
+# Post stays denied (open policy for Matt).
+ATRIUM_DENIED: tuple[str, ...] = (
     "atrium.journal.post",
     "payment.approve",
     "payment.execute",

@@ -235,7 +235,7 @@ UPLOAD_ALLOWED_CONTENT_TYPES = {
 
 BRANDS = ("habitat", "umablu", "atrium", "selo", "tropik")
 STAGES = ("RAW", "EDIT", "FINAL")
-ASSET_TYPES = ("video", "audio", "broll", "graphic", "image")
+ASSET_TYPES = ("video", "audio", "broll", "graphic", "image", "drone")
 DATE_RE = re.compile(r"(20\d{2})[-_]?(\d{2})[-_]?(\d{2})")
 SLUG_SAFE = re.compile(r"[^a-z0-9]+")
 
@@ -35056,11 +35056,13 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
         Phase 2.5A: default data_lane=operational ONLY (hide test fixtures #1–3 from
         normal UI). Pass data_lane=all|test to include non-operational rows (dev).
+        HUMFIX-1: active=1 keeps Working_Draft / Human_Approved / Ready_for_Render.
         Rows stay in DB — never deleted.
         """
         brand = (qs.get("brand") or qs.get("brand_id") or [""])[0].strip().lower()
         status = (qs.get("status") or [""])[0].strip()
         lane_q = (qs.get("data_lane") or qs.get("lane") or ["operational"])[0].strip().lower()
+        active_only = (qs.get("active") or ["0"])[0].strip().lower() in ("1", "true", "yes")
         try:
             conn = db_connect()
             try:
@@ -35072,6 +35074,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 if status:
                     clauses.append("status = ?")
                     params.append(status)
+                elif active_only:
+                    clauses.append(
+                        "lower(ifnull(status,'')) IN ('working_draft','human_approved','ready_for_render')"
+                    )
                 # Default: operational only. data_lane=all → no lane filter; =test → test only.
                 if lane_q in ("", "operational", "default"):
                     clauses.append("ifnull(data_lane,'operational') = 'operational'")
@@ -35122,7 +35128,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     counts = {row["card_type"]: row["n"] for row in cc}
                     r["posts"] = int(counts.get("feed") or counts.get("post") or 0)
                     r["stories"] = int(counts.get("story") or 0)
-                self._send_json({"ok": True, "plans": rows, "count": len(rows), "brand": brand or None, "data_lane": lane_q or "operational"})
+                self._send_json({"ok": True, "plans": rows, "count": len(rows), "brand": brand or None, "data_lane": lane_q or "operational", "active_only": active_only})
             finally:
                 conn.close()
         except Exception as exc:  # noqa: BLE001

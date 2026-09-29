@@ -58,6 +58,13 @@ def is_sensitive(method: str, path: str, wolf_role: str) -> bool:
     if wolf_role not in FINANCE_ROLES | {OWNER_ROLE}:
         return False
     api = api_path(path)
+    # HUMFIX-1: FC may approve/reject (SoD enforced server-side). Post stays denied.
+    if wolf_role == FINANCE_ROLE_CONTROLLER:
+        from core import atrium_fc_authority as _fc
+
+        if _fc.fc_may_approve_path(wolf_role, method, api):
+            return False
+        return _fc.still_denied_sensitive(method, api)
     if api == "/api/admin" or api.startswith("/api/admin/"):
         return True
     if "/bank" in api:
@@ -125,6 +132,10 @@ def seat_allowed(person_id: str, conn) -> tuple[bool, str]:
     ).fetchall()
     roles = {str(row[0]) for row in rows if row[0]}
     if pid == ZAYEN_PERSON and (roles & FINANCE_ROLES):
-        if rbac.can(pid, "atrium.board.read", {"entity_id": "ENT-AMG"}, conn=conn):
-            return True, FINANCE_ROLE
+        if not rbac.can(pid, "atrium.board.read", {"entity_id": "ENT-AMG"}, conn=conn):
+            return False, ""
+        # Prefer live FC seat; fall back to Officer string for legacy seats.
+        if FINANCE_ROLE_CONTROLLER in roles:
+            return True, FINANCE_ROLE_CONTROLLER
+        return True, FINANCE_ROLE
     return False, ""

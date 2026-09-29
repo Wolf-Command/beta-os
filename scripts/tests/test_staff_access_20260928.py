@@ -275,6 +275,10 @@ def test_permissions() -> None:
                 f"Zayen denies {code}",
                 rbac.can(ZAYEN_PERSON, code, AMG, conn=conn) is False,
             )
+        check(
+            "Zayen FC may approve journals",
+            rbac.can(ZAYEN_PERSON, "atrium.journal.approve", AMG, conn=conn) is True,
+        )
         zwho = build_whoami(person_id=ZAYEN_PERSON)
         check("Zayen lands on Atrium Finance", zwho.get("landing") == ATRIUM_FINANCE_HREF)
         pages = set(zwho.get("pages") or [])

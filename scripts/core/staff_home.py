@@ -548,16 +548,18 @@ def _dedupe_plan_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _stored_plan_items(conn, scope_ids: set[str]) -> list[dict[str, Any]]:
-    """Read stored content plans. Does not insert a work item."""
+    """Read active content plans in brand scope. Same canonical store as Content Engine."""
     try:
         rows = conn.execute(
             """
             SELECT id, brand_id, title, status, period_start, period_end,
                    created_at, updated_at, data_lane
             FROM content_plans
-            WHERE lower(brand_id) = 'habitat'
-              AND ifnull(data_lane, 'operational') != 'test'
-            ORDER BY id
+            WHERE ifnull(data_lane, 'operational') != 'test'
+              AND lower(ifnull(status,'')) IN (
+                'working_draft', 'human_approved', 'ready_for_render'
+              )
+            ORDER BY lower(brand_id), id
             """
         ).fetchall()
     except Exception:
@@ -577,11 +579,12 @@ def _stored_plan_items(conn, scope_ids: set[str]) -> list[dict[str, Any]]:
             date_range = start or end
         else:
             date_range = ""
+        brand_label = brand.replace("_", " ").title() or "Brand"
         items.append(
             {
                 "id": f"content-plan-{plan_id}",
-                "title": str(row["title"] or f"Habitat plan {plan_id}"),
-                "href": f"/content-2.0?plan={plan_id}#plan",
+                "title": str(row["title"] or f"{brand_label} plan {plan_id}"),
+                "href": f"/content-2.0?plan={plan_id}&brand={brand}#plan",
                 "status": status,
                 "status_label": _plan_status_words(status),
                 "date_range": date_range,

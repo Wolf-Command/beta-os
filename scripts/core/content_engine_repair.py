@@ -23,8 +23,10 @@ TZ = ZoneInfo("Asia/Makassar")
 BETA_ROOT = Path(__file__).resolve().parents[2]
 RUN_ID = "BF-content-engine-haikal-fail-repair-20260924"
 ROUND2_RUN_ID = "BF-content-engine-haikal-round2-20260925"
-CONTENT_ALL_ASSIGNMENT = "ASG-HAIKAL-CD-1"
+CONTENT_ALL_ASSIGNMENT = "ASG-HAIKAL-CD-1"  # legacy seed id; attach is by role
 CONTENT_DIRECTOR_ROLE = "ROLE-GGV-CREATIVE-DIRECTOR"
+CONTENT_CREATOR_ROLE = "ROLE-CONTENT-CREATOR"
+CONTENT_TEAM_ROLES = (CONTENT_DIRECTOR_ROLE, CONTENT_CREATOR_ROLE)
 # Desk permissions for the Creative Director role. Not finance, HR, leads, or WI.
 CONTENT_DESK_PERMISSIONS = (
     "PERM-CONTENT-PLAN-READ",
@@ -57,13 +59,16 @@ LIFECYCLE: tuple[tuple[str, str], ...] = (
 )
 
 # Staff media labels. broll stays in MEDIA_TYPES as content-class debt, not a media kind.
+# Drone is a first-class media kind (HUMFIX-1).
 STAFF_MEDIA_LABELS = {
     "image": "Photo",
     "photo": "Photo",
     "video": "Video",
     "audio": "Audio",
     "graphic": "Graphic",
+    "drone": "Drone",
 }
+STAFF_MEDIA_KINDS = frozenset(STAFF_MEDIA_LABELS.keys()) - {"photo"}  # photo aliases image
 
 
 def staff_media_label(media_type: str | None) -> str:
@@ -377,9 +382,12 @@ def ensure_registry(conn: sqlite3.Connection) -> dict[str, Any]:
 
 
 def ensure_content_all_brands_scope(conn: sqlite3.Connection) -> dict[str, Any]:
-    """Owner grant: Creative Director assignment may see all eight content brands.
+    """Content team grant: CD + Content Creator seats see all active content brands.
 
-    Content-only. Does not attach SCOPE-AMG, SCOPE-BZG-ENTITY, or SCOPE-WOLF-GROUP.
+    Creative Director = cross-brand. Content Creator assignments carry team scopes
+    without brand targets → Content team role covers all active content brands.
+    Succession: any new ACTIVE seat on those roles gets the same scope; ended
+    assignments stop receiving it. Content-only — not SCOPE-AMG/BZG/WOLF-GROUP.
     """
     scope_id = _nas.CONTENT_ALL_BRANDS_SCOPE
     stamp = now_iso()
@@ -405,17 +413,18 @@ def ensure_content_all_brands_scope(conn: sqlite3.Connection) -> dict[str, Any]:
             (scope_id, row["org_brand_id"], stamp),
         )
     assignment_ids = [CONTENT_ALL_ASSIGNMENT]
+    placeholders = ",".join("?" for _ in CONTENT_TEAM_ROLES)
     role_rows = conn.execute(
-        """
+        f"""
         SELECT a.assignment_id
         FROM org_assignments a
         JOIN org_positions p ON p.position_id = a.position_id
-        WHERE p.role_id = ?
+        WHERE p.role_id IN ({placeholders})
           AND a.status = 'ACTIVE'
           AND a.end_at IS NULL
         ORDER BY a.assignment_id
         """,
-        (CONTENT_DIRECTOR_ROLE,),
+        CONTENT_TEAM_ROLES,
     ).fetchall()
     for row in role_rows:
         aid = row["assignment_id"] if hasattr(row, "keys") else row[0]
@@ -1048,9 +1057,9 @@ def _nas_card(row: sqlite3.Row | dict[str, Any], names: dict[str, str]) -> dict[
     kind = (d.get("classification") or "").lower()
     if kind == "photo":
         kind = "image"
-    if kind not in ("image", "video", "audio", "graphic"):
+    if kind not in ("image", "video", "audio", "graphic", "drone"):
         kind = _media_kind(filename) or kind
-    if kind not in ("image", "video", "audio", "graphic"):
+    if kind not in ("image", "video", "audio", "graphic", "drone"):
         return None
     slug = (d.get("brand_slug") or "").strip().lower()
     nas_id = d.get("id")

@@ -95,7 +95,7 @@ def test_part_a_assignments() -> None:
     for code in staff_access.ATRIUM_DENIED:
         ev = rbac.evaluate("PERS-ZAYEN", code, {"entity_id": "ENT-AMG"}, conn=conn)
         check(f"zayen denied {code}", not ev.get("allowed"), str(ev.get("allowed")))
-    for code in ("atrium.board.read", "atrium.journal.draft", "atrium.ledger.read"):
+    for code in ("atrium.board.read", "atrium.journal.draft", "atrium.ledger.read", "atrium.journal.approve"):
         ev = rbac.evaluate("PERS-ZAYEN", code, {"entity_id": "ENT-AMG"}, conn=conn)
         check(f"zayen allowed {code}", bool(ev.get("allowed")))
     closer = conn.execute(

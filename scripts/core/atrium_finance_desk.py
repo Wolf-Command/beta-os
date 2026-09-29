@@ -63,14 +63,9 @@ WITHHELD: tuple[dict[str, str], ...] = (
         "reason": "Payroll posts pay and statutory amounts. That is a posting path.",
     },
     {
-        "id": "journal-approve",
-        "grant": "atrium.journal.approve",
-        "reason": "Journal approval stays ungranted.",
-    },
-    {
         "id": "journal-post",
         "grant": "atrium.journal.post",
-        "reason": "Journal posting stays ungranted.",
+        "reason": "Journal posting stays ungranted pending Matt policy (HUMFIX-1 open point).",
     },
 )
 

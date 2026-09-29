@@ -702,11 +702,12 @@
       </div>
       <div id="libDetailed" class="lib-detailed" hidden>
         <select id="libType" aria-label="Media type">
-          <option value="">Photo / Video / Audio / Graphic</option>
+          <option value="">Photo / Video / Audio / Graphic / Drone</option>
           <option value="image">Photo</option>
           <option value="video">Video</option>
           <option value="audio">Audio</option>
           <option value="graphic">Graphic</option>
+          <option value="drone">Drone</option>
         </select>
         <select id="libStage" aria-label="Stage">
           <option value="">RAW / EDIT / FINAL</option>
@@ -788,6 +789,7 @@
                 <option value="video">Video</option>
                 <option value="audio">Audio</option>
                 <option value="graphic">Graphic</option>
+                <option value="drone">Drone</option>
               </select>
             </div>
             <div class="field"><label>Content type</label>
@@ -1206,9 +1208,10 @@
     if (t === "video") return "Video";
     if (t === "audio") return "Audio";
     if (t === "graphic") return "Graphic";
+    if (t === "drone") return "Drone";
     if (t === "broll") return "";
     const label = String((a && a.media_label) || "");
-    if (label === "Photo" || label === "Video" || label === "Audio" || label === "Graphic") return label;
+    if (label === "Photo" || label === "Video" || label === "Audio" || label === "Graphic" || label === "Drone") return label;
     return "";
   }
 
@@ -1471,11 +1474,11 @@
 
   /* ----- Content Plan ----- */
   async function loadPlanList() {
-    const data = await api(`/api/planner/plans?brand=${encodeURIComponent(state.brand)}`);
+    const data = await api(`/api/planner/plans?brand=${encodeURIComponent(state.brand)}&active=1`);
     state.plans = data.plans || [];
     const box = $("planList");
     if (!state.plans.length) {
-      box.innerHTML = `<div class="empty">No content plan for this brand yet.</div>`;
+      box.innerHTML = `<div class="empty">No active content plan for this brand yet.</div>`;
       return;
     }
     box.innerHTML = state.plans.map((p) => `

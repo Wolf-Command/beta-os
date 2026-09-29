@@ -103,8 +103,8 @@ def test_page_and_nav() -> None:
     withheld_ids = {row["id"] for row in desk.withheld()}
     check("cash stays off the nav", "cash" in withheld_ids and "/amg/finance/cash" not in html)
     check("configuration stays off the nav", "configuration" in withheld_ids)
-    check("approve stays off the nav", "journal-approve" in withheld_ids)
     check("post stays off the nav", "journal-post" in withheld_ids)
+    check("approve no longer withheld on lite desk", "journal-approve" not in withheld_ids)
 
 
 def test_grants_unchanged() -> None:
@@ -125,17 +125,23 @@ def test_grants_unchanged() -> None:
                 (ZAYEN_PERSON,),
             )
         }
-        expected = {row[1] for row in ATRIUM_GRANTS} | {ATRIUM_SUBMIT}
+        expected = {row[1] for row in ATRIUM_GRANTS} | {ATRIUM_SUBMIT} | {
+            "atrium.journal.approve",
+            "atrium.journal.reject",
+        }
         held = {row[1] for row in ATRIUM_HELD_BACK}
-        check("grants match the seat", codes == expected, str(sorted(codes)))
-        check("approve and post not granted", held.isdisjoint(codes))
+        check("grants include FC approve", "atrium.journal.approve" in codes, str(sorted(codes)))
+        check("post still held", "atrium.journal.post" not in codes)
         check("board read on Atrium", rbac.can(ZAYEN_PERSON, "atrium.board.read", AMG, conn=conn) is True)
         for code in ("atrium.ledger.read", "atrium.coa.read", "atrium.report.read", "atrium.journal.draft"):
             check(f"existing grant {code}", rbac.can(ZAYEN_PERSON, code, AMG, conn=conn) is True)
         check("board read not on GGV", rbac.can(ZAYEN_PERSON, "atrium.board.read", GGV, conn=conn) is False)
         check("approval request on Atrium", rbac.can(ZAYEN_PERSON, "approval.request", AMG, conn=conn) is True)
+        check(
+            "FC approve granted",
+            rbac.can(ZAYEN_PERSON, "atrium.journal.approve", AMG, conn=conn) is True,
+        )
         for code in (
-            "atrium.journal.approve",
             "atrium.journal.post",
             "payment.approve",
             "payment.execute",

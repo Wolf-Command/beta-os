@@ -20,7 +20,7 @@ from pathlib import Path
 
 BRANDS = ("habitat", "umablu", "atrium", "selo", "tropik")
 STAGES = ("RAW", "EDIT", "FINAL")
-MEDIA_TYPES = ("video", "audio", "image", "broll", "graphic")
+MEDIA_TYPES = ("video", "audio", "image", "broll", "graphic", "drone")
 
 SLUG_RE = re.compile(r"[^a-z0-9]+")
 DATE_RE = re.compile(r"^20\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])$")
