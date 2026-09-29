@@ -2,7 +2,7 @@
   "mission": "FINAL_WOLF_COMPLETION_MISSION",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 0,
-  "at_wita": "2026-09-29T23:33:17+08:00",
+  "at_wita": "2026-09-29T23:33:33+08:00",
   "matt_order_at": "2026-09-29T23:25:00+08:00",
   "prior_exit_report": {
     "path": "docs/wolf/ops/WOLF-COMMAND-REBUILD-COMPLETION-EXIT-REPORT-20260929.md",
@@ -14,12 +14,13 @@
     "beta-os": {
       "path": "~/beta-os",
       "branch": "build/wolf-command-rebuild",
-      "head_sha_full": "a5f8c3763446c82b0c4cc1a641a823cd8feb0d1e",
-      "head_sha_short": "a5f8c37",
+      "head_sha_full": "44af031183c2ec1aae260ae630eb86d4ee85f307",
+      "head_sha_short": "44af031",
       "dirty_at_phase0_start": true,
       "checkpoint_commit_message": "checkpoint: pre-FINAL-COMPLETION-MISSION 2026-09-29",
-      "checkpoint_commit_sha": null,
-      "push": false
+      "checkpoint_commit_sha": "44af031183c2ec1aae260ae630eb86d4ee85f307",
+      "push": false,
+      "dirty_after_checkpoint": false
     },
     "atrium-finance": {
       "path": "~/atrium-finance",
@@ -61,7 +62,8 @@
   },
   "mirrored_to_box": true,
   "mac_write_pending": false,
-  "mac_checkpoint_commit_pending": true,
-  "phase0_status": "MAC_STAMPS_WRITTEN_AWAITING_CHECKPOINT_COMMIT",
-  "next_phase": 1
+  "mac_checkpoint_commit_pending": false,
+  "phase0_status": "CHECKPOINT_COMMITTED_LOCAL_NO_PUSH",
+  "next_phase": 1,
+  "phase0_complete": true
 }
