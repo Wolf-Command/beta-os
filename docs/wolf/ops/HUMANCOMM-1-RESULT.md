@@ -83,3 +83,6 @@ Additive columns on `core_work_items`: `human_result`, `human_comment`, `opened_
 PYTHONPATH=scripts python3 scripts/migrations/migrate_humancomm1_20260929.py --json
 PYTHONPATH=scripts python3 scripts/ops/commissioning_tick.py --json
 ```
+
+## Commit
+Local only: `918a15d` — Ship HUMANCOMM-1: employee commissioning loop in My Work.
