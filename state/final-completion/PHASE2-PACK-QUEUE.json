@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T01:28:55+08:00",
+  "at_wita": "2026-09-30T01:39:21+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -371,7 +371,8 @@
       "status": "PASS_VERIFIED",
       "armed_at": "2026-09-30T01:18:00+08:00",
       "cursor_pid": 11271,
-      "verified_at": "2026-09-30T01:28:55+08:00"
+      "verified_at": "2026-09-30T01:28:55+08:00",
+      "exited_at": "2026-09-30T01:28:12+08:00"
     },
     {
       "pack_id": "FIN-RECON-SHELL-1",
@@ -402,7 +403,10 @@
       "estimated_effort": "L",
       "matt_blocker": false,
       "synthesized_from": "MISSING/PARTIAL priority buckets",
-      "status": "NEXT_TO_ARM"
+      "status": "PASS_VERIFIED",
+      "armed_at": "2026-09-30T01:28:55+08:00",
+      "cursor_pid": 14108,
+      "verified_at": "2026-09-30T01:39:21+08:00"
     },
     {
       "pack_id": "DASH-LIVE-1",
@@ -431,7 +435,7 @@
       "estimated_effort": "M",
       "matt_blocker": false,
       "synthesized_from": "MISSING/PARTIAL priority buckets",
-      "status": "QUEUED"
+      "status": "NEXT_TO_ARM"
     },
     {
       "pack_id": "RELIABILITY-1",
@@ -627,7 +631,7 @@
       "synthesized_from": "wave3"
     }
   ],
-  "first_pack": "FIN-RECON-SHELL-1",
+  "first_pack": "DASH-LIVE-1",
   "hr_deferred_not_in_queue": true,
   "blocked_external_not_auto_solved": [
     "MB-008",
@@ -652,7 +656,8 @@
     "CRM-IDENTITY-1",
     "FIN-INTERCO-1",
     "INTEL-LEARN-1",
-    "BZG-OPS-DESK-1"
+    "BZG-OPS-DESK-1",
+    "FIN-RECON-SHELL-1"
   ],
   "exited_awaiting_peaches": [
     "BZG-VENUEPL-1",

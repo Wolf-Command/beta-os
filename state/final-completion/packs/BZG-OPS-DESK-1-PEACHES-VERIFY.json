@@ -79,5 +79,12 @@
   },
   "no_push": true,
   "beta_only": true,
-  "next_pack": "FIN-RECON-SHELL-1"
+  "next_pack": "FIN-RECON-SHELL-1",
+  "watch_tick_confirm_rerun": {
+    "at": "2026-09-30T01:31:16+08:00",
+    "test_bzg_ops_desk1_20260930.py": {
+      "pass": 114,
+      "fail": 0
+    }
+  }
 }

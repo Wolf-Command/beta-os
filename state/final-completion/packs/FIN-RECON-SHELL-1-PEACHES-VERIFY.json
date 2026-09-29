@@ -1,0 +1,61 @@
+{
+  "pack": "FIN-RECON-SHELL-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T01:39:21+08:00",
+  "verifier": "Peaches-executor",
+  "exit_code": 0,
+  "result_file": "docs/wolf/ops/FIN-RECON-SHELL-1-RESULT.md",
+  "tests_rerun": {
+    "test_fin_recon_shell1_20260930.py": {
+      "pass": 174,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 5,
+    "distinct_sha256": 3,
+    "all_distinct": false,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/finreconshell1-desk-desktop.png",
+        "bytes": 175899,
+        "sha256": "835e4a1849f4b3d01faba08660a11762a0e3c2d29bec56d70977def2677f3bd5"
+      },
+      {
+        "path": "docs/wolf/ops/shots/finreconshell1-desk-phone.png",
+        "bytes": 136091,
+        "sha256": "d051983a11608f874ca92867f9c18e288197afc3f8856e5ff2e44b3e7e449b6d"
+      },
+      {
+        "path": "docs/wolf/ops/shots/finreconshell1-preserved-packs.png",
+        "bytes": 175899,
+        "sha256": "835e4a1849f4b3d01faba08660a11762a0e3c2d29bec56d70977def2677f3bd5"
+      },
+      {
+        "path": "docs/wolf/ops/shots/finreconshell1-queue-empty.png",
+        "bytes": 175899,
+        "sha256": "835e4a1849f4b3d01faba08660a11762a0e3c2d29bec56d70977def2677f3bd5"
+      },
+      {
+        "path": "docs/wolf/ops/shots/finreconshell1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      }
+    ]
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "no_push": true,
+  "beta_only": true,
+  "next_pack": "DASH-LIVE-1"
+}
