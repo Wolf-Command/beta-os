@@ -3,7 +3,7 @@
   "pack": "MYWORK-PROVE-1",
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
-  "status": "EXITED",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T00:19:58+08:00",
   "exited_at": "2026-09-30T00:26:30+08:00",
   "exit_code": 0,
@@ -58,5 +58,7 @@
   ],
   "launch_method": "python_detach+daemon.sh",
   "cursor_pid": 98053,
-  "launched_at": "2026-09-30T00:20:04+08:00"
+  "launched_at": "2026-09-30T00:20:04+08:00",
+  "verified_at": "2026-09-30T00:28:22+08:00",
+  "peaches_verify": "state/final-completion/packs/MYWORK-PROVE-1-PEACHES-VERIFY.json"
 }

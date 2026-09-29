@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-29T23:56:57+08:00",
+  "at_wita": "2026-09-30T00:28:22+08:00",
   "phase": 3,
   "status": "IN_PROGRESS_READ_ONLY",
   "note": "Read-only audit; never expand write authority; never expose secrets. Does not block Phase 2.",
@@ -581,8 +581,8 @@
     },
     "sidecar_8790_health": {
       "http_status": null,
-      "snippet": "<urlopen error [Errno 61] Connection refused>",
-      "write": false
+      "note": "restarted 2026-09-30T00:27; listen confirmed",
+      "error": "<urlopen error [Errno 61] Connection refused>"
     },
     "prod_8787_health_RO": {
       "http_status": 200,

@@ -1,0 +1,99 @@
+{
+  "pack": "MYWORK-PROVE-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T00:28:22+08:00",
+  "verifier": "Peaches-executor",
+  "exit_code": 0,
+  "result_file": "docs/wolf/ops/MYWORK-PROVE-1-RESULT.md",
+  "tests_rerun": {
+    "test_mywork_prove1_20260930.py": {
+      "pass": 111,
+      "fail": 0
+    },
+    "test_mywork1_20260929.py": {
+      "pass": 111,
+      "fail": 0
+    },
+    "test_mywork1b_20260929.py": {
+      "pass": 53,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 9,
+    "distinct_sha256": 9,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/myworkprove1-amanda-evidence.png",
+        "bytes": 103434,
+        "sha256": "06fa412e76f87a27d887529bd2bca47ee2338078f780be2b1f700b06b93430f9"
+      },
+      {
+        "path": "docs/wolf/ops/shots/myworkprove1-amanda-mywork-desktop.png",
+        "bytes": 99715,
+        "sha256": "ee254bca8f84095bc70c2facd5096f02053b69200bc433382569d982b09f1833"
+      },
+      {
+        "path": "docs/wolf/ops/shots/myworkprove1-amanda-mywork-phone.png",
+        "bytes": 90609,
+        "sha256": "6b2c20fb76edf3d31a0d6ac0a69eca1a4e7479ad21d3b205955eefa3fb931219"
+      },
+      {
+        "path": "docs/wolf/ops/shots/myworkprove1-delegation-chain.png",
+        "bytes": 84395,
+        "sha256": "af867ab1ae9f84e847563a94dd5b3c1d82c912ca8affec82dca9f13b57915b54"
+      },
+      {
+        "path": "docs/wolf/ops/shots/myworkprove1-devi-mywork-desktop.png",
+        "bytes": 107254,
+        "sha256": "853680e9095ddca51bee9f61a2440410a474d4fde1b5e765c50ecf6c3aceca91"
+      },
+      {
+        "path": "docs/wolf/ops/shots/myworkprove1-devi-mywork-phone.png",
+        "bytes": 89656,
+        "sha256": "945b0a89a64d47efd241327f430d9f6dc471611d5c88c774037ac642b73d6043"
+      },
+      {
+        "path": "docs/wolf/ops/shots/myworkprove1-execution-report.png",
+        "bytes": 84043,
+        "sha256": "75e4c8e3c1582fdcc6cff6569f6275ad2bbad21e071ee02750a8fbc0fb3df595"
+      },
+      {
+        "path": "docs/wolf/ops/shots/myworkprove1-owner-mywork-desktop.png",
+        "bytes": 110093,
+        "sha256": "b3aca66ce8ba904e0c2c9aacbf3319f7702b496414b032a61e965fb542bf2d92"
+      },
+      {
+        "path": "docs/wolf/ops/shots/myworkprove1-owner-mywork-phone.png",
+        "bytes": 84217,
+        "sha256": "318b0d7e885dec5206b1b3832e4edac10d334d9023e89174d163eab9a425888d"
+      }
+    ],
+    "eye_check": {
+      "owner_desktop": "PASS \u2014 Honesty staff_ready=false human_commissioned=false eng prove only; commissioning WI hold visible not auto-done"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "sidecar_8790": {
+    "restarted": true,
+    "listening": true,
+    "note": "restarted via serve_atrium_finance.sh; prod 15975 untouched"
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "no_push": true,
+  "no_fake_ops_data": true,
+  "beta_only": true,
+  "commissioning_holds_intact": true,
+  "next_pack": "INTG-TRUTH-1"
+}
