@@ -2436,6 +2436,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if m_chain:
             self._mywork_chain(m_chain.group(1))
             return
+        m_ev_list = re.match(r"^/api/my-work/items/([^/]+)/evidence-files$", path)
+        if m_ev_list:
+            self._mywork_evidence_files(m_ev_list.group(1))
+            return
         if path == "/api/work-loop" or path.startswith("/api/work-loop/"):
             self._work_loop_refused(path)
             return
@@ -15487,7 +15491,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 out["opened_stamped"] = stamped.get("opened_stamped")
                 out["card"] = _umw.enrich_card(conn, item) if item else {}
                 out["delegation_chain"] = _umw.delegation_chain(work_item_id, conn=conn)
+                out["evidence_files"] = _umw.list_evidence_files(work_item_id, conn=conn)
                 out["freshness"] = _umw.derived_view_status("my-work", conn=conn)
+                out["staff_ready"] = False
+                out["human_commissioned"] = False
             finally:
                 conn.close()
             self._send_json(out)
@@ -15582,8 +15589,39 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "ok": True,
                 "work_item_id": work_item_id,
                 "chain": _umw.delegation_chain(work_item_id),
+                "staff_ready": False,
+                "human_commissioned": False,
             }
         )
+
+    def _mywork_evidence_files(self, work_item_id: str) -> None:
+        """Read-only evidence trail (metadata). MYWORK-PROVE-1."""
+        identity = self._loop_identity()
+        if identity is None:
+            return
+        try:
+            files = _umw.list_evidence_files(work_item_id)
+            self._send_json(
+                {
+                    "ok": True,
+                    "work_item_id": work_item_id,
+                    "files": files,
+                    "count": len(files),
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "evidence_list_failed",
+                    "message": str(exc),
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=500,
+            )
 
     def _mywork_post(self, path: str) -> None:
         try:

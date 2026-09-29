@@ -769,6 +769,54 @@ def _evidence_count(conn, work_item_id: str) -> int:
     return int(row[0] or 0)
 
 
+def list_evidence_files(
+    work_item_id: str,
+    *,
+    conn=None,
+) -> list[dict[str, Any]]:
+    """Read-only evidence trail for a work item (metadata only; no blob bytes).
+
+    Honest under the test write guard: uses whatever catalog connection the
+    caller supplies (temp copy in tests) and never invents files. Paths are
+    returned as stored so callers can verify they land under blob_root().
+    """
+    own = conn is None
+    c = conn or wi.db_connect()
+    try:
+        rows = c.execute(
+            """
+            SELECT file_id, work_item_id, evidence_id, filename, content_type,
+                   byte_size, storage_path, sha256, uploaded_by_person_id, created_at
+            FROM core_work_evidence_files
+            WHERE work_item_id=?
+            ORDER BY created_at ASC, file_id ASC
+            """,
+            (work_item_id,),
+        ).fetchall()
+        out: list[dict[str, Any]] = []
+        for r in rows:
+            created_raw = r["created_at"]
+            out.append(
+                {
+                    "file_id": r["file_id"],
+                    "work_item_id": r["work_item_id"],
+                    "evidence_id": r["evidence_id"],
+                    "filename": r["filename"],
+                    "content_type": r["content_type"],
+                    "byte_size": int(r["byte_size"] or 0),
+                    "storage_path": r["storage_path"],
+                    "sha256": r["sha256"],
+                    "uploaded_by_person_id": r["uploaded_by_person_id"],
+                    "created_at": created_raw,
+                    "created_at_display": format_wita(created_raw),
+                }
+            )
+        return out
+    finally:
+        if own:
+            c.close()
+
+
 def _is_commissioning_origin(origin: str | None) -> bool:
     return str(origin or "") in {"commissioning", "commissioning-retest"}
 

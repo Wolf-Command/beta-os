@@ -50,6 +50,7 @@
 <body data-wolf-page-type="WORKSPACE" data-wolf-shell="global">
   <h1>Execution &amp; Delegation Report</h1>
   <p class="muted">Plain counts only. No judgement labels. Times shown in Asia/Makassar (WITA).</p>
+  <p class="muted" id="honesty">Honesty: staff_ready=false · human_commissioned=false · eng prove only.</p>
   <p class="muted" id="fresh"></p>
   <label for="period">Period</label>
   <select id="period">
@@ -78,6 +79,13 @@
           return;
         }
         $("msg").innerHTML = "";
+        const honesty = $("honesty");
+        if (honesty) {
+          honesty.textContent =
+            "Honesty: staff_ready=" + String(data.staff_ready === true) +
+            " · human_commissioned=" + String(data.human_commissioned === true) +
+            " · eng prove only — not human commissioning complete.";
+        }
         const fresh = (data.freshness || {}).status || "";
         $("fresh").textContent = fresh ? `View: ${fresh}` : "";
         $("rows").innerHTML = (data.people || []).map((row) => `

@@ -1,0 +1,58 @@
+{
+  "run_id": "MYWORK-PROVE-1",
+  "pack": "MYWORK-PROVE-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "EXITED",
+  "armed_at": "2026-09-30T00:19:58+08:00",
+  "exited_at": "2026-09-30T00:26:30+08:00",
+  "exit_code": 0,
+  "brief": "state/build-factory/briefs/BRIEF-MYWORK-PROVE-1.md",
+  "log": "state/build-factory/logs/MYWORK-PROVE-1.log",
+  "result_file": "docs/wolf/ops/MYWORK-PROVE-1-RESULT.md",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "cursor_did_not_auto_chain": true,
+  "next_pack_for_parent": "INTG-TRUTH-1",
+  "depends_on": [
+    "MYWORK-1",
+    "MYWORK-1B",
+    "SOP-FACTORY-1"
+  ],
+  "prior_pack_verified": "SOP-FACTORY-1",
+  "beta_os_head_at_arm": "200ab1b",
+  "beta_os_head_at_exit": "PENDING_COMMIT",
+  "decision_served": "2026-09-29 07:20 P0 UNIVERSAL MY WORK (prove harden)",
+  "extends": "scripts/core/universal_my_work.py",
+  "commissioning_holds_diagnosed": {
+    "commissioning_open": 26,
+    "commissioning_total": 39,
+    "commissioning_retest_open": 12,
+    "legacy": 148,
+    "auto_completed": false
+  },
+  "tests": {
+    "test_mywork_prove1_20260930.py": "PASS=111 FAIL=0",
+    "test_mywork1_20260929.py": "PASS=111 FAIL=0",
+    "test_mywork1b_20260929.py": "PASS=53 FAIL=0"
+  },
+  "shots": [
+    "myworkprove1-owner-mywork-desktop.png",
+    "myworkprove1-owner-mywork-phone.png",
+    "myworkprove1-devi-mywork-desktop.png",
+    "myworkprove1-devi-mywork-phone.png",
+    "myworkprove1-amanda-mywork-desktop.png",
+    "myworkprove1-amanda-mywork-phone.png",
+    "myworkprove1-delegation-chain.png",
+    "myworkprove1-amanda-evidence.png",
+    "myworkprove1-execution-report.png"
+  ],
+  "launch_method": "python_detach+daemon.sh",
+  "cursor_pid": 98053,
+  "launched_at": "2026-09-30T00:20:04+08:00"
+}

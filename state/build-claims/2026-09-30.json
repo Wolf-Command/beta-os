@@ -28,6 +28,20 @@
       "check": "python3 -c \"from urllib.request import urlopen; from urllib.error import HTTPError; import sys\\n\\ndef code(url):\\n  try:\\n    with urlopen(url, timeout=5) as r: return r.status\\n  except HTTPError as e: return e.code\\nsys.exit(0 if code('http://127.0.0.1:8788/api/sop/review-queue')==403 and code('http://127.0.0.1:8788/core/sop-factory')==403 else 1)\"",
       "expect": "exit 0",
       "by": "sop-factory1-20260930"
+    },
+    {
+      "id": "mywork-prove1-holds-and-honesty",
+      "claim": "Universal My Work prove: commissioning OPEN holds >=20, commissioning origin count 39, legacy 148, staff_home Owner/Devi human_commissioned and staff_ready false, format_wita labels Asia/Makassar.",
+      "check": "PYTHONPATH=scripts python3 -c \"import sqlite3; from pathlib import Path; from core import universal_my_work as u; from core.staff_home import build_home; c=sqlite3.connect('catalog/content_library.sqlite'); open_n=c.execute(\\\"SELECT COUNT(*) FROM core_work_items WHERE origin='commissioning' AND status='OPEN'\\\").fetchone()[0]; comm=c.execute(\\\"SELECT COUNT(*) FROM core_work_items WHERE origin='commissioning'\\\").fetchone()[0]; leg=c.execute(\\\"SELECT COUNT(*) FROM core_work_items WHERE origin='legacy'\\\").fetchone()[0]; c.close(); h=build_home('PERS-MATT'); d=build_home('PERS-DEVI'); w=u.format_wita('2026-09-29T00:36:43Z'); import sys; sys.exit(0 if (open_n>=20 and comm==39 and leg==148 and h.get('human_commissioned') is False and h.get('staff_ready') is False and d.get('human_commissioned') is False and w.endswith(' WITA') and '08:36' in w) else 1)\"",
+      "expect": "exit 0",
+      "by": "mywork-prove1-20260930"
+    },
+    {
+      "id": "mywork-prove1-evidence-list-api",
+      "claim": "list_evidence_files returns list; proof suite file exists; honesty banners present on my-work HTML.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import universal_my_work as u; from pathlib import Path; import sys; html=Path('dashboards/my-work.html').read_text(); sys.exit(0 if (callable(u.list_evidence_files) and Path('scripts/tests/test_mywork_prove1_20260930.py').is_file() and 'human_commissioned' in html and 'id=\\\"honesty\\\"' in html) else 1)\"",
+      "expect": "exit 0",
+      "by": "mywork-prove1-20260930"
     }
   ]
 }

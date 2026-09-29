@@ -84,6 +84,7 @@
 </head>
 <body data-wolf-page-type="WORKSPACE" data-wolf-shell="global">
   <h1 id="hello">My Work</h1>
+  <p class="note" id="honesty">Honesty: staff_ready=false · human_commissioned=false · eng prove only.</p>
   <div id="wolf-truth" data-wolf-truth data-surface="my-work"></div>
   <p class="role" id="role"></p>
   <p class="covers" id="covers"></p>
@@ -176,6 +177,13 @@
         return;
       }
       $("hello").textContent = data.greeting || "My Work";
+      const honesty = $("honesty");
+      if (honesty) {
+        honesty.textContent =
+          "Honesty: staff_ready=" + String(data.staff_ready === true) +
+          " · human_commissioned=" + String(data.human_commissioned === true) +
+          " · eng prove only — not human commissioning complete.";
+      }
       const role = (data.role || {}).label || "";
       $("role").textContent = role;
       const covers = data.covers || [];

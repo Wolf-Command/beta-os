@@ -90,6 +90,7 @@
 <body data-wolf-page-type="WORKSPACE" data-wolf-shell="global">
   <a class="back" href="/my-work">My Work</a>
   <h1 id="title">Work</h1>
+  <p class="muted" id="honesty">Honesty: staff_ready=false · human_commissioned=false · eng prove only.</p>
   <p class="muted" id="status"></p>
   <div id="msg"></div>
   <div id="body"></div>
@@ -133,6 +134,13 @@
       || card.origin === "commissioning-retest";
     humanResult = card.human_result || "";
     $("title").textContent = item.title || "Work";
+    const honestyEl = $("honesty");
+    if (honestyEl) {
+      honestyEl.textContent =
+        "Honesty: staff_ready=" + String(data.staff_ready === true) +
+        " · human_commissioned=" + String(data.human_commissioned === true) +
+        " · eng prove only — not human commissioning complete.";
+    }
     const fresh = (data.freshness || {}).status === "STALE" || progress.freshness === "STALE" ? "STALE" : "LIVE";
     $("status").textContent = [
       card.status_label || item.status || "",
@@ -179,6 +187,11 @@
         <p class="muted">Requested by ${esc(card.requested_by || "—")} · Due ${esc(card.due || "—")} · ${esc(card.company_site_department || "")}</p>
         <p class="muted">Priority ${esc(card.priority ?? "—")}${card.evidence_files ? " · " + card.evidence_files + " file(s) attached" : ""}</p>
         <p id="evidence-line"><strong>Evidence required:</strong> ${esc(card.evidence_required || missing)}</p>
+        ${(data.evidence_files || []).length
+          ? `<ul id="evidence-list">${(data.evidence_files || []).map((f) =>
+              `<li class="muted">${esc(f.filename || f.file_id)} · ${esc(f.created_at_display || f.created_at || "")}</li>`
+            ).join("")}</ul>`
+          : `<p class="muted" id="evidence-list">No evidence files attached yet.</p>`}
         <p class="next">${esc(card.what_happens_next || "")}</p>
         <p class="${fresh === "STALE" ? "stale" : "muted"}">Progress: ${esc(fresh)} · DONE is not VERIFIED · SYSTEM % unchanged</p>
       </div>
