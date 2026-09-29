@@ -1,0 +1,77 @@
+{
+  "pack": "BACKUP-HEALTH-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T02:59:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T02:52:10+08:00",
+  "result_file": "docs/wolf/ops/BACKUP-HEALTH-1-RESULT.md",
+  "tests_rerun": {
+    "test_backup_health1_20260930.py": {
+      "pass": 136,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/backuphealth1-board-desktop.png",
+        "bytes": 182951,
+        "sha256": "8e8e0b6720b6109da0dc51eeafb0060d7037a87f1ee448133680ba698a4200e3"
+      },
+      {
+        "path": "docs/wolf/ops/shots/backuphealth1-board-phone.png",
+        "bytes": 103094,
+        "sha256": "062f2bee7f33d09b816ef13d736046f84013657a22b13b3286aa8e2a5b5eeed5"
+      },
+      {
+        "path": "docs/wolf/ops/shots/backuphealth1-stamps-honesty.png",
+        "bytes": 183069,
+        "sha256": "23805abae83fd3cf3c4edbca8afdcfa1cdce92ea7f6e2d5d155365528294fdc6"
+      },
+      {
+        "path": "docs/wolf/ops/shots/backuphealth1-unsigned-deny.png",
+        "bytes": 25119,
+        "sha256": "800c7de7d32a71425efe385952a795210c15bfaa76566c4a176f66418a3c233d"
+      }
+    ],
+    "eye_check": {
+      "board": "restore NOT_RUN; atrium snapshot STALE; CAP-DR-01 SPECIFIED; fake_backup_success=false",
+      "unsigned_deny": "Access denied"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "fake_backup_success": false,
+    "invented_restore_pass": false,
+    "restore_drill": "NOT_RUN",
+    "ceiling": "BUILT"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "687a9ca",
+    "atrium_finance_head": "7584266",
+    "uncommitted": true
+  },
+  "preserves": [
+    "RELIABILITY-1"
+  ],
+  "next_pack": "FIN-CASH-TRUTH-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

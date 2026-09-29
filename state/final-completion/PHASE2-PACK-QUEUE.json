@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T02:45:00+08:00",
+  "at_wita": "2026-09-30T02:59:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -674,7 +674,7 @@
       "armed_at": "2026-09-30T02:37:00+08:00",
       "cursor_pid": 27705,
       "launched_at": "2026-09-30T02:37:30+08:00",
-      "child_alive": true,
+      "child_alive": false,
       "probed_at": "2026-09-30T02:39:17+08:00",
       "exited_at": "2026-09-30T02:42:55+08:00",
       "tests": {
@@ -683,7 +683,7 @@
       },
       "cursor_did_not_auto_start_next": true,
       "result_file": "docs/wolf/ops/ESB-TRUTH-1-RESULT.md",
-      "verified_at": "2026-09-30T02:45:00+08:00"
+      "verified_at": "2026-09-30T02:54:10+08:00"
     },
     {
       "pack_id": "BACKUP-HEALTH-1",
@@ -708,9 +708,20 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "synthesized_from": "wave3",
-      "armed_at": "2026-09-30T02:45:00+08:00"
+      "armed_at": "2026-09-30T02:45:00+08:00",
+      "cursor_pid": 29018,
+      "launched_at": "2026-09-30T02:45:30+08:00",
+      "verified_at": "2026-09-30T02:59:00+08:00",
+      "exited_at": "2026-09-30T02:52:10+08:00",
+      "tests": {
+        "pass": 136,
+        "fail": 0
+      },
+      "child_alive": false,
+      "cursor_did_not_auto_start_next": true,
+      "result_file": "docs/wolf/ops/BACKUP-HEALTH-1-RESULT.md"
     },
     {
       "pack_id": "FIN-CASH-TRUTH-1",
@@ -736,8 +747,12 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
-      "synthesized_from": "wave4 MISSING finance_loops"
+      "status": "WAITING_CURSOR",
+      "synthesized_from": "wave4 MISSING finance_loops",
+      "armed_at": "2026-09-30T02:59:00+08:00",
+      "launched_at": "2026-09-30T02:54:10+08:00",
+      "cursor_pid": 31184,
+      "child_alive": true
     },
     {
       "pack_id": "BZG-LABOR-COST-1",
@@ -853,7 +868,9 @@
     "FIN-AP-AR-SHELL-1",
     "OWNER-NEEDS-YOU-1",
     "RELIABILITY-1",
-    "CONTENT-ENGINE-LIVE-1"
+    "CONTENT-ENGINE-LIVE-1",
+    "ESB-TRUTH-1",
+    "BACKUP-HEALTH-1"
   ],
   "exited_awaiting_peaches": [],
   "synthesized_after_queue_head": true,
@@ -868,11 +885,12 @@
   },
   "synthesis_wave2_at": "2026-09-30T00:45:44+08:00",
   "synthesis_wave3_at": "2026-09-30T01:19:01+08:00",
-  "last_verified": "OWNER-NEEDS-YOU-1",
-  "next_to_arm": "BACKUP-HEALTH-1",
-  "heavy_in_flight": "ESB-TRUTH-1",
-  "last_exited": "OWNER-NEEDS-YOU-1",
+  "last_verified": "BACKUP-HEALTH-1",
+  "next_to_arm": "BZG-LABOR-COST-1",
+  "heavy_in_flight": "FIN-CASH-TRUTH-1",
+  "last_exited": "BACKUP-HEALTH-1",
   "next_to_arm_note": "parent/Peaches only after ESB-TRUTH-1 PASS_VERIFIED \u2014 Cursor must not auto-arm; HEADCHEF veto",
   "wave4_synthesized_at": "2026-09-30T02:45:00+08:00",
-  "wave4_count": 4
+  "wave4_count": 4,
+  "updated_at": "2026-09-30T02:54:10+08:00"
 }

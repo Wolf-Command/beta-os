@@ -4,8 +4,9 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 3,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T02:45:00+08:00",
+  "exited_at": "2026-09-30T02:51:00+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
   "prod_pid_held": 15975,
@@ -15,6 +16,7 @@
   "matt_auto_continue": true,
   "prior_pack_verified": "ESB-TRUTH-1",
   "beta_os_head_at_arm": "b583a62",
+  "beta_os_head_at_exit": "687a9ca",
   "brief": "state/build-factory/briefs/BRIEF-BACKUP-HEALTH-1.md",
   "log": "state/build-factory/logs/BACKUP-HEALTH-1.log",
   "result_file": "docs/wolf/ops/BACKUP-HEALTH-1-RESULT.md",
@@ -34,5 +36,40 @@
   ],
   "preserves": [
     "RELIABILITY-1"
-  ]
+  ],
+  "launched_at": "2026-09-30T02:45:30+08:00",
+  "cursor_pid": 29018,
+  "child_alive": false,
+  "suite": {
+    "path": "scripts/tests/test_backup_health1_20260930.py",
+    "pass": 136,
+    "fail": 0
+  },
+  "shots": [
+    "docs/wolf/ops/shots/backuphealth1-board-desktop.png",
+    "docs/wolf/ops/shots/backuphealth1-board-phone.png",
+    "docs/wolf/ops/shots/backuphealth1-stamps-honesty.png",
+    "docs/wolf/ops/shots/backuphealth1-unsigned-deny.png"
+  ],
+  "page": "/ops/backup-health-1",
+  "api": "/api/ops/backup-health-1",
+  "fake_backup_success": false,
+  "invented_restore_pass": false,
+  "restore_drill_status": "NOT_RUN",
+  "ceiling": "BUILT",
+  "cursor_did_not_auto_start_next": true,
+  "exit": 0,
+  "closed_at": "2026-09-30T02:54:10+08:00",
+  "peaches_verify": "state/final-completion/packs/BACKUP-HEALTH-1-PEACHES-VERIFY.json",
+  "peaches_verified_at": "2026-09-30T02:59:00+08:00",
+  "matt_finished_ping": true,
+  "matt_finished_ping_at": "2026-09-30T02:54:10+08:00",
+  "has_exit": true,
+  "exit_code": 0,
+  "independent_tests_this_tick": {
+    "pass": 136,
+    "fail": 0
+  },
+  "tests_pass": 136,
+  "tests_fail": 0
 }

@@ -176,6 +176,7 @@ from core import fin_recon_shell1 as _fin_recon_shell1
 from core import fin_ap_ar_shell1 as _fin_ap_ar_shell1
 from core import owner_needs_you1 as _owner_needs_you1
 from core import esb_truth1 as _esb_truth1
+from core import backup_health1 as _backup_health1
 from core import intel_learn1 as _intel_learn1
 from core import bzg_ops_desk1 as _bzg_ops_desk1
 from core import bzg_waste_yield1 as _bzg_waste_yield1
@@ -2043,6 +2044,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._esb_truth1_dispatch():
+            return
+
+        if self._backup_health1_dispatch():
             return
 
         if self._intel_learn1_dispatch():
@@ -5176,6 +5180,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._esb_truth1_dispatch():
                 return
         elif path in (
+            "/ops/backup-health-1",
+            "/ops/backup-health-1/",
+            "/ops/backup-health",
+            "/ops/backup-health/",
+            "/backup-health-1",
+            "/backup-health-1/",
+            "/backup-health",
+            "/backup-health/",
+            "/backup-health-1.html",
+            "/dashboards/backup-health-1.html",
+        ):
+            if self._backup_health1_dispatch():
+                return
+        elif path in (
             "/intel/learning",
             "/intel/learning/",
             "/ops/intel-learning",
@@ -5979,6 +5997,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ops/esb-truth-1" or path.startswith("/api/ops/esb-truth-1/"):
             self._esb_truth1_write_refused(path)
+            return
+        if path == "/api/ops/backup-health-1" or path.startswith("/api/ops/backup-health-1/"):
+            self._backup_health1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -6813,6 +6834,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ops/esb-truth-1" or path.startswith("/api/ops/esb-truth-1/"):
             self._esb_truth1_write_refused(path)
+            return
+        if path == "/api/ops/backup-health-1" or path.startswith("/api/ops/backup-health-1/"):
+            self._backup_health1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -8052,6 +8076,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/ops/esb-truth-1" or path.startswith("/api/ops/esb-truth-1/"):
             self._esb_truth1_write_refused(path)
+            return
+        if path == "/api/ops/backup-health-1" or path.startswith("/api/ops/backup-health-1/"):
+            self._backup_health1_write_refused(path)
             return
         if path == "/api/ops/reliability" or path.startswith("/api/ops/reliability/"):
             self._reliability1_write_refused(path)
@@ -16109,6 +16136,100 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "path": path,
                 "staff_ready": False,
                 "human_commissioned": False,
+            },
+            status=403,
+        )
+
+    def _backup_health1_dispatch(self) -> bool:
+        """BACKUP-HEALTH-1 — backup/recovery stamps; no fake success / restore PASS."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _backup_health1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _backup_health1.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "backup_health_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "fake_backup_success": False,
+                        "invented_restore_pass": False,
+                        "prod_mutate": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _backup_health1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "backup-health-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "BACKUP-HEALTH-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="backup-health-1.html")
+        return True
+
+    def _backup_health1_write_refused(self, path: str) -> None:
+        """Refuse fake backup success / invent restore PASS / prod mutate."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _backup_health1.refuse_external_write(body if isinstance(body, dict) else {})
+        except _backup_health1.BackupHealth1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "fake_backup_success": False,
+                    "invented_restore_pass": False,
+                    "prod_mutate": False,
+                    "prod_pid_held": _backup_health1.PROD_PID_HELD,
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": "BACKUP-HEALTH-1 is a read-only stamps board. Writes refused.",
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "fake_backup_success": False,
+                "invented_restore_pass": False,
             },
             status=403,
         )

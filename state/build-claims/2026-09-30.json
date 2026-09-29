@@ -260,6 +260,22 @@
       "expect": "exit 0",
       "by": "cursor-esb-truth-1",
       "at": "2026-09-30T02:42:55+08:00"
+    },
+    {
+      "id": "BACKUP-HEALTH-1-desk",
+      "claim": "BACKUP-HEALTH-1: backup/recovery stamps board; restore_drill NOT_RUN; fake_backup_success/invented_restore_pass false; CAP-DR-01 not raised; RELIABILITY-1 preserved; staff_ready/human_commissioned false; next pack parent-only FIN-CASH-TRUTH-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import backup_health1 as b; p=b.build_board(); r=next(s for s in p['stamps'] if s['id']=='restore_drill'); import sys; sys.exit(0 if (p.get('ok') and p.get('fake_backup_success') is False and p.get('invented_restore_pass') is False and str(r.get('status')).upper()=='NOT_RUN' and b.restore_drill_is_honest(p) and p.get('staff_ready') is False and p.get('human_commissioned') is False and p.get('reliability1_preserved') is True and b.honesty_flags().get('next_pack_for_parent_only')=='FIN-CASH-TRUTH-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-backup-health-1",
+      "at": "2026-09-30T02:51:45+08:00"
+    },
+    {
+      "id": "BACKUP-HEALTH-1-surface",
+      "claim": "BACKUP-HEALTH-1 page/API/shots/RESULT present; unsigned deny + suite PASS=136; next pack parent-only FIN-CASH-TRUTH-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import backup_health1 as b; from pathlib import Path; html=Path('dashboards/backup-health-1.html').read_text(); import sys; sys.exit(0 if (b.api_matches('/api/ops/backup-health-1') and b.page_matches('/ops/backup-health-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/backuphealth1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/BACKUP-HEALTH-1-RESULT.md').is_file() and b.honesty_flags().get('next_pack_for_parent_only')=='FIN-CASH-TRUTH-1' and b.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-backup-health-1",
+      "at": "2026-09-30T02:51:45+08:00"
     }
   ]
 }

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Backup Health — Recovery stamps</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1c1915;
+      --muted: #5c574e;
+      --paper: #f3f1ec;
+      --card: #fffdf8;
+      --line: #ddd6c8;
+      --bad: #8a1f1f;
+      --ok: #2a4a28;
+      --warn: #6b4a18;
+      --hist: #3a4a5c;
+    }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(ellipse 70% 40% at 0% 0%, #e6ebe8 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 72px; }
+    h1 { font-size: 1.65rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #f5efe3; border: 1px solid #d2c4a4; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner strong { color: #5a4a28; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+    .chip {
+      display: inline-block; padding: 5px 10px; border-radius: 6px;
+      background: #ebe4d6; font-size: 0.75rem; font-weight: 600;
+    }
+    .chip.PRESENT, .chip.PRESERVED, .chip.SPECIFIED, .chip.BUILT { background: #dde8dc; color: var(--ok); }
+    .chip.MISSING, .chip.BROKEN { background: #f5e0e0; color: var(--bad); }
+    .chip.UNKNOWN, .chip.STALE, .chip.PARTIAL, .chip.NOT_RUN { background: #f5ead8; color: var(--warn); }
+    .chip.HISTORICAL { background: #e0e6ec; color: var(--hist); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+    table { width: 100%; border-collapse: collapse; min-width: 680px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #ebe4d6; vertical-align: top; font-size: 0.86rem; }
+    th { background: #f0ebe2; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    tr:last-child td { border-bottom: 0; }
+    tr.MISSING, tr.BROKEN { background: #fff5f3; }
+    tr.NOT_RUN, tr.STALE, tr.PARTIAL, tr.UNKNOWN { background: #fffaf0; }
+    tr.HISTORICAL { background: #f4f7fa; }
+    tr.PRESENT, tr.PRESERVED, tr.SPECIFIED { background: #f6faf6; }
+    .status { font-weight: 700; white-space: nowrap; }
+    .status.MISSING, .status.BROKEN { color: var(--bad); }
+    .status.NOT_RUN, .status.STALE, .status.PARTIAL, .status.UNKNOWN { color: var(--warn); }
+    .status.HISTORICAL { color: var(--hist); }
+    .status.PRESENT, .status.PRESERVED, .status.SPECIFIED, .status.BUILT { color: var(--ok); }
+    .muted { color: var(--muted); font-size: 0.8rem; line-height: 1.4; }
+    .null { color: #9a9488; font-style: italic; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
+    @media (max-width: 520px) {
+      h1 { font-size: 1.35rem; }
+      main { padding: 16px 12px 64px; }
+      th, td { padding: 8px 8px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body data-ready="0" data-pack="BACKUP-HEALTH-1">
+  <main>
+    <h1>Backup Health</h1>
+    <p class="sub" id="sub">Recovery stamps · pack BACKUP-HEALTH-1 · loading…</p>
+    <div class="banner" id="honesty">
+      <strong>Honesty:</strong>
+      staff_ready=false · human_commissioned=false ·
+      no fake backup success · restore-drill NOT_RUN stays NOT_RUN ·
+      last-backup stamp ≠ restore · prod pid 15975 READ-ONLY · write_authority=NONE
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Stamp</th>
+            <th>Status</th>
+            <th>Key facts</th>
+            <th>Source</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <tr><td colspan="5" class="muted">Loading atrium RO + Beta catalog stamps…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    function factsFor(row) {
+      const id = row.id || "";
+      if (id === "last_backup") {
+        const bits = [];
+        if (row.last_run) bits.push("last_run " + row.last_run);
+        if (row.local_ok != null) bits.push("local_ok=" + row.local_ok);
+        if (row.b2_ok != null) bits.push("b2_ok=" + row.b2_ok);
+        if (row.files_count != null) bits.push("files=" + row.files_count);
+        if (row.atrium_git_push) bits.push(row.atrium_git_push);
+        return bits.length ? bits.join(" · ") : '<span class="null">MISSING</span>';
+      }
+      if (id === "restore_drill") {
+        return "drill=" + esc(row.drill_status || row.status) +
+          " · skeleton=" + esc(row.framework_skeleton || "—") +
+          " · live_restore=false";
+      }
+      if (id === "cap_dr_01") {
+        return "maturity=" + esc(row.maturity || row.status);
+      }
+      if (id === "historical_b2_drill") {
+        return esc(row.historical_id || "—") +
+          " · counts_as_live_success=" + esc(row.counts_as_live_success);
+      }
+      if (id === "atrium_snapshot") {
+        const age = row.age_minutes != null ? row.age_minutes + "m" : "—";
+        return "generated " + esc(row.generated_at || "—") + " · age " + esc(age);
+      }
+      if (id === "nas_keepalive") {
+        const tail = Array.isArray(row.tail) ? row.tail.slice(-2).join(" | ") : "";
+        return tail ? esc(tail.slice(0, 160)) : '<span class="null">no tail</span>';
+      }
+      if (id === "reliability1") {
+        return "sidecar_honest=" + esc(row.sidecar_honest);
+      }
+      return "—";
+    }
+    function render(data) {
+      document.getElementById("sub").textContent =
+        "Recovery stamps · pack " + (data.pack || "BACKUP-HEALTH-1") +
+        " · as of " + (data.as_of_wita || "—") +
+        " · ceiling " + (data.ceiling || "BUILT");
+      const counts = (data.counts && data.counts.by_status) || {};
+      const chips = Object.keys(counts).map(function (k) {
+        return '<span class="chip ' + esc(k) + '">' + esc(k) + ": " + esc(counts[k]) + "</span>";
+      });
+      chips.push('<span class="chip">fake_backup_success=false</span>');
+      chips.push('<span class="chip">invented_restore_pass=false</span>');
+      document.getElementById("chips").innerHTML = chips.join("");
+      const stamps = data.stamps || [];
+      const body = stamps.map(function (row) {
+        const st = row.status || "UNKNOWN";
+        return '<tr class="' + esc(st) + '" data-id="' + esc(row.id) + '" data-status="' + esc(st) + '">' +
+          "<td><strong>" + esc(row.label || row.id) + "</strong><div class=\"muted\"><code>" + esc(row.id) + "</code></div></td>" +
+          '<td class="status ' + esc(st) + '">' + esc(st) + "</td>" +
+          "<td>" + factsFor(row) + "</td>" +
+          "<td class=\"muted\"><code>" + esc((row.source || "").toString().slice(-60)) + "</code></td>" +
+          '<td class="muted">' + esc(row.notes || "") + "</td>" +
+          "</tr>";
+      }).join("");
+      document.getElementById("rows").innerHTML = body ||
+        '<tr><td colspan="5" class="muted">No stamps</td></tr>';
+      document.body.setAttribute("data-ready", "1");
+      document.body.setAttribute("data-restore-status",
+        ((stamps.find(function (s) { return s.id === "restore_drill"; }) || {}).status) || "UNKNOWN");
+    }
+    fetch("/api/ops/backup-health-1", { credentials: "same-origin" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(render)
+      .catch(function (err) {
+        document.getElementById("rows").innerHTML =
+          '<tr><td colspan="5" class="muted">Failed to load: ' + esc(err.message) + "</td></tr>";
+        document.body.setAttribute("data-ready", "0");
+      });
+  </script>
+</body>
+</html>
