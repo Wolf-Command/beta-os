@@ -64,4 +64,6 @@ Local only. No push.
 - `4998727b4081db4faf1bd5fae976cb2a15bf0296` — Repair My Work cream-card contrast, header overlap, and WITA times.
 - `1aef14351e603209b0d3cd563b866f98da81f422` — Record the MYWORK-1B repair commit in the result.
 
+-  — List full MYWORK-1B result commit SHAs.
+
 RESULT: PASS (Alchemist live-count drift on opsfix2/umareal noted; unrelated to this pack)
