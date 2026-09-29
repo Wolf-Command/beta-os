@@ -129,7 +129,7 @@ All under `docs/wolf/ops/shots/`:
 
 | Repo | Commit |
 |------|--------|
-| beta-os | `fa1858f` (code/shots/RESULT) · `8dbfbf6` (claim) · `308c15a` (RESULT refs) |
+| beta-os | `fa1858f` (code/shots) · `8dbfbf6`…`f233033` (RESULT/claim/pids) |
 | atrium-finance | `b6008cd` |
 
 ### Migration
