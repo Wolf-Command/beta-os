@@ -4,7 +4,7 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 4,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T03:08:00+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
@@ -15,6 +15,7 @@
   "matt_auto_continue": true,
   "prior_pack_verified": "FIN-CASH-TRUTH-1",
   "beta_os_head_at_arm": "0e750d9",
+  "beta_os_head_at_exit": "3ca7dd7",
   "brief": "state/build-factory/briefs/BRIEF-BZG-LABOR-COST-1.md",
   "log": "state/build-factory/logs/BZG-LABOR-COST-1.log",
   "result_file": "docs/wolf/ops/BZG-LABOR-COST-1-RESULT.md",
@@ -35,5 +36,42 @@
   "preserves": [
     "BZG-OPS-DESK-1",
     "HR deferred"
-  ]
+  ],
+  "launched_at": "2026-09-30T03:08:30+08:00",
+  "cursor_pid": 33421,
+  "child_alive": false,
+  "suite": {
+    "path": "scripts/tests/test_bzg_labor_cost1_20260930.py",
+    "pass": 204,
+    "fail": 0
+  },
+  "shots": [
+    "docs/wolf/ops/shots/bzglaborcost1-desk-desktop.png",
+    "docs/wolf/ops/shots/bzglaborcost1-desk-phone.png",
+    "docs/wolf/ops/shots/bzglaborcost1-labor-unknown.png",
+    "docs/wolf/ops/shots/bzglaborcost1-hr-deferred.png",
+    "docs/wolf/ops/shots/bzglaborcost1-unsigned-deny.png"
+  ],
+  "page": "/bzg/labor-cost-1",
+  "api": "/api/bzg/labor-cost-1",
+  "fake_payroll": false,
+  "invented_labor_cost": false,
+  "labor_unknown": true,
+  "hr_deferred": true,
+  "hr_deferred_not_flipped": true,
+  "bzg_ops_desk1_preserved": true,
+  "ceiling": "BUILT",
+  "cursor_did_not_auto_start_next": true,
+  "exit": 0,
+  "has_exit": true,
+  "exit_code": 0,
+  "tests_pass": 204,
+  "tests_fail": 0,
+  "independent_tests_this_tick": {
+    "pass": 204,
+    "fail": 0
+  },
+  "completed_at": "2026-09-30T03:14:23+08:00",
+  "peaches_verified_at": "2026-09-30T03:19:00+08:00",
+  "peaches_verify": "state/final-completion/packs/BZG-LABOR-COST-1-PEACHES-VERIFY.json"
 }

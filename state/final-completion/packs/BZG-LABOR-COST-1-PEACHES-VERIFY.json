@@ -1,0 +1,84 @@
+{
+  "pack": "BZG-LABOR-COST-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T03:19:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T03:15:00+08:00",
+  "result_file": "docs/wolf/ops/BZG-LABOR-COST-1-RESULT.md",
+  "tests_rerun": {
+    "test_bzg_labor_cost1_20260930.py": {
+      "pass": 204,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 5,
+    "distinct_sha256": 3,
+    "all_distinct": false,
+    "note": "desk/hr/labor share SHA; phone+unsigned distinct",
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/bzglaborcost1-desk-desktop.png",
+        "bytes": 177070,
+        "sha256": "2cf8784d1c7c0b2d19c3d8e20ae14b61f229b62ed39250410f6b181f7d6a0457"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzglaborcost1-desk-phone.png",
+        "bytes": 133791,
+        "sha256": "8413ba12b01a14629010e60696d8a43a4fe7005a2557dbdac7cdbca2d5618ae1"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzglaborcost1-hr-deferred.png",
+        "bytes": 177070,
+        "sha256": "2cf8784d1c7c0b2d19c3d8e20ae14b61f229b62ed39250410f6b181f7d6a0457"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzglaborcost1-labor-unknown.png",
+        "bytes": 177070,
+        "sha256": "2cf8784d1c7c0b2d19c3d8e20ae14b61f229b62ed39250410f6b181f7d6a0457"
+      },
+      {
+        "path": "docs/wolf/ops/shots/bzglaborcost1-unsigned-deny.png",
+        "bytes": 21452,
+        "sha256": "42061c4baa6d1d307cac3fdea297221bba0dcd85ddf4d05719db8961d7b04c3f"
+      }
+    ],
+    "eye_check": {
+      "desk": "6 slots UNKNOWN fake_payroll=false HR deferred PRESERVED",
+      "unsigned_deny": "Access denied"
+    }
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "honesty": {
+    "fake_payroll": false,
+    "invented_labor_cost": false,
+    "hr_deferred": true,
+    "ceiling": "BUILT"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "3ca7dd7",
+    "atrium_finance_head": "7584266",
+    "uncommitted": true
+  },
+  "preserves": [
+    "BZG-OPS-DESK-1",
+    "HR deferred"
+  ],
+  "next_pack": "GGV-PIPELINE-TRUTH-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

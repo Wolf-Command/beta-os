@@ -1,0 +1,38 @@
+{
+  "run_id": "GGV-PIPELINE-TRUTH-1",
+  "pack": "GGV-PIPELINE-TRUTH-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 4,
+  "status": "WAITING_CURSOR",
+  "armed_at": "2026-09-30T03:19:00+08:00",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "prior_pack_verified": "BZG-LABOR-COST-1",
+  "beta_os_head_at_arm": "PENDING",
+  "brief": "state/build-factory/briefs/BRIEF-GGV-PIPELINE-TRUTH-1.md",
+  "log": "state/build-factory/logs/GGV-PIPELINE-TRUTH-1.log",
+  "result_file": "docs/wolf/ops/GGV-PIPELINE-TRUTH-1-RESULT.md",
+  "next_pack_for_parent": "CONN-HEALTH-BOARD-1",
+  "closes_toward": [
+    "CAP-GGV pipeline"
+  ],
+  "forbids": [
+    "fake deals",
+    "fake conversion",
+    "HEADCHEF",
+    "Exit Report",
+    "push"
+  ],
+  "depends_on": [
+    "CRM-IDENTITY-1"
+  ],
+  "preserves": [
+    "CRM-IDENTITY-1"
+  ]
+}

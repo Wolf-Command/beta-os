@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T03:08:00+08:00",
+  "at_wita": "2026-09-30T03:19:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -789,9 +789,16 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "synthesized_from": "wave4 MISSING bzg_ops",
-      "armed_at": "2026-09-30T03:08:00+08:00"
+      "armed_at": "2026-09-30T03:08:00+08:00",
+      "cursor_pid": 33421,
+      "launched_at": "2026-09-30T03:08:30+08:00",
+      "verified_at": "2026-09-30T03:19:00+08:00",
+      "tests": {
+        "pass": 204,
+        "fail": 0
+      }
     },
     {
       "pack_id": "GGV-PIPELINE-TRUTH-1",
@@ -817,8 +824,9 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
-      "synthesized_from": "wave4 MISSING dashboards"
+      "status": "WAITING_CURSOR",
+      "synthesized_from": "wave4 MISSING dashboards",
+      "armed_at": "2026-09-30T03:19:00+08:00"
     },
     {
       "pack_id": "CONN-HEALTH-BOARD-1",
