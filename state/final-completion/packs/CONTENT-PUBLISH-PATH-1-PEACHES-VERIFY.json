@@ -1,0 +1,85 @@
+{
+  "pack": "CONTENT-PUBLISH-PATH-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 8,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T09:15:45+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T09:15:06+08:00",
+  "result_file": "docs/wolf/ops/CONTENT-PUBLISH-PATH-1-RESULT.md",
+  "tests_rerun": {
+    "test_content_publish_path1_20260930.py": {
+      "pass": 233,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 5,
+    "distinct_sha256": 3,
+    "all_distinct": false,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/contentpublish1-desk-desktop.png",
+        "bytes": 218796,
+        "sha256": "7ce7df7734ea6c8c5e35a16b4c18ef693cdfff902333c9be8b396fb7839bcfbb"
+      },
+      {
+        "path": "docs/wolf/ops/shots/contentpublish1-desk-phone.png",
+        "bytes": 165199,
+        "sha256": "c5384171c3f10fd7876bbc9e7204a6ad54b0a0c320d08e22221470ee6e684df8"
+      },
+      {
+        "path": "docs/wolf/ops/shots/contentpublish1-metricool-preserved.png",
+        "bytes": 218796,
+        "sha256": "7ce7df7734ea6c8c5e35a16b4c18ef693cdfff902333c9be8b396fb7839bcfbb"
+      },
+      {
+        "path": "docs/wolf/ops/shots/contentpublish1-unsigned-deny.png",
+        "bytes": 22586,
+        "sha256": "a332f8e73a739b564311d5e76eac7ba7b7e8c379f8bf13cfb8563d1cba413509"
+      },
+      {
+        "path": "docs/wolf/ops/shots/contentpublish1-write-disabled.png",
+        "bytes": 218796,
+        "sha256": "7ce7df7734ea6c8c5e35a16b4c18ef693cdfff902333c9be8b396fb7839bcfbb"
+      }
+    ]
+  },
+  "publish": {
+    "write": "DISABLED",
+    "status": "NOT_RUNTIME",
+    "publish_success": null,
+    "real_external_publish": "NO"
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "classification": {
+    "pack": "HUMAN_COMMISSIONING_OR_EXTERNAL",
+    "route": "HUMAN_COMMISSIONING",
+    "shell_ne_complete": true
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "ac067e0ea4d1d8fbd9774c1b5e0fdb0fa5a873d1",
+    "uncommitted": true
+  },
+  "preserves": [
+    "METRICOOL-RUNTIME-WIRE-1",
+    "CONTENT-ENGINE-LIVE-1",
+    "GGV-METRIC-HONESTY-1"
+  ],
+  "next_pack": "OCCUPANCY-EXTERNAL-HOLD-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

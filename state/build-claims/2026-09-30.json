@@ -560,6 +560,22 @@
       "expect": "exit 0",
       "by": "cursor-crm-pipeline-truth-1",
       "at": "2026-09-30T09:01:50+08:00"
+    },
+    {
+      "id": "CONTENT-PUBLISH-PATH-1-board",
+      "claim": "CONTENT-PUBLISH-PATH-1: classification HUMAN_COMMISSIONING; Metricool write DISABLED/NOT_RUNTIME; publish_success/engagement/last_success null; invented_publish_success false; METRICOOL-RUNTIME-WIRE-1 + CONTENT-ENGINE-LIVE-1 + GGV-METRIC-HONESTY-1 preserved; staff_ready/human_commissioned false; next pack parent-only OCCUPANCY-EXTERNAL-HOLD-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import content_publish_path1 as c; p=c.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='HUMAN_COMMISSIONING' and p.get('invented_publish_success') is False and p.get('publish_success') is None and p.get('engagement') is None and p.get('metricool_write') is False and p.get('metricool_write_disabled') is True and c.no_invented_publish_success(p) and c.surfaces_are_honest(p) and p.get('metricool_runtime_wire1_preserved') is True and p.get('content_engine_live1_preserved') is True and p.get('ggv_metric_honesty1_preserved') is True and p.get('staff_ready') is False and p.get('human_commissioned') is False and c.honesty_flags().get('next_pack_for_parent_only')=='OCCUPANCY-EXTERNAL-HOLD-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-content-publish-path-1",
+      "at": "2026-09-30T09:13:49+08:00"
+    },
+    {
+      "id": "CONTENT-PUBLISH-PATH-1-surfaces",
+      "claim": "CONTENT-PUBLISH-PATH-1 page/API/shots/RESULT present; unsigned deny + invent-publish refuse; HUMAN_COMMISSIONING; Metricool write NOT_RUNTIME; next pack parent-only OCCUPANCY-EXTERNAL-HOLD-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import content_publish_path1 as c; from pathlib import Path; html=Path('dashboards/content-publish-path-1.html').read_text(); import sys; sys.exit(0 if (c.api_matches('/api/ops/content-publish-path-1') and c.page_matches('/ops/content-publish-path-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/contentpublish1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/CONTENT-PUBLISH-PATH-1-RESULT.md').is_file() and c.honesty_flags().get('next_pack_for_parent_only')=='OCCUPANCY-EXTERNAL-HOLD-1' and c.honesty_flags().get('cursor_did_not_auto_start_next') is True and c.honesty_flags().get('classification')=='HUMAN_COMMISSIONING') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-content-publish-path-1",
+      "at": "2026-09-30T09:13:49+08:00"
     }
   ]
 }

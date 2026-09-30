@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Content Publish Path-1 — write NOT_RUNTIME (no invent)</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1a1f24;
+      --muted: #5a6570;
+      --paper: #f2f4f6;
+      --card: #fbfcfd;
+      --line: #d3dae0;
+      --warn: #8a1f1f;
+      --ok: #1f5a3a;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(ellipse 65% 35% at 100% 0%, #e4ebf1 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 80px; }
+    .crumb { font-size: 0.78rem; color: var(--muted); margin: 0 0 8px; }
+    h1 {
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: 1.75rem;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #eef3f7; border: 1px solid #c5d0d9; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner.warn {
+      background: #f8eaea; border-color: #e0b8b8; color: var(--warn);
+    }
+    .banner strong { color: #2a3a48; }
+    .banner.warn strong { color: var(--warn); }
+    h2 {
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin: 22px 0 10px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .tile {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 10px;
+      padding: 14px;
+      min-height: 120px;
+    }
+    .tile.warn {
+      border-color: #e0b8b8;
+      background: #fff5f3;
+    }
+    .tile .k {
+      font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .tile .v {
+      font-family: var(--display);
+      font-size: 1.25rem;
+      margin: 6px 0 4px;
+      font-weight: 600;
+    }
+    .tile.warn .v { color: var(--warn); }
+    .tile .why { font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
+    .stamp {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 4px 8px;
+      margin: 0 8px 8px 0;
+      font-size: 0.78rem;
+      background: #fff;
+    }
+    .stamp.bad { border-color: #e0b8b8; color: var(--warn); }
+    .links a {
+      display: block;
+      color: var(--ink);
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: var(--card);
+    }
+    .links a:hover { border-color: #9aa8b4; }
+    .links .note { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+    .pair-meta { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+    .empty-queue {
+      border: 1px dashed #c5d0d9;
+      border-radius: 10px;
+      padding: 28px 18px;
+      text-align: center;
+      color: var(--muted);
+      background: #f7f9fb;
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+    .empty-queue strong { color: var(--warn); display: block; margin-bottom: 6px; font-size: 1.05rem; }
+  </style>
+</head>
+<body
+  data-ready="0"
+  data-deny=""
+  data-pack="CONTENT-PUBLISH-PATH-1"
+  data-wolf-page-type="WORKSPACE"
+  data-wolf-org="EMPIRE"
+  data-wolf-shell="global"
+  data-classification=""
+  data-publish-success=""
+  data-write-disabled="0"
+  data-write-not-runtime="0"
+  data-invented-publish="0"
+  data-metricool-preserved="0"
+  data-content-preserved="0"
+  data-ggv-preserved="0"
+  data-staff-ready="0"
+  data-human-commissioned="0"
+>
+  <main>
+    <p class="crumb">WOLF · Empire · Content · Publish Path-1 (write NOT_RUNTIME)</p>
+    <h1>Content publish path board</h1>
+    <p class="sub">Document the publish path; keep Metricool write DISABLED until authorised. Preserve METRICOOL-RUNTIME-WIRE-1 engagement-null / publish_success NOT_RUNTIME. Never invent publish success. staff_ready=false · human_commissioned=false.</p>
+
+    <div class="banner warn" id="honesty">
+      Loading honesty pins…
+    </div>
+
+    <div id="stamps" aria-label="Honesty stamps"></div>
+
+    <h2>Publish path (documented)</h2>
+    <div id="path" data-path="documented"></div>
+
+    <h2>Write / publish honesty</h2>
+    <div class="grid" id="surfaces"></div>
+
+    <h2>Honesty tiles</h2>
+    <div class="grid" id="tiles"></div>
+
+    <h2>Preserved packs</h2>
+    <div class="grid" id="preserved"></div>
+
+    <h2>Existing desks</h2>
+    <div class="links" id="links"></div>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function render(body) {
+      var banner = document.getElementById("honesty");
+      banner.className = "banner warn";
+      banner.innerHTML =
+        "<strong>Honesty:</strong> classification=" + esc(body.classification || "HUMAN_COMMISSIONING") +
+        " · pack=" + esc(body.pack_classification || "HUMAN_COMMISSIONING_OR_EXTERNAL") +
+        " · Metricool write DISABLED / NOT_RUNTIME · " +
+        "publish_success=null · engagement=null · invented_publish_success=false · " +
+        "staff_ready=false · human_commissioned=false · " +
+        "CAP-GGV publish " + esc(body.cap_ggv_publish_maturity || "SPECIFIED") +
+        " (ceiling " + esc(body.cap_ggv_publish_ceiling || "BUILT") + ") · " +
+        "METRICOOL-RUNTIME-WIRE-1 " + (body.metricool_runtime_wire1_preserved ? "PRESERVED" : "CHECK") +
+        " · CONTENT-ENGINE-LIVE-1 " + (body.content_engine_live1_preserved ? "PRESERVED" : "CHECK") +
+        " · GGV-METRIC-HONESTY-1 " + (body.ggv_metric_honesty1_preserved ? "PRESERVED" : "CHECK") + ".";
+
+      var stamps = [
+        ["staff_ready=false", true],
+        ["human_commissioned=false", true],
+        ["invented_publish_success=false", true],
+        ["publish_success=null", true],
+        ["engagement=null", true],
+        ["Metricool write DISABLED", true],
+        ["publish_success NOT_RUNTIME", true],
+        ["classification " + (body.classification || "HUMAN_COMMISSIONING"), true],
+        ["METRICOOL-RUNTIME-WIRE-1 preserved", body.metricool_runtime_wire1_preserved === true],
+        ["CONTENT-ENGINE-LIVE-1 preserved", body.content_engine_live1_preserved === true],
+        ["GGV-METRIC-HONESTY-1 preserved", body.ggv_metric_honesty1_preserved === true]
+      ];
+      document.getElementById("stamps").innerHTML = stamps.map(function (row) {
+        return '<span class="stamp' + (row[1] ? " bad" : "") + '">' + esc(row[0]) + "</span>";
+      }).join("");
+
+      var steps = body.path_steps || [];
+      document.getElementById("path").innerHTML =
+        "<div class='empty-queue' style='margin-bottom:10px'>" +
+        "<strong>DOCUMENTED</strong>" +
+        "Publish path documented. Write stays disabled until authorised. Never invent publish success." +
+        "</div>" +
+        "<div class='grid'>" +
+        steps.map(function (s) {
+          return (
+            '<div class="tile" data-step="' + esc(s.step || s.id) + '">' +
+            '<div class="k">Step ' + esc(s.step || "") + "</div>" +
+            '<div class="v">' + esc(s.label || s.status || "DOCUMENTED") + "</div>" +
+            '<div class="pair-meta">status=' + esc(s.status || "DOCUMENTED") +
+            " · publish_success=null</div>" +
+            '<div class="why">' + esc(s.why || "") + "</div></div>"
+          );
+        }).join("") +
+        "</div>";
+
+      var surfaces = body.surfaces || [];
+      document.getElementById("surfaces").innerHTML = surfaces.map(function (s) {
+        var warn = s.status === "NOT_RUNTIME" || s.status === "DISABLED" || s.write_status === "DISABLED";
+        return (
+          '<div class="tile' + (warn ? " warn" : "") + '" data-surface="' + esc(s.id) + '">' +
+          '<div class="k">' + esc(s.label) + "</div>" +
+          '<div class="v">' + esc(s.status || "UNKNOWN") + "</div>" +
+          '<div class="pair-meta">' +
+          (s.write_status ? ("write_status=" + esc(s.write_status) + " · ") : "") +
+          "publish_success=" + (s.publish_success == null ? "null" : esc(s.publish_success)) +
+          " · real_external_publish=" + esc(s.real_external_publish || "NO") +
+          "</div>" +
+          '<div class="why">' + esc(s.why || "") + "</div></div>"
+        );
+      }).join("");
+
+      document.getElementById("tiles").innerHTML = (body.honesty_tiles || []).map(function (t) {
+        return (
+          '<div class="tile warn" data-tile="' + esc(t.id) + '">' +
+          '<div class="k">' + esc(t.label) + "</div>" +
+          '<div class="v">' + esc(t.status || "UNKNOWN") + "</div>" +
+          '<div class="why">' + esc(t.why || "") + "</div>" +
+          "</div>"
+        );
+      }).join("");
+
+      var mw = body.metricool_runtime_wire1 || {};
+      var cel = body.content_engine_live1 || {};
+      var ggv = body.ggv_metric_honesty1 || {};
+      document.getElementById("preserved").innerHTML =
+        '<div class="tile" data-preserved="METRICOOL-RUNTIME-WIRE-1">' +
+        '<div class="k">METRICOOL-RUNTIME-WIRE-1</div>' +
+        '<div class="v">' + (mw.ok ? "PRESERVED" : "CHECK") + "</div>" +
+        '<div class="why">' + esc(mw.why || "publish_success NOT_RUNTIME.") + "</div></div>" +
+        '<div class="tile" data-preserved="CONTENT-ENGINE-LIVE-1">' +
+        '<div class="k">CONTENT-ENGINE-LIVE-1</div>' +
+        '<div class="v">' + (cel.ok ? "PRESERVED" : "CHECK") + "</div>" +
+        '<div class="why">' + esc(cel.why || "Content board preserved.") + "</div></div>" +
+        '<div class="tile" data-preserved="GGV-METRIC-HONESTY-1">' +
+        '<div class="k">GGV-METRIC-HONESTY-1</div>' +
+        '<div class="v">' + (ggv.ok ? "PRESERVED" : "CHECK") + "</div>" +
+        '<div class="why">' + esc(ggv.why || "Metric honesty preserved.") + "</div></div>";
+
+      document.getElementById("links").innerHTML = (body.desk_links || []).map(function (l) {
+        return '<a href="' + esc(l.href) + '"><strong>' + esc(l.label) + "</strong>" +
+          '<div class="note">' + esc(l.note || "") + "</div></a>";
+      }).join("");
+
+      document.body.setAttribute("data-ready", body.ok === true ? "1" : "0");
+      document.body.setAttribute("data-classification", body.classification || "");
+      document.body.setAttribute(
+        "data-publish-success",
+        body.publish_success == null ? "null" : String(body.publish_success)
+      );
+      document.body.setAttribute(
+        "data-write-disabled",
+        body.metricool_write_disabled === true || body.metricool_write === false ? "1" : "0"
+      );
+      document.body.setAttribute("data-write-not-runtime", "1");
+      document.body.setAttribute(
+        "data-invented-publish",
+        body.invented_publish_success === true ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-metricool-preserved",
+        body.metricool_runtime_wire1_preserved === true ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-content-preserved",
+        body.content_engine_live1_preserved === true ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-ggv-preserved",
+        body.ggv_metric_honesty1_preserved === true ? "1" : "0"
+      );
+      document.body.setAttribute("data-staff-ready", body.staff_ready === true ? "1" : "0");
+      document.body.setAttribute(
+        "data-human-commissioned",
+        body.human_commissioned === true ? "1" : "0"
+      );
+    }
+
+    fetch("/api/ops/content-publish-path-1", { headers: { "Accept": "application/json" } })
+      .then(function (r) {
+        return r.json().then(function (j) { return { status: r.status, body: j }; });
+      })
+      .then(function (res) {
+        if (res.status === 403 || res.status === 401) {
+          document.body.setAttribute("data-deny", String(res.status));
+          document.body.setAttribute("data-ready", "0");
+          document.getElementById("honesty").textContent =
+            "HTTP " + res.status + " — unsigned or unauthorised callers are refused.";
+          return;
+        }
+        render(res.body || {});
+      })
+      .catch(function () {
+        document.body.setAttribute("data-ready", "0");
+        document.getElementById("honesty").textContent =
+          "CONTENT-PUBLISH-PATH-1 slice could not be read.";
+      });
+  </script>
+</body>
+</html>

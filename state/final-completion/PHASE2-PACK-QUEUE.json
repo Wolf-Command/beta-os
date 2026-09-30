@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T09:03:45+08:00",
+  "at_wita": "2026-09-30T09:15:45+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -1479,10 +1479,25 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
-      "classification": "HUMAN_COMMISSIONING_OR_EXTERNAL",
+      "status": "PASS_VERIFIED",
+      "classification": "HUMAN_COMMISSIONING",
+      "pack_classification": "HUMAN_COMMISSIONING_OR_EXTERNAL",
+      "action": "DOCUMENT_PUBLISH_PATH",
+      "metricool_write": "DISABLED",
+      "publish_success": null,
       "synthesized_from": "publish_success NOT_RUNTIME after Metricool wire",
-      "armed_at": "2026-09-30T09:03:45+08:00"
+      "armed_at": "2026-09-30T09:03:45+08:00",
+      "exited_at": "2026-09-30T09:13:49+08:00",
+      "prior_pack_verified": "CRM-PIPELINE-TRUTH-1",
+      "suite": {
+        "pass": 233,
+        "fail": 0
+      },
+      "tests": {
+        "pass": 233,
+        "fail": 0
+      },
+      "verified_at": "2026-09-30T09:15:45+08:00"
     },
     {
       "pack_id": "OCCUPANCY-EXTERNAL-HOLD-1",
@@ -1508,9 +1523,10 @@
       ],
       "estimated_effort": "S",
       "matt_blocker": false,
-      "status": "QUEUED",
+      "status": "WAITING_CURSOR",
       "classification": "EXTERNAL_BLOCKER",
-      "synthesized_from": "hold Yanolja EXTERNAL"
+      "synthesized_from": "hold Yanolja EXTERNAL",
+      "armed_at": "2026-09-30T09:15:45+08:00"
     }
   ],
   "first_pack": "DASH-LIVE-1",

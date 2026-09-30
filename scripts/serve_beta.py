@@ -179,6 +179,7 @@ from core import fin_bank_creds_route1 as _fin_bank_creds_route1
 from core import inv_cash_facts_route1 as _inv_cash_facts_route1
 from core import fin_tax_deepen1 as _fin_tax_deepen1
 from core import crm_pipeline_truth1 as _crm_pipeline_truth1
+from core import content_publish_path1 as _content_publish_path1
 from core import fin_tax_shell1 as _fin_tax_shell1
 from core import fin_ap_ar_shell1 as _fin_ap_ar_shell1
 from core import owner_needs_you1 as _owner_needs_you1
@@ -2099,6 +2100,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._crm_pipeline_truth1_dispatch():
+            return
+
+        if self._content_publish_path1_dispatch():
             return
 
         if self._fin_tax_shell1_dispatch():
@@ -5346,6 +5350,24 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._crm_pipeline_truth1_dispatch():
                 return
         elif path in (
+            "/ops/content-publish-path-1",
+            "/ops/content-publish-path-1/",
+            "/ops/content-publish-path",
+            "/ops/content-publish-path/",
+            "/content/publish-path-1",
+            "/content/publish-path-1/",
+            "/content/publish-path",
+            "/content/publish-path/",
+            "/content-publish-path-1",
+            "/content-publish-path-1/",
+            "/content-publish-path-1.html",
+            "/dashboards/content-publish-path-1.html",
+            "/ggv/content-publish-path-1",
+            "/ggv/content-publish-path-1/",
+        ):
+            if self._content_publish_path1_dispatch():
+                return
+        elif path in (
             "/fin/tax-shell-1",
             "/fin/tax-shell-1/",
             "/fin/tax-shell",
@@ -6497,6 +6519,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._crm_pipeline_truth1_write_refused(path)
             return
+        if (
+            path == "/api/ops/content-publish-path-1"
+            or path.startswith("/api/ops/content-publish-path-1/")
+            or path == "/api/ggv/content-publish-path-1"
+            or path.startswith("/api/ggv/content-publish-path-1/")
+            or path == "/api/content/publish-path-1"
+            or path.startswith("/api/content/publish-path-1/")
+        ):
+            self._content_publish_path1_write_refused(path)
+            return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
             return
@@ -7436,6 +7468,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             or path.startswith("/api/ops/crm-pipeline/")
         ):
             self._crm_pipeline_truth1_write_refused(path)
+            return
+        if (
+            path == "/api/ops/content-publish-path-1"
+            or path.startswith("/api/ops/content-publish-path-1/")
+            or path == "/api/ggv/content-publish-path-1"
+            or path.startswith("/api/ggv/content-publish-path-1/")
+            or path == "/api/content/publish-path-1"
+            or path.startswith("/api/content/publish-path-1/")
+        ):
+            self._content_publish_path1_write_refused(path)
             return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
@@ -8781,6 +8823,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             or path.startswith("/api/ops/crm-pipeline/")
         ):
             self._crm_pipeline_truth1_write_refused(path)
+            return
+        if (
+            path == "/api/ops/content-publish-path-1"
+            or path.startswith("/api/ops/content-publish-path-1/")
+            or path == "/api/ggv/content-publish-path-1"
+            or path.startswith("/api/ggv/content-publish-path-1/")
+            or path == "/api/content/publish-path-1"
+            or path.startswith("/api/content/publish-path-1/")
+        ):
+            self._content_publish_path1_write_refused(path)
             return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
@@ -19759,6 +19811,155 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "staff_ready": False,
                 "human_commissioned": False,
                 "invented_pipeline": False,
+            },
+            status=403,
+        )
+
+    def _content_publish_path1_dispatch(self) -> bool:
+        """CONTENT-PUBLISH-PATH-1 — publish path honesty; never invent success."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _content_publish_path1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            person_id = (identity.get("person_id") or "").strip()
+            if not person_id:
+                self._send_identity_deny(identity)
+                return True
+            if not _content_publish_path1.person_may_view(person_id):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "forbidden",
+                        "message": (
+                            "Content publish path board is not on this assignment. "
+                            "Owner or GGV Habitat seats only. Not staff readiness "
+                            "or human commissioning."
+                        ),
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_publish_success": False,
+                        "publish_success": None,
+                        "metricool_write": False,
+                        "classification": "HUMAN_COMMISSIONING",
+                    },
+                    status=403,
+                )
+                return True
+            try:
+                payload = _content_publish_path1.public_payload(person_id)
+            except _content_publish_path1.ContentPublishPath1Error as exc:
+                status = getattr(exc, "http_status", 403) or 403
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": getattr(exc, "code", "invalid"),
+                        "message": str(exc),
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        **_content_publish_path1.honesty_flags(),
+                    },
+                    status=status,
+                )
+                return True
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "content_publish_path_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_publish_success": False,
+                        "publish_success": None,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _content_publish_path1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_access_denied_page(
+                "Content publish path board requires a signed-in person. "
+                "Unsigned callers are refused."
+            )
+            return True
+        person_id = (identity.get("person_id") or "").strip()
+        if not person_id:
+            self._send_access_denied_page(
+                "Content publish path board requires a signed-in person. "
+                "Unsigned callers are refused."
+            )
+            return True
+        if not _content_publish_path1.person_may_view(person_id):
+            self._send_access_denied_page(
+                "Content publish path board is Owner or GGV Habitat seats only. "
+                "This is not staff readiness or human commissioning."
+            )
+            return True
+        page = DASHBOARDS / "content-publish-path-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "CONTENT-PUBLISH-PATH-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="content-publish-path-1.html")
+        return True
+
+    def _content_publish_path1_write_refused(self, path: str) -> None:
+        """Refuse invent-publish / Metricool-write / fake-engagement writes."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _content_publish_path1.refuse_external_write(
+                body if isinstance(body, dict) else {}
+            )
+        except _content_publish_path1.ContentPublishPath1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "invented_publish_success": False,
+                    "publish_success": None,
+                    "metricool_write": False,
+                    "prod_pid_held": _content_publish_path1.PROD_PID_HELD,
+                    "classification": "HUMAN_COMMISSIONING",
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": "CONTENT-PUBLISH-PATH-1 is a read honesty shell. Writes refused.",
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "invented_publish_success": False,
             },
             status=403,
         )
