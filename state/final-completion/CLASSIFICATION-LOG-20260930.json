@@ -68,6 +68,26 @@
       "note": "Live count/cash facts need Owner-authorised systems + commission stamp; pack EXIT does not invent qty/cash"
     },
     {
+      "surface": "FIN-TAX-SHELL-1 UNKNOWN dues ceiling",
+      "classification": "INTERNALLY_SOLVABLE_OR_HUMAN",
+      "evidence": "FIN-TAX-SHELL-1 filing_count=0 UNKNOWN; no TAX_/DJP_/EFAKTUR env keys; no tax filing client; live DJP/eFaktur ABSENT in-repo",
+      "next_pack": "FIN-TAX-DEEPEN-1",
+      "action": "DONE this pack FIN-TAX-DEEPEN-1 \u2014 stamped HUMAN_COMMISSIONING; DJP/eFaktur EXTERNAL_BLOCKER; NPWP MATT_ACTION non-blocking; no invent dues/filings/NPWP; FIN-TAX-SHELL-1 preserved",
+      "status_after": "HUMAN_COMMISSIONING stamped; EXTERNAL_BLOCKER for DJP/eFaktur; NPWP non-blocking",
+      "board": "/fin/tax-deepen-1",
+      "note": "Live tax dues need Owner-authorised systems + commission stamp; pack EXIT does not invent dues/NPWP"
+    },
+    {
+      "surface": "MISSING CRM pipeline (IL-R6)",
+      "classification": "WIRED",
+      "evidence": "Habitat core_leads via ggv_ops_pack.pipeline_consequence authorised; lead_count=8 stages FROM_CRM or UNKNOWN; HubSpot/Salesforce/Pipedrive/AC reader ABSENT; never invent pipeline counts",
+      "next_pack": "CONTENT-PUBLISH-PATH-1",
+      "action": "DONE this pack CRM-PIPELINE-TRUTH-1 \u2014 WIRED Habitat facts; external SaaS ABSENT; GGV-PIPELINE-TRUTH-1 + CRM-IDENTITY-1 preserved; no invent",
+      "status_after": "WIRED Habitat stages; conversion UNKNOWN; invented_pipeline=false",
+      "board": "/crm/pipeline-truth-1",
+      "note": "Parent/Peaches arms CONTENT-PUBLISH-PATH-1; Cursor did not auto-chain"
+    },
+    {
       "surface": "Backup restore NOT_RUN",
       "classification": "INTERNALLY_SOLVABLE",
       "evidence": "BACKUP-RESTORE-DRILL-1 ran non-destructive temp drill; sha256 match; honesty DRILL_RAN_NON_DESTRUCTIVE; full DR READY still shell_ne_complete",
@@ -84,7 +104,7 @@
       "status_after": "PIPE_OK_WITH_DETECT_RECOVER"
     }
   ],
-  "updated_at": "2026-09-30T08:42:00+08:00",
+  "updated_at": "2026-09-30T09:01:50+08:00",
   "metricool_runtime_probe": {
     "getBrandSettings": "6 brands",
     "getAnalyticsAvailableMetrics_instagram_posts": "29 fields incl engagement/likes/reach",
@@ -170,5 +190,29 @@
     "route": "HUMAN_COMMISSIONING",
     "fact_count": 0,
     "uma_petty": "EXTERNAL"
+  },
+  "fin_tax_deepen1": {
+    "status": "PASS_VERIFIED",
+    "pack": "INTERNALLY_SOLVABLE_OR_HUMAN",
+    "route": "HUMAN_COMMISSIONING",
+    "djp_efaktur": "EXTERNAL_BLOCKER",
+    "npwp": "MATT_ACTION_NON_BLOCKING",
+    "filing_count": 0
+  },
+  "crm_pipeline_truth1": {
+    "status": "CURSOR_EXIT_0",
+    "classification": "WIRED",
+    "action": "WIRE_HABITAT_FACTS",
+    "habitat_crm_lead_count": 8,
+    "external_saas_crm": "ABSENT",
+    "invented_pipeline": false,
+    "preserves": [
+      "GGV-PIPELINE-TRUTH-1",
+      "CRM-IDENTITY-1"
+    ],
+    "board": "/crm/pipeline-truth-1",
+    "suite_pass": 245,
+    "suite_fail": 0,
+    "next_pack_for_parent_only": "CONTENT-PUBLISH-PATH-1"
   }
 }

@@ -544,6 +544,22 @@
       "expect": "exit 0",
       "by": "cursor-fin-tax-deepen-1",
       "at": "2026-09-30T08:49:20+08:00"
+    },
+    {
+      "id": "CRM-PIPELINE-TRUTH-1-board",
+      "claim": "CRM-PIPELINE-TRUTH-1: classification WIRED; Habitat CRM stage counts FROM_CRM or UNKNOWN; invented_pipeline/fake_deals/fake_conversion false; live_pipeline false; GGV-PIPELINE-TRUTH-1 + CRM-IDENTITY-1 preserved; staff_ready/human_commissioned false; next pack parent-only CONTENT-PUBLISH-PATH-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import crm_pipeline_truth1 as c; p=c.build_slice(); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='WIRED' and p.get('invented_pipeline') is False and p.get('fake_deals') is False and p.get('fake_conversion') is False and p.get('live_pipeline') is False and c.stages_crm_or_unknown(p) and c.all_conversion_slots_unknown(p) and c.no_invented_pipeline_counts(p) and p.get('ggv_pipeline_truth1_preserved') is True and p.get('crm_identity1_preserved') is True and p.get('staff_ready') is False and p.get('human_commissioned') is False and c.honesty_flags().get('next_pack_for_parent_only')=='CONTENT-PUBLISH-PATH-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-crm-pipeline-truth-1",
+      "at": "2026-09-30T09:01:50+08:00"
+    },
+    {
+      "id": "CRM-PIPELINE-TRUTH-1-surfaces",
+      "claim": "CRM-PIPELINE-TRUTH-1 page/API/shots/RESULT present; unsigned deny + invent-pipeline refuse; WIRED; external SaaS ABSENT; next pack parent-only CONTENT-PUBLISH-PATH-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import crm_pipeline_truth1 as c; from pathlib import Path; html=Path('dashboards/crm-pipeline-truth-1.html').read_text(); import sys; sys.exit(0 if (c.api_matches('/api/crm/pipeline-truth-1') and c.page_matches('/crm/pipeline-truth-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/crmpipeline1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/CRM-PIPELINE-TRUTH-1-RESULT.md').is_file() and c.honesty_flags().get('next_pack_for_parent_only')=='CONTENT-PUBLISH-PATH-1' and c.honesty_flags().get('cursor_did_not_auto_start_next') is True and c.honesty_flags().get('classification')=='WIRED') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-crm-pipeline-truth-1",
+      "at": "2026-09-30T09:01:50+08:00"
     }
   ]
 }

@@ -89,23 +89,24 @@
     "RELIABILITY-1",
     "CONTENT-ENGINE-LIVE-1"
   ],
-  "last_pack_verified": "FIN-TAX-DEEPEN-1",
-  "last_verified_at": "2026-09-30T08:51:30+08:00",
-  "pass_verified_count": 38,
-  "next_pack": "CRM-PIPELINE-TRUTH-1",
+  "last_pack_verified": "CRM-PIPELINE-TRUTH-1",
+  "last_verified_at": "2026-09-30T09:03:45+08:00",
+  "pass_verified_count": 39,
+  "next_pack": "CONTENT-PUBLISH-PATH-1",
   "mac_pipe": "GREEN_BOARD",
   "unparked_at": "2026-09-30T07:26:00+08:00",
   "standards_lock": true,
   "restore_drill": "DRILL_RAN_NON_DESTRUCTIVE",
-  "last_pack_exited": "FIN-TAX-DEEPEN-1",
-  "last_exit_at": "2026-09-30T08:49:20+08:00",
+  "last_pack_exited": "CRM-PIPELINE-TRUTH-1",
+  "last_exit_at": "2026-09-30T09:01:50+08:00",
   "metricool": "PER_SURFACE_RUNTIME_WIRED",
-  "next_pack_note": "Matt auto-continue armed CRM-PIPELINE-TRUTH-1 after FIN-TAX-DEEPEN-1 Peaches \u2014 Cursor must not auto-chain CONTENT-PUBLISH / HEADCHEF / Exit Report",
+  "next_pack_note": "CRM-PIPELINE-TRUTH-1 CURSOR_EXIT_0 WIRED \u2014 parent/Peaches arms CONTENT-PUBLISH-PATH-1 after verify; Cursor must not auto-chain CONTENT-PUBLISH / HEADCHEF / Exit Report",
   "wave8_queued": [
     "CRM-PIPELINE-TRUTH-1",
     "CONTENT-PUBLISH-PATH-1",
     "OCCUPANCY-EXTERNAL-HOLD-1"
   ],
-  "wave8_active": "CRM-PIPELINE-TRUTH-1",
-  "at_wita": "2026-09-30T08:49:45+08:00"
+  "wave8_active": null,
+  "at_wita": "2026-09-30T09:01:50+08:00",
+  "wave8_awaiting_peaches": "CRM-PIPELINE-TRUTH-1"
 }
