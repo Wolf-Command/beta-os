@@ -89,10 +89,10 @@
     "RELIABILITY-1",
     "CONTENT-ENGINE-LIVE-1"
   ],
-  "last_pack_verified": "WEEKLY-CASH-FORECAST-SHELL-1",
-  "last_verified_at": "2026-09-30T09:51:45+08:00",
-  "pass_verified_count": 44,
-  "next_pack": "CONNECTOR-HEALTH-DEEPEN-1",
+  "last_pack_verified": "CONNECTOR-HEALTH-DEEPEN-1",
+  "last_verified_at": "2026-09-30T10:02:30+08:00",
+  "pass_verified_count": 45,
+  "next_pack": "OWNER-DASH-FRESHNESS-1",
   "mac_pipe": "GREEN_BOARD",
   "unparked_at": "2026-09-30T07:26:00+08:00",
   "standards_lock": true,
@@ -116,5 +116,12 @@
     "WEEKLY-CASH-FORECAST-SHELL-1",
     "CONNECTOR-HEALTH-DEEPEN-1"
   ],
-  "wave9_active": "APPROVALS-LIVE-DEEPEN-1"
+  "wave9_active": "APPROVALS-LIVE-DEEPEN-1",
+  "wave9_complete": true,
+  "wave10_queued": [
+    "OWNER-DASH-FRESHNESS-1",
+    "ATRIUM-FC-TRUTH-DEEPEN-1",
+    "HR-DEFERRED-HOLD-STAMP-1",
+    "RELIABILITY-PIPE-EPISODE-ROLLUP-1"
+  ]
 }

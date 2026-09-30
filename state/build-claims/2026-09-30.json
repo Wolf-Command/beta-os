@@ -640,6 +640,22 @@
       "expect": "exit 0",
       "by": "cursor-weekly-cash-forecast-shell-1",
       "at": "2026-09-30T09:50:30+08:00"
+    },
+    {
+      "id": "CONNECTOR-HEALTH-DEEPEN-1-board",
+      "claim": "CONNECTOR-HEALTH-DEEPEN-1: classification INTERNALLY_SOLVABLE; Wave7/8 per-connector stamps; invented_last_success/fake_up/connector_up false; Yanolja EXTERNAL_BLOCKER; CONN-HEALTH + INTG-TRUTH-1 preserved; staff_ready/human_commissioned false; next pack parent-only WAVE10-SYNTH-CONTINUE.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import connector_health_deepen1 as c; p=c.build_board(); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='INTERNALLY_SOLVABLE' and p.get('invented_last_success') is False and p.get('fake_up') is False and p.get('connector_up') is False and c.all_last_success_null(p) and c.no_fake_up(p) and c.yanolja_stays_blocked(p) and c.focal_wave78_pinned(p) and p.get('conn_health_preserved') is True and p.get('intg_truth1_preserved') is True and p.get('staff_ready') is False and p.get('human_commissioned') is False and c.honesty_flags().get('next_pack_for_parent_only')=='WAVE10-SYNTH-CONTINUE') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-connector-health-deepen-1",
+      "at": "2026-09-30T10:01:47+08:00"
+    },
+    {
+      "id": "CONNECTOR-HEALTH-DEEPEN-1-surfaces",
+      "claim": "CONNECTOR-HEALTH-DEEPEN-1 page/API/shots/RESULT present; unsigned deny + invent-success/fake-UP refuse; INTERNALLY_SOLVABLE + EXTERNAL_BLOCKER + HUMAN_COMMISSIONING pins; CONN-HEALTH + INTG preserved; next pack parent-only WAVE10-SYNTH-CONTINUE; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import connector_health_deepen1 as c; from pathlib import Path; html=Path('dashboards/connector-health-deepen-1.html').read_text(); import sys; sys.exit(0 if (c.api_matches('/api/ops/connector-health-deepen-1') and c.page_matches('/ops/connector-health-deepen-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/connhealthdeepen1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/CONNECTOR-HEALTH-DEEPEN-1-RESULT.md').is_file() and c.honesty_flags().get('next_pack_for_parent_only')=='WAVE10-SYNTH-CONTINUE' and c.honesty_flags().get('cursor_did_not_auto_start_next') is True and c.honesty_flags().get('classification')=='INTERNALLY_SOLVABLE') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-connector-health-deepen-1",
+      "at": "2026-09-30T10:01:47+08:00"
     }
   ]
 }

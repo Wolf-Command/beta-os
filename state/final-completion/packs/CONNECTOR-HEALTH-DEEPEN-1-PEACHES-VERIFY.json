@@ -1,0 +1,80 @@
+{
+  "pack": "CONNECTOR-HEALTH-DEEPEN-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 9,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T10:02:30+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T10:01:58+08:00",
+  "result_file": "docs/wolf/ops/CONNECTOR-HEALTH-DEEPEN-1-RESULT.md",
+  "tests_rerun": {
+    "test_connector_health_deepen1_20260930.py": {
+      "pass": 174,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/connhealthdeepen1-class-stamps.png",
+        "bytes": 409445,
+        "sha256": "e300f01c11d69d608bf7afce3f4d849cef81343b86987e0a7ef53946ea3dc424"
+      },
+      {
+        "path": "docs/wolf/ops/shots/connhealthdeepen1-desk-desktop.png",
+        "bytes": 387129,
+        "sha256": "2a126ef97dc42ad8b6ab5de55187cd06104c2b9a4c430ef18d9010c2011ecf50"
+      },
+      {
+        "path": "docs/wolf/ops/shots/connhealthdeepen1-desk-phone.png",
+        "bytes": 148135,
+        "sha256": "868021448bc4d3b2cfccdc7ae1516c88669aa53cc19eaac2a63a298beb7271f2"
+      },
+      {
+        "path": "docs/wolf/ops/shots/connhealthdeepen1-unsigned-deny.png",
+        "bytes": 24471,
+        "sha256": "7df206a8cc673a3bc5593cc1ec6f49e9b4799764c6a5130d7590ace9de8fbded"
+      }
+    ]
+  },
+  "honesty": {
+    "fake_up": false,
+    "invented_last_success": false,
+    "yanolja": "EXTERNAL_BLOCKER",
+    "esb_settlement": "EXTERNAL_BLOCKER",
+    "bank": "HUMAN_COMMISSIONING",
+    "metricool": "INTERNALLY_SOLVABLE"
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "classification": {
+    "pack": "INTERNALLY_SOLVABLE",
+    "shell_ne_complete": true
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "4c0d14d5d64a3c8376c9f0f4c7f65f4880917823",
+    "uncommitted": true
+  },
+  "preserves": [
+    "CONN-HEALTH",
+    "INTG-TRUTH-1"
+  ],
+  "next_pack": "WAVE10-SYNTH-CONTINUE",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

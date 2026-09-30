@@ -1,0 +1,54 @@
+{
+  "milestone_id": "MULTI-20260930-1002-WAVE9",
+  "at_wita": "2026-09-30T10:02:30+08:00",
+  "pass_verified_count": 45,
+  "queue_len": 49,
+  "wave9": [
+    {
+      "pack": "STAFF-ACCESS-TRUTH-1",
+      "tests": "135/0",
+      "commit": "b36456f",
+      "class": "INTERNALLY_SOLVABLE",
+      "matt_heartbeat": "NEEDED"
+    },
+    {
+      "pack": "APPROVALS-LIVE-DEEPEN-1",
+      "tests": "135/0",
+      "commit": "3bf33be",
+      "class": "INTERNALLY_SOLVABLE",
+      "matt_heartbeat": "NEEDED"
+    },
+    {
+      "pack": "WEEKLY-CASH-FORECAST-SHELL-1",
+      "tests": "158/0",
+      "commit": "4c0d14d",
+      "class": "HUMAN_COMMISSIONING_OR_INTERNAL",
+      "matt_heartbeat": "NEEDED"
+    },
+    {
+      "pack": "CONNECTOR-HEALTH-DEEPEN-1",
+      "tests": "174/0",
+      "commit": "PENDING",
+      "class": "INTERNALLY_SOLVABLE",
+      "matt_heartbeat": "NEEDED"
+    }
+  ],
+  "wave10_queued": [
+    "OWNER-DASH-FRESHNESS-1",
+    "ATRIUM-FC-TRUTH-DEEPEN-1",
+    "HR-DEFERRED-HOLD-STAMP-1",
+    "RELIABILITY-PIPE-EPISODE-ROLLUP-1"
+  ],
+  "standards_lock": true,
+  "staff_ready": false,
+  "no_push": true,
+  "prod_pid": 15975,
+  "no_exit_report": true,
+  "matt_new_finished_heartbeat": true,
+  "matt_heartbeat_packs": [
+    "STAFF-ACCESS-TRUTH-1",
+    "APPROVALS-LIVE-DEEPEN-1",
+    "WEEKLY-CASH-FORECAST-SHELL-1",
+    "CONNECTOR-HEALTH-DEEPEN-1"
+  ]
+}

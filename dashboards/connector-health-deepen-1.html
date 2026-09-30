@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CONNECTOR-HEALTH-DEEPEN-1 — Wave7/8 per-connector honesty</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1a1f24;
+      --muted: #5a6570;
+      --paper: #f2f4f6;
+      --card: #fbfcfd;
+      --line: #d3dae0;
+      --warn: #8a1f1f;
+      --partial: #7a5a12;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(ellipse 65% 35% at 100% 0%, #e4ebf1 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 80px; }
+    .crumb { font-size: 0.78rem; color: var(--muted); margin: 0 0 8px; }
+    h1 {
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: 1.75rem;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #eef3f7; border: 1px solid #c5d0d9; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner.warn {
+      background: #f8eaea; border-color: #e0b8b8; color: var(--warn);
+    }
+    .banner strong { color: #2a3a48; }
+    .banner.warn strong { color: var(--warn); }
+    h2 {
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin: 22px 0 10px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .tile {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 10px;
+      padding: 14px;
+      min-height: 120px;
+    }
+    .tile.warn {
+      border-color: #e0b8b8;
+      background: #fff5f3;
+    }
+    .tile.partial {
+      border-color: #e0d0a0;
+      background: #fffbf0;
+    }
+    .tile .k {
+      font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .tile .v {
+      font-family: var(--display);
+      font-size: 1.05rem;
+      margin: 6px 0 4px;
+      font-weight: 600;
+      word-break: break-word;
+    }
+    .tile.warn .v { color: var(--warn); }
+    .tile.partial .v { color: var(--partial); }
+    .tile .why { font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
+    .stamp {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 4px 8px;
+      margin: 0 8px 8px 0;
+      font-size: 0.78rem;
+      background: #fff;
+    }
+    .stamp.bad { border-color: #e0b8b8; color: var(--warn); }
+    .stamp.partial { border-color: #e0d0a0; color: var(--partial); }
+    .links a {
+      display: block;
+      color: var(--ink);
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: var(--card);
+    }
+    .links a:hover { border-color: #9aa8b4; }
+    .links .note { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+    table.inv {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    table.inv th, table.inv td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    table.inv th {
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: #eef3f7;
+    }
+    table.inv tr:last-child td { border-bottom: none; }
+    .unknown { color: var(--warn); font-weight: 600; }
+  </style>
+</head>
+<body
+  data-ready="0"
+  data-deny=""
+  data-pack="CONNECTOR-HEALTH-DEEPEN-1"
+  data-wolf-page-type="WORKSPACE"
+  data-wolf-org="WOLF"
+  data-wolf-shell="global"
+  data-classification=""
+  data-yanolja=""
+  data-yanolja-blocked="0"
+  data-last-success=""
+  data-invented-last-success="0"
+  data-fake-up="0"
+  data-connector-up="0"
+  data-conn-health-preserved="0"
+  data-intg-preserved="0"
+  data-staff-ready="0"
+  data-human-commissioned="0"
+  data-connection-count=""
+>
+  <main>
+    <p class="crumb">WOLF · Ops · CONNECTOR-HEALTH-DEEPEN-1 (Wave7/8 per-connector)</p>
+    <h1>Connector health deepen</h1>
+    <p class="sub">Deepen CONN-HEALTH with Wave7/8 classifications. No invent last_success. No fake UP. staff_ready=false · human_commissioned=false. Preserves CONN-HEALTH + INTG-TRUTH-1.</p>
+
+    <div class="banner warn" id="honesty">
+      Loading honesty pins…
+    </div>
+
+    <div id="stamps" aria-label="Honesty stamps"></div>
+
+    <h2>Honesty tiles</h2>
+    <div class="grid" id="tiles"></div>
+
+    <h2>Focal connectors — Wave7/8 classification</h2>
+    <div class="grid" id="focal"></div>
+
+    <h2>All connectors (last_success never invented · never UP)</h2>
+    <div id="registry"></div>
+
+    <h2>Preserved packs</h2>
+    <div class="grid" id="preserved"></div>
+
+    <h2>Related boards</h2>
+    <div class="links" id="links"></div>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function tileClass(status) {
+      var s = String(status || "");
+      if (
+        s === "BLOCKED_EXTERNAL" ||
+        s === "EXTERNAL_BLOCKER" ||
+        s === "UNKNOWN" ||
+        s === "NULL" ||
+        s === "CHECK_FAILED" ||
+        s === "REFUSED" ||
+        s === "MISSING_OR_UNPROVEN"
+      ) {
+        return "tile warn";
+      }
+      if (
+        s === "PARTIAL_IN_BETA" ||
+        s === "FILE_IMPORT_ONLY" ||
+        s === "HUMAN_COMMISSIONING" ||
+        s === "HUMAN_COMMISSIONING_OR_INTERNAL" ||
+        s === "PER_SURFACE_RUNTIME_WIRED_PARTIAL"
+      ) {
+        return "tile partial";
+      }
+      return "tile";
+    }
+
+    function render(body) {
+      var yan = body.yanolja || {};
+      var banner = document.getElementById("honesty");
+      banner.className = "banner warn";
+      banner.innerHTML =
+        "<strong>Honesty:</strong> classification=<strong>INTERNALLY_SOLVABLE</strong> · " +
+        "Yanolja=EXTERNAL_BLOCKER/BLOCKED_EXTERNAL · last_success=null · " +
+        "invented_last_success=false · fake_up=false · connector_up=false · " +
+        "connections=" + esc(body.connection_count) +
+        " · blocked=" + esc(body.blocked_external_count) +
+        " · staff_ready=false · human_commissioned=false · " +
+        "CONN-HEALTH " + (body.conn_health_preserved ? "PRESERVED" : "CHECK") +
+        " · INTG-TRUTH-1 " + (body.intg_truth1_preserved ? "PRESERVED" : "CHECK") + ".";
+
+      var stamps = [
+        ["INTERNALLY_SOLVABLE", body.classification === "INTERNALLY_SOLVABLE"],
+        ["Yanolja EXTERNAL_BLOCKER", yan.classification === "EXTERNAL_BLOCKER"],
+        ["staff_ready=false", true],
+        ["human_commissioned=false", true],
+        ["last_success=null", body.last_success == null],
+        ["invented_last_success=false", body.invented_last_success === false],
+        ["fake_up=false", body.fake_up === false],
+        ["connector_up=false", body.connector_up === false],
+        ["yanolja_unblocked=false", body.yanolja_unblocked === false],
+        ["CONN-HEALTH preserved", body.conn_health_preserved === true],
+        ["INTG-TRUTH-1 preserved", body.intg_truth1_preserved === true]
+      ];
+      document.getElementById("stamps").innerHTML = stamps.map(function (row) {
+        var cls = "stamp";
+        if (!row[1]) cls += " bad";
+        else if (String(row[0]).indexOf("BLOCKER") >= 0 || String(row[0]).indexOf("Yanolja") >= 0) cls += " bad";
+        else if (String(row[0]).indexOf("PARTIAL") >= 0) cls += " partial";
+        return '<span class="' + cls + '">' + esc(row[0]) + "</span>";
+      }).join("");
+
+      var tiles = body.honesty_tiles || [];
+      document.getElementById("tiles").innerHTML = tiles.map(function (t) {
+        var display = t.value == null || t.value === "" ? (t.status || "UNKNOWN") : t.value;
+        if (typeof display === "object") display = JSON.stringify(display);
+        return (
+          '<div class="' + tileClass(t.status) + '" data-tile="' + esc(t.id) + '">' +
+          '<div class="k">' + esc(t.label) + "</div>" +
+          '<div class="v">' + esc(display) + "</div>" +
+          '<div class="why">' + esc(t.why || "") + "</div></div>"
+        );
+      }).join("");
+
+      var focal = body.focal_stamps || [];
+      document.getElementById("focal").innerHTML = focal.map(function (s) {
+        return (
+          '<div class="' + tileClass(s.classification || s.audit_status) + '" data-focal="' + esc(s.integration_id) + '">' +
+          '<div class="k">' + esc(s.integration_id) + "</div>" +
+          '<div class="v">' + esc(s.classification || "UNKNOWN") + "</div>" +
+          '<div class="why">health=' + esc(s.health_display || "UNKNOWN") +
+          " · wave=" + esc(s.wave || "?") +
+          " · last_success=" + (s.last_success == null ? "null" : esc(s.last_success)) +
+          " · UP=false" +
+          (s.blocked_external ? " · BLOCKED" : "") +
+          "</div></div>"
+        );
+      }).join("");
+
+      var rows = (body.connection_stamps || []).map(function (s) {
+        return (
+          "<tr data-conn=\"" + esc(s.integration_id) + "\">" +
+          "<td>" + esc(s.integration_id) + "</td>" +
+          "<td>" + esc(s.wave78_classification || s.classification || "UNKNOWN") + "</td>" +
+          "<td>" + esc(s.health_display || s.audit_status || "UNKNOWN") + "</td>" +
+          "<td>" + (s.last_success == null ? '<span class="unknown">null</span>' : esc(s.last_success)) + "</td>" +
+          "<td>false</td>" +
+          "<td>" + (s.blocked_external ? "YES" : "no") + "</td></tr>"
+        );
+      }).join("");
+      document.getElementById("registry").innerHTML =
+        '<table class="inv"><thead><tr><th>Integration</th><th>Wave7/8 class</th><th>Health display</th><th>last_success</th><th>UP</th><th>Blocked</th></tr></thead><tbody>' +
+        rows + "</tbody></table>";
+
+      var preserved = [
+        body.conn_health || { pack: "CONN-HEALTH", ok: false, why: "missing" },
+        body.intg_truth1 || { pack: "INTG-TRUTH-1", ok: false, why: "missing" }
+      ];
+      document.getElementById("preserved").innerHTML = preserved.map(function (p) {
+        return (
+          '<div class="tile' + (p.ok ? "" : " warn") + '" data-preserved="' + esc(p.pack) + '">' +
+          '<div class="k">' + esc(p.pack) + "</div>" +
+          '<div class="v">' + (p.ok ? "PRESERVED" : "CHECK_FAILED") + "</div>" +
+          '<div class="why">' + esc(p.why || "") + "</div></div>"
+        );
+      }).join("");
+
+      var links = body.desk_links || [];
+      document.getElementById("links").innerHTML = links.map(function (l) {
+        return (
+          '<a href="' + esc(l.href) + '"><strong>' + esc(l.label) + "</strong>" +
+          '<div class="note">' + esc(l.note || "") + "</div></a>"
+        );
+      }).join("");
+
+      document.body.setAttribute("data-ready", "1");
+      document.body.setAttribute("data-classification", body.classification || "");
+      document.body.setAttribute("data-yanolja", yan.audit_status || "");
+      document.body.setAttribute(
+        "data-yanolja-blocked",
+        yan.blocked_external === true && yan.classification === "EXTERNAL_BLOCKER" ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-last-success",
+        body.last_success == null ? "null" : String(body.last_success)
+      );
+      document.body.setAttribute(
+        "data-invented-last-success",
+        body.invented_last_success === false ? "0" : "1"
+      );
+      document.body.setAttribute("data-fake-up", body.fake_up === false ? "0" : "1");
+      document.body.setAttribute("data-connector-up", body.connector_up === false ? "0" : "1");
+      document.body.setAttribute(
+        "data-conn-health-preserved",
+        body.conn_health_preserved ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-intg-preserved",
+        body.intg_truth1_preserved ? "1" : "0"
+      );
+      document.body.setAttribute("data-staff-ready", "0");
+      document.body.setAttribute("data-human-commissioned", "0");
+      document.body.setAttribute(
+        "data-connection-count",
+        String(body.connection_count == null ? "" : body.connection_count)
+      );
+    }
+
+    function deny(status, text) {
+      document.body.setAttribute("data-ready", "0");
+      document.body.setAttribute("data-deny", String(status || "403"));
+      var banner = document.getElementById("honesty");
+      banner.className = "banner warn";
+      banner.innerHTML =
+        "<strong>Access denied.</strong> Connector health deepen requires signed identity. " +
+        "staff_ready=false · human_commissioned=false. (" + esc(status) + ") " +
+        esc((text || "").slice(0, 180));
+    }
+
+    fetch("/api/ops/connector-health-deepen-1", { credentials: "same-origin" })
+      .then(function (resp) {
+        return resp.text().then(function (text) {
+          var data = null;
+          try { data = JSON.parse(text); } catch (e) { data = null; }
+          if (!resp.ok) {
+            deny(resp.status, text);
+            return;
+          }
+          if (!data || data.ok !== true) {
+            deny(resp.status || 500, text);
+            return;
+          }
+          render(data);
+        });
+      })
+      .catch(function (err) {
+        deny(0, String(err));
+      });
+  </script>
+</body>
+</html>

@@ -4,7 +4,7 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 9,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T09:51:45+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
@@ -14,7 +14,7 @@
   "no_push": true,
   "matt_auto_continue": true,
   "prior_pack_verified": "WEEKLY-CASH-FORECAST-SHELL-1",
-  "beta_os_head_at_arm": "PENDING",
+  "beta_os_head_at_arm": "4c0d14d5d64a3c8376c9f0f4c7f65f4880917823",
   "brief": "state/build-factory/briefs/BRIEF-CONNECTOR-HEALTH-DEEPEN-1.md",
   "log": "state/build-factory/logs/CONNECTOR-HEALTH-DEEPEN-1.log",
   "result_file": "docs/wolf/ops/CONNECTOR-HEALTH-DEEPEN-1-RESULT.md",
@@ -34,5 +34,38 @@
   "preserves": [
     "CONN-HEALTH",
     "INTG-TRUTH-1"
-  ]
+  ],
+  "action": "DEEPEN_CONN_HEALTH_WAVE78_CLASS",
+  "page": "/ops/connector-health-deepen-1",
+  "api": "/api/ops/connector-health-deepen-1",
+  "cursor_did_not_auto_start_next": true,
+  "pins": {
+    "pack": "INTERNALLY_SOLVABLE",
+    "yanolja": "EXTERNAL_BLOCKER",
+    "esb_settlement": "EXTERNAL_BLOCKER",
+    "bank": "HUMAN_COMMISSIONING",
+    "metricool": "INTERNALLY_SOLVABLE",
+    "gws": "HUMAN_COMMISSIONING_OR_INTERNAL",
+    "fake_up": "REFUSED",
+    "invent_last_success": "REFUSED",
+    "exit_report_headchef": "MATT_ACTION",
+    "prod_mutate": "EXTERNAL_BLOCKER"
+  },
+  "shots": [
+    "docs/wolf/ops/shots/connhealthdeepen1-desk-desktop.png",
+    "docs/wolf/ops/shots/connhealthdeepen1-desk-phone.png",
+    "docs/wolf/ops/shots/connhealthdeepen1-class-stamps.png",
+    "docs/wolf/ops/shots/connhealthdeepen1-unsigned-deny.png"
+  ],
+  "exited_at": "2026-09-30T10:01:47+08:00",
+  "exit_code": 0,
+  "suite_pass": 174,
+  "suite_fail": 0,
+  "tests_pass": 174,
+  "tests_fail": 0,
+  "invented_last_success": false,
+  "fake_up": false,
+  "connector_up": false,
+  "peaches_verified_at": "2026-09-30T10:02:30+08:00",
+  "peaches_verify": "state/final-completion/packs/CONNECTOR-HEALTH-DEEPEN-1-PEACHES-VERIFY.json"
 }
