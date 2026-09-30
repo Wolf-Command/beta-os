@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HR deferred hold stamp — do not build HR</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1c1915;
+      --muted: #5c574e;
+      --paper: #f3f1ec;
+      --card: #fffdf8;
+      --line: #ddd6c8;
+      --hold: #5a4a18;
+      --block: #8a1f1f;
+      --def: #2a3f5c;
+    }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(ellipse 70% 40% at 0% 0%, #ebe6dc 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 72px; }
+    h1 { font-size: 1.65rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+    h2 { font-size: 1.05rem; margin: 22px 0 10px; letter-spacing: -0.01em; }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #f5efe0; border: 1px solid #d2c4a0; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner strong { color: var(--hold); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+    .chip {
+      display: inline-block; padding: 5px 10px; border-radius: 6px;
+      background: #ebe4d6; font-size: 0.75rem; font-weight: 600;
+    }
+    .chip.EXTERNAL_BLOCKER_OR_DEFERRED,
+    .chip.HOLD { background: #f0ead8; color: var(--hold); }
+    .chip.DEFERRED, .chip.DEFERRED_NEXT_WEEK { background: #dde4ec; color: var(--def); }
+    .chip.REFUSED { background: #f5e0e0; color: var(--block); }
+    .facts {
+      margin: 0 0 18px; padding: 12px 14px; border: 1px solid var(--line);
+      border-radius: 10px; background: var(--card);
+    }
+    .facts dl {
+      display: grid; grid-template-columns: 220px 1fr; gap: 6px 12px;
+      margin: 0; font-size: 0.88rem;
+    }
+    .facts dt { color: var(--muted); }
+    .facts dd { margin: 0; }
+    .status { font-weight: 700; }
+    .status.EXTERNAL_BLOCKER_OR_DEFERRED,
+    .status.HOLD { color: var(--hold); }
+    .status.DEFERRED, .status.DEFERRED_NEXT_WEEK { color: var(--def); }
+    .status.REFUSED { color: var(--block); }
+    .table-wrap {
+      overflow-x: auto; border: 1px solid var(--line); border-radius: 10px;
+      background: var(--card); margin: 0 0 18px;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 640px; }
+    th, td {
+      text-align: left; padding: 10px 12px; border-bottom: 1px solid #ebe4d6;
+      vertical-align: top; font-size: 0.86rem;
+    }
+    th {
+      background: #f0ebe2; font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.04em; color: var(--muted);
+    }
+    tr:last-child td { border-bottom: 0; }
+    .muted { color: var(--muted); font-size: 0.8rem; line-height: 1.4; }
+    .null { color: #9a9488; font-style: italic; }
+    .err { color: var(--block); }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
+    a { color: var(--def); }
+    @media (max-width: 520px) {
+      h1 { font-size: 1.35rem; }
+      main { padding: 16px 12px 64px; }
+      .facts dl { grid-template-columns: 1fr; }
+      th, td { padding: 8px 8px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body data-ready="0" data-pack="HR-DEFERRED-HOLD-STAMP-1">
+  <main>
+    <h1>HR deferred hold stamp</h1>
+    <p class="sub" id="sub">Do not build HR · pack HR-DEFERRED-HOLD-STAMP-1 · loading…</p>
+    <div class="banner" id="honesty">
+      <strong>Honesty:</strong>
+      staff_ready=false · human_commissioned=false ·
+      classification=<span id="banner-class">EXTERNAL_BLOCKER_OR_DEFERRED</span> ·
+      ceiling=HOLD · payroll=null · headcount=null ·
+      never invent payroll/headcount · do not build HR ·
+      charter hr=DEFERRED_NEXT_WEEK ·
+      prod pid 15975 READ-ONLY
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="facts" id="facts">
+      <dl>
+        <dt>classification</dt>
+        <dd id="f-class" class="status EXTERNAL_BLOCKER_OR_DEFERRED">EXTERNAL_BLOCKER_OR_DEFERRED</dd>
+        <dt>ceiling</dt>
+        <dd id="f-ceil" class="status HOLD">HOLD</dd>
+        <dt>charter hr</dt>
+        <dd id="f-charter" class="status DEFERRED_NEXT_WEEK">DEFERRED_NEXT_WEEK</dd>
+        <dt>HR_DEFERRED count</dt>
+        <dd id="f-count">—</dd>
+        <dt>payroll</dt>
+        <dd id="f-pay" class="null">null (never invent)</dd>
+        <dt>headcount</dt>
+        <dd id="f-hc" class="null">null (never invent)</dd>
+        <dt>build HR</dt>
+        <dd id="f-build" class="status REFUSED">REFUSED</dd>
+      </dl>
+    </div>
+    <h2>Hold surfaces</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Surface</th>
+            <th>Status</th>
+            <th>Value</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody id="surfaces">
+          <tr><td colspan="4" class="muted">Loading surfaces…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h2>Deferral evidence pins</h2>
+    <div class="facts" id="evidence">
+      <dl>
+        <dt>Finding</dt><dd id="e-finding" class="muted">—</dd>
+        <dt>Charter</dt><dd id="e-charter" class="muted">—</dd>
+        <dt>Phase1</dt><dd id="e-phase1" class="muted">—</dd>
+        <dt>Synthesis</dt><dd id="e-synth" class="muted">—</dd>
+      </dl>
+    </div>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    function setText(id, value, cls) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = value == null || value === "" ? "—" : String(value);
+      if (cls) el.className = cls;
+    }
+    async function load() {
+      var sub = document.getElementById("sub");
+      var chips = document.getElementById("chips");
+      var surfaces = document.getElementById("surfaces");
+      try {
+        var resp = await fetch("/api/ops/hr-deferred-hold-stamp-1", {
+          headers: { Accept: "application/json" }
+        });
+        var data = await resp.json();
+        if (!resp.ok || !data.ok) {
+          surfaces.innerHTML = '<tr><td colspan="4" class="err">Failed (' + resp.status + ")</td></tr>";
+          document.body.setAttribute("data-ready", "0");
+          sub.textContent = "Do not build HR · pack HR-DEFERRED-HOLD-STAMP-1 · load failed";
+          return;
+        }
+        sub.textContent =
+          "Do not build HR · pack HR-DEFERRED-HOLD-STAMP-1 · as of " +
+          (data.as_of_wita || "?") +
+          " · ceiling " + (data.ceiling || "HOLD");
+        var counts = data.surface_counts || {};
+        chips.innerHTML =
+          '<span class="chip EXTERNAL_BLOCKER_OR_DEFERRED">EXTERNAL_BLOCKER_OR_DEFERRED</span>' +
+          '<span class="chip HOLD">HOLD=' + esc(counts.HOLD || 0) + "</span>" +
+          '<span class="chip DEFERRED">DEFERRED=' + esc((counts.DEFERRED || 0) + (counts.DEFERRED_NEXT_WEEK || 0)) + "</span>" +
+          '<span class="chip REFUSED">REFUSED=' + esc(counts.REFUSED || 0) + "</span>" +
+          '<span class="chip">invented_payroll=false</span>' +
+          '<span class="chip">hr_deferred=' + esc(data.hr_deferred_count || 0) + "</span>";
+        setText("f-class", data.classification || "EXTERNAL_BLOCKER_OR_DEFERRED", "status EXTERNAL_BLOCKER_OR_DEFERRED");
+        setText("f-ceil", data.ceiling || "HOLD", "status HOLD");
+        setText("f-charter", data.charter_hr || "DEFERRED_NEXT_WEEK", "status DEFERRED_NEXT_WEEK");
+        setText(
+          "f-count",
+          String(data.hr_deferred_count != null ? data.hr_deferred_count : "—") +
+            " (expected ~" + (data.hr_deferred_count_expected || 33) + ")"
+        );
+        setText("f-pay", "null (never invent)", "null");
+        setText("f-hc", "null (never invent)", "null");
+        setText("f-build", "REFUSED", "status REFUSED");
+        var ev = data.defer_evidence || {};
+        setText("e-finding", ev.finding || "—", "muted");
+        setText("e-charter", ev.charter_path || "—", "muted");
+        setText("e-phase1", ev.phase1_path || "—", "muted");
+        setText("e-synth", ev.synthesis_path || "—", "muted");
+        document.getElementById("banner-class").textContent =
+          data.classification || "EXTERNAL_BLOCKER_OR_DEFERRED";
+        document.body.setAttribute("data-classification", data.classification || "EXTERNAL_BLOCKER_OR_DEFERRED");
+        document.body.setAttribute("data-ceiling", data.ceiling || "HOLD");
+        document.body.setAttribute("data-payroll", "null");
+        document.body.setAttribute("data-headcount", "null");
+
+        var surf = data.surfaces || [];
+        surfaces.innerHTML = surf.map(function (s) {
+          var st = s.status || "HOLD";
+          var val = s.value;
+          if (val == null) val = "null";
+          return (
+            "<tr data-surface=\"" + esc(s.id || "") + "\" data-status=\"" + esc(st) + "\">" +
+            "<td>" + esc(s.label || s.id || "") + "</td>" +
+            "<td class=\"status " + esc(st) + "\">" + esc(st) + "</td>" +
+            "<td>" + (val === "null" ? "<span class=\"null\">null</span>" : esc(val)) + "</td>" +
+            "<td class=\"muted\">" + esc(s.why || "") + "</td>" +
+            "</tr>"
+          );
+        }).join("") || '<tr><td colspan="4" class="muted">No surfaces</td></tr>';
+
+        document.body.setAttribute("data-ready", "1");
+      } catch (err) {
+        surfaces.innerHTML = '<tr><td colspan="4" class="err">' + esc(err.message || err) + "</td></tr>";
+        document.body.setAttribute("data-ready", "0");
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

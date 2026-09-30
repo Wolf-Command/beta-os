@@ -187,6 +187,7 @@ from core import weekly_cash_forecast_shell1 as _weekly_cash_forecast_shell1
 from core import connector_health_deepen1 as _connector_health_deepen1
 from core import owner_dash_freshness1 as _owner_dash_freshness1
 from core import atrium_fc_truth_deepen1 as _atrium_fc_truth_deepen1
+from core import hr_deferred_hold_stamp1 as _hr_deferred_hold_stamp1
 from core import fin_tax_shell1 as _fin_tax_shell1
 from core import fin_ap_ar_shell1 as _fin_ap_ar_shell1
 from core import owner_needs_you1 as _owner_needs_you1
@@ -2131,6 +2132,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._atrium_fc_truth_deepen1_dispatch():
+            return
+
+        if self._hr_deferred_hold_stamp1_dispatch():
             return
 
         if self._fin_tax_shell1_dispatch():
@@ -5504,6 +5508,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._atrium_fc_truth_deepen1_dispatch():
                 return
         elif path in (
+            "/ops/hr-deferred-hold-stamp-1",
+            "/ops/hr-deferred-hold-stamp-1/",
+            "/ops/hr-deferred-hold-stamp",
+            "/ops/hr-deferred-hold-stamp/",
+            "/ops/hr-deferred-hold",
+            "/ops/hr-deferred-hold/",
+            "/hr-deferred-hold-stamp-1",
+            "/hr-deferred-hold-stamp-1/",
+            "/hr-deferred-hold-stamp-1.html",
+            "/dashboards/hr-deferred-hold-stamp-1.html",
+        ):
+            if self._hr_deferred_hold_stamp1_dispatch():
+                return
+        elif path in (
             "/fin/tax-shell-1",
             "/fin/tax-shell-1/",
             "/fin/tax-shell",
@@ -6745,6 +6763,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._atrium_fc_truth_deepen1_write_refused(path)
             return
+        if (
+            path == "/api/ops/hr-deferred-hold-stamp-1"
+            or path.startswith("/api/ops/hr-deferred-hold-stamp-1/")
+            or path == "/api/ops/hr-deferred-hold-stamp"
+            or path.startswith("/api/ops/hr-deferred-hold-stamp/")
+            or path == "/api/ops/hr-deferred-hold"
+            or path.startswith("/api/ops/hr-deferred-hold/")
+            or path == "/api/hr/deferred-hold-stamp-1"
+            or path.startswith("/api/hr/deferred-hold-stamp-1/")
+        ):
+            self._hr_deferred_hold_stamp1_write_refused(path)
+            return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
             return
@@ -7774,6 +7804,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             or path.startswith("/api/amg/atrium-fc-truth-deepen-1/")
         ):
             self._atrium_fc_truth_deepen1_write_refused(path)
+            return
+        if (
+            path == "/api/ops/hr-deferred-hold-stamp-1"
+            or path.startswith("/api/ops/hr-deferred-hold-stamp-1/")
+            or path == "/api/ops/hr-deferred-hold-stamp"
+            or path.startswith("/api/ops/hr-deferred-hold-stamp/")
+            or path == "/api/ops/hr-deferred-hold"
+            or path.startswith("/api/ops/hr-deferred-hold/")
+            or path == "/api/hr/deferred-hold-stamp-1"
+            or path.startswith("/api/hr/deferred-hold-stamp-1/")
+        ):
+            self._hr_deferred_hold_stamp1_write_refused(path)
             return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
@@ -9209,6 +9251,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             or path.startswith("/api/amg/atrium-fc-truth-deepen-1/")
         ):
             self._atrium_fc_truth_deepen1_write_refused(path)
+            return
+        if (
+            path == "/api/ops/hr-deferred-hold-stamp-1"
+            or path.startswith("/api/ops/hr-deferred-hold-stamp-1/")
+            or path == "/api/ops/hr-deferred-hold-stamp"
+            or path.startswith("/api/ops/hr-deferred-hold-stamp/")
+            or path == "/api/ops/hr-deferred-hold"
+            or path.startswith("/api/ops/hr-deferred-hold/")
+            or path == "/api/hr/deferred-hold-stamp-1"
+            or path.startswith("/api/hr/deferred-hold-stamp-1/")
+        ):
+            self._hr_deferred_hold_stamp1_write_refused(path)
             return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
@@ -21248,6 +21302,117 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "prod_mutate": False,
                 "prod_pid_held": _atrium_fc_truth_deepen1.PROD_PID_HELD,
                 "classification": "INTERNALLY_SOLVABLE_OR_HUMAN",
+            },
+            status=403,
+        )
+
+    def _hr_deferred_hold_stamp1_dispatch(self) -> bool:
+        """HR-DEFERRED-HOLD-STAMP-1 — deferred hold; no invent payroll / build HR."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _hr_deferred_hold_stamp1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _hr_deferred_hold_stamp1.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "hr_deferred_hold_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_payroll": False,
+                        "invented_headcount": False,
+                        "hr_built": False,
+                        "classification": "EXTERNAL_BLOCKER_OR_DEFERRED",
+                        "ceiling": "HOLD",
+                        "charter_hr": "DEFERRED_NEXT_WEEK",
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _hr_deferred_hold_stamp1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "hr-deferred-hold-stamp-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "HR-DEFERRED-HOLD-STAMP-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="hr-deferred-hold-stamp-1.html")
+        return True
+
+    def _hr_deferred_hold_stamp1_write_refused(self, path: str) -> None:
+        """Refuse invent payroll / invent headcount / build HR / prod mutate."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _hr_deferred_hold_stamp1.refuse_external_write(
+                body if isinstance(body, dict) else {}
+            )
+        except _hr_deferred_hold_stamp1.HrDeferredHoldStamp1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "invented_payroll": False,
+                    "invented_headcount": False,
+                    "hr_built": False,
+                    "prod_mutate": False,
+                    "prod_pid_held": _hr_deferred_hold_stamp1.PROD_PID_HELD,
+                    "classification": "EXTERNAL_BLOCKER_OR_DEFERRED",
+                    "ceiling": "HOLD",
+                    "charter_hr": "DEFERRED_NEXT_WEEK",
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": (
+                    "HR-DEFERRED-HOLD-STAMP-1 is a read-only deferred hold board. "
+                    "Writes refused."
+                ),
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "invented_payroll": False,
+                "invented_headcount": False,
+                "hr_built": False,
+                "prod_mutate": False,
+                "prod_pid_held": _hr_deferred_hold_stamp1.PROD_PID_HELD,
+                "classification": "EXTERNAL_BLOCKER_OR_DEFERRED",
+                "ceiling": "HOLD",
             },
             status=403,
         )

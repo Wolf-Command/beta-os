@@ -443,5 +443,24 @@
     "at_wita": "2026-09-30T10:24:23+08:00",
     "tests": "163/0",
     "notes": "Live stamps wired; invent books/P&L/balance refused 403; SoD live; staff_ready=false"
+  },
+  "hr_deferred_hold_stamp1": {
+    "pack": "HR-DEFERRED-HOLD-STAMP-1",
+    "classification": "EXTERNAL_BLOCKER_OR_DEFERRED",
+    "ceiling": "HOLD",
+    "charter_hr": "DEFERRED_NEXT_WEEK",
+    "hr_deferred_count": 33,
+    "at_wita": "2026-09-30T10:30:50+08:00",
+    "tests": "135/0",
+    "suite_pass": 135,
+    "suite_fail": 0,
+    "staff_ready": false,
+    "human_commissioned": false,
+    "invented_payroll": false,
+    "invented_headcount": false,
+    "hr_built": false,
+    "board": "/ops/hr-deferred-hold-stamp-1",
+    "next_pack_for_parent_only": "RELIABILITY-PIPE-EPISODE-ROLLUP-1",
+    "notes": "Hold stamp only; do not build HR; invent payroll/headcount refused 403"
   }
 }
