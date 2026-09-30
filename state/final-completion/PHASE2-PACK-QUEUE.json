@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T08:16:30+08:00",
+  "at_wita": "2026-09-30T08:26:30+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -1274,10 +1274,21 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "classification": "INTERNALLY_SOLVABLE",
       "synthesized_from": "challenge empty SOP catalog",
-      "armed_at": "2026-09-30T08:16:30+08:00"
+      "armed_at": "2026-09-30T08:16:30+08:00",
+      "exited_at": "2026-09-30T08:30:00+08:00",
+      "route_classification": "HUMAN_COMMISSIONING",
+      "suite": {
+        "pass": 154,
+        "fail": 0
+      },
+      "verified_at": "2026-09-30T08:26:30+08:00",
+      "tests": {
+        "pass": 154,
+        "fail": 0
+      }
     },
     {
       "pack_id": "FIN-BANK-CREDS-ROUTE-1",
@@ -1304,9 +1315,10 @@
       ],
       "estimated_effort": "S",
       "matt_blocker": false,
-      "status": "QUEUED",
+      "status": "WAITING_CURSOR",
       "classification": "HUMAN_COMMISSIONING",
-      "synthesized_from": "challenge file-only bank ceiling"
+      "synthesized_from": "challenge file-only bank ceiling",
+      "armed_at": "2026-09-30T08:26:30+08:00"
     },
     {
       "pack_id": "INV-CASH-FACTS-ROUTE-1",

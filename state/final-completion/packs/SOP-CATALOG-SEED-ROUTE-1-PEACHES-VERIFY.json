@@ -1,0 +1,78 @@
+{
+  "pack": "SOP-CATALOG-SEED-ROUTE-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T08:26:30+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T08:25:42+08:00",
+  "result_file": "docs/wolf/ops/SOP-CATALOG-SEED-ROUTE-1-RESULT.md",
+  "tests_rerun": {
+    "test_sop_catalog_seed_route1_20260930.py": {
+      "pass": 154,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/sopcatalog1-desk-desktop.png",
+        "bytes": 231665,
+        "sha256": "a73789e730357e6110263a0db81ade55dacf775d226805ca419c56a5dcf9c851"
+      },
+      {
+        "path": "docs/wolf/ops/shots/sopcatalog1-desk-phone.png",
+        "bytes": 122295,
+        "sha256": "09c2155731f299df6a096341806448e4ac63a3917eb9562b31b485aa28d5760c"
+      },
+      {
+        "path": "docs/wolf/ops/shots/sopcatalog1-route-stamps.png",
+        "bytes": 259782,
+        "sha256": "50663130f4528f7d42b91c9ae6a5f764635a104e760b336871dee73649c2f024"
+      },
+      {
+        "path": "docs/wolf/ops/shots/sopcatalog1-unsigned-deny.png",
+        "bytes": 22108,
+        "sha256": "335c320fdbbf57fc904697d0e3091ce1710eb03b81038629bb86b86fef66018c"
+      }
+    ]
+  },
+  "route": {
+    "decision": "STAMP_HUMAN_COMMISSIONING",
+    "live_catalog": "ABSENT",
+    "auto_approve": false,
+    "invented_lessons": false
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "classification": {
+    "pack": "INTERNALLY_SOLVABLE",
+    "route": "HUMAN_COMMISSIONING",
+    "shell_ne_complete": true,
+    "note": "Live catalog ABSENT honest; seed gated until human commission \u2014 not invent"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "9a519a504ce26a4d92c4330f0fd5f79174ef149f",
+    "uncommitted": true
+  },
+  "preserves": [
+    "SOP-LESSON-LIVE-1"
+  ],
+  "next_pack": "FIN-BANK-CREDS-ROUTE-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

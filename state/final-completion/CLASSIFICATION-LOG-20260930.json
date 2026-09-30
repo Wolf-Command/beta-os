@@ -48,7 +48,11 @@
       "surface": "SOP live catalog ABSENT",
       "classification": "INTERNALLY_SOLVABLE",
       "evidence": "SOP-LESSON-LIVE-1 DEMO only; factory exists; seed-or-route human review without inventing live adoption",
-      "next_pack": "SOP-CATALOG-SEED-ROUTE-1"
+      "next_pack": "SOP-CATALOG-SEED-ROUTE-1",
+      "action": "DONE this pack SOP-CATALOG-SEED-ROUTE-1 \u2014 stamped HUMAN_COMMISSIONING for live seed; live catalog still ABSENT (never invented); DEMO honesty preserved; auto_approve false",
+      "status_after": "HUMAN_COMMISSIONING stamped; live ABSENT honest",
+      "board": "/ops/sop-catalog-seed-route-1",
+      "note": "Live adoption needs human APPROVE DEMO + commission stamp before seed; pack EXIT did not write live catalog"
     },
     {
       "surface": "Inventory/cash UNKNOWN shells",
@@ -73,7 +77,7 @@
       "status_after": "PIPE_OK_WITH_DETECT_RECOVER"
     }
   ],
-  "updated_at": "2026-09-30T08:16:30+08:00",
+  "updated_at": "2026-09-30T08:26:30+08:00",
   "metricool_runtime_probe": {
     "getBrandSettings": "6 brands",
     "getAnalyticsAvailableMetrics_instagram_posts": "29 fields incl engagement/likes/reach",
@@ -137,5 +141,11 @@
     "status": "PASS_VERIFIED",
     "classification": "EXTERNAL_BLOCKER",
     "evidence": "Felix UNAVAILABLE + no SETTLEMENT/ESB_API keys"
+  },
+  "sop_catalog_seed_route1": {
+    "status": "PASS_VERIFIED",
+    "pack": "INTERNALLY_SOLVABLE",
+    "route": "HUMAN_COMMISSIONING",
+    "live_catalog": "ABSENT"
   }
 }

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SOP Catalog Seed-or-Route — HUMAN_COMMISSIONING</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1a1f24;
+      --muted: #5a6570;
+      --paper: #f1f3f5;
+      --card: #fbfcfd;
+      --line: #d3dae0;
+      --warn: #8a1f1f;
+      --amber: #6a4d12;
+      --pres: #2a3f5c;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(ellipse 70% 40% at 0% 0%, #e8eef3 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 960px; margin: 0 auto; padding: 24px 16px 72px; }
+    h1 {
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: 1.7rem;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    h2 {
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin: 22px 0 10px;
+    }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #f5ead8; border: 1px solid #e0c898; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner strong { color: var(--amber); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+    .chip {
+      display: inline-block; padding: 5px 10px; border-radius: 6px;
+      background: #ebe4d6; font-size: 0.75rem; font-weight: 600;
+    }
+    .chip.HUMAN_COMMISSIONING { background: #f5ead8; color: var(--amber); }
+    .chip.ABSENT { background: #f0e6e6; color: var(--warn); }
+    .chip.PRESERVED { background: #dde4ec; color: var(--pres); }
+    .chip.REFUSED { background: #f0d6d6; color: var(--warn); }
+    .chip.PENDING_REVIEW { background: #efe4c8; color: var(--amber); }
+    .facts {
+      margin: 0 0 18px; padding: 12px 14px; border: 1px solid var(--line);
+      border-radius: 10px; background: var(--card);
+    }
+    .facts dl {
+      display: grid; grid-template-columns: 200px 1fr; gap: 6px 12px;
+      margin: 0; font-size: 0.88rem;
+    }
+    .facts dt { color: var(--muted); }
+    .facts dd { margin: 0; }
+    .status { font-weight: 700; }
+    .status.HUMAN_COMMISSIONING { color: var(--amber); }
+    .status.ABSENT { color: var(--warn); }
+    .status.PRESERVED { color: var(--pres); }
+    .table-wrap {
+      overflow-x: auto; border: 1px solid var(--line); border-radius: 10px;
+      background: var(--card); margin: 0 0 18px;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 640px; }
+    th, td {
+      text-align: left; padding: 10px 12px; border-bottom: 1px solid #ebe4d6;
+      vertical-align: top; font-size: 0.86rem;
+    }
+    th {
+      background: #eef2f5; font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.04em; color: var(--muted);
+    }
+    tr:last-child td { border-bottom: 0; }
+    .muted { color: var(--muted); font-size: 0.8rem; line-height: 1.4; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
+    a { color: var(--pres); }
+    @media (max-width: 520px) {
+      h1 { font-size: 1.35rem; }
+      main { padding: 16px 12px 64px; }
+      .facts dl { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-ready="0" data-pack="SOP-CATALOG-SEED-ROUTE-1">
+  <main>
+    <h1>SOP catalog seed-or-route</h1>
+    <p class="sub" id="sub">Seed from approved DEMO after route · or stamp HUMAN_COMMISSIONING · loading…</p>
+    <div class="banner" id="honesty">
+      <strong>Honesty:</strong>
+      staff_ready=false · human_commissioned=false ·
+      auto_approve=false · never invent live lessons ·
+      DEMO stays DEMO / NOT LIVE STAFF ADOPTION ·
+      prod pid 15975 READ-ONLY · SOP-LESSON-LIVE-1 preserved
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="facts" id="facts">
+      <dl>
+        <dt>classification</dt><dd id="f-class" class="status HUMAN_COMMISSIONING">HUMAN_COMMISSIONING</dd>
+        <dt>action</dt><dd id="f-action">—</dd>
+        <dt>live catalog</dt><dd id="f-live" class="status ABSENT">ABSENT</dd>
+        <dt>approved DEMO</dt><dd id="f-approved">—</dd>
+        <dt>pending DEMO</dt><dd id="f-pending">—</dd>
+        <dt>human route</dt><dd id="f-route">—</dd>
+        <dt>auto_approve</dt><dd id="f-auto">false</dd>
+        <dt>SOP-LESSON-LIVE-1</dt><dd id="f-lesson"><a href="/ops/sop-lesson-live">/ops/sop-lesson-live</a></dd>
+      </dl>
+    </div>
+    <h2>Route surfaces</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Surface</th>
+            <th>Status</th>
+            <th>Value</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody id="surfaces">
+          <tr><td colspan="4" class="muted">Loading surfaces…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h2>Decision note</h2>
+    <div class="facts">
+      <p class="muted" id="reason">—</p>
+      <p class="muted">
+        Seed live catalog from approved DEMO after human route
+        <strong>OR</strong> stamp HUMAN_COMMISSIONING — never invent live lessons.
+      </p>
+    </div>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    function setText(id, value, cls) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = value == null || value === "" ? "—" : String(value);
+      if (cls) el.className = cls;
+    }
+    async function load() {
+      var sub = document.getElementById("sub");
+      var chips = document.getElementById("chips");
+      try {
+        var resp = await fetch("/api/ops/sop-catalog-seed-route-1", {
+          credentials: "same-origin",
+          headers: { "Accept": "application/json" }
+        });
+        if (!resp.ok) {
+          sub.textContent = "Access denied or unavailable (" + resp.status + ").";
+          document.body.setAttribute("data-ready", "0");
+          return;
+        }
+        var data = await resp.json();
+        sub.textContent =
+          "pack " + (data.pack || "SOP-CATALOG-SEED-ROUTE-1") +
+          " · " + (data.summary || "seed-or-route") +
+          " · as of " + (data.as_of_wita || "");
+        var cls = data.classification || "HUMAN_COMMISSIONING";
+        setText("f-class", cls, "status " + cls);
+        setText("f-action", data.action || "—");
+        setText(
+          "f-live",
+          data.live_catalog_status || "ABSENT",
+          "status " + (data.live_catalog_status || "ABSENT")
+        );
+        setText("f-approved", String(data.approved_demo_count != null ? data.approved_demo_count : "—"));
+        setText("f-pending", String(data.pending_demo_count != null ? data.pending_demo_count : "—"));
+        setText(
+          "f-route",
+          data.human_route_commissioned === true ? "commissioned" : "HUMAN_COMMISSIONING (absent stamp)"
+        );
+        setText("f-auto", "false");
+        document.getElementById("reason").textContent = data.reason || "—";
+
+        chips.innerHTML = "";
+        [
+          cls,
+          "live=" + (data.live_catalog_status || "ABSENT"),
+          "auto_approve=false",
+          "invented=false",
+          data.sop_lesson_live1_preserved ? "SOP-LESSON-LIVE-1 PRESERVED" : "lesson check"
+        ].forEach(function (label) {
+          var span = document.createElement("span");
+          span.className = "chip " + (label === cls ? cls : "");
+          span.textContent = label;
+          chips.appendChild(span);
+        });
+
+        var tbody = document.getElementById("surfaces");
+        tbody.innerHTML = "";
+        (data.surfaces || []).forEach(function (s) {
+          var tr = document.createElement("tr");
+          var val = s.value;
+          if (val && typeof val === "object") val = JSON.stringify(val);
+          tr.innerHTML =
+            "<td>" + esc(s.label || s.id) + "</td>" +
+            "<td class=\"status " + esc(s.status) + "\">" + esc(s.status) + "</td>" +
+            "<td>" + esc(val) + "</td>" +
+            "<td class=\"muted\">" + esc(s.why) + "</td>";
+          tbody.appendChild(tr);
+        });
+        document.body.setAttribute("data-ready", "1");
+      } catch (err) {
+        sub.textContent = "Load failed: " + (err && err.message ? err.message : err);
+        document.body.setAttribute("data-ready", "0");
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

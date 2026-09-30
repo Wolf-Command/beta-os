@@ -482,6 +482,20 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import esb_settlement_path1 as e; from pathlib import Path; html=Path('dashboards/esb-settlement-path-1.html').read_text(); import sys; sys.exit(0 if (e.api_matches('/api/ops/esb-settlement-path-1') and e.page_matches('/ops/esb-settlement-path-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/esbsettlement1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/ESB-SETTLEMENT-PATH-1-RESULT.md').is_file() and e.honesty_flags().get('next_pack_for_parent_only')=='SOP-CATALOG-SEED-ROUTE-1' and e.honesty_flags().get('cursor_did_not_auto_start_next') is True and e.honesty_flags().get('classification')=='EXTERNAL_BLOCKER') else 1)\"",
       "expect": "exit 0",
       "by": "cursor-esb-settlement-path-1"
+    },
+    {
+      "id": "sop-catalog-seed-route1-decision",
+      "claim": "SOP-CATALOG-SEED-ROUTE-1: live catalog ABSENT; seed-or-route stamps HUMAN_COMMISSIONING (no approved DEMO + no commission); never invents live lessons; auto_approve false; SOP-LESSON-LIVE-1 DEMO honesty preserved; staff_ready/human_commissioned false; next pack parent-only FIN-BANK-CREDS-ROUTE-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import sop_catalog_seed_route1 as s; from core import sop_lesson_live1 as l; from pathlib import Path; p=s.build_board('PERS-MATT'); lb=l.build_board('PERS-MATT'); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='HUMAN_COMMISSIONING' and p.get('action')=='STAMP_HUMAN_COMMISSIONING' and p.get('live_catalog_status')=='ABSENT' and p.get('live_lesson_count')==0 and p.get('auto_approve') is False and p.get('invented_lessons') is False and p.get('seeded_live') is False and s.surfaces_are_honest(p) and s.no_invented_live_lessons(p) and p.get('sop_lesson_live1_preserved') is True and lb.get('live_catalog_status')=='ABSENT' and lb.get('auto_approve') is False and not Path('catalog/sop_factory.sqlite').is_file() and s.honesty_flags().get('next_pack_for_parent_only')=='FIN-BANK-CREDS-ROUTE-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-sop-catalog-seed-route-1"
+    },
+    {
+      "id": "sop-catalog-seed-route1-surfaces",
+      "claim": "SOP-CATALOG-SEED-ROUTE-1 page/API/shots/RESULT present; unsigned deny + invent/seed/auto-approve refuse; HUMAN_COMMISSIONING; next pack parent-only FIN-BANK-CREDS-ROUTE-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import sop_catalog_seed_route1 as s; from pathlib import Path; html=Path('dashboards/sop-catalog-seed-route-1.html').read_text(); import sys; sys.exit(0 if (s.api_matches('/api/ops/sop-catalog-seed-route-1') and s.page_matches('/ops/sop-catalog-seed-route-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/sopcatalog1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/SOP-CATALOG-SEED-ROUTE-1-RESULT.md').is_file() and s.honesty_flags().get('next_pack_for_parent_only')=='FIN-BANK-CREDS-ROUTE-1' and s.honesty_flags().get('cursor_did_not_auto_start_next') is True and s.honesty_flags().get('classification')=='HUMAN_COMMISSIONING') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-sop-catalog-seed-route-1"
     }
   ]
 }

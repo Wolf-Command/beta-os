@@ -4,8 +4,9 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 7,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T08:16:30+08:00",
+  "exited_at": "2026-09-30T08:30:00+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
   "prod_pid_held": 15975,
@@ -14,12 +15,28 @@
   "no_push": true,
   "matt_auto_continue": true,
   "prior_pack_verified": "ESB-SETTLEMENT-PATH-1",
-  "beta_os_head_at_arm": "PENDING",
+  "beta_os_head_at_arm": "9a519a504ce26a4d92c4330f0fd5f79174ef149f",
   "brief": "state/build-factory/briefs/BRIEF-SOP-CATALOG-SEED-ROUTE-1.md",
   "log": "state/build-factory/logs/SOP-CATALOG-SEED-ROUTE-1.log",
   "result_file": "docs/wolf/ops/SOP-CATALOG-SEED-ROUTE-1-RESULT.md",
   "next_pack_for_parent": "FIN-BANK-CREDS-ROUTE-1",
   "classification": "INTERNALLY_SOLVABLE",
+  "route_classification": "HUMAN_COMMISSIONING",
+  "action": "STAMP_HUMAN_COMMISSIONING",
+  "live_catalog_status": "ABSENT",
+  "seeded_live": false,
+  "auto_approve": false,
+  "invented_lessons": false,
+  "suite": {
+    "pass": 154,
+    "fail": 0
+  },
+  "shots": [
+    "docs/wolf/ops/shots/sopcatalog1-desk-desktop.png",
+    "docs/wolf/ops/shots/sopcatalog1-desk-phone.png",
+    "docs/wolf/ops/shots/sopcatalog1-route-stamps.png",
+    "docs/wolf/ops/shots/sopcatalog1-unsigned-deny.png"
+  ],
   "forbids": [
     "auto-approve",
     "fake live lessons",
@@ -32,5 +49,11 @@
   ],
   "preserves": [
     "SOP-LESSON-LIVE-1"
-  ]
+  ],
+  "cursor_did_not_auto_start_next": true,
+  "peaches_verified_at": "2026-09-30T08:26:30+08:00",
+  "exit_code": 0,
+  "tests_pass": 154,
+  "tests_fail": 0,
+  "peaches_verify": "state/final-completion/packs/SOP-CATALOG-SEED-ROUTE-1-PEACHES-VERIFY.json"
 }

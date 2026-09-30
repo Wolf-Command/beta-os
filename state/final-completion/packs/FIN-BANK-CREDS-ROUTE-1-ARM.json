@@ -1,0 +1,38 @@
+{
+  "run_id": "FIN-BANK-CREDS-ROUTE-1",
+  "pack": "FIN-BANK-CREDS-ROUTE-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 7,
+  "status": "WAITING_CURSOR",
+  "armed_at": "2026-09-30T08:26:30+08:00",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "prior_pack_verified": "SOP-CATALOG-SEED-ROUTE-1",
+  "beta_os_head_at_arm": "PENDING",
+  "brief": "state/build-factory/briefs/BRIEF-FIN-BANK-CREDS-ROUTE-1.md",
+  "log": "state/build-factory/logs/FIN-BANK-CREDS-ROUTE-1.log",
+  "result_file": "docs/wolf/ops/FIN-BANK-CREDS-ROUTE-1-RESULT.md",
+  "next_pack_for_parent": "INV-CASH-FACTS-ROUTE-1",
+  "classification": "HUMAN_COMMISSIONING",
+  "forbids": [
+    "invent scrape",
+    "fake balances",
+    "HEADCHEF",
+    "Exit Report",
+    "push"
+  ],
+  "depends_on": [
+    "FIN-RECON-SHELL-1",
+    "FIN-CASH-TRUTH-1"
+  ],
+  "preserves": [
+    "FIN-RECON-SHELL-1",
+    "FIN-CASH-TRUTH-1"
+  ]
+}
