@@ -576,6 +576,22 @@
       "expect": "exit 0",
       "by": "cursor-content-publish-path-1",
       "at": "2026-09-30T09:13:49+08:00"
+    },
+    {
+      "id": "OCCUPANCY-EXTERNAL-HOLD-1-board",
+      "claim": "OCCUPANCY-EXTERNAL-HOLD-1: classification EXTERNAL_BLOCKER; Yanolja/Mews EXTERNAL; occupancy/ADR null; invented_occupancy/adr false; AMG-OCC preserved; NPWP MATT_ACTION non-blocking; staff_ready/human_commissioned false; next pack parent-only WAVE9-SYNTH-CONTINUE.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import occupancy_external_hold1 as h; p=h.build_board(); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='EXTERNAL_BLOCKER' and p.get('invented_occupancy') is False and p.get('invented_adr') is False and p.get('occupancy') is None and p.get('adr') is None and h.no_invented_occupancy(p) and h.surfaces_are_honest(p) and p.get('amg_occ_preserved') is True and p.get('npwp')=='MATT_ACTION' and p.get('npwp_blocking') is False and p.get('staff_ready') is False and p.get('human_commissioned') is False and h.honesty_flags().get('next_pack_for_parent_only')=='WAVE9-SYNTH-CONTINUE') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-occupancy-external-hold-1",
+      "at": "2026-09-30T09:21:20+08:00"
+    },
+    {
+      "id": "OCCUPANCY-EXTERNAL-HOLD-1-surfaces",
+      "claim": "OCCUPANCY-EXTERNAL-HOLD-1 page/API/shots/RESULT present; unsigned deny + invent-occupancy/ADR refuse; EXTERNAL_BLOCKER; AMG-OCC preserved; NPWP MATT_ACTION; next pack parent-only WAVE9-SYNTH-CONTINUE; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import occupancy_external_hold1 as h; from pathlib import Path; html=Path('dashboards/occupancy-external-hold-1.html').read_text(); import sys; sys.exit(0 if (h.api_matches('/api/amg/occupancy-external-hold-1') and h.page_matches('/amg/occupancy-external-hold-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/occupancyhold1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/OCCUPANCY-EXTERNAL-HOLD-1-RESULT.md').is_file() and h.honesty_flags().get('next_pack_for_parent_only')=='WAVE9-SYNTH-CONTINUE' and h.honesty_flags().get('cursor_did_not_auto_start_next') is True and h.honesty_flags().get('classification')=='EXTERNAL_BLOCKER') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-occupancy-external-hold-1",
+      "at": "2026-09-30T09:21:20+08:00"
     }
   ]
 }

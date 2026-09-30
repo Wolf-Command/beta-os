@@ -45,7 +45,10 @@
       "classification": "EXTERNAL_BLOCKER",
       "evidence": "Yanolja BLOCKED_EXTERNAL; CAP-AMG-01 not unblocked; Mews/Yanolja not available without owner/external",
       "next_pack": null,
-      "action": "Hold EXTERNAL_BLOCKER; do not invent occupancy; Google NPWP remains Matt-only non-blocking"
+      "action": "DONE this pack OCCUPANCY-EXTERNAL-HOLD-1 \u2014 stamped EXTERNAL_BLOCKER with Yanolja/Mews evidence; no invent occupancy/ADR; AMG-OCC preserved; NPWP MATT_ACTION non-blocking",
+      "status_after": "EXTERNAL_BLOCKER stamped with Yanolja evidence",
+      "board": "/amg/occupancy-external-hold-1",
+      "note": "Parent/Peaches arms WAVE9-SYNTH-CONTINUE; Cursor did not auto-chain"
     },
     {
       "surface": "SOP live catalog ABSENT",
@@ -88,6 +91,16 @@
       "note": "Parent/Peaches arms CONTENT-PUBLISH-PATH-1; Cursor did not auto-chain"
     },
     {
+      "surface": "CAP-GGV publish / Metricool write still NOT_RUNTIME",
+      "classification": "HUMAN_COMMISSIONING_OR_EXTERNAL",
+      "evidence": "Publish path documented; Metricool write DISABLED/NOT_RUNTIME; publish_success=null; engagement=null; METRICOOL-RUNTIME-WIRE-1 publish_success surface NOT_RUNTIME preserved; never invent publish success",
+      "next_pack": "OCCUPANCY-EXTERNAL-HOLD-1",
+      "action": "DONE this pack CONTENT-PUBLISH-PATH-1 \u2014 DOCUMENT_PUBLISH_PATH; write held DISABLED; METRICOOL-RUNTIME-WIRE-1 + CONTENT-ENGINE-LIVE-1 + GGV-METRIC-HONESTY-1 preserved; no invent",
+      "status_after": "HUMAN_COMMISSIONING; Metricool write DISABLED/NOT_RUNTIME; publish_success=null",
+      "board": "/ops/content-publish-path-1",
+      "note": "Parent/Peaches arms OCCUPANCY-EXTERNAL-HOLD-1; Cursor did not auto-chain"
+    },
+    {
       "surface": "Backup restore NOT_RUN",
       "classification": "INTERNALLY_SOLVABLE",
       "evidence": "BACKUP-RESTORE-DRILL-1 ran non-destructive temp drill; sha256 match; honesty DRILL_RAN_NON_DESTRUCTIVE; full DR READY still shell_ne_complete",
@@ -104,7 +117,7 @@
       "status_after": "PIPE_OK_WITH_DETECT_RECOVER"
     }
   ],
-  "updated_at": "2026-09-30T09:01:50+08:00",
+  "updated_at": "2026-09-30T09:23:45+08:00",
   "metricool_runtime_probe": {
     "getBrandSettings": "6 brands",
     "getAnalyticsAvailableMetrics_instagram_posts": "29 fields incl engagement/likes/reach",
@@ -214,5 +227,30 @@
     "suite_pass": 245,
     "suite_fail": 0,
     "next_pack_for_parent_only": "CONTENT-PUBLISH-PATH-1"
+  },
+  "content_publish_path1": {
+    "status": "CURSOR_EXIT_0",
+    "classification": "HUMAN_COMMISSIONING",
+    "pack_classification": "HUMAN_COMMISSIONING_OR_EXTERNAL",
+    "action": "DOCUMENT_PUBLISH_PATH",
+    "metricool_write": "DISABLED",
+    "metricool_write_status": "NOT_RUNTIME",
+    "publish_success": null,
+    "engagement": null,
+    "invented_publish_success": false,
+    "preserves": [
+      "METRICOOL-RUNTIME-WIRE-1",
+      "CONTENT-ENGINE-LIVE-1",
+      "GGV-METRIC-HONESTY-1"
+    ],
+    "board": "/ops/content-publish-path-1",
+    "suite_pass": 233,
+    "suite_fail": 0,
+    "next_pack_for_parent_only": "OCCUPANCY-EXTERNAL-HOLD-1"
+  },
+  "occupancy_external_hold1": {
+    "status": "PASS_VERIFIED",
+    "classification": "EXTERNAL_BLOCKER",
+    "yanolja": "BLOCKED_EXTERNAL"
   }
 }

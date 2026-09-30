@@ -1,0 +1,79 @@
+{
+  "pack": "OCCUPANCY-EXTERNAL-HOLD-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 8,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T09:23:45+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T09:22:59+08:00",
+  "result_file": "docs/wolf/ops/OCCUPANCY-EXTERNAL-HOLD-1-RESULT.md",
+  "tests_rerun": {
+    "test_occupancy_external_hold1_20260930.py": {
+      "pass": 136,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/occupancyhold1-blocker-stamps.png",
+        "bytes": 288365,
+        "sha256": "2f06b12b26be0f51e9ae95b87dc278b1cffd5b326ad15bb3851a2a400b7b7a05"
+      },
+      {
+        "path": "docs/wolf/ops/shots/occupancyhold1-desk-desktop.png",
+        "bytes": 246456,
+        "sha256": "8552adc5f759847eda241f9097a4206623fbc4e275ae7ce01d74b2d54ad93bd5"
+      },
+      {
+        "path": "docs/wolf/ops/shots/occupancyhold1-desk-phone.png",
+        "bytes": 101231,
+        "sha256": "6d09bfe14a1e849a45a4a9741249036afb954411757e51fc11c32b4fdfc097ac"
+      },
+      {
+        "path": "docs/wolf/ops/shots/occupancyhold1-unsigned-deny.png",
+        "bytes": 24471,
+        "sha256": "7df206a8cc673a3bc5593cc1ec6f49e9b4799764c6a5130d7590ace9de8fbded"
+      }
+    ]
+  },
+  "hold": {
+    "yanolja": "EXTERNAL_BLOCKER",
+    "mews": "ABSENT",
+    "occupancy": null,
+    "adr": null,
+    "npwp": "MATT_ACTION_NON_BLOCKING"
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "classification": {
+    "pack": "EXTERNAL_BLOCKER",
+    "shell_ne_complete": true,
+    "note": "Yanolja BLOCKED; occupancy/ADR null forever until external unlock"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "3ca226c6104a39705e64fe7bcf58cf754e550afc",
+    "uncommitted": true
+  },
+  "preserves": [
+    "AMG-OCC"
+  ],
+  "next_pack": "WAVE9-SYNTH-CONTINUE",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

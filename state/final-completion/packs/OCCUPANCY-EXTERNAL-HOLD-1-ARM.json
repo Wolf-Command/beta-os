@@ -4,8 +4,9 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 8,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T09:15:45+08:00",
+  "exited_at": "2026-09-30T09:21:20+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
   "prod_pid_held": 15975,
@@ -14,12 +15,18 @@
   "no_push": true,
   "matt_auto_continue": true,
   "prior_pack_verified": "CONTENT-PUBLISH-PATH-1",
-  "beta_os_head_at_arm": "PENDING",
+  "beta_os_head_at_arm": "3ca226c6104a39705e64fe7bcf58cf754e550afc",
   "brief": "state/build-factory/briefs/BRIEF-OCCUPANCY-EXTERNAL-HOLD-1.md",
   "log": "state/build-factory/logs/OCCUPANCY-EXTERNAL-HOLD-1.log",
   "result_file": "docs/wolf/ops/OCCUPANCY-EXTERNAL-HOLD-1-RESULT.md",
   "next_pack_for_parent": "WAVE9-SYNTH-CONTINUE",
   "classification": "EXTERNAL_BLOCKER",
+  "yanolja": "EXTERNAL_HOLD",
+  "npwp": "MATT_ACTION_NON_BLOCKING",
+  "occupancy": null,
+  "adr": null,
+  "invented_occupancy": false,
+  "invented_adr": false,
   "forbids": [
     "invent occupancy",
     "invent ADR",
@@ -31,8 +38,26 @@
     "AMG-OCC"
   ],
   "preserves": [
-    "AMG-OCC"
+    "AMG-OCC",
+    "AMG-OCC-TRUTH-1"
   ],
-  "npwp": "MATT_ACTION_NON_BLOCKING",
-  "yanolja": "EXTERNAL_HOLD"
+  "page": "/amg/occupancy-external-hold-1",
+  "api": "/api/amg/occupancy-external-hold-1",
+  "suite": {
+    "path": "scripts/tests/test_occupancy_external_hold1_20260930.py",
+    "pass": 136,
+    "fail": 0
+  },
+  "shots": [
+    "docs/wolf/ops/shots/occupancyhold1-desk-desktop.png",
+    "docs/wolf/ops/shots/occupancyhold1-desk-phone.png",
+    "docs/wolf/ops/shots/occupancyhold1-blocker-stamps.png",
+    "docs/wolf/ops/shots/occupancyhold1-unsigned-deny.png"
+  ],
+  "cursor_did_not_auto_start_next": true,
+  "exit_code": 0,
+  "tests_pass": 136,
+  "tests_fail": 0,
+  "peaches_verified_at": "2026-09-30T09:23:45+08:00",
+  "peaches_verify": "state/final-completion/packs/OCCUPANCY-EXTERNAL-HOLD-1-PEACHES-VERIFY.json"
 }

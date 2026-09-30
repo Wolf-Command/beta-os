@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T08:42:00+08:00",
+  "at_wita": "2026-09-30T09:23:45+08:00",
   "requirements_total": 465,
   "classes": {
     "MISSING": 360,
@@ -9,23 +9,22 @@
     "BLOCKED_EXTERNAL": 10,
     "SUPERSEDED": 3
   },
-  "pass_verified_count": 37,
-  "wave7_8_done": [
-    "METRICOOL-RUNTIME-WIRE-1",
-    "ESB-SETTLEMENT-PATH-1",
-    "SOP-CATALOG-SEED-ROUTE-1",
-    "FIN-BANK-CREDS-ROUTE-1",
-    "INV-CASH-FACTS-ROUTE-1"
-  ],
-  "wave8_queued": [
+  "pass_verified_count": 41,
+  "wave8_done": [
     "FIN-TAX-DEEPEN-1",
     "CRM-PIPELINE-TRUTH-1",
     "CONTENT-PUBLISH-PATH-1",
     "OCCUPANCY-EXTERNAL-HOLD-1"
   ],
+  "wave9_queued": [
+    "STAFF-ACCESS-TRUTH-1",
+    "APPROVALS-LIVE-DEEPEN-1",
+    "WEEKLY-CASH-FORECAST-SHELL-1",
+    "CONNECTOR-HEALTH-DEEPEN-1"
+  ],
   "holds": {
     "yanolja_occupancy": "EXTERNAL_BLOCKER",
     "npwp": "MATT_ACTION non-blocking"
   },
-  "note": "Do not re-ping Metricool/ESB/SOP/FIN/OWNER/BACKUP/PIPE/GGV"
+  "note": "Do not re-ping tax/bank/inv/metricool/esb/sop/crm/content/occupancy once Matt pinged"
 }

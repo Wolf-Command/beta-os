@@ -1,0 +1,44 @@
+{
+  "milestone_id": "MULTI-20260930-0923-WAVE8",
+  "at_wita": "2026-09-30T09:23:45+08:00",
+  "pass_verified_count": 41,
+  "queue_len": 45,
+  "wave8": [
+    {
+      "pack": "FIN-TAX-DEEPEN-1",
+      "tests": "179/0",
+      "commit": "ce9debe",
+      "class": "HUMAN_COMMISSIONING",
+      "note": "Matt pinged \u2014 do not re-ping"
+    },
+    {
+      "pack": "CRM-PIPELINE-TRUTH-1",
+      "tests": "245/0",
+      "commit": "ac067e0",
+      "class": "WIRED"
+    },
+    {
+      "pack": "CONTENT-PUBLISH-PATH-1",
+      "tests": "233/0",
+      "commit": "3ca226c",
+      "class": "HUMAN_COMMISSIONING"
+    },
+    {
+      "pack": "OCCUPANCY-EXTERNAL-HOLD-1",
+      "tests": "136/0",
+      "commit": "PENDING",
+      "class": "EXTERNAL_BLOCKER"
+    }
+  ],
+  "wave9_queued": [
+    "STAFF-ACCESS-TRUTH-1",
+    "APPROVALS-LIVE-DEEPEN-1",
+    "WEEKLY-CASH-FORECAST-SHELL-1",
+    "CONNECTOR-HEALTH-DEEPEN-1"
+  ],
+  "standards_lock": true,
+  "staff_ready": false,
+  "no_push": true,
+  "prod_pid": 15975,
+  "no_exit_report": true
+}

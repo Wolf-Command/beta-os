@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T09:15:45+08:00",
+  "at_wita": "2026-09-30T09:23:45+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -557,7 +557,7 @@
       "launched_at": "2026-09-30T02:11:30+08:00",
       "verified_at": "2026-09-30T02:18:00+08:00",
       "tests": {
-        "pass": 137,
+        "pass": 136,
         "fail": 0
       },
       "matt_finished_ping": true,
@@ -1523,10 +1523,128 @@
       ],
       "estimated_effort": "S",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "classification": "EXTERNAL_BLOCKER",
       "synthesized_from": "hold Yanolja EXTERNAL",
-      "armed_at": "2026-09-30T09:15:45+08:00"
+      "armed_at": "2026-09-30T09:15:45+08:00",
+      "exited_at": "2026-09-30T09:21:20+08:00",
+      "prior_pack_verified": "CONTENT-PUBLISH-PATH-1",
+      "suite": {
+        "pass": 136,
+        "fail": 0
+      },
+      "tests": {
+        "pass": 136,
+        "fail": 0
+      },
+      "verified_at": "2026-09-30T09:23:45+08:00"
+    },
+    {
+      "pack_id": "STAFF-ACCESS-TRUTH-1",
+      "title": "Staff access truth deepen \u2014 no invent roles",
+      "closes": [
+        "staff access"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "PARTIAL"
+      ],
+      "priority_bucket": "ops",
+      "scope": [
+        "Probe authorised staff access stamps",
+        "Honest empty or wire; never invent roles/permissions"
+      ],
+      "forbids": [
+        "invent roles",
+        "flip staff_ready"
+      ],
+      "depends_on": [],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "classification": "INTERNALLY_SOLVABLE",
+      "synthesized_from": "MISSING staff/access themes; staff_ready stays false"
+    },
+    {
+      "pack_id": "APPROVALS-LIVE-DEEPEN-1",
+      "title": "Approvals live deepen \u2014 no invent approvals",
+      "closes": [
+        "approvals"
+      ],
+      "targets_classes": [
+        "PARTIAL",
+        "BUILT_NOT_PROVEN"
+      ],
+      "priority_bucket": "ops",
+      "scope": [
+        "Deepen approvals board from live stamps only",
+        "Refuse invent-approve"
+      ],
+      "forbids": [
+        "invent approvals",
+        "auto-approve"
+      ],
+      "depends_on": [],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "classification": "INTERNALLY_SOLVABLE",
+      "synthesized_from": "approvals/commissioning path deepen"
+    },
+    {
+      "pack_id": "WEEKLY-CASH-FORECAST-SHELL-1",
+      "title": "13-week cash forecast shell \u2014 no invent cash",
+      "closes": [
+        "cash forecast"
+      ],
+      "targets_classes": [
+        "MISSING"
+      ],
+      "priority_bucket": "finance",
+      "scope": [
+        "Honest UNKNOWN shell for 13-week cash until bank facts",
+        "FILE_IMPORT_ONLY path preserved"
+      ],
+      "forbids": [
+        "invent cash",
+        "invent forecast"
+      ],
+      "depends_on": [
+        "FIN-CASH-TRUTH-1",
+        "FIN-BANK-CREDS-ROUTE-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "classification": "HUMAN_COMMISSIONING_OR_INTERNAL",
+      "synthesized_from": "IL-R2 budgets+13-week cash MISSING"
+    },
+    {
+      "pack_id": "CONNECTOR-HEALTH-DEEPEN-1",
+      "title": "Connector health deepen \u2014 per-connector honesty",
+      "closes": [
+        "connections"
+      ],
+      "targets_classes": [
+        "PARTIAL"
+      ],
+      "priority_bucket": "connections",
+      "scope": [
+        "Deepen CONN-HEALTH with Wave7/8 classifications",
+        "No invent last_success"
+      ],
+      "forbids": [
+        "fake connector UP"
+      ],
+      "depends_on": [
+        "CONN-HEALTH",
+        "INTG-TRUTH-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "classification": "INTERNALLY_SOLVABLE",
+      "synthesized_from": "post-wave8 connector honesty synthesis"
     }
   ],
   "first_pack": "DASH-LIVE-1",
@@ -1569,7 +1687,9 @@
     "SOP-CATALOG-SEED-ROUTE-1",
     "FIN-BANK-CREDS-ROUTE-1"
   ],
-  "exited_awaiting_peaches": [],
+  "exited_awaiting_peaches": [
+    "OCCUPANCY-EXTERNAL-HOLD-1"
+  ],
   "synthesized_after_queue_head": true,
   "synthesis_note": "Appended after INTG-TRUTH-1 PASS; do not reorder ahead of AMG-OS-SHELL-1",
   "priority_bucket_counts": {
@@ -1583,9 +1703,9 @@
   "synthesis_wave2_at": "2026-09-30T00:45:44+08:00",
   "synthesis_wave3_at": "2026-09-30T01:19:01+08:00",
   "last_verified": "SOP-CATALOG-SEED-ROUTE-1",
-  "next_to_arm": null,
+  "next_to_arm": "WAVE9-SYNTH-CONTINUE",
   "heavy_in_flight": null,
-  "last_exited": "INV-CASH-FACTS-ROUTE-1",
+  "last_exited": "OCCUPANCY-EXTERNAL-HOLD-1",
   "next_to_arm_note": "parent/Peaches only after FIN-TAX-SHELL-1 PASS_VERIFIED \u2014 Cursor must not auto-arm; HEADCHEF veto",
   "wave4_synthesized_at": "2026-09-30T02:45:00+08:00",
   "wave4_count": 4,
