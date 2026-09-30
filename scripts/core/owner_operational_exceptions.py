@@ -247,6 +247,31 @@ def _commissioning_fails() -> list[dict[str, Any]]:
     return out
 
 
+
+def _external_route_exceptions() -> list[dict[str, Any]]:
+    """P0 Host Error / sidecar availability — RED only, deduped by probe tick."""
+    try:
+        from core import external_route_health as erh
+
+        rows = erh.owner_exception_items()
+    except Exception:  # noqa: BLE001
+        return []
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        out.append(
+            _item(
+                kind=str(row.get("kind") or "external_route"),
+                title=str(row.get("title") or "External finance route failure"),
+                detail=str(row.get("detail") or row.get("plain") or ""),
+                href=str(row.get("href") or "/ops/reliability"),
+                owner_role=str(row.get("owner_role") or "Owner / Ops"),
+                money_risk=bool(row.get("money_risk", True)),
+                blocked=bool(row.get("blocked", True)),
+            )
+        )
+    return out
+
+
 def _work_item_exceptions() -> list[dict[str, Any]]:
     """Overdue / blocked / failed commissioning work from the canonical work model."""
     try:
@@ -286,6 +311,7 @@ def collect(*, cards: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     items.extend(_month_end_blockers())
     items.extend(_commissioning_fails())
     items.extend(_work_item_exceptions())
+    items.extend(_external_route_exceptions())
     return {
         "ok": True,
         "read": "READ",

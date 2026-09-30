@@ -1,0 +1,12 @@
+{
+  "at_wita": "2026-09-30T10:49:38+08:00",
+  "overall_class": "ORIGIN_REACHABLE",
+  "previous_class": "ORIGIN_REACHABLE",
+  "transition_to_red": false,
+  "sustained_red": false,
+  "cleared_red": false,
+  "noise_suppressed": false,
+  "surface_exception": false,
+  "alert_id": null,
+  "reasons": []
+}

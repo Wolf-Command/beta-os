@@ -1,0 +1,248 @@
+{
+  "ok": true,
+  "pack": "EXTERNAL-ROUTE-HEALTH",
+  "schema": "wolf.external-route-health.v1",
+  "bound": "beta-external-route-health-safe",
+  "as_of_wita": "2026-09-30T10:49:38+08:00",
+  "overall": {
+    "class": "ORIGIN_REACHABLE",
+    "color": "AMBER",
+    "critical": false,
+    "reasons": [],
+    "summary": "ORIGIN_REACHABLE \u2014 CF Access challenge / fail-closed auth. Not Host Error. Unauth probe cannot claim GREEN."
+  },
+  "external_routes": [
+    {
+      "id": "amg_finance",
+      "entity": "AMG",
+      "path": "/amg/finance",
+      "url": "https://beta.wolfcommand.net/amg/finance",
+      "perspective": "external_https",
+      "http": {
+        "status_code": 302,
+        "location": "https://wolfcommand.cloudflareaccess.com/cdn-cgi/access/login/beta.wolfcommand.net?kid=3579f17f64cb0a8863cbd285c47de0f65d75e3cf8e24b2c0627e8d86f6f16b45&meta=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImI3ZmM5ZGNhYTM3N2ZiZTY3NjRkYmY0YTFjZDU1YWU3ZWY3OTRhZjM5MjA5ZTFhYmZhM2ZkMTI0NzJiY2RkZjIifQ.eyJ0eXBlIjoibWV0YSIsImF1ZCI6IjM1NzlmMTdmNjRjYjBhODg2M2NiZDI4NWM0N2RlMGY2NWQ3NWUzY2Y4ZTI0YjJjMDYyN2U4ZDg2ZjZmMTZiNDUiLCJob3N0bmFtZSI6ImJldGEud29sZmNvbW1hbmQubmV0IiwicmVkaXJlY3RfdXJsIjoiL2FtZy9maW5hbmNlIiwic2VydmljZV90b2tlbl9zdGF0dXMiOmZhbHNlLCJpc193YXJwIjpmYWxzZSwiaXNfZ2F0ZXdheSI6ZmFsc2UsImV4cCI6MTc5MDczNjg3OSwibmJmIjoxNzkwNzM2NTc5LCJpYXQiOjE3OTA3MzY1NzksImF1dGhfc3RhdHVzIjoiTk9ORSIsIm10bHNfYXV0aCI6eyJjZXJ0X2lzc3Vlcl9kbiI6IiIsImNlcnRfc2VyaWFsIjoiIiwiY2VydF9pc3N1ZXJfc2tpIjoiIiwiY2VydF9wcmVzZW50ZWQiOmZhbHNlLCJjb21tb25fbmFtZSI6IiIsImF1dGhfc3RhdHVzIjoiTk9ORSJ9LCJyZWFsX2NvdW50cnkiOiJJRCIsImFwcF9zZXNzaW9uX2hhc2giOiI3MGViOTNkOWM5MTE3NGE1NjI4NjdkM2Y3YTBjNjY5OGNkYzRkMWU2ZGQ1ZTVhYmNmODJlNzM0NDRjMTY1YzY2In0.WFcVB3wcrj2hzlke15_7-u-fm5HJprRhfhnnkSkr3JzBttQ0hudtqaP1DMoNRoHp1H47ySPTdyZZlgE6WBi6coGLmziH0bJdYhNfKH9KbwHdvjIAjtYfJItFeYJRg7z6bJ8MEGvbI7h9aneT2_zRphm24HupJFGU-qGBC9EFS5qIjdvXTXAXAN9FSr0hVjBFiPrV-yn0MszM6iBYFFSpTQpZ-DHpfxaWAA8YNbEdQMzASYU7K1nqe8tnLsFR1Wv5ngjavBgrTZaNHLPvG6yQR1eewqYdVheNab6OBWB9rPxL60V1oHbm60qN821lKZoAwYiLFOqvdWM-VrLnHckyjQ&redirect_url=%2Famg%2Ffinance",
+        "cf_ray": "a42fea64bcb4e88a-HKG",
+        "error": "HTTPError:302",
+        "elapsed_ms": 293,
+        "body_snippet": "<html>\r\n<head><title>302 Found</title></head>\r\n<body>\r\n<center><h1>302 Found</h1></center>\r\n<hr><center>cloudflare</center>\r\n<script type=\"module\" src=\"https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495\" integrity=\"sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==\" data-cf-beacon='{\"version\":\"2024.11.0\",\""
+      },
+      "classification": {
+        "class": "ORIGIN_REACHABLE",
+        "reason": "cf_access_challenge_origin_reachable",
+        "color": "AMBER",
+        "critical": false,
+        "note": "Unauth probe \u2014 ORIGIN_REACHABLE not RED. GREEN needs valid auth HTML."
+      }
+    },
+    {
+      "id": "bzg_finance",
+      "entity": "BZG",
+      "path": "/bzg/finance",
+      "url": "https://beta.wolfcommand.net/bzg/finance",
+      "perspective": "external_https",
+      "http": {
+        "status_code": 302,
+        "location": "https://wolfcommand.cloudflareaccess.com/cdn-cgi/access/login/beta.wolfcommand.net?kid=3579f17f64cb0a8863cbd285c47de0f65d75e3cf8e24b2c0627e8d86f6f16b45&meta=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImI3ZmM5ZGNhYTM3N2ZiZTY3NjRkYmY0YTFjZDU1YWU3ZWY3OTRhZjM5MjA5ZTFhYmZhM2ZkMTI0NzJiY2RkZjIifQ.eyJ0eXBlIjoibWV0YSIsImF1ZCI6IjM1NzlmMTdmNjRjYjBhODg2M2NiZDI4NWM0N2RlMGY2NWQ3NWUzY2Y4ZTI0YjJjMDYyN2U4ZDg2ZjZmMTZiNDUiLCJob3N0bmFtZSI6ImJldGEud29sZmNvbW1hbmQubmV0IiwicmVkaXJlY3RfdXJsIjoiL2J6Zy9maW5hbmNlIiwic2VydmljZV90b2tlbl9zdGF0dXMiOmZhbHNlLCJpc193YXJwIjpmYWxzZSwiaXNfZ2F0ZXdheSI6ZmFsc2UsImV4cCI6MTc5MDczNjg3OSwibmJmIjoxNzkwNzM2NTc5LCJpYXQiOjE3OTA3MzY1NzksImF1dGhfc3RhdHVzIjoiTk9ORSIsIm10bHNfYXV0aCI6eyJjZXJ0X2lzc3Vlcl9kbiI6IiIsImNlcnRfc2VyaWFsIjoiIiwiY2VydF9pc3N1ZXJfc2tpIjoiIiwiY2VydF9wcmVzZW50ZWQiOmZhbHNlLCJjb21tb25fbmFtZSI6IiIsImF1dGhfc3RhdHVzIjoiTk9ORSJ9LCJyZWFsX2NvdW50cnkiOiJJRCIsImFwcF9zZXNzaW9uX2hhc2giOiIwZmJjZGIzOGQ5NDdlZmQ3NmNkMWQ3OWE3OGRiMDZkYjkzZDM4MWNiMmM1ZDVhZmNmYjgxYzg4ZjU2NzgzOTRjIn0.pyEkjIHQdKdACxJZr53YGjs33VnSl693CgOJHQ7_QXRtklv3ZOc-78n5UowJrhG-HiJLJQTTA0um8OjY6tnVrTNmSFXrwt33Zr1uB0SG66PvOe5j8zU40TVGTb9MIR2xYw08-Ow-gNuvYRB8u_IHzDF2hqSv1oDWdV7WH2yXqbytZAvcsUQFyrf8GICaG0RErBpkZcw3omPnx47sICphGU0k_mT-YUYVAXLGbNtp3jTl7k44cNWUgqnrElgu13OyPSwcrQc_uep3_v8uks_oFF37nrhtbVCh5qYMv9n_wA9W8vZPznIdW2actd4SawjQYZ_4maBQpNHEUnOyNrZwDQ&redirect_url=%2Fbzg%2Ffinance",
+        "cf_ray": "a42fea6699d29b87-HKG",
+        "error": "HTTPError:302",
+        "elapsed_ms": 300,
+        "body_snippet": "<html>\r\n<head><title>302 Found</title></head>\r\n<body>\r\n<center><h1>302 Found</h1></center>\r\n<hr><center>cloudflare</center>\r\n<script type=\"module\" src=\"https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495\" integrity=\"sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==\" data-cf-beacon='{\"version\":\"2024.11.0\",\""
+      },
+      "classification": {
+        "class": "ORIGIN_REACHABLE",
+        "reason": "cf_access_challenge_origin_reachable",
+        "color": "AMBER",
+        "critical": false,
+        "note": "Unauth probe \u2014 ORIGIN_REACHABLE not RED. GREEN needs valid auth HTML."
+      }
+    },
+    {
+      "id": "ggv_finance",
+      "entity": "GGV",
+      "path": "/ggv/finance",
+      "url": "https://beta.wolfcommand.net/ggv/finance",
+      "perspective": "external_https",
+      "http": {
+        "status_code": 302,
+        "location": "https://wolfcommand.cloudflareaccess.com/cdn-cgi/access/login/beta.wolfcommand.net?kid=3579f17f64cb0a8863cbd285c47de0f65d75e3cf8e24b2c0627e8d86f6f16b45&meta=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImI3ZmM5ZGNhYTM3N2ZiZTY3NjRkYmY0YTFjZDU1YWU3ZWY3OTRhZjM5MjA5ZTFhYmZhM2ZkMTI0NzJiY2RkZjIifQ.eyJ0eXBlIjoibWV0YSIsImF1ZCI6IjM1NzlmMTdmNjRjYjBhODg2M2NiZDI4NWM0N2RlMGY2NWQ3NWUzY2Y4ZTI0YjJjMDYyN2U4ZDg2ZjZmMTZiNDUiLCJob3N0bmFtZSI6ImJldGEud29sZmNvbW1hbmQubmV0IiwicmVkaXJlY3RfdXJsIjoiL2dndi9maW5hbmNlIiwic2VydmljZV90b2tlbl9zdGF0dXMiOmZhbHNlLCJpc193YXJwIjpmYWxzZSwiaXNfZ2F0ZXdheSI6ZmFsc2UsImV4cCI6MTc5MDczNjg3OSwibmJmIjoxNzkwNzM2NTc5LCJpYXQiOjE3OTA3MzY1NzksImF1dGhfc3RhdHVzIjoiTk9ORSIsIm10bHNfYXV0aCI6eyJjZXJ0X2lzc3Vlcl9kbiI6IiIsImNlcnRfc2VyaWFsIjoiIiwiY2VydF9pc3N1ZXJfc2tpIjoiIiwiY2VydF9wcmVzZW50ZWQiOmZhbHNlLCJjb21tb25fbmFtZSI6IiIsImF1dGhfc3RhdHVzIjoiTk9ORSJ9LCJyZWFsX2NvdW50cnkiOiJJRCIsImFwcF9zZXNzaW9uX2hhc2giOiI1NWE3YTgzNzYzMjg2YzUzOTk4ZjNlZTM3YTJjYzBhM2NkNzE2NmYwYjZhMDNiYjUwNDNmYzIzYmFlYzYzMjU3In0.ZzAk1T_JfNLO5Qj3WAWfpOSXXWOGSDviJ7CKm0ga_ESeqtieq1m-Z3gjmoWLGOtSVNLHfq6uA9HVM9Vh29qDP0SWfaMgzmLUejjXZceg_6XqekxlG38Nc6cPGjnbd-xsLI_LC8jUa082pXeuyPDvg0bpFJg8LWqONZbJbKmneDynJ8JR6Mmm6P4ChGwpKh2U0lFSijSkpsXyPDA1hExPXLwozJPy9xXsn8W2Vxw2KOmqzYDjJOSmkj7gQcVK1ce6skfk3b0qSvTnRszwwnIGxdhaHKL_xkS2RZEgb6u_ZfT_4SP52ucrFpD83jYTLyoHA1bs9fW0nBlE89ft-aLYzA&redirect_url=%2Fggv%2Ffinance",
+        "cf_ray": "a42fea687ed10ef8-HKG",
+        "error": "HTTPError:302",
+        "elapsed_ms": 305,
+        "body_snippet": "<html>\r\n<head><title>302 Found</title></head>\r\n<body>\r\n<center><h1>302 Found</h1></center>\r\n<hr><center>cloudflare</center>\r\n<script type=\"module\" src=\"https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495\" integrity=\"sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==\" data-cf-beacon='{\"version\":\"2024.11.0\",\""
+      },
+      "classification": {
+        "class": "ORIGIN_REACHABLE",
+        "reason": "cf_access_challenge_origin_reachable",
+        "color": "AMBER",
+        "critical": false,
+        "note": "Unauth probe \u2014 ORIGIN_REACHABLE not RED. GREEN needs valid auth HTML."
+      }
+    }
+  ],
+  "loopback_routes": [
+    {
+      "id": "amg_finance",
+      "entity": "AMG",
+      "path": "/amg/finance",
+      "url": "http://127.0.0.1:8788/amg/finance",
+      "perspective": "loopback_8788",
+      "http": {
+        "status_code": 403,
+        "error": "HTTPError:403",
+        "elapsed_ms": 3,
+        "body_snippet": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Access denied</title>\n<link rel=\"stylesheet\" href=\"/wolf-tokens.css\">\n<style>\nbody{margin:0 auto;max-width:32rem;padding:2rem 1.25rem;font-family:var(--font,system-ui,sans-serif);background:var(--bg,#10140f);color:var(--text,#f3f7f1);}\na{display:inline-block;ma"
+      },
+      "classification": {
+        "class": "UNKNOWN",
+        "reason": "loopback_status_403",
+        "color": "AMBER",
+        "critical": false
+      }
+    },
+    {
+      "id": "bzg_finance",
+      "entity": "BZG",
+      "path": "/bzg/finance",
+      "url": "http://127.0.0.1:8788/bzg/finance",
+      "perspective": "loopback_8788",
+      "http": {
+        "status_code": 403,
+        "error": "HTTPError:403",
+        "elapsed_ms": 2,
+        "body_snippet": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Access denied</title>\n<link rel=\"stylesheet\" href=\"/wolf-tokens.css\">\n<style>\nbody{margin:0 auto;max-width:32rem;padding:2rem 1.25rem;font-family:var(--font,system-ui,sans-serif);background:var(--bg,#10140f);color:var(--text,#f3f7f1);}\na{display:inline-block;ma"
+      },
+      "classification": {
+        "class": "UNKNOWN",
+        "reason": "loopback_status_403",
+        "color": "AMBER",
+        "critical": false
+      }
+    },
+    {
+      "id": "ggv_finance",
+      "entity": "GGV",
+      "path": "/ggv/finance",
+      "url": "http://127.0.0.1:8788/ggv/finance",
+      "perspective": "loopback_8788",
+      "http": {
+        "status_code": 403,
+        "error": "HTTPError:403",
+        "elapsed_ms": 2,
+        "body_snippet": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Access denied</title>\n<link rel=\"stylesheet\" href=\"/wolf-tokens.css\">\n<style>\nbody{margin:0 auto;max-width:32rem;padding:2rem 1.25rem;font-family:var(--font,system-ui,sans-serif);background:var(--bg,#10140f);color:var(--text,#f3f7f1);}\na{display:inline-block;ma"
+      },
+      "classification": {
+        "class": "UNKNOWN",
+        "reason": "loopback_status_403",
+        "color": "AMBER",
+        "critical": false
+      }
+    }
+  ],
+  "local_deps": {
+    "beta_8788": {
+      "id": "beta_8788",
+      "port": 8788,
+      "listen": {
+        "port": 8788,
+        "listening": true,
+        "pids": [
+          30031
+        ],
+        "status": "UP",
+        "probe": "lsof_listen",
+        "rc": 0,
+        "err": null
+      },
+      "status": "UP",
+      "critical_if_down": true,
+      "note": "Local Beta listener. External Host Error can still occur if sidecar down."
+    },
+    "sidecar_8790": {
+      "id": "sidecar_8790",
+      "port": 8790,
+      "listen": {
+        "port": 8790,
+        "listening": true,
+        "pids": [
+          96666
+        ],
+        "status": "UP",
+        "probe": "lsof_listen",
+        "rc": 0,
+        "err": null
+      },
+      "health_http": {
+        "status_code": 200,
+        "body_snippet": "{\"status\":\"ok\",\"timestamp\":\"2026-09-30T02:49:39.026Z\",\"pack\":\"CORE-BOOKS-1\",\"books_isolation\":\"separate_sqlite_files\",\"books_slots\":[{\"id\":\"ENT-AMG\",\"books_enabled\":true,\"db_file\":\"atrium.sqlite\",\"she",
+        "error": null,
+        "elapsed_ms": 7
+      },
+      "healthy": true,
+      "status": "UP",
+      "critical_if_down": true
+    },
+    "cloudflared_tunnel": {
+      "id": "cloudflared_tunnel",
+      "status": "UP",
+      "running": true,
+      "process_count": 1,
+      "sample": "78700 /opt/homebrew/bin/cloudflared --no-autoupdate --config /Users/wolfterminal/.cloudflared/config.yml tunnel run wolf-dash",
+      "probe": "pgrep",
+      "rc": 0,
+      "err": null,
+      "critical_if_down": true
+    },
+    "launchagent": {
+      "id": "launchagent_atrium_finance_sidecar",
+      "label": "net.wolfcommand.atrium-finance-sidecar",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/net.wolfcommand.atrium-finance-sidecar.plist",
+      "plist_exists": true,
+      "state": "running",
+      "pid": 96649,
+      "runs": 2,
+      "raw_snippet": "gui/501/net.wolfcommand.atrium-finance-sidecar = {\n\tactive count = 1\n\tpath = /Users/wolfterminal/Library/LaunchAgents/net.wolfcommand.atrium-finance-sidecar.plist\n\ttype = LaunchAgent\n\tstate = running\n\n\tprogram = /Users/wolfterminal/beta-os/scripts/serve_atrium_finance.sh\n\targuments = {\n\t\t/Users/wolfterminal/beta-os/scripts/serve_atrium_finance.sh\n\t}\n\n\tworking directory = /Users/wolfterminal/atrium-finance\n\n\tstdout path = /Users/wolfterminal/beta-os/state/build-factory/logs/atrium-sidecar-launchd.out.log\n\tstderr path = /Users/wolfterminal/beta-os/state/build-factory/logs/atrium-sidecar-launchd.err.log\n\tinherited environment = {\n\t\tSSH_AUTH_SOCK => /var/run/com.apple.launchd.0pROLsejWO/Listeners\n\t}\n\n\tdefault environment = {\n\t\tPATH => /usr/bin:/bin:/usr/sbin:/sbin\n\t}\n\n\tenvironment = {\n\t\tOSLogR",
+      "probe": "launchctl_print"
+    }
+  },
+  "autorecover": null,
+  "health_model_gap": {
+    "reliability1_probes": "local_lsof_8788_8790_8787_ro",
+    "reliability1_external_https": false,
+    "lied_green_sidecar_up_while_down": false,
+    "blind_to_external_host_error": true,
+    "note": "RELIABILITY-1 was honest on sidecar DOWN via lsof, but did not probe external HTTPS. Beta :8788 UP alone could look fine while CF Host Error 502 hit /amg|/bzg|/ggv/finance. Owner exceptions had no external-route RED."
+  },
+  "identity_matrix_gaps": [
+    "Unauth probe cannot prove GREEN (200 HTML after valid CF Access + Beta auth).",
+    "Human prove still required for identity-matrix seat walk on finance desks.",
+    "staff_ready=false \u00b7 human_commissioned=false."
+  ],
+  "prod_touched": false,
+  "auth_weakened": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "operating_adoption": false,
+  "fake_uptime": false,
+  "invented_uptime": false,
+  "invented_green_health": false,
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "prod_port_untouched": 8787,
+  "no_exit_report": true,
+  "shell_only_not_full_recovery": true,
+  "ceiling": "BUILT",
+  "proven_claimed": false,
+  "ready_claimed": false,
+  "alert": {
+    "at_wita": "2026-09-30T10:49:38+08:00",
+    "overall_class": "ORIGIN_REACHABLE",
+    "previous_class": "ORIGIN_REACHABLE",
+    "transition_to_red": false,
+    "sustained_red": false,
+    "cleared_red": false,
+    "noise_suppressed": false,
+    "surface_exception": false,
+    "alert_id": null,
+    "reasons": []
+  }
+}

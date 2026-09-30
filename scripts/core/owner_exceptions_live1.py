@@ -89,6 +89,11 @@ _KIND_SPECS: tuple[tuple[str, str, str], ...] = (
         "Work-item exceptions",
         "Live overdue/blocked work items. Severity MISSING.",
     ),
+    (
+        "external_route",
+        "External finance routes",
+        "Live EXTERNAL-ROUTE-HEALTH RED CRITICAL (Host Error / sidecar). Severity MISSING.",
+    ),
 )
 
 _FINANCE_KINDS = frozenset({"finance_books", "stale_data", "missing_data"})

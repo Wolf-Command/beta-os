@@ -1,0 +1,21 @@
+{
+  "title": "P0-502 status after Mac reconnect",
+  "recorded_at": "2026-09-30T10:44:30.152772+08:00",
+  "sidecar": {
+    "port": 8790,
+    "health": 200,
+    "launchd": "net.wolfcommand.atrium-finance-sidecar",
+    "KeepAlive": true,
+    "runs": 2
+  },
+  "beta_8788": "listening serve_beta",
+  "unauth_amg_finance": "403 missing_auth (not sidecar_unavailable)",
+  "external_from_box": "302 CF Access for /amg|/bzg|/ggv/finance \u2014 not Host Error",
+  "matt_action_requested": "hard-refresh https://beta.wolfcommand.net/amg/finance",
+  "in_flight": [
+    "external-route-health executor",
+    "browser prove computerUse",
+    "V1 forensic executor"
+  ],
+  "exit_report": "LOCKED"
+}

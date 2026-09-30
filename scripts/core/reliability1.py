@@ -323,6 +323,30 @@ def _mac_pipe_surface() -> dict[str, Any]:
         }
 
 
+
+
+def _external_routes_surface() -> dict[str, Any]:
+    """EXTERNAL-ROUTE-HEALTH surface (latest tick; no live HTTPS on every board load)."""
+    try:
+        from core import external_route_health as _erh
+
+        return _erh.reliability_surface(live=False)
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "id": "external_route_health",
+            "status": "UNKNOWN",
+            "class": "UNKNOWN",
+            "last_probe_at": None,
+            "critical": False,
+            "uptime_pct": None,
+            "invented_uptime": False,
+            "painted_green": False,
+            "notes": (
+                f"External route health unavailable ({type(exc).__name__}). "
+                "Run scripts/ops/external_route_health_tick.py"
+            ),
+        }
+
 def build_board() -> dict[str, Any]:
     """Public reliability board. Auth gating is caller's responsibility."""
     probed_at = _now_wita()
@@ -331,6 +355,7 @@ def build_board() -> dict[str, Any]:
     prod = probe_prod_ro()
     targets = [beta, sidecar, prod]
     mac_pipe = _mac_pipe_surface()
+    external_routes = _external_routes_surface()
 
     # Absolute honesty pins — never invent uptime or flip DOWN→UP.
     for row in targets:
@@ -347,6 +372,12 @@ def build_board() -> dict[str, Any]:
         mac_pipe["uptime_invented"] = False
         mac_pipe["painted_green"] = False
         mac_pipe["fake_pipe_up"] = False
+
+    if isinstance(external_routes, dict):
+        external_routes["uptime_pct"] = None
+        external_routes["invented_uptime"] = False
+        external_routes["painted_green"] = False
+        external_routes["fake_uptime"] = False
 
     by_status: dict[str, int] = {}
     for row in targets:
@@ -378,6 +409,7 @@ def build_board() -> dict[str, Any]:
         },
         "targets": targets,
         "mac_pipe": mac_pipe,
+        "external_routes": external_routes,
         "honesty": {
             "sidecar_down_stays_down": sidecar.get("status") != "UP"
             or sidecar.get("listening") is True,
@@ -389,6 +421,8 @@ def build_board() -> dict[str, Any]:
             "prod_pid_held": PROD_PID_HELD,
             "mac_pipe_status_vocab": "GREEN|DOWN|UNKNOWN",
             "mac_pipe_pack": "PIPE-RELIABILITY-AUTO-1",
+            "external_route_health_pack": "EXTERNAL-ROUTE-HEALTH",
+            "external_https_probed_by": "external_route_health_tick",
         },
         "preserved_packs": list(PRESERVED_PACKS),
         "next_pack_for_parent_only": "CONTENT-ENGINE-LIVE-1",

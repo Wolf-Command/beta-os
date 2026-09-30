@@ -1,0 +1,179 @@
+{
+  "title": "EXTERNAL-ROUTE-HEALTH P0 evidence",
+  "as_of_wita": "2026-09-30T10:50:43+08:00",
+  "pack": "EXTERNAL-ROUTE-HEALTH",
+  "schema": "wolf.external-route-health.v1",
+  "incident": "https://beta.wolfcommand.net/amg/finance Cloudflare Host Error 502",
+  "root_cause": "Atrium Finance sidecar :8790 down unsupervised; atrium_full_mount \u2192 sidecar_unavailable 502 \u2192 CF Host Error",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_touched": false,
+  "auth_weakened": false,
+  "exit_report": "NOT_CREATED",
+  "probe_command": "python3 /Users/wolfterminal/beta-os/scripts/ops/external_route_health_tick.py --json",
+  "probe_command_plain": "python3 /Users/wolfterminal/beta-os/scripts/ops/external_route_health_tick.py",
+  "exit_codes": {
+    "0": "not RED",
+    "2": "RED CRITICAL"
+  },
+  "classification_samples": {
+    "host_error_or_502": {
+      "input": {
+        "status_code": 502,
+        "body_snippet": "Host Error / sidecar_unavailable"
+      },
+      "class": "RED_CRITICAL",
+      "color": "RED",
+      "critical": true
+    },
+    "cf_access_302": {
+      "input": {
+        "status_code": 302,
+        "location": "https://wolfcommand.cloudflareaccess.com/..."
+      },
+      "class": "ORIGIN_REACHABLE",
+      "color": "AMBER",
+      "critical": false,
+      "note": "Unauth probe \u2014 not RED. GREEN needs valid auth HTML."
+    },
+    "sidecar_down_local": {
+      "input": {
+        "port": 8790,
+        "listening": false,
+        "health": null
+      },
+      "class": "RED_CRITICAL",
+      "triggers_autorecover": "launchctl kickstart -k gui/$(id -u)/net.wolfcommand.atrium-finance-sidecar",
+      "critical": true
+    },
+    "loopback_missing_auth_or_access_denied_403": {
+      "input": {
+        "status_code": 403,
+        "body": "missing_auth OR Access denied HTML"
+      },
+      "class": "ORIGIN_REACHABLE / AMBER",
+      "critical": false,
+      "note": "Auth held \u2014 not Host Error."
+    }
+  },
+  "live_probe_sample": {
+    "as_of_wita": "2026-09-30T10:49:38+08:00",
+    "overall": {
+      "class": "ORIGIN_REACHABLE",
+      "color": "AMBER",
+      "critical": false,
+      "reasons": [],
+      "summary": "ORIGIN_REACHABLE \u2014 CF Access challenge / fail-closed auth. Not Host Error. Unauth probe cannot claim GREEN."
+    },
+    "external_routes": [
+      {
+        "path": "/amg/finance",
+        "status_code": 302,
+        "class": "ORIGIN_REACHABLE"
+      },
+      {
+        "path": "/bzg/finance",
+        "status_code": 302,
+        "class": "ORIGIN_REACHABLE"
+      },
+      {
+        "path": "/ggv/finance",
+        "status_code": 302,
+        "class": "ORIGIN_REACHABLE"
+      }
+    ],
+    "loopback_routes": [
+      {
+        "path": "/amg/finance",
+        "status_code": 403,
+        "class": "UNKNOWN",
+        "reason": "loopback_status_403"
+      },
+      {
+        "path": "/bzg/finance",
+        "status_code": 403,
+        "class": "UNKNOWN",
+        "reason": "loopback_status_403"
+      },
+      {
+        "path": "/ggv/finance",
+        "status_code": 403,
+        "class": "UNKNOWN",
+        "reason": "loopback_status_403"
+      }
+    ],
+    "local_deps": {
+      "beta_8788": "UP",
+      "sidecar_8790": "UP",
+      "cloudflared": "UP",
+      "launchagent": "running"
+    },
+    "alert": {
+      "at_wita": "2026-09-30T10:49:38+08:00",
+      "overall_class": "ORIGIN_REACHABLE",
+      "previous_class": "ORIGIN_REACHABLE",
+      "transition_to_red": false,
+      "sustained_red": false,
+      "cleared_red": false,
+      "noise_suppressed": false,
+      "surface_exception": false,
+      "alert_id": null,
+      "reasons": []
+    }
+  },
+  "autorecovery": {
+    "label": "net.wolfcommand.atrium-finance-sidecar",
+    "condition": ":8790 down AND LaunchAgent plist exists",
+    "command": "launchctl kickstart -k gui/501/net.wolfcommand.atrium-finance-sidecar",
+    "never": [
+      "kill unrelated processes",
+      "touch prod :8787",
+      "weaken auth"
+    ],
+    "log": "state/build-factory/logs/external-route-health-autorecover.jsonl"
+  },
+  "health_model_honesty": {
+    "lied_green_sidecar_up_while_down": false,
+    "blind_to_external_host_error_before": true,
+    "note": "RELIABILITY-1 was honest on sidecar DOWN via lsof, but did NOT probe external HTTPS. Beta :8788 UP alone could look fine while CF Host Error hit finance routes. Owner exceptions previously had no external-route RED. This probe closes that gap."
+  },
+  "owner_war_room_wiring": {
+    "status": "WIRED_PARTIAL",
+    "done": [
+      "owner_operational_exceptions._external_route_exceptions reads RED from latest tick",
+      "owner_exceptions_live1 KIND_SPECS includes external_route",
+      "reliability1.build_board includes external_routes surface from latest tick",
+      "dedupe alert on transition to RED; sustained RED open without spam events"
+    ],
+    "partial": [
+      "No dedicated /ops/external-route-health page or serve_beta dispatch (call tick script / reliability surface)",
+      "Owner board shows RED only after tick has written state/ops/external-route-health-latest.json",
+      "collect() may fail in some REPL contexts if catalog sqlite locked \u2014 production Owner path uses live Beta",
+      "Unauth probe cannot prove GREEN \u2014 identity-matrix human prove still required"
+    ]
+  },
+  "identity_matrix_gaps": [
+    "Unauth probe cannot claim GREEN (200 HTML after valid CF Access + Beta auth).",
+    "Human seat walk still required for finance desks.",
+    "staff_ready=false \u00b7 human_commissioned=false."
+  ],
+  "files_changed": [
+    "scripts/core/external_route_health.py",
+    "scripts/ops/external_route_health_tick.py",
+    "scripts/tests/test_external_route_health_20260930.py",
+    "docs/RULE-External-Route-Health-2026-09-30.md",
+    "scripts/core/owner_operational_exceptions.py",
+    "scripts/core/owner_exceptions_live1.py",
+    "scripts/core/reliability1.py",
+    "state/ops/external-route-health-latest.json",
+    "state/ops/external-route-health-alert.json"
+  ],
+  "unit_tests": "PASS=26 FAIL=0 (scripts/tests/test_external_route_health_20260930.py) prior to HTML-403 classify refine",
+  "inventory_boards": {
+    "reliability1": "/ops/reliability \u2014 local lsof 8788/8790/8787 RO + mac_pipe + now external_routes",
+    "pipe_reliability_auto1": "/ops/pipe-reliability-auto-1 \u2014 Mac local-exec pipe",
+    "conn_health_board1": "/ops/conn-health-1 \u2014 INTG connectors",
+    "owner_exceptions_live1": "/owner/exceptions-live-1 \u2014 operational rollup incl. external_route when RED",
+    "backup_health1": "backup health board"
+  }
+}
