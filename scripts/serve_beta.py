@@ -182,6 +182,7 @@ from core import crm_pipeline_truth1 as _crm_pipeline_truth1
 from core import content_publish_path1 as _content_publish_path1
 from core import occupancy_external_hold1 as _occupancy_external_hold1
 from core import staff_access_truth1 as _staff_access_truth1
+from core import approvals_live_deepen1 as _approvals_live_deepen1
 from core import fin_tax_shell1 as _fin_tax_shell1
 from core import fin_ap_ar_shell1 as _fin_ap_ar_shell1
 from core import owner_needs_you1 as _owner_needs_you1
@@ -2111,6 +2112,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._staff_access_truth1_dispatch():
+            return
+
+        if self._approvals_live_deepen1_dispatch():
             return
 
         if self._fin_tax_shell1_dispatch():
@@ -5410,6 +5414,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._staff_access_truth1_dispatch():
                 return
         elif path in (
+            "/ops/approvals-live-deepen-1",
+            "/ops/approvals-live-deepen-1/",
+            "/ops/approvals-live",
+            "/ops/approvals-live/",
+            "/ops/approvals",
+            "/ops/approvals/",
+            "/approvals-live-deepen-1",
+            "/approvals-live-deepen-1/",
+            "/approvals-live-deepen-1.html",
+            "/dashboards/approvals-live-deepen-1.html",
+        ):
+            if self._approvals_live_deepen1_dispatch():
+                return
+        elif path in (
             "/fin/tax-shell-1",
             "/fin/tax-shell-1/",
             "/fin/tax-shell",
@@ -6591,6 +6609,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._staff_access_truth1_write_refused(path)
             return
+        if (
+            path == "/api/ops/approvals-live-deepen-1"
+            or path.startswith("/api/ops/approvals-live-deepen-1/")
+            or path == "/api/ops/approvals-live"
+            or path.startswith("/api/ops/approvals-live/")
+            or path == "/api/approvals/live-deepen-1"
+            or path.startswith("/api/approvals/live-deepen-1/")
+            or path == "/api/approvals/live"
+            or path.startswith("/api/approvals/live/")
+        ):
+            self._approvals_live_deepen1_write_refused(path)
+            return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
             return
@@ -7560,6 +7590,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             or path.startswith("/api/staff/access-truth/")
         ):
             self._staff_access_truth1_write_refused(path)
+            return
+        if (
+            path == "/api/ops/approvals-live-deepen-1"
+            or path.startswith("/api/ops/approvals-live-deepen-1/")
+            or path == "/api/ops/approvals-live"
+            or path.startswith("/api/ops/approvals-live/")
+            or path == "/api/approvals/live-deepen-1"
+            or path.startswith("/api/approvals/live-deepen-1/")
+            or path == "/api/approvals/live"
+            or path.startswith("/api/approvals/live/")
+        ):
+            self._approvals_live_deepen1_write_refused(path)
             return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
@@ -8935,6 +8977,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             or path.startswith("/api/staff/access-truth/")
         ):
             self._staff_access_truth1_write_refused(path)
+            return
+        if (
+            path == "/api/ops/approvals-live-deepen-1"
+            or path.startswith("/api/ops/approvals-live-deepen-1/")
+            or path == "/api/ops/approvals-live"
+            or path.startswith("/api/ops/approvals-live/")
+            or path == "/api/approvals/live-deepen-1"
+            or path.startswith("/api/approvals/live-deepen-1/")
+            or path == "/api/approvals/live"
+            or path.startswith("/api/approvals/live/")
+        ):
+            self._approvals_live_deepen1_write_refused(path)
             return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
@@ -20320,6 +20374,154 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "invented_staff": False,
                 "prod_mutate": False,
                 "prod_pid_held": _staff_access_truth1.PROD_PID_HELD,
+                "classification": "INTERNALLY_SOLVABLE",
+            },
+            status=403,
+        )
+
+    def _approvals_live_deepen1_dispatch(self) -> bool:
+        """APPROVALS-LIVE-DEEPEN-1 — live stamps only; no invent approvals."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _approvals_live_deepen1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            person_id = str(identity.get("person_id") or "")
+            if not _approvals_live_deepen1.person_may_view(person_id):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "forbidden",
+                        "message": "Approvals live deepen board is not on this assignment.",
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_approvals": False,
+                        "auto_approve": False,
+                        "classification": "INTERNALLY_SOLVABLE",
+                    },
+                    status=403,
+                )
+                return True
+            try:
+                payload = _approvals_live_deepen1.public_payload(person_id)
+            except _approvals_live_deepen1.ApprovalsLiveDeepen1Error as exc:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": exc.code,
+                        "message": str(exc),
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_approvals": False,
+                        "auto_approve": False,
+                        **_approvals_live_deepen1.honesty_flags(),
+                    },
+                    status=403,
+                )
+                return True
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "approvals_live_deepen_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_approvals": False,
+                        "auto_approve": False,
+                        "classification": "INTERNALLY_SOLVABLE",
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _approvals_live_deepen1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        person_id = str(identity.get("person_id") or "")
+        if not _approvals_live_deepen1.person_may_view(person_id):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Approvals live deepen board is not on this assignment.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=403,
+            )
+            return True
+        page = DASHBOARDS / "approvals-live-deepen-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "APPROVALS-LIVE-DEEPEN-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="approvals-live-deepen-1.html")
+        return True
+
+    def _approvals_live_deepen1_write_refused(self, path: str) -> None:
+        """Refuse invent-approve / auto-approve / invent-pending / ready / prod."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _approvals_live_deepen1.refuse_external_write(
+                body if isinstance(body, dict) else {}
+            )
+        except _approvals_live_deepen1.ApprovalsLiveDeepen1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "invented_approvals": False,
+                    "auto_approve": False,
+                    "fake_approvals": False,
+                    "prod_mutate": False,
+                    "prod_pid_held": _approvals_live_deepen1.PROD_PID_HELD,
+                    "classification": "INTERNALLY_SOLVABLE",
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": (
+                    "APPROVALS-LIVE-DEEPEN-1 is a read-only truth board. "
+                    "Writes refused."
+                ),
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "invented_approvals": False,
+                "auto_approve": False,
+                "prod_mutate": False,
+                "prod_pid_held": _approvals_live_deepen1.PROD_PID_HELD,
                 "classification": "INTERNALLY_SOLVABLE",
             },
             status=403,

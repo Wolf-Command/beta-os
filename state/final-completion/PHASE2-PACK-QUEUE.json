@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T09:33:45+08:00",
+  "at_wita": "2026-09-30T09:42:45+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -1594,10 +1594,16 @@
       "depends_on": [],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "classification": "INTERNALLY_SOLVABLE",
       "synthesized_from": "approvals/commissioning path deepen",
-      "armed_at": "2026-09-30T09:33:45+08:00"
+      "armed_at": "2026-09-30T09:33:45+08:00",
+      "exit_at": "2026-09-30T09:41:32+08:00",
+      "tests": {
+        "pass": 135,
+        "fail": 0
+      },
+      "verified_at": "2026-09-30T09:42:45+08:00"
     },
     {
       "pack_id": "WEEKLY-CASH-FORECAST-SHELL-1",
@@ -1623,9 +1629,10 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
+      "status": "WAITING_CURSOR",
       "classification": "HUMAN_COMMISSIONING_OR_INTERNAL",
-      "synthesized_from": "IL-R2 budgets+13-week cash MISSING"
+      "synthesized_from": "IL-R2 budgets+13-week cash MISSING",
+      "armed_at": "2026-09-30T09:42:45+08:00"
     },
     {
       "pack_id": "CONNECTOR-HEALTH-DEEPEN-1",
@@ -1717,7 +1724,7 @@
   "next_to_arm_note": "parent/Peaches only after FIN-TAX-SHELL-1 PASS_VERIFIED \u2014 Cursor must not auto-arm; HEADCHEF veto",
   "wave4_synthesized_at": "2026-09-30T02:45:00+08:00",
   "wave4_count": 4,
-  "updated_at": "2026-09-30T08:55:00+08:00",
+  "updated_at": "2026-09-30T09:41:32+08:00",
   "wave5_synthesized_at": "2026-09-30T03:30:00+08:00",
   "wave6_synthesized_at": "2026-09-30T03:57:00+08:00",
   "unparked_at": "2026-09-30T07:26:00+08:00",

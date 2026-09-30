@@ -608,6 +608,22 @@
       "expect": "exit 0",
       "by": "cursor-staff-access-truth-1",
       "at": "2026-09-30T09:31:42+08:00"
+    },
+    {
+      "id": "APPROVALS-LIVE-DEEPEN-1-board",
+      "claim": "APPROVALS-LIVE-DEEPEN-1: classification INTERNALLY_SOLVABLE; live request_count=0 honest empty; invented_approvals/auto_approve false; approvals engine preserved; staff_ready/human_commissioned false; next pack parent-only WEEKLY-CASH-FORECAST-SHELL-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import approvals_live_deepen1 as a; p=a.build_board(); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='INTERNALLY_SOLVABLE' and p.get('invented_approvals') is False and p.get('auto_approve') is False and p.get('request_count')==0 and p.get('honest_empty') is True and a.no_invented_approvals(p) and a.surfaces_are_honest(p) and p.get('approvals_preserved') is True and p.get('staff_ready') is False and p.get('human_commissioned') is False and a.honesty_flags().get('next_pack_for_parent_only')=='WEEKLY-CASH-FORECAST-SHELL-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-approvals-live-deepen-1",
+      "at": "2026-09-30T09:41:32+08:00"
+    },
+    {
+      "id": "APPROVALS-LIVE-DEEPEN-1-surfaces",
+      "claim": "APPROVALS-LIVE-DEEPEN-1 page/API/shots/RESULT present; unsigned deny + invent-approve refuse; INTERNALLY_SOLVABLE + HUMAN_COMMISSIONING + MATT_ACTION + EXTERNAL_BLOCKER pins; approvals preserved; next pack parent-only WEEKLY-CASH-FORECAST-SHELL-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import approvals_live_deepen1 as a; from pathlib import Path; html=Path('dashboards/approvals-live-deepen-1.html').read_text(); import sys; sys.exit(0 if (a.api_matches('/api/ops/approvals-live-deepen-1') and a.page_matches('/ops/approvals-live-deepen-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/approvalslive1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/APPROVALS-LIVE-DEEPEN-1-RESULT.md').is_file() and a.honesty_flags().get('next_pack_for_parent_only')=='WEEKLY-CASH-FORECAST-SHELL-1' and a.honesty_flags().get('cursor_did_not_auto_start_next') is True and a.honesty_flags().get('classification')=='INTERNALLY_SOLVABLE') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-approvals-live-deepen-1",
+      "at": "2026-09-30T09:41:32+08:00"
     }
   ]
 }

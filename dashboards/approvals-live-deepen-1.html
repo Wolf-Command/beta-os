@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Approvals live deepen — live stamps only</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1c1915;
+      --muted: #5c574e;
+      --paper: #f3f1ec;
+      --card: #fffdf8;
+      --line: #ddd6c8;
+      --pres: #2a3f5c;
+      --block: #8a1f1f;
+      --matt: #5a4a18;
+      --solv: #1f4d3a;
+      --hum: #5a3a18;
+      --empty: #4a5560;
+    }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(ellipse 70% 40% at 0% 0%, #e4ebe7 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 72px; }
+    h1 { font-size: 1.65rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+    h2 { font-size: 1.05rem; margin: 22px 0 10px; letter-spacing: -0.01em; }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #e8f0eb; border: 1px solid #a8c4b0; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner strong { color: var(--solv); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+    .chip {
+      display: inline-block; padding: 5px 10px; border-radius: 6px;
+      background: #ebe4d6; font-size: 0.75rem; font-weight: 600;
+    }
+    .chip.INTERNALLY_SOLVABLE { background: #dcebe3; color: var(--solv); }
+    .chip.HUMAN_COMMISSIONING { background: #f0e6d8; color: var(--hum); }
+    .chip.MATT_ACTION { background: #f0ead8; color: var(--matt); }
+    .chip.EXTERNAL_BLOCKER { background: #f5e0e0; color: var(--block); }
+    .chip.PRESERVED { background: #dde4ec; color: var(--pres); }
+    .chip.REFUSED { background: #ece8e2; color: var(--muted); }
+    .chip.HONEST_EMPTY { background: #e2e6ea; color: var(--empty); }
+    .chip.NOT_BUILT { background: #ece8e2; color: var(--muted); }
+    .facts {
+      margin: 0 0 18px; padding: 12px 14px; border: 1px solid var(--line);
+      border-radius: 10px; background: var(--card);
+    }
+    .facts dl {
+      display: grid; grid-template-columns: 220px 1fr; gap: 6px 12px;
+      margin: 0; font-size: 0.88rem;
+    }
+    .facts dt { color: var(--muted); }
+    .facts dd { margin: 0; }
+    .status { font-weight: 700; }
+    .status.INTERNALLY_SOLVABLE { color: var(--solv); }
+    .status.HUMAN_COMMISSIONING { color: var(--hum); }
+    .status.MATT_ACTION { color: var(--matt); }
+    .status.EXTERNAL_BLOCKER { color: var(--block); }
+    .status.PRESERVED { color: var(--pres); }
+    .status.REFUSED { color: var(--muted); }
+    .status.HONEST_EMPTY { color: var(--empty); }
+    .status.NOT_BUILT { color: var(--muted); }
+    .table-wrap {
+      overflow-x: auto; border: 1px solid var(--line); border-radius: 10px;
+      background: var(--card); margin: 0 0 18px;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 640px; }
+    th, td {
+      text-align: left; padding: 10px 12px; border-bottom: 1px solid #ebe4d6;
+      vertical-align: top; font-size: 0.86rem;
+    }
+    th {
+      background: #f0ebe2; font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.04em; color: var(--muted);
+    }
+    tr:last-child td { border-bottom: 0; }
+    .muted { color: var(--muted); font-size: 0.8rem; line-height: 1.4; }
+    .null { color: #9a9488; font-style: italic; }
+    .err { color: var(--block); }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
+    a { color: var(--pres); }
+    @media (max-width: 520px) {
+      h1 { font-size: 1.35rem; }
+      main { padding: 16px 12px 64px; }
+      .facts dl { grid-template-columns: 1fr; }
+      th, td { padding: 8px 8px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body data-ready="0" data-pack="APPROVALS-LIVE-DEEPEN-1">
+  <main>
+    <h1>Approvals live deepen</h1>
+    <p class="sub" id="sub">Live stamps only · pack APPROVALS-LIVE-DEEPEN-1 · loading…</p>
+    <div class="banner" id="honesty">
+      <strong>Honesty:</strong>
+      staff_ready=false · human_commissioned=false ·
+      classification=<span id="banner-class">INTERNALLY_SOLVABLE</span> ·
+      never invent approvals · never auto-approve ·
+      honest empty when no live approvals ·
+      invent-approve writes refused ·
+      prod pid 15975 READ-ONLY · approvals engine preserved
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="facts" id="facts">
+      <dl>
+        <dt>classification</dt><dd id="f-class" class="status INTERNALLY_SOLVABLE">INTERNALLY_SOLVABLE</dd>
+        <dt>live requests</dt><dd id="f-req" class="null">0 (honest empty)</dd>
+        <dt>PENDING queue</dt><dd id="f-pend" class="status HONEST_EMPTY">0</dd>
+        <dt>orphan decisions</dt><dd id="f-orphan" class="muted">—</dd>
+        <dt>HUMAN_COMMISSIONING</dt><dd id="f-hum" class="status HUMAN_COMMISSIONING">human decide only</dd>
+        <dt>approvals engine</dt><dd id="f-pres"><a href="/amg/finance/approvals">/amg/finance/approvals</a> · preserved</dd>
+      </dl>
+    </div>
+    <h2>Truth surfaces</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Surface</th>
+            <th>Status</th>
+            <th>Value</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody id="surfaces">
+          <tr><td colspan="4" class="muted">Loading surfaces…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h2>Live queue (requests only)</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Count</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody id="queue">
+          <tr><td colspan="3" class="muted">Loading queue…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    function setText(id, value, cls) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = value == null || value === "" ? "—" : String(value);
+      if (cls) el.className = cls;
+    }
+    async function load() {
+      var sub = document.getElementById("sub");
+      var chips = document.getElementById("chips");
+      var surfaces = document.getElementById("surfaces");
+      var queueEl = document.getElementById("queue");
+      try {
+        var resp = await fetch("/api/ops/approvals-live-deepen-1", {
+          headers: { Accept: "application/json" }
+        });
+        var data = await resp.json();
+        if (!resp.ok || !data.ok) {
+          surfaces.innerHTML = '<tr><td colspan="4" class="err">Failed (' + resp.status + ")</td></tr>";
+          queueEl.innerHTML = '<tr><td colspan="3" class="err">Failed</td></tr>';
+          document.body.setAttribute("data-ready", "0");
+          sub.textContent = "Live stamps only · pack APPROVALS-LIVE-DEEPEN-1 · load failed";
+          return;
+        }
+        sub.textContent =
+          "Live stamps only · pack APPROVALS-LIVE-DEEPEN-1 · as of " +
+          (data.as_of_wita || "?") +
+          " · ceiling " + (data.ceiling || "BUILT");
+        var counts = data.surface_counts || {};
+        chips.innerHTML =
+          '<span class="chip INTERNALLY_SOLVABLE">INTERNALLY_SOLVABLE=' + esc(counts.INTERNALLY_SOLVABLE || 0) + "</span>" +
+          '<span class="chip HUMAN_COMMISSIONING">HUMAN_COMMISSIONING=' + esc(counts.HUMAN_COMMISSIONING || 0) + "</span>" +
+          '<span class="chip MATT_ACTION">MATT_ACTION=' + esc(counts.MATT_ACTION || 0) + "</span>" +
+          '<span class="chip EXTERNAL_BLOCKER">EXTERNAL_BLOCKER=' + esc(counts.EXTERNAL_BLOCKER || 0) + "</span>" +
+          '<span class="chip HONEST_EMPTY">HONEST_EMPTY=' + esc(counts.HONEST_EMPTY || 0) + "</span>" +
+          '<span class="chip">invented_approvals=false</span>' +
+          '<span class="chip">auto_approve=false</span>' +
+          '<span class="chip INTERNALLY_SOLVABLE">classification=INTERNALLY_SOLVABLE</span>';
+        setText("f-class", data.classification || "INTERNALLY_SOLVABLE", "status INTERNALLY_SOLVABLE");
+        setText(
+          "f-req",
+          (data.request_count || 0) + (data.honest_empty ? " (honest empty — never invent)" : ""),
+          data.honest_empty ? "null" : "muted"
+        );
+        setText(
+          "f-pend",
+          String(data.pending_count || 0) + (Number(data.pending_count || 0) === 0 ? " HONEST_EMPTY" : " HUMAN_COMMISSIONING"),
+          Number(data.pending_count || 0) === 0 ? "status HONEST_EMPTY" : "status HUMAN_COMMISSIONING"
+        );
+        setText(
+          "f-orphan",
+          (data.orphan_decision_count || 0) + " orphan · " + (data.decision_count || 0) + " decisions total (not inventing requests)",
+          "muted"
+        );
+        document.getElementById("banner-class").textContent =
+          data.classification || "INTERNALLY_SOLVABLE";
+        document.body.setAttribute("data-classification", data.classification || "INTERNALLY_SOLVABLE");
+        document.body.setAttribute("data-request-count", String(data.request_count || 0));
+        document.body.setAttribute("data-honest-empty", String(!!data.honest_empty));
+        document.body.setAttribute("data-invented-approvals", "false");
+
+        var surf = data.surfaces || [];
+        surfaces.innerHTML = surf.map(function (s) {
+          var st = s.status || "UNKNOWN";
+          var val = s.value;
+          if (val == null) val = "null";
+          return (
+            "<tr data-surface=\"" + esc(s.id || "") + "\" data-status=\"" + esc(st) + "\">" +
+            "<td>" + esc(s.label || s.id || "") + "</td>" +
+            "<td class=\"status " + esc(st) + "\">" + esc(st) + "</td>" +
+            "<td>" + (val === "null" ? "<span class=\"null\">null</span>" : esc(val)) + "</td>" +
+            "<td class=\"muted\">" + esc(s.why || "") + "</td>" +
+            "</tr>"
+          );
+        }).join("") || '<tr><td colspan="4" class="muted">No surfaces</td></tr>';
+
+        var by = data.by_status || {};
+        var keys = Object.keys(by);
+        if (!keys.length) {
+          queueEl.innerHTML =
+            '<tr data-status="HONEST_EMPTY"><td class="status HONEST_EMPTY">HONEST_EMPTY</td>' +
+            "<td>0</td>" +
+            '<td class="muted">No live approval requests — never invent PENDING/APPROVED rows</td></tr>';
+        } else {
+          queueEl.innerHTML = keys.map(function (k) {
+            return (
+              "<tr data-status=\"" + esc(k) + "\">" +
+              "<td>" + esc(k) + "</td>" +
+              "<td>" + esc(by[k]) + "</td>" +
+              '<td class="muted">Live stamp only</td></tr>'
+            );
+          }).join("");
+        }
+
+        document.body.setAttribute("data-ready", "1");
+      } catch (err) {
+        surfaces.innerHTML = '<tr><td colspan="4" class="err">' + esc(err.message || err) + "</td></tr>";
+        document.body.setAttribute("data-ready", "0");
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

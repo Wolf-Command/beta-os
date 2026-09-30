@@ -4,7 +4,7 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 9,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T09:33:45+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
@@ -14,7 +14,7 @@
   "no_push": true,
   "matt_auto_continue": true,
   "prior_pack_verified": "STAFF-ACCESS-TRUTH-1",
-  "beta_os_head_at_arm": "PENDING",
+  "beta_os_head_at_arm": "b36456fceb1cb0afc69561cb49e55276557726a7",
   "brief": "state/build-factory/briefs/BRIEF-APPROVALS-LIVE-DEEPEN-1.md",
   "log": "state/build-factory/logs/APPROVALS-LIVE-DEEPEN-1.log",
   "result_file": "docs/wolf/ops/APPROVALS-LIVE-DEEPEN-1-RESULT.md",
@@ -34,5 +34,15 @@
   "standards": {
     "shell_ne_complete": true,
     "tests_ne_staff_ready": true
-  }
+  },
+  "cursor_started_at": "2026-09-30T09:40:48+08:00",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T09:41:32+08:00",
+  "suite_pass": 135,
+  "suite_fail": 0,
+  "cursor_did_not_auto_start_next": true,
+  "peaches_verified_at": "2026-09-30T09:42:45+08:00",
+  "tests_pass": 135,
+  "tests_fail": 0,
+  "peaches_verify": "state/final-completion/packs/APPROVALS-LIVE-DEEPEN-1-PEACHES-VERIFY.json"
 }
