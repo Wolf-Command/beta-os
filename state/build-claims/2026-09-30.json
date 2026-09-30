@@ -592,6 +592,22 @@
       "expect": "exit 0",
       "by": "cursor-occupancy-external-hold-1",
       "at": "2026-09-30T09:21:20+08:00"
+    },
+    {
+      "id": "STAFF-ACCESS-TRUTH-1-board",
+      "claim": "STAFF-ACCESS-TRUTH-1: classification INTERNALLY_SOLVABLE; live registry wired; commissioned_count=0 honest empty; invented_roles/staff false; staff_access preserved; staff_ready/human_commissioned false; next pack parent-only APPROVALS-LIVE-DEEPEN-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import staff_access_truth1 as s; p=s.build_board(); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='INTERNALLY_SOLVABLE' and p.get('invented_roles') is False and p.get('invented_staff') is False and p.get('commissioned_count')==0 and p.get('honest_empty_commissioned') is True and s.no_invented_roles(p) and s.surfaces_are_honest(p) and p.get('staff_access_preserved') is True and p.get('staff_ready') is False and p.get('human_commissioned') is False and s.honesty_flags().get('next_pack_for_parent_only')=='APPROVALS-LIVE-DEEPEN-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-staff-access-truth-1",
+      "at": "2026-09-30T09:31:42+08:00"
+    },
+    {
+      "id": "STAFF-ACCESS-TRUTH-1-surfaces",
+      "claim": "STAFF-ACCESS-TRUTH-1 page/API/shots/RESULT present; unsigned deny + invent-role refuse; INTERNALLY_SOLVABLE + HUMAN_COMMISSIONING + MATT_ACTION + EXTERNAL_BLOCKER pins; staff_access preserved; next pack parent-only APPROVALS-LIVE-DEEPEN-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import staff_access_truth1 as s; from pathlib import Path; html=Path('dashboards/staff-access-truth-1.html').read_text(); import sys; sys.exit(0 if (s.api_matches('/api/ops/staff-access-truth-1') and s.page_matches('/ops/staff-access-truth-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/staffaccess1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/STAFF-ACCESS-TRUTH-1-RESULT.md').is_file() and s.honesty_flags().get('next_pack_for_parent_only')=='APPROVALS-LIVE-DEEPEN-1' and s.honesty_flags().get('cursor_did_not_auto_start_next') is True and s.honesty_flags().get('classification')=='INTERNALLY_SOLVABLE') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-staff-access-truth-1",
+      "at": "2026-09-30T09:31:42+08:00"
     }
   ]
 }

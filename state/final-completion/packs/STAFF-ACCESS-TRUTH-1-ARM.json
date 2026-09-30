@@ -1,0 +1,71 @@
+{
+  "run_id": "STAFF-ACCESS-TRUTH-1",
+  "pack": "STAFF-ACCESS-TRUTH-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 9,
+  "status": "PASS_VERIFIED",
+  "armed_at": "2026-09-30T09:25:00+08:00",
+  "exited_at": "2026-09-30T09:31:42+08:00",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "prior_pack_verified": "OCCUPANCY-EXTERNAL-HOLD-1",
+  "beta_os_head_at_arm": "622eb1c5019f79edcafc6091f3b38637f1262009",
+  "brief": "state/build-factory/briefs/BRIEF-STAFF-ACCESS-TRUTH-1.md",
+  "log": "state/build-factory/logs/STAFF-ACCESS-TRUTH-1.log",
+  "result_file": "docs/wolf/ops/STAFF-ACCESS-TRUTH-1-RESULT.md",
+  "next_pack_for_parent": "APPROVALS-LIVE-DEEPEN-1",
+  "classification": "INTERNALLY_SOLVABLE",
+  "action": "WIRE_LIVE_REGISTRY_STAMPS",
+  "persons_active": 18,
+  "seat_count": 22,
+  "commissioned_count": 0,
+  "honest_empty_commissioned": true,
+  "pins": {
+    "registry": "INTERNALLY_SOLVABLE",
+    "human_commissioning": "HUMAN_COMMISSIONING",
+    "cloudflare_access": "MATT_ACTION",
+    "cf_access_api": "EXTERNAL_BLOCKER"
+  },
+  "forbids": [
+    "invent roles",
+    "flip staff_ready",
+    "HEADCHEF",
+    "Exit Report",
+    "push"
+  ],
+  "preserves": [
+    "staff_access"
+  ],
+  "standards": {
+    "shell_ne_complete": true,
+    "tests_ne_staff_ready": true
+  },
+  "page": "/ops/staff-access-truth-1",
+  "api": "/api/ops/staff-access-truth-1",
+  "suite": {
+    "path": "scripts/tests/test_staff_access_truth1_20260930.py",
+    "pass": 135,
+    "fail": 0
+  },
+  "shots": [
+    "docs/wolf/ops/shots/staffaccess1-desk-desktop.png",
+    "docs/wolf/ops/shots/staffaccess1-desk-phone.png",
+    "docs/wolf/ops/shots/staffaccess1-stamps.png",
+    "docs/wolf/ops/shots/staffaccess1-unsigned-deny.png"
+  ],
+  "cursor_did_not_auto_start_next": true,
+  "exit_code": 0,
+  "tests_pass": 135,
+  "tests_fail": 0,
+  "peaches_verified_at": "2026-09-30T09:33:45+08:00",
+  "peaches_verify": "state/final-completion/packs/STAFF-ACCESS-TRUTH-1-PEACHES-VERIFY.json",
+  "peaches_verify_path": "state/final-completion/packs/STAFF-ACCESS-TRUTH-1-PEACHES-VERIFY.json",
+  "matt_finished_ping": true,
+  "matt_finished_ping_at": "2026-09-30T09:32:10+08:00"
+}

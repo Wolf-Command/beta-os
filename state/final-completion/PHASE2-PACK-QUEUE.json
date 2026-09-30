@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T09:23:45+08:00",
+  "at_wita": "2026-09-30T09:33:45+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -1561,9 +1561,16 @@
       "depends_on": [],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
+      "status": "PASS_VERIFIED",
       "classification": "INTERNALLY_SOLVABLE",
-      "synthesized_from": "MISSING staff/access themes; staff_ready stays false"
+      "synthesized_from": "MISSING staff/access themes; staff_ready stays false",
+      "armed_at": "2026-09-30T09:25:00+08:00",
+      "exited_at": "2026-09-30T09:31:42+08:00",
+      "verified_at": "2026-09-30T09:33:45+08:00",
+      "tests": {
+        "pass": 135,
+        "fail": 0
+      }
     },
     {
       "pack_id": "APPROVALS-LIVE-DEEPEN-1",
@@ -1587,9 +1594,10 @@
       "depends_on": [],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
+      "status": "WAITING_CURSOR",
       "classification": "INTERNALLY_SOLVABLE",
-      "synthesized_from": "approvals/commissioning path deepen"
+      "synthesized_from": "approvals/commissioning path deepen",
+      "armed_at": "2026-09-30T09:33:45+08:00"
     },
     {
       "pack_id": "WEEKLY-CASH-FORECAST-SHELL-1",
@@ -1720,5 +1728,6 @@
     "TESTS_NE_STAFF_READY_NE_HUMAN_COMMISSIONED_NE_OPERATING_ADOPTION",
     "CLASSIFY_EVERY_SHELL",
     "NO_EXIT_REPORT_UNTIL_PHASE_13"
-  ]
+  ],
+  "wave9_active": "APPROVALS-LIVE-DEEPEN-1"
 }

@@ -1,0 +1,82 @@
+{
+  "pack": "STAFF-ACCESS-TRUTH-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 9,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T09:33:45+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T09:33:08+08:00",
+  "result_file": "docs/wolf/ops/STAFF-ACCESS-TRUTH-1-RESULT.md",
+  "tests_rerun": {
+    "test_staff_access_truth1_20260930.py": {
+      "pass": 135,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/staffaccess1-desk-desktop.png",
+        "bytes": 260604,
+        "sha256": "6aa6f51ef9c75b63e86c2016646b0977d19040c7d231cb8ce6e096ee883ce24d"
+      },
+      {
+        "path": "docs/wolf/ops/shots/staffaccess1-desk-phone.png",
+        "bytes": 111866,
+        "sha256": "cbafbd2179e225d1b6acc37a4fa9575ee273d79f6fa6bcafbb4ca44724378fdc"
+      },
+      {
+        "path": "docs/wolf/ops/shots/staffaccess1-stamps.png",
+        "bytes": 294431,
+        "sha256": "e9aaa8b1eb23b2421a744721a7b45dbb717647d2dae80ada744b64890caf8fa7"
+      },
+      {
+        "path": "docs/wolf/ops/shots/staffaccess1-unsigned-deny.png",
+        "bytes": 24471,
+        "sha256": "7df206a8cc673a3bc5593cc1ec6f49e9b4799764c6a5130d7590ace9de8fbded"
+      }
+    ]
+  },
+  "truth": {
+    "persons_active": 18,
+    "seat_count": 22,
+    "commissioned_count": 0,
+    "invented_roles": false,
+    "action": "WIRE_LIVE_REGISTRY_STAMPS"
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "classification": {
+    "pack": "INTERNALLY_SOLVABLE",
+    "registry": "INTERNALLY_SOLVABLE",
+    "human_commissioning": "HUMAN_COMMISSIONING",
+    "cloudflare": "MATT_ACTION",
+    "cf_api": "EXTERNAL_BLOCKER",
+    "shell_ne_complete": true
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "622eb1c5019f79edcafc6091f3b38637f1262009",
+    "uncommitted": true
+  },
+  "preserves": [
+    "staff_access"
+  ],
+  "next_pack": "APPROVALS-LIVE-DEEPEN-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

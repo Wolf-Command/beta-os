@@ -89,31 +89,32 @@
     "RELIABILITY-1",
     "CONTENT-ENGINE-LIVE-1"
   ],
-  "last_pack_verified": "OCCUPANCY-EXTERNAL-HOLD-1",
-  "last_verified_at": "2026-09-30T09:23:45+08:00",
-  "pass_verified_count": 41,
-  "next_pack": "STAFF-ACCESS-TRUTH-1",
+  "last_pack_verified": "STAFF-ACCESS-TRUTH-1",
+  "last_verified_at": "2026-09-30T09:33:45+08:00",
+  "pass_verified_count": 42,
+  "next_pack": "APPROVALS-LIVE-DEEPEN-1",
   "mac_pipe": "GREEN_BOARD",
   "unparked_at": "2026-09-30T07:26:00+08:00",
   "standards_lock": true,
   "restore_drill": "DRILL_RAN_NON_DESTRUCTIVE",
-  "last_pack_exited": "CONTENT-PUBLISH-PATH-1",
-  "last_exit_at": "2026-09-30T09:13:49+08:00",
+  "last_pack_exited": "STAFF-ACCESS-TRUTH-1",
+  "last_exit_at": "2026-09-30T09:31:42+08:00",
   "metricool": "PER_SURFACE_RUNTIME_WIRED",
-  "next_pack_note": "OCCUPANCY-EXTERNAL-HOLD-1 CURSOR_EXIT_0 EXTERNAL_BLOCKER \u2014 Yanolja/Mews hold \u00b7 occupancy/ADR null \u00b7 AMG-OCC preserved \u00b7 NPWP MATT_ACTION non-blocking \u00b7 parent/Peaches arms WAVE9-SYNTH-CONTINUE after verify; Cursor must not auto-chain WAVE9 / HEADCHEF / Exit Report",
+  "next_pack_note": "STAFF-ACCESS-TRUTH-1 PASS_VERIFIED INTERNALLY_SOLVABLE \u2014 live registry wired \u00b7 commissioned PASS=0 honest empty \u00b7 invent-role 403 \u00b7 staff_access preserved \u00b7 parent armed APPROVALS-LIVE-DEEPEN-1; Cursor must not auto-chain HEADCHEF / Exit Report",
   "wave8_queued": [
     "CRM-PIPELINE-TRUTH-1",
     "CONTENT-PUBLISH-PATH-1",
     "OCCUPANCY-EXTERNAL-HOLD-1"
   ],
   "wave8_active": null,
-  "at_wita": "2026-09-30T09:13:49+08:00",
-  "wave8_awaiting_peaches": "CONTENT-PUBLISH-PATH-1",
+  "at_wita": "2026-09-30T09:32:10+08:00",
+  "wave8_awaiting_peaches": null,
   "wave8_complete": true,
   "wave9_queued": [
     "STAFF-ACCESS-TRUTH-1",
     "APPROVALS-LIVE-DEEPEN-1",
     "WEEKLY-CASH-FORECAST-SHELL-1",
     "CONNECTOR-HEALTH-DEEPEN-1"
-  ]
+  ],
+  "wave9_active": "APPROVALS-LIVE-DEEPEN-1"
 }
