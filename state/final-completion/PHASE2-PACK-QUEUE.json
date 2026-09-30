@@ -1701,9 +1701,16 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
+      "status": "PASS_VERIFIED",
       "classification": "INTERNALLY_SOLVABLE",
-      "synthesized_from": "post-wave9 owner freshness deepen"
+      "synthesized_from": "post-wave9 owner freshness deepen",
+      "armed_at": "2026-09-30T10:05:49+08:00",
+      "wave": 10,
+      "exited_at": "2026-09-30T10:11:44+08:00",
+      "suite_pass": 169,
+      "suite_fail": 0,
+      "verified_at": "2026-09-30T10:13:53+08:00",
+      "tests": "169/0"
     },
     {
       "pack_id": "ATRIUM-FC-TRUTH-DEEPEN-1",

@@ -28,7 +28,7 @@
   "fake_ops_data": false,
   "auto_chain": true,
   "optimize_for": "actually_finish_wolf_not_speed_or_flattery",
-  "updated_at": "2026-09-30T03:46:32+08:00",
+  "updated_at": "2026-09-30T10:13:53+08:00",
   "phase0_box_prepared_at": "2026-09-29T23:28:13+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase0_mac_stamps_at": "2026-09-29T23:33:17+08:00",
@@ -36,8 +36,8 @@
   "phase1_status": "COMPLETE",
   "phase2_status": "CHAINING",
   "phase": 2,
-  "active_pack": "SOP-LESSON-LIVE-1",
-  "active_pack_status": "WAITING_CURSOR",
+  "active_pack": "ATRIUM-FC-TRUTH-DEEPEN-1",
+  "active_pack_status": "ARMING",
   "cursor_pid": 35130,
   "daemon_pid": 89677,
   "raw_1500_qa_status": "NOT_FOUND_AFTER_EXHAUSTIVE_SEARCH",
@@ -46,7 +46,7 @@
   "exit_report": "FORBIDDEN_UNTIL_PHASE_13_GATE",
   "continue_flag": true,
   "next": "Babysit INTEL-LEARN-1 \u2192 BZG-OPS-DESK-1 \u2192 FIN-RECON-SHELL-1 \u2192 DASH-LIVE-1 \u2192 RELIABILITY-1 \u2192 CONTENT-ENGINE-LIVE-1",
-  "last_exited_pack": "OCCUPANCY-EXTERNAL-HOLD-1",
+  "last_exited_pack": "OWNER-DASH-FRESHNESS-1",
   "last_exited_status": "CURSOR_EXIT_0",
   "last_verified_pack": "AMG-OCC-TRUTH-1",
   "last_verified_status": "PASS_VERIFIED",
@@ -89,10 +89,10 @@
     "RELIABILITY-1",
     "CONTENT-ENGINE-LIVE-1"
   ],
-  "last_pack_verified": "CONNECTOR-HEALTH-DEEPEN-1",
-  "last_verified_at": "2026-09-30T10:02:30+08:00",
-  "pass_verified_count": 45,
-  "next_pack": "OWNER-DASH-FRESHNESS-1",
+  "last_pack_verified": "OWNER-DASH-FRESHNESS-1",
+  "last_verified_at": "2026-09-30T10:13:53+08:00",
+  "pass_verified_count": 46,
+  "next_pack": "ATRIUM-FC-TRUTH-DEEPEN-1",
   "mac_pipe": "GREEN_BOARD",
   "unparked_at": "2026-09-30T07:26:00+08:00",
   "standards_lock": true,
@@ -107,7 +107,7 @@
     "OCCUPANCY-EXTERNAL-HOLD-1"
   ],
   "wave8_active": null,
-  "at_wita": "2026-09-30T09:32:10+08:00",
+  "at_wita": "2026-09-30T10:13:53+08:00",
   "wave8_awaiting_peaches": null,
   "wave8_complete": true,
   "wave9_queued": [
@@ -123,5 +123,9 @@
     "ATRIUM-FC-TRUTH-DEEPEN-1",
     "HR-DEFERRED-HOLD-STAMP-1",
     "RELIABILITY-PIPE-EPISODE-ROLLUP-1"
-  ]
+  ],
+  "wave10_active": null,
+  "wave10_complete": false,
+  "cursor_did_not_auto_start_next": true,
+  "wave10_awaiting_peaches": null
 }

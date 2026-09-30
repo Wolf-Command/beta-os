@@ -1,0 +1,41 @@
+{
+  "pack": "OWNER-DASH-FRESHNESS-1",
+  "status": "PASS_VERIFIED",
+  "at_wita": "2026-09-30T10:13:53+08:00",
+  "tests": "169/0",
+  "re_ran_tests": true,
+  "prod_pid": 15975,
+  "prod_untouched": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "classification": "INTERNALLY_SOLVABLE",
+  "ceiling": "BUILT",
+  "shots": [
+    {
+      "name": "ownerdashfresh1-desk-desktop.png",
+      "sha256": "751381058a6b447055f6653365e51037d850c1d8596904515edc0af38cbc9444",
+      "bytes": 295927
+    },
+    {
+      "name": "ownerdashfresh1-desk-phone.png",
+      "sha256": "f642992dcd5b6dacc2e88aec6448f5c6606c280b53590db4242a17d0ef5b37fe",
+      "bytes": 144033
+    },
+    {
+      "name": "ownerdashfresh1-surface-stamps.png",
+      "sha256": "8526480743011de87318032484a412967f42c2114ea10621e298a70d7c660558",
+      "bytes": 333810
+    },
+    {
+      "name": "ownerdashfresh1-unsigned-deny.png",
+      "sha256": "7df206a8cc673a3bc5593cc1ec6f49e9b4799764c6a5130d7590ace9de8fbded",
+      "bytes": 24471
+    }
+  ],
+  "next_pack": "ATRIUM-FC-TRUTH-DEEPEN-1",
+  "no_push": true,
+  "no_exit_report": true,
+  "cursor_did_not_auto_chain": true,
+  "wave": 10,
+  "peaches": "PASS"
+}

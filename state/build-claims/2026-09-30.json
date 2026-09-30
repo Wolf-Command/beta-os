@@ -656,6 +656,22 @@
       "expect": "exit 0",
       "by": "cursor-connector-health-deepen-1",
       "at": "2026-09-30T10:01:47+08:00"
+    },
+    {
+      "id": "OWNER-DASH-FRESHNESS-1-board",
+      "claim": "OWNER-DASH-FRESHNESS-1: classification INTERNALLY_SOLVABLE; LIVE|STALE|UNKNOWN from live stamps; invented_kpi/freshness false; stale_shown_as_current false; DASH-LIVE-1 + OWNER-EXCEPTIONS-LIVE-1 + OWNER-NEEDS-YOU-1 preserved; staff_ready/human_commissioned false; next pack parent-only ATRIUM-FC-TRUTH-DEEPEN-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import owner_dash_freshness1 as o; p=o.build_board(); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='INTERNALLY_SOLVABLE' and p.get('invented_kpi') is False and p.get('invented_freshness') is False and p.get('stale_shown_as_current') is False and o.no_invented_kpi(p) and o.no_stale_as_current(p) and o.surfaces_are_honest(p) and p.get('dash_live1_preserved') is True and p.get('owner_exceptions_live1_preserved') is True and p.get('owner_needs_you1_preserved') is True and p.get('staff_ready') is False and p.get('human_commissioned') is False and o.honesty_flags().get('next_pack_for_parent_only')=='ATRIUM-FC-TRUTH-DEEPEN-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-owner-dash-freshness-1",
+      "at": "2026-09-30T10:11:44+08:00"
+    },
+    {
+      "id": "OWNER-DASH-FRESHNESS-1-surfaces",
+      "claim": "OWNER-DASH-FRESHNESS-1 page/API/shots/RESULT present; unsigned deny + invent-kpi/freshness refuse; INTERNALLY_SOLVABLE; preserved packs; next pack parent-only ATRIUM-FC-TRUTH-DEEPEN-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import owner_dash_freshness1 as o; from pathlib import Path; html=Path('dashboards/owner-dash-freshness-1.html').read_text(); import sys; sys.exit(0 if (o.api_matches('/api/ops/owner-dash-freshness-1') and o.page_matches('/ops/owner-dash-freshness-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/ownerdashfresh1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/OWNER-DASH-FRESHNESS-1-RESULT.md').is_file() and o.honesty_flags().get('next_pack_for_parent_only')=='ATRIUM-FC-TRUTH-DEEPEN-1' and o.honesty_flags().get('cursor_did_not_auto_start_next') is True and o.honesty_flags().get('classification')=='INTERNALLY_SOLVABLE') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-owner-dash-freshness-1",
+      "at": "2026-09-30T10:11:44+08:00"
     }
   ]
 }

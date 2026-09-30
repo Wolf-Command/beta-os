@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OWNER-DASH-FRESHNESS-1 — live stamps only</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1a1f24;
+      --muted: #5a6570;
+      --paper: #f2f4f6;
+      --card: #fbfcfd;
+      --line: #d3dae0;
+      --warn: #8a1f1f;
+      --partial: #7a5a12;
+      --ok: #1f5a3a;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(ellipse 65% 35% at 100% 0%, #e4ebf1 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 80px; }
+    .crumb { font-size: 0.78rem; color: var(--muted); margin: 0 0 8px; }
+    h1 {
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: 1.75rem;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #eef3f7; border: 1px solid #c5d0d9; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner.warn {
+      background: #f8eaea; border-color: #e0b8b8; color: var(--warn);
+    }
+    .banner strong { color: #2a3a48; }
+    .banner.warn strong { color: var(--warn); }
+    h2 {
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin: 22px 0 10px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .tile {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 10px;
+      padding: 14px;
+      min-height: 120px;
+    }
+    .tile.warn {
+      border-color: #e0b8b8;
+      background: #fff5f3;
+    }
+    .tile.partial {
+      border-color: #e0d0a0;
+      background: #fffbf0;
+    }
+    .tile.ok {
+      border-color: #b8d8c4;
+      background: #f3faf5;
+    }
+    .tile .k {
+      font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .tile .v {
+      font-family: var(--display);
+      font-size: 1.05rem;
+      margin: 6px 0 4px;
+      font-weight: 600;
+      word-break: break-word;
+    }
+    .tile.warn .v { color: var(--warn); }
+    .tile.partial .v { color: var(--partial); }
+    .tile.ok .v { color: var(--ok); }
+    .tile .why { font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
+    .stamp {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 4px 8px;
+      margin: 0 8px 8px 0;
+      font-size: 0.78rem;
+      background: #fff;
+    }
+    .stamp.bad { border-color: #e0b8b8; color: var(--warn); }
+    .stamp.partial { border-color: #e0d0a0; color: var(--partial); }
+    .links a {
+      display: block;
+      color: var(--ink);
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: var(--card);
+    }
+    .links a:hover { border-color: #9aa8b4; }
+    .links .note { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+    table.inv {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    table.inv th, table.inv td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    table.inv th {
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: #eef3f7;
+    }
+    table.inv tr:last-child td { border-bottom: none; }
+    .unknown { color: var(--warn); font-weight: 600; }
+    .stale { color: var(--partial); font-weight: 600; }
+    .live { color: var(--ok); font-weight: 600; }
+  </style>
+</head>
+<body
+  data-ready="0"
+  data-deny=""
+  data-pack="OWNER-DASH-FRESHNESS-1"
+  data-wolf-page-type="WORKSPACE"
+  data-wolf-org="WOLF"
+  data-wolf-shell="global"
+  data-classification=""
+  data-invented-kpi="0"
+  data-invented-freshness="0"
+  data-stale-as-current="0"
+  data-dash-live1-preserved="0"
+  data-exceptions-preserved="0"
+  data-needs-you-preserved="0"
+  data-staff-ready="0"
+  data-human-commissioned="0"
+  data-surface-count=""
+>
+  <main>
+    <p class="crumb">WOLF · Ops · OWNER-DASH-FRESHNESS-1 (live stamps only)</p>
+    <h1>Owner dash freshness</h1>
+    <p class="sub">Deepen owner dashboard freshness from live derived-view stamps only. LIVE|STALE|UNKNOWN with real as_of. No invent KPI. STALE never current. staff_ready=false · human_commissioned=false. Preserves DASH-LIVE-1 + OWNER-EXCEPTIONS-LIVE-1 + OWNER-NEEDS-YOU-1.</p>
+
+    <div class="banner warn" id="honesty">
+      Loading honesty pins…
+    </div>
+
+    <div id="stamps" aria-label="Honesty stamps"></div>
+
+    <h2>Honesty tiles</h2>
+    <div class="grid" id="tiles"></div>
+
+    <h2>Per-surface freshness (LIVE|STALE|UNKNOWN)</h2>
+    <div class="grid" id="surfaces"></div>
+
+    <h2>Surface table</h2>
+    <div id="registry"></div>
+
+    <h2>Preserved packs</h2>
+    <div class="grid" id="preserved"></div>
+
+    <h2>Related boards</h2>
+    <div class="links" id="links"></div>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function tileClass(status) {
+      var s = String(status || "");
+      if (
+        s === "STALE" ||
+        s === "UNKNOWN" ||
+        s === "UNAVAILABLE" ||
+        s === "CHECK_FAILED" ||
+        s === "REFUSED" ||
+        s === "NULL"
+      ) {
+        return s === "STALE" ? "tile partial" : "tile warn";
+      }
+      if (s === "CURRENT" || s === "HUMAN_COMMISSIONING" || s === "PARTIAL") {
+        return "tile partial";
+      }
+      if (s === "LIVE" || s === "PRESERVED" || s === "INTERNALLY_SOLVABLE") {
+        return "tile ok";
+      }
+      return "tile";
+    }
+
+    function statusClass(status) {
+      var s = String(status || "");
+      if (s === "LIVE") return "live";
+      if (s === "STALE" || s === "CURRENT") return "stale";
+      return "unknown";
+    }
+
+    function render(body) {
+      var banner = document.getElementById("honesty");
+      banner.className = "banner warn";
+      banner.innerHTML =
+        "<strong>Honesty:</strong> classification=<strong>INTERNALLY_SOLVABLE</strong> · " +
+        "invented_kpi=false · invented_freshness=false · stale_shown_as_current=false · " +
+        "surfaces=" + esc(body.surface_count) +
+        " · by_status=" + esc(JSON.stringify(body.by_status || {})) +
+        " · staff_ready=false · human_commissioned=false · " +
+        "DASH-LIVE-1 " + (body.dash_live1_preserved ? "PRESERVED" : "CHECK") +
+        " · EXCEPTIONS " + (body.owner_exceptions_live1_preserved ? "PRESERVED" : "CHECK") +
+        " · NEEDS-YOU " + (body.owner_needs_you1_preserved ? "PRESERVED" : "CHECK") + ".";
+
+      var stamps = [
+        ["INTERNALLY_SOLVABLE", body.classification === "INTERNALLY_SOLVABLE"],
+        ["staff_ready=false", true],
+        ["human_commissioned=false", true],
+        ["invented_kpi=false", body.invented_kpi === false],
+        ["invented_freshness=false", body.invented_freshness === false],
+        ["stale_shown_as_current=false", body.stale_shown_as_current === false],
+        ["DASH-LIVE-1 preserved", body.dash_live1_preserved === true],
+        ["OWNER-EXCEPTIONS-LIVE-1 preserved", body.owner_exceptions_live1_preserved === true],
+        ["OWNER-NEEDS-YOU-1 preserved", body.owner_needs_you1_preserved === true]
+      ];
+      document.getElementById("stamps").innerHTML = stamps.map(function (row) {
+        var cls = "stamp";
+        if (!row[1]) cls += " bad";
+        return '<span class="' + cls + '">' + esc(row[0]) + "</span>";
+      }).join("");
+
+      var tiles = body.honesty_tiles || [];
+      document.getElementById("tiles").innerHTML = tiles.map(function (t) {
+        var display = t.value == null || t.value === "" ? (t.status || "UNKNOWN") : t.value;
+        if (typeof display === "object") display = JSON.stringify(display);
+        return (
+          '<div class="' + tileClass(t.status) + '" data-tile="' + esc(t.id) + '">' +
+          '<div class="k">' + esc(t.label) + "</div>" +
+          '<div class="v">' + esc(display) + "</div>" +
+          '<div class="why">' + esc(t.why || "") + "</div></div>"
+        );
+      }).join("");
+
+      var surfaces = body.surface_stamps || [];
+      document.getElementById("surfaces").innerHTML = surfaces.map(function (s) {
+        return (
+          '<div class="' + tileClass(s.status) + '" data-surface="' + esc(s.id) + '">' +
+          '<div class="k">' + esc(s.label) + "</div>" +
+          '<div class="v">' + esc(s.status || "UNKNOWN") + "</div>" +
+          '<div class="why">as_of=' + esc(s.as_of_wita || "null") +
+          " · kind=" + esc(s.kind || "?") +
+          " · shown_as_current=" + (s.shown_as_current ? "true" : "false") +
+          "</div></div>"
+        );
+      }).join("");
+
+      var rows = surfaces.map(function (s) {
+        return (
+          "<tr data-surface-row=\"" + esc(s.id) + "\">" +
+          "<td>" + esc(s.label || s.id) + "</td>" +
+          "<td><span class=\"" + statusClass(s.status) + "\">" + esc(s.status || "UNKNOWN") + "</span></td>" +
+          "<td>" + (s.as_of_wita == null ? '<span class="unknown">null</span>' : esc(s.as_of_wita)) + "</td>" +
+          "<td>" + (s.shown_as_current ? "yes" : "no") + "</td>" +
+          "<td>false</td></tr>"
+        );
+      }).join("");
+      document.getElementById("registry").innerHTML =
+        '<table class="inv"><thead><tr><th>Surface</th><th>Status</th><th>as_of</th><th>Shown current</th><th>Invented</th></tr></thead><tbody>' +
+        rows + "</tbody></table>";
+
+      var preserved = [
+        body.dash_live1 || { pack: "DASH-LIVE-1", ok: false, why: "missing" },
+        body.owner_exceptions_live1 || { pack: "OWNER-EXCEPTIONS-LIVE-1", ok: false, why: "missing" },
+        body.owner_needs_you1 || { pack: "OWNER-NEEDS-YOU-1", ok: false, why: "missing" }
+      ];
+      document.getElementById("preserved").innerHTML = preserved.map(function (p) {
+        return (
+          '<div class="tile' + (p.ok ? " ok" : " warn") + '" data-preserved="' + esc(p.pack) + '">' +
+          '<div class="k">' + esc(p.pack) + "</div>" +
+          '<div class="v">' + (p.ok ? "PRESERVED" : "CHECK_FAILED") + "</div>" +
+          '<div class="why">' + esc(p.why || "") + "</div></div>"
+        );
+      }).join("");
+
+      var links = body.desk_links || [];
+      document.getElementById("links").innerHTML = links.map(function (l) {
+        return (
+          '<a href="' + esc(l.href) + '"><strong>' + esc(l.label) + "</strong>" +
+          '<div class="note">' + esc(l.note || "") + "</div></a>"
+        );
+      }).join("");
+
+      document.body.setAttribute("data-ready", "1");
+      document.body.setAttribute("data-classification", body.classification || "");
+      document.body.setAttribute("data-invented-kpi", body.invented_kpi === false ? "0" : "1");
+      document.body.setAttribute(
+        "data-invented-freshness",
+        body.invented_freshness === false ? "0" : "1"
+      );
+      document.body.setAttribute(
+        "data-stale-as-current",
+        body.stale_shown_as_current === false ? "0" : "1"
+      );
+      document.body.setAttribute(
+        "data-dash-live1-preserved",
+        body.dash_live1_preserved ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-exceptions-preserved",
+        body.owner_exceptions_live1_preserved ? "1" : "0"
+      );
+      document.body.setAttribute(
+        "data-needs-you-preserved",
+        body.owner_needs_you1_preserved ? "1" : "0"
+      );
+      document.body.setAttribute("data-staff-ready", "0");
+      document.body.setAttribute("data-human-commissioned", "0");
+      document.body.setAttribute(
+        "data-surface-count",
+        String(body.surface_count == null ? "" : body.surface_count)
+      );
+    }
+
+    function deny(status, text) {
+      document.body.setAttribute("data-ready", "0");
+      document.body.setAttribute("data-deny", String(status || "403"));
+      var banner = document.getElementById("honesty");
+      banner.className = "banner warn";
+      banner.innerHTML =
+        "<strong>Access denied.</strong> Owner dash freshness requires signed identity. " +
+        "staff_ready=false · human_commissioned=false. (" + esc(status) + ") " +
+        esc((text || "").slice(0, 180));
+    }
+
+    fetch("/api/ops/owner-dash-freshness-1", { credentials: "same-origin" })
+      .then(function (resp) {
+        return resp.text().then(function (text) {
+          var data = null;
+          try { data = JSON.parse(text); } catch (e) { data = null; }
+          if (!resp.ok) {
+            deny(resp.status, text);
+            return;
+          }
+          if (!data || data.ok !== true) {
+            deny(resp.status || 500, text);
+            return;
+          }
+          render(data);
+        });
+      })
+      .catch(function (err) {
+        deny(0, String(err));
+      });
+  </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+{
+  "run_id": "OWNER-DASH-FRESHNESS-1",
+  "pack": "OWNER-DASH-FRESHNESS-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 10,
+  "status": "PASS_VERIFIED",
+  "armed_at": "2026-09-30T10:05:49+08:00",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "prior_pack_verified": "CONNECTOR-HEALTH-DEEPEN-1",
+  "beta_os_head_at_arm": "f2586a4",
+  "log": "state/build-factory/logs/OWNER-DASH-FRESHNESS-1.log",
+  "result_file": "docs/wolf/ops/OWNER-DASH-FRESHNESS-1-RESULT.md",
+  "next_pack_for_parent": "ATRIUM-FC-TRUTH-DEEPEN-1",
+  "classification": "INTERNALLY_SOLVABLE",
+  "forbids": [
+    "invent KPI",
+    "invent freshness",
+    "flip staff_ready",
+    "HEADCHEF",
+    "Exit Report",
+    "push",
+    "auto-chain ATRIUM-FC-TRUTH-DEEPEN-1"
+  ],
+  "depends_on": [
+    "DASH-LIVE-1",
+    "OWNER-EXCEPTIONS-LIVE-1"
+  ],
+  "preserves": [
+    "DASH-LIVE-1",
+    "OWNER-EXCEPTIONS-LIVE-1",
+    "OWNER-NEEDS-YOU-1"
+  ],
+  "action": "WIRE_LIVE_FRESHNESS_STAMPS",
+  "page": "/ops/owner-dash-freshness-1",
+  "api": "/api/ops/owner-dash-freshness-1",
+  "cursor_did_not_auto_start_next": true,
+  "pins": {
+    "pack": "INTERNALLY_SOLVABLE",
+    "invent_kpi": "REFUSED",
+    "invent_freshness": "REFUSED",
+    "stale_as_current": "REFUSED",
+    "exit_report_headchef": "MATT_ACTION",
+    "prod_mutate": "EXTERNAL_BLOCKER"
+  },
+  "shots": [
+    "docs/wolf/ops/shots/ownerdashfresh1-desk-desktop.png",
+    "docs/wolf/ops/shots/ownerdashfresh1-desk-phone.png",
+    "docs/wolf/ops/shots/ownerdashfresh1-surface-stamps.png",
+    "docs/wolf/ops/shots/ownerdashfresh1-unsigned-deny.png"
+  ],
+  "exited_at": "2026-09-30T10:11:44+08:00",
+  "exit_code": 0,
+  "suite_pass": 169,
+  "suite_fail": 0,
+  "tests_pass": 169,
+  "tests_fail": 0,
+  "invented_kpi": false,
+  "invented_freshness": false,
+  "stale_shown_as_current": false,
+  "verified_at": "2026-09-30T10:13:53+08:00",
+  "tests": "169/0",
+  "peaches": "PASS"
+}

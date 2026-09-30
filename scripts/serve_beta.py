@@ -185,6 +185,7 @@ from core import staff_access_truth1 as _staff_access_truth1
 from core import approvals_live_deepen1 as _approvals_live_deepen1
 from core import weekly_cash_forecast_shell1 as _weekly_cash_forecast_shell1
 from core import connector_health_deepen1 as _connector_health_deepen1
+from core import owner_dash_freshness1 as _owner_dash_freshness1
 from core import fin_tax_shell1 as _fin_tax_shell1
 from core import fin_ap_ar_shell1 as _fin_ap_ar_shell1
 from core import owner_needs_you1 as _owner_needs_you1
@@ -2123,6 +2124,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._connector_health_deepen1_dispatch():
+            return
+
+        if self._owner_dash_freshness1_dispatch():
             return
 
         if self._fin_tax_shell1_dispatch():
@@ -5468,6 +5472,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._connector_health_deepen1_dispatch():
                 return
         elif path in (
+            "/ops/owner-dash-freshness-1",
+            "/ops/owner-dash-freshness-1/",
+            "/ops/owner-dash-freshness",
+            "/ops/owner-dash-freshness/",
+            "/ops/owner-freshness-1",
+            "/ops/owner-freshness-1/",
+            "/owner-dash-freshness-1",
+            "/owner-dash-freshness-1/",
+            "/owner-dash-freshness-1.html",
+            "/dashboards/owner-dash-freshness-1.html",
+        ):
+            if self._owner_dash_freshness1_dispatch():
+                return
+        elif path in (
             "/fin/tax-shell-1",
             "/fin/tax-shell-1/",
             "/fin/tax-shell",
@@ -6685,6 +6703,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._connector_health_deepen1_write_refused(path)
             return
+        if (
+            path == "/api/ops/owner-dash-freshness-1"
+            or path.startswith("/api/ops/owner-dash-freshness-1/")
+            or path == "/api/ops/owner-dash-freshness"
+            or path.startswith("/api/ops/owner-dash-freshness/")
+            or path == "/api/ops/owner-freshness-1"
+            or path.startswith("/api/ops/owner-freshness-1/")
+            or path == "/api/owner/dash-freshness-1"
+            or path.startswith("/api/owner/dash-freshness-1/")
+        ):
+            self._owner_dash_freshness1_write_refused(path)
+            return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
             return
@@ -7690,6 +7720,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             or path.startswith("/api/ops/conn-health-deepen/")
         ):
             self._connector_health_deepen1_write_refused(path)
+            return
+        if (
+            path == "/api/ops/owner-dash-freshness-1"
+            or path.startswith("/api/ops/owner-dash-freshness-1/")
+            or path == "/api/ops/owner-dash-freshness"
+            or path.startswith("/api/ops/owner-dash-freshness/")
+            or path == "/api/ops/owner-freshness-1"
+            or path.startswith("/api/ops/owner-freshness-1/")
+            or path == "/api/owner/dash-freshness-1"
+            or path.startswith("/api/owner/dash-freshness-1/")
+        ):
+            self._owner_dash_freshness1_write_refused(path)
             return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
@@ -9101,6 +9143,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             or path.startswith("/api/ops/conn-health-deepen/")
         ):
             self._connector_health_deepen1_write_refused(path)
+            return
+        if (
+            path == "/api/ops/owner-dash-freshness-1"
+            or path.startswith("/api/ops/owner-dash-freshness-1/")
+            or path == "/api/ops/owner-dash-freshness"
+            or path.startswith("/api/ops/owner-dash-freshness/")
+            or path == "/api/ops/owner-freshness-1"
+            or path.startswith("/api/ops/owner-freshness-1/")
+            or path == "/api/owner/dash-freshness-1"
+            or path.startswith("/api/owner/dash-freshness-1/")
+        ):
+            self._owner_dash_freshness1_write_refused(path)
             return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
@@ -20840,6 +20894,154 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "staff_ready": False,
                 "human_commissioned": False,
                 "prod_pid_held": _connector_health_deepen1.PROD_PID_HELD,
+            },
+            status=403,
+        )
+
+    def _owner_dash_freshness1_dispatch(self) -> bool:
+        """OWNER-DASH-FRESHNESS-1 — live stamps only; no invent KPI / freshness."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _owner_dash_freshness1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            person_id = str(identity.get("person_id") or "")
+            if not _owner_dash_freshness1.person_may_view(person_id):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "forbidden",
+                        "message": "Owner dash freshness board is not on this assignment.",
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_kpi": False,
+                        "invented_freshness": False,
+                        "classification": "INTERNALLY_SOLVABLE",
+                    },
+                    status=403,
+                )
+                return True
+            try:
+                payload = _owner_dash_freshness1.public_payload(person_id)
+            except _owner_dash_freshness1.OwnerDashFreshness1Error as exc:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": exc.code,
+                        "message": str(exc),
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_kpi": False,
+                        "invented_freshness": False,
+                        **_owner_dash_freshness1.honesty_flags(),
+                    },
+                    status=403,
+                )
+                return True
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "owner_dash_freshness_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_kpi": False,
+                        "invented_freshness": False,
+                        "classification": "INTERNALLY_SOLVABLE",
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _owner_dash_freshness1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        person_id = str(identity.get("person_id") or "")
+        if not _owner_dash_freshness1.person_may_view(person_id):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Owner dash freshness board is not on this assignment.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=403,
+            )
+            return True
+        page = DASHBOARDS / "owner-dash-freshness-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "OWNER-DASH-FRESHNESS-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="owner-dash-freshness-1.html")
+        return True
+
+    def _owner_dash_freshness1_write_refused(self, path: str) -> None:
+        """Refuse invent-KPI / invent-freshness / force-LIVE writes."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _owner_dash_freshness1.refuse_external_write(
+                body if isinstance(body, dict) else {}
+            )
+        except _owner_dash_freshness1.OwnerDashFreshness1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "invented_kpi": False,
+                    "invented_freshness": False,
+                    "stale_shown_as_current": False,
+                    "prod_mutate": False,
+                    "prod_pid_held": _owner_dash_freshness1.PROD_PID_HELD,
+                    "classification": "INTERNALLY_SOLVABLE",
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": (
+                    "OWNER-DASH-FRESHNESS-1 is a read-only freshness board. "
+                    "Writes refused."
+                ),
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "invented_kpi": False,
+                "invented_freshness": False,
+                "prod_mutate": False,
+                "prod_pid_held": _owner_dash_freshness1.PROD_PID_HELD,
+                "classification": "INTERNALLY_SOLVABLE",
             },
             status=403,
         )
