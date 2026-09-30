@@ -1,0 +1,79 @@
+{
+  "pack": "INV-CASH-FACTS-ROUTE-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T08:42:00+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T08:41:16+08:00",
+  "result_file": "docs/wolf/ops/INV-CASH-FACTS-ROUTE-1-RESULT.md",
+  "tests_rerun": {
+    "test_inv_cash_facts_route1_20260930.py": {
+      "pass": 172,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/invcashfacts1-desk-desktop.png",
+        "bytes": 151526,
+        "sha256": "208a75c932bd118e3ca74a892cdc0debfc8a6d35fac8cc15f056fedf01581deb"
+      },
+      {
+        "path": "docs/wolf/ops/shots/invcashfacts1-desk-phone.png",
+        "bytes": 87572,
+        "sha256": "f4610f2e02417fca00060a8cfaa13e586e5e016ae0a1703755c39aa8d5d7e905"
+      },
+      {
+        "path": "docs/wolf/ops/shots/invcashfacts1-route-stamps.png",
+        "bytes": 166717,
+        "sha256": "417d2b6415b1044b0e5d1212b6a38c051bb7e326a62bcdb2fe6bd3c48273c651"
+      },
+      {
+        "path": "docs/wolf/ops/shots/invcashfacts1-unsigned-deny.png",
+        "bytes": 21392,
+        "sha256": "5bd2d844d2f9a15369862d70b9c100d1cf529763752c4801d9be074199cc3ace"
+      }
+    ]
+  },
+  "route": {
+    "decision": "STAMP_HUMAN_COMMISSIONING",
+    "fact_count": 0,
+    "import_count": 0,
+    "uma_petty_cash": "EXTERNAL"
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "classification": {
+    "pack": "HUMAN_COMMISSIONING_OR_INTERNAL",
+    "route": "HUMAN_COMMISSIONING",
+    "uma_petty": "EXTERNAL_BLOCKER",
+    "shell_ne_complete": true
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "aa185a57ad9fd0d714cbe8fd94dfc2092d94df10",
+    "uncommitted": true
+  },
+  "preserves": [
+    "BZG-INVENTORY-TRUTH-1",
+    "FIN-CASH-TRUTH-1"
+  ],
+  "next_pack": "DEEPEN-SYNTH-CONTINUE",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

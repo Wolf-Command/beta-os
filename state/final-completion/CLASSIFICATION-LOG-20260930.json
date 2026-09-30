@@ -60,8 +60,12 @@
     {
       "surface": "Inventory/cash UNKNOWN shells",
       "classification": "HUMAN_COMMISSIONING_OR_INTERNAL",
-      "evidence": "BZG-INVENTORY / FIN-CASH honest UNKNOWN; deepen if count/bank systems exist with facts",
-      "next_pack": "INV-CASH-FACTS-ROUTE-1"
+      "evidence": "BZG-INVENTORY fact_count=0; FIN-CASH import_count=0 FILE_IMPORT_ONLY; no authorised count/cash clients; Uma Alchemist petty_cash EXTERNAL to empire shells",
+      "next_pack": "INV-CASH-FACTS-ROUTE-1",
+      "action": "DONE this pack INV-CASH-FACTS-ROUTE-1 \u2014 stamped HUMAN_COMMISSIONING; Uma petty_cash EXTERNAL; no invent qty/cash; BZG-INVENTORY-TRUTH-1 + FIN-CASH-TRUTH-1 preserved",
+      "status_after": "HUMAN_COMMISSIONING stamped; no authorised systems to wire",
+      "board": "/ops/inv-cash-facts-route-1",
+      "note": "Live count/cash facts need Owner-authorised systems + commission stamp; pack EXIT does not invent qty/cash"
     },
     {
       "surface": "Backup restore NOT_RUN",
@@ -80,7 +84,7 @@
       "status_after": "PIPE_OK_WITH_DETECT_RECOVER"
     }
   ],
-  "updated_at": "2026-09-30T08:33:30+08:00",
+  "updated_at": "2026-09-30T08:42:00+08:00",
   "metricool_runtime_probe": {
     "getBrandSettings": "6 brands",
     "getAnalyticsAvailableMetrics_instagram_posts": "29 fields incl engagement/likes/reach",
@@ -160,5 +164,11 @@
     "status": "PASS_VERIFIED",
     "classification": "HUMAN_COMMISSIONING",
     "file_import_only": true
+  },
+  "inv_cash_facts_route1": {
+    "status": "PASS_VERIFIED",
+    "route": "HUMAN_COMMISSIONING",
+    "fact_count": 0,
+    "uma_petty": "EXTERNAL"
   }
 }

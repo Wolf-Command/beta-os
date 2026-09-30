@@ -4,8 +4,9 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 7,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T08:33:30+08:00",
+  "exited_at": "2026-09-30T08:55:00+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
   "prod_pid_held": 15975,
@@ -14,12 +15,14 @@
   "no_push": true,
   "matt_auto_continue": true,
   "prior_pack_verified": "FIN-BANK-CREDS-ROUTE-1",
-  "beta_os_head_at_arm": "PENDING",
+  "beta_os_head_at_arm": "aa185a57ad9fd0d714cbe8fd94dfc2092d94df10",
   "brief": "state/build-factory/briefs/BRIEF-INV-CASH-FACTS-ROUTE-1.md",
   "log": "state/build-factory/logs/INV-CASH-FACTS-ROUTE-1.log",
   "result_file": "docs/wolf/ops/INV-CASH-FACTS-ROUTE-1-RESULT.md",
   "next_pack_for_parent": "DEEPEN-SYNTH-CONTINUE",
   "classification": "HUMAN_COMMISSIONING_OR_INTERNAL",
+  "route_classification": "HUMAN_COMMISSIONING",
+  "uma_petty": "EXTERNAL",
   "forbids": [
     "invent qty",
     "invent cash",
@@ -34,5 +37,15 @@
   "preserves": [
     "BZG-INVENTORY-TRUTH-1",
     "FIN-CASH-TRUTH-1"
-  ]
+  ],
+  "peaches_verify": "state/final-completion/packs/INV-CASH-FACTS-ROUTE-1-PEACHES-VERIFY.json",
+  "suite": {
+    "pass": 172,
+    "fail": 0
+  },
+  "cursor_did_not_auto_start_next": true,
+  "peaches_verified_at": "2026-09-30T08:42:00+08:00",
+  "exit_code": 0,
+  "tests_pass": 172,
+  "tests_fail": 0
 }

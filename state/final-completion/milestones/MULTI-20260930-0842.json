@@ -1,0 +1,55 @@
+{
+  "milestone_id": "MULTI-20260930-0842",
+  "at_wita": "2026-09-30T08:42:00+08:00",
+  "pass_verified_count": 37,
+  "queue_len": 41,
+  "commits": {
+    "METRICOOL-RUNTIME-WIRE-1": "00586a5",
+    "ESB-SETTLEMENT-PATH-1": "9a519a5",
+    "SOP-CATALOG-SEED-ROUTE-1": "d8f6ecd",
+    "FIN-BANK-CREDS-ROUTE-1": "aa185a5",
+    "INV-CASH-FACTS-ROUTE-1": "PENDING_COMMIT"
+  },
+  "verified_this_chain": [
+    {
+      "pack": "METRICOOL-RUNTIME-WIRE-1",
+      "tests": "136/0",
+      "note": "not re-pinged; PER_SURFACE RUNTIME_WIRED"
+    },
+    {
+      "pack": "ESB-SETTLEMENT-PATH-1",
+      "tests": "122/0",
+      "class": "EXTERNAL_BLOCKER",
+      "note": "not re-pinged"
+    },
+    {
+      "pack": "SOP-CATALOG-SEED-ROUTE-1",
+      "tests": "154/0",
+      "class": "HUMAN_COMMISSIONING",
+      "note": "not re-pinged"
+    },
+    {
+      "pack": "FIN-BANK-CREDS-ROUTE-1",
+      "tests": "161/0",
+      "class": "HUMAN_COMMISSIONING",
+      "file_import_only": true
+    },
+    {
+      "pack": "INV-CASH-FACTS-ROUTE-1",
+      "tests": "172/0",
+      "class": "HUMAN_COMMISSIONING",
+      "fact_count": 0
+    }
+  ],
+  "next_queued": [
+    "FIN-TAX-DEEPEN-1",
+    "CRM-PIPELINE-TRUTH-1",
+    "CONTENT-PUBLISH-PATH-1",
+    "OCCUPANCY-EXTERNAL-HOLD-1"
+  ],
+  "standards_lock": true,
+  "staff_ready": false,
+  "no_push": true,
+  "prod_pid": 15975,
+  "no_exit_report": true
+}

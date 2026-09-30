@@ -176,6 +176,7 @@ from core import fin_interco1 as _fin_interco1
 from core import fin_recon_shell1 as _fin_recon_shell1
 from core import fin_cash_truth1 as _fin_cash_truth1
 from core import fin_bank_creds_route1 as _fin_bank_creds_route1
+from core import inv_cash_facts_route1 as _inv_cash_facts_route1
 from core import fin_tax_shell1 as _fin_tax_shell1
 from core import fin_ap_ar_shell1 as _fin_ap_ar_shell1
 from core import owner_needs_you1 as _owner_needs_you1
@@ -2087,6 +2088,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._fin_bank_creds_route1_dispatch():
+            return
+
+        if self._inv_cash_facts_route1_dispatch():
             return
 
         if self._fin_tax_shell1_dispatch():
@@ -5286,6 +5290,24 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._fin_bank_creds_route1_dispatch():
                 return
         elif path in (
+            "/ops/inv-cash-facts-route-1",
+            "/ops/inv-cash-facts-route-1/",
+            "/ops/inv-cash-facts-route",
+            "/ops/inv-cash-facts-route/",
+            "/fin/inv-cash-facts-route-1",
+            "/fin/inv-cash-facts-route-1/",
+            "/fin/inv-cash-facts-route",
+            "/fin/inv-cash-facts-route/",
+            "/inv-cash-facts-route-1",
+            "/inv-cash-facts-route-1/",
+            "/inv-cash-facts-route-1.html",
+            "/dashboards/inv-cash-facts-route-1.html",
+            "/bzg/inv-cash-facts-route-1",
+            "/bzg/inv-cash-facts-route-1/",
+        ):
+            if self._inv_cash_facts_route1_dispatch():
+                return
+        elif path in (
             "/fin/tax-shell-1",
             "/fin/tax-shell-1/",
             "/fin/tax-shell",
@@ -6361,6 +6383,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._fin_bank_creds_route1_write_refused(path)
             return
+        if (
+            path == "/api/ops/inv-cash-facts-route-1"
+            or path.startswith("/api/ops/inv-cash-facts-route-1/")
+            or path == "/api/fin/inv-cash-facts-route-1"
+            or path.startswith("/api/fin/inv-cash-facts-route-1/")
+            or path == "/api/bzg/inv-cash-facts-route-1"
+            or path.startswith("/api/bzg/inv-cash-facts-route-1/")
+        ):
+            self._inv_cash_facts_route1_write_refused(path)
+            return
         if path == "/api/fin/tax-shell-1" or path.startswith("/api/fin/tax-shell-1/"):
             self._fin_tax_shell1_write_refused(path)
             return
@@ -7270,6 +7302,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             or path.startswith("/api/ops/fin-bank-creds-route-1/")
         ):
             self._fin_bank_creds_route1_write_refused(path)
+            return
+        if (
+            path == "/api/ops/inv-cash-facts-route-1"
+            or path.startswith("/api/ops/inv-cash-facts-route-1/")
+            or path == "/api/fin/inv-cash-facts-route-1"
+            or path.startswith("/api/fin/inv-cash-facts-route-1/")
+            or path == "/api/bzg/inv-cash-facts-route-1"
+            or path.startswith("/api/bzg/inv-cash-facts-route-1/")
+        ):
+            self._inv_cash_facts_route1_write_refused(path)
             return
         if path == "/api/fin/tax-shell-1" or path.startswith("/api/fin/tax-shell-1/"):
             self._fin_tax_shell1_write_refused(path)
@@ -8585,6 +8627,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             or path.startswith("/api/ops/fin-bank-creds-route-1/")
         ):
             self._fin_bank_creds_route1_write_refused(path)
+            return
+        if (
+            path == "/api/ops/inv-cash-facts-route-1"
+            or path.startswith("/api/ops/inv-cash-facts-route-1/")
+            or path == "/api/fin/inv-cash-facts-route-1"
+            or path.startswith("/api/fin/inv-cash-facts-route-1/")
+            or path == "/api/bzg/inv-cash-facts-route-1"
+            or path.startswith("/api/bzg/inv-cash-facts-route-1/")
+        ):
+            self._inv_cash_facts_route1_write_refused(path)
             return
         if path == "/api/fin/tax-shell-1" or path.startswith("/api/fin/tax-shell-1/"):
             self._fin_tax_shell1_write_refused(path)
@@ -17812,6 +17864,174 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "prod_mutate": False,
                 "prod_pid_held": _fin_bank_creds_route1.PROD_PID_HELD,
                 "classification": "HUMAN_COMMISSIONING",
+            },
+            status=403,
+        )
+
+    def _inv_cash_facts_route1_dispatch(self) -> bool:
+        """INV-CASH-FACTS-ROUTE-1 — wire or HUMAN_COMMISSIONING/EXTERNAL; no invent."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _inv_cash_facts_route1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            person_id = (identity.get("person_id") or "").strip()
+            if not person_id:
+                self._send_identity_deny(identity)
+                return True
+            role_allowed = False
+            if person_id != _inv_cash_facts_route1.OWNER_PERSON:
+                role_allowed = False
+            if not _inv_cash_facts_route1.person_may_view(
+                person_id, role_allowed=role_allowed
+            ):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "denied",
+                        "message": (
+                            "Inventory/cash facts route is Owner only. "
+                            "Not staff readiness or human commissioning."
+                        ),
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_qty": False,
+                        "invented_cash": False,
+                        "classification": "HUMAN_COMMISSIONING",
+                        "pack_classification": "HUMAN_COMMISSIONING_OR_INTERNAL",
+                    },
+                    status=403,
+                )
+                return True
+            try:
+                payload = _inv_cash_facts_route1.public_payload(
+                    person_id, role_allowed=role_allowed
+                )
+            except _inv_cash_facts_route1.InvCashFactsRoute1Error as exc:
+                status = 403 if getattr(exc, "code", "") == "denied" else 400
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": getattr(exc, "code", "invalid"),
+                        "message": str(exc),
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_qty": False,
+                        "invented_cash": False,
+                        **_inv_cash_facts_route1.honesty_flags(),
+                    },
+                    status=status,
+                )
+                return True
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "inv_cash_facts_route_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_qty": False,
+                        "invented_cash": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _inv_cash_facts_route1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_access_denied_page(
+                "Inventory/cash facts route requires a signed-in person. "
+                "Unsigned callers are refused."
+            )
+            return True
+        person_id = (identity.get("person_id") or "").strip()
+        if not person_id:
+            self._send_access_denied_page(
+                "Inventory/cash facts route requires a signed-in person. "
+                "Unsigned callers are refused."
+            )
+            return True
+        if not _inv_cash_facts_route1.person_may_view(person_id, role_allowed=False):
+            self._send_access_denied_page(
+                "Inventory/cash facts route is Owner only. "
+                "This is not staff readiness or human commissioning."
+            )
+            return True
+        page = DASHBOARDS / "inv-cash-facts-route-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "INV-CASH-FACTS-ROUTE-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="inv-cash-facts-route-1.html")
+        return True
+
+    def _inv_cash_facts_route1_write_refused(self, path: str) -> None:
+        """Refuse qty/cash invent and commission-flag flips."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _inv_cash_facts_route1.refuse_external_write(
+                body if isinstance(body, dict) else {}
+            )
+        except _inv_cash_facts_route1.InvCashFactsRoute1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "invented_qty": False,
+                    "invented_cash": False,
+                    "invented_balance": False,
+                    "fake_stock": False,
+                    "prod_mutate": False,
+                    "prod_pid_held": _inv_cash_facts_route1.PROD_PID_HELD,
+                    "classification": "HUMAN_COMMISSIONING",
+                    "pack_classification": "HUMAN_COMMISSIONING_OR_INTERNAL",
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": (
+                    "INV-CASH-FACTS-ROUTE-1 is a read honesty / commissioning "
+                    "route board. Writes refused."
+                ),
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "invented_qty": False,
+                "invented_cash": False,
+                "prod_mutate": False,
+                "prod_pid_held": _inv_cash_facts_route1.PROD_PID_HELD,
+                "classification": "HUMAN_COMMISSIONING",
+                "pack_classification": "HUMAN_COMMISSIONING_OR_INTERNAL",
             },
             status=403,
         )

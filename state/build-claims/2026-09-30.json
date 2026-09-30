@@ -512,6 +512,22 @@
       "expect": "exit 0",
       "by": "cursor-fin-bank-creds-route-1",
       "at": "2026-09-30T08:45:00+08:00"
+    },
+    {
+      "id": "INV-CASH-FACTS-ROUTE-1-board",
+      "claim": "INV-CASH-FACTS-ROUTE-1: stamps HUMAN_COMMISSIONING; pack HUMAN_COMMISSIONING_OR_INTERNAL; Uma petty EXTERNAL; invented_qty/cash false; qty/balance null; BZG-INVENTORY-TRUTH-1 + FIN-CASH-TRUTH-1 preserved; staff_ready/human_commissioned false; next pack parent-only DEEPEN-SYNTH-CONTINUE.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import inv_cash_facts_route1 as r; p=r.build_board('PERS-MATT'); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='HUMAN_COMMISSIONING' and p.get('pack_classification')=='HUMAN_COMMISSIONING_OR_INTERNAL' and p.get('action')=='STAMP_HUMAN_COMMISSIONING' and p.get('uma_petty_external') is True and p.get('invented_qty') is False and p.get('invented_cash') is False and p.get('qty') is None and p.get('balance') is None and r.surfaces_are_honest(p) and r.no_invented_qty_or_cash(p) and p.get('bzg_inventory_truth1_preserved') is True and p.get('fin_cash_truth1_preserved') is True and p.get('staff_ready') is False and p.get('human_commissioned') is False and r.honesty_flags().get('next_pack_for_parent_only')=='DEEPEN-SYNTH-CONTINUE') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-inv-cash-facts-route-1",
+      "at": "2026-09-30T08:55:00+08:00"
+    },
+    {
+      "id": "INV-CASH-FACTS-ROUTE-1-surfaces",
+      "claim": "INV-CASH-FACTS-ROUTE-1 page/API/shots/RESULT present; unsigned deny + qty/cash/commission refuse; HUMAN_COMMISSIONING; Uma EXTERNAL; next pack parent-only DEEPEN-SYNTH-CONTINUE; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import inv_cash_facts_route1 as r; from pathlib import Path; html=Path('dashboards/inv-cash-facts-route-1.html').read_text(); import sys; sys.exit(0 if (r.api_matches('/api/ops/inv-cash-facts-route-1') and r.page_matches('/ops/inv-cash-facts-route-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/invcashfacts1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/INV-CASH-FACTS-ROUTE-1-RESULT.md').is_file() and r.honesty_flags().get('next_pack_for_parent_only')=='DEEPEN-SYNTH-CONTINUE' and r.honesty_flags().get('cursor_did_not_auto_start_next') is True and r.honesty_flags().get('classification')=='HUMAN_COMMISSIONING') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-inv-cash-facts-route-1",
+      "at": "2026-09-30T08:55:00+08:00"
     }
   ]
 }

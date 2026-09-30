@@ -89,15 +89,22 @@
     "RELIABILITY-1",
     "CONTENT-ENGINE-LIVE-1"
   ],
-  "last_pack_verified": "FIN-BANK-CREDS-ROUTE-1",
-  "last_verified_at": "2026-09-30T08:33:30+08:00",
-  "pass_verified_count": 36,
-  "next_pack": "INV-CASH-FACTS-ROUTE-1",
+  "last_pack_verified": "INV-CASH-FACTS-ROUTE-1",
+  "last_verified_at": "2026-09-30T08:42:00+08:00",
+  "pass_verified_count": 37,
+  "next_pack": "FIN-TAX-DEEPEN-1",
   "mac_pipe": "GREEN_BOARD",
   "unparked_at": "2026-09-30T07:26:00+08:00",
   "standards_lock": true,
   "restore_drill": "DRILL_RAN_NON_DESTRUCTIVE",
-  "last_pack_exited": "FIN-BANK-CREDS-ROUTE-1",
-  "last_exit_at": "2026-09-30T08:03:30+08:00",
-  "metricool": "PER_SURFACE_RUNTIME_WIRED"
+  "last_pack_exited": "INV-CASH-FACTS-ROUTE-1",
+  "last_exit_at": "2026-09-30T08:55:00+08:00",
+  "metricool": "PER_SURFACE_RUNTIME_WIRED",
+  "next_pack_note": "parent/Peaches only after INV-CASH-FACTS-ROUTE-1 PASS_VERIFIED \u2014 Cursor must not auto-arm",
+  "wave8_queued": [
+    "FIN-TAX-DEEPEN-1",
+    "CRM-PIPELINE-TRUTH-1",
+    "CONTENT-PUBLISH-PATH-1",
+    "OCCUPANCY-EXTERNAL-HOLD-1"
+  ]
 }

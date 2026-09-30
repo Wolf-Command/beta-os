@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T08:33:30+08:00",
+  "at_wita": "2026-09-30T08:42:00+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -1360,10 +1360,128 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "classification": "HUMAN_COMMISSIONING_OR_INTERNAL",
       "synthesized_from": "challenge unknown inventory/cash",
-      "armed_at": "2026-09-30T08:33:30+08:00"
+      "armed_at": "2026-09-30T08:33:30+08:00",
+      "exited_at": "2026-09-30T08:55:00+08:00",
+      "route_classification": "HUMAN_COMMISSIONING",
+      "suite": {
+        "pass": 172,
+        "fail": 0
+      },
+      "tests": {
+        "pass": 172,
+        "fail": 0
+      },
+      "verified_at": "2026-09-30T08:42:00+08:00"
+    },
+    {
+      "pack_id": "FIN-TAX-DEEPEN-1",
+      "title": "Tax dues deepen \u2014 wire if system else HUMAN/EXTERNAL evidence",
+      "closes": [
+        "tax"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "PARTIAL"
+      ],
+      "priority_bucket": "finance",
+      "scope": [
+        "Challenge FIN-TAX UNKNOWN dues shell",
+        "Wire authorised tax system or stamp HUMAN/EXTERNAL"
+      ],
+      "forbids": [
+        "invent dues",
+        "fake NPWP"
+      ],
+      "depends_on": [
+        "FIN-TAX-SHELL-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "classification": "INTERNALLY_SOLVABLE_OR_HUMAN",
+      "synthesized_from": "challenge tax UNKNOWN; NPWP remains MATT_ACTION non-blocking"
+    },
+    {
+      "pack_id": "CRM-PIPELINE-TRUTH-1",
+      "title": "CRM pipeline truth shell \u2014 no invent pipeline",
+      "closes": [
+        "CRM"
+      ],
+      "targets_classes": [
+        "MISSING"
+      ],
+      "priority_bucket": "growth",
+      "scope": [
+        "Probe authorised CRM; honest empty or wire",
+        "Never invent pipeline counts"
+      ],
+      "forbids": [
+        "invent pipeline"
+      ],
+      "depends_on": [],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "classification": "TBD_PROBE",
+      "synthesized_from": "MISSING CRM pipeline (IL-R6)"
+    },
+    {
+      "pack_id": "CONTENT-PUBLISH-PATH-1",
+      "title": "Content publish path \u2014 Metricool write still NOT_RUNTIME",
+      "closes": [
+        "CAP-GGV publish"
+      ],
+      "targets_classes": [
+        "PARTIAL"
+      ],
+      "priority_bucket": "content",
+      "scope": [
+        "Document publish path; keep write disabled until authorised",
+        "Preserve METRICOOL-RUNTIME-WIRE engagement-null honesty"
+      ],
+      "forbids": [
+        "fake publish success"
+      ],
+      "depends_on": [
+        "METRICOOL-RUNTIME-WIRE-1",
+        "CONTENT-ENGINE-LIVE-1"
+      ],
+      "estimated_effort": "M",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "classification": "HUMAN_COMMISSIONING_OR_EXTERNAL",
+      "synthesized_from": "publish_success NOT_RUNTIME after Metricool wire"
+    },
+    {
+      "pack_id": "OCCUPANCY-EXTERNAL-HOLD-1",
+      "title": "Occupancy EXTERNAL hold stamp (Yanolja/Mews) \u2014 no invent",
+      "closes": [
+        "CAP-AMG occupancy"
+      ],
+      "targets_classes": [
+        "MISSING",
+        "BLOCKED_EXTERNAL"
+      ],
+      "priority_bucket": "amg",
+      "scope": [
+        "Stamp EXTERNAL_BLOCKER with Yanolja evidence; no invent occupancy",
+        "Google NPWP remains MATT_ACTION non-blocking"
+      ],
+      "forbids": [
+        "invent occupancy",
+        "invent ADR"
+      ],
+      "depends_on": [
+        "AMG-OCC"
+      ],
+      "estimated_effort": "S",
+      "matt_blocker": false,
+      "status": "QUEUED",
+      "classification": "EXTERNAL_BLOCKER",
+      "synthesized_from": "hold Yanolja EXTERNAL"
     }
   ],
   "first_pack": "DASH-LIVE-1",
@@ -1403,7 +1521,8 @@
     "BACKUP-HEALTH-1",
     "FIN-CASH-TRUTH-1",
     "BZG-LABOR-COST-1",
-    "SOP-CATALOG-SEED-ROUTE-1"
+    "SOP-CATALOG-SEED-ROUTE-1",
+    "FIN-BANK-CREDS-ROUTE-1"
   ],
   "exited_awaiting_peaches": [],
   "synthesized_after_queue_head": true,
@@ -1420,12 +1539,12 @@
   "synthesis_wave3_at": "2026-09-30T01:19:01+08:00",
   "last_verified": "SOP-CATALOG-SEED-ROUTE-1",
   "next_to_arm": null,
-  "heavy_in_flight": "FIN-BANK-CREDS-ROUTE-1",
-  "last_exited": "SOP-CATALOG-SEED-ROUTE-1",
+  "heavy_in_flight": null,
+  "last_exited": "INV-CASH-FACTS-ROUTE-1",
   "next_to_arm_note": "parent/Peaches only after FIN-TAX-SHELL-1 PASS_VERIFIED \u2014 Cursor must not auto-arm; HEADCHEF veto",
   "wave4_synthesized_at": "2026-09-30T02:45:00+08:00",
   "wave4_count": 4,
-  "updated_at": "2026-09-30T08:28:12+08:00",
+  "updated_at": "2026-09-30T08:55:00+08:00",
   "wave5_synthesized_at": "2026-09-30T03:30:00+08:00",
   "wave6_synthesized_at": "2026-09-30T03:57:00+08:00",
   "unparked_at": "2026-09-30T07:26:00+08:00",
