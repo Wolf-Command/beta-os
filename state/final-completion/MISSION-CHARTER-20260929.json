@@ -89,12 +89,15 @@
     "RELIABILITY-1",
     "CONTENT-ENGINE-LIVE-1"
   ],
-  "last_pack_verified": "PIPE-RELIABILITY-AUTO-1",
-  "last_verified_at": "2026-09-30T07:54:00+08:00",
-  "pass_verified_count": 32,
-  "next_pack": "METRICOOL-RUNTIME-WIRE-1",
+  "last_pack_verified": "METRICOOL-RUNTIME-WIRE-1",
+  "last_verified_at": "2026-09-30T08:05:30+08:00",
+  "pass_verified_count": 33,
+  "next_pack": "ESB-SETTLEMENT-PATH-1",
   "mac_pipe": "GREEN_BOARD",
   "unparked_at": "2026-09-30T07:26:00+08:00",
   "standards_lock": true,
-  "restore_drill": "DRILL_RAN_NON_DESTRUCTIVE"
+  "restore_drill": "DRILL_RAN_NON_DESTRUCTIVE",
+  "last_pack_exited": "METRICOOL-RUNTIME-WIRE-1",
+  "last_exit_at": "2026-09-30T08:03:30+08:00",
+  "metricool": "PER_SURFACE_RUNTIME_WIRED"
 }

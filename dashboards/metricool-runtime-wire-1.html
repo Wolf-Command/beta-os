@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Metricool Runtime Wire — brands + analytics honesty</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1c1915;
+      --muted: #5c574e;
+      --paper: #f3f1ec;
+      --card: #fffdf8;
+      --line: #ddd6c8;
+      --wired: #2a4a28;
+      --nr: #6b4a18;
+      --block: #8a1f1f;
+    }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(ellipse 70% 40% at 100% 0%, #e4ebe6 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 72px; }
+    h1 { font-size: 1.65rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+    h2 { font-size: 1.05rem; margin: 22px 0 10px; letter-spacing: -0.01em; }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #f5efe3; border: 1px solid #d2c4a4; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner strong { color: #5a4a28; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+    .chip {
+      display: inline-block; padding: 5px 10px; border-radius: 6px;
+      background: #ebe4d6; font-size: 0.75rem; font-weight: 600;
+    }
+    .chip.RUNTIME_WIRED { background: #dde8dc; color: var(--wired); }
+    .chip.NOT_RUNTIME { background: #f5ead8; color: var(--nr); }
+    .chip.EXTERNAL_BLOCKER { background: #f5e0e0; color: var(--block); }
+    .facts {
+      margin: 0 0 18px; padding: 12px 14px; border: 1px solid var(--line);
+      border-radius: 10px; background: var(--card);
+    }
+    .facts dl {
+      display: grid; grid-template-columns: 180px 1fr; gap: 6px 12px;
+      margin: 0; font-size: 0.88rem;
+    }
+    .facts dt { color: var(--muted); }
+    .facts dd { margin: 0; }
+    .status { font-weight: 700; }
+    .status.RUNTIME_WIRED { color: var(--wired); }
+    .status.NOT_RUNTIME { color: var(--nr); }
+    .status.EXTERNAL_BLOCKER { color: var(--block); }
+    .table-wrap {
+      overflow-x: auto; border: 1px solid var(--line); border-radius: 10px;
+      background: var(--card); margin: 0 0 18px;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 640px; }
+    th, td {
+      text-align: left; padding: 10px 12px; border-bottom: 1px solid #ebe4d6;
+      vertical-align: top; font-size: 0.86rem;
+    }
+    th {
+      background: #f0ebe2; font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.04em; color: var(--muted);
+    }
+    tr:last-child td { border-bottom: 0; }
+    .muted { color: var(--muted); font-size: 0.8rem; line-height: 1.4; }
+    .null { color: #9a9488; font-style: italic; }
+    .err { color: var(--block); }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
+    @media (max-width: 520px) {
+      h1 { font-size: 1.35rem; }
+      main { padding: 16px 12px 64px; }
+      .facts dl { grid-template-columns: 1fr; }
+      th, td { padding: 8px 8px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body data-ready="0" data-pack="METRICOOL-RUNTIME-WIRE-1">
+  <main>
+    <h1>Metricool runtime wire</h1>
+    <p class="sub" id="sub">Authorised brands + analytics paths · pack METRICOOL-RUNTIME-WIRE-1 · loading…</p>
+    <div class="banner" id="honesty">
+      <strong>Honesty:</strong>
+      staff_ready=false · human_commissioned=false ·
+      per-surface RUNTIME_WIRED | NOT_RUNTIME | EXTERNAL_BLOCKER ·
+      no fake engagement · last_success=null · prod pid 15975 READ-ONLY
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="facts" id="facts">
+      <dl>
+        <dt>brand_count</dt><dd id="f-brands" class="null">—</dd>
+        <dt>analytics fields</dt><dd id="f-fields" class="null">—</dd>
+        <dt>engagement</dt><dd id="f-eng" class="null">null (never invent)</dd>
+        <dt>last_success</dt><dd id="f-last" class="null">null (never invent)</dd>
+        <dt>wolf HTTP</dt><dd id="f-http" class="null">—</dd>
+        <dt>classification</dt><dd id="f-class">INTERNALLY_SOLVABLE</dd>
+      </dl>
+    </div>
+    <h2>Per-surface honesty</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Surface</th>
+            <th>Status</th>
+            <th>Value</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody id="surfaces">
+          <tr><td colspan="4" class="muted">Loading surfaces…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h2>Authorised brand stamps</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Brand</th>
+            <th>blogId</th>
+            <th>Status</th>
+            <th>Engagement</th>
+          </tr>
+        </thead>
+        <tbody id="brands">
+          <tr><td colspan="4" class="muted">Loading brands…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    function setText(id, value, cls) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = value == null || value === "" ? "—" : String(value);
+      if (cls) el.className = cls;
+    }
+    async function load() {
+      var sub = document.getElementById("sub");
+      var chips = document.getElementById("chips");
+      var surfaces = document.getElementById("surfaces");
+      var brands = document.getElementById("brands");
+      try {
+        var resp = await fetch("/api/ops/metricool-runtime-wire-1", {
+          headers: { Accept: "application/json" }
+        });
+        var data = await resp.json();
+        if (!resp.ok || !data.ok) {
+          surfaces.innerHTML = '<tr><td colspan="4" class="err">Failed (' + resp.status + ")</td></tr>";
+          document.body.setAttribute("data-ready", "0");
+          sub.textContent = "Authorised brands + analytics · pack METRICOOL-RUNTIME-WIRE-1 · load failed";
+          return;
+        }
+        sub.textContent =
+          "Authorised brands + analytics paths · pack METRICOOL-RUNTIME-WIRE-1 · as of " +
+          (data.as_of_wita || "?") +
+          " · ceiling " + (data.ceiling || "BUILT");
+        var counts = data.surface_counts || {};
+        chips.innerHTML =
+          '<span class="chip RUNTIME_WIRED">RUNTIME_WIRED=' + esc(counts.RUNTIME_WIRED || 0) + "</span>" +
+          '<span class="chip NOT_RUNTIME">NOT_RUNTIME=' + esc(counts.NOT_RUNTIME || 0) + "</span>" +
+          '<span class="chip EXTERNAL_BLOCKER">EXTERNAL_BLOCKER=' + esc(counts.EXTERNAL_BLOCKER || 0) + "</span>" +
+          '<span class="chip">fake_metrics=false</span>' +
+          '<span class="chip">classification=INTERNALLY_SOLVABLE</span>';
+        setText("f-brands", data.brand_count || 0);
+        var ap = data.analytics_path || {};
+        setText(
+          "f-fields",
+          (ap.field_count || 29) + " (incl " + (ap.proven_includes || []).join("/") + ")"
+        );
+        setText("f-eng", "null (never invent)", "null");
+        setText("f-last", "null (never invent)", "null");
+        var http = data.wolf_http_connector || {};
+        setText("f-http", http.status || "—", "status " + (http.status || ""));
+        setText("f-class", data.classification || "INTERNALLY_SOLVABLE");
+        document.body.setAttribute("data-brand-count", String(data.brand_count || 0));
+        document.body.setAttribute("data-engagement", "null");
+
+        var surf = data.surfaces || [];
+        surfaces.innerHTML = surf.map(function (s) {
+          var st = s.status || "NOT_RUNTIME";
+          var val = s.value;
+          if (val == null) val = "null";
+          return (
+            "<tr data-surface=\"" + esc(s.id || "") + "\" data-status=\"" + esc(st) + "\">" +
+            "<td>" + esc(s.label || s.id || "") + "</td>" +
+            "<td class=\"status " + esc(st) + "\">" + esc(st) + "</td>" +
+            "<td>" + (val === "null" ? "<span class=\"null\">null</span>" : esc(val)) + "</td>" +
+            "<td class=\"muted\">" + esc(s.why || "") + "</td>" +
+            "</tr>"
+          );
+        }).join("") || '<tr><td colspan="4" class="muted">No surfaces</td></tr>';
+
+        var blist = data.brands || [];
+        brands.innerHTML = blist.map(function (b) {
+          return (
+            "<tr data-brand=\"" + esc(b.label || "") + "\">" +
+            "<td>" + esc(b.label || "") + "</td>" +
+            "<td><code>" + esc(b.blog_id || "") + "</code></td>" +
+            "<td class=\"status RUNTIME_WIRED\">" + esc(b.status || "RUNTIME_WIRED") + "</td>" +
+            "<td class=\"null\">null</td>" +
+            "</tr>"
+          );
+        }).join("") || '<tr><td colspan="4" class="muted">No brands</td></tr>';
+
+        document.body.setAttribute("data-ready", "1");
+      } catch (err) {
+        surfaces.innerHTML = '<tr><td colspan="4" class="err">' + esc(err.message || err) + "</td></tr>";
+        document.body.setAttribute("data-ready", "0");
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

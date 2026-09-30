@@ -1,0 +1,82 @@
+{
+  "pack": "METRICOOL-RUNTIME-WIRE-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T08:05:30+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T08:04:29+08:00",
+  "result_file": "docs/wolf/ops/METRICOOL-RUNTIME-WIRE-1-RESULT.md",
+  "tests_rerun": {
+    "test_metricool_runtime_wire1_20260930.py": {
+      "pass": 136,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/metricoolruntime1-desk-desktop.png",
+        "bytes": 229591,
+        "sha256": "8c92d9c519e7e9e1bdef89c715f956d00a20ae510753b24d5e942050846b5535"
+      },
+      {
+        "path": "docs/wolf/ops/shots/metricoolruntime1-desk-phone.png",
+        "bytes": 101266,
+        "sha256": "f05a1f405f6bd605142d21810c7edbe3daa862949f8151e6d09ff57007339cf6"
+      },
+      {
+        "path": "docs/wolf/ops/shots/metricoolruntime1-surfaces.png",
+        "bytes": 252113,
+        "sha256": "22cdc446b677a4858e25b1c974c25d6be092cba9d2ba70857065da59dec4cfc2"
+      },
+      {
+        "path": "docs/wolf/ops/shots/metricoolruntime1-unsigned-deny.png",
+        "bytes": 24471,
+        "sha256": "7df206a8cc673a3bc5593cc1ec6f49e9b4799764c6a5130d7590ace9de8fbded"
+      }
+    ]
+  },
+  "runtime": {
+    "brands_wired": 6,
+    "analytics_paths_ig_posts": 29,
+    "engagement_values": "NOT_RUNTIME_null",
+    "wolf_http": "EXTERNAL_BLOCKER",
+    "per_surface": true
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "classification": {
+    "brands_analytics_paths": "INTERNALLY_SOLVABLE",
+    "engagement_values": "INTERNALLY_SOLVABLE_or_EXTERNAL",
+    "wolf_http_connector": "EXTERNAL_BLOCKER",
+    "shell_ne_complete": true,
+    "note": "Blanket NOT_RUNTIME lifted to PER_SURFACE; engagement still null \u2014 not invent"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "9da81984f9db7521bd65fee25bcaf7f4539c93fb",
+    "uncommitted": true
+  },
+  "preserves": [
+    "GGV-METRIC-HONESTY-1",
+    "CONTENT-ENGINE-LIVE-1"
+  ],
+  "next_pack": "ESB-SETTLEMENT-PATH-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false,
+  "did_not_redo_ggv_metric": true
+}

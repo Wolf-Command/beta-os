@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T07:54:00+08:00",
+  "at_wita": "2026-09-30T08:05:30+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -1205,10 +1205,17 @@
       ],
       "estimated_effort": "L",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "classification": "INTERNALLY_SOLVABLE",
       "synthesized_from": "challenge Metricool ceiling \u2014 MCP ready 6 brands",
-      "armed_at": "2026-09-30T07:54:00+08:00"
+      "armed_at": "2026-09-30T07:54:00+08:00",
+      "exited_at": "2026-09-30T08:03:30+08:00",
+      "tests": {
+        "pass": 136,
+        "fail": 0
+      },
+      "verified_at": "2026-09-30T08:05:30+08:00",
+      "shell_ne_complete": true
     },
     {
       "pack_id": "ESB-SETTLEMENT-PATH-1",
@@ -1233,9 +1240,10 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
+      "status": "WAITING_CURSOR",
       "classification": "TBD_PROBE",
-      "synthesized_from": "challenge ESB partial ceiling"
+      "synthesized_from": "challenge ESB partial ceiling",
+      "armed_at": "2026-09-30T08:05:30+08:00"
     },
     {
       "pack_id": "SOP-CATALOG-SEED-ROUTE-1",

@@ -315,27 +315,48 @@ def _apply_safe_probes(rows: list[dict[str, Any]], *, probed_at: str) -> list[di
             )
 
         elif iid == "INT-MET-WOLF" or iid == "CAP-INTG-05":
-            # Wolf product runtime Metricool is not a live connector.
-            item["audit_status"] = "MISSING_OR_UNPROVEN" if iid == "INT-MET-WOLF" else (
-                item.get("audit_status") or "BUILT_NOT_PROVEN"
-            )
+            # METRICOOL-RUNTIME-WIRE-1: per-surface honesty (not blanket NOT_RUNTIME).
             st = metricool.get("status")
-            if st == "NOT_CONFIGURED":
-                item["probe_status"] = "NOT_RUNTIME"
+            try:
+                from core import metricool_runtime_wire1 as _mrw
+
+                overlay = _mrw.intg_probe_overlay()
+            except Exception:  # noqa: BLE001
+                overlay = None
+            if overlay:
+                item["audit_status"] = overlay.get("audit_status") or "PARTIAL_IN_BETA"
+                item["probe_status"] = overlay.get("probe_status") or "RUNTIME_WIRED_PARTIAL"
+                item["last_success"] = None
+                item["last_probed_at"] = probed_at
+                item["probe_notes"] = overlay.get("probe_notes")
+                item["probe_facts"] = {
+                    **(overlay.get("probe_facts") or {}),
+                    "status_status_fn": st,
+                    "creds_loaded": False,
+                    "network_called": False,
+                }
             else:
-                item["probe_status"] = f"STATUS_{st}"
-            item["last_success"] = None
-            item["last_probed_at"] = probed_at
-            item["probe_notes"] = (
-                f"Wolf Metricool status()={st} (no creds loaded, no network). "
-                "Agent-host MCP-Metricool ≠ Wolf runtime connector."
-            )
-            item["probe_facts"] = {
-                "status": st,
-                "wolf_runtime": False,
-                "creds_loaded": False,
-                "network_called": False,
-            }
+                item["audit_status"] = (
+                    "MISSING_OR_UNPROVEN"
+                    if iid == "INT-MET-WOLF"
+                    else (item.get("audit_status") or "BUILT_NOT_PROVEN")
+                )
+                if st == "NOT_CONFIGURED":
+                    item["probe_status"] = "NOT_RUNTIME"
+                else:
+                    item["probe_status"] = f"STATUS_{st}"
+                item["last_success"] = None
+                item["last_probed_at"] = probed_at
+                item["probe_notes"] = (
+                    f"Wolf Metricool status()={st} (no creds loaded, no network). "
+                    "Agent-host MCP-Metricool ≠ Wolf runtime connector."
+                )
+                item["probe_facts"] = {
+                    "status": st,
+                    "wolf_runtime": False,
+                    "creds_loaded": False,
+                    "network_called": False,
+                }
 
         elif iid.startswith("MCP-") or str(item.get("target") or "") == "AgentHost":
             item["audit_status"] = "AGENT_HOST_ONLY"
@@ -345,11 +366,15 @@ def _apply_safe_probes(rows: list[dict[str, Any]], *, probed_at: str) -> list[di
             item["last_probed_at"] = probed_at
             item["probe_notes"] = (
                 "Agent-host MCP only — not Wolf staff runtime connector. "
-                "NOT_RUNTIME for product surfaces."
+                "Brand/analytics stamps land via METRICOOL-RUNTIME-WIRE-1; "
+                "engagement values stay NOT_RUNTIME."
             )
             if iid == "MCP-Metricool":
                 notes = list(item.get("evidence_notes") or [])
-                stamp = "MCP-Metricool is AGENT_HOST_ONLY; INT-MET-WOLF Wolf runtime NOT_RUNTIME"
+                stamp = (
+                    "MCP-Metricool AGENT_HOST_ONLY; INT-MET-WOLF per-surface "
+                    "RUNTIME_WIRED (brands/analytics) via METRICOOL-RUNTIME-WIRE-1"
+                )
                 if stamp not in notes:
                     notes.append(stamp)
                 item["evidence_notes"] = notes
@@ -440,8 +465,13 @@ def build_board(*, persist_audit: bool = False) -> dict[str, Any]:
             "yanolja": "BLOCKED_EXTERNAL",
             "esb": "PARTIAL_IN_BETA",
             "bank": "FILE_IMPORT_ONLY",
-            "metricool_wolf": "NOT_RUNTIME",
+            "metricool_wolf": "PER_SURFACE",
             "metricool_mcp": "AGENT_HOST_ONLY",
+            "metricool_policy": (
+                "RUNTIME_WIRED brands+analytics catalog; "
+                "NOT_RUNTIME engagement/last_success/publish values; "
+                "EXTERNAL_BLOCKER Wolf HTTP when BETA_METRICOOL_ENABLED=false"
+            ),
             "last_success_policy": "null_if_unknown_never_invent",
         },
         "cursor_did_not_auto_start_next_pack": True,

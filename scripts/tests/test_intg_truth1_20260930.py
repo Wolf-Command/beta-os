@@ -164,10 +164,15 @@ def test_registry_honesty() -> None:
 
     met = next(c for c in connectors if c["integration_id"] == "INT-MET-WOLF")
     check(
-        "metricool wolf NOT_RUNTIME or STATUS_",
-        str(met.get("probe_status") or "").startswith("NOT_RUNTIME")
+        "metricool wolf RUNTIME_WIRED_PARTIAL or NOT_RUNTIME or STATUS_",
+        str(met.get("probe_status") or "").startswith("RUNTIME_WIRED")
+        or str(met.get("probe_status") or "").startswith("NOT_RUNTIME")
         or str(met.get("probe_status") or "").startswith("STATUS_"),
         str(met.get("probe_status")),
+    )
+    check(
+        "metricool last_success null",
+        met.get("last_success") is None,
     )
 
     mcp = next(c for c in connectors if c["integration_id"] == "MCP-Metricool")

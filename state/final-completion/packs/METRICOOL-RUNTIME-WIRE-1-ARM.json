@@ -4,8 +4,9 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 7,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T07:54:00+08:00",
+  "exited_at": "2026-09-30T08:03:30+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
   "prod_pid_held": 15975,
@@ -14,12 +15,25 @@
   "no_push": true,
   "matt_auto_continue": true,
   "prior_pack_verified": "PIPE-RELIABILITY-AUTO-1",
-  "beta_os_head_at_arm": "PENDING",
+  "beta_os_head_at_arm": "9da81984f9db7521bd65fee25bcaf7f4539c93fb",
+  "beta_os_head_at_exit": "9da8198",
   "brief": "state/build-factory/briefs/BRIEF-METRICOOL-RUNTIME-WIRE-1.md",
   "log": "state/build-factory/logs/METRICOOL-RUNTIME-WIRE-1.log",
   "result_file": "docs/wolf/ops/METRICOOL-RUNTIME-WIRE-1-RESULT.md",
   "next_pack_for_parent": "ESB-SETTLEMENT-PATH-1",
   "classification": "INTERNALLY_SOLVABLE",
+  "suite": {
+    "pass": 136,
+    "fail": 0
+  },
+  "honesty": {
+    "brand_stamps": "RUNTIME_WIRED",
+    "analytics_paths_instagram_posts": "RUNTIME_WIRED",
+    "engagement_values": "NOT_RUNTIME",
+    "last_success": "NOT_RUNTIME",
+    "wolf_http_connector": "EXTERNAL_BLOCKER",
+    "fake_metrics": false
+  },
   "forbids": [
     "fake engagement",
     "fake last_success",
@@ -35,5 +49,11 @@
   "preserves": [
     "GGV-METRIC-HONESTY-1",
     "CONTENT-ENGINE-LIVE-1"
-  ]
+  ],
+  "cursor_did_not_auto_start_next": true,
+  "peaches_verify": "state/final-completion/packs/METRICOOL-RUNTIME-WIRE-1-PEACHES-VERIFY.json",
+  "peaches_verified_at": "2026-09-30T08:05:30+08:00",
+  "exit_code": 0,
+  "tests_pass": 136,
+  "tests_fail": 0
 }

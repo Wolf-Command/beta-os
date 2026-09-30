@@ -15,7 +15,10 @@
       "classification": "INTERNALLY_SOLVABLE",
       "evidence": "user-Metricool MCP serverStatus=ready; getBrandSettings returned 6 live brands (Atrium/Goss/Uma Blu/Habitat/Selo/Tropik); IG posts metrics list returned 29 fields via MCP",
       "next_pack": "METRICOOL-RUNTIME-WIRE-1",
-      "not_complete_until": "Beta board paints real last_success/engagement from authorised Metricool OR evidenced EXTERNAL_BLOCKER"
+      "not_complete_until": "Beta board paints real last_success/engagement from authorised Metricool OR evidenced EXTERNAL_BLOCKER",
+      "status_after": "PER_SURFACE_RUNTIME_WIRED_PARTIAL",
+      "action": "DONE this pack METRICOOL-RUNTIME-WIRE-1 \u2014 blanket NOT_RUNTIME replaced; live engagement values still NOT_RUNTIME (never invent)",
+      "note": "METRICOOL-RUNTIME-WIRE-1 lifted blanket NOT_RUNTIME; engagement values still NOT_RUNTIME null"
     },
     {
       "surface": "ESB PARTIAL_IN_BETA / settlement UNAVAILABLE",
@@ -67,12 +70,21 @@
       "status_after": "PIPE_OK_WITH_DETECT_RECOVER"
     }
   ],
-  "updated_at": "2026-09-30T07:54:00+08:00",
+  "updated_at": "2026-09-30T08:05:30+08:00",
   "metricool_runtime_probe": {
     "getBrandSettings": "6 brands",
     "getAnalyticsAvailableMetrics_instagram_posts": "29 fields incl engagement/likes/reach",
     "classification": "INTERNALLY_SOLVABLE",
-    "next": "METRICOOL-RUNTIME-WIRE-1"
+    "next": "METRICOOL-RUNTIME-WIRE-1",
+    "status_after": "METRICOOL-RUNTIME-WIRE-1 EXIT:0 \u2014 PER_SURFACE wired",
+    "board": "/ops/metricool-runtime-wire-1",
+    "surfaces": {
+      "brand_stamps": "RUNTIME_WIRED",
+      "analytics_paths_instagram_posts": "RUNTIME_WIRED",
+      "engagement_values": "NOT_RUNTIME",
+      "last_success": "NOT_RUNTIME",
+      "wolf_http_connector": "EXTERNAL_BLOCKER"
+    }
   },
   "pipe_flap_observed": {
     "at_wita": "2026-09-30T07:28:40+08:00",
@@ -94,6 +106,23 @@
       "at_wita": "2026-09-30T07:53:00+08:00",
       "during": "post PIPE EXIT Peaches",
       "recovered": true
+    },
+    {
+      "at_wita": "2026-09-30T07:55:30+08:00",
+      "during": "METRICOOL babysit start",
+      "recovered": true
+    },
+    {
+      "at_wita": "2026-09-30T08:02:40+08:00",
+      "during": "METRICOOL mid-babysit",
+      "recovered": true
     }
-  ]
+  ],
+  "metricool_runtime_wire1": {
+    "status": "PASS_VERIFIED",
+    "brands": 6,
+    "per_surface": true,
+    "engagement_still_null": true,
+    "wolf_http": "EXTERNAL_BLOCKER"
+  }
 }

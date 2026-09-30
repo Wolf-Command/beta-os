@@ -183,6 +183,7 @@ from core import esb_truth1 as _esb_truth1
 from core import backup_health1 as _backup_health1
 from core import backup_restore_drill1 as _backup_restore_drill1
 from core import pipe_reliability_auto1 as _pipe_reliability_auto1
+from core import metricool_runtime_wire1 as _metricool_runtime_wire1
 from core import intel_learn1 as _intel_learn1
 from core import sop_lesson_live1 as _sop_lesson_live1
 from core import bzg_ops_desk1 as _bzg_ops_desk1
@@ -2068,6 +2069,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._pipe_reliability_auto1_dispatch():
+            return
+
+        if self._metricool_runtime_wire1_dispatch():
             return
 
         if self._fin_cash_truth1_dispatch():
@@ -5336,6 +5340,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._pipe_reliability_auto1_dispatch():
                 return
         elif path in (
+            "/ops/metricool-runtime-wire-1",
+            "/ops/metricool-runtime-wire-1/",
+            "/ops/metricool-runtime",
+            "/ops/metricool-runtime/",
+            "/metricool-runtime-wire-1",
+            "/metricool-runtime-wire-1/",
+            "/metricool-runtime-wire-1.html",
+            "/dashboards/metricool-runtime-wire-1.html",
+            "/ggv/metricool-runtime-wire-1",
+            "/ggv/metricool-runtime-wire-1/",
+        ):
+            if self._metricool_runtime_wire1_dispatch():
+                return
+        elif path in (
             "/intel/learning",
             "/intel/learning/",
             "/ops/intel-learning",
@@ -6246,6 +6264,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._pipe_reliability_auto1_write_refused(path)
             return
+        if path == "/api/ops/metricool-runtime-wire-1" or path.startswith(
+            "/api/ops/metricool-runtime-wire-1/"
+        ):
+            self._metricool_runtime_wire1_write_refused(path)
+            return
         if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
             self._fin_cash_truth1_write_refused(path)
             return
@@ -7129,6 +7152,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/api/ops/pipe-reliability-auto-1/"
         ):
             self._pipe_reliability_auto1_write_refused(path)
+            return
+        if path == "/api/ops/metricool-runtime-wire-1" or path.startswith(
+            "/api/ops/metricool-runtime-wire-1/"
+        ):
+            self._metricool_runtime_wire1_write_refused(path)
             return
         if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
             self._fin_cash_truth1_write_refused(path)
@@ -8418,6 +8446,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/api/ops/pipe-reliability-auto-1/"
         ):
             self._pipe_reliability_auto1_write_refused(path)
+            return
+        if path == "/api/ops/metricool-runtime-wire-1" or path.startswith(
+            "/api/ops/metricool-runtime-wire-1/"
+        ):
+            self._metricool_runtime_wire1_write_refused(path)
             return
         if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
             self._fin_cash_truth1_write_refused(path)
@@ -16992,6 +17025,108 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "human_commissioned": False,
                 "fake_uptime": False,
                 "fake_pipe_up": False,
+                "prod_mutate": False,
+            },
+            status=403,
+        )
+
+    def _metricool_runtime_wire1_dispatch(self) -> bool:
+        """METRICOOL-RUNTIME-WIRE-1 — authorised Metricool brand/analytics stamps."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _metricool_runtime_wire1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _metricool_runtime_wire1.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "metricool_runtime_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "fake_metrics": False,
+                        "invented_engagement": False,
+                        "invented_last_success": False,
+                        "prod_mutate": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _metricool_runtime_wire1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "metricool-runtime-wire-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "METRICOOL-RUNTIME-WIRE-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="metricool-runtime-wire-1.html")
+        return True
+
+    def _metricool_runtime_wire1_write_refused(self, path: str) -> None:
+        """Refuse fake engagement / invent metrics / prod mutate / commissioning."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _metricool_runtime_wire1.refuse_external_write(
+                body if isinstance(body, dict) else {}
+            )
+        except _metricool_runtime_wire1.MetricoolRuntimeWire1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "fake_metrics": False,
+                    "invented_engagement": False,
+                    "invented_last_success": False,
+                    "prod_mutate": False,
+                    "prod_pid_held": _metricool_runtime_wire1.PROD_PID_HELD,
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": (
+                    "METRICOOL-RUNTIME-WIRE-1 is a read-only runtime stamp board. "
+                    "Writes refused."
+                ),
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "fake_metrics": False,
+                "invented_engagement": False,
                 "prod_mutate": False,
             },
             status=403,

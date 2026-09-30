@@ -454,6 +454,20 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import pipe_reliability_auto1 as p; from pathlib import Path; html=Path('dashboards/pipe-reliability-auto-1.html').read_text(); import sys; sys.exit(0 if (p.api_matches('/api/ops/pipe-reliability-auto-1') and p.page_matches('/ops/pipe-reliability-auto-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/pipe1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/PIPE-RELIABILITY-AUTO-1-RESULT.md').is_file() and Path('state/final-completion/packs/PIPE-RELIABILITY-AUTO-1-EPISODES.json').is_file() and p.honesty_flags().get('next_pack_for_parent_only')=='METRICOOL-RUNTIME-WIRE-1' and p.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
       "expect": "exit 0",
       "by": "cursor-pipe-reliability-auto-1"
+    },
+    {
+      "id": "metricool-runtime-wire1-surfaces",
+      "claim": "METRICOOL-RUNTIME-WIRE-1: 6 authorised brand stamps RUNTIME_WIRED; IG posts analytics catalog 29 fields RUNTIME_WIRED; engagement/last_success/publish null NOT_RUNTIME; Wolf HTTP EXTERNAL_BLOCKER when BETA_METRICOOL_ENABLED=false; INTG INT-MET PER_SURFACE; GGV-METRIC-HONESTY-1 + CONTENT-ENGINE-LIVE-1 preserved; staff_ready/human_commissioned false; next pack parent-only ESB-SETTLEMENT-PATH-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import metricool_runtime_wire1 as m; from core import intg_truth_board as i; p=m.build_board(); met=next(c for c in i.build_board()['connectors'] if c['integration_id']=='INT-MET-WOLF'); import sys; sys.exit(0 if (p.get('ok') and p.get('brand_count')==6 and p.get('engagement') is None and p.get('last_success') is None and p.get('fake_metrics') is False and m.surfaces_are_honest(p) and p.get('staff_ready') is False and p.get('human_commissioned') is False and str(met.get('probe_status') or '').startswith('RUNTIME_WIRED') and i.build_board()['honesty'].get('metricool_wolf')=='PER_SURFACE' and m.honesty_flags().get('next_pack_for_parent_only')=='ESB-SETTLEMENT-PATH-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-metricool-runtime-wire-1"
+    },
+    {
+      "id": "metricool-runtime-wire1-artifacts",
+      "claim": "METRICOOL-RUNTIME-WIRE-1 page/API/shots/RESULT present; unsigned deny + invent-engagement refuse; suite PASS=136; next pack parent-only ESB-SETTLEMENT-PATH-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import metricool_runtime_wire1 as m; from pathlib import Path; html=Path('dashboards/metricool-runtime-wire-1.html').read_text(); import sys; sys.exit(0 if (m.api_matches('/api/ops/metricool-runtime-wire-1') and m.page_matches('/ops/metricool-runtime-wire-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/metricoolruntime1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/METRICOOL-RUNTIME-WIRE-1-RESULT.md').is_file() and m.honesty_flags().get('next_pack_for_parent_only')=='ESB-SETTLEMENT-PATH-1' and m.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-metricool-runtime-wire-1"
     }
   ]
 }
