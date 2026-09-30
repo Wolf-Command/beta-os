@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T08:42:00+08:00",
+  "at_wita": "2026-09-30T08:51:30+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -1400,9 +1400,23 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
+      "status": "PASS_VERIFIED",
       "classification": "INTERNALLY_SOLVABLE_OR_HUMAN",
-      "synthesized_from": "challenge tax UNKNOWN; NPWP remains MATT_ACTION non-blocking"
+      "route_classification": "HUMAN_COMMISSIONING",
+      "external_blocker": "EXTERNAL_BLOCKER",
+      "npwp": "MATT_ACTION_NON_BLOCKING",
+      "synthesized_from": "challenge tax UNKNOWN; NPWP remains MATT_ACTION non-blocking",
+      "armed_at": "2026-09-30T08:43:00+08:00",
+      "exited_at": "2026-09-30T08:49:20+08:00",
+      "verified_at": "2026-09-30T08:51:30+08:00",
+      "suite": {
+        "pass": 179,
+        "fail": 0
+      },
+      "tests": {
+        "pass": 179,
+        "fail": 0
+      }
     },
     {
       "pack_id": "CRM-PIPELINE-TRUTH-1",
@@ -1424,9 +1438,11 @@
       "depends_on": [],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
+      "status": "WAITING_CURSOR",
       "classification": "TBD_PROBE",
-      "synthesized_from": "MISSING CRM pipeline (IL-R6)"
+      "synthesized_from": "MISSING CRM pipeline (IL-R6)",
+      "armed_at": "2026-09-30T08:51:30+08:00",
+      "prior_pack_verified": "FIN-TAX-DEEPEN-1"
     },
     {
       "pack_id": "CONTENT-PUBLISH-PATH-1",

@@ -89,22 +89,23 @@
     "RELIABILITY-1",
     "CONTENT-ENGINE-LIVE-1"
   ],
-  "last_pack_verified": "INV-CASH-FACTS-ROUTE-1",
-  "last_verified_at": "2026-09-30T08:42:00+08:00",
-  "pass_verified_count": 37,
-  "next_pack": "FIN-TAX-DEEPEN-1",
+  "last_pack_verified": "FIN-TAX-DEEPEN-1",
+  "last_verified_at": "2026-09-30T08:51:30+08:00",
+  "pass_verified_count": 38,
+  "next_pack": "CRM-PIPELINE-TRUTH-1",
   "mac_pipe": "GREEN_BOARD",
   "unparked_at": "2026-09-30T07:26:00+08:00",
   "standards_lock": true,
   "restore_drill": "DRILL_RAN_NON_DESTRUCTIVE",
-  "last_pack_exited": "INV-CASH-FACTS-ROUTE-1",
-  "last_exit_at": "2026-09-30T08:55:00+08:00",
+  "last_pack_exited": "FIN-TAX-DEEPEN-1",
+  "last_exit_at": "2026-09-30T08:49:20+08:00",
   "metricool": "PER_SURFACE_RUNTIME_WIRED",
-  "next_pack_note": "parent/Peaches only after INV-CASH-FACTS-ROUTE-1 PASS_VERIFIED \u2014 Cursor must not auto-arm",
+  "next_pack_note": "Matt auto-continue armed CRM-PIPELINE-TRUTH-1 after FIN-TAX-DEEPEN-1 Peaches \u2014 Cursor must not auto-chain CONTENT-PUBLISH / HEADCHEF / Exit Report",
   "wave8_queued": [
-    "FIN-TAX-DEEPEN-1",
     "CRM-PIPELINE-TRUTH-1",
     "CONTENT-PUBLISH-PATH-1",
     "OCCUPANCY-EXTERNAL-HOLD-1"
-  ]
+  ],
+  "wave8_active": "CRM-PIPELINE-TRUTH-1",
+  "at_wita": "2026-09-30T08:49:45+08:00"
 }

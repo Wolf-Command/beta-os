@@ -528,6 +528,22 @@
       "expect": "exit 0",
       "by": "cursor-inv-cash-facts-route-1",
       "at": "2026-09-30T08:55:00+08:00"
+    },
+    {
+      "id": "FIN-TAX-DEEPEN-1-board",
+      "claim": "FIN-TAX-DEEPEN-1: stamps HUMAN_COMMISSIONING; pack INTERNALLY_SOLVABLE_OR_HUMAN; DJP/eFaktur EXTERNAL_BLOCKER; NPWP MATT_ACTION non-blocking; invented_amount/filing/npwp false; due_amount null; FIN-TAX-SHELL-1 preserved; staff_ready/human_commissioned false; next pack parent-only CRM-PIPELINE-TRUTH-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import fin_tax_deepen1 as d; p=d.build_board('PERS-MATT'); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='HUMAN_COMMISSIONING' and p.get('pack_classification')=='INTERNALLY_SOLVABLE_OR_HUMAN' and p.get('action')=='STAMP_HUMAN_COMMISSIONING' and p.get('external_blocker')=='EXTERNAL_BLOCKER' and p.get('npwp')=='MATT_ACTION' and p.get('npwp_blocking') is False and p.get('invented_amount') is False and p.get('invented_filing') is False and p.get('invented_npwp') is False and p.get('due_amount') is None and d.surfaces_are_honest(p) and d.no_invented_dues_or_filings(p) and p.get('fin_tax_shell1_preserved') is True and p.get('staff_ready') is False and p.get('human_commissioned') is False and d.honesty_flags().get('next_pack_for_parent_only')=='CRM-PIPELINE-TRUTH-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-fin-tax-deepen-1",
+      "at": "2026-09-30T08:49:20+08:00"
+    },
+    {
+      "id": "FIN-TAX-DEEPEN-1-surfaces",
+      "claim": "FIN-TAX-DEEPEN-1 page/API/shots/RESULT present; unsigned deny + dues/filing/NPWP refuse; HUMAN_COMMISSIONING; EXTERNAL_BLOCKER; NPWP MATT_ACTION; next pack parent-only CRM-PIPELINE-TRUTH-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import fin_tax_deepen1 as d; from pathlib import Path; html=Path('dashboards/fin-tax-deepen-1.html').read_text(); import sys; sys.exit(0 if (d.api_matches('/api/fin/tax-deepen-1') and d.page_matches('/fin/tax-deepen-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/fintaxdeepen1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/FIN-TAX-DEEPEN-1-RESULT.md').is_file() and d.honesty_flags().get('next_pack_for_parent_only')=='CRM-PIPELINE-TRUTH-1' and d.honesty_flags().get('cursor_did_not_auto_start_next') is True and d.honesty_flags().get('classification')=='HUMAN_COMMISSIONING') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-fin-tax-deepen-1",
+      "at": "2026-09-30T08:49:20+08:00"
     }
   ]
 }

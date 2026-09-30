@@ -1,0 +1,80 @@
+{
+  "pack": "FIN-TAX-DEEPEN-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 8,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T08:51:30+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T08:50:55+08:00",
+  "result_file": "docs/wolf/ops/FIN-TAX-DEEPEN-1-RESULT.md",
+  "tests_rerun": {
+    "test_fin_tax_deepen1_20260930.py": {
+      "pass": 179,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/fintaxdeepen1-desk-desktop.png",
+        "bytes": 247990,
+        "sha256": "5a96e2f4dacd9bad4fe38e0850703282d11d8f8ba202983922242038e77f7b33"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fintaxdeepen1-desk-phone.png",
+        "bytes": 127241,
+        "sha256": "4d1bb5a5001a7bcf461f14d0844e4df5d3b1c98a3dca8899a5849fa08794f23c"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fintaxdeepen1-route-stamps.png",
+        "bytes": 289959,
+        "sha256": "b4928077ff01f97bf5fd37d7f8e7244a14cb4553cbb3c4f477ba732ace906ff7"
+      },
+      {
+        "path": "docs/wolf/ops/shots/fintaxdeepen1-unsigned-deny.png",
+        "bytes": 19818,
+        "sha256": "adfa719f777e6a8b34369d342e4380cedf21c897b34da1475c7e8645a0b92053"
+      }
+    ]
+  },
+  "route": {
+    "decision": "STAMP_HUMAN_COMMISSIONING",
+    "djp_efaktur": "EXTERNAL_BLOCKER",
+    "npwp": "MATT_ACTION_NON_BLOCKING",
+    "filing_count": 0
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "classification": {
+    "pack": "INTERNALLY_SOLVABLE_OR_HUMAN",
+    "route": "HUMAN_COMMISSIONING",
+    "djp": "EXTERNAL_BLOCKER",
+    "npwp": "MATT_ACTION",
+    "shell_ne_complete": true
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "c3687c2a102e639cc0e984d490541c652ae29350",
+    "uncommitted": true
+  },
+  "preserves": [
+    "FIN-TAX-SHELL-1"
+  ],
+  "next_pack": "CRM-PIPELINE-TRUTH-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}
