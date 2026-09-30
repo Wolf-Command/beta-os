@@ -22,10 +22,13 @@
     },
     {
       "surface": "ESB PARTIAL_IN_BETA / settlement UNAVAILABLE",
-      "classification": "EXTERNALLY_OR_HUMAN_TBD",
-      "evidence": "ESB-TRUTH-1 warehouse RO only; settlement_api UNAVAILABLE",
+      "classification": "EXTERNAL_BLOCKER",
+      "evidence": "Felix 2026-07-19 settlement API CONFIRMED UNAVAILABLE; no SETTLEMENT/ESB_API keys in .env; no settlement client; ESB-TRUTH-1 warehouse RO preserved (settlement_api UNAVAILABLE)",
       "next_pack": "ESB-SETTLEMENT-PATH-1",
-      "action": "Probe settlement path; if no creds \u2192 EXTERNAL_BLOCKER with evidence; else wire"
+      "action": "DONE this pack ESB-SETTLEMENT-PATH-1 \u2014 stamped EXTERNAL_BLOCKER with evidence; not UNKNOWN forever; no invent settlement/P&L",
+      "status_after": "ESB-SETTLEMENT-PATH-1 external block evidenced",
+      "board": "/ops/esb-settlement-path-1",
+      "note": "Warehouse stays PARTIAL_IN_BETA; settlement path pinned EXTERNAL_BLOCKER"
     },
     {
       "surface": "Bank recon FILE_IMPORT_ONLY",
@@ -70,7 +73,7 @@
       "status_after": "PIPE_OK_WITH_DETECT_RECOVER"
     }
   ],
-  "updated_at": "2026-09-30T08:05:30+08:00",
+  "updated_at": "2026-09-30T08:16:30+08:00",
   "metricool_runtime_probe": {
     "getBrandSettings": "6 brands",
     "getAnalyticsAvailableMetrics_instagram_posts": "29 fields incl engagement/likes/reach",
@@ -116,6 +119,11 @@
       "at_wita": "2026-09-30T08:02:40+08:00",
       "during": "METRICOOL mid-babysit",
       "recovered": true
+    },
+    {
+      "at_wita": "2026-09-30T08:05:45+08:00",
+      "during": "ESB-SETTLEMENT babysit",
+      "recovered": true
     }
   ],
   "metricool_runtime_wire1": {
@@ -124,5 +132,10 @@
     "per_surface": true,
     "engagement_still_null": true,
     "wolf_http": "EXTERNAL_BLOCKER"
+  },
+  "esb_settlement_path1": {
+    "status": "PASS_VERIFIED",
+    "classification": "EXTERNAL_BLOCKER",
+    "evidence": "Felix UNAVAILABLE + no SETTLEMENT/ESB_API keys"
   }
 }

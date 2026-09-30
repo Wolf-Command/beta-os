@@ -1,0 +1,36 @@
+{
+  "run_id": "SOP-CATALOG-SEED-ROUTE-1",
+  "pack": "SOP-CATALOG-SEED-ROUTE-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 7,
+  "status": "WAITING_CURSOR",
+  "armed_at": "2026-09-30T08:16:30+08:00",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "prod_mutate": false,
+  "prod_pid_held": 15975,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "prior_pack_verified": "ESB-SETTLEMENT-PATH-1",
+  "beta_os_head_at_arm": "PENDING",
+  "brief": "state/build-factory/briefs/BRIEF-SOP-CATALOG-SEED-ROUTE-1.md",
+  "log": "state/build-factory/logs/SOP-CATALOG-SEED-ROUTE-1.log",
+  "result_file": "docs/wolf/ops/SOP-CATALOG-SEED-ROUTE-1-RESULT.md",
+  "next_pack_for_parent": "FIN-BANK-CREDS-ROUTE-1",
+  "classification": "INTERNALLY_SOLVABLE",
+  "forbids": [
+    "auto-approve",
+    "fake live lessons",
+    "HEADCHEF",
+    "Exit Report",
+    "push"
+  ],
+  "depends_on": [
+    "SOP-LESSON-LIVE-1"
+  ],
+  "preserves": [
+    "SOP-LESSON-LIVE-1"
+  ]
+}

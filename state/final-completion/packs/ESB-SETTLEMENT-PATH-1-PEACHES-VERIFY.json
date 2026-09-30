@@ -1,0 +1,76 @@
+{
+  "pack": "ESB-SETTLEMENT-PATH-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T08:16:30+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T08:13:54+08:00",
+  "result_file": "docs/wolf/ops/ESB-SETTLEMENT-PATH-1-RESULT.md",
+  "tests_rerun": {
+    "test_esb_settlement_path1_20260930.py": {
+      "pass": 122,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/esbsettlement1-blocker-stamps.png",
+        "bytes": 266492,
+        "sha256": "d4c7cedb5300af1086e899981158f0fc438a68cce4555fcd9b48a8fa4e3ccc90"
+      },
+      {
+        "path": "docs/wolf/ops/shots/esbsettlement1-desk-desktop.png",
+        "bytes": 240543,
+        "sha256": "a9064e8f8775b555076c9ad655d67cd13d9fc2b9b6cc03f0c718985699bc78f3"
+      },
+      {
+        "path": "docs/wolf/ops/shots/esbsettlement1-desk-phone.png",
+        "bytes": 96311,
+        "sha256": "b2fb6065cf0a2247cf685d77efec3678a43ea1028e791d1eb5abef305d39f707"
+      },
+      {
+        "path": "docs/wolf/ops/shots/esbsettlement1-unsigned-deny.png",
+        "bytes": 24471,
+        "sha256": "7df206a8cc673a3bc5593cc1ec6f49e9b4799764c6a5130d7590ace9de8fbded"
+      }
+    ]
+  },
+  "probe": {
+    "settlement_api": "EXTERNAL_BLOCKER",
+    "credentials": "ABSENT",
+    "warehouse": "PRESERVED_PARTIAL"
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "classification": {
+    "settlement_path": "EXTERNAL_BLOCKER",
+    "shell_ne_complete": true,
+    "note": "Not UNKNOWN forever \u2014 Felix UNAVAILABLE + no creds evidenced"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "00586a5c677f8dc0491e3dd09e5b3162386f1ed8",
+    "uncommitted": true
+  },
+  "preserves": [
+    "ESB-TRUTH-1"
+  ],
+  "next_pack": "SOP-CATALOG-SEED-ROUTE-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

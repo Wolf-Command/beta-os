@@ -468,6 +468,20 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import metricool_runtime_wire1 as m; from pathlib import Path; html=Path('dashboards/metricool-runtime-wire-1.html').read_text(); import sys; sys.exit(0 if (m.api_matches('/api/ops/metricool-runtime-wire-1') and m.page_matches('/ops/metricool-runtime-wire-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/metricoolruntime1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/METRICOOL-RUNTIME-WIRE-1-RESULT.md').is_file() and m.honesty_flags().get('next_pack_for_parent_only')=='ESB-SETTLEMENT-PATH-1' and m.honesty_flags().get('cursor_did_not_auto_start_next') is True) else 1)\"",
       "expect": "exit 0",
       "by": "cursor-metricool-runtime-wire-1"
+    },
+    {
+      "id": "esb-settlement-path1-blocker",
+      "claim": "ESB-SETTLEMENT-PATH-1: settlement API path + credentials EXTERNAL_BLOCKER with Felix 2026-07-19 + env-key-absence evidence; settlement/pnl null; fake_settlement/pnl_invented/esb_write false; ESB-TRUTH-1 warehouse RO preserved (settlement_api UNAVAILABLE); INTG esb_settlement EXTERNAL_BLOCKER; staff_ready/human_commissioned false; next pack parent-only SOP-CATALOG-SEED-ROUTE-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import esb_settlement_path1 as e; from core import esb_truth1 as t; from core import intg_truth_board as i; p=e.build_board(); s=t.build_slice(); esb=next(c for c in i.build_board(persist_audit=False)['connectors'] if c['integration_id']=='INT-ESB-WOLF'); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='EXTERNAL_BLOCKER' and p.get('settlement_api')=='EXTERNAL_BLOCKER' and p.get('settlement') is None and p.get('pnl') is None and p.get('fake_settlement') is False and e.surfaces_are_honest(p) and p.get('esb_truth1_preserved') is True and s.get('settlement_api')=='UNAVAILABLE' and s.get('audit_status')=='PARTIAL_IN_BETA' and i.build_board(persist_audit=False)['honesty'].get('esb_settlement')=='EXTERNAL_BLOCKER' and e.honesty_flags().get('next_pack_for_parent_only')=='SOP-CATALOG-SEED-ROUTE-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-esb-settlement-path-1"
+    },
+    {
+      "id": "esb-settlement-path1-artifacts",
+      "claim": "ESB-SETTLEMENT-PATH-1 page/API/shots/RESULT present; unsigned deny + settlement/pnl refuse; classification EXTERNAL_BLOCKER; next pack parent-only SOP-CATALOG-SEED-ROUTE-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import esb_settlement_path1 as e; from pathlib import Path; html=Path('dashboards/esb-settlement-path-1.html').read_text(); import sys; sys.exit(0 if (e.api_matches('/api/ops/esb-settlement-path-1') and e.page_matches('/ops/esb-settlement-path-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/esbsettlement1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/ESB-SETTLEMENT-PATH-1-RESULT.md').is_file() and e.honesty_flags().get('next_pack_for_parent_only')=='SOP-CATALOG-SEED-ROUTE-1' and e.honesty_flags().get('cursor_did_not_auto_start_next') is True and e.honesty_flags().get('classification')=='EXTERNAL_BLOCKER') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-esb-settlement-path-1"
     }
   ]
 }

@@ -279,29 +279,59 @@ def _apply_safe_probes(rows: list[dict[str, Any]], *, probed_at: str) -> list[di
         elif iid in ("INT-ESB-WOLF", "CAP-INTG-02") or (
             str(item.get("source") or "").upper() == "ESB"
         ):
-            item["audit_status"] = "PARTIAL_IN_BETA"
+            # ESB-SETTLEMENT-PATH-1: warehouse PARTIAL + settlement EXTERNAL_BLOCKER.
             wh = esb.get("warehouse_status")
-            if wh == "READ_OK":
-                item["probe_status"] = "WAREHOUSE_READ_OK_PARTIAL"
-            elif wh in ("NOT_CONFIGURED", "UNKNOWN"):
-                item["probe_status"] = "WAREHOUSE_ABSENT"
-            else:
-                item["probe_status"] = f"WAREHOUSE_{wh}"
-            item["blocked_external"] = False
-            item["last_success"] = None  # warehouse ≠ connector success
-            item["last_probed_at"] = probed_at
             closes = esb.get("venue_daily_closes_count")
-            item["probe_notes"] = (
-                f"ESB warehouse RO status={wh}. "
-                f"venue_daily_closes={closes}. "
-                "PARTIAL_IN_BETA — warehouse facts only; P&L not invented; "
-                "settlement_api UNAVAILABLE."
-            )
-            item["probe_facts"] = {
-                "warehouse_status": wh,
-                "venue_daily_closes_count": closes,
-                "pnl_invented": False,
-            }
+            try:
+                from core import esb_settlement_path1 as _esp
+
+                overlay = _esp.intg_probe_overlay()
+            except Exception:  # noqa: BLE001
+                overlay = None
+            if overlay:
+                item["audit_status"] = overlay.get("audit_status") or "PARTIAL_IN_BETA"
+                item["probe_status"] = overlay.get("probe_status") or (
+                    "WAREHOUSE_READ_OK_PARTIAL_SETTLEMENT_EXTERNAL_BLOCKER"
+                    if wh == "READ_OK"
+                    else f"WAREHOUSE_{wh}"
+                )
+                item["blocked_external"] = False
+                item["last_success"] = None  # warehouse ≠ connector success
+                item["last_probed_at"] = probed_at
+                item["probe_notes"] = overlay.get("probe_notes") or (
+                    f"ESB warehouse RO status={wh}. venue_daily_closes={closes}. "
+                    "Settlement path EXTERNAL_BLOCKER."
+                )
+                item["probe_facts"] = {
+                    "warehouse_status": wh,
+                    "venue_daily_closes_count": closes,
+                    "pnl_invented": False,
+                    "settlement": None,
+                    "fake_settlement": False,
+                    **(overlay.get("probe_facts") or {}),
+                }
+            else:
+                item["audit_status"] = "PARTIAL_IN_BETA"
+                if wh == "READ_OK":
+                    item["probe_status"] = "WAREHOUSE_READ_OK_PARTIAL"
+                elif wh in ("NOT_CONFIGURED", "UNKNOWN"):
+                    item["probe_status"] = "WAREHOUSE_ABSENT"
+                else:
+                    item["probe_status"] = f"WAREHOUSE_{wh}"
+                item["blocked_external"] = False
+                item["last_success"] = None
+                item["last_probed_at"] = probed_at
+                item["probe_notes"] = (
+                    f"ESB warehouse RO status={wh}. "
+                    f"venue_daily_closes={closes}. "
+                    "PARTIAL_IN_BETA — warehouse facts only; P&L not invented; "
+                    "settlement_api UNAVAILABLE."
+                )
+                item["probe_facts"] = {
+                    "warehouse_status": wh,
+                    "venue_daily_closes_count": closes,
+                    "pnl_invented": False,
+                }
 
         elif iid in ("INT-BANK-WOLF", "CAP-INTG-04") or "bank" in iid.lower():
             item["audit_status"] = item.get("audit_status") or "MISSING_OR_UNPROVEN"
@@ -464,6 +494,12 @@ def build_board(*, persist_audit: bool = False) -> dict[str, Any]:
         "honesty": {
             "yanolja": "BLOCKED_EXTERNAL",
             "esb": "PARTIAL_IN_BETA",
+            "esb_settlement": "EXTERNAL_BLOCKER",
+            "esb_policy": (
+                "WAREHOUSE_RO PARTIAL_IN_BETA (ESB-TRUTH-1 preserved); "
+                "settlement API path + credentials EXTERNAL_BLOCKER "
+                "(Felix 2026-07-19 + env-key absence); no invent settlement/P&L"
+            ),
             "bank": "FILE_IMPORT_ONLY",
             "metricool_wolf": "PER_SURFACE",
             "metricool_mcp": "AGENT_HOST_ONLY",

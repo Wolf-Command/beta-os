@@ -4,8 +4,9 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 7,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T08:05:30+08:00",
+  "exited_at": "2026-09-30T08:20:00+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
   "prod_pid_held": 15975,
@@ -14,12 +15,23 @@
   "no_push": true,
   "matt_auto_continue": true,
   "prior_pack_verified": "METRICOOL-RUNTIME-WIRE-1",
-  "beta_os_head_at_arm": "PENDING",
+  "beta_os_head_at_arm": "00586a5c677f8dc0491e3dd09e5b3162386f1ed8",
   "brief": "state/build-factory/briefs/BRIEF-ESB-SETTLEMENT-PATH-1.md",
   "log": "state/build-factory/logs/ESB-SETTLEMENT-PATH-1.log",
   "result_file": "docs/wolf/ops/ESB-SETTLEMENT-PATH-1-RESULT.md",
+  "board": "/ops/esb-settlement-path-1",
+  "api": "/api/ops/esb-settlement-path-1",
   "next_pack_for_parent": "SOP-CATALOG-SEED-ROUTE-1",
-  "classification": "TBD_PROBE",
+  "classification": "EXTERNAL_BLOCKER",
+  "settlement_api": "EXTERNAL_BLOCKER",
+  "settlement_api_legacy_stamp": "UNAVAILABLE",
+  "settlement": null,
+  "pnl": null,
+  "fake_settlement": false,
+  "pnl_invented": false,
+  "esb_write": false,
+  "esb_truth1_preserved": true,
+  "unknown_forever_replaced": true,
   "forbids": [
     "fake settlement",
     "invent P&L",
@@ -32,5 +44,18 @@
   ],
   "preserves": [
     "ESB-TRUTH-1"
-  ]
+  ],
+  "evidence": {
+    "felix_dated": "2026-07-19",
+    "felix_finding": "ESB settlement / cancel-menu / goods-receipt reports CONFIRMED UNAVAILABLE via API",
+    "doc": "docs/deliveries/BZG-UMA-BLU-OPERATIONS-DISCOVERY-2026-09-17.md",
+    "creds_present": false,
+    "client_module_found": false
+  },
+  "cursor_did_not_auto_start_next": true,
+  "peaches_verified_at": "2026-09-30T08:16:30+08:00",
+  "exit_code": 0,
+  "tests_pass": 122,
+  "tests_fail": 0,
+  "peaches_verify": "state/final-completion/packs/ESB-SETTLEMENT-PATH-1-PEACHES-VERIFY.json"
 }

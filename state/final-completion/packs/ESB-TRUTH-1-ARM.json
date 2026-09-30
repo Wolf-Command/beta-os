@@ -4,7 +4,7 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 3,
-  "status": "PASS_VERIFIED",
+  "status": "DONE_ENGINEERING_PASS",
   "armed_at": "2026-09-30T02:37:00+08:00",
   "exited_at": "2026-09-30T02:42:15+08:00",
   "exit_code": 0,
@@ -75,6 +75,13 @@
     "docs/wolf/ops/shots/esbtruth1-unsigned-deny.png"
   ],
   "cursor_did_not_auto_start_next": true,
-  "peaches_verified_at": "2026-09-30T02:45:00+08:00",
-  "peaches_verify": "state/final-completion/packs/ESB-TRUTH-1-PEACHES-VERIFY.json"
+  "peaches_verified_at": "2026-09-30T02:51:30+08:00",
+  "peaches_verify": "PASS_VERIFIED",
+  "closed_at": "2026-09-30T02:51:30+08:00",
+  "matt_finished_ping": true,
+  "matt_finished_ping_at": "2026-09-30T02:51:30+08:00",
+  "independent_tests_this_tick": {
+    "pass": 152,
+    "fail": 0
+  }
 }
