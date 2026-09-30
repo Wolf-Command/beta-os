@@ -624,6 +624,22 @@
       "expect": "exit 0",
       "by": "cursor-approvals-live-deepen-1",
       "at": "2026-09-30T09:41:32+08:00"
+    },
+    {
+      "id": "WEEKLY-CASH-FORECAST-SHELL-1-board",
+      "claim": "WEEKLY-CASH-FORECAST-SHELL-1: classification HUMAN_COMMISSIONING_OR_INTERNAL; 13 weeks UNKNOWN amounts null; invented_cash/forecast false; FILE_IMPORT_ONLY; FIN-CASH-TRUTH-1 + FIN-BANK-CREDS preserved; staff_ready/human_commissioned false; next pack parent-only CONNECTOR-HEALTH-DEEPEN-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import weekly_cash_forecast_shell1 as w; p=w.build_board(); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='HUMAN_COMMISSIONING_OR_INTERNAL' and p.get('invented_cash') is False and p.get('invented_forecast') is False and p.get('week_count')==13 and p.get('weeks_unknown') is True and w.all_weeks_unknown(p) and w.no_invented_cash(p) and p.get('file_import_only') is True and p.get('fin_cash_truth1_preserved') is True and p.get('fin_bank_creds_preserved') is True and p.get('staff_ready') is False and p.get('human_commissioned') is False and w.honesty_flags().get('next_pack_for_parent_only')=='CONNECTOR-HEALTH-DEEPEN-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-weekly-cash-forecast-shell-1",
+      "at": "2026-09-30T09:50:30+08:00"
+    },
+    {
+      "id": "WEEKLY-CASH-FORECAST-SHELL-1-surfaces",
+      "claim": "WEEKLY-CASH-FORECAST-SHELL-1 page/API/shots/RESULT present; unsigned deny + invent-cash/forecast refuse; HUMAN_COMMISSIONING_OR_INTERNAL + FILE_IMPORT_ONLY pins; FIN packs preserved; next pack parent-only CONNECTOR-HEALTH-DEEPEN-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import weekly_cash_forecast_shell1 as w; from pathlib import Path; html=Path('dashboards/weekly-cash-forecast-shell-1.html').read_text(); import sys; sys.exit(0 if (w.api_matches('/api/fin/weekly-cash-forecast-shell-1') and w.page_matches('/fin/weekly-cash-forecast-shell-1') and 'staff_ready=false' in html and 'FILE_IMPORT_ONLY' in html and Path('docs/wolf/ops/shots/weeklycash1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/WEEKLY-CASH-FORECAST-SHELL-1-RESULT.md').is_file() and w.honesty_flags().get('next_pack_for_parent_only')=='CONNECTOR-HEALTH-DEEPEN-1' and w.honesty_flags().get('cursor_did_not_auto_start_next') is True and w.honesty_flags().get('classification')=='HUMAN_COMMISSIONING_OR_INTERNAL') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-weekly-cash-forecast-shell-1",
+      "at": "2026-09-30T09:50:30+08:00"
     }
   ]
 }

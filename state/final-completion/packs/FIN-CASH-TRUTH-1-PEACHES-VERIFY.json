@@ -70,7 +70,7 @@
   "no_push": true,
   "beta_only": true,
   "git": {
-    "beta_os_head": "9250f3e",
+    "beta_os_head": "d70b1d2",
     "atrium_finance_head": "7584266",
     "uncommitted": true
   },
@@ -81,5 +81,15 @@
   "next_pack": "BZG-LABOR-COST-1",
   "cursor_did_not_auto_start_next": true,
   "HEADCHEF_auto": false,
-  "note_exit143": "daemon logged EXIT:143 mid-run then completed EXIT:0 with suite green"
+  "note_exit143": "daemon logged EXIT:143 mid-run then completed EXIT:0 with suite green",
+  "matt_finished_ping_at": "2026-09-30T03:22:12+08:00",
+  "covers_with": [
+    "FIN-CASH-TRUTH-1",
+    "BZG-LABOR-COST-1"
+  ],
+  "independent_rerun_this_tick": {
+    "at": "2026-09-30T03:22:12+08:00",
+    "pass": 187,
+    "fail": 0
+  }
 }

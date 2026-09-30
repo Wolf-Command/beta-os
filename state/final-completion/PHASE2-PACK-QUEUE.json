@@ -1,5 +1,5 @@
 {
-  "at_wita": "2026-09-30T09:42:45+08:00",
+  "at_wita": "2026-09-30T09:51:45+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase": 2,
   "status": "CHAINING",
@@ -1629,10 +1629,16 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "WAITING_CURSOR",
+      "status": "PASS_VERIFIED",
       "classification": "HUMAN_COMMISSIONING_OR_INTERNAL",
       "synthesized_from": "IL-R2 budgets+13-week cash MISSING",
-      "armed_at": "2026-09-30T09:42:45+08:00"
+      "armed_at": "2026-09-30T09:42:45+08:00",
+      "exit_at": "2026-09-30T09:50:30+08:00",
+      "tests": {
+        "pass": 158,
+        "fail": 0
+      },
+      "verified_at": "2026-09-30T09:51:45+08:00"
     },
     {
       "pack_id": "CONNECTOR-HEALTH-DEEPEN-1",
@@ -1657,9 +1663,10 @@
       ],
       "estimated_effort": "M",
       "matt_blocker": false,
-      "status": "QUEUED",
+      "status": "WAITING_CURSOR",
       "classification": "INTERNALLY_SOLVABLE",
-      "synthesized_from": "post-wave8 connector honesty synthesis"
+      "synthesized_from": "post-wave8 connector honesty synthesis",
+      "armed_at": "2026-09-30T09:51:45+08:00"
     }
   ],
   "first_pack": "DASH-LIVE-1",
