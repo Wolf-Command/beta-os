@@ -1,0 +1,95 @@
+{
+  "schema": "P0-GLOBAL-APP-SHELL-EVIDENCE/v0",
+  "slice": "global_app_shell_p0_20260930",
+  "generated_at_wita": "2026-09-30T11:02:02+08:00",
+  "executor": "Peaches-executor",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "bound": "beta",
+  "prod_8787_touched": false,
+  "prod_pid_read_only": 15975,
+  "beta_port": 8788,
+  "cache_token": "20260930-global-shell1",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "exit_report": "NOT_CREATED",
+  "migration_state": "PARTIAL",
+  "claim": "PARTIAL \u2014 visible business switcher + SPEC + Owner Trading/Fitness IA/crumbs; NOT REBUILT+PROVEN",
+  "model": "PERSON \u2192 ROLE/POSITION \u2192 ASSIGNMENT \u2192 SCOPE \u2192 PERMISSION \u2192 AUDIENCE",
+  "business_switcher": {
+    "derived_from": "wolf_shell.IA_TREE (home.empire + businesses.*) \u2229 whoami pages",
+    "not_from": "person-name couplings",
+    "chrome_id": "wolfnav-biz",
+    "owner_chips": [
+      "Owner",
+      "GGV",
+      "AMG",
+      "BZG",
+      "Uma Blu"
+    ],
+    "distinct_from": "wolfnav-ctx assignment context switcher"
+  },
+  "files_changed": [
+    "state/final-completion/p0-v1/GLOBAL-APP-SHELL-SPEC.md",
+    "state/final-completion/p0-v1/SHELL-IA-BUSINESSES.json",
+    "state/final-completion/p0-v1/GLOBAL-APP-SHELL-EVIDENCE-20260930.json",
+    "scripts/core/wolf_shell.py",
+    "dashboards/assets/sidenav.js",
+    "dashboards/assets/wolf-shell.css",
+    "scripts/tests/test_wolf_global_app_shell_20260930.py"
+  ],
+  "routes": {
+    "owner_home_alias": "/wolf \u2192 /owner-empire-pack (auth required; 403 anon)",
+    "owner_empire": "/owner-empire-pack",
+    "owner_trading": "/owner/trading",
+    "owner_fitness": "/owner/fitness",
+    "shell_whoami": "/api/wolf/shell-whoami",
+    "business_homes": {
+      "owner": "/wolf",
+      "ggv": "/ggv-ops-pack",
+      "amg": "/amg-ops-pack",
+      "bzg": "/bzg",
+      "uma": "/bzg/uma-blu"
+    }
+  },
+  "beta_urls_hard_refresh": [
+    "http://127.0.0.1:8788/wolf",
+    "http://127.0.0.1:8788/owner-empire-pack",
+    "http://127.0.0.1:8788/owner/trading",
+    "http://127.0.0.1:8788/owner/fitness",
+    "http://127.0.0.1:8788/ggv-ops-pack",
+    "http://127.0.0.1:8788/amg-ops-pack",
+    "http://127.0.0.1:8788/bzg",
+    "http://127.0.0.1:8788/bzg/uma-blu"
+  ],
+  "tests": {
+    "test_wolf_global_app_shell_20260930.py": {
+      "pass": 39,
+      "fail": 0
+    },
+    "test_wolf_empire_home.py": {
+      "pass": 172,
+      "fail": 3,
+      "note": "Pre-existing: sidenav comment contains 'mgmt-cluster'; empire HTML title/crumb no longer says 'Empire' (Owner Command). Not introduced by this pack."
+    }
+  },
+  "live_probes_wita": "2026-09-30T11:02:02+08:00",
+  "live": {
+    "sidenav_cache_token_served": true,
+    "css_nv_biz_served": true,
+    "owner_trading_injects_wolfnav_biz": true,
+    "owner_fitness_injects_wolfnav_biz": true,
+    "owner_trading_http": 200,
+    "owner_fitness_http": 200,
+    "prod_8787_still_pid_15975": true
+  },
+  "gaps_remaining": [
+    "Org DB Owner assignments collapse to /wolf \u2014 business switcher compensates via IA\u2229pages; ASSIGNMENT seed vs DB reconcile still debt",
+    "PERSON_AUDIENCE / ROLE-MATT person-name coupling debt (People\u2260Roles register) untouched this pack",
+    "Trading/Fitness migration_state PARTIAL \u2014 no holdings/health API re-wire",
+    "Full V1 READY screenshot/deny matrix bars not claimed",
+    "IA still dual-maintained (wolf_shell + sidenav mirror); overlay JSON is docs-only"
+  ],
+  "blockers": [],
+  "hr_touched": false,
+  "auth_weakened": false
+}

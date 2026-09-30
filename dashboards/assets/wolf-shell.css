@@ -148,6 +148,72 @@ html, body { overflow-x: visible; }
   flex: 0 0 auto;
 }
 
+
+/* Business switcher — IA∩clearance chips (Owner/GGV/AMG/BZG/Uma). Phone+desktop. */
+#wolfnav .nv-biz {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+#wolfnav .nv-biz[hidden] { display: none !important; }
+#wolfnav .nv-biz-label {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #eaf3f2 55%, transparent);
+  white-space: nowrap;
+}
+#wolfnav .nv-biz-chips {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding: 2px 0;
+}
+#wolfnav .nv-biz-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent, #d4af6a) 40%, #1e3f44);
+  background: color-mix(in srgb, #0b1d21 70%, #1e3f44);
+  color: #eaf3f2;
+  text-decoration: none;
+  font: 700 12px/1.2 inherit;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+#wolfnav .nv-biz-chip:hover {
+  border-color: color-mix(in srgb, var(--accent, #d4af6a) 70%, transparent);
+  background: color-mix(in srgb, var(--accent, #d4af6a) 18%, transparent);
+  color: #fff;
+}
+#wolfnav .nv-biz-chip.is-active {
+  background: color-mix(in srgb, var(--accent, #d4af6a) 28%, transparent);
+  border-color: var(--accent, #d4af6a);
+  color: #fff;
+}
+html.wolfnav-phone #wolfnav .nv-biz-chip {
+  min-height: 44px;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+html.wolfnav-phone #wolfnav .nv-biz-label {
+  display: none; /* chips speak for themselves on narrow chrome */
+}
+
 /* Authorised context switcher — multi-assignment only.
    MYWORK-1B: select must shrink (min-width:0) so CONTEXT never paints over .nv-hello. */
 #wolfnav .nv-ctx {

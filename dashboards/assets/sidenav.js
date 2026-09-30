@@ -8,9 +8,10 @@
  * Wave 6: Intel crumbs WOLF › Intelligence › …; Content under Intel; Haikal → Content.
  * Wave 7: System crumbs WOLF › System › …; Progress soft-land; Sale under SYSTEM;
  *   Factory EMPTY; staff hide SYSTEM admin via nav.
- * Wave 8: trading/travel/spartacus/mila/amanda/kuta-rates NOT in primary IA
- *   (Hidden ≠ deleted; soft redirect → /wolf). No new sprawl.
+ * Wave 8: travel/mila/amanda/kuta-rates NOT in primary IA.
+ *   P0: trading→/owner/trading, spartacus→/owner/fitness (Owner HOME; PARTIAL).
  * RHC V1: breadcrumbs · UP / BACK / HOME · multi-assignment context switcher;
+ *   P0 global shell: business switcher (IA∩clearance Owner/GGV/AMG/BZG/Uma);
  *   responsive shell prove (tokens + drawer). Visibility from whoami only —
  *   Hidden ≠ permission; API auth is canonical. No invent PROVEN/READY.
  * Perms: Person→Role→Assignment→Scope→Permission→Audience via whoami.chain;
@@ -25,14 +26,13 @@
   if (window.__WOLF_SIDENAV_BOOTED__) return;
   window.__WOLF_SIDENAV_BOOTED__ = true;
 
-  var CACHE = "20260922-nav-route-merge";
+  var CACHE = "20260930-global-shell1";
   var EMPIRE_ALIASES = { "/owner-empire-pack": 1, "/wolf": 1 };
   var TRAIL_KEY = "wolf-shell-trail";
   /* Wave 8 — retired from primary Boards; soft-redirect handled server-side. */
   var HIDDEN_SPECIALIST_PRIMARY = {
-    trading: 1,
+    /* P0: trading + spartacus re-entered as Owner HOME items */
     travel: 1,
-    spartacus: 1,
     mila: 1,
     amanda: 1,
     "kuta-rates": 1
@@ -50,7 +50,9 @@
           primary: true,
           aliases: ["/wolf"]
         },
-        { href: "/staff-ops-routing", title: "Needs You", key: "needs_you" }
+        { href: "/staff-ops-routing", title: "Needs You", key: "needs_you" },
+        { href: "/owner/trading", title: "Trading (Owner)", key: "owner_trading" },
+        { href: "/owner/fitness", title: "Fitness (Owner)", key: "owner_fitness" }
       ]
     },
     {
@@ -108,7 +110,9 @@
     "/content-2.0": "/intel-ops-pack",
     "/progress": "/owner-empire-pack",
     "/integration-health": "/progress",
-    "/sale-evidence-pack": "/progress"
+    "/sale-evidence-pack": "/progress",
+    "/owner/trading": "/owner-empire-pack",
+    "/owner/fitness": "/owner-empire-pack"
   };
 
   var ROUTE_CRUMBS = {
@@ -123,6 +127,14 @@
     "/staff-ops-routing": [
       { label: "HOME", href: "/wolf" },
       { label: "Needs You", href: null }
+    ],
+    "/owner/trading": [
+      { label: "HOME", href: "/wolf" },
+      { label: "Trading (Owner)", href: null }
+    ],
+    "/owner/fitness": [
+      { label: "HOME", href: "/wolf" },
+      { label: "Fitness (Owner)", href: null }
     ],
     "/ggv-ops-pack": [
       { label: "WOLF", href: "/wolf" },
@@ -549,7 +561,168 @@
     }
   }
 
-  function paintContext(el, who) {
+  
+  function businessCatalogFallback() {
+    /* Mirror IA_TREE derivation when whoami.businesses absent (stale bake). */
+    var out = [];
+    var i, j, sec, it;
+    for (i = 0; i < IA_TREE.length; i++) {
+      sec = IA_TREE[i];
+      if (sec.id === "home") {
+        for (j = 0; j < sec.items.length; j++) {
+          it = sec.items[j];
+          if (it.key === "empire") {
+            out.push({
+              id: "owner",
+              key: "owner",
+              title: "Owner",
+              href: "/wolf",
+              aliases: (it.aliases || []).concat(["/owner-empire-pack"])
+            });
+          }
+        }
+      }
+      if (sec.id === "businesses") {
+        for (j = 0; j < sec.items.length; j++) {
+          it = sec.items[j];
+          var short =
+            it.key === "ggv"
+              ? "GGV"
+              : it.key === "amg"
+                ? "AMG"
+                : it.key === "bzg"
+                  ? "BZG"
+                  : it.key === "uma"
+                    ? "Uma Blu"
+                    : it.title;
+          out.push({
+            id: it.key,
+            key: it.key,
+            title: short,
+            href: it.href,
+            aliases: it.aliases || []
+          });
+        }
+      }
+    }
+    return out;
+  }
+
+  function businessesFor(who) {
+    who = who || whoami();
+    var baked = (who && who.businesses) || [];
+    if (baked && baked.length) return baked;
+    var cat = businessCatalogFallback();
+    var out = [];
+    var i;
+    for (i = 0; i < cat.length; i++) {
+      if (pageAllowed(cat[i].href, who)) out.push(cat[i]);
+      else {
+        var als = cat[i].aliases || [];
+        var ok = false;
+        var a;
+        for (a = 0; a < als.length; a++) {
+          if (pageAllowed(als[a], who)) {
+            ok = true;
+            break;
+          }
+        }
+        if (ok) out.push(cat[i]);
+      }
+    }
+    return out;
+  }
+
+  function activeBusinessId(biz, who) {
+    who = who || whoami();
+    if (who && who.active_business_id) {
+      var i;
+      for (i = 0; i < biz.length; i++) {
+        if (biz[i].id === who.active_business_id) return who.active_business_id;
+      }
+    }
+    var path = (location.pathname || "/").replace(/\/+$/, "") || "/";
+    var best = null;
+    var bestLen = -1;
+    var b, cands, c, h, hr;
+    for (b = 0; b < biz.length; b++) {
+      cands = [biz[b].href].concat(biz[b].aliases || []);
+      for (c = 0; c < cands.length; c++) {
+        h = cands[c];
+        if (!h) continue;
+        hr = String(h).replace(/\/+$/, "") || "/";
+        if (
+          path === hr ||
+          path.indexOf(hr + "/") === 0 ||
+          (EMPIRE_ALIASES[hr] && (EMPIRE_ALIASES[path] || path.indexOf("/owner/") === 0))
+        ) {
+          if (hr.length > bestLen) {
+            bestLen = hr.length;
+            best = biz[b].id;
+          }
+        }
+      }
+    }
+    return best;
+  }
+
+  function paintBusiness(el, who) {
+    if (!el) return;
+    who = who || whoami();
+    var biz = businessesFor(who);
+    var show = biz.length >= 1;
+    if (!show) {
+      el.hidden = true;
+      el.innerHTML = "";
+      el.removeAttribute("data-wolf-biz");
+      return;
+    }
+    el.hidden = false;
+    el.setAttribute("data-wolf-biz", biz.length > 1 ? "multi" : "single");
+    var active = activeBusinessId(biz, who);
+    var chips = biz
+      .map(function (b) {
+        if (!pageAllowed(b.href, who) && !(b.aliases || []).some(function (a) {
+          return pageAllowed(a, who);
+        })) {
+          return "";
+        }
+        var isOn = b.id === active;
+        return (
+          '<a class="nv-biz-chip' +
+          (isOn ? " is-active" : "") +
+          '" href="' +
+          esc(b.href) +
+          '" data-biz-id="' +
+          esc(b.id) +
+          '" aria-current="' +
+          (isOn ? "page" : "false") +
+          '">' +
+          esc(b.title) +
+          "</a>"
+        );
+      })
+      .join("");
+    el.innerHTML =
+      '<span class="nv-biz-label" id="wolfnav-biz-label">Business</span>' +
+      '<div class="nv-biz-chips" role="navigation" aria-labelledby="wolfnav-biz-label">' +
+      chips +
+      "</div>";
+    var links = el.querySelectorAll("a.nv-biz-chip");
+    var i;
+    for (i = 0; i < links.length; i++) {
+      links[i].onclick = function (e) {
+        var href = this.getAttribute("href");
+        if (!href || !pageAllowed(href, who)) {
+          if (e) e.preventDefault();
+          return false;
+        }
+        return true;
+      };
+    }
+  }
+
+function paintContext(el, who) {
     if (!el) return;
     var asg = (who && who.assignments) || [];
     var show = who && who.context_switcher === true && asg.length > 1;
@@ -668,13 +841,22 @@
       row.insertBefore(crumbs, dir.nextSibling);
     }
 
+    var biz = document.getElementById("wolfnav-biz");
+    if (!biz) {
+      biz = document.createElement("div");
+      biz.className = "nv-biz";
+      biz.id = "wolfnav-biz";
+      biz.hidden = true;
+      row.insertBefore(biz, crumbs.nextSibling);
+    }
+
     var ctx = document.getElementById("wolfnav-ctx");
     if (!ctx) {
       ctx = document.createElement("div");
       ctx.className = "nv-ctx";
       ctx.id = "wolfnav-ctx";
       ctx.hidden = true;
-      row.insertBefore(ctx, crumbs.nextSibling);
+      row.insertBefore(ctx, biz.nextSibling);
     }
 
     var hello = document.getElementById("wolfnav-hello");
@@ -731,6 +913,7 @@
       panel: panel,
       hello: hello,
       crumbs: crumbs,
+      biz: document.getElementById("wolfnav-biz"),
       ctx: ctx
     };
   }
@@ -817,6 +1000,7 @@
     rememberHere();
     paintCrumbs(parts.crumbs, who);
     paintDir(who);
+    paintBusiness(parts.biz, who);
     paintContext(parts.ctx, who);
     syncNavHeight();
     if (phone()) setBoardsOpen(false);
@@ -879,6 +1063,8 @@
     sameDest: sameDest,
     empireAliases: EMPIRE_ALIASES,
     crumbsFor: crumbsFor,
+    businessesFor: businessesFor,
+    paintBusiness: paintBusiness,
     parentHref: parentHref,
     backHref: backHref,
     homeHref: homeHref,

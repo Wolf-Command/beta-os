@@ -27,8 +27,8 @@ Owner landing = Empire. Devi landing = Uma Blu Today. Amanda landing = GGV Overv
 Coral landing = Atrium/AMG Today/Operations (/amg-ops-pack). Fixture PERS-MISA.
 Haikal landing = Content (/content-2.0) under Intelligence→Content. No Owner Intel admin.
 Progress under SYSTEM only (Owner). Staff hide SYSTEM admin via nav. Client fail-closed.
-RHC: breadcrumbs · UP/BACK/HOME · multi-assignment context switcher · responsive shell.
-Wave 8: trading/travel/spartacus/mila/amanda/kuta-rates NOT primary in #wolfnav IA.
+RHC: breadcrumbs · UP/BACK/HOME · multi-assignment context switcher · business switcher (IA∩clearance) · responsive shell.
+Wave 8: travel/mila/amanda/kuta-rates NOT primary; P0 re-entry: trading→/owner/trading, spartacus→/owner/fitness.
 Hidden ≠ deleted — soft redirect into Empire (/wolf); no new sprawl pages.
 Route merge: redirect > delete. mgmt-cluster → BU parents; legacy uma → /bzg/uma-blu;
 dashboards/*.html → clean URLs; radar → Empire priorities; content brand peers → content-2.0.
@@ -52,7 +52,7 @@ SLICE_PRIOR_ROUTE = "wolf_route_merge_retire_redirect"
 SLICE_PRIOR_PERMS = "wolf_permissions_audience_prove"
 SLICE_PRIOR_RHC = "wolf_responsive_v1_prove"
 SLICE_PRIOR_WAVE8 = "wolf_specialist_nav_v8"
-CACHE_TOKEN = "20260929-mywork1b"
+CACHE_TOKEN = "20260930-global-shell1"
 SCHEMA_ID = "wolf.shell-whoami.v1"
 EVIDENCE_DIR = Path(__file__).resolve().parents[2] / "docs" / "deliveries" / "evidence" / "wolf-rhc-v1-20260922"
 V1_READY_REQUIRES: tuple[str, ...] = (
@@ -90,6 +90,20 @@ IA_TREE: list[dict[str, Any]] = [
                 "aliases": [WOLF_ALIAS],
             },
             {"href": NEEDS_YOU_HREF, "title": "Needs You", "key": "needs_you"},
+            {
+                "href": "/owner/trading",
+                "title": "Trading (Owner)",
+                "key": "owner_trading",
+                "audience": "owner",
+                "migration_state": "PARTIAL",
+            },
+            {
+                "href": "/owner/fitness",
+                "title": "Fitness (Owner)",
+                "key": "owner_fitness",
+                "audience": "owner",
+                "migration_state": "PARTIAL",
+            },
         ],
     },
     {
@@ -130,9 +144,9 @@ ALL_HREFS: list[str] = [
 # Trading execution stays refused elsewhere (Flint reserved) — these are chrome paths only.
 SPECIALIST_PRIMARY_SLUGS: frozenset[str] = frozenset(
     {
-        "trading",
+        # P0 2026-09-30: trading + spartacus re-entered as Owner IA (/owner/trading, /owner/fitness).
+        # Still retired: travel / mila / amanda / kuta-rates.
         "travel",
-        "spartacus",
         "mila",
         "amanda",
         "kuta-rates",
@@ -140,9 +154,8 @@ SPECIALIST_PRIMARY_SLUGS: frozenset[str] = frozenset(
 )
 SPECIALIST_PRIMARY_KEYS: frozenset[str] = frozenset(
     {
-        "trading",
+        # trading/spartacus removed — Owner keys owner_trading / owner_fitness are primary.
         "travel",
-        "spartacus",
         "mila",
         "amanda",
         "kuta_rates",
@@ -154,18 +167,10 @@ SPECIALIST_SOFT_REDIRECT_TARGET = WOLF_ALIAS
 # Paths that used to sit as Boards peers — redirect only; capability preserved via Empire.
 SPECIALIST_SOFT_REDIRECT_PATHS: frozenset[str] = frozenset(
     {
-        "/trading",
-        "/trading/",
-        "/trading.html",
-        "/dashboards/trading.html",
         "/travel",
         "/travel/",
         "/travel.html",
         "/dashboards/travel.html",
-        "/spartacus",
-        "/spartacus/",
-        "/spartacus.html",
-        "/dashboards/spartacus.html",
         "/mila",
         "/mila/",
         "/mila.html",
@@ -367,6 +372,25 @@ DASHBOARDS_HTML_CANONICAL: dict[str, str] = {
     "/owner-exceptions-live-1/": "/owner/exceptions-live-1",
     "/owner/exceptions": "/owner/exceptions-live-1",
     "/owner/exceptions/": "/owner/exceptions-live-1",
+    # P0 Owner Trading / Fitness — legacy specialist URLs → Owner canonical (not Empire).
+    "/dashboards/owner-trading-1.html": "/owner/trading",
+    "/owner-trading-1.html": "/owner/trading",
+    "/owner-trading-1": "/owner/trading",
+    "/owner-trading-1/": "/owner/trading",
+    "/owner/trading/": "/owner/trading",
+    "/trading": "/owner/trading",
+    "/trading/": "/owner/trading",
+    "/trading.html": "/owner/trading",
+    "/dashboards/trading.html": "/owner/trading",
+    "/dashboards/owner-fitness-1.html": "/owner/fitness",
+    "/owner-fitness-1.html": "/owner/fitness",
+    "/owner-fitness-1": "/owner/fitness",
+    "/owner-fitness-1/": "/owner/fitness",
+    "/owner/fitness/": "/owner/fitness",
+    "/spartacus": "/owner/fitness",
+    "/spartacus/": "/owner/fitness",
+    "/spartacus.html": "/owner/fitness",
+    "/dashboards/spartacus.html": "/owner/fitness",
     "/dashboards/esb-truth-1.html": "/ops/esb-truth-1",
     "/esb-truth-1.html": "/ops/esb-truth-1",
     "/esb-truth-1": "/ops/esb-truth-1",
@@ -411,6 +435,16 @@ DASHBOARDS_HTML_CANONICAL: dict[str, str] = {
     "/ops/hr-deferred-hold-stamp/": "/ops/hr-deferred-hold-stamp-1",
     "/ops/hr-deferred-hold": "/ops/hr-deferred-hold-stamp-1",
     "/ops/hr-deferred-hold/": "/ops/hr-deferred-hold-stamp-1",
+    "/dashboards/reliability-pipe-episode-rollup-1.html": "/ops/reliability-pipe-episode-rollup-1",
+    "/reliability-pipe-episode-rollup-1.html": "/ops/reliability-pipe-episode-rollup-1",
+    "/reliability-pipe-episode-rollup-1": "/ops/reliability-pipe-episode-rollup-1",
+    "/reliability-pipe-episode-rollup-1/": "/ops/reliability-pipe-episode-rollup-1",
+    "/ops/reliability-pipe-episode-rollup": "/ops/reliability-pipe-episode-rollup-1",
+    "/ops/reliability-pipe-episode-rollup/": "/ops/reliability-pipe-episode-rollup-1",
+    "/ops/pipe-episode-rollup-1": "/ops/reliability-pipe-episode-rollup-1",
+    "/ops/pipe-episode-rollup-1/": "/ops/reliability-pipe-episode-rollup-1",
+    "/ops/pipe-episode-rollup": "/ops/reliability-pipe-episode-rollup-1",
+    "/ops/pipe-episode-rollup/": "/ops/reliability-pipe-episode-rollup-1",
     "/dashboards/backup-health-1.html": "/ops/backup-health-1",
     "/backup-health-1.html": "/ops/backup-health-1",
     "/backup-health-1": "/ops/backup-health-1",
@@ -961,6 +995,8 @@ ROUTE_PARENT: dict[str, str | None] = {
     "/fin/ap-ar-shell-1": EMPIRE_HREF,
     "/owner/needs-you-1": EMPIRE_HREF,
     "/owner/exceptions-live-1": EMPIRE_HREF,
+    "/owner/trading": EMPIRE_HREF,
+    "/owner/fitness": EMPIRE_HREF,
     "/owner/exceptions": EMPIRE_HREF,
     "/ops/esb-truth-1": PROGRESS_HREF,
     "/ops/conn-health-1": PROGRESS_HREF,
@@ -976,6 +1012,10 @@ ROUTE_PARENT: dict[str, str | None] = {
     "/ops/hr-deferred-hold-stamp-1": EMPIRE_HREF,
     "/ops/hr-deferred-hold-stamp": EMPIRE_HREF,
     "/ops/hr-deferred-hold": EMPIRE_HREF,
+    "/ops/reliability-pipe-episode-rollup-1": PROGRESS_HREF,
+    "/ops/reliability-pipe-episode-rollup": PROGRESS_HREF,
+    "/ops/pipe-episode-rollup-1": PROGRESS_HREF,
+    "/ops/pipe-episode-rollup": PROGRESS_HREF,
     "/ops/conn-health-deepen-1": PROGRESS_HREF,
     "/ops/conn-health-deepen": PROGRESS_HREF,
     "/ops/metricool-runtime-wire-1": PROGRESS_HREF,
@@ -1056,6 +1096,14 @@ ROUTE_CRUMBS: dict[str, list[dict[str, Any]]] = {
     NEEDS_YOU_HREF: [
         {"label": "HOME", "href": WOLF_ALIAS},
         {"label": "Needs You", "href": None},
+    ],
+    "/owner/trading": [
+        {"label": "HOME", "href": WOLF_ALIAS},
+        {"label": "Trading (Owner)", "href": None},
+    ],
+    "/owner/fitness": [
+        {"label": "HOME", "href": WOLF_ALIAS},
+        {"label": "Fitness (Owner)", "href": None},
     ],
     "/ggv-ops-pack": [
         {"label": "WOLF", "href": WOLF_ALIAS},
@@ -1217,6 +1265,26 @@ ROUTE_CRUMBS: dict[str, list[dict[str, Any]]] = {
         {"label": "WOLF", "href": WOLF_ALIAS},
         {"label": "Empire", "href": EMPIRE_HREF},
         {"label": "HR Deferred Hold", "href": None},
+    ],
+    "/ops/reliability-pipe-episode-rollup-1": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "System", "href": PROGRESS_HREF},
+        {"label": "Pipe Episode Rollup", "href": None},
+    ],
+    "/ops/reliability-pipe-episode-rollup": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "System", "href": PROGRESS_HREF},
+        {"label": "Pipe Episode Rollup", "href": None},
+    ],
+    "/ops/pipe-episode-rollup-1": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "System", "href": PROGRESS_HREF},
+        {"label": "Pipe Episode Rollup", "href": None},
+    ],
+    "/ops/pipe-episode-rollup": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "System", "href": PROGRESS_HREF},
+        {"label": "Pipe Episode Rollup", "href": None},
     ],
     "/ops/metricool-runtime-wire-1": [
         {"label": "WOLF", "href": WOLF_ALIAS},
@@ -1737,6 +1805,7 @@ HONESTY_BASE: dict[str, Any] = {
     "client_projection_fail_closed": True,
     "direction_up_back_home": True,
     "context_switcher_multi_only": True,
+    "business_switcher_from_ia": True,
     "responsive_tokens_media": True,
     "responsive_shell_v1_prove": True,
     "deny_matrix_expanded": True,
@@ -2495,6 +2564,117 @@ def _hello_for(person_id: str | None, audience: str) -> str:
     return audience
 
 
+
+_BIZ_SHORT: dict[str, str] = {
+    "ggv": "GGV",
+    "amg": "AMG",
+    "bzg": "BZG",
+    "uma": "Uma Blu",
+    "owner": "Owner",
+    "empire": "Owner",
+}
+
+
+def business_catalog_from_ia() -> list[dict[str, Any]]:
+    """Business switcher destinations derived from IA_TREE (anti-drift).
+
+    Owner/Empire from HOME.empire + every BUSINESSES item. Not a person map.
+    Optional overlay JSON is documentation-only — runtime uses IA_TREE.
+    """
+    out: list[dict[str, Any]] = []
+    home = next((s for s in IA_TREE if s.get("id") == "home"), None)
+    if home:
+        for it in home.get("items") or []:
+            if it.get("key") == "empire":
+                aliases = list(it.get("aliases") or [])
+                if EMPIRE_HREF not in aliases:
+                    aliases.append(EMPIRE_HREF)
+                out.append(
+                    {
+                        "id": "owner",
+                        "key": "owner",
+                        "title": "Owner",
+                        "href": WOLF_ALIAS,
+                        "aliases": aliases,
+                    }
+                )
+                break
+    biz = next((s for s in IA_TREE if s.get("id") == "businesses"), None)
+    if biz:
+        for it in biz.get("items") or []:
+            key = str(it.get("key") or "")
+            href = str(it.get("href") or "")
+            if not key or not href:
+                continue
+            out.append(
+                {
+                    "id": key,
+                    "key": key,
+                    "title": _BIZ_SHORT.get(key) or str(it.get("title") or key),
+                    "href": href,
+                    "aliases": list(it.get("aliases") or []),
+                }
+            )
+    return out
+
+
+def _href_allowed_for_business(href: str, aliases: list[str], pages: set[str], who: dict[str, Any]) -> bool:
+    if href in pages:
+        return True
+    for a in aliases:
+        if a in pages:
+            return True
+    if who.get("wolf_authorized") is True or who.get("audience") in {"OWNER", "SYSTEM"}:
+        # Owner chrome may list WOLF_ALIAS while pages carry EMPIRE_HREF.
+        if href in EMPIRE_ALIASES or any(a in EMPIRE_ALIASES for a in aliases):
+            return EMPIRE_HREF in pages or True
+    # Prefix: authorised child page under this business home.
+    for p in pages:
+        if href != "/" and (p == href or p.startswith(href.rstrip("/") + "/")):
+            return True
+        for a in aliases:
+            if a and a != "/" and (p == a or p.startswith(str(a).rstrip("/") + "/")):
+                return True
+    return False
+
+
+def businesses_for_whoami(who: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """Filter IA-derived businesses by chrome-allowed pages. Visibility only."""
+    if not who:
+        return []
+    pages = set(filter_hrefs(who))
+    out: list[dict[str, Any]] = []
+    for b in business_catalog_from_ia():
+        href = str(b.get("href") or "")
+        aliases = [str(a) for a in (b.get("aliases") or []) if a]
+        if _href_allowed_for_business(href, aliases, pages, who):
+            out.append(dict(b))
+    return out
+
+
+def active_business_id(path: str | None, businesses: list[dict[str, Any]]) -> str | None:
+    """Longest href/alias prefix wins (Uma before BZG)."""
+    p = (path or "").rstrip("/") or "/"
+    if p != "/" and not p.startswith("/"):
+        p = "/" + p
+    best_id = None
+    best_len = -1
+    for b in businesses:
+        cands = [str(b.get("href") or "")] + [str(a) for a in (b.get("aliases") or []) if a]
+        for h in cands:
+            if not h:
+                continue
+            hr = h.rstrip("/") or "/"
+            if p == hr or p.startswith(hr + "/") or (
+                hr in EMPIRE_ALIASES and (p in EMPIRE_ALIASES or p.startswith("/owner/"))
+            ):
+                n = len(hr)
+                if n > best_len:
+                    best_len = n
+                    best_id = str(b.get("id") or b.get("key") or "") or None
+    return best_id
+
+
 def build_whoami(
     *,
     person_id: str | None = None,
@@ -2556,6 +2736,14 @@ def build_whoami(
         "surfaces": surfaces,
     }
     base["chain"] = permission_chain(base)
+    # Business switcher: IA_TREE ∩ clearance (not person-name couplings).
+    biz = businesses_for_whoami(base)
+    base["businesses"] = biz
+    base["business_switcher"] = len(biz) > 1
+    base["active_business_id"] = active_business_id(
+        (base.get("landing") or WOLF_ALIAS) if base.get("wolf_authorized") else (base.get("landing") or None),
+        biz,
+    )
     return base
 
 
@@ -2600,6 +2788,9 @@ def shell_whoami_payload(identity: dict[str, Any] | None) -> dict[str, Any]:
         "landing": who.get("landing"),
         "assignments": who.get("assignments") or [],
         "context_switcher": bool(who.get("context_switcher")),
+        "businesses": who.get("businesses") or [],
+        "business_switcher": bool(who.get("business_switcher")),
+        "active_business_id": who.get("active_business_id"),
         "chain": who.get("chain") or permission_chain(who),
         "permissions": who.get("permissions"),
         "honesty": honesty_flags(),
@@ -2631,6 +2822,7 @@ _NAV_STUB = (
     b'<a class="nv-dir-btn" id="wolfnav-home" href="#" data-wolf-dir="home">Home</a>'
     b"</div>"
     b'<nav class="nv-crumbs" id="wolfnav-crumbs" aria-label="Breadcrumb"></nav>'
+    b'<div class="nv-biz" id="wolfnav-biz" hidden></div>'
     b'<div class="nv-ctx" id="wolfnav-ctx" hidden></div>'
     b'<div class="nv-hello" id="wolfnav-hello"></div>'
     b'<div class="nv-footer"><a href="/signout" title="End session">Sign out</a></div>'

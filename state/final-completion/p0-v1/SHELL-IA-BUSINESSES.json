@@ -1,0 +1,22 @@
+{
+  "schema": "SHELL-IA-BUSINESSES/v0",
+  "generated_at_wita": "2026-09-30T10:59:39+08:00",
+  "note": "Documentation overlay \u2014 runtime derives businesses from wolf_shell.IA_TREE (home.empire + businesses.*), filtered by whoami pages. Do not treat this file as a second Boards menu.",
+  "derived_from": [
+    "scripts/core/wolf_shell.py::IA_TREE",
+    "state/final-completion/p0-v1/V1-SURFACE-MANIFEST-DRAFT.json (Owner Trading/Fitness recovery context only)"
+  ],
+  "business_keys": [
+    "owner",
+    "ggv",
+    "amg",
+    "bzg",
+    "uma"
+  ],
+  "owner_home_extras_partial": [
+    "owner_trading",
+    "owner_fitness"
+  ],
+  "staff_ready": false,
+  "migration_state": "PARTIAL"
+}
