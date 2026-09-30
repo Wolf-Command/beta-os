@@ -1,0 +1,26 @@
+{
+  "run_id": "HR-DEFERRED-HOLD-STAMP-1",
+  "pack": "HR-DEFERRED-HOLD-STAMP-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 10,
+  "status": "ARMED_CURSOR_RUNNING",
+  "armed_at": "2026-09-30T10:25:01+08:00",
+  "prior_pack_verified": "ATRIUM-FC-TRUTH-DEEPEN-1",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "next_pack_for_parent": "RELIABILITY-PIPE-EPISODE-ROLLUP-1",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "classification": "EXTERNAL_BLOCKER_OR_DEFERRED",
+  "prod_pid_held": 15975,
+  "no_push": true,
+  "matt_auto_continue": true,
+  "forbids": [
+    "build HR",
+    "invent payroll"
+  ],
+  "scope": [
+    "Stamp HR_DEFERRED as held; no HR build",
+    "Document deferral evidence"
+  ]
+}

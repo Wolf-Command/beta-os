@@ -186,6 +186,7 @@ from core import approvals_live_deepen1 as _approvals_live_deepen1
 from core import weekly_cash_forecast_shell1 as _weekly_cash_forecast_shell1
 from core import connector_health_deepen1 as _connector_health_deepen1
 from core import owner_dash_freshness1 as _owner_dash_freshness1
+from core import atrium_fc_truth_deepen1 as _atrium_fc_truth_deepen1
 from core import fin_tax_shell1 as _fin_tax_shell1
 from core import fin_ap_ar_shell1 as _fin_ap_ar_shell1
 from core import owner_needs_you1 as _owner_needs_you1
@@ -2127,6 +2128,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._owner_dash_freshness1_dispatch():
+            return
+
+        if self._atrium_fc_truth_deepen1_dispatch():
             return
 
         if self._fin_tax_shell1_dispatch():
@@ -5486,6 +5490,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._owner_dash_freshness1_dispatch():
                 return
         elif path in (
+            "/ops/atrium-fc-truth-deepen-1",
+            "/ops/atrium-fc-truth-deepen-1/",
+            "/ops/atrium-fc-truth-deepen",
+            "/ops/atrium-fc-truth-deepen/",
+            "/ops/atrium-fc-truth-1",
+            "/ops/atrium-fc-truth-1/",
+            "/atrium-fc-truth-deepen-1",
+            "/atrium-fc-truth-deepen-1/",
+            "/atrium-fc-truth-deepen-1.html",
+            "/dashboards/atrium-fc-truth-deepen-1.html",
+        ):
+            if self._atrium_fc_truth_deepen1_dispatch():
+                return
+        elif path in (
             "/fin/tax-shell-1",
             "/fin/tax-shell-1/",
             "/fin/tax-shell",
@@ -6715,6 +6733,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._owner_dash_freshness1_write_refused(path)
             return
+        if (
+            path == "/api/ops/atrium-fc-truth-deepen-1"
+            or path.startswith("/api/ops/atrium-fc-truth-deepen-1/")
+            or path == "/api/ops/atrium-fc-truth-deepen"
+            or path.startswith("/api/ops/atrium-fc-truth-deepen/")
+            or path == "/api/ops/atrium-fc-truth-1"
+            or path.startswith("/api/ops/atrium-fc-truth-1/")
+            or path == "/api/amg/atrium-fc-truth-deepen-1"
+            or path.startswith("/api/amg/atrium-fc-truth-deepen-1/")
+        ):
+            self._atrium_fc_truth_deepen1_write_refused(path)
+            return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
             return
@@ -7732,6 +7762,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             or path.startswith("/api/owner/dash-freshness-1/")
         ):
             self._owner_dash_freshness1_write_refused(path)
+            return
+        if (
+            path == "/api/ops/atrium-fc-truth-deepen-1"
+            or path.startswith("/api/ops/atrium-fc-truth-deepen-1/")
+            or path == "/api/ops/atrium-fc-truth-deepen"
+            or path.startswith("/api/ops/atrium-fc-truth-deepen/")
+            or path == "/api/ops/atrium-fc-truth-1"
+            or path.startswith("/api/ops/atrium-fc-truth-1/")
+            or path == "/api/amg/atrium-fc-truth-deepen-1"
+            or path.startswith("/api/amg/atrium-fc-truth-deepen-1/")
+        ):
+            self._atrium_fc_truth_deepen1_write_refused(path)
             return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
@@ -9155,6 +9197,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             or path.startswith("/api/owner/dash-freshness-1/")
         ):
             self._owner_dash_freshness1_write_refused(path)
+            return
+        if (
+            path == "/api/ops/atrium-fc-truth-deepen-1"
+            or path.startswith("/api/ops/atrium-fc-truth-deepen-1/")
+            or path == "/api/ops/atrium-fc-truth-deepen"
+            or path.startswith("/api/ops/atrium-fc-truth-deepen/")
+            or path == "/api/ops/atrium-fc-truth-1"
+            or path.startswith("/api/ops/atrium-fc-truth-1/")
+            or path == "/api/amg/atrium-fc-truth-deepen-1"
+            or path.startswith("/api/amg/atrium-fc-truth-deepen-1/")
+        ):
+            self._atrium_fc_truth_deepen1_write_refused(path)
             return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
@@ -21042,6 +21096,158 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "prod_mutate": False,
                 "prod_pid_held": _owner_dash_freshness1.PROD_PID_HELD,
                 "classification": "INTERNALLY_SOLVABLE",
+            },
+            status=403,
+        )
+
+    def _atrium_fc_truth_deepen1_dispatch(self) -> bool:
+        """ATRIUM-FC-TRUTH-DEEPEN-1 — live stamps; no invent books / P&L / balance."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _atrium_fc_truth_deepen1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            person_id = str(identity.get("person_id") or "")
+            if not _atrium_fc_truth_deepen1.person_may_view(person_id):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "forbidden",
+                        "message": "Atrium FC truth deepen board is not on this assignment.",
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_books": False,
+                        "invented_pnl": False,
+                        "invented_balance": False,
+                        "classification": "INTERNALLY_SOLVABLE_OR_HUMAN",
+                    },
+                    status=403,
+                )
+                return True
+            try:
+                payload = _atrium_fc_truth_deepen1.public_payload(person_id)
+            except _atrium_fc_truth_deepen1.AtriumFcTruthDeepen1Error as exc:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": exc.code,
+                        "message": str(exc),
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_books": False,
+                        "invented_pnl": False,
+                        "invented_balance": False,
+                        **_atrium_fc_truth_deepen1.honesty_flags(),
+                    },
+                    status=403,
+                )
+                return True
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "atrium_fc_truth_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "invented_books": False,
+                        "invented_pnl": False,
+                        "invented_balance": False,
+                        "classification": "INTERNALLY_SOLVABLE_OR_HUMAN",
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _atrium_fc_truth_deepen1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        person_id = str(identity.get("person_id") or "")
+        if not _atrium_fc_truth_deepen1.person_may_view(person_id):
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Atrium FC truth deepen board is not on this assignment.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=403,
+            )
+            return True
+        page = DASHBOARDS / "atrium-fc-truth-deepen-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "ATRIUM-FC-TRUTH-DEEPEN-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="atrium-fc-truth-deepen-1.html")
+        return True
+
+    def _atrium_fc_truth_deepen1_write_refused(self, path: str) -> None:
+        """Refuse invent-books / invent-P&L / invent-balance writes."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _atrium_fc_truth_deepen1.refuse_external_write(
+                body if isinstance(body, dict) else {}
+            )
+        except _atrium_fc_truth_deepen1.AtriumFcTruthDeepen1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "invented_books": False,
+                    "invented_pnl": False,
+                    "invented_balance": False,
+                    "prod_mutate": False,
+                    "prod_pid_held": _atrium_fc_truth_deepen1.PROD_PID_HELD,
+                    "classification": "INTERNALLY_SOLVABLE_OR_HUMAN",
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": (
+                    "ATRIUM-FC-TRUTH-DEEPEN-1 is a read honesty shell. "
+                    "Writes refused."
+                ),
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "invented_books": False,
+                "invented_pnl": False,
+                "invented_balance": False,
+                "prod_mutate": False,
+                "prod_pid_held": _atrium_fc_truth_deepen1.PROD_PID_HELD,
+                "classification": "INTERNALLY_SOLVABLE_OR_HUMAN",
             },
             status=403,
         )

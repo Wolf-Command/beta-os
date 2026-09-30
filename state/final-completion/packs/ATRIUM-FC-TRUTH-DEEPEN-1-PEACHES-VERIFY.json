@@ -1,0 +1,43 @@
+{
+  "pack": "ATRIUM-FC-TRUTH-DEEPEN-1",
+  "status": "PASS_VERIFIED",
+  "at_wita": "2026-09-30T10:25:01+08:00",
+  "tests": "163/0",
+  "re_ran_tests": true,
+  "prod_pid": 15975,
+  "prod_untouched": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "classification": "INTERNALLY_SOLVABLE",
+  "ceiling": "BUILT",
+  "shots": [
+    {
+      "name": "atriumfctruth1-desk-desktop.png",
+      "sha256": "36345000dd35a59418854b441e36677080982b09c1cb6229824f9d6e339d1bb2",
+      "bytes": 345152
+    },
+    {
+      "name": "atriumfctruth1-desk-phone.png",
+      "sha256": "eb621d222887fe661bad3e3cd482ddb684bc4acac7fdc628f66f55ff1f97b6f0",
+      "bytes": 153962
+    },
+    {
+      "name": "atriumfctruth1-entity-stamps.png",
+      "sha256": "6a758eabc7a99f3a6d03198f862221ce4442e69e4127235060268f2156f54795",
+      "bytes": 373762
+    },
+    {
+      "name": "atriumfctruth1-unsigned-deny.png",
+      "sha256": "7df206a8cc673a3bc5593cc1ec6f49e9b4799764c6a5130d7590ace9de8fbded",
+      "bytes": 24471
+    }
+  ],
+  "next_pack": "HR-DEFERRED-HOLD-STAMP-1",
+  "no_push": true,
+  "no_exit_report": true,
+  "cursor_did_not_auto_chain": true,
+  "wave": 10,
+  "peaches": "PASS",
+  "independent_peaches_rerun_at": "2026-09-30T10:26:30+08:00",
+  "independent_peaches_tests": "163/0"
+}

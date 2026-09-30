@@ -1,0 +1,25 @@
+{
+  "at_wita": "2026-09-30T10:24:23+08:00",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 10,
+  "pack": "ATRIUM-FC-TRUTH-DEEPEN-1",
+  "status": "PASS_VERIFIED",
+  "classification": "INTERNALLY_SOLVABLE",
+  "suite_pass": 163,
+  "suite_fail": 0,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_pid_held": 15975,
+  "no_push": true,
+  "cursor_did_not_auto_start_next": true,
+  "next_pack_for_parent_only": "HR-DEFERRED-HOLD-STAMP-1",
+  "result": "docs/wolf/ops/ATRIUM-FC-TRUTH-DEEPEN-1-RESULT.md",
+  "preserves": [
+    "FC-SHELL-2",
+    "ATRIUM-SOD-1",
+    "atrium_fc_authority"
+  ],
+  "verified_at": "2026-09-30T10:25:01+08:00",
+  "peaches": "PASS"
+}

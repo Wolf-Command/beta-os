@@ -155,9 +155,19 @@
       "status_after": "FRESHNESS_BOARD_BUILT_LIVE_STAMPS",
       "board": "/ops/owner-dash-freshness-1",
       "note": "Ceiling BUILT only; not PROVEN/READY/staff"
+    },
+    {
+      "surface": "Atrium FC authority truth (ATRIUM-FC-TRUTH-DEEPEN-1)",
+      "classification": "INTERNALLY_SOLVABLE",
+      "evidence": "Live AMG books + BZG/GGV coa_template + SoD COMM1 POSTED; invent books/P&L/balance 403; FC-SHELL-2 + ATRIUM-SOD-1 + atrium_fc_authority preserved",
+      "next_pack": "HR-DEFERRED-HOLD-STAMP-1",
+      "action": "DONE this pack ATRIUM-FC-TRUTH-DEEPEN-1 \u2014 live stamps deepened; never invent books/P&L; preserved FC-SHELL-2 + SOD",
+      "status_after": "FC_TRUTH_BOARD_BUILT_LIVE_STAMPS",
+      "board": "/ops/atrium-fc-truth-deepen-1",
+      "note": "Ceiling BUILT only; HUMAN_COMMISSIONING only if books sealed without authorised open"
     }
   ],
-  "updated_at": "2026-09-30T10:13:53+08:00",
+  "updated_at": "2026-09-30T10:24:23+08:00",
   "metricool_runtime_probe": {
     "getBrandSettings": "6 brands",
     "getAnalyticsAvailableMetrics_instagram_posts": "29 fields incl engagement/likes/reach",
@@ -425,5 +435,13 @@
     "at_wita": "2026-09-30T10:13:53+08:00",
     "tests": "169/0",
     "notes": "Live stamps wired; invent KPI/freshness refused 403; STALE\u2260current; staff_ready=false"
+  },
+  "atrium_fc_truth_deepen1": {
+    "pack": "ATRIUM-FC-TRUTH-DEEPEN-1",
+    "classification": "INTERNALLY_SOLVABLE",
+    "ceiling": "BUILT",
+    "at_wita": "2026-09-30T10:24:23+08:00",
+    "tests": "163/0",
+    "notes": "Live stamps wired; invent books/P&L/balance refused 403; SoD live; staff_ready=false"
   }
 }
