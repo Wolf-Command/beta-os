@@ -1,0 +1,78 @@
+{
+  "pack": "FIN-BANK-CREDS-ROUTE-1",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T08:33:30+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "exit_code": 0,
+  "exit_at": "2026-09-30T08:32:57+08:00",
+  "result_file": "docs/wolf/ops/FIN-BANK-CREDS-ROUTE-1-RESULT.md",
+  "tests_rerun": {
+    "test_fin_bank_creds_route1_20260930.py": {
+      "pass": 161,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/finbankcreds1-desk-desktop.png",
+        "bytes": 153980,
+        "sha256": "9b3328778acfe1b8707f4499fdb2f35cf8512df9c5cf50fa416429928a8149aa"
+      },
+      {
+        "path": "docs/wolf/ops/shots/finbankcreds1-desk-phone.png",
+        "bytes": 86839,
+        "sha256": "24dbe33a25fcd8ca06001187ca2e81f920d3790aa22744d6cabc85c45f938326"
+      },
+      {
+        "path": "docs/wolf/ops/shots/finbankcreds1-route-stamps.png",
+        "bytes": 160856,
+        "sha256": "258d5f04efb4dc5e0918f4cdb57a1336ccf5c4fd597ffcb2843d702d404c5e29"
+      },
+      {
+        "path": "docs/wolf/ops/shots/finbankcreds1-unsigned-deny.png",
+        "bytes": 22040,
+        "sha256": "4e18d170b36dc3befacb624074294b7d17c7246085a75d5d1542ce3413db43c4"
+      }
+    ]
+  },
+  "route": {
+    "decision": "STAMP_HUMAN_COMMISSIONING",
+    "file_import_only": true,
+    "invented_scrape": false,
+    "invented_balance": false
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "classification": {
+    "route": "HUMAN_COMMISSIONING",
+    "shell_ne_complete": true,
+    "note": "Creds ABSENT; FILE_IMPORT_ONLY held; commissioning path documented"
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "d8f6ecd89de99b7d62bc4cc111e7744ce14b6451",
+    "uncommitted": true
+  },
+  "preserves": [
+    "FIN-RECON-SHELL-1",
+    "FIN-CASH-TRUTH-1"
+  ],
+  "next_pack": "INV-CASH-FACTS-ROUTE-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
+}

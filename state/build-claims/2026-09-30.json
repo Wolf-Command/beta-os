@@ -496,6 +496,22 @@
       "check": "PYTHONPATH=scripts python3 -c \"from core import sop_catalog_seed_route1 as s; from pathlib import Path; html=Path('dashboards/sop-catalog-seed-route-1.html').read_text(); import sys; sys.exit(0 if (s.api_matches('/api/ops/sop-catalog-seed-route-1') and s.page_matches('/ops/sop-catalog-seed-route-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/sopcatalog1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/SOP-CATALOG-SEED-ROUTE-1-RESULT.md').is_file() and s.honesty_flags().get('next_pack_for_parent_only')=='FIN-BANK-CREDS-ROUTE-1' and s.honesty_flags().get('cursor_did_not_auto_start_next') is True and s.honesty_flags().get('classification')=='HUMAN_COMMISSIONING') else 1)\"",
       "expect": "exit 0",
       "by": "cursor-sop-catalog-seed-route-1"
+    },
+    {
+      "id": "FIN-BANK-CREDS-ROUTE-1-board",
+      "claim": "FIN-BANK-CREDS-ROUTE-1: stamps HUMAN_COMMISSIONING; bank creds ABSENT; FILE_IMPORT_ONLY held; invented_scrape/invented_balance false; balance/last_success null; FIN-RECON-SHELL-1 + FIN-CASH-TRUTH-1 preserved; staff_ready/human_commissioned false; next pack parent-only INV-CASH-FACTS-ROUTE-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import fin_bank_creds_route1 as r; from pathlib import Path; p=r.build_board('PERS-MATT'); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='HUMAN_COMMISSIONING' and p.get('action')=='STAMP_HUMAN_COMMISSIONING' and p.get('file_import_only') is True and p.get('invented_scrape') is False and p.get('invented_balance') is False and p.get('balance') is None and p.get('last_success') is None and p.get('creds_present') is False and r.surfaces_are_honest(p) and r.no_invented_scrape_or_balances(p) and p.get('fin_recon_shell1_preserved') is True and p.get('fin_cash_truth1_preserved') is True and p.get('staff_ready') is False and p.get('human_commissioned') is False and r.honesty_flags().get('next_pack_for_parent_only')=='INV-CASH-FACTS-ROUTE-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-fin-bank-creds-route-1",
+      "at": "2026-09-30T08:45:00+08:00"
+    },
+    {
+      "id": "FIN-BANK-CREDS-ROUTE-1-surfaces",
+      "claim": "FIN-BANK-CREDS-ROUTE-1 page/API/shots/RESULT present; unsigned deny + scrape/balance/commission refuse; HUMAN_COMMISSIONING; FILE_IMPORT_ONLY; next pack parent-only INV-CASH-FACTS-ROUTE-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import fin_bank_creds_route1 as r; from pathlib import Path; html=Path('dashboards/fin-bank-creds-route-1.html').read_text(); import sys; sys.exit(0 if (r.api_matches('/api/fin/bank-creds-route-1') and r.page_matches('/fin/bank-creds-route-1') and 'staff_ready=false' in html and 'FILE_IMPORT_ONLY' in html and Path('docs/wolf/ops/shots/finbankcreds1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/FIN-BANK-CREDS-ROUTE-1-RESULT.md').is_file() and r.honesty_flags().get('next_pack_for_parent_only')=='INV-CASH-FACTS-ROUTE-1' and r.honesty_flags().get('cursor_did_not_auto_start_next') is True and r.honesty_flags().get('classification')=='HUMAN_COMMISSIONING') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-fin-bank-creds-route-1",
+      "at": "2026-09-30T08:45:00+08:00"
     }
   ]
 }

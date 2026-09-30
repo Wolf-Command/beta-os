@@ -4,7 +4,7 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 7,
-  "status": "WAITING_CURSOR",
+  "status": "PASS_VERIFIED",
   "armed_at": "2026-09-30T08:26:30+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
@@ -14,7 +14,7 @@
   "no_push": true,
   "matt_auto_continue": true,
   "prior_pack_verified": "SOP-CATALOG-SEED-ROUTE-1",
-  "beta_os_head_at_arm": "PENDING",
+  "beta_os_head_at_arm": "d8f6ecd89de99b7d62bc4cc111e7744ce14b6451",
   "brief": "state/build-factory/briefs/BRIEF-FIN-BANK-CREDS-ROUTE-1.md",
   "log": "state/build-factory/logs/FIN-BANK-CREDS-ROUTE-1.log",
   "result_file": "docs/wolf/ops/FIN-BANK-CREDS-ROUTE-1-RESULT.md",
@@ -34,5 +34,19 @@
   "preserves": [
     "FIN-RECON-SHELL-1",
     "FIN-CASH-TRUTH-1"
-  ]
+  ],
+  "exited_at": "2026-09-30T08:45:00+08:00",
+  "suite": {
+    "pass": 161,
+    "fail": 0
+  },
+  "tests": {
+    "pass": 161,
+    "fail": 0
+  },
+  "peaches_verified_at": "2026-09-30T08:33:30+08:00",
+  "exit_code": 0,
+  "tests_pass": 161,
+  "tests_fail": 0,
+  "peaches_verify": "state/final-completion/packs/FIN-BANK-CREDS-ROUTE-1-PEACHES-VERIFY.json"
 }

@@ -175,6 +175,7 @@ from core import crm_identity_operator_depth as _crm_ident_depth
 from core import fin_interco1 as _fin_interco1
 from core import fin_recon_shell1 as _fin_recon_shell1
 from core import fin_cash_truth1 as _fin_cash_truth1
+from core import fin_bank_creds_route1 as _fin_bank_creds_route1
 from core import fin_tax_shell1 as _fin_tax_shell1
 from core import fin_ap_ar_shell1 as _fin_ap_ar_shell1
 from core import owner_needs_you1 as _owner_needs_you1
@@ -2083,6 +2084,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if self._fin_cash_truth1_dispatch():
+            return
+
+        if self._fin_bank_creds_route1_dispatch():
             return
 
         if self._fin_tax_shell1_dispatch():
@@ -5268,6 +5272,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._fin_cash_truth1_dispatch():
                 return
         elif path in (
+            "/fin/bank-creds-route-1",
+            "/fin/bank-creds-route-1/",
+            "/fin/bank-creds-route",
+            "/fin/bank-creds-route/",
+            "/fin-bank-creds-route-1",
+            "/fin-bank-creds-route-1/",
+            "/fin-bank-creds-route-1.html",
+            "/dashboards/fin-bank-creds-route-1.html",
+            "/ops/fin-bank-creds-route-1",
+            "/ops/fin-bank-creds-route-1/",
+        ):
+            if self._fin_bank_creds_route1_dispatch():
+                return
+        elif path in (
             "/fin/tax-shell-1",
             "/fin/tax-shell-1/",
             "/fin/tax-shell",
@@ -6335,6 +6353,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
             self._fin_cash_truth1_write_refused(path)
             return
+        if (
+            path == "/api/fin/bank-creds-route-1"
+            or path.startswith("/api/fin/bank-creds-route-1/")
+            or path == "/api/ops/fin-bank-creds-route-1"
+            or path.startswith("/api/ops/fin-bank-creds-route-1/")
+        ):
+            self._fin_bank_creds_route1_write_refused(path)
+            return
         if path == "/api/fin/tax-shell-1" or path.startswith("/api/fin/tax-shell-1/"):
             self._fin_tax_shell1_write_refused(path)
             return
@@ -7236,6 +7262,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
             self._fin_cash_truth1_write_refused(path)
+            return
+        if (
+            path == "/api/fin/bank-creds-route-1"
+            or path.startswith("/api/fin/bank-creds-route-1/")
+            or path == "/api/ops/fin-bank-creds-route-1"
+            or path.startswith("/api/ops/fin-bank-creds-route-1/")
+        ):
+            self._fin_bank_creds_route1_write_refused(path)
             return
         if path == "/api/fin/tax-shell-1" or path.startswith("/api/fin/tax-shell-1/"):
             self._fin_tax_shell1_write_refused(path)
@@ -8543,6 +8577,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/fin/cash-truth-1" or path.startswith("/api/fin/cash-truth-1/"):
             self._fin_cash_truth1_write_refused(path)
+            return
+        if (
+            path == "/api/fin/bank-creds-route-1"
+            or path.startswith("/api/fin/bank-creds-route-1/")
+            or path == "/api/ops/fin-bank-creds-route-1"
+            or path.startswith("/api/ops/fin-bank-creds-route-1/")
+        ):
+            self._fin_bank_creds_route1_write_refused(path)
             return
         if path == "/api/fin/tax-shell-1" or path.startswith("/api/fin/tax-shell-1/"):
             self._fin_tax_shell1_write_refused(path)
@@ -17601,6 +17643,175 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "path": path,
                 "staff_ready": False,
                 "human_commissioned": False,
+            },
+            status=403,
+        )
+
+    def _fin_bank_creds_route1_dispatch(self) -> bool:
+        """FIN-BANK-CREDS-ROUTE-1 — HUMAN_COMMISSIONING; no invent scrape/balances."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _fin_bank_creds_route1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            person_id = (identity.get("person_id") or "").strip()
+            if not person_id:
+                self._send_identity_deny(identity)
+                return True
+            role_allowed = False
+            if person_id != _fin_bank_creds_route1.OWNER_PERSON:
+                role_allowed = False
+            if not _fin_bank_creds_route1.person_may_view(
+                person_id, role_allowed=role_allowed
+            ):
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "denied",
+                        "message": (
+                            "Bank credentials commissioning route is Owner only. "
+                            "Not staff readiness or human commissioning."
+                        ),
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "file_import_only": True,
+                        "invented_scrape": False,
+                        "invented_balance": False,
+                        "classification": "HUMAN_COMMISSIONING",
+                    },
+                    status=403,
+                )
+                return True
+            try:
+                payload = _fin_bank_creds_route1.public_payload(
+                    person_id, role_allowed=role_allowed
+                )
+            except _fin_bank_creds_route1.FinBankCredsRoute1Error as exc:
+                status = 403 if getattr(exc, "code", "") == "denied" else 400
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": getattr(exc, "code", "invalid"),
+                        "message": str(exc),
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "file_import_only": True,
+                        "invented_scrape": False,
+                        "invented_balance": False,
+                        **_fin_bank_creds_route1.honesty_flags(),
+                    },
+                    status=status,
+                )
+                return True
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "bank_creds_route_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "file_import_only": True,
+                        "invented_scrape": False,
+                        "invented_balance": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _fin_bank_creds_route1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_access_denied_page(
+                "Bank credentials commissioning route requires a signed-in person. "
+                "Unsigned callers are refused."
+            )
+            return True
+        person_id = (identity.get("person_id") or "").strip()
+        if not person_id:
+            self._send_access_denied_page(
+                "Bank credentials commissioning route requires a signed-in person. "
+                "Unsigned callers are refused."
+            )
+            return True
+        if not _fin_bank_creds_route1.person_may_view(person_id, role_allowed=False):
+            self._send_access_denied_page(
+                "Bank credentials commissioning route is Owner only. "
+                "This is not staff readiness or human commissioning."
+            )
+            return True
+        page = DASHBOARDS / "fin-bank-creds-route-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "FIN-BANK-CREDS-ROUTE-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(page.read_bytes(), rel="fin-bank-creds-route-1.html")
+        return True
+
+    def _fin_bank_creds_route1_write_refused(self, path: str) -> None:
+        """Refuse scrape/balance invent and commission-flag flips."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _fin_bank_creds_route1.refuse_external_write(
+                body if isinstance(body, dict) else {}
+            )
+        except _fin_bank_creds_route1.FinBankCredsRoute1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "file_import_only": True,
+                    "invented_scrape": False,
+                    "invented_balance": False,
+                    "live_scrape": False,
+                    "prod_mutate": False,
+                    "prod_pid_held": _fin_bank_creds_route1.PROD_PID_HELD,
+                    "classification": "HUMAN_COMMISSIONING",
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": (
+                    "FIN-BANK-CREDS-ROUTE-1 is a read honesty / commissioning "
+                    "route board. Writes refused."
+                ),
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "file_import_only": True,
+                "invented_scrape": False,
+                "invented_balance": False,
+                "prod_mutate": False,
+                "prod_pid_held": _fin_bank_creds_route1.PROD_PID_HELD,
+                "classification": "HUMAN_COMMISSIONING",
             },
             status=403,
         )
