@@ -1,0 +1,47 @@
+{
+  "pack": "WAVE2-06",
+  "title": "Month-end to shareholder pack",
+  "status": "eng-proved",
+  "proved_at": "2026-10-01T22:26:00+08:00",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "writes": false,
+  "xero_enabled": false,
+  "state": "SHELL",
+  "chain": "BROKEN",
+  "pnl": null,
+  "pnl_invented": false,
+  "pack_completed": false,
+  "historical_boards": {
+    "july": "PRESERVE",
+    "august": "PRESERVE",
+    "beta_present": false,
+    "live_replacement": false,
+    "figures_copied": false
+  },
+  "daily_closes": {
+    "count": 2,
+    "month_end_pack": false,
+    "declared_cash_evidence_id": null
+  },
+  "xero": {
+    "precise_state": "ABSENT",
+    "as_of_wita": "2026-10-01T07:17:29+08:00",
+    "beta_connected": false
+  },
+  "books": {
+    "ggv_notas": 0,
+    "ggv_invoices": 0,
+    "xero_book": false
+  },
+  "tests": "scripts/tests/test_monthend_shareholder_wave2_06.py 12 passed, 0 failed",
+  "http": {
+    "GET /api/bzg/month-end": 200,
+    "GET /bzg/month-end": 200,
+    "POST /api/bzg/month-end": 405,
+    "health_8788": 200,
+    "health_8787": 200
+  },
+  "next": "WAVE2-07 sale readiness (need.sale.readiness). Not started. Then stop for Owner on events, tours, security, and maintenance."
+}

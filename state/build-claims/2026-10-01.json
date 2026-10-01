@@ -88,6 +88,14 @@
       "expect": "11 passed, 0 failed; learn UNAVAILABLE; brief has no performance id; metricool write false; staff_ready false",
       "by": "WAVE2-05",
       "at": "2026-10-01T22:18:23+08:00"
+    },
+    {
+      "id": "wave2-06-monthend-shell-no-pnl",
+      "claim": "Wave 2.06 month-end tests pass. The chain stays broken, pnl stays null, historical boards stay preserved, and Xero stays ABSENT. staff_ready stays false.",
+      "check": "cd /Users/wolfterminal/beta-os && /opt/homebrew/bin/python3 scripts/tests/test_monthend_shareholder_wave2_06.py | tail -1; curl -sS --max-time 8 http://127.0.0.1:8788/api/bzg/month-end | python3 -c \"import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get('state')=='SHELL' and d.get('chain')=='BROKEN' and d.get('pnl') is None and d.get('pnl_invented') is False and d.get('xero',{}).get('precise_state')=='ABSENT' and d.get('xero_enabled') is False and d.get('staff_ready') is False else 1)\"",
+      "expect": "12 passed, 0 failed; SHELL; chain BROKEN; pnl null; Xero ABSENT; staff_ready false",
+      "by": "WAVE2-06",
+      "at": "2026-10-01T22:26:00+08:00"
     }
   ]
 }
