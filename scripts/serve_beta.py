@@ -82,6 +82,7 @@ from core import content_publish as _content_publish
 from core import venue_close as _venue_close
 from core import uma_ops_console as _uma_ops
 from core import amg_sales_desk_ro as _amg_sales_desk_ro
+from core import amg_guest_stay_pack7 as _amg_guest_stay
 from core import content_tick_draft as _content_tick_draft
 from core import owner_cockpit as _owner_cockpit
 from core import uma_real_projection as _uma_real
@@ -2032,6 +2033,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "writes": False}, status=404)
                 return
             self._send_html_shell(page.read_bytes(), rel="amg-sales-desk.html")
+            return
+
+        # PACK-07-GUEST AMG stay honesty. Read-only. Before auth walls, same as the sales desk.
+        if path == "/api/amg/guest-stay" or path.startswith("/api/amg/guest-stay/"):
+            try:
+                self._send_json(_amg_guest_stay.load_guest_stay())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "guest_stay_fail", "detail": str(_e), "staff_ready": False, "writes": False}, status=500)
+            return
+        if path in ("/amg/guest-stay", "/amg/guest-stay/", "/amg-guest-stay", "/amg-guest-stay/"):
+            page = DASHBOARDS / "amg-guest-stay.html"
+            if not page.is_file():
+                self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "writes": False}, status=404)
+                return
+            self._send_html_shell(page.read_bytes(), rel="amg-guest-stay.html")
             return
 
         # PACK-04 Habitat tick → draft or Misa queue. Publish stays off.
@@ -5906,6 +5922,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == "/api/amg/sales-desk" or path.startswith("/api/amg/sales-desk/"):
             self._send_json(_amg_sales_desk_ro.refuse_write(), status=405)
+            return
+        if path == "/api/amg/guest-stay" or path.startswith("/api/amg/guest-stay/"):
+            self._send_json(_amg_guest_stay.refuse_write(), status=405)
             return
         if path == "/api/owner/cockpit" or path.startswith("/api/owner/cockpit/"):
             self._send_json(_owner_cockpit.refuse_write(), status=405)

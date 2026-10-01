@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Atrium guest stay · AMG</title>
+<style>
+  :root {
+    --bg: #14110c; --bg2: #1e1912; --border: #3d3426;
+    --text: #f4efe4; --muted: #b3a48c; --accent: #c4a574; --warn: #e0b15a; --danger: #f04438;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 1100px; padding: 16px 16px 96px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  h1 { font-size: 1.25rem; margin: 0 0 4px; }
+  h1 span { color: var(--accent); }
+  .crumb, .note { color: var(--muted); font-size: 0.82rem; line-height: 1.4; }
+  nav.grammar { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 12px; }
+  nav.grammar a {
+    display: inline-flex; align-items: center; min-height: 44px; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: 10px; color: var(--muted);
+    text-decoration: none; font-size: 0.78rem; font-weight: 650;
+  }
+  nav.grammar a.active { color: var(--accent); border-color: rgba(196,165,116,0.55); }
+  .banner { background: var(--bg2); border: 1px solid rgba(224,177,90,0.55); color: var(--warn); border-radius: 10px; padding: 10px 12px; font-size: 0.86rem; }
+  details { border: 1px solid var(--border); border-radius: 12px; background: var(--bg2); margin: 8px 0; padding: 0 12px 10px; }
+  details summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--accent); }
+  a.desk { color: var(--accent); }
+  .err { color: var(--danger); }
+</style>
+</head>
+<body data-wolf-page-type="DASHBOARD" data-wolf-org="AMG" data-wolf-shell="global">
+  <p class="crumb">WOLF · Atrium Management · AMG · Guest stay</p>
+  <h1>AMG <span>Guest stay</span></h1>
+  <p class="note">Pre-arrival, the room snapshot, and post-stay. Tiles start closed. staff_ready is false. Housekeeping is later. Bookings are not written.</p>
+  <nav class="grammar" aria-label="This page">
+    <a href="/amg/sales-desk">Sales</a>
+    <a href="/amg/sales-desk#occ">OCC</a>
+    <a class="active" href="/amg/guest-stay">Guest stay</a>
+  </nav>
+  <p class="banner" id="banner">Loading the stay read…</p>
+  <details id="pre">
+    <summary>Pre-arrival</summary>
+    <div id="preBody" class="note"></div>
+  </details>
+  <details id="stay">
+    <summary>Stay · vacant versus rooms</summary>
+    <div id="stayBody" class="note"></div>
+  </details>
+  <details id="post">
+    <summary>Post-stay</summary>
+    <div id="postBody" class="note"></div>
+  </details>
+  <script>
+    const banner = document.getElementById("banner");
+    function line(node, text) {
+      const p = document.createElement("p");
+      p.className = "note";
+      p.textContent = text;
+      node.appendChild(p);
+    }
+    fetch("/api/amg/guest-stay", { headers: { "Accept": "application/json" } })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data || data.ok !== true) {
+          banner.textContent = "The stay read did not load.";
+          banner.classList.add("err");
+          return;
+        }
+        const stay = data.stay || {};
+        banner.textContent = (stay.display || "UNKNOWN") + " · in-house UNKNOWN · staff_ready false";
+        const pre = data.pre_arrival || {};
+        const post = data.post_stay || {};
+        const reservations = data.reservations || {};
+        line(document.getElementById("preBody"), pre.state + ". " + (pre.why || ""));
+        line(document.getElementById("preBody"), "No pre-arrival desk. Guest count was not invented.");
+        const stayBody = document.getElementById("stayBody");
+        line(stayBody, stay.why || "");
+        if (stay.href) {
+          const p = document.createElement("p");
+          const a = document.createElement("a");
+          a.className = "desk";
+          a.href = stay.href;
+          a.textContent = "Open the sales occupancy desk";
+          p.appendChild(a);
+          stayBody.appendChild(p);
+        }
+        line(document.getElementById("postBody"), post.state + ". " + (post.why || ""));
+        line(document.getElementById("postBody"), "Cafe reservation rows on file: " + String(reservations.row_count) + ". That is not an Atrium stay book.");
+      })
+      .catch(() => {
+        banner.textContent = "The stay read did not load.";
+        banner.classList.add("err");
+      });
+  </script>
+</body>
+</html>

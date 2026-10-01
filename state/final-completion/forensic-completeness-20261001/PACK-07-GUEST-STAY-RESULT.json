@@ -1,0 +1,39 @@
+{
+  "pack": "PACK-07",
+  "title": "AMG guest stay honesty",
+  "status": "eng-proved",
+  "proved_at": "2026-10-01T21:05:00+08:00",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "writes": false,
+  "bookings_write": false,
+  "xero_write": false,
+  "guests": null,
+  "adr": null,
+  "revpar": null,
+  "in_house": "UNKNOWN",
+  "stay": {
+    "state": "PARTIAL",
+    "source": "yanolja last-read Inventory+RoomInfo",
+    "written_at": "2026-10-01T07:16:15+08:00",
+    "display": "89% · 13 vacant / 114 rooms",
+    "occupancy_pct": 88.6,
+    "rooms_vacant": 13,
+    "rooms_total": 114,
+    "href": "/amg/sales-desk#occ",
+    "v1_master_val": "1.75% occ",
+    "v1_not_merged": true
+  },
+  "pre_arrival": "UNAVAILABLE",
+  "post_stay": "UNAVAILABLE",
+  "housekeeping": "OUT_OF_SCOPE",
+  "reservations": {
+    "row_count": 1,
+    "venue": "Uma Blu Cafe",
+    "hotel_history": false,
+    "means_no_guests": false
+  },
+  "tests": "scripts/tests/test_amg_guest_stay_pack7.py 25 passed, 0 failed",
+  "next": "PACK-08 recipe variance. Not started."
+}

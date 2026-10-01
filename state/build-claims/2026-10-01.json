@@ -16,6 +16,14 @@
       "expect": "40 passed, 0 failed; notas 0; next_value 67; HTTP 403",
       "by": "PACK-06",
       "at": "2026-10-01T20:53:00+08:00"
+    },
+    {
+      "id": "pack7-guest-stay-yanolja-not-invented",
+      "claim": "Pack 7 guest stay tests pass. Stay read is vacant-versus-rooms with guests null. reservations.db stays 1 cafe row. Unauthenticated GET /api/amg/guest-stay is 200 and POST is 405.",
+      "check": "cd /Users/wolfterminal/beta-os && /opt/homebrew/bin/python3 scripts/tests/test_amg_guest_stay_pack7.py | tail -1; curl -sS -o /dev/null -w \"GET %{http_code}\\n\" --max-time 5 http://127.0.0.1:8788/api/amg/guest-stay; curl -sS -o /dev/null -w \"POST %{http_code}\\n\" --max-time 5 -X POST http://127.0.0.1:8788/api/amg/guest-stay",
+      "expect": "25 passed, 0 failed; GET 200; POST 405",
+      "by": "PACK-07",
+      "at": "2026-10-01T21:05:00+08:00"
     }
   ]
 }
