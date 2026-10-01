@@ -7557,6 +7557,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if path == "/api/bzg/uma-blu/petty/count":
                 self._uma_ops_petty_count_post()
                 return
+            if path == "/api/bzg/uma-blu/petty/opening":
+                self._uma_ops_petty_opening_post()
+                return
             if path == "/api/bzg/uma-blu/receive":
                 self._uma_ops_receive_post()
                 return
@@ -41296,6 +41299,35 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     "staff_ready": False,
                 }
             )
+        except _uma_ops.UmaOpsError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_petty_opening_post(self) -> None:
+        """Owner human-supplied opening balance — not a fabricated IN/OUT movement."""
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length) if length > 0 else b"{}"
+            body = json.loads(raw.decode("utf-8") or "{}")
+            if not isinstance(body, dict):
+                body = {}
+            actor = self._uma_ops_actor(body)
+            if actor is None:
+                return
+            person_id, identity = actor
+            out = _uma_ops.set_opening_float_ops(
+                person_id=person_id,
+                amount=body.get("amount") if body.get("amount") is not None else body.get("opening_float"),
+                business_date=body.get("business_date"),
+                source=body.get("source") or "human_supplied",
+                supplied_by=body.get("supplied_by") or body.get("source_name") or "Matt Goss",
+                identity=identity,
+            )
+            self._send_json({**out, **_uma_ops.honesty_flags()})
         except _uma_ops.UmaOpsError as exc:
             self._send_json(
                 {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},

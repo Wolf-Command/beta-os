@@ -142,6 +142,10 @@
   <h1 class="brand">Petty <em>cash</em></h1>
   <p class="sub">Phone tin log — out or in, amount, reason, receipt photo. Opening balance is not invented.</p>
 
+  <div class="balance-card" id="balanceCard" hidden>
+    <div class="balance-label">Current balance</div>
+    <div class="balance-value" id="balanceValue">—</div>
+  </div>
   <div class="banner" id="floatBanner">Opening cash balance is not set yet. You can still record movements. The tin total cannot be verified until an approved opening balance is commissioned.</div>
   <div class="banner hidden" id="fixtureBanner">Practice examples — not live Uma Blu tin activity.</div>
 
@@ -348,6 +352,19 @@
         });
         fillSelect(document.getElementById("outlet"), outlets, outlets[0]);
 
+        function fmtIdr(n) {
+          var x = Math.round(Number(n));
+          if (!isFinite(x)) return String(n);
+          return "Rp" + String(x).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+        var balCard = document.getElementById("balanceCard");
+        var balVal = document.getElementById("balanceValue");
+        if (data.current_balance != null && data.current_balance !== "") {
+          balVal.textContent = fmtIdr(data.current_balance);
+          balCard.hidden = false;
+        } else {
+          balCard.hidden = true;
+        }
         var floatStatus = (data.float_status || (data.honesty && data.honesty.float) || "NOT_FOUND");
         var floatEl = document.getElementById("floatBanner");
         if (floatStatus === "NOT_FOUND" || floatStatus === "NOT_IN_SLICE") {
@@ -356,9 +373,12 @@
             banner += " Past movements stay listed. They do not set an opening balance.";
           }
           floatEl.textContent = banner;
+          floatEl.classList.remove("ok");
+          floatEl.classList.remove("hidden");
         } else {
-          floatEl.textContent = "Opening float is recorded on a day tin below.";
+          floatEl.textContent = "Current balance: " + fmtIdr(data.current_balance != null ? data.current_balance : data.opening_float) + " (human-supplied opening by Matt).";
           floatEl.classList.add("ok");
+          floatEl.classList.remove("hidden");
         }
         if (data.fixture_notice && !(data.movements || []).some(function (m) { return m.legacy; })) {
           document.getElementById("fixtureBanner").classList.remove("hidden");

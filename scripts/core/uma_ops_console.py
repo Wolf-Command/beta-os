@@ -393,6 +393,8 @@ def _public_petty_day(row: dict[str, Any] | None) -> dict[str, Any] | None:
         out["opening_float_status"] = "NOT_FOUND"
     else:
         out["opening_float_status"] = "PROVIDED"
+    if out.get("opening_float_source"):
+        out["opening_balance_kind"] = out.get("opening_float_kind") or "human_supplied"
     return out
 
 
@@ -877,13 +879,35 @@ def list_petty(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
                 d.get("state") == "OPEN"
             )
         ]
+        today = today_biz_date()
+        today_day = next((d for d in days if d.get("business_date") == today), None)
+        current_balance = None
+        opening_today = None
+        opening_meta = None
+        if today_day and today_day.get("opening_float") is not None:
+            opening_today = float(today_day["opening_float"])
+            current_balance = _compute_expected_from_float_and_movements(
+                c, today, opening_today
+            )
+            if current_balance is None:
+                current_balance = opening_today
+            opening_meta = {
+                "source": today_day.get("opening_float_source"),
+                "supplied_by": today_day.get("opening_float_set_by"),
+                "set_at": today_day.get("opening_float_set_at"),
+                "kind": today_day.get("opening_float_kind") or "human_supplied_opening_balance",
+            }
         return {
             "ok": True,
             "movements": movements,
             "days": days,
             "attention_count": len(attention),
             "float_status": float_status,
-            "opening_float": None if float_status == "NOT_FOUND" else "see_days",
+            "opening_float": None if float_status == "NOT_FOUND" else opening_today,
+            "current_balance": current_balance,
+            "currency": "IDR",
+            "business_date": today,
+            "opening_balance_meta": opening_meta,
             "honesty": honesty,
             "fixture_notice": fixture_notice_for(movements, days),
             "categories": list(PETTY_CATEGORIES),
@@ -1165,6 +1189,25 @@ def _ensure_petty_phone_columns(conn: sqlite3.Connection) -> None:
                 conn.execute(f"ALTER TABLE bzg_ops_petty_movements ADD COLUMN {name} {decl}")
             except sqlite3.Error:
                 # Read path / test-mode live catalog: keep listing without phone cols.
+                return
+    # Opening-balance provenance on day tin (human-supplied Owner commission).
+    try:
+        day_cols = {
+            str(r[1])
+            for r in conn.execute("PRAGMA table_info(bzg_ops_petty_days)").fetchall()
+        }
+    except sqlite3.Error:
+        return
+    for name, decl in (
+        ("opening_float_source", "TEXT"),
+        ("opening_float_set_by", "TEXT"),
+        ("opening_float_set_at", "TEXT"),
+        ("opening_float_kind", "TEXT"),
+    ):
+        if name not in day_cols:
+            try:
+                conn.execute(f"ALTER TABLE bzg_ops_petty_days ADD COLUMN {name} {decl}")
+            except sqlite3.Error:
                 return
 
 
@@ -1463,6 +1506,121 @@ def count_petty_ops(
         if commit:
             c.commit()
         return out
+    finally:
+        if own:
+            c.close()
+
+
+
+def set_opening_float_ops(
+    *,
+    person_id: str,
+    amount: float,
+    business_date: str | None = None,
+    source: str = "human_supplied",
+    supplied_by: str = "Matt Goss",
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Canonical opening balance — human-supplied, not a fabricated IN/OUT movement.
+
+    Stores opening_float on the day tin with provenance + append-only audit.
+    Does not invent float; refuses negative amounts; does not rewrite other days.
+    """
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        assert_catalog_writable(Path(CATALOG_DB))
+        ensure_schema(c)
+        # Owner commission of opening tin — same write bar as count.
+        _require_ops_permission(c, person_id, "work.update")
+        try:
+            amt = float(amount)
+        except (TypeError, ValueError) as exc:
+            raise UmaOpsError("opening amount must be numeric", code="invalid_amount") from exc
+        if amt < 0:
+            raise UmaOpsError("opening amount cannot be negative", code="invalid_amount")
+        biz = (business_date or "").strip() or today_biz_date()
+        src = (source or "human_supplied").strip() or "human_supplied"
+        by = (supplied_by or "").strip() or person_id
+        ts = now_utc_iso()
+        existing = get_petty_day(biz, conn=c)
+        if existing is None:
+            _ensure_petty_day(c, biz, opening_float=amt)
+        c.execute(
+            """
+            UPDATE bzg_ops_petty_days
+            SET opening_float=?,
+                opening_float_source=?,
+                opening_float_set_by=?,
+                opening_float_set_at=?,
+                opening_float_kind=?,
+                expected_amount=?,
+                note=?,
+                updated_at=?
+            WHERE venue=? AND business_date=?
+            """,
+            (
+                amt,
+                src,
+                by,
+                ts,
+                "human_supplied_opening_balance",
+                amt,  # expected starts at opening; movements adjust on read/count
+                f"Human-supplied opening balance by {by}",
+                ts,
+                VENUE_UMA,
+                biz,
+            ),
+        )
+        # Recompute expected from float + movements (may differ if movements already logged).
+        expected = _compute_expected_from_float_and_movements(c, biz, amt)
+        if expected is not None:
+            c.execute(
+                """
+                UPDATE bzg_ops_petty_days
+                SET expected_amount=?
+                WHERE venue=? AND business_date=?
+                """,
+                (expected, VENUE_UMA, biz),
+            )
+        _audit_ops(
+            action="bzg.petty.opening_float",
+            result="SUCCEEDED",
+            resource_type=RESOURCE_PETTY_DAY,
+            resource_id=biz,
+            conn=c,
+            metadata={
+                "status": "PROVIDED",
+                "note": "human_supplied_opening_balance",
+                "amount": amt,
+                "currency": "IDR",
+                "source": src,
+                "supplied_by": by,
+                "kind": "opening_balance_not_movement",
+                "fabricated_transaction": False,
+            },
+            actor_type="PERSON",
+            verified_person_id=person_id,
+            identity=identity,
+        )
+        if commit:
+            c.commit()
+        day = get_petty_day(biz, conn=c)
+        assert day
+        return {
+            "ok": True,
+            "day": day,
+            "current_balance": expected if expected is not None else amt,
+            "currency": "IDR",
+            "opening_float": amt,
+            "float_status": "PROVIDED",
+            "fabricated_transaction": False,
+            "source": src,
+            "supplied_by": by,
+            "set_at": ts,
+        }
     finally:
         if own:
             c.close()
