@@ -2300,6 +2300,22 @@
     el.textContent = `${fileName || "File"} — ` + bits.map((b) => `${b[0]}: ${b[1]}`).join(" · ") + failed;
   }
 
+  function staffUploadWhy(res, data) {
+    if (data && data.staff_message) return String(data.staff_message);
+    const status = res ? res.status : 0;
+    const err = String((data && (data.error || data.message)) || "");
+    const low = err.toLowerCase();
+    if (status === 413 || low.indexOf("exceeds") >= 0 || low.indexOf("too large") >= 0) return "This file is too large to upload.";
+    if (status === 415 || low.indexOf("unsupported") === 0 || low.indexOf("magic mismatch") >= 0) return "This file type is not supported.";
+    if (status === 409 || err === "possible_duplicate") return "This file is already in the library.";
+    if (status === 403 || err === "forbidden") return "You do not have permission to upload for this brand.";
+    const stage = String((data && data.failed_stage) || "");
+    if (stage === "saving_nas" || low.indexOf("save failed") === 0) return "Storage is unavailable. Nothing new was saved for this file.";
+    if (stage === "thumbnail") return "Saved to the library. A preview image could not be made.";
+    if (!res) return "The connection was interrupted. Retry the failed files.";
+    return "This file could not be added to the library. Retry the failed files.";
+  }
+
   async function runSmartUpload(onlyFailed) {
     if (!state.canUpload) {
       toast("You do not have upload permission");
@@ -2373,6 +2389,21 @@
         const data = await res.json();
         paintLifecycleResult(data);
         paintRegistration(data, file.name);
+        const duplicate = res.status === 409 || (data && (data.error === "possible_duplicate" || data.duplicate === true));
+        const savedDespitePoster = !!(data && data.ok && data.nas_received && data.asset_id && data.failed_stage === "thumbnail");
+        if (duplicate || savedDespitePoster) {
+          if (badge) badge.textContent = duplicate ? "Already in Library" : "Available in Library";
+          status.textContent = data.staff_message || (duplicate
+            ? "This file is already in the library."
+            : "Saved to the library. A preview image could not be made.");
+          const canon = $("canon-" + i);
+          if (canon && data.canonical_filename) canon.textContent = data.canonical_filename;
+          ok++;
+          uploadWizard.okIdx = uploadWizard.okIdx || [];
+          if (!uploadWizard.okIdx.includes(i)) uploadWizard.okIdx.push(i);
+          toast(`${file.name}: ${status.textContent}`);
+          continue;
+        }
         if (!res.ok || data.ok === false || !data.library_available) {
           const stage = String((data && data.failed_stage) || "");
           if (stage === "saving_nas") status.textContent = "Saving to NAS";
@@ -2380,8 +2411,7 @@
           else if (stage === "indexing" || stage === "thumbnail" || stage === "library") status.textContent = "Adding to Library";
           else status.textContent = "Failed";
           if (badge) badge.textContent = stage === "saving_nas" ? "Saving" : "Failed";
-          const why = (data && (data.failed_stage || data.error || data.message)) || "not in the library yet";
-          throw new Error(String(why));
+          throw new Error(staffUploadWhy(res, data));
         }
         if (badge) badge.textContent = "Available in Library";
         status.textContent = "✓ Complete";
@@ -2394,8 +2424,12 @@
         fail++;
         failedIdx.push(i);
         if (badge) badge.textContent = "Failed";
-        if (!e || !e.message || e.message === "Failed to fetch") paintUploadLifecycle("uploading", "uploading");
-        toast(`${file.name}: ${e.message}`);
+        const interrupted = !e || !e.message || e.message === "Failed to fetch";
+        if (interrupted) paintUploadLifecycle("uploading", "uploading");
+        const why = interrupted
+          ? "The connection was interrupted. Retry the failed files."
+          : e.message;
+        toast(`${file.name}: ${why}`);
       }
     }
     uploadWizard.failedIdx = failedIdx;

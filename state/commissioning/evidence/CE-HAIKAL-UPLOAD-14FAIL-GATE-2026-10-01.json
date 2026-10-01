@@ -1,0 +1,155 @@
+{
+  "staff_ready": false,
+  "run_id": "BF-content-engine-haikal-upload-14fail-20261001",
+  "gates": {
+    "E1": "PASS",
+    "E3": "PASS",
+    "E4": "PASS",
+    "E5": "PASS",
+    "E6": "PASS",
+    "E2": "PASS",
+    "E7": "PASS",
+    "E8": "PASS"
+  },
+  "http_note": "Unsigned POST /api/upload/smart on :8788 returns 403 missing_auth. E1-E7 byte pipeline was proved in-process with PATH=/usr/bin:/bin:/usr/sbin:/sbin, the same PATH launchd gives serve-beta. The listening process (repair-status) reports ffmpeg_resolved true. A logged-in browser POST was not replayed.",
+  "http_without_jwt": {
+    "status": 403,
+    "error": "missing_auth"
+  },
+  "repair_status": {
+    "http": 200,
+    "ffmpeg_resolved": true,
+    "staff_ready": false,
+    "run_id": "BF-content-engine-haikal-fail-repair-20260924"
+  },
+  "e1_body_keys": [
+    "asset_id",
+    "batch_id",
+    "brand",
+    "canonical_filename",
+    "complete",
+    "content_card_id",
+    "content_hash",
+    "content_plan_id",
+    "data_lane",
+    "detail",
+    "detail_tags",
+    "failed_stage",
+    "file_size",
+    "library_available",
+    "library_status",
+    "lifecycle",
+    "location",
+    "media_type",
+    "nas",
+    "nas_message",
+    "nas_received",
+    "nas_rel",
+    "ok",
+    "original_filename",
+    "preview_url",
+    "processing_status",
+    "provenance",
+    "readiness",
+    "readiness_label",
+    "registration",
+    "sequence_token",
+    "shoot_date",
+    "staff_message",
+    "staff_ready",
+    "stage",
+    "staged_id",
+    "status",
+    "subject",
+    "ui_status",
+    "uploaded_at",
+    "uploaded_by"
+  ],
+  "e5": {
+    "nas_rel_tail": "tropik_RAW_video_eng-probe-14fail_eng-probe-14fail_20261001_001.mov",
+    "size": 2217,
+    "hash_match": true
+  },
+  "probe_asset_ids": [
+    33,
+    34,
+    35,
+    36,
+    37
+  ],
+  "bbq_batch_untouched": true,
+  "probe_rows_left": 0,
+  "bbq_rows": 12,
+  "poster_backfill": [
+    {
+      "id": 19,
+      "poster": true,
+      "nas_size_unchanged": true
+    },
+    {
+      "id": 20,
+      "poster": true,
+      "nas_size_unchanged": true
+    },
+    {
+      "id": 21,
+      "poster": true,
+      "nas_size_unchanged": true
+    },
+    {
+      "id": 22,
+      "poster": true,
+      "nas_size_unchanged": true
+    },
+    {
+      "id": 23,
+      "poster": true,
+      "nas_size_unchanged": true
+    },
+    {
+      "id": 24,
+      "poster": true,
+      "nas_size_unchanged": true
+    },
+    {
+      "id": 25,
+      "poster": true,
+      "nas_size_unchanged": true
+    },
+    {
+      "id": 26,
+      "poster": true,
+      "nas_size_unchanged": true
+    },
+    {
+      "id": 27,
+      "poster": true,
+      "nas_size_unchanged": true
+    },
+    {
+      "id": 28,
+      "poster": true,
+      "nas_size_unchanged": true
+    },
+    {
+      "id": 29,
+      "poster": true,
+      "nas_size_unchanged": true
+    },
+    {
+      "id": 30,
+      "poster": true,
+      "nas_size_unchanged": true
+    },
+    {
+      "id": 31,
+      "poster": true,
+      "nas_size_unchanged": true
+    },
+    {
+      "id": 32,
+      "poster": true,
+      "nas_size_unchanged": true
+    }
+  ]
+}

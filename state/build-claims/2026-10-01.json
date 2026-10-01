@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-01",
+  "claims": [
+    {
+      "id": "ce-haikal-upload-14fail-ffmpeg-path",
+      "claim": "Content upload poster resolution finds /opt/homebrew/bin/ffmpeg when PATH is the launchd default, and public_status keeps staff_ready false while ffmpeg_resolved is true.",
+      "check": "PATH=/usr/bin:/bin:/usr/sbin:/sbin PYTHONPATH=scripts python3 -c \"from core.content_engine_repair import resolve_ffmpeg, public_status; s=public_status(); import sys; sys.exit(0 if (resolve_ffmpeg()=='/opt/homebrew/bin/ffmpeg' and s.get('ffmpeg_resolved') is True and s.get('staff_ready') is False and s.get('run_id')=='BF-content-engine-haikal-fail-repair-20260924') else 1)\"",
+      "expect": "exit 0",
+      "by": "BF-content-engine-haikal-upload-14fail-20261001",
+      "at": "2026-10-01T13:40:00+08:00"
+    }
+  ]
+}

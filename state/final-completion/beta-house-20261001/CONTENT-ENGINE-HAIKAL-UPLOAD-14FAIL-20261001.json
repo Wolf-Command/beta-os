@@ -1,0 +1,98 @@
+{
+  "id": "CONTENT-ENGINE-HAIKAL-UPLOAD-14FAIL-20261001",
+  "recorded_at_wita": "2026-10-01T13:01:33+08:00",
+  "class": "HUMAN_COMMISSIONING_FAIL",
+  "status": "FAILED_RETEST_REQUIRED",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "desktop_gate_ready": false,
+  "exit_report": "NOT_CREATED",
+  "code_complete_ne_staff_ready": true,
+  "actor": "Haikal",
+  "surface": "Content Engine Smart Upload (Beta)",
+  "brand": "tropik",
+  "detail": "bbq-night-grill",
+  "batch": {
+    "count": 14,
+    "type": ".MOV",
+    "failed": 14,
+    "succeeded": 0,
+    "ui_state": "Stopped \u2014 14 failed of 14. Nothing was marked complete. Successful files stay put.",
+    "naming": "deterministic destination filenames generated for all 14 (preview-names reached)"
+  },
+  "owner_orders": [
+    "Do not ask Haikal to diagnose",
+    "Do not ask Matt to troubleshoot",
+    "Peaches: FAIL record + acceptance criteria only (credit-light)",
+    "Cursor: engineering investigation + repair on live Beta tree + logs",
+    "Do not guess root cause from screenshot",
+    "Shared infrastructure/path first (14/14 together)",
+    "Preserve failed batch provenance; do not mark successful manually; no duplicate assets",
+    "UX: human-useful error + Retry where safe; tech detail in admin logs",
+    "Eng prove then Beta-only deploy; Prod untouched",
+    "Haikal retest small then normal batch; Content Upload FAIL until Haikal PASS"
+  ],
+  "evidence": {
+    "owner_report": "Matt message 2026-10-01 ~12:58 WITA",
+    "screenshot": "Owner referenced screenshot; chat asset not confirmed as upload UI \u2014 FAIL stands on Owner/Haikal report",
+    "live_log": "/tmp/serve_beta.log",
+    "beta_pid": 12379,
+    "beta_port": 8788,
+    "prod_8787": "READ_ONLY_SACRED",
+    "log_leads_for_cursor_only": [
+      "POST /api/upload/preview-names 200 (naming worked)",
+      "POST /api/upload/smart mixed 200 and historical 403 in log",
+      "Multiple Exception/Traceback blocks in serve_beta.log \u2014 Cursor must extract actual exceptions"
+    ]
+  },
+  "acceptance_criteria": {
+    "engineering": [
+      "single MOV upload PASS",
+      "multi-video batch PASS",
+      "generated naming correct",
+      "brand association tropik correct",
+      "NAS destination correct; file exists; size/checksum sane",
+      "DB/index record once; no duplicate on retry",
+      "partial-batch failure safe; failed item retryable",
+      "desktop UI human-useful error + Retry"
+    ],
+    "human_retest": [
+      "Haikal small real batch first",
+      "then normal real-world batch",
+      "upload completes; files on intended storage; Library/index sees them; names+brand correct; Haikal can find/preview/use"
+    ]
+  },
+  "cursor_run_id": "BF-content-engine-haikal-upload-14fail-20261001",
+  "credit_exception": "human_commissioning_fail_repair_P0",
+  "peaches_role": "FAIL_RECORD_AND_ACCEPTANCE_ONLY",
+  "next": "Peaches light verify, then Haikal retest. Engineering prove is done. staff_ready stays false.",
+  "engineering_findings": {
+    "recorded_at_wita": "2026-10-01T13:20:00+08:00",
+    "status": "ENG_PROVED_AWAITING_PEACHES_AND_HAIKAL",
+    "staff_ready": false,
+    "human_status_unchanged": "FAILED_RETEST_REQUIRED",
+    "root_cause": "Launchd job net.wolfcommand.serve-beta has PATH /usr/bin:/bin:/usr/sbin:/sbin (plist EnvironmentVariables is only BETA_PORT). write_jpeg_thumb called bare ffmpeg, caught FileNotFoundError, and returned false. annotate_upload then set failed_stage=thumbnail and library_available=false while HTTP stayed 200 and the file was already on NAS and in assets. The Content page treats a missing library_available as a failed upload.",
+    "log_citation": {
+      "tropik_smart_200_lines": "1544939-1545394 twelve POST /api/upload/smart 200",
+      "later_selo_smart_200_lines": "1546011 and 1546017",
+      "no_traceback_on_this_batch": "FileNotFoundError was swallowed inside write_jpeg_thumb",
+      "not_this_batch": "sqlite3.OperationalError unable to open database file at lines 1527243-1529459 is GET /api/content/nas-media identity, earlier than the upload cluster"
+    },
+    "catalog": {
+      "batch_id": "bmuowp00n",
+      "rows": 12,
+      "brand": "tropik",
+      "detail": "bbq-night-grill",
+      "sequences": "001-012",
+      "nas_sizes_matched_db": true,
+      "owner_reported_count": 14,
+      "two_filenames_not_in_catalog": "UNKNOWN"
+    },
+    "not_marked_successful": true,
+    "poster_backfill_asset_ids": "19-32 posters only; NAS byte sizes unchanged; library_status was already LIBRARY_READY",
+    "beta_pid_after_restart": 30689,
+    "prod_pid_untouched": 15975,
+    "evidence": "state/commissioning/evidence/CE-HAIKAL-UPLOAD-14FAIL-GATE-2026-10-01.json",
+    "result": "state/build-factory/RESULT-CONTENT-ENGINE-HAIKAL-UPLOAD-14FAIL-20261001.md"
+  }
+}

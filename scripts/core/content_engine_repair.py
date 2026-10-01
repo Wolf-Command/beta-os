@@ -10,6 +10,8 @@ Does not invent a Content Engine agent.
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import sqlite3
 import subprocess
 from datetime import datetime
@@ -45,6 +47,21 @@ CONTENT_CLASSES: tuple[tuple[str, str], ...] = (
 )
 THUMB_DIR = BETA_ROOT / "state" / "content-thumbs"
 COVERAGE_PATH = BETA_ROOT / "state" / "content-engine" / "nas-index-coverage.json"
+UPLOAD_AUDIT_PATH = BETA_ROOT / "state" / "content-engine" / "upload-audit.jsonl"
+# launchd serve-beta ships PATH=/usr/bin:/bin:/usr/sbin:/sbin, so a bare "ffmpeg" raises FileNotFoundError.
+FFMPEG_CANDIDATES = (
+    "/opt/homebrew/bin/ffmpeg",
+    "/usr/local/bin/ffmpeg",
+)
+STAFF_TOO_LARGE = "This file is too large to upload."
+STAFF_UNSUPPORTED = "This file type is not supported."
+STAFF_STORAGE = "Storage is unavailable. Nothing new was saved for this file."
+STAFF_INTERRUPTED = "The connection was interrupted. Retry the failed files."
+STAFF_ALREADY = "This file is already in the library."
+STAFF_SAVED = "Available in the library."
+STAFF_RETRY = "This file could not be added to the library. Retry the failed files."
+STAFF_FORBIDDEN = "You do not have permission to upload for this brand."
+STAFF_PREVIEW = "Saved to the library. A preview image could not be made."
 
 # Human stages. COMPLETE is last and only when the asset is Library-available.
 LIFECYCLE: tuple[tuple[str, str], ...] = (
@@ -279,6 +296,7 @@ def refuse_staff_ready(_payload: dict | None = None) -> None:
 
 
 def public_status() -> dict[str, Any]:
+    ffmpeg = resolve_ffmpeg()
     return {
         "ok": True,
         "run_id": RUN_ID,
@@ -288,6 +306,8 @@ def public_status() -> dict[str, Any]:
         "round2_run_id": ROUND2_RUN_ID,
         "wi_connected": False,
         "wi_staff_hidden": True,
+        # True when the running process can poster a MOV even if launchd PATH has no ffmpeg.
+        "ffmpeg_resolved": bool(ffmpeg),
         **HONESTY,
     }
 
@@ -589,6 +609,54 @@ def lifecycle_rows(*, failed_stage: str | None, library_available: bool) -> list
     return out
 
 
+def resolve_ffmpeg() -> str | None:
+    """Find ffmpeg even when launchd stripped PATH to the system bins."""
+    found = shutil.which("ffmpeg")
+    if found:
+        return found
+    for cand in FFMPEG_CANDIDATES:
+        if os.path.isfile(cand) and os.access(cand, os.X_OK):
+            return cand
+    return None
+
+
+def log_upload_fault(event: dict[str, Any]) -> None:
+    """Admin-only audit. Never returned to the upload page."""
+    try:
+        UPLOAD_AUDIT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        row = {
+            "at": datetime.now(TZ).isoformat(timespec="seconds"),
+            **{k: v for k, v in event.items() if k not in ("data", "file", "bytes")},
+        }
+        with UPLOAD_AUDIT_PATH.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(row, default=str) + "\n")
+    except OSError:
+        return
+
+
+def staff_upload_message(http: int, body: dict[str, Any] | None) -> str:
+    """Sentence a staff member can act on. Technical text stays in the audit log."""
+    body = body or {}
+    if body.get("library_available") is True:
+        return STAFF_SAVED
+    err = str(body.get("error") or "")
+    stage = str(body.get("failed_stage") or "")
+    low = err.lower()
+    if http == 413 or "exceeds" in low or "too large" in low:
+        return STAFF_TOO_LARGE
+    if http == 415 or low.startswith("unsupported") or "magic mismatch" in low:
+        return STAFF_UNSUPPORTED
+    if http == 409 or err == "possible_duplicate" or body.get("duplicate") is True:
+        return STAFF_ALREADY
+    if http == 403 or err == "forbidden":
+        return STAFF_FORBIDDEN
+    if stage == "saving_nas" or "nas verify failed" in low or low.startswith("save failed"):
+        return STAFF_STORAGE
+    if stage == "thumbnail":
+        return STAFF_PREVIEW
+    return STAFF_RETRY
+
+
 def write_jpeg_thumb(src: Path, dest: Path) -> bool:
     """Photo thumb or video poster. Never moves the source file."""
     if not src.is_file():
@@ -605,9 +673,20 @@ def write_jpeg_thumb(src: Path, dest: Path) -> bool:
                 im.save(dest, "JPEG", quality=80)
             return dest.is_file() and dest.stat().st_size > 32
         if ext in VIDEO_EXT:
+            ffmpeg = resolve_ffmpeg()
+            if not ffmpeg:
+                log_upload_fault(
+                    {
+                        "where": "write_jpeg_thumb",
+                        "error": "ffmpeg not found",
+                        "path": os.environ.get("PATH"),
+                        "src_name": src.name,
+                    }
+                )
+                return False
             proc = subprocess.run(
                 [
-                    "ffmpeg",
+                    ffmpeg,
                     "-y",
                     "-ss",
                     "0.4",
@@ -620,11 +699,32 @@ def write_jpeg_thumb(src: Path, dest: Path) -> bool:
                     str(dest),
                 ],
                 capture_output=True,
-                timeout=20,
+                timeout=45,
                 check=False,
             )
-            return proc.returncode == 0 and dest.is_file() and dest.stat().st_size > 32
-    except (OSError, subprocess.TimeoutExpired, Exception):
+            ok = proc.returncode == 0 and dest.is_file() and dest.stat().st_size > 32
+            if not ok:
+                err = (proc.stderr or b"").decode("utf-8", "replace")[-500:]
+                log_upload_fault(
+                    {
+                        "where": "write_jpeg_thumb",
+                        "error": "ffmpeg poster failed",
+                        "returncode": proc.returncode,
+                        "ffmpeg": ffmpeg,
+                        "src_name": src.name,
+                        "stderr_tail": err,
+                    }
+                )
+            return ok
+    except (OSError, subprocess.TimeoutExpired, Exception) as exc:
+        log_upload_fault(
+            {
+                "where": "write_jpeg_thumb",
+                "error": type(exc).__name__,
+                "detail": str(exc)[:300],
+                "src_name": src.name,
+            }
+        )
         return False
     return False
 
@@ -675,6 +775,7 @@ def annotate_upload(body: dict[str, Any], *, media_path: str | Path | None) -> d
     out["lifecycle"] = lifecycle_rows(failed_stage=failed, library_available=library_available)
     out["preview_url"] = f"/api/assets/{asset_id}/preview" if asset_id else None
     out["staff_ready"] = False
+    out["staff_message"] = staff_upload_message(200 if out.get("ok") else 500, out)
     if library_available:
         out["ui_status"] = "COMPLETE"
     elif out.get("ok"):

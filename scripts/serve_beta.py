@@ -7936,24 +7936,65 @@ class BetaHandler(SimpleHTTPRequestHandler):
         try:
             length = int(self.headers.get("Content-Length") or 0)
             if length > MAX_UPLOAD_BYTES:
-                self._send_json(
-                    {"ok": False, "status": "error", "error": f"upload exceeds {MAX_UPLOAD_BYTES} byte limit", "ui_status": "FAILED"},
-                    status=413,
+                self._finish_upload_response(
+                    413,
+                    {
+                        "ok": False,
+                        "status": "error",
+                        "error": f"upload exceeds {MAX_UPLOAD_BYTES} byte limit",
+                        "ui_status": "FAILED",
+                    },
                 )
                 return
             fields = parse_multipart(self.headers, self.rfile)
             result = _smart_upload.handle_smart_upload(
                 fields, subject=subject, serve_mod=sys.modules[__name__], scopes=scopes
             )
-            self._send_json(result["body"], status=int(result["http"]))
+            self._finish_upload_response(int(result["http"]), result["body"])
         except UploadTooLarge as exc:
-            self._send_json({"ok": False, "status": "error", "error": str(exc), "ui_status": "FAILED"}, status=413)
+            self._finish_upload_response(
+                413,
+                {"ok": False, "status": "error", "error": str(exc), "ui_status": "FAILED"},
+                technical=str(exc),
+            )
         except UnsupportedMedia as exc:
-            self._send_json({"ok": False, "status": "error", "error": str(exc), "ui_status": "FAILED"}, status=415)
+            self._finish_upload_response(
+                415,
+                {"ok": False, "status": "error", "error": str(exc), "ui_status": "FAILED"},
+                technical=str(exc),
+            )
         except ValueError as exc:
-            self._send_json({"ok": False, "status": "error", "error": str(exc), "ui_status": "FAILED"}, status=400)
+            self._finish_upload_response(
+                400,
+                {"ok": False, "status": "error", "error": str(exc), "ui_status": "FAILED"},
+                technical=str(exc),
+            )
         except Exception as exc:  # noqa: BLE001
-            self._send_json({"ok": False, "status": "error", "error": str(exc), "ui_status": "FAILED"}, status=500)
+            self._finish_upload_response(
+                500,
+                {"ok": False, "status": "error", "error": "upload_failed", "ui_status": "FAILED"},
+                technical=f"{type(exc).__name__}: {exc}",
+            )
+
+    def _finish_upload_response(self, http: int, body: dict, technical: str | None = None) -> None:
+        """Staff sentence on the body. Exception text goes to the audit log only."""
+        if not isinstance(body, dict):
+            self._send_json(body, status=http)
+            return
+        body["staff_message"] = body.get("staff_message") or _ce_repair.staff_upload_message(http, body)
+        if http >= 400:
+            _ce_repair.log_upload_fault(
+                {
+                    "where": "upload_smart",
+                    "http": http,
+                    "error": body.get("error"),
+                    "failed_stage": body.get("failed_stage"),
+                    "original_filename": body.get("original_filename"),
+                    "brand": body.get("brand"),
+                    "technical": (technical or "")[:500],
+                }
+            )
+        self._send_json(body, status=http)
 
     def _nas_registry_get(self) -> None:
         """Read-only NAS source registry. Owner Integration Health / content crew."""
