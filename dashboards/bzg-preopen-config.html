@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pre-open outlets</title>
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", "Segoe UI", sans-serif; background: #f3f1ec; color: #1c1a16; }
+    main { max-width: 820px; margin: 0 auto; padding: 28px 20px 64px; }
+    h1 { font-size: 1.5rem; margin: 0 0 8px; }
+    .sub, .note { color: #5c574e; line-height: 1.45; }
+    nav a { color: #1c1a16; margin-right: 12px; }
+    .banner { background: #fffdf8; border: 1px solid #ddd6c8; border-radius: 12px; padding: 10px 12px; }
+    details { background: #fffdf8; border: 1px solid #ddd6c8; border-radius: 12px; margin: 8px 0; padding: 0 12px 10px; }
+    details summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+  </style>
+</head>
+<body>
+<main>
+  <p class="sub">WOLF · BZG · Pre-open</p>
+  <h1>Pre-open outlets</h1>
+  <p class="sub">Registry rows and a blank close. No sales. Tiles start closed. staff_ready is false. The restaurant board title is Blu Zone Restaurant.</p>
+  <nav aria-label="This page">
+    <a href="/bzg/outlets">Outlet registry</a>
+    <a href="/bzg/pre-open">Pre-open</a>
+  </nav>
+  <p class="banner" id="banner">Loading the registry…</p>
+  <div id="list">
+    <details><summary>Pool Bar</summary><p class="note">Blank close. Sales not invented.</p></details>
+    <details><summary>Merah</summary><p class="note">Blank close. Sales not invented.</p></details>
+    <details><summary>Rooftop</summary><p class="note">Blank close. Sales not invented.</p></details>
+    <details><summary>Room Service</summary><p class="note">Blank close. Sales not invented.</p></details>
+    <details><summary>Catering</summary><p class="note">Blank close. Sales not invented.</p></details>
+    <details><summary>Blu Zone Restaurant</summary><p class="note">Board title from the standing name. Blank close. Sales not invented.</p></details>
+  </div>
+<script>
+  function line(node, text) {
+    const p = document.createElement("p");
+    p.className = "note";
+    p.textContent = text;
+    node.appendChild(p);
+  }
+  fetch("/api/bzg/pre-open", { headers: { "Accept": "application/json" } })
+    .then((res) => res.json())
+    .then((data) => {
+      const banner = document.getElementById("banner");
+      if (!data || data.ok !== true) {
+        banner.textContent = "The registry did not load.";
+        return;
+      }
+      const title = (data.standing_name || {}).title || "UNKNOWN";
+      banner.textContent = "Restaurant board title " + title + " · sales not invented · staff_ready false";
+      const list = document.getElementById("list");
+      list.replaceChildren();
+      (data.cards || []).forEach((card) => {
+        const details = document.createElement("details");
+        const summary = document.createElement("summary");
+        summary.textContent = (card.ui_title || "UNKNOWN") + " · " + (card.state || "UNKNOWN");
+        details.appendChild(summary);
+        line(details, card.why || "");
+        line(details, "Stored display name: " + (card.stored_display_name || "UNKNOWN") + ". Close rows: " + String(card.close_count) + ". Sales: none.");
+        list.appendChild(details);
+      });
+    })
+    .catch(() => {
+      document.getElementById("banner").textContent = "The registry did not load.";
+    });
+</script>
+</main>
+</body>
+</html>

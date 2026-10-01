@@ -1,0 +1,45 @@
+{
+  "pack": "PACK-09",
+  "title": "Pre-open config",
+  "status": "eng-proved",
+  "proved_at": "2026-10-01T21:22:00+08:00",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "fake_sales": false,
+  "writes": false,
+  "name_resolution": {
+    "state": "PARTIAL",
+    "ui_title": "Blu Zone Restaurant",
+    "stored_display_name": "Rainforest",
+    "brand_config_label": "Rainforest",
+    "board_title_is_rainforest": false,
+    "stored_labels_overwritten": false
+  },
+  "close_template": {
+    "state": "BLANK",
+    "inserted": false,
+    "sales": null,
+    "till": null,
+    "covers": null
+  },
+  "cards": [
+    {"outlet_id": "OU-BZG-RAIN-POOL", "state": "PARTIAL", "ui_title": "Pool Bar", "status": "PRE-OPENING", "close_count": 0, "sales": null},
+    {"outlet_id": "BZG-MERAH", "state": "PARTIAL", "ui_title": "Merah", "status": "PRE-OPENING", "close_count": 0, "sales": null},
+    {"outlet_id": "BZG-ROOF", "state": "PARTIAL", "ui_title": "Rooftop", "status": "PRE-OPENING", "close_count": 0, "sales": null},
+    {"outlet_id": "BZG-RS", "state": "PARTIAL", "ui_title": "Room Service", "status": "PRE-OPENING", "close_count": 0, "sales": null},
+    {"outlet_id": "BZG-CAT", "state": "PARTIAL", "ui_title": "Catering", "status": "PRE-OPENING", "close_count": 0, "sales": null},
+    {"outlet_id": "BZG-RAIN", "state": "PARTIAL", "ui_title": "Blu Zone Restaurant", "stored_display_name": "Rainforest", "status": "PRE-OPENING", "close_count": 0, "sales": null}
+  ],
+  "uma_left_open": "OPEN",
+  "sales_till_covers": "UNKNOWN",
+  "tests": "scripts/tests/test_preopen_config_pack9.py 19 passed, 0 failed",
+  "http": {
+    "GET /api/bzg/pre-open": 200,
+    "GET /bzg/pre-open": 200,
+    "POST /api/bzg/pre-open": 405,
+    "health_8788": 200,
+    "health_8787": 200
+  },
+  "next": "PACK-10 approvals and evidence. Not started."
+}
