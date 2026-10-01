@@ -83,6 +83,7 @@ from core import venue_close as _venue_close
 from core import uma_ops_console as _uma_ops
 from core import amg_sales_desk_ro as _amg_sales_desk_ro
 from core import amg_guest_stay_pack7 as _amg_guest_stay
+from core import uma_recipe_variance_pack8 as _uma_recipe_variance
 from core import content_tick_draft as _content_tick_draft
 from core import owner_cockpit as _owner_cockpit
 from core import uma_real_projection as _uma_real
@@ -2048,6 +2049,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "writes": False}, status=404)
                 return
             self._send_html_shell(page.read_bytes(), rel="amg-guest-stay.html")
+            return
+
+        # PACK-08-RECIPE Uma recipe variance. Read-only. Does not write ESB.
+        if path == "/api/bzg/uma-blu/recipe-variance" or path.startswith("/api/bzg/uma-blu/recipe-variance/"):
+            try:
+                self._send_json(_uma_recipe_variance.load_variance())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "recipe_variance_fail", "detail": str(_e), "staff_ready": False, "esb_write": False}, status=500)
+            return
+        if path in ("/uma/recipe-variance", "/uma/recipe-variance/"):
+            page = DASHBOARDS / "uma-recipe-variance.html"
+            if not page.is_file():
+                self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "esb_write": False}, status=404)
+                return
+            self._send_html_shell(page.read_bytes(), rel="uma-recipe-variance.html")
             return
 
         # PACK-04 Habitat tick → draft or Misa queue. Publish stays off.
@@ -5925,6 +5941,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/amg/guest-stay" or path.startswith("/api/amg/guest-stay/"):
             self._send_json(_amg_guest_stay.refuse_write(), status=405)
+            return
+        if path == "/api/bzg/uma-blu/recipe-variance" or path.startswith("/api/bzg/uma-blu/recipe-variance/"):
+            self._send_json(_uma_recipe_variance.refuse_write(), status=405)
             return
         if path == "/api/owner/cockpit" or path.startswith("/api/owner/cockpit/"):
             self._send_json(_owner_cockpit.refuse_write(), status=405)

@@ -1,0 +1,33 @@
+{
+  "pack": "PACK-08",
+  "title": "Uma recipe variance",
+  "status": "eng-proved",
+  "proved_at": "2026-10-01T21:10:00+08:00",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "esb_write": false,
+  "yield_invented": false,
+  "recipes": {"recipes": 127, "lines": 756, "with_lines": 127},
+  "recipe_compare": 0,
+  "product_mix": {
+    "real": true,
+    "day": "2026-09-30",
+    "branch": "BLZ",
+    "menu_count": 76,
+    "qty_sum": 292
+  },
+  "theoretical": {"state": "PARTIAL", "matched_recipes": 26},
+  "variance": {"state": "UNKNOWN", "amount": null, "qty": null},
+  "material_usage_rows": 160,
+  "material_usage_joined": false,
+  "variance_policies": 0,
+  "pack2_close": {
+    "close_id": "VDC-25a3123a-3e26-43db-8085-10c6f208bbcd",
+    "business_date": "2026-09-30",
+    "state": "DATA_CAPTURED",
+    "finished_count": 50
+  },
+  "tests": "scripts/tests/test_uma_recipe_variance_pack8.py 13 passed, 0 failed",
+  "next": "PACK-09 pre-open config. Not started."
+}

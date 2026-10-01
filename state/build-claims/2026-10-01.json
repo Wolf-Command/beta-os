@@ -24,6 +24,14 @@
       "expect": "25 passed, 0 failed; GET 200; POST 405",
       "by": "PACK-07",
       "at": "2026-10-01T21:05:00+08:00"
+    },
+    {
+      "id": "pack8-recipe-variance-unknown",
+      "claim": "Pack 8 recipe variance tests pass. Product mix for 2026-09-30 is readable and the variance amount stays null. ESB sqlite mtime is unchanged by the test.",
+      "check": "cd /Users/wolfterminal/beta-os && /opt/homebrew/bin/python3 scripts/tests/test_uma_recipe_variance_pack8.py | tail -1; curl -sS --max-time 8 http://127.0.0.1:8788/api/bzg/uma-blu/recipe-variance | python3 -c \"import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get('variance',{}).get('state')=='UNKNOWN' and d.get('variance',{}).get('amount') is None and d.get('staff_ready') is False else 1)\"",
+      "expect": "13 passed, 0 failed; variance UNKNOWN; amount null; staff_ready false",
+      "by": "PACK-08",
+      "at": "2026-10-01T21:10:00+08:00"
     }
   ]
 }
