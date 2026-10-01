@@ -1,0 +1,456 @@
+{
+  "schema": "PEACHES-SAMPLE-VERIFY/v1",
+  "mission": "FORENSIC_WOLF_COMPLETENESS_AUDIT",
+  "agent": "Peaches-light-independent-sample",
+  "as_of_wita": "2026-10-01T19:03:43+08:00",
+  "honesty": {
+    "completeness_claimed": false,
+    "crawl_thousands": false,
+    "sample_only": true,
+    "no_matt_ping": true,
+    "no_exit_report": true
+  },
+  "verdict": "PRIOR_UNDERCOUNT_CONFIRMED",
+  "verdict_reason": "Prior V1-BETA-PARITY-AUDIT audited only 22 surfaces; V1 alone has 55 dashboard HTML files and 23 manifest-registered boards. Surface count and live pulse function density exceed the 22-surface sample.",
+  "samples": {
+    "1_v1_boards": {
+      "html_glob": "~/.openclaw/workspace/wolf-system/dashboards/*.html",
+      "html_count": 55,
+      "html_files": [
+        "admin-access.html",
+        "ads-studio.html",
+        "amanda.html",
+        "amg-voice.html",
+        "atlas.html",
+        "atrium-finance.html",
+        "atrium-inventory.html",
+        "atrium-management.html",
+        "atrium-sales.html",
+        "blu-zone-group.html",
+        "brands-atrium.html",
+        "brands-goss-group.html",
+        "brands-habitat.html",
+        "brands-selong-selo.html",
+        "brands-tropik.html",
+        "brands-uma-blu.html",
+        "brands.html",
+        "bzg-august-2026.html",
+        "bzg-finance.html",
+        "bzg-july-2026.html",
+        "bzg-shareholder-reports.html",
+        "bzg-voice.html",
+        "catalogue.html",
+        "content-atrium.html",
+        "content-brand.html",
+        "content-cycle.html",
+        "content-goss-group.html",
+        "content-habitat.html",
+        "content-selong-selo.html",
+        "content-tropik.html",
+        "content-uma-blu.html",
+        "content.html",
+        "ggv-finance.html",
+        "ggv-intake-invite.html",
+        "ggv-onboarding.html",
+        "ggv-voice.html",
+        "habitat-investment-2026.html",
+        "haikal-desk.html",
+        "haikal.html",
+        "hr.html",
+        "index.html",
+        "kuta-rates.html",
+        "learning.html",
+        "legal.html",
+        "mila.html",
+        "misa.html",
+        "peaches.html",
+        "radar.html",
+        "spartacus.html",
+        "trading.html",
+        "travel.html",
+        "uma-blu-console.html",
+        "uma-blu-recipes.html",
+        "uma-blu.html",
+        "wolf.html"
+      ],
+      "manifest_path": "~/.openclaw/workspace/wolf-system/dashboards/data/manifest.json",
+      "manifest_generated_at": "2026-08-20T17:42:00+08:00",
+      "manifest_registered_count": 23,
+      "manifest_boards": [
+        {
+          "name": "wolf",
+          "title": "Wolf"
+        },
+        {
+          "name": "amanda",
+          "title": "Amanda"
+        },
+        {
+          "name": "mila",
+          "title": "Mila"
+        },
+        {
+          "name": "spartacus",
+          "title": "Spartacus"
+        },
+        {
+          "name": "trading",
+          "title": "Trading"
+        },
+        {
+          "name": "atrium-sales",
+          "title": "Atrium \u2014 Sales"
+        },
+        {
+          "name": "atrium-inventory",
+          "title": "Atrium \u2014 Inventory"
+        },
+        {
+          "name": "hr",
+          "title": "HR"
+        },
+        {
+          "name": "uma-blu",
+          "title": "Uma Blu"
+        },
+        {
+          "name": "uma-blu-recipes",
+          "title": "Uma Blu \u2014 Recipes"
+        },
+        {
+          "name": "atrium-management",
+          "title": "Atrium \u2014 Management"
+        },
+        {
+          "name": "legal",
+          "title": "Legal"
+        },
+        {
+          "name": "content",
+          "title": "Content"
+        },
+        {
+          "name": "content-goss-group",
+          "title": "Content \u2014 Goss Group"
+        },
+        {
+          "name": "content-habitat",
+          "title": "Content \u2014 Habitat"
+        },
+        {
+          "name": "content-uma-blu",
+          "title": "Content \u2014 Uma Blu"
+        },
+        {
+          "name": "content-atrium",
+          "title": "Content \u2014 Atrium"
+        },
+        {
+          "name": "content-selong-selo",
+          "title": "Content \u2014 Selong Selo"
+        },
+        {
+          "name": "content-tropik",
+          "title": "Content \u2014 Tropik"
+        },
+        {
+          "name": "atrium-finance",
+          "title": "Atrium \u2014 Finance"
+        },
+        {
+          "name": "ggv-finance",
+          "title": "GGV Books"
+        },
+        {
+          "name": "travel",
+          "title": "Travel"
+        },
+        {
+          "name": "kuta-rates",
+          "title": "Kuta rates"
+        }
+      ],
+      "named_desks": [
+        "amanda-desk",
+        "mila-desk",
+        "peaches-desk",
+        "trading-desk",
+        "uma-blu-desk",
+        "wolf-desk"
+      ],
+      "wolf_system_top_dirs": [
+        "amanda-desk",
+        "archive",
+        "assets",
+        "atrium",
+        "atrium-finance",
+        "briefs",
+        "config",
+        "content-ideas",
+        "content-library",
+        "content-machine",
+        "dashboards",
+        "data",
+        "docs",
+        "flags",
+        "ggv-finance",
+        "hr-creatives",
+        "hr-reports",
+        "hr-uploads",
+        "logs",
+        "mila-desk",
+        "n8n-templates",
+        "peaches-desk",
+        "profiles",
+        "resolve-studio",
+        "scripts",
+        "state",
+        "trading-desk",
+        "training-centre",
+        "uma-blu",
+        "uma-blu-desk",
+        "usage",
+        "wolf-desk",
+        "xero-setup"
+      ],
+      "note": "HTML count (55) > manifest registered (23)."
+    },
+    "2_beta_boards": {
+      "html_glob": "~/beta-os/dashboards/*.html",
+      "html_count": 158,
+      "sidenav_wave8": {
+        "file": "~/beta-os/dashboards/assets/sidenav.js",
+        "header_quote": "Wave 8: mila/amanda NOT in primary IA; P0 Owner travel+learning + habitat/kuta/voice re-entry.",
+        "retire_comment": "Wave 8 \u2014 retired from primary Boards; soft-redirect handled server-side.",
+        "route_merge_doc": "docs/deliveries/GROK-PLAN-WOLF-ROUTE-MERGE-RETIRE-REDIRECT-2026-09-22.md row 8",
+        "review_quote": "Primary: trading / travel / spartacus / mila / amanda / kuta-rates retired from #wolfnav primary IA.",
+        "personal_ia_kept": [
+          "/owner/trading",
+          "/owner/fitness",
+          "/owner/travel",
+          "/owner/learning"
+        ],
+        "note": "YES \u2014 Wave 8 retires trading/spartacus/travel from primary Boards; Owner PERSONAL PARTIAL routes kept."
+      }
+    },
+    "3_prior_parity_22": {
+      "path_box": "/workspace/state/final-completion/ux-rescue-20260930/V1-BETA-PARITY-AUDIT.md",
+      "path_mac": "~/beta-os/state/final-completion/ux-rescue-20260930/V1-BETA-PARITY-AUDIT.md",
+      "generated": "2026-09-30T21:52:00+08:00",
+      "summary_counts_quoted": {
+        "Surfaces audited": 22,
+        "BETA_BETTER": 5,
+        "BETA_MISSING_FUNCTION": 3,
+        "BETA_MORE_CONFUSING": 2,
+        "PARITY": 5,
+        "V1_BETTER": 5,
+        "V1_OBSOLETE": 2
+      },
+      "undercount_vs_this_sample": "22 surfaces << V1 55 HTML / 23 manifest / Beta 158 HTML"
+    },
+    "4_history_nas_vs_library": {
+      "method": "existing stamps only \u2014 no full NAS walk",
+      "nas_media_01_maxdepth3": 38091,
+      "nas_editable_00_3": 843,
+      "nas_stock_02_1": 207,
+      "library_db": {
+        "assets": 18,
+        "content_cards": 153,
+        "content_plans": 9,
+        "brands": 1,
+        "content_versions": 0
+      },
+      "honesty": "Library sqlite \u2260 NAS Media 38091; full_tree_indexed=false",
+      "as_of_stamp_wita": "2026-10-01T08:02:44+08:00"
+    },
+    "5_live_http": {
+      "8787": {
+        "url": "http://127.0.0.1:8787/",
+        "http_status": 200
+      },
+      "8788": {
+        "url": "http://127.0.0.1:8788/",
+        "http_status": 403,
+        "note": "CF Access 403 expected"
+      }
+    },
+    "6_original_requirements_reconstruction": {
+      "path_asked": "~/beta-os/ORIGINAL-REQUIREMENTS-RECONSTRUCTION",
+      "file_count_at_asked_path": 0,
+      "sibling_with_content": "~/beta-os/state/final-completion/ORIGINAL-REQUIREMENTS-RECONSTRUCTION",
+      "sibling_file_count": 7,
+      "sibling_files": [
+        "01-INTERVIEW-LEDGER-LOCKED-REQUIREMENTS.json",
+        "02-MASTER-BUILD-BACKLOG.json",
+        "03-MASTER-SPEC-FULL.md",
+        "03-MASTER-SPEC-SECTION-INDEX.json",
+        "04-GAP-REGISTER-CLASS-SEED.json",
+        "05-DRIVE-ULTIMATE-MASTER-PLAN-CITATION.json",
+        "requirements.jsonl"
+      ]
+    },
+    "7_v1_functions_beta_owner_home_lacks_or_shells": {
+      "master_status_tile_count": 14,
+      "master_status_tiles": [
+        {
+          "key": "money",
+          "lab": "Money",
+          "val": "Restricted",
+          "note": "secure /api/money"
+        },
+        {
+          "key": "brief",
+          "lab": "Command Brief",
+          "val": "Ready",
+          "note": "today evening brief"
+        },
+        {
+          "key": "atrium",
+          "lab": "Atrium",
+          "val": "1.75% occ",
+          "href": "atrium-sales.html"
+        },
+        {
+          "key": "kutarates",
+          "lab": "Kuta rates",
+          "val": "tonight competitor intel",
+          "href": "kuta-rates.html"
+        },
+        {
+          "key": "bzg",
+          "lab": "BZG Venues",
+          "val": "IDR 15,140,000 \u00b7 87 covers",
+          "href": "uma-blu.html"
+        },
+        {
+          "key": "content",
+          "lab": "Content",
+          "val": "Restricted",
+          "href": "atlas.html"
+        },
+        {
+          "key": "leads",
+          "lab": "Leads",
+          "val": "2 new 24h"
+        },
+        {
+          "key": "hr",
+          "lab": "HR",
+          "val": "Restricted",
+          "href": "hr.html"
+        },
+        {
+          "key": "purchasing",
+          "lab": "Purchasing",
+          "val": "2 open PRs \u00b7 103 suppliers"
+        },
+        {
+          "key": "alchemist",
+          "lab": "Alchemist",
+          "val": "owe/paid/tin/broken"
+        },
+        {
+          "key": "system",
+          "lab": "System",
+          "val": "14/14 green"
+        },
+        {
+          "key": "backup",
+          "lab": "Backup B2",
+          "val": "5319.43GB (42.6%)"
+        },
+        {
+          "key": "r2gap",
+          "lab": "R2 backup gap",
+          "val": "0 absent"
+        },
+        {
+          "key": "spartacus",
+          "lab": "Spartacus 75",
+          "val": "Day 1/75"
+        }
+      ],
+      "functions": [
+        {
+          "id": 1,
+          "v1": "Live multi-tile Owner pulse from master.status.json (14 tiles)",
+          "evidence": "dashboards/data/master.status.json @ 2026-10-01T18:44:57+08:00",
+          "beta": "owner-empire-pack pulse-strip; local :8788 CF 403 without JWT; capability fragmented"
+        },
+        {
+          "id": 2,
+          "v1": "Atrium occupancy live tile (1.75% occ \u2192 atrium-sales.html)",
+          "evidence": "master.status.json tiles[atrium]",
+          "beta": "AMG prove/ops sprawl; no single unauth Owner Home occ glance"
+        },
+        {
+          "id": 3,
+          "v1": "Kuta rates tonight competitor intel tile + board",
+          "evidence": "master.status.json tiles[kutarates] + kuta-rates.html",
+          "beta": "kuta-rates-1 / competitor-rates prove; Wave 8 retired primary IA"
+        },
+        {
+          "id": 4,
+          "v1": "BZG last-night revenue + covers pulse",
+          "evidence": "master.status.json tiles[bzg] IDR 15.14M / 87 covers",
+          "beta": "BZG pages exist; not same one-glance Owner pulse"
+        },
+        {
+          "id": 5,
+          "v1": "Leads 24h by brand on Owner Home",
+          "evidence": "master.status.json tiles[leads]",
+          "beta": "CRM/lead prove packs \u2260 Home live tile"
+        },
+        {
+          "id": 6,
+          "v1": "Purchasing open PRs + supplier count tile",
+          "evidence": "master.status.json tiles[purchasing]",
+          "beta": "No matching Owner Home purchasing pulse in empire pack"
+        },
+        {
+          "id": 7,
+          "v1": "Alchemist owe/paid/tin/broken live numbers",
+          "evidence": "master.status.json tiles[alchemist] + /api/alchemist",
+          "beta": "Not present as Owner Home live tile"
+        },
+        {
+          "id": 8,
+          "v1": "Backup B2 capacity + R2 backup gap tiles",
+          "evidence": "master.status.json tiles[backup]+[r2gap]",
+          "beta": "backup-health-1 / restore-drill prove \u2014 not Home dual tiles"
+        },
+        {
+          "id": 9,
+          "v1": "Spartacus 75 day counter + Open Spartacus from Diet/workouts",
+          "evidence": "master.status.json tiles[spartacus]; wolf.html \u2192 spartacus.html",
+          "beta": "owner-fitness-1.html migration_state PARTIAL"
+        },
+        {
+          "id": 10,
+          "v1": "Talk to Peaches / Tell Peaches task comments on wolf desk",
+          "evidence": "wolf.html peaches form + /api/peaches-desk + /api/wolf/comment",
+          "beta": "No interactive Peaches desk thread on Beta Owner Home"
+        },
+        {
+          "id": 11,
+          "v1": "Owner desk rails: Asks / Needs you / Read-View / Shareholders",
+          "evidence": "wolf.html tile ids asks, needs-you, read-view, share, body",
+          "beta": "owner-needs-you-1 separate; not multi-rail cockpit"
+        },
+        {
+          "id": 12,
+          "v1": "Trading desk real workspace vs PARTIAL paper RO",
+          "evidence": "V1 trading.html; Beta owner-trading-1.html PARTIAL",
+          "beta": "Wave 8 retired primary; /owner/trading PARTIAL shell"
+        }
+      ],
+      "count": 12
+    }
+  },
+  "paths_written": {
+    "mac_md": "/Users/wolfterminal/beta-os/state/final-completion/forensic-completeness-20261001/PEACHES-SAMPLE-VERIFY.md",
+    "mac_json": "/Users/wolfterminal/beta-os/state/final-completion/forensic-completeness-20261001/PEACHES-SAMPLE-VERIFY.json",
+    "box_md": "/workspace/state/final-completion/forensic-completeness-20261001/PEACHES-SAMPLE-VERIFY.md",
+    "box_json": "/workspace/state/final-completion/forensic-completeness-20261001/PEACHES-SAMPLE-VERIFY.json"
+  }
+}
