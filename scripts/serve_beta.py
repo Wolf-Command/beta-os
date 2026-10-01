@@ -94,6 +94,7 @@ from core import content_learn_wave2_05 as _content_learn
 from core import monthend_shareholder_wave2_06 as _monthend
 from core import sale_readiness_wave2_07 as _sale_readiness
 from core import content_tick_draft as _content_tick_draft
+from core import atrium_ops_security_evidence_1 as _sec_evidence
 from core import owner_cockpit as _owner_cockpit
 from core import uma_real_projection as _uma_real
 from core import uma_devi_p0 as _uma_p0
@@ -2223,6 +2224,49 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "publish": "OFF"}, status=404)
                 return
             self._send_html_shell(page.read_bytes(), rel="content-tick-draft.html")
+            return
+
+        # ATRIUM-OPS-SECURITY-EVIDENCE-1 — security/evidence workflow (Beta writes).
+        if path == "/api/msc/security-evidence" or path.startswith("/api/msc/security-evidence/"):
+            try:
+                self._send_json(_sec_evidence.handle_get(path))
+            except Exception as _e:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "security_evidence_fail",
+                        "detail": str(_e),
+                        "staff_ready": False,
+                        "cctv_stream": False,
+                        "prod_mutate": False,
+                    },
+                    status=500,
+                )
+            return
+        if path in (
+            "/msc/security-evidence",
+            "/msc/security-evidence/",
+            "/msc-security-evidence",
+            "/msc-security-evidence/",
+            "/msc-security-evidence.html",
+            "/atrium-ops-security-evidence-1",
+            "/atrium-ops-security-evidence-1/",
+            "/atrium-ops-security-evidence-1.html",
+            "/dashboards/atrium-ops-security-evidence-1.html",
+        ):
+            page = DASHBOARDS / "atrium-ops-security-evidence-1.html"
+            if not page.is_file():
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "not_found",
+                        "staff_ready": False,
+                        "cctv_stream": False,
+                    },
+                    status=404,
+                )
+                return
+            self._send_html_shell(page.read_bytes(), rel="atrium-ops-security-evidence-1.html")
             return
 
         # PACK-01 Owner cockpit. Read-only JSON and a read board.
@@ -6127,6 +6171,36 @@ class BetaHandler(SimpleHTTPRequestHandler):
             except Exception:
                 body = {}
             payload, status = _content_tick_draft.handle_post(path, body if isinstance(body, dict) else {})
+            self._send_json(payload, status=status)
+            return
+        if path == "/api/msc/security-evidence" or path.startswith("/api/msc/security-evidence/"):
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length) if length else b""
+            try:
+                body = json.loads(raw.decode() or "{}")
+            except Exception:
+                body = {}
+            actor = "PERS-MATT"
+            try:
+                identity = self._resolve_identity(
+                    body if isinstance(body, dict) else {},
+                    emit_audit=False,
+                )
+                if identity.get("ok") and identity.get("person_id"):
+                    actor = str(identity.get("person_id"))
+                else:
+                    hdr = (self.headers.get("X-Wolf-Subject") or "").strip()
+                    if hdr:
+                        actor = hdr
+            except Exception:
+                hdr = (self.headers.get("X-Wolf-Subject") or "").strip()
+                if hdr:
+                    actor = hdr
+            payload, status = _sec_evidence.handle_post(
+                path,
+                body if isinstance(body, dict) else {},
+                actor=actor,
+            )
             self._send_json(payload, status=status)
             return
         if path == "/api/dashboard-truth" or path.startswith("/api/dashboard-truth/"):

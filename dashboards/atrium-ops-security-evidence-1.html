@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wolf · Security / evidence desk</title>
+<style>
+  :root {
+    --bg: #101418;
+    --bg2: #171d23;
+    --line: #2c3842;
+    --text: #eef2f5;
+    --muted: #8b9aa6;
+    --accent: #c4a574;
+    --warn: #e0b15a;
+    --ok: #7d9b76;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background:
+      radial-gradient(ellipse 90% 60% at 0% -10%, #243039 0%, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 20px 16px 72px; }
+  h1 { font-family: var(--display); font-weight: 500; font-size: 30px; margin: 0 0 6px; }
+  h2 { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 24px 0 8px; }
+  .lede { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.92rem; }
+  .banner {
+    border: 1px solid rgba(224,177,90,0.45);
+    background: var(--bg2);
+    border-left: 3px solid var(--warn);
+    padding: 12px 14px;
+    margin: 0 0 14px;
+    font-size: 0.88rem;
+    color: var(--warn);
+  }
+  .grid { display: grid; gap: 8px; }
+  .card {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    padding: 12px 14px;
+  }
+  .card.active { border-color: var(--accent); }
+  .k { color: var(--muted); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .v { font-family: var(--display); font-size: 20px; margin: 4px 0; }
+  .note { color: var(--muted); font-size: 0.84rem; line-height: 1.4; }
+  label { display: block; font-size: 0.78rem; color: var(--muted); margin: 8px 0 4px; }
+  input, select, textarea, button { font: inherit; }
+  input, select, textarea {
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--line);
+    padding: 8px 10px;
+    border-radius: 6px;
+  }
+  textarea { min-height: 64px; resize: vertical; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  button {
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+  }
+  button.primary { background: #243039; border-color: var(--accent); color: var(--accent); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  #detail { white-space: pre-wrap; font-size: 0.78rem; color: var(--muted); margin-top: 12px; }
+  .pill { display: inline-block; font-size: 0.72rem; color: var(--ok); border: 1px solid #3a4a3a; padding: 2px 6px; margin-right: 4px; }
+</style>
+</head>
+<body data-wolf-page-type="DASHBOARD" data-wolf-org="MSC">
+<div class="wrap">
+  <p class="note">WOLF · MSC / Atrium · Security evidence</p>
+  <h1>Security / evidence desk</h1>
+  <p class="lede">
+    Operational workflow: incident → time/location → people/asset → evidence →
+    optional CCTV timestamp/camera ref → responsible → severity/escalation →
+    action → follow-up → closure → immutable audit. Not a CCTV viewer.
+    CCTV stream is EXTERNAL / UNAVAILABLE. staff_ready stays false.
+  </p>
+  <div class="banner" id="banner">Loading security evidence desk…</div>
+
+  <h2>Open the job</h2>
+  <div class="card">
+    <div class="row">
+      <div style="flex:1;min-width:140px">
+        <label for="business">Business</label>
+        <select id="business">
+          <option value="AMG">AMG</option>
+          <option value="BZG">BZG</option>
+          <option value="GGV">GGV</option>
+          <option value="MSC">MSC</option>
+        </select>
+      </div>
+      <div style="flex:2;min-width:180px">
+        <label for="venue">Venue / location</label>
+        <input id="venue" placeholder="Atrium lobby / Uma Blu bar / …" />
+      </div>
+    </div>
+    <div class="row">
+      <div style="flex:1;min-width:140px">
+        <label for="category">Category</label>
+        <select id="category"></select>
+      </div>
+      <div style="flex:1;min-width:140px">
+        <label for="severity">Severity</label>
+        <select id="severity">
+          <option value="near-miss">near-miss</option>
+          <option value="incident" selected>incident</option>
+          <option value="critical">critical</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:140px">
+        <label for="reported_by">Reported by</label>
+        <input id="reported_by" placeholder="name or seat" />
+      </div>
+    </div>
+    <label for="details">What happened</label>
+    <textarea id="details" placeholder="Facts only. Time, place, what was seen."></textarea>
+    <div class="row">
+      <div style="flex:1;min-width:160px">
+        <label for="people">People involved</label>
+        <input id="people" placeholder="comma-separated" />
+      </div>
+      <div style="flex:1;min-width:160px">
+        <label for="asset_ref">Asset / cash point</label>
+        <input id="asset_ref" placeholder="till / door / room …" />
+      </div>
+      <div style="flex:1;min-width:160px">
+        <label for="responsible">Responsible person</label>
+        <input id="responsible" placeholder="who owns follow-up" />
+      </div>
+    </div>
+    <div class="row">
+      <div style="flex:1;min-width:160px">
+        <label for="cctv_ts">CCTV timestamp (text ref)</label>
+        <input id="cctv_ts" placeholder="2026-10-02T14:22+08:00 — not a stream" />
+      </div>
+      <div style="flex:1;min-width:160px">
+        <label for="cctv_cam">CCTV camera ref (text)</label>
+        <input id="cctv_cam" placeholder="CAM label if known — no invent" />
+      </div>
+    </div>
+    <div class="row">
+      <button type="button" class="primary" id="btn-create">Create incident</button>
+    </div>
+  </div>
+
+  <h2>Incidents</h2>
+  <div class="grid" id="list">
+    <article class="card"><div class="k">Incidents</div><div class="v">…</div><p class="note">Loading…</p></article>
+  </div>
+
+  <h2>Work the selected incident</h2>
+  <div class="card">
+    <p class="note" id="picked">No incident selected.</p>
+    <label for="ev_kind">Evidence kind</label>
+    <select id="ev_kind"></select>
+    <label for="ev_ref">Evidence reference</label>
+    <input id="ev_ref" placeholder="photo path / doc id / cash count ref / CCTV timestamp text" />
+    <label for="ev_note">Evidence note</label>
+    <textarea id="ev_note" placeholder="What this evidence shows"></textarea>
+    <label for="action_text">Action taken</label>
+    <textarea id="action_text" placeholder="What was done; who was told"></textarea>
+    <label for="follow_up">Follow-up</label>
+    <input id="follow_up" placeholder="next check / preventability note" />
+    <label for="closure">Closure note</label>
+    <input id="closure" placeholder="required to close" />
+    <div class="row">
+      <button type="button" id="btn-evidence">Add evidence</button>
+      <button type="button" id="btn-action">Record action</button>
+      <button type="button" id="btn-escalate">Escalate</button>
+      <button type="button" id="btn-close">Close</button>
+    </div>
+    <p class="note" style="margin-top:10px">
+      CCTV stream endpoint is refused. Evidence and audit rows are append-only.
+    </p>
+  </div>
+  <div id="detail"></div>
+</div>
+<script>
+(function () {
+  var API = "/api/msc/security-evidence";
+  var selected = "";
+  var meta = { categories: [], evidence_kinds: [] };
+
+  function show(obj) {
+    document.getElementById("detail").textContent = JSON.stringify(obj, null, 2);
+  }
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function fillSelect(id, values, preferred) {
+    var el = document.getElementById(id);
+    el.innerHTML = "";
+    (values || []).forEach(function (v) {
+      var opt = document.createElement("option");
+      opt.value = v;
+      opt.textContent = v;
+      if (v === preferred) opt.selected = true;
+      el.appendChild(opt);
+    });
+  }
+  function paintList(data) {
+    var banner = document.getElementById("banner");
+    var counts = data.status_counts || {};
+    banner.textContent =
+      "Register " + (data.register_state || "?") +
+      " · incidents " + (data.count || 0) +
+      " · open-ish " + (data.open_workflow_count || 0) +
+      " · evidence " + (data.evidence_total || 0) +
+      " · audit " + (data.audit_total || 0) +
+      " · CCTV stream " + (data.cctv_stream_status || "EXTERNAL_UNAVAILABLE") +
+      " · staff_ready false · not HUMAN_PROVEN";
+    if (data.v1_seed && data.v1_seed.imported != null) {
+      banner.textContent +=
+        " · V1 seed imported " + data.v1_seed.imported +
+        " skipped " + data.v1_seed.skipped +
+        (data.v1_seed.v1_mtime_unchanged ? " (V1 mtime unchanged)" : "");
+    }
+    fillSelect("category", data.categories || meta.categories, "security");
+    fillSelect("ev_kind", data.evidence_kinds || meta.evidence_kinds, "note");
+    var list = document.getElementById("list");
+    var rows = data.incidents || [];
+    if (!rows.length) {
+      list.innerHTML = '<article class="card"><div class="k">Incidents</div><div class="v">EMPTY</div><p class="note">No incidents yet. Create one above. Empty is not a CCTV stream.</p></article>';
+      return;
+    }
+    list.innerHTML = "";
+    rows.forEach(function (inc) {
+      var art = document.createElement("article");
+      art.className = "card" + (inc.incident_id === selected ? " active" : "");
+      art.innerHTML =
+        '<div class="k">' + esc(inc.business || "—") + " · " + esc(inc.venue || "") + "</div>" +
+        '<div class="v">' + esc(inc.status) + " · " + esc(inc.severity) + "</div>" +
+        '<p class="note">' + esc(inc.category) + " · " + esc(inc.details) +
+        (inc.provenance ? ' · <span class="pill">' + esc(inc.provenance) + "</span>" : "") +
+        "</p>";
+      art.addEventListener("click", function () {
+        selected = inc.incident_id;
+        document.getElementById("picked").textContent =
+          inc.incident_id + " · " + (inc.venue || "") + " · " + (inc.status || "");
+        loadDetail(inc.incident_id);
+        paintList(data);
+      });
+      list.appendChild(art);
+    });
+  }
+  function reload() {
+    return fetch(API, { headers: { Accept: "application/json" } })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        meta.categories = data.categories || [];
+        meta.evidence_kinds = data.evidence_kinds || [];
+        paintList(data);
+        return data;
+      })
+      .catch(function (err) {
+        document.getElementById("banner").textContent = String(err);
+      });
+  }
+  function loadDetail(id) {
+    fetch(API + "/" + encodeURIComponent(id), { headers: { Accept: "application/json" } })
+      .then(function (r) { return r.json(); })
+      .then(show)
+      .catch(function (err) { show(String(err)); });
+  }
+  function post(path, payload) {
+    return fetch(API + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(payload || {})
+    }).then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); });
+  }
+  document.getElementById("btn-create").addEventListener("click", function () {
+    var people = document.getElementById("people").value.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+    post("", {
+      business: document.getElementById("business").value,
+      venue: document.getElementById("venue").value,
+      category: document.getElementById("category").value,
+      severity: document.getElementById("severity").value,
+      reported_by: document.getElementById("reported_by").value || "desk",
+      details: document.getElementById("details").value,
+      people_involved: people,
+      asset_ref: document.getElementById("asset_ref").value,
+      responsible_person: document.getElementById("responsible").value,
+      cctv_timestamp: document.getElementById("cctv_ts").value,
+      cctv_camera_ref: document.getElementById("cctv_cam").value
+    }).then(function (res) {
+      show(res);
+      if (res.body && res.body.incident) {
+        selected = res.body.incident.incident_id;
+        document.getElementById("picked").textContent = selected;
+      }
+      return reload();
+    });
+  });
+  function needSelected() {
+    if (!selected) { show({ ok: false, error: "select an incident" }); return false; }
+    return true;
+  }
+  document.getElementById("btn-evidence").addEventListener("click", function () {
+    if (!needSelected()) return;
+    post("/" + encodeURIComponent(selected) + "/evidence", {
+      kind: document.getElementById("ev_kind").value,
+      ref_text: document.getElementById("ev_ref").value,
+      note: document.getElementById("ev_note").value,
+      cctv_timestamp: document.getElementById("cctv_ts").value,
+      cctv_camera_ref: document.getElementById("cctv_cam").value
+    }).then(function (res) { show(res); return reload(); });
+  });
+  document.getElementById("btn-action").addEventListener("click", function () {
+    if (!needSelected()) return;
+    post("/" + encodeURIComponent(selected) + "/action", {
+      actions_taken: document.getElementById("action_text").value,
+      follow_up: document.getElementById("follow_up").value,
+      responsible_person: document.getElementById("responsible").value
+    }).then(function (res) { show(res); return reload(); });
+  });
+  document.getElementById("btn-escalate").addEventListener("click", function () {
+    if (!needSelected()) return;
+    post("/" + encodeURIComponent(selected) + "/escalate", {
+      reason: document.getElementById("ev_note").value || "escalated from desk"
+    }).then(function (res) { show(res); return reload(); });
+  });
+  document.getElementById("btn-close").addEventListener("click", function () {
+    if (!needSelected()) return;
+    post("/" + encodeURIComponent(selected) + "/close", {
+      closure_note: document.getElementById("closure").value
+    }).then(function (res) { show(res); return reload(); });
+  });
+  reload();
+})();
+</script>
+</body>
+</html>

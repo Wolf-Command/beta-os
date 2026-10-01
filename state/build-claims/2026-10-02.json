@@ -1,0 +1,11 @@
+[
+  {
+    "id": "atrium-ops-security-evidence-1-20261002",
+    "claim": "Beta :8788 GET /api/msc/security-evidence returns ok with register_state PARTIAL, cctv_stream false, staff_ready false",
+    "check": "curl -s http://127.0.0.1:8788/api/msc/security-evidence | python3 -c \"import sys,json; d=json.load(sys.stdin); assert d.get('ok') is True and d.get('register_state')=='PARTIAL' and d.get('cctv_stream') is False and d.get('staff_ready') is False\"",
+    "expect": "exit 0",
+    "by": "cursor-local",
+    "pack": "ATRIUM-OPS-SECURITY-EVIDENCE-1",
+    "created_at": "2026-10-02T06:52:14+08:00"
+  }
+]

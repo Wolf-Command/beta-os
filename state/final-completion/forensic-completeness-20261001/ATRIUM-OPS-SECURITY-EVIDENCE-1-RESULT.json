@@ -1,0 +1,49 @@
+{
+  "pack": "ATRIUM-OPS-SECURITY-EVIDENCE-1",
+  "title": "Security / CCTV evidence workflow (Beta)",
+  "proved_at": "2026-10-02",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_commissioned": false,
+  "register_id": "need.security",
+  "register_state": "PARTIAL",
+  "cctv_stream": false,
+  "cctv_stream_status": "EXTERNAL_UNAVAILABLE",
+  "cctv_inventory_invented": false,
+  "footage_invented": false,
+  "prod_mutate": false,
+  "decision": "2026-10-02 PICK ATRIUM-OPS-SECURITY-EVIDENCE-1",
+  "owner_order": "ATRIUM-OPS-FOUR-20261002",
+  "db": "state/security-evidence/security_evidence.sqlite",
+  "v1_seed": {
+    "path": "/Users/wolfterminal/.openclaw/workspace/wolf-system/state/incidents.db",
+    "open_mode": "ro",
+    "imported": 1,
+    "provenance": "v1:incidents.db#id=1",
+    "mtime_unchanged": true
+  },
+  "live_incident": {
+    "incident_id": "SEC-3BA1CE4F0733",
+    "chain": ["create", "evidence", "escalate", "close"],
+    "final_status": "closed"
+  },
+  "http": {
+    "GET /api/msc/security-evidence": 200,
+    "GET /msc/security-evidence": 200,
+    "POST create": 200,
+    "POST evidence": 200,
+    "POST escalate": 200,
+    "POST close": 200,
+    "POST stream": 405,
+    "GET :8788 /api/health": 200,
+    "GET :8787 /api/health": 200
+  },
+  "tests": "scripts/tests/test_atrium_ops_security_evidence_1.py 43 passed, 0 failed",
+  "surfaces": {
+    "module": "scripts/core/atrium_ops_security_evidence_1.py",
+    "dashboard": "dashboards/atrium-ops-security-evidence-1.html",
+    "api": "/api/msc/security-evidence",
+    "page": "/msc/security-evidence"
+  },
+  "next": "Human commission later. Do not claim staff_ready. Maintenance / events packs remain separate."
+}
