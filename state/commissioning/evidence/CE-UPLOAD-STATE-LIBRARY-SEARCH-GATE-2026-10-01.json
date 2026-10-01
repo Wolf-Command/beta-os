@@ -76,6 +76,7 @@
   "prior_e1_e8": "test_content_engine_upload_14fail_20261001.py --live 33 pass / 0 fail",
   "prior_haikal_repair": "test_content_engine_haikal_fail_repair.py 72 pass / 0 fail",
   "ffmpeg_commit_kept": "e0896ae",
+  "commit": "9df39108a63ca1e365ee5e2a859341a4fab62fd0",
   "authenticated_browser_upload": "NOT_REPLAYED",
   "unsigned_upload": "403 missing_auth"
 }

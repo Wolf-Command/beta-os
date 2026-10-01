@@ -6,6 +6,7 @@ staff_ready: false
 Haikal retest: HOLD until Peaches verifies this pack
 Prod :8787: not touched (pid 15975 still listening)
 Prior ffmpeg commit kept: `e0896ae`
+This pack commit: `9df39108a63ca1e365ee5e2a859341a4fab62fd0` on `build/wolf-command-rebuild`. No remote is configured, so it was not pushed.
 
 ## Root causes fixed
 
