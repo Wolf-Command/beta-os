@@ -1,0 +1,49 @@
+{
+  "pack": "WAVE2-02",
+  "title": "Housekeeping and room status",
+  "status": "eng-proved",
+  "proved_at": "2026-10-01T21:48:00+08:00",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "writes": false,
+  "bookings_enabled": false,
+  "state": "UNAVAILABLE",
+  "room_status": {
+    "clean": null,
+    "dirty": null,
+    "inspected": null,
+    "out_of_order": null,
+    "derived_from_occupancy": false,
+    "state": "UNKNOWN"
+  },
+  "inventory_not_status": {
+    "display": "89% · 13 vacant / 114 rooms",
+    "vacant": 13,
+    "rooms_total": 114,
+    "written_at": "2026-10-01T07:16:15+08:00",
+    "source": "Yanolja Inventory+RoomInfo",
+    "used_as_housekeeping": false
+  },
+  "inhouse": {
+    "state": "UNKNOWN",
+    "error_codes": ["502", "Request Type is missing"],
+    "row_count": null
+  },
+  "probes": {
+    "file": "state/yanolja/guest-depth-probe-20261001c.json",
+    "probed_at": "2026-10-01T07:31:35+08:00",
+    "http": 404,
+    "path_count": 6,
+    "has_roomlist": false
+  },
+  "tests": "scripts/tests/test_amg_housekeeping_wave2_02.py 14 passed, 0 failed",
+  "http": {
+    "GET /api/amg/housekeeping": 200,
+    "GET /amg/housekeeping": 200,
+    "POST /api/amg/housekeeping": 405,
+    "health_8788": 200,
+    "health_8787": 200
+  },
+  "next": "WAVE2-03 CRM identity (need.crm.identity). Not started."
+}

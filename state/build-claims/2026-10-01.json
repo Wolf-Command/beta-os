@@ -56,6 +56,14 @@
       "expect": "16 passed, 0 failed; FAIL_CLOSED; evidence null; cash_count 0; limits 0; staff_ready false",
       "by": "WAVE2-01",
       "at": "2026-10-01T21:40:00+08:00"
+    },
+    {
+      "id": "wave2-02-housekeeping-unavailable",
+      "claim": "Wave 2.02 housekeeping tests pass. Clean, dirty, and inspected stay null. Vacant rooms are not used as a status. Bookings stays disabled. staff_ready stays false.",
+      "check": "cd /Users/wolfterminal/beta-os && /opt/homebrew/bin/python3 scripts/tests/test_amg_housekeeping_wave2_02.py | tail -1; curl -sS --max-time 8 http://127.0.0.1:8788/api/amg/housekeeping | python3 -c \"import json,sys; d=json.load(sys.stdin); s=d.get('room_status') or {}; sys.exit(0 if d.get('state')=='UNAVAILABLE' and s.get('clean') is None and s.get('dirty') is None and s.get('derived_from_occupancy') is False and d.get('bookings_enabled') is False and d.get('staff_ready') is False else 1)\"",
+      "expect": "14 passed, 0 failed; UNAVAILABLE; status null; bookings off; staff_ready false",
+      "by": "WAVE2-02",
+      "at": "2026-10-01T21:48:00+08:00"
     }
   ]
 }

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Housekeeping and room status</title>
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", "Segoe UI", sans-serif; background: #f3f1ec; color: #1c1a16; }
+    main { max-width: 820px; margin: 0 auto; padding: 28px 20px 64px; }
+    h1 { font-size: 1.5rem; margin: 0 0 8px; }
+    .sub, .note { color: #5c574e; line-height: 1.45; }
+    nav a { color: #1c1a16; margin-right: 12px; }
+    .banner { background: #fffdf8; border: 1px solid #ddd6c8; border-radius: 12px; padding: 10px 12px; }
+    details { background: #fffdf8; border: 1px solid #ddd6c8; border-radius: 12px; margin: 8px 0; padding: 0 12px 10px; }
+    details summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+  </style>
+</head>
+<body>
+<main>
+  <p class="sub">WOLF · Atrium · Rooms</p>
+  <h1>Housekeeping and room status</h1>
+  <p class="sub">Clean, dirty, and inspected are unknown. Vacant rooms are not a status. Tiles start closed. staff_ready is false. Bookings stays off.</p>
+  <nav aria-label="This page">
+    <a href="/amg/housekeeping">Room status</a>
+    <a href="/amg/guest-stay">Guest stay</a>
+  </nav>
+  <p class="banner" id="banner">Loading the room read…</p>
+  <div id="list">
+    <details><summary>Room status</summary><p class="note">No clean, dirty, or inspected count is stored.</p></details>
+    <details><summary>Inventory is not status</summary><p class="note">Vacant versus rooms stays on its own card.</p></details>
+    <details><summary>Probed paths</summary><p class="note">A missing room list is not zero rooms.</p></details>
+    <details><summary>Bookings</summary><p class="note">Bookings stays denied.</p></details>
+  </div>
+<script>
+  function line(node, text) {
+    const p = document.createElement("p");
+    p.className = "note";
+    p.textContent = text;
+    node.appendChild(p);
+  }
+  fetch("/api/amg/housekeeping", { headers: { "Accept": "application/json" } })
+    .then((res) => res.json())
+    .then((data) => {
+      const banner = document.getElementById("banner");
+      if (!data || data.ok !== true) {
+        banner.textContent = "The room read did not load.";
+        return;
+      }
+      banner.textContent = (data.state || "UNKNOWN") + " · status unknown · staff_ready false";
+      const list = document.getElementById("list");
+      list.replaceChildren();
+      const status = data.room_status || {};
+      const inv = data.inventory_not_status || {};
+      const inn = data.inhouse || {};
+      const cards = [
+        ["Room status", "Clean " + String(status.clean) + ". Dirty " + String(status.dirty) + ". Inspected " + String(status.inspected) + "."],
+        ["Inventory is not status", (inv.display || "UNKNOWN") + ". Used as housekeeping: " + String(inv.used_as_housekeeping) + "."],
+        ["Probed paths", (data.probes || {}).why || ""],
+        ["In-house", inn.why || ""],
+        ["Bookings", (data.bookings || {}).why || ""]
+      ];
+      cards.forEach((pair) => {
+        const details = document.createElement("details");
+        const summary = document.createElement("summary");
+        summary.textContent = pair[0];
+        details.appendChild(summary);
+        line(details, pair[1]);
+        list.appendChild(details);
+      });
+    })
+    .catch(() => {
+      document.getElementById("banner").textContent = "The room read did not load.";
+    });
+</script>
+</main>
+</body>
+</html>
