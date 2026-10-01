@@ -1,0 +1,48 @@
+{
+  "pack": "WAVE2-01",
+  "title": "Uma declared-cash evidence",
+  "status": "eng-proved",
+  "proved_at": "2026-10-01T21:40:00+08:00",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "writes": false,
+  "till_invented": false,
+  "attached": false,
+  "state": "FAIL_CLOSED",
+  "count_state": "UNAVAILABLE",
+  "night_close": {
+    "close_id": "VDC-25a3123a-3e26-43db-8085-10c6f208bbcd",
+    "business_date": "2026-09-30",
+    "state": "DATA_CAPTURED",
+    "declared_cash_amount": null,
+    "declared_cash_evidence_id": null
+  },
+  "today_close": {
+    "close_id": "VDC-3353351f-3234-4f7d-acf0-a63e0e176114",
+    "state": "OPEN",
+    "declared_cash_evidence_id": null
+  },
+  "cash_count": {"source": "alchemist.db cash_count", "count": 0},
+  "esb_not_till": {
+    "cash_from_payments": 2610000,
+    "label": "ESB_CASH_FROM_PAYMENTS",
+    "copied_to_declared_cash": false
+  },
+  "amount_gate": {
+    "authority_limit_count": 0,
+    "reason": "higher_approval_required",
+    "matched_limit": null,
+    "threshold_invented": false
+  },
+  "missing_amount_code": "invalid_amount",
+  "tests": "scripts/tests/test_uma_declared_cash_wave2_01.py 16 passed, 0 failed",
+  "http": {
+    "GET /api/bzg/uma-blu/declared-cash": 200,
+    "GET /uma/declared-cash": 200,
+    "POST /api/bzg/uma-blu/declared-cash": 405,
+    "health_8788": 200,
+    "health_8787": 200
+  },
+  "next": "WAVE2-02 housekeeping and room status (need.housekeeping). Not started."
+}

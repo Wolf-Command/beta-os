@@ -86,6 +86,7 @@ from core import amg_guest_stay_pack7 as _amg_guest_stay
 from core import uma_recipe_variance_pack8 as _uma_recipe_variance
 from core import bzg_preopen_config_pack9 as _bzg_preopen
 from core import approvals_evidence_pack10 as _approvals_gate
+from core import uma_declared_cash_wave2_01 as _uma_declared_cash
 from core import content_tick_draft as _content_tick_draft
 from core import owner_cockpit as _owner_cockpit
 from core import uma_real_projection as _uma_real
@@ -2096,6 +2097,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "writes": False}, status=404)
                 return
             self._send_html_shell(page.read_bytes(), rel="approvals-evidence.html")
+            return
+
+        # WAVE2-01-CASH Uma declared cash. Read-only. No till is written.
+        if path == "/api/bzg/uma-blu/declared-cash" or path.startswith("/api/bzg/uma-blu/declared-cash/"):
+            try:
+                self._send_json(_uma_declared_cash.load_declared_cash())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "declared_cash_fail", "detail": str(_e), "staff_ready": False, "writes": False}, status=500)
+            return
+        if path in ("/uma/declared-cash", "/uma/declared-cash/"):
+            page = DASHBOARDS / "uma-declared-cash.html"
+            if not page.is_file():
+                self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "writes": False}, status=404)
+                return
+            self._send_html_shell(page.read_bytes(), rel="uma-declared-cash.html")
             return
 
         # PACK-04 Habitat tick → draft or Misa queue. Publish stays off.
@@ -5982,6 +5998,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/approvals/evidence" or path.startswith("/api/approvals/evidence/"):
             self._send_json(_approvals_gate.refuse_write(), status=405)
+            return
+        if path == "/api/bzg/uma-blu/declared-cash" or path.startswith("/api/bzg/uma-blu/declared-cash/"):
+            self._send_json(_uma_declared_cash.refuse_write(), status=405)
             return
         if path == "/api/owner/cockpit" or path.startswith("/api/owner/cockpit/"):
             self._send_json(_owner_cockpit.refuse_write(), status=405)

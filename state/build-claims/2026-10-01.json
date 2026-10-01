@@ -48,6 +48,14 @@
       "expect": "27 passed, 0 failed; limits 0; requests 1; declared cash unattached; staff_ready false",
       "by": "PACK-10",
       "at": "2026-10-01T21:32:00+08:00"
+    },
+    {
+      "id": "wave2-01-declared-cash-fail-closed",
+      "claim": "Wave 2.01 declared-cash tests pass. The night close evidence id stays null, Alchemist cash_count stays 0, and authority limits stay 0. staff_ready stays false.",
+      "check": "cd /Users/wolfterminal/beta-os && /opt/homebrew/bin/python3 scripts/tests/test_uma_declared_cash_wave2_01.py | tail -1; curl -sS --max-time 8 http://127.0.0.1:8788/api/bzg/uma-blu/declared-cash | python3 -c \"import json,sys; d=json.load(sys.stdin); n=d.get('night_close') or {}; sys.exit(0 if d.get('state')=='FAIL_CLOSED' and d.get('attached') is False and n.get('declared_cash_evidence_id') is None and d.get('cash_count',{}).get('count')==0 and d.get('amount_gate',{}).get('authority_limit_count')==0 and d.get('staff_ready') is False else 1)\"",
+      "expect": "16 passed, 0 failed; FAIL_CLOSED; evidence null; cash_count 0; limits 0; staff_ready false",
+      "by": "WAVE2-01",
+      "at": "2026-10-01T21:40:00+08:00"
     }
   ]
 }
