@@ -1,0 +1,51 @@
+{
+  "pack": "PACK-04",
+  "title": "Habitat content tick to draft or Misa queue",
+  "proved_at": "2026-10-01",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "haikal_upload_retest": "OPEN",
+  "publish": "OFF",
+  "metricool_network": false,
+  "full_tree_indexed": false,
+  "brand": "habitat",
+  "why_brand": "V1 habitat-2026-09-28-11.json covers 2026-10-01. Atrium has the same window. Beta content_plans end 2026-09-27. Habitat is the publish-gate brand.",
+  "cycle": {
+    "source": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/data/content-plans/habitat-2026-09-28-11.json",
+    "open_mode": "ro",
+    "cycle_start": "2026-09-28",
+    "cycle_end": "2026-10-11",
+    "posts": 6,
+    "stories": 28,
+    "post_titles_blank": true,
+    "file_written": false
+  },
+  "card": {
+    "id": "s2",
+    "title": "Book a site tour with Matt",
+    "comment_note_id": 1,
+    "queue_id": "MISA-CBA83917AE23",
+    "queue_state": "QUEUED",
+    "reason": "metricool_write_blocked",
+    "idempotent": true
+  },
+  "library": {
+    "asset_count": 48,
+    "library_example": "habitat_RAW_video_habitat-vibe_workers_20260730_001.mov",
+    "nas_only_example": "/Volumes/01-Media-Library/Brand-Assets/GGV/logos/goss-group-logo.png",
+    "tree_walked": false
+  },
+  "http": {
+    "GET /api/content/tick-draft": 200,
+    "GET /content/tick-draft": 200,
+    "POST comment": 200,
+    "POST apply": 200,
+    "POST tick": 200,
+    "POST publish": 405,
+    "GET :8788 /api/health": 200,
+    "GET :8787 /api/health": 200
+  },
+  "tests": "scripts/tests/test_content_tick_draft_pack4.py 22 passed, 0 failed",
+  "next": "PACK-01 Owner cockpit. Pack 5 Atrium finance stays behind the SoD lock."
+}

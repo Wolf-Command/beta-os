@@ -82,6 +82,7 @@ from core import content_publish as _content_publish
 from core import venue_close as _venue_close
 from core import uma_ops_console as _uma_ops
 from core import amg_sales_desk_ro as _amg_sales_desk_ro
+from core import content_tick_draft as _content_tick_draft
 from core import uma_real_projection as _uma_real
 from core import uma_devi_p0 as _uma_p0
 from core import esb_close_snapshot as _esb_close_snapshot
@@ -2030,6 +2031,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "writes": False}, status=404)
                 return
             self._send_html_shell(page.read_bytes(), rel="amg-sales-desk.html")
+            return
+
+        # PACK-04 Habitat tick → draft or Misa queue. Publish stays off.
+        if path == "/api/content/tick-draft" or path.startswith("/api/content/tick-draft/"):
+            try:
+                self._send_json(_content_tick_draft.handle_get(path))
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "tick_draft_fail", "detail": str(_e), "staff_ready": False, "publish": "OFF"}, status=500)
+            return
+        if path in ("/content/tick-draft", "/content/tick-draft/"):
+            page = DASHBOARDS / "content-tick-draft.html"
+            if not page.is_file():
+                self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "publish": "OFF"}, status=404)
+                return
+            self._send_html_shell(page.read_bytes(), rel="content-tick-draft.html")
             return
 
         if path in ("/favicon.ico", "/favicon.svg"):
@@ -5873,6 +5889,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == "/api/amg/sales-desk" or path.startswith("/api/amg/sales-desk/"):
             self._send_json(_amg_sales_desk_ro.refuse_write(), status=405)
+            return
+        if path == "/api/content/tick-draft" or path.startswith("/api/content/tick-draft/"):
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length) if length else b""
+            try:
+                body = json.loads(raw.decode() or "{}")
+            except Exception:
+                body = {}
+            payload, status = _content_tick_draft.handle_post(path, body if isinstance(body, dict) else {})
+            self._send_json(payload, status=status)
             return
         if path == "/api/dashboard-truth" or path.startswith("/api/dashboard-truth/"):
             self._dashboard_truth_write_refused()
