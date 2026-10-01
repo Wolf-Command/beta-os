@@ -100,7 +100,7 @@ def test_module_landing() -> None:
     check("owner has needs you", "/staff-ops-routing" in owner["pages"])
     check("owner has progress", "/progress" in owner["pages"])
     check("owner multi assignment", len(owner.get("assignments") or []) > 1)
-    check("owner context switcher on", owner.get("context_switcher") is True)
+    check("owner context switcher off (auto-resolve)", owner.get("context_switcher") is False)
     check(
         "owner assignment chain",
         all(
@@ -133,7 +133,7 @@ def test_module_landing() -> None:
     )
     check("payload landing", payload.get("landing") == "/wolf")
     check("payload home_primary", payload.get("home_primary") == "/owner-empire-pack")
-    check("payload context switcher", payload.get("context_switcher") is True)
+    check("payload context switcher off for owner", payload.get("context_switcher") is False)
 
     crumbs_uma = shell.breadcrumbs_for_path("/bzg/uma-blu", owner)
     check(
@@ -346,7 +346,7 @@ def test_http() -> None:
         check("matt sees empire", "/owner-empire-pack" in (who.get("pages") or []))
         check("matt sees needs you", "/staff-ops-routing" in (who.get("pages") or []))
         check("matt sees progress", "/progress" in (who.get("pages") or []))
-        check("matt context switcher", who.get("context_switcher") is True)
+        check("matt context switcher off (auto-resolve)", who.get("context_switcher") is False)
         check("matt assignments multi", len(who.get("assignments") or []) > 1)
         ia = payload.get("ia") or []
         home = next((s for s in ia if s.get("id") == "home"), None)

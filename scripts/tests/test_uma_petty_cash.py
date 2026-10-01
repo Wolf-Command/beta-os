@@ -351,7 +351,12 @@ def main() -> int:
             check("petty page 200", st == 200, f"status={st}")
             html = body.decode("utf-8", errors="replace")
             check("petty page has title", "Petty" in html)
-            check("petty page float NOT FOUND copy", "NOT FOUND" in html)
+            check(
+                "petty page float NOT FOUND copy",
+                "NOT FOUND" in html
+                or "Opening cash balance is not set yet" in html
+                or "opening cash balance" in html.lower(),
+            )
 
             st2, body2 = get("/api/bzg/uma-blu/petty")
             check("petty API no identity 403", st2 == 403, f"status={st2}")

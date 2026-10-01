@@ -149,10 +149,11 @@ html, body { overflow-x: visible; }
 }
 
 
-/* Business switcher — IA∩clearance chips (Owner/GGV/AMG/BZG/Uma). Phone+desktop. */
+/* Business switcher — OWNER·GGV·AMG/ATRIUM·BZG (+ BZG outlet strip). Phone+desktop. */
 #wolfnav .nv-biz {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   flex: 1 1 auto;
   min-width: 0;
@@ -168,6 +169,16 @@ html, body { overflow-x: visible; }
   color: color-mix(in srgb, #eaf3f2 55%, transparent);
   white-space: nowrap;
 }
+#wolfnav .nv-biz-honesty {
+  color: var(--muted, #8aa6a6);
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.85;
+}
+#wolfnav[data-nav-source="authority"] .nv-biz-honesty,
+#wolfnav .nv-biz[data-nav-source="authority"] .nv-biz-honesty { display: none; }
 #wolfnav .nv-biz-chips {
   display: flex;
   align-items: center;
@@ -212,6 +223,49 @@ html.wolfnav-phone #wolfnav .nv-biz-chip {
 }
 html.wolfnav-phone #wolfnav .nv-biz-label {
   display: none; /* chips speak for themselves on narrow chrome */
+}
+
+/* BZG outlet children under the business chip row */
+#wolfnav .nv-outlet-chips {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding: 2px 0 0;
+}
+#wolfnav .nv-outlet-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #8aa6a6 35%, #1e3f44);
+  background: transparent;
+  color: color-mix(in srgb, #eaf3f2 85%, transparent);
+  text-decoration: none;
+  font: 650 11px/1.2 inherit;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+#wolfnav .nv-outlet-chip[data-outlet-status="PRE-OPENING"] {
+  opacity: 0.78;
+  border-style: dashed;
+}
+#wolfnav .nv-outlet-chip.is-active {
+  border-color: var(--accent, #d4af6a);
+  color: #fff;
+  background: color-mix(in srgb, var(--accent, #d4af6a) 16%, transparent);
+}
+html.wolfnav-phone #wolfnav .nv-outlet-chip {
+  min-height: 40px;
+  padding: 6px 12px;
+  font-size: 12px;
 }
 
 /* Authorised context switcher — multi-assignment only.

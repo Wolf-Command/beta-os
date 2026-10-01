@@ -134,6 +134,20 @@ from core import gws_integrate_prove as _gws_prove
 from core import crm_package_intel as _pkg_intel
 from core import crm_package_intel_operator_depth as _crm_pkg_depth
 from core import msc_asset_register as _msc_assets
+
+# --- HKEGCAV_RO_20260930 BEGIN ---
+try:
+    from core.hkegcav_ro_routes import try_hkegcav_ro
+except Exception:
+    try:
+        from scripts.core.hkegcav_ro_routes import try_hkegcav_ro
+    except Exception:
+        try:
+            from hkegcav_ro_routes import try_hkegcav_ro
+        except Exception as _hk_imp_err:
+            try_hkegcav_ro = None
+            print("HKEGCAV_RO import failed:", _hk_imp_err)
+# --- HKEGCAV_RO_20260930 END ---
 from core import msc_compliance_pack as _msc_compliance
 from core import msc_compliance_operator_depth as _msc_comp_depth
 from core import msc_cyber_baseline as _msc_cyber
@@ -174,6 +188,17 @@ from core import intg_connector_contract as _intg_contract
 from core import intg_connector_cap_tests as _intg_cap_tests
 from core import crm_lead_cap_prove as _crm_lead_prove
 from core import strat_radar_prove as _strat_radar
+
+# --- OWNER_RO_DEEPEN_20260930_IMPORT BEGIN ---
+from core import owner_trading_ro as _owner_trading_ro
+from core import owner_fitness_ro as _owner_fitness_ro
+from core import owner_pulse_ro as _owner_pulse_ro
+from core import uma_alchemist_ro as _uma_alchemist_ro
+from core import gws_draft_workflows1 as _gws_draft_workflows1
+from core import owner_travel_ro as _owner_travel_ro
+from core import owner_learning_ro as _owner_learning_ro
+from core import owner_radar_ro as _owner_radar_ro
+# --- OWNER_RO_DEEPEN_20260930_IMPORT END ---
 from core import ggv_speed_to_lead_prove as _ggv_speed
 from core import ggv_ops_pack as _ggv_ops
 from core import ggv_finance_nota as _ggv_fin
@@ -204,6 +229,7 @@ from core import connector_health_deepen1 as _connector_health_deepen1
 from core import owner_dash_freshness1 as _owner_dash_freshness1
 from core import atrium_fc_truth_deepen1 as _atrium_fc_truth_deepen1
 from core import hr_deferred_hold_stamp1 as _hr_deferred_hold_stamp1
+from core import reliability_pipe_episode_rollup1 as _reliability_pipe_episode_rollup1
 from core import fin_tax_shell1 as _fin_tax_shell1
 from core import fin_ap_ar_shell1 as _fin_ap_ar_shell1
 from core import owner_needs_you1 as _owner_needs_you1
@@ -2465,6 +2491,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._hr_deferred_hold_stamp1_dispatch():
             return
 
+        if self._reliability_pipe_episode_rollup1_dispatch():
+            return
+
         if self._fin_tax_shell1_dispatch():
             return
 
@@ -3071,6 +3100,85 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/progress":
             self._progress_empire()
             return
+        # --- OWNER_RO_DEEPEN_20260930_ROUTES BEGIN ---
+        # Owner Trading/Fitness/Travel/Learning READ-ONLY V1 surfaces. Beta only.
+        # No broker / no Spartacus writes / no booking / no live quant exec.
+        if path == "/api/owner/trading-ro" or path.rstrip("/") == "/api/owner/trading-ro":
+            try:
+                self._send_json(_owner_trading_ro.load_trading_ro())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "trading_ro_fail", "detail": str(_e), "staff_ready": False}, status=500)
+            return
+        if path == "/api/owner/trading-ro/history" or path.rstrip("/") == "/api/owner/trading-ro/history":
+            try:
+                lim = 50
+                try:
+                    lim = int((qs.get("limit") or ["50"])[0])
+                except Exception:
+                    lim = 50
+                self._send_json(_owner_trading_ro.load_trading_history(limit=lim))
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "trading_history_fail", "detail": str(_e), "staff_ready": False}, status=500)
+            return
+        if path == "/api/owner/fitness-ro" or path.rstrip("/") == "/api/owner/fitness-ro":
+            try:
+                self._send_json(_owner_fitness_ro.load_fitness_ro())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "fitness_ro_fail", "detail": str(_e), "staff_ready": False}, status=500)
+            return
+        if path == "/api/owner/pulse-ro" or path.rstrip("/") == "/api/owner/pulse-ro":
+            try:
+                self._send_json(_owner_pulse_ro.load_pulse_ro())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "pulse_ro_fail", "detail": str(_e), "staff_ready": False}, status=500)
+            return
+        if path == "/api/owner/alchemist-ro" or path.rstrip("/") == "/api/owner/alchemist-ro":
+            try:
+                self._send_json(_uma_alchemist_ro.load_alchemist_ro())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "alchemist_ro_fail", "detail": str(_e), "staff_ready": False, "pay_mutate": False}, status=500)
+            return
+        if path == "/api/owner/gws-ro" or path.rstrip("/") == "/api/owner/gws-ro":
+            try:
+                self._send_json(_gws_draft_workflows1.load_gws_ro())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "gws_ro_fail", "detail": str(_e), "staff_ready": False}, status=500)
+            return
+
+        # HKEGCAV_RO_20260930 routes (dispatch — prefer _send_json)
+        if try_hkegcav_ro is not None:
+            _hk_sent = {"ok": False}
+            def _hk_json(payload, status=200):
+                self._send_json(payload)
+                _hk_sent["ok"] = True
+                return True
+            try:
+                try_hkegcav_ro(path, _hk_json)
+            except Exception as _hk_exc:
+                self._send_json({"ok": False, "error": "hkegcav_ro", "detail": str(_hk_exc)})
+                return
+            if _hk_sent["ok"]:
+                return
+        if path == "/api/owner/travel-ro" or path.rstrip("/") == "/api/owner/travel-ro":
+            try:
+                self._send_json(_owner_travel_ro.load_travel_ro())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "travel_ro_fail", "detail": str(_e), "staff_ready": False}, status=500)
+            return
+        if path == "/api/owner/learning-ro" or path.rstrip("/") == "/api/owner/learning-ro":
+            try:
+                self._send_json(_owner_learning_ro.load_learning_ro())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "learning_ro_fail", "detail": str(_e), "staff_ready": False}, status=500)
+            return
+        if path == "/api/owner/radar-ro" or path.rstrip("/") == "/api/owner/radar-ro":
+            try:
+                self._send_json(_owner_radar_ro.load_radar_ro())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "radar_ro_fail", "detail": str(_e), "staff_ready": False}, status=500)
+            return
+        # --- OWNER_RO_DEEPEN_20260930_ROUTES END ---
+
         # Owner Command Centre. Owner only. Read model over Wolf Core. No writes.
         if path == "/api/owner/command" or path.startswith("/api/owner/command/"):
             self._owner_command_get(path)
@@ -4812,6 +4920,63 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self.path = "/content-2.0.html"
         elif path in ("/progress", "/progress/"):
             self.path = "/progress.html"
+        elif path in ("/owner/trading", "/owner/trading/"):
+            # P0 Owner Trading — PARTIAL; not Wave-8 Empire soft-redirect.
+            self.path = "/owner-trading-1.html"
+        elif path in ("/owner/fitness", "/owner/fitness/"):
+            # P0 Owner Fitness (Spartacus) — PARTIAL; Fitness ≠ HR.
+            self.path = "/owner-fitness-1.html"
+        elif path in ("/owner/radar", "/owner/radar/"):
+            # UX-PACK-07 Owner Radar stub — Personal Command (not only radar-prove).
+            self.path = "/owner-radar-1.html"
+        elif path in ("/owner/travel", "/owner/travel/"):
+            # P0 Owner Travel — PARTIAL; no live booking.
+            self.path = "/owner-travel-1.html"
+        elif path in ("/owner/learning", "/owner/learning/"):
+            # P0 Owner Learning Desk — PARTIAL; TTC paper; ≠ intel-learning.
+            self.path = "/owner-learning-1.html"
+        elif path in ("/seats/content-desk", "/seats/content-desk/"):
+            # P0 Content Desk seat (historical Haikal Desk) — PARTIAL; roles≠person.
+            self.path = "/seat-content-desk-1.html"
+        elif path in ("/seats/content-admin", "/seats/content-admin/"):
+            # P0 Content Admin seat (historical Misa Board) — PARTIAL; no post/spend.
+            self.path = "/seat-content-admin-1.html"
+        elif path in ("/seats/ads-studio", "/seats/ads-studio/"):
+            # P0 Ads Studio seat — PARTIAL; LEARN-only; no Meta/Google spend/publish.
+            self.path = "/seat-ads-studio-1.html"
+        elif path in ("/seats/resolve-studio", "/seats/resolve-studio/"):
+            # P0 Resolve Studio seat — PARTIAL; free Resolve 21; nobody posts.
+            self.path = "/seat-resolve-studio-1.html"
+        elif path in ("/habitat-investment-2026", "/habitat-investment-2026/"):
+            # P0 Habitat Investment 2026 — PARTIAL; prefer existing habitat-investment* paths.
+            self.path = "/habitat-investment-1.html"
+        elif path in ("/kuta-rates", "/kuta-rates/"):
+            # P0 Kuta Rates AMG — PARTIAL; Wave8 Empire soft-redirect retired; nobody books.
+            self.path = "/kuta-rates-1.html"
+        elif path in ("/amg-voice", "/amg-voice/"):
+            # P0 AMG Voice seat — PARTIAL; no send; no reply automation.
+            self.path = "/amg-voice-1.html"
+        elif path in ("/bzg-voice", "/bzg-voice/"):
+            # P0 BZG Voice seat — PARTIAL; no send; no reply automation.
+            self.path = "/bzg-voice-1.html"
+        elif path in ("/ggv-voice", "/ggv-voice/"):
+            # P0 GGV Voice seat — PARTIAL; no send; no reply automation.
+            self.path = "/ggv-voice-1.html"
+        elif path in ("/owner/gatekeeper", "/owner/gatekeeper/"):
+            # P0 Owner Gatekeeper — PARTIAL; never sends; draft-only.
+            self.path = "/owner-gatekeeper-1.html"
+        elif path in ("/ops/event-bus", "/ops/event-bus/"):
+            # P0 Event Bus ops — PARTIAL honesty; no fake live stream.
+            self.path = "/ops-event-bus-1.html"
+        elif path in ("/ops/competitor-rates-pipeline", "/ops/competitor-rates-pipeline/"):
+            # P0 Competitor Rates Pipeline — PARTIAL stub; no fake live sync.
+            self.path = "/ops-competitor-rates-pipeline-1.html"
+        elif path in ("/ops/rate-calendar", "/ops/rate-calendar/"):
+            # P0 Rate Calendar DB — PARTIAL stub; LaunchAgents parked.
+            self.path = "/ops-rate-calendar-1.html"
+        elif path in ("/ops/calendly-atrium-sync", "/ops/calendly-atrium-sync/"):
+            # P0 Calendly Atrium Sync — PARTIAL stub; no Beta live sync.
+            self.path = "/ops-calendly-atrium-sync-1.html"
         elif path in (
             "/integration-health",
             "/integration-health/",
@@ -5863,6 +6028,22 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if self._hr_deferred_hold_stamp1_dispatch():
                 return
         elif path in (
+            "/ops/reliability-pipe-episode-rollup-1",
+            "/ops/reliability-pipe-episode-rollup-1/",
+            "/ops/reliability-pipe-episode-rollup",
+            "/ops/reliability-pipe-episode-rollup/",
+            "/ops/pipe-episode-rollup-1",
+            "/ops/pipe-episode-rollup-1/",
+            "/ops/pipe-episode-rollup",
+            "/ops/pipe-episode-rollup/",
+            "/reliability-pipe-episode-rollup-1",
+            "/reliability-pipe-episode-rollup-1/",
+            "/reliability-pipe-episode-rollup-1.html",
+            "/dashboards/reliability-pipe-episode-rollup-1.html",
+        ):
+            if self._reliability_pipe_episode_rollup1_dispatch():
+                return
+        elif path in (
             "/fin/tax-shell-1",
             "/fin/tax-shell-1/",
             "/fin/tax-shell",
@@ -6141,6 +6322,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._recipe_builder_page()
             return
         elif path in (
+            "/bzg/uma-blu/real",
+            "/bzg/uma-blu/real/",
             "/bzg/uma-blu/recipes",
             "/bzg/uma-blu/recipes/",
             "/bzg/uma-blu/purchasing",
@@ -7225,6 +7408,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._hr_deferred_hold_stamp1_write_refused(path)
             return
+        if (
+            path == "/api/ops/reliability-pipe-episode-rollup-1"
+            or path.startswith("/api/ops/reliability-pipe-episode-rollup-1/")
+            or path == "/api/ops/reliability-pipe-episode-rollup"
+            or path.startswith("/api/ops/reliability-pipe-episode-rollup/")
+            or path == "/api/ops/pipe-episode-rollup-1"
+            or path.startswith("/api/ops/pipe-episode-rollup-1/")
+            or path == "/api/ops/pipe-episode-rollup"
+            or path.startswith("/api/ops/pipe-episode-rollup/")
+        ):
+            self._reliability_pipe_episode_rollup1_write_refused(path)
+            return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
             return
@@ -7355,6 +7550,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 return
             if path == "/api/bzg/uma-blu/petty":
                 self._uma_ops_petty_post()
+                return
+            if path == "/api/bzg/uma-blu/petty/receipt":
+                self._uma_ops_petty_receipt_post()
                 return
             if path == "/api/bzg/uma-blu/petty/count":
                 self._uma_ops_petty_count_post()
@@ -8271,6 +8469,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             or path.startswith("/api/hr/deferred-hold-stamp-1/")
         ):
             self._hr_deferred_hold_stamp1_write_refused(path)
+            return
+        if (
+            path == "/api/ops/reliability-pipe-episode-rollup-1"
+            or path.startswith("/api/ops/reliability-pipe-episode-rollup-1/")
+            or path == "/api/ops/reliability-pipe-episode-rollup"
+            or path.startswith("/api/ops/reliability-pipe-episode-rollup/")
+            or path == "/api/ops/pipe-episode-rollup-1"
+            or path.startswith("/api/ops/pipe-episode-rollup-1/")
+            or path == "/api/ops/pipe-episode-rollup"
+            or path.startswith("/api/ops/pipe-episode-rollup/")
+        ):
+            self._reliability_pipe_episode_rollup1_write_refused(path)
             return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
@@ -9791,6 +10001,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             or path.startswith("/api/hr/deferred-hold-stamp-1/")
         ):
             self._hr_deferred_hold_stamp1_write_refused(path)
+            return
+        if (
+            path == "/api/ops/reliability-pipe-episode-rollup-1"
+            or path.startswith("/api/ops/reliability-pipe-episode-rollup-1/")
+            or path == "/api/ops/reliability-pipe-episode-rollup"
+            or path.startswith("/api/ops/reliability-pipe-episode-rollup/")
+            or path == "/api/ops/pipe-episode-rollup-1"
+            or path.startswith("/api/ops/pipe-episode-rollup-1/")
+            or path == "/api/ops/pipe-episode-rollup"
+            or path.startswith("/api/ops/pipe-episode-rollup/")
+        ):
+            self._reliability_pipe_episode_rollup1_write_refused(path)
             return
         if path == "/api/ops/conn-health-1" or path.startswith("/api/ops/conn-health-1/"):
             self._conn_health_board1_write_refused(path)
@@ -21968,6 +22190,111 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "prod_pid_held": _hr_deferred_hold_stamp1.PROD_PID_HELD,
                 "classification": "EXTERNAL_BLOCKER_OR_DEFERRED",
                 "ceiling": "HOLD",
+            },
+            status=403,
+        )
+
+    def _reliability_pipe_episode_rollup1_dispatch(self) -> bool:
+        """RELIABILITY-PIPE-EPISODE-ROLLUP-1 — flap evidence rollup board."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if _reliability_pipe_episode_rollup1.api_matches(path):
+            identity = self._resolve_identity(emit_audit=False)
+            if not identity.get("ok"):
+                self._send_identity_deny(identity)
+                return True
+            try:
+                payload = _reliability_pipe_episode_rollup1.public_payload()
+            except Exception as exc:  # noqa: BLE001
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "pipe_episode_rollup_unavailable",
+                        "message": type(exc).__name__,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                        "fake_uptime": False,
+                        "fake_pipe_up": False,
+                        "prod_mutate": False,
+                    },
+                    status=500,
+                )
+                return True
+            self._send_json(payload)
+            return True
+        if not _reliability_pipe_episode_rollup1.page_matches(path):
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return True
+        page = DASHBOARDS / "reliability-pipe-episode-rollup-1.html"
+        if not page.is_file():
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "not_found",
+                    "message": "RELIABILITY-PIPE-EPISODE-ROLLUP-1 page missing.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=404,
+            )
+            return True
+        self._send_html_shell(
+            page.read_bytes(), rel="reliability-pipe-episode-rollup-1.html"
+        )
+        return True
+
+    def _reliability_pipe_episode_rollup1_write_refused(self, path: str) -> None:
+        """Refuse invent-uptime / fake-pipe-up / prod mutate / commissioning flips."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        try:
+            _reliability_pipe_episode_rollup1.refuse_external_write(
+                body if isinstance(body, dict) else {}
+            )
+        except _reliability_pipe_episode_rollup1.ReliabilityPipeEpisodeRollup1Error as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "path": path,
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                    "fake_uptime": False,
+                    "fake_pipe_up": False,
+                    "prod_mutate": False,
+                    "prod_pid_held": _reliability_pipe_episode_rollup1.PROD_PID_HELD,
+                    "classification": "INTERNALLY_SOLVABLE",
+                    "ceiling": "BUILT",
+                },
+                status=403,
+            )
+            return
+        self._send_json(
+            {
+                "ok": False,
+                "error": "write_refused",
+                "message": (
+                    "RELIABILITY-PIPE-EPISODE-ROLLUP-1 is a read-only evidence board. "
+                    "Writes refused."
+                ),
+                "path": path,
+                "staff_ready": False,
+                "human_commissioned": False,
+                "fake_uptime": False,
+                "fake_pipe_up": False,
+                "prod_mutate": False,
+                "prod_pid_held": _reliability_pipe_episode_rollup1.PROD_PID_HELD,
             },
             status=403,
         )
@@ -40915,6 +41242,68 @@ class BetaHandler(SimpleHTTPRequestHandler):
         except Exception as exc:  # noqa: BLE001
             self._send_err(500, str(exc))
 
+
+    def _uma_ops_petty_receipt_post(self) -> None:
+        """Phone receipt photo for Uma petty — Beta state only. No invent float."""
+        try:
+            actor = self._uma_ops_actor({})
+            if actor is None:
+                return
+            person_id, identity = actor
+            ctype = (self.headers.get("Content-Type") or "").lower()
+            if "multipart/form-data" in ctype:
+                fields = parse_multipart(self.headers, self.rfile)
+                file_field = fields.get("file") or fields.get("receipt") or fields.get("photo")
+                if not isinstance(file_field, dict) or not file_field.get("data"):
+                    self._send_json(
+                        {"ok": False, "error": "receipt photo required", "code": "missing_receipt"},
+                        status=400,
+                    )
+                    return
+                saved = _uma_ops.save_petty_receipt_bytes(
+                    data=file_field["data"],
+                    filename=file_field.get("filename"),
+                    content_type=file_field.get("content_type") or file_field.get("content-type"),
+                )
+            else:
+                length = int(self.headers.get("Content-Length") or 0)
+                raw = self.rfile.read(length) if length > 0 else b"{}"
+                body = json.loads(raw.decode("utf-8") or "{}")
+                if not isinstance(body, dict):
+                    body = {}
+                b64 = (body.get("image_base64") or body.get("data_base64") or "").strip()
+                if not b64:
+                    self._send_json(
+                        {"ok": False, "error": "receipt photo required", "code": "missing_receipt"},
+                        status=400,
+                    )
+                    return
+                import base64 as _b64
+                if "," in b64:
+                    b64 = b64.split(",", 1)[1]
+                saved = _uma_ops.save_petty_receipt_bytes(
+                    data=_b64.b64decode(b64),
+                    filename=body.get("filename") or "receipt.jpg",
+                    content_type=body.get("content_type"),
+                )
+            self._send_json(
+                {
+                    "ok": True,
+                    "evidence_id": saved["evidence_id"],
+                    "receipt_path": saved["receipt_path"],
+                    "bytes": saved["bytes"],
+                    "logged_by": person_id,
+                    "staff_ready": False,
+                }
+            )
+        except _uma_ops.UmaOpsError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
     def _uma_ops_petty_post(self) -> None:
         """Operator tin movement, or a test-mode fixture. No bank write."""
         try:
@@ -40935,7 +41324,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     amount=body.get("amount") if body.get("amount") is not None else 0,
                     currency=body.get("currency"),
                     purpose=body.get("purpose"),
-                    evidence_note_id=body.get("evidence_note_id"),
+                    category=body.get("category"),
+                    outlet=body.get("outlet"),
+                    logged_by=body.get("logged_by"),
+                    receipt_path=body.get("receipt_path"),
+                    evidence_note_id=body.get("evidence_note_id") or body.get("evidence_id"),
                     identity=identity,
                 )
             else:

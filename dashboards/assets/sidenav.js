@@ -1,4 +1,5 @@
 /* sidenav.js — Beta Wave 1–8 + RHC V1 + Perms + Route Merge/Retire (#wolfnav).
+// IA-HIDE-ORPHAN-PROVE-CRUMBS-2: Owner NeedsYou→staff-ops-routing; Exceptions→radar; BZG inventory/labor→/bzg; AMG prove crumbs off chrome
  * One chrome owner. Never a second Boards menu.
  * IA: HOME / BUSINESSES / INTELLIGENCE / SYSTEM (Target IA 2026-09-22).
  * Wave 2: Owner HOME primary = Empire; /wolf alias → Empire; Progress under SYSTEM only.
@@ -8,7 +9,10 @@
  * Wave 6: Intel crumbs WOLF › Intelligence › …; Content under Intel; Haikal → Content.
  * Wave 7: System crumbs WOLF › System › …; Progress soft-land; Sale under SYSTEM;
  *   Factory EMPTY; staff hide SYSTEM admin via nav.
- * Wave 8: travel/mila/amanda/kuta-rates NOT in primary IA.
+ * Wave 8: mila/amanda NOT in primary IA; P0 Owner travel+learning + habitat/kuta/voice re-entry.
+ * P0: Haikal Desk→/seats/content-desk, Misa Board→/seats/content-admin (roles≠person).
+ *   P0: Ads Studio→/seats/ads-studio, Resolve Studio→/seats/resolve-studio (LEARN-only · no spend).
+ *   P0: habitat-investment-2026, kuta-rates (AMG), amg/bzg/ggv-voice (no send).
  *   P0: trading→/owner/trading, spartacus→/owner/fitness (Owner HOME; PARTIAL).
  * RHC V1: breadcrumbs · UP / BACK / HOME · multi-assignment context switcher;
  *   P0 global shell: business switcher (IA∩clearance Owner/GGV/AMG/BZG/Uma);
@@ -26,15 +30,19 @@
   if (window.__WOLF_SIDENAV_BOOTED__) return;
   window.__WOLF_SIDENAV_BOOTED__ = true;
 
-  var CACHE = "20260930-global-shell1";
+  var CACHE = "20261002-owner-ux-petty";
   var EMPIRE_ALIASES = { "/owner-empire-pack": 1, "/wolf": 1 };
   var TRAIL_KEY = "wolf-shell-trail";
   /* Wave 8 — retired from primary Boards; soft-redirect handled server-side. */
   var HIDDEN_SPECIALIST_PRIMARY = {
-    /* P0: trading + spartacus re-entered as Owner HOME items */
-    travel: 1,
+    /* UX-PACK-03/04: Uma desk tabs + AMG/GGV hub merges.
+ * UX-PACK-02: prove/deepen + voice/kuta seats off primary Boards; URLs stay live.
+ * IA-HIDE-VOICE-ORPHAN-1: voice off SPECIALIST/OPERATOR audience chrome; soft-land → hubs. */
     mila: 1,
     amanda: 1,
+    "ggv-voice": 1,
+    "amg-voice": 1,
+    "bzg-voice": 1,
     "kuta-rates": 1
   };
 
@@ -45,24 +53,42 @@
       items: [
         {
           href: "/owner-empire-pack",
-          title: "Empire Pulse",
+          title: "Owner Home",
           key: "empire",
           primary: true,
           aliases: ["/wolf"]
         },
-        { href: "/staff-ops-routing", title: "Needs You", key: "needs_you" },
-        { href: "/owner/trading", title: "Trading (Owner)", key: "owner_trading" },
-        { href: "/owner/fitness", title: "Fitness (Owner)", key: "owner_fitness" }
+        {
+          href: "/finish-war-room",
+          title: "FINISH WOLF",
+          key: "finish_wolf",
+          audience: "owner"
+        },
+        { href: "/my-work", title: "My Work", key: "my_work" },
+        { href: "/staff-ops-routing", title: "Needs You", key: "needs_you" }
+        /* UX-PACK-07: Travel / Learning / Habitat Investment HIDE_UNTIL_USEFUL — routes kept */
+      ]
+    },
+    {
+      id: "personal",
+      title: "PERSONAL",
+      items: [
+        { href: "/owner/trading", title: "Trading", key: "owner_trading", audience: "owner" },
+        { href: "/owner/fitness", title: "Fitness", key: "owner_fitness", audience: "owner" },
+        { href: "/owner/radar", title: "Radar", key: "owner_radar", audience: "owner" },
+        { href: "/owner/travel", title: "Travel", key: "owner_travel", audience: "owner" },
+        { href: "/owner/learning", title: "Learning", key: "owner_learning", audience: "owner" }
+        /* UX-PACK-11: Travel/Learning unhidden as PARTIAL RO desks (Fitness pattern). Habitat Investment stays hidden. */
       ]
     },
     {
       id: "businesses",
       title: "BUSINESSES",
+      /* OWNER-UX-PETTY-MOBILE-1: top = OWNER·GGV·AMG/ATRIUM·BZG; Uma under BZG outlets */
       items: [
         { href: "/ggv-ops-pack", title: "GGV", key: "ggv" },
-        { href: "/amg-ops-pack", title: "Atrium / AMG", key: "amg" },
-        { href: "/bzg", title: "Blu Zone / BZG", key: "bzg" },
-        { href: "/bzg/uma-blu", title: "Uma Blu · Today", key: "uma" }
+        { href: "/amg-ops-pack", title: "AMG / Atrium", key: "amg" },
+        { href: "/bzg", title: "BZG", key: "bzg" }
       ]
     },
     {
@@ -71,6 +97,7 @@
       items: [
         { href: "/intel-ops-pack", title: "Intelligence Home", key: "intel" },
         { href: "/content-2.0", title: "Content", key: "content" }
+        /* IA-TAB-INTEL-CONTENT-1: seats off primary — tabs under /content-2.0; routes kept */
       ]
     },
     {
@@ -79,7 +106,9 @@
       items: [
         { href: "/progress", title: "Progress", key: "progress" },
         { href: "/integration-health", title: "Integrations", key: "integrations" },
-        { href: "/sale-evidence-pack", title: "Sale Readiness", key: "sale" }
+        { href: "/sale-evidence-pack", title: "Sale Readiness", key: "sale" },
+        { href: "/ops/backup-health-1", title: "Backup / DR", key: "backup" }
+        /* IA-MERGE-BACKUP-SYSTEM-1: restore-drill stays HIDE */
       ]
     }
   ];
@@ -89,11 +118,23 @@
     "/owner-empire-pack": null,
     "/wolf": null,
     "/staff-ops-routing": "/owner-empire-pack",
+    "/finish-war-room": "/owner-empire-pack",
+    "/my-work": "/owner-empire-pack",
     "/ggv-ops-pack": "/owner-empire-pack",
     "/habitat-operator": "/ggv-ops-pack",
     "/lead-spine": "/ggv-ops-pack",
     "/amg-ops-pack": "/owner-empire-pack",
     "/amg-daily-ops-state": "/amg-ops-pack",
+    "/amg-journey-workflow": "/amg-ops-pack",
+    "/amg-packages-products": "/amg-ops-pack",
+    "/amg/occ-truth-1": "/amg-ops-pack",
+    "/ggv/pipeline-truth-1": "/ggv-ops-pack",
+    "/ggv-strategy-machine": "/ggv-ops-pack",
+    "/ggv-social": "/ggv-ops-pack",
+    "/bzg/uma-blu/evidence": "/bzg/uma-blu",
+    "/bzg/uma-blu/exceptions": "/bzg/uma-blu",
+    "/bzg/uma-blu/real": "/bzg/uma-blu",
+    "/bzg/uma-blu/recipes": "/bzg/uma-blu",
     "/amg/finance": null,
     "/amg/finance/ledger": "/amg/finance",
     "/amg/finance/accounts": "/amg/finance",
@@ -111,18 +152,39 @@
     "/progress": "/owner-empire-pack",
     "/integration-health": "/progress",
     "/sale-evidence-pack": "/progress",
+    "/ops/backup-health-1": "/progress",
+    "/backup-health-1": "/progress",
     "/owner/trading": "/owner-empire-pack",
-    "/owner/fitness": "/owner-empire-pack"
+    "/owner/fitness": "/owner-empire-pack",
+    "/owner/travel": "/owner-empire-pack",
+    "/owner/learning": "/owner-empire-pack",
+    "/seats/content-desk": "/content-2.0",
+    "/seats/content-admin": "/content-2.0",
+    "/seats/ads-studio": "/content-2.0",
+    "/seats/resolve-studio": "/content-2.0",
+    "/habitat-investment-2026": "/owner-empire-pack",
+    "/kuta-rates": "/amg-ops-pack",
+    "/amg-voice": "/amg-ops-pack",
+    "/bzg-voice": "/bzg",
+    "/ggv-voice": "/ggv-ops-pack"
   };
 
   var ROUTE_CRUMBS = {
     "/owner-empire-pack": [
       { label: "HOME", href: "/wolf" },
-      { label: "Empire Pulse", href: null }
+      { label: "Owner Home", href: null }
     ],
     "/wolf": [
       { label: "HOME", href: "/wolf" },
-      { label: "Empire Pulse", href: null }
+      { label: "Owner Home", href: null }
+    ],
+    "/finish-war-room": [
+      { label: "HOME", href: "/wolf" },
+      { label: "FINISH WOLF", href: null }
+    ],
+    "/my-work": [
+      { label: "HOME", href: "/wolf" },
+      { label: "My Work", href: null }
     ],
     "/staff-ops-routing": [
       { label: "HOME", href: "/wolf" },
@@ -130,11 +192,28 @@
     ],
     "/owner/trading": [
       { label: "HOME", href: "/wolf" },
-      { label: "Trading (Owner)", href: null }
+      { label: "Personal", href: "/owner-empire-pack" },
+      { label: "Trading", href: null }
     ],
     "/owner/fitness": [
       { label: "HOME", href: "/wolf" },
-      { label: "Fitness (Owner)", href: null }
+      { label: "Personal", href: "/owner-empire-pack" },
+      { label: "Fitness", href: null }
+    ],
+    "/owner/radar": [
+      { label: "HOME", href: "/wolf" },
+      { label: "Personal", href: "/owner-empire-pack" },
+      { label: "Radar", href: null }
+    ],
+    "/owner/travel": [
+      { label: "HOME", href: "/wolf" },
+      { label: "Personal", href: "/owner-empire-pack" },
+      { label: "Travel", href: null }
+    ],
+    "/owner/learning": [
+      { label: "HOME", href: "/wolf" },
+      { label: "Personal", href: "/owner-empire-pack" },
+      { label: "Learning", href: null }
     ],
     "/ggv-ops-pack": [
       { label: "WOLF", href: "/wolf" },
@@ -163,6 +242,67 @@
       { label: "Atrium Management", href: null },
       { label: "AMG", href: "/amg-ops-pack" },
       { label: "Daily Ops", href: null }
+    ],
+
+    "/amg-journey-workflow": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Atrium Management", href: "/amg-ops-pack" },
+      { label: "AMG", href: "/amg-ops-pack" },
+      { label: "Journey", href: null }
+    ],
+    "/amg-packages-products": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Atrium Management", href: "/amg-ops-pack" },
+      { label: "AMG", href: "/amg-ops-pack" },
+      { label: "Packages", href: null }
+    ],
+    "/amg/occ-truth-1": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Atrium Management", href: "/amg-ops-pack" },
+      { label: "AMG", href: "/amg-ops-pack" },
+      { label: "OCC", href: null }
+    ],
+    "/ggv/pipeline-truth-1": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Goss Group", href: "/ggv-ops-pack" },
+      { label: "GGV", href: "/ggv-ops-pack" },
+      { label: "Pipeline", href: null }
+    ],
+    "/ggv-strategy-machine": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Goss Group", href: "/ggv-ops-pack" },
+      { label: "GGV", href: "/ggv-ops-pack" },
+      { label: "Strategy", href: null }
+    ],
+    "/ggv-social": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Goss Group", href: "/ggv-ops-pack" },
+      { label: "GGV", href: "/ggv-ops-pack" },
+      { label: "Social", href: null }
+    ],
+    "/bzg/uma-blu/evidence": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Blu Zone", href: "/bzg" },
+      { label: "Uma Blu", href: "/bzg/uma-blu" },
+      { label: "Evidence", href: null }
+    ],
+    "/bzg/uma-blu/exceptions": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Blu Zone", href: "/bzg" },
+      { label: "Uma Blu", href: "/bzg/uma-blu" },
+      { label: "Exceptions", href: null }
+    ],
+    "/bzg/uma-blu/real": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Blu Zone", href: "/bzg" },
+      { label: "Uma Blu", href: "/bzg/uma-blu" },
+      { label: "Real", href: null }
+    ],
+    "/bzg/uma-blu/recipes": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Blu Zone", href: "/bzg" },
+      { label: "Uma Blu", href: "/bzg/uma-blu" },
+      { label: "Recipes", href: null }
     ],
     "/amg/finance": [
       { label: "Atrium Finance", href: null }
@@ -229,6 +369,57 @@
       { label: "WOLF", href: "/wolf" },
       { label: "Intelligence", href: "/intel-ops-pack" },
       { label: "Content", href: null }
+    ],
+    "/seats/content-desk": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Intelligence", href: "/intel-ops-pack" },
+      { label: "Content", href: "/content-2.0" },
+      { label: "Content Desk (seat)", href: null }
+    ],
+    "/seats/content-admin": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Intelligence", href: "/intel-ops-pack" },
+      { label: "Content", href: "/content-2.0" },
+      { label: "Content Admin (seat)", href: null }
+    ],
+    "/seats/ads-studio": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Intelligence", href: "/intel-ops-pack" },
+      { label: "Content", href: "/content-2.0" },
+      { label: "Ads Studio (seat)", href: null }
+    ],
+    "/seats/resolve-studio": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Intelligence", href: "/intel-ops-pack" },
+      { label: "Content", href: "/content-2.0" },
+      { label: "Resolve Studio (seat)", href: null }
+    ],
+    "/habitat-investment-2026": [
+      { label: "HOME", href: "/wolf" },
+      { label: "Habitat Investment (Owner)", href: null }
+    ],
+    "/kuta-rates": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Atrium Management", href: null },
+      { label: "AMG", href: "/amg-ops-pack" },
+      { label: "Kuta Rates", href: null }
+    ],
+    "/amg-voice": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Atrium Management", href: null },
+      { label: "AMG", href: "/amg-ops-pack" },
+      { label: "Voice (seat)", href: null }
+    ],
+    "/bzg-voice": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Blu Zone", href: "/bzg" },
+      { label: "Voice (seat)", href: null }
+    ],
+    "/ggv-voice": [
+      { label: "WOLF", href: "/wolf" },
+      { label: "Goss Group", href: null },
+      { label: "GGV", href: "/ggv-ops-pack" },
+      { label: "Voice (seat)", href: null }
     ],
     "/progress": [
       { label: "WOLF", href: "/wolf" },
@@ -608,8 +799,33 @@
     return out;
   }
 
+  function navBizSource(who) {
+    /* Prefer Assignment/Role/Scope authority; honesty stamp when transitional. */
+    who = who || whoami();
+    try {
+      var auth = who && who.nav_authority;
+      if (auth && auth.ok !== false) {
+        var ab = auth.businesses;
+        if (Array.isArray(ab) && ab.length) return "authority";
+      }
+    } catch (e) {
+      /* authority missing/error → transitional fallback */
+    }
+    return "ia_intersect_pages_transitional";
+  }
+
   function businessesFor(who) {
     who = who || whoami();
+    /* Prefer nav_authority.businesses (ROLE+SCOPE). Safe fallback to IA∩pages. */
+    try {
+      var auth = who && who.nav_authority;
+      if (auth && auth.ok !== false) {
+        var authBiz = auth.businesses;
+        if (Array.isArray(authBiz) && authBiz.length) return authBiz;
+      }
+    } catch (e) {
+      /* fall through */
+    }
     var baked = (who && who.businesses) || [];
     if (baked && baked.length) return baked;
     var cat = businessCatalogFallback();
@@ -635,18 +851,18 @@
 
   function activeBusinessId(biz, who) {
     who = who || whoami();
-    if (who && who.active_business_id) {
-      var i;
-      for (i = 0; i < biz.length; i++) {
-        if (biz[i].id === who.active_business_id) return who.active_business_id;
-      }
-    }
+    /* Path wins so BZG/Uma routes highlight BZG (not sticky Owner landing). */
     var path = (location.pathname || "/").replace(/\/+$/, "") || "/";
     var best = null;
     var bestLen = -1;
     var b, cands, c, h, hr;
+    var bids = {};
+    for (b = 0; b < biz.length; b++) bids[biz[b].id] = 1;
     for (b = 0; b < biz.length; b++) {
       cands = [biz[b].href].concat(biz[b].aliases || []);
+      if (biz[b].id === "bzg" && !bids.uma) {
+        cands = cands.concat(["/bzg/uma-blu", "/bzg/uma-blu/"]);
+      }
       for (c = 0; c < cands.length; c++) {
         h = cands[c];
         if (!h) continue;
@@ -663,22 +879,60 @@
         }
       }
     }
+    if (best) return best;
+    if (who && who.active_business_id) {
+      for (b = 0; b < biz.length; b++) {
+        if (biz[b].id === who.active_business_id) return who.active_business_id;
+      }
+    }
     return best;
+  }
+
+  function activeOutletId(outlets, who) {
+    who = who || whoami();
+    var path = (location.pathname || "/").replace(/\/+$/, "") || "/";
+    var best = null;
+    var bestLen = -1;
+    var o, cands, c, h, hr;
+    for (o = 0; o < outlets.length; o++) {
+      cands = [outlets[o].href].concat(outlets[o].aliases || []);
+      for (c = 0; c < cands.length; c++) {
+        h = cands[c];
+        if (!h || h === "/bzg/outlets" || h === "/bzg/outlets/") continue;
+        hr = String(h).replace(/\/+$/, "") || "/";
+        if (path === hr || path.indexOf(hr + "/") === 0) {
+          if (hr.length > bestLen) {
+            bestLen = hr.length;
+            best = outlets[o].id;
+          }
+        }
+      }
+    }
+    if (best) return best;
+    return (who && who.active_outlet_id) || null;
   }
 
   function paintBusiness(el, who) {
     if (!el) return;
     who = who || whoami();
+    var source = navBizSource(who);
     var biz = businessesFor(who);
     var show = biz.length >= 1;
     if (!show) {
       el.hidden = true;
       el.innerHTML = "";
       el.removeAttribute("data-wolf-biz");
+      el.removeAttribute("data-nav-source");
+      el.removeAttribute("data-wolf-nav-honesty");
       return;
     }
     el.hidden = false;
     el.setAttribute("data-wolf-biz", biz.length > 1 ? "multi" : "single");
+    el.setAttribute("data-nav-source", source);
+    el.setAttribute(
+      "data-wolf-nav-honesty",
+      source === "authority" ? "authority_chrome" : "ia_intersect_pages_transitional"
+    );
     var active = activeBusinessId(biz, who);
     var chips = biz
       .map(function (b) {
@@ -695,6 +949,8 @@
           esc(b.href) +
           '" data-biz-id="' +
           esc(b.id) +
+          '" data-nav-source="' +
+          esc(source) +
           '" aria-current="' +
           (isOn ? "page" : "false") +
           '">' +
@@ -703,17 +959,52 @@
         );
       })
       .join("");
+    var outlets = (who && who.outlet_children) || [];
+    var path = (location.pathname || "/").replace(/\/+$/, "") || "/";
+    var showOutlets =
+      outlets.length > 0 &&
+      (active === "bzg" || active === "uma" || path.indexOf("/bzg") === 0);
+    var activeOut = showOutlets ? activeOutletId(outlets, who) : null;
+    var outletChips = "";
+    if (showOutlets) {
+      outletChips =
+        '<div class="nv-outlet-chips" role="navigation" aria-label="BZG outlets">' +
+        outlets
+          .map(function (o) {
+            var label = o.chip_label || o.title || o.id;
+            var isOn = o.id === activeOut;
+            var pre = o.status === "PRE-OPENING" ? ' data-outlet-status="PRE-OPENING"' : "";
+            return (
+              '<a class="nv-outlet-chip' +
+              (isOn ? " is-active" : "") +
+              '" href="' +
+              esc(o.href) +
+              '" data-outlet-id="' +
+              esc(o.id) +
+              '"' +
+              pre +
+              ' aria-current="' +
+              (isOn ? "page" : "false") +
+              '">' +
+              esc(label) +
+              "</a>"
+            );
+          })
+          .join("") +
+        "</div>";
+    }
     el.innerHTML =
       '<span class="nv-biz-label" id="wolfnav-biz-label">Business</span>' +
       '<div class="nv-biz-chips" role="navigation" aria-labelledby="wolfnav-biz-label">' +
       chips +
-      "</div>";
-    var links = el.querySelectorAll("a.nv-biz-chip");
+      "</div>" +
+      outletChips;
+    var links = el.querySelectorAll("a.nv-biz-chip, a.nv-outlet-chip");
     var i;
     for (i = 0; i < links.length; i++) {
       links[i].onclick = function (e) {
         var href = this.getAttribute("href");
-        if (!href || !pageAllowed(href, who)) {
+        if (!href || (!pageAllowed(href, who) && href.indexOf("/bzg") !== 0)) {
           if (e) e.preventDefault();
           return false;
         }
@@ -754,9 +1045,10 @@ function paintContext(el, who) {
         );
       })
       .join("");
+    /* Advanced only — human-labeled; Owner chrome hides this (server context_switcher=false). */
     el.innerHTML =
-      '<label class="nv-ctx-label" for="wolfnav-ctx-select">Context</label>' +
-      '<select id="wolfnav-ctx-select" class="nv-ctx-select" aria-label="Authorised context switcher">' +
+      '<label class="nv-ctx-label" for="wolfnav-ctx-select">Seat</label>' +
+      '<select id="wolfnav-ctx-select" class="nv-ctx-select" aria-label="Switch authorised seat">' +
       opts +
       "</select>";
     var sel = document.getElementById("wolfnav-ctx-select");
@@ -970,18 +1262,9 @@ function paintContext(el, who) {
     var name =
       (who && (who.hello || who.given_name || who.email)) || "";
     if (isOwner) {
-      /* Owner / debug: codes may stay (audience · ROLE-*). */
-      var roleHint = roleForActiveContext(who);
-      var ownerLabel = name || (who && who.role_label) || "";
-      if (ownerLabel && aud && roleHint) {
-        hello.textContent = ownerLabel + " · " + aud + " · " + roleHint;
-      } else if (ownerLabel && aud) {
-        hello.textContent = ownerLabel + " · " + aud;
-      } else if (ownerLabel) {
-        hello.textContent = String(ownerLabel);
-      } else {
-        hello.textContent = "";
-      }
+      /* OWNER-UX-PETTY-MOBILE-1: plain human hello — no ROLE-* / audience dump on chrome. */
+      var ownerLabel = name || "Owner";
+      hello.textContent = String(ownerLabel);
       return;
     }
     /* Staff: plain role title only (optional name · title). Never SPECIALIST_/ROLE- codes. */
@@ -1030,6 +1313,16 @@ function paintContext(el, who) {
       .then(function (data) {
         clearTimeout(timer);
         if (data && data.ok && data.whoami) {
+          /* Prefer parallel payload.nav_authority; keep whoami.nav_authority if only there. */
+          if (data.nav_authority) {
+            data.whoami.nav_authority = data.nav_authority;
+          }
+          if (data.outlet_children && !data.whoami.outlet_children) {
+            data.whoami.outlet_children = data.outlet_children;
+          }
+          if (data.businesses && (!data.whoami.businesses || !data.whoami.businesses.length)) {
+            data.whoami.businesses = data.businesses;
+          }
           window.__WOLF_WHOAMI__ = data.whoami;
           cb(data.whoami);
         } else {
@@ -1064,6 +1357,7 @@ function paintContext(el, who) {
     empireAliases: EMPIRE_ALIASES,
     crumbsFor: crumbsFor,
     businessesFor: businessesFor,
+    navBizSource: navBizSource,
     paintBusiness: paintBusiness,
     parentHref: parentHref,
     backHref: backHref,

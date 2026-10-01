@@ -1,0 +1,43 @@
+{
+  "pack": "OWNER-UX-PETTY-MOBILE-1",
+  "stamped_at": "2026-10-02T07:26:00+08:00",
+  "decision": "2026-10-02 PICK OWNER-UX-PETTY-MOBILE-1",
+  "owner_order": "OWNER-ORDER-UX-RESET-MOBILE-COMMISSION-20261002",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "invented_float": false,
+  "prod_8787_mutated": false,
+  "parts": {
+    "owner_home_ux": "PASS",
+    "business_hierarchy": "PASS",
+    "context_switcher_hidden_for_owner": true,
+    "uma_petty_phone": "PASS",
+    "mobile_gate_overflow": false
+  },
+  "nav_top": ["owner", "ggv", "amg", "bzg"],
+  "bzg_outlets": [
+    "Uma Blu",
+    "Blu Zone Restaurant · PRE-OPENING",
+    "Pool Bar · PRE-OPENING",
+    "Merah · PRE-OPENING",
+    "Rooftop · PRE-OPENING",
+    "Room Service · PRE-OPENING",
+    "Catering · PRE-OPENING"
+  ],
+  "tests": {
+    "test_owner_ux_petty_mobile_1.py": {"pass": 49, "fail": 0},
+    "test_wolf_global_app_shell_20260930.py": {"pass": 42, "fail": 0},
+    "test_wolf_nav_authority_20260930.py": {"pass": 31, "fail": 0}
+  },
+  "shots": [
+    "docs/wolf/ops/shots/owneruxpetty1-home-desktop.png",
+    "docs/wolf/ops/shots/owneruxpetty1-home-phone.png",
+    "docs/wolf/ops/shots/owneruxpetty1-petty-desktop.png",
+    "docs/wolf/ops/shots/owneruxpetty1-petty-phone.png"
+  ],
+  "health": {
+    "8788": 200,
+    "8787": 200
+  },
+  "next": "Peaches gives Matt only Beta Petty URL + short phone instruction; staff_ready stays false until PASS"
+}

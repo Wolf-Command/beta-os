@@ -14,27 +14,64 @@
     --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
-  body { margin: 0 auto; max-width: 960px; padding: 16px 16px 80px; background: var(--bg); color: var(--text); font-family: var(--font); }
-  h1 { font-size: 1.35rem; margin: 0 0 4px; }
+  body {
+    margin: 0 auto; max-width: 1360px; padding: 18px 24px 88px;
+    background: var(--bg); color: var(--text); font-family: var(--font);
+  }
+  h1 { font-size: 1.55rem; margin: 0 0 4px; letter-spacing: -0.01em; }
   h1 span { color: var(--accent); }
-  h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
-  .lede, .note, .meta { color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
-  .banner { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: 0.88rem; }
+  h2 { font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 22px 0 10px; }
+  .lede, .note, .meta { color: var(--muted); font-size: 0.88rem; line-height: 1.45; }
+  .banner { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin: 12px 0; font-size: 0.9rem; }
   .banner.warn { border-color: rgba(224,177,90,0.55); color: var(--warn); }
-  .card { border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; padding: 12px; margin-top: 8px; }
+  .card { border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; padding: 14px; margin-top: 8px; }
   .card.loud { border-color: rgba(224,177,90,0.7); }
+  .card.finish { border-color: rgba(215,226,106,0.55); background: linear-gradient(180deg, #243018 0%, var(--bg2) 48%); }
   .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.75rem; margin: 0 4px 4px 0; color: var(--muted); }
   .pill.loud { color: var(--warn); border-color: rgba(224,177,90,0.55); }
   .freshness { display: inline-flex; align-items: center; gap: 8px; margin: 8px 0 4px; font-size: 0.85rem; }
   .freshness .badge { display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); }
   .freshness .badge.live { color: var(--ok); border-color: rgba(61,214,140,0.55); }
   .freshness .badge.stale { color: var(--danger); border-color: rgba(240,68,56,0.55); }
-  a.action { display: inline-flex; align-items: center; min-height: 44px; margin-top: 8px; text-decoration: none; border-radius: 10px; padding: 10px 12px; border: 1px solid #5d6b2a; background: #2d3816; color: var(--text); font-weight: 650; }
-  a.action.primary { border-color: var(--accent); }
+  a.action {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 48px; margin-top: 0; text-decoration: none; border-radius: 12px;
+    padding: 12px 16px; border: 1px solid #5d6b2a; background: #2d3816; color: var(--text); font-weight: 650;
+  }
+  a.action.primary {
+    border-color: var(--accent); background: #3a4518; color: #f7fbe6;
+    box-shadow: 0 0 0 1px rgba(215,226,106,0.25);
+    font-size: 1.02rem;
+  }
+  a.action.primary:hover { filter: brightness(1.06); }
+  .hero {
+    display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr));
+    gap: 12px; margin: 16px 0 8px;
+  }
+  .hero .card { margin-top: 0; min-height: 148px; display: flex; flex-direction: column; }
+  .hero .card .lede { flex: 1; }
+  .hero .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
   .err { color: var(--danger); white-space: pre-wrap; font-size: 0.85rem; }
   .pct { font-size: 1.6rem; margin: 4px 0; }
-  .answers { display: grid; gap: 8px; }
-  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .answers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .finish-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .attn-strip {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 8px 0 4px;
+  }
+  .attn-card {
+    border: 1px solid var(--border); background: var(--bg2); border-radius: 12px;
+    padding: 12px 13px; min-height: 110px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .attn-card.loud { border-color: rgba(224,177,90,0.7); }
+  .attn-card h3 { margin: 0; font-size: 0.95rem; }
+  .attn-card .attn-val { font-weight: 650; font-size: 0.92rem; line-height: 1.3; flex: 1; margin: 0; }
+  .attn-card .attn-why { font-size: 0.78rem; color: var(--muted); line-height: 1.35; margin: 0;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .attn-card a.attn-go { color: var(--accent); font-weight: 650; text-decoration: none; font-size: 0.82rem;
+    min-height: 32px; display: inline-flex; align-items: center; }
+  .finish-field { margin: 6px 0; font-size: 0.88rem; line-height: 1.4; }
+  .finish-field strong { color: var(--accent); font-weight: 650; margin-right: 6px; letter-spacing: 0.02em; font-size: 0.72rem; text-transform: uppercase; }
   .q { font-weight: 700; margin: 0 0 4px; }
   details { margin-top: 16px; }
   summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--muted); }
@@ -43,19 +80,94 @@
   #freshness-badge[data-display-state="STALE"] { border-color: rgba(224,177,90,0.55); }
   #freshness-badge[data-display-state="LIVE"],
   #freshness-badge[data-display-state="CURRENT"] { border-color: rgba(61,214,140,0.4); }
-  @media (max-width: 860px) {
-    body { max-width: 100%; padding: 12px 12px 80px; }
-    .grid { grid-template-columns: 1fr; }
+
+  .pulse-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin: 8px 0 4px;
+  }
+  .pulse-tile {
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    border-radius: 12px;
+    padding: 12px 12px 10px;
+    min-height: 118px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .pulse-tile.loud { border-color: rgba(224,177,90,0.7); }
+  .pulse-tile .pulse-what {
+    font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--muted); margin: 0;
+  }
+  .pulse-tile .pulse-value {
+    font-size: 0.95rem; font-weight: 650; line-height: 1.35; margin: 2px 0;
+    flex: 1;
+    display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+    word-break: break-word;
+  }
+  .pulse-tile[data-pulse-state="LIVE"] { border-color: rgba(61,214,140,0.35); }
+  .pulse-tile[data-pulse-state="PARTIAL"] { border-color: rgba(224,177,90,0.4); }
+  .pulse-tile[data-pulse-state="EMPTY"],
+  .pulse-tile[data-pulse-state="BLOCKED"] { border-color: rgba(240,68,56,0.35); }
+  .pulse-tile .pulse-why { font-size: 0.76rem; color: var(--muted); line-height: 1.35; margin: 0;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .pulse-tile a.pulse-where {
+    display: inline-flex; align-items: center; min-height: 36px;
+    margin-top: 4px; font-size: 0.82rem; font-weight: 600;
+    color: var(--accent); text-decoration: none;
+  }
+  .pulse-tile a.pulse-where:hover { text-decoration: underline; }
+  .pill[data-mark="LIVE"] { color: var(--ok); border-color: rgba(61,214,140,0.55); }
+  .pill[data-mark="PARTIAL"] { color: var(--warn); border-color: rgba(224,177,90,0.55); }
+  .pill[data-mark="EMPTY"], .pill[data-mark="BLOCKED"] { color: var(--danger); border-color: rgba(240,68,56,0.45); }
+  @media (max-width: 980px) {
+    body { max-width: 100%; padding: 14px 14px 88px; }
+    .hero, .answers, .finish-grid, .grid, .pulse-strip, .attn-strip { grid-template-columns: 1fr; }
+  }
+  @media (min-width: 981px) and (max-width: 1180px) {
+    .pulse-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .finish-grid, .attn-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1181px) {
+    .pulse-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   }
 </style>
 </head>
 <body data-wolf-page-type="DASHBOARD" data-wolf-org="WOLF/GROUP" data-wolf-shell="global" data-wolf-home-primary="empire">
-  <nav class="wolf-crumb" aria-label="Org context" style="font-size:0.75rem;color:var(--muted);margin:0 0 8px;letter-spacing:0.02em">WOLF › GROUP › Owner Command</nav>
-  <h1>Owner Command <span>· Beta</span></h1>
-  <p class="lede">Bound beta-owner-safe. Pulse and exceptions for GGV, AMG, and BZG. Unknown stays UNKNOWN. Missing stays MISSING. No manufactured green KPI. No payment, bank, Zayen, HR, or trading on this desk.</p>
-  <p class="meta" id="honesty-flags">staff_ready=false · human_commissioned=false · freshness from real stamps only · no invented KPIs · DASH-LIVE-1</p>
-  <div id="freshness-badge" data-freshness-badge data-surface="owner-command" aria-live="polite"><p class="meta">Loading freshness…</p></div>
-  <p><a class="action" href="/finish-war-room">Finish war room</a></p>
+  <nav class="wolf-crumb" aria-label="Org context" style="font-size:0.75rem;color:var(--muted);margin:0 0 8px;letter-spacing:0.02em">WOLF › HOME › Owner Home</nav>
+  <h1>Owner Home</h1>
+  <p class="lede">How are the businesses. What is wrong. What needs you. What money or risk. What is blocked.</p>
+
+  <h2>What needs you</h2>
+  <p class="note">Decisions and exceptions waiting on you — one hop to the desk that can act.</p>
+  <div class="attn-strip" id="attn-strip" aria-label="Exceptions and Needs You"><p class="meta">Loading…</p></div>
+
+  <section class="hero" aria-label="Owner start actions">
+    <article class="card finish">
+      <h3>Needs you now</h3>
+      <p class="lede">Decisions and finish items that only you can close.</p>
+      <a class="action primary" href="/staff-ops-routing" id="cta-needs-you">Open Needs You</a>
+    </article>
+    <article class="card">
+      <h3>My Work</h3>
+      <p class="lede">Work assigned to you.</p>
+      <a class="action" href="/my-work">Open My Work</a>
+    </article>
+    <article class="card">
+      <h3>Finish Wolf</h3>
+      <p class="lede">Owner proof queue — capture real evidence only.</p>
+      <a class="action" href="/finish-war-room" id="cta-finish-wolf">Open Finish Wolf</a>
+    </article>
+  </section>
+
+  <h2>How are my businesses</h2>
+  <p class="note">Pulse glance. Unknown facts may say Unknown — that is not the subject of the page.</p>
+  <div class="pulse-strip" id="live-pulse" aria-label="Owner live pulse" aria-live="polite"><p class="meta">Loading pulse…</p></div>
+
+  <h2>Quick answers</h2>
   <section id="answers" class="answers">
     <article class="card"><p class="q">Are my businesses okay?</p><p data-answer="okay">Loading…</p></article>
     <article class="card"><p class="q">What changed?</p><p data-answer="changed">Loading…</p></article>
@@ -63,32 +175,66 @@
     <article class="card"><p class="q">What needs my decision?</p><p data-answer="decision">Loading…</p></article>
     <article class="card"><p class="q">Where is money at risk?</p><p data-answer="money">Loading…</p></article>
     <article class="card"><p class="q">Who or what is blocked?</p><p data-answer="blocked">Loading…</p></article>
-    <article class="card"><p class="q">Are we less dependent on me?</p><p data-answer="dependency">Loading…</p></article>
   </section>
+
+  <h2>Personal</h2>
+  <p class="note">Trading · Fitness · Radar · Travel · Learning.</p>
+  <div class="finish-grid" id="personal-command" aria-label="Personal Command">
+    <article class="card">
+      <h3>Trading</h3>
+      <p class="lede">Paper RO desk — Holdings / Journal / TTC. No live broker.</p>
+      <a class="action" href="/owner/trading">Open Trading</a>
+    </article>
+    <article class="card">
+      <h3>Fitness</h3>
+      <p class="lede">Spartacus RO — Today / Program / Peptides. Fitness ≠ HR.</p>
+      <p class="meta" id="fitness-glance">Loading fitness glance…</p>
+      <a class="action" href="/owner/fitness">Open Fitness</a>
+    </article>
+    <article class="card">
+      <h3>Radar</h3>
+      <p class="lede">Tonight / this week RO desk — pulse · 12WY · Mars · wire · exceptions. PARTIAL · no fake scores.</p>
+      <p class="meta" id="radar-glance">Loading radar glance…</p>
+      <a class="action" href="/owner/radar">Open Radar</a>
+    </article>
+    <article class="card">
+      <h3>Travel</h3>
+      <p class="lede">Draft holidays RO — no book · no spend. PARTIAL.</p>
+      <p class="meta" id="travel-glance">Loading travel glance…</p>
+      <a class="action" href="/owner/travel">Open Travel</a>
+    </article>
+    <article class="card">
+      <h3>Learning</h3>
+      <p class="lede">Tracks + TTC paper RO — nothing trades. PARTIAL.</p>
+      <p class="meta" id="learning-glance">Loading learning glance…</p>
+      <a class="action" href="/owner/learning">Open Learning</a>
+    </article>
+  </div>
+
+  <h2>Finish Wolf</h2>
+  <p class="note">Owner proof items. Status stays open until you record real evidence.</p>
+  <div id="finish-wolf-cards" class="finish-grid" aria-live="polite"><p class="meta">Loading…</p></div>
+
   <div id="command"></div>
   <div id="msg"></div>
 
   <details>
-    <summary>System health</summary>
-    <p class="note">Secondary. A source stamp is not a business score. Not commissioned.</p>
+    <summary>System diagnostics</summary>
+    <p class="note">Engineering detail — not the normal Owner view. Unknown and stale stamps live here so they do not dominate Home.</p>
+    <div id="freshness-badge" data-freshness-badge data-surface="owner-command" aria-live="polite"><p class="meta">Loading freshness…</p></div>
+    <p class="meta" id="honesty-flags">Not ready for staff yet · Not human-commissioned · No invented numbers</p>
     <div id="wolf-truth" data-wolf-truth data-surface="empire"></div>
-  </details>
-
-  <details>
-    <summary>Ledger and pack handoffs</summary>
-    <p class="lede">Today, Radar honesty, 12-Week Year honesty, and pack handoffs. SYSTEM% comes from the Progress ledger. EMPTY is not 0%. CAP-STRAT stays at the ledger. Track D is parked.</p>
     <div class="banner warn" id="who">Loading…</div>
     <div id="pulse"></div>
     <h2>Next human action</h2>
     <div id="next"></div>
     <h2>Today · Progress</h2>
     <div id="today"></div>
-    <h2>Radar · CAP-STRAT-02</h2>
+    <h2>Radar</h2>
     <div id="radar"></div>
-    <h2>12-Week Year · CAP-STRAT-01</h2>
+    <h2>12-Week Year</h2>
     <div id="wy"></div>
     <h2>Pack handoffs</h2>
-    <p class="note">Read-only. An EMPTY card is not an invented count. Amounts stay off this desk.</p>
     <div id="handoffs"></div>
     <h2>Intel</h2>
     <div id="intel"></div>
@@ -263,7 +409,7 @@
       <h2>Needs you</h2>
       <div id="needs-you">${needBody}</div>
       <h2>Business pulse</h2>
-      <p class="note">The company cards above are the pulse. Open a company to leave this screen.</p>
+      <p class="note">Primary live pulse is the strip at the top of Owner Home. Company cards below remain the group status desk. Open a company to leave this screen.</p>
       <h2>What is going wrong</h2>
       <div id="operational-exceptions">${opsBody}</div>
       <h2>Exceptions</h2>
@@ -354,13 +500,13 @@
     $("today").innerHTML = `<div class="${loudClass(today).trim()}">${pill(today.status || "UNWIRED", today.loud)}${pct}<p>${esc(today.why || "")}</p><p class="meta">${esc(today.formula || "")}</p>${link(today.href || "/progress.html", "Open Progress", false)}</div>`;
 
     const radar = data.radar || {};
-    $("radar").innerHTML = `<div class="${loudClass(radar).trim()}">${pill(radar.display || "UNWIRED", radar.loud)} ${pill(radar.maturity || "UNKNOWN", false)}<p>${esc(radar.why || "")}</p><p class="meta">CAP-STRAT-02 · counts not invented · SYSTEM% not copied</p>${link(radar.href || "/radar-prove", "Open Radar prove", false)}</div>`;
+    $("radar").innerHTML = `<div class="${loudClass(radar).trim()}">${pill(radar.display || "UNWIRED", radar.loud)} ${pill(radar.maturity || "UNKNOWN", false)}<p>${esc(radar.why || "")}</p><p class="meta">CAP-STRAT-02 · counts not invented · SYSTEM% not copied</p>${link(radar.href || "/owner/radar", "Open Radar", false)}</div>`;
 
     const wy = data.twelve_wy || {};
     const score = wy.display === "WIRED" && wy.percent != null
       ? `<div class="pct">${esc(wy.percent)}%</div>`
       : `<div class="pct">${esc(wy.display || "UNWIRED")}</div>`;
-    $("wy").innerHTML = `<div class="${loudClass(wy).trim()}">${pill(wy.display || "UNWIRED", wy.loud)} ${pill(wy.maturity || "UNKNOWN", false)}${score}<p>${esc(wy.why || "")}</p><p class="meta">EMPTY is not 0%. Not PROVEN from this desk.</p>${link(wy.href || "/12wy-prove", "Open 12-Week Year prove", false)}</div>`;
+    $("wy").innerHTML = `<div class="${loudClass(wy).trim()}">${pill(wy.display || "UNWIRED", wy.loud)} ${pill(wy.maturity || "UNKNOWN", false)}${score}<p>${esc(wy.why || "")}</p><p class="meta">EMPTY is not 0%. Not PROVEN from this desk.</p>${link(wy.href || "/progress", "Open Progress", false)}</div>`;
 
     const cards = ((data.handoffs || {}).cards) || [];
     $("handoffs").innerHTML = cards.map((card) => {
@@ -380,7 +526,13 @@
     const items = block.items || [];
     const body = block.empty
       ? `<div class="card">${esc(block.empty_message || "Nothing here.")}</div>`
-      : items.map((it) => `<div class="card"><p>${esc(it.title)}</p></div>`).join("");
+      : items.map((it) => {
+          const href = it.href || it.open_href || (it.work_item_id ? ("/my-work/item/" + it.work_item_id) : (it.id && String(it.id).indexOf("WI-") === 0 ? ("/my-work/item/" + it.id) : null));
+          const inner = `<p>${esc(it.title || it.what || "")}</p>` + (it.status || it.status_label ? `<p class="meta">${esc(it.status_label || it.status)}</p>` : "") + (href ? `<p class="meta">Open action →</p>` : "");
+          return href
+            ? `<a class="card" href="${esc(href)}" style="display:block;text-decoration:none;color:inherit">${inner}</a>`
+            : `<div class="card">${inner}</div>`;
+        }).join("");
     return `<h2>${esc(block.title || "")}</h2>${body}`;
   }
 
@@ -395,10 +547,273 @@
     $("pulse").innerHTML = `<div class="card loud">Pulse did not load. No figures were filled in.</div>`;
   });
 
+  // UX-PACK-06/08 — Fitness RO glance on Owner Home (best-effort; never invent)
+
+  function paintLivePulse(data) {
+    const box = document.getElementById("live-pulse");
+    if (!box) return;
+    if (!data || !data.ok || !Array.isArray(data.tiles)) {
+      box.innerHTML = `<article class="pulse-tile loud"><p class="pulse-what">Pulse</p><p class="pulse-value">EMPTY</p><p class="pulse-why">Pulse RO did not load. No figures were filled in.</p></article>`;
+      document.body.setAttribute("data-live-pulse", "empty");
+      return;
+    }
+    const counts = data.counts || {};
+    box.innerHTML = data.tiles.map((tile) => {
+      const state = tile.state || "EMPTY";
+      const loud = state === "EMPTY" || state === "BLOCKED" || tile.loud ? " loud" : "";
+      const val = tile.value != null && tile.value !== "" ? String(tile.value) : "Unknown";
+      const href = tile.href || tile.where || "#";
+      return `<article class="pulse-tile${loud}" data-pulse-id="${esc(tile.id || "")}" data-pulse-state="${esc(state)}">
+        <p class="pulse-what">${esc(tile.what || tile.id || "Tile")}</p>
+        <p class="pulse-value">${esc(val)}</p>
+        <p class="pulse-why">${esc(tile.why || "")}</p>
+        <a class="pulse-where" href="${esc(href)}">Open →</a>
+      </article>`;
+    }).join("") + (data.as_of_wita ? `<p class="meta" style="grid-column:1/-1;margin:4px 0 0">As of ${esc(data.as_of_wita)}</p>` : "");
+    document.body.setAttribute("data-live-pulse", "1");
+  }
+
+  fetch("/api/owner/pulse-ro", { credentials: "same-origin" })
+    .then((r) => r.json().then((j) => ({ ok: r.ok, j })))
+    .then(({ ok, j }) => {
+      if (!ok) throw new Error((j && (j.message || j.error)) || "pulse_ro_http");
+      paintLivePulse(j);
+    })
+    .catch((err) => {
+      paintLivePulse(null);
+      console.warn("pulse-ro", err);
+    });
+
+  function paintAttn(data) {
+    const box = document.getElementById("attn-strip");
+    if (!box) return;
+    if (!data || !data.ok) {
+      box.innerHTML = `<article class="attn-card loud"><h3>Attention ${mark("EMPTY")}</h3><p class="attn-why">Radar RO did not load. No exceptions invented.</p><a class="attn-go" href="/owner/radar">Open Exceptions →</a></article>`;
+      return;
+    }
+    const cards = [];
+    const ny = (data.cards || []).find((c) => c.id === "needs_you");
+    if (ny) {
+      const val = ny.value != null && String(ny.value) !== "null" ? String(ny.value) : (ny.state || "PARTIAL");
+      cards.push(`<article class="attn-card${ny.loud || ny.state === "EMPTY" || ny.state === "BLOCKED" ? " loud" : ""}">
+        <h3>Needs You ${mark(ny.state || "PARTIAL")}</h3>
+        <p class="attn-val">${esc(val)}</p>
+        <p class="attn-why">${esc(ny.why || "Connective counts only. No invented urgency.")}</p>
+        <a class="attn-go" href="${esc(ny.href || "/staff-ops-routing")}">Open Needs You →</a>
+      </article>`);
+    }
+    const blocked = (data.cards || []).filter((c) => String(c.id || "").startsWith("ex_") && c.state === "BLOCKED").slice(0, 2);
+    blocked.forEach((c) => {
+      const val = c.value != null && String(c.value) !== "null" ? String(c.value) : c.state;
+      cards.push(`<article class="attn-card loud">
+        <h3>${esc(c.what || "Exception")} ${mark(c.state || "BLOCKED")}</h3>
+        <p class="attn-val">${esc(val)}</p>
+        <p class="attn-why">${esc(c.why || "")}</p>
+        <a class="attn-go" href="${esc(c.href || "/owner/radar")}">Do this →</a>
+      </article>`);
+    });
+    if (!blocked.length) {
+      cards.push(`<article class="attn-card">
+        <h3>Exceptions ${mark("PARTIAL")}</h3>
+        <p class="attn-val">${esc(String((data.exceptions_ref && data.exceptions_ref.operational_count) != null ? (data.exceptions_ref.operational_count + " operational on board") : "Open exceptions desk"))}</p>
+        <p class="attn-why">Severity MISSING when not on record. Not invented CRITICAL.</p>
+        <a class="attn-go" href="/owner/radar">Open Exceptions →</a>
+      </article>`);
+    }
+    // ensure at least 3 glance slots: pad with Radar link
+    if (cards.length < 3) {
+      cards.push(`<article class="attn-card">
+        <h3>Radar desk ${mark("PARTIAL")}</h3>
+        <p class="attn-val">Tonight / this week RO deepen</p>
+        <p class="attn-why">12WY · Mars · wire · pulse honesty. No fake green scores.</p>
+        <a class="attn-go" href="/owner/radar">Open Radar →</a>
+      </article>`);
+    }
+    box.innerHTML = cards.slice(0, 3).join("");
+  }
+
+  fetch("/api/owner/radar-ro", { credentials: "same-origin" })
+    .then((r) => r.json().then((j) => ({ ok: r.ok, j })))
+    .then(({ ok, j }) => {
+      paintAttn(ok ? j : null);
+      const el = document.getElementById("radar-glance");
+      if (!el) return;
+      if (!ok || !j || !j.ok) {
+        el.textContent = "Radar RO unavailable · no invented scores.";
+        return;
+      }
+      const c = j.counts || {};
+      el.textContent = `PARTIAL · ${c.tiles || 0} cards · LIVE ${c.LIVE ?? "—"} · EMPTY ${c.EMPTY ?? "—"} · BLOCKED ${c.BLOCKED ?? "—"}`;
+    })
+    .catch((err) => {
+      paintAttn(null);
+      const el = document.getElementById("radar-glance");
+      if (el) el.textContent = "Radar glance did not load.";
+      console.warn("radar-ro", err);
+    });
+
+  fetch("/api/owner/fitness-ro", { credentials: "same-origin" })
+    .then((r) => r.json().then((j) => ({ ok: r.ok, j })))
+    .then(({ ok, j }) => {
+      const el = document.getElementById("fitness-glance");
+      if (!el) return;
+      if (!ok || !j || !j.ok) {
+        el.textContent = "Fitness RO unavailable · no invented day.";
+        return;
+      }
+      const d = j.today_day || {};
+      const plan = j.today_plan || {};
+      el.textContent = (d.date ? ("Day " + (d.day_num != null ? d.day_num : "?") + " · " + d.date) : "No day row")
+        + " · wo1 " + (d.wo1_done ? "done" : "open")
+        + " · wo2 " + (d.wo2_done ? "done" : "open")
+        + " · plan tasks " + (plan.task_count != null ? plan.task_count : "—");
+    })
+    .catch(() => {
+      const el = document.getElementById("fitness-glance");
+      if (el) el.textContent = "Fitness glance did not load.";
+    });
+    fetch("/api/owner/travel-ro", { credentials: "same-origin" })
+      .then((r) => r.json().then((j) => ({ ok: r.ok, j })))
+      .then(({ ok, j }) => {
+        const el = document.getElementById("travel-glance");
+        if (!el) return;
+        if (!ok || !j || !j.ok) {
+          el.textContent = "Travel RO unavailable · no invented trips.";
+          return;
+        }
+        const tiles = j.tiles || [];
+        const party = (j.party && j.party.label) || "party";
+        el.textContent = `PARTIAL · ${tiles.length} draft tiles · ${party}`;
+      })
+      .catch(() => {
+        const el = document.getElementById("travel-glance");
+        if (el) el.textContent = "Travel glance did not load.";
+      });
+    fetch("/api/owner/learning-ro", { credentials: "same-origin" })
+      .then((r) => r.json().then((j) => ({ ok: r.ok, j })))
+      .then(({ ok, j }) => {
+        const el = document.getElementById("learning-glance");
+        if (!el) return;
+        if (!ok || !j || !j.ok) {
+          el.textContent = "Learning RO unavailable · no invented tracks.";
+          return;
+        }
+        const tracks = (j.tracks && j.tracks.tracks) || [];
+        const inbox = (j.inbox && j.inbox.counts && j.inbox.counts.all) || 0;
+        el.textContent = `PARTIAL · ${tracks.length} tracks · inbox ${inbox} · TTC paper`;
+      })
+      .catch(() => {
+        const el = document.getElementById("learning-glance");
+        if (el) el.textContent = "Learning glance did not load.";
+      });
+
+
+
   api("/api/owner/empire-pack").then(show).catch((err) => {
     $("who").textContent = "This desk did not load.";
     $("msg").innerHTML = `<p class="err">${esc(err.message || "failed")}</p>`;
   });
+
+  function finishField(label, value) {
+    const v = (value == null || value === "") ? "—" : String(value);
+    return `<p class="finish-field"><strong>${esc(label)}</strong>${esc(v)}</p>`;
+  }
+
+  function renderNeedsMatt(items, sourceLabel) {
+    const box = $("finish-wolf-cards");
+    if (!box) return;
+    if (!items || !items.length) {
+      box.innerHTML = `<div class="card"><p>No open Needs Matt items were readable. Nothing was invented. Open FINISH WOLF for the full desk.</p><a class="action primary" href="/finish-war-room">Open FINISH WOLF</a></div>`;
+      return;
+    }
+    const essentials = [];
+    const optionals = [];
+    let inOpt = false;
+    for (const item of items) {
+      if (item && item._section === "optional") { inOpt = true; continue; }
+      if (inOpt || item.optional || item.status === "OPTIONAL_NON_GATING") optionals.push(item);
+      else essentials.push(item);
+    }
+    function cardHtml(item, tone) {
+      const urls = (item.urls && (item.urls.external || item.urls.local)) || item.open_urls || [];
+      const where = Array.isArray(urls) && urls.length
+        ? urls[0]
+        : (item.open_href || item.route || item.href || "—");
+      const why = item.why_blocks_completion || item.why || item.check || item.do_this && item.do_this[0] || item.note || "";
+      const after = (item.evidence_to_capture && item.evidence_to_capture.join("; "))
+        || item.what_happens_next
+        || "Record evidence in MY COMMISSIONING. Do not invent PASS.";
+      const status = item.status || item.status_label || "OPEN";
+      const when = item.updated_at_wita || item.as_of || item.time || "Queue as of Needs Matt file";
+      const what = item.title || item.task || item.what || item.id || "Needs Matt";
+      const border = tone === "optional" ? "border-color:#6b7280;opacity:0.85" : "";
+      return `<article class="card" style="${border}">
+        <div class="row"><strong>${what}</strong><span class="pill">${status}</span></div>
+        <p class="note">${why}</p>
+        <p class="meta">Where: ${where}</p>
+        <p class="meta">Next: ${after}</p>
+        <p class="meta">${when}</p>
+        <a class="action primary" href="/finish-war-room">FINISH WOLF desk</a>
+      </article>`;
+    }
+    let html = essentials.map((it) => cardHtml(it, "essential")).join("");
+    if (optionals.length) {
+      html += `<div class="card" style="border-style:dashed;opacity:0.9"><strong>Optional / non-gating</strong><p class="note">Not Finish Wolf blockers. Do only if useful.</p></div>`;
+      html += optionals.map((it) => cardHtml(it, "optional")).join("");
+    }
+    box.innerHTML = html;
+  }
+
+  async function loadFinishWolf() {
+    // Prefer live commissioning API (Owner session). Fall back to mirrored Needs Matt JSON.
+    try {
+      const data = await api("/api/progress/commissioning");
+      const cards = (data.cards || data.active_cards || []).filter((c) =>
+        String(c.audience || "").toUpperCase() === "NEEDS_MATT"
+        || String(c.person_to_test || "").toLowerCase() === "matt"
+      );
+      if (cards.length) {
+        renderNeedsMatt(cards.map((c) => ({
+          id: c.id,
+          title: c.task || c.title,
+          who: c.person_to_test || "Matt (Owner)",
+          why_blocks_completion: Array.isArray(c.do_this) ? c.do_this[0] : (c.check || ""),
+          open_href: c.open_href || c.route,
+          status: c.status || "READY_TO_TEST",
+          evidence_to_capture: c.check ? [c.check] : ["Record in MY COMMISSIONING"],
+          what_happens_next: "Do the steps, capture evidence, submit feedback. Do not invent PASS."
+        })), "Commissioning queue");
+        return;
+      }
+    } catch (err) {
+      /* fall through — missing auth or empty */
+    }
+    try {
+      const res = await fetch("/assets/needs-matt-queue.json?v=20261001-fw3", { headers: { Accept: "application/json" } });
+      const data = await res.json().catch(() => ({}));
+      const items = data.items || [];
+      const optional = data.optional_non_gating || [];
+      const stamp = data.updated_at_wita || data.generated_at_wita || "";
+      const mapped = items.map((it) => Object.assign({}, it, {
+        status: it.status || "OPEN",
+        updated_at_wita: stamp
+      }));
+      // Optional non-gating listed separately (not Finish blockers)
+      const optMapped = optional.map((it) => Object.assign({}, it, {
+        title: it.title || it.id,
+        status: "OPTIONAL_NON_GATING",
+        optional: true,
+        why_blocks_completion: it.note || "Optional / non-gating — not a Finish Wolf blocker",
+        updated_at_wita: stamp
+      }));
+      renderNeedsMatt(mapped.concat(optMapped.length ? [{_section: "optional"}].concat(optMapped) : []), "Needs Matt P0");
+    } catch (err2) {
+      renderNeedsMatt([], "");
+    }
+  }
+
+  loadFinishWolf();
+
 })();
 </script>
 </body>

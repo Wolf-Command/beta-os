@@ -28,7 +28,7 @@ Coral landing = Atrium/AMG Today/Operations (/amg-ops-pack). Fixture PERS-MISA.
 Haikal landing = Content (/content-2.0) under Intelligence→Content. No Owner Intel admin.
 Progress under SYSTEM only (Owner). Staff hide SYSTEM admin via nav. Client fail-closed.
 RHC: breadcrumbs · UP/BACK/HOME · multi-assignment context switcher · business switcher (IA∩clearance) · responsive shell.
-Wave 8: travel/mila/amanda/kuta-rates NOT primary; P0 re-entry: trading→/owner/trading, spartacus→/owner/fitness.
+Wave 8: mila/amanda NOT primary; P0 re-entry: trading/fitness/travel/learning + habitat-investment + kuta-rates + amg/bzg/ggv-voice + gatekeeper/event-bus/peptide/holdings/pipeline-trio (PARTIAL).
 Hidden ≠ deleted — soft redirect into Empire (/wolf); no new sprawl pages.
 Route merge: redirect > delete. mgmt-cluster → BU parents; legacy uma → /bzg/uma-blu;
 dashboards/*.html → clean URLs; radar → Empire priorities; content brand peers → content-2.0.
@@ -52,7 +52,7 @@ SLICE_PRIOR_ROUTE = "wolf_route_merge_retire_redirect"
 SLICE_PRIOR_PERMS = "wolf_permissions_audience_prove"
 SLICE_PRIOR_RHC = "wolf_responsive_v1_prove"
 SLICE_PRIOR_WAVE8 = "wolf_specialist_nav_v8"
-CACHE_TOKEN = "20260930-global-shell1"
+CACHE_TOKEN = "20261002-owner-ux-petty"
 SCHEMA_ID = "wolf.shell-whoami.v1"
 EVIDENCE_DIR = Path(__file__).resolve().parents[2] / "docs" / "deliveries" / "evidence" / "wolf-rhc-v1-20260922"
 V1_READY_REQUIRES: tuple[str, ...] = (
@@ -71,6 +71,8 @@ EMPIRE_HREF = "/owner-empire-pack"
 WOLF_ALIAS = "/wolf"
 EMPIRE_ALIASES: frozenset[str] = frozenset({EMPIRE_HREF, WOLF_ALIAS})
 NEEDS_YOU_HREF = "/staff-ops-routing"
+FINISH_WOLF_HREF = "/finish-war-room"
+MY_WORK_HREF = "/my-work"
 PROGRESS_HREF = "/progress"
 INTEGRATIONS_HREF = "/integration-health"
 SALE_HREF = "/sale-evidence-pack"
@@ -84,36 +86,72 @@ IA_TREE: list[dict[str, Any]] = [
         "items": [
             {
                 "href": EMPIRE_HREF,
-                "title": "Empire Pulse",
+                "title": "Owner Home",
                 "key": "empire",
                 "primary": True,
                 "aliases": [WOLF_ALIAS],
             },
+            {
+                "href": FINISH_WOLF_HREF,
+                "title": "FINISH WOLF",
+                "key": "finish_wolf",
+                "audience": "owner",
+                "note": "Owner finish desk — Needs Matt commissioning queue",
+            },
+            {"href": MY_WORK_HREF, "title": "My Work", "key": "my_work"},
             {"href": NEEDS_YOU_HREF, "title": "Needs You", "key": "needs_you"},
+            # UX-PACK-07/11: Habitat Investment still HIDE_UNTIL_USEFUL; Travel/Learning now under PERSONAL
+        ],
+    },
+    {
+        "id": "personal",
+        "title": "PERSONAL",
+        "items": [
             {
                 "href": "/owner/trading",
-                "title": "Trading (Owner)",
+                "title": "Trading",
                 "key": "owner_trading",
                 "audience": "owner",
-                "migration_state": "PARTIAL",
             },
             {
                 "href": "/owner/fitness",
-                "title": "Fitness (Owner)",
+                "title": "Fitness",
                 "key": "owner_fitness",
                 "audience": "owner",
-                "migration_state": "PARTIAL",
             },
+            {
+                "href": "/owner/radar",
+                "title": "Radar",
+                "key": "owner_radar",
+                "audience": "owner",
+                "note": "Owner Radar stub — not only radar-prove",
+            },
+            {
+                "href": "/owner/travel",
+                "title": "Travel",
+                "key": "owner_travel",
+                "audience": "owner",
+                "note": "PARTIAL RO — no book / no spend (UX-PACK-11)",
+            },
+            {
+                "href": "/owner/learning",
+                "title": "Learning",
+                "key": "owner_learning",
+                "audience": "owner",
+                "note": "PARTIAL RO — TTC paper only (UX-PACK-11)",
+            },
+            # UX-PACK-11: Travel/Learning unhidden as PARTIAL RO desks. Habitat Investment stays hidden.
         ],
     },
     {
         "id": "businesses",
         "title": "BUSINESSES",
+        # OWNER-UX-PETTY-MOBILE-1: top chips OWNER·GGV·AMG/ATRIUM·BZG.
+        # Uma Blu is a BZG outlet (not a peer of BZG). Routes stay live.
         "items": [
             {"href": "/ggv-ops-pack", "title": "GGV", "key": "ggv"},
-            {"href": "/amg-ops-pack", "title": "Atrium / AMG", "key": "amg"},
-            {"href": "/bzg", "title": "Blu Zone / BZG", "key": "bzg"},
-            {"href": "/bzg/uma-blu", "title": "Uma Blu · Today", "key": "uma"},
+            {"href": "/amg-ops-pack", "title": "AMG / Atrium", "key": "amg"},
+            {"href": "/bzg", "title": "BZG", "key": "bzg"},
         ],
     },
     {
@@ -122,15 +160,24 @@ IA_TREE: list[dict[str, Any]] = [
         "items": [
             {"href": INTEL_HREF, "title": "Intelligence Home", "key": "intel"},
             {"href": CONTENT_HREF, "title": "Content", "key": "content"},
+            # IA-TAB-INTEL-CONTENT-1: seat leaves off primary IA — tabs under /content-2.0; routes + AUDIENCE_PAGES kept
         ],
     },
     {
         "id": "system",
         "title": "SYSTEM",
         "items": [
+            # UX-PACK-IA-HIDE-DEAD-1: Gatekeeper + Event Bus HIDE_UNTIL_USEFUL — routes kept, off primary IA
             {"href": PROGRESS_HREF, "title": "Progress", "key": "progress"},
             {"href": INTEGRATIONS_HREF, "title": "Integrations", "key": "integrations"},
             {"href": SALE_HREF, "title": "Sale Readiness", "key": "sale"},
+            # IA-MERGE-BACKUP-SYSTEM-1: Backup/DR under SYSTEM; restore-drill stays HIDE
+            {
+                "href": "/ops/backup-health-1",
+                "title": "Backup / DR",
+                "key": "backup",
+                "note": "Health stamps — restore-drill remains HIDE_UNTIL_USEFUL",
+            },
         ],
     },
 ]
@@ -138,28 +185,27 @@ IA_TREE: list[dict[str, Any]] = [
 ALL_HREFS: list[str] = [
     it["href"] for sec in IA_TREE for it in sec["items"]
 ]
+# Outlet desks stay authorised even when not top IA chips (Uma under BZG).
+for _outlet_href in ("/bzg/uma-blu", "/bzg/outlets"):
+    if _outlet_href not in ALL_HREFS:
+        ALL_HREFS.append(_outlet_href)
 
 # Wave 8 — legacy specialist boards retired from primary IA (Target IA + merge plan #8).
 # Hidden ≠ deleted: soft-redirect into Empire HOME (/wolf). No new sprawl pages.
 # Trading execution stays refused elsewhere (Flint reserved) — these are chrome paths only.
 SPECIALIST_PRIMARY_SLUGS: frozenset[str] = frozenset(
     {
-        # P0 2026-09-30: trading + spartacus re-entered as Owner IA (/owner/trading, /owner/fitness).
-        # Still retired: travel / mila / amanda / kuta-rates.
-        "travel",
+        # P0 2026-09-30: trading/spartacus/travel/learning + kuta-rates re-entered.
+        # Still retired: mila / amanda.
         "mila",
         "amanda",
-        "kuta-rates",
     }
 )
 SPECIALIST_PRIMARY_KEYS: frozenset[str] = frozenset(
     {
-        # trading/spartacus removed — Owner keys owner_trading / owner_fitness are primary.
-        "travel",
+        # trading/spartacus/travel/learning/kuta-rates removed — primary Owner/AMG keys.
         "mila",
         "amanda",
-        "kuta_rates",
-        "kuta-rates",
         "specialist",
     }
 )
@@ -167,10 +213,8 @@ SPECIALIST_SOFT_REDIRECT_TARGET = WOLF_ALIAS
 # Paths that used to sit as Boards peers — redirect only; capability preserved via Empire.
 SPECIALIST_SOFT_REDIRECT_PATHS: frozenset[str] = frozenset(
     {
-        "/travel",
-        "/travel/",
-        "/travel.html",
-        "/dashboards/travel.html",
+        # /travel* removed — Owner Travel re-entry (/owner/travel).
+        # /kuta-rates* removed — AMG Kuta Rates PARTIAL re-entry.
         "/mila",
         "/mila/",
         "/mila.html",
@@ -179,10 +223,6 @@ SPECIALIST_SOFT_REDIRECT_PATHS: frozenset[str] = frozenset(
         "/amanda/",
         "/amanda.html",
         "/dashboards/amanda.html",
-        "/kuta-rates",
-        "/kuta-rates/",
-        "/kuta-rates.html",
-        "/dashboards/kuta-rates.html",
     }
 )
 
@@ -403,10 +443,162 @@ DASHBOARDS_HTML_CANONICAL: dict[str, str] = {
     "/owner-fitness-1": "/owner/fitness",
     "/owner-fitness-1/": "/owner/fitness",
     "/owner/fitness/": "/owner/fitness",
+    # UX-PACK-07 Owner Radar stub (Personal Command) — not radar-prove only
+    "/dashboards/owner-radar-1.html": "/owner/radar",
+    "/owner-radar-1.html": "/owner/radar",
+    "/owner-radar-1": "/owner/radar",
+    "/owner-radar-1/": "/owner/radar",
+    "/owner/radar/": "/owner/radar",
     "/spartacus": "/owner/fitness",
     "/spartacus/": "/owner/fitness",
     "/spartacus.html": "/owner/fitness",
     "/dashboards/spartacus.html": "/owner/fitness",
+    # P0 Owner Travel / Learning — legacy URLs → Owner canonical (not Empire).
+    "/dashboards/owner-travel-1.html": "/owner/travel",
+    "/owner-travel-1.html": "/owner/travel",
+    "/owner-travel-1": "/owner/travel",
+    "/owner-travel-1/": "/owner/travel",
+    "/owner/travel/": "/owner/travel",
+    "/travel": "/owner/travel",
+    "/travel/": "/owner/travel",
+    "/travel.html": "/owner/travel",
+    "/dashboards/travel.html": "/owner/travel",
+    "/dashboards/owner-learning-1.html": "/owner/learning",
+    "/owner-learning-1.html": "/owner/learning",
+    "/owner-learning-1": "/owner/learning",
+    "/owner-learning-1/": "/owner/learning",
+    "/owner/learning/": "/owner/learning",
+    "/learning": "/owner/learning",
+    "/learning/": "/owner/learning",
+    "/learning.html": "/owner/learning",
+    "/dashboards/learning.html": "/owner/learning",
+    # P0 Content Desk / Content Admin seats — historical Haikal/Misa URLs → seat canonical (roles, not person ACL).
+    "/dashboards/seat-content-desk-1.html": "/seats/content-desk",
+    "/seat-content-desk-1.html": "/seats/content-desk",
+    "/seat-content-desk-1": "/seats/content-desk",
+    "/seat-content-desk-1/": "/seats/content-desk",
+    "/seats/content-desk/": "/seats/content-desk",
+    "/haikal": "/seats/content-desk",
+    "/haikal/": "/seats/content-desk",
+    "/haikal.html": "/seats/content-desk",
+    "/haikal-desk": "/seats/content-desk",
+    "/haikal-desk/": "/seats/content-desk",
+    "/haikal-desk.html": "/seats/content-desk",
+    "/dashboards/haikal.html": "/seats/content-desk",
+    "/dashboards/haikal-desk.html": "/seats/content-desk",
+    "/dashboards/seat-content-admin-1.html": "/seats/content-admin",
+    "/seat-content-admin-1.html": "/seats/content-admin",
+    "/seat-content-admin-1": "/seats/content-admin",
+    "/seat-content-admin-1/": "/seats/content-admin",
+    "/seats/content-admin/": "/seats/content-admin",
+    "/misa": "/seats/content-admin",
+    "/misa/": "/seats/content-admin",
+    "/misa.html": "/seats/content-admin",
+    "/dashboards/misa.html": "/seats/content-admin",
+    # P0 Ads Studio / Resolve Studio seats — LEARN-only · no spend/publish · V1 aliases → seat canonical.
+    "/dashboards/seat-ads-studio-1.html": "/seats/ads-studio",
+    "/seat-ads-studio-1.html": "/seats/ads-studio",
+    "/seat-ads-studio-1": "/seats/ads-studio",
+    "/seat-ads-studio-1/": "/seats/ads-studio",
+    "/seats/ads-studio/": "/seats/ads-studio",
+    "/ads-studio": "/seats/ads-studio",
+    "/ads-studio/": "/seats/ads-studio",
+    "/ads-studio.html": "/seats/ads-studio",
+    "/dashboards/ads-studio.html": "/seats/ads-studio",
+    "/dashboards/seat-resolve-studio-1.html": "/seats/resolve-studio",
+    "/seat-resolve-studio-1.html": "/seats/resolve-studio",
+    "/seat-resolve-studio-1": "/seats/resolve-studio",
+    "/seat-resolve-studio-1/": "/seats/resolve-studio",
+    "/seats/resolve-studio/": "/seats/resolve-studio",
+    "/resolve-studio": "/seats/resolve-studio",
+    "/resolve-studio/": "/seats/resolve-studio",
+    "/resolve-studio.html": "/seats/resolve-studio",
+    "/dashboards/resolve-studio.html": "/seats/resolve-studio",
+    # P0 Habitat Investment 2026 — prefer existing habitat-investment* paths.
+    "/dashboards/habitat-investment-1.html": "/habitat-investment-2026",
+    "/habitat-investment-1.html": "/habitat-investment-2026",
+    "/habitat-investment-1": "/habitat-investment-2026",
+    "/habitat-investment-1/": "/habitat-investment-2026",
+    "/habitat-investment-2026/": "/habitat-investment-2026",
+    "/habitat-investment-2026.html": "/habitat-investment-2026",
+    "/dashboards/habitat-investment-2026.html": "/habitat-investment-2026",
+    "/habitat-investment": "/habitat-investment-2026",
+    "/habitat-investment/": "/habitat-investment-2026",
+    "/habitat-investment.html": "/habitat-investment-2026",
+    # P0 Kuta Rates — Wave8 soft-redirect retired; aliases → /kuta-rates.
+    "/dashboards/kuta-rates-1.html": "/kuta-rates",
+    "/kuta-rates-1.html": "/kuta-rates",
+    "/kuta-rates-1": "/kuta-rates",
+    "/kuta-rates-1/": "/kuta-rates",
+    "/kuta-rates/": "/kuta-rates",
+    "/kuta-rates.html": "/kuta-rates",
+    "/dashboards/kuta-rates.html": "/kuta-rates",
+    # P0 AMG/BZG/GGV Voice — no send; aliases → entity voice canonical.
+    "/dashboards/amg-voice-1.html": "/amg-voice",
+    "/amg-voice-1.html": "/amg-voice",
+    "/amg-voice-1": "/amg-voice",
+    "/amg-voice-1/": "/amg-voice",
+    "/amg-voice/": "/amg-voice",
+    "/amg-voice.html": "/amg-voice",
+    "/dashboards/amg-voice.html": "/amg-voice",
+    "/dashboards/bzg-voice-1.html": "/bzg-voice",
+    "/bzg-voice-1.html": "/bzg-voice",
+    "/bzg-voice-1": "/bzg-voice",
+    "/bzg-voice-1/": "/bzg-voice",
+    "/bzg-voice/": "/bzg-voice",
+    "/bzg-voice.html": "/bzg-voice",
+    "/dashboards/bzg-voice.html": "/bzg-voice",
+    "/dashboards/ggv-voice-1.html": "/ggv-voice",
+    "/ggv-voice-1.html": "/ggv-voice",
+    "/ggv-voice-1": "/ggv-voice",
+    "/ggv-voice-1/": "/ggv-voice",
+    "/ggv-voice/": "/ggv-voice",
+    "/ggv-voice.html": "/ggv-voice",
+    "/dashboards/ggv-voice.html": "/ggv-voice",
+    # P0 Gatekeeper / Event Bus / Peptide+Holdings aliases / pipeline trio honesty stubs.
+    "/dashboards/owner-gatekeeper-1.html": "/owner/gatekeeper",
+    "/owner-gatekeeper-1.html": "/owner/gatekeeper",
+    "/owner-gatekeeper-1": "/owner/gatekeeper",
+    "/owner-gatekeeper-1/": "/owner/gatekeeper",
+    "/owner/gatekeeper/": "/owner/gatekeeper",
+    "/gatekeeper": "/owner/gatekeeper",
+    "/gatekeeper/": "/owner/gatekeeper",
+    "/gatekeeper.html": "/owner/gatekeeper",
+    "/owner/peptide": "/owner/fitness",
+    "/owner/peptide/": "/owner/fitness",
+    "/owner/peptide.html": "/owner/fitness",
+    "/owner/holdings": "/owner/trading",
+    "/owner/holdings/": "/owner/trading",
+    "/owner/holdings.html": "/owner/trading",
+    "/dashboards/ops-event-bus-1.html": "/ops/event-bus",
+    "/ops-event-bus-1.html": "/ops/event-bus",
+    "/ops-event-bus-1": "/ops/event-bus",
+    "/ops-event-bus-1/": "/ops/event-bus",
+    "/ops/event-bus/": "/ops/event-bus",
+    "/event-bus": "/ops/event-bus",
+    "/event-bus/": "/ops/event-bus",
+    "/event-bus.html": "/ops/event-bus",
+    "/dashboards/ops-competitor-rates-pipeline-1.html": "/ops/competitor-rates-pipeline",
+    "/ops-competitor-rates-pipeline-1.html": "/ops/competitor-rates-pipeline",
+    "/ops-competitor-rates-pipeline-1": "/ops/competitor-rates-pipeline",
+    "/ops-competitor-rates-pipeline-1/": "/ops/competitor-rates-pipeline",
+    "/ops/competitor-rates-pipeline/": "/ops/competitor-rates-pipeline",
+    "/competitor-rates-pipeline": "/ops/competitor-rates-pipeline",
+    "/competitor-rates-pipeline/": "/ops/competitor-rates-pipeline",
+    "/dashboards/ops-rate-calendar-1.html": "/ops/rate-calendar",
+    "/ops-rate-calendar-1.html": "/ops/rate-calendar",
+    "/ops-rate-calendar-1": "/ops/rate-calendar",
+    "/ops-rate-calendar-1/": "/ops/rate-calendar",
+    "/ops/rate-calendar/": "/ops/rate-calendar",
+    "/rate-calendar": "/ops/rate-calendar",
+    "/rate-calendar/": "/ops/rate-calendar",
+    "/dashboards/ops-calendly-atrium-sync-1.html": "/ops/calendly-atrium-sync",
+    "/ops-calendly-atrium-sync-1.html": "/ops/calendly-atrium-sync",
+    "/ops-calendly-atrium-sync-1": "/ops/calendly-atrium-sync",
+    "/ops-calendly-atrium-sync-1/": "/ops/calendly-atrium-sync",
+    "/ops/calendly-atrium-sync/": "/ops/calendly-atrium-sync",
+    "/calendly-atrium-sync": "/ops/calendly-atrium-sync",
+    "/calendly-atrium-sync/": "/ops/calendly-atrium-sync",
     "/dashboards/esb-truth-1.html": "/ops/esb-truth-1",
     "/esb-truth-1.html": "/ops/esb-truth-1",
     "/esb-truth-1": "/ops/esb-truth-1",
@@ -611,6 +803,11 @@ V1_SUPERSEDED_BOARD_REDIRECTS: dict[str, str] = {
     "/bzg-finance": "/bzg/finance",
     "/bzg-finance.html": "/bzg/finance",
     "/dashboards/bzg-finance.html": "/bzg/finance",
+    # P0 UI-REAUDIT 20260930 — orphan short-path 404 → products board
+    "/amg-packages": "/amg-packages-products",
+    "/amg-packages/": "/amg-packages-products",
+    "/amg-packages.html": "/amg-packages-products",
+    "/dashboards/amg-packages.html": "/amg-packages-products",
 }
 
 
@@ -706,8 +903,8 @@ BZG_GRAMMAR: list[dict[str, Any]] = [
     {"key": "outlets", "label": "Outlets", "href": "/bzg/outlets", "state": "live"},
     {"key": "venue_pnl", "label": "Venue P&L", "href": "/bzg/venue-pnl", "state": "live"},
     {"key": "waste_yield", "label": "Waste / Yield", "href": "/bzg/waste-yield", "state": "live"},
-    {"key": "labor_cost", "label": "Labor Cost", "href": "/bzg/labor-cost-1", "state": "live"},
-    {"key": "inventory", "label": "Inventory", "href": "/bzg/inventory-truth-1", "state": "live"},
+    {"key": "labor_cost", "label": "Labor Cost", "href": "/bzg", "state": "live"},  # IA-HIDE-ORPHAN-PROVE-CRUMBS-2: prove leaf off grammar chrome
+    {"key": "inventory", "label": "Inventory", "href": "/bzg", "state": "live"},  # IA-HIDE-ORPHAN-PROVE-CRUMBS-2: prove leaf off grammar chrome
     {"key": "issues", "label": "Issues", "href": None, "state": "EMPTY"},
     {"key": "finance", "label": "Finance", "href": "/bzg/finance", "state": "live"},
     {"key": "people", "label": "People", "href": None, "state": "EMPTY"},
@@ -717,35 +914,55 @@ BZG_GRAMMAR: list[dict[str, Any]] = [
 ]
 
 UMA_GRAMMAR: list[dict[str, Any]] = [
+    # UX-PACK-03: desk tabs under /bzg/uma-blu (permissions unchanged).
     {"key": "today", "label": "Today", "href": "/bzg/uma-blu", "state": "live"},
-    {"key": "overview", "label": "Overview", "href": None, "state": "EMPTY"},
-    {"key": "operations", "label": "Operations", "href": None, "state": "EMPTY"},
     {"key": "bills", "label": "Bills", "href": "/bzg/uma-blu/bills", "state": "live"},
     {"key": "issues", "label": "Issues", "href": "/bzg/uma-blu/issues", "state": "live"},
     {"key": "petty", "label": "Petty", "href": "/bzg/uma-blu/petty", "state": "live"},
+    {"key": "evidence", "label": "Evidence", "href": "/bzg/uma-blu/evidence", "state": "live"},
+    {"key": "exceptions", "label": "Exceptions", "href": "/bzg/uma-blu/exceptions", "state": "live"},
     {"key": "recipes", "label": "Recipes", "href": "/bzg/uma-blu/recipes", "state": "live"},
+    {"key": "real", "label": "Real", "href": "/bzg/uma-blu/real", "state": "live"},
     {"key": "close", "label": "Close", "href": "/uma-blu-close", "state": "live"},
+    # Honest EMPTY retained (no page yet) — never fake %.
+    {"key": "overview", "label": "Overview", "href": None, "state": "EMPTY"},
+    {"key": "operations", "label": "Operations", "href": None, "state": "EMPTY"},
 ]
 
+# GGV business grammar
 # GGV business grammar — Overview live on existing /ggv-ops-pack.
 # Finance is the bounded nota desk (not Zayen books). Other slots stay EMPTY.
 GGV_GRAMMAR: list[dict[str, Any]] = [
+    # UX-PACK-04: pipeline/strategy/social merged into GGV hub tabs (visual).
+    # Finance stays live + SoD-gated exactly as today — auth matrices unchanged.
+    # IA-MERGE-GGV-SOCIAL-METRICOL-1: social (+ pipeline chrome) land on hub hashes; Metricool WRITE stays off.
+    # IA-MERGE-GGV-STRATEGY-HUB-1: strategy chrome -> hub #strategy; leaf /ggv-strategy-machine kept.
     {"key": "overview", "label": "Overview", "href": "/ggv-ops-pack", "state": "live"},
+    {"key": "pipeline", "label": "Pipeline", "href": "/ggv-ops-pack#pipeline", "state": "live"},
+    {"key": "strategy", "label": "Strategy", "href": "/ggv-ops-pack#strategy", "state": "live"},  # IA-MERGE-GGV-STRATEGY-HUB-1
+    {"key": "social", "label": "Social", "href": "/ggv-ops-pack#social", "state": "live"},
+    {"key": "finance", "label": "Finance", "href": "/ggv/finance", "state": "live"},
     {"key": "operations", "label": "Operations", "href": None, "state": "EMPTY"},
-    {"key": "pipeline", "label": "Pipeline", "href": "/ggv/pipeline-truth-1", "state": "live"},
     {"key": "people", "label": "People", "href": None, "state": "EMPTY"},
     {"key": "customers", "label": "Customers", "href": None, "state": "EMPTY"},
-    {"key": "finance", "label": "Finance", "href": "/ggv/finance", "state": "live"},
     {"key": "standards", "label": "Standards", "href": None, "state": "EMPTY"},
     {"key": "issues", "label": "Issues", "href": None, "state": "EMPTY"},
     {"key": "intelligence", "label": "Intelligence", "href": None, "state": "EMPTY"},
 ]
 
+# AMG / Atrium grammar
 # AMG / Atrium grammar — Overview+Operations soft-land on existing /amg-ops-pack (Today desk).
 # Finance nested/visible-only EMPTY — never money/Zayen execution. No fake %.
 AMG_GRAMMAR: list[dict[str, Any]] = [
+    # UX-PACK-04: day-ops/journey/packages/occ/kuta into AMG hub tabs (visual only).
+    # Finance remains EMPTY on this ops desk — never open hotel books here (SoD).
     {"key": "overview", "label": "Overview", "href": "/amg-ops-pack", "state": "live"},
     {"key": "operations", "label": "Operations", "href": "/amg-ops-pack", "state": "live"},
+    {"key": "day_ops", "label": "Day Ops", "href": "/amg-daily-ops-state", "state": "live"},
+    {"key": "journey", "label": "Journey", "href": "/amg-journey-workflow", "state": "live"},
+    {"key": "packages", "label": "Packages", "href": "/amg-packages-products", "state": "live"},
+    {"key": "occ", "label": "OCC", "href": "/amg-ops-pack#occ", "state": "live"},  # IA-ALIGN-AMG-OCC-GRAMMAR-1
+    {"key": "kuta", "label": "Kuta Rates", "href": "/amg-ops-pack#kuta", "state": "live"},  # IA-HIDE-ORPHAN-PROVE-CRUMBS-2 / align hub
     {"key": "people", "label": "People", "href": None, "state": "EMPTY"},
     {"key": "customers", "label": "Customers", "href": None, "state": "EMPTY"},
     {"key": "finance", "label": "Finance", "href": None, "state": "EMPTY"},
@@ -754,6 +971,7 @@ AMG_GRAMMAR: list[dict[str, Any]] = [
     {"key": "intelligence", "label": "Intelligence", "href": None, "state": "EMPTY"},
 ]
 
+# Intelligence grammar
 # Intelligence grammar — Home soft-land /intel-ops-pack; Content live /content-2.0.
 # Rest EMPTY (never fake %). Inherits requester perms — not a side door.
 INTEL_GRAMMAR: list[dict[str, Any]] = [
@@ -770,6 +988,8 @@ SYSTEM_GRAMMAR: list[dict[str, Any]] = [
     {"key": "progress", "label": "Progress", "href": PROGRESS_HREF, "state": "live"},
     {"key": "integrations", "label": "Integrations", "href": INTEGRATIONS_HREF, "state": "live"},
     {"key": "sale", "label": "Sale Readiness", "href": SALE_HREF, "state": "live"},
+    # IA-MERGE-BACKUP-SYSTEM-1
+    {"key": "backup", "label": "Backup / DR", "href": "/ops/backup-health-1", "state": "live"},
     {"key": "factory", "label": "Factory / Health", "href": None, "state": "EMPTY"},
 ]
 
@@ -787,12 +1007,22 @@ AUDIENCE_PAGES: dict[str, list[str]] = {
         INTEL_HREF,
         CONTENT_HREF,
     ],
+    # IA-HIDE-VOICE-ORPHAN-1: voice leaves HIDE_UNTIL_USEFUL — off audience chrome; routes + soft-land kept
     "OPERATOR": [NEEDS_YOU_HREF, "/bzg/uma-blu", "/bzg", "/bzg/recipe-builder"],
     "SPECIALIST_GGV": [NEEDS_YOU_HREF, "/ggv-ops-pack", "/ggv/finance"],
+    # IA-HIDE-ORPHAN-PROVE-CRUMBS-2: HIDE_UNTIL_USEFUL prove leaves off audience chrome; routes kept
     "SPECIALIST_AMG": [NEEDS_YOU_HREF, "/amg-ops-pack"],
     # Content crew: Content under Intelligence→Content + Needs You + assigned GGV brands.
     # Never Owner Intelligence Home (/intel-ops-pack) via nav alone.
-    "SPECIALIST_CONTENT": [NEEDS_YOU_HREF, CONTENT_HREF, "/ggv-ops-pack"],
+    "SPECIALIST_CONTENT": [
+        NEEDS_YOU_HREF,
+        CONTENT_HREF,
+        "/ggv-ops-pack",
+        "/seats/content-desk",
+        "/seats/content-admin",
+        "/seats/ads-studio",
+        "/seats/resolve-studio",
+    ],
     "SPECIALIST_FINANCE": [MY_WORK_HREF, "/ggv/finance"],
     # CORE-ENT-1: AMG primary + BZG finance entry; GGV stays off this audience.
     "SPECIALIST_ATRIUM_FINANCE": [MY_WORK_HREF, "/amg/finance", "/bzg/finance"],
@@ -818,6 +1048,7 @@ ROLE_AUDIENCE: dict[str, str] = {
     "ROLE-AMG-GM": "SPECIALIST_AMG",
     "ROLE-GGV-EXTERNAL-ACCOUNTANT": "SPECIALIST_FINANCE",
     "ROLE-GGV-FINANCE-OPERATOR": "SPECIALIST_FINANCE",
+    "ROLE-GGV-FINANCIAL-CONTROLLER": "SPECIALIST_FINANCE",
     "ROLE-AMG-FINANCE-OFFICER": "SPECIALIST_ATRIUM_FINANCE",
     "ROLE-AMG-FINANCIAL-CONTROLLER": "SPECIALIST_ATRIUM_FINANCE",
     "ROLE-AMG-ACCOUNTS-PAYABLE": "SPECIALIST_ATRIUM_FINANCE",
@@ -1019,6 +1250,23 @@ ROUTE_PARENT: dict[str, str | None] = {
     "/owner/exceptions-live-1": EMPIRE_HREF,
     "/owner/trading": EMPIRE_HREF,
     "/owner/fitness": EMPIRE_HREF,
+    "/owner/radar": EMPIRE_HREF,
+    "/owner/travel": EMPIRE_HREF,
+    "/owner/learning": EMPIRE_HREF,
+    "/seats/content-desk": CONTENT_HREF,
+    "/seats/content-admin": CONTENT_HREF,
+    "/seats/ads-studio": CONTENT_HREF,
+    "/seats/resolve-studio": CONTENT_HREF,
+    "/habitat-investment-2026": EMPIRE_HREF,
+    "/kuta-rates": "/amg-ops-pack",
+    "/amg-voice": "/amg-ops-pack",
+    "/bzg-voice": "/bzg",
+    "/ggv-voice": "/ggv-ops-pack",
+    "/owner/gatekeeper": EMPIRE_HREF,
+    "/ops/event-bus": INTEGRATIONS_HREF,
+    "/ops/competitor-rates-pipeline": "/amg-ops-pack",
+    "/ops/rate-calendar": "/amg-ops-pack",
+    "/ops/calendly-atrium-sync": "/amg-ops-pack",
     "/owner/exceptions": EMPIRE_HREF,
     "/ops/esb-truth-1": PROGRESS_HREF,
     "/ops/conn-health-1": PROGRESS_HREF,
@@ -1052,6 +1300,14 @@ ROUTE_PARENT: dict[str, str | None] = {
     "/lead-spine": "/ggv-ops-pack",
     "/amg-ops-pack": EMPIRE_HREF,
     "/amg-daily-ops-state": "/amg-ops-pack",
+    "/amg-journey-workflow": "/amg-ops-pack",
+    "/amg-packages-products": "/amg-ops-pack",
+    "/ggv-strategy-machine": "/ggv-ops-pack",
+    "/ggv-social": "/ggv-ops-pack",
+    "/bzg/uma-blu/real": "/bzg/uma-blu",
+    "/bzg/uma-blu/evidence": "/bzg/uma-blu",
+    "/bzg/uma-blu/exceptions": "/bzg/uma-blu",
+    "/bzg/uma-blu/recipes": "/bzg/uma-blu",
     "/amg/os-shell": "/amg-ops-pack",
     "/amg/occ-truth-1": "/amg-ops-pack",
     "/amg/occ-truth": "/amg-ops-pack",
@@ -1101,6 +1357,8 @@ ROUTE_PARENT: dict[str, str | None] = {
     PROGRESS_HREF: EMPIRE_HREF,
     INTEGRATIONS_HREF: PROGRESS_HREF,
     SALE_HREF: PROGRESS_HREF,
+    "/ops/backup-health-1": PROGRESS_HREF,  # IA-MERGE-BACKUP-SYSTEM-1
+    "/backup-health-1": PROGRESS_HREF,
 }
 
 # Breadcrumb trails (last crumb = current; href None = current page).
@@ -1121,11 +1379,105 @@ ROUTE_CRUMBS: dict[str, list[dict[str, Any]]] = {
     ],
     "/owner/trading": [
         {"label": "HOME", "href": WOLF_ALIAS},
+        {"label": "Personal", "href": EMPIRE_HREF},
         {"label": "Trading (Owner)", "href": None},
     ],
     "/owner/fitness": [
         {"label": "HOME", "href": WOLF_ALIAS},
+        {"label": "Personal", "href": EMPIRE_HREF},
         {"label": "Fitness (Owner)", "href": None},
+    ],
+    "/owner/radar": [
+        {"label": "HOME", "href": WOLF_ALIAS},
+        {"label": "Personal", "href": EMPIRE_HREF},
+        {"label": "Radar (Owner)", "href": None},
+    ],
+    "/owner/travel": [
+        {"label": "HOME", "href": WOLF_ALIAS},
+        {"label": "Travel (Owner)", "href": None},
+    ],
+    "/owner/learning": [
+        {"label": "HOME", "href": WOLF_ALIAS},
+        {"label": "Learning (Owner)", "href": None},
+    ],
+    "/seats/content-desk": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Intelligence", "href": INTEL_HREF},
+        {"label": "Content", "href": CONTENT_HREF},
+        {"label": "Content Desk (seat)", "href": None},
+    ],
+    "/seats/content-admin": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Intelligence", "href": INTEL_HREF},
+        {"label": "Content", "href": CONTENT_HREF},
+        {"label": "Content Admin (seat)", "href": None},
+    ],
+    "/seats/ads-studio": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Intelligence", "href": INTEL_HREF},
+        {"label": "Content", "href": CONTENT_HREF},
+        {"label": "Ads Studio (seat)", "href": None},
+    ],
+    "/seats/resolve-studio": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Intelligence", "href": INTEL_HREF},
+        {"label": "Content", "href": CONTENT_HREF},
+        {"label": "Resolve Studio (seat)", "href": None},
+    ],
+    "/habitat-investment-2026": [
+        {"label": "HOME", "href": WOLF_ALIAS},
+        {"label": "Habitat Investment (Owner)", "href": None},
+    ],
+    "/kuta-rates": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Atrium Management", "href": None},
+        {"label": "AMG", "href": "/amg-ops-pack"},
+        {"label": "Kuta Rates", "href": None},
+    ],
+    "/amg-voice": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Atrium Management", "href": None},
+        {"label": "AMG", "href": "/amg-ops-pack"},
+        {"label": "Voice (seat)", "href": None},
+    ],
+    "/bzg-voice": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Blu Zone", "href": "/bzg"},
+        {"label": "Voice (seat)", "href": None},
+    ],
+    "/ggv-voice": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Goss Group", "href": None},
+        {"label": "GGV", "href": "/ggv-ops-pack"},
+        {"label": "Voice (seat)", "href": None},
+    ],
+    "/owner/gatekeeper": [
+        {"label": "HOME", "href": WOLF_ALIAS},
+        {"label": "Gatekeeper (Owner)", "href": None},
+    ],
+    "/ops/event-bus": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "SYSTEM", "href": None},
+        {"label": "Integrations", "href": INTEGRATIONS_HREF},
+        {"label": "Event Bus", "href": None},
+    ],
+    "/ops/competitor-rates-pipeline": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Atrium Management", "href": None},
+        {"label": "AMG", "href": "/amg-ops-pack"},
+        {"label": "Competitor Rates Pipeline", "href": None},
+    ],
+    "/ops/rate-calendar": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Atrium Management", "href": None},
+        {"label": "AMG", "href": "/amg-ops-pack"},
+        {"label": "Rate Calendar DB", "href": None},
+    ],
+    "/ops/calendly-atrium-sync": [
+        {"label": "WOLF", "href": WOLF_ALIAS},
+        {"label": "Atrium Management", "href": None},
+        {"label": "AMG", "href": "/amg-ops-pack"},
+        {"label": "Calendly Atrium Sync", "href": None},
     ],
     "/ggv-ops-pack": [
         {"label": "WOLF", "href": WOLF_ALIAS},
@@ -1582,6 +1934,55 @@ ROUTE_CRUMBS: dict[str, list[dict[str, Any]]] = {
         {"label": "AMG", "href": "/amg-ops-pack"},
         {"label": "Daily Ops", "href": None},
     ],
+
+    "/amg-journey-workflow": [
+        {"label": "WOLF", "href": "/wolf"},
+        {"label": "Atrium Management", "href": "/amg-ops-pack"},
+        {"label": "AMG", "href": "/amg-ops-pack"},
+        {"label": "Journey", "href": None},
+    ],
+    "/amg-packages-products": [
+        {"label": "WOLF", "href": "/wolf"},
+        {"label": "Atrium Management", "href": "/amg-ops-pack"},
+        {"label": "AMG", "href": "/amg-ops-pack"},
+        {"label": "Packages", "href": None},
+    ],
+    "/ggv-strategy-machine": [
+        {"label": "WOLF", "href": "/wolf"},
+        {"label": "Goss Group", "href": "/ggv-ops-pack"},
+        {"label": "GGV", "href": "/ggv-ops-pack"},
+        {"label": "Strategy", "href": None},
+    ],
+    "/ggv-social": [
+        {"label": "WOLF", "href": "/wolf"},
+        {"label": "Goss Group", "href": "/ggv-ops-pack"},
+        {"label": "GGV", "href": "/ggv-ops-pack"},
+        {"label": "Social", "href": None},
+    ],
+    "/bzg/uma-blu/real": [
+        {"label": "WOLF", "href": "/wolf"},
+        {"label": "Blu Zone", "href": "/bzg"},
+        {"label": "Uma Blu", "href": "/bzg/uma-blu"},
+        {"label": "Real", "href": None},
+    ],
+    "/bzg/uma-blu/evidence": [
+        {"label": "WOLF", "href": "/wolf"},
+        {"label": "Blu Zone", "href": "/bzg"},
+        {"label": "Uma Blu", "href": "/bzg/uma-blu"},
+        {"label": "Evidence", "href": None},
+    ],
+    "/bzg/uma-blu/exceptions": [
+        {"label": "WOLF", "href": "/wolf"},
+        {"label": "Blu Zone", "href": "/bzg"},
+        {"label": "Uma Blu", "href": "/bzg/uma-blu"},
+        {"label": "Exceptions", "href": None},
+    ],
+    "/bzg/uma-blu/recipes": [
+        {"label": "WOLF", "href": "/wolf"},
+        {"label": "Blu Zone", "href": "/bzg"},
+        {"label": "Uma Blu", "href": "/bzg/uma-blu"},
+        {"label": "Recipes", "href": None},
+    ],
     "/amg/os-shell": [
         {"label": "WOLF", "href": WOLF_ALIAS},
         {"label": "Atrium Management", "href": None},
@@ -1858,6 +2259,12 @@ HONESTY_BASE: dict[str, Any] = {
     "direction_up_back_home": True,
     "context_switcher_multi_only": True,
     "business_switcher_from_ia": True,
+    "ia_intersect_pages_transitional": True,
+    "authority_nav_partial": True,
+    "authority_nav_source": "assignment_role_scope",
+    "authority_chrome_wired": True,
+    "authority_nav_sole_source": False,
+    "nav_status": "AUTHORITY_CHROME",
     "responsive_tokens_media": True,
     "responsive_shell_v1_prove": True,
     "deny_matrix_expanded": True,
@@ -2124,6 +2531,7 @@ _ASSIGNMENT_AUDIENCE_ROLES = frozenset(
         "ROLE-AMG-ACCOUNTS-RECEIVABLE",
         "ROLE-AMG-EXTERNAL-ACCOUNTANT",
         "ROLE-BZG-FINANCIAL-CONTROLLER",
+        "ROLE-GGV-FINANCIAL-CONTROLLER",
         "ROLE-BZG-EXTERNAL-ACCOUNTANT",
     }
 )
@@ -2221,6 +2629,7 @@ _ROLE_HREF: dict[str, str] = {
     "ROLE-BZG-FINANCIAL-CONTROLLER": "/bzg/finance",
     "ROLE-BZG-EXTERNAL-ACCOUNTANT": "/bzg/finance",
     "ROLE-GGV-FINANCE-OPERATOR": "/ggv/finance",
+    "ROLE-GGV-FINANCIAL-CONTROLLER": "/ggv/finance",
     "ROLE-GGV-EXTERNAL-ACCOUNTANT": "/ggv/finance",
 }
 
@@ -2619,19 +3028,87 @@ def _hello_for(person_id: str | None, audience: str) -> str:
 
 _BIZ_SHORT: dict[str, str] = {
     "ggv": "GGV",
-    "amg": "AMG",
+    "amg": "AMG / Atrium",
     "bzg": "BZG",
     "uma": "Uma Blu",
     "owner": "Owner",
     "empire": "Owner",
 }
 
+# BZG outlets exposed under the BZG chip (permission-filtered). PRE-OPENING stays labeled.
+# No invented operating desks for pre-open outlets — they land on /bzg/outlets.
+BZG_OUTLET_CHILDREN: list[dict[str, Any]] = [
+    {
+        "id": "uma",
+        "key": "uma",
+        "title": "Uma Blu",
+        "href": "/bzg/uma-blu",
+        "status": "OPEN",
+        "parent": "bzg",
+        "aliases": ["/bzg/uma-blu/", "/uma-blu"],
+    },
+    {
+        "id": "blu-zone-restaurant",
+        "key": "blu-zone-restaurant",
+        "title": "Blu Zone Restaurant",
+        "href": "/bzg/outlets",
+        "status": "PRE-OPENING",
+        "parent": "bzg",
+        "aliases": [],
+    },
+    {
+        "id": "pool-bar",
+        "key": "pool-bar",
+        "title": "Pool Bar",
+        "href": "/bzg/outlets",
+        "status": "PRE-OPENING",
+        "parent": "bzg",
+        "aliases": [],
+    },
+    {
+        "id": "merah",
+        "key": "merah",
+        "title": "Merah",
+        "href": "/bzg/outlets",
+        "status": "PRE-OPENING",
+        "parent": "bzg",
+        "aliases": [],
+    },
+    {
+        "id": "rooftop",
+        "key": "rooftop",
+        "title": "Rooftop",
+        "href": "/bzg/outlets",
+        "status": "PRE-OPENING",
+        "parent": "bzg",
+        "aliases": [],
+    },
+    {
+        "id": "room-service",
+        "key": "room-service",
+        "title": "Room Service",
+        "href": "/bzg/outlets",
+        "status": "PRE-OPENING",
+        "parent": "bzg",
+        "aliases": [],
+    },
+    {
+        "id": "catering",
+        "key": "catering",
+        "title": "Catering",
+        "href": "/bzg/outlets",
+        "status": "PRE-OPENING",
+        "parent": "bzg",
+        "aliases": [],
+    },
+]
+
 
 def business_catalog_from_ia() -> list[dict[str, Any]]:
-    """Business switcher destinations derived from IA_TREE (anti-drift).
+    """Top business switcher chips from IA_TREE (anti-drift).
 
-    Owner/Empire from HOME.empire + every BUSINESSES item. Not a person map.
-    Optional overlay JSON is documentation-only — runtime uses IA_TREE.
+    Canonical top: OWNER · GGV · AMG/ATRIUM · BZG.
+    Uma Blu is a BZG outlet child — not a top chip. Not a person map.
     """
     out: list[dict[str, Any]] = []
     home = next((s for s in IA_TREE if s.get("id") == "home"), None)
@@ -2658,6 +3135,9 @@ def business_catalog_from_ia() -> list[dict[str, Any]]:
             href = str(it.get("href") or "")
             if not key or not href:
                 continue
+            # Never promote Uma (or other outlets) to the top chip row.
+            if key == "uma":
+                continue
             out.append(
                 {
                     "id": key,
@@ -2668,6 +3148,44 @@ def business_catalog_from_ia() -> list[dict[str, Any]]:
                 }
             )
     return out
+
+
+def bzg_outlet_catalog() -> list[dict[str, Any]]:
+    """BZG outlet children for the outlet strip. PRE-OPENING label preserved."""
+    out: list[dict[str, Any]] = []
+    for row in BZG_OUTLET_CHILDREN:
+        item = dict(row)
+        status = str(item.get("status") or "")
+        title = str(item.get("title") or item.get("id") or "")
+        if status == "PRE-OPENING" and "PRE-OPENING" not in title:
+            item["title"] = f"{title} · PRE-OPENING"
+        item["chip_label"] = item["title"]
+        out.append(item)
+    return out
+
+
+def uma_outlet_as_business() -> dict[str, Any]:
+    """Scoped Uma-only staff chip (not Owner top hierarchy)."""
+    uma = next((o for o in bzg_outlet_catalog() if o.get("id") == "uma"), None)
+    if uma:
+        return {
+            "id": "uma",
+            "key": "uma",
+            "title": "Uma Blu",
+            "href": str(uma.get("href") or "/bzg/uma-blu"),
+            "aliases": list(uma.get("aliases") or []),
+            "parent": "bzg",
+            "status": "OPEN",
+        }
+    return {
+        "id": "uma",
+        "key": "uma",
+        "title": "Uma Blu",
+        "href": "/bzg/uma-blu",
+        "aliases": [],
+        "parent": "bzg",
+        "status": "OPEN",
+    }
 
 
 def _href_allowed_for_business(href: str, aliases: list[str], pages: set[str], who: dict[str, Any]) -> bool:
@@ -2690,8 +3208,153 @@ def _href_allowed_for_business(href: str, aliases: list[str], pages: set[str], w
     return False
 
 
+# --- Authority-derived nav (PARTIAL) -----------------------------------------
+# Target: PERSON→ROLE/POSITION→ASSIGNMENT→SCOPE→PERMISSION→AUDIENCE
+# Chrome `#wolfnav-biz` prefers `nav_authority.businesses` (ROLE+SCOPE);
+# falls back to IA_TREE ∩ audience pages `businesses` when authority empty/error.
+# Honesty stamp data-nav-source=ia_intersect_pages_transitional on fallback.
+# Staff swap: same ROLE+SCOPE ⇒ identical nav_authority regardless of person_id.
+# NOT sole source yet — authority_nav_sole_source=false · not LIVE_USABLE.
+
+SCOPE_BUSINESS_ID: dict[str, str] = {
+    "SCOPE-WOLF-GROUP": "owner",
+    "SCOPE-CORE-OPERATOR": "owner",
+    "SCOPE-SALE-OPERATOR": "owner",
+    "SCOPE-GGV-ALL": "ggv",
+    "SCOPE-GGV": "ggv",
+    "SCOPE-GGV-CONTENT": "ggv",
+    "SCOPE-GGV-CONTENT-LIBRARY": "ggv",
+    "SCOPE-GGV-HABITAT-LEAD": "ggv",
+    "SCOPE-GGV-FINANCE": "ggv",
+    "SCOPE-CRM-HABITAT-LEAD": "ggv",
+    "SCOPE-AMG": "amg",
+    "SCOPE-AMG-FINANCE": "amg",
+    "SCOPE-AMG-ATR-DAY": "amg",
+    "SCOPE-BZG-ENTITY": "bzg",
+    "SCOPE-BZG-FB": "bzg",
+    "SCOPE-BZG-FINANCE": "bzg",
+    "SCOPE-BZG-UMA": "uma",
+}
+
+# Role codes that imply Owner chrome business set (not person names).
+_OWNER_ROLE_CODES = frozenset({"ROLE-OWNER", "ROLE-MATT"})
+
+
+def _scopes_of_assignment(a: dict[str, Any]) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    values: list[Any] = []
+    if a.get("scope"):
+        values.append(a.get("scope"))
+    values.extend(a.get("scopes") or [])
+    for raw in values:
+        s = str(raw or "").strip()
+        if s and s not in seen:
+            seen.add(s)
+            out.append(s)
+    return out
+
+
+def business_ids_from_scopes(scopes: list[str]) -> list[str]:
+    """Map SCOPE-* codes → business chip ids. Order stable; no person input."""
+    out: list[str] = []
+    seen: set[str] = set()
+    for scope in scopes:
+        bid = SCOPE_BUSINESS_ID.get(str(scope))
+        if bid and bid not in seen:
+            seen.add(bid)
+            out.append(bid)
+    return out
+
+
+def authority_nav_from_assignments(
+    assignments: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Nav chips/items from Assignment/Role/Scope — never person-name couplings.
+
+    person_id on rows is ignored for derivation (staff-swap safe).
+    Visibility-only projection; Hidden ≠ permission; API auth remains canonical.
+    """
+    rows = [dict(a) for a in (assignments or []) if isinstance(a, dict)]
+    roles = roles_from_assignments(rows)
+    scopes = scopes_from_assignments(rows)
+    catalog = {str(b.get("id")): dict(b) for b in business_catalog_from_ia()}
+    biz_ids: list[str] = []
+    seen_biz: set[str] = set()
+    if any(r in _OWNER_ROLE_CODES for r in roles):
+        # Top hierarchy only — Uma is under BZG outlets, not a peer chip.
+        for bid in ("owner", "ggv", "amg", "bzg"):
+            if bid in catalog and bid not in seen_biz:
+                seen_biz.add(bid)
+                biz_ids.append(bid)
+    for bid in business_ids_from_scopes(scopes):
+        if bid == "uma":
+            # Scoped Uma staff: show Uma chip (not Owner top peer of BZG).
+            if "uma" not in seen_biz and "bzg" not in seen_biz:
+                seen_biz.add("uma")
+                biz_ids.append("uma")
+            elif "bzg" in catalog and "bzg" not in seen_biz:
+                seen_biz.add("bzg")
+                biz_ids.append("bzg")
+            continue
+        if bid in catalog and bid not in seen_biz:
+            seen_biz.add(bid)
+            biz_ids.append(bid)
+    businesses: list[dict[str, Any]] = []
+    for bid in biz_ids:
+        if bid in catalog:
+            businesses.append(catalog[bid])
+        elif bid == "uma":
+            businesses.append(uma_outlet_as_business())
+
+    items: list[dict[str, Any]] = []
+    seen_href: set[str] = set()
+    for a in rows:
+        role = str(a.get("role") or "").strip()
+        href = str(a.get("href") or "").strip() or str(_ROLE_HREF.get(role) or "").strip()
+        if not href or href in seen_href:
+            continue
+        seen_href.add(href)
+        label = str(a.get("label") or role or href)
+        # Strip accidental person tokens from labels used in chrome items.
+        title = label
+        for token in ("Zayen", "Amanda", "Hariyanto", "Haikal", "Misa", "Devi", "Matt"):
+            if title == token:
+                title = role or href
+        items.append(
+            {
+                "key": role or href,
+                "title": title,
+                "href": href,
+                "role": role,
+                "scopes": _scopes_of_assignment(a),
+                "source": "assignment_role_scope",
+            }
+        )
+    return {
+        "ok": True,
+        "source": "assignment_role_scope",
+        "model": "PERSON→ROLE/POSITION→ASSIGNMENT→SCOPE→PERMISSION→AUDIENCE",
+        "people_neq_roles": True,
+        "ia_intersect_pages_transitional": True,
+        "roles": roles,
+        "scopes": scopes,
+        "businesses": businesses,
+        "items": items,
+        "business_switcher": len(businesses) > 1,
+    }
+
+
+def authority_nav_for_person(person_id: str | None) -> dict[str, Any]:
+    """Load ACTIVE assignments for person, then derive authority nav (role/scope)."""
+    return authority_nav_from_assignments(assignments_for_person(person_id))
+
+
 def businesses_for_whoami(who: dict[str, Any] | None) -> list[dict[str, Any]]:
-    """Filter IA-derived businesses by chrome-allowed pages. Visibility only."""
+    """Filter IA-derived top businesses by chrome-allowed pages. Visibility only.
+
+    Owner top chips never include Uma. Scoped Uma-only seats get Uma as their chip.
+    """
     if not who:
         return []
     pages = set(filter_hrefs(who))
@@ -2701,18 +3364,83 @@ def businesses_for_whoami(who: dict[str, Any] | None) -> list[dict[str, Any]]:
         aliases = [str(a) for a in (b.get("aliases") or []) if a]
         if _href_allowed_for_business(href, aliases, pages, who):
             out.append(dict(b))
+    bids = {str(b.get("id")) for b in out}
+    # Scoped Uma staff without BZG entity chip — surface Uma, not a flat Owner peer.
+    uma_allowed = _href_allowed_for_business(
+        "/bzg/uma-blu", ["/bzg/uma-blu/"], pages, who
+    )
+    if uma_allowed and "bzg" not in bids and "uma" not in bids:
+        out.append(uma_outlet_as_business())
     return out
 
 
-def active_business_id(path: str | None, businesses: list[dict[str, Any]]) -> str | None:
-    """Longest href/alias prefix wins (Uma before BZG)."""
+def outlet_children_for_whoami(who: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """BZG outlet strip when the seat can see BZG or Uma. Permission-filtered."""
+    if not who:
+        return []
+    pages = set(filter_hrefs(who))
+    bids = {str(b.get("id")) for b in (who.get("businesses") or [])}
+    ownerish = who.get("wolf_authorized") is True or who.get("audience") in {"OWNER", "SYSTEM"}
+    if "bzg" not in bids and "uma" not in bids and not ownerish:
+        # Still allow when pages include Uma/BZG even if chip list transitional.
+        if not (
+            _href_allowed_for_business("/bzg", [], pages, who)
+            or _href_allowed_for_business("/bzg/uma-blu", [], pages, who)
+        ):
+            return []
+    out: list[dict[str, Any]] = []
+    for o in bzg_outlet_catalog():
+        href = str(o.get("href") or "")
+        aliases = [str(a) for a in (o.get("aliases") or []) if a]
+        status = str(o.get("status") or "")
+        # PRE-OPENING outlets: visible to Owner/BZG seats (label only — no fake ops).
+        if status == "PRE-OPENING":
+            if ownerish or "bzg" in bids or _href_allowed_for_business("/bzg", [], pages, who):
+                out.append(dict(o))
+            continue
+        if _href_allowed_for_business(href, aliases, pages, who) or ownerish or "bzg" in bids:
+            out.append(dict(o))
+    # Uma-only seat: only Uma child.
+    if "uma" in bids and "bzg" not in bids and not ownerish:
+        out = [o for o in out if o.get("id") == "uma"]
+    return out
+
+
+def active_outlet_id(path: str | None, outlets: list[dict[str, Any]]) -> str | None:
+    """Longest outlet href/alias prefix under BZG."""
     p = (path or "").rstrip("/") or "/"
     if p != "/" and not p.startswith("/"):
         p = "/" + p
     best_id = None
     best_len = -1
+    for o in outlets:
+        cands = [str(o.get("href") or "")] + [str(a) for a in (o.get("aliases") or []) if a]
+        for h in cands:
+            if not h or h in ("/bzg/outlets", "/bzg/outlets/"):
+                # Shared pre-open landing — do not steal active from path alone.
+                continue
+            hr = h.rstrip("/") or "/"
+            if p == hr or p.startswith(hr + "/"):
+                n = len(hr)
+                if n > best_len:
+                    best_len = n
+                    best_id = str(o.get("id") or o.get("key") or "") or None
+    return best_id
+
+
+def active_business_id(path: str | None, businesses: list[dict[str, Any]]) -> str | None:
+    """Longest href/alias prefix wins. Uma paths activate BZG when Uma is not a top chip."""
+    p = (path or "").rstrip("/") or "/"
+    if p != "/" and not p.startswith("/"):
+        p = "/" + p
+    best_id = None
+    best_len = -1
+    bids = {str(b.get("id")) for b in businesses}
     for b in businesses:
         cands = [str(b.get("href") or "")] + [str(a) for a in (b.get("aliases") or []) if a]
+        # Owner BZG chip also covers Uma routes when Uma is not a top-level chip.
+        if str(b.get("id")) == "bzg" and "uma" not in bids:
+            cands.extend(["/bzg/uma-blu", "/bzg/uma-blu/"])
         for h in cands:
             if not h:
                 continue
@@ -2776,7 +3504,10 @@ def build_whoami(
     base["assignments"] = asg
     base["active_assignment_id"] = (active or {}).get("id")
     base["active_assignment"] = dict(active) if active else None
-    base["context_switcher"] = len(asg) > 1
+    # OWNER-UX-PETTY-MOBILE-1: Owner identity auto-resolves via business switcher.
+    # Hide assignment Context dropdown from normal Owner UX (multi-assignment chrome only
+    # when not Owner/System — advanced control for genuine multi-seat staff).
+    base["context_switcher"] = len(asg) > 1 and aud not in {"OWNER", "SYSTEM"}
     base["roles"] = roles
     # Scopes come from the assignment rows, including ones the chrome filter hid.
     base["scopes"] = scopes_from_assignments(raw_asg)
@@ -2788,7 +3519,7 @@ def build_whoami(
         "surfaces": surfaces,
     }
     base["chain"] = permission_chain(base)
-    # Business switcher: IA_TREE ∩ clearance (not person-name couplings).
+    # Business switcher: IA_TREE ∩ clearance (transitional). Authority nav is parallel.
     biz = businesses_for_whoami(base)
     base["businesses"] = biz
     base["business_switcher"] = len(biz) > 1
@@ -2796,6 +3527,14 @@ def build_whoami(
         (base.get("landing") or WOLF_ALIAS) if base.get("wolf_authorized") else (base.get("landing") or None),
         biz,
     )
+    outlets = outlet_children_for_whoami(base)
+    base["outlet_children"] = outlets
+    base["active_outlet_id"] = active_outlet_id(
+        (base.get("landing") or None),
+        outlets,
+    )
+    # Authority-derived nav (PARTIAL): ROLE+SCOPE chips/items; survives staff swap.
+    base["nav_authority"] = authority_nav_from_assignments(raw_asg)
     return base
 
 
@@ -2843,6 +3582,9 @@ def shell_whoami_payload(identity: dict[str, Any] | None) -> dict[str, Any]:
         "businesses": who.get("businesses") or [],
         "business_switcher": bool(who.get("business_switcher")),
         "active_business_id": who.get("active_business_id"),
+        "outlet_children": who.get("outlet_children") or [],
+        "active_outlet_id": who.get("active_outlet_id"),
+        "nav_authority": who.get("nav_authority") or authority_nav_from_assignments(who.get("assignments") or []),
         "chain": who.get("chain") or permission_chain(who),
         "permissions": who.get("permissions"),
         "honesty": honesty_flags(),

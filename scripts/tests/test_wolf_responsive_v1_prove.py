@@ -150,8 +150,12 @@ def test_role_matrix() -> None:
     mtree = shell.filter_ia_tree(matt)
     check("matt sections HOME/BIZ/INTEL/SYSTEM",
           set(_section_ids(mtree)) >= {"home", "businesses", "intelligence", "system"})
-    check("matt context switcher on", matt.get("context_switcher") is True)
+    check(
+        "matt context switcher off (owner auto-resolve)",
+        matt.get("context_switcher") is False,
+    )
     check("matt multi assignments", len(matt.get("assignments") or []) > 1)
+    check("matt business switcher on", matt.get("business_switcher") is True)
 
     devi = shell.build_whoami(person_id="PERS-DEVI", email=DEVI)
     check("devi audience OPERATOR", devi.get("audience") == "OPERATOR")
@@ -234,7 +238,7 @@ def test_breadcrumb_direction() -> None:
 
 def test_context_switch() -> None:
     owner = shell.build_whoami(person_id="PERS-MATT", email=MATT)
-    check("matt switcher on", owner.get("context_switcher") is True)
+    check("matt switcher off (owner auto-resolve)", owner.get("context_switcher") is False)
     asg = owner.get("assignments") or []
     check("matt asg > 1", len(asg) > 1)
     # Never invent unauthorised contexts — all assignment hrefs in pages/aliases
@@ -374,7 +378,7 @@ def test_http_deny_matrix() -> None:
         st, payload, _ = call("GET", "/api/wolf/shell-whoami", MATT)
         who = payload.get("whoami") or {}
         check("matt whoami owner", who.get("audience") == "OWNER")
-        check("matt switcher live", who.get("context_switcher") is True)
+        check("matt switcher live off (owner auto-resolve)", who.get("context_switcher") is False)
         ia = payload.get("ia") or []
         check("matt live SYSTEM", any(s.get("id") == "system" for s in ia))
 

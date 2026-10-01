@@ -42,7 +42,7 @@ def check(name: str, cond: bool, detail: str = "") -> None:
 
 def main() -> int:
     check("bound beta", shell.BOUND == "beta")
-    check("cache token global-shell1", shell.CACHE_TOKEN == "20260930-global-shell1")
+    check("cache token matches shell", shell.CACHE_TOKEN == "20261002-owner-ux-petty")
     check("spec exists", SPEC.is_file())
     check("honesty business_switcher_from_ia", shell.honesty_flags().get("business_switcher_from_ia") is True)
     check("not proven", shell.honesty_flags().get("proven") is False)
@@ -54,10 +54,10 @@ def main() -> int:
     check("catalog has ggv amg bzg", all(k in keys for k in ("ggv", "amg", "bzg")))
     check("catalog derived not empty", len(cat) >= 4)
 
-    home = next(s for s in shell.IA_TREE if s["id"] == "home")
-    hrefs = [it["href"] for it in home["items"]]
-    check("HOME has trading", "/owner/trading" in hrefs)
-    check("HOME has fitness", "/owner/fitness" in hrefs)
+    personal = next(s for s in shell.IA_TREE if s["id"] == "personal")
+    hrefs = [it["href"] for it in personal["items"]]
+    check("PERSONAL has trading", "/owner/trading" in hrefs)
+    check("PERSONAL has fitness", "/owner/fitness" in hrefs)
     check("trading crumb", bool(shell.ROUTE_CRUMBS.get("/owner/trading")))
     check("fitness crumb", bool(shell.ROUTE_CRUMBS.get("/owner/fitness")))
     check("trading parent empire", shell.ROUTE_PARENT.get("/owner/trading") == shell.EMPIRE_HREF)
@@ -78,8 +78,15 @@ def main() -> int:
         shell.active_business_id("/owner/trading", biz) == "owner",
     )
     check(
-        "active uma bills→uma",
-        shell.active_business_id("/bzg/uma-blu/bills", biz) == "uma",
+        "active uma bills→bzg (Uma under BZG)",
+        shell.active_business_id("/bzg/uma-blu/bills", biz) == "bzg",
+    )
+    check("owner top chips exclude uma", "uma" not in bids)
+    outs = owner.get("outlet_children") or []
+    check("owner has BZG outlets", any(o.get("id") == "uma" for o in outs))
+    check(
+        "pre-opening outlets labeled",
+        any("PRE-OPENING" in str(o.get("title") or "") for o in outs),
     )
 
     payload = shell.shell_whoami_payload(
@@ -93,11 +100,11 @@ def main() -> int:
     check("client switcher off", client.get("business_switcher") is False)
 
     sn = SIDENAV.read_text(encoding="utf-8")
-    check("sidenav cache token", 'CACHE = "20260930-global-shell1"' in sn)
+    check("sidenav cache token", f'CACHE = "{shell.CACHE_TOKEN}"' in sn)
     check("sidenav paintBusiness", "function paintBusiness(" in sn)
     check("sidenav wolfnav-biz", "wolfnav-biz" in sn)
     check("sidenav trading parent", '"/owner/trading": "/owner-empire-pack"' in sn)
-    check("sidenav fitness crumb", '"/owner/fitness"' in sn and "Fitness (Owner)" in sn)
+    check("sidenav fitness crumb", '"/owner/fitness"' in sn and "Fitness" in sn)
     check("css nv-biz", "nv-biz" in CSS.read_text(encoding="utf-8"))
     check("trading html sidenav", "sidenav.js" in TRADING.read_text(encoding="utf-8"))
     check("fitness html sidenav", "sidenav.js" in FITNESS.read_text(encoding="utf-8"))

@@ -44,6 +44,21 @@ RESOURCE_PETTY_DAY = "bzg_petty_day"
 PAYMENT_PERM = "bzg.pr.payment_approve"
 
 PETTY_DIRECTIONS = frozenset({"OUT", "IN"})
+# V1 Notion / Alchemist category set (phone workflow). Other → free text.
+PETTY_CATEGORIES: tuple[str, ...] = (
+    "Transport",
+    "Gas / LPG",
+    "Supplies",
+    "Food",
+    "Maintenance",
+    "Staff",
+    "Top-up",
+    "Other",
+)
+PETTY_ACTIVE_OUTLETS: tuple[str, ...] = ("Uma Blu",)
+# V1: IDR 500k+ needs approval (flag only — does not invent an approval product).
+PETTY_APPROVAL_THRESHOLD_IDR = 500_000
+PETTY_RECEIPT_DIR = Path("/Users/wolfterminal/beta-os/state/uma-petty-receipts")
 PETTY_DAY_STATES = frozenset(
     {
         "OPEN",
@@ -533,6 +548,10 @@ def insert_petty_movement(
     amount: float,
     currency: str | None = None,
     purpose: str | None = None,
+    category: str | None = None,
+    outlet: str | None = None,
+    logged_by: str | None = None,
+    receipt_path: str | None = None,
     example: bool = False,
     work_item_id: str | None = None,
     evidence_id: str | None = None,
@@ -540,7 +559,7 @@ def insert_petty_movement(
     movement_id: str | None = None,
     conn: sqlite3.Connection,
 ) -> dict[str, Any]:
-    """Insert a movement. Currency blank stays NULL — never guessed."""
+    """Insert a movement. Currency blank stays NULL — never guessed. No invented float."""
     ensure_schema(conn)
     biz = (business_date or "").strip()
     if not biz:
@@ -558,6 +577,12 @@ def insert_petty_movement(
     cur = (currency or "").strip() or None
     mid = (movement_id or "").strip() or mint_petty_id()
     ts = now_utc_iso()
+    cat = (category or "").strip() or None
+    outl = (outlet or "").strip() or (PETTY_ACTIVE_OUTLETS[0] if PETTY_ACTIVE_OUTLETS else None)
+    person = (logged_by or "").strip() or None
+    rpath = (receipt_path or "").strip() or None
+    needs_appr = 1 if (direc == "OUT" and amt >= PETTY_APPROVAL_THRESHOLD_IDR) else 0
+    appr_state = "NEEDS_APPROVAL" if needs_appr else "AUTO_OK"
     prior_day = get_petty_day(biz, conn=conn)
     day_was_new = prior_day is None
     _ensure_petty_day(
@@ -570,8 +595,9 @@ def insert_petty_movement(
         """
         INSERT INTO bzg_ops_petty_movements (
           movement_id, venue, business_date, direction, amount, currency,
-          purpose, example, work_item_id, evidence_id, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          purpose, example, work_item_id, evidence_id, created_at,
+          category, outlet, logged_by, receipt_path, needs_approval, approval_state
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             mid,
@@ -585,6 +611,12 @@ def insert_petty_movement(
             (work_item_id or "").strip() or None,
             (evidence_id or "").strip() or None,
             ts,
+            cat,
+            outl,
+            person,
+            rpath,
+            needs_appr,
+            appr_state,
         ),
     )
     day = get_petty_day(biz, conn=conn)
@@ -613,6 +645,14 @@ def insert_petty_movement(
         move_meta["note"] = purpose_note
     if cur:
         move_meta["currency"] = cur
+    if cat:
+        move_meta["category"] = cat
+    if outl:
+        move_meta["outlet"] = outl
+    if person:
+        move_meta["logged_by"] = person
+    if needs_appr:
+        move_meta["needs_approval"] = True
     _audit_ops(
         action="bzg.petty.movement",
         result="SUCCEEDED",
@@ -807,7 +847,11 @@ def list_petty(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
     own = conn is None
     c = conn or db_connect()
     try:
-        ensure_schema(c)
+        try:
+            ensure_schema(c)
+        except (sqlite3.Error, RuntimeError, OSError):
+            # Read path must still answer when schema migrate is refused (test/live guard).
+            pass
         movements = list_petty_movements(conn=c, limit=200)
         legacy_moves = _safe_legacy_petty(200)
         if legacy_moves:
@@ -842,6 +886,12 @@ def list_petty(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
             "opening_float": None if float_status == "NOT_FOUND" else "see_days",
             "honesty": honesty,
             "fixture_notice": fixture_notice_for(movements, days),
+            "categories": list(PETTY_CATEGORIES),
+            "outlets": list(PETTY_ACTIVE_OUTLETS),
+            "approval_threshold_idr": PETTY_APPROVAL_THRESHOLD_IDR,
+            "staff_ready": False,
+            "human_commissioned": False,
+            "phone_workflow": True,
         }
     finally:
         if own:
@@ -1090,6 +1140,64 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
           ON bzg_ops_pr_operator_actions(venue, pr_key, created_at);
         """
     )
+    _ensure_petty_phone_columns(conn)
+
+
+def _ensure_petty_phone_columns(conn: sqlite3.Connection) -> None:
+    """OWNER-UX-PETTY-MOBILE-1 phone fields. Additive only — never invent float."""
+    try:
+        cols = {
+            str(r[1])
+            for r in conn.execute("PRAGMA table_info(bzg_ops_petty_movements)").fetchall()
+        }
+    except sqlite3.Error:
+        return
+    for name, decl in (
+        ("category", "TEXT"),
+        ("outlet", "TEXT"),
+        ("logged_by", "TEXT"),
+        ("receipt_path", "TEXT"),
+        ("needs_approval", "INTEGER NOT NULL DEFAULT 0"),
+        ("approval_state", "TEXT"),
+    ):
+        if name not in cols:
+            try:
+                conn.execute(f"ALTER TABLE bzg_ops_petty_movements ADD COLUMN {name} {decl}")
+            except sqlite3.Error:
+                # Read path / test-mode live catalog: keep listing without phone cols.
+                return
+
+
+def save_petty_receipt_bytes(
+    *,
+    data: bytes,
+    filename: str | None = None,
+    content_type: str | None = None,
+) -> dict[str, Any]:
+    """Persist a phone receipt photo under Beta state. Returns evidence id + path."""
+    if not data:
+        raise UmaOpsError("receipt photo required", code="missing_receipt")
+    if len(data) > 8_000_000:
+        raise UmaOpsError("receipt too large", code="receipt_too_large", http_status=413)
+    PETTY_RECEIPT_DIR.mkdir(parents=True, exist_ok=True)
+    ext = ".jpg"
+    name = (filename or "").lower()
+    ctype = (content_type or "").lower()
+    if name.endswith(".png") or "png" in ctype:
+        ext = ".png"
+    elif name.endswith(".webp") or "webp" in ctype:
+        ext = ".webp"
+    elif name.endswith(".heic") or "heic" in ctype:
+        ext = ".heic"
+    eid = f"EVD-PETTY-{uuid.uuid4().hex[:12].upper()}"
+    dest = PETTY_RECEIPT_DIR / f"{eid}{ext}"
+    dest.write_bytes(data)
+    return {
+        "evidence_id": eid,
+        "receipt_path": str(dest),
+        "bytes": len(data),
+        "filename": filename or dest.name,
+    }
 
 
 def list_pr_lines(pr_id: str, *, conn: sqlite3.Connection) -> list[dict[str, Any]]:
@@ -1259,6 +1367,10 @@ def record_petty_ops(
     amount: float,
     currency: str | None = None,
     purpose: str | None = None,
+    category: str | None = None,
+    outlet: str | None = None,
+    logged_by: str | None = None,
+    receipt_path: str | None = None,
     evidence_note_id: str | None = None,
     identity: dict[str, Any] | None = None,
     conn: sqlite3.Connection | None = None,
@@ -1275,12 +1387,17 @@ def record_petty_ops(
         if not note:
             raise UmaOpsError("purpose required", code="missing_purpose")
         biz = (business_date or "").strip() or today_biz_date()
+        actor_label = (logged_by or "").strip() or person_id
         out = insert_petty_movement(
             business_date=biz,
             direction=direction,
             amount=amount,
             currency=currency,
             purpose=note,
+            category=category,
+            outlet=outlet,
+            logged_by=actor_label,
+            receipt_path=receipt_path,
             example=False,
             evidence_id=(evidence_note_id or "").strip() or None,
             conn=c,
@@ -1291,7 +1408,14 @@ def record_petty_ops(
             resource_type=RESOURCE_PETTY,
             resource_id=str(out.get("movement_id") or biz),
             conn=c,
-            metadata={"status": direction, "note": note, "actor": "operator"},
+            metadata={
+                "status": direction,
+                "note": note,
+                "actor": "operator",
+                "category": (category or "").strip() or None,
+                "outlet": (outlet or "").strip() or None,
+                "logged_by": actor_label,
+            },
             actor_type="PERSON",
             verified_person_id=person_id,
             identity=identity,

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Uma Blu · Petty cash</title>
 <style>
   :root {
@@ -16,108 +16,190 @@
     --warn: #e0a045;
     --danger: #e05a4c;
     --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --thumb: 48px;
   }
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0; background: var(--bg); color: var(--text);
     font-family: var(--font); min-height: 100%;
+    overflow-x: hidden;
   }
   body {
-    padding: 16px 16px 64px; max-width: 480px; margin: 0 auto;
+    padding: 14px 14px calc(88px + env(safe-area-inset-bottom, 0px));
+    max-width: 720px; margin: 0 auto;
     background:
       radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
       radial-gradient(ellipse 90% 60% at 100% 0%, #163028 0%, transparent 50%),
       var(--bg);
   }
-  .brand { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 2px; }
+  .brand { font-size: 1.45rem; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 2px; }
   .brand em { font-style: normal; color: var(--accent); }
-  .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 14px; line-height: 1.35; }
+  .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 12px; line-height: 1.35; }
   .banner {
     background: rgba(224,160,69,0.12); border: 1px solid rgba(224,160,69,0.45);
-    color: var(--warn); border-radius: 12px; padding: 10px 12px;
-    font-size: 0.88rem; margin-bottom: 14px;
+    color: var(--warn); border-radius: 12px; padding: 12px 14px;
+    font-size: 0.9rem; margin-bottom: 12px; line-height: 1.4;
   }
   .banner.hidden { display: none; }
-  .banner.danger {
-    background: rgba(224,90,76,0.12); border-color: rgba(224,90,76,0.45); color: var(--danger);
+  .banner.ok {
+    background: rgba(61,184,160,0.12); border-color: rgba(61,184,160,0.45); color: var(--accent);
   }
-  nav.uma { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  nav.uma {
+    display: flex; flex-wrap: nowrap; gap: 6px; margin-bottom: 14px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px;
+  }
   nav.uma a {
     padding: 10px 12px; border-radius: 999px; border: 1px solid var(--line);
     color: var(--muted); text-decoration: none; font-size: 0.84rem; font-weight: 650;
-    min-height: 44px; display: inline-flex; align-items: center;
+    min-height: 44px; display: inline-flex; align-items: center; flex: 0 0 auto;
   }
   nav.uma a.active { color: var(--accent); border-color: var(--accent); }
   .crumb { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
   .crumb a { color: var(--muted); }
-  .row {
-    background: color-mix(in srgb, var(--bg2) 92%, #000);
-    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 10px;
-  }
-  .row h3 { margin: 0 0 6px; font-size: 1.02rem; }
-  .state {
-    display: inline-block; padding: 4px 10px; border-radius: 999px;
-    border: 1px solid var(--line); font-size: 0.75rem; color: var(--muted); margin-bottom: 8px;
-  }
-  .state.warn { color: var(--warn); border-color: rgba(224,160,69,0.45); }
-  .chip {
-    display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px;
-    border: 1px solid rgba(61,184,160,0.45); color: var(--accent);
-    font-size: 0.72rem; font-weight: 650; vertical-align: middle;
-  }
-  .meta { color: var(--muted); font-size: 0.82rem; line-height: 1.4; }
-  .ex { color: var(--warn); font-size: 0.75rem; margin-top: 6px; }
-  .muted { color: var(--muted); font-size: 0.82rem; }
-  .empty { color: var(--muted); font-size: 0.9rem; padding: 8px 0; }
   .panel {
     background: color-mix(in srgb, var(--bg2) 92%, #000);
-    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 16px;
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 12px;
   }
   .panel h2 {
     margin: 0 0 10px; font-size: 0.78rem; text-transform: uppercase;
     letter-spacing: 0.06em; color: var(--muted); font-weight: 650;
   }
+  .dir-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .dir-btn {
+    min-height: var(--thumb); border-radius: 12px; border: 1px solid var(--line);
+    background: var(--bg3); color: var(--text); font-weight: 700; font-size: 1rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dir-btn.is-on { border-color: var(--accent); background: #1f6b5c; color: #fff; }
+  label.field {
+    display: block; color: var(--muted); font-size: 0.8rem; margin: 10px 0 4px;
+  }
+  input, select, textarea {
+    width: 100%; min-height: var(--thumb); border-radius: 12px;
+    background: var(--bg3); color: var(--text); border: 1px solid var(--line);
+    padding: 10px 12px; font: inherit; font-size: 16px; /* phone keyboard: avoid iOS zoom */
+  }
+  textarea { min-height: 72px; resize: vertical; }
+  .photo-box {
+    border: 1px dashed color-mix(in srgb, var(--accent) 55%, var(--line));
+    border-radius: 14px; padding: 14px; text-align: center; margin-top: 10px;
+    background: color-mix(in srgb, var(--bg3) 80%, transparent);
+  }
+  .photo-box strong { display: block; margin-bottom: 6px; }
+  .photo-box .muted { color: var(--muted); font-size: 0.82rem; margin: 0 0 10px; }
+  .photo-preview {
+    display: none; max-width: 100%; max-height: 180px; border-radius: 10px; margin: 8px auto 0;
+  }
+  .photo-preview.show { display: block; }
+  .primary {
+    width: 100%; min-height: var(--thumb); margin-top: 12px; border-radius: 14px;
+    border: 1px solid #2a8a76; background: #1f6b5c; color: #fff; font-weight: 700;
+    font-size: 1.05rem; -webkit-tap-highlight-color: transparent;
+  }
+  .primary:disabled { opacity: 0.55; }
+  .muted { color: var(--muted); font-size: 0.82rem; }
+  .msg { min-height: 1.2em; margin: 8px 0 0; font-size: 0.88rem; }
+  .msg.err { color: var(--danger); }
+  .msg.ok { color: var(--accent); }
+  .card {
+    background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 10px;
+  }
+  .card h3 { margin: 0 0 6px; font-size: 1.02rem; word-break: break-word; }
+  .state {
+    display: inline-block; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--line); font-size: 0.75rem; color: var(--muted); margin-bottom: 8px;
+  }
+  .state.warn { color: var(--warn); border-color: rgba(224,160,69,0.45); }
+  .state.out { color: var(--danger); border-color: rgba(224,90,76,0.45); }
+  .state.in { color: var(--accent); border-color: rgba(61,184,160,0.45); }
+  .chip {
+    display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid rgba(61,184,160,0.45); color: var(--accent);
+    font-size: 0.72rem; font-weight: 650; vertical-align: middle;
+  }
+  .meta { color: var(--muted); font-size: 0.82rem; line-height: 1.4; word-break: break-word; }
+  .empty { color: var(--muted); font-size: 0.9rem; padding: 8px 0; }
+  .sticky-cta {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(180deg, transparent, var(--bg) 28%);
+    pointer-events: none;
+  }
+  .sticky-cta a {
+    pointer-events: auto; display: flex; align-items: center; justify-content: center;
+    min-height: var(--thumb); border-radius: 14px; text-decoration: none;
+    background: #1f6b5c; color: #fff; font-weight: 700; border: 1px solid #2a8a76;
+  }
+  @media (min-width: 900px) {
+    body { max-width: 920px; padding: 20px 28px 72px; }
+    .dir-row { max-width: 360px; }
+  }
 </style>
 </head>
-<body>
+<body data-wolf-page-type="DASHBOARD" data-wolf-org="BZG/UMA" data-staff-ready="false">
   <p class="crumb"><a href="/bzg">BZG</a> · <a href="/bzg/uma-blu">Uma Blu</a> · Petty cash</p>
   <h1 class="brand">Petty <em>cash</em></h1>
-  <p class="sub">Tin movements only.</p>
+  <p class="sub">Phone tin log — out or in, amount, reason, receipt photo. Opening balance is not invented.</p>
 
-  <div class="banner" id="floatBanner">Opening float NOT FOUND. Opening cash balance needed. Uma Blu has no approved opening balance yet. You can view movements, but the tin total cannot be verified.</div>
+  <div class="banner" id="floatBanner">Opening cash balance is not set yet. You can still record movements. The tin total cannot be verified until an approved opening balance is commissioned.</div>
   <div class="banner hidden" id="fixtureBanner">Practice examples — not live Uma Blu tin activity.</div>
 
-    <nav class="uma" aria-label="Uma Blu day">
+  <nav class="uma" aria-label="Uma Blu desk">
     <a href="/bzg/uma-blu">Today</a>
-    <a href="/uma-blu-close">Daily Close</a>
-    <a href="/bzg/uma-blu/issues">Issues</a>
     <a href="/bzg/uma-blu/bills">Bills</a>
-    <a href="/bzg/uma-blu/bills#purchasing">Purchasing</a>
+    <a href="/bzg/uma-blu/issues">Issues</a>
+    <a class="active" href="/bzg/uma-blu/petty">Petty</a>
     <a href="/bzg/uma-blu/evidence">Evidence</a>
     <a href="/bzg/uma-blu/exceptions">Exceptions</a>
-    <a href="/my-work">My Work</a>
-    <a class="active" href="/bzg/uma-blu/petty">Petty cash</a>
+    <a href="/bzg/uma-blu/recipes">Recipes</a>
+    <a href="/bzg/uma-blu/real">Real</a>
+    <a id="closeLink" href="/uma-blu-close">Close</a>
   </nav>
 
   <div class="panel" id="pettyForm" hidden>
     <h2>Record a movement</h2>
-    <p class="muted">This writes the tin only. It does not pay a supplier or touch the bank.</p>
+    <p class="muted">Writes the tin only. Does not pay a supplier or touch the bank.</p>
     <form id="moveForm">
-      <label style="display:block;color:#8aa0ad;font-size:0.8rem;margin:8px 0 4px">Out or in
-        <select id="direction" style="width:100%;margin-top:4px;min-height:44px;border-radius:10px;background:#1e3542;color:#eef4f7;border:1px solid #2a4554">
-          <option value="OUT">Out</option>
-          <option value="IN">In</option>
+      <div class="dir-row" role="group" aria-label="Out or in">
+        <button type="button" class="dir-btn is-on" data-dir="OUT" id="dirOut">Out</button>
+        <button type="button" class="dir-btn" data-dir="IN" id="dirIn">In</button>
+      </div>
+      <input type="hidden" id="direction" value="OUT" />
+
+      <label class="field">Amount (IDR)
+        <input id="amount" type="number" inputmode="decimal" min="0" step="1" required placeholder="e.g. 50000" />
+      </label>
+      <label class="field">Category
+        <select id="category" required>
+          <option value="">Choose…</option>
         </select>
       </label>
-      <label style="display:block;color:#8aa0ad;font-size:0.8rem;margin:8px 0 4px">Amount
-        <input id="amount" type="number" min="0" step="any" required style="width:100%;min-height:44px;border-radius:10px;background:#1e3542;color:#eef4f7;border:1px solid #2a4554;padding:8px" />
+      <label class="field">What it was for
+        <input id="purpose" required placeholder="Short reason" autocomplete="off" />
       </label>
-      <label style="display:block;color:#8aa0ad;font-size:0.8rem;margin:8px 0 4px">What it was for
-        <input id="purpose" required style="width:100%;min-height:44px;border-radius:10px;background:#1e3542;color:#eef4f7;border:1px solid #2a4554;padding:8px" />
+      <label class="field">Outlet
+        <select id="outlet" required></select>
       </label>
-      <button type="submit" style="width:100%;min-height:44px;margin-top:8px;border-radius:12px;border:1px solid #2a8a76;background:#1f6b5c;color:#fff;font-weight:650">Record movement</button>
-      <p class="muted" id="moveMsg"></p>
+      <label class="field">Person
+        <input id="logged_by" required placeholder="Who logged this" autocomplete="name" />
+      </label>
+
+      <div class="photo-box">
+        <strong>Receipt photo</strong>
+        <p class="muted">Take a photo or choose from the phone library. First-class step — not an afterthought.</p>
+        <input id="receipt" type="file" accept="image/*" capture="environment" />
+        <img id="receiptPreview" class="photo-preview" alt="Receipt preview" />
+        <p class="muted" id="receiptStatus">No photo yet</p>
+      </div>
+
+      <button class="primary" type="submit" id="submitBtn">Record movement</button>
+      <p class="msg" id="moveMsg"></p>
     </form>
+  </div>
+  <div class="panel" id="pettyFormLocked">
+    <h2>Record a movement</h2>
+    <p class="muted">Sign in with a seat that can create Uma work to record tin movements.</p>
   </div>
 
   <div class="panel">
@@ -130,8 +212,17 @@
     <div id="list"><p class="muted">Loading…</p></div>
   </div>
 
+  <div class="sticky-cta" id="stickyCta" hidden>
+    <a href="#pettyForm">Record movement</a>
+  </div>
+
 <script>
 (function () {
+  var direction = "OUT";
+  var receiptMeta = null;
+  var cats = ["Transport","Gas / LPG","Supplies","Food","Maintenance","Staff","Top-up","Other"];
+  var outlets = ["Uma Blu"];
+
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -142,113 +233,240 @@
     if (amt == null) return "—";
     var s = String(amt);
     if (cur) return s + " " + cur;
-    return s + " (currency not recorded)";
+    return "IDR " + s;
   }
-  fetch("/api/bzg/uma-blu/petty")
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      var floatStatus = (data.float_status || (data.honesty && data.honesty.float) || "NOT_FOUND");
-      var floatEl = document.getElementById("floatBanner");
-      if (floatStatus === "NOT_FOUND" || floatStatus === "NOT_IN_SLICE") {
-        var banner = "Opening float NOT FOUND. Opening cash balance needed. Uma Blu has no approved opening balance yet. You can view movements, but the tin total cannot be verified.";
-        if ((data.movements || []).length) {
-          banner += " Past movements stay listed under this notice. They do not set an opening balance.";
-        }
-        floatEl.textContent = banner;
-        floatEl.classList.remove("danger");
-      } else {
-        floatEl.textContent = "Opening float: recorded on a day tin (see below)";
-        floatEl.classList.remove("danger");
-      }
-      if (data.fixture_notice && !(data.movements || []).some(function (m) { return m.legacy; })) {
-        document.getElementById("fixtureBanner").classList.remove("hidden");
-      }
-
-      var daysBox = document.getElementById("days");
-      daysBox.innerHTML = "";
-      var days = data.days || [];
-      if (!days.length) {
-        daysBox.appendChild(el("p", "empty", "No day tin records yet."));
-      } else {
-        days.forEach(function (d) {
-          var row = el("div", "row");
-          var st = d.state || "OPEN";
-          var STATE_HUMAN = {OPEN:"Open", COUNTED:"Counted", POLICY_REQUIRED:"Needs policy", VARIANCE_NOTED:"Variance noted", CLOSED:"Closed"};
-          var stEl = el("span", "state" + (st === "POLICY_REQUIRED" || st === "VARIANCE_NOTED" ? " warn" : ""), STATE_HUMAN[st] || st);
-          row.appendChild(stEl);
-          row.appendChild(el("h3", null, d.business_date || "Date unknown"));
-          var floatLine = d.opening_float == null
-            ? "Opening cash balance not set yet"
-            : "Opening float: " + d.opening_float;
-          row.appendChild(el("div", "meta", floatLine));
-          if (d.counted_amount != null) {
-            row.appendChild(el("div", "meta", "Counted: " + d.counted_amount));
-          }
-          if (d.expected_amount != null) {
-            row.appendChild(el("div", "meta", "Expected: " + d.expected_amount));
-          } else if (d.opening_float == null) {
-            row.appendChild(el("div", "meta", "Expected balance unavailable until opening cash is set"));
-          }
-          if (d.note) row.appendChild(el("div", "meta", d.note));
-          if (d.example) row.appendChild(el("div", "ex", "Example"));
-          daysBox.appendChild(row);
-        });
-      }
-
-      var box = document.getElementById("list");
-      box.innerHTML = "";
-      var rows = data.movements || [];
-      if (!rows.length) {
-        box.appendChild(el("p", "empty", "No petty movements yet."));
-        return;
-      }
-      rows.forEach(function (m) {
-        var d = el("div", "row");
-        var head = el("div");
-        head.appendChild(el("span", "state", m.direction_label || m.direction || "?"));
-        if (m.legacy) head.appendChild(el("span", "chip", "Existing"));
-        d.appendChild(head);
-        d.appendChild(el("h3", null, m.purpose || "Movement"));
-        var meta = (m.business_date || "") + " · " + money(m.amount, m.currency);
-        if (m.logged_by) meta += " · " + m.logged_by;
-        d.appendChild(el("div", "meta", meta));
-        if (m.example) d.appendChild(el("div", "ex", "Example"));
-        box.appendChild(d);
-      });
-    })
-    .catch(function () {
-      document.getElementById("list").textContent = "Could not load petty cash.";
-      document.getElementById("days").textContent = "Could not load day tin.";
+  function fillSelect(sel, items, selected) {
+    sel.innerHTML = "";
+    items.forEach(function (item) {
+      var o = document.createElement("option");
+      o.value = item;
+      o.textContent = item;
+      if (item === selected) o.selected = true;
+      sel.appendChild(o);
     });
-})();
-</script>
-<script>
-(function () {
-  fetch("/api/bzg/uma-blu/permissions").then(function (r) { return r.json(); }).then(function (perm) {
-    if (!perm || !perm.buttons || !perm.buttons.petty_record) return;
-    var panel = document.getElementById("pettyForm");
-    panel.hidden = false;
-    document.getElementById("moveForm").onsubmit = function (ev) {
-      ev.preventDefault();
-      var msg = document.getElementById("moveMsg");
-      fetch("/api/bzg/uma-blu/petty", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          operator: true,
-          direction: document.getElementById("direction").value,
-          amount: Number(document.getElementById("amount").value),
-          purpose: document.getElementById("purpose").value
-        })
-      }).then(function (r) { return r.json(); }).then(function (out) {
-        if (!out.ok) {
-          msg.textContent = out.error || out.message || "Movement was not recorded.";
+  }
+  function setDir(d) {
+    direction = d;
+    document.getElementById("direction").value = d;
+    document.getElementById("dirOut").classList.toggle("is-on", d === "OUT");
+    document.getElementById("dirIn").classList.toggle("is-on", d === "IN");
+  }
+  document.getElementById("dirOut").onclick = function () { setDir("OUT"); };
+  document.getElementById("dirIn").onclick = function () { setDir("IN"); };
+
+  document.getElementById("receipt").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    var prev = document.getElementById("receiptPreview");
+    var st = document.getElementById("receiptStatus");
+    receiptMeta = null;
+    if (!f) {
+      prev.classList.remove("show");
+      prev.removeAttribute("src");
+      st.textContent = "No photo yet";
+      return;
+    }
+    st.textContent = f.name + " · ready to upload";
+    var url = URL.createObjectURL(f);
+    prev.src = url;
+    prev.classList.add("show");
+  });
+
+  function paintDays(days) {
+    var daysBox = document.getElementById("days");
+    daysBox.innerHTML = "";
+    if (!days.length) {
+      daysBox.appendChild(el("p", "empty", "No day tin records yet."));
+      return;
+    }
+    days.forEach(function (d) {
+      var row = el("div", "card");
+      var st = d.state || "OPEN";
+      var STATE_HUMAN = {OPEN:"Open", COUNTED:"Counted", POLICY_REQUIRED:"Needs policy", VARIANCE_NOTED:"Variance noted", CLOSED:"Closed", CLOSED_CLAIMED:"Closed"};
+      row.appendChild(el("span", "state" + (st === "POLICY_REQUIRED" || st === "VARIANCE_NOTED" ? " warn" : ""), STATE_HUMAN[st] || st));
+      row.appendChild(el("h3", null, d.business_date || "Date unknown"));
+      var floatLine = d.opening_float == null
+        ? "Opening cash balance not set yet"
+        : "Opening float: " + d.opening_float;
+      row.appendChild(el("div", "meta", floatLine));
+      if (d.counted_amount != null) row.appendChild(el("div", "meta", "Counted: " + d.counted_amount));
+      if (d.expected_amount != null) {
+        row.appendChild(el("div", "meta", "Expected: " + d.expected_amount));
+      } else if (d.opening_float == null) {
+        row.appendChild(el("div", "meta", "Expected balance unavailable until opening cash is set"));
+      }
+      if (d.note) row.appendChild(el("div", "meta", d.note));
+      if (d.example) row.appendChild(el("div", "meta", "Example"));
+      daysBox.appendChild(row);
+    });
+  }
+
+  function paintMoves(rows) {
+    var box = document.getElementById("list");
+    box.innerHTML = "";
+    if (!rows.length) {
+      box.appendChild(el("p", "empty", "No petty movements yet."));
+      return;
+    }
+    rows.forEach(function (m) {
+      var d = el("div", "card");
+      var dir = (m.direction || "").toUpperCase();
+      var head = el("div");
+      head.appendChild(el("span", "state " + (dir === "IN" ? "in" : "out"), m.direction_label || dir || "?"));
+      if (m.needs_approval) head.appendChild(el("span", "chip", "Needs approval"));
+      if (m.legacy) head.appendChild(el("span", "chip", "Existing"));
+      d.appendChild(head);
+      d.appendChild(el("h3", null, m.purpose || m.category || "Movement"));
+      var bits = [];
+      if (m.business_date) bits.push(m.business_date);
+      bits.push(money(m.amount, m.currency));
+      if (m.category) bits.push(m.category);
+      if (m.outlet) bits.push(m.outlet);
+      if (m.logged_by) bits.push(m.logged_by);
+      if (m.created_at) bits.push(String(m.created_at).replace("T", " ").slice(0, 16));
+      d.appendChild(el("div", "meta", bits.join(" · ")));
+      if (m.evidence_id || m.receipt_path) d.appendChild(el("div", "meta", "Receipt attached"));
+      if (m.example) d.appendChild(el("div", "meta", "Example"));
+      box.appendChild(d);
+    });
+  }
+
+  function loadPetty() {
+    return fetch("/api/bzg/uma-blu/petty", { credentials: "same-origin" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (Array.isArray(data.categories) && data.categories.length) cats = data.categories;
+        if (Array.isArray(data.outlets) && data.outlets.length) outlets = data.outlets;
+        fillSelect(document.getElementById("category"), ["Choose…"].concat(cats).filter(function (x, i, a) {
+          return i === 0 ? true : x !== "Choose…";
+        }).slice(1).length ? cats : cats, cats[0]);
+        // rebuild category properly
+        var catSel = document.getElementById("category");
+        catSel.innerHTML = '<option value="">Choose…</option>';
+        cats.forEach(function (c) {
+          var o = document.createElement("option");
+          o.value = c; o.textContent = c; catSel.appendChild(o);
+        });
+        fillSelect(document.getElementById("outlet"), outlets, outlets[0]);
+
+        var floatStatus = (data.float_status || (data.honesty && data.honesty.float) || "NOT_FOUND");
+        var floatEl = document.getElementById("floatBanner");
+        if (floatStatus === "NOT_FOUND" || floatStatus === "NOT_IN_SLICE") {
+          var banner = "Opening cash balance is not set yet. You can still record movements. The tin total cannot be verified until an approved opening balance is commissioned.";
+          if ((data.movements || []).length) {
+            banner += " Past movements stay listed. They do not set an opening balance.";
+          }
+          floatEl.textContent = banner;
+        } else {
+          floatEl.textContent = "Opening float is recorded on a day tin below.";
+          floatEl.classList.add("ok");
+        }
+        if (data.fixture_notice && !(data.movements || []).some(function (m) { return m.legacy; })) {
+          document.getElementById("fixtureBanner").classList.remove("hidden");
+        }
+        paintDays(data.days || []);
+        paintMoves(data.movements || []);
+        document.body.setAttribute("data-overflow",
+          document.documentElement.scrollWidth > document.documentElement.clientWidth + 1 ? "yes" : "no");
+      })
+      .catch(function () {
+        document.getElementById("list").textContent = "Could not load petty cash.";
+        document.getElementById("days").textContent = "Could not load day tin.";
+      });
+  }
+
+  function uploadReceipt(file) {
+    var fd = new FormData();
+    fd.append("file", file, file.name || "receipt.jpg");
+    return fetch("/api/bzg/uma-blu/petty/receipt", {
+      method: "POST",
+      credentials: "same-origin",
+      body: fd
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); });
+  }
+
+  fetch("/api/bzg/uma-blu/permissions", { credentials: "same-origin" })
+    .then(function (r) { return r.json(); })
+    .then(function (perm) {
+      if (!perm || !perm.buttons || !perm.buttons.petty_record) return;
+      document.getElementById("pettyForm").hidden = false;
+      document.getElementById("pettyFormLocked").hidden = true;
+      document.getElementById("stickyCta").hidden = false;
+      var hello = (window.__WOLF_WHOAMI__ && (window.__WOLF_WHOAMI__.hello || window.__WOLF_WHOAMI__.email)) || "";
+      if (hello) document.getElementById("logged_by").value = hello;
+      document.getElementById("moveForm").onsubmit = function (ev) {
+        ev.preventDefault();
+        var msg = document.getElementById("moveMsg");
+        var btn = document.getElementById("submitBtn");
+        msg.textContent = "";
+        msg.className = "msg";
+        var amount = Number(document.getElementById("amount").value);
+        var purpose = document.getElementById("purpose").value.trim();
+        var category = document.getElementById("category").value;
+        var outlet = document.getElementById("outlet").value;
+        var loggedBy = document.getElementById("logged_by").value.trim();
+        var file = document.getElementById("receipt").files && document.getElementById("receipt").files[0];
+        if (!file) {
+          msg.textContent = "Add a receipt photo first.";
+          msg.className = "msg err";
           return;
         }
-        location.reload();
-      }).catch(function () { msg.textContent = "Movement was not recorded."; });
-    };
-  }).catch(function () {});
+        if (!category) {
+          msg.textContent = "Choose a category.";
+          msg.className = "msg err";
+          return;
+        }
+        btn.disabled = true;
+        msg.textContent = "Uploading receipt…";
+        uploadReceipt(file).then(function (up) {
+          if (!up.ok || !up.j || !up.j.ok) {
+            throw new Error((up.j && (up.j.error || up.j.message)) || "Receipt upload failed");
+          }
+          receiptMeta = up.j;
+          msg.textContent = "Recording movement…";
+          return fetch("/api/bzg/uma-blu/petty", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              operator: true,
+              direction: direction,
+              amount: amount,
+              purpose: purpose,
+              category: category,
+              outlet: outlet,
+              logged_by: loggedBy,
+              evidence_id: up.j.evidence_id,
+              receipt_path: up.j.receipt_path,
+              currency: "IDR"
+            })
+          }).then(function (r) { return r.json(); });
+        }).then(function (out) {
+          if (!out.ok) {
+            msg.textContent = out.error || out.message || "Movement was not recorded.";
+            msg.className = "msg err";
+            btn.disabled = false;
+            return;
+          }
+          msg.textContent = out.movement && out.movement.needs_approval
+            ? "Recorded — needs approval (IDR 500k+)."
+            : "Recorded.";
+          msg.className = "msg ok";
+          document.getElementById("moveForm").reset();
+          setDir("OUT");
+          document.getElementById("receiptPreview").classList.remove("show");
+          document.getElementById("receiptStatus").textContent = "No photo yet";
+          if (hello) document.getElementById("logged_by").value = hello;
+          loadPetty().then(function () { btn.disabled = false; });
+        }).catch(function (err) {
+          msg.textContent = (err && err.message) || "Movement was not recorded.";
+          msg.className = "msg err";
+          btn.disabled = false;
+        });
+      };
+    })
+    .catch(function () {});
+
+  loadPetty();
 })();
 </script>
 </body>
