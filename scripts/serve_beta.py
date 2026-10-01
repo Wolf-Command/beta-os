@@ -95,6 +95,7 @@ from core import monthend_shareholder_wave2_06 as _monthend
 from core import sale_readiness_wave2_07 as _sale_readiness
 from core import content_tick_draft as _content_tick_draft
 from core import atrium_ops_security_evidence_1 as _sec_evidence
+from core import atrium_ops_maintenance_pm_1 as _maint_pm
 from core import owner_cockpit as _owner_cockpit
 from core import uma_real_projection as _uma_real
 from core import uma_devi_p0 as _uma_p0
@@ -2267,6 +2268,47 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 )
                 return
             self._send_html_shell(page.read_bytes(), rel="atrium-ops-security-evidence-1.html")
+            return
+
+        # ATRIUM-OPS-MAINTENANCE-PM-1 — maintenance / PM workflow (Beta writes).
+        if path == "/api/msc/maintenance-pm" or path.startswith("/api/msc/maintenance-pm/"):
+            try:
+                self._send_json(_maint_pm.handle_get(path))
+            except Exception as _e:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "maintenance_pm_fail",
+                        "message": str(_e)[:240],
+                        "staff_ready": False,
+                        "prod_mutate": False,
+                    },
+                    status=500,
+                )
+            return
+        if path in (
+            "/msc/maintenance-pm",
+            "/msc/maintenance-pm/",
+            "/msc-maintenance-pm",
+            "/msc-maintenance-pm/",
+            "/msc-maintenance-pm.html",
+            "/atrium-ops-maintenance-pm-1",
+            "/atrium-ops-maintenance-pm-1/",
+            "/atrium-ops-maintenance-pm-1.html",
+            "/dashboards/atrium-ops-maintenance-pm-1.html",
+        ):
+            page = DASHBOARDS / "atrium-ops-maintenance-pm-1.html"
+            if not page.is_file():
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "maintenance_pm_page_missing",
+                        "staff_ready": False,
+                    },
+                    status=404,
+                )
+                return
+            self._send_html_shell(page.read_bytes(), rel="atrium-ops-maintenance-pm-1.html")
             return
 
         # PACK-01 Owner cockpit. Read-only JSON and a read board.
@@ -6197,6 +6239,36 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 if hdr:
                     actor = hdr
             payload, status = _sec_evidence.handle_post(
+                path,
+                body if isinstance(body, dict) else {},
+                actor=actor,
+            )
+            self._send_json(payload, status=status)
+            return
+        if path == "/api/msc/maintenance-pm" or path.startswith("/api/msc/maintenance-pm/"):
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length) if length else b""
+            try:
+                body = json.loads(raw.decode() or "{}")
+            except Exception:
+                body = {}
+            actor = "PERS-MATT"
+            try:
+                identity = self._resolve_identity(
+                    body if isinstance(body, dict) else {},
+                    emit_audit=False,
+                )
+                if identity.get("ok") and identity.get("person_id"):
+                    actor = str(identity.get("person_id"))
+                else:
+                    hdr = (self.headers.get("X-Wolf-Subject") or "").strip()
+                    if hdr:
+                        actor = hdr
+            except Exception:
+                hdr = (self.headers.get("X-Wolf-Subject") or "").strip()
+                if hdr:
+                    actor = hdr
+            payload, status = _maint_pm.handle_post(
                 path,
                 body if isinstance(body, dict) else {},
                 actor=actor,

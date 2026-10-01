@@ -7,5 +7,14 @@
     "by": "cursor-local",
     "pack": "ATRIUM-OPS-SECURITY-EVIDENCE-1",
     "created_at": "2026-10-02T06:52:14+08:00"
+  },
+  {
+    "id": "atrium-ops-maintenance-pm-1-20261002",
+    "claim": "Beta :8788 GET /api/msc/maintenance-pm returns ok with register_state PARTIAL, schedule_count 19, staff_ready false, auto_room_block false",
+    "check": "curl -s -H 'X-Wolf-Subject: PERS-MATT' http://127.0.0.1:8788/api/msc/maintenance-pm | python3 -c \"import sys,json; d=json.load(sys.stdin); assert d.get('ok') is True and d.get('register_state')=='PARTIAL' and int(d.get('schedule_count') or 0)>=19 and d.get('staff_ready') is False and d.get('auto_room_block') is False\"",
+    "expect": "exit 0",
+    "by": "cursor-local",
+    "pack": "ATRIUM-OPS-MAINTENANCE-PM-1",
+    "created_at": "2026-10-02T07:10:08+08:00"
   }
 ]

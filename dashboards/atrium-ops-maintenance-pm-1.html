@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wolf · Maintenance / PM desk</title>
+<style>
+  :root {
+    --bg: #101418;
+    --bg2: #171d23;
+    --line: #2c3842;
+    --text: #eef2f5;
+    --muted: #8b9aa6;
+    --accent: #c4a574;
+    --warn: #e0b15a;
+    --ok: #7d9b76;
+    --bad: #c47a6a;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background:
+      radial-gradient(ellipse 90% 60% at 0% -10%, #243039 0%, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 20px 16px 72px; }
+  h1 { font-family: var(--display); font-weight: 500; font-size: 30px; margin: 0 0 6px; }
+  h2 { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 24px 0 8px; }
+  .lede { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.92rem; }
+  .banner {
+    border: 1px solid rgba(224,177,90,0.45);
+    background: var(--bg2);
+    border-left: 3px solid var(--warn);
+    padding: 12px 14px;
+    margin: 0 0 14px;
+    font-size: 0.88rem;
+    color: var(--warn);
+  }
+  .card {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .card.overdue { border-color: rgba(196,122,106,0.55); }
+  .k { color: var(--muted); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .v { font-family: var(--display); font-size: 18px; margin: 4px 0; }
+  .note { color: var(--muted); font-size: 0.84rem; line-height: 1.4; }
+  label { display: block; font-size: 0.78rem; color: var(--muted); margin: 8px 0 4px; }
+  input, select, textarea, button { font: inherit; }
+  input, select, textarea {
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--line);
+    padding: 8px 10px;
+    border-radius: 6px;
+  }
+  textarea { min-height: 56px; resize: vertical; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  button {
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+  }
+  button.primary { background: #243039; border-color: var(--accent); color: var(--accent); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .pill {
+    display: inline-block;
+    font-size: 0.72rem;
+    border: 1px solid #3a4a3a;
+    color: var(--ok);
+    padding: 2px 6px;
+    margin-right: 4px;
+  }
+  .pill.warn { border-color: rgba(224,177,90,0.5); color: var(--warn); }
+  .pill.bad { border-color: rgba(196,122,106,0.5); color: var(--bad); }
+  #detail { white-space: pre-wrap; font-size: 0.78rem; color: var(--muted); margin-top: 12px; }
+</style>
+</head>
+<body data-wolf-page-type="DASHBOARD" data-wolf-org="MSC">
+<div class="wrap">
+  <p class="note">WOLF · MSC / Atrium · Maintenance / PM (AMG slice)</p>
+  <h1>Maintenance / PM desk</h1>
+  <p class="lede">
+    Operational workflow: asset register (CAP-MSC-01) → location → PM schedule →
+    inspection/checklist → assigned role/person → due/overdue → issue → work order →
+    priority → action → parts/vendor/cost (optional UNKNOWN) → evidence →
+    verification → closed → next service date → history → recurring failure flag.
+    Not a Kanban board of fake WOs. Predictive intelligence later. staff_ready stays false.
+  </p>
+  <div class="banner" id="banner">Loading maintenance / PM desk…</div>
+
+  <h2>Asset register SoT</h2>
+  <div class="card">
+    <p class="note" id="assetNote">CAP-MSC-01 via /api/msc/assets — empty register stays honest. No second asset register.</p>
+    <div class="row">
+      <a class="note" href="/msc-assets" style="color:var(--accent)">Open asset register</a>
+    </div>
+  </div>
+
+  <h2>PM schedule (AMG seed)</h2>
+  <div id="schedule"></div>
+
+  <h2>Raise / reactive</h2>
+  <div class="card">
+    <div class="row">
+      <div style="flex:1;min-width:160px">
+        <label for="pmTask">PM task id</label>
+        <select id="pmTask"></select>
+      </div>
+      <div style="flex:1;min-width:140px">
+        <label for="assignee">Assigned person</label>
+        <input id="assignee" placeholder="PERS-… or name" />
+      </div>
+    </div>
+    <div class="row">
+      <button class="primary" id="btnRaise" type="button">Raise PM work order</button>
+    </div>
+    <div class="row">
+      <div style="flex:1;min-width:140px">
+        <label for="rxLoc">Reactive location</label>
+        <input id="rxLoc" placeholder="room / area" />
+      </div>
+      <div style="flex:2;min-width:180px">
+        <label for="rxIssue">Issue</label>
+        <input id="rxIssue" placeholder="leak / AC fail / …" />
+      </div>
+      <div style="flex:0 0 90px">
+        <label for="rxPri">Priority</label>
+        <select id="rxPri">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3" selected>3</option>
+          <option value="4">4</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <button id="btnReactive" type="button">Create reactive issue</button>
+    </div>
+  </div>
+
+  <h2>Open work orders</h2>
+  <div id="orders"></div>
+
+  <h2>Selected job</h2>
+  <div class="card">
+    <p class="note" id="selLabel">Select a work order above.</p>
+    <div class="row">
+      <button id="btnCheck" type="button" disabled>Complete checklist</button>
+      <button id="btnAction" type="button" disabled>Record action</button>
+      <button id="btnEvidence" type="button" disabled>Add evidence</button>
+      <button id="btnVerify" type="button" disabled>Verify</button>
+      <button class="primary" id="btnClose" type="button" disabled>Close / reset cycle</button>
+    </div>
+    <label for="note">Note</label>
+    <textarea id="note" placeholder="action / evidence ref / verification / closure note"></textarea>
+    <div id="detail"></div>
+  </div>
+</div>
+<script>
+const API = "/api/msc/maintenance-pm";
+const HDR = { "Accept": "application/json", "X-Wolf-Subject": "PERS-MATT", "Content-Type": "application/json" };
+let selected = null;
+let deskData = null;
+
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+async function api(method, path, body) {
+  const opts = { method, headers: HDR };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const resp = await fetch(path, opts);
+  const data = await resp.json().catch(() => ({}));
+  return { status: resp.status, data };
+}
+
+function setButtons(on) {
+  ["btnCheck","btnAction","btnEvidence","btnVerify","btnClose"].forEach((id) => {
+    document.getElementById(id).disabled = !on;
+  });
+}
+
+function renderSchedule(rows) {
+  const box = document.getElementById("schedule");
+  const sel = document.getElementById("pmTask");
+  sel.innerHTML = "";
+  if (!rows || !rows.length) {
+    box.innerHTML = '<div class="card"><p class="note">No PM schedule seeded yet.</p></div>';
+    return;
+  }
+  box.innerHTML = rows.map((t) => {
+    const state = t.due_state || "?";
+    const cls = state === "OVERDUE" ? "overdue" : "";
+    const pill = state === "OVERDUE" ? "bad" : (state === "DUE" ? "warn" : "");
+    return `<div class="card ${cls}">
+      <span class="pill ${pill}">${esc(state)}</span>
+      <span class="pill">P${esc(t.priority)}</span>
+      <span class="pill">${esc(t.interval_days)}d</span>
+      <div class="v">${esc(t.task)}</div>
+      <p class="note">${esc(t.task_id)} · ${esc(t.scope)} · next ${esc(t.next_due || "—")} · checklist: ${esc(t.checklist)}</p>
+    </div>`;
+  }).join("");
+  rows.forEach((t) => {
+    const opt = document.createElement("option");
+    opt.value = t.task_id;
+    opt.textContent = `${t.task_id} (${t.due_state})`;
+    sel.appendChild(opt);
+  });
+}
+
+function renderOrders(rows) {
+  const box = document.getElementById("orders");
+  const open = (rows || []).filter((w) => w.status !== "closed");
+  if (!open.length) {
+    box.innerHTML = '<div class="card"><p class="note">No open work orders.</p></div>';
+    return;
+  }
+  box.innerHTML = open.map((w) => {
+    const rec = w.recurring_failure ? '<span class="pill bad">recurring</span>' : "";
+    return `<div class="card" data-wo="${esc(w.wo_id)}" style="cursor:pointer">
+      <span class="pill">${esc(w.status)}</span>
+      <span class="pill">P${esc(w.priority)}</span>
+      <span class="pill">${esc(w.kind)}</span>
+      ${rec}
+      <div class="v">${esc(w.issue)}</div>
+      <p class="note">${esc(w.wo_id)} · ${esc(w.location)} · ${esc(w.assigned_role || "")} ${esc(w.assigned_person || "")}</p>
+    </div>`;
+  }).join("");
+  box.querySelectorAll("[data-wo]").forEach((el) => {
+    el.addEventListener("click", () => selectWo(el.getAttribute("data-wo")));
+  });
+}
+
+async function selectWo(id) {
+  selected = id;
+  const { data } = await api("GET", `${API}/${id}`);
+  document.getElementById("selLabel").textContent = `${id} · ${(data.work_order || {}).status || "?"}`;
+  document.getElementById("detail").textContent = JSON.stringify(data, null, 2);
+  setButtons(true);
+}
+
+async function refresh() {
+  const { status, data } = await api("GET", API);
+  deskData = data;
+  const banner = document.getElementById("banner");
+  if (!data.ok) {
+    banner.textContent = `Desk error: ${data.error || status}`;
+    return;
+  }
+  banner.innerHTML = `register <strong>${esc(data.register_state)}</strong> ·
+    schedule ${esc(data.schedule_count)} · overdue ${esc(data.overdue_count)} ·
+    open WO ${esc(data.open_workflow_count)} · staff_ready=${esc(data.staff_ready)} ·
+    room_block=${esc(data.auto_room_block)} · sinks Cloudbeds/ClickUp/Notion/Telegram=RETIRED ·
+    eng-prove only`;
+  document.getElementById("assetNote").textContent =
+    (data.asset_register && data.asset_register.message) ||
+    "CAP-MSC-01 /api/msc/assets is asset SoT.";
+  renderSchedule(data.pm_schedule || []);
+  renderOrders(data.work_orders || []);
+}
+
+document.getElementById("btnRaise").onclick = async () => {
+  const pm_task_id = document.getElementById("pmTask").value;
+  const assigned_person = document.getElementById("assignee").value.trim() || null;
+  const { data } = await api("POST", `${API}/raise`, { pm_task_id, assigned_person });
+  document.getElementById("detail").textContent = JSON.stringify(data, null, 2);
+  if (data.work_order) selected = data.work_order.wo_id;
+  setButtons(!!selected);
+  await refresh();
+};
+
+document.getElementById("btnReactive").onclick = async () => {
+  const location = document.getElementById("rxLoc").value.trim();
+  const issue = document.getElementById("rxIssue").value.trim();
+  const priority = Number(document.getElementById("rxPri").value);
+  const { data } = await api("POST", `${API}/reactive`, { location, issue, priority });
+  document.getElementById("detail").textContent = JSON.stringify(data, null, 2);
+  if (data.work_order) selected = data.work_order.wo_id;
+  setButtons(!!selected);
+  await refresh();
+};
+
+document.getElementById("btnCheck").onclick = async () => {
+  if (!selected) return;
+  const { data } = await api("POST", `${API}/${selected}/checklist`, { complete_all: true });
+  document.getElementById("detail").textContent = JSON.stringify(data, null, 2);
+  await refresh();
+};
+
+document.getElementById("btnAction").onclick = async () => {
+  if (!selected) return;
+  const note = document.getElementById("note").value.trim() || "Inspection / service action logged.";
+  const { data } = await api("POST", `${API}/${selected}/action`, { actions_taken: note });
+  document.getElementById("detail").textContent = JSON.stringify(data, null, 2);
+  await refresh();
+};
+
+document.getElementById("btnEvidence").onclick = async () => {
+  if (!selected) return;
+  const note = document.getElementById("note").value.trim() || "photo/doc ref";
+  const { data } = await api("POST", `${API}/${selected}/evidence`, {
+    kind: "photo_ref",
+    ref_text: note,
+  });
+  document.getElementById("detail").textContent = JSON.stringify(data, null, 2);
+  await refresh();
+};
+
+document.getElementById("btnVerify").onclick = async () => {
+  if (!selected) return;
+  const note = document.getElementById("note").value.trim() || "Verified complete.";
+  const { data } = await api("POST", `${API}/${selected}/verify`, { verification_note: note });
+  document.getElementById("detail").textContent = JSON.stringify(data, null, 2);
+  await refresh();
+};
+
+document.getElementById("btnClose").onclick = async () => {
+  if (!selected) return;
+  const note = document.getElementById("note").value.trim() || "Closed; cycle reset.";
+  const { data } = await api("POST", `${API}/${selected}/close`, { closure_note: note });
+  document.getElementById("detail").textContent = JSON.stringify(data, null, 2);
+  selected = null;
+  setButtons(false);
+  await refresh();
+};
+
+refresh();
+</script>
+</body>
+</html>

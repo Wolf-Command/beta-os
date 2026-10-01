@@ -1,0 +1,196 @@
+{
+  "version": 1,
+  "seeded": "2026-06-18",
+  "tasks": [
+    {
+      "id": "ac-service",
+      "scope": "all rooms",
+      "task": "AC filter clean & full service",
+      "interval_days": 90,
+      "priority": 2,
+      "checklist": "Clean filter, check gas/cooling, test thermostat, wipe vents, check drip tray",
+      "last_done": "2026-06-18",
+      "last_raised": null
+    },
+    {
+      "id": "deep-clean",
+      "scope": "room rotation",
+      "task": "Deep-clean rotation (rooms + bathrooms)",
+      "interval_days": 30,
+      "priority": 3,
+      "checklist": "Behind furniture, skirting & vents, descale bathroom, steam soft furnishings, polish fittings",
+      "last_done": "2026-06-18",
+      "last_raised": "2026-08-15"
+    },
+    {
+      "id": "plumbing",
+      "scope": "all rooms",
+      "task": "Plumbing & drainage inspection",
+      "interval_days": 30,
+      "priority": 3,
+      "checklist": "Test hot-water time-to-temp, check shower pressure, inspect for leaks, test drainage",
+      "last_done": "2026-06-18",
+      "last_raised": "2026-08-15"
+    },
+    {
+      "id": "water-heater",
+      "scope": "all rooms",
+      "task": "Water heater / geyser check",
+      "interval_days": 60,
+      "priority": 2,
+      "checklist": "Check element/anode, test thermostat & cut-off, flush sediment, inspect for leaks",
+      "last_done": "2026-06-18",
+      "last_raised": "2026-08-17"
+    },
+    {
+      "id": "door-locks",
+      "scope": "all rooms",
+      "task": "Door lock & in-room safe battery",
+      "interval_days": 120,
+      "priority": 2,
+      "checklist": "Test card lock, proactively replace battery, test secondary lock, test in-room safe",
+      "last_done": "2026-06-18",
+      "last_raised": null
+    },
+    {
+      "id": "balcony-furniture",
+      "scope": "all rooms",
+      "task": "Balcony & furniture inspection",
+      "interval_days": 90,
+      "priority": 4,
+      "checklist": "Check railing integrity, inspect cushions, test jacuzzi (if fitted), check drainage",
+      "last_done": "2026-06-18",
+      "last_raised": null
+    },
+    {
+      "id": "grout-silicone",
+      "scope": "all rooms",
+      "task": "Deep grout & silicone check",
+      "interval_days": 120,
+      "priority": 3,
+      "checklist": "Inspect bathroom grout/silicone for mould, re-seal if needed, check tile integrity",
+      "last_done": "2026-06-18",
+      "last_raised": null
+    },
+    {
+      "id": "linen-mattress",
+      "scope": "all rooms",
+      "task": "Linen & mattress rotation / inspection",
+      "interval_days": 90,
+      "priority": 4,
+      "checklist": "Inspect/rotate mattresses, check curtains/blinds, flag staining/wear for replacement",
+      "last_done": "2026-06-18",
+      "last_raised": null
+    },
+    {
+      "id": "electrical",
+      "scope": "property",
+      "task": "Electrical & socket / RCD safety test",
+      "interval_days": 90,
+      "priority": 2,
+      "checklist": "Test sockets/switches/RCD, replace dimming bulbs, check distribution board, test safe battery",
+      "last_done": "2026-06-18",
+      "last_raised": null
+    },
+    {
+      "id": "fire-safety",
+      "scope": "property",
+      "task": "Fire extinguisher & smoke-alarm check",
+      "interval_days": 180,
+      "priority": 1,
+      "checklist": "Check all extinguishers (lobby/floors/rooftop), test smoke alarms, check exit signage & lighting",
+      "last_done": "2026-06-18",
+      "last_raised": null
+    },
+    {
+      "id": "lift-safety",
+      "scope": "property",
+      "task": "Lift / elevator safety check",
+      "interval_days": 30,
+      "priority": 1,
+      "checklist": "Test all floors, check emergency phone, inspect doors, log any noise/judder",
+      "last_done": "2026-06-18",
+      "last_raised": "2026-08-15"
+    },
+    {
+      "id": "generator",
+      "scope": "property",
+      "task": "Generator / inverter load test",
+      "interval_days": 30,
+      "priority": 2,
+      "checklist": "Run load test, check fuel & oil, verify auto-switchover, log runtime",
+      "last_done": "2026-06-18",
+      "last_raised": "2026-08-15"
+    },
+    {
+      "id": "pest-control",
+      "scope": "property",
+      "task": "Pest-control treatment",
+      "interval_days": 90,
+      "priority": 3,
+      "checklist": "Treat perimeter & voids, inspect kitchen/bins/drains, check bait stations, log sightings",
+      "last_done": "2026-06-18",
+      "last_raised": null
+    },
+    {
+      "id": "wifi-network",
+      "scope": "property",
+      "task": "WiFi & network health check",
+      "interval_days": 30,
+      "priority": 3,
+      "checklist": "Test speed all floors, check dead zones, reboot APs if needed, verify guest portal",
+      "last_done": "2026-06-18",
+      "last_raised": "2026-08-15"
+    },
+    {
+      "id": "common-ac",
+      "scope": "common areas",
+      "task": "Lobby & common-area AC service",
+      "interval_days": 30,
+      "priority": 2,
+      "checklist": "Service lobby/corridor AC, check rooftop units, clean common-area vents",
+      "last_done": "2026-06-18",
+      "last_raised": "2026-08-15"
+    },
+    {
+      "id": "pool-pump",
+      "scope": "pool",
+      "task": "Pool & pump maintenance",
+      "interval_days": 14,
+      "priority": 3,
+      "checklist": "Service pump & filtration, backwash, check chemical dosing, verify magnesium pool, inspect surrounds",
+      "last_done": "2026-06-18",
+      "last_raised": "2026-08-20"
+    },
+    {
+      "id": "bathhouse",
+      "scope": "spa (Surga)",
+      "task": "Bathhouse systems (sauna / hammam)",
+      "interval_days": 30,
+      "priority": 2,
+      "checklist": "Test sauna heat, hammam steam, ice-bath chiller, sensory tank, magnesium pool",
+      "last_done": "2026-06-18",
+      "last_raised": "2026-08-15"
+    },
+    {
+      "id": "gym-equipment",
+      "scope": "gym",
+      "task": "Gym equipment inspection",
+      "interval_days": 30,
+      "priority": 3,
+      "checklist": "Test all machines, check cables/belts, sanitise, flag any wear",
+      "last_done": "2026-06-18",
+      "last_raised": "2026-08-15"
+    },
+    {
+      "id": "landscaping",
+      "scope": "grounds",
+      "task": "Landscaping & garden upkeep",
+      "interval_days": 14,
+      "priority": 4,
+      "checklist": "Trim, check irrigation, clear walkways, inspect garden lighting & pool surrounds",
+      "last_done": "2026-06-18",
+      "last_raised": "2026-08-20"
+    }
+  ]
+}
