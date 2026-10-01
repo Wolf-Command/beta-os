@@ -92,6 +92,7 @@ from core import crm_identity_wave2_03 as _crm_identity
 from core import menu_engineering_wave2_04 as _menu_engineering
 from core import content_learn_wave2_05 as _content_learn
 from core import monthend_shareholder_wave2_06 as _monthend
+from core import sale_readiness_wave2_07 as _sale_readiness
 from core import content_tick_draft as _content_tick_draft
 from core import owner_cockpit as _owner_cockpit
 from core import uma_real_projection as _uma_real
@@ -2192,6 +2193,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "writes": False, "xero_enabled": False, "pnl_invented": False}, status=404)
                 return
             self._send_html_shell(page.read_bytes(), rel="bzg-month-end.html")
+            return
+
+        # WAVE2-07-SALE Sale readiness honesty. Read-only. Not a buyer data room.
+        if path == "/api/sale/readiness" or path.startswith("/api/sale/readiness/"):
+            try:
+                self._send_json(_sale_readiness.load_readiness())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "sale_readiness_fail", "detail": str(_e), "staff_ready": False, "writes": False, "sale_ready": False, "buyer_data_room": False}, status=500)
+            return
+        if path in ("/sale/readiness", "/sale/readiness/"):
+            page = DASHBOARDS / "sale-readiness.html"
+            if not page.is_file():
+                self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "writes": False, "sale_ready": False, "buyer_data_room": False}, status=404)
+                return
+            self._send_html_shell(page.read_bytes(), rel="sale-readiness.html")
             return
 
         # PACK-04 Habitat tick → draft or Misa queue. Publish stays off.
@@ -6096,6 +6112,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/bzg/month-end" or path.startswith("/api/bzg/month-end/"):
             self._send_json(_monthend.refuse_write(), status=405)
+            return
+        if path == "/api/sale/readiness" or path.startswith("/api/sale/readiness/"):
+            self._send_json(_sale_readiness.refuse_write(), status=405)
             return
         if path == "/api/owner/cockpit" or path.startswith("/api/owner/cockpit/"):
             self._send_json(_owner_cockpit.refuse_write(), status=405)

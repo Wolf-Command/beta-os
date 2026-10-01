@@ -1,0 +1,53 @@
+{
+  "pack": "WAVE2-07",
+  "title": "Sale readiness data room honesty",
+  "status": "eng-proved",
+  "proved_at": "2026-10-01T22:33:08+08:00",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "writes": false,
+  "sale_ready": false,
+  "buyer_data_room": false,
+  "state": "SHELL",
+  "system_page": {
+    "page_type": "SYSTEM",
+    "title": "Wolf · Sale evidence pack"
+  },
+  "evidence_pack": {
+    "cap": "CAP-SALE-01",
+    "controls_read": 60,
+    "empty_slots": 60,
+    "filled_slots": 0,
+    "maturity": "SPECIFIED",
+    "cr_state": "OPEN",
+    "proven": false,
+    "ready": false
+  },
+  "data_room": {
+    "cap": "CAP-SALE-02",
+    "on_disk": false,
+    "document_count": 0,
+    "buyer_count": 0,
+    "buyer_access": false,
+    "live_share": false
+  },
+  "gaps": {
+    "FINANCE": 12,
+    "HR": 15,
+    "LEGAL": 6,
+    "OPS": 12,
+    "COMPLIANCE": 3,
+    "TECH": 9,
+    "UNKNOWN": 3
+  },
+  "tests": "scripts/tests/test_sale_readiness_wave2_07.py 10 passed, 0 failed",
+  "http": {
+    "GET /api/sale/readiness": 200,
+    "GET /sale/readiness": 200,
+    "POST /api/sale/readiness": 405,
+    "health_8788": 200,
+    "health_8787": 200
+  },
+  "next": "STOP_FOR_OWNER"
+}
