@@ -88,6 +88,7 @@ from core import bzg_preopen_config_pack9 as _bzg_preopen
 from core import approvals_evidence_pack10 as _approvals_gate
 from core import uma_declared_cash_wave2_01 as _uma_declared_cash
 from core import amg_housekeeping_wave2_02 as _amg_housekeeping
+from core import crm_identity_wave2_03 as _crm_identity
 from core import content_tick_draft as _content_tick_draft
 from core import owner_cockpit as _owner_cockpit
 from core import uma_real_projection as _uma_real
@@ -2128,6 +2129,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "writes": False}, status=404)
                 return
             self._send_html_shell(page.read_bytes(), rel="amg-housekeeping.html")
+            return
+
+        # WAVE2-03-CRM CRM identity. Read-only. No merge is written.
+        if path == "/api/crm/identity" or path.startswith("/api/crm/identity/"):
+            try:
+                self._send_json(_crm_identity.load_identity())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "crm_identity_fail", "detail": str(_e), "staff_ready": False, "writes": False, "one_crm": False}, status=500)
+            return
+        if path in ("/crm/identity", "/crm/identity/"):
+            page = DASHBOARDS / "crm-identity-wave2.html"
+            if not page.is_file():
+                self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "writes": False, "one_crm": False}, status=404)
+                return
+            self._send_html_shell(page.read_bytes(), rel="crm-identity-wave2.html")
             return
 
         # PACK-04 Habitat tick → draft or Misa queue. Publish stays off.
@@ -6020,6 +6036,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/amg/housekeeping" or path.startswith("/api/amg/housekeeping/"):
             self._send_json(_amg_housekeeping.refuse_write(), status=405)
+            return
+        if path == "/api/crm/identity" or path.startswith("/api/crm/identity/"):
+            self._send_json(_crm_identity.refuse_write(), status=405)
             return
         if path == "/api/owner/cockpit" or path.startswith("/api/owner/cockpit/"):
             self._send_json(_owner_cockpit.refuse_write(), status=405)

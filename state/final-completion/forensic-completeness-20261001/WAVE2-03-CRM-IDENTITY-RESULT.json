@@ -1,0 +1,55 @@
+{
+  "pack": "WAVE2-03",
+  "title": "CRM identity",
+  "status": "eng-proved",
+  "proved_at": "2026-10-01T22:00:18+08:00",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "writes": false,
+  "one_crm": false,
+  "master_table_written": false,
+  "join": {
+    "state": "UNAVAILABLE",
+    "matched_pairs": null,
+    "compared": false
+  },
+  "sources": {
+    "habitat_sheet": {
+      "file": "state/habitat-leads-glance.json",
+      "as_of_wita": "2026-10-01T09:43:42+08:00",
+      "count": 271,
+      "email_rows": null,
+      "phone_rows": null,
+      "write": false
+    },
+    "core_leads": {
+      "count": 8,
+      "fixture_only": true,
+      "email_rows": 0,
+      "phone_rows": 0
+    },
+    "guest_profiles": {
+      "guests": 1,
+      "visits": 1,
+      "observations": 2,
+      "businesses": ["AMG"],
+      "email_rows": 1,
+      "phone_rows": 1,
+      "values_omitted": true
+    },
+    "ggv_onboard": {
+      "state": "SHELL",
+      "count": null
+    }
+  },
+  "tests": "scripts/tests/test_crm_identity_wave2_03.py 12 passed, 0 failed",
+  "http": {
+    "GET /api/crm/identity": 200,
+    "GET /crm/identity": 200,
+    "POST /api/crm/identity": 405,
+    "health_8788": 200,
+    "health_8787": 200
+  },
+  "next": "WAVE2-04 menu engineering (need.menu.engineering). Not started."
+}

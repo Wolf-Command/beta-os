@@ -64,6 +64,14 @@
       "expect": "14 passed, 0 failed; UNAVAILABLE; status null; bookings off; staff_ready false",
       "by": "WAVE2-02",
       "at": "2026-10-01T21:48:00+08:00"
+    },
+    {
+      "id": "wave2-03-crm-identity-unjoined",
+      "claim": "Wave 2.03 CRM identity tests pass. The three stores stay separate. Join stays UNAVAILABLE, matched_pairs stays null, and staff_ready stays false.",
+      "check": "cd /Users/wolfterminal/beta-os && /opt/homebrew/bin/python3 scripts/tests/test_crm_identity_wave2_03.py | tail -1; curl -sS --max-time 8 http://127.0.0.1:8788/api/crm/identity | python3 -c \"import json,sys; d=json.load(sys.stdin); j=d.get('join') or {}; h=(d.get('sources') or {}).get('habitat_sheet') or {}; sys.exit(0 if j.get('state')=='UNAVAILABLE' and j.get('matched_pairs') is None and d.get('one_crm') is False and d.get('staff_ready') is False and h.get('count')==271 else 1)\"",
+      "expect": "12 passed, 0 failed; join UNAVAILABLE; matched_pairs null; one_crm false; habitat 271; staff_ready false",
+      "by": "WAVE2-03",
+      "at": "2026-10-01T22:00:18+08:00"
     }
   ]
 }
