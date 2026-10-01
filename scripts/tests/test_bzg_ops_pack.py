@@ -162,7 +162,7 @@ def main() -> int:
             )
             check("submitted", submitted["state"] == "REQUESTED", submitted["state"])
             approved = p0.ops_advance(
-                person_id="PERS-DEVI",
+                person_id="PERS-MATT",
                 pr_id=pr["pr_id"],
                 to_state="APPROVED",
                 conn=conn,

@@ -40370,14 +40370,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "close": "OPS_CLOSED",
         }[action]
         try:
-            out = _uma_p0.ops_advance(
-                person_id=person_id,
-                pr_id=pr_id,
-                to_state=dest,
-                evidence_note_id=body.get("evidence_note_id"),
-                evidence_photo_id=body.get("evidence_photo_id"),
-                identity=identity,
-            )
+            if action == "approve":
+                out = _uma_p0.approve_purchase_segregated(
+                    person_id=person_id,
+                    pr_id=pr_id,
+                    identity=identity,
+                )
+            else:
+                out = _uma_p0.ops_advance(
+                    person_id=person_id,
+                    pr_id=pr_id,
+                    to_state=dest,
+                    evidence_note_id=body.get("evidence_note_id"),
+                    evidence_photo_id=body.get("evidence_photo_id"),
+                    identity=identity,
+                )
             self._send_json({"ok": True, "pr": out, "payment_execution": False})
         except _uma_ops.UmaOpsError as exc:
             self._send_json(

@@ -1220,6 +1220,28 @@ def operator_view(person_id: str, *, conn: sqlite3.Connection) -> dict[str, Any]
     }
 
 
+def _pr_requester_person(conn: sqlite3.Connection, pr_id: str) -> str | None:
+    """Person who drafted or submitted the PR. Audit is the source. No name list."""
+    key = (pr_id or "").strip()
+    if not key:
+        return None
+    row = conn.execute(
+        """
+        SELECT actor_person_id
+        FROM core_audit_events
+        WHERE resource_type=? AND resource_id=?
+          AND action IN ('bzg.pr.draft', 'bzg.pr.requested')
+          AND actor_person_id IS NOT NULL AND actor_person_id != ''
+        ORDER BY occurred_at ASC, created_at ASC
+        LIMIT 1
+        """,
+        (_ops.RESOURCE_TYPE, key),
+    ).fetchone()
+    if not row:
+        return None
+    return str(row[0]).strip() or None
+
+
 def ops_advance(
     *,
     person_id: str,
@@ -1249,6 +1271,14 @@ def ops_advance(
                 code="forbidden",
                 http_status=403,
             )
+        if dest == "APPROVED":
+            requester = _pr_requester_person(c, (pr_id or "").strip())
+            if not requester or requester == pid:
+                raise _ops.UmaOpsError(
+                    "A different person must approve this request.",
+                    code="self_approval_denied",
+                    http_status=403,
+                )
         if dest == "OPS_CLOSED":
             _ops.save_pr_close_slot(
                 c,
@@ -1270,6 +1300,129 @@ def ops_advance(
         if commit:
             c.commit()
         return out
+    finally:
+        if own:
+            c.close()
+
+
+def approve_purchase_segregated(
+    *,
+    person_id: str,
+    pr_id: str,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """One segregating ops approval. Not the approvals product.
+
+    The requester cannot approve. A different person with work.complete
+    decides one GENERAL core_approval_requests row, then the PR moves to
+    APPROVED. No payment, no authority-limit table, no delegation product.
+    """
+    from core import approvals as _approvals
+
+    pid = (person_id or "").strip()
+    key = (pr_id or "").strip()
+    own = conn is None
+    c = conn or _ops.db_connect()
+    try:
+        _ops.assert_catalog_writable(_ops.CATALOG_DB)
+        requester = _pr_requester_person(c, key)
+        if not requester or requester == pid:
+            raise _ops.UmaOpsError(
+                "A different person must approve this request.",
+                code="self_approval_denied",
+                http_status=403,
+            )
+        existing = c.execute(
+            """
+            SELECT approval_request_id, status
+            FROM core_approval_requests
+            WHERE source_id=? AND request_type='GENERAL'
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            (key,),
+        ).fetchone()
+        if existing and str(existing["status"]) == "APPROVED":
+            request_id = str(existing["approval_request_id"])
+        elif existing and str(existing["status"]) == "PENDING":
+            request_id = str(existing["approval_request_id"])
+        elif existing:
+            raise _ops.UmaOpsError(
+                f"approval request is {existing['status']}",
+                code="approval_not_pending",
+                http_status=409,
+            )
+        else:
+            detail = pr_detail(key, conn=c) or {}
+            title = f"Uma Blu purchase {detail.get('pr_num') or key}"
+            try:
+                created = _approvals.create_approval_request(
+                    title=title[:200],
+                    owning_entity_id=_ops.ENTITY_BZG,
+                    brand_id=_ops.VENUE_UMA,
+                    required_permission_code="work.complete",
+                    verified_person_id=requester,
+                    request_type="GENERAL",
+                    description=(
+                        "Segregating ops approval for one Uma Blu purchase. "
+                        "Not a payment and not an authority limit."
+                    ),
+                    source_type="HUMAN",
+                    source_id=key,
+                    governed_object_type=_ops.RESOURCE_TYPE,
+                    governed_object_id=key,
+                    bind_policy=False,
+                    identity=identity,
+                    conn=c,
+                    commit=False,
+                )
+            except _approvals.ApprovalError as exc:
+                raise _ops.UmaOpsError(
+                    str(exc),
+                    code=getattr(exc, "code", "approval_failed"),
+                    http_status=int(getattr(exc, "http_status", 400) or 400),
+                ) from exc
+            request_id = str(created["approval_request_id"])
+        if not existing or str(existing["status"]) == "PENDING":
+            try:
+                _approvals.approve_request(
+                    request_id,
+                    verified_person_id=pid,
+                    reason="Segregated ops approval. Not a payment.",
+                    identity=identity,
+                    conn=c,
+                    commit=False,
+                )
+            except _approvals.ApprovalError as exc:
+                raise _ops.UmaOpsError(
+                    str(exc),
+                    code=getattr(exc, "code", "approval_failed"),
+                    http_status=int(getattr(exc, "http_status", 400) or 400),
+                ) from exc
+        out = ops_advance(
+            person_id=pid,
+            pr_id=key,
+            to_state="APPROVED",
+            identity=identity,
+            conn=c,
+            commit=False,
+        )
+        out["approval_request_id"] = request_id
+        out["approval_status"] = "APPROVED"
+        out["segregated"] = True
+        out["payment_execution"] = False
+        if commit:
+            c.commit()
+        return out
+    except Exception:
+        if commit and own:
+            try:
+                c.rollback()
+            except Exception:
+                pass
+        raise
     finally:
         if own:
             c.close()

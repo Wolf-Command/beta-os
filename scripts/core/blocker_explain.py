@@ -49,6 +49,9 @@ WHY_PR_WAITING = "A purchase request is waiting for approval."
 WHY_ORDERED = "An order has been placed and the goods have not been received."
 WHY_BILL_WAITING = "A bill is waiting for payment approval."
 WHY_CLOSE_NOT_STARTED = "Daily Close has not been started."
+WHY_CLOSE_EVIDENCE_MISSING = (
+    "Daily close has no declared-cash evidence. No till count was invented."
+)
 WHY_CLOSE_POLICY = (
     "BLOCKED BY BUSINESS POLICY. "
     "Daily Close is blocked because no variance policy is authorised. "
@@ -84,6 +87,7 @@ _TEMPLATES: dict[str, tuple[str, str]] = {
     "ordered_not_received": (WHY_ORDERED, CLASS_NEEDS_STAFF),
     "bill_waiting_payment": (WHY_BILL_WAITING, CLASS_NEEDS_STAFF),
     "close_not_started": (WHY_CLOSE_NOT_STARTED, CLASS_NEEDS_STAFF),
+    "close_evidence_missing": (WHY_CLOSE_EVIDENCE_MISSING, CLASS_NEEDS_STAFF),
     "close_policy_required": (WHY_CLOSE_POLICY, CLASS_NEEDS_POLICY),
     "close_not_loaded": (WHY_CLOSE_NOT_LOADED, CLASS_NEEDS_STAFF),
     "issues_open": (WHY_ISSUES, CLASS_NEEDS_STAFF),

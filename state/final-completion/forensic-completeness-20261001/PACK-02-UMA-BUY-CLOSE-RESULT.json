@@ -1,0 +1,90 @@
+{
+  "pack": "PACK-02",
+  "title": "Uma Blu buy → receive → petty → close",
+  "proved_at": "2026-10-01",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "alchemist_written": false,
+  "prod_8787_written": false,
+  "recipe_variance": false,
+  "xero_write": false,
+  "buyer": "PERS-DEVI",
+  "approver": "PERS-MATT",
+  "self_approval_denied_code": "self_approval_denied",
+  "source": {
+    "db": "/Users/wolfterminal/.openclaw/workspace/alchemist/data/alchemist.db",
+    "mode": "ro",
+    "pr_orders_id": 557,
+    "pr_num": "PR-1557",
+    "vendor": "BU SEPTI",
+    "order_date": "2026-09-30",
+    "line_count": 15,
+    "petty_cash_id": 451,
+    "petty_amount": 50000,
+    "cash_count_rows": 0
+  },
+  "rows": {
+    "pr_id": "PR-UMA-0E65E353A422",
+    "pr_state": "RECEIVED",
+    "pr_example": 0,
+    "pr_lines": 15,
+    "lines_match_alchemist": true,
+    "approval_request_id": "APR-292cc664-f235-4bef-93eb-78a6abbf43bd",
+    "approval_status": "APPROVED",
+    "approval_requester": "PERS-DEVI",
+    "approval_decided_by": "PERS-MATT",
+    "receipt_id": "RCP-d8d0d12a-903f-4f50-aa5e-216ed31394fe",
+    "receipt_status": "COMPLETE",
+    "receipt_lines": 15,
+    "receipt_evidence_id": "EVD-372162c1-d0ac-42a6-b5f3-5959c11f4621",
+    "petty_movement_id": "PETTY-UMA-2321496C6D",
+    "petty_example": 0,
+    "petty_amount": 50000,
+    "petty_currency": null,
+    "petty_business_date": "2026-10-01",
+    "today_close_id": "VDC-3353351f-3234-4f7d-acf0-a63e0e176114",
+    "today_close_state": "OPEN",
+    "today_capture_error": "esb_empty_day",
+    "issue_id": "ISS-UMA-12FD811939",
+    "night_close_id": "VDC-25a3123a-3e26-43db-8085-10c6f208bbcd",
+    "night_close_date": "2026-09-30",
+    "night_close_state": "DATA_CAPTURED",
+    "night_finished_count": 50,
+    "night_grand_total": 15140000,
+    "declared_cash_evidence_id": null,
+    "declared_cash_invented": false
+  },
+  "today_card": {
+    "attention": true,
+    "blocked": true,
+    "explain_kind": "close_evidence_missing",
+    "why": "Daily close has no declared-cash evidence. No till count was invented."
+  },
+  "http": {
+    "beta_today_unauthenticated": 403,
+    "beta_health": 200,
+    "prod_health": 200,
+    "auth_mode_changed": false
+  },
+  "tests": {
+    "test_uma_buy_close_pack2": "6 passed, 0 failed",
+    "note": "Service-layer approve in existing BZG tests passed after the approver moved off the requester. Unrelated HTML and JWT identity checks in those files still fail."
+  },
+  "register_rows_updated": [
+    "uma.pr",
+    "uma.petty",
+    "uma.today",
+    "uma.evidence",
+    "uma.tasks",
+    "owner.pulse.bzg_night",
+    "owner.pulse.purchasing",
+    "need.cash.theft"
+  ],
+  "next": {
+    "pack": "PACK-03",
+    "title": "Atrium sales desk",
+    "started": false,
+    "note": "14 views on 88 units / 570 leads / 399 payments under AMG. Occupancy stays vacant-versus-rooms until in-house is known. No housekeeping."
+  }
+}

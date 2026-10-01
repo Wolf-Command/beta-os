@@ -143,7 +143,7 @@ def test_operator_depth_on_copy(td: Path) -> None:
         )
         check("pr requested", pr["state"] == "REQUESTED", pr["state"])
         approved = p0.ops_advance(
-            person_id="PERS-DEVI",
+            person_id="PERS-MATT",
             pr_id=pr["pr_id"],
             to_state="APPROVED",
             conn=conn,

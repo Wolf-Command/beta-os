@@ -74,6 +74,7 @@ TODAY_RANK = {
     "petty_variance_noted": 100,
     "petty_open_uncounted": 110,
     "petty_attention": 120,
+    "close_evidence_missing": 45,
     "close_not_started": 130,
     "close_not_loaded": 140,
     "daily_close": 150,
@@ -88,6 +89,7 @@ BLOCKED_EXPLAIN_KINDS = frozenset(
         "missing_payment_evidence",
         "close_exception",
         "close_policy_required",
+        "close_evidence_missing",
         "petty_variance_noted",
     }
 )
@@ -1968,6 +1970,16 @@ def _safe_close_for_today(
                 "attention": False,
                 "blocked": False,
                 "explain_kind": None,
+            }
+        evidence_id = str(row.get("declared_cash_evidence_id") or "").strip()
+        if st in ("OPEN", "DATA_CAPTURED") and not evidence_id:
+            return {
+                **base,
+                "status": "blocked",
+                "label": "Daily close blocked — declared cash evidence missing",
+                "attention": True,
+                "blocked": True,
+                "explain_kind": "close_evidence_missing",
             }
         progress_labels = {
             "OPEN": "Daily close open",
