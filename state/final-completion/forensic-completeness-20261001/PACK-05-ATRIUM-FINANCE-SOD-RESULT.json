@@ -1,0 +1,43 @@
+{
+  "pack": "PACK-05",
+  "title": "Atrium finance screens under separation of duties",
+  "proved_at": "2026-10-01",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "books_written": false,
+  "xero_write": false,
+  "payroll": "OFF",
+  "bank_balance": null,
+  "tests": "scripts/tests/test_amg_finance_screens_pack5.py 27 passed, 0 failed",
+  "books": {
+    "path": "/Users/wolfterminal/atrium-finance/data/beta/atrium.sqlite",
+    "legal_entity_id": "ENT-AMG",
+    "shell_kind": "live",
+    "journals": {"total": 13, "POSTED": 4, "APPROVED": 3, "ARCHIVED": 6},
+    "revenue_rows": 2,
+    "revenue_source": "Manual",
+    "tax_closed_periods": 0
+  },
+  "sod": {
+    "posted_journal": "JRN-ATRIUMSOD1B-COMM1",
+    "preparer": "PERS-ZENITALFATHAN",
+    "approver": "PERS-ZAYEN",
+    "self_journal": "JRN-ATRIUMSOD1B-SELF",
+    "self_approval_denied": true,
+    "amanda_amg": "entity_denied",
+    "zayen_ggv": "entity_denied",
+    "zayen_amg": true,
+    "zayen_bzg": true
+  },
+  "http": {
+    "GET /api/amg/finance/screens": 403,
+    "GET /amg/finance/screens": 403,
+    "POST /api/amg/finance/screens/xero": 403,
+    "POST /api/amg/finance/screens/payroll": 403,
+    "GET /api/amg/finance/no-such": 404,
+    "GET /api/health :8788": 200,
+    "GET /api/health :8787": 200
+  },
+  "next": "PACK-06 GGV nota"
+}

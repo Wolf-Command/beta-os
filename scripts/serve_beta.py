@@ -16194,6 +16194,22 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def _amg_finance_get(self, path: str) -> bool:
         from core import atrium_finance_desk as _desk
+        from core import amg_finance_screens as _fin_screens
+
+        # PACK-05 read screens. Same finance guard. Books stay read-only.
+        _screen_base = path.rstrip("/")
+        if _screen_base in ("/api/amg/finance/screens", "/amg/finance/screens"):
+            if self._amg_finance_guard() is None:
+                return True
+            if _screen_base.startswith("/api/"):
+                self._send_json(_fin_screens.load_screens())
+                return True
+            page = DASHBOARDS / "amg-finance-screens.html"
+            if not page.is_file():
+                self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "xero_write": False}, status=404)
+                return True
+            self._send_html_shell(page.read_bytes(), rel="amg-finance-screens.html")
+            return True
 
         lite = False
         if path.rstrip("/") == "/amg/finance/lite" or path.startswith("/amg/finance/lite/"):
@@ -16253,6 +16269,17 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def _amg_finance_post(self, path: str) -> bool:
         from core import atrium_finance_desk as _desk
+        from core import amg_finance_screens as _fin_screens
+
+        # PACK-05: screen writes stay blocked. Xero and payroll do not post.
+        if path.rstrip("/").startswith("/api/amg/finance/screens"):
+            if self._amg_finance_guard() is None:
+                return True
+            if path.rstrip("/").endswith("/payroll"):
+                self._send_json(_fin_screens.refuse_payroll(), status=405)
+            else:
+                self._send_json(_fin_screens.refuse_xero(), status=405)
+            return True
 
         kind = _desk.route_kind("POST", path)
         if kind is None:
