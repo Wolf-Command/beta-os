@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Content learn-back</title>
+<style>
+  :root {
+    --bg: #14110c; --bg2: #1e1912; --border: #3d3426;
+    --text: #f4efe4; --muted: #b3a48c; --accent: #c4a574; --warn: #e0b15a;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 820px; padding: 16px 16px 72px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  h1 { font-size: 1.35rem; margin: 0 0 6px; }
+  .note { color: var(--muted); font-size: 0.92rem; line-height: 1.45; }
+  nav a { color: var(--muted); margin-right: 12px; }
+  .banner { border: 1px solid rgba(224,177,90,0.55); color: var(--warn); border-radius: 10px; padding: 10px 12px; }
+  details { border: 1px solid var(--border); border-radius: 12px; background: var(--bg2); margin: 8px 0; padding: 0 12px 10px; }
+  details summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--accent); }
+</style>
+</head>
+<body>
+  <p class="note">WOLF · Content</p>
+  <h1>Content learn-back</h1>
+  <p class="note">History is readable. No learn-back row was written. Tiles start closed. staff_ready is false.</p>
+  <nav aria-label="This page">
+    <a href="/content/tick-draft">Tick</a>
+    <a href="/content/learn-back">This desk</a>
+  </nav>
+  <p class="banner" id="banner">Loading the stores…</p>
+  <div id="list">
+    <details><summary>Performance store</summary><p class="note">A history count. Not a loop.</p></details>
+    <details><summary>Previous snapshots</summary><p class="note">Frozen onto the previous fortnight.</p></details>
+    <details><summary>Current brief</summary><p class="note">No performance record id.</p></details>
+    <details><summary>Learn-back</summary><p class="note">No learn-back row was written.</p></details>
+  </div>
+<script>
+  function line(node, text) {
+    const p = document.createElement("p");
+    p.className = "note";
+    p.textContent = text;
+    node.appendChild(p);
+  }
+  fetch("/api/content/learn-back", { headers: { "Accept": "application/json" } })
+    .then((res) => res.json())
+    .then((data) => {
+      const banner = document.getElementById("banner");
+      if (!data || data.ok !== true) {
+        banner.textContent = "The stores did not load.";
+        return;
+      }
+      const loop = data.learn || {};
+      banner.textContent = "Learn " + (loop.state || "UNKNOWN") + " · Metricool write off · staff_ready false";
+      const list = document.getElementById("list");
+      list.replaceChildren();
+      const perf = data.performance || {};
+      const snaps = data.snapshots || {};
+      const brief = data.current_brief || {};
+      const cards = [
+        ["Performance store", String(perf.count) + " rows. Engagement null " + String(perf.engagement_null) + "."],
+        ["Previous snapshots", String(snaps.count) + " snapshots. Current-cycle plans " + String(snaps.current_cycle_plans) + "."],
+        ["Current brief", String(brief.cycle_start) + " → " + String(brief.cycle_end) + ". Performance id in file: " + String(brief.has_performance_record_id) + "."],
+        ["Learn-back", loop.why || "No learn-back row was written."]
+      ];
+      cards.forEach((pair) => {
+        const details = document.createElement("details");
+        const summary = document.createElement("summary");
+        summary.textContent = pair[0];
+        details.appendChild(summary);
+        line(details, pair[1]);
+        list.appendChild(details);
+      });
+    })
+    .catch(() => {
+      document.getElementById("banner").textContent = "The stores did not load.";
+    });
+</script>
+</body>
+</html>

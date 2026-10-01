@@ -80,6 +80,14 @@
       "expect": "14 passed, 0 failed; contribution UNAVAILABLE; margin null; classes unassigned; staff_ready false",
       "by": "WAVE2-04",
       "at": "2026-10-01T22:10:31+08:00"
+    },
+    {
+      "id": "wave2-05-content-learn-unjoined",
+      "claim": "Wave 2.05 content learn-back tests pass. performance_records stays a history store. The current brief has no performance_record id. Metricool write stays false. staff_ready stays false.",
+      "check": "cd /Users/wolfterminal/beta-os && /opt/homebrew/bin/python3 scripts/tests/test_content_learn_wave2_05.py | tail -1; curl -sS --max-time 8 http://127.0.0.1:8788/api/content/learn-back | python3 -c \"import json,sys; d=json.load(sys.stdin); L=d.get('learn') or {}; b=d.get('current_brief') or {}; sys.exit(0 if L.get('state')=='UNAVAILABLE' and L.get('fed_into_current_brief') is False and L.get('rows_written') is False and d.get('metricool_write') is False and d.get('staff_ready') is False and d.get('performance',{}).get('count')==1103 and b.get('has_performance_record_id') is False else 1)\"",
+      "expect": "11 passed, 0 failed; learn UNAVAILABLE; brief has no performance id; metricool write false; staff_ready false",
+      "by": "WAVE2-05",
+      "at": "2026-10-01T22:18:23+08:00"
     }
   ]
 }

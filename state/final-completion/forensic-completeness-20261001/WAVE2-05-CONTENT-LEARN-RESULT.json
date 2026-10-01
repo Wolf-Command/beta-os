@@ -1,0 +1,53 @@
+{
+  "pack": "WAVE2-05",
+  "title": "Content learn-back",
+  "status": "eng-proved",
+  "proved_at": "2026-10-01T22:18:23+08:00",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "writes": false,
+  "metricool_write": false,
+  "state": "PARTIAL",
+  "performance": {
+    "count": 1103,
+    "engagement_null": 1012,
+    "published_max": "2026-09-14T09:02:15Z",
+    "fetched_max": "2026-09-15T07:45:19+08:00",
+    "values_omitted": true
+  },
+  "snapshots": {
+    "count": 6,
+    "performance_ids_per_snapshot": 6,
+    "plan_period": "2026-09-14 → 2026-09-27",
+    "current_cycle_plans": 0
+  },
+  "current_brief": {
+    "cycle_start": "2026-09-28",
+    "cycle_end": "2026-10-11",
+    "posts": 6,
+    "stories": 28,
+    "has_performance_record_id": false,
+    "prose_metricool_snapshot": "2026-08-21T10:26:50+08:00"
+  },
+  "learn": {
+    "state": "UNAVAILABLE",
+    "fed_into_current_brief": false,
+    "rows_written": false
+  },
+  "publish_queue": {
+    "count": 1,
+    "state": "QUEUED",
+    "reason": "metricool_write_blocked",
+    "publish": "OFF"
+  },
+  "tests": "scripts/tests/test_content_learn_wave2_05.py 11 passed, 0 failed",
+  "http": {
+    "GET /api/content/learn-back": 200,
+    "GET /content/learn-back": 200,
+    "POST /api/content/learn-back": 405,
+    "health_8788": 200,
+    "health_8787": 200
+  },
+  "next": "WAVE2-06 month-end shareholder pack honesty (need.monthend.shareholder). Not started."
+}

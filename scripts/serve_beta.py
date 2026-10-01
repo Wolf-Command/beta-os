@@ -90,6 +90,7 @@ from core import uma_declared_cash_wave2_01 as _uma_declared_cash
 from core import amg_housekeeping_wave2_02 as _amg_housekeeping
 from core import crm_identity_wave2_03 as _crm_identity
 from core import menu_engineering_wave2_04 as _menu_engineering
+from core import content_learn_wave2_05 as _content_learn
 from core import content_tick_draft as _content_tick_draft
 from core import owner_cockpit as _owner_cockpit
 from core import uma_real_projection as _uma_real
@@ -2160,6 +2161,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "writes": False, "scores_written": False}, status=404)
                 return
             self._send_html_shell(page.read_bytes(), rel="uma-menu-engineering.html")
+            return
+
+        # WAVE2-05-LEARN Content learn-back. Read-only. No loop is written.
+        if path == "/api/content/learn-back" or path.startswith("/api/content/learn-back/"):
+            try:
+                self._send_json(_content_learn.load_learn())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "learn_back_fail", "detail": str(_e), "staff_ready": False, "writes": False, "metricool_write": False}, status=500)
+            return
+        if path in ("/content/learn-back", "/content/learn-back/"):
+            page = DASHBOARDS / "content-learn-back.html"
+            if not page.is_file():
+                self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "writes": False, "metricool_write": False}, status=404)
+                return
+            self._send_html_shell(page.read_bytes(), rel="content-learn-back.html")
             return
 
         # PACK-04 Habitat tick → draft or Misa queue. Publish stays off.
@@ -6058,6 +6074,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/bzg/uma-blu/menu-engineering" or path.startswith("/api/bzg/uma-blu/menu-engineering/"):
             self._send_json(_menu_engineering.refuse_write(), status=405)
+            return
+        if path == "/api/content/learn-back" or path.startswith("/api/content/learn-back/"):
+            self._send_json(_content_learn.refuse_write(), status=405)
             return
         if path == "/api/owner/cockpit" or path.startswith("/api/owner/cockpit/"):
             self._send_json(_owner_cockpit.refuse_write(), status=405)
