@@ -693,7 +693,7 @@
       </section>
       <!--/STAFF_OMIT_ENG-->
       <div class="lib-search-hero">
-        <input type="search" id="libSearch" placeholder="Search name, subject, or detail" aria-label="Search library" />
+        <input type="search" id="libSearch" placeholder="Search title, filename, brand, detail, subject, location, date" aria-label="Search library" />
       </div>
       <div class="filter-bar lib-search-row">
         <select id="libBrand" aria-label="Brand filter"><option value="">This Brand</option></select>
@@ -754,15 +754,13 @@
       <div id="nasBanner" class="nas-banner" hidden></div>
       <p id="uploadLiveStatus" class="sub" hidden></p>
       <ol class="upload-lifecycle" id="uploadLifecycle" hidden aria-hidden="true" aria-label="Upload progress">
-        <li data-stage="select">Select file</li>
-        <li data-stage="uploading">Uploading</li>
-        <li data-stage="processing">Processing</li>
-        <li data-stage="saving_nas">Saving to NAS</li>
-        <li data-stage="indexing">Indexing</li>
-        <li data-stage="thumbnail">Generating thumbnail/preview</li>
-        <li data-stage="library">Available in Library</li>
-        <li data-stage="complete">✓ Complete</li>
+        <li data-stage="received">RECEIVED / UPLOADING</li>
+        <li data-stage="file_stored">FILE STORED</li>
+        <li data-stage="indexed">INDEXED</li>
+        <li data-stage="derivatives">DERIVATIVES PROCESSING</li>
+        <li data-stage="ready">READY</li>
       </ol>
+      <p id="uploadOutcome" class="sub" hidden></p>
       <div class="wizard-steps" id="wizardSteps">
         <div class="step on" data-step="1">1 · Batch</div>
         <div class="step" data-step="2">2 · Files</div>
@@ -1415,20 +1413,45 @@
     return "Processing";
   }
 
+  const STAGE_ALIAS = {
+    select: "received",
+    uploading: "received",
+    processing: "received",
+    saving_nas: "file_stored",
+    indexing: "indexed",
+    thumbnail: "derivatives",
+    library: "ready",
+    complete: "ready",
+    received: "received",
+    file_stored: "file_stored",
+    indexed: "indexed",
+    derivatives: "derivatives",
+    ready: "ready",
+  };
+
   function paintUploadLifecycle(stageKey, failedStage) {
     const live = $("uploadLiveStatus");
     const liveLabels = {
-      uploading: "Uploading",
-      processing: "Processing",
-      saving_nas: "Saving to NAS",
-      indexing: "Adding to Library",
-      thumbnail: "Adding to Library",
-      library: "Adding to Library",
-      complete: "✓ Complete",
+      received: "RECEIVED / UPLOADING",
+      uploading: "RECEIVED / UPLOADING",
+      processing: "RECEIVED / UPLOADING",
+      file_stored: "FILE STORED",
+      indexed: "INDEXED",
+      derivatives: "DERIVATIVES PROCESSING",
+      ready: "READY",
+      complete: "READY",
+    };
+    const failLabels = {
+      saving_nas: "STORAGE FAILED",
+      file_stored: "STORAGE FAILED",
+      indexing: "INDEX FAILED",
+      indexed: "INDEX FAILED",
+      thumbnail: "DERIVATIVE FAILED",
+      derivatives: "DERIVATIVE FAILED",
     };
     if (live) {
       const text = failedStage
-        ? "Failed. Retry keeps the files that already succeeded."
+        ? (failLabels[failedStage] || "STORAGE FAILED")
         : (liveLabels[stageKey] || "");
       live.hidden = !text;
       live.textContent = text;
@@ -1440,11 +1463,13 @@
       return;
     }
     root.hidden = !stageKey || stageKey === "select";
-    const order = ["select", "uploading", "processing", "saving_nas", "indexing", "thumbnail", "library", "complete"];
-    const idx = order.indexOf(stageKey);
+    const order = ["received", "file_stored", "indexed", "derivatives", "ready"];
+    const key = STAGE_ALIAS[stageKey] || stageKey;
+    const failKey = failedStage ? (STAGE_ALIAS[failedStage] || failedStage) : "";
+    const idx = order.indexOf(key);
     root.querySelectorAll("[data-stage]").forEach((el) => {
       const i = order.indexOf(el.dataset.stage);
-      const failed = failedStage && el.dataset.stage === failedStage;
+      const failed = failKey && el.dataset.stage === failKey;
       el.classList.toggle("fail", !!failed);
       el.classList.toggle("on", !failed && i === idx);
       el.classList.toggle("done", !failed && idx >= 0 && i < idx);
@@ -1454,22 +1479,46 @@
   function paintLifecycleResult(data) {
     const stages = (data && data.lifecycle) || [];
     const root = $("uploadLifecycle");
+    const outcome = $("uploadOutcome");
+    const failCopy = {
+      STORAGE_FAILED: "STORAGE FAILED",
+      INDEX_FAILED: "INDEX FAILED",
+      DERIVATIVE_FAILED: "DERIVATIVE FAILED",
+    };
+    if (outcome) {
+      const life = data && data.lifecycle_state;
+      if (life && failCopy[life]) {
+        outcome.hidden = false;
+        outcome.textContent = failCopy[life];
+      } else if (data && data.library_available) {
+        outcome.hidden = false;
+        outcome.textContent = "READY";
+      } else {
+        outcome.hidden = true;
+        outcome.textContent = "";
+      }
+    }
     if (!root || !stages.length) {
-      if (data && data.library_available) paintUploadLifecycle("complete");
+      if (data && data.library_available) paintUploadLifecycle("ready");
       return;
     }
+    if (!isOwnerDesk()) {
+      root.hidden = true;
+      return;
+    }
+    root.hidden = false;
     root.querySelectorAll("[data-stage]").forEach((el) => {
       const row = stages.find((s) => s.key === el.dataset.stage);
       const state = row ? row.state : "pending";
-      el.classList.toggle("done", state === "done" && el.dataset.stage !== "complete" ? true : state === "done");
-      el.classList.toggle("on", state === "done" && el.dataset.stage === "complete");
+      el.classList.toggle("done", state === "done");
+      el.classList.toggle("on", state === "done" && el.dataset.stage === "ready");
       el.classList.toggle("fail", state === "failed");
       if (state === "pending") {
         el.classList.remove("done");
         el.classList.remove("on");
+        el.classList.remove("fail");
       }
     });
-    if (data.library_available) paintUploadLifecycle("complete");
   }
 
   /* ----- Content Plan ----- */
@@ -1776,41 +1825,8 @@
 
   /* ----- Library ----- */
   async function loadLibrary() {
-    try {
-      const q = new URLSearchParams();
-      q.set("brand", state.brand);
-      const st = $("libStatus").value;
-      if (st) q.set("status", st);
-      const data = await api(`/api/assets?${q}`);
-      let assets = data.assets || [];
-      const type = $("libType").value.toLowerCase();
-      const search = ($("libSearch").value || "").toLowerCase().trim();
-      if (type) assets = assets.filter((a) => String(a.type || "").toLowerCase().includes(type) || String(a.thumb || "") === type);
-      if (search) assets = assets.filter((a) =>
-        `${a.slug || ""} ${a.filename || ""}`.toLowerCase().includes(search)
-      );
-      const grid = $("libGrid");
-      if (!assets.length) {
-        grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><strong>No assets yet</strong>Upload media, then commit from staging to grow the library.</div>`;
-        return;
-      }
-      grid.innerHTML = assets.map((a) => {
-        const thumb = a.thumb || "file";
-        return `<div class="lib-card">
-          <div class="lib-thumb ${esc(thumb)}">${esc(thumb)}</div>
-          <div class="lib-meta">
-            <div class="slug">${esc(a.slug || a.filename || "asset-" + a.id)}</div>
-            <div class="meta">${esc(a.type || "")} · ${esc(a.stage || "")} · ${esc(a.status || "")}<br/>${esc(a.date_added || "")}</div>
-          </div>
-        </div>`;
-      }).join("");
-      // Guard: no raw paths in DOM
-      if (/\/Users\/|library_v2\/|original_path|v2_path/.test(grid.innerHTML)) {
-        console.warn("path leak blocked visually");
-      }
-    } catch (e) {
-      $("libGrid").innerHTML = `<div class="empty" style="grid-column:1/-1">${esc(e.message)}</div>`;
-    }
+    // Active loader is the server-paged override further down.
+    // This stub must not download the corpus and filter it in the browser.
   }
 
   /* ----- Smart Upload wizard (Phase 2.5B) ----- */
@@ -2311,9 +2327,28 @@
     if (status === 403 || err === "forbidden") return "You do not have permission to upload for this brand.";
     const stage = String((data && data.failed_stage) || "");
     if (stage === "saving_nas" || low.indexOf("save failed") === 0) return "Storage is unavailable. Nothing new was saved for this file.";
-    if (stage === "thumbnail") return "Saved to the library. A preview image could not be made.";
+    if (stage === "indexing" || stage === "library") return "The file was saved but could not be indexed. Retry the failed files.";
+    if (stage === "thumbnail" || (data && data.derivative_failed)) return "Video uploaded successfully. Preview processing failed — Retry Preview.";
     if (!res) return "The connection was interrupted. Retry the failed files.";
     return "This file could not be added to the library. Retry the failed files.";
+  }
+
+  async function retryPreview(assetId, btn, badge) {
+    if (!assetId) return;
+    if (btn) btn.disabled = true;
+    try {
+      const data = await api("/api/assets/" + encodeURIComponent(assetId) + "/retry-preview", { method: "POST", json: {} });
+      const msg = data.staff_message || (data.preview_ready ? "Available in the library." : "Video uploaded successfully. Preview processing failed — Retry Preview.");
+      if (badge) badge.textContent = data.preview_ready ? "Available in Library" : "Preview failed";
+      const status = $("uploadStatus");
+      if (status) status.textContent = msg;
+      toast(msg);
+      if (data.preview_ready && btn) btn.hidden = true;
+    } catch (e) {
+      toast(e.message || "Video uploaded successfully. Preview processing failed — Retry Preview.");
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   }
 
   async function runSmartUpload(onlyFailed) {
@@ -2348,7 +2383,9 @@
     }
     let ok = (uploadWizard.okIdx || []).length;
     let fail = 0;
+    let previewFails = (uploadWizard.previewIdx || []).length;
     const failedIdx = [];
+    const previewIdx = (uploadWizard.previewIdx || []).slice();
     const total = uploadWizard.files.length;
     for (let n = 0; n < indexes.length; n++) {
       const i = indexes[n];
@@ -2390,21 +2427,35 @@
         paintLifecycleResult(data);
         paintRegistration(data, file.name);
         const duplicate = res.status === 409 || (data && (data.error === "possible_duplicate" || data.duplicate === true));
-        const savedDespitePoster = !!(data && data.ok && data.nas_received && data.asset_id && data.failed_stage === "thumbnail");
+        const savedDespitePoster = !!(data && data.ok && data.file_stored && data.asset_id && (data.derivative_failed === true || data.failed_stage === "thumbnail") && data.upload_failed !== true);
         if (duplicate || savedDespitePoster) {
-          if (badge) badge.textContent = duplicate ? "Already in Library" : "Available in Library";
+          if (badge) badge.textContent = duplicate ? "Already in Library" : "Preview failed";
           status.textContent = data.staff_message || (duplicate
             ? "This file is already in the library."
-            : "Saved to the library. A preview image could not be made.");
+            : "Video uploaded successfully. Preview processing failed — Retry Preview.");
           const canon = $("canon-" + i);
           if (canon && data.canonical_filename) canon.textContent = data.canonical_filename;
           ok++;
           uploadWizard.okIdx = uploadWizard.okIdx || [];
           if (!uploadWizard.okIdx.includes(i)) uploadWizard.okIdx.push(i);
+          if (savedDespitePoster) {
+            previewFails++;
+            if (!previewIdx.includes(i)) previewIdx.push(i);
+            const cell = badge && badge.parentElement;
+            if (cell && data.asset_id && !cell.querySelector(".retry-preview")) {
+              const btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = "btn retry-preview";
+              btn.textContent = "Retry Preview";
+              btn.dataset.assetId = String(data.asset_id);
+              btn.addEventListener("click", () => retryPreview(data.asset_id, btn, badge));
+              cell.appendChild(btn);
+            }
+          }
           toast(`${file.name}: ${status.textContent}`);
           continue;
         }
-        if (!res.ok || data.ok === false || !data.library_available) {
+        if (!res.ok || data.ok === false || data.upload_failed === true || !data.library_available) {
           const stage = String((data && data.failed_stage) || "");
           if (stage === "saving_nas") status.textContent = "Saving to NAS";
           else if (stage === "processing") status.textContent = "Processing";
@@ -2433,14 +2484,17 @@
       }
     }
     uploadWizard.failedIdx = failedIdx;
+    uploadWizard.previewIdx = previewIdx;
     bar.style.width = "100%";
     const retry = $("uploadRetry");
     if (retry) retry.hidden = failedIdx.length === 0;
     if (fail && !ok) {
       status.textContent = `Stopped — ${fail} failed of ${total}. Nothing was marked complete. Successful files stay put.`;
+    } else if (ok && !fail && previewFails) {
+      status.textContent = "Video uploaded successfully. Preview processing failed — Retry Preview.";
     } else if (ok && !fail) {
       status.textContent = `Complete — ${ok} of ${total} available in Library.`;
-      paintUploadLifecycle("complete");
+      paintUploadLifecycle("ready");
     } else {
       status.textContent = `${ok} available in Library, ${fail} failed. Retry keeps the files that already succeeded.`;
     }
@@ -3045,6 +3099,12 @@
     if (dl) dl.disabled = state.libSelected.size === 0;
   }
 
+  function footageDateLabel(a) {
+    const raw = a && a.shoot_date != null ? String(a.shoot_date).trim() : "";
+    if (!raw || raw.toUpperCase() === "UNKNOWN") return "UNKNOWN";
+    return raw.slice(0, 32);
+  }
+
   function libraryClampPage(page, pages) {
     let n = parseInt(page, 10);
     if (!isFinite(n)) n = 1;
@@ -3289,7 +3349,12 @@
       state.libVisibleIds = assets.map((a) => a.id);
       const grid = $("libGrid");
       if (!assets.length) {
-        grid.innerHTML = `<div class="empty" id="libEmptyNext" style="grid-column:1/-1"><strong>Nothing in the library yet</strong>Open Upload and add photos or videos for this brand. <button type="button" class="btn btn-primary" style="margin-top:10px" data-goto-upload>Open Upload</button></div>`;
+        const filtered = fields.q || fields.media_type || fields.stage || fields.readiness || fields.shoot_date || fields.subject || fields.location;
+        const title = filtered ? "No files match these filters" : "Nothing in the library yet";
+        const copy = filtered
+          ? "Empty search shows every file you can open. These filters together match nothing."
+          : "Open Upload and add photos or videos for this brand.";
+        grid.innerHTML = `<div class="empty" id="libEmptyNext" style="grid-column:1/-1"><strong>${esc(title)}</strong>${esc(copy)} <button type="button" class="btn btn-primary" style="margin-top:10px" data-goto-upload>Open Upload</button></div>`;
         const go = grid.querySelector("[data-goto-upload]");
         if (go) go.addEventListener("click", () => setView("upload"));
         syncLibSel();
@@ -3298,8 +3363,9 @@
       grid.innerHTML = assets.map((a) => {
         const idKey = String(a.id);
         const zipOk = a.zip_eligible !== false;
-        const when = String(a.shoot_date || a.date_added || "").slice(0, 10) || "—";
+        const when = footageDateLabel(a);
         const media = staffMediaLabel(a);
+        const status = a.status_label || a.readiness_label || a.library_status || "";
         return `
         <div class="lib-card${state.libSelected.has(idKey)?" selected":""}" data-id="${esc(idKey)}">
           ${zipOk ? `<input class="sel" type="checkbox" ${state.libSelected.has(idKey)?"checked":""} data-sel="${esc(idKey)}" />` : ""}
@@ -3310,7 +3376,7 @@
           </div>
           <div class="lib-body" data-open="${a.id}">
             <div class="lib-title">${esc(staffCardTitle(a))}</div>
-            <div class="lib-facts">${esc(a.brand_badge || a.brand || "")} · ${esc(media)} · ${esc(when)}</div>
+            <div class="lib-facts">${esc(a.brand_badge || a.brand || "")} · ${esc(media)} · ${esc(when)} · ${esc(status)}</div>
           </div>
         </div>`;
       }).join("");
@@ -3335,18 +3401,25 @@
     const nas = idStr.indexOf("nas:") === 0;
     const previewTitle = staffCardTitle(a);
     $("prevTitle").textContent = previewTitle;
-    $("prevSub").textContent = [a.brand_badge || a.brand, staffMediaLabel(a) || a.media_label, a.shoot_date].filter(Boolean).join(" · ");
+    $("prevSub").textContent = [a.brand_badge || a.brand, staffMediaLabel(a) || a.media_label, footageDateLabel(a)].filter(Boolean).join(" · ");
     $("prevMedia").innerHTML = `<div class="empty">Loading preview…</div>`;
     const tags = Array.isArray(a.detail_tags) ? a.detail_tags.join(", ") : "";
     const contentType = a.content_class_label || a.content_class || tags || "—";
+    const uploaded = String(a.uploaded_at || a.date_added || "").trim();
     $("prevNote").innerHTML = `<div class="preview-fields">
       <div><div class="k">Title</div><div>${esc(previewTitle)}</div></div>
       <div><div class="k">Brand</div><div>${esc(a.brand_badge || a.brand || "—")}</div></div>
       <div><div class="k">Subject</div><div>${esc(a.subject || "—")}</div></div>
-      <div><div class="k">Shoot date</div><div>${esc(a.shoot_date || "—")}</div></div>
+      <div><div class="k">Detail</div><div>${esc(a.detail || "—")}</div></div>
+      <div><div class="k">Shoot date</div><div>${esc(footageDateLabel(a))}</div></div>
+      <div><div class="k">Uploaded</div><div>${esc(uploaded || "UNKNOWN")}</div></div>
       <div><div class="k">Location</div><div>${esc(a.location || "—")}</div></div>
+      <div><div class="k">Stage</div><div>${esc(a.stage || "—")}</div></div>
       <div><div class="k">Media type</div><div>${esc(staffMediaLabel(a) || a.media_label || "—")}</div></div>
       <div><div class="k">Content type</div><div>${esc(contentType)}</div></div>
+      <div><div class="k">Status</div><div>${esc(a.status_label || a.readiness_label || a.library_status || "—")}</div></div>
+      <div><div class="k">Original name</div><div>${esc(a.original_name || "—")}</div></div>
+      <div><div class="k">Generated name</div><div>${esc(a.canonical_name || a.name || "—")}</div></div>
     </div>`;
     $("prevBackdrop").classList.add("open");
     const playUrl = nas

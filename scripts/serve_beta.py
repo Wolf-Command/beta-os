@@ -2215,16 +2215,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
                         status=403,
                     )
                     return
-                rows = query_assets(qs)
-                allowed = set(_nas_library.brands_for_scopes(scopes))
-                if allowed:
-                    rows = [r for r in rows if (r.get("brand") or "") in allowed]
-                else:
-                    rows = []
-                for row in rows:
-                    row["zip_eligible"] = True
                 q_text = ((qs.get("q") or qs.get("search") or [""])[0] or "").strip()
                 media = ((qs.get("media_type") or qs.get("type") or [""])[0] or "").strip().lower()
+                stage_f = ((qs.get("stage") or [""])[0] or "").strip()
+                readiness_f = ((qs.get("readiness") or qs.get("status") or [""])[0] or "").strip()
+                shoot_f = ((qs.get("shoot_date") or [""])[0] or "").strip()
+                subject_f = ((qs.get("subject") or [""])[0] or "").strip()
+                location_f = ((qs.get("location") or [""])[0] or "").strip()
+                lane_f = ((qs.get("data_lane") or qs.get("lane") or ["operational"])[0] or "operational").strip().lower()
                 page_spec = (qs.get("page") or qs.get("nas_page") or [None])[0]
                 page_arg = None
                 if page_spec not in (None, ""):
@@ -2240,62 +2238,77 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     nas_offset = int((qs.get("nas_offset") or qs.get("offset") or ["0"])[0])
                 except (TypeError, ValueError):
                     nas_offset = 0
-                nas_page = {
+                lib_page = {
                     "cards": [],
                     "matched": 0,
+                    "nas_matched": 0,
+                    "catalog_matched": 0,
                     "total": 0,
                     "limit": max(1, min(48, nas_limit)),
-                    "offset": max(0, nas_offset),
+                    "offset": 0,
                     "page": 1,
                     "pages": 0,
                 }
                 try:
                     conn = db_connect()
                     try:
-                        nas_page = _ce_repair.nas_library_search(
+                        lib_page = _ce_repair.library_search(
                             conn,
                             scopes,
                             brand or "all",
                             q=q_text,
                             media_type=media,
+                            stage=stage_f,
+                            readiness=readiness_f,
+                            shoot_date=shoot_f,
+                            subject=subject_f,
+                            location=location_f,
                             limit=nas_limit,
                             offset=nas_offset,
                             page=page_arg,
+                            lane=lane_f,
                         )
                     finally:
                         conn.close()
                 except Exception:
-                    nas_page = {
+                    lib_page = {
                         "cards": [],
                         "matched": 0,
+                        "nas_matched": 0,
+                        "catalog_matched": 0,
                         "total": 0,
                         "limit": max(1, min(48, nas_limit)),
                         "offset": 0,
                         "page": 1,
                         "pages": 0,
                     }
-                nas_cards = list(nas_page.get("cards") or [])
-                shown_offset = int(nas_page.get("offset") or 0)
-                nas_total = int(nas_page.get("total") if nas_page.get("total") is not None else (nas_page.get("matched") or 0))
-                nas_page_n = int(nas_page.get("page") or 1)
-                # Uploaded assets stay on the first page so later NAS pages are not repeated.
-                if shown_offset <= 0:
-                    rows = nas_cards + rows
-                else:
-                    rows = nas_cards
-                # Phase 2.6 + NAS P0: query_assets already strips absolute FS paths
+                rows = list(lib_page.get("cards") or [])[:48]
+                shown_offset = int(lib_page.get("offset") or 0)
+                nas_total = int(lib_page.get("nas_matched") or 0)
+                matched_total = int(
+                    lib_page.get("matched")
+                    if lib_page.get("matched") is not None
+                    else (lib_page.get("total") or 0)
+                )
+                nas_page_n = int(lib_page.get("page") or 1)
+                # Server page only. Catalog and NAS share one ≤48 window. No client corpus.
                 payload = {
                     "ok": True,
                     "assets": rows,
                     "count": len(rows),
-                    "nas_matched": int(nas_page.get("matched") or 0),
+                    "nas_matched": nas_total,
                     "nas_total": nas_total,
+                    "catalog_matched": int(lib_page.get("catalog_matched") or 0),
+                    "matched": matched_total,
                     "nas_offset": shown_offset,
-                    "nas_limit": int(nas_page.get("limit") or nas_limit),
+                    "nas_limit": int(lib_page.get("limit") or nas_limit),
                     "nas_page": nas_page_n,
-                    "nas_pages": int(nas_page.get("pages") or 0),
-                    "total": nas_total,
+                    "nas_pages": int(lib_page.get("pages") or 0),
+                    "total": matched_total,
                     "page": nas_page_n,
+                    "pages": int(lib_page.get("pages") or 0),
+                    "limit": int(lib_page.get("limit") or 48),
+                    "search_fields": lib_page.get("search_fields") or [],
                     "nas_index": _ce_repair.read_coverage(),
                     "full_tree_indexed": False,
                     "full_nas_complete": False,
@@ -7008,6 +7021,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._assets_zip()
             return
 
+        m_retry_preview = re.match(r"^/api/assets/(\d+)/retry-preview$", path)
+        if m_retry_preview:
+            self._retry_asset_preview(int(m_retry_preview.group(1)))
+            return
+
         if path == "/api/upload/check-duplicate":
             self._upload_check_duplicate()
             return
@@ -7995,6 +8013,38 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 }
             )
         self._send_json(body, status=http)
+
+    def _retry_asset_preview(self, asset_id: int) -> None:
+        """POST poster rebuild for one stored asset. Does not accept a new file."""
+        subject = self._require_permission("can_upload", {})
+        if subject is None:
+            return
+        identity = self._resolve_identity()
+        who = _wolf_shell.whoami_from_identity(identity if identity.get("ok") else None)
+        scopes = list(who.get("scopes") or [])
+        try:
+            conn = db_connect()
+            try:
+                body = _ce_repair.retry_asset_preview(conn, asset_id, scopes)
+            finally:
+                conn.close()
+        except _ce_repair.RepairError as exc:
+            self._send_json(
+                {"ok": False, "error": exc.code, "message": str(exc), "staff_ready": False},
+                status=exc.http,
+            )
+            return
+        except Exception as exc:  # noqa: BLE001
+            _ce_repair.log_upload_fault(
+                {"where": "retry_preview", "asset_id": asset_id, "error": type(exc).__name__, "detail": str(exc)[:300]}
+            )
+            self._send_json(
+                {"ok": False, "error": "preview_retry_failed", "staff_message": _ce_repair.STAFF_PREVIEW, "staff_ready": False},
+                status=500,
+            )
+            return
+        body["staff_ready"] = False
+        self._send_json(body, status=200 if body.get("ok") else 409)
 
     def _nas_registry_get(self) -> None:
         """Read-only NAS source registry. Owner Integration Health / content crew."""

@@ -61,18 +61,23 @@ STAFF_ALREADY = "This file is already in the library."
 STAFF_SAVED = "Available in the library."
 STAFF_RETRY = "This file could not be added to the library. Retry the failed files."
 STAFF_FORBIDDEN = "You do not have permission to upload for this brand."
-STAFF_PREVIEW = "Saved to the library. A preview image could not be made."
+STAFF_PREVIEW = "Video uploaded successfully. Preview processing failed — Retry Preview."
+STAFF_INDEX = "The file was saved but could not be indexed. Retry the failed files."
+UPLOAD_STATE_RUN_ID = "BF-content-engine-upload-state-library-search-20261001"
 
-# Human stages. COMPLETE is last and only when the asset is Library-available.
+# Canonical stages. COMPLETE / READY is last and only when the preview is ready.
+# Poster failure after FILE STORED is DERIVATIVE FAILED, not an upload failure.
 LIFECYCLE: tuple[tuple[str, str], ...] = (
-    ("select", "Select file"),
-    ("uploading", "Uploading"),
-    ("processing", "Processing"),
-    ("saving_nas", "Saving to NAS"),
-    ("indexing", "Indexing"),
-    ("thumbnail", "Generating thumbnail/preview"),
-    ("library", "Available in Library"),
-    ("complete", "Complete"),
+    ("received", "RECEIVED / UPLOADING"),
+    ("file_stored", "FILE STORED"),
+    ("indexed", "INDEXED"),
+    ("derivatives", "DERIVATIVES PROCESSING"),
+    ("ready", "READY"),
+)
+FAIL_LIFECYCLE: tuple[tuple[str, str], ...] = (
+    ("storage_failed", "STORAGE FAILED"),
+    ("index_failed", "INDEX FAILED"),
+    ("derivative_failed", "DERIVATIVE FAILED"),
 )
 
 # Staff media labels. broll stays in MEDIA_TYPES as content-class debt, not a media kind.
@@ -308,6 +313,9 @@ def public_status() -> dict[str, Any]:
         "wi_staff_hidden": True,
         # True when the running process can poster a MOV even if launchd PATH has no ffmpeg.
         "ffmpeg_resolved": bool(ffmpeg),
+        "upload_state_run_id": UPLOAD_STATE_RUN_ID,
+        "upload_lifecycle": [{"key": k, "label": label} for k, label in LIFECYCLE],
+        "upload_fail_states": [{"key": k, "label": label} for k, label in FAIL_LIFECYCLE],
         **HONESTY,
     }
 
@@ -589,24 +597,47 @@ def suggest_brand(filename: str, scopes: list[str] | set[str] | None, conn: sqli
     }
 
 
-def lifecycle_rows(*, failed_stage: str | None, library_available: bool) -> list[dict[str, str]]:
-    order = [k for k, _ in LIFECYCLE]
+def _rows_for_state(state: str) -> list[dict[str, str]]:
+    """Canonical stage rows. A fail marks that stage and leaves later stages pending."""
     labels = dict(LIFECYCLE)
-    if library_available:
-        return [{"key": k, "label": labels[k], "state": "done"} for k in order]
-    if failed_stage not in order or failed_stage == "complete":
-        failed_stage = "library"
+    order = [key for key, _label in LIFECYCLE]
+    fail_key = {
+        "STORAGE_FAILED": "file_stored",
+        "INDEX_FAILED": "indexed",
+        "DERIVATIVE_FAILED": "derivatives",
+    }.get(state)
+    if state == "READY" or fail_key is None:
+        mark = "done" if state == "READY" else "pending"
+        if state == "READY":
+            return [{"key": key, "label": labels[key], "state": "done"} for key in order]
+        return [{"key": key, "label": labels[key], "state": mark} for key in order]
+    fail_at = order.index(fail_key)
     out = []
-    for key in order:
-        if key == "complete":
-            out.append({"key": key, "label": labels[key], "state": "pending"})
-        elif key == failed_stage:
-            out.append({"key": key, "label": labels[key], "state": "failed"})
-        elif order.index(key) < order.index(failed_stage):
-            out.append({"key": key, "label": labels[key], "state": "done"})
+    for index, key in enumerate(order):
+        if index < fail_at:
+            row_state = "done"
+        elif index == fail_at:
+            row_state = "failed"
         else:
-            out.append({"key": key, "label": labels[key], "state": "pending"})
+            row_state = "pending"
+        out.append({"key": key, "label": labels[key], "state": row_state})
     return out
+
+
+def lifecycle_rows(*, failed_stage: str | None, library_available: bool) -> list[dict[str, str]]:
+    if library_available and not failed_stage:
+        return _rows_for_state("READY")
+    state = {
+        "uploading": "STORAGE_FAILED",
+        "processing": "STORAGE_FAILED",
+        "saving_nas": "STORAGE_FAILED",
+        "indexing": "INDEX_FAILED",
+        "library": "INDEX_FAILED",
+        "thumbnail": "DERIVATIVE_FAILED",
+    }.get(failed_stage or "", "STORAGE_FAILED")
+    if library_available:
+        state = "READY"
+    return _rows_for_state(state)
 
 
 def resolve_ffmpeg() -> str | None:
@@ -637,10 +668,18 @@ def log_upload_fault(event: dict[str, Any]) -> None:
 def staff_upload_message(http: int, body: dict[str, Any] | None) -> str:
     """Sentence a staff member can act on. Technical text stays in the audit log."""
     body = body or {}
+    stage = str(body.get("failed_stage") or "")
+    life = str(body.get("lifecycle_state") or "")
+    derivative = (
+        body.get("derivative_failed") is True
+        or life == "DERIVATIVE_FAILED"
+        or stage == "thumbnail"
+    )
+    if derivative and body.get("ok") is not False and http < 400:
+        return STAFF_PREVIEW
     if body.get("library_available") is True:
         return STAFF_SAVED
     err = str(body.get("error") or "")
-    stage = str(body.get("failed_stage") or "")
     low = err.lower()
     if http == 413 or "exceeds" in low or "too large" in low:
         return STAFF_TOO_LARGE
@@ -650,10 +689,15 @@ def staff_upload_message(http: int, body: dict[str, Any] | None) -> str:
         return STAFF_ALREADY
     if http == 403 or err == "forbidden":
         return STAFF_FORBIDDEN
-    if stage == "saving_nas" or "nas verify failed" in low or low.startswith("save failed"):
+    if life == "INDEX_FAILED" or stage in {"indexing", "library"}:
+        return STAFF_INDEX
+    if (
+        life == "STORAGE_FAILED"
+        or stage == "saving_nas"
+        or "nas verify failed" in low
+        or low.startswith("save failed")
+    ):
         return STAFF_STORAGE
-    if stage == "thumbnail":
-        return STAFF_PREVIEW
     return STAFF_RETRY
 
 
@@ -738,11 +782,15 @@ def nas_thumb_path(nas_id: int) -> Path:
 
 
 def annotate_upload(body: dict[str, Any], *, media_path: str | Path | None) -> dict[str, Any]:
-    """COMPLETE only when NAS file, hash, index, and thumbnail all succeeded."""
+    """READY only when NAS file, hash, index, and thumbnail all succeeded.
+
+    A poster miss after the file is stored is DERIVATIVE FAILED. The upload
+    itself stays successful and Retry Preview reuses the stored asset.
+    """
     out = dict(body)
     asset_id = out.get("asset_id")
     thumb_ok = False
-    if out.get("ok") and asset_id and media_path:
+    if out.get("ok") and asset_id and media_path and out.get("nas_received"):
         thumb_ok = write_jpeg_thumb(Path(media_path), asset_thumb_path(int(asset_id)))
     registration = {
         "upload": "ok" if out.get("ok") else "failed",
@@ -754,30 +802,47 @@ def annotate_upload(body: dict[str, Any], *, media_path: str | Path | None) -> d
         "library": bool(asset_id) and out.get("library_status") == "LIBRARY_READY",
         "thumbnail": thumb_ok,
     }
-    failed = None
-    if not out.get("ok"):
-        failed = "uploading"
-    elif not registration["hash"]:
-        failed = "processing"
-    elif not registration["nas_file"]:
-        failed = "saving_nas"
+    if not out.get("ok") or not registration["hash"] or not registration["nas_file"]:
+        state = "STORAGE_FAILED"
+        failed = "saving_nas" if out.get("ok") else "uploading"
+        if out.get("ok") and not registration["hash"]:
+            failed = "processing"
     elif not registration["indexed"]:
+        state = "INDEX_FAILED"
         failed = "indexing"
-    elif not registration["thumbnail"]:
-        failed = "thumbnail"
     elif not registration["library"]:
+        state = "INDEX_FAILED"
         failed = "library"
-    library_available = failed is None and bool(registration["library"])
+    elif not registration["thumbnail"]:
+        state = "DERIVATIVE_FAILED"
+        failed = "thumbnail"
+    else:
+        state = "READY"
+        failed = None
+    file_stored = bool(out.get("ok") and registration["nas_file"])
+    derivative_failed = state == "DERIVATIVE_FAILED"
+    upload_failed = state in {"STORAGE_FAILED", "INDEX_FAILED"} or not out.get("ok")
+    library_available = state == "READY"
     out["registration"] = registration
     out["failed_stage"] = failed
+    out["lifecycle_state"] = state
+    out["file_stored"] = file_stored
+    out["derivative_failed"] = derivative_failed
+    out["upload_failed"] = upload_failed
+    out["preview_ready"] = bool(thumb_ok and library_available)
+    out["preview_retryable"] = bool(derivative_failed and asset_id)
     out["library_available"] = library_available
     out["complete"] = library_available
-    out["lifecycle"] = lifecycle_rows(failed_stage=failed, library_available=library_available)
+    out["lifecycle"] = _rows_for_state(state)
     out["preview_url"] = f"/api/assets/{asset_id}/preview" if asset_id else None
     out["staff_ready"] = False
     out["staff_message"] = staff_upload_message(200 if out.get("ok") else 500, out)
     if library_available:
         out["ui_status"] = "COMPLETE"
+    elif derivative_failed:
+        out["ui_status"] = "STORED"
+    elif upload_failed:
+        out["ui_status"] = "FAILED"
     elif out.get("ok"):
         out["ui_status"] = "CHECKING"
     return out
@@ -1289,6 +1354,348 @@ def _library_page_body(
     }
 
 
+ASSET_SEARCH_COLUMNS = (
+    "canonical_filename",
+    "original_filename",
+    "filename",
+    "slug",
+    "subject",
+    "detail",
+    "detail_tags_json",
+    "location",
+    "brand",
+    "stage",
+    "media_type",
+    "type",
+    "shoot_date",
+    "readiness",
+    "library_status",
+    "status",
+)
+NAS_SEARCH_COLUMNS = (
+    "original_filename",
+    "rel",
+    "brand_slug",
+    "classification",
+    "index_state",
+    "preview_note",
+)
+
+
+def footage_date_label(value: str | None) -> str:
+    """Shoot date as stored. Blank stays UNKNOWN. Never replaced by upload date."""
+    raw = str(value or "").strip()
+    if not raw or raw.upper() == "UNKNOWN":
+        return "UNKNOWN"
+    return raw
+
+
+def shoot_date_needles(value: str | None) -> list[str]:
+    """Accept 2026-08-01 and 20260801 as the same shoot date. No upload-date alias."""
+    raw = str(value or "").strip()
+    if not raw:
+        return []
+    digits = "".join(ch for ch in raw if ch.isdigit())
+    out: list[str] = []
+    if len(digits) >= 8:
+        digits = digits[:8]
+        iso = f"{digits[:4]}-{digits[4:6]}-{digits[6:8]}"
+        for item in (digits, iso, raw):
+            if item and item not in out:
+                out.append(item)
+        return out
+    return [raw]
+
+
+def _like_clause(columns: tuple[str, ...], q: str) -> tuple[str, list[str]]:
+    like = f"%{q.strip().lower()}%"
+    parts = [f"lower(ifnull({col},'')) LIKE ?" for col in columns]
+    # content_class lives in provenance_json. Search the stored JSON, not an invented column.
+    parts.append("lower(ifnull(provenance_json,'')) LIKE ?")
+    return "(" + " OR ".join(parts) + ")", [like] * (len(columns) + 1)
+
+
+def _asset_card(row: sqlite3.Row | dict[str, Any], names: dict[str, str]) -> dict[str, Any]:
+    d = dict(row)
+    typ = (d.get("media_type") or d.get("type") or "").lower()
+    if typ == "photo":
+        typ = "image"
+    media_label = staff_media_label(typ)
+    if typ == "video":
+        thumb = "video"
+    elif typ in ("image", "graphic"):
+        thumb = "image"
+    elif typ == "audio":
+        thumb = "audio"
+    else:
+        thumb = "file"
+        if typ == "broll":
+            media_label = ""
+    tags = []
+    try:
+        tags = json.loads(d.get("detail_tags_json") or "[]") or []
+    except (TypeError, json.JSONDecodeError):
+        tags = []
+    prov = {}
+    try:
+        prov = json.loads(d.get("provenance_json") or "{}") or {}
+    except (TypeError, json.JSONDecodeError):
+        prov = {}
+    asset_id = d.get("id")
+    thumb_file = asset_thumb_path(int(asset_id)) if asset_id else None
+    thumb_ready = bool(thumb_file and thumb_file.is_file() and thumb_file.stat().st_size > 32)
+    ready = (d.get("readiness") or "").upper()
+    if d.get("nas_received") and not thumb_ready:
+        status_label = "Preview processing failed"
+    elif ready == "READY_TO_USE":
+        status_label = "Ready"
+    elif ready == "FAILED":
+        status_label = "Failed"
+    elif ready == "CHECKING":
+        status_label = "Checking"
+    else:
+        status_label = d.get("library_status") or ready or ""
+    slug = (d.get("brand") or "").strip().lower()
+    content_class = prov.get("content_class") or ""
+    return {
+        "id": asset_id,
+        "source": "assets",
+        "brand": slug,
+        "brand_badge": names.get(slug, slug.replace("-", " ").title()),
+        "staff_title": library_display_title(d.get("subject"), d.get("detail"), d.get("original_filename") or d.get("canonical_filename")),
+        "content_class": content_class,
+        "content_class_label": content_class_label(content_class),
+        "stage": d.get("stage") or "",
+        "canonical_name": d.get("canonical_filename") or d.get("filename") or d.get("slug") or "",
+        "original_name": d.get("original_filename") or "",
+        "name": d.get("canonical_filename") or d.get("filename") or d.get("slug") or "",
+        "media_type": typ,
+        "media_label": media_label,
+        "thumb": thumb,
+        "thumb_ready": thumb_ready,
+        "shoot_date": d.get("shoot_date") or "",
+        "shoot_date_label": footage_date_label(d.get("shoot_date")),
+        "uploaded_at": d.get("uploaded_at") or d.get("date_added") or "",
+        "subject": d.get("subject") or "",
+        "detail": d.get("detail") or "",
+        "detail_tags": tags if isinstance(tags, list) else [],
+        "location": d.get("location") or "",
+        "readiness": ready,
+        "readiness_label": status_label,
+        "status_label": status_label,
+        "library_status": d.get("library_status") or d.get("status") or "",
+        "date_added": d.get("date_added") or "",
+        "batch_id": d.get("batch_id"),
+        "nas_received": bool(d.get("nas_received")),
+        "preview_retryable": bool(d.get("nas_received") and asset_id and not thumb_ready),
+        "zip_eligible": True,
+        "preview_url": f"/api/assets/{asset_id}/preview" if asset_id else None,
+        "download_url": f"/api/assets/{asset_id}/download" if asset_id else None,
+    }
+
+
+def library_search(
+    conn: sqlite3.Connection,
+    scopes: list[str] | set[str] | None,
+    brand: str | None,
+    *,
+    q: str = "",
+    media_type: str | None = None,
+    stage: str | None = None,
+    readiness: str | None = None,
+    shoot_date: str | None = None,
+    subject: str | None = None,
+    location: str | None = None,
+    limit: int = 48,
+    offset: int = 0,
+    page: int | None = None,
+    lane: str = "operational",
+) -> dict[str, Any]:
+    """One library page. Filters AND. Empty q returns authorised rows. Page size ≤ 48.
+
+    Shoot-date, stage, readiness, subject, and location apply only where the
+    column exists. NAS rows have none of those, so they drop out of that AND.
+    """
+    try:
+        limit_n = int(limit)
+    except (TypeError, ValueError):
+        limit_n = 48
+    limit_n = max(1, min(48, limit_n))
+    slugs = _library_slugs(scopes, brand)
+    names = {row["slug"]: row["display_name"] for row in REQUIRED_BRANDS}
+    empty = _library_page_body([], 0, limit=limit_n, offset=0, page=1, pages=0)
+    empty.update(
+        {
+            "nas_matched": 0,
+            "catalog_matched": 0,
+            "search_fields": list(ASSET_SEARCH_COLUMNS) + ["content_class"],
+        }
+    )
+    if not slugs:
+        return empty
+    q_text = (q or "").strip().lower()
+    media = (media_type or "").strip().lower()
+    if media == "photo":
+        media = "image"
+    stage_v = (stage or "").strip()
+    ready_v = (readiness or "").strip()
+    subject_v = (subject or "").strip().lower()
+    location_v = (location or "").strip().lower()
+    shoot_needles = shoot_date_needles(shoot_date)
+    lane_v = (lane or "operational").strip().lower()
+    if lane_v not in {"operational", "test", "all"}:
+        lane_v = "operational"
+
+    asset_where = [f"lower(ifnull(brand,'')) IN ({','.join('?' * len(slugs))})"]
+    asset_params: list[Any] = list(slugs)
+    if lane_v == "operational":
+        asset_where.append("ifnull(data_lane,'operational') = 'operational'")
+    elif lane_v == "test":
+        asset_where.append("ifnull(data_lane,'operational') = 'test'")
+    if q_text:
+        clause, likes = _like_clause(ASSET_SEARCH_COLUMNS, q_text)
+        asset_where.append(clause)
+        asset_params.extend(likes)
+    if media in {"image", "video", "audio", "graphic", "drone"}:
+        asset_where.append("lower(ifnull(media_type, type)) = ?")
+        asset_params.append(media)
+    elif media:
+        asset_where.append("lower(ifnull(media_type, type)) = ?")
+        asset_params.append(media)
+    if stage_v:
+        asset_where.append("upper(ifnull(stage,'')) = ?")
+        asset_params.append(stage_v.upper())
+    if ready_v:
+        asset_where.append(
+            "(upper(ifnull(readiness,'')) = ? OR upper(ifnull(library_status,'')) = ? OR upper(ifnull(status,'')) = ?)"
+        )
+        token = ready_v.upper()
+        asset_params.extend([token, token, token])
+    if subject_v:
+        asset_where.append("lower(ifnull(subject,'')) LIKE ?")
+        asset_params.append(f"%{subject_v}%")
+    if location_v:
+        asset_where.append("lower(ifnull(location,'')) LIKE ?")
+        asset_params.append(f"%{location_v}%")
+    if shoot_needles:
+        ors = ["lower(ifnull(shoot_date,'')) = ?" for _n in shoot_needles]
+        asset_params.extend([n.lower() for n in shoot_needles])
+        digits = "".join(ch for ch in shoot_needles[0] if ch.isdigit())[:8]
+        if len(digits) == 8:
+            ors.append("replace(replace(lower(ifnull(shoot_date,'')),'-',''),'/','') = ?")
+            asset_params.append(digits)
+        asset_where.append("(" + " OR ".join(ors) + ")")
+    asset_sql = " AND ".join(asset_where)
+
+    nas_specific = bool(stage_v or ready_v or subject_v or location_v or shoot_needles)
+    nas_where = [
+        f"lower(ifnull(brand_slug,'')) IN ({','.join('?' * len(slugs))})",
+        f"(ifnull(index_state,'') = '' OR index_state IN ({','.join('?' * len(LIBRARY_INDEX_STATES))}))",
+    ]
+    nas_params: list[Any] = [*slugs, *LIBRARY_INDEX_STATES]
+    if q_text:
+        nas_like_cols = [f"lower(ifnull({col},'')) LIKE ?" for col in NAS_SEARCH_COLUMNS]
+        nas_where.append("(" + " OR ".join(nas_like_cols) + ")")
+        nas_params.extend([f"%{q_text}%"] * len(NAS_SEARCH_COLUMNS))
+    if media in {"image", "video", "audio", "graphic"}:
+        nas_where.append("lower(ifnull(classification,'')) = ?")
+        nas_params.append(media)
+    elif media:
+        nas_where.append("lower(ifnull(classification,'')) = ?")
+        nas_params.append(media)
+    nas_sql = " AND ".join(nas_where)
+
+    try:
+        catalog_matched = int(conn.execute(f"SELECT COUNT(*) FROM assets WHERE {asset_sql}", asset_params).fetchone()[0])
+    except sqlite3.OperationalError:
+        catalog_matched = 0
+        asset_sql = "0"
+        asset_params = []
+    if nas_specific:
+        nas_matched = 0
+    else:
+        try:
+            nas_matched = int(conn.execute(f"SELECT COUNT(*) FROM nas_index WHERE {nas_sql}", nas_params).fetchone()[0])
+        except sqlite3.OperationalError:
+            nas_matched = 0
+    matched = catalog_matched + nas_matched
+    page_n, pages_n, offset_n, limit_n = _library_page_bounds(matched, limit_n, offset, page)
+    cards: list[dict[str, Any]] = []
+    asset_take = 0
+    asset_offset = 0
+    nas_take = 0
+    nas_offset = 0
+    if offset_n < catalog_matched:
+        asset_offset = offset_n
+        asset_take = min(limit_n, catalog_matched - offset_n)
+        nas_take = limit_n - asset_take
+        nas_offset = 0
+    else:
+        nas_offset = offset_n - catalog_matched
+        nas_take = limit_n
+    if asset_take and asset_sql != "0":
+        try:
+            rows = conn.execute(
+                f"""
+                SELECT id, brand, stage, type, slug, filename, date_added, status,
+                       original_filename, canonical_filename, subject, detail, location,
+                       shoot_date, media_type, uploaded_at, library_status, batch_id,
+                       detail_tags_json, readiness, nas_received, provenance_json
+                FROM assets
+                WHERE {asset_sql}
+                ORDER BY id DESC
+                LIMIT ? OFFSET ?
+                """,
+                [*asset_params, asset_take, asset_offset],
+            ).fetchall()
+        except sqlite3.OperationalError:
+            rows = []
+        for row in rows:
+            card = _asset_card(row, names)
+            if card.get("brand") in set(slugs):
+                cards.append(card)
+    if nas_take and not nas_specific and nas_matched:
+        try:
+            nrows = conn.execute(
+                f"""
+                SELECT id, original_filename, rel, size, brand_slug, index_state,
+                       map_confidence, classification, sha256_1mb, thumb_ready
+                FROM nas_index
+                WHERE {nas_sql}
+                ORDER BY id DESC
+                LIMIT ? OFFSET ?
+                """,
+                [*nas_params, nas_take, nas_offset],
+            ).fetchall()
+        except sqlite3.OperationalError:
+            nrows = []
+        wanted = set(slugs)
+        for row in nrows:
+            card = _nas_card(row, names)
+            if card is None or card["brand"] not in wanted:
+                continue
+            card["shoot_date"] = ""
+            card["shoot_date_label"] = "UNKNOWN"
+            card["status_label"] = card.get("index_state") or "INDEXED"
+            card["readiness_label"] = card["status_label"]
+            cards.append(card)
+            if len(cards) >= limit_n:
+                break
+    body = _library_page_body(
+        cards[:limit_n],
+        matched,
+        limit=limit_n,
+        offset=offset_n,
+        page=page_n,
+        pages=pages_n,
+    )
+    body["nas_matched"] = nas_matched
+    body["catalog_matched"] = catalog_matched
+    body["search_fields"] = list(ASSET_SEARCH_COLUMNS) + ["content_class"]
+    body["nas_search_fields"] = list(NAS_SEARCH_COLUMNS)
+    return body
+
+
 def nas_library_search(
     conn: sqlite3.Connection,
     scopes: list[str] | set[str] | None,
@@ -1527,3 +1934,191 @@ def _path_under_nas_read_root(path: Path) -> bool:
         except ValueError:
             continue
     return False
+
+
+def retry_asset_preview(
+    conn: sqlite3.Connection,
+    asset_id: int,
+    scopes: list[str] | set[str] | None,
+) -> dict[str, Any]:
+    """Rebuild the poster for an existing asset. No second NAS write and no new row."""
+    row = conn.execute(
+        """
+        SELECT id, brand, content_hash, file_size, nas_path, nas_received, v2_path
+        FROM assets WHERE id=?
+        """,
+        (int(asset_id),),
+    ).fetchone()
+    if not row:
+        raise RepairError("asset not found", code="not_found", http=404)
+    d = dict(row)
+    brand = (d.get("brand") or "").strip().lower()
+    if brand and not _nas.scopes_allow_brand(scopes, brand):
+        raise RepairError("subject lacks scope for this file", code="forbidden", http=403)
+    content_hash = d.get("content_hash") or ""
+    before = 0
+    if content_hash:
+        before = int(
+            conn.execute("SELECT COUNT(*) FROM assets WHERE content_hash=?", (content_hash,)).fetchone()[0]
+        )
+    src: Path | None = None
+    nas_size = None
+    nas_path = d.get("nas_path") or ""
+    if d.get("nas_received") and nas_path:
+        candidate = Path(str(nas_path))
+        if candidate.is_file():
+            src = candidate
+            nas_size = candidate.stat().st_size
+    if src is None and d.get("v2_path"):
+        candidate = Path(str(d["v2_path"]))
+        if candidate.is_file():
+            src = candidate
+    if src is None:
+        return {
+            "ok": False,
+            "asset_id": int(asset_id),
+            "upload_failed": True,
+            "file_stored": False,
+            "derivative_failed": False,
+            "lifecycle_state": "STORAGE_FAILED",
+            "staff_message": STAFF_STORAGE,
+            "duplicate_created": False,
+            "catalog_rows_for_hash": before,
+            "staff_ready": False,
+        }
+    dest = asset_thumb_path(int(asset_id))
+    thumb_ok = write_jpeg_thumb(src, dest)
+    after = before
+    if content_hash:
+        after = int(
+            conn.execute("SELECT COUNT(*) FROM assets WHERE content_hash=?", (content_hash,)).fetchone()[0]
+        )
+    nas_after = None
+    if nas_path and Path(str(nas_path)).is_file():
+        nas_after = Path(str(nas_path)).stat().st_size
+    return {
+        "ok": True,
+        "asset_id": int(asset_id),
+        "preview_ready": bool(thumb_ok),
+        "derivative_failed": not thumb_ok,
+        "upload_failed": False,
+        "file_stored": True,
+        "lifecycle_state": "READY" if thumb_ok else "DERIVATIVE_FAILED",
+        "staff_message": STAFF_SAVED if thumb_ok else STAFF_PREVIEW,
+        "duplicate_created": after != before,
+        "catalog_rows_for_hash": after,
+        "nas_bytes_unchanged": nas_size is None or nas_after == nas_size,
+        "staff_ready": False,
+    }
+
+
+def reconcile_bbq_batch(conn: sqlite3.Connection, *, repair_missing_posters: bool = True) -> dict[str, Any]:
+    """Inventory Tropik bbq-night-grill. Repair only a missing poster on a stored row.
+
+    Does not delete, does not invent the two unknown filenames, does not mark the
+    owner-reported 14 successful.
+    """
+    rows = conn.execute(
+        """
+        SELECT id, brand, detail, batch_id, sequence_token, original_filename,
+               canonical_filename, content_hash, file_size, nas_received, nas_path,
+               library_status, shoot_date, media_type, subject, stage
+        FROM assets
+        WHERE batch_id = ?
+           OR (
+                lower(ifnull(brand,'')) = 'tropik'
+                AND lower(ifnull(detail,'')) LIKE '%bbq-night-grill%'
+           )
+        ORDER BY id
+        """,
+        ("bmuowp00n",),
+    ).fetchall()
+    inventory: list[dict[str, Any]] = []
+    actions: list[dict[str, Any]] = []
+    by_hash: dict[str, list[int]] = {}
+    for row in rows:
+        d = dict(row)
+        nas_path = d.get("nas_path") or ""
+        nas_file = Path(str(nas_path)) if nas_path else None
+        on_nas = bool(nas_file and nas_file.is_file())
+        size_match = bool(on_nas and nas_file.stat().st_size == d.get("file_size"))
+        thumb = asset_thumb_path(int(d["id"]))
+        had_poster = thumb.is_file() and thumb.stat().st_size > 32
+        poster_action = "present" if had_poster else "missing"
+        if repair_missing_posters and on_nas and size_match and d.get("nas_received") and not had_poster:
+            wrote = write_jpeg_thumb(nas_file, thumb)
+            poster_action = "generated" if wrote else "generate_failed"
+            actions.append(
+                {
+                    "asset_id": d["id"],
+                    "action": poster_action,
+                    "deterministic": True,
+                    "reason": "NAS file and catalog row exist; poster was missing",
+                }
+            )
+        digest = d.get("content_hash") or ""
+        if digest:
+            by_hash.setdefault(digest, []).append(int(d["id"]))
+        if on_nas and size_match and d.get("nas_received"):
+            storage = "FILE_STORED"
+        elif d.get("id"):
+            storage = "INDEXED_WITHOUT_NAS"
+        else:
+            storage = "PRE_STORAGE_UNKNOWN"
+        inventory.append(
+            {
+                "asset_id": d["id"],
+                "batch_id": d.get("batch_id"),
+                "sequence_token": d.get("sequence_token"),
+                "original_filename": d.get("original_filename"),
+                "canonical_filename": d.get("canonical_filename"),
+                "brand": d.get("brand"),
+                "detail": d.get("detail"),
+                "on_nas": on_nas,
+                "size_match": size_match,
+                "indexed": True,
+                "poster": thumb.is_file() and thumb.stat().st_size > 32,
+                "poster_action": poster_action,
+                "storage": storage,
+                "content_hash": digest,
+            }
+        )
+    duplicates = [
+        {"content_hash": digest, "asset_ids": ids}
+        for digest, ids in by_hash.items()
+        if len(ids) > 1
+    ]
+    catalog_ids = {item["asset_id"] for item in inventory}
+    return {
+        "run_id": UPLOAD_STATE_RUN_ID,
+        "batch_id": "bmuowp00n",
+        "brand": "tropik",
+        "detail": "bbq-night-grill",
+        "owner_reported_count": 14,
+        "catalog_rows": len(inventory),
+        "catalog_asset_ids": sorted(catalog_ids),
+        "on_nas": sum(1 for item in inventory if item["on_nas"] and item["size_match"]),
+        "indexed": len(inventory),
+        "with_derivatives": sum(1 for item in inventory if item["poster"]),
+        "duplicates": duplicates,
+        "inventory": inventory,
+        "deterministic_actions": actions,
+        "human_review": [
+            {
+                "item": "owner_reported_14_vs_catalog_12",
+                "catalog_rows": len(inventory),
+                "missing_count": max(0, 14 - len(inventory)),
+                "missing_filenames": "UNKNOWN",
+                "reason": (
+                    "Access log records POST /api/upload/smart status only. "
+                    "It does not name the two files that never became catalog rows. "
+                    "Filenames are not invented and those files are not marked successful."
+                ),
+                "action": "human_review",
+            }
+        ],
+        "pre_storage_failed": "UNKNOWN_TWO_FILENAMES",
+        "force_success": False,
+        "deleted": False,
+        "staff_ready": False,
+    }
