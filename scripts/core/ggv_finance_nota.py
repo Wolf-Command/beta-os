@@ -2861,6 +2861,10 @@ def dispatch(method: str, path: str, qs: dict[str, list[str]], body: dict | None
             refuse_money(trimmed)
     rest = trimmed[len("/api/ggv/finance"):] or "/"
     body = body or {}
+    if rest == "/pack6" or rest.startswith("/pack6/"):
+        from core import ggv_nota_pack6 as _pack6
+
+        return _pack6.http(method, rest, body, person_id)
     from core import ggv_finance_invoice as _inv
 
     invoice_result = _inv.try_dispatch(method, rest, qs, body, person_id)

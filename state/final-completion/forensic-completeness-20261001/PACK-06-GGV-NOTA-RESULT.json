@@ -1,0 +1,43 @@
+{
+  "pack": "PACK-06",
+  "title": "GGV nota capture on a catalog copy",
+  "status": "eng-proved",
+  "proved_at": "2026-10-01T20:53:00+08:00",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "phone_commission": "open",
+  "xero_write": false,
+  "issue_blocked": true,
+  "allocated": false,
+  "invoice_number": null,
+  "capture": "catalog_copy",
+  "live_counts": {
+    "ggv_notas": 0,
+    "ggv_uploads": 0,
+    "ggv_invoices": 0,
+    "ggv_vendors": 0
+  },
+  "sequence": {
+    "entity_id": "ENT-GGV",
+    "format": "{n:03d}A",
+    "next_value": 67,
+    "rendered_seed": "067A",
+    "allocated": false
+  },
+  "supplier": "M-Mart",
+  "supplier_merge_run": false,
+  "workflow_state": "needs_review",
+  "amount_confirmed": false,
+  "books_written": false,
+  "nas_written": false,
+  "tests": "scripts/tests/test_ggv_nota_pack6.py 40 passed, 0 failed",
+  "http": {
+    "GET /api/ggv/finance/pack6": 403,
+    "POST /api/ggv/finance/pack6/issue": 403,
+    "POST /api/ggv/finance/pack6/xero": 403,
+    "GET /api/health :8788": 200,
+    "GET /api/health :8787": 200
+  },
+  "next": "PACK-07 guest stay. Not started."
+}

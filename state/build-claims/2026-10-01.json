@@ -8,6 +8,14 @@
       "expect": "exit 0",
       "by": "BF-content-engine-haikal-upload-14fail-20261001",
       "at": "2026-10-01T13:40:00+08:00"
+    },
+    {
+      "id": "pack6-ggv-nota-copy-issue-blocked",
+      "claim": "Pack 6 GGV nota tests pass. Live ggv_notas stays 0 and the GGV invoice seed stays next_value 67. Unauthenticated GET /api/ggv/finance/pack6 is 403 missing_auth.",
+      "check": "cd /Users/wolfterminal/beta-os && /opt/homebrew/bin/python3 scripts/tests/test_ggv_nota_pack6.py | tail -1; sqlite3 catalog/content_library.sqlite \"PRAGMA query_only=ON; SELECT COUNT(*) FROM ggv_notas; SELECT next_value FROM fin_invoice_sequences WHERE entity_id='ENT-GGV';\"; curl -sS -o /dev/null -w \"%{http_code}\\n\" --max-time 5 http://127.0.0.1:8788/api/ggv/finance/pack6",
+      "expect": "40 passed, 0 failed; notas 0; next_value 67; HTTP 403",
+      "by": "PACK-06",
+      "at": "2026-10-01T20:53:00+08:00"
     }
   ]
 }
