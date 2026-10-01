@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Owner cockpit</title>
+<style>
+  :root {
+    --bg: #14110c; --bg2: #1e1912; --border: #3d3426;
+    --text: #f4efe4; --muted: #b3a48c; --accent: #c4a574; --warn: #e0b15a;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 880px; padding: 16px 16px 48px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  h1 { font-size: 1.25rem; margin: 0 0 6px; }
+  h1 span { color: var(--accent); }
+  .note { color: var(--muted); font-size: 0.82rem; line-height: 1.4; }
+  .banner { border: 1px solid rgba(224,177,90,0.55); color: var(--warn); border-radius: 10px; padding: 10px 12px; font-size: 0.86rem; }
+  details { border-top: 1px solid var(--border); padding: 8px 0; }
+  summary { cursor: pointer; font-size: 0.95rem; min-height: 44px; display: flex; align-items: center; }
+  .why { color: var(--muted); font-size: 0.8rem; margin: 4px 0 8px; white-space: pre-wrap; }
+  a { color: var(--accent); }
+  h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 22px 0 4px; }
+</style>
+</head>
+<body data-wolf-page-type="DASHBOARD" data-wolf-org="OWNER">
+  <p class="note">WOLF · Owner · read only</p>
+  <h1>Owner <span>cockpit</span></h1>
+  <p class="banner" id="banner">Loading the read cards…</p>
+  <p class="note" id="auth"></p>
+  <h2>Desks</h2>
+  <div id="staff"></div>
+  <h2>Questions the pulse dropped</h2>
+  <div id="restored"></div>
+  <h2>Personal</h2>
+  <p class="note">Trading and fitness stay on this rail. They are not the staff menu.</p>
+  <div id="personal"></div>
+<script>
+(function () {
+  function section(el, cards) {
+    el.textContent = "";
+    (cards || []).forEach(function (card) {
+      var d = document.createElement("details");
+      var s = document.createElement("summary");
+      var value = card.value == null ? "UNKNOWN" : String(card.value);
+      s.textContent = (card.what || card.id) + " · " + (card.state || "") + " · " + value;
+      d.appendChild(s);
+      var why = document.createElement("p");
+      why.className = "why";
+      why.textContent = card.why || "";
+      d.appendChild(why);
+      if (card.href) {
+        var a = document.createElement("a");
+        a.href = card.href;
+        a.textContent = "Open " + card.href;
+        d.appendChild(a);
+      }
+      el.appendChild(d);
+    });
+  }
+  fetch("/api/owner/cockpit", { headers: { Accept: "application/json" } })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      document.getElementById("banner").textContent =
+        "staff_ready false · read only · pulse cards " +
+        ((data.counts || {}).pulse_tiles) +
+        " · not the empire page";
+      var auth = data.auth || {};
+      document.getElementById("auth").textContent = auth.empire_page || "";
+      section(document.getElementById("staff"), data.staff_primary);
+      section(document.getElementById("restored"), data.restored);
+      section(document.getElementById("personal"), data.personal_rail);
+    })
+    .catch(function (err) {
+      document.getElementById("banner").textContent = String(err);
+    });
+})();
+</script>
+</body>
+</html>

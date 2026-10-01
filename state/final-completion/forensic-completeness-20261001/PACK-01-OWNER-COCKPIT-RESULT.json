@@ -1,0 +1,41 @@
+{
+  "pack": "PACK-01",
+  "title": "Owner cockpit",
+  "proved_at": "2026-10-01",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "writes": false,
+  "tests": "scripts/tests/test_owner_cockpit_pack1.py 22 passed, 0 failed",
+  "auth": {
+    "wolf": 403,
+    "owner_empire_pack": 403,
+    "error": "missing_auth",
+    "mode_unchanged": true
+  },
+  "http": {
+    "GET /api/owner/cockpit": 200,
+    "GET /owner/cockpit": 200,
+    "POST /api/owner/cockpit": 405,
+    "GET /amg/sales-desk": 200,
+    "GET /content/tick-draft": 200,
+    "GET /bzg/uma-blu": 403,
+    "GET /api/bzg/uma-blu/today": 403,
+    "GET /api/health :8788": 200,
+    "GET /api/health :8787": 200
+  },
+  "counts": {"pulse_tiles": 10, "staff_primary": 9, "restored": 7},
+  "cards": {
+    "brief": "PARTIAL Brief-2026-10-01.md present, body not copied",
+    "r2_gap": "PARTIAL offbox NO-GO 2026-10-01T16:49:25+08:00, August gap file not re-measured",
+    "system": "PARTIAL 14 daemon records status ok, no job, not Beta 14/14",
+    "asks": "EMPTY 0 open asks of 89 tasks",
+    "peaches": "PARTIAL 57 V1 threads, newest 2026-09-16, beta store absent, text not copied",
+    "content": "PARTIAL queue MISA-CBA83917AE23 publish OFF",
+    "money": "PARTIAL value null",
+    "fitness_rail": "PARTIAL",
+    "fitness_pulse_loader": "LIVE",
+    "trading": "PARTIAL live_broker false"
+  },
+  "next": "PACK-05 Atrium finance screens under separation of duties"
+}

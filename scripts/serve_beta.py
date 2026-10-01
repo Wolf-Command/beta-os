@@ -83,6 +83,7 @@ from core import venue_close as _venue_close
 from core import uma_ops_console as _uma_ops
 from core import amg_sales_desk_ro as _amg_sales_desk_ro
 from core import content_tick_draft as _content_tick_draft
+from core import owner_cockpit as _owner_cockpit
 from core import uma_real_projection as _uma_real
 from core import uma_devi_p0 as _uma_p0
 from core import esb_close_snapshot as _esb_close_snapshot
@@ -2046,6 +2047,22 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "publish": "OFF"}, status=404)
                 return
             self._send_html_shell(page.read_bytes(), rel="content-tick-draft.html")
+            return
+
+        # PACK-01 Owner cockpit. Read-only JSON and a read board.
+        # /wolf and /owner-empire-pack stay on _owner_empire_page (JWT).
+        if path == "/api/owner/cockpit" or path.rstrip("/") == "/api/owner/cockpit":
+            try:
+                self._send_json(_owner_cockpit.load_cockpit())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "cockpit_fail", "detail": str(_e), "staff_ready": False, "writes": False}, status=500)
+            return
+        if path in ("/owner/cockpit", "/owner/cockpit/"):
+            page = DASHBOARDS / "owner-cockpit.html"
+            if not page.is_file():
+                self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "writes": False}, status=404)
+                return
+            self._send_html_shell(page.read_bytes(), rel="owner-cockpit.html")
             return
 
         if path in ("/favicon.ico", "/favicon.svg"):
@@ -5889,6 +5906,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == "/api/amg/sales-desk" or path.startswith("/api/amg/sales-desk/"):
             self._send_json(_amg_sales_desk_ro.refuse_write(), status=405)
+            return
+        if path == "/api/owner/cockpit" or path.startswith("/api/owner/cockpit/"):
+            self._send_json(_owner_cockpit.refuse_write(), status=405)
             return
         if path == "/api/content/tick-draft" or path.startswith("/api/content/tick-draft/"):
             length = int(self.headers.get("Content-Length") or 0)
