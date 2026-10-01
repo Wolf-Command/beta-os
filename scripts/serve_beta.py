@@ -81,6 +81,7 @@ from core import delegation as _delegation
 from core import content_publish as _content_publish
 from core import venue_close as _venue_close
 from core import uma_ops_console as _uma_ops
+from core import amg_sales_desk_ro as _amg_sales_desk_ro
 from core import uma_real_projection as _uma_real
 from core import uma_devi_p0 as _uma_p0
 from core import esb_close_snapshot as _esb_close_snapshot
@@ -1997,6 +1998,38 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/health":
             self._send_json({"ok": True, "root": "beta-os", "planner": "sqlite"})
+            return
+
+        # PACK-03 Atrium sales desk. Read-only. Before auth walls, same as owner RO routes.
+        if path == "/api/amg/sales-desk" or path.startswith("/api/amg/sales-desk/"):
+            try:
+                view = None
+                rest = path[len("/api/amg/sales-desk"):].strip("/")
+                if rest:
+                    view = rest.split("/")[0]
+                limit = 40
+                offset = 0
+                try:
+                    limit = int((qs.get("limit") or ["40"])[0])
+                except Exception:
+                    limit = 40
+                try:
+                    offset = int((qs.get("offset") or ["0"])[0])
+                except Exception:
+                    offset = 0
+                detail = (qs.get("id") or [None])[0]
+                self._send_json(_amg_sales_desk_ro.load_sales_desk(
+                    view=view, limit=limit, offset=offset, detail_id=detail,
+                ))
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "sales_desk_fail", "detail": str(_e), "staff_ready": False, "writes": False}, status=500)
+            return
+        if path in ("/amg/sales-desk", "/amg/sales-desk/", "/amg-sales-desk", "/amg-sales-desk/"):
+            page = DASHBOARDS / "amg-sales-desk.html"
+            if not page.is_file():
+                self._send_json({"ok": False, "error": "not_found", "staff_ready": False, "writes": False}, status=404)
+                return
+            self._send_html_shell(page.read_bytes(), rel="amg-sales-desk.html")
             return
 
         if path in ("/favicon.ico", "/favicon.svg"):
@@ -5838,6 +5871,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = urlparse(self.path).path
+        if path == "/api/amg/sales-desk" or path.startswith("/api/amg/sales-desk/"):
+            self._send_json(_amg_sales_desk_ro.refuse_write(), status=405)
+            return
         if path == "/api/dashboard-truth" or path.startswith("/api/dashboard-truth/"):
             self._dashboard_truth_write_refused()
             return

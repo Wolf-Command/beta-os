@@ -1,0 +1,71 @@
+{
+  "pack": "PACK-03",
+  "title": "Atrium sales desk",
+  "proved_at": "2026-10-01",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "prod_8787_written": false,
+  "sales_sqlite_written": false,
+  "writes": false,
+  "housekeeping": false,
+  "guest_stay": false,
+  "source": {
+    "db": "/Users/wolfterminal/.openclaw/workspace/wolf-system/atrium/atrium_sales.sqlite",
+    "open_mode": "ro",
+    "formula": "wolf-system/scripts/dash_data.py",
+    "tax_ceiling": 4800000000
+  },
+  "counts": {
+    "units": 88,
+    "leads": 570,
+    "payments": 399,
+    "exceptions_unresolved": 61,
+    "exceptions_table": 88
+  },
+  "view_totals": {
+    "overview": 16,
+    "milestones": 4,
+    "payments": 399,
+    "newsale": 13,
+    "inventory": 88,
+    "deals": 8,
+    "leads": 570,
+    "comms": 68,
+    "cv": 5,
+    "payables": 17,
+    "tax": 5,
+    "vendors": 27,
+    "commonarea": 85,
+    "exceptions": 61
+  },
+  "http": {
+    "GET /api/amg/sales-desk": 200,
+    "GET /amg/sales-desk": 200,
+    "POST /api/amg/sales-desk": 405,
+    "GET :8788 /api/health": 200,
+    "GET :8787 /api/health": 200
+  },
+  "occupancy": {
+    "question": "vacant_versus_rooms",
+    "in_house": "UNKNOWN",
+    "guests": null,
+    "merged_pct": null,
+    "yanolja_value": "89% · 13 vacant / 114 rooms",
+    "yanolja_freshness": "2026-10-01T07:16:15+08:00",
+    "v1_master_tile": "1.75% occ",
+    "pulse_href": "/amg/sales-desk#occ",
+    "pulse_href_committed": false
+  },
+  "kuta": {
+    "night": "2026-10-01 → 2026-10-02",
+    "generated_at": "2026-10-01T08:18:01+08:00",
+    "official_total": 13,
+    "official_shown": 12,
+    "booking": false,
+    "href": "/amg/sales-desk#kuta",
+    "leaf": "/kuta-rates"
+  },
+  "tests": "scripts/tests/test_amg_sales_desk_pack3.py 36 passed, 0 failed",
+  "next": "PACK-04 content tick to draft. Not started. Metricool WRITE stays off."
+}

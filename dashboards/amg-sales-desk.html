@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Atrium sales desk · AMG</title>
+<style>
+  :root {
+    --bg: #14110c; --bg2: #1e1912; --bg3: #2a241b; --border: #3d3426;
+    --text: #f4efe4; --muted: #b3a48c; --accent: #c4a574; --ok: #3dd68c;
+    --warn: #e0b15a; --danger: #f04438;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 1100px; padding: 16px 16px 96px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  h1 { font-size: 1.25rem; margin: 0 0 4px; }
+  h1 span { color: var(--accent); }
+  .crumb, .note, .meta { color: var(--muted); font-size: 0.82rem; line-height: 1.4; }
+  nav.grammar { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 12px; }
+  nav.grammar a {
+    display: inline-flex; align-items: center; min-height: 44px; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: 10px; color: var(--muted);
+    text-decoration: none; font-size: 0.78rem; font-weight: 650;
+  }
+  nav.grammar a.active { color: var(--accent); border-color: rgba(196,165,116,0.55); }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+  .tabs button {
+    min-height: 44px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--bg2); color: var(--text); font: inherit; font-size: 0.78rem; font-weight: 650;
+  }
+  .tabs button.on { color: var(--accent); border-color: rgba(196,165,116,0.55); }
+  .banner { background: var(--bg2); border: 1px solid rgba(224,177,90,0.55); color: var(--warn); border-radius: 10px; padding: 10px 12px; font-size: 0.86rem; }
+  details { border: 1px solid var(--border); border-radius: 12px; background: var(--bg2); margin: 8px 0; padding: 0 12px; }
+  details summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--accent); }
+  .list { list-style: none; margin: 0; padding: 0; }
+  .list button {
+    width: 100%; text-align: left; min-height: 44px; margin: 0 0 6px; padding: 8px 10px;
+    border-radius: 10px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); font: inherit;
+  }
+  .list button small { display: block; color: var(--muted); font-size: 0.75rem; }
+  #detail { border: 1px solid var(--border); border-radius: 12px; background: var(--bg3); padding: 12px; margin-top: 8px; white-space: pre-wrap; font-size: 0.82rem; }
+  .err { color: var(--danger); }
+  nav.phone {
+    position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 4px;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    background: var(--bg); border-top: 1px solid var(--border); max-width: 1100px; margin: 0 auto;
+  }
+  nav.phone a {
+    flex: 1; min-height: 44px; display: flex; align-items: center; justify-content: center;
+    color: var(--muted); text-decoration: none; font-size: 0.75rem; font-weight: 650;
+  }
+</style>
+</head>
+<body data-wolf-page-type="DASHBOARD" data-wolf-org="AMG" data-wolf-shell="global">
+  <p class="crumb">WOLF · Atrium Management · AMG · Sales</p>
+  <h1>AMG <span>Sales</span> · 14 views</h1>
+  <p class="note">Read of the V1 sales ledger. Lists are capped. One detail at a time. staff_ready false. New sale does not write.</p>
+  <nav class="grammar" aria-label="AMG grammar">
+    <a href="/amg-ops-pack">Overview</a>
+    <a class="active" href="/amg/sales-desk">Sales</a>
+    <a href="/amg/sales-desk#occ">OCC</a>
+    <a href="/amg/sales-desk#kuta">Kuta tonight</a>
+    <a href="/kuta-rates">Kuta leaf</a>
+  </nav>
+  <p class="banner" id="banner">Loading the ledger…</p>
+  <details id="occ">
+    <summary>Occupancy · vacant versus rooms</summary>
+    <div id="occBody" class="note">Closed until opened. In-house is UNKNOWN.</div>
+  </details>
+  <details id="kuta">
+    <summary>Kuta tonight · learn only</summary>
+    <div id="kutaBody" class="note">Closed until opened. Nobody books.</div>
+  </details>
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <p class="meta" id="meta"></p>
+  <ul class="list" id="list"></ul>
+  <div id="detail">Select a row.</div>
+  <nav class="phone" aria-label="AMG">
+    <a href="/amg-ops-pack">AMG</a>
+    <a href="/amg/sales-desk">Sales</a>
+    <a href="/amg/sales-desk#kuta">Kuta</a>
+  </nav>
+<script>
+(function () {
+  var INDEX = "/api/amg/sales-desk";
+  var state = { views: [], current: "overview" };
+  function esc(v) {
+    return String(v == null ? "" : v).replace(/[&<>"]/g, function (c) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c];
+    });
+  }
+  function money(n) {
+    if (typeof n !== "number") return esc(n);
+    return esc(Math.round(n).toLocaleString("en-US"));
+  }
+  function line(row) {
+    if (!row || typeof row !== "object") return esc(row);
+    if (row.k) return esc(row.k) + ": " + money(row.v);
+    var title = row.unit_id || row.name || row.vendor || row.cv || row.label || row.code || row.id || "row";
+    var bits = [];
+    ["status", "stage", "paid_date", "amount_idr", "balance_idr", "severity", "milestone", "introducer", "night"].forEach(function (k) {
+      if (row[k] != null && row[k] !== "") bits.push(k + " " + row[k]);
+    });
+    return { title: title, sub: bits.join(" · ") };
+  }
+  function renderOcc(occ) {
+    var y = (occ && occ.yanolja) || {};
+    var v1 = (occ && occ.v1_master_tile) || {};
+    document.getElementById("occBody").innerHTML =
+      "<p>Question: vacant versus rooms. In-house " + esc(occ.in_house) + ". Arrivals " + esc(occ.arrivals) + ". Guests not counted.</p>" +
+      "<p>Yanolja: " + esc(y.value) + " · source " + esc(y.source) + " · " + esc(y.freshness) + "</p>" +
+      "<p>V1 master tile (different question, not merged): " + esc(v1.val) + " · " + esc(v1.path) + "</p>" +
+      "<p>" + esc(occ.honesty) + "</p>";
+  }
+  function renderKuta(kuta) {
+    var rows = (kuta.official_shown || []).map(function (r) {
+      return "<li>" + esc(r.hotel || r.name || "") + " · " + esc(r.room || "") + " · " + esc(r.stay || r.rate || "") + "</li>";
+    }).join("");
+    document.getElementById("kutaBody").innerHTML =
+      "<p>" + esc(kuta.headline || kuta.reason || "") + "</p>" +
+      "<p>Night " + esc(kuta.night) + " · generated " + esc(kuta.generated_at) + " · official " + esc(kuta.official_total) + "</p>" +
+      "<ul>" + rows + "</ul>" +
+      "<p>" + esc(kuta.honesty) + " Leaf <a href=\"" + esc(kuta.href_leaf || "/kuta-rates") + "\">/kuta-rates</a>.</p>";
+  }
+  function showDetail(row) {
+    document.getElementById("detail").textContent = row ? JSON.stringify(row, null, 2) : "No row.";
+  }
+  function renderRows(payload) {
+    var list = document.getElementById("list");
+    list.innerHTML = "";
+    (payload.rows || []).forEach(function (row) {
+      var li = document.createElement("li");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      var shown = line(row);
+      if (typeof shown === "string") btn.textContent = shown;
+      else btn.innerHTML = esc(shown.title) + "<small>" + esc(shown.sub) + "</small>";
+      btn.addEventListener("click", function () { showDetail(row); });
+      li.appendChild(btn);
+      list.appendChild(li);
+    });
+    var note = payload.view === "newsale"
+      ? " Writes off. Available " + payload.available_total + "."
+      : "";
+    document.getElementById("meta").textContent =
+      payload.title + " · showing " + (payload.rows || []).length + " of " + payload.total + note;
+  }
+  function openView(id) {
+    state.current = id;
+    Array.prototype.forEach.call(document.querySelectorAll(".tabs button"), function (b) {
+      b.classList.toggle("on", b.getAttribute("data-id") === id);
+    });
+    fetch(INDEX + "/" + encodeURIComponent(id) + "?limit=40", { headers: { Accept: "application/json" } })
+      .then(function (r) { return r.json(); })
+      .then(function (payload) {
+        if (!payload.ok) {
+          document.getElementById("meta").textContent = payload.error || "view failed";
+          return;
+        }
+        renderRows(payload);
+        showDetail(null);
+      })
+      .catch(function (err) {
+        document.getElementById("meta").textContent = String(err);
+      });
+  }
+  function boot(index) {
+    document.getElementById("banner").textContent =
+      "Units " + index.counts.units + " · leads " + index.counts.leads + " · payments " + index.counts.payments +
+      " · unresolved exceptions " + index.counts.exceptions_unresolved +
+      " (table " + index.counts.exceptions_table + ") · read only · staff_ready false";
+    renderOcc(index.occupancy || {});
+    renderKuta(index.kuta || {});
+    var tabs = document.getElementById("tabs");
+    (index.views || []).forEach(function (view) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("data-id", view.id);
+      b.textContent = view.title + " " + view.total;
+      b.addEventListener("click", function () {
+        location.hash = view.id;
+        openView(view.id);
+      });
+      tabs.appendChild(b);
+    });
+    var hash = (location.hash || "#overview").slice(1);
+    if (hash === "occ" || hash === "kuta") {
+      var box = document.getElementById(hash);
+      if (box) box.open = true;
+      openView("overview");
+    } else {
+      openView(index.views.some(function (v) { return v.id === hash; }) ? hash : "overview");
+    }
+  }
+  fetch(INDEX, { headers: { Accept: "application/json" } })
+    .then(function (r) { return r.json(); })
+    .then(boot)
+    .catch(function (err) {
+      document.getElementById("banner").textContent = String(err);
+      document.getElementById("banner").className = "banner err";
+    });
+})();
+</script>
+</body>
+</html>
