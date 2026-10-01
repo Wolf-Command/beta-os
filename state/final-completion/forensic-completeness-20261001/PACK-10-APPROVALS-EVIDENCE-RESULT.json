@@ -1,0 +1,58 @@
+{
+  "pack": "PACK-10",
+  "title": "Approvals and evidence",
+  "status": "eng-proved",
+  "proved_at": "2026-10-01T21:32:00+08:00",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "writes": false,
+  "fake_approval": false,
+  "authority_limit_invented": false,
+  "authority_limits": {"count": 0, "active_threshold": null, "state": "FAIL_CLOSED"},
+  "amount_gate": {
+    "allowed": false,
+    "reason": "higher_approval_required",
+    "detail": "no_matching_authority_limit",
+    "matched_limit": null,
+    "probe_source": "PETTY-UMA-2321496C6D",
+    "probe_amount": 50000,
+    "probe_currency": null
+  },
+  "live_request": {
+    "approval_request_id": "APR-292cc664-f235-4bef-93eb-78a6abbf43bd",
+    "request_type": "GENERAL",
+    "requested_by_person_id": "PERS-DEVI",
+    "decided_by_person_id": "PERS-MATT",
+    "self_approved": false,
+    "status": "APPROVED",
+    "material_amount": null,
+    "request_count": 1
+  },
+  "orphan_decisions": {"count": 9, "treated_as_authority": false},
+  "delegations": 0,
+  "evidence": {
+    "receipt_evidence_id": "EVD-372162c1-d0ac-42a6-b5f3-5959c11f4621",
+    "declared_cash_attached": false,
+    "declared_cash_state": "FAIL_CLOSED",
+    "publish_reason_code": "missing_required_evidence",
+    "publish_executed": false
+  },
+  "human_residual": "A named person still has to click. This read did not click.",
+  "tests": "scripts/tests/test_approvals_evidence_pack10.py 27 passed, 0 failed",
+  "http": {
+    "GET /api/approvals/evidence": 200,
+    "GET /approvals/evidence": 200,
+    "POST /api/approvals/evidence": 405,
+    "health_8788": 200,
+    "health_8787": 200
+  },
+  "register_after": {
+    "PARTIAL": 61,
+    "SHELL": 42,
+    "MISSING": 32,
+    "FUNCTIONAL_REAL_DATA": 23,
+    "READ_ONLY_MIRROR": 19
+  },
+  "next": "Forensic checkpoint. No pack 11. Peaches chooses the next slice from the missing-function register."
+}

@@ -40,6 +40,14 @@
       "expect": "19 passed, 0 failed; ui title Blu Zone Restaurant; sales null; staff_ready false; close not inserted",
       "by": "PACK-09",
       "at": "2026-10-01T21:22:00+08:00"
+    },
+    {
+      "id": "pack10-approvals-limits-zero",
+      "claim": "Pack 10 approval-gate tests pass. Authority limits stay 0, the live request count stays 1, and declared-cash evidence stays unattached. staff_ready stays false.",
+      "check": "cd /Users/wolfterminal/beta-os && /opt/homebrew/bin/python3 scripts/tests/test_approvals_evidence_pack10.py | tail -1; curl -sS --max-time 8 http://127.0.0.1:8788/api/approvals/evidence | python3 -c \"import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get('authority_limits',{}).get('count')==0 and d.get('amount_gate',{}).get('matched_limit') is None and d.get('counts',{}).get('core_approval_requests')==1 and d.get('evidence',{}).get('declared_cash_attached') is False and d.get('staff_ready') is False else 1)\"",
+      "expect": "27 passed, 0 failed; limits 0; requests 1; declared cash unattached; staff_ready false",
+      "by": "PACK-10",
+      "at": "2026-10-01T21:32:00+08:00"
     }
   ]
 }
