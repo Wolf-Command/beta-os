@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Menu engineering</title>
+<style>
+  :root {
+    --bg: #0f1c24; --bg2: #162833; --line: #2a4554; --text: #eef4f7;
+    --muted: #8aa0ad; --accent: #3db8a0; --warn: #e0a045;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 820px; padding: 16px 16px 72px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  h1 { font-size: 1.35rem; margin: 0 0 6px; }
+  .note { color: var(--muted); font-size: 0.92rem; line-height: 1.45; }
+  nav a { color: var(--muted); margin-right: 12px; }
+  .banner { background: var(--bg2); border: 1px solid var(--warn); color: var(--warn); border-radius: 10px; padding: 10px 12px; }
+  details { border: 1px solid var(--line); border-radius: 12px; background: var(--bg2); margin: 8px 0; padding: 0 12px 10px; }
+  details summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--accent); }
+</style>
+</head>
+<body>
+  <p class="note">WOLF · BZG · Uma Blu</p>
+  <h1>Menu engineering</h1>
+  <p class="note">Recipes copied. No class was assigned. Tiles start closed. staff_ready is false.</p>
+  <nav aria-label="This page">
+    <a href="/bzg/uma-blu/recipes">Recipes</a>
+    <a href="/uma/recipe-variance">Variance</a>
+    <a href="/uma/menu-engineering">This desk</a>
+  </nav>
+  <p class="banner" id="banner">Loading the stores…</p>
+  <div id="list">
+    <details><summary>Recipes</summary><p class="note">A copy. A stored target is not a score.</p></details>
+    <details><summary>Product mix</summary><p class="note">ESB quantities. Amounts stay off this desk.</p></details>
+    <details><summary>Contribution</summary><p class="note">Usage is not joined. Margin stays empty.</p></details>
+    <details><summary>Classes</summary><p class="note">No class was assigned.</p></details>
+  </div>
+<script>
+  function line(node, text) {
+    const p = document.createElement("p");
+    p.className = "note";
+    p.textContent = text;
+    node.appendChild(p);
+  }
+  fetch("/api/bzg/uma-blu/menu-engineering", { headers: { "Accept": "application/json" } })
+    .then((res) => res.json())
+    .then((data) => {
+      const banner = document.getElementById("banner");
+      if (!data || data.ok !== true) {
+        banner.textContent = "The stores did not load.";
+        return;
+      }
+      const contribution = data.contribution || {};
+      const quadrants = data.quadrants || {};
+      banner.textContent = "Contribution " + (contribution.state || "UNKNOWN") + " · classes unassigned · staff_ready false";
+      const list = document.getElementById("list");
+      list.replaceChildren();
+      const recipes = data.recipes || {};
+      const mix = data.product_mix || {};
+      const join = data.name_join || {};
+      const cards = [
+        ["Recipes", String(recipes.recipes) + " recipes. ESB menu links " + String(recipes.esb_menu_links) + "."],
+        ["Product mix", String(mix.menu_count) + " menus on " + String(mix.day) + ". Amounts copied: " + String(mix.amounts_copied) + "."],
+        ["Name join", String(join.matched) + " names match. Unmatched menus " + String(join.unmatched_menus) + "."],
+        ["Contribution", contribution.why || ""],
+        ["Classes", quadrants.why || "No class was assigned."]
+      ];
+      cards.forEach((pair) => {
+        const details = document.createElement("details");
+        const summary = document.createElement("summary");
+        summary.textContent = pair[0];
+        details.appendChild(summary);
+        line(details, pair[1]);
+        list.appendChild(details);
+      });
+    })
+    .catch(() => {
+      document.getElementById("banner").textContent = "The stores did not load.";
+    });
+</script>
+</body>
+</html>

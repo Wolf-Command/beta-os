@@ -72,6 +72,14 @@
       "expect": "12 passed, 0 failed; join UNAVAILABLE; matched_pairs null; one_crm false; habitat 271; staff_ready false",
       "by": "WAVE2-03",
       "at": "2026-10-01T22:00:18+08:00"
+    },
+    {
+      "id": "wave2-04-menu-engineering-unscored",
+      "claim": "Wave 2.04 menu engineering tests pass. Contribution stays UNAVAILABLE, margin_pct stays null, and no menu class is assigned. staff_ready stays false.",
+      "check": "cd /Users/wolfterminal/beta-os && /opt/homebrew/bin/python3 scripts/tests/test_menu_engineering_wave2_04.py | tail -1; curl -sS --max-time 8 http://127.0.0.1:8788/api/bzg/uma-blu/menu-engineering | python3 -c \"import json,sys; d=json.load(sys.stdin); c=d.get('contribution') or {}; q=d.get('quadrants') or {}; sys.exit(0 if c.get('state')=='UNAVAILABLE' and c.get('margin_pct') is None and q.get('drawn') is False and q.get('stars') is None and d.get('scores_written') is False and d.get('staff_ready') is False else 1)\"",
+      "expect": "14 passed, 0 failed; contribution UNAVAILABLE; margin null; classes unassigned; staff_ready false",
+      "by": "WAVE2-04",
+      "at": "2026-10-01T22:10:31+08:00"
     }
   ]
 }

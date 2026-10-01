@@ -1,0 +1,59 @@
+{
+  "pack": "WAVE2-04",
+  "title": "Menu engineering",
+  "status": "eng-proved",
+  "proved_at": "2026-10-01T22:10:31+08:00",
+  "staff_ready": false,
+  "human_proven": false,
+  "human_clicked": false,
+  "writes": false,
+  "scores_written": false,
+  "state": "PARTIAL",
+  "recipes": {
+    "recipes": 127,
+    "lines": 756,
+    "cost_complete": 108,
+    "cost_partial": 2,
+    "cost_missing": 17,
+    "esb_menu_links": 0
+  },
+  "product_mix": {
+    "day": "2026-09-30",
+    "branch": "BLZ",
+    "menu_count": 76,
+    "qty_sum": 292.0,
+    "amounts_copied": false
+  },
+  "name_join": {
+    "matched": 26,
+    "ambiguous": 0,
+    "matched_cost_complete": 23,
+    "matched_cost_missing": 3,
+    "unmatched_menus": 50
+  },
+  "usage": {
+    "joined": false,
+    "row_count": 160
+  },
+  "contribution": {
+    "state": "UNAVAILABLE",
+    "margin_pct": null,
+    "amount": null
+  },
+  "quadrants": {
+    "drawn": false,
+    "stars": null,
+    "plowhorses": null,
+    "puzzles": null,
+    "dogs": null
+  },
+  "tests": "scripts/tests/test_menu_engineering_wave2_04.py 14 passed, 0 failed",
+  "http": {
+    "GET /api/bzg/uma-blu/menu-engineering": 200,
+    "GET /uma/menu-engineering": 200,
+    "POST /api/bzg/uma-blu/menu-engineering": 405,
+    "health_8788": 200,
+    "health_8787": 200
+  },
+  "next": "WAVE2-05 content learn-back (need.content.learn). Not started."
+}
