@@ -67,6 +67,6 @@
 - `dashboards/uma-blu-close.html`
 - `scripts/tests/test_bzg_close_governed_takeover_1.py`
 
-**Impl tip:** (filled by stamp commit) · **Parent tip:** `69de1bb`
+**Impl tip:**  · **Parent tip:** `69de1bb`
 
 RESULT: **PASS** (engineering). `staff_ready=false`. Iza commissioning remains **FAIL**. Human: Peaches independent verify → **MATT RETEST READY** (not claimed here).

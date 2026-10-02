@@ -13,9 +13,20 @@
   "tonight_state": "OPEN",
   "live_takeover_performed": false,
   "permission": "venue.close.reassign",
-  "grants": ["ROLE-BZG-CAPTAIN", "ROLE-BZG-HFB", "ROLE-BZG-FB-OPS-LEAD", "ROLE-MATT"],
-  "deny_roles": ["ROLE-BZG-CASHIER", "ROLE-BZG-CLOSER"],
-  "routes": ["/api/venue-close/takeover", "/api/venue-close/reassign"],
+  "grants": [
+    "ROLE-BZG-CAPTAIN",
+    "ROLE-BZG-HFB",
+    "ROLE-BZG-FB-OPS-LEAD",
+    "ROLE-MATT"
+  ],
+  "deny_roles": [
+    "ROLE-BZG-CASHIER",
+    "ROLE-BZG-CLOSER"
+  ],
+  "routes": [
+    "/api/venue-close/takeover",
+    "/api/venue-close/reassign"
+  ],
   "beta_8788_pid": "61131",
   "beta_8788_pid_was": "57765",
   "prod_8787_pid": "15975",
@@ -31,5 +42,7 @@
   "parent_tip": "69de1bb",
   "branch": "build/wolf-command-rebuild",
   "no_push": true,
-  "result_md": "state/bzg-daily-close/BZG-CLOSE-GOVERNED-TAKEOVER-1-RESULT.md"
+  "result_md": "state/bzg-daily-close/BZG-CLOSE-GOVERNED-TAKEOVER-1-RESULT.md",
+  "tip": "8f9e1ff",
+  "commit": "8f9e1ff"
 }
