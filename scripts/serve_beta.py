@@ -457,6 +457,10 @@ class UnsupportedMedia(Exception):
     """Raised for disallowed extension/content → HTTP 415."""
 
 
+class UploadCancelled(Exception):
+    """Raised when Cancel Upload aborts a transfer → honest CANCELLED (no commit)."""
+
+
 def today_makassar() -> date:
     return datetime.now(TZ).date()
 
@@ -790,8 +794,13 @@ def unique_incoming_path(ext: str) -> Path:
     raise OSError("could not allocate unique incoming_drop name")
 
 
-def write_upload_streaming(dest: Path, data: bytes, max_bytes: int) -> int:
-    """Write bytes in chunks; abort+delete if over max_bytes. Returns bytes written."""
+def write_upload_streaming(
+    dest: Path,
+    data: bytes,
+    max_bytes: int,
+    cancel_check=None,
+) -> int:
+    """Write bytes in chunks; abort+delete if over max_bytes or cancel_check. Returns bytes written."""
     dest = _ensure_under_incoming(dest)
     written = 0
     chunk = 1024 * 1024
@@ -799,6 +808,8 @@ def write_upload_streaming(dest: Path, data: bytes, max_bytes: int) -> int:
         with open(dest, "wb") as fh:
             view = memoryview(bytes(data))
             for i in range(0, len(view), chunk):
+                if callable(cancel_check) and cancel_check():
+                    raise UploadCancelled("cancelled during transfer")
                 part = view[i : i + chunk]
                 written += len(part)
                 if written > max_bytes:
@@ -7479,6 +7490,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/upload/smart":
             self._upload_smart()
             return
+        if path == "/api/upload/cancel":
+            self._upload_cancel()
+            return
+        if path == "/api/upload/cancel-status":
+            self._upload_cancel_status()
+            return
 
         if path == "/api/nas/index/sample":
             self._nas_index_sample_post()
@@ -7659,6 +7676,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._assets_zip()
             return
 
+        m_correct_meta = re.match(r"^/api/assets/(\d+)/correct-metadata$", path)
+        if m_correct_meta:
+            self._correct_asset_metadata(int(m_correct_meta.group(1)))
+            return
         m_retry_preview = re.match(r"^/api/assets/(\d+)/retry-preview$", path)
         if m_retry_preview:
             self._retry_asset_preview(int(m_retry_preview.group(1)))
@@ -8619,6 +8640,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 fields, subject=subject, serve_mod=sys.modules[__name__], scopes=scopes
             )
             self._finish_upload_response(int(result["http"]), result["body"])
+        except UploadCancelled:
+            self._finish_upload_response(
+                200,
+                _smart_upload.cancelled_response(phase="during_transfer"),
+            )
         except UploadTooLarge as exc:
             self._finish_upload_response(
                 413,
@@ -8643,6 +8669,67 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 {"ok": False, "status": "error", "error": "upload_failed", "ui_status": "FAILED"},
                 technical=f"{type(exc).__name__}: {exc}",
             )
+
+    def _upload_cancel(self) -> None:
+        """POST JSON — Cancel remaining uploads for a batch (or one file_key)."""
+        subject = self._require_permission("can_upload", {})
+        if subject is None:
+            return
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": str(exc)}, status=400)
+            return
+        batch_id = str((body or {}).get("batch_id") or "").strip()
+        file_key = (body or {}).get("file_key")
+        result = _smart_upload.request_batch_cancel(
+            batch_id, subject=subject, file_key=str(file_key) if file_key else None
+        )
+        http = int(result.pop("http", 200) or 200)
+        result["staff_ready"] = False
+        self._send_json(result, status=http)
+
+    def _upload_cancel_status(self) -> None:
+        """GET/POST — cancel flag for a batch_id (progress UI)."""
+        subject = self._require_permission("can_upload", {})
+        if subject is None:
+            return
+        qs = parse_qs(urlparse(self.path).query)
+        batch_id = ((qs.get("batch_id") or [""])[0] or "").strip()
+        if not batch_id and self.command == "POST":
+            try:
+                body = self._read_json()
+                batch_id = str((body or {}).get("batch_id") or "").strip()
+            except Exception:  # noqa: BLE001
+                batch_id = ""
+        if not batch_id:
+            self._send_json({"ok": False, "error": "batch_id required"}, status=400)
+            return
+        out = _smart_upload.cancel_status(batch_id)
+        out["staff_ready"] = False
+        self._send_json(out)
+
+    def _correct_asset_metadata(self, asset_id: int) -> None:
+        """POST JSON — correct brand/stage/content type/subject/location/details. No re-upload."""
+        subject = self._require_permission("can_upload", {})
+        if subject is None:
+            return
+        identity = self._resolve_identity()
+        who = _wolf_shell.whoami_from_identity(identity if identity.get("ok") else None)
+        scopes = list(who.get("scopes") or [])
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": str(exc)}, status=400)
+            return
+        result = _smart_upload.correct_asset_metadata(
+            sys.modules[__name__],
+            int(asset_id),
+            body if isinstance(body, dict) else {},
+            subject=subject,
+            scopes=scopes,
+        )
+        self._send_json(result["body"], status=int(result["http"]))
 
     def _finish_upload_response(self, http: int, body: dict, technical: str | None = None) -> None:
         """Staff sentence on the body. Exception text goes to the audit log only."""

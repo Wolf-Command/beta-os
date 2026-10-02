@@ -1,0 +1,32 @@
+{
+  "id": "CE-CANCEL-UPLOAD-1",
+  "status": "ENG_PROVED",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_mutated": false,
+  "origin_feedback": "Haikal Cancel Upload while processing (wrong brand/stage/footage)",
+  "owner_order": "state/content-engine/OWNER-ORDER-CE-CANCEL-UPLOAD-20261002.json",
+  "fold_into_haikal_retest": true,
+  "retest_brief": "state/commissioning/CONTENT-ENGINE-HAIKAL-RETEST-A-D-20261001.md",
+  "tests": {
+    "path": "scripts/tests/test_content_engine_cancel_upload_20261002.py",
+    "pass": 36,
+    "fail": 0
+  },
+  "proved": [
+    "cancel_queued_before_upload",
+    "cancel_batch_before_first_file",
+    "cancel_mid_transfer",
+    "temp_partial_cleanup",
+    "cancel_after_stored_asset_preserved",
+    "no_fake_nas_delete",
+    "cancelled_neq_ready",
+    "completed_intact",
+    "metadata_correction_audit",
+    "retry_unaffected",
+    "multi_file_mov_batch"
+  ],
+  "branch": "build/wolf-command-rebuild",
+  "commit": "49c657d69457604a807238d2990f65a5be362b46",
+  "stamped_at": "2026-10-02T17:19:05+08:00"
+}

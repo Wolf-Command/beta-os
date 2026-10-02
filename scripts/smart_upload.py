@@ -3,10 +3,15 @@
 
 Keeps MIME/staging/path-jail/probe. Never touches wolf-system or :8787.
 Never writes Metricool / publish / live AI / semantic match.
+
+CE-CANCEL-UPLOAD-1: Cancel Upload (batch + per-file) + post-upload metadata
+correction with audit. Late Cancel never fakes NAS delete.
 """
 from __future__ import annotations
 
+import json
 import shutil
+import threading
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -29,12 +34,25 @@ LIB_UPLOAD_RECEIVED = "UPLOAD_RECEIVED"
 LIB_CHECKING = "CHECKING"
 LIB_READY = "LIBRARY_READY"
 LIB_FAILED = "FAILED"
+LIB_CANCELLED = "CANCELLED"
 
 # UI upload row statuses
 UI_UPLOADING = "UPLOADING"
 UI_CHECKING = "CHECKING"
 UI_READY = "READY"
 UI_FAILED = "FAILED"
+UI_CANCELLED = "CANCELLED"
+
+STAFF_CANCELLED = "Upload cancelled."
+STAFF_ALREADY_UPLOADED_STOPPED = "File already uploaded. Processing stopped."
+CANCEL_CONFIRM = (
+    "Cancel remaining uploads?\n"
+    "Files already uploaded will stay in the Library."
+)
+
+# In-process cancel registry (Beta serve is single-process). Keys: batch_id.
+_cancel_lock = threading.Lock()
+_batch_cancels: dict[str, dict[str, Any]] = {}
 
 def safe_original_basename(name: str) -> str:
     """Strip path traversal only; keep camera basename (underscores OK).
@@ -60,6 +78,366 @@ def now_iso() -> str:
 def nas_status() -> dict[str, Any]:
     """Honest NAS connectivity. Status endpoint never claims a file was received."""
     return _nas.public_nas_status()
+
+
+def cleanup_temp_partial(path: Path | str | None) -> bool:
+    """Remove an incomplete temp upload. Never touches NAS / library_v2 / assets."""
+    if not path:
+        return False
+    try:
+        p = Path(path)
+        if not p.is_file():
+            return False
+        # Only allow under incoming_drop-style UUID names (caller jail-checked).
+        p.unlink(missing_ok=True)
+        return not p.exists()
+    except OSError:
+        return False
+
+
+def _normalize_file_key(file_key: str | None) -> str | None:
+    if file_key is None:
+        return None
+    s = str(file_key).strip()
+    return s if s else None
+
+
+def request_batch_cancel(
+    batch_id: str,
+    *,
+    subject: str | None = None,
+    file_key: str | None = None,
+) -> dict[str, Any]:
+    """Mark a batch (or one file in a batch) cancelled. Idempotent."""
+    bid = (batch_id or "").strip()
+    if not bid:
+        return {"ok": False, "error": "batch_id required", "http": 400}
+    fk = _normalize_file_key(file_key)
+    with _cancel_lock:
+        row = _batch_cancels.setdefault(
+            bid,
+            {
+                "batch_id": bid,
+                "cancelled_at": now_iso(),
+                "subject": subject,
+                "batch": False,
+                "files": set(),
+            },
+        )
+        if fk:
+            row["files"].add(fk)
+        else:
+            row["batch"] = True
+            row["cancelled_at"] = now_iso()
+            if subject:
+                row["subject"] = subject
+        files = sorted(row["files"])
+        batch_flag = bool(row["batch"])
+    return {
+        "ok": True,
+        "batch_id": bid,
+        "batch_cancelled": batch_flag,
+        "cancelled_files": files,
+        "confirm_copy": CANCEL_CONFIRM,
+        "staff_ready": False,
+    }
+
+
+def clear_batch_cancel(batch_id: str) -> None:
+    """Test/helper: drop cancel flag for a batch."""
+    bid = (batch_id or "").strip()
+    with _cancel_lock:
+        _batch_cancels.pop(bid, None)
+
+
+def is_cancelled(batch_id: str | None, file_key: str | None = None) -> bool:
+    bid = (batch_id or "").strip()
+    if not bid:
+        return False
+    fk = _normalize_file_key(file_key)
+    with _cancel_lock:
+        row = _batch_cancels.get(bid)
+        if not row:
+            return False
+        if row.get("batch"):
+            return True
+        if fk and fk in row.get("files", set()):
+            return True
+        return False
+
+
+def cancel_status(batch_id: str) -> dict[str, Any]:
+    bid = (batch_id or "").strip()
+    with _cancel_lock:
+        row = _batch_cancels.get(bid)
+        if not row:
+            return {"ok": True, "batch_id": bid, "batch_cancelled": False, "cancelled_files": []}
+        return {
+            "ok": True,
+            "batch_id": bid,
+            "batch_cancelled": bool(row.get("batch")),
+            "cancelled_files": sorted(row.get("files") or []),
+            "cancelled_at": row.get("cancelled_at"),
+            "subject": row.get("subject"),
+        }
+
+
+def cancelled_response(
+    *,
+    original_filename: str | None = None,
+    batch_id: str | None = None,
+    phase: str = "before_storage",
+) -> dict[str, Any]:
+    """Honest CANCELLED body — never claims READY / library available."""
+    return {
+        "ok": False,
+        "status": "cancelled",
+        "ui_status": UI_CANCELLED,
+        "library_status": LIB_CANCELLED,
+        "processing_status": LIB_CANCELLED,
+        "cancelled": True,
+        "cancel_phase": phase,
+        "library_available": False,
+        "nas_received": False,
+        "upload_failed": False,
+        "original_filename": original_filename,
+        "batch_id": batch_id,
+        "staff_message": STAFF_CANCELLED,
+        "staff_ready": False,
+    }
+
+
+def late_cancel_annotate(body: dict[str, Any]) -> dict[str, Any]:
+    """After commit: do not fake CANCELLED. Keep asset; stop further processing copy."""
+    out = dict(body)
+    out["already_uploaded_processing_stopped"] = True
+    out["cancelled"] = False
+    out["ui_status"] = UI_READY if out.get("library_available") else out.get("ui_status")
+    out["staff_message"] = STAFF_ALREADY_UPLOADED_STOPPED
+    out["staff_ready"] = False
+    return out
+
+
+def format_batch_cancel_summary(
+    *,
+    uploaded: int = 0,
+    stopped_during: int = 0,
+    cancelled_before: int = 0,
+    failed: int = 0,
+) -> str:
+    """Human batch outcome — never bare 'Cancelled'."""
+    parts = [f"{int(uploaded)} uploaded"]
+    if stopped_during:
+        parts.append(f"{int(stopped_during)} stopped during processing")
+    if cancelled_before:
+        parts.append(f"{int(cancelled_before)} cancelled before upload")
+    if failed:
+        parts.append(f"{int(failed)} failed")
+    return " · ".join(parts)
+
+
+def correct_asset_metadata(
+    serve_mod: Any,
+    asset_id: int,
+    patch: dict[str, Any],
+    *,
+    subject: str,
+    scopes: list[str] | None = None,
+) -> dict[str, Any]:
+    """Correct brand/stage/content type/subject/location/details without re-upload.
+
+    Updates the assets index + audit trail. Does not delete or re-copy NAS bytes.
+    """
+    from core import content_engine_repair as _ce_repair
+
+    if not asset_id:
+        return {"http": 400, "body": {"ok": False, "error": "asset_id required"}}
+    allowed = {
+        "brand",
+        "stage",
+        "content_class",
+        "content_type",
+        "subject",
+        "location",
+        "detail",
+        "details",
+    }
+    incoming = {k: v for k, v in (patch or {}).items() if k in allowed and v is not None}
+    if "content_type" in incoming and "content_class" not in incoming:
+        incoming["content_class"] = incoming.pop("content_type")
+    if "details" in incoming and "detail" not in incoming:
+        incoming["detail"] = incoming.pop("details")
+    else:
+        incoming.pop("details", None)
+        incoming.pop("content_type", None)
+    if not incoming:
+        return {"http": 400, "body": {"ok": False, "error": "no correctable fields"}}
+
+    conn = serve_mod.db_connect()
+    try:
+        _nas.migrate_schema(conn)
+        row = conn.execute(
+            """
+            SELECT id, brand, stage, subject, detail, location, media_type, type,
+                   original_filename, canonical_filename, filename, provenance_json,
+                   library_status, processing_status, nas_path, nas_rel, nas_received,
+                   content_hash, file_size, data_lane, batch_id, v2_path
+            FROM assets WHERE id=?
+            """,
+            (int(asset_id),),
+        ).fetchone()
+        if not row:
+            return {"http": 404, "body": {"ok": False, "error": "asset not found"}}
+        d = dict(row)
+        try:
+            prov = json.loads(d.get("provenance_json") or "{}") or {}
+        except json.JSONDecodeError:
+            prov = {}
+
+        changes: list[dict[str, Any]] = []
+        new_brand = d.get("brand")
+        new_stage = d.get("stage")
+        new_subject = d.get("subject")
+        new_detail = d.get("detail")
+        new_location = d.get("location")
+        new_class = prov.get("content_class") or ""
+
+        if "brand" in incoming:
+            try:
+                cand = _wn.normalize_brand(str(incoming["brand"]))
+            except ValueError as exc:
+                return {"http": 400, "body": {"ok": False, "error": str(exc)}}
+            if scopes is not None and not _nas.scopes_allow_brand(scopes, cand):
+                return {
+                    "http": 403,
+                    "body": {
+                        "ok": False,
+                        "error": "forbidden",
+                        "message": f"subject lacks scope for brand {cand}",
+                    },
+                }
+            if cand != d.get("brand"):
+                changes.append({"field": "brand", "old": d.get("brand"), "new": cand})
+                new_brand = cand
+        if "stage" in incoming:
+            try:
+                cand = _wn.normalize_stage(str(incoming["stage"]))
+            except ValueError as exc:
+                return {"http": 400, "body": {"ok": False, "error": str(exc)}}
+            if cand != d.get("stage"):
+                changes.append({"field": "stage", "old": d.get("stage"), "new": cand})
+                new_stage = cand
+        if "subject" in incoming:
+            cand = _wn.slug_normalize(str(incoming["subject"]), fallback="subject")
+            if cand != (d.get("subject") or ""):
+                changes.append({"field": "subject", "old": d.get("subject"), "new": cand})
+                new_subject = cand
+        if "detail" in incoming:
+            raw = str(incoming["detail"]).strip()
+            if not _p26.detail_valid(raw):
+                return {
+                    "http": 400,
+                    "body": {"ok": False, "error": "detail required — need ≥1 meaningful slug token"},
+                }
+            tags = _p26.parse_detail_tags(raw)
+            cand = "-".join(tags) if tags else _wn.slug_normalize(raw, fallback="")
+            if cand != (d.get("detail") or ""):
+                changes.append({"field": "detail", "old": d.get("detail"), "new": cand})
+                new_detail = cand
+        if "location" in incoming:
+            raw_loc = str(incoming["location"]).strip()
+            cand = _wn.slug_normalize(raw_loc, fallback="") if raw_loc else ""
+            if cand != (d.get("location") or ""):
+                changes.append({"field": "location", "old": d.get("location"), "new": cand or None})
+                new_location = cand or None
+        if "content_class" in incoming:
+            cand = str(incoming["content_class"]).strip().lower()
+            allowed_classes = {slug for slug, _label in _ce_repair.CONTENT_CLASSES}
+            if cand and cand not in allowed_classes:
+                return {"http": 400, "body": {"ok": False, "error": f"unknown content_class: {cand}"}}
+            if cand != (new_class or ""):
+                changes.append({"field": "content_class", "old": new_class or None, "new": cand or None})
+                new_class = cand
+
+        if not changes:
+            return {
+                "http": 200,
+                "body": {
+                    "ok": True,
+                    "asset_id": int(asset_id),
+                    "changed": False,
+                    "changes": [],
+                    "message": "No metadata changes",
+                    "staff_ready": False,
+                    "reuploaded": False,
+                },
+            }
+
+        prov["content_class"] = new_class or None
+        audit = list(prov.get("metadata_corrections") or [])
+        entry = {
+            "at": now_iso(),
+            "by": subject,
+            "changes": changes,
+        }
+        audit.append(entry)
+        prov["metadata_corrections"] = audit[-50:]
+
+        detail_tags = _p26.parse_detail_tags(new_detail) if new_detail else []
+        conn.execute(
+            """
+            UPDATE assets SET
+              brand=?, stage=?, subject=?, detail=?, location=?,
+              slug=?, detail_tags_json=?, provenance_json=?
+            WHERE id=?
+            """,
+            (
+                new_brand,
+                new_stage,
+                new_subject,
+                new_detail,
+                new_location,
+                new_subject,
+                json.dumps(detail_tags),
+                json.dumps(prov),
+                int(asset_id),
+            ),
+        )
+        conn.commit()
+        _ce_repair.log_upload_fault(
+            {
+                "where": "metadata_correction",
+                "kind": "metadata_correction",
+                "asset_id": int(asset_id),
+                "by": subject,
+                "changes": changes,
+                "reuploaded": False,
+                "nas_deleted": False,
+            }
+        )
+        return {
+            "http": 200,
+            "body": {
+                "ok": True,
+                "asset_id": int(asset_id),
+                "changed": True,
+                "changes": changes,
+                "brand": new_brand,
+                "stage": new_stage,
+                "subject": new_subject,
+                "detail": new_detail,
+                "location": new_location,
+                "content_class": new_class or None,
+                "content_class_label": _ce_repair.content_class_label(new_class),
+                "audit": entry,
+                "reuploaded": False,
+                "nas_deleted": False,
+                "staff_message": "Details updated. File was not re-uploaded.",
+                "staff_ready": False,
+            },
+        }
+    finally:
+        conn.close()
 
 
 def _opt_int(v: Any) -> int | None:
@@ -213,9 +591,21 @@ def handle_smart_upload(
     plan_id = _opt_int(_field_str(fields, "content_plan_id") or _field_str(fields, "plan_id"))
     card_id = _opt_int(_field_str(fields, "content_card_id") or _field_str(fields, "card_id"))
     batch_id = _field_str(fields, "batch_id") or uuid.uuid4().hex[:16]
+    file_key = _field_str(fields, "file_key") or original_filename
     content_hash = _p26.file_sha256(data)
     file_size = len(data)
     force = (_field_str(fields, "force") or "").lower() in ("1", "true", "yes")
+
+    # BEFORE storage starts — cancel immediately; no NAS / Library record.
+    if is_cancelled(batch_id, file_key):
+        return {
+            "http": 200,
+            "body": cancelled_response(
+                original_filename=original_filename,
+                batch_id=batch_id,
+                phase="before_storage",
+            ),
+        }
 
     # Optional per-file detail override already in detail
     dest_dirs = [
@@ -299,27 +689,75 @@ def handle_smart_upload(
 
     # Write to incoming_drop (UUID path jail) then stage + commit to library
     uploaded_at = now_iso()
+    dest: Path | None = None
     try:
         dest = serve_mod.unique_incoming_path(ext)
-        serve_mod.write_upload_streaming(dest, data, serve_mod.MAX_UPLOAD_BYTES)
+
+        def _cancel_check() -> bool:
+            return is_cancelled(batch_id, file_key)
+
+        if is_cancelled(batch_id, file_key):
+            cleanup_temp_partial(dest)
+            return {
+                "http": 200,
+                "body": cancelled_response(
+                    original_filename=original_filename,
+                    batch_id=batch_id,
+                    phase="before_storage",
+                ),
+            }
+        serve_mod.write_upload_streaming(
+            dest, data, serve_mod.MAX_UPLOAD_BYTES, cancel_check=_cancel_check
+        )
         dest = serve_mod._ensure_under_incoming(dest)
+        if is_cancelled(batch_id, file_key):
+            cleanup_temp_partial(dest)
+            return {
+                "http": 200,
+                "body": cancelled_response(
+                    original_filename=original_filename,
+                    batch_id=batch_id,
+                    phase="during_transfer",
+                ),
+            }
+    except serve_mod.UploadCancelled:
+        cleanup_temp_partial(dest)
+        return {
+            "http": 200,
+            "body": cancelled_response(
+                original_filename=original_filename,
+                batch_id=batch_id,
+                phase="during_transfer",
+            ),
+        }
     except serve_mod.UploadTooLarge as exc:
+        cleanup_temp_partial(dest)
         return {"http": 413, "body": {"ok": False, "status": "error", "error": str(exc), "ui_status": UI_FAILED, "original_filename": original_filename}}
     except serve_mod.UnsupportedMedia as exc:
+        cleanup_temp_partial(dest)
         return {"http": 415, "body": {"ok": False, "status": "error", "error": str(exc), "ui_status": UI_FAILED, "original_filename": original_filename}}
     except PermissionError as exc:
+        cleanup_temp_partial(dest)
         return {"http": 400, "body": {"ok": False, "status": "error", "error": str(exc), "ui_status": UI_FAILED, "original_filename": original_filename}}
     except OSError as exc:
+        cleanup_temp_partial(dest)
         return {"http": 500, "body": {"ok": False, "status": "error", "error": f"save failed: {exc}", "ui_status": UI_FAILED, "original_filename": original_filename}}
 
     # Stage (probe / MIME) — status STAGED initially
+    if is_cancelled(batch_id, file_key):
+        cleanup_temp_partial(dest)
+        return {
+            "http": 200,
+            "body": cancelled_response(
+                original_filename=original_filename,
+                batch_id=batch_id,
+                phase="during_transfer",
+            ),
+        }
     try:
         row = _stage_inspector.stage_file(dest, brand=brand, stage=stage)
     except Exception as exc:  # noqa: BLE001
-        try:
-            dest.unlink(missing_ok=True)
-        except OSError:
-            pass
+        cleanup_temp_partial(dest)
         return {
             "http": 500,
             "body": {
@@ -334,6 +772,16 @@ def handle_smart_upload(
         }
 
     staged_id = row["id"]
+    if is_cancelled(batch_id, file_key):
+        cleanup_temp_partial(dest)
+        return {
+            "http": 200,
+            "body": cancelled_response(
+                original_filename=original_filename,
+                batch_id=batch_id,
+                phase="during_transfer",
+            ),
+        }
     # Prefer media_type from batch; keep probe type as fallback for assets.type compat
     asset_type = media_type if media_type in ("video", "audio", "broll", "graphic", "image") else (row.get("suggested_type") or "graphic")
     if asset_type == "image":
@@ -571,6 +1019,9 @@ def handle_smart_upload(
             },
             media_path=final_path,
         )
+        # AFTER safely stored — do not fake CANCELLED; stop subsequent processing copy.
+        if is_cancelled(batch_id, file_key):
+            body = late_cancel_annotate(body)
         return {"http": 200, "body": body}
     except Exception as exc:  # noqa: BLE001
         conn = serve_mod.db_connect()

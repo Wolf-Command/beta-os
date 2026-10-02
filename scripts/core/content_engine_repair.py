@@ -63,7 +63,10 @@ STAFF_RETRY = "This file could not be added to the library. Retry the failed fil
 STAFF_FORBIDDEN = "You do not have permission to upload for this brand."
 STAFF_PREVIEW = "Video uploaded successfully. Preview processing failed — Retry Preview."
 STAFF_INDEX = "The file was saved but could not be indexed. Retry the failed files."
+STAFF_CANCELLED = "Upload cancelled."
+STAFF_ALREADY_UPLOADED_STOPPED = "File already uploaded. Processing stopped."
 UPLOAD_STATE_RUN_ID = "BF-content-engine-upload-state-library-search-20261001"
+CANCEL_UPLOAD_RUN_ID = "CE-CANCEL-UPLOAD-1"
 
 # Canonical stages. COMPLETE / READY is last and only when the preview is ready.
 # Poster failure after FILE STORED is DERIVATIVE FAILED, not an upload failure.
@@ -668,6 +671,10 @@ def log_upload_fault(event: dict[str, Any]) -> None:
 def staff_upload_message(http: int, body: dict[str, Any] | None) -> str:
     """Sentence a staff member can act on. Technical text stays in the audit log."""
     body = body or {}
+    if body.get("already_uploaded_processing_stopped") is True:
+        return STAFF_ALREADY_UPLOADED_STOPPED
+    if body.get("cancelled") is True or str(body.get("ui_status") or "").upper() == "CANCELLED":
+        return STAFF_CANCELLED
     stage = str(body.get("failed_stage") or "")
     life = str(body.get("lifecycle_state") or "")
     derivative = (

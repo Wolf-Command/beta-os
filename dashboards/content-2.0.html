@@ -590,6 +590,18 @@
   </header>
   <div class="chrome-secondary staff-secondary">
     <a id="ownerProgressLink" class="hidden" href="/progress" style="display:none">Progress</a>
+    <!-- IA-TAB-INTEL-CONTENT-1: Content seat leaves as hub tabs; routes kept; off primary IA -->
+    <nav class="grammar" aria-label="Content seats" id="contentSeatTabs" style="margin:8px 18px 0">
+      <a class="active" href="/content-2.0">Hub</a>
+      <a href="/seats/content-desk">Desk</a>
+      <a href="/seats/content-admin">Admin</a>
+      <a href="/seats/ads-studio">Ads Studio</a>
+      <a href="/seats/resolve-studio">Resolve</a>
+    </nav>
+    <!-- IA-MERGE-GGV-SOCIAL-METRICOL-1: Metricool READ honesty on Content — no WRITE -->
+    <p class="note" id="metricoolContentHonesty" style="margin:8px 18px 0;font-size:0.78rem;color:var(--muted,#8b95a8)">Metricool READ: brands may be LIVE · engagement NOT invented · schedule/post WRITE OFF · social glance on <a href="/ggv-ops-pack#social">GGV Social hub</a>. Engineer Metricool wire retained as direct URL only (not chrome). <!-- IA-HIDE-ORPHAN-PROVE-CRUMBS-2 --></p>
+    <p class="note" id="nasB2DeskHonesty" style="margin:6px 18px 0;font-size:0.78rem;color:var(--muted,#8b95a8)">NAS/B2 desk (WORKFLOW-NAS-B2-DESK-STAMP-1): Media shallow 38091 · editable-3 843 · stock-1 207 · B2 cache fresh ~07:56 WITA · 00/02 bare volumes Permission denied · full_tree_indexed=false · restore NOT_RUN · Library sqlite (assets 18 / cards 153) ≠ NAS tree. No invent completeness.</p>
+    <p class="note" id="metricoolScheduleHonesty" style="margin:6px 18px 0;font-size:0.78rem;color:var(--muted,#8b95a8)">Metricool schedule READ glance: brands 6 · Atrium window posts 14 · Habitat 17 · PENDING/PUBLISHED status only · engagement NOT invented · WRITE OFF · <a href="/ggv-ops-pack#social">#social</a>.</p>
   </div>
 
   <main>
@@ -853,11 +865,13 @@
             </table>
           </div>
           <div class="progress" id="uploadProgress" style="display:none;margin-top:14px"><div id="uploadProgressBar"></div></div>
+          <div id="uploadBatchStats" class="sub" style="display:none;margin-top:10px" aria-live="polite"></div>
           <p id="uploadStatus" class="sub" style="margin:10px 0 0"></p>
           <div id="uploadRegistration" class="sub" style="margin-top:8px"></div>
           <div class="wizard-nav">
             <button type="button" class="btn" id="wizBack3">Back</button>
             <button type="button" class="btn" id="uploadRetry" hidden>Retry failed</button>
+            <button type="button" class="btn" id="uploadCancelBtn" hidden>Cancel Upload</button>
             <button type="button" class="btn btn-primary" id="wizUpload">UPLOAD</button>
           </div>
         </div>
@@ -919,6 +933,7 @@
       <div class="drawer-body"><div id="prevMedia" class="preview-media"></div><p class="sub" id="prevNote"></p></div>
       <div class="drawer-foot">
         <button type="button" class="btn" id="prevDownload">Download</button>
+        <button type="button" class="btn" id="prevCorrectMeta" hidden>Correct details</button>
         <button type="button" class="btn btn-primary" id="prevClose2">Close</button>
       </div>
     </div>
@@ -1835,6 +1850,11 @@
     files: [],
     previews: [],
     batchId: null,
+    abortController: null,
+    cancelRequested: false,
+    running: false,
+    counts: { completed: 0, failed: 0, cancelled: 0, remaining: 0, stopped: 0 },
+    currentName: "",
   };
 
   function todayInputDate() {
@@ -2216,7 +2236,10 @@
         <td>${esc(p.original_filename)}</td>
         <td><input type="text" class="rev-detail" value="${esc(p.detail || detailDefault || "")}" data-idx="${i}" /></td>
         <td class="canon" id="canon-${i}">${esc(p.canonical_filename)}</td>
-        <td><span class="badge" id="ust-${i}">PENDING</span></td>
+        <td>
+          <span class="badge" id="ust-${i}">PENDING</span>
+          <button type="button" class="btn rev-cancel-one" data-idx="${i}" hidden>Cancel</button>
+        </td>
       </tr>`;
     }).join("");
     tbody.querySelectorAll(".rev-detail").forEach((inp) => {
@@ -2351,9 +2374,72 @@
     }
   }
 
+  function paintBatchStats() {
+    const el = $("uploadBatchStats");
+    if (!el) return;
+    const c = uploadWizard.counts || {};
+    const total = uploadWizard.files.length || 0;
+    const done = (c.completed || 0) + (c.failed || 0) + (c.cancelled || 0) + (c.stopped || 0);
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    const current = uploadWizard.currentName ? ` · Current: ${uploadWizard.currentName}` : "";
+    el.style.display = "block";
+    el.textContent =
+      `Overall ${pct}%${current} · Completed ${c.completed || 0} · Remaining ${c.remaining || 0}` +
+      ` · Failed ${c.failed || 0} · Cancelled ${c.cancelled || 0}`;
+    const bar = $("uploadProgressBar");
+    if (bar) bar.style.width = `${pct}%`;
+  }
+
+  function setPerFileCancelVisible(running) {
+    document.querySelectorAll(".rev-cancel-one").forEach((btn) => {
+      const idx = Number(btn.dataset.idx);
+      const done = (uploadWizard.okIdx || []).includes(idx)
+        || (uploadWizard.failedIdx || []).includes(idx)
+        || (uploadWizard.cancelledIdx || []).includes(idx);
+      btn.hidden = !running || done;
+    });
+  }
+
+  async function requestCancelUpload(fileKey) {
+    if (!uploadWizard.batchId) return;
+    try {
+      await api("/api/upload/cancel", {
+        method: "POST",
+        body: { batch_id: uploadWizard.batchId, file_key: fileKey || undefined },
+      });
+    } catch (_) { /* client abort still applies */ }
+    uploadWizard.cancelRequested = true;
+    if (!fileKey && uploadWizard.abortController) {
+      try { uploadWizard.abortController.abort(); } catch (_) {}
+    }
+  }
+
+  async function confirmCancelRemaining() {
+    if (!uploadWizard.running) return;
+    const ok = window.confirm(
+      "Cancel remaining uploads?\nFiles already uploaded will stay in the Library."
+    );
+    if (!ok) return;
+    await requestCancelUpload(null);
+    const status = $("uploadStatus");
+    if (status) status.textContent = "Cancelling remaining uploads…";
+  }
+
+  function formatCancelSummary(counts) {
+    const parts = [`${counts.completed || 0} uploaded`];
+    if (counts.stopped) parts.push(`${counts.stopped} stopped during processing`);
+    if (counts.cancelled) parts.push(`${counts.cancelled} cancelled before upload`);
+    if (counts.failed) parts.push(`${counts.failed} failed`);
+    return parts.join(" · ");
+  }
+
   async function runSmartUpload(onlyFailed) {
     if (!state.canUpload) {
       toast("You do not have upload permission");
+      return;
+    }
+    if (uploadWizard.running) {
+      toast("Upload already running");
       return;
     }
     const err = validateBatch();
@@ -2361,11 +2447,19 @@
     if (!uploadWizard.files.length) { toast("No files"); return; }
     const brand = ($("upBrand") && $("upBrand").value || "").trim();
     if (!brand) { toast("Choose a brand before upload"); return; }
-    uploadWizard.batchId = (uploadWizard.batchId || ("b" + Date.now().toString(36)));
+    if (!onlyFailed) uploadWizard.batchId = "b" + Date.now().toString(36);
+    else uploadWizard.batchId = (uploadWizard.batchId || ("b" + Date.now().toString(36)));
+    uploadWizard.cancelRequested = false;
+    uploadWizard.cancelledIdx = uploadWizard.cancelledIdx || [];
+    uploadWizard.abortController = (typeof AbortController !== "undefined") ? new AbortController() : null;
     const status = $("uploadStatus");
     const wrap = $("uploadProgress");
     const bar = $("uploadProgressBar");
+    const cancelBtn = $("uploadCancelBtn");
     wrap.style.display = "block";
+    if (cancelBtn) cancelBtn.hidden = false;
+    uploadWizard.running = true;
+    setPerFileCancelVisible(true);
     const planEl = $("upPlan");
     const cardEl = $("upCard");
     const planId = planEl ? (planEl.value || "").trim() : "";
@@ -2374,30 +2468,63 @@
     const indexes = [];
     for (let i = 0; i < uploadWizard.files.length; i++) {
       if (onlyFailed && !(uploadWizard.failedIdx || []).includes(i)) continue;
-      if (!onlyFailed && (uploadWizard.okIdx || []).includes(i)) continue;
+      if (!onlyFailed && ((uploadWizard.okIdx || []).includes(i) || (uploadWizard.cancelledIdx || []).includes(i))) continue;
       indexes.push(i);
     }
     if (!indexes.length) {
       status.textContent = "Nothing left to upload. Successful files were kept.";
+      uploadWizard.running = false;
+      if (cancelBtn) cancelBtn.hidden = true;
+      setPerFileCancelVisible(false);
       return;
     }
     let ok = (uploadWizard.okIdx || []).length;
     let fail = 0;
+    let cancelled = (uploadWizard.cancelledIdx || []).length;
+    let stopped = 0;
     let previewFails = (uploadWizard.previewIdx || []).length;
     const failedIdx = [];
     const previewIdx = (uploadWizard.previewIdx || []).slice();
     const total = uploadWizard.files.length;
+    uploadWizard.counts = {
+      completed: ok,
+      failed: 0,
+      cancelled,
+      remaining: indexes.length,
+      stopped: 0,
+    };
+    paintBatchStats();
     for (let n = 0; n < indexes.length; n++) {
       const i = indexes[n];
+      const remaining = indexes.length - n;
+      uploadWizard.counts.remaining = Math.max(0, remaining - (uploadWizard.cancelRequested ? 0 : 0));
+      uploadWizard.counts.remaining = indexes.length - n;
+      if (uploadWizard.cancelRequested) {
+        for (let k = n; k < indexes.length; k++) {
+          const ci = indexes[k];
+          const badgeC = $("ust-" + ci);
+          if (badgeC) badgeC.textContent = "Cancelled";
+          if (!(uploadWizard.cancelledIdx || []).includes(ci)) {
+            uploadWizard.cancelledIdx = uploadWizard.cancelledIdx || [];
+            uploadWizard.cancelledIdx.push(ci);
+          }
+          cancelled++;
+        }
+        uploadWizard.counts.cancelled = cancelled;
+        uploadWizard.counts.remaining = 0;
+        paintBatchStats();
+        break;
+      }
       const file = uploadWizard.files[i];
+      uploadWizard.currentName = file.name;
+      uploadWizard.counts.remaining = indexes.length - n;
+      paintBatchStats();
       const detailEl = $("reviewBody") && $("reviewBody").querySelector(`.rev-detail[data-idx="${i}"]`);
       const detail = detailEl ? detailEl.value.trim() : "";
       const badge = $("ust-" + i);
       if (badge) badge.textContent = "Uploading";
       paintUploadLifecycle("uploading");
-      const pct = Math.round((n / Math.max(total, 1)) * 100);
-      status.textContent = `Uploading ${n + 1} of ${total} · ${pct}%`;
-      bar.style.width = `${pct}%`;
+      status.textContent = `Uploading ${n + 1} of ${indexes.length} · ${file.name}`;
       const fd = new FormData();
       fd.append("file", file, file.name);
       fd.append("brand", brand);
@@ -2412,20 +2539,41 @@
       if (planId) fd.append("content_plan_id", planId);
       if (cardId) fd.append("content_card_id", cardId);
       fd.append("batch_id", uploadWizard.batchId);
+      fd.append("file_key", file.name);
       fd.append("data_lane", "operational");
       try {
         if (badge) badge.textContent = "Processing";
         paintUploadLifecycle("processing");
-        status.textContent = "Processing";
-        const res = await fetch("/api/upload/smart", {
-          method: "POST",
-          headers: (state.developmentAssertionAllowed && state.subject)
-            ? { "X-Wolf-Subject": state.subject } : {},
-          body: fd,
-        });
+        const headers = (state.developmentAssertionAllowed && state.subject)
+          ? { "X-Wolf-Subject": state.subject } : {};
+        const fetchOpts = { method: "POST", headers, body: fd };
+        if (uploadWizard.abortController) fetchOpts.signal = uploadWizard.abortController.signal;
+        const res = await fetch("/api/upload/smart", fetchOpts);
         const data = await res.json();
         paintLifecycleResult(data);
         paintRegistration(data, file.name);
+        if (data && (data.cancelled === true || data.ui_status === "CANCELLED")) {
+          if (badge) badge.textContent = "Cancelled";
+          status.textContent = data.staff_message || "Upload cancelled.";
+          stopped++;
+          uploadWizard.cancelledIdx = uploadWizard.cancelledIdx || [];
+          if (!uploadWizard.cancelledIdx.includes(i)) uploadWizard.cancelledIdx.push(i);
+          uploadWizard.counts.stopped = stopped;
+          uploadWizard.counts.cancelled = cancelled + stopped;
+          paintBatchStats();
+          continue;
+        }
+        if (data && data.already_uploaded_processing_stopped) {
+          if (badge) badge.textContent = "Available in Library";
+          status.textContent = data.staff_message || "File already uploaded. Processing stopped.";
+          ok++;
+          uploadWizard.okIdx = uploadWizard.okIdx || [];
+          if (!uploadWizard.okIdx.includes(i)) uploadWizard.okIdx.push(i);
+          uploadWizard.counts.completed = ok;
+          paintBatchStats();
+          toast(`${file.name}: ${status.textContent}`);
+          continue;
+        }
         const duplicate = res.status === 409 || (data && (data.error === "possible_duplicate" || data.duplicate === true));
         const savedDespitePoster = !!(data && data.ok && data.file_stored && data.asset_id && (data.derivative_failed === true || data.failed_stage === "thumbnail") && data.upload_failed !== true);
         if (duplicate || savedDespitePoster) {
@@ -2438,6 +2586,8 @@
           ok++;
           uploadWizard.okIdx = uploadWizard.okIdx || [];
           if (!uploadWizard.okIdx.includes(i)) uploadWizard.okIdx.push(i);
+          uploadWizard.counts.completed = ok;
+          paintBatchStats();
           if (savedDespitePoster) {
             previewFails++;
             if (!previewIdx.includes(i)) previewIdx.push(i);
@@ -2471,9 +2621,24 @@
         ok++;
         uploadWizard.okIdx = uploadWizard.okIdx || [];
         if (!uploadWizard.okIdx.includes(i)) uploadWizard.okIdx.push(i);
+        uploadWizard.counts.completed = ok;
+        paintBatchStats();
       } catch (e) {
+        const aborted = (e && (e.name === "AbortError" || /aborted/i.test(String(e.message || ""))));
+        if (aborted || uploadWizard.cancelRequested) {
+          if (badge) badge.textContent = "Cancelled";
+          status.textContent = "Upload cancelled.";
+          stopped++;
+          uploadWizard.cancelledIdx = uploadWizard.cancelledIdx || [];
+          if (!uploadWizard.cancelledIdx.includes(i)) uploadWizard.cancelledIdx.push(i);
+          uploadWizard.counts.stopped = stopped;
+          paintBatchStats();
+          continue;
+        }
         fail++;
         failedIdx.push(i);
+        uploadWizard.counts.failed = fail;
+        paintBatchStats();
         if (badge) badge.textContent = "Failed";
         const interrupted = !e || !e.message || e.message === "Failed to fetch";
         if (interrupted) paintUploadLifecycle("uploading", "uploading");
@@ -2485,10 +2650,30 @@
     }
     uploadWizard.failedIdx = failedIdx;
     uploadWizard.previewIdx = previewIdx;
+    uploadWizard.counts.completed = ok;
+    uploadWizard.counts.failed = fail;
+    uploadWizard.counts.cancelled = Math.max(0, cancelled + (uploadWizard.cancelRequested ? 0 : 0));
+    // cancelled before upload = cancelledIdx that never transferred; stopped = mid-transfer
+    const cancelledBefore = Math.max(0, (uploadWizard.cancelledIdx || []).length - stopped);
+    uploadWizard.counts.cancelled = cancelledBefore;
+    uploadWizard.counts.stopped = stopped;
+    uploadWizard.counts.remaining = 0;
+    uploadWizard.currentName = "";
+    paintBatchStats();
     bar.style.width = "100%";
     const retry = $("uploadRetry");
     if (retry) retry.hidden = failedIdx.length === 0;
-    if (fail && !ok) {
+    if (cancelBtn) cancelBtn.hidden = true;
+    uploadWizard.running = false;
+    setPerFileCancelVisible(false);
+    if (uploadWizard.cancelRequested || stopped || cancelledBefore) {
+      status.textContent = formatCancelSummary({
+        completed: ok,
+        stopped,
+        cancelled: cancelledBefore,
+        failed: fail,
+      });
+    } else if (fail && !ok) {
       status.textContent = `Stopped — ${fail} failed of ${total}. Nothing was marked complete. Successful files stay put.`;
     } else if (ok && !fail && previewFails) {
       status.textContent = "Video uploaded successfully. Preview processing failed — Retry Preview.";
@@ -2498,7 +2683,7 @@
     } else {
       status.textContent = `${ok} available in Library, ${fail} failed. Retry keeps the files that already succeeded.`;
     }
-    setTimeout(() => { wrap.style.display = "none"; bar.style.width = "0"; }, 2200);
+    setTimeout(() => { wrap.style.display = "none"; bar.style.width = "0"; }, 2800);
     loadUploads();
     if (state.view === "library") loadLibrary();
   }
@@ -2691,6 +2876,19 @@
   if (wizUpload) wizUpload.addEventListener("click", () => runSmartUpload(false));
   const uploadRetry = $("uploadRetry");
   if (uploadRetry) uploadRetry.addEventListener("click", () => runSmartUpload(true));
+  const uploadCancelBtn = $("uploadCancelBtn");
+  if (uploadCancelBtn) uploadCancelBtn.addEventListener("click", () => confirmCancelRemaining());
+  document.addEventListener("click", (ev) => {
+    const t = ev.target;
+    if (!t || !t.classList || !t.classList.contains("rev-cancel-one")) return;
+    const idx = Number(t.dataset.idx);
+    const file = uploadWizard.files[idx];
+    if (!file || !uploadWizard.running) return;
+    requestCancelUpload(file.name).then(() => {
+      const badge = $("ust-" + idx);
+      if (badge && badge.textContent === "PENDING") badge.textContent = "Cancel queued";
+    });
+  });
 
   const wiOpenPlanBtn = $("wiOpenPlan");
   if (wiOpenPlanBtn) wiOpenPlanBtn.addEventListener("click", () => setView("plan"));
@@ -3395,6 +3593,50 @@
     } catch (e) { toast(e.message || "Library error"); }
   };
 
+  async function correctAssetMetadata26(asset) {
+    if (!asset || !asset.id || String(asset.id).indexOf("nas:") === 0) {
+      toast("Only Library uploads can be corrected here.");
+      return;
+    }
+    if (!state.canUpload) {
+      toast("You do not have permission to correct details.");
+      return;
+    }
+    const brand = window.prompt("Brand (habitat/umablu/atrium/selo/tropik)", asset.brand || "");
+    if (brand === null) return;
+    const stage = window.prompt("Stage (RAW/EDIT/FINAL)", asset.stage || "RAW");
+    if (stage === null) return;
+    const contentClass = window.prompt(
+      "Content type (b-roll/testimonial/property/food/people/event/lifestyle or blank)",
+      asset.content_class || ""
+    );
+    if (contentClass === null) return;
+    const subject = window.prompt("Subject", asset.subject || "");
+    if (subject === null) return;
+    const location = window.prompt("Location (optional)", asset.location || "");
+    if (location === null) return;
+    const detail = window.prompt("Details (slug tokens)", asset.detail || "");
+    if (detail === null) return;
+    try {
+      const data = await api(`/api/assets/${encodeURIComponent(asset.id)}/correct-metadata`, {
+        method: "POST",
+        body: {
+          brand: (brand || "").trim() || undefined,
+          stage: (stage || "").trim() || undefined,
+          content_class: (contentClass || "").trim() || undefined,
+          subject: (subject || "").trim() || undefined,
+          location: (location || "").trim(),
+          detail: (detail || "").trim() || undefined,
+        },
+      });
+      toast(data.staff_message || (data.changed ? "Details updated." : "No metadata changes"));
+      $("prevBackdrop").classList.remove("open");
+      await loadLibrary();
+    } catch (e) {
+      toast(e.message || "Could not update details");
+    }
+  }
+
   async function openPreview26(id, assets) {
     const a = (assets||[]).find((x)=>String(x.id)===String(id)) || {id};
     const idStr = String(id);
@@ -3429,6 +3671,11 @@
       ? `/api/content/nas-media/${encodeURIComponent(idStr.slice(4))}/preview?download=1`
       : `/api/assets/${encodeURIComponent(idStr)}/download`;
     $("prevDownload").onclick = () => window.open(downloadUrl, "_blank");
+    const correctBtn = $("prevCorrectMeta");
+    if (correctBtn) {
+      correctBtn.hidden = nas || !state.canUpload;
+      correctBtn.onclick = () => correctAssetMetadata26(a);
+    }
     try {
       const res = await fetch(playUrl, {
         headers: (state.developmentAssertionAllowed && state.subject)

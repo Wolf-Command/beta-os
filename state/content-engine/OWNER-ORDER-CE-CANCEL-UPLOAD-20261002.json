@@ -1,0 +1,15 @@
+{
+  "id": "CE-CANCEL-UPLOAD-1",
+  "approved_at": "2026-10-02T15:30:08+08:00",
+  "owner": "Matt Goss",
+  "origin_feedback": "Haikal Cancel Upload while processing (wrong brand/stage/footage)",
+  "scope": "beta_only",
+  "prod": "untouched",
+  "peaches_role": "credit_light_verify",
+  "cursor_role": "implement",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "fold_into_haikal_retest": true,
+  "status": "ENG_PROVED_AWAITING_HAIKAL",
+  "result": "state/final-completion/beta-house-20261001/CE-CANCEL-UPLOAD-1-RESULT.md"
+}
