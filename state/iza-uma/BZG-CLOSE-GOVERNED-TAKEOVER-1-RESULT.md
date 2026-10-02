@@ -67,6 +67,6 @@
 - `dashboards/uma-blu-close.html`
 - `scripts/tests/test_bzg_close_governed_takeover_1.py`
 
-**Impl:**  · **EXIT tip:**  / 
+**Impl / EXIT tip:** `8f9e1ff` (feature). Branch HEAD after RESULT stamp: see `git rev-parse HEAD` on `build/wolf-command-rebuild` (no push).
 
 RESULT: **PASS** (engineering). `staff_ready=false`. Iza commissioning remains **FAIL**. Human: Peaches independent verify → **MATT RETEST READY** (not claimed here).

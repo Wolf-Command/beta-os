@@ -40,10 +40,11 @@
     "matt_open_tonight": "409 concurrent_take holder=Iza requires=venue.close.reassign"
   },
   "parent_tip": "69de1bb",
+  "impl": "8f9e1ff",
+  "tip": "8f9e1ff",
+  "tip_full": "8f9e1ffee9226759d7cb8be894d6897d47da6632",
   "branch": "build/wolf-command-rebuild",
   "no_push": true,
   "result_md": "state/bzg-daily-close/BZG-CLOSE-GOVERNED-TAKEOVER-1-RESULT.md",
-  "tip": "c0c3e2c",
-  "impl": "8f9e1ff",
-  "tip_full": "c0c3e2ce5a2a993e920c447a86426f6aa95b914c"
+  "exit_branch_head_at_write": "e5db00303db7cea46c36233b34a98e3dc0155d9e"
 }
