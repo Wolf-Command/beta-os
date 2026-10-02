@@ -1,0 +1,126 @@
+{
+  "business_date": "2026-10-02",
+  "branch": "BLZ",
+  "outlet": "Uma Blu",
+  "commissioning": "FAIL",
+  "defect": "ESB_LIVE_VS_CLOSING_RECEIPT_MISMATCH",
+  "live_esb_operational": {
+    "source": "warehouse esb.sqlite salesPayments for Finished statusName",
+    "finished_count": 61,
+    "cash_rp": 2855000,
+    "pax": 106,
+    "grand_total_sum": 18614008.26,
+    "note": "includes 3 Finished OTHER COST rows with no billNum; QRIS classified via paymentMethodName"
+  },
+  "closing_receipt_printed": {
+    "source": "photographed ESB end-of-day closing receipt (Owner evidence)",
+    "bills": 58,
+    "cash_rp": 2735000,
+    "pax": 103,
+    "net_sales": 15202479,
+    "service_charge": 1672273,
+    "tax": 1520248,
+    "gross_sales": 18395000,
+    "payments": {
+      "CASH": 2735000,
+      "EDC_BNI": 6185000,
+      "EDC_MANDIRI": 5450000,
+      "QRIS_BNI": 65000,
+      "QRIS_MANDIRI": 2105000,
+      "ROB_AND_FAMILY": 160000,
+      "ROOM_CHARGE_112": 545000,
+      "SCOTT_AND_ETIK": 1150000
+    }
+  },
+  "delta": {
+    "bills": {
+      "live_minus_receipt": 3,
+      "explanation": "Live finished_count includes 3 Finished rows with paymentMethodTypeName=OTHER COST and null billNum (Executife Chef x2 + COMPLIMENT). Printed closing receipt bill count matches Finished rows that have a real billNum: 58.",
+      "other_cost_rows": [
+        {
+          "salesNum": "SBLZ179091379811",
+          "method": "Executife Chef",
+          "amount": 103305.785,
+          "salesDateOut": "2026-10-02 20:16:04"
+        },
+        {
+          "salesNum": "SBLZ179093112263",
+          "method": "COMPLIMENT",
+          "amount": 41322.314,
+          "salesDateOut": "2026-10-02 17:30:52"
+        },
+        {
+          "salesNum": "SBLZ179094661810",
+          "method": "Executife Chef",
+          "amount": 74380.165,
+          "salesDateOut": "2026-10-02 21:10:49"
+        }
+      ]
+    },
+    "cash_rp": {
+      "live_minus_receipt": 120000,
+      "live_basis": "cash tendered (payment lines)",
+      "receipt_basis": "cash-bill grandTotal (sales net of change)",
+      "explanation": "Five Finished CASH bills have tendered > grandTotal (change overpay) summing to Rp 120,000. cash_sales_grand=2,735,000 matches receipt. Not a single missing bill.",
+      "overpay_bills": [
+        {
+          "billNum": "BLZ202610020012",
+          "tendered": 100000,
+          "grand": 80000,
+          "over": 20000
+        },
+        {
+          "billNum": "BLZ202610020024",
+          "tendered": 500000,
+          "grand": 450000,
+          "over": 50000
+        },
+        {
+          "billNum": "BLZ202610020026",
+          "tendered": 200000,
+          "grand": 190000,
+          "over": 10000
+        },
+        {
+          "billNum": "BLZ202610020029",
+          "tendered": 350000,
+          "grand": 340000,
+          "over": 10000
+        },
+        {
+          "billNum": "BLZ202610020046",
+          "tendered": 800000,
+          "grand": 770000,
+          "over": 30000
+        }
+      ]
+    },
+    "pax": {
+      "live_all_finished": 106,
+      "live_non_other_cost_with_bill": 103,
+      "receipt": 103,
+      "live_minus_receipt_operational_sales": 0,
+      "explanation": "Pax matches receipt (103) when OTHER COST rows are excluded. Live all-Finished pax 106 includes +1 pax on each of 3 OTHER COST rows."
+    }
+  },
+  "matched_payment_methods_live_vs_receipt": {
+    "EDC_BNI": "MATCH 6185000",
+    "EDC_MANDIRI": "MATCH 5450000",
+    "QRIS_BNI": "MATCH 65000",
+    "QRIS_MANDIRI": "MATCH 2105000",
+    "ROB_AND_FAMILY": "MATCH 160000",
+    "ROOM_CHARGE_112": "MATCH 545000",
+    "SCOTT_AND_ETIK": "MATCH 1150000",
+    "CASH": "MISMATCH live 2855000 vs receipt 2735000"
+  },
+  "classifier_bug_note": "snapshot_day currently buckets by paymentMethodTypeName path that yields CARD lump + QRIS=0 in one code path; paymentMethodName correctly separates QRIS MANDIRI/BNI. Recon board must use paymentMethodName (and keep EDC/QRIS bank-split).",
+  "rule": "Do not overwrite live with receipt or receipt with live. Daily Close must show both + difference.",
+  "stamped_by": "Peaches",
+  "stamped_at_wita": "2026-10-02T22:35:00+08:00",
+  "datasets": {
+    "LIVE_ESB_OPERATIONAL": "All Finished salesPayments for BLZ business_date including OTHER COST non-bill rows; paymentMethodName bank-split.",
+    "ESB_EOD_CLOSING_RECEIPT": "Printed end-of-day Z-report style totals; bill count excludes OTHER COST; cash may exclude specific Finished cash bills pending Owner confirm."
+  },
+  "peaches_verified_at_wita": "2026-10-02T22:43:29.226668+08:00",
+  "aligned_with": "FORENSIC-ESB-RECON-20261002.md"
+}

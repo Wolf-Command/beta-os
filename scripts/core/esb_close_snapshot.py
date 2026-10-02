@@ -136,6 +136,24 @@ def _slug_method(method_name: str | None) -> str:
     return slug or "UNKNOWN"
 
 
+def _named_nonbank_key(method_name: str | None) -> str | None:
+    """House / guest-ledger methods that ESB mislabels as CARD TypeName."""
+    mu = (method_name or "").strip().upper()
+    if not mu:
+        return None
+    if "ROB" in mu and "FAMILY" in mu:
+        return "ROB_FAMILY"
+    if "SCOTT" in mu:
+        return "SCOTT_ETIK"
+    if "ROOM" in mu and "CHARGE" in mu:
+        return "ROOM_CHARGE_112" if "112" in mu else f"ROOM_CHARGE_{_slug_method(method_name)}"
+    if "COMPLIMENT" in mu:
+        return "COMPLIMENT"
+    if "CHEF" in mu or "EXECUTIFE" in mu or "EXECUTIVE" in mu:
+        return "EXECUTIVE_CHEF"
+    return None
+
+
 def payment_line_key(
     bucket: str,
     *,
@@ -145,30 +163,24 @@ def payment_line_key(
     """Canonical dual-source key: EDC_BNI / QRIS_Mandiri / Cash / ROB_FAMILY …"""
     m = (method_name or "").strip()
     bank = _bank_from_method(m)
+    named = _named_nonbank_key(m)
     if bucket == "CASH":
         return "Cash"
+    # Named non-bank first — ESB often sets TypeName=CARD for house charges.
+    if named:
+        return named
     if bucket == "CARD":
         if bank:
             return f"EDC_{bank if bank != 'Mandiri' else 'Mandiri'}"
-        return f"EDC_{_slug_method(m)}" if m else "EDC_UNKNOWN"
+        # Real EDC only when method name says EDC (avoid fake EDC_ slug)
+        if "EDC" in m.upper():
+            return f"EDC_{_slug_method(m)}"
+        return _slug_method(m) if m else "CARD_UNKNOWN"
     if bucket == "QRIS":
         if bank:
             return f"QRIS_{bank if bank != 'Mandiri' else 'Mandiri'}"
         return f"QRIS_{_slug_method(m)}" if m else "QRIS_UNKNOWN"
-    # Non-bank / OTHER — preserve human method label as slug
     if m:
-        # Align with Owner receipt labels where known
-        mu = m.upper()
-        if "ROB" in mu and "FAMILY" in mu:
-            return "ROB_FAMILY"
-        if "SCOTT" in mu:
-            return "SCOTT_ETIK"
-        if "ROOM" in mu and "CHARGE" in mu:
-            return "ROOM_CHARGE_112" if "112" in mu else f"ROOM_CHARGE_{_slug_method(m)}"
-        if "COMPLIMENT" in mu:
-            return "COMPLIMENT"
-        if "CHEF" in mu or "EXECUTIFE" in mu or "EXECUTIVE" in mu:
-            return "EXECUTIVE_CHEF"
         return _slug_method(m)
     return _slug_method(type_name)
 
