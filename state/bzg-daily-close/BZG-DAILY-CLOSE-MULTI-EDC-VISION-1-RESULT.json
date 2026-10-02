@@ -13,10 +13,18 @@
   "ai_is_not_accounting_truth": true,
   "qris_never_merged_into_card": true,
   "multi_edc_receipts": "0..N",
-  "human_close_enabled_outlet_ids": ["BZG-UMA"],
+  "human_close_enabled_outlet_ids": [
+    "BZG-UMA"
+  ],
   "tests": {
-    "test_bzg_daily_close_multi_edc_vision_1.py": {"pass": 77, "fail": 0},
-    "test_bzg_daily_close_till_edc_1.py": {"pass": 57, "fail": 0}
+    "test_bzg_daily_close_multi_edc_vision_1.py": {
+      "pass": 77,
+      "fail": 0
+    },
+    "test_bzg_daily_close_till_edc_1.py": {
+      "pass": 57,
+      "fail": 0
+    }
   },
   "apis": [
     "/api/venue-close/edc-receipt-extract",
@@ -29,5 +37,5 @@
   ],
   "ui": "/uma-blu-close",
   "result_md": "state/bzg-daily-close/BZG-DAILY-CLOSE-MULTI-EDC-VISION-1-RESULT.md",
-  "commit": null
+  "commit": "909addf3f7617f4c526097717255db59dcd82f92"
 }

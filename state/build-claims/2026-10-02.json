@@ -67,11 +67,12 @@
   },
   {
     "id": "bzg-daily-close-multi-edc-vision-1-20261002",
-    "claim": "BZG Daily Close Multi-EDC Vision: 0..N receipts with separate EDC+QRIS, vision draft≠truth, ESB receipt dual-source, recon board, Uma-only human_close; staff_ready false; 0 ACTIVE tolerance; no invented TIDs",
+    "claim": "BZG Daily Close Multi-EDC Vision: 0..N receipts with separate EDC+QRIS, vision draft\u2260truth, ESB receipt dual-source, recon board, Uma-only human_close; staff_ready false; 0 ACTIVE tolerance; no invented TIDs",
     "check": "python3 scripts/tests/test_bzg_daily_close_multi_edc_vision_1.py",
     "expect": "pass=77 fail=0",
     "by": "cursor-local",
     "pack": "BZG-DAILY-CLOSE-MULTI-EDC-VISION-1",
-    "created_at": "2026-10-02T21:05:00+08:00"
+    "created_at": "2026-10-02T21:05:00+08:00",
+    "commit": "909addf3f7617f4c526097717255db59dcd82f92"
   }
 ]
