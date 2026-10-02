@@ -40,7 +40,7 @@ Covered: cancel queued before upload; cancel batch before first file; cancel mid
 ## Commit
 
 - Branch: `build/wolf-command-rebuild` (local only — no origin/push)
-- Pack commit: `49c657d69457604a807238d2990f65a5be362b46`
+- Pack commit: `9cad16a99503e593b804b4ed582d549c9a341e84`
 
 ## Not done
 
