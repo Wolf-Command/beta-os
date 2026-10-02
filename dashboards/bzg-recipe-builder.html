@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Wolf · Recipe Builder</title>
+<title>Wolf · BZG Recipe Builder</title>
 <style>
   :root {
     --bg: #12161a;
@@ -14,6 +14,7 @@
     --accent: #c4a574;
     --warn: #d4a017;
     --ok: #6f9e7a;
+    --danger: #c45c5c;
     --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
     --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   }
@@ -30,6 +31,38 @@
   h1 { font-family: var(--display); font-weight: 500; font-size: 28px; margin: 0 0 4px; }
   h2 { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; }
   .lede { color: var(--muted); margin: 0 0 14px; line-height: 1.4; font-size: 14px; }
+  .outlet-bar {
+    border: 2px solid var(--accent);
+    background: linear-gradient(135deg, #243039 0%, var(--bg2) 100%);
+    padding: 14px 14px 12px;
+    margin: 0 0 14px;
+  }
+  .outlet-bar label {
+    display: block;
+    color: var(--accent);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0 0 6px;
+    font-weight: 700;
+  }
+  .outlet-bar select {
+    width: 100%;
+    font-size: 20px;
+    font-family: var(--display);
+    font-weight: 500;
+    padding: 12px 10px;
+    background: #0e1216;
+    color: var(--text);
+    border: 1px solid var(--accent);
+  }
+  .outlet-meta {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .outlet-meta strong { color: var(--text); font-weight: 600; }
   .banner {
     border: 1px solid var(--line);
     background: var(--bg2);
@@ -39,6 +72,7 @@
     font-size: 14px;
     line-height: 1.4;
   }
+  .banner.warn { border-left-color: var(--warn); }
   .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
   .tabs button {
     background: var(--bg2); color: var(--text); border: 1px solid var(--line);
@@ -60,6 +94,7 @@
     border: 1px solid var(--line); font-size: 12px; color: var(--warn);
   }
   .badge.ok { color: var(--ok); }
+  .badge.danger { color: var(--danger); border-color: var(--danger); }
   .hidden { display: none; }
   label { display: block; color: var(--muted); font-size: 12px; margin: 10px 0 4px; }
   input, textarea, select {
@@ -79,9 +114,20 @@
     display: grid; grid-template-columns: 1fr 70px 70px; gap: 6px;
     margin-bottom: 6px;
   }
+  .outlet-checks {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px;
+    margin: 6px 0 0;
+  }
+  .outlet-checks label {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--text); font-size: 14px; margin: 0;
+  }
+  .outlet-checks input { width: auto; }
   @media (max-width: 420px) {
     h1 { font-size: 24px; }
     .line { grid-template-columns: 1fr; }
+    .outlet-checks { grid-template-columns: 1fr; }
+    .outlet-bar select { font-size: 18px; }
   }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
   th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -92,17 +138,31 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>Recipe Builder</h1>
-  <p class="lede">Kitchen recipes for BZG. Costs come from real purchases. If a cost is not known, it says cost missing — never invents a number. Selling price is read-only here.</p>
+  <h1>BZG Recipe Builder</h1>
+  <p class="lede">One builder for every BZG kitchen. Pick the outlet first. Recipes store once and associate to outlets. Menu items, prices and portions are per outlet. Missing purchase cost shows as INCOMPLETE COST — never a silent zero.</p>
+
+  <div class="outlet-bar" id="outlet-bar">
+    <label for="outlet-select">Working outlet</label>
+    <select id="outlet-select" aria-label="Working outlet">
+      <option value="">Loading outlets…</option>
+    </select>
+    <p class="outlet-meta" id="outlet-meta">Outlet context loads from the canonical BZG registry.</p>
+  </div>
+
   <div id="banner" class="banner">Loading recipes…</div>
   <div class="tabs">
     <button type="button" class="active" data-view="list" id="tab-list">Recipes</button>
+    <button type="button" data-view="menu" id="tab-menu">Menu</button>
     <button type="button" data-view="exceptions" id="tab-exceptions">Cost gaps</button>
     <button type="button" data-view="create" id="tab-create">New recipe</button>
   </div>
 
   <section id="view-list">
     <div id="list"></div>
+  </section>
+
+  <section id="view-menu" class="hidden">
+    <div id="menu"></div>
   </section>
 
   <section id="view-detail" class="hidden">
@@ -124,7 +184,7 @@
       <input type="hidden" id="f-id" value="" />
       <label for="f-name">Dish name</label>
       <input id="f-name" name="name" required maxlength="120" autocomplete="off" />
-      <label for="f-group">Group</label>
+      <label for="f-group">Group / category</label>
       <input id="f-group" name="group_name" maxlength="80" />
       <label for="f-yield">Portions</label>
       <input id="f-yield" name="yield_n" type="number" step="any" min="0" />
@@ -132,8 +192,14 @@
       <input id="f-yield-unit" name="yield_unit" maxlength="40" placeholder="Pax" />
       <label for="f-method">Method</label>
       <textarea id="f-method" name="method" maxlength="4000"></textarea>
+      <h2>Associate outlets</h2>
+      <p class="note">Store the recipe once. Tick one, several, or All BZG. This does not invent a merged menu.</p>
+      <label class="outlet-checks" style="display:flex;margin-bottom:8px;">
+        <input type="checkbox" id="f-all-bzg" /> All BZG (catalogue association)
+      </label>
+      <div class="outlet-checks" id="f-outlets"></div>
       <h2>Ingredients</h2>
-      <p class="note">Add names, amounts and units. Unit cost is filled from real purchases when known. Do not type a guessed cost.</p>
+      <p class="note">Shared ingredient master. Unit cost comes from real purchases when known. Do not type a guessed cost.</p>
       <div id="lines"></div>
       <div class="actions">
         <button type="button" class="secondary" id="add-line">Add ingredient</button>
@@ -161,37 +227,98 @@ function pct(v) {
   if (v == null || v === "") return "—";
   return Number(v).toFixed(1) + "%";
 }
+function costLabel(status, foodCost) {
+  if (status === "COMPLETE") return "Food cost " + money(foodCost);
+  return "INCOMPLETE COST";
+}
 
-var state = { recipes: [], current: null, editing: null };
+var state = {
+  recipes: [],
+  current: null,
+  editing: null,
+  outlets: [],
+  outletId: "",
+  selected: null,
+  catalogueMode: false
+};
+
+function qsOutlet() {
+  try {
+    return new URLSearchParams(window.location.search).get("outlet_id") || "";
+  } catch (e) { return ""; }
+}
 
 function show(view) {
-  ["list", "detail", "exceptions", "create"].forEach(function (v) {
-    document.getElementById("view-" + v).classList.toggle("hidden", v !== view);
+  ["list", "detail", "exceptions", "create", "menu"].forEach(function (v) {
+    var el = document.getElementById("view-" + v);
+    if (el) el.classList.toggle("hidden", v !== view);
   });
   document.querySelectorAll(".tabs button").forEach(function (b) {
     b.classList.toggle("active", b.getAttribute("data-view") === view || (view === "detail" && b.id === "tab-list"));
   });
 }
 
+function paintOutletBar(ctx) {
+  state.outlets = ctx.outlets || [];
+  var sel = document.getElementById("outlet-select");
+  var html = "";
+  state.outlets.forEach(function (o) {
+    html += '<option value="' + esc(o.outlet_id) + '">'
+      + esc(o.display_name) + " · " + esc(o.status) + "</option>";
+  });
+  html += '<option value="ALL_BZG">All BZG · catalogue + assignments</option>';
+  sel.innerHTML = html;
+  var chosen = (ctx.selected_outlet && ctx.selected_outlet.outlet_id)
+    || ctx.default_outlet_id
+    || (state.outlets[0] && state.outlets[0].outlet_id)
+    || "ALL_BZG";
+  sel.value = chosen;
+  state.outletId = chosen;
+  state.selected = ctx.selected_outlet;
+  state.catalogueMode = chosen === "ALL_BZG";
+  var meta = document.getElementById("outlet-meta");
+  if (chosen === "ALL_BZG") {
+    meta.innerHTML = "<strong>All BZG</strong> — catalogue and outlet assignments. Not a fake merged menu.";
+  } else {
+    var o = state.outlets.find(function (x) { return x.outlet_id === chosen; }) || {};
+    meta.innerHTML = "Working in <strong>" + esc(o.display_name || chosen) + "</strong>"
+      + " (" + esc(o.status || "") + "). Registry-driven — rename/add outlets without rebuilding this app."
+      + (ctx.selected_outlet && ctx.selected_outlet.defaulted
+        ? " Defaulted to the OPEN outlet — change it above if wrong."
+        : "");
+  }
+}
+
 function paintList(pack) {
   state.recipes = pack.recipes || [];
+  state.catalogueMode = !!pack.catalogue_mode;
   var banner = document.getElementById("banner");
-  banner.textContent = (pack.count || 0) + " recipes in your BZG kitchens. Costs from real purchases. Selling price is read-only.";
+  if (state.catalogueMode) {
+    banner.className = "banner warn";
+    banner.textContent = (pack.count || 0) + " recipes in All BZG catalogue (assignments shown). This is not a merged outlet menu.";
+  } else {
+    banner.className = "banner";
+    var label = (state.selected && state.selected.display_name) || state.outletId;
+    banner.textContent = (pack.count || 0) + " recipes for " + label + ". Costs from real purchases. Selling price on the recipe card is read-only; outlet menu prices are separate.";
+  }
   var html = "";
   state.recipes.forEach(function (r) {
-    var costLabel = r.food_cost_status === "COMPLETE"
-      ? ("Food cost " + money(r.food_cost))
-      : "cost missing";
-    var badgeClass = r.food_cost_status === "COMPLETE" ? "badge ok" : "badge";
+    var incomplete = r.food_cost_status !== "COMPLETE";
+    var costText = costLabel(r.food_cost_status, r.food_cost);
+    var badgeClass = incomplete ? "badge danger" : "badge ok";
+    var assigns = (r.outlet_assignment && r.outlet_assignment.all_bzg)
+      ? "All BZG"
+      : ((r.outlet_assignment && r.outlet_assignment.outlets) || [])
+          .map(function (o) { return o.display_name || o.outlet_id; }).join(", ");
     html += '<article class="row" data-id="' + esc(r.recipe_id) + '">'
       + '<div class="name">' + esc(r.name) + '</div>'
       + '<div class="meta">' + esc(r.group_name || "Ungrouped")
-      + (r.brand_id ? " · " + esc(r.brand_id) : "")
+      + (assigns ? " · " + esc(assigns) : "")
       + " · sell " + money(r.real_sell) + "</div>"
-      + '<span class="' + badgeClass + '">' + esc(costLabel) + '</span>'
+      + '<span class="' + badgeClass + '">' + esc(costText) + '</span>'
       + "</article>";
   });
-  if (!html) html = '<p class="note">No recipes yet.</p>';
+  if (!html) html = '<p class="note">No recipes for this outlet context yet.</p>';
   document.getElementById("list").innerHTML = html;
   document.getElementById("list").onclick = function (ev) {
     var row = ev.target.closest("[data-id]");
@@ -200,20 +327,55 @@ function paintList(pack) {
   };
 }
 
+function paintMenu(pack) {
+  var el = document.getElementById("menu");
+  if (state.catalogueMode || !state.outletId || state.outletId === "ALL_BZG") {
+    el.innerHTML = '<p class="note">All BZG is catalogue + assignments — pick a single outlet to see its menu structure. RECIPE ≠ MENU ITEM ≠ OUTLET MENU.</p>';
+    return;
+  }
+  if (pack && pack.ok === false) {
+    el.innerHTML = '<p class="note">' + esc(pack.message || "Menu unavailable") + "</p>";
+    return;
+  }
+  var rows = (pack && pack.menu_items) || [];
+  if (!rows.length) {
+    el.innerHTML = '<p class="note">No menu items for this outlet yet. Shared recipes can be attached with a different name, portion and sell price per outlet.</p>';
+    return;
+  }
+  var html = "<table><thead><tr><th>Menu item</th><th>Recipe</th><th>Portion</th><th>Sell</th><th>Status</th></tr></thead><tbody>";
+  rows.forEach(function (m) {
+    html += "<tr><td>" + esc(m.menu_name) + "</td><td>" + esc(m.recipe_id)
+      + "</td><td>" + esc(m.portion_n != null ? m.portion_n : "—") + " " + esc(m.portion_unit || "")
+      + '</td><td class="money">' + money(m.sell_price)
+      + "</td><td>" + esc(m.status || "") + "</td></tr>";
+  });
+  html += "</tbody></table>";
+  el.innerHTML = html;
+}
+
 function paintDetail(r) {
   state.current = r;
   document.getElementById("detail-title").textContent = r.name || "Recipe";
   var lines = (r.lines || []).map(function (line) {
-    var cost = line.cost_badge === "cost missing" || line.extended_cost == null
-      ? "cost missing"
+    var cost = line.cost_badge === "INCOMPLETE COST" || line.extended_cost == null
+      ? "INCOMPLETE COST"
       : money(line.extended_cost);
     return "<tr><td>" + esc(line.name) + "</td><td>" + esc(line.qty) + " " + esc(line.unit || "")
       + '</td><td class="money">' + esc(cost) + "</td></tr>";
   }).join("");
-  var food = r.food_cost_status === "COMPLETE" ? money(r.food_cost) : "cost missing";
+  var food = r.food_cost_status === "COMPLETE" ? money(r.food_cost) : "INCOMPLETE COST";
+  var assigns = (r.outlet_assignment && r.outlet_assignment.all_bzg)
+    ? "All BZG"
+    : ((r.outlet_assignment && r.outlet_assignment.outlets) || [])
+        .map(function (o) { return o.display_name || o.outlet_id; }).join(", ");
+  var menuRows = (r.menu_items || []).map(function (m) {
+    return "<tr><td>" + esc(m.outlet_id) + "</td><td>" + esc(m.menu_name)
+      + "</td><td>" + esc(m.portion_n != null ? m.portion_n : "—") + " " + esc(m.portion_unit || "")
+      + '</td><td class="money">' + money(m.sell_price) + "</td></tr>";
+  }).join("");
   var html = ""
-    + '<p class="meta">' + esc(r.group_name || "") + (r.brand_id ? " · " + esc(r.brand_id) : "") + "</p>"
-    + '<p><strong>Sell price</strong> (read only): <span class="money">' + money(r.real_sell) + "</span></p>"
+    + '<p class="meta">' + esc(r.group_name || "") + (assigns ? " · " + esc(assigns) : "") + "</p>"
+    + '<p><strong>Sell price</strong> (recipe card, read only): <span class="money">' + money(r.real_sell) + "</span></p>"
     + "<p><strong>Food cost</strong>: <span class=\"money\">" + esc(food) + "</span>"
     + (r.food_cost_pct != null ? " · " + pct(r.food_cost_pct) + " of sell" : "")
     + (r.margin != null ? " · margin " + money(r.margin) : "")
@@ -223,7 +385,14 @@ function paintDetail(r) {
     + "<h2>Ingredients</h2><table><thead><tr><th>Item</th><th>Amount</th><th>Cost</th></tr></thead><tbody>"
     + (lines || "<tr><td colspan=3>No ingredients</td></tr>")
     + "</tbody></table>"
-    + '<p class="note">Provenance: ' + esc((r.provenance && r.provenance.source) || "beta") + "</p>";
+    + "<h2>Outlet menu items</h2>"
+    + (menuRows
+      ? "<table><thead><tr><th>Outlet</th><th>Menu name</th><th>Portion</th><th>Sell</th></tr></thead><tbody>"
+        + menuRows + "</tbody></table>"
+      : '<p class="note">No outlet menu rows yet for this recipe.</p>')
+    + '<p class="note">Provenance: ' + esc((r.provenance && r.provenance.source) || "beta")
+    + (r.brand_id === "BZG-UMA" ? " · Uma Blu provenance (not relabelled BZG-wide)" : "")
+    + "</p>";
   document.getElementById("detail").innerHTML = html;
   show("detail");
 }
@@ -250,8 +419,8 @@ function paintExceptions(pack) {
   var html = rows.map(function (e) {
     return '<article class="row" data-id="' + esc(e.recipe_id) + '">'
       + '<div class="name">' + esc(e.name) + '</div>'
-      + '<div class="meta">' + esc(e.missing_cost_lines || 0) + " ingredient lines with cost missing</div>"
-      + '<span class="badge">cost missing</span></article>';
+      + '<div class="meta">' + esc(e.missing_cost_lines || 0) + " ingredient lines with INCOMPLETE COST</div>"
+      + '<span class="badge danger">INCOMPLETE COST</span></article>';
   }).join("");
   if (!html) html = '<p class="note">No cost gaps right now.</p>';
   document.getElementById("exceptions").innerHTML = html || "";
@@ -284,6 +453,30 @@ function collectLines() {
   }).filter(function (l) { return (l.name || "").trim(); });
 }
 
+function paintOutletChecks(selectedIds, allBzg) {
+  var box = document.getElementById("f-outlets");
+  box.innerHTML = state.outlets.map(function (o) {
+    var checked = selectedIds && selectedIds.indexOf(o.outlet_id) >= 0 ? " checked" : "";
+    return '<label><input type="checkbox" class="f-outlet" value="' + esc(o.outlet_id) + '"' + checked + " /> "
+      + esc(o.display_name) + "</label>";
+  }).join("");
+  document.getElementById("f-all-bzg").checked = !!allBzg;
+  if (!selectedIds || !selectedIds.length) {
+    // Pre-tick current working outlet so create is never silent-wrong
+    if (state.outletId && state.outletId !== "ALL_BZG") {
+      var hit = box.querySelector('.f-outlet[value="' + state.outletId + '"]');
+      if (hit) hit.checked = true;
+    }
+  }
+}
+
+function collectOutletIds() {
+  return Array.prototype.map.call(
+    document.querySelectorAll("#f-outlets .f-outlet:checked"),
+    function (el) { return el.value; }
+  );
+}
+
 function resetForm(recipe) {
   state.editing = recipe || null;
   document.getElementById("form-title").textContent = recipe ? "Edit recipe" : "New recipe";
@@ -298,6 +491,8 @@ function resetForm(recipe) {
   var lines = (recipe && recipe.lines) || [{}, {}, {}];
   if (!lines.length) lines = [{}, {}, {}];
   lines.forEach(addLine);
+  var assigns = (recipe && recipe.outlet_assignment) || {};
+  paintOutletChecks(assigns.outlet_ids || null, assigns.all_bzg);
 }
 
 document.querySelectorAll(".tabs button").forEach(function (btn) {
@@ -309,10 +504,16 @@ document.querySelectorAll(".tabs button").forEach(function (btn) {
       return;
     }
     if (view === "exceptions") {
-      fetch("/api/bzg/recipe-builder/exceptions", { headers: { "Accept": "application/json" } })
+      fetch("/api/bzg/recipe-builder/exceptions?outlet_id=" + encodeURIComponent(state.outletId || ""), {
+        headers: { "Accept": "application/json" }
+      })
         .then(function (r) { return r.json(); })
         .then(paintExceptions);
       show("exceptions");
+      return;
+    }
+    if (view === "menu") {
+      loadMenu().then(function () { show("menu"); });
       return;
     }
     show("list");
@@ -327,16 +528,37 @@ document.getElementById("edit-btn").addEventListener("click", function () {
   show("create");
 });
 
+document.getElementById("outlet-select").addEventListener("change", function () {
+  state.outletId = this.value;
+  state.catalogueMode = state.outletId === "ALL_BZG";
+  var o = state.outlets.find(function (x) { return x.outlet_id === state.outletId; });
+  state.selected = state.catalogueMode
+    ? { outlet_id: "ALL_BZG", display_name: "All BZG", mode: "catalogue_assignments" }
+    : o;
+  var url = new URL(window.location.href);
+  url.searchParams.set("outlet_id", state.outletId);
+  window.history.replaceState({}, "", url.toString());
+  loadContext().then(function () { return loadList(); }).then(loadMenu);
+});
+
 document.getElementById("recipe-form").addEventListener("submit", function (ev) {
   ev.preventDefault();
   var id = document.getElementById("f-id").value;
+  var outletIds = collectOutletIds();
+  var allBzg = document.getElementById("f-all-bzg").checked;
+  if (!allBzg && !outletIds.length) {
+    document.getElementById("form-msg").textContent = "Choose at least one outlet (or All BZG). Never leave outlet silent.";
+    return;
+  }
   var body = {
     name: document.getElementById("f-name").value,
     group_name: document.getElementById("f-group").value,
     yield_n: document.getElementById("f-yield").value === "" ? null : Number(document.getElementById("f-yield").value),
     yield_unit: document.getElementById("f-yield-unit").value,
     method: document.getElementById("f-method").value,
-    lines: collectLines()
+    lines: collectLines(),
+    outlet_ids: outletIds,
+    all_bzg: allBzg
   };
   var url = id
     ? "/api/bzg/recipe-builder/recipes/" + encodeURIComponent(id)
@@ -365,8 +587,23 @@ document.getElementById("recipe-form").addEventListener("submit", function (ev) 
     });
 });
 
+function loadContext() {
+  var oid = state.outletId || qsOutlet();
+  var url = "/api/bzg/recipe-builder/context" + (oid ? ("?outlet_id=" + encodeURIComponent(oid)) : "");
+  return fetch(url, { headers: { "Accept": "application/json" } })
+    .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
+    .then(function (result) {
+      if (!result.ok) {
+        document.getElementById("banner").textContent = "Recipe Builder refused. You may not have access.";
+        return;
+      }
+      paintOutletBar(result.body);
+    });
+}
+
 function loadList() {
-  return fetch("/api/bzg/recipe-builder/recipes", { headers: { "Accept": "application/json" } })
+  var url = "/api/bzg/recipe-builder/recipes?outlet_id=" + encodeURIComponent(state.outletId || "");
+  return fetch(url, { headers: { "Accept": "application/json" } })
     .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
     .then(function (result) {
       if (!result.ok) {
@@ -380,7 +617,20 @@ function loadList() {
     });
 }
 
-loadList();
+function loadMenu() {
+  if (!state.outletId || state.outletId === "ALL_BZG") {
+    paintMenu({ ok: false, message: "Pick a single outlet for its menu." });
+    return Promise.resolve();
+  }
+  return fetch("/api/bzg/recipe-builder/menu-items?outlet_id=" + encodeURIComponent(state.outletId), {
+    headers: { "Accept": "application/json" }
+  })
+    .then(function (r) { return r.json(); })
+    .then(paintMenu)
+    .catch(function () { paintMenu({ ok: false, message: "Could not load menu." }); });
+}
+
+loadContext().then(function () { return loadList(); }).then(loadMenu);
 </script>
 </body>
 </html>

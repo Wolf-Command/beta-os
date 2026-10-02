@@ -214,19 +214,20 @@ def test_recipe_store() -> None:
         check("detail food_cost numeric", detail is not None and isinstance(detail.get("food_cost"), (int, float)))
         check("sell price read-only flag", detail.get("sell_price_editable") is False)
     missing = next((r for r in pack["recipes"] if r["food_cost_status"] != "COMPLETE"), None)
-    check("incomplete stays cost missing", missing is not None and missing.get("food_cost") is None)
+    check("incomplete stays incomplete", missing is not None and missing.get("food_cost") is None)
     if missing:
         detail = rb.get_recipe(missing["recipe_id"])
         check(
             "no invented zero cost",
             detail is not None
             and detail.get("food_cost") is None
-            and detail.get("food_cost_status") == "cost missing",
+            and detail.get("food_cost_status") == "INCOMPLETE COST",
         )
         check(
-            "line badge cost missing not 0",
+            "line badge INCOMPLETE COST not 0",
             any(
-                line.get("cost_badge") == "cost missing" and line.get("extended_cost") is None
+                line.get("cost_badge") == "INCOMPLETE COST"
+                and line.get("extended_cost") is None
                 for line in (detail.get("lines") or [])
             ),
         )
@@ -290,6 +291,7 @@ def test_http(base: str) -> None:
             "name": "HEADCHEF1 HTTP Dish",
             "yield_n": 1,
             "yield_unit": "Pax",
+            "outlet_id": "BZG-UMA",
             "lines": [{"name": "garlic", "unit": "gr", "qty": 5}],
         },
     )

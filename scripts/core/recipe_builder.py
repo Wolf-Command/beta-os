@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
-"""BZG Recipe Builder (Beta) — real V1 recipes + create/edit, no invented costs.
+"""BZG Recipe Builder (Beta) — multi-outlet, real V1 recipes, no invented costs.
 
-Decision served: 2026-09-29 PICK HEADCHEF-1 (extends CAP-BZG-06 / UMAREAL-1).
-Historical wolf-system recipes.sqlite is read-only import source.
-Beta store is the write surface. Missing purchase/card cost → "cost missing",
-never 0 or a guess. Selling price is read-only for the chef (no edit policy).
+Decision served: 2026-09-29 PICK HEADCHEF-1 (extends CAP-BZG-06 / UMAREAL-1)
++ 2026-10-02 BZG-RECIPE-MULTI-OUTLET-1 (Haryanto multi-outlet menus).
+
+One builder with outlet context — not seven apps. Recipes store once and
+associate to one / multi / all-BZG outlets. Menu items are outlet-specific.
+Shared ingredient master. Missing purchase/card cost → INCOMPLETE COST,
+never 0 or a guess. Uma Blu 127/756 preserved (brand_id BZG-UMA provenance;
+not relabelled BZG-wide). Outlets come from org_outlet_registry — never
+hardcoded. Recipe.real_sell stays chef-read-only; outlet menu sell prices
+are separate per-outlet menu rows.
 """
 from __future__ import annotations
 
@@ -17,6 +23,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from core import bzg_outlet_registry as _outlets
 from core import uma_real_projection as uma
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
@@ -35,6 +42,10 @@ V1_EXPORT = (
 TZ8 = timezone(timedelta(hours=8))
 PROVENANCE_SOURCE = "wolf-system/uma-blu/recipes.sqlite"
 ENTITY_BZG = "ENT-BZG"
+ALL_BZG = "ALL_BZG"
+UMA_OUTLET_ID = "BZG-UMA"
+INCOMPLETE_COST = "INCOMPLETE COST"
+PACK_MULTI = "BZG-RECIPE-MULTI-OUTLET-1"
 
 
 def now_iso() -> str:
@@ -64,11 +75,12 @@ def connect(*, writable: bool = True) -> sqlite3.Connection:
         if bad:
             raise RuntimeError(f"recipe_builder refuses path ({bad}): {path}")
         path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(path))
+    conn = sqlite3.connect(str(path), timeout=30)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys=ON")
     if writable:
         _ensure_schema(conn)
+        conn.commit()
     return conn
 
 
@@ -139,8 +151,165 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
           value TEXT NOT NULL,
           updated_at TEXT NOT NULL
         );
+        -- BZG-RECIPE-MULTI-OUTLET-1: associate once; menus outlet-specific
+        CREATE TABLE IF NOT EXISTS recipe_outlet_links (
+          recipe_id TEXT NOT NULL,
+          outlet_id TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          PRIMARY KEY (recipe_id, outlet_id),
+          FOREIGN KEY (recipe_id) REFERENCES recipes(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_recipe_outlet_links_outlet
+          ON recipe_outlet_links(outlet_id, recipe_id);
+        CREATE TABLE IF NOT EXISTS recipe_all_bzg (
+          recipe_id TEXT PRIMARY KEY,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (recipe_id) REFERENCES recipes(id)
+        );
+        CREATE TABLE IF NOT EXISTS outlet_menu_items (
+          id TEXT PRIMARY KEY,
+          outlet_id TEXT NOT NULL,
+          recipe_id TEXT NOT NULL,
+          menu_name TEXT NOT NULL,
+          category TEXT,
+          portion_n REAL,
+          portion_unit TEXT,
+          sell_price REAL,
+          status TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          updated_by TEXT,
+          FOREIGN KEY (recipe_id) REFERENCES recipes(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_outlet_menu_items_outlet
+          ON outlet_menu_items(outlet_id, recipe_id);
+        CREATE TABLE IF NOT EXISTS ingredient_master (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          default_unit TEXT,
+          purchase_unit TEXT,
+          purchase_cost REAL,
+          cost_source TEXT,
+          goods_key TEXT,
+          entity_id TEXT NOT NULL DEFAULT 'ENT-BZG',
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_ingredient_master_name
+          ON ingredient_master(entity_id, name COLLATE NOCASE);
         """
     )
+    _migrate_multi_outlet(conn)
+
+
+def _migrate_multi_outlet(conn: sqlite3.Connection) -> None:
+    """Preserve Uma Blu 127/756 — assign existing recipes to BZG-UMA only.
+
+    Does not relabel brand_id to BZG-wide. Idempotent.
+    """
+    ts = now_iso()
+    meta = conn.execute(
+        "SELECT value FROM recipe_import_meta WHERE key='multi_outlet_v1'"
+    ).fetchone()
+    # Always ensure Uma links for any recipe with brand_id BZG-UMA that lacks links
+    # and is not marked all_bzg — safe to re-run.
+    uma_ids = [
+        r[0]
+        for r in conn.execute(
+            """
+            SELECT id FROM recipes
+            WHERE brand_id=? OR provenance_source=?
+            """,
+            (UMA_OUTLET_ID, PROVENANCE_SOURCE),
+        ).fetchall()
+    ]
+    # Also cover every existing recipe that has zero outlet links and is not all_bzg
+    orphan_ids = [
+        r[0]
+        for r in conn.execute(
+            """
+            SELECT r.id FROM recipes r
+            WHERE NOT EXISTS (
+              SELECT 1 FROM recipe_outlet_links l WHERE l.recipe_id=r.id
+            )
+            AND NOT EXISTS (
+              SELECT 1 FROM recipe_all_bzg a WHERE a.recipe_id=r.id
+            )
+            """
+        ).fetchall()
+    ]
+    # Prefer Uma assignment for provenance Uma rows; orphans without brand default Uma
+    # only when brand_id is BZG-UMA or null with v1 provenance — never invent Rainforest.
+    for rid in set(uma_ids) | set(orphan_ids):
+        row = conn.execute(
+            "SELECT brand_id, provenance_source, origin FROM recipes WHERE id=?",
+            (rid,),
+        ).fetchone()
+        if row is None:
+            continue
+        brand_id, prov, origin = row[0], row[1], row[2]
+        is_uma = (
+            brand_id == UMA_OUTLET_ID
+            or prov == PROVENANCE_SOURCE
+            or origin == "v1_import"
+        )
+        # Never invent Uma assignment for new beta recipes without Uma provenance
+        if not is_uma:
+            continue
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO recipe_outlet_links(recipe_id, outlet_id, created_at)
+            VALUES (?, ?, ?)
+            """,
+            (rid, UMA_OUTLET_ID, ts),
+        )
+    # Shared ingredient master from distinct line names (one master, not seven)
+    for name, unit, unit_cost, cost_source, goods_key in conn.execute(
+        """
+        SELECT name, MAX(unit), MAX(unit_cost), MAX(cost_source), MAX(goods_key)
+        FROM recipe_lines
+        WHERE name IS NOT NULL AND TRIM(name) != ''
+        GROUP BY name COLLATE NOCASE
+        """
+    ):
+        existing = conn.execute(
+            """
+            SELECT id FROM ingredient_master
+            WHERE entity_id=? AND name=? COLLATE NOCASE
+            """,
+            (ENTITY_BZG, name),
+        ).fetchone()
+        if existing:
+            continue
+        iid = f"ing-{_slug(name)}-{uuid.uuid4().hex[:6]}"
+        conn.execute(
+            """
+            INSERT INTO ingredient_master (
+              id, name, default_unit, purchase_unit, purchase_cost,
+              cost_source, goods_key, entity_id, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                iid,
+                name,
+                unit,
+                unit,
+                unit_cost,
+                cost_source,
+                goods_key,
+                ENTITY_BZG,
+                ts,
+                ts,
+            ),
+        )
+    if not meta:
+        conn.execute(
+            """
+            INSERT INTO recipe_import_meta(key, value, updated_at)
+            VALUES ('multi_outlet_v1', ?, ?)
+            """,
+            (PACK_MULTI, ts),
+        )
 
 
 def _slug(name: str) -> str:
@@ -507,12 +676,14 @@ def _cost_recipe(recipe: dict[str, Any], lines: list[dict[str, Any]]) -> dict[st
         for line in lines
         if (line.get("name") or "").strip()
     ]
-    # Re-stamp source as Beta store while keeping applied costs honest
+    # Re-stamp: missing → INCOMPLETE COST (never silent zero)
     for row in priced:
-        if row.get("cost_badge") == "MISSING COST":
-            row["cost_badge"] = "cost missing"
+        if row.get("cost_badge") in {"MISSING COST", "INCOMPLETE COST", "cost missing"}:
+            row["cost_badge"] = INCOMPLETE_COST
             row["applied_unit_cost"] = None
             row["extended_cost"] = None
+        elif row.get("cost_badge") is None and row.get("extended_cost") is None:
+            row["cost_badge"] = INCOMPLETE_COST
         elif row.get("cost_badge") is None and row.get("extended_cost") is not None:
             row["cost_badge"] = None
     rollup = uma.rollup_food_cost(
@@ -520,8 +691,8 @@ def _cost_recipe(recipe: dict[str, Any], lines: list[dict[str, Any]]) -> dict[st
             {
                 **line,
                 "cost_badge": (
-                    "MISSING COST"
-                    if line.get("cost_badge") == "cost missing"
+                    "INCOMPLETE COST"
+                    if line.get("cost_badge") == INCOMPLETE_COST
                     else line.get("cost_badge")
                 ),
             }
@@ -546,7 +717,7 @@ def _cost_recipe(recipe: dict[str, Any], lines: list[dict[str, Any]]) -> dict[st
         food_cost_pct = None
         # Never show 0 or a partial guess
         food_cost = None
-        food_cost_status = "cost missing" if priced else "INCOMPLETE"
+        food_cost_status = INCOMPLETE_COST if priced else INCOMPLETE_COST
     else:
         food_cost = rollup["food_cost"]
         food_cost_status = "COMPLETE"
@@ -569,7 +740,7 @@ def _cost_recipe(recipe: dict[str, Any], lines: list[dict[str, Any]]) -> dict[st
         "description": recipe.get("description"),
         "line_count": len(priced),
         "missing_cost_lines": sum(
-            1 for line in priced if line.get("cost_badge") == "cost missing"
+            1 for line in priced if line.get("cost_badge") == INCOMPLETE_COST
         ),
         "food_cost": food_cost,
         "food_cost_status": food_cost_status,
@@ -588,9 +759,222 @@ def _cost_recipe(recipe: dict[str, Any], lines: list[dict[str, Any]]) -> dict[st
     }
 
 
+def _registry_outlets() -> list[dict[str, Any]]:
+    """Canonical outlets — never hardcode seven names."""
+    return _outlets.list_outlets()
+
+
+def _outlet_index() -> dict[str, dict[str, Any]]:
+    return {o["outlet_id"]: o for o in _registry_outlets()}
+
+
+def preserve_counts() -> dict[str, Any]:
+    """Uma Blu store truth — 127 recipes / 756 lines must hold."""
+    import_v1_recipes()
+    conn = connect(writable=True)
+    try:
+        recipes = conn.execute("SELECT COUNT(*) FROM recipes").fetchone()[0]
+        lines = conn.execute("SELECT COUNT(*) FROM recipe_lines").fetchone()[0]
+        uma_assigned = conn.execute(
+            """
+            SELECT COUNT(DISTINCT r.id) FROM recipes r
+            JOIN recipe_outlet_links l ON l.recipe_id=r.id
+            WHERE l.outlet_id=?
+            """,
+            (UMA_OUTLET_ID,),
+        ).fetchone()[0]
+        uma_brand = conn.execute(
+            "SELECT COUNT(*) FROM recipes WHERE brand_id=?",
+            (UMA_OUTLET_ID,),
+        ).fetchone()[0]
+        all_bzg_uma = conn.execute(
+            """
+            SELECT COUNT(*) FROM recipe_all_bzg a
+            JOIN recipes r ON r.id=a.recipe_id
+            WHERE r.brand_id=? AND r.origin='v1_import'
+            """,
+            (UMA_OUTLET_ID,),
+        ).fetchone()[0]
+        return {
+            "ok": True,
+            "recipes": recipes,
+            "lines": lines,
+            "uma_outlet_assigned": uma_assigned,
+            "uma_brand_id_count": uma_brand,
+            "v1_import_relabelled_all_bzg": all_bzg_uma,
+            "preserved": recipes >= 127 and lines >= 756 and uma_brand >= 127,
+            "relabelled_bzg_wide": all_bzg_uma > 0,
+        }
+    finally:
+        conn.close()
+
+
+def builder_context(
+    *,
+    outlet_id: str | None = None,
+    person_id: str | None = None,
+) -> dict[str, Any]:
+    """Outlet selector payload. Default sensible (OPEN Uma) but never silent wrong."""
+    import_v1_recipes()
+    registry = _registry_outlets()
+    covered = (
+        _outlets.outlets_for_person(person_id) if person_id else list(registry)
+    )
+    covered_ids = {o["outlet_id"] for o in covered}
+    outlets = []
+    for row in registry:
+        if covered_ids and row["outlet_id"] not in covered_ids:
+            continue
+        outlets.append(
+            {
+                "outlet_id": row["outlet_id"],
+                "display_name": row["display_name"],
+                "brand_id": row["brand_id"],
+                "parent_outlet_id": row.get("parent_outlet_id"),
+                "outlet_kind": row["outlet_kind"],
+                "status": row["status"],
+                "registry_source": "org_outlet_registry",
+            }
+        )
+    requested = (outlet_id or "").strip() or None
+    default = next((o for o in outlets if o["status"] == "OPEN"), None)
+    if default is None and outlets:
+        default = outlets[0]
+    selected = None
+    silent_wrong = False
+    needs_explicit = False
+    if requested == ALL_BZG:
+        selected = {
+            "outlet_id": ALL_BZG,
+            "display_name": "All BZG",
+            "mode": "catalogue_assignments",
+            "not_merged_menu": True,
+        }
+    elif requested:
+        hit = next((o for o in outlets if o["outlet_id"] == requested), None)
+        if hit is None:
+            needs_explicit = True
+            silent_wrong = False
+        else:
+            selected = {**hit, "mode": "outlet"}
+    else:
+        # Sensible default = OPEN outlet, but surface it explicitly (never silent)
+        if default:
+            selected = {**default, "mode": "outlet", "defaulted": True}
+        else:
+            needs_explicit = True
+    return {
+        "ok": True,
+        "pack": PACK_MULTI,
+        "outlets": outlets,
+        "all_bzg": {
+            "outlet_id": ALL_BZG,
+            "display_name": "All BZG",
+            "mode": "catalogue_assignments",
+            "not_merged_menu": True,
+            "note": "Catalogue + assignments for Head Chef — not a fake merged menu.",
+        },
+        "selected_outlet": selected,
+        "default_outlet_id": default["outlet_id"] if default else None,
+        "needs_explicit_outlet": needs_explicit,
+        "silent_wrong_outlet": silent_wrong,
+        "registry_driven": True,
+        "hardcoded_outlet_list": False,
+        "rainforest_registry_name": next(
+            (
+                o["display_name"]
+                for o in registry
+                if o["outlet_id"] == "BZG-RAIN"
+            ),
+            None,
+        ),
+        "staff_ready": False,
+        "human_commissioned": False,
+    }
+
+
+def _recipe_outlet_payload(conn: sqlite3.Connection, recipe_id: str) -> dict[str, Any]:
+    links = [
+        r[0]
+        for r in conn.execute(
+            "SELECT outlet_id FROM recipe_outlet_links WHERE recipe_id=? ORDER BY outlet_id",
+            (recipe_id,),
+        ).fetchall()
+    ]
+    all_bzg = (
+        conn.execute(
+            "SELECT 1 FROM recipe_all_bzg WHERE recipe_id=?", (recipe_id,)
+        ).fetchone()
+        is not None
+    )
+    idx = _outlet_index()
+    return {
+        "outlet_ids": links,
+        "all_bzg": all_bzg,
+        "outlets": [
+            {
+                "outlet_id": oid,
+                "display_name": (idx.get(oid) or {}).get("display_name") or oid,
+            }
+            for oid in links
+        ],
+    }
+
+
+def set_recipe_outlets(
+    recipe_id: str,
+    *,
+    outlet_ids: list[str] | None = None,
+    all_bzg: bool = False,
+) -> dict[str, Any]:
+    """Associate recipe to one / multi / all-BZG without duplicating the recipe row."""
+    registry_ids = {o["outlet_id"] for o in _registry_outlets()}
+    conn = connect(writable=True)
+    try:
+        if conn.execute("SELECT 1 FROM recipes WHERE id=?", (recipe_id,)).fetchone() is None:
+            raise KeyError(recipe_id)
+        ts = now_iso()
+        if all_bzg:
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO recipe_all_bzg(recipe_id, created_at)
+                VALUES (?, ?)
+                """,
+                (recipe_id, ts),
+            )
+            # Keep explicit links optional; all_bzg means catalogue-wide
+        else:
+            conn.execute("DELETE FROM recipe_all_bzg WHERE recipe_id=?", (recipe_id,))
+        if outlet_ids is not None:
+            wanted = []
+            for oid in outlet_ids:
+                oid = (oid or "").strip()
+                if not oid or oid == ALL_BZG:
+                    continue
+                if oid not in registry_ids:
+                    raise ValueError(f"unknown outlet_id (not in registry): {oid}")
+                wanted.append(oid)
+            conn.execute(
+                "DELETE FROM recipe_outlet_links WHERE recipe_id=?", (recipe_id,)
+            )
+            for oid in wanted:
+                conn.execute(
+                    """
+                    INSERT INTO recipe_outlet_links(recipe_id, outlet_id, created_at)
+                    VALUES (?, ?, ?)
+                    """,
+                    (recipe_id, oid, ts),
+                )
+        conn.commit()
+        return {"ok": True, "recipe_id": recipe_id, **_recipe_outlet_payload(conn, recipe_id)}
+    finally:
+        conn.close()
+
+
 def list_recipes(
     *,
     brand_ids: list[str] | None = None,
+    outlet_id: str | None = None,
     limit: int = 100,
     offset: int = 0,
 ) -> dict[str, Any]:
@@ -608,12 +992,27 @@ def list_recipes(
                     "limit": limit,
                     "recipes": [],
                     "brands_in_scope": [],
+                    "outlet_id": outlet_id,
                     "staff_ready": False,
                     "human_commissioned": False,
                 }
             placeholders = ",".join("?" for _ in brand_ids)
             where = f"(brand_id IN ({placeholders}) OR brand_id IS NULL)"
             params.extend(brand_ids)
+        oid = (outlet_id or "").strip() or None
+        catalogue_mode = False
+        if oid == ALL_BZG:
+            catalogue_mode = True
+            # Catalogue + assignments — every recipe in scope (not a merged menu)
+        elif oid:
+            where = (
+                f"({where}) AND ("
+                "EXISTS (SELECT 1 FROM recipe_all_bzg a WHERE a.recipe_id=recipes.id) "
+                "OR EXISTS (SELECT 1 FROM recipe_outlet_links l "
+                "WHERE l.recipe_id=recipes.id AND l.outlet_id=?)"
+                ")"
+            )
+            params.append(oid)
         total = conn.execute(
             f"SELECT COUNT(*) FROM recipes WHERE {where}", params
         ).fetchone()[0]
@@ -637,6 +1036,7 @@ def list_recipes(
             ]
             dish = _cost_recipe(dict(recipe), lines)
             dish.pop("lines", None)
+            dish["outlet_assignment"] = _recipe_outlet_payload(conn, recipe["id"])
             out.append(dish)
         return {
             "ok": True,
@@ -645,6 +1045,9 @@ def list_recipes(
             "limit": limit,
             "recipes": out,
             "brands_in_scope": list(brand_ids) if brand_ids is not None else None,
+            "outlet_id": oid,
+            "catalogue_mode": catalogue_mode,
+            "not_merged_menu": catalogue_mode,
             "staff_ready": False,
             "human_commissioned": False,
         }
@@ -668,13 +1071,30 @@ def get_recipe(recipe_id: str) -> dict[str, Any] | None:
                 (recipe_id,),
             )
         ]
-        return _cost_recipe(dict(recipe), lines)
+        dish = _cost_recipe(dict(recipe), lines)
+        dish["outlet_assignment"] = _recipe_outlet_payload(conn, recipe_id)
+        dish["menu_items"] = [
+            dict(r)
+            for r in conn.execute(
+                """
+                SELECT * FROM outlet_menu_items
+                WHERE recipe_id=?
+                ORDER BY outlet_id, menu_name COLLATE NOCASE
+                """,
+                (recipe_id,),
+            )
+        ]
+        return dish
     finally:
         conn.close()
 
 
-def list_cost_exceptions(*, brand_ids: list[str] | None = None) -> dict[str, Any]:
-    pack = list_recipes(brand_ids=brand_ids, limit=500, offset=0)
+def list_cost_exceptions(
+    *,
+    brand_ids: list[str] | None = None,
+    outlet_id: str | None = None,
+) -> dict[str, Any]:
+    pack = list_recipes(brand_ids=brand_ids, outlet_id=outlet_id, limit=500, offset=0)
     exceptions = []
     for recipe in pack.get("recipes") or []:
         if recipe.get("missing_cost_lines") or recipe.get("food_cost_status") != "COMPLETE":
@@ -683,15 +1103,17 @@ def list_cost_exceptions(*, brand_ids: list[str] | None = None) -> dict[str, Any
                     "recipe_id": recipe["recipe_id"],
                     "name": recipe["name"],
                     "brand_id": recipe.get("brand_id"),
+                    "outlet_assignment": recipe.get("outlet_assignment"),
                     "missing_cost_lines": recipe.get("missing_cost_lines"),
                     "food_cost_status": recipe.get("food_cost_status"),
-                    "exception": "cost missing",
+                    "exception": INCOMPLETE_COST,
                 }
             )
     return {
         "ok": True,
         "count": len(exceptions),
         "exceptions": exceptions,
+        "outlet_id": outlet_id,
         "staff_ready": False,
         "human_commissioned": False,
         "invented_costs": False,
@@ -713,13 +1135,53 @@ def create_recipe(
         raise PermissionError(
             "Selling price is read-only for the chef. Propose a change via approval."
         )
+    outlet_ids = payload.get("outlet_ids")
+    all_bzg = bool(payload.get("all_bzg"))
+    single_outlet = (payload.get("outlet_id") or "").strip() or None
+    if single_outlet and single_outlet != ALL_BZG:
+        outlet_ids = list(outlet_ids or []) + [single_outlet]
+    registry_ids = {o["outlet_id"]: o for o in _registry_outlets()}
+    bid = (brand_id or payload.get("brand_id") or "").strip() or None
+    # Legacy HEADCHEF-1: explicit brand_id maps to that brand's BRAND outlet — not silent.
+    if not all_bzg and not outlet_ids and bid:
+        if bid in registry_ids:
+            outlet_ids = [bid]
+        else:
+            match = next(
+                (
+                    o["outlet_id"]
+                    for o in registry_ids.values()
+                    if o.get("brand_id") == bid and o.get("outlet_kind") == "BRAND"
+                ),
+                None,
+            )
+            if match:
+                outlet_ids = [match]
+    if not all_bzg and not outlet_ids:
+        raise ValueError(
+            "Explicit outlet_ids, outlet_id, all_bzg, or brand_id required — "
+            "never create with a silent outlet."
+        )
+    cleaned: list[str] = []
+    for oid in outlet_ids or []:
+        oid = (oid or "").strip()
+        if not oid or oid == ALL_BZG:
+            continue
+        if oid not in registry_ids:
+            raise ValueError(f"unknown outlet_id (not in registry): {oid}")
+        if oid not in cleaned:
+            cleaned.append(oid)
+    if not all_bzg and not cleaned:
+        raise ValueError("At least one registry outlet_id required")
+    # brand_id is provenance / primary brand — prefer first outlet's brand, else caller
+    if not bid and cleaned:
+        bid = registry_ids[cleaned[0]].get("brand_id")
     conn = connect(writable=True)
     try:
         rid = (payload.get("id") or "").strip() or f"{_slug(name)}-{uuid.uuid4().hex[:6]}"
         if conn.execute("SELECT 1 FROM recipes WHERE id=?", (rid,)).fetchone():
             rid = f"{rid}-{uuid.uuid4().hex[:4]}"
         ts = now_iso()
-        bid = (brand_id or payload.get("brand_id") or "").strip() or None
         conn.execute(
             """
             INSERT INTO recipes (
@@ -751,9 +1213,10 @@ def create_recipe(
         )
         _replace_lines(conn, rid, payload.get("lines") or [])
         conn.commit()
-        return get_recipe(rid) or {"recipe_id": rid, "ok": True}
     finally:
         conn.close()
+    set_recipe_outlets(rid, outlet_ids=cleaned, all_bzg=all_bzg)
+    return get_recipe(rid) or {"recipe_id": rid, "ok": True}
 
 
 def update_recipe(
@@ -855,6 +1318,212 @@ def _replace_lines(
         )
 
 
+def list_menu_items(*, outlet_id: str) -> dict[str, Any]:
+    """Outlet-specific menu — RECIPE ≠ MENU ITEM ≠ OUTLET MENU."""
+    oid = (outlet_id or "").strip()
+    if not oid or oid == ALL_BZG:
+        return {
+            "ok": False,
+            "error": "outlet_required",
+            "message": "All BZG is catalogue/assignments — not a merged menu.",
+            "menu_items": [],
+            "staff_ready": False,
+            "human_commissioned": False,
+        }
+    if oid not in {o["outlet_id"] for o in _registry_outlets()}:
+        raise ValueError(f"unknown outlet_id (not in registry): {oid}")
+    import_v1_recipes()
+    conn = connect(writable=True)
+    try:
+        rows = [
+            dict(r)
+            for r in conn.execute(
+                """
+                SELECT * FROM outlet_menu_items
+                WHERE outlet_id=?
+                ORDER BY category COLLATE NOCASE, menu_name COLLATE NOCASE
+                """,
+                (oid,),
+            )
+        ]
+        return {
+            "ok": True,
+            "outlet_id": oid,
+            "count": len(rows),
+            "menu_items": rows,
+            "staff_ready": False,
+            "human_commissioned": False,
+        }
+    finally:
+        conn.close()
+
+
+def upsert_menu_item(
+    payload: dict[str, Any],
+    *,
+    updated_by: str | None,
+) -> dict[str, Any]:
+    """Create/update outlet menu item for a shared recipe (price/portion may differ)."""
+    oid = (payload.get("outlet_id") or "").strip()
+    rid = (payload.get("recipe_id") or "").strip()
+    menu_name = (payload.get("menu_name") or "").strip()
+    if not oid or not rid or not menu_name:
+        raise ValueError("outlet_id, recipe_id, menu_name required")
+    if oid == ALL_BZG:
+        raise ValueError("Cannot attach a menu item to All BZG (not a menu)")
+    if oid not in {o["outlet_id"] for o in _registry_outlets()}:
+        raise ValueError(f"unknown outlet_id (not in registry): {oid}")
+    conn = connect(writable=True)
+    try:
+        if conn.execute("SELECT 1 FROM recipes WHERE id=?", (rid,)).fetchone() is None:
+            raise KeyError(rid)
+        ts = now_iso()
+        mid = (payload.get("id") or "").strip() or f"mi-{_slug(menu_name)}-{uuid.uuid4().hex[:6]}"
+        existing = conn.execute(
+            "SELECT id FROM outlet_menu_items WHERE id=?", (mid,)
+        ).fetchone()
+        if existing:
+            conn.execute(
+                """
+                UPDATE outlet_menu_items SET
+                  outlet_id=?, recipe_id=?, menu_name=?, category=?,
+                  portion_n=?, portion_unit=?, sell_price=?, status=?,
+                  updated_at=?, updated_by=?
+                WHERE id=?
+                """,
+                (
+                    oid,
+                    rid,
+                    menu_name,
+                    (payload.get("category") or "").strip() or None,
+                    payload.get("portion_n"),
+                    (payload.get("portion_unit") or "").strip() or None,
+                    payload.get("sell_price"),
+                    (payload.get("status") or "draft").strip(),
+                    ts,
+                    updated_by,
+                    mid,
+                ),
+            )
+        else:
+            conn.execute(
+                """
+                INSERT INTO outlet_menu_items (
+                  id, outlet_id, recipe_id, menu_name, category, portion_n,
+                  portion_unit, sell_price, status, created_at, updated_at, updated_by
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    mid,
+                    oid,
+                    rid,
+                    menu_name,
+                    (payload.get("category") or "").strip() or None,
+                    payload.get("portion_n"),
+                    (payload.get("portion_unit") or "").strip() or None,
+                    payload.get("sell_price"),
+                    (payload.get("status") or "draft").strip(),
+                    ts,
+                    ts,
+                    updated_by,
+                ),
+            )
+        conn.commit()
+        row = conn.execute(
+            "SELECT * FROM outlet_menu_items WHERE id=?", (mid,)
+        ).fetchone()
+        return {"ok": True, "menu_item": dict(row) if row else {"id": mid}}
+    finally:
+        conn.close()
+
+
+def list_ingredients() -> dict[str, Any]:
+    """Shared ingredient master — one master for all BZG outlets."""
+    import_v1_recipes()
+    conn = connect(writable=True)
+    try:
+        rows = []
+        for r in conn.execute(
+            """
+            SELECT * FROM ingredient_master
+            WHERE entity_id=?
+            ORDER BY name COLLATE NOCASE
+            """,
+            (ENTITY_BZG,),
+        ):
+            d = dict(r)
+            if d.get("purchase_cost") is None:
+                d["cost_status"] = INCOMPLETE_COST
+            else:
+                d["cost_status"] = "KNOWN"
+            # Never coerce null cost to 0
+            if d.get("purchase_cost") == 0 and not d.get("cost_source"):
+                d["purchase_cost"] = None
+                d["cost_status"] = INCOMPLETE_COST
+            rows.append(d)
+        return {
+            "ok": True,
+            "count": len(rows),
+            "ingredients": rows,
+            "shared_master": True,
+            "per_outlet_masters": False,
+            "staff_ready": False,
+            "human_commissioned": False,
+        }
+    finally:
+        conn.close()
+
+
+def reporting_foundation(*, outlet_id: str | None = None) -> dict[str, Any]:
+    """Reporting foundation only — refuse fake Rainforest FC / ESB / inventory."""
+    oid = (outlet_id or "").strip() or None
+    registry = _outlet_index()
+    outlet = registry.get(oid) if oid and oid != ALL_BZG else None
+    commissioned = False
+    # No outlet has commissioned FC/ESB theoretical/inventory variance in this pack
+    reasons = []
+    if oid == "BZG-RAIN" or (outlet and outlet.get("outlet_id") == "BZG-RAIN"):
+        reasons.append(
+            "Rainforest food-cost reporting is not human-commissioned — "
+            "registry status is PRE-OPENING; refusing invented FC numbers."
+        )
+    reasons.append(
+        "ESB theoretical usage variance is not commissioned on this builder surface."
+    )
+    reasons.append(
+        "Inventory variance is not commissioned on this builder surface."
+    )
+    return {
+        "ok": True,
+        "pack": PACK_MULTI,
+        "outlet_id": oid,
+        "outlet_display_name": (outlet or {}).get("display_name"),
+        "outlet_status": (outlet or {}).get("status"),
+        "reporting": {
+            "rainforest_food_cost": {
+                "state": "REFUSED_UNCOMMISSIONED",
+                "value": None,
+                "invented": False,
+            },
+            "esb_theoretical": {
+                "state": "REFUSED_UNCOMMISSIONED",
+                "value": None,
+                "invented": False,
+            },
+            "inventory_variance": {
+                "state": "REFUSED_UNCOMMISSIONED",
+                "value": None,
+                "invented": False,
+            },
+        },
+        "commissioned": commissioned,
+        "refused_reasons": reasons,
+        "staff_ready": False,
+        "human_commissioned": False,
+        "foundation_only": True,
+    }
+
+
 def honesty() -> dict[str, Any]:
     return {
         "staff_ready": False,
@@ -863,4 +1532,8 @@ def honesty() -> dict[str, Any]:
         "sell_price_editable": False,
         "bound": "beta-bzg-recipe-builder",
         "v1_source_readonly": True,
+        "multi_outlet": True,
+        "pack": PACK_MULTI,
+        "incomplete_cost_label": INCOMPLETE_COST,
+        "registry_driven_outlets": True,
     }

@@ -1,0 +1,33 @@
+{
+  "id": "BZG-RECIPE-MULTI-OUTLET-1",
+  "approved_at": "2026-10-02T16:14:00+08:00",
+  "owner": "Matt Goss",
+  "origin_feedback": "Haryanto actively building Blu Zone menus; Recipe Builder must be multi-outlet",
+  "scope": "beta_only",
+  "prod": "untouched",
+  "peaches_role": "credit_light_verify_then_haryanto_commission",
+  "cursor_role": "implement",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "commissioner": "Haryanto",
+  "role": "BZG Head Chef",
+  "status": "APPROVED_PARKED_MAC",
+  "queue_priority": "HUMAN_COMMISSIONING_ACTIVE",
+  "ahead_of": [
+    "CE-CANCEL-UPLOAD-1",
+    "ATRIUM-OPS-TOURS",
+    "ATRIUM-OPS-EVENTS"
+  ],
+  "preserve_uma_blu_recipes": 127,
+  "canonical_outlets_named": [
+    "Uma Blu",
+    "Blu Zone Rainforest Restaurant & Bar",
+    "Pool Bar",
+    "Merah Underground",
+    "Rooftop Bar",
+    "Room Service",
+    "Catering"
+  ],
+  "outlets_from": "canonical BZG outlet registry \u2014 do not hardcode seven",
+  "permissions": "BZG Head Chef Assignment/Scope server-side; no finance/banking/Owner/HR/AMG/GGV"
+}

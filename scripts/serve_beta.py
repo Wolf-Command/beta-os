@@ -40122,6 +40122,71 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
 
         if path in (
+            "/api/bzg/recipe-builder/context",
+            "/api/bzg/recipe-builder/context/",
+        ):
+            subject, identity = self._require_recipe_builder("recipe.read")
+            if subject is None:
+                return
+            self._send_json(
+                _recipe_builder.builder_context(
+                    outlet_id=one("outlet_id") or None,
+                    person_id=identity.get("person_id") if identity else None,
+                )
+            )
+            return
+
+        if path in (
+            "/api/bzg/recipe-builder/preserve",
+            "/api/bzg/recipe-builder/preserve/",
+        ):
+            subject, _identity = self._require_recipe_builder("recipe.read")
+            if subject is None:
+                return
+            self._send_json(_recipe_builder.preserve_counts())
+            return
+
+        if path in (
+            "/api/bzg/recipe-builder/ingredients",
+            "/api/bzg/recipe-builder/ingredients/",
+        ):
+            subject, _identity = self._require_recipe_builder("ingredient.read")
+            if subject is None:
+                return
+            self._send_json(_recipe_builder.list_ingredients())
+            return
+
+        if path in (
+            "/api/bzg/recipe-builder/menu-items",
+            "/api/bzg/recipe-builder/menu-items/",
+        ):
+            subject, _identity = self._require_recipe_builder("recipe.read")
+            if subject is None:
+                return
+            try:
+                self._send_json(
+                    _recipe_builder.list_menu_items(outlet_id=one("outlet_id"))
+                )
+            except ValueError as exc:
+                self._send_json(
+                    {"ok": False, "error": "bad_payload", "message": str(exc)},
+                    status=400,
+                )
+            return
+
+        if path in (
+            "/api/bzg/recipe-builder/reporting",
+            "/api/bzg/recipe-builder/reporting/",
+        ):
+            subject, _identity = self._require_recipe_builder("recipe.cost.read")
+            if subject is None:
+                return
+            self._send_json(
+                _recipe_builder.reporting_foundation(outlet_id=one("outlet_id") or None)
+            )
+            return
+
+        if path in (
             "/api/bzg/recipe-builder/recipes",
             "/api/bzg/recipe-builder/recipes/",
         ):
@@ -40132,6 +40197,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_json(
                 _recipe_builder.list_recipes(
                     brand_ids=brands,
+                    outlet_id=one("outlet_id") or None,
                     limit=int(one("limit", "100") or "100"),
                     offset=int(one("offset", "0") or "0"),
                 )
@@ -40166,7 +40232,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             brands = self._recipe_builder_brands_in_scope(
                 identity.get("person_id") if identity else None
             )
-            self._send_json(_recipe_builder.list_cost_exceptions(brand_ids=brands))
+            self._send_json(
+                _recipe_builder.list_cost_exceptions(
+                    brand_ids=brands,
+                    outlet_id=one("outlet_id") or None,
+                )
+            )
             return
 
         self._send_json(
@@ -40194,6 +40265,36 @@ class BetaHandler(SimpleHTTPRequestHandler):
             body = {}
 
         if method == "POST" and path in (
+            "/api/bzg/recipe-builder/menu-items",
+            "/api/bzg/recipe-builder/menu-items/",
+        ):
+            subject, identity = self._require_recipe_builder("recipe.edit", body)
+            if subject is None:
+                return
+            try:
+                item = _recipe_builder.upsert_menu_item(
+                    body,
+                    updated_by=identity.get("person_id") if identity else subject,
+                )
+            except PermissionError as exc:
+                self._send_json(
+                    {"ok": False, "error": "forbidden", "message": str(exc)},
+                    status=403,
+                )
+                return
+            except ValueError as exc:
+                self._send_json(
+                    {"ok": False, "error": "bad_payload", "message": str(exc)},
+                    status=400,
+                )
+                return
+            except KeyError:
+                self._send_json({"ok": False, "error": "not_found"}, status=404)
+                return
+            self._send_json({**item, **_recipe_builder.honesty()})
+            return
+
+        if method == "POST" and path in (
             "/api/bzg/recipe-builder/recipes",
             "/api/bzg/recipe-builder/recipes/",
         ):
@@ -40203,13 +40304,36 @@ class BetaHandler(SimpleHTTPRequestHandler):
             brands = self._recipe_builder_brands_in_scope(
                 identity.get("person_id") if identity else None
             )
-            brand_id = (body.get("brand_id") or "").strip() or (brands[0] if brands else None)
+            # Never silent-default brand/outlet — require explicit outlet or brand_id.
+            brand_id = (body.get("brand_id") or "").strip() or None
             if brand_id and brands and brand_id not in brands:
                 self._send_json(
                     {"ok": False, "error": "forbidden", "message": "brand out of scope"},
                     status=403,
                 )
                 return
+            outlet_ids = body.get("outlet_ids") or (
+                [body["outlet_id"]] if body.get("outlet_id") else None
+            )
+            if outlet_ids:
+                registry = {
+                    o["outlet_id"]: o for o in _bzg_outlets.list_outlets()
+                }
+                for oid in outlet_ids:
+                    oid = (oid or "").strip()
+                    if not oid or oid == "ALL_BZG":
+                        continue
+                    row = registry.get(oid)
+                    if row and brands and row.get("brand_id") and row["brand_id"] not in brands:
+                        self._send_json(
+                            {
+                                "ok": False,
+                                "error": "forbidden",
+                                "message": "outlet out of scope",
+                            },
+                            status=403,
+                        )
+                        return
             try:
                 recipe = _recipe_builder.create_recipe(
                     body,
@@ -40229,6 +40353,45 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 )
                 return
             self._send_json({"ok": True, "recipe": recipe, **_recipe_builder.honesty()})
+            return
+
+        m_outlets = re.match(
+            r"^/api/bzg/recipe-builder/recipes/([^/]+)/outlets/?$", path
+        )
+        if method == "PUT" and m_outlets:
+            subject, identity = self._require_recipe_builder("recipe.edit", body)
+            if subject is None:
+                return
+            rid = unquote(m_outlets.group(1))
+            existing = _recipe_builder.get_recipe(rid)
+            if existing is None:
+                self._send_json({"ok": False, "error": "not_found"}, status=404)
+                return
+            brands = self._recipe_builder_brands_in_scope(
+                identity.get("person_id") if identity else None
+            )
+            if existing.get("brand_id") and brands and existing.get("brand_id") not in brands:
+                self._send_json(
+                    {"ok": False, "error": "forbidden", "message": "out of scope"},
+                    status=403,
+                )
+                return
+            try:
+                result = _recipe_builder.set_recipe_outlets(
+                    rid,
+                    outlet_ids=body.get("outlet_ids"),
+                    all_bzg=bool(body.get("all_bzg")),
+                )
+            except ValueError as exc:
+                self._send_json(
+                    {"ok": False, "error": "bad_payload", "message": str(exc)},
+                    status=400,
+                )
+                return
+            except KeyError:
+                self._send_json({"ok": False, "error": "not_found"}, status=404)
+                return
+            self._send_json({**result, **_recipe_builder.honesty()})
             return
 
         m_recipe = re.match(r"^/api/bzg/recipe-builder/recipes/([^/]+)/?$", path)
@@ -40256,10 +40419,23 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     body,
                     updated_by=identity.get("person_id") if identity else subject,
                 )
+                if "outlet_ids" in body or "all_bzg" in body:
+                    _recipe_builder.set_recipe_outlets(
+                        rid,
+                        outlet_ids=body.get("outlet_ids"),
+                        all_bzg=bool(body.get("all_bzg")),
+                    )
+                    recipe = _recipe_builder.get_recipe(rid) or recipe
             except PermissionError as exc:
                 self._send_json(
                     {"ok": False, "error": "forbidden", "message": str(exc)},
                     status=403,
+                )
+                return
+            except ValueError as exc:
+                self._send_json(
+                    {"ok": False, "error": "bad_payload", "message": str(exc)},
+                    status=400,
                 )
                 return
             except KeyError:

@@ -1,0 +1,36 @@
+{
+  "pack": "BZG-RECIPE-MULTI-OUTLET-1",
+  "title": "BZG Recipe Builder multi-outlet",
+  "status": "eng-proved",
+  "proved_at": "2026-10-02T16:45:00+08:00",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "human_proven": false,
+  "prod_8787": "untouched",
+  "branch": "build/wolf-command-rebuild",
+  "push": false,
+  "decision": "HEADCHEF-1 + OWNER-ORDER-BZG-RECIPE-MULTI-OUTLET-20261002",
+  "store": "catalog/bzg_recipes.sqlite",
+  "preserve": {
+    "recipes": 127,
+    "lines": 756,
+    "uma_outlet_assigned": 127,
+    "uma_brand_id_count": 127,
+    "relabelled_bzg_wide": false
+  },
+  "registry_driven": true,
+  "hardcoded_outlet_list": false,
+  "rainforest_registry_display_name": "Rainforest",
+  "incomplete_cost_label": "INCOMPLETE COST",
+  "reporting": {
+    "rainforest_food_cost": "REFUSED_UNCOMMISSIONED",
+    "esb_theoretical": "REFUSED_UNCOMMISSIONED",
+    "inventory_variance": "REFUSED_UNCOMMISSIONED"
+  },
+  "tests": {
+    "test_bzg_recipe_multi_outlet_1.py": "pass=85 fail=0",
+    "test_headchef1_20260929.py": "pass=92 fail=0"
+  },
+  "result_md": "state/final-completion/forensic-completeness-20261001/BZG-RECIPE-MULTI-OUTLET-1-RESULT.md",
+  "next": "Peaches credit-light verify then Haryanto real Rainforest menu work on Beta — not commissioned for outlet switching alone"
+}
