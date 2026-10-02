@@ -64,4 +64,6 @@ Bank EDC/QRIS (BNI/Mandiri) live method totals match receipt non-cash lines afte
 - `state/bzg-daily-close/FORENSIC-ESB-RECON-20261002.{md,json}`
 - `state/bzg-daily-close/OWNER-CONTROL-GAP-REGISTER.json`
 
+**Impl / EXIT tip:** `0e02bb3` (feature). Parent tip at arm: `d4f8f1e`. Branch `build/wolf-command-rebuild` (no push).
+
 RESULT: **PASS** (engineering). `staff_ready=false`. Human: Peaches independent verify → then Matt ping (not claimed here).

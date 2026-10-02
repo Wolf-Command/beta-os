@@ -2,6 +2,8 @@
   "id": "PEACHES-VERIFY-OWNER-CONTROL-ESB-RECON-1",
   "when_wita": "2026-10-02T22:45:00+08:00",
   "pack": "BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1",
+  "tip": "0e02bb3",
+  "impl": "0e02bb3",
   "beta_8788_pid": "65974",
   "prod_8787_pid": "15975",
   "route": "/uma-blu-close",

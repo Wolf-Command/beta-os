@@ -21,5 +21,8 @@
   "gap_register": "state/bzg-daily-close/OWNER-CONTROL-GAP-REGISTER.json",
   "permission": "venue.close.owner_control",
   "grant": "ROLE-MATT",
-  "result_md": "state/bzg-daily-close/BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1-RESULT.md"
+  "result_md": "state/bzg-daily-close/BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1-RESULT.md",
+  "commit": "0e02bb38964db862db1b42c8990bbbb496507179",
+  "tip": "0e02bb3",
+  "parent_tip_at_arm": "d4f8f1e"
 }

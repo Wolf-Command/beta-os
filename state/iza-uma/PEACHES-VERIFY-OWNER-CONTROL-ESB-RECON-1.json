@@ -1,0 +1,36 @@
+{
+  "id": "PEACHES-VERIFY-OWNER-CONTROL-ESB-RECON-1",
+  "when_wita": "2026-10-02T22:45:00+08:00",
+  "pack": "BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1",
+  "tip": "0e02bb3",
+  "impl": "0e02bb3",
+  "beta_8788_pid": "65974",
+  "prod_8787_pid": "15975",
+  "route": "/uma-blu-close",
+  "ui_markers": [
+    "Owner Control",
+    "Unlock abandoned",
+    "Return for correction",
+    "dualSourceBox",
+    "bankSplitBox"
+  ],
+  "api": "/api/venue-close/owner-control",
+  "permission": "venue.close.owner_control",
+  "matt_has_owner_control": true,
+  "forensic": "state/bzg-daily-close/FORENSIC-ESB-RECON-20261002.md",
+  "forensic_root_cause": [
+    "OTHER_COST_BILLS_IN_LIVE (+3 bills)",
+    "CASH_TENDERED_VS_SALES_GRAND (+120000 change overpay)"
+  ],
+  "tonight_close": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+  "tonight_holder": "PERS-MATT",
+  "live_owner_control_by_peaches": false,
+  "sources_never_overwrite": true,
+  "iza_commissioning": "FAIL",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "daily_close_commissioned": false,
+  "matt_ready_claimed": false,
+  "peaches_then_matt_ping": true,
+  "result": "state/bzg-daily-close/BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1-RESULT.md"
+}
