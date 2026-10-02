@@ -34,5 +34,15 @@
     "by": "cursor-local",
     "pack": "BZG-RECIPE-MULTI-OUTLET-1",
     "created_at": "2026-10-02T16:45:00+08:00"
+  },
+  {
+    "id": "ce-cancel-upload-1-20261002",
+    "claim": "CE-CANCEL-UPLOAD-1 Cancel Upload + metadata correction on Beta; ENGINEERING PROOF pass=36 fail=0; staff_ready false",
+    "check": "python3 scripts/tests/test_content_engine_cancel_upload_20261002.py",
+    "expect": "pass=36 fail=0",
+    "by": "cursor-local",
+    "pack": "CE-CANCEL-UPLOAD-1",
+    "commit": "9cad16a99503e593b804b4ed582d549c9a341e84",
+    "created_at": "2026-10-02T17:19:59+08:00"
   }
 ]
