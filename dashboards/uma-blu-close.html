@@ -119,7 +119,7 @@
 </head>
 <body>
   <h1 class="brand">Uma Blu <em>Daily Close</em></h1>
-  <p class="sub">Mobile close · till + EDC evidence · ESB payments ≠ bank settlement.</p>
+  <p class="sub">Phone close · ESB receipt + live API · Add EDC Receipt (0..N) · EDC≠QRIS · AI draft ≠ truth.</p>
   <p class="banner info" id="umarealCut">Daily close history: checking the register.</p>
   <div class="panel" id="cfgPanel" style="border-color: var(--warn)">
     <h2>Outlet / EDC config</h2>
@@ -159,8 +159,70 @@
     <label for="bizDate">Business date</label>
     <input type="date" id="bizDate" />
     <button class="btn btn-primary" id="btnOpen" data-cap="submit" type="button">Open close</button>
-    <button class="btn" id="btnCapture" data-cap="submit" type="button" disabled>Pull ESB sales</button>
+    <button class="btn" id="btnCapture" data-cap="submit" type="button" disabled>Pull ESB sales (live API)</button>
     <div id="esbBox" class="muted" style="margin-top:10px"></div>
+    <div id="statusBox" style="margin-top:12px"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="panel">
+    <h2>ESB closing receipt</h2>
+    <p class="muted">Required photo evidence + live API kept as dual sources. Mismatch = visible exception. AI is not truth.</p>
+    <label for="esbReceiptRef">Receipt image ref</label>
+    <input type="text" id="esbReceiptRef" placeholder="photo://esb-close-…" disabled />
+    <label for="esbCash">Cash (from receipt)</label>
+    <input type="number" id="esbCash" min="0" step="1000" placeholder="optional until extract" disabled inputmode="decimal" />
+    <div class="row">
+      <div>
+        <label for="esbEdc">EDC card</label>
+        <input type="number" id="esbEdc" min="0" step="1000" disabled inputmode="decimal" />
+      </div>
+      <div>
+        <label for="esbQris">QRIS</label>
+        <input type="number" id="esbQris" min="0" step="1000" disabled inputmode="decimal" />
+      </div>
+    </div>
+    <button class="btn" id="btnEsbExtract" data-cap="submit" type="button" disabled>Wolf reads receipt</button>
+    <button class="btn btn-ok" id="btnEsbLooks" data-cap="submit" type="button" disabled>Looks Correct</button>
+    <button class="btn btn-warn" id="btnEsbEdit" data-cap="submit" type="button" disabled>Edit &amp; confirm</button>
+    <div id="esbReceiptBox" class="muted" style="margin-top:10px">No ESB closing receipt yet.</div>
+  </div>
+
+  <div class="panel">
+    <h2>Add EDC Receipt</h2>
+    <p class="muted" id="edcCfgNote">Terminal inventory: checking…</p>
+    <p class="muted">0..N receipts/day. Free-text bank OK. Separate EDC card + QRIS — never merge. Unused terminals are not fake rows.</p>
+    <label for="edcBank">Bank / acquirer</label>
+    <input type="text" id="edcBank" placeholder="e.g. Mandiri / BCA / BRI" disabled />
+    <label for="edcTerminal">Terminal (optional — only if known)</label>
+    <input type="text" id="edcTerminal" placeholder="label if known — no invented TID" disabled />
+    <label for="edcDate">Settlement / batch date</label>
+    <input type="date" id="edcDate" disabled />
+    <div class="row">
+      <div>
+        <label for="edcCardAmt">EDC card amount</label>
+        <input type="number" id="edcCardAmt" min="0" step="1000" placeholder="card only" disabled inputmode="decimal" />
+      </div>
+      <div>
+        <label for="edcQrisAmt">QRIS amount</label>
+        <input type="number" id="edcQrisAmt" min="0" step="1000" placeholder="QRIS only" disabled inputmode="decimal" />
+      </div>
+    </div>
+    <label for="edcBatchRef">Batch / ref</label>
+    <input type="text" id="edcBatchRef" placeholder="optional" disabled />
+    <label for="edcRef">Receipt image ref</label>
+    <input type="text" id="edcRef" placeholder="Required — photo/file ref" disabled />
+    <button class="btn" id="btnEdcExtract" data-cap="submit" type="button" disabled>Wolf reads EDC receipt</button>
+    <button class="btn btn-ok" id="btnEdcLooks" data-cap="submit" type="button" disabled>Looks Correct</button>
+    <button class="btn btn-warn" id="btnEdcEdit" data-cap="submit" type="button" disabled>Edit &amp; confirm</button>
+    <button class="btn btn-primary" id="btnEdc" data-cap="submit" type="button" disabled>Add EDC Receipt</button>
+    <div id="edcList" class="muted" style="margin-top:10px">No EDC receipts yet.</div>
+    <div id="edcTotals" class="muted"></div>
+    <p class="muted">TOTAL_EDC / TOTAL_QRIS / TOTAL_CARD_QRIS from confirmed receipts. ESB card ≠ EDC settlement.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Cash count</h2>
     <label for="cashAmt">Cash in the till (declared — not verified)</label>
     <input type="number" id="cashAmt" min="0" step="1000" placeholder="Amount counted" disabled inputmode="decimal" />
     <label for="zReportRef">POS / Z-report evidence ref (photo/file)</label>
@@ -169,25 +231,13 @@
     <input type="text" id="cashNote" placeholder="optional note" disabled />
     <button class="btn" id="btnDeclare" data-cap="submit" type="button" disabled>Submit till + Z-report</button>
     <p class="muted">Declared cash is never copied from ESB. ESB cash is payment lines only.</p>
-    <button class="btn btn-ok" id="btnReconcile" data-cap="submit" type="button" disabled>Reconcile</button>
-    <div id="statusBox" style="margin-top:12px"></div>
-    <div class="msg" id="msg"></div>
   </div>
 
   <div class="panel">
-    <h2>EDC settlement (per terminal)</h2>
-    <p class="muted" id="edcCfgNote">Terminal inventory: checking…</p>
-    <label for="edcBank">Acquirer / bank label</label>
-    <input type="text" id="edcBank" placeholder="e.g. Mandiri" disabled />
-    <label for="edcBatch">Batch total (slip)</label>
-    <input type="number" id="edcBatch" min="0" step="1000" placeholder="Settlement slip total" disabled inputmode="decimal" />
-    <label for="edcTxn">Txn count (optional)</label>
-    <input type="number" id="edcTxn" min="0" step="1" placeholder="optional" disabled inputmode="numeric" />
-    <label for="edcRef">Settlement slip evidence ref</label>
-    <input type="text" id="edcRef" placeholder="Required — photo/file ref" disabled />
-    <button class="btn" id="btnEdc" data-cap="submit" type="button" disabled>Add EDC line</button>
-    <div id="edcList" class="muted" style="margin-top:10px">No EDC lines yet.</div>
-    <p class="muted">Card Total = Σ EDC batches when present. ESB card payments are not EDC settlement.</p>
+    <h2>Reconciliation board</h2>
+    <div id="reconBox" class="muted">Open a close to see cash / EDC / QRIS expected vs confirmed.</div>
+    <button class="btn btn-ok" id="btnReconcile" data-cap="submit" type="button" disabled>Reconcile</button>
+    <button class="btn" id="btnReconRefresh" type="button" disabled>Refresh recon</button>
   </div>
 
   <div class="panel">
@@ -216,6 +266,8 @@
   let close = null;
   let me = null;
   let policyCount = null;
+  let edcDraft = null;
+  let esbDraft = null;
   let caps = {
     open: false, capture: false, declare: false, reconcile: false,
     exception: false, resolve: false, verify: false, submit: false
@@ -313,6 +365,7 @@
     const canDeclare = (st === "DATA_CAPTURED" || st === "EVIDENCE_SUBMITTED") && !!caps.declare;
     const canRec = (st === "EVIDENCE_SUBMITTED" || st === "VARIANCE_REQUIRES_POLICY") && !!caps.reconcile;
     const canEdc = !!close && st !== "VERIFIED_CLOSED" && st !== "CANCELLED" && !!caps.submit;
+    const canEsbR = canEdc && (st === "DATA_CAPTURED" || st === "EVIDENCE_SUBMITTED" || st === "VARIANCE_REQUIRES_POLICY" || st === "OPEN");
     $("btnOpen").hidden = !caps.open;
     $("btnCapture").hidden = !caps.capture;
     $("btnDeclare").hidden = !caps.declare;
@@ -324,30 +377,89 @@
     $("cashNote").disabled = !canDeclare;
     $("btnDeclare").disabled = !canDeclare;
     $("btnReconcile").disabled = !canRec;
-    $("edcBank").disabled = !canEdc;
-    $("edcBatch").disabled = !canEdc;
-    $("edcTxn").disabled = !canEdc;
-    $("edcRef").disabled = !canEdc;
-    $("btnEdc").disabled = !canEdc;
+    $("btnReconRefresh").disabled = !close;
+    ["edcBank","edcTerminal","edcDate","edcCardAmt","edcQrisAmt","edcBatchRef","edcRef","btnEdc","btnEdcExtract","btnEdcLooks","btnEdcEdit"].forEach((id) => {
+      if ($(id)) $(id).disabled = !canEdc;
+    });
+    ["esbReceiptRef","esbCash","esbEdc","esbQris","btnEsbExtract","btnEsbLooks","btnEsbEdit"].forEach((id) => {
+      if ($(id)) $(id).disabled = !canEsbR;
+    });
     renderEdc(close);
+    renderEsbReceipt(close);
+    renderRecon(close);
   }
 
   function renderEdc(cl) {
     const el = $("edcList");
+    const tot = $("edcTotals");
     if (!el) return;
-    const lines = (cl && cl.edc_lines) || [];
-    const card = (cl && cl.card_total) || {};
-    if (!lines.length) {
-      el.textContent = "No EDC lines yet. Card Total unset until slips are bound.";
+    const receipts = (cl && cl.edc_receipts) || [];
+    const rt = (cl && cl.receipt_totals) || {};
+    if (!receipts.length) {
+      el.textContent = "No EDC receipts yet. Add only banks used today (0..N).";
+      if (tot) tot.textContent = "";
       return;
     }
+    el.innerHTML = receipts.map((r) =>
+      `<div class="exc"><strong>${r.acquirer_label}</strong> · EDC ${money(r.edc_card_amount)} · QRIS ${money(r.qris_amount)} · total ${money(r.receipt_total)}` +
+      (r.duplicate_warn ? ` <span class="state warn">duplicate warn</span>` : "") +
+      `<div class="muted">${r.human_confirm_status}` +
+      (r.settlement_batch_date ? ` · ${r.settlement_batch_date}` : "") +
+      (r.batch_ref ? ` · ref ${r.batch_ref}` : "") +
+      ` · ${r.confirmed_by_person_id || ""}` +
+      `</div></div>`
+    ).join("");
+    if (tot) {
+      tot.innerHTML =
+        `<div class="row">` +
+        `<div class="fig">${money(rt.TOTAL_EDC)}<small>TOTAL_EDC</small></div>` +
+        `<div class="fig">${money(rt.TOTAL_QRIS)}<small>TOTAL_QRIS</small></div>` +
+        `</div>` +
+        `<div class="fig" style="margin-top:8px">${money(rt.TOTAL_CARD_QRIS)}<small>TOTAL_CARD_QRIS (EDC+QRIS, never merged labels)</small></div>`;
+    }
+  }
+
+  function renderEsbReceipt(cl) {
+    const el = $("esbReceiptBox");
+    if (!el) return;
+    const rows = (cl && cl.esb_closing_receipts) || [];
+    if (!rows.length) {
+      el.textContent = "No ESB closing receipt yet. Photograph after ESB API pull.";
+      return;
+    }
+    el.innerHTML = rows.map((r) =>
+      `<div class="exc">Cash ${money(r.cash_amount)} · EDC ${money(r.edc_card_amount)} · QRIS ${money(r.qris_amount)}` +
+      (r.api_mismatch ? ` <span class="state bad">API mismatch</span>` : ` <span class="state ok">matches API</span>`) +
+      `<div class="muted">${r.human_confirm_status} · dual source kept · no silent overwrite</div></div>`
+    ).join("");
+  }
+
+  function renderRecon(cl) {
+    const el = $("reconBox");
+    if (!el) return;
+    const b = (cl && cl.recon_board) || null;
+    if (!b) {
+      el.textContent = "Open a close to see cash / EDC / QRIS expected vs confirmed.";
+      return;
+    }
+    const cash = b.cash || {};
+    const edc = b.edc || {};
+    const qris = b.qris || {};
+    const ev = b.evidence_completeness || {};
     el.innerHTML =
-      lines.map((l) =>
-        `<div class="exc"><strong>${l.acquirer_label}</strong> · ${money(l.batch_total)}` +
-        (l.txn_count != null ? ` · ${l.txn_count} txn` : "") +
-        `<div class="muted">evidence ${l.evidence_id}</div></div>`
-      ).join("") +
-      `<div class="fig" style="margin-top:8px">${money(card.card_total_from_edc)}<small>Card Total (Σ EDC)</small></div>`;
+      `<div class="row"><div class="fig">${money(cash.esb_expected)}<small>ESB cash expected</small></div>` +
+      `<div class="fig">${money(cash.declared_confirmed)}<small>Cash declared</small></div></div>` +
+      `<div class="muted">Cash variance ${money(cash.variance)}</div>` +
+      `<div class="row" style="margin-top:8px"><div class="fig">${money(edc.esb_expected)}<small>ESB EDC expected</small></div>` +
+      `<div class="fig">${money(edc.receipts_confirmed)}<small>EDC receipts confirmed</small></div></div>` +
+      `<div class="muted">EDC variance ${money(edc.variance)}</div>` +
+      `<div class="row" style="margin-top:8px"><div class="fig">${money(qris.esb_expected)}<small>ESB QRIS expected</small></div>` +
+      `<div class="fig">${money(qris.receipts_confirmed)}<small>QRIS receipts confirmed</small></div></div>` +
+      `<div class="muted">QRIS variance ${money(qris.variance)} · never merged into card</div>` +
+      (b.esb_api_vs_receipt_mismatch
+        ? `<p class="msg err">ESB receipt ≠ live API — visible exception; API not overwritten.</p>`
+        : "") +
+      `<p class="muted" style="margin-top:8px">Evidence: API ${ev.esb_api_snapshot ? "yes" : "no"} · ESB receipt ${ev.esb_closing_receipt_confirmed ? "yes" : "no"} · cash ${ev.declared_cash ? "yes" : "no"} · EDC receipts ${ev.edc_receipts_confirmed ? "yes" : "no"} · complete ${b.evidence_complete ? "yes" : "no"}</p>`;
   }
 
   async function loadOutletConfig() {
@@ -638,28 +750,179 @@
     }
   };
 
-  $("btnEdc").onclick = async () => {
+  function edcPayload(action) {
+    return {
+      close_id: close.close_id,
+      acquirer_label: $("edcBank").value,
+      edc_card_amount: $("edcCardAmt").value === "" ? 0 : Number($("edcCardAmt").value),
+      qris_amount: $("edcQrisAmt").value === "" ? 0 : Number($("edcQrisAmt").value),
+      settlement_batch_date: $("edcDate").value || null,
+      batch_ref: $("edcBatchRef").value || null,
+      terminal_label: $("edcTerminal").value || null,
+      object_ref: $("edcRef").value || null,
+      action: action,
+      vision_event_id: edcDraft && edcDraft.vision_event_id,
+      extracted: edcDraft && edcDraft.extracted,
+      ocr_confidence: edcDraft && edcDraft.extracted && edcDraft.extracted.ocr_confidence,
+    };
+  }
+
+  async function submitEdcReceipt(action) {
     if (!close) return;
     setMsg("");
     try {
-      const data = await api("/api/venue-close/edc-line", {
+      const data = await api("/api/venue-close/edc-receipt", {
+        method: "POST",
+        body: JSON.stringify(edcPayload(action)),
+      });
+      close = Object.assign({}, close, {
+        edc_receipts: data.edc_receipts,
+        receipt_totals: data.receipt_totals,
+        unused_terminals: data.unused_terminals,
+      });
+      try {
+        const rb = await api("/api/venue-close/" + encodeURIComponent(close.close_id) + "/recon-board");
+        close.recon_board = rb;
+      } catch (_) { /* recon optional mid-flow */ }
+      renderClose();
+      const warn = data.duplicate_warn ? " Duplicate warning — not deleted." : "";
+      setMsg("EDC receipt " + (data.human_confirm_status || "CONFIRMED") + ". AI was not accounting truth." + warn, true);
+      $("edcCardAmt").value = "";
+      $("edcQrisAmt").value = "";
+      $("edcBatchRef").value = "";
+      $("edcRef").value = "";
+      edcDraft = null;
+    } catch (e) {
+      setMsg((e.data && e.data.message) || e.message || String(e));
+    }
+  }
+
+  $("btnEdcExtract").onclick = async () => {
+    if (!close) return;
+    setMsg("");
+    try {
+      const data = await api("/api/venue-close/edc-receipt-extract", {
         method: "POST",
         body: JSON.stringify({
           close_id: close.close_id,
-          acquirer_label: $("edcBank").value,
-          batch_total: Number($("edcBatch").value),
-          txn_count: $("edcTxn").value === "" ? null : Number($("edcTxn").value),
           object_ref: $("edcRef").value || null,
+          fixture_fields: {
+            acquirer_label: $("edcBank").value || null,
+            edc_card_amount: $("edcCardAmt").value === "" ? null : Number($("edcCardAmt").value),
+            qris_amount: $("edcQrisAmt").value === "" ? null : Number($("edcQrisAmt").value),
+            settlement_batch_date: $("edcDate").value || null,
+            batch_ref: $("edcBatchRef").value || null,
+            terminal_label: $("edcTerminal").value || null,
+            ocr_confidence: 0.82,
+          },
+        }),
+      });
+      edcDraft = data;
+      const x = data.extracted || {};
+      if (x.acquirer_label) $("edcBank").value = x.acquirer_label;
+      if (x.edc_card_amount != null) $("edcCardAmt").value = x.edc_card_amount;
+      if (x.qris_amount != null) $("edcQrisAmt").value = x.qris_amount;
+      if (x.settlement_batch_date) $("edcDate").value = x.settlement_batch_date;
+      if (x.batch_ref) $("edcBatchRef").value = x.batch_ref;
+      if (x.terminal_label) $("edcTerminal").value = x.terminal_label;
+      if (data.image_object_ref && !$("edcRef").value) $("edcRef").value = data.image_object_ref;
+      const low = x.low_confidence_flag || x.ocr_confidence_band === "LOW";
+      setMsg(
+        low
+          ? "Low confidence draft — fields blanked/flagged. Edit before confirm. AI ≠ truth."
+          : "Vision draft ready. Looks Correct or Edit. AI ≠ accounting truth.",
+        !low
+      );
+    } catch (e) {
+      setMsg((e.data && e.data.message) || e.message || String(e));
+    }
+  };
+
+  $("btnEdcLooks").onclick = () => submitEdcReceipt("looks_correct");
+  $("btnEdcEdit").onclick = () => submitEdcReceipt("edit");
+  $("btnEdc").onclick = () => submitEdcReceipt("confirm");
+
+  $("btnEsbExtract").onclick = async () => {
+    if (!close) return;
+    setMsg("");
+    try {
+      const data = await api("/api/venue-close/esb-receipt-extract", {
+        method: "POST",
+        body: JSON.stringify({
+          close_id: close.close_id,
+          object_ref: $("esbReceiptRef").value || null,
+          fixture_fields: {
+            cash_amount: $("esbCash").value === "" ? null : Number($("esbCash").value),
+            edc_card_amount: $("esbEdc").value === "" ? null : Number($("esbEdc").value),
+            qris_amount: $("esbQris").value === "" ? null : Number($("esbQris").value),
+            ocr_confidence: 0.8,
+          },
+        }),
+      });
+      esbDraft = data;
+      const x = data.extracted || {};
+      if (x.cash_amount != null) $("esbCash").value = x.cash_amount;
+      if (x.edc_card_amount != null) $("esbEdc").value = x.edc_card_amount;
+      if (x.qris_amount != null) $("esbQris").value = x.qris_amount;
+      if (data.image_object_ref && !$("esbReceiptRef").value) $("esbReceiptRef").value = data.image_object_ref;
+      const mm = data.api_mismatch_preview && data.api_mismatch_preview.api_mismatch;
+      setMsg(
+        mm
+          ? "Draft shows API mismatch — will stay visible; API not overwritten. Confirm or Edit."
+          : "ESB receipt draft ready. Looks Correct or Edit. Dual source kept.",
+        !mm
+      );
+    } catch (e) {
+      setMsg((e.data && e.data.message) || e.message || String(e));
+    }
+  };
+
+  async function submitEsbReceipt(action) {
+    if (!close) return;
+    setMsg("");
+    try {
+      const data = await api("/api/venue-close/esb-receipt", {
+        method: "POST",
+        body: JSON.stringify({
+          close_id: close.close_id,
+          action: action,
+          object_ref: $("esbReceiptRef").value || null,
+          cash_amount: $("esbCash").value === "" ? null : Number($("esbCash").value),
+          edc_card_amount: $("esbEdc").value === "" ? null : Number($("esbEdc").value),
+          qris_amount: $("esbQris").value === "" ? null : Number($("esbQris").value),
+          vision_event_id: esbDraft && esbDraft.vision_event_id,
+          extracted: esbDraft && esbDraft.extracted,
         }),
       });
       close = Object.assign({}, close, {
-        edc_lines: data.edc_lines,
-        card_total: data.card_total,
+        esb_closing_receipts: data.esb_closing_receipts,
       });
+      try {
+        const rb = await api("/api/venue-close/" + encodeURIComponent(close.close_id) + "/recon-board");
+        close.recon_board = rb;
+      } catch (_) {}
       renderClose();
-      setMsg("EDC settlement slip bound. Not equated to ESB card payments.", true);
-      $("edcBatch").value = "";
-      $("edcRef").value = "";
+      setMsg(
+        data.api_mismatch
+          ? "ESB receipt confirmed with visible API mismatch. Live API preserved."
+          : "ESB closing receipt confirmed. Dual source kept.",
+        !data.api_mismatch
+      );
+      esbDraft = null;
+    } catch (e) {
+      setMsg((e.data && e.data.message) || e.message || String(e));
+    }
+  }
+
+  $("btnEsbLooks").onclick = () => submitEsbReceipt("looks_correct");
+  $("btnEsbEdit").onclick = () => submitEsbReceipt("edit");
+
+  $("btnReconRefresh").onclick = async () => {
+    if (!close) return;
+    try {
+      close.recon_board = await api("/api/venue-close/" + encodeURIComponent(close.close_id) + "/recon-board");
+      renderRecon(close);
+      setMsg("Recon refreshed.", true);
     } catch (e) {
       setMsg((e.data && e.data.message) || e.message || String(e));
     }

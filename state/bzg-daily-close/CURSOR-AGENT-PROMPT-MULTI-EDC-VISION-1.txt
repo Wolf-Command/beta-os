@@ -1,0 +1,25 @@
+You are building BZG-DAILY-CLOSE-MULTI-EDC-VISION-1 on local beta-os ONLY (branch build/wolf-command-rebuild). NO git push. NO origin. Prod :8787 READ-ONLY.
+
+Read first:
+- /Users/wolfterminal/beta-os/state/bzg-daily-close/CURSOR-PACK-BZG-DAILY-CLOSE-MULTI-EDC-VISION-1.md
+- /Users/wolfterminal/beta-os/state/bzg-daily-close/OWNER-ORDER-BZG-DAILY-CLOSE-MULTI-EDC-VISION-20261002.json
+- scripts/core/bzg_daily_close.py and related venue_close / daily close UI routes
+- Prior tip a8085be path if present
+
+OWNER TRUTH (Matt):
+1. Multiple EDC receipts per day (0..N). Uma rotates up to 3 banks; some days 1/2/3. NEVER require exactly one. Repeating "Add EDC Receipt". No fake placeholders for unused terminals.
+2. Each receipt: SEPARATE edc_card_amount AND qris_amount. Bank/acquirer, terminal if known, settlement/batch date, amounts, total, image, batch/ref, OCR confidence, human confirm. EDC+QRIS=receipt total. Aggregate TOTAL_EDC, TOTAL_QRIS, TOTAL_CARD_QRIS. Reconcile to ESB separately — NEVER merge QRIS into card.
+3. Configured terminals = available options; receipts entered = used today. Dynamic banks.
+4. ESB closing receipt required + live ESB API — keep BOTH; mismatch = visible exception; no silent overwrite.
+5. Vision draft → Iza Looks Correct / Edit. AI is NOT accounting truth. Preserve extracted, confirmed, who, ts, image.
+6. Low confidence: do not invent; flag or blank.
+7. Duplicate warn (hash/ref/amount/date); no silent delete.
+8. Recon board: cash / EDC / QRIS expected vs confirmed + variances + evidence completeness.
+9. Phone-first. Canonical BZG engine; only Uma human_close_enabled for live tonight.
+10. Do NOT invent terminal TIDs or variance tolerances. If 3 Uma banks not named in config, leave empty/NEEDS CONFIGURATION but free-text bank on Add Receipt must work.
+11. staff_ready/human_commissioned stay false.
+12. Tests must cover: 1 receipt, 3 receipts, EDC-only, QRIS-only, both, unused configured terminal, image extraction, wrong extraction edited, low-confidence, ESB receipt extraction, API vs receipt mismatch, duplicate warning, totals, phone workflow, evidence/audit.
+
+Vision: cheapest reliable approved Wolf vision (Gemini OK if authorised). Reuse existing Alchemist/Wolf vision patterns if present.
+
+Implement schema + API + mobile UX + tests. Commit locally. Write RESULT md+json under state/bzg-daily-close/. Print EXIT:0 and tip SHA at end.

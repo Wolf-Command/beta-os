@@ -84,6 +84,9 @@ def _classify_pay_type(name: str | None) -> str:
     n = (name or "").strip().upper()
     if n == "CASH":
         return "CASH"
+    # QRIS never merges into CARD — check before CARD bucket.
+    if "QRIS" in n:
+        return "QRIS"
     if n == "CARD":
         return "CARD"
     return "OTHER"
@@ -129,6 +132,7 @@ def snapshot_day(
     payment_total = 0.0
     cash_from_payments = 0.0
     card_from_payments = 0.0
+    qris_from_payments = 0.0
     other_from_payments = 0.0
     pay_mix: dict[str, float] = {}
 
@@ -175,6 +179,8 @@ def snapshot_day(
                 cash_from_payments += amt
             elif bucket == "CARD":
                 card_from_payments += amt
+            elif bucket == "QRIS":
+                qris_from_payments += amt
             else:
                 other_from_payments += amt
             pay_sig.append(f"{ptype_raw}:{amt}")
@@ -210,13 +216,17 @@ def snapshot_day(
         "payment_total": round(payment_total, 2),
         "cash_from_payments": round(cash_from_payments, 2),
         "card_from_payments": round(card_from_payments, 2),
+        "qris_from_payments": round(qris_from_payments, 2),
         "other_from_payments": round(other_from_payments, 2),
         "finished_count": finished_count,
         "cancelled_count": cancelled_count,
         "other_status_count": other_status,
         "payment_mix": {k: round(v, 2) for k, v in sorted(pay_mix.items())},
         "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "card_label": "ESB_CARD_FROM_PAYMENTS",
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
         "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "qris_never_merged_into_card": True,
     }
     meta = {
         "branch": branch,

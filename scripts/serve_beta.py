@@ -3024,6 +3024,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if m_edc_lines:
             self._bzg_daily_close_edc_lines_get(m_edc_lines.group(1))
             return
+        m_edc_receipts = re.match(r"^/api/venue-close/([^/]+)/edc-receipts$", path)
+        if m_edc_receipts:
+            self._bzg_daily_close_edc_receipts_get(m_edc_receipts.group(1))
+            return
+        m_esb_receipts = re.match(r"^/api/venue-close/([^/]+)/esb-receipts$", path)
+        if m_esb_receipts:
+            self._bzg_daily_close_esb_receipts_get(m_esb_receipts.group(1))
+            return
+        m_recon = re.match(r"^/api/venue-close/([^/]+)/recon-board$", path)
+        if m_recon:
+            self._bzg_daily_close_recon_board(m_recon.group(1))
+            return
         # CAP-INTEL-01 read-only orchestration. Owner / PERS-MATT. Anon → 403.
         if path == "/api/intel/orchestrate":
             self._intel_orchestrate(qs)
@@ -4705,6 +4717,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "till-declare",
             "edc-line",
             "edc-terminals",
+            "edc-receipt",
+            "edc-receipt-extract",
+            "esb-receipt",
+            "esb-receipt-extract",
+            "recon-board",
             "outlets",
             "reconcile",
             "exception",
@@ -7735,6 +7752,18 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/venue-close/edc-line":
             self._bzg_daily_close_edc_line()
+            return
+        if path == "/api/venue-close/edc-receipt-extract":
+            self._bzg_daily_close_edc_receipt_extract()
+            return
+        if path == "/api/venue-close/edc-receipt":
+            self._bzg_daily_close_edc_receipt_confirm()
+            return
+        if path == "/api/venue-close/esb-receipt-extract":
+            self._bzg_daily_close_esb_receipt_extract()
+            return
+        if path == "/api/venue-close/esb-receipt":
+            self._bzg_daily_close_esb_receipt_confirm()
             return
         if path == "/api/venue-close/reconcile":
             self._venue_close_reconcile()
@@ -41973,6 +42002,207 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 content_hash=(body.get("content_hash") or None),
                 txn_count=body.get("txn_count"),
                 terminal_config_id=(body.get("terminal_config_id") or None),
+                identity=identity,
+            )
+            self._send_json({"ok": True, **out})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_vision_image_bytes(self, body: dict) -> tuple[bytes | None, str]:
+        import base64 as _b64
+
+        b64 = (body.get("image_base64") or body.get("data_base64") or "").strip()
+        mime = str(body.get("mime_type") or body.get("content_type") or "image/jpeg")
+        if not b64:
+            return None, mime
+        if "," in b64:
+            header, b64 = b64.split(",", 1)
+            if "image/" in header:
+                mime = header.split("image/")[-1].split(";")[0]
+                mime = f"image/{mime}" if not mime.startswith("image/") else mime
+        try:
+            return _b64.b64decode(b64), mime
+        except Exception:  # noqa: BLE001
+            return None, mime
+
+    def _bzg_daily_close_edc_receipts_get(self, close_id: str) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            receipts = _bzg_daily_close.list_edc_receipts(close_id)
+            totals = _bzg_daily_close.receipt_totals(close_id)
+            self._send_json(
+                {
+                    "ok": True,
+                    "close_id": close_id,
+                    "edc_receipts": receipts,
+                    "receipt_totals": totals,
+                    **_bzg_daily_close.HONESTY,
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_esb_receipts_get(self, close_id: str) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            rows = _bzg_daily_close.list_esb_closing_receipts(close_id)
+            self._send_json(
+                {
+                    "ok": True,
+                    "close_id": close_id,
+                    "esb_closing_receipts": rows,
+                    **_bzg_daily_close.HONESTY,
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_recon_board(self, close_id: str) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            self._send_json(_bzg_daily_close.recon_board(close_id))
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_edc_receipt_extract(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            img, mime = self._bzg_vision_image_bytes(body)
+            fixture = body.get("fixture_fields")
+            if fixture is not None and not isinstance(fixture, dict):
+                fixture = None
+            out = _bzg_daily_close.extract_edc_receipt_draft(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                image_bytes=img,
+                mime_type=mime,
+                image_object_ref=(body.get("object_ref") or body.get("image_object_ref") or None),
+                content_hash=(body.get("content_hash") or None),
+                fixture_fields=fixture,
+                identity=identity,
+            )
+            self._send_json(out)
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_edc_receipt_confirm(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "variance_cash_amount", "esb_totals", "TOTAL_EDC", "TOTAL_QRIS")
+        ):
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            overrides = body.get("confirmed_overrides")
+            if overrides is not None and not isinstance(overrides, dict):
+                overrides = None
+            extracted = body.get("extracted")
+            if extracted is not None and not isinstance(extracted, dict):
+                extracted = None
+            out = _bzg_daily_close.confirm_edc_receipt(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                acquirer_label=str(body.get("acquirer_label") or ""),
+                edc_card_amount=body.get("edc_card_amount"),
+                qris_amount=body.get("qris_amount"),
+                action=str(body.get("action") or "confirm"),
+                object_ref=(body.get("object_ref") or body.get("image_object_ref") or None),
+                content_hash=(body.get("content_hash") or None),
+                terminal_config_id=(body.get("terminal_config_id") or None),
+                terminal_label=(body.get("terminal_label") or None),
+                settlement_batch_date=(body.get("settlement_batch_date") or None),
+                batch_ref=(body.get("batch_ref") or None),
+                ocr_confidence=body.get("ocr_confidence"),
+                extracted=extracted,
+                confirmed_overrides=overrides,
+                vision_event_id=(body.get("vision_event_id") or None),
+                identity=identity,
+            )
+            self._send_json({"ok": True, **out})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_esb_receipt_extract(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            img, mime = self._bzg_vision_image_bytes(body)
+            fixture = body.get("fixture_fields")
+            if fixture is not None and not isinstance(fixture, dict):
+                fixture = None
+            out = _bzg_daily_close.extract_esb_closing_receipt_draft(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                image_bytes=img,
+                mime_type=mime,
+                image_object_ref=(body.get("object_ref") or body.get("image_object_ref") or None),
+                content_hash=(body.get("content_hash") or None),
+                fixture_fields=fixture,
+                identity=identity,
+            )
+            self._send_json(out)
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_esb_receipt_confirm(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "variance_cash_amount", "esb_totals", "esb_fingerprint_sha256")
+        ):
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            overrides = body.get("confirmed_overrides")
+            if overrides is not None and not isinstance(overrides, dict):
+                overrides = None
+            extracted = body.get("extracted")
+            if extracted is not None and not isinstance(extracted, dict):
+                extracted = None
+            out = _bzg_daily_close.confirm_esb_closing_receipt(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                action=str(body.get("action") or "confirm"),
+                object_ref=(body.get("object_ref") or body.get("image_object_ref") or None),
+                content_hash=(body.get("content_hash") or None),
+                cash_amount=body.get("cash_amount"),
+                edc_card_amount=body.get("edc_card_amount"),
+                qris_amount=body.get("qris_amount"),
+                gross_amount=body.get("gross_amount"),
+                ocr_confidence=body.get("ocr_confidence"),
+                extracted=extracted,
+                confirmed_overrides=overrides,
+                vision_event_id=(body.get("vision_event_id") or None),
                 identity=identity,
             )
             self._send_json({"ok": True, **out})

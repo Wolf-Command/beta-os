@@ -1,38 +1,46 @@
 #!/usr/bin/env python3
-"""BZG Daily Close Till+EDC — one reusable engine over venue_close.
+"""BZG Daily Close — one reusable engine over venue_close (Till+EDC + Multi-EDC Vision).
 
-Decision served: 2026-09-17 · PICK Uma Blu Daily Close (extend) + Owner order
-BZG-DAILY-CLOSE-TILL-EDC-20261002.
+Decision served: 2026-09-17 · PICK Uma Blu Daily Close (extend) + Owner orders
+BZG-DAILY-CLOSE-TILL-EDC-20261002 and BZG-DAILY-CLOSE-MULTI-EDC-VISION-20261002.
 
 Not a second close product. Outlet config from registry. Only Uma Blu
 human_close_enabled. EDC terminals unknown → NEEDS CONFIGURATION.
-ESB payment totals ≠ EDC settlement evidence. Settlement API UNAVAILABLE.
-No invented variance tolerance. No if-Devi.
+0..N EDC receipts/day with separate EDC card + QRIS (never merge).
+Vision draft → human confirm (AI ≠ accounting truth). ESB closing receipt
++ live API dual-source; mismatch visible. Settlement API UNAVAILABLE.
+No invented variance tolerance / terminal TIDs. No if-Devi.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import sqlite3
 import uuid
 from pathlib import Path
 from typing import Any
 
 from core import audit as _audit
+from core import bzg_close_vision as _vision
 from core import bzg_outlet_registry as _outlets
 from core import evidence as _evidence
 from core import venue_close as _vc
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 CATALOG_DB = BETA_ROOT / "catalog" / "content_library.sqlite"
-PACK = "BZG-DAILY-CLOSE-TILL-EDC-1"
+PACK = "BZG-DAILY-CLOSE-MULTI-EDC-VISION-1"
+PACK_PRIOR = "BZG-DAILY-CLOSE-TILL-EDC-1"
 ENTITY = "ENT-BZG"
 OUTLET_UMA = "BZG-UMA"
 
 EVIDENCE_Z = "pos_z_report"
 EVIDENCE_EDC = "edc_settlement_slip"
+EVIDENCE_ESB_RECEIPT = "esb_closing_receipt"
 
 HONESTY = {
     **_vc.HONESTY,
     "pack": PACK,
+    "prior_pack": PACK_PRIOR,
     "staff_ready": False,
     "human_commissioned": False,
     "settlement_api": "UNAVAILABLE",
@@ -43,6 +51,10 @@ HONESTY = {
     "invented_tolerance": False,
     "invented_edc_terminals": False,
     "alchemist_soft_gap_not_policy": True,
+    "ai_is_not_accounting_truth": True,
+    "qris_never_merged_into_card": True,
+    "multi_edc_receipts": True,
+    "edc_receipts_required_count": None,  # 0..N — never exactly-one
     "engine": "venue_close",
 }
 
@@ -56,13 +68,20 @@ def db_connect(db_path: Path | None = None) -> sqlite3.Connection:
 
 
 def ensure_schema(conn: sqlite3.Connection) -> None:
-    sql = (
+    sql_031 = (
         BETA_ROOT
         / "scripts"
         / "migrations"
         / "031_bzg_daily_close_till_edc.sql"
     ).read_text(encoding="utf-8")
-    conn.executescript(sql)
+    sql_032 = (
+        BETA_ROOT
+        / "scripts"
+        / "migrations"
+        / "032_bzg_daily_close_multi_edc_vision.sql"
+    ).read_text(encoding="utf-8")
+    conn.executescript(sql_031)
+    conn.executescript(sql_032)
 
 
 def _has_table(conn: sqlite3.Connection, name: str) -> bool:
@@ -651,10 +670,1034 @@ def overview(
             "bzg_close_path": "/bzg/daily-close",
             "message": (
                 "One BZG Daily Close engine (venue_close). Config for Owner outlets; "
-                "only Uma Blu human-activated. EDC terminals NEEDS CONFIGURATION until "
-                "Owner provides inventory. Settlement API UNAVAILABLE."
+                "only Uma Blu human-activated. Multi EDC receipts (0..N) with separate "
+                "EDC card + QRIS; vision draft ≠ truth. EDC terminals NEEDS CONFIGURATION "
+                "until Owner names inventory (free-text bank still works). "
+                "Settlement API UNAVAILABLE."
             ),
             "person_id": (person_id or "").strip() or None,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def _dumps(obj: Any) -> str | None:
+    if obj is None:
+        return None
+    return json.dumps(obj, ensure_ascii=False, sort_keys=True)
+
+
+def _loads(s: Any) -> Any:
+    if s is None or s == "":
+        return None
+    if isinstance(s, (dict, list)):
+        return s
+    try:
+        return json.loads(str(s))
+    except (TypeError, json.JSONDecodeError):
+        return None
+
+
+def _amt(v: Any, default: float = 0.0) -> float:
+    if v is None or v == "":
+        return float(default)
+    try:
+        n = float(v)
+    except (TypeError, ValueError) as exc:
+        raise BzgDailyCloseError("amount must be numeric", code="invalid_amount") from exc
+    if n < 0:
+        raise BzgDailyCloseError("amount cannot be negative", code="invalid_amount")
+    return round(n, 2)
+
+
+def _record_vision_event(
+    conn: sqlite3.Connection,
+    *,
+    close_id: str,
+    target_kind: str,
+    target_id: str | None,
+    provider: str,
+    model: str | None,
+    confidence: float | None,
+    confidence_band: str | None,
+    extracted: dict[str, Any],
+    image_object_ref: str | None,
+    content_hash: str | None,
+    actor_person_id: str | None,
+) -> str:
+    eid = f"VIS-{uuid.uuid4()}"
+    conn.execute(
+        """
+        INSERT INTO venue_close_vision_events (
+          vision_event_id, close_id, target_kind, target_id, provider, model,
+          confidence, confidence_band, extracted_json, image_object_ref,
+          content_hash, actor_person_id, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            eid,
+            close_id,
+            target_kind,
+            target_id,
+            provider,
+            model,
+            confidence,
+            confidence_band,
+            _dumps(extracted) or "{}",
+            image_object_ref,
+            content_hash,
+            actor_person_id,
+            _vc.now_utc_iso(),
+        ),
+    )
+    return eid
+
+
+def list_edc_receipts(
+    close_id: str,
+    conn: sqlite3.Connection | None = None,
+) -> list[dict[str, Any]]:
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        if not _has_table(c, "venue_close_edc_receipts"):
+            return []
+        rows = [
+            dict(r)
+            for r in c.execute(
+                """
+                SELECT * FROM venue_close_edc_receipts
+                WHERE close_id=? ORDER BY created_at
+                """,
+                (close_id.strip(),),
+            ).fetchall()
+        ]
+        out: list[dict[str, Any]] = []
+        for r in rows:
+            r["extracted"] = _loads(r.pop("extracted_json", None))
+            r["confirmed"] = _loads(r.pop("confirmed_json", None))
+            r["duplicate_warn_detail"] = _loads(r.pop("duplicate_warn_json", None))
+            r["duplicate_warn"] = bool(r.get("duplicate_warn"))
+            out.append(r)
+        return out
+    finally:
+        if own:
+            c.close()
+
+
+def receipt_totals(
+    close_id: str,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    """Aggregate confirmed (or all non-draft) receipt amounts. QRIS never in EDC."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        receipts = list_edc_receipts(close_id, conn=c)
+        # Confirmed/edited count toward recon; drafts excluded from confirmed totals.
+        confirmed = [
+            r
+            for r in receipts
+            if r.get("human_confirm_status") in ("CONFIRMED", "EDITED")
+        ]
+        total_edc = round(sum(float(r.get("edc_card_amount") or 0) for r in confirmed), 2)
+        total_qris = round(sum(float(r.get("qris_amount") or 0) for r in confirmed), 2)
+        return {
+            "close_id": close_id,
+            "receipt_count": len(receipts),
+            "confirmed_receipt_count": len(confirmed),
+            "draft_receipt_count": len(receipts) - len(confirmed),
+            "TOTAL_EDC": total_edc,
+            "TOTAL_QRIS": total_qris,
+            "TOTAL_CARD_QRIS": round(total_edc + total_qris, 2),
+            "qris_never_merged_into_card": True,
+            "basis": "SUM_CONFIRMED_EDC_RECEIPTS",
+            "esb_payments_are_not_edc_settlement": True,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def unused_configured_terminals(
+    close_id: str,
+    outlet_id: str,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    """Configured terminals with no receipt today — available options, not placeholders."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        terms = list_edc_terminals(outlet_id, conn=c)
+        receipts = list_edc_receipts(close_id, conn=c)
+        used_ids = {
+            (r.get("terminal_config_id") or "").strip()
+            for r in receipts
+            if (r.get("terminal_config_id") or "").strip()
+        }
+        unused = [
+            t
+            for t in terms["terminals"]
+            if t["terminal_config_id"] not in used_ids
+        ]
+        return {
+            "outlet_id": outlet_id,
+            "close_id": close_id,
+            "configured_count": terms["edc_terminal_count"],
+            "used_terminal_ids": sorted(used_ids),
+            "unused_terminals": unused,
+            "unused_count": len(unused),
+            "edc_terminal_config_status": terms["edc_terminal_config_status"],
+            "no_fake_placeholders": True,
+            "message": (
+                "Unused configured terminals are available options only — "
+                "no placeholder receipt rows created"
+            ),
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def _duplicate_warn(
+    conn: sqlite3.Connection,
+    *,
+    close_id: str,
+    content_hash: str | None,
+    batch_ref: str | None,
+    edc_card_amount: float,
+    qris_amount: float,
+    settlement_batch_date: str | None,
+    exclude_receipt_id: str | None = None,
+) -> dict[str, Any]:
+    receipts = list_edc_receipts(close_id, conn=conn)
+    hits: list[dict[str, Any]] = []
+    ch = (content_hash or "").strip()
+    ref = (batch_ref or "").strip()
+    date = (settlement_batch_date or "").strip()
+    total = round(edc_card_amount + qris_amount, 2)
+    for r in receipts:
+        if exclude_receipt_id and r.get("edc_receipt_id") == exclude_receipt_id:
+            continue
+        reasons: list[str] = []
+        if ch and (r.get("content_hash") or "").strip() == ch:
+            reasons.append("content_hash")
+        if ref and (r.get("batch_ref") or "").strip() == ref:
+            reasons.append("batch_ref")
+        r_total = round(float(r.get("edc_card_amount") or 0) + float(r.get("qris_amount") or 0), 2)
+        r_date = (r.get("settlement_batch_date") or "").strip()
+        if total > 0 and r_total == total and date and r_date == date:
+            reasons.append("amount_and_date")
+        if reasons:
+            hits.append(
+                {
+                    "edc_receipt_id": r.get("edc_receipt_id"),
+                    "reasons": reasons,
+                    "acquirer_label": r.get("acquirer_label"),
+                }
+            )
+    return {
+        "duplicate_warn": bool(hits),
+        "matches": hits,
+        "silent_delete": False,
+        "message": (
+            "Possible duplicate receipt — not deleted; human must decide"
+            if hits
+            else None
+        ),
+    }
+
+
+def extract_edc_receipt_draft(
+    close_id: str,
+    *,
+    verified_person_id: str,
+    image_bytes: bytes | None = None,
+    mime_type: str = "image/jpeg",
+    image_object_ref: str | None = None,
+    content_hash: str | None = None,
+    fixture_fields: dict[str, Any] | None = None,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Vision draft for Add EDC Receipt. AI is NOT accounting truth."""
+    verified = (verified_person_id or "").strip()
+    if not verified:
+        raise BzgDailyCloseError(
+            "verified_person_id required", code="missing_verified_person"
+        )
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        ensure_schema(c)
+        row = _vc.get_close(close_id, conn=c)
+        if not row:
+            raise BzgDailyCloseError("close not found", code="not_found", http_status=404)
+        draft = _vision.extract_edc_receipt(
+            image_bytes=image_bytes,
+            mime_type=mime_type,
+            fixture_fields=fixture_fields,
+        )
+        extracted = draft.get("extracted") or {}
+        ref = (image_object_ref or "").strip() or None
+        ch = (content_hash or "").strip() or None
+        if image_bytes and not ch:
+            ch = hashlib.sha256(image_bytes).hexdigest()
+        if not ref and ch:
+            ref = f"vision://edc/{ch[:16]}"
+        vid = _record_vision_event(
+            c,
+            close_id=close_id,
+            target_kind="EDC_RECEIPT",
+            target_id=None,
+            provider=str(draft.get("provider") or "unknown"),
+            model=draft.get("model"),
+            confidence=extracted.get("ocr_confidence"),
+            confidence_band=extracted.get("ocr_confidence_band"),
+            extracted=extracted,
+            image_object_ref=ref,
+            content_hash=ch,
+            actor_person_id=verified,
+        )
+        _audit.safe_record(
+            action="venue_close.edc_receipt_extract",
+            result="ALLOWED",
+            source="bzg_daily_close",
+            actor_type="PERSON",
+            verified_person_id=verified,
+            actor_person_id=verified,
+            identity_assurance=(identity or {}).get("identity_assurance"),
+            resource_type="venue_daily_close",
+            resource_id=close_id,
+            reason_code="vision_draft_not_truth",
+            metadata={
+                "vision_event_id": vid,
+                "provider": draft.get("provider"),
+                "ai_is_not_accounting_truth": True,
+                **HONESTY,
+            },
+            conn=c,
+        )
+        if commit:
+            c.commit()
+        return {
+            **HONESTY,
+            "ok": True,
+            "close_id": close_id,
+            "vision_event_id": vid,
+            "draft": draft,
+            "extracted": extracted,
+            "image_object_ref": ref,
+            "content_hash": ch,
+            "ai_is_not_accounting_truth": True,
+            "next": "Looks Correct / Edit — human confirm required",
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def confirm_edc_receipt(
+    close_id: str,
+    *,
+    verified_person_id: str,
+    acquirer_label: str,
+    edc_card_amount: float | None = None,
+    qris_amount: float | None = None,
+    action: str = "confirm",
+    object_ref: str | None = None,
+    content_hash: str | None = None,
+    terminal_config_id: str | None = None,
+    terminal_label: str | None = None,
+    settlement_batch_date: str | None = None,
+    batch_ref: str | None = None,
+    ocr_confidence: float | None = None,
+    extracted: dict[str, Any] | None = None,
+    confirmed_overrides: dict[str, Any] | None = None,
+    vision_event_id: str | None = None,
+    identity: dict[str, Any] | None = None,
+    allow_test_write: bool = False,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Human Looks Correct / Edit — persist confirmed EDC+QRIS separately."""
+    verified = (verified_person_id or "").strip()
+    if not verified:
+        raise BzgDailyCloseError(
+            "verified_person_id required", code="missing_verified_person"
+        )
+    bank = (acquirer_label or "").strip()
+    if not bank:
+        raise BzgDailyCloseError(
+            "acquirer_label required (free-text bank OK)",
+            code="missing_acquirer_label",
+        )
+    act = (action or "confirm").strip().lower()
+    if act not in ("confirm", "edit", "looks_correct"):
+        raise BzgDailyCloseError("action must be confirm|edit|looks_correct", code="invalid_action")
+    status = "EDITED" if act == "edit" else "CONFIRMED"
+
+    overrides = confirmed_overrides or {}
+    edc = _amt(
+        overrides.get("edc_card_amount", edc_card_amount)
+        if "edc_card_amount" in overrides or edc_card_amount is not None
+        else 0.0
+    )
+    qris = _amt(
+        overrides.get("qris_amount", qris_amount)
+        if "qris_amount" in overrides or qris_amount is not None
+        else 0.0
+    )
+    if edc == 0.0 and qris == 0.0:
+        raise BzgDailyCloseError(
+            "receipt needs edc_card_amount and/or qris_amount > 0",
+            code="missing_amounts",
+        )
+    total = round(edc + qris, 2)
+    ref = (object_ref or overrides.get("object_ref") or "").strip() or None
+    ch = (content_hash or overrides.get("content_hash") or "").strip() or None
+    if not ref and not ch:
+        raise BzgDailyCloseError(
+            "EDC receipt requires image evidence object_ref or content_hash",
+            code="missing_edc_evidence",
+        )
+    batch = (batch_ref or overrides.get("batch_ref") or "").strip() or None
+    sdate = (
+        settlement_batch_date or overrides.get("settlement_batch_date") or ""
+    ).strip() or None
+    tlabel = (terminal_label or overrides.get("terminal_label") or "").strip() or None
+    tid = (terminal_config_id or overrides.get("terminal_config_id") or "").strip() or None
+
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        _vc.assert_catalog_writable(Path(_vc.CATALOG_DB))
+        _vc._assert_perm(  # noqa: SLF001
+            verified_person_id=verified,
+            permission_code="venue.close.submit",
+            conn=c,
+        )
+        ensure_schema(c)
+        row = _vc.get_close(close_id, conn=c)
+        if not row:
+            raise BzgDailyCloseError("close not found", code="not_found", http_status=404)
+        if row["state"] in _vc.TERMINAL:
+            raise BzgDailyCloseError(
+                f"close is terminal ({row['state']})", code="terminal_state"
+            )
+        outlet_id = (row.get("outlet_id") or OUTLET_UMA).strip()
+        term_cfg = list_edc_terminals(outlet_id, conn=c)
+        if tid:
+            known = {t["terminal_config_id"] for t in term_cfg["terminals"]}
+            if tid not in known:
+                raise BzgDailyCloseError(
+                    "terminal_config_id not in registry (do not invent)",
+                    code="unknown_terminal",
+                    http_status=409,
+                )
+
+        dup = _duplicate_warn(
+            c,
+            close_id=close_id,
+            content_hash=ch,
+            batch_ref=batch,
+            edc_card_amount=edc,
+            qris_amount=qris,
+            settlement_batch_date=sdate,
+        )
+
+        evid = _evidence.submit_evidence(
+            entity_id=row["entity_id"],
+            evidence_type=EVIDENCE_EDC,
+            governed_object_type="venue_daily_close",
+            governed_object_id=close_id,
+            verified_person_id=verified,
+            source_type="HUMAN",
+            object_ref=ref,
+            content_hash=ch,
+            brand_id=row.get("venue_brand_id") or _vc.BRAND_UMA,
+            metadata={
+                "kind": "edc_receipt",
+                "acquirer_label": bank,
+                "edc_card_amount": edc,
+                "qris_amount": qris,
+                "receipt_total": total,
+                "batch_ref": batch,
+                "settlement_batch_date": sdate,
+                "terminal_config_id": tid,
+                "human_confirm_status": status,
+                "qris_never_merged_into_card": True,
+                "ai_is_not_accounting_truth": True,
+                "duplicate_warn": dup["duplicate_warn"],
+            },
+            identity=identity,
+            allow_test_write=allow_test_write,
+            conn=c,
+            commit=False,
+        )
+
+        rid = f"EDCR-{uuid.uuid4()}"
+        ts = _vc.now_utc_iso()
+        extracted_obj = extracted or {}
+        confirmed_obj = {
+            "acquirer_label": bank,
+            "edc_card_amount": edc,
+            "qris_amount": qris,
+            "receipt_total": total,
+            "batch_ref": batch,
+            "settlement_batch_date": sdate,
+            "terminal_config_id": tid,
+            "terminal_label": tlabel,
+            "action": act,
+            "confirmed_by_person_id": verified,
+            "confirmed_at": ts,
+        }
+        conf_val = ocr_confidence
+        if conf_val is None and isinstance(extracted_obj, dict):
+            conf_val = extracted_obj.get("ocr_confidence")
+        band = None
+        if isinstance(extracted_obj, dict):
+            band = extracted_obj.get("ocr_confidence_band")
+        if band is None and conf_val is not None:
+            band = _vision._confidence_band(float(conf_val))  # noqa: SLF001
+
+        c.execute(
+            """
+            INSERT INTO venue_close_edc_receipts (
+              edc_receipt_id, close_id, outlet_id, acquirer_label,
+              terminal_config_id, terminal_label, settlement_batch_date,
+              edc_card_amount, qris_amount, receipt_total, batch_ref,
+              image_object_ref, content_hash, evidence_id,
+              ocr_confidence, ocr_confidence_band,
+              extracted_json, confirmed_json, human_confirm_status,
+              confirmed_by_person_id, confirmed_at,
+              duplicate_warn, duplicate_warn_json,
+              created_by_person_id, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                rid,
+                close_id,
+                outlet_id,
+                bank,
+                tid,
+                tlabel,
+                sdate,
+                edc,
+                qris,
+                total,
+                batch,
+                ref,
+                ch,
+                evid["evidence_id"],
+                conf_val,
+                band,
+                _dumps(extracted_obj),
+                _dumps(confirmed_obj),
+                status,
+                verified,
+                ts,
+                1 if dup["duplicate_warn"] else 0,
+                _dumps(dup),
+                verified,
+                ts,
+                ts,
+            ),
+        )
+        if vision_event_id:
+            c.execute(
+                """
+                UPDATE venue_close_vision_events
+                SET target_id=? WHERE vision_event_id=? AND close_id=?
+                """,
+                (rid, vision_event_id, close_id),
+            )
+        _audit.safe_record(
+            action="venue_close.edc_receipt_confirm",
+            result="ALLOWED",
+            source="bzg_daily_close",
+            actor_type="PERSON",
+            verified_person_id=verified,
+            actor_person_id=verified,
+            identity_assurance=(identity or {}).get("identity_assurance"),
+            resource_type="venue_daily_close",
+            resource_id=close_id,
+            reason_code="human_confirm_edc_receipt",
+            metadata={
+                "edc_receipt_id": rid,
+                "evidence_id": evid["evidence_id"],
+                "edc_card_amount": edc,
+                "qris_amount": qris,
+                "receipt_total": total,
+                "human_confirm_status": status,
+                "duplicate_warn": dup["duplicate_warn"],
+                "ai_is_not_accounting_truth": True,
+                **HONESTY,
+            },
+            conn=c,
+        )
+        if commit:
+            c.commit()
+        totals = receipt_totals(close_id, conn=c)
+        return {
+            **HONESTY,
+            "ok": True,
+            "edc_receipt_id": rid,
+            "evidence": evid,
+            "close_id": close_id,
+            "human_confirm_status": status,
+            "edc_card_amount": edc,
+            "qris_amount": qris,
+            "receipt_total": total,
+            "duplicate_warn": dup["duplicate_warn"],
+            "duplicate_warn_detail": dup,
+            "edc_receipts": list_edc_receipts(close_id, conn=c),
+            "receipt_totals": totals,
+            "unused_terminals": unused_configured_terminals(close_id, outlet_id, conn=c),
+            "edc_terminal_config_status": term_cfg["edc_terminal_config_status"],
+            "ai_is_not_accounting_truth": True,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def list_esb_closing_receipts(
+    close_id: str,
+    conn: sqlite3.Connection | None = None,
+) -> list[dict[str, Any]]:
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        if not _has_table(c, "venue_close_esb_closing_receipts"):
+            return []
+        rows = [
+            dict(r)
+            for r in c.execute(
+                """
+                SELECT * FROM venue_close_esb_closing_receipts
+                WHERE close_id=? ORDER BY created_at
+                """,
+                (close_id.strip(),),
+            ).fetchall()
+        ]
+        out: list[dict[str, Any]] = []
+        for r in rows:
+            r["extracted"] = _loads(r.pop("extracted_json", None))
+            r["confirmed"] = _loads(r.pop("confirmed_json", None))
+            r["api_mismatch_detail"] = _loads(r.pop("api_mismatch_json", None))
+            r["api_mismatch"] = bool(r.get("api_mismatch"))
+            out.append(r)
+        return out
+    finally:
+        if own:
+            c.close()
+
+
+def _api_vs_receipt_mismatch(
+    close_row: dict[str, Any],
+    *,
+    cash_amount: float | None,
+    edc_card_amount: float | None,
+    qris_amount: float | None,
+) -> dict[str, Any]:
+    totals = close_row.get("esb_totals") or {}
+    diffs: list[dict[str, Any]] = []
+    pairs = (
+        ("cash", cash_amount, totals.get("cash_from_payments")),
+        ("edc_card", edc_card_amount, totals.get("card_from_payments")),
+        ("qris", qris_amount, totals.get("qris_from_payments")),
+    )
+    for name, receipt_v, api_v in pairs:
+        if receipt_v is None or api_v is None:
+            continue
+        rv = round(float(receipt_v), 2)
+        av = round(float(api_v), 2)
+        if rv != av:
+            diffs.append(
+                {
+                    "field": name,
+                    "receipt_amount": rv,
+                    "api_amount": av,
+                    "variance": round(rv - av, 2),
+                }
+            )
+    return {
+        "api_mismatch": bool(diffs),
+        "diffs": diffs,
+        "silent_overwrite": False,
+        "message": (
+            "ESB closing receipt ≠ live ESB API — visible exception; API not overwritten"
+            if diffs
+            else None
+        ),
+        "dual_source_kept": True,
+    }
+
+
+def extract_esb_closing_receipt_draft(
+    close_id: str,
+    *,
+    verified_person_id: str,
+    image_bytes: bytes | None = None,
+    mime_type: str = "image/jpeg",
+    image_object_ref: str | None = None,
+    content_hash: str | None = None,
+    fixture_fields: dict[str, Any] | None = None,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    verified = (verified_person_id or "").strip()
+    if not verified:
+        raise BzgDailyCloseError(
+            "verified_person_id required", code="missing_verified_person"
+        )
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        ensure_schema(c)
+        row = _vc.get_close(close_id, conn=c)
+        if not row:
+            raise BzgDailyCloseError("close not found", code="not_found", http_status=404)
+        draft = _vision.extract_esb_closing_receipt(
+            image_bytes=image_bytes,
+            mime_type=mime_type,
+            fixture_fields=fixture_fields,
+        )
+        extracted = draft.get("extracted") or {}
+        ref = (image_object_ref or "").strip() or None
+        ch = (content_hash or "").strip() or None
+        if image_bytes and not ch:
+            ch = hashlib.sha256(image_bytes).hexdigest()
+        if not ref and ch:
+            ref = f"vision://esb/{ch[:16]}"
+        mismatch = _api_vs_receipt_mismatch(
+            row,
+            cash_amount=extracted.get("cash_amount"),
+            edc_card_amount=extracted.get("edc_card_amount"),
+            qris_amount=extracted.get("qris_amount"),
+        )
+        vid = _record_vision_event(
+            c,
+            close_id=close_id,
+            target_kind="ESB_CLOSING_RECEIPT",
+            target_id=None,
+            provider=str(draft.get("provider") or "unknown"),
+            model=draft.get("model"),
+            confidence=extracted.get("ocr_confidence"),
+            confidence_band=extracted.get("ocr_confidence_band"),
+            extracted={**extracted, "api_mismatch_preview": mismatch},
+            image_object_ref=ref,
+            content_hash=ch,
+            actor_person_id=verified,
+        )
+        if commit:
+            c.commit()
+        return {
+            **HONESTY,
+            "ok": True,
+            "close_id": close_id,
+            "vision_event_id": vid,
+            "draft": draft,
+            "extracted": extracted,
+            "api_mismatch_preview": mismatch,
+            "image_object_ref": ref,
+            "content_hash": ch,
+            "ai_is_not_accounting_truth": True,
+            "next": "Looks Correct / Edit — human confirm required; API snapshot kept",
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def confirm_esb_closing_receipt(
+    close_id: str,
+    *,
+    verified_person_id: str,
+    action: str = "confirm",
+    object_ref: str | None = None,
+    content_hash: str | None = None,
+    cash_amount: float | None = None,
+    edc_card_amount: float | None = None,
+    qris_amount: float | None = None,
+    gross_amount: float | None = None,
+    ocr_confidence: float | None = None,
+    extracted: dict[str, Any] | None = None,
+    confirmed_overrides: dict[str, Any] | None = None,
+    vision_event_id: str | None = None,
+    identity: dict[str, Any] | None = None,
+    allow_test_write: bool = False,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    verified = (verified_person_id or "").strip()
+    if not verified:
+        raise BzgDailyCloseError(
+            "verified_person_id required", code="missing_verified_person"
+        )
+    act = (action or "confirm").strip().lower()
+    if act not in ("confirm", "edit", "looks_correct"):
+        raise BzgDailyCloseError("action must be confirm|edit|looks_correct", code="invalid_action")
+    status = "EDITED" if act == "edit" else "CONFIRMED"
+    overrides = confirmed_overrides or {}
+    cash = overrides.get("cash_amount", cash_amount)
+    edc = overrides.get("edc_card_amount", edc_card_amount)
+    qris = overrides.get("qris_amount", qris_amount)
+    gross = overrides.get("gross_amount", gross_amount)
+    cash_f = None if cash is None else _amt(cash)
+    edc_f = None if edc is None else _amt(edc)
+    qris_f = None if qris is None else _amt(qris)
+    gross_f = None if gross is None else _amt(gross)
+    ref = (object_ref or overrides.get("object_ref") or "").strip() or None
+    ch = (content_hash or overrides.get("content_hash") or "").strip() or None
+    if not ref and not ch:
+        raise BzgDailyCloseError(
+            "ESB closing receipt requires image evidence",
+            code="missing_esb_receipt_evidence",
+        )
+
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        _vc.assert_catalog_writable(Path(_vc.CATALOG_DB))
+        _vc._assert_perm(  # noqa: SLF001
+            verified_person_id=verified,
+            permission_code="venue.close.submit",
+            conn=c,
+        )
+        ensure_schema(c)
+        row = _vc.get_close(close_id, conn=c)
+        if not row:
+            raise BzgDailyCloseError("close not found", code="not_found", http_status=404)
+        if not row.get("esb_fingerprint_sha256"):
+            raise BzgDailyCloseError(
+                "live ESB API snapshot required before ESB receipt confirm",
+                code="missing_esb_api_snapshot",
+                http_status=409,
+            )
+        outlet_id = (row.get("outlet_id") or OUTLET_UMA).strip()
+        mismatch = _api_vs_receipt_mismatch(
+            row, cash_amount=cash_f, edc_card_amount=edc_f, qris_amount=qris_f
+        )
+        # Dual source: never overwrite API totals on the close row.
+        evid = _evidence.submit_evidence(
+            entity_id=row["entity_id"],
+            evidence_type=EVIDENCE_ESB_RECEIPT,
+            governed_object_type="venue_daily_close",
+            governed_object_id=close_id,
+            verified_person_id=verified,
+            source_type="HUMAN",
+            object_ref=ref,
+            content_hash=ch,
+            brand_id=row.get("venue_brand_id") or _vc.BRAND_UMA,
+            metadata={
+                "kind": "esb_closing_receipt",
+                "cash_amount": cash_f,
+                "edc_card_amount": edc_f,
+                "qris_amount": qris_f,
+                "gross_amount": gross_f,
+                "api_mismatch": mismatch["api_mismatch"],
+                "dual_source_kept": True,
+                "silent_overwrite": False,
+                "ai_is_not_accounting_truth": True,
+            },
+            identity=identity,
+            allow_test_write=allow_test_write,
+            conn=c,
+            commit=False,
+        )
+        rid = f"ESBR-{uuid.uuid4()}"
+        ts = _vc.now_utc_iso()
+        extracted_obj = extracted or {}
+        confirmed_obj = {
+            "cash_amount": cash_f,
+            "edc_card_amount": edc_f,
+            "qris_amount": qris_f,
+            "gross_amount": gross_f,
+            "action": act,
+            "confirmed_by_person_id": verified,
+            "confirmed_at": ts,
+        }
+        conf_val = ocr_confidence
+        if conf_val is None and isinstance(extracted_obj, dict):
+            conf_val = extracted_obj.get("ocr_confidence")
+        band = None
+        if isinstance(extracted_obj, dict):
+            band = extracted_obj.get("ocr_confidence_band")
+        c.execute(
+            """
+            INSERT INTO venue_close_esb_closing_receipts (
+              esb_receipt_id, close_id, outlet_id, image_object_ref, content_hash,
+              evidence_id, extracted_json, confirmed_json,
+              cash_amount, edc_card_amount, qris_amount, gross_amount,
+              ocr_confidence, ocr_confidence_band, human_confirm_status,
+              confirmed_by_person_id, confirmed_at,
+              api_mismatch, api_mismatch_json,
+              created_by_person_id, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                rid,
+                close_id,
+                outlet_id,
+                ref,
+                ch,
+                evid["evidence_id"],
+                _dumps(extracted_obj),
+                _dumps(confirmed_obj),
+                cash_f,
+                edc_f,
+                qris_f,
+                gross_f,
+                conf_val,
+                band,
+                status,
+                verified,
+                ts,
+                1 if mismatch["api_mismatch"] else 0,
+                _dumps(mismatch),
+                verified,
+                ts,
+                ts,
+            ),
+        )
+        if vision_event_id:
+            c.execute(
+                """
+                UPDATE venue_close_vision_events
+                SET target_id=? WHERE vision_event_id=? AND close_id=?
+                """,
+                (rid, vision_event_id, close_id),
+            )
+        _audit.safe_record(
+            action="venue_close.esb_receipt_confirm",
+            result="ALLOWED",
+            source="bzg_daily_close",
+            actor_type="PERSON",
+            verified_person_id=verified,
+            actor_person_id=verified,
+            identity_assurance=(identity or {}).get("identity_assurance"),
+            resource_type="venue_daily_close",
+            resource_id=close_id,
+            reason_code="human_confirm_esb_receipt",
+            metadata={
+                "esb_receipt_id": rid,
+                "api_mismatch": mismatch["api_mismatch"],
+                "dual_source_kept": True,
+                **HONESTY,
+            },
+            conn=c,
+        )
+        if commit:
+            c.commit()
+        return {
+            **HONESTY,
+            "ok": True,
+            "esb_receipt_id": rid,
+            "evidence": evid,
+            "close_id": close_id,
+            "human_confirm_status": status,
+            "api_mismatch": mismatch["api_mismatch"],
+            "api_mismatch_detail": mismatch,
+            "esb_api_totals_preserved": row.get("esb_totals"),
+            "esb_closing_receipts": list_esb_closing_receipts(close_id, conn=c),
+            "ai_is_not_accounting_truth": True,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def recon_board(
+    close_id: str,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    """Cash / EDC / QRIS expected (ESB API) vs confirmed receipts + evidence completeness."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        row = _vc.get_close(close_id, conn=c)
+        if not row:
+            raise BzgDailyCloseError("close not found", code="not_found", http_status=404)
+        totals = row.get("esb_totals") or {}
+        rt = receipt_totals(close_id, conn=c)
+        esb_recs = list_esb_closing_receipts(close_id, conn=c)
+        confirmed_esb = [
+            r for r in esb_recs if r.get("human_confirm_status") in ("CONFIRMED", "EDITED")
+        ]
+        declared_cash = row.get("declared_cash_amount")
+        esb_cash = totals.get("cash_from_payments")
+        esb_edc = totals.get("card_from_payments")
+        esb_qris = totals.get("qris_from_payments")
+        conf_edc = rt["TOTAL_EDC"]
+        conf_qris = rt["TOTAL_QRIS"]
+
+        def _var(expected: Any, confirmed: Any) -> float | None:
+            if expected is None or confirmed is None:
+                return None
+            return round(float(confirmed) - float(expected), 2)
+
+        mismatches = [r for r in confirmed_esb if r.get("api_mismatch")]
+        evidence = {
+            "esb_api_snapshot": bool(row.get("esb_fingerprint_sha256")),
+            "esb_closing_receipt_confirmed": bool(confirmed_esb),
+            "declared_cash": declared_cash is not None,
+            "edc_receipts_confirmed": rt["confirmed_receipt_count"] > 0,
+            "z_report_or_till": bool(
+                row.get("declared_cash_evidence_id")
+                or (
+                    _has_table(c, "venue_close_till_evidence")
+                    and c.execute(
+                        "SELECT 1 FROM venue_close_till_evidence WHERE close_id=? LIMIT 1",
+                        (close_id,),
+                    ).fetchone()
+                )
+            ),
+        }
+        complete = all(
+            [
+                evidence["esb_api_snapshot"],
+                evidence["esb_closing_receipt_confirmed"],
+                evidence["declared_cash"],
+            ]
+        )
+        return {
+            **HONESTY,
+            "ok": True,
+            "close_id": close_id,
+            "business_date": row.get("business_date"),
+            "state": row.get("state"),
+            "cash": {
+                "esb_expected": esb_cash,
+                "declared_confirmed": declared_cash,
+                "variance": _var(esb_cash, declared_cash),
+            },
+            "edc": {
+                "esb_expected": esb_edc,
+                "receipts_confirmed": conf_edc,
+                "variance": _var(esb_edc, conf_edc),
+            },
+            "qris": {
+                "esb_expected": esb_qris,
+                "receipts_confirmed": conf_qris,
+                "variance": _var(esb_qris, conf_qris),
+            },
+            "other_methods": {
+                "esb_expected": totals.get("other_from_payments"),
+            },
+            "receipt_totals": rt,
+            "esb_api_vs_receipt_mismatch": bool(mismatches),
+            "esb_mismatch_rows": len(mismatches),
+            "evidence_completeness": evidence,
+            "evidence_complete": complete,
+            "qris_never_merged_into_card": True,
+            "unused_terminals": unused_configured_terminals(
+                close_id, (row.get("outlet_id") or OUTLET_UMA), conn=c
+            ),
         }
     finally:
         if own:
@@ -669,6 +1712,7 @@ def enrich_close(close: dict[str, Any] | None, conn: sqlite3.Connection | None =
     try:
         cid = close.get("close_id") or ""
         oid = (close.get("outlet_id") or OUTLET_UMA).strip()
+        rt = receipt_totals(cid, conn=c) if cid else None
         return {
             **close,
             **HONESTY,
@@ -677,6 +1721,13 @@ def enrich_close(close: dict[str, Any] | None, conn: sqlite3.Connection | None =
             "edc_terminals": list_edc_terminals(oid, conn=c),
             "edc_lines": list_edc_lines(cid, conn=c) if cid else [],
             "card_total": edc_card_total(cid, conn=c) if cid else None,
+            "edc_receipts": list_edc_receipts(cid, conn=c) if cid else [],
+            "receipt_totals": rt,
+            "esb_closing_receipts": list_esb_closing_receipts(cid, conn=c) if cid else [],
+            "recon_board": recon_board(cid, conn=c) if cid else None,
+            "unused_terminals": (
+                unused_configured_terminals(cid, oid, conn=c) if cid else None
+            ),
             "honesty": {**(close.get("honesty") or {}), **HONESTY},
         }
     finally:

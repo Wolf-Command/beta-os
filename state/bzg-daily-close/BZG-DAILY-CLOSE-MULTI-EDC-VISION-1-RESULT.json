@@ -1,0 +1,33 @@
+{
+  "pack": "BZG-DAILY-CLOSE-MULTI-EDC-VISION-1",
+  "as_of": "2026-10-02T21:05:00+08:00",
+  "branch": "build/wolf-command-rebuild",
+  "decision": "2026-09-17 PICK Uma Blu Daily Close (extend) + OWNER-ORDER-BZG-DAILY-CLOSE-MULTI-EDC-VISION-20261002",
+  "result": "PASS",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_8787": "READ_ONLY_UNTOUCHED",
+  "migration_id": "032_bzg_daily_close_multi_edc_vision",
+  "invented_terminals": false,
+  "invented_tolerance": false,
+  "ai_is_not_accounting_truth": true,
+  "qris_never_merged_into_card": true,
+  "multi_edc_receipts": "0..N",
+  "human_close_enabled_outlet_ids": ["BZG-UMA"],
+  "tests": {
+    "test_bzg_daily_close_multi_edc_vision_1.py": {"pass": 77, "fail": 0},
+    "test_bzg_daily_close_till_edc_1.py": {"pass": 57, "fail": 0}
+  },
+  "apis": [
+    "/api/venue-close/edc-receipt-extract",
+    "/api/venue-close/edc-receipt",
+    "/api/venue-close/esb-receipt-extract",
+    "/api/venue-close/esb-receipt",
+    "/api/venue-close/{id}/edc-receipts",
+    "/api/venue-close/{id}/esb-receipts",
+    "/api/venue-close/{id}/recon-board"
+  ],
+  "ui": "/uma-blu-close",
+  "result_md": "state/bzg-daily-close/BZG-DAILY-CLOSE-MULTI-EDC-VISION-1-RESULT.md",
+  "commit": null
+}
