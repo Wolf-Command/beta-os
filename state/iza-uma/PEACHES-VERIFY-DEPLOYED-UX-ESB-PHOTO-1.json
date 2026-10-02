@@ -1,0 +1,23 @@
+{
+  "id": "PEACHES-VERIFY-DEPLOYED-UX-ESB-PHOTO-1",
+  "when_wita": "2026-10-02T22:04:56.310570+08:00",
+  "tip": "b511df3",
+  "beta_8788_pid": "57765",
+  "route": "/uma-blu-close",
+  "photo_controls": true,
+  "take_upload_capture_environment": true,
+  "esb_today_2026-10-02": "AVAILABLE_via_same_day_pull",
+  "esb_totals_spotcheck": {
+    "finished_count": 61,
+    "note": "live warehouse after --date pull; amounts stamped at verify time may move if more sales"
+  },
+  "esb_ingest": "--date mode added; capture refreshes when empty",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "iza_retest_ready": true,
+  "three_failures_ledger": [
+    "1 assignment eng-fixed a0cbc81",
+    "2 photo Take/Upload fixed on deployed HTML",
+    "3 ESB same-day live pull fixed (was T+1 yday only)"
+  ]
+}
