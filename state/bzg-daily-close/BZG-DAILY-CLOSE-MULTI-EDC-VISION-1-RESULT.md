@@ -60,6 +60,6 @@ Covered: 1 receipt, 3 receipts, EDC-only, QRIS-only, both, unused configured ter
 - `dashboards/uma-blu-close.html`
 - `scripts/tests/test_bzg_daily_close_multi_edc_vision_1.py`
 
-**Commit:**  (local only — no push)
+**Commit:** `909addf` (local only — no push) · tip `dab1e99`
 
 RESULT: **PASS** (engineering). Human commissioning PENDING (`staff_ready` stays false).
