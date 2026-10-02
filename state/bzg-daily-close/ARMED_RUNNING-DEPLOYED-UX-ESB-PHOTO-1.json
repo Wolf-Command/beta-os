@@ -2,7 +2,7 @@
   "pack": "BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1",
   "status": "DONE_ENGINEERING_PASS",
   "closed_at": "2026-10-02T21:58:12+08:00",
-  "tip_commit": "819133d",
+  "tip_commit": "0809f04",
   "parent_tip": "a0cbc81",
   "beta_8788_pid": "55658",
   "prod_8787_pid": "15975",
@@ -11,5 +11,7 @@
   "staff_ready": false,
   "human_commissioned": false,
   "iza_retest_ready": false,
-  "child_exit": 0
+  "child_exit": 0,
+  "tip": "0809f04",
+  "impl": "28c0ec5"
 }
