@@ -43,6 +43,7 @@
   "branch": "build/wolf-command-rebuild",
   "no_push": true,
   "result_md": "state/bzg-daily-close/BZG-CLOSE-GOVERNED-TAKEOVER-1-RESULT.md",
-  "tip": "8f9e1ff",
-  "commit": "8f9e1ff"
+  "tip": "c0c3e2c",
+  "impl": "8f9e1ff",
+  "tip_full": "c0c3e2ce5a2a993e920c447a86426f6aa95b914c"
 }
