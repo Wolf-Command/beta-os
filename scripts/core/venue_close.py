@@ -37,7 +37,18 @@ BRAND_UMA = "BZG-UMA"
 ROLE_HFB = "ROLE-BZG-HFB"
 ROLE_FB_OPS_LEAD = "ROLE-BZG-FB-OPS-LEAD"
 ROLE_CLOSER = "ROLE-BZG-CLOSER"
+ROLE_CAPTAIN = "ROLE-BZG-CAPTAIN"
+ROLE_CASHIER = "ROLE-BZG-CASHIER"
+ROLE_MATT = "ROLE-MATT"
+ROLE_OWNER = "ROLE-OWNER"
 EVIDENCE_CASH = "cash_count"
+
+# Oversight may open the Uma close desk without a Daily Close roster row.
+CLOSE_OVERSIGHT_ROLES = frozenset(
+    {ROLE_HFB, ROLE_FB_OPS_LEAD, ROLE_MATT, ROLE_OWNER}
+)
+# Floor closer seats authorised via venue_closer_roster + active Assignment.
+CLOSE_ROSTER_ROLES = frozenset({ROLE_CLOSER, ROLE_CAPTAIN, ROLE_CASHIER})
 
 STATES = frozenset(
     {
@@ -1067,6 +1078,355 @@ def verify_close(
         out = get_close(close_id, conn=c)
         assert out
         return {**out, **HONESTY}
+    finally:
+        if own:
+            c.close()
+
+
+def ensure_take_attribution_columns(conn: sqlite3.Connection) -> None:
+    """Attribution columns for multi-closer take (not person-per-day invent)."""
+    cols = {str(r[1]) for r in conn.execute("PRAGMA table_info(venue_daily_closes)")}
+    if "taken_by_person_id" not in cols:
+        conn.execute(
+            "ALTER TABLE venue_daily_closes ADD COLUMN taken_by_person_id TEXT NULL"
+        )
+    if "taken_at" not in cols:
+        conn.execute("ALTER TABLE venue_daily_closes ADD COLUMN taken_at TEXT NULL")
+
+
+def _active_role_ids(person_id: str, conn: sqlite3.Connection) -> set[str]:
+    rows = conn.execute(
+        """
+        SELECT DISTINCT pos.role_id
+        FROM org_assignments a
+        JOIN org_positions pos ON pos.position_id = a.position_id
+        WHERE a.person_id=? AND a.status='ACTIVE' AND a.end_at IS NULL
+          AND pos.status='ACTIVE'
+        """,
+        (person_id,),
+    ).fetchall()
+    return {str(r[0]) for r in rows}
+
+
+def _assignment_covers_brand(
+    conn: sqlite3.Connection,
+    *,
+    assignment_id: str,
+    position_brand_id: str | None,
+    venue_brand_id: str,
+    entity_id: str = ENTITY_BZG,
+) -> bool:
+    if (position_brand_id or "").strip() == venue_brand_id:
+        return True
+    rows = conn.execute(
+        """
+        SELECT t.target_type, t.target_id
+        FROM org_assignment_scopes s
+        JOIN org_scope_targets t ON t.scope_id = s.scope_id
+        WHERE s.assignment_id=? AND s.status='ACTIVE' AND s.end_at IS NULL
+        """,
+        (assignment_id,),
+    ).fetchall()
+    for r in rows:
+        ttype = str(r["target_type"] if isinstance(r, sqlite3.Row) else r[0])
+        tid = str(r["target_id"] if isinstance(r, sqlite3.Row) else r[1])
+        if ttype == "brand" and tid == venue_brand_id:
+            return True
+        if ttype == "entity" and tid == entity_id:
+            return True
+    return False
+
+
+def person_authorised_for_venue_close(
+    person_id: str | None,
+    *,
+    venue_brand_id: str = BRAND_UMA,
+    entity_id: str = ENTITY_BZG,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    """Reusable authorisation: active Assignment → closer roster → tonight's open close.
+
+    Distinguishes (1) authorised to perform the venue close from (2) who took/submitted
+    tonight's close (attribution). Multi-closer = multiple ACTIVE roster rows.
+    No email special-case. No person-per-day invent as the only path.
+    Does not loosen RBAC permission grants — page/desk gate only.
+    """
+    pid = (person_id or "").strip()
+    brand = (venue_brand_id or "").strip() or BRAND_UMA
+    ent = (entity_id or "").strip() or ENTITY_BZG
+    deny = {
+        "allowed": False,
+        "reason": "not_on_assignment",
+        "message": "This close is not on your assignment.",
+        "person_id": pid or None,
+        "venue_brand_id": brand,
+        "roster_id": None,
+        "assignment_id": None,
+        "role_id": None,
+        "via": None,
+    }
+    if not pid:
+        return {**deny, "reason": "anonymous"}
+
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        if not _has_roster_table(c):
+            return {**deny, "reason": "roster_unavailable"}
+
+        roles = _active_role_ids(pid, c)
+        oversight = sorted(roles & CLOSE_OVERSIGHT_ROLES)
+        if oversight:
+            return {
+                "allowed": True,
+                "reason": "oversight_role",
+                "message": None,
+                "person_id": pid,
+                "venue_brand_id": brand,
+                "roster_id": None,
+                "assignment_id": None,
+                "role_id": oversight[0],
+                "via": "oversight",
+                "oversight_roles": oversight,
+            }
+
+        rows = c.execute(
+            """
+            SELECT r.roster_id, r.brand_id, r.position_id, r.person_id, r.assignment_id,
+                   r.status AS roster_status,
+                   a.status AS asg_status, a.end_at AS asg_end_at,
+                   p.role_id, p.status AS pos_status, p.brand_id AS pos_brand,
+                   p.entity_id AS pos_entity
+            FROM venue_closer_roster r
+            JOIN org_assignments a ON a.assignment_id = r.assignment_id
+            JOIN org_positions p ON p.position_id = r.position_id
+            WHERE r.brand_id=?
+              AND r.person_id=?
+              AND r.status='ACTIVE'
+            ORDER BY r.roster_id
+            """,
+            (brand, pid),
+        ).fetchall()
+        if not rows:
+            return {**deny, "reason": "not_on_roster"}
+
+        for r in rows:
+            d = dict(r)
+            if str(d.get("asg_status") or "") != "ACTIVE" or d.get("asg_end_at") is not None:
+                continue
+            if str(d.get("pos_status") or "") != "ACTIVE":
+                continue
+            role_id = str(d.get("role_id") or "")
+            if role_id not in CLOSE_ROSTER_ROLES:
+                continue
+            pos_ent = str(d.get("pos_entity") or "").strip()
+            if pos_ent and pos_ent != ent:
+                continue
+            if not _assignment_covers_brand(
+                c,
+                assignment_id=str(d["assignment_id"]),
+                position_brand_id=d.get("pos_brand"),
+                venue_brand_id=brand,
+                entity_id=ent,
+            ):
+                continue
+            return {
+                "allowed": True,
+                "reason": "closer_roster",
+                "message": None,
+                "person_id": pid,
+                "venue_brand_id": brand,
+                "roster_id": str(d["roster_id"]),
+                "assignment_id": str(d["assignment_id"]),
+                "role_id": role_id,
+                "via": "roster",
+            }
+
+        # Roster row(s) exist but assignment/scope/role inactive or wrong outlet.
+        return {**deny, "reason": "inactive_or_unscoped_assignment"}
+    finally:
+        if own:
+            c.close()
+
+
+def _has_roster_table(conn: sqlite3.Connection) -> bool:
+    return (
+        conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='venue_closer_roster'"
+        ).fetchone()
+        is not None
+    )
+
+
+def take_open_venue_close(
+    close_id: str,
+    *,
+    verified_person_id: str,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Claim attribution on an open close. Multi-closer authorised; concurrent take denied.
+
+    Preserves first successful take. Does not invent a person-per-day close row.
+    """
+    cid = (close_id or "").strip()
+    verified = (verified_person_id or "").strip()
+    if not cid:
+        raise VenueCloseError("close_id required", code="missing_close_id")
+    if not verified:
+        raise VenueCloseError("verified_person_id required", code="missing_verified_person")
+
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        assert_catalog_writable(Path(CATALOG_DB))
+        ensure_take_attribution_columns(c)
+        row = get_close(cid, conn=c)
+        if not row:
+            raise VenueCloseError("close not found", code="not_found", http_status=404)
+
+        authz = person_authorised_for_venue_close(
+            verified,
+            venue_brand_id=str(row.get("venue_brand_id") or BRAND_UMA),
+            entity_id=str(row.get("entity_id") or ENTITY_BZG),
+            conn=c,
+        )
+        if not authz.get("allowed"):
+            _audit.safe_record(
+                action="venue_close.take",
+                result="DENIED",
+                source="venue_close",
+                actor_type="PERSON",
+                verified_person_id=verified,
+                actor_person_id=verified,
+                identity_assurance=(identity or {}).get("identity_assurance"),
+                resource_type="venue_daily_close",
+                resource_id=cid,
+                reason_code=str(authz.get("reason") or "not_on_assignment"),
+                metadata={"authz": authz},
+                conn=c,
+            )
+            if commit:
+                c.commit()
+            raise VenueCloseError(
+                authz.get("message") or "This close is not on your assignment.",
+                code="forbidden",
+                http_status=403,
+            )
+
+        if row.get("state") in TERMINAL:
+            raise VenueCloseError(
+                f"close is terminal ({row['state']})",
+                code="invalid_transition",
+            )
+
+        taken_by = (row.get("taken_by_person_id") or "").strip()
+        ts = now_utc_iso()
+        if taken_by and taken_by != verified:
+            _audit.safe_record(
+                action="venue_close.take",
+                result="DENIED",
+                source="venue_close",
+                actor_type="PERSON",
+                verified_person_id=verified,
+                actor_person_id=verified,
+                identity_assurance=(identity or {}).get("identity_assurance"),
+                resource_type="venue_daily_close",
+                resource_id=cid,
+                reason_code="concurrent_take",
+                metadata={
+                    "taken_by_person_id": taken_by,
+                    "state": row.get("state"),
+                    "authz": authz,
+                },
+                conn=c,
+            )
+            if commit:
+                c.commit()
+            raise VenueCloseError(
+                "This close is already taken by another authorised closer.",
+                code="concurrent_take",
+                http_status=409,
+            )
+
+        if not taken_by:
+            c.execute(
+                """
+                UPDATE venue_daily_closes
+                SET taken_by_person_id=?, taken_at=?, updated_at=?
+                WHERE close_id=? AND (taken_by_person_id IS NULL OR taken_by_person_id='')
+                """,
+                (verified, ts, ts, cid),
+            )
+            # Re-read under race: another closer may have won the update.
+            refreshed = get_close(cid, conn=c)
+            assert refreshed
+            won = (refreshed.get("taken_by_person_id") or "").strip()
+            if won != verified:
+                _audit.safe_record(
+                    action="venue_close.take",
+                    result="DENIED",
+                    source="venue_close",
+                    actor_type="PERSON",
+                    verified_person_id=verified,
+                    actor_person_id=verified,
+                    identity_assurance=(identity or {}).get("identity_assurance"),
+                    resource_type="venue_daily_close",
+                    resource_id=cid,
+                    reason_code="concurrent_take",
+                    metadata={"taken_by_person_id": won, "race": True, "authz": authz},
+                    conn=c,
+                )
+                if commit:
+                    c.commit()
+                raise VenueCloseError(
+                    "This close is already taken by another authorised closer.",
+                    code="concurrent_take",
+                    http_status=409,
+                )
+            _audit.safe_record(
+                action="venue_close.take",
+                result="ALLOWED",
+                source="venue_close",
+                actor_type="PERSON",
+                verified_person_id=verified,
+                actor_person_id=verified,
+                identity_assurance=(identity or {}).get("identity_assurance"),
+                resource_type="venue_daily_close",
+                resource_id=cid,
+                reason_code="taken",
+                metadata={"authz": authz, "taken_at": ts},
+                conn=c,
+            )
+            row = refreshed
+        else:
+            # Idempotent re-take by same person
+            _audit.safe_record(
+                action="venue_close.take",
+                result="ALLOWED",
+                source="venue_close",
+                actor_type="PERSON",
+                verified_person_id=verified,
+                actor_person_id=verified,
+                identity_assurance=(identity or {}).get("identity_assurance"),
+                resource_type="venue_daily_close",
+                resource_id=cid,
+                reason_code="take_idempotent",
+                metadata={"authz": authz, "taken_at": row.get("taken_at")},
+                conn=c,
+            )
+
+        if commit:
+            c.commit()
+        out = get_close(cid, conn=c)
+        assert out
+        return {
+            **out,
+            "taken": True,
+            "authz": authz,
+            **HONESTY,
+        }
     finally:
         if own:
             c.close()

@@ -5675,21 +5675,23 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "/bzg/daily-close",
             "/bzg/daily-close/",
         ):
+            # Authorisation = active Assignment → closer roster (Captain⊇Cashier /
+            # CLOSER) or oversight role → tonight's open Uma close. Not email ACL.
+            # Attribution (take/submit) is separate (venue_close.take_open_venue_close).
             identity = self._resolve_identity(emit_audit=False)
             person_id = str(identity.get("person_id") or "")
-            close_roles = {
-                "ROLE-BZG-CLOSER",
-                "ROLE-BZG-CAPTAIN",
-                "ROLE-BZG-FB-OPS-LEAD",
-                "ROLE-BZG-HFB",
-                "ROLE-MATT",
-                "ROLE-OWNER",
-            }
             allowed = False
+            authz: dict = {}
             if identity.get("ok") and person_id:
                 conn = _work_items.db_connect()
                 try:
-                    allowed = bool(_ggv_fin.active_role_ids(person_id, conn) & close_roles)
+                    authz = _venue_close.person_authorised_for_venue_close(
+                        person_id,
+                        venue_brand_id=_venue_close.BRAND_UMA,
+                        entity_id=_venue_close.ENTITY_BZG,
+                        conn=conn,
+                    )
+                    allowed = bool(authz.get("allowed"))
                 finally:
                     conn.close()
             if not allowed:
@@ -5704,6 +5706,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
                         },
                         "staff_ready": False,
                         "human_commissioned": False,
+                        "authz_reason": (authz or {}).get("reason") or "anonymous",
                     },
                     status=403,
                 )

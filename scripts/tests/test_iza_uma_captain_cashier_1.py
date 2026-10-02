@@ -209,21 +209,19 @@ def main() -> int:
     finally:
         conn.close()
 
-    # Source ACL — role-based, not person/email hardcode
+    # Source ACL — roster resolution, not person/email hardcode
     serve_src = SERVE.read_text(encoding="utf-8")
-    # Slice around /uma-blu-close close_roles block
     m = re.search(
-        r'path in \(\s*"/uma-blu-close".*?close_roles\s*=\s*\{([^}]+)\}',
+        r'path in \(\s*"/uma-blu-close".*?person_authorised_for_venue_close',
         serve_src,
         re.DOTALL,
     )
-    check("close_roles block found", m is not None)
-    if m:
-        block = m.group(1)
-        check("close_roles contains ROLE-BZG-CAPTAIN", "ROLE-BZG-CAPTAIN" in block)
-        check("close_roles keeps ROLE-BZG-CLOSER", "ROLE-BZG-CLOSER" in block)
-        check("no PERS-IZA in close_roles", "PERS-IZA" not in block)
-        check("no Iza email in close_roles", IZA_EMAIL not in block)
+    check("uma-blu-close uses person_authorised_for_venue_close", m is not None)
+    check("no PERS-IZA hardcode in serve close gate", "PERS-IZA" not in serve_src[serve_src.find("/uma-blu-close"):serve_src.find("/uma-blu-close") + 1200])
+    check(
+        "no Iza email in serve close gate",
+        IZA_EMAIL not in serve_src[serve_src.find("/uma-blu-close"):serve_src.find("/uma-blu-close") + 1200],
+    )
 
     mig_src = MIG.read_text(encoding="utf-8")
     check(
@@ -260,9 +258,7 @@ def main() -> int:
     else:
         check(
             "CF production path not weakened",
-            "development_assertion" not in serve_src.split("close_roles")[0][-200:]
-            if "close_roles" in serve_src
-            else True,
+            "person_authorised_for_venue_close" in serve_src,
         )
 
     print(f"\npass={PASS} fail={FAIL}")

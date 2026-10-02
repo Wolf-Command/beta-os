@@ -100,6 +100,24 @@ def seed_test_closer(conn: sqlite3.Connection) -> None:
     from core.scope import upsert_assignment_scope
 
     upsert_assignment_scope(conn, "ASG-TEST-CLOSER-1", "SCOPE-BZG-UMA", TS, TS)
+    # Roster row required for open_human_close authorisation (multi-closer model).
+    conn.execute(
+        """
+        INSERT INTO venue_closer_roster (
+          roster_id, brand_id, position_id, person_id, assignment_id,
+          status, note, created_at, updated_at
+        ) VALUES (
+          'VCR-UMA-TEST-1', 'BZG-UMA', 'POS-BZG-CLOSER-UMA-1', 'PERS-TEST-CLOSER',
+          'ASG-TEST-CLOSER-1', 'ACTIVE', 'test closer roster', ?, ?
+        )
+        ON CONFLICT(roster_id) DO UPDATE SET
+          person_id=excluded.person_id,
+          assignment_id=excluded.assignment_id,
+          status='ACTIVE',
+          updated_at=excluded.updated_at
+        """,
+        (TS, TS),
+    )
     conn.commit()
 
 

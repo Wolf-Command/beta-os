@@ -74,5 +74,14 @@
     "pack": "BZG-DAILY-CLOSE-MULTI-EDC-VISION-1",
     "created_at": "2026-10-02T21:05:00+08:00",
     "commit": "909addf3f7617f4c526097717255db59dcd82f92"
+  },
+  {
+    "id": "iza-assignment-resolution-1-20261002",
+    "claim": "Uma close page gate uses venue_closer_roster\u2192Assignment resolution; Iza PERS-IZA ALLOW via VCR-UMA-2; unsigned /uma-blu-close 403; concurrent take 409 audited; staff_ready false",
+    "check": "python3 scripts/tests/test_iza_assignment_resolution_1.py",
+    "expect": "pass=23 fail=0",
+    "by": "cursor-local",
+    "pack": "IZA-ASSIGNMENT-RESOLUTION-1",
+    "created_at": "2026-10-02T21:40:00+08:00"
   }
 ]

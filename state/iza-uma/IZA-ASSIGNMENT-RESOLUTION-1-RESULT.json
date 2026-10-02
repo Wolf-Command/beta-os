@@ -1,0 +1,34 @@
+{
+  "pack": "IZA-ASSIGNMENT-RESOLUTION-1",
+  "result": "PASS_ENG",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "branch": "build/wolf-command-rebuild",
+  "parent_tip_before": "8688c08",
+  "decision": "2026-09-17 Uma Blu Daily Close + IZA-UMA-CAPTAIN-CASHIER-DAILY-CLOSE-20261002",
+  "root_cause": "page gate used active_role_ids hard set only; ignored venue_closer_roster; Beta process stale pre-Captain tip",
+  "fix": {
+    "person_authorised_for_venue_close": true,
+    "take_open_venue_close": true,
+    "serve_beta_gate": "roster_resolution",
+    "open_human_close": "authz_then_open_then_take"
+  },
+  "iza_identity_path": {
+    "email": "izazaen00@gmail.com",
+    "person_id": "PERS-IZA",
+    "allowed": true,
+    "via": "roster",
+    "roster_id": "VCR-UMA-2",
+    "role_id": "ROLE-BZG-CAPTAIN"
+  },
+  "unsigned_uma_blu_close_8788": 403,
+  "tests": {
+    "test_iza_assignment_resolution_1": "pass=23 fail=0",
+    "test_iza_uma_captain_cashier_1": "pass=41 fail=0",
+    "test_bzg_daily_close_till_edc_1": "pass=57 fail=0",
+    "test_bzg_daily_close_multi_edc_vision_1": "pass=77 fail=0"
+  },
+  "prod_8787": "READ_ONLY_UNTOUCHED",
+  "retest": "RETEST IZA NOW",
+  "noted_at": "2026-10-02T21:40:00+08:00"
+}

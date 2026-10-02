@@ -603,6 +603,19 @@ def open_human_close(
     try:
         ensure_schema(c)
         cfg = assert_human_close_enabled(oid, c)
+        # Roster/oversight gate before open — authorisation ≠ attribution.
+        authz = _vc.person_authorised_for_venue_close(
+            verified_person_id,
+            venue_brand_id=str(cfg.get("venue_brand_id") or _vc.BRAND_UMA),
+            entity_id=str(cfg.get("entity_id") or _vc.ENTITY_BZG),
+            conn=c,
+        )
+        if not authz.get("allowed"):
+            raise BzgDailyCloseError(
+                authz.get("message") or "This close is not on your assignment.",
+                code="forbidden",
+                http_status=403,
+            )
         out = _vc.open_or_get(
             business_date,
             verified_person_id=verified_person_id,
@@ -622,6 +635,15 @@ def open_human_close(
             refreshed = _vc.get_close(out["close_id"], conn=c)
             if refreshed:
                 out = {**out, **refreshed, "created": out.get("created")}
+        # Multi-closer take attribution. Concurrent take → 409 + audit.
+        taken = _vc.take_open_venue_close(
+            str(out["close_id"]),
+            verified_person_id=verified_person_id,
+            identity=identity,
+            conn=c,
+            commit=False,
+        )
+        out = {**out, **taken, "created": out.get("created"), "authz": authz}
         if commit:
             c.commit()
         return {
