@@ -71,4 +71,6 @@ One reusable **BZG Daily Close** engine over `venue_close` — outlet config for
 - `scripts/tests/test_bzg_daily_close_till_edc_1.py`
 - `docs/canon/UMA-BLU-DAILY-CLOSE.md`
 
+**Commit:** `8546cec` (local only — no push)
+
 RESULT: **PASS** (engineering). Human commissioning PENDING.

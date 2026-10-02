@@ -32,5 +32,6 @@
   },
   "telegram_recovery": "TELEGRAM_SOURCE_INCOMPLETE",
   "no_matt_message": true,
-  "result_md": "state/final-completion/beta-house-20261001/BZG-DAILY-CLOSE-TILL-EDC-1-RESULT.md"
+  "result_md": "state/final-completion/beta-house-20261001/BZG-DAILY-CLOSE-TILL-EDC-1-RESULT.md",
+  "commit": "8546cec"
 }
