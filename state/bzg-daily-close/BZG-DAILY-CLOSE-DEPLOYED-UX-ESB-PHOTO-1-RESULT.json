@@ -3,7 +3,7 @@
   "status": "ENG_PROVED_AWAITING_PEACHES",
   "at": "2026-10-02T21:58:12+08:00",
   "decision": "2026-09-17 Uma Blu Daily Close extend",
-  "tip": "28c0ec5",
+  "tip": "db93c33",
   "parent_tip_when_armed": "a0cbc81",
   "html_feat_prior": "909addf",
   "staff_ready": false,
@@ -29,5 +29,6 @@
     "docs/wolf/ops/shots/bzgclose-ux-photo1-desk-desktop.png"
   ],
   "handoff": "https://beta.wolfcommand.net/uma-blu-close",
-  "exit": 0
+  "exit": 0,
+  "impl": "28c0ec5"
 }
