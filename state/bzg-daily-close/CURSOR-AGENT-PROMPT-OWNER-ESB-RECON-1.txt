@@ -1,0 +1,9 @@
+P0 BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1.
+
+Read: /Users/wolfterminal/beta-os/state/bzg-daily-close/CURSOR-PACK-BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1.md
+Also: state/bzg-daily-close/COMMISSIONING-FAIL-ESB-RECON-20261002.json
+
+1) Canonical Owner Control (assignment-derived, UI, audited) — Daily Close first + gap register.
+2) Forensic why live 61/2,855,000 ≠ receipt 58/2,735,000 — do not overwrite.
+3) Dual-source live vs closing receipt + bank-split EDC/QRIS recon board.
+staff_ready=false. No push. Prod :8787 untouched. Peaches verifies before Matt ping.

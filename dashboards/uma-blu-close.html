@@ -195,6 +195,23 @@
         Lock stays. Cashiers cannot steal. Prior photos, extracts, cash, EDC, QRIS, notes stay.
       </p>
     </div>
+    <div class="panel hidden" id="ownerControlPanel" style="border-color: var(--warn); margin-top: 12px;">
+      <h2>Owner Control</h2>
+      <p class="muted">Assignment-derived (ROLE-MATT). Audited. Reversible ops only — not money movement.</p>
+      <label for="ownerReason">Reason (required)</label>
+      <textarea id="ownerReason" placeholder="Why are you intervening?" disabled></textarea>
+      <label for="ownerReassignTo" id="ownerReassignToLabel" class="hidden">Correct assignment → person id</label>
+      <input type="text" id="ownerReassignTo" class="hidden" placeholder="PERS-…" disabled />
+      <div class="row" style="margin-top:8px; flex-wrap:wrap; gap:8px;">
+        <button class="btn btn-warn" id="btnOwnerUnlock" type="button" disabled>Unlock abandoned</button>
+        <button class="btn" id="btnOwnerOverride" type="button" disabled>Override lock</button>
+        <button class="btn" id="btnOwnerReturn" type="button" disabled>Return for correction</button>
+        <button class="btn" id="btnOwnerReopen" type="button" disabled>Reopen close</button>
+        <button class="btn" id="btnOwnerCancel" type="button" disabled>Cancel workflow</button>
+        <button class="btn btn-primary" id="btnOwnerCorrect" type="button" disabled>Correct assignment…</button>
+      </div>
+      <p class="muted" id="ownerControlNote" style="margin-top:8px">Evidence kept. No silent mutation. No audit deletion.</p>
+    </div>
     <button class="btn" id="btnCapture" data-cap="submit" type="button" disabled>Pull ESB sales (live API)</button>
     <div id="esbLiveBanner"></div>
     <div id="esbBox" class="muted" style="margin-top:10px"></div>
@@ -288,7 +305,10 @@
 
   <div class="panel">
     <h2>Reconciliation board</h2>
+    <p class="muted">LIVE ESB operational data and ESB end-of-day closing receipt stay dual sources. Never overwrite.</p>
     <div id="reconBox" class="muted">Open a close to see cash / EDC / QRIS expected vs confirmed.</div>
+    <div id="dualSourceBox" class="muted" style="margin-top:12px">Dual-source difference board appears after ESB pull + closing receipt confirm.</div>
+    <div id="bankSplitBox" class="muted" style="margin-top:12px">Bank-split EDC / QRIS (BNI / Mandiri) loads with recon.</div>
     <button class="btn btn-ok" id="btnReconcile" data-cap="submit" type="button" disabled>Reconcile</button>
     <button class="btn" id="btnReconRefresh" type="button" disabled>Refresh recon</button>
   </div>
@@ -615,6 +635,7 @@
       esb.textContent = "";
       esbLiveStatus = null;
       renderEsbLiveBanner();
+      showOwnerControlPanel(false);
       return;
     }
     const totals = close.esb_totals || {};
@@ -670,6 +691,7 @@
     renderEdc(close);
     renderEsbReceipt(close);
     renderRecon(close);
+    showOwnerControlPanel(!!close && !!(caps.owner_control || caps.reopen || caps.cancel_close));
   }
 
   function renderEdc(cl) {
@@ -719,10 +741,14 @@
 
   function renderRecon(cl) {
     const el = $("reconBox");
+    const dualEl = $("dualSourceBox");
+    const bankEl = $("bankSplitBox");
     if (!el) return;
     const b = (cl && cl.recon_board) || null;
     if (!b) {
       el.textContent = "Open a close to see cash / EDC / QRIS expected vs confirmed.";
+      if (dualEl) dualEl.textContent = "Dual-source difference board appears after ESB pull + closing receipt confirm.";
+      if (bankEl) bankEl.textContent = "Bank-split EDC / QRIS (BNI / Mandiri) loads with recon.";
       return;
     }
     const cash = b.cash || {};
@@ -730,9 +756,10 @@
     const qris = b.qris || {};
     const ev = b.evidence_completeness || {};
     el.innerHTML =
-      `<div class="row"><div class="fig">${money(cash.esb_expected)}<small>ESB cash expected</small></div>` +
+      `<div class="row"><div class="fig">${money(cash.esb_expected)}<small>ESB cash tendered (payment lines)</small></div>` +
+      `<div class="fig">${money(cash.esb_cash_sales_grand)}<small>ESB cash sales grand</small></div>` +
       `<div class="fig">${money(cash.declared_confirmed)}<small>Cash declared</small></div></div>` +
-      `<div class="muted">Cash variance ${money(cash.variance)}</div>` +
+      `<div class="muted">Cash variance (declared − tendered) ${money(cash.variance)}</div>` +
       `<div class="row" style="margin-top:8px"><div class="fig">${money(edc.esb_expected)}<small>ESB EDC expected</small></div>` +
       `<div class="fig">${money(edc.receipts_confirmed)}<small>EDC receipts confirmed</small></div></div>` +
       `<div class="muted">EDC variance ${money(edc.variance)}</div>` +
@@ -743,6 +770,105 @@
         ? `<p class="msg err">ESB receipt ≠ live API — visible exception; API not overwritten.</p>`
         : "") +
       `<p class="muted" style="margin-top:8px">Evidence: API ${ev.esb_api_snapshot ? "yes" : "no"} · ESB receipt ${ev.esb_closing_receipt_confirmed ? "yes" : "no"} · cash ${ev.declared_cash ? "yes" : "no"} · EDC receipts ${ev.edc_receipts_confirmed ? "yes" : "no"} · complete ${b.evidence_complete ? "yes" : "no"}</p>`;
+
+    const dual = b.dual_source || null;
+    if (dualEl) {
+      if (!dual) {
+        dualEl.textContent = "Dual-source board unavailable.";
+      } else {
+        const live = dual.live_esb_operational || {};
+        const rec = dual.esb_end_of_day_closing_receipt || {};
+        const diff = dual.difference_board || {};
+        const bills = diff.bills || {};
+        const cashD = diff.cash || {};
+        const pays = diff.payments || [];
+        const expl = (dual.explanations || []).map((e) =>
+          `<li><strong>${e.code}</strong> — ${e.message || ""}</li>`
+        ).join("");
+        const payRows = pays.map((p) =>
+          `<div class="muted">${p.key}: live ${money(p.live)} · receipt ${money(p.closing_receipt)} · Δ ${money(p.delta_live_minus_receipt)} · <span class="state">${p.status}</span></div>`
+        ).join("");
+        dualEl.innerHTML =
+          `<h3 style="margin:0 0 8px;font-size:1rem">Dual-source difference</h3>` +
+          `<div class="row"><div class="fig">${live.finished_bills != null ? live.finished_bills : "—"}<small>LIVE finished bills</small></div>` +
+          `<div class="fig">${live.sales_bills_excl_other_cost != null ? live.sales_bills_excl_other_cost : "—"}<small>LIVE sales excl OTHER</small></div>` +
+          `<div class="fig">${rec.bills != null ? rec.bills : "—"}<small>Closing receipt bills</small></div></div>` +
+          `<div class="muted">Bills Δ (finished − receipt) ${bills.delta_finished_minus_receipt != null ? bills.delta_finished_minus_receipt : "—"}</div>` +
+          `<div class="row" style="margin-top:8px"><div class="fig">${money(live.cash_tendered)}<small>LIVE cash tendered</small></div>` +
+          `<div class="fig">${money(live.cash_sales_grand)}<small>LIVE cash sales</small></div>` +
+          `<div class="fig">${money(rec.cash)}<small>Closing receipt cash</small></div></div>` +
+          `<div class="muted">Cash Δ (tendered − receipt) ${money(cashD.delta_tendered_minus_receipt)}</div>` +
+          (expl ? `<ul style="margin:8px 0 0 1.1rem;padding:0">${expl}</ul>` : "") +
+          (dual.flags && dual.flags.length ? `<p class="msg err">Flags: ${dual.flags.join(", ")}</p>` : "") +
+          `<p class="muted" style="margin-top:8px">Sources kept · silent overwrite = no · ${dual.policy || ""}</p>` +
+          (payRows ? `<div style="margin-top:8px"><strong>Payment lines</strong>${payRows}</div>` : "");
+      }
+    }
+
+    if (bankEl) {
+      const edcB = b.bank_split_edc || {};
+      const qrisB = b.bank_split_qris || {};
+      const edcKeys = Object.keys(edcB);
+      const qrisKeys = Object.keys(qrisB);
+      if (!edcKeys.length && !qrisKeys.length) {
+        bankEl.textContent = "No bank-split EDC/QRIS lines on live ESB yet.";
+      } else {
+        bankEl.innerHTML =
+          `<h3 style="margin:0 0 8px;font-size:1rem">Bank-split EDC / QRIS</h3>` +
+          edcKeys.map((k) => `<div class="fig" style="display:inline-block;margin:4px 8px 4px 0">${money(edcB[k])}<small>${k}</small></div>`).join("") +
+          qrisKeys.map((k) => `<div class="fig" style="display:inline-block;margin:4px 8px 4px 0">${money(qrisB[k])}<small>${k}</small></div>`).join("") +
+          `<p class="muted" style="margin-top:6px">QRIS never merged into EDC card. Outlet bank labels are location-specific.</p>`;
+      }
+    }
+  }
+
+  function showOwnerControlPanel(visible) {
+    const panel = $("ownerControlPanel");
+    if (!panel) return;
+    const can = !!(caps.owner_control || caps.reopen || caps.cancel_close);
+    if (!visible || !can) {
+      panel.classList.add("hidden");
+      return;
+    }
+    panel.classList.remove("hidden");
+    $("ownerReason").disabled = false;
+    ["btnOwnerUnlock", "btnOwnerOverride", "btnOwnerReturn", "btnOwnerReopen", "btnOwnerCancel", "btnOwnerCorrect"].forEach((id) => {
+      if ($(id)) $(id).disabled = false;
+    });
+  }
+
+  async function runOwnerControl(action, extra) {
+    if (!close) {
+      setMsg("Open a close first.");
+      return;
+    }
+    const reason = ($("ownerReason").value || "").trim();
+    if (!reason) {
+      setMsg("Reason required for Owner Control.");
+      return;
+    }
+    const body = {
+      close_id: close.close_id,
+      action: action,
+      reason: reason,
+    };
+    if (extra && extra.new_holder_person_id) {
+      body.new_holder_person_id = extra.new_holder_person_id;
+    }
+    setMsg("");
+    try {
+      const data = await api("/api/venue-close/owner-control", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      close = data.close || close;
+      renderClose();
+      showOwnerControlPanel(true);
+      setMsg("Owner Control " + (data.owner_action || action) + " — audited. Work preserved. No money movement.", true);
+      $("ownerReason").value = "";
+    } catch (e) {
+      setMsg((e.data && e.data.message) || e.message || String(e));
+    }
   }
 
   async function loadOutletConfig() {
@@ -1098,6 +1224,28 @@
     $("reassignTo").focus();
   };
   $("btnReassignConfirm").onclick = () => runGovernedTakeover("reassign");
+
+  if ($("btnOwnerUnlock")) $("btnOwnerUnlock").onclick = () => runOwnerControl("unlock_abandoned");
+  if ($("btnOwnerOverride")) $("btnOwnerOverride").onclick = () => runOwnerControl("override_lock");
+  if ($("btnOwnerReturn")) $("btnOwnerReturn").onclick = () => runOwnerControl("return_for_correction");
+  if ($("btnOwnerReopen")) $("btnOwnerReopen").onclick = () => runOwnerControl("reopen");
+  if ($("btnOwnerCancel")) $("btnOwnerCancel").onclick = () => runOwnerControl("cancel");
+  if ($("btnOwnerCorrect")) {
+    $("btnOwnerCorrect").onclick = () => {
+      if ($("ownerReassignToLabel")) $("ownerReassignToLabel").classList.remove("hidden");
+      if ($("ownerReassignTo")) {
+        $("ownerReassignTo").classList.remove("hidden");
+        $("ownerReassignTo").disabled = false;
+        $("ownerReassignTo").focus();
+      }
+      const target = ($("ownerReassignTo").value || "").trim();
+      if (!target) {
+        setMsg("Enter person id for Correct assignment, then press again.");
+        return;
+      }
+      runOwnerControl("correct_assignment", { new_holder_person_id: target });
+    };
+  }
 
   $("btnCapture").onclick = async () => {
     await pullEsbLive({ quiet: false });

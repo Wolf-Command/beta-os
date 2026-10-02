@@ -7789,6 +7789,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/venue-close/reassign":
             self._venue_close_reassign()
             return
+        if path == "/api/venue-close/owner-control":
+            self._venue_close_owner_control()
+            return
 
         m_wi_assign = re.match(r"^/api/core/work-items/([^/]+)/assign$", path)
         if m_wi_assign:
@@ -42510,6 +42513,54 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     "before": out.get("before"),
                     "after": out.get("after"),
                     "work_preserved": out.get("work_preserved"),
+                    "holder": out.get("holder"),
+                    **_venue_close.HONESTY,
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_owner_control(self) -> None:
+        """Owner Control / Break Glass — assignment ROLE-MATT, audited, no money move."""
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "variance_cash_amount", "esb_totals", "taken_by_person_id")
+        ):
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            out = _venue_close.owner_control_venue_close(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                action=str(body.get("action") or ""),
+                reason=str(body.get("reason") or ""),
+                new_holder_person_id=(
+                    str(body.get("new_holder_person_id") or body.get("to_person_id") or "")
+                    or None
+                ),
+                identity=identity,
+            )
+            enriched = _bzg_daily_close.enrich_close(out)
+            self._send_json(
+                {
+                    "ok": True,
+                    "close": enriched,
+                    "owner_control": True,
+                    "owner_action": out.get("owner_action"),
+                    "reason": out.get("reason"),
+                    "prior_holder_person_id": out.get("prior_holder_person_id"),
+                    "prior_holder_display_name": out.get("prior_holder_display_name"),
+                    "before": out.get("before"),
+                    "after": out.get("after"),
+                    "work_preserved": out.get("work_preserved"),
+                    "reversible_ops_control": True,
+                    "money_movement": False,
                     "holder": out.get("holder"),
                     **_venue_close.HONESTY,
                 }

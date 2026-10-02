@@ -25,13 +25,15 @@ from typing import Any
 from core import audit as _audit
 from core import bzg_close_vision as _vision
 from core import bzg_outlet_registry as _outlets
+from core import esb_close_snapshot as _esb
 from core import evidence as _evidence
 from core import venue_close as _vc
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 CATALOG_DB = BETA_ROOT / "catalog" / "content_library.sqlite"
-PACK = "BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1"
-PACK_PRIOR = "BZG-DAILY-CLOSE-MULTI-EDC-VISION-1"
+PACK = "BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1"
+PACK_PRIOR = "BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1"
+PACK_VISION = "BZG-DAILY-CLOSE-MULTI-EDC-VISION-1"
 ENTITY = "ENT-BZG"
 OUTLET_UMA = "BZG-UMA"
 
@@ -46,8 +48,10 @@ HONESTY = {
     **_vc.HONESTY,
     "pack": PACK,
     "prior_pack": PACK_PRIOR,
+    "vision_pack": PACK_VISION,
     "staff_ready": False,
     "human_commissioned": False,
+    "daily_close_commissioned": False,
     "settlement_api": "UNAVAILABLE",
     "settlement_status": "PENDING_BANK",
     "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
@@ -64,6 +68,9 @@ HONESTY = {
     "esb_unavailable_explicit": True,
     "esb_empty_is_not_zero_sales": True,
     "dual_source_api_and_receipt": True,
+    "dual_source_never_overwrite": True,
+    "bank_split_edc_qris": True,
+    "owner_control": True,
     "engine": "venue_close",
 }
 
@@ -1753,11 +1760,258 @@ def confirm_esb_closing_receipt(
             c.close()
 
 
+def _receipt_payments_map(confirmed_esb: list[dict[str, Any]]) -> dict[str, float]:
+    """Bank-split map from confirmed closing receipt (confirmed_json.payments or fields)."""
+    if not confirmed_esb:
+        return {}
+    latest = confirmed_esb[-1]
+    conf = latest.get("confirmed") or latest.get("extracted") or {}
+    pays = conf.get("payments") if isinstance(conf, dict) else None
+    out: dict[str, float] = {}
+    if isinstance(pays, dict):
+        for k, v in pays.items():
+            if v is None:
+                continue
+            try:
+                out[str(k)] = round(float(v), 2)
+            except (TypeError, ValueError):
+                continue
+        return out
+    # Flatten confirmed cash/edc/qris when vision did not emit bank keys
+    if isinstance(conf, dict):
+        if conf.get("cash_amount") is not None:
+            out["Cash"] = round(float(conf["cash_amount"]), 2)
+        if conf.get("edc_card_amount") is not None:
+            out["EDC_TOTAL"] = round(float(conf["edc_card_amount"]), 2)
+        if conf.get("qris_amount") is not None:
+            out["QRIS_TOTAL"] = round(float(conf["qris_amount"]), 2)
+    elif latest.get("cash_amount") is not None:
+        out["Cash"] = round(float(latest["cash_amount"]), 2)
+        if latest.get("edc_card_amount") is not None:
+            out["EDC_TOTAL"] = round(float(latest["edc_card_amount"]), 2)
+        if latest.get("qris_amount") is not None:
+            out["QRIS_TOTAL"] = round(float(latest["qris_amount"]), 2)
+    return out
+
+
+def _diff_payment_maps(
+    live: dict[str, float],
+    receipt: dict[str, float],
+) -> list[dict[str, Any]]:
+    keys = sorted(set(live) | set(receipt))
+    rows: list[dict[str, Any]] = []
+    for k in keys:
+        lv = round(float(live.get(k) or 0), 2)
+        rv = round(float(receipt.get(k) or 0), 2)
+        if lv == rv:
+            status = "MATCH"
+        elif k not in receipt:
+            status = "LIVE_ONLY"
+        elif k not in live:
+            status = "RECEIPT_ONLY"
+        else:
+            status = "MISMATCH"
+        rows.append(
+            {
+                "key": k,
+                "live": lv,
+                "closing_receipt": rv,
+                "delta_live_minus_receipt": round(lv - rv, 2),
+                "status": status,
+            }
+        )
+    return rows
+
+
+def dual_source_difference_board(
+    *,
+    live_totals: dict[str, Any],
+    stored_totals: dict[str, Any],
+    confirmed_esb: list[dict[str, Any]],
+    business_date: str | None,
+) -> dict[str, Any]:
+    """LIVE ESB operational vs END OF DAY closing receipt — never overwrite either."""
+    live_split = dict(live_totals.get("payments_by_bank_split") or {})
+    if not live_split:
+        # Fallback: stored snapshot may predate bank-split; use method names if present
+        live_split = dict(
+            live_totals.get("payment_by_method_name")
+            or stored_totals.get("payment_by_method_name")
+            or {}
+        )
+    receipt_split = _receipt_payments_map(confirmed_esb)
+    latest = confirmed_esb[-1] if confirmed_esb else {}
+    conf = (latest.get("confirmed") or latest.get("extracted") or {}) if latest else {}
+    receipt_bills = conf.get("bills") if isinstance(conf, dict) else None
+    receipt_cash = None
+    if isinstance(conf, dict) and conf.get("cash_amount") is not None:
+        receipt_cash = round(float(conf["cash_amount"]), 2)
+    elif latest.get("cash_amount") is not None:
+        receipt_cash = round(float(latest["cash_amount"]), 2)
+    receipt_pax = conf.get("pax") if isinstance(conf, dict) else None
+
+    live_bills = live_totals.get("finished_count")
+    live_cash_tendered = live_totals.get("cash_from_payments")
+    live_cash_sales = live_totals.get("cash_sales_grand")
+    live_sales_bills = live_totals.get("sales_bill_count_excl_other_cost")
+    live_pax_sales = live_totals.get("sales_pax_excl_other_cost")
+
+    explanations: list[dict[str, Any]] = []
+    flags: list[str] = []
+
+    if (
+        live_bills is not None
+        and live_sales_bills is not None
+        and int(live_bills) != int(live_sales_bills)
+    ):
+        explanations.append(
+            {
+                "code": "OTHER_COST_BILLS_IN_LIVE",
+                "message": (
+                    f"Live Finished includes {int(live_bills) - int(live_sales_bills)} "
+                    "OTHER COST bill(s) (comp/chef) that closing receipts typically omit."
+                ),
+                "live_finished": live_bills,
+                "live_sales_excl_other": live_sales_bills,
+            }
+        )
+    if (
+        live_cash_tendered is not None
+        and live_cash_sales is not None
+        and round(float(live_cash_tendered) - float(live_cash_sales), 2) != 0
+    ):
+        explanations.append(
+            {
+                "code": "CASH_TENDERED_VS_SALES",
+                "message": (
+                    "Live cash is payment-line tendered (includes change overpay). "
+                    "Closing receipt cash usually equals sales grand on cash bills."
+                ),
+                "cash_tendered": live_cash_tendered,
+                "cash_sales_grand": live_cash_sales,
+                "change_overpay": live_totals.get("cash_change_overpay"),
+            }
+        )
+    if receipt_bills is not None and live_sales_bills is not None:
+        if int(receipt_bills) == int(live_sales_bills):
+            explanations.append(
+                {
+                    "code": "BILLS_MATCH_EXCL_OTHER",
+                    "message": "Receipt bill count matches live Finished excluding OTHER COST.",
+                    "bills": int(receipt_bills),
+                }
+            )
+        else:
+            flags.append("BILLS_STILL_MISMATCH_AFTER_OTHER_EXCL")
+            explanations.append(
+                {
+                    "code": "BILLS_MISMATCH",
+                    "message": "Receipt bills ≠ live sales bills even after excluding OTHER COST.",
+                    "receipt_bills": receipt_bills,
+                    "live_sales_bills": live_sales_bills,
+                    "live_finished": live_bills,
+                }
+            )
+    elif receipt_bills is not None and live_bills is not None:
+        if int(receipt_bills) != int(live_bills):
+            flags.append("BILLS_MISMATCH")
+    if receipt_cash is not None and live_cash_sales is not None:
+        if round(float(receipt_cash), 2) == round(float(live_cash_sales), 2):
+            explanations.append(
+                {
+                    "code": "CASH_MATCHES_SALES_GRAND",
+                    "message": "Receipt cash matches live cash-bill grandTotal (not tendered).",
+                    "cash": receipt_cash,
+                }
+            )
+        elif live_cash_tendered is not None and round(
+            float(receipt_cash), 2
+        ) != round(float(live_cash_tendered), 2):
+            flags.append("CASH_MISMATCH")
+    if receipt_pax is not None and live_pax_sales is not None:
+        if round(float(receipt_pax), 2) == round(float(live_pax_sales), 2):
+            explanations.append(
+                {
+                    "code": "PAX_MATCH_EXCL_OTHER",
+                    "message": "Receipt pax matches live pax excluding OTHER COST bills.",
+                    "pax": receipt_pax,
+                }
+            )
+
+    pay_rows = _diff_payment_maps(live_split, receipt_split)
+    any_mismatch = any(r["status"] != "MATCH" for r in pay_rows) or bool(flags)
+
+    return {
+        "policy": "Do not overwrite live with receipt or vice versa; dual-source reconcile + explain/flag",
+        "business_date": business_date,
+        "live_esb_operational": {
+            "source": "warehouse_payment_lines",
+            "finished_bills": live_bills,
+            "sales_bills_excl_other_cost": live_sales_bills,
+            "other_cost_bills": live_totals.get("other_cost_bill_count"),
+            "cash_tendered": live_cash_tendered,
+            "cash_sales_grand": live_cash_sales,
+            "cash_change_overpay": live_totals.get("cash_change_overpay"),
+            "pax_total": live_totals.get("pax_total"),
+            "sales_pax_excl_other_cost": live_pax_sales,
+            "grand_total": live_totals.get("grand_total"),
+            "sales_grand_excl_other_cost": live_totals.get("sales_grand_excl_other_cost"),
+            "card_from_payments": live_totals.get("card_from_payments"),
+            "qris_from_payments": live_totals.get("qris_from_payments"),
+            "other_from_payments": live_totals.get("other_from_payments"),
+            "payments_by_bank_split": live_split,
+        },
+        "esb_end_of_day_closing_receipt": {
+            "source": "photo_vision_confirm",
+            "confirmed": bool(confirmed_esb),
+            "bills": receipt_bills,
+            "cash": receipt_cash,
+            "pax": receipt_pax,
+            "net_sales": conf.get("net_sales") if isinstance(conf, dict) else None,
+            "service_charge": conf.get("service_charge") if isinstance(conf, dict) else None,
+            "tax": conf.get("tax") if isinstance(conf, dict) else None,
+            "gross_sales": conf.get("gross_sales") if isinstance(conf, dict) else None,
+            "payments_by_bank_split": receipt_split,
+            "image_preserved": bool(
+                latest.get("object_ref") or latest.get("content_hash")
+            ),
+        },
+        "difference_board": {
+            "bills": {
+                "live_finished": live_bills,
+                "live_sales_excl_other": live_sales_bills,
+                "closing_receipt": receipt_bills,
+                "delta_finished_minus_receipt": (
+                    None
+                    if live_bills is None or receipt_bills is None
+                    else int(live_bills) - int(receipt_bills)
+                ),
+            },
+            "cash": {
+                "live_tendered": live_cash_tendered,
+                "live_sales_grand": live_cash_sales,
+                "closing_receipt": receipt_cash,
+                "delta_tendered_minus_receipt": (
+                    None
+                    if live_cash_tendered is None or receipt_cash is None
+                    else round(float(live_cash_tendered) - float(receipt_cash), 2)
+                ),
+            },
+            "payments": pay_rows,
+        },
+        "explanations": explanations,
+        "flags": flags,
+        "has_unexplained_delta": any_mismatch and not explanations,
+        "silent_overwrite": False,
+        "sources_kept": True,
+    }
+
+
 def recon_board(
     close_id: str,
     conn: sqlite3.Connection | None = None,
 ) -> dict[str, Any]:
-    """Cash / EDC / QRIS expected (ESB API) vs confirmed receipts + evidence completeness."""
+    """Cash / EDC / QRIS + bank-split dual-source board. Never overwrites sources."""
     own = conn is None
     c = conn or db_connect()
     try:
@@ -1771,11 +2025,42 @@ def recon_board(
             r for r in esb_recs if r.get("human_confirm_status") in ("CONFIRMED", "EDITED")
         ]
         declared_cash = row.get("declared_cash_amount")
+
+        # Live operational re-read (RO warehouse) — does not mutate stored close.
+        live_totals = dict(totals)
+        live_meta: dict[str, Any] = {"source": "stored_close_snapshot"}
+        biz = (row.get("business_date") or "").strip()
+        if biz:
+            try:
+                snap = _esb.snapshot_day(biz)
+                live_totals = dict(snap.get("totals") or {})
+                live_meta = {
+                    "source": "warehouse_payment_lines_live",
+                    "esb_pulled_at": snap.get("esb_pulled_at"),
+                    "fingerprint_sha256": snap.get("fingerprint_sha256"),
+                    "stored_fingerprint_sha256": row.get("esb_fingerprint_sha256"),
+                    "fingerprint_matches_stored": snap.get("fingerprint_sha256")
+                    == row.get("esb_fingerprint_sha256"),
+                }
+            except _esb.EsbSnapshotError as exc:
+                live_meta = {
+                    "source": "stored_close_snapshot",
+                    "live_read_error": str(exc),
+                    "live_read_code": getattr(exc, "code", None),
+                }
+
+        # Captured snapshot remains the close's expected basis (fingerprint-locked).
+        # Live warehouse re-read feeds dual_source only — never overwrites captured.
         esb_cash = totals.get("cash_from_payments")
         esb_edc = totals.get("card_from_payments")
         esb_qris = totals.get("qris_from_payments")
         conf_edc = rt["TOTAL_EDC"]
         conf_qris = rt["TOTAL_QRIS"]
+        bank_split = (
+            live_totals.get("payments_by_bank_split")
+            or totals.get("payments_by_bank_split")
+            or {}
+        )
 
         def _var(expected: Any, confirmed: Any) -> float | None:
             if expected is None or confirmed is None:
@@ -1806,6 +2091,12 @@ def recon_board(
                 evidence["declared_cash"],
             ]
         )
+        dual = dual_source_difference_board(
+            live_totals=live_totals,
+            stored_totals=totals,
+            confirmed_esb=confirmed_esb,
+            business_date=biz,
+        )
         return {
             **HONESTY,
             "ok": True,
@@ -1814,6 +2105,8 @@ def recon_board(
             "state": row.get("state"),
             "cash": {
                 "esb_expected": esb_cash,
+                "esb_cash_tendered": esb_cash,
+                "esb_cash_sales_grand": live_totals.get("cash_sales_grand"),
                 "declared_confirmed": declared_cash,
                 "variance": _var(esb_cash, declared_cash),
             },
@@ -1828,10 +2121,26 @@ def recon_board(
                 "variance": _var(esb_qris, conf_qris),
             },
             "other_methods": {
-                "esb_expected": totals.get("other_from_payments"),
+                "esb_expected": live_totals.get(
+                    "other_from_payments", totals.get("other_from_payments")
+                ),
             },
+            "payments_by_bank_split": bank_split,
+            "bank_split_edc": {
+                k: v for k, v in bank_split.items() if str(k).startswith("EDC_")
+            },
+            "bank_split_qris": {
+                k: v for k, v in bank_split.items() if str(k).startswith("QRIS_")
+            },
+            "live_esb_meta": live_meta,
+            "dual_source": dual,
             "receipt_totals": rt,
-            "esb_api_vs_receipt_mismatch": bool(mismatches),
+            "esb_api_vs_receipt_mismatch": bool(mismatches)
+            or bool(dual.get("flags"))
+            or any(
+                r.get("status") == "MISMATCH"
+                for r in (dual.get("difference_board") or {}).get("payments") or []
+            ),
             "esb_mismatch_rows": len(mismatches),
             "evidence_completeness": evidence,
             "evidence_complete": complete,

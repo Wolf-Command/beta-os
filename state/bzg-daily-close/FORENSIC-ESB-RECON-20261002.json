@@ -1,0 +1,173 @@
+{
+  "id": "FORENSIC-ESB-RECON-20261002",
+  "pack": "BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1",
+  "when_wita": "2026-10-02T22:39:34+08:00",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "daily_close_commissioned": false,
+  "policy_overwrite": false,
+  "policy": "Do not overwrite live with receipt or vice versa; dual-source reconcile + explain/flag",
+  "live_esb_operational": {
+    "source": "warehouse_payment_lines",
+    "warehouse": "/Users/wolfterminal/.openclaw/data/esb.sqlite",
+    "esb_pulled_at": "2026-10-02T22:04:55.138957+08:00",
+    "fingerprint_sha256": "15d56bb66d8fc5988f40a24bbe145cbc4f6b932667c3094d7fc29649a655486b",
+    "finished_bills": 61,
+    "cancelled_bills": 5,
+    "cash_tendered": 2855000.0,
+    "cash_sales_grand": 2735000.0,
+    "cash_change_overpay": 120000.0,
+    "sales_bills_excl_other_cost": 58,
+    "other_cost_bill_count": 3,
+    "pax_total": 106.0,
+    "sales_pax_excl_other_cost": 103.0,
+    "grand_total": 18614008.26,
+    "sales_grand_excl_other_cost": 18395000.0,
+    "card_from_payments": 13490000.0,
+    "qris_from_payments": 2170000.0,
+    "other_from_payments": 219008.26,
+    "payments_by_bank_split": {
+      "COMPLIMENT": 41322.31,
+      "Cash": 2855000.0,
+      "EDC_BNI": 6185000.0,
+      "EDC_Mandiri": 5450000.0,
+      "EDC_ROB_FAMILY": 160000.0,
+      "EDC_ROOM_CHARGE_112": 545000.0,
+      "EDC_SCOTT_ETIK": 1150000.0,
+      "EXECUTIVE_CHEF": 177685.95,
+      "QRIS_BNI": 65000.0,
+      "QRIS_Mandiri": 2105000.0
+    }
+  },
+  "closing_receipt_printed": {
+    "business_date": "2026-10-02",
+    "bills": 58,
+    "cash": 2735000,
+    "pax": 103,
+    "net_sales": 15202479,
+    "service_charge": 1672273,
+    "tax": 1520248,
+    "gross_sales": 18395000,
+    "payments": {
+      "Cash": 2735000,
+      "EDC_BNI": 6185000,
+      "EDC_Mandiri": 5450000,
+      "QRIS_BNI": 65000,
+      "QRIS_Mandiri": 2105000,
+      "ROB_FAMILY": 160000,
+      "ROOM_CHARGE_112": 545000,
+      "SCOTT_ETIK": 1150000
+    },
+    "payment_total": 18395000
+  },
+  "delta_raw": {
+    "bills_finished_minus_receipt": 3,
+    "cash_tendered_minus_receipt": 120000.0
+  },
+  "root_cause": [
+    {
+      "code": "OTHER_COST_BILLS_IN_LIVE",
+      "explains": "bills +3 (61→58) and pax 106→103 and gross 18,614,008→18,395,000",
+      "detail": "Live Finished includes OTHER COST bills (COMPLIMENT + Executife Chef ×2) with billNum=null that the printed closing receipt omits.",
+      "bills": [
+        {
+          "sales_num": "SBLZ179091379811",
+          "bill_num": null,
+          "grand_total": 103305.785,
+          "pax_total": 1.0,
+          "sales_date_out": "2026-10-02 20:16:04",
+          "cash_tendered": 0.0,
+          "is_other_cost_only": true
+        },
+        {
+          "sales_num": "SBLZ179093112263",
+          "bill_num": null,
+          "grand_total": 41322.314,
+          "pax_total": 1.0,
+          "sales_date_out": "2026-10-02 17:30:52",
+          "cash_tendered": 0.0,
+          "is_other_cost_only": true
+        },
+        {
+          "sales_num": "SBLZ179094661810",
+          "bill_num": null,
+          "grand_total": 74380.165,
+          "pax_total": 1.0,
+          "sales_date_out": "2026-10-02 21:10:49",
+          "cash_tendered": 0.0,
+          "is_other_cost_only": true
+        }
+      ],
+      "verified": true
+    },
+    {
+      "code": "CASH_TENDERED_VS_SALES_GRAND",
+      "explains": "cash +120,000 (2,855,000→2,735,000)",
+      "detail": "Live cash sums payment-line tendered amounts (includes change overpay). Receipt cash equals sum of grandTotal on cash-paid sales bills.",
+      "cash_overpay_bills": [
+        {
+          "sales_num": "SBLZ179090320790",
+          "bill_num": "BLZ202610020012",
+          "cash_tendered": 100000.0,
+          "grand_total": 80000.0,
+          "overpay": 20000.0,
+          "sales_date_out": "2026-10-02 10:07:02"
+        },
+        {
+          "sales_num": "SBLZ179091174510",
+          "bill_num": "BLZ202610020024",
+          "cash_tendered": 500000.0,
+          "grand_total": 450000.0,
+          "overpay": 50000.0,
+          "sales_date_out": "2026-10-02 12:19:13"
+        },
+        {
+          "sales_num": "SBLZ179091267360",
+          "bill_num": "BLZ202610020026",
+          "cash_tendered": 200000.0,
+          "grand_total": 190000.0,
+          "overpay": 10000.0,
+          "sales_date_out": "2026-10-02 12:37:56"
+        },
+        {
+          "sales_num": "SBLZ179091705649",
+          "bill_num": "BLZ202610020029",
+          "cash_tendered": 350000.0,
+          "grand_total": 340000.0,
+          "overpay": 10000.0,
+          "sales_date_out": "2026-10-02 13:36:45"
+        },
+        {
+          "sales_num": "SBLZ179093065284",
+          "bill_num": "BLZ202610020046",
+          "cash_tendered": 800000.0,
+          "grand_total": 770000.0,
+          "overpay": 30000.0,
+          "sales_date_out": "2026-10-02 17:37:44"
+        }
+      ],
+      "sum_overpay": 120000.0,
+      "verified": true
+    },
+    {
+      "code": "NOT_DATE_BOUNDARY_OR_TZ",
+      "detail": "All Finished bills share biz_date=2026-10-02; warehouse trusts ESB biz_date. Cash overpay is change on mid-day bills, not late finish after print."
+    },
+    {
+      "code": "NOT_CANCEL_VOID_OF_THE_THREE",
+      "detail": "Cancelled count=5 separate from the +3 OTHER COST Finished bills. Receipt bill gap is classification (OTHER COST omitted), not cancel."
+    },
+    {
+      "code": "PRIOR_CLASSIFY_BUG_NOTED",
+      "detail": "Stored close snapshot had qris_from_payments=0 because TypeName=CARD for QRIS*; fixed to classify by paymentMethodName. Does not change bill/cash delta math."
+    }
+  ],
+  "bank_split_live_matches_receipt_noncash": {
+    "EDC_BNI": true,
+    "EDC_Mandiri": true,
+    "QRIS_BNI": true,
+    "QRIS_Mandiri": true
+  },
+  "sources_kept": true,
+  "silent_overwrite": false
+}

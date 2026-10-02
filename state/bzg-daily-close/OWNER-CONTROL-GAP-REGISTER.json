@@ -1,0 +1,84 @@
+{
+  "id": "OWNER-CONTROL-GAP-REGISTER",
+  "pack": "BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1",
+  "when_wita": "2026-10-02T22:45:00+08:00",
+  "authority_model": "Owner Assignment → ROLE-MATT / PERS-MATT via org_assignments — not hardcoded email",
+  "money_movement_separated": true,
+  "note": "Honest PARTIAL Wolf-wide register. Daily Close implemented tonight; others stamped as gaps.",
+  "workflows": [
+    {
+      "workflow": "BZG Daily Close",
+      "status": "IMPLEMENTED",
+      "ui": "/uma-blu-close",
+      "actions": [
+        "take_over",
+        "reassign",
+        "reopen",
+        "cancel",
+        "unlock_abandoned",
+        "override_lock",
+        "return_for_correction",
+        "correct_assignment"
+      ],
+      "permission": "venue.close.owner_control (+ venue.close.reassign for takeover/reassign)",
+      "audited": true,
+      "notes": "Canonical Owner Control first surface. Reversible ops only."
+    },
+    {
+      "workflow": "Finance / payments / bank execution",
+      "status": "GAP",
+      "ui": null,
+      "actions_needed": [
+        "override operational hold",
+        "return for correction",
+        "reassign approver"
+      ],
+      "notes": "Must stay separated from money movement / irreversible bank execution."
+    },
+    {
+      "workflow": "Content Engine / uploads",
+      "status": "GAP",
+      "ui": null,
+      "actions_needed": [
+        "take over abandoned upload",
+        "reassign seat",
+        "cancel workflow",
+        "unlock stuck job"
+      ],
+      "notes": "Haikal/seat surfaces have ops paths; no unified Owner Control panel yet."
+    },
+    {
+      "workflow": "My Work / work items",
+      "status": "PARTIAL",
+      "ui": "/my-work",
+      "actions_present": ["assign", "start", "block", "complete", "verify", "cancel"],
+      "actions_needed": [
+        "owner break-glass takeover with reason+audit parity",
+        "unlock abandoned with preserved evidence stamp"
+      ],
+      "notes": "Core work-item mutations exist; not yet under canonical Owner Control product UI."
+    },
+    {
+      "workflow": "Approvals",
+      "status": "GAP",
+      "ui": null,
+      "actions_needed": [
+        "owner override lock",
+        "reassign approver chain",
+        "return for correction"
+      ],
+      "notes": "Approvals-live deepen exists; Owner Control break-glass not productised."
+    },
+    {
+      "workflow": "Integrations / pipe / external routes",
+      "status": "GAP",
+      "ui": null,
+      "actions_needed": [
+        "unlock abandoned sync",
+        "cancel stuck episode",
+        "owner reopen after false close"
+      ],
+      "notes": "Reliability boards are RO; no Owner Control mutation surface."
+    }
+  ]
+}

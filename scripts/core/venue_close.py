@@ -1979,6 +1979,319 @@ def take_over_venue_close(
     )
 
 
+# Owner Control / Break Glass — assignment-derived (ROLE-MATT), not email.
+# Reversible ops controls only — never money movement / bank execution.
+OWNER_CONTROL_ACTIONS = frozenset(
+    {
+        "reopen",
+        "cancel",
+        "unlock_abandoned",
+        "override_lock",
+        "return_for_correction",
+        "correct_assignment",
+    }
+)
+OWNER_CONTROL_PERM = "venue.close.owner_control"
+# States that may rewind to DATA_CAPTURED for correction (evidence kept).
+_RETURN_FROM = frozenset(
+    {
+        "EVIDENCE_SUBMITTED",
+        "RECONCILED",
+        "VARIANCE_REQUIRES_POLICY",
+        "EXCEPTION",
+        "RESOLVED",
+    }
+)
+
+
+def owner_control_venue_close(
+    close_id: str,
+    *,
+    verified_person_id: str,
+    action: str,
+    reason: str,
+    new_holder_person_id: str | None = None,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Canonical Owner Control for Daily Close (Break Glass).
+
+    Authority: org Assignment → ROLE-MATT (or role granted venue.close.owner_control).
+    Not hardcoded email. Every intervention audited with before/after.
+    Does not move money or execute bank settlement.
+    """
+    cid = (close_id or "").strip()
+    actor = (verified_person_id or "").strip()
+    act = (action or "").strip().lower()
+    why = (reason or "").strip()
+    if not cid:
+        raise VenueCloseError("close_id required", code="missing_close_id")
+    if not actor:
+        raise VenueCloseError("verified_person_id required", code="missing_verified_person")
+    if act not in OWNER_CONTROL_ACTIONS:
+        raise VenueCloseError(
+            f"unknown owner action: {action}",
+            code="invalid_owner_action",
+            http_status=400,
+            details={"allowed": sorted(OWNER_CONTROL_ACTIONS)},
+        )
+    if not why:
+        raise VenueCloseError(
+            "Reason required for Owner Control.",
+            code="missing_reason",
+            http_status=400,
+        )
+
+    # correct_assignment delegates to governed reassign (same audit surface).
+    if act == "correct_assignment":
+        target = (new_holder_person_id or "").strip()
+        if not target:
+            raise VenueCloseError(
+                "new_holder_person_id required for correct_assignment",
+                code="missing_new_holder",
+            )
+        # Owner control perm required in addition to reassign path.
+        own_gate = conn is None
+        c_gate = conn or db_connect()
+        try:
+            _assert_perm(
+                verified_person_id=actor,
+                permission_code=OWNER_CONTROL_PERM,
+                conn=c_gate,
+            )
+        finally:
+            if own_gate:
+                c_gate.close()
+        out = reassign_venue_close(
+            cid,
+            verified_person_id=actor,
+            new_holder_person_id=target,
+            reason=why,
+            identity=identity,
+            mode="reassign",
+            conn=conn,
+            commit=commit,
+        )
+        return {
+            **out,
+            "owner_control": True,
+            "owner_action": act,
+            "reversible_ops_control": True,
+            "money_movement": False,
+        }
+
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        assert_catalog_writable(Path(CATALOG_DB))
+        ensure_take_attribution_columns(c)
+        row = get_close(cid, conn=c)
+        if not row:
+            raise VenueCloseError("close not found", code="not_found", http_status=404)
+
+        brand = str(row.get("venue_brand_id") or BRAND_UMA)
+        entity = str(row.get("entity_id") or ENTITY_BZG)
+
+        _assert_perm(
+            verified_person_id=actor,
+            permission_code=OWNER_CONTROL_PERM,
+            conn=c,
+        )
+        actor_authz = person_authorised_for_venue_close(
+            actor,
+            venue_brand_id=brand,
+            entity_id=entity,
+            conn=c,
+        )
+        if not actor_authz.get("allowed"):
+            _audit.safe_record(
+                action=f"venue_close.owner_{act}",
+                result="DENIED",
+                source="venue_close",
+                actor_type="PERSON",
+                verified_person_id=actor,
+                actor_person_id=actor,
+                identity_assurance=(identity or {}).get("identity_assurance"),
+                resource_type="venue_daily_close",
+                resource_id=cid,
+                reason_code=str(actor_authz.get("reason") or "not_on_assignment"),
+                metadata={
+                    "reason": why,
+                    "owner_action": act,
+                    "entity_id": entity,
+                    "venue_brand_id": brand,
+                    "reversible_ops_control": True,
+                },
+                conn=c,
+            )
+            if commit:
+                c.commit()
+            raise VenueCloseError(
+                actor_authz.get("message") or "Owner Control not on your assignment.",
+                code="forbidden",
+                http_status=403,
+            )
+
+        before = close_work_snapshot(row, conn=c)
+        prior_holder = (row.get("taken_by_person_id") or "").strip() or None
+        prior_state = str(row.get("state") or "")
+        ts = now_utc_iso()
+        target_state = prior_state
+        clear_holder = False
+        set_holder_to_actor = False
+
+        if act == "cancel":
+            if prior_state == "VERIFIED_CLOSED":
+                raise VenueCloseError(
+                    "Cannot cancel a verified-closed day — reopen first if correction needed.",
+                    code="invalid_transition",
+                )
+            target_state = "CANCELLED"
+        elif act == "reopen":
+            if prior_state not in TERMINAL:
+                raise VenueCloseError(
+                    "reopen applies to VERIFIED_CLOSED or CANCELLED — use return_for_correction otherwise.",
+                    code="invalid_transition",
+                )
+            target_state = "OPEN"
+            set_holder_to_actor = True
+        elif act in {"unlock_abandoned", "override_lock"}:
+            if prior_state in TERMINAL:
+                raise VenueCloseError(
+                    f"cannot unlock holder on terminal close ({prior_state})",
+                    code="invalid_transition",
+                )
+            clear_holder = bool(prior_holder)
+            target_state = prior_state
+        elif act == "return_for_correction":
+            if prior_state not in _RETURN_FROM:
+                raise VenueCloseError(
+                    f"return_for_correction not allowed from {prior_state}",
+                    code="invalid_transition",
+                    details={"allowed_from": sorted(_RETURN_FROM)},
+                )
+            target_state = "DATA_CAPTURED"
+            set_holder_to_actor = True
+        else:
+            raise VenueCloseError(
+                f"unhandled owner action: {act}",
+                code="invalid_owner_action",
+            )
+
+        # Apply mutation — never delete evidence / audit / receipts.
+        if clear_holder and target_state == prior_state:
+            c.execute(
+                """
+                UPDATE venue_daily_closes
+                SET taken_by_person_id=NULL, taken_at=NULL, updated_at=?
+                WHERE close_id=?
+                """,
+                (ts, cid),
+            )
+        elif set_holder_to_actor:
+            c.execute(
+                """
+                UPDATE venue_daily_closes
+                SET state=?, taken_by_person_id=?, taken_at=?, updated_at=?
+                WHERE close_id=?
+                """,
+                (target_state, actor, ts, ts, cid),
+            )
+        elif target_state != prior_state:
+            c.execute(
+                """
+                UPDATE venue_daily_closes
+                SET state=?, updated_at=?
+                WHERE close_id=?
+                """,
+                (target_state, ts, cid),
+            )
+
+        refreshed = get_close(cid, conn=c)
+        assert refreshed
+        after = close_work_snapshot(refreshed, conn=c)
+
+        # Evidence / receipt counts must be preserved (no wipe).
+        for key in (
+            "declared_cash_amount",
+            "declared_cash_evidence_id",
+            "esb_fingerprint_sha256",
+            "edc_receipt_count",
+            "edc_line_count",
+            "esb_closing_receipt_count",
+            "till_evidence_count",
+            "vision_event_count",
+        ):
+            if before.get(key) != after.get(key):
+                raise VenueCloseError(
+                    f"work preservation failed on {key}",
+                    code="work_not_preserved",
+                    http_status=500,
+                )
+
+        roles = sorted(_active_role_ids(actor, c) & CLOSE_OVERSIGHT_ROLES)
+        _audit.safe_record(
+            action=f"venue_close.owner_{act}",
+            result="ALLOWED",
+            source="venue_close",
+            actor_type="PERSON",
+            verified_person_id=actor,
+            actor_person_id=actor,
+            identity_assurance=(identity or {}).get("identity_assurance"),
+            resource_type="venue_daily_close",
+            resource_id=cid,
+            reason_code=act,
+            metadata={
+                "reason": why,
+                "owner_action": act,
+                "mode": act,
+                "prior_holder_person_id": prior_holder,
+                "prior_holder_display_name": _person_display_name(c, prior_holder),
+                "new_holder_person_id": refreshed.get("taken_by_person_id"),
+                "new_holder_display_name": _person_display_name(
+                    c, refreshed.get("taken_by_person_id")
+                ),
+                "before_state": prior_state,
+                "after_state": str(after.get("state") or ""),
+                "target_state": target_state,
+                "work_preserved": True,
+                "reversible_ops_control": True,
+                "entity_id": entity,
+                "venue_brand_id": brand,
+                "actor_role_basis": ",".join(roles) or "assignment",
+                "governed_object_id": cid,
+                "taken_at": ts,
+                "note": json.dumps(
+                    {"before": before, "after": after},
+                    separators=(",", ":"),
+                    ensure_ascii=False,
+                )[:3500],
+            },
+            conn=c,
+        )
+        if commit:
+            c.commit()
+        return {
+            **refreshed,
+            "owner_control": True,
+            "owner_action": act,
+            "reason": why,
+            "prior_holder_person_id": prior_holder,
+            "prior_holder_display_name": _person_display_name(c, prior_holder),
+            "before": before,
+            "after": after,
+            "work_preserved": True,
+            "reversible_ops_control": True,
+            "money_movement": False,
+            "holder": close_holder_info(refreshed, conn=c, viewer_person_id=actor),
+            **HONESTY,
+        }
+    finally:
+        if own:
+            c.close()
+
+
 def honesty_flags(conn: sqlite3.Connection | None = None) -> dict[str, Any]:
     own = conn is None
     c = conn or db_connect()

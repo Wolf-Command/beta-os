@@ -1,0 +1,25 @@
+{
+  "id": "BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1-RESULT",
+  "pack": "BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1",
+  "when_wita": "2026-10-02T22:45:00+08:00",
+  "decision": "2026-09-17 PICK Uma Blu Daily Close (extend) + OWNER-CONTROL-ESB-RECON-1",
+  "engineering": "PASS",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "daily_close_commissioned": false,
+  "iza_commissioning": "FAIL",
+  "matt_ready_claimed": false,
+  "prod_8787_pid": "15975",
+  "prod_8787_untouched": true,
+  "beta_8788_pid": "65974",
+  "tests": {
+    "test_bzg_close_owner_control_esb_recon_1": "pass=47 fail=0",
+    "test_bzg_close_governed_takeover_1": "pass=46 fail=0",
+    "test_bzg_daily_close_multi_edc_vision_1": "pass=77 fail=0"
+  },
+  "forensic": "state/bzg-daily-close/FORENSIC-ESB-RECON-20261002.md",
+  "gap_register": "state/bzg-daily-close/OWNER-CONTROL-GAP-REGISTER.json",
+  "permission": "venue.close.owner_control",
+  "grant": "ROLE-MATT",
+  "result_md": "state/bzg-daily-close/BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1-RESULT.md"
+}

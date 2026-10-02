@@ -86,7 +86,7 @@ METADATA_ALLOWLIST = frozenset(
         "exception_result",
         "usage_limit",
         "used_count",
-        # Venue close governed takeover / reassign
+        # Venue close governed takeover / reassign / owner control
         "prior_holder_person_id",
         "new_holder_person_id",
         "prior_holder_display_name",
@@ -96,6 +96,12 @@ METADATA_ALLOWLIST = frozenset(
         "taken_at",
         "before_state",
         "after_state",
+        "owner_action",
+        "entity_id",
+        "venue_brand_id",
+        "reversible_ops_control",
+        "target_state",
+        "actor_role_basis",
     }
 )
 METADATA_MAX_BYTES = 4096
