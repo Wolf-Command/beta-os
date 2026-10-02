@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -321,6 +322,39 @@ def open_or_get(
             c.close()
 
 
+
+def _refresh_esb_warehouse_for_date(business_date: str) -> dict[str, Any]:
+    """Pull live ESB for one business date into the warehouse (same-day close).
+
+    Nightly ingest only loads *yesterday*, so evening Daily Close would otherwise
+    always see an empty day. Idempotent. Never invents totals.
+    """
+    import subprocess
+    script = Path("/Users/wolfterminal/.openclaw/workspace/wolf-system/scripts/esb_ingest.py")
+    py = Path("/opt/homebrew/bin/python3")
+    if not script.is_file():
+        return {"ok": False, "error": "esb_ingest_missing", "path": str(script)}
+    if not py.is_file():
+        py = Path(sys.executable)
+    try:
+        proc = subprocess.run(
+            [str(py), str(script), "--date", str(business_date).strip()],
+            capture_output=True,
+            text=True,
+            timeout=180,
+            check=False,
+        )
+    except Exception as exc:  # noqa: BLE001 — surface as refresh failure
+        return {"ok": False, "error": type(exc).__name__, "detail": str(exc)[:200]}
+    out = (proc.stdout or "")[-800:]
+    err = (proc.stderr or "")[-400:]
+    return {
+        "ok": proc.returncode == 0,
+        "returncode": proc.returncode,
+        "stdout_tail": out,
+        "stderr_tail": err,
+    }
+
 def capture_esb_snapshot(
     close_id: str,
     *,
@@ -357,26 +391,45 @@ def capture_esb_snapshot(
             )
 
         biz = row["business_date"]
+        refresh_meta: dict[str, Any] | None = None
         try:
             snap = _esb.snapshot_day(biz, esb_path=esb_path)
         except _esb.EsbSnapshotError as exc:
-            # Warehouse missing / unreadable → explicit UNAVAILABLE (never fake zeros).
-            raise VenueCloseError(
-                f"ESB DATA UNAVAILABLE — cannot read live sales for {biz}. "
-                "Empty is not zero sales. Retry after ESB pull; photographed "
-                "closing receipt stays a separate dual source.",
-                code="esb_data_unavailable",
-                http_status=getattr(exc, "http_status", 503) or 503,
-            ) from exc
+            # Warehouse missing / unreadable → try same-day live pull once.
+            refresh_meta = _refresh_esb_warehouse_for_date(biz)
+            if refresh_meta.get("ok"):
+                try:
+                    snap = _esb.snapshot_day(biz, esb_path=esb_path)
+                except _esb.EsbSnapshotError as exc2:
+                    raise VenueCloseError(
+                        f"ESB DATA UNAVAILABLE — cannot read live sales for {biz}. "
+                        "Empty is not zero sales. Retry after ESB pull; photographed "
+                        "closing receipt stays a separate dual source.",
+                        code="esb_data_unavailable",
+                        http_status=getattr(exc2, "http_status", 503) or 503,
+                    ) from exc2
+            else:
+                raise VenueCloseError(
+                    f"ESB DATA UNAVAILABLE — cannot read live sales for {biz}. "
+                    "Empty is not zero sales. Retry after ESB pull; photographed "
+                    "closing receipt stays a separate dual source.",
+                    code="esb_data_unavailable",
+                    http_status=getattr(exc, "http_status", 503) or 503,
+                ) from exc
         if snap.get("incomplete"):
-            # Do not write zero totals as a successful live pull.
-            raise VenueCloseError(
-                f"ESB DATA UNAVAILABLE — no live sales for {biz}. "
-                "Empty is not zero sales. Retry after ESB pull; photographed "
-                "closing receipt stays a separate dual source.",
-                code="esb_data_unavailable",
-                http_status=409,
-            )
+            # Nightly ingest is T+1 (yesterday only). Same-day close must live-pull.
+            refresh_meta = refresh_meta or _refresh_esb_warehouse_for_date(biz)
+            if refresh_meta.get("ok"):
+                snap = _esb.snapshot_day(biz, esb_path=esb_path)
+            if snap.get("incomplete"):
+                # Do not write zero totals as a successful live pull.
+                raise VenueCloseError(
+                    f"ESB DATA UNAVAILABLE — no live sales for {biz}. "
+                    "Empty is not zero sales. Retry after ESB pull; photographed "
+                    "closing receipt stays a separate dual source.",
+                    code="esb_data_unavailable",
+                    http_status=409,
+                )
 
         ts = now_utc_iso()
         c.execute(
@@ -428,7 +481,7 @@ def capture_esb_snapshot(
             c.commit()
         out = get_close(close_id, conn=c)
         assert out
-        return {
+        ret = {
             **out,
             **HONESTY,
             "esb_live_status": "AVAILABLE",
@@ -439,6 +492,12 @@ def capture_esb_snapshot(
             ),
             "esb_empty_is_not_zero_sales": True,
         }
+        if refresh_meta is not None:
+            ret["esb_same_day_refresh"] = {
+                "ok": bool(refresh_meta.get("ok")),
+                "returncode": refresh_meta.get("returncode"),
+            }
+        return ret
     finally:
         if own:
             c.close()
