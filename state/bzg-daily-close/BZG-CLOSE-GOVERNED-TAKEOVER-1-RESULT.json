@@ -1,0 +1,35 @@
+{
+  "id": "BZG-CLOSE-GOVERNED-TAKEOVER-1",
+  "when_wita": "2026-10-02T22:25:00+08:00",
+  "result": "PASS",
+  "engineering": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "iza_commissioning": "FAIL",
+  "matt_ready_claimed": false,
+  "next": "Peaches verifies then MATT RETEST READY",
+  "tonight_close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+  "tonight_holder": "PERS-IZA",
+  "tonight_state": "OPEN",
+  "live_takeover_performed": false,
+  "permission": "venue.close.reassign",
+  "grants": ["ROLE-BZG-CAPTAIN", "ROLE-BZG-HFB", "ROLE-BZG-FB-OPS-LEAD", "ROLE-MATT"],
+  "deny_roles": ["ROLE-BZG-CASHIER", "ROLE-BZG-CLOSER"],
+  "routes": ["/api/venue-close/takeover", "/api/venue-close/reassign"],
+  "beta_8788_pid": "61131",
+  "beta_8788_pid_was": "57765",
+  "prod_8787_pid": "15975",
+  "auth_mode": "cloudflare_access",
+  "tests": {
+    "test_bzg_close_governed_takeover_1": "pass=46 fail=0",
+    "test_iza_assignment_resolution_1": "pass=23 fail=0"
+  },
+  "harness_prove": {
+    "html_markers": true,
+    "matt_open_tonight": "409 concurrent_take holder=Iza requires=venue.close.reassign"
+  },
+  "parent_tip": "69de1bb",
+  "branch": "build/wolf-command-rebuild",
+  "no_push": true,
+  "result_md": "state/bzg-daily-close/BZG-CLOSE-GOVERNED-TAKEOVER-1-RESULT.md"
+}

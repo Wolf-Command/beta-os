@@ -7783,6 +7783,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/venue-close/verify":
             self._venue_close_verify()
             return
+        if path == "/api/venue-close/takeover":
+            self._venue_close_takeover()
+            return
+        if path == "/api/venue-close/reassign":
+            self._venue_close_reassign()
+            return
 
         m_wi_assign = re.match(r"^/api/core/work-items/([^/]+)/assign$", path)
         if m_wi_assign:
@@ -41734,6 +41740,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 "message": str(exc),
                 **_venue_close.HONESTY,
             }
+            if getattr(exc, "details", None):
+                payload.update(exc.details)
             if exc.code in (
                 "esb_data_unavailable",
                 "esb_empty_day",
@@ -42413,6 +42421,99 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 identity=identity,
             )
             self._send_json({"ok": True, "close": out})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_takeover(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "variance_cash_amount", "esb_totals", "taken_by_person_id")
+        ):
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            out = _venue_close.take_over_venue_close(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                reason=str(body.get("reason") or ""),
+                identity=identity,
+            )
+            enriched = _bzg_daily_close.enrich_close(out)
+            self._send_json(
+                {
+                    "ok": True,
+                    "close": enriched,
+                    "reassigned": True,
+                    "takeover": True,
+                    "mode": "takeover",
+                    "reason": out.get("reason"),
+                    "prior_holder_person_id": out.get("prior_holder_person_id"),
+                    "prior_holder_display_name": out.get("prior_holder_display_name"),
+                    "new_holder_person_id": out.get("new_holder_person_id"),
+                    "new_holder_display_name": out.get("new_holder_display_name"),
+                    "before": out.get("before"),
+                    "after": out.get("after"),
+                    "work_preserved": out.get("work_preserved"),
+                    "holder": out.get("holder"),
+                    **_venue_close.HONESTY,
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_reassign(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "variance_cash_amount", "esb_totals", "taken_by_person_id")
+        ):
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            new_holder = str(
+                body.get("new_holder_person_id")
+                or body.get("to_person_id")
+                or ""
+            ).strip()
+            out = _venue_close.reassign_venue_close(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                new_holder_person_id=new_holder,
+                reason=str(body.get("reason") or ""),
+                identity=identity,
+                mode="reassign",
+            )
+            enriched = _bzg_daily_close.enrich_close(out)
+            self._send_json(
+                {
+                    "ok": True,
+                    "close": enriched,
+                    "reassigned": True,
+                    "takeover": False,
+                    "mode": "reassign",
+                    "reason": out.get("reason"),
+                    "prior_holder_person_id": out.get("prior_holder_person_id"),
+                    "prior_holder_display_name": out.get("prior_holder_display_name"),
+                    "new_holder_person_id": out.get("new_holder_person_id"),
+                    "new_holder_display_name": out.get("new_holder_display_name"),
+                    "before": out.get("before"),
+                    "after": out.get("after"),
+                    "work_preserved": out.get("work_preserved"),
+                    "holder": out.get("holder"),
+                    **_venue_close.HONESTY,
+                }
+            )
         except Exception as exc:  # noqa: BLE001
             self._venue_close_err(exc)
 

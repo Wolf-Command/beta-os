@@ -1,0 +1,8 @@
+P0 BZG-CLOSE-GOVERNED-TAKEOVER-1 — Owner takeover of tonight's Uma close.
+
+Read: /Users/wolfterminal/beta-os/state/bzg-daily-close/CURSOR-PACK-BZG-CLOSE-GOVERNED-TAKEOVER-1.md
+
+Screen: "This close is already taken by another authorised closer." — lock OK; add governed Take Over/Reassign with reason + audit; preserve work; no DB wipe; no delete close; cashiers cannot steal.
+
+Deploy Beta :8788. Tests. RESULT. staff_ready=false. No push. Prod :8787 untouched.
+Do not claim Matt-ready — Peaches verifies then MATT RETEST READY.

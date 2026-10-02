@@ -82,10 +82,18 @@ HONESTY = {
 
 
 class VenueCloseError(ValueError):
-    def __init__(self, message: str, *, code: str = "invalid", http_status: int = 400):
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str = "invalid",
+        http_status: int = 400,
+        details: dict[str, Any] | None = None,
+    ):
         super().__init__(message)
         self.code = code
         self.http_status = http_status
+        self.details = dict(details or {})
 
 
 def _under_test_process() -> bool:
@@ -379,6 +387,9 @@ def capture_esb_snapshot(
         row = get_close(close_id, conn=c)
         if not row:
             raise VenueCloseError("close not found", code="not_found", http_status=404)
+        _assert_holder_allows(
+            row, verified_person_id=verified, conn=c, identity=identity
+        )
         if row["state"] in TERMINAL:
             raise VenueCloseError(
                 f"close is terminal ({row['state']})",
@@ -557,6 +568,9 @@ def attach_declared_cash(
         row = get_close(close_id, conn=c)
         if not row:
             raise VenueCloseError("close not found", code="not_found", http_status=404)
+        _assert_holder_allows(
+            row, verified_person_id=verified, conn=c, identity=identity
+        )
         if row["state"] not in ("DATA_CAPTURED", "EVIDENCE_SUBMITTED"):
             raise VenueCloseError(
                 f"cannot attach cash from state {row['state']}",
@@ -691,6 +705,9 @@ def reconcile(
         row = get_close(close_id, conn=c)
         if not row:
             raise VenueCloseError("close not found", code="not_found", http_status=404)
+        _assert_holder_allows(
+            row, verified_person_id=verified, conn=c, identity=identity
+        )
         if row["state"] not in ("EVIDENCE_SUBMITTED", "RECONCILED", "VARIANCE_REQUIRES_POLICY"):
             raise VenueCloseError(
                 f"cannot reconcile from state {row['state']}",
@@ -1180,6 +1197,137 @@ def ensure_take_attribution_columns(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE venue_daily_closes ADD COLUMN taken_at TEXT NULL")
 
 
+def _person_display_name(conn: sqlite3.Connection, person_id: str | None) -> str | None:
+    pid = (person_id or "").strip()
+    if not pid:
+        return None
+    try:
+        row = conn.execute(
+            "SELECT display_name FROM org_persons WHERE person_id=?",
+            (pid,),
+        ).fetchone()
+    except sqlite3.Error:
+        return None
+    if not row:
+        return None
+    name = str(row["display_name"] if isinstance(row, sqlite3.Row) else row[0] or "").strip()
+    return name or None
+
+
+def _count_if_table(conn: sqlite3.Connection, table: str, close_id: str) -> int:
+    try:
+        exists = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+            (table,),
+        ).fetchone()
+        if not exists:
+            return 0
+        return int(
+            conn.execute(
+                f"SELECT COUNT(*) FROM {table} WHERE close_id=?",
+                (close_id,),
+            ).fetchone()[0]
+        )
+    except sqlite3.Error:
+        return 0
+
+
+def close_work_snapshot(
+    row: dict[str, Any],
+    *,
+    conn: sqlite3.Connection,
+) -> dict[str, Any]:
+    """Preserved-work fingerprint for takeover audit (no wipe, no delete)."""
+    cid = str(row.get("close_id") or "")
+    return {
+        "close_id": cid,
+        "business_date": row.get("business_date"),
+        "state": row.get("state"),
+        "taken_by_person_id": row.get("taken_by_person_id"),
+        "taken_at": row.get("taken_at"),
+        "submitted_by_person_id": row.get("submitted_by_person_id"),
+        "declared_cash_amount": row.get("declared_cash_amount"),
+        "declared_cash_evidence_id": row.get("declared_cash_evidence_id"),
+        "esb_fingerprint_sha256": row.get("esb_fingerprint_sha256"),
+        "esb_pulled_at": row.get("esb_pulled_at"),
+        "variance_cash_amount": row.get("variance_cash_amount"),
+        "work_item_id": row.get("work_item_id"),
+        "edc_receipt_count": _count_if_table(conn, "venue_close_edc_receipts", cid),
+        "edc_line_count": _count_if_table(conn, "venue_close_edc_lines", cid),
+        "esb_closing_receipt_count": _count_if_table(
+            conn, "venue_close_esb_closing_receipts", cid
+        ),
+        "till_evidence_count": _count_if_table(conn, "venue_close_till_evidence", cid),
+        "vision_event_count": _count_if_table(conn, "venue_close_vision_events", cid),
+    }
+
+
+def close_holder_info(
+    row: dict[str, Any] | None,
+    *,
+    conn: sqlite3.Connection,
+    viewer_person_id: str | None = None,
+) -> dict[str, Any] | None:
+    """Public holder payload for concurrent-lock UI / takeover."""
+    if not row:
+        return None
+    taken_by = (row.get("taken_by_person_id") or "").strip() or None
+    viewer = (viewer_person_id or "").strip() or None
+    held_by_other = bool(taken_by and viewer and taken_by != viewer)
+    return {
+        "close_id": row.get("close_id"),
+        "business_date": row.get("business_date"),
+        "state": row.get("state"),
+        "taken_by_person_id": taken_by,
+        "taken_by_display_name": _person_display_name(conn, taken_by),
+        "taken_at": row.get("taken_at"),
+        "held_by_other": held_by_other,
+        "held_by_self": bool(taken_by and viewer and taken_by == viewer),
+        "work": close_work_snapshot(row, conn=conn),
+    }
+
+
+def _assert_holder_allows(
+    row: dict[str, Any],
+    *,
+    verified_person_id: str,
+    conn: sqlite3.Connection,
+    identity: dict[str, Any] | None = None,
+) -> None:
+    """Block mutations while another authorised closer holds the take lock."""
+    verified = (verified_person_id or "").strip()
+    taken_by = (row.get("taken_by_person_id") or "").strip()
+    if not taken_by or taken_by == verified:
+        return
+    holder = close_holder_info(row, conn=conn, viewer_person_id=verified)
+    cid = str(row.get("close_id") or "")
+    _audit.safe_record(
+        action="venue_close.mutate",
+        result="DENIED",
+        source="venue_close",
+        actor_type="PERSON",
+        verified_person_id=verified,
+        actor_person_id=verified,
+        identity_assurance=(identity or {}).get("identity_assurance"),
+        resource_type="venue_daily_close",
+        resource_id=cid,
+        reason_code="concurrent_take",
+        metadata={"taken_by_person_id": taken_by, "holder": holder},
+        conn=conn,
+    )
+    raise VenueCloseError(
+        "This close is already taken by another authorised closer.",
+        code="concurrent_take",
+        http_status=409,
+        details={
+            "holder": holder,
+            "governed_takeover": True,
+            "requires_permission": "venue.close.reassign",
+            "requires_reason": True,
+        },
+    )
+
+
 def _active_role_ids(person_id: str, conn: sqlite3.Connection) -> set[str]:
     rows = conn.execute(
         """
@@ -1410,6 +1558,7 @@ def take_open_venue_close(
         taken_by = (row.get("taken_by_person_id") or "").strip()
         ts = now_utc_iso()
         if taken_by and taken_by != verified:
+            holder = close_holder_info(row, conn=c, viewer_person_id=verified)
             _audit.safe_record(
                 action="venue_close.take",
                 result="DENIED",
@@ -1425,6 +1574,7 @@ def take_open_venue_close(
                     "taken_by_person_id": taken_by,
                     "state": row.get("state"),
                     "authz": authz,
+                    "holder": holder,
                 },
                 conn=c,
             )
@@ -1434,6 +1584,12 @@ def take_open_venue_close(
                 "This close is already taken by another authorised closer.",
                 code="concurrent_take",
                 http_status=409,
+                details={
+                    "holder": holder,
+                    "governed_takeover": True,
+                    "requires_permission": "venue.close.reassign",
+                    "requires_reason": True,
+                },
             )
 
         if not taken_by:
@@ -1450,6 +1606,7 @@ def take_open_venue_close(
             assert refreshed
             won = (refreshed.get("taken_by_person_id") or "").strip()
             if won != verified:
+                holder = close_holder_info(refreshed, conn=c, viewer_person_id=verified)
                 _audit.safe_record(
                     action="venue_close.take",
                     result="DENIED",
@@ -1461,7 +1618,12 @@ def take_open_venue_close(
                     resource_type="venue_daily_close",
                     resource_id=cid,
                     reason_code="concurrent_take",
-                    metadata={"taken_by_person_id": won, "race": True, "authz": authz},
+                    metadata={
+                        "taken_by_person_id": won,
+                        "race": True,
+                        "authz": authz,
+                        "holder": holder,
+                    },
                     conn=c,
                 )
                 if commit:
@@ -1470,6 +1632,12 @@ def take_open_venue_close(
                     "This close is already taken by another authorised closer.",
                     code="concurrent_take",
                     http_status=409,
+                    details={
+                        "holder": holder,
+                        "governed_takeover": True,
+                        "requires_permission": "venue.close.reassign",
+                        "requires_reason": True,
+                    },
                 )
             _audit.safe_record(
                 action="venue_close.take",
@@ -1516,6 +1684,299 @@ def take_open_venue_close(
     finally:
         if own:
             c.close()
+
+
+def reassign_venue_close(
+    close_id: str,
+    *,
+    verified_person_id: str,
+    new_holder_person_id: str,
+    reason: str,
+    identity: dict[str, Any] | None = None,
+    mode: str = "reassign",
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Governed reassign / take-over. Preserves work. Does not delete the close.
+
+    Requires venue.close.reassign (Captain / HFB / FB-Ops / Owner — not cashier).
+    New holder must be authorised for the venue close (roster or oversight).
+    Reason required. Full audit with before/after work snapshot.
+    """
+    cid = (close_id or "").strip()
+    actor = (verified_person_id or "").strip()
+    new_holder = (new_holder_person_id or "").strip()
+    why = (reason or "").strip()
+    mode_norm = (mode or "reassign").strip().lower()
+    if mode_norm not in {"reassign", "takeover"}:
+        mode_norm = "reassign"
+    if not cid:
+        raise VenueCloseError("close_id required", code="missing_close_id")
+    if not actor:
+        raise VenueCloseError("verified_person_id required", code="missing_verified_person")
+    if not new_holder:
+        raise VenueCloseError(
+            "new_holder_person_id required",
+            code="missing_new_holder",
+        )
+    if not why:
+        raise VenueCloseError(
+            "Reason required for take over / reassign.",
+            code="missing_reason",
+            http_status=400,
+        )
+
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        assert_catalog_writable(Path(CATALOG_DB))
+        ensure_take_attribution_columns(c)
+        row = get_close(cid, conn=c)
+        if not row:
+            raise VenueCloseError("close not found", code="not_found", http_status=404)
+
+        brand = str(row.get("venue_brand_id") or BRAND_UMA)
+        entity = str(row.get("entity_id") or ENTITY_BZG)
+
+        _assert_perm(
+            verified_person_id=actor,
+            permission_code="venue.close.reassign",
+            conn=c,
+        )
+
+        actor_authz = person_authorised_for_venue_close(
+            actor,
+            venue_brand_id=brand,
+            entity_id=entity,
+            conn=c,
+        )
+        if not actor_authz.get("allowed"):
+            _audit.safe_record(
+                action=f"venue_close.{mode_norm}",
+                result="DENIED",
+                source="venue_close",
+                actor_type="PERSON",
+                verified_person_id=actor,
+                actor_person_id=actor,
+                identity_assurance=(identity or {}).get("identity_assurance"),
+                resource_type="venue_daily_close",
+                resource_id=cid,
+                reason_code=str(actor_authz.get("reason") or "not_on_assignment"),
+                metadata={"authz": actor_authz, "reason": why},
+                conn=c,
+            )
+            if commit:
+                c.commit()
+            raise VenueCloseError(
+                actor_authz.get("message") or "This close is not on your assignment.",
+                code="forbidden",
+                http_status=403,
+            )
+
+        new_authz = person_authorised_for_venue_close(
+            new_holder,
+            venue_brand_id=brand,
+            entity_id=entity,
+            conn=c,
+        )
+        if not new_authz.get("allowed"):
+            _audit.safe_record(
+                action=f"venue_close.{mode_norm}",
+                result="DENIED",
+                source="venue_close",
+                actor_type="PERSON",
+                verified_person_id=actor,
+                actor_person_id=actor,
+                identity_assurance=(identity or {}).get("identity_assurance"),
+                resource_type="venue_daily_close",
+                resource_id=cid,
+                reason_code="new_holder_not_authorised",
+                metadata={
+                    "new_holder_person_id": new_holder,
+                    "new_holder_authz": new_authz,
+                    "reason": why,
+                },
+                conn=c,
+            )
+            if commit:
+                c.commit()
+            raise VenueCloseError(
+                "New closer is not authorised for this venue close.",
+                code="new_holder_forbidden",
+                http_status=403,
+                details={"new_holder_person_id": new_holder, "authz": new_authz},
+            )
+
+        if row.get("state") in TERMINAL:
+            raise VenueCloseError(
+                f"close is terminal ({row['state']})",
+                code="invalid_transition",
+            )
+
+        before = close_work_snapshot(row, conn=c)
+        prior_holder = (row.get("taken_by_person_id") or "").strip() or None
+        ts = now_utc_iso()
+
+        if prior_holder == new_holder:
+            _audit.safe_record(
+                action=f"venue_close.{mode_norm}",
+                result="ALLOWED",
+                source="venue_close",
+                actor_type="PERSON",
+                verified_person_id=actor,
+                actor_person_id=actor,
+                identity_assurance=(identity or {}).get("identity_assurance"),
+                resource_type="venue_daily_close",
+                resource_id=cid,
+                reason_code=f"{mode_norm}_idempotent",
+                metadata={
+                    "reason": why,
+                    "mode": mode_norm,
+                    "prior_holder_person_id": prior_holder,
+                    "new_holder_person_id": new_holder,
+                    "prior_holder_display_name": _person_display_name(c, prior_holder),
+                    "new_holder_display_name": _person_display_name(c, new_holder),
+                    "before_state": str(before.get("state") or ""),
+                    "after_state": str(before.get("state") or ""),
+                    "work_preserved": True,
+                    "governed_object_id": cid,
+                    "note": json.dumps(
+                        {"before": before, "after": before},
+                        separators=(",", ":"),
+                        ensure_ascii=False,
+                    )[:3500],
+                },
+                conn=c,
+            )
+            if commit:
+                c.commit()
+            out = get_close(cid, conn=c)
+            assert out
+            return {
+                **out,
+                "reassigned": True,
+                "takeover": mode_norm == "takeover",
+                "mode": mode_norm,
+                "reason": why,
+                "prior_holder_person_id": prior_holder,
+                "prior_holder_display_name": _person_display_name(c, prior_holder),
+                "new_holder_person_id": new_holder,
+                "new_holder_display_name": _person_display_name(c, new_holder),
+                "before": before,
+                "after": before,
+                "work_preserved": True,
+                "holder": close_holder_info(out, conn=c, viewer_person_id=actor),
+                **HONESTY,
+            }
+
+        c.execute(
+            """
+            UPDATE venue_daily_closes
+            SET taken_by_person_id=?, taken_at=?, updated_at=?
+            WHERE close_id=?
+            """,
+            (new_holder, ts, ts, cid),
+        )
+        refreshed = get_close(cid, conn=c)
+        assert refreshed
+        after = close_work_snapshot(refreshed, conn=c)
+        # Work fields other than holder attribution must be unchanged.
+        work_keys = (
+            "state",
+            "declared_cash_amount",
+            "declared_cash_evidence_id",
+            "esb_fingerprint_sha256",
+            "esb_pulled_at",
+            "variance_cash_amount",
+            "work_item_id",
+            "edc_receipt_count",
+            "edc_line_count",
+            "esb_closing_receipt_count",
+            "till_evidence_count",
+            "vision_event_count",
+        )
+        for key in work_keys:
+            if before.get(key) != after.get(key):
+                raise VenueCloseError(
+                    f"work preservation failed on {key}",
+                    code="work_not_preserved",
+                    http_status=500,
+                )
+
+        _audit.safe_record(
+            action=f"venue_close.{mode_norm}",
+            result="ALLOWED",
+            source="venue_close",
+            actor_type="PERSON",
+            verified_person_id=actor,
+            actor_person_id=actor,
+            identity_assurance=(identity or {}).get("identity_assurance"),
+            resource_type="venue_daily_close",
+            resource_id=cid,
+            reason_code=mode_norm,
+            metadata={
+                "reason": why,
+                "mode": mode_norm,
+                "prior_holder_person_id": prior_holder,
+                "prior_holder_display_name": _person_display_name(c, prior_holder),
+                "new_holder_person_id": new_holder,
+                "new_holder_display_name": _person_display_name(c, new_holder),
+                "before_state": str(before.get("state") or ""),
+                "after_state": str(after.get("state") or ""),
+                "work_preserved": True,
+                "taken_at": ts,
+                "governed_object_id": cid,
+                "note": json.dumps(
+                    {"before": before, "after": after},
+                    separators=(",", ":"),
+                    ensure_ascii=False,
+                )[:3500],
+            },
+            conn=c,
+        )
+        if commit:
+            c.commit()
+        return {
+            **refreshed,
+            "reassigned": True,
+            "takeover": mode_norm == "takeover",
+            "mode": mode_norm,
+            "reason": why,
+            "prior_holder_person_id": prior_holder,
+            "prior_holder_display_name": _person_display_name(c, prior_holder),
+            "new_holder_person_id": new_holder,
+            "new_holder_display_name": _person_display_name(c, new_holder),
+            "before": before,
+            "after": after,
+            "work_preserved": True,
+            "holder": close_holder_info(refreshed, conn=c, viewer_person_id=actor),
+            **HONESTY,
+        }
+    finally:
+        if own:
+            c.close()
+
+
+def take_over_venue_close(
+    close_id: str,
+    *,
+    verified_person_id: str,
+    reason: str,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Actor becomes holder. Same gates as reassign; reason required."""
+    return reassign_venue_close(
+        close_id,
+        verified_person_id=verified_person_id,
+        new_holder_person_id=verified_person_id,
+        reason=reason,
+        identity=identity,
+        mode="takeover",
+        conn=conn,
+        commit=commit,
+    )
 
 
 def honesty_flags(conn: sqlite3.Connection | None = None) -> dict[str, Any]:

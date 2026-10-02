@@ -194,6 +194,7 @@ def _caps(person_id: str, conn: sqlite3.Connection) -> dict[str, bool]:
 
     submit = allow("venue.close.submit")
     resolve = allow("venue.close.resolve_exception")
+    reassign = allow("venue.close.reassign")
     return {
         "read": allow("venue.close.read"),
         "submit": submit,
@@ -204,6 +205,8 @@ def _caps(person_id: str, conn: sqlite3.Connection) -> dict[str, bool]:
         "resolve": resolve,
         "exception": submit or resolve,
         "verify": allow("venue.close.verify"),
+        "reassign": reassign,
+        "takeover": reassign,
         "payment_approve": allow("bzg.pr.payment_approve"),
         "receive": allow(receive_code),
         "receive_permission": receive_code,

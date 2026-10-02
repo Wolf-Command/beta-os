@@ -181,6 +181,20 @@
     <label for="bizDate">Business date</label>
     <input type="date" id="bizDate" />
     <button class="btn btn-primary" id="btnOpen" data-cap="submit" type="button">Open close</button>
+    <div class="panel hidden" id="lockPanel" style="border-color: var(--warn); margin-top: 12px;">
+      <h2>Close lock</h2>
+      <div id="lockBox" class="muted">Checking holder…</div>
+      <label for="takeoverReason">Reason (required for Take Over / Reassign)</label>
+      <textarea id="takeoverReason" placeholder="Why are you taking over or reassigning this close?" disabled></textarea>
+      <label for="reassignTo" id="reassignToLabel" class="hidden">Reassign to person id</label>
+      <input type="text" id="reassignTo" class="hidden" placeholder="PERS-…" disabled />
+      <button class="btn btn-warn" id="btnTakeOver" type="button" disabled>Take Over Close</button>
+      <button class="btn" id="btnReassignShow" type="button" disabled>Reassign Close…</button>
+      <button class="btn btn-primary hidden" id="btnReassignConfirm" type="button" disabled>Confirm Reassign</button>
+      <p class="muted" id="lockNote" style="margin-top:8px">
+        Lock stays. Cashiers cannot steal. Prior photos, extracts, cash, EDC, QRIS, notes stay.
+      </p>
+    </div>
     <button class="btn" id="btnCapture" data-cap="submit" type="button" disabled>Pull ESB sales (live API)</button>
     <div id="esbLiveBanner"></div>
     <div id="esbBox" class="muted" style="margin-top:10px"></div>
@@ -314,8 +328,11 @@
   let edcPhotoMime = null;
   let caps = {
     open: false, capture: false, declare: false, reconcile: false,
-    exception: false, resolve: false, verify: false, submit: false
+    exception: false, resolve: false, verify: false, submit: false,
+    reassign: false, takeover: false
   };
+  let lockHold = null;
+  let lockedOut = false;
 
   function todayWITA() {
     const d = new Date();
@@ -372,6 +389,104 @@
     const el = $("msg");
     el.textContent = text || "";
     el.className = "msg " + (ok ? "ok" : text ? "err" : "");
+  }
+
+  function hideLockPanel() {
+    lockHold = null;
+    lockedOut = false;
+    const panel = $("lockPanel");
+    if (panel) panel.classList.add("hidden");
+    if ($("reassignTo")) {
+      $("reassignTo").classList.add("hidden");
+      $("reassignTo").disabled = true;
+    }
+    if ($("reassignToLabel")) $("reassignToLabel").classList.add("hidden");
+    if ($("btnReassignConfirm")) $("btnReassignConfirm").classList.add("hidden");
+  }
+
+  function showLockPanel(holder, opts) {
+    const panel = $("lockPanel");
+    if (!panel) return;
+    lockHold = holder || null;
+    lockedOut = true;
+    const canGov = !!(caps.reassign || caps.takeover);
+    const name = (holder && (holder.taken_by_display_name || holder.taken_by_person_id)) || "another closer";
+    const takenAt = (holder && holder.taken_at) || "";
+    const work = (holder && holder.work) || {};
+    const bits = [];
+    bits.push(`This close is already taken by <strong>${name}</strong>.`);
+    if (takenAt) bits.push(`<div class="muted">Taken at ${takenAt}</div>`);
+    if (holder && holder.close_id) bits.push(`<div class="muted">Close ${holder.close_id}</div>`);
+    bits.push(
+      `<div class="muted" style="margin-top:6px">Preserved work: state ${work.state || "—"} · cash ${work.declared_cash_amount != null ? money(work.declared_cash_amount) : "—"} · EDC receipts ${work.edc_receipt_count || 0} · ESB receipt ${work.esb_closing_receipt_count || 0} · till ${work.till_evidence_count || 0}</div>`
+    );
+    if (!canGov) {
+      bits.push(`<p class="msg err" style="margin-top:8px">You cannot take this close. Ask a Captain / supervisor / Owner.</p>`);
+    }
+    $("lockBox").innerHTML = bits.join("");
+    panel.classList.remove("hidden");
+    $("takeoverReason").disabled = !canGov;
+    $("btnTakeOver").disabled = !canGov;
+    $("btnReassignShow").disabled = !canGov;
+    $("btnReassignConfirm").disabled = !canGov;
+    if (opts && opts.focusReason && canGov) $("takeoverReason").focus();
+  }
+
+  async function loadLockedClose(closeId) {
+    if (!closeId) return null;
+    try {
+      const data = await api("/api/venue-close/" + encodeURIComponent(closeId));
+      return data.close || null;
+    } catch (_e) {
+      return null;
+    }
+  }
+
+  async function probeTodayHolder() {
+    const date = $("bizDate").value || todayWITA();
+    try {
+      const data = await api(
+        "/api/venue-close/by-date?business_date=" + encodeURIComponent(date)
+      );
+      const row = data.close || null;
+      if (!row) {
+        hideLockPanel();
+        return;
+      }
+      const takenBy = (row.taken_by_person_id || "").trim();
+      const meId = (me && (me.person_id || me.id) || "").trim();
+      if (takenBy && meId && takenBy !== meId) {
+        const holder = {
+          close_id: row.close_id,
+          business_date: row.business_date,
+          state: row.state,
+          taken_by_person_id: takenBy,
+          taken_by_display_name: null,
+          taken_at: row.taken_at,
+          work: {
+            state: row.state,
+            declared_cash_amount: row.declared_cash_amount,
+            edc_receipt_count: (row.edc_receipts || []).length,
+            esb_closing_receipt_count: (row.esb_closing_receipts || []).length,
+            till_evidence_count: row.declared_cash_evidence_id ? 1 : 0,
+          },
+        };
+        // Prefer error-shaped holder when open already ran; else show from probe.
+        showLockPanel(holder);
+        // Read-only preview of prior work while locked.
+        close = row;
+        renderClose();
+      } else if (takenBy && meId && takenBy === meId) {
+        hideLockPanel();
+        close = row;
+        renderClose();
+      } else {
+        hideLockPanel();
+      }
+    } catch (_e) {
+      // by-date 404 / deny — no lock panel
+      hideLockPanel();
+    }
   }
 
   function renderEsbLiveBanner() {
@@ -529,10 +644,10 @@
       : (esbLiveStatus === "UNAVAILABLE" ? "" : "");
     renderEsbLiveBanner();
 
-    const canCapture = (st === "OPEN" || st === "DATA_CAPTURED") && !!caps.capture;
-    const canDeclare = (st === "DATA_CAPTURED" || st === "EVIDENCE_SUBMITTED") && !!caps.declare;
-    const canRec = (st === "EVIDENCE_SUBMITTED" || st === "VARIANCE_REQUIRES_POLICY") && !!caps.reconcile;
-    const canEdc = !!close && st !== "VERIFIED_CLOSED" && st !== "CANCELLED" && !!caps.submit;
+    const canCapture = !lockedOut && (st === "OPEN" || st === "DATA_CAPTURED") && !!caps.capture;
+    const canDeclare = !lockedOut && (st === "DATA_CAPTURED" || st === "EVIDENCE_SUBMITTED") && !!caps.declare;
+    const canRec = !lockedOut && (st === "EVIDENCE_SUBMITTED" || st === "VARIANCE_REQUIRES_POLICY") && !!caps.reconcile;
+    const canEdc = !lockedOut && !!close && st !== "VERIFIED_CLOSED" && st !== "CANCELLED" && !!caps.submit;
     const canEsbR = canEdc && (st === "DATA_CAPTURED" || st === "EVIDENCE_SUBMITTED" || st === "VARIANCE_REQUIRES_POLICY" || st === "OPEN");
     $("btnOpen").hidden = !caps.open;
     $("btnCapture").hidden = !caps.capture;
@@ -829,6 +944,7 @@
     await loadHonesty();
     await loadOutletConfig();
     await loadExceptions();
+    await probeTodayHolder();
     renderClose();
     markOverflow();
   }
@@ -894,15 +1010,94 @@
         method: "POST",
         body: JSON.stringify({ business_date: $("bizDate").value }),
       });
+      hideLockPanel();
       close = data.close;
       esbLiveStatus = close.esb_fingerprint_sha256 ? "AVAILABLE" : null;
       renderClose();
       setMsg(close.created ? "Close opened — pulling live ESB…" : "Existing close loaded — pulling live ESB…", true);
       await pullEsbLive({ quiet: false });
     } catch (e) {
+      const data = e.data || {};
+      if (data.error === "concurrent_take") {
+        const holder = data.holder || {
+          close_id: data.close_id,
+          taken_by_person_id: data.taken_by_person_id,
+          taken_by_display_name: data.taken_by_display_name,
+          taken_at: data.taken_at,
+        };
+        showLockPanel(holder, { focusReason: true });
+        if (holder && holder.close_id) {
+          const preview = await loadLockedClose(holder.close_id);
+          if (preview) {
+            close = preview;
+            renderClose();
+          }
+        }
+        setMsg(data.message || e.message || String(e));
+        return;
+      }
       setMsg(e.message || String(e));
     }
   };
+
+  async function runGovernedTakeover(mode) {
+    const reason = ($("takeoverReason").value || "").trim();
+    if (!reason) {
+      setMsg("Reason required for Take Over / Reassign.");
+      return;
+    }
+    const closeId = (lockHold && lockHold.close_id) || (close && close.close_id);
+    if (!closeId) {
+      setMsg("No locked close to take over.");
+      return;
+    }
+    setMsg("");
+    try {
+      let data;
+      if (mode === "reassign") {
+        const to = ($("reassignTo").value || "").trim();
+        if (!to) {
+          setMsg("Reassign requires a person id (PERS-…).");
+          return;
+        }
+        data = await api("/api/venue-close/reassign", {
+          method: "POST",
+          body: JSON.stringify({
+            close_id: closeId,
+            new_holder_person_id: to,
+            reason: reason,
+          }),
+        });
+      } else {
+        data = await api("/api/venue-close/takeover", {
+          method: "POST",
+          body: JSON.stringify({ close_id: closeId, reason: reason }),
+        });
+      }
+      hideLockPanel();
+      close = data.close || data;
+      renderClose();
+      const prior = data.prior_holder_display_name || data.prior_holder_person_id || "prior closer";
+      setMsg(
+        (mode === "reassign" ? "Reassigned" : "Took over") +
+          " from " + prior + ". Prior work preserved. Controls enabled for you.",
+        true
+      );
+      await pullEsbLive({ quiet: true });
+    } catch (e) {
+      setMsg((e.data && e.data.message) || e.message || String(e));
+    }
+  }
+
+  $("btnTakeOver").onclick = () => runGovernedTakeover("takeover");
+  $("btnReassignShow").onclick = () => {
+    $("reassignToLabel").classList.remove("hidden");
+    $("reassignTo").classList.remove("hidden");
+    $("reassignTo").disabled = !(caps.reassign || caps.takeover);
+    $("btnReassignConfirm").classList.remove("hidden");
+    $("reassignTo").focus();
+  };
+  $("btnReassignConfirm").onclick = () => runGovernedTakeover("reassign");
 
   $("btnCapture").onclick = async () => {
     await pullEsbLive({ quiet: false });

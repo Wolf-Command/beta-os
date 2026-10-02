@@ -72,6 +72,21 @@ class BzgDailyCloseError(_vc.VenueCloseError):
     pass
 
 
+def _require_holder(
+    row: dict[str, Any],
+    *,
+    verified_person_id: str,
+    conn: sqlite3.Connection,
+    identity: dict[str, Any] | None = None,
+) -> None:
+    _vc._assert_holder_allows(  # noqa: SLF001 — shared concurrency gate
+        row,
+        verified_person_id=verified_person_id,
+        conn=conn,
+        identity=identity,
+    )
+
+
 def save_close_receipt_bytes(
     *,
     data: bytes,
@@ -424,6 +439,7 @@ def attach_edc_line(
         row = _vc.get_close(close_id, conn=c)
         if not row:
             raise BzgDailyCloseError("close not found", code="not_found", http_status=404)
+        _require_holder(row, verified_person_id=verified, conn=c, identity=identity)
         if row["state"] in _vc.TERMINAL:
             raise BzgDailyCloseError(
                 f"close is terminal ({row['state']})", code="terminal_state"
@@ -1203,6 +1219,7 @@ def confirm_edc_receipt(
         row = _vc.get_close(close_id, conn=c)
         if not row:
             raise BzgDailyCloseError("close not found", code="not_found", http_status=404)
+        _require_holder(row, verified_person_id=verified, conn=c, identity=identity)
         if row["state"] in _vc.TERMINAL:
             raise BzgDailyCloseError(
                 f"close is terminal ({row['state']})", code="terminal_state"
@@ -1596,6 +1613,7 @@ def confirm_esb_closing_receipt(
         row = _vc.get_close(close_id, conn=c)
         if not row:
             raise BzgDailyCloseError("close not found", code="not_found", http_status=404)
+        _require_holder(row, verified_person_id=verified, conn=c, identity=identity)
         if not row.get("esb_fingerprint_sha256"):
             raise BzgDailyCloseError(
                 "live ESB API snapshot required before ESB receipt confirm",
