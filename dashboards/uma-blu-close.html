@@ -119,8 +119,12 @@
 </head>
 <body>
   <h1 class="brand">Uma Blu <em>Daily Close</em></h1>
-  <p class="sub">Count the till. We pull ESB sales. Variance only when numbers disagree.</p>
+  <p class="sub">Mobile close · till + EDC evidence · ESB payments ≠ bank settlement.</p>
   <p class="banner info" id="umarealCut">Daily close history: checking the register.</p>
+  <div class="panel" id="cfgPanel" style="border-color: var(--warn)">
+    <h2>Outlet / EDC config</h2>
+    <div class="muted" id="cfgBox">Loading outlet config…</div>
+  </div>
   <script>
     fetch("/api/bzg/uma-blu/real/closes").then(function (r) { return r.json(); }).then(function (d) {
       var el = document.getElementById("umarealCut");
@@ -157,14 +161,33 @@
     <button class="btn btn-primary" id="btnOpen" data-cap="submit" type="button">Open close</button>
     <button class="btn" id="btnCapture" data-cap="submit" type="button" disabled>Pull ESB sales</button>
     <div id="esbBox" class="muted" style="margin-top:10px"></div>
-    <label for="cashAmt">Cash in the till (declared)</label>
-    <input type="number" id="cashAmt" min="0" step="1000" placeholder="Amount counted" disabled />
-    <label for="cashNote">Optional note / photo ref</label>
-    <input type="text" id="cashNote" placeholder="e.g. photo on phone" disabled />
-    <button class="btn" id="btnDeclare" data-cap="submit" type="button" disabled>Submit cash count</button>
+    <label for="cashAmt">Cash in the till (declared — not verified)</label>
+    <input type="number" id="cashAmt" min="0" step="1000" placeholder="Amount counted" disabled inputmode="decimal" />
+    <label for="zReportRef">POS / Z-report evidence ref (photo/file)</label>
+    <input type="text" id="zReportRef" placeholder="Required for till+Z path — e.g. photo://…" disabled />
+    <label for="cashNote">Optional note</label>
+    <input type="text" id="cashNote" placeholder="optional note" disabled />
+    <button class="btn" id="btnDeclare" data-cap="submit" type="button" disabled>Submit till + Z-report</button>
+    <p class="muted">Declared cash is never copied from ESB. ESB cash is payment lines only.</p>
     <button class="btn btn-ok" id="btnReconcile" data-cap="submit" type="button" disabled>Reconcile</button>
     <div id="statusBox" style="margin-top:12px"></div>
     <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="panel">
+    <h2>EDC settlement (per terminal)</h2>
+    <p class="muted" id="edcCfgNote">Terminal inventory: checking…</p>
+    <label for="edcBank">Acquirer / bank label</label>
+    <input type="text" id="edcBank" placeholder="e.g. Mandiri" disabled />
+    <label for="edcBatch">Batch total (slip)</label>
+    <input type="number" id="edcBatch" min="0" step="1000" placeholder="Settlement slip total" disabled inputmode="decimal" />
+    <label for="edcTxn">Txn count (optional)</label>
+    <input type="number" id="edcTxn" min="0" step="1" placeholder="optional" disabled inputmode="numeric" />
+    <label for="edcRef">Settlement slip evidence ref</label>
+    <input type="text" id="edcRef" placeholder="Required — photo/file ref" disabled />
+    <button class="btn" id="btnEdc" data-cap="submit" type="button" disabled>Add EDC line</button>
+    <div id="edcList" class="muted" style="margin-top:10px">No EDC lines yet.</div>
+    <p class="muted">Card Total = Σ EDC batches when present. ESB card payments are not EDC settlement.</p>
   </div>
 
   <div class="panel">
@@ -289,15 +312,69 @@
     const canCapture = (st === "OPEN" || st === "DATA_CAPTURED") && !!caps.capture;
     const canDeclare = (st === "DATA_CAPTURED" || st === "EVIDENCE_SUBMITTED") && !!caps.declare;
     const canRec = (st === "EVIDENCE_SUBMITTED" || st === "VARIANCE_REQUIRES_POLICY") && !!caps.reconcile;
+    const canEdc = !!close && st !== "VERIFIED_CLOSED" && st !== "CANCELLED" && !!caps.submit;
     $("btnOpen").hidden = !caps.open;
     $("btnCapture").hidden = !caps.capture;
     $("btnDeclare").hidden = !caps.declare;
     $("btnReconcile").hidden = !caps.reconcile;
+    $("btnEdc").hidden = !caps.submit;
     $("btnCapture").disabled = !canCapture;
     $("cashAmt").disabled = !canDeclare;
+    $("zReportRef").disabled = !canDeclare;
     $("cashNote").disabled = !canDeclare;
     $("btnDeclare").disabled = !canDeclare;
     $("btnReconcile").disabled = !canRec;
+    $("edcBank").disabled = !canEdc;
+    $("edcBatch").disabled = !canEdc;
+    $("edcTxn").disabled = !canEdc;
+    $("edcRef").disabled = !canEdc;
+    $("btnEdc").disabled = !canEdc;
+    renderEdc(close);
+  }
+
+  function renderEdc(cl) {
+    const el = $("edcList");
+    if (!el) return;
+    const lines = (cl && cl.edc_lines) || [];
+    const card = (cl && cl.card_total) || {};
+    if (!lines.length) {
+      el.textContent = "No EDC lines yet. Card Total unset until slips are bound.";
+      return;
+    }
+    el.innerHTML =
+      lines.map((l) =>
+        `<div class="exc"><strong>${l.acquirer_label}</strong> · ${money(l.batch_total)}` +
+        (l.txn_count != null ? ` · ${l.txn_count} txn` : "") +
+        `<div class="muted">evidence ${l.evidence_id}</div></div>`
+      ).join("") +
+      `<div class="fig" style="margin-top:8px">${money(card.card_total_from_edc)}<small>Card Total (Σ EDC)</small></div>`;
+  }
+
+  async function loadOutletConfig() {
+    const box = $("cfgBox");
+    const edcNote = $("edcCfgNote");
+    try {
+      const data = await api("/api/bzg/daily-close/overview");
+      const outlets = data.outlets || [];
+      const enabled = data.human_close_enabled_outlet_ids || [];
+      const uma = outlets.find((o) => o.outlet_id === "BZG-UMA") || {};
+      const mismatch = outlets.filter((o) => o.title_map_status === "NEEDS CONFIGURATION");
+      const termStatus = (data.uma_edc_terminals && data.uma_edc_terminals.edc_terminal_config_status)
+        || uma.edc_terminal_config_status
+        || "NEEDS CONFIGURATION";
+      box.innerHTML =
+        `<div><strong>Human-activated:</strong> ${enabled.join(", ") || "none"}</div>` +
+        `<div>Outlet configs: ${outlets.length} · float Uma: ${uma.till_float_idr != null ? money(uma.till_float_idr) + " (excluded from takings)" : "NEEDS CONFIGURATION"}</div>` +
+        `<div>Title map mismatches: ${mismatch.length ? mismatch.map((m) => m.owner_title).join("; ") : "none"}</div>` +
+        `<div style="margin-top:6px;color:var(--warn)"><strong>EDC terminals:</strong> ${termStatus}</div>` +
+        `<div class="muted">staff_ready=false · human_commissioned=false · settlement UNAVAILABLE</div>`;
+      edcNote.textContent = termStatus === "NEEDS CONFIGURATION"
+        ? "EDC terminal inventory: NEEDS CONFIGURATION — no invented IDs. You can still bind slip evidence."
+        : "EDC terminals configured.";
+    } catch (e) {
+      box.textContent = "Outlet config unavailable: " + (e.message || e);
+      edcNote.textContent = "EDC terminal inventory: NEEDS CONFIGURATION";
+    }
   }
 
   async function loadHonesty() {
@@ -311,8 +388,9 @@
       const closerLine = h.closer_commissioning === "WAITING FOR VERIFIED CLOSING OPERATOR"
         ? "Closer seat is waiting. No person is assigned to the closing role."
         : "A closing operator is assigned.";
-      const payLine = "Settlement API is unavailable. ESB is read for sales only. This screen does not pay or change a bank.";
-      $("honesty").textContent = [policyLine, closerLine, payLine].join(" ");
+      const payLine = "Settlement API is unavailable (PENDING_BANK). ESB payment lines ≠ EDC settlement. This screen does not pay or change a bank.";
+      const tolLine = "No invented tolerance. Alchemist 2%/Rp5k soft warn is not a Wolf policy.";
+      $("honesty").textContent = [policyLine, closerLine, payLine, tolLine].join(" ");
     } catch (e) {
       policyCount = 0;
       $("honesty").textContent =
@@ -468,6 +546,7 @@
     }
     await loadCaps();
     await loadHonesty();
+    await loadOutletConfig();
     await loadExceptions();
     renderClose();
     markOverflow();
@@ -527,21 +606,62 @@
   $("btnDeclare").onclick = async () => {
     if (!close) return;
     setMsg("");
+    const zRef = ($("zReportRef").value || "").trim();
     try {
-      const data = await api("/api/venue-close/declare-cash", {
+      let data;
+      if (zRef) {
+        data = await api("/api/venue-close/till-declare", {
+          method: "POST",
+          body: JSON.stringify({
+            close_id: close.close_id,
+            declared_cash_amount: Number($("cashAmt").value),
+            object_ref: zRef,
+            notes: $("cashNote").value || null,
+          }),
+        });
+      } else {
+        data = await api("/api/venue-close/declare-cash", {
+          method: "POST",
+          body: JSON.stringify({
+            close_id: close.close_id,
+            declared_cash_amount: Number($("cashAmt").value),
+            object_ref: $("cashNote").value || null,
+            notes: $("cashNote").value || null,
+          }),
+        });
+      }
+      close = data.close;
+      renderClose();
+      setMsg("Till cash recorded as DECLARED (not verified). Not copied from ESB.", true);
+    } catch (e) {
+      setMsg((e.data && e.data.message) || e.message || String(e));
+    }
+  };
+
+  $("btnEdc").onclick = async () => {
+    if (!close) return;
+    setMsg("");
+    try {
+      const data = await api("/api/venue-close/edc-line", {
         method: "POST",
         body: JSON.stringify({
           close_id: close.close_id,
-          declared_cash_amount: Number($("cashAmt").value),
-          object_ref: $("cashNote").value || null,
-          notes: $("cashNote").value || null,
+          acquirer_label: $("edcBank").value,
+          batch_total: Number($("edcBatch").value),
+          txn_count: $("edcTxn").value === "" ? null : Number($("edcTxn").value),
+          object_ref: $("edcRef").value || null,
         }),
       });
-      close = data.close;
+      close = Object.assign({}, close, {
+        edc_lines: data.edc_lines,
+        card_total: data.card_total,
+      });
       renderClose();
-      setMsg("Cash count recorded as DECLARED (not verified).", true);
+      setMsg("EDC settlement slip bound. Not equated to ESB card payments.", true);
+      $("edcBatch").value = "";
+      $("edcRef").value = "";
     } catch (e) {
-      setMsg(e.message || String(e));
+      setMsg((e.data && e.data.message) || e.message || String(e));
     }
   };
 

@@ -1,0 +1,13 @@
+{
+  "pack": "BZG-DAILY-CLOSE-TILL-EDC-1",
+  "status": "ARMING",
+  "head_before": "e8b9041100957acbccdbbee80ff43c00b95f34ff",
+  "head_before_short": "e8b9041",
+  "branch": "build/wolf-command-rebuild",
+  "telegram_recovery": "TELEGRAM_SOURCE_INCOMPLETE",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod": "READ_ONLY",
+  "no_matt_message": true,
+  "stamped_at": "2026-10-02T19:46:30+08:00"
+}

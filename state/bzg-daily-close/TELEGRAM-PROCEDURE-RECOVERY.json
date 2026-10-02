@@ -1,0 +1,83 @@
+{
+  "pack": "BZG-DAILY-CLOSE-TILL-EDC-1",
+  "recovered_at": "2026-10-02T19:45:00+08:00",
+  "telegram_recovery_status": "TELEGRAM_SOURCE_INCOMPLETE",
+  "secondary_authorised_ok": true,
+  "no_matt_message": true,
+  "raw_telegram_desktop": {
+    "recovered": false,
+    "reason": "Keepcoder postbox db_sqlite unsupported/proprietary format; strings yielded no SOP",
+    "paths_tried": [
+      "/Users/wolfterminal/Library/Group Containers/6N38VWS5BX.ru.keepcoder.Telegram/appstore/account-694867054387081856/postbox/db/db_sqlite",
+      "/Users/wolfterminal/Library/Containers/ru.keepcoder.Telegram",
+      "/Users/wolfterminal/.openclaw/telegram"
+    ]
+  },
+  "primary_secondary_source": {
+    "kind": "alchemist_telegram_bot_nightly",
+    "path": "/Users/wolfterminal/.openclaw/workspace/alchemist/nightly_cmd.py",
+    "commands": [
+      "/nightly",
+      "/eod"
+    ],
+    "media_dir": "/Users/wolfterminal/.openclaw/workspace/alchemist/media/nightly",
+    "media_file_count_observed": 404,
+    "default_outlet_code": "Uma Blu Cafe",
+    "sheet_tab": "Nightly Reconciliation",
+    "edc_columns": [
+      "EDC-1",
+      "EDC-2",
+      "EDC-3"
+    ],
+    "part2_status_default": "PENDING BANK",
+    "alchemist_soft_pos_gap_tolerance": {
+      "formula": "max(2% of gross, Rp 5000)",
+      "adopt_as_wolf_policy": false,
+      "note": "Owner forbids invented tolerances; keep live variance policies=0"
+    }
+  },
+  "other_authorised_sources": [
+    {
+      "path": "/Users/wolfterminal/.openclaw/wolf-output/decisions.md",
+      "cite": "2026-08-02 cash-audit; Rp 1_000_000 till float; 2026-09-17 Uma Daily Close pick"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/docs/canon/UMA-BLU-DAILY-CLOSE.md",
+      "cite": "honesty table; settlement UNAVAILABLE"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/docs/wolf/five/PROPOSED-UMA-VARIANCE-POLICY.md",
+      "cite": "thresholds UNRESOLVED"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/state/final-completion/forensic-completeness-20261001/WAVE2-01-UMA-DECLARED-CASH-EVIDENCE-RESULT.md",
+      "cite": "declared cash null; cash_count 0"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/scripts/core/bzg_outlet_registry.py",
+      "cite": "canonical outlets"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/docs/canon/build-dashboard/Brands_Locations.csv",
+      "cite": "board outlet titles"
+    }
+  ],
+  "searched_no_hit_highlights": [
+    "telegram export / chat dump files",
+    "ClickUp\u2192TG closing SOP bridge dump",
+    "box peaches TG learn closing SOP transcript",
+    "Devi commission pack till/EDC step list"
+  ],
+  "needs_configuration": [
+    "uma_edc_terminal_inventory",
+    "variance_absolute_threshold",
+    "settlement_api_or_bank_part2",
+    "outlet_display_name_map_owner_vs_registry_vs_alchemist",
+    "role_bzg_closer_seat_assignment"
+  ],
+  "stop_for_owner": [
+    "Whether any soft OCR warn may exist without becoming a variance tolerance policy",
+    "Confirm EDC terminal inventory for Uma Blu before human commission",
+    "Confirm outlet title map for Owner's 7 names vs org_outlet_registry"
+  ]
+}

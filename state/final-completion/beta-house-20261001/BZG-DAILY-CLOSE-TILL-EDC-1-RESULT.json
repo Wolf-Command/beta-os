@@ -1,0 +1,36 @@
+{
+  "pack": "BZG-DAILY-CLOSE-TILL-EDC-1",
+  "status": "ENG_PROVED",
+  "as_of": "2026-10-02T20:00:00+08:00",
+  "branch": "build/wolf-command-rebuild",
+  "decision": "2026-09-17 PICK Uma Blu Daily Close + Owner order BZG-DAILY-CLOSE-TILL-EDC-20261002",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod": "READ_ONLY",
+  "prod_pid": 15975,
+  "prod_root_http": 200,
+  "beta_routes": {
+    "/uma-blu-close": 403,
+    "/bzg/daily-close": 403,
+    "/api/bzg/daily-close/overview": 403,
+    "note": "CF Access fail-closed — route present (not 404)"
+  },
+  "outlet_config_count": 7,
+  "human_close_enabled_outlet_ids": ["BZG-UMA"],
+  "edc_terminal_rows": 0,
+  "edc_terminal_config_status": "NEEDS CONFIGURATION",
+  "active_variance_policies": 0,
+  "settlement_api": "UNAVAILABLE",
+  "settlement_status": "PENDING_BANK",
+  "invented_tolerance": false,
+  "invented_edc_terminals": false,
+  "till_float_uma_idr": 1000000,
+  "till_float_citation": "decisions.md 2026-08-02 BZG cash-audit",
+  "tests": {
+    "test_bzg_daily_close_till_edc_1.py": {"pass": 57, "fail": 0},
+    "test_uma_blu_daily_close.py": {"pass": 71, "fail": 0}
+  },
+  "telegram_recovery": "TELEGRAM_SOURCE_INCOMPLETE",
+  "no_matt_message": true,
+  "result_md": "state/final-completion/beta-house-20261001/BZG-DAILY-CLOSE-TILL-EDC-1-RESULT.md"
+}

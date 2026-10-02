@@ -1,0 +1,33 @@
+{
+  "pack": "BZG-DAILY-CLOSE-TILL-EDC-1",
+  "status": "ENG_DONE",
+  "armed_at": "2026-10-02T19:46:54+08:00",
+  "wrapper_pid": 29441,
+  "shell_pid": 29429,
+  "cursor_agent_pid": 29459,
+  "log": "/Users/wolfterminal/beta-os/state/bzg-daily-close/cursor-run-BZG-DAILY-CLOSE-TILL-EDC-1.log",
+  "head_before": "e8b9041100957acbccdbbee80ff43c00b95f34ff",
+  "head_before_short": "e8b9041",
+  "branch": "build/wolf-command-rebuild",
+  "workspace": "/Users/wolfterminal/beta-os",
+  "launch": "state/bzg-daily-close/launch-BZG-DAILY-CLOSE-TILL-EDC-1.sh",
+  "telegram_recovery": "TELEGRAM_SOURCE_INCOMPLETE",
+  "secondary_source": "alchemist_nightly_cmd",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod": "READ_ONLY",
+  "credit_override": "OWNER_ORDER",
+  "no_matt_message": true,
+  "pipe": "GREEN",
+  "beta_health": 200,
+  "prod_health": 200,
+  "cursor_pid": 29459,
+  "last_watch_at": "2026-10-02T19:56:02+08:00",
+  "last_watch_status": "WAIT_SILENT_CHILD_ALIVE",
+  "eng_done_at": "2026-10-02T19:57:38+08:00",
+  "result": "state/final-completion/beta-house-20261001/BZG-DAILY-CLOSE-TILL-EDC-1-RESULT.md",
+  "tests": {
+    "pass": 57,
+    "fail": 0
+  }
+}

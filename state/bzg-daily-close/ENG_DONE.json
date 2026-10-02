@@ -1,0 +1,11 @@
+{
+  "pack": "BZG-DAILY-CLOSE-TILL-EDC-1",
+  "status": "ENG_DONE",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "result": "state/final-completion/beta-house-20261001/BZG-DAILY-CLOSE-TILL-EDC-1-RESULT.md",
+  "tests_pass": 57,
+  "tests_fail": 0,
+  "prod": "READ_ONLY",
+  "done_at": "2026-10-02T19:57:38+08:00"
+}

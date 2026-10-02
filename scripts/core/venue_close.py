@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""Wolf Core Venue Daily Close — Uma Blu (Beta).
+"""Wolf Core Venue Daily Close — BZG reusable engine (Uma pilot).
 
 SUBMITTED ≠ RECONCILED ≠ VERIFIED
 EXCEPTION ≠ RESOLVED ≠ VERIFIED_CLOSED
 DECLARED cash ≠ VERIFIED cash
 
+BZG-DAILY-CLOSE-TILL-EDC-1 extends this module (one engine — not seven apps).
 No hard-coded person gates (no if Devi). Role / assignment / scope only.
 Client cannot submit expected totals, variance, or state.
 Live variance thresholds = 0 → non-zero variance → VARIANCE_REQUIRES_POLICY.
+Till declare refuses ESB-copy. Settlement API UNAVAILABLE.
 """
 from __future__ import annotations
 
@@ -54,10 +56,15 @@ TERMINAL = frozenset({"VERIFIED_CLOSED", "CANCELLED"})
 
 HONESTY = {
     "settlement_api": "UNAVAILABLE",
+    "settlement_status": "PENDING_BANK",
     "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
+    "esb_payments_are_not_edc_settlement": True,
     "live_variance_threshold": 0,
     "live_monetary_authority": 0,
     "declared_cash_is_not_verified": True,
+    "invented_tolerance": False,
+    "staff_ready": False,
+    "human_commissioned": False,
     "closer_commissioning": "WAITING FOR VERIFIED CLOSING OPERATOR",
 }
 
@@ -407,15 +414,33 @@ def attach_declared_cash(
     object_ref: str | None = None,
     content_hash: str | None = None,
     notes: str | None = None,
+    source: str | None = None,
+    copy_from_esb: bool = False,
     identity: dict[str, Any] | None = None,
     allow_test_write: bool = False,
     conn: sqlite3.Connection | None = None,
     commit: bool = True,
 ) -> dict[str, Any]:
-    """Attach DECLARED cash evidence. Amount is operator declaration — not verified cash."""
+    """Attach DECLARED cash evidence. Amount is operator declaration — not verified cash.
+
+    Refuses copying ESB payment-line cash into declared till (declared ≠ ESB source).
+    """
     verified = (verified_person_id or "").strip()
     if not verified:
         raise VenueCloseError("verified_person_id required", code="missing_verified_person")
+    src = (source or "").strip().lower()
+    if copy_from_esb or src in (
+        "esb",
+        "esb_cash",
+        "esb_cash_from_payments",
+        "copy_esb",
+        "esb_copy",
+    ):
+        raise VenueCloseError(
+            "refuses copying ESB cash into declared till",
+            code="esb_copy_refused",
+            http_status=400,
+        )
     try:
         amount = float(declared_cash_amount)
     except (TypeError, ValueError) as exc:
@@ -814,15 +839,18 @@ def open_exception(
                 http_status=409,
             )
 
+        brand = row.get("venue_brand_id") or BRAND_UMA
+        outlet_tag = (row.get("outlet_id") or brand).strip()
         wi = _work_items.create_work_item(
-            title=f"Uma Blu close variance {row['business_date']}",
+            title=f"BZG close variance {outlet_tag} {row['business_date']}",
             owning_entity_id=row["entity_id"],
             work_type="EXCEPTION",
             source_type="SYSTEM",
             created_by_actor_type="SYSTEM",
             description=(
                 f"Cash variance {row.get('variance_cash_amount')} "
-                f"(declared − ESB_CASH_FROM_PAYMENTS). Settlement API unavailable."
+                f"(declared − ESB_CASH_FROM_PAYMENTS) for outlet {outlet_tag}. "
+                f"Settlement API unavailable. ESB payments ≠ EDC settlement."
             ),
             priority=2,
             source_id=close_id,
@@ -1059,16 +1087,22 @@ def honesty_flags(conn: sqlite3.Connection | None = None) -> dict[str, Any]:
             (ROLE_CLOSER,),
         ).fetchone()[0]
         policy_rows = int(n_pol)
+        active_pol = int(
+            c.execute(
+                "SELECT COUNT(*) FROM venue_close_variance_policies WHERE status='ACTIVE'"
+            ).fetchone()[0]
+        )
         return {
             **HONESTY,
             # Row count. Zero rows is not a tolerance of 0.
             "live_variance_threshold": policy_rows,
+            "active_variance_policies": active_pol,
             "variance_policy_display": (
-                "UNSET — open policy control (do not invent a number)"
-                if policy_rows == 0
+                "BLOCKED BY BUSINESS POLICY"
+                if active_pol == 0
                 else "POLICY_ON_FILE"
             ),
-            "cash_variance_tolerance": "UNSET" if policy_rows == 0 else "SET",
+            "cash_variance_tolerance": "UNSET" if active_pol == 0 else "SET",
             "live_monetary_authority": int(n_auth),
             "closer_active_assignments": int(closer_n),
             "closer_commissioning": (
@@ -1076,6 +1110,10 @@ def honesty_flags(conn: sqlite3.Connection | None = None) -> dict[str, Any]:
                 if closer_n == 0
                 else "CLOSER_ASSIGNED"
             ),
+            "staff_ready": False,
+            "human_commissioned": False,
+            "invented_tolerance": False,
+            "alchemist_soft_gap_not_policy": True,
         }
     finally:
         if own:

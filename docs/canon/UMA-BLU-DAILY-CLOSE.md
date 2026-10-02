@@ -28,6 +28,10 @@
 | ESB / Production writes | **FORBIDDEN** |
 | POS / Alchemist / ClickUp / other venues | **NOT IN SLICE** |
 
+## BZG-DAILY-CLOSE-TILL-EDC-1 (2026-10-02)
+
+Extends this engine — **not** a second close product. Outlet config for Owner’s 7 BZG outlets (registry-driven); **only Uma Blu** `human_close_enabled`. Till + Z-report evidence path; EDC per-terminal evidence (empty terminal registry = **NEEDS CONFIGURATION** — no invented IDs). Card Total = Σ EDC batches when present; ESB payments ≠ EDC settlement. Settlement API remains **UNAVAILABLE** / PENDING_BANK. No ACTIVE variance tolerance seeded (Alchemist 2%/Rp5k soft warn is not Wolf policy). Till float Rp 1,000,000 (Owner 2026-08-02) cited for Uma only. `staff_ready=false` · `human_commissioned=false` until Devi real-close PASS via Assignment/Role/Scope.
+
 ## States (strict)
 
 `OPEN` → `DATA_CAPTURED` → `EVIDENCE_SUBMITTED` → `RECONCILED` → `VERIFIED_CLOSED` (variance 0, system)  

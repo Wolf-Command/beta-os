@@ -80,6 +80,7 @@ from core import approvals as _approvals
 from core import delegation as _delegation
 from core import content_publish as _content_publish
 from core import venue_close as _venue_close
+from core import bzg_daily_close as _bzg_daily_close
 from core import uma_ops_console as _uma_ops
 from core import amg_sales_desk_ro as _amg_sales_desk_ro
 from core import amg_guest_stay_pack7 as _amg_guest_stay
@@ -3000,7 +3001,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._staff_ops_get(path)
             return
 
-        # Uma Blu daily close (Beta — read)
+        # Uma Blu / BZG daily close (Beta — read)
         if path == "/api/venue-close/honesty":
             self._venue_close_honesty()
             return
@@ -3012,6 +3013,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/venue-close/capabilities":
             self._venue_close_capabilities()
+            return
+        if path in ("/api/bzg/daily-close/overview", "/api/venue-close/outlets"):
+            self._bzg_daily_close_overview()
+            return
+        if path == "/api/venue-close/edc-terminals":
+            self._bzg_daily_close_edc_terminals(qs)
+            return
+        m_edc_lines = re.match(r"^/api/venue-close/([^/]+)/edc-lines$", path)
+        if m_edc_lines:
+            self._bzg_daily_close_edc_lines_get(m_edc_lines.group(1))
             return
         # CAP-INTEL-01 read-only orchestration. Owner / PERS-MATT. Anon → 403.
         if path == "/api/intel/orchestrate":
@@ -4691,6 +4702,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "open",
             "capture",
             "declare-cash",
+            "till-declare",
+            "edc-line",
+            "edc-terminals",
+            "outlets",
             "reconcile",
             "exception",
             "resolve",
@@ -5637,7 +5652,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
         ):
             self._crm_identity_page()
             return
-        elif path in ("/uma-blu-close", "/uma-blu-close/"):
+        elif path in (
+            "/uma-blu-close",
+            "/uma-blu-close/",
+            "/bzg/daily-close",
+            "/bzg/daily-close/",
+        ):
             identity = self._resolve_identity(emit_audit=False)
             person_id = str(identity.get("person_id") or "")
             close_roles = {
@@ -7699,7 +7719,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._post_core_work_item()
             return
 
-        # Uma Blu daily close mutations (server computes totals/variance/state)
+        # Uma Blu / BZG daily close mutations (server computes totals/variance/state)
         if path == "/api/venue-close/open":
             self._venue_close_open()
             return
@@ -7708,6 +7728,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/venue-close/declare-cash":
             self._venue_close_declare_cash()
+            return
+        if path == "/api/venue-close/till-declare":
+            self._bzg_daily_close_till_declare()
+            return
+        if path == "/api/venue-close/edc-line":
+            self._bzg_daily_close_edc_line()
             return
         if path == "/api/venue-close/reconcile":
             self._venue_close_reconcile()
@@ -41788,12 +41814,15 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if identity is None:
             return
         try:
-            out = _venue_close.open_or_get(
+            outlet_id = str(body.get("outlet_id") or "BZG-UMA").strip() or "BZG-UMA"
+            # Human-activation gate via BZG outlet config (Uma only today).
+            out = _bzg_daily_close.open_human_close(
                 str(body.get("business_date") or ""),
                 verified_person_id=identity["person_id"],
+                outlet_id=outlet_id,
                 identity=identity,
             )
-            self._send_json({"ok": True, "close": out})
+            self._send_json({"ok": True, "close": _bzg_daily_close.enrich_close(out)})
         except Exception as exc:  # noqa: BLE001
             self._venue_close_err(exc)
 
@@ -41840,9 +41869,112 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 verified_person_id=identity["person_id"],
                 object_ref=(body.get("object_ref") or None),
                 notes=(body.get("notes") or None),
+                source=(body.get("source") or None),
+                copy_from_esb=bool(body.get("copy_from_esb")),
                 identity=identity,
             )
-            self._send_json({"ok": True, "close": out})
+            self._send_json({"ok": True, "close": _bzg_daily_close.enrich_close(out)})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_overview(self) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            self._send_json(
+                _bzg_daily_close.overview(person_id=identity.get("person_id"))
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_edc_terminals(self, qs: dict) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            oid = (qs.get("outlet_id") or ["BZG-UMA"])[0]
+            self._send_json(_bzg_daily_close.list_edc_terminals(str(oid)))
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_edc_lines_get(self, close_id: str) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            lines = _bzg_daily_close.list_edc_lines(close_id)
+            card = _bzg_daily_close.edc_card_total(close_id)
+            self._send_json(
+                {
+                    "ok": True,
+                    "close_id": close_id,
+                    "edc_lines": lines,
+                    "card_total": card,
+                    **_bzg_daily_close.HONESTY,
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_till_declare(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "variance_cash_amount", "esb_totals", "verified_cash")
+        ):
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            out = _bzg_daily_close.attach_till_with_z_report(
+                str(body.get("close_id") or ""),
+                declared_cash_amount=body.get("declared_cash_amount"),
+                verified_person_id=identity["person_id"],
+                object_ref=(body.get("object_ref") or body.get("z_report_object_ref") or None),
+                content_hash=(body.get("content_hash") or None),
+                declared_card_amount=body.get("declared_card_amount"),
+                declared_qris_amount=body.get("declared_qris_amount"),
+                declared_gross_amount=body.get("declared_gross_amount"),
+                notes=(body.get("notes") or None),
+                source=(body.get("source") or None),
+                copy_from_esb=bool(body.get("copy_from_esb")),
+                identity=identity,
+            )
+            self._send_json({"ok": True, "close": _bzg_daily_close.enrich_close(out)})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_edc_line(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "variance_cash_amount", "esb_totals", "card_total")
+        ):
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            out = _bzg_daily_close.attach_edc_line(
+                str(body.get("close_id") or ""),
+                acquirer_label=str(body.get("acquirer_label") or ""),
+                batch_total=body.get("batch_total"),
+                verified_person_id=identity["person_id"],
+                object_ref=(body.get("object_ref") or None),
+                content_hash=(body.get("content_hash") or None),
+                txn_count=body.get("txn_count"),
+                terminal_config_id=(body.get("terminal_config_id") or None),
+                identity=identity,
+            )
+            self._send_json({"ok": True, **out})
         except Exception as exc:  # noqa: BLE001
             self._venue_close_err(exc)
 

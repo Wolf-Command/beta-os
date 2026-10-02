@@ -1,0 +1,40 @@
+{
+  "id": "BZG-DAILY-CLOSE-TILL-EDC-1",
+  "approved_at": "2026-10-02T19:40:35+08:00",
+  "owner": "Matt Goss",
+  "scope": "beta_only",
+  "prod": "untouched",
+  "pilot": "Uma Blu",
+  "commissioner": "Devi",
+  "commissioner_note": "first known Uma Blu Daily Closer \u2014 Assignment/Role/Scope, do not hardcode Devi",
+  "outlets_config_now": [
+    "Uma Blu",
+    "Blu Zone Rainforest Restaurant & Bar",
+    "Pool Bar",
+    "Merah Underground",
+    "Rooftop Bar",
+    "Room Service",
+    "Catering"
+  ],
+  "activate_human_close": [
+    "Uma Blu"
+  ],
+  "engine": "ONE reusable BZG Daily Close \u2014 reuse Uma Blu Daily Close foundations",
+  "telegram_first": true,
+  "no_invented_tolerances": true,
+  "no_fake_data": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "queue": "HUMAN_COMMISSIONING_ACTIVE",
+  "do_not_drop": [
+    "BZG-RECIPE-MULTI-OUTLET-1",
+    "CE-CANCEL/Haikal retest",
+    "forensic",
+    "finance",
+    "other commissioning"
+  ],
+  "credit_conservation": "Owner order overrides for this pack (same as Recipe/CE-CANCEL drain)",
+  "peaches_role": "govern/verify; return to Matt only for missing business rule, Devi commission readiness, or Owner decision",
+  "cursor_role": "implement after Telegram recover + gap vs current Uma Daily Close",
+  "status": "OWNER_APPROVED_DISCOVERY"
+}
