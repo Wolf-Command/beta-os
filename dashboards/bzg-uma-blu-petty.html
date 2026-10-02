@@ -126,11 +126,15 @@
     background: linear-gradient(180deg, transparent, var(--bg) 28%);
     pointer-events: none;
   }
-  .sticky-cta a {
+  .sticky-cta button,
+  .sticky-cta .primary {
     pointer-events: auto; display: flex; align-items: center; justify-content: center;
-    min-height: var(--thumb); border-radius: 14px; text-decoration: none;
+    width: 100%; min-height: var(--thumb); border-radius: 14px; text-decoration: none;
     background: #1f6b5c; color: #fff; font-weight: 700; border: 1px solid #2a8a76;
+    font: inherit; cursor: pointer;
   }
+  .sticky-cta button:disabled { opacity: 0.55; cursor: wait; }
+  body.petty-form-open { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
   @media (min-width: 900px) {
     body { max-width: 920px; padding: 20px 28px 72px; }
     .dir-row { max-width: 360px; }
@@ -164,7 +168,7 @@
   <div class="panel" id="pettyForm" hidden>
     <h2>Record a movement</h2>
     <p class="muted">Writes the tin only. Does not pay a supplier or touch the bank.</p>
-    <form id="moveForm">
+    <form id="moveForm" novalidate>
       <div class="dir-row" role="group" aria-label="Out or in">
         <button type="button" class="dir-btn is-on" data-dir="OUT" id="dirOut">Out</button>
         <button type="button" class="dir-btn" data-dir="IN" id="dirIn">In</button>
@@ -217,7 +221,7 @@
   </div>
 
   <div class="sticky-cta" id="stickyCta" hidden>
-    <a href="#pettyForm">Record movement</a>
+    <button type="button" id="stickySubmit" class="primary">Record movement</button>
   </div>
 
 <script>
@@ -404,6 +408,126 @@
     }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); });
   }
 
+  function showMoveErr(text, focusId) {
+    var msg = document.getElementById("moveMsg");
+    msg.textContent = text;
+    msg.className = "msg err";
+    try { msg.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {}
+    if (focusId) {
+      var elFocus = document.getElementById(focusId);
+      if (elFocus) {
+        try { elFocus.focus(); } catch (e2) {}
+        try { elFocus.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e3) {}
+      }
+    }
+  }
+
+  function setBusy(busy) {
+    var btn = document.getElementById("submitBtn");
+    var sticky = document.getElementById("stickySubmit");
+    if (btn) btn.disabled = !!busy;
+    if (sticky) sticky.disabled = !!busy;
+  }
+
+  function validateMove() {
+    var amountRaw = document.getElementById("amount").value;
+    var amount = Number(amountRaw);
+    var purpose = document.getElementById("purpose").value.trim();
+    var category = document.getElementById("category").value;
+    var outlet = document.getElementById("outlet").value;
+    var loggedBy = document.getElementById("logged_by").value.trim();
+    var file = document.getElementById("receipt").files && document.getElementById("receipt").files[0];
+    if (!amountRaw || !isFinite(amount) || amount <= 0) {
+      showMoveErr("Enter an amount greater than 0.", "amount");
+      return null;
+    }
+    if (!category) {
+      showMoveErr("Choose a category.", "category");
+      return null;
+    }
+    if (!purpose) {
+      showMoveErr("Say what it was for.", "purpose");
+      return null;
+    }
+    if (!outlet) {
+      showMoveErr("Choose an outlet.", "outlet");
+      return null;
+    }
+    if (!loggedBy) {
+      showMoveErr("Enter who logged this.", "logged_by");
+      return null;
+    }
+    if (!file) {
+      showMoveErr("Add a receipt photo first.", "receipt");
+      return null;
+    }
+    return {
+      amount: amount,
+      purpose: purpose,
+      category: category,
+      outlet: outlet,
+      loggedBy: loggedBy,
+      file: file
+    };
+  }
+
+  function submitMove() {
+    var msg = document.getElementById("moveMsg");
+    msg.textContent = "";
+    msg.className = "msg";
+    var fields = validateMove();
+    if (!fields) return;
+    setBusy(true);
+    msg.textContent = "Uploading receipt…";
+    try { msg.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {}
+    uploadReceipt(fields.file).then(function (up) {
+      if (!up.ok || !up.j || !up.j.ok) {
+        throw new Error((up.j && (up.j.error || up.j.message)) || "Receipt upload failed");
+      }
+      receiptMeta = up.j;
+      msg.textContent = "Recording movement…";
+      return fetch("/api/bzg/uma-blu/petty", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          operator: true,
+          direction: direction,
+          amount: fields.amount,
+          purpose: fields.purpose,
+          category: fields.category,
+          outlet: fields.outlet,
+          logged_by: fields.loggedBy,
+          evidence_id: up.j.evidence_id,
+          receipt_path: up.j.receipt_path,
+          currency: "IDR"
+        })
+      }).then(function (r) { return r.json(); });
+    }).then(function (out) {
+      if (!out.ok) {
+        msg.textContent = out.error || out.message || "Movement was not recorded.";
+        msg.className = "msg err";
+        setBusy(false);
+        return;
+      }
+      msg.textContent = out.movement && out.movement.needs_approval
+        ? "Recorded — needs approval (IDR 500k+)."
+        : "Recorded.";
+      msg.className = "msg ok";
+      document.getElementById("moveForm").reset();
+      setDir("OUT");
+      document.getElementById("receiptPreview").classList.remove("show");
+      document.getElementById("receiptStatus").textContent = "No photo yet";
+      var hello = (window.__WOLF_WHOAMI__ && (window.__WOLF_WHOAMI__.hello || window.__WOLF_WHOAMI__.email)) || "";
+      if (hello) document.getElementById("logged_by").value = hello;
+      loadPetty().then(function () { setBusy(false); });
+    }).catch(function (err) {
+      msg.textContent = (err && err.message) || "Movement was not recorded.";
+      msg.className = "msg err";
+      setBusy(false);
+    });
+  }
+
   fetch("/api/bzg/uma-blu/permissions", { credentials: "same-origin" })
     .then(function (r) { return r.json(); })
     .then(function (perm) {
@@ -411,78 +535,27 @@
       document.getElementById("pettyForm").hidden = false;
       document.getElementById("pettyFormLocked").hidden = true;
       document.getElementById("stickyCta").hidden = false;
+      document.body.classList.add("petty-form-open");
       var hello = (window.__WOLF_WHOAMI__ && (window.__WOLF_WHOAMI__.hello || window.__WOLF_WHOAMI__.email)) || "";
       if (hello) document.getElementById("logged_by").value = hello;
       document.getElementById("moveForm").onsubmit = function (ev) {
         ev.preventDefault();
-        var msg = document.getElementById("moveMsg");
-        var btn = document.getElementById("submitBtn");
-        msg.textContent = "";
-        msg.className = "msg";
-        var amount = Number(document.getElementById("amount").value);
-        var purpose = document.getElementById("purpose").value.trim();
-        var category = document.getElementById("category").value;
-        var outlet = document.getElementById("outlet").value;
-        var loggedBy = document.getElementById("logged_by").value.trim();
-        var file = document.getElementById("receipt").files && document.getElementById("receipt").files[0];
-        if (!file) {
-          msg.textContent = "Add a receipt photo first.";
-          msg.className = "msg err";
-          return;
-        }
-        if (!category) {
-          msg.textContent = "Choose a category.";
-          msg.className = "msg err";
-          return;
-        }
-        btn.disabled = true;
-        msg.textContent = "Uploading receipt…";
-        uploadReceipt(file).then(function (up) {
-          if (!up.ok || !up.j || !up.j.ok) {
-            throw new Error((up.j && (up.j.error || up.j.message)) || "Receipt upload failed");
-          }
-          receiptMeta = up.j;
-          msg.textContent = "Recording movement…";
-          return fetch("/api/bzg/uma-blu/petty", {
-            method: "POST",
-            credentials: "same-origin",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              operator: true,
-              direction: direction,
-              amount: amount,
-              purpose: purpose,
-              category: category,
-              outlet: outlet,
-              logged_by: loggedBy,
-              evidence_id: up.j.evidence_id,
-              receipt_path: up.j.receipt_path,
-              currency: "IDR"
-            })
-          }).then(function (r) { return r.json(); });
-        }).then(function (out) {
-          if (!out.ok) {
-            msg.textContent = out.error || out.message || "Movement was not recorded.";
-            msg.className = "msg err";
-            btn.disabled = false;
-            return;
-          }
-          msg.textContent = out.movement && out.movement.needs_approval
-            ? "Recorded — needs approval (IDR 500k+)."
-            : "Recorded.";
-          msg.className = "msg ok";
-          document.getElementById("moveForm").reset();
-          setDir("OUT");
-          document.getElementById("receiptPreview").classList.remove("show");
-          document.getElementById("receiptStatus").textContent = "No photo yet";
-          if (hello) document.getElementById("logged_by").value = hello;
-          loadPetty().then(function () { btn.disabled = false; });
-        }).catch(function (err) {
-          msg.textContent = (err && err.message) || "Movement was not recorded.";
-          msg.className = "msg err";
-          btn.disabled = false;
-        });
+        submitMove();
       };
+      document.getElementById("stickySubmit").onclick = function () {
+        // Real submit — sticky used to be a #hash link that only scrolled (felt dead).
+        submitMove();
+      };
+      // Hide sticky while in-form button is on screen (avoid double green buttons).
+      var inFormBtn = document.getElementById("submitBtn");
+      var stickyWrap = document.getElementById("stickyCta");
+      if (window.IntersectionObserver && inFormBtn && stickyWrap) {
+        var io = new IntersectionObserver(function (entries) {
+          var visible = entries.some(function (e) { return e.isIntersecting; });
+          stickyWrap.style.visibility = visible ? "hidden" : "visible";
+        }, { threshold: 0.4 });
+        io.observe(inFormBtn);
+      }
     })
     .catch(function () {});
 
