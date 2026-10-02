@@ -1,0 +1,82 @@
+{
+  "proved_at": "2026-10-02T22:58:30+0800",
+  "capability": "RECEIPT_IMAGE_EXTRACTION",
+  "image": "/Users/wolfterminal/beta-os/state/bzg-daily-close/receipts/EVD-CLOSE-ESB-806C52F2BFBF.jpg",
+  "elapsed_s": 18.9,
+  "extraction_unavailable": false,
+  "provider": "gemini",
+  "model": "gemini-2.5-flash",
+  "extracted": {
+    "cash_amount": 2735000.0,
+    "edc_card_amount": 10045000.0,
+    "qris_amount": 2170000.0,
+    "gross_amount": 18395000.0,
+    "net_sales": 15202479.0,
+    "bills": 59,
+    "pax": 103,
+    "settlement_batch_date": "2026-10-02",
+    "payment_methods": [
+      {
+        "label": "CASH",
+        "amount": 2735000.0,
+        "kind": "CASH"
+      },
+      {
+        "label": "EDC BNI",
+        "amount": 6185000.0,
+        "kind": "EDC"
+      },
+      {
+        "label": "EDC MANDIRI",
+        "amount": 3860000.0,
+        "kind": "EDC"
+      },
+      {
+        "label": "QRIS BNI",
+        "amount": 65000.0,
+        "kind": "QRIS"
+      },
+      {
+        "label": "QRIS MANDIRI",
+        "amount": 2105000.0,
+        "kind": "QRIS"
+      },
+      {
+        "label": "ROB & FAMILY",
+        "amount": 160000.0,
+        "kind": "OTHER"
+      },
+      {
+        "label": "ROOM CHARGE 112",
+        "amount": 545000.0,
+        "kind": "OTHER"
+      },
+      {
+        "label": "SCOTT & ETIK",
+        "amount": 1150000.0,
+        "kind": "OTHER"
+      }
+    ],
+    "edc_bni": 6185000.0,
+    "edc_mandiri": 3860000.0,
+    "edc_bca": null,
+    "edc_bri": null,
+    "qris_bni": 65000.0,
+    "qris_mandiri": 2105000.0,
+    "qris_bca": null,
+    "qris_bri": null,
+    "ocr_confidence": 0.9,
+    "ocr_confidence_band": "HIGH"
+  },
+  "expected": {
+    "gross_amount": 18395000,
+    "net_sales": 15202479,
+    "cash_amount": 2735000,
+    "bills": 58,
+    "pax": 103,
+    "edc_bni": 6185000,
+    "edc_mandiri": 5450000,
+    "qris_bni": 65000,
+    "qris_mandiri": 2105000
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "COMMISSIONING-FAIL-VISION-GEMINI-20261002",
+  "when_wita": "2026-10-02T22:48:49.381249+08:00",
+  "defect": "VISION_EXTRACTION_BROKEN_GEMINI_KEY",
+  "close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+  "photo_capture": "WORKING",
+  "photo_storage": "WORKING",
+  "vision_extraction": "BROKEN",
+  "false_eng_proved": true,
+  "preserve_close": true,
+  "do_not_ask_matt_for_key_until_discovery_exhausted": true,
+  "staff_ui": "no provider names",
+  "eng_proved_redefinition": "INTEGRATION must exercise real credential+provider",
+  "snapshot_counts": {
+    "venue_close_edc_lines": 0,
+    "venue_close_till_evidence": 0,
+    "venue_close_edc_receipts": 0,
+    "venue_close_esb_closing_receipts": 0,
+    "venue_close_vision_events": 0
+  }
+}

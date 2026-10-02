@@ -1,0 +1,52 @@
+{
+  "id": "FORENSIC-FALSE-ENG-PROVED-VISION-20261002",
+  "when_wita": "2026-10-02T22:50:59.310255+08:00",
+  "close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+  "holder": "PERS-MATT",
+  "state": "DATA_CAPTURED",
+  "defect_chain_tonight": [
+    "assignment deny",
+    "no photo UX / empty same-day ESB",
+    "no governed takeover",
+    "ESB live vs receipt recon",
+    "vision Gemini key unavailable on deployed Beta"
+  ],
+  "photo_capture": "WORKING",
+  "photo_storage": {
+    "working": true,
+    "path": "state/bzg-daily-close/receipts/EVD-CLOSE-ESB-806C52F2BFBF.jpg",
+    "object_ref": "close-receipt://EVD-CLOSE-ESB-806C52F2BFBF.jpg",
+    "bytes": 1770075,
+    "db_esb_closing_receipts_rows": 0,
+    "note": "bytes saved; extract 500 before confirm row insert"
+  },
+  "vision_extraction": "BROKEN",
+  "root_cause": {
+    "hardcoded_provider": "Gemini via GEMINI_API_KEY/GOOGLE_API_KEY only",
+    "beta_os_env_GEMINI_API_KEY": "EMPTY_PLACEHOLDER",
+    "serve_beta_process": "GEMINI_API_KEY missing",
+    "launchd_env": "BETA_PORT only \u2014 does not load .env API keys",
+    "authorised_alternatives_discovered": {
+      "wolf_model_router_vision_extract": true,
+      "anthropic_default_profile": true,
+      "openai_creds_file": true,
+      "gemini_creds_file": false
+    },
+    "why_tests_passed": "unit/fixture path + mocked vision; no real Beta credential+provider call required for ENG_PROVED stamp"
+  },
+  "policy_fix": {
+    "eng_proved_requires": [
+      "code test",
+      "Beta deployed",
+      "real credential resolution",
+      "real provider call",
+      "real representative input",
+      "expected output",
+      "failure/fallback path",
+      "evidence"
+    ],
+    "otherwise": "CODE COMPLETE / INTEGRATION UNPROVED"
+  },
+  "staff_ui_rule": "never show provider/key names to ops staff",
+  "preserve": true
+}

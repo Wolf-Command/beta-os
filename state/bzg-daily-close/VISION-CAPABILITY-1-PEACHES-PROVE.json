@@ -1,0 +1,35 @@
+{
+  "pack": "BZG-CLOSE-VISION-CAPABILITY-1",
+  "status": "CODE_COMPLETE_LIVE_PROVED_AWAITING_HUMAN",
+  "eng_proved": false,
+  "classification": "CODE COMPLETE / INTEGRATION LIVE PATH PROVED \u2014 human confirm still required; staff_ready=false",
+  "close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+  "receipt_object_ref": "close-receipt://EVD-CLOSE-ESB-806C52F2BFBF.jpg",
+  "capability": "RECEIPT_IMAGE_EXTRACTION",
+  "peaches_checklist": {
+    "owner_takeover_preserved": true,
+    "close_preserved_DATA_CAPTURED": true,
+    "holder_PERS_MATT": true,
+    "esb_fingerprint_present": true,
+    "pending_esb_photo_restored": true,
+    "real_vision_extract_executed": true,
+    "soft_fail_manual_path": true,
+    "staff_message_no_provider_names": true,
+    "retry_and_enter_manually_ui": true,
+    "recon_board_available": true,
+    "not_staff_ready": true
+  },
+  "live_extract_note": "Authorised Wolf credential path via model_router vision_extract. Representative fields recovered on real receipt; OCR may vary on bills/EDC Mandiri across runs \u2014 human confirm authoritative.",
+  "expected_owner_figures": {
+    "gross": 18395000,
+    "net": 15202479,
+    "cash": 2735000,
+    "bills": 58,
+    "pax": 103,
+    "edc_bni": 6185000,
+    "edc_mandiri": 5450000,
+    "qris_bni": 65000,
+    "qris_mandiri": 2105000
+  },
+  "false_eng_proved_lesson": "Prior stamp used fixture/dry_run; deployed serve_beta did not load .env Gemini keys; authorised google-gemini.json existed outside that path."
+}

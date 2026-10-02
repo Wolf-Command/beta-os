@@ -1,0 +1,18 @@
+{
+  "policy_id": "ENG-PROVED-INTEGRATION-GATE-1",
+  "effective_at": "2026-10-02T23:05:00+08:00",
+  "rule": "An integration-backed feature cannot be ENG_PROVED on mocked/unit/fixture paths alone.",
+  "required_chain": [
+    "code_test",
+    "beta_deployed",
+    "real_beta_credential_resolution",
+    "real_provider_or_service_call",
+    "real_representative_input",
+    "expected_output_or_honest_partial",
+    "failure_or_fallback_path",
+    "evidence_on_disk"
+  ],
+  "otherwise": "CODE COMPLETE / INTEGRATION UNPROVED",
+  "applies_to": "entire forensic production line",
+  "tonight_trigger": "BZG close vision falsely ENG_PROVED; deployed Gemini env empty while Wolf credentials existed"
+}

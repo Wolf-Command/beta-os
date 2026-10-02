@@ -245,6 +245,8 @@
       </div>
     </div>
     <button class="btn" id="btnEsbExtract" data-cap="submit" type="button" disabled>Wolf reads receipt</button>
+    <button class="btn" id="btnEsbRetry" data-cap="submit" type="button" disabled>Retry Reading</button>
+    <button class="btn btn-warn" id="btnEsbManual" data-cap="submit" type="button" disabled>Enter Manually</button>
     <button class="btn btn-ok" id="btnEsbLooks" data-cap="submit" type="button" disabled>Looks Correct</button>
     <button class="btn btn-warn" id="btnEsbEdit" data-cap="submit" type="button" disabled>Edit &amp; confirm</button>
     <div id="esbReceiptBox" class="muted" style="margin-top:10px">No ESB closing receipt yet.</div>
@@ -685,10 +687,20 @@
     ["edcBank","edcTerminal","edcDate","edcCardAmt","edcQrisAmt","edcBatchRef","btnEdc","btnEdcExtract","btnEdcLooks","btnEdcEdit","btnEdcTakePhoto","btnEdcUploadPhoto"].forEach((id) => {
       if ($(id)) $(id).disabled = !canEdc;
     });
-    ["esbCash","esbEdc","esbQris","btnEsbExtract","btnEsbLooks","btnEsbEdit","btnEsbTakePhoto","btnEsbUploadPhoto"].forEach((id) => {
+    ["esbCash","esbEdc","esbQris","btnEsbExtract","btnEsbRetry","btnEsbManual","btnEsbLooks","btnEsbEdit","btnEsbTakePhoto","btnEsbUploadPhoto"].forEach((id) => {
       if ($(id)) $(id).disabled = !canEsbR;
     });
     renderEdc(close);
+    // Restore previously uploaded ESB photo after refresh (do not force re-shoot)
+    if (close.pending_esb_photo && close.pending_esb_photo.object_ref) {
+      if (!($("esbReceiptRef").value || "").trim()) {
+        $("esbReceiptRef").value = close.pending_esb_photo.object_ref;
+        if (close.pending_esb_photo.content_hash) $("esbContentHash").value = close.pending_esb_photo.content_hash || "";
+      }
+      if ($("esbPhotoStatus") && !(close.esb_closing_receipts || []).length) {
+        $("esbPhotoStatus").textContent = "Stored photo on file — Retry Reading or Enter Manually";
+      }
+    }
     renderEsbReceipt(close);
     renderRecon(close);
     showOwnerControlPanel(!!close && !!(caps.owner_control || caps.reopen || caps.cancel_close));
@@ -1391,7 +1403,11 @@
         $("edcPhotoStatus").textContent = "Photo kept · draft ready for confirm";
       }
     } catch (e) {
-      setMsg((e.data && e.data.message) || e.message || String(e));
+      const raw = (e.data && (e.data.staff_message || e.data.message)) || e.message || String(e);
+      setMsg(typeof staffSafeVisionMsg === "function" ? staffSafeVisionMsg(raw) : raw);
+      if ($("edcPhotoStatus") && ($("edcRef").value || "").trim()) {
+        $("edcPhotoStatus").textContent = "Photo kept · reading unavailable — retry or enter manually";
+      }
     }
   }
 
@@ -1400,9 +1416,42 @@
   $("btnEdcEdit").onclick = () => submitEdcReceipt("edit");
   $("btnEdc").onclick = () => submitEdcReceipt("confirm");
 
+  function staffSafeVisionMsg(raw) {
+    const s = String(raw || "");
+    const low = s.toLowerCase();
+    if (/gemini|anthropic|openai|claude|gpt-|api[_ ]?key|not authorised|not authorized|unauthorized|generativelanguage/.test(low)) {
+      return "Receipt reading is temporarily unavailable. Retry or enter the figures manually.";
+    }
+    return s || "Receipt reading is temporarily unavailable. Retry or enter the figures manually.";
+  }
+
+  function enterEsbManually() {
+    if (!close) return;
+    // Keep photo; clear AI draft authority; unlock fields for human entry
+    esbDraft = {
+      extraction_unavailable: true,
+      extracted: {},
+      image_object_ref: $("esbReceiptRef").value || null,
+      content_hash: $("esbContentHash").value || null,
+    };
+    ["esbCash","esbEdc","esbQris"].forEach((id) => { if ($(id)) $(id).disabled = false; });
+    if ($("btnEsbLooks")) $("btnEsbLooks").disabled = false;
+    if ($("btnEsbEdit")) $("btnEsbEdit").disabled = false;
+    if ($("esbPhotoStatus") && ($("esbReceiptRef").value || "").trim()) {
+      $("esbPhotoStatus").textContent = "Photo kept · enter figures manually";
+    }
+    setMsg("Enter the figures manually. Human-confirmed values are authoritative. Photo preserved.");
+  }
+
   async function runEsbExtract(fromPhoto) {
     if (!close) return;
     setMsg("");
+    // Restore pending photo from server if refresh lost the hidden ref
+    if (!($("esbReceiptRef").value || "").trim() && close.pending_esb_photo && close.pending_esb_photo.object_ref) {
+      $("esbReceiptRef").value = close.pending_esb_photo.object_ref || "";
+      if (close.pending_esb_photo.content_hash) $("esbContentHash").value = close.pending_esb_photo.content_hash;
+      if ($("esbPhotoStatus")) $("esbPhotoStatus").textContent = "Stored photo restored · ready to retry";
+    }
     const hasPhoto = !!(esbPhotoB64 || ($("esbReceiptRef").value || "").trim());
     if (!hasPhoto && !fromPhoto) {
       setMsg("Take Photo or Upload Photo for the ESB closing receipt first.");
@@ -1415,14 +1464,7 @@
       mime_type: esbPhotoMime || "image/jpeg",
     };
     if (esbPhotoB64) body.image_base64 = esbPhotoB64;
-    if (!esbPhotoB64) {
-      body.fixture_fields = {
-        cash_amount: $("esbCash").value === "" ? null : Number($("esbCash").value),
-        edc_card_amount: $("esbEdc").value === "" ? null : Number($("esbEdc").value),
-        qris_amount: $("esbQris").value === "" ? null : Number($("esbQris").value),
-        ocr_confidence: 0.8,
-      };
-    }
+    // Never send fixture when a real photo/ref exists — that was masking live vision.
     try {
       const data = await api("/api/venue-close/esb-receipt-extract", {
         method: "POST",
@@ -1435,6 +1477,14 @@
       if (x.qris_amount != null) $("esbQris").value = x.qris_amount;
       if (data.image_object_ref) $("esbReceiptRef").value = data.image_object_ref;
       if (data.content_hash) $("esbContentHash").value = data.content_hash;
+      if (data.extraction_unavailable) {
+        ["esbCash","esbEdc","esbQris"].forEach((id) => { if ($(id)) $(id).disabled = false; });
+        setMsg(staffSafeVisionMsg(data.staff_message || data.message));
+        if ($("esbPhotoStatus") && ($("esbReceiptRef").value || "").trim()) {
+          $("esbPhotoStatus").textContent = "Photo kept · reading unavailable — retry or enter manually";
+        }
+        return;
+      }
       const mm = data.api_mismatch_preview && data.api_mismatch_preview.api_mismatch;
       setMsg(
         mm
@@ -1446,11 +1496,18 @@
         $("esbPhotoStatus").textContent = "Photo kept · draft ready for confirm";
       }
     } catch (e) {
-      setMsg((e.data && e.data.message) || e.message || String(e));
+      const raw = (e.data && (e.data.staff_message || e.data.message)) || e.message || String(e);
+      setMsg(staffSafeVisionMsg(raw));
+      if ($("esbPhotoStatus") && ($("esbReceiptRef").value || "").trim()) {
+        $("esbPhotoStatus").textContent = "Photo kept · reading unavailable — retry or enter manually";
+      }
+      ["esbCash","esbEdc","esbQris"].forEach((id) => { if ($(id)) $(id).disabled = false; });
     }
   }
 
   $("btnEsbExtract").onclick = () => runEsbExtract(false);
+  if ($("btnEsbRetry")) $("btnEsbRetry").onclick = () => runEsbExtract(false);
+  if ($("btnEsbManual")) $("btnEsbManual").onclick = () => enterEsbManually();
 
   async function submitEsbReceipt(action) {
     if (!close) return;

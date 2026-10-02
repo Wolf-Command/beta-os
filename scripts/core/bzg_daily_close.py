@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import json
+import json
 import sqlite3
 import uuid
 from pathlib import Path
@@ -127,7 +129,7 @@ def save_close_receipt_bytes(
     dest.write_bytes(data)
     ch = hashlib.sha256(data).hexdigest()
     ref = f"{CLOSE_RECEIPT_SCHEME}{eid}{ext}"
-    return {
+    out = {
         "ok": True,
         "evidence_id": eid,
         "object_ref": ref,
@@ -142,6 +144,27 @@ def save_close_receipt_bytes(
         "kept_original": True,
         **HONESTY,
     }
+    try:
+        idx = CLOSE_RECEIPT_DIR / "photo-index.jsonl"
+        with idx.open("a", encoding="utf-8") as fh:
+            fh.write(
+                json.dumps(
+                    {
+                        "close_id": out["close_id"],
+                        "object_ref": ref,
+                        "content_hash": ch,
+                        "kind": kind_n,
+                        "mime_type": out["mime_type"],
+                        "filename": out["filename"],
+                        "bytes": out["bytes"],
+                    },
+                    sort_keys=True,
+                )
+                + "\n"
+            )
+    except OSError:
+        pass
+    return out
 
 
 def resolve_close_receipt_path(object_ref: str | None) -> Path | None:
@@ -1543,6 +1566,15 @@ def extract_esb_closing_receipt_draft(
         )
         if commit:
             c.commit()
+        unavailable = bool(draft.get("extraction_unavailable"))
+        staff_msg = None
+        if unavailable:
+            staff_msg = draft.get("staff_message") or _vision.STAFF_VISION_UNAVAILABLE
+            extracted = {
+                **extracted,
+                "extraction_unavailable": True,
+                "extraction_status": "UNAVAILABLE",
+            }
         return {
             **HONESTY,
             "ok": True,
@@ -1550,11 +1582,18 @@ def extract_esb_closing_receipt_draft(
             "vision_event_id": vid,
             "draft": draft,
             "extracted": extracted,
+            "extraction_unavailable": unavailable,
+            "staff_message": staff_msg,
+            "message": staff_msg if unavailable else draft.get("message"),
             "api_mismatch_preview": mismatch,
             "image_object_ref": ref,
             "content_hash": ch,
             "ai_is_not_accounting_truth": True,
-            "next": "Looks Correct / Edit — human confirm required; API snapshot kept",
+            "next": (
+                "Receipt reading unavailable — Retry Reading or Enter Manually. Photo kept."
+                if unavailable
+                else "Looks Correct / Edit — human confirm required; API snapshot kept"
+            ),
         }
     finally:
         if own:
@@ -2154,6 +2193,68 @@ def recon_board(
             c.close()
 
 
+
+def find_pending_esb_receipt_photo(
+    close_id: str | None = None,
+) -> dict[str, Any] | None:
+    """Recover stored ESB closing photo when extract failed before DB insert.
+
+    Prefers sidecar index rows for this close_id; else newest EVD-CLOSE-ESB-* on disk.
+    Never deletes. Never invents amounts.
+    """
+    CLOSE_RECEIPT_DIR.mkdir(parents=True, exist_ok=True)
+    idx = CLOSE_RECEIPT_DIR / "photo-index.jsonl"
+    cid = (close_id or "").strip()
+    if idx.is_file() and cid:
+        try:
+            lines = idx.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            lines = []
+        for line in reversed(lines):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if str(row.get("close_id") or "") != cid:
+                continue
+            if str(row.get("kind") or "").lower() not in ("esb", "receipt"):
+                continue
+            ref = (row.get("object_ref") or "").strip()
+            if ref and resolve_close_receipt_path(ref):
+                return {
+                    "object_ref": ref,
+                    "content_hash": row.get("content_hash"),
+                    "mime_type": row.get("mime_type") or "image/jpeg",
+                    "source": "photo_index",
+                    "extraction_status": "PHOTO_STORED_EXTRACT_PENDING",
+                }
+    # Disk fallback: newest ESB evidence file
+    cands = sorted(
+        CLOSE_RECEIPT_DIR.glob("EVD-CLOSE-ESB-*"),
+        key=lambda x: x.stat().st_mtime,
+        reverse=True,
+    )
+    if not cands:
+        return None
+    path = cands[0]
+    ref = f"{CLOSE_RECEIPT_SCHEME}{path.name}"
+    try:
+        ch = hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        ch = None
+    return {
+        "object_ref": ref,
+        "content_hash": ch,
+        "mime_type": "image/jpeg" if path.suffix.lower() in (".jpg", ".jpeg") else f"image/{path.suffix.lstrip('.')}",
+        "source": "disk_newest_esb",
+        "extraction_status": "PHOTO_STORED_EXTRACT_PENDING",
+        "filename": path.name,
+    }
+
+
 def enrich_close(close: dict[str, Any] | None, conn: sqlite3.Connection | None = None) -> dict[str, Any] | None:
     if not close:
         return None
@@ -2163,6 +2264,10 @@ def enrich_close(close: dict[str, Any] | None, conn: sqlite3.Connection | None =
         cid = close.get("close_id") or ""
         oid = (close.get("outlet_id") or OUTLET_UMA).strip()
         rt = receipt_totals(cid, conn=c) if cid else None
+        esb_recs = list_esb_closing_receipts(cid, conn=c) if cid else []
+        pending_esb = None
+        if cid and not esb_recs:
+            pending_esb = find_pending_esb_receipt_photo(cid)
         return {
             **close,
             **HONESTY,
@@ -2173,7 +2278,8 @@ def enrich_close(close: dict[str, Any] | None, conn: sqlite3.Connection | None =
             "card_total": edc_card_total(cid, conn=c) if cid else None,
             "edc_receipts": list_edc_receipts(cid, conn=c) if cid else [],
             "receipt_totals": rt,
-            "esb_closing_receipts": list_esb_closing_receipts(cid, conn=c) if cid else [],
+            "esb_closing_receipts": esb_recs,
+            "pending_esb_photo": pending_esb,
             "recon_board": recon_board(cid, conn=c) if cid else None,
             "unused_terminals": (
                 unused_configured_terminals(cid, oid, conn=c) if cid else None

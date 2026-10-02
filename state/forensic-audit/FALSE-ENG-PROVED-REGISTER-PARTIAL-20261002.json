@@ -1,0 +1,25 @@
+{
+  "as_of": "2026-10-02T23:05:00+08:00",
+  "reason": "Tonight vision failure proved mocked ENG_PROVED overstates readiness. Partial revisit \u2014 not exhaustive.",
+  "items": [
+    {
+      "id": "BZG-DAILY-CLOSE-MULTI-EDC-VISION",
+      "was": "ENG_PROVED",
+      "now": "CODE COMPLETE / INTEGRATION UNPROVED \u2192 repaired to LIVE PATH PROVED awaiting human",
+      "evidence": "COMMISSIONING-FAIL-VISION-GEMINI-20261002.json"
+    },
+    {
+      "id": "BZG-DAILY-CLOSE engine",
+      "was": "ENG_PROVED",
+      "now": "INTEGRATION PARTIAL \u2014 human close not commissioned; vision proof gap found",
+      "note": "Keep staff_ready=false"
+    },
+    {
+      "id": "forensic PACK-02..10 / WAVE2 stamps",
+      "was": "ENG_PROVED",
+      "now": "REVIEW REQUIRED under new gate for any external dependency",
+      "note": "Honest PARTIAL until real credential+provider chain evidenced"
+    }
+  ],
+  "policy": "ENG-PROVED-INTEGRATION-GATE-1"
+}

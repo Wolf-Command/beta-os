@@ -81,6 +81,7 @@ from core import delegation as _delegation
 from core import content_publish as _content_publish
 from core import venue_close as _venue_close
 from core import bzg_daily_close as _bzg_daily_close
+from core import bzg_close_vision as _bzg_close_vision
 from core import uma_ops_console as _uma_ops
 from core import amg_sales_desk_ro as _amg_sales_desk_ro
 from core import amg_guest_stay_pack7 as _amg_guest_stay
@@ -41735,7 +41736,40 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return None
         return identity
 
+    def _staff_vision_sanitize(self, message: str | None) -> str:
+        """Never show provider/key names to operational staff."""
+        try:
+            return _bzg_close_vision._staff_sanitize(message)
+        except Exception:
+            return (
+                "Receipt reading is temporarily unavailable. "
+                "Retry or enter the figures manually."
+            )
+
     def _venue_close_err(self, exc: Exception) -> None:
+        # VisionError / capability soft failures — staff-safe, close continues
+        try:
+            ve = _bzg_close_vision.VisionError
+        except Exception:
+            ve = None
+        if ve is not None and isinstance(exc, ve):
+            staff = getattr(exc, "staff_message", None) or self._staff_vision_sanitize(str(exc))
+            payload = {
+                "ok": False,
+                "error": getattr(exc, "code", "vision_error"),
+                "message": staff,
+                "staff_message": staff,
+                "extraction_unavailable": getattr(exc, "code", "")
+                in ("vision_unavailable", "vision_http", "vision_transport"),
+                "retry": True,
+                "manual_entry_ok": True,
+            }
+            # diagnostic for Owner/logs only — not staff copy
+            diag = getattr(exc, "diagnostic", None)
+            if diag:
+                payload["diagnostic_code"] = getattr(exc, "code", None)
+            self._send_json(payload, status=getattr(exc, "http_status", 503))
+            return
         if isinstance(exc, _venue_close.VenueCloseError):
             payload = {
                 "ok": False,
