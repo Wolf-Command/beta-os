@@ -55,4 +55,6 @@ Pack cases: Iza ALLOW · Devi ALLOW · unauthorised BZG DENY · wrong outlet DEN
 
 Peaches → Matt: **RETEST IZA NOW** at `https://beta.wolfcommand.net/bzg/daily-close` (or `/uma-blu-close`).
 
+**Commit:** `c6ec9a0` (local only — no push)
+
 RESULT: **PASS** (engineering). Human commissioning PENDING.

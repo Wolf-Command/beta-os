@@ -5,6 +5,7 @@
   "human_commissioned": false,
   "branch": "build/wolf-command-rebuild",
   "parent_tip_before": "8688c08",
+  "commit": "c6ec9a094d97e143e1a222706ef6287322f3c4c0",
   "decision": "2026-09-17 Uma Blu Daily Close + IZA-UMA-CAPTAIN-CASHIER-DAILY-CLOSE-20261002",
   "root_cause": "page gate used active_role_ids hard set only; ignored venue_closer_roster; Beta process stale pre-Captain tip",
   "fix": {
