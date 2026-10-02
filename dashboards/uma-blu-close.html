@@ -137,6 +137,14 @@
     nav.uma a { flex: 1 1 calc(33.33% - 6px); justify-content: center; text-align: center; }
     .photo-actions { grid-template-columns: 1fr; }
   }
+
+  #esbDocReview .esb-sec { margin: 12px 0; padding: 10px; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; }
+  #esbDocReview .esb-sec h3 { margin: 0 0 8px; font-size: 14px; letter-spacing: 0.02em; }
+  #esbDocReview .esb-line { display: grid; grid-template-columns: 1fr 70px 120px; gap: 8px; align-items: center; margin: 6px 0; }
+  #esbDocReview .esb-line label { font-size: 13px; }
+  #esbDocReview .esb-uncertain { background: rgba(255, 180, 0, 0.12); border-radius: 8px; padding: 4px 6px; }
+  #esbDocReview .esb-badge { font-size: 11px; opacity: 0.75; margin-left: 6px; }
+  #esbDocReview input[type=number] { width: 100%; }
 </style>
 </head>
 <body>
@@ -232,18 +240,11 @@
     <p class="muted" id="esbPhotoStatus">No photo yet — Take Photo or Upload Photo.</p>
     <input type="hidden" id="esbReceiptRef" value="" />
     <input type="hidden" id="esbContentHash" value="" />
-    <label for="esbCash">Cash (from receipt)</label>
-    <input type="number" id="esbCash" min="0" step="1000" placeholder="optional until extract" disabled inputmode="decimal" />
-    <div class="row">
-      <div>
-        <label for="esbEdc">EDC card</label>
-        <input type="number" id="esbEdc" min="0" step="1000" disabled inputmode="decimal" />
-      </div>
-      <div>
-        <label for="esbQris">QRIS</label>
-        <input type="number" id="esbQris" min="0" step="1000" disabled inputmode="decimal" />
-      </div>
-    </div>
+    <p class="muted">Wolf captures the full receipt (sections + lines). Edit only uncertain fields. Raw labels are preserved. AI is not truth.</p>
+    <div id="esbDocReview" class="muted" style="margin-top:8px">No draft yet — Take/Upload Photo then Wolf reads, or Enter Manually.</div>
+    <input type="hidden" id="esbCash" value="" />
+    <input type="hidden" id="esbEdc" value="" />
+    <input type="hidden" id="esbQris" value="" />
     <button class="btn" id="btnEsbExtract" data-cap="submit" type="button" disabled>Wolf reads receipt</button>
     <button class="btn" id="btnEsbRetry" data-cap="submit" type="button" disabled>Retry Reading</button>
     <button class="btn btn-warn" id="btnEsbManual" data-cap="submit" type="button" disabled>Enter Manually</button>
@@ -687,7 +688,7 @@
     ["edcBank","edcTerminal","edcDate","edcCardAmt","edcQrisAmt","edcBatchRef","btnEdc","btnEdcExtract","btnEdcLooks","btnEdcEdit","btnEdcTakePhoto","btnEdcUploadPhoto"].forEach((id) => {
       if ($(id)) $(id).disabled = !canEdc;
     });
-    ["esbCash","esbEdc","esbQris","btnEsbExtract","btnEsbRetry","btnEsbManual","btnEsbLooks","btnEsbEdit","btnEsbTakePhoto","btnEsbUploadPhoto"].forEach((id) => {
+    ["btnEsbExtract","btnEsbRetry","btnEsbManual","btnEsbLooks","btnEsbEdit","btnEsbTakePhoto","btnEsbUploadPhoto"].forEach((id) => {
       if ($(id)) $(id).disabled = !canEsbR;
     });
     renderEdc(close);
@@ -814,6 +815,23 @@
           (dual.flags && dual.flags.length ? `<p class="msg err">Flags: ${dual.flags.join(", ")}</p>` : "") +
           `<p class="muted" style="margin-top:8px">Sources kept · silent overwrite = no · ${dual.policy || ""}</p>` +
           (payRows ? `<div style="margin-top:8px"><strong>Payment lines</strong>${payRows}</div>` : "");
+        const drec = b.document_recon || null;
+        if (drec) {
+          const ns = (drec.nonsales_lines || []).map((n) =>
+            `<div class="muted">${n.raw_label}: ${money(n.amount)} · ${n.normalized_type || "NEEDS CLASSIFICATION"}</div>`
+          ).join("");
+          const ex = (drec.exception_lines || []).map((n) =>
+            `<div class="muted">${n.section}: ${n.raw_label} ${money(n.amount)}</div>`
+          ).join("");
+          const gvp = drec.gross_vs_payment_methods || null;
+          dualEl.innerHTML +=
+            `<div style="margin-top:12px"><strong>Full receipt document</strong>` +
+            `<div class="muted">Gross ${money((drec.shift||{}).GROSS_SALES)} · Net ${money((drec.shift||{}).NET_SALES)} · Bills ${(drec.shift||{}).BILLS != null ? (drec.shift||{}).BILLS : "—"} · Pax ${(drec.shift||{}).PAX != null ? (drec.shift||{}).PAX : "—"}</div>` +
+            (gvp ? `<div class="muted">Payment lines sum vs Gross: ${money(gvp.payment_methods_sum)} vs ${money(gvp.gross_sales)} · ${gvp.status}</div>` : "") +
+            (ns ? `<div style="margin-top:6px"><strong>Non sales</strong> (excluded from sales recon)${ns}</div>` : "") +
+            (ex ? `<div style="margin-top:6px"><strong>Exceptions</strong>${ex}</div>` : "") +
+            `<p class="muted">Raw labels preserved · house accounts not auto-classified</p></div>`;
+        }
       }
     }
 
@@ -1416,6 +1434,7 @@
   $("btnEdcEdit").onclick = () => submitEdcReceipt("edit");
   $("btnEdc").onclick = () => submitEdcReceipt("confirm");
 
+
   function staffSafeVisionMsg(raw) {
     const s = String(raw || "");
     const low = s.toLowerCase();
@@ -1425,28 +1444,186 @@
     return s || "Receipt reading is temporarily unavailable. Retry or enter the figures manually.";
   }
 
+  function sectionHeading(sec) {
+    const t = (sec && sec.normalized_type) || "";
+    const map = {
+      SHIFT_SUMMARY: "SALES SUMMARY",
+      PAYMENT_METHODS: "PAYMENT METHODS",
+      NON_SALES: "NON SALES",
+      CANCELLED_MENU: "CANCELLED MENU",
+      VOID_PAYMENT: "VOID PAYMENT",
+      PROMOTION: "PROMOTIONS",
+      DISCOUNT: "DISCOUNTS",
+      UNKNOWN: "OTHER / UNCLASSIFIED",
+    };
+    const nice = map[t] || (sec && sec.raw_title) || "SECTION";
+    const raw = (sec && sec.raw_title) || "";
+    const needs = sec && sec.classification === "NEEDS_CLASSIFICATION";
+    return nice + (raw && raw !== nice ? " · " + raw : "") + (needs ? " · needs classification" : "");
+  }
+
+  function renderEsbDocDraft(doc, editable) {
+    const box = $("esbDocReview");
+    if (!box) return;
+    if (!doc || !Array.isArray(doc.sections)) {
+      box.innerHTML = "<p class='muted'>No structured draft yet.</p>";
+      return;
+    }
+    const canEdit = !!editable;
+    let html = "";
+    (doc.sections || []).forEach((sec, si) => {
+      html += "<div class='esb-sec' data-sec='" + si + "'>";
+      html += "<h3>" + sectionHeading(sec) + "</h3>";
+      const lines = sec.lines || [];
+      if (!lines.length) {
+        html += "<p class='muted'>No lines in this section (captured empty — preserved).</p>";
+      }
+      lines.forEach((ln, li) => {
+        const unc = !!ln.uncertain || ln.classification === "NEEDS_CLASSIFICATION";
+        const amt = ln.human_confirmed_value != null ? ln.human_confirmed_value : (ln.amount != null ? ln.amount : "");
+        const qty = ln.quantity != null ? ln.quantity : "";
+        html += "<div class='esb-line" + (unc ? " esb-uncertain" : "") + "' data-li='" + li + "'>";
+        html += "<label>" + (ln.raw_label || "(unlabeled)") +
+          (ln.normalized_type && ln.normalized_type !== "UNKNOWN" ? "<span class='esb-badge'>" + ln.normalized_type + (ln.bank_acquirer ? " · " + ln.bank_acquirer : "") + "</span>" : "<span class='esb-badge'>NEEDS CLASSIFICATION</span>") +
+          "</label>";
+        html += "<input type='number' data-field='quantity' " + (canEdit ? "" : "disabled ") + "placeholder='qty' value='" + qty + "' inputmode='decimal' />";
+        html += "<input type='number' data-field='amount' " + (canEdit ? "" : "disabled ") + "placeholder='amount' value='" + amt + "' step='1' inputmode='decimal' />";
+        html += "</div>";
+      });
+      html += "</div>";
+    });
+    const der = doc.derived || {};
+    html += "<p class='muted' style='margin-top:10px'>Derived (not authority): EDC total " +
+      (der.total_edc != null ? money(der.total_edc) : "—") +
+      " · QRIS total " + (der.total_qris != null ? money(der.total_qris) : "—") +
+      " · Payment lines sum " + (der.payment_methods_sum != null ? money(der.payment_methods_sum) : "—") +
+      ". Banks stay separate.</p>";
+    box.innerHTML = html;
+    syncEsbFlatFromDoc(doc);
+  }
+
+  function syncEsbFlatFromDoc(doc) {
+    const der = (doc && doc.derived) || {};
+    if ($("esbCash")) $("esbCash").value = der.cash_amount != null ? der.cash_amount : "";
+    if ($("esbEdc")) $("esbEdc").value = der.edc_card_amount != null ? der.edc_card_amount : "";
+    if ($("esbQris")) $("esbQris").value = der.qris_amount != null ? der.qris_amount : "";
+  }
+
+  function collectEsbDocumentFromDom() {
+    const base = (esbDraft && (esbDraft.document || esbDraft.extracted)) || { sections: [], schema_version: 1, document_kind: "ESB_CLOSING_RECEIPT" };
+    const doc = JSON.parse(JSON.stringify(base));
+    const box = $("esbDocReview");
+    if (!box || !Array.isArray(doc.sections)) return doc;
+    box.querySelectorAll(".esb-sec").forEach((secEl) => {
+      const si = Number(secEl.getAttribute("data-sec"));
+      if (!doc.sections[si]) return;
+      secEl.querySelectorAll(".esb-line").forEach((lineEl) => {
+        const li = Number(lineEl.getAttribute("data-li"));
+        const ln = doc.sections[si].lines && doc.sections[si].lines[li];
+        if (!ln) return;
+        const qtyInp = lineEl.querySelector("input[data-field=quantity]");
+        const amtInp = lineEl.querySelector("input[data-field=amount]");
+        const qty = qtyInp && qtyInp.value !== "" ? Number(qtyInp.value) : null;
+        const amt = amtInp && amtInp.value !== "" ? Number(amtInp.value) : null;
+        ln.quantity = Number.isFinite(qty) ? qty : null;
+        ln.amount = Number.isFinite(amt) ? amt : null;
+        ln.human_confirmed_value = Number.isFinite(amt) ? amt : (Number.isFinite(qty) ? qty : null);
+        ln.extracted_value = ln.extracted_value != null ? ln.extracted_value : ln.amount;
+      });
+    });
+    // refresh derived mirrors client-side (server also re-derives on confirm)
+    const payments = [];
+    let totalEdc = 0, totalQris = 0, totalCash = null, paySum = 0;
+    (doc.sections || []).forEach((sec) => {
+      if (sec.normalized_type !== "PAYMENT_METHODS") return;
+      (sec.lines || []).forEach((ln) => {
+        if (ln.normalized_type === "PAYMENT_METHOD_TOTAL") return;
+        const a = ln.human_confirmed_value != null ? ln.human_confirmed_value : ln.amount;
+        payments.push(ln);
+        if (a == null || !Number.isFinite(Number(a))) return;
+        const n = Number(a);
+        paySum += n;
+        if (ln.normalized_type === "EDC") totalEdc += n;
+        if (ln.normalized_type === "QRIS") totalQris += n;
+        if (ln.normalized_type === "CASH") totalCash = n;
+      });
+    });
+    const shift = {};
+    (doc.sections || []).forEach((sec) => {
+      if (sec.normalized_type !== "SHIFT_SUMMARY") return;
+      (sec.lines || []).forEach((ln) => {
+        if (ln.normalized_type && ln.normalized_type !== "UNKNOWN") {
+          shift[ln.normalized_type] = ln.human_confirmed_value != null ? ln.human_confirmed_value : ln.amount;
+        }
+      });
+    });
+    doc.derived = Object.assign({}, doc.derived || {}, {
+      shift,
+      total_edc: Math.round(totalEdc * 100) / 100,
+      total_qris: Math.round(totalQris * 100) / 100,
+      total_cash: totalCash,
+      payment_methods_sum: Math.round(paySum * 100) / 100,
+      cash_amount: totalCash,
+      edc_card_amount: totalEdc || null,
+      qris_amount: totalQris || null,
+      gross_amount: shift.GROSS_SALES,
+      net_sales: shift.NET_SALES || shift.SALES_TOTAL,
+      bills: shift.BILLS,
+      pax: shift.PAX,
+    });
+    doc.cash_amount = doc.derived.cash_amount;
+    doc.edc_card_amount = doc.derived.edc_card_amount;
+    doc.qris_amount = doc.derived.qris_amount;
+    doc.gross_amount = doc.derived.gross_amount;
+    return doc;
+  }
+
   function enterEsbManually() {
     if (!close) return;
-    // Keep photo; clear AI draft authority; unlock fields for human entry
+    const emptyDoc = {
+      document_kind: "ESB_CLOSING_RECEIPT",
+      schema_version: 1,
+      sections: [
+        { raw_title: "Shift Summary", normalized_type: "SHIFT_SUMMARY", classification: "KNOWN", lines: [
+          { raw_label: "Gross Sales Total", normalized_type: "GROSS_SALES", amount: null, uncertain: true, classification: "KNOWN" },
+          { raw_label: "Net Sales Total", normalized_type: "NET_SALES", amount: null, uncertain: true, classification: "KNOWN" },
+          { raw_label: "Service Charge Total", normalized_type: "SERVICE_CHARGE", amount: null, uncertain: true, classification: "KNOWN" },
+          { raw_label: "Tax Total", normalized_type: "TAX", amount: null, uncertain: true, classification: "KNOWN" },
+          { raw_label: "Number of Bills", normalized_type: "BILLS", amount: null, uncertain: true, classification: "KNOWN" },
+          { raw_label: "Number of Pax", normalized_type: "PAX", amount: null, uncertain: true, classification: "KNOWN" },
+        ]},
+        { raw_title: "Payment Method Summary", normalized_type: "PAYMENT_METHODS", classification: "KNOWN", lines: [
+          { raw_label: "CASH", normalized_type: "CASH", amount: null, quantity: null, uncertain: true, classification: "KNOWN" },
+          { raw_label: "EDC BNI", normalized_type: "EDC", bank_acquirer: "BNI", amount: null, quantity: null, uncertain: true, classification: "KNOWN" },
+          { raw_label: "EDC MANDIRI", normalized_type: "EDC", bank_acquirer: "MANDIRI", amount: null, quantity: null, uncertain: true, classification: "KNOWN" },
+          { raw_label: "QRIS BNI", normalized_type: "QRIS", bank_acquirer: "BNI", amount: null, quantity: null, uncertain: true, classification: "KNOWN" },
+          { raw_label: "QRIS MANDIRI", normalized_type: "QRIS", bank_acquirer: "MANDIRI", amount: null, quantity: null, uncertain: true, classification: "KNOWN" },
+        ]},
+        { raw_title: "Non Sales Payment Method Summary", normalized_type: "NON_SALES", classification: "KNOWN", lines: [] },
+        { raw_title: "Cancelled Menu Summary", normalized_type: "CANCELLED_MENU", classification: "KNOWN", lines: [] },
+        { raw_title: "Void Payment Detail", normalized_type: "VOID_PAYMENT", classification: "KNOWN", lines: [] },
+        { raw_title: "Promotion Summary", normalized_type: "PROMOTION", classification: "KNOWN", lines: [] },
+      ],
+      derived: {},
+      extensible: true,
+    };
     esbDraft = {
       extraction_unavailable: true,
-      extracted: {},
+      extracted: emptyDoc,
+      document: emptyDoc,
       image_object_ref: $("esbReceiptRef").value || null,
       content_hash: $("esbContentHash").value || null,
     };
-    ["esbCash","esbEdc","esbQris"].forEach((id) => { if ($(id)) $(id).disabled = false; });
-    if ($("btnEsbLooks")) $("btnEsbLooks").disabled = false;
-    if ($("btnEsbEdit")) $("btnEsbEdit").disabled = false;
+    renderEsbDocDraft(emptyDoc, true);
     if ($("esbPhotoStatus") && ($("esbReceiptRef").value || "").trim()) {
       $("esbPhotoStatus").textContent = "Photo kept · enter figures manually";
     }
-    setMsg("Enter the figures manually. Human-confirmed values are authoritative. Photo preserved.");
+    setMsg("Enter the figures manually. Human-confirmed values are authoritative. Photo preserved. Add unknown lines by editing labels after Retry if needed.");
   }
 
   async function runEsbExtract(fromPhoto) {
     if (!close) return;
     setMsg("");
-    // Restore pending photo from server if refresh lost the hidden ref
     if (!($("esbReceiptRef").value || "").trim() && close.pending_esb_photo && close.pending_esb_photo.object_ref) {
       $("esbReceiptRef").value = close.pending_esb_photo.object_ref || "";
       if (close.pending_esb_photo.content_hash) $("esbContentHash").value = close.pending_esb_photo.content_hash;
@@ -1464,21 +1641,17 @@
       mime_type: esbPhotoMime || "image/jpeg",
     };
     if (esbPhotoB64) body.image_base64 = esbPhotoB64;
-    // Never send fixture when a real photo/ref exists — that was masking live vision.
     try {
       const data = await api("/api/venue-close/esb-receipt-extract", {
         method: "POST",
         body: JSON.stringify(body),
       });
       esbDraft = data;
-      const x = data.extracted || {};
-      if (x.cash_amount != null) $("esbCash").value = x.cash_amount;
-      if (x.edc_card_amount != null) $("esbEdc").value = x.edc_card_amount;
-      if (x.qris_amount != null) $("esbQris").value = x.qris_amount;
+      const doc = data.document || data.extracted || {};
       if (data.image_object_ref) $("esbReceiptRef").value = data.image_object_ref;
       if (data.content_hash) $("esbContentHash").value = data.content_hash;
+      renderEsbDocDraft(doc, true);
       if (data.extraction_unavailable) {
-        ["esbCash","esbEdc","esbQris"].forEach((id) => { if ($(id)) $(id).disabled = false; });
         setMsg(staffSafeVisionMsg(data.staff_message || data.message));
         if ($("esbPhotoStatus") && ($("esbReceiptRef").value || "").trim()) {
           $("esbPhotoStatus").textContent = "Photo kept · reading unavailable — retry or enter manually";
@@ -1488,12 +1661,12 @@
       const mm = data.api_mismatch_preview && data.api_mismatch_preview.api_mismatch;
       setMsg(
         mm
-          ? "Draft shows API mismatch — will stay visible; API not overwritten. Confirm or Edit."
-          : "ESB receipt draft ready. Looks Correct or Edit. Dual source kept.",
+          ? "Full receipt draft ready — live API mismatch will stay visible. Confirm or Edit. Dual source kept."
+          : "Full receipt draft ready. Check sections, then Looks Correct or Edit. Dual source kept.",
         !mm
       );
       if ($("esbPhotoStatus") && ($("esbReceiptRef").value || "").trim()) {
-        $("esbPhotoStatus").textContent = "Photo kept · draft ready for confirm";
+        $("esbPhotoStatus").textContent = "Photo kept · structured draft ready for confirm";
       }
     } catch (e) {
       const raw = (e.data && (e.data.staff_message || e.data.message)) || e.message || String(e);
@@ -1501,7 +1674,6 @@
       if ($("esbPhotoStatus") && ($("esbReceiptRef").value || "").trim()) {
         $("esbPhotoStatus").textContent = "Photo kept · reading unavailable — retry or enter manually";
       }
-      ["esbCash","esbEdc","esbQris"].forEach((id) => { if ($(id)) $(id).disabled = false; });
     }
   }
 
@@ -1513,6 +1685,8 @@
     if (!close) return;
     setMsg("");
     try {
+      const doc = collectEsbDocumentFromDom();
+      const der = (doc && doc.derived) || {};
       const data = await api("/api/venue-close/esb-receipt", {
         method: "POST",
         body: JSON.stringify({
@@ -1520,11 +1694,14 @@
           action: action,
           object_ref: $("esbReceiptRef").value || null,
           content_hash: $("esbContentHash").value || null,
-          cash_amount: $("esbCash").value === "" ? null : Number($("esbCash").value),
-          edc_card_amount: $("esbEdc").value === "" ? null : Number($("esbEdc").value),
-          qris_amount: $("esbQris").value === "" ? null : Number($("esbQris").value),
+          cash_amount: der.cash_amount != null ? der.cash_amount : null,
+          edc_card_amount: der.edc_card_amount != null ? der.edc_card_amount : null,
+          qris_amount: der.qris_amount != null ? der.qris_amount : null,
+          gross_amount: der.gross_amount != null ? der.gross_amount : null,
           vision_event_id: esbDraft && esbDraft.vision_event_id,
           extracted: esbDraft && esbDraft.extracted,
+          document: doc,
+          confirmed_overrides: { document: doc },
         }),
       });
       close = Object.assign({}, close, {
@@ -1538,7 +1715,7 @@
       setMsg(
         data.api_mismatch
           ? "ESB receipt confirmed with visible API mismatch. Live API preserved."
-          : "ESB closing receipt confirmed. Dual source kept.",
+          : "ESB closing receipt confirmed (full document). Dual source kept.",
         !data.api_mismatch
       );
       esbDraft = null;
@@ -1549,6 +1726,7 @@
 
   $("btnEsbLooks").onclick = () => submitEsbReceipt("looks_correct");
   $("btnEsbEdit").onclick = () => submitEsbReceipt("edit");
+
 
   $("btnReconRefresh").onclick = async () => {
     if (!close) return;

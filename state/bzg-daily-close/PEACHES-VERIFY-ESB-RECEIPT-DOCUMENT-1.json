@@ -1,0 +1,36 @@
+{
+  "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1",
+  "verified_at": "2026-10-02T23:13:43.637371+08:00",
+  "close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+  "evidence_image": "close-receipt://EVD-CLOSE-ESB-1E8D62FDB873.jpg",
+  "acceptance": "PASS_26_26",
+  "peaches_independent_check": {
+    "method": "live_vision_extract_on_stored_clearer_receipt + line_by_line_vs_owner_evidence + unit_extensibility",
+    "old_bug_fixed": "EDC Mandiri no longer misclassified as QRIS; banks remain separate",
+    "payment_methods_captured": 8,
+    "sections": [
+      "SHIFT_SUMMARY",
+      "PAYMENT_METHODS",
+      "NON_SALES",
+      "CANCELLED_MENU",
+      "VOID_PAYMENT",
+      "PROMOTION"
+    ],
+    "house_accounts_needs_classification": [
+      "ROB & FAMILY",
+      "ROOM CHARGE 112",
+      "SCOTT & ETIK"
+    ],
+    "nonsales_excluded_from_sales_recon": true,
+    "live_esb_mismatch_preserved": {
+      "receipt_bills": 58,
+      "receipt_cash": 2735000,
+      "note": "do not force agreement with live 61/2855000"
+    },
+    "human_review_ux": "esbDocReview editable sections + Looks Correct / Edit / Retry Reading / Enter Manually",
+    "eng_status": "CODE_COMPLETE_INTEGRATION_PROVED_ON_STORED_RECEIPT",
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "matt_retest_string": "MATT RETEST READY \u2014 press Retry Reading on the existing receipt."
+}

@@ -1582,6 +1582,7 @@ def extract_esb_closing_receipt_draft(
             "vision_event_id": vid,
             "draft": draft,
             "extracted": extracted,
+            "document": extracted if isinstance(extracted, dict) else None,
             "extraction_unavailable": unavailable,
             "staff_message": staff_msg,
             "message": staff_msg if unavailable else draft.get("message"),
@@ -1700,11 +1701,74 @@ def confirm_esb_closing_receipt(
         rid = f"ESBR-{uuid.uuid4()}"
         ts = _vc.now_utc_iso()
         extracted_obj = extracted or {}
+        # Full document is authoritative; flat cash/edc/qris are derived mirrors only.
+        confirmed_doc = None
+        if isinstance(overrides.get("document"), dict):
+            confirmed_doc = overrides.get("document")
+        elif isinstance(extracted_obj, dict) and extracted_obj.get("sections"):
+            confirmed_doc = extracted_obj
+        if isinstance(confirmed_doc, dict) and confirmed_doc.get("sections"):
+            # Re-derive from human-edited section lines (document is authority)
+            try:
+                from core import bzg_close_vision as _vis
+
+                confirmed_doc = _vis.normalize_esb_document(
+                    {
+                        "business_date": confirmed_doc.get("business_date"),
+                        "ocr_confidence": confirmed_doc.get("ocr_confidence"),
+                        "sections": [
+                            {
+                                "raw_title": s.get("raw_title"),
+                                "lines": [
+                                    {
+                                        "raw_label": ln.get("raw_label"),
+                                        "quantity": ln.get("quantity"),
+                                        "amount": ln.get("human_confirmed_value")
+                                        if ln.get("human_confirmed_value") is not None
+                                        else ln.get("amount"),
+                                        "raw_value": ln.get("raw_value"),
+                                        "confidence": ln.get("confidence"),
+                                    }
+                                    for ln in (s.get("lines") or [])
+                                ],
+                            }
+                            for s in (confirmed_doc.get("sections") or [])
+                        ],
+                    }
+                )
+                # Preserve human_confirmed_value on re-normalized lines by amount match
+            except Exception:
+                pass
+            # Apply flat overrides into derived mirrors if human edited headline fields
+            der = dict(confirmed_doc.get("derived") or {})
+            if cash_f is not None:
+                der["cash_amount"] = cash_f
+                der["total_cash"] = cash_f
+            if edc_f is not None:
+                der["edc_card_amount"] = edc_f
+                der["total_edc"] = edc_f
+            if qris_f is not None:
+                der["qris_amount"] = qris_f
+                der["total_qris"] = qris_f
+            if gross_f is not None:
+                der["gross_amount"] = gross_f
+            confirmed_doc = {**confirmed_doc, "derived": der}
+            # Prefer document-derived flats when caller omitted headline amounts
+            if cash_f is None:
+                cash_f = der.get("cash_amount")
+            if edc_f is None:
+                edc_f = der.get("edc_card_amount")
+            if qris_f is None:
+                qris_f = der.get("qris_amount")
+            if gross_f is None:
+                gross_f = der.get("gross_amount")
         confirmed_obj = {
             "cash_amount": cash_f,
             "edc_card_amount": edc_f,
             "qris_amount": qris_f,
             "gross_amount": gross_f,
+            "document": confirmed_doc,
+            "schema_version": (confirmed_doc or {}).get("schema_version") if isinstance(confirmed_doc, dict) else None,
             "action": act,
             "confirmed_by_person_id": verified,
             "confirmed_at": ts,
@@ -1799,14 +1863,59 @@ def confirm_esb_closing_receipt(
             c.close()
 
 
+def _document_from_esb_row(row: dict[str, Any]) -> dict[str, Any] | None:
+    """Prefer confirmed document, else extracted document."""
+    for blob in (row.get("confirmed"), row.get("extracted")):
+        if not isinstance(blob, dict):
+            continue
+        doc = blob.get("document") if isinstance(blob.get("document"), dict) else None
+        if doc and doc.get("sections"):
+            return doc
+        if blob.get("sections"):
+            return blob
+    return None
+
+
 def _receipt_payments_map(confirmed_esb: list[dict[str, Any]]) -> dict[str, float]:
-    """Bank-split map from confirmed closing receipt (confirmed_json.payments or fields)."""
+    """Bank-split map from confirmed closing receipt document lines (fallback to flats)."""
     if not confirmed_esb:
         return {}
     latest = confirmed_esb[-1]
     conf = latest.get("confirmed") or latest.get("extracted") or {}
-    pays = conf.get("payments") if isinstance(conf, dict) else None
     out: dict[str, float] = {}
+
+    doc = _document_from_esb_row(latest)
+    if doc:
+        for sec in doc.get("sections") or []:
+            if sec.get("normalized_type") != "PAYMENT_METHODS":
+                continue
+            for ln in sec.get("lines") or []:
+                nt = ln.get("normalized_type")
+                if nt in (None, "PAYMENT_METHOD_TOTAL", "UNKNOWN"):
+                    continue
+                amt = ln.get("human_confirmed_value")
+                if amt is None:
+                    amt = ln.get("amount")
+                if amt is None:
+                    continue
+                bank = (ln.get("bank_acquirer") or "").upper()
+                if nt == "CASH":
+                    key = "Cash"
+                elif nt in ("EDC", "QRIS") and bank:
+                    key = f"{nt}_{bank}"
+                elif nt in ("EDC", "QRIS"):
+                    key = f"{nt}_TOTAL"
+                else:
+                    # Preserve raw house/account labels — do not invent meaning
+                    key = str(ln.get("raw_label") or nt)
+                try:
+                    out[key] = round(float(amt), 2)
+                except (TypeError, ValueError):
+                    continue
+        if out:
+            return out
+
+    pays = conf.get("payments") if isinstance(conf, dict) else None
     if isinstance(pays, dict):
         for k, v in pays.items():
             if v is None:
@@ -1831,6 +1940,69 @@ def _receipt_payments_map(confirmed_esb: list[dict[str, Any]]) -> dict[str, floa
         if latest.get("qris_amount") is not None:
             out["QRIS_TOTAL"] = round(float(latest["qris_amount"]), 2)
     return out
+
+
+def _receipt_document_recon(confirmed_esb: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Section-aware receipt view for recon — nonsales/exceptions stay separate."""
+    if not confirmed_esb:
+        return None
+    doc = _document_from_esb_row(confirmed_esb[-1])
+    if not doc:
+        return None
+    der = doc.get("derived") or {}
+    shift = der.get("shift") or {}
+    pay_lines = []
+    nonsales = []
+    exceptions = []
+    for sec in doc.get("sections") or []:
+        st = sec.get("normalized_type")
+        for ln in sec.get("lines") or []:
+            row = {
+                "raw_label": ln.get("raw_label"),
+                "quantity": ln.get("quantity"),
+                "amount": ln.get("human_confirmed_value")
+                if ln.get("human_confirmed_value") is not None
+                else ln.get("amount"),
+                "normalized_type": ln.get("normalized_type"),
+                "bank_acquirer": ln.get("bank_acquirer"),
+                "classification": ln.get("classification"),
+                "section": st,
+            }
+            if st == "PAYMENT_METHODS" and ln.get("normalized_type") != "PAYMENT_METHOD_TOTAL":
+                pay_lines.append(row)
+            elif st == "NON_SALES":
+                nonsales.append(row)
+            elif st in ("CANCELLED_MENU", "VOID_PAYMENT", "PROMOTION", "DISCOUNT", "UNKNOWN"):
+                exceptions.append(row)
+    gross = shift.get("GROSS_SALES")
+    pay_sum = der.get("payment_methods_sum")
+    gross_vs_payments = None
+    if gross is not None and pay_sum is not None:
+        gross_vs_payments = {
+            "gross_sales": gross,
+            "payment_methods_sum": pay_sum,
+            "delta": round(float(pay_sum) - float(gross), 2),
+            "status": "MATCH"
+            if round(float(pay_sum) - float(gross), 2) == 0
+            else "MISMATCH",
+        }
+    return {
+        "schema_version": doc.get("schema_version"),
+        "business_date": doc.get("business_date"),
+        "shift": shift,
+        "payment_lines": pay_lines,
+        "nonsales_lines": nonsales,
+        "exception_lines": exceptions,
+        "derived_totals": {
+            "cash": der.get("total_cash"),
+            "edc": der.get("total_edc"),
+            "qris": der.get("total_qris"),
+            "payment_methods_sum": pay_sum,
+        },
+        "gross_vs_payment_methods": gross_vs_payments,
+        "raw_labels_preserved": True,
+        "nonsales_excluded_from_sales_recon": True,
+    }
 
 
 def _diff_payment_maps(
@@ -1881,13 +2053,26 @@ def dual_source_difference_board(
     receipt_split = _receipt_payments_map(confirmed_esb)
     latest = confirmed_esb[-1] if confirmed_esb else {}
     conf = (latest.get("confirmed") or latest.get("extracted") or {}) if latest else {}
-    receipt_bills = conf.get("bills") if isinstance(conf, dict) else None
-    receipt_cash = None
-    if isinstance(conf, dict) and conf.get("cash_amount") is not None:
+    doc = _document_from_esb_row(latest) if latest else None
+    der = (doc or {}).get("derived") or {}
+    shift = der.get("shift") or {}
+    receipt_bills = shift.get("BILLS")
+    if receipt_bills is None and isinstance(conf, dict):
+        receipt_bills = conf.get("bills")
+    receipt_cash = der.get("total_cash") or der.get("cash_amount")
+    if receipt_cash is None and isinstance(conf, dict) and conf.get("cash_amount") is not None:
         receipt_cash = round(float(conf["cash_amount"]), 2)
-    elif latest.get("cash_amount") is not None:
+    elif receipt_cash is None and latest.get("cash_amount") is not None:
         receipt_cash = round(float(latest["cash_amount"]), 2)
-    receipt_pax = conf.get("pax") if isinstance(conf, dict) else None
+    elif receipt_cash is not None:
+        receipt_cash = round(float(receipt_cash), 2)
+    receipt_pax = shift.get("PAX")
+    if receipt_pax is None and isinstance(conf, dict):
+        receipt_pax = conf.get("pax")
+    receipt_gross = shift.get("GROSS_SALES") or der.get("gross_amount")
+    receipt_net = shift.get("NET_SALES") or der.get("net_sales")
+    receipt_service = shift.get("SERVICE_CHARGE") or der.get("service_charge")
+    receipt_tax = shift.get("TAX") or der.get("tax")
 
     live_bills = live_totals.get("finished_count")
     live_cash_tendered = live_totals.get("cash_from_payments")
@@ -2006,11 +2191,12 @@ def dual_source_difference_board(
             "bills": receipt_bills,
             "cash": receipt_cash,
             "pax": receipt_pax,
-            "net_sales": conf.get("net_sales") if isinstance(conf, dict) else None,
-            "service_charge": conf.get("service_charge") if isinstance(conf, dict) else None,
-            "tax": conf.get("tax") if isinstance(conf, dict) else None,
-            "gross_sales": conf.get("gross_sales") if isinstance(conf, dict) else None,
+            "net_sales": receipt_net if receipt_net is not None else (conf.get("net_sales") if isinstance(conf, dict) else None),
+            "service_charge": receipt_service if receipt_service is not None else (conf.get("service_charge") if isinstance(conf, dict) else None),
+            "tax": receipt_tax if receipt_tax is not None else (conf.get("tax") if isinstance(conf, dict) else None),
+            "gross_sales": receipt_gross if receipt_gross is not None else (conf.get("gross_sales") if isinstance(conf, dict) else None),
             "payments_by_bank_split": receipt_split,
+            "document_present": bool(doc),
             "image_preserved": bool(
                 latest.get("object_ref") or latest.get("content_hash")
             ),
@@ -2173,6 +2359,7 @@ def recon_board(
             },
             "live_esb_meta": live_meta,
             "dual_source": dual,
+            "document_recon": _receipt_document_recon(confirmed_esb),
             "receipt_totals": rt,
             "esb_api_vs_receipt_mismatch": bool(mismatches)
             or bool(dual.get("flags"))

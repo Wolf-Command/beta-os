@@ -42344,9 +42344,14 @@ class BetaHandler(SimpleHTTPRequestHandler):
             overrides = body.get("confirmed_overrides")
             if overrides is not None and not isinstance(overrides, dict):
                 overrides = None
-            extracted = body.get("extracted")
+            extracted = body.get("extracted") or body.get("document")
             if extracted is not None and not isinstance(extracted, dict):
                 extracted = None
+            # Prefer explicit document for confirm; merge into overrides
+            doc = body.get("document")
+            if isinstance(doc, dict):
+                overrides = dict(overrides or {})
+                overrides["document"] = doc
             out = _bzg_daily_close.confirm_esb_closing_receipt(
                 str(body.get("close_id") or ""),
                 verified_person_id=identity["person_id"],

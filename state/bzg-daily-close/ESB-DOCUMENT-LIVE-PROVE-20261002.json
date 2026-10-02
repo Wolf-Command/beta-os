@@ -1,0 +1,1159 @@
+{
+  "image": "EVD-CLOSE-ESB-1E8D62FDB873.jpg",
+  "provider": "gemini",
+  "model": "gemini-2.5-flash",
+  "elapsed_s": 12.9,
+  "document": {
+    "document_kind": "ESB_CLOSING_RECEIPT",
+    "schema_version": 1,
+    "business_date": "2025-10-02",
+    "sections": [
+      {
+        "section_id": "SEC-73c9e6372f",
+        "raw_title": "Shift Summary | 02-10-2025",
+        "normalized_type": "SHIFT_SUMMARY",
+        "classification": "KNOWN",
+        "lines": [
+          {
+            "line_id": "LN-1ca859564b1c",
+            "raw_label": "Sales Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 15202479.0,
+            "normalized_type": "SALES_TOTAL",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 15202479.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-6a5d83e88345",
+            "raw_label": "Menu Discount",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 0.0,
+            "normalized_type": "MENU_DISCOUNT",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 0.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-9dd2ce6dd534",
+            "raw_label": "Bill Discount",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 0.0,
+            "normalized_type": "BILL_DISCOUNT",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 0.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-2eb96649d1e7",
+            "raw_label": "Net Sales Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 15202479.0,
+            "normalized_type": "NET_SALES",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 15202479.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-0faaecde6f85",
+            "raw_label": "Delivery Cost Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 0.0,
+            "normalized_type": "DELIVERY_COST",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 0.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-55729f99f08e",
+            "raw_label": "Order Fee Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 0.0,
+            "normalized_type": "ORDER_FEE",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 0.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-e4d4ab3d2b1a",
+            "raw_label": "Service Charge Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 1672273.0,
+            "normalized_type": "SERVICE_CHARGE",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 1672273.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-a630531dcafc",
+            "raw_label": "Tax Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 1520248.0,
+            "normalized_type": "TAX",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 1520248.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-2780cb2e36b8",
+            "raw_label": "Tip Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 0.0,
+            "normalized_type": "TIP",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.4,
+            "extracted_value": 0.0,
+            "human_confirmed_value": null,
+            "classification": "NEEDS_CLASSIFICATION",
+            "uncertain": true,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1",
+              "note": "tip_line_ensured_absent_from_vision"
+            }
+          },
+          {
+            "line_id": "LN-8bfce69f661a",
+            "raw_label": "Platform Fee Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 0.0,
+            "normalized_type": "PLATFORM_FEE",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 0.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-d6d5e0cc344b",
+            "raw_label": "Voucher Sales Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 0.0,
+            "normalized_type": "VOUCHER_SALES",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 0.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-d333163d9b8c",
+            "raw_label": "Rounding Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 0.0,
+            "normalized_type": "ROUNDING",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 0.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-7c2b7b5b5fcf",
+            "raw_label": "Gross Sales Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 18395000.0,
+            "normalized_type": "GROSS_SALES",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 18395000.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-83f5bd269647",
+            "raw_label": "Number of Pax",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 103.0,
+            "normalized_type": "PAX",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 103.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-0f3990619562",
+            "raw_label": "Avg. Net Sales per Pax",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 147597.0,
+            "normalized_type": "AVG_NET_PER_PAX",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 147597.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-c9adbdf4206a",
+            "raw_label": "Avg. Sales per Pax",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 178592.0,
+            "normalized_type": "AVG_SALES_PER_PAX",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 178592.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-fbf3f0bc4880",
+            "raw_label": "Number of Bills",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 58.0,
+            "normalized_type": "BILLS",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 58.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-477f3be9c13f",
+            "raw_label": "Avg. Net Sales per Bill",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 262112.0,
+            "normalized_type": "AVG_NET_PER_BILL",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 262112.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-fb9c9f451691",
+            "raw_label": "Avg. Sales per Bill",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 317155.0,
+            "normalized_type": "AVG_SALES_PER_BILL",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 317155.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-c16d46559ac7",
+            "raw_label": "Cancel Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 0.0,
+            "normalized_type": "CANCEL_TOTAL",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 0.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-e44d91d70f10",
+            "raw_label": "Void Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 0.0,
+            "normalized_type": "VOID_TOTAL",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 0.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          }
+        ]
+      },
+      {
+        "section_id": "SEC-7f586b7e82",
+        "raw_title": "Payment Method Summary | 02-10-2025",
+        "normalized_type": "PAYMENT_METHODS",
+        "classification": "KNOWN",
+        "lines": [
+          {
+            "line_id": "LN-4763ea7612e2",
+            "raw_label": "CASH",
+            "raw_value": null,
+            "quantity": 10,
+            "amount": 2735000.0,
+            "normalized_type": "CASH",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 2735000.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-33bd377cb717",
+            "raw_label": "EDC BNI",
+            "raw_value": null,
+            "quantity": 19,
+            "amount": 6185000.0,
+            "normalized_type": "EDC",
+            "subtype": "BNI",
+            "bank_acquirer": "BNI",
+            "confidence": 0.98,
+            "extracted_value": 6185000.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-50afcf1dbad6",
+            "raw_label": "EDC MANDIRI",
+            "raw_value": null,
+            "quantity": 20,
+            "amount": 5450000.0,
+            "normalized_type": "EDC",
+            "subtype": "MANDIRI",
+            "bank_acquirer": "MANDIRI",
+            "confidence": 0.98,
+            "extracted_value": 5450000.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-67df29d8a810",
+            "raw_label": "QRIS BNI",
+            "raw_value": null,
+            "quantity": 1,
+            "amount": 65000.0,
+            "normalized_type": "QRIS",
+            "subtype": "BNI",
+            "bank_acquirer": "BNI",
+            "confidence": 0.98,
+            "extracted_value": 65000.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-4a37176ebe71",
+            "raw_label": "QRIS MANDIRI",
+            "raw_value": null,
+            "quantity": 5,
+            "amount": 2105000.0,
+            "normalized_type": "QRIS",
+            "subtype": "MANDIRI",
+            "bank_acquirer": "MANDIRI",
+            "confidence": 0.98,
+            "extracted_value": 2105000.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-c9528e4d124f",
+            "raw_label": "ROB & FAMILY",
+            "raw_value": null,
+            "quantity": 1,
+            "amount": 160000.0,
+            "normalized_type": "ACCOUNT_OR_HOUSE",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 160000.0,
+            "human_confirmed_value": null,
+            "classification": "NEEDS_CLASSIFICATION",
+            "uncertain": true,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-2c7f67641b15",
+            "raw_label": "ROOM CHARGE 112",
+            "raw_value": null,
+            "quantity": 1,
+            "amount": 545000.0,
+            "normalized_type": "ACCOUNT_OR_HOUSE",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 545000.0,
+            "human_confirmed_value": null,
+            "classification": "NEEDS_CLASSIFICATION",
+            "uncertain": true,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-651754010dfe",
+            "raw_label": "SCOTT & ETIK",
+            "raw_value": null,
+            "quantity": 1,
+            "amount": 1150000.0,
+            "normalized_type": "ACCOUNT_OR_HOUSE",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 1150000.0,
+            "human_confirmed_value": null,
+            "classification": "NEEDS_CLASSIFICATION",
+            "uncertain": true,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-820f0c6d0e9c",
+            "raw_label": "Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 18395000.0,
+            "normalized_type": "PAYMENT_METHOD_TOTAL",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 18395000.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          }
+        ]
+      },
+      {
+        "section_id": "SEC-925d9ccc59",
+        "raw_title": "Non Sales Payment Method Summary | 02-10-2026",
+        "normalized_type": "NON_SALES",
+        "classification": "KNOWN",
+        "lines": [
+          {
+            "line_id": "LN-89f5ce5f9ef1",
+            "raw_label": "Total COMPLIMENT",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 41322.0,
+            "normalized_type": "COMPLIMENT",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 41322.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-8f6e9528e5ed",
+            "raw_label": "Total Executive Chef",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 177686.0,
+            "normalized_type": "EXECUTIVE_CHEF",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 177686.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-08cb3522dd2f",
+            "raw_label": "Total Non Sales",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 219008.0,
+            "normalized_type": "NON_SALES_TOTAL",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 219008.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          }
+        ]
+      },
+      {
+        "section_id": "SEC-29a0fdcca0",
+        "raw_title": "Cancelled Menu Summary | 02-10-2026",
+        "normalized_type": "CANCELLED_MENU",
+        "classification": "KNOWN",
+        "lines": [
+          {
+            "line_id": "LN-603ac08d8dfa",
+            "raw_label": "Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 0.0,
+            "normalized_type": "CANCELLED_MENU_TOTAL",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 0.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          }
+        ]
+      },
+      {
+        "section_id": "SEC-b2abd6d513",
+        "raw_title": "Void Payment Detail | 02-10-2026",
+        "normalized_type": "VOID_PAYMENT",
+        "classification": "KNOWN",
+        "lines": [
+          {
+            "line_id": "LN-e84eaa796132",
+            "raw_label": "Total All",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 0.0,
+            "normalized_type": "VOID_PAYMENT_TOTAL",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 0.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          }
+        ]
+      },
+      {
+        "section_id": "SEC-161ac837e6",
+        "raw_title": "Promotion Summary | 02-10-2026",
+        "normalized_type": "PROMOTION",
+        "classification": "KNOWN",
+        "lines": [
+          {
+            "line_id": "LN-62907707040f",
+            "raw_label": "Total",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 0.0,
+            "normalized_type": "PROMOTION_TOTAL",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 0.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          },
+          {
+            "line_id": "LN-5a00daba0033",
+            "raw_label": "Total Discount",
+            "raw_value": null,
+            "quantity": null,
+            "amount": 0.0,
+            "normalized_type": "PROMOTION_TOTAL",
+            "subtype": null,
+            "bank_acquirer": null,
+            "confidence": 0.98,
+            "extracted_value": 0.0,
+            "human_confirmed_value": null,
+            "classification": "KNOWN",
+            "uncertain": false,
+            "provenance": {
+              "source": "vision",
+              "capability": "RECEIPT_IMAGE_EXTRACTION",
+              "pack": "BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1"
+            }
+          }
+        ]
+      }
+    ],
+    "derived": {
+      "shift": {
+        "SALES_TOTAL": 15202479.0,
+        "MENU_DISCOUNT": 0.0,
+        "BILL_DISCOUNT": 0.0,
+        "NET_SALES": 15202479.0,
+        "DELIVERY_COST": 0.0,
+        "ORDER_FEE": 0.0,
+        "SERVICE_CHARGE": 1672273.0,
+        "TAX": 1520248.0,
+        "TIP": 0.0,
+        "PLATFORM_FEE": 0.0,
+        "VOUCHER_SALES": 0.0,
+        "ROUNDING": 0.0,
+        "GROSS_SALES": 18395000.0,
+        "PAX": 103.0,
+        "AVG_NET_PER_PAX": 147597.0,
+        "AVG_SALES_PER_PAX": 178592.0,
+        "BILLS": 58.0,
+        "AVG_NET_PER_BILL": 262112.0,
+        "AVG_SALES_PER_BILL": 317155.0,
+        "CANCEL_TOTAL": 0.0,
+        "VOID_TOTAL": 0.0
+      },
+      "payment_lines": [
+        {
+          "raw_label": "CASH",
+          "quantity": 10,
+          "amount": 2735000.0,
+          "normalized_type": "CASH",
+          "bank_acquirer": null,
+          "classification": "KNOWN",
+          "line_id": "LN-4763ea7612e2"
+        },
+        {
+          "raw_label": "EDC BNI",
+          "quantity": 19,
+          "amount": 6185000.0,
+          "normalized_type": "EDC",
+          "bank_acquirer": "BNI",
+          "classification": "KNOWN",
+          "line_id": "LN-33bd377cb717"
+        },
+        {
+          "raw_label": "EDC MANDIRI",
+          "quantity": 20,
+          "amount": 5450000.0,
+          "normalized_type": "EDC",
+          "bank_acquirer": "MANDIRI",
+          "classification": "KNOWN",
+          "line_id": "LN-50afcf1dbad6"
+        },
+        {
+          "raw_label": "QRIS BNI",
+          "quantity": 1,
+          "amount": 65000.0,
+          "normalized_type": "QRIS",
+          "bank_acquirer": "BNI",
+          "classification": "KNOWN",
+          "line_id": "LN-67df29d8a810"
+        },
+        {
+          "raw_label": "QRIS MANDIRI",
+          "quantity": 5,
+          "amount": 2105000.0,
+          "normalized_type": "QRIS",
+          "bank_acquirer": "MANDIRI",
+          "classification": "KNOWN",
+          "line_id": "LN-4a37176ebe71"
+        },
+        {
+          "raw_label": "ROB & FAMILY",
+          "quantity": 1,
+          "amount": 160000.0,
+          "normalized_type": "ACCOUNT_OR_HOUSE",
+          "bank_acquirer": null,
+          "classification": "NEEDS_CLASSIFICATION",
+          "line_id": "LN-c9528e4d124f"
+        },
+        {
+          "raw_label": "ROOM CHARGE 112",
+          "quantity": 1,
+          "amount": 545000.0,
+          "normalized_type": "ACCOUNT_OR_HOUSE",
+          "bank_acquirer": null,
+          "classification": "NEEDS_CLASSIFICATION",
+          "line_id": "LN-2c7f67641b15"
+        },
+        {
+          "raw_label": "SCOTT & ETIK",
+          "quantity": 1,
+          "amount": 1150000.0,
+          "normalized_type": "ACCOUNT_OR_HOUSE",
+          "bank_acquirer": null,
+          "classification": "NEEDS_CLASSIFICATION",
+          "line_id": "LN-651754010dfe"
+        }
+      ],
+      "nonsales_lines": [
+        {
+          "raw_label": "Total COMPLIMENT",
+          "amount": 41322.0,
+          "normalized_type": "COMPLIMENT",
+          "classification": "KNOWN",
+          "line_id": "LN-89f5ce5f9ef1"
+        },
+        {
+          "raw_label": "Total Executive Chef",
+          "amount": 177686.0,
+          "normalized_type": "EXECUTIVE_CHEF",
+          "classification": "KNOWN",
+          "line_id": "LN-8f6e9528e5ed"
+        },
+        {
+          "raw_label": "Total Non Sales",
+          "amount": 219008.0,
+          "normalized_type": "NON_SALES_TOTAL",
+          "classification": "KNOWN",
+          "line_id": "LN-08cb3522dd2f"
+        }
+      ],
+      "other_section_count": 3,
+      "total_edc": 11635000.0,
+      "total_qris": 2170000.0,
+      "total_cash": 2735000.0,
+      "payment_methods_sum": 18395000.0,
+      "cash_amount": 2735000.0,
+      "edc_card_amount": 11635000.0,
+      "qris_amount": 2170000.0,
+      "gross_amount": 18395000.0,
+      "net_sales": 15202479.0,
+      "bills": 58.0,
+      "pax": 103.0,
+      "service_charge": 1672273.0,
+      "tax": 1520248.0
+    },
+    "ocr_confidence": 0.95,
+    "ocr_confidence_band": "HIGH",
+    "cash_amount": 2735000.0,
+    "edc_card_amount": 11635000.0,
+    "qris_amount": 2170000.0,
+    "gross_amount": 18395000.0,
+    "net_sales": 15202479.0,
+    "bills": 58.0,
+    "pax": 103.0,
+    "payment_methods": [
+      {
+        "raw_label": "CASH",
+        "quantity": 10,
+        "amount": 2735000.0,
+        "normalized_type": "CASH",
+        "bank_acquirer": null,
+        "classification": "KNOWN",
+        "line_id": "LN-4763ea7612e2"
+      },
+      {
+        "raw_label": "EDC BNI",
+        "quantity": 19,
+        "amount": 6185000.0,
+        "normalized_type": "EDC",
+        "bank_acquirer": "BNI",
+        "classification": "KNOWN",
+        "line_id": "LN-33bd377cb717"
+      },
+      {
+        "raw_label": "EDC MANDIRI",
+        "quantity": 20,
+        "amount": 5450000.0,
+        "normalized_type": "EDC",
+        "bank_acquirer": "MANDIRI",
+        "classification": "KNOWN",
+        "line_id": "LN-50afcf1dbad6"
+      },
+      {
+        "raw_label": "QRIS BNI",
+        "quantity": 1,
+        "amount": 65000.0,
+        "normalized_type": "QRIS",
+        "bank_acquirer": "BNI",
+        "classification": "KNOWN",
+        "line_id": "LN-67df29d8a810"
+      },
+      {
+        "raw_label": "QRIS MANDIRI",
+        "quantity": 5,
+        "amount": 2105000.0,
+        "normalized_type": "QRIS",
+        "bank_acquirer": "MANDIRI",
+        "classification": "KNOWN",
+        "line_id": "LN-4a37176ebe71"
+      },
+      {
+        "raw_label": "ROB & FAMILY",
+        "quantity": 1,
+        "amount": 160000.0,
+        "normalized_type": "ACCOUNT_OR_HOUSE",
+        "bank_acquirer": null,
+        "classification": "NEEDS_CLASSIFICATION",
+        "line_id": "LN-c9528e4d124f"
+      },
+      {
+        "raw_label": "ROOM CHARGE 112",
+        "quantity": 1,
+        "amount": 545000.0,
+        "normalized_type": "ACCOUNT_OR_HOUSE",
+        "bank_acquirer": null,
+        "classification": "NEEDS_CLASSIFICATION",
+        "line_id": "LN-2c7f67641b15"
+      },
+      {
+        "raw_label": "SCOTT & ETIK",
+        "quantity": 1,
+        "amount": 1150000.0,
+        "normalized_type": "ACCOUNT_OR_HOUSE",
+        "bank_acquirer": null,
+        "classification": "NEEDS_CLASSIFICATION",
+        "line_id": "LN-651754010dfe"
+      }
+    ],
+    "extensible": true,
+    "unknown_preserved": true
+  },
+  "misses": [
+    "TIP"
+  ],
+  "acceptance_checks": [
+    {
+      "name": "shift_sales",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "shift_gross",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "shift_bills",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "shift_pax",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "tip_present",
+      "pass": true,
+      "detail": "0.0"
+    },
+    {
+      "name": "service",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "tax",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "pay_CASH_None",
+      "pass": true,
+      "detail": "{'line_id': 'LN-4763ea7612e2', 'raw_label': 'CASH', 'raw_value': None, 'quantity': 10, 'amount': 2735000.0, 'normalized_type': 'CASH', 'subtype': None, 'bank_acquirer': None, 'confidence': 0.98, 'extracted_value': 2735000.0, 'human_confirmed_value': None, 'classification': 'KNOWN', 'uncertain': False, 'provenance': {'source': 'vision', 'capability': 'RECEIPT_IMAGE_EXTRACTION', 'pack': 'BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1'}}"
+    },
+    {
+      "name": "pay_EDC_BNI",
+      "pass": true,
+      "detail": "{'line_id': 'LN-33bd377cb717', 'raw_label': 'EDC BNI', 'raw_value': None, 'quantity': 19, 'amount': 6185000.0, 'normalized_type': 'EDC', 'subtype': 'BNI', 'bank_acquirer': 'BNI', 'confidence': 0.98, 'extracted_value': 6185000.0, 'human_confirmed_value': None, 'classification': 'KNOWN', 'uncertain': False, 'provenance': {'source': 'vision', 'capability': 'RECEIPT_IMAGE_EXTRACTION', 'pack': 'BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1'}}"
+    },
+    {
+      "name": "pay_EDC_MANDIRI",
+      "pass": true,
+      "detail": "{'line_id': 'LN-50afcf1dbad6', 'raw_label': 'EDC MANDIRI', 'raw_value': None, 'quantity': 20, 'amount': 5450000.0, 'normalized_type': 'EDC', 'subtype': 'MANDIRI', 'bank_acquirer': 'MANDIRI', 'confidence': 0.98, 'extracted_value': 5450000.0, 'human_confirmed_value': None, 'classification': 'KNOWN', 'uncertain': False, 'provenance': {'source': 'vision', 'capability': 'RECEIPT_IMAGE_EXTRACTION', 'pack': 'BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1'}}"
+    },
+    {
+      "name": "pay_QRIS_BNI",
+      "pass": true,
+      "detail": "{'line_id': 'LN-67df29d8a810', 'raw_label': 'QRIS BNI', 'raw_value': None, 'quantity': 1, 'amount': 65000.0, 'normalized_type': 'QRIS', 'subtype': 'BNI', 'bank_acquirer': 'BNI', 'confidence': 0.98, 'extracted_value': 65000.0, 'human_confirmed_value': None, 'classification': 'KNOWN', 'uncertain': False, 'provenance': {'source': 'vision', 'capability': 'RECEIPT_IMAGE_EXTRACTION', 'pack': 'BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1'}}"
+    },
+    {
+      "name": "pay_QRIS_MANDIRI",
+      "pass": true,
+      "detail": "{'line_id': 'LN-4a37176ebe71', 'raw_label': 'QRIS MANDIRI', 'raw_value': None, 'quantity': 5, 'amount': 2105000.0, 'normalized_type': 'QRIS', 'subtype': 'MANDIRI', 'bank_acquirer': 'MANDIRI', 'confidence': 0.98, 'extracted_value': 2105000.0, 'human_confirmed_value': None, 'classification': 'KNOWN', 'uncertain': False, 'provenance': {'source': 'vision', 'capability': 'RECEIPT_IMAGE_EXTRACTION', 'pack': 'BZG-CLOSE-ESB-RECEIPT-DOCUMENT-1'}}"
+    },
+    {
+      "name": "house_3",
+      "pass": true,
+      "detail": "[('ROB & FAMILY', 160000.0, 'NEEDS_CLASSIFICATION'), ('ROOM CHARGE 112', 545000.0, 'NEEDS_CLASSIFICATION'), ('SCOTT & ETIK', 1150000.0, 'NEEDS_CLASSIFICATION')]"
+    },
+    {
+      "name": "rob_raw",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "room_raw",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "scott_raw",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "compliment",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "exec_chef",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "sec_CANCELLED_MENU",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "sec_VOID_PAYMENT",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "sec_PROMOTION",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "edc_total",
+      "pass": true,
+      "detail": "11635000.0"
+    },
+    {
+      "name": "qris_total",
+      "pass": true,
+      "detail": "2170000.0"
+    },
+    {
+      "name": "qris_not_mandiri_bug",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "pay_sum_gross",
+      "pass": true,
+      "detail": "18395000.0"
+    },
+    {
+      "name": "extensible_unknown",
+      "pass": true,
+      "detail": ""
+    }
+  ],
+  "acceptance": "PASS"
+}
