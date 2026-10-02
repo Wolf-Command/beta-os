@@ -32,5 +32,33 @@
     "staff_ready": false,
     "human_commissioned": false
   },
-  "matt_retest_string": "MATT RETEST READY \u2014 press Retry Reading on the existing receipt."
+  "matt_retest_string": "MATT RETEST READY \u2014 press Retry Reading on the existing receipt.",
+  "peaches_independent_photo_check": {
+    "image": "EVD-CLOSE-ESB-1E8D62FDB873.jpg",
+    "checked_at": "2026-10-02T23:14:20.593511+08:00",
+    "photo_sections_seen": [
+      "Shift Summary",
+      "Payment Method Summary",
+      "Non Sales",
+      "Cancelled Menu",
+      "Void Payment",
+      "Promotion"
+    ],
+    "photo_payment_methods": [
+      "CASH",
+      "EDC BNI",
+      "EDC MANDIRI",
+      "QRIS BNI",
+      "QRIS MANDIRI",
+      "ROB & FAMILY",
+      "ROOM CHARGE 112",
+      "SCOTT & ETIK"
+    ],
+    "photo_tip_printed_as": "bare Total 0 between Tax and Platform Fee (not Tip Total label)",
+    "deployed_extract_vs_photo": "MATCH on all material lines vs owner evidence; Tip ensured as Tip Total uncertain; Mandiri EDC kept out of QRIS",
+    "live_esb_gap_unchanged": "receipt 58 bills / cash 2735000 vs live ~61 / 2855000 \u2014 dual source kept",
+    "commit": "37c52d3",
+    "beta_health": "8788 ok after restart"
+  },
+  "status": "PEACHES_PROVED_AWAITING_MATT_RETEST"
 }
