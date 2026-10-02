@@ -1,0 +1,69 @@
+{
+  "pack": "IZA-UMA-CAPTAIN-CASHIER-1",
+  "as_of": "2026-10-02T20:17:00+08:00",
+  "branch": "build/wolf-command-rebuild",
+  "local_only": true,
+  "no_push": true,
+  "decision": "IZA-UMA-CAPTAIN-CASHIER-DAILY-CLOSE-20261002",
+  "credit_override": "OWNER_ORDER",
+  "hr": {
+    "employee_id_comment_only": "BZG26023002",
+    "full_name": "Iza Zainatulloh Hulhidayati",
+    "email": "izazaen00@gmail.com",
+    "role_hr": "Floor Captain"
+  },
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_8787": "READ_ONLY_UNTOUCHED",
+  "prod_pid": 15975,
+  "seeded": {
+    "person_id": "PERS-IZA",
+    "auth_identity_id": "AUTH-IZA-EMAIL",
+    "roles": ["ROLE-BZG-CASHIER", "ROLE-BZG-CAPTAIN"],
+    "cashier_bundle": [
+      "venue.close.read",
+      "venue.close.submit",
+      "evidence.record.read",
+      "evidence.record.submit",
+      "work.read",
+      "work.update",
+      "work.complete"
+    ],
+    "position_id": "POS-BZG-CAPTAIN-UMA-1",
+    "assignment_id": "ASG-IZA-CAPTAIN-UMA-1",
+    "scope_ids": ["SCOPE-BZG-UMA"],
+    "roster_id": "VCR-UMA-2",
+    "devi_roster_preserved": "VCR-UMA-1"
+  },
+  "honesty": {
+    "active_variance_policies": 0,
+    "edc_terminals_count": 0,
+    "edc_status": "NEEDS_CONFIGURATION",
+    "cf_login_binding": "OWNER_GATED_CHECKLIST_ONLY",
+    "cf_live_claimed": false,
+    "gmail_draft": "EXISTS_NOT_DUPLICATED",
+    "no_if_iza": true,
+    "devi_replaced": false
+  },
+  "prove": {
+    "active_role_ids_includes_captain": true,
+    "venue_close_submit_uma_allow": true,
+    "finance_amg_ggv_deny": true,
+    "unsigned_uma_blu_close_8788": 403,
+    "migration_idempotent": true
+  },
+  "tests": {
+    "test_iza_uma_captain_cashier_1.py": {"pass": 43, "fail": 0},
+    "test_uma_blu_daily_close.py": {"pass": 71, "fail": 0},
+    "test_bzg_daily_close_till_edc_1.py": {"pass": 57, "fail": 0}
+  },
+  "files": [
+    "scripts/migrations/migrate_iza_uma_captain_cashier_1.py",
+    "scripts/serve_beta.py",
+    "scripts/tests/test_iza_uma_captain_cashier_1.py",
+    "state/iza-uma/IZA-UMA-CAPTAIN-CASHIER-1-RESULT.md",
+    "state/iza-uma/IZA-UMA-CAPTAIN-CASHIER-1-RESULT.json"
+  ],
+  "result": "PASS",
+  "human_commissioning": "PENDING"
+}

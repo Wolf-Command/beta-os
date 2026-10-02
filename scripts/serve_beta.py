@@ -5662,6 +5662,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             person_id = str(identity.get("person_id") or "")
             close_roles = {
                 "ROLE-BZG-CLOSER",
+                "ROLE-BZG-CAPTAIN",
                 "ROLE-BZG-FB-OPS-LEAD",
                 "ROLE-BZG-HFB",
                 "ROLE-MATT",
