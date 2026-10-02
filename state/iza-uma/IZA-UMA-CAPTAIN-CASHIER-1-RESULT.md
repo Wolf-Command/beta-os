@@ -66,4 +66,6 @@
 - `scripts/tests/test_iza_uma_captain_cashier_1.py`
 - `state/iza-uma/IZA-UMA-CAPTAIN-CASHIER-1-RESULT.md` (+ `.json`)
 
+**Commit:** `15b6cb5` (local only — no push)
+
 RESULT: **PASS** (engineering). Human commissioning PENDING · CF binding Owner-gated.

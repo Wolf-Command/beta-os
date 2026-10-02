@@ -62,6 +62,7 @@
     "expect": "pass=43 fail=0",
     "by": "cursor-local",
     "pack": "IZA-UMA-CAPTAIN-CASHIER-1",
-    "created_at": "2026-10-02T20:18:00+08:00"
+    "created_at": "2026-10-02T20:18:00+08:00",
+    "commit": "15b6cb54f9f910934416a80d42cc4d3efb64b6b9"
   }
 ]

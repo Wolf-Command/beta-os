@@ -65,5 +65,6 @@
     "state/iza-uma/IZA-UMA-CAPTAIN-CASHIER-1-RESULT.json"
   ],
   "result": "PASS",
-  "human_commissioning": "PENDING"
+  "human_commissioning": "PENDING",
+  "commit": "15b6cb54f9f910934416a80d42cc4d3efb64b6b9"
 }
