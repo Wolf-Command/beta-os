@@ -57,6 +57,6 @@
 - `scripts/tests/test_bzg_daily_close_till_edc_1.py` (fresh-day date avoid live taken close)
 - `scripts/tests/test_uma_blu_daily_close.py` (UNAVAILABLE code)
 
-**Commit tip:** `TIP_PENDING` (filled by stamp commit)
+**Commit tip:** `28c0ec5` (filled by stamp commit)
 
 RESULT: **PASS** (engineering). `staff_ready=false`. Human commissioning PENDING — Peaches independent verify before IZA RETEST READY.

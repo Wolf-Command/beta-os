@@ -5,4 +5,4 @@ Full RESULT: `state/bzg-daily-close/BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1-RESU
 
 - `staff_ready=false` · `human_commissioned=false` · **`iza_retest_ready=false`**
 - Do **not** ask Iza to retest until Peaches independently verifies deployed `/uma-blu-close` and Matt stamps **IZA RETEST READY**.
-- Tip: `TIP_PENDING` (stamp commit fills SHA)
+- Tip: `28c0ec5` (stamp commit fills SHA)
