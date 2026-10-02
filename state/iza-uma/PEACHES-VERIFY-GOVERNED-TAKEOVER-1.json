@@ -1,0 +1,24 @@
+{
+  "id": "PEACHES-VERIFY-GOVERNED-TAKEOVER-1",
+  "when_wita": "2026-10-02T22:26:41.210370+08:00",
+  "tip": "ed19543",
+  "impl": "8f9e1ff",
+  "beta_8788_pid": "62275",
+  "route": "/uma-blu-close",
+  "ui_markers": [
+    "Take Over Close",
+    "Reassign Close",
+    "takeoverReason"
+  ],
+  "tonight_close": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+  "tonight_holder": "PERS-IZA",
+  "live_takeover_by_peaches": false,
+  "matt_has_venue_close_reassign": true,
+  "concurrency_intact": true,
+  "iza_commissioning": "FAIL",
+  "matt_owner_commissioning": "PENDING_TONIGHT",
+  "uma_staff_commissioning": "PENDING",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "matt_retest_ready": true
+}
