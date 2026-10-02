@@ -431,10 +431,10 @@ def main() -> int:
     finally:
         c2.close()
 
-    # Zero-variance clean path on a fresh day
-    make_esb(esb_path, cash=200000.0, biz_date="2026-10-02")
+    # Zero-variance clean path on a fresh day (avoid live-copied taken close for today)
+    make_esb(esb_path, cash=200000.0, biz_date="2026-10-04")
     o2 = bzg.open_human_close(
-        "2026-10-02",
+        "2026-10-04",
         verified_person_id="PERS-TEST-CLOSER",
         outlet_id="BZG-UMA",
     )
@@ -444,7 +444,7 @@ def main() -> int:
         c2id,
         declared_cash_amount=200000.0,
         verified_person_id="PERS-TEST-CLOSER",
-        object_ref="photo://z-20261002",
+        object_ref="photo://z-20261004",
         allow_test_write=True,
     )
     clean = vc.reconcile(c2id, verified_person_id="PERS-TEST-CLOSER")

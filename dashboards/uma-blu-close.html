@@ -109,11 +109,33 @@
     min-height: 44px; display: inline-flex; align-items: center;
   }
   nav.uma a.active { color: var(--accent); border-color: var(--accent); }
+  .photo-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .photo-actions .btn { margin-top: 0; }
+  .photo-preview {
+    display: none; width: 100%; max-height: 220px; object-fit: contain;
+    margin-top: 10px; border-radius: 10px; border: 1px solid var(--line);
+    background: #0a141a;
+  }
+  .photo-preview.show { display: block; }
+  .esb-unavail {
+    margin-top: 10px; padding: 12px; border-radius: 12px;
+    border: 1px solid rgba(224,90,76,0.55);
+    background: rgba(224,90,76,0.1); color: var(--danger);
+    font-size: 0.9rem; font-weight: 650; line-height: 1.35;
+  }
+  .esb-unavail .muted { color: #c98a84; margin-top: 6px; font-weight: 500; }
+  .esb-ok {
+    margin-top: 10px; padding: 10px 12px; border-radius: 12px;
+    border: 1px solid rgba(78,207,138,0.4);
+    background: rgba(78,207,138,0.08); color: var(--ok);
+    font-size: 0.85rem; font-weight: 650;
+  }
   @media (max-width: 420px) {
     body { padding-left: 12px; padding-right: 12px; }
     .row { grid-template-columns: 1fr; }
     .brand { font-size: 1.35rem; }
     nav.uma a { flex: 1 1 calc(33.33% - 6px); justify-content: center; text-align: center; }
+    .photo-actions { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -160,6 +182,7 @@
     <input type="date" id="bizDate" />
     <button class="btn btn-primary" id="btnOpen" data-cap="submit" type="button">Open close</button>
     <button class="btn" id="btnCapture" data-cap="submit" type="button" disabled>Pull ESB sales (live API)</button>
+    <div id="esbLiveBanner"></div>
     <div id="esbBox" class="muted" style="margin-top:10px"></div>
     <div id="statusBox" style="margin-top:12px"></div>
     <div class="msg" id="msg"></div>
@@ -167,9 +190,17 @@
 
   <div class="panel">
     <h2>ESB closing receipt</h2>
-    <p class="muted">Required photo evidence + live API kept as dual sources. Mismatch = visible exception. AI is not truth.</p>
-    <label for="esbReceiptRef">Receipt image ref</label>
-    <input type="text" id="esbReceiptRef" placeholder="photo://esb-close-…" disabled />
+    <p class="muted">Photograph the closing receipt. Live API + photo are dual sources. Mismatch = visible exception. AI is not truth.</p>
+    <div class="photo-actions">
+      <button class="btn btn-primary" id="btnEsbTakePhoto" data-cap="submit" type="button" disabled>Take Photo</button>
+      <button class="btn" id="btnEsbUploadPhoto" data-cap="submit" type="button" disabled>Upload Photo</button>
+    </div>
+    <input type="file" id="esbCam" accept="image/*" capture="environment" hidden />
+    <input type="file" id="esbFile" accept="image/*" hidden />
+    <img id="esbPreview" class="photo-preview" alt="ESB receipt preview" />
+    <p class="muted" id="esbPhotoStatus">No photo yet — Take Photo or Upload Photo.</p>
+    <input type="hidden" id="esbReceiptRef" value="" />
+    <input type="hidden" id="esbContentHash" value="" />
     <label for="esbCash">Cash (from receipt)</label>
     <input type="number" id="esbCash" min="0" step="1000" placeholder="optional until extract" disabled inputmode="decimal" />
     <div class="row">
@@ -192,6 +223,16 @@
     <h2>Add EDC Receipt</h2>
     <p class="muted" id="edcCfgNote">Terminal inventory: checking…</p>
     <p class="muted">0..N receipts/day. Free-text bank OK. Separate EDC card + QRIS — never merge. Unused terminals are not fake rows.</p>
+    <div class="photo-actions">
+      <button class="btn btn-primary" id="btnEdcTakePhoto" data-cap="submit" type="button" disabled>Take Photo</button>
+      <button class="btn" id="btnEdcUploadPhoto" data-cap="submit" type="button" disabled>Upload Photo</button>
+    </div>
+    <input type="file" id="edcCam" accept="image/*" capture="environment" hidden />
+    <input type="file" id="edcFile" accept="image/*" hidden />
+    <img id="edcPreview" class="photo-preview" alt="EDC receipt preview" />
+    <p class="muted" id="edcPhotoStatus">No photo yet — Take Photo or Upload Photo for this EDC.</p>
+    <input type="hidden" id="edcRef" value="" />
+    <input type="hidden" id="edcContentHash" value="" />
     <label for="edcBank">Bank / acquirer</label>
     <input type="text" id="edcBank" placeholder="e.g. Mandiri / BCA / BRI" disabled />
     <label for="edcTerminal">Terminal (optional — only if known)</label>
@@ -210,8 +251,6 @@
     </div>
     <label for="edcBatchRef">Batch / ref</label>
     <input type="text" id="edcBatchRef" placeholder="optional" disabled />
-    <label for="edcRef">Receipt image ref</label>
-    <input type="text" id="edcRef" placeholder="Required — photo/file ref" disabled />
     <button class="btn" id="btnEdcExtract" data-cap="submit" type="button" disabled>Wolf reads EDC receipt</button>
     <button class="btn btn-ok" id="btnEdcLooks" data-cap="submit" type="button" disabled>Looks Correct</button>
     <button class="btn btn-warn" id="btnEdcEdit" data-cap="submit" type="button" disabled>Edit &amp; confirm</button>
@@ -268,6 +307,11 @@
   let policyCount = null;
   let edcDraft = null;
   let esbDraft = null;
+  let esbLiveStatus = null; // AVAILABLE | UNAVAILABLE | null
+  let esbPhotoB64 = null;
+  let esbPhotoMime = null;
+  let edcPhotoB64 = null;
+  let edcPhotoMime = null;
   let caps = {
     open: false, capture: false, declare: false, reconcile: false,
     exception: false, resolve: false, verify: false, submit: false
@@ -330,25 +374,148 @@
     el.className = "msg " + (ok ? "ok" : text ? "err" : "");
   }
 
+  function renderEsbLiveBanner() {
+    const el = $("esbLiveBanner");
+    if (!el) return;
+    if (esbLiveStatus === "UNAVAILABLE") {
+      el.innerHTML =
+        `<div class="esb-unavail">ESB DATA UNAVAILABLE` +
+        `<div class="muted">No live sales for this business date. Empty is not zero sales. Retry pull, or photograph the closing receipt as the other dual source.</div></div>`;
+      return;
+    }
+    if (esbLiveStatus === "AVAILABLE" && close && close.esb_totals) {
+      el.innerHTML =
+        `<div class="esb-ok">Live ESB available for ${close.business_date || "today"} — payment lines (not settlement). Dual source: keep the closing receipt photo separate.</div>`;
+      return;
+    }
+    el.innerHTML = "";
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result || ""));
+      r.onerror = () => reject(new Error("Could not read photo"));
+      r.readAsDataURL(file);
+    });
+  }
+
+  async function uploadReceiptPhoto(file, kind) {
+    const fd = new FormData();
+    fd.append("file", file, file.name || kind + "-receipt.jpg");
+    fd.append("kind", kind);
+    if (close && close.close_id) fd.append("close_id", close.close_id);
+    const res = await fetch("/api/venue-close/receipt-photo", {
+      method: "POST",
+      credentials: "same-origin",
+      body: fd,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) {
+      const err = new Error(data.message || data.error || res.statusText);
+      err.data = data;
+      throw err;
+    }
+    return data;
+  }
+
+  function showPreview(kind, file) {
+    const img = $(kind === "esb" ? "esbPreview" : "edcPreview");
+    const st = $(kind === "esb" ? "esbPhotoStatus" : "edcPhotoStatus");
+    if (!file) {
+      if (img) { img.classList.remove("show"); img.removeAttribute("src"); }
+      if (st) st.textContent = "No photo yet — Take Photo or Upload Photo.";
+      return;
+    }
+    if (img) {
+      img.src = URL.createObjectURL(file);
+      img.classList.add("show");
+    }
+    if (st) st.textContent = (file.name || "photo") + " · ready";
+  }
+
+  async function handlePhotoChosen(file, kind) {
+    if (!close) {
+      setMsg("Open a close first.");
+      return;
+    }
+    if (!file) return;
+    setMsg("");
+    showPreview(kind, file);
+    try {
+      const up = await uploadReceiptPhoto(file, kind);
+      const b64 = await fileToBase64(file);
+      if (kind === "esb") {
+        $("esbReceiptRef").value = up.object_ref || "";
+        $("esbContentHash").value = up.content_hash || "";
+        esbPhotoB64 = b64;
+        esbPhotoMime = file.type || up.mime_type || "image/jpeg";
+        $("esbPhotoStatus").textContent = "Photo stored · Wolf reading…";
+        await runEsbExtract(true);
+      } else {
+        $("edcRef").value = up.object_ref || "";
+        $("edcContentHash").value = up.content_hash || "";
+        edcPhotoB64 = b64;
+        edcPhotoMime = file.type || up.mime_type || "image/jpeg";
+        $("edcPhotoStatus").textContent = "Photo stored · Wolf reading…";
+        await runEdcExtract(true);
+      }
+    } catch (e) {
+      setMsg((e.data && e.data.message) || e.message || String(e));
+    }
+  }
+
+  function wirePhotoButtons() {
+    $("btnEsbTakePhoto").onclick = () => { if (!$("btnEsbTakePhoto").disabled) $("esbCam").click(); };
+    $("btnEsbUploadPhoto").onclick = () => { if (!$("btnEsbUploadPhoto").disabled) $("esbFile").click(); };
+    $("btnEdcTakePhoto").onclick = () => { if (!$("btnEdcTakePhoto").disabled) $("edcCam").click(); };
+    $("btnEdcUploadPhoto").onclick = () => { if (!$("btnEdcUploadPhoto").disabled) $("edcFile").click(); };
+    $("esbCam").onchange = () => {
+      const f = $("esbCam").files && $("esbCam").files[0];
+      handlePhotoChosen(f, "esb");
+      $("esbCam").value = "";
+    };
+    $("esbFile").onchange = () => {
+      const f = $("esbFile").files && $("esbFile").files[0];
+      handlePhotoChosen(f, "esb");
+      $("esbFile").value = "";
+    };
+    $("edcCam").onchange = () => {
+      const f = $("edcCam").files && $("edcCam").files[0];
+      handlePhotoChosen(f, "edc");
+      $("edcCam").value = "";
+    };
+    $("edcFile").onchange = () => {
+      const f = $("edcFile").files && $("edcFile").files[0];
+      handlePhotoChosen(f, "edc");
+      $("edcFile").value = "";
+    };
+  }
+
   function renderClose() {
     const box = $("statusBox");
     const esb = $("esbBox");
     if (!close) {
       box.innerHTML = "";
       esb.textContent = "";
+      esbLiveStatus = null;
+      renderEsbLiveBanner();
       return;
     }
     const totals = close.esb_totals || {};
     const st = close.state;
+    const hasLive = !!(close.esb_fingerprint_sha256 && totals && typeof totals.finished_count === "number");
+    if (hasLive && esbLiveStatus !== "UNAVAILABLE") esbLiveStatus = "AVAILABLE";
+    const showZeros = esbLiveStatus === "AVAILABLE";
     box.innerHTML =
       `<div class="state ${stateClass(st)}">${humanState(st)}</div>` +
       `<div class="row">` +
       `<div class="fig">${money(close.declared_cash_amount)}<small>Declared cash</small></div>` +
-      `<div class="fig">${money(totals.cash_from_payments)}<small>ESB cash (payments)</small></div>` +
+      `<div class="fig">${showZeros ? money(totals.cash_from_payments) : "—"}<small>ESB cash (payments)</small></div>` +
       `</div>` +
       `<div class="row">` +
       `<div class="fig">${money(close.variance_cash_amount)}<small>Variance</small></div>` +
-      `<div class="fig">${totals.finished_count ?? "—"}<small>Finished bills</small></div>` +
+      `<div class="fig">${showZeros ? (totals.finished_count ?? "—") : "—"}<small>Finished bills</small></div>` +
       `</div>` +
       (st === "VARIANCE_REQUIRES_POLICY" && policyCount === 0
         ? `<p class="muted" style="margin-top:8px">BLOCKED BY BUSINESS POLICY. Open an exception. It shows in <a href="/my-work">My Work</a>.</p>`
@@ -357,9 +524,10 @@
         ? `<p class="muted" style="margin-top:8px"><a href="/my-work">Open in My Work</a></p>`
         : "");
 
-    esb.textContent = totals.cash_label
-      ? `ESB basis: ${totals.cash_label} — not settlement. Settlement API unavailable.`
-      : "";
+    esb.textContent = showZeros && totals.cash_label
+      ? `ESB basis: ${totals.cash_label} — not settlement. Settlement API unavailable. Source: live warehouse payment lines for ${close.business_date || "today"} (not prior-day history).`
+      : (esbLiveStatus === "UNAVAILABLE" ? "" : "");
+    renderEsbLiveBanner();
 
     const canCapture = (st === "OPEN" || st === "DATA_CAPTURED") && !!caps.capture;
     const canDeclare = (st === "DATA_CAPTURED" || st === "EVIDENCE_SUBMITTED") && !!caps.declare;
@@ -378,10 +546,10 @@
     $("btnDeclare").disabled = !canDeclare;
     $("btnReconcile").disabled = !canRec;
     $("btnReconRefresh").disabled = !close;
-    ["edcBank","edcTerminal","edcDate","edcCardAmt","edcQrisAmt","edcBatchRef","edcRef","btnEdc","btnEdcExtract","btnEdcLooks","btnEdcEdit"].forEach((id) => {
+    ["edcBank","edcTerminal","edcDate","edcCardAmt","edcQrisAmt","edcBatchRef","btnEdc","btnEdcExtract","btnEdcLooks","btnEdcEdit","btnEdcTakePhoto","btnEdcUploadPhoto"].forEach((id) => {
       if ($(id)) $(id).disabled = !canEdc;
     });
-    ["esbReceiptRef","esbCash","esbEdc","esbQris","btnEsbExtract","btnEsbLooks","btnEsbEdit"].forEach((id) => {
+    ["esbCash","esbEdc","esbQris","btnEsbExtract","btnEsbLooks","btnEsbEdit","btnEsbTakePhoto","btnEsbUploadPhoto"].forEach((id) => {
       if ($(id)) $(id).disabled = !canEsbR;
     });
     renderEdc(close);
@@ -645,6 +813,7 @@
 
   async function boot() {
     $("bizDate").value = todayWITA();
+    wirePhotoButtons();
     try {
       const meData = await api("/api/core/me");
       me = meData.person || meData;
@@ -684,6 +853,40 @@
     }
   });
 
+  async function pullEsbLive(opts) {
+    const quiet = !!(opts && opts.quiet);
+    if (!close) return false;
+    if (!quiet) setMsg("");
+    try {
+      const data = await api("/api/venue-close/capture", {
+        method: "POST",
+        body: JSON.stringify({ close_id: close.close_id }),
+      });
+      close = data.close || data;
+      esbLiveStatus = data.esb_live_status || close.esb_live_status || "AVAILABLE";
+      renderClose();
+      if (!quiet) setMsg("ESB sales pulled (live payment lines for " + (close.business_date || "today") + ").", true);
+      return true;
+    } catch (e) {
+      const code = (e.data && e.data.error) || "";
+      const msg = (e.data && e.data.message) || e.message || String(e);
+      const unavail =
+        code === "esb_data_unavailable" ||
+        code === "esb_empty_day" ||
+        code === "esb_missing" ||
+        (e.data && e.data.esb_live_status === "UNAVAILABLE") ||
+        /ESB DATA UNAVAILABLE/i.test(msg);
+      if (unavail) {
+        esbLiveStatus = "UNAVAILABLE";
+        renderClose();
+        if (!quiet) setMsg("ESB DATA UNAVAILABLE — empty is not zero sales. Retry or photograph the closing receipt.", false);
+        return false;
+      }
+      if (!quiet) setMsg(msg);
+      return false;
+    }
+  }
+
   $("btnOpen").onclick = async () => {
     setMsg("");
     try {
@@ -692,27 +895,17 @@
         body: JSON.stringify({ business_date: $("bizDate").value }),
       });
       close = data.close;
+      esbLiveStatus = close.esb_fingerprint_sha256 ? "AVAILABLE" : null;
       renderClose();
-      setMsg(close.created ? "Close opened." : "Existing close loaded.", true);
+      setMsg(close.created ? "Close opened — pulling live ESB…" : "Existing close loaded — pulling live ESB…", true);
+      await pullEsbLive({ quiet: false });
     } catch (e) {
       setMsg(e.message || String(e));
     }
   };
 
   $("btnCapture").onclick = async () => {
-    if (!close) return;
-    setMsg("");
-    try {
-      const data = await api("/api/venue-close/capture", {
-        method: "POST",
-        body: JSON.stringify({ close_id: close.close_id }),
-      });
-      close = data.close;
-      renderClose();
-      setMsg("ESB sales pulled.", true);
-    } catch (e) {
-      setMsg((e.data && e.data.message) || e.message || String(e));
-    }
+    await pullEsbLive({ quiet: false });
   };
 
   $("btnDeclare").onclick = async () => {
@@ -760,6 +953,7 @@
       batch_ref: $("edcBatchRef").value || null,
       terminal_label: $("edcTerminal").value || null,
       object_ref: $("edcRef").value || null,
+      content_hash: $("edcContentHash").value || null,
       action: action,
       vision_event_id: edcDraft && edcDraft.vision_event_id,
       extracted: edcDraft && edcDraft.extracted,
@@ -791,31 +985,47 @@
       $("edcQrisAmt").value = "";
       $("edcBatchRef").value = "";
       $("edcRef").value = "";
+      $("edcContentHash").value = "";
+      edcPhotoB64 = null;
+      edcPhotoMime = null;
+      showPreview("edc", null);
       edcDraft = null;
     } catch (e) {
       setMsg((e.data && e.data.message) || e.message || String(e));
     }
   }
 
-  $("btnEdcExtract").onclick = async () => {
+  async function runEdcExtract(fromPhoto) {
     if (!close) return;
     setMsg("");
+    const hasPhoto = !!(edcPhotoB64 || ($("edcRef").value || "").trim());
+    if (!hasPhoto && !fromPhoto) {
+      setMsg("Take Photo or Upload Photo for this EDC receipt first.");
+      return;
+    }
+    const body = {
+      close_id: close.close_id,
+      object_ref: $("edcRef").value || null,
+      content_hash: $("edcContentHash").value || null,
+      mime_type: edcPhotoMime || "image/jpeg",
+    };
+    if (edcPhotoB64) body.image_base64 = edcPhotoB64;
+    // Only use typed fixture when no photo bytes (dev/manual path).
+    if (!edcPhotoB64) {
+      body.fixture_fields = {
+        acquirer_label: $("edcBank").value || null,
+        edc_card_amount: $("edcCardAmt").value === "" ? null : Number($("edcCardAmt").value),
+        qris_amount: $("edcQrisAmt").value === "" ? null : Number($("edcQrisAmt").value),
+        settlement_batch_date: $("edcDate").value || null,
+        batch_ref: $("edcBatchRef").value || null,
+        terminal_label: $("edcTerminal").value || null,
+        ocr_confidence: 0.82,
+      };
+    }
     try {
       const data = await api("/api/venue-close/edc-receipt-extract", {
         method: "POST",
-        body: JSON.stringify({
-          close_id: close.close_id,
-          object_ref: $("edcRef").value || null,
-          fixture_fields: {
-            acquirer_label: $("edcBank").value || null,
-            edc_card_amount: $("edcCardAmt").value === "" ? null : Number($("edcCardAmt").value),
-            qris_amount: $("edcQrisAmt").value === "" ? null : Number($("edcQrisAmt").value),
-            settlement_batch_date: $("edcDate").value || null,
-            batch_ref: $("edcBatchRef").value || null,
-            terminal_label: $("edcTerminal").value || null,
-            ocr_confidence: 0.82,
-          },
-        }),
+        body: JSON.stringify(body),
       });
       edcDraft = data;
       const x = data.extracted || {};
@@ -825,7 +1035,8 @@
       if (x.settlement_batch_date) $("edcDate").value = x.settlement_batch_date;
       if (x.batch_ref) $("edcBatchRef").value = x.batch_ref;
       if (x.terminal_label) $("edcTerminal").value = x.terminal_label;
-      if (data.image_object_ref && !$("edcRef").value) $("edcRef").value = data.image_object_ref;
+      if (data.image_object_ref) $("edcRef").value = data.image_object_ref;
+      if (data.content_hash) $("edcContentHash").value = data.content_hash;
       const low = x.low_confidence_flag || x.ocr_confidence_band === "LOW";
       setMsg(
         low
@@ -833,38 +1044,54 @@
           : "Vision draft ready. Looks Correct or Edit. AI ≠ accounting truth.",
         !low
       );
+      if ($("edcPhotoStatus") && ($("edcRef").value || "").trim()) {
+        $("edcPhotoStatus").textContent = "Photo kept · draft ready for confirm";
+      }
     } catch (e) {
       setMsg((e.data && e.data.message) || e.message || String(e));
     }
-  };
+  }
 
+  $("btnEdcExtract").onclick = () => runEdcExtract(false);
   $("btnEdcLooks").onclick = () => submitEdcReceipt("looks_correct");
   $("btnEdcEdit").onclick = () => submitEdcReceipt("edit");
   $("btnEdc").onclick = () => submitEdcReceipt("confirm");
 
-  $("btnEsbExtract").onclick = async () => {
+  async function runEsbExtract(fromPhoto) {
     if (!close) return;
     setMsg("");
+    const hasPhoto = !!(esbPhotoB64 || ($("esbReceiptRef").value || "").trim());
+    if (!hasPhoto && !fromPhoto) {
+      setMsg("Take Photo or Upload Photo for the ESB closing receipt first.");
+      return;
+    }
+    const body = {
+      close_id: close.close_id,
+      object_ref: $("esbReceiptRef").value || null,
+      content_hash: $("esbContentHash").value || null,
+      mime_type: esbPhotoMime || "image/jpeg",
+    };
+    if (esbPhotoB64) body.image_base64 = esbPhotoB64;
+    if (!esbPhotoB64) {
+      body.fixture_fields = {
+        cash_amount: $("esbCash").value === "" ? null : Number($("esbCash").value),
+        edc_card_amount: $("esbEdc").value === "" ? null : Number($("esbEdc").value),
+        qris_amount: $("esbQris").value === "" ? null : Number($("esbQris").value),
+        ocr_confidence: 0.8,
+      };
+    }
     try {
       const data = await api("/api/venue-close/esb-receipt-extract", {
         method: "POST",
-        body: JSON.stringify({
-          close_id: close.close_id,
-          object_ref: $("esbReceiptRef").value || null,
-          fixture_fields: {
-            cash_amount: $("esbCash").value === "" ? null : Number($("esbCash").value),
-            edc_card_amount: $("esbEdc").value === "" ? null : Number($("esbEdc").value),
-            qris_amount: $("esbQris").value === "" ? null : Number($("esbQris").value),
-            ocr_confidence: 0.8,
-          },
-        }),
+        body: JSON.stringify(body),
       });
       esbDraft = data;
       const x = data.extracted || {};
       if (x.cash_amount != null) $("esbCash").value = x.cash_amount;
       if (x.edc_card_amount != null) $("esbEdc").value = x.edc_card_amount;
       if (x.qris_amount != null) $("esbQris").value = x.qris_amount;
-      if (data.image_object_ref && !$("esbReceiptRef").value) $("esbReceiptRef").value = data.image_object_ref;
+      if (data.image_object_ref) $("esbReceiptRef").value = data.image_object_ref;
+      if (data.content_hash) $("esbContentHash").value = data.content_hash;
       const mm = data.api_mismatch_preview && data.api_mismatch_preview.api_mismatch;
       setMsg(
         mm
@@ -872,10 +1099,15 @@
           : "ESB receipt draft ready. Looks Correct or Edit. Dual source kept.",
         !mm
       );
+      if ($("esbPhotoStatus") && ($("esbReceiptRef").value || "").trim()) {
+        $("esbPhotoStatus").textContent = "Photo kept · draft ready for confirm";
+      }
     } catch (e) {
       setMsg((e.data && e.data.message) || e.message || String(e));
     }
-  };
+  }
+
+  $("btnEsbExtract").onclick = () => runEsbExtract(false);
 
   async function submitEsbReceipt(action) {
     if (!close) return;
@@ -887,6 +1119,7 @@
           close_id: close.close_id,
           action: action,
           object_ref: $("esbReceiptRef").value || null,
+          content_hash: $("esbContentHash").value || null,
           cash_amount: $("esbCash").value === "" ? null : Number($("esbCash").value),
           edc_card_amount: $("esbEdc").value === "" ? null : Number($("esbEdc").value),
           qris_amount: $("esbQris").value === "" ? null : Number($("esbQris").value),

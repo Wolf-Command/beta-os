@@ -1,0 +1,11 @@
+P0 COMMISSIONING FAIL #2 — BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1.
+
+Read: /Users/wolfterminal/beta-os/state/bzg-daily-close/CURSOR-PACK-BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1.md
+
+Peaches triage (verify then fix):
+- /uma-blu-close served by scripts/serve_beta.py :8788 → dashboards/uma-blu-close.html
+- Tip a0cbc81; multi-EDC HTML from 909addf is present BUT photo is text photo:// refs only — no file/camera controls
+- Fix phone Take Photo / Upload Photo for ESB + each EDC; vision draft→confirm; live ESB today with honest UNAVAILABLE; dual API+receipt
+- Test DEPLOYED Beta (restart :8788), mobile viewport, not just unit tests
+- staff_ready=false. No push. Prod :8787 untouched.
+- RESULT + EXIT:0 tip SHA. Do not claim Iza-ready — Peaches verifies then Matt gets IZA RETEST READY.

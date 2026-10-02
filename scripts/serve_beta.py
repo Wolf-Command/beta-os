@@ -7747,6 +7747,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/venue-close/capture":
             self._venue_close_capture()
             return
+        if path == "/api/venue-close/receipt-photo":
+            self._bzg_daily_close_receipt_photo()
+            return
         if path == "/api/venue-close/declare-cash":
             self._venue_close_declare_cash()
             return
@@ -41725,22 +41728,34 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def _venue_close_err(self, exc: Exception) -> None:
         if isinstance(exc, _venue_close.VenueCloseError):
-            self._send_json(
-                {
-                    "ok": False,
-                    "error": exc.code,
-                    "message": str(exc),
-                    **_venue_close.HONESTY,
-                },
-                status=exc.http_status,
-            )
+            payload = {
+                "ok": False,
+                "error": exc.code,
+                "message": str(exc),
+                **_venue_close.HONESTY,
+            }
+            if exc.code in (
+                "esb_data_unavailable",
+                "esb_empty_day",
+                "esb_missing",
+            ) or "ESB DATA UNAVAILABLE" in str(exc):
+                payload["esb_live_status"] = "UNAVAILABLE"
+                payload["esb_empty_is_not_zero_sales"] = True
+                payload["retry"] = True
+            self._send_json(payload, status=exc.http_status)
             return
         if isinstance(exc, _esb_close_snapshot.EsbSnapshotError):
             self._send_json(
                 {
                     "ok": False,
-                    "error": exc.code,
-                    "message": str(exc),
+                    "error": "esb_data_unavailable",
+                    "message": (
+                        f"ESB DATA UNAVAILABLE — {exc}. "
+                        "Empty is not zero sales."
+                    ),
+                    "esb_live_status": "UNAVAILABLE",
+                    "esb_empty_is_not_zero_sales": True,
+                    "retry": True,
                     **_esb_close_snapshot.HONESTY,
                 },
                 status=exc.http_status,
@@ -42016,17 +42031,112 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
         b64 = (body.get("image_base64") or body.get("data_base64") or "").strip()
         mime = str(body.get("mime_type") or body.get("content_type") or "image/jpeg")
-        if not b64:
-            return None, mime
-        if "," in b64:
-            header, b64 = b64.split(",", 1)
-            if "image/" in header:
-                mime = header.split("image/")[-1].split(";")[0]
-                mime = f"image/{mime}" if not mime.startswith("image/") else mime
+        if b64:
+            if "," in b64:
+                header, b64 = b64.split(",", 1)
+                if "image/" in header:
+                    mime = header.split("image/")[-1].split(";")[0]
+                    mime = f"image/{mime}" if not mime.startswith("image/") else mime
+            try:
+                return _b64.b64decode(b64), mime
+            except Exception:  # noqa: BLE001
+                return None, mime
+        # Fall back to stored phone upload (close-receipt://…).
+        ref = (body.get("object_ref") or body.get("image_object_ref") or "").strip()
+        if ref:
+            stored, stored_mime = _bzg_daily_close.load_close_receipt_bytes(ref)
+            if stored:
+                return stored, stored_mime or mime
+        return None, mime
+
+    def _bzg_daily_close_receipt_photo(self) -> None:
+        """POST multipart/base64 phone photo → store evidence → object_ref."""
+        identity = self._venue_close_person()
+        if identity is None:
+            return
         try:
-            return _b64.b64decode(b64), mime
-        except Exception:  # noqa: BLE001
-            return None, mime
+            ctype = (self.headers.get("Content-Type") or "").lower()
+            close_id = None
+            kind = "receipt"
+            filename = None
+            content_type = None
+            data: bytes | None = None
+            if "multipart/form-data" in ctype:
+                fields = parse_multipart(self.headers, self.rfile)
+                close_raw = fields.get("close_id")
+                kind_raw = fields.get("kind")
+                close_id = str(close_raw).strip() if close_raw not in (None, "") else None
+                kind = str(kind_raw).strip() if kind_raw not in (None, "") else "receipt"
+                file_field = (
+                    fields.get("file")
+                    or fields.get("receipt")
+                    or fields.get("photo")
+                    or fields.get("image")
+                )
+                if not isinstance(file_field, dict) or not file_field.get("data"):
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "missing_receipt",
+                            "message": "Take Photo or Upload Photo required",
+                        },
+                        status=400,
+                    )
+                    return
+                data = file_field["data"]
+                filename = file_field.get("filename")
+                content_type = file_field.get("content_type") or file_field.get(
+                    "content-type"
+                )
+            else:
+                body = self._read_json()
+                if not isinstance(body, dict):
+                    body = {}
+                close_id = body.get("close_id")
+                kind = str(body.get("kind") or "receipt")
+                filename = body.get("filename")
+                content_type = body.get("content_type") or body.get("mime_type")
+                img, mime = self._bzg_vision_image_bytes(body)
+                data = img
+                content_type = content_type or mime
+            if not data:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "missing_receipt",
+                        "message": "Take Photo or Upload Photo required",
+                    },
+                    status=400,
+                )
+                return
+            out = _bzg_daily_close.save_close_receipt_bytes(
+                data=data,
+                kind=str(kind or "receipt"),
+                close_id=str(close_id) if close_id else None,
+                filename=filename,
+                content_type=content_type,
+            )
+            _audit.safe_record(
+                action="venue_close.receipt_photo_stored",
+                result="ALLOWED",
+                source="serve_beta",
+                actor_type="PERSON",
+                verified_person_id=identity.get("person_id"),
+                actor_person_id=identity.get("person_id"),
+                identity_assurance=identity.get("identity_assurance"),
+                resource_type="venue_daily_close",
+                resource_id=str(close_id or ""),
+                reason_code="phone_receipt_photo",
+                metadata={
+                    "object_ref": out.get("object_ref"),
+                    "content_hash": out.get("content_hash"),
+                    "kind": out.get("kind"),
+                    "bytes": out.get("bytes"),
+                },
+            )
+            self._send_json(out)
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
 
     def _bzg_daily_close_edc_receipts_get(self, close_id: str) -> None:
         identity = self._venue_close_person()

@@ -1,0 +1,15 @@
+{
+  "pack": "BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1",
+  "status": "DONE_ENGINEERING_PASS",
+  "closed_at": "2026-10-02T21:58:12+08:00",
+  "tip_commit": "TIP_PENDING",
+  "parent_tip": "a0cbc81",
+  "beta_8788_pid": "55658",
+  "prod_8787_pid": "15975",
+  "peaches_verify": "PENDING_INDEPENDENT",
+  "pack_tests": "deployed_ux_esb_photo_1=48/0 multi_edc=77/0 till_edc=57/0",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "iza_retest_ready": false,
+  "child_exit": 0
+}

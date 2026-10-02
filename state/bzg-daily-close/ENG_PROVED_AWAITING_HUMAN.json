@@ -1,0 +1,12 @@
+{
+  "pack": "BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1",
+  "status": "ENG_PROVED_AWAITING_PEACHES",
+  "at": "2026-10-02T21:58:12+08:00",
+  "tip": "TIP_PENDING",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "iza_retest_ready": false,
+  "handoff": "https://beta.wolfcommand.net/uma-blu-close",
+  "tests": "deployed_ux_esb_photo_1=48/0 multi_edc=77/0 till_edc=57/0",
+  "note": "Peaches verifies deployed route before Matt issues IZA RETEST READY"
+}

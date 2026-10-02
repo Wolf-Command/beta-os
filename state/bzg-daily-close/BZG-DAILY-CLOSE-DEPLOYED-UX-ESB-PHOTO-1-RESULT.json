@@ -1,0 +1,33 @@
+{
+  "pack": "BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1",
+  "status": "ENG_PROVED_AWAITING_PEACHES",
+  "at": "2026-10-02T21:58:12+08:00",
+  "decision": "2026-09-17 Uma Blu Daily Close extend",
+  "tip": "TIP_PENDING",
+  "parent_tip_when_armed": "a0cbc81",
+  "html_feat_prior": "909addf",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "iza_retest_ready": false,
+  "prod_8787_pid": "15975",
+  "beta_8788_pid": "55658",
+  "beta_auth_mode": "cloudflare_access",
+  "tests": {
+    "deployed_ux_esb_photo_1": "48/0",
+    "multi_edc_vision_1": "77/0",
+    "till_edc_1": "57/0"
+  },
+  "deploy_markers": [
+    "Take Photo",
+    "Upload Photo",
+    "capture=environment",
+    "ESB DATA UNAVAILABLE"
+  ],
+  "live_esb_today_2026-10-02": "UNAVAILABLE_incomplete_esb_empty_day",
+  "shots": [
+    "docs/wolf/ops/shots/bzgclose-ux-photo1-desk-phone.png",
+    "docs/wolf/ops/shots/bzgclose-ux-photo1-desk-desktop.png"
+  ],
+  "handoff": "https://beta.wolfcommand.net/uma-blu-close",
+  "exit": 0
+}

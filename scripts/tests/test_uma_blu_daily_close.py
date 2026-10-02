@@ -375,7 +375,16 @@ def main() -> int:
             )
             check("empty day blocks capture", False, "should have raised")
         except vc.VenueCloseError as e:
-            check("empty day blocks capture", e.code == "esb_empty_day", e.code)
+            check(
+                "empty day blocks capture",
+                e.code in ("esb_data_unavailable", "esb_empty_day"),
+                e.code,
+            )
+            check(
+                "empty day message UNAVAILABLE",
+                "ESB DATA UNAVAILABLE" in str(e),
+                str(e)[:80],
+            )
     finally:
         conn.close()
 

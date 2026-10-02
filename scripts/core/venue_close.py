@@ -356,11 +356,25 @@ def capture_esb_snapshot(
                 code="invalid_transition",
             )
 
-        snap = _esb.snapshot_day(row["business_date"], esb_path=esb_path)
-        if snap.get("incomplete"):
+        biz = row["business_date"]
+        try:
+            snap = _esb.snapshot_day(biz, esb_path=esb_path)
+        except _esb.EsbSnapshotError as exc:
+            # Warehouse missing / unreadable → explicit UNAVAILABLE (never fake zeros).
             raise VenueCloseError(
-                "ESB data incomplete / empty day — close blocked",
-                code=snap.get("incomplete_reason") or "esb_empty_day",
+                f"ESB DATA UNAVAILABLE — cannot read live sales for {biz}. "
+                "Empty is not zero sales. Retry after ESB pull; photographed "
+                "closing receipt stays a separate dual source.",
+                code="esb_data_unavailable",
+                http_status=getattr(exc, "http_status", 503) or 503,
+            ) from exc
+        if snap.get("incomplete"):
+            # Do not write zero totals as a successful live pull.
+            raise VenueCloseError(
+                f"ESB DATA UNAVAILABLE — no live sales for {biz}. "
+                "Empty is not zero sales. Retry after ESB pull; photographed "
+                "closing receipt stays a separate dual source.",
+                code="esb_data_unavailable",
                 http_status=409,
             )
 
@@ -403,6 +417,9 @@ def capture_esb_snapshot(
                 "fingerprint": snap["fingerprint_sha256"],
                 "finished_count": snap["totals"]["finished_count"],
                 "cash_from_payments": snap["totals"]["cash_from_payments"],
+                "esb_live_status": "AVAILABLE",
+                "esb_source": "warehouse_payment_lines",
+                "business_date": biz,
                 **HONESTY,
             },
             conn=c,
@@ -411,7 +428,17 @@ def capture_esb_snapshot(
             c.commit()
         out = get_close(close_id, conn=c)
         assert out
-        return {**out, **HONESTY}
+        return {
+            **out,
+            **HONESTY,
+            "esb_live_status": "AVAILABLE",
+            "esb_source": "warehouse_payment_lines",
+            "esb_source_label": (
+                "Live ESB payment lines for this business date "
+                "(warehouse) — not settlement; not prior-day history"
+            ),
+            "esb_empty_is_not_zero_sales": True,
+        }
     finally:
         if own:
             c.close()

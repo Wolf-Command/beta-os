@@ -1,0 +1,46 @@
+{
+  "id": "COMMISSIONING-FAILS-20261002-NIGHT",
+  "when_wita": "2026-10-02T21:58:12+08:00",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "iza_retest_ready": false,
+  "failures": [
+    {
+      "n": 1,
+      "title": "Close not on assignment",
+      "status": "ENG_FIXED_a0cbc81",
+      "human_retest": "SUPERSEDED_BY_FAIL_2",
+      "evidence": "COMMISSIONING-FAIL-20261002-IZA-ASSIGNMENT.json"
+    },
+    {
+      "n": 2,
+      "title": "Photo/camera controls missing",
+      "status": "ENG_FIXED_AWAITING_PEACHES",
+      "detail": "Take Photo / Upload Photo + capture=environment wired; receipt-photo store→vision",
+      "pack": "BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1",
+      "result": "state/bzg-daily-close/BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1-RESULT.md"
+    },
+    {
+      "n": 3,
+      "title": "ESB live data missing",
+      "status": "ENG_FIXED_AWAITING_PEACHES",
+      "detail": "Empty today → ESB DATA UNAVAILABLE (not zeros); auto-pull on open; dual API+receipt",
+      "pack": "BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1"
+    }
+  ],
+  "deploy_triage": {
+    "route": "/uma-blu-close",
+    "serve": "scripts/serve_beta.py :8788",
+    "html": "dashboards/uma-blu-close.html",
+    "beta_pid_after_restart": "55658",
+    "prod_8787_pid": "15975",
+    "note": "Engineering proved; Peaches independent verify before IZA RETEST READY"
+  },
+  "do_not": [
+    "ask Iza continue degraded",
+    "mark staff_ready",
+    "claim IZA RETEST READY before Peaches verify",
+    "push",
+    "touch prod :8787"
+  ]
+}

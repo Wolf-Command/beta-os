@@ -2,13 +2,15 @@
 """BZG Daily Close — one reusable engine over venue_close (Till+EDC + Multi-EDC Vision).
 
 Decision served: 2026-09-17 · PICK Uma Blu Daily Close (extend) + Owner orders
-BZG-DAILY-CLOSE-TILL-EDC-20261002 and BZG-DAILY-CLOSE-MULTI-EDC-VISION-20261002.
+BZG-DAILY-CLOSE-TILL-EDC-20261002, BZG-DAILY-CLOSE-MULTI-EDC-VISION-20261002,
+and BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1 (phone Take/Upload + honest ESB).
 
 Not a second close product. Outlet config from registry. Only Uma Blu
 human_close_enabled. EDC terminals unknown → NEEDS CONFIGURATION.
 0..N EDC receipts/day with separate EDC card + QRIS (never merge).
 Vision draft → human confirm (AI ≠ accounting truth). ESB closing receipt
 + live API dual-source; mismatch visible. Settlement API UNAVAILABLE.
+Empty today ESB → ESB DATA UNAVAILABLE (never fake zeros).
 No invented variance tolerance / terminal TIDs. No if-Devi.
 """
 from __future__ import annotations
@@ -28,14 +30,17 @@ from core import venue_close as _vc
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 CATALOG_DB = BETA_ROOT / "catalog" / "content_library.sqlite"
-PACK = "BZG-DAILY-CLOSE-MULTI-EDC-VISION-1"
-PACK_PRIOR = "BZG-DAILY-CLOSE-TILL-EDC-1"
+PACK = "BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1"
+PACK_PRIOR = "BZG-DAILY-CLOSE-MULTI-EDC-VISION-1"
 ENTITY = "ENT-BZG"
 OUTLET_UMA = "BZG-UMA"
 
 EVIDENCE_Z = "pos_z_report"
 EVIDENCE_EDC = "edc_settlement_slip"
 EVIDENCE_ESB_RECEIPT = "esb_closing_receipt"
+
+CLOSE_RECEIPT_DIR = BETA_ROOT / "state" / "bzg-daily-close" / "receipts"
+CLOSE_RECEIPT_SCHEME = "close-receipt://"
 
 HONESTY = {
     **_vc.HONESTY,
@@ -55,12 +60,101 @@ HONESTY = {
     "qris_never_merged_into_card": True,
     "multi_edc_receipts": True,
     "edc_receipts_required_count": None,  # 0..N — never exactly-one
+    "phone_take_upload_photo": True,
+    "esb_unavailable_explicit": True,
+    "esb_empty_is_not_zero_sales": True,
+    "dual_source_api_and_receipt": True,
     "engine": "venue_close",
 }
 
 
 class BzgDailyCloseError(_vc.VenueCloseError):
     pass
+
+
+def save_close_receipt_bytes(
+    *,
+    data: bytes,
+    kind: str = "receipt",
+    close_id: str | None = None,
+    filename: str | None = None,
+    content_type: str | None = None,
+) -> dict[str, Any]:
+    """Persist phone receipt photo under Beta state. Returns object_ref + hash."""
+    if not data:
+        raise BzgDailyCloseError("receipt photo required", code="missing_receipt")
+    if len(data) > 8_000_000:
+        raise BzgDailyCloseError(
+            "receipt too large", code="receipt_too_large", http_status=413
+        )
+    kind_n = (kind or "receipt").strip().lower()
+    if kind_n not in ("esb", "edc", "receipt", "z", "till"):
+        kind_n = "receipt"
+    CLOSE_RECEIPT_DIR.mkdir(parents=True, exist_ok=True)
+    ext = ".jpg"
+    name = (filename or "").lower()
+    ctype = (content_type or "").lower()
+    if name.endswith(".png") or "png" in ctype:
+        ext = ".png"
+    elif name.endswith(".webp") or "webp" in ctype:
+        ext = ".webp"
+    elif name.endswith(".heic") or "heic" in ctype:
+        ext = ".heic"
+    eid = f"EVD-CLOSE-{kind_n.upper()}-{uuid.uuid4().hex[:12].upper()}"
+    dest = CLOSE_RECEIPT_DIR / f"{eid}{ext}"
+    dest.write_bytes(data)
+    ch = hashlib.sha256(data).hexdigest()
+    ref = f"{CLOSE_RECEIPT_SCHEME}{eid}{ext}"
+    return {
+        "ok": True,
+        "evidence_id": eid,
+        "object_ref": ref,
+        "image_object_ref": ref,
+        "content_hash": ch,
+        "bytes": len(data),
+        "mime_type": content_type or f"image/{ext.lstrip('.')}",
+        "filename": filename or dest.name,
+        "kind": kind_n,
+        "close_id": (close_id or "").strip() or None,
+        "path": str(dest),
+        "kept_original": True,
+        **HONESTY,
+    }
+
+
+def resolve_close_receipt_path(object_ref: str | None) -> Path | None:
+    """Map close-receipt://… ref to on-disk path. Refuse path escape."""
+    ref = (object_ref or "").strip()
+    if not ref.startswith(CLOSE_RECEIPT_SCHEME):
+        return None
+    token = ref[len(CLOSE_RECEIPT_SCHEME) :].strip()
+    if not token or "/" in token or "\\" in token or ".." in token:
+        return None
+    path = (CLOSE_RECEIPT_DIR / token).resolve()
+    try:
+        path.relative_to(CLOSE_RECEIPT_DIR.resolve())
+    except ValueError:
+        return None
+    return path if path.is_file() else None
+
+
+def load_close_receipt_bytes(
+    object_ref: str | None,
+) -> tuple[bytes | None, str]:
+    """Load stored receipt bytes + mime. Returns (None, mime) if missing."""
+    path = resolve_close_receipt_path(object_ref)
+    if path is None:
+        return None, "image/jpeg"
+    data = path.read_bytes()
+    suf = path.suffix.lower()
+    mime = {
+        ".png": "image/png",
+        ".webp": "image/webp",
+        ".heic": "image/heic",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+    }.get(suf, "image/jpeg")
+    return data, mime
 
 
 def db_connect(db_path: Path | None = None) -> sqlite3.Connection:
@@ -957,6 +1051,10 @@ def extract_edc_receipt_draft(
         row = _vc.get_close(close_id, conn=c)
         if not row:
             raise BzgDailyCloseError("close not found", code="not_found", http_status=404)
+        # Load stored phone upload when client sent object_ref only.
+        if not image_bytes and image_object_ref:
+            image_bytes, mime_type = load_close_receipt_bytes(image_object_ref)
+        # Explicit fixture_fields keep test/dev path; phone UX omits fixture when photo present.
         draft = _vision.extract_edc_receipt(
             image_bytes=image_bytes,
             mime_type=mime_type,
@@ -1384,6 +1482,9 @@ def extract_esb_closing_receipt_draft(
         row = _vc.get_close(close_id, conn=c)
         if not row:
             raise BzgDailyCloseError("close not found", code="not_found", http_status=404)
+        if not image_bytes and image_object_ref:
+            image_bytes, mime_type = load_close_receipt_bytes(image_object_ref)
+        # Explicit fixture_fields keep test/dev path; phone UX omits fixture when photo present.
         draft = _vision.extract_esb_closing_receipt(
             image_bytes=image_bytes,
             mime_type=mime_type,
