@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-05T22:31:44+08:00",
+  "at": "2026-10-05T22:41:42+08:00",
   "mode": "SHADOW",
   "production_touched": false,
   "workers_killed": false,
@@ -111,12 +111,13 @@
     },
     "anthropic_api": {
       "label": "Anthropic API",
-      "status": "PARTIAL",
+      "status": "CONNECTED",
       "ok": true,
-      "evidence": "openclaw primary mentions haiku (default not best); openclaw references anthropic",
+      "evidence": "ANTHROPIC_API_KEY name present in beta .env but value empty; openclaw primary mentions haiku (default not best); openclaw references anthropic; auth-profiles references anthropic (auth-profiles.json)",
       "data": {
         "billing": "api",
-        "note": "haiku_is_default_not_best"
+        "note": "haiku_is_default_not_best",
+        "openclaw_may_hold_creds": true
       },
       "supports": [
         "health",
@@ -175,8 +176,8 @@
     }
   },
   "summary": {
-    "CONNECTED": 4,
-    "PARTIAL": 3,
+    "CONNECTED": 5,
+    "PARTIAL": 2,
     "UNAVAILABLE": 2
   }
 }

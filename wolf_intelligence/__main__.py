@@ -26,6 +26,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("accept-phase1")
     sub.add_parser("worker-status")
     sub.add_parser("benchmark")
+    sub.add_parser("benchmark-local")
     sub.add_parser("learn-demo")
     sub.add_parser("shadow-compare")
     sub.add_parser("serve-ui")
@@ -68,6 +69,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "benchmark":
         from . import benchmark
         print(json.dumps(benchmark.run_all(), indent=2))
+        return 0
+    if args.cmd == "benchmark-local":
+        from . import benchmark_local
+        print(json.dumps(benchmark_local.run_ollama_safe(), indent=2))
         return 0
     if args.cmd == "learn-demo":
         from . import learning

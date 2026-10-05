@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Wolf Intelligence</title>
+<style>
+  :root { --bg:#0b0f14; --card:#151b24; --ink:#eef3f8; --muted:#9aa8b5; --go:#3dd68c; --need:#ffb020; --bad:#ff6b6b; --run:#5b9dff; --line:#243041; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:16px 16px 8px; position:sticky; top:0; background:rgba(11,15,20,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+  h1 { font-size:1.15rem; margin:0 0 4px; font-weight:700; }
+  .sub { color:var(--muted); font-size:.8rem; }
+  main { padding:12px 16px 40px; max-width:430px; margin:0 auto; }
+  .bucket { margin:14px 0; }
+  .bucket h2 { font-size:.78rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:0 0 8px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin:0 0 8px; }
+  .card .title { font-size:.95rem; font-weight:600; margin:0 0 4px; }
+  .card .meta { font-size:.75rem; color:var(--muted); }
+  .empty { color:var(--muted); font-size:.85rem; padding:8px 0; }
+  .pill { display:inline-block; font-size:.7rem; padding:2px 8px; border-radius:999px; margin-right:6px; }
+  .need { background:rgba(255,176,32,.15); color:var(--need); }
+  .go { background:rgba(61,214,140,.15); color:var(--go); }
+  .run { background:rgba(91,157,255,.15); color:var(--run); }
+  .bad { background:rgba(255,107,107,.15); color:var(--bad); }
+  details.tech { margin-top:20px; color:var(--muted); font-size:.8rem; }
+  details.tech summary { cursor:pointer; color:var(--ink); }
+  pre { white-space:pre-wrap; word-break:break-word; background:#0a1018; padding:10px; border-radius:8px; font-size:.7rem; }
+  .bar { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .stat { flex:1; min-width:70px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:8px; text-align:center; }
+  .stat b { display:block; font-size:1.1rem; }
+  .stat span { font-size:.65rem; color:var(--muted); text-transform:uppercase; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Wolf Intelligence</h1>
+  <div class="sub">What needs you · what is ready · what is running</div>
+  <div class="bar" id="stats"></div>
+</header>
+<main>
+  <section class="bucket" id="needs_you"><h2><span class="pill need">Needs you</span></h2><div class="list"></div></section>
+  <section class="bucket" id="ready"><h2><span class="pill go">Ready to test</span></h2><div class="list"></div></section>
+  <section class="bucket" id="decisions"><h2><span class="pill need">Decisions</span></h2><div class="list"></div></section>
+  <section class="bucket" id="exceptions"><h2><span class="pill bad">Exceptions</span></h2><div class="list"></div></section>
+  <section class="bucket" id="running"><h2><span class="pill run">Running</span></h2><div class="list"></div></section>
+  <details class="tech">
+    <summary>Technical details (optional)</summary>
+    <pre id="tech">Loading…</pre>
+  </details>
+</main>
+<script>
+async function load() {
+  const urls = ['/api/wolf-intelligence/board', '/api/owner-board', 'http://127.0.0.1:8799/api/owner-board'];
+  let data = null;
+  for (const u of urls) {
+    try {
+      const r = await fetch(u, {cache:'no-store'});
+      if (r.ok) { data = await r.json(); break; }
+    } catch (e) {}
+  }
+  if (!data) { document.getElementById('tech').textContent = 'Board unreachable'; return; }
+  const map = {
+    needs_you: data.NEEDS_YOU || [],
+    ready: data.READY_TO_TEST || [],
+    decisions: data.DECISIONS || [],
+    exceptions: data.EXCEPTIONS || [],
+    running: data.RUNNING || []
+  };
+  const stats = document.getElementById('stats');
+  stats.innerHTML = [
+    ['Needs you', map.needs_you.length],
+    ['Ready', map.ready.length],
+    ['Decisions', map.decisions.length],
+    ['Exceptions', map.exceptions.length],
+    ['Running', map.running.length]
+  ].map(([l,n]) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`).join('');
+  function paint(sectionId, items, pill) {
+    const root = document.querySelector('#' + sectionId + ' .list');
+    if (!items.length) { root.innerHTML = '<div class="empty">Nothing here</div>'; return; }
+    root.innerHTML = items.map(it => `
+      <div class="card">
+        <div class="title">${escapeHtml(it.title || it.id)}</div>
+        <div class="meta">${escapeHtml(it.state || '')} · ${escapeHtml((it.recommendation && it.recommendation.recommended_worker) || 'unrouted')}</div>
+      </div>`).join('');
+  }
+  paint('needs_you', map.needs_you);
+  paint('ready', map.ready);
+  paint('decisions', map.decisions);
+  paint('exceptions', map.exceptions);
+  paint('running', map.running);
+  document.getElementById('tech').textContent = JSON.stringify(data._tech || {}, null, 2);
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+load(); setInterval(load, 5000);
+</script>
+</body>
+</html>

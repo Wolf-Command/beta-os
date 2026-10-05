@@ -27,8 +27,21 @@ class AnthropicAPIAdapter(WorkerAdapter):
     def health(self) -> AdapterResult:
         has = _env_has("ANTHROPIC_API_KEY")
         evidence = []
+        openclaw_holds = False
         if has:
-            evidence.append("ANTHROPIC_API_KEY configured (value not read)")
+            evidence.append("ANTHROPIC_API_KEY configured in beta .env (value not read)")
+        name_present = False
+        try:
+            env = Path("/Users/wolfterminal/beta-os/.env")
+            if env.exists():
+                for line in env.read_text(encoding="utf-8", errors="replace").splitlines():
+                    if line.strip().startswith("ANTHROPIC_API_KEY="):
+                        name_present = True
+                        break
+        except OSError:
+            pass
+        if name_present and not has:
+            evidence.append("ANTHROPIC_API_KEY name present in beta .env but value empty")
         if OPENCLAW.exists():
             try:
                 txt = OPENCLAW.read_text(encoding="utf-8", errors="replace")
@@ -36,11 +49,35 @@ class AnthropicAPIAdapter(WorkerAdapter):
                     evidence.append("openclaw primary mentions haiku (default not best)")
                 if "anthropic" in txt.lower():
                     evidence.append("openclaw references anthropic")
+                # Detect credential material WITHOUT copying it
+                # Credential material may live in auth profiles — detect presence only
+                if "sk-ant-" in txt:
+                    openclaw_holds = True
+                    evidence.append("openclaw.json appears to embed Anthropic credential material (not copied)")
+                auth_roots = [
+                    Path.home() / ".openclaw" / "agents",
+                    Path.home() / ".openclaw",
+                ]
+                for root in auth_roots:
+                    if not root.exists():
+                        continue
+                    for ap in root.rglob("auth-profiles.json"):
+                        try:
+                            at = ap.read_text(encoding="utf-8", errors="replace")
+                        except OSError:
+                            continue
+                        if "anthropic" in at.lower() or "sk-ant-" in at:
+                            openclaw_holds = True
+                            evidence.append(f"auth-profiles references anthropic ({ap.name})")
+                            break
+                    if openclaw_holds:
+                        break
             except OSError:
                 pass
+        status = "CONNECTED" if (has or openclaw_holds) else ("PARTIAL" if evidence else "UNAVAILABLE")
         if evidence:
-            return AdapterResult(True, "CONNECTED" if has else "PARTIAL", "; ".join(evidence),
-                                 {"billing": "api", "note": "haiku_is_default_not_best"})
+            return AdapterResult(True if status != "UNAVAILABLE" else False, status, "; ".join(evidence),
+                                 {"billing": "api", "note": "haiku_is_default_not_best", "openclaw_may_hold_creds": openclaw_holds})
         return AdapterResult(False, "UNAVAILABLE", "no Anthropic API evidence")
 
     def submit(self, job: dict[str, Any]) -> AdapterResult:

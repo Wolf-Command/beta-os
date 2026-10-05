@@ -51,8 +51,15 @@
 </main>
 <script>
 async function load() {
-  const r = await fetch('/api/owner-board');
-  const data = await r.json();
+  const urls = ['/api/wolf-intelligence/board', '/api/owner-board', 'http://127.0.0.1:8799/api/owner-board'];
+  let data = null;
+  for (const u of urls) {
+    try {
+      const r = await fetch(u, {cache:'no-store'});
+      if (r.ok) { data = await r.json(); break; }
+    } catch (e) {}
+  }
+  if (!data) { document.getElementById('tech').textContent = 'Board unreachable'; return; }
   const map = {
     needs_you: data.NEEDS_YOU || [],
     ready: data.READY_TO_TEST || [],

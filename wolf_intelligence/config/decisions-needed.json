@@ -1,0 +1,48 @@
+{
+  "updated_at": "2026-10-05T22:40:00+08:00",
+  "rule": "Safest reversible defaults applied; Owner decides these later.",
+  "decisions": [
+    {
+      "id": "DN-001",
+      "topic": "Which SuperGrok consumer tier is active for Grok Bot?",
+      "default_applied": "ledger pool grok_sub.monthly_usd=null (UNKNOWN); prefer subscription billing rank",
+      "needs": "Owner confirm Free/Lite/$30/$100/$300 from xAI account UI"
+    },
+    {
+      "id": "DN-002",
+      "topic": "Which ChatGPT plan is active?",
+      "default_applied": "chatgpt_sub.monthly_usd=null (UNKNOWN); separate from openai_api pool",
+      "needs": "Owner confirm Free/Go/Plus/Pro tier from OpenAI account"
+    },
+    {
+      "id": "DN-003",
+      "topic": "Fill beta .env OPENAI_API_KEY / GEMINI_API_KEY / ANTHROPIC_API_KEY values?",
+      "default_applied": "leave UNAVAILABLE when value empty; do not invent keys; OpenClaw may hold Anthropic separately",
+      "needs": "Owner paste keys into beta .env OR authorize reading from OpenClaw secret store"
+    },
+    {
+      "id": "DN-004",
+      "topic": "Gemini paid allowance",
+      "default_applied": "NO_PAID_WITHOUT_OWNER_POLICY; free pool only",
+      "needs": "Owner policy if paid Gemini wanted"
+    },
+    {
+      "id": "DN-005",
+      "topic": "Ollama retirement timing",
+      "default_applied": "RETIRE CANDIDATE marked; process left running; not deleted",
+      "needs": "Owner authorize stop/uninstall after NAS archive check"
+    },
+    {
+      "id": "DN-006",
+      "topic": "Promote Wolf Intelligence from SHADOW to live dispatch",
+      "default_applied": "SHADOW_MODE=true forever until Owner flips",
+      "needs": "Owner explicit go-live for non-isolated jobs"
+    },
+    {
+      "id": "DN-007",
+      "topic": "Beta :8788 reload to pick up /owner/intelligence route",
+      "default_applied": "sidecar :8799 primary; Beta route added in code but reload deferred if humans on Daily Close",
+      "needs": "Owner/Peaches confirm safe Beta reload window"
+    }
+  ]
+}

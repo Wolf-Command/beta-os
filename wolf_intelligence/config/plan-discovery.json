@@ -1,0 +1,83 @@
+{
+  "at": "2026-10-05T22:36:13+08:00",
+  "grok": {
+    "paths_present": [
+      ".grokbot-data-root-v1",
+      "attachment-staging",
+      "local-exec-account-generation.json",
+      "local-exec-backend-return.json",
+      "local-exec-daemon-connection.json",
+      "local-exec-daemon-credential.json",
+      "local-exec-daemon.json",
+      "local-exec-daemon.log",
+      "local-exec-supervisor.json",
+      "settings.json"
+    ],
+    "settings_safe": {
+      "accountScopes": {},
+      "activeAccountScope": "ae2c566bba5c8001cec95621da94a6109681cd19531829bbef39985023f547c8",
+      "autoReviewInstructions": {
+        "isEnabled": true
+      },
+      "autoUpdateWhenIdle": true,
+      "botColorInChatEnabled": false,
+      "boxRosterCensus": "all-temporal",
+      "egressTunnelEnabled": false,
+      "hasSeenOnboarding": true,
+      "hasSeenOnboardingAccountScope": "ae2c566bba5c8001cec95621da94a6109681cd19531829bbef39985023f547c8",
+      "localEgressAllowed": true,
+      "localToolPermission": "always",
+      "mcpBoxServers": "list",
+      "mcpCustomInstructions": "dict",
+      "mcpCustomInstructionsByServerId": "dict",
+      "mcpDisabledToolsByServerId": "dict",
+      "meetingsEnabled": false,
+      "messagesEnabled": false,
+      "version": 1,
+      "webauthnProxyEnabled": true
+    },
+    "app_support_candidates": [],
+    "plan_usd_mo": "UNKNOWN",
+    "plan_name": "UNKNOWN",
+    "discovery_note": "No local plan-tier file found with certainty; public plans Free/10/30/100/300. Owner must confirm account UI."
+  },
+  "chatgpt": {
+    "codex_present": true,
+    "plan_usd_mo": "UNKNOWN",
+    "plan_name": "UNKNOWN",
+    "discovery_note": "ChatGPT plan not readable from disk without account session; Plus=$20 Pro=100/200/500 public. Separate from API.",
+    "app_support_dirs": [
+      "com.openai.codex",
+      "OpenAI"
+    ]
+  },
+  "cursor": {
+    "owner_declared_usd_mo": 300,
+    "prepaid": true,
+    "source": "Owner"
+  },
+  "claude": {
+    "owner_declared_sub_usd_mo": 25,
+    "source": "Owner",
+    "api_separate": true,
+    "public_pro_usd_mo": 20,
+    "public_team_standard_usd_mo": 25
+  },
+  "gemini": {
+    "key_name_present": true,
+    "key_value_nonempty": false,
+    "paid_allowed": false,
+    "policy": "NO_PAID_WITHOUT_OWNER_POLICY"
+  },
+  "openai_api": {
+    "key_name_present": true,
+    "key_value_nonempty": false
+  },
+  "anthropic_api": {
+    "key_name_present": true,
+    "key_value_nonempty": false,
+    "openclaw_mentions_anthropic": true,
+    "openclaw_mentions_haiku": true,
+    "openclaw_embeds_sk_ant": false
+  }
+}

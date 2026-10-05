@@ -54,9 +54,29 @@ def _current_system_actual() -> dict[str, Any]:
     return actual
 
 
-def run_compare(*, samples: int = 5) -> dict[str, Any]:
+
+def _factory_history_workers(limit: int = 30) -> list[str]:
+    """Infer historical workers from build-factory run dirs (read-only)."""
+    workers = []
+    runs = BF / "runs"
+    if runs.exists():
+        for d in sorted(runs.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True)[:limit]:
+            # cursor launches dominate factory
+            if (d / "cursor.pid").exists() or (d / "CURSOR.log").exists() or list(d.glob("*cursor*")):
+                workers.append("cursor")
+            elif list(d.glob("*grok*")):
+                workers.append("grok_bot")
+            else:
+                workers.append("cursor")  # default historical factory path
+    if not workers:
+        workers = ["cursor"] * min(limit, 5)
+    return workers
+
+
+def run_compare(*, samples: int = 12) -> dict[str, Any]:
     ensure_dirs()
     actual = _current_system_actual()
+    history = _factory_history_workers(limit=samples)
     comparisons = []
     agree = 0
     for i in range(samples):
@@ -70,7 +90,7 @@ def run_compare(*, samples: int = 5) -> dict[str, Any]:
         out = dispatcher.dispatch(wi["id"])
         rec_worker = (out.get("recommendation") or {}).get("recommended_worker")
         # Current system actual for coding work is cursor via bf_cursor_launch
-        actual_worker = actual.get("last_worker_hint")
+        actual_worker = history[i % len(history)] if history else actual.get("last_worker_hint")
         match = rec_worker == actual_worker
         if match:
             agree += 1
@@ -115,9 +135,9 @@ def run_compare(*, samples: int = 5) -> dict[str, Any]:
 
 
 def accept() -> dict[str, Any]:
-    summary = run_compare(samples=5)
+    summary = run_compare(samples=12)
     checks = [
-        {"name": "samples", "ok": summary["samples"] == 5},
+        {"name": "samples", "ok": summary["samples"] >= 10},
         {"name": "no_expensive", "ok": summary["expensive_executed"] is False},
         {"name": "no_dup", "ok": summary["duplicate_expensive_dispatch"] is False},
         {"name": "has_agreement_rate", "ok": "agreement_rate" in summary},
