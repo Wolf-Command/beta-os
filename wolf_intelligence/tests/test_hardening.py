@@ -3,14 +3,18 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import tempfile
+import threading
 import unittest
+import urllib.error
+import urllib.request
 from pathlib import Path
 from unittest import mock
 
-from wolf_intelligence import factory_history, ledger, paths, shadow_compare
+from wolf_intelligence import factory_history, learning, ledger, paths, shadow_compare, stats_store
 from wolf_intelligence.adapters.base import AdapterResult
-from wolf_intelligence.adapters.live_gate import LIVE_SUBMIT_ENV, MAX_COST_ENV, PROVIDER_MOCK_ENV
+from wolf_intelligence.adapters.live_gate import LIVE_SUBMIT_ENV, MAX_COST_ENV, PROVIDER_MOCK_ENV, cost_cap
 
 
 class FactoryHistoryTests(unittest.TestCase):
@@ -204,7 +208,10 @@ class AdapterGateTests(unittest.TestCase):
              mock.patch("wolf_intelligence.adapters.cursor.subprocess.run", return_value=_Done()) as run:
             result = CursorAdapter().submit({"execute": True, "prompt": shadow_compare.TINY_PROMPT, "work_item_id": "wi_cursor"})
         cmd = run.call_args.args[0]
-        self.assertEqual(cmd[1:4], ["--print", "--mode", "ask"])
+        self.assertEqual(cmd[1:6], ["--print", "--mode", "ask", "--trust", "--workspace"])
+        self.assertIn("wi-cursor-ask-", cmd[6])
+        self.assertEqual(cmd[-1], shadow_compare.TINY_PROMPT)
+        self.assertFalse(Path(cmd[6]).exists())
         self.assertEqual(result.status, "LIVE_OK")
         self.assertTrue(result.data.get("mocked"))
         self.assertEqual(result.data["usage"]["metered_usd"], "UNKNOWN")
@@ -367,6 +374,265 @@ class LedgerAndRealShadowTests(unittest.TestCase):
         self.assertEqual(row["recommended_worker"], "cursor")
         self.assertEqual(row["test_result"], "UNKNOWN")
         self.assertNotEqual(row["truth_label"], "SHADOW PROVED")
+
+
+class LiveSubmitDefaultsTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self._env = os.environ.copy()
+        os.environ.pop(LIVE_SUBMIT_ENV, None)
+        os.environ.pop(MAX_COST_ENV, None)
+        os.environ.pop(PROVIDER_MOCK_ENV, None)
+        os.environ.pop("OPENAI_API_KEY", None)
+
+    def tearDown(self) -> None:
+        os.environ.clear()
+        os.environ.update(self._env)
+
+    def test_live_submit_off_unless_execute_and_env(self) -> None:
+        from wolf_intelligence.__main__ import main
+        from wolf_intelligence.adapters.cursor import CursorAdapter
+        from wolf_intelligence.adapters.ollama import OllamaAdapter
+        with mock.patch("wolf_intelligence.adapters.ollama.urllib.request.urlopen") as opened, \
+             mock.patch("wolf_intelligence.adapters.cursor.subprocess.run") as run:
+            missing_env = OllamaAdapter().submit({"execute": True, "prompt": "ping"})
+            self.assertEqual(missing_env.status, "LIVE_DISABLED")
+            os.environ[LIVE_SUBMIT_ENV] = "1"
+            missing_execute = OllamaAdapter().submit({"shadow_isolated": True, "prompt": "ping"})
+            self.assertEqual(missing_execute.status, "SHADOW_OK")
+            self.assertFalse(missing_execute.data.get("provider_called"))
+            os.environ.pop(LIVE_SUBMIT_ENV, None)
+            cursor_off = CursorAdapter().submit({"execute": True, "prompt": "ping"})
+            self.assertEqual(cursor_off.status, "LIVE_DISABLED")
+            self.assertEqual(main(["live-submit", "--worker", "ollama", "--execute"]), 2)
+            os.environ[LIVE_SUBMIT_ENV] = "1"
+            self.assertEqual(main(["live-submit", "--worker", "ollama"]), 2)
+        opened.assert_not_called()
+        run.assert_not_called()
+
+    def test_paid_cost_cap_on_by_default(self) -> None:
+        from wolf_intelligence.adapters.openai_worker import OpenAIAPIAdapter
+        os.environ[LIVE_SUBMIT_ENV] = "1"
+        os.environ["OPENAI_API_KEY"] = "unit-test-openai-key"
+        self.assertIsNone(os.environ.get(MAX_COST_ENV))
+        self.assertIsNone(cost_cap({}))
+        with mock.patch("wolf_intelligence.adapters.live_gate.urllib.request.urlopen") as opened:
+            result = OpenAIAPIAdapter().submit({"execute": True, "prompt": "tiny"})
+        self.assertEqual(result.status, "GATED")
+        self.assertFalse(result.data.get("provider_called"))
+        opened.assert_not_called()
+
+    def test_no_hardcoded_cursor_hint(self) -> None:
+        root = Path(paths.PKG_ROOT)
+        hint = re.compile(
+            r"""last_worker_hint\s*[:=]\s*['\"]cursor['\"]"""
+            r"""|recommended_worker\s*=\s*['\"]cursor['\"]"""
+            r"""|default\s*=\s*['\"]cursor['\"]"""
+        )
+        hits = []
+        for path in root.rglob("*.py"):
+            if "tests" in path.parts:
+                continue
+            text = path.read_text(encoding="utf-8")
+            for i, line in enumerate(text.splitlines(), start=1):
+                if hint.search(line):
+                    hits.append(f"{path.name}:{i}:{line.strip()}")
+        self.assertEqual(hits, [])
+        router_src = (root / "router.py").read_text(encoding="utf-8")
+        self.assertNotIn('"cursor"', router_src)
+        self.assertNotIn("'cursor'", router_src)
+        from wolf_intelligence.router import recommend
+        with mock.patch("wolf_intelligence.router.ADAPTER_REGISTRY", {}):
+            out = recommend({"id": "wi_no_default", "kind": "code_debug"})
+        self.assertIsNone(out["recommendation"]["recommended_worker"])
+        self.assertNotEqual(out["recommendation"]["recommended_worker"], "cursor")
+
+
+class LearningActorTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        base = Path(self.tmp.name)
+        self._outcomes = learning.OUTCOMES_PATH
+        self._weights = learning.WEIGHTS_PATH
+        self._stats = stats_store.STATS_PATH
+        self._summary = stats_store.SUMMARY_PATH
+        learning.OUTCOMES_PATH = base / "outcomes.jsonl"
+        learning.WEIGHTS_PATH = base / "weights.json"
+        stats_store.STATS_PATH = base / "stats.json"
+        stats_store.SUMMARY_PATH = base / "stats-summary.json"
+
+    def tearDown(self) -> None:
+        learning.OUTCOMES_PATH = self._outcomes
+        learning.WEIGHTS_PATH = self._weights
+        stats_store.STATS_PATH = self._stats
+        stats_store.SUMMARY_PATH = self._summary
+        self.tmp.cleanup()
+
+    def test_outcome_without_actor_never_counts_as_human(self) -> None:
+        rec = learning.record_outcome(
+            "wi_x",
+            human_passed=True,
+            human_rating=4,
+            notes="no actor",
+            source="owner_ui",
+        )
+        self.assertIn(rec.get("actor"), (None, ""))
+        self.assertEqual(rec.get("source"), "synthetic")
+        self.assertEqual(rec.get("effective_source"), "synthetic")
+        self.assertTrue(rec.get("synthetic"))
+        self.assertFalse(learning.is_real_human_outcome(rec))
+        stats = stats_store.recompute()
+        self.assertEqual(stats["outcomes_total"], 1)
+        self.assertEqual(stats["outcomes_human"], 0)
+        self.assertEqual(stats["human_passes"], 0)
+        weights = json.loads(learning.WEIGHTS_PATH.read_text(encoding="utf-8"))
+        self.assertEqual(weights["models"], {})
+
+    def test_outcome_with_actor_counts_as_human(self) -> None:
+        rec = learning.record_outcome(
+            "wi_y",
+            human_passed=True,
+            human_rating=4,
+            actor="matt",
+            source="owner_ui",
+        )
+        self.assertEqual(rec.get("actor"), "matt")
+        self.assertEqual(rec.get("source"), "owner_ui")
+        self.assertEqual(rec.get("effective_source"), "human")
+        self.assertTrue(learning.is_real_human_outcome(rec))
+        stats = stats_store.recompute()
+        self.assertEqual(stats["outcomes_human"], 1)
+        self.assertEqual(stats["human_passes"], 1)
+
+    def test_existing_actorless_rows_recompute_to_zero(self) -> None:
+        rows = [
+            {"effective_source": "human", "human_passed": True, "notes": "human wins", "source": None},
+            {"effective_source": "human_passed_bool", "human_passed": True, "notes": "harden human pass sample"},
+            {"effective_source": "human", "human_passed": True, "actor": "", "source": "owner_ui", "notes": "owner ui harden test"},
+        ]
+        learning.OUTCOMES_PATH.write_text(
+            "".join(json.dumps(row) + "\n" for row in rows),
+            encoding="utf-8",
+        )
+        stats = stats_store.recompute()
+        self.assertEqual(stats["outcomes_total"], 3)
+        self.assertEqual(stats["outcomes_human"], 0)
+        self.assertEqual(stats["human_passes"], 0)
+
+
+class OwnerUiAuthTests(unittest.TestCase):
+    TOKEN = "ui-test-tok"
+
+    def setUp(self) -> None:
+        self._env = os.environ.copy()
+        os.environ.pop(paths.UI_TOKEN_ENV, None)
+        self.tmp = tempfile.TemporaryDirectory()
+        base = Path(self.tmp.name)
+        self._outcomes = learning.OUTCOMES_PATH
+        self._weights = learning.WEIGHTS_PATH
+        self._stats = stats_store.STATS_PATH
+        self._summary = stats_store.SUMMARY_PATH
+        self._audit = __import__("wolf_intelligence.owner_ui_server", fromlist=["AUDIT_DIR"])
+        from wolf_intelligence import owner_ui_server
+        self.ui = owner_ui_server
+        self._audit_dir = owner_ui_server.AUDIT_DIR
+        learning.OUTCOMES_PATH = base / "outcomes.jsonl"
+        learning.WEIGHTS_PATH = base / "weights.json"
+        stats_store.STATS_PATH = base / "stats.json"
+        stats_store.SUMMARY_PATH = base / "stats-summary.json"
+        owner_ui_server.AUDIT_DIR = base / "audit"
+        owner_ui_server.AUDIT_DIR.mkdir()
+        from wolf_intelligence.owner_ui_server import Handler, ReuseHTTPServer
+        self.server = ReuseHTTPServer(("127.0.0.1", 0), Handler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.assertEqual(self.server.server_address[0], "127.0.0.1")
+
+    def tearDown(self) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=3)
+        learning.OUTCOMES_PATH = self._outcomes
+        learning.WEIGHTS_PATH = self._weights
+        stats_store.STATS_PATH = self._stats
+        stats_store.SUMMARY_PATH = self._summary
+        self.ui.AUDIT_DIR = self._audit_dir
+        os.environ.clear()
+        os.environ.update(self._env)
+        self.tmp.cleanup()
+
+    def _post(self, body: dict, headers: dict | None = None):
+        host, port = self.server.server_address
+        req = urllib.request.Request(
+            f"http://{host}:{port}/api/human-decision",
+            data=json.dumps(body).encode(),
+            headers=headers or {},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                return resp.status, resp.read()
+        except urllib.error.HTTPError as exc:
+            return exc.code, exc.read()
+
+    def test_no_token_gives_401(self) -> None:
+        os.environ.pop(paths.UI_TOKEN_ENV, None)
+        code, raw = self._post({"work_item_id": "wi", "decision": "PASS", "actor": "matt"})
+        self.assertEqual(code, 401)
+        self.assertNotIn(self.TOKEN.encode(), raw)
+        log = (self.ui.AUDIT_DIR / "owner-ui-access.log").read_text(encoding="utf-8")
+        self.assertNotIn(self.TOKEN, log)
+
+    def test_wrong_token_gives_401(self) -> None:
+        os.environ[paths.UI_TOKEN_ENV] = self.TOKEN
+        code, raw = self._post(
+            {"work_item_id": "wi", "decision": "PASS", "actor": "matt"},
+            {"Authorization": "Bearer wrong-token"},
+        )
+        self.assertEqual(code, 401)
+        self.assertNotIn(self.TOKEN.encode(), raw)
+        log = (self.ui.AUDIT_DIR / "owner-ui-access.log").read_text(encoding="utf-8")
+        self.assertNotIn(self.TOKEN, log)
+        self.assertNotIn("wrong-token", log)
+
+    def test_right_token_gives_200(self) -> None:
+        from wolf_intelligence import work_items
+        os.environ[paths.UI_TOKEN_ENV] = self.TOKEN
+        wi = work_items.create(title="ui auth unit", kind="review", isolated_safe=True)
+        code, raw = self._post(
+            {"work_item_id": wi["id"], "decision": "PASS", "actor": "matt"},
+            {"Authorization": "Bearer " + self.TOKEN},
+        )
+        self.assertEqual(code, 200, raw)
+        body = json.loads(raw.decode())
+        self.assertTrue(body["ok"])
+        rows = [
+            json.loads(line)
+            for line in learning.OUTCOMES_PATH.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        self.assertTrue(any(row.get("actor") == "matt" and row.get("source") == "owner_ui" for row in rows))
+        log = (self.ui.AUDIT_DIR / "owner-ui-access.log").read_text(encoding="utf-8")
+        self.assertNotIn(self.TOKEN, log)
+
+    def test_right_token_without_actor_is_400(self) -> None:
+        from wolf_intelligence import work_items
+        os.environ[paths.UI_TOKEN_ENV] = self.TOKEN
+        wi = work_items.create(title="ui actor required", kind="review", isolated_safe=True)
+        code, _raw = self._post(
+            {"work_item_id": wi["id"], "decision": "PASS"},
+            {"Authorization": "Bearer " + self.TOKEN},
+        )
+        self.assertEqual(code, 400)
+
+    def test_suite_has_no_pytest_dependency(self) -> None:
+        text = Path(__file__).read_text(encoding="utf-8")
+        imports = [
+            line.strip()
+            for line in text.splitlines()
+            if line.startswith("import ") or line.startswith("from ")
+        ]
+        self.assertTrue(imports)
+        self.assertFalse(any("pytest" in line for line in imports))
 
 
 if __name__ == "__main__":

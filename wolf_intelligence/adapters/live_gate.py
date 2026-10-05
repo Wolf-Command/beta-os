@@ -45,6 +45,12 @@ def unsupported(message: str) -> AdapterResult:
 
 
 def cost_cap(job: dict[str, Any]) -> float | None:
+    """Per-call paid cap. Unset means the cap is on: callers must refuse, not spend.
+
+    There is no unlimited default. A missing job cap and a missing
+    WOLF_INTELLIGENCE_MAX_COST_USD both return None, and paid adapters treat
+    None as GATED.
+    """
     raw = job.get("max_cost_usd")
     if raw is None or raw == "":
         raw = os.environ.get(MAX_COST_ENV)

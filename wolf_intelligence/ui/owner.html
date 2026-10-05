@@ -36,6 +36,10 @@
 <header>
   <h1>Wolf Intelligence</h1>
   <div class="sub">What needs you · what is ready · what is running</div>
+  <div class="sub" style="margin-top:8px;display:flex;gap:8px">
+    <label>Name <input id="actor" autocomplete="username" style="width:7rem;background:#0a1018;color:#eef3f8;border:1px solid #243041;border-radius:6px;padding:4px"/></label>
+    <label>Token <input id="token" type="password" autocomplete="current-password" style="width:7rem;background:#0a1018;color:#eef3f8;border:1px solid #243041;border-radius:6px;padding:4px"/></label>
+  </div>
   <div class="bar" id="stats"></div>
 </header>
 <main>
@@ -97,20 +101,33 @@ async function load() {
   document.getElementById('tech').textContent = JSON.stringify(data._tech || {}, null, 2);
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function restoreIdentity(){
+  const actor = sessionStorage.getItem('wi_actor') || '';
+  const token = sessionStorage.getItem('wi_token') || '';
+  const actorEl = document.getElementById('actor');
+  const tokenEl = document.getElementById('token');
+  if (actorEl) actorEl.value = actor;
+  if (tokenEl) tokenEl.value = token;
+}
+restoreIdentity();
 load(); setInterval(load, 5000);
-</script>
-</body>
-</html>
-
-<script>
 async function humanDecide(id, decision){
+  const actor = (document.getElementById('actor').value || '').trim();
+  const token = (document.getElementById('token').value || '').trim();
+  if (!actor) { alert('Enter your name first'); return; }
+  sessionStorage.setItem('wi_actor', actor);
+  if (token) sessionStorage.setItem('wi_token', token);
+  const headers = {'Content-Type':'application/json'};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
   const urls = ['/api/wolf-intelligence/human-decision','/api/human-decision','http://127.0.0.1:8799/api/human-decision'];
   for (const u of urls){
     try{
-      const r = await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({work_item_id:id,decision})});
+      const r = await fetch(u,{method:'POST',headers,body:JSON.stringify({work_item_id:id,decision,actor})});
       if(r.ok){ load(); return; }
     }catch(e){}
   }
   alert('Could not save decision');
 }
 </script>
+</body>
+</html>

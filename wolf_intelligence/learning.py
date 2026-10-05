@@ -18,6 +18,18 @@ def now_iso() -> str:
     return datetime.now(TZ).isoformat(timespec="seconds")
 
 
+def is_real_human_outcome(rec: dict[str, Any]) -> bool:
+    """A row counts as human only with a real actor and a non-synthetic source."""
+    if not isinstance(rec, dict):
+        return False
+    if rec.get("source") == "synthetic" or rec.get("synthetic") is True:
+        return False
+    actor = rec.get("actor")
+    if not (isinstance(actor, str) and actor.strip()):
+        return False
+    return str(rec.get("effective_source") or "").startswith("human")
+
+
 def record_outcome(
     work_item_id: str,
     *,
@@ -28,11 +40,20 @@ def record_outcome(
     model_id: str | None = None,
     worker_id: str | None = None,
     source: str | None = None,
+    actor: str | None = None,
 ) -> dict[str, Any]:
-    """Human fields dominate. Self-eval stored but never overrides human."""
+    """Human fields dominate only when a named actor recorded them.
+
+    Demo and harden rows may set human_passed without an actor. Those are
+    stored as synthetic and do not move weights or HUMAN_PASSED.
+    """
     ensure_dirs()
     item = work_items.get(work_item_id)
-    rec = {
+    wants_human = human_passed is not None or human_rating is not None
+    actor_s = actor.strip() if isinstance(actor, str) else ""
+    if wants_human and not actor_s:
+        source = source or "synthetic"
+    rec: dict[str, Any] = {
         "at": now_iso(),
         "work_item_id": work_item_id,
         "model_id": model_id or ((item or {}).get("recommendation") or {}).get("recommended_model_id"),
@@ -43,32 +64,39 @@ def record_outcome(
         "human_dominates": True,
         "notes": notes,
         "source": source,
+        "actor": actor_s or None,
+        "synthetic": (source == "synthetic") or (wants_human and not actor_s),
     }
-    # Effective score: human if present else UNKNOWN (not self-eval)
-    if human_rating is not None:
-        rec["effective_rating"] = human_rating
-        rec["effective_source"] = "human"
-    elif human_passed is not None:
-        rec["effective_rating"] = 5 if human_passed else 1
-        rec["effective_source"] = "human_passed_bool"
+    if wants_human and actor_s and source != "synthetic":
+        if human_rating is not None:
+            rec["effective_rating"] = human_rating
+            rec["effective_source"] = "human"
+        else:
+            rec["effective_rating"] = 5 if human_passed else 1
+            rec["effective_source"] = "human_passed_bool"
+    elif wants_human:
+        rec["effective_rating"] = human_rating if human_rating is not None else (5 if human_passed else 1)
+        rec["effective_source"] = "synthetic"
+        rec["source"] = "synthetic"
+        rec["synthetic"] = True
     else:
         rec["effective_rating"] = None
         rec["effective_source"] = "UNKNOWN_pending_human"
-        # self-eval may be stored for later comparison only
         rec["self_eval_only"] = self_eval_rating
     with OUTCOMES_PATH.open("a", encoding="utf-8") as f:
         f.write(json.dumps(rec, ensure_ascii=False) + "\n")
     events.emit("outcome.recorded", rec, work_item_id=work_item_id)
-    if human_passed is not None or human_rating is not None:
+    real_human = is_real_human_outcome(rec)
+    if real_human:
         events.emit("outcome.human_override", {"dominates_self_eval": True}, work_item_id=work_item_id)
     _recompute_weights()
     if item:
         outs = list(item.get("outcomes") or [])
         outs.append(rec)
         work_items.update_fields(work_item_id, outcomes=outs)
-        if human_passed is True and item.get("state") == "READY_TO_TEST":
+        if real_human and human_passed is True and item.get("state") == "READY_TO_TEST":
             work_items.transition(work_item_id, "HUMAN_PASSED", reason="human learning outcome")
-        elif human_passed is False and item.get("state") in ("READY_TO_TEST", "NEEDS_YOU"):
+        elif real_human and human_passed is False and item.get("state") in ("READY_TO_TEST", "NEEDS_YOU"):
             work_items.transition(work_item_id, "BLOCKED", reason="human failed outcome")
     return rec
 
@@ -86,7 +114,7 @@ def _recompute_weights() -> dict[str, Any]:
                     rec = json.loads(line)
                 except json.JSONDecodeError:
                     continue
-                if rec.get("effective_source") in (None, "UNKNOWN_pending_human"):
+                if not is_real_human_outcome(rec):
                     continue
                 key = rec.get("model_id") or rec.get("worker_id") or "unknown"
                 t = tallies.setdefault(key, {"n_human": 0, "sum_rating": 0.0, "passes": 0, "fails": 0})
@@ -124,8 +152,8 @@ def demo_cycle() -> dict[str, Any]:
     work_items.update_fields(
         wi["id"],
         recommendation={
-            "recommended_model_id": "cursor-agent",
-            "recommended_worker": "cursor",
+            "recommended_model_id": None,
+            "recommended_worker": None,
             "mode": "SHADOW",
         },
     )
@@ -137,8 +165,16 @@ def demo_cycle() -> dict[str, Any]:
     # Self-eval alone must NOT pass
     self_only = record_outcome(wi["id"], self_eval_rating=5, notes="self-eval only")
     assert self_only["effective_source"] == "UNKNOWN_pending_human"
-    # Human dominates
-    human = record_outcome(wi["id"], human_passed=True, human_rating=4, self_eval_rating=5, notes="human wins")
+    # Demo human fields are synthetic. They must not count as a person.
+    human = record_outcome(
+        wi["id"],
+        human_passed=True,
+        human_rating=4,
+        self_eval_rating=5,
+        notes="human wins",
+        source="synthetic",
+        actor=None,
+    )
     item = work_items.get(wi["id"])
     weights = json.loads(WEIGHTS_PATH.read_text()) if WEIGHTS_PATH.exists() else {}
     return {
@@ -146,6 +182,8 @@ def demo_cycle() -> dict[str, Any]:
         "final_state": item["state"] if item else None,
         "self_only_source": self_only["effective_source"],
         "human_source": human["effective_source"],
+        "human_is_real": is_real_human_outcome(human),
+        "human_synthetic": human.get("synthetic") is True,
         "human_dominates": human["human_dominates"],
         "weights_has_cursor": "cursor-agent" in (weights.get("models") or {}),
     }
@@ -155,9 +193,9 @@ def accept() -> dict[str, Any]:
     demo = demo_cycle()
     checks = [
         {"name": "self_eval_not_effective", "ok": demo["self_only_source"] == "UNKNOWN_pending_human"},
-        {"name": "human_effective", "ok": demo["human_source"].startswith("human")},
-        {"name": "human_passed_state", "ok": demo["final_state"] == "HUMAN_PASSED"},
-        {"name": "weights_updated", "ok": demo["weights_has_cursor"]},
+        {"name": "synthetic_not_human", "ok": demo["human_source"] == "synthetic" and demo["human_is_real"] is False},
+        {"name": "state_stays_ready", "ok": demo["final_state"] == "READY_TO_TEST"},
+        {"name": "synthetic_flag", "ok": demo["human_synthetic"] is True},
     ]
     passed = all(c["ok"] for c in checks)
     out = {"phase": 4, "passed": passed, "checks": checks, "demo": demo}

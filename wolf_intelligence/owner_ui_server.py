@@ -5,25 +5,66 @@ Durable via LaunchAgent com.wolfcommand.wolf-intelligence-owner-ui.
 """
 from __future__ import annotations
 
+import hmac
 import json
 import os
-import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
 from urllib.parse import urlparse
 
 from . import work_items
 from . import stats_store
-from .paths import OWNER_UI_HOST, OWNER_UI_PORT, UI_DIR, WORKER_STATUS_PATH, ensure_dirs, AUDIT_DIR
+from .paths import OWNER_UI_HOST, OWNER_UI_PORT, UI_DIR, UI_TOKEN_ENV, WORKER_STATUS_PATH, ensure_dirs, AUDIT_DIR
 
 HTML = UI_DIR / "owner.html"
+_SESSION_COOKIE = "wolf_intelligence_session"
+
+
+def ui_token() -> str:
+    """Read the Owner UI token. Callers must not log the return value."""
+    return os.environ.get(UI_TOKEN_ENV, "").strip()
+
+
+def presented_token(headers) -> str:
+    auth = headers.get("Authorization") or ""
+    if len(auth) >= 7 and auth[:7].lower() == "bearer ":
+        return auth[7:].strip()
+    session = (headers.get("X-Wolf-Session") or "").strip()
+    if session:
+        return session
+    cookie = headers.get("Cookie") or ""
+    for part in cookie.split(";"):
+        name, _, value = part.strip().partition("=")
+        if name == _SESSION_COOKIE and value.strip():
+            return value.strip()
+    return ""
+
+
+def token_matches(presented: str, expected: str) -> bool:
+    if not presented or not expected:
+        return False
+    left = presented.encode("utf-8")
+    right = expected.encode("utf-8")
+    if len(left) != len(right):
+        return False
+    return hmac.compare_digest(left, right)
+
+
+def post_authorized(headers) -> bool:
+    """POST is allowed only when the env token is set and the request presents it."""
+    expected = ui_token()
+    if not expected:
+        return False
+    return token_matches(presented_token(headers), expected)
 
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt: str, *args) -> None:
+        """Log method and path only. Never the headers, so the token is not written."""
         try:
             ensure_dirs()
-            line = "%s - %s\n" % (self.log_date_time_string(), fmt % args)
+            AUDIT_DIR.mkdir(parents=True, exist_ok=True)
+            path = urlparse(self.path).path
+            line = "%s %s %s\n" % (self.log_date_time_string(), self.command, path)
             with (AUDIT_DIR / "owner-ui-access.log").open("a", encoding="utf-8") as f:
                 f.write(line)
         except OSError:
@@ -88,6 +129,9 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         length = int(self.headers.get("Content-Length") or 0)
         raw = self.rfile.read(length) if length else b"{}"
+        if not post_authorized(self.headers):
+            self._send(401, b'{"ok":false,"error":"unauthorized"}', "application/json")
+            return
         try:
             body = json.loads(raw.decode() or "{}")
         except json.JSONDecodeError:
@@ -98,8 +142,13 @@ class Handler(BaseHTTPRequestHandler):
             decision = (body.get("decision") or "").upper()
             rating = body.get("rating")
             notes = body.get("notes") or ""
+            actor = body.get("actor")
+            actor_s = actor.strip() if isinstance(actor, str) else ""
             if not wid or decision not in ("PASS", "FAIL", "NEEDS_YOU"):
                 self._send(400, b'{"ok":false,"error":"need work_item_id and decision PASS|FAIL|NEEDS_YOU"}', "application/json")
+                return
+            if decision in ("PASS", "FAIL") and not actor_s:
+                self._send(400, b'{"ok":false,"error":"actor_required"}', "application/json")
                 return
             from . import learning, work_items
             item = work_items.get(wid)
@@ -107,13 +156,27 @@ class Handler(BaseHTTPRequestHandler):
                 self._send(404, b'{"ok":false,"error":"not_found"}', "application/json")
                 return
             if decision == "PASS":
-                learning.record_outcome(wid, human_passed=True, human_rating=int(rating) if rating else 4, notes=notes or "owner pass", source="owner_ui")
+                learning.record_outcome(
+                    wid,
+                    human_passed=True,
+                    human_rating=int(rating) if rating else 4,
+                    notes=notes or "owner pass",
+                    source="owner_ui",
+                    actor=actor_s,
+                )
             elif decision == "FAIL":
-                learning.record_outcome(wid, human_passed=False, human_rating=int(rating) if rating else 1, notes=notes or "owner fail", source="owner_ui")
+                learning.record_outcome(
+                    wid,
+                    human_passed=False,
+                    human_rating=int(rating) if rating else 1,
+                    notes=notes or "owner fail",
+                    source="owner_ui",
+                    actor=actor_s,
+                )
             else:
                 if item["state"] in ("READY_TO_TEST", "RUNNING", "RECOMMENDED"):
                     work_items.transition(wid, "NEEDS_YOU", reason=notes or "owner flagged")
-                learning.record_outcome(wid, notes=notes or "needs you", self_eval_rating=None, source="owner_ui")
+                learning.record_outcome(wid, notes=notes or "needs you", self_eval_rating=None, source="owner_ui", actor=actor_s or None)
             item = work_items.get(wid)
             self._send(200, json.dumps({"ok": True, "item": {"id": wid, "state": item["state"]}}).encode(), "application/json")
             return
@@ -125,12 +188,19 @@ class ReuseHTTPServer(ThreadingHTTPServer):
 
 
 def main() -> int:
+    if OWNER_UI_HOST != "127.0.0.1":
+        print("OWNER_UI refusing non-loopback bind", flush=True)
+        return 2
     ensure_dirs()
     AUDIT_DIR.mkdir(parents=True, exist_ok=True)
     pid_path = AUDIT_DIR / "owner-ui.pid"
     pid_path.write_text(str(os.getpid()) + "\n", encoding="utf-8")
     server = ReuseHTTPServer((OWNER_UI_HOST, OWNER_UI_PORT), Handler)
-    print(f"OWNER_UI http://{OWNER_UI_HOST}:{OWNER_UI_PORT}/ pid={os.getpid()}", flush=True)
+    post_mode = "auth" if ui_token() else "read-only"
+    print(
+        f"OWNER_UI http://{OWNER_UI_HOST}:{OWNER_UI_PORT}/ pid={os.getpid()} post={post_mode}",
+        flush=True,
+    )
     try:
         server.serve_forever()
     except KeyboardInterrupt:

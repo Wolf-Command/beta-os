@@ -1,9 +1,9 @@
 {
   "updated_at": "2026-10-06T07:27:22+08:00",
   "outcomes_total": 18,
-  "outcomes_human": 5,
+  "outcomes_human": 0,
   "outcomes_self_eval_recorded": 16,
-  "human_passes": 5,
+  "human_passes": 0,
   "human_fails": 0,
   "shadow_samples": 12,
   "shadow_agreements": 0,
@@ -12,5 +12,5 @@
     "PARTIAL": 2,
     "UNAVAILABLE": 2
   },
-  "rule": "human > self-eval"
+  "rule": "human > self-eval; human counts require an actor"
 }
