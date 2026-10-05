@@ -1,0 +1,100 @@
+{
+  "at": "2026-10-05T22:43:54+08:00",
+  "pools": [
+    {
+      "id": "cursor_sub_300",
+      "provider": "cursor",
+      "billing": "subscription",
+      "monthly_usd": 300,
+      "prepaid": true,
+      "source": "Owner declared Cursor $300/mo prepaid",
+      "verified_owner_declared": true,
+      "used_usd_period": 0.0,
+      "remaining_usd_estimate": 300.0
+    },
+    {
+      "id": "claude_sub_25",
+      "provider": "anthropic",
+      "billing": "subscription",
+      "monthly_usd": 25,
+      "prepaid": true,
+      "source": "Owner declared Claude sub $25/mo separate from API",
+      "verified_owner_declared": true,
+      "public_team_standard_matches": true,
+      "used_usd_period": 0.0,
+      "remaining_usd_estimate": 25.0
+    },
+    {
+      "id": "grok_sub",
+      "provider": "xai_grok",
+      "billing": "subscription",
+      "monthly_usd": null,
+      "note": "No local plan-tier file found with certainty; public plans Free/10/30/100/300. Owner must confirm account UI.",
+      "plan_name": "UNKNOWN",
+      "discovered_at": "2026-10-05T22:36:13+08:00",
+      "used_usd_period": 0.0,
+      "remaining_usd_estimate": "UNKNOWN"
+    },
+    {
+      "id": "chatgpt_sub",
+      "provider": "openai",
+      "billing": "subscription",
+      "monthly_usd": null,
+      "note": "ChatGPT plan not readable from disk without account session; Plus=$20 Pro=100/200/500 public. Separate from API.",
+      "plan_name": "UNKNOWN",
+      "discovered_at": "2026-10-05T22:36:13+08:00",
+      "used_usd_period": 0.0,
+      "remaining_usd_estimate": "UNKNOWN"
+    },
+    {
+      "id": "openai_api",
+      "provider": "openai",
+      "billing": "api",
+      "monthly_usd": null,
+      "note": "Pay-as-you-go; avoid duplicate expensive dispatch in shadow",
+      "key_value_nonempty": false,
+      "status": "UNAVAILABLE_EMPTY_KEY",
+      "used_usd_period": 0.0,
+      "remaining_usd_estimate": "UNKNOWN"
+    },
+    {
+      "id": "anthropic_api",
+      "provider": "anthropic",
+      "billing": "api",
+      "monthly_usd": null,
+      "note": "Beta .env empty; OpenClaw may hold live Anthropic \u2014 do not copy secrets into commits",
+      "key_value_nonempty_beta_env": false,
+      "openclaw_may_hold_creds": true,
+      "used_usd_period": 0.0,
+      "remaining_usd_estimate": "UNKNOWN"
+    },
+    {
+      "id": "xai_api",
+      "provider": "xai_grok",
+      "billing": "api",
+      "monthly_usd": null,
+      "note": "Separate from SuperGrok subscription",
+      "used_usd_period": 0.0,
+      "remaining_usd_estimate": "UNKNOWN"
+    },
+    {
+      "id": "gemini_free",
+      "provider": "google_gemini",
+      "billing": "free",
+      "monthly_usd": 0,
+      "note": "No paid Gemini without Owner policy",
+      "key_value_nonempty": false,
+      "used_usd_period": 0.0,
+      "remaining_usd_estimate": 0.0
+    },
+    {
+      "id": "ollama_local",
+      "provider": "ollama_local",
+      "billing": "local",
+      "monthly_usd": 0,
+      "note": "Local free",
+      "used_usd_period": 0.0,
+      "remaining_usd_estimate": 0.0
+    }
+  ]
+}

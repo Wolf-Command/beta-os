@@ -24,11 +24,18 @@ def now_iso() -> str:
 
 def _current_system_actual() -> dict[str, Any]:
     """Read-only snapshot of current factory routing — do not dispatch."""
+    hist_path = Path("/Users/wolfterminal/beta-os/wolf_intelligence/config/factory-history-workers.json")
+    hist_hint = "cursor"
+    if hist_path.exists():
+        try:
+            hist_hint = json.loads(hist_path.read_text()).get("implied_primary_from_bf_cursor_launch") or "cursor"
+        except Exception:
+            pass
     actual = {
         "source": "build-factory read-only",
         "active": None,
         "supervisor_held": None,
-        "last_worker_hint": "cursor",  # factory uses bf_cursor_launch historically
+        "last_worker_hint": hist_hint,
     }
     active = BF / "ACTIVE"
     if active.exists():

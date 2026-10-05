@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-05T22:43:54+08:00",
+  "samples_scanned": 100,
+  "parsed_counts": {
+    "cursor": 96,
+    "unknown": 4
+  },
+  "implied_primary_from_bf_cursor_launch": "cursor",
+  "note": "JSON run files rarely name the worker; bf_cursor_launch.sh is the factory executor \u2014 treat historical actual as cursor unless grok markers found",
+  "sample_keys_example": {
+    "file": "BF-ae8e2ebfc9ed.json",
+    "worker": "cursor",
+    "keys": [
+      "approved_scope",
+      "blocker",
+      "cursor_log",
+      "cursor_pid",
+      "final_state",
+      "findings",
+      "fix_attempts",
+      "grok_plan_ref",
+      "human_commissioned",
+      "run_id",
+      "slice",
+      "staff_ready"
+    ]
+  }
+}

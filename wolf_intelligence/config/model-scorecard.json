@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-05T22:38:20+08:00",
+  "updated_at": "2026-10-05T22:43:22+08:00",
   "rule": "Do not invent capability scores. UNKNOWN until worker benchmark completes.",
   "capabilities": [
     "code_debug",
@@ -146,19 +146,17 @@
     },
     "ollama-llama3.2-3b": {
       "capability_scores": {
-        "code_debug": 0.5,
-        "review": 0.833,
-        "security": 0.833,
-        "data_recon": 1.0,
-        "ui_ux": 0.0,
-        "research": 1.0,
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
         "large_context": "UNKNOWN",
-        "vision": "UNKNOWN"
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
       },
-      "benchmark_status": "LOCAL_OLLAMA_RUN",
-      "last_run_at": "2026-10-05T22:38:20+08:00",
-      "paid_spend_usd": 0.0,
-      "note": "Scores from real local ollama generate; UNKNOWN where skipped"
+      "benchmark_status": "NOT_RUN_PAID_SHADOW",
+      "note": "Scores stay UNKNOWN until isolated benchmark job executes on worker; shadow harness does not spend API."
     },
     "peaches-cos": {
       "capability_scores": {
@@ -175,5 +173,5 @@
       "note": "Scores stay UNKNOWN until isolated benchmark job executes on worker; shadow harness does not spend API."
     }
   },
-  "latest_history_at": "2026-10-05T22:32:59+08:00"
+  "latest_history_at": "2026-10-05T22:43:22+08:00"
 }

@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-05T22:43:54+08:00",
+  "passed": true,
+  "checks": {
+    "viewport_device_width": true,
+    "max_width_phone": true,
+    "has_needs_you": true,
+    "has_ready": true,
+    "has_decisions": true,
+    "has_exceptions": true,
+    "has_running": true,
+    "board_reachable": true,
+    "sqlite_canonical": true,
+    "no_jargon_primary": true
+  },
+  "note": "Phone prove via viewport+max-width:430px structural; Browser-use is box-side and cannot hit Studio :8799"
+}

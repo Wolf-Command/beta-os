@@ -1,7 +1,7 @@
 {
-  "at": "2026-10-05T22:42:54+08:00",
-  "samples": 5,
-  "agreement_count": 5,
+  "at": "2026-10-05T22:43:23+08:00",
+  "samples": 12,
+  "agreement_count": 12,
   "agreement_rate": 1.0,
   "expensive_executed": false,
   "duplicate_expensive_dispatch": false,
@@ -14,8 +14,8 @@
   },
   "comparisons": [
     {
-      "at": "2026-10-05T22:42:54+08:00",
-      "work_item_id": "wi_4a60e37d3456",
+      "at": "2026-10-05T22:43:22+08:00",
+      "work_item_id": "wi_06d0123676e2",
       "kind": "code_debug",
       "recommended_worker": "cursor",
       "actual_current_system_worker": "cursor",
@@ -27,8 +27,8 @@
       "shadow_mode": true
     },
     {
-      "at": "2026-10-05T22:42:54+08:00",
-      "work_item_id": "wi_19ba7f76eb5e",
+      "at": "2026-10-05T22:43:22+08:00",
+      "work_item_id": "wi_5a5c244b9c33",
       "kind": "review",
       "recommended_worker": "cursor",
       "actual_current_system_worker": "cursor",
@@ -40,8 +40,8 @@
       "shadow_mode": true
     },
     {
-      "at": "2026-10-05T22:42:54+08:00",
-      "work_item_id": "wi_79fa3d522bfd",
+      "at": "2026-10-05T22:43:22+08:00",
+      "work_item_id": "wi_90acb6c7bc28",
       "kind": "security",
       "recommended_worker": "cursor",
       "actual_current_system_worker": "cursor",
@@ -53,8 +53,8 @@
       "shadow_mode": true
     },
     {
-      "at": "2026-10-05T22:42:54+08:00",
-      "work_item_id": "wi_f970c1997f25",
+      "at": "2026-10-05T22:43:22+08:00",
+      "work_item_id": "wi_b03b342e15fc",
       "kind": "data_recon",
       "recommended_worker": "cursor",
       "actual_current_system_worker": "cursor",
@@ -66,9 +66,100 @@
       "shadow_mode": true
     },
     {
-      "at": "2026-10-05T22:42:54+08:00",
-      "work_item_id": "wi_ae8ff4fc0c33",
+      "at": "2026-10-05T22:43:23+08:00",
+      "work_item_id": "wi_5c1f46f04583",
       "kind": "ui_ux",
+      "recommended_worker": "cursor",
+      "actual_current_system_worker": "cursor",
+      "agreement": true,
+      "expensive_executed": false,
+      "duplicate_expensive_dispatch": false,
+      "cost_diff_usd": 0.0,
+      "quality_diff": "UNKNOWN",
+      "shadow_mode": true
+    },
+    {
+      "at": "2026-10-05T22:43:23+08:00",
+      "work_item_id": "wi_24e6d80681f1",
+      "kind": "code_debug",
+      "recommended_worker": "cursor",
+      "actual_current_system_worker": "cursor",
+      "agreement": true,
+      "expensive_executed": false,
+      "duplicate_expensive_dispatch": false,
+      "cost_diff_usd": 0.0,
+      "quality_diff": "UNKNOWN",
+      "shadow_mode": true
+    },
+    {
+      "at": "2026-10-05T22:43:23+08:00",
+      "work_item_id": "wi_8fe24e3ef6d9",
+      "kind": "review",
+      "recommended_worker": "cursor",
+      "actual_current_system_worker": "cursor",
+      "agreement": true,
+      "expensive_executed": false,
+      "duplicate_expensive_dispatch": false,
+      "cost_diff_usd": 0.0,
+      "quality_diff": "UNKNOWN",
+      "shadow_mode": true
+    },
+    {
+      "at": "2026-10-05T22:43:23+08:00",
+      "work_item_id": "wi_a256d3a57a46",
+      "kind": "security",
+      "recommended_worker": "cursor",
+      "actual_current_system_worker": "cursor",
+      "agreement": true,
+      "expensive_executed": false,
+      "duplicate_expensive_dispatch": false,
+      "cost_diff_usd": 0.0,
+      "quality_diff": "UNKNOWN",
+      "shadow_mode": true
+    },
+    {
+      "at": "2026-10-05T22:43:23+08:00",
+      "work_item_id": "wi_7cee0d37a12c",
+      "kind": "data_recon",
+      "recommended_worker": "cursor",
+      "actual_current_system_worker": "cursor",
+      "agreement": true,
+      "expensive_executed": false,
+      "duplicate_expensive_dispatch": false,
+      "cost_diff_usd": 0.0,
+      "quality_diff": "UNKNOWN",
+      "shadow_mode": true
+    },
+    {
+      "at": "2026-10-05T22:43:23+08:00",
+      "work_item_id": "wi_1c011a51385e",
+      "kind": "ui_ux",
+      "recommended_worker": "cursor",
+      "actual_current_system_worker": "cursor",
+      "agreement": true,
+      "expensive_executed": false,
+      "duplicate_expensive_dispatch": false,
+      "cost_diff_usd": 0.0,
+      "quality_diff": "UNKNOWN",
+      "shadow_mode": true
+    },
+    {
+      "at": "2026-10-05T22:43:23+08:00",
+      "work_item_id": "wi_45c9e81a716c",
+      "kind": "code_debug",
+      "recommended_worker": "cursor",
+      "actual_current_system_worker": "cursor",
+      "agreement": true,
+      "expensive_executed": false,
+      "duplicate_expensive_dispatch": false,
+      "cost_diff_usd": 0.0,
+      "quality_diff": "UNKNOWN",
+      "shadow_mode": true
+    },
+    {
+      "at": "2026-10-05T22:43:23+08:00",
+      "work_item_id": "wi_ecfbba03b9fb",
+      "kind": "review",
       "recommended_worker": "cursor",
       "actual_current_system_worker": "cursor",
       "agreement": true,
