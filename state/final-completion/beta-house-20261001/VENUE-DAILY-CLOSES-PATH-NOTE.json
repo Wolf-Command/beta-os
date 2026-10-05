@@ -1,0 +1,29 @@
+{
+  "schema": "VENUE-DAILY-CLOSES-PATH-NOTE/v1",
+  "generated_at_wita": "2026-10-01T07:42:49+08:00",
+  "table": "catalog/content_library.sqlite :: venue_daily_closes",
+  "count": 0,
+  "role_bzg_closer_active": 1,
+  "why_still_zero": [
+    "Uma close desk / API exist but no nightly close rows have been filed into venue_daily_closes",
+    "Historical build-claims intentionally kept live count at 0 during SoD proves",
+    "Filing a close is an ops/staff workflow (ROLE-BZG-CLOSER seated) \u2014 not an Owner OAuth gate",
+    "No missing 1-file code path obvious: warehouse ESB fallback already wired for Owner pulse"
+  ],
+  "esb_fallback": {
+    "enough_for_uma_night_pulse": true,
+    "mechanism": "owner_pulse_ro._bzg_night_tile uses esb_close_snapshot.snapshot_day(BLZ) when venue_daily_closes empty",
+    "proved": {
+      "state": "LIVE",
+      "biz_date": "2026-09-30",
+      "finished": 50,
+      "covers": 87,
+      "grand_total_idr": 15140000.0,
+      "theoretical_consumption_only": true,
+      "settlement_api": "UNAVAILABLE/EXTERNAL"
+    }
+  },
+  "recommendation": "Document-only: keep ESB fallback for Uma night Owner glance; do not invent closes; staff close filing can proceed later without blocking FUNCTIONAL_PARITY pulse",
+  "fix": false,
+  "one_file_fix_obvious": false
+}

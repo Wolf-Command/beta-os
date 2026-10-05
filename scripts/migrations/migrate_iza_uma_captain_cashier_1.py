@@ -30,6 +30,12 @@ from core.scope import upsert_assignment_scope  # noqa: E402
 
 DB = ROOT / "catalog" / "content_library.sqlite"
 BACKUP_DIR = ROOT / "catalog" / "backups"
+
+# Owner P0 5 Oct 2026: retention/free-space guard (docs/BACKUP-RETENTION.md)
+import sys as _bp_sys  # noqa: E402
+if str(ROOT / "scripts") not in _bp_sys.path:
+    _bp_sys.path.insert(0, str(ROOT / "scripts"))
+from core.backup_policy import premig_backup  # noqa: E402
 MIGRATION_ID = "iza_uma_captain_cashier_1"
 PACK = "IZA-UMA-CAPTAIN-CASHIER-1"
 TZ8 = timezone(timedelta(hours=8))
@@ -339,7 +345,7 @@ def run(db_path: Path | None = None) -> dict:
     ts = now_iso()
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
     bak = BACKUP_DIR / f"pre-iza-uma-captain-cashier-1-{stamp()}.sqlite"
-    shutil.copy2(path, bak)
+    bak = premig_backup(path, bak)
     digest = _sha256(bak)
 
     conn = sqlite3.connect(str(path))

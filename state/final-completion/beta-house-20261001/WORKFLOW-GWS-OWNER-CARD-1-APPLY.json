@@ -1,0 +1,36 @@
+{
+  "pack": "WORKFLOW-GWS-OWNER-CARD-1",
+  "schema": "wolf.workflow-gws-owner-card-1.v1",
+  "applied_at_wita": "2026-10-01T07:59:52+08:00",
+  "executor": "Peaches-executor",
+  "phase": "WORKFLOW",
+  "prod_8787": "UNTOUCHED",
+  "prod_pid": 15975,
+  "beta_8788_pid_before": 94257,
+  "beta_8788_pid_after": 95169,
+  "write": false,
+  "gmail_send": false,
+  "mutations": [
+    "scripts/core/gws_draft_workflows1.py \u2014 owner_workflow_card + pulse CONSUMING",
+    "scripts/core/owner_pulse_ro.py \u2014 _gws_tile() into Owner Home pulse",
+    "beta :8788 restart only"
+  ],
+  "backup": "/Users/wolfterminal/beta-os/backups/beta-house-workflow-20261001/",
+  "proof": {
+    "gws_ro_workflow_pack": "WORKFLOW-GWS-OWNER-CARD-1",
+    "gmail_policy": "DRAFT_ONLY",
+    "pulse_tile_id": "gws_workflow",
+    "pulse_tile_state": "LIVE",
+    "pulse_counts_after": {
+      "tiles": 8,
+      "LIVE": 5,
+      "PARTIAL": 3,
+      "EMPTY": 0,
+      "BLOCKED": 0
+    },
+    "invented_counts": false,
+    "value": "Gmail DRAFT_ONLY \u00b7 Drive READ \u00b7 Calendar READ \u00b7 MCP surfaces 4"
+  },
+  "honesty": "Binds already-LIVE MCP GWS policy stamp into visible Owner pulse card. No message/event/file counts invented. Send/write OFF.",
+  "status": "APPLIED"
+}

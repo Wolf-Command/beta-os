@@ -1,1802 +1,723 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Uma Blu · Daily Close</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Uma Blu · Tonight's Close</title>
 <style>
   :root {
-    --bg: #0f1c24;
-    --bg2: #162833;
-    --bg3: #1e3542;
-    --line: #2a4554;
-    --text: #eef4f7;
-    --muted: #8aa0ad;
-    --accent: #3db8a0;
-    --warn: #e0a045;
-    --danger: #e05a4c;
-    --ok: #4ecf8a;
-    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --bg: #0b1220; --card: #121a2b; --line: #243049; --text: #f4f7fb;
+    --muted: #9aa7bd; --accent: #3d8bfd; --ok: #2ecc71; --warn: #f0b429; --bad: #e85d5d;
   }
   * { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0; background: var(--bg); color: var(--text);
-    font-family: var(--font); min-height: 100%;
-  }
   body {
-    padding: 16px 16px 64px;
-    max-width: 480px;
-    margin: 0 auto;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-    overflow-x: clip;
-    background:
-      radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
-      radial-gradient(ellipse 90% 60% at 100% 0%, #163028 0%, transparent 50%),
-      var(--bg);
+    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 12px 14px 96px;
+    -webkit-tap-highlight-color: transparent;
   }
-  .brand {
-    font-size: 1.55rem; font-weight: 700; letter-spacing: -0.03em;
-    margin: 0 0 2px;
+  h1 { font-size: 1.35rem; margin: 0 0 2px; }
+  .sub { color: #9aa7bd; margin: 0 0 14px; font-size: 0.92rem; }
+  .when { font-weight: 700; margin: 0 0 16px; font-size: 1.05rem; }
+  .msg { min-height: 1.2em; margin: 0 0 10px; color: #9aa7bd; font-size: 0.9rem; }
+  .msg.ok { color: var(--ok); } .msg.bad { color: var(--bad); }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 14px; margin: 0 0 14px;
   }
-  .brand em { font-style: normal; color: var(--accent); }
-  .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 18px; line-height: 1.35; }
-  .panel {
-    background: color-mix(in srgb, var(--bg2) 92%, #000);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 14px;
-    margin-bottom: 14px;
-  }
-  .panel h2 {
-    margin: 0 0 10px; font-size: 0.78rem; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--muted); font-weight: 650;
-  }
-  label { display: block; font-size: 0.8rem; color: var(--muted); margin: 10px 0 6px; }
-  input[type="date"], input[type="number"], input[type="text"], textarea {
-    width: 100%; appearance: none; border: 1px solid var(--line);
-    background: var(--bg3); color: var(--text); border-radius: 10px;
-    padding: 13px 12px; font: inherit; font-size: 1.05rem;
-  }
-  textarea { min-height: 72px; resize: vertical; }
+  .card h2 { margin: 0 0 10px; font-size: 1.02rem; letter-spacing: 0.02em; }
+  .kicker { color: #9aa7bd; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 6px; }
+  .line { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid rgba(36,48,73,0.65); font-size: 0.95rem; }
+  .line:last-child { border-bottom: 0; }
+  .line .lbl { color: #9aa7bd; }
+  .line .val { font-weight: 650; text-align: right; }
   .btn {
-    appearance: none; border: 1px solid var(--line); background: var(--bg3);
-    color: var(--text); border-radius: 12px; padding: 14px 16px;
-    font-size: 1rem; font-weight: 650; cursor: pointer; width: 100%;
-    margin-top: 10px; min-height: 44px;
+    display: block; width: 100%; margin: 8px 0 0; padding: 14px 16px; border-radius: 12px;
+    border: 1px solid var(--line); background: #1a2438; color: var(--text);
+    font-size: 1rem; font-weight: 700; cursor: pointer;
   }
-  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn-primary { background: #1f6b5c; border-color: #2a8a76; color: #fff; }
-  .btn-ok { background: rgba(78,207,138,0.12); border-color: rgba(78,207,138,0.4); color: var(--ok); }
-  .btn-warn { background: rgba(224,160,69,0.12); border-color: rgba(224,160,69,0.45); color: var(--warn); }
-  .state {
-    display: inline-block; padding: 5px 10px; border-radius: 999px;
-    border: 1px solid var(--line); font-size: 0.78rem; color: var(--muted);
-    margin-top: 4px;
-  }
-  .state.ok { color: var(--ok); border-color: rgba(78,207,138,0.45); }
-  .state.warn { color: var(--warn); border-color: rgba(224,160,69,0.45); }
-  .state.bad { color: var(--danger); border-color: rgba(224,90,76,0.45); }
-  .fig { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
-  .fig small { display: block; font-size: 0.72rem; font-weight: 500; color: var(--muted); margin-top: 2px; }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-  .msg { margin-top: 10px; font-size: 0.88rem; white-space: pre-wrap; }
-  .msg.err { color: var(--danger); }
-  .msg.ok { color: var(--ok); }
-  .muted { color: var(--muted); font-size: 0.78rem; line-height: 1.4; }
-  .exc {
-    border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px;
-  }
-  .exc:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
-  .who { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; }
-  .tabs { display: flex; gap: 8px; margin: 0 0 14px; }
-  .tabs button { width: auto; margin: 0; min-height: 44px; padding: 10px 16px; }
-  .tabs button.on { border-color: var(--accent); color: var(--accent); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-ok { background: var(--ok); border-color: var(--ok); color: #06210f; }
+  .btn-warn { background: var(--warn); border-color: var(--warn); color: #1a1400; }
+  .btn-huge { padding: 18px 16px; font-size: 1.15rem; margin-top: 12px; }
+  .btn:disabled { opacity: 0.45; }
   .hidden { display: none !important; }
-  .prev {
-    display: block; width: 100%; text-align: left; margin-top: 8px;
-    min-height: 44px;
+  .ok-pill { display: inline-block; background: rgba(46,204,113,0.15); color: var(--ok); padding: 4px 10px; border-radius: 999px; font-weight: 700; font-size: 0.85rem; }
+  .warn-box { background: rgba(240,180,41,0.12); border: 1px solid rgba(240,180,41,0.4); color: #ffe6a3; padding: 10px 12px; border-radius: 10px; margin: 8px 0; }
+  .bank { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin: 10px 0; }
+  .bank h3 { margin: 0 0 8px; font-size: 1rem; }
+  input[type=number], textarea, input[type=text] {
+    width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--line);
+    background: #0d1524; color: var(--text); font-size: 1rem; margin: 6px 0 8px;
   }
-  .chip {
-    display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px;
-    border: 1px solid rgba(61,184,160,0.45); color: var(--accent);
-    font-size: 0.72rem; font-weight: 650;
-  }
-  nav.uma { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; }
-  nav.uma a {
-    padding: 10px 12px; border-radius: 999px; border: 1px solid var(--line);
-    color: var(--muted); text-decoration: none; font-size: 0.84rem; font-weight: 650;
-    min-height: 44px; display: inline-flex; align-items: center;
-  }
-  nav.uma a.active { color: var(--accent); border-color: var(--accent); }
-  .photo-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-  .photo-actions .btn { margin-top: 0; }
-  .photo-preview {
-    display: none; width: 100%; max-height: 220px; object-fit: contain;
-    margin-top: 10px; border-radius: 10px; border: 1px solid var(--line);
-    background: #0a141a;
-  }
-  .photo-preview.show { display: block; }
-  .esb-unavail {
-    margin-top: 10px; padding: 12px; border-radius: 12px;
-    border: 1px solid rgba(224,90,76,0.55);
-    background: rgba(224,90,76,0.1); color: var(--danger);
-    font-size: 0.9rem; font-weight: 650; line-height: 1.35;
-  }
-  .esb-unavail .muted { color: #c98a84; margin-top: 6px; font-weight: 500; }
-  .esb-ok {
-    margin-top: 10px; padding: 10px 12px; border-radius: 12px;
-    border: 1px solid rgba(78,207,138,0.4);
-    background: rgba(78,207,138,0.08); color: var(--ok);
-    font-size: 0.85rem; font-weight: 650;
-  }
-  @media (max-width: 420px) {
-    body { padding-left: 12px; padding-right: 12px; }
-    .row { grid-template-columns: 1fr; }
-    .brand { font-size: 1.35rem; }
-    nav.uma a { flex: 1 1 calc(33.33% - 6px); justify-content: center; text-align: center; }
-    .photo-actions { grid-template-columns: 1fr; }
-  }
-
-  #esbDocReview .esb-sec { margin: 12px 0; padding: 10px; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; }
-  #esbDocReview .esb-sec h3 { margin: 0 0 8px; font-size: 14px; letter-spacing: 0.02em; }
-  #esbDocReview .esb-line { display: grid; grid-template-columns: 1fr 70px 120px; gap: 8px; align-items: center; margin: 6px 0; }
-  #esbDocReview .esb-line label { font-size: 13px; }
-  #esbDocReview .esb-uncertain { background: rgba(255, 180, 0, 0.12); border-radius: 8px; padding: 4px 6px; }
-  #esbDocReview .esb-badge { font-size: 11px; opacity: 0.75; margin-left: 6px; }
-  #esbDocReview input[type=number] { width: 100%; }
+  .lbl { display: block; color: #9aa7bd; font-size: 0.82rem; margin-top: 6px; }
+  img.preview { max-width: 100%; border-radius: 10px; margin: 8px 0; display: none; }
+  img.preview.show { display: block; }
+  .choose-list button { text-align: left; }
+  .done-banner { text-align: center; padding: 28px 12px; }
+  .done-banner .big { font-size: 1.6rem; color: var(--ok); font-weight: 800; margin: 8px 0; }
 </style>
 </head>
 <body>
-  <h1 class="brand">Uma Blu <em>Daily Close</em></h1>
-  <p class="sub">Phone close · ESB receipt + live API · Add EDC Receipt (0..N) · EDC≠QRIS · AI draft ≠ truth.</p>
-  <p class="banner info" id="umarealCut">Daily close history: checking the register.</p>
-  <div class="panel" id="cfgPanel" style="border-color: var(--warn)">
-    <h2>Outlet / EDC config</h2>
-    <div class="muted" id="cfgBox">Loading outlet config…</div>
-  </div>
-  <script>
-    fetch("/api/bzg/uma-blu/real/closes").then(function (r) { return r.json(); }).then(function (d) {
-      var el = document.getElementById("umarealCut");
-      if (!el || !d) return;
-      el.textContent = "Daily close history: " + (d.status || "NONE FOUND") + ". " + (d.policy || "");
-    }).catch(function () {
-      var el = document.getElementById("umarealCut");
-      if (el) el.textContent = "Daily close history: NONE FOUND";
-    });
-  </script>
-    <nav class="uma" aria-label="Uma Blu day">
-    <a href="/bzg/uma-blu">Today</a>
-    <a class="active" href="/uma-blu-close">Daily Close</a>
-    <a href="/bzg/uma-blu/issues">Issues</a>
-    <a href="/bzg/uma-blu/bills">Bills</a>
-    <a href="/bzg/uma-blu/bills#purchasing">Purchasing</a>
-    <a href="/bzg/uma-blu/evidence">Evidence</a>
-    <a href="/bzg/uma-blu/exceptions">Exceptions</a>
-    <a href="/my-work">My Work</a>
-    <a href="/bzg/uma-blu/petty">Petty cash</a>
-  </nav>
-  <div class="who" id="who">Checking who you are…</div>
-  <div class="tabs">
-    <button class="btn on" id="tabToday" type="button">Today</button>
-    <button class="btn" id="tabPrevious" type="button">Previous</button>
-  </div>
-  <p class="muted hidden" id="capNote"></p>
+  <h1>Uma Blu</h1>
+  <p class="sub" id="pageSub">Tonight's Close</p>
+  <p class="when" id="whenLabel"></p>
+  <p class="msg" id="msg"></p>
 
-  <div id="paneToday">
-  <div class="panel">
-    <h2>Today’s close</h2>
-    <label for="bizDate">Business date</label>
-    <input type="date" id="bizDate" />
-    <button class="btn btn-primary" id="btnOpen" data-cap="submit" type="button">Open close</button>
-    <div class="panel hidden" id="lockPanel" style="border-color: var(--warn); margin-top: 12px;">
-      <h2>Close lock</h2>
-      <div id="lockBox" class="muted">Checking holder…</div>
-      <label for="takeoverReason">Reason (required for Take Over / Reassign)</label>
-      <textarea id="takeoverReason" placeholder="Why are you taking over or reassigning this close?" disabled></textarea>
-      <label for="reassignTo" id="reassignToLabel" class="hidden">Reassign to person id</label>
-      <input type="text" id="reassignTo" class="hidden" placeholder="PERS-…" disabled />
-      <button class="btn btn-warn" id="btnTakeOver" type="button" disabled>Take Over Close</button>
-      <button class="btn" id="btnReassignShow" type="button" disabled>Reassign Close…</button>
-      <button class="btn btn-primary hidden" id="btnReassignConfirm" type="button" disabled>Confirm Reassign</button>
-      <p class="muted" id="lockNote" style="margin-top:8px">
-        Lock stays. Cashiers cannot steal. Prior photos, extracts, cash, EDC, QRIS, notes stay.
-      </p>
-    </div>
-    <div class="panel hidden" id="ownerControlPanel" style="border-color: var(--warn); margin-top: 12px;">
-      <h2>Owner Control</h2>
-      <p class="muted">Assignment-derived (ROLE-MATT). Audited. Reversible ops only — not money movement.</p>
-      <label for="ownerReason">Reason (required)</label>
-      <textarea id="ownerReason" placeholder="Why are you intervening?" disabled></textarea>
-      <label for="ownerReassignTo" id="ownerReassignToLabel" class="hidden">Correct assignment → person id</label>
-      <input type="text" id="ownerReassignTo" class="hidden" placeholder="PERS-…" disabled />
-      <div class="row" style="margin-top:8px; flex-wrap:wrap; gap:8px;">
-        <button class="btn btn-warn" id="btnOwnerUnlock" type="button" disabled>Unlock abandoned</button>
-        <button class="btn" id="btnOwnerOverride" type="button" disabled>Override lock</button>
-        <button class="btn" id="btnOwnerReturn" type="button" disabled>Return for correction</button>
-        <button class="btn" id="btnOwnerReopen" type="button" disabled>Reopen close</button>
-        <button class="btn" id="btnOwnerCancel" type="button" disabled>Cancel workflow</button>
-        <button class="btn btn-primary" id="btnOwnerCorrect" type="button" disabled>Correct assignment…</button>
+  <!-- CHOOSE -->
+  <section id="secChoose" class="card">
+    <h2>Open close</h2>
+    <div id="chooseList" class="choose-list"></div>
+    <button class="btn" id="btnRefreshDates" type="button">Refresh</button>
+  </section>
+
+  <!-- ONE PAGE CLOSE -->
+  <section id="secClose" class="hidden">
+
+    <!-- 1 ESB -->
+    <div class="card" id="cardEsb">
+      <p class="kicker">1 · Shift report</p>
+      <h2>ESB</h2>
+      <div id="esbStatus"></div>
+      <img class="preview" id="shiftPreview" alt="Shift report" />
+      <div class="photo-actions" id="shiftPhotoActions">
+        <button class="btn btn-primary" id="btnTakeShift" type="button">TAKE PHOTO</button>
+        <button class="btn" id="btnUploadShift" type="button">UPLOAD PHOTO</button>
       </div>
-      <p class="muted" id="ownerControlNote" style="margin-top:8px">Evidence kept. No silent mutation. No audit deletion.</p>
-    </div>
-    <button class="btn" id="btnCapture" data-cap="submit" type="button" disabled>Pull ESB sales (live API)</button>
-    <div id="esbLiveBanner"></div>
-    <div id="esbBox" class="muted" style="margin-top:10px"></div>
-    <div id="statusBox" style="margin-top:12px"></div>
-    <div class="msg" id="msg"></div>
-  </div>
-
-  <div class="panel">
-    <h2>ESB closing receipt</h2>
-    <p class="muted">Photograph the closing receipt. Live API + photo are dual sources. Mismatch = visible exception. AI is not truth.</p>
-    <div class="photo-actions">
-      <button class="btn btn-primary" id="btnEsbTakePhoto" data-cap="submit" type="button" disabled>Take Photo</button>
-      <button class="btn" id="btnEsbUploadPhoto" data-cap="submit" type="button" disabled>Upload Photo</button>
-    </div>
-    <input type="file" id="esbCam" accept="image/*" capture="environment" hidden />
-    <input type="file" id="esbFile" accept="image/*" hidden />
-    <img id="esbPreview" class="photo-preview" alt="ESB receipt preview" />
-    <p class="muted" id="esbPhotoStatus">No photo yet — Take Photo or Upload Photo.</p>
-    <input type="hidden" id="esbReceiptRef" value="" />
-    <input type="hidden" id="esbContentHash" value="" />
-    <p class="muted">Wolf captures the full receipt (sections + lines). Edit only uncertain fields. Raw labels are preserved. AI is not truth.</p>
-    <div id="esbDocReview" class="muted" style="margin-top:8px">No draft yet — Take/Upload Photo then Wolf reads, or Enter Manually.</div>
-    <input type="hidden" id="esbCash" value="" />
-    <input type="hidden" id="esbEdc" value="" />
-    <input type="hidden" id="esbQris" value="" />
-    <button class="btn" id="btnEsbExtract" data-cap="submit" type="button" disabled>Wolf reads receipt</button>
-    <button class="btn" id="btnEsbRetry" data-cap="submit" type="button" disabled>Retry Reading</button>
-    <button class="btn btn-warn" id="btnEsbManual" data-cap="submit" type="button" disabled>Enter Manually</button>
-    <button class="btn btn-ok" id="btnEsbLooks" data-cap="submit" type="button" disabled>Looks Correct</button>
-    <button class="btn btn-warn" id="btnEsbEdit" data-cap="submit" type="button" disabled>Edit &amp; confirm</button>
-    <div id="esbReceiptBox" class="muted" style="margin-top:10px">No ESB closing receipt yet.</div>
-  </div>
-
-  <div class="panel">
-    <h2>Add EDC Receipt</h2>
-    <p class="muted" id="edcCfgNote">Terminal inventory: checking…</p>
-    <p class="muted">0..N receipts/day. Free-text bank OK. Separate EDC card + QRIS — never merge. Unused terminals are not fake rows.</p>
-    <div class="photo-actions">
-      <button class="btn btn-primary" id="btnEdcTakePhoto" data-cap="submit" type="button" disabled>Take Photo</button>
-      <button class="btn" id="btnEdcUploadPhoto" data-cap="submit" type="button" disabled>Upload Photo</button>
-    </div>
-    <input type="file" id="edcCam" accept="image/*" capture="environment" hidden />
-    <input type="file" id="edcFile" accept="image/*" hidden />
-    <img id="edcPreview" class="photo-preview" alt="EDC receipt preview" />
-    <p class="muted" id="edcPhotoStatus">No photo yet — Take Photo or Upload Photo for this EDC.</p>
-    <input type="hidden" id="edcRef" value="" />
-    <input type="hidden" id="edcContentHash" value="" />
-    <label for="edcBank">Bank / acquirer</label>
-    <input type="text" id="edcBank" placeholder="e.g. Mandiri / BCA / BRI" disabled />
-    <label for="edcTerminal">Terminal (optional — only if known)</label>
-    <input type="text" id="edcTerminal" placeholder="label if known — no invented TID" disabled />
-    <label for="edcDate">Settlement / batch date</label>
-    <input type="date" id="edcDate" disabled />
-    <div class="row">
-      <div>
-        <label for="edcCardAmt">EDC card amount</label>
-        <input type="number" id="edcCardAmt" min="0" step="1000" placeholder="card only" disabled inputmode="decimal" />
+      <input type="file" id="shiftCam" accept="image/*,image/heic,image/heif,.heic,.heif" capture="environment" hidden />
+      <input type="file" id="shiftFile" accept="image/*,image/heic,image/heif,.heic,.heif" hidden />
+      <button class="btn btn-primary hidden" id="btnReadShift" type="button">Read shift report</button>
+      <div id="esbFigures" class="hidden"></div>
+      <div id="esbActions" class="hidden">
+        <button class="btn btn-ok" id="btnShiftCorrect" type="button">CORRECT</button>
+        <button class="btn" id="btnShiftEdit" type="button">VIEW / CORRECT</button>
       </div>
-      <div>
-        <label for="edcQrisAmt">QRIS amount</label>
-        <input type="number" id="edcQrisAmt" min="0" step="1000" placeholder="QRIS only" disabled inputmode="decimal" />
-      </div>
+      <div id="esbEditPanel" class="hidden"></div>
+      <p class="msg hidden" id="shiftSaveFail">PHOTO COULD NOT BE SAVED — try again</p>
     </div>
-    <label for="edcBatchRef">Batch / ref</label>
-    <input type="text" id="edcBatchRef" placeholder="optional" disabled />
-    <button class="btn" id="btnEdcExtract" data-cap="submit" type="button" disabled>Wolf reads EDC receipt</button>
-    <button class="btn btn-ok" id="btnEdcLooks" data-cap="submit" type="button" disabled>Looks Correct</button>
-    <button class="btn btn-warn" id="btnEdcEdit" data-cap="submit" type="button" disabled>Edit &amp; confirm</button>
-    <button class="btn btn-primary" id="btnEdc" data-cap="submit" type="button" disabled>Add EDC Receipt</button>
-    <div id="edcList" class="muted" style="margin-top:10px">No EDC receipts yet.</div>
-    <div id="edcTotals" class="muted"></div>
-    <p class="muted">TOTAL_EDC / TOTAL_QRIS / TOTAL_CARD_QRIS from confirmed receipts. ESB card ≠ EDC settlement.</p>
-  </div>
 
-  <div class="panel">
-    <h2>Cash count</h2>
-    <label for="cashAmt">Cash in the till (declared — not verified)</label>
-    <input type="number" id="cashAmt" min="0" step="1000" placeholder="Amount counted" disabled inputmode="decimal" />
-    <label for="zReportRef">POS / Z-report evidence ref (photo/file)</label>
-    <input type="text" id="zReportRef" placeholder="Required for till+Z path — e.g. photo://…" disabled />
-    <label for="cashNote">Optional note</label>
-    <input type="text" id="cashNote" placeholder="optional note" disabled />
-    <button class="btn" id="btnDeclare" data-cap="submit" type="button" disabled>Submit till + Z-report</button>
-    <p class="muted">Declared cash is never copied from ESB. ESB cash is payment lines only.</p>
-  </div>
-
-  <div class="panel">
-    <h2>Reconciliation board</h2>
-    <p class="muted">LIVE ESB operational data and ESB end-of-day closing receipt stay dual sources. Never overwrite.</p>
-    <div id="reconBox" class="muted">Open a close to see cash / EDC / QRIS expected vs confirmed.</div>
-    <div id="dualSourceBox" class="muted" style="margin-top:12px">Dual-source difference board appears after ESB pull + closing receipt confirm.</div>
-    <div id="bankSplitBox" class="muted" style="margin-top:12px">Bank-split EDC / QRIS (BNI / Mandiri) loads with recon.</div>
-    <button class="btn btn-ok" id="btnReconcile" data-cap="submit" type="button" disabled>Reconcile</button>
-    <button class="btn" id="btnReconRefresh" type="button" disabled>Refresh recon</button>
-  </div>
-
-  <div class="panel">
-    <h2>Exceptions needing you</h2>
-    <p class="muted">Only variance / policy gaps appear here — quiet when the day is clean.</p>
-    <div id="excList" class="muted">Loading…</div>
-  </div>
-  </div>
-
-  <div id="panePrevious" class="hidden">
-    <div class="panel">
-      <h2>Previous closes</h2>
-      <div id="prevList" class="muted">Loading…</div>
+    <!-- 2 BANKS -->
+    <div class="card" id="cardBanks">
+      <p class="kicker">2 · Bank receipts</p>
+      <h2>Bank receipts</h2>
+      <div id="bankCards"><p class="sub">Confirm the shift report first.</p></div>
+      <input type="file" id="bankFile" accept="image/*,image/heic,image/heif,.heic,.heif" capture="environment" hidden />
     </div>
-    <div class="panel hidden" id="prevDetail"></div>
-  </div>
 
-  <div class="panel">
-    <h2>What this screen can and cannot do</h2>
-    <div class="muted" id="honesty">BLOCKED BY BUSINESS POLICY. A till that does not match ESB stops. No threshold was invented. Closer seat is waiting. No person is assigned to the closing role. This screen does not pay or change a bank.</div>
-  </div>
+    <!-- 3 CASH -->
+    <div class="card" id="cardCash">
+      <p class="kicker">3 · Cash</p>
+      <h2>Cash count</h2>
+      <div id="cashLines"></div>
+      <label class="lbl" for="cashAmt">I COUNTED</label>
+      <input type="number" id="cashAmt" min="0" step="1000" placeholder="Amount counted" />
+      <button class="btn" id="btnCashPhoto" type="button">TAKE CASH PHOTO (optional)</button>
+      <input type="file" id="cashFile" accept="image/*" capture="environment" hidden />
+      <div id="cashDiff"></div>
+      <label class="lbl hidden" for="cashWhy" id="cashWhyLabel">WHY?</label>
+      <textarea id="cashWhy" class="hidden" rows="2" placeholder="Simple note"></textarea>
+      <button class="btn btn-primary" id="btnCashSave" type="button">SAVE COUNT</button>
+    </div>
+
+    <!-- 4 FINISH -->
+    <div class="card" id="cardFinish">
+      <p class="kicker">4 · Finish</p>
+      <h2>Finish close</h2>
+      <div id="finishSummary"></div>
+      <button class="btn btn-primary btn-huge" id="btnFinish" type="button">FINISH CLOSE</button>
+      <button class="btn btn-warn btn-huge hidden" id="btnFinishEx" type="button">FINISH WITH EXCEPTION</button>
+    </div>
+  </section>
+
+  <section id="secDone" class="card hidden">
+    <div class="done-banner">
+      <div class="ok-pill">✓ COMPLETE</div>
+      <div class="big" id="doneTitle">CLOSE SAVED</div>
+      <p id="doneBody" class="sub"></p>
+      <button class="btn" id="btnBackHome" type="button">Back</button>
+    </div>
+  </section>
 
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
   let close = null;
-  let me = null;
-  let policyCount = null;
-  let edcDraft = null;
-  let esbDraft = null;
-  let esbLiveStatus = null; // AVAILABLE | UNAVAILABLE | null
-  let esbPhotoB64 = null;
-  let esbPhotoMime = null;
-  let edcPhotoB64 = null;
-  let edcPhotoMime = null;
-  let caps = {
-    open: false, capture: false, declare: false, reconcile: false,
-    exception: false, resolve: false, verify: false, submit: false,
-    reassign: false, takeover: false
-  };
-  let lockHold = null;
-  let lockedOut = false;
-
-  function todayWITA() {
-    const d = new Date();
-    // Approximate local calendar date for operator phone
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
-  }
+  let wizard = null;
+  let selectedDate = "";
+  let shiftRef = "", shiftHash = "", shiftExtract = {};
+  let bankRef = "", bankHash = "", bankDraft = null, activeBank = "";
+  let cashRef = "", cashHash = "";
+  let lastCashSaved = null;
 
   function money(n) {
-    if (n == null || n === "") return "—";
-    return Number(n).toLocaleString("id-ID");
+    if (n == null || n === "" || Number.isNaN(Number(n))) return "—";
+    return "Rp" + Number(n).toLocaleString("id-ID");
   }
-
-  function stateClass(s) {
-    if (s === "VERIFIED_CLOSED") return "ok";
-    if (s === "VARIANCE_REQUIRES_POLICY" || s === "EXCEPTION" || s === "RESOLVED") return "warn";
-    if (s === "CANCELLED") return "bad";
-    return "";
+  function longDate(iso) {
+    if (!iso) return "";
+    const [y, m, d] = iso.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d, 4));
+    return dt.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Makassar" });
   }
-
-  function humanState(s) {
-    const map = {
-      OPEN: "Opened — pull ESB next",
-      DATA_CAPTURED: "ESB pulled — count cash",
-      EVIDENCE_SUBMITTED: "Cash declared — reconcile",
-      RECONCILED: "Reconciled",
-      VARIANCE_REQUIRES_POLICY: "Variance — needs policy / handover",
-      EXCEPTION: "Exception open",
-      RESOLVED: "Resolved — needs verify",
-      VERIFIED_CLOSED: "Closed & verified",
-      CANCELLED: "Cancelled",
-    };
-    return map[s] || s;
-  }
-
-  async function api(path, opts) {
-    const res = await fetch(path, {
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json", ...(opts && opts.headers) },
-      ...opts,
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || data.ok === false) {
-      const err = new Error(data.message || data.error || res.statusText);
-      err.data = data;
-      throw err;
-    }
-    return data;
-  }
-
   function setMsg(text, ok) {
     const el = $("msg");
     el.textContent = text || "";
-    el.className = "msg " + (ok ? "ok" : text ? "err" : "");
+    el.className = "msg" + (ok === true ? " ok" : ok === false ? " bad" : "");
   }
-
-  function hideLockPanel() {
-    lockHold = null;
-    lockedOut = false;
-    const panel = $("lockPanel");
-    if (panel) panel.classList.add("hidden");
-    if ($("reassignTo")) {
-      $("reassignTo").classList.add("hidden");
-      $("reassignTo").disabled = true;
-    }
-    if ($("reassignToLabel")) $("reassignToLabel").classList.add("hidden");
-    if ($("btnReassignConfirm")) $("btnReassignConfirm").classList.add("hidden");
+  function line(label, val) {
+    return `<div class="line"><span class="lbl">${label}</span><span class="val">${val}</span></div>`;
   }
-
-  function showLockPanel(holder, opts) {
-    const panel = $("lockPanel");
-    if (!panel) return;
-    lockHold = holder || null;
-    lockedOut = true;
-    const canGov = !!(caps.reassign || caps.takeover);
-    const name = (holder && (holder.taken_by_display_name || holder.taken_by_person_id)) || "another closer";
-    const takenAt = (holder && holder.taken_at) || "";
-    const work = (holder && holder.work) || {};
-    const bits = [];
-    bits.push(`This close is already taken by <strong>${name}</strong>.`);
-    if (takenAt) bits.push(`<div class="muted">Taken at ${takenAt}</div>`);
-    if (holder && holder.close_id) bits.push(`<div class="muted">Close ${holder.close_id}</div>`);
-    bits.push(
-      `<div class="muted" style="margin-top:6px">Preserved work: state ${work.state || "—"} · cash ${work.declared_cash_amount != null ? money(work.declared_cash_amount) : "—"} · EDC receipts ${work.edc_receipt_count || 0} · ESB receipt ${work.esb_closing_receipt_count || 0} · till ${work.till_evidence_count || 0}</div>`
-    );
-    if (!canGov) {
-      bits.push(`<p class="msg err" style="margin-top:8px">You cannot take this close. Ask a Captain / supervisor / Owner.</p>`);
-    }
-    $("lockBox").innerHTML = bits.join("");
-    panel.classList.remove("hidden");
-    $("takeoverReason").disabled = !canGov;
-    $("btnTakeOver").disabled = !canGov;
-    $("btnReassignShow").disabled = !canGov;
-    $("btnReassignConfirm").disabled = !canGov;
-    if (opts && opts.focusReason && canGov) $("takeoverReason").focus();
-  }
-
-  async function loadLockedClose(closeId) {
-    if (!closeId) return null;
-    try {
-      const data = await api("/api/venue-close/" + encodeURIComponent(closeId));
-      return data.close || null;
-    } catch (_e) {
-      return null;
-    }
-  }
-
-  async function probeTodayHolder() {
-    const date = $("bizDate").value || todayWITA();
-    try {
-      const data = await api(
-        "/api/venue-close/by-date?business_date=" + encodeURIComponent(date)
-      );
-      const row = data.close || null;
-      if (!row) {
-        hideLockPanel();
-        return;
-      }
-      const takenBy = (row.taken_by_person_id || "").trim();
-      const meId = (me && (me.person_id || me.id) || "").trim();
-      if (takenBy && meId && takenBy !== meId) {
-        const holder = {
-          close_id: row.close_id,
-          business_date: row.business_date,
-          state: row.state,
-          taken_by_person_id: takenBy,
-          taken_by_display_name: null,
-          taken_at: row.taken_at,
-          work: {
-            state: row.state,
-            declared_cash_amount: row.declared_cash_amount,
-            edc_receipt_count: (row.edc_receipts || []).length,
-            esb_closing_receipt_count: (row.esb_closing_receipts || []).length,
-            till_evidence_count: row.declared_cash_evidence_id ? 1 : 0,
-          },
-        };
-        // Prefer error-shaped holder when open already ran; else show from probe.
-        showLockPanel(holder);
-        // Read-only preview of prior work while locked.
-        close = row;
-        renderClose();
-      } else if (takenBy && meId && takenBy === meId) {
-        hideLockPanel();
-        close = row;
-        renderClose();
-      } else {
-        hideLockPanel();
-      }
-    } catch (_e) {
-      // by-date 404 / deny — no lock panel
-      hideLockPanel();
-    }
-  }
-
-  function renderEsbLiveBanner() {
-    const el = $("esbLiveBanner");
-    if (!el) return;
-    if (esbLiveStatus === "UNAVAILABLE") {
-      el.innerHTML =
-        `<div class="esb-unavail">ESB DATA UNAVAILABLE` +
-        `<div class="muted">No live sales for this business date. Empty is not zero sales. Retry pull, or photograph the closing receipt as the other dual source.</div></div>`;
-      return;
-    }
-    if (esbLiveStatus === "AVAILABLE" && close && close.esb_totals) {
-      el.innerHTML =
-        `<div class="esb-ok">Live ESB available for ${close.business_date || "today"} — payment lines (not settlement). Dual source: keep the closing receipt photo separate.</div>`;
-      return;
-    }
-    el.innerHTML = "";
-  }
-
-  function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(String(r.result || ""));
-      r.onerror = () => reject(new Error("Could not read photo"));
-      r.readAsDataURL(file);
-    });
-  }
-
-  async function uploadReceiptPhoto(file, kind) {
-    const fd = new FormData();
-    fd.append("file", file, file.name || kind + "-receipt.jpg");
-    fd.append("kind", kind);
-    if (close && close.close_id) fd.append("close_id", close.close_id);
-    const res = await fetch("/api/venue-close/receipt-photo", {
-      method: "POST",
-      credentials: "same-origin",
-      body: fd,
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || data.ok === false) {
-      const err = new Error(data.message || data.error || res.statusText);
-      err.data = data;
+  async function api(path, opts) {
+    const r = await fetch(path, Object.assign({ headers: { "Content-Type": "application/json", Accept: "application/json" } }, opts || {}));
+    const text = await r.text();
+    let data = {};
+    try { data = text ? JSON.parse(text) : {}; } catch (_e) { data = { raw: text }; }
+    if (!r.ok || data.ok === false) {
+      const msg = (data && (data.staff_message || data.message || data.error)) || ("Request failed (" + r.status + ")");
+      const err = new Error(String(msg).replace(/VDC-[a-f0-9-]+/gi, "this close").replace(/PERS-[A-Z0-9-]+/gi, "staff"));
       throw err;
     }
     return data;
   }
-
-  function showPreview(kind, file) {
-    const img = $(kind === "esb" ? "esbPreview" : "edcPreview");
-    const st = $(kind === "esb" ? "esbPhotoStatus" : "edcPhotoStatus");
-    if (!file) {
-      if (img) { img.classList.remove("show"); img.removeAttribute("src"); }
-      if (st) st.textContent = "No photo yet — Take Photo or Upload Photo.";
-      return;
-    }
-    if (img) {
-      img.src = URL.createObjectURL(file);
-      img.classList.add("show");
-    }
-    if (st) st.textContent = (file.name || "photo") + " · ready";
+  async function postPhoto(file, kind) {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("kind", kind || "esb");
+    if (close && close.close_id) fd.append("close_id", close.close_id);
+    if (selectedDate) fd.append("business_date", selectedDate);
+    const r = await fetch("/api/venue-close/receipt-photo", { method: "POST", body: fd });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || data.ok === false) throw new Error("PHOTO COULD NOT BE SAVED — try again");
+    if (data.close_id) close = { close_id: data.close_id, business_date: selectedDate || data.business_date };
+    return data;
   }
 
-  async function handlePhotoChosen(file, kind) {
-    if (!close) {
-      setMsg("Open a close first.");
-      return;
-    }
-    if (!file) return;
-    setMsg("");
-    showPreview(kind, file);
-    try {
-      const up = await uploadReceiptPhoto(file, kind);
-      const b64 = await fileToBase64(file);
-      if (kind === "esb") {
-        $("esbReceiptRef").value = up.object_ref || "";
-        $("esbContentHash").value = up.content_hash || "";
-        esbPhotoB64 = b64;
-        esbPhotoMime = file.type || up.mime_type || "image/jpeg";
-        $("esbPhotoStatus").textContent = "Photo stored · Wolf reading…";
-        await runEsbExtract(true);
-      } else {
-        $("edcRef").value = up.object_ref || "";
-        $("edcContentHash").value = up.content_hash || "";
-        edcPhotoB64 = b64;
-        edcPhotoMime = file.type || up.mime_type || "image/jpeg";
-        $("edcPhotoStatus").textContent = "Photo stored · Wolf reading…";
-        await runEdcExtract(true);
-      }
-    } catch (e) {
-      setMsg((e.data && e.data.message) || e.message || String(e));
-    }
-  }
-
-  function wirePhotoButtons() {
-    $("btnEsbTakePhoto").onclick = () => { if (!$("btnEsbTakePhoto").disabled) $("esbCam").click(); };
-    $("btnEsbUploadPhoto").onclick = () => { if (!$("btnEsbUploadPhoto").disabled) $("esbFile").click(); };
-    $("btnEdcTakePhoto").onclick = () => { if (!$("btnEdcTakePhoto").disabled) $("edcCam").click(); };
-    $("btnEdcUploadPhoto").onclick = () => { if (!$("btnEdcUploadPhoto").disabled) $("edcFile").click(); };
-    $("esbCam").onchange = () => {
-      const f = $("esbCam").files && $("esbCam").files[0];
-      handlePhotoChosen(f, "esb");
-      $("esbCam").value = "";
-    };
-    $("esbFile").onchange = () => {
-      const f = $("esbFile").files && $("esbFile").files[0];
-      handlePhotoChosen(f, "esb");
-      $("esbFile").value = "";
-    };
-    $("edcCam").onchange = () => {
-      const f = $("edcCam").files && $("edcCam").files[0];
-      handlePhotoChosen(f, "edc");
-      $("edcCam").value = "";
-    };
-    $("edcFile").onchange = () => {
-      const f = $("edcFile").files && $("edcFile").files[0];
-      handlePhotoChosen(f, "edc");
-      $("edcFile").value = "";
-    };
-  }
-
-  function renderClose() {
-    const box = $("statusBox");
-    const esb = $("esbBox");
-    if (!close) {
-      box.innerHTML = "";
-      esb.textContent = "";
-      esbLiveStatus = null;
-      renderEsbLiveBanner();
-      showOwnerControlPanel(false);
-      return;
-    }
-    const totals = close.esb_totals || {};
-    const st = close.state;
-    const hasLive = !!(close.esb_fingerprint_sha256 && totals && typeof totals.finished_count === "number");
-    if (hasLive && esbLiveStatus !== "UNAVAILABLE") esbLiveStatus = "AVAILABLE";
-    const showZeros = esbLiveStatus === "AVAILABLE";
-    box.innerHTML =
-      `<div class="state ${stateClass(st)}">${humanState(st)}</div>` +
-      `<div class="row">` +
-      `<div class="fig">${money(close.declared_cash_amount)}<small>Declared cash</small></div>` +
-      `<div class="fig">${showZeros ? money(totals.cash_from_payments) : "—"}<small>ESB cash (payments)</small></div>` +
-      `</div>` +
-      `<div class="row">` +
-      `<div class="fig">${money(close.variance_cash_amount)}<small>Variance</small></div>` +
-      `<div class="fig">${showZeros ? (totals.finished_count ?? "—") : "—"}<small>Finished bills</small></div>` +
-      `</div>` +
-      (st === "VARIANCE_REQUIRES_POLICY" && policyCount === 0
-        ? `<p class="muted" style="margin-top:8px">BLOCKED BY BUSINESS POLICY. Open an exception. It shows in <a href="/my-work">My Work</a>.</p>`
-        : "") +
-      (close.work_item_id
-        ? `<p class="muted" style="margin-top:8px"><a href="/my-work">Open in My Work</a></p>`
-        : "");
-
-    esb.textContent = showZeros && totals.cash_label
-      ? `ESB basis: ${totals.cash_label} — not settlement. Settlement API unavailable. Source: live warehouse payment lines for ${close.business_date || "today"} (not prior-day history).`
-      : (esbLiveStatus === "UNAVAILABLE" ? "" : "");
-    renderEsbLiveBanner();
-
-    const canCapture = !lockedOut && (st === "OPEN" || st === "DATA_CAPTURED") && !!caps.capture;
-    const canDeclare = !lockedOut && (st === "DATA_CAPTURED" || st === "EVIDENCE_SUBMITTED") && !!caps.declare;
-    const canRec = !lockedOut && (st === "EVIDENCE_SUBMITTED" || st === "VARIANCE_REQUIRES_POLICY") && !!caps.reconcile;
-    const canEdc = !lockedOut && !!close && st !== "VERIFIED_CLOSED" && st !== "CANCELLED" && !!caps.submit;
-    const canEsbR = canEdc && (st === "DATA_CAPTURED" || st === "EVIDENCE_SUBMITTED" || st === "VARIANCE_REQUIRES_POLICY" || st === "OPEN");
-    $("btnOpen").hidden = !caps.open;
-    $("btnCapture").hidden = !caps.capture;
-    $("btnDeclare").hidden = !caps.declare;
-    $("btnReconcile").hidden = !caps.reconcile;
-    $("btnEdc").hidden = !caps.submit;
-    $("btnCapture").disabled = !canCapture;
-    $("cashAmt").disabled = !canDeclare;
-    $("zReportRef").disabled = !canDeclare;
-    $("cashNote").disabled = !canDeclare;
-    $("btnDeclare").disabled = !canDeclare;
-    $("btnReconcile").disabled = !canRec;
-    $("btnReconRefresh").disabled = !close;
-    ["edcBank","edcTerminal","edcDate","edcCardAmt","edcQrisAmt","edcBatchRef","btnEdc","btnEdcExtract","btnEdcLooks","btnEdcEdit","btnEdcTakePhoto","btnEdcUploadPhoto"].forEach((id) => {
-      if ($(id)) $(id).disabled = !canEdc;
-    });
-    ["btnEsbExtract","btnEsbRetry","btnEsbManual","btnEsbLooks","btnEsbEdit","btnEsbTakePhoto","btnEsbUploadPhoto"].forEach((id) => {
-      if ($(id)) $(id).disabled = !canEsbR;
-    });
-    renderEdc(close);
-    // Restore previously uploaded ESB photo after refresh (do not force re-shoot)
-    if (close.pending_esb_photo && close.pending_esb_photo.object_ref) {
-      if (!($("esbReceiptRef").value || "").trim()) {
-        $("esbReceiptRef").value = close.pending_esb_photo.object_ref;
-        if (close.pending_esb_photo.content_hash) $("esbContentHash").value = close.pending_esb_photo.content_hash || "";
-      }
-      if ($("esbPhotoStatus") && !(close.esb_closing_receipts || []).length) {
-        $("esbPhotoStatus").textContent = "Stored photo on file — Retry Reading or Enter Manually";
-      }
-    }
-    renderEsbReceipt(close);
-    renderRecon(close);
-    showOwnerControlPanel(!!close && !!(caps.owner_control || caps.reopen || caps.cancel_close));
-  }
-
-  function renderEdc(cl) {
-    const el = $("edcList");
-    const tot = $("edcTotals");
-    if (!el) return;
-    const receipts = (cl && cl.edc_receipts) || [];
-    const rt = (cl && cl.receipt_totals) || {};
-    if (!receipts.length) {
-      el.textContent = "No EDC receipts yet. Add only banks used today (0..N).";
-      if (tot) tot.textContent = "";
-      return;
-    }
-    el.innerHTML = receipts.map((r) =>
-      `<div class="exc"><strong>${r.acquirer_label}</strong> · EDC ${money(r.edc_card_amount)} · QRIS ${money(r.qris_amount)} · total ${money(r.receipt_total)}` +
-      (r.duplicate_warn ? ` <span class="state warn">duplicate warn</span>` : "") +
-      `<div class="muted">${r.human_confirm_status}` +
-      (r.settlement_batch_date ? ` · ${r.settlement_batch_date}` : "") +
-      (r.batch_ref ? ` · ref ${r.batch_ref}` : "") +
-      ` · ${r.confirmed_by_person_id || ""}` +
-      `</div></div>`
-    ).join("");
-    if (tot) {
-      tot.innerHTML =
-        `<div class="row">` +
-        `<div class="fig">${money(rt.TOTAL_EDC)}<small>TOTAL_EDC</small></div>` +
-        `<div class="fig">${money(rt.TOTAL_QRIS)}<small>TOTAL_QRIS</small></div>` +
-        `</div>` +
-        `<div class="fig" style="margin-top:8px">${money(rt.TOTAL_CARD_QRIS)}<small>TOTAL_CARD_QRIS (EDC+QRIS, never merged labels)</small></div>`;
-    }
-  }
-
-  function renderEsbReceipt(cl) {
-    const el = $("esbReceiptBox");
-    if (!el) return;
-    const rows = (cl && cl.esb_closing_receipts) || [];
+  async function loadQueue() {
+    const data = await api("/api/venue-close/history-queue");
+    const rows = data.rows || data.items || data.queue || [];
+    const list = $("chooseList");
     if (!rows.length) {
-      el.textContent = "No ESB closing receipt yet. Photograph after ESB API pull.";
+      list.innerHTML = `<button class="btn btn-primary" id="btnStartToday" type="button">START TONIGHT'S CLOSE</button>`;
+      $("btnStartToday").onclick = () => openTonight();
       return;
     }
-    el.innerHTML = rows.map((r) =>
-      `<div class="exc">Cash ${money(r.cash_amount)} · EDC ${money(r.edc_card_amount)} · QRIS ${money(r.qris_amount)}` +
-      (r.api_mismatch ? ` <span class="state bad">API mismatch</span>` : ` <span class="state ok">matches API</span>`) +
-      `<div class="muted">${r.human_confirm_status} · dual source kept · no silent overwrite</div></div>`
-    ).join("");
+    list.innerHTML = rows.slice(0, 12).map((row) => {
+      const iso = row.business_date || row.date;
+      const label = row.staff_label || row.action_label || row.state || "OPEN";
+      const action = (row.action || row.primary_action || "OPEN").toUpperCase();
+      return `<button class="btn" type="button" data-iso="${iso}" data-action="${action}">${longDate(iso)} · ${label}</button>`;
+    }).join("") + `<button class="btn btn-primary" id="btnStartToday" type="button">TONIGHT</button>`;
+    list.querySelectorAll("[data-iso]").forEach((b) => {
+      b.onclick = () => openDate(b.getAttribute("data-iso"), b.getAttribute("data-action"));
+    });
+    const t = $("btnStartToday");
+    if (t) t.onclick = () => openTonight();
   }
 
-  function renderRecon(cl) {
-    const el = $("reconBox");
-    const dualEl = $("dualSourceBox");
-    const bankEl = $("bankSplitBox");
-    if (!el) return;
-    const b = (cl && cl.recon_board) || null;
-    if (!b) {
-      el.textContent = "Open a close to see cash / EDC / QRIS expected vs confirmed.";
-      if (dualEl) dualEl.textContent = "Dual-source difference board appears after ESB pull + closing receipt confirm.";
-      if (bankEl) bankEl.textContent = "Bank-split EDC / QRIS (BNI / Mandiri) loads with recon.";
-      return;
-    }
-    const cash = b.cash || {};
-    const edc = b.edc || {};
-    const qris = b.qris || {};
-    const ev = b.evidence_completeness || {};
-    el.innerHTML =
-      `<div class="row"><div class="fig">${money(cash.esb_expected)}<small>ESB cash tendered (payment lines)</small></div>` +
-      `<div class="fig">${money(cash.esb_cash_sales_grand)}<small>ESB cash sales grand</small></div>` +
-      `<div class="fig">${money(cash.declared_confirmed)}<small>Cash declared</small></div></div>` +
-      `<div class="muted">Cash variance (declared − tendered) ${money(cash.variance)}</div>` +
-      `<div class="row" style="margin-top:8px"><div class="fig">${money(edc.esb_expected)}<small>ESB EDC expected</small></div>` +
-      `<div class="fig">${money(edc.receipts_confirmed)}<small>EDC receipts confirmed</small></div></div>` +
-      `<div class="muted">EDC variance ${money(edc.variance)}</div>` +
-      `<div class="row" style="margin-top:8px"><div class="fig">${money(qris.esb_expected)}<small>ESB QRIS expected</small></div>` +
-      `<div class="fig">${money(qris.receipts_confirmed)}<small>QRIS receipts confirmed</small></div></div>` +
-      `<div class="muted">QRIS variance ${money(qris.variance)} · never merged into card</div>` +
-      (b.esb_api_vs_receipt_mismatch
-        ? `<p class="msg err">ESB receipt ≠ live API — visible exception; API not overwritten.</p>`
-        : "") +
-      `<p class="muted" style="margin-top:8px">Evidence: API ${ev.esb_api_snapshot ? "yes" : "no"} · ESB receipt ${ev.esb_closing_receipt_confirmed ? "yes" : "no"} · cash ${ev.declared_cash ? "yes" : "no"} · EDC receipts ${ev.edc_receipts_confirmed ? "yes" : "no"} · complete ${b.evidence_complete ? "yes" : "no"}</p>`;
+  function todayWITA() {
+    const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Makassar", year: "numeric", month: "2-digit", day: "2-digit" });
+    return fmt.format(new Date());
+  }
 
-    const dual = b.dual_source || null;
-    if (dualEl) {
-      if (!dual) {
-        dualEl.textContent = "Dual-source board unavailable.";
-      } else {
-        const live = dual.live_esb_operational || {};
-        const rec = dual.esb_end_of_day_closing_receipt || {};
-        const diff = dual.difference_board || {};
-        const bills = diff.bills || {};
-        const cashD = diff.cash || {};
-        const pays = diff.payments || [];
-        const expl = (dual.explanations || []).map((e) =>
-          `<li><strong>${e.code}</strong> — ${e.message || ""}</li>`
-        ).join("");
-        const payRows = pays.map((p) =>
-          `<div class="muted">${p.key}: live ${money(p.live)} · receipt ${money(p.closing_receipt)} · Δ ${money(p.delta_live_minus_receipt)} · <span class="state">${p.status}</span></div>`
-        ).join("");
-        dualEl.innerHTML =
-          `<h3 style="margin:0 0 8px;font-size:1rem">Dual-source difference</h3>` +
-          `<div class="row"><div class="fig">${live.finished_bills != null ? live.finished_bills : "—"}<small>LIVE finished bills</small></div>` +
-          `<div class="fig">${live.sales_bills_excl_other_cost != null ? live.sales_bills_excl_other_cost : "—"}<small>LIVE sales excl OTHER</small></div>` +
-          `<div class="fig">${rec.bills != null ? rec.bills : "—"}<small>Closing receipt bills</small></div></div>` +
-          `<div class="muted">Bills Δ (finished − receipt) ${bills.delta_finished_minus_receipt != null ? bills.delta_finished_minus_receipt : "—"}</div>` +
-          `<div class="row" style="margin-top:8px"><div class="fig">${money(live.cash_tendered)}<small>LIVE cash tendered</small></div>` +
-          `<div class="fig">${money(live.cash_sales_grand)}<small>LIVE cash sales</small></div>` +
-          `<div class="fig">${money(rec.cash)}<small>Closing receipt cash</small></div></div>` +
-          `<div class="muted">Cash Δ (tendered − receipt) ${money(cashD.delta_tendered_minus_receipt)}</div>` +
-          (expl ? `<ul style="margin:8px 0 0 1.1rem;padding:0">${expl}</ul>` : "") +
-          (dual.flags && dual.flags.length ? `<p class="msg err">Flags: ${dual.flags.join(", ")}</p>` : "") +
-          `<p class="muted" style="margin-top:8px">Sources kept · silent overwrite = no · ${dual.policy || ""}</p>` +
-          (payRows ? `<div style="margin-top:8px"><strong>Payment lines</strong>${payRows}</div>` : "");
-        const drec = b.document_recon || null;
-        if (drec) {
-          const ns = (drec.nonsales_lines || []).map((n) =>
-            `<div class="muted">${n.raw_label}: ${money(n.amount)} · ${n.normalized_type || "NEEDS CLASSIFICATION"}</div>`
-          ).join("");
-          const ex = (drec.exception_lines || []).map((n) =>
-            `<div class="muted">${n.section}: ${n.raw_label} ${money(n.amount)}</div>`
-          ).join("");
-          const gvp = drec.gross_vs_payment_methods || null;
-          dualEl.innerHTML +=
-            `<div style="margin-top:12px"><strong>Full receipt document</strong>` +
-            `<div class="muted">Gross ${money((drec.shift||{}).GROSS_SALES)} · Net ${money((drec.shift||{}).NET_SALES)} · Bills ${(drec.shift||{}).BILLS != null ? (drec.shift||{}).BILLS : "—"} · Pax ${(drec.shift||{}).PAX != null ? (drec.shift||{}).PAX : "—"}</div>` +
-            (gvp ? `<div class="muted">Payment lines sum vs Gross: ${money(gvp.payment_methods_sum)} vs ${money(gvp.gross_sales)} · ${gvp.status}</div>` : "") +
-            (ns ? `<div style="margin-top:6px"><strong>Non sales</strong> (excluded from sales recon)${ns}</div>` : "") +
-            (ex ? `<div style="margin-top:6px"><strong>Exceptions</strong>${ex}</div>` : "") +
-            `<p class="muted">Raw labels preserved · house accounts not auto-classified</p></div>`;
-        }
-      }
-    }
+  async function openTonight() {
+    await openDate(todayWITA(), "START");
+  }
 
-    if (bankEl) {
-      const edcB = b.bank_split_edc || {};
-      const qrisB = b.bank_split_qris || {};
-      const edcKeys = Object.keys(edcB);
-      const qrisKeys = Object.keys(qrisB);
-      if (!edcKeys.length && !qrisKeys.length) {
-        bankEl.textContent = "No bank-split EDC/QRIS lines on live ESB yet.";
-      } else {
-        bankEl.innerHTML =
-          `<h3 style="margin:0 0 8px;font-size:1rem">Bank-split EDC / QRIS</h3>` +
-          edcKeys.map((k) => `<div class="fig" style="display:inline-block;margin:4px 8px 4px 0">${money(edcB[k])}<small>${k}</small></div>`).join("") +
-          qrisKeys.map((k) => `<div class="fig" style="display:inline-block;margin:4px 8px 4px 0">${money(qrisB[k])}<small>${k}</small></div>`).join("") +
-          `<p class="muted" style="margin-top:6px">QRIS never merged into EDC card. Outlet bank labels are location-specific.</p>`;
+  async function openDate(iso, action) {
+    selectedDate = iso;
+    $("whenLabel").textContent = longDate(iso);
+    $("pageSub").textContent = "Tonight's Close";
+    setMsg("Opening…", true);
+    const peek = await api("/api/venue-close/date-peek?business_date=" + encodeURIComponent(iso));
+    if (peek.close_id) {
+      close = { close_id: peek.close_id, business_date: iso, state: peek.state };
+    } else if ((action || "").includes("CONTINUE") && peek.close_id) {
+      close = { close_id: peek.close_id, business_date: iso };
+    } else {
+      const opened = await api("/api/venue-close/open", {
+        method: "POST",
+        body: JSON.stringify({ business_date: iso, outlet_id: "BZG-UMA" }),
+      });
+      close = { close_id: opened.close_id, business_date: iso, state: opened.state };
+    }
+    await loadWizard();
+    $("secChoose").classList.add("hidden");
+    $("secClose").classList.remove("hidden");
+    $("secDone").classList.add("hidden");
+    await silentAckDiff();
+    renderAll();
+    setMsg("", true);
+  }
+
+  async function ensureClose() {
+    if (close && close.close_id) return;
+    await openDate(selectedDate || todayWITA(), "START");
+  }
+
+  async function loadWizard() {
+    if (!close || !close.close_id) return;
+    wizard = await api("/api/venue-close/" + encodeURIComponent(close.close_id) + "/source-wizard");
+    const ev = (wizard.shift_report_evidence || {}).reports || [];
+    const confirmed = ev.filter((r) => r.human_confirm_status === "CONFIRMED" || r.human_confirm_status === "EDITED");
+    const latest = confirmed[confirmed.length - 1] || ev[ev.length - 1];
+    if (latest) {
+      shiftRef = latest.image_object_ref || shiftRef;
+      shiftHash = latest.content_hash || shiftHash;
+    }
+    const p = wizard.printed_source || {};
+    if (p.image_object_ref) shiftRef = p.image_object_ref;
+    if (p.content_hash) shiftHash = p.content_hash;
+  }
+
+  async function silentAckDiff() {
+    try {
+      const d = (wizard && wizard.source_discrepancy) || {};
+      if (d.has_discrepancy && !(wizard && wizard.esb_difference_acked) && close && close.close_id) {
+        await api("/api/venue-close/ack-esb-difference", {
+          method: "POST",
+          body: JSON.stringify({ close_id: close.close_id }),
+        });
+        await loadWizard();
       }
+    } catch (_e) { /* Wolf handles underneath — never block captain */ }
+  }
+
+  function phone() {
+    return (wizard && wizard.phone_close) || {};
+  }
+
+  function renderAll() {
+    renderEsb();
+    renderBanks();
+    renderCash();
+    renderFinish();
+  }
+
+  function renderEsb() {
+    const ph = phone();
+    const printed = (wizard && wizard.printed_source) || {};
+    const shiftYes = wizard && wizard.shift_figures_yes;
+    const status = $("esbStatus");
+    const figs = $("esbFigures");
+    const actions = $("esbActions");
+    if (shiftYes || ph.shift_read) {
+      status.innerHTML = `<span class="ok-pill">✓ SHIFT REPORT READ</span>`;
+      $("shiftPhotoActions").classList.add("hidden");
+      $("btnReadShift").classList.add("hidden");
+      figs.classList.remove("hidden");
+      figs.innerHTML =
+        line("Sales", money(ph.sales != null ? ph.sales : printed.gross_sales_rp)) +
+        line("Bills", ph.bills != null ? ph.bills : (printed.bills != null ? printed.bills : "—")) +
+        line("Pax", ph.pax != null ? ph.pax : (printed.pax != null ? printed.pax : "—")) +
+        line("Cash", money(ph.cash != null ? ph.cash : printed.cash_rp)) +
+        line("Card", money(ph.card)) +
+        line("QRIS", money(ph.qris)) +
+        line("Other", money(ph.other));
+      actions.classList.remove("hidden");
+      $("btnShiftCorrect").classList.add("hidden");
+      $("btnShiftEdit").textContent = "VIEW / CORRECT";
+    } else if (shiftRef || printed.image_attached) {
+      status.innerHTML = `<p class="sub">Photo ready — read the report</p>`;
+      $("btnReadShift").classList.remove("hidden");
+      figs.classList.add("hidden");
+      actions.classList.add("hidden");
+    } else {
+      status.innerHTML = `<p class="sub">Take a photo of the final shift report</p>`;
+      $("shiftPhotoActions").classList.remove("hidden");
+      $("btnReadShift").classList.add("hidden");
+      figs.classList.add("hidden");
+      actions.classList.add("hidden");
     }
   }
 
-  function showOwnerControlPanel(visible) {
-    const panel = $("ownerControlPanel");
-    if (!panel) return;
-    const can = !!(caps.owner_control || caps.reopen || caps.cancel_close);
-    if (!visible || !can) {
-      panel.classList.add("hidden");
-      return;
-    }
+  function showShiftEdit() {
+    const ph = phone();
+    const p = (wizard && wizard.printed_source) || {};
+    const panel = $("esbEditPanel");
     panel.classList.remove("hidden");
-    $("ownerReason").disabled = false;
-    ["btnOwnerUnlock", "btnOwnerOverride", "btnOwnerReturn", "btnOwnerReopen", "btnOwnerCancel", "btnOwnerCorrect"].forEach((id) => {
-      if ($(id)) $(id).disabled = false;
+    panel.innerHTML =
+      `<p class="sub">Type the figures from the report.</p>` +
+      `<label class="lbl">Sales</label><input type="number" id="editGross" value="${ph.sales || p.gross_sales_rp || ""}" />` +
+      `<label class="lbl">Bills</label><input type="number" id="editBills" value="${ph.bills != null ? ph.bills : (p.bills != null ? p.bills : "")}" />` +
+      `<label class="lbl">Pax</label><input type="number" id="editPax" value="${ph.pax != null ? ph.pax : (p.pax != null ? p.pax : "")}" />` +
+      `<label class="lbl">Cash</label><input type="number" id="editCash" value="${ph.cash || p.cash_rp || ""}" />` +
+      `<label class="lbl">BNI Card</label><input type="number" id="editBniEdc" value="${p.edc_bni_rp || ""}" />` +
+      `<label class="lbl">BNI QRIS</label><input type="number" id="editBniQris" value="${p.qris_bni_rp || ""}" />` +
+      `<label class="lbl">BRI Card</label><input type="number" id="editBriEdc" value="${p.edc_bri_rp || ""}" />` +
+      `<label class="lbl">BRI QRIS</label><input type="number" id="editBriQris" value="${p.qris_bri_rp || ""}" />` +
+      `<label class="lbl">Mandiri Card</label><input type="number" id="editManEdc" value="${p.edc_mandiri_rp || ""}" />` +
+      `<label class="lbl">Mandiri QRIS</label><input type="number" id="editManQris" value="${p.qris_mandiri_rp || ""}" />` +
+      `<button class="btn btn-primary" id="btnSaveEdit" type="button">SAVE</button>` +
+      `<button class="btn" id="btnCancelEdit" type="button">CANCEL</button>`;
+    $("btnSaveEdit").onclick = () => saveShiftEdit().catch((e) => setMsg(e.message, false));
+    $("btnCancelEdit").onclick = () => { panel.classList.add("hidden"); panel.innerHTML = ""; };
+  }
+
+  async function saveShiftEdit() {
+    await ensureClose();
+    const figures = {
+      gross_sales_rp: Number($("editGross").value) || null,
+      bills: $("editBills").value ? Number($("editBills").value) : null,
+      pax: $("editPax").value ? Number($("editPax").value) : null,
+      cash_rp: Number($("editCash").value) || null,
+      edc_bni_rp: Number($("editBniEdc").value) || null,
+      qris_bni_rp: Number($("editBniQris").value) || null,
+      edc_bri_rp: Number($("editBriEdc").value) || null,
+      qris_bri_rp: Number($("editBriQris").value) || null,
+      edc_mandiri_rp: Number($("editManEdc").value) || null,
+      qris_mandiri_rp: Number($("editManQris").value) || null,
+    };
+    if (!figures.gross_sales_rp || !figures.cash_rp) {
+      setMsg("Enter at least sales and cash from the report.", false);
+      return;
+    }
+    setMsg("Saving…", true);
+    await api("/api/venue-close/save-shift-figure-edits", {
+      method: "POST",
+      body: JSON.stringify({ close_id: close.close_id, object_ref: shiftRef, content_hash: shiftHash, extracted: shiftExtract, figures }),
     });
-  }
-
-  async function runOwnerControl(action, extra) {
-    if (!close) {
-      setMsg("Open a close first.");
-      return;
-    }
-    const reason = ($("ownerReason").value || "").trim();
-    if (!reason) {
-      setMsg("Reason required for Owner Control.");
-      return;
-    }
-    const body = {
-      close_id: close.close_id,
-      action: action,
-      reason: reason,
-    };
-    if (extra && extra.new_holder_person_id) {
-      body.new_holder_person_id = extra.new_holder_person_id;
-    }
-    setMsg("");
-    try {
-      const data = await api("/api/venue-close/owner-control", {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
-      close = data.close || close;
-      renderClose();
-      showOwnerControlPanel(true);
-      setMsg("Owner Control " + (data.owner_action || action) + " — audited. Work preserved. No money movement.", true);
-      $("ownerReason").value = "";
-    } catch (e) {
-      setMsg((e.data && e.data.message) || e.message || String(e));
-    }
-  }
-
-  async function loadOutletConfig() {
-    const box = $("cfgBox");
-    const edcNote = $("edcCfgNote");
-    try {
-      const data = await api("/api/bzg/daily-close/overview");
-      const outlets = data.outlets || [];
-      const enabled = data.human_close_enabled_outlet_ids || [];
-      const uma = outlets.find((o) => o.outlet_id === "BZG-UMA") || {};
-      const mismatch = outlets.filter((o) => o.title_map_status === "NEEDS CONFIGURATION");
-      const termStatus = (data.uma_edc_terminals && data.uma_edc_terminals.edc_terminal_config_status)
-        || uma.edc_terminal_config_status
-        || "NEEDS CONFIGURATION";
-      box.innerHTML =
-        `<div><strong>Human-activated:</strong> ${enabled.join(", ") || "none"}</div>` +
-        `<div>Outlet configs: ${outlets.length} · float Uma: ${uma.till_float_idr != null ? money(uma.till_float_idr) + " (excluded from takings)" : "NEEDS CONFIGURATION"}</div>` +
-        `<div>Title map mismatches: ${mismatch.length ? mismatch.map((m) => m.owner_title).join("; ") : "none"}</div>` +
-        `<div style="margin-top:6px;color:var(--warn)"><strong>EDC terminals:</strong> ${termStatus}</div>` +
-        `<div class="muted">staff_ready=false · human_commissioned=false · settlement UNAVAILABLE</div>`;
-      edcNote.textContent = termStatus === "NEEDS CONFIGURATION"
-        ? "EDC terminal inventory: NEEDS CONFIGURATION — no invented IDs. You can still bind slip evidence."
-        : "EDC terminals configured.";
-    } catch (e) {
-      box.textContent = "Outlet config unavailable: " + (e.message || e);
-      edcNote.textContent = "EDC terminal inventory: NEEDS CONFIGURATION";
-    }
-  }
-
-  async function loadHonesty() {
-    try {
-      const h = await api("/api/venue-close/honesty");
-      policyCount = Number(h.live_variance_threshold);
-      const policyBlocked = h.variance_policy_display === "BLOCKED BY BUSINESS POLICY" || policyCount === 0;
-      const policyLine = policyBlocked
-        ? "BLOCKED BY BUSINESS POLICY. A till that does not match ESB stops. No threshold was invented."
-        : "An authorised variance policy is on file. This screen does not show a threshold amount.";
-      const closerLine = h.closer_commissioning === "WAITING FOR VERIFIED CLOSING OPERATOR"
-        ? "Closer seat is waiting. No person is assigned to the closing role."
-        : "A closing operator is assigned.";
-      const payLine = "Settlement API is unavailable (PENDING_BANK). ESB payment lines ≠ EDC settlement. This screen does not pay or change a bank.";
-      const tolLine = "No invented tolerance. Alchemist 2%/Rp5k soft warn is not a Wolf policy.";
-      $("honesty").textContent = [policyLine, closerLine, payLine, tolLine].join(" ");
-    } catch (e) {
-      policyCount = 0;
-      $("honesty").textContent =
-        "BLOCKED BY BUSINESS POLICY. Could not confirm the policy table. " +
-        (e.message || e);
-    }
-  }
-
-  async function loadExceptions() {
-    const el = $("excList");
-    try {
-      const data = await api("/api/venue-close/list?state=EXCEPTION");
-      const data2 = await api("/api/venue-close/list?state=VARIANCE_REQUIRES_POLICY");
-      const data3 = await api("/api/venue-close/list?state=RESOLVED");
-      const rows = [...(data.closes || []), ...(data2.closes || []), ...(data3.closes || [])];
-      if (!rows.length) {
-        el.textContent = "None right now.";
-        return;
-      }
-      el.innerHTML = rows
-        .map((r) => {
-          const actions =
-            r.state === "VARIANCE_REQUIRES_POLICY" && caps.exception
-              ? `<button class="btn btn-warn" data-act="exception" data-id="${r.close_id}" type="button">Open exception</button>`
-              : r.state === "EXCEPTION" && caps.resolve
-              ? `<label>Resolution note</label><textarea data-notes="${r.close_id}"></textarea>` +
-                `<button class="btn" data-act="resolve" data-id="${r.close_id}" type="button">Resolve</button>`
-              : r.state === "RESOLVED" && caps.verify
-              ? `<button class="btn btn-ok" data-act="verify" data-id="${r.close_id}" type="button">Verify close</button>`
-              : r.state === "RESOLVED"
-              ? `<p class="muted">Waiting on verifier — no action needed from you.</p>`
-              : !caps.submit
-              ? `<p class="muted">Waiting on closer — no action needed from you.</p>`
-              : `<p class="muted">No further action on this row.</p>`;
-          const policyNote =
-            r.state === "VARIANCE_REQUIRES_POLICY" && policyCount === 0
-              ? `<p class="muted">BLOCKED BY BUSINESS POLICY. Opening an exception puts it in <a href="/my-work">My Work</a>.</p>`
-              : r.state === "EXCEPTION" || r.work_item_id
-              ? `<p class="muted"><a href="/my-work">Open in My Work</a></p>`
-              : "";
-          return (
-            `<div class="exc">` +
-            `<strong>${r.business_date}</strong> · ${humanState(r.state)}` +
-            `<div class="muted">Variance ${money(r.variance_cash_amount)}</div>` +
-            policyNote +
-            actions +
-            `</div>`
-          );
-        })
-        .join("");
-    } catch (e) {
-      el.textContent = e.message || String(e);
-    }
-  }
-
-  async function loadCaps() {
-    try {
-      const data = await api("/api/venue-close/capabilities");
-      caps = Object.assign(caps, data.can || {});
-      const note = $("capNote");
-      if (caps.submit) {
-        note.classList.remove("hidden");
-        note.textContent = caps.verify
-          ? "You can perform and submit this close."
-          : "You can perform and submit this close. Verify stays with a separate role.";
-      } else if (!caps.submit && data.denied_explanation) {
-        note.classList.remove("hidden");
-        note.textContent = data.denied_explanation;
-      }
-      $("btnOpen").hidden = !caps.open;
-      $("btnCapture").hidden = !caps.capture;
-      $("btnDeclare").hidden = !caps.declare;
-      $("btnReconcile").hidden = !caps.reconcile;
-    } catch (e) {
-      $("capNote").classList.remove("hidden");
-      $("capNote").textContent = "Could not read what you are allowed to do. Actions stay hidden.";
-      $("btnOpen").hidden = true;
-      $("btnCapture").hidden = true;
-      $("btnDeclare").hidden = true;
-      $("btnReconcile").hidden = true;
-    }
-  }
-
-  function showTab(which) {
-    const today = which === "today";
-    $("paneToday").classList.toggle("hidden", !today);
-    $("panePrevious").classList.toggle("hidden", today);
-    $("tabToday").classList.toggle("on", today);
-    $("tabPrevious").classList.toggle("on", !today);
-    if (!today) loadPrevious();
-  }
-
-  function paintDetail(detail) {
-    const box = $("prevDetail");
-    box.classList.remove("hidden");
-    if (!detail) {
-      box.textContent = "Close not found.";
-      return;
-    }
-    const summary = detail.summary || {};
-    const bits = [];
-    bits.push(`<strong>${summary.business_date || ""}</strong> · ${humanState(summary.state || "")}`);
-    if (detail.chip) bits.push(`<span class="chip">${detail.chip}</span>`);
-    if (summary.declared_cash_amount != null) bits.push(`<div class="muted">Declared cash ${money(summary.declared_cash_amount)}</div>`);
-    if (summary.variance_flag) bits.push(`<div class="muted">Variance ${money(summary.variance_cash_amount)}</div>`);
-    const labels = detail.operator_labels || {};
-    if (labels.submitted_by) bits.push(`<div class="muted">Submitted by ${labels.submitted_by}</div>`);
-    if (labels.resolved_by) bits.push(`<div class="muted">Resolved by ${labels.resolved_by}</div>`);
-    if (labels.verified_by) bits.push(`<div class="muted">Verified by ${labels.verified_by}</div>`);
-    const refs = detail.evidence_refs || [];
-    if (!refs.length) bits.push(`<div class="muted">No evidence reference stored.</div>`);
-    refs.forEach((ref) => {
-      bits.push(`<div class="muted">Evidence ${ref.field}</div>`);
+    shiftExtract = Object.assign({}, shiftExtract, figures);
+    await api("/api/venue-close/confirm-shift-figures", {
+      method: "POST",
+      body: JSON.stringify({ close_id: close.close_id, object_ref: shiftRef, content_hash: shiftHash, extracted: figures }),
     });
-    const audits = detail.audit_sentences || [];
-    if (!audits.length) bits.push(`<div class="muted">No audit sentences stored.</div>`);
-    audits.forEach((a) => bits.push(`<div class="muted">${a.sentence || ""}</div>`));
-    box.innerHTML = bits.join("");
+    await loadWizard();
+    await silentAckDiff();
+    $("esbEditPanel").classList.add("hidden");
+    renderAll();
+    setMsg("Figures saved.", true);
   }
 
-  async function loadPrevious() {
-    const el = $("prevList");
-    try {
-      const data = await api("/api/venue-close/previous?exclude_business_date=" + encodeURIComponent($("bizDate").value || ""));
-      const rows = data.closes || [];
-      if (!rows.length) {
-        el.textContent = data.empty_message || "No previous closes recorded in Wolf yet";
-        $("prevDetail").classList.add("hidden");
-        return;
-      }
-      el.innerHTML = rows.map((r) => {
-        const cash = r.declared_cash_amount != null ? ` · cash ${money(r.declared_cash_amount)}` : "";
-        const chip = r.chip ? ` <span class="chip">${r.chip}</span>` : "";
-        return `<button class="btn prev" type="button" data-prev="${r.close_id}">${r.business_date} · ${humanState(r.state)}${cash}${chip}</button>`;
-      }).join("");
-    } catch (e) {
-      el.textContent = e.message || String(e);
-    }
+  async function readShiftReport() {
+    await ensureClose();
+    setMsg("Reading…", true);
+    const extracted = await api("/api/venue-close/esb-receipt-extract", {
+      method: "POST",
+      body: JSON.stringify({ close_id: close.close_id, object_ref: shiftRef, content_hash: shiftHash }),
+    });
+    shiftExtract = extracted.extracted || extracted.document || {};
+    await loadWizard();
+    const printed = (wizard && wizard.printed_source) || {};
+    const readable = (shiftExtract.gross_sales_rp || shiftExtract.gross_amount || printed.gross_sales_rp) &&
+      (shiftExtract.cash_rp || shiftExtract.cash_amount || printed.cash_rp) != null;
+    $("esbFigures").classList.remove("hidden");
+    $("esbActions").classList.remove("hidden");
+    $("btnShiftCorrect").classList.remove("hidden");
+    $("esbStatus").innerHTML = readable
+      ? `<span class="ok-pill">✓ FIGURES READY</span>`
+      : `<div class="warn-box">Nothing read — tap VIEW / CORRECT and type the figures</div>`;
+    const src = Object.assign({}, printed, shiftExtract);
+    $("esbFigures").innerHTML =
+      line("Sales", money(src.gross_sales_rp || src.gross_amount)) +
+      line("Bills", src.bills != null ? src.bills : "—") +
+      line("Pax", src.pax != null ? src.pax : "—") +
+      line("Cash", money(src.cash_rp || src.cash_amount)) +
+      line("BNI Card", money(src.edc_bni_rp)) +
+      line("BNI QRIS", money(src.qris_bni_rp)) +
+      line("BRI Card", money(src.edc_bri_rp)) +
+      line("BRI QRIS", money(src.qris_bri_rp));
+    setMsg(readable ? "Do these figures match the report?" : "Nothing read — tap VIEW / CORRECT.", readable);
   }
 
-  async function boot() {
-    $("bizDate").value = todayWITA();
-    wirePhotoButtons();
-    try {
-      const meData = await api("/api/core/me");
-      me = meData.person || meData;
-      $("who").textContent = me.display_name
-        ? `Signed in as ${me.display_name}`
-        : me.email
-        ? `Signed in as ${me.email}`
-        : "Signed in";
-    } catch (e) {
-      $("who").textContent = "Not signed in — open via Cloudflare Access.";
-    }
-    await loadCaps();
-    await loadHonesty();
-    await loadOutletConfig();
-    await loadExceptions();
-    await probeTodayHolder();
-    renderClose();
-    markOverflow();
-  }
-
-  function markOverflow() {
-    var over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
-    document.body.setAttribute("data-overflow", over ? "yes" : "no");
-  }
-  window.addEventListener("load", markOverflow);
-
-  $("tabToday").onclick = () => showTab("today");
-  $("tabPrevious").onclick = () => showTab("previous");
-  $("prevList").addEventListener("click", async (ev) => {
-    const btn = ev.target.closest("button[data-prev]");
-    if (!btn) return;
-    try {
-      const data = await api("/api/venue-close/" + encodeURIComponent(btn.getAttribute("data-prev")));
-      paintDetail(data.detail);
-    } catch (e) {
-      $("prevDetail").classList.remove("hidden");
-      $("prevDetail").textContent = e.message || String(e);
-    }
-  });
-
-  async function pullEsbLive(opts) {
-    const quiet = !!(opts && opts.quiet);
-    if (!close) return false;
-    if (!quiet) setMsg("");
-    try {
-      const data = await api("/api/venue-close/capture", {
-        method: "POST",
-        body: JSON.stringify({ close_id: close.close_id }),
-      });
-      close = data.close || data;
-      esbLiveStatus = data.esb_live_status || close.esb_live_status || "AVAILABLE";
-      renderClose();
-      if (!quiet) setMsg("ESB sales pulled (live payment lines for " + (close.business_date || "today") + ").", true);
-      return true;
-    } catch (e) {
-      const code = (e.data && e.data.error) || "";
-      const msg = (e.data && e.data.message) || e.message || String(e);
-      const unavail =
-        code === "esb_data_unavailable" ||
-        code === "esb_empty_day" ||
-        code === "esb_missing" ||
-        (e.data && e.data.esb_live_status === "UNAVAILABLE") ||
-        /ESB DATA UNAVAILABLE/i.test(msg);
-      if (unavail) {
-        esbLiveStatus = "UNAVAILABLE";
-        renderClose();
-        if (!quiet) setMsg("ESB DATA UNAVAILABLE — empty is not zero sales. Retry or photograph the closing receipt.", false);
-        return false;
-      }
-      if (!quiet) setMsg(msg);
-      return false;
-    }
-  }
-
-  $("btnOpen").onclick = async () => {
-    setMsg("");
-    try {
-      const data = await api("/api/venue-close/open", {
-        method: "POST",
-        body: JSON.stringify({ business_date: $("bizDate").value }),
-      });
-      hideLockPanel();
-      close = data.close;
-      esbLiveStatus = close.esb_fingerprint_sha256 ? "AVAILABLE" : null;
-      renderClose();
-      setMsg(close.created ? "Close opened — pulling live ESB…" : "Existing close loaded — pulling live ESB…", true);
-      await pullEsbLive({ quiet: false });
-    } catch (e) {
-      const data = e.data || {};
-      if (data.error === "concurrent_take") {
-        const holder = data.holder || {
-          close_id: data.close_id,
-          taken_by_person_id: data.taken_by_person_id,
-          taken_by_display_name: data.taken_by_display_name,
-          taken_at: data.taken_at,
-        };
-        showLockPanel(holder, { focusReason: true });
-        if (holder && holder.close_id) {
-          const preview = await loadLockedClose(holder.close_id);
-          if (preview) {
-            close = preview;
-            renderClose();
-          }
-        }
-        setMsg(data.message || e.message || String(e));
-        return;
-      }
-      setMsg(e.message || String(e));
-    }
-  };
-
-  async function runGovernedTakeover(mode) {
-    const reason = ($("takeoverReason").value || "").trim();
-    if (!reason) {
-      setMsg("Reason required for Take Over / Reassign.");
+  async function confirmShiftYes() {
+    await ensureClose();
+    const printed = (wizard && wizard.printed_source) || {};
+    const src = Object.assign({}, printed, shiftExtract);
+    const flat = {
+      gross_sales_rp: src.gross_sales_rp || src.gross_amount,
+      bills: src.bills,
+      pax: src.pax,
+      cash_rp: src.cash_rp || src.cash_amount,
+      edc_bni_rp: src.edc_bni_rp,
+      qris_bni_rp: src.qris_bni_rp,
+      edc_bri_rp: src.edc_bri_rp,
+      qris_bri_rp: src.qris_bri_rp,
+      edc_mandiri_rp: src.edc_mandiri_rp,
+      qris_mandiri_rp: src.qris_mandiri_rp,
+    };
+    if (!flat.gross_sales_rp || flat.cash_rp == null) {
+      setMsg("Nothing read — tap VIEW / CORRECT and type the figures.", false);
       return;
     }
-    const closeId = (lockHold && lockHold.close_id) || (close && close.close_id);
-    if (!closeId) {
-      setMsg("No locked close to take over.");
+    setMsg("Saving…", true);
+    await api("/api/venue-close/confirm-shift-figures", {
+      method: "POST",
+      body: JSON.stringify({ close_id: close.close_id, object_ref: shiftRef, content_hash: shiftHash, extracted: flat }),
+    });
+    await loadWizard();
+    await silentAckDiff();
+    renderAll();
+    setMsg("Shift report confirmed.", true);
+  }
+
+  function renderBanks() {
+    const cards = ((wizard && wizard.wizard_bank_cards) || {}).cards || [];
+    const root = $("bankCards");
+    if (!(wizard && wizard.shift_figures_yes) && !(phone().shift_read)) {
+      root.innerHTML = `<p class="sub">Confirm the shift report first.</p>`;
       return;
     }
-    setMsg("");
-    try {
-      let data;
-      if (mode === "reassign") {
-        const to = ($("reassignTo").value || "").trim();
-        if (!to) {
-          setMsg("Reassign requires a person id (PERS-…).");
-          return;
-        }
-        data = await api("/api/venue-close/reassign", {
-          method: "POST",
-          body: JSON.stringify({
-            close_id: closeId,
-            new_holder_person_id: to,
-            reason: reason,
-          }),
-        });
-      } else {
-        data = await api("/api/venue-close/takeover", {
-          method: "POST",
-          body: JSON.stringify({ close_id: closeId, reason: reason }),
-        });
-      }
-      hideLockPanel();
-      close = data.close || data;
-      renderClose();
-      const prior = data.prior_holder_display_name || data.prior_holder_person_id || "prior closer";
-      setMsg(
-        (mode === "reassign" ? "Reassigned" : "Took over") +
-          " from " + prior + ". Prior work preserved. Controls enabled for you.",
-        true
-      );
-      await pullEsbLive({ quiet: true });
-    } catch (e) {
-      setMsg((e.data && e.data.message) || e.message || String(e));
-    }
-  }
-
-  $("btnTakeOver").onclick = () => runGovernedTakeover("takeover");
-  $("btnReassignShow").onclick = () => {
-    $("reassignToLabel").classList.remove("hidden");
-    $("reassignTo").classList.remove("hidden");
-    $("reassignTo").disabled = !(caps.reassign || caps.takeover);
-    $("btnReassignConfirm").classList.remove("hidden");
-    $("reassignTo").focus();
-  };
-  $("btnReassignConfirm").onclick = () => runGovernedTakeover("reassign");
-
-  if ($("btnOwnerUnlock")) $("btnOwnerUnlock").onclick = () => runOwnerControl("unlock_abandoned");
-  if ($("btnOwnerOverride")) $("btnOwnerOverride").onclick = () => runOwnerControl("override_lock");
-  if ($("btnOwnerReturn")) $("btnOwnerReturn").onclick = () => runOwnerControl("return_for_correction");
-  if ($("btnOwnerReopen")) $("btnOwnerReopen").onclick = () => runOwnerControl("reopen");
-  if ($("btnOwnerCancel")) $("btnOwnerCancel").onclick = () => runOwnerControl("cancel");
-  if ($("btnOwnerCorrect")) {
-    $("btnOwnerCorrect").onclick = () => {
-      if ($("ownerReassignToLabel")) $("ownerReassignToLabel").classList.remove("hidden");
-      if ($("ownerReassignTo")) {
-        $("ownerReassignTo").classList.remove("hidden");
-        $("ownerReassignTo").disabled = false;
-        $("ownerReassignTo").focus();
-      }
-      const target = ($("ownerReassignTo").value || "").trim();
-      if (!target) {
-        setMsg("Enter person id for Correct assignment, then press again.");
-        return;
-      }
-      runOwnerControl("correct_assignment", { new_holder_person_id: target });
-    };
-  }
-
-  $("btnCapture").onclick = async () => {
-    await pullEsbLive({ quiet: false });
-  };
-
-  $("btnDeclare").onclick = async () => {
-    if (!close) return;
-    setMsg("");
-    const zRef = ($("zReportRef").value || "").trim();
-    try {
-      let data;
-      if (zRef) {
-        data = await api("/api/venue-close/till-declare", {
-          method: "POST",
-          body: JSON.stringify({
-            close_id: close.close_id,
-            declared_cash_amount: Number($("cashAmt").value),
-            object_ref: zRef,
-            notes: $("cashNote").value || null,
-          }),
-        });
-      } else {
-        data = await api("/api/venue-close/declare-cash", {
-          method: "POST",
-          body: JSON.stringify({
-            close_id: close.close_id,
-            declared_cash_amount: Number($("cashAmt").value),
-            object_ref: $("cashNote").value || null,
-            notes: $("cashNote").value || null,
-          }),
-        });
-      }
-      close = data.close;
-      renderClose();
-      setMsg("Till cash recorded as DECLARED (not verified). Not copied from ESB.", true);
-    } catch (e) {
-      setMsg((e.data && e.data.message) || e.message || String(e));
-    }
-  };
-
-  function edcPayload(action) {
-    return {
-      close_id: close.close_id,
-      acquirer_label: $("edcBank").value,
-      edc_card_amount: $("edcCardAmt").value === "" ? 0 : Number($("edcCardAmt").value),
-      qris_amount: $("edcQrisAmt").value === "" ? 0 : Number($("edcQrisAmt").value),
-      settlement_batch_date: $("edcDate").value || null,
-      batch_ref: $("edcBatchRef").value || null,
-      terminal_label: $("edcTerminal").value || null,
-      object_ref: $("edcRef").value || null,
-      content_hash: $("edcContentHash").value || null,
-      action: action,
-      vision_event_id: edcDraft && edcDraft.vision_event_id,
-      extracted: edcDraft && edcDraft.extracted,
-      ocr_confidence: edcDraft && edcDraft.extracted && edcDraft.extracted.ocr_confidence,
-    };
-  }
-
-  async function submitEdcReceipt(action) {
-    if (!close) return;
-    setMsg("");
-    try {
-      const data = await api("/api/venue-close/edc-receipt", {
-        method: "POST",
-        body: JSON.stringify(edcPayload(action)),
-      });
-      close = Object.assign({}, close, {
-        edc_receipts: data.edc_receipts,
-        receipt_totals: data.receipt_totals,
-        unused_terminals: data.unused_terminals,
-      });
-      try {
-        const rb = await api("/api/venue-close/" + encodeURIComponent(close.close_id) + "/recon-board");
-        close.recon_board = rb;
-      } catch (_) { /* recon optional mid-flow */ }
-      renderClose();
-      const warn = data.duplicate_warn ? " Duplicate warning — not deleted." : "";
-      setMsg("EDC receipt " + (data.human_confirm_status || "CONFIRMED") + ". AI was not accounting truth." + warn, true);
-      $("edcCardAmt").value = "";
-      $("edcQrisAmt").value = "";
-      $("edcBatchRef").value = "";
-      $("edcRef").value = "";
-      $("edcContentHash").value = "";
-      edcPhotoB64 = null;
-      edcPhotoMime = null;
-      showPreview("edc", null);
-      edcDraft = null;
-    } catch (e) {
-      setMsg((e.data && e.data.message) || e.message || String(e));
-    }
-  }
-
-  async function runEdcExtract(fromPhoto) {
-    if (!close) return;
-    setMsg("");
-    const hasPhoto = !!(edcPhotoB64 || ($("edcRef").value || "").trim());
-    if (!hasPhoto && !fromPhoto) {
-      setMsg("Take Photo or Upload Photo for this EDC receipt first.");
+    if (!cards.length) {
+      root.innerHTML = `<p class="sub">No bank receipts needed for this close.</p>`;
       return;
     }
-    const body = {
-      close_id: close.close_id,
-      object_ref: $("edcRef").value || null,
-      content_hash: $("edcContentHash").value || null,
-      mime_type: edcPhotoMime || "image/jpeg",
-    };
-    if (edcPhotoB64) body.image_base64 = edcPhotoB64;
-    // Only use typed fixture when no photo bytes (dev/manual path).
-    if (!edcPhotoB64) {
-      body.fixture_fields = {
-        acquirer_label: $("edcBank").value || null,
-        edc_card_amount: $("edcCardAmt").value === "" ? null : Number($("edcCardAmt").value),
-        qris_amount: $("edcQrisAmt").value === "" ? null : Number($("edcQrisAmt").value),
-        settlement_batch_date: $("edcDate").value || null,
-        batch_ref: $("edcBatchRef").value || null,
-        terminal_label: $("edcTerminal").value || null,
-        ocr_confidence: 0.82,
+    root.innerHTML = cards.map((c) => {
+      if (c.status === "UNCERTAIN" || c.status === "FIGURES_NEED_EDIT") {
+        return `<div class="bank">
+          <div class="warn-box">WE COULDN'T READ THIS PAYMENT${c.bank ? " · " + c.bank : ""}</div>
+          <button class="btn btn-warn" type="button" data-check="1">CHECK</button>
+        </div>`;
+      }
+      let body = line("Expected Card", money(c.expected_edc)) + line("Expected QRIS", money(c.expected_qris));
+      if (c.receipt_added) {
+        body += line("Receipt Card", money(c.actual_edc)) + line("Receipt QRIS", money(c.actual_qris));
+        body += `<span class="ok-pill">${c.staff_label || "SAVED"}</span>`;
+      }
+      const act = c.receipt_added ? "" :
+        `<button class="btn btn-primary" type="button" data-bank="${c.bank}" data-action="add">TAKE RECEIPT PHOTO</button>
+         <div id="bankWork-${c.bank}"></div>`;
+      return `<div class="bank" id="bankCard-${c.bank}"><h3>${c.bank}</h3>${body}${act}</div>`;
+    }).join("");
+    root.querySelectorAll("[data-action='add']").forEach((b) => {
+      b.onclick = () => {
+        activeBank = b.getAttribute("data-bank");
+        $("bankFile").value = "";
+        $("bankFile").click();
       };
-    }
+    });
+    root.querySelectorAll("[data-check]").forEach((b) => {
+      b.onclick = () => showShiftEdit();
+    });
+  }
+
+  function showBankWork(bank, expEdc, expQris) {
+    const work = $("bankWork-" + bank);
+    if (!work) return;
+    let actEdc = bankDraft && (bankDraft.edc_card_amount != null ? bankDraft.edc_card_amount : bankDraft.TOTAL_EDC);
+    let actQris = bankDraft && (bankDraft.qris_amount != null ? bankDraft.qris_amount : bankDraft.TOTAL_QRIS);
+    const failed = (actEdc == null || actEdc === 0) && (actQris == null || actQris === 0);
+    work.innerHTML =
+      (failed ? `<div class="warn-box">Couldn't read — type the amount from the receipt</div>` : "") +
+      line("Expected Card", money(expEdc)) + line("Receipt Card", money(actEdc)) +
+      line("Expected QRIS", money(expQris)) + line("Receipt QRIS", money(actQris)) +
+      `<button class="btn btn-ok" id="btnBankOk-${bank}" type="button">CORRECT</button>` +
+      `<button class="btn" id="btnBankEdit-${bank}" type="button">EDIT</button>`;
+    $(`btnBankOk-${bank}`).onclick = () => confirmBank().catch((e) => setMsg(e.message, false));
+    $(`btnBankEdit-${bank}`).onclick = () => {
+      work.innerHTML =
+        `<label class="lbl">Card amount</label><input type="number" id="editEdc-${bank}" value="${actEdc || ""}" />` +
+        `<label class="lbl">QRIS amount</label><input type="number" id="editQris-${bank}" value="${actQris || ""}" />` +
+        `<button class="btn btn-primary" id="btnBankSave-${bank}" type="button">SAVE</button>`;
+      $(`btnBankSave-${bank}`).onclick = () => {
+        bankDraft = bankDraft || {};
+        bankDraft.edc_card_amount = Number($(`editEdc-${bank}`).value) || 0;
+        bankDraft.qris_amount = Number($(`editQris-${bank}`).value) || 0;
+        showBankWork(bank, expEdc, expQris);
+      };
+    };
+  }
+
+  async function uploadBank(file) {
     try {
-      const data = await api("/api/venue-close/edc-receipt-extract", {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
-      edcDraft = data;
-      const x = data.extracted || {};
-      if (x.acquirer_label) $("edcBank").value = x.acquirer_label;
-      if (x.edc_card_amount != null) $("edcCardAmt").value = x.edc_card_amount;
-      if (x.qris_amount != null) $("edcQrisAmt").value = x.qris_amount;
-      if (x.settlement_batch_date) $("edcDate").value = x.settlement_batch_date;
-      if (x.batch_ref) $("edcBatchRef").value = x.batch_ref;
-      if (x.terminal_label) $("edcTerminal").value = x.terminal_label;
-      if (data.image_object_ref) $("edcRef").value = data.image_object_ref;
-      if (data.content_hash) $("edcContentHash").value = data.content_hash;
-      const low = x.low_confidence_flag || x.ocr_confidence_band === "LOW";
-      setMsg(
-        low
-          ? "Low confidence draft — fields blanked/flagged. Edit before confirm. AI ≠ truth."
-          : "Vision draft ready. Looks Correct or Edit. AI ≠ accounting truth.",
-        !low
-      );
-      if ($("edcPhotoStatus") && ($("edcRef").value || "").trim()) {
-        $("edcPhotoStatus").textContent = "Photo kept · draft ready for confirm";
-      }
-    } catch (e) {
-      const raw = (e.data && (e.data.staff_message || e.data.message)) || e.message || String(e);
-      setMsg(typeof staffSafeVisionMsg === "function" ? staffSafeVisionMsg(raw) : raw);
-      if ($("edcPhotoStatus") && ($("edcRef").value || "").trim()) {
-        $("edcPhotoStatus").textContent = "Photo kept · reading unavailable — retry or enter manually";
-      }
-    }
-  }
-
-  $("btnEdcExtract").onclick = () => runEdcExtract(false);
-  $("btnEdcLooks").onclick = () => submitEdcReceipt("looks_correct");
-  $("btnEdcEdit").onclick = () => submitEdcReceipt("edit");
-  $("btnEdc").onclick = () => submitEdcReceipt("confirm");
-
-
-  function staffSafeVisionMsg(raw) {
-    const s = String(raw || "");
-    const low = s.toLowerCase();
-    if (/gemini|anthropic|openai|claude|gpt-|api[_ ]?key|not authorised|not authorized|unauthorized|generativelanguage/.test(low)) {
-      return "Receipt reading is temporarily unavailable. Retry or enter the figures manually.";
-    }
-    return s || "Receipt reading is temporarily unavailable. Retry or enter the figures manually.";
-  }
-
-  function sectionHeading(sec) {
-    const t = (sec && sec.normalized_type) || "";
-    const map = {
-      SHIFT_SUMMARY: "SALES SUMMARY",
-      PAYMENT_METHODS: "PAYMENT METHODS",
-      NON_SALES: "NON SALES",
-      CANCELLED_MENU: "CANCELLED MENU",
-      VOID_PAYMENT: "VOID PAYMENT",
-      PROMOTION: "PROMOTIONS",
-      DISCOUNT: "DISCOUNTS",
-      UNKNOWN: "OTHER / UNCLASSIFIED",
-    };
-    const nice = map[t] || (sec && sec.raw_title) || "SECTION";
-    const raw = (sec && sec.raw_title) || "";
-    const needs = sec && sec.classification === "NEEDS_CLASSIFICATION";
-    return nice + (raw && raw !== nice ? " · " + raw : "") + (needs ? " · needs classification" : "");
-  }
-
-  function renderEsbDocDraft(doc, editable) {
-    const box = $("esbDocReview");
-    if (!box) return;
-    if (!doc || !Array.isArray(doc.sections)) {
-      box.innerHTML = "<p class='muted'>No structured draft yet.</p>";
-      return;
-    }
-    const canEdit = !!editable;
-    let html = "";
-    (doc.sections || []).forEach((sec, si) => {
-      html += "<div class='esb-sec' data-sec='" + si + "'>";
-      html += "<h3>" + sectionHeading(sec) + "</h3>";
-      const lines = sec.lines || [];
-      if (!lines.length) {
-        html += "<p class='muted'>No lines in this section (captured empty — preserved).</p>";
-      }
-      lines.forEach((ln, li) => {
-        const unc = !!ln.uncertain || ln.classification === "NEEDS_CLASSIFICATION";
-        const amt = ln.human_confirmed_value != null ? ln.human_confirmed_value : (ln.amount != null ? ln.amount : "");
-        const qty = ln.quantity != null ? ln.quantity : "";
-        html += "<div class='esb-line" + (unc ? " esb-uncertain" : "") + "' data-li='" + li + "'>";
-        html += "<label>" + (ln.raw_label || "(unlabeled)") +
-          (ln.normalized_type && ln.normalized_type !== "UNKNOWN" ? "<span class='esb-badge'>" + ln.normalized_type + (ln.bank_acquirer ? " · " + ln.bank_acquirer : "") + "</span>" : "<span class='esb-badge'>NEEDS CLASSIFICATION</span>") +
-          "</label>";
-        html += "<input type='number' data-field='quantity' " + (canEdit ? "" : "disabled ") + "placeholder='qty' value='" + qty + "' inputmode='decimal' />";
-        html += "<input type='number' data-field='amount' " + (canEdit ? "" : "disabled ") + "placeholder='amount' value='" + amt + "' step='1' inputmode='decimal' />";
-        html += "</div>";
-      });
-      html += "</div>";
-    });
-    const der = doc.derived || {};
-    html += "<p class='muted' style='margin-top:10px'>Derived (not authority): EDC total " +
-      (der.total_edc != null ? money(der.total_edc) : "—") +
-      " · QRIS total " + (der.total_qris != null ? money(der.total_qris) : "—") +
-      " · Payment lines sum " + (der.payment_methods_sum != null ? money(der.payment_methods_sum) : "—") +
-      ". Banks stay separate.</p>";
-    box.innerHTML = html;
-    syncEsbFlatFromDoc(doc);
-  }
-
-  function syncEsbFlatFromDoc(doc) {
-    const der = (doc && doc.derived) || {};
-    if ($("esbCash")) $("esbCash").value = der.cash_amount != null ? der.cash_amount : "";
-    if ($("esbEdc")) $("esbEdc").value = der.edc_card_amount != null ? der.edc_card_amount : "";
-    if ($("esbQris")) $("esbQris").value = der.qris_amount != null ? der.qris_amount : "";
-  }
-
-  function collectEsbDocumentFromDom() {
-    const base = (esbDraft && (esbDraft.document || esbDraft.extracted)) || { sections: [], schema_version: 1, document_kind: "ESB_CLOSING_RECEIPT" };
-    const doc = JSON.parse(JSON.stringify(base));
-    const box = $("esbDocReview");
-    if (!box || !Array.isArray(doc.sections)) return doc;
-    box.querySelectorAll(".esb-sec").forEach((secEl) => {
-      const si = Number(secEl.getAttribute("data-sec"));
-      if (!doc.sections[si]) return;
-      secEl.querySelectorAll(".esb-line").forEach((lineEl) => {
-        const li = Number(lineEl.getAttribute("data-li"));
-        const ln = doc.sections[si].lines && doc.sections[si].lines[li];
-        if (!ln) return;
-        const qtyInp = lineEl.querySelector("input[data-field=quantity]");
-        const amtInp = lineEl.querySelector("input[data-field=amount]");
-        const qty = qtyInp && qtyInp.value !== "" ? Number(qtyInp.value) : null;
-        const amt = amtInp && amtInp.value !== "" ? Number(amtInp.value) : null;
-        ln.quantity = Number.isFinite(qty) ? qty : null;
-        ln.amount = Number.isFinite(amt) ? amt : null;
-        ln.human_confirmed_value = Number.isFinite(amt) ? amt : (Number.isFinite(qty) ? qty : null);
-        ln.extracted_value = ln.extracted_value != null ? ln.extracted_value : ln.amount;
-      });
-    });
-    // refresh derived mirrors client-side (server also re-derives on confirm)
-    const payments = [];
-    let totalEdc = 0, totalQris = 0, totalCash = null, paySum = 0;
-    (doc.sections || []).forEach((sec) => {
-      if (sec.normalized_type !== "PAYMENT_METHODS") return;
-      (sec.lines || []).forEach((ln) => {
-        if (ln.normalized_type === "PAYMENT_METHOD_TOTAL") return;
-        const a = ln.human_confirmed_value != null ? ln.human_confirmed_value : ln.amount;
-        payments.push(ln);
-        if (a == null || !Number.isFinite(Number(a))) return;
-        const n = Number(a);
-        paySum += n;
-        if (ln.normalized_type === "EDC") totalEdc += n;
-        if (ln.normalized_type === "QRIS") totalQris += n;
-        if (ln.normalized_type === "CASH") totalCash = n;
-      });
-    });
-    const shift = {};
-    (doc.sections || []).forEach((sec) => {
-      if (sec.normalized_type !== "SHIFT_SUMMARY") return;
-      (sec.lines || []).forEach((ln) => {
-        if (ln.normalized_type && ln.normalized_type !== "UNKNOWN") {
-          shift[ln.normalized_type] = ln.human_confirmed_value != null ? ln.human_confirmed_value : ln.amount;
-        }
-      });
-    });
-    doc.derived = Object.assign({}, doc.derived || {}, {
-      shift,
-      total_edc: Math.round(totalEdc * 100) / 100,
-      total_qris: Math.round(totalQris * 100) / 100,
-      total_cash: totalCash,
-      payment_methods_sum: Math.round(paySum * 100) / 100,
-      cash_amount: totalCash,
-      edc_card_amount: totalEdc || null,
-      qris_amount: totalQris || null,
-      gross_amount: shift.GROSS_SALES,
-      net_sales: shift.NET_SALES || shift.SALES_TOTAL,
-      bills: shift.BILLS,
-      pax: shift.PAX,
-    });
-    doc.cash_amount = doc.derived.cash_amount;
-    doc.edc_card_amount = doc.derived.edc_card_amount;
-    doc.qris_amount = doc.derived.qris_amount;
-    doc.gross_amount = doc.derived.gross_amount;
-    return doc;
-  }
-
-  function enterEsbManually() {
-    if (!close) return;
-    const emptyDoc = {
-      document_kind: "ESB_CLOSING_RECEIPT",
-      schema_version: 1,
-      sections: [
-        { raw_title: "Shift Summary", normalized_type: "SHIFT_SUMMARY", classification: "KNOWN", lines: [
-          { raw_label: "Gross Sales Total", normalized_type: "GROSS_SALES", amount: null, uncertain: true, classification: "KNOWN" },
-          { raw_label: "Net Sales Total", normalized_type: "NET_SALES", amount: null, uncertain: true, classification: "KNOWN" },
-          { raw_label: "Service Charge Total", normalized_type: "SERVICE_CHARGE", amount: null, uncertain: true, classification: "KNOWN" },
-          { raw_label: "Tax Total", normalized_type: "TAX", amount: null, uncertain: true, classification: "KNOWN" },
-          { raw_label: "Number of Bills", normalized_type: "BILLS", amount: null, uncertain: true, classification: "KNOWN" },
-          { raw_label: "Number of Pax", normalized_type: "PAX", amount: null, uncertain: true, classification: "KNOWN" },
-        ]},
-        { raw_title: "Payment Method Summary", normalized_type: "PAYMENT_METHODS", classification: "KNOWN", lines: [
-          { raw_label: "CASH", normalized_type: "CASH", amount: null, quantity: null, uncertain: true, classification: "KNOWN" },
-          { raw_label: "EDC BNI", normalized_type: "EDC", bank_acquirer: "BNI", amount: null, quantity: null, uncertain: true, classification: "KNOWN" },
-          { raw_label: "EDC MANDIRI", normalized_type: "EDC", bank_acquirer: "MANDIRI", amount: null, quantity: null, uncertain: true, classification: "KNOWN" },
-          { raw_label: "QRIS BNI", normalized_type: "QRIS", bank_acquirer: "BNI", amount: null, quantity: null, uncertain: true, classification: "KNOWN" },
-          { raw_label: "QRIS MANDIRI", normalized_type: "QRIS", bank_acquirer: "MANDIRI", amount: null, quantity: null, uncertain: true, classification: "KNOWN" },
-        ]},
-        { raw_title: "Non Sales Payment Method Summary", normalized_type: "NON_SALES", classification: "KNOWN", lines: [] },
-        { raw_title: "Cancelled Menu Summary", normalized_type: "CANCELLED_MENU", classification: "KNOWN", lines: [] },
-        { raw_title: "Void Payment Detail", normalized_type: "VOID_PAYMENT", classification: "KNOWN", lines: [] },
-        { raw_title: "Promotion Summary", normalized_type: "PROMOTION", classification: "KNOWN", lines: [] },
-      ],
-      derived: {},
-      extensible: true,
-    };
-    esbDraft = {
-      extraction_unavailable: true,
-      extracted: emptyDoc,
-      document: emptyDoc,
-      image_object_ref: $("esbReceiptRef").value || null,
-      content_hash: $("esbContentHash").value || null,
-    };
-    renderEsbDocDraft(emptyDoc, true);
-    if ($("esbPhotoStatus") && ($("esbReceiptRef").value || "").trim()) {
-      $("esbPhotoStatus").textContent = "Photo kept · enter figures manually";
-    }
-    setMsg("Enter the figures manually. Human-confirmed values are authoritative. Photo preserved. Add unknown lines by editing labels after Retry if needed.");
-  }
-
-  async function runEsbExtract(fromPhoto) {
-    if (!close) return;
-    setMsg("");
-    if (!($("esbReceiptRef").value || "").trim() && close.pending_esb_photo && close.pending_esb_photo.object_ref) {
-      $("esbReceiptRef").value = close.pending_esb_photo.object_ref || "";
-      if (close.pending_esb_photo.content_hash) $("esbContentHash").value = close.pending_esb_photo.content_hash;
-      if ($("esbPhotoStatus")) $("esbPhotoStatus").textContent = "Stored photo restored · ready to retry";
-    }
-    const hasPhoto = !!(esbPhotoB64 || ($("esbReceiptRef").value || "").trim());
-    if (!hasPhoto && !fromPhoto) {
-      setMsg("Take Photo or Upload Photo for the ESB closing receipt first.");
-      return;
-    }
-    const body = {
-      close_id: close.close_id,
-      object_ref: $("esbReceiptRef").value || null,
-      content_hash: $("esbContentHash").value || null,
-      mime_type: esbPhotoMime || "image/jpeg",
-    };
-    if (esbPhotoB64) body.image_base64 = esbPhotoB64;
-    try {
-      const data = await api("/api/venue-close/esb-receipt-extract", {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
-      esbDraft = data;
-      const doc = data.document || data.extracted || {};
-      if (data.image_object_ref) $("esbReceiptRef").value = data.image_object_ref;
-      if (data.content_hash) $("esbContentHash").value = data.content_hash;
-      renderEsbDocDraft(doc, true);
-      if (data.extraction_unavailable) {
-        setMsg(staffSafeVisionMsg(data.staff_message || data.message));
-        if ($("esbPhotoStatus") && ($("esbReceiptRef").value || "").trim()) {
-          $("esbPhotoStatus").textContent = "Photo kept · reading unavailable — retry or enter manually";
-        }
-        return;
-      }
-      const mm = data.api_mismatch_preview && data.api_mismatch_preview.api_mismatch;
-      setMsg(
-        mm
-          ? "Full receipt draft ready — live API mismatch will stay visible. Confirm or Edit. Dual source kept."
-          : "Full receipt draft ready. Check sections, then Looks Correct or Edit. Dual source kept.",
-        !mm
-      );
-      if ($("esbPhotoStatus") && ($("esbReceiptRef").value || "").trim()) {
-        $("esbPhotoStatus").textContent = "Photo kept · structured draft ready for confirm";
-      }
-    } catch (e) {
-      const raw = (e.data && (e.data.staff_message || e.data.message)) || e.message || String(e);
-      setMsg(staffSafeVisionMsg(raw));
-      if ($("esbPhotoStatus") && ($("esbReceiptRef").value || "").trim()) {
-        $("esbPhotoStatus").textContent = "Photo kept · reading unavailable — retry or enter manually";
-      }
-    }
-  }
-
-  $("btnEsbExtract").onclick = () => runEsbExtract(false);
-  if ($("btnEsbRetry")) $("btnEsbRetry").onclick = () => runEsbExtract(false);
-  if ($("btnEsbManual")) $("btnEsbManual").onclick = () => enterEsbManually();
-
-  async function submitEsbReceipt(action) {
-    if (!close) return;
-    setMsg("");
-    try {
-      const doc = collectEsbDocumentFromDom();
-      const der = (doc && doc.derived) || {};
-      const data = await api("/api/venue-close/esb-receipt", {
+      const data = await postPhoto(file, "edc");
+      bankRef = data.object_ref;
+      bankHash = data.content_hash;
+      const card = (((wizard || {}).wizard_bank_cards || {}).cards || []).find((c) => c.bank === activeBank) || {};
+      bankDraft = await api("/api/venue-close/edc-receipt-extract", {
         method: "POST",
         body: JSON.stringify({
           close_id: close.close_id,
-          action: action,
-          object_ref: $("esbReceiptRef").value || null,
-          content_hash: $("esbContentHash").value || null,
-          cash_amount: der.cash_amount != null ? der.cash_amount : null,
-          edc_card_amount: der.edc_card_amount != null ? der.edc_card_amount : null,
-          qris_amount: der.qris_amount != null ? der.qris_amount : null,
-          gross_amount: der.gross_amount != null ? der.gross_amount : null,
-          vision_event_id: esbDraft && esbDraft.vision_event_id,
-          extracted: esbDraft && esbDraft.extracted,
-          document: doc,
-          confirmed_overrides: { document: doc },
+          object_ref: bankRef,
+          content_hash: bankHash,
+          bank_hint: activeBank,
+          esb_edc_expected: card.expected_edc,
+          esb_qris_expected: card.expected_qris,
         }),
       });
-      close = Object.assign({}, close, {
-        esb_closing_receipts: data.esb_closing_receipts,
-      });
-      try {
-        const rb = await api("/api/venue-close/" + encodeURIComponent(close.close_id) + "/recon-board");
-        close.recon_board = rb;
-      } catch (_) {}
-      renderClose();
-      setMsg(
-        data.api_mismatch
-          ? "ESB receipt confirmed with visible API mismatch. Live API preserved."
-          : "ESB closing receipt confirmed (full document). Dual source kept.",
-        !data.api_mismatch
-      );
-      esbDraft = null;
-    } catch (e) {
-      setMsg((e.data && e.data.message) || e.message || String(e));
+      renderBanks();
+      showBankWork(activeBank, card.expected_edc, card.expected_qris);
+      setMsg("Receipt linked — confirm amounts.", true);
+    } catch (_e) {
+      setMsg("PHOTO COULD NOT BE SAVED — try again", false);
     }
   }
 
-  $("btnEsbLooks").onclick = () => submitEsbReceipt("looks_correct");
-  $("btnEsbEdit").onclick = () => submitEsbReceipt("edit");
+  async function confirmBank() {
+    const card = (((wizard || {}).wizard_bank_cards || {}).cards || []).find((c) => c.bank === activeBank) || {};
+    const edc = bankDraft.edc_card_amount != null ? bankDraft.edc_card_amount : bankDraft.TOTAL_EDC;
+    const qris = bankDraft.qris_amount != null ? bankDraft.qris_amount : bankDraft.TOTAL_QRIS;
+    await api("/api/venue-close/edc-receipt", {
+      method: "POST",
+      body: JSON.stringify({
+        close_id: close.close_id,
+        object_ref: bankRef,
+        content_hash: bankHash,
+        acquirer_label: activeBank,
+        edc_card_amount: edc,
+        qris_amount: qris,
+        action: "looks_correct",
+      }),
+    });
+    await loadWizard();
+    renderAll();
+    setMsg(activeBank + " receipt saved.", true);
+  }
 
+  function renderCash() {
+    const c = (wizard && wizard.wizard_cash) || {};
+    const petty = (wizard && wizard.wizard_petty) || phone().petty || {};
+    $("cashLines").innerHTML =
+      line("Expected after petty", money(c.expected_cash_in_till)) +
+      line("Shift report cash", money(c.shift_report_cash)) +
+      line("Petty out", money(c.petty_cash_paid_today != null ? c.petty_cash_paid_today : petty.out)) +
+      line("Petty in", money(c.petty_cash_in_today != null ? c.petty_cash_in_today : petty.in));
+    if (c.cash_counted != null && $("cashAmt").value === "") $("cashAmt").value = c.cash_counted;
+    updateCashDiff();
+  }
 
-  $("btnReconRefresh").onclick = async () => {
-    if (!close) return;
+  function updateCashDiff() {
+    const c = (wizard && wizard.wizard_cash) || {};
+    const counted = $("cashAmt").value === "" ? null : Number($("cashAmt").value);
+    const expected = c.expected_cash_in_till;
+    const box = $("cashDiff");
+    if (counted == null || expected == null) {
+      box.innerHTML = "";
+      $("cashWhyLabel").classList.add("hidden");
+      $("cashWhy").classList.add("hidden");
+      return;
+    }
+    const diff = Math.round((counted - expected) * 100) / 100;
+    if (Math.abs(diff) < 0.01) {
+      box.innerHTML = `<span class="ok-pill">MATCHES</span>`;
+      $("cashWhyLabel").classList.add("hidden");
+      $("cashWhy").classList.add("hidden");
+    } else {
+      const label = diff < 0 ? "DIFFERENCE · short " + money(Math.abs(diff)) : "DIFFERENCE · over " + money(diff);
+      box.innerHTML = `<div class="warn-box">${label}</div>`;
+      $("cashWhyLabel").classList.remove("hidden");
+      $("cashWhy").classList.remove("hidden");
+    }
+  }
+
+  async function saveCash() {
+    await ensureClose();
+    const amt = Number($("cashAmt").value);
+    if (!amt && amt !== 0) { setMsg("Enter the counted cash.", false); return; }
+    await api("/api/venue-close/till-declare", {
+      method: "POST",
+      body: JSON.stringify({
+        close_id: close.close_id,
+        amount: amt,
+        cash_why_note: ($("cashWhy").value || "").trim() || null,
+        object_ref: cashRef || null,
+        content_hash: cashHash || null,
+      }),
+    });
+    lastCashSaved = amt;
+    await loadWizard();
+    renderAll();
+    setMsg("Cash count saved.", true);
+  }
+
+  function renderFinish() {
+    const ph = phone();
+    const c = (wizard && wizard.wizard_cash) || {};
+    const banks = ((wizard && wizard.wizard_bank_cards) || {}).cards || [];
+    const ready = (wizard && wizard.submit_readiness) || {};
+    const needBanks = banks.some((b) => b.status === "RECEIPT_REQUIRED" || b.status === "UNCERTAIN");
+    const hasCash = c.cash_counted != null || ($("cashAmt").value !== "" && !Number.isNaN(Number($("cashAmt").value)));
+    $("finishSummary").innerHTML =
+      line("Sales", money(ph.sales)) +
+      line("Cash expected", money(c.expected_cash_in_till)) +
+      line("Cash counted", money(c.cash_counted != null ? c.cash_counted : ($("cashAmt").value || null))) +
+      line("Banks left", needBanks ? banks.filter((b) => b.status === "RECEIPT_REQUIRED" || b.status === "UNCERTAIN").map((b) => b.bank || "CHECK").join(", ") : "None") +
+      (c.difference != null && Math.abs(c.difference) >= 0.01 ? `<div class="warn-box">${c.difference_label || "Cash difference"} ${money(Math.abs(c.difference))}</div>` : "");
+    const canFinish = Boolean(ph.shift_read || (wizard && wizard.shift_figures_yes)) && hasCash && !needBanks;
+    $("btnFinish").disabled = !canFinish && !ready.submit_enabled;
+    const hasEx = Boolean(ready.has_exception || (c.difference != null && Math.abs(c.difference) >= 0.01));
+    $("btnFinishEx").classList.toggle("hidden", !hasEx);
+    $("btnFinishEx").disabled = !canFinish && !ready.submit_with_exception_available && !ready.submit_enabled;
+    // Variance never blocks — enable finish when shift+cash done even if banks uncertain? Owner: banks needing evidence must be shown; allow finish with exception if mismatch.
+    if ((ph.shift_read || (wizard && wizard.shift_figures_yes)) && hasCash) {
+      $("btnFinish").disabled = needBanks;
+      $("btnFinishEx").disabled = needBanks;
+      if (hasEx) $("btnFinishEx").classList.remove("hidden");
+    }
+  }
+
+  async function doFinish(withException) {
+    await ensureClose();
+    const amt = Number($("cashAmt").value);
+    if ($("cashAmt").value !== "" && amt !== lastCashSaved) {
+      await saveCash();
+    }
+    setMsg("Saving close…", true);
+    const out = await api("/api/venue-close/staff-submit", {
+      method: "POST",
+      body: JSON.stringify({
+        close_id: close.close_id,
+        amount: Number($("cashAmt").value),
+        cash_why_note: ($("cashWhy").value || "").trim() || null,
+        submit_with_exception: !!withException,
+      }),
+    });
+    $("secClose").classList.add("hidden");
+    $("secDone").classList.remove("hidden");
+    $("doneTitle").textContent = out.staff_message || out.message || (withException ? "CLOSE SAVED WITH EXCEPTION" : "CLOSE SAVED");
+    $("doneBody").textContent = "✓ COMPLETE";
+    setMsg("", true);
+  }
+
+  // Wire events
+  $("btnRefreshDates").onclick = () => loadQueue().catch((e) => setMsg(e.message, false));
+  $("btnTakeShift").onclick = () => $("shiftCam").click();
+  $("btnUploadShift").onclick = () => $("shiftFile").click();
+  $("shiftCam").onchange = async (ev) => {
+    const f = ev.target.files && ev.target.files[0];
+    if (!f) return;
     try {
-      close.recon_board = await api("/api/venue-close/" + encodeURIComponent(close.close_id) + "/recon-board");
-      renderRecon(close);
-      setMsg("Recon refreshed.", true);
-    } catch (e) {
-      setMsg((e.data && e.data.message) || e.message || String(e));
+      $("shiftSaveFail").classList.add("hidden");
+      const data = await postPhoto(f, "esb");
+      shiftRef = data.object_ref; shiftHash = data.content_hash;
+      const preview = $("shiftPreview");
+      preview.src = URL.createObjectURL(f); preview.classList.add("show");
+      await loadWizard(); renderEsb();
+      setMsg("Photo uploaded.", true);
+    } catch (_e) {
+      $("shiftSaveFail").classList.remove("hidden");
+      setMsg("PHOTO COULD NOT BE SAVED — try again", false);
     }
   };
-
-  $("btnReconcile").onclick = async () => {
-    if (!close) return;
-    setMsg("");
+  $("shiftFile").onchange = $("shiftCam").onchange;
+  $("btnReadShift").onclick = () => readShiftReport().catch((e) => setMsg(e.message, false));
+  $("btnShiftCorrect").onclick = () => confirmShiftYes().catch((e) => setMsg(e.message, false));
+  $("btnShiftEdit").onclick = () => showShiftEdit();
+  $("bankFile").onchange = (ev) => {
+    const f = ev.target.files && ev.target.files[0];
+    if (f) uploadBank(f);
+  };
+  $("cashAmt").oninput = () => { updateCashDiff(); renderFinish(); };
+  $("btnCashSave").onclick = () => saveCash().catch((e) => setMsg(e.message, false));
+  $("btnCashPhoto").onclick = () => $("cashFile").click();
+  $("cashFile").onchange = async (ev) => {
+    const f = ev.target.files && ev.target.files[0];
+    if (!f) return;
     try {
-      const data = await api("/api/venue-close/reconcile", {
-        method: "POST",
-        body: JSON.stringify({ close_id: close.close_id }),
-      });
-      close = data.close;
-      renderClose();
-      setMsg(
-        close.state === "VERIFIED_CLOSED"
-          ? "Clean day — closed and verified."
-          : (policyCount === 0
-          ? "BLOCKED BY BUSINESS POLICY. Open an exception. It shows in My Work."
-          : "Variance needs an exception handover. Acceptance is not built on this screen."),
-        close.state === "VERIFIED_CLOSED"
-      );
-      await loadExceptions();
-    } catch (e) {
-      setMsg((e.data && e.data.message) || e.message || String(e));
-    }
+      const data = await postPhoto(f, "till");
+      cashRef = data.object_ref; cashHash = data.content_hash;
+      setMsg("Cash photo saved.", true);
+    } catch (_e) { setMsg("PHOTO COULD NOT BE SAVED — try again", false); }
+  };
+  $("btnFinish").onclick = () => doFinish(false).catch((e) => setMsg(e.message, false));
+  $("btnFinishEx").onclick = () => doFinish(true).catch((e) => setMsg(e.message, false));
+  $("btnBackHome").onclick = () => {
+    $("secDone").classList.add("hidden");
+    $("secClose").classList.add("hidden");
+    $("secChoose").classList.remove("hidden");
+    close = null; wizard = null;
+    loadQueue().catch(() => {});
   };
 
-  $("excList").addEventListener("click", async (ev) => {
-    const btn = ev.target.closest("button[data-act]");
-    if (!btn) return;
-    const id = btn.getAttribute("data-id");
-    const act = btn.getAttribute("data-act");
-    try {
-      if (act === "exception") {
-        await api("/api/venue-close/exception", {
-          method: "POST",
-          body: JSON.stringify({ close_id: id }),
-        });
-      } else if (act === "resolve") {
-        const ta = document.querySelector(`textarea[data-notes="${id}"]`);
-        await api("/api/venue-close/resolve", {
-          method: "POST",
-          body: JSON.stringify({
-            close_id: id,
-            resolution_notes: (ta && ta.value) || "",
-          }),
-        });
-      } else if (act === "verify") {
-        await api("/api/venue-close/verify", {
-          method: "POST",
-          body: JSON.stringify({ close_id: id }),
-        });
-      }
-      await loadExceptions();
-      setMsg("Updated.", true);
-    } catch (e) {
-      setMsg(e.message || String(e));
-    }
-  });
-
-  boot();
+  loadQueue().catch((e) => setMsg(e.message, false));
 })();
 </script>
 </body>

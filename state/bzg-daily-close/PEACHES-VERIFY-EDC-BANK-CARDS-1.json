@@ -1,0 +1,36 @@
+{
+  "pack": "BZG-CLOSE-EDC-BANK-CARDS-1",
+  "verified_at": "2026-10-02T23:33:15.088433+08:00",
+  "close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+  "duplicate_repair": {
+    "superseded": "EDCR-10bcf918-df7a-44ca-a5b3-6ca38dd55117",
+    "current": "EDCR-6a4b26bb-2ca3-4252-a888-382711159bd0",
+    "current_edc": 6185000,
+    "current_qris": 65000,
+    "totals_edc": 6185000,
+    "totals_qris": 65000,
+    "no_double_count": true
+  },
+  "bank_cards": [
+    {
+      "bank": "MANDIRI",
+      "status": "RECEIPT_REQUIRED",
+      "edc_exp": 5450000,
+      "qris_exp": 2105000
+    },
+    {
+      "bank": "BNI",
+      "status": "MATCH",
+      "edc_exp": 6185000,
+      "qris_exp": 65000,
+      "actual_edc": 6185000
+    },
+    {
+      "bank": "BRI",
+      "status": "NOT_USED_TODAY"
+    }
+  ],
+  "eng_status": "CODE_COMPLETE_AWAITING_PEACHES_VISUAL",
+  "staff_ready": false,
+  "do_not_call_eng_proved": true
+}

@@ -55,18 +55,29 @@
     td { border-bottom: 0; padding: 4px 0; }
     tr { border-bottom: 1px solid var(--line); padding: 8px 0; }
   }
+
+  /* UX-PACK-03-DESKTOP */
+  @media (min-width: 900px) {
+    body { max-width: 1100px; padding: 20px 28px 72px; }
+    nav.uma { gap: 8px; }
+    nav.uma a { flex: 0 0 auto; }
+  }
 </style>
 </head>
 <body data-wolf-page-type="WORKSPACE" data-wolf-org="BZG/UMA">
   <p class="muted"><a href="/bzg/uma-blu">Uma Blu Today</a></p>
   <h1 id="title">Uma Blu</h1>
   <p class="banner" id="cutLine">Historical source stays authoritative. Wolf commissioning date is not set.</p>
-  <nav class="uma" aria-label="Uma Blu real data">
+    <nav class="uma" aria-label="Uma Blu desk">
+    <a href="/bzg/uma-blu">Today</a>
+    <a href="/bzg/uma-blu/bills">Bills</a>
+    <a href="/bzg/uma-blu/issues">Issues</a>
+    <a href="/bzg/uma-blu/petty">Petty</a>
+    <a href="/bzg/uma-blu/evidence">Evidence</a>
+    <a href="/bzg/uma-blu/exceptions">Exceptions</a>
     <a href="/bzg/uma-blu/recipes">Recipes</a>
-    <a href="/bzg/uma-blu/purchasing">Purchasing</a>
-    <a href="/bzg/uma-blu/sales">ESB sales</a>
-    <a href="/bzg/uma-blu/menu-map">Menu map</a>
-    <a href="/uma-blu-close">Daily Close</a>
+    <a class="active" href="/bzg/uma-blu/real">Real</a>
+    <a id="closeLink" href="/uma-blu-close">Close</a>
   </nav>
   <div id="app"><p class="muted">Loading…</p></div>
 <script>

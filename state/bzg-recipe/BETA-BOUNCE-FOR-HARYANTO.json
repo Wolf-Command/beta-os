@@ -1,0 +1,19 @@
+{
+  "pack": "BZG-RECIPE-MULTI-OUTLET-1",
+  "action": "serve_beta_kickstart",
+  "method": "python3 scripts/beta_restart.py",
+  "label": "net.wolfcommand.serve-beta",
+  "old_pid": 62891,
+  "new_pid": 10470,
+  "commit": "d61756e",
+  "beta_port": 8788,
+  "prod_8787": "untouched_still_listening",
+  "post_probes_no_jwt": {
+    "/bzg/recipe-builder": 403,
+    "/api/bzg/recipe-builder/context": 403,
+    "/api/bzg/recipe-builder/ingredients?outlet_id=BZG-UMA": 403,
+    "note": "403 fail-closed = routes loaded on fresh process"
+  },
+  "haryanto_beta_url": "https://beta.wolfcommand.net/bzg/recipe-builder",
+  "status": "READY_FOR_HARYANTO_COMMISSION"
+}

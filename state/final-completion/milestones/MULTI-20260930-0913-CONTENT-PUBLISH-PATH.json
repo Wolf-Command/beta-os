@@ -1,0 +1,30 @@
+{
+  "milestone": "MULTI-20260930-0913-CONTENT-PUBLISH-PATH",
+  "at_wita": "2026-09-30T09:13:49+08:00",
+  "pack": "CONTENT-PUBLISH-PATH-1",
+  "status": "CURSOR_EXIT_0",
+  "suite": {
+    "pass": 233,
+    "fail": 0
+  },
+  "classification": "HUMAN_COMMISSIONING",
+  "pack_classification": "HUMAN_COMMISSIONING_OR_EXTERNAL",
+  "action": "DOCUMENT_PUBLISH_PATH",
+  "metricool_write": "DISABLED",
+  "metricool_write_status": "NOT_RUNTIME",
+  "publish_success": null,
+  "engagement": null,
+  "invented_publish_success": false,
+  "metricool_runtime_wire1_preserved": true,
+  "content_engine_live1_preserved": true,
+  "ggv_metric_honesty1_preserved": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_pid_held": 15975,
+  "no_push": true,
+  "board": "/ops/content-publish-path-1",
+  "result": "docs/wolf/ops/CONTENT-PUBLISH-PATH-1-RESULT.md",
+  "next_pack_for_parent": "OCCUPANCY-EXTERNAL-HOLD-1",
+  "cursor_did_not_auto_start_next": true,
+  "matt_auto_continue_next_after_peaches": "OCCUPANCY-EXTERNAL-HOLD-1"
+}

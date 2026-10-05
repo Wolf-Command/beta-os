@@ -1,0 +1,299 @@
+[
+  {
+    "id": "bzg-p2p-nota-bill1-20261005",
+    "claim": "BZG-P2P-NOTA-BILL-1: supplier nota capture against saved goods receipt; bzg_ops_supplier_bills; bzg.bill.capture; RECEIVED\u2192BILL_RECEIVED when full; not payment/AP",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_bzg_p2p_nota1_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_bzg_p2p_recv1_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_bzg_p2p_po1_20261004.py",
+    "expect": "24 passed 0 failed; 25 passed 0 failed; 27 passed 0 failed",
+    "by": "cursor-local",
+    "pack": "BZG-P2P-NOTA-BILL-1",
+    "created_at": "2026-10-05T06:45:00+08:00"
+  },
+  {
+    "id": "ggv-bills-605-20261005",
+    "claim": "GGV-BILLS-605: 605 bills imported from money.sqlite into Beta ggv_bills; provenance preserved; idempotent; 46 invoices and 33 notas unchanged",
+    "check": "python3 scripts/tests/test_ggv_bills_605_20261005.py && sqlite3 catalog/content_library.sqlite \"SELECT COUNT(*) FROM ggv_bills; SELECT COUNT(*) FROM ggv_invoices; SELECT COUNT(*) FROM ggv_notas\"",
+    "expect": "21 passed 0 failed; counts 605, 46, 33",
+    "by": "cursor-local",
+    "pack": "GGV-BILLS-605",
+    "created_at": "2026-10-05T06:30:00+08:00"
+  },
+  {
+    "id": "bzg-p2p-recv1-20261005",
+    "claim": "BZG-P2P-RECV-1: goods receipt saves against saved PO to bzg_ops_goods_receipts; venue.receive; ORDERED\u2192PARTIALLY_RECEIVED/RECEIVED; not bill/payment/stock",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_bzg_p2p_recv1_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_bzg_p2p_po1_20261004.py",
+    "expect": "25 passed 0 failed; 27 passed 0 failed",
+    "by": "cursor-local",
+    "pack": "BZG-P2P-RECV-1",
+    "created_at": "2026-10-05T06:36:00+08:00"
+  },
+  {
+    "id": "bzg-p2p-ap1-20261005",
+    "claim": "BZG-P2P-AP-1: matched bill AP-ready for controller; bzg_ops_ap_ready; bzg.ap.view + bzg.ap.mark_ready; not payment/approval; PR stays BILL_RECEIVED",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_bzg_p2p_ap1_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_bzg_p2p_three_way1_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_bzg_p2p_nota1_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_bzg_p2p_recv1_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_bzg_p2p_po1_20261004.py",
+    "expect": "24 passed 0 failed; 27 passed 0 failed; 24 passed 0 failed; 25 passed 0 failed; 27 passed 0 failed",
+    "by": "cursor-local",
+    "pack": "BZG-P2P-AP-1",
+    "created_at": "2026-10-05T06:55:00+08:00"
+  },
+  {
+    "id": "owner-home-factory-indicator-20261005",
+    "claim": "OWNER-HOME-FACTORY-INDICATOR: read-only factory line on /owner/cockpit from GOD-MODE-DISPATCH.json + WRITER.lock; six counts/timestamps; staff_ready=false",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_owner_home_factory_indicator_20261005.py && curl -sS http://127.0.0.1:8788/api/owner/cockpit | python3 -c \"import json,sys; d=json.load(sys.stdin); fi=d['factory_indicator']; assert fi['ready_for_human_test_count']==6\"",
+    "expect": "9 passed 0 failed; factory_indicator present on live Beta API",
+    "by": "cursor-local",
+    "pack": "OWNER-HOME-FACTORY-INDICATOR",
+    "created_at": "2026-10-05T07:05:00+08:00"
+  },
+  {
+    "id": "BZG-HISTORY-IMPORT-1-PO-COUNT",
+    "claim": "543 Alchemist pr_orders in bzg_ops_purchase_orders",
+    "check": "cd /Users/wolfterminal/beta-os && python3 -c \"import sqlite3; print(sqlite3.connect('catalog/content_library.sqlite').execute('SELECT COUNT(*) FROM bzg_ops_purchase_orders').fetchone()[0])\"",
+    "expect": "543",
+    "by": "cursor-bzg-history-import1",
+    "pack": "BZG-HISTORY-IMPORT-1",
+    "created_at": "2026-10-05T07:41:34+08:00"
+  },
+  {
+    "id": "BZG-HISTORY-IMPORT-1-PETTY-BAL",
+    "claim": "Live Uma petty balance Rp52,700 unchanged after historical import",
+    "check": "cd /Users/wolfterminal/beta-os && python3 -c \"import sqlite3; c=sqlite3.connect('catalog/content_library.sqlite'); o=c.execute(\\\"SELECT opening_float FROM bzg_ops_petty_days WHERE business_date='2026-10-02'\\\").fetchone()[0]; m=c.execute(\\\"SELECT COALESCE(SUM(CASE WHEN direction='IN' THEN amount WHEN direction='OUT' THEN -amount ELSE 0 END),0) FROM bzg_ops_petty_movements WHERE business_date>='2026-10-02'\\\").fetchone()[0]; print(o+m)\"",
+    "expect": "52700.0",
+    "by": "cursor-bzg-history-import1",
+    "pack": "BZG-HISTORY-IMPORT-1",
+    "created_at": "2026-10-05T07:41:34+08:00"
+  },
+  {
+    "id": "BZG-HISTORY-IMPORT-1-PROD-PID",
+    "claim": "Prod pid 1297 still on 8787",
+    "check": "lsof -i :8787 -t | head -1",
+    "expect": "1297",
+    "by": "cursor-bzg-history-import1",
+    "pack": "BZG-HISTORY-IMPORT-1",
+    "created_at": "2026-10-05T07:41:34+08:00"
+  },
+  {
+    "id": "bzg-p2p-grant-repair1-20261005",
+    "claim": "BZG-P2P-GRANT-REPAIR-1: explicit P2P role matrix replaces work.complete copy; GGV content DENY; Iza/Hariyanto cannot hold full chain; document segregation on pay-ready",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_bzg_p2p_grant_repair1_20261005.py && PYTHONPATH=scripts python3 -c \"import sys; sys.path.insert(0,'scripts'); from core import rbac; t={'entity_id':'ENT-BZG','brand_id':'BZG-UMA'}; assert not rbac.can('PERS-HAIKAL','bzg.pay.mark_ready',t); assert not rbac.can('PERS-IZA','bzg.ap.mark_ready',t)\"",
+    "expect": "74 passed 0 failed; live Haikal DENY pay.mark_ready; live Iza DENY ap.mark_ready",
+    "by": "cursor-local",
+    "pack": "BZG-P2P-GRANT-REPAIR-1",
+    "created_at": "2026-10-05T08:35:00+08:00"
+  },
+  {
+    "id": "bzg-finance-usability1-20261005",
+    "claim": "BZG-FINANCE-USABILITY-1: /bzg/finance browse imported history (suppliers, PO, GR, nota, petty, bank, AP, exceptions); completeness secondary tab; read-only; Zayen allowed Haikal denied; staff_ready=false",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_bzg_finance_usability1_20261005.py",
+    "expect": "12 passed 0 failed",
+    "by": "cursor-bzg-finance-usability1",
+    "pack": "BZG-FINANCE-USABILITY-1",
+    "created_at": "2026-10-05T11:20:00+08:00"
+  },
+  {
+    "id": "bzg-bank-recon1-20261005",
+    "claim": "BZG-BANK-RECON-1: 1257 bank txns / 10 parsed imports get deterministic recon states (MATCHED/POSSIBLE MATCH/UNMATCHED/EXCEPTION); Sep-Oct 2026 missing per account NEEDS FROM MATT; finance bank browse filters read-only; staff_ready=false",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_bzg_bank_recon1_20261005.py",
+    "expect": "10 passed 0 failed; state sum=1257; 6 missing months NEEDS FROM MATT; 9 MATCHED reproducible",
+    "by": "cursor-bzg-bank-recon1",
+    "pack": "BZG-BANK-RECON-1",
+    "created_at": "2026-10-05T11:20:00+08:00"
+  },
+  {
+    "id": "uma-hist-close-queue1-20261005",
+    "claim": "UMA-HIST-CLOSE-QUEUE-1: owner nine-date backlog on /uma-blu-close#history-queue; canonical statuses from venue_daily_closes; preflight freeze matrix; protected closes/petty unchanged; staff_ready=false",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_uma_hist_close_queue1_20261005.py",
+    "expect": "34 passed 0 failed; nine statuses OPEN\u00d74 INCOMPLETE\u00d74 EXCEPTION\u00d71; ready_to_close_now=6; prod pid 1297",
+    "by": "cursor-local",
+    "pack": "UMA-HIST-CLOSE-QUEUE-1",
+    "created_at": "2026-10-05T11:45:00+08:00"
+  },
+  {
+    "id": "finance-core-ggv1-20261005",
+    "claim": "FINANCE-CORE-GGV-1: GGV operational finance desk + nota upload + bank statement FILE_IMPORT_ONLY + propose-only recon; 46/33/605 history preserved; Amanda GGV nota.create via RBAC chain; Zayen denied",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_finance_core_ggv1_20261005.py",
+    "expect": "8 passed 0 failed; desk counts invoices=46 notas=33 bills=605; matt URLs /ggv/finance/notas /banking /reconciliation",
+    "by": "cursor-local",
+    "pack": "FINANCE-CORE-GGV-1",
+    "created_at": "2026-10-05T11:50:00+08:00"
+  },
+  {
+    "id": "finance-core-amg-prove1-20261005",
+    "claim": "FINANCE-CORE-AMG-PROVE-1: AMG operational finance core on ENT-AMG via shared ggv_finance_nota/bank entity scope; Matt+Zayen allowed Amanda denied on AMG writes; GGV 46/33/605 unchanged; no payment.execute",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_finance_core_amg_prove1_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_finance_core_ggv1_20261005.py",
+    "expect": "8 passed 0 failed each; isolation proofs in state/reliability/FINANCE-CORE-AMG-PROVE-1-RESULT-2026-10-05.json",
+    "by": "cursor-local",
+    "pack": "FINANCE-CORE-AMG-PROVE-1",
+    "created_at": "2026-10-05T12:05:00+08:00"
+  },
+  {
+    "id": "bzg-evidence-link1-20261005",
+    "claim": "BZG-EVIDENCE-LINK-1: deterministic evidence linkage for possessed BZG history; 1 auto-linked PO-HIST-389 exact_path_ref; 1362 UNLINKED; finance desk shows linked evidence; no fabricated refs",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_bzg_evidence_link1_20261005.py",
+    "expect": "9 passed 0 failed; linked=1 unlinked=1362; PO-HIST-389 evidence linked on finance desk",
+    "by": "cursor-local",
+    "pack": "BZG-EVIDENCE-LINK-1",
+    "created_at": "2026-10-05T11:51:00+08:00"
+  },
+  {
+    "id": "finance-core-statements1-20261005",
+    "claim": "FINANCE-CORE-STATEMENTS-1: shared bank statement library+upload for GGV/AMG/BZG; signature overlap dedupe; PDF/CIMB parsers; GGV prove fixtures flagged TEST_FIXTURE; historical registry from authorised files only",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_finance_core_statements1_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_finance_core_ggv1_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_finance_core_amg_prove1_20261005.py",
+    "expect": "10 passed 0 failed; 8 passed 0 failed each regression; RESULT state/reliability/FINANCE-CORE-STATEMENTS-1-RESULT-2026-10-05.json status IMPLEMENTATION_DONE",
+    "by": "cursor-local",
+    "pack": "FINANCE-CORE-STATEMENTS-1",
+    "created_at": "2026-10-05T12:10:00+08:00"
+  },
+  {
+    "id": "finance-core-bzg-prove1-20261005",
+    "claim": "FINANCE-CORE-BZG-PROVE-1: BZG finance desk composes shared finance_core_entity+statements on ENT-BZG; Matt+Zayen allowed Haikal/Amanda denied; BZG imports isolated to bzg_bank_*; GGV 46/33/605 and AMG 525/0 unchanged; no payment.execute; staff_ready=false; zayen_ready=false",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_finance_core_bzg_prove1_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_finance_core_ggv1_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_finance_core_amg_prove1_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_bzg_finance_usability1_20261005.py",
+    "expect": "8 passed 0 failed each; isolation proofs in state/reliability/FINANCE-CORE-BZG-PROVE-1-RESULT-2026-10-05.json",
+    "by": "cursor-local",
+    "pack": "FINANCE-CORE-BZG-PROVE-1",
+    "created_at": "2026-10-05T12:30:00+08:00"
+  },
+  {
+    "id": "obsidian-mirror-continue1-20261005",
+    "claim": "OBSIDIAN-MIRROR-CONTINUE-1: one-way Wolf\u2192Obsidian 10-Mirror; read-only content_library.sqlite; append-only markdown for petty/closes/imports/reconciliations/evidence-links/decisions/exceptions; idempotent second run zero writes; no DB writes; prod 1297 untouched",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_obsidian_ops_mirror_continue1_20261005.py && PYTHONPATH=scripts python3 scripts/ops/obsidian_ops_mirror.py | python3 -c \"import sys,json; d=json.load(sys.stdin); assert all(a['action']=='skip' for a in d['actions'])\"",
+    "expect": "9 passed 0 failed; second vault run all skip (22 notes)",
+    "by": "cursor-local",
+    "pack": "OBSIDIAN-MIRROR-CONTINUE-1",
+    "created_at": "2026-10-05T12:20:00+08:00"
+  },
+  {
+    "id": "uma-hist-close-nav-mobile1-20261005",
+    "claim": "UMA-HIST-CLOSE-NAV-MOBILE-1: iPhone history-queue taps hide backlog panels, scroll to opened close, whole-row links, protected read-only review, pushState back; server mutation guards + race-safe open_or_get",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_uma_hist_close_nav_mobile1_20261005.py",
+    "expect": "51 passed 0 failed",
+    "by": "cursor-local",
+    "pack": "UMA-HIST-CLOSE-NAV-MOBILE-1",
+    "created_at": "2026-10-05T12:35:00+08:00"
+  },
+  {
+    "id": "uma-hist-close-nav-mobile2-20261005",
+    "claim": "UMA-HIST-CLOSE-NAV-MOBILE-2: no VDC- in owner DOM; sanitizeOwnerText on errors; topMsgGlobal opening feedback until screen; queue test derives canonical status",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_uma_hist_close_nav_mobile1_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_uma_hist_close_nav_mobile2_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_uma_hist_close_queue1_20261005.py",
+    "expect": "51 passed 0 failed; 95 passed 0 failed; 34 passed 0 failed",
+    "by": "cursor-local",
+    "pack": "UMA-HIST-CLOSE-NAV-MOBILE-2",
+    "created_at": "2026-10-05T12:40:00+08:00"
+  },
+  {
+    "id": "finance-switcher-repair2-20261005",
+    "claim": "FINANCE-SWITCHER-REPAIR-2: Zayen loads /shared/finance-switcher.js|.css (narrow allowlist); Matt GET /api/amg/finance/accounts|journals|ledger 200 via ROLE-MATT+SCOPE-AMG-FINANCE read grants; Amanda/Zayen regressions hold; staff_ready=false",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_finance_switcher_repair2_20261005.py && PYTHONPATH=scripts python3 scripts/tests/test_finance_switcher_repair1_20261005.py",
+    "expect": "7 passed 0 failed; 7 passed 0 failed; status IMPLEMENTATION_DONE",
+    "by": "cursor-local",
+    "pack": "FINANCE-SWITCHER-REPAIR-2",
+    "created_at": "2026-10-05T12:56:00+08:00"
+  },
+  {
+    "id": "bzg-p2p-harden1-20261005",
+    "claim": "BZG-P2P-HARDEN-1: six legacy P2P migrations neutralised (no copy-seed re-grant); mark-ready precheck leak closed; same-person AP+pay SoD; J1 matrix green",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_bzg_p2p_harden1_20261005.py",
+    "expect": "31 passed 0 failed; status PASS in state/reliability/BZG-P2P-HARDEN-1-RESULT-2026-10-05.json",
+    "by": "cursor-bzg-p2p-harden1",
+    "pack": "BZG-P2P-HARDEN-1",
+    "created_at": "2026-10-05T12:58:00+08:00"
+  },
+  {
+    "id": "uma-hist-close-complete2-20261005",
+    "claim": "UMA-HIST-CLOSE-COMPLETE-2: 29 Sep wizard resumes after reload; BNI/BRI terminal expected values; till-declare resolves shift evidence; exception submit end-to-end",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_uma_hist_close_complete2_20261005.py 2>&1 | tail -1",
+    "expect": "SUMMARY pass=29 fail=0",
+    "by": "cursor-complete2-20261005",
+    "pack": "UMA-HIST-CLOSE-COMPLETE-2",
+    "created_at": "2026-10-05T13:15:00+08:00"
+  },
+  {
+    "id": "uma-close-6step-rebuild1-20261005",
+    "claim": "UMA-CLOSE-6STEP-REBUILD-1: six-step uma-blu-close workflow; read-only date-peek; ESB difference exception idempotent; iPhone harness PASS on probe copy",
+    "check": "WOLF_TEST_MODE=1 PYTHONPATH=scripts python3 scripts/tests/test_uma_close_6step_rebuild1_20261005.py 2>&1 | tail -1",
+    "expect": "SUMMARY pass=46 fail=0",
+    "by": "cursor-6step-rebuild-20261005",
+    "pack": "UMA-CLOSE-6STEP-REBUILD-1",
+    "created_at": "2026-10-05T13:35:00+08:00"
+  },
+  {
+    "id": "finance-ui-human-labels1-20261005",
+    "claim": "FINANCE-UI-HUMAN-LABELS-1: finance pages show plain role+business seat labels and no staff_ready/zayen_ready/SCOPE-/ENT- visible text; NO ACCESS only on greyed GGV dropdown option; switcher repair1+2+zayen prove1 regressions green; staff_ready=false",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_finance_ui_human_labels1_20261005.py 2>&1 | tail -1",
+    "expect": "RESULT_JSON: state/reliability/FINANCE-UI-HUMAN-LABELS-1-RESULT-2026-10-05.json; tests_pass=5 tests_fail=0 status=IMPLEMENTATION_DONE",
+    "by": "cursor-finance-ui-human-labels1",
+    "pack": "FINANCE-UI-HUMAN-LABELS-1",
+    "created_at": "2026-10-05T13:50:00+08:00"
+  },
+  {
+    "id": "uma-close-evidence-isolation1-20261005",
+    "claim": "UMA-CLOSE-EVIDENCE-ISOLATION-1: Sep29 resolve no synthetic D8D83EB13C05; 52 synthetic refs quarantined; WOLF_EVIDENCE_ROOT guard blocks live receipt writes under WOLF_TEST_MODE",
+    "check": "PYTHONPATH=scripts python3 -c \"from core import bzg_daily_close as b; c=b.db_connect(); r,_=b._resolve_shift_report_evidence('VDC-8fd544e2-2132-4a4a-b714-720eb0cd18ad',c); assert 'D8D83EB13C05' not in (r or '')\" && PYTHONPATH=scripts python3 scripts/tests/test_uma_close_evidence_isolation1_20261005.py",
+    "expect": "exit 0; guard tests 2/0",
+    "by": "cursor-agent",
+    "pack": "UMA-CLOSE-EVIDENCE-ISOLATION-1",
+    "created_at": "2026-10-05T14:30:00+08:00"
+  },
+  {
+    "id": "uma-close-6step-rebuild3-20261005",
+    "claim": "UMA-CLOSE-6STEP-REBUILD-3: shift EDIT saves corrections; YES blocks empty read; all 4 Sep03 slips; variance Short/Over/Matches; read-only VIEW CLOSE; unified status vocabulary",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_uma_close_6step_rebuild3_20261005.py",
+    "expect": "SUMMARY pass=37 fail=0",
+    "by": "cursor-agent",
+    "pack": "UMA-CLOSE-6STEP-REBUILD-3",
+    "created_at": "2026-10-05T14:35:00+08:00"
+  },
+  {
+    "id": "uma-close-6step-rebuild4-20261005",
+    "claim": "UMA-CLOSE-6STEP-REBUILD-4: EDIT\u2192YES confirmed figures drive bank/cash/review; resume bank step with found slips; search-date CONTINUE parity; empty read message",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_uma_close_6step_rebuild4_20261005.py && /Users/wolfterminal/pw-venv-histclose/bin/python scripts/tests/prove_uma_close_6step_rebuild4_20261005.py 8802 6step-rebuild4-wolf",
+    "expect": "SUMMARY pass=18 fail=0; harness zero_live_writes=true sep03_banks_ok=true",
+    "by": "cursor-local",
+    "pack": "UMA-CLOSE-6STEP-REBUILD-4",
+    "created_at": "2026-10-05T17:25:00+08:00"
+  },
+  {
+    "id": "uma-close-step2-iphone-photo-1-20261005",
+    "claim": "UMA-CLOSE-STEP2-IPHONE-PHOTO-1: Step 2 shift photo upload survives Beta restart (postPhoto JSON guard + 502 retry); 40MB cap; HEIC magic + .read.jpg derivative; staff-safe fail copy; receipt-photo always JSON",
+    "check": "python3 scripts/tests/test_uma_close_step2_iphone_photo1_20261005.py",
+    "expect": "tests_pass=42 tests_fail=0 status READY FOR HUMAN TEST",
+    "by": "cursor-local",
+    "pack": "UMA-CLOSE-STEP2-IPHONE-PHOTO-1",
+    "created_at": "2026-10-05T19:40:00+08:00"
+  },
+  {
+    "id": "fc-bzg-receive-evidence1-20261005",
+    "claim": "FC-BZG-RECEIVE-EVIDENCE-1: receive photo human review queue on BZG Finance; propose/accept/reject; Zayen+Matt only; 0 live proposals (paths lack signal); staff_ready=false",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_fc_bzg_receive_evidence1_20261005.py",
+    "expect": "10 passed 0 failed; regression suites green",
+    "by": "cursor-agent",
+    "pack": "FC-BZG-RECEIVE-EVIDENCE-1",
+    "created_at": "2026-10-05T20:00:52+08:00"
+  },
+  {
+    "id": "fc-recon-queues1-20261005",
+    "claim": "FC-RECON-QUEUES-1: AMG bank proposal pass (525 txns; 2 admin-fee exceptions) + Zayen work queues on /amg/finance/reconciliation and /bzg/finance/bank with confirm/reject/exception audit; no journals posted; GGV untouched",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_fc_recon_queues1_20261005.py && sqlite3 catalog/content_library.sqlite \"SELECT COUNT(*) FROM ggv_bank_transactions WHERE entity_id='ENT-AMG' AND match_confidence='BANK_ADMIN_FEE'\"",
+    "expect": "11 passed 0 failed (1 skipped); admin fee count = 2",
+    "by": "cursor-agent",
+    "pack": "FC-RECON-QUEUES-1",
+    "created_at": "2026-10-05T20:12:00+08:00"
+  },
+  {
+    "id": "fc-isolation-labels-sweep1-20261005",
+    "claim": "FC-ISOLATION-LABELS-SWEEP-1: finance entity isolation matrix; Zayen BZG finance AP + ready-to-pay nav; plain-language sweep; uma-blu P2P read via finance gate",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_fc_isolation_labels_sweep1_20261005.py",
+    "expect": "7 passed 0 failed; all 7 regression packs pass; state READY FOR HUMAN TEST",
+    "by": "cursor-fc-sweep1",
+    "pack": "FC-ISOLATION-LABELS-SWEEP-1",
+    "created_at": "2026-10-05T20:22:00+08:00"
+  },
+  {
+    "id": "p2p-pr-approval1-proof-repair1-20261005",
+    "claim": "P2P-PR-APPROVAL-1-PROOF-REPAIR-1: can_create_po uses outlet-scoped RBAC; Playwright WebKit iPhone 14 PR approve→PO workflow passes on isolated Beta",
+    "check": "BF_IN_TEST=1 /usr/bin/python3 scripts/tests/prove_p2p_pr_approval1_proof_repair1_20261005.py",
+    "expect": "rendered_workflow_test.pass=true; tests_pass=10 tests_fail=0; exit_code=0",
+    "by": "cursor-local",
+    "pack": "P2P-PR-APPROVAL-1-PROOF-REPAIR-1",
+    "created_at": "2026-10-05T21:08:00+08:00"
+  }
+]

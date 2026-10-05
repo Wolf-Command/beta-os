@@ -259,6 +259,41 @@ def install() -> None:
     _INSTALLED = True
 
 
+TMPF1_MIN_FREE_GB = float(os.environ.get("WOLF_TMPF1_MIN_FREE_GB", "8"))
+
+
+def _tmpf1_free_space_floor(src: Path, scratch: Path) -> None:
+    import shutil as _sh
+    need = src.stat().st_size if src.exists() else 0
+    free = _sh.disk_usage(str(scratch)).free
+    if free - need < TMPF1_MIN_FREE_GB * 1e9:
+        try:
+            import json as _js
+            from datetime import datetime as _dt, timezone as _tz
+            q = BETA_ROOT / "state" / "build-factory" / "NOTIFY-QUEUE.jsonl"
+            with q.open("a", encoding="utf-8") as fh:
+                fh.write(_js.dumps({"at": _dt.now(_tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "kind": "STUCK",
+                                    "source": "canonical_guard.backup_catalog",
+                                    "reason": "studio_free_space_below_floor", "free_gb": round(free / 1e9, 2),
+                                    "min_free_gb": TMPF1_MIN_FREE_GB}) + "\n")
+        except Exception:  # noqa: BLE001
+            pass
+        raise CanonicalGuardError(
+            f"REFUSE_LOW_DISK: test catalog copy would leave < {TMPF1_MIN_FREE_GB:.0f} GB free")
+
+
+def _tmpf1_register_cleanup(dest_dir: Path) -> None:
+    import atexit as _ax
+    import shutil as _sh
+
+    def _rm(d: Path = dest_dir) -> None:
+        if os.environ.get("WOLF_KEEP_TMPF1") == "1":
+            return
+        _sh.rmtree(d, ignore_errors=True)
+
+    _ax.register(_rm)
+
+
 def backup_catalog(source: Path | None = None) -> Path:
     """Consistent temp copy of a canonical Beta sqlite file. Reads only."""
     src = _resolved(source or BETA_CATALOG)
@@ -267,7 +302,11 @@ def backup_catalog(source: Path | None = None) -> Path:
         raise CanonicalGuardError("refusing to copy canonical prod")
     scratch = BETA_ROOT / "state" / "build-factory" / "tmp-f1"
     scratch.mkdir(parents=True, exist_ok=True)
+    # Owner P0 5 Oct 2026 20:50 WITA (disk RED): every test process left a full ~114 MB
+    # catalog copy here and nothing removed it (53 GB). Guard + auto-remove at process exit.
+    _tmpf1_free_space_floor(src, scratch)
     dest_dir = Path(tempfile.mkdtemp(prefix="wolf-f1-", dir=scratch))
+    _tmpf1_register_cleanup(dest_dir)
     dest = dest_dir / src.name
     src_uri = src.as_uri() + "?mode=ro"
     src_conn = _REAL_CONNECT(src_uri, uri=True)

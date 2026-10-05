@@ -1,0 +1,18 @@
+{
+  "title": "Finance Control Repair — 3 Oct 2026",
+  "source": "state/reliability/FINANCE-CONTROL-REPAIR-PARENT-2026-10-03.json",
+  "staff_ready": false,
+  "eng_proved": false,
+  "pack_finished": false,
+  "counts": {
+    "TOTAL": 132,
+    "PROVEN_COMPLETE": 2,
+    "IN_PROGRESS": 89,
+    "HUMAN_COMMISSIONING": 0,
+    "EXTERNAL_BLOCKED": 0,
+    "OWNER_BLOCKED": 0,
+    "NOT_STARTED": 41
+  },
+  "branch_line": "UMA BLU CLOSE = HUMAN COMMISSIONING FAIL. staff_ready false. human commissioned false. Not READY FOR IZA.",
+  "human_commissioned": false
+}

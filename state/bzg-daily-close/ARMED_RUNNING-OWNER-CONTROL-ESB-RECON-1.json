@@ -1,0 +1,23 @@
+{
+  "pack": "BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1",
+  "status": "DONE_ENGINEERING_PASS",
+  "at": "2026-10-02T22:58:48+08:00",
+  "closed_at": "2026-10-02T22:58:48+08:00",
+  "cursor_pid": 62740,
+  "wrapper_pid": 62739,
+  "child_alive": false,
+  "exit": 0,
+  "classic_bf_active": false,
+  "credit_override": "OWNER_ORDER_P0_COMMISSIONING_FAIL_ESB_RECON",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_mutate": false,
+  "parent_tip_at_arm": "d4f8f1e",
+  "impl_commit": "0e02bb3",
+  "tip": "a03cdc8",
+  "peaches_verify": "PASS_VERIFIED",
+  "matt_finished_ping": true,
+  "matt_finished_ping_at": "2026-10-02T22:58:48+08:00",
+  "result_present": true,
+  "watch_note": "EXIT verified; Peaches independent verify PASS; Matt FINISHED ping dispatching."
+}

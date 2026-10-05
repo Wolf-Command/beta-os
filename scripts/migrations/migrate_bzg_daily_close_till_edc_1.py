@@ -27,6 +27,12 @@ if str(SCRIPTS) not in sys.path:
 DB = ROOT / "catalog" / "content_library.sqlite"
 SQL = Path(__file__).resolve().parent / "031_bzg_daily_close_till_edc.sql"
 BACKUP_DIR = ROOT / "catalog" / "backups"
+
+# Owner P0 5 Oct 2026: retention/free-space guard (docs/BACKUP-RETENTION.md)
+import sys as _bp_sys  # noqa: E402
+if str(ROOT / "scripts") not in _bp_sys.path:
+    _bp_sys.path.insert(0, str(ROOT / "scripts"))
+from core.backup_policy import premig_backup  # noqa: E402
 MIGRATION_ID = "031_bzg_daily_close_till_edc"
 PACK = "BZG-DAILY-CLOSE-TILL-EDC-1"
 TZ8 = timezone(timedelta(hours=8))
@@ -295,7 +301,7 @@ def main(db_path: Path | None = None) -> int:
 
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
     bak = BACKUP_DIR / f"content_library-pre-{MIGRATION_ID}-{stamp()}.sqlite"
-    shutil.copy2(path, bak)
+    bak = premig_backup(path, bak)
     bak_sha = _sha256(bak)
 
     conn = sqlite3.connect(str(path))

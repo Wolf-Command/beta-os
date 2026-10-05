@@ -1,0 +1,10 @@
+{
+  "schema": "P0-SURGICAL-FIX-NOTE/v1",
+  "generated_at_wita": "2026-09-30T11:37:11+08:00",
+  "path": "/amg-packages",
+  "was": "404 orphan",
+  "now": "302 \u2192 /amg-packages-products",
+  "prod_8787_touched": false,
+  "staff_ready": false,
+  "reaudit_rank9_applied": true
+}

@@ -1,0 +1,32 @@
+{
+  "pack": "PULSE-LEADS-HABITAT-SHEET-1",
+  "applied_at_wita": "2026-10-01T09:45:39+08:00",
+  "executor": "Peaches-executor",
+  "target": "beta-os :8788",
+  "prod_8787": "UNTOUCHED",
+  "prod_pid": 15975,
+  "beta_8788_pid_after": 10150,
+  "sot": "HABITAT_SHEET_DRIVE_READ",
+  "sheet_id": "1HMNAXUQ_seF4RGff66N402wp25rBOvfucaDNToRzEZM",
+  "real_lead_count": 271,
+  "core_leads_fixtures_ignored": 8,
+  "klaviyo_push": false,
+  "proof": {
+    "pulse_leads_state": "LIVE",
+    "pulse_counts": {
+      "LIVE": 9,
+      "PARTIAL": 1,
+      "EMPTY": 0,
+      "BLOCKED": 0,
+      "tiles": 10
+    },
+    "drive_mcp": "download_file_content LIVE+TESTED",
+    "glance": "state/habitat-leads-glance.json"
+  },
+  "honesty": {
+    "invented_live_leads": false,
+    "demo_shown_as_operational_sot": false,
+    "staff_ready": false,
+    "desktop_gate_ready": false
+  }
+}

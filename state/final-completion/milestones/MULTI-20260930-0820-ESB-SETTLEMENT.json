@@ -1,0 +1,17 @@
+{
+  "at_wita": "2026-09-30T08:20:00+08:00",
+  "pack": "ESB-SETTLEMENT-PATH-1",
+  "status": "EXIT:0",
+  "classification": "EXTERNAL_BLOCKER",
+  "tests": {
+    "pass": 122,
+    "fail": 0
+  },
+  "esb_truth1_preserved": true,
+  "settlement": null,
+  "pnl": null,
+  "next_pack_for_parent": "SOP-CATALOG-SEED-ROUTE-1",
+  "cursor_did_not_auto_start_next": true,
+  "prod_pid_held": 15975,
+  "result": "docs/wolf/ops/ESB-SETTLEMENT-PATH-1-RESULT.md"
+}

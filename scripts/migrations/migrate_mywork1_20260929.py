@@ -22,6 +22,12 @@ if str(SCRIPTS) not in sys.path:
 DB = ROOT / "catalog" / "content_library.sqlite"
 SQL = Path(__file__).resolve().parent / "030_mywork1_universal.sql"
 BACKUP_DIR = ROOT / "catalog" / "backups"
+
+# Owner P0 5 Oct 2026: retention/free-space guard (docs/BACKUP-RETENTION.md)
+import sys as _bp_sys  # noqa: E402
+if str(ROOT / "scripts") not in _bp_sys.path:
+    _bp_sys.path.insert(0, str(ROOT / "scripts"))
+from core.backup_policy import premig_backup  # noqa: E402
 LEGACY_PROPOSAL = ROOT / "state" / "legacy" / "proposed-migration.json"
 CUT_LINE = ROOT / "state" / "legacy" / "clickup-cut-line.json"
 IMPORT_RECEIPT = ROOT / "state" / "legacy" / "mywork1-import-receipt.json"
@@ -78,7 +84,7 @@ def stamp() -> str:
 def _backup(db: Path) -> Path:
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
     dest = BACKUP_DIR / f"content_library-mywork1-{stamp()}.sqlite"
-    shutil.copy2(db, dest)
+    dest = premig_backup(db, dest)
     return dest
 
 

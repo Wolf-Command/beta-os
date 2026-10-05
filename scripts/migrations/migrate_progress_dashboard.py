@@ -19,6 +19,12 @@ MIGRATION_ID = "022_progress_dashboard"
 FORBIDDEN = ("wolf-system", "money.sqlite", "/Production")
 TZ8 = timezone(timedelta(hours=8))
 BACKUP_DIR = ROOT / "catalog" / "backups"
+
+# Owner P0 5 Oct 2026: retention/free-space guard (docs/BACKUP-RETENTION.md)
+import sys as _bp_sys  # noqa: E402
+if str(ROOT / "scripts") not in _bp_sys.path:
+    _bp_sys.path.insert(0, str(ROOT / "scripts"))
+from core.backup_policy import premig_backup  # noqa: E402
 STATE_DIR = ROOT / "state"
 
 PERM_ID = "PERM-PROGRESS-READ"
@@ -57,7 +63,7 @@ def main() -> int:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     ts = now_iso()
     bak = BACKUP_DIR / f"pre-progress-dashboard-{stamp()}.sqlite"
-    shutil.copy2(db_path, bak)
+    bak = premig_backup(db_path, bak)
     digest = _sha256(bak)
     sha_path = STATE_DIR / f"progress-dashboard-backup-{bak.stem.replace('pre-progress-dashboard-', '')}.sha256"
     sha_path.write_text(digest + "\n", encoding="utf-8")

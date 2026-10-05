@@ -127,36 +127,111 @@ def _occ_slot(slot_id: str, label: str, why: str) -> dict[str, Any]:
 
 
 def _occ_slots() -> list[dict[str, Any]]:
-    return [_occ_slot(*spec) for spec in _OCC_SLOT_SPECS]
+    """Occupancy slots from last-read when usable; else UNKNOWN/BLOCKED."""
+    yan = yanolja_path_honesty()
+    occ = yan.get("occupancy") or {}
+    slots = []
+    for slot_id, label, why in _OCC_SLOT_SPECS:
+        slot = _occ_slot(slot_id, label, why)
+        if not occ.get("usable"):
+            slots.append(slot)
+            continue
+        # Live inventory path
+        if slot_id == "occupancy_pct":
+            slot.update(
+                {
+                    "status": "LIVE",
+                    "blocked_external": False,
+                    "display": occ.get("display"),
+                    "value": occ.get("pct"),
+                    "occupancy_pct": occ.get("pct"),
+                    "yanolja_live": True,
+                    "pms_connected": True,
+                    "source": occ.get("source"),
+                    "freshness": occ.get("written_at"),
+                    "why": (
+                        f"LIVE {occ.get('display')} from Yanolja last-read "
+                        f"({occ.get('written_at')}). Vacant vs rooms, not guests."
+                    ),
+                }
+            )
+        elif slot_id == "rooms_sold":
+            slot.update(
+                {
+                    "status": "LIVE",
+                    "blocked_external": False,
+                    "display": str(occ.get("occupied_rooms")),
+                    "value": occ.get("occupied_rooms"),
+                    "count": occ.get("occupied_rooms"),
+                    "yanolja_live": True,
+                    "pms_connected": True,
+                    "why": "Occupied rooms = rooms_total − vacant (Inventory+RoomInfo).",
+                }
+            )
+        elif slot_id == "rooms_available":
+            slot.update(
+                {
+                    "status": "LIVE",
+                    "blocked_external": False,
+                    "display": str(occ.get("vacant")),
+                    "value": occ.get("vacant"),
+                    "count": occ.get("vacant"),
+                    "yanolja_live": True,
+                    "pms_connected": True,
+                    "why": "Vacant rooms from Yanolja Inventory vs RoomInfo total.",
+                }
+            )
+        else:
+            # adr / revpar — not in last-read → UNKNOWN (not BLOCKED invent)
+            slot.update(
+                {
+                    "status": "UNKNOWN",
+                    "blocked_external": False,
+                    "yanolja_live": True,
+                    "pms_connected": True,
+                    "why": (
+                        f"{label} UNKNOWN — not in Inventory+RoomInfo last-read. "
+                        "Not invented."
+                    ),
+                }
+            )
+        slots.append(slot)
+    return slots
 
 
 def amg_os_shell1_preserved() -> dict[str, Any]:
-    """Read-only: AMG-OS-SHELL-1 still BLOCKED_EXTERNAL / UNKNOWN PMS tiles."""
+    """AMG-OS-SHELL-1 honesty preserved: no invent; staff_ready false.
+
+    LIVE Inventory+RoomInfo occupancy is allowed when last-read usable.
+    Guest-depth / ADR / RevPAR may remain UNKNOWN. CAP-AMG-01 full guest
+    PMS stays unblocked=false until reservation depth is wired.
+    """
     try:
         shell = _shell.build_shell()
         blocked = _shell.all_pms_tiles_blocked(shell)
+        yan = shell.get("yanolja") or {}
+        honest = (
+            shell.get("ok") is True
+            and shell.get("staff_ready") is False
+            and shell.get("human_commissioned") is False
+            and shell.get("cap_amg_01_unblocked") is False
+            and shell.get("fake_pms_data") is False
+            and shell.get("invented_occupancy") is False
+            and shell.get("invented_arrivals") is False
+        )
         return {
-            "ok": (
-                blocked
-                and shell.get("ok") is True
-                and shell.get("staff_ready") is False
-                and shell.get("human_commissioned") is False
-                and shell.get("cap_amg_01_unblocked") is False
-                and shell.get("fake_pms_data") is False
-                and shell.get("invented_occupancy") is False
-                and (shell.get("yanolja") or {}).get("audit_status") == "BLOCKED_EXTERNAL"
-                and (shell.get("yanolja") or {}).get("last_success") is None
-            ),
+            "ok": honest,
             "pms_tiles_blocked": blocked,
             "cap_amg_01_unblocked": shell.get("cap_amg_01_unblocked"),
             "fake_pms_data": shell.get("fake_pms_data"),
             "invented_occupancy": shell.get("invented_occupancy"),
-            "yanolja_status": (shell.get("yanolja") or {}).get("audit_status"),
-            "last_success": (shell.get("yanolja") or {}).get("last_success"),
+            "yanolja_status": yan.get("audit_status"),
+            "last_success": yan.get("last_success"),
+            "yanolja_live": shell.get("yanolja_live"),
             "why": (
-                "AMG-OS-SHELL-1 preserved: PMS tiles BLOCKED_EXTERNAL / UNKNOWN, "
-                "cap_amg_01_unblocked=false, no fake PMS. This pack deepens "
-                "occupancy honesty over that shell — does not replace it."
+                "AMG-OS-SHELL-1 preserved honesty: no invent, staff_ready=false, "
+                "cap_amg_01_unblocked=false. Occupancy may be LIVE from Yanolja "
+                "last-read (vacant vs rooms); guest depth may stay UNKNOWN."
             ),
         }
     except Exception as exc:  # noqa: BLE001
@@ -168,21 +243,39 @@ def amg_os_shell1_preserved() -> dict[str, Any]:
 
 
 def yanolja_path_honesty() -> dict[str, Any]:
-    """Reuse AMG-OS-SHELL-1 / INTG board Yanolja pin."""
-    shell = _shell.build_shell()
-    yan = shell.get("yanolja") or {}
+    """Yanolja pin from last-read RO (WIRE-YANOLJA-READ-HOUSE-1)."""
+    try:
+        from core.yanolja_last_read_ro import connection_stamp
+
+        ys = connection_stamp()
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "integration_id": YANOLJA_ID,
+            "audit_status": "BLOCKED_EXTERNAL",
+            "blocked_external": True,
+            "probe_status": "LAST_READ_LOADER_FAIL",
+            "last_success": None,
+            "yanolja_live": False,
+            "pms_connected": False,
+            "honesty_board_href": HONESTY_BOARD,
+            "why": f"yanolja_last_read_ro failed ({type(exc).__name__}). Occupancy UNKNOWN.",
+        }
+    occ = ys.get("occupancy") or {}
     return {
         "integration_id": YANOLJA_ID,
-        "audit_status": yan.get("audit_status") or "BLOCKED_EXTERNAL",
-        "blocked_external": True,
-        "probe_status": yan.get("probe_status"),
-        "last_success": None,
-        "yanolja_live": False,
-        "pms_connected": False,
+        "audit_status": ys.get("audit_status") or "BLOCKED_EXTERNAL",
+        "blocked_external": bool(ys.get("blocked_external")),
+        "probe_status": ys.get("probe_status"),
+        "last_success": ys.get("last_success"),
+        "yanolja_live": bool(ys.get("yanolja_live")),
+        "pms_connected": bool(ys.get("pms_connected")),
+        "occupancy": occ,
+        "guest_depth": ys.get("guest_depth") or "UNKNOWN",
         "honesty_board_href": HONESTY_BOARD,
-        "why": (
-            "INT-YAN-WOLF remains BLOCKED_EXTERNAL. CAP-AMG-01 not unblocked. "
-            "Occupancy stays UNKNOWN — never invent a percent."
+        "why": ys.get("why")
+        or (
+            "INT-YAN-WOLF last-read stamp. Occupancy vacant-vs-rooms only; "
+            "no guest invent."
         ),
     }
 
@@ -223,19 +316,25 @@ def _desk_links() -> list[dict[str, Any]]:
 def _honesty_tiles() -> list[dict[str, Any]]:
     yan = yanolja_path_honesty()
     shell_pin = amg_os_shell1_preserved()
+    occ = yan.get("occupancy") or {}
+    occ_status = "LIVE" if occ.get("usable") else ("UNKNOWN" if yan.get("yanolja_live") else "UNKNOWN")
     return [
         {
             "id": "occupancy",
             "label": "Occupancy",
-            "status": "UNKNOWN",
-            "value": None,
-            "why": "PMS blocked → occupancy UNKNOWN (not zero, not invented).",
+            "status": occ_status,
+            "value": occ.get("pct") if occ.get("usable") else None,
+            "why": (
+                f"LIVE {occ.get('display')} (vacant vs rooms, not guests)."
+                if occ.get("usable")
+                else "Occupancy UNKNOWN — never invent a percent."
+            ),
         },
         {
             "id": "yanolja",
             "label": "Yanolja / PMS",
-            "status": "BLOCKED_EXTERNAL",
-            "value": None,
+            "status": yan.get("audit_status") or "BLOCKED_EXTERNAL",
+            "value": yan.get("last_success"),
             "why": yan.get("why"),
         },
         {
@@ -255,9 +354,14 @@ def _honesty_tiles() -> list[dict[str, Any]]:
         {
             "id": "cap_amg_01",
             "label": "CAP-AMG-01",
-            "status": "BLOCKED_EXTERNAL",
+            "status": "INVENTORY_LIVE_GUEST_DEPTH_LIMITED"
+            if (yanolja_path_honesty().get("yanolja_live"))
+            else "BLOCKED_EXTERNAL",
             "value": None,
-            "why": "Does not unblock CAP-AMG-01. Needs external Yanolja.",
+            "why": (
+                "Inventory+RoomInfo LIVE for occupancy. Full guest PMS / "
+                "arrivals depth still limited — CAP-AMG-01 not fully unblocked."
+            ),
         },
         {
             "id": "cap_amg_occ",
@@ -281,8 +385,8 @@ def honesty_flags() -> dict[str, Any]:
         "yanolja_id": YANOLJA_ID,
         "staff_ready": False,
         "human_commissioned": False,
-        "yanolja_live": False,
-        "pms_connected": False,
+        "yanolja_live": bool(yan.get("yanolja_live")),
+        "pms_connected": bool(yan.get("pms_connected")),
         "cap_amg_01_unblocked": False,
         "fake_pms_data": False,
         "invented_occupancy": False,
@@ -292,8 +396,8 @@ def honesty_flags() -> dict[str, Any]:
         "invented_revpar": False,
         "invented_proven": False,
         "invented_ready": False,
-        "occupancy_unknown": True,
-        "occupancy_blocked": True,
+        "occupancy_unknown": not bool((yan.get("occupancy") or {}).get("usable")),
+        "occupancy_blocked": bool(yan.get("blocked_external")),
         "last_success_null": yan.get("last_success") is None,
         "yanolja_blocked": yan.get("audit_status") == "BLOCKED_EXTERNAL",
         "amg_os_shell1_preserved": shell_pin.get("ok") is True,
@@ -445,6 +549,8 @@ def build_slice() -> dict[str, Any]:
         (t for t in (shell.get("pms_tiles") or []) if t.get("id") == "occupancy"),
         None,
     )
+    occ = yan.get("occupancy") or {}
+    live = bool(occ.get("usable") and yan.get("yanolja_live"))
     return {
         "ok": True,
         "pack": PACK_ID,
@@ -455,8 +561,8 @@ def build_slice() -> dict[str, Any]:
         "staff_ready": False,
         "human_commissioned": False,
         "prod_touched": False,
-        "yanolja_live": False,
-        "pms_connected": False,
+        "yanolja_live": live,
+        "pms_connected": live,
         "cap_amg_01_unblocked": False,
         "fake_pms_data": False,
         "invented_occupancy": False,
@@ -464,9 +570,16 @@ def build_slice() -> dict[str, Any]:
         "invented_rooms_sold": False,
         "invented_adr": False,
         "invented_revpar": False,
-        "occupancy_unknown": True,
-        "occupancy_blocked": True,
-        "last_success": None,
+        "occupancy_unknown": not live,
+        "occupancy_blocked": not live,
+        "last_success": yan.get("last_success"),
+        "occupancy_pct": occ.get("pct") if live else None,
+        "rooms_total": occ.get("rooms_total") if live else None,
+        "rooms_vacant": occ.get("vacant") if live else None,
+        "rooms_occupied": occ.get("occupied_rooms") if live else None,
+        "guests": None,
+        "source": "yanolja_last_read" if live else None,
+        "freshness": occ.get("written_at") if live else None,
         "amg_os_shell1_preserved": shell_pin.get("ok") is True,
         "cap_amg_01_proven": False,
         "cap_amg_occ_proven": False,

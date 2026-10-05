@@ -629,6 +629,15 @@ def build_board() -> dict[str, Any]:
     creds = next((s for s in surfaces if s.get("id") == "yanolja_credentials"), {})
     shell = _shell.build_shell()
 
+    # WIRE-YANOLJA-READ-HOUSE-1 overlay — clear EXTERNAL when last-read usable
+    try:
+        from core.yanolja_last_read_ro import connection_stamp as _yan_stamp
+
+        ys = _yan_stamp()
+    except Exception:  # noqa: BLE001
+        ys = {}
+    occ = (ys or {}).get("occupancy") or {}
+    live = bool(occ.get("usable"))
     return {
         "ok": True,
         "pack": PACK_ID,
@@ -644,23 +653,36 @@ def build_board() -> dict[str, Any]:
         "invented_adr": False,
         "invented_revpar": False,
         "fake_occupancy": False,
-        "occupancy": None,
-        "occupancy_pct": None,
+        "occupancy": occ.get("pct") if live else None,
+        "occupancy_pct": occ.get("pct") if live else None,
+        "occupancy_display": occ.get("display") if live else None,
         "adr": None,
         "revpar": None,
-        "rooms_sold": None,
-        "rooms_available": None,
-        "last_success": None,
-        "yanolja_live": False,
-        "pms_connected": False,
+        "rooms_sold": occ.get("occupied_rooms") if live else None,
+        "rooms_available": occ.get("vacant") if live else None,
+        "rooms_total": occ.get("rooms_total") if live else None,
+        "guests": None,
+        "last_success": ys.get("last_success") if live else None,
+        "yanolja_live": live,
+        "pms_connected": live,
         "cap_amg_01_unblocked": False,
         "secrets_exposed": False,
         "ceiling": CEILING,
-        "classification": CLASSIFICATION,
+        "classification": "LIVE_READ_PARTIAL" if live else CLASSIFICATION,
         "closes_toward": list(CLOSES_TOWARD),
         "integration_id": YANOLJA_ID,
-        "yanolja_status": "EXTERNAL_BLOCKER",
-        "yanolja_audit_status": yan.get("audit_status") or "BLOCKED_EXTERNAL",
+        "yanolja_status": "LIVE_READ_OK" if live else "EXTERNAL_BLOCKER",
+        "yanolja_audit_status": (ys.get("audit_status") if ys else None)
+        or yan.get("audit_status")
+        or "BLOCKED_EXTERNAL",
+        "source": "yanolja_last_read" if live else None,
+        "freshness": occ.get("written_at") if live else None,
+        "hold_note": (
+            "Inventory+RoomInfo LIVE — occupancy hold cleared for that scope. "
+            "Arrivals/ADR/RevPAR/guest depth still UNKNOWN/held."
+            if live
+            else "External hold remains — no usable last-read."
+        ),
         "npwp": NPWP_STATUS,
         "npwp_blocking": NPWP_BLOCKING,
         "npwp_number": None,

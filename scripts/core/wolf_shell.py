@@ -186,7 +186,7 @@ ALL_HREFS: list[str] = [
     it["href"] for sec in IA_TREE for it in sec["items"]
 ]
 # Outlet desks stay authorised even when not top IA chips (Uma under BZG).
-for _outlet_href in ("/bzg/uma-blu", "/bzg/outlets"):
+for _outlet_href in ("/bzg/uma-blu", "/bzg/outlets", "/bzg/recipe-builder"):
     if _outlet_href not in ALL_HREFS:
         ALL_HREFS.append(_outlet_href)
 
@@ -888,6 +888,7 @@ LANDING_BY_AUDIENCE: dict[str, str | None] = {
     "SYSTEM": WOLF_ALIAS,
     "EXECUTIVE": EMPIRE_HREF,
     "OPERATOR": "/bzg/uma-blu",
+    "HEAD_CHEF": "/bzg/recipe-builder",
     "SPECIALIST_GGV": "/ggv-ops-pack",
     "SPECIALIST_AMG": "/amg-ops-pack",
     "SPECIALIST_CONTENT": CONTENT_HREF,
@@ -1009,6 +1010,8 @@ AUDIENCE_PAGES: dict[str, list[str]] = {
     ],
     # IA-HIDE-VOICE-ORPHAN-1: voice leaves HIDE_UNTIL_USEFUL — off audience chrome; routes + soft-land kept
     "OPERATOR": [NEEDS_YOU_HREF, "/bzg/uma-blu", "/bzg", "/bzg/recipe-builder"],
+    # Head Chef: Recipe Builder + outlets registry — never the Uma Blu close desk.
+    "HEAD_CHEF": [NEEDS_YOU_HREF, "/bzg", "/bzg/recipe-builder", "/bzg/outlets"],
     "SPECIALIST_GGV": [NEEDS_YOU_HREF, "/ggv-ops-pack", "/ggv/finance"],
     # IA-HIDE-ORPHAN-PROVE-CRUMBS-2: HIDE_UNTIL_USEFUL prove leaves off audience chrome; routes kept
     "SPECIALIST_AMG": [NEEDS_YOU_HREF, "/amg-ops-pack"],
@@ -1042,7 +1045,7 @@ ROLE_AUDIENCE: dict[str, str] = {
     "ROLE-BZG-FB-OPS-LEAD": "OPERATOR",
     "ROLE-BZG-HFB": "OPERATOR",
     "ROLE-BZG-CLOSER": "OPERATOR",
-    "ROLE-BZG-HEAD-CHEF": "OPERATOR",
+    "ROLE-BZG-HEAD-CHEF": "HEAD_CHEF",
     "ROLE-GGV-LEAD": "SPECIALIST_GGV",
     "ROLE-AMG-OPS": "SPECIALIST_AMG",
     "ROLE-AMG-GM": "SPECIALIST_AMG",
@@ -1342,6 +1345,7 @@ ROUTE_PARENT: dict[str, str | None] = {
     "/bzg/inventory-truth-1": "/bzg",
     "/bzg/inventory-truth": "/bzg",
     "/bzg/inventory": "/bzg",
+    "/bzg/recipe-builder": "/bzg",
     "/bzg/uma-blu": "/bzg",
     "/bzg/uma-blu/bills": "/bzg/uma-blu",
     "/bzg/uma-blu/issues": "/bzg/uma-blu",
@@ -2085,6 +2089,11 @@ ROUTE_CRUMBS: dict[str, list[dict[str, Any]]] = {
         {"label": "WOLF", "href": WOLF_ALIAS},
         {"label": "Blu Zone", "href": "/bzg"},
         {"label": "Outlets", "href": None},
+    ],
+    "/bzg/recipe-builder": [
+        {"label": "HOME", "href": WOLF_ALIAS},
+        {"label": "Blu Zone", "href": "/bzg"},
+        {"label": "Recipe Builder", "href": None},
     ],
     "/bzg/ops-desk": [
         {"label": "WOLF", "href": WOLF_ALIAS},
@@ -3041,6 +3050,7 @@ BZG_OUTLET_CHILDREN: list[dict[str, Any]] = [
     {
         "id": "uma",
         "key": "uma",
+        "outlet_id": "BZG-UMA",
         "title": "Uma Blu",
         "href": "/bzg/uma-blu",
         "status": "OPEN",
@@ -3050,24 +3060,27 @@ BZG_OUTLET_CHILDREN: list[dict[str, Any]] = [
     {
         "id": "blu-zone-restaurant",
         "key": "blu-zone-restaurant",
+        "outlet_id": "BZG-RAIN",
         "title": "Blu Zone Restaurant",
-        "href": "/bzg/outlets",
-        "status": "PRE-OPENING",
+        "href": "/bzg/recipe-builder?outlet_id=BZG-RAIN",
+        "status": "OPEN",
         "parent": "bzg",
-        "aliases": [],
+        "aliases": ["/bzg/recipe-builder"],
     },
     {
         "id": "pool-bar",
         "key": "pool-bar",
+        "outlet_id": "OU-BZG-RAIN-POOL",
         "title": "Pool Bar",
-        "href": "/bzg/outlets",
-        "status": "PRE-OPENING",
+        "href": "/bzg/recipe-builder?outlet_id=OU-BZG-RAIN-POOL",
+        "status": "OPEN",
         "parent": "bzg",
         "aliases": [],
     },
     {
         "id": "merah",
         "key": "merah",
+        "outlet_id": "BZG-MERAH",
         "title": "Merah",
         "href": "/bzg/outlets",
         "status": "PRE-OPENING",
@@ -3077,6 +3090,7 @@ BZG_OUTLET_CHILDREN: list[dict[str, Any]] = [
     {
         "id": "rooftop",
         "key": "rooftop",
+        "outlet_id": "BZG-ROOF",
         "title": "Rooftop",
         "href": "/bzg/outlets",
         "status": "PRE-OPENING",
@@ -3086,6 +3100,7 @@ BZG_OUTLET_CHILDREN: list[dict[str, Any]] = [
     {
         "id": "room-service",
         "key": "room-service",
+        "outlet_id": "BZG-RS",
         "title": "Room Service",
         "href": "/bzg/outlets",
         "status": "PRE-OPENING",
@@ -3095,6 +3110,7 @@ BZG_OUTLET_CHILDREN: list[dict[str, Any]] = [
     {
         "id": "catering",
         "key": "catering",
+        "outlet_id": "BZG-CAT",
         "title": "Catering",
         "href": "/bzg/outlets",
         "status": "PRE-OPENING",
@@ -3151,12 +3167,23 @@ def business_catalog_from_ia() -> list[dict[str, Any]]:
 
 
 def bzg_outlet_catalog() -> list[dict[str, Any]]:
-    """BZG outlet children for the outlet strip. PRE-OPENING label preserved."""
+    """BZG outlet children for the outlet strip — status from org_outlet_registry."""
+    registry: dict[str, dict[str, Any]] = {}
+    try:
+        from core import bzg_outlet_registry as _oreg
+
+        registry = {o["outlet_id"]: o for o in _oreg.list_outlets()}
+    except Exception:
+        registry = {}
     out: list[dict[str, Any]] = []
     for row in BZG_OUTLET_CHILDREN:
         item = dict(row)
-        status = str(item.get("status") or "")
-        title = str(item.get("title") or item.get("id") or "")
+        oid = str(item.get("outlet_id") or "")
+        reg = registry.get(oid) or {}
+        status = str(reg.get("status") or item.get("status") or "")
+        item["status"] = status
+        title = str(reg.get("display_name") or item.get("title") or item.get("id") or "")
+        item["title"] = title
         if status == "PRE-OPENING" and "PRE-OPENING" not in title:
             item["title"] = f"{title} · PRE-OPENING"
         item["chip_label"] = item["title"]
@@ -3388,18 +3415,31 @@ def outlet_children_for_whoami(who: dict[str, Any] | None) -> list[dict[str, Any
             or _href_allowed_for_business("/bzg/uma-blu", [], pages, who)
         ):
             return []
+    roles = set(who.get("roles") or [])
+    head_chef = "ROLE-BZG-HEAD-CHEF" in roles
     out: list[dict[str, Any]] = []
     for o in bzg_outlet_catalog():
-        href = str(o.get("href") or "")
-        aliases = [str(a) for a in (o.get("aliases") or []) if a]
-        status = str(o.get("status") or "")
+        item = dict(o)
+        href = str(item.get("href") or "")
+        aliases = [str(a) for a in (item.get("aliases") or []) if a]
+        status = str(item.get("status") or "")
+        oid = str(item.get("outlet_id") or "")
+        if head_chef:
+            if href.startswith("/bzg/uma-blu"):
+                href = f"/bzg/recipe-builder?outlet_id={oid or 'BZG-UMA'}"
+                item["href"] = href
+            elif oid and href == "/bzg/outlets" and status == "OPEN":
+                href = f"/bzg/recipe-builder?outlet_id={oid}"
+                item["href"] = href
         # PRE-OPENING outlets: visible to Owner/BZG seats (label only — no fake ops).
         if status == "PRE-OPENING":
             if ownerish or "bzg" in bids or _href_allowed_for_business("/bzg", [], pages, who):
-                out.append(dict(o))
+                out.append(item)
             continue
         if _href_allowed_for_business(href, aliases, pages, who) or ownerish or "bzg" in bids:
-            out.append(dict(o))
+            if head_chef and href.startswith("/bzg/uma-blu"):
+                continue
+            out.append(item)
     # Uma-only seat: only Uma child.
     if "uma" in bids and "bzg" not in bids and not ownerish:
         out = [o for o in out if o.get("id") == "uma"]

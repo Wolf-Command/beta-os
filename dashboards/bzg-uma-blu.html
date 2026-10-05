@@ -25,7 +25,7 @@
   }
   body {
     padding: 16px 16px 64px;
-    max-width: 480px;
+    max-width: 1100px;
     margin: 0 auto;
     overflow-wrap: anywhere;
     word-break: break-word;
@@ -111,6 +111,13 @@
   .banner.info {
     background: rgba(61,184,160,0.10); border-color: rgba(61,184,160,0.35); color: var(--accent);
   }
+
+  /* UX-PACK-03-DESKTOP */
+  @media (min-width: 900px) {
+    body { max-width: 1100px; padding: 20px 28px 72px; }
+    nav.uma { gap: 8px; }
+    nav.uma a { flex: 0 0 auto; }
+  }
 </style>
 </head>
 <body data-wolf-page-type="WORKSPACE" data-wolf-org="BZG/UMA" data-wolf-shell="global">
@@ -132,19 +139,16 @@
     <div id="exceptionsBody"><p class="muted">Loading exceptions…</p></div>
   </div>
 
-  <nav class="uma" aria-label="Uma Blu day">
+    <nav class="uma" aria-label="Uma Blu desk">
     <a class="active" href="/bzg/uma-blu">Today</a>
-    <a id="closeLink" href="/uma-blu-close">Daily Close</a>
-    <a href="/bzg/uma-blu/issues">Issues</a>
     <a href="/bzg/uma-blu/bills">Bills</a>
-    <a href="/bzg/uma-blu/recipes">Recipes</a>
-    <a href="/bzg/uma-blu/purchasing">Purchasing</a>
-    <a href="/bzg/uma-blu/sales">ESB sales</a>
-    <a href="/bzg/uma-blu/menu-map">Menu map</a>
+    <a href="/bzg/uma-blu/issues">Issues</a>
+    <a href="/bzg/uma-blu/petty">Petty</a>
     <a href="/bzg/uma-blu/evidence">Evidence</a>
     <a href="/bzg/uma-blu/exceptions">Exceptions</a>
-    <a href="/my-work">My Work</a>
-    <a href="/bzg/uma-blu/petty">Petty cash</a>
+    <a href="/bzg/uma-blu/recipes">Recipes</a>
+    <a href="/bzg/uma-blu/real">Real</a>
+    <a id="closeLink" href="/uma-blu-close">Close</a>
   </nav>
 
   <div class="panel" id="now">
@@ -304,12 +308,17 @@
           exBody.appendChild(dupeCard);
           var close = ex.daily_close || {};
           var closeCard = el("div", "card");
-          closeCard.appendChild(el("h3", null, close.status === "BLOCKED" ? "Daily close BLOCKED" : "Daily close"));
+          closeCard.appendChild(el("h3", null, (close.status === "ACTION_REQUIRED" || close.action_required) ? "DAILY CLOSE · Action required" : "Daily close"));
           closeCard.appendChild(el("p", null, close.reason || ""));
+          if (close.action_required || close.status === "ACTION_REQUIRED") {
+            var rev = el("a", null, "[REVIEW]");
+            rev.href = close.review_href || close.href || "/uma-blu-close";
+            closeCard.appendChild(rev);
+          }
           exBody.appendChild(closeCard);
           var closeLink = document.getElementById("closeLink");
-          if (closeLink && close.branch_blocked) {
-            closeLink.textContent = "Daily Close · BLOCKED";
+          if (closeLink && (close.action_required || close.status === "ACTION_REQUIRED")) {
+            closeLink.textContent = "Daily Close · Action required";
           }
         }
         markReady("sales");

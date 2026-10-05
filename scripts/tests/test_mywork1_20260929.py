@@ -117,7 +117,7 @@ def test_part_a_assignments() -> None:
     check("devi fb ops preserved", fb is not None)
     flags = venue_close.honesty_flags(conn)
     check("cash variance UNSET", flags.get("cash_variance_tolerance") == "UNSET", str(flags.get("cash_variance_tolerance")))
-    check("variance display open policy", "UNSET" in str(flags.get("variance_policy_display") or ""))
+    check("variance display open policy", "needs approval" in str(flags.get("variance_policy_display") or "").lower() or "UNSET" in str(flags.get("variance_policy_display") or ""))
     matt_scopes = {
         r[0]
         for r in conn.execute(

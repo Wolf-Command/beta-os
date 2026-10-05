@@ -1,0 +1,21 @@
+{
+  "schema": "LIVE-USABLE-SCOREBOARD/v0",
+  "generated_at_wita": "2026-09-30T12:23:21+08:00",
+  "executor": "Peaches-executor",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "bound": "beta",
+  "staff_ready": false,
+  "baseline": true,
+  "evidence_ref": "UI-REAUDIT-20260930.json counts_primary",
+  "counts": {
+    "LIVE_USABLE": 0,
+    "PARTIAL_SHELL": 18,
+    "AUTH_WALL": 14
+  },
+  "note": "Baseline from UI reaudit. Update only with evidence. LIVE_USABLE stays 0 until authenticated human prove.",
+  "updates": [],
+  "nav_status": "AUTHORITY_CHROME",
+  "nav_authority_chrome": true,
+  "live_usable": false,
+  "updated_at_wita": "2026-09-30T12:32:39+08:00"
+}

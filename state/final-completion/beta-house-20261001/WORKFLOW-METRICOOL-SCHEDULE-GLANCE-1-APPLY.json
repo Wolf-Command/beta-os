@@ -1,0 +1,38 @@
+{
+  "pack": "WORKFLOW-METRICOOL-SCHEDULE-GLANCE-1",
+  "schema": "wolf.workflow-metricool-schedule-glance-1.v1",
+  "applied_at_wita": "2026-10-01T08:05:50+08:00",
+  "executor": "Peaches-executor",
+  "phase": "WORKFLOW",
+  "prod_8787": "UNTOUCHED",
+  "prod_pid": 15975,
+  "beta_8788_pid_after": 96630,
+  "metricool_write": false,
+  "invented_engagement": false,
+  "backup": "/Users/wolfterminal/beta-os/backups/beta-house-workflow-20261001/",
+  "mutations": [
+    "scripts/core/metricool_schedule_glance1.py (new)",
+    "scripts/core/owner_pulse_ro.py \u2014 _metricool_schedule_tile LIVE",
+    "scripts/core/metricool_runtime_wire1.py \u2014 schedule_glance_stamp into build_board",
+    "dashboards/ggv-ops-pack.html \u2014 #socialScheduleStamp + paintSocialScheduleGlance",
+    "dashboards/content-2.0.html \u2014 metricoolScheduleHonesty note",
+    "state/content-engine/metricool-schedule-glance.json",
+    "MCP READ: getBrandSettings + getScheduledPosts (Atrium+Habitat)"
+  ],
+  "proof": {
+    "brands": 6,
+    "atrium_posts_in_window": 14,
+    "atrium_pending": 10,
+    "atrium_published": 4,
+    "habitat_posts_in_window": 17,
+    "habitat_pending": 13,
+    "habitat_published": 4,
+    "window": "2026-10-01..2026-10-08 Asia/Makassar",
+    "pulse_tile_id": "metricool_schedule",
+    "pulse_tile_state": "LIVE",
+    "engagement": null,
+    "metricool_write": false
+  },
+  "honesty": "Brands/list/schedule freshness only. PENDING/PUBLISHED status counts. No engagement invent. WRITE OFF.",
+  "status": "APPLIED"
+}

@@ -1661,7 +1661,7 @@ def _build_policy_decisions(
             {
                 "id": "POL-UMA-VARIANCE",
                 "title": "Uma Blu cash variance threshold",
-                "note": "BLOCKED BY BUSINESS POLICY. NOT_CONFIGURED. No threshold was invented.",
+                "note": "Variance policy needs approval. No threshold was invented.",
                 "owner": "Owner",
                 "status": "UNAPPROVED_POLICY",
                 "source": uma.get("source") or "docs/canon/UMA-BLU-DAILY-CLOSE.md",
@@ -2285,7 +2285,7 @@ def build_read_model(
     uma_owner = {
         "stages": _owner_uma_stages(verticals.get("uma_close") or {}),
         "waiting_plain": "Waiting for closer (WAITING_HUMAN — not a system outage)",
-        "variance_plain": "BLOCKED BY BUSINESS POLICY. No threshold was invented.",
+        "variance_plain": "Variance policy needs approval. No threshold was invented.",
     }
 
     views: dict[str, Any] = {}

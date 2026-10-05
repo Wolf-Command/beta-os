@@ -21,8 +21,7 @@
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0; background: var(--bg); color: var(--text);
-    font-family: var(--font); min-height: 100%;
-    overflow-x: hidden;
+    font-family: var(--font); min-height: 100%; overflow-x: hidden;
   }
   body {
     padding: 14px 14px calc(88px + env(safe-area-inset-bottom, 0px));
@@ -34,16 +33,23 @@
   }
   .brand { font-size: 1.45rem; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 2px; }
   .brand em { font-style: normal; color: var(--accent); }
-  .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 12px; line-height: 1.35; }
-  .banner {
-    background: rgba(224,160,69,0.12); border: 1px solid rgba(224,160,69,0.45);
-    color: var(--warn); border-radius: 12px; padding: 12px 14px;
-    font-size: 0.9rem; margin-bottom: 12px; line-height: 1.4;
+  .outlet-lock {
+    font-size: 1.1rem; font-weight: 650; margin: 0 0 12px; color: var(--text);
   }
-  .banner.hidden { display: none; }
-  .banner.ok {
-    background: rgba(61,184,160,0.12); border-color: rgba(61,184,160,0.45); color: var(--accent);
+  .outlet-lock .lock {
+    display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid rgba(61,184,160,0.45); color: var(--accent);
+    font-size: 0.72rem; font-weight: 650; vertical-align: middle;
   }
+  .balance-panel {
+    background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px;
+  }
+  .balance-panel .big {
+    font-size: 1.65rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 4px;
+  }
+  .balance-panel .subline { color: var(--muted); font-size: 0.88rem; margin: 0; line-height: 1.4; }
+  .balance-panel .gap { color: var(--warn); margin-top: 6px; font-size: 0.85rem; }
   nav.uma {
     display: flex; flex-wrap: nowrap; gap: 6px; margin-bottom: 14px;
     overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px;
@@ -64,20 +70,25 @@
     margin: 0 0 10px; font-size: 0.78rem; text-transform: uppercase;
     letter-spacing: 0.06em; color: var(--muted); font-weight: 650;
   }
-  .dir-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-  .dir-btn {
-    min-height: var(--thumb); border-radius: 12px; border: 1px solid var(--line);
-    background: var(--bg3); color: var(--text); font-weight: 700; font-size: 1rem;
-    -webkit-tap-highlight-color: transparent;
+  .action-tabs {
+    display: flex; gap: 8px; margin-bottom: 12px;
   }
-  .dir-btn.is-on { border-color: var(--accent); background: #1f6b5c; color: #fff; }
+  .action-tabs button {
+    flex: 1; min-height: 44px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--bg3); color: var(--muted); font: inherit; font-weight: 650;
+    cursor: pointer;
+  }
+  .action-tabs button.active {
+    color: var(--accent); border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, var(--bg3));
+  }
   label.field {
     display: block; color: var(--muted); font-size: 0.8rem; margin: 10px 0 4px;
   }
   input, select, textarea {
     width: 100%; min-height: var(--thumb); border-radius: 12px;
     background: var(--bg3); color: var(--text); border: 1px solid var(--line);
-    padding: 10px 12px; font: inherit; font-size: 16px; /* phone keyboard: avoid iOS zoom */
+    padding: 10px 12px; font: inherit; font-size: 16px;
   }
   textarea { min-height: 72px; resize: vertical; }
   .photo-box {
@@ -96,28 +107,26 @@
     border: 1px solid #2a8a76; background: #1f6b5c; color: #fff; font-weight: 700;
     font-size: 1.05rem; -webkit-tap-highlight-color: transparent;
   }
+  .primary.in-btn { border-color: #3a7a9a; background: #2a5f7a; }
   .primary:disabled { opacity: 0.55; }
   .muted { color: var(--muted); font-size: 0.82rem; }
   .msg { min-height: 1.2em; margin: 8px 0 0; font-size: 0.88rem; }
   .msg.err { color: var(--danger); }
   .msg.ok { color: var(--accent); }
+  .msg.warn { color: var(--warn); }
   .card {
     background: color-mix(in srgb, var(--bg2) 92%, #000);
     border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 10px;
   }
   .card h3 { margin: 0 0 6px; font-size: 1.02rem; word-break: break-word; }
-  .state {
-    display: inline-block; padding: 4px 10px; border-radius: 999px;
-    border: 1px solid var(--line); font-size: 0.75rem; color: var(--muted); margin-bottom: 8px;
-  }
-  .state.warn { color: var(--warn); border-color: rgba(224,160,69,0.45); }
-  .state.out { color: var(--danger); border-color: rgba(224,90,76,0.45); }
-  .state.in { color: var(--accent); border-color: rgba(61,184,160,0.45); }
   .chip {
-    display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px;
+    display: inline-block; margin-right: 6px; padding: 2px 8px; border-radius: 999px;
     border: 1px solid rgba(61,184,160,0.45); color: var(--accent);
     font-size: 0.72rem; font-weight: 650; vertical-align: middle;
   }
+  .chip.warn { color: var(--warn); border-color: rgba(224,160,69,0.45); }
+  .chip.danger { color: var(--danger); border-color: rgba(224,90,76,0.45); }
+  .chip.in { color: #6ab4d4; border-color: rgba(106,180,212,0.45); }
   .meta { color: var(--muted); font-size: 0.82rem; line-height: 1.4; word-break: break-word; }
   .empty { color: var(--muted); font-size: 0.9rem; padding: 8px 0; }
   .sticky-cta {
@@ -126,32 +135,35 @@
     background: linear-gradient(180deg, transparent, var(--bg) 28%);
     pointer-events: none;
   }
-  .sticky-cta button,
-  .sticky-cta .primary {
+  .sticky-cta button {
     pointer-events: auto; display: flex; align-items: center; justify-content: center;
-    width: 100%; min-height: var(--thumb); border-radius: 14px; text-decoration: none;
+    width: 100%; min-height: var(--thumb); border-radius: 14px;
     background: #1f6b5c; color: #fff; font-weight: 700; border: 1px solid #2a8a76;
     font: inherit; cursor: pointer;
   }
+  .sticky-cta button.in-btn { background: #2a5f7a; border-color: #3a7a9a; }
   .sticky-cta button:disabled { opacity: 0.55; cursor: wait; }
   body.petty-form-open { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
-  @media (min-width: 900px) {
-    body { max-width: 920px; padding: 20px 28px 72px; }
-    .dir-row { max-width: 360px; }
+  .hidden { display: none; }
+  .recon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .recon-grid .stat {
+    background: var(--bg3); border-radius: 10px; padding: 10px; border: 1px solid var(--line);
   }
+  .recon-grid .stat .lbl { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; }
+  .recon-grid .stat .val { font-size: 1rem; font-weight: 650; margin-top: 4px; }
 </style>
 </head>
 <body data-wolf-page-type="DASHBOARD" data-wolf-org="BZG/UMA" data-staff-ready="false">
   <p class="crumb"><a href="/bzg">BZG</a> · <a href="/bzg/uma-blu">Uma Blu</a> · Petty cash</p>
   <h1 class="brand">Petty <em>cash</em></h1>
-  <p class="sub">Phone tin log — out or in, amount, reason, receipt photo. Opening balance is not invented.</p>
+  <p class="outlet-lock" id="outletLabel">Uma Blu <span class="lock">locked</span></p>
 
-  <div class="balance-card" id="balanceCard" hidden>
-    <div class="balance-label">Current balance</div>
-    <div class="balance-value" id="balanceValue">—</div>
+  <div class="balance-panel" id="balancePanel">
+    <p class="big" id="balanceAmount">Loading…</p>
+    <p class="subline" id="todayOutLine">TODAY'S CASH OUT: —</p>
+    <p class="subline" id="todayInLine">TODAY'S CASH IN: —</p>
+    <p class="gap hidden" id="balanceGap"></p>
   </div>
-  <div class="banner" id="floatBanner">Opening cash balance is not set yet. You can still record movements. The tin total cannot be verified until an approved opening balance is commissioned.</div>
-  <div class="banner hidden" id="fixtureBanner">Practice examples — not live Uma Blu tin activity.</div>
 
   <nav class="uma" aria-label="Uma Blu desk">
     <a href="/bzg/uma-blu">Today</a>
@@ -166,70 +178,96 @@
   </nav>
 
   <div class="panel" id="pettyForm" hidden>
-    <h2>Record a movement</h2>
-    <p class="muted">Writes the tin only. Does not pay a supplier or touch the bank.</p>
+    <div class="action-tabs" id="actionTabs" hidden>
+      <button type="button" id="tabOut" class="active">Cash out</button>
+      <button type="button" id="tabIn">Cash in / top up</button>
+    </div>
+    <h2 id="formTitle">Record cash out</h2>
     <form id="moveForm" novalidate>
-      <div class="dir-row" role="group" aria-label="Out or in">
-        <button type="button" class="dir-btn is-on" data-dir="OUT" id="dirOut">Out</button>
-        <button type="button" class="dir-btn" data-dir="IN" id="dirIn">In</button>
-      </div>
-      <input type="hidden" id="direction" value="OUT" />
-
       <label class="field">Amount (IDR)
         <input id="amount" type="number" inputmode="decimal" min="0" step="1" required placeholder="e.g. 50000" />
       </label>
-      <label class="field">Category
-        <select id="category" required>
-          <option value="">Choose…</option>
-        </select>
-      </label>
-      <label class="field">What it was for
-        <input id="purpose" required placeholder="Short reason" autocomplete="off" />
-      </label>
-      <label class="field">Outlet
-        <select id="outlet" required></select>
-      </label>
-      <label class="field">Person
-        <input id="logged_by" required placeholder="Who logged this" autocomplete="name" />
+
+      <div id="outOnlyFields">
+        <label class="field">Category
+          <select id="category" required>
+            <option value="">Choose…</option>
+          </select>
+        </label>
+        <label class="field">Payee <span class="muted">(optional)</span>
+          <input id="payee" placeholder="Leave blank if there is no payee" autocomplete="off" />
+        </label>
+      </div>
+
+      <label class="field" id="reasonLabel">Reason
+        <input id="purpose" required placeholder="What was this for?" autocomplete="off" />
       </label>
 
       <div class="photo-box">
-        <strong>Receipt photo</strong>
-        <p class="muted">Take a photo or choose from the phone library. First-class step — not an afterthought.</p>
+        <strong id="photoLabel">Receipt photo</strong>
+        <p class="muted" id="photoHint">Optional. If you do not have a receipt, you can still save — it will be flagged as an evidence exception.</p>
         <input id="receipt" type="file" accept="image/*" capture="environment" />
         <img id="receiptPreview" class="photo-preview" alt="Receipt preview" />
-        <p class="muted" id="receiptStatus">No photo yet</p>
+        <p class="muted" id="receiptStatus">No photo attached</p>
       </div>
 
-      <button class="primary" type="submit" id="submitBtn">Record movement</button>
+      <button class="primary" type="submit" id="submitBtn">Record cash out</button>
       <p class="msg" id="moveMsg"></p>
     </form>
   </div>
   <div class="panel" id="pettyFormLocked">
-    <h2>Record a movement</h2>
-    <p class="muted">Sign in with a seat that can create Uma work to record tin movements.</p>
+    <h2>Record cash out</h2>
+    <p class="muted">Sign in with a seat that can record petty cash out from the tin.</p>
+  </div>
+
+  <div class="panel hidden" id="reconcilePanel">
+    <h2>Cash count / reconciliation</h2>
+    <p class="muted">Count physical cash. Ledger balance is derived from movements — differences stay unproved until a real count is recorded. No silent adjustment.</p>
+    <div class="recon-grid" id="reconSummary">
+      <div class="stat"><div class="lbl">Ledger balance</div><div class="val" id="reconLedger">—</div></div>
+      <div class="stat"><div class="lbl">Difference</div><div class="val" id="reconDiff">—</div></div>
+    </div>
+    <form id="reconForm" novalidate>
+      <label class="field">Notes total (IDR)
+        <input id="notesTotal" type="number" inputmode="decimal" min="0" step="1" required placeholder="e.g. 52000" />
+      </label>
+      <label class="field">Coins total (IDR)
+        <input id="coinsTotal" type="number" inputmode="decimal" min="0" step="1" required placeholder="e.g. 700" />
+      </label>
+      <label class="field">Reason / notes
+        <input id="reconReason" placeholder="End-of-day count, handover, etc." autocomplete="off" />
+      </label>
+      <div class="photo-box">
+        <strong>Count evidence</strong>
+        <p class="muted">Optional photo of counted cash.</p>
+        <input id="reconReceipt" type="file" accept="image/*" capture="environment" />
+        <p class="muted" id="reconReceiptStatus">No photo attached</p>
+      </div>
+      <button class="primary" type="submit" id="reconSubmitBtn">Submit count</button>
+      <p class="msg" id="reconMsg"></p>
+    </form>
   </div>
 
   <div class="panel">
-    <h2>Day tin</h2>
-    <div id="days"><p class="muted">Loading…</p></div>
-  </div>
-
-  <div class="panel">
-    <h2>Movements</h2>
+    <h2>Ledger</h2>
     <div id="list"><p class="muted">Loading…</p></div>
   </div>
 
   <div class="sticky-cta" id="stickyCta" hidden>
-    <button type="button" id="stickySubmit" class="primary">Record movement</button>
+    <button type="button" id="stickySubmit">Record cash out</button>
   </div>
 
 <script>
 (function () {
-  var direction = "OUT";
-  var receiptMeta = null;
-  var cats = ["Transport","Gas / LPG","Supplies","Food","Maintenance","Staff","Top-up","Other"];
-  var outlets = ["Uma Blu"];
+  var personName = "";
+  var hasAssignment = false;
+  var canRecordOut = false;
+  var canRecordIn = false;
+  var canReconcile = false;
+  var activeDirection = "OUT";
+  var lockedOutlet = "Uma Blu";
+  var currentBalance = null;
+  var idempotencyKey = null;
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -237,103 +275,154 @@
     if (text != null) n.textContent = text;
     return n;
   }
-  function money(amt, cur) {
-    if (amt == null) return "—";
-    var s = String(amt);
-    if (cur) return s + " " + cur;
-    return "IDR " + s;
+  function fmtIdr(n) {
+    var x = Math.round(Number(n));
+    if (!isFinite(x)) return "—";
+    return "Rp" + String(x).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   }
-  function fillSelect(sel, items, selected) {
+  function newIdempotencyKey() {
+    return "petty-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+  }
+  function fillSelect(sel, items) {
     sel.innerHTML = "";
+    var ph = document.createElement("option");
+    ph.value = "";
+    ph.textContent = "Choose…";
+    sel.appendChild(ph);
     items.forEach(function (item) {
       var o = document.createElement("option");
-      o.value = item;
-      o.textContent = item;
-      if (item === selected) o.selected = true;
+      o.value = typeof item === "string" ? item : item.value;
+      o.textContent = typeof item === "string" ? item : item.label;
       sel.appendChild(o);
     });
   }
-  function setDir(d) {
-    direction = d;
-    document.getElementById("direction").value = d;
-    document.getElementById("dirOut").classList.toggle("is-on", d === "OUT");
-    document.getElementById("dirIn").classList.toggle("is-on", d === "IN");
+  function readWhoami() {
+    var w = window.__WOLF_WHOAMI__ || {};
+    personName = (w.hello || "").trim();
+    hasAssignment = !!(w.active_assignment || (w.assignments && w.assignments.length));
   }
-  document.getElementById("dirOut").onclick = function () { setDir("OUT"); };
-  document.getElementById("dirIn").onclick = function () { setDir("IN"); };
+
+  function setDirection(dir) {
+    activeDirection = dir;
+    var isIn = dir === "IN";
+    document.getElementById("tabOut").classList.toggle("active", !isIn);
+    document.getElementById("tabIn").classList.toggle("active", isIn);
+    document.getElementById("outOnlyFields").hidden = isIn;
+    document.getElementById("category").required = !isIn;
+    document.getElementById("formTitle").textContent = isIn ? "Cash in / top up" : "Record cash out";
+    document.getElementById("reasonLabel").firstChild.textContent = isIn ? "Reason / source " : "Reason\n        ";
+    document.getElementById("purpose").placeholder = isIn ? "Owner top-up, change float, etc." : "What was this for?";
+    document.getElementById("photoLabel").textContent = isIn ? "Evidence photo" : "Receipt photo";
+    document.getElementById("photoHint").textContent = isIn
+      ? "Optional photo of cash received or bank slip."
+      : "Optional. If you do not have a receipt, you can still save — it will be flagged as an evidence exception.";
+    var btn = document.getElementById("submitBtn");
+    var sticky = document.getElementById("stickySubmit");
+    btn.textContent = isIn ? "Record cash in" : "Record cash out";
+    sticky.textContent = isIn ? "Record cash in" : "Record cash out";
+    btn.classList.toggle("in-btn", isIn);
+    sticky.classList.toggle("in-btn", isIn);
+    idempotencyKey = newIdempotencyKey();
+  }
 
   document.getElementById("receipt").addEventListener("change", function () {
     var f = this.files && this.files[0];
     var prev = document.getElementById("receiptPreview");
     var st = document.getElementById("receiptStatus");
-    receiptMeta = null;
     if (!f) {
       prev.classList.remove("show");
       prev.removeAttribute("src");
-      st.textContent = "No photo yet";
+      st.textContent = "No photo attached";
       return;
     }
     st.textContent = f.name + " · ready to upload";
-    var url = URL.createObjectURL(f);
-    prev.src = url;
+    prev.src = URL.createObjectURL(f);
     prev.classList.add("show");
   });
 
-  function paintDays(days) {
-    var daysBox = document.getElementById("days");
-    daysBox.innerHTML = "";
-    if (!days.length) {
-      daysBox.appendChild(el("p", "empty", "No day tin records yet."));
-      return;
+  function paintBalance(data) {
+    var bal = data.current_balance;
+    currentBalance = bal;
+    var recon = data.balance_reconciliation || {};
+    var balEl = document.getElementById("balanceAmount");
+    var outEl = document.getElementById("todayOutLine");
+    var inEl = document.getElementById("todayInLine");
+    var gapEl = document.getElementById("balanceGap");
+    if (bal != null && isFinite(Number(bal))) {
+      balEl.textContent = "CURRENT BALANCE: " + fmtIdr(bal);
+    } else {
+      balEl.textContent = "CURRENT BALANCE unavailable — chain not anchored";
     }
-    days.forEach(function (d) {
-      var row = el("div", "card");
-      var st = d.state || "OPEN";
-      var STATE_HUMAN = {OPEN:"Open", COUNTED:"Counted", POLICY_REQUIRED:"Needs policy", VARIANCE_NOTED:"Variance noted", CLOSED:"Closed", CLOSED_CLAIMED:"Closed"};
-      row.appendChild(el("span", "state" + (st === "POLICY_REQUIRED" || st === "VARIANCE_NOTED" ? " warn" : ""), STATE_HUMAN[st] || st));
-      row.appendChild(el("h3", null, d.business_date || "Date unknown"));
-      var floatLine = d.opening_float == null
-        ? "Opening cash balance not set yet"
-        : "Opening float: " + d.opening_float;
-      row.appendChild(el("div", "meta", floatLine));
-      if (d.counted_amount != null) row.appendChild(el("div", "meta", "Counted: " + d.counted_amount));
-      if (d.expected_amount != null) {
-        row.appendChild(el("div", "meta", "Expected: " + d.expected_amount));
-      } else if (d.opening_float == null) {
-        row.appendChild(el("div", "meta", "Expected balance unavailable until opening cash is set"));
-      }
-      if (d.note) row.appendChild(el("div", "meta", d.note));
-      if (d.example) row.appendChild(el("div", "meta", "Example"));
-      daysBox.appendChild(row);
-    });
+    var todayOut = data.today_cash_out != null ? data.today_cash_out : recon.today_cash_out;
+    outEl.textContent = "TODAY'S CASH OUT: " + (todayOut != null ? fmtIdr(todayOut) : "—");
+    var todayIn = data.today_cash_in != null ? data.today_cash_in : recon.today_cash_in;
+    inEl.textContent = "TODAY'S CASH IN: " + (todayIn != null ? fmtIdr(todayIn) : "—");
+    inEl.hidden = false;
+    var gap = recon.gap_vs_owner_stated;
+    if (gap != null && Math.abs(Number(gap)) > 0) {
+      gapEl.textContent = "Unresolved difference vs owner-stated position: " + fmtIdr(Math.abs(gap)) + (Number(gap) > 0 ? " short" : " over");
+      gapEl.classList.remove("hidden");
+    } else if (bal != null) {
+      gapEl.classList.add("hidden");
+    } else {
+      gapEl.textContent = recon.anchored === false ? "Balance chain needs an anchored opening before the tin total can be verified." : "";
+      gapEl.classList.toggle("hidden", !gapEl.textContent);
+    }
+    if (data.outlet_locked && data.outlet_locked.display_name) {
+      lockedOutlet = data.outlet_locked.display_name;
+      document.getElementById("outletLabel").innerHTML =
+        lockedOutlet + ' <span class="lock">locked</span>';
+    } else if (data.outlet) {
+      lockedOutlet = data.outlet;
+    }
+    if (canReconcile) {
+      document.getElementById("reconLedger").textContent = bal != null ? fmtIdr(bal) : "—";
+    }
   }
 
   function paintMoves(rows) {
     var box = document.getElementById("list");
     box.innerHTML = "";
-    if (!rows.length) {
+    var filtered = rows.filter(function (m) { return !m.example; });
+    if (!filtered.length) {
       box.appendChild(el("p", "empty", "No petty movements yet."));
       return;
     }
-    rows.forEach(function (m) {
+    filtered.forEach(function (m) {
       var d = el("div", "card");
       var dir = (m.direction || "").toUpperCase();
-      var head = el("div");
-      head.appendChild(el("span", "state " + (dir === "IN" ? "in" : "out"), m.direction_label || dir || "?"));
-      if (m.needs_approval) head.appendChild(el("span", "chip", "Needs approval"));
-      if (m.legacy) head.appendChild(el("span", "chip", "Existing"));
-      d.appendChild(head);
-      d.appendChild(el("h3", null, m.purpose || m.category || "Movement"));
+      var prefix = dir === "IN" ? "+ " : "− ";
+      d.appendChild(el("h3", null, prefix + fmtIdr(m.amount)));
       var bits = [];
-      if (m.business_date) bits.push(m.business_date);
-      bits.push(money(m.amount, m.currency));
+      if (dir === "IN") bits.push("Cash in");
+      else bits.push("Cash out");
+      if (m.purpose) bits.push(m.purpose);
       if (m.category) bits.push(m.category);
-      if (m.outlet) bits.push(m.outlet);
       if (m.logged_by) bits.push(m.logged_by);
-      if (m.created_at) bits.push(String(m.created_at).replace("T", " ").slice(0, 16));
+      var t = m.transaction_time || m.created_at || "";
+      if (t) bits.push(String(t).replace("T", " ").slice(0, 16));
       d.appendChild(el("div", "meta", bits.join(" · ")));
-      if (m.evidence_id || m.receipt_path) d.appendChild(el("div", "meta", "Receipt attached"));
-      if (m.example) d.appendChild(el("div", "meta", "Example"));
+      var chips = el("div");
+      chips.style.marginTop = "6px";
+      if (dir === "IN") {
+        chips.appendChild(el("span", "chip in", "Cash in"));
+      }
+      if (m.receipt_missing) {
+        chips.appendChild(el("span", "chip warn", "Receipt missing"));
+      } else if (m.receipt_attached) {
+        chips.appendChild(el("span", "chip", "Evidence attached"));
+      }
+      var exc = m.exception_state;
+      if (Array.isArray(exc)) {
+        exc.forEach(function (e) {
+          if (e === "needs_accounting_classification") {
+            chips.appendChild(el("span", "chip warn", "Needs accounting"));
+          } else if (e === "needs_approval") {
+            chips.appendChild(el("span", "chip warn", "Needs approval"));
+          }
+        });
+      }
+      if (chips.childNodes.length) d.appendChild(chips);
       box.appendChild(d);
     });
   }
@@ -342,59 +431,19 @@
     return fetch("/api/bzg/uma-blu/petty", { credentials: "same-origin" })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        if (Array.isArray(data.categories) && data.categories.length) cats = data.categories;
-        if (Array.isArray(data.outlets) && data.outlets.length) outlets = data.outlets;
-        fillSelect(document.getElementById("category"), ["Choose…"].concat(cats).filter(function (x, i, a) {
-          return i === 0 ? true : x !== "Choose…";
-        }).slice(1).length ? cats : cats, cats[0]);
-        // rebuild category properly
-        var catSel = document.getElementById("category");
-        catSel.innerHTML = '<option value="">Choose…</option>';
-        cats.forEach(function (c) {
-          var o = document.createElement("option");
-          o.value = c; o.textContent = c; catSel.appendChild(o);
-        });
-        fillSelect(document.getElementById("outlet"), outlets, outlets[0]);
-
-        function fmtIdr(n) {
-          var x = Math.round(Number(n));
-          if (!isFinite(x)) return String(n);
-          return "Rp" + String(x).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        if (Array.isArray(data.categories) && data.categories.length) {
+          fillSelect(document.getElementById("category"), data.categories);
         }
-        var balCard = document.getElementById("balanceCard");
-        var balVal = document.getElementById("balanceValue");
-        if (data.current_balance != null && data.current_balance !== "") {
-          balVal.textContent = fmtIdr(data.current_balance);
-          balCard.hidden = false;
-        } else {
-          balCard.hidden = true;
-        }
-        var floatStatus = (data.float_status || (data.honesty && data.honesty.float) || "NOT_FOUND");
-        var floatEl = document.getElementById("floatBanner");
-        if (floatStatus === "NOT_FOUND" || floatStatus === "NOT_IN_SLICE") {
-          var banner = "Opening cash balance is not set yet. You can still record movements. The tin total cannot be verified until an approved opening balance is commissioned.";
-          if ((data.movements || []).length) {
-            banner += " Past movements stay listed. They do not set an opening balance.";
-          }
-          floatEl.textContent = banner;
-          floatEl.classList.remove("ok");
-          floatEl.classList.remove("hidden");
-        } else {
-          floatEl.textContent = "Current balance: " + fmtIdr(data.current_balance != null ? data.current_balance : data.opening_float) + " (human-supplied opening by Matt).";
-          floatEl.classList.add("ok");
-          floatEl.classList.remove("hidden");
-        }
-        if (data.fixture_notice && !(data.movements || []).some(function (m) { return m.legacy; })) {
-          document.getElementById("fixtureBanner").classList.remove("hidden");
-        }
-        paintDays(data.days || []);
+        var caps = data.capabilities || {};
+        if (caps.record_out !== undefined) canRecordOut = !!caps.record_out;
+        if (caps.record_in !== undefined) canRecordIn = !!caps.record_in;
+        if (caps.reconcile !== undefined) canReconcile = !!caps.reconcile;
+        paintBalance(data);
         paintMoves(data.movements || []);
-        document.body.setAttribute("data-overflow",
-          document.documentElement.scrollWidth > document.documentElement.clientWidth + 1 ? "yes" : "no");
       })
       .catch(function () {
         document.getElementById("list").textContent = "Could not load petty cash.";
-        document.getElementById("days").textContent = "Could not load day tin.";
+        document.getElementById("balanceAmount").textContent = "Could not load balance.";
       });
   }
 
@@ -412,63 +461,84 @@
     var msg = document.getElementById("moveMsg");
     msg.textContent = text;
     msg.className = "msg err";
-    try { msg.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {}
     if (focusId) {
       var elFocus = document.getElementById(focusId);
-      if (elFocus) {
-        try { elFocus.focus(); } catch (e2) {}
-        try { elFocus.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e3) {}
-      }
+      if (elFocus) try { elFocus.focus(); } catch (e) {}
     }
   }
 
   function setBusy(busy) {
     var btn = document.getElementById("submitBtn");
     var sticky = document.getElementById("stickySubmit");
-    if (btn) btn.disabled = !!busy;
-    if (sticky) sticky.disabled = !!busy;
+    var canAct = activeDirection === "IN" ? canRecordIn : canRecordOut;
+    var dis = !!busy || !canAct || !hasAssignment || !personName;
+    if (btn) btn.disabled = dis;
+    if (sticky) sticky.disabled = dis;
   }
 
   function validateMove() {
+    var canAct = activeDirection === "IN" ? canRecordIn : canRecordOut;
+    if (!canAct) {
+      showMoveErr(activeDirection === "IN"
+        ? "Your seat cannot record petty cash in."
+        : "Your seat cannot record petty cash out.");
+      return null;
+    }
+    if (!hasAssignment || !personName) {
+      showMoveErr("Sign in with an active assignment before recording.");
+      return null;
+    }
     var amountRaw = document.getElementById("amount").value;
     var amount = Number(amountRaw);
     var purpose = document.getElementById("purpose").value.trim();
     var category = document.getElementById("category").value;
-    var outlet = document.getElementById("outlet").value;
-    var loggedBy = document.getElementById("logged_by").value.trim();
+    var payee = document.getElementById("payee").value.trim();
     var file = document.getElementById("receipt").files && document.getElementById("receipt").files[0];
     if (!amountRaw || !isFinite(amount) || amount <= 0) {
       showMoveErr("Enter an amount greater than 0.", "amount");
       return null;
     }
-    if (!category) {
+    if (activeDirection === "OUT" && !category) {
       showMoveErr("Choose a category.", "category");
       return null;
     }
     if (!purpose) {
-      showMoveErr("Say what it was for.", "purpose");
-      return null;
-    }
-    if (!outlet) {
-      showMoveErr("Choose an outlet.", "outlet");
-      return null;
-    }
-    if (!loggedBy) {
-      showMoveErr("Enter who logged this.", "logged_by");
-      return null;
-    }
-    if (!file) {
-      showMoveErr("Add a receipt photo first.", "receipt");
+      showMoveErr(activeDirection === "IN" ? "Say where the cash came from." : "Say what it was for.", "purpose");
       return null;
     }
     return {
       amount: amount,
       purpose: purpose,
       category: category,
-      outlet: outlet,
-      loggedBy: loggedBy,
-      file: file
+      payee: payee,
+      file: file || null,
+      direction: activeDirection
     };
+  }
+
+  function postMovement(fields, receiptMeta) {
+    var body = {
+      operator: true,
+      direction: fields.direction,
+      amount: fields.amount,
+      purpose: fields.purpose,
+      currency: "IDR",
+      idempotency_key: idempotencyKey
+    };
+    if (fields.direction === "OUT") {
+      body.category = fields.category;
+      if (fields.payee) body.payee = fields.payee;
+    }
+    if (receiptMeta && receiptMeta.receipt_path) {
+      body.evidence_id = receiptMeta.evidence_id;
+      body.receipt_path = receiptMeta.receipt_path;
+    }
+    return fetch("/api/bzg/uma-blu/petty", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    }).then(function (r) { return r.json(); });
   }
 
   function submitMove() {
@@ -478,75 +548,161 @@
     var fields = validateMove();
     if (!fields) return;
     setBusy(true);
-    msg.textContent = "Uploading receipt…";
-    try { msg.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {}
-    uploadReceipt(fields.file).then(function (up) {
-      if (!up.ok || !up.j || !up.j.ok) {
-        throw new Error((up.j && (up.j.error || up.j.message)) || "Receipt upload failed");
+    var label = fields.direction === "IN" ? "cash in" : "cash out";
+    var chain;
+    if (fields.file) {
+      msg.textContent = "Uploading evidence…";
+      chain = uploadReceipt(fields.file).then(function (up) {
+        if (!up.ok || !up.j || !up.j.ok) {
+          throw new Error((up.j && (up.j.error || up.j.message)) || "Upload failed");
+        }
+        msg.textContent = "Recording " + label + "…";
+        return postMovement(fields, up.j);
+      });
+    } else {
+      if (fields.direction === "OUT") {
+        msg.textContent = "Recording cash out — receipt missing, so this will be an evidence exception…";
+        msg.className = "msg warn";
+      } else {
+        msg.textContent = "Recording cash in…";
       }
-      receiptMeta = up.j;
-      msg.textContent = "Recording movement…";
-      return fetch("/api/bzg/uma-blu/petty", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          operator: true,
-          direction: direction,
-          amount: fields.amount,
-          purpose: fields.purpose,
-          category: fields.category,
-          outlet: fields.outlet,
-          logged_by: fields.loggedBy,
-          evidence_id: up.j.evidence_id,
-          receipt_path: up.j.receipt_path,
-          currency: "IDR"
-        })
-      }).then(function (r) { return r.json(); });
-    }).then(function (out) {
+      chain = postMovement(fields, null);
+    }
+    chain.then(function (out) {
       if (!out.ok) {
-        msg.textContent = out.error || out.message || "Movement was not recorded.";
+        msg.textContent = out.error || out.message || ("Cash " + label + " was not recorded.");
         msg.className = "msg err";
         setBusy(false);
         return;
       }
-      msg.textContent = out.movement && out.movement.needs_approval
-        ? "Recorded — needs approval (IDR 500k+)."
-        : "Recorded.";
-      msg.className = "msg ok";
+      var receiptMissing = fields.direction === "OUT" && !fields.file;
+      msg.textContent = out.movement && out.movement.idempotent
+        ? "Already recorded (duplicate submit ignored)."
+        : receiptMissing
+          ? "Recorded. Receipt is missing — evidence exception."
+          : "Recorded.";
+      msg.className = receiptMissing ? "msg warn" : "msg ok";
       document.getElementById("moveForm").reset();
-      setDir("OUT");
       document.getElementById("receiptPreview").classList.remove("show");
-      document.getElementById("receiptStatus").textContent = "No photo yet";
-      var hello = (window.__WOLF_WHOAMI__ && (window.__WOLF_WHOAMI__.hello || window.__WOLF_WHOAMI__.email)) || "";
-      if (hello) document.getElementById("logged_by").value = hello;
+      document.getElementById("receiptStatus").textContent = "No photo attached";
+      idempotencyKey = newIdempotencyKey();
+      readWhoami();
       loadPetty().then(function () { setBusy(false); });
     }).catch(function (err) {
-      msg.textContent = (err && err.message) || "Movement was not recorded.";
+      msg.textContent = (err && err.message) || ("Cash " + label + " was not recorded.");
       msg.className = "msg err";
       setBusy(false);
     });
   }
 
+  function updateReconDiff() {
+    if (!canReconcile) return;
+    var notes = Number(document.getElementById("notesTotal").value) || 0;
+    var coins = Number(document.getElementById("coinsTotal").value) || 0;
+    var physical = notes + coins;
+    var diffEl = document.getElementById("reconDiff");
+    if (currentBalance == null || !isFinite(Number(currentBalance))) {
+      diffEl.textContent = "—";
+      return;
+    }
+    var diff = physical - Number(currentBalance);
+    diffEl.textContent = fmtIdr(diff) + (Math.abs(diff) > 0 ? " unproved" : "");
+    diffEl.style.color = Math.abs(diff) > 0 ? "var(--warn)" : "var(--accent)";
+  }
+
+  document.getElementById("notesTotal").addEventListener("input", updateReconDiff);
+  document.getElementById("coinsTotal").addEventListener("input", updateReconDiff);
+
+  function submitReconcile(ev) {
+    ev.preventDefault();
+    var msg = document.getElementById("reconMsg");
+    msg.textContent = "";
+    msg.className = "msg";
+    if (!canReconcile) {
+      msg.textContent = "Your seat cannot reconcile petty cash.";
+      msg.className = "msg err";
+      return;
+    }
+    var notes = Number(document.getElementById("notesTotal").value);
+    var coins = Number(document.getElementById("coinsTotal").value);
+    if (!isFinite(notes) || notes < 0 || !isFinite(coins) || coins < 0) {
+      msg.textContent = "Enter valid notes and coins totals.";
+      msg.className = "msg err";
+      return;
+    }
+    var reason = document.getElementById("reconReason").value.trim();
+    var file = document.getElementById("reconReceipt").files && document.getElementById("reconReceipt").files[0];
+    var body = { notes_total: notes, coins_total: coins, reason: reason };
+    var chain;
+    if (file) {
+      chain = uploadReceipt(file).then(function (up) {
+        if (!up.ok || !up.j || !up.j.ok) throw new Error("Upload failed");
+        body.evidence_id = up.j.evidence_id;
+        return fetch("/api/bzg/uma-blu/petty/reconcile", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        }).then(function (r) { return r.json(); });
+      });
+    } else {
+      chain = fetch("/api/bzg/uma-blu/petty/reconcile", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }).then(function (r) { return r.json(); });
+    }
+    chain.then(function (out) {
+      if (!out.ok) {
+        msg.textContent = out.error || "Count not recorded.";
+        msg.className = "msg err";
+        return;
+      }
+      if (out.unproved) {
+        msg.textContent = "Count recorded. Difference " + fmtIdr(Math.abs(out.difference)) + " is unproved — no adjustment posted.";
+        msg.className = "msg warn";
+      } else {
+        msg.textContent = "Count recorded — matches ledger.";
+        msg.className = "msg ok";
+      }
+      document.getElementById("reconDiff").textContent = out.difference != null ? fmtIdr(out.difference) : "—";
+    }).catch(function (err) {
+      msg.textContent = (err && err.message) || "Count not recorded.";
+      msg.className = "msg err";
+    });
+  }
+
+  readWhoami();
+
   fetch("/api/bzg/uma-blu/permissions", { credentials: "same-origin" })
     .then(function (r) { return r.json(); })
     .then(function (perm) {
-      if (!perm || !perm.buttons || !perm.buttons.petty_record) return;
+      var buttons = (perm && perm.buttons) || {};
+      canRecordOut = !!buttons.petty_record_out || !!buttons.petty_record;
+      canRecordIn = !!buttons.petty_record_in;
+      canReconcile = !!buttons.petty_reconcile;
+      if (!canRecordOut && !canRecordIn) return;
       document.getElementById("pettyForm").hidden = false;
       document.getElementById("pettyFormLocked").hidden = true;
+      if (canRecordIn) {
+        document.getElementById("actionTabs").hidden = false;
+        document.getElementById("tabOut").onclick = function () { setDirection("OUT"); setBusy(false); };
+        document.getElementById("tabIn").onclick = function () { setDirection("IN"); setBusy(false); };
+      }
+      if (canReconcile) {
+        document.getElementById("reconcilePanel").classList.remove("hidden");
+        document.getElementById("reconForm").onsubmit = submitReconcile;
+      }
       document.getElementById("stickyCta").hidden = false;
       document.body.classList.add("petty-form-open");
-      var hello = (window.__WOLF_WHOAMI__ && (window.__WOLF_WHOAMI__.hello || window.__WOLF_WHOAMI__.email)) || "";
-      if (hello) document.getElementById("logged_by").value = hello;
+      readWhoami();
+      idempotencyKey = newIdempotencyKey();
       document.getElementById("moveForm").onsubmit = function (ev) {
         ev.preventDefault();
         submitMove();
       };
-      document.getElementById("stickySubmit").onclick = function () {
-        // Real submit — sticky used to be a #hash link that only scrolled (felt dead).
-        submitMove();
-      };
-      // Hide sticky while in-form button is on screen (avoid double green buttons).
+      document.getElementById("stickySubmit").onclick = function () { submitMove(); };
       var inFormBtn = document.getElementById("submitBtn");
       var stickyWrap = document.getElementById("stickyCta");
       if (window.IntersectionObserver && inFormBtn && stickyWrap) {
@@ -556,6 +712,7 @@
         }, { threshold: 0.4 });
         io.observe(inFormBtn);
       }
+      setBusy(false);
     })
     .catch(function () {});
 

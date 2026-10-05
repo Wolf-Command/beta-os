@@ -1,0 +1,30 @@
+{
+  "captured_at": "2026-09-30T10:45:00+08:00",
+  "method": "box browser computerUse \u2014 no credentials entered",
+  "host_error": false,
+  "access_login_all_three": true,
+  "finance_ui": false,
+  "note": "Origin reachable through CF tunnel; Host Error 502 cleared. Authenticated identity matrix still required (Zayen/Amanda desktop+phone).",
+  "screenshots_on_box": [
+    "/workspace/state/final-completion/p0-502/amg-finance.png",
+    "/workspace/state/final-completion/p0-502/bzg-finance.png",
+    "/workspace/state/final-completion/p0-502/ggv-finance.png"
+  ],
+  "results": [
+    {
+      "path": "/amg/finance",
+      "host_error": false,
+      "access_login": true
+    },
+    {
+      "path": "/bzg/finance",
+      "host_error": false,
+      "access_login": true
+    },
+    {
+      "path": "/ggv/finance",
+      "host_error": false,
+      "access_login": true
+    }
+  ]
+}

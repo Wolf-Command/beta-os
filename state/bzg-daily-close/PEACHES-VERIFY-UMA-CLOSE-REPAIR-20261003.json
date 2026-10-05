@@ -1,0 +1,76 @@
+{
+  "run_id": "BF-b2154da6f884",
+  "pack": "UMA-CLOSE-REPAIR-2026-10-03",
+  "verified_at": "2026-10-03T22:54:56+08:00",
+  "verifier": "Peaches",
+  "cursor_status": "EXITED_IMPLEMENTATION_DONE",
+  "cursor_pid": 30253,
+  "cursor_log": "state/reliability/uma-close-cursor-20261003.log",
+  "result_md": "state/reliability/UMA-CLOSE-REPAIR-RESULT-2026-10-03.md",
+  "tests": {
+    "command": "python3 scripts/tests/test_uma_close_repair_20261003.py",
+    "pass": 22,
+    "fail": 0,
+    "note": "Cursor log claimed pass=23; Peaches re-run got pass=22 fail=0. All listed proofs PASS. Protected close id not written by tests."
+  },
+  "py_compile": "PASS",
+  "diff_review": {
+    "files": [
+      "scripts/core/bzg_close_vision.py",
+      "scripts/core/venue_close.py",
+      "scripts/core/bzg_daily_close.py",
+      "scripts/serve_beta.py",
+      "dashboards/uma-blu-close.html",
+      "scripts/tests/test_uma_close_repair_20261003.py"
+    ],
+    "spot_checks": {
+      "_edc_prompt_with_bank_context": true,
+      "staff_submit_close": true,
+      "cash_three_sources": true,
+      "api_staff_submit_route": true,
+      "btnCashTakePhoto": true,
+      "btnCashUploadPhoto": true,
+      "btnReconcile_absent": true
+    }
+  },
+  "protected_close": {
+    "close_id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+    "unchanged": true,
+    "business_date": "2026-10-03",
+    "state": "EXCEPTION",
+    "declared_cash_amount": 3225000.0,
+    "variance_cash_amount": -125000.0,
+    "work_item_id": "WI-109e1683-4e57-4fc0-860f-24bfbaf42975",
+    "updated_at": "2026-10-03T13:47:39Z"
+  },
+  "beta_reload": {
+    "performed": true,
+    "at": "2026-10-03T22:54:56+08:00",
+    "method": "launchctl kickstart -k gui/501/net.wolfcommand.serve-beta",
+    "old_pid": 1237,
+    "new_pid": 33020,
+    "port": 8788,
+    "health": 200,
+    "staff_submit_pre": 404,
+    "staff_submit_post": 403,
+    "staff_submit_post_meaning": "route present; missing_auth fail-closed (Cloudflare Access) \u2014 expected for unauthenticated local POST",
+    "prod_pid_15975_untouched": true
+  },
+  "eng_proved": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "ready_for_human_test": true,
+  "verdict": "IMPLEMENTATION_DONE_BETA_RELOADED_AWAITING_HUMAN_RETEST",
+  "matt_ping": true,
+  "matt_ping_kind": "READY_FOR_HUMAN_TEST",
+  "beta_starting_link": "https://beta.wolfcommand.net/uma-blu-close",
+  "do_not_claim": [
+    "HUMAN PASS",
+    "staff_ready",
+    "human_commissioned",
+    "eng_proved"
+  ],
+  "prod_mutate": false,
+  "git_commit": false,
+  "tip": "0b0e50d"
+}

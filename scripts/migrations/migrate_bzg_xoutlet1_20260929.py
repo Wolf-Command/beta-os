@@ -31,6 +31,12 @@ from core import bzg_xoutlet_foundations as xout  # noqa: E402
 
 DB = ROOT / "catalog" / "content_library.sqlite"
 BACKUP_DIR = ROOT / "catalog" / "backups"
+
+# Owner P0 5 Oct 2026: retention/free-space guard (docs/BACKUP-RETENTION.md)
+import sys as _bp_sys  # noqa: E402
+if str(ROOT / "scripts") not in _bp_sys.path:
+    _bp_sys.path.insert(0, str(ROOT / "scripts"))
+from core.backup_policy import premig_backup  # noqa: E402
 BZG_BOOKS = Path("/Users/wolfterminal/atrium-finance/data/beta/atrium-bzg.sqlite")
 FOUNDATIONS_DOC = ROOT / "state" / "finance-core-sprint" / "BZG-XOUTLET-FOUNDATIONS.json"
 ARM = ROOT / "state" / "finance-core-sprint" / "BZG-XOUTLET-1-ARM.json"
@@ -234,7 +240,7 @@ def main() -> int:
         return 2
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
     backup = BACKUP_DIR / f"pre-bzg-xoutlet1-{stamp()}.sqlite"
-    shutil.copy2(DB, backup)
+    backup = premig_backup(DB, backup)
     ts = now_iso()
 
     conn = sqlite3.connect(str(DB))

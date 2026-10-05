@@ -1,0 +1,64 @@
+{
+  "as_of": "2026-09-30T11:37:11+08:00",
+  "source": "p0-v1/NEEDS-MATT-P0-20260930 after UI-REAUDIT",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "exit_report": "NOT_CREATED",
+  "prod_8787_touched": false,
+  "pointer": {
+    "needs_matt_md": "state/final-completion/p0-v1/NEEDS-MATT-P0-20260930.md",
+    "needs_matt_json": "state/final-completion/p0-v1/NEEDS-MATT-P0-20260930.json",
+    "connector_gap_json": "state/final-completion/p0-v1/CONNECTOR-GAP-20260930.json",
+    "reaudit": "state/final-completion/p0-v1/UI-REAUDIT-20260930.json"
+  },
+  "top5": [
+    "NM-P0-WOLF-BIZ-CHIPS",
+    "NM-P0-FINANCE-IDENTITY-MATRIX",
+    "NM-P0-OWNER-TRADING-FITNESS-TRAVEL-LEARNING",
+    "NM-P0-SEATS-CONTENT-ADS-RESOLVE",
+    "NM-P0-VOICE-GATEKEEPER-NEVER-SEND"
+  ],
+  "my_commissioning": [
+    {
+      "id": "NM-P0-WOLF-BIZ-CHIPS",
+      "title": "Owner wolf chrome + business chips (wolfnav-biz)",
+      "who": "Matt (Owner)",
+      "status": "OPEN",
+      "priority": "P0",
+      "owner": "Matt"
+    },
+    {
+      "id": "NM-P0-FINANCE-IDENTITY-MATRIX",
+      "title": "Finance identity matrix \u2014 Zayen/Amanda (desktop+phone) AMG/BZG/GGV",
+      "who": "Zayen (AMG/finance seat) + Amanda (GGV/finance seat); Matt Owner spot-check OK",
+      "status": "OPEN",
+      "priority": "P0",
+      "owner": "Matt"
+    },
+    {
+      "id": "NM-P0-OWNER-TRADING-FITNESS-TRAVEL-LEARNING",
+      "title": "Owner Trading / Fitness / Travel / Learning \u2014 human commission PARTIAL boards",
+      "who": "Matt (Owner only)",
+      "status": "OPEN",
+      "priority": "P0",
+      "owner": "Matt"
+    },
+    {
+      "id": "NM-P0-SEATS-CONTENT-ADS-RESOLVE",
+      "title": "Seat boards \u2014 content-desk / content-admin / ads-studio / resolve-studio",
+      "who": "Matt (Owner prove); Haikal/Misa/Amanda seat walk later \u2014 this card = Owner unblock",
+      "status": "OPEN",
+      "priority": "P0",
+      "owner": "Matt"
+    },
+    {
+      "id": "NM-P0-VOICE-GATEKEEPER-NEVER-SEND",
+      "title": "Voice boards + Gatekeeper \u2014 never-send / no-send spot-check",
+      "who": "Matt (Owner)",
+      "status": "OPEN",
+      "priority": "P0",
+      "owner": "Matt"
+    }
+  ],
+  "note": "Cheap Progress/owner-commissioning ingest \u2014 file drop only. Did not edit owner_commissioning_queue.seed_templates (factory breadth avoided). Did not invent PASS overrides in commissioning-queue-state.json."
+}

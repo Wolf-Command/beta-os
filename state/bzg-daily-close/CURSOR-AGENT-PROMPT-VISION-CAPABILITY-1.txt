@@ -1,0 +1,5 @@
+P0 BZG-CLOSE-VISION-CAPABILITY-1.
+Read: state/bzg-daily-close/CURSOR-PACK-BZG-CLOSE-VISION-CAPABILITY-1.md
+Also: FORENSIC-FALSE-ENG-PROVED-VISION-20261002.json
+Preserve close VDC-87202768… + receipt EVD-CLOSE-ESB-806C52F2BFBF.jpg.
+RECEIPT_IMAGE_EXTRACTION via model_router (Anthropic ok). Staff-safe errors. Manual fallback. Real-receipt prove. ENG_PROVED gate. No push. Prod untouched. Peaches verifies before Matt ping.

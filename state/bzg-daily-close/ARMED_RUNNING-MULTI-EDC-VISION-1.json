@@ -1,0 +1,16 @@
+{
+  "pack": "BZG-DAILY-CLOSE-MULTI-EDC-VISION-1",
+  "status": "DONE_ENGINEERING_PASS",
+  "closed_at": "2026-10-02T21:14:15+08:00",
+  "impl_commit": "909addf",
+  "tip_commit": "8688c08",
+  "peaches_verify": "PASS_VERIFIED",
+  "pack_tests_peaches": "bzg_daily_close_multi_edc_vision_1=77/0 bzg_daily_close_till_edc_1=57/0",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "matt_finished_ping": true,
+  "matt_finished_ping_at": "2026-10-02T21:14:15+08:00",
+  "credit_override": "OWNER_ORDER",
+  "owner_message": "t2390u",
+  "child_exit": 0
+}

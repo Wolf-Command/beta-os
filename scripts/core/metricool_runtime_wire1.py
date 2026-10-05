@@ -260,6 +260,8 @@ def surface_stamps(*, wolf_http: dict[str, Any] | None = None) -> list[dict[str,
             "status": "RUNTIME_WIRED",
             "value": len(brands),
             "brand_count": len(brands),
+        "schedule_read": schedule_read,
+        "schedule_glance_pack": (schedule_read or {}).get("pack"),
             "brands": [b["label"] for b in brands],
             "last_success": None,
             "engagement": None,
@@ -600,6 +602,32 @@ def surfaces_are_honest(payload: dict[str, Any] | None = None) -> bool:
     return wired >= 3
 
 
+
+def schedule_glance_stamp() -> dict[str, Any]:
+    """WORKFLOW-METRICOOL-SCHEDULE-GLANCE-1 — brands/list/schedule freshness only."""
+    try:
+        from core import metricool_schedule_glance1 as msg
+
+        payload = msg.load_schedule_glance()
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "ok": False,
+            "pack": "WORKFLOW-METRICOOL-SCHEDULE-GLANCE-1",
+            "engagement": None,
+            "metricool_write": False,
+            "invented_engagement": False,
+            "error": type(exc).__name__,
+        }
+    if not isinstance(payload, dict):
+        return {"ok": False, "engagement": None, "metricool_write": False}
+    # Force honesty fields
+    payload = dict(payload)
+    payload["engagement"] = None
+    payload["metricool_write"] = False
+    payload["invented_engagement"] = False
+    return payload
+
+
 def build_board() -> dict[str, Any]:
     """Public Metricool runtime wire board. Auth gating is caller's job."""
     probed_at = _now_wita()
@@ -609,6 +637,7 @@ def build_board() -> dict[str, Any]:
     ggv = ggv_metric_honesty1_preserved()
     cel = content_engine_live1_preserved()
     flags = honesty_flags()
+    schedule_read = schedule_glance_stamp()
     by_status: dict[str, int] = {}
     for s in surfaces:
         st = str(s.get("status") or "UNKNOWN")

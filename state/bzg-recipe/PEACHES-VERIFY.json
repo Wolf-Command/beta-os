@@ -1,0 +1,75 @@
+{
+  "pack": "BZG-RECIPE-MULTI-OUTLET-1",
+  "verify": "VERIFY_PASS",
+  "mode": "peaches_credit_light",
+  "verified_at": "2026-10-02T17:13:57+08:00",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "label": "Wolfs-Mac-Studio.local",
+  "commit": "d61756e",
+  "commit_full": "d61756e5e355ec4da6a753f667df3268e9876882",
+  "branch": "build/wolf-command-rebuild",
+  "head_match": true,
+  "result_path": "state/final-completion/forensic-completeness-20261001/BZG-RECIPE-MULTI-OUTLET-1-RESULT.md",
+  "result_decision": "PASS_engineering",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_8787": "READ_ONLY_untouched",
+  "tests": {
+    "invoke": "python3 scripts/tests/test_bzg_recipe_multi_outlet_1.py",
+    "suite": "scripts/tests/test_bzg_recipe_multi_outlet_1.py",
+    "pass": 85,
+    "fail": 0,
+    "exit": 0,
+    "rerun_at": "2026-10-02T17:13:57+08:00",
+    "prior_RESULT_counts": {
+      "test_bzg_recipe_multi_outlet_1.py": "pass=85 fail=0",
+      "test_headchef1_20260929.py": "pass=92 fail=0"
+    },
+    "note": "Same non-pytest script Cursor used; ephemeral ThreadingHTTPServer + development_assertion. Head Chef page/context/recipes HTTP 200 inside suite."
+  },
+  "spot_http_beta_8788": {
+    "base": "http://127.0.0.1:8788",
+    "live_process_pid": 62891,
+    "live_process_started": "2026-10-02T07:52:54+08:00",
+    "live_process_stale_vs_commit": true,
+    "note": "Live serve_beta pre-dates d61756e (commit 16:43). Local probes without CF JWT are fail-closed. Suite HTTP against HEAD code proved 200.",
+    "probes": [
+      {
+        "path": "/bzg/recipe-builder",
+        "http": 403,
+        "meaning": "route_present_auth_fail_closed"
+      },
+      {
+        "path": "/api/bzg/recipe-builder/context",
+        "http": 404,
+        "meaning": "unknown_subroute_on_stale_process"
+      },
+      {
+        "path": "/api/bzg/recipe-builder/recipes?outlet_id=BZG-UMA",
+        "http": 403,
+        "meaning": "route_present_auth_fail_closed"
+      },
+      {
+        "path": "/api/bzg/recipe-builder/ingredients?outlet_id=BZG-UMA",
+        "http": 404,
+        "meaning": "unknown_subroute_on_stale_process"
+      }
+    ],
+    "suite_http_head_code": {
+      "Head Chef page": 200,
+      "context API": 200,
+      "Uma list": 200
+    }
+  },
+  "haryanto_beta_url": "https://beta.wolfcommand.net/bzg/recipe-builder",
+  "next": "HARYANTO_COMMISSION",
+  "before_haryanto": "Restart live serve_beta (:8788) so d61756e routes load; do not touch prod :8787. Do not message Matt.",
+  "no_matt_message": true,
+  "reasons": [
+    "HEAD is d61756e",
+    "RESULT PASS with staff_ready=false human_commissioned=false",
+    "Re-ran test_bzg_recipe_multi_outlet_1.py \u2192 pass=85 fail=0 EXIT:0",
+    "Suite proved Head Chef /bzg/recipe-builder and context API 200 under development_assertion",
+    "Live :8788 fail-closed without JWT (expected); process stale \u2014 bounce before Haryanto"
+  ]
+}

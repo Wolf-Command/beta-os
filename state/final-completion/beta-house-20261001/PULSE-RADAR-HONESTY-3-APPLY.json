@@ -1,0 +1,132 @@
+{
+  "pack": "PULSE-RADAR-HONESTY-3",
+  "applied_at_wita": "2026-10-01T08:21:13+08:00",
+  "executor": "Peaches-executor",
+  "target": "beta-os :8788",
+  "prod_8787": "UNTOUCHED",
+  "prod_pid": 15975,
+  "beta_8788_pid_before": 237,
+  "beta_8788_pid_after": 1810,
+  "phase": "POLISH",
+  "mutations": [
+    "owner_radar_ro.py: empty_reason/blocked_reason/precise_state + empty_blocked_index",
+    "owner_radar_ro.py: orphan prove hrefs \u2192 hubs",
+    "owner_pulse_ro.py: atrium href_hold \u2192 /amg-ops-pack#occ",
+    "owner-radar-1.html: surface stamped reasons"
+  ],
+  "proof": {
+    "radar_counts": {
+      "tiles": 15,
+      "LIVE": 3,
+      "PARTIAL": 3,
+      "EMPTY": 3,
+      "BLOCKED": 6
+    },
+    "empty_blocked_index_count": 9,
+    "empty_blocked_index": [
+      {
+        "id": "ex_0_uma_daily_close",
+        "state": "BLOCKED",
+        "precise_state": "BLOCKED",
+        "empty_reason": null,
+        "blocked_reason": "Daily close is BLOCKED. Matt has not set them. the variance policy is not set. The rest of this page stays open. Severity MISSING when not on record \u2014 not invented.",
+        "why": "Daily close is BLOCKED. Matt has not set them. the variance policy is not set. The rest of this page stays open. Severity MISSING when not on record \u2014 not invented.",
+        "href": "/uma-blu-close"
+      },
+      {
+        "id": "ex_1_month_end",
+        "state": "BLOCKED",
+        "precise_state": "BLOCKED",
+        "empty_reason": null,
+        "blocked_reason": "No bank-statement register is on Beta yet. Per the month-end close rule, missing statements block close for GGV, AMG, and BZG. Severity MISSING when not on record \u2014 not invented.",
+        "why": "No bank-statement register is on Beta yet. Per the month-end close rule, missing statements block close for GGV, AMG, and BZG. Severity MISSING when not on record \u2014 not invented.",
+        "href": "/finish-war-room"
+      },
+      {
+        "id": "ex_2_commissioning_fail",
+        "state": "BLOCKED",
+        "precise_state": "BLOCKED",
+        "empty_reason": null,
+        "blocked_reason": "OPSFIX-1 wrapped the plan header. The earlier line that no person has written PASS or FAIL is kept. Severity MISSING when not on record \u2014 not invented.",
+        "why": "OPSFIX-1 wrapped the plan header. The earlier line that no person has written PASS or FAIL is kept. Severity MISSING when not on record \u2014 not invented.",
+        "href": "/content-2.0#plan"
+      },
+      {
+        "id": "ex_3_commissioning_fail",
+        "state": "BLOCKED",
+        "precise_state": "BLOCKED",
+        "empty_reason": null,
+        "blocked_reason": "OPSFIX-3: human test card for Zayen. Earlier FAIL kept. No new human PASS. Severity MISSING when not on record \u2014 not invented.",
+        "why": "OPSFIX-3: human test card for Zayen. Earlier FAIL kept. No new human PASS. Severity MISSING when not on record \u2014 not invented.",
+        "href": "/amg/finance"
+      },
+      {
+        "id": "ex_4_commissioning_fail",
+        "state": "BLOCKED",
+        "precise_state": "BLOCKED",
+        "empty_reason": null,
+        "blocked_reason": "OPSFIX-1 allows Owner on the reduced desk. Zayen's earlier FAIL is kept. No new human PASS. Severity MISSING when not on record \u2014 not invented.",
+        "why": "OPSFIX-1 allows Owner on the reduced desk. Zayen's earlier FAIL is kept. No new human PASS. Severity MISSING when not on record \u2014 not invented.",
+        "href": "/amg/finance/lite"
+      },
+      {
+        "id": "ex_5_commissioning_fail",
+        "state": "BLOCKED",
+        "precise_state": "BLOCKED",
+        "empty_reason": null,
+        "blocked_reason": "OPSFIX-3 queued the Zayen operator card. Earlier desk FAIL kept elsewhere. No new human PASS. Severity MISSING when not on record \u2014 not invented.",
+        "why": "OPSFIX-3 queued the Zayen operator card. Earlier desk FAIL kept elsewhere. No new human PASS. Severity MISSING when not on record \u2014 not invented.",
+        "href": "/amg/finance"
+      },
+      {
+        "id": "12wy",
+        "state": "EMPTY",
+        "precise_state": "EMPTY",
+        "empty_reason": "No evidenced planned tactics this week. EMPTY, not 0%. Score does not create NOW.",
+        "blocked_reason": null,
+        "why": "No evidenced planned tactics this week. EMPTY, not 0%. Score does not create NOW.",
+        "href": "/progress"
+      },
+      {
+        "id": "mars",
+        "state": "EMPTY",
+        "precise_state": "EMPTY",
+        "empty_reason": "tile-mars present on birdseye (14 tiles). Meter remains EMPTY (V1 punch). Not inventing progress. WHERE: /owner/radar (prove surface hidden from Owner glance).",
+        "blocked_reason": null,
+        "why": "tile-mars present on birdseye (14 tiles). Meter remains EMPTY (V1 punch). Not inventing progress. WHERE: /owner/radar (prove surface hidden from Owner glance).",
+        "href": "/owner/radar"
+      },
+      {
+        "id": "radar_cap",
+        "state": "EMPTY",
+        "precise_state": "EMPTY",
+        "empty_reason": "Catalog intent is Pulse + Exceptions. Those names are not on the Owner Radar text. Counts are not invented. A Python exception handler is not this binding. Counts are not zero.",
+        "blocked_reason": null,
+        "why": "Catalog intent is Pulse + Exceptions. Those names are not on the Owner Radar text. Counts are not invented. A Python exception handler is not this binding. Counts are not zero.",
+        "href": "/owner/radar"
+      }
+    ],
+    "pulse_counts": {
+      "tiles": 10,
+      "LIVE": 8,
+      "PARTIAL": 2,
+      "EMPTY": 0,
+      "BLOCKED": 0
+    },
+    "atrium_href_hold": "/amg-ops-pack#occ",
+    "primary_ia_count": 19,
+    "prod_8787_pid": 15975,
+    "beta_8788_pid_after": 1810,
+    "invented_green": false
+  },
+  "honesty": {
+    "staff_ready": false,
+    "desktop_gate_ready": false,
+    "exit_report": "NOT_CREATED",
+    "wolf_desktop_ready": false,
+    "metricool_write": false,
+    "finance_sod": "UNCHANGED",
+    "cf_jwt": "PARKED"
+  },
+  "backup": "/Users/wolfterminal/beta-os/backups/beta-house-ux-20261001/"
+}

@@ -22,6 +22,12 @@ from core.uma_devi_p0 import ensure_receipt_schema  # noqa: E402
 
 DB = ROOT / "catalog" / "content_library.sqlite"
 BACKUP_DIR = ROOT / "catalog" / "backups"
+
+# Owner P0 5 Oct 2026: retention/free-space guard (docs/BACKUP-RETENTION.md)
+import sys as _bp_sys  # noqa: E402
+if str(ROOT / "scripts") not in _bp_sys.path:
+    _bp_sys.path.insert(0, str(ROOT / "scripts"))
+from core.backup_policy import premig_backup  # noqa: E402
 MIGRATION_ID = "022_uma_devi_feedback_p0"
 TZ8 = timezone(timedelta(hours=8))
 FORBIDDEN = ("wolf-system", "money.sqlite", "/Production", "8787")
@@ -39,7 +45,7 @@ def main() -> int:
             return 1
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
     dest = BACKUP_DIR / f"pre-uma-devi-feedback-p0-{stamp()}.sqlite"
-    shutil.copy2(DB, dest)
+    dest = premig_backup(DB, dest)
     digest = hashlib.sha256(dest.read_bytes()).hexdigest()
     print(f"BACKUP={dest}")
     print(f"SHA256={digest}")

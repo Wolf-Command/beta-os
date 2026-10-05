@@ -1,0 +1,51 @@
+{
+  "pack": "COMMISSIONING-DEEPEN-20261001",
+  "applied_at_wita": "2026-10-01T09:53:00+08:00",
+  "executor": "Peaches-executor",
+  "prod_8787": "UNTOUCHED",
+  "rows": {
+    "Jotform": {
+      "from": "CONNECTED, COMMISSIONING REQUIRED",
+      "to": "LIVE+TESTED",
+      "prove": "MCP search 4 forms"
+    },
+    "GitHub": {
+      "from": "CONNECTED, COMMISSIONING REQUIRED",
+      "to": "LIVE+TESTED",
+      "prove": "get_me wolfcommand"
+    },
+    "Bank_Import": {
+      "from": "CONNECTED, COMMISSIONING REQUIRED",
+      "to": "CONNECTED, COMMISSIONING REQUIRED",
+      "note": "OWNER/STAFF file-import \u2014 no invent LIVE"
+    },
+    "Atrium_Finance_8790": {
+      "from": "CONNECTED, COMMISSIONING REQUIRED",
+      "to": "CONNECTED, COMMISSIONING REQUIRED",
+      "note": "staff prove + entity isolation routing"
+    },
+    "Spartacus_Fitness": {
+      "from": "CONNECTED, COMMISSIONING REQUIRED",
+      "to": "INTENTIONALLY DISABLED",
+      "note": "no credentials"
+    },
+    "Trading_Desk": {
+      "from": "CONNECTED, COMMISSIONING REQUIRED",
+      "to": "INTENTIONALLY DISABLED",
+      "note": "no credentials"
+    }
+  },
+  "counts_by_end_state": {
+    "LIVE+TESTED": 17,
+    "OPTIONAL_NON_GATING": 1,
+    "OWNER ACTION REQUIRED": 2,
+    "CONNECTED, COMMISSIONING REQUIRED": 2,
+    "INTENTIONALLY DISABLED": 12,
+    "OBSOLETE/SUPERSEDED": 6,
+    "EXTERNAL BLOCKER": 2
+  },
+  "human_commissioned_true": 0,
+  "write_authority_approved_true": 0,
+  "staff_ready": false,
+  "desktop_gate_ready": false
+}

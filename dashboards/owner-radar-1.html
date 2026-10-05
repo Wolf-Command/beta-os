@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Owner Radar — PARTIAL</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root { color-scheme: light; --ink:#1a1f24; --muted:#5a6570; --paper:#f2f4f6; --card:#fbfcfd; --line:#d3dae0; --warn:#8a1f1f; --partial:#7a5a12; --ok:#1f5a3a; --accent:#2a5bb8; --font:"IBM Plex Sans","Segoe UI",sans-serif; --display:"Iowan Old Style",Palatino,Georgia,serif; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:var(--font);background:radial-gradient(ellipse 65% 35% at 100% 0%,#e8ecf1 0%,transparent 55%),var(--paper);color:var(--ink)}
+    main{max-width:1240px;margin:0 auto;padding:22px 22px 96px}
+    .crumb{font-size:.78rem;color:var(--muted);margin:0 0 8px}
+    h1{font-family:var(--display);font-weight:500;font-size:1.7rem;margin:0 0 6px;letter-spacing:-.02em}
+    .sub{color:var(--muted);margin:0 0 12px;line-height:1.45;font-size:.94rem}
+    .banner{background:#f8eaea;border:1px solid #e0b8b8;border-radius:10px;padding:11px 14px;margin:0 0 10px;font-size:.88rem;line-height:1.45;color:var(--warn)}
+    .banner.partial{background:#f7f0df;border-color:#e0d2a8;color:var(--partial)}
+    h2{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:20px 0 8px}
+    .card-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 13px;min-height:118px;display:flex;flex-direction:column;gap:4px}
+    .card.loud{border-color:#e0b8b8;background:#fdf8f8}
+    .card h3{margin:0;font-size:.92rem;line-height:1.25}
+    .ro-meta{font-size:.78rem;color:var(--muted);margin:0;line-height:1.35}
+    .ro-ok{color:var(--ok)}.ro-bad{color:var(--warn)}.ro-warn{color:var(--partial)}
+    .val{font-size:.95rem;font-weight:650;line-height:1.3;margin:2px 0;flex:1}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#eef2f5;font-size:.7rem;margin:0 4px 4px 0;font-weight:650}
+    .pill.loud{background:#f8eaea;color:var(--warn)}
+    .pill[data-mark="LIVE"]{background:#e6f5ec;color:var(--ok)}
+    .pill[data-mark="PARTIAL"]{background:#f7f0df;color:var(--partial)}
+    .pill[data-mark="EMPTY"],.pill[data-mark="BLOCKED"]{background:#f8eaea;color:var(--warn)}
+    a.act{display:inline-flex;align-items:center;min-height:36px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#eef2f5;color:var(--ink);font-weight:650;text-decoration:none;margin:4px 6px 0 0;font-size:.82rem}
+    a.where{color:var(--accent);font-weight:650;text-decoration:none;font-size:.82rem;min-height:32px;display:inline-flex;align-items:center}
+    .boards{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+    .meta{font-size:.8rem;color:var(--muted);margin-top:16px;line-height:1.45}
+    .counts{font-size:.8rem;color:var(--muted);margin:4px 0 0}
+    @media (max-width:1100px){.card-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    @media (max-width:780px){.card-grid{grid-template-columns:1fr} main{padding:14px 14px 88px}}
+  </style>
+</head>
+<body data-wolf-page-type="WORKSPACE" data-wolf-org="OWNER" data-wolf-shell="global" data-pack="UX-PACK-12">
+<main>
+  <p class="crumb">WOLF › HOME › Personal › Radar (Owner)</p>
+  <h1>Radar</h1>
+  <p class="sub">Owner Personal Command · what matters tonight / this week · honesty stamps · CAP-STRAT-02 · migration_state <strong>PARTIAL</strong> · staff_ready=false</p>
+  <div class="banner"><strong>NOT REBUILT+PROVEN.</strong> Useful RO desk — not fake green mission scores. EMPTY / BLOCKED stay loud with stamped reasons (PULSE-RADAR-HONESTY-3). SYSTEM% is not copied here.</div>
+  <div class="banner partial" id="pack-banner"><strong>PARTIAL · UX-PACK-12.</strong> Deepened from stub: pulse tonight + exceptions/Needs You + 12WY / Mars / wire links. Full V1 radar feature dump remains out of scope.</div>
+
+  <p class="ro-meta">Live · <span id="ro-live-status">loading…</span> · as of <span id="ro-asof">—</span></p>
+  <p class="counts" id="ro-counts"></p>
+
+  <h2>What matters tonight</h2>
+  <div class="card-grid" id="sec-tonight"><p class="ro-meta">…</p></div>
+
+  <h2>This week · plan boards</h2>
+  <div class="card-grid" id="sec-week"><p class="ro-meta">…</p></div>
+
+  <h2>Honesty · CAP stamps</h2>
+  <div class="card-grid" id="sec-honesty"><p class="ro-meta">…</p></div>
+
+  <h2>Open a real board</h2>
+  <div class="boards" id="boards"></div>
+
+  <h2>Residuals</h2>
+  <div class="card" id="residuals"><p class="ro-meta">…</p></div>
+
+  <p class="meta">Route <code>/owner/radar</code> · API <code>/api/owner/radar-ro</code> · Pack UX-PACK-12 · desktop_gate_ready=false · finance SoD unchanged</p>
+</main>
+<script>
+(function(){
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
+  function pill(state){
+    var st=String(state||"PARTIAL");
+    var loud = st==="EMPTY"||st==="BLOCKED";
+    return "<span class=\"pill"+(loud?" loud":"")+"\" data-mark=\""+esc(st)+"\">"+esc(st)+"</span>";
+  }
+  function cardHtml(c){
+    var st=c.state||"PARTIAL";
+    var loud = st==="EMPTY"||st==="BLOCKED"||c.loud ? " loud" : "";
+    var val = (c.value!=null && c.value!=="" && String(c.value)!=="null" && String(c.value)!=="None") ? String(c.value) : st;
+    var href = c.href || c.where || "#";
+    return "<article class=\"card"+loud+"\" data-id=\""+esc(c.id||"")+"\">"
+      +"<h3>"+esc(c.what||c.id||"Card")+" "+pill(st)+"</h3>"
+      +"<p class=\"val\">"+esc(val)+"</p>"
+      +"<p class=\"ro-meta\">"+esc((st==="EMPTY"&&c.empty_reason)||(st==="BLOCKED"&&c.blocked_reason)||c.why||"")+"</p>"
+      +(c.precise_state?("<p class=\"ro-meta\"><code>"+esc(c.precise_state)+"</code>"+(c.empty_reason&&st==="EMPTY"?" · EMPTY reason stamped":"")+(c.blocked_reason&&st==="BLOCKED"?" · BLOCKED reason stamped":"")+"</p>"):"")
+      +"<a class=\"where\" href=\""+esc(href)+"\">Open →</a>"
+      +"</article>";
+  }
+  function paintSection(id, list){
+    var el=document.getElementById(id);
+    if(!el) return;
+    if(!list || !list.length){
+      el.innerHTML="<article class=\"card loud\"><h3>EMPTY "+pill("EMPTY")+"</h3><p class=\"ro-meta\">Nothing readable in this section. Not invented.</p></article>";
+      return;
+    }
+    el.innerHTML=list.map(cardHtml).join("");
+  }
+
+  var st=document.getElementById("ro-live-status");
+  fetch("/api/owner/radar-ro",{credentials:"same-origin"})
+    .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+    .catch(function(e){return {ok:false,e:e};})
+    .then(function(res){
+      document.getElementById("ro-asof").textContent=new Date().toISOString();
+      if(!res.ok || !res.j || !res.j.ok){
+        st.textContent="fail-closed · radar-ro unavailable";
+        st.className="ro-bad";
+        paintSection("sec-tonight",[]);
+        paintSection("sec-week",[]);
+        paintSection("sec-honesty",[]);
+        return;
+      }
+      var j=res.j;
+      st.textContent="radar-ro ok · PARTIAL desk";
+      st.className="ro-ok";
+      document.getElementById("ro-asof").textContent=j.as_of_wita||"—";
+      var c=j.counts||{};
+      document.getElementById("ro-counts").textContent=
+        "Cards "+(c.tiles||0)+" · LIVE "+(c.LIVE??"—")+" · PARTIAL "+(c.PARTIAL??"—")+
+        " · EMPTY "+(c.EMPTY??"—")+" · BLOCKED "+(c.BLOCKED??"—")+
+        " · pulse LIVE "+(((j.pulse_ref||{}).counts||{}).LIVE??"—")+
+        " · exceptions ops "+(((j.exceptions_ref||{}).operational_count)??"—")+
+        " · needs-you "+(((j.needs_you_ref||{}).total_connective_count)??"—");
+      if(j.banner && j.banner.text){
+        document.getElementById("pack-banner").innerHTML="<strong>"+esc(j.banner.state||"PARTIAL")+" · UX-PACK-12.</strong> "+esc(j.banner.text);
+      }
+      var sec=j.sections||{};
+      paintSection("sec-tonight", sec.tonight||[]);
+      paintSection("sec-week", sec.this_week||[]);
+      paintSection("sec-honesty", sec.honesty||[]);
+      var boards=j.boards||[];
+      document.getElementById("boards").innerHTML=boards.map(function(b){
+        return "<a class=\"act\" href=\""+esc(b.href)+"\">"+esc(b.label)+"</a>";
+      }).join("");
+      var resList=j.residuals||[];
+      document.getElementById("residuals").innerHTML=
+        "<p class=\"ro-meta\">"+resList.map(function(r){return "· "+esc(r);}).join("<br>")+"</p>"+
+        "<p class=\"ro-meta\">desktop_gate_ready="+esc(String(!!j.desktop_gate_ready))+" · finance_sod_unchanged="+esc(String(!!j.finance_sod_unchanged))+" · staff_ready=false</p>";
+    });
+})();
+</script>
+<script src="/assets/sidenav.js"></script>
+</body>
+</html>

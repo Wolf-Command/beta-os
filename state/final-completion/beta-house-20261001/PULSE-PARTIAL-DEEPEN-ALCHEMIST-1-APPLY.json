@@ -1,0 +1,38 @@
+{
+  "pack": "PULSE-PARTIAL-DEEPEN-ALCHEMIST-1",
+  "applied_at_wita": "2026-10-01T08:12:49+08:00",
+  "executor": "Peaches-executor",
+  "target": "beta-os :8788",
+  "prod_8787": "UNTOUCHED",
+  "prod_pid_before_after": 15975,
+  "beta_8788_pid_after": 99198,
+  "phase": "DESKTOP_UX",
+  "mutations": [
+    "scripts/core/owner_pulse_ro.py::_purchasing_tile \u2014 LIVE when source OK + process_up + DB counts; legacy_path honesty; pay_mutate NO",
+    "scripts/core/owner_pulse_ro.py::_leads_tile \u2014 honest PARTIAL deepen (DEMO/fixture; no live invent)",
+    "scripts/core/owner_pulse_ro.py::_backup_tile \u2014 honest PARTIAL deepen (as_of/drill note; stay PARTIAL if STALE)"
+  ],
+  "proof": {
+    "pulse_counts": {
+      "LIVE": 8,
+      "PARTIAL": 2,
+      "EMPTY": 0,
+      "BLOCKED": 0,
+      "tiles": 10
+    },
+    "purchasing": "LIVE (was PARTIAL) \u2014 unpaid 106 \u00b7 process_up True \u00b7 pay_mutate false \u00b7 legacy_path true",
+    "leads": "PARTIAL (honest deepen) \u2014 0 live \u00b7 8 DEMO fixture",
+    "backup": "PARTIAL (honest deepen) \u2014 atrium STALE \u00b7 not invented fresh"
+  },
+  "honesty": {
+    "invented_balances": false,
+    "invented_engagement": false,
+    "invented_occ_sales": false,
+    "pay_mutate": false,
+    "finance_sod": "UNCHANGED",
+    "metricool_write": false,
+    "staff_ready": false,
+    "desktop_gate_ready": false
+  },
+  "backup": "/Users/wolfterminal/beta-os/backups/beta-house-ux-20261001/"
+}

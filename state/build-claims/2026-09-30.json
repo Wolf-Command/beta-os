@@ -672,6 +672,54 @@
       "expect": "exit 0",
       "by": "cursor-owner-dash-freshness-1",
       "at": "2026-09-30T10:11:44+08:00"
+    },
+    {
+      "id": "ATRIUM-FC-TRUTH-DEEPEN-1-board",
+      "claim": "ATRIUM-FC-TRUTH-DEEPEN-1: classification INTERNALLY_SOLVABLE where live stamps/SoD exist; books_opened/shell_kind/SoD from live beta; invented_books/pnl/balance false; FC-SHELL-2 + ATRIUM-SOD-1 + atrium_fc_authority preserved; staff_ready/human_commissioned false; next pack parent-only HR-DEFERRED-HOLD-STAMP-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import atrium_fc_truth_deepen1 as a; p=a.build_board(); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='INTERNALLY_SOLVABLE' and p.get('invented_books') is False and p.get('invented_pnl') is False and p.get('invented_balance') is False and a.no_invented_money(p) and a.entity_isolation_held(p) and a.sod_is_honest(p) and p.get('fc_shell2_preserved') is True and p.get('atrium_sod1_preserved') is True and p.get('atrium_fc_authority_preserved') is True and p.get('staff_ready') is False and p.get('human_commissioned') is False and a.honesty_flags().get('next_pack_for_parent_only')=='HR-DEFERRED-HOLD-STAMP-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-atrium-fc-truth-deepen-1",
+      "at": "2026-09-30T10:24:23+08:00"
+    },
+    {
+      "id": "ATRIUM-FC-TRUTH-DEEPEN-1-surfaces",
+      "claim": "ATRIUM-FC-TRUTH-DEEPEN-1 page/API/shots/RESULT present; unsigned deny + invent-books/P&L/balance refuse; INTERNALLY_SOLVABLE; preserved packs; next pack parent-only HR-DEFERRED-HOLD-STAMP-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import atrium_fc_truth_deepen1 as a; from pathlib import Path; html=Path('dashboards/atrium-fc-truth-deepen-1.html').read_text(); import sys; sys.exit(0 if (a.api_matches('/api/ops/atrium-fc-truth-deepen-1') and a.page_matches('/ops/atrium-fc-truth-deepen-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/atriumfctruth1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/ATRIUM-FC-TRUTH-DEEPEN-1-RESULT.md').is_file() and a.honesty_flags().get('next_pack_for_parent_only')=='HR-DEFERRED-HOLD-STAMP-1' and a.honesty_flags().get('cursor_did_not_auto_start_next') is True and a.honesty_flags().get('classification')=='INTERNALLY_SOLVABLE') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-atrium-fc-truth-deepen-1",
+      "at": "2026-09-30T10:24:23+08:00"
+    },
+    {
+      "id": "HR-DEFERRED-HOLD-STAMP-1-board",
+      "claim": "HR-DEFERRED-HOLD-STAMP-1: classification EXTERNAL_BLOCKER_OR_DEFERRED; ceiling HOLD; charter_hr DEFERRED_NEXT_WEEK; hr_deferred_count=33; payroll/headcount null; invented_payroll/headcount/hr_built false; staff_ready/human_commissioned false; next pack parent-only RELIABILITY-PIPE-EPISODE-ROLLUP-1.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import hr_deferred_hold_stamp1 as h; p=h.build_board(); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='EXTERNAL_BLOCKER_OR_DEFERRED' and p.get('ceiling')=='HOLD' and p.get('charter_hr')=='DEFERRED_NEXT_WEEK' and p.get('hr_deferred_count')==33 and p.get('payroll') is None and p.get('headcount') is None and p.get('invented_payroll') is False and p.get('invented_headcount') is False and p.get('hr_built') is False and h.no_invented_hr(p) and h.surfaces_are_honest(p) and p.get('staff_ready') is False and p.get('human_commissioned') is False and h.honesty_flags().get('next_pack_for_parent_only')=='RELIABILITY-PIPE-EPISODE-ROLLUP-1') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-hr-deferred-hold-stamp-1",
+      "at": "2026-09-30T10:30:50+08:00"
+    },
+    {
+      "id": "HR-DEFERRED-HOLD-STAMP-1-surfaces",
+      "claim": "HR-DEFERRED-HOLD-STAMP-1 page/API/shots/RESULT present; unsigned deny + invent-payroll/headcount/build-HR refuse; EXTERNAL_BLOCKER_OR_DEFERRED; ceiling HOLD; next pack parent-only RELIABILITY-PIPE-EPISODE-ROLLUP-1; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import hr_deferred_hold_stamp1 as h; from pathlib import Path; html=Path('dashboards/hr-deferred-hold-stamp-1.html').read_text(); import sys; sys.exit(0 if (h.api_matches('/api/ops/hr-deferred-hold-stamp-1') and h.page_matches('/ops/hr-deferred-hold-stamp-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/hrdeferred1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/HR-DEFERRED-HOLD-STAMP-1-RESULT.md').is_file() and h.honesty_flags().get('next_pack_for_parent_only')=='RELIABILITY-PIPE-EPISODE-ROLLUP-1' and h.honesty_flags().get('cursor_did_not_auto_start_next') is True and h.honesty_flags().get('classification')=='EXTERNAL_BLOCKER_OR_DEFERRED' and h.honesty_flags().get('ceiling')=='HOLD') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-hr-deferred-hold-stamp-1",
+      "at": "2026-09-30T10:30:50+08:00"
+    },
+    {
+      "id": "RELIABILITY-PIPE-EPISODE-ROLLUP-1-board",
+      "claim": "RELIABILITY-PIPE-EPISODE-ROLLUP-1: classification INTERNALLY_SOLVABLE; ceiling BUILT; episode_count>=10; flap_count>=8; live status GREEN|DOWN|UNKNOWN; fake_uptime/fake_pipe_up false; staff_ready/human_commissioned false; next pack parent-only WAVE11-SYNTH-CONTINUE.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import reliability_pipe_episode_rollup1 as r; p=r.build_board(); import sys; sys.exit(0 if (p.get('ok') and p.get('classification')=='INTERNALLY_SOLVABLE' and p.get('ceiling')=='BUILT' and int(p.get('episode_count') or 0)>=10 and int(p.get('flap_count') or 0)>=8 and p.get('status') in ('GREEN','DOWN','UNKNOWN') and p.get('fake_uptime') is False and p.get('fake_pipe_up') is False and r.pipe_is_honest(p) and p.get('staff_ready') is False and p.get('human_commissioned') is False and r.honesty_flags().get('next_pack_for_parent_only')=='WAVE11-SYNTH-CONTINUE') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-reliability-pipe-episode-rollup-1",
+      "at": "2026-09-30T10:39:59+08:00"
+    },
+    {
+      "id": "RELIABILITY-PIPE-EPISODE-ROLLUP-1-surfaces",
+      "claim": "RELIABILITY-PIPE-EPISODE-ROLLUP-1 page/API/shots/RESULT present; unsigned deny + invent-uptime/fake-pipe-up refuse; INTERNALLY_SOLVABLE; ceiling BUILT; preserves PIPE-RELIABILITY-AUTO-1; next pack parent-only WAVE11-SYNTH-CONTINUE; no auto-chain.",
+      "check": "PYTHONPATH=scripts python3 -c \"from core import reliability_pipe_episode_rollup1 as r; from pathlib import Path; html=Path('dashboards/reliability-pipe-episode-rollup-1.html').read_text(); import sys; sys.exit(0 if (r.api_matches('/api/ops/reliability-pipe-episode-rollup-1') and r.page_matches('/ops/reliability-pipe-episode-rollup-1') and 'staff_ready=false' in html and Path('docs/wolf/ops/shots/piperollup1-unsigned-deny.png').is_file() and Path('docs/wolf/ops/RELIABILITY-PIPE-EPISODE-ROLLUP-1-RESULT.md').is_file() and Path('state/final-completion/packs/RELIABILITY-PIPE-EPISODE-ROLLUP-1-EPISODES.json').is_file() and r.honesty_flags().get('next_pack_for_parent_only')=='WAVE11-SYNTH-CONTINUE' and r.honesty_flags().get('cursor_did_not_auto_start_next') is True and r.honesty_flags().get('classification')=='INTERNALLY_SOLVABLE' and r.honesty_flags().get('ceiling')=='BUILT') else 1)\"",
+      "expect": "exit 0",
+      "by": "cursor-reliability-pipe-episode-rollup-1",
+      "at": "2026-09-30T10:39:59+08:00"
     }
   ]
 }

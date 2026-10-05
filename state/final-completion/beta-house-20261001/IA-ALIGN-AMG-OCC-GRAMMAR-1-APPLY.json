@@ -1,0 +1,31 @@
+{
+  "pack": "IA-ALIGN-AMG-OCC-GRAMMAR-1",
+  "applied_at_wita": "2026-10-01T07:51:20+08:00",
+  "executor": "Peaches-executor",
+  "target": "beta-os :8788",
+  "prod_8787": "UNTOUCHED",
+  "prod_8787_pid": 15975,
+  "backup": "/Users/wolfterminal/beta-os/backups/beta-house-ia-20261001/",
+  "status": "APPLIED",
+  "mutations": [
+    "wolf_shell.AMG_GRAMMAR OCC href: /amg/occ-truth-1 -> /amg-ops-pack#occ (align with HTML from IA-HIDE-AMG-OCC-PROVE-LINK-1)",
+    "Finance EMPTY on AMG ops desk unchanged (SoD)"
+  ],
+  "proof": {
+    "primary_ia_count": 19,
+    "amg_occ_grammar_href": "/amg-ops-pack#occ",
+    "amg_finance_empty": true,
+    "sidenav_js_http": 200,
+    "pulse_ro_http": 200,
+    "prod_8787_pid": 15975,
+    "beta_8788_pid_after": 93533
+  },
+  "honesty": {
+    "pages_deleted": false,
+    "routes_kept": true,
+    "staff_ready": false,
+    "desktop_gate_ready": false,
+    "exit_report": "NOT_CREATED",
+    "wolf_desktop_ready": false
+  }
+}

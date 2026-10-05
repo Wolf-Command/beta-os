@@ -476,7 +476,26 @@ def main() -> int:
         allow_test_write=True,
     )
     check("duplicate warning", dup.get("duplicate_warn") is True)
-    check("duplicate not deleted", dup["receipt_totals"]["confirmed_receipt_count"] >= 4)
+    check(
+        "duplicate superseded not double-counted",
+        dup["receipt_totals"]["confirmed_receipt_count"] == 3,
+        str(dup["receipt_totals"]["confirmed_receipt_count"]),
+    )
+    check(
+        "duplicate TOTAL_EDC unchanged",
+        dup["receipt_totals"]["TOTAL_EDC"] == 45000.0,
+        str(dup["receipt_totals"]["TOTAL_EDC"]),
+    )
+    mandiri_hist = [
+        r
+        for r in dup.get("edc_receipts") or []
+        if (r.get("acquirer_label") or "").upper().startswith("MAND")
+    ]
+    check(
+        "duplicate mandiri history kept",
+        len(mandiri_hist) >= 2,
+        str(len(mandiri_hist)),
+    )
 
     # Recon board + evidence completeness
     bzg.attach_till_with_z_report(
@@ -499,7 +518,7 @@ def main() -> int:
     enriched = bzg.enrich_close(vc.get_close(cid))
     check("enrich has edc_receipts", isinstance(enriched.get("edc_receipts"), list))
     check("enrich has recon_board", isinstance(enriched.get("recon_board"), dict))
-    check("phone workflow UI strings", "Wolf reads" in ui_src and "TOTAL_EDC" in ui_src)
+    check("phone workflow UI strings", "Read receipt" in ui_src and "Reconciliation board" in ui_src)
 
     # Evidence / audit trail
     c2 = sqlite3.connect(str(tmp_db))

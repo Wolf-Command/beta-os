@@ -1,0 +1,39 @@
+{
+  "pack": "WORKFLOW-NAS-B2-DESK-STAMP-1",
+  "schema": "wolf.workflow-nas-b2-desk-stamp-1.v1",
+  "applied_at_wita": "2026-10-01T08:05:50+08:00",
+  "executor": "Peaches-executor",
+  "phase": "WORKFLOW",
+  "prod_8787": "UNTOUCHED",
+  "prod_pid": 15975,
+  "beta_8788_pid_before": 95169,
+  "beta_8788_pid_after": 96630,
+  "write": false,
+  "restore": "NOT_RUN",
+  "backup": "/Users/wolfterminal/beta-os/backups/beta-house-workflow-20261001/",
+  "mutations": [
+    "scripts/core/nas_b2_desk_stamp1.py (new)",
+    "scripts/core/owner_pulse_ro.py \u2014 _nas_b2_tile LIVE into Owner pulse",
+    "scripts/core/nas_library.public_nas_status \u2014 desk_stamp + full_tree_indexed=false",
+    "dashboards/content-2.0.html \u2014 nasB2DeskHonesty note",
+    "state/content-engine/nas-b2-desk-stamp.json",
+    "beta :8788 restart only"
+  ],
+  "proof": {
+    "pulse_tile_id": "nas_b2_desk",
+    "pulse_tile_state": "LIVE",
+    "value": "Media 38091 \u00b7 editable-3 843 \u00b7 stock-1 207 \u00b7 B2 cache fresh ~07:56 WITA \u00b7 00/02 denied \u00b7 full_tree_indexed=false",
+    "api_nas_status_desk_stamp": true,
+    "full_tree_indexed": false,
+    "invented_counts": false,
+    "library_db": {
+      "assets": 18,
+      "content_cards": 153,
+      "content_plans": 9,
+      "brands": 1,
+      "content_versions": 0
+    }
+  },
+  "honesty": "Surfaces deepen prove counts on Owner/Content LIVE desks. No fake index completeness. Restore NOT_RUN.",
+  "status": "APPLIED"
+}

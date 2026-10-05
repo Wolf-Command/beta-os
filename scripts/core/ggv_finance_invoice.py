@@ -36,6 +36,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
 
 from core import ggv_finance_nota as nota
+from core import rbac as _rbac
 
 ROLE_OPERATOR = "ROLE-GGV-FINANCE-OPERATOR"
 ROLE_OWNER = "ROLE-MATT"
@@ -181,6 +182,43 @@ FINANCE_ENTITIES: dict[str, dict[str, str]] = {
         "href": "/bzg/finance",
         "entity_id": "ENT-BZG",
     },
+    "ROLE-GGV-FINANCIAL-CONTROLLER": {
+        "id": "GGV",
+        "label": "GGV",
+        "href": "/ggv/finance",
+        "entity_id": "ENT-GGV",
+    },
+}
+
+ENTITY_FINANCE_CHIP: dict[str, dict[str, str]] = {
+    "ENT-GGV": {
+        "id": "GGV",
+        "label": "GGV",
+        "href": "/ggv/finance",
+        "entity_id": "ENT-GGV",
+    },
+    "ENT-AMG": {
+        "id": "AMG",
+        "label": "AMG / ATRIUM",
+        "href": "/amg-finance-ops",
+        "entity_id": "ENT-AMG",
+    },
+    "ENT-BZG": {
+        "id": "BZG",
+        "label": "BZG",
+        "href": "/bzg/finance",
+        "entity_id": "ENT-BZG",
+    },
+}
+
+FINANCE_SWITCHER_ORDER: tuple[str, ...] = ("ENT-GGV", "ENT-AMG", "ENT-BZG")
+
+FINANCE_SCOPE_TO_ENTITY: dict[str, str] = {
+    "SCOPE-GGV-FINANCE": "ENT-GGV",
+    "SCOPE-GGV-ALL": "ENT-GGV",
+    "SCOPE-AMG-FINANCE": "ENT-AMG",
+    "SCOPE-BZG-FINANCE": "ENT-BZG",
+    "SCOPE-BZG-ENTITY": "ENT-BZG",
 }
 
 _NUMBER = re.compile(r"^[A-Z0-9][A-Z0-9./-]{0,31}$")
@@ -403,30 +441,60 @@ def seed_operator_role(conn: sqlite3.Connection) -> None:
     )
 
 
-def finance_entities(person_id: str | None, conn: sqlite3.Connection) -> list[dict[str, str]]:
+def _can_access_finance_entity(
+    person_id: str,
+    entity_id: str,
+    conn: sqlite3.Connection,
+) -> bool:
+    ctx = {"entity_id": entity_id}
+    return bool(
+        _rbac.can(person_id, "finance.nota.read", ctx, conn=conn)
+        or _rbac.can(person_id, "atrium.board.read", ctx, conn=conn)
+    )
+
+
+def finance_entities(person_id: str | None, conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    """All Finance businesses for the shared switcher — selectable from RBAC only."""
     pid = (person_id or "").strip()
     if not pid:
         return []
-    rows = conn.execute(
-        """
-        SELECT DISTINCT pos.role_id
-        FROM org_assignments a
-        JOIN org_positions pos ON pos.position_id = a.position_id
-        WHERE a.person_id=? AND a.status='ACTIVE' AND a.end_at IS NULL
-          AND pos.status='ACTIVE'
-        """,
-        (pid,),
-    ).fetchall()
-    found: list[dict[str, str]] = []
-    seen: set[str] = set()
-    for row in rows:
-        item = FINANCE_ENTITIES.get(str(row[0]))
-        if item and item["id"] not in seen:
-            seen.add(item["id"])
-            found.append(dict(item))
-    order = {"GGV": 0, "AMG": 1, "BZG": 2}
-    found.sort(key=lambda item: order.get(item["id"], 9))
-    return found
+    out: list[dict[str, Any]] = []
+    for entity_id in FINANCE_SWITCHER_ORDER:
+        chip = ENTITY_FINANCE_CHIP.get(entity_id)
+        if not chip:
+            continue
+        selectable = _can_access_finance_entity(pid, entity_id, conn)
+        row: dict[str, Any] = {
+            "id": chip["id"],
+            "label": chip["label"],
+            "entity_id": entity_id,
+            "selectable": selectable,
+        }
+        if selectable:
+            row["href"] = chip["href"]
+        else:
+            row["help"] = "NO ACCESS"
+        out.append(row)
+    return out
+
+
+def finance_entry_href(
+    person_id: str | None,
+    conn: sqlite3.Connection,
+    *,
+    prefer_id: str | None = None,
+) -> str | None:
+    """First authorised Finance home, optionally honouring a client preference id."""
+    rows = finance_entities(person_id, conn)
+    selectable = [row for row in rows if row.get("selectable")]
+    if not selectable:
+        return None
+    prefer = (prefer_id or "").strip().upper()
+    if prefer:
+        for row in selectable:
+            if str(row.get("id") or "").upper() == prefer:
+                return str(row.get("href") or "")
+    return str(selectable[0].get("href") or "")
 
 
 def _money_quantum(currency: str) -> Decimal:

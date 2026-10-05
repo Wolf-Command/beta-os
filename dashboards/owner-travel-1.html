@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Owner Travel — PARTIAL (no book)</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root { color-scheme: light; --ink:#1a1f24; --muted:#5a6570; --paper:#f2f4f6; --card:#fbfcfd; --line:#d3dae0; --warn:#8a1f1f; --partial:#7a5a12; --font:"IBM Plex Sans","Segoe UI",sans-serif; --display:"Iowan Old Style",Palatino,Georgia,serif; }
+    *{box-sizing:border-box} body{margin:0;font-family:var(--font);background:radial-gradient(ellipse 65% 35% at 100% 0%,#efe8df 0%,transparent 55%),var(--paper);color:var(--ink)}
+    main{max-width:920px;margin:0 auto;padding:24px 16px 80px}
+    .crumb{font-size:.78rem;color:var(--muted);margin:0 0 8px}
+    h1{font-family:var(--display);font-weight:500;font-size:1.75rem;margin:0 0 6px;letter-spacing:-.02em}
+    .sub{color:var(--muted);margin:0 0 14px;line-height:1.45;font-size:.95rem}
+    .banner{background:#f8eaea;border:1px solid #e0b8b8;border-radius:10px;padding:12px 14px;margin:0 0 16px;font-size:.9rem;line-height:1.45;color:var(--warn)}
+    .banner.partial{background:#f7f0df;border-color:#e0d2a8;color:var(--partial)}
+    h2{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+    .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+    .tile b{display:block;font-size:.85rem;margin:0 0 4px}
+    .tile span{font-size:.8rem;color:var(--muted);line-height:1.4}
+    .meta{font-size:.8rem;color:var(--muted);margin-top:18px;line-height:1.45}
+    code{font-size:.78rem}
+  
+    #ro-live{margin:18px 0 0;padding:0;border:none}
+    .ro-panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 12px}
+    .ro-panel h3{margin:0 0 8px;font-size:.95rem}
+    .ro-meta{font-size:.78rem;color:var(--muted);margin:0 0 10px}
+    .ro-table{width:100%;border-collapse:collapse;font-size:.82rem}
+    .ro-table th,.ro-table td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+    .ro-table th{color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
+    .ro-chip{display:inline-block;padding:2px 8px;border-radius:999px;background:#eef2f5;font-size:.72rem;margin:0 4px 4px 0}
+    .ro-pre{white-space:pre-wrap;font-size:.78rem;max-height:220px;overflow:auto;background:#f6f8fa;border:1px solid var(--line);border-radius:8px;padding:10px;margin:0}
+    .ro-empty{color:var(--muted);font-size:.85rem}
+    .ro-ok{color:var(--ok,#1f5a3a)}.ro-bad{color:var(--warn,#8a1f1f)}
+
+  </style>
+</head>
+<body>
+<main>
+  <p class="crumb">WOLF › HOME › Personal › Travel (Owner)</p>
+  <h1>Travel</h1>
+  <p class="sub">Owner-only · draft holidays · <strong>no book · no spend · no hotel mail</strong> · migration_state <strong>PARTIAL</strong> · staff_ready=false</p>
+  <div class="banner"><strong>NOT REBUILT+PROVEN.</strong> No live booking APIs. Nobody books from here. Human prove required before any stronger claim.</div>
+  <div class="banner partial"><strong>PARTIAL transfer.</strong> Wave-8 soft-redirect into Empire reversed for Owner Travel. V1 <code>travel.html</code> remains SoT until Matthew proves this surface.</div>
+  <h2>Status</h2>
+  <div class="grid">
+    <div class="tile"><b>migration_state</b><span>PARTIAL</span></div>
+    <div class="tile"><b>staff_ready</b><span>false</span></div>
+    <div class="tile"><b>human_commissioned</b><span>false</span></div>
+    <div class="tile"><b>booking</b><span>FORBIDDEN · draft / plan only</span></div>
+  </div>
+  <h2>Provenance (V1)</h2>
+  <div class="grid">
+    <div class="tile"><b>Board</b><span>wolf-system/dashboards/travel.html</span></div>
+    <div class="tile"><b>Party</b><span>Matthew + Amanda · 2 adults + kids 5 and 7</span></div>
+    <div class="tile"><b>Planner</b><span>Peaches plans on board · draft tiles (Europe etc.)</span></div>
+    <div class="tile"><b>Audience</b><span>Matthew / Owner only</span></div>
+  </div>
+  <p class="meta">Beta route <code>/owner/travel</code> · legacy <code>/travel</code> aliases here (not /wolf). RO deepen 20260930: `/api/owner/travel-ro` draft tiles mirror · booking still FORBIDDEN. Spec: <code>state/final-completion/p0-v1/transfer/TRANSFER-TRAVEL-SPEC.md</code></p>
+
+<!-- OWNER_RO_DEEPEN_20260930 -->
+<section id="ro-live" data-api="/api/owner/travel-ro">
+  <h2>Live RO (Beta)</h2>
+  <div class="banner partial"><strong>PARTIAL · nobody books from here.</strong> <span id="ro-live-status">loading…</span> · no spend · no hotel mail</div>
+  <div id="ro-party" class="ro-panel"><h3>Party</h3><p class="ro-empty">…</p></div>
+  <div id="ro-tiles" class="ro-panel"><h3>V1 draft tiles</h3><p class="ro-empty">…</p></div>
+</section>
+<script>
+(function(){
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
+  var root=document.getElementById("ro-live"); if(!root) return;
+  fetch(root.getAttribute("data-api"),{credentials:"same-origin"}).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+  .then(function(x){
+    var j=x.j||{};
+    var st=document.getElementById("ro-live-status");
+    st.textContent=(x.ok&&j.ok)?(j.reason||"ok"):("fail-closed · "+(j.reason||j.error||"error"));
+    st.className=(x.ok&&j.ok)?"ro-ok":"ro-bad";
+    var p=j.party||{};
+    var law=(j.law||[]).map(function(l){return "<li>"+esc(l)+"</li>";}).join("");
+    document.getElementById("ro-party").innerHTML="<h3>Party</h3><p><strong>"+esc(p.label||"")+"</strong></p><ul>"+law+"</ul>";
+    var tiles=j.tiles||[];
+    document.getElementById("ro-tiles").innerHTML="<h3>V1 draft tiles</h3>"+(tiles.length?
+      tiles.map(function(t){return "<div style=\"margin:0 0 10px\"><b>"+esc(t.title)+"</b><div class=\"ro-meta\">"+esc(t.snippet)+"</div><div>"+(t.outbound_hints||[]).map(function(h){return "<span class=\"ro-chip\">"+esc(h)+"</span>";}).join("")+"</div></div>";}).join(""):
+      "<p class=\"ro-empty\">No tiles extracted.</p>");
+  }).catch(function(e){
+    document.getElementById("ro-live-status").textContent="error · "+e;
+    document.getElementById("ro-live-status").className="ro-bad";
+  });
+})();
+</script>
+
+</main>
+<script src="/assets/sidenav.js"></script>
+</body>
+</html>

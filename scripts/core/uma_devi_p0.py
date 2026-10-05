@@ -26,6 +26,23 @@ EXISTING_CHIP = "Existing"
 WAITING_TEMPLATE = "Waiting on {role} — no action needed from you"
 CAN_ACT_LABEL = "You can act"
 POLICY_REQUIRED_LABEL = "Policy required"
+PR_STATE_LABELS: dict[str, str] = {
+    "DRAFT": "Draft — not submitted",
+    "REQUESTED": "Waiting approval",
+    "APPROVED": "Approved",
+    "ORDERED": "Ordered",
+    "PARTIALLY_RECEIVED": "Part received",
+    "RECEIVED": "Received",
+    "BILL_RECEIVED": "Bill received",
+    "PAYMENT_REQUESTED": "Payment requested",
+    "PAYMENT_APPROVED": "Payment approved",
+    "PAID_CLAIMED": "Paid claimed — not verified",
+    "PAYMENT_VERIFIED": "Payment verified",
+    "CLOSED": "Closed",
+    "POLICY_REQUIRED": POLICY_REQUIRED_LABEL,
+    "REJECTED": "Rejected",
+    "OPS_CLOSED": "Closed for operations — payment not executed",
+}
 ACTION_RECEIVE = "Receive goods"
 ACTION_PERFORM_CLOSE = "Perform close"
 ACTION_RESOLVE = "Resolve exception"
@@ -218,12 +235,15 @@ def _caps(person_id: str, conn: sqlite3.Connection) -> dict[str, bool]:
         "payment_approve": allow("bzg.pr.payment_approve"),
         "receive": allow(receive_code),
         "receive_permission": receive_code,
-        "create": allow("work.create"),
+        "create": allow("bzg.pr.create") or allow("work.create"),
         "submit_pr": allow("work.update"),
         "approve_ops": allow("work.complete"),
         "order": allow("work.update"),
         "close_ops": allow("work.complete"),
-        "petty": allow("work.create"),
+        "petty": allow("petty_cash.record_out"),
+        "petty_record_out": allow("petty_cash.record_out"),
+        "petty_record_in": allow("petty_cash.record_in"),
+        "petty_reconcile": allow("petty_cash.reconcile"),
         "issue": allow("work.create"),
         # Sprint2 P1 operator depth — PR detail/correction affordance.
         "pr_operator": allow(_ops.PERM_PR_OPERATOR) or allow("work.update"),
@@ -384,6 +404,14 @@ def close_detail(close_id: str, *, conn: sqlite3.Connection | None = None) -> di
             label = _person_label(c, row.get(src))
             if label:
                 labels[dest] = label
+        # Finance Control history board — saved snapshot / dual source (no live mutate).
+        history = None
+        try:
+            from core import bzg_daily_close as _bzg_dc
+
+            history = _bzg_dc.history_detail(row["close_id"], conn=c)
+        except Exception:  # noqa: BLE001
+            history = None
         return {
             "close": row,
             "summary": summarise_close(row, c),
@@ -392,6 +420,9 @@ def close_detail(close_id: str, *, conn: sqlite3.Connection | None = None) -> di
             "audit_sentences": _audit_sentences(c, row["close_id"]),
             "chip": chip,
             "alchemist_cash_count_used": False,
+            "three_objects": _venue_close.three_close_objects(row),
+            "snapshot_frozen": bool(row.get("esb_fingerprint_sha256")),
+            "history_detail": history,
         }
     finally:
         if own:
@@ -486,10 +517,48 @@ def pr_detail(key: str, *, conn: sqlite3.Connection | None = None) -> dict[str, 
         if "expected_value" not in detail:
             detail["expected_value"] = None
         detail["lines"] = _attach_wolf_received(detail.get("lines") or [], detail, c)
+        st = str(detail.get("state") or detail.get("wolf_state") or "").strip().upper()
+        if st and not detail.get("display_status"):
+            detail["display_status"] = PR_STATE_LABELS.get(st, st.title().replace("_", " "))
+        _attach_pr_business_and_po(detail, c)
         return detail
     finally:
         if own:
             c.close()
+
+
+def _attach_pr_business_and_po(detail: dict[str, Any], conn: sqlite3.Connection) -> None:
+    """Outlet-derived business label for legacy rows; PO back-link when saved."""
+    from core import bzg_outlet_registry as _outlets
+
+    oid = (detail.get("outlet_id") or "").strip()
+    if oid:
+        outlet = _outlets.get_outlet(oid, conn=conn)
+        if outlet:
+            detail.setdefault("outlet_display_name", outlet.get("display_name"))
+            if not (detail.get("entity_id") or "").strip():
+                detail["business_label"] = outlet.get("display_name") or "Uma Blu"
+            else:
+                ent_id = str(detail.get("entity_id") or "").strip()
+                row = conn.execute(
+                    "SELECT display_name FROM org_entities WHERE entity_id=?",
+                    (ent_id,),
+                ).fetchone()
+                detail["business_label"] = (
+                    str(row[0]).strip() if row and row[0] else outlet.get("display_name")
+                )
+    pr_key = str(detail.get("pr_id") or detail.get("pr_num") or "").strip()
+    if pr_key:
+        try:
+            po = conn.execute(
+                "SELECT po_id FROM bzg_ops_purchase_orders WHERE pr_id=?",
+                (pr_key,),
+            ).fetchone()
+        except sqlite3.OperationalError:
+            po = None
+        if po:
+            detail["linked_po_id"] = str(po["po_id"])
+            detail["linked_po_href"] = "/bzg/uma-blu/purchase-orders"
 
 
 def _pr_match_keys(detail: dict[str, Any]) -> list[str]:
@@ -554,10 +623,14 @@ def pr_actions(person_id: str, *, conn: sqlite3.Connection) -> dict[str, Any]:
         "create_pr": bool(caps.get("create")),
         "submit": bool(caps.get("submit_pr")),
         "approve_ops": bool(caps.get("approve_ops")),
+        "reject_ops": bool(caps.get("approve_ops")),
         "order": bool(caps.get("order")),
         "close_ops": bool(caps.get("close_ops")),
         "petty_record": bool(caps.get("petty")),
-        "petty_count": bool(caps.get("petty")),
+        "petty_record_out": bool(caps.get("petty_record_out")),
+        "petty_record_in": bool(caps.get("petty_record_in")),
+        "petty_reconcile": bool(caps.get("petty_reconcile")),
+        "petty_count": bool(caps.get("petty_reconcile")),
         "create_issue": bool(caps.get("issue")),
         "perform_close": bool(caps.get("submit")),
         "payment_approve": False,
@@ -578,6 +651,7 @@ def pr_actions(person_id: str, *, conn: sqlite3.Connection) -> dict[str, Any]:
         actions["submit_waiting"] = waiting_copy("staff")
     if not caps["approve_ops"]:
         actions["approve_waiting"] = waiting_copy("approver")
+        actions["reject_waiting"] = waiting_copy("approver")
     actions["payment_waiting"] = waiting_copy("finance")
     return actions
 
@@ -1185,6 +1259,7 @@ def _seat_line(view: str, buttons: dict[str, bool]) -> str:
 _OPS_DEST_CAP = {
     "REQUESTED": "submit_pr",
     "APPROVED": "approve_ops",
+    "REJECTED": "approve_ops",
     "ORDERED": "order",
     "OPS_CLOSED": "close_ops",
 }
@@ -1203,7 +1278,10 @@ def operator_view(person_id: str, *, conn: sqlite3.Connection) -> dict[str, Any]
         "receive": bool(caps.get("receive")),
         "close_ops": bool(caps.get("close_ops")),
         "petty_record": bool(caps.get("petty")),
-        "petty_count": bool(caps.get("submit_pr")),
+        "petty_record_out": bool(caps.get("petty_record_out")),
+        "petty_record_in": bool(caps.get("petty_record_in")),
+        "petty_reconcile": bool(caps.get("petty_reconcile")),
+        "petty_count": bool(caps.get("petty_reconcile")),
         "create_issue": bool(caps.get("issue")),
         "perform_close": bool(caps.get("submit")),
         "pr_operator": bool(caps.get("pr_operator")),
@@ -1232,16 +1310,22 @@ def operator_view(person_id: str, *, conn: sqlite3.Connection) -> dict[str, Any]
 
 
 def _pr_requester_person(conn: sqlite3.Connection, pr_id: str) -> str | None:
-    """Person who drafted or submitted the PR. Audit is the source. No name list."""
+    """Person who drafted or submitted the PR. Column first, then audit."""
     key = (pr_id or "").strip()
     if not key:
         return None
+    col = conn.execute(
+        "SELECT requester_person_id FROM bzg_ops_purchase_requests WHERE pr_id=?",
+        (key,),
+    ).fetchone()
+    if col and col[0]:
+        return str(col[0]).strip() or None
     row = conn.execute(
         """
         SELECT actor_person_id
         FROM core_audit_events
         WHERE resource_type=? AND resource_id=?
-          AND action IN ('bzg.pr.draft', 'bzg.pr.requested')
+          AND action IN ('bzg.pr.draft', 'bzg.pr.requested', 'bzg.pr.create')
           AND actor_person_id IS NOT NULL AND actor_person_id != ''
         ORDER BY occurred_at ASC, created_at ASC
         LIMIT 1
@@ -1282,11 +1366,12 @@ def ops_advance(
                 code="forbidden",
                 http_status=403,
             )
-        if dest == "APPROVED":
+        if dest in ("APPROVED", "REJECTED"):
             requester = _pr_requester_person(c, (pr_id or "").strip())
             if not requester or requester == pid:
+                verb = "reject" if dest == "REJECTED" else "approve"
                 raise _ops.UmaOpsError(
-                    "A different person must approve this request.",
+                    f"A different person must {verb} this request.",
                     code="self_approval_denied",
                     http_status=403,
                 )
@@ -1311,6 +1396,139 @@ def ops_advance(
         if commit:
             c.commit()
         return out
+    finally:
+        if own:
+            c.close()
+
+
+def reject_purchase_segregated(
+    *,
+    person_id: str,
+    pr_id: str,
+    reason: str,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Segregating ops rejection. Reason required. Not payment."""
+    from core import approvals as _approvals
+
+    pid = (person_id or "").strip()
+    key = (pr_id or "").strip()
+    text = (reason or "").strip()
+    if not text:
+        raise _ops.UmaOpsError(
+            "A reason is required to reject.",
+            code="missing_reason",
+            http_status=400,
+        )
+    own = conn is None
+    c = conn or _ops.db_connect()
+    try:
+        _ops.assert_catalog_writable(_ops.CATALOG_DB)
+        requester = _pr_requester_person(c, key)
+        if not requester or requester == pid:
+            raise _ops.UmaOpsError(
+                "A different person must reject this request.",
+                code="self_approval_denied",
+                http_status=403,
+            )
+        existing = c.execute(
+            """
+            SELECT approval_request_id, status
+            FROM core_approval_requests
+            WHERE source_id=? AND request_type='GENERAL'
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            (key,),
+        ).fetchone()
+        if existing and str(existing["status"]) == "REJECTED":
+            request_id = str(existing["approval_request_id"])
+        elif existing and str(existing["status"]) == "PENDING":
+            request_id = str(existing["approval_request_id"])
+        elif existing and str(existing["status"]) == "APPROVED":
+            raise _ops.UmaOpsError(
+                "This request was already approved.",
+                code="already_approved",
+                http_status=409,
+            )
+        elif existing:
+            raise _ops.UmaOpsError(
+                f"approval request is {existing['status']}",
+                code="approval_not_pending",
+                http_status=409,
+            )
+        else:
+            detail = pr_detail(key, conn=c) or {}
+            title = f"Uma Blu purchase {detail.get('pr_num') or key}"
+            try:
+                created = _approvals.create_approval_request(
+                    title=title[:200],
+                    owning_entity_id=_ops.ENTITY_BZG,
+                    brand_id=_ops.VENUE_UMA,
+                    required_permission_code="work.complete",
+                    verified_person_id=requester,
+                    request_type="GENERAL",
+                    description=(
+                        "Segregating ops rejection for one Uma Blu purchase. "
+                        "Not a payment and not an authority limit."
+                    ),
+                    source_type="HUMAN",
+                    source_id=key,
+                    governed_object_type=_ops.RESOURCE_TYPE,
+                    governed_object_id=key,
+                    bind_policy=False,
+                    identity=identity,
+                    conn=c,
+                    commit=False,
+                )
+            except _approvals.ApprovalError as exc:
+                raise _ops.UmaOpsError(
+                    str(exc),
+                    code=getattr(exc, "code", "approval_failed"),
+                    http_status=int(getattr(exc, "http_status", 400) or 400),
+                ) from exc
+            request_id = str(created["approval_request_id"])
+        if not existing or str(existing["status"]) == "PENDING":
+            try:
+                _approvals.reject_request(
+                    request_id,
+                    verified_person_id=pid,
+                    reason=text,
+                    identity=identity,
+                    conn=c,
+                    commit=False,
+                )
+            except _approvals.ApprovalError as exc:
+                raise _ops.UmaOpsError(
+                    str(exc),
+                    code=getattr(exc, "code", "approval_failed"),
+                    http_status=int(getattr(exc, "http_status", 400) or 400),
+                ) from exc
+        out = ops_advance(
+            person_id=pid,
+            pr_id=key,
+            to_state="REJECTED",
+            identity=identity,
+            conn=c,
+            commit=False,
+        )
+        out["approval_request_id"] = request_id
+        out["approval_status"] = "REJECTED"
+        out["reject_reason"] = text
+        out["segregated"] = True
+        out["payment_execution"] = False
+        if commit:
+            c.commit()
+        return out
+    except Exception:
+        if commit and own:
+            try:
+                c.rollback()
+            except Exception:
+                pass
+        raise
     finally:
         if own:
             c.close()

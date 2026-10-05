@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>God Mode Completion · Beta</title>
+<link rel="stylesheet" href="/wolf-tokens.css" />
+<style>
+  :root {
+    --bg: #10140f; --bg2: #182018; --bg3: #243024; --border: #314033;
+    --text: #f3f7f1; --muted: #a8b5a6; --accent: #d7e26a; --ok: #3dd68c;
+    --warn: #e0b15a; --danger: #f04438;
+    --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0 auto; max-width: 1360px; padding: 18px 24px 88px;
+    background: var(--bg); color: var(--text); font-family: var(--font);
+  }
+  h1 { font-size: 1.55rem; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 22px 0 10px; }
+  .lede, .meta { color: var(--muted); font-size: 0.88rem; line-height: 1.45; }
+  .crumb { font-size: 0.75rem; color: var(--muted); margin: 0 0 8px; }
+  .headline-bar {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px 20px;
+    border: 1px solid rgba(215,226,106,0.45); background: linear-gradient(180deg, #243018 0%, var(--bg2) 60%);
+    border-radius: 14px; padding: 16px 18px; margin: 12px 0 16px;
+  }
+  .headline-bar .gm-label { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+  .headline-bar .gm-score { font-size: 1.85rem; font-weight: 700; letter-spacing: -0.02em; }
+  .headline-bar .gm-pct { font-size: 1.35rem; color: var(--accent); font-weight: 650; }
+  .headline-bar .gm-today { font-size: 1rem; color: var(--muted); }
+  .pipeline { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin: 8px 0 4px; }
+  .pipe-tile { border: 1px solid var(--border); background: var(--bg2); border-radius: 10px; padding: 10px 12px; }
+  .pipe-tile .lbl { font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+  .pipe-tile .val { font-size: 1.25rem; font-weight: 700; margin-top: 2px; }
+  .by-system { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
+  .chip {
+    border: 1px solid var(--border); background: var(--bg2); border-radius: 999px;
+    padding: 5px 11px; font-size: 0.78rem; color: var(--muted); cursor: pointer;
+    min-height: 32px; display: inline-flex; align-items: center;
+  }
+  .chip.active { border-color: var(--accent); color: var(--text); background: #2a3418; }
+  .chip:hover { border-color: rgba(215,226,106,0.5); }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  th, td { border-bottom: 1px solid var(--border); padding: 10px 8px; text-align: left; vertical-align: top; }
+  th { color: var(--muted); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 650; }
+  tr.task-row { cursor: pointer; }
+  tr.task-row:hover { background: rgba(255,255,255,0.03); }
+  tr.task-row.open { background: rgba(215,226,106,0.06); }
+  .state-pill {
+    display: inline-block; border-radius: 999px; padding: 2px 8px; font-size: 0.72rem;
+    border: 1px solid var(--border); color: var(--muted); white-space: nowrap;
+  }
+  .detail-row td { background: var(--bg3); padding: 12px 14px; }
+  .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; font-size: 0.84rem; }
+  .detail-grid dt { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; margin: 0; }
+  .detail-grid dd { margin: 2px 0 8px; line-height: 1.4; word-break: break-word; }
+  .back { color: var(--accent); text-decoration: none; font-weight: 650; font-size: 0.88rem; }
+  .err { color: var(--danger); }
+  @media (max-width: 900px) {
+    body { padding: 14px 14px 88px; }
+    .pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .detail-grid { grid-template-columns: 1fr; }
+    table { font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body data-wolf-page-type="DASHBOARD" data-wolf-org="WOLF/GROUP" data-wolf-shell="global">
+  <p class="crumb">WOLF › HOME › God Mode Completion</p>
+  <a class="back" href="/wolf">← Owner Home</a>
+  <h1>God Mode Completion</h1>
+  <p class="lede" id="frozen-note">Frozen register — loading…</p>
+
+  <div class="headline-bar" id="headline-bar" aria-live="polite">
+    <span class="gm-label">God Mode</span>
+    <span class="gm-score" id="gm-score">—</span>
+    <span class="gm-pct" id="gm-pct">—</span>
+    <span class="gm-today" id="gm-today">—</span>
+  </div>
+
+  <h2>Pipeline</h2>
+  <div class="pipeline" id="pipeline" aria-label="Pipeline counts"><p class="meta">Loading…</p></div>
+
+  <h2>By business</h2>
+  <div class="by-system" id="by-system" aria-label="By business filter"><p class="meta">Loading…</p></div>
+
+  <h2>Tasks</h2>
+  <div class="filters" id="status-filters" aria-label="Status filters"></div>
+  <div id="table-wrap"><p class="meta">Loading tasks…</p></div>
+
+<script>
+(function () {
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+
+  const IN_PROGRESS = new Set(["DESIGNED", "BUILT", "DEPLOYED", "REAL DATA", "ENGINEERING PROVED"]);
+  let data = null;
+  let statusFilter = "ALL";
+  let systemFilter = "ALL";
+  let openId = null;
+
+  const STATUS_FILTERS = [
+    { id: "ALL", label: "All" },
+    { id: "COMPLETE", label: "Complete", match: (t) => t.state === "HUMAN COMMISSIONED" },
+    { id: "READY", label: "Ready for human test", match: (t) => t.state === "READY FOR HUMAN TEST" },
+    { id: "IN_PROGRESS", label: "In progress", match: (t) => IN_PROGRESS.has(t.state) },
+    { id: "BLOCKED", label: "Blocked", match: (t) => t.state === "BLOCKED EXTERNALLY" },
+    { id: "NOT_STARTED", label: "Not started", match: (t) => t.state === "NOT STARTED" },
+  ];
+
+  function fmtPct(p) {
+    const n = Number(p);
+    if (!Number.isFinite(n)) return "—";
+    return n.toFixed(1) + "%";
+  }
+
+  function paintHeadline(reg) {
+    const h = reg.headline || {};
+    const num = h.numerator_complete;
+    const den = h.denominator;
+    document.getElementById("gm-score").textContent = num + " / " + den + " complete";
+    document.getElementById("gm-pct").textContent = fmtPct(h.percent);
+    const today = Number(h.movement_today);
+    const sign = today > 0 ? "+" : "";
+    document.getElementById("gm-today").textContent = sign + today + " today";
+    const frozenAt = reg.frozen_at ? String(reg.frozen_at) : "unknown time";
+    document.getElementById("frozen-note").textContent =
+      "Figures are the frozen register as of " + frozenAt + ". Read-only — not live task state.";
+  }
+
+  function paintPipeline(rollup) {
+    const items = [
+      ["Complete", rollup.complete],
+      ["Ready for human test", rollup.ready_for_human_test],
+      ["In progress", rollup.in_progress],
+      ["Blocked", rollup.blocked_externally],
+      ["Not started", rollup.not_started],
+      ["Discovered", rollup.discovered],
+    ];
+    document.getElementById("pipeline").innerHTML = items.map(([lbl, val]) =>
+      '<div class="pipe-tile"><div class="lbl">' + esc(lbl) + '</div><div class="val">' + esc(val) + '</div></div>'
+    ).join("");
+  }
+
+  function paintBySystem(list) {
+    const el = document.getElementById("by-system");
+    const chips = ['<button type="button" class="chip' + (systemFilter === "ALL" ? " active" : "") + '" data-system="ALL">All businesses</button>'];
+    (list || []).forEach((row) => {
+      const sys = row.system || "?";
+      const label = sys + " " + row.complete + "/" + row.total;
+      chips.push('<button type="button" class="chip' + (systemFilter === sys ? " active" : "") + '" data-system="' + esc(sys) + '">' + esc(label) + '</button>');
+    });
+    el.innerHTML = chips.join("");
+    el.querySelectorAll(".chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        systemFilter = btn.getAttribute("data-system") || "ALL";
+        paintBySystem(list);
+        renderTable();
+      });
+    });
+  }
+
+  function paintStatusFilters() {
+    const el = document.getElementById("status-filters");
+    el.innerHTML = STATUS_FILTERS.map((f) =>
+      '<button type="button" class="chip' + (statusFilter === f.id ? " active" : "") + '" data-status="' + esc(f.id) + '">' + esc(f.label) + '</button>'
+    ).join("");
+    el.querySelectorAll(".chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        statusFilter = btn.getAttribute("data-status") || "ALL";
+        openId = null;
+        paintStatusFilters();
+        renderTable();
+      });
+    });
+  }
+
+  function filteredTasks() {
+    const tasks = (data && data.tasks) || [];
+    const sf = STATUS_FILTERS.find((f) => f.id === statusFilter);
+    return tasks.filter((t) => {
+      if (systemFilter !== "ALL" && t.business_system !== systemFilter) return false;
+      if (!sf || sf.id === "ALL") return true;
+      return sf.match(t);
+    });
+  }
+
+  function detailHtml(t) {
+    const fields = [
+      ["Owner / worker", t.owner_worker],
+      ["Real data", t.real_data],
+      ["Deployed", t.deployed],
+      ["Human test", t.human_test],
+      ["Blocker", t.blocker],
+      ["Last movement", t.last_movement],
+      ["Evidence", t.evidence],
+    ];
+    return '<dl class="detail-grid">' + fields.map(([k, v]) =>
+      "<dt>" + esc(k) + "</dt><dd>" + esc(v || "—") + "</dd>"
+    ).join("") + "</dl>";
+  }
+
+  function renderTable() {
+    const tasks = filteredTasks();
+    const wrap = document.getElementById("table-wrap");
+    if (!tasks.length) {
+      wrap.innerHTML = '<p class="meta">No tasks match this filter.</p>';
+      return;
+    }
+    let rows = "";
+    tasks.forEach((t) => {
+      const id = t.id || "";
+      const open = openId === id;
+      rows += '<tr class="task-row' + (open ? " open" : "") + '" data-id="' + esc(id) + '">'
+        + "<td>" + esc(id) + "</td>"
+        + "<td>" + esc(t.task) + "</td>"
+        + "<td>" + esc(t.business_system) + "</td>"
+        + '<td><span class="state-pill">' + esc(t.state) + "</span></td>"
+        + "</tr>";
+      if (open) {
+        rows += '<tr class="detail-row"><td colspan="4">' + detailHtml(t) + "</td></tr>";
+      }
+    });
+    wrap.innerHTML = '<table><thead><tr><th>ID</th><th>Task</th><th>Business</th><th>State</th></tr></thead><tbody>'
+      + rows + "</tbody></table>";
+    wrap.querySelectorAll(".task-row").forEach((row) => {
+      row.addEventListener("click", () => {
+        const id = row.getAttribute("data-id");
+        openId = openId === id ? null : id;
+        renderTable();
+      });
+    });
+  }
+
+  async function load() {
+    const res = await fetch("/api/owner/god-mode-register", { credentials: "same-origin" });
+    if (!res.ok) {
+      document.getElementById("frozen-note").innerHTML = '<span class="err">Could not load frozen register.</span>';
+      return;
+    }
+    data = await res.json();
+    if (!data || !data.ok) {
+      document.getElementById("frozen-note").innerHTML = '<span class="err">Register response invalid.</span>';
+      return;
+    }
+    paintHeadline(data);
+    paintPipeline(data.rollup || {});
+    paintBySystem(data.by_system || []);
+    paintStatusFilters();
+    renderTable();
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>

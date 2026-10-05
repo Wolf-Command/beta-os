@@ -25,6 +25,12 @@ if str(SCRIPTS) not in sys.path:
 
 DB = ROOT / "catalog" / "content_library.sqlite"
 BACKUP_DIR = ROOT / "catalog" / "backups"
+
+# Owner P0 5 Oct 2026: retention/free-space guard (docs/BACKUP-RETENTION.md)
+import sys as _bp_sys  # noqa: E402
+if str(ROOT / "scripts") not in _bp_sys.path:
+    _bp_sys.path.insert(0, str(ROOT / "scripts"))
+from core.backup_policy import premig_backup  # noqa: E402
 MIGRATION_ID = "bzg_close_owner_control_esb_recon_1"
 PACK = "BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1"
 TZ8 = timezone(timedelta(hours=8))
@@ -78,7 +84,7 @@ def main() -> int:
 
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
     dest = BACKUP_DIR / f"pre-bzg-close-owner-control-esb-recon-1-{stamp()}.sqlite"
-    shutil.copy2(db_path, dest)
+    dest = premig_backup(db_path, dest)
     digest = _sha256(dest)
     print(f"BACKUP={dest}")
     print(f"SHA256={digest}")

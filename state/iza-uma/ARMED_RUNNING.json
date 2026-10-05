@@ -1,0 +1,12 @@
+{
+  "pack": "IZA-UMA-CAPTAIN-CASHIER-1",
+  "armed_at": "2026-10-02T20:12:27+08:00",
+  "launch_pid": 35215,
+  "credit_override": "OWNER_ORDER",
+  "branch": "build/wolf-command-rebuild",
+  "head_at_arm": "a8085be",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod": ":8787 READ-ONLY",
+  "gmail_draft": "EXISTS_DO_NOT_DUPLICATE"
+}

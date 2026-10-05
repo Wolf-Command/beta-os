@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rate Calendar DB — PARTIAL stub</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root{color-scheme:light;--ink:#1a1f24;--muted:#5a6570;--paper:#f2f4f6;--card:#fbfcfd;--line:#d3dae0;--warn:#8a1f1f;--partial:#7a5a12;--ok:#1f5a3a;--font:"IBM Plex Sans","Segoe UI",sans-serif;--display:"Iowan Old Style",Palatino,Georgia,serif}
+    *{box-sizing:border-box}body{margin:0;font-family:var(--font);background:radial-gradient(ellipse 65% 35% at 100% 0%,#e8efe4 0%,transparent 55%),var(--paper);color:var(--ink)}
+    main{max-width:920px;margin:0 auto;padding:24px 16px 80px}
+    .crumb{font-size:.78rem;color:var(--muted);margin:0 0 8px}
+    h1{font-family:var(--display);font-weight:500;font-size:1.75rem;margin:0 0 6px;letter-spacing:-.02em}
+    .sub{color:var(--muted);margin:0 0 14px;line-height:1.45;font-size:.95rem}
+    .banner{background:#f8eaea;border:1px solid #e0b8b8;border-radius:10px;padding:12px 14px;margin:0 0 16px;font-size:.9rem;line-height:1.45;color:var(--warn)}
+    .banner.partial{background:#f7f0df;border-color:#e0d2a8;color:var(--partial)}
+    h2{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+    .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+    .tile b{display:block;font-size:.85rem;margin:0 0 4px}
+    .tile span{font-size:.8rem;color:var(--muted);line-height:1.4;display:block}
+    .meta{font-size:.8rem;color:var(--muted);margin-top:18px;line-height:1.45}
+    code{font-size:.78rem}
+    a.go{display:inline-block;margin-top:8px;font-weight:700;color:#1a5c45;text-decoration:none}
+    ul.blockers{margin:8px 0 0;padding-left:1.1rem;color:var(--muted);font-size:.85rem;line-height:1.45}
+</style>
+</head>
+<body>
+<main>
+  <p class="crumb">WOLF › SYSTEM › Rate Calendar</p>
+  <h1>Rate Calendar DB</h1>
+  <p class="sub">AMG rate calendar store · LaunchAgents <strong>parked</strong> · <strong>no fake live sync</strong> · migration_state <strong>PARTIAL</strong></p>
+  <div class="banner"><strong>NOT REBUILT+PROVEN.</strong> Do not unpark LaunchAgents without Owner. No Beta write path to rate-calendar.db.</div>
+  <div class="banner banner partial"><strong>PARTIAL honesty stub.</strong> DB preserved in place. Agents parked 2026-08-20 (tg-mute).</div>
+  <h2>Status</h2>
+  <div class="grid">
+    <div class="tile"><b>migration_state</b><span>PARTIAL</span></div>
+    <div class="tile"><b>staff_ready</b><span>false</span></div>
+    <div class="tile"><b>launchagents</b><span>PARKED</span></div>
+    <div class="tile"><b>beta_write</b><span>NO</span></div>
+  </div>
+  <h2>Provenance (V1)</h2>
+  <div class="grid">
+    <div class="tile"><b>DB</b><span>~/.openclaw/data/rate-calendar.db</span></div>
+    <div class="tile"><b>Tables</b><span>room_rates · demand_calendar · pending_rate_change · review_gates · …</span></div>
+    <div class="tile"><b>Agents</b><span>rate-calendar*.plist.parked-20260820-tg-mute</span></div>
+    <div class="tile"><b>JSON mirror</b><span>~/.openclaw/atrium/data/rate_calendar_2026.json</span></div>
+  </div>
+  <h2>Blockers</h2>
+  <ul class="blockers">
+    <li>All three rate-calendar LaunchAgents parked (tg-mute) — not loaded.</li>
+    <li>Pending rate changes exist in DB; no Beta approval UI this pack.</li>
+    <li>Unpark + Telegram mute policy = Owner decision, not this transfer.</li>
+  </ul>
+  <p class="meta">Beta route <code>/ops/rate-calendar</code> · pack 20260930-gk-ebus-peptide-holdings-pipe</p>
+</main>
+<script src="/assets/sidenav.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+  "proved_at": "2026-10-03T10:43:37+0800",
+  "capability": "RECEIPT_IMAGE_EXTRACTION",
+  "image": "/Users/wolfterminal/beta-os/state/bzg-daily-close/receipts/EVD-CLOSE-ESB-806C52F2BFBF.jpg",
+  "elapsed_s": 13.5,
+  "extraction_unavailable": false,
+  "provider": "gemini",
+  "model": "gemini-2.5-flash",
+  "staff_message": null,
+  "got": {
+    "gross": 18395000.0,
+    "net": 15202479.0,
+    "cash": 2735000.0,
+    "bills": 58.0,
+    "pax": 103.0,
+    "edc_bni": 6185000.0,
+    "edc_mandiri": 5450000.0,
+    "qris_bni": 65000.0,
+    "qris_mandiri": 2105000.0
+  },
+  "expected": {
+    "gross": 18395000,
+    "net": 15202479,
+    "cash": 2735000,
+    "bills": 58,
+    "pax": 103,
+    "edc_bni": 6185000,
+    "edc_mandiri": 5450000,
+    "qris_bni": 65000,
+    "qris_mandiri": 2105000
+  },
+  "matches": {
+    "gross": true,
+    "net": true,
+    "cash": true,
+    "bills": true,
+    "pax": true,
+    "edc_bni": true,
+    "edc_mandiri": true,
+    "qris_bni": true,
+    "qris_mandiri": true
+  },
+  "match_count": 9,
+  "match_total": 9
+}

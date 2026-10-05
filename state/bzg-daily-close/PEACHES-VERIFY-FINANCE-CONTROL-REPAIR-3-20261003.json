@@ -1,0 +1,66 @@
+{
+  "pack": "FINANCE-CONTROL-REPAIR-3",
+  "run_id": "BF-584a61a4abca",
+  "slice": "continuation_3_ggv_accounting_queues",
+  "at": "2026-10-03T17:52:30+08:00",
+  "verifier": "Peaches",
+  "verdict": "LOCAL_PASS_CODE_COMPLETE_INTEGRATION_PARTIAL_NOT_MATT_READY",
+  "eng_proved": false,
+  "staff_ready": false,
+  "ready_for_matt_test": false,
+  "human_commissioned": false,
+  "tip_observed": "0b0e50d",
+  "working_tree_dirty": true,
+  "dirty_approx": 440,
+  "cursor_pid": 81553,
+  "cursor_alive": false,
+  "cursor_log": "/Users/wolfterminal/beta-os/state/reliability/finance-cursor-continuation-3b-2026-10-03.log",
+  "prove_script": "state/reliability/prove_finance_control_ggv_accounting_20261003.py",
+  "prove_result": "PASS preserved_intact amg_bzg_vault_isolated accounting_queues_persisted extraction_visible image_evidence_attached human_confirm_keeps_extraction duplicate_queue:10 zayen_ggv_deny freeze_still_holds",
+  "factory_blocker_diagnosed": {
+    "blocker": "FACTORY_FAILURE:inspect_retry_ceiling",
+    "require_matt": false,
+    "diagnosis": "FALSE_ALARM_CHILD_COMPLETED: inspect ceiling fired while/after composer-2.5 exit; cursor log shows Continuation 3 complete with PASS; Peaches re-ran prove PASS",
+    "action": "CLEAR_ACTIVE_LOCAL_PASS_NO_MATT_PING"
+  },
+  "prod_pid_sacred": 15975,
+  "prod_pid_unchanged": true,
+  "preserved_close": {
+    "close_id": "VDC-87202768",
+    "state": "DATA_CAPTURED",
+    "holder": "PERS-MATT",
+    "intact": true
+  },
+  "queue_counts_from_cursor_prove": {
+    "needs_review": 474,
+    "duplicate": 10,
+    "needs_coding": 0,
+    "unmatched": 0,
+    "bank_unmatched_txns": 6
+  },
+  "code_spot_checks": {
+    "ggv_receipt_accounting1_py": "PASS",
+    "entity_isolation_intake": "PASS",
+    "nota_queues_routes": "PASS",
+    "receipts_ui_queues": "PASS"
+  },
+  "checks": {
+    "cursor_exited": "PASS",
+    "prove_script_rerun": "PASS",
+    "checkpoint_appended": "PASS",
+    "beta_8788_cf_auth": "403_expected",
+    "prod_8787": "200",
+    "p2p_not_started": "PASS"
+  },
+  "remaining_gates": [
+    "peaches_visual_edc_bank_cards",
+    "mandiri_receipt_photo_human",
+    "peaches_live_chat_bridge_hook",
+    "cf_staff_session_eng_proved",
+    "ggv_vault_extraction_enrichment_skews_needs_review"
+  ],
+  "matt_ping": false,
+  "matt_ping_reason": "not_matt_ready_staff_ready_false_eng_proved_false",
+  "total_completion_gate": "Finance Control Repair not yet real proved Beta checkpoint (eng_proved=false); P2P remains QUEUED_NEXT held",
+  "note": "Classic ACTIVE BF-584a61a4abca was stamped BLOCKED inspect_retry_ceiling with require_matt=false. Peaches diagnose: child completed GGV accounting queues; local prove PASS; CF auth restored; not ENG_PROVED. Clear ACTIVE. No WakeParent. No auto-arm P2P or Tours/Events."
+}

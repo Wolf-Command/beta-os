@@ -1,0 +1,1821 @@
+{
+  "schema": "V1-SURFACE-MANIFEST-DRAFT/v0",
+  "mission": "P0_RESET_FORENSIC_INVENTORY_ACTUAL_V1",
+  "generated_at_wita": "2026-09-30T10:55:00+08:00",
+  "executor": "Peaches-executor",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "prod_8787_touched": false,
+  "hr_policy": "DEFERRED",
+  "exit_report": "NOT_CREATED",
+  "writes": "~/beta-os/state/final-completion/p0-v1 (Mac primary) + /workspace/state/final-completion/p0-v1 (box mirror)",
+  "mac_write_status": "SYNCED_FROM_BOX_2026-09-30T10:48:45+08:00",
+  "v1_roots": {
+    "live_app": "/Users/wolfterminal/.openclaw/workspace/wolf-system",
+    "vault": "/Users/wolfterminal/WolfCommandSystem/WolfCommand",
+    "openclaw": "/Users/wolfterminal/.openclaw",
+    "personal_health": "/Users/wolfterminal/.openclaw/personal/health",
+    "recovery": "/Users/wolfterminal/WolfRecoveryPoints/2026-09-29_1220.partial",
+    "nas_dr": "/Volumes/05-Wolf-Vault-Mirror/wolf-command",
+    "beta_os": "/Users/wolfterminal/beta-os",
+    "git_remote_wolf_system": "https://github.com/wolfcommand/wolf-system.git"
+  },
+  "method_failure_corrected": {
+    "prior_465_source": "interview ledger + Master Spec constitutional bullets + domain pack seeds — documents-first",
+    "why_trading_fitness_missed": [
+      "MODEL-C-CAPABILITY-CATALOG.md explicitly marks Personal Command / Trading (Spec §18) as OUT",
+      "Beta sidenav.js Wave 8 retires trading/travel/spartacus/mila/amanda/kuta-rates from primary IA",
+      "465 requirements.jsonl has only 2 keyword hits: Master Spec package 'fitness' product word + private-domains bullet naming health/fitness/travel/investments/trading analysis — not expanded to boards/APIs/DBs",
+      "Discovery must walk live wolf-system dashboards/manifest, desks, DBs, LaunchAgents, bots — not docs alone"
+    ]
+  },
+  "reconcile_465": {
+    "requirements_file": "/Users/wolfterminal/beta-os/state/final-completion/ORIGINAL-REQUIREMENTS-RECONSTRUCTION/requirements.jsonl",
+    "requirements_file_box_mirror": "/workspace/state/final-completion/ORIGINAL-REQUIREMENTS-RECONSTRUCTION/requirements.jsonl",
+    "requirements_count": 465,
+    "keyword_hits_trading_fitness": 2,
+    "capabilities_in_manifest": 68,
+    "newly_recovered_count": 34,
+    "newly_recovered_names": [
+      "Trading Desk (holdings + trade journal)",
+      "TTC / Flint Paper Quant Program",
+      "Spartacus Fitness / Health Command",
+      "Travel Board",
+      "Wolf Radar (Owner plan board)",
+      "Learning Desk",
+      "Personal Health Data Store (Spartacus SQLite + Wolf75)",
+      "Peptide Schedule (legacy Sheets + board tracker)",
+      "Personal Vault Daily Intel Notes",
+      "HOLDINGS-PERSONAL Registry",
+      "Amanda Desk (ads/content tasks)",
+      "Mila Desk",
+      "Peaches Desk (CoS threads)",
+      "Haikal Desk",
+      "Wolf Desk (owner tasks/routines)",
+      "Misa Board",
+      "BZG Monthly Boards",
+      "Ads Studio",
+      "Habitat Investment 2026",
+      "Kuta Rates Competitor Board",
+      "AMG / BZG / GGV Voice Boards",
+      "n8n Workflow Templates (11)",
+      "LaunchAgents Automation Layer (~283 wolf)",
+      "Gatekeeper",
+      "Event Bus",
+      "Competitor Rates Pipeline",
+      "Rate Calendar DB",
+      "PRF Forms Ingest",
+      "Calendly Atrium Sync",
+      "Identity Vault (personal docs lookup)",
+      "Resolve Studio",
+      "Alpha System DB",
+      "OpenClaw Memory / Tasks DBs",
+      "WolfRecoveryPoints Mirror"
+    ],
+    "note": "newly_recovered = evidenced on actual V1 and absent as dedicated capability in 465 (Master Spec private-domain mention does not count as coverage)"
+  },
+  "counts_by_classification": {
+    "MISSING": 19,
+    "PARTIAL": 35,
+    "HISTORICAL_PRESERVATION_REQUIRED": 8,
+    "REBUILT_BUT_NOT_LIVE": 2,
+    "HR_DEFERRED": 2,
+    "SUPERSEDED": 1,
+    "EXTERNALLY_BLOCKED": 1
+  },
+  "trading_status": {
+    "v1_exists": true,
+    "live_board": "trading.html (manifest live=true, access=wolf)",
+    "store": "trading-desk/journal.jsonl + files/",
+    "quant": "PAPER ONLY — Flint QUANT_PROGRAM.md; trading_alerts NOT LIVE; POST auto journal 409",
+    "in_465": false,
+    "in_beta_primary_ia": false,
+    "classification": "MISSING",
+    "capabilities": [
+      "Trading Desk (holdings + trade journal)",
+      "TTC / Flint Paper Quant Program"
+    ]
+  },
+  "fitness_status": {
+    "v1_exists": true,
+    "live_board": "spartacus.html (manifest live=true)",
+    "db": "~/.openclaw/personal/health/spartacus.sqlite (live mtime 2026-09-30)",
+    "program": "Sparta 24 + Wolf75 + peptides + breathwork",
+    "telegram_bot": "Spartacus (health)",
+    "master_tile": "Spartacus 75 present on master.status.json 2026-09-30",
+    "in_465": false,
+    "in_beta_primary_ia": false,
+    "classification": "MISSING",
+    "capabilities": [
+      "Spartacus Fitness / Health Command",
+      "Personal Health Data Store (Spartacus SQLite + Wolf75)",
+      "Peptide Schedule (legacy Sheets + board tracker)"
+    ]
+  },
+  "top_20_newly_recovered": [
+    "Trading Desk (holdings + trade journal)",
+    "TTC / Flint Paper Quant Program",
+    "Spartacus Fitness / Health Command",
+    "Travel Board",
+    "Wolf Radar (Owner plan board)",
+    "Learning Desk",
+    "Personal Health Data Store (Spartacus SQLite + Wolf75)",
+    "Peptide Schedule (legacy Sheets + board tracker)",
+    "Personal Vault Daily Intel Notes",
+    "HOLDINGS-PERSONAL Registry",
+    "Amanda Desk (ads/content tasks)",
+    "Mila Desk",
+    "Peaches Desk (CoS threads)",
+    "Haikal Desk",
+    "Wolf Desk (owner tasks/routines)",
+    "Misa Board",
+    "BZG Monthly Boards",
+    "Ads Studio",
+    "Habitat Investment 2026",
+    "Kuta Rates Competitor Board"
+  ],
+  "capabilities": [
+    {
+      "name": "Trading Desk (holdings + trade journal)",
+      "v1_route_or_location": "http://127.0.0.1:8787/trading.html · ~/.openclaw/workspace/wolf-system/trading-desk/ · dashboards/assets/trading-desk.js",
+      "purpose": "Matthew-only personal trading board: holdings glance, manual trade journal, attachment store; paper-only quant later",
+      "intended_user_role": "Owner (Matthew)",
+      "business_company": "Personal / Goss Holdings (not group ops)",
+      "source_data": "trading-desk/journal.jsonl; trading-desk/files/; HOLDINGS-PERSONAL.md (BTC stub)",
+      "dependencies": [
+        "wolf-system dashboards server :8787",
+        "access_key=wolf"
+      ],
+      "external_integrations": [
+        "Bitunix (manual screenshot entry only)",
+        "TradingView GATED",
+        "trading_alerts adapter NOT LIVE"
+      ],
+      "historical_data": "journal entry #1 2026-08-25 Bitunix BTCUSDT short; files/ screenshots",
+      "current_wolf_replacement": "NONE — Beta Wave 8 retired trading from primary IA; MODEL-C marks Personal Command/Trading Spec §18 OUT",
+      "replacement_route": null,
+      "migration_state": "NOT_IN_BETA_IA",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/trading.html",
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/trading-desk/README.md",
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/trading-desk/QUANT_PROGRAM.md",
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/data/manifest.json#trading",
+        "/Users/wolfterminal/WolfCommandSystem/WolfCommand/01-Wolf-Command/System-Registry/HOLDINGS-PERSONAL.md",
+        "/Users/wolfterminal/beta-os/docs/MODEL-C-CAPABILITY-CATALOG.md (OUT)",
+        "/Users/wolfterminal/beta-os/dashboards/assets/sidenav.js Wave8 trading:1"
+      ],
+      "remaining_work": "Rebuild Personal Command surface in beta OR explicitly preserve as V1 historical; restore trading/travel/spartacus to Owner IA; wire paper quant per QUANT_PROGRAM without live broker",
+      "owner": "Matthew / Peaches (ops supervisor) / Flint (TTC Quant)",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": "465 only has Master Spec private-domain bullet mentioning investments/trading analysis — no capability record for Trading Desk"
+    },
+    {
+      "name": "TTC / Flint Paper Quant Program",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/trading-desk/QUANT_PROGRAM.md · state/learning-desk/ttc-learn-base/ · scripts/ttc_discord_dm_silent_ingest.py · learning.html",
+      "purpose": "Paper quant learning pipeline: Discord gosscap → entries.jsonl → features/levels → probability-tagged alert drafts; no live trading",
+      "intended_user_role": "Owner + Flint (TTC Quant)",
+      "business_company": "Personal / Trade Travel Chill (TTC)",
+      "source_data": "ttc-learn-base/entries.jsonl; learning-desk; dashboards/data/ttc-learn-base-seed.jsonl",
+      "dependencies": [
+        "Discord silent ingest",
+        "learning desk",
+        "Trading desk store"
+      ],
+      "external_integrations": [
+        "Discord gosscap→Wolf HQ",
+        "TradingView GATED"
+      ],
+      "historical_data": "entries.jsonl.flint-clean + FLINT_OWN.lock",
+      "current_wolf_replacement": "NONE in beta IA; learning.html exists on V1 only",
+      "replacement_route": null,
+      "migration_state": "NOT_IN_BETA_IA",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/trading-desk/QUANT_PROGRAM.md",
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/learning.html"
+      ],
+      "remaining_work": "Inventory learning-desk state; decide beta Owner Personal Command home for TTC",
+      "owner": "Flint / Matthew",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Spartacus Fitness / Health Command",
+      "v1_route_or_location": "http://127.0.0.1:8787/spartacus.html · ~/.openclaw/personal/health/ · dashboards/data/spartacus-*.json · Telegram bot Spartacus",
+      "purpose": "Owner health board: Sparta 24 workouts, peptide tracker, breathwork, Wolf75 program, daily log; Telegram Spartacus bot",
+      "intended_user_role": "Owner (Matthew)",
+      "business_company": "Personal",
+      "source_data": "spartacus.sqlite; spartacus-program.json; spartacus-peptides.json; spartacus-body.json; spartacus-breathwork.json; personal/health/log.md; WOLF75-PROGRAM.md; DIET.md",
+      "dependencies": [
+        "dashboards server",
+        "Telegram Spartacus bot",
+        "workout_peptides.py"
+      ],
+      "external_integrations": [
+        "Telegram Spartacus",
+        "Google Sheets peptide_schedule_update.gs (legacy)"
+      ],
+      "historical_data": "spartacus.sqlite live (mtime 2026-09-30); SPARTA-24-WORKOUTS.md; wolf_workout_rebuild.py home",
+      "current_wolf_replacement": "NONE — Beta Wave 8 retired spartacus from primary IA; Master Spec private domain named but not expanded into 465 caps",
+      "replacement_route": null,
+      "migration_state": "NOT_IN_BETA_IA",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/spartacus.html",
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/data/spartacus-program.json",
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/data/spartacus-peptides.json",
+        "/Users/wolfterminal/.openclaw/personal/health/spartacus.sqlite",
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/scripts/workout_peptides.py",
+        "/Users/wolfterminal/beta-os/dashboards/assets/sidenav.js Wave8 spartacus:1",
+        "ACCESS-MAP Telegram Spartacus (health)"
+      ],
+      "remaining_work": "Preserve DB + program JSON; rebuild Owner Fitness surface; keep HR_DEFERRED separate from personal fitness",
+      "owner": "Matthew / Spartacus bot",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": "Master tile Spartacus 75 still live on V1 master.status.json 2026-09-30"
+    },
+    {
+      "name": "Travel Board",
+      "v1_route_or_location": "http://127.0.0.1:8787/travel.html",
+      "purpose": "Owner/content travel planning surface (personal domain travel)",
+      "intended_user_role": "Owner + content seats (access_key=content in manifest)",
+      "business_company": "Personal / GGV content adjacent",
+      "source_data": "travel.html board data (embedded/API)",
+      "dependencies": [
+        "dashboards :8787"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 board present in manifest live=true",
+      "current_wolf_replacement": "NONE — Wave 8 retired travel from beta primary IA",
+      "replacement_route": null,
+      "migration_state": "NOT_IN_BETA_IA",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/travel.html",
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/data/manifest.json#travel"
+      ],
+      "remaining_work": "Confirm data store behind travel.html; migrate or HISTORICAL_PRESERVATION",
+      "owner": "Matthew",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Wolf Owner Home Board",
+      "v1_route_or_location": "http://127.0.0.1:8787/wolf.html · index master tiles",
+      "purpose": "Owner command home: master tiles (money, brief, atrium, kuta, bzg, content, leads, hr, purchasing, alchemist, system, backup, spartacus)",
+      "intended_user_role": "Owner",
+      "business_company": "Wolf Command / Group",
+      "source_data": "master.status.json; desk-chrome",
+      "dependencies": [
+        "tile builders",
+        "LaunchAgents producing status JSON"
+      ],
+      "external_integrations": [],
+      "historical_data": "master.status.json generated live 2026-09-30",
+      "current_wolf_replacement": "owner-empire-pack / business-dashboard (partial)",
+      "replacement_route": "/owner-empire-pack",
+      "migration_state": "PARTIAL_BETA",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/wolf.html",
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/data/master.status.json",
+        "/Users/wolfterminal/beta-os/dashboards/owner-empire-pack.html"
+      ],
+      "remaining_work": "Prove parity of all master tiles including Spartacus/Trading personal tiles",
+      "owner": "Peaches / Matthew",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Wolf Radar (Owner plan board)",
+      "v1_route_or_location": "http://127.0.0.1:8787/radar.html",
+      "purpose": "Owner-only plan/radar board; denies non-owner",
+      "intended_user_role": "Owner",
+      "business_company": "Wolf Command",
+      "source_data": "radar board API/state",
+      "dependencies": [
+        "access control"
+      ],
+      "external_integrations": [],
+      "historical_data": "radar.html on V1",
+      "current_wolf_replacement": "radar-prove.html (prove pack) — not full V1 radar",
+      "replacement_route": "/radar-prove",
+      "migration_state": "PARTIAL_BETA",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/radar.html",
+        "/Users/wolfterminal/beta-os/dashboards/radar-prove.html"
+      ],
+      "remaining_work": "Full owner radar parity",
+      "owner": "Matthew",
+      "classification": "PARTIAL",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Learning Desk",
+      "v1_route_or_location": "http://127.0.0.1:8787/learning.html · assets/learning-desk.js",
+      "purpose": "Owner learning tracks including TTC trading learn-base",
+      "intended_user_role": "Owner",
+      "business_company": "Personal / Wolf",
+      "source_data": "learning-desk state; ttc-learn-base",
+      "dependencies": [
+        "trading quant program"
+      ],
+      "external_integrations": [],
+      "historical_data": "ttc-learn-base-seed.jsonl",
+      "current_wolf_replacement": "NONE",
+      "replacement_route": null,
+      "migration_state": "NOT_IN_BETA_IA",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/learning.html",
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/assets/learning-desk.js"
+      ],
+      "remaining_work": "Include under Personal Command rebuild",
+      "owner": "Matthew / Flint",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Personal Health Data Store (Spartacus SQLite + Wolf75)",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/personal/health/spartacus.sqlite · WOLF75-PROGRAM.md · DIET.md · log.md",
+      "purpose": "Canonical personal health DB and program docs for Spartacus",
+      "intended_user_role": "Owner",
+      "business_company": "Personal",
+      "source_data": "spartacus.sqlite; log.md",
+      "dependencies": [],
+      "external_integrations": [
+        "Telegram Spartacus"
+      ],
+      "historical_data": "DB 286720 bytes; log.md updated 2026-09-30",
+      "current_wolf_replacement": "NONE",
+      "replacement_route": null,
+      "migration_state": "HISTORICAL_LIVE_V1",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/personal/health/"
+      ],
+      "remaining_work": "Schema dump for DR (no PII in packs); preserve across beta",
+      "owner": "Matthew",
+      "classification": "HISTORICAL_PRESERVATION_REQUIRED",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Peptide Schedule (legacy Sheets + board tracker)",
+      "v1_route_or_location": "/Users/wolfterminal/peptide_schedule_update.gs · spartacus-peptides.json · workout_peptides.py",
+      "purpose": "12-week peptide tracker feeding Spartacus board",
+      "intended_user_role": "Owner",
+      "business_company": "Personal",
+      "source_data": "spartacus-peptides.json; Google Apps Script",
+      "dependencies": [
+        "Spartacus board"
+      ],
+      "external_integrations": [
+        "Google Sheets (legacy script)"
+      ],
+      "historical_data": "peptide_schedule_update.gs in home; recovery dashboards/data copies",
+      "current_wolf_replacement": "NONE",
+      "replacement_route": null,
+      "migration_state": "NOT_IN_BETA",
+      "evidence": [
+        "/Users/wolfterminal/peptide_schedule_update.gs",
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/data/spartacus-peptides.json"
+      ],
+      "remaining_work": "Confirm Sheets still source-of-truth vs local JSON",
+      "owner": "Matthew",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Personal Vault Daily Intel Notes",
+      "v1_route_or_location": "/Users/wolfterminal/WolfCommandSystem/WolfCommand/07-Personal/Daily-Notes/",
+      "purpose": "Owner daily intel notes in Obsidian vault personal section",
+      "intended_user_role": "Owner",
+      "business_company": "Personal",
+      "source_data": "Daily-Notes/*.md",
+      "dependencies": [
+        "Obsidian vault"
+      ],
+      "external_integrations": [],
+      "historical_data": "Notes from 2026-06 through 2026-09-27+",
+      "current_wolf_replacement": "NONE as beta surface",
+      "replacement_route": null,
+      "migration_state": "VAULT_PRESERVE",
+      "evidence": [
+        "/Users/wolfterminal/WolfCommandSystem/WolfCommand/07-Personal/"
+      ],
+      "remaining_work": "Keep in vault; do not treat as business requirement",
+      "owner": "Matthew",
+      "classification": "HISTORICAL_PRESERVATION_REQUIRED",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "HOLDINGS-PERSONAL Registry",
+      "v1_route_or_location": "/Users/wolfterminal/WolfCommandSystem/WolfCommand/01-Wolf-Command/System-Registry/HOLDINGS-PERSONAL.md",
+      "purpose": "Peaches morning stock glance list; Sterling owns group books; no trades from this file",
+      "intended_user_role": "Owner / Peaches",
+      "business_company": "Personal",
+      "source_data": "HOLDINGS-PERSONAL.md (BTC line)",
+      "dependencies": [
+        "Trading board"
+      ],
+      "external_integrations": [],
+      "historical_data": "BTC stub present",
+      "current_wolf_replacement": "NONE",
+      "replacement_route": null,
+      "migration_state": "NOT_IN_BETA",
+      "evidence": [
+        "/Users/wolfterminal/WolfCommandSystem/WolfCommand/01-Wolf-Command/System-Registry/HOLDINGS-PERSONAL.md"
+      ],
+      "remaining_work": "Fold into Personal Command holdings UI",
+      "owner": "Matthew / Peaches",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Amanda Desk (ads/content tasks)",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/amanda-desk + amanda.html + ads-studio.html",
+      "purpose": "Staff/agent desk surface: Amanda Desk (ads/content tasks)",
+      "intended_user_role": "Amanda / content",
+      "business_company": "GGV/AMG content",
+      "source_data": "/Users/wolfterminal/.openclaw/workspace/wolf-system/amanda-desk + amanda.html + ads-studio.html",
+      "dependencies": [
+        "dashboards :8787"
+      ],
+      "external_integrations": [],
+      "historical_data": "present in wolf-system",
+      "current_wolf_replacement": "partial content packs",
+      "replacement_route": "/content-engine-live",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/amanda-desk + amanda.html + ads-studio.html"
+      ],
+      "remaining_work": "Parity proof vs beta",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Mila Desk",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/mila-desk + mila.html",
+      "purpose": "Staff/agent desk surface: Mila Desk",
+      "intended_user_role": "Mila",
+      "business_company": "Ops/staff",
+      "source_data": "/Users/wolfterminal/.openclaw/workspace/wolf-system/mila-desk + mila.html",
+      "dependencies": [
+        "dashboards :8787"
+      ],
+      "external_integrations": [],
+      "historical_data": "present in wolf-system",
+      "current_wolf_replacement": "staff-ops-routing partial",
+      "replacement_route": "/staff-ops-routing",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/mila-desk + mila.html"
+      ],
+      "remaining_work": "Parity proof vs beta",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Peaches Desk (CoS threads)",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/peaches-desk + peaches.html",
+      "purpose": "Staff/agent desk surface: Peaches Desk (CoS threads)",
+      "intended_user_role": "Peaches CoS",
+      "business_company": "Wolf Command",
+      "source_data": "/Users/wolfterminal/.openclaw/workspace/wolf-system/peaches-desk + peaches.html",
+      "dependencies": [
+        "dashboards :8787"
+      ],
+      "external_integrations": [],
+      "historical_data": "present in wolf-system",
+      "current_wolf_replacement": "agent runtime not a beta page",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/peaches-desk + peaches.html"
+      ],
+      "remaining_work": "Parity proof vs beta",
+      "owner": "Peaches",
+      "classification": "REBUILT_BUT_NOT_LIVE",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Haikal Desk",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/haikal-desk.html + haikal.html",
+      "purpose": "Staff/agent desk surface: Haikal Desk",
+      "intended_user_role": "Haikal",
+      "business_company": "BZG/ops",
+      "source_data": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/haikal-desk.html + haikal.html",
+      "dependencies": [
+        "dashboards :8787"
+      ],
+      "external_integrations": [],
+      "historical_data": "present in wolf-system",
+      "current_wolf_replacement": "NONE clear",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/haikal-desk.html + haikal.html"
+      ],
+      "remaining_work": "Parity proof vs beta",
+      "owner": "Peaches",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Wolf Desk (owner tasks/routines)",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/wolf-desk/",
+      "purpose": "Staff/agent desk surface: Wolf Desk (owner tasks/routines)",
+      "intended_user_role": "Owner",
+      "business_company": "Wolf",
+      "source_data": "/Users/wolfterminal/.openclaw/workspace/wolf-system/wolf-desk/",
+      "dependencies": [
+        "dashboards :8787"
+      ],
+      "external_integrations": [],
+      "historical_data": "present in wolf-system",
+      "current_wolf_replacement": "my-work partial",
+      "replacement_route": "/my-work",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/wolf-desk/"
+      ],
+      "remaining_work": "Parity proof vs beta",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Uma Blu Desk tasks",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/uma-blu-desk/",
+      "purpose": "Staff/agent desk surface: Uma Blu Desk tasks",
+      "intended_user_role": "Uma Blu staff",
+      "business_company": "BZG",
+      "source_data": "/Users/wolfterminal/.openclaw/workspace/wolf-system/uma-blu-desk/",
+      "dependencies": [
+        "dashboards :8787"
+      ],
+      "external_integrations": [],
+      "historical_data": "present in wolf-system",
+      "current_wolf_replacement": "bzg-uma-blu-* packs",
+      "replacement_route": "/bzg-uma-blu",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/uma-blu-desk/"
+      ],
+      "remaining_work": "Parity proof vs beta",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": false,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Misa Board",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/misa.html",
+      "purpose": "Staff/agent desk surface: Misa Board",
+      "intended_user_role": "Misa",
+      "business_company": "Ops",
+      "source_data": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/misa.html",
+      "dependencies": [
+        "dashboards :8787"
+      ],
+      "external_integrations": [],
+      "historical_data": "present in wolf-system",
+      "current_wolf_replacement": "NONE clear",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/misa.html"
+      ],
+      "remaining_work": "Parity proof vs beta",
+      "owner": "Peaches",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Atrium Sales Board",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/atrium-sales.html",
+      "purpose": "Hotel daily sales",
+      "intended_user_role": "AMG/Atrium staff+owner",
+      "business_company": "AMG",
+      "source_data": "atrium/atrium_sales.sqlite",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "amg-ops / atrium FC packs",
+      "replacement_route": "/amg-ops-pack",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/atrium-sales.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Atrium Management Board",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/atrium-management.html",
+      "purpose": "Rooms occupancy bookings",
+      "intended_user_role": "AMG",
+      "business_company": "AMG",
+      "source_data": "atrium-management.status.json",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "amg-occ-truth / amg-os-shell",
+      "replacement_route": "/amg-occ-truth-1",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/atrium-management.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Atrium Inventory Board",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/atrium-inventory.html",
+      "purpose": "Hotel inventory",
+      "intended_user_role": "AMG",
+      "business_company": "AMG",
+      "source_data": "board",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "PARTIAL inventory packs",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/atrium-inventory.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Atrium Finance Desk",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/atrium-finance.html + atrium-finance/",
+      "purpose": "Hotel books/finance desk",
+      "intended_user_role": "Owner/finance",
+      "business_company": "AMG",
+      "source_data": "atrium_finance.sqlite",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "atrium-finance app + fin packs",
+      "replacement_route": "/atrium-fc-truth-deepen-1",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/atrium-finance.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "REBUILT_BUT_NOT_LIVE",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Uma Blu Ops Console",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/uma-blu.html + uma-blu-console.html",
+      "purpose": "Venue till/menu/reviews/ops",
+      "intended_user_role": "BZG staff",
+      "business_company": "BZG",
+      "source_data": "uma-blu.status.json + ESB",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "bzg-uma-blu-*",
+      "replacement_route": "/bzg-uma-blu",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/uma-blu.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Uma Blu Recipes",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/uma-blu-recipes.html",
+      "purpose": "Recipe book",
+      "intended_user_role": "BZG kitchen",
+      "business_company": "BZG",
+      "source_data": "recipes",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "bzg-recipe-builder",
+      "replacement_route": "/bzg-recipe-builder",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/uma-blu-recipes.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "BZG Finance Board",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/bzg-finance.html",
+      "purpose": "Venue finance view",
+      "intended_user_role": "Owner/finance",
+      "business_company": "BZG",
+      "source_data": "ESB+local",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "bzg-finance / venue-pnl",
+      "replacement_route": "/bzg-venue-pnl",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/bzg-finance.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "BZG Shareholder Reports",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/bzg-shareholder-reports.html",
+      "purpose": "Shareholder reporting",
+      "intended_user_role": "Owner/shareholders",
+      "business_company": "BZG",
+      "source_data": "reports",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "Client-Shareholder-Reporting-MAP",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/bzg-shareholder-reports.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "BZG Monthly Boards",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/bzg-july-2026.html / bzg-august-2026.html",
+      "purpose": "Monthly venue boards",
+      "intended_user_role": "Owner",
+      "business_company": "BZG",
+      "source_data": "PDF/HTML archives",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "HISTORICAL",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/bzg-july-2026.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "HISTORICAL_PRESERVATION_REQUIRED",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Blu Zone Group Board",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/blu-zone-group.html",
+      "purpose": "Group ops board",
+      "intended_user_role": "BZG",
+      "business_company": "BZG",
+      "source_data": "nav-entities bzg_ops",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "bzg-ops-desk",
+      "replacement_route": "/bzg-ops-desk",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/blu-zone-group.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "GGV Finance / Books",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/ggv-finance.html + ggv-finance/money.sqlite",
+      "purpose": "GGV books desk",
+      "intended_user_role": "Finance",
+      "business_company": "GGV",
+      "source_data": "money.sqlite",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "ggv-finance / fin packs",
+      "replacement_route": "/ggv-finance",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/ggv-finance.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "GGV Onboarding / Intake",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/ggv-onboarding.html + ggv-intake-invite.html",
+      "purpose": "Client onboarding",
+      "intended_user_role": "GGV ops",
+      "business_company": "GGV",
+      "source_data": "board",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "ggv packs",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/ggv-onboarding.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "HR Board (V1)",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/hr.html + ~/.openclaw/hr/state/*",
+      "purpose": "HR tasks/people — WRITE LOCKED",
+      "intended_user_role": "HR/Nirmata",
+      "business_company": "Group",
+      "source_data": "employees.db tasks.db payments.db shifts.db reviews.sqlite",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "hr-* deferred stamps",
+      "replacement_route": "/hr-deferred-hold-stamp-1",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/hr.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "HR_DEFERRED",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "ATLAS Content Ops Board",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/atlas.html",
+      "purpose": "Content production ops",
+      "intended_user_role": "ATLAS/content team",
+      "business_company": "GGV/AMG/brands",
+      "source_data": "atlas builders + Metricool",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "content-engine-live / atlas flows",
+      "replacement_route": "/content-engine-live",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/atlas.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Content Hub + Brand Boards",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/content.html + content-*.html",
+      "purpose": "Per-brand content boards",
+      "intended_user_role": "Content",
+      "business_company": "Multi-brand",
+      "source_data": "content-board.jsonl Metricool JSONs",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "content-2.0 / ggv-content",
+      "replacement_route": "/content-2.0",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/content.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Ads Studio",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/ads-studio.html",
+      "purpose": "Ads creative studio",
+      "intended_user_role": "Amanda/content",
+      "business_company": "GGV/AMG",
+      "source_data": "content_ads_studio.py",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "NONE clear",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/ads-studio.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Brands Directory",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/brands.html + brands-*.html",
+      "purpose": "Brand kits/pages Habitat/Selo/Tropik/Uma/Atrium/GGV",
+      "intended_user_role": "Content/owner",
+      "business_company": "Multi",
+      "source_data": "brand-kits",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "PARTIAL brand pages",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/brands.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Habitat Investment 2026",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/habitat-investment-2026.html",
+      "purpose": "Habitat investment board",
+      "intended_user_role": "Owner/client",
+      "business_company": "Habitat/GGV",
+      "source_data": "board",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "NONE",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/habitat-investment-2026.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Media Catalogue",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/catalogue.html + wolf-catalogue.sqlite",
+      "purpose": "Media library catalogue",
+      "intended_user_role": "Content/ATLAS",
+      "business_company": "Group",
+      "source_data": "wolf-catalogue.sqlite 68MB",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "content-library catalog",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/catalogue.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Legal Board",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/legal.html",
+      "purpose": "Legal docs/suggestions",
+      "intended_user_role": "Owner/legal",
+      "business_company": "Group",
+      "source_data": "legal-docs.json legal.status.json",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "msc-compliance / legal MAP",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/legal.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Kuta Rates Competitor Board",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/kuta-rates.html + competitor-rates.db",
+      "purpose": "Nightly competitor rate intel",
+      "intended_user_role": "AMG/owner",
+      "business_company": "AMG",
+      "source_data": "competitor-rates.db + briefs",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "Wave8 retired from beta IA; still V1 live",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/kuta-rates.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Admin Access Door",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/admin-access.html",
+      "purpose": "Access admin",
+      "intended_user_role": "Owner/admin",
+      "business_company": "Wolf",
+      "source_data": "access-config.json",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "staff-access-truth",
+      "replacement_route": "/staff-access-truth-1",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/admin-access.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "AMG / BZG / GGV Voice Boards",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/amg-voice.html bzg-voice.html ggv-voice.html",
+      "purpose": "Voice/agent boards per entity",
+      "intended_user_role": "Staff",
+      "business_company": "Multi",
+      "source_data": "voice py modules",
+      "dependencies": [
+        ":8787 wolf-system"
+      ],
+      "external_integrations": [],
+      "historical_data": "V1 live tree",
+      "current_wolf_replacement": "NONE clear",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/amg-voice.html"
+      ],
+      "remaining_work": "Classify deeper in P0 pass 2",
+      "owner": "Peaches",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Telegram Bot Fleet (6)",
+      "v1_route_or_location": "OpenClaw Telegram: Peaches, Nirmata, ATLAS, Alchemist, Spartacus, Kirana",
+      "purpose": "Staff/owner messaging ops",
+      "intended_user_role": "All roles",
+      "business_company": "Group+Personal",
+      "source_data": "openclaw.json (secrets not read)",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "beta connectors partial; bots Mac-only",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "ACCESS-MAP.md"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Alchemist Procurement System",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/alchemist + alchemist.db + 11 LaunchAgents",
+      "purpose": "BZG orders/receive/pay/petty cash",
+      "intended_user_role": "Procurement/Alchemist",
+      "business_company": "BZG",
+      "source_data": "alchemist.db",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "alchemist rebuild notes; not full beta desk",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/alchemist + alchemist.db + 11 LaunchAgents"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "ESB CORE Ingest + OMS",
+      "v1_route_or_location": "~/.openclaw/data/esb.sqlite + esb_ingest.py + LaunchAgents",
+      "purpose": "BZG restaurant OMS mirror sales/menus/GL",
+      "intended_user_role": "BZG/finance",
+      "business_company": "BZG",
+      "source_data": "esb.sqlite ~69MB live",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "esb-truth / esb-settlement packs",
+      "replacement_route": "/esb-truth-1",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "~/.openclaw/data/esb.sqlite + esb_ingest.py + LaunchAgents"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Xero Group Books Integration",
+      "v1_route_or_location": "scripts xero-* + n8n 09-11 + workflows",
+      "purpose": "Group finance SoR",
+      "intended_user_role": "Finance",
+      "business_company": "GGV/AMG/BZG",
+      "source_data": "Xero cloud",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "fin-* packs; Hubdoc DEAD",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "Money-Apps-MAP"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "n8n Workflow Templates (11)",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/n8n-templates + ~/.n8n",
+      "purpose": "Self-hosted automation templates leads/sales/xero/content",
+      "intended_user_role": "Ops",
+      "business_company": "Group",
+      "source_data": "n8n database.sqlite",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "partial Metricool/content wiring",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/n8n-templates + ~/.n8n"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "LaunchAgents Automation Layer (~283 wolf)",
+      "v1_route_or_location": "~/Library/LaunchAgents/com.wolfcommand*",
+      "purpose": "Cron/daemons for atlas/alchemist/hr/backup/vault/esb/etc",
+      "intended_user_role": "System",
+      "business_company": "Wolf",
+      "source_data": "plists",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "beta scripts/partial; many still V1",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "~/Library/LaunchAgents/com.wolfcommand*"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Backup B2 / R2 / Daily Tarball",
+      "v1_route_or_location": "backup LaunchAgents + B2 buckets wolf-cold-archive",
+      "purpose": "DR cold archive",
+      "intended_user_role": "System/Phoenix",
+      "business_company": "Wolf",
+      "source_data": "B2 objects",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "backup-health / restore-drill packs",
+      "replacement_route": "/backup-health-1",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "GAPS.md"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "NAS Wolf Vault Mirror",
+      "v1_route_or_location": "/Volumes/05-Wolf-Vault-Mirror/wolf-command",
+      "purpose": "Off-box DR package maps",
+      "intended_user_role": "Phoenix/DR",
+      "business_company": "Wolf",
+      "source_data": "ACCESS/BASELINE/GAPS maps",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "nas-index pending expand",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Volumes/05-Wolf-Vault-Mirror/wolf-command"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "HISTORICAL_PRESERVATION_REQUIRED",
+      "in_465_requirements": false,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Obsidian Vault (WolfCommand)",
+      "v1_route_or_location": "/Users/wolfterminal/WolfCommandSystem/WolfCommand",
+      "purpose": "Canonical Living Docs + company sections 01-08 + HR + Strategy",
+      "intended_user_role": "Owner/agents",
+      "business_company": "Group",
+      "source_data": "markdown vault",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "beta docs partial; vault remains SoT for living docs",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/WolfCommandSystem/WolfCommand"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "HISTORICAL_PRESERVATION_REQUIRED",
+      "in_465_requirements": false,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Gatekeeper",
+      "v1_route_or_location": "/Users/wolfterminal/WolfCommandSystem/WolfCommand/01-Wolf-Command/Gatekeeper",
+      "purpose": "Access/gatekeeping living docs+scripts",
+      "intended_user_role": "Owner/system",
+      "business_company": "Wolf",
+      "source_data": "Gatekeeper dir 96 entries",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "NONE clear in beta",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/WolfCommandSystem/WolfCommand/01-Wolf-Command/Gatekeeper"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Event Bus",
+      "v1_route_or_location": "~/.openclaw/state/event_bus.db + LaunchAgent",
+      "purpose": "Internal event bus",
+      "intended_user_role": "System",
+      "business_company": "Wolf",
+      "source_data": "event_bus.db",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "NONE clear",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "~/.openclaw/state/event_bus.db + LaunchAgent"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Bank Ingest / Bank Statements",
+      "v1_route_or_location": "bank_ingest.py bank_statements.py LaunchAgents",
+      "purpose": "Bank statement drop ingest",
+      "intended_user_role": "Finance",
+      "business_company": "Group",
+      "source_data": "statement drops",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "fin-bank-creds-route",
+      "replacement_route": "/fin-bank-creds-route-1",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "bank_ingest.py bank_statements.py LaunchAgents"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Competitor Rates Pipeline",
+      "v1_route_or_location": "competitor-rates.db + LaunchAgents + kuta-rates briefs",
+      "purpose": "AMG rate intel",
+      "intended_user_role": "AMG",
+      "business_company": "AMG",
+      "source_data": "competitor-rates.db",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "Wave8 removed from beta IA",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "competitor-rates.db + LaunchAgents + kuta-rates briefs"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Rate Calendar DB",
+      "v1_route_or_location": "~/.openclaw/data/rate-calendar.db",
+      "purpose": "Rate calendar store",
+      "intended_user_role": "AMG",
+      "business_company": "AMG",
+      "source_data": "rate-calendar.db",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "UNKNOWN beta",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "~/.openclaw/data/rate-calendar.db"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "PRF Forms Ingest",
+      "v1_route_or_location": "prf-forms-ingest/poller LaunchAgents",
+      "purpose": "Form intake",
+      "intended_user_role": "Ops",
+      "business_company": "Group",
+      "source_data": "forms",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "Jotform MCP exists separately",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "prf-forms-ingest/poller LaunchAgents"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Calendly Atrium Sync",
+      "v1_route_or_location": "calendly-atrium-sync LaunchAgent",
+      "purpose": "Pre-arrival/calendar sync",
+      "intended_user_role": "AMG",
+      "business_company": "AMG",
+      "source_data": "Calendly",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "UNKNOWN",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "calendly-atrium-sync LaunchAgent"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Identity Vault (personal docs lookup)",
+      "v1_route_or_location": "OpenClaw identity-vault / architecture Identity Vault",
+      "purpose": "NPWP/NIK/passport lookup — owner/staff scoped",
+      "intended_user_role": "Owner",
+      "business_company": "Personal/Group",
+      "source_data": "identity vault (secrets not opened)",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "EXTERNALLY sensitive; preserve",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "OpenClaw identity-vault / architecture Identity Vault"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "HISTORICAL_PRESERVATION_REQUIRED",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Training Centre",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/training-centre",
+      "purpose": "Training materials index",
+      "intended_user_role": "Staff",
+      "business_company": "Group",
+      "source_data": "index.json + files",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "hr-training-competency (deferred domain)",
+      "replacement_route": "/hr-training-competency",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/training-centre"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "HR_DEFERRED",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Resolve Studio",
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/resolve-studio",
+      "purpose": "Video resolve studio projects/reviews",
+      "intended_user_role": "Content",
+      "business_company": "GGV content",
+      "source_data": "studio.json reviews.json",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "NONE clear",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/.openclaw/workspace/wolf-system/resolve-studio"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "MISSING",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Alpha System DB",
+      "v1_route_or_location": "~/.openclaw/alpha/data/alpha.db",
+      "purpose": "Alpha doctrine/automation (many plists parked)",
+      "intended_user_role": "Owner/system",
+      "business_company": "Wolf",
+      "source_data": "alpha.db",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "parked LaunchAgents 20260820",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "~/.openclaw/alpha/data/alpha.db"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "SUPERSEDED",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Wolf Catalogue Media DB",
+      "v1_route_or_location": "~/.openclaw/data/wolf-catalogue.sqlite",
+      "purpose": "Full media catalogue DB",
+      "intended_user_role": "Content",
+      "business_company": "Group",
+      "source_data": "68MB sqlite live",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "content_library.sqlite beta partial",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "~/.openclaw/data/wolf-catalogue.sqlite"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "OpenClaw Memory / Tasks DBs",
+      "v1_route_or_location": "~/.openclaw/memory/main.sqlite + tasks/runs.sqlite",
+      "purpose": "Agent memory and task runs",
+      "intended_user_role": "Agents",
+      "business_company": "Wolf",
+      "source_data": "sqlite",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "agent runtime Mac-only",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "~/.openclaw/memory/main.sqlite + tasks/runs.sqlite"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "HISTORICAL_PRESERVATION_REQUIRED",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "WolfRecoveryPoints Mirror",
+      "v1_route_or_location": "/Users/wolfterminal/WolfRecoveryPoints/2026-09-29_1220.partial",
+      "purpose": "Partial rsync snapshot of wolf-system incl trading-desk",
+      "intended_user_role": "DR",
+      "business_company": "Wolf",
+      "source_data": "recovery tree",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "preserve",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "/Users/wolfterminal/WolfRecoveryPoints/2026-09-29_1220.partial"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "HISTORICAL_PRESERVATION_REQUIRED",
+      "in_465_requirements": false,
+      "newly_recovered": true,
+      "notes": ""
+    },
+    {
+      "name": "Yanolja / Coral CM",
+      "v1_route_or_location": "Coral-OWNED-STATE + Coral-Yanolja-CM-LEARN",
+      "purpose": "Channel manager occupancy external",
+      "intended_user_role": "AMG",
+      "business_company": "AMG",
+      "source_data": "external CM",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "occupancy-external-hold",
+      "replacement_route": "/occupancy-external-hold-1",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "Coral-OWNED-STATE + Coral-Yanolja-CM-LEARN"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "EXTERNALLY_BLOCKED",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Metricool Social Analytics",
+      "v1_route_or_location": "Metricool JSON snapshots + atlas_metricool.py",
+      "purpose": "IG/social truth",
+      "intended_user_role": "Content",
+      "business_company": "Multi-brand",
+      "source_data": "metricool-*.json",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "metricool-runtime-wire-1",
+      "replacement_route": "/metricool-runtime-wire-1",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "Metricool JSON snapshots + atlas_metricool.py"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "Notion Ecosystem (33+ DBs)",
+      "v1_route_or_location": "Notion via MCP + architecture Notion section",
+      "purpose": "Working trackers AMG/BZG/GGV/Personal",
+      "intended_user_role": "All",
+      "business_company": "Group",
+      "source_data": "Notion cloud",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "still used; not full replacement for boards",
+      "replacement_route": null,
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "Notion via MCP + architecture Notion section"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    },
+    {
+      "name": "ClickUp Task Hub",
+      "v1_route_or_location": "wolf-desk clickup-inbox.json + ClickUp MCP",
+      "purpose": "Task lists",
+      "intended_user_role": "Staff",
+      "business_company": "Group",
+      "source_data": "ClickUp cloud",
+      "dependencies": [],
+      "external_integrations": [],
+      "historical_data": "evidenced on Mac 2026-09-30",
+      "current_wolf_replacement": "my-work partial",
+      "replacement_route": "/my-work",
+      "migration_state": "SEE_CLASS",
+      "evidence": [
+        "wolf-desk clickup-inbox.json + ClickUp MCP"
+      ],
+      "remaining_work": "Deepen in next P0 pass",
+      "owner": "Peaches",
+      "classification": "PARTIAL",
+      "in_465_requirements": true,
+      "newly_recovered": false,
+      "notes": ""
+    }
+  ]
+}

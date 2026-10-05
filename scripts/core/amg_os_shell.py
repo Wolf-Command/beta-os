@@ -191,13 +191,89 @@ def build_shell(*, refresh_board: bool = False) -> dict[str, Any]:
         (c for c in connectors if c.get("integration_id") == YANOLJA_ID),
         None,
     )
-    yanolja_blocked = bool(
-        yan
-        and yan.get("audit_status") == "BLOCKED_EXTERNAL"
-        and yan.get("blocked_external") is True
-        and yan.get("last_success") is None
+    # BETA_HOUSE WIRE-YANOLJA-READ-HOUSE-1: prefer last-read when usable.
+    try:
+        from core.yanolja_last_read_ro import connection_stamp as _yan_stamp
+
+        ys = _yan_stamp()
+    except Exception:  # noqa: BLE001
+        ys = {
+            "audit_status": (yan or {}).get("audit_status") or "BLOCKED_EXTERNAL",
+            "blocked_external": True,
+            "probe_status": (yan or {}).get("probe_status"),
+            "last_success": None,
+            "yanolja_live": False,
+            "pms_connected": False,
+            "occupancy": {},
+            "why": "yanolja_last_read_ro unavailable",
+        }
+    # Prefer board row when present; overlay last-read truth.
+    audit = ys.get("audit_status") or (yan or {}).get("audit_status") or "BLOCKED_EXTERNAL"
+    yanolja_live = bool(ys.get("yanolja_live"))
+    yanolja_blocked = (not yanolja_live) and (
+        audit == "BLOCKED_EXTERNAL"
+        and bool(ys.get("blocked_external", True))
+        and ys.get("last_success") is None
     )
-    pms_tiles = [_pms_tile(*spec) for spec in _PMS_TILE_SPECS]
+    occ = ys.get("occupancy") or {}
+    pms_tiles = []
+    for tile_id, label, why in _PMS_TILE_SPECS:
+        tile = _pms_tile(tile_id, label, why)
+        if tile_id == "occupancy" and occ.get("usable"):
+            tile.update(
+                {
+                    "status": "LIVE",
+                    "blocked_external": False,
+                    "value": occ.get("pct"),
+                    "display": occ.get("display"),
+                    "count": occ.get("occupied_rooms"),
+                    "occupancy_pct": occ.get("pct"),
+                    "rooms_total": occ.get("rooms_total"),
+                    "rooms_vacant": occ.get("vacant"),
+                    "guests": None,
+                    "yanolja_live": True,
+                    "pms_connected": True,
+                    "source": occ.get("source"),
+                    "freshness": occ.get("written_at"),
+                    "why": (
+                        f"LIVE from Yanolja last-read ({occ.get('written_at')}). "
+                        "Vacant vs rooms, not guests. Arrivals/in-house still UNKNOWN."
+                    ),
+                }
+            )
+        elif tile_id == "rooms" and occ.get("usable"):
+            tile.update(
+                {
+                    "status": "PARTIAL",
+                    "blocked_external": False,
+                    "value": occ.get("rooms_total"),
+                    "display": f"{occ.get('rooms_total')} rooms · {occ.get('vacant')} vacant",
+                    "count": occ.get("rooms_total"),
+                    "rooms_total": occ.get("rooms_total"),
+                    "rooms_vacant": occ.get("vacant"),
+                    "yanolja_live": True,
+                    "pms_connected": True,
+                    "why": (
+                        "Room inventory totals from RoomInfo+Inventory last-read. "
+                        "Per-room status board still UNKNOWN."
+                    ),
+                }
+            )
+        elif tile_id in ("arrivals", "departures", "in_house", "inhouse") and occ.get("usable"):
+            # Endpoint missing in Inventory+RoomInfo last-read → keep UNKNOWN honesty
+            tile.update(
+                {
+                    "status": "UNKNOWN",
+                    "blocked_external": False,
+                    "yanolja_live": True,
+                    "pms_connected": True,
+                    "why": (
+                        "Yanolja inventory LIVE but this field not in last-read "
+                        "(Inventory+RoomInfo). UNKNOWN ≠ invent guests."
+                    ),
+                }
+            )
+        pms_tiles.append(tile)
     holds = _commissioning_holds()
     payload = {
         "ok": True,
@@ -210,8 +286,8 @@ def build_shell(*, refresh_board: bool = False) -> dict[str, Any]:
         "prod_touched": False,
         "write_authority_expanded": False,
         "secrets_exposed": False,
-        "cap_amg_01_unblocked": False,
-        "yanolja_live": False,
+        "cap_amg_01_unblocked": False,  # full guest PMS depth still limited
+        "yanolja_live": yanolja_live,
         "fake_pms_data": False,
         "invented_occupancy": False,
         "invented_arrivals": False,
@@ -224,18 +300,21 @@ def build_shell(*, refresh_board: bool = False) -> dict[str, Any]:
         },
         "yanolja": {
             "integration_id": YANOLJA_ID,
-            "audit_status": (yan or {}).get("audit_status") or "BLOCKED_EXTERNAL",
-            "blocked_external": True,
-            "probe_status": (yan or {}).get("probe_status"),
-            "last_success": None,
+            "audit_status": audit,
+            "blocked_external": bool(ys.get("blocked_external")),
+            "probe_status": ys.get("probe_status") or (yan or {}).get("probe_status"),
+            "last_success": ys.get("last_success"),
             "honesty_board_href": HONESTY_BOARD,
             "blocked_confirmed": yanolja_blocked,
+            "yanolja_live": yanolja_live,
+            "guest_depth": ys.get("guest_depth") or "UNKNOWN",
+            "why": ys.get("why"),
         },
         "honesty": {
-            "yanolja": "BLOCKED_EXTERNAL",
-            "pms_tiles": "BLOCKED_EXTERNAL",
+            "yanolja": audit,
+            "pms_tiles": "LIVE_OCC_PARTIAL_GUEST_UNKNOWN" if yanolja_live else "BLOCKED_EXTERNAL",
             "display_policy": "UNKNOWN_or_BLOCKED_never_zero_as_success",
-            "cap_amg_01": "BLOCKED_EXTERNAL",
+            "cap_amg_01": "INVENTORY_LIVE_GUEST_DEPTH_LIMITED" if yanolja_live else "BLOCKED_EXTERNAL",
             "cap_amg_02": "STRUCTURE_ONLY",
             "cap_amg_04": "STRUCTURE_ONLY",
             "mb_008": "STRUCTURE_ONLY_NOT_LIVE",
@@ -258,6 +337,7 @@ def public_payload() -> dict[str, Any]:
 
 
 def all_pms_tiles_blocked(payload: dict[str, Any] | None = None) -> bool:
+    """True only when every PMS tile is still BLOCKED_EXTERNAL with no values."""
     pack = payload if payload is not None else build_shell()
     tiles = pack.get("pms_tiles") or []
     if not tiles:
@@ -270,3 +350,10 @@ def all_pms_tiles_blocked(payload: dict[str, Any] | None = None) -> bool:
         and t.get("occupancy_pct") is None
         for t in tiles
     )
+
+
+def occupancy_live_from_last_read(payload: dict[str, Any] | None = None) -> bool:
+    pack = payload if payload is not None else build_shell()
+    tiles = pack.get("pms_tiles") or []
+    occ = next((t for t in tiles if t.get("id") == "occupancy"), None)
+    return bool(occ and occ.get("status") == "LIVE" and occ.get("occupancy_pct") is not None)

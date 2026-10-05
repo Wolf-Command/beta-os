@@ -1095,11 +1095,22 @@ def _staff_day(value: str) -> str:
 
 
 def _close_branch() -> dict[str, Any]:
-    policies = _table_count(CATALOG_DB, "venue_close_variance_policies") or 0
+    # Owner YES 5 Oct 2026 21:01 WITA locked Rp0 policy in venue_close_variance_policies.
+    # Null/zero ACTIVE policies still mean "needs approval". Saving is never refused for policy.
+    policies = 0
     closer = 0
+    open_exceptions = 0
     if CATALOG_DB.is_file():
         conn = _connect_ro(CATALOG_DB)
         try:
+            try:
+                policies = int(
+                    conn.execute(
+                        "SELECT COUNT(*) FROM venue_close_variance_policies WHERE status='ACTIVE'"
+                    ).fetchone()[0]
+                )
+            except sqlite3.Error:
+                policies = _table_count(CATALOG_DB, "venue_close_variance_policies") or 0
             closer = int(
                 conn.execute(
                     """
@@ -1110,29 +1121,47 @@ def _close_branch() -> dict[str, Any]:
                     ("ROLE-BZG-CLOSER",),
                 ).fetchone()[0]
             )
+            try:
+                open_exceptions = int(
+                    conn.execute(
+                        """
+                        SELECT COUNT(*) FROM venue_daily_closes
+                        WHERE state IN ('EXCEPTION','VARIANCE_REQUIRES_POLICY')
+                          AND business_date >= date('now','-14 day')
+                        """
+                    ).fetchone()[0]
+                )
+            except sqlite3.Error:
+                open_exceptions = 0
         except sqlite3.Error:
             closer = 0
         finally:
             conn.close()
-    missing = []
+    actions: list[str] = []
     if policies == 0:
-        missing.append("the variance policy is not set")
+        actions.append("Variance policy needs approval")
     if closer == 0:
-        missing.append("a closer is not named")
-    blocked = bool(missing)
-    reason = (
-        "Daily close is BLOCKED. Matt has not set them. " + " and ".join(missing) + ". The rest of this page stays open."
-        if blocked
-        else "Daily close can be opened."
-    )
+        actions.append("Daily close closer needs naming")
+    if open_exceptions > 0:
+        actions.append("Open close exception needs review")
+    action_required = bool(actions)
+    if action_required:
+        reason = "DAILY CLOSE · Action required · " + " · ".join(actions) + " · [REVIEW]"
+    else:
+        reason = "Daily close can be opened."
     return {
-        "status": "BLOCKED" if blocked else "OPEN",
-        "branch_blocked": blocked,
+        "status": "ACTION_REQUIRED" if action_required else "OPEN",
+        "branch_blocked": False,
+        "action_required": action_required,
         "page_blocked": False,
         "policy_count": policies,
         "closer_count": closer,
+        "open_exceptions": open_exceptions,
+        "actions": actions,
         "reason": reason,
         "href": "/uma-blu-close",
+        "review_href": "/uma-blu-close",
+        "recording_tolerance_idr": 0 if policies else None,
     }
 
 

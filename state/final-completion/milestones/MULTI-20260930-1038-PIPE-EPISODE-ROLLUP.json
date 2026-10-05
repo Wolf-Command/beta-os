@@ -1,0 +1,34 @@
+{
+  "at_wita": "2026-09-30T10:40:30+08:00",
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
+  "wave": 10,
+  "pack": "RELIABILITY-PIPE-EPISODE-ROLLUP-1",
+  "status": "CURSOR_EXIT_0",
+  "classification": "INTERNALLY_SOLVABLE",
+  "ceiling": "BUILT",
+  "episode_count": 10,
+  "flap_count": 9,
+  "wave_span": "Wave7-10",
+  "live_probe": "GREEN",
+  "fake_uptime": false,
+  "fake_pipe_up": false,
+  "suite_pass": 129,
+  "suite_fail": 0,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_pid_held": 15975,
+  "no_push": true,
+  "cursor_did_not_auto_start_next": true,
+  "next_pack_for_parent_only": "WAVE11-SYNTH-CONTINUE",
+  "result": "docs/wolf/ops/RELIABILITY-PIPE-EPISODE-ROLLUP-1-RESULT.md",
+  "preserves": [
+    "PIPE-RELIABILITY-AUTO-1",
+    "RELIABILITY-1"
+  ],
+  "forbids": [
+    "fake uptime",
+    "invent uptime %",
+    "fake pipe up"
+  ]
+}

@@ -58,7 +58,7 @@
   "result_present": true,
   "shots_count": 6,
   "shots_distinct_sha256": 4,
-  "awaiting_peaches_verify": true,
+  "awaiting_peaches_verify": false,
   "page": "/ops/sop-lesson-live",
   "api": "/api/ops/sop-lesson-live",
   "review_decision_api": "/api/sop/review-decision",
@@ -71,5 +71,8 @@
     "docs/wolf/ops/shots/soplessonlive1-unsigned-deny.png"
   ],
   "peaches_verified_at": "2026-09-30T03:57:00+08:00",
-  "peaches_verify": "state/final-completion/packs/SOP-LESSON-LIVE-1-PEACHES-VERIFY.json"
+  "peaches_verify": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T03:57:00+08:00",
+  "matt_finished_ping": true,
+  "matt_finished_ping_at": "2026-09-30T03:58:00+08:00"
 }

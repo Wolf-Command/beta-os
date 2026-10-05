@@ -1,0 +1,35 @@
+{
+  "milestone": "MULTI-20260930-0932-STAFF-ACCESS-TRUTH",
+  "at_wita": "2026-09-30T09:31:42+08:00",
+  "pack": "STAFF-ACCESS-TRUTH-1",
+  "status": "CURSOR_EXIT_0",
+  "suite": {
+    "pass": 135,
+    "fail": 0
+  },
+  "classification": "INTERNALLY_SOLVABLE",
+  "action": "WIRE_LIVE_REGISTRY_STAMPS",
+  "persons_active": 18,
+  "seat_count": 22,
+  "commissioned_count": 0,
+  "honest_empty_commissioned": true,
+  "invented_roles": false,
+  "invented_staff": false,
+  "staff_access_preserved": true,
+  "pins": {
+    "registry": "INTERNALLY_SOLVABLE",
+    "human_commissioning": "HUMAN_COMMISSIONING",
+    "cloudflare_access": "MATT_ACTION",
+    "cf_access_api": "EXTERNAL_BLOCKER"
+  },
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_pid_held": 15975,
+  "no_push": true,
+  "board": "/ops/staff-access-truth-1",
+  "result": "docs/wolf/ops/STAFF-ACCESS-TRUTH-1-RESULT.md",
+  "next_pack_for_parent": "APPROVALS-LIVE-DEEPEN-1",
+  "cursor_did_not_auto_start_next": true,
+  "matt_auto_continue_next_after_peaches": "APPROVALS-LIVE-DEEPEN-1",
+  "peaches_verify": "PASS_VERIFIED"
+}

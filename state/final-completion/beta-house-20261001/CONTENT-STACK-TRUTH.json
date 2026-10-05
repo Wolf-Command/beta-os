@@ -1,0 +1,189 @@
+{
+  "schema": "CONTENT-STACK-TRUTH/v1",
+  "mission": "BETA_HOUSE_REAL_CONNECTIONS",
+  "as_of_wita": "2026-10-01T08:05:50+08:00",
+  "prod_8787": "UNTOUCHED",
+  "staff_ready": false,
+  "desktop_gate_ready": false,
+  "metricool_write": false,
+  "skipped_owner": [
+    "Canva (Owner re-auth)",
+    "Klaviyo (Owner optional)"
+  ],
+  "layers": [
+    {
+      "id": "content_engine_ui",
+      "surface": "/content-2.0",
+      "state": "PARTIAL",
+      "proof": "HTML present; CF Access / authorised-scope gate returns 403 locally without JWT. Library/Upload/Plan chrome exists. Metricool honesty note WRITE OFF stamped in page.",
+      "live_bits": [
+        "dashboard file",
+        "Metricool READ honesty copy",
+        "NAS index operator chrome"
+      ],
+      "blocked_bits": [
+        "local unauth page load (403)",
+        "operator-depth APIs need Cf-Access JWT"
+      ]
+    },
+    {
+      "id": "content_library_db",
+      "surface": "catalog/content_library.sqlite",
+      "state": "PARTIAL",
+      "proof": "RO counts stamped honest on Content desk: assets=18, content_cards=153, content_plans=9, brands=1, content_versions=0. Explicit \u2260 NAS Media 38091.",
+      "live_bits": [
+        "sqlite readable",
+        "planner cards/plans present",
+        "content_desk_honesty_note"
+      ],
+      "blocked_bits": [
+        "not full media library",
+        "nas_received false on upload path"
+      ]
+    },
+    {
+      "id": "nas_mount_read",
+      "surface": "SMB /Volumes + /api/nas/status",
+      "state": "LIVE",
+      "proof": "Desk stamp LIVE on Owner pulse + content-2.0 + /api/nas/status.desk_stamp: Media 38091 / editable-3 843 / stock-1 207; B2 freshness; 00/02 denied; full_tree_indexed=false.",
+      "live_bits": [
+        "mounts",
+        "brand folders",
+        "timed file counts",
+        "owner_pulse_tile",
+        "content_honesty_note",
+        "api_nas_status_desk_stamp"
+      ],
+      "blocked_bits": [
+        "00/02 bare volume Permission denied",
+        "full_tree_indexed=false"
+      ]
+    },
+    {
+      "id": "nas_index_api",
+      "surface": "/api/nas/index/* + /api/content/ops-depth/*",
+      "state": "PARTIAL",
+      "proof": "Routes exist in content-2.0 JS; local calls return missing_auth (Cf-Access JWT fail-closed). Index operator depth not reproven this run without JWT.",
+      "live_bits": [
+        "code paths present"
+      ],
+      "blocked_bits": [
+        "JWT required for browse/filter APIs"
+      ]
+    },
+    {
+      "id": "nas_upload",
+      "surface": "/api/upload/smart + /api/upload/recent",
+      "state": "PARTIAL",
+      "proof": "recent returns ok with items=[] and nas.connected=true; nas_received=false until verify. No upload performed this run (no write invent).",
+      "live_bits": [
+        "status honesty",
+        "wolf_write_prefix documented"
+      ],
+      "blocked_bits": [
+        "no verified nas_received proof this run",
+        "staff_ready false"
+      ]
+    },
+    {
+      "id": "b2_archive",
+      "surface": "rclone b2nas:/wolfb2:",
+      "state": "LIVE",
+      "proof": "Freshness stamped on Owner/Content desk (~07:56 WITA media-cache). restore NOT_RUN.",
+      "live_bits": [
+        "list",
+        "freshness stamp"
+      ],
+      "blocked_bits": [
+        "restore"
+      ]
+    },
+    {
+      "id": "drive_mcp_read",
+      "surface": "MCP user-Google-drive",
+      "state": "LIVE",
+      "proof": "list_recent_files returned 5 files (BZG Alchemist Control sheet + board PDFs). WRITE OFF.",
+      "live_bits": [
+        "list_recent_files"
+      ],
+      "blocked_bits": [
+        "Drive write (policy OFF)"
+      ]
+    },
+    {
+      "id": "metricool_read",
+      "surface": "MCP user-Metricool + Beta wire",
+      "state": "LIVE",
+      "proof": "getBrandSettings 6 brands + getScheduledPosts Atrium 14 / Habitat 17 READ. Pulse tile + GGV #social schedule glance. WRITE OFF. Engagement invent OFF.",
+      "live_bits": [
+        "brands list",
+        "scheduled posts READ",
+        "READ wire",
+        "schedule_window_counts",
+        "owner_pulse_tile",
+        "ggv_social_schedule_stamp"
+      ],
+      "blocked_bits": [
+        "schedule/post WRITE",
+        "engagement invent"
+      ]
+    },
+    {
+      "id": "canva",
+      "surface": "Canva",
+      "state": "BLOCKED",
+      "proof": "CREDENTIAL_PRESENT_UNTESTED / expired \u2014 Owner re-auth. Skipped this run.",
+      "live_bits": [],
+      "blocked_bits": [
+        "Owner re-auth"
+      ]
+    },
+    {
+      "id": "klaviyo",
+      "surface": "Klaviyo",
+      "state": "BLOCKED",
+      "proof": "CREDENTIAL_PRESENT_UNTESTED \u2014 Owner optional. Skipped.",
+      "live_bits": [],
+      "blocked_bits": [
+        "Owner optional READ"
+      ]
+    },
+    {
+      "id": "ggv_social_hub",
+      "surface": "/ggv-ops-pack#social",
+      "state": "LIVE",
+      "proof": "IA hub + schedule READ glance via pulse RO (brands/list/PENDING-PUBLISHED counts). WRITE OFF. engagement null.",
+      "live_bits": [
+        "chrome hub",
+        "READ honesty",
+        "schedule_glance_stamp"
+      ],
+      "blocked_bits": [
+        "WRITE"
+      ]
+    },
+    {
+      "id": "gates",
+      "surface": "staff_ready / desktop_gate / human_commissioned",
+      "state": "BLOCKED",
+      "proof": "All false. No Exit Report. No WOLF DESKTOP READY.",
+      "live_bits": [],
+      "blocked_bits": [
+        "staff_ready",
+        "desktop_gate_ready",
+        "human_commissioned"
+      ]
+    }
+  ],
+  "summary_counts": {
+    "LIVE": 5,
+    "PARTIAL": 4,
+    "BLOCKED": 3,
+    "layers": 12
+  },
+  "notes": [
+    "Reconcile without fake: Library DB \u2260 NAS tree; NAS mount LIVE \u2260 index API LIVE without JWT.",
+    "No Metricool WRITE, no Canva/Klaviyo/Yanolja writes, no guest mail.",
+    "WORKFLOW desk stamps 2026-10-01: NAS/B2 + Metricool schedule + Library\u2260NAS on LIVE Owner/Content/GGV surfaces."
+  ]
+}

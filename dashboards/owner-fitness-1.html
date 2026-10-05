@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Owner Fitness — PARTIAL (Spartacus)</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root { color-scheme: light; --ink:#1a1f24; --muted:#5a6570; --paper:#f2f4f6; --card:#fbfcfd; --line:#d3dae0; --warn:#8a1f1f; --partial:#7a5a12; --ok:#1f5a3a; --accent:#2a5bb8; --font:"IBM Plex Sans","Segoe UI",sans-serif; --display:"Iowan Old Style",Palatino,Georgia,serif; }
+    *{box-sizing:border-box} body{margin:0;font-family:var(--font);background:radial-gradient(ellipse 65% 35% at 100% 0%,#e8efe8 0%,transparent 55%),var(--paper);color:var(--ink)}
+    main{max-width:1180px;margin:0 auto;padding:24px 20px 96px}
+    .crumb{font-size:.78rem;color:var(--muted);margin:0 0 8px}
+    h1{font-family:var(--display);font-weight:500;font-size:1.75rem;margin:0 0 6px;letter-spacing:-.02em}
+    .sub{color:var(--muted);margin:0 0 14px;line-height:1.45;font-size:.95rem}
+    .banner{background:#f8eaea;border:1px solid #e0b8b8;border-radius:10px;padding:12px 14px;margin:0 0 12px;font-size:.9rem;line-height:1.45;color:var(--warn)}
+    .banner.partial{background:#f7f0df;border-color:#e0d2a8;color:var(--partial)}
+    .banner strong{color:inherit}
+    h2{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px}
+    .meta{font-size:.8rem;color:var(--muted);margin-top:18px;line-height:1.45}
+    code{font-size:.78rem}
+    nav.desk{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+    nav.desk button{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:10px 14px;min-height:44px;font:inherit;font-weight:650;font-size:.84rem;cursor:pointer}
+    nav.desk button.active{border-color:var(--accent);color:var(--accent);background:#eef3fb}
+    .status-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin:0 0 16px}
+    .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+    .tile b{display:block;font-size:.85rem;margin:0 0 4px}
+    .tile span{font-size:.8rem;color:var(--muted);line-height:1.4}
+    .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin:0 0 18px}
+    .card-grid .span-2{grid-column:span 2}
+    @media (max-width:720px){.card-grid .span-2{grid-column:span 1}}
+    article.desk-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0;overflow:hidden;display:flex;flex-direction:column}
+    article.desk-card header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
+    article.desk-card header h3{margin:0;font-size:1rem;font-weight:650}
+    article.desk-card header .chev{color:var(--muted);font-size:1.1rem}
+    article.desk-card .body{padding:12px 14px 16px}
+    article.desk-card.collapsed .body{display:none}
+    .ro-meta{font-size:.78rem;color:var(--muted);margin:0 0 10px}
+    .ro-table{width:100%;border-collapse:collapse;font-size:.82rem}
+    .ro-table th,.ro-table td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+    .ro-table th{color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
+    .ro-chip{display:inline-block;padding:2px 8px;border-radius:999px;background:#eef2f5;font-size:.72rem;margin:0 4px 4px 0}
+    .ro-chip.on{background:#e3f0e8;color:var(--ok)}
+    .ro-chip.off{background:#f3e8e8;color:var(--warn)}
+    .ro-pre{white-space:pre-wrap;font-size:.78rem;max-height:220px;overflow:auto;background:#f6f8fa;border:1px solid var(--line);border-radius:8px;padding:10px;margin:0}
+    .ro-empty{color:var(--muted);font-size:.85rem}
+    .ro-ok{color:var(--ok)}.ro-bad{color:var(--warn)}
+    .view{display:none}.view.active{display:block}
+    ul.hold{margin:0;padding-left:1.1rem} ul.hold li{margin:4px 0}
+  </style>
+</head>
+<body data-wolf-page-type="WORKSPACE" data-wolf-org="OWNER" data-wolf-shell="global">
+<main>
+  <p class="crumb">WOLF › HOME › Personal › Fitness (Owner)</p>
+  <h1>Fitness · Spartacus</h1>
+  <p class="sub">Owner personal command · <strong>Fitness ≠ HR</strong> · RO from V1 sqlite · migration_state <strong>PARTIAL</strong> · staff_ready=false</p>
+  <div class="banner"><strong>NOT REBUILT+PROVEN.</strong> No staff Fitness product. No HRIS merge. No write invent. Telegram bot unchanged.</div>
+  <div class="banner partial"><strong>PARTIAL transfer · UX-PACK-06 slice.</strong> Useful V1-like RO cards (Today / Program / Training / Peptides) from <code>/api/owner/fitness-ro</code>. Still PARTIAL. No PII dumps beyond Owner RO aggregates already present.</div>
+
+  <nav class="desk" aria-label="Fitness desk views" id="deskNav">
+    <button type="button" class="active" data-view="desk">Desk</button>
+    <button type="button" data-view="today">Today</button>
+    <button type="button" data-view="training">Training</button>
+    <button type="button" data-view="peptides">Peptides</button>
+    <button type="button" data-view="status">Status</button>
+  </nav>
+
+  <p class="ro-meta">Live RO · <span id="ro-live-status">loading…</span> · as of <span id="ro-asof">—</span></p>
+
+  <section class="view active" id="view-desk" aria-label="Desk cards">
+    <div class="card-grid" id="deskCards">
+      <article class="desk-card" id="card-today">
+        <header data-toggle><h3>Today</h3><span class="chev">›</span></header>
+        <div class="body" id="desk-today"><p class="ro-empty">…</p></div>
+      </article>
+      <article class="desk-card" id="card-program">
+        <header data-toggle><h3>Program / plan</h3><span class="chev">›</span></header>
+        <div class="body" id="desk-program"><p class="ro-empty">…</p></div>
+      </article>
+      <article class="desk-card span-2" id="card-training">
+        <header data-toggle><h3>Recent training</h3><span class="chev">›</span></header>
+        <div class="body" id="desk-training"><p class="ro-empty">…</p></div>
+      </article>
+      <article class="desk-card span-2" id="card-peptides">
+        <header data-toggle><h3>Peptide schedule</h3><span class="chev">›</span></header>
+        <div class="body" id="desk-peptides"><p class="ro-empty">…</p></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="view" id="view-today" aria-label="Today view">
+    <h2>Today (RO)</h2>
+    <div id="view-today-body"><p class="ro-empty">…</p></div>
+  </section>
+
+  <section class="view" id="view-training" aria-label="Training view">
+    <h2>Training + lifts (RO)</h2>
+    <div id="view-training-body"><p class="ro-empty">…</p></div>
+  </section>
+
+  <section class="view" id="view-peptides" aria-label="Peptides view">
+    <h2>Peptides (RO)</h2>
+    <div id="view-peptides-body"><p class="ro-empty">…</p></div>
+  </section>
+
+  <section class="view" id="view-status" aria-label="Status">
+    <h2>Status</h2>
+    <div class="status-grid">
+      <div class="tile"><b>migration_state</b><span>PARTIAL</span></div>
+      <div class="tile"><b>staff_ready</b><span>false</span></div>
+      <div class="tile"><b>human_commissioned</b><span>false</span></div>
+      <div class="tile"><b>HR boundary</b><span>Fitness ≠ HR · no staff Fitness</span></div>
+    </div>
+    <h2>Provenance (V1)</h2>
+    <div class="status-grid">
+      <div class="tile"><b>Board</b><span>wolf-system/dashboards/spartacus.html</span></div>
+      <div class="tile"><b>DB</b><span>~/.openclaw/personal/health/spartacus.sqlite (mode=ro)</span></div>
+      <div class="tile"><b>Program</b><span>Wolf75 · Sparta · peptides · breathwork</span></div>
+      <div class="tile"><b>Audience</b><span>Matthew / Owner only</span></div>
+    </div>
+    <h2>Counts (aggregates)</h2>
+    <div id="view-counts"><p class="ro-empty">…</p></div>
+    <p class="meta">Alias <code>/owner/peptide</code> → this board. Pack tag UX-PACK-06-20260930. Spec: <code>state/final-completion/p0-v1/transfer/TRANSFER-FITNESS-SPEC.md</code></p>
+  </section>
+</main>
+<script>
+(function(){
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
+  function chip(label, on){return "<span class=\"ro-chip "+(on?"on":"off")+"\">"+esc(label)+"</span>";}
+
+  function setView(name){
+    document.querySelectorAll("nav.desk button").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-view")===name);});
+    document.querySelectorAll("section.view").forEach(function(s){s.classList.toggle("active",s.id==="view-"+name);});
+  }
+  document.getElementById("deskNav").addEventListener("click",function(e){
+    var b=e.target.closest("button[data-view]"); if(!b) return;
+    setView(b.getAttribute("data-view"));
+  });
+  document.getElementById("deskCards").addEventListener("click",function(e){
+    var h=e.target.closest("header[data-toggle]"); if(!h) return;
+    h.parentElement.classList.toggle("collapsed");
+  });
+
+  function paintToday(d){
+    d=d||{};
+    if(!d.date){
+      var empty="<p class=\"ro-empty\">No day row yet. Do not invent a workout.</p>";
+      document.getElementById("desk-today").innerHTML=empty;
+      document.getElementById("view-today-body").innerHTML=empty;
+      return;
+    }
+    var html="<p class=\"ro-meta\">date <strong>"+esc(d.date)+"</strong> · day_num "+esc(d.day_num)+" · "+esc(d.note||"today glance")+"</p>"+
+      "<div>"+chip("wo1 "+(d.wo1_done?"done":"open"),!!d.wo1_done)+chip("wo2 "+(d.wo2_done?"done":"open"),!!d.wo2_done)+
+      chip("breathwork",!!d.breathwork_done)+chip("meditation",!!d.meditation_done)+chip("reading",!!d.reading_done)+
+      chip("water "+(d.water_ml||0)+"ml",!!(d.water_ml))+chip("closed",!!d.logged_closed)+"</div>"+
+      "<p class=\"ro-meta\">diet "+esc(d.diet_status||"—")+" · verdict "+esc(d.verdict||"—")+" · perfect "+esc(String(!!d.perfect))+"</p>"+
+      "<p class=\"ro-meta\">RO glance only. No Save. Fitness ≠ HR.</p>";
+    document.getElementById("desk-today").innerHTML=html;
+    document.getElementById("view-today-body").innerHTML=html;
+  }
+
+  function paintProgram(plan, stats){
+    plan=plan||{}; stats=stats||{};
+    var tasks=plan.tasks||[];
+    var blocks=plan.blocks||{};
+    var taskHtml=tasks.length
+      ? "<ul class=\"hold\">"+tasks.map(function(t){return "<li>"+esc(t.name||"")+(t.done?" · done":" · open")+"</li>";}).join("")+"</ul>"
+      : "<p class=\"ro-empty\">No plan tasks.</p>";
+    var html="<p class=\"ro-meta\">plan date <strong>"+esc(plan.date||"—")+"</strong> · confirmed "+esc(String(!!plan.confirmed))+" · tasks "+esc(plan.task_count||0)+"</p>"+
+      "<p class=\"ro-meta\">blocks b1 "+esc(JSON.stringify(blocks.b1||null))+" · b2 "+esc(JSON.stringify(blocks.b2||null))+" · cal_ok "+esc(String(blocks.cal_ok))+"</p>"+
+      taskHtml+
+      "<p class=\"ro-meta\">program stats · days "+esc(stats.days_rows)+" · with_wo "+esc(stats.days_with_wo)+" · closed "+esc(stats.days_closed)+"</p>";
+    document.getElementById("desk-program").innerHTML=html;
+    document.getElementById("view-today-body").innerHTML=
+      (document.getElementById("view-today-body").innerHTML||"")+
+      "<h2 style=\"margin-top:18px\">Program / plan</h2>"+html;
+  }
+
+  function trainTable(wo, lifts){
+    var a=(!wo||!wo.length)?"<p class=\"ro-empty\">No recent training_log rows.</p>":
+      "<table class=\"ro-table\"><thead><tr><th>Date</th><th>Lift</th><th>ts</th></tr></thead><tbody>"+
+      wo.map(function(r){return "<tr><td>"+esc(r.date)+"</td><td>"+esc(r.lift)+"</td><td>"+esc(r.ts||"")+"</td></tr>";}).join("")+
+      "</tbody></table>";
+    var b=(!lifts||!lifts.length)?"<p class=\"ro-empty\">No lift_sessions.</p>":
+      "<table class=\"ro-table\"><thead><tr><th>Date</th><th>Lift key</th><th>Progressed</th></tr></thead><tbody>"+
+      lifts.map(function(r){return "<tr><td>"+esc(r.date)+"</td><td>"+esc(r.lift_key)+"</td><td>"+esc(r.progressed)+"</td></tr>";}).join("")+
+      "</tbody></table>";
+    return "<h3 style=\"margin:0 0 8px;font-size:.9rem\">Training log</h3>"+a+"<h3 style=\"margin:14px 0 8px;font-size:.9rem\">Lift sessions</h3>"+b;
+  }
+
+  function paintTraining(j){
+    var html=trainTable(j.recent_workouts||[], j.recent_lifts||[]);
+    document.getElementById("desk-training").innerHTML=html;
+    document.getElementById("view-training-body").innerHTML=html;
+  }
+
+  function paintPeptides(j){
+    var ps=j.peptide_schedule||{};
+    var comps=ps.compounds||[];
+    var pl=j.peptide_log_recent||[];
+    var html="<p class=\"ro-meta\">"+esc(ps.law||"")+" · fresh_start "+esc(ps.fresh_start||"—")+" · "+esc(ps.protocol_dated||"")+" · status "+esc(ps.status||"—")+"</p>"+
+      (comps.length?"<table class=\"ro-table\"><thead><tr><th>Compound</th><th>Dose</th><th>When</th><th>Cycle</th></tr></thead><tbody>"+
+        comps.map(function(c){return "<tr><td>"+esc(c.name||c.id)+"</td><td>"+esc(c.dose)+"</td><td>"+esc(c.when)+"</td><td>"+esc(c.cycle)+"</td></tr>";}).join("")+
+        "</tbody></table>":"<p class=\"ro-empty\">Schedule missing.</p>")+
+      "<h3 style=\"margin:12px 0 6px;font-size:.85rem\">Recent peptide_log</h3>"+
+      (pl.length?"<table class=\"ro-table\"><thead><tr><th>Date</th><th>Compound</th><th>Status</th></tr></thead><tbody>"+
+        pl.map(function(r){return "<tr><td>"+esc(r.date)+"</td><td>"+esc(r.compound)+"</td><td>"+esc(r.status)+"</td></tr>";}).join("")+
+        "</tbody></table>":"<p class=\"ro-empty\">No peptide_log rows.</p>");
+    document.getElementById("desk-peptides").innerHTML=html;
+    document.getElementById("view-peptides-body").innerHTML=html;
+  }
+
+  function paintCounts(tc){
+    tc=tc||{};
+    var keys=["training_log","lift_sessions","lift_weights","peptide_log","days","plans","water_log","habits"];
+    document.getElementById("view-counts").innerHTML="<div>"+keys.map(function(k){return "<span class=\"ro-chip\">"+esc(k)+": "+esc(tc[k])+"</span>";}).join("")+"</div>";
+  }
+
+  function paintAll(j){
+    var st=document.getElementById("ro-live-status");
+    var ok=!!(j&&j.ok);
+    st.textContent=ok?(j.reason||"ok"):("fail-closed · "+((j&& (j.reason||j.error))||"error"));
+    st.className=ok?"ro-ok":"ro-bad";
+    document.getElementById("ro-asof").textContent=(j&&j.as_of_wita)||"—";
+    paintToday(j&&j.today_day);
+    paintProgram(j&&j.today_plan, j&&j.day_stats);
+    paintTraining(j||{});
+    paintPeptides(j||{});
+    paintCounts(j&&j.table_counts);
+  }
+
+  fetch("/api/owner/fitness-ro",{credentials:"same-origin"})
+    .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+    .then(function(x){
+      var j=x.j||{};
+      if(!x.ok) j.ok=false;
+      paintAll(j);
+    })
+    .catch(function(e){
+      document.getElementById("ro-live-status").textContent="error · "+e;
+      document.getElementById("ro-live-status").className="ro-bad";
+    });
+})();
+</script>
+<script src="/assets/sidenav.js"></script>
+</body>
+</html>

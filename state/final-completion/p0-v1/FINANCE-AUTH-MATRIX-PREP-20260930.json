@@ -1,0 +1,161 @@
+{
+  "schema": "FINANCE-AUTH-MATRIX-PREP/v0",
+  "generated_at_wita": "2026-09-30T12:23:21+08:00",
+  "executor": "Peaches-executor",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "bound": "beta",
+  "staff_ready": false,
+  "matrix_pass_invented": false,
+  "claim": "PREP only \u2014 mechanical Role/Scope/whoami + unauth HTTP. No human PASS. No matrix PASS.",
+  "people_neq_roles": true,
+  "seats": [
+    {
+      "person_id": "PERS-ZAYEN",
+      "display": "Zayen",
+      "email": "laluzayen@gmail.com",
+      "intended_surface": "AMG/BZG Finance",
+      "db_assignments": [
+        {
+          "id": "ASG-ZAYEN-FC-1",
+          "role": "ROLE-AMG-FINANCIAL-CONTROLLER",
+          "scopes": [
+            "SCOPE-AMG-FINANCE"
+          ],
+          "href": "/amg/finance"
+        },
+        {
+          "id": "ASG-ZAYEN-AR-1",
+          "role": "ROLE-AMG-ACCOUNTS-RECEIVABLE",
+          "scopes": [
+            "SCOPE-AMG-FINANCE"
+          ],
+          "href": "/amg/finance"
+        },
+        {
+          "id": "ASG-ZAYEN-BZG-FC-1",
+          "role": "ROLE-BZG-FINANCIAL-CONTROLLER",
+          "scopes": [
+            "SCOPE-BZG-FINANCE"
+          ],
+          "href": "/bzg/finance"
+        }
+      ],
+      "nav_authority_roles": [
+        "ROLE-AMG-FINANCIAL-CONTROLLER",
+        "ROLE-AMG-ACCOUNTS-RECEIVABLE",
+        "ROLE-BZG-FINANCIAL-CONTROLLER"
+      ],
+      "nav_authority_businesses": [
+        "amg",
+        "bzg"
+      ],
+      "nav_authority_items": [
+        "/amg/finance",
+        "/bzg/finance"
+      ],
+      "audience": "SPECIALIST_ATRIUM_FINANCE",
+      "checks_mechanical": {
+        "roles_cover_expected": true,
+        "hrefs_cover_expected": true,
+        "biz_cover_expected": true,
+        "source_assignment_role_scope": true
+      },
+      "human_prove_status": "NOT_RUN",
+      "matrix_pass": null
+    },
+    {
+      "person_id": "PERS-AMANDA",
+      "display": "Amanda",
+      "email": "amanda@wolfcommand.net",
+      "intended_surface": "GGV Finance",
+      "db_assignments": [
+        {
+          "id": "ASG-AMANDA-CM-1",
+          "role": "ROLE-CONTENT-MGMT",
+          "scopes": [
+            "SCOPE-CRM-HABITAT-LEAD",
+            "SCOPE-GGV-CONTENT",
+            "SCOPE-GGV-CONTENT-LIBRARY",
+            "SCOPE-GGV-HABITAT-LEAD",
+            "SCOPE-GGV"
+          ],
+          "href": "/content-2.0"
+        },
+        {
+          "id": "ASG-AMANDA-GGV-FIN-1",
+          "role": "ROLE-GGV-FINANCE-OPERATOR",
+          "scopes": [
+            "SCOPE-GGV-FINANCE"
+          ],
+          "href": "/ggv/finance"
+        }
+      ],
+      "nav_authority_roles": [
+        "ROLE-CONTENT-MGMT",
+        "ROLE-GGV-FINANCE-OPERATOR"
+      ],
+      "nav_authority_businesses": [
+        "ggv"
+      ],
+      "nav_authority_items": [
+        "/content-2.0",
+        "/ggv/finance"
+      ],
+      "audience": "SPECIALIST_GGV",
+      "checks_mechanical": {
+        "roles_cover_expected": true,
+        "hrefs_cover_expected": true,
+        "biz_cover_expected": true,
+        "source_assignment_role_scope": true
+      },
+      "human_prove_status": "NOT_RUN",
+      "matrix_pass": null
+    }
+  ],
+  "unauth_http_local_beta_8788": {
+    "/amg/finance": {
+      "local_beta_unauth": 403
+    },
+    "/bzg/finance": {
+      "local_beta_unauth": 403
+    },
+    "/ggv/finance": {
+      "local_beta_unauth": 403
+    },
+    "/amg-ops-pack": {
+      "local_beta_unauth": 403
+    },
+    "/bzg": {
+      "local_beta_unauth": 403
+    },
+    "/ggv-ops-pack": {
+      "local_beta_unauth": 403
+    },
+    "/amg-packages-products": {
+      "local_beta_unauth": 403
+    },
+    "/amg-packages": {
+      "local_beta_unauth": 403
+    }
+  },
+  "owner_gate_note": "Keep on Needs Matt only if CF Access / Owner policy still blocks staff seats. Otherwise Zayen/Amanda prove on STAFF-PROVE-QUEUE.",
+  "human_prove_steps_when_seated": {
+    "Zayen": [
+      "Sign in as Zayen (laluzayen@gmail.com) via CF Access + Beta \u2014 own session",
+      "Desktop: /amg/finance \u2192 real finance UI (not Access wall / Host Error / empty shell)",
+      "Desktop: /bzg/finance \u2192 BZG FC surface",
+      "Desktop: /amg-ops-pack reachable",
+      "Phone: /amg/finance + /bzg/finance",
+      "Confirm no GGV finance grant",
+      "MY COMMISSIONING PASS or PROBLEM* \u2014 do not invent PASS"
+    ],
+    "Amanda": [
+      "Sign in as Amanda (amanda@wolfcommand.net) via CF Access + Beta \u2014 own session",
+      "Desktop: /ggv/finance \u2192 GGV finance / nota desk",
+      "Confirm nota remains payment-impossible",
+      "Desktop: /ggv-ops-pack reachable",
+      "Phone: /ggv/finance",
+      "MY COMMISSIONING PASS or PROBLEM* \u2014 do not invent PASS"
+    ]
+  }
+}

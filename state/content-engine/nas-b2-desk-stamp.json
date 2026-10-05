@@ -1,0 +1,54 @@
+{
+  "schema": "wolf.nas-b2-desk-stamp-1.v1",
+  "pack": "WORKFLOW-NAS-B2-DESK-STAMP-1",
+  "as_of_wita": "2026-10-01T08:02:44+08:00",
+  "source_pack": "PROVE-NAS-B2-INVENTORY-1-DEEPEN",
+  "ok": true,
+  "write": false,
+  "restore": "NOT_RUN",
+  "full_tree_indexed": false,
+  "staff_ready": false,
+  "invented_counts": false,
+  "nas": {
+    "reachable_ok": [
+      "01-Media-Library",
+      "00-Editing-Workspace-3",
+      "02-Stock-Assets-1",
+      "03-Templates",
+      "05-Wolf-Vault-Mirror"
+    ],
+    "permission_denied_honest": [
+      "00-Editing-Workspace",
+      "00-Editing-Workspace-1",
+      "00-Editing-Workspace-2",
+      "02-Stock-Assets"
+    ],
+    "counts": {
+      "media_01_maxdepth3": 38091,
+      "editable_00_3_maxdepth3": 843,
+      "stock_02_1_maxdepth3": 207,
+      "templates_03_maxdepth2": 1,
+      "vault_mirror_05_maxdepth2": 21
+    },
+    "note": "Shallow timed counts from deepen prove. 00/02 bare volumes Permission denied (not active mounts). Not full NAS index."
+  },
+  "b2": {
+    "freshness_headline_wita": "newest media-cache ~2026-10-01 07:53\u201307:56 WITA",
+    "newest_modtime_utc": {
+      "b2nas_wolf_media_nas_cache": "2026-09-30T23:53:57.000Z",
+      "wolfb2_wolf_media_nas_cache": "2026-09-30T23:56:58.000Z",
+      "wolfb2_footage": "2026-09-30T18:05:53.079Z",
+      "wolfb2_cold_scratch": "2026-09-26T23:48:44.052Z"
+    },
+    "restore": "NOT_RUN"
+  },
+  "library_db_honesty": {
+    "note": "Library sqlite \u2260 NAS tree",
+    "assets": 18,
+    "content_cards": 153,
+    "content_plans": 9,
+    "brands": 1,
+    "content_versions": 0
+  },
+  "value_line": "Media 38091 \u00b7 editable-3 843 \u00b7 stock-1 207 \u00b7 B2 cache fresh ~07:56 WITA \u00b7 00/02 denied \u00b7 full_tree_indexed=false"
+}

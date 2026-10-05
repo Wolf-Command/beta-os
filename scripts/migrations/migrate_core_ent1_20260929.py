@@ -30,6 +30,12 @@ from core.scope import upsert_assignment_scope  # noqa: E402
 
 DB = ROOT / "catalog" / "content_library.sqlite"
 BACKUP_DIR = ROOT / "catalog" / "backups"
+
+# Owner P0 5 Oct 2026: retention/free-space guard (docs/BACKUP-RETENTION.md)
+import sys as _bp_sys  # noqa: E402
+if str(ROOT / "scripts") not in _bp_sys.path:
+    _bp_sys.path.insert(0, str(ROOT / "scripts"))
+from core.backup_policy import premig_backup  # noqa: E402
 ATRIUM_DB = Path("/Users/wolfterminal/atrium-finance/data/beta/atrium.sqlite")
 OU_DOC = ROOT / "state" / "finance-core-sprint" / "BZG-OPERATING-UNITS.json"
 MIGRATION_ID = "core_ent1_20260929"
@@ -561,7 +567,7 @@ def main() -> int:
     ts = now_iso()
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
     dest = BACKUP_DIR / f"pre-core-ent1-{stamp()}.sqlite"
-    shutil.copy2(DB, dest)
+    dest = premig_backup(DB, dest)
     print(f"BACKUP={dest}")
     print(f"SHA256={_sha256(dest)}")
 

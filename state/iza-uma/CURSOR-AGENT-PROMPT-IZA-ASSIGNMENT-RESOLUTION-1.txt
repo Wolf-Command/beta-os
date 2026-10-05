@@ -1,0 +1,11 @@
+P0 HUMAN COMMISSIONING FAIL — IZA-ASSIGNMENT-RESOLUTION-1.
+
+Read: /Users/wolfterminal/beta-os/state/iza-uma/CURSOR-PACK-IZA-ASSIGNMENT-RESOLUTION-1.md
+Deny string at scripts/serve_beta.py ~5700 and ~1889.
+Iza: CF OK as izazaen00@gmail.com; error "This close is not on your assignment."
+Claimed: PERS-IZA → Uma Floor Captain → Captain⊇Cashier → VCR-UMA-2.
+Tip HEAD should be 8688c08 lineage; Captain work from 876f49e.
+
+Fix reusable roster→tonight’s open close resolution per Owner business model. Multi-closer. Take/submit attribution. No RBAC loosen, no email special-case, no per-day person invent as only path.
+
+Tests listed in pack — all green. Restart Beta if needed. Verify Iza identity path ALLOW independently. RESULT under state/iza-uma/. Local commit only. EXIT:0 + tip SHA.

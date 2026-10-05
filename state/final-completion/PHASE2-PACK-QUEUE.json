@@ -1801,9 +1801,19 @@
       ],
       "estimated_effort": "S",
       "matt_blocker": false,
-      "status": "QUEUED",
+      "status": "CURSOR_EXIT_0",
       "classification": "INTERNALLY_SOLVABLE",
-      "synthesized_from": "pipe flaps logged during Wave7-9"
+      "synthesized_from": "pipe flaps logged during Wave7-9",
+      "armed_at": "2026-09-30T10:33:41+08:00",
+      "wave": 10,
+      "prior_pack_verified": "HR-DEFERRED-HOLD-STAMP-1",
+      "exited_at": "2026-09-30T10:40:30+08:00",
+      "suite_pass": 129,
+      "suite_fail": 0,
+      "tests": "129/0",
+      "episode_count": 10,
+      "flap_count": 9,
+      "next_pack_for_parent": "WAVE11-SYNTH-CONTINUE"
     }
   ],
   "first_pack": "DASH-LIVE-1",

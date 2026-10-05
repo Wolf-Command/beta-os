@@ -1,0 +1,59 @@
+{
+  "stamped_at": "2026-10-02T06:42:36.790524+08:00",
+  "desks": {
+    "declared_cash": {
+      "tags": [
+        "HUMAN_DATA_REQUIRED",
+        "REQUIRES_HUMAN_COMMISSIONING",
+        "INTERNALLY_BUILDABLE"
+      ],
+      "complete": false
+    },
+    "housekeeping": {
+      "tags": [
+        "INTERNALLY_BUILDABLE",
+        "REQUIRES_INTEGRATION",
+        "EXTERNAL_BLOCKER"
+      ],
+      "complete": false
+    },
+    "crm_identity": {
+      "tags": [
+        "INTERNALLY_BUILDABLE",
+        "REQUIRES_HISTORICAL_MIGRATION",
+        "REQUIRES_INTEGRATION"
+      ],
+      "complete": false
+    },
+    "menu_engineering": {
+      "tags": [
+        "INTERNALLY_BUILDABLE",
+        "HUMAN_DATA_REQUIRED",
+        "REQUIRES_INTEGRATION"
+      ],
+      "complete": false
+    },
+    "content_learn_back": {
+      "tags": [
+        "INTERNALLY_BUILDABLE"
+      ],
+      "complete": false
+    },
+    "month_end_shareholder": {
+      "tags": [
+        "INTERNALLY_BUILDABLE",
+        "REQUIRES_INTEGRATION",
+        "REQUIRES_HISTORICAL_MIGRATION"
+      ],
+      "complete": false
+    },
+    "sale_readiness": {
+      "tags": [
+        "INTERNALLY_BUILDABLE",
+        "REQUIRES_HUMAN_COMMISSIONING"
+      ],
+      "complete": false
+    }
+  },
+  "honesty_ui_counts_as_complete": false
+}

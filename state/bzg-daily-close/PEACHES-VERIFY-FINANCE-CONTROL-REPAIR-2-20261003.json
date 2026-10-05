@@ -1,0 +1,47 @@
+{
+  "pack": "FINANCE-CONTROL-REPAIR-2",
+  "run_id": "BF-e7e9674c2f1d",
+  "slice": "continuation_2_restart_reopen_missing_close_ggv_bank_http",
+  "at": "2026-10-03T16:54:50+08:00",
+  "verifier": "Peaches",
+  "verdict": "LOCAL_PASS_CODE_COMPLETE_INTEGRATION_PARTIAL_NOT_MATT_READY",
+  "eng_proved": false,
+  "staff_ready": false,
+  "ready_for_matt_test": false,
+  "human_commissioned": false,
+  "tip_observed": "0b0e50d",
+  "working_tree_dirty": true,
+  "dirty_approx": 437,
+  "cursor_pid": 74464,
+  "cursor_alive": false,
+  "cursor_log": "/Users/wolfterminal/beta-os/state/reliability/finance-cursor-continuation-2-2026-10-03.log",
+  "prove_script": "state/reliability/prove_finance_control_continuation_20261003.py",
+  "prove_result": "PASS preserved_intact restart_schema history_range history_detail_dual_source add_missing_already_present cancel_restart single_holder_lock takeover_reassign reopen_immutable bank_cards_not_used ggv_vault_receipts bank_statement_import zayen_ggv_deny freeze_still_holds",
+  "prod_pid_sacred": 15975,
+  "prod_pid_unchanged": true,
+  "preserved_close": {
+    "close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+    "state": "DATA_CAPTURED",
+    "holder": "PERS-MATT",
+    "intact": true
+  },
+  "checks": {
+    "cursor_exited": "PASS",
+    "prove_script_rerun": "PASS",
+    "checkpoint_appended": "PASS",
+    "beta_8788_cf_auth": "403_expected",
+    "prod_8787": "200",
+    "p2p_not_started": "PASS"
+  },
+  "remaining_gates": [
+    "peaches_visual_edc_bank_cards",
+    "mandiri_receipt_photo_human",
+    "peaches_live_chat_bridge_hook",
+    "cf_staff_session_eng_proved",
+    "ggv_accountant_queue_taxonomy_partial"
+  ],
+  "matt_ping": false,
+  "matt_ping_reason": "not_matt_ready_staff_ready_false_eng_proved_false",
+  "total_completion_gate": "Finance Control Repair not yet real proved Beta checkpoint (eng_proved=false); P2P remains QUEUED_NEXT held",
+  "note": "Classic ACTIVE BF-e7e9674c2f1d WAITING_CURSOR child dead. Peaches independent verify: local prove PASS on running Beta DB; HTTP prove was under temporary development_assertion then CF restored. Do not stamp ENG_PROVED or staff_ready. Do not WakeParent. Do not auto-arm P2P or Tours/Events."
+}

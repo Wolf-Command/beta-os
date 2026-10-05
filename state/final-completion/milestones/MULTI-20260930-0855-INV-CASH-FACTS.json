@@ -1,0 +1,28 @@
+{
+  "milestone": "MULTI-20260930-0855-INV-CASH-FACTS",
+  "at_wita": "2026-09-30T08:55:00+08:00",
+  "pack": "INV-CASH-FACTS-ROUTE-1",
+  "status": "CURSOR_EXIT_0",
+  "suite": {
+    "pass": 172,
+    "fail": 0
+  },
+  "pack_classification": "HUMAN_COMMISSIONING_OR_INTERNAL",
+  "route_classification": "HUMAN_COMMISSIONING",
+  "action": "STAMP_HUMAN_COMMISSIONING",
+  "uma_petty": "EXTERNAL",
+  "invented_qty": false,
+  "invented_cash": false,
+  "qty": null,
+  "balance": null,
+  "bzg_inventory_truth1_preserved": true,
+  "fin_cash_truth1_preserved": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_pid_held": 15975,
+  "no_push": true,
+  "board": "/ops/inv-cash-facts-route-1",
+  "result": "docs/wolf/ops/INV-CASH-FACTS-ROUTE-1-RESULT.md",
+  "next_pack_for_parent": "DEEPEN-SYNTH-CONTINUE",
+  "cursor_did_not_auto_start_next": true
+}

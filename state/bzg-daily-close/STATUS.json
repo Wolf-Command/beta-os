@@ -1,10 +1,15 @@
 {
-  "status": "ENG_PROVED_AWAITING_PEACHES",
-  "tip": "0809f04",
-  "pack": "BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1",
-  "at": "2026-10-02T21:58:12+08:00",
+  "status": "CODE_COMPLETE_LIVE_PROVED_AWAITING_PEACHES",
+  "tip": "0b0e50d",
+  "pack": "BZG-CLOSE-VISION-CAPABILITY-1",
+  "at": "2026-10-03T10:44:30+08:00",
   "staff_ready": false,
   "human_commissioned": false,
+  "daily_close_commissioned": false,
   "iza_retest_ready": false,
-  "impl": "28c0ec5"
+  "eng_proved": false,
+  "result": "state/bzg-daily-close/BZG-CLOSE-VISION-CAPABILITY-1-RESULT.md",
+  "peaches_verify": "state/bzg-daily-close/PEACHES-VERIFY-VISION-CAPABILITY-1.json",
+  "beta_8788_pid": "34207",
+  "prod_8787_pid": "15975"
 }

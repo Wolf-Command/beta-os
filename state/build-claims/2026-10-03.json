@@ -1,0 +1,53 @@
+[
+  {
+    "id": "bzg-close-vision-capability-1-20261003",
+    "claim": "BZG-CLOSE-VISION-CAPABILITY-1: RECEIPT_IMAGE_EXTRACTION via model_router vision_extract; staff-safe errors; soft-fail manual path; preserved close+receipt; live prove 9/9 on EVD-CLOSE-ESB-806C52F2BFBF.jpg; ENG_PROVED gate fail-closed; staff_ready false; eng_proved false",
+    "check": "python3 scripts/tests/test_eng_proved_integration_gate_1.py && python3 -c \"import json; from pathlib import Path; p=json.loads(Path('state/bzg-daily-close/VISION-LIVE-PROVE-20261003.json').read_text()); assert p['match_count']==9 and p['extraction_unavailable'] is False; r=Path('state/bzg-daily-close/receipts/EVD-CLOSE-ESB-806C52F2BFBF.jpg'); assert r.is_file() and r.stat().st_size>1000\"",
+    "expect": "gate 20/0 + live prove 9/9 + receipt preserved",
+    "by": "cursor-local",
+    "pack": "BZG-CLOSE-VISION-CAPABILITY-1",
+    "created_at": "2026-10-03T10:44:30+08:00"
+  },
+  {
+    "id": "HA-OS-P0-ROOT-CAUSE-20261003",
+    "claim": "HA Phase1: HOST ONLINE / CONTROL DEGRADED; LOCAL_EXEC_DEAD probe+sticky ceiling proved; ultimate 07:12 cause UNKNOWN; no SSH/Tailscale/actuator install; prod untouched",
+    "check": "test -f state/reliability/HA-ROOT-CAUSE-2026-10-03.md && rg -n 'UNKNOWN|LOCAL_EXEC_DEAD|HOST ONLINE' state/reliability/HA-ROOT-CAUSE-2026-10-03.md | head -5 && lsof -nP -iTCP:8787 -sTCP:LISTEN | head -1",
+    "expect": "HA-ROOT-CAUSE file present; UNKNOWN + LOCAL_EXEC_DEAD documented; :8787 still listening",
+    "by": "cursor-agent-beta-os",
+    "at": "2026-10-03T11:05:00+08:00"
+  },
+  {
+    "id": "FINANCE-CONTROL-HISTORY-CANCEL-20261003",
+    "claim": "Finance repair continue: closing history filters+saved totals; cancel_unfinished; VDC-87202768+photos preserved; staff_ready false; eng_proved false; CODE COMPLETE / INTEGRATION UNPROVED",
+    "check": "python3 -c \"import sqlite3; from pathlib import Path; c=sqlite3.connect('catalog/content_library.sqlite'); r=c.execute(\\\"SELECT state,business_date,taken_by_person_id FROM venue_daily_closes WHERE close_id='VDC-87202768-55af-4c8e-abc3-382a5496b8c6'\\\").fetchone(); assert r[0]=='DATA_CAPTURED' and r[1]=='2026-10-02' and r[2]=='PERS-MATT'; assert len(list(Path('state/bzg-daily-close/receipts').glob('EVD-CLOSE-*')))>=5; import sys; sys.path.insert(0,'scripts'); from core import venue_close as v; h=v.closing_history(date_from='2026-10-02',date_to='2026-10-02',outlet_id='BZG-UMA'); assert h['live_esb_used'] is False and h['count']>=1\"",
+    "expect": "preserved close DATA_CAPTURED; photos>=5; closing_history live_esb_used false",
+    "by": "cursor-agent-beta-os",
+    "at": "2026-10-03T11:05:00+08:00"
+  },
+  {
+    "id": "FINANCE-CONTROL-THREE-OBJECT-HISTORY-GGV-RX-20261003",
+    "claim": "Finance repair continue: three-object freeze (live ESB cannot overwrite dated snapshot); history_detail API vs receipt + bank cards; throwaway cancel; VDC-87202768+photos preserved; GGV receipt intake RO reuse of vault+bridge (no second pipeline); staff_ready false; eng_proved false; CODE COMPLETE / INTEGRATION UNPROVED",
+    "check": "python3 state/reliability/prove_finance_control_three_object_20261003.py && python3 -c \"import sys; sys.path.insert(0,'scripts'); from core import ggv_receipt_intake_ro as r; assert r.parse_peaches_receipt_caption('receipt ggv x')['tenant']=='GGV'; L=r.list_ggv_receipts(limit=5); assert L['ok'] and L['second_pipeline'] is False and L['bridge_present']\"",
+    "expect": "prove PASS freeze+history+throwaway; GGV intake RO lists vault receipts; bridge present; staff_ready/eng_proved false",
+    "by": "cursor-agent-beta-os",
+    "at": "2026-10-03T13:53:01+08:00"
+  },
+  {
+    "id": "FINANCE-CONTROL-REPAIR-CONTINUATION-20261003",
+    "claim": "Finance Control Repair continuation on Beta: restart-after-cancel, reopen immutable history, missing historical close 2026-09-28 ESB cash 2460000, GGV vault receipts UI + bank statement FILE_IMPORT_ONLY, owner force-recapture UI; preserved VDC-87202768 intact; prod 15975 untouched",
+    "check": "python3 /Users/wolfterminal/beta-os/state/reliability/prove_finance_control_continuation_20261003.py; curl -sS http://127.0.0.1:8788/api/core/auth-mode | python3 -c \"import sys,json; print(json.load(sys.stdin).get(\"auth_mode\"))\"; sqlite3 /Users/wolfterminal/beta-os/catalog/content_library.sqlite \"SELECT state,taken_by_person_id FROM venue_daily_closes WHERE close_id='VDC-87202768-55af-4c8e-abc3-382a5496b8c6'\"; lsof -iTCP:8787 -sTCP:LISTEN -t | head -1",
+    "expect": "PASS ... freeze_still_holds; auth_mode cloudflare_access; DATA_CAPTURED|PERS-MATT; 15975",
+    "by": "cursor-finance-continuation-2",
+    "staff_ready": false,
+    "eng_proved": false
+  },
+  {
+    "id": "FINANCE-CONTROL-GGV-ACCOUNTING-QUEUES-20261003",
+    "claim": "GGV accounting queues on Beta: needs_coding/needs_review/unmatched/duplicate persisted; human confirm keeps extraction; image evidence; AMG/BZG isolated; preserved VDC-87202768 intact; prod 15975 untouched; staff_ready false; eng_proved false",
+    "check": "python3 /Users/wolfterminal/beta-os/state/reliability/prove_finance_control_ggv_accounting_20261003.py; FINANCE_PROVE_HTTP=1 python3 /Users/wolfterminal/beta-os/state/reliability/prove_finance_control_ggv_accounting_20261003.py; sqlite3 /Users/wolfterminal/beta-os/catalog/content_library.sqlite \"SELECT COUNT(*) FROM ggv_receipt_accounting WHERE entity_id='ENT-GGV'\"; lsof -iTCP:8787 -sTCP:LISTEN -t | head -1",
+    "expect": "PASS local+http prove; ggv_receipt_accounting rows>0; prod pid 15975",
+    "by": "cursor-finance-continuation-3",
+    "staff_ready": false,
+    "eng_proved": false
+  }
+]

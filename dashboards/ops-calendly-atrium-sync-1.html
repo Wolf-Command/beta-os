@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calendly Atrium Sync — PARTIAL stub</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root{color-scheme:light;--ink:#1a1f24;--muted:#5a6570;--paper:#f2f4f6;--card:#fbfcfd;--line:#d3dae0;--warn:#8a1f1f;--partial:#7a5a12;--ok:#1f5a3a;--font:"IBM Plex Sans","Segoe UI",sans-serif;--display:"Iowan Old Style",Palatino,Georgia,serif}
+    *{box-sizing:border-box}body{margin:0;font-family:var(--font);background:radial-gradient(ellipse 65% 35% at 100% 0%,#e4e8ef 0%,transparent 55%),var(--paper);color:var(--ink)}
+    main{max-width:920px;margin:0 auto;padding:24px 16px 80px}
+    .crumb{font-size:.78rem;color:var(--muted);margin:0 0 8px}
+    h1{font-family:var(--display);font-weight:500;font-size:1.75rem;margin:0 0 6px;letter-spacing:-.02em}
+    .sub{color:var(--muted);margin:0 0 14px;line-height:1.45;font-size:.95rem}
+    .banner{background:#f8eaea;border:1px solid #e0b8b8;border-radius:10px;padding:12px 14px;margin:0 0 16px;font-size:.9rem;line-height:1.45;color:var(--warn)}
+    .banner.partial{background:#f7f0df;border-color:#e0d2a8;color:var(--partial)}
+    h2{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+    .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+    .tile b{display:block;font-size:.85rem;margin:0 0 4px}
+    .tile span{font-size:.8rem;color:var(--muted);line-height:1.4;display:block}
+    .meta{font-size:.8rem;color:var(--muted);margin-top:18px;line-height:1.45}
+    code{font-size:.78rem}
+    a.go{display:inline-block;margin-top:8px;font-weight:700;color:#1a5c45;text-decoration:none}
+    ul.blockers{margin:8px 0 0;padding-left:1.1rem;color:var(--muted);font-size:.85rem;line-height:1.45}
+</style>
+</head>
+<body>
+<main>
+  <p class="crumb">WOLF › SYSTEM › Calendly Atrium Sync</p>
+  <h1>Calendly Atrium Sync</h1>
+  <p class="sub">Pre-arrival / calendar poll · V1 LaunchAgent on Mac · <strong>no Beta live sync wire</strong> · migration_state <strong>PARTIAL</strong></p>
+  <div class="banner"><strong>NOT REBUILT+PROVEN.</strong> No fake booking feed on Beta. Credentials stay in V1 <code>calendly.json</code> — not copied into beta-os.</div>
+  <div class="banner banner partial"><strong>PARTIAL honesty stub.</strong> Documents SoT + blockers. Recent V1 polls: 0 new bookings processed.</div>
+  <h2>Status</h2>
+  <div class="grid">
+    <div class="tile"><b>migration_state</b><span>PARTIAL</span></div>
+    <div class="tile"><b>staff_ready</b><span>false</span></div>
+    <div class="tile"><b>beta_live_sync</b><span>NO</span></div>
+    <div class="tile"><b>fake_feed</b><span>FORBIDDEN</span></div>
+  </div>
+  <h2>Provenance (V1)</h2>
+  <div class="grid">
+    <div class="tile"><b>Agent</b><span>com.wolfcommand.calendly-atrium-sync · StartInterval 900s</span></div>
+    <div class="tile"><b>Script</b><span>wolf-system/scripts/calendly-atrium-sync.py</span></div>
+    <div class="tile"><b>Creds</b><span>~/.openclaw/credentials/calendly.json (V1 only)</span></div>
+    <div class="tile"><b>Logs</b><span>~/.openclaw/logs/calendly-atrium-sync.log</span></div>
+  </div>
+  <h2>Blockers</h2>
+  <ul class="blockers">
+    <li>Beta has no Calendly connector wire this pack.</li>
+    <li>Do not invent bookings or mirror PII into dashboards.</li>
+    <li>V1 poll still authoritative until Owner commissions Beta sync.</li>
+  </ul>
+  <p class="meta">Beta route <code>/ops/calendly-atrium-sync</code> · pack 20260930-gk-ebus-peptide-holdings-pipe</p>
+</main>
+<script src="/assets/sidenav.js"></script>
+</body>
+</html>

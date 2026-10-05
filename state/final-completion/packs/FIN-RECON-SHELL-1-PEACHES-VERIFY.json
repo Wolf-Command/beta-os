@@ -3,9 +3,10 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "status": "PASS_VERIFIED",
-  "verified_at": "2026-09-30T01:39:21+08:00",
-  "verifier": "Peaches-executor",
+  "verified_at": "2026-09-30T01:39:40+08:00",
+  "verifier": "Peaches-build-factory-watch",
   "exit_code": 0,
+  "exit_at": "2026-09-30T01:35:15+08:00",
   "result_file": "docs/wolf/ops/FIN-RECON-SHELL-1-RESULT.md",
   "tests_rerun": {
     "test_fin_recon_shell1_20260930.py": {
@@ -17,6 +18,7 @@
     "count": 5,
     "distinct_sha256": 3,
     "all_distinct": false,
+    "note": "desk-desktop/queue-empty/preserved-packs share one SHA; desk-phone + unsigned-deny distinct. Tests still PASS on shot readiness.",
     "files": [
       {
         "path": "docs/wolf/ops/shots/finreconshell1-desk-desktop.png",
@@ -51,11 +53,39 @@
     "listening": true,
     "untouched": true
   },
+  "beta": {
+    "port": 8788,
+    "pid": 13405,
+    "listening": true
+  },
   "flags": {
     "staff_ready": false,
     "human_commissioned": false
   },
+  "honesty": {
+    "file_import_only": true,
+    "queue_empty": true,
+    "last_success": null,
+    "payment_write": false,
+    "cap_fin_02_maturity": "SPECIFIED",
+    "cap_fin_02_proven": false,
+    "cap_fin_02_ready": false,
+    "cap_fin_08_closed_by_this_pack": false
+  },
   "no_push": true,
   "beta_only": true,
-  "next_pack": "DASH-LIVE-1"
+  "git": {
+    "beta_os_head": "9701bb1",
+    "atrium_finance_head": "7584266",
+    "uncommitted": true
+  },
+  "preserves": [
+    "FC-SHELL-2",
+    "FIN-INTERCO-1",
+    "ATRIUM-SOD",
+    "INTG-TRUTH-1"
+  ],
+  "next_pack": "DASH-LIVE-1",
+  "cursor_did_not_auto_start_next": true,
+  "HEADCHEF_auto": false
 }

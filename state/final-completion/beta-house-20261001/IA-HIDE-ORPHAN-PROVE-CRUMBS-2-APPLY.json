@@ -1,0 +1,69 @@
+{
+  "pack": "IA-HIDE-ORPHAN-PROVE-CRUMBS-2",
+  "applied_at_wita": "2026-10-01T08:17:11+08:00",
+  "executor": "Peaches-executor",
+  "target": "beta-os :8788",
+  "prod_8787": "UNTOUCHED",
+  "prod_pid": 15975,
+  "beta_8788_pid_after": 237,
+  "backup": "/Users/wolfterminal/beta-os/backups/beta-house-ux-20261001/",
+  "phase": "DESKTOP_UX",
+  "inventory_basis": "ux-rescue BETA-PAGE-INVENTORY HIDE_UNTIL_USEFUL=73; residual hub chrome crumbs only",
+  "mutations": [
+    "owner-empire-pack.html: /owner/needs-you-1 \u2192 /staff-ops-routing; /owner/exceptions-live-1 \u2192 /owner/radar",
+    "amg-ops-pack.html#occ: remove /amg/occupancy-external-hold-1 chrome link",
+    "ggv-ops-pack.html#social: remove ggv-social + metricool-runtime-wire + metric-honesty chrome links",
+    "content-2.0.html: demote Metricool engineer wire chrome href",
+    "wolf_shell.BZG_GRAMMAR: inventory+labor_cost \u2192 /bzg hub",
+    "wolf_shell.AMG_GRAMMAR: kuta \u2192 /amg-ops-pack#kuta",
+    "wolf_shell.AUDIENCE_PAGES SPECIALIST_AMG: drop prove crumbs; keep /amg-ops-pack",
+    "sidenav.js stamp",
+    "leads truth_href \u2192 /ggv-ops-pack#pipeline"
+  ],
+  "hubs_kept": [
+    "/owner-empire-pack",
+    "/ggv-ops-pack",
+    "/amg-ops-pack",
+    "/bzg",
+    "/content-2.0",
+    "/staff-ops-routing",
+    "/owner/radar"
+  ],
+  "routes_kept": true,
+  "pages_deleted": false,
+  "proof": {
+    "primary_ia_count": 19,
+    "primary_ia_hrefs": [
+      "/owner-empire-pack",
+      "/finish-war-room",
+      "/my-work",
+      "/staff-ops-routing",
+      "/owner/trading",
+      "/owner/fitness",
+      "/owner/radar",
+      "/owner/travel",
+      "/owner/learning",
+      "/ggv-ops-pack",
+      "/amg-ops-pack",
+      "/bzg",
+      "/bzg/uma-blu",
+      "/intel-ops-pack",
+      "/content-2.0",
+      "/progress",
+      "/integration-health",
+      "/sale-evidence-pack",
+      "/ops/backup-health-1"
+    ],
+    "hub_chrome_prove_crumbs_removed": true,
+    "prod_8787_pid": 15975,
+    "beta_8788_pid_after": 237
+  },
+  "honesty": {
+    "staff_ready": false,
+    "desktop_gate_ready": false,
+    "exit_report": "NOT_CREATED",
+    "wolf_desktop_ready": false,
+    "metricool_write": false,
+    "finance_sod": "UNCHANGED"
+  }
+}

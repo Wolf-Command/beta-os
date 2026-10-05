@@ -1,0 +1,49 @@
+{
+  "schema": "wolf.metricool-schedule-glance-1.v1",
+  "pack": "WORKFLOW-METRICOOL-SCHEDULE-GLANCE-1",
+  "as_of_wita": "2026-10-01T08:02:44+08:00",
+  "ok": true,
+  "metricool_write": false,
+  "invented_engagement": false,
+  "engagement": null,
+  "brands": {
+    "count": 6,
+    "labels": [
+      "Atrium Lombok",
+      "Goss Group",
+      "Uma Blu Coffee & Brunch",
+      "The Habitat",
+      "Selo Properties",
+      "Tropik Resort Lombok"
+    ],
+    "source": "MCP getBrandSettings READ"
+  },
+  "schedule_read": {
+    "window": {
+      "from": "2026-10-01",
+      "to": "2026-10-08",
+      "timezone": "Asia/Makassar"
+    },
+    "brands_glanced": [
+      {
+        "brand_id": "6260617",
+        "label": "Atrium Lombok",
+        "posts_in_window": 14,
+        "pending": 10,
+        "published": 4,
+        "note": "status counts from getScheduledPosts providers; not engagement"
+      },
+      {
+        "brand_id": "6260634",
+        "label": "The Habitat",
+        "posts_in_window": 17,
+        "pending": 13,
+        "published": 4,
+        "note": "GGV social glance brand; status counts only"
+      }
+    ],
+    "source": "MCP getScheduledPosts READ",
+    "write": false
+  },
+  "value_line": "brands 6 \u00b7 Atrium schedule 14 (P10/Pub4) \u00b7 Habitat 17 (P13/Pub4) \u00b7 WRITE OFF \u00b7 engagement NOT invented"
+}

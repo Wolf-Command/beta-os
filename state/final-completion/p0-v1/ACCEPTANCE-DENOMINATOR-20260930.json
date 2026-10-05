@@ -1,0 +1,204 @@
+{
+  "schema": "ACCEPTANCE-DENOMINATOR/v1",
+  "generated_at_wita": "2026-09-30T10:54:11+08:00",
+  "executor": "Peaches-executor",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "rule": "do NOT use 465 alone as completion gate \u2014 465 missed Owner Trading/Fitness and other live V1 surfaces; add newly_recovered + subsequent Matt gates; deduct SUPERSEDED / HR_DEFERRED / obsolete",
+  "exit_report": "NOT_CREATED",
+  "prod_8787_touched": false,
+  "hr_policy": "DEFERRED",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "old_465_count": 465,
+  "old_465_classification_snapshot": {
+    "MISSING": 360,
+    "BUILT_NOT_PROVEN": 39,
+    "HR_DEFERRED": 33,
+    "PARTIAL": 20,
+    "BLOCKED_EXTERNAL": 10,
+    "SUPERSEDED": 3
+  },
+  "newly_recovered_v1_capabilities": {
+    "count": 34,
+    "source": "V1-SURFACE-MANIFEST-DRAFT.json reconcile_465.newly_recovered_names",
+    "names": [
+      "Trading Desk (holdings + trade journal)",
+      "TTC / Flint Paper Quant Program",
+      "Spartacus Fitness / Health Command",
+      "Travel Board",
+      "Wolf Radar (Owner plan board)",
+      "Learning Desk",
+      "Personal Health Data Store (Spartacus SQLite + Wolf75)",
+      "Peptide Schedule (legacy Sheets + board tracker)",
+      "Personal Vault Daily Intel Notes",
+      "HOLDINGS-PERSONAL Registry",
+      "Amanda Desk (ads/content tasks)",
+      "Mila Desk",
+      "Peaches Desk (CoS threads)",
+      "Haikal Desk",
+      "Wolf Desk (owner tasks/routines)",
+      "Misa Board",
+      "BZG Monthly Boards",
+      "Ads Studio",
+      "Habitat Investment 2026",
+      "Kuta Rates Competitor Board",
+      "AMG / BZG / GGV Voice Boards",
+      "n8n Workflow Templates (11)",
+      "LaunchAgents Automation Layer (~283 wolf)",
+      "Gatekeeper",
+      "Event Bus",
+      "Competitor Rates Pipeline",
+      "Rate Calendar DB",
+      "PRF Forms Ingest",
+      "Calendly Atrium Sync",
+      "Identity Vault (personal docs lookup)",
+      "Resolve Studio",
+      "Alpha System DB",
+      "OpenClaw Memory / Tasks DBs",
+      "WolfRecoveryPoints Mirror"
+    ],
+    "note": "evidenced on actual V1 and absent as dedicated capability in 465"
+  },
+  "subsequent_matt_requirements": [
+    {
+      "id": "P0-502-EXTERNAL-ROUTE-HEALTH",
+      "title": "P0 Host Error 502 + EXTERNAL ROUTE HEALTH",
+      "why": "beta.wolfcommand.net /amg|/bzg|/ggv/finance CF Host Error when atrium sidecar :8790 down; needs external route health + safe autorecovery into service truth",
+      "evidence": "p0-502/RECOVERY-20260930.json; scripts/core/external_route_health.py",
+      "in_465": false,
+      "counts_as": 1
+    },
+    {
+      "id": "GLOBAL-NAV-SHELL",
+      "title": "Global nav shell",
+      "why": "Human commissioning queue / Target IA shell still an acceptance gate (PHASE1 coherent gap theme)",
+      "evidence": "PHASE1-FIRST-GAP-SNAPSHOT.json coherent_gap_themes; wolf_shell.py / sidenav.js",
+      "in_465": false,
+      "counts_as": 1
+    },
+    {
+      "id": "FINANCE-IDENTITY-MATRIX-ZAYEN-AMANDA",
+      "title": "Finance identity matrix Zayen/Amanda (desktop+phone)",
+      "why": "Authenticated external HTML prove AMG/BZG/GGV finance for Zayen/Amanda seats \u2014 remaining after sidecar recovery",
+      "evidence": "p0-502/RECOVERY-20260930.json remaining[]; BREACH-ESCALATION Zayen note",
+      "in_465": false,
+      "counts_as": 1
+    },
+    {
+      "id": "V1-NON-HR-DEPS-ZERO",
+      "title": "V1 non-HR deps=0",
+      "why": "Matt gate: after HR deferred, remaining non-HR V1 dependency debt must reach zero before completion claim",
+      "evidence": "P0 RESET continuation brief",
+      "in_465": false,
+      "counts_as": 1
+    }
+  ],
+  "deductions": {
+    "HR_DEFERRED": {
+      "count": 33,
+      "from": "requirements.jsonl classification=HR_DEFERRED",
+      "reason": "Matt order \u2014 HR deferred next week; do not expand HR this week; remove from this week's acceptance gate",
+      "ids_sample": [
+        "IL-R3-16f465f3",
+        "IL-R3-fd154546",
+        "IL-R3-285d94e3",
+        "IL-R3-902f1972",
+        "IL-R3-36afeffe",
+        "IL-R3-e9476320",
+        "IL-R3-99d7b28c",
+        "IL-R3-134c9e7d"
+      ],
+      "ids_all": [
+        "IL-R3-16f465f3",
+        "IL-R3-fd154546",
+        "IL-R3-285d94e3",
+        "IL-R3-902f1972",
+        "IL-R3-36afeffe",
+        "IL-R3-e9476320",
+        "IL-R3-99d7b28c",
+        "IL-R3-134c9e7d",
+        "IL-R3-efa5799d",
+        "IL-R3-a54f5d45",
+        "IL-R3-8d91aefe",
+        "IL-R3-fbd2ada9",
+        "IL-R3-e1deceee",
+        "MB-011",
+        "CAP-HR-01",
+        "CAP-HR-02",
+        "CAP-HR-03",
+        "CAP-HR-04",
+        "CAP-HR-05",
+        "MASTER-5f86426cb6",
+        "MASTER-bc93fe61c4",
+        "MASTER-4141ede8b1",
+        "MASTER-b20ffff83a",
+        "MASTER-9095c7dc04",
+        "MASTER-d3d86fdc5c",
+        "MASTER-503683d3a8",
+        "MASTER-07bb51926f",
+        "MASTER-21ac7d1a44",
+        "MASTER-cde80032a8",
+        "MASTER-df6b9d0804",
+        "MASTER-b15ae73db7",
+        "MASTER-f0caaa267c",
+        "MASTER-7527011403"
+      ]
+    },
+    "SUPERSEDED": {
+      "count": 4,
+      "from_465": [
+        {
+          "id": "NY-ce28fe7c4b",
+          "text": "NOT YET / NOT TARGET: Replace Yanolja with custom PMS",
+          "reason": "Commodity/specialist system; not strategic while Yanolja serves operations"
+        },
+        {
+          "id": "NY-a83b07c869",
+          "text": "NOT YET / NOT TARGET: Build own email server",
+          "reason": "Commodity infrastructure; little strategic advantage"
+        },
+        {
+          "id": "NY-07c5907b88",
+          "text": "NOT YET / NOT TARGET: Direct bank payment initiation",
+          "reason": "Current Indonesian banking integration uncertain/not assumed"
+        }
+      ],
+      "from_newly_recovered_manifest": [
+        {
+          "name": "Alpha System DB",
+          "reason": "SUPERSEDED in V1 surface manifest \u2014 parked/replaced; not an acceptance rebuild target"
+        }
+      ],
+      "reason": "Parked/replaced / NOT TARGET \u2014 not rebuild acceptance items"
+    },
+    "obsolete": {
+      "count": 0,
+      "items": [],
+      "reason": "None evidenced this pass. Wave-8 soft-redirect retire (hidden \u2260 deleted) is NOT obsolete."
+    }
+  },
+  "working_denominator": 466,
+  "arithmetic": {
+    "formula": "working_denominator = old_465_count + newly_recovered_count + subsequent_matt_count - HR_DEFERRED_465 - SUPERSEDED_465 - SUPERSEDED_newly_recovered - obsolete",
+    "terms": {
+      "old_465_count": 465,
+      "newly_recovered_count": 34,
+      "subsequent_matt_count": 4,
+      "minus_HR_DEFERRED_465": 33,
+      "minus_SUPERSEDED_465": 3,
+      "minus_SUPERSEDED_newly_recovered": 1,
+      "minus_obsolete": 0
+    },
+    "expression": "465 + 34 + 4 - 33 - 3 - 1 - 0",
+    "result": 466,
+    "check": "465 + 34 + 4 - 33 - 3 - 1 - 0 = 466"
+  },
+  "side_notes": {
+    "manifest_capabilities_68": 68,
+    "historical_preservation_in_newly": 6,
+    "historical_still_in_denominator": true,
+    "blocked_external_still_in_denominator": true,
+    "sidecar_8790_health_at_write": "HTTP 200 verified",
+    "external_route_health_lsof_patch": "absolute /usr/sbin/lsof for thin PATH"
+  }
+}

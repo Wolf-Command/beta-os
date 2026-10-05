@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Owner Learning — PARTIAL (TTC paper)</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root { color-scheme: light; --ink:#1a1f24; --muted:#5a6570; --paper:#f2f4f6; --card:#fbfcfd; --line:#d3dae0; --warn:#8a1f1f; --partial:#7a5a12; --font:"IBM Plex Sans","Segoe UI",sans-serif; --display:"Iowan Old Style",Palatino,Georgia,serif; }
+    *{box-sizing:border-box} body{margin:0;font-family:var(--font);background:radial-gradient(ellipse 65% 35% at 100% 0%,#e4e8f1 0%,transparent 55%),var(--paper);color:var(--ink)}
+    main{max-width:920px;margin:0 auto;padding:24px 16px 80px}
+    .crumb{font-size:.78rem;color:var(--muted);margin:0 0 8px}
+    h1{font-family:var(--display);font-weight:500;font-size:1.75rem;margin:0 0 6px;letter-spacing:-.02em}
+    .sub{color:var(--muted);margin:0 0 14px;line-height:1.45;font-size:.95rem}
+    .banner{background:#f8eaea;border:1px solid #e0b8b8;border-radius:10px;padding:12px 14px;margin:0 0 16px;font-size:.9rem;line-height:1.45;color:var(--warn)}
+    .banner.partial{background:#f7f0df;border-color:#e0d2a8;color:var(--partial)}
+    h2{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+    .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+    .tile b{display:block;font-size:.85rem;margin:0 0 4px}
+    .tile span{font-size:.8rem;color:var(--muted);line-height:1.4}
+    .meta{font-size:.8rem;color:var(--muted);margin-top:18px;line-height:1.45}
+    code{font-size:.78rem}
+  
+    #ro-live{margin:18px 0 0;padding:0;border:none}
+    .ro-panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 12px}
+    .ro-panel h3{margin:0 0 8px;font-size:.95rem}
+    .ro-meta{font-size:.78rem;color:var(--muted);margin:0 0 10px}
+    .ro-table{width:100%;border-collapse:collapse;font-size:.82rem}
+    .ro-table th,.ro-table td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+    .ro-table th{color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
+    .ro-chip{display:inline-block;padding:2px 8px;border-radius:999px;background:#eef2f5;font-size:.72rem;margin:0 4px 4px 0}
+    .ro-pre{white-space:pre-wrap;font-size:.78rem;max-height:220px;overflow:auto;background:#f6f8fa;border:1px solid var(--line);border-radius:8px;padding:10px;margin:0}
+    .ro-empty{color:var(--muted);font-size:.85rem}
+    .ro-ok{color:var(--ok,#1f5a3a)}.ro-bad{color:var(--warn,#8a1f1f)}
+
+  </style>
+</head>
+<body>
+<main>
+  <p class="crumb">WOLF › HOME › Personal › Learning (Owner)</p>
+  <h1>Learning</h1>
+  <p class="sub">Owner-only · tracks + TTC paper · <strong>nothing trades</strong> · migration_state <strong>PARTIAL</strong> · staff_ready=false</p>
+  <div class="banner"><strong>NOT REBUILT+PROVEN.</strong> Drop with no track refused. TTC is paper. No live broker. Human prove required before any stronger claim.</div>
+  <div class="banner partial"><strong>PARTIAL transfer.</strong> V1 <code>learning.html</code> + <code>learning-desk.js</code> recoverable. State under <code>state/learning-desk/</code> remains SoT. RO deepen 20260930: `/api/owner/learning-ro` tracks+inbox RO · TTC paper · ≠ /intel/learning.</div>
+  <h2>Status</h2>
+  <div class="grid">
+    <div class="tile"><b>migration_state</b><span>PARTIAL</span></div>
+    <div class="tile"><b>staff_ready</b><span>false</span></div>
+    <div class="tile"><b>human_commissioned</b><span>false</span></div>
+    <div class="tile"><b>TTC</b><span>PAPER ONLY · nothing trades</span></div>
+  </div>
+  <h2>Provenance (V1)</h2>
+  <div class="grid">
+    <div class="tile"><b>Board</b><span>wolf-system/dashboards/learning.html</span></div>
+    <div class="tile"><b>JS</b><span>dashboards/assets/learning-desk.js</span></div>
+    <div class="tile"><b>State</b><span>state/learning-desk/ (tracks · ttc-learn-base · inbox)</span></div>
+    <div class="tile"><b>Tracks</b><span>ttc-trading · acquisition-sales · dan-martell</span></div>
+  </div>
+  <p class="meta">Beta route <code>/owner/learning</code> · legacy <code>/learning</code> aliases here. Distinct from Intel Learning Policy (<code>/intel/learning</code>). Spec: <code>state/final-completion/p0-v1/transfer/TRANSFER-LEARNING-SPEC.md</code></p>
+
+<!-- OWNER_RO_DEEPEN_20260930 -->
+<section id="ro-live" data-api="/api/owner/learning-ro">
+  <h2>Live RO (Beta)</h2>
+  <div class="banner partial"><strong>PARTIAL · TTC paper only · nothing trades.</strong> <span id="ro-live-status">loading…</span> · ≠ /intel/learning</div>
+  <div id="ro-tracks" class="ro-panel"><h3>Tracks</h3><p class="ro-empty">…</p></div>
+  <div id="ro-items" class="ro-panel"><h3>Recent inbox items</h3><p class="ro-empty">…</p></div>
+  <div id="ro-paper" class="ro-panel"><h3>Paper quant docs (shared)</h3><p class="ro-empty">…</p></div>
+</section>
+<script>
+(function(){
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
+  var root=document.getElementById("ro-live"); if(!root) return;
+  fetch(root.getAttribute("data-api"),{credentials:"same-origin"}).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+  .then(function(x){
+    var j=x.j||{};
+    var st=document.getElementById("ro-live-status");
+    st.textContent=(x.ok&&j.ok)?(j.reason||"ok"):("fail-closed · "+(j.reason||j.error||"error"));
+    st.className=(x.ok&&j.ok)?"ro-ok":"ro-bad";
+    var tr=(j.tracks&&j.tracks.tracks)||[];
+    document.getElementById("ro-tracks").innerHTML="<h3>Tracks</h3>"+(tr.length?
+      "<table class=\"ro-table\"><thead><tr><th>Track</th><th>Status</th><th>Items</th><th>Started</th></tr></thead><tbody>"+
+      tr.map(function(t){return "<tr><td>"+esc(t.id)+"</td><td>"+esc(t.status)+"</td><td>"+esc(t.item_count)+"</td><td>"+esc(t.started_at)+"</td></tr>";}).join("")+
+      "</tbody></table>":"<p class=\"ro-empty\">No tracks.</p>");
+    var inbox=j.inbox||{};
+    var recent=inbox.recent||[];
+    var counts=inbox.counts||{};
+    document.getElementById("ro-items").innerHTML="<h3>Recent inbox items</h3><p class=\"ro-meta\">all="+esc(counts.all)+" · titles/status only (no transcript dump)</p>"+(recent.length?
+      "<table class=\"ro-table\"><thead><tr><th>Title</th><th>Track</th><th>Status</th><th>Added</th></tr></thead><tbody>"+
+      recent.map(function(r){return "<tr><td>"+esc(r.title)+"</td><td>"+esc(r.track||"")+"</td><td>"+esc(r.status)+"</td><td>"+esc(r.added_at||"")+"</td></tr>";}).join("")+
+      "</tbody></table>":"<p class=\"ro-empty\">Inbox empty/missing.</p>");
+    var docs=j.paper_quant_docs||[];
+    var ttc=j.ttc_learn_base||{};
+    document.getElementById("ro-paper").innerHTML="<h3>Paper quant docs (shared)</h3><div>"+docs.map(function(d){return "<span class=\"ro-chip\">"+esc(d)+"</span>";}).join("")+
+      "</div><p class=\"ro-meta\">ttc-learn-base entries hint: "+esc(ttc.entry_count_hint)+" · live quant FORBIDDEN</p>";
+  }).catch(function(e){
+    document.getElementById("ro-live-status").textContent="error · "+e;
+    document.getElementById("ro-live-status").className="ro-bad";
+  });
+})();
+</script>
+
+</main>
+<script src="/assets/sidenav.js"></script>
+</body>
+</html>

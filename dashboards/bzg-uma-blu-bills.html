@@ -22,7 +22,7 @@
     font-family: var(--font); min-height: 100%;
   }
   body {
-    padding: 16px 16px 64px; max-width: 480px; margin: 0 auto;
+    padding: 16px 16px 64px; max-width: 1100px; margin: 0 auto;
     overflow-x: clip;
     background:
       radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
@@ -69,6 +69,13 @@
   .ex { color: var(--warn); font-size: 0.75rem; margin-top: 6px; }
   .muted { color: var(--muted); font-size: 0.82rem; }
   .empty { color: var(--muted); font-size: 0.9rem; padding: 8px 0; }
+
+  /* UX-PACK-03-DESKTOP */
+  @media (min-width: 900px) {
+    body { max-width: 1100px; padding: 20px 28px 72px; }
+    nav.uma { gap: 8px; }
+    nav.uma a { flex: 0 0 auto; }
+  }
 </style>
 </head>
 <body>
@@ -76,32 +83,37 @@
   <h1 class="brand">PR <em>and bills</em></h1>
   <p class="sub">Request is not approval. A paid claim is not a verified payment.</p>
 
-    <nav class="uma" aria-label="Uma Blu day">
+      <nav class="uma" aria-label="Uma Blu desk">
     <a href="/bzg/uma-blu">Today</a>
-    <a href="/uma-blu-close">Daily Close</a>
-    <a href="/bzg/uma-blu/issues">Issues</a>
     <a class="active" href="/bzg/uma-blu/bills">Bills</a>
-    <a href="/bzg/uma-blu/bills#purchasing">Purchasing</a>
+    <a href="/bzg/uma-blu/purchase-orders">Orders</a>
+    <a href="/bzg/uma-blu/issues">Issues</a>
+    <a href="/bzg/uma-blu/petty">Petty</a>
     <a href="/bzg/uma-blu/evidence">Evidence</a>
     <a href="/bzg/uma-blu/exceptions">Exceptions</a>
-    <a href="/my-work">My Work</a>
-    <a href="/bzg/uma-blu/petty">Petty cash</a>
+    <a href="/bzg/uma-blu/recipes">Recipes</a>
+    <a href="/bzg/uma-blu/real">Real</a>
+    <a id="closeLink" href="/uma-blu-close">Close</a>
   </nav>
 
   <div class="panel" id="createPanel" hidden>
     <h2 style="margin:0 0 8px;font-size:0.78rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)">New request</h2>
     <form id="createForm">
-      <label>Supplier<input id="supplier" required /></label>
-      <label>What it is for<input id="purpose" required /></label>
+      <label>Outlet <span style="color:var(--warn)">required</span>
+        <select id="outlet" required></select>
+      </label>
+      <label>Supplier<input id="supplier" /></label>
+      <label>Reason / what it is for<input id="purpose" required /></label>
       <label>Item<input id="item" required /></label>
       <label>Quantity<input id="qty" type="number" min="0" step="any" required /></label>
+      <label>Unit<input id="unit" placeholder="kg, pcs, box…" /></label>
       <button class="btn" type="submit">Save draft</button>
       <p class="muted" id="createMsg"></p>
     </form>
   </div>
   <style>
     label { display:block; font-size:0.8rem; color:var(--muted); margin:8px 0 4px; }
-    input { width:100%; border:1px solid var(--line); background:var(--bg3); color:var(--text); border-radius:10px; padding:12px; font:inherit; }
+    input, select { width:100%; border:1px solid var(--line); background:var(--bg3); color:var(--text); border-radius:10px; padding:12px; font:inherit; }
     .btn { appearance:none; width:100%; min-height:44px; margin-top:10px; border-radius:12px; border:1px solid #2a8a76; background:#1f6b5c; color:#fff; font-size:1rem; font-weight:650; }
     .panel { background: color-mix(in srgb, var(--bg2) 92%, #000); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px; }
   </style>
@@ -200,6 +212,8 @@
         d.appendChild(el("h3", null, title));
         var bits = [];
         if (p.pr_num && !/^\d+$/.test(String(p.pr_num))) bits.push(String(p.pr_num));
+        if (p.outlet_display_name) bits.push(p.outlet_display_name);
+        else if (p.outlet_id) bits.push(p.outlet_id);
         if (p.requester_label) bits.push("Requested by " + p.requester_label);
         if (p.expected_value != null) {
           var amt = (p.currency === "IDR" || !p.currency) ? idr(p.expected_value) : String(p.expected_value);
@@ -230,18 +244,47 @@
   fetch("/api/bzg/uma-blu/permissions").then(function (r) { return r.json(); }).then(function (perm) {
     var buttons = (perm && perm.buttons) || {};
     if (!buttons.create_pr) return;
+    var outlets = perm.outlets || [];
+    var sel = document.getElementById("outlet");
+    sel.innerHTML = "";
+    if (!outlets.length) {
+      var opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "No outlet on your assignment";
+      sel.appendChild(opt);
+      sel.disabled = true;
+      return;
+    }
+    outlets.forEach(function (o) {
+      var opt = document.createElement("option");
+      opt.value = o.outlet_id;
+      opt.textContent = o.display_name + (o.status && o.status !== "OPEN" ? " (" + o.status + ")" : "");
+      sel.appendChild(opt);
+    });
     panel.hidden = false;
     document.getElementById("createForm").onsubmit = function (ev) {
       ev.preventDefault();
       var msg = document.getElementById("createMsg");
+      var outletId = document.getElementById("outlet").value;
+      if (!outletId) {
+        msg.textContent = "Outlet is required.";
+        return;
+      }
+      var unitVal = document.getElementById("unit").value;
+      var line = {
+        item: document.getElementById("item").value,
+        qty: Number(document.getElementById("qty").value)
+      };
+      if (unitVal) line.unit = unitVal;
       fetch("/api/bzg/uma-blu/prs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          outlet_id: outletId,
           supplier_name: document.getElementById("supplier").value,
           purpose: document.getElementById("purpose").value,
           submitted: false,
-          lines: [{ item: document.getElementById("item").value, qty: Number(document.getElementById("qty").value) }]
+          lines: [line]
         })
       }).then(function (r) { return r.json(); }).then(function (out) {
         if (!out.ok) {

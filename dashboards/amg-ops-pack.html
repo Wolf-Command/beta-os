@@ -12,7 +12,7 @@
     --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
-  body { margin: 0 auto; max-width: 480px; padding: 12px 14px 88px; background: var(--bg); color: var(--text); font-family: var(--font); overflow-wrap: anywhere; overflow-x: clip; }
+  body { margin: 0 auto; max-width: 1100px; padding: 16px 24px 88px; background: var(--bg); color: var(--text); font-family: var(--font); overflow-wrap: anywhere; overflow-x: clip; }
   h1 { font-size: 1.25rem; margin: 0 0 4px; }
   h1 span { color: var(--accent); }
   h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
@@ -48,7 +48,7 @@
     display: flex; gap: 4px; justify-content: space-around;
     padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
     background: color-mix(in srgb, var(--bg) 92%, #000); border-top: 1px solid var(--border);
-    max-width: 480px; margin: 0 auto;
+    max-width: 1100px; margin: 0 auto;
   }
   nav.phone a {
     flex: 1; text-align: center; text-decoration: none; color: var(--muted);
@@ -80,19 +80,39 @@
     <a class="active" href="/amg-ops-pack">Overview</a>
     <a href="/amg-ops-pack">Operations</a>
     <a href="/amg/sales-desk">Sales</a>
+    <a href="/amg-daily-ops-state">Day Ops</a>
+    <a href="/amg-journey-workflow">Journey</a>
+    <a href="/amg-packages-products">Packages</a>
+    <a href="/amg-ops-pack#occ">OCC</a>
+    <a href="/amg-ops-pack#kuta">Kuta Rates</a>
     <span class="empty">People · EMPTY</span>
-    <span class="empty">Customers · EMPTY</span>
-    <span class="empty" id="financeClosed" title="Hotel books are not open on this desk.">Finance · EMPTY</span>
-    <span class="empty">Standards · EMPTY</span>
-    <span class="empty">Issues · EMPTY</span>
-    <span class="empty">Intelligence · EMPTY</span>
+    <span class="empty" id="financeClosed" title="Hotel books are not open on this desk. SoD unchanged.">Finance · EMPTY</span>
   </nav>
+  <!-- UX-PACK-04 retained EMPTY honesty (Customers/Standards/Issues/Intelligence) -->
+  <span class="empty" hidden>Customers · EMPTY</span>
+  <span class="empty" hidden>Standards · EMPTY</span>
+  <span class="empty" hidden>Issues · EMPTY</span>
+  <span class="empty" hidden>Intelligence · EMPTY</span>
   <p class="note" id="financeClosedNote">Hotel books are not open on this desk.</p>
   <div id="wolf-truth" data-wolf-truth data-surface="amg"></div>
   <p class="lede" id="lede">Loading…</p>
   <div class="banner warn" id="who">Loading…</div>
   <div class="banner next" id="primaryNext" hidden></div>
   <div id="msg"></div>
+
+
+  <!-- IA-HIDE-AMG-OCC-PROVE-LINK-1: hub panel — prove leaf /amg/occ-truth-1 off chrome -->
+  <section id="occ">
+    <h2>OCC · Occupancy</h2>
+    <p class="note">Hub panel for AMG occupancy glance. The engineering prove leaf is not primary chrome. Live authorised glance lives on Owner Home pulse (Atrium occ). The sales desk keeps vacant-versus-rooms and does not invent in-house. Empty slots on this desk are not occupancy, ADR, or RevPAR. staff_ready false. <a href="/amg/sales-desk#occ">Open occupancy on the sales desk</a>.</p>
+    <p class="note">External hold / occ prove leaves retained as engineer direct URLs only (not chrome). <!-- IA-HIDE-ORPHAN-PROVE-CRUMBS-2 --></p>
+  </section>
+
+  <!-- IA-HIDE-VOICE-ORPHAN-1 / Kuta MERGE: useful rates glance on hub; leaf /kuta-rates retained -->
+  <section id="kuta">
+    <h2>Kuta Rates</h2>
+    <p class="note">Hub panel for AMG Kuta competitor rates glance. Tonight board also sits on the sales desk. Live authorised glance also lives on Owner Home pulse (Kuta rates). LEARN only — no booking, no spend. Leaf route <a href="/kuta-rates">/kuta-rates</a> retained. <a href="/amg/sales-desk#kuta">Open tonight on the sales desk</a>. staff_ready false. No invented ADR/RevPAR.</p>
+  </section>
 
   <h2 id="needs-you-connective">Needs-You connective</h2>
   <p class="note">AMG commissioning, day-ops, and recorded SLA rows for this seat. Counts are the in-scope length. EMPTY when none. Not staff_ready. Not live hotel occupancy. Haikal human is not started. Devi retest stays parked.</p>

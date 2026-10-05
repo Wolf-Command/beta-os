@@ -1,0 +1,223 @@
+{
+  "schema": "CONNECTOR-GAP-P0/v1",
+  "generated_at_wita": "2026-09-30T12:23:31+0800",
+  "executor": "Peaches-executor",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "bound": "beta",
+  "prod_8787_touched": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "exit_report": "NOT_CREATED",
+  "mode": "read-only deepen \u2014 list next real connector per PARTIAL board; no new spend; no Meta/Google write",
+  "refs": [
+    "UI-REAUDIT-20260930.json",
+    "docs/wolf/ops/CONNECTOR-HEALTH-DEEPEN-1-RESULT.md",
+    "docs/deliveries/WOLF-CONNECTION-COMMISSIONING-REGISTER-2026-09-22.md",
+    "state/final-completion/milestones/MULTI-20260930-0954-CONNECTOR-HEALTH-DEEPEN.json",
+    "p0-v1/transfer/TRANSFER-*-SPEC.md"
+  ],
+  "finance_sidecar": {
+    "board_group": "Finance/AMG (atrium)",
+    "status": "UP",
+    "port": 8790,
+    "launchd": "net.wolfcommand.atrium-finance-sidecar",
+    "note": "Already up after P0-502 recovery. Next is human identity-matrix prove, not a new connector.",
+    "next_connector": null,
+    "no_new_spend": true
+  },
+  "partial_boards_need_connector": [
+    {
+      "board": "/owner/trading",
+      "class": "BOARD_DATA_WIRED",
+      "next_real_connector": "HUMAN hard-refresh prove on /owner/trading (RO already deepened)",
+      "sot": [
+        "~/.openclaw/workspace/wolf-system/trading-desk/journal.jsonl",
+        "V1 /api/trading (holdings + journal)",
+        "~/.openclaw/workspace/wolf-system/dashboards/trading.html"
+      ],
+      "forbidden": [
+        "live broker",
+        "order routing",
+        "auto-trade LIVE"
+      ],
+      "priority": "P0",
+      "api_class": "API_USABLE",
+      "live_usable": false,
+      "note": "journal+holdings+paper quant UI live on Beta; still PARTIAL\u2260LIVE_USABLE"
+    },
+    {
+      "board": "/owner/fitness",
+      "class": "BOARD_DATA_WIRED",
+      "next_real_connector": "HUMAN hard-refresh prove on /owner/fitness",
+      "sot": [
+        "~/.openclaw/personal/health/spartacus.sqlite",
+        "peptide schedule SoT PENDING_OWNER (Sheets script + spartacus-peptides.json)"
+      ],
+      "forbidden": [
+        "PII row dumps in git",
+        "Fitness\u2260HR merge",
+        "destructive migrate"
+      ],
+      "priority": "P0",
+      "api_class": "API_USABLE",
+      "live_usable": false,
+      "note": "Spartacus RO counts/workouts/peptides wired; Fitness\u2260HR"
+    },
+    {
+      "board": "/owner/travel",
+      "class": "BOARD_DATA_WIRED",
+      "next_real_connector": "optional later: richer draft vault \u2014 booking still forbidden",
+      "sot": [
+        "V1 travel board provenance under wolf-system"
+      ],
+      "forbidden": [
+        "live booking",
+        "payment initiate"
+      ],
+      "priority": "P1",
+      "api_class": "API_USABLE",
+      "live_usable": false,
+      "note": "travel-ro mounted; draft tiles from V1"
+    },
+    {
+      "board": "/owner/learning",
+      "class": "BOARD_DATA_WIRED",
+      "next_real_connector": "optional later: richer lesson body RO \u2014 no live quant",
+      "sot": [
+        "trading-desk/QUANT_PROGRAM.md",
+        "PAPER_QUANT_PRACTICE_BRIEF.md"
+      ],
+      "forbidden": [
+        "live quant execution"
+      ],
+      "priority": "P1",
+      "api_class": "API_USABLE",
+      "live_usable": false,
+      "note": "learning-ro tracks+inbox mounted; TTC paper"
+    },
+    {
+      "board": "/content-2.0 + /seats/content-desk|content-admin",
+      "class": "AUTH_WALL (CE) / PARTIAL_SHELL (seats)",
+      "next_real_connector": "Content CE \u2014 NAS library + Metricool READ glance (no mutate)",
+      "sot": [
+        "V1 haikal/misa boards",
+        "library_v2 / NAS _Imports/Wolf-Library",
+        "Metricool per-surface PARTIAL (INT-MET-WOLF)"
+      ],
+      "forbidden": [
+        "Metricool mutate",
+        "Canva mutate",
+        "invent staff_ready",
+        "NAS destroy"
+      ],
+      "priority": "P0",
+      "note": "Haikal Round 3 still NOT READY historically; deepen CE read path only"
+    },
+    {
+      "board": "/seats/ads-studio + /seats/resolve-studio",
+      "class": "PARTIAL_SHELL",
+      "next_real_connector": "NONE \u2014 ads connectors intentionally absent",
+      "sot": [
+        "V1 ads-studio templates only",
+        "briefs no Meta/Google call"
+      ],
+      "forbidden": [
+        "Meta Graph/Marketing API",
+        "Google Ads client",
+        "spend",
+        "publish",
+        "boost"
+      ],
+      "priority": "HOLD",
+      "note": "LEARN-only. No Meta/Google write. No new spend connectors."
+    },
+    {
+      "board": "/amg-voice \u00b7 /bzg-voice \u00b7 /ggv-voice \u00b7 /owner/gatekeeper",
+      "class": "PARTIAL_SHELL",
+      "next_real_connector": "NONE for send \u2014 keep never-send; optional draft vault read-only later",
+      "sot": [
+        "V1 voice boards",
+        "Gatekeeper daily MD vault"
+      ],
+      "forbidden": [
+        "outbound send automation",
+        "Telegram auto-reply fire"
+      ],
+      "priority": "HOLD_SEND"
+    },
+    {
+      "board": "/ops/competitor-rates-pipeline \u00b7 /ops/rate-calendar \u00b7 /ops/calendly-atrium-sync",
+      "class": "PARTIAL_SHELL",
+      "next_real_connector": "Blocked external \u2014 not a cheap Beta connector this week",
+      "blockers": [
+        "Atrium SSL timeout",
+        "competitor_rates/rate_signals empty",
+        "rate-calendar LaunchAgents PARKED",
+        "no Beta live Calendly sync / no fake feed"
+      ],
+      "priority": "EXTERNAL_BLOCKER"
+    },
+    {
+      "board": "/habitat-investment-2026 \u00b7 /kuta-rates \u00b7 /ops/event-bus",
+      "class": "PARTIAL_SHELL",
+      "next_real_connector": "Event Bus: optional RO bind to ~/.openclaw/state/event_bus.db (no fake stream); Habitat/Kuta: no invent financials",
+      "priority": "P2"
+    }
+  ],
+  "connector_health_preserve": {
+    "CONN-HEALTH": "PRESERVED",
+    "INTG-TRUTH-1": "PRESERVED",
+    "invent_last_success": false,
+    "fake_up": false,
+    "yanolja": "EXTERNAL_BLOCKER",
+    "esb_settlement": "EXTERNAL_BLOCKER / PARTIAL_IN_BETA",
+    "bank": "HUMAN_COMMISSIONING FILE_IMPORT_ONLY",
+    "metricool": "PER_SURFACE_RUNTIME_WIRED_PARTIAL \u2014 engagement NOT_RUNTIME"
+  },
+  "summary_for_exit": {
+    "trading": "API_USABLE + BOARD_DATA_WIRED \u2014 needs Matt hard-refresh prove (not LIVE_USABLE)",
+    "fitness": "API_USABLE + BOARD_DATA_WIRED \u2014 needs Matt hard-refresh prove",
+    "travel": "API_USABLE + BOARD_DATA_WIRED \u2014 draft only / no book",
+    "learning": "API_USABLE + BOARD_DATA_WIRED \u2014 TTC paper / \u2260 intel",
+    "finance_sidecar": "already UP \u2014 identity matrix human next",
+    "content_ce": "needs NAS/Metricool READ deepen (no mutate)",
+    "ads": "NONE \u2014 hold spend/write"
+  },
+  "ro_trading_fitness": {
+    "status": "DEEPENED_API_USABLE",
+    "at": "2026-09-30T12:23:31+0800",
+    "apis": [
+      "/api/owner/trading-ro",
+      "/api/owner/trading-ro/history",
+      "/api/owner/fitness-ro"
+    ],
+    "boards": [
+      "/owner/trading",
+      "/owner/fitness"
+    ],
+    "class": "BOARD_DATA_WIRED",
+    "live_usable": false,
+    "staff_ready": false,
+    "broker": false,
+    "spartacus_writes": false,
+    "updated": "2026-09-30T12:23:31+0800"
+  },
+  "ro_travel_learning": {
+    "status": "RO_MOUNTED_API_USABLE",
+    "at": "2026-09-30T12:23:31+0800",
+    "apis": [
+      "/api/owner/travel-ro",
+      "/api/owner/learning-ro"
+    ],
+    "boards": [
+      "/owner/travel",
+      "/owner/learning"
+    ],
+    "class": "BOARD_DATA_WIRED",
+    "live_usable": false,
+    "staff_ready": false,
+    "booking": false,
+    "live_quant": false,
+    "updated": "2026-09-30T12:23:31+0800"
+  }
+}

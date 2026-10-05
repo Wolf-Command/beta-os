@@ -54,5 +54,9 @@
   "hr_built": false,
   "rearmed_by": "peaches_parent_after_atrium_verify",
   "verified_at": "2026-09-30T10:33:22+08:00",
-  "peaches": "PASS"
+  "peaches": "PASS",
+  "peaches_verify": "PASS_VERIFIED",
+  "matt_finished_ping": true,
+  "matt_finished_ping_at": "2026-09-30T10:36:53+08:00",
+  "independent_retest": "135/0"
 }

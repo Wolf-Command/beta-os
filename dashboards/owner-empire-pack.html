@@ -134,12 +134,36 @@
   @media (min-width: 1181px) {
     .pulse-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   }
+  .gm-headline {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px;
+    border: 1px solid rgba(215,226,106,0.5); background: linear-gradient(180deg, #243018 0%, var(--bg2) 55%);
+    border-radius: 14px; padding: 14px 18px; margin: 10px 0 14px;
+    text-decoration: none; color: var(--text); cursor: pointer;
+    transition: filter 0.15s ease;
+  }
+  .gm-headline:hover { filter: brightness(1.06); }
+  .gm-headline .gm-label {
+    font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent); font-weight: 700;
+  }
+  .gm-headline .gm-score { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em; }
+  .gm-headline .gm-pct { font-size: 1.25rem; color: var(--accent); font-weight: 650; }
+  .gm-headline .gm-today { font-size: 0.95rem; color: var(--muted); }
+  .gm-headline .gm-hint { font-size: 0.75rem; color: var(--muted); margin-left: auto; }
 </style>
 </head>
 <body data-wolf-page-type="DASHBOARD" data-wolf-org="WOLF/GROUP" data-wolf-shell="global" data-wolf-home-primary="empire">
   <nav class="wolf-crumb" aria-label="Org context" style="font-size:0.75rem;color:var(--muted);margin:0 0 8px;letter-spacing:0.02em">WOLF › HOME › Owner Home</nav>
   <h1>Owner Home</h1>
   <p class="lede">How are the businesses. What is wrong. What needs you. What money or risk. What is blocked.</p>
+
+  <a class="gm-headline" id="gm-headline" href="/owner/god-mode" aria-label="God Mode completion register">
+    <span class="gm-label">God Mode</span>
+    <span class="gm-score" id="gm-score">—</span>
+    <span class="gm-pct" id="gm-pct">—</span>
+    <span class="gm-today" id="gm-today">—</span>
+    <span class="gm-hint">Frozen register · tap for full list</span>
+  </a>
 
   <h2>What needs you</h2>
   <p class="note">Decisions and exceptions waiting on you — one hop to the desk that can act.</p>
@@ -461,6 +485,13 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
+  const TRUTH = ["LIVE", "CURRENT", "STALE", "UNKNOWN", "UNAVAILABLE", "NEEDS REVIEW"];
+
+  function mark(state) {
+    const label = String(state || "UNKNOWN");
+    if (TRUTH.indexOf(label) >= 0 && window.WolfTruth) return window.WolfTruth.chip(label);
+    return `<span class="pill" data-mark="${esc(label)}">${esc(label)}</span>`;
+  }
 
   async function api(path) {
     const res = await fetch(path, { headers: { Accept: "application/json" } });
@@ -813,6 +844,30 @@
   }
 
   loadFinishWolf();
+
+  async function loadGodModeHeadline() {
+    const scoreEl = $("gm-score");
+    const pctEl = $("gm-pct");
+    const todayEl = $("gm-today");
+    if (!scoreEl) return;
+    try {
+      const res = await fetch("/api/owner/god-mode-register", { credentials: "same-origin" });
+      if (!res.ok) return;
+      const reg = await res.json();
+      if (!reg || !reg.ok) return;
+      const h = reg.headline || {};
+      scoreEl.textContent = String(h.numerator_complete) + " / " + String(h.denominator) + " complete";
+      const pct = Number(h.percent);
+      pctEl.textContent = Number.isFinite(pct) ? pct.toFixed(1) + "%" : "—";
+      const today = Number(h.movement_today);
+      const sign = today > 0 ? "+" : "";
+      todayEl.textContent = sign + today + " today";
+    } catch (_e) {
+      /* headline stays placeholder */
+    }
+  }
+
+  loadGodModeHeadline();
 
 })();
 </script>

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Wave 8 Wolf Specialist Nav — Beta :8788 only.
 
-trading/travel/spartacus/mila/amanda/kuta-rates NOT primary in #wolfnav IA.
+mila/amanda NOT primary in #wolfnav IA (P0 re-entries: trading/travel/spartacus/kuta-rates/habitat/voice).
 Soft redirect → /wolf. Wave1–7 soft green. Anon 403. One #wolfnav.
 No Production. No invent PROVEN/READY.
 """
@@ -47,12 +47,9 @@ WIP = (
 )
 
 SPECIALIST_SLUGS = (
-    "trading",
-    "travel",
-    "spartacus",
+    # P0 re-entries (trading/travel/spartacus/kuta-rates) no longer Wave8 soft-redirect.
     "mila",
     "amanda",
-    "kuta-rates",
 )
 
 
@@ -214,7 +211,7 @@ def test_files() -> None:
         "20260922-nav-specialist" in sn or "20260922-nav-rhc-v1" in sn
         or "20260922-nav-perms" in sn or "20260922-nav-route-merge" in sn)
     check("sidenav HIDDEN_SPECIALIST", "HIDDEN_SPECIALIST_PRIMARY" in sn)
-    check("sidenav trading hidden map", "trading:" in sn or "trading: 1" in sn)
+    check("sidenav mila hidden map", "mila:" in sn or "mila: 1" in sn)
     check("sidenav travel hidden map", "travel:" in sn)
     check("sidenav spartacus hidden map", "spartacus:" in sn)
     check("sidenav one wolfnav guard", "Never create a second #wolfnav" in sn)

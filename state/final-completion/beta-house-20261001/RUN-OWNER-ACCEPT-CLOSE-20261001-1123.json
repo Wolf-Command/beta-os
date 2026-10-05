@@ -1,0 +1,21 @@
+{
+  "run_id": "OWNER-ACCEPT-CLOSE-20261001-1123",
+  "started_wita": "2026-10-01T11:22:00+08:00",
+  "finished_wita": "2026-10-01T11:24:15+08:00",
+  "executor": "Peaches-executor",
+  "owner_accept_wita": "2026-10-01T11:21:00+08:00",
+  "finding_close": "CLOSED_REPAIRED_VERIFIED",
+  "entity_isolation": "REPAIRED_VERIFIED_OWNER_ACCEPTED",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "desktop_gate_ready": false,
+  "exit_report": "NOT_CREATED",
+  "wolf_desktop_ready_claim": false,
+  "wolf_intelligence_started": false,
+  "prod_8787_pid": 15975,
+  "beta_8788_pid": 12379,
+  "finance_8790_pid": 45751,
+  "prod_touched": false,
+  "beta_restarted": false,
+  "finance_sod": "UNCHANGED"
+}

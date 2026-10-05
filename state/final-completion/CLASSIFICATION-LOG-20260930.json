@@ -462,5 +462,29 @@
     "board": "/ops/hr-deferred-hold-stamp-1",
     "next_pack_for_parent_only": "RELIABILITY-PIPE-EPISODE-ROLLUP-1",
     "notes": "Hold stamp only; do not build HR; invent payroll/headcount refused 403"
+  },
+  "reliability_pipe_episode_rollup1": {
+    "pack": "RELIABILITY-PIPE-EPISODE-ROLLUP-1",
+    "classification": "INTERNALLY_SOLVABLE",
+    "ceiling": "BUILT",
+    "at_wita": "2026-09-30T10:40:30+08:00",
+    "tests": "129/0",
+    "suite_pass": 129,
+    "suite_fail": 0,
+    "episode_count": 10,
+    "flap_count": 9,
+    "wave_span": "Wave7-10",
+    "live_probe": "GREEN",
+    "fake_uptime": false,
+    "fake_pipe_up": false,
+    "staff_ready": false,
+    "human_commissioned": false,
+    "board": "/ops/reliability-pipe-episode-rollup-1",
+    "preserves": [
+      "PIPE-RELIABILITY-AUTO-1",
+      "RELIABILITY-1"
+    ],
+    "next_pack_for_parent_only": "WAVE11-SYNTH-CONTINUE",
+    "notes": "Wave7-10 flap evidence rollup; invent-uptime / fake-pipe-up refused 403"
   }
 }

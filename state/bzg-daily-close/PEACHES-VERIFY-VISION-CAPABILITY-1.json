@@ -1,0 +1,31 @@
+{
+  "pack": "BZG-CLOSE-VISION-CAPABILITY-1",
+  "for": "Peaches independent verify — do not claim Matt-ready until this checklist PASSes",
+  "result": "state/bzg-daily-close/BZG-CLOSE-VISION-CAPABILITY-1-RESULT.md",
+  "eng_proved": false,
+  "staff_ready": false,
+  "daily_close_commissioned": false,
+  "preserve": {
+    "close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+    "receipt_object_ref": "close-receipt://EVD-CLOSE-ESB-806C52F2BFBF.jpg"
+  },
+  "checklist": [
+    "owner_takeover_preserved (taken_by PERS-MATT)",
+    "close preserved DATA_CAPTURED",
+    "live ESB loads (or honest UNAVAILABLE — never fake zeros)",
+    "existing ESB receipt attached / Retry Reading against stored ref",
+    "real vision runs via model_router (not fixture)",
+    "fields populate to owner figures (gross/net/cash/bills/pax/EDC+QRIS banks)",
+    "confirm/edit path works; human values authoritative",
+    "manual fallback with vision forced unavailable (staff-safe copy, photo kept)",
+    "multi EDC + EDC≠QRIS",
+    "recon board dual-source — never overwrite"
+  ],
+  "engineering_evidence": {
+    "live_prove_9_of_9": "state/bzg-daily-close/VISION-LIVE-PROVE-20261003.json",
+    "gate_tests_20_pass": "scripts/tests/test_eng_proved_integration_gate_1.py",
+    "beta_8788_pid": "34207"
+  },
+  "on_pass_send_exactly": "MATT RETEST READY — refresh the existing close.",
+  "do_not_call_eng_proved": true
+}

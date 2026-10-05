@@ -31,9 +31,9 @@ ENTITY_FILES: dict[str, str] = {
 }
 
 ENTITY_LABELS: dict[str, str] = {
-    "ENT-AMG": "Atrium (AMG) — live books",
-    "ENT-BZG": "Blu Zone Group — COA template shell (zero journals)",
-    "ENT-GGV": "GGV — COA template shell (zero journals)",
+    "ENT-AMG": "Atrium",
+    "ENT-BZG": "Blu Zone Group",
+    "ENT-GGV": "GGV",
 }
 
 # Structure-only Wolf COA template source: AMG account rows (codes/names/types).
@@ -549,30 +549,22 @@ def desk_stamp(legal_entity_id: str) -> dict[str, Any]:
     journals = int(snap.get("journals") or 0)
     shell = snap.get("shell_kind") or "empty_shell"
     if legal_entity_id == "ENT-AMG":
-        message = (
-            "AMG / Atrium books are live on the Beta sidecar file. "
-            "Not staff_ready. Not human_commissioned."
-        )
+        message = "Atrium books are live."
         empty = False
         pack = "CORE-BOOKS-1"
     else:
         # empty = no journals/money facts (COA structure alone is OK)
         empty = journals == 0
-        if shell == COA_TEMPLATE_SHELL or accounts > 0:
-            message = (
-                f"{ENTITY_LABELS.get(legal_entity_id, legal_entity_id)} is open. "
-                f"COA template: {accounts} accounts · journals: {journals} (none). "
-                "Structure only — no sales, P&L, or go-live figures. "
-                "Not staff_ready. Not human_commissioned."
-            )
+        label = ENTITY_LABELS.get(legal_entity_id, "This business")
+        if journals == 0 and accounts > 0:
+            message = f"{label} — chart of accounts set up. No journals posted yet."
             pack = PACK_FC_SHELL2
+        elif journals == 0:
+            message = "No journals posted yet."
+            pack = "CORE-BOOKS-1" if shell != COA_TEMPLATE_SHELL and accounts == 0 else PACK_FC_SHELL2
         else:
-            message = (
-                f"{ENTITY_LABELS.get(legal_entity_id, legal_entity_id)} is open. "
-                "Empty shell — no journals or go-live figures. "
-                "Not staff_ready. Not human_commissioned."
-            )
-            pack = "CORE-BOOKS-1"
+            message = f"{label} books — {journals} journal(s) on record."
+            pack = PACK_FC_SHELL2 if shell == COA_TEMPLATE_SHELL else "CORE-BOOKS-1"
     return {
         "ok": True,
         "legal_entity_id": legal_entity_id,

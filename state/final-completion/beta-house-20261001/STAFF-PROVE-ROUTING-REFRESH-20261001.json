@@ -1,0 +1,60 @@
+{
+  "refreshed_at_wita": "2026-10-01T11:24:15+08:00",
+  "source": "/Users/wolfterminal/beta-os/state/final-completion/p0-v1/STAFF-PROVE-QUEUE-20260930.json",
+  "owner_accept_entity_isolation_wita": "2026-10-01T11:21:00+08:00",
+  "entity_isolation": "REPAIRED_VERIFIED_OWNER_ACCEPTED",
+  "finding_closed": "BREACH-2026-09-30-J1-ZAYEN-GGV-NOTA-READ CLOSED_REPAIRED_VERIFIED",
+  "zayen": "AMG+BZG retest; GGV ZERO; KEEP ASG-ZAYEN-BZG-FC-1",
+  "amanda": "GGV Operator; AMG/BZG NO",
+  "items": [
+    {
+      "id": "SP-ZAYEN-AMG-BZG-FINANCE",
+      "class": "STAFF_COMMISSIONING",
+      "who": "Zayen",
+      "status": "NOT_RUN",
+      "expect": "AMG YES · BZG YES · GGV ZERO (server-side already 50/50)",
+      "keep": "ASG-ZAYEN-BZG-FC-1"
+    },
+    {
+      "id": "ZAYEN-CF-BROWSER-ENTITY-ISOLATION-UI",
+      "class": "STAFF_COMMISSIONING",
+      "who": "Zayen",
+      "status": "NOT_RUN",
+      "expect": "AMG YES · BZG YES · GGV DENY",
+      "method": "authenticated CF/browser session (not server-side matrix)",
+      "matrix_pass": null,
+      "architecture_reopen": false,
+      "blocks_architecture": false,
+      "note": "Does NOT reopen soft-bleed finding unless browser exposes regression. human_finance_commissioning still false until done."
+    },
+    {
+      "id": "SP-AMANDA-GGV-FINANCE",
+      "class": "STAFF_COMMISSIONING",
+      "who": "Amanda",
+      "status": "NOT_RUN",
+      "expect": "GGV YES · AMG/BZG NO"
+    },
+    {
+      "id": "BANK-IMPORT-COMMISSIONING",
+      "class": "STAFF_COMMISSIONING",
+      "status": "NOT_RUN",
+      "end_state": "CONNECTED, COMMISSIONING REQUIRED",
+      "invent_live": false,
+      "write_authority": false
+    },
+    {
+      "id": "ATRIUM-FINANCE-8790-COMMISSIONING",
+      "class": "STAFF_COMMISSIONING",
+      "status": "NOT_RUN",
+      "end_state": "CONNECTED, COMMISSIONING REQUIRED",
+      "invent_live": false,
+      "write_authority": false
+    }
+  ],
+  "ping_staff": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "desktop_gate_ready": false,
+  "exit_report": "NOT_CREATED",
+  "wolf_desktop_ready_claim": false
+}

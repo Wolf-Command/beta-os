@@ -103,3 +103,8 @@ Breadcrumbs hierarchy-aware; Trading/Fitness crumbs: `HOME › Trading|Fitness (
 - `docs/deliveries/GROK-SPEC-WOLF-GLOBAL-SHELL-2026-09-22.md`
 - `docs/canon/ROLE-POSITION-ASSIGNMENT-TRANSITIONAL.md`
 - Transfer: `transfer/TRANSFER-TRADING-SPEC.md` · `transfer/TRANSFER-FITNESS-SPEC.md`
+
+## Follow-on (2026-09-30 nav authority PARTIAL)
+
+Chrome `#wolfnav-biz` is **AUTHORITY_CHROME**: prefers `nav_authority.businesses` (Assignment/Role/Scope); falls back to IA∩pages `businesses` with honesty stamp. NOT sole source · NOT LIVE_USABLE · migration_state PARTIAL. See `NAV-AUTHORITY-SPEC.md`.
+

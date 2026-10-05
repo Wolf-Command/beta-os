@@ -5,35 +5,42 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>My Work</title>
 <link rel="stylesheet" href="/assets/wolf-truth.css?v=20260927-w3p3" />
+<link rel="stylesheet" href="/wolf-tokens.css" />
+<link rel="stylesheet" href="/assets/wolf-shell.css" />
 <style>
   :root {
     --bg: #f4f1ea; --card: #fffdf8; --text: #1c1915; --muted: #5c564c;
-    --line: #e4dccf; --accent: #1f4d3a;
+    --line: #e4dccf; --accent: #1f4d3a; --warn:#8a1f1f;
     --work-ink: #1c1408; --work-muted: #3f3422; --work-card: #f4e4c4;
     --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
   html, body { max-width: 100%; overflow-x: hidden; }
   body {
-    margin: 0 auto; max-width: 720px; padding: 16px 16px 88px;
+    margin: 0 auto; max-width: 1100px; padding: 20px 20px 96px;
     background: var(--bg); color: var(--text); font-family: var(--font);
-    font-size: 17px; line-height: 1.4;
+    font-size: 16px; line-height: 1.45;
   }
-  h1 { font-size: 1.45rem; margin: 0 0 4px; }
-  h2 { font-size: 1.05rem; margin: 22px 0 8px; }
+  .crumb { font-size: 0.78rem; color: var(--muted); margin: 0 0 8px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 {
+    font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin: 22px 0 10px;
+  }
   .role, .covers, .boundary, .note { color: var(--muted); margin: 4px 0; }
+  .lede { color: var(--muted); margin: 0 0 14px; }
   .card {
     background: var(--card); border: 1px solid var(--line);
     border-radius: 12px; padding: 12px 14px; margin-top: 8px;
   }
   a.action {
-    display: block; margin-top: 12px; text-decoration: none;
+    display: block; margin-top: 10px; text-decoration: none;
     background: var(--accent); color: #fff; border-radius: 12px;
     padding: 14px 16px; font-weight: 650; min-height: 48px;
   }
-  a.card { display: block; text-decoration: none; color: inherit; }
-  a.card:active { border-color: var(--accent); }
-  .prompt { margin: 0 0 8px; display: none; } /* MYWORK-1B: title is the only heading */
+  a.card, a.work-card { display: block; text-decoration: none; color: inherit; }
+  a.card:hover, a.work-card:hover { border-color: var(--accent); }
+  .prompt { margin: 0 0 8px; display: none; }
   #wolf-truth,
   #wolf-truth .wolf-card,
   #wolf-truth .wolf-empty,
@@ -70,26 +77,41 @@
     font-size: 0.78rem;
     margin-top: 6px;
   }
-  .work-title { font-weight: 700; margin: 0 0 4px; }
+  .work-title { font-weight: 700; margin: 0 0 4px; font-size: 1.02rem; }
   .next { font-weight: 650; margin: 8px 0 0; }
-  .err { color: #8d1d1d; }
-  @media (max-width: 420px) {
-    body { padding: 12px 12px 88px; font-size: 16px; }
+  .do-this {
+    display: inline-block; margin-top: 10px; padding: 8px 12px;
+    border-radius: 999px; background: var(--accent); color: #fff !important;
+    font-weight: 700; font-size: 0.84rem;
   }
-</style>
-<style>
-  html, body { overflow-x: hidden !important; max-width: 100%; }
-  #wolf-boards, #wolfnav, #wolfnav-scrim { max-width: 100vw !important; }
+  .err { color: #8d1d1d; }
+  .sec-help { color: var(--muted); font-size: 0.85rem; margin: -4px 0 8px; }
+  .empty {
+    background: var(--card); border: 1px dashed var(--line);
+    border-radius: 12px; padding: 14px; color: var(--muted);
+  }
+  .queue-nav { display:flex; flex-wrap:wrap; gap:8px; margin: 0 0 12px; }
+  .queue-nav a {
+    appearance:none; border:1px solid var(--line); background:var(--card);
+    color:var(--text); border-radius:999px; padding:8px 12px; min-height:40px;
+    font-weight:650; font-size:0.82rem; text-decoration:none; display:inline-flex; align-items:center;
+  }
+  @media (max-width: 720px) {
+    body { padding: 14px 14px 88px; font-size: 16px; max-width: 100%; }
+  }
 </style>
 </head>
 <body data-wolf-page-type="WORKSPACE" data-wolf-shell="global">
+  <p class="crumb">WOLF › HOME › My Work</p>
   <h1 id="hello">My Work</h1>
+  <p class="lede">Plain queues. Open a card to do the next action — not a scavenger hunt.</p>
   <p class="note" id="honesty">Honesty: staff_ready=false · human_commissioned=false · eng prove only.</p>
   <div id="wolf-truth" data-wolf-truth data-surface="my-work"></div>
   <p class="role" id="role"></p>
   <p class="covers" id="covers"></p>
   <p class="boundary" id="boundary"></p>
   <div id="msg"></div>
+  <nav class="queue-nav" aria-label="Work queues" id="queueNav" hidden></nav>
   <div id="sections"></div>
   <p class="note" id="notes"></p>
   <div id="desk"></div>
@@ -100,15 +122,30 @@
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
 
+  const PLAIN = {
+    today: { title: "TODAY", help: "Do these now." },
+    do_this: { title: "DO THIS NEXT", help: "After today — still yours." },
+    do_this_next: { title: "DO THIS NEXT", help: "After today — still yours." },
+    attention: { title: "NEEDS ATTENTION", help: "Blocked, failed, or needs a decision." },
+    waiting: { title: "WAITING", help: "Waiting on someone else." },
+    completed: { title: "COMPLETED", help: "Recently done." },
+    owner_overwatch: { title: "NEEDS ATTENTION", help: "Owner overwatch — commissioning, routing, verify." }
+  };
+
+  function actionHref(it) {
+    if (it && it.href) return it.href;
+    if (it && it.open_href) return it.open_href;
+    if (it && (it.id || it.work_item_id)) return "/my-work/item/" + (it.work_item_id || it.id);
+    return null;
+  }
+
   function cards(items) {
     return (items || []).map((it) => {
+      const href = actionHref(it);
       const title = `<p class="work-title">${esc(it.title || it.what || "")}</p>`;
       const range = it.date_range ? `<p>${esc(it.date_range)}</p>` : "";
       const status = it.status_label || it.status;
       const state = status ? `<p>${esc(status)}</p>` : "";
-      const openBit = it.open_href
-        ? `<p class="meta">Open: ${esc(it.open_href)}</p>`
-        : "";
       const steps = (it.is_commissioning && it.instructions)
         ? `<p class="meta">${esc(String(it.instructions).split("\n").slice(0, 3).join(" · "))}</p>`
         : "";
@@ -134,9 +171,10 @@
       const foot = it.staff_footnote
         ? `<p class="footnote">${esc(it.staff_footnote)}</p>`
         : "";
-      const inner = `${title}${range}${state}${openBit}${steps}${pf}${meta}${next}${foot}`;
-      if (it.href) {
-        return `<a class="action work-card" href="${esc(it.href)}">${inner}</a>`;
+      const cta = href ? `<span class="do-this">Open → do this</span>` : "";
+      const inner = `${title}${range}${state}${steps}${pf}${meta}${next}${foot}${cta}`;
+      if (href) {
+        return `<a class="action work-card" href="${esc(href)}">${inner}</a>`;
       }
       return `<div class="card work-card">${inner}</div>`;
     }).join("");
@@ -146,34 +184,94 @@
     const items = block.items || [];
     const body = items.length
       ? cards(items)
-      : `<div class="wolf-empty">${esc(block.empty_message || "Nothing here.")}</div>`;
-    const prompt = block.prompt ? `<p class="prompt">${esc(block.prompt)}</p>` : "";
-    return `${prompt}${body}`;
+      : `<div class="empty">${esc(block.empty_message || "Nothing here.")}</div>`;
+    return body;
+  }
+
+  function plainTitle(block) {
+    const key = String(block.key || "");
+    if (PLAIN[key]) return PLAIN[key].title;
+    const t = String(block.title || "").toUpperCase();
+    if (/TODAY/.test(t)) return "TODAY";
+    if (/DO THIS/.test(t)) return "DO THIS NEXT";
+    if (/ATTENTION|OVERWATCH/.test(t)) return "NEEDS ATTENTION";
+    if (/WAITING/.test(t)) return "WAITING";
+    if (/COMPLETE/.test(t)) return "COMPLETED";
+    return block.title || "Queue";
+  }
+
+  function plainHelp(block) {
+    const key = String(block.key || "");
+    if (PLAIN[key]) return PLAIN[key].help;
+    return "";
   }
 
   function framework(sections) {
-    return (sections || []).filter((block) => block && block.show !== false).map((block) => {
+    const order = ["today", "do_this", "do_this_next", "attention", "owner_overwatch", "waiting", "completed"];
+    const list = (sections || []).filter((block) => block && block.show !== false);
+    list.sort((a, b) => {
+      const ia = order.indexOf(a.key); const ib = order.indexOf(b.key);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+    // Prefer one NEEDS ATTENTION: if both attention + overwatch, keep overwatch for owner when it has items
+    const keys = new Set(list.map((b) => b.key));
+    const filtered = list.filter((b) => {
+      if (b.key === "attention" && keys.has("owner_overwatch")) {
+        const ow = list.find((x) => x.key === "owner_overwatch");
+        if (ow && (ow.items || []).length) return false;
+      }
+      return true;
+    });
+    return filtered.map((block) => {
       const body = (block.parts && block.parts.length)
         ? block.parts.map(part).join("")
         : part(block);
+      const help = plainHelp(block);
       const score = block.performance && block.performance.shown_as_score === false
-        ? `<p class="wolf-empty" data-performance="${esc(block.performance.state || "MISSING")}">${esc(block.performance.message || "")}</p>`
+        ? `<p class="empty" data-performance="${esc(block.performance.state || "MISSING")}">${esc(block.performance.message || "")}</p>`
         : "";
-      return `<section data-section="${esc(block.key || "")}"><h2>${esc(block.title || "")}</h2>${body}${score}</section>`;
+      const id = "sec-" + esc(block.key || plainTitle(block).toLowerCase().replace(/\s+/g, "-"));
+      return `<section id="${id}" data-section="${esc(block.key || "")}"><h2>${esc(plainTitle(block))}</h2>${help ? `<p class="sec-help">${esc(help)}</p>` : ""}${body}${score}</section>`;
     }).join("");
   }
 
   function list(block) {
     if (!block) return "";
-    return `<section data-section="${esc(block.key || "")}"><h2>${esc(block.title || "")}</h2>${part(block)}</section>`;
+    const id = "sec-" + esc(block.key || "x");
+    const help = plainHelp(block);
+    return `<section id="${id}" data-section="${esc(block.key || "")}"><h2>${esc(plainTitle(block))}</h2>${help ? `<p class="sec-help">${esc(help)}</p>` : ""}${part(block)}</section>`;
   }
 
-  fetch("/api/staff/home", { headers: { Accept: "application/json" } })
+  function paintQueueNav(sections) {
+    const nav = $("queueNav");
+    const labels = [];
+    (sections || []).forEach((b) => {
+      if (!b || b.show === false) return;
+      const title = plainTitle(b);
+      const n = (b.items || []).length;
+      labels.push({ key: b.key, title, n, id: "sec-" + (b.key || title.toLowerCase().replace(/\s+/g, "-")) });
+    });
+    // dedupe by title
+    const seen = {};
+    const uniq = [];
+    labels.forEach((l) => {
+      if (seen[l.title]) return;
+      seen[l.title] = 1;
+      uniq.push(l);
+    });
+    if (!uniq.length) { nav.hidden = true; return; }
+    nav.hidden = false;
+    nav.innerHTML = uniq.map((l) =>
+      `<a href="#${esc(l.id)}">${esc(l.title)}${l.n ? " · " + l.n : ""}</a>`
+    ).join("");
+  }
+
+  fetch("/api/staff/home", { headers: { Accept: "application/json" }, credentials: "same-origin" })
     .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
     .then(({ ok, data }) => {
       if (!ok || data.ok === false) {
         $("hello").textContent = "My Work";
-        $("msg").innerHTML = `<p class="err">${esc(data.message || "This page did not load.")}</p>`;
+        $("msg").innerHTML = `<p class="err">${esc(data.message || "This page did not load. Sign in with Owner/staff session.")}</p>`;
         return;
       }
       $("hello").textContent = data.greeting || "My Work";
@@ -190,22 +288,27 @@
       $("covers").textContent = covers.length ? covers.join(", ") : "";
       $("boundary").textContent = data.boundary || "";
       const dash = data.dashboard || {};
+      let sections = [];
       if (dash.sections && dash.sections.length) {
-        $("sections").innerHTML = framework(dash.sections);
+        sections = dash.sections;
+        $("sections").innerHTML = framework(sections);
         document.body.setAttribute("data-dashboard", "1");
         if (dash.representative) document.body.setAttribute("data-representative", String(dash.representative));
       } else {
-        $("sections").innerHTML = (data.sections || []).map(list).join("");
+        sections = data.sections || [];
+        $("sections").innerHTML = sections.map(list).join("");
       }
+      paintQueueNav(sections);
       const notes = data.notifications || {};
       $("notes").textContent = notes.empty_message || "";
       const deskLinks = (dash.sections && dash.sections.length) ? [] : (data.desk || []);
-      const extra = [{ label: "Execution report", href: "/execution-report" }];
+      const extra = [
+        { label: "Execution report", href: "/execution-report" },
+        { label: "Owner Home", href: "/owner-empire-pack" }
+      ];
       $("desk").innerHTML = [...deskLinks, ...extra].map((link) => (
         `<a class="action" href="${esc(link.href)}">${esc(link.label)}</a>`
       )).join("");
-      const over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
-      document.body.setAttribute("data-overflow", over ? "yes" : "no");
       document.body.setAttribute("data-ready", "1");
     })
     .catch((err) => {
@@ -214,5 +317,6 @@
 })();
 </script>
 <script src="/assets/wolf-truth.js?v=20260927-w3p4"></script>
+<script src="/assets/sidenav.js"></script>
 </body>
 </html>

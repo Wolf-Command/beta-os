@@ -1,0 +1,29 @@
+{
+  "milestone": "MULTI-20260930-0901-CRM-PIPELINE-TRUTH",
+  "at_wita": "2026-09-30T09:01:50+08:00",
+  "pack": "CRM-PIPELINE-TRUTH-1",
+  "status": "CURSOR_EXIT_0",
+  "suite": {
+    "pass": 245,
+    "fail": 0
+  },
+  "classification": "WIRED",
+  "action": "WIRE_HABITAT_FACTS",
+  "habitat_crm_lead_count": 8,
+  "external_saas_crm": "ABSENT",
+  "invented_pipeline": false,
+  "fake_deals": false,
+  "fake_conversion": false,
+  "live_pipeline": false,
+  "ggv_pipeline_truth1_preserved": true,
+  "crm_identity1_preserved": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_pid_held": 15975,
+  "no_push": true,
+  "board": "/crm/pipeline-truth-1",
+  "result": "docs/wolf/ops/CRM-PIPELINE-TRUTH-1-RESULT.md",
+  "next_pack_for_parent": "CONTENT-PUBLISH-PATH-1",
+  "cursor_did_not_auto_start_next": true,
+  "matt_auto_continue_next_after_peaches": "CONTENT-PUBLISH-PATH-1"
+}

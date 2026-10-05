@@ -1,0 +1,62 @@
+{
+  "schema": "P0-NAV-AUTHORITY-EVIDENCE/v0",
+  "slice": "nav_authority_p0_20260930",
+  "generated_at_wita": "2026-09-30T12:23:21+08:00",
+  "executor": "Peaches-executor",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "bound": "beta",
+  "prod_8787_touched": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "exit_report": "NOT_CREATED",
+  "migration_state": "PARTIAL",
+  "nav_status": "AUTHORITY_CHROME",
+  "claim": "AUTHORITY_CHROME \u2014 API nav_authority + chrome #wolfnav-biz prefers authority; IA\u2229pages fallback + honesty stamp. NOT sole source. NOT LIVE_USABLE.",
+  "gap": {
+    "today": "IA_TREE \u2229 audience pages (+ PERSON_AUDIENCE bridge)",
+    "target": "Assignment/Role/Scope DB authority",
+    "this_step": "parallel nav_authority on whoami; staff-swap unit green"
+  },
+  "files_changed": [
+    "scripts/core/wolf_shell.py",
+    "scripts/tests/test_wolf_nav_authority_20260930.py",
+    "scripts/tests/test_wolf_global_app_shell_20260930.py",
+    "state/final-completion/p0-v1/NAV-AUTHORITY-SPEC.md",
+    "state/final-completion/p0-v1/NAV-AUTHORITY-EVIDENCE-20260930.json",
+    "state/final-completion/p0-v1/NEEDS-MATT-P0-20260930.md",
+    "state/final-completion/p0-v1/NEEDS-MATT-P0-20260930.json",
+    "state/final-completion/p0-v1/STAFF-PROVE-QUEUE-20260930.md",
+    "state/final-completion/p0-v1/STAFF-PROVE-QUEUE-20260930.json",
+    "state/final-completion/p0-v1/LIVE-USABLE-SCOREBOARD-20260930.json",
+    "state/final-completion/p0-v1/LIVE-USABLE-SCOREBOARD.md",
+    "state/final-completion/p0-v1/FINANCE-AUTH-MATRIX-PREP-20260930.json",
+    "state/final-completion/p0-v1/FINANCE-AUTH-MATRIX-PREP.md"
+  ],
+  "api": {
+    "shell_whoami": "/api/wolf/shell-whoami",
+    "new_field": "nav_authority",
+    "functions": [
+      "authority_nav_from_assignments",
+      "authority_nav_for_person",
+      "business_ids_from_scopes"
+    ]
+  },
+  "tests": {
+    "test_wolf_nav_authority_20260930.py": {
+      "pass": 31,
+      "fail": 0
+    },
+    "test_wolf_global_app_shell_20260930.py": {
+      "pass": 39,
+      "fail": 0,
+      "note": "stale cache-token expectation aligned to shell.CACHE_TOKEN"
+    }
+  },
+  "staff_swap_case": "same ROLE+SCOPE different person_id \u2192 identical nav_authority",
+  "chrome_still_transitional": false,
+  "hr_touched": false,
+  "auth_weakened": false,
+  "chrome_followon": "AUTHORITY_CHROME",
+  "chrome_fallback_transitional": true,
+  "updated_at_wita": "2026-09-30T12:33:20+08:00"
+}

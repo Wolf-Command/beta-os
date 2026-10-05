@@ -1,0 +1,28 @@
+{
+  "milestone": "MULTI-20260930-0921-OCCUPANCY-EXTERNAL-HOLD",
+  "at_wita": "2026-09-30T09:21:20+08:00",
+  "pack": "OCCUPANCY-EXTERNAL-HOLD-1",
+  "status": "CURSOR_EXIT_0",
+  "suite": {
+    "pass": 136,
+    "fail": 0
+  },
+  "classification": "EXTERNAL_BLOCKER",
+  "yanolja": "EXTERNAL_HOLD",
+  "occupancy": null,
+  "adr": null,
+  "invented_occupancy": false,
+  "invented_adr": false,
+  "amg_occ_preserved": true,
+  "npwp": "MATT_ACTION_NON_BLOCKING",
+  "npwp_blocking": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_pid_held": 15975,
+  "no_push": true,
+  "board": "/amg/occupancy-external-hold-1",
+  "result": "docs/wolf/ops/OCCUPANCY-EXTERNAL-HOLD-1-RESULT.md",
+  "next_pack_for_parent": "WAVE9-SYNTH-CONTINUE",
+  "cursor_did_not_auto_start_next": true,
+  "matt_auto_continue_next_after_peaches": "WAVE9-SYNTH-CONTINUE"
+}

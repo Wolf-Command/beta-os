@@ -1,0 +1,19 @@
+{
+  "at_wita": "2026-09-30T08:03:30+08:00",
+  "pack": "METRICOOL-RUNTIME-WIRE-1",
+  "status": "EXIT_0",
+  "suite": {
+    "pass": 136,
+    "fail": 0
+  },
+  "honesty": {
+    "brand_stamps": "RUNTIME_WIRED",
+    "analytics_catalog": "RUNTIME_WIRED",
+    "engagement_values": "NOT_RUNTIME",
+    "wolf_http": "EXTERNAL_BLOCKER"
+  },
+  "next_pack_for_parent": "ESB-SETTLEMENT-PATH-1",
+  "cursor_did_not_auto_start_next": true,
+  "prod_pid_held": 15975,
+  "result": "docs/wolf/ops/METRICOOL-RUNTIME-WIRE-1-RESULT.md"
+}

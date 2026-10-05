@@ -4,8 +4,9 @@
 Invariant: ACTIVE MISSION → advancement available regardless of calendar.
 Matt status is not an input. Quiet when inactive.
 
-Does NOT invent Cursor work. Does NOT touch Production.
-Deterministic stage advance + recovery WAKE only.
+Does NOT touch Production. Matt status is not an input.
+On worker exit or idle, bf_dispatch starts the next safe named-queue slice.
+Does not kill a live cursor. Credit conservation does not block that queue.
 """
 from __future__ import annotations
 
@@ -27,6 +28,10 @@ sys.path.insert(0, str(ROOT / "scripts" / "build-factory"))
 import bf_advance as ba  # noqa: E402
 import bf_watch as bw  # noqa: E402
 import bf_queue as bq  # noqa: E402
+try:
+    import bf_disk_guard as bdg  # noqa: E402
+except ImportError:  # pragma: no cover
+    bdg = None  # type: ignore
 
 # Hard ceiling for consecutive INSPECT recoveries on the same run without EXIT.
 INSPECT_RETRY_CEILING = 2
@@ -149,7 +154,7 @@ def mission_continue_if_idle(*, dry_run: bool = False) -> dict:
     """
     mid = bq.read_active_mission_id(BF)
     if not mid:
-        return {"action": "IDLE", "reason": "no_active_run_and_no_mission"}
+        return {"action": "IDLE", "reason": "no_active_run_and_no_mission", "wake_parent": False, "stopped": True}
     mission = bq.load_mission(mid, BF / "missions")
     if not mission:
         return {"action": "IDLE", "reason": "active_mission_missing", "mission_id": mid}
@@ -245,6 +250,94 @@ def mission_continue_if_idle(*, dry_run: bool = False) -> dict:
     }
 
 
+
+def hold_flags_blocking(bf_dir: Path | None = None) -> dict | None:
+    """Refuse dispatch while any factory hold flag is active.
+
+    Owner grill 2026-10-06 item 2: on-exit calls bf_supervisor directly and
+    previously skipped DISK-SAFETY-HOLD / SINGLE_TRACK-HOLD flag files (launchd
+    unload alone is not enough). Every dispatch path must read these flags.
+    Returns a dict describing the active hold, or None when clear.
+    """
+    base = bf_dir if bf_dir is not None else BF
+    active: list[dict] = []
+
+    disk = base / "DISK-SAFETY-HOLD.json"
+    if disk.is_file():
+        try:
+            payload = json.loads(disk.read_text(encoding="utf-8"))
+        except Exception as exc:  # noqa: BLE001
+            payload = {"status": "UNREADABLE", "error": exc.__class__.__name__}
+        status = str(payload.get("status") or "").upper()
+        # RESUMED = hold lifted; anything else (missing status, HOLD, PAUSED) blocks.
+        if status != "RESUMED":
+            active.append({
+                "flag": "DISK-SAFETY-HOLD.json",
+                "status": payload.get("status") or "ACTIVE",
+                "kind": payload.get("kind") or "DISK_SAFETY_HOLD",
+                "reason": payload.get("reason"),
+            })
+
+    single = base / "SINGLE_TRACK-HOLD.json"
+    if single.is_file():
+        try:
+            payload = json.loads(single.read_text(encoding="utf-8"))
+        except Exception as exc:  # noqa: BLE001
+            payload = {"status": "UNREADABLE", "error": exc.__class__.__name__}
+        status = str(payload.get("status") or "").upper()
+        if status not in ("RESUMED", "CLEAR", "CLEARED", "OFF"):
+            active.append({
+                "flag": "SINGLE_TRACK-HOLD.json",
+                "status": payload.get("status") or "HOLD",
+                "kind": payload.get("kind") or "SINGLE_TRACK_HOLD",
+                "reason": payload.get("reason"),
+                "allowed_track": payload.get("allowed_track"),
+            })
+
+    hold_marker = base / "HOLD"
+    if hold_marker.exists():
+        try:
+            body = hold_marker.read_text(encoding="utf-8").strip()
+        except Exception:  # noqa: BLE001
+            body = ""
+        # Empty marker still counts as a hold presence signal.
+        active.append({
+            "flag": "HOLD",
+            "status": "HOLD",
+            "kind": body or "HOLD_MARKER",
+            "reason": "HOLD marker file present",
+        })
+
+    # Any other *-HOLD.json that is not RESUMED/CLEAR (exclude archived-*).
+    for path in sorted(base.glob("*-HOLD.json")):
+        name = path.name
+        if name in ("DISK-SAFETY-HOLD.json", "SINGLE_TRACK-HOLD.json"):
+            continue
+        if name.startswith("archived-"):
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception as exc:  # noqa: BLE001
+            payload = {"status": "UNREADABLE", "error": exc.__class__.__name__}
+        status = str(payload.get("status") or "").upper()
+        if status not in ("RESUMED", "CLEAR", "CLEARED", "OFF"):
+            active.append({
+                "flag": name,
+                "status": payload.get("status") or "HOLD",
+                "kind": payload.get("kind") or name,
+                "reason": payload.get("reason"),
+            })
+
+    if not active:
+        return None
+    return {
+        "action": "HOLD_REFUSED",
+        "holds": active,
+        "allow_dispatch": False,
+        "message": "dispatch refused: factory hold flag(s) set",
+    }
+
+
 def tick(*, dry_run: bool = False) -> dict:
     """One supervisor tick. Idempotent. Calendar-blind."""
     out: dict = {
@@ -255,7 +348,113 @@ def tick(*, dry_run: bool = False) -> dict:
         "require_matt": False,
         "dry_run": dry_run,
         "calendar_gate": False,  # always false — invariant
+        "wake_parent": False,
+        "stopped": False,
     }
+
+    # Owner grill 2026-10-06: honour DISK-SAFETY / SINGLE_TRACK / HOLD flags on
+    # every path, including the launcher on-exit tick (launchd unload alone is
+    # not enough). Runs even on dry_run so refuse is testable.
+    blocked = hold_flags_blocking()
+    if blocked:
+        out["action"] = "HOLD_REFUSED"
+        out["ok"] = True
+        out["stopped"] = False
+        out["hold_flags"] = blocked
+        out["allow_dispatch"] = False
+        refuse_line = {
+            "at": now_iso(),
+            "event": "DISPATCH_REFUSED_HOLD",
+            "action": "HOLD_REFUSED",
+            "holds": blocked.get("holds"),
+            "dry_run": dry_run,
+            "require_matt": False,
+        }
+        try:
+            with (BF / "DISPATCH-AUDIT.jsonl").open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps(refuse_line, sort_keys=True) + "\n")
+        except Exception:  # noqa: BLE001
+            pass
+        try:
+            with (BF / "hold-refusals.jsonl").open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps(refuse_line, sort_keys=True) + "\n")
+        except Exception:  # noqa: BLE001
+            pass
+        if not dry_run:
+            _append_tick(out)
+            _write_wake({
+                "kind": "FACTORY_HOLD_REFUSED",
+                "at": now_iso(),
+                "require_matt": False,
+                "wake_parent": False,
+                "stopped": False,
+                "action": "HOLD_REFUSED",
+                "hold_flags": blocked,
+                "instruction": (
+                    "Factory hold flag(s) set. No dispatch (including on-exit). "
+                    "Do not message Matt."
+                ),
+            })
+        return out
+
+    # Owner P0 5 Oct 2026 21:01 WITA — hard free-space guards.
+    # <100GB WARN, <50GB pause new dispatches + auto-clean tmp-f1, <25GB P0 protection.
+    if bdg is not None and not dry_run:
+        try:
+            dg = bdg.check(auto_clean=True)
+            out["disk_guard"] = dg
+            if not dg.get("allow_dispatch", True):
+                out["action"] = "DISK_HOLD"
+                out["ok"] = True
+                out["stopped"] = False
+                _append_tick(out)
+                _write_wake({
+                    "kind": "FACTORY_DISK_HOLD",
+                    "at": now_iso(),
+                    "require_matt": False,
+                    "wake_parent": False,
+                    "stopped": False,
+                    "action": "DISK_HOLD",
+                    "disk_guard": dg,
+                    "instruction": (
+                        "Studio free space below guard. No new factory dispatches. "
+                        "Do not message Matt. Archive catalog/backups to NAS or free disk."
+                    ),
+                })
+                return out
+        except Exception as exc:  # noqa: BLE001
+            out["disk_guard_error"] = exc.__class__.__name__
+
+    import bf_dispatch as bd
+
+    dispatched = bd.supervisor_dispatch(dry_run=dry_run)
+    if dispatched.get("handled"):
+        out.update(dispatched)
+        out["require_matt"] = False
+        out["calendar_gate"] = False
+        # Self-dispatch is not a parent wake and is not an idle stop.
+        if dispatched.get("started") or dispatched.get("action") in ("WAIT", "DISPATCH"):
+            out["stopped"] = False
+            out["wake_parent"] = False
+        if not dry_run:
+            _append_tick(out)
+            _write_wake(
+                {
+                    "kind": "FACTORY_SUPERVISOR_OWNS_DISPATCH",
+                    "at": now_iso(),
+                    "require_matt": False,
+                    "wake_parent": False,
+                    "stopped": False,
+                    "action": out.get("action"),
+                    "run_id": out.get("run_id"),
+                    "slice": out.get("slice"),
+                    "instruction": (
+                        "The build-factory supervisor owns dispatch. Do not message Matt. "
+                        "Do not start a second cursor while this writer is alive."
+                    ),
+                }
+            )
+        return out
 
     if not ACTIVE.exists() or not ACTIVE.read_text(encoding="utf-8").strip():
         # Owner 19 Sep: empty ACTIVE must still consume ACTIVE_MISSION queue.
@@ -376,7 +575,16 @@ def main() -> int:
     if args.prove_calendar_free:
         print(json.dumps({"ok": True, "calendar_independent": calendar_independent()}))
         return 0 if calendar_independent() else 1
-    print(json.dumps(tick(dry_run=args.dry_run), indent=2))
+    # One tick at a time: launchd's 5-minute tick and the launcher's on-exit tick must not race.
+    import fcntl
+    lock_path = BF / "supervisor-tick.flock"
+    with lock_path.open("w") as lk:
+        try:
+            fcntl.flock(lk, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            print(json.dumps({"ok": True, "action": "SKIP", "reason": "tick_in_progress"}))
+            return 0
+        print(json.dumps(tick(dry_run=args.dry_run), indent=2))
     return 0
 
 

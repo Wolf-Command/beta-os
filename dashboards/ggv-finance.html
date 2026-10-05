@@ -87,7 +87,9 @@
 </head>
 <body data-wolf-page-type="WORKSPACE" data-wolf-org="GGV" data-wolf-shell="global">
   <p class="meta">WOLF · Goss Group · GGV · Finance</p>
-  <p class="meta" id="entity-switch">This page is GGV.</p>
+  <div id="entity-switch" data-wolf-finance-switcher data-current="GGV"></div>
+  <link rel="stylesheet" href="/shared/finance-switcher.css" />
+  <script src="/shared/finance-switcher.js" defer></script>
   <h1>GGV <span>Finance</span></h1>
   <div class="banner">
     <strong>Entering a nota is not the same as paying it.</strong>
@@ -98,15 +100,28 @@
   </div>
   <nav class="tabs" aria-label="Finance">
     <button type="button" data-tab="overview" class="active">Overview</button>
+    <button type="button" data-tab="banking">Banking</button>
+    <button type="button" data-tab="transactions">Transactions</button>
+    <button type="button" data-tab="notas">Receipts/Notas</button>
+    <button type="button" data-tab="bills">Bills</button>
     <button type="button" data-tab="invoices">Invoices</button>
-    <button type="button" data-tab="notas">Notas / Bills</button>
-    <button type="button" data-tab="vendors">Vendors</button>
-    <button type="button" data-tab="customers">Customers</button>
-    <button type="button" data-tab="history">History</button>
+    <button type="button" data-tab="reconciliation">Reconciliation</button>
+    <button type="button" data-tab="vendors">Suppliers</button>
+    <button type="button" data-tab="missing_evidence">Missing Evidence</button>
     <button type="button" data-tab="reports">Reports</button>
+    <button type="button" data-tab="audit">Audit</button>
+    <button type="button" data-tab="customers" class="hidden">Customers</button>
+    <button type="button" data-tab="history" class="hidden">History</button>
+    <button type="button" data-tab="receipts" class="hidden">Receipts</button>
   </nav>
 
   <section id="overview">
+    <div class="grid" id="primary-actions">
+      <a class="file-btn primary" href="/ggv/finance/banking">UPLOAD STATEMENT</a>
+      <a class="file-btn primary" href="/ggv/finance/notas">UPLOAD NOTA / RECEIPT</a>
+      <a class="file-btn primary" href="/ggv/finance/statements">Historical statements</a>
+      <a class="file-btn primary" href="/ggv/finance/reconciliation">RECONCILIATION</a>
+    </div>
     <div class="grid" id="overview-cards"></div>
     <h2>Recently added</h2>
     <div id="recent"></div>
@@ -165,7 +180,53 @@
   <section id="notas" class="hidden">
     <div id="nota-list-wrap">
       <button type="button" class="primary" id="start-upload">+ Upload Nota</button>
+      <h2>Receipt queue</h2>
+      <p class="note">Vault receipts for accountant review. Original images stay evidence — paths are never shown.</p>
+      <label>Receipt queue
+        <select id="rx-queue-inline">
+          <option value="">All queues</option>
+          <option value="needs_review">Needs review</option>
+          <option value="duplicate">Duplicate</option>
+          <option value="not_business">Not a business receipt</option>
+          <option value="evidence_missing">Evidence missing</option>
+        </select>
+      </label>
+      <button type="button" class="secondary" id="rx-reload-inline">Reload receipts</button>
+      <p class="note" id="rx-summary-inline">Loading…</p>
+      <div id="rx-list-inline"></div>
+      <div id="rx-detail-inline" class="hidden card warn">
+        <h2 id="rx-detail-title-inline">Receipt detail</h2>
+        <div id="rx-detail-image-inline"></div>
+        <div class="grid">
+          <div><h3>Extracted</h3><div id="rx-fields-extraction" class="meta"></div></div>
+          <div><h3>Your confirmation</h3>
+            <label>Vendor<input id="rx-vendor-inline" /></label>
+            <label>Amount<input id="rx-amount-inline" inputmode="decimal" /></label>
+            <label>Tax<input id="rx-tax-inline" inputmode="decimal" placeholder="Leave blank if not shown" /></label>
+            <label>Date<input id="rx-date-inline" placeholder="YYYY-MM-DD" /></label>
+            <label>Category<input id="rx-category-inline" /></label>
+            <label>Account code<input id="rx-account-inline" /></label>
+            <label>Notes<textarea id="rx-notes-inline"></textarea></label>
+          </div>
+        </div>
+        <button type="button" class="primary" id="rx-confirm-inline">Confirm beside extraction</button>
+        <p class="note" id="rx-confirm-msg-inline"></p>
+        <label>Reason (required for evidence missing)<textarea id="rx-disposition-reason" placeholder="Why you are marking this"></textarea></label>
+        <button type="button" class="secondary" id="rx-mark-duplicate">Mark duplicate</button>
+        <button type="button" class="secondary" id="rx-not-business">Not a business receipt</button>
+        <button type="button" class="secondary" id="rx-evidence-missing">Evidence missing</button>
+        <h3>Link to bill or nota</h3>
+        <label>Search<input id="rx-link-q" placeholder="Supplier, invoice, bill number" /></label>
+        <button type="button" class="secondary" id="rx-link-search">Search</button>
+        <div id="rx-link-results"></div>
+        <p class="note" id="rx-linked"></p>
+        <button type="button" class="secondary" id="rx-detail-close-inline">Close</button>
+      </div>
+      <h2>Notas</h2>
       <div id="nota-list"></div>
+      <h2>Bills</h2>
+      <p class="note" id="bill-summary">Imported bills from the finance record.</p>
+      <div id="bill-list"></div>
     </div>
     <div id="upload-panel" class="hidden">
       <button type="button" class="secondary" id="cancel-upload">Back to notas</button>
@@ -234,6 +295,104 @@
     <p class="note">This download is a copy for the month. Each original file stays separate.</p>
   </section>
 
+  <section id="receipts" class="hidden">
+    <p class="note">Vault receipts from the existing Peaches / receipt-from-telegram bridge. GGV only — AMG and BZG excluded. Original images stay evidence. Human confirm keeps extraction beside it. Xero stays fail-closed.</p>
+    <label>Accounting queue
+      <select id="rx-queue">
+        <option value="">All queues</option>
+        <option value="needs_review">Needs review</option>
+        <option value="needs_coding">Needs coding</option>
+        <option value="unmatched">Unmatched</option>
+        <option value="duplicate">Duplicate</option>
+      </select>
+    </label>
+    <button type="button" class="secondary" id="rx-reload">Reload accounting queues</button>
+    <p class="note" id="rx-summary">Loading…</p>
+    <div id="rx-counts" class="grid"></div>
+    <div id="rx-list"></div>
+    <div id="rx-detail" class="hidden card warn">
+      <h2 id="rx-detail-title">Receipt detail</h2>
+      <div id="rx-detail-image"></div>
+      <h3>Extraction (kept)</h3>
+      <pre id="rx-detail-extraction" class="meta"></pre>
+      <h3>Human confirmed</h3>
+      <pre id="rx-detail-human" class="meta"></pre>
+      <label>Vendor<input id="rx-vendor" /></label>
+      <label>Amount<input id="rx-amount" inputmode="decimal" /></label>
+      <label>Tax<input id="rx-tax" inputmode="decimal" placeholder="Leave blank if not shown" /></label>
+      <label>Date<input id="rx-date" placeholder="YYYY-MM-DD" /></label>
+      <label>Category<input id="rx-category" /></label>
+      <label>Account code<input id="rx-account" /></label>
+      <label>Notes<textarea id="rx-notes"></textarea></label>
+      <button type="button" class="primary" id="rx-confirm">Confirm beside extraction</button>
+      <p class="note" id="rx-confirm-msg"></p>
+      <button type="button" class="secondary" id="rx-detail-close">Close detail</button>
+    </div>
+    <h2>Missing evidence (receipts + notas)</h2>
+    <div id="rx-missing-notas"></div>
+    <h2>Bank unmatched (missing receipt)</h2>
+    <div id="rx-bank-unmatched"></div>
+  </section>
+
+  <section id="banking" class="hidden">
+    <p class="note">FILE_IMPORT_ONLY. Original statement file is kept. Normalised rows are written for matching. Weak matches never auto-reconcile. GGV entity only.</p>
+    <h2>Bank statements library</h2>
+    <div id="stmt-completeness"></div>
+    <div id="stmt-library"></div>
+    <h2>Upload statement</h2>
+    <label>Statement file (CSV or PDF)<input type="file" id="bank-file" accept=".csv,.pdf,text/csv,application/pdf,text/plain" /></label>
+    <label>Bank label (optional)
+      <select id="bank-label">
+        <option value="">Detect</option>
+        <option value="MANDIRI">Mandiri</option>
+        <option value="BNI">BNI</option>
+        <option value="BRI">BRI</option>
+      </select>
+    </label>
+    <button type="button" class="primary" id="bank-upload">Upload statement</button>
+    <p class="note" id="bank-msg"></p>
+    <h2>Imports</h2>
+    <div id="bank-imports"></div>
+    <h2>Transactions needing receipt / review</h2>
+    <div id="bank-txns"></div>
+  </section>
+
+  <section id="transactions" class="hidden">
+    <p class="note">All imported bank transactions for GGV. Propose-only matching — never auto-reconciled.</p>
+    <div id="txn-list"></div>
+  </section>
+
+  <section id="bills" class="hidden">
+    <p class="note" id="bills-only-summary">Imported bills from the finance record.</p>
+    <label>Search bills<input id="bill-q" placeholder="Supplier, number, reference" /></label>
+    <button type="button" class="secondary" id="bill-search">Search</button>
+    <div id="bills-only-list"></div>
+  </section>
+
+  <section id="reconciliation" class="hidden">
+    <p class="note">Propose-only reconciliation. No auto-post. No Reconcile button.</p>
+    <div id="recon-summary" class="grid"></div>
+    <h2>Imports</h2>
+    <div id="recon-imports"></div>
+    <h2>Transactions</h2>
+    <div id="recon-txns"></div>
+  </section>
+
+  <section id="missing_evidence" class="hidden">
+    <p class="note">Receipts and bank rows missing evidence. Originals stay on disk when present.</p>
+    <h2>Receipt accounting — missing image</h2>
+    <div id="me-rx"></div>
+    <h2>Bank — unmatched / needs receipt</h2>
+    <div id="me-bank"></div>
+    <h2>Notas — missing evidence</h2>
+    <div id="me-notas"></div>
+  </section>
+
+  <section id="audit" class="hidden">
+    <p class="note">Recent GGV finance audit events (read-only).</p>
+    <div id="audit-list"></div>
+  </section>
+
   <section id="reports" class="hidden">
     <p class="note">Accountant evidence stays in Reports. Cash, profit, ageing, margin, and tax position are not on this page.</p>
     <p class="note" id="acct-note">No accounting total. The books are not complete on this screen.</p>
@@ -252,16 +411,33 @@
 
 <script>
 const $ = (id) => document.getElementById(id);
-const tabs = ["overview", "invoices", "notas", "vendors", "customers", "history", "reports"];
+const tabs = [
+  "overview", "banking", "transactions", "notas", "bills", "invoices",
+  "reconciliation", "vendors", "missing_evidence", "reports", "audit",
+  "customers", "history", "receipts"
+];
 const pathTab = {
   "/ggv/finance": "overview",
-  "/ggv/finance/invoices": "invoices",
+  "/ggv/finance/banking": "banking",
+  "/ggv/finance/statements": "banking",
+  "/ggv/finance/transactions": "transactions",
   "/ggv/finance/notas": "notas",
+  "/ggv/finance/bills": "bills",
+  "/ggv/finance/invoices": "invoices",
+  "/ggv/finance/reconciliation": "reconciliation",
   "/ggv/finance/vendors": "vendors",
+  "/ggv/finance/suppliers": "vendors",
+  "/ggv/finance/missing-evidence": "missing_evidence",
+  "/ggv/finance/reports": "reports",
+  "/ggv/finance/audit": "audit",
   "/ggv/finance/customers": "customers",
   "/ggv/finance/history": "history",
-  "/ggv/finance/reports": "reports"
+  "/ggv/finance/receipts": "receipts"
 };
+const OPERATIONAL_SECTIONS = [
+  "Overview", "Banking", "Transactions", "Receipts/Notas", "Bills", "Invoices",
+  "Reconciliation", "Suppliers", "Missing Evidence", "Reports", "Audit"
+];
 let invoiceLines = [];
 let editingInvoice = null;
 let chosen = [];
@@ -279,10 +455,17 @@ function showTab(name) {
   });
   if (name === "overview") loadOverview();
   if (name === "invoices") loadInvoices();
-  if (name === "notas") loadNotas();
+  if (name === "notas") { loadNotas(); loadReceiptsInline(); }
+  if (name === "bills") loadBillsOnly();
   if (name === "vendors") searchVendors();
   if (name === "customers") searchCustomers();
   if (name === "history") return;
+  if (name === "receipts") loadReceipts();
+  if (name === "banking") loadBanking();
+  if (name === "transactions") loadTransactions();
+  if (name === "reconciliation") loadReconciliation();
+  if (name === "missing_evidence") loadMissingEvidence();
+  if (name === "audit") loadAudit();
   if (name === "reports") loadAccountant();
 }
 document.querySelectorAll("nav.tabs button").forEach((btn) => {
@@ -320,6 +503,7 @@ async function loadOverview() {
     ["Waiting approval", data.waiting_approval],
     ["Not paid from this screen", data.payment_unverified],
     ["Vendor issues", data.vendor_issues],
+    ["Bills on record", data.bill_count || 0],
   ];
   const desk = data.invoice_desk || {};
   if (desk.invoice_access) {
@@ -336,7 +520,6 @@ async function loadOverview() {
   $("activity").innerHTML = activity.length
     ? activity.map((item) => `<article class="card">${esc(item.at)} · ${esc(item.action)}</article>`).join("")
     : `<p class="note">No invoice activity yet.</p>`;
-  renderEntities(data.finance_entities || desk.finance_entities || []);
   if (data.boundary_note) $("boundary").textContent = data.boundary_note;
   const shell = $("books-shell");
   if (shell) {
@@ -352,24 +535,10 @@ async function loadOverview() {
         ? data.books_shell.journals
         : (data.journals != null ? data.journals : 0)
     );
-    shell.textContent =
-      "GGV books slot open (" + dbFile + ", " + kind + "). COA " + accounts +
-      " accounts · journals " + journals +
-      " (empty). Structure only — no fake P&L. staff_ready=false · human_commissioned=false. Not READY.";
+    shell.textContent = journals === 0
+      ? "GGV — chart of accounts set up. No journals posted yet."
+      : "GGV books · " + accounts + " accounts · " + journals + " journals.";
   }
-}
-
-function renderEntities(rows) {
-  const box = $("entity-switch");
-  if (!rows || !rows.length) {
-    box.textContent = "This page is GGV.";
-    return;
-  }
-  if (rows.length === 1) {
-    box.textContent = "Finance · " + rows[0].label;
-    return;
-  }
-  box.innerHTML = "Finance · " + rows.map((row) => `<a class="inline" href="${esc(row.href)}">${esc(row.label)}</a>`).join(" · ");
 }
 
 function notaCard(nota) {
@@ -378,20 +547,51 @@ function notaCard(nota) {
   return `<article class="card row"><button type="button" data-open="${esc(nota.nota_id)}"><strong>${esc(who)}</strong><br>${esc(nota.invoice_no || "No invoice number")} · ${esc(nota.date || "No date")}<br>${amount}<br>${esc(nota.state_label || "")}</button></article>`;
 }
 
+function billCard(bill) {
+  const who = bill.contact_name || "No supplier name";
+  const amount = bill.amount ? esc(bill.amount) + " " + esc(bill.currency || "") : "Amount not recorded";
+  const number = bill.bill_number || bill.reference || "No bill number";
+  const due = bill.due_on ? " · due " + esc(bill.due_on) : "";
+  return `<article class="card row"><strong>${esc(who)}</strong><br>${esc(number)} · ${esc(bill.issued_on || "No date")}${due}<br>${amount}<br>${esc(bill.status || "")}</article>`;
+}
+
 async function loadNotas() {
-  const data = await api("/api/ggv/finance/notas");
-  const rows = data.notas || [];
+  const [notaData, billData] = await Promise.all([
+    api("/api/ggv/finance/notas"),
+    api("/api/ggv/finance/bills"),
+  ]);
+  const rows = notaData.notas || [];
   $("nota-list").innerHTML = rows.length ? rows.map(notaCard).join("") : `<p class="note">No notas yet. Upload one from your phone.</p>`;
   $("nota-list").querySelectorAll("[data-open]").forEach((btn) => btn.addEventListener("click", () => openNota(btn.dataset.open)));
+  const bills = billData.bills || [];
+  const total = billData.bill_count || bills.length;
+  const summary = $("bill-summary");
+  if (summary) {
+    summary.textContent = total
+      ? `${total} imported bill${total === 1 ? "" : "s"} from the finance record.`
+      : "No imported bills on record yet.";
+  }
+  $("bill-list").innerHTML = bills.length
+    ? bills.map(billCard).join("") + (total > bills.length ? `<p class="note">Showing ${bills.length} of ${total} bills.</p>` : "")
+    : `<p class="note">No bills on record yet.</p>`;
+}
+
+function extractionFields(obj) {
+  if (!obj || typeof obj !== "object") return "<p class='note'>No extraction on file.</p>";
+  const rows = Object.entries(obj).filter(([k]) => !["raw_meta"].includes(k)).map(([k, v]) =>
+    `<p><span class="meta">${esc(k)}</span><br>${esc(String(v ?? ""))}</p>`
+  ).join("");
+  return rows || "<p class='note'>No fields read.</p>";
 }
 
 async function openNota(id) {
   const data = await api("/api/ggv/finance/notas/" + encodeURIComponent(id));
   const nota = data.nota;
+  const proposals = (nota.proposals && nota.proposals.fields) || {};
   $("nota-list-wrap").classList.add("hidden");
   $("upload-panel").classList.add("hidden");
   $("nota-detail").classList.remove("hidden");
-  const files = (nota.files || []).map((file) => `<p><a class="inline" href="/api/ggv/finance/files/${esc(file.file_id)}">${esc(file.original_filename || file.filename || "Attachment")}</a> <span class="meta">Backup: ${esc(file.backup_label || "Unknown")}</span></p>`).join("");
+  const files = (nota.files || []).map((file) => `<p><a class="inline" href="/api/ggv/finance/files/${esc(file.file_id)}">${esc(file.original_filename || file.filename || "Attachment")}</a> <span class="meta">Backup: ${esc(file.backup_label || "Unknown")}</span></p>`).join("") || `<p class="bad">No file attached — evidence missing.</p>`;
   const history = (nota.history || []).map((item) => `<li>${esc(item.at)} · ${esc(item.action)}</li>`).join("");
   const bank = nota.bank_details && nota.bank_details.text
     ? `<p class="warn">Bank details observed: ${esc(nota.bank_details.text)}. Not verified. This does not pay anyone.</p>`
@@ -399,12 +599,29 @@ async function openNota(id) {
   $("nota-detail").innerHTML = `
     <button type="button" class="secondary" id="detail-back">Back to notas</button>
     <article class="card">
-      <h2>${esc(nota.vendor && nota.vendor.name || "No vendor yet")}</h2>
-      <p>${esc(nota.state_label)} · ${esc(nota.invoice_no || "")}</p>
-      <p>Date ${esc(nota.date || "—")} · Amount ${esc(nota.amount || "not confirmed")} ${esc(nota.currency || "")}</p>
+      <h2>${esc(nota.vendor && nota.vendor.name || proposals.vendor_name || "No vendor yet")}</h2>
+      <p>${esc(nota.state_label)} · ${esc(nota.invoice_no || proposals.invoice_no || "")}</p>
       <p class="note">Entering this nota is not approval, not payment, and not payment verified.</p>
       ${bank}
       ${files}
+      <div class="grid">
+        <div><h3>Extracted</h3>${extractionFields(proposals)}</div>
+        <div><h3>Your confirmation</h3>
+          <label>Invoice number<input id="nd-invoice" value="${esc(nota.invoice_no || proposals.invoice_no || "")}" /></label>
+          <label>Date<input id="nd-date" value="${esc(nota.date || proposals.date || "")}" /></label>
+          <label>Amount<input id="nd-amount" value="${esc(nota.amount || proposals.amount || "")}" inputmode="decimal" /></label>
+          <label>Tax<input id="nd-tax" value="${esc(nota.tax || proposals.tax || "")}" inputmode="decimal" /></label>
+          <label>Currency<input id="nd-currency" value="${esc(nota.currency || proposals.currency || "IDR")}" /></label>
+          <label>Category<input id="nd-category" value="${esc(nota.category || proposals.category || "")}" /></label>
+          <label>Notes<textarea id="nd-notes">${esc(nota.notes || "")}</textarea></label>
+          <label>Reason (required for evidence missing)<textarea id="nd-disposition-reason" placeholder="Why you are marking this"></textarea></label>
+        </div>
+      </div>
+      <button type="button" class="primary" id="nd-confirm">Confirm beside extraction</button>
+      <p class="note" id="nd-confirm-msg"></p>
+      <button type="button" class="secondary" id="nd-mark-duplicate">Mark duplicate</button>
+      <button type="button" class="secondary" id="nd-not-business">Not a business document</button>
+      <button type="button" class="secondary" id="nd-evidence-missing">Evidence missing</button>
       <h2>History</h2>
       <ul>${history}</ul>
     </article>`;
@@ -413,6 +630,41 @@ async function openNota(id) {
     $("nota-list-wrap").classList.remove("hidden");
     loadNotas();
   });
+  $("nd-confirm").addEventListener("click", async () => {
+    $("nd-confirm-msg").textContent = "Saving…";
+    try {
+      const body = {
+        invoice_no: $("nd-invoice").value,
+        date: $("nd-date").value,
+        amount: $("nd-amount").value,
+        tax: $("nd-tax").value,
+        currency: $("nd-currency").value,
+        category: $("nd-category").value,
+        notes: $("nd-notes").value,
+        confirm: { vendor: true, invoice_no: true, date: true, amount: true, tax: true, currency: true, category: true },
+      };
+      const res = await api(`/api/ggv/finance/notas/${encodeURIComponent(id)}/confirm`, { method: "POST", body: JSON.stringify(body) });
+      $("nd-confirm-msg").textContent = res.message || "Confirmed.";
+      openNota(id);
+    } catch (err) {
+      $("nd-confirm-msg").textContent = err.message || String(err);
+    }
+  });
+  async function notaDisposition(action) {
+    const reason = ($("nd-disposition-reason").value || "").trim();
+    try {
+      await api(`/api/ggv/finance/notas/${encodeURIComponent(id)}/disposition`, {
+        method: "POST",
+        body: JSON.stringify({ action, reason }),
+      });
+      openNota(id);
+    } catch (err) {
+      $("nd-confirm-msg").textContent = err.message || String(err);
+    }
+  }
+  $("nd-mark-duplicate").addEventListener("click", () => notaDisposition("mark_duplicate"));
+  $("nd-not-business").addEventListener("click", () => notaDisposition("not_a_business_receipt"));
+  $("nd-evidence-missing").addEventListener("click", () => notaDisposition("evidence_missing"));
 }
 
 function rememberFiles(list, reset) {
@@ -704,6 +956,445 @@ async function loadAccountant() {
 }
 
 $("acct-export").addEventListener("click", () => downloadPack($("acct-year").value, $("acct-month").value, $("acct-note")));
+
+let rxSelectedKey = null;
+
+function rxQueueBadge(queue, label) {
+  const cls = queue === "duplicate" ? "bad" : queue === "needs_review" ? "" : "check";
+  return `<span class="${cls}">${esc(label || queue || "")}</span>`;
+}
+
+async function loadReceipts() {
+  const q = ($("rx-queue").value || "").trim();
+  const path = q
+    ? `/api/ggv/finance/accounting/queues?queue=${encodeURIComponent(q)}&limit=80`
+    : "/api/ggv/finance/accounting/queues?limit=80";
+  const data = await api(path);
+  const counts = data.queue_counts || {};
+  const labels = data.queue_labels || {};
+  $("rx-summary").textContent =
+    `Accounting queue · showing ${data.count || 0}` +
+    (data.amg_bzg_isolated ? "" : " · check business isolation");
+  $("rx-counts").innerHTML = Object.keys(labels).map((key) => `
+    <article class="card">
+      <p class="count">${esc(String(counts[key] || 0))}</p>
+      <p class="meta">${esc(labels[key] || key)}</p>
+    </article>`).join("");
+  const rows = data.items || [];
+  $("rx-list").innerHTML = rows.length
+    ? rows.map((r) => `
+      <article class="card" data-rx-key="${esc(r.receipt_key || "")}">
+        <strong>${esc(r.vault_filename || r.receipt_key || "")}</strong><br>
+        ${rxQueueBadge(r.accounting_queue, r.queue_label)} · ${esc(r.vault_queue || "")} · ${esc(r.updated_at || "")}<br>
+        <span class="meta">${esc((r.extraction && r.extraction.note) || "")}</span>
+        <div class="meta">
+          ${r.image_retrievable ? "Original image attached" : "<span class='bad'>Missing evidence</span>"}
+          · extraction ${r.extraction_retained ? "kept" : "none"}
+          · human ${r.human_confirmed ? "confirmed beside" : "not yet"}
+          ${r.duplicate_of ? " · duplicate of " + esc(r.duplicate_of) : ""}
+        </div>
+        <button type="button" class="secondary rx-open" data-rx-key="${esc(r.receipt_key || "")}">Open</button>
+      </article>`).join("")
+    : `<p class="note">No receipts in this accounting queue.</p>`;
+  document.querySelectorAll(".rx-open").forEach((btn) => {
+    btn.addEventListener("click", () => openReceiptDetail(btn.dataset.rxKey));
+  });
+  const acct = await api("/api/ggv/finance/accountant");
+  const missingRx = (data.missing_evidence_receipts || 0) > 0
+    ? `<p class="bad">${esc(String(data.missing_evidence_receipts))} vault receipt(s) missing image on disk.</p>`
+    : "";
+  $("rx-missing-notas").innerHTML =
+    missingRx + (periodCards(acct.missing_evidence) || `<p class="note">No missing nota evidence.</p>`);
+  const bank = await api("/api/ggv/finance/bank-transactions?limit=40");
+  const need = (bank.transactions || []).filter((t) =>
+    ["NEEDS_RECEIPT", "NEEDS_REVIEW", "UNIDENTIFIED"].includes(String(t.recon_status || "").toUpperCase())
+  );
+  $("rx-bank-unmatched").innerHTML = need.length
+    ? need.map((t) => `
+      <article class="card">
+        <strong>${esc(t.txn_date || "")}</strong> · ${esc(t.recon_status || "")}<br>
+        debit ${esc(String(t.debit || 0))} · credit ${esc(String(t.credit || 0))}<br>
+        <span class="meta">${esc(t.description || "")}</span>
+      </article>`).join("")
+    : `<p class="note">No bank rows waiting for receipt (${esc(String(data.bank_unmatched_txns || 0))} total unmatched).</p>`;
+}
+
+async function openReceiptDetail(key) {
+  if (!key) return;
+  rxSelectedKey = key;
+  const data = await api(`/api/ggv/finance/accounting/receipts/${encodeURIComponent(key)}`);
+  const r = data.receipt || {};
+  $("rx-detail").classList.remove("hidden");
+  $("rx-detail-title").textContent = r.vault_filename || key;
+  $("rx-detail-extraction").textContent = JSON.stringify(r.extraction || {}, null, 2);
+  $("rx-detail-human").textContent = r.human_confirmed
+    ? JSON.stringify(r.human_confirmed, null, 2)
+    : "(not confirmed yet — extraction stays when you confirm)";
+  $("rx-detail-image").innerHTML = r.image_retrievable
+    ? `<img src="/api/ggv/finance/accounting/receipts/${encodeURIComponent(key)}/image" alt="Receipt evidence" style="max-width:100%;border-radius:12px;border:1px solid var(--border)" />`
+    : `<p class="bad">Missing evidence — original image not on disk.</p>`;
+  const h = r.human_confirmed || {};
+  $("rx-vendor").value = h.vendor || (r.extraction && r.extraction.vendor) || "";
+  $("rx-amount").value = h.amount || (r.extraction && r.extraction.amount) || "";
+  $("rx-tax").value = h.tax || (r.extraction && r.extraction.tax) || "";
+  $("rx-date").value = h.date || (r.extraction && r.extraction.receipt_date) || "";
+  $("rx-category").value = h.category || (r.extraction && r.extraction.category) || "";
+  $("rx-account").value = h.account_code || (r.extraction && r.extraction.account_code) || "";
+  $("rx-notes").value = h.notes || "";
+  $("rx-confirm-msg").textContent = "";
+}
+
+if ($("rx-detail-close")) {
+  $("rx-detail-close").addEventListener("click", () => {
+    $("rx-detail").classList.add("hidden");
+    rxSelectedKey = null;
+  });
+}
+if ($("rx-confirm")) {
+  $("rx-confirm").addEventListener("click", async () => {
+    if (!rxSelectedKey) return;
+    $("rx-confirm-msg").textContent = "Saving…";
+    try {
+      const body = {
+        vendor: $("rx-vendor").value,
+        amount: $("rx-amount").value,
+        date: $("rx-date").value,
+        category: $("rx-category").value,
+        account_code: $("rx-account").value,
+        notes: $("rx-notes").value,
+      };
+      const taxVal = ($("rx-tax").value || "").trim();
+      if (taxVal) body.tax = taxVal;
+      const data = await api(
+        `/api/ggv/finance/accounting/receipts/${encodeURIComponent(rxSelectedKey)}/confirm`,
+        { method: "POST", body: JSON.stringify(body) }
+      );
+      $("rx-confirm-msg").textContent = data.extraction_retained
+        ? "Confirmed — extraction kept beside human fields."
+        : "Confirmed.";
+      await openReceiptDetail(rxSelectedKey);
+      await loadReceipts();
+    } catch (err) {
+      $("rx-confirm-msg").textContent = err.message || String(err);
+    }
+  });
+}
+if ($("rx-reload")) $("rx-reload").addEventListener("click", () => loadReceipts());
+if ($("rx-queue")) $("rx-queue").addEventListener("change", () => loadReceipts());
+
+let rxInlineKey = null;
+
+function rxFieldList(extraction) {
+  if (!extraction || typeof extraction !== "object") return "<p class='note'>No extraction on file.</p>";
+  return Object.entries(extraction).filter(([k]) => !["raw_meta"].includes(k)).map(([k, v]) =>
+    `<p><span class="meta">${esc(k)}</span><br>${esc(String(v ?? ""))}</p>`
+  ).join("") || "<p class='note'>No fields read.</p>";
+}
+
+async function loadReceiptsInline() {
+  const elQ = $("rx-queue-inline");
+  const elSummary = $("rx-summary-inline");
+  const elList = $("rx-list-inline");
+  if (!elQ || !elSummary || !elList) return;
+  const q = (elQ.value || "").trim();
+  const path = q
+    ? `/api/ggv/finance/accounting/queues?queue=${encodeURIComponent(q)}&limit=40`
+    : "/api/ggv/finance/accounting/queues?limit=40";
+  const data = await api(path);
+  elSummary.textContent = `Receipt queue · showing ${data.count || 0}`;
+  const rows = data.items || [];
+  elList.innerHTML = rows.length
+    ? rows.map((r) => `
+      <article class="card">
+        <strong>${esc(r.queue_label || r.accounting_queue || "")}</strong> · ${esc(r.upload_date || r.updated_at || "")}<br>
+        <span class="meta">${esc((r.extraction && r.extraction.note) || (r.extraction && r.extraction.vendor) || "")}</span>
+        <div class="meta">
+          ${r.image_retrievable ? "Image attached" : "<span class='bad'>Missing evidence</span>"}
+          ${r.linked_bill ? " · linked bill " + esc(r.linked_bill.bill_number || "") : ""}
+          ${r.linked_nota ? " · linked nota " + esc(r.linked_nota.invoice_no || "") : ""}
+        </div>
+        <button type="button" class="secondary rx-open-inline" data-rx-key="${esc(r.receipt_key || "")}">Open</button>
+      </article>`).join("")
+    : `<p class="note">No receipts in this queue.</p>`;
+  document.querySelectorAll(".rx-open-inline").forEach((btn) => {
+    btn.addEventListener("click", () => openReceiptInline(btn.dataset.rxKey));
+  });
+}
+
+async function openReceiptInline(key) {
+  if (!key) return;
+  rxInlineKey = key;
+  const data = await api(`/api/ggv/finance/accounting/receipts/${encodeURIComponent(key)}`);
+  const r = data.receipt || {};
+  $("rx-detail-inline").classList.remove("hidden");
+  $("rx-detail-title-inline").textContent = r.queue_label || "Receipt detail";
+  $("rx-fields-extraction").innerHTML = rxFieldList(r.extraction);
+  $("rx-detail-image-inline").innerHTML = r.image_retrievable
+    ? `<img src="/api/ggv/finance/accounting/receipts/${encodeURIComponent(key)}/image" alt="Receipt evidence" style="max-width:100%;border-radius:12px;border:1px solid var(--border)" />`
+    : `<p class="bad">Missing evidence — original image not on disk.</p>`;
+  const h = r.human_confirmed || {};
+  $("rx-vendor-inline").value = h.vendor || (r.extraction && r.extraction.vendor) || "";
+  $("rx-amount-inline").value = h.amount || (r.extraction && r.extraction.amount) || "";
+  $("rx-tax-inline").value = h.tax || (r.extraction && r.extraction.tax) || "";
+  $("rx-date-inline").value = h.date || (r.extraction && r.extraction.receipt_date) || "";
+  $("rx-category-inline").value = h.category || (r.extraction && r.extraction.category) || "";
+  $("rx-account-inline").value = h.account_code || (r.extraction && r.extraction.account_code) || "";
+  $("rx-notes-inline").value = h.notes || "";
+  $("rx-confirm-msg-inline").textContent = "";
+  $("rx-disposition-reason").value = r.disposition_reason || "";
+  const linked = [];
+  if (r.linked_bill) linked.push(`Bill ${r.linked_bill.bill_number || ""} · ${r.linked_bill.contact_name || ""}`);
+  if (r.linked_nota) linked.push(`Nota ${r.linked_nota.invoice_no || ""}`);
+  $("rx-linked").textContent = linked.length ? "Linked: " + linked.join(" · ") : "";
+  $("rx-link-results").innerHTML = "";
+}
+
+async function rxDispositionInline(action) {
+  if (!rxInlineKey) return;
+  const reason = ($("rx-disposition-reason").value || "").trim();
+  try {
+    await api(`/api/ggv/finance/accounting/receipts/${encodeURIComponent(rxInlineKey)}/disposition`, {
+      method: "POST",
+      body: JSON.stringify({ action, reason }),
+    });
+    await openReceiptInline(rxInlineKey);
+    await loadReceiptsInline();
+  } catch (err) {
+    $("rx-confirm-msg-inline").textContent = err.message || String(err);
+  }
+}
+
+if ($("rx-reload-inline")) $("rx-reload-inline").addEventListener("click", () => loadReceiptsInline());
+if ($("rx-queue-inline")) $("rx-queue-inline").addEventListener("change", () => loadReceiptsInline());
+if ($("rx-detail-close-inline")) {
+  $("rx-detail-close-inline").addEventListener("click", () => {
+    $("rx-detail-inline").classList.add("hidden");
+    rxInlineKey = null;
+  });
+}
+if ($("rx-confirm-inline")) {
+  $("rx-confirm-inline").addEventListener("click", async () => {
+    if (!rxInlineKey) return;
+    $("rx-confirm-msg-inline").textContent = "Saving…";
+    try {
+      const body = {
+        vendor: $("rx-vendor-inline").value,
+        amount: $("rx-amount-inline").value,
+        date: $("rx-date-inline").value,
+        category: $("rx-category-inline").value,
+        account_code: $("rx-account-inline").value,
+        notes: $("rx-notes-inline").value,
+      };
+      const taxVal = ($("rx-tax-inline").value || "").trim();
+      if (taxVal) body.tax = taxVal;
+      const data = await api(
+        `/api/ggv/finance/accounting/receipts/${encodeURIComponent(rxInlineKey)}/confirm`,
+        { method: "POST", body: JSON.stringify(body) }
+      );
+      $("rx-confirm-msg-inline").textContent = data.extraction_retained
+        ? "Confirmed — extraction kept beside human fields."
+        : "Confirmed.";
+      await openReceiptInline(rxInlineKey);
+      await loadReceiptsInline();
+    } catch (err) {
+      $("rx-confirm-msg-inline").textContent = err.message || String(err);
+    }
+  });
+}
+if ($("rx-mark-duplicate")) $("rx-mark-duplicate").addEventListener("click", () => rxDispositionInline("mark_duplicate"));
+if ($("rx-not-business")) $("rx-not-business").addEventListener("click", () => rxDispositionInline("not_a_business_receipt"));
+if ($("rx-evidence-missing")) $("rx-evidence-missing").addEventListener("click", () => rxDispositionInline("evidence_missing"));
+if ($("rx-link-search")) {
+  $("rx-link-search").addEventListener("click", async () => {
+    if (!rxInlineKey) return;
+    const q = ($("rx-link-q").value || "").trim();
+    const data = await api(`/api/ggv/finance/accounting/link-search?q=${encodeURIComponent(q)}&limit=12`);
+    const bills = (data.bills || []).map((b) =>
+      `<button type="button" class="secondary rx-link-bill" data-bill-id="${esc(b.bill_id)}">${esc(b.contact_name || "")} · ${esc(b.bill_number || "")}</button>`
+    ).join("");
+    const notas = (data.notas || []).map((n) =>
+      `<button type="button" class="secondary rx-link-nota" data-nota-id="${esc(n.nota_id)}">${esc(n.invoice_no || "No invoice")} · ${esc(n.date || "")}</button>`
+    ).join("");
+    $("rx-link-results").innerHTML = (bills || notas)
+      ? `<div>${bills}</div><div>${notas}</div>`
+      : `<p class="note">No matches.</p>`;
+    document.querySelectorAll(".rx-link-bill").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        await api(`/api/ggv/finance/accounting/receipts/${encodeURIComponent(rxInlineKey)}/link`, {
+          method: "POST",
+          body: JSON.stringify({ bill_id: btn.dataset.billId }),
+        });
+        await openReceiptInline(rxInlineKey);
+      });
+    });
+    document.querySelectorAll(".rx-link-nota").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        await api(`/api/ggv/finance/accounting/receipts/${encodeURIComponent(rxInlineKey)}/link`, {
+          method: "POST",
+          body: JSON.stringify({ nota_id: btn.dataset.notaId }),
+        });
+        await openReceiptInline(rxInlineKey);
+      });
+    });
+  });
+}
+
+async function loadTransactions() {
+  const tx = await api("/api/ggv/finance/bank-transactions?limit=200");
+  const rows = tx.transactions || [];
+  $("txn-list").innerHTML = rows.length
+    ? rows.map((t) => `
+      <article class="card">
+        <strong>${esc(t.txn_date || "")}</strong> · ${esc(t.match_label || t.recon_status || "")}<br>
+        debit ${esc(String(t.debit || 0))} · credit ${esc(String(t.credit || 0))}<br>
+        <span class="meta">${esc(t.description || "")}</span>
+      </article>`).join("")
+    : `<p class="note">No bank transactions imported yet.</p>`;
+}
+
+async function loadBillsOnly() {
+  const data = await api("/api/ggv/finance/bills");
+  const bills = data.bills || [];
+  const total = data.bill_count || bills.length;
+  $("bills-only-summary").textContent = total
+    ? `${total} imported bill${total === 1 ? "" : "s"} on record.`
+    : "No imported bills on record yet.";
+  $("bills-only-list").innerHTML = bills.length
+    ? bills.map(billCard).join("") + (total > bills.length ? `<p class="note">Showing ${bills.length} of ${total}.</p>` : "")
+    : `<p class="note">No bills on record yet.</p>`;
+}
+
+async function loadReconciliation() {
+  const data = await api("/api/ggv/finance/reconciliation");
+  const s = data.summary || {};
+  $("recon-summary").innerHTML = [
+    ["Unmatched bank rows", s.bank_unmatched],
+    ["Propose match", s.bank_propose_match],
+    ["Human review", s.bank_human_review],
+    ["Receipt missing evidence", s.receipt_missing_evidence],
+  ].map(([label, count]) =>
+    `<article class="card"><p class="meta">${esc(label)}</p><p class="count">${esc(String(count || 0))}</p></article>`
+  ).join("");
+  $("recon-imports").innerHTML = (data.imports || []).length
+    ? (data.imports || []).map((imp) => `
+      <article class="card">
+        <strong>${esc(imp.bank_label || "")}</strong> · ${esc(imp.original_filename || "")}<br>
+        ${esc(String(imp.txn_count || 0))} txns · ${esc(imp.period_start || "?")} → ${esc(imp.period_end || "?")}
+      </article>`).join("")
+    : `<p class="note">No statement imports yet.</p>`;
+  $("recon-txns").innerHTML = (data.transactions || []).length
+    ? (data.transactions || []).map((t) => `
+      <article class="card">
+        <strong>${esc(t.txn_date || "")}</strong> · ${esc(t.match_label || "UNMATCHED")}<br>
+        ${esc(t.description || "")}
+      </article>`).join("")
+    : `<p class="note">No transactions to reconcile.</p>`;
+}
+
+async function loadMissingEvidence() {
+  const acct = await api("/api/ggv/finance/accounting/queues?limit=80");
+  const missingRx = (acct.items || []).filter((r) => r.missing_evidence_visible);
+  $("me-rx").innerHTML = missingRx.length
+    ? missingRx.map((r) => `<article class="card bad">${esc(r.vault_filename || r.receipt_key || "")} — missing image</article>`).join("")
+    : `<p class="note">No vault receipts flagged missing evidence (${acct.missing_evidence_receipts || 0} total).</p>`;
+  const bank = await api("/api/ggv/finance/bank-transactions?limit=80");
+  const need = (bank.transactions || []).filter((t) =>
+    ["NEEDS_RECEIPT", "UNIDENTIFIED", "NEEDS_REVIEW"].includes(String(t.recon_status || "").toUpperCase())
+  );
+  $("me-bank").innerHTML = need.length
+    ? need.map((t) => `<article class="card">${esc(t.txn_date || "")} · ${esc(t.description || "")}</article>`).join("")
+    : `<p class="note">No bank rows waiting for receipt.</p>`;
+  const ac = await api("/api/ggv/finance/accountant");
+  $("me-notas").innerHTML = periodCards(ac.missing_evidence) || `<p class="note">No missing nota evidence.</p>`;
+}
+
+async function loadAudit() {
+  const data = await api("/api/ggv/finance/audit?limit=40");
+  const rows = data.events || [];
+  $("audit-list").innerHTML = rows.length
+    ? rows.map((e) => `
+      <article class="card">
+        <strong>${esc(e.action || "")}</strong> · ${esc(e.occurred_at || "")}<br>
+        <span class="meta">${esc(e.resource_type || "")} ${esc(e.resource_id || "")}</span>
+      </article>`).join("")
+    : `<p class="note">No audit events yet.</p>`;
+}
+
+async function loadBanking() {
+  const data = await api("/api/ggv/finance/statements/library");
+  const stmts = data.statements || data.imports || [];
+  const completeness = data.completeness || [];
+  $("stmt-completeness").innerHTML = completeness.length
+    ? completeness.map((acct) => `
+      <article class="card">
+        <strong>${esc(acct.bank || "")} ${esc(acct.account || "")}</strong>
+        <p class="meta">${(acct.months || []).map((m) => esc(m.label || m.month)).join(" · ")}</p>
+      </article>`).join("")
+    : `<p class="note">Month completeness loads from real statement records only.</p>`;
+  $("stmt-library").innerHTML = stmts.length
+    ? stmts.map((imp) => `
+      <article class="card">
+        <strong>${esc(imp.bank || imp.bank_label || "")}</strong> · ${esc(imp.account || "")}<br>
+        ${esc(imp.period_start || "?")} → ${esc(imp.period_end || "?")} · ${esc(String(imp.txn_count || 0))} txns<br>
+        Open ${esc(String(imp.opening_balance ?? "—"))} · Close ${esc(String(imp.closing_balance ?? "—"))}<br>
+        <span class="meta">${esc(imp.evidence_status || "")} · ${esc(imp.reconciliation_status || "")}</span><br>
+        <a class="inline" href="${esc(imp.open_href || "#")}">OPEN</a>
+      </article>`).join("")
+    : `<p class="note">No statements in library yet.</p>`;
+  $("bank-imports").innerHTML = stmts.length
+    ? stmts.map((imp) => `
+      <article class="card">
+        <strong>${esc(imp.bank || imp.bank_label || "")}</strong> · ${esc(imp.account || "")}<br>
+        ${esc(imp.uploaded_at || "")} · ${esc(String(imp.txn_count || 0))} txns · ${esc(imp.period_start || "?")} → ${esc(imp.period_end || "?")}<br>
+        <span class="meta">${esc(imp.evidence_status || "Original kept")}</span>
+      </article>`).join("")
+    : `<p class="note">No statements imported yet.</p>`;
+  const tx = await api("/api/ggv/finance/bank-transactions?limit=80");
+  const need = (tx.transactions || []).filter((t) =>
+    ["NEEDS_RECEIPT", "NEEDS_REVIEW", "UNIDENTIFIED"].includes(String(t.recon_status || "").toUpperCase())
+  );
+  $("bank-txns").innerHTML = need.length
+    ? need.map((t) => `
+      <article class="card">
+        <strong>${esc(t.txn_date || "")}</strong> · ${esc(t.recon_status || "")}<br>
+        debit ${esc(String(t.debit || 0))} · credit ${esc(String(t.credit || 0))}<br>
+        <span class="meta">${esc(t.description || "")}</span>
+        <div class="meta">${t.matched_receipt_ref ? "Proposed: " + esc(t.matched_receipt_ref) + " (not confirmed)" : "Missing evidence"}</div>
+      </article>`).join("")
+    : `<p class="note">No unmatched / missing-evidence bank rows yet. Missing evidence count: ${esc(String(data.missing_evidence_txns || 0))}.</p>`;
+}
+if ($("bank-upload")) {
+  $("bank-upload").addEventListener("click", async () => {
+    const fileInput = $("bank-file");
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    if (!file) {
+      $("bank-msg").textContent = "Choose a statement file first (CSV or PDF).";
+      return;
+    }
+    $("bank-msg").textContent = "Uploading…";
+    try {
+      const buf = await file.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      const b64 = btoa(binary);
+      const body = {
+        filename: file.name,
+        content_base64: b64,
+        bank_label: ($("bank-label").value || "").trim() || null,
+      };
+      const data = await api("/api/ggv/finance/bank-statements/import", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      $("bank-msg").textContent =
+        `Imported ${data.txn_count || 0} rows · original kept · proposed matches ${((data.proposed_matches || {}).proposed_count) || 0} (not auto-reconciled).`;
+      loadBanking();
+    } catch (err) {
+      $("bank-msg").textContent = err.message || String(err);
+    }
+  });
+}
 
 function blankLine() {
   return { description: "", qty: "1", unit_price: "", tax_rate: "" };

@@ -1,0 +1,15 @@
+WOLF INTELLIGENCE NIGHT BUILD
+PHASE 1: PASS — work-item store + registry + ledger + event bus + SHADOW dispatcher; accept create/route/events/audit; no prod mutation; no workers killed; no duplicate expensive dispatch
+PHASE 2: PASS — workers wrapped with evidence: grok_bot CONNECTED; cursor CONNECTED; peaches CONNECTED (CoS only not brain); openai_chatgpt PARTIAL; openai_api UNAVAILABLE (key name empty); claude_sub PARTIAL (Owner $25/mo declared); anthropic_api PARTIAL (haiku default not best); gemini UNAVAILABLE (key empty; no paid without Owner policy); ollama CONNECTED → RETIRE CANDIDATE (callers stale; DO NOT DELETE)
+PHASE 3: PASS — benchmark harness + fixtures (8 caps) + model-scorecard.json; all capability scores UNKNOWN (not invented); no private/customer data
+PHASE 4: PASS — learning loop; human > self-eval proven; weights from human outcomes only
+PHASE 5: PASS — Owner Beta UI NEEDS YOU / READY TO TEST / DECISIONS / EXCEPTIONS / RUNNING; phone viewport; Technical Details optional; no jargon primary
+PHASE 6: PASS — shadow compare vs current system; agreement_rate=1.0 (recommend cursor vs factory cursor); expensive_executed=NO; duplicate_expensive_dispatch=NO; quality_diff=UNKNOWN_until_human
+REPO: wolfcommand/beta-os
+BRANCH: build/wolf-intelligence-control-plane
+COMMIT: d140c7ea2f4b6be94a7301c74de6b35ad2df96c7
+PRODUCTION TOUCHED: NO
+V1 RETIRED: NO
+AGENTS DELETED: NO
+OWNER UI LINK: http://127.0.0.1:8799/
+READY FOR CHATGPT INDEPENDENT REVIEW: YES

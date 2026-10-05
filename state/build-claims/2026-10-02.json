@@ -130,7 +130,8 @@
     "expect": "pass=47 fail=0",
     "by": "cursor-local",
     "pack": "BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1",
-    "created_at": "2026-10-02T22:45:00+08:00"
+    "created_at": "2026-10-02T22:45:00+08:00",
+    "commit": "0e02bb38964db862db1b42c8990bbbb496507179"
   },
   {
     "id": "bzg-close-owner-control-esb-recon-1-html-20261002",
@@ -139,6 +140,7 @@
     "expect": "exit 0",
     "by": "cursor-local",
     "pack": "BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1",
-    "created_at": "2026-10-02T22:45:00+08:00"
+    "created_at": "2026-10-02T22:45:00+08:00",
+    "commit": "0e02bb38964db862db1b42c8990bbbb496507179"
   }
 ]

@@ -15,6 +15,36 @@ BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
 CATALOG_DB = BETA_ROOT / "catalog" / "content_library.sqlite"
 
 
+# Entity-bound permission families (ONE FINANCE PRODUCT / THREE ENTITY CONFIGS).
+# Shared permission codes must never vacuous-ALLOW without a requested entity/resource.
+# Bare/empty target → DENY entity_scope_required (not a seating revoke/strip).
+_ENTITY_BOUND_PREFIXES = (
+    "finance.",
+    "vendor.",
+    "payment.",
+    "atrium.",
+    "bzg.ap.",
+    "bzg.pay.",
+)
+
+
+def permission_requires_entity_scope(permission_code: str) -> bool:
+    """True when evaluating this code requires entity/brand/location/department in target."""
+    code = (permission_code or "").strip().lower()
+    if not code:
+        return False
+    return code.startswith(_ENTITY_BOUND_PREFIXES)
+
+
+def _target_has_where_keys(target: dict[str, Any] | None) -> bool:
+    target = target or {}
+    return any(
+        (target.get(k) or "").strip()
+        for k in ("entity_id", "brand_id", "location_id", "department_id")
+    )
+
+
+
 def db_connect(db_path: Path | None = None) -> sqlite3.Connection:
     path = Path(db_path) if db_path else CATALOG_DB
     resolved = path.resolve()
@@ -254,6 +284,14 @@ def evaluate(
             explanation["reason"] = "unknown_permission"
             return explanation
         explanation["permission_id"] = perm["permission_id"]
+
+        # ENTITY ISOLATION (2026-10-01): finance/vendor/payment/atrium codes require
+        # a WHERE key on the request. Vacuous bare ALLOW was soft-bleed BREACH-2026-09-30-J1.
+        target = target_context or {}
+        if permission_requires_entity_scope(code) and not _target_has_where_keys(target):
+            explanation["reason"] = "entity_scope_required"
+            explanation["target_context"] = target
+            return explanation
 
         # Active assignments
         asgs = c.execute(

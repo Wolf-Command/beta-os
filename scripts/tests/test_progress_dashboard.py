@@ -333,7 +333,7 @@ def main() -> int:
     check(
         "Empire uma variance blocked by business policy",
         (empire.get("uma_owner") or {}).get("variance_plain")
-        == "BLOCKED BY BUSINESS POLICY. No threshold was invented.",
+        == "Variance policy needs approval. No threshold was invented.",
         str((empire.get("uma_owner") or {}).get("variance_plain")),
     )
 

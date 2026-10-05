@@ -1,0 +1,34 @@
+{
+  "id": "OWNER-ACCEPT-ENTITY-ISOLATION-20261001",
+  "recorded_at_wita": "2026-10-01T11:23:30+08:00",
+  "owner_accept_wita": "2026-10-01T11:21:00+08:00",
+  "owner": "Matt Goss",
+  "executor": "Peaches-executor",
+  "finding_id": "BREACH-2026-09-30-J1-ZAYEN-GGV-NOTA-READ",
+  "security_fail_id": "SECURITY-FAIL-SOFT-BLEED-ZAYEN-GGV-20261001",
+  "repair_id": "ENTITY-ISOLATION-REPAIR-20261001",
+  "verdict": "REPAIRED + VERIFIED",
+  "basis": "50/50 server-side prove",
+  "terms": {
+    "accept_entity_isolation_repair": true,
+    "close_soft_bleed_as": "REPAIRED + VERIFIED",
+    "human_finance_commissioning_complete": false,
+    "keep_zayen_cf_browser_in_staff_queue": true,
+    "cf_browser_expect": "AMG YES · BZG YES · GGV DENY",
+    "do_not_reopen_architecture_for_outstanding_browser": true,
+    "unless_browser_exposes_regression": true,
+    "keep_assignment": "ASG-ZAYEN-BZG-FC-1",
+    "continue_beta_house": true,
+    "canva_yanolja": "FINISH_WOLF_OWNER_EXTERNAL — do NOT freeze unrelated completion; continue staff commissioning + internal around them",
+    "wolf_desktop_ready_phrase": "WOLF DESKTOP — READY FOR MATT UX TEST + ONE starting link — only when Beta House desktop phase + required human commissioning complete enough; do NOT claim yet",
+    "next_major": "WOLF INTELLIGENCE → ADAPT TO COMPLETED WOLF OS — RECORDED_ONLY; do NOT start; do NOT create Exit Report"
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false,
+    "desktop_gate_ready": false,
+    "exit_report": "NOT_CREATED",
+    "wolf_desktop_ready_claim": false,
+    "wolf_intelligence_started": false
+  }
+}

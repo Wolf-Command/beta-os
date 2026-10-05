@@ -1,0 +1,56 @@
+[
+  {
+    "id": "fcr-bzg-16-idempotency-20261004",
+    "claim": "FCR-BZG-16 venue-close refresh/idempotency: repeat open, capture, same-amount declare, and staff submit return existing result without duplicate close, cash evidence, or approval",
+    "check": "python3 scripts/tests/test_fcr_bzg_16_idempotency_20261004.py",
+    "expect": "28 passed, 0 failed",
+    "by": "cursor-local",
+    "pack": "FCR-BZG-16",
+    "created_at": "2026-10-04T08:45:00+08:00"
+  },
+  {
+    "id": "haryanto-ux-20261004",
+    "claim": "HARYANTO-UX: Rainforest+Pool Bar OPEN in registry; Head Chef nav excludes /bzg/uma-blu; ingredient type-ahead binds canonical id; honest empty Rainforest menu",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_haryanto_ux_20261004.py",
+    "expect": "35 passed, 0 failed",
+    "by": "cursor-local",
+    "pack": "HARYANTO-UX",
+    "created_at": "2026-10-04T16:10:00+08:00"
+  },
+  {
+    "id": "ggv-empty-chain-repair-20261004",
+    "claim": "GGV-EMPTY-CHAIN-REPAIR: money.sqlite 46 invoices + 33 notas imported into Beta catalog; source ids/amounts preserved; idempotent; bills skipped (no target table)",
+    "check": "python3 scripts/tests/test_ggv_empty_chain_repair_20261004.py && sqlite3 catalog/content_library.sqlite \"SELECT COUNT(*) FROM ggv_invoices; SELECT COUNT(*) FROM ggv_notas\"",
+    "expect": "21 passed 0 failed; counts 46 and 33",
+    "by": "cursor-local",
+    "pack": "GGV-EMPTY-CHAIN-REPAIR",
+    "created_at": "2026-10-04T19:16:18+08:00"
+  },
+  {
+    "id": "uma-close-4oct-takeover-20261004",
+    "claim": "UMA-CLOSE-4OCT-TAKEOVER: VDC-64f5f529 Matt takeover via venue.close.reassign; governance masthead; finished bills off difference line; declared null; protected closes unchanged",
+    "check": "python3 scripts/tests/test_uma_close_4oct_takeover_20261004.py && python3 state/reliability/prove_uma_close_4oct_takeover_20261004.py",
+    "expect": "17 passed 0 failed; prove exit 0; taken_by PERS-MATT",
+    "by": "cursor-local",
+    "pack": "UMA-CLOSE-4OCT-TAKEOVER",
+    "created_at": "2026-10-04T21:56:00+08:00"
+  },
+  {
+    "id": "haryanto-recipe-finish-20261004",
+    "claim": "HARYANTO-RECIPE-FINISH: Uma recipe opens/saves/reloads; ingredient typeahead; cost unknown when missing; Rainforest+Pool Bar honest empty; Head Chef recipe.* without work.update; Beta :8788 reloaded",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_haryanto_recipe_finish_20261004.py",
+    "expect": "27 passed, 0 failed",
+    "by": "cursor-local",
+    "pack": "HARYANTO-RECIPE-FINISH",
+    "created_at": "2026-10-04T22:50:00+08:00"
+  },
+  {
+    "id": "bzg-p2p-po1-20261004",
+    "claim": "BZG-P2P-PO-1: purchase order page saves from APPROVED PR to bzg_ops_purchase_orders; supplier from projection; APPROVED→ORDERED on save; not payment/receipt",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_bzg_p2p_po1_20261004.py && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8788/bzg/uma-blu/purchase-orders",
+    "expect": "27 passed 0 failed; HTTP 403 (auth gate, route live)",
+    "by": "cursor-local",
+    "pack": "BZG-P2P-PO-1",
+    "created_at": "2026-10-05T00:40:00+08:00"
+  }
+]

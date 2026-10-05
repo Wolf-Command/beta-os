@@ -761,7 +761,7 @@ def main() -> int:
     check("honesty live_variance_threshold 0", flags["live_variance_threshold"] == 0)
     check(
         "honesty variance display blocked not zero tolerance",
-        flags.get("variance_policy_display") == "BLOCKED BY BUSINESS POLICY",
+        flags.get("variance_policy_display") == "Variance policy needs approval",
         str(flags.get("variance_policy_display")),
     )
     check("honesty live_monetary_authority 0", flags["live_monetary_authority"] == 0)

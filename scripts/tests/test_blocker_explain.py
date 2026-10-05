@@ -69,7 +69,7 @@ def test_templates() -> None:
     check(
         "close policy says blocked by business policy",
         close_policy.get("why") == WHY_CLOSE_POLICY
-        and str(close_policy.get("why") or "").startswith("BLOCKED BY BUSINESS POLICY"),
+        and str(close_policy.get("why") or "").startswith("Variance policy needs approval"),
         str(close_policy.get("why")),
     )
     check(

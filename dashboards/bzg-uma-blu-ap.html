@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Uma Blu · AP ready</title>
+<style>
+  :root {
+    --bg: #0f1c24; --bg2: #162833; --bg3: #1e3542; --line: #2a4554;
+    --text: #eef4f7; --muted: #8aa0ad; --accent: #3db8a0; --warn: #e0a045;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font); min-height: 100%;
+  }
+  body {
+    padding: 16px 16px 64px; max-width: 1100px; margin: 0 auto;
+    background:
+      radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
+      radial-gradient(ellipse 90% 60% at 100% 0%, #163028 0%, transparent 50%),
+      var(--bg);
+  }
+  .brand { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 2px; }
+  .brand em { font-style: normal; color: var(--accent); }
+  .sub, .muted { color: var(--muted); font-size: 0.9rem; line-height: 1.35; margin: 0 0 14px; }
+  .banner {
+    background: rgba(61,184,160,0.1); border: 1px solid rgba(61,184,160,0.35);
+    color: var(--accent); border-radius: 12px; padding: 10px 12px;
+    font-size: 0.88rem; margin-bottom: 14px;
+  }
+  nav.uma { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  nav.uma a {
+    padding: 10px 12px; border-radius: 999px; border: 1px solid var(--line);
+    color: var(--muted); text-decoration: none; font-size: 0.84rem; font-weight: 650;
+    min-height: 44px; display: inline-flex; align-items: center;
+  }
+  nav.uma a.active { color: var(--accent); border-color: var(--accent); }
+  .crumb { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
+  .crumb a { color: var(--muted); }
+  h2.sec {
+    margin: 18px 0 8px; font-size: 0.78rem; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .row {
+    background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 10px;
+  }
+  .row h3 { margin: 0 0 6px; font-size: 1.02rem; }
+  .state {
+    display: inline-block; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--line); font-size: 0.75rem; color: var(--muted); margin-bottom: 8px;
+  }
+  .state.ready { color: var(--accent); border-color: rgba(61,184,160,0.5); }
+  .empty { color: var(--muted); font-size: 0.9rem; padding: 8px 0; }
+  .err { color: #e05a4c; font-size: 0.86rem; }
+  @media (min-width: 900px) {
+    body { padding: 20px 28px 72px; }
+    nav.uma { gap: 8px; }
+  }
+</style>
+</head>
+<body>
+  <p class="crumb"><a href="/bzg">BZG</a> · <a href="/bzg/uma-blu">Uma Blu</a> · <a href="/bzg/uma-blu/purchase-orders">Orders</a> · AP ready</p>
+  <h1 class="brand">AP <em>ready</em></h1>
+  <p class="sub">Matched supplier bills sitting ready for the controller to review. This is visibility only — not a payment and not approval to pay.</p>
+  <div class="banner">These bills completed three-way match. Finance can see them here before any later payment step. Nothing on this page moves money.</div>
+
+  <nav class="uma" aria-label="Uma Blu desk">
+    <a href="/bzg/uma-blu">Today</a>
+    <a href="/bzg/uma-blu/bills">Bills</a>
+    <a href="/bzg/uma-blu/purchase-orders">Orders</a>
+    <a class="active" href="/bzg/uma-blu/ap">AP ready</a>
+    <a href="/bzg/uma-blu/ready-to-pay">Ready to pay</a>
+    <a href="/bzg/uma-blu/issues">Issues</a>
+    <a href="/bzg/uma-blu/petty">Petty</a>
+    <a href="/bzg/uma-blu/evidence">Evidence</a>
+    <a href="/bzg/uma-blu/exceptions">Exceptions</a>
+    <a href="/bzg/uma-blu/recipes">Recipes</a>
+    <a href="/bzg/uma-blu/real">Real</a>
+    <a id="closeLink" href="/uma-blu-close">Close</a>
+  </nav>
+
+  <h2 class="sec">Ready for controller</h2>
+  <div id="apList"><p class="muted">Loading…</p></div>
+
+<script>
+(function () {
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function paintApReady(rows) {
+    var box = document.getElementById("apList");
+    box.innerHTML = "";
+    if (!rows.length) {
+      box.appendChild(el("p", "empty", "No matched bills are AP-ready yet."));
+      return;
+    }
+    rows.forEach(function (r) {
+      var d = el("div", "row");
+      d.appendChild(el("span", "state ready", "AP ready for controller"));
+      var title = (r.supplier_name || "Supplier nota");
+      if (r.outlet_display_name) title += " · " + r.outlet_display_name;
+      d.appendChild(el("h3", null, title));
+      var nota = "Nota " + (r.nota_number || "");
+      if (r.nota_date) nota += " · " + r.nota_date;
+      d.appendChild(el("div", "muted", nota));
+      if (r.stated_total != null) {
+        d.appendChild(el("div", "muted", "Total on nota Rp " + Number(r.stated_total).toLocaleString("id-ID")));
+      }
+      var when = (r.created_at || "").replace("T", " ").slice(0, 16);
+      if (when) d.appendChild(el("div", "muted", "Marked ready " + when));
+      if (r.match_label) {
+        d.appendChild(el("div", "muted", r.match_label));
+      } else {
+        d.appendChild(el("div", "muted", "Three-way match completed. Not a payment."));
+      }
+      box.appendChild(d);
+    });
+  }
+
+  fetch("/api/bzg/uma-blu/ap")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data.ok) {
+        document.getElementById("apList").textContent = data.error || "Could not load AP-ready bills.";
+        return;
+      }
+      if (!data.can_view_ap) {
+        document.getElementById("apList").innerHTML = "";
+        document.getElementById("apList").appendChild(
+          el("p", "err", "You do not have permission to view AP-ready bills.")
+        );
+        return;
+      }
+      paintApReady(data.ap_ready || []);
+    })
+    .catch(function () {
+      document.getElementById("apList").textContent = "Could not load AP-ready bills.";
+    });
+})();
+</script>
+</body>
+</html>

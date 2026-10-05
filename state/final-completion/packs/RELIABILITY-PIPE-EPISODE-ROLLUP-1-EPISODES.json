@@ -1,0 +1,231 @@
+{
+  "pack": "RELIABILITY-PIPE-EPISODE-ROLLUP-1",
+  "schema": "wolf.reliability-pipe-episode-rollup-1.episodes.v1",
+  "stamped_at_wita": "2026-09-30T10:49:51+08:00",
+  "honesty": {
+    "uptime_pct": null,
+    "invented_uptime": false,
+    "fake_pipe_up": false,
+    "note": "Episodes are evidence stamps only \u2014 not continuous uptime."
+  },
+  "sources": [
+    "state/final-completion/CLASSIFICATION-LOG-20260930.json#pipe_flaps",
+    "state/final-completion/CLASSIFICATION-LOG-20260930.json#pipe_flap_observed",
+    "state/final-completion/packs/PIPE-RELIABILITY-AUTO-1-EPISODES.json"
+  ],
+  "overnight_transition": {
+    "from": "PARKED_MAC_PIPE",
+    "to": "UNPARKED_PIPE_OK",
+    "date": "2026-09-30",
+    "approx_wita": "07:23",
+    "hostname_proven": "Wolfs-Mac-Studio"
+  },
+  "wave_span": "Wave7-10",
+  "episodes": [
+    {
+      "id": "ep-20260930-overnight-unpark",
+      "at_wita": "2026-09-30T07:23:00+08:00",
+      "at_wita_end": "2026-09-30T07:27:30+08:00",
+      "from_state": "PARKED_MAC_PIPE",
+      "to_state": "UNPARKED_PIPE_OK",
+      "hostname_proven": "Wolfs-Mac-Studio",
+      "evidence": [
+        "state/final-completion/milestones/UNPARK-20260930-0726.json",
+        "CLASSIFICATION-LOG-20260930 Mac local-exec pipe outage"
+      ],
+      "notes": "Overnight PARKED_MAC_PIPE \u2192 UNPARKED_PIPE_OK ~07:23 WITA; hostname Wolfs-Mac-Studio proven at unpark milestone.",
+      "uptime_pct": null,
+      "invented_uptime": false,
+      "fake_pipe_up": false,
+      "source": "PIPE-RELIABILITY-AUTO-1-EPISODES",
+      "wave": "Wave7"
+    },
+    {
+      "id": "ep-20260930-0728-brief-unreachable",
+      "at_wita": "2026-09-30T07:28:40+08:00",
+      "at_wita_end": "2026-09-30T07:29:30+08:00",
+      "from_state": "PIPE_OK",
+      "to_state": "PIPE_OK",
+      "flap": true,
+      "hostname_proven": "Wolfs-Mac-Studio",
+      "evidence": [
+        "state/final-completion/CLASSIFICATION-LOG-20260930.json#pipe_flap_observed"
+      ],
+      "notes": "Brief unreachable during unpark work ~07:28 WITA; recovered PIPE_OK. Not continuous uptime.",
+      "uptime_pct": null,
+      "invented_uptime": false,
+      "fake_pipe_up": false,
+      "source": "PIPE-RELIABILITY-AUTO-1-EPISODES",
+      "wave": "Wave7",
+      "during": "unpark / early Wave7",
+      "recovered": true
+    },
+    {
+      "id": "ep-20260930-0736-backup-babysit-flap",
+      "at_wita": "2026-09-30T07:36:40+08:00",
+      "at_wita_end": "2026-09-30T07:40:00+08:00",
+      "from_state": "PIPE_OK",
+      "to_state": "PIPE_OK",
+      "flap": true,
+      "during": "BACKUP-RESTORE-DRILL-1 babysit",
+      "hostname_proven": "Wolfs-Mac-Studio",
+      "evidence": [
+        "state/final-completion/CLASSIFICATION-LOG-20260930.json#pipe_flaps",
+        "state/final-completion/milestones/MULTI-20260930-0746.json mac_pipe=PIPE_OK_WITH_FLAPS"
+      ],
+      "notes": "Flap ~07:36\u201307:40 WITA during BACKUP-RESTORE-DRILL-1 babysit; recovered PIPE_OK. Stamp only \u2014 no uptime % invented.",
+      "uptime_pct": null,
+      "invented_uptime": false,
+      "recovered": true,
+      "fake_pipe_up": false,
+      "source": "PIPE-RELIABILITY-AUTO-1-EPISODES",
+      "wave": "Wave7"
+    },
+    {
+      "id": "ep-20260930-0746-flap",
+      "at_wita": "2026-09-30T07:46:30+08:00",
+      "at_wita_end": null,
+      "from_state": "PIPE_OK",
+      "to_state": "PIPE_OK",
+      "flap": true,
+      "during": "PIPE-RELIABILITY-AUTO-1 launch/babysit",
+      "wave": "Wave7",
+      "hostname_proven": "Wolfs-Mac-Studio",
+      "recovered": true,
+      "source": "CLASSIFICATION-LOG#pipe_flaps",
+      "evidence": [
+        "state/final-completion/CLASSIFICATION-LOG-20260930.json#pipe_flaps"
+      ],
+      "notes": "Flap during PIPE-RELIABILITY-AUTO-1 launch/babysit \u2014 recovered PIPE_OK. Evidence stamp only; no uptime % invented.",
+      "uptime_pct": null,
+      "invented_uptime": false,
+      "fake_pipe_up": false
+    },
+    {
+      "id": "ep-20260930-0753-flap",
+      "at_wita": "2026-09-30T07:53:00+08:00",
+      "at_wita_end": null,
+      "from_state": "PIPE_OK",
+      "to_state": "PIPE_OK",
+      "flap": true,
+      "during": "post PIPE EXIT Peaches",
+      "wave": "Wave7",
+      "hostname_proven": "Wolfs-Mac-Studio",
+      "recovered": true,
+      "source": "CLASSIFICATION-LOG#pipe_flaps",
+      "evidence": [
+        "state/final-completion/CLASSIFICATION-LOG-20260930.json#pipe_flaps"
+      ],
+      "notes": "Flap during post PIPE EXIT Peaches \u2014 recovered PIPE_OK. Evidence stamp only; no uptime % invented.",
+      "uptime_pct": null,
+      "invented_uptime": false,
+      "fake_pipe_up": false
+    },
+    {
+      "id": "ep-20260930-0755-flap",
+      "at_wita": "2026-09-30T07:55:30+08:00",
+      "at_wita_end": null,
+      "from_state": "PIPE_OK",
+      "to_state": "PIPE_OK",
+      "flap": true,
+      "during": "METRICOOL babysit start",
+      "wave": "Wave7",
+      "hostname_proven": "Wolfs-Mac-Studio",
+      "recovered": true,
+      "source": "CLASSIFICATION-LOG#pipe_flaps",
+      "evidence": [
+        "state/final-completion/CLASSIFICATION-LOG-20260930.json#pipe_flaps"
+      ],
+      "notes": "Flap during METRICOOL babysit start \u2014 recovered PIPE_OK. Evidence stamp only; no uptime % invented.",
+      "uptime_pct": null,
+      "invented_uptime": false,
+      "fake_pipe_up": false
+    },
+    {
+      "id": "ep-20260930-0802-flap",
+      "at_wita": "2026-09-30T08:02:40+08:00",
+      "at_wita_end": null,
+      "from_state": "PIPE_OK",
+      "to_state": "PIPE_OK",
+      "flap": true,
+      "during": "METRICOOL mid-babysit",
+      "wave": "Wave7",
+      "hostname_proven": "Wolfs-Mac-Studio",
+      "recovered": true,
+      "source": "CLASSIFICATION-LOG#pipe_flaps",
+      "evidence": [
+        "state/final-completion/CLASSIFICATION-LOG-20260930.json#pipe_flaps"
+      ],
+      "notes": "Flap during METRICOOL mid-babysit \u2014 recovered PIPE_OK. Evidence stamp only; no uptime % invented.",
+      "uptime_pct": null,
+      "invented_uptime": false,
+      "fake_pipe_up": false
+    },
+    {
+      "id": "ep-20260930-0805-flap",
+      "at_wita": "2026-09-30T08:05:45+08:00",
+      "at_wita_end": null,
+      "from_state": "PIPE_OK",
+      "to_state": "PIPE_OK",
+      "flap": true,
+      "during": "ESB-SETTLEMENT babysit",
+      "wave": "Wave7",
+      "hostname_proven": "Wolfs-Mac-Studio",
+      "recovered": true,
+      "source": "CLASSIFICATION-LOG#pipe_flaps",
+      "evidence": [
+        "state/final-completion/CLASSIFICATION-LOG-20260930.json#pipe_flaps"
+      ],
+      "notes": "Flap during ESB-SETTLEMENT babysit \u2014 recovered PIPE_OK. Evidence stamp only; no uptime % invented.",
+      "uptime_pct": null,
+      "invented_uptime": false,
+      "fake_pipe_up": false
+    },
+    {
+      "id": "ep-20260930-0829-flap",
+      "at_wita": "2026-09-30T08:29:20+08:00",
+      "at_wita_end": null,
+      "from_state": "PIPE_OK",
+      "to_state": "PIPE_OK",
+      "flap": true,
+      "during": "FIN-BANK babysit",
+      "wave": "Wave7",
+      "hostname_proven": "Wolfs-Mac-Studio",
+      "recovered": true,
+      "source": "CLASSIFICATION-LOG#pipe_flaps",
+      "evidence": [
+        "state/final-completion/CLASSIFICATION-LOG-20260930.json#pipe_flaps"
+      ],
+      "notes": "Flap during FIN-BANK babysit \u2014 recovered PIPE_OK. Evidence stamp only; no uptime % invented.",
+      "uptime_pct": null,
+      "invented_uptime": false,
+      "fake_pipe_up": false
+    },
+    {
+      "id": "ep-20260930-1009-flap",
+      "at_wita": "2026-09-30T10:09:00+08:00",
+      "at_wita_end": "2026-09-30T10:13:53+08:00",
+      "from_state": "PIPE_OK",
+      "to_state": "PIPE_OK",
+      "flap": true,
+      "during": "OWNER-DASH-FRESHNESS-1 babysit",
+      "wave": "Wave10",
+      "hostname_proven": "Wolfs-Mac-Studio",
+      "recovered": true,
+      "source": "CLASSIFICATION-LOG#pipe_flaps",
+      "evidence": [
+        "state/final-completion/CLASSIFICATION-LOG-20260930.json#pipe_flaps"
+      ],
+      "notes": "Flap during OWNER-DASH-FRESHNESS-1 babysit \u2014 recovered PIPE_OK. Evidence stamp only; no uptime % invented.",
+      "uptime_pct": null,
+      "invented_uptime": false,
+      "fake_pipe_up": false
+    }
+  ],
+  "episode_count": 10,
+  "flap_count": 9,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "classification": "INTERNALLY_SOLVABLE",
+  "ceiling": "BUILT"
+}
