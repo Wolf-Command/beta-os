@@ -58,8 +58,20 @@ def score_candidates(work_item: dict[str, Any]) -> list[dict[str, Any]]:
         billing = m.get("billing")
         # Prefer subscription/local/free over API when quality UNKNOWN (Owner: prefer already-paid)
         billing_rank = {"subscription": 3, "local": 2, "free": 2, "api": 1}.get(billing or "", 0)
+        # Human learning weights (never invent capability scores)
+        human_rank = 0
+        try:
+            from .paths import LEARNING_DIR
+            wp = LEARNING_DIR / "weights.json"
+            if wp.exists():
+                import json as _json
+                w = (_json.loads(wp.read_text()).get("models") or {}).get(mid) or {}
+                if w.get("n_human"):
+                    human_rank = int(round(float(w.get("avg_human_rating") or 0) * 10))
+        except Exception:
+            human_rank = 0
         # Numeric sort key only from known facts — never invent capability
-        sort_key = (health_rank, billing_rank, prefer_rank)
+        sort_key = (health_rank, human_rank, billing_rank, prefer_rank)
         scored.append(
             {
                 "model_id": mid,

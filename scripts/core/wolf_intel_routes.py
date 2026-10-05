@@ -105,3 +105,36 @@ def handle_get(handler, path: str) -> bool:
         )
         return True
     return False
+
+
+def handle_post(handler, path: str) -> bool:
+    """Human decisions via Beta when route live."""
+    if path not in ("/api/wolf-intelligence/human-decision", "/api/wolf-intelligence/human-decision/"):
+        return False
+    length = int(handler.headers.get("Content-Length") or 0)
+    raw = handler.rfile.read(length) if length else b"{}"
+    try:
+        body = json.loads(raw.decode() or "{}")
+    except json.JSONDecodeError:
+        handler._send_json({"ok": False, "error": "bad_json"}, status=400)
+        return True
+    wid = body.get("work_item_id")
+    decision = (body.get("decision") or "").upper()
+    if not wid or decision not in ("PASS", "FAIL", "NEEDS_YOU"):
+        handler._send_json({"ok": False, "error": "bad_request"}, status=400)
+        return True
+    from wolf_intelligence import learning, work_items
+    item = work_items.get(wid)
+    if not item:
+        handler._send_json({"ok": False, "error": "not_found"}, status=404)
+        return True
+    if decision == "PASS":
+        learning.record_outcome(wid, human_passed=True, human_rating=int(body.get("rating") or 4), notes=body.get("notes") or "owner pass")
+    elif decision == "FAIL":
+        learning.record_outcome(wid, human_passed=False, human_rating=int(body.get("rating") or 1), notes=body.get("notes") or "owner fail")
+    else:
+        if item["state"] in ("READY_TO_TEST", "RUNNING", "RECOMMENDED"):
+            work_items.transition(wid, "NEEDS_YOU", reason=body.get("notes") or "owner flagged")
+    item = work_items.get(wid)
+    handler._send_json({"ok": True, "item": {"id": wid, "state": item["state"]}})
+    return True
