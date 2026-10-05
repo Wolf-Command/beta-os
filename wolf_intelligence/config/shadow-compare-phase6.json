@@ -1,0 +1,83 @@
+{
+  "at": "2026-10-05T22:33:00+08:00",
+  "samples": 5,
+  "agreement_count": 5,
+  "agreement_rate": 1.0,
+  "expensive_executed": false,
+  "duplicate_expensive_dispatch": false,
+  "cost_diff_usd_total": 0.0,
+  "quality_diff": "UNKNOWN_until_human_outcomes",
+  "current_system_snapshot": {
+    "last_worker_hint": "cursor",
+    "priority_queue_n": 44,
+    "active_path": "ACTIVE"
+  },
+  "comparisons": [
+    {
+      "at": "2026-10-05T22:33:00+08:00",
+      "work_item_id": "wi_ccc1eece8679",
+      "kind": "code_debug",
+      "recommended_worker": "cursor",
+      "actual_current_system_worker": "cursor",
+      "agreement": true,
+      "expensive_executed": false,
+      "duplicate_expensive_dispatch": false,
+      "cost_diff_usd": 0.0,
+      "quality_diff": "UNKNOWN",
+      "shadow_mode": true
+    },
+    {
+      "at": "2026-10-05T22:33:00+08:00",
+      "work_item_id": "wi_e3d95339b5fc",
+      "kind": "review",
+      "recommended_worker": "cursor",
+      "actual_current_system_worker": "cursor",
+      "agreement": true,
+      "expensive_executed": false,
+      "duplicate_expensive_dispatch": false,
+      "cost_diff_usd": 0.0,
+      "quality_diff": "UNKNOWN",
+      "shadow_mode": true
+    },
+    {
+      "at": "2026-10-05T22:33:00+08:00",
+      "work_item_id": "wi_3cc9689d0d93",
+      "kind": "security",
+      "recommended_worker": "cursor",
+      "actual_current_system_worker": "cursor",
+      "agreement": true,
+      "expensive_executed": false,
+      "duplicate_expensive_dispatch": false,
+      "cost_diff_usd": 0.0,
+      "quality_diff": "UNKNOWN",
+      "shadow_mode": true
+    },
+    {
+      "at": "2026-10-05T22:33:00+08:00",
+      "work_item_id": "wi_d9e8ea571982",
+      "kind": "data_recon",
+      "recommended_worker": "cursor",
+      "actual_current_system_worker": "cursor",
+      "agreement": true,
+      "expensive_executed": false,
+      "duplicate_expensive_dispatch": false,
+      "cost_diff_usd": 0.0,
+      "quality_diff": "UNKNOWN",
+      "shadow_mode": true
+    },
+    {
+      "at": "2026-10-05T22:33:00+08:00",
+      "work_item_id": "wi_6b69780569fa",
+      "kind": "ui_ux",
+      "recommended_worker": "cursor",
+      "actual_current_system_worker": "cursor",
+      "agreement": true,
+      "expensive_executed": false,
+      "duplicate_expensive_dispatch": false,
+      "cost_diff_usd": 0.0,
+      "quality_diff": "UNKNOWN",
+      "shadow_mode": true
+    }
+  ],
+  "production_touched": false
+}
