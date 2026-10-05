@@ -1,0 +1,1 @@
+SYNTHETIC_VISION_PROMPT: Describe a simple red circle on white background. No real image PII.

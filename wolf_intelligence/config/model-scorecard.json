@@ -1,0 +1,177 @@
+{
+  "updated_at": "2026-10-05T22:32:59+08:00",
+  "rule": "Do not invent capability scores. UNKNOWN until worker benchmark completes.",
+  "capabilities": [
+    "code_debug",
+    "review",
+    "security",
+    "data_recon",
+    "ui_ux",
+    "large_context",
+    "vision",
+    "research"
+  ],
+  "fixtures": {
+    "code_debug": "code_debug.py",
+    "review": "review_snippet.py",
+    "security": "security_snippet.py",
+    "data_recon": "data_recon.csv",
+    "ui_ux": "ui_copy.txt",
+    "large_context": "large_context.txt",
+    "vision": "vision_desc.txt",
+    "research": "research_query.txt"
+  },
+  "fixtures_ok": {
+    "code_debug": true,
+    "review": true,
+    "security": true,
+    "data_recon": true,
+    "ui_ux": true,
+    "large_context": true,
+    "vision": true,
+    "research": true
+  },
+  "models": {
+    "grok-bot-local-exec": {
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      },
+      "benchmark_status": "NOT_RUN_PAID_SHADOW",
+      "note": "Scores stay UNKNOWN until isolated benchmark job executes on worker; shadow harness does not spend API."
+    },
+    "cursor-agent": {
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      },
+      "benchmark_status": "NOT_RUN_PAID_SHADOW",
+      "note": "Scores stay UNKNOWN until isolated benchmark job executes on worker; shadow harness does not spend API."
+    },
+    "chatgpt-sub": {
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      },
+      "benchmark_status": "NOT_RUN_PAID_SHADOW",
+      "note": "Scores stay UNKNOWN until isolated benchmark job executes on worker; shadow harness does not spend API."
+    },
+    "openai-api": {
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      },
+      "benchmark_status": "NOT_RUN_PAID_SHADOW",
+      "note": "Scores stay UNKNOWN until isolated benchmark job executes on worker; shadow harness does not spend API."
+    },
+    "claude-sub": {
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      },
+      "benchmark_status": "NOT_RUN_PAID_SHADOW",
+      "note": "Scores stay UNKNOWN until isolated benchmark job executes on worker; shadow harness does not spend API."
+    },
+    "claude-haiku": {
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      },
+      "benchmark_status": "NOT_RUN_PAID_SHADOW",
+      "note": "Scores stay UNKNOWN until isolated benchmark job executes on worker; shadow harness does not spend API."
+    },
+    "claude-sonnet": {
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      },
+      "benchmark_status": "NOT_RUN_PAID_SHADOW",
+      "note": "Scores stay UNKNOWN until isolated benchmark job executes on worker; shadow harness does not spend API."
+    },
+    "gemini-free": {
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      },
+      "benchmark_status": "NOT_RUN_PAID_SHADOW",
+      "note": "Scores stay UNKNOWN until isolated benchmark job executes on worker; shadow harness does not spend API."
+    },
+    "ollama-llama3.2-3b": {
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      },
+      "benchmark_status": "NOT_RUN_PAID_SHADOW",
+      "note": "Scores stay UNKNOWN until isolated benchmark job executes on worker; shadow harness does not spend API."
+    },
+    "peaches-cos": {
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      },
+      "benchmark_status": "NOT_RUN_PAID_SHADOW",
+      "note": "Scores stay UNKNOWN until isolated benchmark job executes on worker; shadow harness does not spend API."
+    }
+  },
+  "latest_history_at": "2026-10-05T22:32:59+08:00"
+}
