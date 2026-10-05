@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  TEMPLATE ONLY — NOT INSTALLED.
+  Do not launchctl load while drafting on box / while pipe DOWN from box.
+  When Mac GREEN: copy to ~/Library/LaunchAgents/com.wolf.mac-reachability.supervisor.plist
+  then: launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.wolf.mac-reachability.supervisor.plist
+
+  Purpose: survive Grok Bot GUI close; restart supervisor after death; drive bounded recover.
+  Design: /workspace/mac-reachability/LAUNCHAGENT-DESIGN.md
+  Keys: RunAtLoad, KeepAlive, ThrottleInterval=30, StandardOut/Err under state/.../logs/
+  Invariant: process alive ≠ path proved — supervisor must call verify.sh.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.wolf.mac-reachability.supervisor</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/wolfterminal/beta-os/scripts/mac-reachability/supervisor.sh</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/wolfterminal/beta-os</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>MAC_REACH_ROOT</key>
+    <string>/Users/wolfterminal/beta-os</string>
+    <key>MAC_MACHINE_ID</key>
+    <string>36d8fa4b-2d58-4983-b227-e5bfa5495e78</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>30</integer>
+  <key>StandardOutPath</key>
+  <string>/Users/wolfterminal/beta-os/state/mac-reachability/logs/supervisor.stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/wolfterminal/beta-os/state/mac-reachability/logs/supervisor.stderr.log</string>
+</dict>
+</plist>

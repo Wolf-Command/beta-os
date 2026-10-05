@@ -1,0 +1,675 @@
+{
+  "finding_id": "BREACH-2026-10-05-J1-BZG-P2P-PAY-READY-OVERGRANT",
+  "verdict": "CLOSED",
+  "probed_at": "2026-10-05T12:52:10+08:00",
+  "probe_window_wita": "2026-10-05T12:45+08:00 \u2192 2026-10-05T12:56+08:00",
+  "head": "0b0e50da410d7158777871ae240c7e757502f5d3",
+  "branch": "build/wolf-command-rebuild",
+  "repair_files_git_status": {
+    "scripts/core/rbac.py": "M (modified, uncommitted; +38 lines adds bzg.ap./bzg.pay. to _ENTITY_BOUND_PREFIXES + entity_scope_required gate)",
+    "scripts/serve_beta.py": "M (modified, uncommitted)",
+    "scripts/core/bzg_p2p_grants.py": "?? untracked",
+    "scripts/core/bzg_ap_ready.py": "?? untracked",
+    "scripts/core/bzg_ready_to_pay.py": "?? untracked",
+    "scripts/core/bzg_supplier_bill.py": "?? untracked",
+    "scripts/migrations/migrate_bzg_p2p_grant_repair1_20261005.py": "?? untracked",
+    "scripts/tests/test_bzg_p2p_grant_repair1_20261005.py": "?? untracked",
+    "note": "Repair is NOT committed at HEAD 0b0e50d. Code-level fix lives only in the dirty worktree; a checkout/reset/clean would revert rbac.py and delete the SoD modules. DB-level grant repair (migration 2026-10-05T08:31:44+08:00, 91 grants revoked) is in the live DB."
+  },
+  "method": "Evaluator method (no isolated server). Live DB read only via sqlite URI mode=ro for protected closes and grant counts. Scratch copy: /private/tmp/breach-j1-reprobe-20261005/beta-os (scripts/ rsync copy + sqlite .backup of catalog/content_library.sqlite taken 12:48 WITA). Process guard monkeypatched sqlite3.connect to refuse any path outside the scratch dir; module CATALOG_DB pointed at copy; WOLF_TEST_MODE=1; PYTHONDONTWRITEBYTECODE=1. Case 1: core.rbac.evaluate(person, perm, bzg_purchase_request.outlet_rbac_target(outlet)) \u2014 the exact call-site target. Case 2: real core.bzg_ap_ready.mark_ap_ready and core.bzg_ready_to_pay.mark_ready_to_pay (the functions the :8788 handlers _uma_ops_ap_ready_mark/_uma_ops_ready_to_pay_mark call with the server-resolved identity person_id) against per-test fresh backups of the copy, after setting PO created_by / nota capturer and inserting a MATCH three-way row + scratch PR in the copy only. No HTTP calls, no money endpoints.",
+  "acceptance": {
+    "case1_ggv_content_denied": {
+      "result": "pass",
+      "detail": "PERS-HAIKAL/MISA/YUDI DENY all 5 perms x 3 outlets (45/45 DENY, reason role_lacks_permission; ALLOW count=0). Also DENY bzg.match.run and bzg.ap.view. Bare target \u2192 entity_scope_required for ap/pay; ENT-BZG and ENT-GGV entity targets \u2192 role_lacks_permission. ROLE-GGV-CREATIVE-DIRECTOR / ROLE-CONTENT-CREATOR / ROLE-CONTENT-MGMT hold zero bzg.* grants."
+    },
+    "case2_same_person_sod": {
+      "result": "pass",
+      "detail": "Enforced server-side in core (not UI): bzg_ap_ready.mark_ap_ready L310 and bzg_ready_to_pay.mark_ready_to_pay L299 call bzg_p2p_grants.p2p_pay_ready_segregation_deny(person, bill) BEFORE the RBAC check \u2192 403 po_creator_cannot_mark_pay_ready / nota_recorder_cannot_mark_pay_ready. Exercised on DB copy: Scenario A (PO by PERS-IZA, nota by PERS-HARIYANTO, BZG-UMA): IZA ap=DENY po_creator, pay=DENY po_creator; HARIYANTO ap=DENY nota_recorder, pay=DENY nota_recorder. Full-chain role holder PERS-DEVI (ROLE-BZG-FB-OPS-LEAD): own nota \u2192 DENY nota_recorder (ap+pay); own PO \u2192 DENY po_creator. PERS-ZAYEN (BZG FC): own PO \u2192 DENY po_creator (ap+pay); own nota \u2192 DENY nota_recorder. Independent marker on others' docs \u2192 ALLOW (Zayen/Devi), as designed. Note IZA and HARIYANTO are ALSO role-DENY for ap/pay mark_ready (defence in depth)."
+    },
+    "entity_bound_code": {
+      "detail": "scripts/core/rbac.py _ENTITY_BOUND_PREFIXES = ('finance.','vendor.','payment.','atrium.','bzg.ap.','bzg.pay.'); evaluate() returns DENY entity_scope_required when an entity-bound code has no entity/brand/location/department key. Verified: bare target DENY for Haikal/Misa/Yudi/Zayen/Matt on bzg.ap.mark_ready & bzg.pay.mark_ready. Caveat: entity-bound only forces a WHERE key; the actual GGV\u2192BZG block is the explicit matrix (GGV roles have no grant). bzg.po.*/bzg.bill.*/bzg.match.* are not entity-bound (Matt bzg.po.create ALLOWs on bare and ENT-GGV targets via SCOPE-GGV-ALL). Change is uncommitted."
+    },
+    "explicit_matrix": {
+      "detail": "scripts/core/bzg_p2p_grants.py P2P_PERMISSION_MATRIX (explicit role tuples; docstring 'never copy from work.complete'); migrate_bzg_p2p_grant_repair1_20261005.py revoke_all_p2p_grants \u2192 apply_p2p_grant_matrix; ran 2026-10-05T08:31:44+08:00, revoked 91. Live DB grants exactly match matrix (20 ALLOW rows): po.create=FB-OPS-LEAD,HFB,CAPTAIN,MATT; bill.capture=FB-OPS-LEAD,HFB; match.run=FB-OPS-LEAD,HFB,BZG-FC; ap.view=FB-OPS-LEAD,HFB,BZG-FC,MATT; ap.mark_ready=FB-OPS-LEAD,BZG-FC; pay.list_ready=FB-OPS-LEAD,BZG-FC,MATT; pay.mark_ready=FB-OPS-LEAD,BZG-FC. (ROLE-OWNER in matrix does not exist; skipped.) RESIDUAL RISK: legacy migrations migrate_bzg_p2p_po1/recv1/nota1/three_way1/ap1/ready_to_pay1 still contain copy-seed logic (SELECT DISTINCT role_id ... seed from work.complete / prior P2P perms); re-running any of them (e.g. DB rebuild) would re-open the over-grant."
+    }
+  },
+  "identities": {
+    "matt": {
+      "person_id": "PERS-MATT",
+      "assignments": "ASG-MATT-OWNER-1 (ROLE-MATT, scopes incl SCOPE-BZG-ENTITY, SCOPE-GGV-ALL), ASG-MATT-GGV-FC-1, ASG-INTEL-OPERATOR-MATT",
+      "matrix": {
+        "bzg.po.create": {
+          "BZG-UMA": "ALLOW:allow:ASG-MATT-OWNER-1/SCOPE-BZG-ENTITY",
+          "BZG-RAIN": "ALLOW:allow:ASG-MATT-OWNER-1/SCOPE-BZG-ENTITY",
+          "OU-BZG-RAIN-POOL": "ALLOW:allow:ASG-MATT-OWNER-1/SCOPE-BZG-ENTITY"
+        },
+        "bzg.bill.capture": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.match.run": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.ap.view": {
+          "BZG-UMA": "ALLOW:allow:ASG-MATT-OWNER-1/SCOPE-BZG-ENTITY",
+          "BZG-RAIN": "ALLOW:allow:ASG-MATT-OWNER-1/SCOPE-BZG-ENTITY",
+          "OU-BZG-RAIN-POOL": "ALLOW:allow:ASG-MATT-OWNER-1/SCOPE-BZG-ENTITY"
+        },
+        "bzg.ap.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.pay.list_ready": {
+          "BZG-UMA": "ALLOW:allow:ASG-MATT-OWNER-1/SCOPE-BZG-ENTITY",
+          "BZG-RAIN": "ALLOW:allow:ASG-MATT-OWNER-1/SCOPE-BZG-ENTITY",
+          "OU-BZG-RAIN-POOL": "ALLOW:allow:ASG-MATT-OWNER-1/SCOPE-BZG-ENTITY"
+        },
+        "bzg.pay.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        }
+      },
+      "document_level": {
+        "ap_mark_ready": "DENY:forbidden:403",
+        "pay_mark_ready": "DENY:forbidden:403 (ap_by_PERS-ZAYEN)"
+      },
+      "summary": "Owner gets po.create, ap.view, pay.list_ready on all 3 outlets (via SCOPE-BZG-ENTITY); DENY bill.capture, match.run, ap.mark_ready, pay.mark_ready (role_lacks_permission). Consistent with explicit matrix (owner sees, does not self-mark). payment.execute/approve/vendor.bank.change DENY."
+    },
+    "zayen": {
+      "person_id": "PERS-ZAYEN",
+      "note": "Brief named PERS-ZENITALFATHAN; ASG-ZAYEN-BZG-FC-1 actually belongs to PERS-ZAYEN (Zayen, laluzayen@gmail.com). PERS-ZENITALFATHAN is a separate AMG Accounts Payable person (ASG-ZENITALFATHAN-AP-1) and is DENY on all 7 P2P perms x 3 outlets.",
+      "matrix": {
+        "bzg.po.create": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.bill.capture": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.match.run": {
+          "BZG-UMA": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE",
+          "BZG-RAIN": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE",
+          "OU-BZG-RAIN-POOL": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE"
+        },
+        "bzg.ap.view": {
+          "BZG-UMA": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE",
+          "BZG-RAIN": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE",
+          "OU-BZG-RAIN-POOL": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE"
+        },
+        "bzg.ap.mark_ready": {
+          "BZG-UMA": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE",
+          "BZG-RAIN": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE",
+          "OU-BZG-RAIN-POOL": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE"
+        },
+        "bzg.pay.list_ready": {
+          "BZG-UMA": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE",
+          "BZG-RAIN": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE",
+          "OU-BZG-RAIN-POOL": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE"
+        },
+        "bzg.pay.mark_ready": {
+          "BZG-UMA": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE",
+          "BZG-RAIN": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE",
+          "OU-BZG-RAIN-POOL": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE"
+        }
+      },
+      "zenitalfathan_matrix": {
+        "bzg.po.create": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.bill.capture": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.match.run": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.ap.view": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.ap.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.pay.list_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.pay.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        }
+      },
+      "cross_entity": {
+        "finance.nota.read|ENT-GGV": "DENY:permission_without_matching_scope",
+        "finance.nota.read|ENT-AMG": "DENY:permission_without_matching_scope",
+        "finance.nota.read|ENT-BZG": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1",
+        "finance.nota.create|ENT-GGV": "DENY:role_lacks_permission",
+        "finance.nota.create|ENT-AMG": "DENY:role_lacks_permission",
+        "finance.nota.create|ENT-BZG": "DENY:role_lacks_permission",
+        "finance.invoice.read|ENT-GGV": "DENY:permission_without_matching_scope",
+        "finance.invoice.read|ENT-AMG": "DENY:permission_without_matching_scope",
+        "finance.invoice.read|ENT-BZG": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1",
+        "vendor.read|ENT-GGV": "DENY:permission_without_matching_scope",
+        "vendor.read|ENT-AMG": "DENY:permission_without_matching_scope",
+        "vendor.read|ENT-BZG": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1",
+        "bzg.ap.view|ENT-GGV": "DENY:permission_without_matching_scope",
+        "bzg.ap.view|ENT-AMG": "DENY:permission_without_matching_scope",
+        "bzg.ap.view|ENT-BZG": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1",
+        "bzg.pay.list_ready|ENT-GGV": "DENY:permission_without_matching_scope",
+        "bzg.pay.list_ready|ENT-AMG": "DENY:permission_without_matching_scope",
+        "bzg.pay.list_ready|ENT-BZG": "ALLOW:allow:ASG-ZAYEN-BZG-FC-1"
+      },
+      "document_level": {
+        "others_doc_scenarioA": {
+          "ap": "ALLOW:wrote APR-UMA-C8033212103D",
+          "pay": "ALLOW:wrote RTP-UMA-AFF35CAFFC3B (ap_by_PERS-ZAYEN)"
+        },
+        "own_po_scenarioD": {
+          "ap": "DENY:po_creator_cannot_mark_pay_ready:403",
+          "pay": "DENY:po_creator_cannot_mark_pay_ready:403 (ap_by_PERS-DEVI)"
+        },
+        "own_nota_scenarioC": {
+          "ap": "DENY:nota_recorder_cannot_mark_pay_ready:403"
+        }
+      },
+      "summary": "Legit BZG FC: match.run, ap.view, ap.mark_ready, pay.list_ready, pay.mark_ready ALLOW on 3 outlets via ASG-ZAYEN-BZG-FC-1/SCOPE-BZG-FINANCE; po.create & bill.capture DENY. Can mark ready on docs he did not create; DENY on own PO/nota. Not cross-entity: bzg.ap.view/pay.list_ready/finance.nota.read/vendor.read DENY on ENT-GGV and ENT-AMG targets."
+    },
+    "amanda": {
+      "person_id": "PERS-AMANDA",
+      "matrix": {
+        "bzg.po.create": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.bill.capture": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.match.run": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.ap.view": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.ap.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.pay.list_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.pay.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        }
+      },
+      "summary": "DENY all 7 P2P perms x 3 outlets (role_lacks_permission). Unchanged from original."
+    },
+    "haikal": {
+      "person_id": "PERS-HAIKAL",
+      "path": "ASG-HAIKAL-CD-1 \u2192 ROLE-GGV-CREATIVE-DIRECTOR (still has SCOPE-WOLF-CONTENT-ALL-BRANDS) \u2192 role now has no bzg.* grant",
+      "matrix": {
+        "bzg.po.create": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.bill.capture": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.match.run": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.ap.view": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.ap.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.pay.list_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.pay.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        }
+      },
+      "document_level": {
+        "ap": "DENY:forbidden:403",
+        "pay": "DENY:forbidden:403 (ap_by_PERS-ZAYEN)"
+      },
+      "summary": "DENY all"
+    },
+    "misa": {
+      "person_id": "PERS-MISA",
+      "matrix": {
+        "bzg.po.create": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.bill.capture": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.match.run": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.ap.view": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.ap.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.pay.list_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.pay.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        }
+      },
+      "summary": "DENY all"
+    },
+    "yudi": {
+      "person_id": "PERS-YUDI",
+      "matrix": {
+        "bzg.po.create": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.bill.capture": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.match.run": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.ap.view": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.ap.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.pay.list_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.pay.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        }
+      },
+      "summary": "DENY all"
+    },
+    "closer_iza": {
+      "person_id": "PERS-IZA",
+      "assignment": "ASG-IZA-CAPTAIN-UMA-1 (ROLE-BZG-CAPTAIN, SCOPE-BZG-UMA)",
+      "matrix": {
+        "bzg.po.create": {
+          "BZG-UMA": "ALLOW:allow:ASG-IZA-CAPTAIN-UMA-1/SCOPE-BZG-UMA",
+          "BZG-RAIN": "DENY:permission_without_matching_scope",
+          "OU-BZG-RAIN-POOL": "DENY:permission_without_matching_scope"
+        },
+        "bzg.bill.capture": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.match.run": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.ap.view": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.ap.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.pay.list_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.pay.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        }
+      },
+      "document_level_own_po": {
+        "ap": "DENY:po_creator_cannot_mark_pay_ready:403",
+        "pay": "DENY:po_creator_cannot_mark_pay_ready:403 (ap_by_PERS-ZAYEN)"
+      },
+      "document_level_own_nota_scenarioD": {
+        "ap": "DENY:nota_recorder_cannot_mark_pay_ready:403",
+        "pay": "DENY:nota_recorder_cannot_mark_pay_ready:403 (ap_by_PERS-DEVI)"
+      },
+      "summary": "po.create ALLOW on BZG-UMA only (DENY RAIN/POOL: permission_without_matching_scope); bill.capture, match.run, ap.view, ap.mark_ready, pay.list_ready, pay.mark_ready DENY. Full chain collapsed. On own PO and own nota: DENY po_creator/nota_recorder (SoD fires before RBAC)."
+    },
+    "hariyanto": {
+      "person_id": "PERS-HARIYANTO",
+      "assignment": "ASG-HARIYANTO-HEAD-CHEF-1 (ROLE-BZG-HEAD-CHEF, SCOPE-BZG-FB)",
+      "matrix": {
+        "bzg.po.create": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.bill.capture": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.match.run": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.ap.view": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.ap.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.pay.list_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        },
+        "bzg.pay.mark_ready": {
+          "BZG-UMA": "DENY:role_lacks_permission",
+          "BZG-RAIN": "DENY:role_lacks_permission",
+          "OU-BZG-RAIN-POOL": "DENY:role_lacks_permission"
+        }
+      },
+      "document_level_own_nota": {
+        "ap": "DENY:nota_recorder_cannot_mark_pay_ready:403",
+        "pay": "DENY:nota_recorder_cannot_mark_pay_ready:403 (ap_by_PERS-ZAYEN)"
+      },
+      "summary": "DENY all 7 P2P perms x 3 outlets (HEAD-CHEF not in matrix; he cannot create/capture either). Nota capture simulated in DB copy \u2192 DENY nota_recorder on ap+pay."
+    },
+    "extra_full_chain_role_devi": {
+      "person_id": "PERS-DEVI",
+      "assignment": "ASG-DEVI-FB-OPS-1 (ROLE-BZG-FB-OPS-LEAD)",
+      "matrix": {
+        "bzg.po.create": {
+          "BZG-UMA": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB",
+          "BZG-RAIN": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB",
+          "OU-BZG-RAIN-POOL": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB"
+        },
+        "bzg.bill.capture": {
+          "BZG-UMA": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB",
+          "BZG-RAIN": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB",
+          "OU-BZG-RAIN-POOL": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB"
+        },
+        "bzg.match.run": {
+          "BZG-UMA": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB",
+          "BZG-RAIN": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB",
+          "OU-BZG-RAIN-POOL": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB"
+        },
+        "bzg.ap.view": {
+          "BZG-UMA": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB",
+          "BZG-RAIN": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB",
+          "OU-BZG-RAIN-POOL": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB"
+        },
+        "bzg.ap.mark_ready": {
+          "BZG-UMA": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB",
+          "BZG-RAIN": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB",
+          "OU-BZG-RAIN-POOL": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB"
+        },
+        "bzg.pay.list_ready": {
+          "BZG-UMA": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB",
+          "BZG-RAIN": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB",
+          "OU-BZG-RAIN-POOL": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB"
+        },
+        "bzg.pay.mark_ready": {
+          "BZG-UMA": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB",
+          "BZG-RAIN": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB",
+          "OU-BZG-RAIN-POOL": "ALLOW:allow:ASG-DEVI-FB-OPS-1/SCOPE-BZG-FB"
+        }
+      },
+      "document_level": {
+        "A_iza_po__hariyanto_nota": {
+          "ap": "ALLOW:wrote APR-UMA-9EAE346A185B",
+          "pay": "ALLOW:wrote RTP-UMA-4A8D9E3A3798 (ap_by_PERS-ZAYEN)"
+        },
+        "B_devi_po__devi_nota": {
+          "ap": "DENY:nota_recorder_cannot_mark_pay_ready:403",
+          "pay": "DENY:nota_recorder_cannot_mark_pay_ready:403 (ap_by_PERS-ZAYEN)"
+        },
+        "C_devi_po__zayen_nota": {
+          "ap": "DENY:po_creator_cannot_mark_pay_ready:403",
+          "pay": "DENY:not_ap_ready:400 (ap_setup_failed:You cannot mark pay-ready on a document you created or recorded.)"
+        },
+        "D_zayen_po__iza_nota": {
+          "ap": "ALLOW:wrote APR-UMA-CEA2C321B1D8",
+          "pay": "ALLOW:wrote RTP-UMA-54E019EC983B (ap_by_PERS-DEVI)"
+        }
+      },
+      "summary": "Only seat holding the full chain at role level now; document SoD blocks her on her own PO/nota."
+    }
+  },
+  "document_scenarios_raw": {
+    "A_iza_po__hariyanto_nota": {
+      "bill_id": "BILL-HIST-317",
+      "po_id": "PO-HIST-369",
+      "po_creator": "PERS-IZA",
+      "nota_recorder": "PERS-HARIYANTO",
+      "ap_mark_ready": {
+        "PERS-IZA": "DENY:po_creator_cannot_mark_pay_ready:403",
+        "PERS-HARIYANTO": "DENY:nota_recorder_cannot_mark_pay_ready:403",
+        "PERS-ZAYEN": "ALLOW:wrote APR-UMA-C8033212103D",
+        "PERS-DEVI": "ALLOW:wrote APR-UMA-9EAE346A185B",
+        "PERS-HAIKAL": "DENY:forbidden:403",
+        "PERS-MATT": "DENY:forbidden:403"
+      },
+      "pay_mark_ready": {
+        "PERS-IZA": "DENY:po_creator_cannot_mark_pay_ready:403 (ap_by_PERS-ZAYEN)",
+        "PERS-HARIYANTO": "DENY:nota_recorder_cannot_mark_pay_ready:403 (ap_by_PERS-ZAYEN)",
+        "PERS-ZAYEN": "ALLOW:wrote RTP-UMA-AFF35CAFFC3B (ap_by_PERS-ZAYEN)",
+        "PERS-DEVI": "ALLOW:wrote RTP-UMA-4A8D9E3A3798 (ap_by_PERS-ZAYEN)",
+        "PERS-HAIKAL": "DENY:forbidden:403 (ap_by_PERS-ZAYEN)",
+        "PERS-MATT": "DENY:forbidden:403 (ap_by_PERS-ZAYEN)"
+      }
+    },
+    "B_devi_po__devi_nota": {
+      "bill_id": "BILL-HIST-323",
+      "po_id": "PO-HIST-363",
+      "po_creator": "PERS-DEVI",
+      "nota_recorder": "PERS-DEVI",
+      "ap_mark_ready": {
+        "PERS-DEVI": "DENY:nota_recorder_cannot_mark_pay_ready:403",
+        "PERS-ZAYEN": "ALLOW:wrote APR-UMA-E97D501646C3"
+      },
+      "pay_mark_ready": {
+        "PERS-DEVI": "DENY:nota_recorder_cannot_mark_pay_ready:403 (ap_by_PERS-ZAYEN)",
+        "PERS-ZAYEN": "ALLOW:wrote RTP-UMA-D8D0B29C4C42 (ap_by_PERS-ZAYEN)"
+      }
+    },
+    "C_devi_po__zayen_nota": {
+      "bill_id": "BILL-HIST-362",
+      "po_id": "PO-HIST-407",
+      "po_creator": "PERS-DEVI",
+      "nota_recorder": "PERS-ZAYEN",
+      "ap_mark_ready": {
+        "PERS-DEVI": "DENY:po_creator_cannot_mark_pay_ready:403",
+        "PERS-ZAYEN": "DENY:nota_recorder_cannot_mark_pay_ready:403"
+      },
+      "pay_mark_ready": {
+        "PERS-DEVI": "DENY:not_ap_ready:400 (ap_setup_failed:You cannot mark pay-ready on a document you created or recorded.)",
+        "PERS-ZAYEN": "DENY:not_ap_ready:400 (ap_setup_failed:You cannot mark pay-ready on a document you created or recorded.)"
+      }
+    },
+    "D_zayen_po__iza_nota": {
+      "bill_id": "BILL-HIST-316",
+      "po_id": "PO-HIST-370",
+      "po_creator": "PERS-ZAYEN",
+      "nota_recorder": "PERS-IZA",
+      "ap_mark_ready": {
+        "PERS-ZAYEN": "DENY:po_creator_cannot_mark_pay_ready:403",
+        "PERS-DEVI": "ALLOW:wrote APR-UMA-CEA2C321B1D8",
+        "PERS-IZA": "DENY:nota_recorder_cannot_mark_pay_ready:403"
+      },
+      "pay_mark_ready": {
+        "PERS-ZAYEN": "DENY:po_creator_cannot_mark_pay_ready:403 (ap_by_PERS-DEVI)",
+        "PERS-DEVI": "ALLOW:wrote RTP-UMA-54E019EC983B (ap_by_PERS-DEVI)",
+        "PERS-IZA": "DENY:nota_recorder_cannot_mark_pay_ready:403 (ap_by_PERS-DEVI)"
+      }
+    },
+    "existing_ap_ready_shortcircuit": {
+      "bill_id": "BILL-HIST-349",
+      "PERS-HAIKAL": "RETURNED existing AP-HIST-349 (no new row written; short-circuit before SoD/RBAC)",
+      "ap_rows_for_bill_before": 1
+    },
+    "existing_rtp_shortcircuit": {
+      "bill_id": "BILL-HIST-317",
+      "PERS-HAIKAL": "RETURNED existing RTP-UMA-005FB37221E7 marked_by=PERS-DEVI",
+      "rtp_rows": 1
+    }
+  },
+  "baseline": {
+    "unknown_person": "PERS-NOBODY-XYZ DENY all (no_active_assignment)",
+    "empty_person": "'' DENY all (missing_person_or_permission)",
+    "bare_target_entity_bound": "DENY entity_scope_required",
+    "payment.execute_role_allow_grants": 0,
+    "payment.execute_matt_ENT-BZG": "role_lacks_permission",
+    "payment.approve_role_allow_grants": 0,
+    "payment.approve_matt_ENT-BZG": "role_lacks_permission",
+    "vendor.bank.change_role_allow_grants": 0,
+    "vendor.bank.change_matt_ENT-BZG": "role_lacks_permission"
+  },
+  "protected_closes": {
+    "before": {
+      "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+        "state": "EXCEPTION",
+        "declared_cash_amount": 3225000.0,
+        "variance_cash_amount": -125000.0,
+        "updated_at": "2026-10-03T13:47:39Z"
+      },
+      "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5": {
+        "state": "DATA_CAPTURED",
+        "declared_cash_amount": null,
+        "variance_cash_amount": null,
+        "updated_at": "2026-10-04T13:56:05Z"
+      },
+      "VDC-8fd544e2-2132-4a4a-b714-720eb0cd18ad": {
+        "state": "DATA_CAPTURED",
+        "declared_cash_amount": null,
+        "variance_cash_amount": null,
+        "updated_at": "2026-10-05T00:41:41Z"
+      }
+    },
+    "after": {
+      "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+        "state": "EXCEPTION",
+        "declared_cash_amount": 3225000.0,
+        "variance_cash_amount": -125000.0,
+        "updated_at": "2026-10-03T13:47:39Z"
+      },
+      "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5": {
+        "state": "DATA_CAPTURED",
+        "declared_cash_amount": null,
+        "variance_cash_amount": null,
+        "updated_at": "2026-10-04T13:56:05Z"
+      },
+      "VDC-8fd544e2-2132-4a4a-b714-720eb0cd18ad": {
+        "state": "DATA_CAPTURED",
+        "declared_cash_amount": null,
+        "variance_cash_amount": null,
+        "updated_at": "2026-10-05T00:41:41Z"
+      }
+    },
+    "unchanged": true,
+    "read_at": [
+      "2026-10-05T12:45+08:00",
+      "2026-10-05T12:52:10+08:00"
+    ]
+  },
+  "prod_untouched": "pid 1297 present at start and end (ps -p only); never signalled or connected to.",
+  "live_beta_untouched": "No connection to :8788, no restart/reload, live DB opened read-only only. NOTE: the :8788 listener changed from pid 95803 (started 12:31:25 WITA) to pid 5756 (started 12:52:05 WITA) during the probe window \u2014 NOT caused by this probe (no signals sent to it; only my own stuck rg was killed). Both start times are after the repair files' mtime (08:31 WITA), so the live server runs the repaired code.",
+  "scratch_deleted": {
+    "deleted": true,
+    "paths": [
+      "/private/tmp/breach-j1-reprobe-20261005 (scripts copy, content_library.sqlite backup copy + per-test t.sqlite copies, guard.py, eval/sod probe scripts and outputs, cg.log)"
+    ],
+    "verified_absent": true,
+    "stray_matches": [],
+    "server_started": "none (evaluator method; no scratch server, no pid to kill)"
+  },
+  "secondary_observations_not_blocking": [
+    "AMBER (new, suggest separate finding): mark_ap_ready and mark_ready_to_pay return an already-existing AP-ready / Ready-to-Pay row BEFORE the SoD and RBAC checks (idempotent short-circuit). On the DB copy PERS-HAIKAL calling mark_ap_ready on BILL-HIST-349 got the existing AP-HIST-349 row back, and calling mark_ready_to_pay on a bill already marked by Devi got RTP row marked_by=PERS-DEVI back. No new row was written (no mark), but an unauthorised caller gets ok:true + document data (supplier, nota, totals) through the mark endpoints.",
+    "Historical data: all 106 live bzg_ops_ap_ready rows (created 2026-10-05T07:40:26+08:00, before the 08:31 repair) are marked_by PERS-MATT, who is also capturer on 106/106 notas and PO creator on 103/106 POs \u2014 pre-repair same-person records remain in the ledger (history import). Matt no longer holds ap.mark_ready.",
+    "SoD covers PO creator and nota recorder only; it does not stop the same person (e.g. BZG FC) marking both AP-ready and Ready-to-Pay on one bill, and does not consider the goods receiver.",
+    "Repair code uncommitted (see repair_files_git_status); legacy copy-seed migrations still present (see explicit_matrix)."
+  ],
+  "one_line_evidence": "HEAD 0b0e50d + uncommitted repair: live-DB-copy evaluator via outlet_rbac_target \u2192 Haikal/Misa/Yudi DENY 45/45 (role_lacks_permission; GGV roles hold 0 bzg.* grants; 20 grants match explicit P2P_PERMISSION_MATRIX); real mark_ap_ready/mark_ready_to_pay on copy \u2192 Iza (PO creator) DENY po_creator_cannot_mark_pay_ready, Hariyanto (nota recorder) DENY nota_recorder_cannot_mark_pay_ready, Devi/Zayen DENY on own docs, Zayen ALLOW on others'; bzg.ap./bzg.pay. entity-bound; payment.execute/approve/vendor.bank.change 0 grants; protected closes unchanged."
+}

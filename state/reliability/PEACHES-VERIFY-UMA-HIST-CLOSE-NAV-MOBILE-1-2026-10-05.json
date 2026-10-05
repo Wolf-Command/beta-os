@@ -1,0 +1,155 @@
+{
+  "pack": "UMA-HIST-CLOSE-NAV-MOBILE-1",
+  "fix_cycles": [
+    "UMA-HIST-CLOSE-NAV-MOBILE-2"
+  ],
+  "run_ids": {
+    "UMA-HIST-CLOSE-NAV-MOBILE-1": "BF-ba91f44026f9",
+    "UMA-HIST-CLOSE-NAV-MOBILE-2": "BF-fd3f83149108"
+  },
+  "at": "2026-10-05T12:42:00+08:00",
+  "verdict": "READY_FOR_HUMAN_TEST",
+  "peaches_independent_verify": true,
+  "root_cause": "The tap handler fired (Matt's 12:05/12:06 WITA taps opened+captured 13 Sep and 27 Sep closes per core_audit_events), but showScreen() only toggled .wiz-screen sections, so the backlog list and Tonight panel stayed on top and the opened close rendered below the fold with errors written to the page bottom \u2014 on iPhone the screen looked unchanged.",
+  "tests": {
+    "test_uma_hist_close_nav_mobile1_20261005.py": "51/0",
+    "test_uma_hist_close_nav_mobile2_20261005.py": "95/0",
+    "test_uma_hist_close_queue1_20261005.py": "34/0",
+    "total": "180/0",
+    "recounted_by_peaches": true
+  },
+  "render_method": {
+    "engine": "Playwright webkit, device 'iPhone 14' (390x664 viewport, touch), real page.tap()/touchscreen.tap()",
+    "identity": "mrwolf@wolfcommand.net (PERS-MATT) via X-Wolf-Subject + Cf-Access-Authenticated-User-Email, BETA_AUTH_MODE=development_assertion",
+    "server": "serve_beta.BetaHandler imported in-process from /Users/wolfterminal/beta-os (same code + dashboards the :8788 listener serves) on 127.0.0.1:8799, against a sqlite backup-API copy of the Beta catalog (WOLF_TEST_MODE=1 so live-catalog writes are refused)",
+    "why_not_8788_direct": "127.0.0.1:8788 is fail-closed without a Cloudflare Access JWT (GET /uma-blu-close -> 403 missing_auth); no JWT was minted. Same in-process method as prior Peaches shot scripts (scripts/audit/*_shots.py)."
+  },
+  "cases": {
+    "25sep_open": {
+      "result": "PASS",
+      "opened": "25 September 2026 \u00b7 HISTORICAL CLOSE"
+    },
+    "28sep_incomplete_resume": {
+      "result": "PASS",
+      "close": "VDC-4046a805 (same saved close, by-date GET only, zero POSTs)"
+    },
+    "29sep_protected_open": {
+      "result": "PASS",
+      "mode": "read-only review banner, zero POSTs"
+    },
+    "3oct_exception_open_no_mutation": {
+      "result": "PASS",
+      "shown": "Cash counted Rp3.225.000 / Expected Rp3.350.000 / Difference Rp125.000; 5 rapid taps; zero POSTs"
+    },
+    "4oct_protected_open_no_mutation": {
+      "result": "PASS"
+    },
+    "rapid_repeat_tap_no_duplicate": {
+      "result": "PASS",
+      "detail": "25 Sep: 1 tap()+4 touchscreen taps -> rows 0->1; 3 Oct: 5 taps -> rows 1->1"
+    },
+    "back_to_history": {
+      "result": "PASS",
+      "detail": "on-screen '\u2190 Back to history' and browser back (go_back) both return to list"
+    },
+    "3sep_selectable_openable": {
+      "result": "PASS",
+      "detail": "search '3 Sep 2026' -> row -> tap opens 3 September 2026 (own ESB: Rp12.322.024,79 / 51 bills); deep link ?business_date=2026-09-03 also opens"
+    },
+    "no_VDC_in_rendered_html": {
+      "result": "PASS",
+      "dom_hits": {
+        "list": [],
+        "25sep_open_rapid": [],
+        "28sep_incomplete": [],
+        "29sep_protected": [],
+        "3oct_exception": [],
+        "4oct_protected": [],
+        "3sep": []
+      },
+      "cycle1_note": "cycle-1 render found VDC-470e741f in collapsed audit details on 3 Oct; fixed by UMA-HIST-CLOSE-NAV-MOBILE-2"
+    },
+    "no_today_esb_on_historical": {
+      "result": "PASS",
+      "detail": "every opened date's source-wizard warehouse_source.business_date equals the tapped date (25 Sep 13,875,000; 28 Sep 15,862,438; 29 Sep 13,513,512 warehouse / 13,435,000 printed; 4 Oct 19,158,306; 3 Sep 12,322,025); ESB has no 2026-10-05 rows"
+    },
+    "immediate_tap_feedback": {
+      "result": "PASS",
+      "detail": "tapped row gets .loading pressed/dimmed state at once; 'Opening 28 September 2026\u2026' set in #topMsgGlobal until screen renders (note: when the list is scrolled, that text line can sit under the sticky shell header; row highlight is always visible)"
+    },
+    "whole_row_touch_target": {
+      "result": "PASS",
+      "detail": "9 rows are <a href=/uma-blu-close?business_date=\u2026> cards, 65-84px tall"
+    }
+  },
+  "protected_hash_proof": {
+    "scope": "venue_daily_closes rows VDC-470e741f (3 Oct EXCEPTION), VDC-64f5f529 (4 Oct DATA_CAPTURED), VDC-8fd544e2 (29 Sep DATA_CAPTURED) + every row for business_date 2026-10-03/04 or those close_ids in venue_close_edc_receipts, venue_close_esb_closing_receipts, venue_close_till_evidence, venue_close_vision_events, bzg_ops_petty_days, bzg_ops_petty_movements",
+    "live_before_12_19": "1d786f9a33ea13dc34ad0f60cc753174e5b395c3c64a8fb37f7c54e2c87661bf",
+    "live_after_12_41": "1d786f9a33ea13dc34ad0f60cc753174e5b395c3c64a8fb37f7c54e2c87661bf",
+    "probe_copy_before_taps": "1d786f9a33ea13dc34ad0f60cc753174e5b395c3c64a8fb37f7c54e2c87661bf",
+    "probe_copy_after_taps": "1d786f9a33ea13dc34ad0f60cc753174e5b395c3c64a8fb37f7c54e2c87661bf",
+    "per_close": {
+      "VDC-470e741f": {
+        "business_date": [
+          "2026-10-03"
+        ],
+        "state": [
+          "EXCEPTION"
+        ],
+        "sha256_before": "2d4820616f313efcd9067a85c0450f18602961216ed53cc9fa7cd77a9770ffbf",
+        "sha256_after": "2d4820616f313efcd9067a85c0450f18602961216ed53cc9fa7cd77a9770ffbf"
+      },
+      "VDC-64f5f529": {
+        "business_date": [
+          "2026-10-04"
+        ],
+        "state": [
+          "DATA_CAPTURED"
+        ],
+        "sha256_before": "c894e41d319a2265282524d01a705b7bb413dcad3cc6e636199bcca866ff98d5",
+        "sha256_after": "c894e41d319a2265282524d01a705b7bb413dcad3cc6e636199bcca866ff98d5"
+      },
+      "VDC-8fd544e2": {
+        "business_date": [
+          "2026-09-29"
+        ],
+        "state": [
+          "DATA_CAPTURED"
+        ],
+        "sha256_before": "bf2f1b9eed7777bc8bf67b2b46258c87da225b6e7a84214e65d05b68300f1018",
+        "sha256_after": "bf2f1b9eed7777bc8bf67b2b46258c87da225b6e7a84214e65d05b68300f1018"
+      }
+    },
+    "unchanged": true,
+    "live_close_counts_unchanged": true
+  },
+  "beta": {
+    "pid_before": 87980,
+    "pid_after_mobile1_reload": 93695,
+    "pid_now": 95803,
+    "pid_now_note": "95803 started 12:31:25 WITA (reload during FINANCE-SWITCHER-REPAIR-1); MOBILE-2 was HTML-only, served from disk",
+    "local_8788_unauth": "403 fail-closed",
+    "public": "https://beta.wolfcommand.net/uma-blu-close -> 302 Cloudflare Access login"
+  },
+  "prod_pid": 1297,
+  "prod_untouched": true,
+  "cursor_agent_2627_untouched": true,
+  "owner_link": "https://beta.wolfcommand.net/uma-blu-close#history-queue",
+  "screenshots_box": [
+    "/workspace/hist-close-nav/final-list.png",
+    "/workspace/hist-close-nav/final-3oct-exception.png",
+    "/workspace/hist-close-nav/final-3sep-open.png",
+    "/workspace/hist-close-nav/final-25sep-open.png",
+    "/workspace/hist-close-nav/final-28sep-continue.png",
+    "/workspace/hist-close-nav/final-29sep-protected.png",
+    "/workspace/hist-close-nav/final-4oct-protected.png",
+    "/workspace/hist-close-nav/final-3sep-search.png",
+    "/workspace/hist-close-nav/final-28sep-opening-feedback.png",
+    "/workspace/hist-close-nav/before-after-tap-3oct.png"
+  ],
+  "supervisor_next": "after MOBILE-1: FINANCE-SWITCHER-REPAIR-1 (BF-09bc100e77ed); after MOBILE-2: IDLE (no executable READY item)",
+  "live_db_note": "Probe taps on 25 Sep and 3 Sep created draft closes only in the probe copy; live Beta DB has no 25 Sep / 3 Sep rows",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_commit": true
+}

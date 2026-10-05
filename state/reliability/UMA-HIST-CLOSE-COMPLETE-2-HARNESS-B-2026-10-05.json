@@ -1,0 +1,217 @@
+{
+ "steps": [
+  {
+   "screen": "wizSourceDiff",
+   "top": [],
+   "buttons": [
+    "btnContinueShift:Continue with shift report",
+    "btnSendReview:Send for review"
+   ],
+   "inputs": [],
+   "text": "SOURCE DIFFERENCE FOUND | Warehouse cash | Rp4.135.000 | Shift report cash | Rp3.790.000 | Cash difference | Rp345.000 | Warehouse bills | 51 | Shift report bills | 50 | Bills difference | 1 | Continue with shift report Send for review",
+   "step": [
+    "tap",
+    ".queue-card[data-queue-date=\"2026-09-29\"]",
+    4
+   ],
+   "err": null,
+   "posts": []
+  },
+  {
+   "screen": "wizTerminals",
+   "top": [],
+   "buttons": [
+    ":Add bank receipt",
+    ":Add bank receipt"
+   ],
+   "inputs": [],
+   "text": "CARD TERMINALS | MANDIRI NOT USED | Not on shift report. | BNI ADD BANK RECEIPT | Expected EDC | Rp2.545.000 | Expected QRIS | Rp145.000 | Add bank receipt | BRI ADD BANK RECEIPT | Expected EDC | Rp4.465.000 | Expected QRIS | Rp1.065.000 | Add bank receipt",
+   "step": [
+    "tap",
+    "#btnContinueShift",
+    3
+   ],
+   "err": null,
+   "posts": []
+  },
+  {
+   "screen": "wizTerminals",
+   "top": [],
+   "buttons": [
+    ":Add bank receipt",
+    ":Add bank receipt",
+    "btnEdcTake:Take photo",
+    "btnEdcUpload:Upload photo",
+    "btnConfirmBank:Confirm bank receipt",
+    "btnCancelBank:Cancel"
+   ],
+   "inputs": [
+    "edcCardAmt:number=2545000",
+    "edcQrisAmt:number=145000"
+   ],
+   "text": "CARD TERMINALS | MANDIRI NOT USED | Not on shift report. | BNI ADD BANK RECEIPT | Expected EDC | Rp2.545.000 | Expected QRIS | Rp145.000 | Add bank receipt | BRI ADD BANK RECEIPT | Expected EDC | Rp4.465.000 | Expected QRIS | Rp1.065.000 | Add bank receipt | BNI | Take photo | Upload photo | Receipt EDC Receipt QRIS  Confirm bank receipt Cancel",
+   "step": [
+    "tap",
+    "button[data-bank=\"BNI\"]",
+    2
+   ],
+   "err": null,
+   "posts": []
+  },
+  {
+   "screen": "wizTerminals",
+   "top": [],
+   "buttons": [
+    ":Add bank receipt",
+    ":Add bank receipt"
+   ],
+   "inputs": [],
+   "text": "CARD TERMINALS | MANDIRI NOT USED | Not on shift report. | BNI MATCH | Expected EDC | Rp2.545.000 | Actual EDC | Rp2.545.000 | EDC difference | Rp0 | Expected QRIS | Rp145.000 | Actual QRIS | Rp145.000 | QRIS difference | Rp0 | Add bank receipt | BRI ADD BANK RECEIPT | Expected EDC | Rp4.465.000 | Expected QRIS | Rp1.065.000 | Add bank receipt",
+   "step": [
+    "tap",
+    "#btnConfirmBank",
+    3
+   ],
+   "err": null,
+   "posts": [
+    [
+     "/api/venue-close/edc-receipt",
+     200
+    ]
+   ]
+  },
+  {
+   "screen": "wizTerminals",
+   "top": [],
+   "buttons": [
+    ":Add bank receipt",
+    ":Add bank receipt",
+    "btnEdcTake:Take photo",
+    "btnEdcUpload:Upload photo",
+    "btnConfirmBank:Confirm bank receipt",
+    "btnCancelBank:Cancel"
+   ],
+   "inputs": [
+    "edcCardAmt:number=4465000",
+    "edcQrisAmt:number=1065000"
+   ],
+   "text": "CARD TERMINALS | MANDIRI NOT USED | Not on shift report. | BNI MATCH | Expected EDC | Rp2.545.000 | Actual EDC | Rp2.545.000 | EDC difference | Rp0 | Expected QRIS | Rp145.000 | Actual QRIS | Rp145.000 | QRIS difference | Rp0 | Add bank receipt | BRI ADD BANK RECEIPT | Expected EDC | Rp4.465.000 | Expected QRIS | Rp1.065.000 | Add bank receipt | BRI | Take photo | Upload photo | Receipt EDC Receipt QRIS  Confirm bank receipt Cancel",
+   "step": [
+    "tap",
+    "button[data-bank=\"BRI\"]",
+    2
+   ],
+   "err": null,
+   "posts": []
+  },
+  {
+   "screen": "wizTerminals",
+   "top": [],
+   "buttons": [
+    ":Add bank receipt",
+    ":Add bank receipt",
+    "btnTerminalsNext:Continue to cash"
+   ],
+   "inputs": [],
+   "text": "CARD TERMINALS | MANDIRI NOT USED | Not on shift report. | BNI MATCH | Expected EDC | Rp2.545.000 | Actual EDC | Rp2.545.000 | EDC difference | Rp0 | Expected QRIS | Rp145.000 | Actual QRIS | Rp145.000 | QRIS difference | Rp0 | Add bank receipt | BRI MATCH | Expected EDC | Rp4.465.000 | Actual EDC | Rp4.465.000 | EDC difference | Rp0 | Expected QRIS | Rp1.065.000 | Actual QRIS | Rp1.065.000 | QRIS difference | Rp0 | Add bank receipt | Continue to cash",
+   "step": [
+    "tap",
+    "#btnConfirmBank",
+    3
+   ],
+   "err": null,
+   "posts": [
+    [
+     "/api/venue-close/edc-receipt",
+     200
+    ]
+   ]
+  },
+  {
+   "screen": "wizCash",
+   "top": [],
+   "buttons": [
+    "btnCashPhoto:Cash photo (optional)"
+   ],
+   "inputs": [
+    "cashAmt:number="
+   ],
+   "text": "CASH | Opening till float | Rp1.000.000 | Shift report cash | Rp3.790.000 | Petty cash paid (out of till) | Rp370.000 | Expected cash in till | Rp4.420.000 | Opening till float plus shift report cash, minus petty paid out of the till today. | Cash counted in till  | Cash photo (optional) | Expected | Rp4.420.000 | Counted | \u2014 | Difference | \u2014",
+   "step": [
+    "tap",
+    "#btnTerminalsNext",
+    2
+   ],
+   "err": null,
+   "posts": []
+  },
+  {
+   "screen": "wizPetty",
+   "top": [],
+   "buttons": [
+    "btnPettyNext:Continue to review"
+   ],
+   "inputs": [],
+   "text": "PETTY CASH | Petty paid this date | Rp370.000 | OUT | Rp370.000 | Continue to review",
+   "step": [
+    "fill",
+    "#cashAmt",
+    "3790000",
+    5
+   ],
+   "err": null,
+   "posts": [
+    [
+     "/api/venue-close/till-declare",
+     200
+    ],
+    [
+     "/api/venue-close/till-declare",
+     200
+    ]
+   ]
+  },
+  {
+   "screen": "wizReview",
+   "top": [],
+   "buttons": [
+    "btnSubmit:Submit close(disabled)",
+    "btnSubmitException:Submit with exception"
+   ],
+   "inputs": [],
+   "text": "REVIEW | Gross sales | Rp13.435.000 | Cash expected | Rp4.420.000 | Cash counted | Rp3.790.000 | Cash difference | DIFFERENCE Rp 630000 | BNI | EDC Rp2.545.000 \u00b7 QRIS Rp145.000 | BRI | EDC Rp4.465.000 \u00b7 QRIS Rp1.065.000 | Scott & Etik | Rp1.425.000 | Source discrepancy between warehouse and shift report | Shift report photo missing \u2014 figures supplied by Owner | Submit close Submit with exception | Review cash difference before submit",
+   "step": [
+    "tap",
+    "#btnPettyNext",
+    4
+   ],
+   "err": null,
+   "posts": []
+  },
+  {
+   "screen": "wizCalendar",
+   "top": [],
+   "buttons": [
+    "btnDateSearch:Find date"
+   ],
+   "inputs": [
+    "dateSearch:search=",
+    "datePicker:date="
+   ],
+   "text": "ALL OTHER DATES | Search or pick a date   Find date | 4 October 2026 | INCOMPLETE | OPEN | 3 October 2026 | EXCEPTION | OPEN | 2 October 2026 | INCOMPLETE | OPEN | 1 October 2026 | MISSING | OPEN | 30 September 2026 | MISSING | OPEN | 29 September 2026 | EXCEPTION | OPEN | 28 September 2026 | INCOMPLETE | OPEN | 27 September 2026 | INCOMPLETE | OPEN | 26 September 2026 | MISSING | OPEN | 25 September 2026 | MISSING | OPEN | 24 September 2026 | MISSING | OPEN | 23 September 2026 | INCOMPLETE | OPEN | 22 September 2026 | MISSING | OPEN | 21 September 2026 | MISSING | OPEN | 20 September 2026 | MISSING | OPEN | 19 September 2026 | MISSING | OPEN | 18 September 2026 | MISSING | OPEN | 17 Septemb",
+   "step": [
+    "tap",
+    "#btnSubmitException",
+    6
+   ],
+   "err": null,
+   "posts": [
+    [
+     "/api/venue-close/staff-submit",
+     200
+    ]
+   ]
+  }
+ ],
+ "errors": []
+}

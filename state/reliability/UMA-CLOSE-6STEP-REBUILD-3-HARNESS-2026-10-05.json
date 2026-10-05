@@ -1,0 +1,192 @@
+{
+  "harness_steps": [
+    {
+      "screen": "stepShift",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        "btnTakeShift:TAKE PHOTO",
+        "btnUploadShift:UPLOAD PHOTO",
+        "btnBackChoose:\u2190 Back"
+      ],
+      "text": "STEP 2 \u00b7 SHIFT REPORT | 29 September 2026 | TAKE PHOTO | UPLOAD PHOTO | \u2190 Back",
+      "label": "29_open"
+    },
+    {
+      "screen": "stepShift",
+      "top": [
+        "Photo uploaded."
+      ],
+      "buttons": [
+        "btnViewShift:VIEW PHOTO",
+        "btnUseShift:USE THIS REPORT",
+        "btnReplaceShift:REPLACE \u2013 ADD BETTER PHOTO",
+        "btnBackChoose:\u2190 Back"
+      ],
+      "text": "STEP 2 \u00b7 SHIFT REPORT | 29 September 2026 | Shift report photo found | VIEW PHOTO USE THIS REPORT REPLACE \u2013 ADD BETTER PHOTO | \u2190 Back",
+      "label": "29_upload"
+    },
+    {
+      "screen": "stepShift",
+      "top": [
+        "Figures read \u2014 confirm they match the report."
+      ],
+      "buttons": [
+        "btnShiftYes:YES",
+        "btnShiftEdit:EDIT",
+        "btnBackChoose:\u2190 Back"
+      ],
+      "text": "STEP 2 \u00b7 SHIFT REPORT | 29 September 2026 | WE READ | Gross sales | Rp13.435.000 | Bills | 50 | Pax | 79 | Cash | Rp3.790.000 | BNI EDC | Rp2.545.000 | BNI QRIS | Rp145.000 | BRI EDC | Rp4.465.000 | BRI QRIS | Rp1.065.000 | Other payment Scott & Etik | Rp1.425.000 | Non-sales Executive Chef | Rp78.512 | DO THESE FIGURES MATCH THE REPORT? | YES EDIT | \u2190 Back",
+      "label": "29_read"
+    },
+    {
+      "screen": "stepShift",
+      "top": [
+        "Figures confirmed."
+      ],
+      "buttons": [
+        "btnShiftDiffContinue:CONTINUE",
+        "btnBackChoose:\u2190 Back"
+      ],
+      "text": "STEP 2 \u00b7 SHIFT REPORT | 29 September 2026 | ESB DATA DIFFERENCE FOUND | Final report cash | Rp3.790.000 | Final report bills | 50 | Historical ESB data cash | Rp4.135.000 | Historical ESB data bills | 51 | Difference cash | Rp345.000 | Difference bills | 1 | CONTINUE | \u2190 Back",
+      "label": "29_yes"
+    },
+    {
+      "screen": "stepBanks",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        ":ADD RECEIPT",
+        ":ADD RECEIPT",
+        "btnBackShift:\u2190 Back"
+      ],
+      "text": "STEP 3 \u00b7 BANK RECEIPTS | 29 September 2026 | MANDIRI \u2014 not used | BNI | Expected EDC | Rp2.545.000 | Expected QRIS | Rp145.000 | ADD RECEIPT | BRI | Expected EDC | Rp4.465.000 | Expected QRIS | Rp1.065.000 | ADD RECEIPT | \u2190 Back",
+      "label": "29_banks"
+    },
+    {
+      "screen": "stepReview",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        "btnReviewNext:Continue to submit",
+        "btnBackCash:\u2190 Back"
+      ],
+      "text": "STEP 5 \u00b7 REVIEW | 29 September 2026 | Sales | Rp13.435.000 | Bills | 50 | Pax | 79 | Opening till float | Rp1.000.000 | Cash expected | Rp4.420.000 | Cash counted | Rp4.400.000 | Cash difference | Short Rp20.000 | BNI EDC expected | Rp2.545.000 | BNI EDC receipt | Rp2.545.000 | BNI EDC difference | Matches | BNI QRIS expected | Rp145.000 | BNI QRIS receipt | Rp145.000 | BNI QRIS difference | Matches | BRI EDC expected | Rp4.465.000 | BRI EDC receipt | Rp4.465.000 | BRI EDC difference | Matches | BRI QRIS expected | Rp1.065.000 | BRI QRIS receipt | Rp1.065.000 | BRI QRIS difference | Matches | Other payment Scott & Etik | Rp1.425.000 | Non-sales Exec Chef | Rp78.512 | Petty cash OUT | Rp370.000 | Petty cash IN | Rp0 | EVIDENCE | Shift report | \u2713 | BNI | \u2713 | BRI | \u2713 | Cash photo | Optional | EXCEPTIONS | Historical ESB discrepancy: Rp345.000 / 1 bill(s) | Cash difference: Rp20.000 | WHY? Petty timing | Continue to submit | \u2190 Back",
+      "label": "29_cash"
+    },
+    {
+      "screen": "stepSubmit",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        "btnSubmit:SUBMIT CLOSE(disabled)",
+        "btnSubmitException:SUBMIT WITH EXCEPTION",
+        "btnBackReview:\u2190 Back"
+      ],
+      "text": "STEP 6 \u00b7 SUBMIT | 29 September 2026 | Submit only when all steps are complete. | SUBMIT CLOSE SUBMIT WITH EXCEPTION | Review cash difference before submit | \u2190 Back",
+      "label": "29_review"
+    },
+    {
+      "screen": "stepResult",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        "btnViewClose:VIEW CLOSE",
+        "btnBackMissing:BACK TO MISSING CLOSES"
+      ],
+      "text": "CLOSE SAVED WITH EXCEPTION | Cash short Rp20.000 \u00b7 ESB data difference Rp345.000 / 1 bill kept as exceptions | VIEW CLOSE BACK TO MISSING CLOSES",
+      "label": "29_result"
+    },
+    {
+      "screen": "stepViewClose",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        "btnViewCloseBack:BACK TO MISSING CLOSES"
+      ],
+      "text": "SAVED CLOSE \u00b7 READ ONLY | 29 September 2026 | Sales | Rp13.435.000 | Bills | 50 | Pax | 79 | Opening till float | Rp1.000.000 | Cash expected | Rp4.420.000 | Cash counted | Rp4.400.000 | Cash difference | Short Rp20.000 | BNI EDC expected | Rp2.545.000 | BNI EDC receipt | Rp2.545.000 | BNI EDC difference | Matches | BNI QRIS expected | Rp145.000 | BNI QRIS receipt | Rp145.000 | BNI QRIS difference | Matches | BRI EDC expected | Rp4.465.000 | BRI EDC receipt | Rp4.465.000 | BRI EDC difference | Matches | BRI QRIS expected | Rp1.065.000 | BRI QRIS receipt | Rp1.065.000 | BRI QRIS difference | Matches | Other payment Scott & Etik | Rp1.425.000 | Non-sales Exec Chef | Rp78.512 | Petty cash OUT | Rp370.000 | Petty cash IN | Rp0 | EVIDENCE | Shift report | \u2713 | BNI | \u2713 | BRI | \u2713 | Cash photo | Optional | EXCEPTIONS | Historical ESB discrepancy: Rp345.000 / 1 bill(s) | Cash difference: Rp20.000 | WHY? Petty timing | BACK TO MISSING CLOSES",
+      "label": "29_view_close"
+    },
+    {
+      "screen": "stepShift",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        "btnViewShift:VIEW PHOTO",
+        "btnUseUnlinkedShift:USE THIS REPORT",
+        "btnReplaceShift:REPLACE \u2013 ADD BETTER PHOTO",
+        "btnBackChoose:\u2190 Back"
+      ],
+      "text": "STEP 2 \u00b7 SHIFT REPORT | 3 September 2026 | Shift report photo found | VIEW PHOTO USE THIS REPORT REPLACE \u2013 ADD BETTER PHOTO | \u2190 Back",
+      "label": "03_open"
+    },
+    {
+      "screen": "stepShift",
+      "top": [
+        "Figures read \u2014 confirm they match the report."
+      ],
+      "buttons": [
+        "btnShiftYes:YES",
+        "btnShiftEdit:EDIT",
+        "btnBackChoose:\u2190 Back"
+      ],
+      "text": "STEP 2 \u00b7 SHIFT REPORT | 3 September 2026 | WE READ | Gross sales | \u2014 | Bills | \u2014 | Pax | \u2014 | Cash | \u2014 | BNI EDC | \u2014 | BNI QRIS | \u2014 | BRI EDC | \u2014 | BRI QRIS | \u2014 | Other payment Scott & Etik | \u2014 | Non-sales Executive Chef | \u2014 | DO THESE FIGURES MATCH THE REPORT? | YES EDIT | \u2190 Back",
+      "label": "03_empty_read"
+    },
+    {
+      "screen": "stepShift",
+      "top": [
+        "Nothing read \u2014 tap EDIT and type the figures from the report."
+      ],
+      "buttons": [
+        "btnShiftYes:YES",
+        "btnShiftEdit:EDIT",
+        "btnBackChoose:\u2190 Back"
+      ],
+      "text": "STEP 2 \u00b7 SHIFT REPORT | 3 September 2026 | WE READ | Gross sales | \u2014 | Bills | \u2014 | Pax | \u2014 | Cash | \u2014 | BNI EDC | \u2014 | BNI QRIS | \u2014 | BRI EDC | \u2014 | BRI QRIS | \u2014 | Other payment Scott & Etik | \u2014 | Non-sales Executive Chef | \u2014 | DO THESE FIGURES MATCH THE REPORT? | YES EDIT | \u2190 Back",
+      "label": "03_yes_blocked"
+    },
+    {
+      "screen": "stepShift",
+      "top": [
+        "Figures saved \u2014 do they match the report?"
+      ],
+      "buttons": [
+        "btnShiftYes:YES",
+        "btnShiftEdit:EDIT",
+        "btnBackChoose:\u2190 Back"
+      ],
+      "text": "STEP 2 \u00b7 SHIFT REPORT | 3 September 2026 | WE READ | Gross sales | Rp5.000.000 | Bills | 30 | Pax | 50 | Cash | Rp1.000.000 | BNI EDC | Rp500.000 | BNI QRIS | \u2014 | BRI EDC | Rp600.000 | BRI QRIS | \u2014 | Other payment Scott & Etik | \u2014 | Non-sales Executive Chef | \u2014 | DO THESE FIGURES MATCH THE REPORT? | YES EDIT | \u2190 Back",
+      "label": "03_edited"
+    },
+    {
+      "screen": "stepBanks",
+      "top": [
+        "Figures confirmed."
+      ],
+      "buttons": [
+        ":USE THIS RECEIPT",
+        ":USE THIS RECEIPT",
+        ":USE THIS RECEIPT",
+        ":USE THIS RECEIPT",
+        "btnBanksNext:Continue to cash",
+        "btnBackShift:\u2190 Back"
+      ],
+      "text": "STEP 3 \u00b7 BANK RECEIPTS | 3 September 2026 | FOUND CARD SLIPS | Discovered for this date \u2014 tap USE THIS RECEIPT | USE THIS RECEIPT | USE THIS RECEIPT | USE THIS RECEIPT | USE THIS RECEIPT | MANDIRI \u2014 not used | BNI \u2014 not used | BRI \u2014 not used | Continue to cash | \u2190 Back",
+      "label": "03_banks_slips"
+    }
+  ],
+  "submit_post_count": 1,
+  "yes_blocked_sep03": true,
+  "sep03_slip_buttons": 4,
+  "view_close_readonly": true,
+  "zero_live_writes": true,
+  "error": null
+}

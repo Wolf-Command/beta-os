@@ -1,3 +1,7 @@
 # FINDINGS-LATEST (security findings only)
 
-Open RED/open: 0. Last J1 quiet probe CLEAN 2026-09-29 tip 950b026 (see findings/2026-09-29-j1-quiet-probe-clean.md). Supersedes 2026-09-28 CLEAN.
+Open RED/open: **0**.
+
+CLOSED REPAIRED+VERIFIED: BREACH-2026-09-30-J1-ZAYEN-GGV-NOTA-READ — Owner ACCEPT 2026-10-01T11:21:00+08:00 (Peaches stamp 2026-10-01T11:23:30+08:00). Verdict REPAIRED + VERIFIED on 50/50 server-side prove (ENTITY-ISOLATION-REPAIR-20261001). Soft-bleed SECURITY-FAIL-SOFT-BLEED-ZAYEN-GGV-20261001 → CLOSED_REPAIRED_VERIFIED. KEEP ASG-ZAYEN-BZG-FC-1. Residual CF/browser UI prove → STAFF_COMMISSIONING (ZAYEN-CF-BROWSER-ENTITY-ISOLATION-UI); not architecture OPEN. human_finance_commissioning=false.
+
+2026-10-02 · quiet-probe · none · CLEAN (tip dfa08dc; Zayen bare/GGV DENY holds; no reopen). See findings/2026-10-02-j1-quiet-probe-clean.md.

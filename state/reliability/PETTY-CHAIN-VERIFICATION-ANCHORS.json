@@ -1,0 +1,23 @@
+{
+  "note": "Owner-supplied reference anchors for petty chain verification only. Not ledger writes.",
+  "anchors": [
+    {
+      "business_date": "2026-10-03",
+      "opening_idr": 560000,
+      "source": "owner_context_2026-10-04",
+      "kind": "morning_opening"
+    },
+    {
+      "business_date": "2026-10-04",
+      "opening_idr": 505000,
+      "source": "owner_context_2026-10-04",
+      "kind": "morning_opening"
+    },
+    {
+      "as_of": "2026-10-04",
+      "stated_balance_idr": 55000,
+      "source": "owner_context_2026-10-04",
+      "kind": "stated_position_after_entries"
+    }
+  ]
+}

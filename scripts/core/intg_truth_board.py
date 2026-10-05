@@ -261,17 +261,43 @@ def _apply_safe_probes(rows: list[dict[str, Any]], *, probed_at: str) -> list[di
         if iid in ("INT-YAN-WOLF", "CAP-INTG-01") or (
             str(item.get("source") or "").lower() == "yanolja"
         ):
-            item["audit_status"] = "BLOCKED_EXTERNAL"
-            item["probe_status"] = "DOCUMENTED_BLOCKER"
-            item["blocked_external"] = True
-            item["last_success"] = None
+            # BETA_HOUSE WIRE-YANOLJA-READ-HOUSE-1: consume last-read when usable.
+            try:
+                from core.yanolja_last_read_ro import connection_stamp as _yan_stamp
+
+                ys = _yan_stamp()
+            except Exception as _yan_exc:  # noqa: BLE001
+                ys = {
+                    "audit_status": "BLOCKED_EXTERNAL",
+                    "blocked_external": True,
+                    "probe_status": "LAST_READ_LOADER_FAIL",
+                    "last_success": None,
+                    "why": f"yanolja_last_read_ro failed: {type(_yan_exc).__name__}",
+                }
+            item["audit_status"] = ys.get("audit_status") or "BLOCKED_EXTERNAL"
+            item["probe_status"] = ys.get("probe_status") or "DOCUMENTED_BLOCKER"
+            item["blocked_external"] = bool(ys.get("blocked_external"))
+            item["last_success"] = ys.get("last_success")
             item["last_probed_at"] = probed_at
-            item["probe_notes"] = (
-                "No live Yanolja probe attempted. Credentials not seated. "
-                "BLOCKED_EXTERNAL stamp only."
-            )
+            item["yanolja_live"] = bool(ys.get("yanolja_live"))
+            item["pms_connected"] = bool(ys.get("pms_connected"))
+            occ = ys.get("occupancy") or {}
+            item["probe_facts"] = {
+                **(item.get("probe_facts") or {}),
+                "occupancy_pct": occ.get("pct"),
+                "rooms_total": occ.get("rooms_total"),
+                "rooms_vacant": occ.get("vacant"),
+                "rooms_occupied": occ.get("occupied_rooms"),
+                "guests": None,
+                "guest_depth": ys.get("guest_depth") or "UNKNOWN",
+                "source": "yanolja_last_read",
+                "invented_occupancy": False,
+            }
+            item["probe_notes"] = ys.get("why") or "Yanolja last-read stamp."
             notes = list(item.get("evidence_notes") or [])
-            stamp = "Yanolja BLOCKED_EXTERNAL — no fake live feed"
+            stamp = (
+                f"Yanolja {item['audit_status']} — last-read {ys.get('last_success') or 'none'}"
+            )
             if stamp not in notes:
                 notes.append(stamp)
             item["evidence_notes"] = notes
@@ -492,7 +518,7 @@ def build_board(*, persist_audit: bool = False) -> dict[str, Any]:
         },
         "connectors": connectors,
         "honesty": {
-            "yanolja": "BLOCKED_EXTERNAL",
+            "yanolja": "LIVE_OR_BLOCKED_FROM_LAST_READ",
             "esb": "PARTIAL_IN_BETA",
             "esb_settlement": "EXTERNAL_BLOCKER",
             "esb_policy": (

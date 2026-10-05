@@ -1,0 +1,24 @@
+{
+  "at": "2026-10-04T20:35:45+08:00",
+  "status": "WAIT_SILENT_IDLE",
+  "active": false,
+  "wake_parent": false,
+  "finished_owed": false,
+  "blocked": false,
+  "credit_conservation": true,
+  "mac_pipe": "PIPE_OK",
+  "tip": "0b0e50d",
+  "dirty_approx": 527,
+  "prod_pid": 1297,
+  "beta_pid": 10393,
+  "protected_close": {
+    "id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+    "cash": 3225000,
+    "variance": -125000,
+    "state": "EXCEPTION",
+    "updated_at": "2026-10-03T13:47:39Z",
+    "unchanged": true
+  },
+  "ship_queue": "GGV_EMPTY_CHAIN_DONE_READY_FOR_HUMAN_TEST",
+  "note": "Build factory watch 2026-10-04T20:35:45+08:00 WAIT_SILENT IDLE under CREDIT CONSERVATION; no ACTIVE; no cursor-agent -p pack (worker 2627 only); ship queue A/B/D READY_FOR_HUMAN_TEST already pinged (GGV BF-91f5182fb155 @19:35); C2 FINANCE-TESTABLE-SLICE HELD; no auto-arm breadth/Tours/Events; Mac 36d8fa4b PIPE_OK tip 0b0e50d dirty\u2248527; prod 1297 + beta 10393 untouched; protected VDC-470e741f cash 3225000 variance -125000 updated_at 2026-10-03T13:47:39Z EXCEPTION unchanged; recovery key Mac :2222 OPEN; wake_parent=false (no FINISHED/BLOCKED owed)."
+}

@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AMG Finance · Notas</title>
+<style>
+  :root {
+    --bg: #08171a; --panel: #0e2125; --panel-2: #123036; --border: #1e3f44;
+    --text: #eaf3f2; --muted: #8aa6a6; --gold: #d4af6a; --ok: #3fbf86;
+    --bad: #e5683f; --touch: 44px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font: 16px/1.4 "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    max-width: 960px; margin: 0 auto; padding: 16px 20px 108px;
+    overflow-x: clip;
+  }
+  h1 { font-size: 1.45rem; margin: 0 0 6px; }
+  h1 span { color: var(--gold); }
+  h2 { font-size: 1rem; margin: 18px 0 8px; }
+  p.note, .meta { color: var(--muted); }
+  .banner {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 12px 14px; margin: 10px 0;
+  }
+  .banner strong { color: var(--gold); }
+  nav.tabs {
+    display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px;
+  }
+  nav.tabs button, button, .file-btn, a.back {
+    min-height: var(--touch); border-radius: 12px; border: 1px solid var(--border);
+    background: var(--panel-2); color: var(--text); font: inherit; font-weight: 650;
+    padding: 10px 14px; cursor: pointer; text-decoration: none;
+  }
+  nav.tabs button { flex: 1 1 140px; }
+  nav.tabs button.active { border-color: var(--gold); color: var(--gold); }
+  button.primary, .file-btn {
+    background: #6e5310; border-color: #8B6914; color: #fff; width: 100%; margin-top: 8px;
+  }
+  button.secondary { width: 100%; margin-top: 8px; }
+  label { display: block; margin: 10px 0 4px; color: var(--muted); font-size: 0.92rem; }
+  input, select, textarea {
+    width: 100%; min-height: var(--touch); border-radius: 12px; border: 1px solid var(--border);
+    background: #0b1c20; color: var(--text); font: inherit; padding: 10px 12px;
+  }
+  textarea { min-height: 88px; }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  @media (min-width: 900px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+    body { padding-top: 20px; }
+  }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px;
+  }
+  .card button { width: auto; }
+  .count { font-size: 1.6rem; margin: 0; }
+  .hidden { display: none !important; }
+  .row { display: flex; flex-direction: column; gap: 4px; padding: 10px 0; border-top: 1px solid var(--border); }
+  .check { color: var(--gold); }
+  .ok { color: var(--ok); }
+  .bad { color: var(--bad); }
+  .progress { list-style: none; padding: 0; margin: 8px 0; }
+  .progress li { padding: 6px 0; }
+  .file-btn input { display: none; }
+  .warn { border-color: var(--gold); }
+    a.inline { color: var(--gold); }
+    .entity-switch {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      margin: 0 0 12px; padding: 10px 12px;
+      background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    }
+    .entity-label { color: var(--muted); font-size: 0.92rem; }
+    .entity-label strong { color: var(--gold); }
+    .entity-chip {
+      display: inline-flex; align-items: center; min-height: 36px;
+      padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
+      background: var(--panel-2); color: var(--text); text-decoration: none; font-weight: 650;
+    }
+    .entity-chip.active { background: #6e5310; border-color: var(--gold); color: #fff; }
+  .line-card { display: block; margin-top: 10px; }
+  .totals p { margin: 4px 0; }
+  .brand-preview { border-color: var(--gold); }
+  .brand-preview .brand { color: var(--gold); font-weight: 700; letter-spacing: 0.06em; }
+  @media (max-width: 430px) {
+    body { padding: 12px 12px 140px; }
+    nav.tabs button { flex: 1 1 46%; font-size: 0.85rem; }
+    .line-card, .totals, .grid { display: block; }
+  }
+  @media (max-width: 860px) {
+    nav.tabs {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+      margin: 0; padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+      background: #08171a; border-top: 1px solid var(--border);
+    }
+    nav.tabs button { flex: 1 1 18%; font-size: 0.78rem; padding: 8px 4px; }
+  }
+</style>
+</head>
+<body data-wolf-page-type="WORKSPACE" data-wolf-org="AMG" data-wolf-shell="global">
+  <p class="meta">WOLF · Atrium · AMG · Finance</p>
+  <div id="entity-switch" data-wolf-finance-switcher data-current="AMG" aria-label="Finance entity switcher"></div>
+  <link rel="stylesheet" href="/shared/finance-switcher.css" />
+  <script src="/shared/finance-switcher.js" defer></script>
+  <h1>AMG <span>Finance</span></h1>
+  <div class="banner">
+    <strong>Entering a nota is not the same as paying it.</strong>
+    <p class="note" id="boundary">Payment and full books live with Finance reconciliation later — here you capture notas and vendors.</p>
+    <p class="note" id="books-shell">AMG books slot: loading…</p>
+    <p class="note"><a class="inline" href="/amg/finance">Open Atrium Finance (ledger)</a></p>
+    <p class="note">Bank details seen on a document are not verified.</p>
+    <p class="note">An issued invoice is not a paid invoice. A claimed payment is not a verified payment.</p>
+  </div>
+  <nav class="tabs" aria-label="Finance">
+    <button type="button" data-tab="overview" class="active">Overview</button>
+    <button type="button" data-tab="banking">Banking</button>
+    <button type="button" data-tab="transactions">Transactions</button>
+    <button type="button" data-tab="notas">Receipts/Notas</button>
+    <button type="button" data-tab="bills">Bills</button>
+    <button type="button" data-tab="invoices">Invoices</button>
+    <button type="button" data-tab="reconciliation">Reconciliation</button>
+    <button type="button" data-tab="vendors">Suppliers</button>
+    <button type="button" data-tab="missing_evidence">Missing Evidence</button>
+    <button type="button" data-tab="reports">Reports</button>
+    <button type="button" data-tab="audit">Audit</button>
+    <button type="button" data-tab="customers" class="hidden">Customers</button>
+    <button type="button" data-tab="history" class="hidden">History</button>
+    <button type="button" data-tab="receipts" class="hidden">Receipts</button>
+  </nav>
+
+  <section id="overview">
+    <div class="grid" id="overview-cards"></div>
+    <h2>Recently added</h2>
+    <div id="recent"></div>
+    <h2>Recent activity</h2>
+    <div id="activity"></div>
+  </section>
+
+  <section id="invoices" class="hidden">
+    <button type="button" class="primary" id="new-invoice">+ New Invoice</button>
+    <div id="invoice-list"></div>
+    <div id="invoice-form" class="hidden">
+      <button type="button" class="secondary" id="invoice-back">Back to invoices</button>
+      <h2 id="invoice-heading">New invoice</h2>
+      <p class="note" id="number-note">Number assigned on issue.</p>
+      <label>Customer
+        <select id="inv-customer"></select>
+      </label>
+      <button type="button" class="secondary" id="show-customer">Create customer</button>
+      <div id="customer-create" class="hidden">
+        <label>Legal name<input id="cust-legal" /></label>
+        <label>Trading name<input id="cust-trading" /></label>
+        <label>Tax or company id<input id="cust-tax" /></label>
+        <label>Billing address<textarea id="cust-address"></textarea></label>
+        <label>Contact<input id="cust-contact" /></label>
+        <label>Email<input id="cust-email" type="email" /></label>
+        <label>Default terms<input id="cust-terms" /></label>
+        <label>Notes<textarea id="cust-notes"></textarea></label>
+        <button type="button" class="primary" id="save-customer">Save customer</button>
+      </div>
+      <label>Invoice date<input id="inv-date" placeholder="YYYY-MM-DD" /></label>
+      <label>Due date<input id="inv-due" placeholder="YYYY-MM-DD" /></label>
+      <label>Terms<input id="inv-terms" /></label>
+      <div id="inv-lines"></div>
+      <button type="button" class="secondary" id="add-line">Add line</button>
+      <label>Notes<textarea id="inv-notes"></textarea></label>
+      <label>Reference<input id="inv-ref" /></label>
+      <label>Payment method<input id="inv-pay-method" /></label>
+      <label>Payment reference<input id="inv-pay-ref" /></label>
+      <p class="note">Payment details print on the invoice. They do not collect money.</p>
+      <div class="totals" id="inv-totals"></div>
+      <div id="inv-preview"></div>
+      <button type="button" class="secondary" id="preview-invoice">Preview</button>
+      <button type="button" class="primary" id="save-draft">Save draft</button>
+      <button type="button" class="secondary" id="issue-invoice" disabled>Issue</button>
+      <p id="invoice-msg"></p>
+      <div id="draft-email"></div>
+    </div>
+  </section>
+
+  <section id="customers" class="hidden">
+    <label>Search customers<input id="customer-q" placeholder="Legal name or email" /></label>
+    <button type="button" class="secondary" id="customer-search">Search</button>
+    <div id="customer-list"></div>
+  </section>
+
+  <section id="notas" class="hidden">
+    <div id="nota-list-wrap">
+      <button type="button" class="primary" id="start-upload">+ Upload Nota</button>
+      <h2>Notas</h2>
+      <div id="nota-list"></div>
+      <h2>Bills</h2>
+      <p class="note" id="bill-summary">Imported bills from the finance record.</p>
+      <div id="bill-list"></div>
+    </div>
+    <div id="upload-panel" class="hidden">
+      <button type="button" class="secondary" id="cancel-upload">Back to notas</button>
+      <h2>Upload nota</h2>
+      <label class="file-btn">Take photo<input id="cam" type="file" accept="image/*" capture="environment" /></label>
+      <label class="file-btn">Choose photo or PDF<input id="file" type="file" accept="image/*,.pdf,application/pdf" /></label>
+      <label class="file-btn">Add more photos<input id="more" type="file" accept="image/*" multiple /></label>
+      <p class="meta" id="file-names">No file chosen yet.</p>
+      <button type="button" class="primary" id="run-upload">Upload and read</button>
+      <ol class="progress" id="progress">
+        <li>Uploading</li>
+        <li>Reading document</li>
+        <li>Checking vendor</li>
+        <li>Ready for review</li>
+        <li>✓ Saved</li>
+      </ol>
+      <p id="upload-msg"></p>
+      <div id="review" class="hidden">
+        <h2>Review</h2>
+        <p class="note" id="review-hint"></p>
+        <div id="vendor-box"></div>
+        <label>Invoice number<input id="f-invoice" /></label>
+        <label>Date<input id="f-date" placeholder="2026-09-01" /></label>
+        <label>Amount<input id="f-amount" inputmode="decimal" placeholder="Type the amount, or leave blank" /></label>
+        <label>Tax<input id="f-tax" inputmode="decimal" placeholder="Leave blank if not shown" /></label>
+        <label>Currency<input id="f-currency" placeholder="IDR" /></label>
+        <label>Category<input id="f-category" /></label>
+        <label>Notes<textarea id="f-notes"></textarea></label>
+        <div id="preview"></div>
+        <p class="meta" id="confidence"></p>
+        <div id="dup-box"></div>
+        <button type="button" class="primary" id="save-nota">Save</button>
+        <button type="button" class="secondary" id="submit-nota" disabled>Submit</button>
+      </div>
+    </div>
+    <div id="nota-detail" class="hidden"></div>
+  </section>
+
+  <section id="vendors" class="hidden">
+    <label>Search vendors<input id="vendor-q" placeholder="Name, phone, email" /></label>
+    <button type="button" class="secondary" id="vendor-search">Search</button>
+    <div id="vendor-list"></div>
+    <div id="vendor-detail" class="hidden"></div>
+  </section>
+
+  <section id="history" class="hidden">
+    <label>Search<input id="hist-q" placeholder="Vendor, invoice, note" /></label>
+    <label>Date<input id="hist-date" placeholder="2026-09" /></label>
+    <label>Amount<input id="hist-amount" inputmode="decimal" /></label>
+    <label>Status
+      <select id="hist-status">
+        <option value="">Any</option>
+        <option>Needs review</option>
+        <option>Ready</option>
+        <option>Waiting approval</option>
+      </select>
+    </label>
+    <label>Invoice number<input id="hist-invoice" /></label>
+    <label>Category<input id="hist-category" /></label>
+    <label>Year<input id="hist-year" inputmode="numeric" placeholder="2026" /></label>
+    <label>Month<input id="hist-month" inputmode="numeric" placeholder="09" /></label>
+    <button type="button" class="primary" id="hist-go">Search history</button>
+    <p class="note">Year, then month, then each nota. Filtering does not move the original files.</p>
+    <div id="hist-results"></div>
+    <button type="button" class="secondary" id="export-month">Download month evidence pack</button>
+    <p class="note">This download is a copy for the month. Each original file stays separate.</p>
+  </section>
+
+  <section id="receipts" class="hidden">
+    <p class="note">Vault receipts from the existing Peaches / receipt-from-telegram bridge. AMG only — GGV and BZG excluded. Original images stay evidence. Human confirm keeps extraction beside it. Xero stays fail-closed.</p>
+    <label>Accounting queue
+      <select id="rx-queue">
+        <option value="">All queues</option>
+        <option value="needs_review">Needs review</option>
+        <option value="needs_coding">Needs coding</option>
+        <option value="unmatched">Unmatched</option>
+        <option value="duplicate">Duplicate</option>
+      </select>
+    </label>
+    <button type="button" class="secondary" id="rx-reload">Reload accounting queues</button>
+    <p class="note" id="rx-summary">Loading…</p>
+    <div id="rx-counts" class="grid"></div>
+    <div id="rx-list"></div>
+    <div id="rx-detail" class="hidden card warn">
+      <h2 id="rx-detail-title">Receipt detail</h2>
+      <div id="rx-detail-image"></div>
+      <h3>Extraction (kept)</h3>
+      <pre id="rx-detail-extraction" class="meta"></pre>
+      <h3>Human confirmed</h3>
+      <pre id="rx-detail-human" class="meta"></pre>
+      <label>Vendor<input id="rx-vendor" /></label>
+      <label>Amount<input id="rx-amount" inputmode="decimal" /></label>
+      <label>Tax<input id="rx-tax" inputmode="decimal" placeholder="Leave blank if not shown" /></label>
+      <label>Date<input id="rx-date" placeholder="YYYY-MM-DD" /></label>
+      <label>Category<input id="rx-category" /></label>
+      <label>Account code<input id="rx-account" /></label>
+      <label>Notes<textarea id="rx-notes"></textarea></label>
+      <button type="button" class="primary" id="rx-confirm">Confirm beside extraction</button>
+      <p class="note" id="rx-confirm-msg"></p>
+      <button type="button" class="secondary" id="rx-detail-close">Close detail</button>
+    </div>
+    <h2>Missing evidence (receipts + notas)</h2>
+    <div id="rx-missing-notas"></div>
+    <h2>Bank unmatched (missing receipt)</h2>
+    <div id="rx-bank-unmatched"></div>
+  </section>
+
+  <section id="statement-detail" class="hidden">
+    <button type="button" class="secondary" id="statement-back">Back to banking</button>
+    <div id="statement-body"></div>
+  </section>
+
+  <section id="banking" class="hidden">
+    <p class="note">FILE_IMPORT_ONLY. Original statement file is kept. Normalised rows are written for matching. Weak matches never auto-reconcile. AMG entity only.</p>
+    <label>Statement file (CSV)<input type="file" id="bank-file" accept=".csv,text/csv,text/plain" /></label>
+    <label>Bank label (optional)
+      <select id="bank-label">
+        <option value="">Detect</option>
+        <option value="MANDIRI">Mandiri</option>
+        <option value="BNI">BNI</option>
+        <option value="BRI">BRI</option>
+      </select>
+    </label>
+    <button type="button" class="primary" id="bank-upload">Upload statement</button>
+    <p class="note" id="bank-msg"></p>
+    <h2>Imports</h2>
+    <div id="bank-imports"></div>
+    <h2>Transactions needing receipt / review</h2>
+    <div id="bank-txns"></div>
+  </section>
+
+  <section id="transactions" class="hidden">
+    <p class="note">All imported bank transactions for AMG. Propose-only matching — never auto-reconciled.</p>
+    <div id="txn-list"></div>
+  </section>
+
+  <section id="bills" class="hidden">
+    <p class="note" id="bills-only-summary">Imported bills from the finance record.</p>
+    <label>Search bills<input id="bill-q" placeholder="Supplier, number, reference" /></label>
+    <button type="button" class="secondary" id="bill-search">Search</button>
+    <div id="bills-only-list"></div>
+  </section>
+
+  <section id="reconciliation" class="hidden">
+    <p class="note">Overnight reconciliation queue. Proposals only — confirm, reject, or mark exception. Nothing auto-posts.</p>
+    <div class="grid" id="recon-tab-counts"></div>
+    <label class="muted">Month
+      <select id="recon-month"><option value="">All months</option></select>
+    </label>
+    <nav class="tabs" id="recon-tabs" aria-label="Reconciliation queue">
+      <button type="button" data-recon-tab="possible" class="active">Possible match</button>
+      <button type="button" data-recon-tab="unmatched">Unmatched</button>
+      <button type="button" data-recon-tab="exception">Exception</button>
+      <button type="button" data-recon-tab="matched">Matched</button>
+    </nav>
+    <p class="note" id="recon-bulk-hint">Select rows with the same rule to bulk confirm.</p>
+    <div id="recon-queue-list"></div>
+  </section>
+
+  <section id="missing_evidence" class="hidden">
+    <p class="note">Receipts and bank rows missing evidence. Originals stay on disk when present.</p>
+    <h2>Receipt accounting — missing image</h2>
+    <div id="me-rx"></div>
+    <h2>Bank — unmatched / needs receipt</h2>
+    <div id="me-bank"></div>
+    <h2>Notas — missing evidence</h2>
+    <div id="me-notas"></div>
+  </section>
+
+  <section id="audit" class="hidden">
+    <p class="note">Recent AMG finance audit events (read-only).</p>
+    <div id="audit-list"></div>
+  </section>
+
+  <section id="reports" class="hidden">
+    <p class="note">Accountant evidence stays in Reports. Cash, profit, ageing, margin, and tax position are not on this page.</p>
+    <p class="note" id="acct-note">No accounting total. The books are not complete on this screen.</p>
+    <label>Year<input id="acct-year" inputmode="numeric" placeholder="2026" /></label>
+    <label>Month<input id="acct-month" inputmode="numeric" placeholder="09" /></label>
+    <button type="button" class="secondary" id="acct-export">Download month evidence pack</button>
+    <h2>This month</h2>
+    <div id="acct-current"></div>
+    <h2>Missing evidence</h2>
+    <div id="acct-missing"></div>
+    <h2>Unreviewed</h2>
+    <div id="acct-unreviewed"></div>
+    <h2>Vendor issues</h2>
+    <div id="acct-vendors"></div>
+  </section>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const tabs = [
+  "overview", "banking", "transactions", "notas", "bills", "invoices",
+  "reconciliation", "vendors", "missing_evidence", "reports", "audit",
+  "customers", "history", "receipts"
+];
+const pathTab = {
+  "/amg/finance": "overview",
+  "/amg/finance/banking": "banking",
+  "/amg/finance/statements": "banking",
+  "/amg/finance/transactions": "transactions",
+  "/amg/finance/notas": "notas",
+  "/amg/finance/bills": "bills",
+  "/amg/finance/invoices": "invoices",
+  "/amg/finance/reconciliation": "reconciliation",
+  "/amg/finance/vendors": "vendors",
+  "/amg/finance/suppliers": "vendors",
+  "/amg/finance/missing-evidence": "missing_evidence",
+  "/amg/finance/reports": "reports",
+  "/amg/finance/audit": "audit",
+  "/amg/finance/customers": "customers",
+  "/amg/finance/history": "history",
+  "/amg/finance/receipts": "receipts"
+};
+const OPERATIONAL_SECTIONS = [
+  "Overview", "Banking", "Transactions", "Receipts/Notas", "Bills", "Invoices",
+  "Reconciliation", "Suppliers", "Missing Evidence", "Reports", "Audit"
+];
+let invoiceLines = [];
+let editingInvoice = null;
+let chosen = [];
+let uploadId = null;
+let notaId = null;
+let proposals = {};
+let dupDecision = null;
+let dupReason = "";
+let existingNotaId = null;
+
+function showTab(name) {
+  tabs.forEach((tab) => {
+    $(tab).classList.toggle("hidden", tab !== name);
+    document.querySelector(`[data-tab="${tab}"]`).classList.toggle("active", tab === name);
+  });
+  if (name === "overview") loadOverview();
+  if (name === "invoices") loadInvoices();
+  if (name === "notas") loadNotas();
+  if (name === "bills") loadBillsOnly();
+  if (name === "vendors") searchVendors();
+  if (name === "customers") searchCustomers();
+  if (name === "history") return;
+  if (name === "receipts") loadReceipts();
+  if (name === "banking") loadBanking();
+  if (name === "transactions") loadTransactions();
+  if (name === "reconciliation") loadReconciliation();
+  if (name === "missing_evidence") loadMissingEvidence();
+  if (name === "audit") loadAudit();
+  if (name === "reports") loadAccountant();
+}
+document.querySelectorAll("nav.tabs button").forEach((btn) => {
+  btn.addEventListener("click", () => showTab(btn.dataset.tab));
+});
+
+async function api(path, options) {
+  const res = await fetch(path, Object.assign({ credentials: "same-origin", headers: { "Content-Type": "application/json" } }, options || {}));
+  const type = res.headers.get("content-type") || "";
+  if (!type.includes("json")) {
+    if (!res.ok) throw new Error("Could not open that page.");
+    return {};
+  }
+  const data = await res.json();
+  if (!res.ok && data && data.error && String(data.error).indexOf("possible_duplicate") === 0) return data;
+  if (!res.ok) throw new Error((data && data.message) || "Something went wrong.");
+  return data;
+}
+
+function esc(value) {
+  return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+}
+
+function renderProgress(steps) {
+  $("progress").innerHTML = (steps || []).map((step) => {
+    const mark = step.status === "done" ? "✓" : step.status === "failed" ? "!" : "·";
+    return `<li class="${step.status === "failed" ? "bad" : ""}">${mark} ${esc(step.label)}</li>`;
+  }).join("");
+}
+
+async function loadOverview() {
+  const data = await api("/api/amg/finance/overview");
+  const cards = [
+    ["Needs review", data.needs_review],
+    ["Waiting approval", data.waiting_approval],
+    ["Not paid from this screen", data.payment_unverified],
+    ["Vendor issues", data.vendor_issues],
+    ["Bills on record", data.bill_count || 0],
+  ];
+  const desk = data.invoice_desk || {};
+  if (desk.invoice_access) {
+    cards.push(["Invoices awaiting action", desk.awaiting_action]);
+    cards.push(["Overdue invoices", desk.overdue]);
+    cards.push(["Payment claimed, not verified", desk.payment_unverified]);
+  }
+  $("overview-cards").innerHTML = cards.map(([label, count]) =>
+    `<article class="card"><p class="meta">${esc(label)}</p><p class="count">${esc(count)}</p></article>`
+  ).join("");
+  const recent = data.recently_added || [];
+  $("recent").innerHTML = recent.length ? recent.map(notaCard).join("") : `<p class="note">Nothing added yet.</p>`;
+  const activity = desk.recent_activity || [];
+  $("activity").innerHTML = activity.length
+    ? activity.map((item) => `<article class="card">${esc(item.at)} · ${esc(item.action)}</article>`).join("")
+    : `<p class="note">No invoice activity yet.</p>`;
+  if (data.boundary_note) $("boundary").textContent = data.boundary_note;
+  const shell = $("books-shell");
+  if (shell) {
+    const stamp = data.books_shell || data;
+    const dbFile = stamp.db_file || "atrium.sqlite";
+    const kind = stamp.shell_kind || "live";
+    const accounts = Number(stamp.accounts != null ? stamp.accounts : 0);
+    const journals = Number(stamp.journals != null ? stamp.journals : 0);
+    shell.textContent = journals === 0
+      ? "Atrium — chart of accounts set up. No journals posted yet."
+      : "Atrium books · " + accounts + " accounts · " + journals + " journals.";
+  }
+}
+
+function notaCard(nota) {
+  const who = nota.vendor && nota.vendor.name ? nota.vendor.name : "No vendor yet";
+  const amount = nota.amount ? esc(nota.amount) + " " + esc(nota.currency || "") : "Amount not confirmed";
+  return `<article class="card row"><button type="button" data-open="${esc(nota.nota_id)}"><strong>${esc(who)}</strong><br>${esc(nota.invoice_no || "No invoice number")} · ${esc(nota.date || "No date")}<br>${amount}<br>${esc(nota.state_label || "")}</button></article>`;
+}
+
+function billCard(bill) {
+  const who = bill.contact_name || "No supplier name";
+  const amount = bill.amount ? esc(bill.amount) + " " + esc(bill.currency || "") : "Amount not recorded";
+  const number = bill.bill_number || bill.reference || "No bill number";
+  const due = bill.due_on ? " · due " + esc(bill.due_on) : "";
+  return `<article class="card row"><strong>${esc(who)}</strong><br>${esc(number)} · ${esc(bill.issued_on || "No date")}${due}<br>${amount}<br>${esc(bill.status || "")}</article>`;
+}
+
+async function loadNotas() {
+  const [notaData, billData] = await Promise.all([
+    api("/api/amg/finance/notas"),
+    api("/api/amg/finance/bills"),
+  ]);
+  const rows = notaData.notas || [];
+  $("nota-list").innerHTML = rows.length ? rows.map(notaCard).join("") : `<p class="note">No notas yet. Upload one from your phone.</p>`;
+  $("nota-list").querySelectorAll("[data-open]").forEach((btn) => btn.addEventListener("click", () => openNota(btn.dataset.open)));
+  const bills = billData.bills || [];
+  const total = billData.bill_count || bills.length;
+  const summary = $("bill-summary");
+  if (summary) {
+    summary.textContent = total
+      ? `${total} imported bill${total === 1 ? "" : "s"} from the finance record.`
+      : "No imported bills on record yet.";
+  }
+  $("bill-list").innerHTML = bills.length
+    ? bills.map(billCard).join("") + (total > bills.length ? `<p class="note">Showing ${bills.length} of ${total} bills.</p>` : "")
+    : `<p class="note">No bills on record yet.</p>`;
+}
+
+async function openNota(id) {
+  const data = await api("/api/amg/finance/notas/" + encodeURIComponent(id));
+  const nota = data.nota;
+  $("nota-list-wrap").classList.add("hidden");
+  $("upload-panel").classList.add("hidden");
+  $("nota-detail").classList.remove("hidden");
+  const files = (nota.files || []).map((file) => `<p><a class="inline" href="/api/amg/finance/files/${esc(file.file_id)}">${esc(file.original_filename || file.filename || "Attachment")}</a> <span class="meta">Backup: ${esc(file.backup_label || "Unknown")}</span></p>`).join("");
+  const history = (nota.history || []).map((item) => `<li>${esc(item.at)} · ${esc(item.action)}</li>`).join("");
+  const bank = nota.bank_details && nota.bank_details.text
+    ? `<p class="warn">Bank details observed: ${esc(nota.bank_details.text)}. Not verified. This does not pay anyone.</p>`
+    : "";
+  $("nota-detail").innerHTML = `
+    <button type="button" class="secondary" id="detail-back">Back to notas</button>
+    <article class="card">
+      <h2>${esc(nota.vendor && nota.vendor.name || "No vendor yet")}</h2>
+      <p>${esc(nota.state_label)} · ${esc(nota.invoice_no || "")}</p>
+      <p>Date ${esc(nota.date || "—")} · Amount ${esc(nota.amount || "not confirmed")} ${esc(nota.currency || "")}</p>
+      <p class="note">Entering this nota is not approval, not payment, and not payment verified.</p>
+      ${bank}
+      ${files}
+      <h2>History</h2>
+      <ul>${history}</ul>
+    </article>`;
+  $("detail-back").addEventListener("click", () => {
+    $("nota-detail").classList.add("hidden");
+    $("nota-list-wrap").classList.remove("hidden");
+    loadNotas();
+  });
+}
+
+function rememberFiles(list, reset) {
+  if (reset) chosen = [];
+  Array.from(list || []).forEach((file) => chosen.push(file));
+  $("file-names").textContent = chosen.length ? chosen.map((file) => file.name).join(", ") : "No file chosen yet.";
+}
+$("cam").addEventListener("change", () => rememberFiles($("cam").files, true));
+$("file").addEventListener("change", () => rememberFiles($("file").files, true));
+$("more").addEventListener("change", () => rememberFiles($("more").files, false));
+$("start-upload").addEventListener("click", () => {
+  uploadId = null; notaId = null; dupDecision = null; chosen = [];
+  $("review").classList.add("hidden");
+  $("nota-list-wrap").classList.add("hidden");
+  $("nota-detail").classList.add("hidden");
+  $("upload-panel").classList.remove("hidden");
+  $("file-names").textContent = "No file chosen yet.";
+  $("progress").innerHTML = "";
+  $("upload-msg").textContent = "";
+});
+$("cancel-upload").addEventListener("click", () => {
+  $("upload-panel").classList.add("hidden");
+  $("nota-list-wrap").classList.remove("hidden");
+  loadNotas();
+});
+
+function fileToPayload(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const raw = String(reader.result || "");
+      const comma = raw.indexOf(",");
+      resolve({ filename: file.name, content_type: file.type || "application/octet-stream", data_base64: comma >= 0 ? raw.slice(comma + 1) : raw });
+    };
+    reader.onerror = () => reject(new Error("Could not read " + file.name));
+    reader.readAsDataURL(file);
+  });
+}
+
+function fillReview(data) {
+  proposals = (data && data.proposals) || proposals || {};
+  const fields = proposals.fields || {};
+  $("f-invoice").value = fields.invoice_no || "";
+  $("f-date").value = fields.nota_date || "";
+  $("f-amount").value = fields.amount || "";
+  $("f-tax").value = fields.tax || "";
+  $("f-currency").value = fields.currency || "";
+  const low = proposals.low_confidence || [];
+  $("confidence").textContent = low.length ? "Check this: " + low.join(", ") : "";
+  $("review-hint").textContent = data.message || proposals.message || "Check the reading, then correct anything that is wrong.";
+  const matches = data.vendor_matches || [];
+  const box = $("vendor-box");
+  if (matches.length) {
+    box.innerHTML = `<div class="card warn"><p>We think this is: <strong>${esc(matches[0].name)}</strong></p>
+      <button type="button" class="primary" id="use-vendor">Use existing</button>
+      <button type="button" class="secondary" id="new-vendor">+ Create new</button>
+      <div id="vendor-form" class="hidden"></div></div>`;
+    $("use-vendor").addEventListener("click", () => { box.dataset.vendorId = matches[0].vendor_id; box.dataset.confirmed = "1"; $("upload-msg").textContent = "Using " + matches[0].name; });
+  } else {
+    box.innerHTML = `<div class="card"><p>Vendor not found.</p><div id="vendor-form"></div></div>`;
+    box.dataset.vendorId = "";
+    renderVendorForm(fields.vendor_name || "");
+  }
+  const formBtn = $("new-vendor");
+  if (formBtn) formBtn.addEventListener("click", () => renderVendorForm(fields.vendor_name || ""));
+  $("review").classList.remove("hidden");
+  $("preview").innerHTML = chosen[0] ? `<p class="meta">Attachment: ${esc(chosen[0].name)}</p>` : "";
+}
+
+function renderVendorForm(prefill) {
+  const host = $("vendor-form");
+  host.classList.remove("hidden");
+  host.innerHTML = `
+    <label>Vendor name<input id="v-name" value="${esc(prefill)}" /></label>
+    <label>Category<input id="v-category" placeholder="Unknown is fine" /></label>
+    <label>Contact<input id="v-contact" /></label>
+    <label>Phone<input id="v-phone" /></label>
+    <label>Email<input id="v-email" /></label>
+    <label>Tax id<input id="v-tax" /></label>
+    <label>Address<textarea id="v-address"></textarea></label>
+    <label>Notes<textarea id="v-notes"></textarea></label>
+    <button type="button" class="primary" id="v-save">Create vendor</button>
+    <div id="v-dup"></div>`;
+  $("v-save").addEventListener("click", saveVendor);
+}
+
+async function saveVendor() {
+  const payload = {
+    display_name: $("v-name").value,
+    category: $("v-category").value,
+    contact_name: $("v-contact").value,
+    phone: $("v-phone").value,
+    email: $("v-email").value,
+    tax_id: $("v-tax").value,
+    address: $("v-address").value,
+    notes: $("v-notes").value,
+    duplicate_decision: $("vendor-form").dataset.decision || null,
+    duplicate_reason: $("v-reason") ? $("v-reason").value : "",
+    existing_vendor_id: $("vendor-form").dataset.existing || null,
+  };
+  const data = await api("/api/amg/finance/vendors", { method: "POST", body: JSON.stringify(payload) });
+  if (data.error === "possible_duplicate_vendor") {
+    const matches = data.matches || [];
+    $("v-dup").innerHTML = `<div class="card warn"><p>${esc(data.message)}</p>
+      ${matches.map((row) => `<button type="button" data-existing="${esc(row.vendor_id)}">Use ${esc(row.name)}</button>`).join("")}
+      <label>Why this is a separate vendor<input id="v-reason" /></label>
+      <button type="button" id="v-separate">Create separate</button></div>`;
+    $("v-dup").querySelectorAll("[data-existing]").forEach((btn) => btn.addEventListener("click", () => {
+      $("vendor-form").dataset.decision = "use_existing";
+      $("vendor-form").dataset.existing = btn.dataset.existing;
+      saveVendor();
+    }));
+    $("v-separate").addEventListener("click", () => {
+      $("vendor-form").dataset.decision = "create_separate";
+      saveVendor();
+    });
+    return;
+  }
+  const vendor = data.vendor;
+  $("vendor-box").dataset.vendorId = vendor.vendor_id;
+  $("vendor-box").dataset.confirmed = "1";
+  $("upload-msg").textContent = "Vendor created. You are still on the same nota. " + vendor.vendor_id;
+}
+
+$("run-upload").addEventListener("click", async () => {
+  $("upload-msg").textContent = "";
+  if (!chosen.length) { $("upload-msg").textContent = "Choose a photo or PDF first."; return; }
+  try {
+    const files = [];
+    for (const file of chosen) files.push(await fileToPayload(file));
+    const uploaded = uploadId
+      ? { upload_id: uploadId, progress: [{ id: "uploading", label: "Uploading", status: "done" }] }
+      : await api("/api/amg/finance/uploads", { method: "POST", body: JSON.stringify({ files }) });
+    uploadId = uploaded.upload_id;
+    renderProgress(uploaded.progress);
+    const read = await api("/api/amg/finance/uploads/" + encodeURIComponent(uploadId) + "/read", { method: "POST", body: "{}" });
+    renderProgress(read.progress);
+    proposals = read.proposals || {};
+    const checked = await api("/api/amg/finance/uploads/" + encodeURIComponent(uploadId) + "/check-vendor", { method: "POST", body: "{}" });
+    renderProgress(checked.progress);
+    fillReview(checked);
+  } catch (err) {
+    $("upload-msg").textContent = err.message + (uploadId ? " Your upload is still saved. Retry reading — do not upload the nota again." : "");
+    if (uploadId) {
+      $("upload-msg").innerHTML = esc(err.message) + ` <button type="button" id="retry-read">Retry reading</button>`;
+      $("retry-read").addEventListener("click", () => $("run-upload").click());
+    }
+  }
+});
+
+function reviewBody() {
+  return {
+    upload_id: uploadId,
+    vendor_id: $("vendor-box").dataset.vendorId || "",
+    invoice_no: $("f-invoice").value,
+    date: $("f-date").value,
+    amount: $("f-amount").value,
+    tax: $("f-tax").value,
+    currency: $("f-currency").value,
+    category: $("f-category").value,
+    notes: $("f-notes").value,
+    items: [],
+    confirm: {
+      vendor: $("vendor-box").dataset.confirmed === "1",
+      invoice_no: true,
+      date: !!$("f-date").value,
+      amount: !!$("f-amount").value,
+      tax: !!$("f-tax").value,
+      currency: !!$("f-currency").value,
+      category: !!$("f-category").value,
+    },
+    duplicate_decision: dupDecision,
+    duplicate_reason: dupReason,
+    existing_nota_id: existingNotaId,
+  };
+}
+
+$("save-nota").addEventListener("click", async () => {
+  try {
+    const data = await api("/api/amg/finance/notas", { method: "POST", body: JSON.stringify(reviewBody()) });
+    if (data.error === "possible_duplicate_nota") {
+      const matches = data.matches || [];
+      $("dup-box").innerHTML = `<div class="card warn"><p>${esc(data.message)}</p>
+        ${matches.map((row) => `<button type="button" data-nota="${esc(row.nota_id)}">Open ${esc(row.invoice_no || row.nota_id)}</button>`).join("")}
+        <label>Why save a separate copy<input id="dup-reason" /></label>
+        <button type="button" id="dup-separate">Save separate</button></div>`;
+      $("dup-box").querySelectorAll("[data-nota]").forEach((btn) => btn.addEventListener("click", () => {
+        dupDecision = "use_existing"; existingNotaId = btn.dataset.nota; $("save-nota").click();
+      }));
+      $("dup-separate").addEventListener("click", () => {
+        dupDecision = "create_separate"; dupReason = $("dup-reason").value; $("save-nota").click();
+      });
+      return;
+    }
+    renderProgress(data.progress);
+    notaId = data.nota.nota_id;
+    $("upload-msg").textContent = "Saved. " + notaId;
+    $("submit-nota").disabled = data.nota.state !== "ready" && data.nota.state !== "waiting_approval";
+    if (data.nota.state === "ready") $("submit-nota").disabled = false;
+  } catch (err) {
+    $("upload-msg").textContent = err.message;
+  }
+});
+
+$("submit-nota").addEventListener("click", async () => {
+  if (!notaId) { $("upload-msg").textContent = "Save the nota before you submit."; return; }
+  try {
+    const data = await api("/api/amg/finance/notas/" + encodeURIComponent(notaId) + "/submit", { method: "POST", body: "{}" });
+    $("upload-msg").textContent = data.message || "Submitted. This is not a payment.";
+  } catch (err) {
+    $("upload-msg").textContent = err.message;
+  }
+});
+
+function historicalNote(data) {
+  const hist = data.historical || {};
+  return hist.message ? `<p class="note">${esc(hist.message)}</p>` : "";
+}
+
+async function searchVendors() {
+  const q = $("vendor-q").value || "";
+  const data = await api("/api/amg/finance/vendors?q=" + encodeURIComponent(q));
+  const rows = data.vendors || [];
+  $("vendor-list").innerHTML = historicalNote(data) + (rows.length ? rows.map((row) =>
+    `<article class="card"><button type="button" data-vendor="${esc(row.vendor_id)}"><strong>${esc(row.name)}</strong><br>${esc(row.phone || "")} ${esc(row.email || "")}</button></article>`
+  ).join("") : `<p class="note">No Wolf-created suppliers yet.</p>`);
+  $("vendor-list").querySelectorAll("[data-vendor]").forEach((btn) => btn.addEventListener("click", () => openVendor(btn.dataset.vendor)));
+}
+$("vendor-search").addEventListener("click", searchVendors);
+
+async function openVendor(id) {
+  const data = await api("/api/amg/finance/vendors/" + encodeURIComponent(id));
+  const vendor = data.vendor;
+  const banks = (data.bank_observations || []).map((row) => `<p>Observed, not verified: ${esc(row.text)}</p>`).join("");
+  const notas = (data.notas || []).map((row) => `<li>${esc(row.invoice_no || row.nota_id)} · ${esc(row.state_label)}</li>`).join("");
+  $("vendor-detail").classList.remove("hidden");
+  $("vendor-detail").innerHTML = `<article class="card"><button type="button" class="secondary" id="vendor-back">Back</button>
+    <h2>${esc(vendor.name)}</h2><p>${esc(vendor.category || "")}</p>${banks}<ul>${notas}</ul></article>`;
+  $("vendor-back").addEventListener("click", () => $("vendor-detail").classList.add("hidden"));
+}
+
+function periodCards(rows) {
+  return (rows || []).map((row) => `<article class="card"><strong>${esc(row.vendor || "No vendor yet")}</strong><br>${esc(row.invoice_no || "No invoice number")} · ${esc(row.date || "No date")}<br>${esc(row.state_label || "")}</article>`).join("");
+}
+
+function renderGroups(data) {
+  const groups = data.groups || [];
+  if (!groups.length) return `<p class="note">Nothing matches.</p>`;
+  return groups.map((year) => `<h2>${esc(year.year)}</h2>` + (year.months || []).map((month) =>
+    `<h2>${esc(year.year)}-${esc(month.month)}</h2>` + (month.notas || []).map(notaCard).join("")
+  ).join("")).join("");
+}
+
+$("hist-go").addEventListener("click", async () => {
+  const params = new URLSearchParams({
+    q: $("hist-q").value, date: $("hist-date").value, amount: $("hist-amount").value,
+    status: $("hist-status").value, invoice: $("hist-invoice").value, category: $("hist-category").value,
+    year: $("hist-year").value, month: $("hist-month").value,
+  });
+  const data = await api("/api/amg/finance/history?" + params.toString());
+  $("hist-results").innerHTML = renderGroups(data);
+  $("hist-results").querySelectorAll("[data-open]").forEach((btn) => btn.addEventListener("click", () => { showTab("notas"); openNota(btn.dataset.open); }));
+});
+
+async function downloadPack(year, month, messageEl) {
+  const res = await fetch("/api/amg/finance/export/month?year=" + encodeURIComponent(year) + "&month=" + encodeURIComponent(month), { credentials: "same-origin" });
+  if (!res.ok) {
+    let message = "Could not download that month.";
+    try { message = (await res.json()).message || message; } catch (err) { /* keep */ }
+    if (messageEl) messageEl.textContent = message;
+    return;
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "ggv-month-evidence-" + year + "-" + month + ".zip";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+$("export-month").addEventListener("click", () => downloadPack($("hist-year").value, $("hist-month").value, $("hist-results")));
+
+async function loadAccountant() {
+  const data = await api("/api/amg/finance/accountant");
+  $("acct-note").textContent = data.note || "No accounting total. The books are not complete on this screen.";
+  const period = data.current_period || "";
+  if (!$("acct-year").value && period.length >= 4) $("acct-year").value = period.slice(0, 4);
+  if (!$("acct-month").value && period.length >= 7) $("acct-month").value = period.slice(5, 7);
+  $("acct-current").innerHTML = periodCards(data.current_month) || `<p class="note">Nothing in this month yet.</p>`;
+  $("acct-missing").innerHTML = periodCards(data.missing_evidence) || `<p class="note">No missing files.</p>`;
+  $("acct-unreviewed").innerHTML = periodCards(data.unreviewed) || `<p class="note">Nothing waiting for review.</p>`;
+  $("acct-vendors").innerHTML = periodCards(data.vendor_issues) || `<p class="note">No vendor issues.</p>`;
+}
+
+$("acct-export").addEventListener("click", () => downloadPack($("acct-year").value, $("acct-month").value, $("acct-note")));
+
+let rxSelectedKey = null;
+
+function rxQueueBadge(queue, label) {
+  const cls = queue === "duplicate" ? "bad" : queue === "needs_review" ? "" : "check";
+  return `<span class="${cls}">${esc(label || queue || "")}</span>`;
+}
+
+async function loadReceipts() {
+  const q = ($("rx-queue").value || "").trim();
+  const path = q
+    ? `/api/amg/finance/accounting/queues?queue=${encodeURIComponent(q)}&limit=80`
+    : "/api/amg/finance/accounting/queues?limit=80";
+  const data = await api(path);
+  const counts = data.queue_counts || {};
+  const labels = data.queue_labels || {};
+  $("rx-summary").textContent =
+    `Accounting queue · showing ${data.count || 0}` +
+    (data.amg_bzg_isolated ? "" : " · check business isolation");
+  $("rx-counts").innerHTML = Object.keys(labels).map((key) => `
+    <article class="card">
+      <p class="count">${esc(String(counts[key] || 0))}</p>
+      <p class="meta">${esc(labels[key] || key)}</p>
+    </article>`).join("");
+  const rows = data.items || [];
+  $("rx-list").innerHTML = rows.length
+    ? rows.map((r) => `
+      <article class="card" data-rx-key="${esc(r.receipt_key || "")}">
+        <strong>${esc(r.vault_filename || r.receipt_key || "")}</strong><br>
+        ${rxQueueBadge(r.accounting_queue, r.queue_label)} · ${esc(r.vault_queue || "")} · ${esc(r.updated_at || "")}<br>
+        <span class="meta">${esc((r.extraction && r.extraction.note) || "")}</span>
+        <div class="meta">
+          ${r.image_retrievable ? "Original image attached" : "<span class='bad'>Missing evidence</span>"}
+          · extraction ${r.extraction_retained ? "kept" : "none"}
+          · human ${r.human_confirmed ? "confirmed beside" : "not yet"}
+          ${r.duplicate_of ? " · duplicate of " + esc(r.duplicate_of) : ""}
+        </div>
+        <button type="button" class="secondary rx-open" data-rx-key="${esc(r.receipt_key || "")}">Open</button>
+      </article>`).join("")
+    : `<p class="note">No receipts in this accounting queue.</p>`;
+  document.querySelectorAll(".rx-open").forEach((btn) => {
+    btn.addEventListener("click", () => openReceiptDetail(btn.dataset.rxKey));
+  });
+  const acct = await api("/api/amg/finance/accountant");
+  const missingRx = (data.missing_evidence_receipts || 0) > 0
+    ? `<p class="bad">${esc(String(data.missing_evidence_receipts))} vault receipt(s) missing image on disk.</p>`
+    : "";
+  $("rx-missing-notas").innerHTML =
+    missingRx + (periodCards(acct.missing_evidence) || `<p class="note">No missing nota evidence.</p>`);
+  const bank = await api("/api/amg/finance/bank-transactions?limit=40");
+  const need = (bank.transactions || []).filter((t) =>
+    ["NEEDS_RECEIPT", "NEEDS_REVIEW", "UNIDENTIFIED"].includes(String(t.recon_status || "").toUpperCase())
+  );
+  $("rx-bank-unmatched").innerHTML = need.length
+    ? need.map((t) => `
+      <article class="card">
+        <strong>${esc(t.txn_date || "")}</strong> · ${esc(t.recon_status || "")}<br>
+        debit ${esc(String(t.debit || 0))} · credit ${esc(String(t.credit || 0))}<br>
+        <span class="meta">${esc(t.description || "")}</span>
+      </article>`).join("")
+    : `<p class="note">No bank rows waiting for receipt (${esc(String(data.bank_unmatched_txns || 0))} total unmatched).</p>`;
+}
+
+async function openReceiptDetail(key) {
+  if (!key) return;
+  rxSelectedKey = key;
+  const data = await api(`/api/amg/finance/accounting/receipts/${encodeURIComponent(key)}`);
+  const r = data.receipt || {};
+  $("rx-detail").classList.remove("hidden");
+  $("rx-detail-title").textContent = r.vault_filename || key;
+  $("rx-detail-extraction").textContent = JSON.stringify(r.extraction || {}, null, 2);
+  $("rx-detail-human").textContent = r.human_confirmed
+    ? JSON.stringify(r.human_confirmed, null, 2)
+    : "(not confirmed yet — extraction stays when you confirm)";
+  $("rx-detail-image").innerHTML = r.image_retrievable
+    ? `<img src="/api/amg/finance/accounting/receipts/${encodeURIComponent(key)}/image" alt="Receipt evidence" style="max-width:100%;border-radius:12px;border:1px solid var(--border)" />`
+    : `<p class="bad">Missing evidence — original image not on disk.</p>`;
+  const h = r.human_confirmed || {};
+  $("rx-vendor").value = h.vendor || (r.extraction && r.extraction.vendor) || "";
+  $("rx-amount").value = h.amount || (r.extraction && r.extraction.amount) || "";
+  $("rx-tax").value = h.tax || (r.extraction && r.extraction.tax) || "";
+  $("rx-date").value = h.date || (r.extraction && r.extraction.receipt_date) || "";
+  $("rx-category").value = h.category || (r.extraction && r.extraction.category) || "";
+  $("rx-account").value = h.account_code || (r.extraction && r.extraction.account_code) || "";
+  $("rx-notes").value = h.notes || "";
+  $("rx-confirm-msg").textContent = "";
+}
+
+if ($("rx-detail-close")) {
+  $("rx-detail-close").addEventListener("click", () => {
+    $("rx-detail").classList.add("hidden");
+    rxSelectedKey = null;
+  });
+}
+if ($("rx-confirm")) {
+  $("rx-confirm").addEventListener("click", async () => {
+    if (!rxSelectedKey) return;
+    $("rx-confirm-msg").textContent = "Saving…";
+    try {
+      const body = {
+        vendor: $("rx-vendor").value,
+        amount: $("rx-amount").value,
+        date: $("rx-date").value,
+        category: $("rx-category").value,
+        account_code: $("rx-account").value,
+        notes: $("rx-notes").value,
+      };
+      const taxVal = ($("rx-tax").value || "").trim();
+      if (taxVal) body.tax = taxVal;
+      const data = await api(
+        `/api/amg/finance/accounting/receipts/${encodeURIComponent(rxSelectedKey)}/confirm`,
+        { method: "POST", body: JSON.stringify(body) }
+      );
+      $("rx-confirm-msg").textContent = data.extraction_retained
+        ? "Confirmed — extraction kept beside human fields."
+        : "Confirmed.";
+      await openReceiptDetail(rxSelectedKey);
+      await loadReceipts();
+    } catch (err) {
+      $("rx-confirm-msg").textContent = err.message || String(err);
+    }
+  });
+}
+if ($("rx-reload")) $("rx-reload").addEventListener("click", () => loadReceipts());
+if ($("rx-queue")) $("rx-queue").addEventListener("change", () => loadReceipts());
+
+async function loadTransactions() {
+  const tx = await api("/api/amg/finance/bank-transactions?limit=200");
+  const rows = tx.transactions || [];
+  $("txn-list").innerHTML = rows.length
+    ? rows.map((t) => `
+      <article class="card">
+        <strong>${esc(t.txn_date || "")}</strong> · ${esc(t.match_label || t.recon_status || "")}<br>
+        debit ${esc(String(t.debit || 0))} · credit ${esc(String(t.credit || 0))}<br>
+        <span class="meta">${esc(t.description || "")}</span>
+      </article>`).join("")
+    : `<p class="note">No bank transactions imported yet.</p>`;
+}
+
+async function loadBillsOnly() {
+  const data = await api("/api/amg/finance/bills");
+  const bills = data.bills || [];
+  const total = data.bill_count || bills.length;
+  $("bills-only-summary").textContent = total
+    ? `${total} Wolf-created bill${total === 1 ? "" : "s"} on record.`
+    : "No Wolf-created bills on record yet.";
+  $("bills-only-list").innerHTML = historicalNote(data) + (bills.length
+    ? bills.map(billCard).join("") + (total > bills.length ? `<p class="note">Showing ${bills.length} of ${total}.</p>` : "")
+    : `<p class="note">No bills on record yet.</p>`);
+}
+
+let reconTab = "possible";
+let reconMonth = "";
+let reconSelected = new Set();
+
+function fmtAmt(n) {
+  const v = Number(n || 0);
+  return "Rp" + v.toLocaleString("en-US", { maximumFractionDigits: 0 });
+}
+
+async function loadReconciliation() {
+  const q = new URLSearchParams({ tab: reconTab, limit: "50" });
+  if (reconMonth) q.set("month", reconMonth);
+  const data = await api("/api/amg/finance/reconciliation/queue?" + q.toString());
+  const counts = data.tab_counts || {};
+  $("recon-tab-counts").innerHTML = (data.tabs || []).map((t) =>
+    `<article class="card"><p class="meta">${esc(t.label)}</p><p class="count">${esc(String(counts[t.id] || 0))}</p></article>`
+  ).join("");
+  const monthSel = $("recon-month");
+  const months = data.months || [];
+  const prev = reconMonth;
+  monthSel.innerHTML = `<option value="">All months</option>` +
+    months.map((m) => `<option value="${esc(m.month)}">${esc(m.month)} (${esc(String(m.count))})</option>`).join("");
+  monthSel.value = prev;
+  monthSel.onchange = () => { reconMonth = monthSel.value; loadReconciliation(); };
+  document.querySelectorAll("#recon-tabs button").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.reconTab === reconTab);
+    btn.onclick = () => { reconTab = btn.dataset.reconTab; reconSelected.clear(); loadReconciliation(); };
+  });
+  const items = data.items || [];
+  reconSelected = new Set([...reconSelected].filter((id) => items.some((it) => it.txn_id === id)));
+  $("recon-queue-list").innerHTML = items.length ? items.map((t) => {
+    const amt = t.direction === "out" ? "−" + fmtAmt(t.amount) : "+" + fmtAmt(t.amount);
+    const checked = reconSelected.has(t.txn_id) ? " checked" : "";
+    return `<article class="card recon-row" data-txn="${esc(t.txn_id)}" data-rule="${esc(t.proposal_rule || "")}">
+      <label><input type="checkbox" class="recon-pick"${checked} /> ${esc(t.txn_date || "—")} · ${amt}</label>
+      <p>${esc(t.description || "No description")}</p>
+      <p class="meta">${esc(t.proposal_text || "No proposal")}</p>
+      <div class="row">
+        <button type="button" class="secondary recon-confirm">Confirm</button>
+        <button type="button" class="secondary recon-reject">Reject</button>
+        <button type="button" class="secondary recon-exception">Mark exception</button>
+      </div>
+      <input type="text" class="recon-note hidden" placeholder="Note required" />
+    </article>`;
+  }).join("") + `<button type="button" class="secondary" id="recon-bulk">Bulk confirm selected</button>`
+    : `<p class="note">No bank lines in this queue.</p>`;
+  $("recon-queue-list").querySelectorAll(".recon-pick").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      const row = cb.closest(".recon-row");
+      const id = row.dataset.txn;
+      if (cb.checked) reconSelected.add(id); else reconSelected.delete(id);
+    });
+  });
+  $("recon-queue-list").querySelectorAll(".recon-confirm").forEach((btn) => {
+    btn.onclick = async () => {
+      const row = btn.closest(".recon-row");
+      await api(`/api/amg/finance/reconciliation/queue/${encodeURIComponent(row.dataset.txn)}/confirm`, { method: "POST", body: "{}" });
+      await loadReconciliation();
+    };
+  });
+  $("recon-queue-list").querySelectorAll(".recon-reject").forEach((btn) => {
+    btn.onclick = async () => {
+      const row = btn.closest(".recon-row");
+      const input = row.querySelector(".recon-note");
+      if (input.classList.contains("hidden")) { input.classList.remove("hidden"); input.focus(); btn.textContent = "Confirm reject"; return; }
+      const reason = (input.value || "").trim();
+      if (!reason) { input.focus(); return; }
+      await api(`/api/amg/finance/reconciliation/queue/${encodeURIComponent(row.dataset.txn)}/reject`, { method: "POST", body: JSON.stringify({ reason }) });
+      await loadReconciliation();
+    };
+  });
+  $("recon-queue-list").querySelectorAll(".recon-exception").forEach((btn) => {
+    btn.onclick = async () => {
+      const row = btn.closest(".recon-row");
+      const input = row.querySelector(".recon-note");
+      if (input.classList.contains("hidden")) { input.classList.remove("hidden"); input.focus(); btn.textContent = "Save exception"; return; }
+      const note = (input.value || "").trim();
+      if (!note) { input.focus(); return; }
+      await api(`/api/amg/finance/reconciliation/queue/${encodeURIComponent(row.dataset.txn)}/exception`, { method: "POST", body: JSON.stringify({ note }) });
+      await loadReconciliation();
+    };
+  });
+  const bulk = $("recon-bulk");
+  if (bulk) {
+    bulk.onclick = async () => {
+      const ids = [...reconSelected];
+      if (ids.length < 2) { alert("Select at least two rows with the same rule."); return; }
+      const rules = new Set(ids.map((id) => {
+        const row = document.querySelector(`.recon-row[data-txn="${CSS.escape(id)}"]`);
+        return row ? row.dataset.rule : "";
+      }));
+      if (rules.size !== 1 || !rules.values().next().value) { alert("All selected rows must share the same rule."); return; }
+      await api("/api/amg/finance/reconciliation/queue/bulk-confirm", { method: "POST", body: JSON.stringify({ txn_ids: ids, rule: rules.values().next().value }) });
+      reconSelected.clear();
+      await loadReconciliation();
+    };
+  }
+}
+
+async function loadMissingEvidence() {
+  const acct = await api("/api/amg/finance/accounting/queues?limit=80");
+  const missingRx = (acct.items || []).filter((r) => r.missing_evidence_visible);
+  $("me-rx").innerHTML = missingRx.length
+    ? missingRx.map((r) => `<article class="card bad">${esc(r.vault_filename || r.receipt_key || "")} — missing image</article>`).join("")
+    : `<p class="note">No vault receipts flagged missing evidence (${acct.missing_evidence_receipts || 0} total).</p>`;
+  const bank = await api("/api/amg/finance/bank-transactions?limit=80");
+  const need = (bank.transactions || []).filter((t) =>
+    ["NEEDS_RECEIPT", "UNIDENTIFIED", "NEEDS_REVIEW"].includes(String(t.recon_status || "").toUpperCase())
+  );
+  $("me-bank").innerHTML = need.length
+    ? need.map((t) => `<article class="card">${esc(t.txn_date || "")} · ${esc(t.description || "")}</article>`).join("")
+    : `<p class="note">No bank rows waiting for receipt.</p>`;
+  const ac = await api("/api/amg/finance/accountant");
+  $("me-notas").innerHTML = periodCards(ac.missing_evidence) || `<p class="note">No missing nota evidence.</p>`;
+}
+
+async function loadAudit() {
+  const data = await api("/api/amg/finance/audit?limit=40");
+  const rows = data.events || [];
+  $("audit-list").innerHTML = rows.length
+    ? rows.map((e) => `
+      <article class="card">
+        <strong>${esc(e.action || "")}</strong> · ${esc(e.occurred_at || "")}<br>
+        <span class="meta">${esc(e.resource_type || "")} ${esc(e.resource_id || "")}</span>
+      </article>`).join("")
+    : `<p class="note">No audit events yet.</p>`;
+}
+
+async function openStatement(importId) {
+  const data = await api("/api/amg/finance/statements/" + encodeURIComponent(importId));
+  const s = data.statement || {};
+  const txns = s.transactions || [];
+  $("banking").classList.add("hidden");
+  $("statement-detail").classList.remove("hidden");
+  $("statement-body").innerHTML = `
+    <article class="card">
+      <h2>${esc(s.bank || "Bank")} · ${esc(s.account || "")}</h2>
+      <p class="note">${esc(s.period_start || "")} → ${esc(s.period_end || "")}</p>
+      <p>Opening ${esc(String(s.opening_balance || "—"))} · Closing ${esc(String(s.closing_balance || "—"))}</p>
+      <p><a class="inline" href="${esc(s.original_download_href || "#")}">Download original file</a></p>
+      <p class="meta">Reconciliation: ${esc(s.reconciliation_status || "Unreconciled")}</p>
+      <h3>Transactions (${txns.length})</h3>
+      ${txns.map((t) => `
+        <div class="row">
+          <strong>${esc(t.txn_date || "")}</strong> · ${esc(t.match_label || t.recon_status || "Unmatched")}<br>
+          debit ${esc(String(t.debit || 0))} · credit ${esc(String(t.credit || 0))}<br>
+          <span class="meta">${esc(t.description || "")}</span>
+        </div>`).join("") || `<p class="note">No transactions on this statement.</p>`}
+    </article>`;
+}
+if ($("statement-back")) {
+  $("statement-back").addEventListener("click", () => {
+    $("statement-detail").classList.add("hidden");
+    $("banking").classList.remove("hidden");
+    history.replaceState(null, "", "/amg/finance/banking");
+  });
+}
+
+async function loadBanking() {
+  const data = await api("/api/amg/finance/statements");
+  const rows = data.statements || [];
+  $("bank-imports").innerHTML = rows.length
+    ? rows.map((imp) => `
+      <article class="card">
+        <button type="button" data-stmt="${esc(imp.statement_id)}">
+          <strong>${esc(imp.bank || "")}</strong> · ${esc(imp.account || "")}<br>
+          ${esc(imp.period_start || "?")} → ${esc(imp.period_end || "?")} · ${esc(String(imp.txn_count || 0))} txns<br>
+          <span class="meta">${esc(imp.reconciliation_status || "Unreconciled")}</span>
+        </button>
+      </article>`).join("")
+    : `<p class="note">No statements imported yet.</p>`;
+  $("bank-imports").querySelectorAll("[data-stmt]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      history.replaceState(null, "", "/amg/finance/statements/" + encodeURIComponent(btn.dataset.stmt));
+      openStatement(btn.dataset.stmt);
+    });
+  });
+  const tx = await api("/api/amg/finance/bank-transactions?limit=80");
+  const need = (tx.transactions || []).filter((t) =>
+    ["NEEDS_RECEIPT", "NEEDS_REVIEW", "UNIDENTIFIED"].includes(String(t.recon_status || "").toUpperCase())
+  );
+  $("bank-txns").innerHTML = need.length
+    ? need.map((t) => `
+      <article class="card">
+        <strong>${esc(t.txn_date || "")}</strong> · ${esc(t.recon_status || "")}<br>
+        debit ${esc(String(t.debit || 0))} · credit ${esc(String(t.credit || 0))}<br>
+        <span class="meta">${esc(t.description || "")}</span>
+        <div class="meta">${t.matched_receipt_ref ? "Proposed: " + esc(t.matched_receipt_ref) + " (not confirmed)" : "Missing evidence"}</div>
+      </article>`).join("")
+    : `<p class="note">No unmatched / missing-evidence bank rows yet. Missing evidence count: ${esc(String(data.missing_evidence_txns || 0))}.</p>`;
+}
+if ($("bank-upload")) {
+  $("bank-upload").addEventListener("click", async () => {
+    const fileInput = $("bank-file");
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    if (!file) {
+      $("bank-msg").textContent = "Choose a CSV statement first.";
+      return;
+    }
+    $("bank-msg").textContent = "Uploading…";
+    try {
+      const buf = await file.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      const b64 = btoa(binary);
+      const body = {
+        filename: file.name,
+        content_base64: b64,
+        bank_label: ($("bank-label").value || "").trim() || null,
+      };
+      const data = await api("/api/amg/finance/bank-statements/import", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      $("bank-msg").textContent =
+        `Imported ${data.txn_count || 0} rows · original kept · proposed matches ${((data.proposed_matches || {}).proposed_count) || 0} (not auto-reconciled).`;
+      loadBanking();
+    } catch (err) {
+      $("bank-msg").textContent = err.message || String(err);
+    }
+  });
+}
+
+function blankLine() {
+  return { description: "", qty: "1", unit_price: "", tax_rate: "" };
+}
+
+function renderLines() {
+  $("inv-lines").innerHTML = invoiceLines.map((line, index) => `
+    <article class="card line-card">
+      <label>Description<input data-line="${index}" data-field="description" value="${esc(line.description)}" /></label>
+      <label>Qty<input data-line="${index}" data-field="qty" inputmode="decimal" value="${esc(line.qty)}" /></label>
+      <label>Unit price<input data-line="${index}" data-field="unit_price" inputmode="decimal" value="${esc(line.unit_price)}" /></label>
+      <label>Tax % <span class="meta">blank if none</span><input data-line="${index}" data-field="tax_rate" inputmode="decimal" value="${esc(line.tax_rate)}" /></label>
+      <button type="button" data-remove="${index}">Delete line</button>
+    </article>
+  `).join("");
+  $("inv-lines").querySelectorAll("input").forEach((input) => {
+    input.addEventListener("input", () => {
+      invoiceLines[Number(input.dataset.line)][input.dataset.field] = input.value;
+      schedulePreview();
+    });
+  });
+  $("inv-lines").querySelectorAll("[data-remove]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      invoiceLines.splice(Number(btn.dataset.remove), 1);
+      renderLines();
+    });
+  });
+}
+
+function invoiceBody() {
+  return {
+    customer_id: $("inv-customer").value,
+    invoice_date: $("inv-date").value,
+    due_date: $("inv-due").value,
+    terms: $("inv-terms").value,
+    notes: $("inv-notes").value,
+    reference: $("inv-ref").value,
+    payment_method: $("inv-pay-method").value,
+    payment_reference: $("inv-pay-ref").value,
+    lines: invoiceLines
+  };
+}
+
+function showTotals(data) {
+  const row = data.preview || data.invoice || data;
+  $("inv-totals").innerHTML = `
+    <p>Subtotal ${esc(row.subtotal)} ${esc(row.currency)}</p>
+    <p>Tax ${esc(row.tax_total)} ${esc(row.currency)}</p>
+    <p><strong>Total ${esc(row.grand_total)} ${esc(row.currency)}</strong></p>
+    <p class="note">${esc((row.rounding || {}).order || "")}</p>
+  `;
+}
+
+async function loadCustomers(selected) {
+  const data = await api("/api/amg/finance/customers");
+  const rows = data.customers || [];
+  $("inv-customer").innerHTML = rows.map((row) =>
+    `<option value="${esc(row.customer_id)}">${esc(row.legal_name)}</option>`
+  ).join("") || `<option value="">No customer yet</option>`;
+  if (selected) $("inv-customer").value = selected;
+  $("customer-list").innerHTML = rows.length
+    ? rows.map((row) => `<article class="card"><strong>${esc(row.legal_name)}</strong><br>${esc(row.email || "No email")}<br>${esc(row.billing_address || "Address unknown")}</article>`).join("")
+    : `<p class="note">No customers yet.</p>`;
+}
+
+function renderBrand(data) {
+  const from = data.from || {};
+  const lines = (data.lines || []).map((line) => `<p>${esc(line.description)} · ${esc(line.total)} ${esc(data.currency)}</p>`).join("");
+  $("inv-preview").innerHTML = `<article class="card brand-preview"><p class="brand">${esc(from.display_name || "AMG")}</p><strong>${esc(from.legal_name || "AMG")}</strong><p>Number assigned on issue.</p>${lines}<p class="note">Preview only. Not saved.</p></article>`;
+}
+
+let previewTimer = null;
+function schedulePreview() {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => { runPreview(false); }, 280);
+}
+
+async function runPreview(showError) {
+  try {
+    const data = await api("/api/amg/finance/invoices/preview", { method: "POST", body: JSON.stringify(invoiceBody()) });
+    showTotals(data);
+    renderBrand(data);
+  } catch (err) {
+    if (showError) $("invoice-msg").textContent = err.message;
+  }
+}
+
+function mountImport(can) {
+  const existing = document.getElementById("historical-import");
+  if (!can) {
+    if (existing) existing.remove();
+    return;
+  }
+  if (existing) return;
+  const box = document.createElement("div");
+  box.id = "historical-import";
+  box.innerHTML = `
+    <h2>Historical import</h2>
+    <p class="note">Owner only. The original number is kept. The sequence does not go backwards.</p>
+    <label>Original number<input id="import-number" /></label>
+    <button type="button" class="secondary" id="run-import">Import historical invoice</button>
+    <p id="import-msg"></p>`;
+  $("invoices").appendChild(box);
+  $("run-import").addEventListener("click", async () => {
+    try {
+      const body = invoiceBody();
+      body.invoice_number = $("import-number").value;
+      const data = await api("/api/amg/finance/invoices/import", { method: "POST", body: JSON.stringify(body) });
+      $("import-msg").textContent = "Imported " + (data.invoice.invoice_number || "") + ".";
+    } catch (err) {
+      $("import-msg").textContent = err.message;
+    }
+  });
+}
+
+async function loadInvoices() {
+  const data = await api("/api/amg/finance/invoices");
+  const next = data.numbering && data.numbering.next ? data.numbering.next : "";
+  $("number-note").textContent = next
+    ? "Next number " + next + " is issued by the system. You do not type it."
+    : "Number assigned on issue.";
+  mountImport(Boolean(data.numbering && data.numbering.can_import));
+  const hist = data.historical || {};
+  const earlier = hist.invoices || [];
+  const historyHtml = earlier.length
+    ? earlier.slice().reverse().map((row) => `<article class="card"><strong>${esc(row.number_label || row.invoice_number)}</strong><br>${esc(row.customer_name || "Customer not read from the file")}<br>${esc(row.invoice_date || "")} · ${esc(row.grand_total_idr || "")} · ${esc(row.status_label)}<br><a class="inline" href="${esc(row.href)}">Open file</a><p class="note">${esc(row.staff_footnote || "From the branded PDF on disk. Not yet checked in Wolf.")}</p></article>`).join("")
+    : (hist.message ? `<p class="note">${esc(hist.message)}</p>` : "");
+  const rows = data.invoices || [];
+  const wolfHtml = rows.length
+    ? rows.map((row) => `<article class="card"><button type="button" data-invoice="${esc(row.invoice_id)}"><strong>${esc(row.number_label || row.invoice_number || "Number assigned on issue")}</strong><br>${esc((row.customer || {}).legal_name || "")}<br>${esc(row.status_label)} · ${esc(row.grand_total)} ${esc(row.currency)}</button></article>`).join("")
+    : `<p class="note">No invoices issued in Wolf yet.</p>`;
+  $("invoice-list").innerHTML = historyHtml + wolfHtml;
+  document.body.setAttribute("data-historical", earlier.length ? "found" : "missing");
+  $("invoice-list").querySelectorAll("[data-invoice]").forEach((btn) => {
+    btn.addEventListener("click", () => openInvoice(btn.dataset.invoice));
+  });
+}
+
+async function openInvoice(id) {
+  const data = await api("/api/amg/finance/invoices/" + encodeURIComponent(id));
+  const row = data.invoice;
+  editingInvoice = row.invoice_id;
+  $("invoice-form").classList.remove("hidden");
+  $("invoice-heading").textContent = row.number_label || row.invoice_number || "Number assigned on issue";
+  $("number-note").textContent = row.invoice_number ? "" : "Number assigned on issue.";
+  await loadCustomers(row.customer.customer_id);
+  $("inv-date").value = row.invoice_date || "";
+  $("inv-due").value = row.due_date || "";
+  $("inv-terms").value = row.terms || "";
+  $("inv-notes").value = row.notes || "";
+  $("inv-ref").value = row.reference || "";
+  $("inv-pay-method").value = row.payment_method || "";
+  $("inv-pay-ref").value = row.payment_reference || "";
+  invoiceLines = (row.lines || []).map((line) => ({
+    description: line.description,
+    qty: line.qty,
+    unit_price: line.unit_price,
+    tax_rate: line.tax_rate || ""
+  }));
+  renderLines();
+  showTotals(data);
+  $("issue-invoice").disabled = row.status !== "DRAFT" && row.status !== "READY";
+  $("save-draft").disabled = row.status !== "DRAFT";
+  const pdf = row.documents && row.documents.length
+    ? `<p><a class="inline" href="/api/amg/finance/invoices/${esc(row.invoice_id)}/pdf">Open PDF</a></p>`
+    : "";
+  $("draft-email").innerHTML = pdf;
+}
+
+$("new-invoice").addEventListener("click", async () => {
+  editingInvoice = null;
+  invoiceLines = [blankLine(), blankLine(), blankLine(), blankLine()];
+  $("invoice-form").classList.remove("hidden");
+  $("invoice-heading").textContent = "New invoice";
+  $("invoice-msg").textContent = "";
+  $("draft-email").innerHTML = "";
+  $("inv-totals").innerHTML = "";
+  $("inv-preview").innerHTML = "";
+  ["inv-date", "inv-due", "inv-terms", "inv-notes", "inv-ref", "inv-pay-method", "inv-pay-ref"].forEach((id) => { $(id).value = ""; });
+  $("number-note").textContent = "Number assigned on issue.";
+  $("save-draft").disabled = false;
+  $("issue-invoice").disabled = true;
+  renderLines();
+  await loadCustomers();
+  const numbering = await api("/api/amg/finance/numbering");
+  $("number-note").textContent = "Number assigned on issue.";
+  mountImport(Boolean(numbering.numbering && numbering.numbering.can_import));
+});
+$("add-line").addEventListener("click", () => { invoiceLines.push(blankLine()); renderLines(); });
+$("invoice-back").addEventListener("click", () => { $("invoice-form").classList.add("hidden"); loadInvoices(); });
+$("show-customer").addEventListener("click", () => $("customer-create").classList.toggle("hidden"));
+$("save-customer").addEventListener("click", async () => {
+  try {
+    const data = await api("/api/amg/finance/customers", { method: "POST", body: JSON.stringify({
+      legal_name: $("cust-legal").value,
+      trading_name: $("cust-trading").value,
+      tax_id: $("cust-tax").value,
+      billing_address: $("cust-address").value,
+      contact_name: $("cust-contact").value,
+      email: $("cust-email").value,
+      default_terms: $("cust-terms").value,
+      notes: $("cust-notes").value
+    })});
+    $("invoice-msg").textContent = data.reused ? "Using the existing customer." : "Customer saved.";
+    await loadCustomers(data.customer.customer_id);
+  } catch (err) {
+    $("invoice-msg").textContent = err.message;
+  }
+});
+$("preview-invoice").addEventListener("click", () => runPreview(true));
+$("save-draft").addEventListener("click", async () => {
+  try {
+    const path = editingInvoice ? "/api/amg/finance/invoices/" + encodeURIComponent(editingInvoice) : "/api/amg/finance/invoices";
+    const data = await api(path, { method: "POST", body: JSON.stringify(invoiceBody()) });
+    editingInvoice = data.invoice.invoice_id;
+    $("issue-invoice").disabled = false;
+    $("invoice-msg").textContent = "Draft saved. The total was calculated here.";
+    showTotals(data);
+  } catch (err) {
+    $("invoice-msg").textContent = err.message;
+  }
+});
+$("issue-invoice").addEventListener("click", async () => {
+  if (!editingInvoice) return;
+  try {
+    const data = await api("/api/amg/finance/invoices/" + encodeURIComponent(editingInvoice) + "/issue", { method: "POST", body: "{}" });
+    const draft = data.draft_email || {};
+    $("draft-email").innerHTML = `
+      <article class="card">
+        <p>PDF ready. It was not emailed.</p>
+        <p><a class="inline" href="/api/amg/finance/invoices/${esc(editingInvoice)}/pdf">Open PDF</a></p>
+        <p>To: ${esc(draft.to || "UNKNOWN")}</p>
+        <p>Subject: ${esc(draft.subject || "")}</p>
+        <pre>${esc(draft.body || "")}</pre>
+      </article>`;
+    $("invoice-heading").textContent = data.invoice.invoice_number || "Issued";
+    $("invoice-msg").textContent = "Issued " + (data.invoice.invoice_number || "") + ". Issued is not paid.";
+    $("draft-email").insertAdjacentHTML("beforeend", `<p class="note">${esc(draft.next_integration || "Generate Gmail draft with PDF attachment — human review/send, never automatic")}. This step is not built. Do not send unless the owner says so.</p>`);
+    $("issue-invoice").disabled = true;
+    $("save-draft").disabled = true;
+  } catch (err) {
+    $("invoice-msg").textContent = err.message;
+  }
+});
+$("customer-search").addEventListener("click", () => searchCustomers());
+
+async function searchCustomers() {
+  const q = new URLSearchParams({ q: $("customer-q").value });
+  const data = await api("/api/amg/finance/customers?" + q.toString());
+  const rows = data.customers || [];
+  $("customer-list").innerHTML = rows.length
+    ? rows.map((row) => `<article class="card"><strong>${esc(row.legal_name)}</strong><br>${esc(row.trading_name || "")}<br>${esc(row.email || "No email")}</article>`).join("")
+    : `<p class="note">No matching customer.</p>`;
+}
+
+loadOverview().then(function () {
+  const path = location.pathname.replace(/\/$/, "") || "/amg/finance";
+  const mStmt = path.match(/^\/amg\/finance\/statements\/([^/]+)$/);
+  if (mStmt) {
+    showTab("banking");
+    openStatement(decodeURIComponent(mStmt[1]));
+  } else {
+    const tab = pathTab[path] || "overview";
+    if (tab !== "overview") showTab(tab);
+  }
+  document.body.setAttribute("data-ready", "1");
+  var over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
+  document.body.setAttribute("data-overflow", over ? "yes" : "no");
+}).catch((err) => {
+  $("recent").textContent = err.message;
+  document.body.setAttribute("data-ready", "1");
+});
+</script>
+</body>
+</html>

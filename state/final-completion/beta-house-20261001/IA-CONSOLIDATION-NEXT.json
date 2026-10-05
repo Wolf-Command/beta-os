@@ -1,0 +1,23 @@
+{
+  "schema": "IA-CONSOLIDATION-NEXT/v1",
+  "mission": "BETA_HOUSE_REAL_CONNECTIONS",
+  "generated_at_wita": "2026-10-01T08:20:58+08:00",
+  "status": "WAITING_OWNER",
+  "phase_now": "POLISH",
+  "phase_note": "POLISH / WAITING_OWNER \u2014 safe-without-Matt DESKTOP_UX queue exhausted",
+  "next_packs_safe_without_matt": [],
+  "next_owner_gated_only": [
+    "Canva re-auth \u2192 CANVA-CAPABILITY-TRUTH-1 READ",
+    "Yanolja Bookings enable \u2192 guest-depth re-prove (write NO)",
+    "Optional Klaviyo READ prove",
+    "W4 seed or ACCEPT-EMPTY (Vesper)",
+    "CF session screenshot acceptance (last)",
+    "leads PARTIAL\u2192LIVE only with non-DEMO Habitat/CRM SoT",
+    "backup PARTIAL\u2192LIVE only when atrium snap fresh (no invent)",
+    "CF JWT Integrations health stays parked"
+  ],
+  "note": "PULSE-RADAR-HONESTY-3 stamped EMPTY/BLOCKED reasons. Primary IA 19. Orphan prove crumbs off radar/pulse chrome. desktop_gate_ready=false.",
+  "staff_ready": false,
+  "desktop_gate_ready": false,
+  "remaining_desktop_gate_blockers_ref": "DESKTOP-GATE-BLOCKERS.json"
+}

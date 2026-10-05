@@ -1,0 +1,110 @@
+{
+  "ok": true,
+  "hotel_code": "63221",
+  "host": "https://live.ipms247.com",
+  "endpoints": {
+    "arrival_list": {
+      "name": "arrival_list",
+      "request_type": "ArrivalList",
+      "http": 200,
+      "ok": false,
+      "denied": false,
+      "error_codes": [
+        "105",
+        "From Date is missing"
+      ],
+      "body_hint": {
+        "kind": "dict",
+        "keys": [
+          "Errors"
+        ],
+        "text": null
+      },
+      "top_keys": [
+        "Errors"
+      ],
+      "row_count": null,
+      "probed_at": "2026-10-01T07:30:53+08:00",
+      "writable": false,
+      "write_attempted": false
+    },
+    "bookings": {
+      "name": "bookings",
+      "request_type": "Bookings",
+      "http": 200,
+      "ok": false,
+      "denied": true,
+      "error_codes": [
+        "302",
+        "Unauthorized Request. Integration is not allowed",
+        "302"
+      ],
+      "body_hint": {
+        "kind": "dict",
+        "keys": [
+          "Errors"
+        ],
+        "text": null
+      },
+      "top_keys": [
+        "Errors"
+      ],
+      "row_count": null,
+      "probed_at": "2026-10-01T07:30:54+08:00",
+      "writable": false,
+      "write_attempted": false
+    },
+    "inhouse_room_status": {
+      "name": "inhouse_room_status",
+      "request_type": "Retrieve Inhouse Room Status",
+      "http": 200,
+      "ok": false,
+      "denied": false,
+      "error_codes": [
+        "502",
+        "Request Type is missing"
+      ],
+      "body_hint": {
+        "kind": "dict",
+        "keys": [
+          "Errors"
+        ],
+        "text": null
+      },
+      "top_keys": [
+        "Errors"
+      ],
+      "row_count": null,
+      "probed_at": "2026-10-01T07:30:55+08:00",
+      "writable": false,
+      "write_attempted": false
+    },
+    "bookings_dated": {
+      "name": "bookings_dated",
+      "request_type": "Bookings",
+      "http": 200,
+      "ok": true,
+      "denied": false,
+      "error_codes": [],
+      "body_hint": {
+        "kind": "dict",
+        "keys": [
+          "SuccessMsg",
+          "code"
+        ],
+        "text": null
+      },
+      "top_keys": [
+        "code",
+        "SuccessMsg"
+      ],
+      "dated": true,
+      "from": "2026-09-30",
+      "to": "2026-10-02",
+      "probed_at": "2026-10-01T07:30:55+08:00",
+      "writable": false,
+      "write_attempted": false
+    }
+  },
+  "pii_omitted": true
+}

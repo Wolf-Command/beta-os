@@ -1,0 +1,84 @@
+{
+  "to": "Peaches",
+  "require_matt": false,
+  "at": "2026-10-05T11:22:37+08:00",
+  "by": "executor_owner_order_2026-10-05T11:16+08:00",
+  "slice": "FINANCE-CORE-GGV-1",
+  "event": "FINANCE_CORE_GGV_ARMED_DISCOVERY",
+  "lock_state": {
+    "holder": "UMA-HIST-CLOSE-QUEUE-1",
+    "run_id": "BF-e4d931b0a032",
+    "wrapper_pid": 69147,
+    "cursor_pid": 69148,
+    "alive": true,
+    "note": "Historical Close already next and RUNNING \u2014 left alive (Owner: do not stop). Usability BF-75bdba189a90 and bank-recon BF-2e9a971acc74 finished earlier."
+  },
+  "armed": {
+    "FINANCE-CORE-GGV-1": {
+      "state": "READY",
+      "priority": 13,
+      "owner_priority": 0,
+      "predecessor": "UMA-HIST-CLOSE-QUEUE-1",
+      "prompt": "state/reliability/FINANCE-CORE-GGV-1-PROMPT-2026-10-05.md",
+      "auto_arm": true,
+      "will_launch_when": "UMA-HIST-CLOSE-QUEUE-1 releases writer lock; select_next prefers this over evidence-link"
+    },
+    "FINANCE-CORE-AMG-PROVE-1": {
+      "state": "READY",
+      "predecessor": "FINANCE-CORE-GGV-1",
+      "prompt_status": "stub_ready"
+    },
+    "FINANCE-CORE-BZG-PROVE-1": {
+      "state": "READY",
+      "predecessor": "FINANCE-CORE-AMG-PROVE-1",
+      "prompt_status": "stub_ready"
+    }
+  },
+  "launch_status": "NOT_LAUNCHED_LOCK_HELD",
+  "discovery_readonly": {
+    "ggv_invoices": 46,
+    "ggv_notas": 33,
+    "ggv_bills": 605,
+    "ggv_bank_statement_imports": 2,
+    "ggv_bank_transactions": 6,
+    "ggv_uploads": 0,
+    "ggv_nota_files": 0,
+    "existing_routes": [
+      "/ggv/finance",
+      "/ggv/finance/invoices",
+      "/ggv/finance/notas",
+      "/ggv/finance/vendors",
+      "/ggv/finance/customers",
+      "/ggv/finance/history",
+      "/ggv/finance/reports",
+      "/ggv/finance/receipts"
+    ],
+    "modules": [
+      "scripts/core/ggv_finance_nota.py",
+      "scripts/core/ggv_bank_statement1.py",
+      "scripts/core/ggv_finance_invoice.py",
+      "scripts/core/fin_entity_boards.py"
+    ],
+    "amanda_ggv_nota_create": {
+      "person": "PERS-AMANDA",
+      "assignment": "ASG-AMANDA-GGV-FIN-1 ACTIVE",
+      "position": "POS-GGV-FINANCE-OPERATOR-1",
+      "role": "ROLE-GGV-FINANCE-OPERATOR",
+      "scope": "SCOPE-GGV-FINANCE",
+      "permission": "PERM-FIN-NOTA-CREATE / finance.nota.create"
+    },
+    "beta_ggv_finance_unauth": "403 on :8788/ggv/finance"
+  },
+  "do_not_stop_honored": [
+    "Daily Close",
+    "Historical Close (UMA-HIST RUNNING)",
+    "P2P",
+    "BZG-FINANCE-USABILITY-1 (READY FOR HUMAN TEST)",
+    "factory"
+  ],
+  "prod_untouched": true,
+  "prod_pid": 1297,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "message_for_peaches": "FINANCE CORE GGV \u2014 ARMED, WAITING LOCK (not ready for Matt yet). FINANCE-CORE-GGV-1 READY priority 13 pred=UMA-HIST-CLOSE-QUEUE-1; full prompt at state/reliability/FINANCE-CORE-GGV-1-PROMPT-2026-10-05.md. AMG/BZG prove slices READY depends_on GGV. Lock: UMA-HIST-CLOSE-QUEUE-1 BF-e4d931b0a032 RUNNING \u2014 left alive. Bank-recon BF-2e9a971acc74 IMPLEMENTATION_DONE (stale RUNNING cleared \u2192 READY FOR HUMAN TEST). Discovery mode=ro: invoices 46 / notas 33 / bills 605; Amanda ASG-AMANDA-GGV-FIN-1 has finance.nota.create; existing /ggv/finance* + ggv_bank_statement1.py present. When GGV eng-proves, Peaches sends the READY FOR MATT TEST block (nota/bank/recon URLs); do not ping Matt for routine progress. Prod 1297 untouched. Factory not stopped."
+}

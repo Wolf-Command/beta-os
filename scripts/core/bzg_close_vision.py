@@ -310,6 +310,31 @@ If unsure, use null and lower ocr_confidence. Do not invent amounts or TIDs.
 EDC card and QRIS must stay separate."""
 
 
+def _edc_prompt_with_bank_context(
+    *,
+    bank_hint: str | None = None,
+    esb_edc_expected: float | None = None,
+    esb_qris_expected: float | None = None,
+) -> str:
+    """Build EDC vision prompt with optional bank/ESB hints (hints only — read the slip)."""
+    parts = [EDC_PROMPT]
+    hint = (bank_hint or "").strip()
+    if hint:
+        parts.append(f"Context: acquirer/bank hint is {hint}.")
+    if esb_edc_expected is not None:
+        parts.append(
+            f"Context: shift report expects EDC card about {esb_edc_expected} "
+            "(hint only — extract what the terminal slip shows)."
+        )
+    if esb_qris_expected is not None:
+        parts.append(
+            f"Context: shift report expects QRIS about {esb_qris_expected} "
+            "(hint only — extract what the terminal slip shows)."
+        )
+    parts.append("Return edc_card_amount and qris_amount as separate numbers. Never merge them.")
+    return "\n".join(parts)
+
+
 def _blank_low_edc(fields: dict[str, Any], conf: float | None) -> dict[str, Any]:
     out = dict(fields)
     band = _confidence_band(conf)
@@ -727,6 +752,33 @@ def _repair_shift_tip(lines: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
+def _unclassified_lines_from_sections(
+    sections: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Lines that still need human classification — preserved, not folded into totals."""
+    out: list[dict[str, Any]] = []
+    for sec in sections:
+        st = sec.get("normalized_type")
+        raw_title = sec.get("raw_title")
+        for ln in sec.get("lines") or []:
+            if ln.get("classification") != "NEEDS_CLASSIFICATION":
+                continue
+            out.append(
+                {
+                    "line_id": ln.get("line_id"),
+                    "raw_label": ln.get("raw_label"),
+                    "raw_value": ln.get("raw_value"),
+                    "quantity": ln.get("quantity"),
+                    "amount": ln.get("amount"),
+                    "normalized_type": ln.get("normalized_type"),
+                    "classification": ln.get("classification"),
+                    "section_type": st,
+                    "section_title": raw_title,
+                }
+            )
+    return out
+
+
 def _derive_views(sections: list[dict[str, Any]]) -> dict[str, Any]:
     """Convenience derived totals — never a substitute for line storage."""
     shift: dict[str, Any] = {}
@@ -841,7 +893,18 @@ def _derive_views(sections: list[dict[str, Any]]) -> dict[str, Any]:
         "pax": shift.get("PAX"),
         "service_charge": shift.get("SERVICE_CHARGE"),
         "tax": shift.get("TAX"),
+        "unclassified_lines": _unclassified_lines_from_sections(sections),
     }
+
+
+def parse_shift_receipt(fixture: dict[str, Any] | str) -> dict[str, Any]:
+    """Parse shift-receipt fixture text or vision JSON into extensible document.
+
+    Unknown labels stay readable with raw label/value and NEEDS_CLASSIFICATION.
+    They are not dropped or rewritten into known totals.
+    """
+    raw = _parse_json_loose(fixture) if isinstance(fixture, str) else dict(fixture or {})
+    return normalize_esb_document(raw)
 
 
 def normalize_esb_document(raw: dict[str, Any]) -> dict[str, Any]:
@@ -1045,6 +1108,9 @@ def extract_edc_receipt(
     mime_type: str = "image/jpeg",
     fixture_fields: dict[str, Any] | None = None,
     force_provider: str | None = None,
+    bank_hint: str | None = None,
+    esb_edc_expected: float | None = None,
+    esb_qris_expected: float | None = None,
 ) -> dict[str, Any]:
     if fixture_fields is not None or force_provider == "fixture":
         fields = normalize_edc_fields(fixture_fields or {})
@@ -1069,12 +1135,20 @@ def extract_edc_receipt(
         )
     try:
         text, provider, model = call_receipt_image_extraction(
-            EDC_PROMPT, image_bytes=image_bytes, mime_type=mime_type
+            _edc_prompt_with_bank_context(
+                bank_hint=bank_hint,
+                esb_edc_expected=esb_edc_expected,
+                esb_qris_expected=esb_qris_expected,
+            ),
+            image_bytes=image_bytes,
+            mime_type=mime_type
         )
     except VisionError as exc:
         if exc.code in ("vision_unavailable", "vision_http", "vision_transport"):
             return _unavailable_draft("EDC_RECEIPT", diagnostic=exc.diagnostic)
         raise
+    except Exception as exc:  # noqa: BLE001 — never surface raw provider errors to staff
+        return _unavailable_draft("EDC_RECEIPT", diagnostic=str(exc)[:240])
     fields = normalize_edc_fields(_parse_json_loose(text))
     return {
         **HONESTY,

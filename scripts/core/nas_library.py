@@ -1321,6 +1321,26 @@ def cleanup_test_asset(nas_path: str | None) -> dict[str, Any]:
 def public_nas_status() -> dict[str, Any]:
     """Honest connectivity for UI banner — never claims nas_received without a file."""
     connected = media_library_connected()
+    desk = None
+    try:
+        from core import nas_b2_desk_stamp1 as _nasb2
+
+        desk = _nasb2.load_nas_b2_desk()
+    except Exception:  # noqa: BLE001
+        desk = None
+    desk_bit = None
+    if isinstance(desk, dict) and desk.get("ok"):
+        desk_bit = {
+            "pack": desk.get("pack"),
+            "value_line": desk.get("value_line"),
+            "full_tree_indexed": False,
+            "restore": desk.get("restore") or "NOT_RUN",
+            "counts": (desk.get("nas") or {}).get("counts"),
+            "permission_denied_honest": (desk.get("nas") or {}).get("permission_denied_honest"),
+            "b2_freshness": (desk.get("b2") or {}).get("freshness_headline_wita"),
+            "library_db_honesty": desk.get("library_db_honesty"),
+            "invented_counts": False,
+        }
     if connected:
         return {
             "connected": True,
@@ -1332,6 +1352,8 @@ def public_nas_status() -> dict[str, Any]:
             ),
             "nas_received": False,  # status endpoint never claims a file received
             "honesty": dict(HONESTY),
+            "desk_stamp": desk_bit,
+            "full_tree_indexed": False,
         }
     return {
         "connected": False,
@@ -1340,6 +1362,8 @@ def public_nas_status() -> dict[str, Any]:
         "message": "NAS not connected — uploads stay on Beta library only. We will not claim NAS received.",
         "nas_received": False,
         "honesty": dict(HONESTY),
+        "desk_stamp": desk_bit,
+        "full_tree_indexed": False,
     }
 
 

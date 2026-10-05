@@ -1,0 +1,168 @@
+{
+  "schema": "UX-PACK-09-APPLY/v0",
+  "applied": true,
+  "status": "PACK_09_APPLIED",
+  "applied_wita": "2026-09-30T22:30:24+08:00",
+  "bound": "beta_only",
+  "beta_port": 8788,
+  "prod_8787": "READ_ONLY_UNTOUCHED",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "packs": [
+    "UX-PACK-09"
+  ],
+  "finance_sod_unchanged": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "backup_dir": "/Users/wolfterminal/beta-os/backups/ux-pack-09-20260930-222559",
+  "beta_restarted": true,
+  "urls": {
+    "owner_home": "https://beta.wolfcommand.net/owner-empire-pack",
+    "owner_home_alias": "https://beta.wolfcommand.net/wolf",
+    "local_owner_home": "http://127.0.0.1:8788/owner-empire-pack",
+    "pulse_ro_api": "http://127.0.0.1:8788/api/owner/pulse-ro",
+    "kuta_rates": "https://beta.wolfcommand.net/kuta-rates",
+    "amg_hub_kuta": "https://beta.wolfcommand.net/amg-ops-pack",
+    "occ_truth": "https://beta.wolfcommand.net/amg/occ-truth-1",
+    "uma": "https://beta.wolfcommand.net/bzg/uma-blu",
+    "ggv": "https://beta.wolfcommand.net/ggv-ops-pack",
+    "purchasing": "https://beta.wolfcommand.net/bzg/uma-blu/purchasing",
+    "fitness": "https://beta.wolfcommand.net/owner/fitness",
+    "backup_health": "https://beta.wolfcommand.net/ops/backup-health-1",
+    "local_pulse_ro": "http://127.0.0.1:8788/api/owner/pulse-ro"
+  },
+  "files_changed": [
+    "dashboards/owner-empire-pack.html",
+    "scripts/core/owner_pulse_ro.py",
+    "scripts/serve_beta.py"
+  ],
+  "pack_09": {
+    "title": "Owner Home live pulse (V1 evening-brief parity slice)",
+    "api": "/api/owner/pulse-ro",
+    "tile_ids": [
+      "atrium_occ",
+      "kuta_rates",
+      "bzg_night",
+      "leads",
+      "purchasing",
+      "fitness",
+      "backup"
+    ],
+    "tile_contract": "WHAT \u00b7 number/state \u00b7 WHERE \u00b7 honesty LIVE|PARTIAL|EMPTY|BLOCKED",
+    "preserved": [
+      "FINISH WOLF hero",
+      "My Work",
+      "Needs You",
+      "Personal Command strip",
+      "fitness glance",
+      "packs 01-08"
+    ],
+    "no_invent": true,
+    "writes": false
+  },
+  "ro_test": {
+    "local_pulse_ro_http": 200,
+    "local_fitness_ro_http": 200,
+    "local_kuta_rates_ro_http": 200,
+    "pulse_counts": {
+      "tiles": 7,
+      "LIVE": 1,
+      "PARTIAL": 5,
+      "EMPTY": 0,
+      "BLOCKED": 1
+    },
+    "tiles": [
+      {
+        "id": "atrium_occ",
+        "what": "Atrium occupancy",
+        "state": "BLOCKED",
+        "value": null,
+        "href": "/amg/occ-truth-1",
+        "why": "PMS blocked \u2192 occupancy UNKNOWN (not zero, not invented)."
+      },
+      {
+        "id": "kuta_rates",
+        "what": "Kuta rates tonight",
+        "state": "PARTIAL",
+        "value": "1,978,000 IDR",
+        "href": "/kuta-rates",
+        "why": "Atrium scrape 2026-09-30 \u00b7 stay 2027-09-30 \u00b7 Signature Studio. Competitor rates may be EMPTY. LEARN only \u2014 no booking."
+      },
+      {
+        "id": "bzg_night",
+        "what": "BZG / Uma last-night",
+        "state": "PARTIAL",
+        "value": "closes EMPTY \u00b7 today attention 308 \u00b7 blocked 1",
+        "href": "/bzg/uma-blu",
+        "why": "No previous closes recorded in Wolf yet Night revenue/covers not on record. Showing Uma Today attention only \u2014 not inventing last-night sales."
+      },
+      {
+        "id": "leads",
+        "what": "Leads (GGV)",
+        "state": "PARTIAL",
+        "value": "8 on board \u00b7 8 DEMO-labeled \u00b7 3 needs-you",
+        "href": "/ggv-ops-pack",
+        "why": "GGV ops pack rows are DEMO-labeled. Not claiming live Habitat pipeline."
+      },
+      {
+        "id": "purchasing",
+        "what": "Purchasing / Alchemist",
+        "state": "PARTIAL",
+        "value": "unpaid 106 \u00b7 unpaid sum 195,268,172 \u00b7 awaiting Devi 39 \u00b7 received 166",
+        "href": "/bzg/uma-blu/purchasing",
+        "why": "Alchemist attention summary (RO). Legacy projection \u2014 PARTIAL. Not a finance settle action. SoD unchanged."
+      },
+      {
+        "id": "fitness",
+        "what": "Fitness / Spartacus day",
+        "state": "LIVE",
+        "value": "day 1 \u00b7 plan 0/3 \u00b7 workouts open",
+        "href": "/owner/fitness",
+        "why": "From /api/owner/fitness-ro (Spartacus sqlite RO). Fitness \u2260 HR."
+      },
+      {
+        "id": "backup",
+        "what": "Backup / pipe health",
+        "state": "PARTIAL",
+        "value": "backup PRESENT \u00b7 atrium snap STALE \u00b7 drill DRILL_RAN_NON_DESTRUCTIVE \u00b7 pipe ORIGIN_REACHABLE/AMBER",
+        "href": "/ops/backup-health-1",
+        "why": "From BACKUP-HEALTH-1 + external_route_health latest. Last backup \u2260 restore proven. staff_ready false."
+      }
+    ],
+    "owner_home_page_without_cf": "403_expected",
+    "prod_8787": "still_listening_untouched"
+  },
+  "desktop_gate_ready": false,
+  "desktop_gate_why": [
+    "Pulse strip APPLIED with 7 honest tiles, but not yet V1-evening-brief dense LIVE parity (occ BLOCKED/PMS, Uma closes EMPTY, GGV leads DEMO-labeled, Kuta stay far-future PARTIAL, atrium snapshot STALE)",
+    "Screenshots still BLOCKED_AUTH without Owner CF Access session",
+    "Authenticated visual verify of Owner Home pulse pending Matt session",
+    "staff_ready remains false \u2014 no commissioning claim"
+  ],
+  "residuals": [
+    "Atrium occupancy BLOCKED until PMS/Yanolja unblocked \u2014 card stays BLOCKED/EMPTY, never invent %",
+    "Uma venue_daily_closes EMPTY \u2014 night revenue/covers not on record; showing Today attention as PARTIAL only",
+    "GGV board leads currently DEMO-labeled \u2014 PARTIAL, not live pipeline claim",
+    "Kuta atrium_recent stay dates may be far future \u2014 PARTIAL when stay!=today",
+    "Alchemist unpaid is legacy projection \u2014 PARTIAL",
+    "Backup atrium snapshot STALE; pipe AMBER ORIGIN_REACHABLE",
+    "Owner Home HTML still CF-gated (403 without JWT) \u2014 expected",
+    "Screenshots CF-blocked"
+  ],
+  "next_work": [
+    "UX-PACK-10 authenticated screenshot pass (BLOCKED until Owner CF)",
+    "Optional UX-PACK-11 Travel RO / Learning RO deepen if cheap",
+    "Do not invent occ/revenue to force desktop_gate_ready"
+  ],
+  "acceptance": {
+    "pulse_strip_on_owner_home": true,
+    "seven_tiles_with_honesty": true,
+    "no_fabricated_metrics": true,
+    "finish_wolf_preserved": true,
+    "personal_strip_preserved": true,
+    "finance_sod_unchanged": true,
+    "staff_ready_false": true,
+    "prod_8787_untouched": true,
+    "pulse_ro_api_200": true
+  },
+  "matt_paragraph": "Owner Home now has a dense Pulse strip (after FINISH WOLF / My Work / Needs You, before Personal Command) fed by /api/owner/pulse-ro \u2014 seven glance tiles with WHAT \u00b7 value/state \u00b7 Open link \u00b7 LIVE/PARTIAL/EMPTY/BLOCKED stamps. Right now: Fitness LIVE from Spartacus RO; Kuta rate + BZG Uma Today attention + GGV DEMO leads + Alchemist unpaid + backup/pipe are PARTIAL with reasons; Atrium occupancy stays BLOCKED (PMS) \u2014 no invented percent; Uma last-night closes remain EMPTY so we do not invent revenue/covers. Prod :8787 untouched; finance SoD unchanged; staff_ready stays false. Desktop gate is still NOT ready \u2014 need your Owner CF session for screenshots and a few more real SoT feeds before it feels like the V1 evening brief."
+}

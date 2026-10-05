@@ -1,0 +1,54 @@
+{
+  "repair": "UMA-CLOSE-4OCT-FAIL",
+  "close_id": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+  "business_date": "2026-10-04",
+  "photo": {
+    "proved": true,
+    "hop": "HTTP auth blocked (cloudflare_access); engine save_close_receipt_bytes",
+    "http_detail": {
+      "ok": false,
+      "error": "missing_auth",
+      "message": "Cf-Access-Jwt-Assertion required. Local :8788 without Cloudflare JWT is denied (fail-closed).",
+      "identity_assurance": "none",
+      "real_authentication": false,
+      "auth_mode": "cloudflare_access",
+      "required_permission": "venue.close.*",
+      "_http_status": 403
+    },
+    "object_ref": "close-receipt://EVD-CLOSE-ESB-2DAA983C0120.jpg",
+    "content_hash": "50f225109f8f815dedf36c0f5f417d03b44f3af3b8c621f1d80c28413d70f151",
+    "close_id_bound": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+    "photo_index_bound": true,
+    "original_on_disk": true
+  },
+  "esb_cash_field_shown": "cash_from_payments",
+  "esb_cash_value": 360000.0,
+  "expected_cash_formula": "opening 1000000 + ESB cash 360000 \u2212 451000 = 909000",
+  "expected_cash": 909000.0,
+  "petty_cash_paid_today": 451000.0,
+  "declared_stayed_null": true,
+  "declared_before": null,
+  "declared_after": null,
+  "finished_bills": 61,
+  "finished_off_variance_line": true,
+  "difference_label_without_counted": "Cannot calculate yet",
+  "protected_closes_unchanged": true,
+  "protected_close_snapshots": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+      "state": "EXCEPTION",
+      "declared_cash_amount": 3225000.0,
+      "variance_cash_amount": -125000.0,
+      "updated_at": "2026-10-03T13:47:39Z"
+    },
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": {
+      "state": "CANCELLED",
+      "declared_cash_amount": null,
+      "variance_cash_amount": null,
+      "updated_at": "2026-10-03T12:32:22Z"
+    }
+  },
+  "enrich_has_staff_cash": true,
+  "cash_three_sources_uses_snapshot": true,
+  "beta_pid": 32550,
+  "prod_pid": 1297
+}

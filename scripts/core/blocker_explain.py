@@ -53,8 +53,8 @@ WHY_CLOSE_EVIDENCE_MISSING = (
     "Daily close has no declared-cash evidence. No till count was invented."
 )
 WHY_CLOSE_POLICY = (
-    "BLOCKED BY BUSINESS POLICY. "
-    "Daily Close is blocked because no variance policy is authorised. "
+    "Variance policy needs approval. "
+    "Daily Close can still be saved. Any unexplained variance becomes an exception until the Owner approves the variance policy. "
     "No threshold was invented."
 )
 WHY_CLOSE_NOT_LOADED = (

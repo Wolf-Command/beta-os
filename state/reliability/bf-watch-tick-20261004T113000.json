@@ -1,0 +1,14 @@
+{
+  "status": "FINISHED_REPORT",
+  "reason": "FCR_GGV_38_IMPLEMENTATION_DONE_NO_AUTO_BREADTH",
+  "as_of": "2026-10-04T11:30:00+08:00",
+  "active": false,
+  "bf_watch_next_action": "IDLE",
+  "next_breadth_arm": "BLOCKED_PEACHES_VETO_CREDIT_CONSERVATION",
+  "finished_owed": false,
+  "do_not_reping_after_this_ping": true,
+  "run_id": "BF-aa52eecef0b2",
+  "mac_pipe": "PIPE_OK",
+  "tip": "0b0e50d",
+  "dirty_approx": 500
+}

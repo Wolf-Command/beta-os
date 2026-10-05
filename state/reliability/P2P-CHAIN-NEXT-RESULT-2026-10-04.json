@@ -1,0 +1,39 @@
+{
+  "pack_id": "BZG-P2P-PO-1",
+  "status": "IMPLEMENTATION_DONE_BETA_RELOADED",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "eng_proved": false,
+  "routes": {
+    "page": "/bzg/uma-blu/purchase-orders",
+    "api_list": "/api/bzg/uma-blu/purchase-orders",
+    "api_detail": "/api/bzg/uma-blu/purchase-orders/{po_id}",
+    "api_create": "POST /api/bzg/uma-blu/purchase-orders",
+    "link_from": "/bzg/uma-blu/bills"
+  },
+  "tests_pass": 27,
+  "tests_fail": 0,
+  "deployed_beta": true,
+  "protected_close_untouched": true,
+  "no_prod": true,
+  "no_shutil_copy2_live_catalog": true,
+  "what_was_not_built": [
+    "receiving",
+    "nota/bill",
+    "three-way match",
+    "AP",
+    "ready-to-pay",
+    "payment execution"
+  ],
+  "stop_reason": null,
+  "permission": "bzg.po.create",
+  "tables": [
+    "bzg_ops_purchase_orders",
+    "bzg_ops_po_lines"
+  ],
+  "migration": "scripts/migrations/migrate_bzg_p2p_po1_20261004.py",
+  "core": "scripts/core/bzg_purchase_order.py",
+  "test_file": "scripts/tests/test_bzg_p2p_po1_20261004.py",
+  "beta_listener": "127.0.0.1:8788 pid 54756",
+  "prod_untouched": "127.0.0.1:8787 pid 1297"
+}

@@ -1,0 +1,148 @@
+{
+  "schema": "UX-PACK-06-08-APPLY/v0",
+  "applied": true,
+  "applied_wita": "2026-09-30T22:19:43+08:00",
+  "bound": "beta_only",
+  "beta_port": 8788,
+  "prod_8787": "READ_ONLY_UNTOUCHED",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "packs": [
+    "UX-PACK-06",
+    "UX-PACK-07",
+    "UX-PACK-08"
+  ],
+  "status": "PACK_06_08_APPLIED",
+  "finance_sod_unchanged": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "backup_dir": "/Users/wolfterminal/beta-os/backups/ux-pack-06-08-20260930-221309",
+  "beta_restarted": true,
+  "urls": {
+    "owner_fitness": "https://beta.wolfcommand.net/owner/fitness",
+    "owner_radar": "https://beta.wolfcommand.net/owner/radar",
+    "owner_trading": "https://beta.wolfcommand.net/owner/trading",
+    "my_work": "https://beta.wolfcommand.net/my-work",
+    "owner_home": "https://beta.wolfcommand.net/owner-empire-pack",
+    "local_fitness": "http://127.0.0.1:8788/owner/fitness",
+    "local_radar": "http://127.0.0.1:8788/owner/radar",
+    "local_my_work": "http://127.0.0.1:8788/my-work",
+    "local_owner_home": "http://127.0.0.1:8788/owner-empire-pack",
+    "fitness_ro_api": "http://127.0.0.1:8788/api/owner/fitness-ro"
+  },
+  "files_changed": [
+    "dashboards/owner-fitness-1.html",
+    "dashboards/owner-radar-1.html",
+    "dashboards/owner-trading-1.html",
+    "dashboards/my-work.html",
+    "dashboards/owner-empire-pack.html",
+    "dashboards/assets/sidenav.js",
+    "scripts/core/wolf_shell.py",
+    "scripts/core/owner_fitness_ro.py",
+    "scripts/serve_beta.py"
+  ],
+  "pack_06": {
+    "title": "Owner Fitness RO desk parity",
+    "status": "PARTIAL",
+    "ui": [
+      "Desk cards",
+      "Today",
+      "Program/plan",
+      "Training",
+      "Peptides",
+      "Status views"
+    ],
+    "apis": [
+      "/api/owner/fitness-ro"
+    ],
+    "api_enhancements": [
+      "today_day",
+      "today_plan"
+    ],
+    "writes": false,
+    "fitness_ne_hr": true,
+    "telegram_bot_unchanged": true
+  },
+  "pack_07": {
+    "title": "Personal Command IA grouping + Radar stub",
+    "personal_section": "PERSONAL",
+    "shown": [
+      "/owner/trading",
+      "/owner/fitness",
+      "/owner/radar"
+    ],
+    "hidden_until_useful_primary_ia": [
+      "/owner/travel",
+      "/owner/learning",
+      "/habitat-investment-2026"
+    ],
+    "routes_kept": true,
+    "radar_stub": "/owner/radar",
+    "radar_prove_retained": "/radar-prove"
+  },
+  "pack_08": {
+    "title": "My Work simplification + Owner Home personal/pulse",
+    "queues": [
+      "TODAY",
+      "DO THIS NEXT",
+      "NEEDS ATTENTION",
+      "WAITING",
+      "COMPLETED"
+    ],
+    "action_screen": "/my-work/item/{id}",
+    "api": "/api/staff/home",
+    "owner_home_personal_strip": true,
+    "owner_home_fitness_glance": true,
+    "owner_home_pulse_links_to_action": true,
+    "screenshots": "BLOCKED_AUTH"
+  },
+  "nav_item_count": {
+    "sidenav_after": 20,
+    "wolf_shell_after": 22
+  },
+  "tests": {
+    "test_owner_ro_loaders_20260930": "PASS=5 FAIL=0",
+    "local_fitness_ro": "ok V1_RO_OK today_day+today_plan",
+    "local_routes": {
+      "owner_fitness": 200,
+      "owner_radar": 200,
+      "owner_trading": 200,
+      "travel_learning_habitat_urls_kept": 200,
+      "my_work_owner_home_radar_prove": "403 without CF JWT (expected)"
+    }
+  },
+  "desktop_gate_ready": false,
+  "desktop_gate_why": [
+    "Owner Home pulse still weak vs V1 dense live tiles (occ/rates/BZG night/leads/purchasing/backup) \u2014 company cards + honesty exist but not V1 evening-brief parity",
+    "Screenshots still BLOCKED_AUTH without Owner CF Access session",
+    "My Work / Owner Home authenticated visual verify pending Matt session",
+    "Radar is PARTIAL stub (not full V1 radar board)",
+    "staff_ready remains false \u2014 no commissioning claim"
+  ],
+  "residuals": [
+    "Travel / Learning / Habitat Investment still HIDE_UNTIL_USEFUL (URL kept)",
+    "V1 Spartacus Telegram bot not ported",
+    "Full V1 radar / mission-control tiles not rebuilt",
+    "Owner Home V1-like multi-tile pulse still incomplete",
+    "Screenshots CF-blocked"
+  ],
+  "next_work": [
+    "Owner Home pulse tiles from real SoT (occ, Kuta rates, BZG night, leads) without invent",
+    "Authenticated screenshot pass with Owner CF session",
+    "Optional Travel/Learning RO desk slices when useful",
+    "Radar deepen beyond stub only if Matt prioritizes"
+  ],
+  "acceptance": {
+    "fitness_ro_desk_cards": true,
+    "day_program_visible": true,
+    "partial_stamp": true,
+    "no_write_invent": true,
+    "personal_command_grouped": true,
+    "radar_first_class_not_only_prove": true,
+    "hide_empty_until_useful": true,
+    "my_work_plain_queues": true,
+    "finance_sod_unchanged": true,
+    "staff_ready_false": true,
+    "prod_8787_untouched": true
+  },
+  "matt_paragraph": "Fitness (/owner/fitness) is now a PARTIAL RO desk like Trading \u2014 Today, Program/plan, Training, and Peptides cards from /api/owner/fitness-ro (live Spartacus sqlite, Fitness \u2260 HR, no writes). Personal Command is grouped under PERSONAL in the nav: Trading, Fitness, and a new Owner Radar stub (/owner/radar). Travel, Learning, and Habitat Investment stay reachable by URL but are hidden from primary IA until useful. My Work is simplified to TODAY / DO THIS NEXT / NEEDS ATTENTION / WAITING / COMPLETED with Open\u2192do this links to the action screen; Owner Home gained a Personal Command strip plus a Fitness day glance and pulse cards that link to actions when hrefs exist. Prod :8787 untouched; finance SoD unchanged; staff_ready stays false. Desktop gate is NOT ready yet \u2014 Owner Home is still weak vs the V1 live pulse, and screenshots remain CF-blocked without your Owner session."
+}

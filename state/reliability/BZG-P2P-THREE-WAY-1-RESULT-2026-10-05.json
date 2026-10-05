@@ -1,0 +1,86 @@
+{
+  "pack_id": "BZG-P2P-THREE-WAY-1",
+  "status": "IMPLEMENTATION_DONE_BETA_RELOADED",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "eng_proved": false,
+  "routes": {
+    "page": "/bzg/uma-blu/purchase-orders",
+    "api_match_run": "POST /api/bzg/uma-blu/three-way-match",
+    "api_match_list": "GET /api/bzg/uma-blu/three-way-match",
+    "api_match_detail": "GET /api/bzg/uma-blu/three-way-match/{match_id}",
+    "workspace": "GET /api/bzg/uma-blu/purchase-orders (includes match_history, eligible_three_way)"
+  },
+  "tables": {
+    "created": [
+      "bzg_ops_three_way_matches"
+    ],
+    "reused": [
+      "bzg_ops_purchase_orders",
+      "bzg_ops_po_lines",
+      "bzg_ops_goods_receipts",
+      "bzg_ops_gr_lines",
+      "bzg_ops_supplier_bills",
+      "bzg_ops_bill_lines"
+    ],
+    "live_counts": {
+      "bzg_ops_three_way_matches": 0,
+      "bzg_ops_supplier_bills": 0,
+      "bzg_ops_goods_receipts": 0,
+      "bzg_ops_purchase_orders": 0
+    }
+  },
+  "permission": "bzg.match.run",
+  "migration": "scripts/migrations/migrate_bzg_p2p_three_way1_20261005.py",
+  "backup": "catalog/backups/pre-bzg-p2p-three-way1-20261005-064734.sqlite",
+  "core": "scripts/core/bzg_three_way_match.py",
+  "test_file": "scripts/tests/test_bzg_p2p_three_way1_20261005.py",
+  "files_changed": [
+    "scripts/core/bzg_three_way_match.py",
+    "scripts/core/bzg_purchase_order.py",
+    "scripts/core/bzg_supplier_bill.py",
+    "scripts/migrations/migrate_bzg_p2p_three_way1_20261005.py",
+    "scripts/serve_beta.py",
+    "scripts/tests/test_bzg_p2p_three_way1_20261005.py",
+    "dashboards/bzg-uma-blu-purchase-orders.html"
+  ],
+  "tests_pass": {
+    "test_bzg_p2p_three_way1_20261005.py": 27,
+    "test_bzg_p2p_nota1_20261005.py": 24,
+    "test_bzg_p2p_recv1_20261005.py": 25,
+    "test_bzg_p2p_po1_20261004.py": 27
+  },
+  "tests_fail": {
+    "test_bzg_p2p_three_way1_20261005.py": 0,
+    "test_bzg_p2p_nota1_20261005.py": 0,
+    "test_bzg_p2p_recv1_20261005.py": 0,
+    "test_bzg_p2p_po1_20261004.py": 0
+  },
+  "beta_reloaded": true,
+  "beta_listener_pid": 97913,
+  "beta_port": 8788,
+  "prod_pid_unchanged": 1297,
+  "prod_port": 8787,
+  "protected_close_untouched": true,
+  "protected_close_states": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": "EXCEPTION",
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": "CANCELLED",
+    "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5": "DATA_CAPTURED"
+  },
+  "no_prod": true,
+  "no_commit": true,
+  "no_money_movement": true,
+  "what_was_not_built": [
+    "AP posting",
+    "ready-to-pay",
+    "payment execution",
+    "payment approval",
+    "bank connection",
+    "GL / journal posting",
+    "ggv_* table writes",
+    "purchase request rebuild",
+    "purchase order rebuild",
+    "goods receiving rebuild",
+    "supplier nota capture rebuild"
+  ]
+}

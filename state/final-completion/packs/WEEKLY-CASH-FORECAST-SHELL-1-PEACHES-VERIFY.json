@@ -4,10 +4,10 @@
   "phase": 2,
   "wave": 9,
   "status": "PASS_VERIFIED",
-  "verified_at": "2026-09-30T09:51:45+08:00",
+  "verified_at": "2026-09-30T10:01:53+08:00",
   "verifier": "Peaches-build-factory-watch",
+  "independent_retest_this_tick": true,
   "exit_code": 0,
-  "exit_at": "2026-09-30T09:51:14+08:00",
   "result_file": "docs/wolf/ops/WEEKLY-CASH-FORECAST-SHELL-1-RESULT.md",
   "tests_rerun": {
     "test_weekly_cash_forecast_shell1_20260930.py": {
@@ -42,12 +42,6 @@
       }
     ]
   },
-  "shell": {
-    "week_count": 13,
-    "weeks_unknown": true,
-    "invented_cash": false,
-    "file_import_only": true
-  },
   "prod": {
     "port": 8787,
     "pid": 15975,
@@ -58,22 +52,22 @@
     "staff_ready": false,
     "human_commissioned": false
   },
-  "classification": {
-    "pack": "HUMAN_COMMISSIONING_OR_INTERNAL",
-    "bank_facts": "HUMAN_COMMISSIONING",
-    "shell_ne_complete": true
-  },
   "no_push": true,
   "beta_only": true,
   "git": {
-    "beta_os_head": "3bf33be85f9defda7e5137466513cc96ca00291d",
+    "beta_os_head": "4c0d14d",
     "uncommitted": true
   },
-  "preserves": [
-    "FIN-CASH-TRUTH-1",
-    "FIN-BANK-CREDS-ROUTE-1"
-  ],
-  "next_pack": "CONNECTOR-HEALTH-DEEPEN-1",
-  "cursor_did_not_auto_start_next": true,
-  "HEADCHEF_auto": false
+  "HEADCHEF_auto": false,
+  "matt_finished_ping_at": "2026-09-30T10:01:53+08:00",
+  "shell": {
+    "week_count": 13,
+    "weeks_unknown": true,
+    "invented_cash": false,
+    "file_import_only": true
+  },
+  "classification": {
+    "pack": "HUMAN_COMMISSIONING_OR_INTERNAL",
+    "bank_facts": "HUMAN_COMMISSIONING"
+  }
 }

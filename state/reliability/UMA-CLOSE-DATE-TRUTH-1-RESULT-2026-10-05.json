@@ -1,0 +1,99 @@
+{
+  "repair": "UMA-CLOSE-DATE-TRUTH-1",
+  "status": "UX_REPAIR_COMPLETE",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "query_corrected": false,
+  "proof_ref": "state/reliability/UMA-29SEP-ESB-PROOF-2026-10-05.md",
+  "verdict_29sep": "CORRECT",
+  "proved_29sep_figures": {
+    "business_date": "2026-09-29",
+    "outlet": "BZG-UMA",
+    "branch": "BLZ",
+    "close_id": "VDC-8fd544e2-2132-4a4a-b714-720eb0cd18ad",
+    "state": "DATA_CAPTURED",
+    "fingerprint": "af1310a02e5ffe5c9a5e9ce29bbab6dc6dada93b4691a4843c4b2ac61543c724",
+    "esb_pulled_at": "2026-10-05T05:47:40.362801+08:00",
+    "cash_from_payments": 4135000.0,
+    "cash_payment_lines": 15,
+    "finished_bills": 51,
+    "grand_total_rounded": 13513512.4,
+    "payment_total_rounded": 13858512.4,
+    "card_from_payments": 8435000.0,
+    "edc_bni": 2545000.0,
+    "edc_bri": 4465000.0,
+    "edc_bank_subtotal": 7010000.0,
+    "house_scott_etik": 1425000.0,
+    "qris_from_payments": 1210000.0,
+    "qris_bni": 145000.0,
+    "qris_bri": 1065000.0,
+    "other_from_payments": 78512.4,
+    "cash_change_overpay": 345000.0,
+    "discounts": 0,
+    "cancelled_bills": 0,
+    "subtotal_raw_sum": 11181818.179,
+    "vatTotal_raw_sum": 1110330.5781,
+    "otherTaxTotal_raw_sum": 1221363.6364,
+    "printed_shift_report": "NOT AVAILABLE",
+    "settlement_api": "UNAVAILABLE"
+  },
+  "ux_repair": {
+    "surface": "dashboards/uma-blu-close.html",
+    "flow_steps": [
+      "Date",
+      "ESB sales",
+      "Shift report",
+      "Card terminals",
+      "Cash",
+      "Review",
+      "Submit"
+    ],
+    "owner_tools_collapsed": "Manage close",
+    "engineering_strings_removed_from_main_flow": true,
+    "historical_close_banner": "HISTORICAL CLOSE on closeMast when not today",
+    "29sep_draft_untouched": true
+  },
+  "files_changed": [
+    "dashboards/uma-blu-close.html",
+    "scripts/core/bzg_daily_close.py",
+    "scripts/tests/test_uma_close_date_truth_1_20261005.py"
+  ],
+  "tests": {
+    "test_uma_close_date_truth_1_20261005.py": {
+      "pass": 32,
+      "fail": 0,
+      "exit_code": 0
+    },
+    "test_close_surface_staff_rules_20261004.py": {
+      "pass": 11,
+      "fail": 0,
+      "exit_code": 0
+    }
+  },
+  "protected_closes_unchanged": true,
+  "protected_close_snapshots": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+      "state": "EXCEPTION",
+      "declared_cash_amount": 3225000.0,
+      "variance_cash_amount": -125000.0,
+      "updated_at": "2026-10-03T13:47:39Z"
+    },
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": {
+      "state": "CANCELLED",
+      "updated_at": "2026-10-03T12:32:22Z"
+    },
+    "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5": {
+      "state": "DATA_CAPTURED",
+      "declared_cash_amount": null,
+      "updated_at": "2026-10-04T13:56:05Z"
+    }
+  },
+  "beta_reloaded": true,
+  "beta_pid_before": 11882,
+  "beta_pid": 17208,
+  "prod_pid": 1297,
+  "no_prod": true,
+  "no_commit": true,
+  "no_esb_api_call": true,
+  "no_second_close_created": true
+}

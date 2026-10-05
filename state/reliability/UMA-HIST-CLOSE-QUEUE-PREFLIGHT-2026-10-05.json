@@ -1,0 +1,2765 @@
+{
+  "generated_at": "2026-10-05T11:25:00+08:00",
+  "generated_by": "executor_owner_order_UMA-HIST-CLOSE-QUEUE",
+  "slice_to_arm": "UMA-HIST-CLOSE-QUEUE-1",
+  "db": "catalog/content_library.sqlite",
+  "mode": "ro",
+  "venue_brand_id": "BZG-UMA",
+  "owner_queue_nine": [
+    {
+      "business_date": "2026-09-25",
+      "canonical_status": "OPEN",
+      "no_record": true,
+      "close_id": null,
+      "db_state": null,
+      "evidence": null,
+      "protected": false,
+      "ready_to_close_candidate": true,
+      "petty_that_date": [
+        {
+          "movement_id": "PETTY-HIST-415",
+          "direction": "IN",
+          "amount": 300000.0,
+          "purpose": "Cash In (Top-up): from Matt Goss",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-417",
+          "direction": "IN",
+          "amount": 500000.0,
+          "purpose": "Cash In (Top-up): from Matt Goss",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-421",
+          "direction": "OUT",
+          "amount": 320000.0,
+          "purpose": "Cash Out (Spend): Staff Meal",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-422",
+          "direction": "IN",
+          "amount": 300000.0,
+          "purpose": "Cash In (Top-up): from Matt Goss",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        }
+      ],
+      "petty_contamination": [],
+      "ui_note": "No venue_daily_closes row — not CLOSED; candidate OPEN (no fake green)"
+    },
+    {
+      "business_date": "2026-09-27",
+      "canonical_status": "OPEN",
+      "no_record": true,
+      "close_id": null,
+      "db_state": null,
+      "evidence": null,
+      "protected": false,
+      "ready_to_close_candidate": true,
+      "petty_that_date": [
+        {
+          "movement_id": "PETTY-HIST-430",
+          "direction": "OUT",
+          "amount": 21000.0,
+          "purpose": "Cash Out (Spend): Cleaning",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-431",
+          "direction": "OUT",
+          "amount": 50000.0,
+          "purpose": "Cash Out (Spend): Repairs & Maint",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-432",
+          "direction": "OUT",
+          "amount": 370000.0,
+          "purpose": "Cash Out (Spend): Staff Meal",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-434",
+          "direction": "IN",
+          "amount": 400000.0,
+          "purpose": "Cash In (Top-up): from Matt Goss",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        }
+      ],
+      "petty_contamination": [],
+      "ui_note": "No venue_daily_closes row — not CLOSED; candidate OPEN (no fake green)"
+    },
+    {
+      "business_date": "2026-09-28",
+      "canonical_status": "INCOMPLETE",
+      "no_record": false,
+      "close_id": "VDC-4046a805-8c76-4439-8019-f879f3b49513",
+      "db_state": "DATA_CAPTURED",
+      "declared_cash": null,
+      "variance_cash": null,
+      "esb_pulled_at": "2026-10-03T05:47:34.839798+08:00",
+      "esb_freeze_snapshot": {
+        "cancelled_count": 3,
+        "cash_change_overpay": 150000.0,
+        "cash_from_payments": 2460000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 2310000.0,
+        "cash_tendered_includes_change": true,
+        "other_cost_bill_count": 1,
+        "pax_total": 85.0,
+        "qris_from_payments": 905000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 57,
+        "sales_grand_excl_other_cost": 15755000.0,
+        "sales_pax_excl_other_cost": 84.0
+      },
+      "esb_totals_full": {
+        "cancelled_count": 3,
+        "card_from_payments": 12540000.0,
+        "card_label": "ESB_CARD_FROM_PAYMENTS",
+        "cash_change_overpay": 150000.0,
+        "cash_from_payments": 2460000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 2310000.0,
+        "cash_tendered_includes_change": true,
+        "classify_uses_payment_method_name": true,
+        "finished_count": 58,
+        "grand_total": 15862438.02,
+        "other_cost_bill_count": 1,
+        "other_from_payments": 107438.02,
+        "other_status_count": 0,
+        "pax_total": 85.0,
+        "payment_by_method_name": {
+          "CASH": 2460000.0,
+          "EDC BNI": 7985000.0,
+          "EDC BRI": 1745000.0,
+          "Executife Chef": 107438.02,
+          "MATT AND FAMILY": 645000.0,
+          "QRIS BNI": 415000.0,
+          "QRIS BRI": 490000.0,
+          "ROB & FAMILY": 210000.0,
+          "SCOTT & ETIK": 1955000.0
+        },
+        "payment_mix": {
+          "CARD": 13445000.0,
+          "CASH": 2460000.0,
+          "OTHER COST": 107438.02
+        },
+        "payment_total": 16012438.02,
+        "payments_by_bank_split": {
+          "Cash": 2460000.0,
+          "EDC_BNI": 7985000.0,
+          "EDC_BRI": 1745000.0,
+          "EXECUTIVE_CHEF": 107438.02,
+          "MATT_AND_FAMILY": 645000.0,
+          "QRIS_BNI": 415000.0,
+          "QRIS_BRI": 490000.0,
+          "ROB_FAMILY": 210000.0,
+          "SCOTT_ETIK": 1955000.0
+        },
+        "qris_from_payments": 905000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 57,
+        "sales_grand_excl_other_cost": 15755000.0,
+        "sales_pax_excl_other_cost": 84.0
+      },
+      "evidence": {
+        "till_rows": 0,
+        "edc_receipts": 0,
+        "edc_with_image": 0,
+        "printed_shift_receipts": 0,
+        "printed_with_image": 0,
+        "core_evidence": 0,
+        "vision_events": 0,
+        "edc_terminals": null
+      },
+      "photos_missing": true,
+      "photos_present": false,
+      "protected": false,
+      "all_records": [
+        {
+          "close_id": "VDC-4046a805-8c76-4439-8019-f879f3b49513",
+          "state": "DATA_CAPTURED",
+          "updated_at": "2026-10-03T13:05:37Z"
+        }
+      ],
+      "ready_to_close_candidate": true,
+      "petty_that_date": [
+        {
+          "movement_id": "PETTY-HIST-435",
+          "direction": "OUT",
+          "amount": 26000.0,
+          "purpose": "Cash Out (Spend): Cleaning",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-436",
+          "direction": "OUT",
+          "amount": 290000.0,
+          "purpose": "Cash Out (Spend): Staff Meal",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-437",
+          "direction": "OUT",
+          "amount": 20000.0,
+          "purpose": "Cash Out (Spend): Bar Supplies",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-438",
+          "direction": "OUT",
+          "amount": 30000.0,
+          "purpose": "Cash Out (Spend): Staff Meal",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-439",
+          "direction": "OUT",
+          "amount": 30000.0,
+          "purpose": "Cash Out (Spend): Staff Meal",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-440",
+          "direction": "OUT",
+          "amount": 16900.0,
+          "purpose": "Cash Out (Spend): Kitchen Supplies",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-441",
+          "direction": "IN",
+          "amount": 300000.0,
+          "purpose": "Cash In (Top-up): from Matt Goss",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-442",
+          "direction": "OUT",
+          "amount": 15000.0,
+          "purpose": "Cash Out (Spend): Cleaning",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        }
+      ],
+      "petty_contamination": []
+    },
+    {
+      "business_date": "2026-09-29",
+      "canonical_status": "INCOMPLETE",
+      "no_record": false,
+      "close_id": "VDC-8fd544e2-2132-4a4a-b714-720eb0cd18ad",
+      "db_state": "DATA_CAPTURED",
+      "declared_cash": null,
+      "variance_cash": null,
+      "esb_pulled_at": "2026-10-05T05:47:40.362801+08:00",
+      "esb_freeze_snapshot": {
+        "cancelled_count": 0,
+        "cash_change_overpay": 345000.0,
+        "cash_from_payments": 4135000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 3870000.0,
+        "cash_tendered_includes_change": true,
+        "other_cost_bill_count": 1,
+        "pax_total": 80.0,
+        "qris_from_payments": 1210000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 50,
+        "sales_grand_excl_other_cost": 13435000.0,
+        "sales_pax_excl_other_cost": 79.0
+      },
+      "esb_totals_full": {
+        "cancelled_count": 0,
+        "card_from_payments": 8435000.0,
+        "card_label": "ESB_CARD_FROM_PAYMENTS",
+        "cash_change_overpay": 345000.0,
+        "cash_from_payments": 4135000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 3870000.0,
+        "cash_tendered_includes_change": true,
+        "classify_uses_payment_method_name": true,
+        "finished_count": 51,
+        "grand_total": 13513512.4,
+        "other_cost_bill_count": 1,
+        "other_from_payments": 78512.4,
+        "other_status_count": 0,
+        "pax_total": 80.0,
+        "payment_by_method_name": {
+          "CASH": 4135000.0,
+          "EDC BNI": 2545000.0,
+          "EDC BRI": 4465000.0,
+          "Executife Chef": 78512.4,
+          "QRIS BNI": 145000.0,
+          "QRIS BRI": 1065000.0,
+          "SCOTT & ETIK": 1425000.0
+        },
+        "payment_mix": {
+          "CARD": 9645000.0,
+          "CASH": 4135000.0,
+          "OTHER COST": 78512.4
+        },
+        "payment_total": 13858512.4,
+        "payments_by_bank_split": {
+          "Cash": 4135000.0,
+          "EDC_BNI": 2545000.0,
+          "EDC_BRI": 4465000.0,
+          "EXECUTIVE_CHEF": 78512.4,
+          "QRIS_BNI": 145000.0,
+          "QRIS_BRI": 1065000.0,
+          "SCOTT_ETIK": 1425000.0
+        },
+        "qris_from_payments": 1210000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 50,
+        "sales_grand_excl_other_cost": 13435000.0,
+        "sales_pax_excl_other_cost": 79.0
+      },
+      "evidence": {
+        "till_rows": 0,
+        "edc_receipts": 0,
+        "edc_with_image": 0,
+        "printed_shift_receipts": 1,
+        "printed_with_image": 0,
+        "core_evidence": 0,
+        "vision_events": 0,
+        "edc_terminals": null
+      },
+      "photos_missing": true,
+      "photos_present": false,
+      "protected": true,
+      "all_records": [
+        {
+          "close_id": "VDC-8fd544e2-2132-4a4a-b714-720eb0cd18ad",
+          "state": "DATA_CAPTURED",
+          "updated_at": "2026-10-05T00:41:41Z"
+        }
+      ],
+      "ready_to_close_candidate": false,
+      "petty_that_date": [
+        {
+          "movement_id": "PETTY-HIST-443",
+          "direction": "OUT",
+          "amount": 370000.0,
+          "purpose": "Cash Out (Spend): Staff Meal",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        }
+      ],
+      "petty_contamination": []
+    },
+    {
+      "business_date": "2026-09-30",
+      "canonical_status": "INCOMPLETE",
+      "no_record": false,
+      "close_id": "VDC-25a3123a-3e26-43db-8085-10c6f208bbcd",
+      "db_state": "DATA_CAPTURED",
+      "declared_cash": null,
+      "variance_cash": null,
+      "esb_pulled_at": "2026-10-01T05:47:26.090632+08:00",
+      "esb_freeze_snapshot": {
+        "cancelled_count": 4,
+        "cash_from_payments": 2610000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement"
+      },
+      "esb_totals_full": {
+        "cancelled_count": 4,
+        "card_from_payments": 12700000.0,
+        "cash_from_payments": 2610000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "finished_count": 50,
+        "grand_total": 15140000.0,
+        "other_from_payments": 0.0,
+        "other_status_count": 0,
+        "payment_mix": {
+          "CARD": 12700000.0,
+          "CASH": 2610000.0
+        },
+        "payment_total": 15310000.0
+      },
+      "evidence": {
+        "till_rows": 0,
+        "edc_receipts": 0,
+        "edc_with_image": 0,
+        "printed_shift_receipts": 0,
+        "printed_with_image": 0,
+        "core_evidence": 0,
+        "vision_events": 0,
+        "edc_terminals": null
+      },
+      "photos_missing": true,
+      "photos_present": false,
+      "protected": false,
+      "all_records": [
+        {
+          "close_id": "VDC-25a3123a-3e26-43db-8085-10c6f208bbcd",
+          "state": "DATA_CAPTURED",
+          "updated_at": "2026-10-01T11:40:32Z"
+        }
+      ],
+      "ready_to_close_candidate": true,
+      "petty_that_date": [
+        {
+          "movement_id": "PETTY-HIST-444",
+          "direction": "IN",
+          "amount": 500000.0,
+          "purpose": "Cash In (Top-up): from Matt Goss",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-445",
+          "direction": "OUT",
+          "amount": 24000.0,
+          "purpose": "Cash Out (Spend): Cleaning",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-446",
+          "direction": "OUT",
+          "amount": 40000.0,
+          "purpose": "Cash Out (Spend): Staff Meal",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-447",
+          "direction": "OUT",
+          "amount": 380000.0,
+          "purpose": "Cash Out (Spend): Staff Meal",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        }
+      ],
+      "petty_contamination": []
+    },
+    {
+      "business_date": "2026-10-01",
+      "canonical_status": "OPEN",
+      "no_record": false,
+      "close_id": "VDC-3353351f-3234-4f7d-acf0-a63e0e176114",
+      "db_state": "OPEN",
+      "declared_cash": null,
+      "variance_cash": null,
+      "esb_pulled_at": null,
+      "esb_freeze_snapshot": null,
+      "esb_totals_full": null,
+      "evidence": {
+        "till_rows": 0,
+        "edc_receipts": 0,
+        "edc_with_image": 0,
+        "printed_shift_receipts": 0,
+        "printed_with_image": 0,
+        "core_evidence": 0,
+        "vision_events": 0,
+        "edc_terminals": null
+      },
+      "photos_missing": true,
+      "photos_present": false,
+      "protected": false,
+      "all_records": [
+        {
+          "close_id": "VDC-3353351f-3234-4f7d-acf0-a63e0e176114",
+          "state": "OPEN",
+          "updated_at": "2026-10-01T11:37:10Z"
+        }
+      ],
+      "ready_to_close_candidate": true,
+      "petty_that_date": [
+        {
+          "movement_id": "PETTY-UMA-2321496C6D",
+          "direction": "OUT",
+          "amount": 50000.0,
+          "purpose": "Transport cash out. alchemist petty_cash id 451. Logged by Uma Blu (outlet phone). Currency left blank because the Alchemist row has no currency column.",
+          "outlet": null,
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-448",
+          "direction": "IN",
+          "amount": 400000.0,
+          "purpose": "Cash In (Top-up): from Matt Goss",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-449",
+          "direction": "OUT",
+          "amount": 15000.0,
+          "purpose": "Cash Out (Spend): Cleaning",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-HIST-450",
+          "direction": "OUT",
+          "amount": 370000.0,
+          "purpose": "Cash Out (Spend): Staff Meal",
+          "outlet": "Uma Blu Cafe",
+          "venue": "BZG-UMA"
+        }
+      ],
+      "petty_contamination": []
+    },
+    {
+      "business_date": "2026-10-02",
+      "canonical_status": "OPEN",
+      "no_record": false,
+      "close_id": "VDC-da1b6621-b657-4444-bc7c-7161a0bf5b94",
+      "db_state": "OPEN",
+      "declared_cash": null,
+      "variance_cash": null,
+      "esb_pulled_at": null,
+      "esb_freeze_snapshot": null,
+      "esb_totals_full": null,
+      "evidence": {
+        "till_rows": 0,
+        "edc_receipts": 0,
+        "edc_with_image": 0,
+        "printed_shift_receipts": 0,
+        "printed_with_image": 0,
+        "core_evidence": 0,
+        "vision_events": 0,
+        "edc_terminals": null
+      },
+      "photos_missing": true,
+      "photos_present": false,
+      "protected": false,
+      "all_records": [
+        {
+          "close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+          "state": "CANCELLED",
+          "updated_at": "2026-10-03T12:32:22Z"
+        },
+        {
+          "close_id": "VDC-da1b6621-b657-4444-bc7c-7161a0bf5b94",
+          "state": "OPEN",
+          "updated_at": "2026-10-03T12:32:27Z"
+        }
+      ],
+      "ready_to_close_candidate": true,
+      "petty_that_date": [
+        {
+          "movement_id": "PETTY-UMA-36743CB1E2",
+          "direction": "IN",
+          "amount": 500000.0,
+          "purpose": "Top up",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-UMA-898F771D08",
+          "direction": "OUT",
+          "amount": 26000.0,
+          "purpose": "Cleaning",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-UMA-535A0CBDE0",
+          "direction": "OUT",
+          "amount": 45300.0,
+          "purpose": "Battery",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-UMA-3E3916F24A",
+          "direction": "OUT",
+          "amount": 42000.0,
+          "purpose": "Gallon",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-UMA-E53F9B191A",
+          "direction": "OUT",
+          "amount": 20000.0,
+          "purpose": "Coconut",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-UMA-3B76ACAAB3",
+          "direction": "OUT",
+          "amount": 14000.0,
+          "purpose": "Gallon",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-UMA-588D5C787F",
+          "direction": "OUT",
+          "amount": 350000.0,
+          "purpose": "Nasi bungkus",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-UMA-266BD262E4",
+          "direction": "IN",
+          "amount": 500000.0,
+          "purpose": "Top up",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-UMA-0153380282",
+          "direction": "OUT",
+          "amount": 500000.0,
+          "purpose": "Metari",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-UMA-9EE4DF7AFB",
+          "direction": "IN",
+          "amount": 500000.0,
+          "purpose": "Top up",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        }
+      ],
+      "petty_contamination": []
+    },
+    {
+      "business_date": "2026-10-03",
+      "canonical_status": "EXCEPTION",
+      "no_record": false,
+      "close_id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+      "db_state": "EXCEPTION",
+      "declared_cash": 3225000.0,
+      "variance_cash": -125000.0,
+      "esb_pulled_at": "2026-10-03T18:47:27.951117+08:00",
+      "esb_freeze_snapshot": {
+        "cancelled_count": 4,
+        "cash_change_overpay": 240000.0,
+        "cash_from_payments": 3350000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 3110000.0,
+        "cash_tendered_includes_change": true,
+        "other_cost_bill_count": 0,
+        "pax_total": 68.0,
+        "qris_from_payments": 885000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 43,
+        "sales_grand_excl_other_cost": 11850000.0,
+        "sales_pax_excl_other_cost": 68.0
+      },
+      "esb_totals_full": {
+        "cancelled_count": 4,
+        "card_from_payments": 7855000.0,
+        "card_label": "ESB_CARD_FROM_PAYMENTS",
+        "cash_change_overpay": 240000.0,
+        "cash_from_payments": 3350000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 3110000.0,
+        "cash_tendered_includes_change": true,
+        "classify_uses_payment_method_name": true,
+        "finished_count": 43,
+        "grand_total": 11850000.0,
+        "other_cost_bill_count": 0,
+        "other_from_payments": 0.0,
+        "other_status_count": 7,
+        "pax_total": 68.0,
+        "payment_by_method_name": {
+          "CASH": 3350000.0,
+          "EDC BRI": 5940000.0,
+          "EDC MANDIRI": 1915000.0,
+          "QRIS BRI": 365000.0,
+          "QRIS MANDIRI": 520000.0
+        },
+        "payment_mix": {
+          "CARD": 8740000.0,
+          "CASH": 3350000.0
+        },
+        "payment_total": 12090000.0,
+        "payments_by_bank_split": {
+          "Cash": 3350000.0,
+          "EDC_BRI": 5940000.0,
+          "EDC_Mandiri": 1915000.0,
+          "QRIS_BRI": 365000.0,
+          "QRIS_Mandiri": 520000.0
+        },
+        "qris_from_payments": 885000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 43,
+        "sales_grand_excl_other_cost": 11850000.0,
+        "sales_pax_excl_other_cost": 68.0
+      },
+      "evidence": {
+        "till_rows": 4,
+        "edc_receipts": 2,
+        "edc_with_image": 2,
+        "printed_shift_receipts": 1,
+        "printed_with_image": 1,
+        "core_evidence": 17,
+        "vision_events": 2,
+        "edc_terminals": null
+      },
+      "photos_missing": false,
+      "photos_present": true,
+      "protected": true,
+      "all_records": [
+        {
+          "close_id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+          "state": "EXCEPTION",
+          "updated_at": "2026-10-03T13:47:39Z"
+        }
+      ],
+      "ready_to_close_candidate": false,
+      "petty_that_date": [
+        {
+          "movement_id": "PETTY-UMA-A172457171",
+          "direction": "OUT",
+          "amount": 490000.0,
+          "purpose": "Nasi",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-UMA-74588A9330",
+          "direction": "OUT",
+          "amount": 50000.0,
+          "purpose": "Coconut",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-UMA-7883C01A50",
+          "direction": "OUT",
+          "amount": 15000.0,
+          "purpose": "Laundry",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-UMA-060F581083",
+          "direction": "IN",
+          "amount": 500000.0,
+          "purpose": "Petty cash",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        }
+      ],
+      "petty_contamination": []
+    },
+    {
+      "business_date": "2026-10-04",
+      "canonical_status": "INCOMPLETE",
+      "no_record": false,
+      "close_id": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+      "db_state": "DATA_CAPTURED",
+      "declared_cash": null,
+      "variance_cash": null,
+      "esb_pulled_at": "2026-10-04T21:24:19.035052+08:00",
+      "esb_freeze_snapshot": {
+        "cancelled_count": 6,
+        "cash_change_overpay": 30000.0,
+        "cash_from_payments": 360000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 330000.0,
+        "cash_tendered_includes_change": true,
+        "other_cost_bill_count": 1,
+        "pax_total": 91.0,
+        "qris_from_payments": 3570000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 60,
+        "sales_grand_excl_other_cost": 19055000.0,
+        "sales_pax_excl_other_cost": 90.0
+      },
+      "esb_totals_full": {
+        "cancelled_count": 6,
+        "card_from_payments": 15155000.0,
+        "card_label": "ESB_CARD_FROM_PAYMENTS",
+        "cash_change_overpay": 30000.0,
+        "cash_from_payments": 360000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 330000.0,
+        "cash_tendered_includes_change": true,
+        "classify_uses_payment_method_name": true,
+        "finished_count": 61,
+        "grand_total": 19158305.79,
+        "other_cost_bill_count": 1,
+        "other_from_payments": 103305.79,
+        "other_status_count": 0,
+        "pax_total": 91.0,
+        "payment_by_method_name": {
+          "CASH": 360000.0,
+          "EDC BNI": 2035000.0,
+          "EDC MANDIRI": 11100000.0,
+          "Executife Chef": 103305.79,
+          "QRIS BNI": 1315000.0,
+          "QRIS MANDIRI": 2255000.0,
+          "ROB & FAMILY": 50000.0,
+          "ROOM SERVICE": 255000.0,
+          "SCOTT & ETIK": 1715000.0
+        },
+        "payment_mix": {
+          "CARD": 18725000.0,
+          "CASH": 360000.0,
+          "OTHER COST": 103305.79
+        },
+        "payment_total": 19188305.79,
+        "payments_by_bank_split": {
+          "Cash": 360000.0,
+          "EDC_BNI": 2035000.0,
+          "EDC_Mandiri": 11100000.0,
+          "EXECUTIVE_CHEF": 103305.79,
+          "QRIS_BNI": 1315000.0,
+          "QRIS_Mandiri": 2255000.0,
+          "ROB_FAMILY": 50000.0,
+          "ROOM_SERVICE": 255000.0,
+          "SCOTT_ETIK": 1715000.0
+        },
+        "qris_from_payments": 3570000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 60,
+        "sales_grand_excl_other_cost": 19055000.0,
+        "sales_pax_excl_other_cost": 90.0
+      },
+      "evidence": {
+        "till_rows": 0,
+        "edc_receipts": 0,
+        "edc_with_image": 0,
+        "printed_shift_receipts": 0,
+        "printed_with_image": 0,
+        "core_evidence": 0,
+        "vision_events": 0,
+        "edc_terminals": null
+      },
+      "photos_missing": true,
+      "photos_present": false,
+      "protected": true,
+      "all_records": [
+        {
+          "close_id": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+          "state": "DATA_CAPTURED",
+          "updated_at": "2026-10-04T13:56:05Z"
+        }
+      ],
+      "ready_to_close_candidate": false,
+      "petty_that_date": [
+        {
+          "movement_id": "PETTY-UMA-6E512800FE",
+          "direction": "OUT",
+          "amount": 430000.0,
+          "purpose": "Nasi bungkus",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        },
+        {
+          "movement_id": "PETTY-UMA-80867C2504",
+          "direction": "OUT",
+          "amount": 21000.0,
+          "purpose": "Laundry",
+          "outlet": "Uma Blu",
+          "venue": "BZG-UMA"
+        }
+      ],
+      "petty_contamination": []
+    }
+  ],
+  "status_counts_nine": {
+    "OPEN": 4,
+    "INCOMPLETE": 4,
+    "EXCEPTION": 1
+  },
+  "ready_to_close_now": 6,
+  "all_other_sep_oct_historical": {
+    "dates_with_records": [
+      {
+        "business_date": "2026-09-23",
+        "close_id": "VDC-c862db66-b57b-4cdc-b667-5df28fd66b25",
+        "db_state": "DATA_CAPTURED",
+        "ui": "INCOMPLETE",
+        "evidence": {
+          "till_rows": 0,
+          "edc_receipts": 0,
+          "edc_with_image": 0,
+          "printed_shift_receipts": 0,
+          "printed_with_image": 0,
+          "core_evidence": 0,
+          "vision_events": 0,
+          "edc_terminals": null
+        }
+      }
+    ],
+    "ui_status_counts": {
+      "INCOMPLETE": 1
+    },
+    "note": "Owner expects CLOSED unless Wolf proves otherwise. Live DB has ZERO CLOSED Uma rows in Sep/Oct — do not invent CLOSED from ESB. Evidence recovery search required before asserting CLOSED."
+  },
+  "sep_dates_with_no_close_record": [
+    "2026-09-01",
+    "2026-09-02",
+    "2026-09-03",
+    "2026-09-04",
+    "2026-09-05",
+    "2026-09-06",
+    "2026-09-07",
+    "2026-09-08",
+    "2026-09-09",
+    "2026-09-10",
+    "2026-09-11",
+    "2026-09-12",
+    "2026-09-13",
+    "2026-09-14",
+    "2026-09-15",
+    "2026-09-16",
+    "2026-09-17",
+    "2026-09-18",
+    "2026-09-19",
+    "2026-09-20",
+    "2026-09-21",
+    "2026-09-22",
+    "2026-09-24",
+    "2026-09-25",
+    "2026-09-26",
+    "2026-09-27"
+  ],
+  "protected_closes": [
+    {
+      "prefix": "VDC-470e741f",
+      "date": "2026-10-03",
+      "rule": "do not create another close; show real INCOMPLETE/EXCEPTION",
+      "live_db_state": "EXCEPTION",
+      "ui": "EXCEPTION"
+    },
+    {
+      "prefix": "VDC-64f5f529",
+      "date": "2026-10-04",
+      "rule": "use existing draft; do not create another",
+      "live_db_state": "DATA_CAPTURED",
+      "ui": "INCOMPLETE"
+    },
+    {
+      "prefix": "VDC-8fd544e2",
+      "date": "2026-09-29",
+      "rule": "do not submit/finalise; preserve warehouse vs printed discrepancy; photo SOURCE EVIDENCE PROVIDED / FILE INGEST PENDING",
+      "live_db_state": "DATA_CAPTURED",
+      "ui": "INCOMPLETE"
+    }
+  ],
+  "protected_petty_today": {
+    "movement_id": "PETTY-UMA-6D853EEAE0",
+    "business_date": "2026-10-05",
+    "direction": "IN",
+    "amount": 500000.0,
+    "purpose": "Low float",
+    "created_at": "2026-10-04T23:52:48Z"
+  },
+  "petty_contamination_check": {
+    "PETTY-UMA-6D853EEAE0_business_date": "2026-10-05",
+    "amount": 500000.0,
+    "appears_in_any_nine_date_petty": false,
+    "ok_not_contaminated": true
+  },
+  "evidence_recovery": {
+    "queue_dates_missing_photos": [
+      "2026-09-25",
+      "2026-09-27",
+      "2026-09-28",
+      "2026-09-29",
+      "2026-09-30",
+      "2026-10-01",
+      "2026-10-02",
+      "2026-10-04"
+    ],
+    "queue_dates_with_photos": [
+      "2026-10-03"
+    ],
+    "authorised_stores_to_search": [
+      "Wolf storage",
+      "upload folders",
+      "NAS",
+      "Telegram evidence",
+      "Alchemist",
+      "Drive",
+      "old Daily Close folders",
+      "ESB exports"
+    ],
+    "counts": {
+      "nine_with_any_photo_evidence": 1,
+      "nine_photos_missing_or_no_record": 8,
+      "other_historical_needing_closed_proof": 25
+    }
+  },
+  "multi_source_preserve": {
+    "2026-09-29": {
+      "close_id": "VDC-8fd544e2-2132-4a4a-b714-720eb0cd18ad",
+      "warehouse_cash": 4135000,
+      "warehouse_bills": 51,
+      "printed_gross": 13435000,
+      "printed_cash": 3790000,
+      "printed_bills": 50,
+      "printed_pax": 79,
+      "non_sales_exec_chef": 78512,
+      "discrepancy_cash": 345000,
+      "discrepancy_bills": 1,
+      "auto_resolve": false,
+      "do_not_submit": true
+    },
+    "2026-10-02": "preserve printed vs historical ESB separately"
+  },
+  "notes": [
+    "No CLOSED Uma Blu rows in venue_daily_closes for Sep/Oct 2026.",
+    "Do not infer CLOSED from ESB; do not infer OPEN from missing photo alone when a draft exists (use INCOMPLETE).",
+    "Tonight current-day close (2026-10-05) is separate from this backlog queue.",
+    "Never pull today live ESB into historical freeze."
+  ],
+  "preflight_freeze_matrix": [
+    {
+      "business_date": "2026-09-25",
+      "frozen_at": "2026-10-05T19:37:29.454853+08:00",
+      "close_id": null,
+      "db_state": null,
+      "canonical_ui_status": "OPEN",
+      "esb_warehouse_freeze": null,
+      "esb_totals_full": null,
+      "esb_pulled_at": null,
+      "printed_shift": null,
+      "warehouse_source": null,
+      "source_discrepancy": null,
+      "terminals_edc_receipts": [],
+      "cash": {
+        "declared_cash_amount": null,
+        "variance_cash_amount": null
+      },
+      "petty": {
+        "business_date": "2026-09-25",
+        "movements": [],
+        "petty_out_total": 0.0,
+        "petty_in_total": 0.0,
+        "contamination": [],
+        "ok_not_contaminated": true
+      },
+      "existing_close": null,
+      "all_records": [],
+      "evidence": {
+        "till_rows": 0,
+        "edc_receipts": 0,
+        "edc_with_image": 0,
+        "printed_shift_receipts": 0,
+        "printed_with_image": 0,
+        "core_evidence": 0,
+        "vision_events": 0
+      },
+      "exceptions": {
+        "state": null,
+        "variance_cash_amount": null
+      },
+      "multi_source_preserve": null,
+      "petty_contamination_ok": true,
+      "live_esb_excluded": true
+    },
+    {
+      "business_date": "2026-09-27",
+      "frozen_at": "2026-10-05T19:37:29.455319+08:00",
+      "close_id": "VDC-667e795b-d311-42e3-8378-00264e183fe2",
+      "db_state": "DATA_CAPTURED",
+      "canonical_ui_status": "INCOMPLETE",
+      "esb_warehouse_freeze": {
+        "cash_from_payments": 2730000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "qris_from_payments": 3230000.0,
+        "sales_grand_excl_other_cost": 19215000.0,
+        "sales_bill_count_excl_other_cost": 60,
+        "sales_pax_excl_other_cost": 93.0,
+        "cancelled_count": 9,
+        "other_cost_bill_count": 1,
+        "cash_change_overpay": 235000.0,
+        "cash_sales_grand": 2495000.0,
+        "cash_tendered_includes_change": true
+      },
+      "esb_totals_full": {
+        "cancelled_count": 9,
+        "card_from_payments": 13490000.0,
+        "card_label": "ESB_CARD_FROM_PAYMENTS",
+        "cash_change_overpay": 235000.0,
+        "cash_from_payments": 2730000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 2495000.0,
+        "cash_tendered_includes_change": true,
+        "classify_uses_payment_method_name": true,
+        "finished_count": 61,
+        "grand_total": 19252190.08,
+        "other_cost_bill_count": 1,
+        "other_from_payments": 37190.08,
+        "other_status_count": 0,
+        "pax_total": 94.0,
+        "payment_by_method_name": {
+          "CASH": 2730000.0,
+          "EDC BNI": 11495000.0,
+          "Executife Chef": 37190.08,
+          "MATT AND FAMILY": 240000.0,
+          "QRIS BNI": 3230000.0,
+          "ROB & FAMILY": 325000.0,
+          "SCOTT & ETIK": 1430000.0
+        },
+        "payment_mix": {
+          "CARD": 16720000.0,
+          "CASH": 2730000.0,
+          "OTHER COST": 37190.08
+        },
+        "payment_total": 19487190.08,
+        "payments_by_bank_split": {
+          "Cash": 2730000.0,
+          "EDC_BNI": 11495000.0,
+          "EXECUTIVE_CHEF": 37190.08,
+          "MATT_AND_FAMILY": 240000.0,
+          "QRIS_BNI": 3230000.0,
+          "ROB_FAMILY": 325000.0,
+          "SCOTT_ETIK": 1430000.0
+        },
+        "qris_from_payments": 3230000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 60,
+        "sales_grand_excl_other_cost": 19215000.0,
+        "sales_pax_excl_other_cost": 93.0
+      },
+      "esb_pulled_at": "2026-10-05T05:47:46.084312+08:00",
+      "printed_shift": null,
+      "warehouse_source": {
+        "source": "warehouse_payment_lines",
+        "object": "WAREHOUSE_SNAPSHOT",
+        "business_date": "2026-09-27",
+        "fingerprint_sha256": "eff414bef6c83068eef5f9974b3892afd385ce97a9a7012202e3bf0ec1c76403",
+        "cash_rp": 2730000.0,
+        "finished_bills": 61,
+        "gross_sales_rp": 19252190.08,
+        "payments_by_bank_split": {
+          "Cash": 2730000.0,
+          "EDC_BNI": 11495000.0,
+          "EXECUTIVE_CHEF": 37190.08,
+          "MATT_AND_FAMILY": 240000.0,
+          "QRIS_BNI": 3230000.0,
+          "ROB_FAMILY": 325000.0,
+          "SCOTT_ETIK": 1430000.0
+        },
+        "snapshot_frozen": true
+      },
+      "source_discrepancy": null,
+      "terminals_edc_receipts": [],
+      "cash": {
+        "declared_cash_amount": null,
+        "variance_cash_amount": null
+      },
+      "petty": {
+        "business_date": "2026-09-27",
+        "movements": [],
+        "petty_out_total": 0.0,
+        "petty_in_total": 0.0,
+        "contamination": [],
+        "ok_not_contaminated": true
+      },
+      "existing_close": {
+        "close_id": "VDC-667e795b-d311-42e3-8378-00264e183fe2",
+        "entity_id": "ENT-BZG",
+        "venue_brand_id": "BZG-UMA",
+        "business_date": "2026-09-27",
+        "state": "DATA_CAPTURED",
+        "esb_fingerprint_sha256": "eff414bef6c83068eef5f9974b3892afd385ce97a9a7012202e3bf0ec1c76403",
+        "esb_pulled_at": "2026-10-05T05:47:46.084312+08:00",
+        "declared_cash_amount": null,
+        "declared_cash_evidence_id": null,
+        "variance_cash_amount": null,
+        "variance_policy_id": null,
+        "work_item_id": null,
+        "fingerprint_stale": 0,
+        "submitted_by_person_id": "PERS-MATT",
+        "resolved_at": null,
+        "resolved_by_person_id": null,
+        "resolve_evidence_id": null,
+        "verified_at": null,
+        "verified_by_person_id": null,
+        "created_at": "2026-10-05T04:06:24Z",
+        "updated_at": "2026-10-05T04:06:24Z",
+        "outlet_id": "BZG-UMA",
+        "cost_centre_id": null,
+        "revenue_centre_id": null,
+        "taken_by_person_id": "PERS-MATT",
+        "taken_at": "2026-10-05T04:06:24Z",
+        "esb_query_meta": {
+          "bill_count": 70,
+          "branch": "BLZ",
+          "business_date": "2026-09-27",
+          "cancelled_count": 9,
+          "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
+          "finished_count": 61,
+          "incomplete": false,
+          "incomplete_reason": null,
+          "live_monetary_authority": 0,
+          "live_variance_threshold": 0,
+          "max_pulled_at": "2026-10-05T05:47:46.084312+08:00",
+          "settlement_api": "UNAVAILABLE",
+          "warehouse_path": "/Users/wolfterminal/.openclaw/data/esb.sqlite"
+        },
+        "esb_totals": {
+          "cancelled_count": 9,
+          "card_from_payments": 13490000.0,
+          "card_label": "ESB_CARD_FROM_PAYMENTS",
+          "cash_change_overpay": 235000.0,
+          "cash_from_payments": 2730000.0,
+          "cash_label": "ESB_CASH_FROM_PAYMENTS",
+          "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+          "cash_sales_grand": 2495000.0,
+          "cash_tendered_includes_change": true,
+          "classify_uses_payment_method_name": true,
+          "finished_count": 61,
+          "grand_total": 19252190.08,
+          "other_cost_bill_count": 1,
+          "other_from_payments": 37190.08,
+          "other_status_count": 0,
+          "pax_total": 94.0,
+          "payment_by_method_name": {
+            "CASH": 2730000.0,
+            "EDC BNI": 11495000.0,
+            "Executife Chef": 37190.08,
+            "MATT AND FAMILY": 240000.0,
+            "QRIS BNI": 3230000.0,
+            "ROB & FAMILY": 325000.0,
+            "SCOTT & ETIK": 1430000.0
+          },
+          "payment_mix": {
+            "CARD": 16720000.0,
+            "CASH": 2730000.0,
+            "OTHER COST": 37190.08
+          },
+          "payment_total": 19487190.08,
+          "payments_by_bank_split": {
+            "Cash": 2730000.0,
+            "EDC_BNI": 11495000.0,
+            "EXECUTIVE_CHEF": 37190.08,
+            "MATT_AND_FAMILY": 240000.0,
+            "QRIS_BNI": 3230000.0,
+            "ROB_FAMILY": 325000.0,
+            "SCOTT_ETIK": 1430000.0
+          },
+          "qris_from_payments": 3230000.0,
+          "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+          "qris_never_merged_into_card": true,
+          "sales_bill_count_excl_other_cost": 60,
+          "sales_grand_excl_other_cost": 19215000.0,
+          "sales_pax_excl_other_cost": 93.0
+        },
+        "honesty": {
+          "settlement_api": "UNAVAILABLE",
+          "settlement_status": "PENDING_BANK",
+          "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
+          "esb_payments_are_not_edc_settlement": true,
+          "live_variance_threshold": 0,
+          "live_monetary_authority": 0,
+          "declared_cash_is_not_verified": true,
+          "invented_tolerance": false,
+          "staff_ready": false,
+          "human_commissioned": false,
+          "closer_commissioning": "WAITING FOR VERIFIED CLOSING OPERATOR"
+        }
+      },
+      "all_records": [
+        {
+          "close_id": "VDC-667e795b-d311-42e3-8378-00264e183fe2",
+          "state": "DATA_CAPTURED",
+          "updated_at": "2026-10-05T04:06:24Z"
+        }
+      ],
+      "evidence": {
+        "till_rows": 0,
+        "edc_receipts": 0,
+        "edc_with_image": 0,
+        "printed_shift_receipts": 0,
+        "printed_with_image": 0,
+        "core_evidence": 0,
+        "vision_events": 0
+      },
+      "exceptions": {
+        "state": "DATA_CAPTURED",
+        "variance_cash_amount": null
+      },
+      "multi_source_preserve": null,
+      "petty_contamination_ok": true,
+      "live_esb_excluded": true
+    },
+    {
+      "business_date": "2026-09-28",
+      "frozen_at": "2026-10-05T19:37:29.455481+08:00",
+      "close_id": "VDC-4046a805-8c76-4439-8019-f879f3b49513",
+      "db_state": "DATA_CAPTURED",
+      "canonical_ui_status": "INCOMPLETE",
+      "esb_warehouse_freeze": {
+        "cancelled_count": 3,
+        "cash_change_overpay": 150000.0,
+        "cash_from_payments": 2460000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 2310000.0,
+        "cash_tendered_includes_change": true,
+        "other_cost_bill_count": 1,
+        "pax_total": 85.0,
+        "qris_from_payments": 905000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 57,
+        "sales_grand_excl_other_cost": 15755000.0,
+        "sales_pax_excl_other_cost": 84.0
+      },
+      "esb_totals_full": {
+        "cancelled_count": 3,
+        "card_from_payments": 12540000.0,
+        "card_label": "ESB_CARD_FROM_PAYMENTS",
+        "cash_change_overpay": 150000.0,
+        "cash_from_payments": 2460000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 2310000.0,
+        "cash_tendered_includes_change": true,
+        "classify_uses_payment_method_name": true,
+        "finished_count": 58,
+        "grand_total": 15862438.02,
+        "other_cost_bill_count": 1,
+        "other_from_payments": 107438.02,
+        "other_status_count": 0,
+        "pax_total": 85.0,
+        "payment_by_method_name": {
+          "CASH": 2460000.0,
+          "EDC BNI": 7985000.0,
+          "EDC BRI": 1745000.0,
+          "Executife Chef": 107438.02,
+          "MATT AND FAMILY": 645000.0,
+          "QRIS BNI": 415000.0,
+          "QRIS BRI": 490000.0,
+          "ROB & FAMILY": 210000.0,
+          "SCOTT & ETIK": 1955000.0
+        },
+        "payment_mix": {
+          "CARD": 13445000.0,
+          "CASH": 2460000.0,
+          "OTHER COST": 107438.02
+        },
+        "payment_total": 16012438.02,
+        "payments_by_bank_split": {
+          "Cash": 2460000.0,
+          "EDC_BNI": 7985000.0,
+          "EDC_BRI": 1745000.0,
+          "EXECUTIVE_CHEF": 107438.02,
+          "MATT_AND_FAMILY": 645000.0,
+          "QRIS_BNI": 415000.0,
+          "QRIS_BRI": 490000.0,
+          "ROB_FAMILY": 210000.0,
+          "SCOTT_ETIK": 1955000.0
+        },
+        "qris_from_payments": 905000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 57,
+        "sales_grand_excl_other_cost": 15755000.0,
+        "sales_pax_excl_other_cost": 84.0
+      },
+      "esb_pulled_at": "2026-10-03T05:47:34.839798+08:00",
+      "printed_shift": null,
+      "warehouse_source": {
+        "source": "warehouse_payment_lines",
+        "object": "WAREHOUSE_SNAPSHOT",
+        "business_date": "2026-09-28",
+        "fingerprint_sha256": "839a59a0919132cbc11d0e9f1f5c6a5e87a114eaec4ad6ce6152b2568f7ad6c0",
+        "cash_rp": 2460000.0,
+        "finished_bills": 58,
+        "gross_sales_rp": 15862438.02,
+        "payments_by_bank_split": {
+          "Cash": 2460000.0,
+          "EDC_BNI": 7985000.0,
+          "EDC_BRI": 1745000.0,
+          "EXECUTIVE_CHEF": 107438.02,
+          "MATT_AND_FAMILY": 645000.0,
+          "QRIS_BNI": 415000.0,
+          "QRIS_BRI": 490000.0,
+          "ROB_FAMILY": 210000.0,
+          "SCOTT_ETIK": 1955000.0
+        },
+        "snapshot_frozen": true
+      },
+      "source_discrepancy": null,
+      "terminals_edc_receipts": [],
+      "cash": {
+        "declared_cash_amount": null,
+        "variance_cash_amount": null
+      },
+      "petty": {
+        "business_date": "2026-09-28",
+        "movements": [],
+        "petty_out_total": 0.0,
+        "petty_in_total": 0.0,
+        "contamination": [],
+        "ok_not_contaminated": true
+      },
+      "existing_close": {
+        "close_id": "VDC-4046a805-8c76-4439-8019-f879f3b49513",
+        "entity_id": "ENT-BZG",
+        "venue_brand_id": "BZG-UMA",
+        "business_date": "2026-09-28",
+        "state": "DATA_CAPTURED",
+        "esb_fingerprint_sha256": "839a59a0919132cbc11d0e9f1f5c6a5e87a114eaec4ad6ce6152b2568f7ad6c0",
+        "esb_pulled_at": "2026-10-03T05:47:34.839798+08:00",
+        "declared_cash_amount": null,
+        "declared_cash_evidence_id": null,
+        "variance_cash_amount": null,
+        "variance_policy_id": null,
+        "work_item_id": null,
+        "fingerprint_stale": 0,
+        "submitted_by_person_id": "PERS-MATT",
+        "resolved_at": null,
+        "resolved_by_person_id": null,
+        "resolve_evidence_id": null,
+        "verified_at": null,
+        "verified_by_person_id": null,
+        "created_at": "2026-10-03T08:47:02Z",
+        "updated_at": "2026-10-03T13:05:37Z",
+        "outlet_id": "BZG-UMA",
+        "cost_centre_id": null,
+        "revenue_centre_id": null,
+        "taken_by_person_id": "PERS-MATT",
+        "taken_at": "2026-10-03T08:47:02Z",
+        "esb_query_meta": {
+          "bill_count": 61,
+          "branch": "BLZ",
+          "business_date": "2026-09-28",
+          "cancelled_count": 3,
+          "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
+          "finished_count": 58,
+          "incomplete": false,
+          "incomplete_reason": null,
+          "live_monetary_authority": 0,
+          "live_variance_threshold": 0,
+          "max_pulled_at": "2026-10-03T05:47:34.839798+08:00",
+          "settlement_api": "UNAVAILABLE",
+          "warehouse_path": "/Users/wolfterminal/.openclaw/data/esb.sqlite"
+        },
+        "esb_totals": {
+          "cancelled_count": 3,
+          "card_from_payments": 12540000.0,
+          "card_label": "ESB_CARD_FROM_PAYMENTS",
+          "cash_change_overpay": 150000.0,
+          "cash_from_payments": 2460000.0,
+          "cash_label": "ESB_CASH_FROM_PAYMENTS",
+          "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+          "cash_sales_grand": 2310000.0,
+          "cash_tendered_includes_change": true,
+          "classify_uses_payment_method_name": true,
+          "finished_count": 58,
+          "grand_total": 15862438.02,
+          "other_cost_bill_count": 1,
+          "other_from_payments": 107438.02,
+          "other_status_count": 0,
+          "pax_total": 85.0,
+          "payment_by_method_name": {
+            "CASH": 2460000.0,
+            "EDC BNI": 7985000.0,
+            "EDC BRI": 1745000.0,
+            "Executife Chef": 107438.02,
+            "MATT AND FAMILY": 645000.0,
+            "QRIS BNI": 415000.0,
+            "QRIS BRI": 490000.0,
+            "ROB & FAMILY": 210000.0,
+            "SCOTT & ETIK": 1955000.0
+          },
+          "payment_mix": {
+            "CARD": 13445000.0,
+            "CASH": 2460000.0,
+            "OTHER COST": 107438.02
+          },
+          "payment_total": 16012438.02,
+          "payments_by_bank_split": {
+            "Cash": 2460000.0,
+            "EDC_BNI": 7985000.0,
+            "EDC_BRI": 1745000.0,
+            "EXECUTIVE_CHEF": 107438.02,
+            "MATT_AND_FAMILY": 645000.0,
+            "QRIS_BNI": 415000.0,
+            "QRIS_BRI": 490000.0,
+            "ROB_FAMILY": 210000.0,
+            "SCOTT_ETIK": 1955000.0
+          },
+          "qris_from_payments": 905000.0,
+          "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+          "qris_never_merged_into_card": true,
+          "sales_bill_count_excl_other_cost": 57,
+          "sales_grand_excl_other_cost": 15755000.0,
+          "sales_pax_excl_other_cost": 84.0
+        },
+        "honesty": {
+          "settlement_api": "UNAVAILABLE",
+          "settlement_status": "PENDING_BANK",
+          "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
+          "esb_payments_are_not_edc_settlement": true,
+          "live_variance_threshold": 0,
+          "live_monetary_authority": 0,
+          "declared_cash_is_not_verified": true,
+          "invented_tolerance": false,
+          "staff_ready": false,
+          "human_commissioned": false,
+          "closer_commissioning": "WAITING FOR VERIFIED CLOSING OPERATOR"
+        }
+      },
+      "all_records": [
+        {
+          "close_id": "VDC-4046a805-8c76-4439-8019-f879f3b49513",
+          "state": "DATA_CAPTURED",
+          "updated_at": "2026-10-03T13:05:37Z"
+        }
+      ],
+      "evidence": {
+        "till_rows": 0,
+        "edc_receipts": 0,
+        "edc_with_image": 0,
+        "printed_shift_receipts": 0,
+        "printed_with_image": 0,
+        "core_evidence": 0,
+        "vision_events": 0
+      },
+      "exceptions": {
+        "state": "DATA_CAPTURED",
+        "variance_cash_amount": null
+      },
+      "multi_source_preserve": null,
+      "petty_contamination_ok": true,
+      "live_esb_excluded": true
+    },
+    {
+      "business_date": "2026-09-29",
+      "frozen_at": "2026-10-05T19:37:29.455584+08:00",
+      "close_id": "VDC-8fd544e2-2132-4a4a-b714-720eb0cd18ad",
+      "db_state": "DATA_CAPTURED",
+      "canonical_ui_status": "INCOMPLETE",
+      "esb_warehouse_freeze": {
+        "cancelled_count": 0,
+        "cash_change_overpay": 345000.0,
+        "cash_from_payments": 4135000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 3870000.0,
+        "cash_tendered_includes_change": true,
+        "other_cost_bill_count": 1,
+        "pax_total": 80.0,
+        "qris_from_payments": 1210000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 50,
+        "sales_grand_excl_other_cost": 13435000.0,
+        "sales_pax_excl_other_cost": 79.0
+      },
+      "esb_totals_full": {
+        "cancelled_count": 0,
+        "card_from_payments": 8435000.0,
+        "card_label": "ESB_CARD_FROM_PAYMENTS",
+        "cash_change_overpay": 345000.0,
+        "cash_from_payments": 4135000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 3870000.0,
+        "cash_tendered_includes_change": true,
+        "classify_uses_payment_method_name": true,
+        "finished_count": 51,
+        "grand_total": 13513512.4,
+        "other_cost_bill_count": 1,
+        "other_from_payments": 78512.4,
+        "other_status_count": 0,
+        "pax_total": 80.0,
+        "payment_by_method_name": {
+          "CASH": 4135000.0,
+          "EDC BNI": 2545000.0,
+          "EDC BRI": 4465000.0,
+          "Executife Chef": 78512.4,
+          "QRIS BNI": 145000.0,
+          "QRIS BRI": 1065000.0,
+          "SCOTT & ETIK": 1425000.0
+        },
+        "payment_mix": {
+          "CARD": 9645000.0,
+          "CASH": 4135000.0,
+          "OTHER COST": 78512.4
+        },
+        "payment_total": 13858512.4,
+        "payments_by_bank_split": {
+          "Cash": 4135000.0,
+          "EDC_BNI": 2545000.0,
+          "EDC_BRI": 4465000.0,
+          "EXECUTIVE_CHEF": 78512.4,
+          "QRIS_BNI": 145000.0,
+          "QRIS_BRI": 1065000.0,
+          "SCOTT_ETIK": 1425000.0
+        },
+        "qris_from_payments": 1210000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 50,
+        "sales_grand_excl_other_cost": 13435000.0,
+        "sales_pax_excl_other_cost": 79.0
+      },
+      "esb_pulled_at": "2026-10-05T05:47:40.362801+08:00",
+      "printed_shift": {
+        "gross_sales_rp": 13435000,
+        "cash_rp": 3790000,
+        "bills": 50,
+        "pax": 79,
+        "non_sales_executive_chef_rp": 78512,
+        "image_status": "SOURCE EVIDENCE PROVIDED / FILE INGEST PENDING"
+      },
+      "warehouse_source": {
+        "source": "warehouse_payment_lines",
+        "object": "WAREHOUSE_SNAPSHOT",
+        "business_date": "2026-09-29",
+        "fingerprint_sha256": "af1310a02e5ffe5c9a5e9ce29bbab6dc6dada93b4691a4843c4b2ac61543c724",
+        "cash_rp": 4135000.0,
+        "finished_bills": 51,
+        "gross_sales_rp": 13513512.4,
+        "payments_by_bank_split": {
+          "Cash": 4135000.0,
+          "EDC_BNI": 2545000.0,
+          "EDC_BRI": 4465000.0,
+          "EXECUTIVE_CHEF": 78512.4,
+          "QRIS_BNI": 145000.0,
+          "QRIS_BRI": 1065000.0,
+          "SCOTT_ETIK": 1425000.0
+        },
+        "snapshot_frozen": true
+      },
+      "source_discrepancy": {
+        "has_discrepancy": true,
+        "warehouse": {
+          "cash_rp": 4135000.0,
+          "finished_bills": 51
+        },
+        "printed": {
+          "cash_rp": 3790000,
+          "bills": 50
+        },
+        "difference": {
+          "cash_rp": 345000.0,
+          "bills": 1
+        },
+        "auto_resolve": false
+      },
+      "terminals_edc_receipts": [],
+      "cash": {
+        "declared_cash_amount": null,
+        "variance_cash_amount": null
+      },
+      "petty": {
+        "business_date": "2026-09-29",
+        "movements": [],
+        "petty_out_total": 0.0,
+        "petty_in_total": 0.0,
+        "contamination": [],
+        "ok_not_contaminated": true
+      },
+      "existing_close": {
+        "close_id": "VDC-8fd544e2-2132-4a4a-b714-720eb0cd18ad",
+        "entity_id": "ENT-BZG",
+        "venue_brand_id": "BZG-UMA",
+        "business_date": "2026-09-29",
+        "state": "DATA_CAPTURED",
+        "esb_fingerprint_sha256": "af1310a02e5ffe5c9a5e9ce29bbab6dc6dada93b4691a4843c4b2ac61543c724",
+        "esb_pulled_at": "2026-10-05T05:47:40.362801+08:00",
+        "declared_cash_amount": null,
+        "declared_cash_evidence_id": null,
+        "variance_cash_amount": null,
+        "variance_policy_id": null,
+        "work_item_id": null,
+        "fingerprint_stale": 0,
+        "submitted_by_person_id": "PERS-MATT",
+        "resolved_at": null,
+        "resolved_by_person_id": null,
+        "resolve_evidence_id": null,
+        "verified_at": null,
+        "verified_by_person_id": null,
+        "created_at": "2026-10-04T23:19:46Z",
+        "updated_at": "2026-10-05T00:41:41Z",
+        "outlet_id": "BZG-UMA",
+        "cost_centre_id": null,
+        "revenue_centre_id": null,
+        "taken_by_person_id": "PERS-MATT",
+        "taken_at": "2026-10-04T23:19:46Z",
+        "esb_query_meta": {
+          "bill_count": 51,
+          "branch": "BLZ",
+          "business_date": "2026-09-29",
+          "cancelled_count": 0,
+          "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
+          "finished_count": 51,
+          "incomplete": false,
+          "incomplete_reason": null,
+          "live_monetary_authority": 0,
+          "live_variance_threshold": 0,
+          "max_pulled_at": "2026-10-05T05:47:40.362801+08:00",
+          "settlement_api": "UNAVAILABLE",
+          "warehouse_path": "/Users/wolfterminal/.openclaw/data/esb.sqlite"
+        },
+        "esb_totals": {
+          "cancelled_count": 0,
+          "card_from_payments": 8435000.0,
+          "card_label": "ESB_CARD_FROM_PAYMENTS",
+          "cash_change_overpay": 345000.0,
+          "cash_from_payments": 4135000.0,
+          "cash_label": "ESB_CASH_FROM_PAYMENTS",
+          "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+          "cash_sales_grand": 3870000.0,
+          "cash_tendered_includes_change": true,
+          "classify_uses_payment_method_name": true,
+          "finished_count": 51,
+          "grand_total": 13513512.4,
+          "other_cost_bill_count": 1,
+          "other_from_payments": 78512.4,
+          "other_status_count": 0,
+          "pax_total": 80.0,
+          "payment_by_method_name": {
+            "CASH": 4135000.0,
+            "EDC BNI": 2545000.0,
+            "EDC BRI": 4465000.0,
+            "Executife Chef": 78512.4,
+            "QRIS BNI": 145000.0,
+            "QRIS BRI": 1065000.0,
+            "SCOTT & ETIK": 1425000.0
+          },
+          "payment_mix": {
+            "CARD": 9645000.0,
+            "CASH": 4135000.0,
+            "OTHER COST": 78512.4
+          },
+          "payment_total": 13858512.4,
+          "payments_by_bank_split": {
+            "Cash": 4135000.0,
+            "EDC_BNI": 2545000.0,
+            "EDC_BRI": 4465000.0,
+            "EXECUTIVE_CHEF": 78512.4,
+            "QRIS_BNI": 145000.0,
+            "QRIS_BRI": 1065000.0,
+            "SCOTT_ETIK": 1425000.0
+          },
+          "qris_from_payments": 1210000.0,
+          "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+          "qris_never_merged_into_card": true,
+          "sales_bill_count_excl_other_cost": 50,
+          "sales_grand_excl_other_cost": 13435000.0,
+          "sales_pax_excl_other_cost": 79.0
+        },
+        "honesty": {
+          "settlement_api": "UNAVAILABLE",
+          "settlement_status": "PENDING_BANK",
+          "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
+          "esb_payments_are_not_edc_settlement": true,
+          "live_variance_threshold": 0,
+          "live_monetary_authority": 0,
+          "declared_cash_is_not_verified": true,
+          "invented_tolerance": false,
+          "staff_ready": false,
+          "human_commissioned": false,
+          "closer_commissioning": "WAITING FOR VERIFIED CLOSING OPERATOR"
+        }
+      },
+      "all_records": [
+        {
+          "close_id": "VDC-8fd544e2-2132-4a4a-b714-720eb0cd18ad",
+          "state": "DATA_CAPTURED",
+          "updated_at": "2026-10-05T00:41:41Z"
+        }
+      ],
+      "evidence": {
+        "till_rows": 0,
+        "edc_receipts": 0,
+        "edc_with_image": 0,
+        "printed_shift_receipts": 1,
+        "printed_with_image": 0,
+        "core_evidence": 0,
+        "vision_events": 0
+      },
+      "exceptions": {
+        "state": "DATA_CAPTURED",
+        "variance_cash_amount": null
+      },
+      "multi_source_preserve": {
+        "close_id": "VDC-8fd544e2-2132-4a4a-b714-720eb0cd18ad",
+        "warehouse_cash": 4135000.0,
+        "warehouse_bills": 51,
+        "printed_gross": 13435000,
+        "printed_cash": 3790000,
+        "printed_bills": 50,
+        "printed_pax": 79,
+        "non_sales_exec_chef": 78512,
+        "discrepancy_cash": 345000.0,
+        "discrepancy_bills": 1,
+        "auto_resolve": false,
+        "do_not_submit": false,
+        "owner_completable": true,
+        "photo_status": "SOURCE EVIDENCE PROVIDED / FILE INGEST PENDING"
+      },
+      "petty_contamination_ok": true,
+      "live_esb_excluded": true
+    },
+    {
+      "business_date": "2026-09-30",
+      "frozen_at": "2026-10-05T19:37:29.455738+08:00",
+      "close_id": "VDC-25a3123a-3e26-43db-8085-10c6f208bbcd",
+      "db_state": "DATA_CAPTURED",
+      "canonical_ui_status": "INCOMPLETE",
+      "esb_warehouse_freeze": {
+        "cancelled_count": 4,
+        "cash_from_payments": 2610000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement"
+      },
+      "esb_totals_full": {
+        "cancelled_count": 4,
+        "card_from_payments": 12700000.0,
+        "cash_from_payments": 2610000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "finished_count": 50,
+        "grand_total": 15140000.0,
+        "other_from_payments": 0.0,
+        "other_status_count": 0,
+        "payment_mix": {
+          "CARD": 12700000.0,
+          "CASH": 2610000.0
+        },
+        "payment_total": 15310000.0
+      },
+      "esb_pulled_at": "2026-10-01T05:47:26.090632+08:00",
+      "printed_shift": null,
+      "warehouse_source": {
+        "source": "warehouse_payment_lines",
+        "object": "WAREHOUSE_SNAPSHOT",
+        "business_date": "2026-09-30",
+        "fingerprint_sha256": "c376a9d576dc841e1c3cd743dc18f00b20c6667ae3f08fb0a1bd8329d3becdad",
+        "cash_rp": 2610000.0,
+        "finished_bills": 50,
+        "gross_sales_rp": 15140000.0,
+        "payments_by_bank_split": {},
+        "snapshot_frozen": true
+      },
+      "source_discrepancy": null,
+      "terminals_edc_receipts": [],
+      "cash": {
+        "declared_cash_amount": null,
+        "variance_cash_amount": null
+      },
+      "petty": {
+        "business_date": "2026-09-30",
+        "movements": [],
+        "petty_out_total": 0.0,
+        "petty_in_total": 0.0,
+        "contamination": [],
+        "ok_not_contaminated": true
+      },
+      "existing_close": {
+        "close_id": "VDC-25a3123a-3e26-43db-8085-10c6f208bbcd",
+        "entity_id": "ENT-BZG",
+        "venue_brand_id": "BZG-UMA",
+        "business_date": "2026-09-30",
+        "state": "DATA_CAPTURED",
+        "esb_fingerprint_sha256": "c376a9d576dc841e1c3cd743dc18f00b20c6667ae3f08fb0a1bd8329d3becdad",
+        "esb_pulled_at": "2026-10-01T05:47:26.090632+08:00",
+        "declared_cash_amount": null,
+        "declared_cash_evidence_id": null,
+        "variance_cash_amount": null,
+        "variance_policy_id": null,
+        "work_item_id": null,
+        "fingerprint_stale": 0,
+        "submitted_by_person_id": "PERS-DEVI",
+        "resolved_at": null,
+        "resolved_by_person_id": null,
+        "resolve_evidence_id": null,
+        "verified_at": null,
+        "verified_by_person_id": null,
+        "created_at": "2026-10-01T11:37:10Z",
+        "updated_at": "2026-10-01T11:40:32Z",
+        "outlet_id": null,
+        "cost_centre_id": null,
+        "revenue_centre_id": null,
+        "taken_by_person_id": null,
+        "taken_at": null,
+        "esb_query_meta": {
+          "bill_count": 54,
+          "branch": "BLZ",
+          "business_date": "2026-09-30",
+          "cancelled_count": 4,
+          "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
+          "finished_count": 50,
+          "incomplete": false,
+          "incomplete_reason": null,
+          "live_monetary_authority": 0,
+          "live_variance_threshold": 0,
+          "max_pulled_at": "2026-10-01T05:47:26.090632+08:00",
+          "settlement_api": "UNAVAILABLE",
+          "warehouse_path": "/Users/wolfterminal/.openclaw/data/esb.sqlite"
+        },
+        "esb_totals": {
+          "cancelled_count": 4,
+          "card_from_payments": 12700000.0,
+          "cash_from_payments": 2610000.0,
+          "cash_label": "ESB_CASH_FROM_PAYMENTS",
+          "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+          "finished_count": 50,
+          "grand_total": 15140000.0,
+          "other_from_payments": 0.0,
+          "other_status_count": 0,
+          "payment_mix": {
+            "CARD": 12700000.0,
+            "CASH": 2610000.0
+          },
+          "payment_total": 15310000.0
+        },
+        "honesty": {
+          "settlement_api": "UNAVAILABLE",
+          "settlement_status": "PENDING_BANK",
+          "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
+          "esb_payments_are_not_edc_settlement": true,
+          "live_variance_threshold": 0,
+          "live_monetary_authority": 0,
+          "declared_cash_is_not_verified": true,
+          "invented_tolerance": false,
+          "staff_ready": false,
+          "human_commissioned": false,
+          "closer_commissioning": "WAITING FOR VERIFIED CLOSING OPERATOR"
+        }
+      },
+      "all_records": [
+        {
+          "close_id": "VDC-25a3123a-3e26-43db-8085-10c6f208bbcd",
+          "state": "DATA_CAPTURED",
+          "updated_at": "2026-10-01T11:40:32Z"
+        }
+      ],
+      "evidence": {
+        "till_rows": 0,
+        "edc_receipts": 0,
+        "edc_with_image": 0,
+        "printed_shift_receipts": 0,
+        "printed_with_image": 0,
+        "core_evidence": 0,
+        "vision_events": 0
+      },
+      "exceptions": {
+        "state": "DATA_CAPTURED",
+        "variance_cash_amount": null
+      },
+      "multi_source_preserve": null,
+      "petty_contamination_ok": true,
+      "live_esb_excluded": true
+    },
+    {
+      "business_date": "2026-10-01",
+      "frozen_at": "2026-10-05T19:37:29.455848+08:00",
+      "close_id": "VDC-3353351f-3234-4f7d-acf0-a63e0e176114",
+      "db_state": "OPEN",
+      "canonical_ui_status": "OPEN",
+      "esb_warehouse_freeze": null,
+      "esb_totals_full": null,
+      "esb_pulled_at": null,
+      "printed_shift": null,
+      "warehouse_source": {
+        "source": "warehouse_payment_lines",
+        "object": "WAREHOUSE_SNAPSHOT",
+        "business_date": "2026-10-01",
+        "fingerprint_sha256": null,
+        "cash_rp": null,
+        "finished_bills": null,
+        "gross_sales_rp": null,
+        "payments_by_bank_split": {},
+        "snapshot_frozen": false
+      },
+      "source_discrepancy": null,
+      "terminals_edc_receipts": [],
+      "cash": {
+        "declared_cash_amount": null,
+        "variance_cash_amount": null
+      },
+      "petty": {
+        "business_date": "2026-10-01",
+        "movements": [],
+        "petty_out_total": 0.0,
+        "petty_in_total": 0.0,
+        "contamination": [],
+        "ok_not_contaminated": true
+      },
+      "existing_close": {
+        "close_id": "VDC-3353351f-3234-4f7d-acf0-a63e0e176114",
+        "entity_id": "ENT-BZG",
+        "venue_brand_id": "BZG-UMA",
+        "business_date": "2026-10-01",
+        "state": "OPEN",
+        "esb_fingerprint_sha256": null,
+        "esb_pulled_at": null,
+        "declared_cash_amount": null,
+        "declared_cash_evidence_id": null,
+        "variance_cash_amount": null,
+        "variance_policy_id": null,
+        "work_item_id": null,
+        "fingerprint_stale": 0,
+        "submitted_by_person_id": "PERS-DEVI",
+        "resolved_at": null,
+        "resolved_by_person_id": null,
+        "resolve_evidence_id": null,
+        "verified_at": null,
+        "verified_by_person_id": null,
+        "created_at": "2026-10-01T11:37:10Z",
+        "updated_at": "2026-10-01T11:37:10Z",
+        "outlet_id": null,
+        "cost_centre_id": null,
+        "revenue_centre_id": null,
+        "taken_by_person_id": null,
+        "taken_at": null,
+        "esb_query_meta": null,
+        "esb_totals": null,
+        "honesty": {
+          "settlement_api": "UNAVAILABLE",
+          "settlement_status": "PENDING_BANK",
+          "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
+          "esb_payments_are_not_edc_settlement": true,
+          "live_variance_threshold": 0,
+          "live_monetary_authority": 0,
+          "declared_cash_is_not_verified": true,
+          "invented_tolerance": false,
+          "staff_ready": false,
+          "human_commissioned": false,
+          "closer_commissioning": "WAITING FOR VERIFIED CLOSING OPERATOR"
+        }
+      },
+      "all_records": [
+        {
+          "close_id": "VDC-3353351f-3234-4f7d-acf0-a63e0e176114",
+          "state": "OPEN",
+          "updated_at": "2026-10-01T11:37:10Z"
+        }
+      ],
+      "evidence": {
+        "till_rows": 0,
+        "edc_receipts": 0,
+        "edc_with_image": 0,
+        "printed_shift_receipts": 0,
+        "printed_with_image": 0,
+        "core_evidence": 0,
+        "vision_events": 0
+      },
+      "exceptions": {
+        "state": "OPEN",
+        "variance_cash_amount": null
+      },
+      "multi_source_preserve": null,
+      "petty_contamination_ok": true,
+      "live_esb_excluded": true
+    },
+    {
+      "business_date": "2026-10-02",
+      "frozen_at": "2026-10-05T19:37:29.455971+08:00",
+      "close_id": "VDC-da1b6621-b657-4444-bc7c-7161a0bf5b94",
+      "db_state": "OPEN",
+      "canonical_ui_status": "OPEN",
+      "esb_warehouse_freeze": null,
+      "esb_totals_full": null,
+      "esb_pulled_at": null,
+      "printed_shift": null,
+      "warehouse_source": {
+        "source": "warehouse_payment_lines",
+        "object": "WAREHOUSE_SNAPSHOT",
+        "business_date": "2026-10-02",
+        "fingerprint_sha256": null,
+        "cash_rp": null,
+        "finished_bills": null,
+        "gross_sales_rp": null,
+        "payments_by_bank_split": {},
+        "snapshot_frozen": false
+      },
+      "source_discrepancy": null,
+      "terminals_edc_receipts": [],
+      "cash": {
+        "declared_cash_amount": null,
+        "variance_cash_amount": null
+      },
+      "petty": {
+        "business_date": "2026-10-02",
+        "movements": [],
+        "petty_out_total": 0.0,
+        "petty_in_total": 0.0,
+        "contamination": [],
+        "ok_not_contaminated": true
+      },
+      "existing_close": {
+        "close_id": "VDC-da1b6621-b657-4444-bc7c-7161a0bf5b94",
+        "entity_id": "ENT-BZG",
+        "venue_brand_id": "BZG-UMA",
+        "business_date": "2026-10-02",
+        "state": "OPEN",
+        "esb_fingerprint_sha256": null,
+        "esb_pulled_at": null,
+        "declared_cash_amount": null,
+        "declared_cash_evidence_id": null,
+        "variance_cash_amount": null,
+        "variance_policy_id": null,
+        "work_item_id": null,
+        "fingerprint_stale": 0,
+        "submitted_by_person_id": "PERS-MATT",
+        "resolved_at": null,
+        "resolved_by_person_id": null,
+        "resolve_evidence_id": null,
+        "verified_at": null,
+        "verified_by_person_id": null,
+        "created_at": "2026-10-03T12:32:27Z",
+        "updated_at": "2026-10-03T12:32:27Z",
+        "outlet_id": "BZG-UMA",
+        "cost_centre_id": null,
+        "revenue_centre_id": null,
+        "taken_by_person_id": "PERS-MATT",
+        "taken_at": "2026-10-03T12:32:27Z",
+        "esb_query_meta": null,
+        "esb_totals": null,
+        "honesty": {
+          "settlement_api": "UNAVAILABLE",
+          "settlement_status": "PENDING_BANK",
+          "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
+          "esb_payments_are_not_edc_settlement": true,
+          "live_variance_threshold": 0,
+          "live_monetary_authority": 0,
+          "declared_cash_is_not_verified": true,
+          "invented_tolerance": false,
+          "staff_ready": false,
+          "human_commissioned": false,
+          "closer_commissioning": "WAITING FOR VERIFIED CLOSING OPERATOR"
+        }
+      },
+      "all_records": [
+        {
+          "close_id": "VDC-da1b6621-b657-4444-bc7c-7161a0bf5b94",
+          "state": "OPEN",
+          "updated_at": "2026-10-03T12:32:27Z"
+        },
+        {
+          "close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+          "state": "CANCELLED",
+          "updated_at": "2026-10-03T12:32:22Z"
+        }
+      ],
+      "evidence": {
+        "till_rows": 0,
+        "edc_receipts": 0,
+        "edc_with_image": 0,
+        "printed_shift_receipts": 0,
+        "printed_with_image": 0,
+        "core_evidence": 0,
+        "vision_events": 0
+      },
+      "exceptions": {
+        "state": "OPEN",
+        "variance_cash_amount": null
+      },
+      "multi_source_preserve": null,
+      "petty_contamination_ok": true,
+      "live_esb_excluded": true
+    },
+    {
+      "business_date": "2026-10-03",
+      "frozen_at": "2026-10-05T19:37:29.456127+08:00",
+      "close_id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+      "db_state": "EXCEPTION",
+      "canonical_ui_status": "EXCEPTION",
+      "esb_warehouse_freeze": {
+        "cancelled_count": 4,
+        "cash_change_overpay": 240000.0,
+        "cash_from_payments": 3350000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 3110000.0,
+        "cash_tendered_includes_change": true,
+        "other_cost_bill_count": 0,
+        "pax_total": 68.0,
+        "qris_from_payments": 885000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 43,
+        "sales_grand_excl_other_cost": 11850000.0,
+        "sales_pax_excl_other_cost": 68.0
+      },
+      "esb_totals_full": {
+        "cancelled_count": 4,
+        "card_from_payments": 7855000.0,
+        "card_label": "ESB_CARD_FROM_PAYMENTS",
+        "cash_change_overpay": 240000.0,
+        "cash_from_payments": 3350000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 3110000.0,
+        "cash_tendered_includes_change": true,
+        "classify_uses_payment_method_name": true,
+        "finished_count": 43,
+        "grand_total": 11850000.0,
+        "other_cost_bill_count": 0,
+        "other_from_payments": 0.0,
+        "other_status_count": 7,
+        "pax_total": 68.0,
+        "payment_by_method_name": {
+          "CASH": 3350000.0,
+          "EDC BRI": 5940000.0,
+          "EDC MANDIRI": 1915000.0,
+          "QRIS BRI": 365000.0,
+          "QRIS MANDIRI": 520000.0
+        },
+        "payment_mix": {
+          "CARD": 8740000.0,
+          "CASH": 3350000.0
+        },
+        "payment_total": 12090000.0,
+        "payments_by_bank_split": {
+          "Cash": 3350000.0,
+          "EDC_BRI": 5940000.0,
+          "EDC_Mandiri": 1915000.0,
+          "QRIS_BRI": 365000.0,
+          "QRIS_Mandiri": 520000.0
+        },
+        "qris_from_payments": 885000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 43,
+        "sales_grand_excl_other_cost": 11850000.0,
+        "sales_pax_excl_other_cost": 68.0
+      },
+      "esb_pulled_at": "2026-10-03T18:47:27.951117+08:00",
+      "printed_shift": null,
+      "warehouse_source": {
+        "source": "warehouse_payment_lines",
+        "object": "WAREHOUSE_SNAPSHOT",
+        "business_date": "2026-10-03",
+        "fingerprint_sha256": "42d21cf643f4b247f07a6144ef6fa6c47ec7ab5fc2645ff12c3ff2fbd850af2c",
+        "cash_rp": 3350000.0,
+        "finished_bills": 43,
+        "gross_sales_rp": 11850000.0,
+        "payments_by_bank_split": {
+          "Cash": 3350000.0,
+          "EDC_BRI": 5940000.0,
+          "EDC_Mandiri": 1915000.0,
+          "QRIS_BRI": 365000.0,
+          "QRIS_Mandiri": 520000.0
+        },
+        "snapshot_frozen": true
+      },
+      "source_discrepancy": null,
+      "terminals_edc_receipts": [
+        {
+          "edc_receipt_id": "EDCR-0f4cdd60-9306-417e-949c-9adfe0759459",
+          "close_id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+          "outlet_id": "BZG-UMA",
+          "acquirer_label": "MANDIRI",
+          "terminal_config_id": null,
+          "terminal_label": null,
+          "settlement_batch_date": "2026-10-03",
+          "edc_card_amount": 2040000.0,
+          "qris_amount": 520000.0,
+          "receipt_total": 2560000.0,
+          "batch_ref": "000095",
+          "image_object_ref": "close-receipt://EVD-CLOSE-EDC-3E3C1C52C4EF.jpg",
+          "content_hash": "bcd0955ffa3260336e25960a5a9ef6b2c3421b011fd2922b39716c55bf2c909b",
+          "evidence_id": "EVD-6f67f934-58f9-4d04-a5c5-138920f92c17",
+          "ocr_confidence": null,
+          "ocr_confidence_band": null,
+          "human_confirm_status": "CONFIRMED",
+          "confirmed_by_person_id": "PERS-IZA",
+          "confirmed_at": "2026-10-03T13:41:05Z",
+          "duplicate_warn": false,
+          "created_by_person_id": "PERS-IZA",
+          "created_at": "2026-10-03T13:41:05Z",
+          "updated_at": "2026-10-03T13:41:05Z",
+          "evidence_role": "CURRENT",
+          "superseded_by": null,
+          "superseded_at": null,
+          "supersede_reason": null,
+          "counted_in_totals": 1,
+          "extracted": {},
+          "confirmed": {
+            "acquirer_label": "MANDIRI",
+            "action": "looks_correct",
+            "batch_ref": "000095",
+            "confirmed_at": "2026-10-03T13:41:05Z",
+            "confirmed_by_person_id": "PERS-IZA",
+            "edc_card_amount": 2040000.0,
+            "qris_amount": 520000.0,
+            "receipt_total": 2560000.0,
+            "settlement_batch_date": "2026-10-03",
+            "terminal_config_id": null,
+            "terminal_label": null
+          },
+          "duplicate_warn_detail": {
+            "duplicate_warn": false,
+            "matches": [],
+            "message": null,
+            "silent_delete": false
+          }
+        },
+        {
+          "edc_receipt_id": "EDCR-0c6897b3-eb0f-45ab-8d7b-73a2962b9099",
+          "close_id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+          "outlet_id": "BZG-UMA",
+          "acquirer_label": "BRI",
+          "terminal_config_id": null,
+          "terminal_label": null,
+          "settlement_batch_date": "2026-10-03",
+          "edc_card_amount": 5940000.0,
+          "qris_amount": 1695000.0,
+          "receipt_total": 7635000.0,
+          "batch_ref": "000046",
+          "image_object_ref": "close-receipt://EVD-CLOSE-EDC-88AB01AE3E27.jpg",
+          "content_hash": "ec806180a1efebe244d15c35cbc331d5f9080511a1745cd77da9b763c9927a88",
+          "evidence_id": "EVD-093c23ae-0235-4bf8-be62-a457dea7b9b9",
+          "ocr_confidence": null,
+          "ocr_confidence_band": null,
+          "human_confirm_status": "CONFIRMED",
+          "confirmed_by_person_id": "PERS-IZA",
+          "confirmed_at": "2026-10-03T13:42:30Z",
+          "duplicate_warn": false,
+          "created_by_person_id": "PERS-IZA",
+          "created_at": "2026-10-03T13:42:30Z",
+          "updated_at": "2026-10-03T13:42:30Z",
+          "evidence_role": "CURRENT",
+          "superseded_by": null,
+          "superseded_at": null,
+          "supersede_reason": null,
+          "counted_in_totals": 1,
+          "extracted": {},
+          "confirmed": {
+            "acquirer_label": "BRI",
+            "action": "looks_correct",
+            "batch_ref": "000046",
+            "confirmed_at": "2026-10-03T13:42:30Z",
+            "confirmed_by_person_id": "PERS-IZA",
+            "edc_card_amount": 5940000.0,
+            "qris_amount": 1695000.0,
+            "receipt_total": 7635000.0,
+            "settlement_batch_date": "2026-10-03",
+            "terminal_config_id": null,
+            "terminal_label": null
+          },
+          "duplicate_warn_detail": {
+            "duplicate_warn": false,
+            "matches": [],
+            "message": null,
+            "silent_delete": false
+          }
+        }
+      ],
+      "cash": {
+        "declared_cash_amount": 3225000.0,
+        "variance_cash_amount": -125000.0
+      },
+      "petty": {
+        "business_date": "2026-10-03",
+        "movements": [],
+        "petty_out_total": 0.0,
+        "petty_in_total": 0.0,
+        "contamination": [],
+        "ok_not_contaminated": true
+      },
+      "existing_close": {
+        "close_id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+        "entity_id": "ENT-BZG",
+        "venue_brand_id": "BZG-UMA",
+        "business_date": "2026-10-03",
+        "state": "EXCEPTION",
+        "esb_fingerprint_sha256": "42d21cf643f4b247f07a6144ef6fa6c47ec7ab5fc2645ff12c3ff2fbd850af2c",
+        "esb_pulled_at": "2026-10-03T18:47:27.951117+08:00",
+        "declared_cash_amount": 3225000.0,
+        "declared_cash_evidence_id": "EVD-57ee9841-51b7-4682-b00d-7711f943183b",
+        "variance_cash_amount": -125000.0,
+        "variance_policy_id": null,
+        "work_item_id": "WI-109e1683-4e57-4fc0-860f-24bfbaf42975",
+        "fingerprint_stale": 0,
+        "submitted_by_person_id": "PERS-IZA",
+        "resolved_at": null,
+        "resolved_by_person_id": null,
+        "resolve_evidence_id": null,
+        "verified_at": null,
+        "verified_by_person_id": null,
+        "created_at": "2026-10-03T13:32:45Z",
+        "updated_at": "2026-10-03T13:47:39Z",
+        "outlet_id": "BZG-UMA",
+        "cost_centre_id": null,
+        "revenue_centre_id": null,
+        "taken_by_person_id": "PERS-IZA",
+        "taken_at": "2026-10-03T13:32:45Z",
+        "esb_query_meta": {
+          "bill_count": 54,
+          "branch": "BLZ",
+          "business_date": "2026-10-03",
+          "cancelled_count": 4,
+          "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
+          "finished_count": 43,
+          "incomplete": false,
+          "incomplete_reason": null,
+          "live_monetary_authority": 0,
+          "live_variance_threshold": 0,
+          "max_pulled_at": "2026-10-03T18:47:27.951117+08:00",
+          "settlement_api": "UNAVAILABLE",
+          "warehouse_path": "/Users/wolfterminal/.openclaw/data/esb.sqlite"
+        },
+        "esb_totals": {
+          "cancelled_count": 4,
+          "card_from_payments": 7855000.0,
+          "card_label": "ESB_CARD_FROM_PAYMENTS",
+          "cash_change_overpay": 240000.0,
+          "cash_from_payments": 3350000.0,
+          "cash_label": "ESB_CASH_FROM_PAYMENTS",
+          "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+          "cash_sales_grand": 3110000.0,
+          "cash_tendered_includes_change": true,
+          "classify_uses_payment_method_name": true,
+          "finished_count": 43,
+          "grand_total": 11850000.0,
+          "other_cost_bill_count": 0,
+          "other_from_payments": 0.0,
+          "other_status_count": 7,
+          "pax_total": 68.0,
+          "payment_by_method_name": {
+            "CASH": 3350000.0,
+            "EDC BRI": 5940000.0,
+            "EDC MANDIRI": 1915000.0,
+            "QRIS BRI": 365000.0,
+            "QRIS MANDIRI": 520000.0
+          },
+          "payment_mix": {
+            "CARD": 8740000.0,
+            "CASH": 3350000.0
+          },
+          "payment_total": 12090000.0,
+          "payments_by_bank_split": {
+            "Cash": 3350000.0,
+            "EDC_BRI": 5940000.0,
+            "EDC_Mandiri": 1915000.0,
+            "QRIS_BRI": 365000.0,
+            "QRIS_Mandiri": 520000.0
+          },
+          "qris_from_payments": 885000.0,
+          "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+          "qris_never_merged_into_card": true,
+          "sales_bill_count_excl_other_cost": 43,
+          "sales_grand_excl_other_cost": 11850000.0,
+          "sales_pax_excl_other_cost": 68.0
+        },
+        "honesty": {
+          "settlement_api": "UNAVAILABLE",
+          "settlement_status": "PENDING_BANK",
+          "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
+          "esb_payments_are_not_edc_settlement": true,
+          "live_variance_threshold": 0,
+          "live_monetary_authority": 0,
+          "declared_cash_is_not_verified": true,
+          "invented_tolerance": false,
+          "staff_ready": false,
+          "human_commissioned": false,
+          "closer_commissioning": "WAITING FOR VERIFIED CLOSING OPERATOR"
+        }
+      },
+      "all_records": [
+        {
+          "close_id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+          "state": "EXCEPTION",
+          "updated_at": "2026-10-03T13:47:39Z"
+        }
+      ],
+      "evidence": {
+        "till_rows": 0,
+        "edc_receipts": 2,
+        "edc_with_image": 2,
+        "printed_shift_receipts": 1,
+        "printed_with_image": 1,
+        "core_evidence": 3,
+        "vision_events": 2
+      },
+      "exceptions": {
+        "state": "EXCEPTION",
+        "variance_cash_amount": -125000.0
+      },
+      "multi_source_preserve": null,
+      "petty_contamination_ok": true,
+      "live_esb_excluded": true
+    },
+    {
+      "business_date": "2026-10-04",
+      "frozen_at": "2026-10-05T19:37:29.456252+08:00",
+      "close_id": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+      "db_state": "DATA_CAPTURED",
+      "canonical_ui_status": "INCOMPLETE",
+      "esb_warehouse_freeze": {
+        "cancelled_count": 6,
+        "cash_change_overpay": 30000.0,
+        "cash_from_payments": 360000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 330000.0,
+        "cash_tendered_includes_change": true,
+        "other_cost_bill_count": 1,
+        "pax_total": 91.0,
+        "qris_from_payments": 3570000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 60,
+        "sales_grand_excl_other_cost": 19055000.0,
+        "sales_pax_excl_other_cost": 90.0
+      },
+      "esb_totals_full": {
+        "cancelled_count": 6,
+        "card_from_payments": 15155000.0,
+        "card_label": "ESB_CARD_FROM_PAYMENTS",
+        "cash_change_overpay": 30000.0,
+        "cash_from_payments": 360000.0,
+        "cash_label": "ESB_CASH_FROM_PAYMENTS",
+        "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+        "cash_sales_grand": 330000.0,
+        "cash_tendered_includes_change": true,
+        "classify_uses_payment_method_name": true,
+        "finished_count": 61,
+        "grand_total": 19158305.79,
+        "other_cost_bill_count": 1,
+        "other_from_payments": 103305.79,
+        "other_status_count": 0,
+        "pax_total": 91.0,
+        "payment_by_method_name": {
+          "CASH": 360000.0,
+          "EDC BNI": 2035000.0,
+          "EDC MANDIRI": 11100000.0,
+          "Executife Chef": 103305.79,
+          "QRIS BNI": 1315000.0,
+          "QRIS MANDIRI": 2255000.0,
+          "ROB & FAMILY": 50000.0,
+          "ROOM SERVICE": 255000.0,
+          "SCOTT & ETIK": 1715000.0
+        },
+        "payment_mix": {
+          "CARD": 18725000.0,
+          "CASH": 360000.0,
+          "OTHER COST": 103305.79
+        },
+        "payment_total": 19188305.79,
+        "payments_by_bank_split": {
+          "Cash": 360000.0,
+          "EDC_BNI": 2035000.0,
+          "EDC_Mandiri": 11100000.0,
+          "EXECUTIVE_CHEF": 103305.79,
+          "QRIS_BNI": 1315000.0,
+          "QRIS_Mandiri": 2255000.0,
+          "ROB_FAMILY": 50000.0,
+          "ROOM_SERVICE": 255000.0,
+          "SCOTT_ETIK": 1715000.0
+        },
+        "qris_from_payments": 3570000.0,
+        "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+        "qris_never_merged_into_card": true,
+        "sales_bill_count_excl_other_cost": 60,
+        "sales_grand_excl_other_cost": 19055000.0,
+        "sales_pax_excl_other_cost": 90.0
+      },
+      "esb_pulled_at": "2026-10-04T21:24:19.035052+08:00",
+      "printed_shift": null,
+      "warehouse_source": {
+        "source": "warehouse_payment_lines",
+        "object": "WAREHOUSE_SNAPSHOT",
+        "business_date": "2026-10-04",
+        "fingerprint_sha256": "bd87469e35514aeb68186ded0c29245ef498dd92f08c9276dc1427d2a9260eb0",
+        "cash_rp": 360000.0,
+        "finished_bills": 61,
+        "gross_sales_rp": 19158305.79,
+        "payments_by_bank_split": {
+          "Cash": 360000.0,
+          "EDC_BNI": 2035000.0,
+          "EDC_Mandiri": 11100000.0,
+          "EXECUTIVE_CHEF": 103305.79,
+          "QRIS_BNI": 1315000.0,
+          "QRIS_Mandiri": 2255000.0,
+          "ROB_FAMILY": 50000.0,
+          "ROOM_SERVICE": 255000.0,
+          "SCOTT_ETIK": 1715000.0
+        },
+        "snapshot_frozen": true
+      },
+      "source_discrepancy": null,
+      "terminals_edc_receipts": [],
+      "cash": {
+        "declared_cash_amount": null,
+        "variance_cash_amount": null
+      },
+      "petty": {
+        "business_date": "2026-10-04",
+        "movements": [],
+        "petty_out_total": 0.0,
+        "petty_in_total": 0.0,
+        "contamination": [],
+        "ok_not_contaminated": true
+      },
+      "existing_close": {
+        "close_id": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+        "entity_id": "ENT-BZG",
+        "venue_brand_id": "BZG-UMA",
+        "business_date": "2026-10-04",
+        "state": "DATA_CAPTURED",
+        "esb_fingerprint_sha256": "bd87469e35514aeb68186ded0c29245ef498dd92f08c9276dc1427d2a9260eb0",
+        "esb_pulled_at": "2026-10-04T21:24:19.035052+08:00",
+        "declared_cash_amount": null,
+        "declared_cash_evidence_id": null,
+        "variance_cash_amount": null,
+        "variance_policy_id": null,
+        "work_item_id": null,
+        "fingerprint_stale": 0,
+        "submitted_by_person_id": "PERS-IZA",
+        "resolved_at": null,
+        "resolved_by_person_id": null,
+        "resolve_evidence_id": null,
+        "verified_at": null,
+        "verified_by_person_id": null,
+        "created_at": "2026-10-04T13:24:15Z",
+        "updated_at": "2026-10-04T13:56:05Z",
+        "outlet_id": "BZG-UMA",
+        "cost_centre_id": null,
+        "revenue_centre_id": null,
+        "taken_by_person_id": "PERS-MATT",
+        "taken_at": "2026-10-04T13:56:05Z",
+        "esb_query_meta": {
+          "bill_count": 67,
+          "branch": "BLZ",
+          "business_date": "2026-10-04",
+          "cancelled_count": 6,
+          "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
+          "finished_count": 61,
+          "incomplete": false,
+          "incomplete_reason": null,
+          "live_monetary_authority": 0,
+          "live_variance_threshold": 0,
+          "max_pulled_at": "2026-10-04T21:24:19.035052+08:00",
+          "settlement_api": "UNAVAILABLE",
+          "warehouse_path": "/Users/wolfterminal/.openclaw/data/esb.sqlite"
+        },
+        "esb_totals": {
+          "cancelled_count": 6,
+          "card_from_payments": 15155000.0,
+          "card_label": "ESB_CARD_FROM_PAYMENTS",
+          "cash_change_overpay": 30000.0,
+          "cash_from_payments": 360000.0,
+          "cash_label": "ESB_CASH_FROM_PAYMENTS",
+          "cash_provenance": "ESB payment lines (salesPayments) — not settlement",
+          "cash_sales_grand": 330000.0,
+          "cash_tendered_includes_change": true,
+          "classify_uses_payment_method_name": true,
+          "finished_count": 61,
+          "grand_total": 19158305.79,
+          "other_cost_bill_count": 1,
+          "other_from_payments": 103305.79,
+          "other_status_count": 0,
+          "pax_total": 91.0,
+          "payment_by_method_name": {
+            "CASH": 360000.0,
+            "EDC BNI": 2035000.0,
+            "EDC MANDIRI": 11100000.0,
+            "Executife Chef": 103305.79,
+            "QRIS BNI": 1315000.0,
+            "QRIS MANDIRI": 2255000.0,
+            "ROB & FAMILY": 50000.0,
+            "ROOM SERVICE": 255000.0,
+            "SCOTT & ETIK": 1715000.0
+          },
+          "payment_mix": {
+            "CARD": 18725000.0,
+            "CASH": 360000.0,
+            "OTHER COST": 103305.79
+          },
+          "payment_total": 19188305.79,
+          "payments_by_bank_split": {
+            "Cash": 360000.0,
+            "EDC_BNI": 2035000.0,
+            "EDC_Mandiri": 11100000.0,
+            "EXECUTIVE_CHEF": 103305.79,
+            "QRIS_BNI": 1315000.0,
+            "QRIS_Mandiri": 2255000.0,
+            "ROB_FAMILY": 50000.0,
+            "ROOM_SERVICE": 255000.0,
+            "SCOTT_ETIK": 1715000.0
+          },
+          "qris_from_payments": 3570000.0,
+          "qris_label": "ESB_QRIS_FROM_PAYMENTS",
+          "qris_never_merged_into_card": true,
+          "sales_bill_count_excl_other_cost": 60,
+          "sales_grand_excl_other_cost": 19055000.0,
+          "sales_pax_excl_other_cost": 90.0
+        },
+        "honesty": {
+          "settlement_api": "UNAVAILABLE",
+          "settlement_status": "PENDING_BANK",
+          "esb_cash_basis": "PAYMENT_LINES_NOT_SETTLEMENT",
+          "esb_payments_are_not_edc_settlement": true,
+          "live_variance_threshold": 0,
+          "live_monetary_authority": 0,
+          "declared_cash_is_not_verified": true,
+          "invented_tolerance": false,
+          "staff_ready": false,
+          "human_commissioned": false,
+          "closer_commissioning": "WAITING FOR VERIFIED CLOSING OPERATOR"
+        }
+      },
+      "all_records": [
+        {
+          "close_id": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+          "state": "DATA_CAPTURED",
+          "updated_at": "2026-10-04T13:56:05Z"
+        }
+      ],
+      "evidence": {
+        "till_rows": 0,
+        "edc_receipts": 0,
+        "edc_with_image": 0,
+        "printed_shift_receipts": 0,
+        "printed_with_image": 0,
+        "core_evidence": 0,
+        "vision_events": 0
+      },
+      "exceptions": {
+        "state": "DATA_CAPTURED",
+        "variance_cash_amount": null
+      },
+      "multi_source_preserve": null,
+      "petty_contamination_ok": true,
+      "live_esb_excluded": true
+    }
+  ]
+}

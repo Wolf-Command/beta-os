@@ -1,0 +1,27 @@
+{
+  "milestone": "MULTI-20260930-0845-FIN-BANK-CREDS",
+  "at_wita": "2026-09-30T08:45:00+08:00",
+  "pack": "FIN-BANK-CREDS-ROUTE-1",
+  "status": "CURSOR_EXIT_0",
+  "suite": {
+    "pass": 161,
+    "fail": 0
+  },
+  "classification": "HUMAN_COMMISSIONING",
+  "route_classification": "HUMAN_COMMISSIONING",
+  "action": "STAMP_HUMAN_COMMISSIONING",
+  "file_import_only": true,
+  "creds_present": false,
+  "invented_scrape": false,
+  "invented_balance": false,
+  "fin_recon_shell1_preserved": true,
+  "fin_cash_truth1_preserved": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_pid_held": 15975,
+  "no_push": true,
+  "board": "/fin/bank-creds-route-1",
+  "result": "docs/wolf/ops/FIN-BANK-CREDS-ROUTE-1-RESULT.md",
+  "next_pack_for_parent": "INV-CASH-FACTS-ROUTE-1",
+  "cursor_did_not_auto_start_next": true
+}

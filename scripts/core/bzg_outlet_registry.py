@@ -75,10 +75,10 @@ SEED: tuple[dict[str, Any], ...] = (
         "operating_unit_id": None,
         "parent_outlet_id": None,
         "outlet_kind": "BRAND",
-        "status": "PRE-OPENING",
+        "status": "OPEN",
         "note": (
-            "Target ~7 Oct 2026. PRE-OPENING — no human F&B commissioning evidence "
-            "for this outlet; do not invent live ops."
+            "Rainforest restaurant outlet OPEN in registry. No invented sales, "
+            "covers, or menu rows — recipe/menu work happens in Recipe Builder."
         ),
     },
     {
@@ -88,10 +88,10 @@ SEED: tuple[dict[str, Any], ...] = (
         "operating_unit_id": "OU-BZG-RAIN-POOL",
         "parent_outlet_id": "BZG-RAIN",
         "outlet_kind": "OPERATING_UNIT",
-        "status": "PRE-OPENING",
+        "status": "OPEN",
         "note": (
-            "Measurable operating unit under Rainforest. Not a second brand_id. "
-            "PRE-OPENING until human confirm."
+            "Pool Bar operating unit under Rainforest. OPEN in registry. "
+            "No invented menu or sales until human menu rows exist."
         ),
     },
     {

@@ -49,6 +49,7 @@ FINANCE_ONLY_SEAT_ROLES = frozenset(
         "ROLE-BZG-EXTERNAL-ACCOUNTANT",
         "ROLE-AMG-EXTERNAL-ACCOUNTANT",
         ROLE_GGV_FINANCE_OPERATOR,
+        "ROLE-GGV-FINANCIAL-CONTROLLER",
         ROLE_FINANCE,
     }
 )
@@ -212,7 +213,10 @@ ATRIUM_PAGE_PATHS = frozenset(
         "/amg/finance/approvals",
         "/amg-finance",
         "/amg-finance.html",
+        "/amg-finance-ops",
+        "/amg/finance-ops",
         "/dashboards/amg-finance.html",
+        "/dashboards/amg-finance-ops.html",
         "/api/amg/finance",
         "/api/amg/finance/ledger",
         "/api/amg/finance/accounts",
@@ -581,6 +585,13 @@ def _seat(
     _attach_scopes_once(conn, assignment_id, scopes, ts)
 
 
+def _bzg_finance_officer_path_allowed(path: str) -> bool:
+    """BZG P2P read surfaces finance controllers may open without venue ops scope."""
+    from core import bzg_finance_desk as _desk
+
+    return _desk.finance_uma_blu_api_path(path) or _desk.finance_uma_blu_page_path(path)
+
+
 def officer_must_deny(person_id: str | None, path: str, conn: sqlite3.Connection) -> bool:
     """Finance-only seats cannot leave their finance surfaces (+ My Work chrome).
 
@@ -610,9 +621,16 @@ def officer_must_deny(person_id: str | None, path: str, conn: sqlite3.Connection
     base = raw.rstrip("/") or "/"
     if base in ATRIUM_PAGE_PATHS or raw in ATRIUM_PAGE_PATHS:
         return False
+    if base in {"/finance", "/finance.html", "/api/finance/entities"}:
+        return False
+    if base in {"/shared/finance-switcher.js", "/shared/finance-switcher.css"}:
+        return False
     if ".." not in base and (
         base.startswith("/amg/finance/")
         or base.startswith("/api/amg/finance/")
+        or base.startswith("/amg-finance-ops")
+        or base.startswith("/amg/finance-ops")
+        or base.startswith("/dashboards/amg-finance-ops")
         or base.startswith("/bzg/finance")
         or base.startswith("/api/bzg/finance")
         or base.startswith("/bzg/outlets")
@@ -635,6 +653,7 @@ def officer_must_deny(person_id: str | None, path: str, conn: sqlite3.Connection
         or base.startswith("/bzg-inventory")
         or base.startswith("/ggv/finance")
         or base.startswith("/api/ggv/finance")
+        or _bzg_finance_officer_path_allowed(base)
     ):
         return False
     if base in {"/my-work", "/my-work.html", "/api/staff/home", "/api/wolf/shell-whoami"}:
@@ -669,6 +688,7 @@ HUMAN_PAGE_BY_ROLE: dict[str, str] = {
     "ROLE-BZG-FINANCIAL-CONTROLLER": "/bzg/finance",
     "ROLE-BZG-EXTERNAL-ACCOUNTANT": "/bzg/finance",
     "ROLE-GGV-FINANCE-OPERATOR": GGV_FINANCE_HREF,
+    "ROLE-GGV-FINANCIAL-CONTROLLER": GGV_FINANCE_HREF,
     "ROLE-GGV-EXTERNAL-ACCOUNTANT": GGV_FINANCE_HREF,
 }
 

@@ -1,0 +1,841 @@
+<!-- viewport 390x — render check artifact -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BZG Finance</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root { color-scheme: light; --touch: 44px; }
+    body { margin: 0; font-family: "IBM Plex Sans", "Segoe UI", sans-serif; background: #f3f1ec; color: #1c1a16; }
+    main { max-width: 820px; margin: 0 auto; padding: 20px 16px 100px; }
+    h1 { font-size: 1.6rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+    h2 { font-size: 1.05rem; margin: 0 0 10px; }
+    .sub { color: #5c574e; margin: 0 0 16px; line-height: 1.45; }
+    .card {
+      background: #fffdf8; border: 1px solid #ddd6c8; border-radius: 12px;
+      padding: 16px; margin-bottom: 14px;
+    }
+    .muted { color: #6b655c; font-size: 0.92rem; line-height: 1.45; }
+    .chip {
+      display: inline-block; margin: 4px 6px 0 0; padding: 4px 10px;
+      border-radius: 999px; background: #ebe4d6; font-size: 0.8rem; text-decoration: none; color: inherit;
+    }
+    .chip.active { background: #2a4a28; color: #fff; font-weight: 600; }
+    .entity-switch {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      padding: 10px 12px; background: #fffdf8; border: 1px solid #ddd6c8; border-radius: 12px;
+    }
+    .entity-label { color: #5c574e; font-size: 0.92rem; }
+    .entity-label strong { color: #2a4a28; }
+    .stamp {
+      display: inline-block; margin: 4px 6px 0 0; padding: 4px 10px;
+      border-radius: 6px; background: #e8f0e6; border: 1px solid #b7c9b2;
+      font-size: 0.78rem; font-weight: 600; color: #2a4a28;
+    }
+    .stamp.warn { background: #f5efe3; border-color: #d2c4a4; color: #5a4a28; }
+    .stamp.bad { background: #f8e8e8; border-color: #d4a8a8; color: #8a1f1f; }
+    .err { color: #8a1f1f; }
+    nav.tabs {
+      display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px;
+    }
+    nav.tabs a, nav.tabs button, button, .btn {
+      min-height: var(--touch); border-radius: 10px; border: 1px solid #ddd6c8;
+      background: #fffdf8; color: #1c1a16; font: inherit; font-weight: 600;
+      padding: 8px 12px; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    nav.tabs a.active, nav.tabs button.active { background: #2a4a28; color: #fff; border-color: #2a4a28; }
+    input, select {
+      width: 100%; min-height: var(--touch); border-radius: 10px; border: 1px solid #ddd6c8;
+      background: #fff; font: inherit; padding: 8px 12px; box-sizing: border-box;
+    }
+    .row {
+      border-top: 1px solid #ebe4d6; padding: 10px 0; font-size: 0.92rem;
+    }
+    .row a { color: #2a4a28; font-weight: 600; text-decoration: none; }
+    .evidence-photo {
+      max-width: 100%; height: auto; border-radius: 10px; border: 1px solid #ddd6c8;
+      margin: 8px 0; display: block;
+    }
+    .review-card { border-top: 1px solid #ebe4d6; padding: 14px 0; }
+    .review-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .hidden { display: none !important; }
+    .metric { font-size: 1.4rem; margin: 0; font-weight: 700; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+    .status-gap { color: #8a1f1f; font-weight: 600; }
+    .status-complete { color: #2a4a28; font-weight: 600; }
+    .recon { font-size: 0.82rem; color: #5a4a28; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid #ebe4d6; }
+    @media (max-width: 700px) {
+      nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+        margin: 0; padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+        background: #f3f1ec; border-top: 1px solid #ddd6c8; }
+      nav.tabs a { flex: 1 1 30%; font-size: 0.75rem; padding: 6px 4px; }
+    }
+  </style>
+<script data-cfasync="false">window.__WOLF_WHOAMI__={"ok":true,"person_id":"PERS-ZAYEN","email":"laluzayen@gmail.com","audience":"SPECIALIST_ATRIUM_FINANCE","role_label":"SPECIALIST_ATRIUM_FINANCE","hello":"Zayen","wolf_authorized":false,"scoped":true,"pages":["/my-work","/amg/finance","/bzg/finance"],"landing":"/amg/finance","home_primary":null,"home_primary_key":null,"hidden_ne_permission":true,"api_auth_canonical":true,"bound":"beta","slice":"wolf_ggv_content_nas_haikal_prep","assignments":[{"id":"ASG-ZAYEN-FC-1","role":"ROLE-AMG-FINANCIAL-CONTROLLER","label":"Atrium Financial Controller","scope":"SCOPE-AMG-FINANCE","scopes":["SCOPE-AMG-FINANCE"],"href":"/amg/finance","position_id":"POS-AMG-FINANCIAL-CONTROLLER-1","is_primary":1,"source":"org_assignments"},{"id":"ASG-ZAYEN-BZG-FC-1","role":"ROLE-BZG-FINANCIAL-CONTROLLER","label":"BZG Financial Controller","scope":"SCOPE-BZG-FINANCE","scopes":["SCOPE-BZG-FINANCE"],"href":"/bzg/finance","position_id":"POS-BZG-FINANCIAL-CONTROLLER-1","is_primary":0,"source":"org_assignments"}],"active_assignment_id":"ASG-ZAYEN-FC-1","active_assignment":{"id":"ASG-ZAYEN-FC-1","role":"ROLE-AMG-FINANCIAL-CONTROLLER","label":"Atrium Financial Controller","scope":"SCOPE-AMG-FINANCE","scopes":["SCOPE-AMG-FINANCE"],"href":"/amg/finance","position_id":"POS-AMG-FINANCIAL-CONTROLLER-1","is_primary":1,"source":"org_assignments"},"context_switcher":true,"roles":["ROLE-AMG-FINANCIAL-CONTROLLER","ROLE-BZG-FINANCIAL-CONTROLLER"],"scopes":["SCOPE-AMG-FINANCE","SCOPE-BZG-FINANCE"],"permissions":{"layers":["CAN_SEE","CAN_ACT","CAN_SEE_DETAIL","CAN_SEE_ACROSS_SCOPE"],"surfaces":{"empire":{"CAN_SEE":false,"CAN_ACT":false,"CAN_SEE_DETAIL":false,"CAN_SEE_ACROSS_SCOPE":false},"uma":{"CAN_SEE":false,"CAN_ACT":false,"CAN_SEE_DETAIL":false,"CAN_SEE_ACROSS_SCOPE":false},"progress":{"CAN_SEE":false,"CAN_ACT":false,"CAN_SEE_DETAIL":false,"CAN_SEE_ACROSS_SCOPE":false}}},"chain":{"person_id":"PERS-ZAYEN","roles":["ROLE-AMG-FINANCIAL-CONTROLLER","ROLE-BZG-FINANCIAL-CONTROLLER"],"assignments":[{"id":"ASG-ZAYEN-FC-1","role":"ROLE-AMG-FINANCIAL-CONTROLLER","label":"Atrium Financial Controller","scope":"SCOPE-AMG-FINANCE","scopes":["SCOPE-AMG-FINANCE"],"href":"/amg/finance","position_id":"POS-AMG-FINANCIAL-CONTROLLER-1","is_primary":1,"source":"org_assignments"},{"id":"ASG-ZAYEN-BZG-FC-1","role":"ROLE-BZG-FINANCIAL-CONTROLLER","label":"BZG Financial Controller","scope":"SCOPE-BZG-FINANCE","scopes":["SCOPE-BZG-FINANCE"],"href":"/bzg/finance","position_id":"POS-BZG-FINANCIAL-CONTROLLER-1","is_primary":0,"source":"org_assignments"}],"scopes":["SCOPE-AMG-FINANCE","SCOPE-BZG-FINANCE"],"permissions":{"layers":["CAN_SEE","CAN_ACT","CAN_SEE_DETAIL","CAN_SEE_ACROSS_SCOPE"],"surfaces":{"empire":{"CAN_SEE":false,"CAN_ACT":false,"CAN_SEE_DETAIL":false,"CAN_SEE_ACROSS_SCOPE":false},"uma":{"CAN_SEE":false,"CAN_ACT":false,"CAN_SEE_DETAIL":false,"CAN_SEE_ACROSS_SCOPE":false},"progress":{"CAN_SEE":false,"CAN_ACT":false,"CAN_SEE_DETAIL":false,"CAN_SEE_ACROSS_SCOPE":false}}},"audience":"SPECIALIST_ATRIUM_FINANCE"},"businesses":[],"business_switcher":false,"active_business_id":null,"outlet_children":[],"active_outlet_id":null,"nav_authority":{"ok":true,"source":"assignment_role_scope","model":"PERSON\u2192ROLE/POSITION\u2192ASSIGNMENT\u2192SCOPE\u2192PERMISSION\u2192AUDIENCE","people_neq_roles":true,"ia_intersect_pages_transitional":true,"roles":["ROLE-AMG-FINANCIAL-CONTROLLER","ROLE-AMG-ACCOUNTS-RECEIVABLE","ROLE-BZG-FINANCIAL-CONTROLLER"],"scopes":["SCOPE-AMG-FINANCE","SCOPE-BZG-FINANCE"],"businesses":[{"id":"amg","key":"amg","title":"AMG / Atrium","href":"/amg-ops-pack","aliases":[]},{"id":"bzg","key":"bzg","title":"BZG","href":"/bzg","aliases":[]}],"items":[{"key":"ROLE-AMG-FINANCIAL-CONTROLLER","title":"Atrium Financial Controller","href":"/amg/finance","role":"ROLE-AMG-FINANCIAL-CONTROLLER","scopes":["SCOPE-AMG-FINANCE"],"source":"assignment_role_scope"},{"key":"ROLE-BZG-FINANCIAL-CONTROLLER","title":"BZG Financial Controller","href":"/bzg/finance","role":"ROLE-BZG-FINANCIAL-CONTROLLER","scopes":["SCOPE-BZG-FINANCE"],"source":"assignment_role_scope"}],"business_switcher":true}};</script></head>
+<body data-wolf-page-type="WORKSPACE" data-wolf-org="BZG" data-wolf-shell="global"><nav id="wolfnav" aria-label="Wolf global navigation"><div class="nv-row"><button type="button" id="wolfnav-t" aria-label="Boards" aria-expanded="false" aria-controls="wolf-boards">Boards</button><div class="nv-brand" id="wolfnav-brand"><b>Wolf</b></div><div class="nv-dir" id="wolfnav-dir" role="group" aria-label="Direction"><a class="nv-dir-btn" id="wolfnav-up" href="#" data-wolf-dir="up">Up</a><a class="nv-dir-btn" id="wolfnav-back" href="#" data-wolf-dir="back">Back</a><a class="nv-dir-btn" id="wolfnav-home" href="#" data-wolf-dir="home">Home</a></div><nav class="nv-crumbs" id="wolfnav-crumbs" aria-label="Breadcrumb"></nav><div class="nv-biz" id="wolfnav-biz" hidden></div><div class="nv-ctx" id="wolfnav-ctx" hidden></div><div class="nv-hello" id="wolfnav-hello"></div><div class="nv-footer"><a href="/signout" title="End session">Sign out</a></div></div><div id="wolf-boards" role="menu"></div></nav><div id="wolfnav-scrim"></div>
+  <main>
+    <div id="entity-switch" data-wolf-finance-switcher data-current="BZG" aria-label="Finance entity switcher"></div>
+    <link rel="stylesheet" href="/shared/finance-switcher.css" />
+    <script src="/shared/finance-switcher.js" defer></script>
+    <h1>BZG Finance</h1>
+    <p class="sub" id="sub">Loading…</p>
+    <div id="stamps"></div>
+
+    <div class="card" id="filter-bar" style="padding:12px 16px;margin-bottom:12px;">
+      <div class="grid">
+        <label class="muted">Outlet
+          <select id="filter-outlet">
+            <option value="">All outlets</option>
+            <option value="BZG-UMA">Uma Blu</option>
+            <option value="BZG-RAIN">Rainforest</option>
+            <option value="BZG-RAIN-POOL">Pool Bar</option>
+          </select>
+        </label>
+        <label class="muted">Month (YYYY-MM)
+          <input id="filter-month" type="month" />
+        </label>
+      </div>
+    </div>
+
+    <nav class="tabs" id="main-nav" aria-label="BZG Finance browse">
+      <a href="/bzg/finance" data-tab="browse">Browse</a>
+      <a href="/bzg/finance/suppliers" data-tab="suppliers">Suppliers</a>
+      <a href="/bzg/finance/petty" data-tab="petty">Petty</a>
+      <a href="/bzg/finance/bank" data-tab="bank">Bank</a>
+      <a href="/bzg/finance/statements" data-tab="statements">Statements</a>
+      <a href="/bzg/finance/ap" data-tab="ap">AP</a>
+      <a href="/bzg/finance/ready-to-pay" data-tab="ready-to-pay">Ready to pay</a>
+      <a href="/bzg/finance/exceptions" data-tab="exceptions">Exceptions</a>
+      <a href="/bzg/finance/completeness" data-tab="completeness">Completeness</a>
+      <a href="/bzg/finance/photos-to-review" data-tab="photos">Photos to review</a>
+    </nav>
+
+    <section id="view-browse" class="card">
+      <h2>Imported history</h2>
+      <div class="grid" id="count-grid"></div>
+      <p class="muted" style="margin-top:12px;">Read-only investigation. No payment or reconcile actions on this desk.</p>
+    </section>
+
+    <section id="view-suppliers" class="card hidden">
+      <h2>Suppliers</h2>
+      <label class="muted">Search
+        <input id="supplier-q" type="search" placeholder="Supplier name" autocomplete="off" />
+      </label>
+      <div id="supplier-results" class="muted">Type to search imported suppliers.</div>
+      <div id="supplier-detail" class="hidden"></div>
+    </section>
+
+    <section id="view-petty" class="card hidden">
+      <h2>Petty cash history</h2>
+      <div id="petty-list" class="muted">Loading…</div>
+    </section>
+
+    <section id="view-statements" class="card hidden">
+      <h2>Bank statements</h2>
+      <div id="statements-list" class="muted">Loading…</div>
+    </section>
+
+    <section id="view-bank" class="card hidden">
+      <h2>Bank reconciliation queue</h2>
+      <p class="muted" id="bank-summary"></p>
+      <div id="bank-missing" class="muted"></div>
+      <div class="grid" id="bank-tab-counts"></div>
+      <label class="muted" style="display:block;margin:10px 0 8px;">Month
+        <input id="bank-month" type="month" />
+      </label>
+      <nav class="tabs" id="bank-tabs" aria-label="Bank reconciliation">
+        <button type="button" data-bank-tab="possible" class="active">Possible match</button>
+        <button type="button" data-bank-tab="unmatched">Unmatched</button>
+        <button type="button" data-bank-tab="exception">Exception</button>
+        <button type="button" data-bank-tab="matched">Matched</button>
+      </nav>
+      <div id="bank-list" class="muted">Loading…</div>
+    </section>
+
+    <section id="view-ap" class="card hidden">
+      <h2>AP ready (read-only)</h2>
+      <p class="muted">Matched supplier bills ready for controller review. Visibility only — not a payment.</p>
+      <div id="ap-list" class="muted">Loading…</div>
+    </section>
+
+    <section id="view-ready-to-pay" class="card hidden">
+      <h2>Ready to pay (read-only)</h2>
+      <p class="muted">Bills cleared for a later payment step. This list does not send money or approve payment.</p>
+      <div id="ready-to-pay-list" class="muted">Loading…</div>
+    </section>
+
+    <section id="view-exceptions" class="card hidden">
+      <h2>Exceptions (needs reconciliation)</h2>
+      <div id="exceptions-list" class="muted">Loading…</div>
+    </section>
+
+    <section id="view-completeness" class="card hidden">
+      <h2>Historical import completeness</h2>
+      <p class="muted" id="completeness-summary">Loading…</p>
+      <div id="completeness-list"></div>
+    </section>
+
+    <section id="view-photos" class="card hidden">
+      <h2>Photos to review</h2>
+      <p class="muted">Receiving photos waiting for a human link to a receipt or nota. Suggested matches only — accept or reject each one.</p>
+      <div id="photos-list" class="muted">Loading…</div>
+    </section>
+
+    <section id="view-detail" class="card hidden">
+      <nav id="detail-crumb" class="muted" style="margin-bottom:10px;"></nav>
+      <button type="button" class="btn" id="detail-back">← Back</button>
+      <div id="detail-body"></div>
+    </section>
+  </main>
+  <script>
+    const fmtIdr = (n) => {
+      const v = Number(n || 0);
+      return "Rp" + v.toLocaleString("en-US", { maximumFractionDigits: 0 });
+    };
+
+    function activeTab() {
+      const p = location.pathname.replace(/\/$/, "") || "/bzg/finance";
+      if (p === "/bzg/finance") return "browse";
+      if (p.startsWith("/bzg/finance/suppliers")) return "suppliers";
+      if (p.startsWith("/bzg/finance/petty")) return "petty";
+      if (p.startsWith("/bzg/finance/bank")) return "bank";
+      if (p.startsWith("/bzg/finance/statements")) return "statements";
+      if (p.startsWith("/bzg/finance/ap")) return "ap";
+      if (p.startsWith("/bzg/finance/ready-to-pay")) return "ready-to-pay";
+      if (p.startsWith("/bzg/finance/exceptions")) return "exceptions";
+      if (p.startsWith("/bzg/finance/completeness")) return "completeness";
+      if (p.startsWith("/bzg/finance/photos-to-review")) return "photos";
+      if (p.match(/\/bzg\/finance\/(po|receipts|notas)\//)) return "detail";
+      return "browse";
+    }
+
+    function showView(name) {
+      ["browse","suppliers","petty","bank","statements","ap","ready-to-pay","exceptions","completeness","photos","detail"].forEach((v) => {
+        const el = document.getElementById("view-" + v);
+        if (el) el.classList.toggle("hidden", v !== name);
+      });
+      document.querySelectorAll("#main-nav a").forEach((a) => {
+        a.classList.toggle("active", a.getAttribute("data-tab") === name && name !== "detail");
+      });
+    }
+
+    const FILTER_KEY = "bzg-finance-filters";
+
+    function readFilters() {
+      try {
+        const raw = sessionStorage.getItem(FILTER_KEY);
+        return raw ? JSON.parse(raw) : { outlet: "", month: "" };
+      } catch (err) {
+        return { outlet: "", month: "" };
+      }
+    }
+
+    function writeFilters(filters) {
+      sessionStorage.setItem(FILTER_KEY, JSON.stringify(filters));
+      const q = new URLSearchParams();
+      if (filters.outlet) q.set("outlet", filters.outlet);
+      if (filters.month) q.set("month", filters.month);
+      const suffix = q.toString() ? "?" + q.toString() : "";
+      const base = location.pathname.replace(/\/$/, "") || "/bzg/finance";
+      if (location.search !== suffix && !base.match(/\/(po|receipts|notas|suppliers)\//)) {
+        history.replaceState(null, "", base + suffix);
+      }
+    }
+
+    function syncFilterControls() {
+      const f = readFilters();
+      const outlet = document.getElementById("filter-outlet");
+      const month = document.getElementById("filter-month");
+      if (outlet) outlet.value = f.outlet || "";
+      if (month) month.value = f.month || "";
+    }
+
+    function filterQuery(extra) {
+      const f = readFilters();
+      const q = new URLSearchParams(extra || "");
+      if (f.outlet) q.set("outlet", f.outlet);
+      return q.toString() ? "?" + q.toString() : "";
+    }
+
+    function bindFilters() {
+      const outlet = document.getElementById("filter-outlet");
+      const month = document.getElementById("filter-month");
+      const onChange = () => {
+        writeFilters({ outlet: outlet.value || "", month: month.value || "" });
+        route();
+      };
+      if (outlet) outlet.onchange = onChange;
+      if (month) month.onchange = onChange;
+    }
+
+    function setCrumb(parts) {
+      const el = document.getElementById("detail-crumb");
+      if (!el) return;
+      el.innerHTML = (parts || []).map((p, i) =>
+        i < parts.length - 1
+          ? `<a href="${p.href}">${p.label}</a> › `
+          : `<span>${p.label}</span>`
+      ).join("");
+    }
+
+    async function api(path) {
+      const join = path.includes("?") ? "&" : "?";
+      const fq = filterQuery();
+      const url = fq ? path + (path.includes("?") ? "&" + fq.slice(1) : fq) : path;
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.message || "Request failed");
+      return body;
+    }
+
+    function evidenceLine(ev) {
+      if (!ev) return '<span class="muted">No evidence linked yet</span>';
+      if (ev.linked && ev.photo_href) {
+        return `<span class="stamp">Evidence linked</span><img class="evidence-photo" src="${ev.photo_href}" alt="Linked evidence photo" loading="lazy" />`;
+      }
+      if (ev.linked) return '<span class="stamp">Evidence linked</span>';
+      return '<span class="stamp warn">No evidence linked yet</span>';
+    }
+
+    async function apiPost(path, body) {
+      const res = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(body || {}),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Request failed");
+      return data;
+    }
+
+    function paginationControls(total, limit, offset, onPage) {
+      if (!total || total <= limit) return "";
+      const page = Math.floor(offset / limit) + 1;
+      const pages = Math.ceil(total / limit);
+      return `<p class="muted">Page ${page} of ${pages} · ${total} rows
+        ${offset > 0 ? `<button type="button" class="btn" data-page="${offset - limit}">Previous</button>` : ""}
+        ${offset + limit < total ? `<button type="button" class="btn" data-page="${offset + limit}">Next</button>` : ""}
+      </p>`;
+    }
+
+    function humanCompletenessStatus(d) {
+      return d.status_label || (d.status === "COMPLETE" ? "Complete" : d.status === "GAP" ? "Gap" : (d.status || "").replace(/_/g, " ").toLowerCase());
+    }
+
+    function reconBadge(status, needs) {
+      if (needs || String(status || "").toUpperCase() === "NEEDS_RECONCILIATION") {
+        return '<span class="stamp bad">Needs reconciliation</span>';
+      }
+      if (status) return `<span class="stamp">${String(status).replace(/_/g, " ")}</span>`;
+      return "";
+    }
+
+    async function renderOverview() {
+      const body = await api("/api/bzg/finance/overview");
+      document.getElementById("sub").textContent = body.message || "BZG Finance";
+      const counts = body.counts || {};
+      document.getElementById("stamps").innerHTML = [
+        `<span class="stamp">PO ${counts.purchase_orders || 0}</span>`,
+        `<span class="stamp">notas ${counts.supplier_bills || 0}</span>`,
+      ].join("");
+      document.getElementById("count-grid").innerHTML = [
+        ["Purchase orders", counts.purchase_orders],
+        ["PO lines", counts.po_lines],
+        ["Goods receipts", counts.goods_receipts],
+        ["Supplier bills", counts.supplier_bills],
+        ["AP ready", counts.ap_ready],
+        ["Suppliers", counts.suppliers],
+        ["Petty (historical)", counts.petty_historical],
+        ["Bank txns", counts.bank_transactions],
+        ["Needs reconciliation", counts.needs_reconciliation],
+        ["Bank unmatched", counts.bank_unmatched],
+      ].map(([label, n]) =>
+        `<div><p class="muted">${label}</p><p class="metric">${n ?? "—"}</p></div>`
+      ).join("");
+      const comp = body.completeness || {};
+      document.getElementById("completeness-summary").textContent =
+        `${(comp.summary || {}).complete_count || 0} complete · ${(comp.summary || {}).gap_count || 0} gap`;
+      const ds = comp.datasets || [];
+      document.getElementById("completeness-list").innerHTML = ds.map((d) => {
+        const label = humanCompletenessStatus(d);
+        const cls = d.status === "COMPLETE" ? "status-complete" : "status-gap";
+        return `<div class="row"><span class="${cls}">${label}</span> · ${d.dataset} · source ${d.source_count} · beta ${d.beta_count}</div>`;
+      }).join("");
+    }
+
+    let supplierPageOffset = 0;
+    const PAGE_SIZE = 200;
+
+    async function renderSuppliersList(q, offset) {
+      supplierPageOffset = offset || 0;
+      const body = await api(
+        "/api/bzg/finance/suppliers?q=" + encodeURIComponent(q || "") +
+        "&limit=" + PAGE_SIZE + "&offset=" + supplierPageOffset
+      );
+      const el = document.getElementById("supplier-results");
+      const rows = body.suppliers || [];
+      if (!rows.length) {
+        el.innerHTML = '<p class="muted">No suppliers found.</p>';
+        return;
+      }
+      el.innerHTML = rows.map((s) =>
+        `<div class="row"><a href="/bzg/finance/suppliers/${encodeURIComponent(s.vendor_id)}">${s.display_name}</a>
+         <span class="muted"> · ${s.po_count} PO · ${s.nota_count} nota</span></div>`
+      ).join("") + paginationControls(body.total, body.limit || PAGE_SIZE, body.offset || 0);
+      el.querySelectorAll("[data-page]").forEach((btn) => {
+        btn.onclick = () => renderSuppliersList(q, Number(btn.dataset.page));
+      });
+    }
+
+    async function renderSupplierDetail(vendorId) {
+      showView("detail");
+      const body = await api("/api/bzg/finance/suppliers/" + encodeURIComponent(vendorId));
+      const v = body.vendor || {};
+      const recon = body.reconciliation || {};
+      setCrumb([
+        { label: "Suppliers", href: "/bzg/finance/suppliers" },
+        { label: v.display_name || "Supplier" },
+      ]);
+      document.getElementById("detail-body").innerHTML = `
+        <h2>${v.display_name || "Supplier"}</h2>
+        <p class="muted">${v.outlet_label || ""}</p>
+        <p class="recon">${reconBadge(recon.migration_status)}</p>
+        <h3>Purchase orders (${body.po_count || 0})</h3>
+        ${(body.purchase_orders || []).map((p) =>
+          `<div class="row"><a href="/bzg/finance/po/${encodeURIComponent(p.po_id)}">${p.source_pr_num || "Purchase order"}</a>
+           ${reconBadge(p.migration_status)} <span class="muted"> · ${p.outlet_label || ""}</span></div>`
+        ).join("") || '<p class="muted">No purchase orders.</p>'}
+        <h3>Notas (${body.nota_count || 0})</h3>
+        ${(body.notas || []).map((n) =>
+          `<div class="row"><a href="/bzg/finance/notas/${encodeURIComponent(n.bill_id)}">${n.nota_number || "Nota"}</a>
+           <span class="muted"> · ${n.nota_date} · ${fmtIdr(n.stated_total)}</span> ${evidenceLine(n.evidence)}</div>`
+        ).join("") || '<p class="muted">No notas.</p>'}
+        <h3>Accounts payable (${body.ap_count || 0})</h3>
+        ${(body.ap_rows || []).map((a) =>
+          `<div class="row"><a href="${a.nota_href}">${a.nota_number || "Nota"}</a>
+           <span class="muted"> · ${fmtIdr(a.stated_total)} · ${a.status_label}</span></div>`
+        ).join("") || '<p class="muted">No AP rows.</p>'}
+        <h3>Matched bank lines</h3>
+        ${(body.bank_matches || []).map((t) =>
+          `<div class="row"><a href="/bzg/finance/bank">${t.txn_date || "—"}</a>
+           <span class="muted"> · ${t.status_label} · ${fmtIdr(t.debit || t.credit)}</span></div>`
+        ).join("") || '<p class="muted">No matched bank lines.</p>'}`;
+    }
+
+    async function renderPoDetail(poId) {
+      showView("detail");
+      const body = await api("/api/bzg/finance/po/" + encodeURIComponent(poId));
+      const po = body.po || {};
+      const recon = body.reconciliation || {};
+      const crumbs = [{ label: "Suppliers", href: "/bzg/finance/suppliers" }];
+      if (body.vendor_href) crumbs.push({ label: po.supplier_name || "Supplier", href: body.vendor_href });
+      crumbs.push({ label: recon.source_pr_num || "Purchase order" });
+      setCrumb(crumbs);
+      document.getElementById("detail-body").innerHTML = `
+        <h2>${recon.source_pr_num || "Purchase order"}</h2>
+        <p class="muted">${po.supplier_name ? `<a href="${body.vendor_href || "#"}">${po.supplier_name}</a>` : ""} · ${po.outlet_label || ""} · ${po.state || ""}</p>
+        <p class="recon">${reconBadge(recon.migration_status, recon.needs_reconciliation)}</p>
+        <h3>Lines (${po.line_count || 0})</h3>
+        <table><thead><tr><th>Item</th><th>Qty</th><th>Unit</th></tr></thead>
+        <tbody>${(po.lines || []).map((l) =>
+          `<tr><td>${l.item}</td><td>${l.qty}</td><td>${l.unit || ""}</td></tr>`
+        ).join("")}</tbody></table>
+        <h3>Receipts</h3>
+        ${(body.receipts || []).map((r) =>
+          `<div class="row"><a href="/bzg/finance/receipts/${encodeURIComponent(r.gr_id)}">${r.rebuild_label || r.title || "Goods receipt"}</a>
+           <span class="muted"> · ${r.status || ""}</span></div>`
+        ).join("") || '<p class="muted">No receipts.</p>'}
+        <h3>Notas</h3>
+        ${(body.notas || []).map((n) =>
+          `<div class="row"><a href="/bzg/finance/notas/${encodeURIComponent(n.bill_id)}">${n.nota_number || "Nota"}</a>
+           ${evidenceLine(n.evidence)}</div>`
+        ).join("") || '<p class="muted">No notas.</p>'}`;
+    }
+
+    async function renderReceiptDetail(grId) {
+      showView("detail");
+      const body = await api("/api/bzg/finance/receipts/" + encodeURIComponent(grId));
+      const gr = body.receipt || {};
+      const recon = body.reconciliation || {};
+      setCrumb([
+        { label: "Purchase order", href: body.po_href },
+        { label: gr.rebuild_label || "Goods receipt" },
+      ]);
+      document.getElementById("detail-body").innerHTML = `
+        <h2>${gr.rebuild_label || gr.title || "Goods receipt"}</h2>
+        ${gr.rebuild_label ? '<p class="stamp warn">Rebuilt from the bill — no receiving record</p>' : ""}
+        <p class="muted">Purchase order <a href="${body.po_href}">Open PO</a> · ${gr.supplier_name || ""}</p>
+        <p class="recon">${reconBadge(recon.migration_status, recon.needs_reconciliation)}</p>
+        <h3>Lines (${gr.line_count || 0})</h3>
+        <table><thead><tr><th>Item</th><th>Received</th></tr></thead>
+        <tbody>${(gr.lines || []).map((l) =>
+          `<tr><td>${l.item}</td><td>${l.received_qty} ${l.unit || ""}</td></tr>`
+        ).join("")}</tbody></table>
+        ${body.bill ? `<p><a href="${body.bill.href}">Nota ${body.bill.nota_number}</a> ${evidenceLine(body.bill.evidence)}</p>` : '<p class="muted">No linked nota.</p>'}`;
+    }
+
+    async function renderNotaDetail(billId) {
+      showView("detail");
+      const body = await api("/api/bzg/finance/notas/" + encodeURIComponent(billId));
+      const n = body.nota || {};
+      const recon = body.reconciliation || {};
+      const crumbs = [{ label: "Suppliers", href: "/bzg/finance/suppliers" }];
+      if (body.vendor_href) crumbs.push({ label: n.supplier_name || "Supplier", href: body.vendor_href });
+      crumbs.push({ label: "Nota " + (n.nota_number || "") });
+      setCrumb(crumbs);
+      const computed = n.computed_total != null ? fmtIdr(n.computed_total) : "—";
+      const stated = fmtIdr(n.stated_total);
+      document.getElementById("detail-body").innerHTML = `
+        <h2>Nota ${n.nota_number || ""}</h2>
+        <p class="muted">${n.supplier_name || ""} · ${n.nota_date || ""}</p>
+        <p><strong>Stated total:</strong> ${stated} · <strong>Computed total:</strong> ${computed}</p>
+        <p>${evidenceLine(n.evidence)}</p>
+        <p class="recon">${reconBadge(recon.migration_status, recon.needs_reconciliation)}</p>
+        <p class="muted">Purchase order <a href="${body.po_href}">Open PO</a> · Receipt <a href="${body.receipt_href}">Open receipt</a></p>
+        <h3>Lines (${n.line_count || 0})</h3>
+        <table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead>
+        <tbody>${(n.lines || []).map((l) =>
+          `<tr><td>${l.item}</td><td>${l.billed_qty}</td><td>${fmtIdr(l.billed_unit_price)}</td><td>${fmtIdr(l.line_amount)}</td></tr>`
+        ).join("")}</tbody></table>
+        ${body.ap_ready ? `<p class="muted">Accounts payable: <a href="${body.ap_href || "/bzg/finance/ap"}">${body.ap_ready.status_label}</a></p>` : ""}
+        <h3>Bank match</h3>
+        ${(body.bank_matches || []).map((t) =>
+          `<div class="row"><a href="/bzg/finance/bank">${t.txn_date || "—"}</a>
+           <span class="muted"> · ${t.status_label} · ${fmtIdr(t.debit || t.credit)}</span></div>`
+        ).join("") || '<p class="muted">No bank match on file.</p>'}`;
+    }
+
+    async function renderPetty() {
+      const body = await api("/api/bzg/finance/petty?limit=50");
+      const el = document.getElementById("petty-list");
+      const rows = body.movements || [];
+      el.innerHTML = rows.length ? rows.map((m) =>
+        `<div class="row"><strong>${m.business_date}</strong> ${m.direction} ${fmtIdr(m.amount)}
+         <div class="muted">${m.purpose || ""}</div>
+         ${m.unresolved ? '<span class="stamp bad">unresolved</span>' : ""}
+         ${evidenceLine(m.evidence)}</div>`
+      ).join("") : '<p class="muted">No petty history rows.</p>';
+    }
+
+    function bankStamp(label) {
+      const s = String(label || "Unmatched");
+      let cls = "";
+      if (/unmatched/i.test(s)) cls = " warn";
+      if (/exception/i.test(s)) cls = " bad";
+      return `<span class="stamp${cls}">${s}</span>`;
+    }
+
+    let bankTab = "possible";
+    let bankMonth = "";
+    let bankSelected = new Set();
+
+    async function renderBank() {
+      const monthInput = document.getElementById("bank-month");
+      if (monthInput && monthInput.value !== bankMonth) bankMonth = monthInput.value || "";
+      const q = new URLSearchParams({ tab: bankTab, limit: "50" });
+      if (bankMonth) q.set("month", bankMonth);
+      const body = await api("/api/bzg/finance/bank/queue?" + q.toString());
+      const counts = body.tab_counts || {};
+      document.getElementById("bank-tab-counts").innerHTML = (body.tabs || []).map((t) =>
+        `<article class="card"><p class="meta">${t.label}</p><p class="count">${counts[t.id] || 0}</p></article>`
+      ).join("");
+      document.getElementById("bank-summary").textContent =
+        `${(body.months || []).length} months on file · ${body.total || 0} rows in this tab`;
+      document.querySelectorAll("#bank-tabs button").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.bankTab === bankTab);
+        btn.onclick = () => { bankTab = btn.dataset.bankTab; bankSelected.clear(); renderBank(); };
+      });
+      if (monthInput) {
+        monthInput.onchange = () => { bankMonth = monthInput.value || ""; renderBank(); };
+      }
+      const rows = body.items || [];
+      bankSelected = new Set([...bankSelected].filter((id) => rows.some((r) => r.txn_id === id)));
+      document.getElementById("bank-list").innerHTML = rows.length ? rows.map((t) => {
+        const amt = t.direction === "out" ? "−" + fmtIdr(t.amount) : "+" + fmtIdr(t.amount);
+        const checked = bankSelected.has(t.txn_id) ? " checked" : "";
+        return `<div class="row bank-row" data-txn="${t.txn_id}" data-rule="${t.proposal_rule || ""}">
+          <label><input type="checkbox" class="bank-pick"${checked} /> <strong>${t.txn_date || "—"}</strong> ${bankStamp(body.tabs && body.tab === "possible" ? "Possible match" : bankTab)}</label>
+          <div class="muted">${t.description || ""}</div>
+          <div>${amt}</div>
+          <div class="recon">${t.proposal_text || ""}</div>
+          <div class="review-actions">
+            <button type="button" class="btn bank-confirm">Confirm</button>
+            <button type="button" class="btn bank-reject">Reject</button>
+            <button type="button" class="btn bank-exception">Mark exception</button>
+          </div>
+          <input type="text" class="bank-note hidden" placeholder="Note required" />
+        </div>`;
+      }).join("") + `<button type="button" class="btn" id="bank-bulk">Bulk confirm selected</button>` : '<p class="muted">No bank lines in this queue.</p>';
+      document.getElementById("bank-list").querySelectorAll(".bank-pick").forEach((cb) => {
+        cb.addEventListener("change", () => {
+          const row = cb.closest(".bank-row");
+          if (cb.checked) bankSelected.add(row.dataset.txn); else bankSelected.delete(row.dataset.txn);
+        });
+      });
+      document.getElementById("bank-list").querySelectorAll(".bank-confirm").forEach((btn) => {
+        btn.onclick = async () => {
+          const id = btn.closest(".bank-row").dataset.txn;
+          await apiPost("/api/bzg/finance/bank/queue/" + encodeURIComponent(id) + "/confirm", {});
+          await renderBank();
+        };
+      });
+      document.getElementById("bank-list").querySelectorAll(".bank-reject").forEach((btn) => {
+        btn.onclick = async () => {
+          const row = btn.closest(".bank-row");
+          const input = row.querySelector(".bank-note");
+          if (input.classList.contains("hidden")) { input.classList.remove("hidden"); input.focus(); btn.textContent = "Confirm reject"; return; }
+          const reason = (input.value || "").trim();
+          if (!reason) { input.focus(); return; }
+          await apiPost("/api/bzg/finance/bank/queue/" + encodeURIComponent(row.dataset.txn) + "/reject", { reason });
+          await renderBank();
+        };
+      });
+      document.getElementById("bank-list").querySelectorAll(".bank-exception").forEach((btn) => {
+        btn.onclick = async () => {
+          const row = btn.closest(".bank-row");
+          const input = row.querySelector(".bank-note");
+          if (input.classList.contains("hidden")) { input.classList.remove("hidden"); input.focus(); btn.textContent = "Save exception"; return; }
+          const note = (input.value || "").trim();
+          if (!note) { input.focus(); return; }
+          await apiPost("/api/bzg/finance/bank/queue/" + encodeURIComponent(row.dataset.txn) + "/exception", { note });
+          await renderBank();
+        };
+      });
+      const bulk = document.getElementById("bank-bulk");
+      if (bulk) {
+        bulk.onclick = async () => {
+          const ids = [...bankSelected];
+          if (ids.length < 2) { alert("Select at least two rows with the same rule."); return; }
+          const rules = new Set(ids.map((id) => document.querySelector(`.bank-row[data-txn="${id}"]`)?.dataset.rule || ""));
+          if (rules.size !== 1 || !rules.values().next().value) { alert("All selected rows must share the same rule."); return; }
+          await apiPost("/api/bzg/finance/bank/queue/bulk-confirm", { txn_ids: ids, rule: rules.values().next().value });
+          bankSelected.clear();
+          await renderBank();
+        };
+      }
+    }
+
+    let apPageOffset = 0;
+
+    async function renderAp(offset) {
+      apPageOffset = offset || 0;
+      const body = await api("/api/bzg/finance/ap?limit=" + PAGE_SIZE + "&offset=" + apPageOffset);
+      const rows = body.ap_ready || [];
+      const el = document.getElementById("ap-list");
+      el.innerHTML = rows.length ? rows.map((a) =>
+        `<div class="row"><a href="${a.nota_href}">${a.nota_number || "Nota"}</a>
+         <span class="muted"> · ${a.supplier_name} · ${fmtIdr(a.stated_total)} · ${a.status_label || a.match_result}</span></div>`
+      ).join("") + paginationControls(body.total, body.limit || PAGE_SIZE, body.offset || 0) : '<p class="muted">No AP rows.</p>';
+      el.querySelectorAll("[data-page]").forEach((btn) => {
+        btn.onclick = () => renderAp(Number(btn.dataset.page));
+      });
+    }
+
+    let rtpPageOffset = 0;
+
+    async function renderReadyToPay(offset) {
+      rtpPageOffset = offset || 0;
+      const body = await api("/api/bzg/finance/ready-to-pay?limit=" + PAGE_SIZE + "&offset=" + rtpPageOffset);
+      const rows = body.ready_to_pay || [];
+      const el = document.getElementById("ready-to-pay-list");
+      el.innerHTML = rows.length ? rows.map((r) =>
+        `<div class="row"><a href="${r.nota_href || "#"}">${r.nota_number || "Nota"}</a>
+         <span class="muted"> · ${r.supplier_name || "Supplier"} · ${fmtIdr(r.stated_total)} · ${r.outlet_label || ""}</span>
+         <div class="muted">Read-only — not a payment.</div></div>`
+      ).join("") + paginationControls(body.total, body.limit || PAGE_SIZE, body.offset || 0) : '<p class="muted">No bills on the ready to pay list yet.</p>';
+      el.querySelectorAll("[data-page]").forEach((btn) => {
+        btn.onclick = () => renderReadyToPay(Number(btn.dataset.page));
+      });
+    }
+
+    async function renderStatements() {
+      const body = await api("/api/bzg/finance/statements");
+      const rows = body.statements || [];
+      document.getElementById("statements-list").innerHTML = rows.length ? rows.map((s) =>
+        `<div class="row"><a href="/bzg/finance/statements/${encodeURIComponent(s.statement_id)}">${s.bank || "Bank"} · ${s.account || ""}</a>
+         <span class="muted"> · ${s.period_start || ""} → ${s.period_end || ""} · ${s.txn_count || 0} txns</span></div>`
+      ).join("") : '<p class="muted">No statements imported.</p>';
+    }
+
+    async function renderStatementDetail(importId) {
+      showView("detail");
+      const body = await api("/api/bzg/finance/statements/" + encodeURIComponent(importId));
+      const s = body.statement || {};
+      setCrumb([
+        { label: "Statements", href: "/bzg/finance/statements" },
+        { label: (s.bank || "Statement") + " " + (s.period_end || "") },
+      ]);
+      const txns = s.transactions || [];
+      document.getElementById("detail-body").innerHTML = `
+        <h2>${s.bank || "Bank"} · ${s.account || ""}</h2>
+        <p class="muted">${s.period_start || ""} → ${s.period_end || ""}</p>
+        <p><strong>Opening:</strong> ${fmtIdr(s.opening_balance)} · <strong>Closing:</strong> ${fmtIdr(s.closing_balance)}</p>
+        <p><a href="${s.original_download_href || "#"}">Download original file</a> · ${s.reconciliation_status || "Unreconciled"}</p>
+        <h3>Transactions (${txns.length})</h3>
+        ${txns.map((t) =>
+          `<div class="row"><strong>${t.txn_date || "—"}</strong>
+           <span class="muted"> · ${t.match_label || t.recon_status || ""}</span>
+           <div>${t.debit ? "−" + fmtIdr(t.debit) : ""} ${t.credit ? "+" + fmtIdr(t.credit) : ""}</div>
+           <div class="muted">${t.description || ""}</div></div>`
+        ).join("") || '<p class="muted">No transactions.</p>'}`;
+    }
+
+    async function renderPhotosToReview() {
+      const el = document.getElementById("photos-list");
+      try {
+        const body = await api("/api/bzg/finance/evidence-review?limit=50");
+        const rows = body.items || [];
+        if (!rows.length) {
+          el.innerHTML = '<p class="muted">No receiving photos waiting for review right now.</p>';
+          return;
+        }
+        el.innerHTML = rows.map((item) => {
+          const rec = item.proposed_record || {};
+          const label = rec.label || rec.kind || "Suggested match";
+          const meta = [rec.supplier_name, rec.date, rec.amount != null ? fmtIdr(rec.amount) : ""].filter(Boolean).join(" · ");
+          return `<div class="review-card" data-recon-id="${item.recon_id}">
+            <img class="evidence-photo" src="${item.photo_href}" alt="Receiving photo" loading="lazy" />
+            <p><strong>${label}</strong></p>
+            <p class="muted">${meta || "Suggested link"}</p>
+            <p class="muted">${item.proposal_rule_label || ""}</p>
+            ${rec.href ? `<p><a href="${rec.href}">Open ${rec.kind || "record"}</a></p>` : ""}
+            <div class="review-actions">
+              <button type="button" class="btn accept-photo" data-id="${item.recon_id}">Accept link</button>
+              <button type="button" class="btn reject-photo" data-id="${item.recon_id}">Reject</button>
+            </div>
+            <label class="muted hidden reject-reason-wrap">Reason
+              <input type="text" class="reject-reason" placeholder="Why is this wrong?" />
+            </label>
+          </div>`;
+        }).join("");
+        el.querySelectorAll(".accept-photo").forEach((btn) => {
+          btn.onclick = async () => {
+            const id = btn.dataset.id;
+            btn.disabled = true;
+            try {
+              await apiPost("/api/bzg/finance/evidence-review/" + encodeURIComponent(id) + "/accept", {});
+              await renderPhotosToReview();
+            } catch (err) {
+              alert(err.message || "Accept failed");
+              btn.disabled = false;
+            }
+          };
+        });
+        el.querySelectorAll(".reject-photo").forEach((btn) => {
+          btn.onclick = async () => {
+            const card = btn.closest(".review-card");
+            const wrap = card.querySelector(".reject-reason-wrap");
+            const input = card.querySelector(".reject-reason");
+            if (wrap.classList.contains("hidden")) {
+              wrap.classList.remove("hidden");
+              input.focus();
+              btn.textContent = "Confirm reject";
+              return;
+            }
+            const reason = (input.value || "").trim();
+            if (!reason) {
+              input.focus();
+              return;
+            }
+            btn.disabled = true;
+            try {
+              await apiPost("/api/bzg/finance/evidence-review/" + encodeURIComponent(btn.dataset.id) + "/reject", { reason });
+              await renderPhotosToReview();
+            } catch (err) {
+              alert(err.message || "Reject failed");
+              btn.disabled = false;
+            }
+          };
+        });
+      } catch (err) {
+        el.innerHTML = `<p class="err">${err.message || "Could not load review queue."}</p>`;
+      }
+    }
+
+    async function renderExceptions() {
+      const body = await api("/api/bzg/finance/exceptions?limit=50");
+      const rows = body.exceptions || [];
+      document.getElementById("exceptions-list").innerHTML = rows.length ? rows.map((e) =>
+        `<div class="row"><span class="stamp bad">Needs reconciliation</span>
+         <strong>${e.record_type}</strong> ${e.source_pr_num || e.beta_id}
+         ${e.href ? `<div><a href="${e.href}">Open</a></div>` : ""}</div>`
+      ).join("") : '<p class="muted">No exceptions.</p>';
+    }
+
+    async function route() {
+      const params = new URLSearchParams(location.search);
+      const filters = readFilters();
+      if (params.get("outlet")) filters.outlet = params.get("outlet");
+      if (params.get("month")) filters.month = params.get("month");
+      writeFilters(filters);
+      syncFilterControls();
+      bindFilters();
+
+      const p = location.pathname.replace(/\/$/, "") || "/bzg/finance";
+      document.getElementById("detail-back").onclick = () => history.back();
+      try {
+        if (p === "/bzg/finance") {
+          showView("browse");
+          await renderOverview();
+          return;
+        }
+        if (p === "/bzg/finance/suppliers") {
+          showView("suppliers");
+          const q = document.getElementById("supplier-q");
+          q.oninput = () => renderSuppliersList(q.value, 0);
+          await renderSuppliersList("", 0);
+          return;
+        }
+        const mSup = p.match(/^\/bzg\/finance\/suppliers\/([^/]+)$/);
+        if (mSup) { await renderSupplierDetail(decodeURIComponent(mSup[1])); return; }
+        const mPo = p.match(/^\/bzg\/finance\/po\/([^/]+)$/);
+        if (mPo) { await renderPoDetail(decodeURIComponent(mPo[1])); return; }
+        const mGr = p.match(/^\/bzg\/finance\/receipts\/([^/]+)$/);
+        if (mGr) { await renderReceiptDetail(decodeURIComponent(mGr[1])); return; }
+        const mNota = p.match(/^\/bzg\/finance\/notas\/([^/]+)$/);
+        if (mNota) { await renderNotaDetail(decodeURIComponent(mNota[1])); return; }
+        const mStmt = p.match(/^\/bzg\/finance\/statements\/([^/]+)$/);
+        if (mStmt) { await renderStatementDetail(decodeURIComponent(mStmt[1])); return; }
+        if (p === "/bzg/finance/petty") { showView("petty"); await renderPetty(); return; }
+        if (p === "/bzg/finance/bank") {
+          showView("bank");
+          await renderBank();
+          return;
+        }
+        if (p === "/bzg/finance/statements") { showView("statements"); await renderStatements(); return; }
+        if (p === "/bzg/finance/ap") { showView("ap"); await renderAp(0); return; }
+        if (p === "/bzg/finance/ready-to-pay") { showView("ready-to-pay"); await renderReadyToPay(0); return; }
+        if (p === "/bzg/finance/exceptions") { showView("exceptions"); await renderExceptions(); return; }
+        if (p === "/bzg/finance/photos-to-review") { showView("photos"); await renderPhotosToReview(); return; }
+        if (p === "/bzg/finance/completeness") {
+          showView("completeness");
+          const body = await api("/api/bzg/finance/overview");
+          const comp = body.completeness || {};
+          document.getElementById("completeness-summary").textContent =
+            `${(comp.summary || {}).complete_count || 0} complete · ${(comp.summary || {}).gap_count || 0} gap`;
+          document.getElementById("completeness-list").innerHTML = (comp.datasets || []).map((d) => {
+            const label = humanCompletenessStatus(d);
+            const cls = d.status === "COMPLETE" ? "status-complete" : "status-gap";
+            return `<div class="row"><span class="${cls}">${label}</span> · ${d.dataset} · source ${d.source_count} · beta ${d.beta_count}</div>`;
+          }).join("");
+          return;
+        }
+        showView("browse");
+        await renderOverview();
+      } catch (err) {
+        document.getElementById("sub").innerHTML = `<span class="err">${String(err)}</span>`;
+      }
+    }
+
+    route();
+    window.addEventListener("popstate", route);
+  </script>
+<script data-cfasync="false" src="/assets/sidenav.js?v=20261002-owner-ux-petty"></script></body>
+</html>

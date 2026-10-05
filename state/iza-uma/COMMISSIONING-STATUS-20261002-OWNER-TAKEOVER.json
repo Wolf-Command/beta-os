@@ -1,0 +1,16 @@
+{
+  "id": "COMMISSIONING-STATUS-20261002-OWNER-TAKEOVER",
+  "when_wita": "2026-10-02T22:10:30.967805+08:00",
+  "iza_commissioning": "FAIL",
+  "iza_reason": "Did not complete close; left mid-flow; concurrency lock held close",
+  "matt_owner_commissioning": "PENDING_TONIGHT",
+  "uma_staff_commissioning": "PENDING_UNTIL_STAFF_CLOSER_PASS",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "do_not": [
+    "delete existing close",
+    "clear ownership in DB",
+    "weaken concurrency",
+    "convert Iza FAIL to PASS if Matt finishes"
+  ]
+}

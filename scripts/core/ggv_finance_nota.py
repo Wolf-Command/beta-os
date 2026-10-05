@@ -43,6 +43,7 @@ from typing import Any
 
 from core import audit as audit_log
 from core import evidence as _evidence
+from core import finance_core_entity as _fce
 from core import nas_library as _nas
 from core import rbac as _rbac
 
@@ -53,6 +54,21 @@ LIVE_CATALOG_DB = CATALOG_DB.resolve()
 # verified copy lives on the media library. Do not write new evidence here.
 LEGACY_BLOB_DIR = BETA_ROOT / "state" / "ggv-finance-nota" / "blobs"
 ENTITY_GGV = "ENT-GGV"
+
+
+def _eid() -> str:
+    return _fce.active_entity()
+
+
+def _finance_rel() -> Path:
+    return Path(_fce.entity_config(_eid())["finance_rel"])
+
+
+def _entity_aliases() -> set[str]:
+    cfg = _fce.entity_config(_eid())
+    return {_eid(), str(cfg.get("label") or "")}
+
+
 BOUND = "beta-ggv-finance-nota"
 STORAGE_ROOT_ID = "01-Media-Library"
 FINANCE_REL = Path("Finance") / "GGV" / "Notas"
@@ -136,15 +152,33 @@ PAGE_PATHS = frozenset(
         "/ggv/finance",
         "/ggv/finance/invoices",
         "/ggv/finance/notas",
+        "/ggv/finance/bills",
         "/ggv/finance/vendors",
+        "/ggv/finance/suppliers",
         "/ggv/finance/customers",
         "/ggv/finance/history",
         "/ggv/finance/reports",
+        "/ggv/finance/receipts",
+        "/ggv/finance/banking",
+        "/ggv/finance/statements",
+        "/ggv/finance/transactions",
+        "/ggv/finance/reconciliation",
+        "/ggv/finance/missing-evidence",
+        "/ggv/finance/audit",
         "/ggv-finance",
         "/ggv-finance.html",
         "/dashboards/ggv-finance.html",
     }
 )
+
+NOTA_QUEUE_LABELS = {
+    "needs_coding": "NEEDS CODING",
+    "needs_review": "NEEDS REVIEW",
+    "unmatched": "UNMATCHED",
+    "possible_duplicate": "POSSIBLE DUPLICATE",
+    "matched": "MATCHED",
+    "completed": "COMPLETED",
+}
 
 REFUSED_SUFFIXES = frozenset(
     {
@@ -538,7 +572,7 @@ def _seed_accountant_role(conn: sqlite3.Connection, ts: str) -> None:
 
 
 def _target() -> dict[str, str]:
-    return {"entity_id": ENTITY_GGV}
+    return {"entity_id": _eid()}
 
 
 def person_can(person_id: str | None, code: str, conn: sqlite3.Connection) -> bool:
@@ -549,9 +583,16 @@ def person_can(person_id: str | None, code: str, conn: sqlite3.Connection) -> bo
 
 
 def require(person_id: str | None, code: str, conn: sqlite3.Connection) -> None:
+    if code == "finance.nota.read" and _eid() == "ENT-AMG":
+        ctx = {"entity_id": "ENT-AMG"}
+        if _rbac.can(person_id or "", "finance.nota.read", ctx, conn=conn) or _rbac.can(
+            person_id or "", "atrium.board.read", ctx, conn=conn
+        ):
+            return
     if not person_can(person_id, code, conn):
+        label = str(_fce.entity_config(_eid()).get("label") or "GGV")
         raise FinanceNotaError(
-            "You do not have access to GGV notas.",
+            f"You do not have access to {label} notas.",
             code="forbidden",
             http_status=403,
             extra={"required_permission": code},
@@ -576,7 +617,7 @@ def _audit(
         actor_type="PERSON",
         actor_person_id=person_id,
         verified_person_id=person_id,
-        entity_id=ENTITY_GGV,
+        entity_id=_eid(),
         resource_type=resource_type,
         resource_id=resource_id,
         reason_code=reason_code,
@@ -785,6 +826,33 @@ def propose_from_bytes(data: bytes, content_type: str, filename: str) -> dict[st
     else:
         proposal["message"] = "Check the reading, then correct anything that is wrong."
     return proposal
+
+
+def _upload_queue_state(
+    upload_row: sqlite3.Row | dict[str, Any],
+    *,
+    proposals: dict[str, Any] | None = None,
+    duplicate: bool = False,
+) -> str:
+    if duplicate:
+        return NOTA_QUEUE_LABELS["possible_duplicate"]
+    nota_id = upload_row["nota_id"] if isinstance(upload_row, sqlite3.Row) else upload_row.get("nota_id")
+    stage = upload_row["stage"] if isinstance(upload_row, sqlite3.Row) else upload_row.get("stage")
+    if nota_id and stage == "saved":
+        return NOTA_QUEUE_LABELS["completed"]
+    if stage == "failed":
+        return NOTA_QUEUE_LABELS["needs_review"]
+    props = proposals
+    if props is None:
+        raw = upload_row["proposals_json"] if isinstance(upload_row, sqlite3.Row) else upload_row.get("proposals_json")
+        try:
+            props = json.loads(raw or "{}")
+        except json.JSONDecodeError:
+            props = {}
+    fields = (props or {}).get("fields") or {}
+    if stage in {"ready_for_review", "reading", "checking_vendor"} and not fields.get("category"):
+        return NOTA_QUEUE_LABELS["needs_coding"]
+    return NOTA_QUEUE_LABELS["needs_review"]
 
 
 def _stage_view(stage: str, *, failed: str | None = None) -> list[dict[str, str]]:
@@ -1000,7 +1068,7 @@ def legacy_blob_dir() -> Path:
 
 
 def finance_nota_root() -> Path:
-    return media_root() / FINANCE_REL
+    return media_root() / _finance_rel()
 
 
 def storage_ready() -> bool:
@@ -1042,9 +1110,16 @@ def evidence_path(rel_path: str) -> Path:
         )
     root = media_root().resolve()
     path = (root / rel).resolve()
-    jail = (root / FINANCE_REL).resolve()
-    if path != jail and jail not in path.parents:
-        raise FinanceNotaError("Saved file path is not available.", code="missing_blob", http_status=404)
+    jail = None
+    for cfg in _fce.ENTITY_CONFIG.values():
+        candidate = (root / Path(str(cfg["finance_rel"]))).resolve()
+        if path == candidate or candidate in path.parents:
+            jail = candidate
+            break
+    if jail is None:
+        jail = (root / _finance_rel()).resolve()
+        if path != jail and jail not in path.parents:
+            raise FinanceNotaError("Saved file path is not available.", code="missing_blob", http_status=404)
     return path
 
 
@@ -1110,7 +1185,8 @@ def _place_evidence(
         )
     partial.replace(dest)
     rel = dest.resolve().relative_to(media_root().resolve()).as_posix()
-    if not rel.startswith("Finance/GGV/Notas/"):
+    jail_prefix = _finance_rel().as_posix().rstrip("/") + "/"
+    if not rel.startswith(jail_prefix):
         dest.unlink(missing_ok=True)
         raise FinanceNotaError("Finance evidence left its folder.", code="path_jail", http_status=500)
     return {
@@ -1169,7 +1245,7 @@ def create_upload(person_id: str, files: list[dict[str, Any]], *, conn: sqlite3.
               created_at, updated_at
             ) VALUES (?, ?, ?, 'uploading', 1, ?, ?)
             """,
-            (upload_id, ENTITY_GGV, person_id, ts, ts),
+            (upload_id, _eid(), person_id, ts, ts),
         )
         stored = []
         placed_rows = []
@@ -1247,9 +1323,13 @@ def create_upload(person_id: str, files: list[dict[str, Any]], *, conn: sqlite3.
                 "upload_id": upload_id,
                 "stage": "uploading",
                 "stage_label": "Uploading",
+                "queue_state": _upload_queue_state(
+                    {"stage": "uploading", "nota_id": None, "proposals_json": "{}"}
+                ),
                 "progress": _stage_view("uploading"),
                 "files": stored,
                 "preserved": True,
+                "evidence_saved_first": True,
                 "message": "Upload saved. Next we read the document.",
             }
         )
@@ -1296,14 +1376,14 @@ def read_upload(person_id: str, upload_id: str, *, conn: sqlite3.Connection | No
                    SET stage='failed', failure_stage='reading', failure_message=?, updated_at=?
                  WHERE upload_id=?
                 """,
-                (str(exc), _now(), upload_id),
+                ("reading_failed", _now(), upload_id),
             )
             c.commit()
             raise FinanceNotaError(
-                f"Reading the document failed. Your upload is still saved ({upload_id}). Retry reading — do not upload again.",
+                "Reading the document failed. Your upload is still saved — retry reading or type fields manually.",
                 code=exc.code,
                 http_status=exc.http_status,
-                extra={"upload_id": upload_id, "preserved": True, "retry": "read"},
+                extra={"upload_id": upload_id, "preserved": True, "retry": "read", "manual_entry": True},
             ) from exc
         c.execute(
             """
@@ -1321,10 +1401,13 @@ def read_upload(person_id: str, upload_id: str, *, conn: sqlite3.Connection | No
                 "upload_id": upload_id,
                 "stage": "reading",
                 "stage_label": "Reading document",
+                "queue_state": _upload_queue_state(row, proposals=proposal),
                 "progress": _stage_view("reading"),
                 "proposals": proposal,
                 "preserved": True,
-                "message": proposal.get("message"),
+                "manual_entry": not proposal.get("read_something"),
+                "message": proposal.get("message")
+                or "Review the draft fields, then save when ready.",
             }
         )
     finally:
@@ -1345,7 +1428,7 @@ def _vendor_matches(conn: sqlite3.Connection, proposal: dict[str, Any]) -> list[
         ORDER BY display_name
         LIMIT 8
         """,
-        (ENTITY_GGV, name, f"%{name}%"),
+        (_eid(), name, f"%{name}%"),
     ).fetchall()
     return [_vendor_public(row) for row in rows]
 
@@ -1414,7 +1497,7 @@ def search_vendors(person_id: str, query: str, *, conn: sqlite3.Connection | Non
                 WHERE entity_id=? AND status='ACTIVE'
                 ORDER BY updated_at DESC LIMIT 30
                 """,
-                (ENTITY_GGV,),
+                (_eid(),),
             ).fetchall()
         else:
             like = f"%{q}%"
@@ -1428,7 +1511,7 @@ def search_vendors(person_id: str, query: str, *, conn: sqlite3.Connection | Non
                   )
                 ORDER BY display_name LIMIT 30
                 """,
-                (ENTITY_GGV, like, like, norm_phone(query), norm_tax(query)),
+                (_eid(), like, like, norm_phone(query), norm_tax(query)),
             ).fetchall()
         return public_payload({"ok": True, "vendors": [_vendor_public(row) for row in rows]})
     finally:
@@ -1442,7 +1525,7 @@ def _duplicate_vendors(conn: sqlite3.Connection, fields: dict[str, Any]) -> list
     email = norm_email(fields.get("email"))
     tax = norm_tax(fields.get("tax_id"))
     clauses = []
-    params: list[Any] = [ENTITY_GGV]
+    params: list[Any] = [_eid()]
     if name:
         clauses.append("name_norm=?")
         params.append(name)
@@ -1550,7 +1633,7 @@ def create_vendor(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connect
             """,
             (
                 vendor_id,
-                ENTITY_GGV,
+                _eid(),
                 name,
                 norm_name(name),
                 fields["category"],
@@ -1617,7 +1700,7 @@ def _duplicate_notas(
             JOIN ggv_nota_files f ON f.nota_id = n.nota_id
             WHERE f.sha256=? AND n.entity_id=?
             """,
-            (digest, ENTITY_GGV),
+            (digest, _eid()),
         ).fetchall()
         for row in rows:
             found[row["nota_id"]] = row
@@ -1628,7 +1711,7 @@ def _duplicate_notas(
             WHERE entity_id=? AND vendor_id=? AND lower(invoice_no)=lower(?)
               AND nota_date=? AND amount=?
             """,
-            (ENTITY_GGV, vendor_id, invoice_no, nota_date, amount),
+            (_eid(), vendor_id, invoice_no, nota_date, amount),
         ).fetchall()
         for row in rows:
             found[row["nota_id"]] = row
@@ -1691,7 +1774,7 @@ def _attach_evidence(
         return None
     try:
         saved = _evidence.submit_evidence(
-            entity_id=ENTITY_GGV,
+            entity_id=_eid(),
             evidence_type="invoice" if file_row["role"] == "primary" else "photo",
             governed_object_type="ggv_nota",
             governed_object_id=nota_id,
@@ -1748,7 +1831,7 @@ def save_nota(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connection 
         if fields["vendor_id"]:
             vendor = c.execute(
                 "SELECT vendor_id FROM ggv_vendors WHERE vendor_id=? AND entity_id=?",
-                (fields["vendor_id"], ENTITY_GGV),
+                (fields["vendor_id"], _eid()),
             ).fetchone()
             if not vendor:
                 raise FinanceNotaError("Choose a vendor from the list, or create one.", code="unknown_vendor")
@@ -1771,6 +1854,7 @@ def save_nota(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connection 
                 {
                     "ok": False,
                     "error": "possible_duplicate_nota",
+                    "queue_state": NOTA_QUEUE_LABELS["possible_duplicate"],
                     "message": "This nota might already be saved. Open the existing one, or save a separate copy and say why.",
                     "matches": matches,
                     "upload_id": upload_id,
@@ -1835,7 +1919,7 @@ def save_nota(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connection 
             """,
             (
                 nota_id,
-                ENTITY_GGV,
+                _eid(),
                 fields["vendor_id"],
                 fields["invoice_no"],
                 fields["nota_date"],
@@ -1905,6 +1989,7 @@ def save_nota(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connection 
                 "ok": True,
                 "saved": True,
                 "nota": _nota_public(c, saved),
+                "queue_state": NOTA_QUEUE_LABELS["completed"],
                 "progress": _stage_view("saved"),
                 "message": "Saved",
             }
@@ -1932,7 +2017,7 @@ def edit_nota(person_id: str, nota_id: str, body: dict[str, Any], *, conn: sqlit
         if fields["vendor_id"]:
             vendor = c.execute(
                 "SELECT vendor_id FROM ggv_vendors WHERE vendor_id=? AND entity_id=?",
-                (fields["vendor_id"], ENTITY_GGV),
+                (fields["vendor_id"], _eid()),
             ).fetchone()
             if not vendor:
                 raise FinanceNotaError("Choose a vendor from the list, or create one.", code="unknown_vendor")
@@ -1997,7 +2082,7 @@ def submit_nota(person_id: str, nota_id: str, *, conn: sqlite3.Connection | None
             created = _approvals.create_approval_request(
                 title=f"Review nota {row['invoice_no'] or nota_id}",
                 description="Review this nota. This is not a payment and not a bank change.",
-                owning_entity_id=ENTITY_GGV,
+                owning_entity_id=_eid(),
                 required_permission_code="finance.nota.edit",
                 verified_person_id=person_id,
                 request_type="GENERAL",
@@ -2074,9 +2159,44 @@ def list_notas(person_id: str, *, conn: sqlite3.Connection | None = None) -> dic
         require(person_id, "finance.nota.read", c)
         rows = c.execute(
             "SELECT * FROM ggv_notas WHERE entity_id=? ORDER BY updated_at DESC LIMIT 100",
-            (ENTITY_GGV,),
+            (_eid(),),
         ).fetchall()
         return public_payload({"ok": True, "notas": [_nota_public(c, row) for row in rows]})
+    finally:
+        if own:
+            c.close()
+
+
+def list_bills(person_id: str, *, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
+    own = conn is None
+    c = conn or _open_ready()
+    try:
+        require(person_id, "finance.nota.read", c)
+        from core import ggv_bills_import1 as _bills
+
+        _bills.ensure_schema(c)
+        rows = c.execute(
+            """
+            SELECT * FROM ggv_bills
+            WHERE entity_id=?
+            ORDER BY issued_on DESC, created_at DESC
+            LIMIT 200
+            """,
+            (_eid(),),
+        ).fetchall()
+        total = int(
+            c.execute(
+                "SELECT COUNT(*) FROM ggv_bills WHERE entity_id=?",
+                (_eid(),),
+            ).fetchone()[0]
+        )
+        return public_payload(
+            {
+                "ok": True,
+                "bills": [_bills.bill_public(row) for row in rows],
+                "bill_count": total,
+            }
+        )
     finally:
         if own:
             c.close()
@@ -2091,7 +2211,7 @@ def edit_vendor(person_id: str, vendor_id: str, body: dict[str, Any], *, conn: s
             refuse_money(f"/api/ggv/finance/vendors/{vendor_id}/bank")
         row = c.execute(
             "SELECT * FROM ggv_vendors WHERE vendor_id=? AND entity_id=?",
-            (vendor_id, ENTITY_GGV),
+            (vendor_id, _eid()),
         ).fetchone()
         if not row:
             raise FinanceNotaError("That vendor was not found.", code="not_found", http_status=404)
@@ -2146,7 +2266,7 @@ def get_vendor(person_id: str, vendor_id: str, *, conn: sqlite3.Connection | Non
     c = conn or _open_ready()
     try:
         require(person_id, "vendor.read", c)
-        row = c.execute("SELECT * FROM ggv_vendors WHERE vendor_id=? AND entity_id=?", (vendor_id, ENTITY_GGV)).fetchone()
+        row = c.execute("SELECT * FROM ggv_vendors WHERE vendor_id=? AND entity_id=?", (vendor_id, _eid())).fetchone()
         if not row:
             raise FinanceNotaError("That vendor was not found.", code="not_found", http_status=404)
         notas = c.execute(
@@ -2192,7 +2312,7 @@ def search_history(person_id: str, qs: dict[str, list[str]], *, conn: sqlite3.Co
             return ((qs.get(key) or [""])[0] or "").strip()
 
         clauses = ["n.entity_id=?"]
-        params: list[Any] = [ENTITY_GGV]
+        params: list[Any] = [_eid()]
         vendor = one("vendor")
         if vendor:
             clauses.append("(n.vendor_id=? OR v.name_norm LIKE ? OR v.display_name LIKE ?)")
@@ -2221,9 +2341,9 @@ def search_history(person_id: str, qs: dict[str, list[str]], *, conn: sqlite3.Co
         year = one("year")
         month = one("month")
         entity = one("entity")
-        if entity and entity not in {ENTITY_GGV, "GGV"}:
+        if entity and entity not in _entity_aliases():
             raise FinanceNotaError(
-                "This account only covers GGV Finance.",
+                "This account only covers this entity's Finance.",
                 code="forbidden",
                 http_status=403,
             )
@@ -2270,25 +2390,46 @@ def search_history(person_id: str, qs: dict[str, list[str]], *, conn: sqlite3.Co
 
 def overview(person_id: str, *, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
     own = conn is None
-    c = conn or _open_ready()
+    if own:
+        probe = db_connect()
+        try:
+            require(person_id, "finance.nota.read", probe)
+        finally:
+            probe.close()
+        c = _open_ready()
+    else:
+        c = conn
     try:
         require(person_id, "finance.nota.read", c)
         def count(sql: str, params: tuple = ()) -> int:
             return int(c.execute(sql, params).fetchone()[0])
 
-        needs = count("SELECT COUNT(*) FROM ggv_notas WHERE entity_id=? AND workflow_state='needs_review'", (ENTITY_GGV,))
-        waiting = count("SELECT COUNT(*) FROM ggv_notas WHERE entity_id=? AND workflow_state='waiting_approval'", (ENTITY_GGV,))
+        needs = count("SELECT COUNT(*) FROM ggv_notas WHERE entity_id=? AND workflow_state='needs_review'", (_eid(),))
+        waiting = count("SELECT COUNT(*) FROM ggv_notas WHERE entity_id=? AND workflow_state='waiting_approval'", (_eid(),))
         unverified = count(
             "SELECT COUNT(*) FROM ggv_notas WHERE entity_id=? AND workflow_state!='payment_verified'",
-            (ENTITY_GGV,),
+            (_eid(),),
         )
         vendor_issues = count(
             "SELECT COUNT(*) FROM ggv_notas WHERE entity_id=? AND (vendor_id IS NULL OR vendor_id='')",
-            (ENTITY_GGV,),
+            (_eid(),),
         )
+        bill_count = 0
+        try:
+            from core import ggv_bills_import1 as _bills
+
+            if c.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='ggv_bills'"
+            ).fetchone():
+                bill_count = count(
+                    "SELECT COUNT(*) FROM ggv_bills WHERE entity_id=?",
+                    (_eid(),),
+                )
+        except Exception:
+            bill_count = 0
         recent_rows = c.execute(
             "SELECT * FROM ggv_notas WHERE entity_id=? ORDER BY created_at DESC LIMIT 8",
-            (ENTITY_GGV,),
+            (_eid(),),
         ).fetchall()
         invoice_desk: dict[str, Any] = {}
         try:
@@ -2301,7 +2442,7 @@ def overview(person_id: str, *, conn: sqlite3.Connection | None = None) -> dict[
         try:
             from core import entity_books as _eb
 
-            books_stamp = _eb.desk_stamp(ENTITY_GGV)
+            books_stamp = _eb.desk_stamp(_eid())
         except Exception:
             books_stamp = {
                 "books_enabled": True,
@@ -2313,6 +2454,13 @@ def overview(person_id: str, *, conn: sqlite3.Connection | None = None) -> dict[
                 "human_commissioned": False,
                 "pack": "CORE-BOOKS-1",
             }
+        desk_payload: dict[str, Any] = {}
+        try:
+            from core import ggv_finance_desk as _desk
+
+            desk_payload = _desk.desk_overview(person_id, c)
+        except Exception:
+            desk_payload = {}
         return public_payload(
             {
                 "ok": True,
@@ -2320,9 +2468,16 @@ def overview(person_id: str, *, conn: sqlite3.Connection | None = None) -> dict[
                 "waiting_approval": waiting,
                 "payment_unverified": unverified,
                 "vendor_issues": vendor_issues,
+                "bill_count": bill_count,
                 "recently_added": [_nota_public(c, row) for row in recent_rows],
                 "invoice_desk": invoice_desk,
                 "finance_entities": invoice_desk.get("finance_entities") or [],
+                "operational": True,
+                "completeness_only": False,
+                "operational_sections": desk_payload.get("operational_sections") or [],
+                "desk_counts": desk_payload.get("counts") or {},
+                "reconciliation_summary": desk_payload.get("reconciliation") or {},
+                "matt_test_urls": desk_payload.get("matt_test_urls") or {},
                 "boundary_note": ZAYEN_NOTE,
                 "payment_note": "Entering a nota is not the same as paying it.",
                 "bank_note": "Bank details seen on a document are not verified.",
@@ -2401,7 +2556,7 @@ def accountant_desk(person_id: str, *, conn: sqlite3.Connection | None = None) -
         period = now[:7]
         rows = c.execute(
             "SELECT * FROM ggv_notas WHERE entity_id=? ORDER BY updated_at DESC",
-            (ENTITY_GGV,),
+            (_eid(),),
         ).fetchall()
         current = []
         missing = []
@@ -2467,7 +2622,7 @@ def review_nota(
             refuse_money(f"/api/ggv/finance/notas/{nota_id}/review")
         row = c.execute(
             "SELECT * FROM ggv_notas WHERE nota_id=? AND entity_id=?",
-            (nota_id, ENTITY_GGV),
+            (nota_id, _eid()),
         ).fetchone()
         if not row:
             raise FinanceNotaError("That nota was not found.", code="not_found", http_status=404)
@@ -2524,7 +2679,7 @@ def _month_rows(conn: sqlite3.Connection, year: str, month: str) -> list[sqlite3
     period = f"{year}-{month}"
     rows = conn.execute(
         "SELECT * FROM ggv_notas WHERE entity_id=? ORDER BY nota_date, created_at",
-        (ENTITY_GGV,),
+        (_eid(),),
     ).fetchall()
     return [row for row in rows if _period_key(row) == period]
 
@@ -2545,9 +2700,9 @@ def export_month_pack(
             return ((qs.get(key) or [""])[0] or "").strip()
 
         entity = one("entity")
-        if entity and entity not in {ENTITY_GGV, "GGV"}:
+        if entity and entity not in _entity_aliases():
             raise FinanceNotaError(
-                "This account only covers GGV Finance.",
+                "This account only covers this entity's Finance.",
                 code="forbidden",
                 http_status=403,
             )
@@ -2656,7 +2811,11 @@ def migrate_legacy_blobs(conn: sqlite3.Connection) -> dict[str, Any]:
     for row in rows:
         rel = str(row["rel_path"] or "")
         nas_rel = str(_col(row, "nas_rel_path", "") or "")
-        if nas_rel.startswith("Finance/GGV/Notas/") and not _is_legacy_rel(rel):
+        migrated = any(
+            nas_rel.startswith(Path(str(cfg["finance_rel"])).as_posix() + "/")
+            for cfg in _fce.ENTITY_CONFIG.values()
+        )
+        if migrated and not _is_legacy_rel(rel):
             continue
         if _is_legacy_rel(rel) or _is_legacy_rel(nas_rel) or not nas_rel:
             if _is_legacy_rel(rel) or (not nas_rel and _legacy_source_path(rel)):
@@ -2874,14 +3033,243 @@ def dispatch(method: str, path: str, qs: dict[str, list[str]], body: dict | None
         return overview(person_id)
     if method == "GET" and rest == "/overview":
         return overview(person_id)
+    if method == "GET" and rest == "/desk":
+        from core import ggv_finance_desk as _desk
+
+        dc = _open_ready()
+        try:
+            return public_payload(_desk.desk_overview(person_id or "", dc))
+        except _desk.GgvFinanceDeskError as exc:
+            raise FinanceNotaError(str(exc), code=exc.code, http_status=exc.http_status) from exc
+        finally:
+            dc.close()
+    if method == "GET" and rest == "/reconciliation":
+        from core import ggv_finance_desk as _desk
+
+        rc = _open_ready()
+        try:
+            return public_payload(_desk.reconciliation_board(person_id or "", rc))
+        except _desk.GgvFinanceDeskError as exc:
+            raise FinanceNotaError(str(exc), code=exc.code, http_status=exc.http_status) from exc
+        finally:
+            rc.close()
+    if method == "GET" and rest == "/audit":
+        from core import ggv_finance_desk as _desk
+
+        ac = _open_ready()
+        try:
+            lim_raw = (qs.get("limit") or ["50"])[0]
+            try:
+                lim = int(lim_raw or 50)
+            except (TypeError, ValueError):
+                lim = 50
+            return public_payload(_desk.audit_tail(person_id or "", ac, limit=lim))
+        except _desk.GgvFinanceDeskError as exc:
+            raise FinanceNotaError(str(exc), code=exc.code, http_status=exc.http_status) from exc
+        finally:
+            ac.close()
     if method == "GET" and rest == "/notas":
         return list_notas(person_id)
+    if method == "GET" and rest == "/bills":
+        return list_bills(person_id)
     if method == "GET" and rest == "/vendors":
         return search_vendors(person_id, ((qs.get("q") or [""])[0]))
     if method == "GET" and rest in {"/history", "/search"}:
         return search_history(person_id, qs)
     if method == "GET" and rest == "/accountant":
         return accountant_desk(person_id)
+    if method == "GET" and rest == "/receipts":
+        # Part B reuse: existing vault inbox/processed — not a second pipeline.
+        from core import ggv_receipt_intake_ro as _ggv_rx
+
+        rx_conn = _open_ready()
+        try:
+            require(person_id, "finance.nota.read", rx_conn)
+        finally:
+            rx_conn.close()
+        lim_raw = (qs.get("limit") or ["100"])[0]
+        try:
+            lim = int(lim_raw or 100)
+        except (TypeError, ValueError):
+            lim = 100
+        return public_payload(_ggv_rx.list_ggv_receipts(limit=lim))
+    if method == "GET" and rest == "/accounting/queues":
+        from core import ggv_receipt_accounting1 as _gra
+
+        qname = ((qs.get("queue") or [""])[0] or "").strip() or None
+        lim_raw = (qs.get("limit") or ["100"])[0]
+        try:
+            lim = int(lim_raw or 100)
+        except (TypeError, ValueError):
+            lim = 100
+        try:
+            return public_payload(
+                _gra.list_accounting_queues(
+                    verified_person_id=person_id or "",
+                    queue=qname,
+                    limit=lim,
+                )
+            )
+        except _gra.GgvReceiptAccountingError as exc:
+            raise FinanceNotaError(
+                str(exc), code=exc.code, http_status=exc.http_status, extra=exc.details
+            ) from exc
+    m_acct_img = re.fullmatch(r"/accounting/receipts/([^/]+)/image", rest)
+    if m_acct_img and method == "GET":
+        from core import ggv_receipt_accounting1 as _gra
+
+        try:
+            raw, mime, fname = _gra.receipt_image_bytes(
+                verified_person_id=person_id or "",
+                receipt_key=m_acct_img.group(1),
+            )
+        except _gra.GgvReceiptAccountingError as exc:
+            raise FinanceNotaError(
+                str(exc), code=exc.code, http_status=exc.http_status, extra=exc.details
+            ) from exc
+        return {
+            "_file": {
+                "data": raw,
+                "content_type": mime,
+                "filename": fname,
+                "disposition": "inline",
+            }
+        }
+    m_acct_confirm = re.fullmatch(r"/accounting/receipts/([^/]+)/confirm", rest)
+    if m_acct_confirm and method == "POST":
+        from core import ggv_receipt_accounting1 as _gra
+
+        try:
+            return public_payload(
+                _gra.confirm_receipt(
+                    verified_person_id=person_id or "",
+                    receipt_key=m_acct_confirm.group(1),
+                    body=body,
+                )
+            )
+        except _gra.GgvReceiptAccountingError as exc:
+            raise FinanceNotaError(
+                str(exc), code=exc.code, http_status=exc.http_status, extra=exc.details
+            ) from exc
+    m_acct_rx = re.fullmatch(r"/accounting/receipts/([^/]+)", rest)
+    if m_acct_rx and method == "GET":
+        from core import ggv_receipt_accounting1 as _gra
+
+        try:
+            return public_payload(
+                _gra.get_receipt(
+                    verified_person_id=person_id or "",
+                    receipt_key=m_acct_rx.group(1),
+                )
+            )
+        except _gra.GgvReceiptAccountingError as exc:
+            raise FinanceNotaError(
+                str(exc), code=exc.code, http_status=exc.http_status, extra=exc.details
+            ) from exc
+    if method == "GET" and rest in {"/bank-statements", "/statements", "/statements/library"}:
+        from core import finance_core_statements as _fcs
+
+        try:
+            return public_payload(_fcs.list_library(verified_person_id=person_id or ""))
+        except _fcs.FinanceStatementError as exc:
+            raise FinanceNotaError(
+                str(exc), code=exc.code, http_status=exc.http_status, extra=exc.details
+            ) from exc
+    m_stmt_orig = re.fullmatch(r"/statements/([^/]+)/original", rest)
+    if m_stmt_orig and method == "GET":
+        from core import finance_core_statements as _fcs
+
+        try:
+            raw, mime, fname = _fcs.original_bytes(
+                verified_person_id=person_id or "", import_id=m_stmt_orig.group(1)
+            )
+        except _fcs.FinanceStatementError as exc:
+            raise FinanceNotaError(
+                str(exc), code=exc.code, http_status=exc.http_status, extra=exc.details
+            ) from exc
+        return {
+            "_file": {
+                "data": raw,
+                "content_type": mime,
+                "filename": fname,
+                "disposition": "attachment",
+            }
+        }
+    m_stmt = re.fullmatch(r"/statements/([^/]+)", rest)
+    if m_stmt and method == "GET":
+        from core import finance_core_statements as _fcs
+
+        try:
+            return public_payload(
+                _fcs.get_statement(verified_person_id=person_id or "", import_id=m_stmt.group(1))
+            )
+        except _fcs.FinanceStatementError as exc:
+            raise FinanceNotaError(
+                str(exc), code=exc.code, http_status=exc.http_status, extra=exc.details
+            ) from exc
+    if method == "GET" and rest == "/statements/completeness":
+        from core import finance_core_statements as _fcs
+
+        try:
+            return public_payload(_fcs.month_completeness(verified_person_id=person_id or ""))
+        except _fcs.FinanceStatementError as exc:
+            raise FinanceNotaError(
+                str(exc), code=exc.code, http_status=exc.http_status, extra=exc.details
+            ) from exc
+    if method == "GET" and rest == "/bank-transactions":
+        from core import ggv_bank_statement1 as _gbs
+
+        iid = ((qs.get("import_id") or [""])[0] or "").strip() or None
+        st = ((qs.get("recon_status") or [""])[0] or "").strip() or None
+        lim_raw = (qs.get("limit") or ["200"])[0]
+        try:
+            lim = int(lim_raw or 200)
+        except (TypeError, ValueError):
+            lim = 200
+        return public_payload(
+            _gbs.list_transactions(
+                verified_person_id=person_id or "",
+                import_id=iid,
+                recon_status=st,
+                limit=lim,
+            )
+        )
+    if method == "POST" and rest == "/bank-statements/import":
+        from core import ggv_bank_statement1 as _gbs
+        import base64
+
+        fname = str(body.get("filename") or body.get("original_filename") or "").strip()
+        b64 = body.get("content_base64") or body.get("content_b64")
+        if not fname or not b64:
+            raise FinanceNotaError(
+                "filename and content_base64 required for bank statement import.",
+                code="missing_file",
+                http_status=400,
+            )
+        try:
+            raw = base64.b64decode(str(b64), validate=False)
+        except Exception as exc:  # noqa: BLE001
+            raise FinanceNotaError(
+                "content_base64 is not valid base64",
+                code="invalid_base64",
+                http_status=400,
+            ) from exc
+        try:
+            return public_payload(
+                _gbs.import_statement(
+                    verified_person_id=person_id or "",
+                    filename=fname,
+                    content=raw,
+                    bank_label=(str(body.get("bank_label") or "").strip() or None),
+                )
+            )
+        except _gbs.GgvBankStatementError as exc:
+            raise FinanceNotaError(
+                str(exc),
+                code=exc.code,
+                http_status=exc.http_status,
+                extra=exc.details,
+            ) from exc
     if method == "GET" and rest == "/export/month":
         return export_month_pack(person_id, qs)
     m_review = re.fullmatch(r"/notas/([^/]+)/review", rest)

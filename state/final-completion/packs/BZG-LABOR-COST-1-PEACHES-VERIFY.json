@@ -3,7 +3,7 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "status": "PASS_VERIFIED",
-  "verified_at": "2026-09-30T03:19:00+08:00",
+  "verified_at": "2026-09-30T03:22:12+08:00",
   "verifier": "Peaches-build-factory-watch",
   "exit_code": 0,
   "exit_at": "2026-09-30T03:15:00+08:00",
@@ -14,11 +14,16 @@
       "fail": 0
     }
   },
+  "independent_rerun_this_tick": {
+    "at": "2026-09-30T03:22:12+08:00",
+    "pass": 204,
+    "fail": 0
+  },
   "shots": {
     "count": 5,
     "distinct_sha256": 3,
     "all_distinct": false,
-    "note": "desk/hr/labor share SHA; phone+unsigned distinct",
+    "note": "desk/labor-unknown/hr-deferred share SHA; phone+unsigned distinct",
     "files": [
       {
         "path": "docs/wolf/ops/shots/bzglaborcost1-desk-desktop.png",
@@ -31,12 +36,12 @@
         "sha256": "8413ba12b01a14629010e60696d8a43a4fe7005a2557dbdac7cdbca2d5618ae1"
       },
       {
-        "path": "docs/wolf/ops/shots/bzglaborcost1-hr-deferred.png",
+        "path": "docs/wolf/ops/shots/bzglaborcost1-labor-unknown.png",
         "bytes": 177070,
         "sha256": "2cf8784d1c7c0b2d19c3d8e20ae14b61f229b62ed39250410f6b181f7d6a0457"
       },
       {
-        "path": "docs/wolf/ops/shots/bzglaborcost1-labor-unknown.png",
+        "path": "docs/wolf/ops/shots/bzglaborcost1-hr-deferred.png",
         "bytes": 177070,
         "sha256": "2cf8784d1c7c0b2d19c3d8e20ae14b61f229b62ed39250410f6b181f7d6a0457"
       },
@@ -47,8 +52,8 @@
       }
     ],
     "eye_check": {
-      "desk": "6 slots UNKNOWN fake_payroll=false HR deferred PRESERVED",
-      "unsigned_deny": "Access denied"
+      "desk": "UNKNOWN labor slots HR deferred no fake payroll",
+      "unsigned_deny": "Access denied shot present"
     }
   },
   "prod": {
@@ -62,15 +67,18 @@
     "human_commissioned": false
   },
   "honesty": {
+    "labor_unknown": true,
     "fake_payroll": false,
     "invented_labor_cost": false,
     "hr_deferred": true,
-    "ceiling": "BUILT"
+    "hr_deferred_not_flipped": true,
+    "ceiling": "BUILT",
+    "long_lived_beta_8788": "STALE_PRE_PACK_START_02:50_routes_404_ephemeral_harness_green"
   },
   "no_push": true,
   "beta_only": true,
   "git": {
-    "beta_os_head": "3ca7dd7",
+    "beta_os_head": "d70b1d2",
     "atrium_finance_head": "7584266",
     "uncommitted": true
   },
@@ -80,5 +88,10 @@
   ],
   "next_pack": "GGV-PIPELINE-TRUTH-1",
   "cursor_did_not_auto_start_next": true,
-  "HEADCHEF_auto": false
+  "HEADCHEF_auto": false,
+  "prior_pack": "FIN-CASH-TRUTH-1",
+  "matt_finished_ping_at": "2026-09-30T03:22:12+08:00",
+  "covers_with": [
+    "FIN-CASH-TRUTH-1"
+  ]
 }

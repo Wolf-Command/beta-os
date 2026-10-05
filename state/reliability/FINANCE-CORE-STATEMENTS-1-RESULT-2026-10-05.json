@@ -1,0 +1,420 @@
+{
+  "pack": "FINANCE-CORE-STATEMENTS-1",
+  "run_id": "BF-bad7704499ed",
+  "routes_added": {
+    "ggv_statements": "https://beta.wolfcommand.net/ggv/finance/statements",
+    "ggv_banking": "https://beta.wolfcommand.net/ggv/finance/banking",
+    "ggv_upload": "https://beta.wolfcommand.net/ggv/finance/banking",
+    "ggv_notas": "https://beta.wolfcommand.net/ggv/finance/notas",
+    "ggv_reconciliation": "https://beta.wolfcommand.net/ggv/finance/reconciliation",
+    "amg_statements": "https://beta.wolfcommand.net/amg/finance/statements",
+    "bzg_statements": "https://beta.wolfcommand.net/bzg/finance/statements"
+  },
+  "api_routes_added": [
+    "/api/ggv/finance/statements/library",
+    "/api/ggv/finance/statements/{id}",
+    "/api/ggv/finance/statements/{id}/original",
+    "/api/ggv/finance/statements/completeness",
+    "/api/amg/finance/statements/library",
+    "/api/bzg/finance/statements/library"
+  ],
+  "test_file": "scripts/tests/test_finance_core_statements1_20261005.py",
+  "tests_pass": 10,
+  "tests_fail": 0,
+  "regression_tests_pass": {
+    "test_finance_core_ggv1_20261005.py": 8,
+    "test_finance_core_amg_prove1_20261005.py": 8
+  },
+  "registry": {
+    "ENT-GGV": {
+      "Mandiri-1610015100972": {
+        "months_covered": [
+          "2026-01",
+          "2026-02",
+          "2026-03",
+          "2026-04",
+          "2026-05",
+          "2026-06",
+          "2026-07",
+          "2026-08"
+        ],
+        "months_missing": [
+          "2026-09",
+          "2026-10"
+        ],
+        "statement_count": 2,
+        "parse_status": [
+          "PARSED",
+          "PARSED"
+        ]
+      }
+    },
+    "ENT-AMG": {
+      "CKM-800203739400": {
+        "months_covered": [
+          "2025-12",
+          "2026-01",
+          "2026-02",
+          "2026-03",
+          "2026-04",
+          "2026-05",
+          "2026-06",
+          "2026-08"
+        ],
+        "months_missing": [
+          "2026-07",
+          "2026-09",
+          "2026-10"
+        ],
+        "statement_count": 34,
+        "parse_status": [
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED"
+        ]
+      },
+      "PPL-800203720100": {
+        "months_covered": [
+          "2025-12",
+          "2026-01",
+          "2026-02",
+          "2026-03",
+          "2026-04",
+          "2026-05",
+          "2026-06",
+          "2026-08"
+        ],
+        "months_missing": [
+          "2026-07",
+          "2026-09",
+          "2026-10"
+        ],
+        "statement_count": 34,
+        "parse_status": [
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED"
+        ]
+      },
+      "FRJ-800203718200": {
+        "months_covered": [
+          "2025-12",
+          "2026-01",
+          "2026-02",
+          "2026-03",
+          "2026-04",
+          "2026-05",
+          "2026-06",
+          "2026-08"
+        ],
+        "months_missing": [
+          "2026-07",
+          "2026-09",
+          "2026-10"
+        ],
+        "statement_count": 34,
+        "parse_status": [
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED"
+        ]
+      },
+      "KAS-800203745100": {
+        "months_covered": [
+          "2025-12",
+          "2026-01",
+          "2026-02",
+          "2026-03",
+          "2026-04",
+          "2026-05",
+          "2026-06",
+          "2026-08"
+        ],
+        "months_missing": [
+          "2026-07",
+          "2026-09",
+          "2026-10"
+        ],
+        "statement_count": 34,
+        "parse_status": [
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED"
+        ]
+      },
+      "PLI-800203774400": {
+        "months_covered": [
+          "2025-12",
+          "2026-01",
+          "2026-02",
+          "2026-03",
+          "2026-04",
+          "2026-05",
+          "2026-06",
+          "2026-08"
+        ],
+        "months_missing": [
+          "2026-07",
+          "2026-09",
+          "2026-10"
+        ],
+        "statement_count": 34,
+        "parse_status": [
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED",
+          "PARSED"
+        ]
+      }
+    },
+    "ENT-BZG": {
+      "Mandiri-1610555335558": {
+        "months_covered": [
+          "2026-03",
+          "2026-04",
+          "2026-05",
+          "2026-06",
+          "2026-07",
+          "2026-08"
+        ],
+        "months_missing": [
+          "2026-09",
+          "2026-10"
+        ],
+        "statement_count": 5,
+        "parse_status": [
+          "UNMATCHED",
+          "UNMATCHED",
+          "UNMATCHED",
+          "UNMATCHED",
+          "UNMATCHED"
+        ]
+      },
+      "BRI-19101003489305": {
+        "months_covered": [
+          "2026-04",
+          "2026-05",
+          "2026-06",
+          "2026-07",
+          "2026-08"
+        ],
+        "months_missing": [
+          "2026-09",
+          "2026-10"
+        ],
+        "statement_count": 5,
+        "parse_status": [
+          "UNMATCHED",
+          "UNMATCHED",
+          "UNMATCHED",
+          "UNMATCHED",
+          "UNMATCHED"
+        ]
+      },
+      "BNI-2177177110": {
+        "months_covered": [
+          "2026-04",
+          "2026-05",
+          "2026-06",
+          "2026-07",
+          "2026-08"
+        ],
+        "months_missing": [
+          "2026-09",
+          "2026-10"
+        ],
+        "statement_count": 5,
+        "parse_status": [
+          "EXCEPTION",
+          "EXCEPTION",
+          "EXCEPTION",
+          "EXCEPTION",
+          "EXCEPTION"
+        ]
+      }
+    }
+  },
+  "fixture_files_ignored": [
+    "state/amg-bank-statements/originals/GBSI-660d3240-5d55-498f-8daa-140e1e19e88a__amg-fc1-statement.csv",
+    "state/amg-bank-statements/originals/GBSI-a50fefec-33d7-4734-9fea-b1927be279a8__amg-fc1-statement.csv",
+    "state/amg-bank-statements/originals/GBSI-d480a625-115a-45ba-b2fb-35552d1bb4f1__amg-idem.csv",
+    "state/ggv-bank-statements/originals/GBSI-0d75cbfc-6991-4b3a-a248-489ccf5661c1__fc1-ggv-statement.csv",
+    "state/ggv-bank-statements/originals/GBSI-15ed4f8a-a15b-406d-b99b-875b775e35d5__fc1-isolation.csv",
+    "state/ggv-bank-statements/originals/GBSI-2651de39-70fe-4689-9bd2-8e8ff7e2e8d3__fc1-ggv-statement.csv",
+    "state/ggv-bank-statements/originals/GBSI-2d2c9fff-5af4-45ca-b607-86755c69082d__fc1-isolation.csv",
+    "state/ggv-bank-statements/originals/GBSI-2ff381f2-ba46-4c0e-a7be-b4671fd3d77d__fc1-isolation.csv",
+    "state/ggv-bank-statements/originals/GBSI-4f9ff395-55f8-4e35-9ba6-ec59456e69d5__fc1-isolation.csv",
+    "state/ggv-bank-statements/originals/GBSI-556daf0b-513d-4f14-83e1-a089e524a780__fc1-ggv-statement.csv",
+    "state/ggv-bank-statements/originals/GBSI-71d5e7dd-82a2-4bc8-a67b-701811403b02__fc1-ggv-statement.csv",
+    "state/ggv-bank-statements/originals/GBSI-ff1d6760-0653-4492-a0c8-48a2ae9e3734__fc1-ggv-statement.csv",
+    "state/ggv-bank-statements/originals/GBSI-ff89407c-9481-40ec-9d55-f4eecff460a2__fc1-isolation.csv"
+  ],
+  "ggv_prove_fixtures_flagged": [
+    "GBSI-cf68360b-e9c0-47eb-84d9-ae11f38364b7",
+    "GBSI-2608830d-db1b-4966-8d14-f114d45a2a6d"
+  ],
+  "beta_reloaded": true,
+  "reload_held": false,
+  "beta_listener_pid": 81522,
+  "prod_pid_unchanged": true,
+  "prod_pid": 1297,
+  "protected_closes_unchanged": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "status": "IMPLEMENTATION_DONE",
+  "exit_code": 0
+}

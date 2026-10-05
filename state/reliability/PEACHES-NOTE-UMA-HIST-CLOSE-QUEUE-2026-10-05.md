@@ -1,0 +1,4 @@
+UMA BLU HISTORICAL CLOSE QUEUE — PREFLIGHT DONE, SLICE ARMED (not launched yet). Lock: BZG-BANK-RECON-1 BF-2e9a971acc74 alive (Finance finished; factory false-BLOCKED then auto-dispatched bank-recon; left alive). Finance corrected to READY FOR HUMAN TEST (IMPLEMENTATION_DONE 12/0). UMA-HIST-CLOSE-QUEUE-1 READY priority 13; stdin waiter pid 68256 will launch when lock free. Nine statuses: 25 OPEN, 27 OPEN, 28 INCOMPLETE, 29 INCOMPLETE(PROTECTED), 30 INCOMPLETE, 01 OPEN, 02 OPEN, 03 EXCEPTION(PROTECTED), 04 INCOMPLETE(PROTECTED). READY_TO_CLOSE_NOW 6/9. Zero CLOSED Uma Sep/Oct in DB. Petty contamination ok. Prod 1297 untouched. Factory not stopped.
+
+Details: state/reliability/PEACHES-PROGRESS-UMA-HIST-CLOSE-QUEUE-2026-10-05.json
+Preflight: state/reliability/UMA-HIST-CLOSE-QUEUE-PREFLIGHT-2026-10-05.json

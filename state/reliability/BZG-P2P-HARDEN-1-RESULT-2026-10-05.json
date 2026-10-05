@@ -1,0 +1,61 @@
+{
+  "pack": "BZG-P2P-HARDEN-1",
+  "run_id": "BZG-P2P-HARDEN-1-2026-10-05T1255+08",
+  "finished_at": "2026-10-05T12:58:00+08:00",
+  "finding_id": "BREACH-2026-10-05-J1-BZG-P2P-PAY-READY-OVERGRANT",
+  "j1_verdict_preserved": "CLOSED",
+  "files_changed": [
+    "scripts/core/bzg_p2p_grants.py",
+    "scripts/core/bzg_ap_ready.py",
+    "scripts/core/bzg_ready_to_pay.py",
+    "scripts/migrations/migrate_bzg_p2p_po1_20261004.py",
+    "scripts/migrations/migrate_bzg_p2p_recv1_20261005.py",
+    "scripts/migrations/migrate_bzg_p2p_nota1_20261005.py",
+    "scripts/migrations/migrate_bzg_p2p_three_way1_20261005.py",
+    "scripts/migrations/migrate_bzg_p2p_ap1_20261005.py",
+    "scripts/migrations/migrate_bzg_p2p_ready_to_pay1_20261005.py",
+    "scripts/tests/test_bzg_p2p_harden1_20261005.py"
+  ],
+  "migrations_neutralised": [
+    "migrate_bzg_p2p_po1_20261004.py",
+    "migrate_bzg_p2p_recv1_20261005.py",
+    "migrate_bzg_p2p_nota1_20261005.py",
+    "migrate_bzg_p2p_three_way1_20261005.py",
+    "migrate_bzg_p2p_ap1_20261005.py",
+    "migrate_bzg_p2p_ready_to_pay1_20261005.py"
+  ],
+  "leak_fixed": {
+    "mark_ap_ready": "permission + SoD before existing-row return; unauthorised 403 forbidden",
+    "mark_ready_to_pay": "permission + SoD before existing-row return; unauthorised 403 forbidden"
+  },
+  "sod_extended": {
+    "rule": "same person cannot mark both AP-ready and Ready-to-Pay on one bill",
+    "code": "same_person_cannot_mark_both_stages",
+    "message": "You cannot mark both AP-ready and ready to pay on the same bill.",
+    "historical_rows": "unchanged"
+  },
+  "test_file": "scripts/tests/test_bzg_p2p_harden1_20261005.py",
+  "tests_pass": 31,
+  "tests_fail": 0,
+  "j1_matrix_rerun": {
+    "haikal_misa_yudi_deny": "pass (deny>=45)",
+    "amanda_deny_ap_mark": "pass",
+    "payment_execute_grants": 0,
+    "payment_approve_grants": 0,
+    "vendor_bank_change_grants": 0,
+    "protected_closes": "unchanged",
+    "petty_uma_6d853eeae0": "Rp552,700 unchanged"
+  },
+  "beta_reloaded": true,
+  "reload_held": false,
+  "beta_listener_pid": 10578,
+  "beta_listener_pid_before": 7546,
+  "prod_pid_unchanged": true,
+  "prod_pid": 1297,
+  "protected_closes_unchanged": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "zayen_ready": false,
+  "status": "PASS",
+  "exit_code": 0
+}

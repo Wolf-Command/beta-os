@@ -1,0 +1,55 @@
+{
+  "date": "2026-09-29",
+  "recorded_on": "2026-10-05",
+  "recorded_at_local": "2026-10-05T08:51:41+08:00",
+  "data_truth": "FAIL",
+  "ux": "FAIL",
+  "reasons": {
+    "from": "Matt",
+    "human_test": "5 Oct 2026 human test of the 29 Sep 2026 Uma Blu close",
+    "data_truth": "The page showed warehouse figures (cash Rp4,135,000, 51 finished bills). Matt supplied the printed FINAL Shift Summary for 29 Sep 2026. Those are a second source, not a correction of the first. Both must be preserved. Never silently overwrite one with the other. Discrepancy to show, not auto-resolve: cash Rp345,000 and 1 bill.",
+    "ux": "The current page is an engineering screen. Uma Blu close needs a phone-first step wizard, one primary action at a time, not one enormous scrolling page."
+  },
+  "warehouse": {
+    "cash_rp": 4135000,
+    "cash_display": "Rp4,135,000",
+    "finished_bills": 51
+  },
+  "printed": {
+    "source": "Owner-typed printed FINAL Shift Summary, 5 Oct 2026, during this human test",
+    "sales_total_rp": 11103306,
+    "net_sales_total_rp": 11103306,
+    "service_charge_rp": 1221364,
+    "tax_rp": 1110331,
+    "gross_sales_total_rp": 13435000,
+    "pax": 79,
+    "bills": 50,
+    "cancel": 0,
+    "void": 0,
+    "cash_rp": 3790000,
+    "edc_bni_rp": 2545000,
+    "edc_bri_rp": 4465000,
+    "qris_bni_rp": 145000,
+    "qris_bri_rp": 1065000,
+    "scott_etik_rp": 1425000,
+    "payment_total_rp": 13435000,
+    "non_sales_executive_chef_rp": 78512,
+    "total_non_sales_rp": 78512
+  },
+  "discrepancy": {
+    "cash_rp": 345000,
+    "bills": 1,
+    "auto_resolve": false
+  },
+  "close_id": "VDC-8fd544e2-2132-4a4a-b714-720eb0cd18ad",
+  "close_id_short": "VDC-8fd544e2",
+  "submitted": false,
+  "prod_touched": false,
+  "oct3_touched": false,
+  "oct4_touched": false,
+  "oct3_close_id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+  "oct4_close_id": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+  "close_row_bytes_changed": false,
+  "note": "Human-fail record only. Does not mutate close row bytes, declared cash, variance, or status.",
+  "ingest_note_2026_10_05": "Classification correction 5 Oct 2026: the printed ESB Shift Summary photograph WAS supplied by the Owner during the human test. SOURCE EVIDENCE PROVIDED BY OWNER. ATTACHMENT NOT YET INGESTED INTO WOLF (ChatGPT/conversation attachment; Peaches cannot read it). This is an ingest gap, not missing evidence. Typed figures are not a substitute and are not the original. image_status on ESBR-OWNER-TYPED-DF8DA50A8BA8 set from MISSING_FILE_VALUES_SUPPLIED_BY_OWNER to INGEST_PENDING_ATTACHMENT_NOT_YET_INGESTED. Photo is not permanently missing. Pickup file: UMA-CLOSE-29SEP-PHOTO-INGEST-2026-10-05.json."
+}

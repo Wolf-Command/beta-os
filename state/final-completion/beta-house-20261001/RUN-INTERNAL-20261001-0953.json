@@ -1,0 +1,35 @@
+{
+  "run": "BETA_HOUSE INTERNAL_ACTIVE post gap-reclass",
+  "as_of_wita": "2026-10-01T09:54:14+08:00",
+  "executor": "Peaches-executor",
+  "applied": [
+    "OWNER-HOME-FINISH-WOLF-3-RECLASS-1",
+    "FINANCE-READ-NAV-AUDIT-20261001",
+    "COMMISSIONING-DEEPEN-20261001",
+    "STAFF-PROVE-ROUTING-REFRESH-20261001"
+  ],
+  "prove": {
+    "needs_matt_asset_cards": 3,
+    "optional": 2,
+    "prod_8787_pid": 15975,
+    "beta_8788_pid": 12379,
+    "finance_8790_pid": 45751,
+    "zayen_ggv_finance_read_by_entity": false,
+    "staff_home_prefer_by_entity": true,
+    "commissioning_remaining": [
+      "Bank_Import",
+      "Atrium_Finance_8790"
+    ]
+  },
+  "sacred": {
+    "prod_untouched": true,
+    "finance_sod_unchanged": true,
+    "asg_zayen_kept": true,
+    "no_exit_report": true,
+    "no_wolf_desktop_ready": true,
+    "staff_ready": false,
+    "desktop_gate_ready": false,
+    "metricool_write": false
+  },
+  "more_internal": "THIN \u2014 no high-value INTERNAL left that unblocks desktop_gate without Owner/Staff"
+}

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Finish war room · Beta</title>
+<title>FINISH WOLF · Beta</title>
 <link rel="stylesheet" href="/wolf-tokens.css" />
 <link rel="stylesheet" href="/assets/wolf-truth.css?v=20260927-w3p5" />
 <style>
@@ -13,7 +13,7 @@
     --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
-  body { margin: 0 auto; max-width: 960px; padding: 16px 16px 80px; background: var(--bg); color: var(--text); font-family: var(--font); }
+  body { margin: 0 auto; max-width: 1280px; padding: 20px 28px 96px; background: var(--bg); color: var(--text); font-family: var(--font); }
   h1 { font-size: 1.35rem; margin: 0 0 4px; }
   h1 span { color: var(--accent); }
   h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
@@ -39,13 +39,33 @@
     body { max-width: 100%; padding: 12px 12px 80px; }
     .grid { grid-template-columns: 1fr; }
   }
+
+  .card.finish { border-color: rgba(215,226,106,0.55); background: linear-gradient(180deg, #243018 0%, var(--bg2) 48%); }
+  .finish-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+  .finish-field { margin: 6px 0; font-size: 0.88rem; line-height: 1.4; }
+  .finish-field strong { color: var(--accent); font-weight: 650; margin-right: 6px; letter-spacing: 0.02em; font-size: 0.72rem; text-transform: uppercase; }
+  a.action.primary { border-color: var(--accent); background: #3a4518; color: #f7fbe6; font-weight: 700; }
+  @media (max-width: 980px) {
+    body { max-width: 100%; padding: 14px 14px 88px; }
+    .finish-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body data-wolf-page-type="DASHBOARD" data-wolf-org="WOLF/GROUP" data-wolf-shell="global" data-bound="beta-owner-safe">
-  <nav class="wolf-crumb" aria-label="Org context" style="font-size:0.75rem;color:var(--muted);margin:0 0 8px">WOLF › GROUP › Finish war room</nav>
-  <h1>Finish war room <span>· Beta</span></h1>
-  <p class="lede">Bound beta-owner-safe. All 77 capabilities from the canonical ledger. SYSTEM is separate from staff readiness, human commissioning, and operating adoption. Unknown stays unknown. No payment on this desk.</p>
-  <p class="meta" id="honesty-flags">staff_ready=false · human_commissioned=false · freshness from real stamps only · no invented KPIs · DASH-LIVE-1</p>
+  <nav class="wolf-crumb" aria-label="Org context" style="font-size:0.75rem;color:var(--muted);margin:0 0 8px">WOLF › HOME › FINISH WOLF</nav>
+  <h1>FINISH WOLF <span>· Beta</span></h1>
+  <p class="lede">Owner finish desk. Matt-only actions from the real Needs Matt queue, then the capability ledger. Do the work, capture evidence, do not invent PASS. Staff readiness stays false until real commissioning.</p>
+  <p class="meta" id="honesty-flags">Not ready for staff yet · Not human-commissioned · Freshness from real stamps only · No invented numbers</p>
+  <p style="margin:12px 0"><a class="action primary" href="/owner-empire-pack">Back to Owner Home</a>
+     <a class="action" href="/my-work" style="margin-left:8px">My Work</a>
+     <a class="action" href="/staff-ops-routing" style="margin-left:8px">Needs You</a></p>
+
+  <h2>Needs Matt · your actions</h2>
+  <p class="note">WHAT / WHY / WHERE / TIME / STATUS / AFTER — from the live Needs Matt queue. Owner-only.</p>
+  <div id="needs-matt-cards" class="finish-grid" aria-live="polite"><p class="meta">Loading Needs Matt…</p></div>
+  <div id="finance-control-repair-card" class="card finish" data-finance-control-repair="1"><p class="meta">Loading finance control repair status…</p></div>
+
+  <h2>Capability ledger</h2>
   <div id="freshness-badge" data-freshness-badge data-surface="finish-war-room" aria-live="polite"><p class="meta">Loading freshness…</p></div>
   <p><a class="action" href="/wolf">Owner Command</a> <a class="action" href="/owner/data-quality">Data-quality register</a></p>
   <section id="testability" aria-label="Operational testability">
@@ -233,7 +253,7 @@
             ${urls || `<p class="meta">${esc(row.route)} · ${esc(row.next_repair)}</p>`}
             ${steps ? `<ol style="margin:8px 0;padding-left:18px;color:var(--muted);font-size:0.85rem">${steps}</ol>` : `<p class="meta">${esc(row.next_repair)}</p>`}
             ${pass}
-            <p class="meta">Record PASS / FAIL / wrong number / missing function / confusing label / suggestion in MY COMMISSIONING.</p>
+            <p class="meta">Record what happened in MY COMMISSIONING. Do not invent PASS.</p>
             <a class="action" href="${esc(feedback)}">Open feedback</a>
           </article>`;
         }).join("")
@@ -255,6 +275,120 @@
     document.getElementById("give-now").innerHTML = `<p class="err">The testability matrix could not be read.</p>`;
     document.body.setAttribute("data-testability-ready", "0");
   });
+
+  function finishField(label, value) {
+    const v = (value == null || value === "") ? "—" : String(value);
+    return `<p class="finish-field"><strong>${esc(label)}</strong>${esc(v)}</p>`;
+  }
+
+  function paintNeedsMatt(items, sourceLabel) {
+    const box = document.getElementById("needs-matt-cards");
+    if (!box) return;
+    if (!items || !items.length) {
+      box.innerHTML = `<div class="card"><p>No open Needs Matt items were readable. Nothing was invented.</p></div>`;
+      return;
+    }
+    box.innerHTML = items.map((item) => {
+      const urls = (item.urls && (item.urls.external || item.urls.local)) || [];
+      const where = (Array.isArray(urls) && urls[0]) || item.open_href || item.route || item.href || "—";
+      const why = item.why_blocks_completion || item.why || item.check || "";
+      const after = (item.evidence_to_capture && item.evidence_to_capture.join("; "))
+        || item.what_happens_next
+        || "Record evidence in MY COMMISSIONING. Do not invent PASS.";
+      const status = item.status || item.status_label || "OPEN";
+      const isOpt = !!(item.optional || status === "OPTIONAL_NON_GATING");
+      const when = item.updated_at_wita || item.as_of || item.time || "Queue as of Needs Matt file";
+      const what = item.title || item.task || item.what || item.id || "Needs Matt action";
+      return `<article class="card finish" data-needs-matt="${esc(item.id || "")}"${isOpt ? ' style="border-style:dashed;opacity:0.85"' : ''}>
+        <h2 style="text-transform:none;letter-spacing:0;font-size:1rem;color:var(--text);margin:0 0 8px">${esc(what)}</h2>
+        ${finishField("What", what)}
+        ${finishField("Why", why)}
+        ${finishField("Where", where)}
+        ${finishField("Time", when)}
+        ${finishField("Status", status)}
+        ${finishField("After", after)}
+        <p class="meta">${esc(item.who || "Matt (Owner)")} · ${esc(sourceLabel || "Needs Matt")}</p>
+        ${where && where !== "—" ? `<a class="action primary" href="${esc(where)}">Open where</a>` : ""}
+      </article>`;
+    }).join("");
+  }
+
+  async function loadNeedsMatt() {
+    try {
+      const res = await fetch("/api/progress/commissioning", { headers: { Accept: "application/json" } });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok !== false) {
+        const cards = (data.cards || data.active_cards || []).filter((c) =>
+          String(c.audience || "").toUpperCase() === "NEEDS_MATT"
+          || String(c.person_to_test || "").toLowerCase() === "matt"
+        );
+        if (cards.length) {
+          paintNeedsMatt(cards.map((c) => ({
+            id: c.id,
+            title: c.task || c.title,
+            who: c.person_to_test || "Matt (Owner)",
+            why_blocks_completion: Array.isArray(c.do_this) ? c.do_this[0] : (c.check || ""),
+            open_href: c.open_href || c.route,
+            status: c.status || "READY_TO_TEST",
+            evidence_to_capture: c.check ? [c.check] : ["Record in MY COMMISSIONING"],
+            what_happens_next: "Do the steps, capture evidence, submit feedback. Do not invent PASS."
+          })), "Commissioning queue");
+          return;
+        }
+      }
+    } catch (e) { /* fall through */ }
+    try {
+      const res = await fetch("/assets/needs-matt-queue.json?v=20261001-fw3", { headers: { Accept: "application/json" } });
+      const data = await res.json().catch(() => ({}));
+      const stamp = data.updated_at_wita || data.generated_at_wita || "";
+      const essentials = (data.items || []).map((it) => Object.assign({}, it, {
+        status: it.status || "OPEN",
+        updated_at_wita: stamp
+      }));
+      const optionals = (data.optional_non_gating || []).map((it) => Object.assign({}, it, {
+        title: it.title || it.id,
+        status: "OPTIONAL_NON_GATING",
+        optional: true,
+        why_blocks_completion: it.note || "Optional / non-gating — not a Finish Wolf blocker",
+        updated_at_wita: stamp
+      }));
+      paintNeedsMatt(essentials.concat(optionals), "Needs Matt P0");
+    } catch (e2) {
+      paintNeedsMatt([], "");
+    }
+  }
+  loadNeedsMatt();
+
+  async function loadFinanceControlRepair() {
+    const box = document.getElementById("finance-control-repair-card");
+    if (!box) return;
+    try {
+      const res = await fetch("/assets/finance-control-repair-status-2026-10-03.json?v=20261003-fcr", { headers: { Accept: "application/json" } });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        box.innerHTML = `<p class="err">Finance control repair status could not be read.</p>`;
+        return;
+      }
+      const counts = data.counts || {};
+      const lines = [
+        ["TOTAL", counts.TOTAL],
+        ["PROVEN COMPLETE", counts.PROVEN_COMPLETE],
+        ["IN PROGRESS", counts.IN_PROGRESS],
+        ["HUMAN COMMISSIONING", counts.HUMAN_COMMISSIONING],
+        ["EXTERNAL BLOCKED", counts.EXTERNAL_BLOCKED],
+        ["OWNER BLOCKED", counts.OWNER_BLOCKED],
+        ["NOT STARTED", counts.NOT_STARTED]
+      ];
+      box.innerHTML = `
+        <h2 style="text-transform:none;letter-spacing:0;font-size:1rem;color:var(--text);margin:0 0 8px">${esc(data.title)}</h2>
+        ${lines.map(([label, value]) => finishField(label, value)).join("")}
+        <p class="meta">${esc(data.branch_line)}</p>`;
+    } catch (e) {
+      box.innerHTML = `<p class="err">Finance control repair status could not be read.</p>`;
+    }
+  }
+  loadFinanceControlRepair();
+
 })();
 </script>
 </body>

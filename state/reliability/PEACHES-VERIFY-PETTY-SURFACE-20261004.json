@@ -1,0 +1,52 @@
+{
+  "pack": "PETTY-SURFACE",
+  "run_id": "BF-a1f3daf7f87b",
+  "at": "2026-10-04T12:33:09+08:00",
+  "verdict": "IMPLEMENTATION_DONE_BETA_RELOADED_READY_FOR_HUMAN_TEST",
+  "peaches_verify": "PASS",
+  "tests_pass": 24,
+  "tests_fail": 0,
+  "test_command": "python3 scripts/tests/test_petty_surface_20261004.py",
+  "factory_blocker_overridden": "FACTORY_CHILD_DEAD_WITHOUT_EXIT_MARKER_CURSOR_RESULT_PRESENT",
+  "cursor_pid": 44779,
+  "child_alive_at_watch": false,
+  "result_file": "state/reliability/PETTY-SURFACE-RESULT-2026-10-04.md",
+  "files_changed": [
+    "dashboards/bzg-uma-blu-petty.html",
+    "scripts/core/uma_ops_console.py",
+    "scripts/tests/test_petty_surface_20261004.py"
+  ],
+  "spot_checks": {
+    "page_no_IN_control": true,
+    "accounting_mapping_present": true,
+    "petty_record_gate": true,
+    "local_petty_http": 200,
+    "public_petty_http": 302
+  },
+  "beta_reload": {
+    "reloaded": true,
+    "method": "python3 scripts/beta_restart.py \u2192 launchctl kickstart -k gui/501/net.wolfcommand.serve-beta",
+    "pid_before": 42835,
+    "pid_after": 47590,
+    "beta_api_health": 200
+  },
+  "prod_pid": 15975,
+  "prod_untouched": true,
+  "protected_close": {
+    "id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+    "declared_cash_amount": 3225000.0,
+    "variance_cash_amount": -125000.0,
+    "updated_at": "2026-10-03T13:47:39Z",
+    "state": "EXCEPTION",
+    "unchanged": true
+  },
+  "staff_ready": false,
+  "human_commissioned": false,
+  "eng_proved": false,
+  "ready_for_human_test": true,
+  "beta_link": "https://beta.wolfcommand.net/bzg/uma-blu/petty",
+  "git_head": "0b0e50d",
+  "dirty_approx": 507,
+  "credit_conservation": true,
+  "no_auto_arm": true
+}

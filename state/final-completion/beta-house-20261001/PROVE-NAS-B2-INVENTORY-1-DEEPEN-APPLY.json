@@ -1,0 +1,306 @@
+{
+  "pack": "PROVE-NAS-B2-INVENTORY-1-DEEPEN",
+  "schema": "wolf.prove-nas-b2-inventory-1-deepen.v1",
+  "applied_at_wita": "2026-10-01T07:59:52+08:00",
+  "executor": "Peaches-executor",
+  "prior": "PROVE-NAS-B2-INVENTORY-1-LIGHT",
+  "prod_8787": "UNTOUCHED",
+  "prod_pid": 15975,
+  "beta_8788_pid": 95169,
+  "write": false,
+  "restore": {
+    "status": "NOT_RUN",
+    "reason": "No Owner-approved restore drill this run; dry-read inventory only. B2-RESTORE-DRILL doc exists on Vault mirror but not executed."
+  },
+  "nas": {
+    "as_of_wita": "2026-10-01T07:56:19+08:00",
+    "reachable_ok": [
+      "01-Media-Library",
+      "00-Editing-Workspace-3",
+      "02-Stock-Assets-1",
+      "03-Templates",
+      "05-Wolf-Vault-Mirror"
+    ],
+    "permission_denied_honest": [
+      "00-Editing-Workspace",
+      "00-Editing-Workspace-1",
+      "00-Editing-Workspace-2",
+      "02-Stock-Assets"
+    ],
+    "note_denied": "Volumes appear under /Volumes but are not the active SMB mounts (is_mount=false) and return Errno 13. Editable workspace is 00-Editing-Workspace-3; stock is 02-Stock-Assets-1.",
+    "mounts": {
+      "01-Media-Library": {
+        "path": "/Volumes/01-Media-Library",
+        "is_mount": true,
+        "listdir_status": "OK",
+        "top_entries": 13,
+        "listdir_ms": 7,
+        "shallow_status": "OK",
+        "file_count_maxdepth": 38091,
+        "shallow_ms": 19778,
+        "max_depth": 3,
+        "error": null
+      },
+      "00-Editing-Workspace-3": {
+        "path": "/Volumes/00-Editing-Workspace-3",
+        "is_mount": true,
+        "listdir_status": "OK",
+        "top_entries": 9,
+        "listdir_ms": 5,
+        "shallow_status": "OK",
+        "file_count_maxdepth": 843,
+        "shallow_ms": 1017,
+        "max_depth": 3,
+        "error": null
+      },
+      "02-Stock-Assets-1": {
+        "path": "/Volumes/02-Stock-Assets-1",
+        "is_mount": true,
+        "listdir_status": "OK",
+        "top_entries": 8,
+        "listdir_ms": 4,
+        "shallow_status": "OK",
+        "file_count_maxdepth": 207,
+        "shallow_ms": 493,
+        "max_depth": 3,
+        "error": null
+      },
+      "00-Editing-Workspace": {
+        "path": "/Volumes/00-Editing-Workspace",
+        "is_mount": false,
+        "listdir_status": "PERMISSION_DENIED",
+        "top_entries": null,
+        "listdir_ms": 0,
+        "shallow_status": null,
+        "file_count_maxdepth": null,
+        "shallow_ms": null,
+        "max_depth": null,
+        "error": "[Errno 13] Permission denied: '/Volumes/00-Editing-Workspace'"
+      },
+      "00-Editing-Workspace-1": {
+        "path": "/Volumes/00-Editing-Workspace-1",
+        "is_mount": false,
+        "listdir_status": "PERMISSION_DENIED",
+        "top_entries": null,
+        "listdir_ms": 0,
+        "shallow_status": null,
+        "file_count_maxdepth": null,
+        "shallow_ms": null,
+        "max_depth": null,
+        "error": "[Errno 13] Permission denied: '/Volumes/00-Editing-Workspace-1'"
+      },
+      "00-Editing-Workspace-2": {
+        "path": "/Volumes/00-Editing-Workspace-2",
+        "is_mount": false,
+        "listdir_status": "PERMISSION_DENIED",
+        "top_entries": null,
+        "listdir_ms": 0,
+        "shallow_status": null,
+        "file_count_maxdepth": null,
+        "shallow_ms": null,
+        "max_depth": null,
+        "error": "[Errno 13] Permission denied: '/Volumes/00-Editing-Workspace-2'"
+      },
+      "02-Stock-Assets": {
+        "path": "/Volumes/02-Stock-Assets",
+        "is_mount": false,
+        "listdir_status": "PERMISSION_DENIED",
+        "top_entries": null,
+        "listdir_ms": 0,
+        "shallow_status": null,
+        "file_count_maxdepth": null,
+        "shallow_ms": null,
+        "max_depth": null,
+        "error": "[Errno 13] Permission denied: '/Volumes/02-Stock-Assets'"
+      },
+      "03-Templates": {
+        "path": "/Volumes/03-Templates",
+        "is_mount": true,
+        "listdir_status": "OK",
+        "top_entries": 7,
+        "listdir_ms": 3,
+        "shallow_status": "OK",
+        "file_count_maxdepth": 1,
+        "shallow_ms": 34,
+        "max_depth": 2,
+        "error": null
+      },
+      "05-Wolf-Vault-Mirror": {
+        "path": "/Volumes/05-Wolf-Vault-Mirror",
+        "is_mount": true,
+        "listdir_status": "OK",
+        "top_entries": 5,
+        "listdir_ms": 4,
+        "shallow_status": "OK",
+        "file_count_maxdepth": 21,
+        "shallow_ms": 170,
+        "max_depth": 2,
+        "error": null
+      }
+    },
+    "brand_top_01_Media_Library": {
+      "AMG": {
+        "status": "OK",
+        "elapsed_ms": 1,
+        "entry_count": 1,
+        "sample": [
+          "AI-Generated"
+        ],
+        "truncated": false
+      },
+      "BZG": {
+        "status": "OK",
+        "elapsed_ms": 0,
+        "entry_count": 9,
+        "sample": [
+          "Catering",
+          "PC-6TB",
+          "Pool-Bar",
+          "Rainforest-Restaurant",
+          "Rooftop-Bar",
+          "Room-Service",
+          "Staff",
+          "Uma-Blu-Cafe",
+          "Underground-Bar"
+        ],
+        "truncated": false
+      },
+      "GGV": {
+        "status": "OK",
+        "elapsed_ms": 0,
+        "entry_count": 4,
+        "sample": [
+          "2025",
+          "2026",
+          "AI-Generated",
+          "Footage"
+        ],
+        "truncated": false
+      },
+      "_Imports": {
+        "status": "OK",
+        "elapsed_ms": 0,
+        "entry_count": 4,
+        "sample": [
+          "One-Touch-2026-06-03",
+          "PC-6TB-2026-06-02",
+          "Wolf-Library",
+          "atlas-intake"
+        ],
+        "truncated": false
+      }
+    },
+    "beta_api_nas_status": {
+      "ok": true,
+      "connected": true,
+      "path": "/Volumes/01-Media-Library",
+      "nas_received": false,
+      "staff_ready": false,
+      "proven": false
+    }
+  },
+  "b2": {
+    "as_of_wita": "2026-10-01T07:56:55+08:00",
+    "rclone_remotes_seen": [
+      "r2",
+      "b2",
+      "wolfb2",
+      "wolfb2crypt",
+      "r2archive",
+      "b2nas"
+    ],
+    "about": "B2 root doesn't support rclone about \u2014 freshness via lsjson ModTime instead",
+    "remotes": {
+      "b2nas": {
+        "path": "b2nas:wolf-media-nas",
+        "dirs_depth1": 11,
+        "dir_sample": [
+          ".cache",
+          "AMG",
+          "AMG-Atrium",
+          "BZG",
+          "Brand-Assets",
+          "Clients",
+          "GGV",
+          "_Imports",
+          "_Shared",
+          "_clickup-attachment-archive",
+          "_needs_sorting"
+        ],
+        "lsd_ms": 2126,
+        "recent_subpath": "b2nas:wolf-media-nas/.cache",
+        "recent_count_90d_depth2": 29631,
+        "newest_modtime_utc": "2026-09-30T23:53:57.000Z",
+        "newest_path": "clip_index.json",
+        "recent_ms": 13138
+      },
+      "wolfb2_media": {
+        "path": "wolfb2:wolf-media-nas",
+        "dirs_depth1": 11,
+        "dir_sample": [
+          ".cache",
+          "AMG",
+          "AMG-Atrium",
+          "BZG",
+          "Brand-Assets",
+          "Clients",
+          "GGV",
+          "_Imports",
+          "_Shared",
+          "_clickup-attachment-archive",
+          "_needs_sorting"
+        ],
+        "lsd_ms": 2053,
+        "recent_subpath": "wolfb2:wolf-media-nas/.cache",
+        "recent_count_90d_depth2": 29631,
+        "newest_modtime_utc": "2026-09-30T23:56:58.000Z",
+        "newest_path": "clip_index.json",
+        "recent_ms": 13424
+      },
+      "wolfb2_cold": {
+        "path": "wolfb2:wolf-cold-archive",
+        "dirs_depth1": 5,
+        "dir_sample": [
+          "atrium-finance-d5-scratch",
+          "daily-backups",
+          "fullstate-restic",
+          "wolf-command",
+          "wolf-vault-mirror"
+        ],
+        "lsd_ms": 1918,
+        "recent_subpath": "wolfb2:wolf-cold-archive/atrium-finance-d5-scratch",
+        "recent_count_90d_depth2": 1,
+        "newest_modtime_utc": "2026-09-26T23:48:44.052Z",
+        "newest_path": "atrium-d5-fresh.sqlite",
+        "recent_ms": 2696
+      },
+      "wolfb2_footage": {
+        "path": "wolfb2:wolf-footage-archive",
+        "dirs_depth1": 1,
+        "dir_sample": [
+          "footage"
+        ],
+        "lsd_ms": 1921,
+        "recent_subpath": "wolfb2:wolf-footage-archive/footage",
+        "recent_count_90d_depth2": 1,
+        "newest_modtime_utc": "2026-09-30T18:05:53.079Z",
+        "newest_path": "nvs320d5qs6kphrprsdl9j8q5k/pgl2jk7iht4rdpu025r5c6fjao",
+        "recent_ms": 10039
+      }
+    },
+    "freshness_headline": {
+      "b2nas_wolf_media_nas_cache_newest_utc": "2026-09-30T23:53:57.000Z",
+      "wolfb2_wolf_media_nas_cache_newest_utc": "2026-09-30T23:56:58.000Z",
+      "wolfb2_footage_newest_utc": "2026-09-30T18:05:53.079Z",
+      "wolfb2_cold_scratch_newest_utc": "2026-09-26T23:48:44.052Z",
+      "converted_wita_note": "newest media-cache ~ 2026-10-01 07:53\u201307:56 WITA"
+    }
+  },
+  "honesty": {
+    "full_tree_indexed": false,
+    "destructive": false,
+    "restore_run": false,
+    "invented_counts": false
+  },
+  "status": "APPLIED"
+}

@@ -1,0 +1,129 @@
+{
+  "pack": "FC-RECON-QUEUES-1",
+  "run_id": "BF-f65bf7cc970d",
+  "finished_at": "2026-10-05T20:12:00+08:00",
+  "gap_before": {
+    "bzg_recon_status": {
+      "UNMATCHED": 889,
+      "EXCEPTION": 314,
+      "POSSIBLE MATCH": 45,
+      "MATCHED": 9
+    },
+    "bzg_total": 1257,
+    "amg_total": 525,
+    "amg_match_proposed": 0,
+    "amg_all_unidentified": true,
+    "ggv_total": 946
+  },
+  "files_changed": [
+    "scripts/core/amg_bank_recon1.py",
+    "scripts/core/fc_recon_queues1.py",
+    "scripts/core/amg_finance_desk.py",
+    "scripts/core/amg_finance_core.py",
+    "scripts/core/bzg_finance_desk.py",
+    "dashboards/amg-finance-ops.html",
+    "dashboards/bzg-finance.html",
+    "scripts/migrations/migrate_fc_recon_queues1_20261005.py",
+    "scripts/tests/test_fc_recon_queues1_20261005.py",
+    "scripts/tests/test_bzg_bank_recon1_20261005.py"
+  ],
+  "routes_and_apis": [
+    "GET /api/amg/finance/reconciliation/queue",
+    "POST /api/amg/finance/reconciliation/queue/{txn_id}/confirm",
+    "POST /api/amg/finance/reconciliation/queue/{txn_id}/reject",
+    "POST /api/amg/finance/reconciliation/queue/{txn_id}/exception",
+    "POST /api/amg/finance/reconciliation/queue/bulk-confirm",
+    "GET /api/bzg/finance/bank/queue",
+    "POST /api/bzg/finance/bank/queue/{txn_id}/confirm",
+    "POST /api/bzg/finance/bank/queue/{txn_id}/reject",
+    "POST /api/bzg/finance/bank/queue/{txn_id}/exception",
+    "POST /api/bzg/finance/bank/queue/bulk-confirm",
+    "/amg/finance/reconciliation",
+    "/bzg/finance/bank"
+  ],
+  "real_record_counts": {
+    "bzg_recon_status": {
+      "UNMATCHED": 889,
+      "EXCEPTION": 314,
+      "POSSIBLE MATCH": 45,
+      "MATCHED": 9
+    },
+    "bzg_total": 1257,
+    "amg_total": 525,
+    "amg_match_proposed": 0,
+    "amg_exception_classified": 2,
+    "amg_unmatched": 523,
+    "ggv_total": 946
+  },
+  "data_changes": {
+    "migration": "scripts/migrations/migrate_fc_recon_queues1_20261005.py",
+    "backup": "/Users/wolfterminal/beta-os/catalog/backups/pre-fc-recon-queues1-20261005-200817.sqlite",
+    "backup_sha256": "c0f20e6bf720a939e2143f8c168e2bc3d01dce5aa404d79b29c61840dc16ed74",
+    "amg_apply": {
+      "transaction_count": 525,
+      "counts": {
+        "proposed": 0,
+        "exception": 2,
+        "unmatched": 523
+      },
+      "note": "No ledger/nota sources for AMG yet — 2 bank admin fee exceptions classified; 523 remain unmatched"
+    },
+    "bzg_schema": "added human_confirmed and match_proposed columns to bzg_bank_transactions",
+    "ggv_unchanged": true
+  },
+  "test_file": "scripts/tests/test_fc_recon_queues1_20261005.py",
+  "tests_pass": {
+    "test_fc_recon_queues1_20261005.py": 11,
+    "test_finance_ui_human_labels1_20261005.py": 5,
+    "test_finance_switcher_repair2_20261005.py": 7,
+    "test_bzg_zayen_finance_prove1_20261005.py": 10,
+    "test_bzg_p2p_harden1_20261005.py": 31,
+    "test_bzg_bank_recon1_20261005.py": 10,
+    "test_finance_core_statements1_20261005.py": 10
+  },
+  "tests_fail": {},
+  "regression": {
+    "pass": [
+      "test_fc_recon_queues1_20261005.py",
+      "test_finance_ui_human_labels1_20261005.py",
+      "test_finance_switcher_repair2_20261005.py",
+      "test_bzg_zayen_finance_prove1_20261005.py",
+      "test_bzg_p2p_harden1_20261005.py",
+      "test_bzg_bank_recon1_20261005.py",
+      "test_finance_core_statements1_20261005.py"
+    ],
+    "fail": []
+  },
+  "assertions_intentionally_changed": [
+    "test_bzg_bank_recon1_20261005.py: bank-filter -> bank-tabs/bank-tab-counts (work-queue UI)"
+  ],
+  "render_check": {
+    "method": "html_render_test_in_suite",
+    "viewports": ["390x844 via in-process HTML fetch", "1440x900 via in-process HTML fetch"],
+    "paths": ["/amg-finance-ops reconciliation tab", "/bzg/finance/bank"],
+    "shots_dir": "state/reliability/shots/FC-RECON-QUEUES-1/ (not used — harness HTML assert chosen)"
+  },
+  "beta_reloaded": false,
+  "reload_held": true,
+  "reload_gate": {
+    "reload_allowed": false,
+    "reasons": [
+      "human_test_window_until=2026-10-05T14:00:00Z",
+      "cooldown_last_reload=2026-10-05T12:00:32Z"
+    ],
+    "beta_listener_pids": [97189],
+    "prod_listener_pids": [1297],
+    "prod_1297_listening": true
+  },
+  "beta_listener_pid": 97189,
+  "prod_pid_unchanged": true,
+  "protected_closes_unchanged": true,
+  "oct3_oct4_unchanged": true,
+  "petty_and_daily_close_untouched": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "zayen_ready": false,
+  "state": "READY FOR HUMAN TEST",
+  "status": "IMPLEMENTATION_DONE",
+  "exit_code": 0
+}

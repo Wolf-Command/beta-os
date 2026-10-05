@@ -1,0 +1,99 @@
+{
+  "run_id": "BF-cc95f0a47633",
+  "pack": "CAPTAIN-PETTY-CASH-OUT-2026-10-04",
+  "verified_at": "2026-10-04T08:18:44+08:00",
+  "verifier": "Peaches",
+  "cursor_status": "EXITED_IMPLEMENTATION_DONE",
+  "cursor_pid": 91037,
+  "cursor_log": "state/reliability/petty-cash-cursor-20261004.log",
+  "result_md": "state/reliability/CAPTAIN-PETTY-CASH-OUT-2026-10-04-RESULT.md",
+  "tests": {
+    "command": "python3 scripts/tests/test_petty_cash_record_out_20261004.py",
+    "pass": 28,
+    "fail": 0,
+    "note": "Peaches independent re-run after cursor EXIT. Protected close id not written by tests."
+  },
+  "py_compile": "PASS",
+  "diff_review": {
+    "files": [
+      "scripts/migrations/migrate_petty_cash_record_out_1.py",
+      "scripts/core/uma_ops_console.py",
+      "scripts/core/bzg_daily_close.py",
+      "scripts/core/uma_devi_p0.py",
+      "scripts/serve_beta.py",
+      "scripts/tests/test_petty_cash_record_out_20261004.py"
+    ],
+    "spot_checks": {
+      "PERM_PETTY_RECORD_OUT": true,
+      "direction_forbidden_IN": true,
+      "EVIDENCE_EXCEPTION_missing_receipt": true,
+      "cash_reconciliation_with_petty": true,
+      "double_count_avoided": true,
+      "no_hardcoded_iza": true,
+      "migration_captain_plus_grants": true
+    }
+  },
+  "migration": {
+    "applied": true,
+    "at": "2026-10-04T08:17:50+08:00",
+    "id": "petty_cash_record_out_1",
+    "permission": "petty_cash.record_out",
+    "granted_roles": [
+      "ROLE-BZG-CAPTAIN",
+      "ROLE-BZG-HFB",
+      "ROLE-BZG-FB-OPS-LEAD",
+      "ROLE-MATT"
+    ],
+    "denied_roles": [
+      "ROLE-BZG-CASHIER",
+      "ROLE-BZG-CLOSER"
+    ],
+    "backup": "catalog/backups/pre-petty-cash-record-out-1-20261004-081750.sqlite",
+    "note": "ROLE-OWNER absent from org_roles this catalog \u2014 skipped by migration"
+  },
+  "protected_close": {
+    "close_id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+    "unchanged": true,
+    "business_date": "2026-10-03",
+    "state": "EXCEPTION",
+    "declared_cash_amount": 3225000.0,
+    "variance_cash_amount": -125000.0,
+    "updated_at": "2026-10-03T13:47:39Z"
+  },
+  "beta_reload": {
+    "performed": true,
+    "at": "2026-10-04T08:18:44+08:00",
+    "method": "launchctl kickstart -k gui/501/net.wolfcommand.serve-beta",
+    "old_pid": 33020,
+    "new_pid": 93525,
+    "port": 8788,
+    "health": 200,
+    "petty_post_unauth": 403,
+    "petty_post_meaning": "route present; missing_auth fail-closed (Cloudflare Access) \u2014 expected for unauthenticated local POST",
+    "uma_close_get_unauth": 403,
+    "prod_pid_15975_untouched": true
+  },
+  "eng_proved": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "ready_for_human_test": true,
+  "verdict": "IMPLEMENTATION_DONE_BETA_RELOADED_MIGRATION_APPLIED_AWAITING_HUMAN_TEST",
+  "matt_ping": true,
+  "matt_ping_kind": "READY_FOR_HUMAN_TEST",
+  "beta_starting_links": [
+    "https://beta.wolfcommand.net/bzg/uma-blu/petty",
+    "https://beta.wolfcommand.net/uma-blu-close"
+  ],
+  "do_not_claim": [
+    "HUMAN PASS",
+    "staff_ready",
+    "human_commissioned",
+    "eng_proved"
+  ],
+  "prod_mutate": false,
+  "git_commit": false,
+  "tip": "0b0e50d",
+  "dirty_approx": 478,
+  "credit_conservation": true,
+  "next_auto_breadth": false
+}

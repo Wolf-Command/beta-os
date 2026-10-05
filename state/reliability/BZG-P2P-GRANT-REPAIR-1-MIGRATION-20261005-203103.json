@@ -1,0 +1,94 @@
+{
+  "pack": "BZG-P2P-GRANT-REPAIR-1",
+  "migration_id": "bzg_p2p_grant_repair1_20261005",
+  "finished_at": "2026-10-05T20:31:03+08:00",
+  "backup": "/Users/wolfterminal/beta-os/catalog/backups/pre-bzg-p2p-grant-repair1-20261005-203103.sqlite",
+  "backup_sha256": "1f552bbdf7cb3c9a78d03005a707be416424693b33a39e3bc0a8692c99625049",
+  "permissions": [
+    "bzg.po.create",
+    "bzg.bill.capture",
+    "bzg.match.run",
+    "bzg.ap.view",
+    "bzg.ap.mark_ready",
+    "bzg.pay.list_ready",
+    "bzg.pay.mark_ready"
+  ],
+  "revoked_count": 20,
+  "granted_roles": {
+    "bzg.po.create": [
+      "ROLE-BZG-FB-OPS-LEAD",
+      "ROLE-BZG-HFB",
+      "ROLE-BZG-CAPTAIN",
+      "ROLE-MATT"
+    ],
+    "bzg.bill.capture": [
+      "ROLE-BZG-FB-OPS-LEAD",
+      "ROLE-BZG-HFB"
+    ],
+    "bzg.match.run": [
+      "ROLE-BZG-FB-OPS-LEAD",
+      "ROLE-BZG-HFB",
+      "ROLE-BZG-FINANCIAL-CONTROLLER"
+    ],
+    "bzg.ap.view": [
+      "ROLE-BZG-FB-OPS-LEAD",
+      "ROLE-BZG-HFB",
+      "ROLE-BZG-FINANCIAL-CONTROLLER",
+      "ROLE-MATT"
+    ],
+    "bzg.ap.mark_ready": [
+      "ROLE-BZG-FB-OPS-LEAD",
+      "ROLE-BZG-FINANCIAL-CONTROLLER"
+    ],
+    "bzg.pay.list_ready": [
+      "ROLE-BZG-FB-OPS-LEAD",
+      "ROLE-BZG-FINANCIAL-CONTROLLER",
+      "ROLE-MATT"
+    ],
+    "bzg.pay.mark_ready": [
+      "ROLE-BZG-FB-OPS-LEAD",
+      "ROLE-BZG-FINANCIAL-CONTROLLER"
+    ]
+  },
+  "role_matrix": {
+    "bzg.po.create": [
+      "ROLE-BZG-FB-OPS-LEAD",
+      "ROLE-BZG-HFB",
+      "ROLE-BZG-CAPTAIN",
+      "ROLE-MATT",
+      "ROLE-OWNER"
+    ],
+    "bzg.bill.capture": [
+      "ROLE-BZG-FB-OPS-LEAD",
+      "ROLE-BZG-HFB"
+    ],
+    "bzg.match.run": [
+      "ROLE-BZG-FB-OPS-LEAD",
+      "ROLE-BZG-HFB",
+      "ROLE-BZG-FINANCIAL-CONTROLLER"
+    ],
+    "bzg.ap.view": [
+      "ROLE-BZG-FB-OPS-LEAD",
+      "ROLE-BZG-HFB",
+      "ROLE-BZG-FINANCIAL-CONTROLLER",
+      "ROLE-MATT",
+      "ROLE-OWNER"
+    ],
+    "bzg.ap.mark_ready": [
+      "ROLE-BZG-FB-OPS-LEAD",
+      "ROLE-BZG-FINANCIAL-CONTROLLER"
+    ],
+    "bzg.pay.list_ready": [
+      "ROLE-BZG-FB-OPS-LEAD",
+      "ROLE-BZG-FINANCIAL-CONTROLLER",
+      "ROLE-MATT",
+      "ROLE-OWNER"
+    ],
+    "bzg.pay.mark_ready": [
+      "ROLE-BZG-FB-OPS-LEAD",
+      "ROLE-BZG-FINANCIAL-CONTROLLER"
+    ]
+  },
+  "staff_ready": false,
+  "human_commissioned": false
+}

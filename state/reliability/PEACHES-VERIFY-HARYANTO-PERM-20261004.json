@@ -1,0 +1,62 @@
+{
+  "run_id": "BF-8334beb00d33",
+  "pack": "HARYANTO-PERM",
+  "verified_at": "2026-10-04T12:52:30+0800",
+  "verdict": "IMPLEMENTATION_DONE_LOCAL_PASS",
+  "factory_blocker_overridden": "FACTORY_CHILD_DEAD_WITHOUT_EXIT_MARKER_CURSOR_RESULT_PRESENT",
+  "cursor_pid": 49250,
+  "child_alive": false,
+  "result_file": "state/reliability/HARYANTO-PERM-RESULT-2026-10-04.md",
+  "tests": {
+    "revoke_temp_sqlite": {
+      "pass": 6,
+      "fail": 0
+    },
+    "headchef1": {
+      "pass": 93,
+      "fail": 0
+    }
+  },
+  "live_db": {
+    "path": "catalog/content_library.sqlite",
+    "headchef_work_update_rows": [],
+    "headchef_work_update_absent": true,
+    "headchef_recipe_grants": [
+      "recipe.cost.read",
+      "recipe.create",
+      "recipe.edit",
+      "recipe.exceptions.read",
+      "recipe.read"
+    ],
+    "captain_work_update_present": true
+  },
+  "protected_close": {
+    "id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+    "snapshot": {
+      "close_id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+      "state": "EXCEPTION",
+      "declared_cash_amount": 3225000.0,
+      "variance_cash_amount": -125000.0,
+      "updated_at": "2026-10-03T13:47:39Z"
+    },
+    "unchanged_expected": {
+      "declared_cash_amount": 3225000.0,
+      "variance_cash_amount": -125000.0,
+      "updated_at": "2026-10-03T13:47:39Z",
+      "state": "EXCEPTION"
+    },
+    "unchanged": true
+  },
+  "prod_pid": 15975,
+  "beta_pid": 47590,
+  "beta_reloaded": false,
+  "prod_untouched": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "eng_proved": false,
+  "ready_for_human_test": false,
+  "matt_finished_ping": false,
+  "matt_ping_reason": "OWNER_REPORTING_STANDARD_NO_MILESTONE_FOR_BACKEND_UNIT_PASS_NO_UI_SURFACE",
+  "tip": "0b0e50d",
+  "note": "Live ROLE-BZG-HEAD-CHEF work.update grant removed; recipe grants kept; Captain still has work.update. No Beta reload (prompt). Not staff_ready / not READY_FOR_HUMAN_TEST."
+}

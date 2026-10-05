@@ -1,0 +1,32 @@
+{
+  "slice": "UMA-HIST-CLOSE-NAV-MOBILE-2",
+  "status": "IMPLEMENTATION_DONE",
+  "fixes": [
+    "Removed close_id / VDC- from all owner DOM paths; exception audit shows server-side note only",
+    "sanitizeOwnerText strips VDC-[0-9a-f-]+ from setMsg/setTopMsg display",
+    "topMsgGlobal persists Opening <date>… until destination screen renders",
+    "test_uma_hist_close_queue1 derives nine-date status from canonical_ui_status (27 Sep INCOMPLETE)"
+  ],
+  "files_changed": [
+    "dashboards/uma-blu-close.html",
+    "scripts/tests/test_uma_hist_close_nav_mobile2_20261005.py",
+    "scripts/tests/test_uma_hist_close_queue1_20261005.py"
+  ],
+  "tests_pass": {
+    "test_uma_hist_close_nav_mobile1_20261005.py": "51/0",
+    "test_uma_hist_close_nav_mobile2_20261005.py": "95/0",
+    "test_uma_hist_close_queue1_20261005.py": "34/0"
+  },
+  "tests_fail": [],
+  "beta_pid_before": 95803,
+  "beta_pid_after": 95803,
+  "beta_reloaded": false,
+  "reload_reason": "HTML-only, served from disk",
+  "protected_closes_unchanged": true,
+  "prod_pid_unchanged": 1297,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_commit": true,
+  "exit_code": 0,
+  "generated_at": "2026-10-05T12:40:00+08:00"
+}

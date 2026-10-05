@@ -1,13 +1,17 @@
-# CONTENT ENGINE HUMAN FAIL — Haikal upload 14/14
+# Content Engine — Haikal upload 14/14 FAIL
 
-**Status:** FAILED_RETEST_REQUIRED  
-**When:** 2026-10-01T13:01:33+08:00  
-**Who:** Haikal · Tropik · detail `bbq-night-grill` · 14× `.MOV` · **14 FAILED OF 14**
+**Human status:** FAILED_RETEST_REQUIRED (CODE COMPLETE ≠ STAFF READY)
+**Engineering:** PROVED on Beta `2026-10-01T13:38:52+0800` — Peaches light verify PASS
+**staff_ready:** false
 
-UI: Stopped — 14 failed of 14. Naming generated for all 14.
+## Root cause (from live logs / process, not screenshot)
+Launchd `net.wolfcommand.serve-beta` PATH lacks Homebrew. Bare `ffmpeg` failed during poster after NAS+assets write. UI treated `library_available:false` as failed upload despite HTTP 200.
 
-- Peaches: FAIL record + acceptance only.
-- Cursor owns engineering on live Beta `:8788` + `/tmp/serve_beta.log`. Prod `:8787` untouched.
-- Do not ask Haikal/Matt to diagnose. staff_ready stays false until Haikal PASS.
+## Repair
+Commit `e0896ae` on Beta. ffmpeg resolved by absolute path; staff sentences + safer Retry. Prod :8787 untouched.
 
-Cursor run id: `BF-content-engine-haikal-upload-14fail-20261001`.
+## Residual
+Owner said 14 MOV; catalog batch has 12 Tropik rows. Two names UNKNOWN (not marked successful).
+
+## Next
+Haikal retest: small real batch first, then normal batch if PASS.

@@ -1,0 +1,132 @@
+{
+  "pack": "FC-BZG-RECEIVE-EVIDENCE-1",
+  "run_id": "BF-87c3d44572be",
+  "finished_at": "2026-10-05T19:59:47+08:00",
+  "gap_before": {
+    "unlinked_total": 1363,
+    "unlinked_receive": 497,
+    "unlinked_petty": 462,
+    "unlinked_nightly": 404,
+    "links": 1,
+    "links_by_rule": {
+      "exact_path_ref": 1
+    },
+    "recon_queue": 0
+  },
+  "gap_after": {
+    "unlinked_total": 1363,
+    "unlinked_receive": 497,
+    "unlinked_petty": 462,
+    "unlinked_nightly": 404,
+    "links": 1,
+    "recon_proposed": 0,
+    "recon_rejected": 0
+  },
+  "precision_sample": {
+    "sample_size": 0,
+    "samples": [],
+    "note": "Receive photo names are recv_{chat}_{hash}.jpg with no PR, nota, or supplier tokens. Most proposals rely on photo date alone and are ambiguous; only unique date matches are queued."
+  },
+  "path_signal_honest": "Receive filenames are recv_{telegram_chat}_{hash}.jpg \u2014 no PR, nota, or supplier tokens in names. Date-only matches are ambiguous (multiple bills per day). Live proposals queued: 0.",
+  "files_changed": [
+    "scripts/core/bzg_receive_evidence1.py",
+    "scripts/core/bzg_finance_desk.py",
+    "scripts/core/bzg_finance_usability_ro.py",
+    "scripts/migrations/migrate_fc_bzg_receive_evidence1_20261005.py",
+    "scripts/serve_beta.py",
+    "dashboards/bzg-finance.html",
+    "scripts/tests/test_fc_bzg_receive_evidence1_20261005.py"
+  ],
+  "routes_and_apis": [
+    "/bzg/finance/photos-to-review",
+    "/api/bzg/finance/evidence-review",
+    "/api/bzg/finance/evidence-review/{id}",
+    "/api/bzg/finance/evidence-review/{id}/photo",
+    "/api/bzg/finance/evidence-review/{id}/accept",
+    "/api/bzg/finance/evidence-review/{id}/reject",
+    "/api/bzg/finance/evidence-photo/{type}/{id}"
+  ],
+  "real_record_counts": {
+    "unlinked_total": 1363,
+    "unlinked_receive": 497,
+    "unlinked_petty": 462,
+    "unlinked_nightly": 404,
+    "links": 1,
+    "recon_proposed": 0,
+    "recon_rejected": 0
+  },
+  "data_changes": {
+    "migration": "migrate_fc_bzg_receive_evidence1_20261005",
+    "backup": "/Users/wolfterminal/beta-os/catalog/backups/pre-fc-bzg-receive-evidence1-20261005-195356.sqlite",
+    "before": {
+      "unlinked_total": 1363,
+      "unlinked_receive": 497,
+      "unlinked_petty": 462,
+      "unlinked_nightly": 404,
+      "links": 1,
+      "links_by_rule": {
+        "exact_path_ref": 1
+      },
+      "recon_queue": 0
+    },
+    "after": {
+      "unlinked_total": 1363,
+      "unlinked_receive": 497,
+      "unlinked_petty": 462,
+      "unlinked_nightly": 404,
+      "links": 1,
+      "recon_proposed": 0,
+      "recon_rejected": 0
+    },
+    "proposals_added": 0
+  },
+  "test_file": "scripts/tests/test_fc_bzg_receive_evidence1_20261005.py",
+  "tests_pass": {
+    "test_fc_bzg_receive_evidence1_20261005.py": 10,
+    "test_finance_ui_human_labels1_20261005.py": 8,
+    "test_finance_switcher_repair2_20261005.py": 6,
+    "test_bzg_zayen_finance_prove1_20261005.py": 10,
+    "test_bzg_p2p_harden1_20261005.py": 11,
+    "test_bzg_evidence_link1_20261005.py": 9
+  },
+  "tests_fail": {},
+  "regression": {
+    "pass": true
+  },
+  "assertions_changed": [],
+  "render_check": {
+    "method": "html_structure_assert",
+    "viewports": [
+      "390x844",
+      "1440x900"
+    ],
+    "shot_dir": "state/reliability/shots/FC-BZG-RECEIVE-EVIDENCE-1/",
+    "notes": "responsive CSS max-width:100% on evidence-photo; no fixed-width overflow"
+  },
+  "beta_reloaded": true,
+  "reload_held": false,
+  "reload_gate": {
+    "reload_allowed": true,
+    "reasons": [],
+    "beta_listener_pids": [
+      96745
+    ],
+    "prod_listener_pids": [
+      1297
+    ],
+    "prod_1297_listening": true,
+    "checked_at": "2026-10-05T12:00:32Z"
+  },
+  "reload_reasons": [],
+  "beta_listener_pid": 97189,
+  "prod_pid_unchanged": true,
+  "protected_closes_unchanged": true,
+  "oct3_oct4_unchanged": true,
+  "petty_and_daily_close_untouched": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "zayen_ready": false,
+  "state": "READY FOR HUMAN TEST",
+  "status": "IMPLEMENTATION_DONE",
+  "exit_code": 0
+}

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Owner Trading — PARTIAL (paper only)</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root { color-scheme: light; --ink:#1a1f24; --muted:#5a6570; --paper:#f2f4f6; --card:#fbfcfd; --line:#d3dae0; --warn:#8a1f1f; --partial:#7a5a12; --ok:#1f5a3a; --accent:#2a5bb8; --font:"IBM Plex Sans","Segoe UI",sans-serif; --display:"Iowan Old Style",Palatino,Georgia,serif; }
+    *{box-sizing:border-box} body{margin:0;font-family:var(--font);background:radial-gradient(ellipse 65% 35% at 100% 0%,#e4ebf1 0%,transparent 55%),var(--paper);color:var(--ink)}
+    main{max-width:1180px;margin:0 auto;padding:24px 20px 96px}
+    .crumb{font-size:.78rem;color:var(--muted);margin:0 0 8px}
+    h1{font-family:var(--display);font-weight:500;font-size:1.75rem;margin:0 0 6px;letter-spacing:-.02em}
+    .sub{color:var(--muted);margin:0 0 14px;line-height:1.45;font-size:.95rem}
+    .banner{background:#f8eaea;border:1px solid #e0b8b8;border-radius:10px;padding:12px 14px;margin:0 0 12px;font-size:.9rem;line-height:1.45;color:var(--warn)}
+    .banner.partial{background:#f7f0df;border-color:#e0d2a8;color:var(--partial)}
+    .banner strong{color:inherit}
+    h2{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px}
+    .meta{font-size:.8rem;color:var(--muted);margin-top:18px;line-height:1.45}
+    code{font-size:.78rem}
+    nav.desk{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+    nav.desk button{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:10px 14px;min-height:44px;font:inherit;font-weight:650;font-size:.84rem;cursor:pointer}
+    nav.desk button.active{border-color:var(--accent);color:var(--accent);background:#eef3fb}
+    .status-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin:0 0 16px}
+    .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+    .tile b{display:block;font-size:.85rem;margin:0 0 4px}
+    .tile span{font-size:.8rem;color:var(--muted);line-height:1.4}
+    .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin:0 0 18px}
+    .card-grid .span-2{grid-column:span 2}
+    @media (max-width:720px){.card-grid .span-2{grid-column:span 1}}
+    article.desk-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0;overflow:hidden;display:flex;flex-direction:column}
+    article.desk-card header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
+    article.desk-card header h3{margin:0;font-size:1rem;font-weight:650}
+    article.desk-card header .chev{color:var(--muted);font-size:1.1rem}
+    article.desk-card .body{padding:12px 14px 16px}
+    article.desk-card.collapsed .body{display:none}
+    .ro-meta{font-size:.78rem;color:var(--muted);margin:0 0 10px}
+    .ro-table{width:100%;border-collapse:collapse;font-size:.82rem}
+    .ro-table th,.ro-table td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+    .ro-table th{color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
+    .ro-chip{display:inline-block;padding:2px 8px;border-radius:999px;background:#eef2f5;font-size:.72rem;margin:0 4px 4px 0}
+    .ro-pre{white-space:pre-wrap;font-size:.78rem;max-height:260px;overflow:auto;background:#f6f8fa;border:1px solid var(--line);border-radius:8px;padding:10px;margin:0}
+    .ro-empty{color:var(--muted);font-size:.85rem}
+    .ro-ok{color:var(--ok)}.ro-bad{color:var(--warn)}
+    .view{display:none}.view.active{display:block}
+    .act{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#eef2f5;color:var(--ink);font-weight:650;font:inherit;cursor:pointer}
+    ul.hold{margin:0;padding-left:1.1rem} ul.hold li{margin:4px 0}
+  </style>
+</head>
+<body data-wolf-page-type="WORKSPACE" data-wolf-org="OWNER" data-wolf-shell="global">
+<main>
+  <p class="crumb">WOLF › HOME › Personal › Trading (Owner)</p>
+  <h1>Trading</h1>
+  <p class="sub">Owner-only · paper quant OK · <strong>no live broker</strong> · migration_state <strong>PARTIAL</strong> · staff_ready=false</p>
+  <div class="banner"><strong>NOT REBUILT+PROVEN.</strong> No live orders. No money moves. Live broker keys refused. Human prove required before any stronger claim.</div>
+  <div class="banner partial"><strong>PARTIAL transfer · UX-PACK-05 slice.</strong> RO desk cards (Holdings / Journal / TTC paper) from V1 SoT via <code>/api/owner/trading-ro</code>. Still paper only. No write invent. No broker.</div>
+
+  <nav class="desk" aria-label="Trading desk views" id="deskNav">
+    <button type="button" class="active" data-view="desk">Desk</button>
+    <button type="button" data-view="holdings">Holdings</button>
+    <button type="button" data-view="journal">Journal</button>
+    <button type="button" data-view="paper">TTC paper</button>
+    <button type="button" data-view="status">Status</button>
+  </nav>
+
+  <p class="ro-meta">Live RO · <span id="ro-live-status">loading…</span> · as of <span id="ro-asof">—</span></p>
+
+  <section class="view active" id="view-desk" aria-label="Desk cards">
+    <div class="card-grid" id="deskCards">
+      <article class="desk-card" id="card-holdings">
+        <header data-toggle><h3>Holdings</h3><span class="chev">›</span></header>
+        <div class="body" id="desk-holdings"><p class="ro-empty">…</p></div>
+      </article>
+      <article class="desk-card span-2" id="card-journal">
+        <header data-toggle><h3>Trade journal</h3><span class="chev">›</span></header>
+        <div class="body" id="desk-journal"><p class="ro-empty">…</p></div>
+      </article>
+      <article class="desk-card" id="card-ttc">
+        <header data-toggle><h3>TTC paper method</h3><span class="chev">›</span></header>
+        <div class="body" id="desk-ttc"><p class="ro-empty">…</p></div>
+      </article>
+      <article class="desk-card" id="card-practice">
+        <header data-toggle><h3>Paper practice</h3><span class="chev">›</span></header>
+        <div class="body" id="desk-practice"><p class="ro-empty">…</p></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="view" id="view-holdings" aria-label="Holdings view">
+    <h2>Holdings (RO)</h2>
+    <div class="tile" id="view-holdings-body"><p class="ro-empty">…</p></div>
+  </section>
+
+  <section class="view" id="view-journal" aria-label="Journal view">
+    <h2>Trade journal (RO)</h2>
+    <p class="ro-meta"><button type="button" class="act" id="btn-more-journal">Load more history</button> · capped · paper log only</p>
+    <div id="view-journal-body"><p class="ro-empty">…</p></div>
+  </section>
+
+  <section class="view" id="view-paper" aria-label="TTC paper view">
+    <h2>TTC paper / quant (RO)</h2>
+    <div id="view-paper-body"><p class="ro-empty">…</p></div>
+  </section>
+
+  <section class="view" id="view-status" aria-label="Status">
+    <h2>Status</h2>
+    <div class="status-grid">
+      <div class="tile"><b>migration_state</b><span>PARTIAL</span></div>
+      <div class="tile"><b>staff_ready</b><span>false</span></div>
+      <div class="tile"><b>human_commissioned</b><span>false</span></div>
+      <div class="tile"><b>execution</b><span>PAPER ONLY · broker FORBIDDEN</span></div>
+    </div>
+    <h2>Provenance (V1)</h2>
+    <div class="status-grid">
+      <div class="tile"><b>Board</b><span>wolf-system/dashboards/trading.html</span></div>
+      <div class="tile"><b>Desk</b><span>wolf-system/trading-desk/ (journal.jsonl · QUANT_PROGRAM.md)</span></div>
+      <div class="tile"><b>Quant</b><span>Flint TTC paper program — alerts NOT LIVE</span></div>
+      <div class="tile"><b>Audience</b><span>Matthew / Owner only</span></div>
+    </div>
+    <h2>HOLDINGS-PERSONAL Registry</h2>
+    <div class="banner partial"><strong>PARTIAL · personal.</strong> Peaches morning stock glance. Sterling owns group books. <em>No trades from this file.</em> Do not invent holdings lines on Beta.</div>
+    <p class="meta">Alias <code>/owner/holdings</code> → this board. Pack tag UX-PACK-05-20260930. Spec: <code>state/final-completion/p0-v1/transfer/TRANSFER-TRADING-SPEC.md</code></p>
+  </section>
+</main>
+<script>
+(function(){
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
+  var state={payload:null,history:null};
+
+  function setView(name){
+    document.querySelectorAll("nav.desk button").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-view")===name);});
+    document.querySelectorAll("section.view").forEach(function(s){s.classList.toggle("active",s.id==="view-"+name);});
+  }
+  document.getElementById("deskNav").addEventListener("click",function(e){
+    var b=e.target.closest("button[data-view]"); if(!b) return;
+    setView(b.getAttribute("data-view"));
+  });
+  document.getElementById("deskCards").addEventListener("click",function(e){
+    var h=e.target.closest("header[data-toggle]"); if(!h) return;
+    h.parentElement.classList.toggle("collapsed");
+  });
+
+  function paintHoldings(h){
+    h=h||{};
+    var lines=(h.holdings||[]).map(function(n){return "<li>"+esc(n)+"</li>";}).join("");
+    var html="<p class=\"ro-meta\">status <strong>"+esc(h.holdings_status||"UNKNOWN")+"</strong> · count "+esc(h.holdings_count||0)+" · "+esc(h.note||"")+"</p>"+
+      (lines?"<ul class=\"hold\">"+lines+"</ul>":"<p class=\"ro-empty\">Book = UNKNOWN. Fill HOLDINGS-PERSONAL.md. Do not invent.</p>")+
+      "<p class=\"ro-meta\">RO glance only. No Save. No broker. No trades from this board.</p>";
+    document.getElementById("desk-holdings").innerHTML=html;
+    document.getElementById("view-holdings-body").innerHTML=html;
+  }
+
+  function journalTable(rows, meta){
+    if(!rows||!rows.length){
+      return "<p class=\"ro-empty\">No journal rows ("+esc((meta&&meta.journal_status)||"UNKNOWN")+").</p>";
+    }
+    var head="<p class=\"ro-meta\">"+esc((meta&&meta.journal_rows)||rows.length)+" rows · showing "+rows.length+" (capped) · V1 journal.jsonl · paper log</p>";
+    var body="<table class=\"ro-table\"><thead><tr><th>When</th><th>Ticker</th><th>Side</th><th>Status</th><th>Live?</th><th>Size</th><th>Notes</th></tr></thead><tbody>"+
+      rows.map(function(e){
+        if(e.act==="remove") return "<tr><td colspan=\"7\"><em>remove</em> "+esc(e.id)+" @ "+esc(e.at||"")+"</td></tr>";
+        return "<tr><td>"+esc(e.when||e.created_at||"")+"</td><td>"+esc(e.ticker||"")+"</td><td>"+esc(e.side||"")+"</td><td>"+esc(e.status||e.act||"")+"</td><td>"+esc(String(e.live))+"</td><td>"+esc(e.size||"")+"</td><td>"+esc((e.notes||e.thesis||"").slice(0,140))+"</td></tr>";
+      }).join("")+"</tbody></table>";
+    return head+body;
+  }
+
+  function paintJournal(jr){
+    jr=jr||{};
+    var rows=jr.journal_history||jr.journal_sample||[];
+    var html=journalTable(rows,jr);
+    document.getElementById("desk-journal").innerHTML=html;
+    document.getElementById("view-journal-body").innerHTML=html;
+  }
+
+  function paintPaper(pq){
+    pq=pq||{};
+    var docs=(pq.docs_present||[]).map(function(d){return "<span class=\"ro-chip\">"+esc(d)+"</span>";}).join("");
+    var qp=(pq.quant_program||{}).excerpt||"";
+    var pp=(pq.paper_practice||{}).excerpt||"";
+    var ttc="<p class=\"ro-meta\">"+esc(pq.lock||"Paper only. No broker.")+"</p><div>"+docs+"</div>"+
+      "<h3 style=\"margin:12px 0 6px;font-size:.85rem\">QUANT_PROGRAM (excerpt)</h3><pre class=\"ro-pre\">"+esc(qp||"(missing)")+"</pre>";
+    var prac="<p class=\"ro-meta\">Practice brief · paper only</p><pre class=\"ro-pre\">"+esc(pp||"(missing)")+"</pre>";
+    document.getElementById("desk-ttc").innerHTML=ttc;
+    document.getElementById("desk-practice").innerHTML=prac;
+    document.getElementById("view-paper-body").innerHTML=ttc+prac;
+  }
+
+  function paintAll(j){
+    state.payload=j;
+    var st=document.getElementById("ro-live-status");
+    var ok=!!(j&&j.ok);
+    st.textContent=ok?(j.reason||"ok"):("fail-closed · "+((j&& (j.reason||j.error))||"error"));
+    st.className=ok?"ro-ok":"ro-bad";
+    document.getElementById("ro-asof").textContent=(j&&j.as_of_wita)||"—";
+    paintHoldings(j&&j.holdings);
+    paintJournal(j&&j.journal);
+    paintPaper(j&&j.paper_quant);
+  }
+
+  fetch("/api/owner/trading-ro",{credentials:"same-origin"})
+    .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+    .then(function(x){
+      var j=x.j||{};
+      if(!x.ok) j.ok=false;
+      paintAll(j);
+    })
+    .catch(function(e){
+      document.getElementById("ro-live-status").textContent="error · "+e;
+      document.getElementById("ro-live-status").className="ro-bad";
+    });
+
+  document.getElementById("btn-more-journal").addEventListener("click",function(){
+    var btn=this; btn.disabled=true;
+    fetch("/api/owner/trading-ro/history?limit=50",{credentials:"same-origin"})
+      .then(function(r){return r.json();})
+      .then(function(j){
+        state.history=j;
+        var jr=j.journal||{};
+        if(!jr.journal_history && j.journal_history) jr={journal_history:j.journal_history,journal_rows:j.journal_rows,journal_status:j.journal_status};
+        if(!jr.journal_history && (j.journal||{}).journal_history) jr=j.journal;
+        // history endpoint may put sample under journal_sample still
+        if(!jr.journal_history && jr.journal_sample) {/* ok */}
+        paintJournal(jr.journal_history||jr.journal_sample?jr:(j.journal||j));
+        btn.disabled=false;
+      })
+      .catch(function(){btn.disabled=false;});
+  });
+})();
+</script>
+<script src="/assets/sidenav.js"></script>
+</body>
+</html>

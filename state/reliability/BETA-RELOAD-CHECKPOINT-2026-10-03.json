@@ -1,0 +1,83 @@
+{
+  "captured_at": "2026-10-03T18:43:48+08:00",
+  "purpose": "Read-only pre-reload checkpoint. Reload NOT performed.",
+  "reload_performed": false,
+  "stop_reason": "Owner P0 steering: Iza real Uma Blu close in about two hours wins over finance reload. Do not kill Beta pid 84487. Do not restart :8788. Do not touch uma-blu-close, venue_close, or bzg_daily_close.",
+  "prod": {
+    "expected_pid": 15975,
+    "pid_alive": true,
+    "listen": [
+      {
+        "pid": "15975",
+        "bind": "127.0.0.1:8787",
+        "name": "Python"
+      }
+    ],
+    "health": {
+      "url": "http://127.0.0.1:8787/api/health",
+      "status": 200,
+      "body": "{\"ok\": true, \"ts\": \"2026-10-03T10:43:48+00:00\", \"hr_updated\": \"2026-09-29T08:49:14+00:00\", \"port\": 8787}"
+    }
+  },
+  "beta": {
+    "expected_pid": 84487,
+    "pid_alive": true,
+    "listen": [
+      {
+        "pid": "84487",
+        "bind": "127.0.0.1:8788",
+        "name": "Python"
+      }
+    ],
+    "health": {
+      "url": "http://127.0.0.1:8788/api/health",
+      "status": 200,
+      "body": "{\"ok\": true, \"root\": \"beta-os\", \"planner\": \"sqlite\"}"
+    },
+    "start_command_redacted": {
+      "launchd_label": "net.wolfcommand.serve-beta",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/net.wolfcommand.serve-beta.plist",
+      "program_arguments": [
+        "/opt/homebrew/bin/python3",
+        "/Users/wolfterminal/beta-os/scripts/serve_beta.py"
+      ],
+      "resolved_argv": [
+        "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/MacOS/Python",
+        "/Users/wolfterminal/beta-os/scripts/serve_beta.py"
+      ],
+      "working_directory": "/Users/wolfterminal/beta-os/scripts",
+      "plist_environment": {
+        "BETA_PORT": "8788"
+      },
+      "process_environment_note": "BETA_AUTH_MODE is not in the launchd plist or the process environ block. serve_beta loads beta-os/.env for unset keys. That file sets BETA_AUTH_MODE=cloudflare_access. No secret values copied.",
+      "auth_mode": "cloudflare_access",
+      "keepalive": true,
+      "run_at_load": true,
+      "stdout_stderr": "/tmp/serve_beta.log"
+    }
+  },
+  "git": {
+    "tip": "0b0e50da410d7158777871ae240c7e757502f5d3",
+    "tip_expected": "0b0e50da410d7158777871ae240c7e757502f5d3",
+    "tip_matches_expected": true,
+    "dirty_count": 444
+  },
+  "preserved_close": {
+    "queried": true,
+    "mode": "sqlite-ro",
+    "db": "/Users/wolfterminal/beta-os/catalog/content_library.sqlite",
+    "present": true,
+    "close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+    "business_date": "2026-10-02",
+    "outlet_id": "BZG-UMA",
+    "state": "DATA_CAPTURED",
+    "taken_by_person_id": "PERS-MATT",
+    "mutated": false
+  },
+  "writer_94840_alive": false,
+  "writer_note": "pid 94840 was already gone at first observation ~18:41 WITA, before any reload. Not killed by this run. Orphan node 95058 was still present then and was not killed. Steering says 94840 may keep running; it was not running at checkpoint.",
+  "prod_15975_untouched": true,
+  "beta_84487_untouched": true,
+  "ports_not_restarted": true,
+  "listen_note": "Bind addresses confirmed by lsof -nP -iTCP:8787 and :8788 -sTCP:LISTEN before this write. Parser had dropped the address column; corrected without touching either process."
+}

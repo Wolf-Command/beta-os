@@ -1,0 +1,15 @@
+{
+  "pack": "BZG-P2P-NOTA-BILL-1",
+  "migration_id": "bzg_p2p_nota1_20261005",
+  "finished_at": "2026-10-05T19:57:43+08:00",
+  "backup": "/Users/wolfterminal/beta-os/catalog/backups/pre-bzg-p2p-nota1-20261005-195743.sqlite",
+  "backup_sha256": "4472b53c5a33b5c88c6b101d46fda4dcbac56a1ca3cbf0fdc0d9007ce47dcce9",
+  "added_tables": [],
+  "tables_reused": [],
+  "tables_created": [],
+  "permission": "bzg.bill.capture",
+  "grant_copy_seed": "skipped: P2P_PERMISSION_MATRIX via grant_repair1",
+  "granted_roles": [],
+  "staff_ready": false,
+  "human_commissioned": false
+}

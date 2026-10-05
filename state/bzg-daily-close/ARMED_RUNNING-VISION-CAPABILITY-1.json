@@ -1,5 +1,13 @@
 {
   "pack": "BZG-CLOSE-VISION-CAPABILITY-1",
-  "status": "PEACHES_PROVED_AWAITING_MATT_RETEST",
-  "updated_at": "2026-10-02T23:01:38+0800"
+  "status": "CODE_COMPLETE_LIVE_PROVED_AWAITING_PEACHES",
+  "updated_at": "2026-10-03T10:44:30+08:00",
+  "child_alive": false,
+  "matt_retest_ready_already_issued": false,
+  "matt_ping_this_watch_tick": false,
+  "tip": "0b0e50d",
+  "beta_8788_pid": "34207",
+  "result": "state/bzg-daily-close/BZG-CLOSE-VISION-CAPABILITY-1-RESULT.md",
+  "peaches_verify": "state/bzg-daily-close/PEACHES-VERIFY-VISION-CAPABILITY-1.json",
+  "watch_note": "Engineering live path proved 9/9 on preserved receipt. Peaches must independently verify before any Matt ping. staff_ready=false."
 }

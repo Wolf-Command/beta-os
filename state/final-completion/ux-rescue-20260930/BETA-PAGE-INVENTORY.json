@@ -1,0 +1,1744 @@
+{
+  "schema": "BETA-PAGE-INVENTORY/v0",
+  "generated_wita": "2026-09-30T21:52:00+08:00",
+  "html_count": 157,
+  "primary_ia_sections": [
+    {
+      "id": "home",
+      "title": "HOME",
+      "items": [
+        {
+          "href": "/owner-empire-pack",
+          "title": "Empire Pulse",
+          "key": "empire"
+        },
+        {
+          "href": "/staff-ops-routing",
+          "title": "Needs You",
+          "key": "needs_you"
+        },
+        {
+          "href": "/owner/trading",
+          "title": "Trading (Owner)",
+          "key": "owner_trading"
+        },
+        {
+          "href": "/owner/fitness",
+          "title": "Fitness (Owner)",
+          "key": "owner_fitness"
+        },
+        {
+          "href": "/owner/travel",
+          "title": "Travel (Owner)",
+          "key": "owner_travel"
+        },
+        {
+          "href": "/owner/learning",
+          "title": "Learning (Owner)",
+          "key": "owner_learning"
+        },
+        {
+          "href": "/habitat-investment-2026",
+          "title": "Habitat Investment (Owner)",
+          "key": "habitat_investment"
+        }
+      ]
+    },
+    {
+      "id": "businesses",
+      "title": "BUSINESSES",
+      "items": [
+        {
+          "href": "/ggv-ops-pack",
+          "title": "GGV",
+          "key": "ggv"
+        },
+        {
+          "href": "/ggv-voice",
+          "title": "GGV Voice (seat)",
+          "key": "ggv_voice"
+        },
+        {
+          "href": "/amg-ops-pack",
+          "title": "Atrium / AMG",
+          "key": "amg"
+        },
+        {
+          "href": "/kuta-rates",
+          "title": "Kuta Rates (AMG)",
+          "key": "kuta_rates"
+        },
+        {
+          "href": "/amg-voice",
+          "title": "AMG Voice (seat)",
+          "key": "amg_voice"
+        },
+        {
+          "href": "/bzg",
+          "title": "Blu Zone / BZG",
+          "key": "bzg"
+        },
+        {
+          "href": "/bzg-voice",
+          "title": "BZG Voice (seat)",
+          "key": "bzg_voice"
+        },
+        {
+          "href": "/bzg/uma-blu",
+          "title": "Uma Blu \u00b7 Today",
+          "key": "uma"
+        }
+      ]
+    },
+    {
+      "id": "intelligence",
+      "title": "INTELLIGENCE",
+      "items": [
+        {
+          "href": "/intel-ops-pack",
+          "title": "Intelligence Home",
+          "key": "intel"
+        },
+        {
+          "href": "/content-2.0",
+          "title": "Content",
+          "key": "content"
+        },
+        {
+          "href": "/seats/content-desk",
+          "title": "Content Desk (seat)",
+          "key": "seat_content_desk"
+        },
+        {
+          "href": "/seats/content-admin",
+          "title": "Content Admin (seat)",
+          "key": "seat_content_admin"
+        },
+        {
+          "href": "/seats/ads-studio",
+          "title": "Ads Studio (seat)",
+          "key": "seat_ads_studio"
+        },
+        {
+          "href": "/seats/resolve-studio",
+          "title": "Resolve Studio (seat)",
+          "key": "seat_resolve_studio"
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "SYSTEM",
+      "items": [
+        {
+          "href": "/progress",
+          "title": "Progress",
+          "key": "progress"
+        },
+        {
+          "href": "/integration-health",
+          "title": "Integrations",
+          "key": "integrations"
+        },
+        {
+          "href": "/sale-evidence-pack",
+          "title": "Sale Readiness",
+          "key": "sale"
+        }
+      ]
+    }
+  ],
+  "primary_ia_item_count": 24,
+  "disposition_counts": {
+    "HIDE_UNTIL_USEFUL": 73,
+    "MERGE": 26,
+    "KEEP": 21,
+    "MOVE": 28,
+    "BECOME_TAB": 9
+  },
+  "pages": [
+    {
+      "file": "12wy-prove.html",
+      "title": "Wolf \u00b7 12WY prove",
+      "route": "/12wy-prove",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 4422,
+      "preserve_capability": true
+    },
+    {
+      "file": "amg-daily-ops-state.html",
+      "title": "Wolf \u00b7 Daily hotel operating state",
+      "route": "/amg-daily-ops-state",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into AMG/Atrium hub tabs",
+      "bytes": 5053,
+      "preserve_capability": true
+    },
+    {
+      "file": "amg-finance.html",
+      "title": "Atrium Finance",
+      "route": "/amg-finance",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into AMG/Atrium hub tabs",
+      "bytes": 24891,
+      "preserve_capability": true
+    },
+    {
+      "file": "amg-journey-workflow.html",
+      "title": "Wolf \u00b7 Guest journey",
+      "route": "/amg-journey-workflow",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into AMG/Atrium hub tabs",
+      "bytes": 9024,
+      "preserve_capability": true
+    },
+    {
+      "file": "amg-mgmt-cluster.html",
+      "title": "AMG Management Cluster \u00b7 Beta",
+      "route": "/amg-mgmt-cluster",
+      "in_primary_ia": false,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 7430,
+      "preserve_capability": true
+    },
+    {
+      "file": "amg-occ-truth-1.html",
+      "title": "AMG Occupancy Truth-1 \u2014 UNKNOWN when PMS blocked",
+      "route": "/amg/occ-truth-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 10633,
+      "preserve_capability": true
+    },
+    {
+      "file": "amg-ops-pack.html",
+      "title": "Atrium desk \u00b7 Beta",
+      "route": "/amg-ops-pack",
+      "in_primary_ia": true,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 33529,
+      "preserve_capability": true
+    },
+    {
+      "file": "amg-os-shell.html",
+      "title": "AMG Operating Shell \u2014 BLOCKED PMS",
+      "route": "/amg/os-shell",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into AMG/Atrium hub tabs",
+      "bytes": 10195,
+      "preserve_capability": true
+    },
+    {
+      "file": "amg-packages-products.html",
+      "title": "Wolf \u00b7 Packages as products",
+      "route": "/amg-packages-products",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into AMG/Atrium hub tabs",
+      "bytes": 8889,
+      "preserve_capability": true
+    },
+    {
+      "file": "amg-pms-orchestration.html",
+      "title": "Wolf \u00b7 Hotel PMS orchestration",
+      "route": "/amg-pms-orchestration",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into AMG/Atrium hub tabs",
+      "bytes": 5217,
+      "preserve_capability": true
+    },
+    {
+      "file": "amg-revenue-yield.html",
+      "title": "Wolf \u00b7 Hotel revenue and yield",
+      "route": "/amg-revenue-yield",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into AMG/Atrium hub tabs",
+      "bytes": 9261,
+      "preserve_capability": true
+    },
+    {
+      "file": "amg-service-improve.html",
+      "title": "Wolf \u00b7 Service improvement loop",
+      "route": "/amg-service-improve",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 9460,
+      "preserve_capability": true
+    },
+    {
+      "file": "amg-sla-incident.html",
+      "title": "Wolf \u00b7 SLA / incident trail",
+      "route": "/amg-sla-incident",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into AMG/Atrium hub tabs",
+      "bytes": 9427,
+      "preserve_capability": true
+    },
+    {
+      "file": "amg-voice-1.html",
+      "title": "AMG Voice \u2014 PARTIAL (no send)",
+      "route": "/amg-voice",
+      "in_primary_ia": true,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 6504,
+      "preserve_capability": true
+    },
+    {
+      "file": "approvals-live-deepen-1.html",
+      "title": "Approvals live deepen \u2014 live stamps only",
+      "route": "/ops/approvals-live-deepen-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 11354,
+      "preserve_capability": true
+    },
+    {
+      "file": "atrium-fc-truth-deepen-1.html",
+      "title": "ATRIUM-FC-TRUTH-DEEPEN-1 \u2014 no invent books",
+      "route": "/ops/atrium-fc-truth-deepen-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 14981,
+      "preserve_capability": true
+    },
+    {
+      "file": "attack-audit.html",
+      "title": "Wolf \u00b7 Attack audit",
+      "route": "/attack-audit",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Meta/debug",
+      "bytes": 6081,
+      "preserve_capability": true
+    },
+    {
+      "file": "backup-health-1.html",
+      "title": "Backup Health \u2014 Recovery stamps",
+      "route": "/ops/backup-health-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 8818,
+      "preserve_capability": true
+    },
+    {
+      "file": "backup-restore-drill-1.html",
+      "title": "Backup Restore Drill \u2014 Non-destructive",
+      "route": "/ops/backup-restore-drill-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 8746,
+      "preserve_capability": true
+    },
+    {
+      "file": "business-dashboard.html",
+      "title": "Business \u00b7 Beta",
+      "route": "/business-dashboard",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Meta/debug",
+      "bytes": 9356,
+      "preserve_capability": true
+    },
+    {
+      "file": "buyer-dataroom.html",
+      "title": "Wolf \u00b7 Buyer data room",
+      "route": "/buyer-dataroom",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 5062,
+      "preserve_capability": true
+    },
+    {
+      "file": "buyer-mode.html",
+      "title": "Wolf \u00b7 Buyer mode",
+      "route": "/buyer-mode",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 6578,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-allocation-engine.html",
+      "title": "Wolf \u00b7 Central Kitchen / Shared Cost Allocation",
+      "route": "/bzg-allocation-engine",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into BZG hub tabs",
+      "bytes": 5155,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-bom-yield.html",
+      "title": "Wolf \u00b7 Recipe / Cost Standards (BOM/yield)",
+      "route": "/bzg-bom-yield",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into BZG hub tabs",
+      "bytes": 5076,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-finance.html",
+      "title": "BZG Finance",
+      "route": "/bzg/finance",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into BZG hub tabs",
+      "bytes": 5176,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-inventory-truth-1.html",
+      "title": "BZG Inventory Truth-1 \u2014 UNKNOWN when empty (no fake stock)",
+      "route": "/bzg/inventory-truth-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 10870,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-labor-cost-1.html",
+      "title": "BZG Labor Cost-1 \u2014 honesty shell (no fake payroll)",
+      "route": "/bzg/labor-cost-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 11101,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-mgmt-cluster.html",
+      "title": "BZG Management Cluster \u00b7 Beta",
+      "route": "/bzg-mgmt-cluster",
+      "in_primary_ia": false,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 6177,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-ops-desk.html",
+      "title": "Wolf \u00b7 BZG Ops Desk",
+      "route": "/bzg-ops-desk",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into BZG hub tabs",
+      "bytes": 9443,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-outlets.html",
+      "title": "BZG Outlet Registry",
+      "route": "/bzg-outlets",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into BZG hub tabs",
+      "bytes": 8821,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-recipe-builder.html",
+      "title": "Wolf \u00b7 Recipe Builder",
+      "route": "/bzg-recipe-builder",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into BZG hub tabs",
+      "bytes": 15675,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-reputation.html",
+      "title": "Wolf \u00b7 Review observe",
+      "route": "/bzg-reputation",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into BZG hub tabs",
+      "bytes": 2340,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-uma-blu-bills.html",
+      "title": "Uma Blu \u00b7 PR and bills",
+      "route": "/bzg/uma-blu/bills",
+      "in_primary_ia": false,
+      "disposition": "BECOME_TAB",
+      "disposition_note": "Uma Blu desk tabs under /bzg/uma-blu",
+      "bytes": 11255,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-uma-blu-evidence.html",
+      "title": "Uma Blu \u00b7 Evidence",
+      "route": "/bzg/uma-blu/evidence",
+      "in_primary_ia": false,
+      "disposition": "BECOME_TAB",
+      "disposition_note": "Uma Blu desk tabs under /bzg/uma-blu",
+      "bytes": 3617,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-uma-blu-exceptions.html",
+      "title": "Uma Blu \u00b7 Exceptions",
+      "route": "/bzg/uma-blu/exceptions",
+      "in_primary_ia": false,
+      "disposition": "BECOME_TAB",
+      "disposition_note": "Uma Blu desk tabs under /bzg/uma-blu",
+      "bytes": 4016,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-uma-blu-issues.html",
+      "title": "Uma Blu \u00b7 Issues",
+      "route": "/bzg/uma-blu/issues",
+      "in_primary_ia": false,
+      "disposition": "BECOME_TAB",
+      "disposition_note": "Uma Blu desk tabs under /bzg/uma-blu",
+      "bytes": 6840,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-uma-blu-petty.html",
+      "title": "Uma Blu \u00b7 Petty cash",
+      "route": "/bzg/uma-blu/petty",
+      "in_primary_ia": false,
+      "disposition": "BECOME_TAB",
+      "disposition_note": "Uma Blu desk tabs under /bzg/uma-blu",
+      "bytes": 11209,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-uma-blu-pr.html",
+      "title": "Uma Blu \u00b7 Purchase",
+      "route": "/bzg/uma-blu/bills",
+      "in_primary_ia": false,
+      "disposition": "BECOME_TAB",
+      "disposition_note": "Uma Blu desk tabs under /bzg/uma-blu",
+      "bytes": 15166,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-uma-blu-real.html",
+      "title": "Uma Blu \u00b7 Real data",
+      "route": "/bzg-uma-blu-real",
+      "in_primary_ia": false,
+      "disposition": "BECOME_TAB",
+      "disposition_note": "Uma Blu desk tabs under /bzg/uma-blu",
+      "bytes": 15163,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-uma-blu.html",
+      "title": "Uma Blu \u00b7 Today",
+      "route": "/bzg/uma-blu",
+      "in_primary_ia": true,
+      "disposition": "BECOME_TAB",
+      "disposition_note": "Uma Blu desk tabs under /bzg/uma-blu",
+      "bytes": 33225,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-variance-waste.html",
+      "title": "Wolf \u00b7 Variance / Waste Analysis",
+      "route": "/bzg-variance-waste",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into BZG hub tabs",
+      "bytes": 5099,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-venue-pnl.html",
+      "title": "Wolf \u00b7 BZG Venue P&L rollup",
+      "route": "/bzg-venue-pnl",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into BZG hub tabs",
+      "bytes": 7891,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-voice-1.html",
+      "title": "BZG Voice \u2014 PARTIAL (no send)",
+      "route": "/bzg-voice",
+      "in_primary_ia": true,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 6478,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg-waste-yield.html",
+      "title": "Wolf \u00b7 BZG Waste / Yield Desk",
+      "route": "/bzg-waste-yield",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into BZG hub tabs",
+      "bytes": 7565,
+      "preserve_capability": true
+    },
+    {
+      "file": "bzg.html",
+      "title": "BZG \u00b7 Overview",
+      "route": "/bzg",
+      "in_primary_ia": true,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 3329,
+      "preserve_capability": true
+    },
+    {
+      "file": "commissioning-live.html",
+      "title": "Commissioning live",
+      "route": "/commissioning-live",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Meta/debug",
+      "bytes": 4485,
+      "preserve_capability": true
+    },
+    {
+      "file": "conn-health-1.html",
+      "title": "CONN-HEALTH-BOARD-1 \u2014 Connections health (BLOCKED honesty)",
+      "route": "/ops/conn-health-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 12698,
+      "preserve_capability": true
+    },
+    {
+      "file": "connector-cap-tests.html",
+      "title": "Wolf \u00b7 Connector tests",
+      "route": "/connector-cap-tests",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 4585,
+      "preserve_capability": true
+    },
+    {
+      "file": "connector-contract.html",
+      "title": "Wolf \u00b7 Connector contract",
+      "route": "/connector-contract",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 4411,
+      "preserve_capability": true
+    },
+    {
+      "file": "connector-health-deepen-1.html",
+      "title": "CONNECTOR-HEALTH-DEEPEN-1 \u2014 Wave7/8 per-connector honesty",
+      "route": "/ops/connector-health-deepen-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 13945,
+      "preserve_capability": true
+    },
+    {
+      "file": "content-2.0.html",
+      "title": "Content Engine \u00b7 Beta",
+      "route": "/content-2.0",
+      "in_primary_ia": true,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 168840,
+      "preserve_capability": true
+    },
+    {
+      "file": "content-engine-live.html",
+      "title": "Content Engine Live \u2014 storage truth",
+      "route": "/ops/content-engine-live",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 11649,
+      "preserve_capability": true
+    },
+    {
+      "file": "content-publish-path-1.html",
+      "title": "Content Publish Path-1 \u2014 write NOT_RUNTIME (no invent)",
+      "route": "/ops/content-publish-path-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 12878,
+      "preserve_capability": true
+    },
+    {
+      "file": "core-harden-pack.html",
+      "title": "Core Harden \u00b7 Beta",
+      "route": "/core-harden-pack",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "System/sale/intel sub-area",
+      "bytes": 6865,
+      "preserve_capability": true
+    },
+    {
+      "file": "core-mgmt-cluster.html",
+      "title": "Core Management Cluster \u00b7 Beta",
+      "route": "/core-mgmt-cluster",
+      "in_primary_ia": false,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 13254,
+      "preserve_capability": true
+    },
+    {
+      "file": "crm-connector-prove.html",
+      "title": "Wolf \u00b7 Connector prove",
+      "route": "/crm-connector-prove",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 5012,
+      "preserve_capability": true
+    },
+    {
+      "file": "crm-identity-1.html",
+      "title": "CRM Identity-1 \u2014 no cross-client leak",
+      "route": "/crm/identity-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 9307,
+      "preserve_capability": true
+    },
+    {
+      "file": "crm-identity.html",
+      "title": "Wolf \u00b7 Customer identity",
+      "route": "/crm-identity",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "System/sale/intel sub-area",
+      "bytes": 7479,
+      "preserve_capability": true
+    },
+    {
+      "file": "crm-lead-cap-prove.html",
+      "title": "Wolf \u00b7 Lead CAP prove",
+      "route": "/crm-lead-cap-prove",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 4479,
+      "preserve_capability": true
+    },
+    {
+      "file": "crm-mgmt-cluster.html",
+      "title": "CRM Management Cluster \u00b7 Beta",
+      "route": "/crm-mgmt-cluster",
+      "in_primary_ia": false,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 11789,
+      "preserve_capability": true
+    },
+    {
+      "file": "crm-package-intel.html",
+      "title": "Wolf \u00b7 Package register",
+      "route": "/crm-package-intel",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "System/sale/intel sub-area",
+      "bytes": 9039,
+      "preserve_capability": true
+    },
+    {
+      "file": "crm-pipeline-truth-1.html",
+      "title": "CRM Pipeline Truth-1 \u2014 authorised CRM (no invent)",
+      "route": "/crm/pipeline-truth-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 13624,
+      "preserve_capability": true
+    },
+    {
+      "file": "crown-jewels.html",
+      "title": "Wolf \u00b7 Crown jewels",
+      "route": "/crown-jewels",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 5032,
+      "preserve_capability": true
+    },
+    {
+      "file": "dashboard-truth.html",
+      "title": "Data truth \u00b7 Beta",
+      "route": "/dashboard-truth",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Meta/debug",
+      "bytes": 1705,
+      "preserve_capability": true
+    },
+    {
+      "file": "dr-mgmt-cluster.html",
+      "title": "DR Management Cluster \u00b7 Beta",
+      "route": "/dr-mgmt-cluster",
+      "in_primary_ia": false,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 7819,
+      "preserve_capability": true
+    },
+    {
+      "file": "esb-settlement-path-1.html",
+      "title": "ESB Settlement Path \u2014 EXTERNAL_BLOCKER probe",
+      "route": "/ops/esb-settlement-path-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 9407,
+      "preserve_capability": true
+    },
+    {
+      "file": "esb-truth-1.html",
+      "title": "ESB-TRUTH-1 \u2014 Warehouse truth (PARTIAL_IN_BETA)",
+      "route": "/ops/esb-truth-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 13294,
+      "preserve_capability": true
+    },
+    {
+      "file": "escalation-burndown.html",
+      "title": "Wolf \u00b7 Escalation burn-down",
+      "route": "/escalation-burndown",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 4517,
+      "preserve_capability": true
+    },
+    {
+      "file": "execution-report.html",
+      "title": "Execution &amp; Delegation Report",
+      "route": "/execution-report",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Meta/debug",
+      "bytes": 4443,
+      "preserve_capability": true
+    },
+    {
+      "file": "failure-domains.html",
+      "title": "Wolf \u00b7 Failure domains",
+      "route": "/failure-domains",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 4335,
+      "preserve_capability": true
+    },
+    {
+      "file": "fin-ap-ar-shell-1.html",
+      "title": "FIN AP/AR Shell-1 \u2014 SoD honesty, no fake invoices",
+      "route": "/fin/ap-ar-shell-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 12576,
+      "preserve_capability": true
+    },
+    {
+      "file": "fin-bank-creds-route-1.html",
+      "title": "Bank Credentials Route \u2014 HUMAN_COMMISSIONING",
+      "route": "/fin/bank-creds-route-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 9900,
+      "preserve_capability": true
+    },
+    {
+      "file": "fin-budget-forecast-cash.html",
+      "title": "Wolf \u00b7 Budget / Forecast / Cash Cadence",
+      "route": "/fin-budget-forecast-cash",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Finance shells under biz finance / group finance \u2014 preserve SoD",
+      "bytes": 5274,
+      "preserve_capability": true
+    },
+    {
+      "file": "fin-cash-truth-1.html",
+      "title": "FIN Cash Truth-1 \u2014 file-import only",
+      "route": "/fin/cash-truth-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 12367,
+      "preserve_capability": true
+    },
+    {
+      "file": "fin-interco-1.html",
+      "title": "FIN Interco-1 \u2014 GGV\u2194AMG/BZG structure only",
+      "route": "/fin/interco-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 9690,
+      "preserve_capability": true
+    },
+    {
+      "file": "fin-intercompany-billing.html",
+      "title": "Wolf \u00b7 Intercompany Billing",
+      "route": "/fin-intercompany-billing",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Finance shells under biz finance / group finance \u2014 preserve SoD",
+      "bytes": 5446,
+      "preserve_capability": true
+    },
+    {
+      "file": "fin-mgmt-reporting.html",
+      "title": "Wolf \u00b7 Management Reporting",
+      "route": "/fin-mgmt-reporting",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Finance shells under biz finance / group finance \u2014 preserve SoD",
+      "bytes": 5173,
+      "preserve_capability": true
+    },
+    {
+      "file": "fin-recon-shell-1.html",
+      "title": "FIN Recon Shell-1 \u2014 bank file-import only",
+      "route": "/fin/recon-shell-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 11789,
+      "preserve_capability": true
+    },
+    {
+      "file": "fin-tax-deepen-1.html",
+      "title": "Tax Dues Deepen \u2014 HUMAN_COMMISSIONING",
+      "route": "/fin/tax-deepen-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 10586,
+      "preserve_capability": true
+    },
+    {
+      "file": "fin-tax-shell-1.html",
+      "title": "FIN Tax Shell-1 \u2014 UNKNOWN until facts",
+      "route": "/fin/tax-shell-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 11523,
+      "preserve_capability": true
+    },
+    {
+      "file": "finish-war-room.html",
+      "title": "Finish war room \u00b7 Beta",
+      "route": "/finish-war-room",
+      "in_primary_ia": false,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 16050,
+      "preserve_capability": true
+    },
+    {
+      "file": "ggv-client-profitability.html",
+      "title": "Wolf \u00b7 Client and contract profitability",
+      "route": "/ggv-client-profitability",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into GGV hub tabs",
+      "bytes": 8766,
+      "preserve_capability": true
+    },
+    {
+      "file": "ggv-content-prove.html",
+      "title": "GGV Content Prove \u2014 no fake publish metrics",
+      "route": "/ggv/content-prove",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 10887,
+      "preserve_capability": true
+    },
+    {
+      "file": "ggv-finance.html",
+      "title": "GGV Finance \u00b7 Notas",
+      "route": "/ggv/finance",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into GGV hub tabs",
+      "bytes": 46824,
+      "preserve_capability": true
+    },
+    {
+      "file": "ggv-intercompany-client.html",
+      "title": "Wolf \u00b7 Intercompany client mode",
+      "route": "/ggv-intercompany-client",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into GGV hub tabs",
+      "bytes": 9275,
+      "preserve_capability": true
+    },
+    {
+      "file": "ggv-metric-honesty-1.html",
+      "title": "GGV Metric Honesty-1 \u2014 Metricool NOT_RUNTIME (no fake engagement)",
+      "route": "/ggv/metric-honesty-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 11170,
+      "preserve_capability": true
+    },
+    {
+      "file": "ggv-mgmt-cluster.html",
+      "title": "GGV Management Cluster \u00b7 Beta",
+      "route": "/ggv-mgmt-cluster",
+      "in_primary_ia": false,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 6673,
+      "preserve_capability": true
+    },
+    {
+      "file": "ggv-ops-pack.html",
+      "title": "Habitat desk \u00b7 Beta",
+      "route": "/ggv-ops-pack",
+      "in_primary_ia": true,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 27957,
+      "preserve_capability": true
+    },
+    {
+      "file": "ggv-pipeline-truth-1.html",
+      "title": "GGV Pipeline Truth-1 \u2014 sales pipeline (no fake deals)",
+      "route": "/ggv/pipeline-truth-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 12359,
+      "preserve_capability": true
+    },
+    {
+      "file": "ggv-social.html",
+      "title": "Wolf \u00b7 Social derive",
+      "route": "/ggv-social",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into GGV hub tabs",
+      "bytes": 2667,
+      "preserve_capability": true
+    },
+    {
+      "file": "ggv-strategy-machine.html",
+      "title": "Wolf \u00b7 Strategy machine",
+      "route": "/ggv-strategy-machine",
+      "in_primary_ia": false,
+      "disposition": "MERGE",
+      "disposition_note": "Fold into GGV hub tabs",
+      "bytes": 4830,
+      "preserve_capability": true
+    },
+    {
+      "file": "ggv-voice-1.html",
+      "title": "GGV Voice \u2014 PARTIAL (no send)",
+      "route": "/ggv-voice",
+      "in_primary_ia": true,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 6497,
+      "preserve_capability": true
+    },
+    {
+      "file": "gws-integrate-prove.html",
+      "title": "Wolf \u00b7 Workspace prove",
+      "route": "/gws-integrate-prove",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 4380,
+      "preserve_capability": true
+    },
+    {
+      "file": "habitat-investment-1.html",
+      "title": "Habitat Investment 2026 \u2014 PARTIAL",
+      "route": "/habitat-investment-2026",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 6604,
+      "preserve_capability": true
+    },
+    {
+      "file": "habitat-operator.html",
+      "title": "Habitat Operator \u00b7 Beta",
+      "route": "/habitat-operator",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 25108,
+      "preserve_capability": true
+    },
+    {
+      "file": "hr-deferred-hold-stamp-1.html",
+      "title": "HR deferred hold stamp \u2014 do not build HR",
+      "route": "/ops/hr-deferred-hold-stamp-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "HR deferred",
+      "bytes": 9919,
+      "preserve_capability": true
+    },
+    {
+      "file": "hr-hiring-onboarding.html",
+      "title": "Wolf \u00b7 Hiring &amp; Onboarding",
+      "route": "/hr-hiring-onboarding",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "HR deferred",
+      "bytes": 5409,
+      "preserve_capability": true
+    },
+    {
+      "file": "hr-payroll-inputs.html",
+      "title": "Wolf \u00b7 Payroll Inputs",
+      "route": "/hr-payroll-inputs",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "HR deferred",
+      "bytes": 5520,
+      "preserve_capability": true
+    },
+    {
+      "file": "hr-retention-signals.html",
+      "title": "Wolf \u00b7 Retention & Succession Signals",
+      "route": "/hr-retention-signals",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "HR deferred",
+      "bytes": 5650,
+      "preserve_capability": true
+    },
+    {
+      "file": "hr-training-competency.html",
+      "title": "Wolf \u00b7 Training &amp; Competency",
+      "route": "/hr-training-competency",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "HR deferred",
+      "bytes": 5483,
+      "preserve_capability": true
+    },
+    {
+      "file": "integration-health.html",
+      "title": "Wolf \u00b7 Integration Health",
+      "route": "/integration-health",
+      "in_primary_ia": true,
+      "disposition": "KEEP",
+      "disposition_note": "Review",
+      "bytes": 8884,
+      "preserve_capability": true
+    },
+    {
+      "file": "integrations-status.html",
+      "title": "Integrations Status \u2014 Honesty Board",
+      "route": "/ops/integrations-status",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 7363,
+      "preserve_capability": true
+    },
+    {
+      "file": "intel-learning.html",
+      "title": "Wolf \u00b7 Intel Learning (human review gate)",
+      "route": "/intel-learning",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 11132,
+      "preserve_capability": true
+    },
+    {
+      "file": "intel-mgmt-cluster.html",
+      "title": "INTEL Learning Policy Cluster \u00b7 Beta",
+      "route": "/intel-mgmt-cluster",
+      "in_primary_ia": false,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 6823,
+      "preserve_capability": true
+    },
+    {
+      "file": "intel-ops-pack.html",
+      "title": "Intel Ops \u00b7 Beta",
+      "route": "/intel-ops-pack",
+      "in_primary_ia": true,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 18084,
+      "preserve_capability": true
+    },
+    {
+      "file": "intg-mgmt-cluster.html",
+      "title": "INTG Management Cluster \u00b7 Beta",
+      "route": "/intg-mgmt-cluster",
+      "in_primary_ia": false,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 8492,
+      "preserve_capability": true
+    },
+    {
+      "file": "intg-secrets.html",
+      "title": "Wolf \u00b7 Secrets and environment separation",
+      "route": "/intg-secrets",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "System/sale/intel sub-area",
+      "bytes": 5231,
+      "preserve_capability": true
+    },
+    {
+      "file": "inv-cash-facts-route-1.html",
+      "title": "Inv/Cash Facts Route \u2014 HUMAN_COMMISSIONING",
+      "route": "/ops/inv-cash-facts-route-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 10281,
+      "preserve_capability": true
+    },
+    {
+      "file": "kuta-rates-1.html",
+      "title": "Kuta Rates (AMG) \u2014 PARTIAL",
+      "route": "/kuta-rates",
+      "in_primary_ia": true,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 6842,
+      "preserve_capability": true
+    },
+    {
+      "file": "lead-spine.html",
+      "title": "Lead Spine \u00b7 Beta",
+      "route": "/lead-spine",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 21878,
+      "preserve_capability": true
+    },
+    {
+      "file": "metricool-runtime-wire-1.html",
+      "title": "Metricool Runtime Wire \u2014 brands + analytics honesty",
+      "route": "/ops/metricool-runtime-wire-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 9377,
+      "preserve_capability": true
+    },
+    {
+      "file": "msc-assets.html",
+      "title": "Wolf \u00b7 Asset register",
+      "route": "/msc-assets",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "System/sale/intel sub-area",
+      "bytes": 8706,
+      "preserve_capability": true
+    },
+    {
+      "file": "msc-compliance.html",
+      "title": "Wolf \u00b7 Compliance pack",
+      "route": "/msc-compliance",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "System/sale/intel sub-area",
+      "bytes": 8512,
+      "preserve_capability": true
+    },
+    {
+      "file": "msc-cyber.html",
+      "title": "Wolf \u00b7 Cybersecurity baseline",
+      "route": "/msc-cyber",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "System/sale/intel sub-area",
+      "bytes": 4237,
+      "preserve_capability": true
+    },
+    {
+      "file": "msc-mgmt-cluster.html",
+      "title": "MSC Management Cluster \u00b7 Beta",
+      "route": "/msc-mgmt-cluster",
+      "in_primary_ia": false,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 12675,
+      "preserve_capability": true
+    },
+    {
+      "file": "msc-posture.html",
+      "title": "Wolf \u00b7 Automated posture prove",
+      "route": "/msc-posture",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "System/sale/intel sub-area",
+      "bytes": 4214,
+      "preserve_capability": true
+    },
+    {
+      "file": "msc-records.html",
+      "title": "Wolf \u00b7 Records defensibility",
+      "route": "/msc-records",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "System/sale/intel sub-area",
+      "bytes": 4296,
+      "preserve_capability": true
+    },
+    {
+      "file": "my-work-item.html",
+      "title": "Work",
+      "route": "/my-work-item",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 14248,
+      "preserve_capability": true
+    },
+    {
+      "file": "my-work.html",
+      "title": "My Work",
+      "route": "/my-work",
+      "in_primary_ia": false,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 8850,
+      "preserve_capability": true
+    },
+    {
+      "file": "occupancy-external-hold-1.html",
+      "title": "Occupancy EXTERNAL hold \u2014 Yanolja/Mews",
+      "route": "/amg/occupancy-external-hold-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 9528,
+      "preserve_capability": true
+    },
+    {
+      "file": "ops-calendly-atrium-sync-1.html",
+      "title": "Calendly Atrium Sync \u2014 PARTIAL stub",
+      "route": "/ops/calendly-atrium-sync",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 3876,
+      "preserve_capability": true
+    },
+    {
+      "file": "ops-competitor-rates-pipeline-1.html",
+      "title": "Competitor Rates Pipeline \u2014 PARTIAL stub",
+      "route": "/ops/competitor-rates-pipeline",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 4056,
+      "preserve_capability": true
+    },
+    {
+      "file": "ops-event-bus-1.html",
+      "title": "Event Bus (ops) \u2014 PARTIAL",
+      "route": "/ops/event-bus",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 6712,
+      "preserve_capability": true
+    },
+    {
+      "file": "ops-rate-calendar-1.html",
+      "title": "Rate Calendar DB \u2014 PARTIAL stub",
+      "route": "/ops/rate-calendar",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 3872,
+      "preserve_capability": true
+    },
+    {
+      "file": "owner-dash-freshness-1.html",
+      "title": "OWNER-DASH-FRESHNESS-1 \u2014 live stamps only",
+      "route": "/ops/owner-dash-freshness-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 13668,
+      "preserve_capability": true
+    },
+    {
+      "file": "owner-data-quality.html",
+      "title": "Data-quality exceptions \u00b7 Owner",
+      "route": "/owner-data-quality",
+      "in_primary_ia": false,
+      "disposition": "BECOME_TAB",
+      "disposition_note": "Owner personal / command",
+      "bytes": 5335,
+      "preserve_capability": true
+    },
+    {
+      "file": "owner-empire-pack.html",
+      "title": "Owner Command \u00b7 Beta",
+      "route": "/owner-empire-pack",
+      "in_primary_ia": true,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 22855,
+      "preserve_capability": true
+    },
+    {
+      "file": "owner-exceptions-live-1.html",
+      "title": "OWNER Exceptions-Live-1 \u2014 live stamps, no fake severity",
+      "route": "/owner/exceptions-live-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 12450,
+      "preserve_capability": true
+    },
+    {
+      "file": "owner-fitness-1.html",
+      "title": "Owner Fitness \u2014 PARTIAL (Spartacus)",
+      "route": "/owner/fitness",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 9493,
+      "preserve_capability": true
+    },
+    {
+      "file": "owner-gatekeeper-1.html",
+      "title": "Owner Gatekeeper \u2014 PARTIAL (never sends)",
+      "route": "/owner/gatekeeper",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 6907,
+      "preserve_capability": true
+    },
+    {
+      "file": "owner-learning-1.html",
+      "title": "Owner Learning \u2014 PARTIAL (TTC paper)",
+      "route": "/owner/learning",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 7593,
+      "preserve_capability": true
+    },
+    {
+      "file": "owner-needs-you-1.html",
+      "title": "OWNER Needs You-1 \u2014 connective prove, no fake urgency",
+      "route": "/owner/needs-you-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 10938,
+      "preserve_capability": true
+    },
+    {
+      "file": "owner-trading-1.html",
+      "title": "Owner Trading \u2014 PARTIAL (paper only)",
+      "route": "/owner/trading",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 9268,
+      "preserve_capability": true
+    },
+    {
+      "file": "owner-travel-1.html",
+      "title": "Owner Travel \u2014 PARTIAL (no book)",
+      "route": "/owner/travel",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 6567,
+      "preserve_capability": true
+    },
+    {
+      "file": "pipe-reliability-auto-1.html",
+      "title": "Mac Pipe \u2014 Detect / Recover",
+      "route": "/ops/pipe-reliability-auto-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 9030,
+      "preserve_capability": true
+    },
+    {
+      "file": "progress.html",
+      "title": "Wolf \u00b7 Progress",
+      "route": "/progress",
+      "in_primary_ia": true,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 76903,
+      "preserve_capability": true
+    },
+    {
+      "file": "radar-prove.html",
+      "title": "Wolf \u00b7 Owner Radar prove",
+      "route": "/radar-prove",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 4626,
+      "preserve_capability": true
+    },
+    {
+      "file": "reliability-pipe-episode-rollup-1.html",
+      "title": "Pipe episode rollup \u2014 flap evidence",
+      "route": "/ops/reliability-pipe-episode-rollup-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 9327,
+      "preserve_capability": true
+    },
+    {
+      "file": "reliability.html",
+      "title": "Reliability \u2014 Health Board",
+      "route": "/ops/reliability",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 9671,
+      "preserve_capability": true
+    },
+    {
+      "file": "restore-drill.html",
+      "title": "Wolf \u00b7 Restore drill",
+      "route": "/restore-drill",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 4039,
+      "preserve_capability": true
+    },
+    {
+      "file": "sale-evidence-pack.html",
+      "title": "Wolf \u00b7 Sale evidence pack",
+      "route": "/sale-evidence-pack",
+      "in_primary_ia": true,
+      "disposition": "MOVE",
+      "disposition_note": "System/sale/intel sub-area",
+      "bytes": 6699,
+      "preserve_capability": true
+    },
+    {
+      "file": "sale-mgmt-cluster.html",
+      "title": "SALE Management Cluster \u00b7 Beta",
+      "route": "/sale-mgmt-cluster",
+      "in_primary_ia": false,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 13099,
+      "preserve_capability": true
+    },
+    {
+      "file": "seat-ads-studio-1.html",
+      "title": "Ads Studio (seat) \u2014 PARTIAL (LEARN-only \u00b7 no spend)",
+      "route": "/seats/ads-studio",
+      "in_primary_ia": true,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 7454,
+      "preserve_capability": true
+    },
+    {
+      "file": "seat-content-admin-1.html",
+      "title": "Content Admin (seat) \u2014 PARTIAL",
+      "route": "/seats/content-admin",
+      "in_primary_ia": true,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 7034,
+      "preserve_capability": true
+    },
+    {
+      "file": "seat-content-desk-1.html",
+      "title": "Content Desk (seat) \u2014 PARTIAL",
+      "route": "/seats/content-desk",
+      "in_primary_ia": true,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 6926,
+      "preserve_capability": true
+    },
+    {
+      "file": "seat-resolve-studio-1.html",
+      "title": "Resolve Studio (seat) \u2014 PARTIAL",
+      "route": "/seats/resolve-studio",
+      "in_primary_ia": true,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 7245,
+      "preserve_capability": true
+    },
+    {
+      "file": "sop-catalog-seed-route-1.html",
+      "title": "SOP Catalog Seed-or-Route \u2014 HUMAN_COMMISSIONING",
+      "route": "/ops/sop-catalog-seed-route-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 8863,
+      "preserve_capability": true
+    },
+    {
+      "file": "sop-factory.html",
+      "title": "Wolf \u00b7 SOP Factory (review gate)",
+      "route": "/sop-factory",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 7384,
+      "preserve_capability": true
+    },
+    {
+      "file": "sop-lesson-live.html",
+      "title": "Wolf \u00b7 SOP Lesson Live (human review required)",
+      "route": "/core/sop-lesson-live",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 13361,
+      "preserve_capability": true
+    },
+    {
+      "file": "speed-to-lead-prove.html",
+      "title": "Wolf \u00b7 Speed-to-lead prove",
+      "route": "/speed-to-lead-prove",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 5217,
+      "preserve_capability": true
+    },
+    {
+      "file": "staff-access-truth-1.html",
+      "title": "Staff access truth \u2014 live stamps only",
+      "route": "/ops/staff-access-truth-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 10802,
+      "preserve_capability": true
+    },
+    {
+      "file": "staff-ops-routing.html",
+      "title": "Staff Ops Routing \u00b7 Beta",
+      "route": "/staff-ops-routing",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 9406,
+      "preserve_capability": true
+    },
+    {
+      "file": "strat-mgmt-cluster.html",
+      "title": "STRAT Management Cluster \u00b7 Beta",
+      "route": "/strat-mgmt-cluster",
+      "in_primary_ia": false,
+      "disposition": "KEEP",
+      "disposition_note": "Hub / pack / finish surface",
+      "bytes": 7773,
+      "preserve_capability": true
+    },
+    {
+      "file": "tech-registry.html",
+      "title": "Wolf \u00b7 Tech Registry",
+      "route": "/tech-registry",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 5663,
+      "preserve_capability": true
+    },
+    {
+      "file": "uma-blu-close.html",
+      "title": "Uma Blu \u00b7 Daily Close",
+      "route": "/uma-blu-close",
+      "in_primary_ia": false,
+      "disposition": "MOVE",
+      "disposition_note": "Review",
+      "bytes": 24201,
+      "preserve_capability": true
+    },
+    {
+      "file": "v1-status.html",
+      "title": "V1 Status Register \u2014 Non-HR",
+      "route": "/ops/v1-status",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Meta/debug",
+      "bytes": 5094,
+      "preserve_capability": true
+    },
+    {
+      "file": "weekly-cash-forecast-shell-1.html",
+      "title": "Weekly Cash Forecast Shell-1 \u2014 UNKNOWN until bank facts",
+      "route": "/fin/weekly-cash-forecast-shell-1",
+      "in_primary_ia": false,
+      "disposition": "HIDE_UNTIL_USEFUL",
+      "disposition_note": "Prove/deepen engineering surface \u2014 hide from primary IA; keep capability",
+      "bytes": 12508,
+      "preserve_capability": true
+    }
+  ],
+  "alias_map_size": 196,
+  "missing_from_primary_ia_proposed": [
+    {
+      "href": "/my-work",
+      "title": "My Work",
+      "propose": "HOME primary"
+    },
+    {
+      "href": "/finish-war-room",
+      "title": "FINISH WOLF",
+      "propose": "HOME primary + Owner Home CTA"
+    }
+  ]
+}

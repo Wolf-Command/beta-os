@@ -1,0 +1,154 @@
+{
+  "results": {
+    "listing_ArrivalList_error": {
+      "Error_Code": "BadRequest",
+      "Error_Message": "Bad request type."
+    },
+    "ArrivalList-Dates-nested": {
+      "http": 200,
+      "error_codes": [
+        "105",
+        "From Date is missing"
+      ],
+      "denied": false,
+      "hint": {
+        "kind": "dict",
+        "keys": [
+          "Errors"
+        ],
+        "text": null
+      },
+      "keys": [
+        "Errors"
+      ]
+    },
+    "ArrivalList-ArrivalDate-nested": {
+      "http": 200,
+      "error_codes": [
+        "105",
+        "From Date is missing"
+      ],
+      "denied": false,
+      "hint": {
+        "kind": "dict",
+        "keys": [
+          "Errors"
+        ],
+        "text": null
+      },
+      "keys": [
+        "Errors"
+      ]
+    },
+    "ArrivalList-fromdate-lowercase": {
+      "http": 200,
+      "error_codes": [
+        "105",
+        "From Date is missing"
+      ],
+      "denied": false,
+      "hint": {
+        "kind": "dict",
+        "keys": [
+          "Errors"
+        ],
+        "text": null
+      },
+      "keys": [
+        "Errors"
+      ]
+    },
+    "FetchBookings": {
+      "http": 200,
+      "error_codes": [
+        "502",
+        "Request Type is missing"
+      ],
+      "denied": false,
+      "hint": {
+        "kind": "dict",
+        "keys": [
+          "Errors"
+        ],
+        "text": null
+      },
+      "keys": [
+        "Errors"
+      ]
+    },
+    "kiosk-flat": {
+      "http": 200,
+      "error_codes": [],
+      "hint": {
+        "kind": "dict",
+        "keys": [
+          "Error"
+        ],
+        "text": null
+      },
+      "keys": [
+        "Error"
+      ],
+      "has_roomlist": false,
+      "has_checkinguestlist": false,
+      "roomlist_n": null,
+      "guestlist_n": null
+    },
+    "kiosk-AuthCode-HotelCode": {
+      "http": 200,
+      "error_codes": [],
+      "hint": {
+        "kind": "dict",
+        "keys": [
+          "Error"
+        ],
+        "text": null
+      },
+      "keys": [
+        "Error"
+      ],
+      "has_roomlist": false,
+      "has_checkinguestlist": false,
+      "roomlist_n": null,
+      "guestlist_n": null
+    },
+    "kiosk-RES_Request-Inhouse": {
+      "http": 200,
+      "error_codes": [],
+      "hint": {
+        "kind": "dict",
+        "keys": [
+          "Error"
+        ],
+        "text": null
+      },
+      "keys": [
+        "Error"
+      ],
+      "has_roomlist": false,
+      "has_checkinguestlist": false,
+      "roomlist_n": null,
+      "guestlist_n": null
+    },
+    "kiosk-gethkdata": {
+      "http": 200,
+      "error_codes": [],
+      "hint": {
+        "kind": "dict",
+        "keys": [
+          "Error"
+        ],
+        "text": null
+      },
+      "keys": [
+        "Error"
+      ],
+      "has_roomlist": false,
+      "has_checkinguestlist": false,
+      "roomlist_n": null,
+      "guestlist_n": null
+    }
+  },
+  "pii_omitted": true,
+  "probed_at": "2026-10-01T07:31:53+08:00"
+}

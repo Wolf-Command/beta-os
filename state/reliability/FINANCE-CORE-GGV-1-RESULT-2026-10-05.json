@@ -1,0 +1,54 @@
+{
+  "pack": "FINANCE-CORE-GGV-1",
+  "run_id": "BF-a4fa599323e0",
+  "routes_added": {
+    "nota_upload": "http://127.0.0.1:8788/ggv/finance/notas",
+    "bank_upload": "http://127.0.0.1:8788/ggv/finance/banking",
+    "reconciliation": "http://127.0.0.1:8788/ggv/finance/reconciliation"
+  },
+  "api_routes_added": [
+    "/api/ggv/finance/desk",
+    "/api/ggv/finance/reconciliation",
+    "/api/ggv/finance/audit"
+  ],
+  "test_file": "scripts/tests/test_finance_core_ggv1_20261005.py",
+  "tests_pass": 8,
+  "tests_fail": 0,
+  "counts": {
+    "desk": {
+      "invoices": 46,
+      "notas": 33,
+      "bills": 605,
+      "bank_imports": 2,
+      "bank_transactions": 6,
+      "receipt_accounting": 484,
+      "uploads": 0,
+      "nota_files": 0,
+      "suppliers": 13
+    },
+    "db_mode_ro": {
+      "ggv_invoices": 46,
+      "ggv_notas": 33,
+      "ggv_bills": 605,
+      "ggv_bank_statement_imports": 2,
+      "ggv_bank_transactions": 6
+    }
+  },
+  "matt_test_urls": {
+    "nota": "http://127.0.0.1:8788/ggv/finance/notas",
+    "bank_statement": "http://127.0.0.1:8788/ggv/finance/banking",
+    "reconciliation": "http://127.0.0.1:8788/ggv/finance/reconciliation"
+  },
+  "beta_reloaded": true,
+  "reload_held": false,
+  "beta_listener_pid": 72231,
+  "beta_listener_pid_before": 68959,
+  "prod_pid_unchanged": true,
+  "prod_pid": 1297,
+  "protected_closes_unchanged": true,
+  "protected_petty_balance_idr": 552700,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "status": "IMPLEMENTATION_DONE",
+  "exit_code": 0
+}

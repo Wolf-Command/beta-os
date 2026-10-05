@@ -1,0 +1,57 @@
+{
+  "pack": "PETTY-OWNER-CASH-IN-1",
+  "ran_at": "2026-10-05T07:28:00+08:00",
+  "status": "PASS",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "public_url": "https://beta.wolfcommand.net/bzg/uma-blu/petty",
+  "provenance_path": "state/reliability/PETTY-BALANCE-PROVENANCE-2026-10-05.md",
+  "live_balance_before": 52700,
+  "live_balance_after": 52700,
+  "live_balance_unchanged": true,
+  "coins_counted": false,
+  "rp2300_inserted": false,
+  "adjustment_posted": false,
+  "beta_pid": 11882,
+  "prod_pid": 1297,
+  "prod_pid_unchanged": true,
+  "beta_port": 8788,
+  "prod_port": 8787,
+  "migration": "scripts/migrations/migrate_petty_cash_record_in_reconcile_1.py",
+  "permissions_added": [
+    "petty_cash.record_in",
+    "petty_cash.reconcile"
+  ],
+  "permission_grants": {
+    "ROLE-MATT": ["petty_cash.record_out", "petty_cash.record_in", "petty_cash.reconcile"],
+    "ROLE-BZG-FINANCIAL-CONTROLLER": ["petty_cash.record_out", "petty_cash.record_in", "petty_cash.reconcile"],
+    "ROLE-BZG-CAPTAIN": ["petty_cash.record_out"]
+  },
+  "tests": {
+    "test_petty_owner_cash_in_20261005.py": {"pass": 31, "fail": 0},
+    "test_petty_cash_record_out_20261004.py": {"pass": 31, "fail": 0},
+    "test_petty_surface_20261004.py": {"pass": 26, "fail": 0},
+    "test_petty_iza_fail_repair_20261004.py": {"pass": 30, "fail": 0},
+    "total_pass": 118,
+    "total_fail": 0
+  },
+  "changes": [
+    "scripts/migrations/migrate_petty_cash_record_in_reconcile_1.py",
+    "scripts/core/uma_ops_console.py",
+    "scripts/core/uma_devi_p0.py",
+    "scripts/core/bzg_daily_close.py",
+    "scripts/serve_beta.py",
+    "dashboards/bzg-uma-blu-petty.html",
+    "scripts/tests/test_petty_owner_cash_in_20261005.py"
+  ],
+  "protected_history_verified": {
+    "PETTY-UMA-6E512800FE": {"direction": "OUT", "amount": 430000},
+    "PETTY-UMA-80867C2504": {"direction": "OUT", "amount": 21000},
+    "PETTY-UMA-2321496C6D": {"direction": "OUT", "amount": 50000, "excluded_from_sum": true}
+  },
+  "protected_closes_untouched": [
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+    "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5"
+  ]
+}

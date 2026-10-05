@@ -1,0 +1,132 @@
+{
+  "pack": "FC-ZAYEN-DRILLDOWN-1",
+  "run_id": "BF-7c6a54c0a3ae",
+  "gap_before": {
+    "bzg_pos": 543,
+    "bzg_po_lines": 2017,
+    "bzg_receipts": 474,
+    "bzg_receipts_rebuilt": 370,
+    "bzg_bills": 473,
+    "bzg_ap": 106,
+    "bzg_suppliers": 103,
+    "bzg_bill_lines": 0,
+    "bzg_evidence_linked": 1,
+    "bzg_statements": 15,
+    "bzg_bank_lines": 1257,
+    "amg_statements": 41,
+    "amg_bank_lines": 525
+  },
+  "files_changed": [
+    "scripts/core/bzg_finance_usability_ro.py",
+    "scripts/core/bzg_finance_desk.py",
+    "scripts/core/amg_finance_desk.py",
+    "scripts/core/amg_finance_core.py",
+    "dashboards/bzg-finance.html",
+    "dashboards/amg-finance-ops.html",
+    "scripts/tests/test_fc_zayen_drilldown1_20261005.py"
+  ],
+  "routes_and_apis": [
+    "/bzg/finance/suppliers",
+    "/bzg/finance/po/<id>",
+    "/bzg/finance/receipts/<id>",
+    "/bzg/finance/notas/<id>",
+    "/bzg/finance/ap",
+    "/bzg/finance/statements",
+    "/bzg/finance/statements/<id>",
+    "/api/bzg/finance/suppliers",
+    "/api/bzg/finance/po/<id>",
+    "/api/bzg/finance/receipts/<id>",
+    "/api/bzg/finance/notas/<id>",
+    "/api/bzg/finance/ap",
+    "/api/bzg/finance/statements",
+    "/api/bzg/finance/statements/<id>",
+    "/api/amg/finance/statements",
+    "/api/amg/finance/statements/<id>",
+    "/api/amg/finance/vendors",
+    "/api/amg/finance/bills"
+  ],
+  "real_record_counts": {
+    "bzg_pos": 543,
+    "bzg_po_lines": 2017,
+    "bzg_receipts": 474,
+    "bzg_receipts_rebuilt": 370,
+    "bzg_bills": 473,
+    "bzg_ap": 106,
+    "bzg_suppliers": 103,
+    "bzg_bill_lines": 0,
+    "bzg_evidence_linked": 1,
+    "bzg_statements": 15,
+    "bzg_bank_lines": 1257,
+    "amg_statements": 41,
+    "amg_bank_lines": 525
+  },
+  "data_changes": "none",
+  "test_file": "scripts/tests/test_fc_zayen_drilldown1_20261005.py",
+  "tests_pass": 13,
+  "tests_fail": 0,
+  "regression": {
+    "finance_ui_human_labels1": {
+      "name": "test_finance_ui_human_labels1_20261005.py",
+      "pass": true,
+      "exit_code": 0
+    },
+    "finance_switcher_repair2": {
+      "name": "test_finance_switcher_repair2_20261005.py",
+      "pass": true,
+      "exit_code": 0
+    },
+    "bzg_zayen_finance_prove1": {
+      "name": "test_bzg_zayen_finance_prove1_20261005.py",
+      "pass": true,
+      "exit_code": 0
+    },
+    "bzg_p2p_harden1": {
+      "name": "test_bzg_p2p_harden1_20261005.py",
+      "pass": true,
+      "exit_code": 0
+    }
+  },
+  "regression_failures": [],
+  "render_check": {
+    "method": "html_render_assertions",
+    "viewport_desktop": "1440x900 (structural)",
+    "viewport_phone": "390x844 (structural via responsive CSS)",
+    "checks": {
+      "filter_bar": true,
+      "statements_tab": true,
+      "rebuilt_label": true,
+      "pagination": true,
+      "crumbs": true,
+      "amg_statement_detail": true,
+      "amg_historical_note": true
+    },
+    "shots_dir": "state/reliability/shots/FC-ZAYEN-DRILLDOWN-1",
+    "overflow_guard": true
+  },
+  "beta_reloaded": true,
+  "reload_held": false,
+  "reload_gate": {
+    "reload_allowed": true,
+    "reasons": [],
+    "beta_listener_pids": [
+      85567
+    ],
+    "prod_listener_pids": [
+      1297
+    ],
+    "prod_1297_listening": true,
+    "checked_at": "2026-10-05T11:24:25Z"
+  },
+  "reload_reasons": null,
+  "beta_listener_pid": 86173,
+  "prod_pid_unchanged": true,
+  "protected_closes_unchanged": true,
+  "oct3_oct4_unchanged": true,
+  "petty_and_daily_close_untouched": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "zayen_ready": false,
+  "state": "READY FOR HUMAN TEST",
+  "status": "IMPLEMENTATION_DONE",
+  "exit_code": 0
+}

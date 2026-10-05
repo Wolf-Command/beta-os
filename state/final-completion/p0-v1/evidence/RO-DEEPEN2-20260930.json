@@ -1,0 +1,21 @@
+{
+  "status": "RO_DEEPENED",
+  "at": "2026-09-30T12:23:31+0800",
+  "live": true,
+  "staff_ready": false,
+  "claim": "BOARD_DATA_WIRED_API_USABLE_NOT_LIVE_USABLE",
+  "mac_dropped": false,
+  "prod_8787_touched": false,
+  "beta_pid": 17216,
+  "tests": "5/0 PASS",
+  "apis_200": [
+    "/api/owner/trading-ro",
+    "/api/owner/trading-ro/history",
+    "/api/owner/fitness-ro",
+    "/api/owner/travel-ro",
+    "/api/owner/learning-ro"
+  ],
+  "scoreboard": "LIVE-USABLE-SCOREBOARD.json",
+  "forensic": "transfer/DEEPEN-FORENSIC-TF-20260930.md",
+  "probes": "evidence/RO-DEEPEN2-PROBES-20260930.json"
+}

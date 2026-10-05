@@ -1,0 +1,26 @@
+{
+ "run_id": "BF-ad715c36d015",
+ "pack": "GGV-BILLS-605",
+ "verified_at": "2026-10-05T06:31:00+08:00",
+ "verifier": "Peaches (build factory watch)",
+ "cursor_status": "EXITED_IMPLEMENTATION_DONE",
+ "cursor_pid": 87967,
+ "tests": {
+  "command": "python3 scripts/tests/test_ggv_bills_605_20261005.py",
+  "pass": 21,
+  "fail": 0,
+  "re_run_this_tick": true
+ },
+ "beta_listener_pid": 89529,
+ "beta_api_unsigned": 403,
+ "prod_pid_1297_untouched": true,
+ "protected_closes": "verified untouched by Cursor result + test suite",
+ "staff_ready": false,
+ "human_commissioned": false,
+ "db_counts_recheck": {
+  "ggv_bills": 605,
+  "ggv_invoices": 46,
+  "ggv_notas": 33,
+  "ggv_vendors": 13
+ }
+}

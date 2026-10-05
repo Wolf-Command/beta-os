@@ -1,0 +1,56 @@
+{
+  "pack": "FCR-BZG-12",
+  "run_id": "BF-bd7258e02b99",
+  "at": "2026-10-04T08:39:05+08:00",
+  "verdict": "IMPLEMENTATION_DONE_LOCAL_PASS",
+  "peaches_independent_verify": "PASS",
+  "tests": {
+    "command": "python3 scripts/tests/test_fcr_bzg_12_reopen_chain_20261004.py",
+    "pass": 23,
+    "fail": 0,
+    "py_compile": "OK",
+    "temp_db_only": true
+  },
+  "protected_closes": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+      "state": "EXCEPTION",
+      "declared_cash_amount": 3225000.0,
+      "variance_cash_amount": -125000.0,
+      "business_date": "2026-10-03",
+      "unchanged": true
+    },
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": {
+      "state": "CANCELLED",
+      "business_date": "2026-10-02",
+      "unchanged": true
+    }
+  },
+  "scope_check": {
+    "no_hardcoded_person_email": true,
+    "actor_from_assignment": true,
+    "live_catalog_reopen_tables_absent_lazy_create_ok": true,
+    "serve_beta_untouched": true,
+    "prod_pid": 15975,
+    "beta_pid": 93525,
+    "prod_restart": false,
+    "beta_restart": false
+  },
+  "chain": [
+    "ORIGINAL",
+    "REOPEN_EVENT",
+    "CHANGES",
+    "NEW_APPROVAL"
+  ],
+  "files_changed": [
+    "scripts/core/venue_close.py",
+    "scripts/tests/test_fcr_bzg_12_reopen_chain_20261004.py",
+    "state/reliability/FCR-BZG-12-RESULT-2026-10-04.md"
+  ],
+  "git_head": "0b0e50d",
+  "dirty_approx": 479,
+  "eng_proved": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "ready_for_human_test": false,
+  "note": "Code-only Finance Control Repair slice FCR-BZG-12. Local tests PASS on temp DB. No UI staff surface change. Not staff_ready / not human commissioned. Protected Iza close VDC-470e741f unchanged."
+}

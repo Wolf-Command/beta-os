@@ -1,0 +1,780 @@
+{
+  "frozen_at": "2026-10-04T15:31:00+08:00",
+  "frozen": true,
+  "denominator": 43,
+  "numerator_complete": 0,
+  "percent": 0.0,
+  "fraction": "0/43",
+  "states": {
+    "HUMAN COMMISSIONED": 0,
+    "READY FOR HUMAN TEST": 2,
+    "ENGINEERING PROVED": 3,
+    "REAL DATA": 1,
+    "DEPLOYED": 0,
+    "BUILT": 5,
+    "DESIGNED": 1,
+    "DISCOVERED": 14,
+    "BLOCKED EXTERNALLY": 0,
+    "OWNER DEFERRED": 0,
+    "NOT STARTED": 17
+  },
+  "rollup": {
+    "complete": 0,
+    "ready_for_human_test": 2,
+    "in_progress": 10,
+    "blocked_externally": 0,
+    "owner_deferred": 0,
+    "not_started": 17,
+    "discovered": 14
+  },
+  "by_system": [
+    {
+      "system": "OWNER",
+      "complete": 0,
+      "total": 3
+    },
+    {
+      "system": "GGV",
+      "complete": 0,
+      "total": 2
+    },
+    {
+      "system": "AMG",
+      "complete": 0,
+      "total": 3
+    },
+    {
+      "system": "BZG",
+      "complete": 0,
+      "total": 12
+    },
+    {
+      "system": "FINANCE",
+      "complete": 0,
+      "total": 3
+    },
+    {
+      "system": "PROCURE TO PAY",
+      "complete": 0,
+      "total": 1
+    },
+    {
+      "system": "CONTENT",
+      "complete": 0,
+      "total": 4
+    },
+    {
+      "system": "SALES / CRM",
+      "complete": 0,
+      "total": 1
+    },
+    {
+      "system": "CLIENT SYSTEMS",
+      "complete": 0,
+      "total": 2
+    },
+    {
+      "system": "HISTORICAL MIGRATION",
+      "complete": 0,
+      "total": 2
+    },
+    {
+      "system": "V1 / TELEGRAM MIGRATION",
+      "complete": 0,
+      "total": 2
+    },
+    {
+      "system": "WOLF INTELLIGENCE",
+      "complete": 0,
+      "total": 1
+    },
+    {
+      "system": "TRADING",
+      "complete": 0,
+      "total": 1
+    },
+    {
+      "system": "LEARNING",
+      "complete": 0,
+      "total": 1
+    },
+    {
+      "system": "PERSONAL",
+      "complete": 0,
+      "total": 1
+    },
+    {
+      "system": "HEALTH / FITNESS",
+      "complete": 0,
+      "total": 1
+    },
+    {
+      "system": "INFRASTRUCTURE",
+      "complete": 0,
+      "total": 3
+    }
+  ],
+  "movement": {
+    "today": 0,
+    "last_24h": 0,
+    "last_7d": 0,
+    "velocity": null,
+    "velocity_note": "INSUFFICIENT — no measured commissioned completions yet",
+    "estimated_completion": null
+  },
+  "scope_changes": [],
+  "excluded_from_denominator": [
+    {
+      "id": "EXCLUDED-HR",
+      "task": "HR systems",
+      "state": "OWNER DEFERRED",
+      "reason": "Owner-deferred. Out of Y. Recorded in the audit. Not a task in this freeze.",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: HR. /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md section 9 was read and not added."
+    }
+  ],
+  "scope_gaps": [
+    {
+      "area": "Maintenance, assets, security, compliance, documents, 12-week strategy, sale readiness",
+      "note": "Named in the master spec sections 15, 16, 17, and 24, which were read. Not given Y rows. The Owner order did not name them as separate operations, and the category list has no honest bucket that would not misfile them. They are not refused as nonexistent."
+    },
+    {
+      "area": "AMG and BZG official books as extra finance rows",
+      "note": "Already the AMG journal desk and the BZG finance desk. Not repeated."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "GM-001",
+      "task": "Owner home surface is the owner entry on running Beta",
+      "business_system": "OWNER",
+      "state": "ENGINEERING PROVED",
+      "owner_worker": "Matt",
+      "real_data": "YES",
+      "deployed": "YES",
+      "human_test": "NONE",
+      "blocker": "Destinations are not commissioned. Do not call GGV, AMG, BZG, or Content ready from this page. Not a human pass.",
+      "last_movement": "2026-10-04",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Owner Home"
+    },
+    {
+      "id": "GM-002",
+      "task": "Needs You shows rows on the owner home",
+      "business_system": "OWNER",
+      "state": "BUILT",
+      "owner_worker": "Matt",
+      "real_data": "YES",
+      "deployed": "YES",
+      "human_test": "NONE",
+      "blocker": "Not engineering-proved as its own capability. Not a human pass.",
+      "last_movement": "2026-10-04",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Needs You"
+    },
+    {
+      "id": "GM-003",
+      "task": "Owner console is clean on a signed-in hard refresh",
+      "business_system": "OWNER",
+      "state": "ENGINEERING PROVED",
+      "owner_worker": "Matt",
+      "real_data": "NO",
+      "deployed": "YES",
+      "human_test": "NONE",
+      "blocker": "Not a human pass.",
+      "last_movement": "2026-10-04",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Owner Console"
+    },
+    {
+      "id": "GM-004",
+      "task": "GGV receipt desk can confirm a real receipt, including tax printed on it",
+      "business_system": "GGV",
+      "state": "BUILT",
+      "owner_worker": "Matt",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Invoices 0 and notas 0. Tax field is in the file, not proved on a real confirm. Not a human test.",
+      "last_movement": "2026-10-04",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: GGV finance. FCR Part B folded from /workspace/wolf-command/missions/FINANCE-CONTROL-REPAIR-2026-10-03.md"
+    },
+    {
+      "id": "GM-005",
+      "task": "GGV client and contract profitability",
+      "business_system": "GGV",
+      "state": "DISCOVERED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "No known-truth build. This is the ledger's non-finance GGV ops row, narrowed to the spec outcome so it is not a second vague bucket.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: GGV ops, refined by /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md section 5.3 (client profitability by client/contract/project). Not a new row."
+    },
+    {
+      "id": "GM-006",
+      "task": "Zayen can run a clean live AMG finance workflow",
+      "business_system": "AMG",
+      "state": "BUILT",
+      "owner_worker": "Zayen",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Not a clean live set. This is the AMG journal desk. Do not add a second AMG books row.",
+      "last_movement": "2026-10-04",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: AMG finance"
+    },
+    {
+      "id": "GM-007",
+      "task": "AMG hotel guest stay from booking through departure, with Yanolja as the PMS source",
+      "business_system": "AMG",
+      "state": "DISCOVERED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Unknown build. Front office, housekeeping, and guest requests stay inside this one stay chain.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: AMG hotel ops. Chain named in /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md section 5.1 and section 13. Not split."
+    },
+    {
+      "id": "GM-008",
+      "task": "Atrium sales workflow, separate from AMG finance",
+      "business_system": "AMG",
+      "state": "DISCOVERED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Unknown. No known-truth state.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Atrium sales"
+    },
+    {
+      "id": "GM-009",
+      "task": "Uma Blu Daily Close commissioned for a real close",
+      "business_system": "BZG",
+      "state": "READY FOR HUMAN TEST",
+      "owner_worker": "Iza",
+      "real_data": "YES",
+      "deployed": "YES",
+      "human_test": "ISSUED",
+      "blocker": "Business date 2026-10-03 close VDC-470e741f is HUMAN COMMISSIONING FAIL / partial operational success. Not a pass. The issued test is the next real close only at https://beta.wolfcommand.net/uma-blu-close. Protected close must stay unchanged. FCR closing slices are folded here.",
+      "last_movement": "2026-10-04",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Uma Blu Daily Close. Owner truth 4 Oct 2026. FCR Part A folded from /workspace/wolf-command/missions/FINANCE-CONTROL-REPAIR-2026-10-03.md"
+    },
+    {
+      "id": "GM-010",
+      "task": "Blu Zone Rainforest Restaurant & Bar daily operation runs as its own outlet",
+      "business_system": "BZG",
+      "state": "NOT STARTED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Spec table 4 targets 7 Oct 2026 and groups the pool bar with Rainforest. Owner order keeps Pool Bar as its own outlet. No daily operation is defined or commissioned. Not a fake page. Not a pass.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+      "source": "Owner God Mode order 2026-10-04: Blu Zone Rainforest Restaurant & Bar daily operation. Also /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md Table 4 and /workspace/wolf-command/missions/BZG-PROCURE-TO-PAY-2026-10-03.md outlet lock. Split from the draft collapsed other-outlets row before freeze."
+    },
+    {
+      "id": "GM-011",
+      "task": "Pool Bar daily operation runs as its own outlet",
+      "business_system": "BZG",
+      "state": "NOT STARTED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Owner names Pool Bar separately. The spec line folds it into Rainforest. No separate operation is defined. Still in scope. Not a fake page. Not a pass.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+      "source": "Owner God Mode order 2026-10-04: Pool Bar daily operation. Also /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md Table 4 and /workspace/wolf-command/missions/BZG-PROCURE-TO-PAY-2026-10-03.md outlet lock. Split from the draft collapsed other-outlets row before freeze."
+    },
+    {
+      "id": "GM-012",
+      "task": "Merah Underground daily operation runs as its own outlet",
+      "business_system": "BZG",
+      "state": "NOT STARTED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Spec table 4: Merah Underground Nightclub and Bar, target by year-end. No daily operation defined. Not a fake page. Not a pass.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+      "source": "Owner God Mode order 2026-10-04: Merah Underground daily operation. Also /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md Table 4 and /workspace/wolf-command/missions/BZG-PROCURE-TO-PAY-2026-10-03.md outlet lock. Split from the draft collapsed other-outlets row before freeze."
+    },
+    {
+      "id": "GM-013",
+      "task": "Rooftop daily operation runs as its own outlet",
+      "business_system": "BZG",
+      "state": "NOT STARTED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Spec table 4: Rooftop Bar, unnamed, target by year-end. No daily operation defined. Not a fake page. Not a pass.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+      "source": "Owner God Mode order 2026-10-04: Rooftop daily operation. Also /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md Table 4 and /workspace/wolf-command/missions/BZG-PROCURE-TO-PAY-2026-10-03.md outlet lock. Split from the draft collapsed other-outlets row before freeze."
+    },
+    {
+      "id": "GM-014",
+      "task": "Room Service daily operation runs as its own outlet",
+      "business_system": "BZG",
+      "state": "NOT STARTED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Spec table 4: Room Service is a BZG business unit. No daily operation defined. Not a fake page. Not a pass.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+      "source": "Owner God Mode order 2026-10-04: Room Service daily operation. Also /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md Table 4 and /workspace/wolf-command/missions/BZG-PROCURE-TO-PAY-2026-10-03.md outlet lock. Split from the draft collapsed other-outlets row before freeze."
+    },
+    {
+      "id": "GM-015",
+      "task": "Catering daily operation runs as its own outlet",
+      "business_system": "BZG",
+      "state": "NOT STARTED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Spec table 4: Catering is a BZG business unit. No daily operation defined. Not a fake page. Not a pass.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+      "source": "Owner God Mode order 2026-10-04: Catering daily operation. Also /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md Table 4 and /workspace/wolf-command/missions/BZG-PROCURE-TO-PAY-2026-10-03.md outlet lock. Split from the draft collapsed other-outlets row before freeze."
+    },
+    {
+      "id": "GM-016",
+      "task": "Zayen BZG finance books are an authoritative entity set",
+      "business_system": "BZG",
+      "state": "NOT STARTED",
+      "owner_worker": "Zayen",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Empty shell. catalog/atrium-bzg.sqlite is 0 bytes. Not an authoritative set. Do not load an AMG-shaped template.",
+      "last_movement": "2026-10-04",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: BZG finance"
+    },
+    {
+      "id": "GM-017",
+      "task": "Captain petty cash usable against a real Blu Zone expense chart",
+      "business_system": "BZG",
+      "state": "REAL DATA",
+      "owner_worker": "Iza",
+      "real_data": "YES",
+      "deployed": "YES",
+      "human_test": "NONE",
+      "blocker": "3 Oct outs total Rp555,000 and the Rp500,000 top-up ties to Rp505,000 difference 0. That proves recorded history only. The page is not ready for human test. No real Blu Zone expense chart. AMG-shaped template must not be loaded.",
+      "last_movement": "2026-10-04",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Captain petty cash. Board READY claim in /workspace/wolf-command/state/COMMISSIONING-BOARD-2026-10-04.md was not used"
+    },
+    {
+      "id": "GM-018",
+      "task": "Opening float and petty count are not tied to the Head Chef recipe grant",
+      "business_system": "BZG",
+      "state": "ENGINEERING PROVED",
+      "owner_worker": "unassigned",
+      "real_data": "YES",
+      "deployed": "YES",
+      "human_test": "NONE",
+      "blocker": "Not a human test. Not upgraded past the ledger. Head Chef also lost other work.update paths.",
+      "last_movement": "2026-10-04",
+      "evidence": "/home/box/wolf-system/state/reliability/HARYANTO-PERM-RESULT-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Opening float and petty count"
+    },
+    {
+      "id": "GM-019",
+      "task": "Inventory and transfers per outlet",
+      "business_system": "BZG",
+      "state": "DISCOVERED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Unknown. Not split per outlet.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Inventory. Also /workspace/wolf-command/missions/BZG-PROCURE-TO-PAY-2026-10-03.md inventory section. Not a second recipe task."
+    },
+    {
+      "id": "GM-020",
+      "task": "Haryanto can maintain live Uma recipes",
+      "business_system": "BZG",
+      "state": "READY FOR HUMAN TEST",
+      "owner_worker": "Haryanto",
+      "real_data": "YES",
+      "deployed": "YES",
+      "human_test": "AWAITING RETEST",
+      "blocker": "Previous fail 15:48 WITA stands. Repair is on running Beta for his retest. Not commissioned.",
+      "last_movement": "2026-10-04T16:12:00+08:00",
+      "evidence": "/Users/wolfterminal/beta-os/state/reliability/HARYANTO-UX-RESULT-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Haryanto recipe seat. Owner God Mode order 2026-10-04: recipe maintenance for Uma is this row"
+    },
+    {
+      "id": "GM-021",
+      "task": "Month-end accounting close per legal entity, with the period locked",
+      "business_system": "FINANCE",
+      "state": "NOT STARTED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Not the Uma daily close. Spec targets management accounts by the 5th. No commissioned month-end.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+      "source": "Owner God Mode order 2026-10-04: month-end close. /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md section 10: daily operational close, monthly accounting close, closed periods lock."
+    },
+    {
+      "id": "GM-022",
+      "task": "Bank statement intake for Mandiri, BNI, and BRI",
+      "business_system": "FINANCE",
+      "state": "NOT STARTED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Weekly statement upload is the spec default until a bank integration is proved. Not the GGV receipt desk and not petty cash.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+      "source": "Owner God Mode order 2026-10-04: bank statement intake. /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md section 10: weekly bank statement uploads for Mandiri, BNI and BRI."
+    },
+    {
+      "id": "GM-023",
+      "task": "GGV official books exist and stay isolated from AMG and BZG books",
+      "business_system": "FINANCE",
+      "state": "NOT STARTED",
+      "owner_worker": "Matt",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "The GGV receipt desk is a different row and is not these books. AMG journal and BZG finance rows already cover those entities and are not repeated.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+      "source": "Owner God Mode order 2026-10-04: entity-isolated books for GGV. /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md section 10: Wolf Accounting is official per legal entity, separately maintained."
+    },
+    {
+      "id": "GM-024",
+      "task": "One canonical Blu Zone procure-to-pay chain with outlet attribution kept",
+      "business_system": "PROCURE TO PAY",
+      "state": "DESIGNED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "QUEUED_NEXT as of 2026-10-03. Not re-verified 2026-10-04. Quotes, receiving, and match stay inside this chain.",
+      "last_movement": "2026-10-03",
+      "evidence": "/workspace/wolf-command/missions/BZG-PROCURE-TO-PAY-2026-10-03.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Procure to pay. Owner God Mode order 2026-10-04: Procure to Pay for BZG. Pack BZG-PROCURE-TO-PAY-1."
+    },
+    {
+      "id": "GM-025",
+      "task": "A current-period content plan exists and the content team can use it",
+      "business_system": "CONTENT",
+      "state": "NOT STARTED",
+      "owner_worker": "Amanda",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "No current-period plan. Stored plans are a finished Habitat fortnight plus test cards. Do not send the content team in on those.",
+      "last_movement": "2026-10-04",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Content. Owner God Mode order 2026-10-04: current-period plan"
+    },
+    {
+      "id": "GM-026",
+      "task": "Content team can search the content library",
+      "business_system": "CONTENT",
+      "state": "DISCOVERED",
+      "owner_worker": "Amanda",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "A library scope is named. Search is not proved on running Beta. Not a commissioned library.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/workspace/wolf-command/state/COMMISSIONING-BOARD-2026-10-04.md",
+      "source": "Owner God Mode order 2026-10-04: content library search. /workspace/wolf-command/state/COMMISSIONING-BOARD-2026-10-04.md names a content library scope and asset counts. Not proved as search."
+    },
+    {
+      "id": "GM-027",
+      "task": "Content team can upload into the library",
+      "business_system": "CONTENT",
+      "state": "NOT STARTED",
+      "owner_worker": "Amanda",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "No source shows a commissioned upload path. Not the same as external publish.",
+      "last_movement": "UNKNOWN",
+      "evidence": "NONE",
+      "source": "Owner God Mode order 2026-10-04: content upload"
+    },
+    {
+      "id": "GM-028",
+      "task": "Habitat content passes the publish gate and can actually publish",
+      "business_system": "CONTENT",
+      "state": "NOT STARTED",
+      "owner_worker": "Amanda",
+      "real_data": "NO",
+      "deployed": "YES",
+      "human_test": "NONE",
+      "blocker": "Publish is not real. APPROVED is not PUBLISHED. Metricool write on Beta is disabled. REAL_EXTERNAL_PUBLISH is NO.",
+      "last_movement": "2026-09-17",
+      "evidence": "/Users/wolfterminal/beta-os/docs/canon/HABITAT-PUBLISH-GATE.md",
+      "source": "/Users/wolfterminal/beta-os/docs/canon/HABITAT-PUBLISH-GATE.md honesty table. Not an Owner-order duplicate of library upload."
+    },
+    {
+      "id": "GM-029",
+      "task": "Sales and CRM from lead through recorded sale",
+      "business_system": "SALES / CRM",
+      "state": "DISCOVERED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Unknown. Speed-to-lead and the pipeline stay inside this one chain. Not split into steps.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Sales / CRM. /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md section 14. Owner God Mode order 2026-10-04: Sales and CRM"
+    },
+    {
+      "id": "GM-030",
+      "task": "Operating system for The One Lombok",
+      "business_system": "CLIENT SYSTEMS",
+      "state": "DISCOVERED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Unknown. Named client door from the ledger. Not commissioned.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: The One Lombok. Owner God Mode order 2026-10-04: named client door already in the ledger"
+    },
+    {
+      "id": "GM-031",
+      "task": "Habitat client door operates as its own client system",
+      "business_system": "CLIENT SYSTEMS",
+      "state": "NOT STARTED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Owner names Habitat as a client door. The Habitat publish gate is a content task, not this door. No client operating system is commissioned.",
+      "last_movement": "UNKNOWN",
+      "evidence": "NONE",
+      "source": "Owner God Mode order 2026-10-04: Habitat client door. Replaces the draft generic client-delivery row."
+    },
+    {
+      "id": "GM-032",
+      "task": "BZG Uma historical completeness reconciled into Wolf with an authoritative cut line",
+      "business_system": "HISTORICAL MIGRATION",
+      "state": "DISCOVERED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "ESB, Alchemist, and Telegram evidence recon is PARTIAL. Not a sales-history complete claim. Not an Uma close pass.",
+      "last_movement": "2026-10-02",
+      "evidence": "/home/box/wolf-system/state/historical-recon/RECONCILIATION-LATEST.md",
+      "source": "/home/box/wolf-system/state/historical-recon/RECONCILIATION-LATEST.md lane HISTORICAL-DATA-COMPLETENESS-BZG-UMA. Owner God Mode order 2026-10-04: historical migration. /workspace/wolf-command/missions/BZG-PROCURE-TO-PAY-2026-10-03.md section History first."
+    },
+    {
+      "id": "GM-033",
+      "task": "Notion legacy operational records are migrated into Wolf",
+      "business_system": "HISTORICAL MIGRATION",
+      "state": "NOT STARTED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Spec marks Notion as migrating. No migration is commissioned. Not an Xero or Cloudbeds rebuild.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+      "source": "/Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md Table 6: Notion, legacy operational information to be progressively migrated. Owner God Mode order 2026-10-04: historical migration"
+    },
+    {
+      "id": "GM-034",
+      "task": "Telegram bot workflows that are still useful are migrated, and Telegram is not the system of record",
+      "business_system": "V1 / TELEGRAM MIGRATION",
+      "state": "DISCOVERED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Build state unknown. Receipt intake must not become a second pipeline. FCR says Telegram is retired for GGV receipts.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Telegram migration. Owner God Mode order 2026-10-04: Telegram migration. /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md Table 6: Telegram is a transitional channel, not the system of record."
+    },
+    {
+      "id": "GM-035",
+      "task": "Useful V1 workflows run on Beta and the parallel V1 path is sunset",
+      "business_system": "V1 / TELEGRAM MIGRATION",
+      "state": "NOT STARTED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "One migration outcome. Not one task per V1 screen. Purchasing parity stays inside procure-to-pay.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md",
+      "source": "Owner God Mode order 2026-10-04: V1 migration of useful workflows. /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md section 21: legacy parallel systems sunset after verified migration."
+    },
+    {
+      "id": "GM-036",
+      "task": "Wolf Intelligence, only after the deterministic OS is accepted",
+      "business_system": "WOLF INTELLIGENCE",
+      "state": "NOT STARTED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "In Y. Not deferred. Do not start. Ask Wolf and memory classes stay inside this one layer.",
+      "last_movement": "2026-10-04",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Wolf Intelligence. Owner God Mode order 2026-10-04: Wolf Intelligence NOT STARTED, in Y, not deferred. /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md section 7."
+    },
+    {
+      "id": "GM-037",
+      "task": "Trading desk with no live money execution",
+      "business_system": "TRADING",
+      "state": "DISCOVERED",
+      "owner_worker": "Matt",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Build state unknown. Live execution is forbidden. Not complete.",
+      "last_movement": "2026-10-04",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Trading. Owner God Mode order 2026-10-04: Trading with no live-money execution"
+    },
+    {
+      "id": "GM-038",
+      "task": "Learning desk and SOP factory staff can run and improve",
+      "business_system": "LEARNING",
+      "state": "DISCOVERED",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Unknown. SOP factory is this row, not a second task.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Learning. Merged with /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md section 8 SOP Factory. Owner God Mode order 2026-10-04: Learning"
+    },
+    {
+      "id": "GM-039",
+      "task": "Personal systems for Matt, segregated from company records",
+      "business_system": "PERSONAL",
+      "state": "DISCOVERED",
+      "owner_worker": "Matt",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Unknown. Health and trading stay in their own categories.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Personal. /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md section 18. Owner God Mode order 2026-10-04: Personal"
+    },
+    {
+      "id": "GM-040",
+      "task": "Health and fitness, private to Matt",
+      "business_system": "HEALTH / FITNESS",
+      "state": "DISCOVERED",
+      "owner_worker": "Matt",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Private to Matt. Build state unknown. Not medical diagnosis and not a company record.",
+      "last_movement": "UNKNOWN",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: Health / fitness. Owner God Mode order 2026-10-04: Health and fitness private to Matt. /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md section 18"
+    },
+    {
+      "id": "GM-041",
+      "task": "Control-path resilience recovers the business without a human",
+      "business_system": "INFRASTRUCTURE",
+      "state": "BUILT",
+      "owner_worker": "unassigned",
+      "real_data": "NO",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "Primary local self-recovery proved in drill and failed in a real incident. Secondary capability proved. Auto-failover not commissioned. End-to-end autonomous resilience FAIL. Not complete.",
+      "last_movement": "2026-10-04",
+      "evidence": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md",
+      "source": "/workspace/wolf-command/state/WOLF-TOTAL-COMPLETION-LEDGER-2026-10-04.md row: NAS recovery watcher. Owner God Mode order 2026-10-04: control-path resilience stays not complete. Older design note /workspace/wolf-command/missions/HA-SECONDARY-PATH-DESIGN-2026-10-03.md was not used to raise this row."
+    },
+    {
+      "id": "GM-042",
+      "task": "NAS library is the high-volume media store Wolf can use",
+      "business_system": "INFRASTRUCTURE",
+      "state": "DISCOVERED",
+      "owner_worker": "unassigned",
+      "real_data": "YES",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "August evidence shows a media library on disk and a Synology prefix. That is not a commissioned library and not the content search task.",
+      "last_movement": "2026-08-29",
+      "evidence": "/workspace/wolf-command/B2-RESTORE-DRILL-2026-08-29.md",
+      "source": "Owner God Mode order 2026-10-04: NAS library. /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md Table 6: NAS is high-volume media/local storage. Evidence note in /workspace/wolf-command/B2-RESTORE-DRILL-2026-08-29.md, not a pass."
+    },
+    {
+      "id": "GM-043",
+      "task": "Backup has a tested restore",
+      "business_system": "INFRASTRUCTURE",
+      "state": "BUILT",
+      "owner_worker": "unassigned",
+      "real_data": "YES",
+      "deployed": "NO",
+      "human_test": "NONE",
+      "blocker": "29 Aug 2026 drill restored one B2 object and matched sha256. restore-drill.py was not run. Synology Cloud Sync UI was not reachable. Not re-proved on 4 Oct. Not crown-jewel recovery. Not complete.",
+      "last_movement": "2026-08-29",
+      "evidence": "/workspace/wolf-command/B2-RESTORE-DRILL-2026-08-29.md",
+      "source": "Owner God Mode order 2026-10-04: backup. /Users/wolfterminal/beta-os/docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md section 25: nothing is backed up until restore has been tested. /workspace/wolf-command/B2-RESTORE-DRILL-2026-08-29.md is a drill, not a commission."
+    }
+  ],
+  "excluded_before_baseline": [
+    {
+      "id": "GM-044",
+      "task": "Prod remains untouched",
+      "reason": "Standing constraint, not an operational capability. Kept out of Y so it cannot pad or block the percentage."
+    },
+    {
+      "id": "GM-045",
+      "task": "Factory and build path",
+      "reason": "How the work is built, not a God Mode deliverable. Kept out of Y."
+    }
+  ],
+  "baseline_correction": "Before the baseline was sent, three rows were downgraded from BUILT because the outcome is not built: BZG books (0-byte shell), current content plan (old fortnight only), Habitat publish (write disabled). Prod-untouched and the factory path were removed from Y as constraints. Numerator unchanged at 0.",
+  "state_corrections": [
+    {
+      "at": "2026-10-04T15:48:00+08:00",
+      "kind": "STATE CORRECTION",
+      "id": "GM-020",
+      "from": "READY FOR HUMAN TEST",
+      "to": "BUILT",
+      "why": "Real Haryanto session failed. Numerator 0. Denominator 43. Fraction string corrected 0/45 to 0/43. Not a scope change."
+    },
+    {
+      "at": "2026-10-04T16:12:00+08:00",
+      "kind": "STATE CORRECTION",
+      "id": "GM-020",
+      "from": "BUILT",
+      "to": "READY FOR HUMAN TEST",
+      "why": "HARYANTO-UX repair on Beta listener 81408. Rainforest and Pool Bar OPEN. Ingredient search on the page. Head Chef not sent to /bzg/uma-blu. Not human commissioned. Numerator 0. Denominator 43."
+    }
+  ]
+}

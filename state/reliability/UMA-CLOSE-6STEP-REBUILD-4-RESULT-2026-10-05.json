@@ -1,0 +1,68 @@
+{
+  "slice": "UMA-CLOSE-6STEP-REBUILD-4",
+  "status": "PASS",
+  "approved": "2026-10-05 17:13 WITA",
+  "scope": {
+    "a_confirmed_edit_figures": {
+      "fix": "_pick_authoritative_shift_receipt + _authoritative_shift_document; confirm_shift_figures_yes preserves EDIT document; printed_shift_source and _esb_expected_by_bank use authoritative receipt; bank/cash/review/submit derive from confirmed human correction",
+      "proof": "unit test_a_edit_confirm_drives_banks_and_cash; harness 03_banks BNI Rp2.000.000 / BRI Rp3.000.000; cash shift Rp3.000.000 expected Rp3.989.500"
+    },
+    "b_resume_bank_slips": {
+      "fix": "_workflow_needs_bank_receipts keeps resume on bank step when receipts required and unlinked slips exist",
+      "proof": "unit test_b_resume_bank_step_with_slips; harness sep03_resume_banks=true with 4 USE THIS RECEIPT buttons"
+    },
+    "c_minor_lists_empty_read": {
+      "fix": "close_date_register passes verified_person_id for owner_can_complete action_label parity; loadQueue+loadCalendar after submit; readShiftReport shows Nothing read when empty",
+      "proof": "unit test_c_search_register_matches_queue_and_empty_read_msg; harness empty_read_msg=true yes_blocked_sep03=true"
+    }
+  },
+  "29_sep_non_regression": {
+    "proof": "harness 29_read through 29_result; submit_post_count=1; view_close_readonly=true; BNI+BRI+MANDIRI not used; ESB diff flow intact"
+  },
+  "03_sep_walk": {
+    "proof": "empty read → Nothing read → EDIT figures → YES → banks expected → resume banks → slips → cash → submit exception; sep03_submit_post_count=1",
+    "harness_file": "state/reliability/UMA-CLOSE-6STEP-REBUILD-4-HARNESS-2026-10-05.json"
+  },
+  "zero_live_write_proof": {
+    "live_receipts_unchanged": true,
+    "live_petty_unchanged": true,
+    "live_notas_unchanged": true,
+    "photo_index_sha_unchanged": true,
+    "WOLF_EVIDENCE_ROOT": "isolated temp dir per harness run"
+  },
+  "idempotency_proof": {
+    "29_sep_staff_submit_taps": 10,
+    "29_sep_staff_submit_posts": 1,
+    "03_sep_staff_submit_posts": 1
+  },
+  "test_suites": {
+    "test_uma_close_6step_rebuild1_20261005": "pass 46/46",
+    "test_uma_close_6step_rebuild2_20261005": "pass 15/15",
+    "test_uma_close_6step_rebuild3_20261005": "pass 37/37",
+    "test_uma_close_6step_rebuild4_20261005": "pass 18/18",
+    "test_uma_close_evidence_isolation1_20261005": "OK",
+    "test_uma_hist_close_complete1_20261005": "pass 28/28",
+    "test_uma_hist_close_complete2_20261005": "pass 29/29",
+    "test_uma_hist_close_nav_mobile1_20261005": "pass 52/52",
+    "test_uma_hist_close_nav_mobile2_20261005": "pass 100/100",
+    "test_uma_hist_close_queue1_20261005": "pass 35/35"
+  },
+  "beta_pid": 61857,
+  "prod_pid_8787": 1297,
+  "protections": {
+    "VDC-470e741f": "byte-unchanged",
+    "VDC-64f5f529": "byte-unchanged",
+    "VDC-8fd544e2": "INCOMPLETE preserved",
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "files_changed": [
+    "scripts/core/bzg_daily_close.py",
+    "scripts/serve_beta.py",
+    "dashboards/uma-blu-close.html",
+    "scripts/tests/test_uma_close_6step_rebuild4_20261005.py",
+    "scripts/tests/prove_uma_close_6step_rebuild4_20261005.py"
+  ],
+  "no_commit": true,
+  "exit_code": 0
+}

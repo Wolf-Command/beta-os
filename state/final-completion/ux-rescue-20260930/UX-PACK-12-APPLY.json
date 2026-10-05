@@ -1,0 +1,121 @@
+{
+  "schema": "UX-PACK-12-APPLY/v0",
+  "applied": true,
+  "status": "PACK_12_APPLIED_PARTIAL",
+  "applied_wita": "2026-09-30T22:46:43+08:00",
+  "bound": "beta_only",
+  "prod_8787": "READ_ONLY_UNTOUCHED",
+  "finance_sod_unchanged": true,
+  "staff_ready": false,
+  "desktop_gate_ready": false,
+  "desktop_gate_why": [
+    "Radar deepened to PARTIAL RO desk but not V1 mission-control / Mars meter LIVE",
+    "12WY score EMPTY (no evidenced tactics) \u00b7 Mars meter EMPTY \u00b7 wire engagement NOT live",
+    "Pulse residuals remain (occ BLOCKED, Uma EMPTY, leads DEMO, backup STALE/AMBER)",
+    "Screenshots still BLOCKED_AUTH without Owner CF Access (UX-PACK-10)",
+    "staff_ready remains false \u2014 no commissioning / WOLF DESKTOP READY claim"
+  ],
+  "urls": {
+    "radar": "https://beta.wolfcommand.net/owner/radar",
+    "radar_local": "http://127.0.0.1:8788/owner/radar",
+    "radar_ro": "http://127.0.0.1:8788/api/owner/radar-ro",
+    "owner_home": "https://beta.wolfcommand.net/owner-empire-pack",
+    "needs_you": "https://beta.wolfcommand.net/owner/needs-you-1",
+    "exceptions": "https://beta.wolfcommand.net/owner/exceptions-live-1",
+    "12wy_prove": "https://beta.wolfcommand.net/12wy-prove",
+    "wire": "https://beta.wolfcommand.net/metricool-runtime-wire-1",
+    "pulse_ro": "http://127.0.0.1:8788/api/owner/pulse-ro"
+  },
+  "radar": {
+    "status": "PARTIAL",
+    "api": "/api/owner/radar-ro",
+    "counts": {
+      "tiles": 15,
+      "LIVE": 1,
+      "PARTIAL": 3,
+      "EMPTY": 4,
+      "BLOCKED": 7
+    },
+    "sections": {
+      "tonight": 11,
+      "this_week": 3,
+      "honesty": 1
+    },
+    "boards_linked": [
+      "/owner-empire-pack",
+      "/finish-war-room",
+      "/owner/needs-you-1",
+      "/owner/exceptions-live-1",
+      "/12wy-prove",
+      "/radar-prove",
+      "/metricool-runtime-wire-1",
+      "/my-work",
+      "/bzg/uma-blu",
+      "/kuta-rates"
+    ],
+    "honesty": "Owner Radar deepen (UX-PACK-12). WHAT tonight / this week + honesty stamps. No invented scores, Mars meters, occ, or revenue. Finance SoD unchanged. staff_ready=false.",
+    "residuals": [
+      "Full V1 multi-tile mission control / live Mars meter not claimed",
+      "12WY weekly score EMPTY until evidenced planned tactics (not 0%)",
+      "Radar CAP-STRAT-02 pulse/exception names still ABSENT on board text",
+      "Wire engagement NOT live / EXTERNAL_BLOCKER possible",
+      "Screenshots / desktop_gate still need Owner CF (UX-PACK-10)"
+    ]
+  },
+  "owner_home_polish": {
+    "needs_you_cta": "/owner/needs-you-1",
+    "staff_ops_secondary": "/staff-ops-routing",
+    "attn_strip": "from /api/owner/radar-ro (Needs You + blocked exceptions + Radar)",
+    "pulse_strip": "preserved UX-PACK-09b",
+    "finish_wolf": "preserved",
+    "personal_command": "Trading/Fitness/Radar/Travel/Learning coherent; Radar glance from radar-ro",
+    "desktop_layout": "max-width 1360 \u00b7 pulse 4-col \u00b7 personal 3-col \u00b7 why line-clamp \u00b7 not stretched-mobile",
+    "fake_pulse_live": false
+  },
+  "files_changed": [
+    "scripts/core/owner_radar_ro.py",
+    "scripts/serve_beta.py",
+    "dashboards/owner-radar-1.html",
+    "dashboards/owner-empire-pack.html"
+  ],
+  "backup": "/Users/wolfterminal/beta-os/backups/ux-pack-12-20260930-224358",
+  "beta_restart": {
+    "needed": true,
+    "how": "killed prior serve_beta PID; relaunched Python serve_beta.py on :8788",
+    "pid_after": 61936,
+    "verified": {
+      "radar_ro": 200,
+      "radar_page": 200,
+      "pulse_ro": 200
+    }
+  },
+  "tile_gate_flags": {
+    "staff_ready": false,
+    "desktop_gate_ready": false,
+    "pulse_counts_unchanged_by_12": {
+      "tiles": 7,
+      "LIVE": 2,
+      "PARTIAL": 3,
+      "EMPTY": 1,
+      "BLOCKED": 1
+    },
+    "radar_counts": {
+      "tiles": 15,
+      "LIVE": 1,
+      "PARTIAL": 3,
+      "EMPTY": 4,
+      "BLOCKED": 7
+    },
+    "wolf_desktop_ready_claimed": false
+  },
+  "do_not": [
+    "Did not claim desktop_gate_ready or WOLF DESKTOP READY",
+    "Did not touch finance SoD / prod :8787 / atrium :8790 writes",
+    "Did not fake CF screenshots (PACK-10 stays BLOCKED)",
+    "Did not invent occ/revenue to greenwash pulse"
+  ],
+  "next": [
+    "UX-PACK-10"
+  ],
+  "matt_paragraph": "UX-PACK-12 landed on Beta: Owner Radar (/owner/radar) is no longer an empty stub \u2014 it is a PARTIAL RO desk with tonight cards (pulse occ/kuta/Uma/backup + blocked exceptions + Needs You connective), this-week boards (12WY Week 4 score EMPTY not 0%, Mars meter EMPTY, Metricool wire PARTIAL brands=6 engagement NOT live), and honesty stamps linking into real desks. Owner Home got denser desktop layout, plain-language Needs You \u2192 /owner/needs-you-1, and an Exceptions/Needs You glance strip (one hop to act) while Pulse + FINISH WOLF + Personal stay coherent. Prod :8787 untouched; finance SoD unchanged; staff_ready false; desktop_gate_ready still false. Next remains UX-PACK-10 authenticated screenshots when you open Owner CF Access \u2014 do not fake shots."
+}

@@ -1,0 +1,45 @@
+{
+  "stamp": "CF-PROVE-20261002",
+  "at": "2026-10-02T20:54:52.479055+08:00",
+  "owner_stated_cf_allow": true,
+  "email": "izazaen00@gmail.com",
+  "person_id": "PERS-IZA",
+  "tip": "876f49e",
+  "checklist_A_catalog": "PASS",
+  "checklist_A_detail": {
+    "PERS-IZA": true,
+    "AUTH-IZA-EMAIL": true,
+    "AUTH-IZA-EMAIL_identifier": "izazaen00@gmail.com",
+    "ASG-IZA-CAPTAIN-UMA-1": true,
+    "VCR-UMA-1": true,
+    "VCR-UMA-2": true,
+    "routes_note": "Public URL returns Cloudflare 302 to login (unauth). Prior executor corroborated /bzg/daily-close 403-not-404 when authed; not re-probed deep tonight (P0 keep Cursor free).",
+    "edc_terminals": 0,
+    "rbac_venue_close_submit_uma": {
+      "allowed": true,
+      "reason": "allow"
+    },
+    "rbac_venue_close_read_uma": {
+      "allowed": true,
+      "reason": "allow"
+    },
+    "rbac_finance_invoice_read": {
+      "allowed": false,
+      "reason": "role_lacks_permission"
+    },
+    "rbac_finance_invoice_create": {
+      "allowed": false,
+      "reason": "role_lacks_permission"
+    },
+    "rbac_payment_approve": {
+      "allowed": false,
+      "reason": "role_lacks_permission"
+    },
+    "verified_live_mac": "2026-10-02T20:54:52.479055+08:00"
+  },
+  "checklist_B_login_binding": "PARTIAL",
+  "checklist_B_reason": "Owner CF Allow LIVE; no JWT harness; Iza must Google login; Peaches cannot complete /api/core/me as Iza without her Google session.",
+  "human_next": "Iza signs in at https://beta.wolfcommand.net/bzg/daily-close with izazaen00@gmail.com; verify person_id=PERS-IZA",
+  "staff_ready": false,
+  "human_commissioned": false
+}

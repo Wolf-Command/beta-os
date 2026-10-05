@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-04T18:50:47+08:00",
+  "status": "STUDIO_EXECUTION_RESTORED",
+  "run_id": "BF-2155a8fd3e52",
+  "pack": "BZG-P2P-PR-1",
+  "cursor_pid": 4167,
+  "child_alive": true,
+  "stage": "WAITING_CURSOR",
+  "mac_pipe": "PIPE_OK",
+  "git_head": "0b0e50d",
+  "dirty_approx": 521,
+  "beta_pid": 1339,
+  "prod_pid": 1297,
+  "wake_parent": true,
+  "credit_conservation": true,
+  "no_auto_arm": true
+}

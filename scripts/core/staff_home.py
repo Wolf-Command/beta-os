@@ -18,6 +18,7 @@ from zoneinfo import ZoneInfo
 
 from core import identity
 from core import work_items as wi
+from core import rbac as _rbac
 from core.nas_library import BRAND_SCOPES
 
 STAFF_TZ = ZoneInfo("Asia/Makassar")
@@ -1000,13 +1001,37 @@ def build_home(person_id: str | None, *, conn=None) -> dict[str, Any]:
             if not any(item.get("href") == "/ggv/finance" for item in desk):
                 desk.append({"label": "Open GGV Finance", "href": "/ggv/finance"})
         boundary = _boundary(experience, codes)
+        # ENTITY ISOLATION (2026-10-01): finance_* flags are AND-ed with entity scope.
+        # Scope-blind role-code union was soft-bleed BREACH-2026-09-30-J1 (Zayen GGV adjacency).
+        _FIN_ENTS = ("ENT-AMG", "ENT-BZG", "ENT-GGV")
+        finance_read_by_entity = {
+            eid: bool(_rbac.can(pid, "finance.nota.read", {"entity_id": eid}, conn=c))
+            for eid in _FIN_ENTS
+        }
+        finance_review_by_entity = {
+            eid: bool(_rbac.can(pid, "finance.nota.review", {"entity_id": eid}, conn=c))
+            for eid in _FIN_ENTS
+        }
+        finance_edit_by_entity = {
+            eid: bool(
+                _rbac.can(pid, "finance.nota.create", {"entity_id": eid}, conn=c)
+                or _rbac.can(pid, "finance.nota.edit", {"entity_id": eid}, conn=c)
+            )
+            for eid in _FIN_ENTS
+        }
         authority = {
             "move_money": bool(codes & _MONEY),
             "change_bank": bool(codes & _BANK),
             "authorise_governance": bool(codes & _GOVERN),
-            "finance_read": "finance.nota.read" in codes,
-            "finance_review": "finance.nota.review" in codes,
-            "finance_edit": "finance.nota.create" in codes or "finance.nota.edit" in codes,
+            # OR-compat only — chrome/nav MUST prefer finance_*_by_entity (ENTITY-ISOLATION 2026-10-01).
+            "finance_read": any(finance_read_by_entity.values()),
+            "finance_review": any(finance_review_by_entity.values()),
+            "finance_edit": any(finance_edit_by_entity.values()),
+            "finance_read_by_entity": finance_read_by_entity,
+            "finance_review_by_entity": finance_review_by_entity,
+            "finance_edit_by_entity": finance_edit_by_entity,
+            "finance_read_semantics": "any_entity_OR_compat_only",
+            "prefer_finance_read_by_entity": True,
             "unrestricted": False,
         }
         from core import role_dashboard as _dashboard

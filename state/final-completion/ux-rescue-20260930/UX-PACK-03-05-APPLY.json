@@ -1,0 +1,134 @@
+{
+  "schema": "UX-PACK-03-05-APPLY/v0",
+  "applied": true,
+  "applied_wita": "2026-09-30T22:08:28+08:00",
+  "bound": "beta_only",
+  "beta_port": 8788,
+  "prod_8787": "READ_ONLY_UNTOUCHED",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "packs": [
+    "UX-PACK-03",
+    "UX-PACK-04",
+    "UX-PACK-05"
+  ],
+  "status": "PACK_03_05_APPLIED",
+  "finance_sod_unchanged": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "backup_dir": "/Users/wolfterminal/beta-os/backups/ux-pack-03-05-20260930-220118",
+  "beta_restarted": true,
+  "urls": {
+    "uma_desk": "https://beta.wolfcommand.net/bzg/uma-blu",
+    "uma_real": "https://beta.wolfcommand.net/bzg/uma-blu/real",
+    "uma_recipes": "https://beta.wolfcommand.net/bzg/uma-blu/recipes",
+    "amg_hub": "https://beta.wolfcommand.net/amg-ops-pack",
+    "ggv_hub": "https://beta.wolfcommand.net/ggv-ops-pack",
+    "owner_trading": "https://beta.wolfcommand.net/owner/trading",
+    "local_uma": "http://127.0.0.1:8788/bzg/uma-blu",
+    "local_amg": "http://127.0.0.1:8788/amg-ops-pack",
+    "local_ggv": "http://127.0.0.1:8788/ggv-ops-pack",
+    "local_trading": "http://127.0.0.1:8788/owner/trading",
+    "trading_ro_api": "http://127.0.0.1:8788/api/owner/trading-ro"
+  },
+  "files_changed": [
+    "dashboards/bzg-uma-blu.html",
+    "dashboards/bzg-uma-blu-bills.html",
+    "dashboards/bzg-uma-blu-issues.html",
+    "dashboards/bzg-uma-blu-petty.html",
+    "dashboards/bzg-uma-blu-evidence.html",
+    "dashboards/bzg-uma-blu-exceptions.html",
+    "dashboards/bzg-uma-blu-pr.html",
+    "dashboards/bzg-uma-blu-real.html",
+    "dashboards/amg-ops-pack.html",
+    "dashboards/ggv-ops-pack.html",
+    "dashboards/owner-trading-1.html",
+    "dashboards/assets/sidenav.js",
+    "scripts/core/wolf_shell.py",
+    "scripts/serve_beta.py"
+  ],
+  "pack_03": {
+    "title": "Uma Blu tab consolidation",
+    "desk_url": "/bzg/uma-blu",
+    "tabs": [
+      "today",
+      "bills",
+      "issues",
+      "petty",
+      "evidence",
+      "exceptions",
+      "recipes",
+      "real",
+      "close"
+    ],
+    "pr_under": "bills",
+    "recipes_tab": "/bzg/uma-blu/recipes",
+    "real_route_added": "/bzg/uma-blu/real",
+    "permissions_unchanged": true,
+    "desktop_first_max_width": 1100,
+    "uma_grammar_empty_retained": [
+      "overview",
+      "operations"
+    ]
+  },
+  "pack_04": {
+    "title": "AMG + GGV hub tab merge (visual only)",
+    "amg_tabs_added": [
+      "day_ops",
+      "journey",
+      "packages",
+      "occ",
+      "kuta"
+    ],
+    "amg_finance_empty_sod": true,
+    "ggv_tabs_added": [
+      "pipeline",
+      "strategy",
+      "social"
+    ],
+    "ggv_finance_live_unchanged": true,
+    "finance_auth_matrices_unchanged": true
+  },
+  "pack_05": {
+    "title": "Owner Trading desk parity slice",
+    "status": "PARTIAL",
+    "ui": [
+      "Holdings card",
+      "Journal card",
+      "TTC paper card",
+      "Paper practice card",
+      "Desk/Holdings/Journal/TTC/Status views"
+    ],
+    "apis": [
+      "/api/owner/trading-ro",
+      "/api/owner/trading-ro/history"
+    ],
+    "live_broker": false,
+    "writes": false,
+    "residuals": [
+      "V1 research tiles (filings/earnings/sector/insider/chatter/floor/sandbox/agent-os) not ported this slice",
+      "No holdings write form (RO intentional)",
+      "Screenshots still need Owner CF Access session"
+    ]
+  },
+  "tests": {
+    "test_wolf_bzg_uma_nav": "PASS=111 FAIL=0",
+    "test_wolf_amg_nav": "PASS=134 FAIL=3 soft-prior-wave env (not pack04 grammar)",
+    "test_wolf_ggv_nav": "PASS=133 FAIL=2 soft-prior-wave env (not pack04 grammar)",
+    "finance_sod_grammar": "amg finance EMPTY; ggv finance live /ggv/finance"
+  },
+  "acceptance": {
+    "uma_one_desk_with_tabs": true,
+    "amg_hub_tabs_visual": true,
+    "ggv_hub_tabs_visual": true,
+    "finance_sod_unchanged": true,
+    "trading_ro_cards": true,
+    "staff_ready_false": true,
+    "prod_8787_untouched": true
+  },
+  "next_packs": [
+    "UX-PACK-06",
+    "UX-PACK-07",
+    "UX-PACK-08"
+  ],
+  "matt_paragraph": "Uma Blu is now one desk (/bzg/uma-blu) with chrome tabs for Bills/Issues/Petty/Evidence/Exceptions/Recipes/Real/Close. AMG hub tabs now reach Day Ops, Journey, Packages, OCC, and Kuta Rates without opening hotel Finance (SoD still EMPTY on that desk). GGV hub tabs now reach Pipeline, Strategy, and Social; Finance link unchanged and still gated. Owner Trading (/owner/trading) is a PARTIAL RO paper desk with Holdings, Journal, and TTC paper cards from /api/owner/trading-ro \u2014 no broker, staff_ready stays false. Prod :8787 untouched. Next: Fitness RO (06), Personal Command + Radar stub (07), My Work depth + Owner screenshots (08)."
+}

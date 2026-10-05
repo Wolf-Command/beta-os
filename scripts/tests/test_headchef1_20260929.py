@@ -156,6 +156,7 @@ def test_identity_and_rbac() -> None:
         )
 
     for code in (
+        "work.update",
         "payment.approve",
         "payment.execute",
         "vendor.bank.change",
@@ -283,6 +284,7 @@ def test_http(base: str) -> None:
         else:
             check("cost missing not invent", recipe.get("food_cost") is None)
 
+    garlic = rb.search_ingredients(query="garlic chopped", limit=1)["ingredients"][0]
     code, body = _http(
         "POST",
         f"{base}/api/bzg/recipe-builder/recipes",
@@ -292,7 +294,14 @@ def test_http(base: str) -> None:
             "yield_n": 1,
             "yield_unit": "Pax",
             "outlet_id": "BZG-UMA",
-            "lines": [{"name": "garlic", "unit": "gr", "qty": 5}],
+            "lines": [
+                {
+                    "ingredient_id": garlic["id"],
+                    "name": garlic["name"],
+                    "unit": garlic.get("default_unit") or "gr",
+                    "qty": 5,
+                }
+            ],
         },
     )
     check("Hariyanto create 200", code == 200 and isinstance(body, dict) and body.get("ok"), str((code, body)))
@@ -302,7 +311,17 @@ def test_http(base: str) -> None:
             "PUT",
             f"{base}/api/bzg/recipe-builder/recipes/{new_id}",
             HARI_EMAIL,
-            {"method": "http edit", "lines": [{"name": "garlic", "unit": "gr", "qty": 6}]},
+            {
+                "method": "http edit",
+                "lines": [
+                    {
+                        "ingredient_id": garlic["id"],
+                        "name": garlic["name"],
+                        "unit": garlic.get("default_unit") or "gr",
+                        "qty": 6,
+                    }
+                ],
+            },
         )
         check("Hariyanto edit 200", code == 200 and body.get("ok"), str((code, body)))
         code, body = _http(

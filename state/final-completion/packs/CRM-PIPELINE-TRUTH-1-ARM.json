@@ -4,7 +4,7 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 8,
-  "status": "PASS_VERIFIED",
+  "status": "DONE_ENGINEERING_PASS",
   "armed_at": "2026-09-30T08:51:30+08:00",
   "exited_at": "2026-09-30T09:01:50+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
@@ -56,6 +56,9 @@
   "exit_code": 0,
   "tests_pass": 245,
   "tests_fail": 0,
-  "peaches_verified_at": "2026-09-30T09:03:45+08:00",
-  "peaches_verify": "state/final-completion/packs/CRM-PIPELINE-TRUTH-1-PEACHES-VERIFY.json"
+  "peaches_verified_at": "2026-09-30T09:12:25+08:00",
+  "peaches_verify": "PASS_VERIFIED",
+  "peaches_verify_path": "state/final-completion/packs/CRM-PIPELINE-TRUTH-1-PEACHES-VERIFY.json",
+  "matt_finished_ping": true,
+  "matt_finished_ping_at": "2026-09-30T09:12:25+08:00"
 }

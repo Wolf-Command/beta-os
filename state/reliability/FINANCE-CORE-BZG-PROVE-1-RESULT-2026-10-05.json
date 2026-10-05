@@ -1,0 +1,111 @@
+{
+  "pack": "FINANCE-CORE-BZG-PROVE-1",
+  "predecessor": "FINANCE-CORE-AMG-PROVE-1",
+  "predecessor_status": "IMPLEMENTATION_DONE",
+  "routes_composed": {
+    "desk": "http://127.0.0.1:8788/bzg/finance",
+    "suppliers": "http://127.0.0.1:8788/bzg/finance/suppliers",
+    "bank": "http://127.0.0.1:8788/bzg/finance/bank",
+    "statements": "http://127.0.0.1:8788/bzg/finance/statements",
+    "ap": "http://127.0.0.1:8788/bzg/finance/ap",
+    "exceptions": "http://127.0.0.1:8788/bzg/finance/exceptions"
+  },
+  "api_routes_composed": [
+    "/api/bzg/finance/overview",
+    "/api/bzg/finance/counts",
+    "/api/bzg/finance/suppliers",
+    "/api/bzg/finance/bank",
+    "/api/bzg/finance/statements/library",
+    "/api/bzg/finance/statements/{id}",
+    "/api/bzg/finance/statements/{id}/original",
+    "/api/bzg/finance/statements/completeness",
+    "/api/bzg/finance/ap",
+    "/api/bzg/finance/exceptions"
+  ],
+  "modules_composed": [
+    "scripts/core/bzg_finance_desk.py",
+    "scripts/core/bzg_finance_usability_ro.py",
+    "scripts/core/finance_core_entity.py",
+    "scripts/core/finance_core_statements.py"
+  ],
+  "shared_core_patterns": [
+    "finance_core_entity.ENTITY_CONFIG ENT-BZG",
+    "finance_core_statements bzg_bank_statement_imports / bzg_bank_transactions",
+    "dual permission guard finance.nota.read OR atrium.board.read"
+  ],
+  "test_file": "scripts/tests/test_finance_core_bzg_prove1_20261005.py",
+  "tests_pass": 8,
+  "tests_fail": 0,
+  "ggv_regression": {
+    "test_file": "scripts/tests/test_finance_core_ggv1_20261005.py",
+    "tests_pass": 8,
+    "tests_fail": 0
+  },
+  "amg_regression": {
+    "test_file": "scripts/tests/test_finance_core_amg_prove1_20261005.py",
+    "tests_pass": 8,
+    "tests_fail": 0
+  },
+  "usability_regression": {
+    "test_file": "scripts/tests/test_bzg_finance_usability1_20261005.py",
+    "tests_pass": 12,
+    "tests_fail": 0
+  },
+  "isolation_proofs": {
+    "bzg_statement_import_entity_id": "ENT-BZG",
+    "bzg_import_table": "bzg_bank_statement_imports",
+    "no_ggv_leak_from_bzg_import": true,
+    "no_amg_leak_from_bzg_import": true,
+    "ggv_invoices_unchanged": 46,
+    "ggv_notas_unchanged": 33,
+    "ggv_bills_unchanged": 605,
+    "amg_bank_transactions_unchanged": 525,
+    "amg_uploads_unchanged": 0
+  },
+  "permissions": {
+    "matt_bzg_finance_read": true,
+    "matt_finance_nota_read": true,
+    "zayen_bzg_finance_read": true,
+    "zayen_atrium_board_read": true,
+    "haikal_bzg_finance_denied": true,
+    "amanda_bzg_finance_denied": true,
+    "amanda_ggv_finance_nota_create": true
+  },
+  "counts": {
+    "desk": {
+      "purchase_orders": 543,
+      "supplier_bills": 473,
+      "bank_imports": 15,
+      "bank_transactions": 1257,
+      "suppliers": 103,
+      "ap_ready": 106
+    },
+    "db_mode_ro": {
+      "bzg_ops_purchase_orders": 543,
+      "bzg_ops_supplier_bills": 473,
+      "bzg_bank_statement_imports": 15,
+      "bzg_bank_transactions": 1257,
+      "bzg_shared_vendors": 103,
+      "bzg_ops_ap_ready": 106
+    }
+  },
+  "matt_test_urls": {
+    "desk": "http://127.0.0.1:8788/bzg/finance",
+    "bank": "http://127.0.0.1:8788/bzg/finance/bank",
+    "statements": "http://127.0.0.1:8788/bzg/finance/statements",
+    "suppliers": "http://127.0.0.1:8788/bzg/finance/suppliers"
+  },
+  "beta_reloaded": true,
+  "reload_held": false,
+  "beta_listener_pid": 85113,
+  "beta_listener_pid_before": 81522,
+  "prod_pid_unchanged": true,
+  "prod_pid": 1297,
+  "protected_closes_unchanged": true,
+  "protected_petty_balance_idr": 552700,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "zayen_ready": false,
+  "status": "IMPLEMENTATION_DONE",
+  "exit_code": 0
+}

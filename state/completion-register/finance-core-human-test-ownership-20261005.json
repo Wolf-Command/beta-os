@@ -1,0 +1,43 @@
+{
+  "id": "finance-core-human-test-ownership-20261005",
+  "at": "2026-10-05T11:41:27+08:00",
+  "by": "executor_owner_order_2026-10-05T11:34+08:00",
+  "status": "NOT COMMISSIONED \u2014 testers assigned only",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "tests": [
+    {
+      "name": "HUMAN TEST \u2014 MATT \u2014 GGV FINANCE",
+      "business": "GGV",
+      "tester": "MATT",
+      "person_id": "PERS-MATT",
+      "queue": "NEEDS_MATT",
+      "open": "https://beta.wolfcommand.net/ggv/finance",
+      "gate": "hand to Matt only after FINANCE-CORE-STATEMENTS-1 eng-proves (page shows Upload Statement + Historical Statements + Upload Nota + Reconciliation)",
+      "state": "WAITING_ENGINEERING"
+    },
+    {
+      "name": "HUMAN TEST \u2014 ZAYEN \u2014 AMG FINANCE",
+      "business": "AMG",
+      "tester": "ZAYEN",
+      "person_id": "PERS-ZAYEN",
+      "queue": "NEEDS_STAFF",
+      "not_in_matt_queue": true,
+      "open": "https://beta.wolfcommand.net/amg/finance",
+      "checklist": "state/reliability/ZAYEN-FINANCE-TEST-AMG-BZG-2026-10-05.md",
+      "state": "WAITING_ENGINEERING"
+    },
+    {
+      "name": "HUMAN TEST \u2014 ZAYEN \u2014 BZG FINANCE",
+      "business": "BZG",
+      "tester": "ZAYEN",
+      "person_id": "PERS-ZAYEN",
+      "queue": "NEEDS_STAFF",
+      "not_in_matt_queue": true,
+      "open": "https://beta.wolfcommand.net/bzg/finance",
+      "checklist": "state/reliability/ZAYEN-FINANCE-TEST-AMG-BZG-2026-10-05.md",
+      "state": "WAITING_ENGINEERING (after BZG-PROVE)"
+    }
+  ],
+  "ui_cards": "Commissioning queue cards are code-seeded (owner_commissioning_queue.seed_templates); adding them is assigned to FINANCE-CORE-STATEMENTS-1 (single Beta writer) rather than edited here."
+}

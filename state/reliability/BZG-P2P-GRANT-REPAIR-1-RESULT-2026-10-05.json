@@ -1,0 +1,71 @@
+{
+  "pack_id": "BZG-P2P-GRANT-REPAIR-1",
+  "finding_id": "BREACH-2026-10-05-J1-BZG-P2P-PAY-READY-OVERGRANT",
+  "status": "REPAIRED_ENG_PROVED",
+  "finished_at": "2026-10-05T08:35:00+08:00",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "eng_proved": true,
+  "peaches_recount_required": true,
+  "ap_ready_for_human_test": false,
+  "ready_to_pay_ready_for_human_test": false,
+  "migration": "scripts/migrations/migrate_bzg_p2p_grant_repair1_20261005.py",
+  "migration_result": "state/reliability/BZG-P2P-GRANT-REPAIR-1-MIGRATION-20261005-083144.json",
+  "backup": "catalog/backups/pre-bzg-p2p-grant-repair1-20261005-083144.sqlite",
+  "revoked_count": 91,
+  "permissions": [
+    "bzg.po.create",
+    "bzg.bill.capture",
+    "bzg.match.run",
+    "bzg.ap.view",
+    "bzg.ap.mark_ready",
+    "bzg.pay.list_ready",
+    "bzg.pay.mark_ready"
+  ],
+  "role_matrix_source": "scripts/core/bzg_p2p_grants.py",
+  "entity_bound_prefixes_added": [
+    "bzg.ap.",
+    "bzg.pay."
+  ],
+  "segregation": {
+    "document_level": "po_creator_cannot_mark_pay_ready; nota_recorder_cannot_mark_pay_ready",
+    "enforced_in": [
+      "scripts/core/bzg_ap_ready.py",
+      "scripts/core/bzg_ready_to_pay.py"
+    ]
+  },
+  "acceptance": {
+    "ggv_content_deny": "PASS — PERS-HAIKAL/MISA/YUDI DENY all five permissions on BZG-UMA, BZG-RAIN, OU-BZG-RAIN-POOL",
+    "one_person_chain_deny": "PASS — PERS-IZA and PERS-HARIYANTO cannot hold create+capture+pay-ready; document segregation PASS"
+  },
+  "forbidden_grants_unchanged": {
+    "payment.execute": 0,
+    "payment.approve": 0,
+    "bzg.pr.payment_approve": 0,
+    "vendor.bank.change": 0
+  },
+  "files_changed": [
+    "scripts/core/bzg_p2p_grants.py",
+    "scripts/core/rbac.py",
+    "scripts/core/bzg_ap_ready.py",
+    "scripts/core/bzg_ready_to_pay.py",
+    "scripts/migrations/migrate_bzg_p2p_grant_repair1_20261005.py",
+    "scripts/tests/test_bzg_p2p_grant_repair1_20261005.py",
+    "scripts/tests/test_bzg_p2p_ap1_20261005.py",
+    "scripts/tests/test_bzg_p2p_ready_to_pay1_20261005.py"
+  ],
+  "tests_pass": {
+    "test_bzg_p2p_grant_repair1_20261005.py": "74 passed 0 failed",
+    "test_bzg_p2p_ap1_20261005.py": "24 passed 0 failed",
+    "test_bzg_p2p_ready_to_pay1_20261005.py": "29 passed 0 failed"
+  },
+  "tests_fail": [],
+  "beta_reloaded": false,
+  "beta_listener_pid": 20127,
+  "prod_listener_pid": 1297,
+  "prod_untouched": true,
+  "protected_close_untouched": true,
+  "no_commit": true,
+  "no_money_movement": true,
+  "what_was_not_built": "Human commissioning; AP/Ready to Pay human test return (Peaches recount hold); payment execute/approve"
+}

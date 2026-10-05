@@ -132,9 +132,17 @@ def _run(cmd: list[str], *, timeout: float = 12.0) -> tuple[int, str, str]:
         return 1, "", f"{type(exc).__name__}: {exc}"
 
 
+def _lsof_bin() -> str:
+    """Absolute lsof — thin agent PATH (/usr/bin:/bin:/opt/homebrew/bin) omits /usr/sbin."""
+    for cand in ("/usr/sbin/lsof", "/usr/bin/lsof", "lsof"):
+        if cand == "lsof" or Path(cand).is_file():
+            return cand
+    return "/usr/sbin/lsof"
+
+
 def _lsof_listen(port: int) -> dict[str, Any]:
     code, out, err = _run(
-        ["lsof", "-nP", f"-iTCP:{port}", "-sTCP:LISTEN"], timeout=8.0
+        [_lsof_bin(), "-nP", f"-iTCP:{port}", "-sTCP:LISTEN"], timeout=8.0
     )
     pids: list[int] = []
     for line in out.splitlines():

@@ -1,0 +1,62 @@
+{
+ "pack": "ZAYEN-FINANCE-SWITCHER-REPROVE",
+ "at": "2026-10-05T12:48:00+08:00",
+ "against": "FINANCE-SWITCHER-REPAIR-1 BF-09bc100e77ed (IMPLEMENTATION_DONE 12:31 WITA); Beta pid 95803",
+ "staff_ready": false,
+ "human_commissioned": false,
+ "zayen_ready": false,
+ "method": "Fresh isolated snapshot /Users/wolfterminal/zsw-prove-20261005-v2 (deleted after). development_assertion + X-Wolf-Subject. Headless Chrome CDP. Zero POST/PUT/PATCH/DELETE. Prod 1297 untouched.",
+ "zayen_items": {
+  "1_switcher_AMG_BZG_selectable": {
+   "result": "FAIL_UI_PASS_API",
+   "detail": "/api/finance/entities returns GGV selectable=false, AMG=true, BZG=true. Mount node present on /finance (redirect), /amg-finance-ops, /bzg/finance, /amg/finance (injected). Dropdown NEVER mounts for Zayen because officer_must_deny blocks GET /shared/finance-switcher.js and .css with 403 'This account is limited to Atrium Finance.' Matt/Amanda can load the assets."
+  },
+  "2_GGV_visible_disabled_NO_ACCESS": {
+   "result": "FAIL_UI_PASS_API",
+   "detail": "API payload correct (GGV help/title NO ACCESS). Live Zayen pages show empty #entity-switch (screenshot zayen-bzg-empty-mount-desktop.png). Component itself correct: Amanda live dropdown shows AMG/BZG \u2014 NO ACCESS. Zayen greyed-GGV screenshots required inline JS/CSS injection to visualise the API payload (filenames zayen-dropdown-greyed-ggv-*.png); without injection the select does not exist."
+  },
+  "3_switch_AMG_to_BZG_loads_BZG": {
+   "result": "PASS",
+   "detail": "BZG counts via /api/bzg/finance/counts: PO 543, suppliers 103, bills 473, bank 1257. /finance? with BZG localStorage pref lands on /bzg/finance. Dropdown navigation unavailable for Zayen until /shared wall fixed."
+  },
+  "4_switch_BZG_to_AMG_loads_AMG": {
+   "result": "PASS",
+   "detail": "/api/amg/finance/accounts=190, journals 200, ledger 200; /api/amg/finance/notas|bills|reconciliation now 200 for Zayen (repair dual-guard). /amg-finance-ops labels 'AMG \u00b7 ENT-AMG books (atrium.sqlite, live). COA 200 accounts \u00b7 journals 20' \u2014 no ENT-GGV label."
+  },
+  "5_no_cross_entity_leakage": {
+   "result": "PASS",
+   "detail": "/api/amg/finance/audit audit_ggv=0 (was 5 ENT-GGV before repair)."
+  },
+  "6_direct_GGV_clean_403": {
+   "result": "PASS",
+   "detail": "All GGV pages + desk/recon/audit/notas APIs \u2192 403. No dropped connections."
+  },
+  "7_refresh_persistence": {
+   "result": "PASS",
+   "detail": "/finance honours wolf.finance.entity when authorised (BZG pref \u2192 /bzg/finance); GGV pref ignored \u2192 lands /amg-finance-ops. Reload of /bzg/finance stays BZG."
+  }
+ },
+ "regressions": {
+  "matt": {
+   "result": "FAIL",
+   "detail": "Dropdown PASS: GGV/AMG/BZG all selectable on /finance,/ggv,/bzg,/amg-finance-ops. BZG 200. Residual: /api/amg/finance/accounts|journals|ledger still 403 for Matt (atrium.board.read on ENT-AMG missing for ROLE-MATT)."
+  },
+  "amanda": {
+   "result": "PASS",
+   "detail": "Dropdown shows GGV selectable + AMG/BZG disabled NO ACCESS (live, no injection). /amg/finance, /amg-finance-ops, /bzg/finance, all AMG/BZG APIs \u2192 clean 403 (no ERR_EMPTY_RESPONSE / dropped connection)."
+  }
+ },
+ "residual_defects": [
+  "BLOCKER for Zayen UX: scripts/core/staff_access.officer_must_deny does not allow /shared/* (or /assets/wolf-shell already allowed but not /shared/). Finance-only seats cannot load finance-switcher.js/css \u2192 empty mount. Fix: allow /shared/finance-switcher.js and .css (and preferably /shared/) in officer_must_deny allowlist.",
+  "Matt still 403 on /api/amg/finance/accounts|journals|ledger (Owner asked these not 403)."
+ ],
+ "public_best_link": "https://beta.wolfcommand.net/finance",
+ "screenshots_box": "/workspace/zayen-switcher/v2/",
+ "best_screenshots": [
+  "/workspace/zayen-switcher/v2/zayen-dropdown-greyed-ggv-desktop.png (INLINE-INJECTED JS \u2014 visualises correct API payload; live page blocks /shared)",
+  "/workspace/zayen-switcher/v2/zayen-dropdown-greyed-ggv-phone.png (same caveat)",
+  "/workspace/zayen-switcher/v2/zayen-bzg-empty-mount-desktop.png (authentic: what Zayen actually sees \u2014 no dropdown)",
+  "/workspace/zayen-switcher/v2/amanda-ggv-dropdown-noaccess-desktop.png (authentic live NO ACCESS dropdown)"
+ ],
+ "overall": "ENGINEERING_PARTIAL \u2014 server/API items mostly PASS; rendered dropdown FAIL for Zayen due to /shared asset wall. Do not commission Zayen until that allowlist lands."
+}

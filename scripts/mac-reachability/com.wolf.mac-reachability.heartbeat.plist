@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  TEMPLATE ONLY — NOT INSTALLED.
+  When Mac GREEN: copy to ~/Library/LaunchAgents/com.wolf.mac-reachability.heartbeat.plist
+  then: launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.wolf.mac-reachability.heartbeat.plist
+
+  Purpose: factory heartbeat WITHOUT requiring Grok Bot GUI window open.
+  Must KeepAlive independently of supervisor and of Grok Bot.app frontmost state.
+  path_prove_ok in heartbeat.sh must not be set from process-alive alone.
+  Design: /workspace/mac-reachability/LAUNCHAGENT-DESIGN.md
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.wolf.mac-reachability.heartbeat</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/wolfterminal/beta-os/scripts/mac-reachability/heartbeat.sh</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/wolfterminal/beta-os</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>MAC_REACH_ROOT</key>
+    <string>/Users/wolfterminal/beta-os</string>
+    <key>MAC_MACHINE_ID</key>
+    <string>36d8fa4b-2d58-4983-b227-e5bfa5495e78</string>
+    <key>HEARTBEAT_INTERVAL_SEC</key>
+    <string>30</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>30</integer>
+  <key>StandardOutPath</key>
+  <string>/Users/wolfterminal/beta-os/state/mac-reachability/logs/heartbeat.stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/wolfterminal/beta-os/state/mac-reachability/logs/heartbeat.stderr.log</string>
+</dict>
+</plist>

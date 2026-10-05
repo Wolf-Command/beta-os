@@ -1,0 +1,1128 @@
+{
+  "pack_name": "FINANCE CONTROL REPAIR PACK — 3 OCT 2026",
+  "kind": "canonical_parent_register",
+  "maintained": true,
+  "one_off_note": false,
+  "as_of_wita": "2026-10-03T20:18:23+08:00",
+  "denominator_rule": "Denominator is row count. Rows are never deleted. The register may only grow if a genuinely missing requirement is found. Never shrink it to look better.",
+  "status_enum": [
+    "EXTERNAL_BLOCKED",
+    "HUMAN_COMMISSIONING",
+    "IN_PROGRESS",
+    "NOT_STARTED",
+    "OWNER_BLOCKED",
+    "PROVEN_COMPLETE"
+  ],
+  "proven_complete_rule": "PROVEN_COMPLETE only with a file path and what was verified on real Beta. A local prove script, a development_assertion HTTP window, a Cursor exit, or a page render alone is IN_PROGRESS.",
+  "staff_ready": false,
+  "eng_proved": false,
+  "pack_finished": false,
+  "human_pass_claimed": false,
+  "counts": {
+    "total": 132,
+    "proven_complete": 2,
+    "in_progress": 89,
+    "human_commissioning": 0,
+    "external_blocked": 0,
+    "owner_blocked": 0,
+    "not_started": 41
+  },
+  "current_branch": "IZA_3OCT_CLOSE",
+  "next_unfinished": {
+    "id": "FCR-BZG-01",
+    "requirement": "Real 3 Oct Iza commissioning",
+    "status": "IN_PROGRESS"
+  },
+  "next_after_branch": {
+    "id": "FCR-BZG-30",
+    "requirement": "Real deployed external integration proof (real Cloudflare staff session, not dev assertion)",
+    "status": "NOT_STARTED",
+    "why": "Highest-value unfinished finance row that is not the Iza commissioning row. Every engineered close and GGV behaviour read today is still local-prove or development_assertion, so this proof is the gate. It is not started."
+  },
+  "next_vertical_queued": {
+    "name": "P2P",
+    "in_this_denominator": false,
+    "implementation": "not_started",
+    "evidence": "state/discovery/P2P-V1-ARCHAEOLOGY-2026-10-03.md and P2P-V1-ARCHAEOLOGY-GAPS-2026-10-03.md are discovery only. Gaps file says no implementation."
+  },
+  "preserved_close_not_mutated": {
+    "close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+    "business_date": "2026-10-02",
+    "cited_state": "DATA_CAPTURED",
+    "cited_holder": "PERS-MATT",
+    "this_run": "not read in a way that writes; not updated"
+  },
+  "process_observation": {
+    "beta_pid": 1237,
+    "beta_listen": "127.0.0.1:8788",
+    "beta_started_wita": "2026-10-03T18:54:01+08:00",
+    "beta_cwd": "/Users/wolfterminal/beta-os/scripts",
+    "beta_restarted_by_this_run": false,
+    "prod_pid": 15975,
+    "prod_listen": "127.0.0.1:8787",
+    "prod_started_wita": "2026-09-21T16:59:38+08:00",
+    "prod_touched": false,
+    "unsigned_finish_war_room": "403 Cf-Access-Jwt-Assertion required",
+    "unsigned_health": "200 {ok:true,root:beta-os}"
+  },
+  "rows": [
+    {
+      "id": "FCR-BZG-01",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Real 3 Oct Iza commissioning",
+      "status": "IN_PROGRESS",
+      "evidence": "HUMAN COMMISSIONING FAIL 3 Oct 2026. Matt's phone on https://beta.wolfcommand.net/uma-blu-close showed business date 2 Oct and a raw script error on btnEdc. Not READY FOR IZA. staff_ready false. human commissioned false. Repair note: state/reliability/IZA-CLOSE-FAIL-2026-10-03.md. 2 Oct preserved close VDC-87202768-55af-4c8e-abc3-382a5496b8c6 was not deleted.",
+      "deleted": false,
+      "staff_ready": false,
+      "human_commissioned": false
+    },
+    {
+      "id": "FCR-BZG-02",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Closing history",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_continuation_20261003.py and FINANCE-CONTROL-CHECKPOINT-2026-10-03.md: local prove and a temporary development_assertion HTTP window only. Not a Cloudflare staff session. Not PROVEN_COMPLETE. history_range / history=1.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-03",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Single-day history",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_continuation_20261003.py and FINANCE-CONTROL-CHECKPOINT-2026-10-03.md: local prove and a temporary development_assertion HTTP window only. Not a Cloudflare staff session. Not PROVEN_COMPLETE. date filter on saved rows. Not a staff session.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-04",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Date-range history",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_continuation_20261003.py and FINANCE-CONTROL-CHECKPOINT-2026-10-03.md: local prove and a temporary development_assertion HTTP window only. Not a Cloudflare staff session. Not PROVEN_COMPLETE. date_from/date_to. Not a staff session.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-05",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Range totals",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_continuation_20261003.py and FINANCE-CONTROL-CHECKPOINT-2026-10-03.md: local prove and a temporary development_assertion HTTP window only. Not a Cloudflare staff session. Not PROVEN_COMPLETE. totals from saved rows, live_esb_used=false in the dev-assertion window.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-06",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Backdated / missing closing",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_continuation_20261003.py and FINANCE-CONTROL-CHECKPOINT-2026-10-03.md: local prove and a temporary development_assertion HTTP window only. Not a Cloudflare staff session. Not PROVEN_COMPLETE. throwaway/missing close VDC-4046a805 for 2026-09-28 created by the prove script, not by a human backdated close.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-07",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Business-date ESB retrieval",
+      "status": "IN_PROGRESS",
+      "evidence": "IZA note: esb_ingest --date 2026-10-03 finished 18:47 WITA, sales upsert 54, snapshot_day BLZ. Prove retrieved 2026-09-28 cash for that date. Not proved through Iza's close.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-08",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "LIVE ESB DATA kept separate from DATED CLOSING SNAPSHOT kept separate from FINAL HISTORICAL CLOSE",
+      "status": "IN_PROGRESS",
+      "evidence": "Checkpoint three_close_objects plus prove freeze. Not proved on a real staff session.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-09",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Live ESB cannot mutate a historical close",
+      "status": "IN_PROGRESS",
+      "evidence": "Prove freeze_still_holds (mutated=false) on the preserved close id. Observation that VDC-87202768 stayed DATA_CAPTURED is not itself this proof. Not re-read in a writing way.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-10",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Cancel unfinished close",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_continuation_20261003.py and FINANCE-CONTROL-CHECKPOINT-2026-10-03.md: local prove and a temporary development_assertion HTTP window only. Not a Cloudflare staff session. Not PROVEN_COMPLETE. throwaway cancel only. Preserved close was not cancelled.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-11",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Restart cancelled close",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_continuation_20261003.py and FINANCE-CONTROL-CHECKPOINT-2026-10-03.md: local prove and a temporary development_assertion HTTP window only. Not a Cloudflare staff session. Not PROVEN_COMPLETE. cancel_restart / restarted_after_cancel on a throwaway date.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-12",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Reopen completed close with ORIGINAL → REOPEN EVENT → CHANGES → NEW APPROVAL",
+      "status": "IN_PROGRESS",
+      "evidence": "Prove reopen_immutable freezes venue_close_final_history before a working-row reopen. The four-stage chain was not shown.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-13",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Owner takeover/reassignment preserving previous closer work",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_continuation_20261003.py and FINANCE-CONTROL-CHECKPOINT-2026-10-03.md: local prove and a temporary development_assertion HTTP window only. Not a Cloudflare staff session. Not PROVEN_COMPLETE. takeover_reassign on throwaways. Previous-closer preservation not separately shown.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-14",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Duplicate close protection",
+      "status": "IN_PROGRESS",
+      "evidence": "Checkpoint: partial unique index ux_venue_daily_closes_current. No dedicated duplicate-submit proof on real Beta.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-15",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Concurrent closer protection",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_continuation_20261003.py and FINANCE-CONTROL-CHECKPOINT-2026-10-03.md: local prove and a temporary development_assertion HTTP window only. Not a Cloudflare staff session. Not PROVEN_COMPLETE. single_holder_lock on a throwaway.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-16",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Refresh/idempotency protection",
+      "status": "NOT_STARTED",
+      "evidence": "No named prove or staff result for refresh/idempotency. Fingerprint freeze is row FCR-BZG-09, not this row.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-17",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Wrong-date protection",
+      "status": "IN_PROGRESS",
+      "evidence": "IZA note: page pins todayWITA to 2026-10-03 and says pull will not copy 2026-10-02. Not verified by a rejected wrong-date close.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-18",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Full audit trail",
+      "status": "IN_PROGRESS",
+      "evidence": "Fragments only (supersede test, GGV confirm before/after). No full close audit trail proved on Beta.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-19",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Original evidence preservation",
+      "status": "IN_PROGRESS",
+      "evidence": "Checkpoint says EVD-CLOSE-ESB (3) and EVD-CLOSE-EDC (2) still under state/bzg-daily-close/receipts/. File presence is not a proved preservation workflow.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-20",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "ESB live data vs printed end-of-day receipt reconciliation",
+      "status": "IN_PROGRESS",
+      "evidence": "Checkpoint: preserved close keeps API cash 2,855,000 and receipt 2,735,000. Both retained. Not reconciled. Cause not invented.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-21",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Full extensible shift-receipt extraction",
+      "status": "IN_PROGRESS",
+      "evidence": "Checkpoint: vision CODE COMPLETE / LIVE PATH awaiting Peaches. Not full and not staff-proved. IZA test file is temp DB only.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-22",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Unknown receipt lines preserved (not discarded)",
+      "status": "NOT_STARTED",
+      "evidence": "Not in the checkpoint, IZA note, or prove results read here.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-23",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Mandiri / BNI / BRI outlet configuration",
+      "status": "IN_PROGRESS",
+      "evidence": "IZA note: catalog banks ACTIVE BANK-BZG-UMA-MANDIRI, BNI, BRI. Catalog read is not a proved configuration workflow.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-24",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "EDC and QRIS separate per bank",
+      "status": "IN_PROGRESS",
+      "evidence": "IZA note: 18:47 pull names include EDC MANDIRI, QRIS MANDIRI, EDC BRI, QRIS BRI, no BNI line. Temp-DB supersede test. Not a staff close.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-25",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "NOT USED TODAY from confirmed final ESB data",
+      "status": "IN_PROGRESS",
+      "evidence": "IZA note: test_bzg_daily_close_bank_supersede_20261003.py pass=15 fail=0 on a temp DB. BRI NOT_USED_TODAY on the preserved close is prior data, not this rule proved on 3 Oct.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-26",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "One CURRENT bank reconciliation state per bank + business date",
+      "status": "IN_PROGRESS",
+      "evidence": "Same temp-DB test: one CURRENT Mandiri. Not proved on a real 3 Oct close.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-27",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Incorrect previous bank evidence SUPERSEDED, never double counted",
+      "status": "IN_PROGRESS",
+      "evidence": "Temp-DB test plus checkpoint note of one SUPERSEDED BNI on the preserved close. Double-count rule not proved on real Beta.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-28",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Manual fallback if image extraction fails",
+      "status": "NOT_STARTED",
+      "evidence": "Not in the files read. Not claimed.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-29",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Provider-agnostic receipt extraction (no provider names in staff UI)",
+      "status": "IN_PROGRESS",
+      "evidence": "IZA note: sanitizer and staff copy inspected in HTML. No device screenshot. Page inspection is not PROVEN_COMPLETE.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-30",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Real deployed external integration proof (real Cloudflare staff session, not dev assertion)",
+      "status": "NOT_STARTED",
+      "evidence": "Checkpoint and freeze: eng_proved=false. HTTP proves used development_assertion then restored cloudflare_access. No real staff session recorded.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-31",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Staff-language UX on the phone workflow",
+      "status": "IN_PROGRESS",
+      "evidence": "IZA note inspected viewport, 480px, 44px targets, Take Photo / Upload Photo. Explicitly no device screenshot.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BZG-32",
+      "group": "BZG_DAILY_CLOSE",
+      "requirement": "Owner direct controls through Wolf UI (take over, reassign, cancel unfinished, restart, reopen, supersede evidence, correct config)",
+      "status": "IN_PROGRESS",
+      "evidence": "Checkpoint: force re-capture control wired; owner panels and APIs exist. The full set was not proved in the Wolf UI on real Beta.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-33",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Reuse existing authorised Peaches/receipt ingestion (not a second pipeline)",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_continuation_20261003.py and FINANCE-CONTROL-CHECKPOINT-2026-10-03.md: local prove and a temporary development_assertion HTTP window only. Not a Cloudflare staff session. Not PROVEN_COMPLETE. second_pipeline=false. Peaches live chat hook still not wired.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-34",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Receipt sent/captured for GGV",
+      "status": "IN_PROGRESS",
+      "evidence": "Vault list in the prove (hundreds of existing GGV receipts). Live send/capture hook not wired. Historical files are not a new capture proof.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-35",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Original image preserved",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_ggv_accounting_20261003.py and continuation-3b log: local catalog prove; HTTP only if FINANCE_PROVE_HTTP under development_assertion. Not PROVEN_COMPLETE. image_evidence_attached locally. Not every image, not a CF session.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-36",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Receipt field: merchant",
+      "status": "IN_PROGRESS",
+      "evidence": "human confirm accepts vendor. Checkpoint: most vault receipts are meta-only stubs without structured extraction.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-37",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Receipt field: transaction date",
+      "status": "IN_PROGRESS",
+      "evidence": "Confirm body accepts date. Not proved populated on real Beta receipts.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-38",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Receipt field: upload date",
+      "status": "IN_PROGRESS",
+      "evidence": "Accounting row has created_at; matcher may use file mtime. Not proved as a staff-visible upload date.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-39",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Receipt field: amount",
+      "status": "IN_PROGRESS",
+      "evidence": "Confirm accepts amount. Checkpoint: most receipts lack structured amounts (needs_review 474).",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-40",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Receipt field: tax",
+      "status": "NOT_STARTED",
+      "evidence": "No tax field in ggv_receipt_accounting confirm keys or prove assertions.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-41",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Receipt field: currency",
+      "status": "NOT_STARTED",
+      "evidence": "No currency field proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-42",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Receipt field: payment method",
+      "status": "NOT_STARTED",
+      "evidence": "No payment-method field proved on the GGV receipt.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-43",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Receipt field: category/account",
+      "status": "IN_PROGRESS",
+      "evidence": "Confirm accepts category and account_code. Not proved on a real CF session.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-44",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Receipt field: description",
+      "status": "NOT_STARTED",
+      "evidence": "No description field proved. Notes are a separate row.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-45",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Receipt field: uploader",
+      "status": "NOT_STARTED",
+      "evidence": "No uploader column proved on ggv_receipt_accounting.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-46",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Receipt field: reimbursement state",
+      "status": "NOT_STARTED",
+      "evidence": "No reimbursement state proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-47",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Receipt field: accounting state",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_ggv_accounting_20261003.py and continuation-3b log: local catalog prove; HTTP only if FINANCE_PROVE_HTTP under development_assertion. Not PROVEN_COMPLETE. queues needs_review 474, duplicate 10, needs_coding 0, unmatched 0.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-48",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Bank reconciliation state on the receipt",
+      "status": "IN_PROGRESS",
+      "evidence": "Schema has bank_match_proposed and bank_match_confirmed. Not proved as one current state on a real receipt.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-49",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Linked transaction",
+      "status": "IN_PROGRESS",
+      "evidence": "Bank matcher can store matched_receipt_ref as a filename proposal. Not a confirmed linked transaction.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-50",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Original extraction retained",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_ggv_accounting_20261003.py and continuation-3b log: local catalog prove; HTTP only if FINANCE_PROVE_HTTP under development_assertion. Not PROVEN_COMPLETE. human_confirm_keeps_extraction, then that prove cleared the confirm on the same row. Not a standing staff proof.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-51",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Human corrections",
+      "status": "IN_PROGRESS",
+      "evidence": "Same local confirm path, then rolled back by the prove script. Not staff-proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-52",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Notes",
+      "status": "IN_PROGRESS",
+      "evidence": "Confirm body accepts notes. No notes history proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-53",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Audit history",
+      "status": "IN_PROGRESS",
+      "evidence": "Confirm writes a before/after fragment locally. Not a full audit history.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-GGV-54",
+      "group": "GGV_RECEIPTS",
+      "requirement": "Accountant can retrieve every original image without asking Peaches",
+      "status": "IN_PROGRESS",
+      "evidence": "Image route exists and one local attachment was asserted. Not every image, and not without a dev-assertion or local call.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-ACCT-55",
+      "group": "GGV_ACCOUNTING_WORKFLOW",
+      "requirement": "Dashboard workflow (operational, not a nav shell)",
+      "status": "NOT_STARTED",
+      "evidence": "ggv-finance.html has an overview section. No operational dashboard workflow was proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-ACCT-56",
+      "group": "GGV_ACCOUNTING_WORKFLOW",
+      "requirement": "Banking workflow (operational, not a nav shell)",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_continuation_20261003.py and FINANCE-CONTROL-CHECKPOINT-2026-10-03.md: local prove and a temporary development_assertion HTTP window only. Not a Cloudflare staff session. Not PROVEN_COMPLETE. Banking tab and bank-statements import. Fixture file, not a real statement. Not CF.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-ACCT-57",
+      "group": "GGV_ACCOUNTING_WORKFLOW",
+      "requirement": "Transactions workflow (operational, not a nav shell)",
+      "status": "IN_PROGRESS",
+      "evidence": "Banking UI lists transactions needing receipt. Not a separate proved Transactions desk.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-ACCT-58",
+      "group": "GGV_ACCOUNTING_WORKFLOW",
+      "requirement": "Receipts workflow (operational, not a nav shell)",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_ggv_accounting_20261003.py and continuation-3b log: local catalog prove; HTTP only if FINANCE_PROVE_HTTP under development_assertion. Not PROVEN_COMPLETE. queues and /ggv/finance/receipts page under development_assertion. Page render is not proof.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-ACCT-59",
+      "group": "GGV_ACCOUNTING_WORKFLOW",
+      "requirement": "Reconciliation workflow (operational, not a nav shell)",
+      "status": "IN_PROGRESS",
+      "evidence": "ggv_bank_statement1 proposes matches and sets auto_reconciled false. Not an operational reconciliation desk on real Beta.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-ACCT-60",
+      "group": "GGV_ACCOUNTING_WORKFLOW",
+      "requirement": "Income/Invoices workflow (operational, not a nav shell)",
+      "status": "IN_PROGRESS",
+      "evidence": "Invoice/nota UI exists from the earlier GGV desk. Not proved on a real CF session in this pack. staff_ready false.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-ACCT-61",
+      "group": "GGV_ACCOUNTING_WORKFLOW",
+      "requirement": "Expenses workflow (operational, not a nav shell)",
+      "status": "NOT_STARTED",
+      "evidence": "No expenses workflow in the checkpoint or prove.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-ACCT-62",
+      "group": "GGV_ACCOUNTING_WORKFLOW",
+      "requirement": "Suppliers workflow (operational, not a nav shell)",
+      "status": "IN_PROGRESS",
+      "evidence": "Vendor match/create exists on the nota desk. Not proved as a supplier accounting workflow.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-ACCT-63",
+      "group": "GGV_ACCOUNTING_WORKFLOW",
+      "requirement": "Missing Evidence workflow (operational, not a nav shell)",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_ggv_accounting_20261003.py and continuation-3b log: local catalog prove; HTTP only if FINANCE_PROVE_HTTP under development_assertion. Not PROVEN_COMPLETE. missing_evidence_receipts 0 and bank_unmatched_txns 6 in the local prove. Not a CF session.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-ACCT-64",
+      "group": "GGV_ACCOUNTING_WORKFLOW",
+      "requirement": "Reports workflow (operational, not a nav shell)",
+      "status": "NOT_STARTED",
+      "evidence": "No reports workflow proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-ACCT-65",
+      "group": "GGV_ACCOUNTING_WORKFLOW",
+      "requirement": "Audit workflow (operational, not a nav shell)",
+      "status": "NOT_STARTED",
+      "evidence": "No audit desk. Receipt confirm fragment is FCR-GGV-53, not this workflow.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-66",
+      "group": "GGV_BANKING",
+      "requirement": "Upload real bank statement",
+      "status": "IN_PROGRESS",
+      "evidence": "Prove imported ggv-prove-statement.csv (a fixture), not a real bank statement.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-67",
+      "group": "GGV_BANKING",
+      "requirement": "Preserve original statement",
+      "status": "IN_PROGRESS",
+      "evidence": "Import table stores original_path and sha256. Proved only on the fixture import.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-68",
+      "group": "GGV_BANKING",
+      "requirement": "Normalize while retaining raw source",
+      "status": "IN_PROGRESS",
+      "evidence": "Normalised ggv_bank_transactions plus raw_json. Fixture import only.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-69",
+      "group": "GGV_BANKING",
+      "requirement": "Bank field: transaction date",
+      "status": "IN_PROGRESS",
+      "evidence": "txn_date written by the fixture import path. Not a real statement.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-70",
+      "group": "GGV_BANKING",
+      "requirement": "Bank field: value date",
+      "status": "IN_PROGRESS",
+      "evidence": "value_date column and parsers exist. Not proved on a real statement.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-71",
+      "group": "GGV_BANKING",
+      "requirement": "Bank field: description",
+      "status": "IN_PROGRESS",
+      "evidence": "description column written by the fixture import. Not a real statement.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-72",
+      "group": "GGV_BANKING",
+      "requirement": "Bank field: reference",
+      "status": "IN_PROGRESS",
+      "evidence": "reference column exists. Not proved populated on a real statement.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-73",
+      "group": "GGV_BANKING",
+      "requirement": "Bank field: debit",
+      "status": "IN_PROGRESS",
+      "evidence": "debit column written by the fixture import.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-74",
+      "group": "GGV_BANKING",
+      "requirement": "Bank field: credit",
+      "status": "IN_PROGRESS",
+      "evidence": "credit column written by the fixture import.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-75",
+      "group": "GGV_BANKING",
+      "requirement": "Bank field: balance",
+      "status": "IN_PROGRESS",
+      "evidence": "running_balance column written by the fixture import.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-76",
+      "group": "GGV_BANKING",
+      "requirement": "Bank field: bank account",
+      "status": "IN_PROGRESS",
+      "evidence": "bank_account / account_label stored on the fixture import.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-77",
+      "group": "GGV_BANKING",
+      "requirement": "Bank field: import batch",
+      "status": "IN_PROGRESS",
+      "evidence": "import_id batch on ggv_bank_statement_imports. Fixture only.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-78",
+      "group": "GGV_BANKING",
+      "requirement": "Bank field: reconciliation state",
+      "status": "IN_PROGRESS",
+      "evidence": "recon_status defaults UNIDENTIFIED; matcher may set NEEDS_RECEIPT or NEEDS_REVIEW. Fixture/local only.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-79",
+      "group": "GGV_BANKING",
+      "requirement": "Bank field: linked accounting record",
+      "status": "IN_PROGRESS",
+      "evidence": "matched_receipt_ref is a receipt filename proposal, not a linked accounting record.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-80",
+      "group": "GGV_BANKING",
+      "requirement": "Bank field: evidence",
+      "status": "IN_PROGRESS",
+      "evidence": "original_retrievable checks the stored original path. Fixture only.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-81",
+      "group": "GGV_BANKING",
+      "requirement": "Bank field: notes",
+      "status": "NOT_STARTED",
+      "evidence": "notes / parse_notes columns exist. No proved note on a real import.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-BANK-82",
+      "group": "GGV_BANKING",
+      "requirement": "Bank field: audit",
+      "status": "NOT_STARTED",
+      "evidence": "No bank-import audit trail proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-83",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match target: receipts",
+      "status": "IN_PROGRESS",
+      "evidence": "Matcher compares bank amount+date to vault receipt hints and proposes a filename.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-84",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match target: supplier expenses",
+      "status": "NOT_STARTED",
+      "evidence": "No matcher target proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-85",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match target: bills",
+      "status": "NOT_STARTED",
+      "evidence": "No matcher target proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-86",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match target: invoices",
+      "status": "NOT_STARTED",
+      "evidence": "No bank matcher target for invoices proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-87",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match target: client payments",
+      "status": "NOT_STARTED",
+      "evidence": "No matcher target proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-88",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match target: payroll where applicable",
+      "status": "NOT_STARTED",
+      "evidence": "No matcher target proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-89",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match target: reimbursements",
+      "status": "NOT_STARTED",
+      "evidence": "No matcher target proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-90",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match target: transfers",
+      "status": "NOT_STARTED",
+      "evidence": "No matcher target proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-91",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match target: existing accounting records",
+      "status": "NOT_STARTED",
+      "evidence": "No matcher target proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-92",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match key: amount",
+      "status": "IN_PROGRESS",
+      "evidence": "Matcher uses amount within 1.0. Local code path, not a real statement proof.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-93",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match key: date",
+      "status": "IN_PROGRESS",
+      "evidence": "Matcher requires txn date equal receipt date when both exist.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-94",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match key: merchant",
+      "status": "NOT_STARTED",
+      "evidence": "Not used by the matcher.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-95",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match key: description",
+      "status": "NOT_STARTED",
+      "evidence": "Description is selected, not used as a match key.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-96",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match key: reference",
+      "status": "NOT_STARTED",
+      "evidence": "Not used as a match key.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-97",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match key: invoice",
+      "status": "NOT_STARTED",
+      "evidence": "Not used as a match key.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-98",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match key: receipt",
+      "status": "NOT_STARTED",
+      "evidence": "Receipt filename is a proposed target, not a match key.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-99",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Match key: other deterministic evidence",
+      "status": "NOT_STARTED",
+      "evidence": "No other deterministic key proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-100",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Weak matches are proposals not truth",
+      "status": "IN_PROGRESS",
+      "evidence": "match_proposed=1 and auto_reconciled false. HIGH_AMOUNT_DATE is still a proposal. Not proved on a real statement.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-101",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Reconciliation state: MATCHED",
+      "status": "NOT_STARTED",
+      "evidence": "No MATCHED status in the bank matcher.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-102",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Reconciliation state: PARTIALLY MATCHED",
+      "status": "NOT_STARTED",
+      "evidence": "No such status proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-103",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Reconciliation state: NEEDS RECEIPT",
+      "status": "IN_PROGRESS",
+      "evidence": "Matcher sets NEEDS_RECEIPT when no amount+date hit. Local/fixture only.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-104",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Reconciliation state: NEEDS CODING",
+      "status": "IN_PROGRESS",
+      "evidence": "Receipt queue needs_coding exists and was counted 0. Not a bank recon state proved on real Beta.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-105",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Reconciliation state: TRANSFER",
+      "status": "NOT_STARTED",
+      "evidence": "No TRANSFER status proved.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-106",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Reconciliation state: POSSIBLE DUPLICATE",
+      "status": "IN_PROGRESS",
+      "evidence": "Receipt duplicate queue counted 10 locally. Not the bank state POSSIBLE DUPLICATE on a real statement.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-107",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Reconciliation state: UNIDENTIFIED",
+      "status": "IN_PROGRESS",
+      "evidence": "Default recon_status on import. Fixture/local only.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-108",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Reconciliation state: RECONCILED",
+      "status": "NOT_STARTED",
+      "evidence": "Matcher returns auto_reconciled false. No RECONCILED status proved. Do not treat a proposal as reconciled.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REC-109",
+      "group": "GGV_RECONCILIATION",
+      "requirement": "Reconciliation state: NEEDS REVIEW (present in code, not in the original list)",
+      "status": "IN_PROGRESS",
+      "evidence": "Matcher sets NEEDS_REVIEW with match_confidence HIGH_AMOUNT_DATE. Included so the register does not hide it. Not proved on a real statement.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-AUTH-110",
+      "group": "FINANCE_AUTHORITY",
+      "requirement": "PERSON → ASSIGNMENT → ROLE → ENTITY SCOPE → PERMISSION → RESOURCE ENTITY chain preserved",
+      "status": "IN_PROGRESS",
+      "evidence": "GGV-AUTHORITY-RECONCILE-AFTER-FC.json (2026-09-30) records the shape and residual gaps. Not re-verified on running Beta today.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-AUTH-111",
+      "group": "FINANCE_AUTHORITY",
+      "requirement": "Zayen AMG/BZG finance per assignment",
+      "status": "NOT_STARTED",
+      "evidence": "The authority file read does not record a Zayen AMG/BZG finance assignment. Not invented.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-AUTH-112",
+      "group": "FINANCE_AUTHORITY",
+      "requirement": "Zayen ZERO GGV",
+      "status": "IN_PROGRESS",
+      "evidence": "Authority probe zayen_journal_approve_ggv false (30 Sep) and prove zayen_ggv_deny / http deny under development_assertion. Not a live CF proof today.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-AUTH-113",
+      "group": "FINANCE_AUTHORITY",
+      "requirement": "Amanda GGV finance per assignment",
+      "status": "IN_PROGRESS",
+      "evidence": "ASG-AMANDA-GGV-FIN-1 ROLE-GGV-FINANCE-OPERATOR ENT-GGV in the 30 Sep file. Residual: no atrium journal draft, not an atrium user. Not re-proved on running Beta.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-AUTH-114",
+      "group": "FINANCE_AUTHORITY",
+      "requirement": "Matt Owner",
+      "status": "IN_PROGRESS",
+      "evidence": "ASG-MATT-OWNER-1 ROLE-MATT ACTIVE in the 30 Sep file. Not re-verified on running Beta today.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-AUTH-115",
+      "group": "FINANCE_AUTHORITY",
+      "requirement": "Matt approved GGV financial-control",
+      "status": "IN_PROGRESS",
+      "evidence": "ASG-MATT-GGV-FC-1 ROLE-GGV-FINANCIAL-CONTROLLER SCOPE-GGV-FINANCE. Residual: product wolf_role map not updated; payment.execute denied. Not re-proved live.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-AUTH-116",
+      "group": "FINANCE_AUTHORITY",
+      "requirement": "Shared Finance Core is not merged entities",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/prove_finance_control_ggv_accounting_20261003.py and continuation-3b log: local catalog prove; HTTP only if FINANCE_PROVE_HTTP under development_assertion. Not PROVEN_COMPLETE. amg_bzg_vault_isolated and amg_bzg_leak_count=0 locally. Not a CF proof that entities stay unmerged.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-HIST-117",
+      "group": "HISTORICAL_DATA",
+      "requirement": "Historical reconciliation: ESB",
+      "status": "IN_PROGRESS",
+      "evidence": "state/historical-recon/HIST-RECON-BZG-UMA-20261002/RECONCILIATION.json status PARTIAL. Cut line null. Not HISTORY COMPLETE.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-HIST-118",
+      "group": "HISTORICAL_DATA",
+      "requirement": "Historical reconciliation: Alchemist",
+      "status": "IN_PROGRESS",
+      "evidence": "Same file status PARTIAL. Beta is not a full mirror. Cut line null.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-HIST-119",
+      "group": "HISTORICAL_DATA",
+      "requirement": "Historical reconciliation: V1",
+      "status": "NOT_STARTED",
+      "evidence": "P2P-V1-ARCHAEOLOGY is discovery only. No finance-history reconciliation file marks V1 complete.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-HIST-120",
+      "group": "HISTORICAL_DATA",
+      "requirement": "Historical reconciliation: notas",
+      "status": "NOT_STARTED",
+      "evidence": "No file marks nota history reconciled.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-HIST-121",
+      "group": "HISTORICAL_DATA",
+      "requirement": "Historical reconciliation: receipts",
+      "status": "NOT_STARTED",
+      "evidence": "Vault inventory is not historical reconciliation. No completeness file.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-HIST-122",
+      "group": "HISTORICAL_DATA",
+      "requirement": "Historical reconciliation: POs",
+      "status": "IN_PROGRESS",
+      "evidence": "Alchemist pr_orders counted (543 vs prior 514) in the 2 Oct recon. Explicitly not COMPLETE.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-HIST-123",
+      "group": "HISTORICAL_DATA",
+      "requirement": "Historical reconciliation: receiving",
+      "status": "IN_PROGRESS",
+      "evidence": "pr_receipt_lines 477 counted; ESB goods_receipts 0. Not complete.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-HIST-124",
+      "group": "HISTORICAL_DATA",
+      "requirement": "Historical reconciliation: petty cash",
+      "status": "IN_PROGRESS",
+      "evidence": "petty_cash 443 vs Beta bzg_ops_petty_movements 3. Not complete.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-HIST-125",
+      "group": "HISTORICAL_DATA",
+      "requirement": "Historical reconciliation: supplier history",
+      "status": "IN_PROGRESS",
+      "evidence": "Alchemist suppliers 103 counted; Beta bzg_shared_vendors 0. Not complete.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-HIST-126",
+      "group": "HISTORICAL_DATA",
+      "requirement": "Historical reconciliation: Telegram evidence",
+      "status": "IN_PROGRESS",
+      "evidence": "Same recon file status PARTIAL. Desktop raw chat SOURCE_GAP. Not complete.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-HIST-127",
+      "group": "HISTORICAL_DATA",
+      "requirement": "Historical reconciliation: NAS",
+      "status": "NOT_STARTED",
+      "evidence": "No file marks NAS finance history reconciled.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-HIST-128",
+      "group": "HISTORICAL_DATA",
+      "requirement": "Historical reconciliation: Drive",
+      "status": "NOT_STARTED",
+      "evidence": "Recon file: 98 PO Drive photo refs not bulk-verified. Connection is not completion.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-HIST-129",
+      "group": "HISTORICAL_DATA",
+      "requirement": "Historical reconciliation: other discovered authorised sources",
+      "status": "NOT_STARTED",
+      "evidence": "No other authorised source was marked reconciled in the files read.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REL-130",
+      "group": "RELIABILITY",
+      "requirement": "Primary watchdog recovery evidence preserved",
+      "status": "PROVEN_COMPLETE",
+      "evidence": "state/mac-reachability/DRILL-20261003-UNATTENDED.json pass true: killed pid 53628 at 13:42:48 WITA, new pid 53978 at 13:43:18 WITA, prod pid 15975 and prod/beta health 200. File still on disk. Drill was not rerun. Also HA-WATCHDOG-TARGET-2026-10-03.md.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REL-131",
+      "group": "RELIABILITY",
+      "requirement": "Root cause of repeated Grok/control-path failure",
+      "status": "IN_PROGRESS",
+      "evidence": "state/reliability/HA-ROOT-CAUSE-2026-10-03.md: probe mismatch and sticky ceiling are described; ultimate cause across dates and the 07:12 incident remain UNKNOWN. Not complete. Not owner-blocked.",
+      "deleted": false
+    },
+    {
+      "id": "FCR-REL-132",
+      "group": "RELIABILITY",
+      "requirement": "Wolf Recovery Key private Tailscale secondary recovery",
+      "status": "PROVEN_COMPLETE",
+      "evidence": "state/mac-reachability/RECOVERY-KEY-RESULT-2026-10-03.md (titled 13:58 WITA, client wolf-command-1, 100.113.26.51:2222, general command DENIED, recover-watchdog allowed, prod pid 15975 unchanged) and RECOVERY-KEY-TEST.json (status_rc 0, denied_rc 1, recover_rc 0, listen on 100.113.26.51:2222). JSON audit lines are stamped 13:50+0800; the markdown says 13:58. Key was not reinstalled. 13:42 drill was not rerun.",
+      "deleted": false
+    }
+  ]
+}

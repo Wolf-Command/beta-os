@@ -1,0 +1,18 @@
+{
+  "pack": "BZG-P2P-PR-1",
+  "migration_id": "bzg_p2p_pr1_20261004",
+  "finished_at": "2026-10-04T18:51:58+08:00",
+  "backup": "/Users/wolfterminal/beta-os/catalog/backups/pre-bzg-p2p-pr1-20261004-185158.sqlite",
+  "backup_sha256": "8bfd277e8a6eb3416331ec9209b847102979f1c73b598e78d6e94b1d6143ec32",
+  "added_columns": [],
+  "permission": "bzg.pr.create",
+  "granted_roles": [
+    "ROLE-BZG-FB-OPS-LEAD",
+    "ROLE-BZG-HFB",
+    "ROLE-BZG-CAPTAIN",
+    "ROLE-MATT"
+  ],
+  "outlet_count": 7,
+  "staff_ready": false,
+  "human_commissioned": false
+}

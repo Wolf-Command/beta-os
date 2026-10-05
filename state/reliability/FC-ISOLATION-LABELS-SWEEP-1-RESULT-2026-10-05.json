@@ -1,0 +1,333 @@
+{
+  "pack": "FC-ISOLATION-LABELS-SWEEP-1",
+  "run_id": "BF-aacd9561b2cf",
+  "gap_before": {
+    "zayen_uma_blu_ap_403": true,
+    "zayen_uma_blu_ready_to_pay_403": true,
+    "zayen_finance_wall_blocked_uma_blu": true,
+    "bzg_finance_missing_ready_to_pay_nav": true,
+    "bzg_finance_needs_reconciliation_visible": true,
+    "bzg_finance_complete_gap_visible": true
+  },
+  "files_changed": [
+    "scripts/core/bzg_finance_desk.py",
+    "scripts/core/bzg_finance_usability_ro.py",
+    "scripts/core/bzg_history_completeness_ro.py",
+    "scripts/core/staff_access.py",
+    "scripts/core/bzg_p2p_grants.py",
+    "scripts/serve_beta.py",
+    "dashboards/bzg-finance.html",
+    "dashboards/ggv-finance.html",
+    "scripts/tests/test_fc_isolation_labels_sweep1_20261005.py",
+    "scripts/tests/test_bzg_p2p_ap1_20261005.py",
+    "scripts/tests/test_bzg_p2p_ready_to_pay1_20261005.py"
+  ],
+  "routes_and_apis": {
+    "matrix": {
+      "Zayen": {
+        "/finance?pick=1": 200,
+        "/api/finance/entities": 200,
+        "/amg-finance-ops": 200,
+        "/amg/finance": 200,
+        "/api/amg/finance/overview": 200,
+        "/bzg/finance": 200,
+        "/bzg/finance/ap": 200,
+        "/bzg/finance/ready-to-pay": 200,
+        "/api/bzg/finance/overview": 200,
+        "/api/bzg/finance/ap": 200,
+        "/api/bzg/finance/ready-to-pay": 200,
+        "/ggv/finance": 403,
+        "/api/ggv/finance/overview": 403,
+        "/bzg/uma-blu/ap": 200,
+        "/api/bzg/uma-blu/ap": 200,
+        "/bzg/uma-blu/ready-to-pay": 200,
+        "/api/bzg/uma-blu/ready-to-pay": 200,
+        "/bzg/uma-blu/bills": 200,
+        "/bzg/uma-blu/evidence": 200,
+        "/bzg/uma-blu/exceptions": 200,
+        "/bzg/uma-blu/purchase-orders": 200,
+        "/uma-blu-close": 403,
+        "/bzg/uma-blu/petty": 403
+      },
+      "Amanda": {
+        "/finance?pick=1": 200,
+        "/api/finance/entities": 200,
+        "/amg-finance-ops": 403,
+        "/amg/finance": 403,
+        "/api/amg/finance/overview": 403,
+        "/bzg/finance": 403,
+        "/bzg/finance/ap": 403,
+        "/bzg/finance/ready-to-pay": 403,
+        "/api/bzg/finance/overview": 403,
+        "/api/bzg/finance/ap": 403,
+        "/api/bzg/finance/ready-to-pay": 403,
+        "/ggv/finance": 200,
+        "/api/ggv/finance/overview": 200,
+        "/bzg/uma-blu/ap": 403,
+        "/api/bzg/uma-blu/ap": 403,
+        "/bzg/uma-blu/ready-to-pay": 403,
+        "/api/bzg/uma-blu/ready-to-pay": 403,
+        "/bzg/uma-blu/bills": 403,
+        "/bzg/uma-blu/evidence": 403,
+        "/bzg/uma-blu/exceptions": 403,
+        "/bzg/uma-blu/purchase-orders": 403,
+        "/uma-blu-close": 403,
+        "/bzg/uma-blu/petty": 200
+      },
+      "Matt": {
+        "/finance?pick=1": 200,
+        "/api/finance/entities": 200,
+        "/amg-finance-ops": 200,
+        "/amg/finance": 200,
+        "/api/amg/finance/overview": 200,
+        "/bzg/finance": 200,
+        "/bzg/finance/ap": 200,
+        "/bzg/finance/ready-to-pay": 200,
+        "/api/bzg/finance/overview": 200,
+        "/api/bzg/finance/ap": 200,
+        "/api/bzg/finance/ready-to-pay": 200,
+        "/ggv/finance": 200,
+        "/api/ggv/finance/overview": 200,
+        "/bzg/uma-blu/ap": 200,
+        "/api/bzg/uma-blu/ap": 200,
+        "/bzg/uma-blu/ready-to-pay": 200,
+        "/api/bzg/uma-blu/ready-to-pay": 200,
+        "/bzg/uma-blu/bills": 200,
+        "/bzg/uma-blu/evidence": 200,
+        "/bzg/uma-blu/exceptions": 200,
+        "/bzg/uma-blu/purchase-orders": 200,
+        "/uma-blu-close": 200,
+        "/bzg/uma-blu/petty": 200
+      },
+      "Haikal": {
+        "/finance?pick=1": 403,
+        "/api/finance/entities": 200,
+        "/amg-finance-ops": 403,
+        "/amg/finance": 403,
+        "/api/amg/finance/overview": 403,
+        "/bzg/finance": 403,
+        "/bzg/finance/ap": 403,
+        "/bzg/finance/ready-to-pay": 403,
+        "/api/bzg/finance/overview": 403,
+        "/api/bzg/finance/ap": 403,
+        "/api/bzg/finance/ready-to-pay": 403,
+        "/ggv/finance": 403,
+        "/api/ggv/finance/overview": 403,
+        "/bzg/uma-blu/ap": 403,
+        "/api/bzg/uma-blu/ap": 403,
+        "/bzg/uma-blu/ready-to-pay": 403,
+        "/api/bzg/uma-blu/ready-to-pay": 403,
+        "/bzg/uma-blu/bills": 403,
+        "/bzg/uma-blu/evidence": 403,
+        "/bzg/uma-blu/exceptions": 403,
+        "/bzg/uma-blu/purchase-orders": 403,
+        "/uma-blu-close": 403,
+        "/bzg/uma-blu/petty": 200
+      }
+    },
+    "expected": {
+      "Zayen": {
+        "/finance?pick=1": 200,
+        "/api/finance/entities": 200,
+        "/amg-finance-ops": 200,
+        "/amg/finance": 200,
+        "/api/amg/finance/overview": 200,
+        "/bzg/finance": 200,
+        "/bzg/finance/ap": 200,
+        "/bzg/finance/ready-to-pay": 200,
+        "/api/bzg/finance/overview": 200,
+        "/api/bzg/finance/ap": 200,
+        "/api/bzg/finance/ready-to-pay": 200,
+        "/ggv/finance": 403,
+        "/api/ggv/finance/overview": 403,
+        "/bzg/uma-blu/ap": 200,
+        "/api/bzg/uma-blu/ap": 200,
+        "/bzg/uma-blu/ready-to-pay": 200,
+        "/api/bzg/uma-blu/ready-to-pay": 200,
+        "/bzg/uma-blu/bills": 200,
+        "/bzg/uma-blu/evidence": 200,
+        "/bzg/uma-blu/exceptions": 200,
+        "/bzg/uma-blu/purchase-orders": 200,
+        "/uma-blu-close": 403,
+        "/bzg/uma-blu/petty": 403
+      },
+      "Amanda": {
+        "/finance?pick=1": 200,
+        "/api/finance/entities": 200,
+        "/amg-finance-ops": 403,
+        "/amg/finance": 403,
+        "/api/amg/finance/overview": 403,
+        "/bzg/finance": 403,
+        "/bzg/finance/ap": 403,
+        "/bzg/finance/ready-to-pay": 403,
+        "/api/bzg/finance/overview": 403,
+        "/api/bzg/finance/ap": 403,
+        "/api/bzg/finance/ready-to-pay": 403,
+        "/ggv/finance": 200,
+        "/api/ggv/finance/overview": 200,
+        "/bzg/uma-blu/ap": 403,
+        "/api/bzg/uma-blu/ap": 403,
+        "/bzg/uma-blu/ready-to-pay": 403,
+        "/api/bzg/uma-blu/ready-to-pay": 403,
+        "/bzg/uma-blu/bills": 403,
+        "/bzg/uma-blu/evidence": 403,
+        "/bzg/uma-blu/exceptions": 403,
+        "/bzg/uma-blu/purchase-orders": 403,
+        "/uma-blu-close": 403,
+        "/bzg/uma-blu/petty": 200
+      },
+      "Matt": {
+        "/finance?pick=1": 200,
+        "/api/finance/entities": 200,
+        "/amg-finance-ops": 200,
+        "/amg/finance": 200,
+        "/api/amg/finance/overview": 200,
+        "/bzg/finance": 200,
+        "/bzg/finance/ap": 200,
+        "/bzg/finance/ready-to-pay": 200,
+        "/api/bzg/finance/overview": 200,
+        "/api/bzg/finance/ap": 200,
+        "/api/bzg/finance/ready-to-pay": 200,
+        "/ggv/finance": 200,
+        "/api/ggv/finance/overview": 200,
+        "/bzg/uma-blu/ap": 200,
+        "/api/bzg/uma-blu/ap": 200,
+        "/bzg/uma-blu/ready-to-pay": 200,
+        "/api/bzg/uma-blu/ready-to-pay": 200,
+        "/bzg/uma-blu/bills": 200,
+        "/bzg/uma-blu/evidence": 200,
+        "/bzg/uma-blu/exceptions": 200,
+        "/bzg/uma-blu/purchase-orders": 200,
+        "/uma-blu-close": 200,
+        "/bzg/uma-blu/petty": 200
+      },
+      "Haikal": {
+        "/finance?pick=1": 403,
+        "/api/finance/entities": 200,
+        "/amg-finance-ops": 403,
+        "/amg/finance": 403,
+        "/api/amg/finance/overview": 403,
+        "/bzg/finance": 403,
+        "/bzg/finance/ap": 403,
+        "/bzg/finance/ready-to-pay": 403,
+        "/api/bzg/finance/overview": 403,
+        "/api/bzg/finance/ap": 403,
+        "/api/bzg/finance/ready-to-pay": 403,
+        "/ggv/finance": 403,
+        "/api/ggv/finance/overview": 403,
+        "/bzg/uma-blu/ap": 403,
+        "/api/bzg/uma-blu/ap": 403,
+        "/bzg/uma-blu/ready-to-pay": 403,
+        "/api/bzg/uma-blu/ready-to-pay": 403,
+        "/bzg/uma-blu/bills": 403,
+        "/bzg/uma-blu/evidence": 403,
+        "/bzg/uma-blu/exceptions": 403,
+        "/bzg/uma-blu/purchase-orders": 403,
+        "/uma-blu-close": 403,
+        "/bzg/uma-blu/petty": 200
+      }
+    }
+  },
+  "real_record_counts": {
+    "AMG": {
+      "ap_ready": null,
+      "supplier_bills": null
+    },
+    "BZG": {
+      "ap_ready": 106,
+      "supplier_bills": 473,
+      "ready_to_pay": 0
+    },
+    "GGV": {
+      "ap_ready": null,
+      "supplier_bills": null
+    }
+  },
+  "data_changes": "none",
+  "test_file": "scripts/tests/test_fc_isolation_labels_sweep1_20261005.py",
+  "tests_pass": 7,
+  "tests_fail": 0,
+  "regression": {
+    "test_finance_ui_human_labels1_20261005.py": {
+      "exit_code": 0,
+      "pass": true,
+      "stdout_tail": "RESULT_JSON: state/reliability/FINANCE-UI-HUMAN-LABELS-1-RESULT-2026-10-05.json\n",
+      "stderr_tail": "nance HTTP/1.1\" 200 -\nok\ntest_switcher_still_marks_ggv_disabled (__main__.FinanceUiHumanLabelsTests.test_switcher_still_marks_ggv_disabled) ... 127.0.0.1 - \"GET /api/finance/entities HTTP/1.1\" 200 -\nok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.891s\n\nOK\n"
+    },
+    "test_finance_switcher_repair2_20261005.py": {
+      "exit_code": 0,
+      "pass": true,
+      "stdout_tail": "RESULT_JSON: state/reliability/FINANCE-SWITCHER-REPAIR-2-RESULT-2026-10-05.json\n",
+      "stderr_tail": "0 (__main__.FinanceSwitcherRepair2Tests.test_zayen_switcher_assets_200) ... 127.0.0.1 - \"GET /shared/finance-switcher.js HTTP/1.1\" 200 -\n127.0.0.1 - \"GET /shared/finance-switcher.css HTTP/1.1\" 200 -\nok\n\n----------------------------------------------------------------------\nRan 7 tests in 1.208s\n\nOK\n"
+    },
+    "test_bzg_zayen_finance_prove1_20261005.py": {
+      "exit_code": 0,
+      "pass": true,
+      "stdout_tail": "RESULT_JSON: /Users/wolfterminal/beta-os/state/reliability/BZG-ZAYEN-FINANCE-PROVE-1-RESULT-2026-10-05.json\nEXIT 0\n",
+      "stderr_tail": "ceProve1Tests.test_usability_routes_still_openable_direct) ... ok\ntest_zayen_policy_amg_bzg_allowed_ggv_denied (__main__.BzgZayenFinanceProve1Tests.test_zayen_policy_amg_bzg_allowed_ggv_denied) ... ok\n\n----------------------------------------------------------------------\nRan 10 tests in 0.730s\n\nOK\n"
+    },
+    "test_bzg_p2p_harden1_20261005.py": {
+      "exit_code": 0,
+      "pass": true,
+      "stdout_tail": "S  authorised rtp idempotent\nPASS  Haikal/Misa/Yudi DENY all P2P perms x outlets\nPASS  Amanda DENY ap.mark_ready\nPASS  payment.execute grant count 0\nPASS  payment.approve grant count 0\nPASS  vendor.bank.change grant count 0\nPASS  protected close VDC-470e741f present\nPASS  protected close VDC-64f5f529 present\nPASS  protected close VDC-8fd544e2 present\nPASS  PETTY-UMA-6D853EEAE0 balance unchanged\nPASS  prod pid 1297 unchanged\n\n31 passed, 0 failed\nbeta_reload_status=reload_candidate beta_pid=97189\n",
+      "stderr_tail": ""
+    },
+    "test_finance_switcher_repair1_20261005.py": {
+      "exit_code": 0,
+      "pass": true,
+      "stdout_tail": "RESULT_JSON: state/reliability/FINANCE-SWITCHER-REPAIR-1-RESULT-2026-10-05.json\n",
+      "stderr_tail": ".1 - \"GET /bzg/finance HTTP/1.1\" 200 -\n127.0.0.1 - \"GET /api/finance/entities HTTP/1.1\" 200 -\n127.0.0.1 - \"GET /amg-finance-ops HTTP/1.1\" 200 -\n127.0.0.1 - \"GET /api/finance/entities HTTP/1.1\" 200 -\nok\n\n----------------------------------------------------------------------\nRan 7 tests in 1.212s\n\nOK\n"
+    },
+    "test_bzg_p2p_ap1_20261005.py": {
+      "exit_code": 0,
+      "pass": true,
+      "stdout_tail": "CEIVED\nPASS  save then reload same id\nPASS  reload same bill\nPASS  reload outlet display\nPASS  idempotent remark same id\nPASS  controller can list\nPASS  difference bill cannot sit AP-ready\nPASS  audit row for mark ready\nPASS  protected close untouched VDC-470e741f-d889-437a-9a40-1ec9c083fb95\nPASS  protected close untouched VDC-87202768-55af-4c8e-abc3-382a5496b8c6\nPASS  protected close untouched VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5\nPASS  live protected close read-only ok\n\n24 passed, 0 failed\n",
+      "stderr_tail": ""
+    },
+    "test_bzg_p2p_ready_to_pay1_20261005.py": {
+      "exit_code": 0,
+      "pass": true,
+      "stdout_tail": "ASS  reload same status\nPASS  reload outlet display\nPASS  idempotent remark same id\nPASS  controller can list\nPASS  workspace list permission\nPASS  workspace honest empty not forced\nPASS  audit row for mark ready to pay\nPASS  protected close untouched VDC-470e741f-d889-437a-9a40-1ec9c083fb95\nPASS  protected close untouched VDC-87202768-55af-4c8e-abc3-382a5496b8c6\nPASS  protected close untouched VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5\nPASS  live protected close read-only ok\n\n29 passed, 0 failed\n",
+      "stderr_tail": ""
+    }
+  },
+  "assertions_updated": [
+    "test_bzg_p2p_ready_to_pay1_20261005.py \u2014 mark_ready_to_pay uses pay_marker (SoD vs controller ap mark)",
+    "test_bzg_p2p_ap1_20261005.py \u2014 bootstrap ensures ready_to_pay schema"
+  ],
+  "render_check": {
+    "method": "html_render_test",
+    "artifacts": [
+      "/Users/wolfterminal/beta-os/state/reliability/shots/FC-ISOLATION-LABELS-SWEEP-1/zayen-ready-to-pay-phone.html",
+      "/Users/wolfterminal/beta-os/state/reliability/shots/FC-ISOLATION-LABELS-SWEEP-1/zayen-ready-to-pay-desktop.html"
+    ]
+  },
+  "beta_reloaded": false,
+  "reload_held": true,
+  "reload_gate": {
+    "reload_allowed": false,
+    "reasons": [
+      "human_test_window_until=2026-10-05T14:00:00Z"
+    ],
+    "beta_listener_pids": [
+      97189
+    ],
+    "prod_listener_pids": [
+      1297
+    ],
+    "prod_1297_listening": true,
+    "checked_at": "2026-10-05T12:21:37Z"
+  },
+  "beta_listener_pid": 97189,
+  "prod_pid_unchanged": true,
+  "protected_closes_unchanged": true,
+  "oct3_oct4_unchanged": true,
+  "petty_and_daily_close_untouched": true,
+  "protected_petty_balance_idr": 552700.0,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "zayen_ready": false,
+  "state": "READY FOR HUMAN TEST",
+  "status": "IMPLEMENTATION_DONE",
+  "exit_code": 0
+}

@@ -1,0 +1,17 @@
+{
+  "pack": "BZG-P2P-RECV-1",
+  "migration_id": "bzg_p2p_recv1_20261005",
+  "finished_at": "2026-10-05T06:35:59+08:00",
+  "backup": "/Users/wolfterminal/beta-os/catalog/backups/pre-bzg-p2p-recv1-20261005-063559.sqlite",
+  "backup_sha256": "6ad84fa0c50198a6d3c71f744461ebb8a886354300d76a5af138829810417609",
+  "added_tables": [
+    "bzg_ops_goods_receipts",
+    "bzg_ops_gr_lines"
+  ],
+  "permission": "venue.receive",
+  "granted_roles": [
+    "ROLE-BZG-FB-OPS-LEAD"
+  ],
+  "staff_ready": false,
+  "human_commissioned": false
+}

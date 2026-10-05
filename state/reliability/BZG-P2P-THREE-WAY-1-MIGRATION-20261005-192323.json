@@ -1,0 +1,15 @@
+{
+  "pack": "BZG-P2P-THREE-WAY-1",
+  "migration_id": "bzg_p2p_three_way1_20261005",
+  "finished_at": "2026-10-05T19:23:23+08:00",
+  "backup": "/Users/wolfterminal/beta-os/catalog/backups/pre-bzg-p2p-three-way1-20261005-192323.sqlite",
+  "backup_sha256": "cf03dd1f9edbb40fdf2f162a8d7ac38f8105b6f432b38139cd21eebc23acae62",
+  "added_tables": [],
+  "tables_reused": [],
+  "tables_created": [],
+  "permission": "bzg.match.run",
+  "grant_copy_seed": "skipped: P2P_PERMISSION_MATRIX via grant_repair1",
+  "granted_roles": [],
+  "staff_ready": false,
+  "human_commissioned": false
+}

@@ -1,0 +1,21 @@
+{
+  "pack": "BZG-P2P-READY-TO-PAY-1",
+  "migration_id": "bzg_p2p_ready_to_pay1_20261005",
+  "finished_at": "2026-10-05T13:01:11+08:00",
+  "backup": "/Users/wolfterminal/beta-os/catalog/backups/pre-bzg-p2p-ready-to-pay1-20261005-130111.sqlite",
+  "backup_sha256": "37d24fad41dea1b7919c6cdd1bf8b041d7e45f1621c25e4ed120d5af84c038eb",
+  "added_tables": [],
+  "tables_reused": [
+    "bzg_ops_ap_ready",
+    "bzg_ops_supplier_bills"
+  ],
+  "tables_created": [],
+  "permissions": [
+    "bzg.pay.list_ready",
+    "bzg.pay.mark_ready"
+  ],
+  "grant_copy_seed": "skipped: P2P_PERMISSION_MATRIX via grant_repair1",
+  "granted_roles": [],
+  "staff_ready": false,
+  "human_commissioned": false
+}

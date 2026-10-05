@@ -1,0 +1,29 @@
+{
+  "pack": "FINANCE-SWITCHER-REPAIR-2",
+  "migration_id": "finance_switcher_repair2_20261005",
+  "finished_at": "2026-10-05T12:54:59+08:00",
+  "backup": "/Users/wolfterminal/beta-os/catalog/backups/pre-finance-switcher-repair2-20261005-125459.sqlite",
+  "backup_sha256": "63572f86b9141c9d4d914fa4d6601098693898b0a06fc2f7e89c49fbc3b661ea",
+  "matt_grant_path": {
+    "role_id": "ROLE-MATT",
+    "assignment_id": "ASG-MATT-OWNER-1",
+    "scope_id": "SCOPE-AMG-FINANCE",
+    "entity_id": "ENT-AMG",
+    "permission_ids": {
+      "atrium.board.read": "PERM-ATRIUM-BOARD-READ",
+      "atrium.coa.read": "PERM-ATRIUM-COA-READ",
+      "atrium.ledger.read": "PERM-ATRIUM-LEDGER-READ",
+      "atrium.report.read": "PERM-ATRIUM-REPORT-READ",
+      "atrium.journal.draft": "PERM-ATRIUM-JOURNAL-DRAFT"
+    }
+  },
+  "permissions_granted": [
+    "atrium.board.read",
+    "atrium.coa.read",
+    "atrium.ledger.read",
+    "atrium.report.read",
+    "atrium.journal.draft"
+  ],
+  "staff_ready": false,
+  "human_commissioned": false
+}

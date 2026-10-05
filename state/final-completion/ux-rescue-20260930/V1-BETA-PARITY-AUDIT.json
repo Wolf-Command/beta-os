@@ -1,0 +1,803 @@
+{
+  "schema": "V1-BETA-PARITY-AUDIT/v0",
+  "generated_wita": "2026-09-30T21:52:00+08:00",
+  "mission": "P0_WOLF_UX_RESCUE",
+  "perspective": "user_functional",
+  "finance_sod": "UNCHANGED \u2014 do not alter finance SoD/authority this run",
+  "sources": [
+    "p0-v1/V1-SURFACE-MANIFEST-DRAFT.json (68 caps)",
+    "V1 dashboards/data/manifest.json (23 live boards)",
+    "V1 master.status.json tiles",
+    "Beta dashboards/*.html (157)",
+    "Beta sidenav.js IA_TREE + wolf_shell.py",
+    "Desktop screenshots 2026-09-30 (images/)"
+  ],
+  "surfaces_audited": 22,
+  "classification_counts": {
+    "V1_BETTER": 5,
+    "BETA_MISSING_FUNCTION": 3,
+    "BETA_MORE_CONFUSING": 2,
+    "BETA_BETTER": 5,
+    "PARITY": 5,
+    "V1_OBSOLETE": 2
+  },
+  "surfaces": [
+    {
+      "id": "v1_owner_home",
+      "v1_name": "Wolf Owner Home / Control",
+      "v1_routes": [
+        "http://127.0.0.1:8787/",
+        "wolf.html",
+        "master.status.json tiles"
+      ],
+      "v1_user_can": [
+        "See live pulse tiles: Atrium occ, Kuta rates tonight, BZG last-night revenue/covers, leads, purchasing, Alchemist owe/paid, Spartacus day, backup",
+        "Open Boards drawer + Ask Peaches",
+        "Navigate WOLF TOOLS: Spartacus, Trading, Learning, Radar, Admin Access",
+        "One-glance Owner evening brief"
+      ],
+      "v1_useful": "Dense live command glance; few clicks to ops reality",
+      "v1_bad": "Some tiles locked/restricted without clear path; person-centric; loading hangs on wolf.html content body in headless",
+      "beta_routes": [
+        "/owner-empire-pack",
+        "/wolf",
+        "/business-dashboard",
+        "/owner-needs-you-1",
+        "/staff-ops-routing"
+      ],
+      "beta_user_can": [
+        "Empire pack hub (when CF Access JWT present)",
+        "Needs You / staff-ops routing",
+        "Honesty stamps on migration state"
+      ],
+      "beta_gap": "Local :8788 Owner home BLOCKED_AUTH without Cloudflare JWT; no equivalent live multi-tile pulse in one screen from anon/headless; capability fragmented across prove packs",
+      "classification": "V1_BETTER",
+      "preserve_capability": "Owner live pulse (occ, rates, BZG night, leads, purchasing, health day, backup) on one Owner Home"
+    },
+    {
+      "id": "trading_desk",
+      "v1_name": "Trading Desk",
+      "v1_routes": [
+        "trading.html",
+        "trading-desk/journal.jsonl",
+        "QUANT_PROGRAM.md"
+      ],
+      "v1_user_can": [
+        "Browse 14 research/hub cards: Holdings, Trade journal, TTC paper method, Morning brief, Filings, Earnings, Sector, Insider, Chatter, Floor, Research desk, 8-step desk, Sandbox, Agent OS",
+        "Paper-only research; LIVE badge with WITA timestamp",
+        "Sidebar stay in Wolf Tools"
+      ],
+      "v1_useful": "Real navigable trading research workspace",
+      "v1_bad": "Sprawl of cards; some may be stubs",
+      "beta_routes": [
+        "/owner/trading",
+        "/owner-trading-1.html"
+      ],
+      "beta_user_can": [
+        "See PARTIAL honesty page: migration_state, provenance, holdings registry warnings",
+        "RO API /api/owner/trading-ro (+ history) wired",
+        "No live broker (correct)"
+      ],
+      "beta_gap": "Not a usable desk \u2014 status/transfer page, not Holdings/Journal/TTC cards UI",
+      "classification": "V1_BETTER",
+      "preserve_capability": "Holdings glance + trade journal + TTC paper method UI under Owner Personal"
+    },
+    {
+      "id": "spartacus_fitness",
+      "v1_name": "Spartacus Fitness / Health Command",
+      "v1_routes": [
+        "spartacus.html",
+        "~/.openclaw/personal/health/spartacus.sqlite"
+      ],
+      "v1_user_can": [
+        "Track Sparta/Wolf75, peptides, breathwork",
+        "See day counter on master tile",
+        "Telegram Spartacus bot (Mac)"
+      ],
+      "v1_useful": "Live personal health command",
+      "v1_bad": "Owner-only sprawl in primary tools list",
+      "beta_routes": [
+        "/owner/fitness",
+        "/owner-fitness-1.html"
+      ],
+      "beta_user_can": [
+        "PARTIAL Spartacus transfer surface",
+        "Honesty stamps"
+      ],
+      "beta_gap": "Not live health command; peptide schedule not rebuilt",
+      "classification": "V1_BETTER",
+      "preserve_capability": "Sparta/Wolf75 + peptide tracker with live sqlite-backed UI"
+    },
+    {
+      "id": "travel",
+      "v1_name": "Travel Board",
+      "v1_routes": [
+        "travel.html"
+      ],
+      "v1_user_can": [
+        "View/manage personal travel board"
+      ],
+      "v1_useful": "Dedicated travel surface",
+      "v1_bad": "Wave-era personal sprawl",
+      "beta_routes": [
+        "/owner/travel",
+        "/owner-travel-1.html"
+      ],
+      "beta_user_can": [
+        "Owner travel stub in IA"
+      ],
+      "beta_gap": "Thin vs V1 board",
+      "classification": "V1_BETTER",
+      "preserve_capability": "Owner travel itinerary/board"
+    },
+    {
+      "id": "learning_desk",
+      "v1_name": "Learning Desk / TTC learn",
+      "v1_routes": [
+        "learning.html",
+        "learning-desk/",
+        "ttc-learn-base"
+      ],
+      "v1_user_can": [
+        "Learning entries, TTC paper quant pipeline views"
+      ],
+      "v1_useful": "Ties to Flint quant learning",
+      "v1_bad": "Niche; coupled to Discord ingest",
+      "beta_routes": [
+        "/owner/learning",
+        "/owner-learning-1.html",
+        "/intel-learning.html"
+      ],
+      "beta_user_can": [
+        "Owner learning stub; intel-learning pack"
+      ],
+      "beta_gap": "No full learning desk / TTC entries UI",
+      "classification": "BETA_MISSING_FUNCTION",
+      "preserve_capability": "TTC/learning entries + paper quant drafts (no live trade)"
+    },
+    {
+      "id": "radar",
+      "v1_name": "Wolf Radar (Owner plan)",
+      "v1_routes": [
+        "radar in Wolf Tools",
+        "radar boards"
+      ],
+      "v1_user_can": [
+        "Owner plan/radar board from Wolf Tools"
+      ],
+      "v1_useful": "Owner planning glance",
+      "v1_bad": "Unclear freshness",
+      "beta_routes": [
+        "/radar-prove"
+      ],
+      "beta_user_can": [
+        "Prove pack only"
+      ],
+      "beta_gap": "No Owner Radar as first-class Home item",
+      "classification": "BETA_MISSING_FUNCTION",
+      "preserve_capability": "Owner Radar / plan board on Home"
+    },
+    {
+      "id": "atrium_sales_ops",
+      "v1_name": "Atrium Sales / Management / Inventory",
+      "v1_routes": [
+        "atrium-sales.html",
+        "atrium-management.html",
+        "atrium-inventory.html"
+      ],
+      "v1_user_can": [
+        "Sales board, management, inventory on dedicated HTML"
+      ],
+      "v1_useful": "Clear hotel ops surfaces",
+      "v1_bad": "Three separate boards; limited auth model",
+      "beta_routes": [
+        "/amg-ops-pack",
+        "/amg-daily-ops-state",
+        "/amg-journey-workflow",
+        "/amg-occ-truth-1",
+        "/amg-os-shell",
+        "/amg-pms-orchestration"
+      ],
+      "beta_user_can": [
+        "Ops pack hub + many deepen/prove shells",
+        "Day ops / journey / packages APIs"
+      ],
+      "beta_gap": "Capability richer but UX more confusing \u2014 many *-1 prove pages",
+      "classification": "BETA_MORE_CONFUSING",
+      "preserve_capability": "Atrium sales+occ+inventory+day-ops under one AMG hub with tabs"
+    },
+    {
+      "id": "atrium_finance",
+      "v1_name": "Atrium Finance Desk",
+      "v1_routes": [
+        "atrium-finance.html",
+        "atrium-finance app"
+      ],
+      "v1_user_can": [
+        "Finance desk UI on V1"
+      ],
+      "v1_useful": "Known FC desk",
+      "v1_bad": "Auth weaker historically",
+      "beta_routes": [
+        "/amg/finance",
+        "/atrium-fc-truth-deepen-1",
+        "fin-* shells"
+      ],
+      "beta_user_can": [
+        "SoD-aware finance routes",
+        "FC truth deepen",
+        "bank/recon/tax shells"
+      ],
+      "beta_gap": "Human retest in parallel \u2014 do not change SoD; UX consolidation only",
+      "classification": "BETA_BETTER",
+      "preserve_capability": "Finance SoD + FC desk; consolidate shells as tabs without weakening auth",
+      "sod_note": "DO_NOT_CHANGE_FINANCE_SOD_OR_AUTHORITY"
+    },
+    {
+      "id": "ggv_finance_ops",
+      "v1_name": "GGV Books / Finance",
+      "v1_routes": [
+        "ggv-finance.html"
+      ],
+      "v1_user_can": [
+        "View GGV books board"
+      ],
+      "v1_useful": "Simple books surface",
+      "v1_bad": "Limited ops breadth",
+      "beta_routes": [
+        "/ggv-finance",
+        "/ggv-ops-pack",
+        "/ggv-client-profitability",
+        "/ggv-strategy-machine",
+        "/ggv-pipeline-truth-1"
+      ],
+      "beta_user_can": [
+        "Ops pack + client profitability + strategy machine + finance seat (GGV FC just landed)"
+      ],
+      "beta_gap": "Many parallel pages; Owner confusion risk",
+      "classification": "BETA_MORE_CONFUSING",
+      "preserve_capability": "GGV finance+ops+content under GGV hub; preserve FC seat SoD",
+      "sod_note": "DO_NOT_CHANGE_FINANCE_SOD_OR_AUTHORITY"
+    },
+    {
+      "id": "uma_blu_ops",
+      "v1_name": "Uma Blu Ops + Recipes",
+      "v1_routes": [
+        "uma-blu.html",
+        "uma-blu-recipes.html"
+      ],
+      "v1_user_can": [
+        "Venue ops console",
+        "Recipes"
+      ],
+      "v1_useful": "Focused venue board",
+      "v1_bad": "Less depth on PR/petty/evidence loops",
+      "beta_routes": [
+        "/bzg/uma-blu",
+        "/bzg-uma-blu-*",
+        "/bzg-recipe-builder"
+      ],
+      "beta_user_can": [
+        "Today, PR, issues, petty, evidence, exceptions, real, bills, recipe builder, APIs"
+      ],
+      "beta_gap": "Split across many HTML files \u2014 should be tabs",
+      "classification": "BETA_BETTER",
+      "preserve_capability": "Full Uma Blu today/PR/petty/evidence/recipe loops as tabs"
+    },
+    {
+      "id": "bzg_group",
+      "v1_name": "BZG Group / Finance / Monthly",
+      "v1_routes": [
+        "bzg boards",
+        "bzg-july-2026.html historical"
+      ],
+      "v1_user_can": [
+        "Group board, venue PnL-ish, monthly historical"
+      ],
+      "v1_useful": "Monthly boards for shareholders historically",
+      "v1_bad": "Monthly HTML freeze pattern obsolete as primary",
+      "beta_routes": [
+        "/bzg",
+        "/bzg-ops-desk",
+        "/bzg-finance",
+        "/bzg-venue-pnl",
+        "/bzg-waste-yield",
+        "/bzg-outlets"
+      ],
+      "beta_user_can": [
+        "Ops desk, finance, venue pnl, waste/yield, outlets"
+      ],
+      "beta_gap": "Hub vs many merge candidates",
+      "classification": "PARITY",
+      "preserve_capability": "BZG ops+finance+venue PnL; monthly boards historical preserve"
+    },
+    {
+      "id": "content_hub",
+      "v1_name": "Content Hub + Brand Boards + Ads/Resolve",
+      "v1_routes": [
+        "content.html",
+        "content-* brand boards",
+        "ads-studio.html",
+        "resolve-studio",
+        "atlas"
+      ],
+      "v1_user_can": [
+        "Per-brand content boards",
+        "Ads studio",
+        "Resolve studio",
+        "Catalogue"
+      ],
+      "v1_useful": "Brand-specific content navigation",
+      "v1_bad": "Duplication across brand HTML",
+      "beta_routes": [
+        "/content-2.0",
+        "/content-engine-live",
+        "/seats/content-desk",
+        "/seats/content-admin",
+        "/seats/ads-studio",
+        "/seats/resolve-studio",
+        "/ggv-content-prove"
+      ],
+      "beta_user_can": [
+        "Content 2.0 + seat surfaces in IA",
+        "Metricool wire packs"
+      ],
+      "beta_gap": "Ads/Resolve seats exist as HTML but depth vs V1 unclear; brand boards collapsed",
+      "classification": "PARITY",
+      "preserve_capability": "Content pipeline + Ads Studio + Resolve Studio seats"
+    },
+    {
+      "id": "kuta_rates",
+      "v1_name": "Kuta Rates Competitor Board",
+      "v1_routes": [
+        "kuta-rates.html",
+        "competitor-rates pipeline",
+        "rate-calendar.db"
+      ],
+      "v1_user_can": [
+        "See tonight competitor rate intel on master tile + dedicated board"
+      ],
+      "v1_useful": "Actionable rate glance for Atrium",
+      "v1_bad": "Pipeline Mac LaunchAgent coupled",
+      "beta_routes": [
+        "/kuta-rates",
+        "/kuta-rates-1.html",
+        "/ops-competitor-rates-pipeline-1.html",
+        "/ops-rate-calendar-1.html"
+      ],
+      "beta_user_can": [
+        "IA item Kuta Rates (AMG)",
+        "prove/pipeline packs"
+      ],
+      "beta_gap": "Primary useful board vs prove sprawl; pipeline may not be live in Beta",
+      "classification": "V1_BETTER",
+      "preserve_capability": "Tonight competitor rates board + pipeline health under AMG"
+    },
+    {
+      "id": "my_work_desks",
+      "v1_name": "Person desks (Wolf/Amanda/Mila/Haikal/Peaches) + ClickUp",
+      "v1_routes": [
+        "amanda.html",
+        "mila.html",
+        "haikal-desk",
+        "peaches-desk",
+        "wolf desk"
+      ],
+      "v1_user_can": [
+        "Open named desk boards for tasks/routines"
+      ],
+      "v1_useful": "Familiar per-person work queues",
+      "v1_bad": "People\u2260Roles violation; brittle when staff changes",
+      "beta_routes": [
+        "/my-work",
+        "/my-work-item",
+        "/staff-ops-routing",
+        "/execution-report"
+      ],
+      "beta_user_can": [
+        "Role/assignment oriented My Work",
+        "receivers API"
+      ],
+      "beta_gap": "My Work blocked without auth; depth incomplete vs V1 desk habits",
+      "classification": "BETA_BETTER",
+      "preserve_capability": "Per-assignment work queue (not person-named primary IA)"
+    },
+    {
+      "id": "habitat_investment",
+      "v1_name": "Habitat Investment 2026",
+      "v1_routes": [
+        "habitat-investment board on V1"
+      ],
+      "v1_user_can": [
+        "Owner investment board"
+      ],
+      "v1_useful": "Owner personal investment view",
+      "v1_bad": "Niche",
+      "beta_routes": [
+        "/habitat-investment-2026",
+        "/habitat-investment-1.html",
+        "/habitat-operator.html"
+      ],
+      "beta_user_can": [
+        "In primary IA as Habitat Investment (Owner)"
+      ],
+      "beta_gap": "May be thin pack",
+      "classification": "PARITY",
+      "preserve_capability": "Habitat investment Owner surface"
+    },
+    {
+      "id": "voice_boards",
+      "v1_name": "AMG/BZG/GGV Voice Boards",
+      "v1_routes": [
+        "amg-voice.html",
+        "bzg-voice",
+        "ggv-voice on V1"
+      ],
+      "v1_user_can": [
+        "Voice/ops seat boards"
+      ],
+      "v1_useful": "Seat-specific voice",
+      "v1_bad": "Separate HTML sprawl",
+      "beta_routes": [
+        "/amg-voice",
+        "/bzg-voice",
+        "/ggv-voice",
+        "*-voice-1.html"
+      ],
+      "beta_user_can": [
+        "In IA as voice seats"
+      ],
+      "beta_gap": "Prove-level depth",
+      "classification": "PARITY",
+      "preserve_capability": "Voice seats under each business"
+    },
+    {
+      "id": "hr",
+      "v1_name": "HR Board",
+      "v1_routes": [
+        "hr.html"
+      ],
+      "v1_user_can": [
+        "HR board (often restricted)"
+      ],
+      "v1_useful": "Historical HR entry",
+      "v1_bad": "Policy deferred domain",
+      "beta_routes": [
+        "/hr-* deferred stamps"
+      ],
+      "beta_user_can": [
+        "Deferred hold stamps only"
+      ],
+      "beta_gap": "Intentionally deferred",
+      "classification": "V1_OBSOLETE",
+      "preserve_capability": "HR deferred \u2014 do not commission this phase"
+    },
+    {
+      "id": "gatekeeper_eventbus",
+      "v1_name": "Gatekeeper + Event Bus",
+      "v1_routes": [
+        "Gatekeeper vault",
+        "event_bus.db"
+      ],
+      "v1_user_can": [
+        "Owner gate/automation visibility (historical)"
+      ],
+      "v1_useful": "System control plane awareness",
+      "v1_bad": "Not polished product UI",
+      "beta_routes": [
+        "/owner-gatekeeper-1.html",
+        "/ops-event-bus-1.html"
+      ],
+      "beta_user_can": [
+        "Prove/deepen pages only"
+      ],
+      "beta_gap": "No Owner-usable Gatekeeper/Event Bus home",
+      "classification": "BETA_MISSING_FUNCTION",
+      "preserve_capability": "Owner-visible gatekeeper + event bus health under System"
+    },
+    {
+      "id": "finish_wolf",
+      "v1_name": "Finish / commissioning (V1 absent as product)",
+      "v1_routes": [
+        "n/a \u2014 V1 was live boards not finish desk"
+      ],
+      "v1_user_can": [
+        "Operate live boards; no FINISH WOLF desk"
+      ],
+      "v1_useful": "n/a",
+      "v1_bad": "No single finish queue for Owner",
+      "beta_routes": [
+        "/finish-war-room",
+        "/commissioning-live",
+        "/progress",
+        "/v1-status"
+      ],
+      "beta_user_can": [
+        "Finish war room + progress (when authed)",
+        "Honesty scoreboards"
+      ],
+      "beta_gap": "Not yet ONE start link containing FINISH WOLF on Owner Home; auth blocks local screenshot",
+      "classification": "BETA_BETTER",
+      "preserve_capability": "FINISH WOLF desk on Owner Home as primary finish entry"
+    },
+    {
+      "id": "integrations_backup",
+      "v1_name": "Integrations / Backup / LaunchAgents",
+      "v1_routes": [
+        "System tile 14/14",
+        "B2/R2 tiles",
+        "~283 LaunchAgents"
+      ],
+      "v1_user_can": [
+        "See system green + backup capacity on home"
+      ],
+      "v1_useful": "Home-level system faith",
+      "v1_bad": "Opaque agent sprawl",
+      "beta_routes": [
+        "/integration-health",
+        "/backup-health-1",
+        "/restore-drill",
+        "/conn-health-1",
+        "/connector-*"
+      ],
+      "beta_user_can": [
+        "Dedicated integration/backup packs"
+      ],
+      "beta_gap": "Not on Owner Home pulse; prove naming",
+      "classification": "PARITY",
+      "preserve_capability": "Integrations+backup health visible from System and Owner exceptions"
+    },
+    {
+      "id": "nav_shell_auth",
+      "v1_name": "Global nav + auth model",
+      "v1_routes": [
+        "Boards + Wolf Tools sidebar",
+        "access_key=wolf era"
+      ],
+      "v1_user_can": [
+        "Simple local nav; often open :8787"
+      ],
+      "v1_useful": "Fast Owner access on LAN",
+      "v1_bad": "Weak auth; People\u2260Roles debt",
+      "beta_routes": [
+        "#wolfnav",
+        "sidenav.js IA_TREE",
+        "CF Access JWT",
+        "nav_authority"
+      ],
+      "beta_user_can": [
+        "Clearance-driven IA",
+        "Business chips",
+        "UP/BACK/HOME",
+        "fail-closed auth"
+      ],
+      "beta_gap": "Owner local UX blocked without JWT \u2014 hurts desktop commissioning screenshots",
+      "classification": "BETA_BETTER",
+      "preserve_capability": "Authority-derived nav + fail-closed auth; need Owner session path for desktop UX test"
+    },
+    {
+      "id": "alpha_superseded",
+      "v1_name": "Alpha System DB",
+      "v1_routes": [
+        "~/.openclaw/alpha/data/alpha.db"
+      ],
+      "v1_user_can": [
+        "Legacy alpha"
+      ],
+      "v1_useful": "Historical only",
+      "v1_bad": "Parked",
+      "beta_routes": [],
+      "beta_user_can": [],
+      "beta_gap": "n/a",
+      "classification": "V1_OBSOLETE",
+      "preserve_capability": "Historical preserve only \u2014 no Beta product surface"
+    }
+  ],
+  "top_v1_better_or_missing": [
+    {
+      "id": "v1_owner_home",
+      "v1_name": "Wolf Owner Home / Control",
+      "v1_routes": [
+        "http://127.0.0.1:8787/",
+        "wolf.html",
+        "master.status.json tiles"
+      ],
+      "v1_user_can": [
+        "See live pulse tiles: Atrium occ, Kuta rates tonight, BZG last-night revenue/covers, leads, purchasing, Alchemist owe/paid, Spartacus day, backup",
+        "Open Boards drawer + Ask Peaches",
+        "Navigate WOLF TOOLS: Spartacus, Trading, Learning, Radar, Admin Access",
+        "One-glance Owner evening brief"
+      ],
+      "v1_useful": "Dense live command glance; few clicks to ops reality",
+      "v1_bad": "Some tiles locked/restricted without clear path; person-centric; loading hangs on wolf.html content body in headless",
+      "beta_routes": [
+        "/owner-empire-pack",
+        "/wolf",
+        "/business-dashboard",
+        "/owner-needs-you-1",
+        "/staff-ops-routing"
+      ],
+      "beta_user_can": [
+        "Empire pack hub (when CF Access JWT present)",
+        "Needs You / staff-ops routing",
+        "Honesty stamps on migration state"
+      ],
+      "beta_gap": "Local :8788 Owner home BLOCKED_AUTH without Cloudflare JWT; no equivalent live multi-tile pulse in one screen from anon/headless; capability fragmented across prove packs",
+      "classification": "V1_BETTER",
+      "preserve_capability": "Owner live pulse (occ, rates, BZG night, leads, purchasing, health day, backup) on one Owner Home"
+    },
+    {
+      "id": "trading_desk",
+      "v1_name": "Trading Desk",
+      "v1_routes": [
+        "trading.html",
+        "trading-desk/journal.jsonl",
+        "QUANT_PROGRAM.md"
+      ],
+      "v1_user_can": [
+        "Browse 14 research/hub cards: Holdings, Trade journal, TTC paper method, Morning brief, Filings, Earnings, Sector, Insider, Chatter, Floor, Research desk, 8-step desk, Sandbox, Agent OS",
+        "Paper-only research; LIVE badge with WITA timestamp",
+        "Sidebar stay in Wolf Tools"
+      ],
+      "v1_useful": "Real navigable trading research workspace",
+      "v1_bad": "Sprawl of cards; some may be stubs",
+      "beta_routes": [
+        "/owner/trading",
+        "/owner-trading-1.html"
+      ],
+      "beta_user_can": [
+        "See PARTIAL honesty page: migration_state, provenance, holdings registry warnings",
+        "RO API /api/owner/trading-ro (+ history) wired",
+        "No live broker (correct)"
+      ],
+      "beta_gap": "Not a usable desk \u2014 status/transfer page, not Holdings/Journal/TTC cards UI",
+      "classification": "V1_BETTER",
+      "preserve_capability": "Holdings glance + trade journal + TTC paper method UI under Owner Personal"
+    },
+    {
+      "id": "spartacus_fitness",
+      "v1_name": "Spartacus Fitness / Health Command",
+      "v1_routes": [
+        "spartacus.html",
+        "~/.openclaw/personal/health/spartacus.sqlite"
+      ],
+      "v1_user_can": [
+        "Track Sparta/Wolf75, peptides, breathwork",
+        "See day counter on master tile",
+        "Telegram Spartacus bot (Mac)"
+      ],
+      "v1_useful": "Live personal health command",
+      "v1_bad": "Owner-only sprawl in primary tools list",
+      "beta_routes": [
+        "/owner/fitness",
+        "/owner-fitness-1.html"
+      ],
+      "beta_user_can": [
+        "PARTIAL Spartacus transfer surface",
+        "Honesty stamps"
+      ],
+      "beta_gap": "Not live health command; peptide schedule not rebuilt",
+      "classification": "V1_BETTER",
+      "preserve_capability": "Sparta/Wolf75 + peptide tracker with live sqlite-backed UI"
+    },
+    {
+      "id": "travel",
+      "v1_name": "Travel Board",
+      "v1_routes": [
+        "travel.html"
+      ],
+      "v1_user_can": [
+        "View/manage personal travel board"
+      ],
+      "v1_useful": "Dedicated travel surface",
+      "v1_bad": "Wave-era personal sprawl",
+      "beta_routes": [
+        "/owner/travel",
+        "/owner-travel-1.html"
+      ],
+      "beta_user_can": [
+        "Owner travel stub in IA"
+      ],
+      "beta_gap": "Thin vs V1 board",
+      "classification": "V1_BETTER",
+      "preserve_capability": "Owner travel itinerary/board"
+    },
+    {
+      "id": "learning_desk",
+      "v1_name": "Learning Desk / TTC learn",
+      "v1_routes": [
+        "learning.html",
+        "learning-desk/",
+        "ttc-learn-base"
+      ],
+      "v1_user_can": [
+        "Learning entries, TTC paper quant pipeline views"
+      ],
+      "v1_useful": "Ties to Flint quant learning",
+      "v1_bad": "Niche; coupled to Discord ingest",
+      "beta_routes": [
+        "/owner/learning",
+        "/owner-learning-1.html",
+        "/intel-learning.html"
+      ],
+      "beta_user_can": [
+        "Owner learning stub; intel-learning pack"
+      ],
+      "beta_gap": "No full learning desk / TTC entries UI",
+      "classification": "BETA_MISSING_FUNCTION",
+      "preserve_capability": "TTC/learning entries + paper quant drafts (no live trade)"
+    },
+    {
+      "id": "radar",
+      "v1_name": "Wolf Radar (Owner plan)",
+      "v1_routes": [
+        "radar in Wolf Tools",
+        "radar boards"
+      ],
+      "v1_user_can": [
+        "Owner plan/radar board from Wolf Tools"
+      ],
+      "v1_useful": "Owner planning glance",
+      "v1_bad": "Unclear freshness",
+      "beta_routes": [
+        "/radar-prove"
+      ],
+      "beta_user_can": [
+        "Prove pack only"
+      ],
+      "beta_gap": "No Owner Radar as first-class Home item",
+      "classification": "BETA_MISSING_FUNCTION",
+      "preserve_capability": "Owner Radar / plan board on Home"
+    },
+    {
+      "id": "kuta_rates",
+      "v1_name": "Kuta Rates Competitor Board",
+      "v1_routes": [
+        "kuta-rates.html",
+        "competitor-rates pipeline",
+        "rate-calendar.db"
+      ],
+      "v1_user_can": [
+        "See tonight competitor rate intel on master tile + dedicated board"
+      ],
+      "v1_useful": "Actionable rate glance for Atrium",
+      "v1_bad": "Pipeline Mac LaunchAgent coupled",
+      "beta_routes": [
+        "/kuta-rates",
+        "/kuta-rates-1.html",
+        "/ops-competitor-rates-pipeline-1.html",
+        "/ops-rate-calendar-1.html"
+      ],
+      "beta_user_can": [
+        "IA item Kuta Rates (AMG)",
+        "prove/pipeline packs"
+      ],
+      "beta_gap": "Primary useful board vs prove sprawl; pipeline may not be live in Beta",
+      "classification": "V1_BETTER",
+      "preserve_capability": "Tonight competitor rates board + pipeline health under AMG"
+    },
+    {
+      "id": "gatekeeper_eventbus",
+      "v1_name": "Gatekeeper + Event Bus",
+      "v1_routes": [
+        "Gatekeeper vault",
+        "event_bus.db"
+      ],
+      "v1_user_can": [
+        "Owner gate/automation visibility (historical)"
+      ],
+      "v1_useful": "System control plane awareness",
+      "v1_bad": "Not polished product UI",
+      "beta_routes": [
+        "/owner-gatekeeper-1.html",
+        "/ops-event-bus-1.html"
+      ],
+      "beta_user_can": [
+        "Prove/deepen pages only"
+      ],
+      "beta_gap": "No Owner-usable Gatekeeper/Event Bus home",
+      "classification": "BETA_MISSING_FUNCTION",
+      "preserve_capability": "Owner-visible gatekeeper + event bus health under System"
+    }
+  ]
+}

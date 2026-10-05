@@ -1,0 +1,253 @@
+{
+  "schema": "CANONICAL-IA-DRAFT/v0",
+  "generated_wita": "2026-09-30T21:55:00+08:00",
+  "derived_from": [
+    "BETA-PAGE-INVENTORY dispositions",
+    "V1-BETA-PARITY-AUDIT preserve_capability",
+    "Existing sidenav IA_TREE",
+    "GLOBAL-APP-SHELL-SPEC / NAV-AUTHORITY-SPEC"
+  ],
+  "constraints": [
+    "Do not weaken SoD/permissions/data",
+    "Finance SoD/authority unchanged",
+    "Not LIVE_USABLE / staff_ready",
+    "Desktop-first; no mobile commissioning",
+    "Preserve capability when merging UI",
+    "People!=Roles \u2014 no person-named primary IA"
+  ],
+  "top_level": [
+    {
+      "id": "home",
+      "title": "HOME",
+      "items": [
+        {
+          "key": "owner_home",
+          "title": "Owner Home",
+          "href": "/owner-empire-pack",
+          "aliases": [
+            "/wolf"
+          ],
+          "note": "Live pulse tiles target; FINISH WOLF CTA"
+        },
+        {
+          "key": "finish_wolf",
+          "title": "FINISH WOLF",
+          "href": "/finish-war-room",
+          "note": "ONE start link for finish desk \u2014 primary Owner CTA"
+        },
+        {
+          "key": "my_work",
+          "title": "My Work",
+          "href": "/my-work",
+          "note": "Assignment-scoped queue"
+        },
+        {
+          "key": "needs_you",
+          "title": "Needs You",
+          "href": "/staff-ops-routing"
+        },
+        {
+          "key": "owner_personal",
+          "title": "Personal Command",
+          "href": "/owner/personal",
+          "children_tabs": [
+            {
+              "key": "owner_trading",
+              "title": "Trading",
+              "href": "/owner/trading"
+            },
+            {
+              "key": "owner_fitness",
+              "title": "Fitness",
+              "href": "/owner/fitness"
+            },
+            {
+              "key": "owner_travel",
+              "title": "Travel",
+              "href": "/owner/travel"
+            },
+            {
+              "key": "owner_learning",
+              "title": "Learning",
+              "href": "/owner/learning"
+            },
+            {
+              "key": "owner_radar",
+              "title": "Radar",
+              "href": "/owner/radar",
+              "status": "TO_BUILD_FROM_V1"
+            },
+            {
+              "key": "habitat_investment",
+              "title": "Habitat Investment",
+              "href": "/habitat-investment-2026"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "businesses",
+      "title": "BUSINESSES",
+      "items": [
+        {
+          "key": "ggv",
+          "title": "GGV",
+          "href": "/ggv-ops-pack",
+          "tabs_merge": [
+            "finance",
+            "ops",
+            "pipeline",
+            "voice",
+            "content-seat"
+          ],
+          "sod": "preserve GGV FC seat"
+        },
+        {
+          "key": "amg",
+          "title": "Atrium / AMG",
+          "href": "/amg-ops-pack",
+          "tabs_merge": [
+            "day-ops",
+            "sales",
+            "occ",
+            "finance",
+            "kuta-rates",
+            "voice",
+            "packages"
+          ],
+          "sod": "preserve AMG finance SoD"
+        },
+        {
+          "key": "bzg",
+          "title": "Blu Zone / BZG",
+          "href": "/bzg",
+          "tabs_merge": [
+            "ops-desk",
+            "finance",
+            "venue-pnl",
+            "outlets",
+            "waste",
+            "voice"
+          ]
+        },
+        {
+          "key": "uma",
+          "title": "Uma Blu \u00b7 Today",
+          "href": "/bzg/uma-blu",
+          "tabs_become": [
+            "today",
+            "pr",
+            "issues",
+            "petty",
+            "evidence",
+            "exceptions",
+            "bills",
+            "real",
+            "recipes"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "intelligence",
+      "title": "INTELLIGENCE",
+      "items": [
+        {
+          "key": "intel",
+          "title": "Intelligence Home",
+          "href": "/intel-ops-pack"
+        },
+        {
+          "key": "content",
+          "title": "Content",
+          "href": "/content-2.0"
+        },
+        {
+          "key": "seat_content_desk",
+          "title": "Content Desk",
+          "href": "/seats/content-desk"
+        },
+        {
+          "key": "seat_content_admin",
+          "title": "Content Admin",
+          "href": "/seats/content-admin"
+        },
+        {
+          "key": "seat_ads_studio",
+          "title": "Ads Studio",
+          "href": "/seats/ads-studio"
+        },
+        {
+          "key": "seat_resolve_studio",
+          "title": "Resolve Studio",
+          "href": "/seats/resolve-studio"
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "SYSTEM",
+      "items": [
+        {
+          "key": "progress",
+          "title": "Progress",
+          "href": "/progress"
+        },
+        {
+          "key": "integrations",
+          "title": "Integrations",
+          "href": "/integration-health"
+        },
+        {
+          "key": "gatekeeper",
+          "title": "Gatekeeper / Event Bus",
+          "href": "/system/control-plane",
+          "status": "TO_CONSOLIDATE_FROM_PROVE"
+        },
+        {
+          "key": "sale",
+          "title": "Sale Readiness",
+          "href": "/sale-evidence-pack"
+        },
+        {
+          "key": "backup",
+          "title": "Backup / DR",
+          "href": "/backup-health-1",
+          "note": "MOVE under System; hide prove siblings"
+        }
+      ]
+    }
+  ],
+  "hide_from_primary_ia": "All *-prove / *-truth-1 / *-deepen-1 / *-route-1 / *-wire-1 / hr-* deferred / attack-audit / commissioning meta \u2014 HIDE_UNTIL_USEFUL; routes remain for engineers",
+  "owner_home_wireframe": {
+    "hero": [
+      "FINISH WOLF CTA -> /finish-war-room",
+      "My Work count",
+      "Needs You"
+    ],
+    "pulse_row": [
+      "Atrium occ",
+      "Kuta rates tonight",
+      "BZG last night",
+      "Leads 24h",
+      "Exceptions",
+      "Backup"
+    ],
+    "personal_row": [
+      "Trading",
+      "Fitness",
+      "Travel",
+      "Learning",
+      "Radar"
+    ],
+    "business_chips": [
+      "Owner",
+      "GGV",
+      "AMG",
+      "BZG",
+      "Uma Blu"
+    ],
+    "honesty": "migration stamps allowed; never invent LIVE_USABLE"
+  }
+}

@@ -107,11 +107,56 @@ def credit_conservation_status() -> dict:
     }
 
 
+def _dispatch_queue() -> dict:
+    path = BF / "GOD-MODE-DISPATCH.json"
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def named_queue_exempt(pack_hint: str | None = None) -> bool:
+    """Owner 5 Oct 2026 06:24 WITA God Mode queue is not a credit-conservation veto."""
+    hint = (pack_hint or "").lower().replace("_", "-")
+    if not hint:
+        queue = _dispatch_queue()
+        return any(
+            (it.get("state") == "READY" and it.get("auto_arm") is not False and it.get("exempt_from_credit_veto"))
+            for it in (queue.get("items") or [])
+        )
+    breadth = ("tour", "event", "operator-depth", "management-depth", "connective")
+    rebuild = ("recipe-builder", "recipe builder", "daily-close", "daily close", "petty-cash", "petty cash", "bzg-p2p-po-1")
+    if any(tok in hint for tok in breadth) or any(tok in hint for tok in rebuild):
+        return False
+    ids = [
+        "ggv-bills-605",
+        "bzg-p2p-recv-1",
+        "bzg-p2p-nota-bill-1",
+        "bzg-p2p-three-way-1",
+        "bzg-p2p-ap-1",
+        "bzg-p2p-ready-to-pay-1",
+        "owner-home-factory-indicator",
+        "finance-testable-slice",
+    ]
+    for it in (_dispatch_queue().get("items") or []):
+        if it.get("exempt_from_credit_veto") and it.get("id"):
+            ids.append(str(it["id"]).lower())
+    return any(item_id in hint or hint in item_id for item_id in ids)
+
+
 def breadth_arm_blocked(pack_hint: str | None = None) -> dict:
-    """True when conservation enabled and hint is breadth without allow_finish."""
+    """True when conservation enabled and hint is breadth without allow_finish.
+
+    Named God Mode queue items are exempt. Tours/Events and other breadth stay blocked.
+    """
     cc = credit_conservation_status()
     if not cc["enabled"]:
         return {"blocked": False, "enabled": False}
+    if named_queue_exempt(pack_hint):
+        return {"blocked": False, "enabled": True, "reason": "named_god_mode_queue_exempt"}
     hint = (pack_hint or "").lower()
     classes = [c.lower().replace("_", "-") for c in (cc.get("veto_if_pack_class_in") or [])]
     is_breadth = any(c in hint for c in classes) or any(
@@ -161,6 +206,21 @@ def advise(run: dict) -> dict:
         next_action = "FINISH"
 
     cc = credit_conservation_status()
+    slice_hint = run.get("slice") or ""
+    # Slice-local exemption only. A ready named item must not exempt an unrelated breadth run.
+    exempt = named_queue_exempt(slice_hint)
+    if not cc.get("enabled"):
+        breadth_arm = "N/A"
+    elif exempt:
+        breadth_arm = "NAMED_QUEUE_EXEMPT"
+    elif next_action in ("IDLE", "FINISH") and not named_queue_exempt(None):
+        breadth_arm = "BLOCKED_PEACHES_VETO_CREDIT_CONSERVATION"
+    elif named_queue_exempt(None):
+        breadth_arm = "NAMED_QUEUE_EXEMPT"
+    else:
+        breadth_arm = "ALLOW_FINISH_ONLY"
+    # Supervisor launches. wake_parent stays false so a second watcher does not also start a cursor.
+    # stopped is false whenever named READY work exists, which is the old IDLE defect.
     return {
         "run_id": run.get("run_id"),
         "slice": run.get("slice"),
@@ -174,14 +234,10 @@ def advise(run: dict) -> dict:
         "head_commit": run.get("head_commit"),
         "updated_at": run.get("updated_at"),
         "credit_conservation": cc,
-        "next_breadth_arm": "BLOCKED_PEACHES_VETO_CREDIT_CONSERVATION"
-        if cc.get("enabled")
-        and not (
-            (run.get("run_id") or "") == (cc.get("allow_finish_run_id") or "")
-            and next_action in ("CONTINUE_PEACHES", "ADVANCE", "FINISH", "WAIT")
-        )
-        and next_action in ("IDLE", "FINISH")
-        else ("ALLOW_FINISH_ONLY" if cc.get("enabled") else "N/A"),
+        "next_breadth_arm": breadth_arm,
+        "wake_parent": False,
+        "stopped": not (exempt or named_queue_exempt(None)),
+        "require_matt": False,
     }
 
 
@@ -223,7 +279,21 @@ def main() -> int:
         if miss.get("active_mission"):
             print(json.dumps(miss, indent=2))
             return 0
-        print(json.dumps({"ok": True, "active": False, "next_action": "IDLE", "credit_conservation": credit_conservation_status(), "next_breadth_arm": "BLOCKED_PEACHES_VETO_CREDIT_CONSERVATION" if credit_conservation_status().get("enabled") else "N/A"}))
+        cc = credit_conservation_status()
+        exempt = named_queue_exempt(None)
+        print(json.dumps({
+            "ok": True,
+            "active": False,
+            "next_action": "IDLE",
+            "credit_conservation": cc,
+            "next_breadth_arm": "NAMED_QUEUE_EXEMPT" if exempt else (
+                "BLOCKED_PEACHES_VETO_CREDIT_CONSERVATION" if cc.get("enabled") else "N/A"
+            ),
+            "wake_parent": False,
+            "stopped": not exempt,
+            "dispatch_owner": "bf_supervisor",
+            "require_matt": False,
+        }))
         return 0
     out = {"ok": True, "active": True, **advise(run)}
     print(json.dumps(out, indent=2))

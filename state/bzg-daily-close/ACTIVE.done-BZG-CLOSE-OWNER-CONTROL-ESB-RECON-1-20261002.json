@@ -1,0 +1,11 @@
+{
+  "pack": "BZG-CLOSE-OWNER-CONTROL-ESB-RECON-1",
+  "final_state": "DONE",
+  "closed_at": "2026-10-02T22:58:48+08:00",
+  "impl": "0e02bb3",
+  "tip": "a03cdc8",
+  "peaches_verify": "PASS_VERIFIED",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "classic_bf_active": false
+}

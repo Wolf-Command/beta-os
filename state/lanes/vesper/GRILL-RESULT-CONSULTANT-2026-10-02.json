@@ -1,0 +1,93 @@
+{
+  "grilled_at": "2026-10-02T07:41:12+08:00",
+  "pack": "CONSULTANT-2026-10-02",
+  "griller": "Peaches - Chief of Staff",
+  "verdict": "PASS",
+  "owner_gate": "NONE \u2014 already used by RED ~07:24; no second ping",
+  "matt_interrupt": false,
+  "checks": [
+    {
+      "id": "pulse",
+      "claim": "2026-10-02T07:18:01+08",
+      "live_now": "2026-10-02T07:38:17+08",
+      "result": "PASS_WITH_NOTE",
+      "note": "Draft as-of held; pulse advanced ~20m by later refresh \u2014 not stale-as-current fraud"
+    },
+    {
+      "id": "w4_d5",
+      "claim": "HOLD EMPTY LIVE EMPTY",
+      "result": "PASS",
+      "evidence": "12wy-2026-10-02.html LIVE EMPTY planned=0 done=0"
+    },
+    {
+      "id": "freeze",
+      "claim": "No proposal / Atlas 49d / red=15 (18/3/15)",
+      "result": "PASS",
+      "evidence": "PRODUCTION-FROZEN 2026-08-14 \u2192 49d; atlas/health overall red counts 18/3/15"
+    },
+    {
+      "id": "cost_u",
+      "claim": "U Money locked",
+      "result": "PASS_ACCEPT",
+      "note": "not re-probed Money tile; accept Cost U no green-wash"
+    },
+    {
+      "id": "ce",
+      "claim": "staff_ready=false searchable 63246/63370 AWAITING_HAIKAL ARMED_NO_LAUNCH",
+      "result": "PASS",
+      "evidence": "FINAL-TRUTH searchable=63246 discovered=63370; gate status PEACHES_VERIFY_PASS_AWAITING_HAIKAL human_retest=ISSUED staff_ready=false"
+    },
+    {
+      "id": "habitat",
+      "claim": "New=114 stock empty",
+      "result": "PASS",
+      "evidence": "demand habitat leads.sections.new=114 stock.state=empty"
+    },
+    {
+      "id": "nas_stubs",
+      "claim": "LOW not RED",
+      "result": "PASS_ACCEPT"
+    },
+    {
+      "id": "dq",
+      "claim": "open_count=3 OPEN not settled",
+      "result": "PASS",
+      "evidence": "data-quality-exceptions.json open_count=3"
+    },
+    {
+      "id": "brand_closed",
+      "claim": "CLOSED five intentional",
+      "result": "PASS_ACCEPT"
+    },
+    {
+      "id": "breach_j1",
+      "claim": "CLOSED",
+      "result": "PASS_ACCEPT"
+    },
+    {
+      "id": "helm_12wy",
+      "claim": "point not duplicate sermon",
+      "result": "PASS"
+    },
+    {
+      "id": "factory_idle",
+      "claim": "WAIT_MATT_PHONE after OWNER-UX-PETTY-MOBILE-1",
+      "result": "PASS",
+      "evidence": "IDLE_REASON FINISHED_OWNER_UX_PETTY_MOBILE_1_MATT_PHONE_HANDOFF next_action WAIT_MATT_PHONE_COMMISSION_PETTY; Peaches handoff not Vesper Owner-gate"
+    },
+    {
+      "id": "evd_preserve",
+      "claim": "EVD-50e827bd preserve",
+      "result": "PASS_ACCEPT"
+    },
+    {
+      "id": "p0",
+      "claim": "FAIL staff_ready 0 \u2014 no SYSTEM% as staff-ready",
+      "result": "PASS",
+      "evidence": "P0-CLOSURE-REPORT STAFF READINESS 0/77"
+    }
+  ],
+  "drift_guard": "PASS",
+  "blocks_consultant_publish": false,
+  "followups_for_vesper": []
+}

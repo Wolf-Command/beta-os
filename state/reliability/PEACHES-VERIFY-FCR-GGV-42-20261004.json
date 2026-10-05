@@ -1,0 +1,56 @@
+{
+  "pack": "FCR-GGV-42",
+  "run_id": "BF-0c75aaf7a036",
+  "verified_at": "2026-10-04T14:09:33+0800",
+  "verifier": "Peaches",
+  "peaches_independent": true,
+  "factory_stage_was": "WAITING_CURSOR",
+  "factory_next_action_was": "INSPECT",
+  "child_alive": false,
+  "cursor_pid": 62153,
+  "inspect_count_at_finish": 2,
+  "factory_blocker_overridden": true,
+  "override_reason": "FACTORY_CHILD_DEAD_WITHOUT_EXIT_MARKER_CURSOR_RESULT_PRESENT \u2014 pid 62153 dead; RESULT + log present; independent retest 8/0",
+  "cursor_log": "state/reliability/fcr-ggv-42-cursor-20261004.log",
+  "result_md": "state/reliability/FCR-GGV-42-RESULT-2026-10-04.md",
+  "prompt": "state/reliability/FCR-GGV-42-CURSOR-PROMPT-2026-10-04.md",
+  "approved_scope": "Optional tax field on the GGV receipt confirm form only",
+  "py_compile": "PASS",
+  "tests": {
+    "test_fcr_ggv_42_receipt_form_tax_20261004.py": {
+      "pass": 8,
+      "fail": 0
+    }
+  },
+  "scope_check": {
+    "rx_tax_present": true,
+    "blank_omits_tax_key": true,
+    "beta_reloaded": false,
+    "serve_beta_untouched": true,
+    "note": "git diff vs HEAD for ggv-finance.html also includes pre-existing uncommitted receipts/banking sections; this pack's contract is rx-tax + blank-omit confirm body only"
+  },
+  "protected_closes": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+      "state": "EXCEPTION",
+      "declared_cash_amount": 3225000.0,
+      "variance_cash_amount": -125000.0,
+      "business_date": "2026-10-03",
+      "updated_at": "2026-10-03T13:47:39Z",
+      "unchanged": true
+    }
+  },
+  "beta_reload": {
+    "performed": false,
+    "beta_pid": 47590,
+    "prod_pid": 15975
+  },
+  "prod_mutate": false,
+  "eng_proved": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "ready_for_human_test": false,
+  "verdict": "IMPLEMENTATION_DONE_LOCAL_PASS",
+  "matt_ping": false,
+  "matt_ping_kind": null,
+  "note": "Local pass only; no Beta reload; not staff_ready / not READY_FOR_HUMAN_TEST. Owner reporting: do not milestone unit-test pass. No auto-arm next under CREDIT CONSERVATION."
+}

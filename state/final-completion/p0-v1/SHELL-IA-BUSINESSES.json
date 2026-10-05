@@ -1,6 +1,6 @@
 {
   "schema": "SHELL-IA-BUSINESSES/v0",
-  "generated_at_wita": "2026-09-30T10:59:39+08:00",
+  "generated_at_wita": "2026-09-30T11:18:54+08:00",
   "note": "Documentation overlay \u2014 runtime derives businesses from wolf_shell.IA_TREE (home.empire + businesses.*), filtered by whoami pages. Do not treat this file as a second Boards menu.",
   "derived_from": [
     "scripts/core/wolf_shell.py::IA_TREE",
@@ -18,5 +18,11 @@
     "owner_fitness"
   ],
   "staff_ready": false,
-  "migration_state": "PARTIAL"
+  "migration_state": "PARTIAL",
+  "intelligence_seats_partial": [
+    "seat_content_desk",
+    "seat_content_admin",
+    "seat_ads_studio",
+    "seat_resolve_studio"
+  ]
 }

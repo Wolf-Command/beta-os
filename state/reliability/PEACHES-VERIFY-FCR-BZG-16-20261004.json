@@ -1,0 +1,56 @@
+{
+  "pack": "FCR-BZG-16",
+  "run_id": "BF-27af30e79185",
+  "verified_at": "2026-10-04T08:56:30+08:00",
+  "verdict": "IMPLEMENTATION_DONE_LOCAL_PASS",
+  "peaches_independent": true,
+  "py_compile": "PASS",
+  "tests": {
+    "test_fcr_bzg_16_idempotency_20261004.py": {
+      "pass": 28,
+      "fail": 0
+    },
+    "test_fcr_bzg_12_reopen_chain_20261004.py": {
+      "pass": 23,
+      "fail": 0,
+      "role": "regression"
+    }
+  },
+  "files_touched_claimed": [
+    "scripts/core/venue_close.py",
+    "scripts/core/bzg_daily_close.py",
+    "scripts/tests/test_fcr_bzg_16_idempotency_20261004.py",
+    "state/reliability/FCR-BZG-16-RESULT-2026-10-04.md"
+  ],
+  "behavior_checked": [
+    "open_or_get repeat returns same close_id idempotent",
+    "capture_esb_snapshot repeat idempotent mutated false",
+    "attach_declared_cash same amount idempotent",
+    "different amount not silent idempotent",
+    "staff_submit_close same amount idempotent",
+    "different amount amount_mismatch CANNOT SUBMIT",
+    "reconcile on VERIFIED_CLOSED idempotent",
+    "no hardcoded person id in test actor path"
+  ],
+  "protected_closes": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+      "unchanged": true,
+      "declared_cash_amount": 3225000.0,
+      "state": "EXCEPTION",
+      "business_date": "2026-10-03"
+    },
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": {
+      "unchanged": true,
+      "state": "CANCELLED"
+    }
+  },
+  "prod_pid": 15975,
+  "beta_pid": 93525,
+  "beta_restart": false,
+  "prod_untouched": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "eng_proved": false,
+  "ready_for_human_test": false,
+  "note": "No UI surface for this slice; IMPLEMENTATION_DONE local temp-DB only. Not staff_ready / not human commissioned."
+}

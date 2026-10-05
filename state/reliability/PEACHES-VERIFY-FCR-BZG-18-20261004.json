@@ -1,0 +1,71 @@
+{
+  "pack": "FCR-BZG-18",
+  "run_id": "BF-77ae398062d8",
+  "verified_at": "2026-10-04T09:27:30+08:00",
+  "verdict": "IMPLEMENTATION_DONE_LOCAL_PASS",
+  "peaches_independent": true,
+  "factory_stage_was": "BLOCKED",
+  "factory_blocker_was": "FACTORY_FAILURE:inspect_retry_ceiling",
+  "factory_blocker_overridden": true,
+  "override_reason": "Cursor EXITED with IMPLEMENTATION_DONE result + Peaches re-ran tests PASS; inspect_retry_ceiling is orchestration false-BLOCKED not work failure",
+  "py_compile": "PASS",
+  "tests": {
+    "test_fcr_bzg_18_audit_trail_20261004.py": {
+      "pass": 18,
+      "fail": 0
+    },
+    "test_fcr_bzg_17_wrong_date_20261004.py": {
+      "pass": 19,
+      "fail": 0,
+      "role": "regression"
+    },
+    "test_fcr_bzg_16_idempotency_20261004.py": {
+      "pass": 28,
+      "fail": 0,
+      "role": "regression"
+    },
+    "test_fcr_bzg_12_reopen_chain_20261004.py": {
+      "pass": 23,
+      "fail": 0,
+      "role": "regression"
+    }
+  },
+  "files_touched_claimed": [
+    "scripts/core/venue_close.py",
+    "scripts/tests/test_fcr_bzg_18_audit_trail_20261004.py",
+    "state/reliability/FCR-BZG-18-RESULT-2026-10-04.md"
+  ],
+  "behavior_checked": [
+    "audit_trail returns ordered open+capture actions",
+    "actor_person_id from caller on open and capture",
+    "occurred_at present",
+    "before_state/after_state on open and capture metadata",
+    "temp DB only; no second audit system",
+    "protected closes unchanged after test"
+  ],
+  "protected_closes": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+      "state": "EXCEPTION",
+      "declared_cash_amount": 3225000.0,
+      "variance_cash_amount": -125000.0,
+      "business_date": "2026-10-03",
+      "unchanged": true
+    },
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": {
+      "state": "CANCELLED",
+      "business_date": "2026-10-02",
+      "unchanged": true
+    }
+  },
+  "prod_pid": 15975,
+  "beta_pid": 93525,
+  "beta_restart": false,
+  "prod_untouched": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "eng_proved": false,
+  "ready_for_human_test": false,
+  "no_ui_surface": true,
+  "git_head": "0b0e50d",
+  "dirty_approx": 484
+}

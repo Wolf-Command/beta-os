@@ -45,16 +45,17 @@ def _item(
 
 def _uma_close() -> list[dict[str, Any]]:
     close = uma._close_branch()  # noqa: SLF001 — shared read of the live close gate
-    if not close.get("branch_blocked"):
+    # Owner P0 5 Oct 2026: surface as Action required, not a save-blocker. Null policy → exception path.
+    if not close.get("action_required") and not close.get("branch_blocked"):
         return []
     return [
         _item(
             kind="uma_daily_close",
-            title="Uma Blu Daily Close is BLOCKED",
-            detail=str(close.get("reason") or "Closer or variance policy is not set."),
+            title="DAILY CLOSE · Action required",
+            detail=str(close.get("reason") or "Variance policy needs approval · [REVIEW]"),
             href=str(close.get("href") or "/uma-blu-close"),
-            owner_role="Owner (policy) / closer when named",
-            blocked=True,
+            owner_role="Owner",
+            blocked=False,
             money_risk=True,
         )
     ]

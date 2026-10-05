@@ -1,0 +1,329 @@
+{
+  "schema": "CONSOLIDATION-PACK-QUEUE/v0",
+  "generated_wita": "2026-09-30T22:46:43+08:00",
+  "bound": "beta_only",
+  "prod_8787": "READ_ONLY",
+  "finance_sod": "DO_NOT_CHANGE",
+  "implement_next_run": true,
+  "packs": [
+    {
+      "id": "UX-PACK-01",
+      "title": "Owner Home shell + FINISH WOLF CTA",
+      "priority": 1,
+      "goal": "Make /owner-empire-pack the desktop start with FINISH WOLF hero + My Work/Needs You; wire IA HOME items",
+      "touches": [
+        "owner-empire-pack.html",
+        "sidenav.js IA_TREE",
+        "wolf_shell.py IA_TREE",
+        "finish-war-room.html link"
+      ],
+      "acceptance_partial": [
+        "FINISH WOLF visible on Owner Home + HOME nav",
+        "No staff_ready invent",
+        "Auth unchanged (still CF Access)"
+      ],
+      "out_of_scope": [
+        "Finance SoD",
+        "Mobile",
+        "Live trading broker"
+      ]
+    },
+    {
+      "id": "UX-PACK-02",
+      "title": "Hide prove/deepen from primary IA",
+      "priority": 2,
+      "goal": "Remove ~73 HIDE_UNTIL_USEFUL surfaces from Boards/primary discoverability; keep routes for engineers",
+      "touches": [
+        "sidenav.js",
+        "wolf_shell AUDIENCE_PAGES if needed",
+        "optional /system/lab index"
+      ],
+      "acceptance_partial": [
+        "Primary IA item count shrinks toward hubs+seats",
+        "Direct URLs to prove pages still work for cleared roles",
+        "Capability note preserved in inventory"
+      ],
+      "out_of_scope": [
+        "Deleting HTML files",
+        "API removals"
+      ]
+    },
+    {
+      "id": "UX-PACK-03",
+      "title": "Uma Blu tab consolidation",
+      "priority": 3,
+      "goal": "BECOME_TAB: bills/evidence/exceptions/issues/petty/pr/real under /bzg/uma-blu chrome tabs",
+      "touches": [
+        "bzg-uma-blu*.html",
+        "uma APIs unchanged",
+        "sidenav uma item"
+      ],
+      "acceptance_partial": [
+        "One Uma Blu desk URL with tabs",
+        "No permission weaken",
+        "Recipes linked as tab or subhub"
+      ],
+      "out_of_scope": [
+        "Staff commissioning claims"
+      ]
+    },
+    {
+      "id": "UX-PACK-04",
+      "title": "AMG + GGV hub tab merge (non-finance-auth)",
+      "priority": 4,
+      "goal": "MERGE day-ops/journey/packages/occ/kuta into AMG hub tabs; GGV pipeline/strategy/social into GGV hub tabs \u2014 visual only",
+      "touches": [
+        "amg-ops-pack.html",
+        "ggv-ops-pack.html",
+        "related HTML as tab targets"
+      ],
+      "acceptance_partial": [
+        "Fewer top-level biz leaves",
+        "Finance routes remain SoD-gated exactly as today",
+        "Kuta Rates reachable as AMG tab"
+      ],
+      "out_of_scope": [
+        "Changing finance auth matrices",
+        "FC seat grants"
+      ]
+    },
+    {
+      "id": "UX-PACK-05",
+      "title": "Owner Trading desk parity slice (UI from V1 cards)",
+      "priority": 5,
+      "goal": "Upgrade /owner/trading from PARTIAL status page toward V1 card desk (Holdings, Journal, TTC paper) RO \u2014 still paper only",
+      "touches": [
+        "owner-trading-1.html",
+        "/api/owner/trading-ro",
+        "optional journal RO"
+      ],
+      "acceptance_partial": [
+        "User can open Holdings + Journal views (RO)",
+        "Honesty PARTIAL retained",
+        "No live broker"
+      ],
+      "out_of_scope": [
+        "Live orders",
+        "staff_ready"
+      ]
+    },
+    {
+      "id": "UX-PACK-06",
+      "title": "Owner Fitness + peptide RO parity slice",
+      "priority": 6,
+      "goal": "Bring Spartacus-usable RO glance onto /owner/fitness from V1 sqlite (read)",
+      "touches": [
+        "owner-fitness-1.html",
+        "RO health APIs if present"
+      ],
+      "acceptance_partial": [
+        "Day/program visible",
+        "PARTIAL stamp",
+        "no write invent"
+      ],
+      "out_of_scope": [
+        "Telegram bot port",
+        "HR"
+      ]
+    },
+    {
+      "id": "UX-PACK-07",
+      "title": "Personal Command IA grouping + Radar stub",
+      "priority": 7,
+      "goal": "Group personal surfaces; add /owner/radar stub fed by V1 radar intent",
+      "touches": [
+        "sidenav.js",
+        "owner-*-1.html crumbs",
+        "new radar stub optional"
+      ],
+      "acceptance_partial": [
+        "Personal Command discoverable",
+        "Radar not only radar-prove"
+      ],
+      "out_of_scope": [
+        "Full V1 radar feature parity in one pack"
+      ]
+    },
+    {
+      "id": "UX-PACK-08",
+      "title": "My Work click-depth + Owner session screenshot pass",
+      "priority": 8,
+      "goal": "Workflow audit follow-on: queues by assignment; capture real desktop shots with Owner CF session",
+      "touches": [
+        "my-work.html",
+        "screenshot re-run"
+      ],
+      "acceptance_partial": [
+        "Documented click depth",
+        "Owner Home+FINISH+biz hubs captured with auth"
+      ],
+      "out_of_scope": [
+        "Mobile"
+      ]
+    },
+    {
+      "id": "UX-PACK-09",
+      "title": "Owner Home live pulse (V1 evening-brief parity slice)",
+      "priority": 9,
+      "goal": "Dense Pulse strip on Owner Home with real SoT cards + honesty stamps",
+      "touches": [
+        "owner-empire-pack.html",
+        "owner_pulse_ro.py",
+        "serve_beta.py"
+      ],
+      "acceptance_partial": [
+        "Pulse strip visible with 7 tiles",
+        "No invented metrics",
+        "FINISH WOLF / Personal preserved",
+        "finance_sod_unchanged"
+      ],
+      "out_of_scope": [
+        "Finance SoD",
+        "Mobile",
+        "Fake screenshots",
+        "Invented occupancy/revenue"
+      ],
+      "status": "APPLIED",
+      "applied_wita": "2026-09-30T22:30:24+08:00",
+      "deepen": "UX-PACK-09b"
+    },
+    {
+      "id": "UX-PACK-10",
+      "title": "Authenticated screenshot pass (Owner CF)",
+      "priority": 10,
+      "goal": "Capture real desktop shots of Owner Home pulse + FINISH + hubs with Owner CF Access session",
+      "touches": [
+        "DESKTOP-SCREENSHOT-AUDIT",
+        "images/"
+      ],
+      "acceptance_partial": [
+        "Owner Home pulse strip captured authenticated",
+        "No fake/placeholder screenshots"
+      ],
+      "out_of_scope": [
+        "Mobile",
+        "Inventing CF session"
+      ],
+      "status": "BLOCKED",
+      "blocked_reason": "Requires Matt Owner Cloudflare Access session in browser; headless/local :8788 fails closed without Cf-Access-Jwt-Assertion. Do not fake screenshots.",
+      "how_to_unblock": [
+        "Matt opens https://beta.wolfcommand.net/owner-empire-pack in a browser already signed into Owner CF Access",
+        "Re-run screenshot audit against authenticated session (or approve agent browser with CF cookies)",
+        "Until then keep shots marked BLOCKED_AUTH"
+      ]
+    },
+    {
+      "id": "UX-PACK-11",
+      "title": "Optional Travel RO / Learning RO desk deepen",
+      "priority": 11,
+      "goal": "Cheap deepen of /owner/travel and /owner/learning RO desks only if pulse residuals are acceptable",
+      "touches": [
+        "owner-travel-1.html",
+        "owner-learning-1.html",
+        "travel-ro",
+        "learning-ro"
+      ],
+      "acceptance_partial": [
+        "PARTIAL stamp",
+        "no invent",
+        "routes already exist"
+      ],
+      "out_of_scope": [
+        "staff_ready",
+        "Finance SoD",
+        "Live booking / live quant"
+      ],
+      "status": "APPLIED_CHEAP",
+      "note": "Only if cheap after pulse; APIs /api/owner/travel-ro and /api/owner/learning-ro already 200",
+      "applied_wita": "2026-09-30T22:39:35+08:00"
+    },
+    {
+      "id": "UX-PACK-09b",
+      "title": "Pulse deepen (honest LIVE/EMPTY/BLOCKED)",
+      "priority": 9.5,
+      "status": "APPLIED",
+      "applied_wita": "2026-09-30T22:39:35+08:00",
+      "parent": "UX-PACK-09",
+      "counts_after": {
+        "tiles": 7,
+        "LIVE": 2,
+        "PARTIAL": 3,
+        "EMPTY": 1,
+        "BLOCKED": 1
+      }
+    },
+    {
+      "id": "UX-PACK-12",
+      "title": "Radar deepen + Owner Home polish (desktop UX toward gate)",
+      "priority": 12,
+      "status": "APPLIED_PARTIAL",
+      "applied_wita": "2026-09-30T22:46:43+08:00",
+      "goal": "Deepen /owner/radar RO desk + Owner Home exceptions/Needs You clarity toward desktop gate without claiming ready",
+      "acceptance_partial": [
+        "Radar PARTIAL desk with tonight/this-week cards + honesty",
+        "Owner Home Needs You/Exceptions one-hop",
+        "No desktop_gate_ready claim",
+        "finance_sod unchanged"
+      ],
+      "out_of_scope": [
+        "Finance SoD",
+        "Fake CF screenshots",
+        "Invented occ/revenue",
+        "staff_ready"
+      ]
+    }
+  ],
+  "last_applied": [
+    "UX-PACK-01",
+    "UX-PACK-02",
+    "UX-PACK-03",
+    "UX-PACK-04",
+    "UX-PACK-05",
+    "UX-PACK-06",
+    "UX-PACK-07",
+    "UX-PACK-08",
+    "UX-PACK-09",
+    "UX-PACK-09b",
+    "UX-PACK-11",
+    "UX-PACK-12"
+  ],
+  "next_implement": [
+    "UX-PACK-10"
+  ],
+  "desktop_gate_ready": false,
+  "ux_pack_09": {
+    "status": "APPLIED",
+    "api": "/api/owner/pulse-ro",
+    "counts": {
+      "tiles": 7,
+      "LIVE": 1,
+      "PARTIAL": 5,
+      "EMPTY": 0,
+      "BLOCKED": 1
+    }
+  },
+  "ux_pack_09b": {
+    "status": "APPLIED",
+    "counts": {
+      "tiles": 7,
+      "LIVE": 2,
+      "PARTIAL": 3,
+      "EMPTY": 1,
+      "BLOCKED": 1
+    }
+  },
+  "ux_pack_11": {
+    "status": "APPLIED_CHEAP"
+  },
+  "ux_pack_12": {
+    "status": "APPLIED_PARTIAL",
+    "radar_api": "/api/owner/radar-ro",
+    "counts": {
+      "tiles": 15,
+      "LIVE": 1,
+      "PARTIAL": 3,
+      "EMPTY": 4,
+      "BLOCKED": 7
+    }
+  }
+}

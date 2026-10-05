@@ -1,0 +1,17 @@
+{
+  "frozen_at": "2026-10-03T17:29:00+08:00",
+  "head": "0b0e50da410d7158777871ae240c7e757502f5d3",
+  "branch": "build/wolf-command-rebuild",
+  "dirty_count": 438,
+  "failed_run": "continuation-3",
+  "failed_error": "RetriableError [resource_exhausted] after 3 reconnects to agentn.global.api5.cursor.sh",
+  "model_flag": "none (default auto)",
+  "changed_nothing": false,
+  "completed_run": "continuation-3-resumed",
+  "classification": "CODE COMPLETE / INTEGRATION PARTIAL",
+  "staff_ready": false,
+  "eng_proved": false,
+  "prod_pid": 15975,
+  "preserved_close": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+  "prove": "state/reliability/prove_finance_control_ggv_accounting_20261003.py PASS"
+}

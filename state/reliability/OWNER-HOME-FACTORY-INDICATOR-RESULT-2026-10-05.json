@@ -1,0 +1,68 @@
+{
+  "pack_id": "OWNER-HOME-FACTORY-INDICATOR",
+  "status": "IMPLEMENTATION_DONE_BETA_RELOADED",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "eng_proved": false,
+  "routes": {
+    "page": "/owner/cockpit",
+    "api": "GET /api/owner/cockpit",
+    "factory_indicator_field": "factory_indicator"
+  },
+  "files_changed": [
+    "scripts/core/owner_factory_indicator_ro.py",
+    "scripts/core/owner_cockpit.py",
+    "dashboards/owner-cockpit.html",
+    "scripts/tests/test_owner_home_factory_indicator_20261005.py"
+  ],
+  "tests_pass": {
+    "test_owner_home_factory_indicator_20261005.py": 9,
+    "test_owner_cockpit_pack1.py": 22
+  },
+  "tests_fail": {
+    "test_owner_home_factory_indicator_20261005.py": 0,
+    "test_owner_cockpit_pack1.py": 0
+  },
+  "live_indicator_after_reload": {
+    "active_workers": 1,
+    "ready_queue_count": 0,
+    "blocked_count": 0,
+    "ready_for_human_test_count": 6,
+    "last_completion_at": "2026-10-04T23:00:16Z",
+    "last_autonomous_dispatch_at": "2026-10-04T23:00:16Z",
+    "line": "Factory · 1 worker · 0 ready · 0 blocked · 6 for your test · last done 2026-10-04T23:00:16Z · last dispatch 2026-10-04T23:00:16Z"
+  },
+  "beta_reloaded": true,
+  "beta_listener_pid": 2744,
+  "beta_port": 8788,
+  "beta_listener_count": 1,
+  "prod_pid_unchanged": 1297,
+  "prod_port": 8787,
+  "prod_listener_count": 1,
+  "protected_close_untouched": true,
+  "protected_close_states": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": "EXCEPTION",
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": "CANCELLED",
+    "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5": "DATA_CAPTURED"
+  },
+  "ggv_counts_unchanged": {
+    "ggv_bills": 605,
+    "ggv_invoices": 46,
+    "ggv_notas": 33
+  },
+  "no_prod": true,
+  "no_commit": true,
+  "no_money_movement": true,
+  "what_was_not_built": [
+    "Owner Home not rebuilt",
+    "purchasing rebuild",
+    "AP rebuild",
+    "Ready to Pay rebuild",
+    "Recipe Builder rebuild",
+    "Daily Close rebuild",
+    "Petty Cash rebuild",
+    "payment execution",
+    "money movement",
+    "ggv_* table writes"
+  ]
+}

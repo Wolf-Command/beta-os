@@ -1,0 +1,127 @@
+{
+  "pack": "CLOSE-SURFACE",
+  "run_id": "BF-f3e574a95527",
+  "verified_at": "2026-10-04T12:18:58+08:00",
+  "verifier": "Peaches",
+  "peaches_independent": true,
+  "factory_stage_was": "WAITING_CURSOR",
+  "factory_next_action_was": "INSPECT",
+  "factory_wake_was": "FACTORY_INSPECT_RECOVER",
+  "child_alive": false,
+  "cursor_pid": 39469,
+  "inspect_count_at_finish": 1,
+  "factory_blocker_overridden": true,
+  "override_reason": "Cursor EXITED (pid 39469 dead) with IMPLEMENTATION_DONE result + Peaches re-ran tests PASS; factory still WAITING_CURSOR/INSPECT without EXIT marker \u2014 orchestration gap not work failure",
+  "cursor_status": "EXITED_IMPLEMENTATION_DONE",
+  "cursor_log": "state/reliability/close-surface-cursor-20261004.log",
+  "result_md": "state/reliability/CLOSE-SURFACE-RESULT-2026-10-04.md",
+  "py_compile": "PASS",
+  "tests": {
+    "test_close_surface_staff_rules_20261004.py": {
+      "pass": 11,
+      "fail": 0
+    },
+    "test_fcr_bzg_28_manual_fallback_20261004.py": {
+      "pass": 26,
+      "fail": 0,
+      "role": "regression"
+    },
+    "test_fcr_bzg_23_outlet_bank_configuration_20261004.py": {
+      "pass": 13,
+      "fail": 0,
+      "role": "regression"
+    },
+    "test_fcr_bzg_22_unknown_receipt_lines_20261004.py": {
+      "pass": 14,
+      "fail": 0,
+      "role": "regression"
+    },
+    "test_fcr_bzg_19_original_evidence_preservation_20261004.py": {
+      "pass": 18,
+      "fail": 0,
+      "role": "regression"
+    },
+    "test_fcr_bzg_18_audit_trail_20261004.py": {
+      "pass": 18,
+      "fail": 0,
+      "role": "regression"
+    },
+    "test_fcr_bzg_17_wrong_date_20261004.py": {
+      "pass": 19,
+      "fail": 0,
+      "role": "regression"
+    },
+    "test_fcr_bzg_16_idempotency_20261004.py": {
+      "pass": 28,
+      "fail": 0,
+      "role": "regression"
+    },
+    "test_fcr_bzg_12_reopen_chain_20261004.py": {
+      "pass": 23,
+      "fail": 0,
+      "role": "regression"
+    }
+  },
+  "files_touched_claimed": [
+    "dashboards/uma-blu-close.html",
+    "scripts/core/bzg_daily_close.py",
+    "scripts/serve_beta.py",
+    "scripts/tests/test_close_surface_staff_rules_20261004.py"
+  ],
+  "behavior_checked": [
+    "nine-step staff flow on uma-blu-close.html",
+    "three sources kept separate: live ESB, printed shift receipt, physical till",
+    "one Submit close control; no Reconcile",
+    "empty outlet banks say needs setup not zero",
+    "blank bank amounts not zero",
+    "failed photo allows typed entry",
+    "repeat submit idempotent not second close",
+    "enrich_close includes staff_close_surface"
+  ],
+  "protected_closes": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+      "state": "EXCEPTION",
+      "declared_cash_amount": 3225000.0,
+      "variance_cash_amount": -125000.0,
+      "business_date": "2026-10-03",
+      "updated_at": "2026-10-03T13:47:39Z",
+      "unchanged": true,
+      "catalog_mtime_note": "catalog file mtime advanced to 2026-10-04T12:08:28+08:00 under live Beta WAL; protected row bytes unchanged"
+    },
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": {
+      "state": "CANCELLED",
+      "business_date": "2026-10-02",
+      "updated_at": "2026-10-03T12:32:22Z",
+      "unchanged": true
+    }
+  },
+  "beta_reload": {
+    "performed": true,
+    "at": "2026-10-04T12:18:58+08:00",
+    "method": "python3 scripts/beta_restart.py \u2192 launchctl kickstart -k gui/501/net.wolfcommand.serve-beta",
+    "old_pid": 93525,
+    "new_pid": 42835,
+    "port": 8788,
+    "beta_api_health": 200,
+    "uma_close_get_unauth": 403,
+    "prod_pid_15975_untouched": true
+  },
+  "pids": {
+    "prod": 15975,
+    "beta": 42835,
+    "sidecar_cursor_worker": 63443
+  },
+  "prod_mutate": false,
+  "tip": "0b0e50d",
+  "dirty_approx": 505,
+  "eng_proved": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "ready_for_human_test": true,
+  "beta_link": "https://beta.wolfcommand.net/uma-blu-close",
+  "real_task": "Staff Uma Blu Daily Close: open today's close \u2192 shift report photo \u2192 confirm figures \u2192 Mandiri/BNI/BRI \u2192 cash \u2192 Wolf three-source compare \u2192 resolve \u2192 submit once \u2192 unmistakable result. Do not use protected 3 Oct close VDC-470e741f as the test.",
+  "verdict": "IMPLEMENTATION_DONE_BETA_RELOADED_READY_FOR_HUMAN_TEST",
+  "matt_ping": true,
+  "matt_ping_kind": "READY_FOR_HUMAN_TEST",
+  "note": "Owner Daily Close gate: morning FCR behavior wired into staff surface + Beta reloaded. Not staff_ready / not human commissioned until a person completes the real task."
+}

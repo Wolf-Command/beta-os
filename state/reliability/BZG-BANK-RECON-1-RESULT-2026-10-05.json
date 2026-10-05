@@ -1,0 +1,454 @@
+{
+  "pack": "BZG-BANK-RECON-1",
+  "finished_at": "2026-10-05T11:18:36+08:00",
+  "backup": "/Users/wolfterminal/beta-os/catalog/backups/pre-bzg-bank-recon1-20261005-111836.sqlite",
+  "backup_sha256": "5dfee58941ba7660997c5e4a003208d329a7cd49814cf45217f3d82a07d474d4",
+  "migration": "scripts/migrations/migrate_bzg_bank_recon1_20261005.py",
+  "core": "scripts/core/bzg_bank_recon1.py",
+  "test_file": "scripts/tests/test_bzg_bank_recon1_20261005.py",
+  "apply_result": {
+    "pack": "BZG-BANK-RECON-1",
+    "staff_ready": false,
+    "human_commissioned": false,
+    "zayen_ready": false,
+    "money_movement": false,
+    "payment_execute": false,
+    "read_only": true,
+    "entity_id": "ENT-BZG",
+    "auto_reconciled": false,
+    "ok": true,
+    "schema": "bzg.bank.recon.v1",
+    "applied_at": "2026-10-05T11:18:36+08:00",
+    "transaction_count": 1257,
+    "state_counts": {
+      "POSSIBLE MATCH": 45,
+      "MATCHED": 9,
+      "EXCEPTION": 314,
+      "UNMATCHED": 889
+    },
+    "matched_txn_ids": [
+      "BZG-TXN-BZG-BANK-29660D515F45-0024",
+      "BZG-TXN-BZG-BANK-29AE7A658E4E-0029",
+      "BZG-TXN-BZG-BANK-8D7D0E09385C-0148",
+      "BZG-TXN-BZG-BANK-8D7D0E09385C-0232",
+      "BZG-TXN-BZG-BANK-8D7D0E09385C-0259",
+      "BZG-TXN-BZG-BANK-8D7D0E09385C-0271",
+      "BZG-TXN-BZG-BANK-8D7D0E09385C-0274",
+      "BZG-TXN-BZG-BANK-8D7D0E09385C-0324",
+      "BZG-TXN-BZG-BANK-8D7D0E09385C-0401"
+    ],
+    "transfer_pair_count": 2
+  },
+  "summary": {
+    "pack": "BZG-BANK-RECON-1",
+    "staff_ready": false,
+    "human_commissioned": false,
+    "zayen_ready": false,
+    "money_movement": false,
+    "payment_execute": false,
+    "read_only": true,
+    "entity_id": "ENT-BZG",
+    "auto_reconciled": false,
+    "ok": true,
+    "schema": "bzg.bank.recon.v1",
+    "import_stats": {
+      "import_total": 15,
+      "parsed_import_count": 10,
+      "parse_exception_import_count": 5,
+      "transaction_count": 1257,
+      "imports": [
+        {
+          "import_id": "BZG-BANK-26195951FAEA",
+          "bank_label": "BNI",
+          "account_label": "BNI-2177177110",
+          "original_filename": "BNI-2177177110_2026-04.xls",
+          "txn_count": 0,
+          "parse_status": "EXCEPTION",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-FB1CFFB488C9",
+          "bank_label": "BNI",
+          "account_label": "BNI-2177177110",
+          "original_filename": "BNI-2177177110_2026-05.xls",
+          "txn_count": 0,
+          "parse_status": "EXCEPTION",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-27D32CA1AD20",
+          "bank_label": "BNI",
+          "account_label": "BNI-2177177110",
+          "original_filename": "BNI-2177177110_2026-06.xls",
+          "txn_count": 0,
+          "parse_status": "EXCEPTION",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-CF2AEF1215B9",
+          "bank_label": "BNI",
+          "account_label": "BNI-2177177110",
+          "original_filename": "BNI-2177177110_2026-07.xls",
+          "txn_count": 0,
+          "parse_status": "EXCEPTION",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-2611D78E5066",
+          "bank_label": "BNI",
+          "account_label": "BNI-2177177110",
+          "original_filename": "BNI-2177177110_2026-08.xls",
+          "txn_count": 0,
+          "parse_status": "EXCEPTION",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-DCA5FE9E4C48",
+          "bank_label": "BRI",
+          "account_label": "BRI-19101003489305",
+          "original_filename": "IBIZ_019101003489305_20260401_20260430_1782816151756869633.csv",
+          "txn_count": 40,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-987DE4DB457E",
+          "bank_label": "BRI",
+          "account_label": "BRI-19101003489305",
+          "original_filename": "IBIZ_019101003489305_20260501_20260531_1782816182088072416.csv",
+          "txn_count": 46,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-6A36E6BFAC39",
+          "bank_label": "BRI",
+          "account_label": "BRI-19101003489305",
+          "original_filename": "IBIZ_019101003489305_20260601_20260630_1782816217464375745.csv",
+          "txn_count": 27,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-29AE7A658E4E",
+          "bank_label": "BRI",
+          "account_label": "BRI-19101003489305",
+          "original_filename": "IBIZ_019101003489305_20260701_20260731_matthew-drop-20260905.csv",
+          "txn_count": 35,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-29660D515F45",
+          "bank_label": "BRI",
+          "account_label": "BRI-19101003489305",
+          "original_filename": "IBIZ_019101003489305_20260801_20260831_matthew-drop-20260905.csv",
+          "txn_count": 28,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-EBA64E6298F3",
+          "bank_label": "MANDIRI",
+          "account_label": "Mandiri-1610555335558",
+          "original_filename": "Acc_Statement_1610555335558_2026-03-01_2026-03-31_20260715144757.csv",
+          "txn_count": 53,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-0CDCAE26E15A",
+          "bank_label": "MANDIRI",
+          "account_label": "Mandiri-1610555335558",
+          "original_filename": "Acc_Statement_1610555335558_2026-04-01_2026-04-30_20260715144828.csv",
+          "txn_count": 184,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-44DF9D45B758",
+          "bank_label": "MANDIRI",
+          "account_label": "Mandiri-1610555335558",
+          "original_filename": "Acc_Statement_1610555335558_2026-05-01_2026-05-31_20260715144856.csv",
+          "txn_count": 225,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-EFF5C04C7D24",
+          "bank_label": "MANDIRI",
+          "account_label": "Mandiri-1610555335558",
+          "original_filename": "Acc_Statement_1610555335558_2026-06-01_2026-06-30_20260715144913.csv",
+          "txn_count": 155,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-8D7D0E09385C",
+          "bank_label": "MANDIRI",
+          "account_label": "Mandiri-1610555335558",
+          "original_filename": "Acc_Statement_1610555335558_2026-07-01_2026-08-31_20260902audit.csv",
+          "txn_count": 464,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        }
+      ],
+      "parsed_imports": [
+        {
+          "import_id": "BZG-BANK-DCA5FE9E4C48",
+          "bank_label": "BRI",
+          "account_label": "BRI-19101003489305",
+          "original_filename": "IBIZ_019101003489305_20260401_20260430_1782816151756869633.csv",
+          "txn_count": 40,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-987DE4DB457E",
+          "bank_label": "BRI",
+          "account_label": "BRI-19101003489305",
+          "original_filename": "IBIZ_019101003489305_20260501_20260531_1782816182088072416.csv",
+          "txn_count": 46,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-6A36E6BFAC39",
+          "bank_label": "BRI",
+          "account_label": "BRI-19101003489305",
+          "original_filename": "IBIZ_019101003489305_20260601_20260630_1782816217464375745.csv",
+          "txn_count": 27,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-29AE7A658E4E",
+          "bank_label": "BRI",
+          "account_label": "BRI-19101003489305",
+          "original_filename": "IBIZ_019101003489305_20260701_20260731_matthew-drop-20260905.csv",
+          "txn_count": 35,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-29660D515F45",
+          "bank_label": "BRI",
+          "account_label": "BRI-19101003489305",
+          "original_filename": "IBIZ_019101003489305_20260801_20260831_matthew-drop-20260905.csv",
+          "txn_count": 28,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-EBA64E6298F3",
+          "bank_label": "MANDIRI",
+          "account_label": "Mandiri-1610555335558",
+          "original_filename": "Acc_Statement_1610555335558_2026-03-01_2026-03-31_20260715144757.csv",
+          "txn_count": 53,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-0CDCAE26E15A",
+          "bank_label": "MANDIRI",
+          "account_label": "Mandiri-1610555335558",
+          "original_filename": "Acc_Statement_1610555335558_2026-04-01_2026-04-30_20260715144828.csv",
+          "txn_count": 184,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-44DF9D45B758",
+          "bank_label": "MANDIRI",
+          "account_label": "Mandiri-1610555335558",
+          "original_filename": "Acc_Statement_1610555335558_2026-05-01_2026-05-31_20260715144856.csv",
+          "txn_count": 225,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-EFF5C04C7D24",
+          "bank_label": "MANDIRI",
+          "account_label": "Mandiri-1610555335558",
+          "original_filename": "Acc_Statement_1610555335558_2026-06-01_2026-06-30_20260715144913.csv",
+          "txn_count": 155,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-8D7D0E09385C",
+          "bank_label": "MANDIRI",
+          "account_label": "Mandiri-1610555335558",
+          "original_filename": "Acc_Statement_1610555335558_2026-07-01_2026-08-31_20260902audit.csv",
+          "txn_count": 464,
+          "parse_status": "UNMATCHED",
+          "period_start": null,
+          "period_end": null
+        }
+      ],
+      "parse_exception_imports": [
+        {
+          "import_id": "BZG-BANK-26195951FAEA",
+          "bank_label": "BNI",
+          "account_label": "BNI-2177177110",
+          "original_filename": "BNI-2177177110_2026-04.xls",
+          "txn_count": 0,
+          "parse_status": "EXCEPTION",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-FB1CFFB488C9",
+          "bank_label": "BNI",
+          "account_label": "BNI-2177177110",
+          "original_filename": "BNI-2177177110_2026-05.xls",
+          "txn_count": 0,
+          "parse_status": "EXCEPTION",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-27D32CA1AD20",
+          "bank_label": "BNI",
+          "account_label": "BNI-2177177110",
+          "original_filename": "BNI-2177177110_2026-06.xls",
+          "txn_count": 0,
+          "parse_status": "EXCEPTION",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-CF2AEF1215B9",
+          "bank_label": "BNI",
+          "account_label": "BNI-2177177110",
+          "original_filename": "BNI-2177177110_2026-07.xls",
+          "txn_count": 0,
+          "parse_status": "EXCEPTION",
+          "period_start": null,
+          "period_end": null
+        },
+        {
+          "import_id": "BZG-BANK-2611D78E5066",
+          "bank_label": "BNI",
+          "account_label": "BNI-2177177110",
+          "original_filename": "BNI-2177177110_2026-08.xls",
+          "txn_count": 0,
+          "parse_status": "EXCEPTION",
+          "period_start": null,
+          "period_end": null
+        }
+      ]
+    },
+    "state_counts": {
+      "EXCEPTION": 314,
+      "MATCHED": 9,
+      "POSSIBLE MATCH": 45,
+      "UNMATCHED": 889
+    },
+    "state_sum": 1257,
+    "transaction_count": 1257,
+    "counts_match_transactions": true,
+    "missing_statement_months": [
+      {
+        "account_label": "BNI-2177177110",
+        "bank_label": "BNI",
+        "month": "2026-09",
+        "status": "NEEDS FROM MATT",
+        "message": "No statement on file for BNI-2177177110 2026-09"
+      },
+      {
+        "account_label": "BNI-2177177110",
+        "bank_label": "BNI",
+        "month": "2026-10",
+        "status": "NEEDS FROM MATT",
+        "message": "No statement on file for BNI-2177177110 2026-10"
+      },
+      {
+        "account_label": "BRI-19101003489305",
+        "bank_label": "BRI",
+        "month": "2026-09",
+        "status": "NEEDS FROM MATT",
+        "message": "No statement on file for BRI-19101003489305 2026-09"
+      },
+      {
+        "account_label": "BRI-19101003489305",
+        "bank_label": "BRI",
+        "month": "2026-10",
+        "status": "NEEDS FROM MATT",
+        "message": "No statement on file for BRI-19101003489305 2026-10"
+      },
+      {
+        "account_label": "Mandiri-1610555335558",
+        "bank_label": "MANDIRI",
+        "month": "2026-09",
+        "status": "NEEDS FROM MATT",
+        "message": "No statement on file for Mandiri-1610555335558 2026-09"
+      },
+      {
+        "account_label": "Mandiri-1610555335558",
+        "bank_label": "MANDIRI",
+        "month": "2026-10",
+        "status": "NEEDS FROM MATT",
+        "message": "No statement on file for Mandiri-1610555335558 2026-10"
+      }
+    ],
+    "missing_statement_month_count": 6,
+    "parsed_import_count": 10,
+    "covered_months_span": "2026-03..2026-08"
+  },
+  "tests_pass": {
+    "test_bzg_bank_recon1_20261005.py": 10
+  },
+  "tests_fail": {},
+  "exit_code": 0,
+  "status": "IMPLEMENTATION_DONE",
+  "prod_pid_unchanged": true,
+  "prod_port": 8787,
+  "protected_closes_unchanged": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "zayen_ready": false,
+  "no_commit": true,
+  "no_money_movement": true,
+  "read_only": true,
+  "files_changed": [
+    "scripts/core/bzg_bank_recon1.py",
+    "scripts/migrations/migrate_bzg_bank_recon1_20261005.py",
+    "scripts/core/bzg_finance_usability_ro.py",
+    "scripts/core/bzg_finance_desk.py",
+    "dashboards/bzg-finance.html",
+    "scripts/tests/test_bzg_bank_recon1_20261005.py"
+  ],
+  "beta_reloaded": true,
+  "reload_held": false,
+  "beta_listener_pid_before": 65634,
+  "beta_listener_pid": 68959,
+  "beta_port": 8788,
+  "routes_added": [
+    "/api/bzg/finance/bank/recon"
+  ]
+}

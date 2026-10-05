@@ -1,0 +1,29 @@
+{
+  "generated_at_wita": "2026-09-30T10:54:34+08:00",
+  "db_path": "/Users/wolfterminal/.openclaw/personal/health/spartacus.sqlite",
+  "pii_in_file": false,
+  "counts_only": true,
+  "tables": {
+    "body_log": 1,
+    "contacts": 10,
+    "days": 80,
+    "food_log": 20,
+    "habit_ticks": 2,
+    "habits": 9,
+    "journal": 0,
+    "lift_sessions": 22,
+    "lift_weights": 57,
+    "metrics_log": 2,
+    "peptide_log": 7,
+    "plans": 79,
+    "profile": 23,
+    "pt141_log": 0,
+    "quotes": 147,
+    "reading_log": 0,
+    "resets": 79,
+    "sched_fired": 474,
+    "training_log": 90,
+    "water_log": 87,
+    "weekly": 2
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "title": "GGV FINANCE \u2014 READY FOR MATT TEST",
+  "NOTA_TEST": "https://beta.wolfcommand.net/ggv/finance/notas",
+  "BANK_STATEMENT_TEST": "https://beta.wolfcommand.net/ggv/finance/banking",
+  "RECONCILIATION": "https://beta.wolfcommand.net/ggv/finance/reconciliation",
+  "HISTORICAL_STATEMENTS": "https://beta.wolfcommand.net/ggv/finance/statements",
+  "staff_ready": false,
+  "human_commissioned": false
+}

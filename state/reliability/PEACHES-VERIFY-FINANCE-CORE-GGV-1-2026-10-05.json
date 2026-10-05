@@ -1,0 +1,109 @@
+{
+  "verifier": "Peaches",
+  "peaches_independent": true,
+  "slice": "FINANCE-CORE-GGV-1",
+  "run_id": "BF-a4fa599323e0",
+  "at": "2026-10-05T11:41:27+08:00",
+  "method": {
+    "tests": "re-ran scripts/tests/test_finance_core_ggv1_20261005.py with gbs._originals_dir patched to a temp dir (the test as written leaks fixture originals into live state/ggv-bank-statements/originals)",
+    "http": "in-process serve_beta.BetaHandler on an ephemeral 127.0.0.1 port, BETA_AUTH_MODE=development_assertion + X-Wolf-Subject (same harness as scripts/audit/coreent1_shots.py), canonical_guard.isolate_runtime_catalog() catalog copy, temp media/originals; scratch removed after. Live :8788 is Cloudflare-Access fail-closed (403 missing_auth for every local request incl. subject header) \u2014 no creds invented, no JWT minted.",
+    "counts": "python sqlite3 mode=ro on catalog/content_library.sqlite"
+  },
+  "results": [
+    {
+      "item": "GGV-1 tests re-run",
+      "result": "PASS",
+      "detail": "8/8 OK"
+    },
+    {
+      "item": "History counts unchanged",
+      "result": "PASS",
+      "detail": "invoices 46, notas 33, bills 605, bank imports 2, bank txns 6, receipt_accounting 484 (mode=ro and /api/ggv/finance/desk)"
+    },
+    {
+      "item": "/ggv/finance 200 real data (Matt)",
+      "result": "PASS",
+      "detail": "200; desk API counts match DB"
+    },
+    {
+      "item": "/ggv/finance/notas 200 (Matt, Amanda)",
+      "result": "PASS",
+      "detail": "200; /api/ggv/finance/notas returns 33"
+    },
+    {
+      "item": "/ggv/finance/banking 200 (Matt, Amanda)",
+      "result": "PASS",
+      "detail": "200; bank-statements API 2 imports / 6 txns"
+    },
+    {
+      "item": "/ggv/finance/reconciliation 200 (Matt, Amanda)",
+      "result": "PASS",
+      "detail": "200; 6 UNMATCHED, 0 propose, auto_reconcile=false, propose_only=true"
+    },
+    {
+      "item": "Nota upload stores original first",
+      "result": "PASS",
+      "detail": "Amanda POST /api/ggv/finance/uploads \u2192 evidence_saved_first=true, 1 nota_files row + 1 file on disk before read; queue_state NEEDS REVIEW; read keeps preserved=true, no provider error text"
+    },
+    {
+      "item": "Statement upload idempotent (exact)",
+      "result": "PASS",
+      "detail": "2nd identical upload \u2192 409 ALREADY IMPORTED; 1 import row total"
+    },
+    {
+      "item": "Statement upload overlap",
+      "result": "PARTIAL",
+      "detail": "POSSIBLE DUPLICATE IMPORT fires, but detection is filename-based only ('same filename, different content'); txn-signature overlap with a different filename is not detected, and a different month with the same filename would be wrongly blocked. Fix specified in FINANCE-CORE-STATEMENTS-1."
+    },
+    {
+      "item": "Zayen server-side DENY on GGV pages",
+      "result": "PASS",
+      "detail": "403 with 'do not have access' on /ggv/finance, /notas, /banking, /reconciliation"
+    },
+    {
+      "item": "Zayen DENY on GGV APIs",
+      "result": "PARTIAL",
+      "detail": "notas/bills/bank-statements/bank-transactions/uploads/import \u2192 clean 403. /api/ggv/finance/desk, /reconciliation, /audit raise uncaught GgvFinanceDeskError \u2192 connection dropped (no data leaked, but not a clean 403). Fix specified in STATEMENTS-1."
+    },
+    {
+      "item": "Amanda GGV allow",
+      "result": "PASS",
+      "detail": "pages 200; nota create works; chain PERS-AMANDA\u2192ASG-AMANDA-GGV-FIN-1\u2192POS-GGV-FINANCE-OPERATOR-1\u2192ROLE-GGV-FINANCE-OPERATOR\u2192SCOPE-GGV-FINANCE\u2192finance.nota.create"
+    },
+    {
+      "item": "Bank Statements library / Historical Statements",
+      "result": "FAIL (not in GGV-1 scope)",
+      "detail": "No BANK STATEMENTS library or month completeness strip; page text has no 'Bank Statements'."
+    },
+    {
+      "item": "Real GGV statements in Wolf",
+      "result": "FAIL (data honesty)",
+      "detail": "The 2 GGV imports (ggv-prove-statement.csv, 'Prove coffee receipt' / 'Client transfer', uploaded 3 Oct as PERS-MATT) are prove fixtures, not real statements. Real GGV Mandiri 1610015100972 files sit un-imported in the wolf-system store."
+    },
+    {
+      "item": "Statement parser formats",
+      "result": "RISK",
+      "detail": "CSV only (Mandiri semicolon / BRI / generic). A Mandiri PDF upload from Matt would fail to parse (original kept)."
+    },
+    {
+      "item": "Test hygiene",
+      "result": "FAIL (minor)",
+      "detail": "GGV-1 tests wrote fixture originals into live state/ggv-bank-statements/originals; AMG-prove tests did the same in state/amg-bank-statements/originals (3 files at 11:36)."
+    },
+    {
+      "item": "Prod 1297 / protected closes / petty",
+      "result": "PASS",
+      "detail": "test_protected_closes_petty_prod_unchanged OK; Rp552,700"
+    }
+  ],
+  "overall": "ENGINEERING_PASS_WITH_DEFECTS \u2014 core nota + statement paths work; NOT ready to hand Matt until FINANCE-CORE-STATEMENTS-1 (library, real history, PDF parsing, signature dedupe, clean 403s).",
+  "hand_to_matt_now": false,
+  "public_links": {
+    "ggv_finance_home": "https://beta.wolfcommand.net/ggv/finance",
+    "nota": "https://beta.wolfcommand.net/ggv/finance/notas",
+    "banking": "https://beta.wolfcommand.net/ggv/finance/banking",
+    "reconciliation": "https://beta.wolfcommand.net/ggv/finance/reconciliation"
+  },
+  "staff_ready": false,
+  "human_commissioned": false
+}

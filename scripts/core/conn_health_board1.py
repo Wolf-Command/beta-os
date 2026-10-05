@@ -246,20 +246,30 @@ def intg_truth1_preserved() -> dict[str, Any]:
         ),
         None,
     )
+    yan_ok = yan is not None and (
+        (
+            yan.get("audit_status") == "BLOCKED_EXTERNAL"
+            and yan.get("blocked_external") is True
+            and yan.get("last_success") is None
+        )
+        or (
+            # WIRE-YANOLJA-READ-HOUSE-1: live Inventory+RoomInfo last-read allowed
+            yan.get("audit_status") == "LIVE_READ_OK"
+            and yan.get("blocked_external") is False
+            and yan.get("last_success") is not None
+            and (yan.get("probe_facts") or {}).get("invented_occupancy") is False
+            and (yan.get("probe_facts") or {}).get("guests") is None
+        )
+    )
     ok = (
         board.get("ok") is True
         and board.get("staff_ready") is False
         and board.get("human_commissioned") is False
         and board.get("invented_last_success") is False
-        and yan is not None
-        and yan.get("audit_status") == "BLOCKED_EXTERNAL"
-        and yan.get("blocked_external") is True
-        and yan.get("last_success") is None
+        and yan_ok
         and esb is not None
-        and esb.get("audit_status") == "PARTIAL_IN_BETA"
-        and esb.get("last_success") is None
+        and esb.get("audit_status") in ("PARTIAL_IN_BETA", "LIVE_READ_OK", "WAREHOUSE_READ_OK_PARTIAL")
         and (esb.get("probe_facts") or {}).get("pnl_invented") is False
-        and _intg.yanolja_blocked(board.get("connectors"))
     )
     return {
         "ok": ok,
@@ -272,8 +282,8 @@ def intg_truth1_preserved() -> dict[str, Any]:
         "pnl_invented": (esb or {}).get("probe_facts", {}).get("pnl_invented"),
         "href": "/ops/integrations-status",
         "why": (
-            "INTG-TRUTH-1 preserved: INT-YAN-WOLF BLOCKED_EXTERNAL last_success=null; "
-            "INT-ESB-WOLF PARTIAL_IN_BETA pnl_invented=false; staff_ready/human_commissioned false."
+            "INTG-TRUTH-1 preserved: Yanolja honest (BLOCKED or LIVE_READ_OK from last-read, "
+            "no invent guests); ESB PARTIAL warehouse; staff_ready/human_commissioned false."
             if ok
             else "INTG-TRUTH-1 honesty check failed."
         ),
@@ -558,8 +568,10 @@ def build_slice() -> dict[str, Any]:
     counts = dict(board.get("counts") or {})
     by_audit = dict(counts.get("by_audit_status") or {})
     blocked = int(counts.get("blocked_external") or 0)
+    nas_b2 = nas_b2_inventory_stamp()
     return {
         "ok": True,
+        "nas_b2_inventory": nas_b2,
         "pack": PACK_ID,
         "schema": SCHEMA_ID,
         "bound": BOUND,
@@ -637,3 +649,58 @@ def schema_document() -> dict[str, Any]:
             "BLOCKED stays BLOCKED. No fake live feeds."
         ),
     }
+
+
+def nas_b2_inventory_stamp() -> dict[str, Any]:
+    """Pack 5 light: NAS/B2 inventory freshness for connection health (no staff-ready)."""
+    from pathlib import Path
+    import shutil
+    import subprocess
+    from datetime import datetime, timedelta, timezone
+    WITA = timezone(timedelta(hours=8))
+    now = datetime.now(WITA).strftime("%Y-%m-%dT%H:%M:%S+08:00")
+    nas = {"id": "NAS_Synology", "status": "UNKNOWN", "mounts": {}, "staff_ready": False}
+    for label, path in (
+        ("01-Media-Library", "/Volumes/01-Media-Library"),
+        ("03-Templates", "/Volumes/03-Templates"),
+        ("05-Wolf-Vault-Mirror", "/Volumes/05-Wolf-Vault-Mirror"),
+    ):
+        pth = Path(path)
+        try:
+            ok = pth.is_dir()
+            entries = None
+            if ok:
+                try:
+                    entries = len(list(pth.iterdir()))
+                except PermissionError:
+                    entries = "PERMISSION_DENIED"
+            nas["mounts"][label] = {"present": ok, "entry_count": entries}
+        except OSError as exc:
+            nas["mounts"][label] = {"present": False, "error": type(exc).__name__}
+    present_n = sum(1 for m in nas["mounts"].values() if m.get("present"))
+    nas["status"] = "LIVE_READ_OK" if present_n else "ABSENT"
+    nas["as_of_wita"] = now
+    nas["note"] = "Inventory-first. staff_ready=false. No write/rename/delete."
+
+    b2 = {"id": "Backblaze_B2", "status": "UNKNOWN", "staff_ready": False, "as_of_wita": now}
+    try:
+        # rclone lsd only — list freshness, no restore claim
+        proc = subprocess.run(
+            ["rclone", "lsd", "b2:", "--max-depth", "1"],
+            capture_output=True,
+            text=True,
+            timeout=45,
+        )
+        if proc.returncode == 0:
+            lines = [ln for ln in (proc.stdout or "").splitlines() if ln.strip()]
+            b2["status"] = "LIVE_READ_OK"
+            b2["bucket_list_count"] = len(lines)
+            b2["restore_drill"] = "NOT_RUN_THIS_PASS"
+            b2["note"] = "rclone lsd OK. List ≠ restore proven. DELETE NO."
+        else:
+            b2["status"] = "ERROR"
+            b2["note"] = f"rclone lsd exit {proc.returncode}"
+    except Exception as exc:  # noqa: BLE001
+        b2["status"] = "UNKNOWN"
+        b2["note"] = f"rclone unavailable: {type(exc).__name__}"
+    return {"nas": nas, "b2": b2, "staff_ready": False, "human_commissioned": False}

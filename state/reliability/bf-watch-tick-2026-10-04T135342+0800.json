@@ -1,0 +1,53 @@
+{
+  "at": "2026-10-04T13:53:42+0800",
+  "status": "WAIT_SILENT_IDLE",
+  "classic_active": false,
+  "side_pack": "HARYANTO-PERM",
+  "side_pack_status": "EXITED_CLEARED_LOCAL_PASS_ALREADY_HANDLED",
+  "run_id": "BF-8334beb00d33",
+  "cursor_pid": 49250,
+  "child_alive": false,
+  "bf_watch": {
+    "active": false,
+    "next_action": "IDLE",
+    "next_breadth_arm": "BLOCKED_PEACHES_VETO_CREDIT_CONSERVATION"
+  },
+  "git_head": "0b0e50d",
+  "dirty_approx": 511,
+  "health": {
+    "prod8787_root": 200,
+    "beta8788_root": 403,
+    "beta_api": 200,
+    "petty_local": 200,
+    "close_local": 403,
+    "public_beta_uma": 403,
+    "public_prod": 200,
+    "as_of": "2026-10-04T13:53:42+0800",
+    "stale": false,
+    "note": "beta root/close 403 without session; api/health 200; beta pid 47590; prod 15975"
+  },
+  "prod_pid": 15975,
+  "beta_pid": 47590,
+  "mac_pipe": "PIPE_OK",
+  "mac_machine_id": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "mac_canonical_state": "HOST ONLINE / CONTROL PATH ONLINE",
+  "matt_ping": false,
+  "finished_owed": false,
+  "wake_parent": false,
+  "protected_close": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+  "protected_cash": 3225000,
+  "protected_variance": -125000,
+  "protected_updated_at": "2026-10-03T13:47:39Z",
+  "protected_state": "EXCEPTION",
+  "protected_unchanged": true,
+  "human_tests_open_already_pinged": [
+    "BF-a1f3daf7f87b",
+    "BF-f3e574a95527",
+    "BF-cc95f0a47633",
+    "BF-b2154da6f884"
+  ],
+  "no_auto_arm": true,
+  "credit_conservation": true,
+  "recovery_key_port_this_tick": "OPEN",
+  "note": "Watch tick 2026-10-04T13:53:42+0800: WAIT_SILENT IDLE under CREDIT CONSERVATION; no ACTIVE; no factory cursor-agent -p (only long-lived cursor-agent worker since Sep18, not factory); HARYANTO-PERM BF-8334beb00d33 already EXITED_CLEARED @12:53 \u2014 no re-ping (not staff_ready); human tests still open already pinged (PETTY-SURFACE/CLOSE-SURFACE/captain petty/UMA-CLOSE-REPAIR); no auto-arm Tours/Events/P2P/Finance/breadth; Mac PIPE_OK tip 0b0e50d dirty\u2248511; prod 15975 + beta 47590 untouched; protected VDC-470e741f cash 3225000 variance -125000 updated_at 2026-10-03T13:47:39Z EXCEPTION unchanged; recovery key port OPEN this tick."
+}

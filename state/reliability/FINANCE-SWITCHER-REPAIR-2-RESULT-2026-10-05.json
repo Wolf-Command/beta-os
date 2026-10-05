@@ -1,0 +1,91 @@
+{
+  "pack": "FINANCE-SWITCHER-REPAIR-2",
+  "run_id": "BF-2731e55ad30e",
+  "files_changed": [
+    "scripts/core/staff_access.py",
+    "scripts/migrations/migrate_finance_switcher_repair2_20261005.py",
+    "scripts/tests/test_finance_switcher_repair2_20261005.py"
+  ],
+  "allowlist_paths": [
+    "/shared/finance-switcher.js",
+    "/shared/finance-switcher.css"
+  ],
+  "matt_grant_path": {
+    "role_id": "ROLE-MATT",
+    "assignment_id": "ASG-MATT-OWNER-1",
+    "scope_id": "SCOPE-AMG-FINANCE",
+    "entity_id": "ENT-AMG",
+    "permissions_granted": [
+      "atrium.board.read",
+      "atrium.coa.read",
+      "atrium.ledger.read",
+      "atrium.report.read",
+      "atrium.journal.draft"
+    ]
+  },
+  "test_file": "scripts/tests/test_finance_switcher_repair2_20261005.py",
+  "tests_pass": 7,
+  "tests_fail": 0,
+  "fail_detail": "",
+  "regression": {
+    "repair1": {
+      "exit_code": 0,
+      "pass": true,
+      "stdout_tail": "RESULT_JSON: state/reliability/FINANCE-SWITCHER-REPAIR-1-RESULT-2026-10-05.json\n"
+    }
+  },
+  "per_person_matrix": {
+    "Matt": {
+      "GGV": {
+        "selectable": true,
+        "help": null
+      },
+      "AMG": {
+        "selectable": true,
+        "help": null
+      },
+      "BZG": {
+        "selectable": true,
+        "help": null
+      }
+    },
+    "Zayen": {
+      "GGV": {
+        "selectable": false,
+        "help": "NO ACCESS"
+      },
+      "AMG": {
+        "selectable": true,
+        "help": null
+      },
+      "BZG": {
+        "selectable": true,
+        "help": null
+      }
+    },
+    "Amanda": {
+      "GGV": {
+        "selectable": true,
+        "help": null
+      },
+      "AMG": {
+        "selectable": false,
+        "help": "NO ACCESS"
+      },
+      "BZG": {
+        "selectable": false,
+        "help": "NO ACCESS"
+      }
+    }
+  },
+  "staff_ready": false,
+  "human_commissioned": false,
+  "zayen_ready": false,
+  "status": "IMPLEMENTATION_DONE",
+  "exit_code": 0,
+  "beta_reloaded": false,
+  "reload_held": true,
+  "beta_listener_pid": 97189,
+  "prod_pid_unchanged": true,
+  "protected_closes_unchanged": true
+}

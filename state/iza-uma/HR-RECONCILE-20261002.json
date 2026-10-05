@@ -1,0 +1,92 @@
+{
+  "stamp": "HR_RECONCILE_IZA",
+  "as_of": "2026-10-02T20:12:00+08:00",
+  "query": {
+    "email": "izazaen00@gmail.com",
+    "name_tokens": ["Iza", "Zainatulloh", "Hulhidayati"],
+    "do_not_invent": true
+  },
+  "status": "HR_FOUND",
+  "authoritative_source": {
+    "path": "/Users/wolfterminal/.openclaw/hr/state/employees.db",
+    "table": "employees",
+    "match": "employee_id=BZG26023002 AND email=izazaen00@gmail.com"
+  },
+  "fields_found": {
+    "employee_id": "BZG26023002",
+    "full_name": "Iza Zainatulloh Hulhidayati",
+    "entity": "BZG",
+    "role_hr": "Floor Captain",
+    "department": "Floor / Service",
+    "outlet": null,
+    "employment_status": "Active",
+    "contract_type": "PKWTT",
+    "start_date": "18/2/2026",
+    "contract_end": null,
+    "email": "izazaen00@gmail.com",
+    "phone": "085967230192",
+    "supervisor": "Ni Putu Devi Parwati",
+    "tab": "Active",
+    "hr_row_created_at": "2026-08-13T12:48:59+08:00",
+    "hr_row_updated_at": "2026-09-13T14:13:09+08:00"
+  },
+  "fields_present_not_copied_to_stamp": [
+    "salary",
+    "bank_name",
+    "bank_account_number",
+    "ktp_nik",
+    "npwp",
+    "bpjs_*",
+    "emergency_*",
+    "mother_name",
+    "date_of_birth"
+  ],
+  "secondary_sources_searched": [
+    {
+      "path": "/Users/wolfterminal/.openclaw/media/inbound/BZG_Employee_Master_Database_v1---3b4c0e79-d592-490b-8729-72c8ef3dfe1a.xlsx",
+      "sheet": "ACTIVE EMPLOYEE MASTER",
+      "hit": true,
+      "note": "STALE relative to employees.db — Employee ID UB304, Position Waitress, Work Location Atrium Lombok, Join 18/2/2026, email izazaen00@gmail.com. Authoritative live HR is employees.db BZG26023002 Floor Captain."
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/catalog/content_library.sqlite",
+      "tables": ["org_persons", "org_auth_identities"],
+      "hit": false,
+      "note": "No PERS-IZA / no auth identity for izazaen00@gmail.com prior to this order."
+    },
+    {
+      "path": "/Users/wolfterminal/.openclaw/identity-vault/bzg/employees/",
+      "hit": false,
+      "note": "Directory empty."
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/state/crm-identity/",
+      "hit": false
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/docs/wolf/staff/",
+      "hit": false
+    },
+    {
+      "path": "/home/box/wolf-system/",
+      "hit": false,
+      "note": "No prior Iza person stamps."
+    },
+    {
+      "source": "Notion AI search izazaen00@gmail.com / Iza Uma Blu + user lookup Iza",
+      "hit": false,
+      "note": "No HR employee page; no Notion user match."
+    }
+  ],
+  "fields_missing_from_authoritative_hr": [
+    "outlet (null in employees.db — Owner order scopes PT Blu Zone Group → Uma Blu)",
+    "Wolf person_id (not yet in org_persons — CREATE required)",
+    "CF Access allow (Owner-gated; Matt adding)"
+  ],
+  "devi_preserved": {
+    "person_id": "PERS-DEVI",
+    "email": "deviputu236@gmail.com",
+    "closer_assignment": "ASG-DEVI-CLOSER-UMA-1",
+    "roster": "VCR-UMA-1 ACTIVE — do not replace"
+  }
+}

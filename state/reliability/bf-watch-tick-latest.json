@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T03:10:38+08:00",
+  "status": "WAIT_SILENT_IDLE",
+  "active": false,
+  "finished_owed": false,
+  "wake_parent": false,
+  "mac_pipe": "PIPE_OK",
+  "prod_pid": 1297,
+  "beta_pid": 54756,
+  "git_head": "0b0e50d",
+  "dirty_approx": 538,
+  "note": "Build factory watch 2026-10-05T03:10:38+08:00 WAIT_SILENT IDLE under CREDIT CONSERVATION; no ACTIVE; last finished BF-5963229a7da6 BZG-P2P-PO-1 READY_FOR_HUMAN_TEST matt ping DEFERRED overnight; HARYANTO-RECIPE-FINISH BF-f89a9241e98d also deferred overnight; FINANCE-TESTABLE-SLICE HELD; no auto-arm Tours/Events/P2P breadth; Mac 36d8fa4b PIPE_OK tip 0b0e50d dirty\u2248538; prod 1297 + beta 54756 untouched; RK Tailscale Mac :2222 OPEN box CLOSED \u2014 overnight log only no Matt escalate; public beta_root 302 prod 200 beta_uma_close/recipe/po 302; protected VDC-470e741f cash 3225000 variance -125000 updated_at 2026-10-03T13:47:39Z EXCEPTION unchanged; staff_ready=false human_commissioned=false; overnight no Matt status \u2014 morning WOLF MORNING TEST BUILD; wake_parent=false."
+}

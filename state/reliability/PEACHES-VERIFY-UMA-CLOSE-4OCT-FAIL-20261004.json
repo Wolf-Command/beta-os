@@ -1,0 +1,97 @@
+{
+  "run_id": "BF-eb322a484d20",
+  "pack": "UMA-CLOSE-4OCT-FAIL",
+  "verified_at": "2026-10-04T21:50:28+08:00",
+  "verdict": "IMPLEMENTATION_DONE_BETA_RELOADED_READY_FOR_HUMAN_TEST",
+  "tests_pass": 15,
+  "tests_fail": 0,
+  "checks": [
+    {
+      "name": "protected_3oct_unchanged",
+      "pass": true
+    },
+    {
+      "name": "protected_872_unchanged",
+      "pass": true
+    },
+    {
+      "name": "target_declared_null",
+      "pass": true
+    },
+    {
+      "name": "esb_cash_360000",
+      "pass": true
+    },
+    {
+      "name": "finished_61",
+      "pass": true
+    },
+    {
+      "name": "expected_909000",
+      "pass": true
+    },
+    {
+      "name": "petty_451000",
+      "pass": true
+    },
+    {
+      "name": "html_staff_lines",
+      "pass": true
+    },
+    {
+      "name": "no_reconcile_in_staff_cash_block",
+      "pass": true
+    },
+    {
+      "name": "prod_untouched",
+      "pass": true,
+      "detail": "1297"
+    },
+    {
+      "name": "beta_reloaded",
+      "pass": true,
+      "detail": "32550"
+    },
+    {
+      "name": "photo_engine_proved",
+      "pass": true
+    },
+    {
+      "name": "prove_script",
+      "pass": true
+    },
+    {
+      "name": "finished_off_variance_line",
+      "pass": true
+    },
+    {
+      "name": "enrich_or_staff_cash",
+      "pass": true,
+      "detail": "{\"settlement_api\": \"UNAVAILABLE\", \"settlement_status\": \"PENDING_BANK\", \"esb_cash_basis\": \"PAYMENT_LINES_NOT_SETTLEMENT\", \"esb_payments_are_not_edc_settlement\": true, \"live_variance_threshold\": 0, \"live_monetary_authority\": 0, \"declared_cash_is_not_verified\": true, \"invented_tolerance\": false, \"staff"
+    }
+  ],
+  "eng_proved": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "ready_for_human_test": true,
+  "close_id": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+  "business_date": "2026-10-04",
+  "esb_cash": 360000,
+  "petty_out": 451000,
+  "expected_cash": 909000,
+  "finished_bills": 61,
+  "declared_stayed_null": true,
+  "protected_close": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+  "protected_cash": 3225000,
+  "protected_variance": -125000,
+  "protected_updated_at": "2026-10-03T13:47:39Z",
+  "protected_state": "EXCEPTION",
+  "protected_untouched": true,
+  "prod_pid": 1297,
+  "beta_pid": 32550,
+  "prod_untouched": true,
+  "beta_reloaded": true,
+  "beta_link": "https://beta.wolfcommand.net/uma-blu-close",
+  "cursor_pid": 31312,
+  "note": "Peaches independent verify after cursor EXIT; prove script green; staff_ready=false human_commissioned=false. Iza hard-refresh for human retest."
+}

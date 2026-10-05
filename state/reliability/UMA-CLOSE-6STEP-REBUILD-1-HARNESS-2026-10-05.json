@@ -1,0 +1,127 @@
+{
+  "steps": [
+    {
+      "screen": "stepShift",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        "btnTakeShift:TAKE PHOTO",
+        "btnUploadShift:UPLOAD PHOTO",
+        "btnShiftYes:YES",
+        "btnShiftEdit:EDIT",
+        "btnShiftDiffContinue:CONTINUE",
+        "btnBackChoose:\u2190 Back"
+      ],
+      "text": "STEP 2 \u00b7 SHIFT REPORT | 29 September 2026 | TAKE PHOTO | UPLOAD PHOTO | WE READ | Gross sales | Rp13.435.000 | Bills | 50 | Pax | 79 | Cash | Rp3.790.000 | BNI EDC | Rp2.545.000 | BNI QRIS | Rp145.000 | BRI EDC | Rp4.465.000 | BRI QRIS | Rp1.065.000 | Other payment Scott & Etik | Rp1.425.000 | Non-sales Executive Chef | Rp78.512 | DO THESE FIGURES MATCH THE REPORT? | YES EDIT | ESB DATA DIFFERENCE FOUND | Final report cash | Rp3.790.000 | Final report bills | 50 | Historical ESB data cash | Rp4.135.000 | Historical ESB data bills | 51 | Difference cash | Rp345.000 | Difference bills | 1 | CONTINUE | \u2190 Back",
+      "label": "opened_29sep_shift"
+    },
+    {
+      "screen": "stepShift",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        "btnTakeShift:TAKE PHOTO",
+        "btnUploadShift:UPLOAD PHOTO",
+        "btnShiftYes:YES",
+        "btnShiftEdit:EDIT",
+        "btnShiftDiffContinue:CONTINUE",
+        "btnBackChoose:\u2190 Back"
+      ],
+      "text": "STEP 2 \u00b7 SHIFT REPORT | 29 September 2026 | TAKE PHOTO | UPLOAD PHOTO | WE READ | Gross sales | Rp13.435.000 | Bills | 50 | Pax | 79 | Cash | Rp3.790.000 | BNI EDC | Rp2.545.000 | BNI QRIS | Rp145.000 | BRI EDC | Rp4.465.000 | BRI QRIS | Rp1.065.000 | Other payment Scott & Etik | Rp1.425.000 | Non-sales Executive Chef | Rp78.512 | DO THESE FIGURES MATCH THE REPORT? | YES EDIT | ESB DATA DIFFERENCE FOUND | Final report cash | Rp3.790.000 | Final report bills | 50 | Historical ESB data cash | Rp4.135.000 | Historical ESB data bills | 51 | Difference cash | Rp345.000 | Difference bills | 1 | CONTINUE | \u2190 Back",
+      "label": "shift_yes"
+    },
+    {
+      "screen": "stepBanks",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        ":ADD RECEIPT",
+        ":ADD RECEIPT",
+        "btnBackShift:\u2190 Back"
+      ],
+      "text": "STEP 3 \u00b7 BANK RECEIPTS | 29 September 2026 | MANDIRI \u2014 not used | BNI | Expected EDC | Rp2.545.000 | Expected QRIS | Rp145.000 | ADD RECEIPT | BRI | Expected EDC | Rp4.465.000 | Expected QRIS | Rp1.065.000 | ADD RECEIPT | \u2190 Back",
+      "label": "esb_diff_continue"
+    },
+    {
+      "screen": "stepCash",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        "btnCashPhoto:TAKE CASH PHOTO (optional)",
+        "btnBackBanks:\u2190 Back"
+      ],
+      "text": "STEP 4 \u00b7 COUNT CASH | 29 September 2026 | Shift report cash | Rp3.790.000 | Petty cash OUT (this date) | Rp370.000 | Petty cash IN (this date) | Rp0 | EXPECTED CASH | Rp4.420.000 | Opening till float plus shift report cash, minus petty paid out, plus petty paid in, for this business date only. | COUNT THE CASH  TAKE CASH PHOTO (optional) | \u2190 Back",
+      "label": "banks_done"
+    },
+    {
+      "screen": "stepCash",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        "btnCashPhoto:TAKE CASH PHOTO (optional)",
+        "btnBackBanks:\u2190 Back"
+      ],
+      "text": "STEP 4 \u00b7 COUNT CASH | 29 September 2026 | Shift report cash | Rp3.790.000 | Petty cash OUT (this date) | Rp370.000 | Petty cash IN (this date) | Rp0 | EXPECTED CASH | Rp4.420.000 | Opening till float plus shift report cash, minus petty paid out, plus petty paid in, for this business date only. | COUNT THE CASH  TAKE CASH PHOTO (optional) | \u2190 Back",
+      "label": "cash_step"
+    },
+    {
+      "screen": "stepCash",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        "btnCashPhoto:TAKE CASH PHOTO (optional)",
+        "btnCashNext:Continue to review",
+        "btnBackBanks:\u2190 Back"
+      ],
+      "text": "STEP 4 \u00b7 COUNT CASH | 29 September 2026 | Shift report cash | Rp3.790.000 | Petty cash OUT (this date) | Rp370.000 | Petty cash IN (this date) | Rp0 | EXPECTED CASH | Rp4.420.000 | Opening till float plus shift report cash, minus petty paid out, plus petty paid in, for this business date only. | COUNT THE CASH  TAKE CASH PHOTO (optional) | Expected | Rp4.420.000 | Counted | Rp3.790.000 | Difference | DIFFERENCE Rp 630000 | WHY?  Continue to review | \u2190 Back",
+      "label": "cash_counted"
+    },
+    {
+      "screen": "stepSubmit",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        "btnSubmit:SUBMIT CLOSE(disabled)",
+        "btnSubmitException:SUBMIT WITH EXCEPTION",
+        "btnBackReview:\u2190 Back"
+      ],
+      "text": "STEP 6 \u00b7 SUBMIT | 29 September 2026 | Submit only when all steps are complete. | SUBMIT CLOSE SUBMIT WITH EXCEPTION | Review cash difference before submit | \u2190 Back",
+      "label": "review"
+    },
+    {
+      "screen": "stepResult",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        "btnViewClose:VIEW CLOSE",
+        "btnBackMissing:BACK TO MISSING CLOSES"
+      ],
+      "text": "CLOSE SAVED WITH EXCEPTION | sales 4135000 \u00b7 shift report 3790000 \u00b7 cash counted 3790000 \u00b7 cash difference kept visible | VIEW CLOSE BACK TO MISSING CLOSES",
+      "label": "submit_result"
+    },
+    {
+      "screen": "stepException",
+      "top": [
+        ""
+      ],
+      "buttons": [
+        "btnBackFromException:\u2190 Back"
+      ],
+      "text": "EXCEPTION \u00b7 REVIEW ONLY | 29 September 2026 | Real exception on file \u2014 read-only review. | Cash counted | Rp3.790.000 | Expected cash | Rp4.135.000 | Difference | Rp345.000 | \u2190 Back",
+      "label": "fresh_resume"
+    }
+  ],
+  "submit_results": [
+    "CLOSE SAVED WITH EXCEPTION",
+    "CLOSE SAVED WITH EXCEPTION",
+    "CLOSE SAVED WITH EXCEPTION"
+  ]
+}

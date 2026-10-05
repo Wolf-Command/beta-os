@@ -1,0 +1,76 @@
+{
+  "pack": "FINANCE-UI-HUMAN-LABELS-1",
+  "run_id": "BF-6d270534aea8",
+  "files_changed": [
+    "dashboards/assets/sidenav.js",
+    "dashboards/shared/finance-switcher.js",
+    "scripts/core/entity_books.py",
+    "scripts/core/bzg_finance_desk.py",
+    "scripts/core/amg_finance_desk.py",
+    "dashboards/bzg-finance.html",
+    "dashboards/amg-finance-ops.html",
+    "dashboards/ggv-finance.html",
+    "scripts/tests/test_finance_ui_human_labels1_20261005.py"
+  ],
+  "strings_replaced": {
+    "/bzg/finance": {
+      "staff_ready=false chip": "removed",
+      "zayen_ready=false chip": "removed",
+      "desk_stamp message": "plain no-journals wording via entity_books.desk_stamp"
+    },
+    "/amg-finance-ops": {
+      "books shell": "Atrium \u2014 chart of accounts set up. No journals posted yet.",
+      "rx-summary": "Accounting queue \u00b7 showing N"
+    },
+    "/ggv/finance": {
+      "books shell": "GGV \u2014 chart of accounts set up. No journals posted yet.",
+      "rx-summary": "Accounting queue \u00b7 showing N"
+    },
+    "seat selector": "role \u2014 business (no SCOPE-*)",
+    "finance switcher": "NO ACCESS only on disabled option text/title"
+  },
+  "seat_label_source": "dashboards/assets/sidenav.js paintContext seatOptionLabel (SCOPE_BUSINESS_LABEL map)",
+  "no_access_render_change": "Removed wfs-help page-level line; disabled GGV option keeps \u2014 NO ACCESS suffix + title",
+  "test_file": "scripts/tests/test_finance_ui_human_labels1_20261005.py",
+  "tests_pass": 5,
+  "tests_fail": 0,
+  "fail_detail": "",
+  "regression": {
+    "switcher_repair1": {
+      "exit_code": 0,
+      "pass": true,
+      "stdout_tail": "RESULT_JSON: state/reliability/FINANCE-SWITCHER-REPAIR-1-RESULT-2026-10-05.json\n"
+    },
+    "switcher_repair2": {
+      "exit_code": 0,
+      "pass": true,
+      "stdout_tail": "RESULT_JSON: state/reliability/FINANCE-SWITCHER-REPAIR-2-RESULT-2026-10-05.json\n"
+    },
+    "zayen_prove1": {
+      "exit_code": 0,
+      "pass": true,
+      "stdout_tail": "RESULT_JSON: /Users/wolfterminal/beta-os/state/reliability/BZG-ZAYEN-FINANCE-PROVE-1-RESULT-2026-10-05.json\nEXIT 0\n"
+    },
+    "matt": {
+      "amg_accounts_journals_ledger": {
+        "exit_code": 0,
+        "pass": true,
+        "stdout_tail": "RESULT_JSON: state/reliability/FINANCE-SWITCHER-REPAIR-2-RESULT-2026-10-05.json\n"
+      }
+    },
+    "amanda": {
+      "entities_api": "unchanged \u2014 GGV selectable; AMG/BZG help NO ACCESS in API only"
+    }
+  },
+  "beta_reloaded": false,
+  "reload_held": true,
+  "beta_listener_pid": 97189,
+  "prod_pid_unchanged": true,
+  "protected_closes_unchanged": true,
+  "data_changes": "none",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "zayen_ready": false,
+  "status": "IMPLEMENTATION_DONE",
+  "exit_code": 0
+}

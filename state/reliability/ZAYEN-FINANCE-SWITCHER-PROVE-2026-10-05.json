@@ -1,0 +1,81 @@
+{
+ "pack": "ZAYEN-FINANCE-SWITCHER-PROVE",
+ "at": "2026-10-05T12:22:00+08:00",
+ "by": "executor_owner_order_2026-10-05T12:02+08:00",
+ "staff_ready": false,
+ "human_commissioned": false,
+ "zayen_ready": false,
+ "method": {
+  "harness": "in-process serve_beta.BetaHandler on ephemeral 127.0.0.1 port from a SNAPSHOT copy of the Beta tree (/Users/wolfterminal/zsw-prove-20261005/beta-os, hardcoded root retargeted) + sqlite backup copy of catalog (mode=ro source) + canonical_guard.isolate_runtime_catalog(); BETA_AUTH_MODE=development_assertion with X-Wolf-Subject + Cf-Access-Authenticated-User-Email (same as scripts/audit/coreent1_shots.py). Headless Chrome via CDP for rendered DOM + screenshots. No creds invented, no JWT minted, live :8788 and prod :8787 untouched.",
+  "code_snapshot": "v2 taken 12:16 WITA = after FINANCE-CORE-STATEMENTS-1 (BF-bad7704499ed), FINANCE-CORE-BZG-PROVE-1 (BF-eeb7ff3c1d04) and BZG-ZAYEN-FINANCE-PROVE-1 (BF-2f53dc14baa3). A v1 run at 12:06 (after STATEMENTS-1 only) is superseded.",
+  "writes": "zero POST/PUT/PATCH/DELETE in all runs. Caveat: /amg/finance/* is proxied to the LIVE Atrium Finance sidecar (127.0.0.1:8790) even from the snapshot server; those were GET page/asset/dashboard reads only.",
+  "harness_artifacts": [
+   "/api/ggv/finance/invoices drops connection for Matt/Amanda in the harness only because canonical_guard refuses reading prod money.sqlite in a test process \u2014 not counted as a product defect (inconclusive)."
+  ]
+ },
+ "zayen": {
+  "1_switcher_lists_AMG_BZG_selectable": {
+   "result": "PARTIAL",
+   "detail": "/bzg/finance and /amg-finance-ops render 'Current entity: X' + chips AMG, BZG (both enabled links) on desktop and 390px phone. NOT a dropdown, three different renderers, and absent on /amg/finance (Atrium product, where the AMG chip leads)."
+  },
+  "2_GGV_visible_disabled_NO_ACCESS": {
+   "result": "FAIL",
+   "detail": "GGV is not rendered at all for Zayen; 'NO ACCESS' text exists nowhere in the code. finance_entities() returns authorised entities only."
+  },
+  "3_switch_AMG_to_BZG_loads_BZG": {
+   "result": "PARTIAL",
+   "detail": "From /amg-finance-ops the BZG chip opens /bzg/finance: PO 543, PO lines 2017, GR 474, supplier bills (notas) 473, suppliers 103, bank 15 imports / 1257 txns, only ENT-BZG. From /amg/finance (Atrium product) there is no switcher."
+  },
+  "4_switch_BZG_to_AMG_loads_AMG": {
+   "result": "PASS_WITH_CAVEATS",
+   "detail": "AMG chip opens /amg/finance (Atrium Finance product): Command Centre loads (5 drafts to validate, 3 ready to post, 'Property profile is not set'); /api/amg/finance/accounts = 190 CoA accounts; Beta journals 0, ledger 0 posted lines. Lands on a page with no switcher back. /amg-finance-ops shows 'AMG books slot open (atrium-ggv.sqlite, empty_shell). COA 0 accounts'."
+  },
+  "5_no_cross_entity_leakage": {
+   "result": "FAIL",
+   "detail": "GET /api/amg/finance/audit returns 5 events, ALL entity_id=ENT-GGV (ggv_receipt_accounting.confirm x4, ggv.invoice.sequence.seed x1, actor PERS-MATT) to Zayen. Other AMG/BZG responses clean (AMG statements library only ENT-AMG; BZG only ENT-BZG; 'GOSS GROUP VENTURES' in BZG bank is a genuine BZG transfer description; BZG books coa_template_source=ENT-AMG is config). Label bugs: AMG page prints 'ENT-GGV \u00b7 persisted accounting rows' and 'atrium-ggv.sqlite'."
+  },
+  "6_direct_GGV_urls_clean_denied": {
+   "result": "PASS",
+   "detail": "18/18 GGV page paths and 16/16 GGV APIs -> 403 (HTML 'Access denied' page in browser, JSON forbidden for APIs), incl. /api/ggv/finance/desk|reconciliation|audit (STATEMENTS-1 fix confirmed) and guessed GGV statement ids + /original. No dropped connections. /api/ggv/finance/missing-evidence is 404 for everyone (route not registered). Wording: home deny says 'You do not have access to GGV notas' / 'Your workspace is Atrium Finance'."
+  },
+  "7_refresh_preserves_authorised_never_GGV": {
+   "result": "PASS",
+   "detail": "URL-based: reload of /bzg/finance stays BZG, reload of /amg-finance-ops stays AMG; no stored preference exists, so GGV is never restored. /finance (generic entry) -> 'This account is limited to Atrium Finance' for Zayen."
+  }
+ },
+ "zayen_other_findings": [
+  "/api/amg/finance/notas, /bills, /reconciliation -> 403 'You do not have access to GGV notas.' for Zayen (has atrium.board.read on ENT-AMG, lacks finance.nota.read). AMG Finance Core Receipts/Notas, Bills, Reconciliation tabs fail for him.",
+  "All /amg/finance/* sub-paths (notas, statements, journals, reconciliation) open the Atrium product SPA; /amg/finance/banking -> 403 'This seat cannot approve, post, pay, change a bank'. The AMG links in state/reliability/ZAYEN-FINANCE-TEST-AMG-BZG-2026-10-05.md (steps 2-12) do not reach the Finance Core AMG statements/notas pages; those live at /amg-finance-ops (tabs).",
+  "AMG data thin: Beta AMG desk counts invoices 0, notas 0, bills 0, suppliers 0, receipt_accounting 0; bank 41 statements / 525 txns all UNMATCHED; CoA 190 (atrium books) but journals 0 / ledger 0."
+ ],
+ "matt_regression": {
+  "result": "PASS_WITH_DEFECT",
+  "detail": "GGV page 'Finance \u00b7 GGV \u00b7 AMG \u00b7 BZG', BZG and AMG Finance Core pages show 'Current entity' + GGV/AMG/BZG chips, all selectable; /bzg/finance now 200 (fixed by FINANCE-CORE-BZG-PROVE-1). Defect: /api/amg/finance/accounts|journals|ledger 403 for Matt (ROLE-MATT lacks atrium.board.read on ENT-AMG; Atrium product itself 200 via seat). AMG audit GGV leak also visible to Matt."
+ },
+ "amanda_regression": {
+  "result": "FAIL",
+  "detail": "Access correct (GGV pages/APIs 200; BZG + AMG Atrium pages 403). But switcher shows 'Finance \u00b7 GGV' only (AMG/BZG not greyed), and /amg-finance-ops, /amg-finance-ops.html, /api/amg/finance drop the connection (uncaught AmgFinanceDeskError; browser ERR_EMPTY_RESPONSE) instead of clean 403."
+ },
+ "already_covered_by_finished_slices": {
+  "FINANCE-CORE-STATEMENTS-1": "clean 403 on GGV desk/reconciliation/audit APIs (confirmed PASS)",
+  "FINANCE-CORE-BZG-PROVE-1": "Matt BZG access (dual guard)",
+  "BZG-ZAYEN-FINANCE-PROVE-1": "'Current entity' AMG/BZG chip switcher on amg-finance-ops + bzg-finance, /amg-finance-ops route, Zayen allowed on ops desk"
+ },
+ "repair": {
+  "armed": true,
+  "id": "FINANCE-SWITCHER-REPAIR-1",
+  "prompt": "state/reliability/FINANCE-SWITCHER-REPAIR-1-PROMPT-2026-10-05.md",
+  "dispatch_backup": "state/build-factory/GOD-MODE-DISPATCH.bak-20261005-121952-switcher-repair1.json",
+  "armed_at": "2026-10-05T12:19:52+08:00",
+  "queue_position": "NEXT (1st waiting) as of 12:20:44 WITA: UMA-HIST-CLOSE-NAV-MOBILE-1 (priority 1, newer owner order 12:14) now holds the writer lock; OBSIDIAN-MIRROR-CONTINUE-1 finished. FINANCE-SWITCHER-REPAIR-1 is the only auto-arm READY item behind it.",
+  "note": "FINANCE-CORE-BZG-PROVE-1 had already run (12:05-12:10) before this prove could finish, so 'ahead of BZG-PROVE-1' was no longer possible."
+ },
+ "public_links": {
+  "unauth_check": "https://beta.wolfcommand.net/amg/finance, /bzg/finance, /ggv/finance, /bzg/finance/statements -> HTTP 302 to wolfcommand.cloudflareaccess.com login (expected)",
+  "zayen_in_cf_access_include": "Recorded as included: state/access-evidence/cf-beta-allow-20260929.json lists laluzayen@gmail.com under previously_confirmed (Matt confirmation in chat, not_cf_api_verified=true). Not verified against the Cloudflare API (read-only check not possible without credentials).",
+  "best_link_today": "https://beta.wolfcommand.net/bzg/finance"
+ },
+ "screenshots_mac": "/Users/wolfterminal/zsw-prove-20261005/out/shots/",
+ "screenshots_box": "/workspace/zayen-switcher/",
+ "overall": "FAIL \u2014 items 2 and 5 fail, items 1 and 3 partial; repair armed."
+}

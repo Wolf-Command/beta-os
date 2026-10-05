@@ -1,0 +1,24 @@
+tag=20260930-ro-deepen3
+time=2026-09-30 12:36:18 WITA
+beta_pid=19718
+prod_pid=15975
+200 /api/owner/habitat-investment-ro
+  True V1_RO_OK
+200 /api/ops/kuta-rates-ro
+  True V1_RO_OK
+200 /api/owner/gatekeeper-ro
+  True V1_RO_OK
+200 /api/ops/event-bus-ro
+  True V1_RO_OK
+200 /api/seats/content-ro
+  True V1_RO_OK
+200 /api/seats/ads-studio-ro
+  True V1_RO_OK
+200 /api/seats/resolve-studio-ro
+  True V1_RO_OK
+200 /api/voice/amg-ro
+  True V1_RO_OK
+200 /api/voice/bzg-ro
+  True V1_RO_OK
+200 /api/voice/ggv-ro
+  True V1_RO_OK

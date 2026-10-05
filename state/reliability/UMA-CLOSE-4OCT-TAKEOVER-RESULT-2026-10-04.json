@@ -1,0 +1,93 @@
+{
+  "repair": "UMA-CLOSE-4OCT-TAKEOVER",
+  "close_id": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+  "business_date": "2026-10-04",
+  "outlet": "BZG-UMA",
+  "photo_input_proof": {
+    "proved": true,
+    "inputs": {
+      "esbCam": true,
+      "esbFile": true,
+      "edcCam": true,
+      "edcFile": true,
+      "cashCam": true,
+      "cashFile": true
+    },
+    "btn_take_photo": true,
+    "btn_upload_photo": true
+  },
+  "display_lines": {
+    "esb_cash": 360000.0,
+    "esb_cash_field": "cash_from_payments",
+    "finished_bills": 61,
+    "finished_off_difference_line": true,
+    "difference_label": "Cannot calculate yet",
+    "petty_cash_paid_today": 451000.0,
+    "expected_cash": 909000.0,
+    "expected_cash_formula": "opening 1000000 + ESB cash 360000 \u2212 451000 = 909000"
+  },
+  "takeover": {
+    "performed": true,
+    "permission": {
+      "permission": "venue.close.reassign",
+      "actor_person_id": "PERS-MATT",
+      "allowed": true,
+      "hardcoded_email": false
+    },
+    "reason": "Iza shift ended / Owner takeover after workflow failure",
+    "prior_holder": "PERS-IZA",
+    "new_holder": "PERS-MATT",
+    "same_close_id": true,
+    "governance": {
+      "close_id": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+      "business_date": "2026-10-04",
+      "outlet_id": "BZG-UMA",
+      "original_closer_person_id": "PERS-IZA",
+      "original_closer_display_name": "Iza Zainatulloh Hulhidayati",
+      "current_holder_person_id": "PERS-MATT",
+      "current_holder_display_name": "Matthew Goss",
+      "taken_over": true,
+      "taken_over_by_person_id": "PERS-MATT",
+      "taken_over_by_display_name": "Matthew Goss",
+      "taken_over_at": "2026-10-04T13:56:05Z",
+      "takeover_reason": "Iza shift ended / Owner takeover after workflow failure",
+      "takeover_actor_person_id": "PERS-MATT",
+      "takeover_actor_display_name": "Matthew Goss",
+      "started_by_person_id": "PERS-IZA",
+      "started_at": "2026-10-04T13:24:15Z"
+    },
+    "audit_events": [
+      {
+        "action": "venue_close.takeover",
+        "actor_person_id": "PERS-MATT",
+        "occurred_at": "2026-10-04T13:56:05Z",
+        "reason": "Iza shift ended / Owner takeover after workflow failure",
+        "prior_holder": "PERS-IZA",
+        "new_holder": "PERS-MATT"
+      }
+    ],
+    "work_preserved": true
+  },
+  "declared_still_null": true,
+  "declared_before": null,
+  "declared_after": null,
+  "esb_totals_unchanged": true,
+  "protected_closes_unchanged": true,
+  "protected_close_snapshots": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+      "state": "EXCEPTION",
+      "declared_cash_amount": 3225000.0,
+      "variance_cash_amount": -125000.0,
+      "updated_at": "2026-10-03T13:47:39Z"
+    },
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": {
+      "state": "CANCELLED",
+      "declared_cash_amount": null,
+      "variance_cash_amount": null,
+      "updated_at": "2026-10-03T12:32:22Z"
+    }
+  },
+  "beta_pid": 35235,
+  "prod_pid": 1297,
+  "incident_note": "state/reliability/UMA-CLOSE-4OCT-SHIFT-ENDED-INCIDENT-2026-10-04.md"
+}

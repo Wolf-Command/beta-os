@@ -1,0 +1,190 @@
+{
+  "results": {
+    "ArrivalList": {
+      "http": 200,
+      "error_codes": [],
+      "denied": false,
+      "hint": {
+        "kind": "list",
+        "n": 1
+      },
+      "n": 1,
+      "sample0_keys": [
+        "Error Details"
+      ],
+      "sample0_scrubbed": {
+        "Error Details": "dict[2]"
+      }
+    },
+    "ArrivalList-FromDate": {
+      "http": 200,
+      "error_codes": [],
+      "denied": false,
+      "hint": {
+        "kind": "list",
+        "n": 1
+      },
+      "n": 1,
+      "sample0_keys": [
+        "Error Details"
+      ],
+      "sample0_scrubbed": {
+        "Error Details": "dict[2]"
+      }
+    },
+    "Bookings": {
+      "http": 200,
+      "error_codes": [],
+      "denied": false,
+      "hint": {
+        "kind": "list",
+        "n": 1
+      },
+      "n": 1,
+      "sample0_keys": [
+        "Error Details"
+      ],
+      "sample0_scrubbed": {
+        "Error Details": "dict[2]"
+      }
+    },
+    "Bookings-FromDate": {
+      "http": 200,
+      "error_codes": [],
+      "denied": false,
+      "hint": {
+        "kind": "list",
+        "n": 1
+      },
+      "n": 1,
+      "sample0_keys": [
+        "Error Details"
+      ],
+      "sample0_scrubbed": {
+        "Error Details": "dict[2]"
+      }
+    },
+    "inhousePOST:/pmsinterface/getRoomStatus.php": {
+      "http": 404,
+      "error_codes": [],
+      "hint": {
+        "kind": "dict",
+        "keys": [
+          "_text",
+          "_xml"
+        ],
+        "text": "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>404 Not F"
+      },
+      "top_keys": [
+        "_text",
+        "_xml"
+      ],
+      "has_roomlist": false,
+      "has_checkinguestlist": false,
+      "roomlist_n": 0,
+      "guestlist_n": 0
+    },
+    "inhousePOST:/pmsinterface/getInhouseRoomStatus.php": {
+      "http": 404,
+      "error_codes": [],
+      "hint": {
+        "kind": "dict",
+        "keys": [
+          "_text",
+          "_xml"
+        ],
+        "text": "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>404 Not F"
+      },
+      "top_keys": [
+        "_text",
+        "_xml"
+      ],
+      "has_roomlist": false,
+      "has_checkinguestlist": false,
+      "roomlist_n": 0,
+      "guestlist_n": 0
+    },
+    "inhousePOST:/pmsinterface/housekeeping.php": {
+      "http": 404,
+      "error_codes": [],
+      "hint": {
+        "kind": "dict",
+        "keys": [
+          "_text",
+          "_xml"
+        ],
+        "text": "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>404 Not F"
+      },
+      "top_keys": [
+        "_text",
+        "_xml"
+      ],
+      "has_roomlist": false,
+      "has_checkinguestlist": false,
+      "roomlist_n": 0,
+      "guestlist_n": 0
+    },
+    "inhousePOST:/booking/reservation_api/getRoomStatus.php": {
+      "http": 404,
+      "error_codes": [],
+      "hint": {
+        "kind": "dict",
+        "keys": [
+          "_text",
+          "_xml"
+        ],
+        "text": "<!DOCTYPE html>\r\n<html lang=en>\r\n<head>\r\n<meta charset=\"utf-8\">\r\n<meta http-equi"
+      },
+      "top_keys": [
+        "_text",
+        "_xml"
+      ],
+      "has_roomlist": false,
+      "has_checkinguestlist": false,
+      "roomlist_n": 0,
+      "guestlist_n": 0
+    },
+    "inhousePOST:/booking/reservation_api/housekeeping.php": {
+      "http": 404,
+      "error_codes": [],
+      "hint": {
+        "kind": "dict",
+        "keys": [
+          "_text",
+          "_xml"
+        ],
+        "text": "<!DOCTYPE html>\r\n<html lang=en>\r\n<head>\r\n<meta charset=\"utf-8\">\r\n<meta http-equi"
+      },
+      "top_keys": [
+        "_text",
+        "_xml"
+      ],
+      "has_roomlist": false,
+      "has_checkinguestlist": false,
+      "roomlist_n": 0,
+      "guestlist_n": 0
+    },
+    "inhousePOST:/channelbookings/housekeeping.php": {
+      "http": 404,
+      "error_codes": [],
+      "hint": {
+        "kind": "dict",
+        "keys": [
+          "_text",
+          "_xml"
+        ],
+        "text": "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>404 Not F"
+      },
+      "top_keys": [
+        "_text",
+        "_xml"
+      ],
+      "has_roomlist": false,
+      "has_checkinguestlist": false,
+      "roomlist_n": 0,
+      "guestlist_n": 0
+    }
+  },
+  "pii_omitted": true,
+  "probed_at": "2026-10-01T07:31:35+08:00"
+}

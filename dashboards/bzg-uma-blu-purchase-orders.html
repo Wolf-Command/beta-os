@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Uma Blu · Purchase orders</title>
+<style>
+  :root {
+    --bg: #0f1c24; --bg2: #162833; --bg3: #1e3542; --line: #2a4554;
+    --text: #eef4f7; --muted: #8aa0ad; --accent: #3db8a0; --warn: #e0a045;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font); min-height: 100%;
+  }
+  body {
+    padding: 16px 16px 64px; max-width: 1100px; margin: 0 auto;
+    background:
+      radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
+      radial-gradient(ellipse 90% 60% at 100% 0%, #163028 0%, transparent 50%),
+      var(--bg);
+  }
+  .brand { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 2px; }
+  .brand em { font-style: normal; color: var(--accent); }
+  .sub, .muted { color: var(--muted); font-size: 0.9rem; line-height: 1.35; margin: 0 0 14px; }
+  .banner {
+    background: rgba(224,160,69,0.12); border: 1px solid rgba(224,160,69,0.45);
+    color: var(--warn); border-radius: 12px; padding: 10px 12px;
+    font-size: 0.88rem; margin-bottom: 14px;
+  }
+  nav.uma { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  nav.uma a {
+    padding: 10px 12px; border-radius: 999px; border: 1px solid var(--line);
+    color: var(--muted); text-decoration: none; font-size: 0.84rem; font-weight: 650;
+    min-height: 44px; display: inline-flex; align-items: center;
+  }
+  nav.uma a.active { color: var(--accent); border-color: var(--accent); }
+  .crumb { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
+  .crumb a { color: var(--muted); }
+  h2.sec {
+    margin: 18px 0 8px; font-size: 0.78rem; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .row {
+    background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 10px;
+  }
+  .row h3 { margin: 0 0 6px; font-size: 1.02rem; }
+  .state {
+    display: inline-block; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--line); font-size: 0.75rem; color: var(--muted); margin-bottom: 8px;
+  }
+  .panel {
+    background: color-mix(in srgb, var(--bg2) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px;
+  }
+  label { display: block; font-size: 0.8rem; color: var(--muted); margin: 8px 0 4px; }
+  input, select, textarea {
+    width: 100%; border: 1px solid var(--line); background: var(--bg3); color: var(--text);
+    border-radius: 10px; padding: 12px; font: inherit;
+  }
+  textarea { min-height: 64px; resize: vertical; }
+  .btn {
+    appearance: none; width: 100%; min-height: 44px; margin-top: 10px;
+    border-radius: 12px; border: 1px solid #2a8a76; background: #1f6b5c; color: #fff;
+    font-size: 1rem; font-weight: 650; cursor: pointer;
+  }
+  .btn.secondary {
+    background: transparent; border-color: var(--line); color: var(--text);
+    margin-top: 6px;
+  }
+  .line-row { display: grid; grid-template-columns: 1fr 70px 70px 70px; gap: 6px; margin-bottom: 8px; align-items: end; }
+  .line-row.receive { grid-template-columns: 1fr 64px 80px; }
+  .line-row label { margin: 0; font-size: 0.72rem; }
+  .empty { color: var(--muted); font-size: 0.9rem; padding: 8px 0; }
+  .err { color: #e05a4c; font-size: 0.86rem; }
+  .ok { color: var(--accent); font-size: 0.86rem; }
+  .hist { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+  .locked { opacity: 0.92; }
+  .photo-box {
+    border: 1px dashed var(--line); border-radius: 12px; padding: 12px; margin: 10px 0;
+    background: color-mix(in srgb, var(--bg3) 60%, transparent);
+  }
+  .photo-box strong { display: block; margin-bottom: 6px; }
+  .photo-preview { display: none; width: 100%; max-height: 220px; object-fit: contain; border-radius: 8px; margin-top: 8px; }
+  .photo-preview.show { display: block; }
+  .line-row.bill { grid-template-columns: 1fr 64px 90px 90px; }
+  .nota-thumb { max-width: 100%; max-height: 140px; border-radius: 8px; margin-top: 6px; }
+  .match-ok { color: var(--accent); font-weight: 650; }
+  .match-diff { color: var(--warn); font-weight: 650; }
+  .match-panel { margin-top: 10px; padding: 10px; border-radius: 10px; border: 1px solid var(--line); }
+  @media (max-width: 520px) {
+    .line-row { grid-template-columns: 1fr 1fr; }
+    .line-row.receive { grid-template-columns: 1fr 1fr; }
+  }
+  @media (min-width: 900px) {
+    body { padding: 20px 28px 72px; }
+    nav.uma { gap: 8px; }
+  }
+</style>
+</head>
+<body>
+  <p class="crumb"><a href="/bzg">BZG</a> · <a href="/bzg/uma-blu">Uma Blu</a> · <a href="/bzg/uma-blu/bills">Bills</a> · Purchase orders</p>
+  <h1 class="brand">Purchase <em>orders</em></h1>
+  <p class="sub">Place orders from approved requests, record goods received, capture the supplier's paper nota, then run a three-way comparison. This is not AP and not a payment.</p>
+  <div class="banner">Receiving records what arrived. Nota capture records what the supplier wrote. Three-way match compares order, receipt, and nota — finance does accounting later. Paying happens on a later step.</div>
+
+  <nav class="uma" aria-label="Uma Blu desk">
+    <a href="/bzg/uma-blu">Today</a>
+    <a href="/bzg/uma-blu/bills">Bills</a>
+    <a class="active" href="/bzg/uma-blu/purchase-orders">Orders</a>
+    <a href="/bzg/uma-blu/ap">AP ready</a>
+    <a href="/bzg/uma-blu/ready-to-pay">Ready to pay</a>
+    <a href="/bzg/uma-blu/issues">Issues</a>
+    <a href="/bzg/uma-blu/petty">Petty</a>
+    <a href="/bzg/uma-blu/evidence">Evidence</a>
+    <a href="/bzg/uma-blu/exceptions">Exceptions</a>
+    <a href="/bzg/uma-blu/recipes">Recipes</a>
+    <a href="/bzg/uma-blu/real">Real</a>
+    <a id="closeLink" href="/uma-blu-close">Close</a>
+  </nav>
+
+  <div id="createPanel" class="panel" hidden>
+    <h2 style="margin:0 0 8px;font-size:1rem">New order from approved request</h2>
+    <form id="createForm">
+      <label>Approved request
+        <select id="prSelect" required></select>
+      </label>
+      <label>Supplier
+        <select id="supplier" required></select>
+      </label>
+      <div id="linesBox"></div>
+      <button class="btn" type="submit">Save purchase order</button>
+      <p class="muted" id="createMsg"></p>
+    </form>
+  </div>
+
+  <h2 class="sec">Three-way match history</h2>
+  <div id="matchHistory"><p class="muted">Loading…</p></div>
+
+  <h2 class="sec">Saved orders</h2>
+  <div id="orders"><p class="muted">Loading…</p></div>
+
+  <h2 class="sec">Approved — not yet ordered</h2>
+  <div id="awaiting"><p class="muted">Loading…</p></div>
+
+<script>
+(function () {
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  var awaitingRows = [];
+  var suppliers = [];
+  var canReceive = false;
+  var canCaptureBill = false;
+  var canRunMatch = false;
+  var canMarkApReady = false;
+
+  function lineSummary(ln) {
+    var u = ln.unit ? " " + ln.unit : "";
+    var ordered = ln.ordered_qty != null ? ln.ordered_qty : ln.qty;
+    var got = ln.received_qty != null ? ln.received_qty : 0;
+    var out = ln.outstanding_qty != null ? ln.outstanding_qty : ordered;
+    return ln.item + " · ordered " + ordered + u + " · received " + got + u + " · outstanding " + out + u;
+  }
+
+  function paintNotaHistory(receiptEl, receipt, order) {
+    var bills = receipt.supplier_bills || [];
+    if (!bills.length) return;
+    var hist = el("div", "hist");
+    hist.appendChild(el("div", "muted", "Supplier nota history"));
+    bills.forEach(function (b) {
+      var when = (b.created_at || "").replace("T", " ").slice(0, 16);
+      var head = "Nota " + (b.nota_number || "") + (b.nota_date ? " · " + b.nota_date : "");
+      if (when) head += " · " + when;
+      hist.appendChild(el("div", "muted", head));
+      if (b.stated_total != null) {
+        hist.appendChild(el("div", "muted", "Total on nota Rp " + Number(b.stated_total).toLocaleString("id-ID")));
+      }
+      if (b.difference_display) {
+        hist.appendChild(el("div", "muted", b.difference_display));
+      }
+      if (b.photo_url) {
+        var img = document.createElement("img");
+        img.className = "nota-thumb";
+        img.alt = "Supplier nota photo";
+        img.src = b.photo_url;
+        hist.appendChild(img);
+      }
+      (b.lines || []).forEach(function (ln) {
+        var u = ln.unit ? " " + ln.unit : "";
+        var bit = (ln.item || "Item") + " · billed " + ln.billed_qty + u
+          + " @ Rp " + Number(ln.billed_unit_price).toLocaleString("id-ID");
+        hist.appendChild(el("div", "muted", bit));
+      });
+      if (b.three_way_match) {
+        var m = b.three_way_match;
+        var mp = el("div", "match-panel");
+        var cls = m.is_match ? "match-ok" : "match-diff";
+        mp.appendChild(el("div", cls, m.is_match ? "Three-way match" : "Three-way difference"));
+        mp.appendChild(el("div", "muted", m.summary || ""));
+        if (m.created_at) {
+          mp.appendChild(el("div", "muted", (m.created_at || "").replace("T", " ").slice(0, 16)));
+        }
+        hist.appendChild(mp);
+      } else if (canRunMatch && b.bill_id && receipt.gr_id) {
+        var matchBtn = el("button", "btn secondary", "Run three-way match");
+        matchBtn.type = "button";
+        matchBtn.onclick = function () {
+          runThreeWayMatch({
+            bill_id: b.bill_id,
+            gr_id: receipt.gr_id,
+            po_id: receipt.po_id || (order && order.po_id)
+          }, matchBtn);
+        };
+        hist.appendChild(matchBtn);
+      }
+    });
+    receiptEl.appendChild(hist);
+  }
+
+  function runThreeWayMatch(payload, btn) {
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Matching…";
+    }
+    fetch("/api/bzg/uma-blu/three-way-match", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }).then(function (r) { return r.json(); }).then(function (out) {
+      if (!out.ok) {
+        alert(out.error || "Match was not saved.");
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Run three-way match";
+        }
+        return;
+      }
+      location.reload();
+    }).catch(function () {
+      alert("Match was not saved.");
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Run three-way match";
+      }
+    });
+  }
+
+  function paintMatchHistory(rows) {
+    var box = document.getElementById("matchHistory");
+    box.innerHTML = "";
+    if (!rows || !rows.length) {
+      box.appendChild(el("p", "empty", "No three-way matches saved yet. Capture a supplier nota on a receipt first."));
+      return;
+    }
+    rows.forEach(function (m) {
+      var d = el("div", "row");
+      var cls = m.is_match ? "match-ok" : "match-diff";
+      d.appendChild(el("span", "state", m.is_match ? "Match" : "Difference"));
+      var title = (m.supplier_name || "Supplier");
+      if (m.outlet_display_name) title += " · " + m.outlet_display_name;
+      if (m.nota_number) title += " · nota " + m.nota_number;
+      d.appendChild(el("h3", null, title));
+      d.appendChild(el("div", cls, m.summary || (m.is_match ? "match" : "difference")));
+      if (m.created_at) {
+        d.appendChild(el("div", "muted", (m.created_at || "").replace("T", " ").slice(0, 16)));
+      }
+      (m.line_details || []).forEach(function (ln) {
+        var u = ln.unit ? " " + ln.unit : "";
+        var bit = (ln.item || "Item")
+          + " · ordered " + ln.ordered_qty + u
+          + " · received " + ln.received_qty + u
+          + " · billed " + ln.billed_qty + u;
+        d.appendChild(el("div", "muted", bit));
+        (ln.differences || []).forEach(function (diff) {
+          d.appendChild(el("div", "match-diff", diff));
+        });
+      });
+      if (canMarkApReady && m.is_match && m.bill_id) {
+        var apBtn = el("button", "btn secondary", "Mark AP ready for controller");
+        apBtn.type = "button";
+        apBtn.onclick = function () {
+          markApReady({
+            bill_id: m.bill_id,
+            gr_id: m.gr_id,
+            po_id: m.po_id,
+            outlet_id: m.outlet_id,
+            supplier_id: m.supplier_id
+          }, apBtn);
+        };
+        d.appendChild(apBtn);
+      }
+      box.appendChild(d);
+    });
+  }
+
+  function markApReady(payload, btn) {
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Saving…";
+    }
+    fetch("/api/bzg/uma-blu/ap/ready", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }).then(function (r) { return r.json(); }).then(function (out) {
+      if (!out.ok) {
+        alert(out.error || "Bill was not marked AP-ready.");
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Mark AP ready for controller";
+        }
+        return;
+      }
+      location.reload();
+    }).catch(function () {
+      alert("Bill was not marked AP-ready.");
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Mark AP ready for controller";
+      }
+    });
+  }
+
+  function uploadNotaPhoto(file) {
+    var fd = new FormData();
+    fd.append("file", file, file.name || "nota.jpg");
+    return fetch("/api/bzg/uma-blu/supplier-bills/photo", {
+      method: "POST",
+      credentials: "same-origin",
+      body: fd
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); });
+  }
+
+  function buildNotaForm(receipt, order, container) {
+    container.innerHTML = "";
+    var panel = el("div", "panel nota-panel");
+    panel.appendChild(el("h3", null, "Add supplier nota"));
+    panel.appendChild(el("p", "muted", "Record what is written on the supplier's paper nota. This is not a payment and not approval to pay."));
+    var locked = el("div", "locked");
+    locked.appendChild(el("div", "muted", "Outlet · " + (receipt.outlet_display_name || order.outlet_display_name || "Uma Blu")));
+    locked.appendChild(el("div", "muted", "Supplier · " + (receipt.supplier_name || order.supplier_name || "")));
+    panel.appendChild(locked);
+
+    var photoBox = el("div", "photo-box");
+    photoBox.appendChild(el("strong", null, "Nota photo"));
+    photoBox.appendChild(el("p", "muted", "Take or upload a clear photo of the paper nota first."));
+    var photoInput = document.createElement("input");
+    photoInput.type = "file";
+    photoInput.accept = "image/*";
+    photoInput.capture = "environment";
+    photoInput.id = "nota-photo-" + receipt.gr_id;
+    photoBox.appendChild(photoInput);
+    var preview = document.createElement("img");
+    preview.className = "photo-preview";
+    preview.alt = "Nota preview";
+    photoBox.appendChild(preview);
+    var photoStatus = el("p", "muted", "No photo attached");
+    photoBox.appendChild(photoStatus);
+    panel.appendChild(photoBox);
+
+    var photoRef = null;
+    photoInput.onchange = function () {
+      var file = photoInput.files && photoInput.files[0];
+      if (!file) return;
+      photoStatus.textContent = "Uploading…";
+      photoStatus.className = "muted";
+      preview.src = URL.createObjectURL(file);
+      preview.classList.add("show");
+      uploadNotaPhoto(file).then(function (res) {
+        if (!res.ok || !res.j.ok) {
+          photoStatus.textContent = (res.j && res.j.error) || "Photo was not saved.";
+          photoStatus.className = "err";
+          photoRef = null;
+          return;
+        }
+        photoRef = res.j.photo_object_ref;
+        photoStatus.textContent = "Photo saved";
+        photoStatus.className = "ok";
+      }).catch(function () {
+        photoStatus.textContent = "Photo was not saved.";
+        photoStatus.className = "err";
+        photoRef = null;
+      });
+    };
+
+    var form = document.createElement("form");
+    form.appendChild(el("label", null, "Supplier nota number"));
+    var notaNo = document.createElement("input");
+    notaNo.required = true;
+    notaNo.name = "nota_number";
+    form.appendChild(notaNo);
+    form.appendChild(el("label", null, "Nota date"));
+    var notaDate = document.createElement("input");
+    notaDate.type = "date";
+    notaDate.required = true;
+    notaDate.name = "nota_date";
+    form.appendChild(notaDate);
+
+    var linesBox = el("div", null);
+    (receipt.lines || []).forEach(function (ln, i) {
+      if ((ln.received_qty || 0) <= 0) return;
+      var row = el("div", "line-row bill");
+      var itemLab = el("label", null, ln.item || "Item");
+      var itemNote = el("div", "muted", "received " + ln.received_qty + (ln.unit ? " " + ln.unit : ""));
+      itemLab.appendChild(itemNote);
+      var qtyLab = el("label", null, "Billed qty");
+      var qtyIn = document.createElement("input");
+      qtyIn.type = "number";
+      qtyIn.min = "0";
+      qtyIn.step = "any";
+      qtyIn.max = String(ln.received_qty);
+      qtyIn.value = ln.received_qty;
+      qtyIn.dataset.grLineId = ln.line_id;
+      qtyLab.appendChild(qtyIn);
+      var priceLab = el("label", null, "Unit price");
+      var priceIn = document.createElement("input");
+      priceIn.type = "number";
+      priceIn.min = "0";
+      priceIn.step = "1";
+      priceIn.placeholder = "Rp";
+      priceIn.dataset.grLineId = ln.line_id;
+      priceLab.appendChild(priceIn);
+      var amtLab = el("label", null, "Line total");
+      var amtNote = el("div", "muted line-amt", "—");
+      amtNote.dataset.grLineId = ln.line_id;
+      function recalc() {
+        var q = Number(qtyIn.value) || 0;
+        var p = Number(priceIn.value) || 0;
+        amtNote.textContent = "Rp " + (q * p).toLocaleString("id-ID");
+      }
+      qtyIn.oninput = recalc;
+      priceIn.oninput = recalc;
+      row.appendChild(itemLab);
+      row.appendChild(qtyLab);
+      row.appendChild(priceLab);
+      row.appendChild(amtLab);
+      amtLab.appendChild(amtNote);
+      linesBox.appendChild(row);
+    });
+    form.appendChild(linesBox);
+    form.appendChild(el("label", null, "Total on nota (as written)"));
+    var totalIn = document.createElement("input");
+    totalIn.type = "number";
+    totalIn.min = "0";
+    totalIn.step = "1";
+    totalIn.required = true;
+    form.appendChild(totalIn);
+
+    var msg = el("p", "muted", "");
+    form.appendChild(msg);
+    var save = el("button", "btn", "Save supplier nota");
+    save.type = "submit";
+    form.appendChild(save);
+    var cancel = el("button", "btn secondary", "Cancel");
+    cancel.type = "button";
+    cancel.onclick = function () { container.innerHTML = ""; };
+    form.appendChild(cancel);
+
+    form.onsubmit = function (ev) {
+      ev.preventDefault();
+      msg.textContent = "";
+      msg.className = "muted";
+      if (!photoRef) {
+        msg.textContent = "Attach a nota photo first.";
+        msg.className = "err";
+        return;
+      }
+      var payload = { lines: [] };
+      form.querySelectorAll("input[data-gr-line-id]").forEach(function (inp) {
+        if (inp.type !== "number" || inp.placeholder === "Rp") return;
+        var q = Number(inp.value);
+        if (!q) return;
+        var priceInp = form.querySelector("input[placeholder='Rp'][data-gr-line-id='" + inp.dataset.grLineId + "']");
+        var price = priceInp ? Number(priceInp.value) : 0;
+        if (!price) return;
+        payload.lines.push({
+          gr_line_id: inp.dataset.grLineId,
+          billed_qty: q,
+          billed_unit_price: price
+        });
+      });
+      if (!payload.lines.length) {
+        msg.textContent = "Enter billed qty and unit price on at least one line.";
+        msg.className = "err";
+        return;
+      }
+      payload.nota_number = notaNo.value.trim();
+      payload.nota_date = notaDate.value;
+      payload.stated_total = Number(totalIn.value);
+      payload.photo_object_ref = photoRef;
+      fetch("/api/bzg/uma-blu/goods-receipts/" + encodeURIComponent(receipt.gr_id) + "/supplier-bills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(function (r) { return r.json(); }).then(function (out) {
+        if (!out.ok) {
+          msg.textContent = out.error || "Nota was not saved.";
+          msg.className = "err";
+          return;
+        }
+        location.reload();
+      }).catch(function () {
+        msg.textContent = "Nota was not saved.";
+        msg.className = "err";
+      });
+    };
+    panel.appendChild(form);
+    container.appendChild(panel);
+  }
+
+  function paintReceiptHistory(box, receipts, order) {
+    if (!receipts || !receipts.length) return;
+    var hist = el("div", "hist");
+    hist.appendChild(el("div", "muted", "Goods receipt history"));
+    receipts.forEach(function (r) {
+      var block = el("div", "receipt-block");
+      var when = (r.created_at || "").replace("T", " ").slice(0, 16);
+      var label = r.status === "COMPLETE" ? "Full receipt" : "Partial receipt";
+      if (when) label += " · " + when;
+      block.appendChild(el("div", "muted", label));
+      (r.lines || []).forEach(function (ln) {
+        var u = ln.unit ? " " + ln.unit : "";
+        var bit = (ln.item || "Item") + " · received " + ln.received_qty + u;
+        if (ln.shortfall_reason) bit += " · note: " + ln.shortfall_reason;
+        block.appendChild(el("div", "muted", bit));
+      });
+      paintNotaHistory(block, r, order);
+      var notaSlot = el("div", "nota-slot");
+      block.appendChild(notaSlot);
+      if (canCaptureBill && r.gr_id) {
+        var btn = el("button", "btn secondary", "Add supplier nota");
+        btn.type = "button";
+        btn.onclick = function () { buildNotaForm(r, order, notaSlot); };
+        block.appendChild(btn);
+      }
+      hist.appendChild(block);
+    });
+    box.appendChild(hist);
+  }
+
+  function buildReceiveForm(order, container) {
+    container.innerHTML = "";
+    var panel = el("div", "panel receive-panel");
+    panel.appendChild(el("h3", null, "Record goods received"));
+    panel.appendChild(el("p", "muted", "This is a goods receipt only — not a supplier bill and not a payment."));
+    var locked = el("div", "locked");
+    locked.appendChild(el("div", "muted", "Outlet · " + (order.outlet_display_name || "Uma Blu")));
+    locked.appendChild(el("div", "muted", "Supplier · " + (order.supplier_name || "")));
+    panel.appendChild(locked);
+    var form = document.createElement("form");
+    var linesBox = el("div", null);
+    (order.lines || []).forEach(function (ln, i) {
+      if ((ln.outstanding_qty || 0) <= 0) return;
+      var row = el("div", "line-row receive");
+      var itemLab = el("label", null, ln.item || "Item");
+      var itemNote = el("div", "muted", lineSummary(ln));
+      itemLab.appendChild(itemNote);
+      var qtyLab = el("label", null, "Receive now");
+      var qtyIn = document.createElement("input");
+      qtyIn.type = "number";
+      qtyIn.min = "0";
+      qtyIn.step = "any";
+      qtyIn.max = String(ln.outstanding_qty);
+      qtyIn.value = "";
+      qtyIn.name = "recv-qty-" + i;
+      qtyIn.dataset.lineId = ln.line_id;
+      qtyIn.dataset.unit = ln.unit || "";
+      qtyLab.appendChild(qtyIn);
+      var reasonLab = el("label", null, "Shortfall note");
+      var reasonIn = document.createElement("input");
+      reasonIn.placeholder = "damaged / short / wrong item";
+      reasonIn.name = "recv-reason-" + i;
+      reasonIn.dataset.lineId = ln.line_id;
+      reasonLab.appendChild(reasonIn);
+      row.appendChild(itemLab);
+      row.appendChild(qtyLab);
+      row.appendChild(reasonLab);
+      linesBox.appendChild(row);
+    });
+    if (!linesBox.children.length) {
+      panel.appendChild(el("p", "muted", "Nothing left to receive on this order."));
+      container.appendChild(panel);
+      return;
+    }
+    form.appendChild(linesBox);
+    form.appendChild(el("label", null, "Delivery notes (optional)"));
+    var notes = document.createElement("textarea");
+    notes.id = "recv-notes-" + order.po_id;
+    form.appendChild(notes);
+    var msg = el("p", "muted", "");
+    form.appendChild(msg);
+    var save = el("button", "btn", "Save goods receipt");
+    save.type = "submit";
+    form.appendChild(save);
+    var cancel = el("button", "btn secondary", "Cancel");
+    cancel.type = "button";
+    cancel.onclick = function () { container.innerHTML = ""; };
+    form.appendChild(cancel);
+    form.onsubmit = function (ev) {
+      ev.preventDefault();
+      msg.textContent = "";
+      msg.className = "muted";
+      var payload = [];
+      form.querySelectorAll("input[name^='recv-qty-']").forEach(function (inp) {
+        var q = Number(inp.value);
+        if (!q) return;
+        var line = { po_line_id: inp.dataset.lineId, received_qty: q };
+        var reason = form.querySelector("input[data-line-id='" + inp.dataset.lineId + "'][name^='recv-reason']");
+        if (reason && reason.value) line.shortfall_reason = reason.value;
+        payload.push(line);
+      });
+      if (!payload.length) {
+        msg.textContent = "Enter a quantity on at least one line.";
+        msg.className = "err";
+        return;
+      }
+      fetch("/api/bzg/uma-blu/purchase-orders/" + encodeURIComponent(order.po_id) + "/receive", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lines: payload, notes: notes.value || undefined })
+      }).then(function (r) { return r.json(); }).then(function (out) {
+        if (!out.ok) {
+          msg.textContent = out.error || "Receipt was not saved.";
+          msg.className = "err";
+          return;
+        }
+        location.reload();
+      }).catch(function () {
+        msg.textContent = "Receipt was not saved.";
+        msg.className = "err";
+      });
+    };
+    panel.appendChild(form);
+    container.appendChild(panel);
+  }
+
+  function paintOrders(orders) {
+    var box = document.getElementById("orders");
+    box.innerHTML = "";
+    if (!orders.length) {
+      box.appendChild(el("p", "empty", "No purchase orders saved yet."));
+      return;
+    }
+    orders.forEach(function (o) {
+      var d = el("div", "row");
+      var chip = o.fully_received ? "Fully received" : ((o.receipts && o.receipts.length) ? "Partially received" : "Order saved");
+      d.appendChild(el("span", "state", chip));
+      var title = (o.supplier_name || "Purchase order");
+      if (o.outlet_display_name) title += " · " + o.outlet_display_name;
+      d.appendChild(el("h3", null, title));
+      if (o.pr_href) {
+        var prLink = el("a", null, "From purchase request");
+        prLink.href = o.pr_href;
+        prLink.style.color = "var(--accent)";
+        prLink.style.fontSize = "0.86rem";
+        d.appendChild(prLink);
+      }
+      if (o.lines && o.lines.length) {
+        o.lines.forEach(function (ln) {
+          d.appendChild(el("div", "muted", lineSummary(ln)));
+        });
+      }
+      paintReceiptHistory(d, o.receipts, o);
+      var recvSlot = el("div", "recv-slot");
+      d.appendChild(recvSlot);
+      if (canReceive && !o.fully_received && o.lines && o.lines.some(function (ln) { return (ln.outstanding_qty || 0) > 0; })) {
+        var btn = el("button", "btn secondary", "Receive goods");
+        btn.type = "button";
+        btn.onclick = function () { buildReceiveForm(o, recvSlot); };
+        d.appendChild(btn);
+      }
+      box.appendChild(d);
+    });
+  }
+
+  function paintAwaiting(rows) {
+    awaitingRows = rows || [];
+    var box = document.getElementById("awaiting");
+    box.innerHTML = "";
+    if (!rows.length) {
+      box.appendChild(el("p", "empty", "No approved requests waiting for an order."));
+      return;
+    }
+    rows.forEach(function (p) {
+      var d = el("div", "row");
+      d.appendChild(el("span", "state", "Approved"));
+      var title = (p.purpose || p.supplier_name || "Purchase request");
+      if (p.outlet_display_name) title += " · " + p.outlet_display_name;
+      d.appendChild(el("h3", null, title));
+      if (p.requester_label) d.appendChild(el("div", "muted", "Requested by " + p.requester_label));
+      box.appendChild(d);
+    });
+  }
+
+  function fillPrSelect(rows) {
+    var sel = document.getElementById("prSelect");
+    sel.innerHTML = "";
+    if (!rows.length) {
+      var opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "No approved requests";
+      sel.appendChild(opt);
+      sel.disabled = true;
+      return;
+    }
+    rows.forEach(function (p, i) {
+      var opt = document.createElement("option");
+      opt.value = p.pr_id;
+      opt.textContent = (p.purpose || p.pr_id) + (p.outlet_display_name ? " · " + p.outlet_display_name : "");
+      opt.dataset.index = String(i);
+      sel.appendChild(opt);
+    });
+    sel.onchange = renderLines;
+    renderLines();
+  }
+
+  function renderLines() {
+    var sel = document.getElementById("prSelect");
+    var box = document.getElementById("linesBox");
+    box.innerHTML = "";
+    var idx = Number(sel.selectedOptions[0] && sel.selectedOptions[0].dataset.index);
+    var pr = awaitingRows[idx];
+    if (!pr || !pr.lines) return;
+    pr.lines.forEach(function (ln, i) {
+      var row = el("div", "line-row");
+      var itemLab = el("label", null, "Item");
+      var itemIn = document.createElement("input");
+      itemIn.value = ln.item || "";
+      itemIn.readOnly = true;
+      itemIn.name = "item-" + i;
+      itemLab.appendChild(itemIn);
+      var qtyLab = el("label", null, "Qty");
+      var qtyIn = document.createElement("input");
+      qtyIn.type = "number";
+      qtyIn.min = "0";
+      qtyIn.step = "any";
+      qtyIn.value = ln.qty != null ? ln.qty : "";
+      qtyIn.max = ln.qty != null ? ln.qty : "";
+      qtyIn.name = "qty-" + i;
+      qtyIn.dataset.item = ln.item || "";
+      qtyIn.dataset.unit = ln.unit || "";
+      qtyLab.appendChild(qtyIn);
+      var unitLab = el("label", null, "Unit");
+      var unitIn = document.createElement("input");
+      unitIn.value = ln.unit || "";
+      unitIn.readOnly = true;
+      unitLab.appendChild(unitIn);
+      row.appendChild(itemLab);
+      row.appendChild(qtyLab);
+      row.appendChild(unitLab);
+      box.appendChild(row);
+    });
+  }
+
+  function fillSuppliers(list) {
+    suppliers = list || [];
+    var sel = document.getElementById("supplier");
+    sel.innerHTML = "";
+    if (!suppliers.length) {
+      var opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "Supplier list unavailable";
+      sel.appendChild(opt);
+      sel.disabled = true;
+      return;
+    }
+    suppliers.forEach(function (s) {
+      var opt = document.createElement("option");
+      opt.value = s.supplier_id;
+      opt.textContent = s.name || s.supplier_id;
+      sel.appendChild(opt);
+    });
+  }
+
+  fetch("/api/bzg/uma-blu/purchase-orders")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      canReceive = !!data.can_receive;
+      canCaptureBill = !!data.can_capture_bill;
+      canRunMatch = !!data.can_run_match;
+      canMarkApReady = !!data.can_mark_ap_ready;
+      paintMatchHistory(data.match_history || []);
+      paintOrders(data.orders || []);
+      paintAwaiting(data.awaiting_order || []);
+      if (data.can_create_po) {
+        document.getElementById("createPanel").hidden = false;
+        fillPrSelect(data.awaiting_order || []);
+        return fetch("/api/bzg/uma-blu/real/suppliers?limit=200").then(function (r2) {
+          return r2.json();
+        }).then(function (sup) {
+          fillSuppliers((sup && sup.suppliers) || []);
+        });
+      }
+    })
+    .catch(function () {
+      document.getElementById("orders").textContent = "Could not load purchase orders.";
+      document.getElementById("awaiting").textContent = "";
+    });
+
+  document.getElementById("createForm").onsubmit = function (ev) {
+    ev.preventDefault();
+    var msg = document.getElementById("createMsg");
+    msg.textContent = "";
+    var prId = document.getElementById("prSelect").value;
+    var supplierId = document.getElementById("supplier").value;
+    if (!prId || !supplierId) {
+      msg.textContent = "Select a request and supplier.";
+      return;
+    }
+    var lines = [];
+    document.querySelectorAll("#linesBox input[name^='qty-']").forEach(function (inp) {
+      lines.push({
+        item: inp.dataset.item,
+        qty: Number(inp.value),
+        unit: inp.dataset.unit || undefined
+      });
+    });
+    fetch("/api/bzg/uma-blu/purchase-orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pr_id: prId, supplier_id: supplierId, lines: lines })
+    }).then(function (r) { return r.json(); }).then(function (out) {
+      if (!out.ok) {
+        msg.textContent = out.error || out.message || "Order was not saved.";
+        msg.className = "err";
+        return;
+      }
+      location.reload();
+    }).catch(function () {
+      msg.textContent = "Order was not saved.";
+      msg.className = "err";
+    });
+  };
+})();
+</script>
+</body>
+</html>

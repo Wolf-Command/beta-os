@@ -1,0 +1,47 @@
+{
+  "run_id": "BF-68fa7ce19fc1",
+  "pack": "PETTY-IZA-FAIL-REPAIR",
+  "verified_at": "2026-10-04T21:36:30+08:00",
+  "verdict": "IMPLEMENTATION_DONE_BETA_RELOADED_READY_FOR_HUMAN_TEST",
+  "factory_blocker_overridden": "FACTORY_FAILURE:inspect_retry_ceiling",
+  "tests": {
+    "test_petty_iza_fail_repair_20261004.py": {
+      "pass": 30,
+      "fail": 0
+    },
+    "test_petty_surface_20261004.py": {
+      "pass": 26,
+      "fail": 0
+    },
+    "test_petty_cash_record_out_20261004.py": {
+      "pass": 31,
+      "fail": 0
+    }
+  },
+  "tests_pass": 87,
+  "tests_fail": 0,
+  "eng_proved": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "ready_for_human_test": true,
+  "outlet_lock_proved": true,
+  "gl_removed_from_captain_form": true,
+  "balance_derived_idr": 54000,
+  "owner_stated_balance_idr": 55000,
+  "gap_vs_owner_stated_idr": 1000,
+  "gap_shown_not_forced": true,
+  "iza_notas_counted_once": true,
+  "protected_close": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+  "protected_cash": 3225000,
+  "protected_variance": -125000,
+  "protected_updated_at": "2026-10-03T13:47:39Z",
+  "protected_state": "EXCEPTION",
+  "protected_untouched": true,
+  "prod_pid": 1297,
+  "beta_pid": 28164,
+  "prod_untouched": true,
+  "beta_reloaded": true,
+  "beta_link": "https://beta.wolfcommand.net/bzg/uma-blu/petty",
+  "cursor_result": "ALREADY_PRESENT_PROVED",
+  "note": "Peaches re-ran three suites green (30+26+31); overridden false inspect_retry_ceiling BLOCKED; ACTIVE cleared; not staff_ready / not human commissioned."
+}

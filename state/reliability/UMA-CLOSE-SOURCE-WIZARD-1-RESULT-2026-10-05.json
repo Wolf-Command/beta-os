@@ -1,0 +1,85 @@
+{
+  "repair": "UMA-CLOSE-SOURCE-WIZARD-1",
+  "status": "COMPLETE",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "data_truth": "PASS",
+  "ux": "PASS",
+  "date": "2026-10-05",
+  "warehouse_29sep": {
+    "close_id": "VDC-8fd544e2-2132-4a4a-b714-720eb0cd18ad",
+    "cash_rp": 4135000,
+    "finished_bills": 51,
+    "fingerprint": "af1310a02e5ffe5c9a5e9ce29bbab6dc6dada93b4691a4843c4b2ac61543c724",
+    "updated_at": "2026-10-05T00:41:41Z"
+  },
+  "printed_29sep": {
+    "source": "OWNER_TYPED",
+    "esb_receipt_id": "ESBR-OWNER-TYPED-DF8DA50A8BA8",
+    "provenance": "provided by Owner, 5 Oct 2026, during historical Daily Close human test",
+    "image_attached": false,
+    "image_status": "MISSING_FILE_VALUES_SUPPLIED_BY_OWNER",
+    "cash_rp": 3790000,
+    "bills": 50,
+    "gross_sales_rp": 13435000,
+    "pax": 79,
+    "non_sales_executive_chef_rp": 78512,
+    "payment_total_rp": 13435000,
+    "edc_bni_rp": 2545000,
+    "edc_bri_rp": 4465000,
+    "qris_bni_rp": 145000,
+    "qris_bri_rp": 1065000,
+    "scott_etik_rp": 1425000
+  },
+  "source_discrepancy_29sep": {
+    "cash_rp": 345000,
+    "bills": 1,
+    "auto_resolve": false,
+    "staff_heading": "SOURCE DIFFERENCE FOUND"
+  },
+  "wizard": {
+    "surface": "dashboards/uma-blu-close.html",
+    "api_date_register": "/api/venue-close/date-register",
+    "api_source_wizard": "/api/venue-close/{close_id}/source-wizard",
+    "seven_day_limit_removed": true,
+    "screens": [
+      "intro_shift_report",
+      "we_read",
+      "source_difference",
+      "terminals",
+      "cash",
+      "petty",
+      "review_submit"
+    ]
+  },
+  "files_changed": [
+    "dashboards/uma-blu-close.html",
+    "scripts/core/bzg_daily_close.py",
+    "scripts/serve_beta.py",
+    "scripts/tests/test_uma_close_source_wizard_1_20261005.py"
+  ],
+  "tests": {
+    "test_uma_close_source_wizard_1_20261005.py": {
+      "pass": 43,
+      "fail": 0,
+      "exit_code": 0
+    }
+  },
+  "protected_closes_unchanged": true,
+  "protected_close_snapshots": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+      "declared_cash_amount": 3225000.0,
+      "updated_at": "2026-10-03T13:47:39Z"
+    },
+    "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5": {
+      "declared_cash_amount": null,
+      "updated_at": "2026-10-04T13:56:05Z"
+    }
+  },
+  "sep29_submitted": false,
+  "beta_reloaded": true,
+  "beta_pid": 42110,
+  "prod_pid": 1297,
+  "no_prod": true,
+  "no_commit": true
+}

@@ -1,0 +1,60 @@
+{
+  "pack": "BZG-CLOSE-VISION-CAPABILITY-1",
+  "status": "CODE_COMPLETE_LIVE_PROVED_AWAITING_PEACHES",
+  "eng_proved": false,
+  "classification": "CODE COMPLETE / INTEGRATION LIVE PATH PROVED — human confirm + Peaches independent verify still required",
+  "as_of": "2026-10-03T10:44:30+08:00",
+  "branch": "build/wolf-command-rebuild",
+  "tip": "0b0e50d",
+  "tip_full": "0b0e50da410d7158777871ae240c7e757502f5d3",
+  "impl_tip_vision_router": "dbec39a",
+  "decision": "2026-09-17 PICK Uma Blu Daily Close (extend)",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "daily_close_commissioned": false,
+  "prod_8787": "READ_ONLY",
+  "prod_8787_pid": "15975",
+  "beta_8788_pid_was": "77236",
+  "beta_8788_pid": "34207",
+  "preserve": {
+    "close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+    "state": "DATA_CAPTURED",
+    "taken_by_person_id": "PERS-MATT",
+    "business_date": "2026-10-02",
+    "receipt": "state/bzg-daily-close/receipts/EVD-CLOSE-ESB-806C52F2BFBF.jpg",
+    "object_ref": "close-receipt://EVD-CLOSE-ESB-806C52F2BFBF.jpg",
+    "bytes": 1770075
+  },
+  "capability": "RECEIPT_IMAGE_EXTRACTION",
+  "router": "model_router.vision_extract",
+  "provider_matrix": ["gemini", "anthropic", "openai"],
+  "live_prove": {
+    "file": "state/bzg-daily-close/VISION-LIVE-PROVE-20261003.json",
+    "match_count": 9,
+    "match_total": 9,
+    "provider": "gemini",
+    "model": "gemini-2.5-flash",
+    "elapsed_s": 13.5
+  },
+  "gate_tests": {
+    "file": "scripts/tests/test_eng_proved_integration_gate_1.py",
+    "passed": 20,
+    "failed": 0
+  },
+  "artifacts": [
+    "scripts/core/bzg_close_vision.py",
+    "scripts/core/eng_proved_integration_gate.py",
+    "scripts/tests/test_eng_proved_integration_gate_1.py",
+    "dashboards/uma-blu-close.html",
+    "state/bzg-daily-close/ENG-PROVED-INTEGRATION-GATE-1.json",
+    "state/bzg-daily-close/FALSE-ENG-PROVED-REGISTER-PARTIAL-20261002.json",
+    "state/bzg-daily-close/GAP-STAFF-SAFE-PROVIDER-NAMING.md",
+    "state/bzg-daily-close/FORENSIC-FALSE-ENG-PROVED-VISION-20261002.json",
+    "state/bzg-daily-close/VISION-LIVE-PROVE-20261003.json",
+    "state/bzg-daily-close/PEACHES-VERIFY-VISION-CAPABILITY-1.json"
+  ],
+  "matt_ping": false,
+  "peaches_must_verify_before_matt_ping": true,
+  "matt_retest_string_for_peaches_only": "MATT RETEST READY — refresh the existing close.",
+  "no_push": true
+}

@@ -199,7 +199,32 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
           ON ingredient_master(entity_id, name COLLATE NOCASE);
         """
     )
+    _migrate_ingredient_id_column(conn)
     _migrate_multi_outlet(conn)
+    _backfill_line_ingredient_ids(conn)
+
+
+def _migrate_ingredient_id_column(conn: sqlite3.Connection) -> None:
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(recipe_lines)")}
+    if "ingredient_id" not in cols:
+        conn.execute("ALTER TABLE recipe_lines ADD COLUMN ingredient_id TEXT")
+
+
+def _backfill_line_ingredient_ids(conn: sqlite3.Connection) -> None:
+    """Bind historical lines to ingredient_master by name — idempotent."""
+    for row in conn.execute(
+        """
+        SELECT id, name FROM recipe_lines
+        WHERE (ingredient_id IS NULL OR TRIM(ingredient_id) = '')
+          AND name IS NOT NULL AND TRIM(name) != ''
+        """
+    ):
+        master = _lookup_ingredient_master(conn, name=str(row[1]))
+        if master:
+            conn.execute(
+                "UPDATE recipe_lines SET ingredient_id=? WHERE id=?",
+                (master["id"], row[0]),
+            )
 
 
 def _migrate_multi_outlet(conn: sqlite3.Connection) -> None:
@@ -315,6 +340,76 @@ def _migrate_multi_outlet(conn: sqlite3.Connection) -> None:
 def _slug(name: str) -> str:
     base = re.sub(r"[^a-z0-9]+", "-", (name or "").strip().lower()).strip("-")
     return (base or "recipe")[:80]
+
+
+def _norm_ingredient_query(text: str) -> str:
+    return re.sub(r"\s+", " ", (text or "").strip().lower())
+
+
+def _ingredient_rank(query: str, name: str) -> int:
+    q = _norm_ingredient_query(query)
+    n = _norm_ingredient_query(name)
+    if not q:
+        return 1
+    if n == q:
+        return 0
+    if n.startswith(q):
+        return 1
+    for word in n.split(" "):
+        if word.startswith(q):
+            return 2
+    if q in n:
+        return 3
+    return 99
+
+
+def _ingredient_payload(row: sqlite3.Row | dict[str, Any]) -> dict[str, Any]:
+    d = dict(row)
+    purchase_cost = d.get("purchase_cost")
+    if purchase_cost == 0 and not d.get("cost_source"):
+        purchase_cost = None
+    cost_status = INCOMPLETE_COST if purchase_cost is None else "KNOWN"
+    units: list[str] = []
+    for key in ("default_unit", "purchase_unit"):
+        unit = (d.get(key) or "").strip()
+        if unit and unit not in units:
+            units.append(unit)
+    return {
+        "id": d.get("id"),
+        "name": d.get("name"),
+        "default_unit": d.get("default_unit"),
+        "purchase_unit": d.get("purchase_unit"),
+        "purchase_cost": purchase_cost,
+        "cost_status": cost_status,
+        "cost_source": d.get("cost_source"),
+        "units": units,
+    }
+
+
+def _lookup_ingredient_master(
+    conn: sqlite3.Connection,
+    *,
+    ingredient_id: str | None = None,
+    name: str | None = None,
+) -> dict[str, Any] | None:
+    iid = (ingredient_id or "").strip()
+    if iid:
+        row = conn.execute(
+            "SELECT * FROM ingredient_master WHERE id=? AND entity_id=?",
+            (iid, ENTITY_BZG),
+        ).fetchone()
+        return _ingredient_payload(row) if row else None
+    nm = (name or "").strip()
+    if not nm:
+        return None
+    row = conn.execute(
+        """
+        SELECT * FROM ingredient_master
+        WHERE entity_id=? AND name=? COLLATE NOCASE
+        """,
+        (ENTITY_BZG, nm),
+    ).fetchone()
+    return _ingredient_payload(row) if row else None
 
 
 def _row_dict(row: sqlite3.Row | None) -> dict[str, Any] | None:
@@ -838,6 +933,13 @@ def builder_context(
         )
     requested = (outlet_id or "").strip() or None
     default = next((o for o in outlets if o["status"] == "OPEN"), None)
+    # Prefer Uma Blu when OPEN and in scope — live recipes are there today.
+    uma_open = next(
+        (o for o in outlets if o["outlet_id"] == UMA_OUTLET_ID and o["status"] == "OPEN"),
+        None,
+    )
+    if uma_open is not None:
+        default = uma_open
     if default is None and outlets:
         default = outlets[0]
     selected = None
@@ -1038,6 +1140,17 @@ def list_recipes(
             dish.pop("lines", None)
             dish["outlet_assignment"] = _recipe_outlet_payload(conn, recipe["id"])
             out.append(dish)
+        outlet_truth = None
+        if oid and oid != ALL_BZG and total == 0:
+            outlet_row = _outlet_index().get(oid) or {}
+            outlet_truth = {
+                "has_recipes": False,
+                "has_menu_items": False,
+                "message": (
+                    f"Wolf has no recipes linked to {outlet_row.get('display_name') or oid} yet. "
+                    "Associate a shared recipe to this outlet — do not copy another outlet's menu."
+                ),
+            }
         return {
             "ok": True,
             "count": total,
@@ -1048,6 +1161,7 @@ def list_recipes(
             "outlet_id": oid,
             "catalogue_mode": catalogue_mode,
             "not_merged_menu": catalogue_mode,
+            "outlet_truth": outlet_truth,
             "staff_ready": False,
             "human_commissioned": False,
         }
@@ -1284,36 +1398,76 @@ def _replace_lines(
     conn: sqlite3.Connection, recipe_id: str, lines: list[dict[str, Any]]
 ) -> None:
     conn.execute("DELETE FROM recipe_lines WHERE recipe_id=?", (recipe_id,))
+    seen_ids: set[str] = set()
+    seen_names: set[str] = set()
     for i, line in enumerate(lines):
+        line_kind = (line.get("line_kind") or "ingredient").strip()
+        stage = (line.get("stage") or line.get("notes") or "").strip()
+        ingredient_id = (line.get("ingredient_id") or "").strip() or None
         name = (line.get("name") or "").strip()
+        master = None
+        if line_kind == "ingredient":
+            master = _lookup_ingredient_master(
+                conn, ingredient_id=ingredient_id, name=name or None
+            )
+            if master:
+                ingredient_id = str(master["id"])
+                name = str(master["name"])
+            elif ingredient_id or name:
+                raise ValueError(
+                    "NO MATCHING INGREDIENT — choose from the shared master or "
+                    "request a new ingredient (you cannot create one here)."
+                )
+            if ingredient_id:
+                if ingredient_id in seen_ids and not stage:
+                    raise ValueError(
+                        "Duplicate ingredient line — add a preparation stage or remove the duplicate."
+                    )
+                seen_ids.add(ingredient_id)
+            elif name:
+                key = _norm_ingredient_query(name)
+                if key in seen_names and not stage:
+                    raise ValueError(
+                        "Duplicate ingredient line — add a preparation stage or remove the duplicate."
+                    )
+                seen_names.add(key)
         if not name:
             continue
-        # Never accept a client-invented unit_cost as truth — store card cost
-        # only when explicitly provided from a known source field; otherwise null.
         unit_cost = line.get("unit_cost")
         cost_source = (line.get("cost_source") or "").strip() or None
-        if unit_cost is not None and not cost_source:
-            # Refuse silent invented costs
+        unit = (line.get("unit") or "").strip() or None
+        if master and line_kind == "ingredient":
+            unit = unit or (master.get("default_unit") or "").strip() or None
+            if master.get("purchase_cost") is not None:
+                unit_cost = master.get("purchase_cost")
+                cost_source = master.get("cost_source")
+            else:
+                unit_cost = None
+                cost_source = None
+        elif unit_cost is not None and not cost_source:
+            unit_cost = None
+        if unit_cost == 0 and not cost_source:
             unit_cost = None
         conn.execute(
             """
             INSERT INTO recipe_lines (
               recipe_id, sort, line_kind, name, unit, qty, unit_cost,
-              cost_source, goods_key, subrecipe_id, notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              cost_source, goods_key, subrecipe_id, notes, ingredient_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 recipe_id,
                 int(line.get("sort") or i + 1),
-                (line.get("line_kind") or "ingredient").strip(),
+                line_kind,
                 name,
-                (line.get("unit") or "").strip() or None,
+                unit,
                 line.get("qty"),
                 unit_cost,
                 cost_source,
                 line.get("goods_key"),
                 line.get("subrecipe_id"),
-                (line.get("notes") or "").strip() or None,
+                stage or None,
+                ingredient_id,
             ),
         )
 
@@ -1346,11 +1500,42 @@ def list_menu_items(*, outlet_id: str) -> dict[str, Any]:
                 (oid,),
             )
         ]
+        recipe_count = conn.execute(
+            """
+            SELECT COUNT(DISTINCT r.id) FROM recipes r
+            WHERE EXISTS (SELECT 1 FROM recipe_all_bzg a WHERE a.recipe_id=r.id)
+               OR EXISTS (
+                 SELECT 1 FROM recipe_outlet_links l
+                 WHERE l.recipe_id=r.id AND l.outlet_id=?
+               )
+            """,
+            (oid,),
+        ).fetchone()[0]
+        outlet_row = _outlet_index().get(oid) or {}
+        outlet_label = outlet_row.get("display_name") or oid
+        outlet_truth = {
+            "has_menu_items": bool(rows),
+            "has_recipes": recipe_count > 0,
+            "recipe_count": recipe_count,
+            "menu_item_count": len(rows),
+        }
+        if not rows:
+            if recipe_count:
+                outlet_truth["message"] = (
+                    f"{outlet_label} has {recipe_count} linked recipe(s) but no menu items yet. "
+                    "A menu item needs its own name, portion and sell price for this outlet."
+                )
+            else:
+                outlet_truth["message"] = (
+                    f"Wolf has no menu items and no recipes for {outlet_label} yet."
+                )
         return {
             "ok": True,
             "outlet_id": oid,
+            "outlet_display_name": outlet_label,
             "count": len(rows),
             "menu_items": rows,
+            "outlet_truth": outlet_truth,
             "staff_ready": False,
             "human_commissioned": False,
         }
@@ -1439,34 +1624,46 @@ def upsert_menu_item(
 
 def list_ingredients() -> dict[str, Any]:
     """Shared ingredient master — one master for all BZG outlets."""
+    return search_ingredients(query="", limit=500)
+
+
+def search_ingredients(*, query: str = "", limit: int = 25) -> dict[str, Any]:
+    """Type-ahead search over ingredient_master — read only, never inserts."""
     import_v1_recipes()
     conn = connect(writable=True)
     try:
-        rows = []
-        for r in conn.execute(
-            """
-            SELECT * FROM ingredient_master
-            WHERE entity_id=?
-            ORDER BY name COLLATE NOCASE
-            """,
-            (ENTITY_BZG,),
-        ):
-            d = dict(r)
-            if d.get("purchase_cost") is None:
-                d["cost_status"] = INCOMPLETE_COST
-            else:
-                d["cost_status"] = "KNOWN"
-            # Never coerce null cost to 0
-            if d.get("purchase_cost") == 0 and not d.get("cost_source"):
-                d["purchase_cost"] = None
-                d["cost_status"] = INCOMPLETE_COST
-            rows.append(d)
+        rows = [
+            _ingredient_payload(r)
+            for r in conn.execute(
+                """
+                SELECT * FROM ingredient_master
+                WHERE entity_id=?
+                ORDER BY name COLLATE NOCASE
+                """,
+                (ENTITY_BZG,),
+            )
+        ]
+        q = _norm_ingredient_query(query)
+        if q:
+            rows = [r for r in rows if _ingredient_rank(q, str(r.get("name") or "")) < 99]
+            rows.sort(
+                key=lambda r: (
+                    _ingredient_rank(q, str(r.get("name") or "")),
+                    str(r.get("name") or "").lower(),
+                )
+            )
+        cap = max(1, min(int(limit), 500))
+        rows = rows[:cap]
         return {
             "ok": True,
+            "query": query,
             "count": len(rows),
             "ingredients": rows,
+            "no_match": bool(q) and not rows,
+            "no_match_label": "NO MATCHING INGREDIENT",
             "shared_master": True,
             "per_outlet_masters": False,
+            "create_refused": True,
             "staff_ready": False,
             "human_commissioned": False,
         }
@@ -1485,7 +1682,7 @@ def reporting_foundation(*, outlet_id: str | None = None) -> dict[str, Any]:
     if oid == "BZG-RAIN" or (outlet and outlet.get("outlet_id") == "BZG-RAIN"):
         reasons.append(
             "Rainforest food-cost reporting is not human-commissioned — "
-            "registry status is PRE-OPENING; refusing invented FC numbers."
+            "refusing invented FC numbers even though the outlet is OPEN."
         )
     reasons.append(
         "ESB theoretical usage variance is not commissioned on this builder surface."

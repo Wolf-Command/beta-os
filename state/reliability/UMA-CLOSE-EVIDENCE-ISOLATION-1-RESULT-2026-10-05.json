@@ -1,0 +1,91 @@
+{
+  "beta_pid": 31147,
+  "date": "2026-10-05",
+  "dirs_guarded": [
+    "CLOSE_RECEIPT_DIR",
+    "PETTY_RECEIPT_DIR",
+    "NOTA_PHOTO_DIR"
+  ],
+  "env_guards": [
+    "WOLF_EVIDENCE_ROOT",
+    "WOLF_TEST_MODE"
+  ],
+  "exit_code": 0,
+  "guard_test": {
+    "fail": 0,
+    "file": "scripts/tests/test_uma_close_evidence_isolation1_20261005.py",
+    "pass": 2
+  },
+  "live_proofs": {
+    "oct3_resolve": {
+      "expected_file": "EVD-CLOSE-ESB-88402DFA4FC5.jpg",
+      "match": true,
+      "ref": "close-receipt://EVD-CLOSE-ESB-88402DFA4FC5.jpg"
+    },
+    "oct4_resolve": {
+      "note": "no DB ESB receipt row; sidecar-only path removed per DB-as-truth",
+      "ref": null
+    },
+    "photo_index_first13_sha256": "07e9c7e0c303bea75fc54b3297b4a7e36c4d4267184483b9b634cb470c256738",
+    "pre_1200_file_count": 13,
+    "sep29_resolve": {
+      "hash_prefix": "cda19dc46fd9ed28",
+      "no_synthetic": true,
+      "ref": "close-receipt://PRINTED-SHIFT-ESBR-OWNER-TYPED-DF8DA50A8BA8"
+    },
+    "unknown_close_pending": null
+  },
+  "no_commit": true,
+  "pack": "UMA-CLOSE-EVIDENCE-ISOLATION-1",
+  "prod_pid": 1297,
+  "protections": {
+    "human_commissioned": false,
+    "no_live_upload": true,
+    "prod_8787_sacred": true,
+    "staff_ready": false
+  },
+  "quarantine_count": 52,
+  "quarantine_file": "state/bzg-daily-close/receipts/quarantine-synthetic-2026-10-05.jsonl",
+  "readers_patched": [
+    "bzg_daily_close._resolve_shift_report_evidence (photo-index fallback removed; quarantine skip)",
+    "bzg_daily_close.find_pending_esb_receipt_photo (disk_newest_esb removed; DB-anchored sidecar only)",
+    "bzg_daily_close.resolve_close_receipt_path (quarantine skip)",
+    "bzg_daily_close.confirm_esb_closing_receipt (quarantine refuse)",
+    "bzg_daily_close.register_shift_report_photo (quarantine refuse)",
+    "wolf_evidence_guard.assert_live_evidence_writable"
+  ],
+  "suites": {
+    "complete1": {
+      "fail": 0,
+      "pass": 28
+    },
+    "complete2": {
+      "fail": 0,
+      "pass": 29
+    },
+    "evidence_isolation_guard": {
+      "fail": 0,
+      "pass": 2
+    },
+    "nav_mobile1": {
+      "fail": 0,
+      "pass": 52
+    },
+    "nav_mobile2": {
+      "fail": 0,
+      "pass": 98
+    },
+    "queue1": {
+      "fail": 0,
+      "pass": 35
+    },
+    "rebuild1": {
+      "fail": 0,
+      "pass": 46
+    },
+    "rebuild2": {
+      "fail": 0,
+      "pass": 15
+    }
+  }
+}

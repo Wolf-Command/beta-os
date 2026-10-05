@@ -28,6 +28,7 @@ from core import intel_connective as _intel_connect
 from core import staff_ready_ux as _staff_ready
 from core import uma_alchemist_ro as _legacy_alc
 from core import venue_close as _venue_close
+from core import wolf_evidence_guard as _weg
 from core import work_items as _work_items
 
 BETA_ROOT = Path("/Users/wolfterminal/beta-os").resolve()
@@ -42,23 +43,26 @@ RESOURCE_TYPE = "bzg_purchase_request"
 RESOURCE_PETTY = "bzg_petty_movement"
 RESOURCE_PETTY_DAY = "bzg_petty_day"
 PAYMENT_PERM = "bzg.pr.payment_approve"
+PERM_PETTY_RECORD_OUT = "petty_cash.record_out"
+PERM_PETTY_RECORD_IN = "petty_cash.record_in"
+PERM_PETTY_RECONCILE = "petty_cash.reconcile"
+PETTY_IN_DEFAULT_CATEGORY = "Top-up"
 
 PETTY_DIRECTIONS = frozenset({"OUT", "IN"})
-# V1 Notion / Alchemist category set (phone workflow). Other → free text.
-PETTY_CATEGORIES: tuple[str, ...] = (
-    "Transport",
-    "Gas / LPG",
-    "Supplies",
-    "Food",
-    "Maintenance",
-    "Staff",
-    "Top-up",
-    "Other",
-)
+PETTY_RECORD_OUT_ONLY = frozenset({"OUT"})
+PETTY_RECEIPT_PROVIDED = "PROVIDED"
+PETTY_RECEIPT_EXCEPTION = "EVIDENCE_EXCEPTION"
+PETTY_PROOF_RECORDED = "RECORDED"
+PETTY_PROOF_INCOMPLETE = "INCOMPLETE"
+PETTY_ACCT_MAPPED = "MAPPED"
+PETTY_ACCT_NEEDS_CLASSIFICATION = "NEEDS_ACCOUNTING_CLASSIFICATION"
+# Captain OUT categories excluded from phone picker (IN-only or system).
+PETTY_CATEGORY_EXCLUDED_OUT: frozenset[str] = frozenset({"Top-up", "Balance reset"})
+PETTY_CHAIN_REF_PATH = BETA_ROOT / "state/reliability/PETTY-CHAIN-VERIFICATION-ANCHORS.json"
 PETTY_ACTIVE_OUTLETS: tuple[str, ...] = ("Uma Blu",)
 # V1: IDR 500k+ needs approval (flag only — does not invent an approval product).
 PETTY_APPROVAL_THRESHOLD_IDR = 500_000
-PETTY_RECEIPT_DIR = Path("/Users/wolfterminal/beta-os/state/uma-petty-receipts")
+PETTY_RECEIPT_DIR = _weg.resolve_petty_receipt_dir()
 PETTY_DAY_STATES = frozenset(
     {
         "OPEN",
@@ -375,12 +379,413 @@ def _petty_variance_policy_exists(conn: sqlite3.Connection) -> bool:
         return False
 
 
+def _staff_person_label(name: str | None) -> str | None:
+    label = (name or "").strip()
+    if not label:
+        return None
+    if label.startswith("PERS-") or label.startswith("ASG-"):
+        return None
+    return label
+
+
 def _public_petty_movement(row: dict[str, Any] | None) -> dict[str, Any] | None:
     if not row:
         return None
-    out = dict(row)
-    out["example"] = bool(out.get("example"))
+    direc = (row.get("direction") or "").strip().upper()
+    rpath = (row.get("receipt_path") or "").strip()
+    r_status = (row.get("receipt_status") or "").strip()
+    receipt_missing = (
+        r_status == PETTY_RECEIPT_EXCEPTION
+        or (not rpath and direc == "OUT")
+    )
+    if rpath:
+        receipt_missing = False
+    out: dict[str, Any] = {
+        "movement_id": row.get("movement_id"),
+        "direction": direc or None,
+        "direction_label": "Out" if direc == "OUT" else ("In" if direc == "IN" else None),
+        "amount": row.get("amount"),
+        "currency": row.get("currency"),
+        "purpose": row.get("purpose"),
+        "category": row.get("category"),
+        "outlet": row.get("outlet"),
+        "business_date": row.get("business_date"),
+        "transaction_time": row.get("transaction_time"),
+        "payee": row.get("payee"),
+        "logged_by": _staff_person_label(row.get("logged_by")),
+        "receipt_attached": bool(rpath),
+        "receipt_missing": bool(receipt_missing and direc == "OUT"),
+        "needs_approval": bool(row.get("needs_approval")),
+        "example": bool(row.get("example")),
+        "created_at": row.get("created_at"),
+    }
+    if row.get("approval_state"):
+        out["approval_state"] = row.get("approval_state")
+    acct_cls = (row.get("accounting_classification") or "").strip()
+    if acct_cls:
+        out["accounting_classification"] = acct_cls
+    exceptions: list[str] = []
+    if receipt_missing and direc == "OUT":
+        exceptions.append("receipt_missing")
+    if acct_cls == PETTY_ACCT_NEEDS_CLASSIFICATION:
+        exceptions.append("needs_accounting_classification")
+    if row.get("needs_approval"):
+        exceptions.append("needs_approval")
+    out["exception_state"] = exceptions if exceptions else None
     return out
+
+
+def list_petty_operational_categories() -> list[str]:
+    """Operational categories from Alchemist petty_cash master (not A&G GL labels)."""
+    seen: set[str] = set()
+    ordered: list[str] = []
+    try:
+        from core import uma_alchemist_ro as _alc
+
+        path = _alc.resolve_db_path()
+        if path and path.is_file():
+            conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+            try:
+                rows = conn.execute(
+                    """
+                    SELECT DISTINCT category FROM petty_cash
+                    WHERE category IS NOT NULL AND TRIM(category)!=''
+                    ORDER BY category COLLATE NOCASE
+                    """
+                ).fetchall()
+                for r in rows:
+                    cat = str(r[0] or "").strip()
+                    if cat and cat not in PETTY_CATEGORY_EXCLUDED_OUT and cat not in seen:
+                        seen.add(cat)
+                        ordered.append(cat)
+            finally:
+                conn.close()
+    except Exception:  # noqa: BLE001 — alchemist may be absent in tests
+        pass
+    return ordered
+
+
+def resolve_petty_outlet_for_person(
+    person_id: str,
+    *,
+    conn: sqlite3.Connection,
+) -> dict[str, str]:
+    """Derive locked outlet from person → assignment → scope → outlet registry."""
+    from core import bzg_outlet_registry as _outlets
+
+    pid = (person_id or "").strip()
+    if not pid:
+        raise UmaOpsError("verified_person_id required", code="missing_verified_person", http_status=403)
+    covered = _outlets.outlets_for_person(pid, conn=conn)
+    uma = [
+        o
+        for o in covered
+        if str(o.get("brand_id") or "") == VENUE_UMA
+        or str(o.get("outlet_id") or "") == VENUE_UMA
+    ]
+    if not uma:
+        raise UmaOpsError(
+            "no Uma Blu outlet in assignment scope",
+            code="outlet_not_in_scope",
+            http_status=403,
+        )
+    pick = next((o for o in uma if str(o.get("outlet_id") or "") == VENUE_UMA), uma[0])
+    display = str(pick.get("display_name") or "Uma Blu").strip() or "Uma Blu"
+    oid = str(pick.get("outlet_id") or VENUE_UMA).strip() or VENUE_UMA
+    return {"outlet_id": oid, "display_name": display, "brand_id": VENUE_UMA}
+
+
+def _category_gl_from_prior_movements(
+    category: str,
+    *,
+    entity_id: str,
+    conn: sqlite3.Connection,
+) -> str | None:
+    cat = (category or "").strip()
+    if not cat:
+        return None
+    row = conn.execute(
+        """
+        SELECT accounting_code FROM bzg_ops_petty_movements
+        WHERE COALESCE(entity_id, ?)=?
+          AND category=? AND accounting_code IS NOT NULL AND TRIM(accounting_code)!=''
+          AND example=0
+        ORDER BY created_at DESC LIMIT 1
+        """,
+        (ENTITY_BZG, entity_id, cat),
+    ).fetchone()
+    if row and row[0]:
+        return str(row[0]).strip()
+    return None
+
+
+def resolve_category_accounting_code(
+    category: str,
+    *,
+    entity_id: str = ENTITY_BZG,
+    conn: sqlite3.Connection,
+) -> tuple[str | None, str]:
+    """Downstream GL: prior approved map → entity books name match; else NEEDS CLASSIFICATION."""
+    prior = _category_gl_from_prior_movements(category, entity_id=entity_id, conn=conn)
+    if prior:
+        return prior, PETTY_ACCT_MAPPED
+    cat_low = (category or "").strip().lower()
+    try:
+        from core import entity_books as _books
+
+        ec = _books.connect(entity_id, readonly=True)
+        try:
+            for row in ec.execute(
+                """
+                SELECT account_code, account_name FROM accounts
+                WHERE account_type='Expense' AND active='Y'
+                """
+            ):
+                code = str(row[0] or "").strip()
+                name = str(row[1] or "").strip().lower()
+                if code and cat_low and (cat_low in name or name in cat_low):
+                    return code, PETTY_ACCT_MAPPED
+        finally:
+            ec.close()
+    except Exception:  # noqa: BLE001
+        pass
+    return None, PETTY_ACCT_NEEDS_CLASSIFICATION
+
+
+def _load_petty_chain_reference_anchors() -> dict[str, Any]:
+    """Optional owner reference anchors for verification — never ledger writes."""
+    try:
+        if PETTY_CHAIN_REF_PATH.is_file():
+            raw = json.loads(PETTY_CHAIN_REF_PATH.read_text(encoding="utf-8"))
+            return raw if isinstance(raw, dict) else {}
+    except (OSError, json.JSONDecodeError, TypeError):
+        pass
+    return {}
+
+
+def reconcile_petty_balance(
+    *,
+    as_of_date: str | None = None,
+    conn: sqlite3.Connection,
+) -> dict[str, Any]:
+    """Derive tin balance from movement chain + provenance anchors. Never invents opening."""
+    as_of = (as_of_date or "").strip() or today_biz_date()
+    sources: list[dict[str, Any]] = []
+    rows = conn.execute(
+        """
+        SELECT business_date, direction, amount, movement_id, purpose, logged_by,
+               COALESCE(transaction_time, created_at) AS sort_ts
+        FROM bzg_ops_petty_movements
+        WHERE venue=? AND example=0 AND business_date <= ?
+        ORDER BY business_date, sort_ts, movement_id
+        """,
+        (VENUE_UMA, as_of),
+    ).fetchall()
+    day_totals: dict[str, dict[str, float]] = {}
+    for r in rows:
+        d = str(r["business_date"])
+        bucket = day_totals.setdefault(d, {"in": 0.0, "out": 0.0})
+        amt = float(r["amount"] or 0)
+        if str(r["direction"]).upper() == "IN":
+            bucket["in"] += amt
+        else:
+            bucket["out"] += amt
+    for d, t in sorted(day_totals.items()):
+        sources.append(
+            {
+                "kind": "wolf_movements_day_total",
+                "business_date": d,
+                "in_idr": round(t["in"], 2),
+                "out_idr": round(t["out"], 2),
+                "net_idr": round(t["in"] - t["out"], 2),
+            }
+        )
+    anchor_row = conn.execute(
+        """
+        SELECT business_date, opening_float, opening_float_source, opening_float_set_by
+        FROM bzg_ops_petty_days
+        WHERE venue=? AND opening_float IS NOT NULL
+          AND business_date <= ?
+        ORDER BY business_date DESC LIMIT 1
+        """,
+        (VENUE_UMA, as_of),
+    ).fetchone()
+    balance: float | None = None
+    if anchor_row:
+        anchor_date = str(anchor_row["business_date"])
+        opening = float(anchor_row["opening_float"])
+        sources.append(
+            {
+                "kind": "day_opening_anchor",
+                "business_date": anchor_date,
+                "opening_idr": opening,
+                "source": anchor_row["opening_float_source"],
+                "set_by": anchor_row["opening_float_set_by"],
+            }
+        )
+        balance = opening
+        for r in rows:
+            if str(r["business_date"]) < anchor_date:
+                continue
+            amt = float(r["amount"] or 0)
+            if str(r["direction"]).upper() == "IN":
+                balance += amt
+            else:
+                balance -= amt
+    today_day = get_petty_day(as_of, conn=conn)
+    today_has_proven_opening = bool(
+        today_day and today_day.get("opening_float") is not None
+    )
+    ref = _load_petty_chain_reference_anchors()
+    ref_anchors = ref.get("anchors") if isinstance(ref.get("anchors"), list) else []
+    ref_opening: float | None = None
+    ref_stated: float | None = None
+    ref_balance: float | None = None
+    for a in ref_anchors:
+        if not isinstance(a, dict):
+            continue
+        if str(a.get("business_date") or "") == as_of and a.get("opening_idr") is not None:
+            ref_opening = float(a["opening_idr"])
+            sources.append(
+                {
+                    "kind": "owner_reference_opening",
+                    "business_date": as_of,
+                    "opening_idr": ref_opening,
+                    "reference_source": a.get("source"),
+                    "note": "verification anchor only — not a ledger write",
+                }
+            )
+        if str(a.get("as_of") or "") == as_of and a.get("stated_balance_idr") is not None:
+            ref_stated = float(a["stated_balance_idr"])
+    if ref_opening is not None:
+        ref_balance = ref_opening
+        for r in rows:
+            if str(r["business_date"]) != as_of:
+                continue
+            amt = float(r["amount"] or 0)
+            if str(r["direction"]).upper() == "IN":
+                ref_balance += amt
+            else:
+                ref_balance -= amt
+        sources.append(
+            {
+                "kind": "owner_reference_derived_balance",
+                "business_date": as_of,
+                "derived_idr": round(ref_balance, 2),
+                "note": "from reference opening + same-day movements",
+            }
+        )
+    if not today_has_proven_opening and ref_balance is not None:
+        if balance is not None and round(balance, 2) != round(ref_balance, 2):
+            sources.append(
+                {
+                    "kind": "stale_anchor_superseded",
+                    "chain_derived_idr": round(balance, 2),
+                    "reference_derived_idr": round(ref_balance, 2),
+                    "note": "today has no proven opening — reference anchor used",
+                }
+            )
+        balance = ref_balance
+    elif balance is None and ref_balance is not None:
+        balance = ref_balance
+    today = day_totals.get(as_of, {"in": 0.0, "out": 0.0})
+    gap_vs_stated: float | None = None
+    if balance is not None and ref_stated is not None:
+        gap_vs_stated = round(ref_stated - balance, 2)
+        sources.append(
+            {
+                "kind": "owner_stated_balance_check",
+                "as_of": as_of,
+                "stated_idr": ref_stated,
+                "derived_idr": round(balance, 2),
+                "gap_idr": gap_vs_stated,
+            }
+        )
+    oct3 = day_totals.get("2026-10-03", {})
+    if oct3:
+        out3 = round(oct3.get("out", 0), 2)
+        sources.append(
+            {
+                "kind": "verification_oct3_out_total",
+                "out_idr": out3,
+                "movements_counted": True,
+            }
+        )
+    return {
+        "as_of": as_of,
+        "derived_balance": round(balance, 2) if balance is not None else None,
+        "currency": "IDR",
+        "today_cash_out": round(today.get("out", 0), 2),
+        "today_cash_in": round(today.get("in", 0), 2),
+        "sources": sources,
+        "gap_vs_owner_stated": gap_vs_stated,
+        "anchored": balance is not None,
+        "float_status": "DERIVED" if balance is not None else "NOT_FOUND",
+    }
+
+
+def list_petty_accounting_mappings(
+    *,
+    entity_id: str = ENTITY_BZG,
+    conn: sqlite3.Connection | None = None,
+) -> list[dict[str, str]]:
+    """Human-labelled expense account codes stored for this business (entity books + prior OUT)."""
+    eid = (entity_id or ENTITY_BZG).strip() or ENTITY_BZG
+    options: dict[str, str] = {}
+    try:
+        from core import entity_books as _books
+
+        ec = _books.connect(eid, readonly=True)
+        try:
+            for row in ec.execute(
+                """
+                SELECT account_code, account_name
+                FROM accounts
+                WHERE account_type='Expense' AND active='Y'
+                ORDER BY account_name COLLATE NOCASE
+                """
+            ):
+                code = str(row[0] or "").strip()
+                label = str(row[1] or "").strip()
+                if code and label:
+                    options[code] = label
+        finally:
+            ec.close()
+    except Exception:  # noqa: BLE001 — books shell may be absent in tests
+        pass
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        if own:
+            try:
+                ensure_schema(c)
+            except (sqlite3.Error, RuntimeError, OSError):
+                pass
+        try:
+            rows = c.execute(
+                """
+                SELECT DISTINCT accounting_code, category
+                FROM bzg_ops_petty_movements
+                WHERE COALESCE(entity_id, ?)=?
+                  AND accounting_code IS NOT NULL AND TRIM(accounting_code)!=''
+                  AND example=0
+                ORDER BY accounting_code
+                """,
+                (ENTITY_BZG, eid),
+            ).fetchall()
+        except sqlite3.Error:
+            rows = []
+        for row in rows:
+            code = str(row[0] or "").strip()
+            if not code or code in options:
+                continue
+            cat = str(row[1] or "").strip()
+            if cat:
+                options[code] = cat
+    finally:
+        if own:
+            c.close()
+    return [{"code": code, "label": label} for code, label in sorted(options.items(), key=lambda x: x[1].lower())]
 
 
 def _public_petty_day(row: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -543,6 +948,90 @@ def _compute_expected_from_float_and_movements(
     return total
 
 
+def sum_petty_out_for_date(
+    business_date: str,
+    *,
+    venue: str = VENUE_UMA,
+    conn: sqlite3.Connection,
+) -> float:
+    """Same-day petty OUT total for daily close (non-example only). No double-count."""
+    biz = (business_date or "").strip()
+    if not biz:
+        return 0.0
+    row = conn.execute(
+        """
+        SELECT COALESCE(SUM(amount), 0) AS total
+        FROM bzg_ops_petty_movements
+        WHERE venue=? AND business_date=? AND direction='OUT' AND example=0
+        """,
+        (venue, biz),
+    ).fetchone()
+    return round(float(row[0] if row else 0), 2)
+
+
+def sum_petty_in_for_date(
+    business_date: str,
+    *,
+    venue: str = VENUE_UMA,
+    conn: sqlite3.Connection,
+) -> float:
+    """Same-day petty IN total for daily close (non-example only). No double-count."""
+    biz = (business_date or "").strip()
+    if not biz:
+        return 0.0
+    row = conn.execute(
+        """
+        SELECT COALESCE(SUM(amount), 0) AS total
+        FROM bzg_ops_petty_movements
+        WHERE venue=? AND business_date=? AND direction='IN' AND example=0
+        """,
+        (venue, biz),
+    ).fetchone()
+    return round(float(row[0] if row else 0), 2)
+
+
+def list_petty_in_for_date(
+    business_date: str,
+    *,
+    venue: str = VENUE_UMA,
+    conn: sqlite3.Connection,
+) -> list[dict[str, Any]]:
+    """Non-example IN movements for a business date — read-only for close reconciliation."""
+    biz = (business_date or "").strip()
+    if not biz:
+        return []
+    rows = conn.execute(
+        """
+        SELECT * FROM bzg_ops_petty_movements
+        WHERE venue=? AND business_date=? AND direction='IN' AND example=0
+        ORDER BY created_at ASC
+        """,
+        (venue, biz),
+    ).fetchall()
+    return [_public_petty_movement(dict(r)) for r in rows]  # type: ignore[misc]
+
+
+def list_petty_out_for_date(
+    business_date: str,
+    *,
+    venue: str = VENUE_UMA,
+    conn: sqlite3.Connection,
+) -> list[dict[str, Any]]:
+    """Non-example OUT movements for a business date — read-only for close reconciliation."""
+    biz = (business_date or "").strip()
+    if not biz:
+        return []
+    rows = conn.execute(
+        """
+        SELECT * FROM bzg_ops_petty_movements
+        WHERE venue=? AND business_date=? AND direction='OUT' AND example=0
+        ORDER BY created_at ASC
+        """,
+        (venue, biz),
+    ).fetchall()
+    return [_public_petty_movement(dict(r)) for r in rows]  # type: ignore[misc]
+
+
 def insert_petty_movement(
     *,
     business_date: str,
@@ -559,6 +1048,15 @@ def insert_petty_movement(
     evidence_id: str | None = None,
     opening_float: float | None = None,
     movement_id: str | None = None,
+    entity_id: str | None = None,
+    transaction_time: str | None = None,
+    payee: str | None = None,
+    purchasing_item_id: str | None = None,
+    accounting_code: str | None = None,
+    accounting_classification: str | None = None,
+    photo_evidence_id: str | None = None,
+    receipt_status: str | None = None,
+    proof_status: str | None = None,
     conn: sqlite3.Connection,
 ) -> dict[str, Any]:
     """Insert a movement. Currency blank stays NULL — never guessed. No invented float."""
@@ -579,10 +1077,23 @@ def insert_petty_movement(
     cur = (currency or "").strip() or None
     mid = (movement_id or "").strip() or mint_petty_id()
     ts = now_utc_iso()
+    txn_time = (transaction_time or "").strip() or ts
+    ent = (entity_id or "").strip() or ENTITY_BZG
     cat = (category or "").strip() or None
     outl = (outlet or "").strip() or (PETTY_ACTIVE_OUTLETS[0] if PETTY_ACTIVE_OUTLETS else None)
     person = (logged_by or "").strip() or None
     rpath = (receipt_path or "").strip() or None
+    pay = (payee or "").strip() or None
+    purch = (purchasing_item_id or work_item_id or "").strip() or None
+    acct = (accounting_code or "").strip() or None
+    acct_cls = (accounting_classification or "").strip() or None
+    photo_evd = (photo_evidence_id or evidence_id or "").strip() or None
+    r_status = (receipt_status or "").strip() or (
+        PETTY_RECEIPT_PROVIDED if rpath else PETTY_RECEIPT_EXCEPTION
+    )
+    p_status = (proof_status or "").strip() or (
+        PETTY_PROOF_RECORDED if rpath else PETTY_PROOF_INCOMPLETE
+    )
     needs_appr = 1 if (direc == "OUT" and amt >= PETTY_APPROVAL_THRESHOLD_IDR) else 0
     appr_state = "NEEDS_APPROVAL" if needs_appr else "AUTO_OK"
     prior_day = get_petty_day(biz, conn=conn)
@@ -598,8 +1109,10 @@ def insert_petty_movement(
         INSERT INTO bzg_ops_petty_movements (
           movement_id, venue, business_date, direction, amount, currency,
           purpose, example, work_item_id, evidence_id, created_at,
-          category, outlet, logged_by, receipt_path, needs_approval, approval_state
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          category, outlet, logged_by, receipt_path, needs_approval, approval_state,
+          entity_id, transaction_time, payee, purchasing_item_id, accounting_code,
+          accounting_classification, photo_evidence_id, receipt_status, proof_status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             mid,
@@ -610,8 +1123,8 @@ def insert_petty_movement(
             cur,
             (purpose or "").strip() or None,
             1 if example else 0,
-            (work_item_id or "").strip() or None,
-            (evidence_id or "").strip() or None,
+            purch,
+            photo_evd,
             ts,
             cat,
             outl,
@@ -619,6 +1132,15 @@ def insert_petty_movement(
             rpath,
             needs_appr,
             appr_state,
+            ent,
+            txn_time,
+            pay,
+            purch,
+            acct,
+            acct_cls,
+            photo_evd,
+            r_status,
+            p_status,
         ),
     )
     day = get_petty_day(biz, conn=conn)
@@ -655,6 +1177,11 @@ def insert_petty_movement(
         move_meta["logged_by"] = person
     if needs_appr:
         move_meta["needs_approval"] = True
+    if r_status == PETTY_RECEIPT_EXCEPTION:
+        move_meta["receipt_status"] = PETTY_RECEIPT_EXCEPTION
+        move_meta["proof_status"] = PETTY_PROOF_INCOMPLETE
+    if acct:
+        move_meta["accounting_code"] = acct
     _audit_ops(
         action="bzg.petty.movement",
         result="SUCCEEDED",
@@ -844,15 +1371,18 @@ def _safe_legacy_summary() -> dict[str, Any]:
     return summary if isinstance(summary, dict) else {"source_status": "INACCESSIBLE"}
 
 
-def list_petty(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
-    """GET payload: movements + day summaries + honesty. Float stays NOT_FOUND when absent."""
+def list_petty(
+    *,
+    person_id: str | None = None,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    """GET payload: movements + reconciled balance. Captain view — no GL picker."""
     own = conn is None
     c = conn or db_connect()
     try:
         try:
             ensure_schema(c)
         except (sqlite3.Error, RuntimeError, OSError):
-            # Read path must still answer when schema migrate is refused (test/live guard).
             pass
         movements = list_petty_movements(conn=c, limit=200)
         legacy_moves = _safe_legacy_petty(200)
@@ -864,58 +1394,65 @@ def list_petty(*, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
                 id_fields=("movement_id",),
             )
         days = list_petty_days(conn=c)
-        # Float comes only from a Wolf day row. Legacy amounts never become one.
-        any_float = any(d.get("opening_float") is not None for d in days)
-        float_status = "PROVIDED" if any_float else "NOT_FOUND"
         honesty = dict(HONESTY)
-        # Per-response float stays NOT_FOUND unless a day actually stores one.
+        today = today_biz_date()
+        recon = reconcile_petty_balance(as_of_date=today, conn=c)
+        current_balance = recon.get("derived_balance")
+        float_status = recon.get("float_status") or "NOT_FOUND"
         if float_status == "NOT_FOUND":
             honesty["float"] = "NOT_FOUND"
         attention = [
             d
             for d in days
-            if d.get("state") in PETTY_TODAY_ATTENTION
-            or (
-                d.get("state") == "OPEN"
-            )
+            if d.get("state") in PETTY_TODAY_ATTENTION or d.get("state") == "OPEN"
         ]
-        today = today_biz_date()
-        today_day = next((d for d in days if d.get("business_date") == today), None)
-        current_balance = None
-        opening_today = None
-        opening_meta = None
-        if today_day and today_day.get("opening_float") is not None:
-            opening_today = float(today_day["opening_float"])
-            current_balance = _compute_expected_from_float_and_movements(
-                c, today, opening_today
-            )
-            if current_balance is None:
-                current_balance = opening_today
-            opening_meta = {
-                "source": today_day.get("opening_float_source"),
-                "supplied_by": today_day.get("opening_float_set_by"),
-                "set_at": today_day.get("opening_float_set_at"),
-                "kind": today_day.get("opening_float_kind") or "human_supplied_opening_balance",
-            }
+        outlet_locked: dict[str, Any] | None = None
+        if person_id:
+            try:
+                outlet_locked = {
+                    **resolve_petty_outlet_for_person(person_id, conn=c),
+                    "locked": True,
+                }
+            except UmaOpsError:
+                outlet_locked = None
+        cats = list_petty_operational_categories()
+        wolf_cats = {
+            str(m.get("category") or "").strip()
+            for m in movements
+            if m.get("category") and not m.get("example")
+        }
+        for wc in sorted(wolf_cats):
+            if wc and wc not in cats and wc not in PETTY_CATEGORY_EXCLUDED_OUT:
+                cats.append(wc)
+        caps = petty_capabilities_for_person(person_id or "", conn=c) if person_id else {
+            "record_out": False,
+            "record_in": False,
+            "reconcile": False,
+        }
         return {
             "ok": True,
             "movements": movements,
             "days": days,
             "attention_count": len(attention),
             "float_status": float_status,
-            "opening_float": None if float_status == "NOT_FOUND" else opening_today,
             "current_balance": current_balance,
+            "balance_reconciliation": recon,
+            "today_cash_out": recon.get("today_cash_out"),
+            "today_cash_in": recon.get("today_cash_in"),
             "currency": "IDR",
             "business_date": today,
-            "opening_balance_meta": opening_meta,
             "honesty": honesty,
             "fixture_notice": fixture_notice_for(movements, days),
-            "categories": list(PETTY_CATEGORIES),
-            "outlets": list(PETTY_ACTIVE_OUTLETS),
+            "categories": cats,
+            "outlet_locked": outlet_locked,
+            "outlet": (outlet_locked or {}).get("display_name") or "Uma Blu",
+            "business_label": "Uma Blu",
             "approval_threshold_idr": PETTY_APPROVAL_THRESHOLD_IDR,
+            "capabilities": caps,
             "staff_ready": False,
             "human_commissioned": False,
             "phone_workflow": True,
+            "captain_view": not caps.get("record_in") and not caps.get("reconcile"),
         }
     finally:
         if own:
@@ -1165,6 +1702,155 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
         """
     )
     _ensure_petty_phone_columns(conn)
+    _ensure_petty_out_columns(conn)
+    _ensure_petty_idempotency_table(conn)
+    _ensure_petty_reconcile_columns(conn)
+
+
+def _ensure_petty_idempotency_table(conn: sqlite3.Connection) -> None:
+    try:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS bzg_ops_petty_idempotency (
+              idempotency_key TEXT PRIMARY KEY,
+              movement_id TEXT NOT NULL,
+              person_id TEXT,
+              direction TEXT,
+              amount REAL,
+              created_at TEXT NOT NULL
+            )
+            """
+        )
+    except sqlite3.Error:
+        return
+
+
+def _ensure_petty_reconcile_columns(conn: sqlite3.Connection) -> None:
+    """PETTY-OWNER-CASH-IN-1 — physical count provenance on day tin."""
+    try:
+        day_cols = {
+            str(r[1])
+            for r in conn.execute("PRAGMA table_info(bzg_ops_petty_days)").fetchall()
+        }
+    except sqlite3.Error:
+        return
+    for name, decl in (
+        ("counted_notes_total", "REAL"),
+        ("counted_coins_total", "REAL"),
+        ("reconcile_counted_by", "TEXT"),
+        ("reconcile_counted_at", "TEXT"),
+        ("reconcile_reason", "TEXT"),
+        ("reconcile_evidence_id", "TEXT"),
+    ):
+        if name not in day_cols:
+            try:
+                conn.execute(f"ALTER TABLE bzg_ops_petty_days ADD COLUMN {name} {decl}")
+            except sqlite3.Error:
+                return
+
+
+def _lookup_petty_idempotency(
+    key: str,
+    *,
+    conn: sqlite3.Connection,
+) -> dict[str, Any] | None:
+    kid = (key or "").strip()
+    if not kid:
+        return None
+    row = conn.execute(
+        """
+        SELECT movement_id, person_id, direction, amount, created_at
+        FROM bzg_ops_petty_idempotency WHERE idempotency_key=?
+        """,
+        (kid,),
+    ).fetchone()
+    if not row:
+        return None
+    mid = str(row[0])
+    mv = _row(
+        conn.execute(
+            "SELECT * FROM bzg_ops_petty_movements WHERE movement_id=?",
+            (mid,),
+        ).fetchone()
+    )
+    if not mv:
+        return None
+    return {
+        "idempotent": True,
+        "movement": _public_petty_movement(mv),
+        "movement_id": mid,
+        "person_id": row[1],
+        "direction": row[2],
+        "amount": row[3],
+        "created_at": row[4],
+    }
+
+
+def _store_petty_idempotency(
+    key: str,
+    movement_id: str,
+    person_id: str,
+    direction: str,
+    amount: float,
+    *,
+    conn: sqlite3.Connection,
+) -> None:
+    kid = (key or "").strip()
+    if not kid:
+        return
+    conn.execute(
+        """
+        INSERT INTO bzg_ops_petty_idempotency (
+          idempotency_key, movement_id, person_id, direction, amount, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(idempotency_key) DO NOTHING
+        """,
+        (kid, movement_id, person_id, direction, amount, now_utc_iso()),
+    )
+
+
+def petty_capabilities_for_person(
+    person_id: str,
+    *,
+    conn: sqlite3.Connection,
+) -> dict[str, bool]:
+    """Assignment-derived petty permissions — no hardcoded people."""
+    from core import rbac as _rbac
+
+    pid = (person_id or "").strip()
+    target = {"entity_id": ENTITY_BZG, "brand_id": VENUE_UMA}
+    return {
+        "record_out": bool(pid and _rbac.can(pid, PERM_PETTY_RECORD_OUT, target, conn=conn)),
+        "record_in": bool(pid and _rbac.can(pid, PERM_PETTY_RECORD_IN, target, conn=conn)),
+        "reconcile": bool(pid and _rbac.can(pid, PERM_PETTY_RECONCILE, target, conn=conn)),
+    }
+
+
+def _ensure_petty_out_columns(conn: sqlite3.Connection) -> None:
+    """CAPTAIN-PETTY-CASH-OUT-2026-10-04 — OUT recording fields. Additive only."""
+    try:
+        cols = {
+            str(r[1])
+            for r in conn.execute("PRAGMA table_info(bzg_ops_petty_movements)").fetchall()
+        }
+    except sqlite3.Error:
+        return
+    for name, decl in (
+        ("entity_id", "TEXT"),
+        ("transaction_time", "TEXT"),
+        ("payee", "TEXT"),
+        ("purchasing_item_id", "TEXT"),
+        ("accounting_code", "TEXT"),
+        ("accounting_classification", "TEXT"),
+        ("photo_evidence_id", "TEXT"),
+        ("receipt_status", "TEXT"),
+        ("proof_status", "TEXT"),
+    ):
+        if name not in cols:
+            try:
+                conn.execute(f"ALTER TABLE bzg_ops_petty_movements ADD COLUMN {name} {decl}")
+            except sqlite3.Error:
+                return
 
 
 def _ensure_petty_phone_columns(conn: sqlite3.Connection) -> None:
@@ -1222,6 +1908,7 @@ def save_petty_receipt_bytes(
         raise UmaOpsError("receipt photo required", code="missing_receipt")
     if len(data) > 8_000_000:
         raise UmaOpsError("receipt too large", code="receipt_too_large", http_status=413)
+    _weg.assert_live_evidence_writable(PETTY_RECEIPT_DIR, label="petty receipt")
     PETTY_RECEIPT_DIR.mkdir(parents=True, exist_ok=True)
     ext = ".jpg"
     name = (filename or "").lower()
@@ -1415,50 +2102,144 @@ def record_petty_ops(
     logged_by: str | None = None,
     receipt_path: str | None = None,
     evidence_note_id: str | None = None,
+    photo_evidence_id: str | None = None,
+    transaction_time: str | None = None,
+    payee: str | None = None,
+    purchasing_item_id: str | None = None,
+    accounting_code: str | None = None,
+    entity_id: str | None = None,
+    idempotency_key: str | None = None,
     identity: dict[str, Any] | None = None,
     conn: sqlite3.Connection | None = None,
     commit: bool = True,
 ) -> dict[str, Any]:
-    """Record a tin movement for an operator who can create work. No bank write."""
+    """Record petty cash IN or OUT. Permission-gated. No bank write. Idempotent by key."""
     own = conn is None
     c = conn or db_connect()
     try:
         assert_catalog_writable(Path(CATALOG_DB))
         ensure_schema(c)
-        _require_ops_permission(c, person_id, "work.create")
+        idem = (idempotency_key or "").strip()
+        if idem:
+            prior = _lookup_petty_idempotency(idem, conn=c)
+            if prior and prior.get("movement"):
+                return {**prior["movement"], "idempotent": True, "movement_id": prior["movement_id"]}
+        direc = (direction or "OUT").strip().upper()
+        if direc not in PETTY_DIRECTIONS:
+            raise UmaOpsError(f"invalid direction: {direction!r}", code="invalid_direction")
+        if direc == "OUT":
+            _require_ops_permission(c, person_id, PERM_PETTY_RECORD_OUT)
+        else:
+            _require_ops_permission(c, person_id, PERM_PETTY_RECORD_IN)
         note = (purpose or "").strip()
         if not note:
-            raise UmaOpsError("purpose required", code="missing_purpose")
+            raise UmaOpsError("reason required", code="missing_purpose")
+        authorized = resolve_petty_outlet_for_person(person_id, conn=c)
+        auth_name = authorized["display_name"]
+        auth_id = authorized["outlet_id"]
+        client_outlet = (outlet or "").strip()
+        if client_outlet and client_outlet not in (auth_name, auth_id):
+            raise UmaOpsError(
+                "outlet not in authorised scope",
+                code="outlet_forbidden",
+                http_status=403,
+            )
+        outl = auth_name
+        ent = (entity_id or "").strip() or ENTITY_BZG
+        client_acct = (accounting_code or "").strip()
+        if client_acct:
+            raise UmaOpsError(
+                "accounting code not allowed on operational petty page",
+                code="accounting_forbidden",
+                http_status=403,
+            )
+        cat = (category or "").strip()
+        acct: str | None = None
+        acct_cls: str | None = None
+        if direc == "OUT":
+            if not cat:
+                raise UmaOpsError("category required", code="missing_category")
+            acct, acct_cls = resolve_category_accounting_code(cat, entity_id=ent, conn=c)
+        else:
+            cat = cat or PETTY_IN_DEFAULT_CATEGORY
         biz = (business_date or "").strip() or today_biz_date()
-        actor_label = (logged_by or "").strip() or person_id
+        txn_ts = (transaction_time or "").strip() or datetime.now(TZ8).isoformat(timespec="seconds")
+        id_label = ""
+        if identity:
+            id_label = str(identity.get("display_name") or identity.get("hello") or "").strip()
+        actor_label = _staff_person_label(logged_by) or id_label or person_id
+        rpath = (receipt_path or "").strip() or None
+        photo = (photo_evidence_id or evidence_note_id or "").strip() or None
+        if direc == "OUT":
+            if rpath and not photo:
+                raise UmaOpsError("evidence photo required", code="missing_evidence")
+            receipt_status = PETTY_RECEIPT_PROVIDED if rpath else PETTY_RECEIPT_EXCEPTION
+            proof_status = PETTY_PROOF_RECORDED if rpath else PETTY_PROOF_INCOMPLETE
+        else:
+            receipt_status = PETTY_RECEIPT_PROVIDED if rpath else None
+            proof_status = PETTY_PROOF_RECORDED if rpath else None
+        try:
+            amt = float(amount)
+        except (TypeError, ValueError) as exc:
+            raise UmaOpsError("amount must be numeric", code="invalid_amount") from exc
+        if amt <= 0:
+            raise UmaOpsError("amount must be positive", code="invalid_amount")
         out = insert_petty_movement(
             business_date=biz,
-            direction=direction,
-            amount=amount,
+            direction=direc,
+            amount=amt,
             currency=currency,
             purpose=note,
-            category=category,
-            outlet=outlet,
+            category=cat,
+            outlet=outl,
             logged_by=actor_label,
-            receipt_path=receipt_path,
+            receipt_path=rpath,
             example=False,
-            evidence_id=(evidence_note_id or "").strip() or None,
+            evidence_id=photo,
+            photo_evidence_id=photo,
+            entity_id=ent,
+            transaction_time=txn_ts,
+            payee=(payee or "").strip() or None if direc == "OUT" else None,
+            purchasing_item_id=(purchasing_item_id or "").strip() or None if direc == "OUT" else None,
+            accounting_code=acct,
+            accounting_classification=acct_cls,
+            receipt_status=receipt_status,
+            proof_status=proof_status,
             conn=c,
         )
+        mid = str(out.get("movement_id") or "")
+        if idem and mid:
+            _store_petty_idempotency(idem, mid, person_id, direc, amt, conn=c)
+        audit_meta: dict[str, Any] = {
+            "status": direc,
+            "note": note,
+            "actor": "operator",
+            "category": cat,
+            "outlet": outl,
+            "outlet_id": auth_id,
+            "logged_by": actor_label,
+            "amount": amt,
+            "business_date": biz,
+            "transaction_time": txn_ts,
+            "type": direc,
+        }
+        if direc == "OUT":
+            audit_meta["receipt_status"] = receipt_status
+            audit_meta["proof_status"] = proof_status
+            audit_meta["accounting_code"] = acct
+            audit_meta["accounting_classification"] = acct_cls
+            audit_meta["self_approval_blocked"] = bool(amt >= PETTY_APPROVAL_THRESHOLD_IDR)
+        if photo:
+            audit_meta["evidence_id"] = photo
+        if idem:
+            audit_meta["idempotency_key"] = idem
         _audit_ops(
             action="bzg.petty.movement",
             result="SUCCEEDED",
             resource_type=RESOURCE_PETTY,
-            resource_id=str(out.get("movement_id") or biz),
+            resource_id=mid or biz,
             conn=c,
-            metadata={
-                "status": direction,
-                "note": note,
-                "actor": "operator",
-                "category": (category or "").strip() or None,
-                "outlet": (outlet or "").strip() or None,
-                "logged_by": actor_label,
-            },
+            metadata=audit_meta,
             actor_type="PERSON",
             verified_person_id=person_id,
             identity=identity,
@@ -1466,6 +2247,131 @@ def record_petty_ops(
         if commit:
             c.commit()
         return out
+    finally:
+        if own:
+            c.close()
+
+
+def reconcile_petty_cash_ops(
+    *,
+    person_id: str,
+    notes_total: float,
+    coins_total: float,
+    reason: str | None = None,
+    evidence_id: str | None = None,
+    business_date: str | None = None,
+    identity: dict[str, Any] | None = None,
+    conn: sqlite3.Connection | None = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Physical cash count for Owner/Finance. Records provenance; never silently adjusts ledger."""
+    own = conn is None
+    c = conn or db_connect()
+    try:
+        assert_catalog_writable(Path(CATALOG_DB))
+        ensure_schema(c)
+        _require_ops_permission(c, person_id, PERM_PETTY_RECONCILE)
+        authorized = resolve_petty_outlet_for_person(person_id, conn=c)
+        auth_name = authorized["display_name"]
+        auth_id = authorized["outlet_id"]
+        try:
+            notes = round(float(notes_total), 2)
+            coins = round(float(coins_total), 2)
+        except (TypeError, ValueError) as exc:
+            raise UmaOpsError("notes and coins must be numeric", code="invalid_amount") from exc
+        if notes < 0 or coins < 0:
+            raise UmaOpsError("notes and coins cannot be negative", code="invalid_amount")
+        physical = round(notes + coins, 2)
+        biz = (business_date or "").strip() or today_biz_date()
+        recon = reconcile_petty_balance(as_of_date=biz, conn=c)
+        ledger = recon.get("derived_balance")
+        difference: float | None = None
+        unproved = False
+        if ledger is not None:
+            difference = round(physical - float(ledger), 2)
+            unproved = abs(difference) > 0
+        id_label = ""
+        if identity:
+            id_label = str(identity.get("display_name") or identity.get("hello") or "").strip()
+        counter = id_label or _staff_person_label(person_id) or person_id
+        ts = now_utc_iso()
+        _ensure_petty_day(c, biz)
+        why = (reason or "").strip() or None
+        evd = (evidence_id or "").strip() or None
+        c.execute(
+            """
+            UPDATE bzg_ops_petty_days
+            SET counted_amount=?,
+                counted_notes_total=?,
+                counted_coins_total=?,
+                reconcile_counted_by=?,
+                reconcile_counted_at=?,
+                reconcile_reason=?,
+                reconcile_evidence_id=?,
+                state=?,
+                note=?,
+                updated_at=?
+            WHERE venue=? AND business_date=?
+            """,
+            (
+                physical,
+                notes,
+                coins,
+                counter,
+                ts,
+                why,
+                evd,
+                "VARIANCE_NOTED" if unproved else "COUNTED",
+                (
+                    f"Physical count {physical} vs ledger {ledger} — difference {difference} unproved"
+                    if unproved
+                    else f"Physical count matches ledger at {physical}"
+                ),
+                ts,
+                VENUE_UMA,
+                biz,
+            ),
+        )
+        _audit_ops(
+            action="bzg.petty.reconcile",
+            result="SUCCEEDED",
+            resource_type=RESOURCE_PETTY_DAY,
+            resource_id=biz,
+            conn=c,
+            metadata={
+                "notes_total": notes,
+                "coins_total": coins,
+                "physical_total": physical,
+                "ledger_balance": ledger,
+                "difference": difference,
+                "unproved": unproved,
+                "outlet": auth_name,
+                "outlet_id": auth_id,
+                "counted_by": counter,
+                "reason": why,
+                "evidence_id": evd,
+                "adjustment_posted": False,
+            },
+            actor_type="PERSON",
+            verified_person_id=person_id,
+            identity=identity,
+        )
+        if commit:
+            c.commit()
+        day = get_petty_day(biz, conn=c)
+        return {
+            "ok": True,
+            "business_date": biz,
+            "outlet": auth_name,
+            "notes_total": notes,
+            "coins_total": coins,
+            "physical_total": physical,
+            "ledger_balance": ledger,
+            "difference": difference,
+            "unproved": unproved,
+            "adjustment_posted": False,
+            "day": day,
+        }
     finally:
         if own:
             c.close()
@@ -1735,7 +2641,9 @@ def get_pr(pr_id: str, *, conn: sqlite3.Connection | None = None) -> dict[str, A
                 (pid,),
             ).fetchone()
         )
-        return _public(row) if row else None
+        if not row:
+            return None
+        return _enrich_pr_outlet(_public(row) or {}, c)
     finally:
         if own:
             c.close()
@@ -1793,7 +2701,24 @@ def _wolf_prs(
             """,
             (venue, limit),
         ).fetchall()
-    return [_public(dict(r)) for r in rows]
+    return [_enrich_pr_outlet(_public(dict(r)) or {}, conn) for r in rows]
+
+
+def _enrich_pr_outlet(row: dict[str, Any], conn: sqlite3.Connection) -> dict[str, Any]:
+    """Human outlet/business labels without exposing entity ids on legacy rows."""
+    from core import bzg_outlet_registry as _outlets
+
+    out = dict(row)
+    oid = (out.get("outlet_id") or "").strip()
+    if not oid:
+        return out
+    outlet = _outlets.get_outlet(oid, conn=conn)
+    if not outlet:
+        return out
+    out["outlet_display_name"] = outlet.get("display_name")
+    if not (out.get("entity_id") or "").strip():
+        out["business_label"] = outlet.get("display_name") or "Uma Blu"
+    return out
 
 
 def _public(row: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -1822,6 +2747,13 @@ def create_pr(
     verified_person_id: str | None = None,
     actor_type: str = "SYSTEM",
     identity: dict[str, Any] | None = None,
+    outlet_id: str | None = None,
+    entity_id: str | None = None,
+    requester_person_id: str | None = None,
+    requester_assignment_id: str | None = None,
+    department: str | None = None,
+    alchemist_pr_order_id: str | None = None,
+    venue: str | None = None,
     conn: sqlite3.Connection | None = None,
     commit: bool = True,
 ) -> dict[str, Any]:
@@ -1831,6 +2763,9 @@ def create_pr(
     try:
         assert_catalog_writable(Path(CATALOG_DB))
         ensure_schema(c)
+        from core import bzg_xoutlet_foundations as _xout
+
+        _xout.ensure_schema(c)
         ts = now_utc_iso()
         pr_id = mint_pr_id()
         initial = "REQUESTED" if submitted else "DRAFT"
@@ -1838,6 +2773,10 @@ def create_pr(
         val = expected_value
         if val is not None:
             val = float(val)
+        oid = (outlet_id or "").strip() or None
+        if not example and not oid and actor_type.upper() == "PERSON":
+            raise UmaOpsError("outlet required", code="missing_outlet", http_status=400)
+        venue_val = (venue or VENUE_UMA).strip() or VENUE_UMA
 
         wi = _work_items.create_work_item(
             title=(purpose or "Uma Blu purchase request").strip()[:200] or "Uma Blu purchase request",
@@ -1853,33 +2792,71 @@ def create_pr(
             commit=False,
         )
 
-        c.execute(
-            """
-            INSERT INTO bzg_ops_purchase_requests (
-              pr_id, venue, requester_label, supplier_name, purpose,
-              expected_value, currency, requested_date, required_by_date,
-              quote_evidence_id, bill_reference, payment_evidence_id,
-              state, work_item_id, example, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)
-            """,
+        base_cols = [
+            "pr_id",
+            "venue",
+            "requester_label",
+            "supplier_name",
+            "purpose",
+            "expected_value",
+            "currency",
+            "requested_date",
+            "required_by_date",
+            "quote_evidence_id",
+            "bill_reference",
+            "payment_evidence_id",
+            "state",
+            "work_item_id",
+            "example",
+            "created_at",
+            "updated_at",
+        ]
+        base_vals: list[Any] = [
+            pr_id,
+            venue_val,
+            (requester_label or "").strip() or None,
+            (supplier_name or "").strip() or None,
+            (purpose or "").strip() or None,
+            val,
+            cur,
+            (requested_date or "").strip() or None,
+            (required_by_date or "").strip() or None,
+            (quote_evidence_id or "").strip() or None,
+            (bill_reference or "").strip() or None,
+            None,
+            initial,
+            wi["work_item_id"],
+            1 if example else 0,
+            ts,
+            ts,
+        ]
+        pr_cols = {
+            str(r[1])
+            for r in c.execute("PRAGMA table_info(bzg_ops_purchase_requests)").fetchall()
+        }
+        extras = (
+            ("outlet_id", oid),
+            ("entity_id", (entity_id or ENTITY_BZG).strip() or ENTITY_BZG),
+            ("requester_person_id", (requester_person_id or verified_person_id or "").strip() or None),
             (
-                pr_id,
-                VENUE_UMA,
-                (requester_label or "").strip() or None,
-                (supplier_name or "").strip() or None,
-                (purpose or "").strip() or None,
-                val,
-                cur,
-                (requested_date or "").strip() or None,
-                (required_by_date or "").strip() or None,
-                (quote_evidence_id or "").strip() or None,
-                (bill_reference or "").strip() or None,
-                initial,
-                wi["work_item_id"],
-                1 if example else 0,
-                ts,
-                ts,
+                "requester_assignment_id",
+                (requester_assignment_id or "").strip() or None,
             ),
+            ("department", (department or "").strip() or None),
+            (
+                "alchemist_pr_order_id",
+                (alchemist_pr_order_id or "").strip() or None,
+            ),
+        )
+        for col, val_extra in extras:
+            if col in pr_cols:
+                base_cols.append(col)
+                base_vals.append(val_extra)
+        placeholders = ", ".join("?" * len(base_cols))
+        col_sql = ", ".join(base_cols)
+        c.execute(
+            f"INSERT INTO bzg_ops_purchase_requests ({col_sql}) VALUES ({placeholders})",
+            base_vals,
         )
         _insert_pr_lines(c, pr_id, lines or [], ts)
         _audit_pr(
@@ -3268,7 +4245,7 @@ def commissioning_readiness() -> dict[str, Any]:
                 "status": "NOT_CONFIGURED",
                 "classification": "NEEDS_POLICY",
                 "why": (
-                    "BLOCKED BY BUSINESS POLICY. "
+                    "Variance policy needs approval. "
                     "No authorised variance policy exists. "
                     "No threshold was invented."
                 ),

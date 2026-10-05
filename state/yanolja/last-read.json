@@ -1,0 +1,201 @@
+{
+  "ok": true,
+  "kind": "Inventory+RoomInfo",
+  "endpoint": "/booking/reservation_api/listing.php",
+  "host": "https://live.ipms247.com",
+  "hotel_code": "63221",
+  "property": "Atrium Suites Lombok",
+  "http": 200,
+  "auth_present": true,
+  "error_codes": [],
+  "body_hint": {
+    "kind": "list",
+    "n": 12
+  },
+  "denied": false,
+  "room_type_count": 12,
+  "room_types": [
+    {
+      "id": "6322100000000000001",
+      "name": "Signature Studio",
+      "rooms": 28
+    },
+    {
+      "id": "6322100000000000002",
+      "name": "Superior Room",
+      "rooms": 12
+    },
+    {
+      "id": "6322100000000000003",
+      "name": "Deluxe Room",
+      "rooms": 7
+    },
+    {
+      "id": "6322100000000000004",
+      "name": "Premier Studio",
+      "rooms": 7
+    },
+    {
+      "id": "6322100000000000005",
+      "name": "Signature 1 Bedroom",
+      "rooms": 10
+    },
+    {
+      "id": "6322100000000000006",
+      "name": "Premier 1 Bedroom",
+      "rooms": 3
+    },
+    {
+      "id": "6322100000000000007",
+      "name": "Grand 1 Bedroom",
+      "rooms": 14
+    },
+    {
+      "id": "6322100000000000008",
+      "name": "Ocean View 1 Bedroom",
+      "rooms": 3
+    },
+    {
+      "id": "6322100000000000009",
+      "name": "Premier 2 Bedroom",
+      "rooms": 16
+    },
+    {
+      "id": "6322100000000000010",
+      "name": "Ocean View 2 Bedroom",
+      "rooms": 3
+    },
+    {
+      "id": "6322100000000000011",
+      "name": "Signature Suites",
+      "rooms": 8
+    },
+    {
+      "id": "6322100000000000012",
+      "name": "Premier Suites",
+      "rooms": 3
+    }
+  ],
+  "occupancy": {
+    "rooms_total": 114,
+    "rooms_occupied": 101,
+    "rooms_vacant": 13,
+    "pct_occupied": 88.6,
+    "in_house": null,
+    "arrivals": null,
+    "source": "Yanolja Inventory+RoomInfo",
+    "guests": null
+  },
+  "occupancy_usable": true,
+  "need": null,
+  "error": null,
+  "stop": false,
+  "cloudbeds_fallback": false,
+  "docs": "https://api.ezeetechnosys.com/",
+  "note": "Occupancy from live Yanolja Inventory availability vs RoomInfo physical rooms. in-house / arrivals UNKNOWN \u2014 no guest reservation read.",
+  "roominfo_http": 200,
+  "roominfo_error_codes": [],
+  "roominfo_type_count": 12,
+  "rooms_total": 114,
+  "inventory_http": 200,
+  "inventory_row_count": 59,
+  "months_out": {
+    "2026-10-01": 13,
+    "2026-10-02": 11,
+    "2026-10-03": 10,
+    "2026-10-04": 9,
+    "2026-10-05": 8,
+    "2026-10-06": 8,
+    "2026-10-07": 13,
+    "2026-10-08": 21,
+    "2026-10-09": 23,
+    "2026-10-10": 24,
+    "2026-10-11": 26,
+    "2026-10-12": 35,
+    "2026-10-13": 41,
+    "2026-10-14": 25,
+    "2026-10-15": 20,
+    "2026-10-16": 21,
+    "2026-10-17": 21,
+    "2026-10-18": 54,
+    "2026-10-19": 55,
+    "2026-10-20": 55,
+    "2026-10-21": 55,
+    "2026-10-22": 55,
+    "2026-10-23": 55,
+    "2026-10-24": 55,
+    "2026-10-25": 57,
+    "2026-10-26": 57,
+    "2026-10-27": 57,
+    "2026-10-28": 57,
+    "2026-10-29": 57,
+    "2026-10-30": 57,
+    "2026-10-31": 58
+  },
+  "availability_today": 13,
+  "written_at": "2026-10-01T07:16:15+08:00",
+  "invented": false,
+  "endpoints": {
+    "arrival_list": {
+      "ok": false,
+      "denied": false,
+      "http": 200,
+      "error_codes": [
+        "105",
+        "From Date is missing"
+      ],
+      "row_count": null,
+      "request_type": "ArrivalList",
+      "probed_at": "2026-10-01T07:30:53+08:00",
+      "writable": false,
+      "write_attempted": false,
+      "pii_omitted": true
+    },
+    "bookings": {
+      "ok": false,
+      "denied": true,
+      "http": 200,
+      "error_codes": [
+        "302",
+        "Unauthorized Request. Integration is not allowed",
+        "302"
+      ],
+      "row_count": null,
+      "request_type": "Bookings",
+      "probed_at": "2026-10-01T07:30:54+08:00",
+      "writable": false,
+      "write_attempted": false,
+      "pii_omitted": true
+    },
+    "inhouse_room_status": {
+      "ok": false,
+      "denied": false,
+      "http": 200,
+      "error_codes": [
+        "502",
+        "Request Type is missing"
+      ],
+      "row_count": null,
+      "request_type": "Retrieve Inhouse Room Status",
+      "probed_at": "2026-10-01T07:30:55+08:00",
+      "writable": false,
+      "write_attempted": false,
+      "pii_omitted": true
+    },
+    "bookings_dated": {
+      "ok": true,
+      "denied": false,
+      "http": 200,
+      "error_codes": [],
+      "row_count": null,
+      "request_type": "Bookings",
+      "probed_at": "2026-10-01T07:30:55+08:00",
+      "writable": false,
+      "write_attempted": false,
+      "pii_omitted": true
+    }
+  },
+  "guest_depth": "UNKNOWN",
+  "guest_depth_note": "2026-10-01 deepen probe: Bookings=302 Integration not allowed; ArrivalList=105 From Date missing / listing Bad request type; Inhouse kiosk=500. Guests UNKNOWN. ADR/RevPAR not invented.",
+  "guest_depth_probed_at": "2026-10-01T07:33:28+08:00"
+}

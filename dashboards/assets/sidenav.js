@@ -1013,6 +1013,32 @@
     }
   }
 
+  var SCOPE_BUSINESS_LABEL = {
+    "SCOPE-AMG-FINANCE": "Atrium",
+    "SCOPE-AMG": "Atrium",
+    "SCOPE-AMG-ATR-DAY": "Atrium",
+    "SCOPE-BZG-FINANCE": "Blu Zone Group",
+    "SCOPE-BZG-ENTITY": "Blu Zone Group",
+    "SCOPE-BZG-FB": "Blu Zone Group",
+    "SCOPE-BZG-UMA": "Uma Blu",
+    "SCOPE-GGV-FINANCE": "GGV",
+    "SCOPE-GGV-ALL": "GGV",
+    "SCOPE-GGV": "GGV",
+    "SCOPE-GGV-CONTENT": "GGV",
+    "SCOPE-GGV-HABITAT-LEAD": "GGV",
+    "SCOPE-WOLF-GROUP": "Wolf Group",
+    "SCOPE-CORE-OPERATOR": "Core",
+    "SCOPE-SALE-OPERATOR": "Sale",
+  };
+
+  function seatOptionLabel(a) {
+    var label = String((a && a.label) || "").trim();
+    var scope = String((a && a.scope) || "").trim();
+    var biz = SCOPE_BUSINESS_LABEL[scope] || "";
+    if (label && biz) return label + " — " + biz;
+    return label || biz || "Seat";
+  }
+
 function paintContext(el, who) {
     if (!el) return;
     var asg = (who && who.assignments) || [];
@@ -1038,9 +1064,7 @@ function paintContext(el, who) {
           '"' +
           sel +
           ">" +
-          esc(a.label) +
-          " · " +
-          esc(a.scope) +
+          esc(seatOptionLabel(a)) +
           "</option>"
         );
       })

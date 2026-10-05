@@ -1,0 +1,101 @@
+{
+  "slice": "UMA-CLOSE-6STEP-REBUILD-3",
+  "status": "PASS",
+  "files_changed": [
+    "dashboards/uma-blu-close.html",
+    "scripts/core/bzg_daily_close.py",
+    "scripts/core/uma_hist_close_queue1.py",
+    "scripts/serve_beta.py",
+    "scripts/tests/test_uma_close_6step_rebuild3_20261005.py",
+    "scripts/tests/prove_uma_close_6step_rebuild3_20261005.py",
+    "scripts/tests/test_uma_hist_close_nav_mobile1_20261005.py"
+  ],
+  "defect_fixes": {
+    "A_shift_edit": {
+      "fix": "showShiftEdit + POST /api/venue-close/save-shift-figure-edits + save_shift_human_corrections (append-only edit action)",
+      "proof": "unit test_a_shift_edit_api_exists; harness 03_edited after SAVE with gross/cash fields"
+    },
+    "B_yes_empty_read": {
+      "fix": "_shift_figures_readable blocks empty extraction; frontend mergedShiftFigures + flatShiftExtract; YES shows Nothing read message",
+      "proof": "unit test_b_yes_blocks_empty_read; harness yes_blocked_sep03=true"
+    },
+    "C_null_bills_pax": {
+      "fix": "formatInt shows — for null bills/pax",
+      "proof": "unit test_c_format_int_in_html; harness 29_read shows Bills 50 not null"
+    },
+    "D_sep03_slips": {
+      "fix": "renderFoundSlips lists all unlinked EDC for date regardless of close; bank chooser; removed !close and || true",
+      "proof": "harness sep03_slip_buttons=4; unit test_d_found_slips_section"
+    },
+    "E_amtEntered_referror": {
+      "fix": "const amtEntered in cashAmt handler; btnCashNext hidden until count entered",
+      "proof": "unit test_e_cash_amt_entered_fix; harness 29_cash reached only after fill"
+    },
+    "F_duplicate_shift_actions": {
+      "fix": "hasExistingPhoto hides TAKE/UPLOAD/Read; USE THIS REPORT calls useShiftReport directly",
+      "proof": "harness 29_upload buttons VIEW/USE/REPLACE only; unit test_f_shift_photo_exclusive"
+    },
+    "G_hide_add_when_work_open": {
+      "fix": "bankWorkOpen + showBankWorkPanel hides ADD RECEIPT on active card",
+      "proof": "unit test_g_bank_work_hides_add"
+    },
+    "H_variance_labels": {
+      "fix": "format_variance_label / formatVariance — Short/Over/Matches everywhere; removed duplicate WHY in review",
+      "proof": "unit test_h_variance_labels; harness 29_review uses Short Rp20.000"
+    },
+    "I_view_close_readonly": {
+      "fix": "stepViewClose with BACK TO MISSING CLOSES only; no stepReview back into cash",
+      "proof": "harness view_close_readonly=true"
+    },
+    "J_stale_messages": {
+      "fix": "showStep clears setMsg on every step change",
+      "proof": "unit test_j_clear_messages_on_step"
+    },
+    "K_status_vocabulary": {
+      "fix": "close_date_register action_label+summary_line; row_summary_line uppercase; EXCEPTION → REVIEW EXCEPTION first",
+      "proof": "unit test_k_status_vocabulary all dates match queue"
+    },
+    "L_sticky_header_scroll": {
+      "fix": "scroll-margin-top on panels; scrollIntoView kicker/when on showStep",
+      "proof": "unit test_l_scroll_into_view"
+    }
+  },
+  "rendered_proof": {
+    "harness_file": "state/reliability/UMA-CLOSE-6STEP-REBUILD-3-HARNESS-2026-10-05.json",
+    "29_sep": "upload → USE THIS REPORT read → YES → ESB diff → BNI/BRI → cash 4,400,000 → review → SUBMIT WITH EXCEPTION",
+    "03_sep": "discover shift → empty read YES blocked → EDIT → YES → 4 slip buttons on bank step",
+    "submit_post_count": 1,
+    "view_close_readonly": true
+  },
+  "zero_live_write_proof": {
+    "live_receipts_unchanged": true,
+    "live_petty_unchanged": true,
+    "live_notas_unchanged": true,
+    "photo_index_sha_unchanged": true,
+    "WOLF_EVIDENCE_ROOT": "isolated temp dir per harness run"
+  },
+  "idempotency_proof": {
+    "staff_submit_taps": 10,
+    "staff_submit_posts": 1
+  },
+  "suites": {
+    "test_uma_close_6step_rebuild3_20261005.py": "pass=37 fail=0",
+    "test_uma_close_6step_rebuild2_20261005.py": "pass=15 fail=0",
+    "test_uma_close_6step_rebuild1_20261005.py": "pass=46 fail=0",
+    "test_uma_close_evidence_isolation1_20261005.py": "OK",
+    "test_uma_hist_close_complete1_20261005.py": "pass=28 fail=0",
+    "test_uma_hist_close_complete2_20261005.py": "pass=29 fail=0",
+    "test_uma_hist_close_nav_mobile1_20261005.py": "pass=52 fail=0",
+    "test_uma_hist_close_nav_mobile2_20261005.py": "pass=100 fail=0",
+    "test_uma_hist_close_queue1_20261005.py": "pass=35 fail=0"
+  },
+  "beta_pid": 35870,
+  "beta_reload": "scripts/beta_restart.py — :8788 pid 35870",
+  "live_29sep_incomplete": true,
+  "oct3_oct4_unchanged": true,
+  "prod_1297": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_commit": true,
+  "exit_code": 0
+}

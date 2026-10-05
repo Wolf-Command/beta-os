@@ -1,0 +1,86 @@
+{
+  "pack_id": "PETTY-IZA-FAIL-REPAIR",
+  "finished_at_wita": "2026-10-04T21:30:00+08:00",
+  "status": "ENG_PROVED",
+  "eng_proved": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "ready_for_human_test": true,
+  "deployed_beta": true,
+  "outlet_lock_proved": true,
+  "outlet_derivation": "person → assignment → scope SCOPE-BZG-UMA → org_outlet_registry BZG-UMA / Uma Blu; server rejects client outlet not in scope (outlet_forbidden)",
+  "gl_removed_from_captain_form": true,
+  "gl_downstream": "resolve_category_accounting_code applies prior category→GL map or NEEDS_ACCOUNTING_CLASSIFICATION; captain POST with accounting_code → accounting_forbidden",
+  "balance_derivation": {
+    "derived_balance_idr": 54000,
+    "currency": "IDR",
+    "as_of": "2026-10-04",
+    "today_cash_out_idr": 451000,
+    "owner_stated_balance_idr": 55000,
+    "gap_vs_owner_stated_idr": 1000,
+    "gap_shown_on_phone": true,
+    "forced_55000": false,
+    "sources": [
+      "wolf_movements_day_totals (2026-10-01..2026-10-04)",
+      "owner_reference_opening 505000 for 2026-10-04 (PETTY-CHAIN-VERIFICATION-ANCHORS.json — verification only)",
+      "same-day OUT 451000 (430000 + 21000)",
+      "verification_oct3_out_total 555000 from movement sum",
+      "stale Oct-02 day_opening_anchor 56000 superseded — today has no proven opening"
+    ]
+  },
+  "iza_notas": {
+    "found": true,
+    "counted_once_each": true,
+    "notas": [
+      {
+        "movement_id": "PETTY-UMA-6E512800FE",
+        "amount_idr": 430000,
+        "purpose": "Nasi bungkus",
+        "category": "Staff",
+        "logged_by": "Iza Zainatulloh Hulhidayati",
+        "receipt_status": "PROVIDED"
+      },
+      {
+        "movement_id": "PETTY-UMA-80867C2504",
+        "amount_idr": 21000,
+        "purpose": "Laundry",
+        "category": "Supplies",
+        "logged_by": "Iza Zainatulloh Hulhidayati",
+        "receipt_status": "PROVIDED"
+      }
+    ]
+  },
+  "categories_source": "Alchemist petty_cash master (Bar Supplies, Cleaning, Kitchen Supplies, Misc, Office, Repairs & Maint, Staff Meal, Transport) — not A&G GL labels",
+  "daily_close_once": {
+    "proved": true,
+    "path": "temp sqlite 2026-10-04 — cash_reconciliation_with_petty single petty_out_total; double_count_avoided true",
+    "protected_closes_untouched": true
+  },
+  "tests": {
+    "test_petty_iza_fail_repair_20261004.py": {"pass": 30, "fail": 0},
+    "test_petty_surface_20261004.py": {"pass": 26, "fail": 0},
+    "test_petty_cash_record_out_20261004.py": {"pass": 31, "fail": 0}
+  },
+  "beta_pid": 28164,
+  "prod_pid": 1297,
+  "prod_restarted": false,
+  "protected_closes": [
+    {
+      "close_id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+      "state": "EXCEPTION",
+      "updated_at": "2026-10-03T13:47:39Z",
+      "unchanged": true
+    },
+    {
+      "close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+      "state": "CANCELLED",
+      "updated_at": "2026-10-03T12:32:22Z",
+      "unchanged": true
+    }
+  ],
+  "no_hardcoded_iza": true,
+  "no_hardcoded_55000_in_code": true,
+  "no_opening_writes_560000_505000": true,
+  "beta_route": "/bzg/uma-blu/petty",
+  "page_file": "dashboards/bzg-uma-blu-petty.html"
+}

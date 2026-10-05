@@ -1,0 +1,68 @@
+{
+  "pack": "P2P-PR-APPROVAL-1",
+  "run_id": "BF-d468b634d3d2",
+  "gap_before": {
+    "pr_rows": 4,
+    "pr_entity_null": 4,
+    "po_count": 543,
+    "payment_execute_allow": 0
+  },
+  "files_changed": [
+    "scripts/core/uma_devi_p0.py",
+    "scripts/core/uma_ops_console.py",
+    "scripts/core/bzg_purchase_order.py",
+    "scripts/serve_beta.py",
+    "dashboards/bzg-uma-blu-pr.html",
+    "dashboards/bzg-uma-blu-purchase-orders.html",
+    "scripts/tests/test_p2p_pr_approval1_20261005.py"
+  ],
+  "routes_and_apis": [
+    "GET /bzg/uma-blu/pr",
+    "GET /bzg/uma-blu/pr/{id}",
+    "POST /api/bzg/uma-blu/prs/{id}/approve",
+    "POST /api/bzg/uma-blu/prs/{id}/reject",
+    "POST /api/bzg/uma-blu/purchase-orders"
+  ],
+  "real_record_counts": {
+    "ENT-BZG": {
+      "pr_rows": 4,
+      "pr_entity_null": 4,
+      "po_count": 543,
+      "payment_execute_allow": 0
+    }
+  },
+  "data_changes": "none",
+  "test_file": "scripts/tests/test_p2p_pr_approval1_20261005.py",
+  "tests_pass": 10,
+  "tests_fail": 0,
+  "regression": {
+    "test_finance_ui_human_labels1_20261005.py": "PASS",
+    "test_finance_switcher_repair2_20261005.py": "PASS",
+    "test_bzg_zayen_finance_prove1_20261005.py": "PASS",
+    "test_bzg_p2p_harden1_20261005.py": "PASS",
+    "test_bzg_p2p_recv1_20261005.py": "PASS"
+  },
+  "render_check": {
+    "method": "html_render_assert",
+    "viewport": "390x844 implied via viewport meta + mobile-friendly controls",
+    "paths": [
+      "/bzg/uma-blu/pr/PR-UMA-EXAMPLE-WAIT"
+    ]
+  },
+  "beta_reloaded": false,
+  "reload_held": true,
+  "reload_gate_reasons": [
+    "human_test_window_until=2026-10-05T14:00:00Z"
+  ],
+  "beta_listener_pid": 97189,
+  "prod_pid_unchanged": true,
+  "protected_closes_unchanged": true,
+  "oct3_oct4_unchanged": true,
+  "petty_and_daily_close_untouched": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "zayen_ready": false,
+  "state": "READY FOR HUMAN TEST",
+  "status": "IMPLEMENTATION_DONE",
+  "exit_code": 0
+}

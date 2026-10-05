@@ -1,0 +1,207 @@
+{
+  "generated_at_wita": "2026-09-30T11:28:28+08:00",
+  "pack": "20260930-gk-ebus-peptide-holdings-pipe",
+  "spec": "state/final-completion/p0-v1/transfer/TRANSFER-GATEKEEPER-EVENTBUS-PEPTIDE-HOLDINGS-PIPELINE-SPEC.md",
+  "gatekeeper": {
+    "beta_route": "/owner/gatekeeper",
+    "html": "dashboards/owner-gatekeeper-1.html",
+    "migration_state": "PARTIAL",
+    "staff_ready": false,
+    "authz": "Owner only",
+    "never_sends": true,
+    "historical_aliases": [
+      "/gatekeeper",
+      "/gatekeeper.html",
+      "/owner-gatekeeper-1.html"
+    ],
+    "claim": "NOT_REBUILT_PLUS_PROVEN"
+  },
+  "event_bus": {
+    "beta_route": "/ops/event-bus",
+    "html": "dashboards/ops-event-bus-1.html",
+    "migration_state": "PARTIAL",
+    "staff_ready": false,
+    "fake_live_stream": false,
+    "v1_db": "~/.openclaw/state/event_bus.db",
+    "claim": "NOT_REBUILT_PLUS_PROVEN"
+  },
+  "peptide_schedule": {
+    "beta_route": "/owner/fitness",
+    "alias": "/owner/peptide",
+    "migration_state": "PARTIAL",
+    "staff_ready": false,
+    "authz": "Owner only",
+    "sot_confirmation": "PENDING_OWNER \u00b7 Sheets script + spartacus-peptides.json both present",
+    "claim": "NOT_REBUILT_PLUS_PROVEN"
+  },
+  "holdings_personal": {
+    "beta_route": "/owner/trading",
+    "alias": "/owner/holdings",
+    "migration_state": "PARTIAL",
+    "staff_ready": false,
+    "authz": "Owner only",
+    "no_invent": true,
+    "no_trades_from_file": true,
+    "claim": "NOT_REBUILT_PLUS_PROVEN"
+  },
+  "competitor_rates_pipeline": {
+    "beta_route": "/ops/competitor-rates-pipeline",
+    "html": "dashboards/ops-competitor-rates-pipeline-1.html",
+    "migration_state": "PARTIAL",
+    "staff_ready": false,
+    "beta_live_sync": false,
+    "blockers": [
+      "Atrium SSL timeout 2026-09-30 03:09",
+      "competitor_rates/rate_signals empty",
+      "no Beta scraper re-host"
+    ],
+    "claim": "NOT_REBUILT_PLUS_PROVEN"
+  },
+  "rate_calendar_db": {
+    "beta_route": "/ops/rate-calendar",
+    "html": "dashboards/ops-rate-calendar-1.html",
+    "migration_state": "PARTIAL",
+    "staff_ready": false,
+    "launchagents": "PARKED_20260820_tg_mute",
+    "beta_write": false,
+    "claim": "NOT_REBUILT_PLUS_PROVEN"
+  },
+  "calendly_atrium_sync": {
+    "beta_route": "/ops/calendly-atrium-sync",
+    "html": "dashboards/ops-calendly-atrium-sync-1.html",
+    "migration_state": "PARTIAL",
+    "staff_ready": false,
+    "beta_live_sync": false,
+    "fake_feed": false,
+    "claim": "NOT_REBUILT_PLUS_PROVEN"
+  },
+  "prior_partial_retained": [
+    "/owner/trading",
+    "/owner/fitness",
+    "/owner/travel",
+    "/owner/learning",
+    "/seats/content-desk",
+    "/seats/content-admin",
+    "/seats/ads-studio",
+    "/seats/resolve-studio",
+    "/habitat-investment-2026",
+    "/kuta-rates",
+    "/amg-voice",
+    "/bzg-voice",
+    "/ggv-voice"
+  ],
+  "skipped_this_pack": [
+    "HR"
+  ],
+  "prod_8787_touched": false,
+  "exit_report": "NOT_CREATED",
+  "claim": "NOT_REBUILT_PLUS_PROVEN",
+  "staff_ready": false,
+  "beta_port": 8788,
+  "beta_kickstart": "launchctl kickstart -k gui/501/net.wolfcommand.serve-beta PASS",
+  "local_route_prove": {
+    "/owner/gatekeeper": "200",
+    "/gatekeeper": "302\u2192/owner/gatekeeper",
+    "/gatekeeper.html": "302\u2192/owner/gatekeeper",
+    "/owner-gatekeeper-1.html": "302\u2192/owner/gatekeeper",
+    "/ops/event-bus": "200",
+    "/event-bus": "302\u2192/ops/event-bus",
+    "/ops-event-bus-1.html": "302\u2192/ops/event-bus",
+    "/owner/fitness": "200",
+    "/owner/peptide": "302\u2192/owner/fitness",
+    "/owner/trading": "200",
+    "/owner/holdings": "302\u2192/owner/trading",
+    "/ops/competitor-rates-pipeline": "200",
+    "/competitor-rates-pipeline": "302\u2192/ops/competitor-rates-pipeline",
+    "/ops/rate-calendar": "200",
+    "/rate-calendar": "302\u2192/ops/rate-calendar",
+    "/ops/calendly-atrium-sync": "200",
+    "/calendly-atrium-sync": "302\u2192/ops/calendly-atrium-sync",
+    "/kuta-rates": "200",
+    "/habitat-investment-2026": "200",
+    "claim": "LOCAL_HTTP_ONLY_NOT_HUMAN_PROVEN",
+    "overall": "PASS"
+  },
+  "hard_refresh_urls": [
+    "http://127.0.0.1:8788/owner/gatekeeper?v=20260930-gk-ebus-peptide-holdings-pipe",
+    "http://127.0.0.1:8788/ops/event-bus?v=20260930-gk-ebus-peptide-holdings-pipe",
+    "http://127.0.0.1:8788/owner/fitness?v=20260930-gk-ebus-peptide-holdings-pipe",
+    "http://127.0.0.1:8788/owner/peptide?v=20260930-gk-ebus-peptide-holdings-pipe",
+    "http://127.0.0.1:8788/owner/trading?v=20260930-gk-ebus-peptide-holdings-pipe",
+    "http://127.0.0.1:8788/owner/holdings?v=20260930-gk-ebus-peptide-holdings-pipe",
+    "http://127.0.0.1:8788/ops/competitor-rates-pipeline?v=20260930-gk-ebus-peptide-holdings-pipe",
+    "http://127.0.0.1:8788/ops/rate-calendar?v=20260930-gk-ebus-peptide-holdings-pipe",
+    "http://127.0.0.1:8788/ops/calendly-atrium-sync?v=20260930-gk-ebus-peptide-holdings-pipe"
+  ],
+  "prod_8787_still_up": 200,
+  "body_markers": {
+    "/owner/gatekeeper": [
+      "NOT REBUILT+PROVEN",
+      "PARTIAL",
+      "NEVER sends",
+      "Gatekeeper"
+    ],
+    "/ops/event-bus": [
+      "NOT REBUILT+PROVEN",
+      "PARTIAL",
+      "no fake",
+      "Event Bus"
+    ],
+    "/owner/fitness": [
+      "NOT REBUILT+PROVEN",
+      "PARTIAL",
+      "Peptide Schedule"
+    ],
+    "/owner/trading": [
+      "NOT REBUILT+PROVEN",
+      "PARTIAL",
+      "HOLDINGS-PERSONAL"
+    ],
+    "/ops/competitor-rates-pipeline": [
+      "NOT REBUILT+PROVEN",
+      "PARTIAL",
+      "no fake",
+      "Competitor Rates Pipeline"
+    ],
+    "/ops/rate-calendar": [
+      "NOT REBUILT+PROVEN",
+      "PARTIAL",
+      "PARKED",
+      "no fake",
+      "parked"
+    ],
+    "/ops/calendly-atrium-sync": [
+      "NOT REBUILT+PROVEN",
+      "PARTIAL",
+      "no fake",
+      "no Beta live"
+    ],
+    "/kuta-rates": [
+      "NOT REBUILT+PROVEN",
+      "PARTIAL"
+    ],
+    "/habitat-investment-2026": [
+      "NOT REBUILT+PROVEN",
+      "PARTIAL"
+    ]
+  },
+  "updated_at_wita": "2026-09-30T12:23:31+0800",
+  "ro_deepen2": {
+    "status": "RO_DEEPENED",
+    "at": "2026-09-30T12:23:31+0800",
+    "live": true,
+    "staff_ready": false,
+    "claim": "BOARD_DATA_WIRED_API_USABLE_NOT_LIVE_USABLE",
+    "mac_dropped": false,
+    "prod_8787_touched": false,
+    "beta_pid": 17216,
+    "tests": "5/0 PASS",
+    "apis_200": [
+      "/api/owner/trading-ro",
+      "/api/owner/trading-ro/history",
+      "/api/owner/fitness-ro",
+      "/api/owner/travel-ro",
+      "/api/owner/learning-ro"
+    ]
+  }
+}

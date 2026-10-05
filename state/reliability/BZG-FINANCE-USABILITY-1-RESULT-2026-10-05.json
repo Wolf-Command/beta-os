@@ -1,0 +1,101 @@
+{
+  "pack": "BZG-FINANCE-USABILITY-1",
+  "run_id": "BF-75bdba189a90",
+  "finished_at": "2026-10-05T11:20:00+08:00",
+  "routes_added": [
+    "/bzg/finance",
+    "/bzg/finance/suppliers",
+    "/bzg/finance/suppliers/<id>",
+    "/bzg/finance/po/<id>",
+    "/bzg/finance/receipts/<id>",
+    "/bzg/finance/notas/<id>",
+    "/bzg/finance/petty",
+    "/bzg/finance/bank",
+    "/bzg/finance/ap",
+    "/bzg/finance/exceptions",
+    "/bzg/finance/completeness",
+    "/api/bzg/finance/overview",
+    "/api/bzg/finance/counts",
+    "/api/bzg/finance/suppliers",
+    "/api/bzg/finance/suppliers/<id>",
+    "/api/bzg/finance/po/<id>",
+    "/api/bzg/finance/receipts/<id>",
+    "/api/bzg/finance/notas/<id>",
+    "/api/bzg/finance/petty",
+    "/api/bzg/finance/bank",
+    "/api/bzg/finance/ap",
+    "/api/bzg/finance/exceptions"
+  ],
+  "test_file": "scripts/tests/test_bzg_finance_usability1_20261005.py",
+  "tests_pass": {
+    "test_bzg_finance_usability1_20261005.py": 12
+  },
+  "tests_fail": {
+    "test_bzg_finance_usability1_20261005.py": 0
+  },
+  "end_to_end_path": {
+    "supplier_search": "Banneton",
+    "vendor_id": "SUP-ALC-7",
+    "po_id": "PO-HIST-15",
+    "source_pr_num": "PR-1001",
+    "po_line_count": 1,
+    "gr_id": "GR-HIST-LEDGER-16",
+    "bill_id": "BILL-HIST-16",
+    "evidence": "missing (photo_object_ref=UNKNOWN)",
+    "reconciliation_visible": true
+  },
+  "counts": {
+    "desk": {
+      "purchase_orders": 543,
+      "po_lines": 2017,
+      "goods_receipts": 474,
+      "gr_lines": 477,
+      "supplier_bills": 473,
+      "ap_ready": 106,
+      "suppliers": 103,
+      "petty_historical": 442,
+      "bank_imports": 15,
+      "bank_transactions": 1257,
+      "evidence_unlinked": 1363,
+      "needs_reconciliation": 808,
+      "bank_unmatched": 1257
+    },
+    "db": {
+      "bzg_ops_purchase_orders": 543,
+      "bzg_ops_po_lines": 2017,
+      "bzg_ops_goods_receipts": 474,
+      "bzg_ops_gr_lines": 477,
+      "bzg_ops_supplier_bills": 473,
+      "bzg_ops_ap_ready": 106,
+      "bzg_shared_vendors": 103,
+      "bzg_ops_petty_movements_historical": 442,
+      "bzg_bank_statement_imports": 15,
+      "bzg_bank_transactions": 1257,
+      "bzg_ops_evidence_unlinked": 1363
+    },
+    "match": true
+  },
+  "beta_reloaded": true,
+  "reload_held": false,
+  "beta_listener_pid": 65634,
+  "beta_port": 8788,
+  "prod_pid_unchanged": 1297,
+  "prod_port": 8787,
+  "protected_closes_unchanged": true,
+  "protected_petty_unchanged": "PETTY-UMA-6D853EEAE0",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "zayen_ready": false,
+  "status": "IMPLEMENTATION_DONE",
+  "exit_code": 0,
+  "files_changed": [
+    "scripts/core/bzg_finance_usability_ro.py",
+    "scripts/core/bzg_finance_desk.py",
+    "scripts/serve_beta.py",
+    "dashboards/bzg-finance.html",
+    "scripts/tests/test_bzg_finance_usability1_20261005.py"
+  ],
+  "no_commit": true,
+  "no_money_movement": true,
+  "read_only": true
+}

@@ -28,7 +28,7 @@
     {
       "pack": "CONNECTOR-HEALTH-DEEPEN-1",
       "tests": "174/0",
-      "commit": "PENDING",
+      "commit": "f2586a4",
       "class": "INTERNALLY_SOLVABLE",
       "matt_heartbeat": "NEEDED"
     }

@@ -286,15 +286,16 @@ def _asks_card() -> dict[str, Any]:
     ]
     count = len(open_rows)
     state = "EMPTY" if count == 0 else "PARTIAL"
+    href = "/owner/needs-you-1"
     return _card(
         id="asks",
         what="Asks from the team",
         state=state,
         value=f"{count} open asks in the V1 desk file",
-        href=None,
+        href=href,
         why=(
-            "Read of wolf-desk/tasks.json, bucket ask, status not done. "
-            "Beta has no answer-in-place rail, so an empty read is not a rebuilt desk."
+            f"Read of wolf-desk/tasks.json, bucket ask, status not done ({count} open). "
+            "Opens the existing Needs You desk — not answer-in-place on this cockpit."
         ),
         source=str(WOLF_TASKS),
         extra={
@@ -302,6 +303,7 @@ def _asks_card() -> dict[str, Any]:
             "open_count": count,
             "task_rows_read": len(rows),
             "titles_copied": False,
+            "desk": "eng_proved",
         },
     )
 
@@ -470,6 +472,24 @@ def _personal_rail(pulse: dict[str, Any]) -> list[dict[str, Any]]:
     return rail
 
 
+def _factory_indicator() -> dict[str, Any]:
+    try:
+        from core.owner_factory_indicator_ro import load_factory_indicator
+
+        return load_factory_indicator()
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "ok": False,
+            "pack": "OWNER-HOME-FACTORY-INDICATOR",
+            "staff_ready": False,
+            "human_commissioned": False,
+            "eng_proved": False,
+            "read_only": True,
+            "error": type(exc).__name__,
+            "line": "Factory · unavailable · queue not read",
+        }
+
+
 def load_cockpit() -> dict[str, Any]:
     pulse = _pulse()
     tiles = [t for t in (pulse.get("tiles") or []) if isinstance(t, dict)]
@@ -516,6 +536,7 @@ def load_cockpit() -> dict[str, Any]:
         "staff_primary": staff,
         "restored": restored,
         "personal_rail": _personal_rail(pulse),
+        "factory_indicator": _factory_indicator(),
         "counts": {
             "pulse_tiles": len(tiles),
             "staff_primary": len(staff),

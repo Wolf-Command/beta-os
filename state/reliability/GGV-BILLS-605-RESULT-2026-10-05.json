@@ -1,0 +1,93 @@
+{
+  "pack_id": "GGV-BILLS-605",
+  "finished_at_wita": "2026-10-05T06:30:00+08:00",
+  "status": "MIGRATION_APPLIED_IDEMPOTENT_PROVED",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_prod": true,
+  "no_commit": true,
+  "no_money_movement": true,
+  "source_db": "/Users/wolfterminal/.openclaw/workspace/wolf-system/ggv-finance/money.sqlite",
+  "source_mode": "read_only",
+  "target_db": "catalog/content_library.sqlite",
+  "backup": "catalog/backups/pre-ggv-bills-605-20261005-062753.sqlite",
+  "backup_sha256": "5ad8f7860936146f5667e08ebf1e18179d7c8c911aa6bdcf7db8643abf7746fc",
+  "migration_id": "ggv_bills_605_20261005",
+  "source_counts": {
+    "sales_invoice": 46,
+    "bill": 605,
+    "ggv_nota": 33
+  },
+  "target_counts_before": {
+    "ggv_invoices": 46,
+    "ggv_bills": 0,
+    "ggv_notas": 33,
+    "ggv_vendors": 13
+  },
+  "target_counts_after": {
+    "ggv_invoices": 46,
+    "ggv_bills": 605,
+    "ggv_notas": 33,
+    "ggv_vendors": 13
+  },
+  "imported": {
+    "ggv_bills": 605
+  },
+  "skipped": {
+    "ggv_invoices": {},
+    "ggv_notas": {},
+    "ggv_bills": {}
+  },
+  "source_bill_status_split": {
+    "DRAFT": 587,
+    "DELETED": 18
+  },
+  "idempotency_second_run": {
+    "ggv_bills_imported": 0,
+    "ggv_bills_skipped_already_exists": 605,
+    "ggv_invoices_unchanged": 46,
+    "ggv_notas_unchanged": 33
+  },
+  "provenance_fields_stored": [
+    "source_id",
+    "source_table",
+    "source_file_path",
+    "source_status",
+    "source"
+  ],
+  "protected_closes_untouched": [
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+    "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5"
+  ],
+  "protected_close_states": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": "EXCEPTION",
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": "CANCELLED",
+    "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5": "DATA_CAPTURED"
+  },
+  "tests": {
+    "command": "python3 scripts/tests/test_ggv_bills_605_20261005.py",
+    "pass": 21,
+    "fail": 0,
+    "exit_code": 0
+  },
+  "api_prove": {
+    "list_bills_bill_count": 605,
+    "list_bills_page_limit": 200,
+    "unsigned_http_status": 403
+  },
+  "beta_reloaded": true,
+  "beta_listener_pid": 89529,
+  "beta_port": 8788,
+  "prod_pid_unchanged": 1297,
+  "prod_port": 8787,
+  "page": "/ggv/finance",
+  "files_changed": [
+    "scripts/core/ggv_bills_import1.py",
+    "scripts/core/ggv_empty_chain_repair1.py",
+    "scripts/core/ggv_finance_nota.py",
+    "scripts/migrations/migrate_ggv_bills_605_20261005.py",
+    "scripts/tests/test_ggv_bills_605_20261005.py",
+    "dashboards/ggv-finance.html"
+  ]
+}

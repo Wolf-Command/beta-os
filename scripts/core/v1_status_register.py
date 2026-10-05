@@ -24,6 +24,11 @@ V1_BOARD_REDIRECTS: dict[str, str] = {
     "/bzg-finance": "/bzg/finance",
     "/bzg-finance.html": "/bzg/finance",
     "/dashboards/bzg-finance.html": "/bzg/finance",
+    # P0 UI-REAUDIT 20260930 — orphan short-path 404 → products board (same pattern as /bzg-finance)
+    "/amg-packages": "/amg-packages-products",
+    "/amg-packages/": "/amg-packages-products",
+    "/amg-packages.html": "/amg-packages-products",
+    "/dashboards/amg-packages.html": "/amg-packages-products",
 }
 
 PAGE_PATHS = frozenset(

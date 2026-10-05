@@ -1,0 +1,19 @@
+{
+  "to": "Peaches",
+  "require_matt": false,
+  "at": "2026-10-05T11:41:43+08:00",
+  "event": "FINANCE_CORE_GGV1_VERIFIED_STATEMENTS1_ARMED",
+  "ggv1_verify": "state/reliability/PEACHES-VERIFY-FINANCE-CORE-GGV-1-2026-10-05.json",
+  "hand_to_matt_now": false,
+  "statements1": {
+    "state": "READY",
+    "priority": 13,
+    "pred": "FINANCE-CORE-AMG-PROVE-1 (done)",
+    "next_when": "BZG-EVIDENCE-LINK-1 BF-f0387c60ee3d exits",
+    "bzg_prove_now_after": "FINANCE-CORE-STATEMENTS-1"
+  },
+  "zayen_checklist": "state/reliability/ZAYEN-FINANCE-TEST-AMG-BZG-2026-10-05.md",
+  "ownership": "state/completion-register/finance-core-human-test-ownership-20261005.json",
+  "staff_ready": false,
+  "human_commissioned": false
+}

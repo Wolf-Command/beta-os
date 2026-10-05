@@ -1,0 +1,228 @@
+{
+  "schema": "UX-PACK-09b-APPLY/v0",
+  "applied": true,
+  "status": "PACK_09b_APPLIED",
+  "applied_wita": "2026-09-30T22:39:35+08:00",
+  "bound": "beta_only",
+  "beta_port": 8788,
+  "prod_8787": "READ_ONLY_UNTOUCHED",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "packs": [
+    "UX-PACK-09b",
+    "UX-PACK-11"
+  ],
+  "finance_sod_unchanged": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "backup_dir": "/Users/wolfterminal/beta-os/backups/ux-pack-09b-20260930-223458",
+  "beta_restarted": true,
+  "urls": {
+    "owner_home": "https://beta.wolfcommand.net/owner-empire-pack",
+    "local_pulse_ro": "http://127.0.0.1:8788/api/owner/pulse-ro",
+    "kuta_rates": "https://beta.wolfcommand.net/kuta-rates",
+    "occ_truth": "https://beta.wolfcommand.net/amg/occ-truth-1",
+    "occ_hold": "https://beta.wolfcommand.net/amg/occupancy-external-hold-1",
+    "uma_closes": "https://beta.wolfcommand.net/bzg/uma-blu#closes",
+    "uma_close_desk": "https://beta.wolfcommand.net/uma-blu-close",
+    "ggv": "https://beta.wolfcommand.net/ggv-ops-pack",
+    "travel": "https://beta.wolfcommand.net/owner/travel",
+    "learning": "https://beta.wolfcommand.net/owner/learning",
+    "fitness": "https://beta.wolfcommand.net/owner/fitness"
+  },
+  "files_changed": [
+    "scripts/core/owner_pulse_ro.py",
+    "dashboards/owner-empire-pack.html",
+    "dashboards/assets/sidenav.js",
+    "scripts/core/wolf_shell.py",
+    "dashboards/owner-travel-1.html",
+    "dashboards/owner-learning-1.html"
+  ],
+  "pack_09b": {
+    "title": "Pulse deepen \u2014 move PARTIAL/BLOCKED toward real LIVE without inventing",
+    "api": "/api/owner/pulse-ro",
+    "tile_before_counts": {
+      "tiles": 7,
+      "LIVE": 1,
+      "PARTIAL": 5,
+      "EMPTY": 0,
+      "BLOCKED": 1
+    },
+    "tile_after_counts": {
+      "tiles": 7,
+      "LIVE": 2,
+      "PARTIAL": 3,
+      "EMPTY": 1,
+      "BLOCKED": 1
+    },
+    "improvements": [
+      {
+        "id": "kuta_rates",
+        "before": "PARTIAL \u00b7 atrium stay 2027-09-30 \u00b7 1,978,000 IDR",
+        "after": "LIVE \u00b7 tonight competitor from 1,050,000 IDR \u00b7 Raja Hotel Kuta Mandalika",
+        "how": "Prefer status.official for tonight (night 2026-09-30\u21922026-10-01) over far-future atrium_recent"
+      },
+      {
+        "id": "bzg_night",
+        "before": "PARTIAL \u00b7 closes EMPTY \u00b7 today attention 308",
+        "after": "EMPTY \u00b7 no close filed \u00b7 href /bzg/uma-blu#closes + /uma-blu-close",
+        "how": "EMPTY honesty when venue_daily_closes empty; surface no-close-filed + WHERE links"
+      },
+      {
+        "id": "leads",
+        "before": "PARTIAL \u00b7 8 on board \u00b7 8 DEMO-labeled",
+        "after": "PARTIAL \u00b7 0 live Habitat \u00b7 8 DEMO fixture \u00b7 3 needs-you",
+        "how": "Demote DEMO/fixture; no non-DEMO Habitat SoT found (core_leads source_system=fixture)"
+      },
+      {
+        "id": "atrium_occ",
+        "before": "BLOCKED \u00b7 PMS blocked",
+        "after": "BLOCKED \u00b7 INT-YAN-WOLF/CAP-AMG-01 + WHERE occ-truth + occupancy-external-hold",
+        "how": "Still no real occ %; clearer blocker + hold desk link. hold occupancy_pct null confirmed"
+      },
+      {
+        "id": "purchasing",
+        "before": "PARTIAL legacy unpaid",
+        "after": "PARTIAL legacy unpaid (not greenwashed) \u00b7 real unpaid fields kept",
+        "how": "No LIVE upgrade \u2014 legacy projection remains PARTIAL"
+      },
+      {
+        "id": "backup",
+        "before": "PARTIAL STALE/AMBER",
+        "after": "PARTIAL STALE/AMBER with clearer why",
+        "how": "No greenwash \u2014 atrium snap STALE + pipe AMBER documented"
+      }
+    ],
+    "no_invent": true,
+    "writes": false
+  },
+  "pack_11": {
+    "title": "Travel RO / Learning RO desk unhide (cheap Fitness pattern)",
+    "status": "APPLIED_CHEAP",
+    "apis": {
+      "travel_ro": "http://127.0.0.1:8788/api/owner/travel-ro",
+      "learning_ro": "http://127.0.0.1:8788/api/owner/learning-ro",
+      "http": 200
+    },
+    "changes": [
+      "PERSONAL IA: Travel + Learning unhidden in sidenav.js + wolf_shell.py",
+      "Owner Home Personal Command: Travel + Learning cards with RO glances",
+      "Crumbs: Personal \u203a Travel / Learning",
+      "Desks already had RO deepen sections \u2014 left PARTIAL, no invent"
+    ],
+    "habitat_investment": "still_HIDDEN"
+  },
+  "ro_test": {
+    "local_pulse_ro_http": 200,
+    "pulse_counts_before": {
+      "tiles": 7,
+      "LIVE": 1,
+      "PARTIAL": 5,
+      "EMPTY": 0,
+      "BLOCKED": 1
+    },
+    "pulse_counts_after": {
+      "tiles": 7,
+      "LIVE": 2,
+      "PARTIAL": 3,
+      "EMPTY": 1,
+      "BLOCKED": 1
+    },
+    "tiles": [
+      {
+        "id": "atrium_occ",
+        "what": "Atrium occupancy",
+        "state": "BLOCKED",
+        "value": null,
+        "href": "/amg/occ-truth-1",
+        "why": "PMS blocked \u2192 occupancy UNKNOWN (not zero, not invented). Blocker: INT-YAN-WOLF / CAP-AMG-01 external. WHERE: /amg/occ-truth-1 \u00b7 /amg/occupancy-external-hold-1."
+      },
+      {
+        "id": "kuta_rates",
+        "what": "Kuta rates tonight",
+        "state": "LIVE",
+        "value": "from 1,050,000 IDR \u00b7 Raja Hotel Kuta Mandalika",
+        "href": "/kuta-rates",
+        "why": "Tonight competitor signal (2026-09-30 \u2192 2026-10-01) \u00b7 cheapest official 1,050,000 IDR \u00b7 Deluxe King \u2014 not labeled studio. Headline: Raja Deluxe King BB IDR 1.050.000 \u00b7 cheaper than 2jt. Official 20 \u00b7 sold_out 25. LEARN only \u2014 no booking. Atrium own stay scrape may be far-future."
+      },
+      {
+        "id": "bzg_night",
+        "what": "BZG / Uma last-night",
+        "state": "EMPTY",
+        "value": "no close filed",
+        "href": "/bzg/uma-blu#closes",
+        "why": "No close filed \u2014 No previous closes recorded in Wolf yet. Night revenue/covers not on record (not invented). File/review at /bzg/uma-blu#closes or Close desk /uma-blu-close. Uma Today attention 308 \u00b7 blocked 1 is ops noise, not last-night sales."
+      },
+      {
+        "id": "leads",
+        "what": "Leads (GGV / Habitat)",
+        "state": "PARTIAL",
+        "value": "0 live Habitat \u00b7 8 DEMO fixture \u00b7 3 needs-you",
+        "href": "/ggv-ops-pack",
+        "why": "No non-DEMO Habitat/GGV lead SoT found. Board rows are DEMO/fixture seed (8 fixture-tagged). live_pipeline=False. Not claiming live sales pipeline. WHERE: /ggv-ops-pack."
+      },
+      {
+        "id": "purchasing",
+        "what": "Purchasing / Alchemist",
+        "state": "PARTIAL",
+        "value": "unpaid 106 \u00b7 unpaid sum 195,268,172 \u00b7 awaiting Devi 39 \u00b7 received 166",
+        "href": "/bzg/uma-blu/purchasing",
+        "why": "Alchemist attention summary (RO). Legacy projection \u2014 PARTIAL, not greenwashed. Unpaid fields are real counts from SoT. Not a finance settle action. SoD unchanged."
+      },
+      {
+        "id": "fitness",
+        "what": "Fitness / Spartacus day",
+        "state": "LIVE",
+        "value": "day 1 \u00b7 plan 0/3 \u00b7 workouts open",
+        "href": "/owner/fitness",
+        "why": "From /api/owner/fitness-ro (Spartacus sqlite RO). Fitness \u2260 HR."
+      },
+      {
+        "id": "backup",
+        "what": "Backup / pipe health",
+        "state": "PARTIAL",
+        "value": "backup PRESENT \u00b7 atrium snap STALE \u00b7 drill DRILL_RAN_NON_DESTRUCTIVE \u00b7 pipe ORIGIN_REACHABLE/AMBER",
+        "href": "/ops/backup-health-1",
+        "why": "From BACKUP-HEALTH-1 + external_route_health latest. Atrium snapshot STALE \u2014 not inventing fresh backup. Pipe AMBER (CF Access / unauth probe). Last backup \u2260 restore proven. staff_ready false."
+      }
+    ],
+    "travel_ro_http": 200,
+    "learning_ro_http": 200,
+    "owner_home_page_without_cf": "403_expected",
+    "prod_8787": "still_listening_untouched"
+  },
+  "desktop_gate_ready": false,
+  "desktop_gate_why": [
+    "Kuta tonight competitor now LIVE and Uma EMPTY honesty improved, but Atrium occ still BLOCKED (PMS), leads DEMO fixture, purchasing legacy, backup STALE/AMBER \u2014 not V1 evening-brief dense LIVE parity",
+    "Screenshots still BLOCKED_AUTH without Owner CF Access session",
+    "Authenticated visual verify of Owner Home pulse + Travel/Learning cards pending Matt session",
+    "staff_ready remains false \u2014 no commissioning claim"
+  ],
+  "residuals": [
+    "Atrium occupancy BLOCKED until Yanolja/INT-YAN-WOLF/CAP-AMG-01 unblocked \u2014 WHERE /amg/occ-truth-1 \u00b7 /amg/occupancy-external-hold-1",
+    "Uma venue_daily_closes EMPTY \u2014 no close filed; file at /bzg/uma-blu#closes or /uma-blu-close",
+    "GGV/Habitat leads all DEMO fixture seed \u2014 0 live Habitat; live_pipeline=false",
+    "Alchemist unpaid is legacy projection \u2014 PARTIAL (real counts, not settle)",
+    "Backup atrium snapshot STALE; pipe AMBER ORIGIN_REACHABLE",
+    "Owner Home HTML CF-gated (403 without JWT) \u2014 expected",
+    "Screenshots CF-blocked \u2014 UX-PACK-10 still BLOCKED_AUTH"
+  ],
+  "next_work": [
+    "UX-PACK-10 authenticated screenshot pass (BLOCKED until Owner CF)",
+    "Do not invent occ/revenue/leads to force desktop_gate_ready",
+    "Optional: when Uma close filed or Yanolja unblocks, pulse tiles auto-improve"
+  ],
+  "acceptance": {
+    "pulse_ro_api_200": true,
+    "tile_honesty_accurate": true,
+    "at_least_1_2_tiles_improved_or_residuals_documented": true,
+    "kuta_tonight_competitor_live": true,
+    "bzg_empty_honesty": true,
+    "no_fabricated_metrics": true,
+    "finance_sod_unchanged": true,
+    "staff_ready_false": true,
+    "prod_8787_untouched": true,
+    "desktop_gate_ready_false": true,
+    "pack_11_travel_learning_partial_ro": true
+  },
+  "matt_paragraph": "Pulse deepen (09b) landed on Beta: Kuta rates tonight is now LIVE from the morning competitor status (from IDR 1,050,000 Raja Deluxe King for 30 Sep\u20131 Oct) instead of a far-future Atrium stay scrape; Uma last-night is honest EMPTY \u2014 no close filed \u2014 with links to /bzg/uma-blu#closes and the Close desk; leads demoted to 0 live Habitat / 8 DEMO fixture; Atrium occ stays BLOCKED with clearer Yanolja blocker + WHERE. Also cheap Pack-11: Travel + Learning unhidden under PERSONAL with Owner Home RO glances (PARTIAL, no book / TTC paper only). Counts moved LIVE 1\u21922, PARTIAL 5\u21923, EMPTY 0\u21921, BLOCKED 1. Prod :8787 untouched; finance SoD unchanged; staff_ready false; desktop_gate_ready still false until your Owner CF session for screenshots and more real SoT."
+}

@@ -13,7 +13,7 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
   body {
-    padding: 16px 16px 72px; max-width: 480px; margin: 0 auto;
+    padding: 16px 16px 72px; max-width: 1100px; margin: 0 auto;
     overflow-wrap: anywhere; word-break: break-word;
   }
   .brand { font-size: 1.45rem; font-weight: 700; margin: 0 0 4px; }
@@ -47,23 +47,34 @@
     font-size: 1rem; font-weight: 650;
   }
   .btn:disabled { opacity: 0.4; }
+  .btn.secondary {
+    background: transparent; border-color: var(--line); color: var(--text);
+  }
+  .btn-row { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
   .err { color: #e05a4c; }
+
+  /* UX-PACK-03-DESKTOP */
+  @media (min-width: 900px) {
+    body { max-width: 1100px; padding: 20px 28px 72px; }
+    nav.uma { gap: 8px; }
+    nav.uma a { flex: 0 0 auto; }
+  }
 </style>
 </head>
 <body>
   <p class="muted"><a href="/bzg/uma-blu/bills" style="color:var(--muted)">Bills</a></p>
   <h1 class="brand">Purchase <em>detail</em></h1>
   <p class="sub">Existing records stay as recorded. Wolf does not mark them verified.</p>
-  <nav class="uma" aria-label="Uma Blu day">
+    <nav class="uma" aria-label="Uma Blu desk">
     <a href="/bzg/uma-blu">Today</a>
-    <a href="/uma-blu-close">Daily Close</a>
+    <a class="active" href="/bzg/uma-blu/bills">Bills</a>
     <a href="/bzg/uma-blu/issues">Issues</a>
-    <a href="/bzg/uma-blu/bills">Bills</a>
-    <a href="/bzg/uma-blu/bills#purchasing">Purchasing</a>
+    <a href="/bzg/uma-blu/petty">Petty</a>
     <a href="/bzg/uma-blu/evidence">Evidence</a>
     <a href="/bzg/uma-blu/exceptions">Exceptions</a>
-    <a href="/my-work">My Work</a>
-    <a href="/bzg/uma-blu/petty">Petty cash</a>
+    <a href="/bzg/uma-blu/recipes">Recipes</a>
+    <a href="/bzg/uma-blu/real">Real</a>
+    <a id="closeLink" href="/uma-blu-close">Close</a>
   </nav>
   <div id="body"><p class="muted">Loading…</p></div>
 <script>
@@ -113,11 +124,22 @@
       field(head, "Number", p.pr_num);
       field(head, "Supplier", p.supplier_name);
       field(head, "Department", p.department);
+      field(head, "Business", p.business_label || p.outlet_display_name);
       field(head, "Requested by", p.requester_label);
       field(head, "Date", p.requested_date);
       field(head, "Status", p.display_status || p.alchemist_status || p.state);
       if (p.expected_value != null) field(head, "Recorded total", String(p.expected_value));
       if (p.source_status_note) head.appendChild(el("p", "muted", p.source_status_note));
+      if (p.linked_po_href) {
+        var poLink = el("a", "btn secondary", "View purchase order");
+        poLink.href = p.linked_po_href;
+        poLink.style.textAlign = "center";
+        poLink.style.textDecoration = "none";
+        poLink.style.display = "inline-flex";
+        poLink.style.alignItems = "center";
+        poLink.style.justifyContent = "center";
+        head.appendChild(poLink);
+      }
       box.appendChild(head);
 
       var lines = p.lines || [];
@@ -177,15 +199,38 @@
         var approveBtn = el("button", "btn", "Approve request");
         approveBtn.type = "button";
         approveBtn.onclick = function () { postAction("/api/bzg/uma-blu/prs/" + encodeURIComponent(key) + "/approve", {}, msg, approveBtn); };
-        act.appendChild(approveBtn);
+        var rejectReason = el("input");
+        rejectReason.placeholder = "Reason if rejecting";
+        rejectReason.setAttribute("aria-label", "Rejection reason");
+        var rejectBtn = el("button", "btn secondary", "Reject request");
+        rejectBtn.type = "button";
+        rejectBtn.onclick = function () {
+          var reason = rejectReason.value.trim();
+          if (!reason) {
+            msg.className = "err";
+            msg.textContent = "A reason is required to reject.";
+            return;
+          }
+          postAction("/api/bzg/uma-blu/prs/" + encodeURIComponent(key) + "/reject", { reason: reason }, msg, rejectBtn);
+        };
+        var row = el("div", "btn-row");
+        row.appendChild(approveBtn);
+        row.appendChild(rejectReason);
+        row.appendChild(rejectBtn);
+        act.appendChild(row);
       } else if (state === "REQUESTED") {
         act.appendChild(el("p", "muted", actions.approve_waiting || "Waiting on approver — no action needed from you."));
       }
       if (state === "APPROVED" && actions.order) {
-        var orderBtn = el("button", "btn", "Mark ordered");
-        orderBtn.type = "button";
-        orderBtn.onclick = function () { postAction("/api/bzg/uma-blu/prs/" + encodeURIComponent(key) + "/order", {}, msg, orderBtn); };
-        act.appendChild(orderBtn);
+        var orderLink = el("a", "btn", "Save purchase order");
+        orderLink.href = "/bzg/uma-blu/purchase-orders";
+        orderLink.style.textAlign = "center";
+        orderLink.style.textDecoration = "none";
+        orderLink.style.display = "inline-flex";
+        orderLink.style.alignItems = "center";
+        orderLink.style.justifyContent = "center";
+        act.appendChild(orderLink);
+        act.appendChild(el("p", "muted", "Approved requests become orders on the Purchase orders desk."));
       }
       if (actions.receive && (state === "ORDERED" || state === "PARTIALLY_RECEIVED" || p.legacy)) {
         var form = el("form");

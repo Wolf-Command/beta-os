@@ -272,6 +272,138 @@ def _empty_summary() -> dict[str, Any]:
     }
 
 
+def db_tile_counts() -> dict[str, Any]:
+    """RO table counts from live Alchemist DB. Never invents; pay/mutate stays NO."""
+
+    def run(conn: sqlite3.Connection) -> dict[str, Any]:
+        tables = [
+            r[0]
+            for r in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+            ).fetchall()
+        ]
+        counts: dict[str, int] = {}
+        for t in tables:
+            if t.startswith("sqlite_"):
+                continue
+            try:
+                counts[t] = int(conn.execute(f'SELECT COUNT(*) FROM "{t}"').fetchone()[0])
+            except sqlite3.Error:
+                counts[t] = -1
+        try:
+            mtime = Path(conn.execute("PRAGMA database_list").fetchone()[2]).stat().st_mtime
+            from datetime import datetime as _dt
+            from zoneinfo import ZoneInfo as _ZI
+            db_mtime_wita = _dt.fromtimestamp(mtime, _ZI("Asia/Makassar")).isoformat(timespec="seconds")
+        except Exception:  # noqa: BLE001
+            db_mtime_wita = None
+        path = resolve_db_path()
+        return {
+            "ok": True,
+            "db_path_basename": path.name if path else None,
+            "db_mtime_wita": db_mtime_wita,
+            "table_count": len(counts),
+            "counts": counts,
+            "pay_mutate": False,
+            "read_only": True,
+        }
+
+    out = _with_conn(run)
+    if out is _MISS:
+        return {
+            "ok": False,
+            "error": "alchemist_db_inaccessible",
+            "counts": {},
+            "table_count": 0,
+            "pay_mutate": False,
+            "read_only": True,
+        }
+    return out
+
+
+def process_stamp() -> dict[str, Any]:
+    """launchd / PID presence for Alchemist bot — no secrets."""
+    import subprocess
+
+    up = False
+    pid = None
+    label = "com.wolfcommand.alchemist"
+    try:
+        out = subprocess.check_output(["launchctl", "list"], text=True, stderr=subprocess.DEVNULL)
+        for line in out.splitlines():
+            if "com.wolfcommand.alchemist" in line and "alchemist-" not in line.split()[-1] if line.split() else True:
+                parts = line.split()
+                # launchctl list: PID Status Label
+                if parts and parts[-1] == label:
+                    if parts[0] not in ("-", ""):
+                        try:
+                            pid = int(parts[0])
+                            up = True
+                        except ValueError:
+                            pass
+                    break
+    except Exception:  # noqa: BLE001
+        pass
+    if not up:
+        try:
+            out = subprocess.check_output(["pgrep", "-f", "alchemist/bot.py"], text=True, stderr=subprocess.DEVNULL)
+            pids = [int(x) for x in out.split() if x.strip().isdigit()]
+            if pids:
+                up = True
+                pid = pids[0]
+        except Exception:  # noqa: BLE001
+            pass
+    return {
+        "label": label,
+        "process_up": up,
+        "pid": pid,
+        "pay_mutate": False,
+    }
+
+
+def load_alchemist_ro() -> dict[str, Any]:
+    """Owner RO surface: DB counts + attention summary. Pay/mutate refused."""
+    from datetime import datetime as _dt
+    from zoneinfo import ZoneInfo as _ZI
+
+    now = _dt.now(_ZI("Asia/Makassar")).isoformat(timespec="seconds")
+    summary = project_attention_summary()
+    tiles = db_tile_counts()
+    proc = process_stamp()
+    src = summary.get("source_status") or source_status()
+    ok = bool(tiles.get("ok")) and src in {"OK", "PRESENT", "LIVE"}
+    return {
+        "ok": ok,
+        "reason": "ALCHEMIST_RO_OK" if ok else "ALCHEMIST_RO_PARTIAL",
+        "staff_ready": False,
+        "human_commissioned": False,
+        "claim": "NOT_REBUILT_PLUS_PROVEN",
+        "read_only": True,
+        "pay_mutate": False,
+        "pay_mutate_refused": True,
+        "as_of_wita": now,
+        "surface": "owner/alchemist-ro",
+        "pack": "WIRE-ALCHEMIST-READ-1",
+        "source_status": src,
+        "legacy": bool(summary.get("legacy")),
+        "attention": {
+            "unpaid_ledger_count": summary.get("unpaid_ledger_count"),
+            "unpaid_ledger_sum": summary.get("unpaid_ledger_sum"),
+            "awaiting_devi_count": summary.get("awaiting_devi_count"),
+            "received_count": summary.get("received_count"),
+        },
+        "db": tiles,
+        "process": proc,
+        "honesty": (
+            "Alchemist DB READ into Beta Owner RO. Counts are real sqlite ROW counts. "
+            "Unpaid/awaiting are attention fields — not a payment run. Pay/mutate stays NO."
+        ),
+        "href": "/bzg/uma-blu/purchasing",
+        "href_petty": "/bzg/uma-blu/petty",
+    }
+
+
+
 def _under_test_process() -> bool:
     if (os.environ.get("WOLF_TEST_MODE") or "").strip() == "1":
         return True

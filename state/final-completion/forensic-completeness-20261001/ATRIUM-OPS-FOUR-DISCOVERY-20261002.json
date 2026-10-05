@@ -1,0 +1,161 @@
+{
+  "stamped_at": "2026-10-02T06:44:01+08:00",
+  "owner_order": "ATRIUM-OPS-FOUR-20261002",
+  "security_pack": {
+    "id": "ATRIUM-OPS-SECURITY-EVIDENCE-1",
+    "status": "ALREADY_BUILDING",
+    "stage": "WAITING_CURSOR",
+    "brief": "state/build-factory/briefs/BRIEF-ATRIUM-OPS-SECURITY-EVIDENCE-1.md",
+    "run": "state/build-factory/runs/ATRIUM-OPS-SECURITY-EVIDENCE-1.json"
+  },
+  "dependency_order": [
+    {
+      "rank": 0,
+      "desk": "security_cctv_evidence",
+      "note": "in_flight"
+    },
+    {
+      "rank": 1,
+      "desk": "maintenance_pm",
+      "note": "next_cursor_pack"
+    },
+    {
+      "rank": 2,
+      "desk": "tours_concierge",
+      "note": "after_maint"
+    },
+    {
+      "rank": 3,
+      "desk": "events_ballroom",
+      "note": "last_of_four"
+    }
+  ],
+  "desks": {
+    "security_cctv_evidence": {
+      "register_id": "need.security",
+      "requirements_sources": [
+        "docs/canon/build-dashboard/Interview_Ledger.csv#Round8",
+        "docs/canon/WOLF-COMMAND-MASTER-SPECIFICATION.md#15",
+        "MISSING-FUNCTION-REGISTER.jsonl#need.security",
+        "wolf-system/state/incidents.db"
+      ],
+      "authoritative_found": [
+        "incidents.db schema",
+        "1 historical near-miss row"
+      ],
+      "authoritative_missing": [
+        "CCTV streams",
+        "camera inventory",
+        "NVR integration"
+      ],
+      "min_slice_1": "incident\u2192evidence\u2192escalate\u2192close with optional CCTV timestamp/camera text ref; append-only audit",
+      "do_not_invent": [
+        "live streams",
+        "camera lists",
+        "footage URLs"
+      ],
+      "build_status": "ALREADY_BUILDING"
+    },
+    "maintenance_pm": {
+      "register_id": "need.maintenance",
+      "requirements_sources": [
+        "Interview_Ledger.csv#Round8",
+        "WOLF-COMMAND-MASTER-SPECIFICATION.md#15",
+        "MODEL-C-CAPABILITY-CATALOG.md#CAP-MSC-01",
+        "GAP-REGISTER-20260927.json#CAP-MSC-01",
+        "wolf-system/state/amg-preventive-maintenance.json",
+        "wolf-system/scripts/amg-preventive-maintenance.py"
+      ],
+      "authoritative_found": [
+        "19 PM seed tasks with intervals+checklists",
+        "reactive ticket CLI shapes (Cloudbeds/Notion sinks RETIRED)",
+        "msc-asset EMPTY honesty"
+      ],
+      "authoritative_missing": [
+        "barcode asset inventory",
+        "contractor rates",
+        "live WO store on Beta"
+      ],
+      "min_slice_1": "PM due\u2192work order\u2192checklist\u2192done(reset cycle)\u2192audit on Beta sqlite; AMG first; seed schedule only",
+      "do_not_invent": [
+        "new cadences",
+        "asset serials",
+        "supplier prices",
+        "Cloudbeds/ClickUp revive",
+        "auto room blocks"
+      ],
+      "build_status": "NEXT"
+    },
+    "tours_concierge": {
+      "register_id": "need.tours",
+      "requirements_sources": [
+        "Interview_Ledger.csv#Round4",
+        "Interview_Ledger.csv#Round9",
+        "WOLF-COMMAND-MASTER-SPECIFICATION.md#13-14",
+        "MODEL-C#CAP-AMG-06",
+        "wolf-system/scripts/aios_concierge.py",
+        "beta-os/state/amg-packages/operator-events.jsonl"
+      ],
+      "authoritative_found": [
+        "DISARMED concierge simulate + never-invent-prices rule",
+        "EMPTY-AMG-PACKAGES",
+        "trackable guest requests constitutional need"
+      ],
+      "authoritative_missing": [
+        "tour prices",
+        "package catalog",
+        "WATI/Meta armed path",
+        "in-house guest list"
+      ],
+      "min_slice_1": "request intake\u2192classify\u2192assign\u2192SLA\u2192close; escalate on money/booking/complaint; no guest auto-send",
+      "do_not_invent": [
+        "prices",
+        "packages",
+        "availability",
+        "WhatsApp sends"
+      ],
+      "build_status": "QUEUED_AFTER_MAINT"
+    },
+    "events_ballroom": {
+      "register_id": "need.events",
+      "requirements_sources": [
+        "Interview_Ledger.csv#Round9",
+        "WOLF-COMMAND-MASTER-SPECIFICATION.md#13-14",
+        "MISSING-FUNCTION-REGISTER.jsonl#need.events",
+        "MISSING-FUNCTION-REGISTER.jsonl#need.catering",
+        "BUSINESS-OPS-AUDIT.md"
+      ],
+      "authoritative_found": [
+        "portal event-planning requirement",
+        "daily report 'events' field",
+        "catering PRE-OPENING (not events desk)"
+      ],
+      "authoritative_missing": [
+        "ballroom calendar",
+        "BEO",
+        "hire rates",
+        "AV inventory"
+      ],
+      "min_slice_1": "enquiry\u2192tentative hold\u2192requirements checklist\u2192owner\u2192confirm/cancel\u2192ops handoff; money fields UNAVAILABLE",
+      "do_not_invent": [
+        "prices",
+        "packages",
+        "confirmed fake bookings",
+        "treat event-bus as ballroom"
+      ],
+      "build_status": "QUEUED_LAST"
+    }
+  },
+  "not_blocking": [
+    "Xero",
+    "Metricool_WRITE",
+    "Yanolja_Bookings_write",
+    "live_CCTV",
+    "Cloudbeds",
+    "ClickUp",
+    "Telegram",
+    "Intelligence",
+    "Exit_Report"
+  ],
+  "raw_1500_qa_found": false
+}

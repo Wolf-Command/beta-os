@@ -1,0 +1,63 @@
+{
+  "pack": "BZG-ZAYEN-FINANCE-PROVE-1",
+  "predecessor": "FINANCE-CORE-BZG-PROVE-1",
+  "session_fixture": {
+    "auth_mode": "development_assertion",
+    "person_id": "PERS-ZAYEN",
+    "email": "laluzayen@gmail.com",
+    "path": "serve_beta BetaHandler + X-Wolf-Subject"
+  },
+  "access_proofs": {
+    "amg_finance_html": "http://127.0.0.1:8788/amg-finance-ops",
+    "bzg_finance_html": "http://127.0.0.1:8788/bzg/finance",
+    "ggv_finance_denied": true,
+    "zayen_finance_entities": [
+      "GGV",
+      "AMG",
+      "BZG"
+    ]
+  },
+  "entity_switcher": {
+    "amg_current_entity_named": true,
+    "bzg_current_entity_named": true,
+    "amg_bzg_links_both_directions": true
+  },
+  "historical_chain": {
+    "vendor_id": "SUP-ALC-7",
+    "po_id": "PO-HIST-15",
+    "gr_id": "GR-HIST-LEDGER-16",
+    "bill_id": "BILL-HIST-16",
+    "routes": [
+      "/api/bzg/finance/suppliers?q=Banneton",
+      "/api/bzg/finance/suppliers/SUP-ALC-7",
+      "/api/bzg/finance/po/PO-HIST-15",
+      "/api/bzg/finance/receipts/GR-HIST-LEDGER-16",
+      "/api/bzg/finance/notas/BILL-HIST-16",
+      "/api/bzg/finance/bank"
+    ],
+    "openable_for_zayen": true
+  },
+  "modules_touched": [
+    "scripts/core/amg_finance_desk.py",
+    "scripts/core/amg_finance_core.py",
+    "dashboards/amg-finance-ops.html",
+    "dashboards/bzg-finance.html"
+  ],
+  "test_file": "scripts/tests/test_bzg_zayen_finance_prove1_20261005.py",
+  "tests_pass": 10,
+  "tests_fail": 0,
+  "exit_code": 0,
+  "status": "IMPLEMENTATION_DONE",
+  "prod_pid_unchanged": true,
+  "prod_pid": 1297,
+  "protected_closes_unchanged": true,
+  "protected_petty_balance_idr": 552700.0,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "zayen_ready": false,
+  "beta_reloaded": false,
+  "reload_held": true,
+  "beta_listener_pid_before": 97189,
+  "beta_listener_pid": 97189,
+  "beta_port": 8788
+}

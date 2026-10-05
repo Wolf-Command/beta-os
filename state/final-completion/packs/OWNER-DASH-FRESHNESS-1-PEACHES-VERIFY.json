@@ -1,41 +1,68 @@
 {
   "pack": "OWNER-DASH-FRESHNESS-1",
-  "status": "PASS_VERIFIED",
-  "at_wita": "2026-09-30T10:13:53+08:00",
-  "tests": "169/0",
-  "re_ran_tests": true,
-  "prod_pid": 15975,
-  "prod_untouched": true,
-  "staff_ready": false,
-  "human_commissioned": false,
-  "classification": "INTERNALLY_SOLVABLE",
-  "ceiling": "BUILT",
-  "shots": [
-    {
-      "name": "ownerdashfresh1-desk-desktop.png",
-      "sha256": "751381058a6b447055f6653365e51037d850c1d8596904515edc0af38cbc9444",
-      "bytes": 295927
-    },
-    {
-      "name": "ownerdashfresh1-desk-phone.png",
-      "sha256": "f642992dcd5b6dacc2e88aec6448f5c6606c280b53590db4242a17d0ef5b37fe",
-      "bytes": 144033
-    },
-    {
-      "name": "ownerdashfresh1-surface-stamps.png",
-      "sha256": "8526480743011de87318032484a412967f42c2114ea10621e298a70d7c660558",
-      "bytes": 333810
-    },
-    {
-      "name": "ownerdashfresh1-unsigned-deny.png",
-      "sha256": "7df206a8cc673a3bc5593cc1ec6f49e9b4799764c6a5130d7590ace9de8fbded",
-      "bytes": 24471
-    }
-  ],
-  "next_pack": "ATRIUM-FC-TRUTH-DEEPEN-1",
-  "no_push": true,
-  "no_exit_report": true,
-  "cursor_did_not_auto_chain": true,
+  "mission": "FINAL_WOLF_COMPLETION",
+  "phase": 2,
   "wave": 10,
-  "peaches": "PASS"
+  "status": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T10:36:53+08:00",
+  "verifier": "Peaches-build-factory-watch",
+  "independent_retest_this_tick": true,
+  "exit_code": 0,
+  "result_file": "docs/wolf/ops/OWNER-DASH-FRESHNESS-1-RESULT.md",
+  "tests_rerun": {
+    "test_owner_dash_freshness1_20260930.py": {
+      "pass": 169,
+      "fail": 0
+    }
+  },
+  "shots": {
+    "count": 4,
+    "distinct_sha256": 4,
+    "all_distinct": true,
+    "files": [
+      {
+        "path": "docs/wolf/ops/shots/ownerdashfresh1-desk-desktop.png",
+        "bytes": 295927,
+        "sha256": "751381058a6b447055f6653365e51037d850c1d8596904515edc0af38cbc9444"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ownerdashfresh1-desk-phone.png",
+        "bytes": 144033,
+        "sha256": "f642992dcd5b6dacc2e88aec6448f5c6606c280b53590db4242a17d0ef5b37fe"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ownerdashfresh1-surface-stamps.png",
+        "bytes": 333810,
+        "sha256": "8526480743011de87318032484a412967f42c2114ea10621e298a70d7c660558"
+      },
+      {
+        "path": "docs/wolf/ops/shots/ownerdashfresh1-unsigned-deny.png",
+        "bytes": 24471,
+        "sha256": "7df206a8cc673a3bc5593cc1ec6f49e9b4799764c6a5130d7590ace9de8fbded"
+      }
+    ]
+  },
+  "prod": {
+    "port": 8787,
+    "pid": 15975,
+    "listening": true,
+    "untouched": true
+  },
+  "flags": {
+    "staff_ready": false,
+    "human_commissioned": false
+  },
+  "no_push": true,
+  "beta_only": true,
+  "git": {
+    "beta_os_head": "e2e9889",
+    "verify_commit": "734ec4f"
+  },
+  "HEADCHEF_auto": false,
+  "classification": "INTERNALLY_SOLVABLE",
+  "matt_finished_ping_at": "2026-09-30T10:36:53+08:00",
+  "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
+  "active_while_waiting": "RELIABILITY-PIPE-EPISODE-ROLLUP-1",
+  "next_pack_for_parent_only": "ATRIUM-FC-TRUTH-DEEPEN-1",
+  "note": "Independent retest 169/0 shots 4 distinct=4; live freshness stamps; invent_kpi/freshness 403; STALE\u2260current; DASH-LIVE+OWNER-EXCEPTIONS+OWNER-NEEDS-YOU preserved"
 }

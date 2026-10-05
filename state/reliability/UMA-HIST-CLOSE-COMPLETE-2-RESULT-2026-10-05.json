@@ -1,0 +1,42 @@
+{
+  "slice": "UMA-HIST-CLOSE-COMPLETE-2",
+  "status": "PASS",
+  "root_causes": {
+    "1_resume_dead_end": "openDate always called showScreen('wizIntro') after loadWizard, undoing resumeWizardScreen; shiftPhotoRef/hash not synced from printed_source; till-declare and esb-receipt required client-only refs",
+    "2_terminals_not_used": "wizard_bank_cards used _esb_expected_by_bank only; owner-typed printed figures (edc_bni_rp etc.) were ignored",
+    "3_till_declare_rejected": "attach_till_with_z_report required object_ref/content_hash with no server-side resolve from saved shift evidence",
+    "4_expected_cash_display": "Formula opening + shift cash - petty was correct but UI listed lines without opening float or minus explanation, reading like petty was added",
+    "5_submit_blocked": "submit_with_exception required len(missing)<=1 while source_discrepancy_ack and cash_difference_ack both present; cash step WebKit tap did not advance to petty reliably"
+  },
+  "files_changed": [
+    "scripts/core/bzg_daily_close.py",
+    "scripts/serve_beta.py",
+    "dashboards/uma-blu-close.html",
+    "scripts/tests/test_uma_hist_close_complete2_20261005.py"
+  ],
+  "suites": {
+    "test_uma_hist_close_complete1_20261005.py": {"pass": 28, "fail": 0, "exit_code": 0},
+    "test_uma_hist_close_complete2_20261005.py": {"pass": 29, "fail": 0, "exit_code": 0},
+    "test_uma_hist_close_nav_mobile1_20261005.py": {"pass": 52, "fail": 0, "exit_code": 0},
+    "test_uma_hist_close_nav_mobile2_20261005.py": {"pass": 102, "fail": 0, "exit_code": 0},
+    "test_uma_hist_close_queue1_20261005.py": {"pass": 35, "fail": 0, "exit_code": 0}
+  },
+  "harness_run": {
+    "server": "probe_server.py :8797 WOLF_CLOSE_VISION_DRY=1 BETA_LLM_DRY_RUN=1 tmp-histnav-probe-complete2-wolf",
+    "device": "Playwright WebKit iPhone 14",
+    "session_a": "29 Sep upload photo → read → correct → source diff → terminals (BNI/BRI expected values visible)",
+    "session_b": "fresh page 29 Sep → resume to source diff → terminals → BNI/BRI bank receipts 200 → till-declare 200 → petty → review → staff-submit 200",
+    "final_on_screen_result": "CLOSE SAVED WITH EXCEPTION — returned to history calendar; 29 Sep row EXCEPTION; review showed source discrepancy and cash difference before submit",
+    "harness_artifact": "state/reliability/UMA-HIST-CLOSE-COMPLETE-2-HARNESS-B-2026-10-05.json"
+  },
+  "beta_pid_before": 10578,
+  "beta_pid_after": 14994,
+  "beta_reload": "scripts/beta_restart.py",
+  "live_29sep_unchanged": true,
+  "oct3_oct4_unchanged": true,
+  "prod_pid_8787": 1297,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_commit": true,
+  "exit_code": 0
+}

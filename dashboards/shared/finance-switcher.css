@@ -1,0 +1,50 @@
+.wolf-finance-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border, #1e3f44);
+  background: var(--panel, #0e2125);
+}
+.wfs-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted, #8aa6a6);
+  margin: 0;
+}
+.wfs-select {
+  min-height: 44px;
+  min-width: 12rem;
+  flex: 1 1 12rem;
+  max-width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--border, #1e3f44);
+  background: var(--bg, #08171a);
+  color: var(--text, #eaf3f2);
+  font: inherit;
+  padding: 8px 12px;
+}
+.wfs-select option:disabled {
+  color: #7a8484;
+}
+.wfs-help {
+  width: 100%;
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--bad, #e5683f);
+  min-height: 1.2em;
+}
+@media (max-width: 390px) {
+  .wolf-finance-switcher {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .wfs-select {
+    width: 100%;
+  }
+}

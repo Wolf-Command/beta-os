@@ -2,7 +2,7 @@
   "id": "CONTENT-ENGINE-HAIKAL-UPLOAD-14FAIL-20261001",
   "recorded_at_wita": "2026-10-01T13:01:33+08:00",
   "class": "HUMAN_COMMISSIONING_FAIL",
-  "status": "FAILED_RETEST_REQUIRED",
+  "status": "ENGINEERING_PROVED_AWAITING_HAIKAL_RETEST",
   "staff_ready": false,
   "human_commissioned": false,
   "desktop_gate_ready": false,
@@ -65,7 +65,7 @@
   "cursor_run_id": "BF-content-engine-haikal-upload-14fail-20261001",
   "credit_exception": "human_commissioning_fail_repair_P0",
   "peaches_role": "FAIL_RECORD_AND_ACCEPTANCE_ONLY",
-  "next": "Peaches light verify, then Haikal retest. Engineering prove is done. staff_ready stays false.",
+  "next": "HAIKAL_RETEST_SMALL_THEN_FULL",
   "engineering_findings": {
     "recorded_at_wita": "2026-10-01T13:20:00+08:00",
     "status": "ENG_PROVED_AWAITING_PEACHES_AND_HAIKAL",
@@ -94,5 +94,30 @@
     "prod_pid_untouched": 15975,
     "evidence": "state/commissioning/evidence/CE-HAIKAL-UPLOAD-14FAIL-GATE-2026-10-01.json",
     "result": "state/build-factory/RESULT-CONTENT-ENGINE-HAIKAL-UPLOAD-14FAIL-20261001.md"
+  },
+  "human_status": "FAILED_RETEST_REQUIRED",
+  "peaches_light_verify": {
+    "at": "2026-10-01T13:38:52+0800",
+    "result": "PASS",
+    "root_cause_accepted": "launchd PATH missing Homebrew ffmpeg; thumb fail after NAS write; UI treated library_available=false as batch fail despite HTTP 200",
+    "commit": "e0896ae",
+    "gates_e1_e8": "PASS",
+    "repair_status_ffmpeg_resolved": true,
+    "beta_pid": 30689,
+    "prod_pid": 15975,
+    "prod_untouched": true,
+    "bbq_batch_rows": 12,
+    "owner_reported_14_gap": "UNKNOWN_TWO_FILENAMES",
+    "notes": "Authenticated browser upload not replayed by Cursor; Peaches did not heavy-debug. Human PASS only after Haikal real retest."
+  },
+  "follow_on_run_id": "BF-content-engine-upload-state-library-search-20261001",
+  "updated_at": "2026-10-01T16:21:35+0800",
+  "peaches_upload_state_library_verify": {
+    "at": "2026-10-01T16:21:35+0800",
+    "result": "PASS",
+    "commit": "9df3910",
+    "gates": "U1-U5 B1-B3 L1-L7 PASS",
+    "bbq_rows": 12,
+    "unknown_gap": 2
   }
 }

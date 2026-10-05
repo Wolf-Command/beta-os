@@ -1,0 +1,29 @@
+{
+  "slice": "UMA-HIST-CLOSE-NAV-MOBILE-1",
+  "status": "IMPLEMENTATION_DONE",
+  "root_cause": "showScreen() only toggled .wiz-screen elements so #ownerQueuePanel and #todayPanel stayed visible on tap, hiding the opened close below the fold on iPhone.",
+  "files_changed": [
+    "dashboards/uma-blu-close.html",
+    "scripts/core/uma_hist_close_queue1.py",
+    "scripts/core/venue_close.py",
+    "scripts/serve_beta.py",
+    "scripts/tests/test_uma_hist_close_nav_mobile1_20261005.py"
+  ],
+  "tests_pass": {
+    "test_uma_hist_close_nav_mobile1_20261005.py": "51/0",
+    "test_uma_hist_close_queue1_20261005.py": "33/1 (2026-09-27 live status INCOMPLETE vs expected OPEN — data drift, not nav code)"
+  },
+  "tests_fail": [],
+  "one_owner_link": "https://beta.wolfcommand.net/uma-blu-close#history-queue",
+  "beta_pid_before": 87980,
+  "beta_pid_after": 93695,
+  "beta_reloaded": true,
+  "reload_reason": "Python changed; exactly one listener on :8788 before kickstart",
+  "protected_closes_unchanged": true,
+  "prod_pid_unchanged": 1297,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_commit": true,
+  "exit_code": 0,
+  "generated_at": "2026-10-05T12:35:00+08:00"
+}

@@ -1,0 +1,128 @@
+{
+  "tag": "20260930-ro-deepen2",
+  "at": "2026-09-30T12:23:07+0800",
+  "probes": {
+    "/api/owner/trading-ro": {
+      "http": 200,
+      "bytes": 10429,
+      "ct": "application/json; charset=utf-8",
+      "ok": true,
+      "reason": "V1_RO_OK",
+      "staff_ready": false,
+      "live_broker": false,
+      "live_booking": null,
+      "live_quant": null,
+      "fitness_ne_hr": null,
+      "journal_rows": 3,
+      "history_len": 3,
+      "paper_docs": [
+        "README.md",
+        "QUANT_PROGRAM.md",
+        "PAPER_QUANT_PRACTICE_BRIEF.md"
+      ],
+      "holdings_status": "PRESENT"
+    },
+    "/api/owner/trading-ro/history?limit=10": {
+      "http": 200,
+      "bytes": 10485,
+      "ct": "application/json; charset=utf-8",
+      "ok": true,
+      "reason": "V1_RO_OK",
+      "staff_ready": false,
+      "live_broker": false,
+      "live_booking": null,
+      "live_quant": null,
+      "fitness_ne_hr": null,
+      "journal_rows": 3,
+      "history_len": 3,
+      "paper_docs": [
+        "README.md",
+        "QUANT_PROGRAM.md",
+        "PAPER_QUANT_PRACTICE_BRIEF.md"
+      ],
+      "holdings_status": "PRESENT"
+    },
+    "/api/owner/fitness-ro": {
+      "http": 200,
+      "bytes": 5883,
+      "ct": "application/json; charset=utf-8",
+      "ok": true,
+      "reason": "V1_RO_OK",
+      "staff_ready": false,
+      "live_broker": null,
+      "live_booking": null,
+      "live_quant": null,
+      "fitness_ne_hr": true,
+      "training_log": 90,
+      "recent_wo": 12,
+      "pep": "PRESENT"
+    },
+    "/api/owner/travel-ro": {
+      "http": 200,
+      "bytes": 2001,
+      "ct": "application/json; charset=utf-8",
+      "ok": true,
+      "reason": "V1_RO_OK",
+      "staff_ready": false,
+      "live_broker": null,
+      "live_booking": false,
+      "live_quant": null,
+      "fitness_ne_hr": null,
+      "tiles": 6
+    },
+    "/api/owner/learning-ro": {
+      "http": 200,
+      "bytes": 4852,
+      "ct": "application/json; charset=utf-8",
+      "ok": true,
+      "reason": "V1_RO_OK",
+      "staff_ready": false,
+      "live_broker": null,
+      "live_booking": null,
+      "live_quant": false,
+      "fitness_ne_hr": null,
+      "tracks": 3,
+      "inbox": 11
+    },
+    "/owner/trading": {
+      "http": 200,
+      "bytes": 10211,
+      "ct": "text/html; charset=utf-8",
+      "has_ro_live": true,
+      "has_deepen_marker": true
+    },
+    "/owner/fitness": {
+      "http": 200,
+      "bytes": 10436,
+      "ct": "text/html; charset=utf-8",
+      "has_ro_live": true,
+      "has_deepen_marker": true
+    },
+    "/owner/travel": {
+      "http": 200,
+      "bytes": 7510,
+      "ct": "text/html; charset=utf-8",
+      "has_ro_live": true,
+      "has_deepen_marker": true
+    },
+    "/owner/learning": {
+      "http": 200,
+      "bytes": 8536,
+      "ct": "text/html; charset=utf-8",
+      "has_ro_live": true,
+      "has_deepen_marker": true
+    },
+    "/api/health": {
+      "http": 200,
+      "bytes": 52,
+      "ct": "application/json; charset=utf-8",
+      "ok": true,
+      "reason": null,
+      "staff_ready": null,
+      "live_broker": null,
+      "live_booking": null,
+      "live_quant": null,
+      "fitness_ne_hr": null
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "slice": "FINANCE-STATEMENTS-TEST-FIXTURE-1",
+  "date": "2026-10-05",
+  "status": "PASS",
+  "root_cause": "setUp copied catalog/content_library.sqlite wholesale; live GGV Jan–Jun PDF (account_statement_asof_20260630.pdf) is now genuinely imported, so temp DB already held its content_sha256 and import_statement raised already_imported before tests could exercise idempotency/overlap/raw import paths.",
+  "fix": "Temp DB still copies live catalog for RBAC/org fixtures, but setUp now clears ggv/bzg statement import+txn tables, seeds isolated GGV prove-fixture rows, then flags them. Statement originals stay in tempfile dirs via patched _originals_dir. Source PDFs read read-only from historical paths only.",
+  "files_changed": [
+    "scripts/tests/test_finance_core_statements1_20261005.py",
+    "dashboards/uma-blu-close.html",
+    "scripts/tests/test_uma_hist_close_nav_mobile2_20261005.py"
+  ],
+  "suites": {
+    "test_finance_core_statements1_20261005.py": {"pass": 10, "fail": 0, "errors": 0, "exit_code": 0},
+    "test_finance_core_ggv1_20261005.py": {"pass": 8, "fail": 0, "errors": 0, "exit_code": 0},
+    "test_finance_core_bzg_prove1_20261005.py": {"pass": 8, "fail": 0, "errors": 0, "exit_code": 0},
+    "test_finance_core_amg_prove1_20261005.py": {"pass": 8, "fail": 0, "errors": 0, "exit_code": 0},
+    "test_finance_switcher_repair1_20261005.py": {"pass": 7, "fail": 0, "errors": 0, "exit_code": 0},
+    "test_uma_hist_close_nav_mobile1_20261005.py": {"pass": 51, "fail": 0, "errors": 0, "exit_code": 0},
+    "test_uma_hist_close_nav_mobile2_20261005.py": {"pass": 102, "fail": 0, "errors": 0, "exit_code": 0},
+    "test_uma_hist_close_queue1_20261005.py": {"pass": 34, "fail": 0, "errors": 0, "exit_code": 0}
+  },
+  "part_b": {
+    "done": true,
+    "skipped": false,
+    "summary": "Queue/calendar .queue-card action label shows Opening… while loading; restored on finally. Keeps topMsgGlobal behaviour; adds setCardOpeningLoading/clearCardOpeningLoading helpers and mobile2 test checks."
+  },
+  "live_data_untouched": true,
+  "live_ggv_pdf_import_id": "GBSI-7eff7ef8-4dba-43d6-ae32-b696642c2064",
+  "beta_reload": "no reload needed — Python product code unchanged",
+  "prod_pid_unchanged": 1297,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_commit": true,
+  "exit_code": 0
+}

@@ -1,0 +1,13 @@
+DEEPER TRIAGE (Peaches/parent, during live run):
+
+POS-BZG-CAPTAIN-UMA-1.role_id = ROLE-BZG-CAPTAIN which IS already in serve_beta close_roles set.
+Live data: AUTH-IZA-EMAIL provider=email identifier=izazaen00@gmail.com, ASG+VCR ACTIVE.
+So if person_id resolved, role gate should ALLOW.
+
+Stronger break candidate: _resolve_identity fails to map Cloudflare Google session → AUTH-IZA-EMAIL/PERS-IZA
+(provider mismatch or identifier), leaving person_id empty → allowed=False with same error
+"This close is not on your assignment."
+
+Also verify running Beta process loaded tip 8688c08 (not stale).
+
+Fix reusable CF→AuthIdentity→assignment→roster→close resolution; do NOT special-case email.

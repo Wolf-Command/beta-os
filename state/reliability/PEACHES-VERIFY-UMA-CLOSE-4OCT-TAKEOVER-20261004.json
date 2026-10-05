@@ -1,0 +1,42 @@
+{
+  "pack": "UMA-CLOSE-4OCT-TAKEOVER",
+  "run_id": "BF-2f0e5e9c2445",
+  "at": "2026-10-04T22:18:24+08:00",
+  "verdict": "IMPLEMENTATION_DONE_READY_FOR_HUMAN_TEST",
+  "peaches_independent_verify": true,
+  "factory_blocker_overridden": "FACTORY_FAILURE:inspect_retry_ceiling",
+  "override_reason": "cursor_pid 36581 DEAD; cursor log + result JSON present; Peaches brace-matched renderStaffCashBox excludes Finished bills; tests 25/0; prior finding was false-positive body bleed into renderFinishedBillsSection",
+  "tests_pass": 25,
+  "tests_fail": 0,
+  "test_file": "scripts/tests/test_uma_close_4oct_takeover_20261004.py",
+  "code_checks": {
+    "renderStaffCashBox_excludes_Finished_bills": true,
+    "renderFinishedBillsSection_present": true,
+    "finished_bills_section_wired_outside_cash_box": true,
+    "difference_is_money_line_only": true
+  },
+  "close_id": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+  "takeover": {
+    "holder": "PERS-MATT",
+    "original_closer": "PERS-IZA",
+    "same_close_id": true,
+    "declared_still_null": true
+  },
+  "beta_pid": 35235,
+  "beta_reloaded": false,
+  "beta_reload_reason": "HTML/test only \u2014 no Python changes; Beta serves updated HTML from disk",
+  "prod_pid": 1297,
+  "prod_untouched": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "ready_for_human_test": true,
+  "eng_proved": true,
+  "beta_link": "https://beta.wolfcommand.net/uma-blu-close",
+  "photo_phone_proved": false,
+  "photo_note": "POST receipt-photo denied without CF JWT on local :8788 \u2014 expected fail-closed; inputs present",
+  "protected_close": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+  "do_not_mutate_protected": true,
+  "next_heavy_pack": "HELD_FINANCE-TESTABLE-SLICE",
+  "credit_conservation": true,
+  "no_auto_arm_breadth": true
+}

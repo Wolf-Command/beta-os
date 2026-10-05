@@ -1,0 +1,513 @@
+{
+  "recorded_at_wita": "2026-10-01T09:42:15+08:00",
+  "pass": 50,
+  "fail": 0,
+  "total": 50,
+  "seat_ASG-ZAYEN-BZG-FC-1": [
+    "ASG-ZAYEN-BZG-FC-1",
+    "ACTIVE",
+    null
+  ],
+  "rows": [
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "finance.nota.read",
+      "target": "bare",
+      "expected": false,
+      "actual": false,
+      "reason": "entity_scope_required",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "finance.nota.read",
+      "target": "ENT-GGV",
+      "expected": false,
+      "actual": false,
+      "reason": "permission_without_matching_scope",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "finance.nota.read",
+      "target": "ENT-BZG",
+      "expected": true,
+      "actual": true,
+      "reason": "allow",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "finance.nota.read",
+      "target": "ENT-AMG",
+      "expected": false,
+      "actual": false,
+      "reason": "permission_without_matching_scope",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "finance.invoice.read",
+      "target": "bare",
+      "expected": false,
+      "actual": false,
+      "reason": "entity_scope_required",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "finance.invoice.read",
+      "target": "ENT-GGV",
+      "expected": false,
+      "actual": false,
+      "reason": "permission_without_matching_scope",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "finance.invoice.read",
+      "target": "ENT-BZG",
+      "expected": true,
+      "actual": true,
+      "reason": "allow",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "finance.invoice.read",
+      "target": "ENT-AMG",
+      "expected": false,
+      "actual": false,
+      "reason": "permission_without_matching_scope",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "finance.evidence.export",
+      "target": "bare",
+      "expected": false,
+      "actual": false,
+      "reason": "entity_scope_required",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "finance.evidence.export",
+      "target": "ENT-GGV",
+      "expected": false,
+      "actual": false,
+      "reason": "permission_without_matching_scope",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "finance.evidence.export",
+      "target": "ENT-BZG",
+      "expected": true,
+      "actual": true,
+      "reason": "allow",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "finance.evidence.export",
+      "target": "ENT-AMG",
+      "expected": false,
+      "actual": false,
+      "reason": "permission_without_matching_scope",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "atrium.board.read",
+      "target": "ENT-AMG",
+      "expected": true,
+      "actual": true,
+      "reason": "allow",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "atrium.board.read",
+      "target": "ENT-BZG",
+      "expected": true,
+      "actual": true,
+      "reason": "allow",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "atrium.board.read",
+      "target": "ENT-GGV",
+      "expected": false,
+      "actual": false,
+      "reason": "permission_without_matching_scope",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "atrium.board.read",
+      "target": "bare",
+      "expected": false,
+      "actual": false,
+      "reason": "entity_scope_required",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "atrium.ledger.read",
+      "target": "ENT-AMG",
+      "expected": true,
+      "actual": true,
+      "reason": "allow",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "atrium.ledger.read",
+      "target": "ENT-BZG",
+      "expected": true,
+      "actual": true,
+      "reason": "allow",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "atrium.ledger.read",
+      "target": "ENT-GGV",
+      "expected": false,
+      "actual": false,
+      "reason": "permission_without_matching_scope",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "atrium.ledger.read",
+      "target": "bare",
+      "expected": false,
+      "actual": false,
+      "reason": "entity_scope_required",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "ggv_nota.person_can",
+      "target": "ENT-GGV",
+      "expected": false,
+      "actual": false,
+      "reason": "live_module",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "ggv_nota.require",
+      "target": "ENT-GGV",
+      "expected": false,
+      "actual": false,
+      "reason": "forbidden",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-AMANDA",
+      "check": "finance.nota.read",
+      "target": "bare",
+      "expected": false,
+      "actual": false,
+      "reason": "entity_scope_required",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-AMANDA",
+      "check": "finance.nota.read",
+      "target": "ENT-GGV",
+      "expected": true,
+      "actual": true,
+      "reason": "allow",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-AMANDA",
+      "check": "finance.nota.read",
+      "target": "ENT-BZG",
+      "expected": false,
+      "actual": false,
+      "reason": "permission_without_matching_scope",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-AMANDA",
+      "check": "finance.nota.read",
+      "target": "ENT-AMG",
+      "expected": false,
+      "actual": false,
+      "reason": "permission_without_matching_scope",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-AMANDA",
+      "check": "finance.invoice.read",
+      "target": "bare",
+      "expected": false,
+      "actual": false,
+      "reason": "entity_scope_required",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-AMANDA",
+      "check": "finance.invoice.read",
+      "target": "ENT-GGV",
+      "expected": true,
+      "actual": true,
+      "reason": "allow",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-AMANDA",
+      "check": "finance.invoice.read",
+      "target": "ENT-BZG",
+      "expected": false,
+      "actual": false,
+      "reason": "permission_without_matching_scope",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-AMANDA",
+      "check": "finance.invoice.read",
+      "target": "ENT-AMG",
+      "expected": false,
+      "actual": false,
+      "reason": "permission_without_matching_scope",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-AMANDA",
+      "check": "ggv_nota.person_can",
+      "target": "ENT-GGV",
+      "expected": true,
+      "actual": true,
+      "reason": "live_module",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-AMANDA",
+      "check": "atrium.board.read",
+      "target": "ENT-AMG",
+      "expected": false,
+      "actual": false,
+      "reason": "role_lacks_permission",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-AMANDA",
+      "check": "atrium.board.read",
+      "target": "ENT-BZG",
+      "expected": false,
+      "actual": false,
+      "reason": "role_lacks_permission",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-AMANDA",
+      "check": "atrium.board.read",
+      "target": "ENT-GGV",
+      "expected": false,
+      "actual": false,
+      "reason": "role_lacks_permission",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-MATT",
+      "check": "finance.nota.read",
+      "target": "bare",
+      "expected": false,
+      "actual": false,
+      "reason": "entity_scope_required",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-MATT",
+      "check": "finance.nota.read",
+      "target": "ENT-GGV",
+      "expected": true,
+      "actual": true,
+      "reason": "allow",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-MATT",
+      "check": "finance.nota.read",
+      "target": "ENT-BZG",
+      "expected": true,
+      "actual": true,
+      "reason": "allow",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-MATT",
+      "check": "finance.nota.read",
+      "target": "ENT-AMG",
+      "expected": true,
+      "actual": true,
+      "reason": "allow",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "ANON",
+      "check": "finance.nota.read",
+      "target": "ENT-GGV",
+      "expected": false,
+      "actual": false,
+      "reason": "missing_person_or_permission",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-NOPE",
+      "check": "finance.nota.read",
+      "target": "ENT-GGV",
+      "expected": false,
+      "actual": false,
+      "reason": "no_active_assignment",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-DEVI",
+      "check": "finance.nota.read",
+      "target": "ENT-GGV",
+      "expected": false,
+      "actual": false,
+      "reason": "role_lacks_permission",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-DEVI",
+      "check": "finance.nota.read",
+      "target": "bare",
+      "expected": false,
+      "actual": false,
+      "reason": "entity_scope_required",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "staff_home.finance_read_ENT-GGV",
+      "target": "map",
+      "expected": false,
+      "actual": false,
+      "reason": "map={'ENT-AMG': False, 'ENT-BZG': True, 'ENT-GGV': False}",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-ZAYEN",
+      "check": "staff_home.finance_read_ENT-BZG",
+      "target": "map",
+      "expected": true,
+      "actual": true,
+      "reason": "map={'ENT-AMG': False, 'ENT-BZG': True, 'ENT-GGV': False}",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-AMANDA",
+      "check": "staff_home.finance_read_ENT-GGV",
+      "target": "map",
+      "expected": true,
+      "actual": true,
+      "reason": "map={'ENT-AMG': False, 'ENT-BZG': False, 'ENT-GGV': True}",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-AMANDA",
+      "check": "staff_home.finance_read_ENT-BZG",
+      "target": "map",
+      "expected": false,
+      "actual": false,
+      "reason": "map={'ENT-AMG': False, 'ENT-BZG': False, 'ENT-GGV': True}",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-MATT",
+      "check": "staff_home.finance_read_ENT-GGV",
+      "target": "map",
+      "expected": true,
+      "actual": true,
+      "reason": "map={'ENT-AMG': True, 'ENT-BZG': True, 'ENT-GGV': True}",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-MATT",
+      "check": "staff_home.finance_read_ENT-BZG",
+      "target": "map",
+      "expected": true,
+      "actual": true,
+      "reason": "map={'ENT-AMG': True, 'ENT-BZG': True, 'ENT-GGV': True}",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-DEVI",
+      "check": "staff_home.finance_read_ENT-GGV",
+      "target": "map",
+      "expected": false,
+      "actual": false,
+      "reason": "map={'ENT-AMG': False, 'ENT-BZG': False, 'ENT-GGV': False}",
+      "pass": true,
+      "notes": ""
+    },
+    {
+      "actor": "PERS-DEVI",
+      "check": "staff_home.finance_read_ENT-BZG",
+      "target": "map",
+      "expected": false,
+      "actual": false,
+      "reason": "map={'ENT-AMG': False, 'ENT-BZG': False, 'ENT-GGV': False}",
+      "pass": true,
+      "notes": ""
+    }
+  ]
+}

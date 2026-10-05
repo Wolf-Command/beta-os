@@ -11,7 +11,7 @@
     "E7": "PASS",
     "E8": "PASS"
   },
-  "http_note": "Unsigned POST /api/upload/smart on :8788 returns 403 missing_auth. E1-E7 byte pipeline was proved in-process with PATH=/usr/bin:/bin:/usr/sbin:/sbin, the same PATH launchd gives serve-beta. The listening process (repair-status) reports ffmpeg_resolved true. A logged-in browser POST was not replayed.",
+  "http_note": "",
   "http_without_jwt": {
     "status": 403,
     "error": "missing_auth"
@@ -32,13 +32,16 @@
     "content_hash",
     "content_plan_id",
     "data_lane",
+    "derivative_failed",
     "detail",
     "detail_tags",
     "failed_stage",
     "file_size",
+    "file_stored",
     "library_available",
     "library_status",
     "lifecycle",
+    "lifecycle_state",
     "location",
     "media_type",
     "nas",
@@ -47,6 +50,8 @@
     "nas_rel",
     "ok",
     "original_filename",
+    "preview_ready",
+    "preview_retryable",
     "preview_url",
     "processing_status",
     "provenance",
@@ -62,6 +67,7 @@
     "status",
     "subject",
     "ui_status",
+    "upload_failed",
     "uploaded_at",
     "uploaded_by"
   ],
@@ -71,11 +77,11 @@
     "hash_match": true
   },
   "probe_asset_ids": [
-    33,
-    34,
-    35,
-    36,
-    37
+    49,
+    50,
+    51,
+    52,
+    53
   ],
   "bbq_batch_untouched": true,
   "probe_rows_left": 0,

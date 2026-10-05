@@ -1,0 +1,13 @@
+{
+  "pack": "BZG-P2P-PO-1",
+  "migration_id": "bzg_p2p_po1_20261004",
+  "finished_at": "2026-10-05T19:26:14+08:00",
+  "backup": "/Users/wolfterminal/beta-os/catalog/backups/pre-bzg-p2p-po1-20261005-192614.sqlite",
+  "backup_sha256": "f5b45ba7491b64ed40f93812ec84f282cfb94cc2a5ed6133bdd76cfdb6008e28",
+  "added_tables": [],
+  "permission": "bzg.po.create",
+  "grant_copy_seed": "skipped: P2P_PERMISSION_MATRIX via grant_repair1",
+  "granted_roles": [],
+  "staff_ready": false,
+  "human_commissioned": false
+}

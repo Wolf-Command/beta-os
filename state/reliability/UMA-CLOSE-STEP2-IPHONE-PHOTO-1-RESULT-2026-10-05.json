@@ -1,0 +1,66 @@
+{
+  "slice": "UMA-CLOSE-STEP2-IPHONE-PHOTO-1",
+  "date": "2026-10-05",
+  "throw_site": "dashboards/uma-blu-close.html uploadShift/uploadBankReceipt blind res.json()",
+  "fix_summary": "postPhoto helper with JSON guard + 502 retry; staff-safe fail UI; 40MB cap + magic-byte ext + HEIC JPEG derivative; vision reads derivative; receipt-photo route always JSON on error",
+  "files_changed": [
+    {
+      "file": "dashboards/uma-blu-close.html",
+      "lines": "122-134,918-1010,1130-1150,1283-1298"
+    },
+    {
+      "file": "scripts/core/bzg_daily_close.py",
+      "lines": "103-320"
+    },
+    {
+      "file": "scripts/serve_beta.py",
+      "lines": "43454,43571-43584"
+    },
+    {
+      "file": "scripts/tests/test_uma_close_evidence_isolation1_20261005.py",
+      "lines": "46-84"
+    },
+    {
+      "file": "scripts/tests/test_uma_close_step2_iphone_photo1_20261005.py",
+      "lines": "new"
+    }
+  ],
+  "tests_pass": 42,
+  "tests_fail": 0,
+  "regression": {
+    "test_uma_close_6step_rebuild4_20261005.py": true,
+    "test_uma_close_6step_rebuild3_20261005.py": true,
+    "test_uma_close_6step_rebuild2_20261005.py": true,
+    "test_uma_close_6step_rebuild1_20261005.py": true,
+    "test_uma_hist_close_complete1_20261005.py": true,
+    "test_uma_hist_close_complete2_20261005.py": true,
+    "test_uma_hist_close_nav_mobile1_20261005.py": true,
+    "test_uma_hist_close_nav_mobile2_20261005.py": true,
+    "test_uma_hist_close_queue1_20261005.py": true,
+    "test_uma_close_evidence_isolation1_20261005.py": true
+  },
+  "webkit_proof": {
+    "skipped": false,
+    "error": null,
+    "cases": [
+      {
+        "retry_502_then_pass": true,
+        "posts": 3
+      },
+      {
+        "always_502_staff_copy": true
+      },
+      {
+        "shiftCam_heic": true
+      },
+      {
+        "shiftFile_jpeg": true
+      }
+    ],
+    "zero_live_writes": true
+  },
+  "beta_pid_after_reload": 90404,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "status": "READY FOR HUMAN TEST"
+}

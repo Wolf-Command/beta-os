@@ -23,7 +23,7 @@
     font-family: var(--font); min-height: 100%;
   }
   body {
-    padding: 16px 16px 64px; max-width: 480px; margin: 0 auto;
+    padding: 16px 16px 64px; max-width: 1100px; margin: 0 auto;
     background:
       radial-gradient(ellipse 120% 80% at 10% -10%, #1a3a48 0%, transparent 55%),
       radial-gradient(ellipse 90% 60% at 100% 0%, #163028 0%, transparent 50%),
@@ -55,6 +55,13 @@
   .status { color: var(--muted); font-size: 0.75rem; margin-top: 6px; }
   .empty { color: var(--muted); font-size: 0.95rem; padding: 16px 4px; }
   .muted { color: var(--muted); font-size: 0.82rem; }
+
+  /* UX-PACK-03-DESKTOP */
+  @media (min-width: 900px) {
+    body { max-width: 1100px; padding: 20px 28px 72px; }
+    nav.uma { gap: 8px; }
+    nav.uma a { flex: 0 0 auto; }
+  }
 </style>
 </head>
 <body>
@@ -62,16 +69,16 @@
   <h1 class="brand">Uma Blu <em>Issues</em></h1>
   <p class="sub">Write down what went wrong. Quiet when nothing is wrong.</p>
 
-    <nav class="uma" aria-label="Uma Blu day">
+      <nav class="uma" aria-label="Uma Blu desk">
     <a href="/bzg/uma-blu">Today</a>
-    <a href="/uma-blu-close">Daily Close</a>
-    <a class="active" href="/bzg/uma-blu/issues">Issues</a>
     <a href="/bzg/uma-blu/bills">Bills</a>
-    <a href="/bzg/uma-blu/bills#purchasing">Purchasing</a>
+    <a class="active" href="/bzg/uma-blu/issues">Issues</a>
+    <a href="/bzg/uma-blu/petty">Petty</a>
     <a href="/bzg/uma-blu/evidence">Evidence</a>
     <a href="/bzg/uma-blu/exceptions">Exceptions</a>
-    <a href="/my-work">My Work</a>
-    <a href="/bzg/uma-blu/petty">Petty cash</a>
+    <a href="/bzg/uma-blu/recipes">Recipes</a>
+    <a href="/bzg/uma-blu/real">Real</a>
+    <a id="closeLink" href="/uma-blu-close">Close</a>
   </nav>
 
   <div class="panel" id="issueForm" hidden style="background:#162833;border:1px solid #2a4554;border-radius:14px;padding:14px;margin-bottom:12px">

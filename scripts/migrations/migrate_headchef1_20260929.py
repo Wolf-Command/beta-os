@@ -70,7 +70,6 @@ GRANT_CODES: tuple[tuple[str, str, str, str, str], ...] = (
 EXISTING_GRANTS = (
     "work.read",
     "work.create",
-    "work.update",
     "work.complete",
     "evidence.record.read",
     "evidence.record.submit",
@@ -78,6 +77,7 @@ EXISTING_GRANTS = (
 )
 
 DENY_ASSERT = (
+    "work.update",
     "payment.approve",
     "payment.execute",
     "vendor.bank.change",

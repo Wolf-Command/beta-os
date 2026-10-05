@@ -1,0 +1,178 @@
+{
+  "probes": [
+    {
+      "label": "ArrivalList+FromTo",
+      "http": 200,
+      "denied": false,
+      "error_codes": [
+        "105",
+        "From Date is missing"
+      ],
+      "body_hint": {
+        "kind": "dict",
+        "keys": [
+          "Errors"
+        ],
+        "text": null
+      },
+      "top_keys": [
+        "Errors"
+      ],
+      "row_count_estimate": 0,
+      "ok": false
+    },
+    {
+      "label": "ArrivalList+ArrivalDate",
+      "http": 200,
+      "denied": false,
+      "error_codes": [
+        "105",
+        "From Date is missing"
+      ],
+      "body_hint": {
+        "kind": "dict",
+        "keys": [
+          "Errors"
+        ],
+        "text": null
+      },
+      "top_keys": [
+        "Errors"
+      ],
+      "row_count_estimate": 0,
+      "ok": false
+    },
+    {
+      "label": "Bookings+FromTo",
+      "http": 200,
+      "denied": true,
+      "error_codes": [
+        "302",
+        "Unauthorized Request. Integration is not allowed",
+        "302"
+      ],
+      "body_hint": {
+        "kind": "dict",
+        "keys": [
+          "Errors"
+        ],
+        "text": null
+      },
+      "top_keys": [
+        "Errors"
+      ],
+      "row_count_estimate": 0,
+      "ok": false
+    },
+    {
+      "label": "Inhouse-as-is",
+      "http": 200,
+      "denied": false,
+      "error_codes": [
+        "502",
+        "Request Type is missing"
+      ],
+      "body_hint": {
+        "kind": "dict",
+        "keys": [
+          "Errors"
+        ],
+        "text": null
+      },
+      "top_keys": [
+        "Errors"
+      ],
+      "row_count_estimate": 0,
+      "ok": false
+    },
+    {
+      "label": "Inhouse-RequestType-nospace",
+      "http": 200,
+      "denied": false,
+      "error_codes": [
+        "502",
+        "Request Type is missing"
+      ],
+      "body_hint": {
+        "kind": "dict",
+        "keys": [
+          "Errors"
+        ],
+        "text": null
+      },
+      "top_keys": [
+        "Errors"
+      ],
+      "row_count_estimate": 0,
+      "ok": false
+    },
+    {
+      "label": "Inhouse-flat-RequestType",
+      "http": 200,
+      "denied": false,
+      "error_codes": [
+        "500",
+        "Error occured during processing"
+      ],
+      "body_hint": {
+        "kind": "dict",
+        "keys": [
+          "Errors"
+        ],
+        "text": null
+      },
+      "top_keys": [
+        "Errors"
+      ],
+      "row_count_estimate": 0,
+      "ok": false
+    },
+    {
+      "label": "Inhouse-RoomList",
+      "http": 200,
+      "denied": false,
+      "error_codes": [
+        "502",
+        "Request Type is missing"
+      ],
+      "body_hint": {
+        "kind": "dict",
+        "keys": [
+          "Errors"
+        ],
+        "text": null
+      },
+      "top_keys": [
+        "Errors"
+      ],
+      "row_count_estimate": 0,
+      "ok": false
+    },
+    {
+      "label": "listing-ArrivalList",
+      "http": 200,
+      "denied": false,
+      "error_codes": [],
+      "body_hint": {
+        "kind": "list",
+        "n": 1
+      },
+      "top_keys": "list",
+      "ok": true
+    },
+    {
+      "label": "listing-Bookings",
+      "http": 200,
+      "denied": false,
+      "error_codes": [],
+      "body_hint": {
+        "kind": "list",
+        "n": 1
+      },
+      "top_keys": "list",
+      "ok": true
+    }
+  ],
+  "pii_omitted": true,
+  "probed_at": "2026-10-01T07:31:16+08:00"
+}

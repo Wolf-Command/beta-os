@@ -1,0 +1,25 @@
+{
+  "schema": "UX-PACK-11-APPLY/v0",
+  "applied": true,
+  "status": "PACK_11_APPLIED_CHEAP",
+  "applied_wita": "2026-09-30T22:39:35+08:00",
+  "bound": "beta_only",
+  "parent": "UX-PACK-09b",
+  "finance_sod_unchanged": true,
+  "staff_ready": false,
+  "desktop_gate_ready": false,
+  "urls": {
+    "travel": "https://beta.wolfcommand.net/owner/travel",
+    "learning": "https://beta.wolfcommand.net/owner/learning",
+    "travel_ro": "http://127.0.0.1:8788/api/owner/travel-ro",
+    "learning_ro": "http://127.0.0.1:8788/api/owner/learning-ro"
+  },
+  "files_changed": [
+    "dashboards/assets/sidenav.js",
+    "scripts/core/wolf_shell.py",
+    "dashboards/owner-empire-pack.html",
+    "dashboards/owner-travel-1.html",
+    "dashboards/owner-learning-1.html"
+  ],
+  "honesty": "PARTIAL RO only \u00b7 no book \u00b7 TTC paper \u00b7 no invent"
+}

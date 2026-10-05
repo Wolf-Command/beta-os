@@ -1,0 +1,52 @@
+{
+ "pack": "ZAYEN-FINANCE-SWITCHER-REPROVE-V3",
+ "at": "2026-10-05T12:59:30+08:00",
+ "against": "FINANCE-SWITCHER-REPAIR-2 BF-2731e55ad30e IMPLEMENTATION_DONE; Beta pid 7546",
+ "injected_js": false,
+ "staff_ready": false,
+ "human_commissioned": false,
+ "zayen_ready": false,
+ "zayen_items": {
+  "1_switcher_AMG_BZG_selectable": {
+   "result": "PASS",
+   "detail": "Real browser: /shared/finance-switcher.js|.css 200 for Zayen; WolfFinanceSwitcher mounts; dropdown on /bzg/finance, /amg-finance-ops, /amg/finance, /finance entry. AMG+BZG selectable."
+  },
+  "2_GGV_visible_disabled_NO_ACCESS": {
+   "result": "PASS",
+   "detail": "Authentic rendered option 'GGV \u2014 NO ACCESS' disabled title=NO ACCESS; help NO ACCESS. Screenshots desktop+phone without injected JS."
+  },
+  "3_switch_AMG_to_BZG": {
+   "result": "PASS",
+   "detail": "Native select change to BZG navigates to /bzg/finance; PO 543 / notas 473 shown."
+  },
+  "4_switch_BZG_to_AMG": {
+   "result": "PASS",
+   "detail": "Select AMG \u2192 /amg-finance-ops; CoA accounts API 190; journals/ledger 200."
+  },
+  "5_no_cross_entity_leak": {
+   "result": "PASS",
+   "detail": "/api/amg/finance/audit audit_ggv=0"
+  },
+  "6_direct_GGV_403": {
+   "result": "PASS",
+   "detail": "/ggv/finance + desk/recon/audit APIs 403"
+  },
+  "7_refresh_persistence": {
+   "result": "PASS",
+   "detail": "/finance + BZG pref \u2192 /bzg/finance; GGV pref ignored \u2192 AMG; reload stays BZG"
+  }
+ },
+ "regressions": {
+  "matt": {
+   "result": "PASS",
+   "detail": "3 selectable; /api/amg/finance/accounts|journals|ledger 200 (accounts=190)"
+  },
+  "amanda": {
+   "result": "PASS",
+   "detail": "GGV selectable; AMG/BZG NO ACCESS in dropdown; AMG/BZG pages+APIs clean 403"
+  }
+ },
+ "best_link": "https://beta.wolfcommand.net/finance",
+ "best_screenshot": "/workspace/zayen-switcher/v3/zayen-bzg-dropdown-greyed-ggv-desktop.png",
+ "overall": "PASS"
+}

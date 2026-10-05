@@ -1,0 +1,31 @@
+{
+  "slice": "UMA-HIST-CLOSE-COMPLETE-1",
+  "status": "PASS",
+  "root_cause": "Protected-close guards treated all PROTECTED_CLOSE_PREFIXES as read-only forever (DO_NOT_SUBMIT included VDC-8fd544e2; mutation_block_reason and uma-blu-close.html routed row.protected → readOnly). Owner/Finance could not continue incomplete 29 Sep.",
+  "files_changed": [
+    "scripts/core/uma_hist_close_queue1.py",
+    "scripts/core/bzg_daily_close.py",
+    "scripts/core/venue_close.py",
+    "scripts/serve_beta.py",
+    "dashboards/uma-blu-close.html",
+    "scripts/tests/test_uma_hist_close_complete1_20261005.py",
+    "scripts/tests/test_uma_hist_close_queue1_20261005.py",
+    "scripts/tests/test_uma_hist_close_nav_mobile1_20261005.py"
+  ],
+  "suites": {
+    "test_uma_hist_close_complete1_20261005.py": {"pass": 28, "fail": 0, "exit_code": 0},
+    "test_uma_hist_close_nav_mobile1_20261005.py": {"pass": 52, "fail": 0, "exit_code": 0},
+    "test_uma_hist_close_nav_mobile2_20261005.py": {"pass": 102, "fail": 0, "exit_code": 0},
+    "test_uma_hist_close_queue1_20261005.py": {"pass": 35, "fail": 0, "exit_code": 0}
+  },
+  "beta_pid_before": 95803,
+  "beta_pid_after": 5756,
+  "beta_reload": "scripts/beta_restart.py",
+  "live_29sep_unchanged": true,
+  "oct3_oct4_unchanged": true,
+  "prod_pid_unchanged": 1297,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_commit": true,
+  "exit_code": 0
+}

@@ -1,0 +1,9 @@
+Manual hook may be needed. Imports inserted.
+
+        # HKEGCAV_RO_20260930 routes
+        if try_hkegcav_ro is not None:
+            _hk = try_hkegcav_ro(path, self._json) if hasattr(self, "_json") else None
+            if _hk is not None:
+                return _hk
+
+serve=/Users/wolfterminal/beta-os/scripts/serve_beta.py

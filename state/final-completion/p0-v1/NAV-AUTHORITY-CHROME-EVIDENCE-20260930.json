@@ -1,0 +1,75 @@
+{
+  "schema": "P0-NAV-AUTHORITY-CHROME-EVIDENCE/v0",
+  "slice": "nav_authority_chrome_20260930",
+  "generated_at_wita": "2026-09-30T12:32:39+08:00",
+  "executor": "Peaches-executor",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "bound": "beta",
+  "prod_8787_touched": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "exit_report": "NOT_CREATED",
+  "migration_state": "PARTIAL",
+  "nav_status": "AUTHORITY_CHROME",
+  "nav_status_aliases": [
+    "WIRED_PARTIAL"
+  ],
+  "claim": "AUTHORITY_CHROME \u2014 #wolfnav-biz prefers nav_authority from shell-whoami; IA\u2229pages businesses fallback + honesty stamp. NOT sole source. NOT LIVE_USABLE.",
+  "files_changed": [
+    "dashboards/assets/sidenav.js",
+    "dashboards/assets/wolf-shell.css",
+    "scripts/core/wolf_shell.py",
+    "scripts/tests/test_wolf_nav_authority_chrome_20260930.py",
+    "state/final-completion/p0-v1/NAV-AUTHORITY-SPEC.md",
+    "state/final-completion/p0-v1/NAV-AUTHORITY-CHROME-EVIDENCE-20260930.json"
+  ],
+  "cache_token": "20260930-nav-authority-chrome",
+  "tests": {
+    "test_wolf_nav_authority_20260930.py": {
+      "exit": 0,
+      "pass": 31,
+      "fail": 0
+    },
+    "test_wolf_nav_authority_chrome_20260930.py": {
+      "exit": 0,
+      "pass": 29,
+      "fail": 0
+    },
+    "test_wolf_global_app_shell_20260930.py": {
+      "exit": 0,
+      "pass": 39,
+      "fail": 0
+    },
+    "kickstart": {
+      "attempted": true,
+      "tool": "scripts/beta_restart.py",
+      "pre_prod_lsof": "COMMAND   PID         USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME\nPython  15975 wolfterminal    3u  IPv4 0xe83078fa3ed5c1e5      0t0  TCP 127.0.0.1:8787 (LISTEN)\n",
+      "restart_exit": 0,
+      "restart_out": "pre-restart :8788 listener:\nCOMMAND   PID         USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME\nPython  17216 wolfterminal    3u  IPv4 0x91d0f3e3f696580b      0t0  TCP 127.0.0.1:8788 (LISTEN)\n\ncmd: launchctl kickstart -k gui/501/net.wolfcommand.serve-beta\nPASS Beta :8788 listening after kickstart\nCOMMAND   PID         USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME\nPython  19083 wolfterminal    3u  IPv4 0x51f1b192d292472b      0t0  TCP 127.0.0.1:8788 (LISTEN)\n\nPASS Production :8787 still listening (untouched)\n",
+      "post_prod_lsof": "COMMAND   PID         USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME\nPython  15975 wolfterminal    3u  IPv4 0xe83078fa3ed5c1e5      0t0  TCP 127.0.0.1:8787 (LISTEN)\n",
+      "prove": {
+        "url": "http://127.0.0.1:8788/api/wolf/shell-whoami",
+        "http": 200,
+        "ok": true,
+        "has_nav_authority": true,
+        "authority_source": "assignment_role_scope",
+        "authority_biz_count": 0,
+        "authority_biz_ids": [],
+        "transitional_businesses_count": 0,
+        "honesty_nav_status": "AUTHORITY_CHROME",
+        "honesty_authority_chrome_wired": true,
+        "sidenav_http": 200,
+        "sidenav_has_navBizSource": true,
+        "sidenav_has_data_nav_source": true,
+        "sidenav_cache": true
+      }
+    },
+    "mac_dropped": false
+  },
+  "chrome_prefers_authority": true,
+  "chrome_sole_source": false,
+  "honesty_stamp_on_fallback": true,
+  "hr_touched": false,
+  "auth_weakened": false,
+  "mac_dropped": false
+}

@@ -1,0 +1,31 @@
+{
+  "pack": "BZG-RECIPE-MULTI-OUTLET-1",
+  "status": "ENG_PROVED_AWAITING_HARYANTO",
+  "previous_status": "ARMED_RUNNING",
+  "verified_at": "2026-10-02T17:13:57+08:00",
+  "armed_at": "2026-10-02T16:35:44+08:00",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "label": "Wolfs-Mac-Studio.local",
+  "commit": "d61756e",
+  "commit_full": "d61756e5e355ec4da6a753f667df3268e9876882",
+  "branch": "build/wolf-command-rebuild",
+  "workspace": "/Users/wolfterminal/beta-os",
+  "tests": {
+    "suite": "scripts/tests/test_bzg_recipe_multi_outlet_1.py",
+    "pass": 85,
+    "fail": 0,
+    "exit": 0
+  },
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod": "untouched",
+  "haryanto_beta_url": "https://beta.wolfcommand.net/bzg/recipe-builder",
+  "next": "HARYANTO_COMMISSION",
+  "before_haryanto": "Restart serve_beta on Mac Studio so live :8788 loads d61756e",
+  "peaches_verify": "/home/box/workspace/bzg-recipe-multi-outlet/PEACHES-VERIFY.json",
+  "result_path": "/Users/wolfterminal/beta-os/state/final-completion/forensic-completeness-20261001/BZG-RECIPE-MULTI-OUTLET-1-RESULT.md",
+  "no_matt_message": true,
+  "beta_bounce": "DONE",
+  "beta_pid": 10470,
+  "ready_for_haryanto": true
+}

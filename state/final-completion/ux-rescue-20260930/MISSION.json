@@ -1,0 +1,118 @@
+{
+  "schema": "UX-RESCUE-MISSION/v0",
+  "armed_wita": "2026-09-30T21:43:00+08:00",
+  "status": "PACK_12_APPLIED_PARTIAL",
+  "exit_report": false,
+  "mobile_this_phase": false,
+  "desktop_first": true,
+  "audits_started_wita": "2026-09-30T21:47:00+08:00",
+  "progress": {
+    "A_parity": "DONE",
+    "B_inventory": "DONE",
+    "C_screenshots": "DONE_PARTIAL_BLOCKED_AUTH",
+    "D_ia": "DONE"
+  },
+  "audits_completed_wita": "2026-09-30T21:55:00+08:00",
+  "counts": {
+    "surfaces_audited": 22,
+    "pages_inventoried": 157,
+    "shots_captured": 14,
+    "shots_blocked_auth": 8,
+    "parity_classes": {
+      "V1_BETTER": 5,
+      "BETA_MISSING_FUNCTION": 3,
+      "BETA_MORE_CONFUSING": 2,
+      "BETA_BETTER": 5,
+      "PARITY": 5,
+      "V1_OBSOLETE": 2
+    },
+    "disposition_counts": {
+      "HIDE_UNTIL_USEFUL": 73,
+      "MERGE": 26,
+      "KEEP": 21,
+      "MOVE": 28,
+      "BECOME_TAB": 9
+    },
+    "implement_packs": 8
+  },
+  "finance_sod_unchanged": true,
+  "implement_completed_wita": "2026-09-30T22:46:43+08:00",
+  "implement_packs_done": [
+    "UX-PACK-01",
+    "UX-PACK-02",
+    "UX-PACK-03",
+    "UX-PACK-04",
+    "UX-PACK-05",
+    "UX-PACK-06",
+    "UX-PACK-07",
+    "UX-PACK-08",
+    "UX-PACK-09",
+    "UX-PACK-09b",
+    "UX-PACK-11",
+    "UX-PACK-12"
+  ],
+  "apply_artifact": "UX-PACK-12-APPLY.json",
+  "finish_wolf_visible": true,
+  "nav_item_count": {
+    "sidenav_after": 20,
+    "wolf_shell_after": 22
+  },
+  "staff_ready": false,
+  "implement_packs_this_run": [
+    "UX-PACK-12"
+  ],
+  "next_packs": [
+    "UX-PACK-10"
+  ],
+  "desktop_gate_ready": false,
+  "desktop_gate_why": [
+    "Radar deepened to PARTIAL RO desk but not V1 mission-control / Mars meter LIVE",
+    "12WY score EMPTY (no evidenced tactics) \u00b7 Mars meter EMPTY \u00b7 wire engagement NOT live",
+    "Pulse residuals remain (occ BLOCKED, Uma EMPTY, leads DEMO, backup STALE/AMBER)",
+    "Screenshots still BLOCKED_AUTH without Owner CF Access (UX-PACK-10)",
+    "staff_ready remains false \u2014 no commissioning / WOLF DESKTOP READY claim"
+  ],
+  "pulse_ro": {
+    "api": "/api/owner/pulse-ro",
+    "pack": "UX-PACK-09b",
+    "counts_before": {
+      "tiles": 7,
+      "LIVE": 1,
+      "PARTIAL": 5,
+      "EMPTY": 0,
+      "BLOCKED": 1
+    },
+    "counts_after": {
+      "tiles": 7,
+      "LIVE": 2,
+      "PARTIAL": 3,
+      "EMPTY": 1,
+      "BLOCKED": 1
+    },
+    "tiles": [
+      "atrium_occ",
+      "kuta_rates",
+      "bzg_night",
+      "leads",
+      "purchasing",
+      "fitness",
+      "backup"
+    ]
+  },
+  "pack_11": {
+    "status": "APPLIED_CHEAP",
+    "travel_learning": "PERSONAL_VISIBLE_PARTIAL_RO"
+  },
+  "pack_12": {
+    "status": "APPLIED_PARTIAL",
+    "radar_api": "/api/owner/radar-ro",
+    "radar_counts": {
+      "tiles": 15,
+      "LIVE": 1,
+      "PARTIAL": 3,
+      "EMPTY": 4,
+      "BLOCKED": 7
+    },
+    "owner_home_attn_strip": true
+  }
+}

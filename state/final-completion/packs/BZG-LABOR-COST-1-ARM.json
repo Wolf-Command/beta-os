@@ -4,7 +4,7 @@
   "mission": "FINAL_WOLF_COMPLETION",
   "phase": 2,
   "wave": 4,
-  "status": "PASS_VERIFIED",
+  "status": "DONE_ENGINEERING_PASS",
   "armed_at": "2026-09-30T03:08:00+08:00",
   "credit_exception": "FINAL_WOLF_COMPLETION_MISSION",
   "prod_mutate": false,
@@ -73,5 +73,6 @@
   },
   "completed_at": "2026-09-30T03:14:23+08:00",
   "peaches_verified_at": "2026-09-30T03:19:00+08:00",
-  "peaches_verify": "state/final-completion/packs/BZG-LABOR-COST-1-PEACHES-VERIFY.json"
+  "peaches_verify": "PASS_VERIFIED",
+  "verified_at": "2026-09-30T03:22:12+08:00"
 }

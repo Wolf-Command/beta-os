@@ -81,6 +81,7 @@ from core import delegation as _delegation
 from core import content_publish as _content_publish
 from core import venue_close as _venue_close
 from core import bzg_daily_close as _bzg_daily_close
+from core import uma_hist_close_queue1 as _uma_hist_close_queue1
 from core import bzg_close_vision as _bzg_close_vision
 from core import uma_ops_console as _uma_ops
 from core import amg_sales_desk_ro as _amg_sales_desk_ro
@@ -200,10 +201,14 @@ from core import gws_draft_workflows1 as _gws_draft_workflows1
 from core import owner_travel_ro as _owner_travel_ro
 from core import owner_learning_ro as _owner_learning_ro
 from core import owner_radar_ro as _owner_radar_ro
+from core import god_mode_register_ro as _god_mode_register_ro
 # --- OWNER_RO_DEEPEN_20260930_IMPORT END ---
 from core import ggv_speed_to_lead_prove as _ggv_speed
 from core import ggv_ops_pack as _ggv_ops
 from core import ggv_finance_nota as _ggv_fin
+from core import ggv_finance_invoice as _ggv_fin_inv
+from core import amg_finance_core as _amg_fin_core
+from core import amg_finance_desk as _amg_fin_desk
 from core import bzg_finance_desk as _bzg_fin_desk
 from core import bzg_outlet_registry as _bzg_outlets
 from core import v1_status_register as _v1_status
@@ -449,6 +454,27 @@ def _atrium_setup_chip(payload: bytes) -> bytes:
     if b"</body>" in payload:
         return payload.replace(b"</body>", _ATRIUM_SETUP_CHIP + b"</body>", 1)
     return payload + _ATRIUM_SETUP_CHIP
+
+
+_ATRIUM_FINANCE_SWITCHER = b"""<div id="entity-switch" data-wolf-finance-switcher data-current="AMG" aria-label="Finance entity switcher"></div>
+<link rel="stylesheet" href="/shared/finance-switcher.css">
+<script src="/shared/finance-switcher.js" defer></script>
+"""
+
+
+def _atrium_finance_switcher_inject(payload: bytes) -> bytes:
+    """Inject shared Finance business switcher into proxied Atrium Finance HTML only."""
+    if b"data-wolf-finance-switcher" in payload:
+        return payload
+    marker = b"<body"
+    idx = payload.lower().find(marker)
+    if idx >= 0:
+        end = payload.find(b">", idx)
+        if end >= 0:
+            return payload[: end + 1] + b"\n" + _ATRIUM_FINANCE_SWITCHER + payload[end + 1 :]
+    if b"</body>" in payload:
+        return payload.replace(b"</body>", _ATRIUM_FINANCE_SWITCHER + b"</body>", 1)
+    return payload + _ATRIUM_FINANCE_SWITCHER
 
 
 class UploadTooLarge(Exception):
@@ -2391,10 +2417,16 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._accountant_scope_wall():
             return
 
+        if self._finance_dispatch():
+            return
+
         if self._atrium_finance_wall():
             return
 
         if self._atrium_product_dispatch():
+            return
+
+        if self._amg_finance_core_dispatch():
             return
 
         if self._ggv_finance_dispatch():
@@ -2796,7 +2828,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
         # BZG / Uma Blu ops console (Beta — read). Fail-closed: identity + permission + Uma scope.
         if path == "/api/bzg/uma-blu" or path.startswith("/api/bzg/uma-blu/"):
-            if self._require_uma_ops() is None:
+            if _bzg_fin_desk.finance_uma_blu_api_path(path):
+                if self._require_uma_ops_or_bzg_finance_read() is None:
+                    return
+            elif self._require_uma_ops() is None:
                 return
             nye_refuse = _uma_ops.connective_refuse_code(path)
             if nye_refuse:
@@ -2819,6 +2854,63 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 return
             if path == "/api/bzg/uma-blu/prs":
                 self._uma_ops_prs()
+                return
+            if path in ("/api/bzg/uma-blu/purchase-orders", "/api/bzg/uma-blu/purchase-orders/"):
+                self._uma_ops_purchase_orders()
+                return
+            if path in ("/api/bzg/uma-blu/ap", "/api/bzg/uma-blu/ap/"):
+                self._uma_ops_ap_ready_list()
+                return
+            if path in ("/api/bzg/uma-blu/ready-to-pay", "/api/bzg/uma-blu/ready-to-pay/"):
+                self._uma_ops_ready_to_pay_list()
+                return
+            m_rtp = re.match(r"^/api/bzg/uma-blu/ready-to-pay/([^/]+)$", path)
+            if m_rtp:
+                from urllib.parse import unquote
+
+                self._uma_ops_ready_to_pay_detail(unquote(m_rtp.group(1)))
+                return
+            m_ap = re.match(r"^/api/bzg/uma-blu/ap/([^/]+)$", path)
+            if m_ap:
+                from urllib.parse import unquote
+
+                self._uma_ops_ap_ready_detail(unquote(m_ap.group(1)))
+                return
+            if path in ("/api/bzg/uma-blu/three-way-match", "/api/bzg/uma-blu/three-way-match/"):
+                self._uma_ops_three_way_match_list()
+                return
+            m_3wm = re.match(r"^/api/bzg/uma-blu/three-way-match/([^/]+)$", path)
+            if m_3wm:
+                from urllib.parse import unquote
+
+                self._uma_ops_three_way_match_detail(unquote(m_3wm.group(1)))
+                return
+            if path in ("/api/bzg/uma-blu/supplier-bills/photo", "/api/bzg/uma-blu/supplier-bills/photo/"):
+                self._uma_ops_supplier_bill_photo_get()
+                return
+            m_gr_bills = re.match(r"^/api/bzg/uma-blu/goods-receipts/([^/]+)/supplier-bills$", path)
+            if m_gr_bills:
+                from urllib.parse import unquote
+
+                self._uma_ops_supplier_bills_for_gr(unquote(m_gr_bills.group(1)))
+                return
+            m_bill = re.match(r"^/api/bzg/uma-blu/supplier-bills/([^/]+)$", path)
+            if m_bill:
+                from urllib.parse import unquote
+
+                self._uma_ops_supplier_bill_detail(unquote(m_bill.group(1)))
+                return
+            m_gr = re.match(r"^/api/bzg/uma-blu/goods-receipts/([^/]+)$", path)
+            if m_gr:
+                from urllib.parse import unquote
+
+                self._uma_ops_goods_receipt_detail(unquote(m_gr.group(1)))
+                return
+            m_po = re.match(r"^/api/bzg/uma-blu/purchase-orders/([^/]+)$", path)
+            if m_po:
+                from urllib.parse import unquote
+
+                self._uma_ops_purchase_order_detail(unquote(m_po.group(1)))
                 return
             m_pr = re.match(r"^/api/bzg/uma-blu/prs/([^/]+)$", path)
             if m_pr:
@@ -3009,6 +3101,30 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/venue-close/list":
             self._venue_close_list(qs)
             return
+        if path == "/api/venue-close/date-register":
+            self._venue_close_date_register(qs)
+            return
+        if path == "/api/venue-close/date-peek":
+            self._venue_close_date_peek(qs)
+            return
+        if path == "/api/venue-close/receipt-image":
+            self._venue_close_receipt_image(qs)
+            return
+        if path == "/api/venue-close/history-queue":
+            self._venue_close_history_queue(qs)
+            return
+        m_hist_closed = re.match(
+            r"^/api/venue-close/([^/]+)/history-closed-summary$", path
+        )
+        if m_hist_closed:
+            self._venue_close_history_closed_summary(m_hist_closed.group(1))
+            return
+        m_exc_review = re.match(
+            r"^/api/venue-close/([^/]+)/exception-review$", path
+        )
+        if m_exc_review:
+            self._venue_close_exception_review(m_exc_review.group(1))
+            return
         if path == "/api/venue-close/previous":
             self._venue_close_previous(qs)
             return
@@ -3028,6 +3144,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         m_edc_receipts = re.match(r"^/api/venue-close/([^/]+)/edc-receipts$", path)
         if m_edc_receipts:
             self._bzg_daily_close_edc_receipts_get(m_edc_receipts.group(1))
+        m_bank_cards = re.match(r"^/api/venue-close/([^/]+)/bank-cards$", path)
+        if m_bank_cards:
+            self._bzg_daily_close_bank_cards(m_bank_cards.group(1))
             return
         m_esb_receipts = re.match(r"^/api/venue-close/([^/]+)/esb-receipts$", path)
         if m_esb_receipts:
@@ -3036,6 +3155,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
         m_recon = re.match(r"^/api/venue-close/([^/]+)/recon-board$", path)
         if m_recon:
             self._bzg_daily_close_recon_board(m_recon.group(1))
+            return
+        m_wiz = re.match(r"^/api/venue-close/([^/]+)/source-wizard$", path)
+        if m_wiz:
+            self._bzg_daily_close_source_wizard(m_wiz.group(1))
             return
         # CAP-INTEL-01 read-only orchestration. Owner / PERS-MATT. Anon → 403.
         if path == "/api/intel/orchestrate":
@@ -3211,6 +3334,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 self._send_json(_owner_radar_ro.load_radar_ro())
             except Exception as _e:
                 self._send_json({"ok": False, "error": "radar_ro_fail", "detail": str(_e), "staff_ready": False}, status=500)
+            return
+        if path == "/api/owner/god-mode-register" or path.rstrip("/") == "/api/owner/god-mode-register":
+            try:
+                self._send_json(_god_mode_register_ro.load_god_mode_register())
+            except Exception as _e:
+                self._send_json({"ok": False, "error": "god_mode_register_fail", "detail": str(_e), "staff_ready": False}, status=500)
             return
         # --- OWNER_RO_DEEPEN_20260930_ROUTES END ---
 
@@ -4716,10 +4845,13 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "capture",
             "declare-cash",
             "till-declare",
+            "staff-submit",
             "edc-line",
             "edc-terminals",
             "edc-receipt",
             "edc-receipt-extract",
+            "bank-mark-unused",
+            "bank-cards",
             "esb-receipt",
             "esb-receipt-extract",
             "recon-board",
@@ -4973,6 +5105,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         elif path in ("/owner/radar", "/owner/radar/"):
             # UX-PACK-07 Owner Radar stub — Personal Command (not only radar-prove).
             self.path = "/owner-radar-1.html"
+        elif path in ("/owner/god-mode", "/owner/god-mode/", "/god-mode-completion", "/god-mode-completion/"):
+            # GM-SCORE — frozen God Mode register (read-only projection).
+            self.path = "/god-mode-completion.html"
         elif path in ("/owner/travel", "/owner/travel/"):
             # P0 Owner Travel — PARTIAL; no live booking.
             self.path = "/owner-travel-1.html"
@@ -5737,6 +5872,24 @@ class BetaHandler(SimpleHTTPRequestHandler):
         elif path in ("/bzg/uma-blu/bills", "/bzg/uma-blu/bills/"):
             self._uma_staff_page("bzg-uma-blu-bills.html")
             return
+        elif path in ("/bzg/uma-blu/pr", "/bzg/uma-blu/pr/") and (qs.get("pr") or [""])[0].strip():
+            self._uma_staff_page("bzg-uma-blu-pr.html")
+            return
+        elif path in ("/bzg/uma-blu/pr", "/bzg/uma-blu/pr/"):
+            self._uma_staff_page("bzg-uma-blu-bills.html")
+            return
+        elif re.match(r"^/bzg/uma-blu/pr/([^/]+)/?$", path):
+            self._uma_staff_page("bzg-uma-blu-pr.html")
+            return
+        elif path in ("/bzg/uma-blu/purchase-orders", "/bzg/uma-blu/purchase-orders/"):
+            self._uma_staff_page("bzg-uma-blu-purchase-orders.html")
+            return
+        elif path in ("/bzg/uma-blu/ap", "/bzg/uma-blu/ap/"):
+            self._uma_staff_page("bzg-uma-blu-ap.html")
+            return
+        elif path in ("/bzg/uma-blu/ready-to-pay", "/bzg/uma-blu/ready-to-pay/"):
+            self._uma_staff_page("bzg-uma-blu-ready-to-pay.html")
+            return
         elif re.match(r"^/bzg/uma-blu/bills/([^/]+)/?$", path):
             self._uma_staff_page("bzg-uma-blu-pr.html")
             return
@@ -5751,10 +5904,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         elif path in ("/bzg/uma-blu/petty", "/bzg/uma-blu/petty/"):
             self.path = "/bzg-uma-blu-petty.html"
-        elif path in (
-            "/bzg/finance",
-            "/bzg/finance/",
-        ):
+        elif path == "/bzg/finance" or path.startswith("/bzg/finance/"):
             # V1 aliases (/bzg-finance*) 302 via _v1_status.board_redirect_target.
             if self._bzg_finance_dispatch():
                 return
@@ -6519,6 +6669,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if self._atrium_finance_wall():
             return
         if self._atrium_product_dispatch():
+            return
+        if self._amg_finance_core_dispatch():
             return
         if self._amg_finance_post(path):
             return
@@ -7597,8 +7749,44 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if path == "/api/bzg/uma-blu/prs":
                 self._uma_ops_pr_create()
                 return
+            if path in ("/api/bzg/uma-blu/purchase-orders", "/api/bzg/uma-blu/purchase-orders/"):
+                self._uma_ops_purchase_order_create()
+                return
+            if path in ("/api/bzg/uma-blu/ap/ready", "/api/bzg/uma-blu/ap/ready/"):
+                self._uma_ops_ap_ready_mark()
+                return
+            if path in (
+                "/api/bzg/uma-blu/ready-to-pay/allow",
+                "/api/bzg/uma-blu/ready-to-pay/allow/",
+            ):
+                self._uma_ops_ready_to_pay_mark()
+                return
+            if path in (
+                "/api/bzg/uma-blu/three-way-match/accept",
+                "/api/bzg/uma-blu/three-way-match/accept/",
+            ):
+                self._uma_ops_three_way_match_accept()
+                return
+            if path in ("/api/bzg/uma-blu/three-way-match", "/api/bzg/uma-blu/three-way-match/"):
+                self._uma_ops_three_way_match_run()
+                return
+            m_po_recv = re.match(r"^/api/bzg/uma-blu/purchase-orders/([^/]+)/receive$", path)
+            if m_po_recv:
+                from urllib.parse import unquote
+
+                self._uma_ops_purchase_order_receive(unquote(m_po_recv.group(1)))
+                return
+            if path in ("/api/bzg/uma-blu/supplier-bills/photo", "/api/bzg/uma-blu/supplier-bills/photo/"):
+                self._uma_ops_supplier_bill_photo_post()
+                return
+            m_gr_bill = re.match(r"^/api/bzg/uma-blu/goods-receipts/([^/]+)/supplier-bills$", path)
+            if m_gr_bill:
+                from urllib.parse import unquote
+
+                self._uma_ops_supplier_bill_create(unquote(m_gr_bill.group(1)))
+                return
             m_act = re.match(
-                r"^/api/bzg/uma-blu/prs/([^/]+)/(submit|approve|order|close|payment)$",
+                r"^/api/bzg/uma-blu/prs/([^/]+)/(submit|approve|reject|order|close|payment)$",
                 path,
             )
             if m_act:
@@ -7618,6 +7806,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 return
             if path == "/api/bzg/uma-blu/petty/opening":
                 self._uma_ops_petty_opening_post()
+                return
+            if path == "/api/bzg/uma-blu/petty/reconcile":
+                self._uma_ops_petty_reconcile_post()
                 return
             if path == "/api/bzg/uma-blu/receive":
                 self._uma_ops_receive_post()
@@ -7757,6 +7948,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path == "/api/venue-close/till-declare":
             self._bzg_daily_close_till_declare()
             return
+        if path == "/api/venue-close/staff-submit":
+            self._bzg_daily_close_staff_submit()
+            return
+        if path == "/api/venue-close/ack-esb-difference":
+            self._bzg_daily_close_ack_esb_difference()
+            return
+        if path == "/api/venue-close/confirm-shift-figures":
+            self._bzg_daily_close_confirm_shift_figures()
+            return
+        if path == "/api/venue-close/save-shift-figure-edits":
+            self._bzg_daily_close_save_shift_figure_edits()
+            return
+        if path == "/api/venue-close/link-unlinked-evidence":
+            self._bzg_daily_close_link_unlinked_evidence()
+            return
         if path == "/api/venue-close/edc-line":
             self._bzg_daily_close_edc_line()
             return
@@ -7765,6 +7971,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/venue-close/edc-receipt":
             self._bzg_daily_close_edc_receipt_confirm()
+        if path == "/api/venue-close/bank-mark-unused":
+            self._bzg_daily_close_bank_mark_unused()
             return
         if path == "/api/venue-close/esb-receipt-extract":
             self._bzg_daily_close_esb_receipt_extract()
@@ -7792,6 +8000,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/venue-close/owner-control":
             self._venue_close_owner_control()
+            return
+        if path == "/api/venue-close/cancel-unfinished":
+            self._venue_close_cancel_unfinished()
             return
 
         m_wi_assign = re.match(r"^/api/core/work-items/([^/]+)/assign$", path)
@@ -16842,6 +17053,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             upstream.close()
         if "html" in out_type.lower():
             payload = _atrium_setup_chip(payload)
+            payload = _atrium_finance_switcher_inject(payload)
         self.send_response(status)
         self.send_header("Content-Type", out_type)
         self.send_header("Cache-Control", "no-store")
@@ -17198,6 +17410,142 @@ class BetaHandler(SimpleHTTPRequestHandler):
         )
         return True
 
+    def _finance_dispatch(self) -> bool:
+        """Shared Finance entry + entity switcher payload."""
+        parsed = urlparse(self.path)
+        path = parsed.path.rstrip("/") or "/"
+        if path.startswith("/dashboards/shared/"):
+            self.path = path[len("/dashboards") :]
+            return False
+        if path not in {"/finance", "/api/finance/entities"}:
+            return False
+        identity = self._resolve_identity(emit_audit=False)
+        if not identity.get("ok") or not identity.get("person_id"):
+            self._send_identity_deny(identity)
+            return True
+        person_id = str(identity.get("person_id"))
+        conn = _ggv_fin.db_connect()
+        try:
+            if path == "/api/finance/entities":
+                entities = _ggv_fin_inv.finance_entities(person_id, conn)
+                self._send_json(
+                    {
+                        "ok": True,
+                        "entities": entities,
+                        "finance_entities": entities,
+                        "staff_ready": False,
+                        "human_commissioned": False,
+                    }
+                )
+                return True
+            qs = parse_qs(parsed.query)
+            prefer = (qs.get("entity") or [""])[0].strip()
+            pick = (qs.get("pick") or [""])[0].strip()
+            if not prefer and not pick and self._browser_document_request():
+                page = DASHBOARDS / "finance-entry.html"
+                if page.is_file():
+                    self._send_html_shell(page.read_bytes(), rel="finance-entry.html")
+                    return True
+            href = _ggv_fin_inv.finance_entry_href(person_id, conn, prefer_id=prefer or None)
+        finally:
+            conn.close()
+        if not href:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "forbidden",
+                    "message": "Finance is not on this assignment.",
+                    "staff_ready": False,
+                    "human_commissioned": False,
+                },
+                status=403,
+            )
+            return True
+        self.send_response(302)
+        self.send_header("Location", href)
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+        return True
+
+    def _amg_finance_core_dispatch(self) -> bool:
+        parsed = urlparse(self.path)
+        if not _amg_fin_core.matches(parsed.path):
+            return False
+        qs = parse_qs(parsed.query)
+        body = None
+        if self.command == "POST":
+            try:
+                body = self._read_json()
+            except Exception:  # noqa: BLE001
+                body = {}
+        if not isinstance(body, dict):
+            body = {}
+        identity = self._resolve_identity(body, emit_audit=False)
+        if not identity.get("ok") or not identity.get("person_id"):
+            self._send_identity_deny(identity)
+            return True
+        person_id = str(identity.get("person_id"))
+        for key in ("person_id", "verified_person_id", "actor_person_id"):
+            spoof = body.get(key)
+            if spoof and str(spoof).strip() != person_id:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "person_id_spoof",
+                        "message": "Person id from the browser body is refused.",
+                        **_amg_fin_core.HONESTY,
+                    },
+                    status=400,
+                )
+                return True
+        try:
+            result = _amg_fin_core.dispatch(self.command, parsed.path, qs, body, person_id)
+        except _amg_fin_core.FinanceNotaError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    "preserved": bool((exc.extra or {}).get("preserved")),
+                    "upload_id": (exc.extra or {}).get("upload_id"),
+                    "retry": (exc.extra or {}).get("retry"),
+                    "conflict": bool((exc.extra or {}).get("conflict")),
+                    **_amg_fin_core.HONESTY,
+                },
+                status=exc.http_status,
+            )
+            return True
+        except _amg_fin_desk.AmgFinanceDeskError as exc:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": exc.code,
+                    "message": str(exc),
+                    **_amg_fin_core.HONESTY,
+                },
+                status=exc.http_status,
+            )
+            return True
+        if result.get("_html"):
+            page = DASHBOARDS / "amg-finance-ops.html"
+            if not page.is_file():
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "not_found",
+                        "message": "AMG Finance ops page is missing.",
+                        **_amg_fin_core.HONESTY,
+                    },
+                    status=404,
+                )
+                return True
+            self._send_html_shell(page.read_bytes(), rel="amg-finance-ops.html")
+            return True
+        status = int(result.pop("_status", 200) or 200)
+        self._send_json(result, status=status)
+        return True
+
     def _ggv_finance_dispatch(self) -> bool:
         parsed = urlparse(self.path)
         if not _ggv_fin.matches(parsed.path):
@@ -17274,15 +17622,35 @@ class BetaHandler(SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         if not _bzg_fin_desk.matches(parsed.path):
             return False
+        qs = parse_qs(parsed.query)
         identity = self._resolve_identity(emit_audit=False)
         if not identity.get("ok") or not identity.get("person_id"):
             self._send_identity_deny(identity)
             return True
         person_id = str(identity.get("person_id"))
+        body: dict | None = None
+        if self.command == "POST":
+            try:
+                body = self._read_json()
+            except Exception:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "invalid_json",
+                        "message": "The request could not be read.",
+                        **_bzg_fin_desk.HONESTY,
+                    },
+                    status=400,
+                )
+                return True
+            if not isinstance(body, dict):
+                body = {}
         conn = _ggv_fin.db_connect()
         try:
             try:
-                result = _bzg_fin_desk.dispatch(self.command, parsed.path, person_id, conn)
+                result = _bzg_fin_desk.dispatch(
+                    self.command, parsed.path, person_id, conn, qs=qs, body=body
+                )
             except _bzg_fin_desk.BzgFinanceError as exc:
                 self._send_json(
                     {
@@ -17310,6 +17678,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 )
                 return True
             self._send_html_shell(page.read_bytes(), rel="bzg-finance.html")
+            return True
+        blob = result.get("_file")
+        if blob:
+            data = blob["data"]
+            self.send_response(200)
+            self.send_header("Content-Type", blob.get("content_type") or "application/octet-stream")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store")
+            disposition = blob.get("disposition") or "inline"
+            self.send_header(
+                "Content-Disposition",
+                f'{disposition}; filename="{blob.get("filename") or "photo.jpg"}"',
+            )
+            self.end_headers()
+            self.wfile.write(data)
             return True
         self._send_json(result, status=200)
         return True
@@ -40154,6 +40537,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     # ----- Uma Blu ops (Devi commissioning: fail-closed) -----
 
+    def _require_uma_ops_or_bzg_finance_read(self, body: dict | None = None) -> str | None:
+        """Venue ops scope OR BZG finance board read (entity ENT-BZG). Fail closed."""
+        identity = self._resolve_identity(body, emit_audit=False)
+        person_id = identity.get("person_id") if identity.get("ok") else None
+        if not person_id:
+            self._send_identity_deny(identity)
+            return None
+        conn = _ggv_fin.db_connect()
+        try:
+            if _bzg_fin_desk._can_read_finance(str(person_id), conn):
+                return str(person_id)
+        finally:
+            conn.close()
+        return self._require_uma_ops(body)
+
     def _require_uma_ops(self, body: dict | None = None) -> str | None:
         """Identity + venue.close.read + Uma or BZG F&B scope. Fail closed.
 
@@ -40312,7 +40710,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             subject, _identity = self._require_recipe_builder("ingredient.read")
             if subject is None:
                 return
-            self._send_json(_recipe_builder.list_ingredients())
+            q = one("q")
+            lim = int(one("limit", "25") or "25")
+            if q or (qs.get("search") or [""])[0].strip():
+                self._send_json(_recipe_builder.search_ingredients(query=q, limit=lim))
+            else:
+                self._send_json(_recipe_builder.list_ingredients())
             return
 
         if path in (
@@ -40638,7 +41041,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def _uma_staff_page(self, filename: str) -> None:
         """Phone page on the Uma day. Same gate as Today. Anon → 403."""
-        if self._require_uma_ops() is None:
+        if filename in _bzg_fin_desk.FINANCE_UMA_BLU_HTML_PAGES:
+            if self._require_uma_ops_or_bzg_finance_read() is None:
+                return
+        elif self._require_uma_ops() is None:
             return
         page = DASHBOARDS / filename
         if not page.is_file():
@@ -41276,7 +41682,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def _uma_ops_petty(self) -> None:
         try:
-            self._send_json(_uma_ops.list_petty())
+            identity = self._resolve_identity(emit_audit=False)
+            person_id = identity.get("person_id") if identity.get("ok") else None
+            self._send_json(_uma_ops.list_petty(person_id=person_id))
         except Exception as exc:  # noqa: BLE001
             self._send_err(500, str(exc))
 
@@ -41397,6 +41805,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_err(500, str(exc))
 
     def _uma_ops_permissions(self) -> None:
+        from core import bzg_purchase_request as _bzg_pr
+
         actor = self._uma_ops_actor()
         if actor is None:
             return
@@ -41404,7 +41814,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
         try:
             conn = _uma_ops.db_connect()
             try:
-                self._send_json(_uma_p0.operator_view(person_id, conn=conn))
+                payload = _uma_p0.operator_view(person_id, conn=conn)
+                payload["outlets"] = _bzg_pr.outlets_for_create(person_id, conn)
+                payload["pack"] = _bzg_pr.PACK
+                self._send_json(payload)
             finally:
                 conn.close()
         except Exception as exc:  # noqa: BLE001
@@ -41416,7 +41829,754 @@ class BetaHandler(SimpleHTTPRequestHandler):
         except Exception as exc:  # noqa: BLE001
             self._send_err(500, str(exc))
 
+    def _uma_ops_purchase_orders(self) -> None:
+        from core import bzg_purchase_order as _bzg_po
+
+        actor = self._uma_ops_actor()
+        if actor is None:
+            return
+        person_id, _identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                self._send_json(_bzg_po.workspace(person_id, conn=conn))
+            finally:
+                conn.close()
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_purchase_order_detail(self, po_id: str) -> None:
+        from core import bzg_goods_receiving as _bzg_gr
+
+        actor = self._uma_ops_actor()
+        if actor is None:
+            return
+        person_id, _identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                row = _bzg_gr.get_po_for_receiving(po_id, person_id=person_id, conn=conn)
+            finally:
+                conn.close()
+            if not row:
+                self._send_json({"ok": False, "error": "not found"}, status=404)
+                return
+            self._send_json({"ok": True, "order": row})
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_goods_receipt_detail(self, gr_id: str) -> None:
+        from core import bzg_goods_receiving as _bzg_gr
+
+        actor = self._uma_ops_actor()
+        if actor is None:
+            return
+        person_id, _identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                row = _bzg_gr.get_goods_receipt(gr_id, person_id=person_id, conn=conn)
+            finally:
+                conn.close()
+            if not row:
+                self._send_json({"ok": False, "error": "not found"}, status=404)
+                return
+            self._send_json({"ok": True, "receipt": row})
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_purchase_order_receive(self, po_id: str) -> None:
+        from core import bzg_goods_receiving as _bzg_gr
+
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if not isinstance(body, dict):
+            body = {}
+        actor = self._uma_ops_actor(body)
+        if actor is None:
+            return
+        person_id, identity = actor
+        lines = body.get("lines")
+        if not isinstance(lines, list):
+            lines = []
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                receipt = _bzg_gr.create_goods_receipt(
+                    person_id=person_id,
+                    po_id=po_id,
+                    lines=lines,
+                    notes=body.get("notes"),
+                    outlet_id=body.get("outlet_id"),
+                    supplier_id=body.get("supplier_id"),
+                    identity=identity,
+                    conn=conn,
+                    commit=True,
+                )
+            finally:
+                conn.close()
+            self._send_json(
+                {
+                    "ok": True,
+                    "receipt": receipt,
+                    "payment_execution": False,
+                    "not_a_bill": True,
+                    "no_stock_ledger_posting": True,
+                }
+            )
+        except _bzg_gr.GrError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_supplier_bill_photo_get(self) -> None:
+        from core import bzg_supplier_bill as _bzg_bill
+        from urllib.parse import parse_qs, urlparse
+
+        actor = self._uma_ops_actor()
+        if actor is None:
+            return
+        person_id, _identity = actor
+        qs = parse_qs(urlparse(self.path).query)
+        ref = (qs.get("ref") or [""])[0]
+        if not ref:
+            self._send_json({"ok": False, "error": "ref required"}, status=400)
+            return
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                from core import bzg_purchase_request as _bzg_pr
+
+                row = conn.execute(
+                    """
+                    SELECT outlet_id FROM bzg_ops_supplier_bills
+                    WHERE photo_object_ref=?
+                    LIMIT 1
+                    """,
+                    (ref,),
+                ).fetchone()
+                if row:
+                    oid = str(row["outlet_id"])
+                    if not _bzg_bill.can_capture_bill(person_id, oid, conn)[0]:
+                        allowed = {o["outlet_id"] for o in _bzg_pr.person_outlets(person_id, conn)}
+                        if oid not in allowed:
+                            self._send_json({"ok": False, "error": "forbidden"}, status=403)
+                            return
+                else:
+                    outlets = _bzg_pr.person_outlets(person_id, conn)
+                    if not any(_bzg_bill.can_capture_bill(person_id, o["outlet_id"], conn)[0] for o in outlets):
+                        self._send_json({"ok": False, "error": "forbidden"}, status=403)
+                        return
+            finally:
+                conn.close()
+            data, mime = _bzg_bill.load_nota_photo_bytes(ref)
+            if not data:
+                self._send_json({"ok": False, "error": "not found"}, status=404)
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", mime or "image/jpeg")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "private, max-age=3600")
+            self.end_headers()
+            self.wfile.write(data)
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_supplier_bill_photo_post(self) -> None:
+        from core import bzg_supplier_bill as _bzg_bill
+
+        actor = self._uma_ops_actor({})
+        if actor is None:
+            return
+        person_id, _identity = actor
+        try:
+            ctype = (self.headers.get("Content-Type") or "").lower()
+            if "multipart/form-data" in ctype:
+                fields = parse_multipart(self.headers, self.rfile)
+                file_field = (
+                    fields.get("file")
+                    or fields.get("photo")
+                    or fields.get("nota")
+                    or fields.get("image")
+                )
+                if not isinstance(file_field, dict) or not file_field.get("data"):
+                    self._send_json(
+                        {"ok": False, "error": "Nota photo required.", "code": "missing_photo"},
+                        status=400,
+                    )
+                    return
+                saved = _bzg_bill.save_nota_photo_bytes(
+                    data=file_field["data"],
+                    filename=file_field.get("filename"),
+                    content_type=file_field.get("content_type") or file_field.get("content-type"),
+                )
+            else:
+                body = self._read_json()
+                if not isinstance(body, dict):
+                    body = {}
+                b64 = (body.get("image_base64") or body.get("data_base64") or "").strip()
+                if not b64:
+                    self._send_json(
+                        {"ok": False, "error": "Nota photo required.", "code": "missing_photo"},
+                        status=400,
+                    )
+                    return
+                import base64 as _b64
+
+                if "," in b64:
+                    b64 = b64.split(",", 1)[1]
+                saved = _bzg_bill.save_nota_photo_bytes(
+                    data=_b64.b64decode(b64),
+                    filename=body.get("filename") or "nota.jpg",
+                    content_type=body.get("content_type"),
+                )
+            self._send_json(
+                {
+                    "ok": True,
+                    "photo_object_ref": saved["photo_object_ref"],
+                    "photo_url": _bzg_bill.photo_url(saved["photo_object_ref"]),
+                    "bytes": saved["bytes"],
+                    "logged_by": person_id,
+                    "staff_ready": False,
+                    **{k: saved[k] for k in ("evidence_id", "content_hash", "mime_type") if k in saved},
+                }
+            )
+        except _bzg_bill.BillError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_supplier_bills_for_gr(self, gr_id: str) -> None:
+        from core import bzg_goods_receiving as _bzg_gr
+        from core import bzg_supplier_bill as _bzg_bill
+
+        actor = self._uma_ops_actor()
+        if actor is None:
+            return
+        person_id, _identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                gr = _bzg_gr.get_goods_receipt(gr_id, person_id=person_id, conn=conn)
+                if not gr:
+                    self._send_json({"ok": False, "error": "not found"}, status=404)
+                    return
+                bills = _bzg_bill.list_bills_for_gr(conn, gr_id)
+                oid = str(gr.get("outlet_id") or "")
+                can_cap = bool(oid) and _bzg_bill.can_capture_bill(person_id, oid, conn)[0]
+            finally:
+                conn.close()
+            self._send_json(
+                {
+                    "ok": True,
+                    "receipt": gr,
+                    "bills": bills,
+                    "can_capture_bill": can_cap,
+                    "staff_ready": False,
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_supplier_bill_detail(self, bill_id: str) -> None:
+        from core import bzg_supplier_bill as _bzg_bill
+
+        actor = self._uma_ops_actor()
+        if actor is None:
+            return
+        person_id, _identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                row = _bzg_bill.get_supplier_bill(bill_id, person_id=person_id, conn=conn)
+            finally:
+                conn.close()
+            if not row:
+                self._send_json({"ok": False, "error": "not found"}, status=404)
+                return
+            self._send_json({"ok": True, "bill": row})
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_supplier_bill_create(self, gr_id: str) -> None:
+        from core import bzg_supplier_bill as _bzg_bill
+
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if not isinstance(body, dict):
+            body = {}
+        actor = self._uma_ops_actor(body)
+        if actor is None:
+            return
+        person_id, identity = actor
+        lines = body.get("lines")
+        if not isinstance(lines, list):
+            lines = []
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                bill = _bzg_bill.create_supplier_bill(
+                    person_id=person_id,
+                    gr_id=gr_id,
+                    nota_number=body.get("nota_number") or body.get("nota_no"),
+                    nota_date=body.get("nota_date") or body.get("date"),
+                    photo_object_ref=body.get("photo_object_ref") or body.get("photo_ref"),
+                    stated_total=body.get("stated_total") or body.get("total"),
+                    lines=lines,
+                    outlet_id=body.get("outlet_id"),
+                    supplier_id=body.get("supplier_id"),
+                    po_id=body.get("po_id"),
+                    identity=identity,
+                    conn=conn,
+                    commit=True,
+                )
+            finally:
+                conn.close()
+            self._send_json(
+                {
+                    "ok": True,
+                    "bill": bill,
+                    "payment_execution": False,
+                    "not_a_payment": True,
+                    "not_approval_to_pay": True,
+                }
+            )
+        except _bzg_bill.BillError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_ap_ready_list(self) -> None:
+        from core import bzg_ap_ready as _bzg_ap
+
+        actor = self._uma_ops_actor()
+        if actor is None:
+            return
+        person_id, _identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                self._send_json(_bzg_ap.workspace(person_id, conn=conn))
+            finally:
+                conn.close()
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_ap_ready_detail(self, key: str) -> None:
+        from core import bzg_ap_ready as _bzg_ap
+
+        actor = self._uma_ops_actor()
+        if actor is None:
+            return
+        person_id, _identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                row = _bzg_ap.get_ap_ready(key, person_id=person_id, conn=conn)
+            finally:
+                conn.close()
+            if not row:
+                self._send_json({"ok": False, "error": "not found"}, status=404)
+                return
+            self._send_json({"ok": True, "ap_ready": row})
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_ap_ready_mark(self) -> None:
+        from core import bzg_ap_ready as _bzg_ap
+
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if not isinstance(body, dict):
+            body = {}
+        actor = self._uma_ops_actor(body)
+        if actor is None:
+            return
+        person_id, identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                pr_state_before = None
+                bill_id = (body.get("bill_id") or "").strip()
+                if bill_id:
+                    bill_row = conn.execute(
+                        "SELECT pr_id FROM bzg_ops_supplier_bills WHERE bill_id=?", (bill_id,)
+                    ).fetchone()
+                    if bill_row:
+                        pr_before = _uma_ops.get_pr(str(bill_row["pr_id"]), conn=conn)
+                        pr_state_before = pr_before.get("state") if pr_before else None
+                result = _bzg_ap.mark_ap_ready(
+                    person_id=person_id,
+                    bill_id=bill_id,
+                    gr_id=body.get("gr_id"),
+                    po_id=body.get("po_id"),
+                    outlet_id=body.get("outlet_id"),
+                    supplier_id=body.get("supplier_id"),
+                    identity=identity,
+                    conn=conn,
+                    commit=True,
+                )
+                pr_state_after = None
+                if bill_id:
+                    bill_row = conn.execute(
+                        "SELECT pr_id FROM bzg_ops_supplier_bills WHERE bill_id=?", (bill_id,)
+                    ).fetchone()
+                    if bill_row:
+                        pr_after = _uma_ops.get_pr(str(bill_row["pr_id"]), conn=conn)
+                        pr_state_after = pr_after.get("state") if pr_after else None
+            finally:
+                conn.close()
+            self._send_json(
+                {
+                    "ok": True,
+                    "ap_ready": result,
+                    "payment_execution": False,
+                    "not_a_payment": True,
+                    "not_approval_to_pay": True,
+                    "pr_state_unchanged": pr_state_before == pr_state_after,
+                }
+            )
+        except _bzg_ap.ApReadyError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_ready_to_pay_list(self) -> None:
+        from core import bzg_ready_to_pay as _bzg_rtp
+
+        actor = self._uma_ops_actor()
+        if actor is None:
+            return
+        person_id, _identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                self._send_json(_bzg_rtp.workspace(person_id, conn=conn))
+            finally:
+                conn.close()
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_ready_to_pay_detail(self, key: str) -> None:
+        from core import bzg_ready_to_pay as _bzg_rtp
+
+        actor = self._uma_ops_actor()
+        if actor is None:
+            return
+        person_id, _identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                row = _bzg_rtp.get_ready_to_pay(key, person_id=person_id, conn=conn)
+            finally:
+                conn.close()
+            if not row:
+                self._send_json({"ok": False, "error": "not found"}, status=404)
+                return
+            self._send_json({"ok": True, "ready_to_pay": row})
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_ready_to_pay_mark(self) -> None:
+        from core import bzg_ready_to_pay as _bzg_rtp
+
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if not isinstance(body, dict):
+            body = {}
+        actor = self._uma_ops_actor(body)
+        if actor is None:
+            return
+        person_id, identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                pr_state_before = None
+                bill_id = (body.get("bill_id") or "").strip()
+                if bill_id:
+                    bill_row = conn.execute(
+                        "SELECT pr_id FROM bzg_ops_supplier_bills WHERE bill_id=?", (bill_id,)
+                    ).fetchone()
+                    if bill_row:
+                        pr_before = _uma_ops.get_pr(str(bill_row["pr_id"]), conn=conn)
+                        pr_state_before = pr_before.get("state") if pr_before else None
+                result = _bzg_rtp.mark_ready_to_pay(
+                    person_id=person_id,
+                    bill_id=bill_id,
+                    gr_id=body.get("gr_id"),
+                    po_id=body.get("po_id"),
+                    outlet_id=body.get("outlet_id"),
+                    supplier_id=body.get("supplier_id"),
+                    identity=identity,
+                    conn=conn,
+                    commit=True,
+                )
+                pr_state_after = None
+                if bill_id:
+                    bill_row = conn.execute(
+                        "SELECT pr_id FROM bzg_ops_supplier_bills WHERE bill_id=?", (bill_id,)
+                    ).fetchone()
+                    if bill_row:
+                        pr_after = _uma_ops.get_pr(str(bill_row["pr_id"]), conn=conn)
+                        pr_state_after = pr_after.get("state") if pr_after else None
+            finally:
+                conn.close()
+            self._send_json(
+                {
+                    "ok": True,
+                    "ready_to_pay": result,
+                    "payment_execution": False,
+                    "not_a_payment": True,
+                    "not_approval_to_pay": True,
+                    "no_money_movement": True,
+                    "pr_state_unchanged": pr_state_before == pr_state_after,
+                }
+            )
+        except _bzg_rtp.ReadyToPayError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_three_way_match_list(self) -> None:
+        from core import bzg_purchase_request as _bzg_pr
+        from core import bzg_three_way_match as _bzg_3wm
+
+        actor = self._uma_ops_actor()
+        if actor is None:
+            return
+        person_id, _identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                history = _bzg_3wm.list_three_way_matches(person_id, conn=conn)
+                eligible = _bzg_3wm.list_eligible_trios(person_id, conn=conn)
+                perm_code = _bzg_3wm.match_permission(conn)
+                can_any = False
+                for row in eligible:
+                    oid = str(row.get("outlet_id") or "")
+                    if oid and _bzg_3wm.can_run_match(person_id, oid, conn)[0]:
+                        can_any = True
+                        break
+                if not can_any:
+                    outlets = _bzg_pr.person_outlets(person_id, conn) if person_id else []
+                    can_any = any(
+                        _bzg_3wm.can_run_match(person_id, o["outlet_id"], conn)[0] for o in outlets
+                    )
+            finally:
+                conn.close()
+            self._send_json(
+                {
+                    "ok": True,
+                    "can_run_match": can_any,
+                    "match_permission": perm_code,
+                    "eligible": eligible,
+                    "history": history,
+                    "staff_ready": False,
+                    "not_ap": True,
+                    "not_a_payment": True,
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_three_way_match_detail(self, match_id: str) -> None:
+        from core import bzg_three_way_match as _bzg_3wm
+
+        actor = self._uma_ops_actor()
+        if actor is None:
+            return
+        person_id, _identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                row = _bzg_3wm.get_three_way_match(match_id, person_id=person_id, conn=conn)
+            finally:
+                conn.close()
+            if not row:
+                self._send_json({"ok": False, "error": "not found"}, status=404)
+                return
+            self._send_json({"ok": True, "match": row})
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_three_way_match_accept(self) -> None:
+        from core import bzg_three_way_match as _bzg_3wm
+
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if not isinstance(body, dict):
+            body = {}
+        actor = self._uma_ops_actor(body)
+        if actor is None:
+            return
+        person_id, identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                result = _bzg_3wm.accept_match_difference(
+                    person_id=person_id,
+                    bill_id=(body.get("bill_id") or "").strip(),
+                    reason=(body.get("reason") or "").strip(),
+                    identity=identity,
+                    conn=conn,
+                    commit=True,
+                )
+            finally:
+                conn.close()
+            self._send_json(
+                {
+                    "ok": True,
+                    "match": result,
+                    "payment_execution": False,
+                    "not_ap": True,
+                    "not_a_payment": True,
+                }
+            )
+        except _bzg_3wm.MatchError as exc:
+            self._send_json({"ok": False, "error": str(exc), "code": exc.code}, status=exc.http_status)
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_three_way_match_run(self) -> None:
+        from core import bzg_three_way_match as _bzg_3wm
+
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if not isinstance(body, dict):
+            body = {}
+        actor = self._uma_ops_actor(body)
+        if actor is None:
+            return
+        person_id, identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                pr_state_before = None
+                bill_id = (body.get("bill_id") or "").strip()
+                if bill_id:
+                    bill_row = conn.execute(
+                        "SELECT pr_id FROM bzg_ops_supplier_bills WHERE bill_id=?", (bill_id,)
+                    ).fetchone()
+                    if bill_row:
+                        pr_before = _uma_ops.get_pr(str(bill_row["pr_id"]), conn=conn)
+                        pr_state_before = pr_before.get("state") if pr_before else None
+                result = _bzg_3wm.run_three_way_match(
+                    person_id=person_id,
+                    bill_id=bill_id,
+                    gr_id=body.get("gr_id"),
+                    po_id=body.get("po_id"),
+                    outlet_id=body.get("outlet_id"),
+                    supplier_id=body.get("supplier_id"),
+                    identity=identity,
+                    conn=conn,
+                    commit=True,
+                )
+                pr_state_after = None
+                if bill_id:
+                    bill_row = conn.execute(
+                        "SELECT pr_id FROM bzg_ops_supplier_bills WHERE bill_id=?", (bill_id,)
+                    ).fetchone()
+                    if bill_row:
+                        pr_after = _uma_ops.get_pr(str(bill_row["pr_id"]), conn=conn)
+                        pr_state_after = pr_after.get("state") if pr_after else None
+            finally:
+                conn.close()
+            self._send_json(
+                {
+                    "ok": True,
+                    "match": result,
+                    "payment_execution": False,
+                    "not_ap": True,
+                    "not_a_payment": True,
+                    "pr_state_unchanged": pr_state_before == pr_state_after,
+                }
+            )
+        except _bzg_3wm.MatchError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_purchase_order_create(self) -> None:
+        from core import bzg_purchase_order as _bzg_po
+
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if not isinstance(body, dict):
+            body = {}
+        actor = self._uma_ops_actor(body)
+        if actor is None:
+            return
+        person_id, identity = actor
+        pr_id = (body.get("pr_id") or "").strip()
+        supplier_id = (body.get("supplier_id") or "").strip()
+        lines = body.get("lines")
+        if not isinstance(lines, list):
+            lines = []
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                order = _bzg_po.create_purchase_order(
+                    person_id=person_id,
+                    pr_id=pr_id,
+                    supplier_id=supplier_id,
+                    lines=lines,
+                    identity=identity,
+                    conn=conn,
+                    commit=True,
+                )
+            finally:
+                conn.close()
+            self._send_json({"ok": True, "order": order, "payment_execution": False})
+        except _bzg_po.PoError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
     def _uma_ops_pr_create(self) -> None:
+        from core import bzg_purchase_request as _bzg_pr
+
         try:
             body = self._read_json()
         except Exception as exc:  # noqa: BLE001
@@ -41453,19 +42613,39 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     status=403,
                 )
                 return
-            out = _uma_ops.create_pr(
-                requester_label=body.get("requester_label"),
+            outlet_id = (body.get("outlet_id") or "").strip()
+            if not outlet_id:
+                self._send_json(
+                    {
+                        "ok": False,
+                        "error": "outlet required",
+                        "code": "missing_outlet",
+                        "message": "Outlet is required on every purchase request.",
+                    },
+                    status=400,
+                )
+                return
+            out = _bzg_pr.create_purchase_request(
+                person_id=person_id,
+                outlet_id=outlet_id,
+                purpose=body.get("purpose") or body.get("reason") or "",
                 supplier_name=body.get("supplier_name"),
-                purpose=body.get("purpose"),
+                department=body.get("department"),
+                alchemist_pr_order_id=body.get("alchemist_pr_order_id"),
                 expected_value=body.get("expected_value"),
                 currency=body.get("currency"),
+                requested_date=body.get("requested_date"),
+                required_by_date=body.get("required_by_date"),
                 lines=body.get("lines") or [],
                 submitted=want_submit,
-                verified_person_id=person_id,
-                actor_type="PERSON",
                 identity=identity,
             )
             self._send_json({"ok": True, "pr": out, "payment_execution": False})
+        except _bzg_pr.PrError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
         except _uma_ops.UmaOpsError as exc:
             self._send_json(
                 {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
@@ -41495,6 +42675,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
         dest = {
             "submit": "REQUESTED",
             "approve": "APPROVED",
+            "reject": "REJECTED",
             "order": "ORDERED",
             "close": "OPS_CLOSED",
         }[action]
@@ -41505,6 +42686,67 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     pr_id=pr_id,
                     identity=identity,
                 )
+            elif action == "reject":
+                reason = str(body.get("reason") or "").strip()
+                if not reason:
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "A reason is required to reject.",
+                            "code": "missing_reason",
+                        },
+                        status=400,
+                    )
+                    return
+                out = _uma_p0.reject_purchase_segregated(
+                    person_id=person_id,
+                    pr_id=pr_id,
+                    reason=reason,
+                    identity=identity,
+                )
+            elif action == "order":
+                from core import bzg_purchase_order as _bzg_po
+
+                supplier_id = (body.get("supplier_id") or "").strip()
+                lines = body.get("lines")
+                if not isinstance(lines, list):
+                    lines = []
+                if not supplier_id or not lines:
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": "use_purchase_orders_desk",
+                            "message": (
+                                "Save the purchase order on the Purchase orders desk "
+                                "with supplier and line quantities."
+                            ),
+                            "code": "use_purchase_orders_desk",
+                        },
+                        status=400,
+                    )
+                    return
+                conn = _uma_ops.db_connect()
+                try:
+                    order = _bzg_po.create_purchase_order(
+                        person_id=person_id,
+                        pr_id=pr_id,
+                        supplier_id=supplier_id,
+                        lines=lines,
+                        identity=identity,
+                        conn=conn,
+                        commit=True,
+                    )
+                finally:
+                    conn.close()
+                self._send_json(
+                    {
+                        "ok": True,
+                        "order": order,
+                        "pr": _uma_ops.get_pr(pr_id),
+                        "payment_execution": False,
+                    }
+                )
+                return
             else:
                 out = _uma_p0.ops_advance(
                     person_id=person_id,
@@ -41642,6 +42884,36 @@ class BetaHandler(SimpleHTTPRequestHandler):
         except Exception as exc:  # noqa: BLE001
             self._send_err(500, str(exc))
 
+    def _uma_ops_petty_reconcile_post(self) -> None:
+        """Owner/Finance physical cash count — provenance only, no silent ledger adjustment."""
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length) if length > 0 else b"{}"
+            body = json.loads(raw.decode("utf-8") or "{}")
+            if not isinstance(body, dict):
+                body = {}
+            actor = self._uma_ops_actor(body)
+            if actor is None:
+                return
+            person_id, identity = actor
+            out = _uma_ops.reconcile_petty_cash_ops(
+                person_id=person_id,
+                notes_total=body.get("notes_total") if body.get("notes_total") is not None else 0,
+                coins_total=body.get("coins_total") if body.get("coins_total") is not None else 0,
+                reason=body.get("reason") or body.get("notes"),
+                evidence_id=body.get("evidence_id") or body.get("photo_evidence_id"),
+                business_date=body.get("business_date"),
+                identity=identity,
+            )
+            self._send_json({**out, **_uma_ops.honesty_flags()})
+        except _uma_ops.UmaOpsError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
     def _uma_ops_petty_opening_post(self) -> None:
         """Owner human-supplied opening balance — not a fabricated IN/OUT movement."""
         try:
@@ -41690,12 +42962,20 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     direction=body.get("direction") or "OUT",
                     amount=body.get("amount") if body.get("amount") is not None else 0,
                     currency=body.get("currency"),
-                    purpose=body.get("purpose"),
+                    purpose=body.get("purpose") or body.get("reason"),
                     category=body.get("category"),
                     outlet=body.get("outlet"),
                     logged_by=body.get("logged_by"),
                     receipt_path=body.get("receipt_path"),
                     evidence_note_id=body.get("evidence_note_id") or body.get("evidence_id"),
+                    photo_evidence_id=body.get("photo_evidence_id"),
+                    transaction_time=body.get("transaction_time"),
+                    payee=body.get("payee"),
+                    purchasing_item_id=body.get("purchasing_item_id")
+                    or body.get("work_item_id"),
+                    accounting_code=body.get("accounting_code"),
+                    entity_id=body.get("entity_id") or body.get("business"),
+                    idempotency_key=body.get("idempotency_key") or body.get("client_token"),
                     identity=identity,
                 )
             else:
@@ -41771,14 +43051,34 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_json(payload, status=getattr(exc, "http_status", 503))
             return
         if isinstance(exc, _venue_close.VenueCloseError):
+            staff = (getattr(exc, "details", None) or {}).get("staff_message")
+            if not staff:
+                _staff_codes = {
+                    "missing_esb_receipt_evidence": (
+                        "Shift report photo is missing. Upload a photo first, "
+                        "then tap Read shift report."
+                    ),
+                    "missing_z_report_evidence": (
+                        "Confirm the shift report before counting cash. "
+                        "Upload and read the photo, or tap Continue if it is already on file."
+                    ),
+                    "missing_edc_evidence": (
+                        "Add a bank receipt photo, or confirm the shift report first "
+                        "so amounts can be saved."
+                    ),
+                }
+                staff = _staff_codes.get(exc.code, str(exc))
             payload = {
                 "ok": False,
                 "error": exc.code,
-                "message": str(exc),
+                "message": staff,
+                "staff_message": staff,
                 **_venue_close.HONESTY,
             }
             if getattr(exc, "details", None):
-                payload.update(exc.details)
+                for k, v in exc.details.items():
+                    if k != "staff_message":
+                        payload[k] = v
             if exc.code in (
                 "esb_data_unavailable",
                 "esb_empty_day",
@@ -41787,6 +43087,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 payload["esb_live_status"] = "UNAVAILABLE"
                 payload["esb_empty_is_not_zero_sales"] = True
                 payload["retry"] = True
+            if exc.code == "wrong_business_date":
+                payload["staff_message"] = (
+                    "That photo or submit is for a different date. "
+                    "Today's close was not changed."
+                )
             self._send_json(payload, status=exc.http_status)
             return
         if isinstance(exc, _esb_close_snapshot.EsbSnapshotError):
@@ -41820,7 +43125,26 @@ class BetaHandler(SimpleHTTPRequestHandler):
             return
         try:
             state = (qs.get("state") or [None])[0]
-            rows = _venue_close.list_closes(state=state)
+            date_from = (qs.get("date_from") or [None])[0]
+            date_to = (qs.get("date_to") or [None])[0]
+            outlet_id = (qs.get("outlet_id") or [None])[0]
+            want_history = (qs.get("history") or ["0"])[0] in ("1", "true", "yes")
+            if want_history or date_from or date_to or outlet_id:
+                self._send_json(
+                    _venue_close.closing_history(
+                        state=state,
+                        date_from=date_from,
+                        date_to=date_to,
+                        outlet_id=outlet_id,
+                    )
+                )
+                return
+            rows = _venue_close.list_closes(
+                state=state,
+                date_from=date_from,
+                date_to=date_to,
+                outlet_id=outlet_id,
+            )
             self._send_json(
                 {
                     "ok": True,
@@ -41868,11 +43192,21 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 )
                 return
             detail = _uma_p0.close_detail(row["close_id"])
+            hist = None
+            try:
+                hist = _bzg_daily_close.history_detail(row["close_id"])
+            except Exception:  # noqa: BLE001 — detail remains usable without history board
+                hist = None
+            enriched = _bzg_daily_close.enrich_close(row)
             self._send_json(
                 {
                     "ok": True,
-                    "close": row,
+                    "close": enriched,
                     "detail": detail,
+                    "history_detail": hist,
+                    "three_objects": (hist or {}).get("three_objects")
+                    or _venue_close.three_close_objects(row),
+                    "snapshot_frozen": bool(row.get("esb_fingerprint_sha256")),
                     **_venue_close.HONESTY,
                 }
             )
@@ -41936,9 +43270,25 @@ class BetaHandler(SimpleHTTPRequestHandler):
             out = _venue_close.capture_esb_snapshot(
                 str(body.get("close_id") or ""),
                 verified_person_id=identity["person_id"],
+                business_date=(
+                    str(body.get("business_date") or "").strip() or None
+                ),
                 identity=identity,
+                force_recapture=bool(body.get("force_recapture")),
+                force_reason=(
+                    str(body.get("force_reason") or body.get("reason") or "").strip()
+                    or None
+                ),
             )
-            self._send_json({"ok": True, "close": out})
+            self._send_json(
+                {
+                    "ok": True,
+                    "close": out,
+                    "snapshot_frozen": bool(out.get("snapshot_frozen")),
+                    "mutated": bool(out.get("mutated")),
+                    "three_objects": out.get("three_objects"),
+                }
+            )
         except Exception as exc:  # noqa: BLE001
             self._venue_close_err(exc)
 
@@ -42024,21 +43374,204 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if identity is None:
             return
         try:
-            out = _bzg_daily_close.attach_till_with_z_report(
+            why = body.get("cash_why_note") or body.get("cash_why") or body.get("notes")
+            out = _bzg_daily_close.declare_cash_with_note(
                 str(body.get("close_id") or ""),
                 declared_cash_amount=body.get("declared_cash_amount"),
+                cash_why_note=why,
                 verified_person_id=identity["person_id"],
                 object_ref=(body.get("object_ref") or body.get("z_report_object_ref") or None),
                 content_hash=(body.get("content_hash") or None),
-                declared_card_amount=body.get("declared_card_amount"),
-                declared_qris_amount=body.get("declared_qris_amount"),
-                declared_gross_amount=body.get("declared_gross_amount"),
-                notes=(body.get("notes") or None),
-                source=(body.get("source") or None),
-                copy_from_esb=bool(body.get("copy_from_esb")),
                 identity=identity,
             )
             self._send_json({"ok": True, "close": _bzg_daily_close.enrich_close(out)})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_ack_esb_difference(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            out = _bzg_daily_close.ack_esb_data_difference(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+            )
+            self._send_json(out)
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_staff_submit(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "variance_cash_amount", "esb_totals", "verified_cash")
+        ):
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            why = body.get("cash_why_note") or body.get("cash_why")
+            close_id = str(body.get("close_id") or "")
+            if why and close_id:
+                _bzg_daily_close.declare_cash_with_note(
+                    close_id,
+                    declared_cash_amount=body.get("declared_cash_amount"),
+                    cash_why_note=why,
+                    verified_person_id=identity["person_id"],
+                    object_ref=(body.get("object_ref") or body.get("cash_photo_ref") or None),
+                    content_hash=(body.get("content_hash") or None),
+                    identity=identity,
+                )
+            out = _bzg_daily_close.staff_submit_close(
+                close_id,
+                declared_cash_amount=body.get("declared_cash_amount"),
+                verified_person_id=identity["person_id"],
+                business_date=(
+                    str(body.get("business_date") or "").strip() or None
+                ),
+                object_ref=(body.get("object_ref") or body.get("cash_photo_ref") or None),
+                content_hash=(body.get("content_hash") or None),
+                notes=(why or body.get("notes") or None),
+                confirm_recount=bool(body.get("confirm_recount")),
+                submit_with_exception=bool(body.get("submit_with_exception")),
+                identity=identity,
+            )
+            self._send_json(out)
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_confirm_shift_figures(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            overrides = body.get("confirmed_overrides")
+            if overrides is not None and not isinstance(overrides, dict):
+                overrides = None
+            extracted = body.get("extracted")
+            if extracted is not None and not isinstance(extracted, dict):
+                extracted = None
+            out = _bzg_daily_close.confirm_shift_figures_yes(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                object_ref=(body.get("object_ref") or body.get("image_object_ref") or None),
+                content_hash=(body.get("content_hash") or None),
+                extracted=extracted,
+                confirmed_overrides=overrides,
+            )
+            self._send_json(out)
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_save_shift_figure_edits(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            figures = body.get("figures")
+            if not isinstance(figures, dict):
+                self._send_json(
+                    {"ok": False, "error": "figures object required"}, status=400
+                )
+                return
+            extracted = body.get("extracted")
+            if extracted is not None and not isinstance(extracted, dict):
+                extracted = None
+            out = _bzg_daily_close.save_shift_human_corrections(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                figures=figures,
+                object_ref=(body.get("object_ref") or body.get("image_object_ref") or None),
+                content_hash=(body.get("content_hash") or None),
+                extracted=extracted,
+                identity=identity,
+            )
+            self._send_json(out)
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_link_unlinked_evidence(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            biz = str(body.get("business_date") or "").strip()
+            close_id = str(body.get("close_id") or "").strip()
+            if not close_id and biz:
+                ensured = _bzg_daily_close.ensure_close_on_evidence(
+                    biz,
+                    verified_person_id=identity["person_id"],
+                    identity=identity,
+                )
+                close_id = str(
+                    (ensured.get("close") or {}).get("close_id") or ensured.get("close_id") or ""
+                )
+            queue_id = str(body.get("queue_id") or "")
+            kind = str(body.get("kind") or "shift").strip().lower()
+            if kind == "edc":
+                out = _bzg_daily_close.link_unlinked_edc_receipt(
+                    close_id,
+                    queue_id=queue_id,
+                    bank_label=str(body.get("bank") or body.get("bank_label") or ""),
+                    verified_person_id=identity["person_id"],
+                )
+            else:
+                out = _bzg_daily_close.link_unlinked_shift_report(
+                    close_id,
+                    queue_id=queue_id,
+                    verified_person_id=identity["person_id"],
+                )
+            self._send_json({**out, "close_id": close_id})
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_receipt_image(self, qs: dict) -> None:
+        ref = (qs.get("ref") or [None])[0]
+        ref_s = str(ref or "").strip()
+        if not ref_s:
+            self._send_json({"ok": False, "error": "missing ref"}, status=400)
+            return
+        try:
+            path = _bzg_daily_close.resolve_unlinked_evidence_path(ref_s)
+            if path is None:
+                path = _bzg_daily_close.resolve_close_receipt_path(ref_s)
+            if path is None or not path.is_file():
+                self.send_error(404, "image not found")
+                return
+            data = path.read_bytes()
+            ctype = "image/jpeg"
+            if path.suffix.lower() == ".png":
+                ctype = "image/png"
+            self.send_response(200)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
         except Exception as exc:  # noqa: BLE001
             self._venue_close_err(exc)
 
@@ -42089,7 +43622,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
         # Fall back to stored phone upload (close-receipt://…).
         ref = (body.get("object_ref") or body.get("image_object_ref") or "").strip()
         if ref:
-            stored, stored_mime = _bzg_daily_close.load_close_receipt_bytes(ref)
+            stored, stored_mime = _bzg_daily_close.load_close_receipt_vision_bytes(ref)
             if stored:
                 return stored, stored_mime or mime
         return None, mime
@@ -42102,6 +43635,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
         try:
             ctype = (self.headers.get("Content-Type") or "").lower()
             close_id = None
+            business_date = None
             kind = "receipt"
             filename = None
             content_type = None
@@ -42109,8 +43643,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if "multipart/form-data" in ctype:
                 fields = parse_multipart(self.headers, self.rfile)
                 close_raw = fields.get("close_id")
+                biz_raw = fields.get("business_date")
                 kind_raw = fields.get("kind")
                 close_id = str(close_raw).strip() if close_raw not in (None, "") else None
+                business_date = (
+                    str(biz_raw).strip() if biz_raw not in (None, "") else None
+                )
                 kind = str(kind_raw).strip() if kind_raw not in (None, "") else "receipt"
                 file_field = (
                     fields.get("file")
@@ -42138,12 +43676,22 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 if not isinstance(body, dict):
                     body = {}
                 close_id = body.get("close_id")
+                business_date = body.get("business_date")
                 kind = str(body.get("kind") or "receipt")
                 filename = body.get("filename")
                 content_type = body.get("content_type") or body.get("mime_type")
                 img, mime = self._bzg_vision_image_bytes(body)
                 data = img
                 content_type = content_type or mime
+            if not close_id and business_date:
+                ensured = _bzg_daily_close.ensure_close_on_evidence(
+                    str(business_date),
+                    verified_person_id=identity["person_id"],
+                    identity=identity,
+                )
+                close_id = (ensured.get("close") or {}).get("close_id") or ensured.get(
+                    "close_id"
+                )
             if not data:
                 self._send_json(
                     {
@@ -42161,6 +43709,17 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 filename=filename,
                 content_type=content_type,
             )
+            if close_id:
+                out = {**out, "close_id": close_id}
+                kind_n = str(kind or "receipt").strip().lower()
+                if kind_n in ("esb", "receipt", "z"):
+                    reg = _bzg_daily_close.register_shift_report_photo(
+                        str(close_id),
+                        object_ref=out.get("object_ref") or "",
+                        content_hash=out.get("content_hash") or "",
+                        verified_person_id=identity["person_id"],
+                    )
+                    out = {**out, "shift_evidence": reg}
             _audit.safe_record(
                 action="venue_close.receipt_photo_stored",
                 result="ALLOWED",
@@ -42180,6 +43739,128 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 },
             )
             self._send_json(out)
+        except _venue_close.VenueCloseError as exc:
+            self._venue_close_err(exc)
+        except Exception as exc:  # noqa: BLE001
+            import traceback
+
+            traceback.print_exc(file=sys.stderr)
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "photo_save_failed",
+                    "staff_message": "PHOTO COULD NOT BE SAVED",
+                },
+                status=500,
+            )
+
+
+    def _bzg_daily_close_bank_cards(self, close_id: str) -> None:
+        try:
+            self._send_json(_bzg_daily_close.bank_cards(close_id))
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_date_peek(self, qs: dict) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            biz = (qs.get("business_date") or [None])[0]
+            self._send_json(
+                _bzg_daily_close.peek_business_date(
+                    str(biz or ""),
+                    verified_person_id=identity.get("person_id"),
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_date_register(self, qs: dict) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            date_from = (qs.get("date_from") or [None])[0]
+            date_to = (qs.get("date_to") or [None])[0]
+            search = (qs.get("search") or qs.get("business_date") or [None])[0]
+            outlet_id = (qs.get("outlet_id") or [None])[0]
+            self._send_json(
+                _bzg_daily_close.close_date_register(
+                    date_from=date_from,
+                    date_to=date_to,
+                    search=search,
+                    outlet_id=outlet_id,
+                    verified_person_id=identity.get("person_id"),
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_history_queue(self, qs: dict) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            today = (qs.get("today") or [None])[0]
+            self._send_json(
+                _uma_hist_close_queue1.owner_history_queue(
+                    today=today,
+                    verified_person_id=identity.get("person_id"),
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_exception_review(self, close_id: str) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            self._send_json(_uma_hist_close_queue1.exception_review_payload(close_id))
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_history_closed_summary(self, close_id: str) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            self._send_json(_uma_hist_close_queue1.closed_readonly_summary(close_id))
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_source_wizard(self, close_id: str) -> None:
+        identity = self._venue_close_person()
+        if identity is None:
+            return
+        try:
+            self._send_json(
+                _bzg_daily_close.source_wizard_state(
+                    close_id, verified_person_id=identity.get("person_id")
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _bzg_daily_close_bank_mark_unused(self) -> None:
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            out = _bzg_daily_close.mark_bank_unused(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                bank_label=str(body.get("bank_label") or body.get("bank") or ""),
+                reason=str(body.get("reason") or ""),
+                identity=identity,
+            )
+            self._send_json({"ok": True, **out})
         except Exception as exc:  # noqa: BLE001
             self._venue_close_err(exc)
 
@@ -42250,6 +43931,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 image_object_ref=(body.get("object_ref") or body.get("image_object_ref") or None),
                 content_hash=(body.get("content_hash") or None),
                 fixture_fields=fixture,
+                bank_hint=(body.get("bank_hint") or body.get("acquirer_label") or None),
+                esb_edc_expected=body.get("esb_edc_expected"),
+                esb_qris_expected=body.get("esb_qris_expected"),
                 identity=identity,
             )
             self._send_json(out)
@@ -42601,6 +44285,41 @@ class BetaHandler(SimpleHTTPRequestHandler):
                     "reversible_ops_control": True,
                     "money_movement": False,
                     "holder": out.get("holder"),
+                    **_venue_close.HONESTY,
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._venue_close_err(exc)
+
+    def _venue_close_cancel_unfinished(self) -> None:
+        """Staff/holder cancel unfinished draft — evidence retained, no accounting entry."""
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if self._venue_close_refuse_overrides(
+            body, ("state", "variance_cash_amount", "esb_totals", "taken_by_person_id")
+        ):
+            return
+        identity = self._venue_close_person(body)
+        if identity is None:
+            return
+        try:
+            out = _venue_close.cancel_unfinished_close(
+                str(body.get("close_id") or ""),
+                verified_person_id=identity["person_id"],
+                reason=str(body.get("reason") or "") or None,
+                identity=identity,
+            )
+            enriched = _bzg_daily_close.enrich_close(out.get("close") or {})
+            self._send_json(
+                {
+                    "ok": True,
+                    "close": enriched,
+                    "cancelled": True,
+                    "evidence_retained": True,
+                    "accounting_entry": False,
                     **_venue_close.HONESTY,
                 }
             )

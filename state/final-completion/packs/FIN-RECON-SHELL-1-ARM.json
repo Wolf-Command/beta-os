@@ -74,6 +74,10 @@
   "exit": 0,
   "prod_15975_untouched": true,
   "result_present": true,
-  "verified_at": "2026-09-30T01:39:21+08:00",
-  "peaches_verify": "state/final-completion/packs/FIN-RECON-SHELL-1-PEACHES-VERIFY.json"
+  "verified_at": "2026-09-30T01:39:40+08:00",
+  "peaches_verify": "PASS_VERIFIED",
+  "has_exit": true,
+  "child_alive": false,
+  "matt_finished_ping": true,
+  "matt_finished_ping_at": "2026-09-30T01:39:40+08:00"
 }

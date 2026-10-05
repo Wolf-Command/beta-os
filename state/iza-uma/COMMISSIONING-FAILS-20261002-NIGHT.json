@@ -1,0 +1,43 @@
+{
+  "id": "COMMISSIONING-FAILS-20261002-NIGHT",
+  "when_wita": "2026-10-02T21:46:40.187058+08:00",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "failures": [
+    {
+      "n": 1,
+      "title": "Close not on assignment",
+      "status": "ENG_FIXED_a0cbc81",
+      "human_retest": "SUPERSEDED_BY_FAIL_2",
+      "evidence": "COMMISSIONING-FAIL-20261002-IZA-ASSIGNMENT.json"
+    },
+    {
+      "n": 2,
+      "title": "Photo/camera controls missing",
+      "status": "OPEN_ROOT_CAUSE",
+      "detail": "uma-blu-close.html has text photo:// refs only; no type=file capture=environment Take/Upload",
+      "pack": "BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1"
+    },
+    {
+      "n": 3,
+      "title": "ESB live data missing",
+      "status": "OPEN",
+      "detail": "Pull ESB button exists; live today path must be traced; no fake zeros; UNAVAILABLE must be explicit",
+      "pack": "BZG-DAILY-CLOSE-DEPLOYED-UX-ESB-PHOTO-1"
+    }
+  ],
+  "deploy_triage": {
+    "route": "/uma-blu-close",
+    "serve": "scripts/serve_beta.py :8788",
+    "html": "dashboards/uma-blu-close.html",
+    "tip_when_armed": "a0cbc81",
+    "html_feat_commit": "909addf",
+    "note": "ENG_PROVED multi-EDC tip was served; human UX still missing camera + live ESB"
+  },
+  "do_not": [
+    "ask Iza continue degraded",
+    "type what Wolf should retrieve",
+    "mark staff_ready",
+    "spam refresh while Cursor works"
+  ]
+}

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os
+os.environ["PATH"] = "/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/usr/local/bin:" + os.environ.get("PATH", "")
 """Operator / reliability watch tick — EXTERNAL-ROUTE-HEALTH (Beta only).
 
 Usage:

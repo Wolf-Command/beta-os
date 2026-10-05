@@ -1,0 +1,60 @@
+{
+  "schema": "LIVE-USABLE-SCOREBOARD/v1",
+  "generated_at_wita": "2026-09-30T12:23:31+0800",
+  "executor": "Peaches-executor",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "bound": "beta",
+  "prod_8787_touched": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "exit_report": "NOT_CREATED",
+  "rule": "Do NOT mark LIVE_USABLE without authenticated human prove. Mechanical curl\u2260usable.",
+  "surfaces": [
+    {
+      "board": "/owner/trading",
+      "api": "/api/owner/trading-ro",
+      "extra_api": "/api/owner/trading-ro/history",
+      "class": "BOARD_DATA_WIRED",
+      "api_class": "API_USABLE",
+      "live_usable": false,
+      "staff_ready": false,
+      "notes": "Journal+holdings+paper quant UI from V1 SoT; paper only; no broker; PARTIAL until Matt hard-refresh prove"
+    },
+    {
+      "board": "/owner/fitness",
+      "api": "/api/owner/fitness-ro",
+      "class": "BOARD_DATA_WIRED",
+      "api_class": "API_USABLE",
+      "live_usable": false,
+      "staff_ready": false,
+      "notes": "Counts+recent training/lifts+peptide schedule RO; Fitness\u2260HR; no PII dumps; PARTIAL until Matt prove"
+    },
+    {
+      "board": "/owner/travel",
+      "api": "/api/owner/travel-ro",
+      "class": "BOARD_DATA_WIRED",
+      "api_class": "API_USABLE",
+      "live_usable": false,
+      "staff_ready": false,
+      "notes": "V1 draft tiles+party RO; booking FORBIDDEN"
+    },
+    {
+      "board": "/owner/learning",
+      "api": "/api/owner/learning-ro",
+      "class": "BOARD_DATA_WIRED",
+      "api_class": "API_USABLE",
+      "live_usable": false,
+      "staff_ready": false,
+      "notes": "tracks+inbox titles RO; TTC paper; \u2260/intel/learning; no live quant"
+    }
+  ],
+  "counts": {
+    "LIVE_USABLE": 0,
+    "BOARD_DATA_WIRED": 4,
+    "API_USABLE": 4,
+    "PARTIAL_SHELL_only": 0,
+    "mechanical_prove_pass": true
+  },
+  "probes_ref": "evidence/RO-DEEPEN2-PROBES-20260930.json",
+  "tests": "test_owner_ro_deepen_20260930.py 5/0 PASS"
+}

@@ -1,0 +1,138 @@
+{
+  "schema": "DEEPEN-FORENSIC-TF/v1",
+  "generated_at_wita": "2026-09-30T12:20:54+0800",
+  "executor": "Peaches-executor",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "bound": "beta",
+  "prod_8787_touched": false,
+  "staff_ready": false,
+  "trading": {
+    "v1_board": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/trading.html",
+    "v1_js": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/assets/trading-desk.js",
+    "v1_js_lines": 395,
+    "v1_apis_called_from_js": [
+      "/api/trading/holdings",
+      "/api/trading/journal",
+      "/api/trading/journal/remove"
+    ],
+    "v1_board_api": "/api/trading \u2192 trading_desk.get_board()",
+    "v1_sot": {
+      "journal": "/Users/wolfterminal/.openclaw/workspace/wolf-system/trading-desk/journal.jsonl",
+      "quant": "/Users/wolfterminal/.openclaw/workspace/wolf-system/trading-desk/QUANT_PROGRAM.md",
+      "paper": "/Users/wolfterminal/.openclaw/workspace/wolf-system/trading-desk/PAPER_QUANT_PRACTICE_BRIEF.md",
+      "holdings": "/Users/wolfterminal/WolfCommandSystem/WolfCommand/01-Wolf-Command/System-Registry/HOLDINGS-PERSONAL.md"
+    },
+    "rendered": {
+      "tiles": [
+        "tile-holdings",
+        "tile-journal",
+        "tile-ttc",
+        "research tiles filings/earnings/sector/insider/chatter"
+      ],
+      "mutations_bound": [
+        "/api/trading/holdings POST",
+        "/api/trading/journal POST",
+        "/api/trading/journal/remove"
+      ],
+      "read_display": [
+        "boardHtml holdings list",
+        "journalRow with attachment img via /api/trading/journal/file",
+        "TTC paper method static"
+      ],
+      "beta_port_forbidden": [
+        "POST journal/holdings",
+        "auto-journal",
+        "live broker"
+      ]
+    },
+    "beta_before": {
+      "api": "/api/owner/trading-ro",
+      "board": "/owner/trading \u2192 owner-trading-1.html #ro-live JSON dump",
+      "claim": "RO_API_MOUNTED_NOT_REBUILT_PLUS_PROVEN"
+    }
+  },
+  "fitness": {
+    "v1_board": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/spartacus.html",
+    "v1_apis": [
+      "/api/spartacus",
+      "/api/spartacus/board",
+      "/api/spartacus",
+      "/api/spartacus/board"
+    ],
+    "v1_db": "/Users/wolfterminal/.openclaw/personal/health/spartacus.sqlite",
+    "v1_peptides_json": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/data/spartacus-peptides.json",
+    "safe_ro": [
+      "table COUNT(*)",
+      "training_log date/lift/ts",
+      "lift_sessions date/lift_key",
+      "peptide_log date/compound/status",
+      "peptide schedule compounds meta"
+    ],
+    "forbidden": [
+      "food_log items",
+      "body_log",
+      "contacts",
+      "journal text",
+      "profile PII",
+      "Fitness=HR merge",
+      "DB writes"
+    ],
+    "beta_before": {
+      "api": "/api/owner/fitness-ro",
+      "board": "JSON dump graft"
+    }
+  },
+  "travel": {
+    "v1_board": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/travel.html",
+    "v1_tiles": [
+      "Europe",
+      "Vegas",
+      "Holiday ideas",
+      "In Lombok \u2014 Accor IDR nights, official, 20 Aug 2026",
+      "Fly-aways with party totals \u2014 Google Flights 20 Aug 2026, currency IDR",
+      "Talk to Peaches"
+    ],
+    "v1_fetch": [
+      "/api/peaches-desk",
+      "/whoami"
+    ],
+    "no_booking_api": true,
+    "party": "Matthew + Amanda \u00b7 2 adults + kids 5 and 7",
+    "beta_before": {
+      "board": "owner-travel-1.html stamp only",
+      "api": null
+    }
+  },
+  "learning": {
+    "v1_board": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/learning.html",
+    "v1_js": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/assets/learning-desk.js",
+    "v1_apis_from_js": [
+      "/api/learning",
+      "/api/learning/file",
+      "/api/learning/research",
+      "/api/learning/start"
+    ],
+    "v1_board_api": "/api/learning \u2192 learning_desk.get_board()",
+    "v1_state": "/Users/wolfterminal/.openclaw/workspace/wolf-system/state/learning-desk",
+    "tracks": [
+      "ttc-trading",
+      "acquisition-sales",
+      "dan-martell"
+    ],
+    "forbidden": [
+      "live quant exec",
+      "drop without track",
+      "merge /intel/learning"
+    ],
+    "beta_before": {
+      "board": "owner-learning-1.html stamp only",
+      "api": null
+    }
+  },
+  "deepen_targets": [
+    "Expand trading-ro: full journal cap + paper quant excerpts + holdings honesty",
+    "Render useful Trading/Fitness board UI (not JSON dump)",
+    "Fitness: peptide schedule RO + recent lifts",
+    "Travel+Learning RO loaders + mount + graft"
+  ]
+}

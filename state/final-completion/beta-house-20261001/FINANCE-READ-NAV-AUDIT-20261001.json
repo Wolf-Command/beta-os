@@ -1,0 +1,63 @@
+{
+  "schema": "FINANCE-READ-NAV-AUDIT/v1",
+  "generated_at_wita": "2026-10-01T09:53:00+08:00",
+  "executor": "Peaches-executor",
+  "mission": "BETA_HOUSE_REAL_CONNECTIONS",
+  "prod_8787": "UNTOUCHED",
+  "finding": "ENTITY-ISOLATION-REPAIR residual \u2014 audit chrome/nav consumers of bare boolean finance_read",
+  "search_scope": [
+    "scripts/core",
+    "scripts/serve_beta.py",
+    "dashboards/**/*.html",
+    "dashboards/**/*.js"
+  ],
+  "consumers_of_boolean_finance_read": [
+    {
+      "path": "scripts/core/staff_home.py",
+      "role": "PRODUCER \u2014 finance_read=any(by_entity.values()) + finance_read_by_entity map"
+    },
+    {
+      "path": "scripts/tests/test_staff_home.py",
+      "role": "TEST only"
+    },
+    {
+      "path": "scripts/tests/test_role_dashboard.py",
+      "role": "TEST only"
+    },
+    {
+      "path": "scripts/ops/apply_entity_isolation_20261001.py",
+      "role": "APPLY SCRIPT (already stamped by_entity)"
+    },
+    {
+      "path": "scripts/serve_beta.py:_amg_finance_read",
+      "role": "UNRELATED handler name \u2014 AMG finance READ route, not authority boolean"
+    }
+  ],
+  "chrome_nav_path": {
+    "wolf_shell.authority_nav_from_assignments": "ROLE+SCOPE \u2014 does NOT read finance_read boolean",
+    "sidenav.js": "prefers nav_authority.businesses \u2014 no finance_read",
+    "role_dashboard.project": "uses authority for decision layers (move_money/change_bank/governance), not finance_read for GGV nav"
+  },
+  "prove_zayen_nav_20261001": {
+    "businesses": [
+      "amg",
+      "bzg"
+    ],
+    "items_hrefs": [
+      "/amg/finance",
+      "/bzg/finance"
+    ],
+    "ggv_finance_in_nav": false,
+    "finance_read_boolean": true,
+    "finance_read_by_entity": {
+      "ENT-AMG": false,
+      "ENT-BZG": true,
+      "ENT-GGV": false
+    },
+    "note": "Boolean True from BZG somewhere; ENT-GGV False. Nav already entity-correct via assignments."
+  },
+  "surgical_apply": "staff_home authority stamp finance_read_semantics + prefer_by_entity hint (no behavior change to boolean OR-compat)",
+  "residual": "Legacy callers still see boolean OR; no chrome consumer found. API require remains entity-scoped. CF JWT UI session as zayen@/ggv/finance still NOT_PROVED.",
+  "staff_ready": false,
+  "desktop_gate_ready": false
+}

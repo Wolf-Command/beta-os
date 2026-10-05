@@ -1,0 +1,63 @@
+{
+  "pack": "FCR-BZG-17",
+  "run_id": "BF-c0c394b2d995",
+  "verified_at": "2026-10-04T09:10:00+08:00",
+  "verdict": "IMPLEMENTATION_DONE_LOCAL_PASS",
+  "peaches_independent": true,
+  "py_compile": "PASS",
+  "tests": {
+    "test_fcr_bzg_17_wrong_date_20261004.py": {
+      "pass": 19,
+      "fail": 0
+    },
+    "test_fcr_bzg_16_idempotency_20261004.py": {
+      "pass": 28,
+      "fail": 0,
+      "role": "regression"
+    },
+    "test_fcr_bzg_12_reopen_chain_20261004.py": {
+      "pass": 23,
+      "fail": 0,
+      "role": "regression"
+    }
+  },
+  "files_touched_claimed": [
+    "scripts/core/venue_close.py",
+    "scripts/core/bzg_daily_close.py",
+    "scripts/serve_beta.py",
+    "scripts/tests/test_fcr_bzg_17_wrong_date_20261004.py",
+    "state/reliability/FCR-BZG-17-RESULT-2026-10-04.md"
+  ],
+  "behavior_checked": [
+    "wrong-date capture rejected wrong_business_date close unchanged",
+    "same-date capture succeeds",
+    "capture without pinned business_date remains idempotent",
+    "wrong-date submit rejected wrong_business_date close unchanged",
+    "same-date submit not rejected as wrong date",
+    "ESB snapshot date mismatch guard present (_assert_esb_snapshot_matches_close)",
+    "no hardcoded person/email in wrong-date path",
+    "no new HTTP surface; existing capture/submit forward business_date"
+  ],
+  "protected_closes": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+      "unchanged": true,
+      "declared_cash_amount": 3225000.0,
+      "state": "EXCEPTION",
+      "business_date": "2026-10-03"
+    },
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": {
+      "unchanged": true,
+      "state": "CANCELLED",
+      "business_date": "2026-10-02"
+    }
+  },
+  "prod_pid": 15975,
+  "beta_pid": 93525,
+  "beta_restart": false,
+  "prod_untouched": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "eng_proved": false,
+  "ready_for_human_test": false,
+  "note": "No UI surface for this slice; IMPLEMENTATION_DONE local temp-DB only. Not staff_ready / not human commissioned."
+}

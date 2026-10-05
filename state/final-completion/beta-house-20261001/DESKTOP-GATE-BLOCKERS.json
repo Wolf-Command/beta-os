@@ -1,0 +1,119 @@
+{
+  "schema": "DESKTOP-GATE-BLOCKERS/v1",
+  "mission": "BETA_HOUSE_REAL_CONNECTIONS",
+  "generated_at_wita": "2026-10-01T11:24:15+08:00",
+  "executor": "Peaches-executor",
+  "desktop_gate_ready": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "write_authority_approved": 0,
+  "claim": "NOT_READY — Matt essentials (Canva/Yanolja Bookings) + human_commissioned; CF shots last non-build; entity_isolation REPAIRED_VERIFIED_OWNER_ACCEPTED (does not clear human_commissioned)",
+  "exit_report": "NOT_CREATED",
+  "wolf_desktop_ready_claim": false,
+  "entity_isolation": "REPAIRED_VERIFIED_OWNER_ACCEPTED",
+  "blockers": [
+    {
+      "id": "FW-CANVA-REAUTH",
+      "class": "MATT_OWNER_ACTION",
+      "owner_gated": true,
+      "summary": "Canva OAuth expired — Finish Wolf",
+      "blocks": "Canva LIVE_READ_OK",
+      "desktop_gate_blocks": true,
+      "phase_note": "Owner/external — continue INTERNAL+STAFF around (do not freeze)"
+    },
+    {
+      "id": "FW-YANOLJA-BOOKINGS-ENABLE",
+      "class": "MATT_OWNER_ACTION",
+      "owner_gated": true,
+      "summary": "Yanolja Bookings 302 — Finish Wolf",
+      "blocks": "guest depth",
+      "desktop_gate_blocks": true,
+      "phase_note": "Owner/external — continue INTERNAL+STAFF around (do not freeze)"
+    },
+    {
+      "id": "HUMAN-COMMISSIONED-FALSE",
+      "class": "STAFF_COMMISSIONING",
+      "owner_gated": true,
+      "summary": "human_commissioned=false · write_authority_approved=0 · Bank_Import + Atrium_Finance + Zayen CF/browser residual",
+      "blocks": "write commissioning / staff_ready",
+      "desktop_gate_blocks": true,
+      "note": "Entity isolation CLOSED REPAIRED+VERIFIED; KEEP ASG-ZAYEN-BZG-FC-1; CF/browser is STAFF not architecture reopen"
+    },
+    {
+      "id": "FW-CF-SCREENSHOT-ACCEPTANCE",
+      "class": "MATT_OWNER_ACTION",
+      "owner_gated": true,
+      "summary": "CF session for final screenshot UX acceptance",
+      "blocks": "screenshot audit only",
+      "desktop_gate_blocks": false,
+      "note": "non-build-blocker · Matt last"
+    }
+  ],
+  "staff_commissioning_active": [
+    {
+      "id": "ZAYEN-CF-BROWSER-ENTITY-ISOLATION-UI",
+      "class": "STAFF_COMMISSIONING",
+      "expect": "AMG YES · BZG YES · GGV DENY",
+      "matrix_pass": null,
+      "architecture_reopen": false,
+      "blocks_desktop_gate": false,
+      "note": "Authenticated Zayen CF/browser session prove; residual of entity isolation — not architecture OPEN"
+    },
+    {
+      "id": "BANK-IMPORT-COMMISSIONING",
+      "class": "STAFF_COMMISSIONING",
+      "end_state": "CONNECTED, COMMISSIONING REQUIRED",
+      "write_authority": false,
+      "invent_live": false
+    },
+    {
+      "id": "ATRIUM-FINANCE-8790-COMMISSIONING",
+      "class": "STAFF_COMMISSIONING",
+      "end_state": "CONNECTED, COMMISSIONING REQUIRED",
+      "write_authority": false,
+      "invent_live": false
+    }
+  ],
+  "cleared_this_run": [
+    {
+      "id": "LEADS-DEMO-SOT",
+      "now": "LIVE HABITAT_SHEET_DRIVE_READ · 271"
+    },
+    {
+      "id": "BACKUP-STALE-ATRIUM",
+      "now": "PRESENT; residual PARTIAL pipe AMBER only"
+    },
+    {
+      "id": "NAS-00-02-PERM-DENIED",
+      "now": "DEBLOCKED NOT_REQUIRED"
+    },
+    {
+      "id": "ENTITY-ISOLATION-ARCHITECTURE",
+      "now": "REPAIRED_VERIFIED_OWNER_ACCEPTED · finding CLOSED"
+    }
+  ],
+  "optional_non_gating": [
+    "FW-KLAVIYO-READ-PROVE-OPTIONAL",
+    "FW-W4-SEED-OR-ACCEPT-EMPTY",
+    "INTEGRATIONS-CF-JWT-PARKED",
+    "RESTORE-DRILL-NOT-RUN",
+    "PIPE-AMBER-CF-ACCESS"
+  ],
+  "owner_cards_matt_essentials": [
+    "FW-CANVA-REAUTH",
+    "FW-YANOLJA-BOOKINGS-ENABLE",
+    "FW-CF-SCREENSHOT-ACCEPTANCE"
+  ],
+  "safe_without_matt_desktop_ux_queue": "INTERNAL_MOSTLY_EXHAUSTED_CONTINUE_STAFF_PREP",
+  "phase_note": "INTERNAL_ACTIVE_WAITING_HUMANS / OWNER_CARDS_OPEN — continue staff commissioning around Canva/Bookings; entity_isolation accepted; do NOT claim WOLF DESKTOP READY",
+  "prod_8787_pid": 15975,
+  "beta_8788_pid": 12379,
+  "finance_8790_pid": 45751,
+  "metricool_write": false,
+  "finance_sod": "UNCHANGED",
+  "this_run_internal": [
+    "OWNER-ACCEPT-ENTITY-ISOLATION-20261001",
+    "STAFF-COMMISSIONING-DEEPEN-20261001",
+    "STAFF-PROVE-ROUTING-REFRESH-20261001"
+  ]
+}

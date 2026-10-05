@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pipe episode rollup — flap evidence</title>
+  <link rel="stylesheet" href="/wolf-tokens.css" />
+  <link rel="stylesheet" href="/assets/wolf-shell.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1c1915;
+      --muted: #5c574e;
+      --paper: #f3f1ec;
+      --card: #fffdf8;
+      --line: #ddd6c8;
+      --down: #8a1f1f;
+      --green: #2a4a28;
+      --unk: #6b4a18;
+      --wave: #2a3f5c;
+    }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(ellipse 70% 40% at 100% 0%, #e4ebe6 0%, transparent 55%),
+        var(--paper);
+      color: var(--ink);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 72px; }
+    h1 { font-size: 1.65rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+    h2 { font-size: 1.05rem; margin: 22px 0 10px; letter-spacing: -0.01em; }
+    .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.45; font-size: 0.95rem; }
+    .banner {
+      background: #f5efe3; border: 1px solid #d2c4a4; border-radius: 10px;
+      padding: 12px 14px; margin: 0 0 16px; font-size: 0.9rem; line-height: 1.45;
+    }
+    .banner strong { color: #5a4a28; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+    .chip {
+      display: inline-block; padding: 5px 10px; border-radius: 6px;
+      background: #ebe4d6; font-size: 0.75rem; font-weight: 600;
+    }
+    .chip.GREEN { background: #dde8dc; color: var(--green); }
+    .chip.DOWN { background: #f5e0e0; color: var(--down); }
+    .chip.UNKNOWN { background: #f5ead8; color: var(--unk); }
+    .facts {
+      margin: 0 0 18px; padding: 12px 14px; border: 1px solid var(--line);
+      border-radius: 10px; background: var(--card);
+    }
+    .facts dl {
+      display: grid; grid-template-columns: 160px 1fr; gap: 6px 12px;
+      margin: 0; font-size: 0.88rem;
+    }
+    .facts dt { color: var(--muted); }
+    .facts dd { margin: 0; }
+    .status { font-weight: 700; }
+    .status.GREEN { color: var(--green); }
+    .status.DOWN { color: var(--down); }
+    .status.UNKNOWN { color: var(--unk); }
+    .table-wrap {
+      overflow-x: auto; border: 1px solid var(--line); border-radius: 10px;
+      background: var(--card); margin: 0 0 18px;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; }
+    th, td {
+      text-align: left; padding: 10px 12px; border-bottom: 1px solid #ebe4d6;
+      vertical-align: top; font-size: 0.86rem;
+    }
+    th {
+      background: #f0ebe2; font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.04em; color: var(--muted);
+    }
+    tr:last-child td { border-bottom: 0; }
+    .muted { color: var(--muted); font-size: 0.8rem; line-height: 1.4; }
+    .null { color: #9a9488; font-style: italic; }
+    .err { color: var(--down); }
+    .wave { color: var(--wave); font-weight: 600; font-size: 0.78rem; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
+    a { color: var(--wave); }
+    @media (max-width: 520px) {
+      h1 { font-size: 1.35rem; }
+      main { padding: 16px 12px 64px; }
+      .facts dl { grid-template-columns: 1fr; }
+      th, td { padding: 8px 8px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body data-ready="0" data-pack="RELIABILITY-PIPE-EPISODE-ROLLUP-1">
+  <main>
+    <h1>Pipe episode rollup</h1>
+    <p class="sub" id="sub">Wave7–10 flap evidence · pack RELIABILITY-PIPE-EPISODE-ROLLUP-1 · loading…</p>
+    <div class="banner" id="honesty">
+      <strong>Honesty:</strong>
+      staff_ready=false · human_commissioned=false ·
+      no fake uptime · GREEN/DOWN/UNKNOWN only ·
+      episodes are evidence stamps · never invent uptime % ·
+      preserves PIPE-RELIABILITY-AUTO-1 + RELIABILITY-1 ·
+      prod pid 15975 READ-ONLY
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="facts" id="facts">
+      <dl>
+        <dt>live status</dt><dd id="f-status" class="null">—</dd>
+        <dt>last_probe_at</dt><dd id="f-probe" class="null">—</dd>
+        <dt>hostname</dt><dd id="f-host" class="null">—</dd>
+        <dt>uptime %</dt><dd id="f-uptime" class="null">null (never invent)</dd>
+        <dt>episode_count</dt><dd id="f-count" class="null">—</dd>
+        <dt>flap_count</dt><dd id="f-flaps" class="null">—</dd>
+        <dt>wave_span</dt><dd id="f-wave">Wave7-10</dd>
+        <dt>classification</dt><dd id="f-class">INTERNALLY_SOLVABLE</dd>
+        <dt>ceiling</dt><dd id="f-ceiling">BUILT</dd>
+      </dl>
+    </div>
+    <h2>Rolled-up episodes (evidence)</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>When (WITA)</th>
+            <th>Wave</th>
+            <th>During / transition</th>
+            <th>Notes</th>
+            <th>Uptime %</th>
+          </tr>
+        </thead>
+        <tbody id="episodes">
+          <tr><td colspan="5" class="muted">Loading episodes…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">
+      Sources: CLASSIFICATION-LOG <code>pipe_flaps</code> +
+      <a href="/ops/pipe-reliability-auto-1">PIPE-RELIABILITY-AUTO-1</a> episodes ·
+      also on <a href="/ops/reliability">/ops/reliability</a> mac_pipe surface.
+    </p>
+  </main>
+  <script>
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    function setText(id, value, cls) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = value == null || value === "" ? "—" : String(value);
+      if (cls) el.className = cls;
+    }
+    async function load() {
+      var sub = document.getElementById("sub");
+      var chips = document.getElementById("chips");
+      var episodes = document.getElementById("episodes");
+      try {
+        var resp = await fetch("/api/ops/reliability-pipe-episode-rollup-1", {
+          headers: { Accept: "application/json" }
+        });
+        var data = await resp.json();
+        if (!resp.ok || !data.ok) {
+          episodes.innerHTML = '<tr><td colspan="5" class="err">Failed (' + resp.status + ")</td></tr>";
+          document.body.setAttribute("data-ready", "0");
+          sub.textContent = "Wave7–10 flap evidence · pack RELIABILITY-PIPE-EPISODE-ROLLUP-1 · load failed";
+          return;
+        }
+        var pipe = data.mac_pipe || {};
+        var st = pipe.status || data.status || "UNKNOWN";
+        sub.textContent =
+          "Wave7–10 flap evidence · pack RELIABILITY-PIPE-EPISODE-ROLLUP-1 · as of " +
+          (data.as_of_wita || pipe.last_probe_at || "?") +
+          " · ceiling " + (data.ceiling || "BUILT");
+        chips.innerHTML =
+          '<span class="chip ' + esc(st) + '">status=' + esc(st) + "</span>" +
+          '<span class="chip">fake_uptime=false</span>' +
+          '<span class="chip">fake_pipe_up=false</span>' +
+          '<span class="chip">episodes=' + esc(String(data.episode_count || 0)) + "</span>" +
+          '<span class="chip">flaps=' + esc(String(data.flap_count || 0)) + "</span>" +
+          '<span class="chip">classification=INTERNALLY_SOLVABLE</span>';
+        setText("f-status", st, "status " + st);
+        setText("f-probe", pipe.last_probe_at || data.last_probe_at || "—");
+        setText("f-host", pipe.hostname || "—");
+        setText("f-uptime", "null (never invent)", "null");
+        setText("f-count", data.episode_count != null ? String(data.episode_count) : "—");
+        setText("f-flaps", data.flap_count != null ? String(data.flap_count) : "—");
+        setText("f-wave", data.wave_span || "Wave7-10");
+        setText("f-class", data.classification || "INTERNALLY_SOLVABLE");
+        setText("f-ceiling", data.ceiling || "BUILT");
+        document.body.setAttribute("data-pipe-status", st);
+        document.body.setAttribute("data-last-probe", pipe.last_probe_at || "");
+        document.body.setAttribute("data-episode-count", String(data.episode_count || 0));
+
+        var eps = data.episodes || [];
+        episodes.innerHTML = eps.map(function (ep) {
+          var when = esc(ep.at_wita || "") +
+            (ep.at_wita_end ? " → " + esc(ep.at_wita_end) : "");
+          var during = ep.during
+            ? esc(ep.during)
+            : esc(ep.from_state || "") + " → " + esc(ep.to_state || "");
+          if (ep.flap && !ep.during) during += " (flap)";
+          return (
+            "<tr data-episode=\"" + esc(ep.id || "") + "\">" +
+            "<td><code>" + when + "</code></td>" +
+            "<td class=\"wave\">" + esc(ep.wave || "Wave7-10") + "</td>" +
+            "<td>" + during + "</td>" +
+            "<td class=\"muted\">" + esc(ep.notes || "") + "</td>" +
+            "<td class=\"null\">null</td>" +
+            "</tr>"
+          );
+        }).join("") || '<tr><td colspan="5" class="muted">No episodes stamped</td></tr>';
+
+        document.body.setAttribute("data-ready", "1");
+      } catch (err) {
+        episodes.innerHTML = '<tr><td colspan="5" class="err">' + esc(err.message || err) + "</td></tr>";
+        document.body.setAttribute("data-ready", "0");
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

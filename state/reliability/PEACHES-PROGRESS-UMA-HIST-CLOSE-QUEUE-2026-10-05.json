@@ -1,0 +1,72 @@
+{
+  "to": "Peaches",
+  "require_matt": false,
+  "at": "2026-10-05T11:28:00+08:00",
+  "by": "executor_owner_order",
+  "slice": "UMA-HIST-CLOSE-QUEUE-1",
+  "event": "UMA_HIST_CLOSE_QUEUE_ARMED_PREFLIGHT",
+  "lock_state": {
+    "holder": "BZG-BANK-RECON-1",
+    "run_id": "BF-2e9a971acc74",
+    "wrapper_pid": 66412,
+    "cursor_pid": 66418,
+    "alive": true,
+    "note": "Finance BF-75bdba189a90 finished IMPLEMENTATION_DONE; factory misclassified EXIT:1 as BLOCKED and auto-dispatched bank-recon. Did NOT kill bank-recon (one writer). Finance corrected to READY FOR HUMAN TEST."
+  },
+  "finance": {
+    "run_id": "BF-75bdba189a90",
+    "result_status": "IMPLEMENTATION_DONE",
+    "tests_pass": 12,
+    "tests_fail": 0,
+    "queue_state_now": "READY FOR HUMAN TEST",
+    "prior_false_state": "BLOCKED"
+  },
+  "preflight": {
+    "path": "state/reliability/UMA-HIST-CLOSE-QUEUE-PREFLIGHT-2026-10-05.json",
+    "nine_statuses": {
+      "2026-09-25": "OPEN (no record)",
+      "2026-09-27": "OPEN (no record)",
+      "2026-09-28": "INCOMPLETE",
+      "2026-09-29": "INCOMPLETE (PROTECTED VDC-8fd544e2 \u2014 do not submit)",
+      "2026-09-30": "INCOMPLETE",
+      "2026-10-01": "OPEN",
+      "2026-10-02": "OPEN",
+      "2026-10-03": "EXCEPTION (PROTECTED VDC-470e741f)",
+      "2026-10-04": "INCOMPLETE (PROTECTED VDC-64f5f529 draft)"
+    },
+    "ready_to_close_now": 6,
+    "evidence_nine_with_photos": 1,
+    "evidence_nine_missing_or_no_record": 8,
+    "petty_contamination_ok": true,
+    "zero_closed_uma_sep_oct_in_db": true
+  },
+  "slice_launched": true,
+  "slice_armed": true,
+  "armed_as": "READY predecessor=BZG-BANK-RECON-1 priority=13 auto_arm=true",
+  "will_auto_start_when": "BZG-BANK-RECON-1 releases writer lock",
+  "kept_in_queue": [
+    "BZG-EVIDENCE-LINK-1",
+    "BZG-BANK-RECON-1",
+    "BZG-ZAYEN-FINANCE-PROVE-1",
+    "OBSIDIAN-MIRROR-CONTINUE-1"
+  ],
+  "prod_untouched": true,
+  "prod_pid": 1297,
+  "factory_not_stopped": true,
+  "updated_at": "2026-10-05T11:30:00+08:00",
+  "waiter_pid": 68256,
+  "waiter_alive": true,
+  "queue_tail": [
+    "12 FINANCE READY FOR HUMAN TEST",
+    "13 UMA-HIST-CLOSE-QUEUE-1 READY pred=Finance",
+    "14 EVIDENCE-LINK READY pred=UMA",
+    "15 BANK-RECON RUNNING (holds lock)",
+    "16 ZAYEN-PROVE READY pred=UMA",
+    "17 OBSIDIAN READY pred=UMA"
+  ],
+  "message_for_peaches": "UMA BLU HISTORICAL CLOSE QUEUE \u2014 PREFLIGHT DONE, SLICE ARMED (not launched yet). Lock: BZG-BANK-RECON-1 BF-2e9a971acc74 alive (Finance finished; factory false-BLOCKED then auto-dispatched bank-recon; left alive). Finance corrected to READY FOR HUMAN TEST (IMPLEMENTATION_DONE 12/0). UMA-HIST-CLOSE-QUEUE-1 READY priority 13; stdin waiter pid 68256 will launch when lock free. Nine statuses: 25 OPEN, 27 OPEN, 28 INCOMPLETE, 29 INCOMPLETE(PROTECTED), 30 INCOMPLETE, 01 OPEN, 02 OPEN, 03 EXCEPTION(PROTECTED), 04 INCOMPLETE(PROTECTED). READY_TO_CLOSE_NOW 6/9. Zero CLOSED Uma Sep/Oct in DB. Petty contamination ok. Prod 1297 untouched. Factory not stopped.",
+  "run_id": "BF-e4d931b0a032",
+  "cursor_pid": 69148,
+  "wrapper_pid": 69147,
+  "launched_at": "2026-10-05T03:19:39Z"
+}

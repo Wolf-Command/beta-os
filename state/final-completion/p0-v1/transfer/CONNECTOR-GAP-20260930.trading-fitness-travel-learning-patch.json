@@ -1,0 +1,49 @@
+{
+  "at": "2026-09-30T12:23:31+0800",
+  "ro_trading_fitness": {
+    "status": "DEEPENED_API_USABLE",
+    "at": "2026-09-30T12:23:31+0800",
+    "apis": [
+      "/api/owner/trading-ro",
+      "/api/owner/trading-ro/history",
+      "/api/owner/fitness-ro"
+    ],
+    "boards": [
+      "/owner/trading",
+      "/owner/fitness"
+    ],
+    "class": "BOARD_DATA_WIRED",
+    "live_usable": false,
+    "staff_ready": false,
+    "broker": false,
+    "spartacus_writes": false,
+    "updated": "2026-09-30T12:23:31+0800"
+  },
+  "ro_travel_learning": {
+    "status": "RO_MOUNTED_API_USABLE",
+    "at": "2026-09-30T12:23:31+0800",
+    "apis": [
+      "/api/owner/travel-ro",
+      "/api/owner/learning-ro"
+    ],
+    "boards": [
+      "/owner/travel",
+      "/owner/learning"
+    ],
+    "class": "BOARD_DATA_WIRED",
+    "live_usable": false,
+    "staff_ready": false,
+    "booking": false,
+    "live_quant": false,
+    "updated": "2026-09-30T12:23:31+0800"
+  },
+  "summary_for_exit": {
+    "trading": "API_USABLE + BOARD_DATA_WIRED \u2014 needs Matt hard-refresh prove (not LIVE_USABLE)",
+    "fitness": "API_USABLE + BOARD_DATA_WIRED \u2014 needs Matt hard-refresh prove",
+    "travel": "API_USABLE + BOARD_DATA_WIRED \u2014 draft only / no book",
+    "learning": "API_USABLE + BOARD_DATA_WIRED \u2014 TTC paper / \u2260 intel",
+    "finance_sidecar": "already UP \u2014 identity matrix human next",
+    "content_ce": "needs NAS/Metricool READ deepen (no mutate)",
+    "ads": "NONE \u2014 hold spend/write"
+  }
+}

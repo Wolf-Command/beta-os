@@ -1,11 +1,17 @@
 {
   "pack": "BZG-DAILY-CLOSE-TILL-EDC-1",
-  "status": "ENG_DONE",
+  "status": "DONE_ENGINEERING_PASS",
   "staff_ready": false,
   "human_commissioned": false,
   "result": "state/final-completion/beta-house-20261001/BZG-DAILY-CLOSE-TILL-EDC-1-RESULT.md",
   "tests_pass": 57,
   "tests_fail": 0,
   "prod": "READ_ONLY",
-  "done_at": "2026-10-02T19:57:38+08:00"
+  "done_at": "2026-10-02T19:57:38+08:00",
+  "peaches_verify": "PASS_VERIFIED",
+  "peaches_verify_at": "2026-10-02T20:13:46+08:00",
+  "closed_at": "2026-10-02T20:13:46+08:00",
+  "tip_commit": "a8085be",
+  "impl_commit": "8546cec",
+  "matt_finished_ping": true
 }

@@ -1,0 +1,12 @@
+{
+  "pack": "IZA-UMA-CAPTAIN-CASHIER-1",
+  "status": "ENG_DONE",
+  "exit": 0,
+  "commits": [
+    "15b6cb5",
+    "876f49e"
+  ],
+  "at": "2026-10-02T20:19:00+08:00",
+  "staff_ready": false,
+  "human_commissioned": false
+}

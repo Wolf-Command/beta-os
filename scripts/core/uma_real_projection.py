@@ -1114,25 +1114,31 @@ def _close_branch() -> dict[str, Any]:
             closer = 0
         finally:
             conn.close()
-    missing = []
+    # Owner P0 5 Oct 2026 20:00 WITA: a null variance policy must NEVER block saving a close.
+    # It is an Owner decision (action required), and the close path creates an exception instead.
+    # The closer seat is a separate Owner decision. No internal config language in staff copy.
+    actions: list[str] = []
     if policies == 0:
-        missing.append("the variance policy is not set")
+        actions.append("Variance policy needs approval")
     if closer == 0:
-        missing.append("a closer is not named")
-    blocked = bool(missing)
-    reason = (
-        "Daily close is BLOCKED. Matt has not set them. " + " and ".join(missing) + ". The rest of this page stays open."
-        if blocked
-        else "Daily close can be opened."
-    )
+        actions.append("Daily close closer needs naming")
+    action_required = bool(actions)
+    if action_required:
+        reason = "DAILY CLOSE · Action required · " + " · ".join(actions) + " · [REVIEW]"
+    else:
+        reason = "Daily close can be opened."
     return {
-        "status": "BLOCKED" if blocked else "OPEN",
-        "branch_blocked": blocked,
+        "status": "ACTION_REQUIRED" if action_required else "OPEN",
+        # branch_blocked=False: saving / opening the close is not refused for a null policy.
+        "branch_blocked": False,
+        "action_required": action_required,
         "page_blocked": False,
         "policy_count": policies,
         "closer_count": closer,
+        "actions": actions,
         "reason": reason,
         "href": "/uma-blu-close",
+        "review_href": "/uma-blu-close",
     }
 
 

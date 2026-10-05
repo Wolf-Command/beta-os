@@ -1,0 +1,66 @@
+{
+  "id": "SECURITY-FAIL-SOFT-BLEED-ZAYEN-GGV-20261001",
+  "finding_id": "BREACH-2026-09-30-J1-ZAYEN-GGV-NOTA-READ",
+  "recorded_at_wita": "2026-10-01T09:39:03+08:00",
+  "severity": "FAIL",
+  "status": "CLOSED_REPAIRED_VERIFIED",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "closure": {
+    "owner_accept_wita": "2026-10-01T11:21:00+08:00",
+    "verdict": "REPAIRED + VERIFIED",
+    "basis": "50/50 server-side prove",
+    "human_finance_commissioning": false,
+    "closed_at_wita": "2026-10-01T11:23:30+08:00",
+    "closed_by": "Peaches-executor",
+    "note": "Owner ACCEPT entity-isolation repair. Do NOT interpret as Finance human commissioning complete. Residual CF/browser UI prove stays STAFF_COMMISSIONING."
+  },
+  "owner_disposition": {
+    "rejected": [
+      "LEAVE",
+      "REVOKE_SEAT",
+      "STRIP_CODES"
+    ],
+    "keep": [
+      "ASG-ZAYEN-BZG-FC-1"
+    ],
+    "repair": "ENTITY_ISOLATION",
+    "intentional": {
+      "PERS-ZAYEN": {
+        "ENT-AMG": "FC_YES",
+        "ENT-BZG": "FC_YES",
+        "ENT-GGV": "FINANCE_ZERO"
+      }
+    }
+  },
+  "citations": [
+    "/workspace/wolf-command/state/lanes/vesper/GRILL-BREACH-2026-10-01-J1-QUIET-PROBE.md",
+    "/workspace/wolf-command/state/lanes/vesper/GRILL-BREACH-2026-09-30-J1-ZAYEN-GGV-NOTA-READ.md",
+    "/workspace/wolf-command/state/lanes/breach/FINDINGS-LATEST.md",
+    "/workspace/wolf-command/state/lanes/breach/findings/2026-10-01-j1-quiet-probe-red-zayen-ggv-nota-read.md",
+    "ENTITY-ISOLATION-REPAIR-20261001.json",
+    "OWNER-ACCEPT-ENTITY-ISOLATION-20261001.json"
+  ],
+  "defect": {
+    "class": "vacuous_bare_target_allow_plus_scope_blind_staff_home_codes",
+    "files": [
+      "/Users/wolfterminal/beta-os/scripts/core/rbac.py",
+      "/Users/wolfterminal/beta-os/scripts/core/staff_home.py"
+    ],
+    "before": {
+      "PERS-ZAYEN_finance.nota.read_bare": true,
+      "PERS-ZAYEN_finance.nota.read_ENT-GGV": false,
+      "PERS-ZAYEN_ggv_finance_nota_person_can": false,
+      "PERS-ZAYEN_staff_home_finance_read": true
+    }
+  },
+  "sacred": {
+    "prod_8787_pid": 15975,
+    "beta_8788_pid": 12379,
+    "finance_8790_pid": 45751,
+    "prod_touch": false
+  },
+  "repair_ref": "ENTITY-ISOLATION-REPAIR-20261001",
+  "repaired_at_wita": "2026-10-01T09:43:25+08:00",
+  "OPEN_PENDING_cleared": true
+}

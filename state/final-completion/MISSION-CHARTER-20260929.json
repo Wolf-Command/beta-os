@@ -28,7 +28,7 @@
   "fake_ops_data": false,
   "auto_chain": true,
   "optimize_for": "actually_finish_wolf_not_speed_or_flattery",
-  "updated_at": "2026-09-30T10:33:22+08:00",
+  "updated_at": "2026-09-30T10:33:41+08:00",
   "phase0_box_prepared_at": "2026-09-29T23:28:13+08:00",
   "FINAL_WOLF_COMPLETION_MISSION": true,
   "phase0_mac_stamps_at": "2026-09-29T23:33:17+08:00",
@@ -37,7 +37,7 @@
   "phase2_status": "CHAINING",
   "phase": 2,
   "active_pack": "RELIABILITY-PIPE-EPISODE-ROLLUP-1",
-  "active_pack_status": "ARMING",
+  "active_pack_status": "CURSOR_EXIT_0_AWAITING_PEACHES",
   "cursor_pid": 35130,
   "daemon_pid": 89677,
   "raw_1500_qa_status": "NOT_FOUND_AFTER_EXHAUSTIVE_SEARCH",
@@ -50,7 +50,7 @@
   "last_exited_status": "CURSOR_EXIT_0",
   "last_verified_pack": "AMG-OCC-TRUTH-1",
   "last_verified_status": "PASS_VERIFIED",
-  "beta_os_head": null,
+  "beta_os_head": "e2e9889",
   "atrium_head": "7584266",
   "updated_at_exit": "2026-09-30T01:15:30+08:00",
   "completed_this_run": [
@@ -92,22 +92,22 @@
   "last_pack_verified": "HR-DEFERRED-HOLD-STAMP-1",
   "last_verified_at": "2026-09-30T10:33:22+08:00",
   "pass_verified_count": 48,
-  "next_pack": "RELIABILITY-PIPE-EPISODE-ROLLUP-1",
+  "next_pack": "WAVE11-SYNTH-CONTINUE",
   "mac_pipe": "GREEN_BOARD",
   "unparked_at": "2026-09-30T07:26:00+08:00",
   "standards_lock": true,
   "restore_drill": "DRILL_RAN_NON_DESTRUCTIVE",
-  "last_pack_exited": "HR-DEFERRED-HOLD-STAMP-1",
-  "last_exit_at": "2026-09-30T10:30:50+08:00",
+  "last_pack_exited": "RELIABILITY-PIPE-EPISODE-ROLLUP-1",
+  "last_exit_at": "2026-09-30T10:38:52+08:00",
   "metricool": "PER_SURFACE_RUNTIME_WIRED",
-  "next_pack_note": "HR-DEFERRED-HOLD-STAMP-1 EXIT:0 EXTERNAL_BLOCKER_OR_DEFERRED \u2014 hold stamp \u00b7 hr=DEFERRED_NEXT_WEEK \u00b7 33 HR_DEFERRED \u00b7 invent payroll/headcount/build-HR 403 \u00b7 ceiling HOLD \u00b7 parent arms RELIABILITY-PIPE-EPISODE-ROLLUP-1; Cursor must not auto-chain HEADCHEF / Exit Report",
+  "next_pack_note": "RELIABILITY-PIPE-EPISODE-ROLLUP-1 EXIT:0 INTERNALLY_SOLVABLE \u2014 episode rollup 10/9 flaps Wave7-10 \u00b7 live GREEN \u00b7 invent-uptime/fake-pipe-up 403 \u00b7 ceiling BUILT \u00b7 parent synthesizes WAVE11-SYNTH-CONTINUE; Cursor must not auto-chain HEADCHEF / Exit Report",
   "wave8_queued": [
     "CRM-PIPELINE-TRUTH-1",
     "CONTENT-PUBLISH-PATH-1",
     "OCCUPANCY-EXTERNAL-HOLD-1"
   ],
   "wave8_active": null,
-  "at_wita": "2026-09-30T10:33:22+08:00",
+  "at_wita": "2026-09-30T10:33:41+08:00",
   "wave8_awaiting_peaches": null,
   "wave8_complete": true,
   "wave9_queued": [
@@ -124,8 +124,8 @@
     "HR-DEFERRED-HOLD-STAMP-1",
     "RELIABILITY-PIPE-EPISODE-ROLLUP-1"
   ],
-  "wave10_active": null,
+  "wave10_active": "RELIABILITY-PIPE-EPISODE-ROLLUP-1",
   "wave10_complete": false,
   "cursor_did_not_auto_start_next": true,
-  "wave10_awaiting_peaches": "HR-DEFERRED-HOLD-STAMP-1"
+  "wave10_awaiting_peaches": "RELIABILITY-PIPE-EPISODE-ROLLUP-1"
 }

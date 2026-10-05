@@ -1,0 +1,116 @@
+{
+  "schema": "STAFF-PROVE-QUEUE/v0",
+  "generated_at_wita": "2026-09-30T12:23:21+08:00",
+  "executor": "Peaches-executor",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "bound": "beta",
+  "staff_ready": false,
+  "items": [
+    {
+      "id": "SP-ZAYEN-AMG-BZG-FINANCE",
+      "who": "Zayen",
+      "person_id": "PERS-ZAYEN",
+      "surface": "AMG/BZG Finance",
+      "status": "NOT_RUN",
+      "routing_note": "RETEST AMG FC + BZG FC/AP after Owner ACCEPT entity-isolation (2026-10-01T11:21:00+08:00). Finding CLOSED_REPAIRED_VERIFIED. Expect AMG YES · BZG YES · GGV Finance ZERO. KEEP ASG-ZAYEN-BZG-FC-1. Do not revoke. Finance :8790 SoD unchanged. No Slack-ping.",
+      "entity_isolation": {
+        "ENT-AMG": "YES (atrium seat)",
+        "ENT-BZG": "YES (ASG-ZAYEN-BZG-FC-1 kept)",
+        "ENT-GGV": "ZERO server-side (CLOSED REPAIRED+VERIFIED)"
+      },
+      "needs_you_route": "staff-ops-routing / MY COMMISSIONING — no agent ping",
+      "refreshed_at_wita": "2026-10-01T11:25:00+08:00",
+      "class": "STAFF_COMMISSIONING"
+    },
+    {
+      "id": "ZAYEN-CF-BROWSER-ENTITY-ISOLATION-UI",
+      "who": "Zayen",
+      "person_id": "PERS-ZAYEN",
+      "surface": "CF/browser authenticated UI — entity isolation residual",
+      "status": "NOT_RUN",
+      "class": "STAFF_COMMISSIONING",
+      "expect": "AMG YES · BZG YES · GGV DENY",
+      "matrix_pass": null,
+      "architecture_reopen": false,
+      "blocks_architecture": false,
+      "method": "Authenticated Cloudflare Access browser session against Beta UI (not bare localhost/API matrix)",
+      "routing_note": "Post Owner ACCEPT residual. Server-side already 50/50. Prove real UI/session path. Does NOT reopen BREACH-2026-09-30-J1 unless regression. Does NOT alone complete Finance human commissioning. No agent Slack-ping.",
+      "needs_you_route": "staff-ops-routing / MY COMMISSIONING — no agent ping",
+      "refreshed_at_wita": "2026-10-01T11:25:00+08:00",
+      "added_at_wita": "2026-10-01T11:25:00+08:00"
+    },
+    {
+      "id": "SP-AMANDA-GGV-FINANCE",
+      "who": "Amanda",
+      "person_id": "PERS-AMANDA",
+      "surface": "GGV Finance Operator",
+      "status": "NOT_RUN",
+      "routing_note": "Amanda GGV Operator prove: GGV finance YES; AMG/BZG finance NO. Complementary to Zayen. Owner ACCEPT entity-isolation stamped. No staff ping.",
+      "entity_isolation": {
+        "ENT-GGV": "YES",
+        "ENT-AMG": "NO",
+        "ENT-BZG": "NO"
+      },
+      "needs_you_route": "staff-ops-routing / MY COMMISSIONING — no agent ping",
+      "refreshed_at_wita": "2026-10-01T11:25:00+08:00",
+      "class": "STAFF_COMMISSIONING"
+    },
+    {
+      "id": "BANK-IMPORT-COMMISSIONING",
+      "who": "Staff / Owner-designated",
+      "person_id": null,
+      "surface": "Bank Import",
+      "status": "NOT_RUN",
+      "class": "STAFF_COMMISSIONING",
+      "end_state": "CONNECTED, COMMISSIONING REQUIRED",
+      "invent_live": false,
+      "write_authority": false,
+      "routing_note": "Honest COMMISSIONING prep — see NOTEPACK-BANK-IMPORT-COMMISSIONING-20261001.md. No invent LIVE. No auto ping.",
+      "needs_you_route": "staff-ops-routing / MY COMMISSIONING — no agent ping",
+      "refreshed_at_wita": "2026-10-01T11:25:00+08:00",
+      "added_at_wita": "2026-10-01T11:25:00+08:00"
+    },
+    {
+      "id": "ATRIUM-FINANCE-8790-COMMISSIONING",
+      "who": "Zayen / Amanda / Matt per seat",
+      "person_id": null,
+      "surface": "Atrium Finance :8790",
+      "status": "NOT_RUN",
+      "class": "STAFF_COMMISSIONING",
+      "end_state": "CONNECTED, COMMISSIONING REQUIRED",
+      "invent_live": false,
+      "write_authority": false,
+      "routing_note": "Honest COMMISSIONING — NOTEPACK-ATRIUM-FINANCE-COMMISSIONING-20261001.md. SoD unchanged. No invent LIVE. No auto ping.",
+      "needs_you_route": "staff-ops-routing / MY COMMISSIONING — no agent ping",
+      "refreshed_at_wita": "2026-10-01T11:25:00+08:00",
+      "added_at_wita": "2026-10-01T11:25:00+08:00"
+    },
+    {
+      "id": "SP-HARIYANTO-BZG-RECIPE",
+      "who": "Hariyanto",
+      "person_id": "PERS-HARIYANTO",
+      "surface": "BZG Recipe Builder",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "SP-CONTENT-TEAM",
+      "who": "Content team",
+      "person_id": null,
+      "surface": "Content / seats",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "SP-DEVI-BZG-OPS",
+      "who": "Devi",
+      "person_id": "PERS-DEVI",
+      "surface": "BZG ops / Uma Blu",
+      "status": "NOT_RUN"
+    }
+  ],
+  "refreshed_at_wita": "2026-10-01T11:25:00+08:00",
+  "refresh_note": "Owner ACCEPT entity-isolation 2026-10-01T11:21:00+08:00: finding CLOSED. Added ZAYEN-CF-BROWSER-ENTITY-ISOLATION-UI + Bank/Atrium commissioning rows. No staff ping.",
+  "human_commissioned": false,
+  "entity_isolation": "REPAIRED_VERIFIED_OWNER_ACCEPTED",
+  "finding_closed": "BREACH-2026-09-30-J1-ZAYEN-GGV-NOTA-READ CLOSED_REPAIRED_VERIFIED",
+  "ping_staff": false
+}

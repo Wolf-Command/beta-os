@@ -4,8 +4,9 @@
 Invariant: ACTIVE MISSION → advancement available regardless of calendar.
 Matt status is not an input. Quiet when inactive.
 
-Does NOT invent Cursor work. Does NOT touch Production.
-Deterministic stage advance + recovery WAKE only.
+Does NOT touch Production. Matt status is not an input.
+On worker exit or idle, bf_dispatch starts the next safe named-queue slice.
+Does not kill a live cursor. Credit conservation does not block that queue.
 """
 from __future__ import annotations
 
@@ -149,7 +150,7 @@ def mission_continue_if_idle(*, dry_run: bool = False) -> dict:
     """
     mid = bq.read_active_mission_id(BF)
     if not mid:
-        return {"action": "IDLE", "reason": "no_active_run_and_no_mission"}
+        return {"action": "IDLE", "reason": "no_active_run_and_no_mission", "wake_parent": False, "stopped": True}
     mission = bq.load_mission(mid, BF / "missions")
     if not mission:
         return {"action": "IDLE", "reason": "active_mission_missing", "mission_id": mid}
@@ -255,7 +256,40 @@ def tick(*, dry_run: bool = False) -> dict:
         "require_matt": False,
         "dry_run": dry_run,
         "calendar_gate": False,  # always false — invariant
+        "wake_parent": False,
+        "stopped": False,
     }
+
+    import bf_dispatch as bd
+
+    dispatched = bd.supervisor_dispatch(dry_run=dry_run)
+    if dispatched.get("handled"):
+        out.update(dispatched)
+        out["require_matt"] = False
+        out["calendar_gate"] = False
+        # Self-dispatch is not a parent wake and is not an idle stop.
+        if dispatched.get("started") or dispatched.get("action") in ("WAIT", "DISPATCH"):
+            out["stopped"] = False
+            out["wake_parent"] = False
+        if not dry_run:
+            _append_tick(out)
+            _write_wake(
+                {
+                    "kind": "FACTORY_SUPERVISOR_OWNS_DISPATCH",
+                    "at": now_iso(),
+                    "require_matt": False,
+                    "wake_parent": False,
+                    "stopped": False,
+                    "action": out.get("action"),
+                    "run_id": out.get("run_id"),
+                    "slice": out.get("slice"),
+                    "instruction": (
+                        "The build-factory supervisor owns dispatch. Do not message Matt. "
+                        "Do not start a second cursor while this writer is alive."
+                    ),
+                }
+            )
+        return out
 
     if not ACTIVE.exists() or not ACTIVE.read_text(encoding="utf-8").strip():
         # Owner 19 Sep: empty ACTIVE must still consume ACTIVE_MISSION queue.
@@ -376,7 +410,16 @@ def main() -> int:
     if args.prove_calendar_free:
         print(json.dumps({"ok": True, "calendar_independent": calendar_independent()}))
         return 0 if calendar_independent() else 1
-    print(json.dumps(tick(dry_run=args.dry_run), indent=2))
+    # One tick at a time: launchd's 5-minute tick and the launcher's on-exit tick must not race.
+    import fcntl
+    lock_path = BF / "supervisor-tick.flock"
+    with lock_path.open("w") as lk:
+        try:
+            fcntl.flock(lk, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            print(json.dumps({"ok": True, "action": "SKIP", "reason": "tick_in_progress"}))
+            return 0
+        print(json.dumps(tick(dry_run=args.dry_run), indent=2))
     return 0
 
 

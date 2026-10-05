@@ -1,0 +1,29 @@
+{
+  "milestone": "MULTI-20260930-0849-FIN-TAX-DEEPEN",
+  "at_wita": "2026-09-30T08:49:20+08:00",
+  "pack": "FIN-TAX-DEEPEN-1",
+  "status": "CURSOR_EXIT_0",
+  "suite": {
+    "pass": 179,
+    "fail": 0
+  },
+  "pack_classification": "INTERNALLY_SOLVABLE_OR_HUMAN",
+  "route_classification": "HUMAN_COMMISSIONING",
+  "action": "STAMP_HUMAN_COMMISSIONING",
+  "external_blocker": "EXTERNAL_BLOCKER",
+  "npwp": "MATT_ACTION_NON_BLOCKING",
+  "invented_amount": false,
+  "invented_filing": false,
+  "invented_npwp": false,
+  "due_amount": null,
+  "fin_tax_shell1_preserved": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_pid_held": 15975,
+  "no_push": true,
+  "board": "/fin/tax-deepen-1",
+  "result": "docs/wolf/ops/FIN-TAX-DEEPEN-1-RESULT.md",
+  "next_pack_for_parent": "CRM-PIPELINE-TRUTH-1",
+  "cursor_did_not_auto_start_next": true,
+  "matt_auto_continue_armed": "CRM-PIPELINE-TRUTH-1"
+}

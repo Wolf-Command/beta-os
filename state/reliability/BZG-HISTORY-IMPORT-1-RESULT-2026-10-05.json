@@ -1,0 +1,204 @@
+{
+  "pack": "BZG-HISTORY-IMPORT-1",
+  "migration_id": "bzg_history_import1_20261005",
+  "finished_at": "2026-10-05T07:40:26+08:00",
+  "source_db": "/Users/wolfterminal/.openclaw/workspace/alchemist/data/alchemist.db",
+  "target_db": "/Users/wolfterminal/beta-os/catalog/content_library.sqlite",
+  "source_counts": {
+    "pr_orders": 543,
+    "pr_order_lines": 2017,
+    "pr_receipt_lines": 477,
+    "ledger": 473,
+    "petty_cash": 443,
+    "suppliers": 103
+  },
+  "imported": {
+    "suppliers": 103,
+    "purchase_orders": 543,
+    "po_lines": 2017,
+    "goods_receipts": 104,
+    "gr_lines": 477,
+    "supplier_bills": 473,
+    "ap_ready": 106,
+    "petty_cash": 442,
+    "bank_imports": 15,
+    "bank_transactions": 1257,
+    "evidence_unlinked_queued": 1363
+  },
+  "skipped": {
+    "suppliers": 0,
+    "purchase_orders": 0,
+    "goods_receipts": 0,
+    "supplier_bills": 0,
+    "petty_cash": 1,
+    "bank_files": 0
+  },
+  "linked": {
+    "po_to_ledger": 464,
+    "petty_receipt_files_existing": 16
+  },
+  "needs_reconciliation": 438,
+  "evidence_unlinked": 1363,
+  "petty_balance_before": {
+    "opening_float": 56000.0,
+    "movement_net_from_2026_10_02": -3300.0,
+    "amount_idr": 52700.0
+  },
+  "petty_balance_after": {
+    "opening_float": 56000.0,
+    "movement_net_from_2026_10_02": -3300.0,
+    "amount_idr": 52700.0
+  },
+  "protected_close_checksums_before": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+      "business_date": "2026-10-03",
+      "state": "EXCEPTION",
+      "declared_cash_amount": 3225000.0,
+      "variance_cash_amount": -125000.0,
+      "updated_at": "2026-10-03T13:47:39Z"
+    },
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": {
+      "business_date": "2026-10-02",
+      "state": "CANCELLED",
+      "declared_cash_amount": null,
+      "variance_cash_amount": null,
+      "updated_at": "2026-10-03T12:32:22Z"
+    },
+    "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5": {
+      "business_date": "2026-10-04",
+      "state": "DATA_CAPTURED",
+      "declared_cash_amount": null,
+      "variance_cash_amount": null,
+      "updated_at": "2026-10-04T13:56:05Z"
+    }
+  },
+  "protected_close_checksums_after": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+      "business_date": "2026-10-03",
+      "state": "EXCEPTION",
+      "declared_cash_amount": 3225000.0,
+      "variance_cash_amount": -125000.0,
+      "updated_at": "2026-10-03T13:47:39Z"
+    },
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": {
+      "business_date": "2026-10-02",
+      "state": "CANCELLED",
+      "declared_cash_amount": null,
+      "variance_cash_amount": null,
+      "updated_at": "2026-10-03T12:32:22Z"
+    },
+    "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5": {
+      "business_date": "2026-10-04",
+      "state": "DATA_CAPTURED",
+      "declared_cash_amount": null,
+      "variance_cash_amount": null,
+      "updated_at": "2026-10-04T13:56:05Z"
+    }
+  },
+  "beta_counts_before": {
+    "bzg_ops_purchase_orders": 0,
+    "bzg_ops_po_lines": 0,
+    "bzg_ops_goods_receipts": 0,
+    "bzg_ops_gr_lines": 0,
+    "bzg_ops_supplier_bills": 0,
+    "bzg_ops_ap_ready": 0,
+    "bzg_ops_petty_movements": 17,
+    "bzg_shared_vendors": 0,
+    "bzg_bank_statement_imports": 0,
+    "bzg_bank_transactions": 0,
+    "bzg_ops_evidence_unlinked": 0,
+    "bzg_ops_petty_movements_historical": 0
+  },
+  "beta_counts_after": {
+    "bzg_ops_purchase_orders": 543,
+    "bzg_ops_po_lines": 2017,
+    "bzg_ops_goods_receipts": 474,
+    "bzg_ops_gr_lines": 477,
+    "bzg_ops_supplier_bills": 473,
+    "bzg_ops_ap_ready": 106,
+    "bzg_ops_petty_movements": 459,
+    "bzg_shared_vendors": 103,
+    "bzg_bank_statement_imports": 15,
+    "bzg_bank_transactions": 1257,
+    "bzg_ops_evidence_unlinked": 1363,
+    "bzg_ops_petty_movements_historical": 442
+  },
+  "bank": {
+    "files_on_disk": 15,
+    "imports": 15,
+    "skipped": 0,
+    "transactions": 1257,
+    "unparsed_files": 5
+  },
+  "staff_ready": false,
+  "zayen_ready": false,
+  "backup": "/Users/wolfterminal/beta-os/catalog/backups/pre-bzg-history-import1-20261005-074026.sqlite",
+  "backup_sha256": "d07efb8ac1811c955f13276a54c1379e6f194bbdd044a929c80e677cedd0c71e",
+  "migration": "scripts/migrations/migrate_bzg_history_import1_20261005.py",
+  "core": "scripts/core/bzg_history_import1.py",
+  "status": "IMPORT_DONE",
+  "no_prod": true,
+  "no_commit": true,
+  "no_money_movement": true,
+  "prod_pid_unchanged": 1297,
+  "prod_port": 8787,
+  "id": "BZG-HISTORY-IMPORT-1-RESULT-2026-10-05",
+  "schema": "bzg.history.import.result.v1",
+  "source_count_recount": {
+    "note": "Fresh read 2026-10-05 matches register \u2014 no count moved",
+    "pr_orders": 543,
+    "pr_order_lines": 2017,
+    "pr_receipt_lines": 477,
+    "ledger": 473,
+    "petty_cash": 443,
+    "suppliers": 103
+  },
+  "real_rows_proved": {
+    "purchase_order": {
+      "alchemist_id": "15",
+      "pr_num": "PR-1001"
+    },
+    "ledger": {
+      "alchemist_id": "16"
+    },
+    "petty_cash": {
+      "alchemist_id": "1"
+    },
+    "linked_payment_po_ledger": 464
+  },
+  "switcher_proved": true,
+  "tests_pass": {
+    "test_bzg_history_import1_20261005.py": 10
+  },
+  "tests_fail": {
+    "test_bzg_history_import1_20261005.py": 0
+  },
+  "test_file": "scripts/tests/test_bzg_history_import1_20261005.py",
+  "beta_reloaded": true,
+  "beta_listener_pid": 20127,
+  "beta_port": 8788,
+  "protected_close_untouched": true,
+  "petty_skipped_source_ids": [
+    "451"
+  ],
+  "petty_live_balance_unchanged_idr": 52700,
+  "goods_receipts_note": "474 beta rows = 104 receipt-line PRs + 370 synthetic GR headers for ledger bills without receipt chain",
+  "bank_transaction_count_parsed": 1257,
+  "bank_bni_xls_exception": 5,
+  "what_was_not_built": [
+    "zayen_ready (staff_ready=false)",
+    "bank reconciliation manufacture",
+    "evidence file-to-row deterministic links for Drive URLs",
+    "sales ESB import",
+    "Sep/Oct 2026 bank statements (absent on disk)"
+  ],
+  "files_changed": [
+    "scripts/core/bzg_history_import1.py",
+    "scripts/core/bzg_history_completeness_ro.py",
+    "scripts/migrations/migrate_bzg_history_import1_20261005.py",
+    "scripts/core/bzg_finance_desk.py",
+    "scripts/core/ggv_finance_invoice.py",
+    "scripts/tests/test_bzg_history_import1_20261005.py",
+    "dashboards/bzg-finance.html"
+  ]
+}

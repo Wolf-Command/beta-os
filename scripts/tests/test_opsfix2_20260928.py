@@ -193,7 +193,7 @@ def test_uma_and_invoices() -> None:
     check("missing cost is counted", (ex.get("missing_cost") or {}).get("count", 0) > 0)
     check("duplicate suppliers include bake house", any("bake house" in (row.get("sentence") or "").lower() for row in ex.get("duplicate_suppliers") or []))
     close = ex.get("daily_close") or {}
-    check("close branch is blocked and the page is not", close.get("branch_blocked") is True and close.get("page_blocked") is False and close.get("status") == "BLOCKED")
+    check("daily close asks for variance policy approval without blocking save", close.get("branch_blocked") is False and close.get("page_blocked") is False and close.get("status") == "ACTION_REQUIRED" and close.get("action_required") is True and "Variance policy needs approval" in str(close.get("reason") or "") and "Matt has not" not in str(close.get("reason") or ""))
     orders = real.list_orders(limit=5)
     # HUMANCOMM-1: read live Alchemist count — do not hardcode a drifting register figure.
     live_pr = real._table_count(real.ALCHEMIST_DB, "pr_orders")

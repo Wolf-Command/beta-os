@@ -1,0 +1,15 @@
+{
+  "pack_id": "BZG-P2P-RECV-1",
+  "run_id": "BF-50c02ad53714",
+  "verified_at": "2026-10-05T06:40:28.857924+08:00",
+  "tests": "test_bzg_p2p_recv1_20261005.py 25/0 (Peaches re-run)",
+  "beta_8788_pid": 92970,
+  "prod_8787_pid": 1297,
+  "state": "READY FOR HUMAN TEST",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "live_rows": {
+    "purchase_orders": 0,
+    "goods_receipts": 0
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "pack": "HIST-RECON-BZG-UMA-20261002",
+  "generated_at": "2026-10-02T20:54:52.502587+08:00",
+  "peaches_governed": true,
+  "mac_pipe_at_stamp": "CONNECTED Wolfs-Mac-Studio.local 36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "live_recount_at": "2026-10-02T20:54:52.502587+08:00",
+  "principle": "Do not answer YES from connections/samples alone. ESB and Alchemist remain external authoritative until Wolf cut line commissioned. Beta mostly read-through/index, not second canonical copy.",
+  "vs_UMAREAL_20260929": {
+    "sales_umareal": 8823,
+    "sales_live": 8978,
+    "sales_delta": 155,
+    "venue_daily_closes_umareal_era_note": 2,
+    "venue_daily_closes_live": 2,
+    "venue_daily_closes_changed": false,
+    "material_usage_umareal": 18790,
+    "material_usage_live": 19268,
+    "gl_journal_umareal": 5937,
+    "gl_journal_live": 5978,
+    "pr_orders_umareal": 514,
+    "pr_orders_live": 543,
+    "pr_order_lines_umareal": 1883,
+    "pr_order_lines_live": 2017,
+    "ledger_umareal": 435,
+    "ledger_live": 473,
+    "petty_cash_umareal": 433,
+    "petty_cash_live": 443
+  },
+  "ESB": {
+    "warehouse_path": "/Users/wolfterminal/.openclaw/data/esb.sqlite",
+    "warehouse_mtime": "2026-10-02T05:47+08:00",
+    "source_range": "sales.biz_date MIN=2026-04-05 MAX=2026-10-01 (live COUNT); morning ingest 2026-10-02T05:30 covers yday 2026-10-01",
+    "source_count": {
+      "sales": 8978,
+      "sales_biz_date_min": "2026-04-05",
+      "sales_biz_date_max": "2026-10-01",
+      "menus": 188,
+      "products": 426,
+      "material_usage": 19268,
+      "gl_journal": 5978,
+      "goods_receipts": 0,
+      "sales_menu_summary": 123,
+      "members": 0,
+      "promotions": 2,
+      "menu_categories": 5,
+      "menu_templates": 4
+    },
+    "beta_count": {
+      "venue_daily_closes": 2,
+      "venue_daily_closes_rows": [
+        {
+          "business_date": "2026-09-30",
+          "state": "DATA_CAPTURED"
+        },
+        {
+          "business_date": "2026-10-01",
+          "state": "OPEN"
+        }
+      ],
+      "duplicated_canonical_sales_tables_in_catalog": "none \u2014 sales path is external warehouse / close snapshot read-through",
+      "cut_line_wolf_commissioning_date": null
+    },
+    "tonight_2026_10_02": {
+      "esb_close_snapshot": "AVAILABLE_TOOL",
+      "warehouse_day": "UNAVAILABLE_EMPTY",
+      "incomplete": true,
+      "incomplete_reason": "esb_empty_day",
+      "bill_count": 0,
+      "note": "Warehouse morning job has not ingested 2026-10-02 yet (last max biz_date 2026-10-01). Live API settlement still UNAVAILABLE. Do not block historical lane; tonight close needs live pull when day exists or accept empty until ingest.",
+      "yday_2026_10_01_contrast": {
+        "incomplete": false,
+        "incomplete_reason": null,
+        "bill_count": 50,
+        "finished_count": 45
+      }
+    },
+    "missing": [
+      "Only 2 venue_daily_closes vs ~9k ESB sales warehouse \u2014 not historical completeness",
+      "No Wolf commissioning cut line for sales",
+      "Today 2026-10-02 absent from warehouse (esb_empty_day)",
+      "goods_receipts empty",
+      "Payment-method / discount / void / covers field-level recon incomplete"
+    ],
+    "status": "PARTIAL",
+    "status_rationale": "Live Mac recount refreshed: sales 8978 (was UMAREAL 8823 / ingest-log 8978 match). Beta still 2 venue_daily_closes; no second full canonical sales copy; cut line null. Not COMPLETE_RECONCILED."
+  },
+  "ALCHEMIST": {
+    "db_path": "/Users/wolfterminal/.openclaw/workspace/alchemist/data/alchemist.db",
+    "db_mtime": "2026-10-01T15:37+08:00",
+    "source_range": "pr_orders.order_date 2026-07-27..2026-09-30; ledger.invoice_date 2026-08-02..2026-09-30; petty_cash.entry_date 2026-01-09..2026-10-01",
+    "source_count": {
+      "suppliers": 103,
+      "pr_orders": 543,
+      "pr_order_lines": 2017,
+      "pr_receipt_lines": 477,
+      "pr_vendor_items": 987,
+      "ledger": 473,
+      "petty_cash": 443,
+      "par_levels": 9,
+      "cash_count": 0,
+      "deliveries": 0,
+      "unit_map": 0,
+      "item_prices": 0
+    },
+    "beta_count": {
+      "bzg_ops_purchase_requests": 4,
+      "bzg_ops_pr_lines": 15,
+      "bzg_ops_receipt_lines": 15,
+      "bzg_shared_vendors": 0,
+      "bzg_ops_petty_movements": 3,
+      "role": "Wolf RO projection / Alchemist remains historical+ops truth until cut line",
+      "cut_line_wolf_commissioning_date": null
+    },
+    "missing": [
+      "Beta example/ops PR rows (4) must not be treated as full purchasing history vs Alchemist 543",
+      "deliveries/unit_map/item_prices/cash_count empty",
+      "98 PO Drive photo refs not bulk-verified this stamp (lightweight finish)"
+    ],
+    "status": "PARTIAL",
+    "status_rationale": "Live recount: growth vs UMAREAL (orders 514\u2192543, lines 1883\u21922017, ledger 435\u2192473, petty 433\u2192443). Not COMPLETE \u2014 cut line null + Beta not full mirror."
+  },
+  "TELEGRAM": {
+    "searched_range": "Lightweight reaffirm 2026-10-02 reconnect: ~/.openclaw/telegram (offset only); Downloads telegram media only; no new export/chat dump found",
+    "relevant_discovered": [
+      "Prior: Alchemist TG /nightly+/eod procedure, edc_*.jpg under media/nightly (~215 files counted), Nightly sheet, decisions.md till float + Card\u2248Mandiri QRIS\u2248BRI"
+    ],
+    "incorporated": [
+      "Procedure into BZG Daily Close honesty model",
+      "Till float citation"
+    ],
+    "unresolved": [
+      "Raw Telegram Desktop chat history NOT readable",
+      "No Telegram export found tonight",
+      "Nightly sheet rows not fully classified into Wolf close objects"
+    ],
+    "status": "PARTIAL",
+    "desktop_raw_status": "SOURCE_GAP",
+    "status_rationale": "Procedure recovered earlier; Desktop still SOURCE_GAP; no new export. TELEGRAM MESSAGE \u2260 FACT preserved."
+  },
+  "EDC_HUNT": {
+    "findings": [
+      "Beta venue_close_edc_terminals COUNT = 0 (live recount)",
+      "Prior acquirer labels Mandiri/BNI on sample nights \u2014 not device inventory",
+      "Owner decisions.md Card\u2248Mandiri QRIS\u2248BRI = bank mapping not TID inventory",
+      "~215 edc_*.jpg under alchemist media (evidence artefacts, not seeded)"
+    ],
+    "confidence": "PARTIAL_ACQUIRER_LABELS_ONLY \u2014 insufficient for seeding venue_close_edc_terminals",
+    "ask_matt_only_if_missing": [
+      "How many physical EDC terminals are at Uma Blu tonight?",
+      "Acquirer/bank label on each terminal (e.g. Mandiri / BNI / BCA / other)",
+      "Optional: terminal ID / TID printed on each device or settlement slip header if you want them named in Wolf"
+    ],
+    "do_not_invent": true,
+    "seeded": false
+  },
+  "CROSS_SOURCE": {
+    "roles": {
+      "ESB": "sales/payment operational source (warehouse + live API)",
+      "Alchemist": "historical purchasing/procurement + TG nightly procedure path",
+      "Telegram": "comms/evidence/decisions/procedures \u2014 claims vs corrections vs superseded"
+    },
+    "conflicts_flagged": [
+      "2026-08-24 Nightly row wrong historically (Mr Wolf correction) \u2014 sheet claim \u2260 truth until corrected",
+      "Alchemist soft OCR gap warn \u2260 Owner variance policy (policies ACTIVE=0; do not seed)"
+    ]
+  },
+  "TONIGHT_CLOSE_GATE": {
+    "login_access": "CATALOG_READY; CF Allow Owner-stated LIVE; human Google login by Iza still required (B PARTIAL)",
+    "today_esb": "esb_close_snapshot tool AVAILABLE; warehouse day 2026-10-02 EMPTY (esb_empty_day). Yday 2026-10-01 present (50 bills / 45 finished).",
+    "edc_configured": false,
+    "evidence_workflow": "Engine ENG_PROVED; stops honestly on NEEDS CONFIGURATION / VARIANCE_REQUIRES_POLICY",
+    "blocked_by_history": false,
+    "blocked_by_edc_config": true,
+    "label_close_honestly": "Any tonight close is post cut-line candidate only after human PASS; historical reconstruction remains PARTIAL lane"
+  },
+  "production_line_lane": {
+    "name": "HISTORICAL-DATA-COMPLETENESS-BZG-UMA",
+    "parallel_to": "IZA-UMA-LIVE-COMMISSIONING",
+    "status": "LIVE_RECOUNT_STAMPED_PARTIAL",
+    "next": "Iza Google login for CF B; seed EDC only after Matt answers ask_matt list; keep Cursor free for multi-EDC+vision pack"
+  },
+  "updated_at": "2026-10-02T20:54:52.502587+08:00",
+  "executor_completion": {
+    "at": "2026-10-02T20:54:52.502587+08:00",
+    "mac_stamps_written": true,
+    "heavy_extraction": false,
+    "note": "P0 owner override: lightweight live recount only; no cursor-agent -p on beta-os; Cursor path left free."
+  }
+}

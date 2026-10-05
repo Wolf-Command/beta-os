@@ -1,0 +1,107 @@
+{
+  "at": "2026-10-05T03:27:45+08:00",
+  "status": "WAIT_SILENT_IDLE",
+  "classic_active": false,
+  "side_pack": null,
+  "side_pack_status": null,
+  "run_id": null,
+  "cursor_pid": null,
+  "child_alive": false,
+  "bf_watch": {
+    "active": false,
+    "next_action": "IDLE",
+    "next_breadth_arm": "BLOCKED_PEACHES_VETO_CREDIT_CONSERVATION"
+  },
+  "git_head": "0b0e50d",
+  "dirty_approx": 538,
+  "health": {
+    "prod8787_root": 200,
+    "beta8788_root": 403,
+    "beta_api": 200,
+    "as_of": "2026-10-05T03:27:45+08:00",
+    "stale": false,
+    "note": "beta root 403 without session; api/health 200; prod 200"
+  },
+  "prod_pid": 1297,
+  "beta_pid": 54756,
+  "private_cursor_worker_pid": 2627,
+  "mac_pipe": "PIPE_OK",
+  "mac_machine_id": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "mac_canonical_state": "HOST Wolfs-Mac-Studio.local / CONTROL PATH PIPE_OK",
+  "mac_host": "Wolfs-Mac-Studio.local",
+  "matt_ping": false,
+  "finished_owed": false,
+  "wake_parent": false,
+  "verdict": "WAIT_SILENT_IDLE_CREDIT_CONSERVATION",
+  "protected_close": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+  "protected_cash_last_known": 3225000,
+  "protected_variance_last_known": -125000,
+  "protected_updated_at_last_known": "2026-10-03T13:47:39Z",
+  "protected_state_last_known": "EXCEPTION",
+  "protected_read_this_tick": true,
+  "protected_read_note": "catalog RO venue_daily_closes declared_cash=3225000 variance=-125000 updated_at=2026-10-03T13:47:39Z state=EXCEPTION; no mutate",
+  "protected_detail": {
+    "id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+    "cash_last_known": 3225000,
+    "variance_last_known": -125000,
+    "updated_at_last_known": "2026-10-03T13:47:39Z",
+    "state_last_known": "EXCEPTION",
+    "read_this_tick": true,
+    "note": "canonical catalog RO; no mutate",
+    "table": "venue_daily_closes"
+  },
+  "public_probes": {
+    "prod_root": 200,
+    "beta_root": 302,
+    "beta_uma_blu_close": 302,
+    "beta_recipe": 302,
+    "beta_po": 302,
+    "as_of": "2026-10-05T03:27:45+08:00",
+    "note": "public prod 200; beta paths 302 redirect without session; not factory blocker"
+  },
+  "recovery_key": "INSTALLED_PROVED",
+  "recovery_key_port_this_tick": {
+    "addr": "100.113.26.51",
+    "port": 2222,
+    "result": "MIXED",
+    "mac_probe": "OPEN",
+    "box_probe": "CLOSED",
+    "overnight_no_escalate": true
+  },
+  "ship_queue": {
+    "status": "BZG_P2P_PO_1_DONE_READY_FOR_HUMAN_TEST",
+    "blocked_on": null,
+    "next_pack": "FINANCE-TESTABLE-SLICE",
+    "next_pack_launched": false,
+    "action_this_tick": "WAIT_SILENT_NO_NEXT_CURSOR"
+  },
+  "credit_conservation": true,
+  "active": false,
+  "next_action": "IDLE",
+  "no_auto_arm": true,
+  "human_tests_open_already_pinged_or_deferred": [
+    "BF-5963229a7da6",
+    "BF-f89a9241e98d",
+    "BF-2f0e5e9c2445",
+    "BF-68fa7ce19fc1",
+    "BF-91f5182fb155",
+    "BF-2155a8fd3e52",
+    "BF-d977295a062f",
+    "BF-a1f3daf7f87b",
+    "BF-f3e574a95527",
+    "BF-cc95f0a47633",
+    "BF-b2154da6f884",
+    "BF-165297bdbd53"
+  ],
+  "human_tests_new_this_tick": [],
+  "overnight_morning_queue": {
+    "date": "2026-10-05",
+    "format": "WOLF MORNING TEST BUILD",
+    "items": [
+      "BZG-P2P-PO-1",
+      "HARYANTO-RECIPE-FINISH"
+    ],
+    "matt_ping_deferred": true
+  },
+  "note": "Build factory watch 2026-10-05T03:27:45+08:00 WAIT_SILENT IDLE under CREDIT CONSERVATION; no ACTIVE; last finished BF-5963229a7da6 BZG-P2P-PO-1 READY_FOR_HUMAN_TEST matt ping DEFERRED overnight; HARYANTO-RECIPE-FINISH BF-f89a9241e98d also deferred overnight; FINANCE-TESTABLE-SLICE HELD; no auto-arm Tours/Events/P2P breadth; Mac 36d8fa4b PIPE_OK tip 0b0e50d dirty≈538; prod 1297 + beta 54756 untouched; RK Tailscale Mac :2222 OPEN box CLOSED — overnight log only no Matt escalate; public beta_root 302 prod 200 beta_uma_close/recipe/po 302; protected VDC-470e741f cash 3225000 variance -125000 updated_at 2026-10-03T13:47:39Z EXCEPTION unchanged; staff_ready=false human_commissioned=false; overnight no Matt status — morning WOLF MORNING TEST BUILD; wake_parent=false."
+}

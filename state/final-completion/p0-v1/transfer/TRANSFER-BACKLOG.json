@@ -1,0 +1,291 @@
+{
+  "schema": "TRANSFER-BACKLOG/v1",
+  "generated_at_wita": "2026-09-30T11:27:57+08:00",
+  "executor": "Peaches-executor",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "rule": "MISSING non-HR only from V1-SURFACE-MANIFEST-DRAFT \u2014 no speculative expansion",
+  "hr_policy": "DEFERRED",
+  "staff_ready": false,
+  "exit_report": "NOT_CREATED",
+  "prod_8787_touched": false,
+  "count": 19,
+  "in_transfer_now": [
+    {
+      "name": "Gatekeeper",
+      "beta_route": "/owner/gatekeeper",
+      "migration_state": "PARTIAL",
+      "note": "never sends"
+    },
+    {
+      "name": "Event Bus",
+      "beta_route": "/ops/event-bus",
+      "migration_state": "PARTIAL",
+      "note": "no fake live stream"
+    },
+    {
+      "name": "Peptide Schedule",
+      "beta_route": "/owner/fitness",
+      "migration_state": "PARTIAL",
+      "note": "Owner-only \u00b7 Sheets vs JSON SoT TBD"
+    },
+    {
+      "name": "HOLDINGS-PERSONAL Registry",
+      "beta_route": "/owner/trading",
+      "migration_state": "PARTIAL",
+      "note": "Owner-only \u00b7 no invent"
+    },
+    {
+      "name": "Competitor Rates Pipeline",
+      "beta_route": "/ops/competitor-rates-pipeline",
+      "migration_state": "PARTIAL",
+      "note": "honesty stub"
+    },
+    {
+      "name": "Rate Calendar DB",
+      "beta_route": "/ops/rate-calendar",
+      "migration_state": "PARTIAL",
+      "note": "parked agents"
+    },
+    {
+      "name": "Calendly Atrium Sync",
+      "beta_route": "/ops/calendly-atrium-sync",
+      "migration_state": "PARTIAL",
+      "note": "no Beta live sync"
+    }
+  ],
+  "items": [
+    {
+      "order": 1,
+      "name": "Trading Desk (holdings + trade journal)",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "http://127.0.0.1:8787/trading.html \u00b7 ~/.openclaw/workspace/wolf-system/trading-desk/ \u00b7 dashboards/assets/trading-desk.js",
+      "remaining_work": "Rebuild Personal Command surface in beta OR explicitly preserve as V1 historical; restore trading/travel/spartacus to Owner IA; wire paper quant per QUANT_PROGRAM without live broker",
+      "beta_route": "/owner/trading",
+      "migration_state": "PARTIAL",
+      "notes": "465 only has Master Spec private-domain bullet mentioning investments/trading analysis \u2014 no capability record for Trading Desk"
+    },
+    {
+      "order": 2,
+      "name": "TTC / Flint Paper Quant Program",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/trading-desk/QUANT_PROGRAM.md \u00b7 state/learning-desk/ttc-learn-base/ \u00b7 scripts/ttc_discord_dm_silent_ingest.py \u00b7 learning.html",
+      "remaining_work": "Inventory learning-desk state; decide beta Owner Personal Command home for TTC",
+      "beta_route": "/owner/trading",
+      "migration_state": "PARTIAL",
+      "notes": ""
+    },
+    {
+      "order": 3,
+      "name": "Spartacus Fitness / Health Command",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "http://127.0.0.1:8787/spartacus.html \u00b7 ~/.openclaw/personal/health/ \u00b7 dashboards/data/spartacus-*.json \u00b7 Telegram bot Spartacus",
+      "remaining_work": "Preserve DB + program JSON; rebuild Owner Fitness surface; keep HR_DEFERRED separate from personal fitness",
+      "beta_route": "/owner/fitness",
+      "migration_state": "PARTIAL",
+      "notes": "Master tile Spartacus 75 still live on V1 master.status.json 2026-09-30"
+    },
+    {
+      "order": 4,
+      "name": "Peptide Schedule (legacy Sheets + board tracker)",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "/Users/wolfterminal/peptide_schedule_update.gs \u00b7 spartacus-peptides.json \u00b7 workout_peptides.py",
+      "remaining_work": "Owner confirm Sheets vs local JSON SoT; no staff Fitness; human prove /owner/fitness peptide section",
+      "beta_route": "/owner/fitness",
+      "migration_state": "PARTIAL",
+      "notes": "Owner-only \u00b7 deepened owner-fitness-1 \u00b7 alias /owner/peptide \u2192 /owner/fitness \u00b7 NOT REBUILT+PROVEN"
+    },
+    {
+      "order": 5,
+      "name": "HOLDINGS-PERSONAL Registry",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "/Users/wolfterminal/WolfCommandSystem/WolfCommand/01-Wolf-Command/System-Registry/HOLDINGS-PERSONAL.md",
+      "remaining_work": "Fold into Personal Command holdings UI (read-only mirror); do not invent lines; human prove",
+      "beta_route": "/owner/trading",
+      "migration_state": "PARTIAL",
+      "notes": "Owner-only \u00b7 deepened owner-trading-1 \u00b7 alias /owner/holdings \u2192 /owner/trading \u00b7 no trades from file"
+    },
+    {
+      "order": 6,
+      "name": "Travel Board",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "http://127.0.0.1:8787/travel.html",
+      "remaining_work": "Human prove /owner/travel; optional later mirror of draft tiles \u2014 no live booking",
+      "beta_route": "/owner/travel",
+      "migration_state": "PARTIAL",
+      "notes": "Wave-8 soft-redirect retired; Owner surface owner-travel-1.html PARTIAL"
+    },
+    {
+      "order": 7,
+      "name": "Learning Desk",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "http://127.0.0.1:8787/learning.html \u00b7 assets/learning-desk.js",
+      "remaining_work": "Human prove /owner/learning; optional /api/learning read-only mirror \u2014 TTC paper only",
+      "beta_route": "/owner/learning",
+      "migration_state": "PARTIAL",
+      "notes": "Distinct from /intel/learning; owner-learning-1.html PARTIAL"
+    },
+    {
+      "order": 8,
+      "name": "Haikal Desk",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/haikal-desk.html + haikal.html",
+      "remaining_work": "Human prove /seats/content-desk + /haikal; parity vs /content-2.0 later \u2014 People\u2260Roles",
+      "beta_route": "/seats/content-desk",
+      "migration_state": "PARTIAL",
+      "notes": "PARTIAL stamp seat-content-desk-1.html; aliases /haikal*; does not replace content-2.0"
+    },
+    {
+      "order": 9,
+      "name": "Misa Board",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/misa.html",
+      "remaining_work": "Human prove /seats/content-admin + /misa; optional due-list API later \u2014 no post/spend",
+      "beta_route": "/seats/content-admin",
+      "migration_state": "PARTIAL",
+      "notes": "PARTIAL stamp seat-content-admin-1.html; aliases /misa*; ROLE-CONTENT-CREW not PERS-MISA ACL"
+    },
+    {
+      "order": 10,
+      "name": "Ads Studio",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/ads-studio.html",
+      "remaining_work": "Human prove /seats/ads-studio + /ads-studio; no Meta/Google spend hooks; Rouge LEARN-only",
+      "beta_route": "/seats/ads-studio",
+      "migration_state": "PARTIAL",
+      "notes": "PARTIAL stamp seat-ads-studio-1.html; aliases /ads-studio*; no publish/spend APIs"
+    },
+    {
+      "order": 11,
+      "name": "Resolve Studio",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/resolve-studio",
+      "remaining_work": "Human prove /seats/resolve-studio + /resolve-studio; V1 folder SoT",
+      "beta_route": "/seats/resolve-studio",
+      "migration_state": "PARTIAL",
+      "notes": "PARTIAL stamp seat-resolve-studio-1.html; aliases /resolve-studio*; nobody posts"
+    },
+    {
+      "order": 12,
+      "name": "Habitat Investment 2026",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/habitat-investment-2026.html",
+      "remaining_work": "Human prove /habitat-investment-2026; optional later prospectus mirror \u2014 no invent financials",
+      "beta_route": "/habitat-investment-2026",
+      "migration_state": "PARTIAL",
+      "notes": "PARTIAL stamp habitat-investment-1.html; prefer existing habitat-investment* aliases; V1 board SoT"
+    },
+    {
+      "order": 13,
+      "name": "Kuta Rates Competitor Board",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/kuta-rates.html + competitor-rates.db",
+      "remaining_work": "Human prove /kuta-rates; optional read-only status/brief mirror \u2014 pipeline separate; nobody books",
+      "beta_route": "/kuta-rates",
+      "migration_state": "PARTIAL",
+      "notes": "PARTIAL stamp kuta-rates-1.html; Wave8 Empire soft-redirect retired; Owner/AMG IA; legacy aliases \u2192 /kuta-rates"
+    },
+    {
+      "order": 14,
+      "name": "AMG / BZG / GGV Voice Boards",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "/Users/wolfterminal/.openclaw/workspace/wolf-system/dashboards/amg-voice.html bzg-voice.html ggv-voice.html",
+      "remaining_work": "Human prove three voice seats; do not wire Beta POST send \u2014 no reply automation",
+      "beta_route": "/amg-voice \u00b7 /bzg-voice \u00b7 /ggv-voice",
+      "migration_state": "PARTIAL",
+      "notes": "PARTIAL stamps *-voice-1.html; no send; no reply automation; V1 jsonl SoT"
+    },
+    {
+      "order": 15,
+      "name": "Gatekeeper",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "/Users/wolfterminal/WolfCommandSystem/WolfCommand/01-Wolf-Command/Gatekeeper",
+      "remaining_work": "Human prove; multi-inbox tokens follow-on; no send; optional draft UI later",
+      "beta_route": "/owner/gatekeeper",
+      "migration_state": "PARTIAL",
+      "notes": "NEVER sends \u00b7 draft-only \u00b7 board owner-gatekeeper-1.html \u00b7 V1 vault+LaunchAgent SoT"
+    },
+    {
+      "order": 16,
+      "name": "Event Bus",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "~/.openclaw/state/event_bus.db + LaunchAgent",
+      "remaining_work": "Optional read-only health API later; do not migrate DB this pass; human prove",
+      "beta_route": "/ops/event-bus",
+      "migration_state": "PARTIAL",
+      "notes": "Honesty board only \u00b7 no fake live stream \u00b7 LaunchAgent KeepAlive remains V1"
+    },
+    {
+      "order": 17,
+      "name": "Competitor Rates Pipeline",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "competitor-rates.db + LaunchAgents + kuta-rates briefs",
+      "remaining_work": "Fix Atrium SSL scrape on V1; do not fake live sync on Beta; human prove",
+      "beta_route": "/ops/competitor-rates-pipeline",
+      "migration_state": "PARTIAL",
+      "notes": "PARTIAL stub \u00b7 blockers documented \u00b7 competitor_rates/rate_signals empty \u00b7 feeds /kuta-rates"
+    },
+    {
+      "order": 18,
+      "name": "Rate Calendar DB",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "~/.openclaw/data/rate-calendar.db",
+      "remaining_work": "Owner decision to unpark LaunchAgents; no Beta write path yet",
+      "beta_route": "/ops/rate-calendar",
+      "migration_state": "PARTIAL",
+      "notes": "PARTIAL stub \u00b7 agents parked-20260820-tg-mute \u00b7 DB preserved in place"
+    },
+    {
+      "order": 19,
+      "name": "Calendly Atrium Sync",
+      "classification": "MISSING",
+      "in_465": false,
+      "newly_recovered": true,
+      "v1_route_or_location": "calendly-atrium-sync LaunchAgent",
+      "remaining_work": "Beta connector wire only after Owner commission; no fake booking feed",
+      "beta_route": "/ops/calendly-atrium-sync",
+      "migration_state": "PARTIAL",
+      "notes": "PARTIAL stub \u00b7 V1 poll SoT \u00b7 creds stay on V1 \u00b7 no Beta live sync"
+    }
+  ],
+  "last_pack": {
+    "tag": "20260930-gk-ebus-peptide-holdings-pipe",
+    "spec": "TRANSFER-GATEKEEPER-EVENTBUS-PEPTIDE-HOLDINGS-PIPELINE-SPEC.md",
+    "claim": "NOT_REBUILT_PLUS_PROVEN"
+  }
+}

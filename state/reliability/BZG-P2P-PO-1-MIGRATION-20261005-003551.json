@@ -1,0 +1,29 @@
+{
+  "pack": "BZG-P2P-PO-1",
+  "migration_id": "bzg_p2p_po1_20261004",
+  "finished_at": "2026-10-05T00:35:51+08:00",
+  "backup": "/Users/wolfterminal/beta-os/catalog/backups/pre-bzg-p2p-po1-20261005-003551.sqlite",
+  "backup_sha256": "85bfe5c15875a497c78a278534f2eeb3c860d15b995cfd5dc79b2f0a0fb1efda",
+  "added_tables": [
+    "bzg_ops_purchase_orders",
+    "bzg_ops_po_lines"
+  ],
+  "permission": "bzg.po.create",
+  "granted_roles": [
+    "ROLE-MATT",
+    "ROLE-AMG-FINANCIAL-CONTROLLER",
+    "ROLE-BZG-CLOSER",
+    "ROLE-BZG-FB-OPS-LEAD",
+    "ROLE-GGV-CREATIVE-DIRECTOR",
+    "ROLE-CONTENT-CREATOR",
+    "ROLE-GGV-FINANCE-OPERATOR",
+    "ROLE-CONTENT-MGMT",
+    "ROLE-BZG-HEAD-CHEF",
+    "ROLE-BZG-FINANCIAL-CONTROLLER",
+    "ROLE-GGV-FINANCIAL-CONTROLLER",
+    "ROLE-BZG-CASHIER",
+    "ROLE-BZG-CAPTAIN"
+  ],
+  "staff_ready": false,
+  "human_commissioned": false
+}

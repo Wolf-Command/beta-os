@@ -1,0 +1,67 @@
+{
+  "ok": true,
+  "probed_at": "2026-10-01T07:33:28+08:00",
+  "pii_omitted": true,
+  "guest_depth": "UNKNOWN",
+  "endpoints": {
+    "arrival_list": {
+      "ok": false,
+      "denied": false,
+      "http": 200,
+      "error_codes": [
+        "105",
+        "From Date is missing"
+      ],
+      "row_count": null,
+      "request_type": "ArrivalList",
+      "probed_at": "2026-10-01T07:30:53+08:00",
+      "writable": false,
+      "write_attempted": false,
+      "pii_omitted": true
+    },
+    "bookings": {
+      "ok": false,
+      "denied": true,
+      "http": 200,
+      "error_codes": [
+        "302",
+        "Unauthorized Request. Integration is not allowed",
+        "302"
+      ],
+      "row_count": null,
+      "request_type": "Bookings",
+      "probed_at": "2026-10-01T07:30:54+08:00",
+      "writable": false,
+      "write_attempted": false,
+      "pii_omitted": true
+    },
+    "inhouse_room_status": {
+      "ok": false,
+      "denied": false,
+      "http": 200,
+      "error_codes": [
+        "502",
+        "Request Type is missing"
+      ],
+      "row_count": null,
+      "request_type": "Retrieve Inhouse Room Status",
+      "probed_at": "2026-10-01T07:30:55+08:00",
+      "writable": false,
+      "write_attempted": false,
+      "pii_omitted": true
+    },
+    "bookings_dated": {
+      "ok": true,
+      "denied": false,
+      "http": 200,
+      "error_codes": [],
+      "row_count": null,
+      "request_type": "Bookings",
+      "probed_at": "2026-10-01T07:30:55+08:00",
+      "writable": false,
+      "write_attempted": false,
+      "pii_omitted": true
+    }
+  },
+  "summary": "2026-10-01 deepen probe: Bookings=302 Integration not allowed; ArrivalList=105 From Date missing / listing Bad request type; Inhouse kiosk=500. Guests UNKNOWN. ADR/RevPAR not invented."
+}

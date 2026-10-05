@@ -1,0 +1,176 @@
+{
+  "schema": "NEEDS-MATT-P0/v1",
+  "generated_at_wita": "2026-10-01T09:51:35+08:00",
+  "updated_at_wita": "2026-10-01T11:25:30+08:00",
+  "executor": "Peaches-executor",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "bound": "beta",
+  "beta_port": 8788,
+  "prod_8787_touched": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "desktop_gate_ready": false,
+  "exit_report": "NOT_CREATED",
+  "wolf_desktop_ready_claim": false,
+  "claim": "FINISH WOLF — 3 Matt essentials (Canva / Yanolja Bookings / CF last). Klaviyo+W4 optional (non-gating).",
+  "diff_summary": {
+    "supersedes": "OWNER-HOME-FINISH-WOLF-5-POLISH-1 (5 cards incl Klaviyo+W4 as Finish)",
+    "now_matt_cards": [
+      "FW-CANVA-REAUTH",
+      "FW-YANOLJA-BOOKINGS-ENABLE",
+      "FW-CF-SCREENSHOT-ACCEPTANCE"
+    ],
+    "matt_card_count": 3,
+    "moved_to_optional": [
+      "FW-KLAVIYO-READ-PROVE-OPTIONAL",
+      "FW-W4-SEED-OR-ACCEPT-EMPTY"
+    ],
+    "gap_reclass": "GAP-RECLASS-20261001",
+    "staff_unchanged": true,
+    "finance_sod": "UNCHANGED"
+  },
+  "items": [
+    {
+      "id": "FW-CANVA-REAUTH",
+      "WHAT": "Re-auth Canva Connect OAuth (expired 2026-06-18)",
+      "WHY": "CREDENTIAL_PRESENT_UNTESTED",
+      "WHERE": "https://www.canva.com/developers/integrations/connect-api",
+      "EXPECTED": "Fresh token; LIVE_READ_OK",
+      "TIME": "10-15 min",
+      "STATUS": "WAITING_OWNER",
+      "NEXT": "CANVA-CAPABILITY-TRUTH-1 READ prove",
+      "owner_only": true,
+      "rank": 1,
+      "title": "Re-auth Canva Connect OAuth (expired 2026-06-18)",
+      "who": "Matt (Owner)",
+      "device": [
+        "desktop"
+      ],
+      "urls": {
+        "external": [
+          "https://www.canva.com/developers/integrations/connect-api"
+        ],
+        "local": [
+          "https://www.canva.com/developers/integrations/connect-api"
+        ]
+      },
+      "open_href": "https://www.canva.com/developers/integrations/connect-api",
+      "why_blocks_completion": "CREDENTIAL_PRESENT_UNTESTED",
+      "pass_criteria": [
+        "Fresh token; LIVE_READ_OK"
+      ],
+      "evidence_to_capture": [
+        "CANVA-CAPABILITY-TRUTH-1 READ prove"
+      ],
+      "time": "10-15 min",
+      "status": "WAITING_OWNER",
+      "optional": false,
+      "last_card": false,
+      "source": "FINISH-WOLF-QUEUE.json",
+      "what_happens_next": "CANVA-CAPABILITY-TRUTH-1 READ prove"
+    },
+    {
+      "id": "FW-YANOLJA-BOOKINGS-ENABLE",
+      "WHAT": "Enable Yanolja Bookings API HotelCode 63221",
+      "WHY": "Guest depth UNKNOWN (302)",
+      "WHERE": "https://live.ipms247.com",
+      "EXPECTED": "Bookings 200; guest probes",
+      "TIME": "15-30 min",
+      "STATUS": "WAITING_OWNER",
+      "NEXT": "Guest-depth probe; write NO",
+      "owner_only": true,
+      "rank": 2,
+      "title": "Enable Yanolja Bookings API HotelCode 63221",
+      "who": "Matt (Owner)",
+      "device": [
+        "desktop"
+      ],
+      "urls": {
+        "external": [
+          "https://live.ipms247.com"
+        ],
+        "local": [
+          "https://live.ipms247.com"
+        ]
+      },
+      "open_href": "https://live.ipms247.com",
+      "why_blocks_completion": "Guest depth UNKNOWN (302)",
+      "pass_criteria": [
+        "Bookings 200; guest probes"
+      ],
+      "evidence_to_capture": [
+        "Guest-depth probe; write NO"
+      ],
+      "time": "15-30 min",
+      "status": "WAITING_OWNER",
+      "optional": false,
+      "last_card": false,
+      "source": "FINISH-WOLF-QUEUE.json",
+      "what_happens_next": "Guest-depth probe; write NO"
+    },
+    {
+      "id": "FW-CF-SCREENSHOT-ACCEPTANCE",
+      "WHAT": "CF Access session for final screenshot acceptance",
+      "WHY": "Matt last, non-build-blocker",
+      "WHERE": "https://beta.wolfcommand.net/owner-empire-pack",
+      "EXPECTED": "Real CF screenshots",
+      "TIME": "10-15 min",
+      "STATUS": "WAITING_OWNER_LAST",
+      "NEXT": "Screenshot audit",
+      "owner_only": true,
+      "last_card": true,
+      "rank": 3,
+      "title": "CF Access session for final screenshot acceptance",
+      "who": "Matt (Owner)",
+      "device": [
+        "desktop"
+      ],
+      "urls": {
+        "external": [
+          "https://beta.wolfcommand.net/owner-empire-pack"
+        ],
+        "local": [
+          "https://beta.wolfcommand.net/owner-empire-pack"
+        ]
+      },
+      "open_href": "https://beta.wolfcommand.net/owner-empire-pack",
+      "why_blocks_completion": "Matt last, non-build-blocker",
+      "pass_criteria": [
+        "Real CF screenshots"
+      ],
+      "evidence_to_capture": [
+        "Screenshot audit"
+      ],
+      "time": "10-15 min",
+      "status": "WAITING_OWNER_LAST",
+      "optional": false,
+      "source": "FINISH-WOLF-QUEUE.json",
+      "what_happens_next": "Screenshot audit"
+    }
+  ],
+  "optional_non_gating": [
+    {
+      "id": "FW-KLAVIYO-READ-PROVE-OPTIONAL",
+      "STATUS": "OPTIONAL_NON_GATING",
+      "note": "Does not block desktop; Habitat sheet covers leads READ",
+      "optional": true,
+      "status": "OPTIONAL_NON_GATING",
+      "who": "Matt (optional)"
+    },
+    {
+      "id": "FW-W4-SEED-OR-ACCEPT-EMPTY",
+      "STATUS": "OPTIONAL_NON_GATING",
+      "note": "Vesper queue — not platform blocker",
+      "optional": true,
+      "status": "OPTIONAL_NON_GATING",
+      "who": "Matt (optional)"
+    }
+  ],
+  "honesty": {
+    "staff_ready": false,
+    "desktop_gate_ready": false,
+    "metricool_write": false
+  },
+  "entity_isolation": "REPAIRED_VERIFIED_OWNER_ACCEPTED",
+  "phase_note": "Owner ACCEPT entity-isolation — finding CLOSED. Continue around Canva/Yanolja; staff commissioning active. Do NOT claim WOLF DESKTOP READY."
+}

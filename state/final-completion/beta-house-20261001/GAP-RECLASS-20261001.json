@@ -1,0 +1,177 @@
+{
+  "schema": "GAP-RECLASS/v1",
+  "mission": "BETA_HOUSE_REAL_CONNECTIONS",
+  "generated_at_wita": "2026-10-01T09:45:23+08:00",
+  "executor": "Peaches-executor",
+  "owner_order": "2026-10-01~09:36 \u2014 do NOT declare safe-without-Matt exhausted; reclassify every remaining gap",
+  "counts_by_class": {
+    "MATT_OWNER_ACTION": 4,
+    "OPTIONAL_NON_GATING": 5,
+    "INTERNAL": 3,
+    "STAFF_COMMISSIONING": 2,
+    "EXTERNAL_BLOCKER": 1
+  },
+  "gaps": [
+    {
+      "id": "FW-CANVA-REAUTH",
+      "class": "MATT_OWNER_ACTION",
+      "why": "Canva OAuth access_token expired 2026-06-18; CREDENTIAL_PRESENT_UNTESTED \u2014 Owner re-auth required",
+      "next_action_owner": "Matt",
+      "finish_wolf": true,
+      "desktop_gate_blocks": true,
+      "note": "Keep Finish Wolf"
+    },
+    {
+      "id": "FW-YANOLJA-BOOKINGS-ENABLE",
+      "class": "MATT_OWNER_ACTION",
+      "why": "Bookings HTTP 302 Integration not allowed \u2014 guest depth UNKNOWN; vendor/admin enable",
+      "next_action_owner": "Matt/vendor",
+      "finish_wolf": true,
+      "desktop_gate_blocks": true,
+      "note": "Keep Finish Wolf"
+    },
+    {
+      "id": "FW-CF-SCREENSHOT-ACCEPTANCE",
+      "class": "MATT_OWNER_ACTION",
+      "why": "Final CF-authenticated screenshot UX acceptance \u2014 last non-build-blocker",
+      "next_action_owner": "Matt",
+      "finish_wolf": true,
+      "desktop_gate_blocks": false,
+      "note": "MATT last; non-build-blocker"
+    },
+    {
+      "id": "FW-KLAVIYO-READ-PROVE-OPTIONAL",
+      "class": "OPTIONAL_NON_GATING",
+      "why": "Keys seated untested; no required Wolf desktop workflow blocked without Klaviyo READ",
+      "next_action_owner": "Matt (optional)",
+      "finish_wolf": false,
+      "desktop_gate_blocks": false,
+      "note": "Moved off Finish Wolf essentials"
+    },
+    {
+      "id": "FW-W4-SEED-OR-ACCEPT-EMPTY",
+      "class": "OPTIONAL_NON_GATING",
+      "why": "Vesper W4 tactics EMPTY is queue/Finish soft-hold \u2014 not platform desktop blocker",
+      "next_action_owner": "Matt/Vesper (optional)",
+      "finish_wolf": false,
+      "desktop_gate_blocks": false,
+      "note": "Keep in optional queue without platform-blocker status"
+    },
+    {
+      "id": "LEADS-DEMO-SOT",
+      "class": "INTERNAL",
+      "why": "FIXED this run: Habitat Google Sheet Drive READ bound \u2014 271 real leads; DEMO fixtures ignored on Owner pulse",
+      "next_action_owner": "Peaches (done)",
+      "finish_wolf": false,
+      "desktop_gate_blocks": false,
+      "status": "FIXED",
+      "precise_state_now": "LIVE",
+      "sot": "HABITAT_SHEET_DRIVE_READ"
+    },
+    {
+      "id": "BACKUP-STALE-ATRIUM",
+      "class": "INTERNAL",
+      "why": "FIXED this run: STALE was monitoring-snapshot telemetry (>90m), not backup failure. Live backup OK 2026-10-01T02:00; snapshot refreshed 09:42 WITA",
+      "next_action_owner": "Peaches (done)",
+      "finish_wolf": false,
+      "desktop_gate_blocks": false,
+      "status": "FIXED",
+      "precise_state_now": "PARTIAL_PIPE_AMBER",
+      "note": "Residual PARTIAL from CF Access unauth pipe AMBER \u2014 not atrium STALE"
+    },
+    {
+      "id": "NAS-00-02-PERM-DENIED",
+      "class": "OPTIONAL_NON_GATING",
+      "why": "Stale non-mount /Volumes stubs (00-Editing-Workspace{,-1,-2}, 02-Stock-Assets). Active mounts are 00-Editing-Workspace-3 + 02-Stock-Assets-1 \u2014 Wolf inventory does not require stubs",
+      "next_action_owner": "none",
+      "finish_wolf": false,
+      "desktop_gate_blocks": false,
+      "status": "DEBLOCKED",
+      "disposition": "NOT_REQUIRED"
+    },
+    {
+      "id": "HUMAN-COMMISSIONED-FALSE",
+      "class": "STAFF_COMMISSIONING",
+      "why": "human_commissioned=false \u00b7 write_authority_approved=0 \u2014 staff finance seats remain on STAFF-PROVE-QUEUE (do not revoke Zayen / edit Finance auth this executor)",
+      "next_action_owner": "Staff (Zayen/Amanda)",
+      "finish_wolf": false,
+      "desktop_gate_blocks": true,
+      "note": "Blocks staff_ready + write commissioning"
+    },
+    {
+      "id": "CF-SHOTS-BLOCKED-AUTH",
+      "class": "MATT_OWNER_ACTION",
+      "why": "Same family as FW-CF-SCREENSHOT-ACCEPTANCE",
+      "next_action_owner": "Matt",
+      "finish_wolf": true,
+      "desktop_gate_blocks": false
+    },
+    {
+      "id": "RADAR-EMPTY-BLOCKED-HONEST",
+      "class": "INTERNAL",
+      "why": "Honesty stamp correct \u2014 not a wire defect to invent past",
+      "next_action_owner": "Peaches (hold honest)",
+      "finish_wolf": false,
+      "desktop_gate_blocks": false,
+      "status": "HONEST_STATE"
+    },
+    {
+      "id": "INTEGRATIONS-CF-JWT-PARKED",
+      "class": "OPTIONAL_NON_GATING",
+      "why": "Parked \u2014 do not wait Matt JWT for Integrations health this mission",
+      "next_action_owner": "none",
+      "finish_wolf": false,
+      "desktop_gate_blocks": false
+    },
+    {
+      "id": "PIPE-AMBER-CF-ACCESS",
+      "class": "EXTERNAL_BLOCKER",
+      "why": "external_route_health ORIGIN_REACHABLE/AMBER from unauth CF Access probe \u2014 expected with Access on; not backup failure",
+      "next_action_owner": "none (honest)",
+      "finish_wolf": false,
+      "desktop_gate_blocks": false
+    },
+    {
+      "id": "BANK-IMPORT-COMMISSION",
+      "class": "STAFF_COMMISSIONING",
+      "why": "CONFIGURED only \u2014 file-import SOP into atrium-finance needs human commission",
+      "next_action_owner": "Matt/Staff",
+      "finish_wolf": false,
+      "desktop_gate_blocks": false
+    },
+    {
+      "id": "RESTORE-DRILL-NOT-RUN",
+      "class": "OPTIONAL_NON_GATING",
+      "why": "B2 list LIVE; restore drill historical 2026-08-29; re-prove optional",
+      "next_action_owner": "Matt (optional)",
+      "finish_wolf": false,
+      "desktop_gate_blocks": false
+    }
+  ],
+  "desktop_gate_ready": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "internal_fixed_this_run": [
+    "LEADS-DEMO-SOT",
+    "BACKUP-STALE-ATRIUM",
+    "NAS-00-02-PERM-DENIED"
+  ],
+  "finish_wolf_matt_essentials": [
+    "FW-CANVA-REAUTH",
+    "FW-YANOLJA-BOOKINGS-ENABLE",
+    "FW-CF-SCREENSHOT-ACCEPTANCE"
+  ],
+  "optional_non_gating": [
+    "FW-KLAVIYO-READ-PROVE-OPTIONAL",
+    "FW-W4-SEED-OR-ACCEPT-EMPTY",
+    "INTEGRATIONS-CF-JWT-PARKED",
+    "RESTORE-DRILL-NOT-RUN",
+    "NAS-00-02-PERM-DENIED"
+  ],
+  "next_major_after_beta_house": "WOLF INTELLIGENCE \u2192 ADAPT TO COMPLETED WOLF OS",
+  "next_major_status": "RECORDED_IN_MISSION_ONLY \u2014 do NOT start",
+  "prod_8787_pid": 15975,
+  "beta_8788_pid": 10150,
+  "metricool_write": false,
+  "finance_sod": "UNCHANGED"
+}

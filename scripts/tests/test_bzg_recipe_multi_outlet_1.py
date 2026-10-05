@@ -267,6 +267,17 @@ def test_shared_ingredient_master() -> None:
 
 
 def test_incomplete_cost_never_zero() -> None:
+    null_row = next(
+        (
+            i
+            for i in rb.list_ingredients().get("ingredients") or []
+            if i.get("purchase_cost") is None
+        ),
+        None,
+    )
+    check("null-cost ingredient fixture", null_row is not None, "no null-cost master row")
+    if not null_row:
+        return
     created = rb.create_recipe(
         {
             "name": "Mystery Herb Soup",
@@ -274,8 +285,9 @@ def test_incomplete_cost_never_zero() -> None:
             "yield_n": 2,
             "lines": [
                 {
-                    "name": "zz-nonexistent-ingredient-xyz-999",
-                    "unit": "gr",
+                    "ingredient_id": null_row["id"],
+                    "name": null_row["name"],
+                    "unit": null_row.get("default_unit") or "gr",
                     "qty": 50,
                     "line_kind": "ingredient",
                 }
@@ -344,6 +356,7 @@ def test_head_chef_scopes_http(base: str) -> None:
     )
     check("Uma list 200", code == 200 and (body or {}).get("count", 0) >= 127, str((code, (body or {}).get("count"))))
 
+    lettuce = rb.search_ingredients(query="romaine lettuce", limit=1)["ingredients"][0]
     code, body = _http(
         "POST",
         f"{base}/api/bzg/recipe-builder/recipes",
@@ -352,7 +365,14 @@ def test_head_chef_scopes_http(base: str) -> None:
             "name": "Rainforest Test Salad",
             "outlet_id": "BZG-RAIN",
             "yield_n": 1,
-            "lines": [{"name": "lettuce", "unit": "gr", "qty": 80}],
+            "lines": [
+                {
+                    "ingredient_id": lettuce["id"],
+                    "name": lettuce["name"],
+                    "unit": lettuce.get("default_unit") or "gr",
+                    "qty": 80,
+                }
+            ],
         },
     )
     check("create with explicit outlet 200", code == 200 and (body or {}).get("ok"), str((code, body)))

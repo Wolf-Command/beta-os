@@ -72,5 +72,9 @@
   "invented_balance": false,
   "verified_at": "2026-09-30T10:26:30+08:00",
   "tests": "163/0",
-  "peaches": "PASS"
+  "peaches": "PASS",
+  "peaches_verify": "PASS_VERIFIED",
+  "matt_finished_ping": true,
+  "matt_finished_ping_at": "2026-09-30T10:36:53+08:00",
+  "independent_retest": "163/0"
 }

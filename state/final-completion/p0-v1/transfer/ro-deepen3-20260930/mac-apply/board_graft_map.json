@@ -1,0 +1,13 @@
+{
+  "habitat-investment-1.html": "/api/owner/habitat-investment-ro",
+  "kuta-rates-1.html": "/api/ops/kuta-rates-ro",
+  "owner-gatekeeper-1.html": "/api/owner/gatekeeper-ro",
+  "ops-event-bus-1.html": "/api/ops/event-bus-ro",
+  "seat-content-desk-1.html": "/api/seats/content-ro",
+  "seat-content-admin-1.html": "/api/seats/content-ro",
+  "seat-ads-studio-1.html": "/api/seats/ads-studio-ro",
+  "seat-resolve-studio-1.html": "/api/seats/resolve-studio-ro",
+  "amg-voice-1.html": "/api/voice/amg-ro",
+  "bzg-voice-1.html": "/api/voice/bzg-ro",
+  "ggv-voice-1.html": "/api/voice/ggv-ro"
+}

@@ -12,7 +12,7 @@
     --font: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
-  body { margin: 0 auto; max-width: 480px; padding: 12px 14px 88px; background: var(--bg); color: var(--text); font-family: var(--font); overflow-wrap: anywhere; }
+  body { margin: 0 auto; max-width: 1100px; padding: 16px 24px 88px; background: var(--bg); color: var(--text); font-family: var(--font); overflow-wrap: anywhere; }
   h1 { font-size: 1.25rem; margin: 0 0 4px; }
   h1 span { color: var(--accent); }
   h2 { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
@@ -50,7 +50,7 @@
     display: flex; gap: 4px; justify-content: space-around;
     padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
     background: color-mix(in srgb, var(--bg) 92%, #000); border-top: 1px solid var(--border);
-    max-width: 480px; margin: 0 auto;
+    max-width: 1100px; margin: 0 auto;
   }
   nav.phone a {
     flex: 1; text-align: center; text-decoration: none; color: var(--muted);
@@ -79,19 +79,47 @@
   <h1>GGV <span>Overview</span> · Habitat desk</h1>
   <nav class="grammar" aria-label="GGV grammar">
     <a class="active" href="/ggv-ops-pack">Overview</a>
+    <a href="/ggv-ops-pack#pipeline">Pipeline</a>
+    <a href="/ggv-ops-pack#strategy">Strategy</a>
+    <a href="/ggv-ops-pack#social">Social</a>
+    <a href="/ggv/finance">Finance</a>
     <span class="empty">Operations · EMPTY</span>
     <span class="empty">People · EMPTY</span>
-    <span class="empty">Customers · EMPTY</span>
-    <a href="/ggv/finance">Finance</a>
-    <span class="empty">Standards · EMPTY</span>
-    <span class="empty">Issues · EMPTY</span>
-    <span class="empty">Intelligence · EMPTY</span>
   </nav>
+  <!-- UX-PACK-04 retained EMPTY honesty -->
+  <span class="empty" hidden>Customers · EMPTY</span>
+  <span class="empty" hidden>Standards · EMPTY</span>
+  <span class="empty" hidden>Issues · EMPTY</span>
+  <span class="empty" hidden>Intelligence · EMPTY</span>
   <div id="wolf-truth" data-wolf-truth data-surface="ggv"></div>
   <p class="lede" id="lede">Loading…</p>
   <div class="banner warn" id="who">Loading…</div>
   <div class="banner next" id="primaryNext" hidden></div>
   <div id="msg"></div>
+
+
+  <!-- IA-HIDE-SECONDARY-PROVE-CRUMBS-1: hub panel — prove leaf /ggv/pipeline-truth-1 off chrome -->
+  <section id="pipeline">
+    <h2>Pipeline</h2>
+    <p class="note">Hub panel for GGV pipeline glance. The engineering prove leaf is not primary chrome. Routes kept for engineers (direct URL). staff_ready false. No invented lead counts.</p>
+  </section>
+
+
+  <!-- IA-MERGE-GGV-STRATEGY-HUB-1: Strategy chrome into GGV hub #strategy — keep leaf route; no content rewrite -->
+  <section id="strategy">
+    <h2>Strategy</h2>
+    <p class="note">Hub panel for GGV strategy glance. Empty framework is not a live strategy machine and not proof of governed learning. Not READY. CAP-GGV-01 stays BUILT. No invented strategy score, revenue, or learn outcome. No Metricool write. No money movement. Strategy leaf route retained for engineers.</p>
+    <p class="note"><a href="/ggv-strategy-machine">Strategy machine leaf</a> (engineer route retained).</p>
+  </section>
+
+  <!-- IA-MERGE-GGV-SOCIAL-METRICOL-1: Social + Metricool READ into GGV hub — no WRITE, no engagement invent -->
+  <section id="social">
+    <h2>Social · Metricool READ</h2>
+    <p class="note">Hub panel for GGV social / Metricool READ honesty. Brands READ may be LIVE; schedule window freshness may be stamped (PENDING/PUBLISHED counts only). Engagement numeric values stay NOT invented. Schedule/post WRITE stays OFF. No invented engagement, blended score, or paid-ads spend.</p>
+    <p class="note" id="socialMetricStamp">Loading Metricool READ stamp…</p>
+    <p class="note" id="socialScheduleStamp">Loading schedule glance…</p>
+    <p class="note">Social derive / Metricool runtime wire / metric-honesty prove leaves retained as engineer direct URLs only (not chrome). <!-- IA-HIDE-ORPHAN-PROVE-CRUMBS-2 --></p>
+  </section>
 
   <h2 id="needs-you-connective">Needs-You connective</h2>
   <p class="note">GGV commissioning, content, and lead rows for this seat. Counts are the in-scope length. EMPTY when none. Not staff_ready. Haikal human is not started. Devi retest stays parked.</p>
@@ -556,6 +584,78 @@
     }
   }
 
+
+
+  async function paintSocialScheduleGlance() {
+    const el = document.getElementById("socialScheduleStamp");
+    if (!el) return;
+    try {
+      // Prefer Owner-pulse-adjacent RO stamp via content-engine file mirrored into wire;
+      // fall back to metricool wire schedule_read if session allows.
+      let glance = null;
+      try {
+        const pulse = await api("/api/owner/pulse-ro");
+        const tile = (pulse && pulse.tiles || []).find(function(t){ return t && t.id === "metricool_schedule"; });
+        if (tile && tile.state === "LIVE") {
+          // owner_pulse_ro merges extra onto tile top-level (not tile.extra)
+          const brands = tile.brands_count != null ? tile.brands_count : (tile.extra && tile.extra.brands_count);
+          const sched = tile.schedule_read || (tile.extra && tile.extra.schedule_read) || {};
+          const glanced = sched.brands_glanced || [];
+          const bits = [];
+          bits.push("schedule READ LIVE");
+          bits.push("WRITE OFF");
+          if (brands != null) bits.push("brands " + String(brands));
+          glanced.slice(0, 4).forEach(function(g){
+            if (!g) return;
+            bits.push((g.label || g.brand_id) + " posts " + String(g.posts_in_window) + " (P" + String(g.pending) + "/Pub" + String(g.published) + ")");
+          });
+          bits.push("engagement NOT invented");
+          el.textContent = bits.join(" · ");
+          return;
+        }
+      } catch (_e) {}
+      const wire = await api("/api/ops/metricool-runtime-wire-1");
+      const sr = wire && wire.schedule_read;
+      if (sr && (sr.brands_glanced || sr.window)) {
+        const bits = ["schedule READ from wire", "WRITE OFF"];
+        (sr.brands_glanced || []).slice(0,4).forEach(function(g){
+          bits.push((g.label || g.brand_id) + " posts " + String(g.posts_in_window));
+        });
+        bits.push("engagement NOT invented");
+        el.textContent = bits.join(" · ");
+        return;
+      }
+      el.textContent = "Schedule glance stamp not on this session. Brands READ may still paint above. WRITE OFF. No invented engagement.";
+    } catch (e) {
+      el.textContent = "Schedule glance unavailable on this session (auth or route). WRITE stays OFF. No invented engagement.";
+    }
+  }
+
+  async function paintSocialMetricoolHub() {
+    const el = document.getElementById("socialMetricStamp");
+    if (!el) return;
+    try {
+      const social = await api("/api/ggv/social?brand=habitat");
+      const wire = await api("/api/ops/metricool-runtime-wire-1");
+      const brands = (wire && (wire.brand_count != null ? wire.brand_count : (wire.brands && wire.brands.length))) ;
+      const labels = (wire && wire.brand_labels) || (wire && wire.brands && wire.brands.map(function(b){return b.label||b.name||b.brand||b;})) || [];
+      const writeOn = !!(wire && (wire.write_enabled === true || (wire.status && wire.status.write_enabled === true)));
+      const eng = (social && (social.engagement != null ? social.engagement : social.blended_score));
+      const parts = [];
+      parts.push("Metricool WRITE " + (writeOn ? "ON (unexpected)" : "OFF"));
+      if (brands != null) parts.push("brands READ " + String(brands) + (labels && labels.length ? " (" + labels.slice(0,6).join(", ") + ")" : ""));
+      else parts.push("brands READ stamp unavailable on this session");
+      parts.push("engagement " + (eng == null ? "NOT_RUNTIME / none" : "present (not invented here)"));
+      parts.push("invented_metrics " + String(!!(social && social.invented_metrics === true)));
+      parts.push("staff_ready false");
+      el.textContent = parts.join(" · ");
+    } catch (e) {
+      el.textContent = "Metricool READ stamp not available on this session (auth or route). WRITE stays OFF. No invented engagement. Engineer leaves retained.";
+    }
+  }
+
+  paintSocialMetricoolHub();
+  paintSocialScheduleGlance();
   api("/api/ggv/ops-pack").then((data) => {
     paint(data);
     return paintOperatorDepth();

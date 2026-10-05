@@ -1,0 +1,29 @@
+{
+  "pack": "IA-HIDE-VOICE-ORPHAN-1",
+  "applied_at_wita": "2026-10-01T08:12:49+08:00",
+  "executor": "Peaches-executor",
+  "target": "beta-os :8788",
+  "prod_8787": "UNTOUCHED",
+  "prod_pid": 15975,
+  "beta_8788_pid_after": 99198,
+  "backup": "/Users/wolfterminal/beta-os/backups/beta-house-ux-20261001/",
+  "mutations": [
+    "wolf_shell.AUDIENCE_PAGES: remove /amg-voice /ggv-voice /bzg-voice from SPECIALIST_AMG/GGV/OPERATOR (HIDE_UNTIL_USEFUL; routes + soft-land kept)",
+    "amg-ops-pack.html: Kuta Rates tab \u2192 /amg-ops-pack#kuta hub panel; leaf /kuta-rates retained",
+    "sidenav.js: stamp IA-HIDE-VOICE-ORPHAN-1 note"
+  ],
+  "proof": {
+    "primary_ia_count": 19,
+    "voices_in_audience": false,
+    "kuta_hub_href": "/amg-ops-pack#kuta",
+    "kuta_leaf_kept": "/kuta-rates",
+    "soft_land_voice_kept": true
+  },
+  "honesty": {
+    "pages_deleted": false,
+    "routes_kept": true,
+    "hubs_unbroken": true,
+    "staff_ready": false,
+    "desktop_gate_ready": false
+  }
+}

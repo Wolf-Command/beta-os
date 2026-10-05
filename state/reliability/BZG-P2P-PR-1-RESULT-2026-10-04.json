@@ -1,0 +1,30 @@
+{
+  "pack_id": "BZG-P2P-PR-1",
+  "finished_at_wita": "2026-10-04T18:55:00+08:00",
+  "status": "IMPLEMENTATION_DONE_LOCAL_PASS",
+  "eng_proved": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "ready_for_human_test": true,
+  "deployed_beta": true,
+  "tests_pass": 20,
+  "tests_fail": 0,
+  "migration_id": "bzg_p2p_pr1_20261004",
+  "routes": [
+    "/bzg/uma-blu/bills",
+    "/api/bzg/uma-blu/prs",
+    "/api/bzg/uma-blu/permissions"
+  ],
+  "protected_close_untouched": true,
+  "no_prod": true,
+  "no_shutil_copy2_live_catalog": true,
+  "stop_reason": null,
+  "permission": "bzg.pr.create",
+  "sor": "bzg_ops_purchase_requests",
+  "approval_handoff": "core_approval_requests PENDING on submit",
+  "notes": "Migration applied to live Beta catalog. Beta serve pid on :8788 not restarted this session \u2014 reload required before HTTP prove. Unsigned POST /api/bzg/uma-blu/prs returns 403 (fail-closed auth).",
+  "beta_reloaded_at": "2026-10-04T18:54:33+08:00",
+  "beta_pid": 6822,
+  "peaches_verify": "state/reliability/PEACHES-VERIFY-BZG-P2P-PR-1-20261004.json",
+  "verdict": "IMPLEMENTATION_DONE_BETA_RELOADED_READY_FOR_HUMAN_TEST"
+}

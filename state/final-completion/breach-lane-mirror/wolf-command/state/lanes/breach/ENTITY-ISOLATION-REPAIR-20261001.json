@@ -1,0 +1,176 @@
+{
+  "id": "ENTITY-ISOLATION-REPAIR-20261001",
+  "recorded_at_wita": "2026-10-01T09:43:12+08:00",
+  "order": "P0 OWNER ORDER 1 Oct 2026 ~09:36 WITA",
+  "finding_id": "BREACH-2026-09-30-J1-ZAYEN-GGV-NOTA-READ",
+  "status": "REPAIRED_VERIFIED_OWNER_ACCEPTED",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "desktop_gate_ready": false,
+  "exit_report": "NOT_CREATED",
+  "owner_disposition": {
+    "rejected": [
+      "LEAVE",
+      "REVOKE_SEAT",
+      "STRIP_CODES"
+    ],
+    "kept": [
+      "ASG-ZAYEN-BZG-FC-1"
+    ],
+    "repair": "ENTITY_ISOLATION",
+    "intentional": {
+      "PERS-ZAYEN": {
+        "ENT-AMG": "FC_YES",
+        "ENT-BZG": "FC_YES",
+        "ENT-GGV": "FINANCE_ZERO"
+      }
+    }
+  },
+  "sacred": {
+    "prod_8787_pid_before": 15975,
+    "prod_8787_pid_after": 15975,
+    "prod_touched": false,
+    "beta_8788_pid_before": 1810,
+    "beta_8788_pid_after": 9503,
+    "beta_restarted": true,
+    "finance_8790_pid": 45751,
+    "finance_sidecar_patched": false,
+    "note": "atrium-finance entityAuthority.ts already denied Zayen GGV; SoD unchanged",
+    "beta_8788_pid_current": 12379
+  },
+  "before": {
+    "rbac_bare_PERS-ZAYEN_finance.nota.read": true,
+    "rbac_ENT-GGV_PERS-ZAYEN_finance.nota.read": false,
+    "ggv_finance_nota_person_can_Zayen": false,
+    "staff_home_finance_read_Zayen": true,
+    "staff_home_finance_read_by_entity": "ABSENT (scope-blind role-code union)"
+  },
+  "after": {
+    "rbac_bare_PERS-ZAYEN_finance.nota.read": false,
+    "rbac_bare_reason": "entity_scope_required",
+    "rbac_ENT-GGV_PERS-ZAYEN_finance.nota.read": false,
+    "rbac_ENT-BZG_PERS-ZAYEN_finance.nota.read": true,
+    "ggv_finance_nota_person_can_Zayen": false,
+    "staff_home_finance_read_Zayen": true,
+    "staff_home_finance_read_by_entity_Zayen": {
+      "ENT-AMG": false,
+      "ENT-BZG": true,
+      "ENT-GGV": false
+    },
+    "ASG-ZAYEN-BZG-FC-1": "ACTIVE kept"
+  },
+  "files_touched": [
+    {
+      "path": "/Users/wolfterminal/beta-os/scripts/core/rbac.py",
+      "change": "entity_scope_required gate for finance./vendor./payment./atrium. bare targets; permission_requires_entity_scope helper"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/scripts/core/staff_home.py",
+      "change": "authority.finance_* AND-ed via rbac.can per ENT-AMG/BZG/GGV; added finance_*_by_entity maps"
+    },
+    {
+      "path": "/Users/wolfterminal/beta-os/scripts/ops/apply_entity_isolation_20261001.py",
+      "change": "idempotent apply script"
+    }
+  ],
+  "not_touched": [
+    "ASG-ZAYEN-BZG-FC-1 (kept ACTIVE)",
+    "ROLE-BZG-FINANCIAL-CONTROLLER permission grants (not stripped)",
+    "Prod :8787",
+    "Finance sidecar :8790 SoD / entityAuthority hardcode left as-is (already Zayen≠GGV)",
+    "Metricool/Canva/Klaviyo/Yanolja"
+  ],
+  "prove_matrix": {
+    "method": "API + local identity matrix (core.rbac / ggv_finance_nota / staff_home.build_home)",
+    "ui_browser_cf_jwt": "NOT_PROVED — local :8788 fail-closed without Cf-Access-Jwt-Assertion (403 missing_auth). UI residual.",
+    "anon_http": {
+      "path": "/api/ggv/finance/summary",
+      "status": 403,
+      "error": "missing_auth"
+    },
+    "summary": {
+      "pass": 50,
+      "fail": 0,
+      "total": 50
+    },
+    "table": [
+      {
+        "actor": "PERS-ZAYEN",
+        "surface": "AMG atrium.board/ledger",
+        "result": "YES",
+        "pass": true
+      },
+      {
+        "actor": "PERS-ZAYEN",
+        "surface": "BZG finance.nota/invoice/evidence + atrium.board",
+        "result": "YES",
+        "pass": true
+      },
+      {
+        "actor": "PERS-ZAYEN",
+        "surface": "GGV finance (rbac ENT-GGV + ggv_nota.person_can/require + staff_home by_entity)",
+        "result": "NO",
+        "pass": true
+      },
+      {
+        "actor": "PERS-ZAYEN",
+        "surface": "bare finance.* evaluate",
+        "result": "NO entity_scope_required",
+        "pass": true
+      },
+      {
+        "actor": "PERS-AMANDA",
+        "surface": "GGV finance Operator",
+        "result": "YES",
+        "pass": true
+      },
+      {
+        "actor": "PERS-AMANDA",
+        "surface": "AMG/BZG finance",
+        "result": "NO",
+        "pass": true
+      },
+      {
+        "actor": "PERS-MATT",
+        "surface": "AMG/BZG/GGV finance.nota.read",
+        "result": "YES per Owner assignments",
+        "pass": true
+      },
+      {
+        "actor": "ANON/NOPE/DEVI",
+        "surface": "fail-closed",
+        "result": "DENY",
+        "pass": true
+      }
+    ],
+    "detail_ref": "entity-isolation-prove-20261001.json"
+  },
+  "residual_risks": [
+    "UI/browser session as zayen@ against /ggv/finance not HTTP-proved this tick (CF JWT required on :8788) — server-side require() already DENYs; residual = chrome/nav honesty until CF shot",
+    "staff_home.authority.finance_read remains True for Zayen (honest BZG somewhere) — callers MUST use finance_read_by_entity for entity decisions; any legacy consumer that treats finance_read as GGV-wide is still a soft risk until audited",
+    "_permission_codes in staff_home still scope-blind for money/bank/govern unions — finance flags fixed; other shared codes not in this order",
+    "atrium-finance entityAuthority.ts still person-hardcoded (Zayen/Matt/Amanda) parallel to RBAC — intentional SoD left unchanged; future harden = drive from org assignments",
+    "Amanda finance.nota.read via ROLE-CONTENT-MGMT + GGV content scopes remains (pre-existing Operator path); not widened",
+    "UI/browser CF JWT as zayen@ → STAFF_COMMISSIONING item ZAYEN-CF-BROWSER-ENTITY-ISOLATION-UI (not architecture OPEN)",
+    "Legacy boolean finance_read OR-compat remains; chrome audit found no GGV-wide consumer (FINANCE-READ-NAV-AUDIT)",
+    "atrium-finance entityAuthority.ts person hardcode left (SoD unchanged)"
+  ],
+  "next_recommended_internal_step": "Audit wolf_shell / sidenav consumers of authority.finance_read; prefer finance_read_by_entity. Optional CF JWT browser probe as zayen@ on /ggv/finance for UI residual close. Do not claim staff_ready.",
+  "owner_accept": {
+    "accepted_at_wita": "2026-10-01T11:21:00+08:00",
+    "verdict": "REPAIRED + VERIFIED",
+    "basis": "50/50 server-side prove",
+    "human_finance_commissioning": false,
+    "stamped_at_wita": "2026-10-01T11:23:30+08:00"
+  },
+  "finding_id_status": "CLOSED_REPAIRED_VERIFIED",
+  "residual_ui_cf_browser": {
+    "class": "STAFF_COMMISSIONING",
+    "architecture_open": false,
+    "item_id": "ZAYEN-CF-BROWSER-ENTITY-ISOLATION-UI",
+    "expect": "AMG YES · BZG YES · GGV DENY",
+    "matrix_pass": null,
+    "note": "Moved out of architecture OPEN; do not reopen finding merely because browser proof outstanding"
+  },
+  "updated_at_wita": "2026-10-01T11:23:30+08:00"
+}

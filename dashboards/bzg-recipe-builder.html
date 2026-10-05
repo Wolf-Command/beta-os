@@ -27,7 +27,12 @@
     color: var(--text);
     font-family: var(--font);
   }
-  .wrap { max-width: 920px; margin: 0 auto; padding: 16px 14px 72px; }
+  .wrap {
+    width: min(960px, 100%);
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 16px 14px 72px;
+  }
   h1 { font-family: var(--display); font-weight: 500; font-size: 28px; margin: 0 0 4px; }
   h2 { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; }
   .lede { color: var(--muted); margin: 0 0 14px; line-height: 1.4; font-size: 14px; }
@@ -111,9 +116,35 @@
     background: transparent; color: var(--text); border: 1px solid var(--line);
   }
   .line {
-    display: grid; grid-template-columns: 1fr 70px 70px; gap: 6px;
-    margin-bottom: 6px;
+    display: grid; grid-template-columns: 1fr 70px 90px 32px; gap: 6px;
+    margin-bottom: 8px; align-items: start;
   }
+  .ing-combo { position: relative; }
+  .combo-options {
+    position: absolute; left: 0; right: 0; top: 100%; z-index: 20;
+    max-height: 220px; overflow: auto; margin: 2px 0 0; padding: 0;
+    list-style: none; background: #0e1216; border: 1px solid var(--accent);
+    box-shadow: 0 8px 24px rgba(0,0,0,.45);
+  }
+  .combo-options li {
+    padding: 8px 10px; cursor: pointer; border-bottom: 1px solid var(--line);
+    font-size: 14px;
+  }
+  .combo-options li:hover, .combo-options li.active { background: #243039; }
+  .combo-options .sub { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .ing-meta { display: block; color: var(--muted); font-size: 11px; margin-top: 4px; min-height: 14px; }
+  .ing-meta.warn { color: var(--warn); }
+  .ing-meta.danger { color: var(--danger); }
+  .line-remove {
+    background: transparent; color: var(--muted); border: 1px solid var(--line);
+    padding: 8px 0; font: inherit; cursor: pointer; height: 42px;
+  }
+  .summary-card {
+    border: 1px solid var(--line); background: var(--bg2);
+    padding: 12px; margin: 0 0 14px; line-height: 1.5; font-size: 14px;
+  }
+  .summary-card .missing { color: var(--warn); }
+  .nav-back { margin: 0 0 10px; }
   .outlet-checks {
     display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px;
     margin: 6px 0 0;
@@ -123,6 +154,11 @@
     color: var(--text); font-size: 14px; margin: 0;
   }
   .outlet-checks input { width: auto; }
+  @media (min-width: 900px) {
+    .wrap { padding-left: 24px; padding-right: 24px; }
+    .line { grid-template-columns: minmax(220px, 2fr) 90px 110px 40px; }
+    .outlet-checks { grid-template-columns: repeat(3, 1fr); }
+  }
   @media (max-width: 420px) {
     h1 { font-size: 24px; }
     .line { grid-template-columns: 1fr; }
@@ -136,10 +172,10 @@
   .note { color: var(--muted); font-size: 13px; line-height: 1.4; }
 </style>
 </head>
-<body>
+<body data-wolf-page-type="WORKSPACE" data-wolf-org="BZG">
 <div class="wrap">
   <h1>BZG Recipe Builder</h1>
-  <p class="lede">One builder for every BZG kitchen. Pick the outlet first. Recipes store once and associate to outlets. Menu items, prices and portions are per outlet. Missing purchase cost shows as INCOMPLETE COST — never a silent zero.</p>
+  <p class="lede">Pick the outlet first. Recipes store once and link to outlets. Menu prices and portions are per outlet. If purchase cost is missing, the builder says cost unknown — never a guessed price.</p>
 
   <div class="outlet-bar" id="outlet-bar">
     <label for="outlet-select">Working outlet</label>
@@ -162,23 +198,32 @@
   </section>
 
   <section id="view-menu" class="hidden">
+    <div class="actions nav-back">
+      <button type="button" class="secondary" id="back-menu">Back</button>
+    </div>
     <div id="menu"></div>
   </section>
 
   <section id="view-detail" class="hidden">
-    <div class="actions">
-      <button type="button" class="secondary" id="back-list">Back to list</button>
-      <button type="button" id="edit-btn">Edit</button>
+    <div class="actions nav-back">
+      <button type="button" class="secondary" id="back-list">Back</button>
+      <button type="button" id="edit-btn">Edit recipe</button>
     </div>
     <h2 id="detail-title">Recipe</h2>
     <div id="detail"></div>
   </section>
 
   <section id="view-exceptions" class="hidden">
+    <div class="actions nav-back">
+      <button type="button" class="secondary" id="back-exceptions">Back</button>
+    </div>
     <div id="exceptions"></div>
   </section>
 
   <section id="view-create" class="hidden">
+    <div class="actions nav-back">
+      <button type="button" class="secondary" id="back-create">Back</button>
+    </div>
     <h2 id="form-title">New recipe</h2>
     <form id="recipe-form">
       <input type="hidden" id="f-id" value="" />
@@ -227,9 +272,16 @@ function pct(v) {
   if (v == null || v === "") return "—";
   return Number(v).toFixed(1) + "%";
 }
+function costMissing(status) {
+  return status !== "COMPLETE";
+}
 function costLabel(status, foodCost) {
   if (status === "COMPLETE") return "Food cost " + money(foodCost);
-  return "INCOMPLETE COST";
+  return "Cost unknown";
+}
+function lineCostLabel(line) {
+  if (line.cost_badge === "INCOMPLETE COST" || line.extended_cost == null) return "Cost unknown";
+  return money(line.extended_cost);
 }
 
 var state = {
@@ -239,7 +291,11 @@ var state = {
   outlets: [],
   outletId: "",
   selected: null,
-  catalogueMode: false
+  catalogueMode: false,
+  view: "list",
+  viewStack: ["list"],
+  ingredientMaster: null,
+  ingredientMasterLoading: false
 };
 
 function qsOutlet() {
@@ -248,7 +304,12 @@ function qsOutlet() {
   } catch (e) { return ""; }
 }
 
-function show(view) {
+function show(view, opts) {
+  opts = opts || {};
+  if (!opts.noPush && state.view !== view) {
+    state.viewStack.push(view);
+  }
+  state.view = view;
   ["list", "detail", "exceptions", "create", "menu"].forEach(function (v) {
     var el = document.getElementById("view-" + v);
     if (el) el.classList.toggle("hidden", v !== view);
@@ -256,6 +317,69 @@ function show(view) {
   document.querySelectorAll(".tabs button").forEach(function (b) {
     b.classList.toggle("active", b.getAttribute("data-view") === view || (view === "detail" && b.id === "tab-list"));
   });
+}
+
+function goBack() {
+  if (state.viewStack.length > 1) {
+    state.viewStack.pop();
+    show(state.viewStack[state.viewStack.length - 1] || "list", { noPush: true });
+    return;
+  }
+  state.viewStack = ["list"];
+  show("list", { noPush: true });
+}
+
+function normIng(s) {
+  return String(s == null ? "" : s).toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function rankIng(query, name) {
+  var q = normIng(query);
+  var n = normIng(name);
+  if (!q) return 1;
+  if (n === q) return 0;
+  if (n.indexOf(q) === 0) return 1;
+  var words = n.split(" ");
+  for (var i = 0; i < words.length; i++) {
+    if (words[i].indexOf(q) === 0) return 2;
+  }
+  if (n.indexOf(q) >= 0) return 3;
+  return 99;
+}
+
+function filterIngredients(query, limit) {
+  var rows = state.ingredientMaster || [];
+  var q = normIng(query);
+  var out = rows.slice();
+  if (q) {
+    out = out.filter(function (r) { return rankIng(q, r.name) < 99; });
+    out.sort(function (a, b) {
+      var ra = rankIng(q, a.name);
+      var rb = rankIng(q, b.name);
+      if (ra !== rb) return ra - rb;
+      return normIng(a.name).localeCompare(normIng(b.name));
+    });
+  }
+  return out.slice(0, limit || 25);
+}
+
+function ensureIngredientMaster() {
+  if (state.ingredientMaster || state.ingredientMasterLoading) {
+    return Promise.resolve(state.ingredientMaster || []);
+  }
+  state.ingredientMasterLoading = true;
+  return fetch("/api/bzg/recipe-builder/ingredients", { headers: { "Accept": "application/json" } })
+    .then(function (res) { return res.json(); })
+    .then(function (body) {
+      state.ingredientMaster = (body && body.ingredients) || [];
+      state.ingredientMasterLoading = false;
+      return state.ingredientMaster;
+    })
+    .catch(function () {
+      state.ingredientMasterLoading = false;
+      state.ingredientMaster = [];
+      return [];
+    });
 }
 
 function paintOutletBar(ctx) {
@@ -303,7 +427,7 @@ function paintList(pack) {
   }
   var html = "";
   state.recipes.forEach(function (r) {
-    var incomplete = r.food_cost_status !== "COMPLETE";
+    var incomplete = costMissing(r.food_cost_status);
     var costText = costLabel(r.food_cost_status, r.food_cost);
     var badgeClass = incomplete ? "badge danger" : "badge ok";
     var assigns = (r.outlet_assignment && r.outlet_assignment.all_bzg)
@@ -318,7 +442,10 @@ function paintList(pack) {
       + '<span class="' + badgeClass + '">' + esc(costText) + '</span>'
       + "</article>";
   });
-  if (!html) html = '<p class="note">No recipes for this outlet context yet.</p>';
+  if (!html) {
+    var truth = pack.outlet_truth && pack.outlet_truth.message;
+    html = '<p class="note">' + esc(truth || "No recipes for this outlet yet.") + "</p>";
+  }
   document.getElementById("list").innerHTML = html;
   document.getElementById("list").onclick = function (ev) {
     var row = ev.target.closest("[data-id]");
@@ -330,7 +457,7 @@ function paintList(pack) {
 function paintMenu(pack) {
   var el = document.getElementById("menu");
   if (state.catalogueMode || !state.outletId || state.outletId === "ALL_BZG") {
-    el.innerHTML = '<p class="note">All BZG is catalogue + assignments — pick a single outlet to see its menu structure. RECIPE ≠ MENU ITEM ≠ OUTLET MENU.</p>';
+    el.innerHTML = '<p class="note">Pick a single outlet to see its menu. All BZG is the shared recipe catalogue, not a merged menu.</p>';
     return;
   }
   if (pack && pack.ok === false) {
@@ -339,12 +466,17 @@ function paintMenu(pack) {
   }
   var rows = (pack && pack.menu_items) || [];
   if (!rows.length) {
-    el.innerHTML = '<p class="note">No menu items for this outlet yet. Shared recipes can be attached with a different name, portion and sell price per outlet.</p>';
+    var truth = (pack && pack.outlet_truth) || {};
+    el.innerHTML = '<p class="note">' + esc(truth.message || "No menu items for this outlet yet.") + "</p>";
     return;
   }
-  var html = "<table><thead><tr><th>Menu item</th><th>Recipe</th><th>Portion</th><th>Sell</th><th>Status</th></tr></thead><tbody>";
+  function recipeName(rid) {
+    var hit = (state.recipes || []).find(function (r) { return r.recipe_id === rid; });
+    return (hit && hit.name) || "—";
+  }
+  var html = "<table><thead><tr><th>Menu item</th><th>Dish</th><th>Portion</th><th>Sell</th><th>Status</th></tr></thead><tbody>";
   rows.forEach(function (m) {
-    html += "<tr><td>" + esc(m.menu_name) + "</td><td>" + esc(m.recipe_id)
+    html += "<tr><td>" + esc(m.menu_name) + "</td><td>" + esc(recipeName(m.recipe_id))
       + "</td><td>" + esc(m.portion_n != null ? m.portion_n : "—") + " " + esc(m.portion_unit || "")
       + '</td><td class="money">' + money(m.sell_price)
       + "</td><td>" + esc(m.status || "") + "</td></tr>";
@@ -353,46 +485,74 @@ function paintMenu(pack) {
   el.innerHTML = html;
 }
 
+function outletLabel() {
+  if (state.catalogueMode || state.outletId === "ALL_BZG") return "All BZG catalogue";
+  var o = state.outlets.find(function (x) { return x.outlet_id === state.outletId; }) || state.selected || {};
+  return o.display_name || state.outletId || "this outlet";
+}
+
 function paintDetail(r) {
   state.current = r;
   document.getElementById("detail-title").textContent = r.name || "Recipe";
   var lines = (r.lines || []).map(function (line) {
-    var cost = line.cost_badge === "INCOMPLETE COST" || line.extended_cost == null
-      ? "INCOMPLETE COST"
-      : money(line.extended_cost);
     return "<tr><td>" + esc(line.name) + "</td><td>" + esc(line.qty) + " " + esc(line.unit || "")
-      + '</td><td class="money">' + esc(cost) + "</td></tr>";
+      + '</td><td class="money">' + esc(lineCostLabel(line)) + "</td></tr>";
   }).join("");
-  var food = r.food_cost_status === "COMPLETE" ? money(r.food_cost) : "INCOMPLETE COST";
+  var food = r.food_cost_status === "COMPLETE" ? money(r.food_cost) : "Cost unknown";
+  var portion = r.portion_cost != null ? money(r.portion_cost) : "Cost unknown";
   var assigns = (r.outlet_assignment && r.outlet_assignment.all_bzg)
     ? "All BZG"
     : ((r.outlet_assignment && r.outlet_assignment.outlets) || [])
-        .map(function (o) { return o.display_name || o.outlet_id; }).join(", ");
+        .map(function (o) { return o.display_name || o.outlet_id; }).join(", ") || "None linked yet";
+  var outletMenu = (r.menu_items || []).filter(function (m) {
+    return !state.outletId || state.outletId === "ALL_BZG" || m.outlet_id === state.outletId;
+  });
+  var thisOutletSell = outletMenu.length ? outletMenu[0].sell_price : null;
+  var foodPct = null;
+  if (r.food_cost_pct != null && thisOutletSell == null) foodPct = null;
+  else if (thisOutletSell && r.portion_cost != null && thisOutletSell > 0) {
+    foodPct = (r.portion_cost / thisOutletSell * 100);
+  } else if (r.food_cost_pct != null) foodPct = r.food_cost_pct;
+  var missing = [];
+  if (r.food_cost_status !== "COMPLETE") missing.push("ingredient costs");
+  if (thisOutletSell == null) missing.push("this outlet's selling price");
+  if (thisOutletSell != null && foodPct == null) missing.push("food cost %");
+  function outletName(oid) {
+    var hit = (state.outlets || []).find(function (o) { return o.outlet_id === oid; });
+    return (hit && hit.display_name) || oid;
+  }
   var menuRows = (r.menu_items || []).map(function (m) {
-    return "<tr><td>" + esc(m.outlet_id) + "</td><td>" + esc(m.menu_name)
+    return "<tr><td>" + esc(outletName(m.outlet_id)) + "</td><td>" + esc(m.menu_name)
+      + "</td><td>" + esc(r.name || "—")
       + "</td><td>" + esc(m.portion_n != null ? m.portion_n : "—") + " " + esc(m.portion_unit || "")
       + '</td><td class="money">' + money(m.sell_price) + "</td></tr>";
   }).join("");
   var html = ""
-    + '<p class="meta">' + esc(r.group_name || "") + (assigns ? " · " + esc(assigns) : "") + "</p>"
-    + '<p><strong>Sell price</strong> (recipe card, read only): <span class="money">' + money(r.real_sell) + "</span></p>"
-    + "<p><strong>Food cost</strong>: <span class=\"money\">" + esc(food) + "</span>"
-    + (r.food_cost_pct != null ? " · " + pct(r.food_cost_pct) + " of sell" : "")
-    + (r.margin != null ? " · margin " + money(r.margin) : "")
-    + "</p>"
-    + (r.yield_n != null ? "<p><strong>Yield</strong>: " + esc(r.yield_n) + " " + esc(r.yield_unit || "") + "</p>" : "")
+    + '<div class="summary-card"><p><strong>Working outlet:</strong> ' + esc(outletLabel()) + "</p>"
+    + "<p><strong>Recipe:</strong> " + esc(r.name) + "</p>"
+    + "<p><strong>Used at:</strong> " + esc(assigns) + "</p>"
+    + "<p><strong>Recipe cost:</strong> <span class=\"money\">" + esc(food) + "</span>"
+    + " · <strong>Portion cost:</strong> <span class=\"money\">" + esc(portion) + "</span></p>"
+    + "<p><strong>This outlet's selling price:</strong> <span class=\"money\">"
+    + (thisOutletSell != null ? money(thisOutletSell) : '<span class="missing">missing</span>') + "</span></p>"
+    + "<p><strong>Food cost %:</strong> "
+    + (foodPct != null ? esc(pct(foodPct)) : '<span class="missing">missing — needs selling price</span>') + "</p>"
+    + (missing.length
+      ? '<p class="missing"><strong>Still missing:</strong> ' + esc(missing.join(", ")) + "</p>"
+      : '<p>All costing fields known for this view.</p>')
+    + "</div>"
+    + '<p class="meta">' + esc(r.group_name || "") + "</p>"
+    + (r.yield_n != null ? "<p><strong>Portions per batch</strong>: " + esc(r.yield_n) + " " + esc(r.yield_unit || "") + "</p>" : "")
     + (r.method ? "<p><strong>Method</strong><br>" + esc(r.method).replace(/\\n/g, "<br>") + "</p>" : "")
-    + "<h2>Ingredients</h2><table><thead><tr><th>Item</th><th>Amount</th><th>Cost</th></tr></thead><tbody>"
-    + (lines || "<tr><td colspan=3>No ingredients</td></tr>")
+    + "<h2>Ingredients</h2><table><thead><tr><th>Ingredient</th><th>Quantity</th><th>Cost</th></tr></thead><tbody>"
+    + (lines || "<tr><td colspan=3>No ingredients yet</td></tr>")
     + "</tbody></table>"
     + "<h2>Outlet menu items</h2>"
     + (menuRows
-      ? "<table><thead><tr><th>Outlet</th><th>Menu name</th><th>Portion</th><th>Sell</th></tr></thead><tbody>"
+      ? "<table><thead><tr><th>Outlet</th><th>Menu name</th><th>Dish</th><th>Portion</th><th>Sell</th></tr></thead><tbody>"
         + menuRows + "</tbody></table>"
-      : '<p class="note">No outlet menu rows yet for this recipe.</p>')
-    + '<p class="note">Provenance: ' + esc((r.provenance && r.provenance.source) || "beta")
-    + (r.brand_id === "BZG-UMA" ? " · Uma Blu provenance (not relabelled BZG-wide)" : "")
-    + "</p>";
+      : '<p class="note">No menu rows for this recipe yet.</p>')
+    + '<p class="note">Recipe card sell price (read only): ' + money(r.real_sell) + "</p>";
   document.getElementById("detail").innerHTML = html;
   show("detail");
 }
@@ -419,8 +579,8 @@ function paintExceptions(pack) {
   var html = rows.map(function (e) {
     return '<article class="row" data-id="' + esc(e.recipe_id) + '">'
       + '<div class="name">' + esc(e.name) + '</div>'
-      + '<div class="meta">' + esc(e.missing_cost_lines || 0) + " ingredient lines with INCOMPLETE COST</div>"
-      + '<span class="badge danger">INCOMPLETE COST</span></article>';
+      + '<div class="meta">' + esc(e.missing_cost_lines || 0) + " ingredient lines with cost unknown</div>"
+      + '<span class="badge danger">Cost unknown</span></article>';
   }).join("");
   if (!html) html = '<p class="note">No cost gaps right now.</p>';
   document.getElementById("exceptions").innerHTML = html || "";
@@ -431,26 +591,152 @@ function paintExceptions(pack) {
   };
 }
 
+function bindIngredientRow(wrap) {
+  var input = wrap.querySelector(".l-name");
+  var hid = wrap.querySelector(".l-ingredient-id");
+  var list = wrap.querySelector(".combo-options");
+  var meta = wrap.querySelector(".ing-meta");
+  var unitSel = wrap.querySelector(".l-unit");
+
+  function paintMeta(ing) {
+    if (!ing) {
+      var txt = normIng(input.value);
+      if (!txt) {
+        meta.textContent = "";
+        meta.className = "ing-meta";
+        return;
+      }
+      meta.textContent = "NO MATCHING INGREDIENT — request a new ingredient (cannot create here).";
+      meta.className = "ing-meta danger";
+      return;
+    }
+    var cost = ing.purchase_cost == null
+      ? "Cost unknown" : ("Rp " + Math.round(ing.purchase_cost).toLocaleString("id-ID"));
+    meta.textContent = (ing.default_unit ? ("Default unit: " + ing.default_unit + " · ") : "") + "Cost: " + cost;
+    meta.className = ing.purchase_cost == null ? "ing-meta warn" : "ing-meta";
+  }
+
+  function fillUnits(ing) {
+    unitSel.innerHTML = "";
+    var units = (ing && ing.units && ing.units.length) ? ing.units : [];
+    if (!units.length && ing && ing.default_unit) units = [ing.default_unit];
+    if (!units.length) {
+      unitSel.innerHTML = '<option value="">Unit</option>';
+      return;
+    }
+    units.forEach(function (u) {
+      var opt = document.createElement("option");
+      opt.value = u;
+      opt.textContent = u;
+      unitSel.appendChild(opt);
+    });
+    if (ing && ing.default_unit) unitSel.value = ing.default_unit;
+  }
+
+  function showOptions(query) {
+    return ensureIngredientMaster().then(function () {
+      var opts = filterIngredients(query, 25);
+      list.innerHTML = "";
+      if (!opts.length) {
+        list.classList.add("hidden");
+        paintMeta(null);
+        return;
+      }
+      opts.forEach(function (ing) {
+        var li = document.createElement("li");
+        li.setAttribute("data-id", ing.id);
+        li.innerHTML = esc(ing.name) + '<span class="sub">' + esc(ing.cost_status || "") + "</span>";
+        li.addEventListener("mousedown", function (ev) {
+          ev.preventDefault();
+          input.value = ing.name;
+          hid.value = ing.id;
+          list.classList.add("hidden");
+          fillUnits(ing);
+          paintMeta(ing);
+        });
+        list.appendChild(li);
+      });
+      list.classList.remove("hidden");
+    });
+  }
+
+  input.addEventListener("focus", function () { showOptions(input.value); });
+  input.addEventListener("input", function () {
+    hid.value = "";
+    showOptions(input.value);
+  });
+  input.addEventListener("blur", function () {
+    setTimeout(function () {
+      list.classList.add("hidden");
+      if (hid.value) return;
+      var hit = (state.ingredientMaster || []).find(function (i) {
+        return normIng(i.name) === normIng(input.value);
+      });
+      if (hit) {
+        hid.value = hit.id;
+        fillUnits(hit);
+        paintMeta(hit);
+      } else {
+        paintMeta(input.value.trim() ? null : null);
+      }
+    }, 150);
+  });
+
+  return wrap;
+}
+
 function addLine(data) {
   data = data || {};
   var wrap = document.createElement("div");
   wrap.className = "line";
   wrap.innerHTML = ""
-    + '<input class="l-name" placeholder="Ingredient" value="' + esc(data.name || "") + '" />'
+    + '<div class="ing-combo">'
+    + '<input class="l-name" placeholder="Search ingredient" value="' + esc(data.name || "") + '" autocomplete="off" />'
+    + '<input type="hidden" class="l-ingredient-id" value="' + esc(data.ingredient_id || "") + '" />'
+    + '<ul class="combo-options hidden"></ul>'
+    + '<span class="ing-meta"></span>'
+    + "</div>"
     + '<input class="l-qty" placeholder="Qty" type="number" step="any" value="' + esc(data.qty != null ? data.qty : "") + '" />'
-    + '<input class="l-unit" placeholder="Unit" value="' + esc(data.unit || "") + '" />';
+    + '<select class="l-unit"></select>'
+    + '<button type="button" class="line-remove" title="Remove line">×</button>';
   document.getElementById("lines").appendChild(wrap);
+  wrap.querySelector(".line-remove").addEventListener("click", function () { wrap.remove(); });
+  bindIngredientRow(wrap);
+  if ((data.ingredient_id || "").trim() || (data.name || "").trim()) {
+    ensureIngredientMaster().then(function () {
+      var ing = (state.ingredientMaster || []).find(function (i) {
+        return i.id === (data.ingredient_id || "") || normIng(i.name) === normIng(data.name || "");
+      });
+      if (ing) {
+        wrap.querySelector(".l-ingredient-id").value = ing.id;
+        wrap.querySelector(".l-name").value = ing.name;
+        var unitSel = wrap.querySelector(".l-unit");
+        unitSel.innerHTML = "";
+        (ing.units || [ing.default_unit]).filter(Boolean).forEach(function (u) {
+          var opt = document.createElement("option");
+          opt.value = u;
+          opt.textContent = u;
+          unitSel.appendChild(opt);
+        });
+        if (data.unit) unitSel.value = data.unit;
+        else if (ing.default_unit) unitSel.value = ing.default_unit;
+      }
+    });
+  }
 }
 
 function collectLines() {
   return Array.prototype.map.call(document.querySelectorAll("#lines .line"), function (row) {
+    var name = row.querySelector(".l-name").value;
+    var iid = row.querySelector(".l-ingredient-id").value;
     return {
-      name: row.querySelector(".l-name").value,
+      name: name,
+      ingredient_id: iid || null,
       qty: row.querySelector(".l-qty").value === "" ? null : Number(row.querySelector(".l-qty").value),
       unit: row.querySelector(".l-unit").value,
       line_kind: "ingredient"
     };
-  }).filter(function (l) { return (l.name || "").trim(); });
+  }).filter(function (l) { return (l.name || "").trim() || l.ingredient_id; });
 }
 
 function paintOutletChecks(selectedIds, allBzg) {
@@ -520,7 +806,10 @@ document.querySelectorAll(".tabs button").forEach(function (btn) {
   });
 });
 
-document.getElementById("back-list").addEventListener("click", function () { show("list"); });
+["back-list", "back-menu", "back-create", "back-exceptions"].forEach(function (id) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener("click", goBack);
+});
 document.getElementById("add-line").addEventListener("click", function () { addLine({}); });
 document.getElementById("edit-btn").addEventListener("click", function () {
   if (!state.current) return;
@@ -579,7 +868,10 @@ document.getElementById("recipe-form").addEventListener("submit", function (ev) 
       msg.textContent = "Saved.";
       loadList().then(function () {
         var rid = (result.body.recipe && result.body.recipe.recipe_id) || (result.body.recipe_id) || id;
-        if (rid) openDetail(rid);
+        if (rid) {
+          state.viewStack = ["list", "detail"];
+          openDetail(rid);
+        }
       });
     })
     .catch(function () {

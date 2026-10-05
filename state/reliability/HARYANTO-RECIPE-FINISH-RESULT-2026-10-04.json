@@ -1,0 +1,130 @@
+{
+  "pack": "HARYANTO-RECIPE-FINISH",
+  "status": "READY_FOR_HUMAN_BUG_TEST",
+  "date": "2026-10-04",
+  "decision": "2026-09-29 HEADCHEF-1 + 2026-10-02 BZG-RECIPE-MULTI-OUTLET-1",
+  "staff_link": "https://beta.wolfcommand.net/bzg/recipe-builder",
+  "staff_link_outlet_uma": "https://beta.wolfcommand.net/bzg/recipe-builder?outlet_id=BZG-UMA",
+  "staff_link_outlet_rainforest": "https://beta.wolfcommand.net/bzg/recipe-builder?outlet_id=BZG-RAIN",
+  "staff_link_outlet_pool_bar": "https://beta.wolfcommand.net/bzg/recipe-builder?outlet_id=OU-BZG-RAIN-POOL",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "beta_listener": {
+    "host": "127.0.0.1",
+    "port": 8788,
+    "pid_before": 35235,
+    "pid_after": 42936,
+    "reloaded": true,
+    "reason": "recipe_builder.py changed (ingredient_id backfill + Uma default outlet)"
+  },
+  "prod": {
+    "pid": 1297,
+    "port": 8787,
+    "touched": false
+  },
+  "proved": {
+    "uma_recipe_opens": {
+      "status": "PASS",
+      "evidence": "127 recipes for BZG-UMA; get_recipe opens e.g. avocado-feta-tartine with 13 lines",
+      "test": "test_uma_recipe_opens_and_cost_honest"
+    },
+    "ingredient_typeahead": {
+      "status": "PASS",
+      "evidence": "combo-options + l-ingredient-id on page; search_ingredients binds canonical id on save",
+      "test": "test_haryanto_ux_20261004.py + test_staff_page_copy"
+    },
+    "qty_unit_save_reload": {
+      "status": "PASS",
+      "evidence": "update_recipe qty=42.5 unit=gr persists on get_recipe reload (temp sqlite)",
+      "test": "test_save_qty_unit_persists"
+    },
+    "cost_from_stored_ingredient": {
+      "status": "PASS",
+      "evidence": "carrot line extended_cost=3000 from stored purchase_cost; null master → extended_cost null",
+      "test": "test_save_qty_unit_persists + test_uma_recipe_opens_and_cost_honest"
+    },
+    "cost_unknown_staff_copy": {
+      "status": "PASS",
+      "evidence": "Staff page shows Cost unknown (not invented price); backend still INCOMPLETE COST",
+      "test": "test_staff_page_copy"
+    },
+    "menu_and_back": {
+      "status": "PASS",
+      "evidence": "Menu tab + Back buttons on menu/detail/exceptions/create; viewStack navigation in HTML",
+      "test": "test_haryanto_ux_20261004.py HTTP page 200"
+    },
+    "outlet_registry_switch": {
+      "status": "PASS",
+      "evidence": "BZG-UMA 127 recipes; BZG-RAIN 0; OU-BZG-RAIN-POOL 0; honest outlet_truth messages",
+      "test": "test_outlet_registry_honest_empty"
+    },
+    "head_chef_not_access_denied": {
+      "status": "PASS",
+      "evidence": "GET /bzg/recipe-builder 200 for carolus.haryanto@gmail.com (development_assertion harness); recipe.read+edit allowed",
+      "test": "test_http_builder + test_head_chef_access_without_work_update"
+    },
+    "no_work_update_grant": {
+      "status": "PASS",
+      "evidence": "work.update denied for PERS-HARIYANTO; recipe.* allowed",
+      "test": "test_head_chef_access_without_work_update"
+    },
+    "no_gl_journals_account_codes": {
+      "status": "PASS",
+      "evidence": "bzg-recipe-builder.html has no GL/journal/account code labels",
+      "test": "test_staff_page_copy"
+    },
+    "desktop_layout": {
+      "status": "PASS",
+      "evidence": "wrap max-width 960px centered; desktop grid widens ingredient rows at min-width 900px",
+      "test": "test_staff_page_copy"
+    },
+    "ingredient_id_backfill": {
+      "status": "PASS",
+      "evidence": "756/756 recipe_lines now have ingredient_id on live catalog after migration",
+      "test": "ingredient_id backfill progressed"
+    },
+    "tests": {
+      "test_haryanto_recipe_finish_20261004.py": {
+        "pass": 27,
+        "fail": 0,
+        "cmd": "PYTHONPATH=scripts python3 scripts/tests/test_haryanto_recipe_finish_20261004.py"
+      },
+      "test_haryanto_ux_20261004.py": {
+        "pass": 35,
+        "fail": 0
+      },
+      "test_headchef1_20260929.py": {
+        "pass": 93,
+        "fail": 0
+      }
+    }
+  },
+  "not_proved": {
+    "cloudflare_live_login": "Commissioning WI still HELD_UNTIL_CF_ACCESS — browser proof requires Matt-confirmed CF Access for carolus.haryanto@gmail.com",
+    "haryanto_browser_save": "No human clicked Save in a real CF-authenticated browser session this run",
+    "rainforest_pool_bar_menus": "No menu source found — honest empty by design; not invented",
+    "phone_screenshot_layout": "Phone usability asserted by CSS breakpoints only; no fresh desk/phone screenshots captured",
+    "staff_ready_commission": "staff_ready remains false; human commissioning not performed"
+  },
+  "hard_limits_respected": {
+    "no_rainforest_pool_bar_invented_menus": true,
+    "no_almond_milk_recipe_created": true,
+    "no_catalog_sqlite_copy_in_tests": true,
+    "protected_venue_closes_untouched": true,
+    "outlets_open": {
+      "BZG-UMA": "OPEN",
+      "BZG-RAIN": "OPEN",
+      "OU-BZG-RAIN-POOL": "OPEN"
+    },
+    "prod_untouched": true,
+    "no_commit_no_push": true
+  },
+  "files_changed": [
+    "scripts/core/recipe_builder.py",
+    "dashboards/bzg-recipe-builder.html",
+    "scripts/tests/test_headchef1_20260929.py",
+    "scripts/tests/test_bzg_recipe_multi_outlet_1.py",
+    "scripts/tests/test_haryanto_recipe_finish_20261004.py",
+    "state/build-claims/2026-10-04.json"
+  ]
+}

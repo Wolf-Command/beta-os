@@ -1,0 +1,36 @@
+{
+  "pack": "OWNER-HOME-FINISH-WOLF-3-RECLASS-1",
+  "applied_at_wita": "2026-10-01T09:53:41+08:00",
+  "executor": "Peaches-executor",
+  "target": "beta-os :8788",
+  "prod_8787": "UNTOUCHED pid 15975",
+  "finance_8790": "UNTOUCHED pid 45751 SoD",
+  "beta_8788_pid_after": 12379,
+  "mutations": [
+    "dashboards/assets/needs-matt-queue.json \u2014 5\u21923 essentials; optional_non_gating Klaviyo+W4",
+    "owner-empire-pack.html \u2014 copy + cache-bust ?v=20261001-fw3 + optional section render",
+    "finish-war-room.html \u2014 cache-bust + optional cards dashed style",
+    "state needs-matt-queue.json mirrored"
+  ],
+  "proof": {
+    "matt_card_count": 3,
+    "card_ids": [
+      "FW-CANVA-REAUTH",
+      "FW-YANOLJA-BOOKINGS-ENABLE",
+      "FW-CF-SCREENSHOT-ACCEPTANCE"
+    ],
+    "optional": [
+      "FW-KLAVIYO-READ-PROVE-OPTIONAL",
+      "FW-W4-SEED-OR-ACCEPT-EMPTY"
+    ],
+    "live_asset_http": "200 /assets/needs-matt-queue.json?v=20261001-fw3",
+    "staff_ready": false,
+    "desktop_gate_ready": false
+  },
+  "honesty": {
+    "no_exit_report": true,
+    "no_wolf_desktop_ready": true,
+    "finance_sod": "UNCHANGED",
+    "asg_zayen_bzg_fc_1": "KEPT"
+  }
+}

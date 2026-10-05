@@ -1,0 +1,44 @@
+{
+  "slice": "UMA-CLOSE-6STEP-REBUILD-1",
+  "status": "PASS",
+  "files_changed": [
+    "scripts/core/bzg_daily_close.py",
+    "scripts/serve_beta.py",
+    "dashboards/uma-blu-close.html",
+    "scripts/tests/test_uma_close_6step_rebuild1_20261005.py"
+  ],
+  "suites": {
+    "test_uma_hist_close_complete1_20261005.py": {
+      "pass": 28,
+      "fail": 0,
+      "exit_code": 0
+    },
+    "test_uma_hist_close_complete2_20261005.py": {
+      "pass": 29,
+      "fail": 0,
+      "exit_code": 0
+    },
+    "test_uma_hist_close_nav_mobile1_20261005.py": {
+      "pass": 52,
+      "fail": 0,
+      "exit_code": 0
+    },
+    "test_uma_hist_close_nav_mobile2_20261005.py": {
+      "pass": 102,
+      "fail": 0,
+      "exit_code": 0
+    },
+    "test_uma_hist_close_queue1_20261005.py": {
+      "pass": 35,
+      "fail": 0,
+      "exit_code": 0
+    }
+  },
+  "live_29sep_incomplete": true,
+  "oct3_oct4_unchanged": true,
+  "prod_pid_8787": 1297,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_commit": true,
+  "exit_code": 0
+}

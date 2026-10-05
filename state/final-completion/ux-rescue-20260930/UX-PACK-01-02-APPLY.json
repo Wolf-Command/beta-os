@@ -1,0 +1,75 @@
+{
+  "schema": "UX-PACK-01-02-APPLY/v0",
+  "applied": true,
+  "applied_wita": "2026-09-30T21:58:29+08:00",
+  "bound": "beta_only",
+  "beta_port": 8788,
+  "prod_8787": "READ_ONLY_UNTOUCHED",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "packs": [
+    "UX-PACK-01",
+    "UX-PACK-02"
+  ],
+  "status": "PACK_01_02_APPLIED",
+  "finance_sod_unchanged": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "beta_owner_start_url": "https://beta.wolfcommand.net/owner-empire-pack",
+  "beta_owner_start_alias": "https://beta.wolfcommand.net/wolf",
+  "beta_finish_wolf_url": "https://beta.wolfcommand.net/finish-war-room",
+  "local_owner_start": "http://127.0.0.1:8788/owner-empire-pack",
+  "finish_wolf_visible": true,
+  "nav_item_count": {
+    "sidenav_before": 24,
+    "sidenav_after": 22,
+    "wolf_shell_before": 29,
+    "wolf_shell_after": 24
+  },
+  "files_changed": [
+    "dashboards/owner-empire-pack.html",
+    "dashboards/finish-war-room.html",
+    "dashboards/assets/sidenav.js",
+    "dashboards/assets/needs-matt-queue.json",
+    "scripts/core/wolf_shell.py"
+  ],
+  "backup_dir": "/Users/wolfterminal/beta-os/backups/ux-pack-01-02-20260930-215513",
+  "beta_restarted": true,
+  "pack_01": {
+    "owner_home_desktop_layout": true,
+    "finish_wolf_primary_cta": true,
+    "finish_wolf_in_home_ia": true,
+    "my_work_in_home_ia": true,
+    "needs_matt_cards_what_why_where_time_status_after": true,
+    "plain_english_ui": true,
+    "pass_invented": false,
+    "owner_only_finish": true
+  },
+  "pack_02": {
+    "removed_from_primary_ia": [
+      "/ggv-voice",
+      "/amg-voice",
+      "/bzg-voice",
+      "/kuta-rates",
+      "/ops/competitor-rates-pipeline",
+      "/ops/rate-calendar",
+      "/ops/calendly-atrium-sync"
+    ],
+    "kept_hubs_and_seats": true,
+    "html_routes_still_url_reachable": true,
+    "html_files_deleted": false,
+    "apis_removed": false
+  },
+  "screenshots": {
+    "status": "BLOCKED_AUTH"
+  },
+  "blockers": [
+    "Desktop screenshots BLOCKED_AUTH (CF Access)",
+    "Authenticated visual verify needs Matt Owner session"
+  ],
+  "acceptance": {
+    "finish_wolf_on_owner_home_and_nav": true,
+    "no_staff_ready_invent": true,
+    "finance_sod_unchanged": true,
+    "primary_ia_shrunk": true
+  }
+}

@@ -1,0 +1,184 @@
+{
+  "schema": "DESKTOP-SCREENSHOT-AUDIT/v0",
+  "generated_wita": "2026-09-30T21:55:00+08:00",
+  "method": "Google Chrome --headless=new --window-size=1440,900 on Mac machineId 36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "desktop_first": true,
+  "mobile_commissioning": false,
+  "beta_port": "127.0.0.1:8788",
+  "v1_port": "127.0.0.1:8787 (READ-ONLY sacred pid 15975)",
+  "owner_session": false,
+  "counts": {
+    "CAPTURED": 14,
+    "BLOCKED_AUTH": 8
+  },
+  "shots": [
+    {
+      "file": "v1-index.png",
+      "url": "http://127.0.0.1:8787/",
+      "surface": "V1 Control/Index",
+      "status": "CAPTURED",
+      "notes": "V1 entry; desktop 1440x900"
+    },
+    {
+      "file": "v1-wolf.png",
+      "url": "http://127.0.0.1:8787/wolf.html",
+      "surface": "V1 Wolf Owner board",
+      "status": "CAPTURED",
+      "notes": "Boards+Ask Peaches; WOLF TOOLS sidebar (Spartacus/Trading/Learning/Radar/Admin); LIVE badge; content body stuck on loading in headless"
+    },
+    {
+      "file": "v1-trading.png",
+      "url": "http://127.0.0.1:8787/trading.html",
+      "surface": "V1 Trading Desk",
+      "status": "CAPTURED",
+      "notes": "14 hub cards (Holdings to Agent OS); paper-only disclaimer; LIVE; rich navigable desk vs Beta PARTIAL page"
+    },
+    {
+      "file": "v1-spartacus.png",
+      "url": "http://127.0.0.1:8787/spartacus.html",
+      "surface": "V1 Spartacus",
+      "status": "CAPTURED",
+      "notes": "Live fitness command board"
+    },
+    {
+      "file": "v1-travel.png",
+      "url": "http://127.0.0.1:8787/travel.html",
+      "surface": "V1 Travel",
+      "status": "CAPTURED",
+      "notes": "Dedicated travel board"
+    },
+    {
+      "file": "v1-atrium-sales.png",
+      "url": "http://127.0.0.1:8787/atrium-sales.html",
+      "surface": "V1 Atrium Sales",
+      "status": "CAPTURED",
+      "notes": "Hotel sales board"
+    },
+    {
+      "file": "v1-atrium-finance.png",
+      "url": "http://127.0.0.1:8787/atrium-finance.html",
+      "surface": "V1 Atrium Finance",
+      "status": "CAPTURED",
+      "notes": "Finance desk \u2014 SoD unchanged in Beta work"
+    },
+    {
+      "file": "v1-ggv-finance.png",
+      "url": "http://127.0.0.1:8787/ggv-finance.html",
+      "surface": "V1 GGV Books",
+      "status": "CAPTURED",
+      "notes": "GGV finance board"
+    },
+    {
+      "file": "v1-uma-blu.png",
+      "url": "http://127.0.0.1:8787/uma-blu.html",
+      "surface": "V1 Uma Blu",
+      "status": "CAPTURED",
+      "notes": "Venue ops console"
+    },
+    {
+      "file": "v1-content.png",
+      "url": "http://127.0.0.1:8787/content.html",
+      "surface": "V1 Content",
+      "status": "CAPTURED",
+      "notes": "Content hub"
+    },
+    {
+      "file": "v1-kuta-rates.png",
+      "url": "http://127.0.0.1:8787/kuta-rates.html",
+      "surface": "V1 Kuta Rates",
+      "status": "CAPTURED",
+      "notes": "Competitor rates board"
+    },
+    {
+      "file": "v1-hr.png",
+      "url": "http://127.0.0.1:8787/hr.html",
+      "surface": "V1 HR",
+      "status": "CAPTURED",
+      "notes": "HR deferred domain \u2014 do not commission"
+    },
+    {
+      "file": "beta-owner-trading.png",
+      "url": "http://127.0.0.1:8788/owner/trading",
+      "surface": "Beta Owner Trading",
+      "status": "CAPTURED",
+      "notes": "PARTIAL honesty/status page \u2014 not V1 card desk; chrome Boards/Wolf/Up/Back/Home; migration banners"
+    },
+    {
+      "file": "beta-owner-fitness.png",
+      "url": "http://127.0.0.1:8788/owner/fitness",
+      "surface": "Beta Owner Fitness",
+      "status": "CAPTURED",
+      "notes": "PARTIAL Spartacus transfer surface"
+    },
+    {
+      "file": "beta-owner-empire.png",
+      "url": "http://127.0.0.1:8788/owner-empire-pack",
+      "surface": "Beta Owner Empire / Home",
+      "status": "BLOCKED_AUTH",
+      "notes": "Access denied \u2014 Cf-Access-Jwt-Assertion required. Local :8788 fail-closed."
+    },
+    {
+      "file": "beta-finish-war.png",
+      "url": "http://127.0.0.1:8788/finish-war-room",
+      "surface": "Beta FINISH WOLF / Finish war room",
+      "status": "BLOCKED_AUTH",
+      "notes": "Same CF Access wall"
+    },
+    {
+      "file": "beta-my-work.png",
+      "url": "http://127.0.0.1:8788/my-work",
+      "surface": "Beta My Work",
+      "status": "BLOCKED_AUTH",
+      "notes": "Sign-in / forbidden JSON or access denied page"
+    },
+    {
+      "file": "beta-ggv-ops.png",
+      "url": "http://127.0.0.1:8788/ggv-ops-pack",
+      "surface": "Beta GGV Ops",
+      "status": "BLOCKED_AUTH",
+      "notes": "CF Access required"
+    },
+    {
+      "file": "beta-amg-ops.png",
+      "url": "http://127.0.0.1:8788/amg-ops-pack",
+      "surface": "Beta AMG Ops",
+      "status": "BLOCKED_AUTH",
+      "notes": "CF Access required"
+    },
+    {
+      "file": "beta-bzg.png",
+      "url": "http://127.0.0.1:8788/bzg",
+      "surface": "Beta BZG Overview",
+      "status": "BLOCKED_AUTH",
+      "notes": "Forbidden / not in authorised scope (anon)"
+    },
+    {
+      "file": "beta-content.png",
+      "url": "http://127.0.0.1:8788/content-2.0",
+      "surface": "Beta Content 2.0",
+      "status": "BLOCKED_AUTH",
+      "notes": "Content workspace not in authorised scope (anon)"
+    },
+    {
+      "file": "beta-uma.png",
+      "url": "http://127.0.0.1:8788/bzg/uma-blu",
+      "surface": "Beta Uma Blu Today",
+      "status": "BLOCKED_AUTH",
+      "notes": "CF Access required"
+    }
+  ],
+  "mechanical_inventory_fallback": {
+    "when": "BLOCKED_AUTH on Owner hubs",
+    "used": [
+      "dashboards/*.html titles + wolf_shell route aliases",
+      "sidenav.js IA_TREE",
+      "HTML body titles for finish-war-room / my-work / owner-empire-pack"
+    ]
+  },
+  "key_findings": [
+    "V1 Trading is a real 14-card desk; Beta /owner/trading is PARTIAL status/transfer page",
+    "V1 Wolf Tools sidebar keeps personal command discoverable; Beta Empire Home not screenshottable without CF JWT",
+    "FINISH WOLF (finish-war-room) exists as HTML but not reachable anonymously and not yet primary IA CTA",
+    "Do not invent pixels for blocked hubs \u2014 auth wall documented"
+  ]
+}

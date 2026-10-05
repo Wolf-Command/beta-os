@@ -1,0 +1,20 @@
+BETA RELOAD ROLLBACK DESCRIPTION — 2026-10-03
+Captured read-only. No restart was performed. This file describes the process that was already listening, so a later operator can restore the same entrypoint. Do not treat this file as permission to restart during Iza's Uma Blu close.
+
+Label: net.wolfcommand.serve-beta
+Plist: /Users/wolfterminal/Library/LaunchAgents/net.wolfcommand.serve-beta.plist
+WorkingDirectory: /Users/wolfterminal/beta-os/scripts
+ProgramArguments:
+  /opt/homebrew/bin/python3
+  /Users/wolfterminal/beta-os/scripts/serve_beta.py
+Resolved argv of pid 84487:
+  /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/MacOS/Python
+  /Users/wolfterminal/beta-os/scripts/serve_beta.py
+Plist environment: BETA_PORT=8788
+Auth mode: cloudflare_access (from beta-os/.env; not present in the launchd environment block; code default if unset is also cloudflare_access)
+KeepAlive: true
+RunAtLoad: true
+Logs: /tmp/serve_beta.log
+Listen: 127.0.0.1:8788
+Pid at capture: 84487
+Secrets: none copied.

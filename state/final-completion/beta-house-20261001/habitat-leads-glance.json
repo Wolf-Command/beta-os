@@ -1,0 +1,22 @@
+{
+  "schema": "habitat-leads-glance/v1",
+  "as_of_wita": "2026-10-01T09:43:42+08:00",
+  "sot": "HABITAT_SHEET_DRIVE_READ",
+  "sheet_id": "1HMNAXUQ_seF4RGff66N402wp25rBOvfucaDNToRzEZM",
+  "sheet_title": "Habitat Leads & Owners ",
+  "tab": "Leads",
+  "drive_modified_utc": "2026-09-30T08:09:03.001Z",
+  "real_lead_count": 271,
+  "raw_data_rows": 286,
+  "prior_snapshot_count_20260821": 232,
+  "excluded_test_junk": true,
+  "authorised_read": true,
+  "write": false,
+  "klaviyo_push": false,
+  "klaviyo_seen_profiles_sync": 143,
+  "klaviyo_last_synced_at": "2026-10-01T01:25:55.759518Z",
+  "core_leads_fixture_only": true,
+  "core_leads_fixture_count": 8,
+  "notes": "Authorised Habitat Google Sheet READ proved via Drive MCP 2026-10-01. Owner pulse binds this ahead of DEMO fixtures.",
+  "prove": "LIVE+TESTED Drive xlsx parse"
+}

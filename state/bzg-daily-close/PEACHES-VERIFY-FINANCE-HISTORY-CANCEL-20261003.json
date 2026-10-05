@@ -1,0 +1,41 @@
+{
+  "pack": "FINANCE-CONTROL-REPAIR-2026-10-03",
+  "slice": "closing_history_filters_cancel_unfinished",
+  "at": "2026-10-03T11:12:19+08:00",
+  "verifier": "Peaches",
+  "verdict": "LOCAL_PASS_CODE_COMPLETE_INTEGRATION_UNPROVED",
+  "eng_proved": false,
+  "staff_ready": false,
+  "ready_for_matt_test": false,
+  "tip_observed": "0b0e50d",
+  "working_tree_dirty": true,
+  "files_touched_uncommitted": [
+    "scripts/core/venue_close.py",
+    "scripts/serve_beta.py",
+    "dashboards/uma-blu-close.html",
+    "scripts/tests/test_finance_control_history_cancel_20261003.py"
+  ],
+  "preserved_close": {
+    "close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+    "business_date": "2026-10-02",
+    "outlet_id": "BZG-UMA",
+    "state": "DATA_CAPTURED",
+    "taken_by_person_id": "PERS-MATT",
+    "receipt_photos_evd_close": 5
+  },
+  "checks": {
+    "list_closes_date_outlet_filters": "PASS",
+    "closing_history_saved_only_no_live_esb": "PASS",
+    "cancel_missing_not_found": "PASS",
+    "cancel_throwaway_open": "PASS",
+    "preserved_untouched_after_cancel_test": "PASS",
+    "pytest_module": "ABSENT_used_manual_runner"
+  },
+  "ha_companion": {
+    "root_cause_path": "state/reliability/HA-ROOT-CAUSE-2026-10-03.md",
+    "written": true,
+    "phase2_activation": "NEEDS_MATT_APPROVAL_NOT_ACTIVATED",
+    "cursor_exit_is_pass": false
+  },
+  "note": "Partial Finance Control Repair checkpoint only. Part B GGV not started. Do not stamp ENG_PROVED or staff_ready."
+}

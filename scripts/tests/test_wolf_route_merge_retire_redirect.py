@@ -46,12 +46,9 @@ WIP = (
 )
 
 SPECIALIST_SLUGS = (
-    "trading",
-    "travel",
-    "spartacus",
+    # P0 re-entries (trading/travel/spartacus/kuta-rates) no longer Wave8 soft-redirect.
     "mila",
     "amanda",
-    "kuta-rates",
 )
 
 # From → expected Location substring
@@ -298,12 +295,13 @@ def test_http() -> None:
                 f"code={code} loc={loc}",
             )
 
+        # P0: /trading canonicalizes to Owner Trading (not Empire soft-land).
         code, hdrs = call_redirect("/trading")
         loc = (hdrs or {}).get("Location") or ""
         check(
-            "specialist /trading → /wolf",
-            code in (301, 302, 303, 307) and "/wolf" in loc,
-            loc,
+            "P0 /trading → /owner/trading (not Empire)",
+            code == 302 and "/owner/trading" in (hdrs.get("Location") or ""),
+            f"{code} {hdrs.get('Location')}",
         )
 
         for path in (

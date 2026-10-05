@@ -1,0 +1,25 @@
+{
+  "pack": "WORKFLOW-CONTENT-LIBRARY-PATH-HONESTY-1",
+  "schema": "wolf.workflow-content-library-path-honesty-1.v1",
+  "applied_at_wita": "2026-10-01T08:05:50+08:00",
+  "executor": "Peaches-executor",
+  "phase": "WORKFLOW",
+  "prod_8787": "UNTOUCHED",
+  "prod_pid": 15975,
+  "note": "Bind already-LIVE content Library path honesty onto Content desk.",
+  "mutations": [
+    "content-2.0.html nasB2DeskHonesty includes Library sqlite \u2260 NAS tree",
+    "nas_b2 desk stamp library_db_honesty field",
+    "CONTENT-STACK-TRUTH reconciled"
+  ],
+  "proof": {
+    "library_assets": 18,
+    "library_content_cards": 153,
+    "nas_media_shallow": 38091,
+    "claim": "Library DB \u2260 NAS tree \u2014 stamped honest"
+  },
+  "skipped": [
+    "Owner Integrations health JWT (/api/integration-health missing_auth) \u2014 park for CF session"
+  ],
+  "status": "APPLIED"
+}

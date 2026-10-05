@@ -1,0 +1,31 @@
+{
+  "pack": "OWNER-HOME-FINISH-WOLF-5-POLISH-1",
+  "applied_at_wita": "2026-10-01T08:12:49+08:00",
+  "executor": "Peaches-executor",
+  "target": "beta-os :8788",
+  "prod_8787": "UNTOUCHED",
+  "mutations": [
+    "dashboards/assets/needs-matt-queue.json \u2014 replaced stale 3 P0 cards with Matt's 5 FINISH-WOLF-QUEUE cards",
+    "owner-empire-pack.html + finish-war-room.html \u2014 cache-bust ?v=20261001-fw5",
+    "owner-empire-pack.html \u2014 pulse value clamp + state border tint; lede/FINISH note no ready claim"
+  ],
+  "proof": {
+    "matt_card_count": 5,
+    "card_ids": [
+      "FW-CANVA-REAUTH",
+      "FW-YANOLJA-BOOKINGS-ENABLE",
+      "FW-KLAVIYO-READ-PROVE-OPTIONAL",
+      "FW-W4-SEED-OR-ACCEPT-EMPTY",
+      "FW-CF-SCREENSHOT-ACCEPTANCE"
+    ],
+    "staff_ready": false,
+    "desktop_gate_ready": false,
+    "wolf_desktop_ready_claim": false
+  },
+  "honesty": {
+    "no_exit_report": true,
+    "no_wolf_desktop_ready": true,
+    "finance_sod": "UNCHANGED"
+  },
+  "backup": "/Users/wolfterminal/beta-os/backups/beta-house-ux-20261001/"
+}

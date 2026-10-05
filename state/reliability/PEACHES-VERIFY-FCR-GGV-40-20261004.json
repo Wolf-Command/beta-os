@@ -1,0 +1,81 @@
+{
+  "pack": "FCR-GGV-40",
+  "run_id": "BF-1beb8ada879f",
+  "verified_at": "2026-10-04T11:52:00+08:00",
+  "verifier": "Peaches",
+  "peaches_independent": true,
+  "factory_stage_was": "WAITING_CURSOR",
+  "factory_next_action_was": "INSPECT",
+  "factory_wake_was": "FACTORY_INSPECT_RECOVER",
+  "child_alive": false,
+  "cursor_pid": 33992,
+  "inspect_count_at_finish": 2,
+  "factory_blocker_overridden": true,
+  "override_reason": "Cursor EXITED (pid 33992 dead) with IMPLEMENTATION_DONE result + Peaches re-ran tests PASS; factory still WAITING_CURSOR/INSPECT without EXIT marker \u2014 orchestration gap not work failure",
+  "cursor_status": "EXITED_CLEARED",
+  "cursor_log": "state/reliability/fcr-ggv-40-cursor-20261004.log",
+  "result_md": "state/reliability/FCR-GGV-40-RESULT-2026-10-04.md",
+  "py_compile": "PASS",
+  "tests": {
+    "test_fcr_ggv_40_tax_20261004.py": {
+      "pass": 9,
+      "fail": 0
+    },
+    "test_fcr_ggv_38_upload_date_20261004.py": {
+      "pass": 13,
+      "fail": 0,
+      "regression": true
+    }
+  },
+  "diff_review": {
+    "files": [
+      "scripts/core/ggv_receipt_accounting1.py",
+      "scripts/tests/test_fcr_ggv_40_tax_20261004.py"
+    ],
+    "tax_helper": "_confirmed_tax",
+    "blank_tax_is_null_not_zero": true,
+    "no_staff_page": true,
+    "no_serve_beta_route": true,
+    "no_live_catalog_write": true,
+    "amount_field_untouched": true
+  },
+  "protected_closes": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+      "state": "EXCEPTION",
+      "declared_cash_amount": 3225000.0,
+      "variance_cash_amount": -125000.0,
+      "business_date": "2026-10-03",
+      "unchanged": true,
+      "catalog_mtime": "2026-10-04T08:17:53+08:00"
+    },
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": {
+      "state": "CANCELLED",
+      "business_date": "2026-10-02",
+      "unchanged": true
+    }
+  },
+  "pids": {
+    "prod": 15975,
+    "beta": 93525,
+    "sidecar_worker": 63443,
+    "unchanged": true
+  },
+  "beta_reload": false,
+  "prod_mutate": false,
+  "eng_proved": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "ready_for_human_test": false,
+  "verdict": "IMPLEMENTATION_DONE_LOCAL_PASS",
+  "matt_ping": true,
+  "matt_ping_kind": "FINISHED_IMPLEMENTATION_DONE",
+  "git_commit": "0b0e50d",
+  "tip": "0b0e50d",
+  "do_not_claim": [
+    "PROVEN_COMPLETE",
+    "staff_ready",
+    "human_commissioned",
+    "READY_FOR_HUMAN_TEST",
+    "eng_proved"
+  ]
+}

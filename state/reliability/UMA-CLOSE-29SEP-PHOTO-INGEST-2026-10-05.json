@@ -1,0 +1,18 @@
+{
+  "task_type": "EVIDENCE_INGEST",
+  "classification": "SOURCE EVIDENCE PROVIDED BY OWNER / ATTACHMENT NOT YET INGESTED INTO WOLF",
+  "close_id": "VDC-8fd544e2-2132-4a4a-b714-720eb0cd18ad",
+  "business_date": "2026-09-29",
+  "esb_receipt_id": "ESBR-OWNER-TYPED-DF8DA50A8BA8",
+  "provenance": "provided by Owner, 5 Oct 2026, during historical Daily Close human test",
+  "attachment_location": "ChatGPT/conversation attachment not yet on the Wolf ingest path",
+  "image_bytes_present": false,
+  "permanently_missing": false,
+  "blocks_daily_close_repair": false,
+  "typed_figures_are_not_the_original": true,
+  "image_status_before": "MISSING_FILE_VALUES_SUPPLIED_BY_OWNER",
+  "image_status_after": "INGEST_PENDING_ATTACHMENT_NOT_YET_INGESTED",
+  "catalog_row": "venue_close_esb_closing_receipts.esb_receipt_id=ESBR-OWNER-TYPED-DF8DA50A8BA8",
+  "note": "Ingest gap only. Owner-typed figures are not the original photograph. Do not invent image bytes. Does not block Daily Close repair.",
+  "created_at_local": "2026-10-05T09:20:00+08:00"
+}

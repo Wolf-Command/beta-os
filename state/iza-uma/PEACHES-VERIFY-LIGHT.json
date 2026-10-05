@@ -1,0 +1,17 @@
+{
+  "pack": "IZA-UMA-CAPTAIN-CASHIER-1",
+  "verified_at": "2026-10-02T20:19:00+08:00",
+  "verifier": "Peaches-style credit-light (executor)",
+  "cursor_exit": 0,
+  "commits": [
+    "15b6cb5",
+    "876f49e"
+  ],
+  "checks_pass": 19,
+  "pack_tests": "43/0",
+  "unsigned_uma_close": 403,
+  "prod_8787": 200,
+  "result": "PASS_VERIFIED_ENG",
+  "staff_ready": false,
+  "human_commissioned": false
+}

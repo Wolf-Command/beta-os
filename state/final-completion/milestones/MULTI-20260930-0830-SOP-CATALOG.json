@@ -1,0 +1,23 @@
+{
+  "milestone": "MULTI-20260930-0830-SOP-CATALOG",
+  "at_wita": "2026-09-30T08:30:00+08:00",
+  "pack": "SOP-CATALOG-SEED-ROUTE-1",
+  "status": "CURSOR_EXIT_0",
+  "suite": {"pass": 154, "fail": 0},
+  "classification": "INTERNALLY_SOLVABLE",
+  "route_classification": "HUMAN_COMMISSIONING",
+  "action": "STAMP_HUMAN_COMMISSIONING",
+  "live_catalog_status": "ABSENT",
+  "seeded_live": false,
+  "auto_approve": false,
+  "invented_lessons": false,
+  "sop_lesson_live1_preserved": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "prod_pid_held": 15975,
+  "no_push": true,
+  "board": "/ops/sop-catalog-seed-route-1",
+  "result": "docs/wolf/ops/SOP-CATALOG-SEED-ROUTE-1-RESULT.md",
+  "next_pack_for_parent": "FIN-BANK-CREDS-ROUTE-1",
+  "cursor_did_not_auto_start_next": true
+}

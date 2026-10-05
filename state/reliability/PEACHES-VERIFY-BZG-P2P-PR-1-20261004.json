@@ -1,0 +1,46 @@
+{
+  "run_id": "BF-2155a8fd3e52",
+  "pack": "BZG-P2P-PR-1",
+  "verified_at": "2026-10-04T18:54:33+08:00",
+  "verifier": "Peaches",
+  "cursor_status": "EXITED_IMPLEMENTATION_DONE",
+  "cursor_pid": 4167,
+  "cursor_log": "state/reliability/bzg-p2p-pr-1-cursor-20261004.log",
+  "result_md": "state/reliability/BZG-P2P-PR-1-RESULT-2026-10-04.md",
+  "result_json": "state/reliability/BZG-P2P-PR-1-RESULT-2026-10-04.json",
+  "tests": {
+    "command": "python3 scripts/tests/test_bzg_p2p_pr1_20261004.py",
+    "pass": 20,
+    "fail": 0
+  },
+  "beta_reload": {
+    "performed": true,
+    "at": "2026-10-04T18:54:33+08:00",
+    "method": "launchctl kickstart -k gui/501/net.wolfcommand.serve-beta",
+    "old_pid": 1339,
+    "new_pid": 6822,
+    "port": 8788,
+    "health_api": 200,
+    "bills": 403,
+    "prs_unsigned_post": 403,
+    "prs_post_meaning": "route present; missing_auth fail-closed \u2014 expected",
+    "prod_pid_1297_untouched": true
+  },
+  "protected_close": {
+    "close_id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+    "unchanged": true,
+    "note": "test_bzg_p2p_pr1 asserted protected close still exists; no mutate"
+  },
+  "eng_proved": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "ready_for_human_test": true,
+  "deployed_beta": true,
+  "beta_link": "https://beta.wolfcommand.net/bzg/uma-blu/bills",
+  "verdict": "IMPLEMENTATION_DONE_BETA_RELOADED_READY_FOR_HUMAN_TEST",
+  "factory_blocker_overridden": "FACTORY_INSPECT_CHILD_DEAD_WITH_RESULT_AND_CURSOR_DONE_LOG",
+  "git_head": "0b0e50d",
+  "dirty_approx": 524,
+  "no_prod": true,
+  "no_second_launch": true
+}

@@ -1,0 +1,67 @@
+{
+  "pack": "FINANCE-SWITCHER-REPAIR-1",
+  "run_id": null,
+  "switcher_component": "dashboards/shared/finance-switcher.js",
+  "amg_entry_choice": "injection_and_amg-finance-ops_href",
+  "routes_added": [
+    "/finance",
+    "/api/finance/entities"
+  ],
+  "test_file": "scripts/tests/test_finance_switcher_repair1_20261005.py",
+  "tests_pass": 7,
+  "tests_fail": 0,
+  "fail_detail": "",
+  "per_person_matrix": {
+    "Matt": {
+      "GGV": {
+        "selectable": true,
+        "help": null
+      },
+      "AMG": {
+        "selectable": true,
+        "help": null
+      },
+      "BZG": {
+        "selectable": true,
+        "help": null
+      }
+    },
+    "Zayen": {
+      "GGV": {
+        "selectable": false,
+        "help": "NO ACCESS"
+      },
+      "AMG": {
+        "selectable": true,
+        "help": null
+      },
+      "BZG": {
+        "selectable": true,
+        "help": null
+      }
+    },
+    "Amanda": {
+      "GGV": {
+        "selectable": true,
+        "help": null
+      },
+      "AMG": {
+        "selectable": false,
+        "help": "NO ACCESS"
+      },
+      "BZG": {
+        "selectable": false,
+        "help": "NO ACCESS"
+      }
+    }
+  },
+  "staff_ready": false,
+  "human_commissioned": false,
+  "zayen_ready": false,
+  "status": "IMPLEMENTATION_DONE",
+  "exit_code": 0,
+  "beta_reloaded": false,
+  "reload_held": true,
+  "beta_listener_pid": 97189,
+  "prod_pid_unchanged": true
+}

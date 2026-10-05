@@ -1,0 +1,25 @@
+{
+  "pack": "STAFF-COMMISSIONING-DEEPEN-20261001",
+  "applied_at_wita": "2026-10-01T11:24:15+08:00",
+  "executor": "Peaches-executor",
+  "prod_8787": "UNTOUCHED",
+  "beta_restart": false,
+  "ping_staff": false,
+  "invent_live": false,
+  "write_authority_approved": 0,
+  "owner_accept_entity_isolation": "2026-10-01T11:21:00+08:00",
+  "actions": [
+    "Deepen Bank_Import + Atrium_Finance commissioning note packs (honest COMMISSIONING)",
+    "Zayen/Amanda retest note pack incl. ZAYEN-CF-BROWSER-ENTITY-ISOLATION-UI",
+    "Refresh STAFF-PROVE-QUEUE on Mac with CF/browser row",
+    "No auto staff ping",
+    "Canva/Yanolja remain FINISH WOLF Owner — continue around"
+  ],
+  "staff_ready": false,
+  "human_commissioned": false,
+  "desktop_gate_ready": false,
+  "exit_report": "NOT_CREATED",
+  "wolf_desktop_ready_claim": false,
+  "internal_phase": "INTERNAL_ACTIVE_WAITING_HUMANS",
+  "internal_remaining": "thin — Jotform/GitHub already LIVE+TESTED; finance_read nav audited; IA exhausted; no beta restart this tick; staff prep is the value"
+}

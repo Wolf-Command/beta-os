@@ -1,0 +1,38 @@
+{
+  "pack": "BZG-P2P-AP-1",
+  "migration_id": "bzg_p2p_ap1_20261005",
+  "finished_at": "2026-10-05T06:52:09+08:00",
+  "backup": "/Users/wolfterminal/beta-os/catalog/backups/pre-bzg-p2p-ap1-20261005-065209.sqlite",
+  "backup_sha256": "1a74c845b6db2c655b94ad85eceb17d86cbf74b053d4a62f1f3df8f128c69d14",
+  "added_tables": [
+    "bzg_ops_ap_ready"
+  ],
+  "tables_reused": [
+    "bzg_ops_supplier_bills",
+    "bzg_ops_three_way_matches"
+  ],
+  "tables_created": [
+    "bzg_ops_ap_ready"
+  ],
+  "permissions": [
+    "bzg.ap.view",
+    "bzg.ap.mark_ready"
+  ],
+  "granted_roles": [
+    "ROLE-AMG-FINANCIAL-CONTROLLER",
+    "ROLE-BZG-CAPTAIN",
+    "ROLE-BZG-CASHIER",
+    "ROLE-BZG-CLOSER",
+    "ROLE-BZG-FB-OPS-LEAD",
+    "ROLE-BZG-FINANCIAL-CONTROLLER",
+    "ROLE-BZG-HEAD-CHEF",
+    "ROLE-CONTENT-CREATOR",
+    "ROLE-CONTENT-MGMT",
+    "ROLE-GGV-CREATIVE-DIRECTOR",
+    "ROLE-GGV-FINANCE-OPERATOR",
+    "ROLE-GGV-FINANCIAL-CONTROLLER",
+    "ROLE-MATT"
+  ],
+  "staff_ready": false,
+  "human_commissioned": false
+}

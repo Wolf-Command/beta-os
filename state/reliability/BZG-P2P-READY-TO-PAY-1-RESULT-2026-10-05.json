@@ -1,0 +1,103 @@
+{
+  "pack_id": "BZG-P2P-READY-TO-PAY-1",
+  "status": "IMPLEMENTATION_DONE_BETA_RELOADED",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "eng_proved": false,
+  "routes": {
+    "page": "/bzg/uma-blu/ready-to-pay",
+    "page_linked_from": [
+      "/bzg/uma-blu/ap",
+      "/bzg/uma-blu/purchase-orders"
+    ],
+    "api_list": "GET /api/bzg/uma-blu/ready-to-pay",
+    "api_detail": "GET /api/bzg/uma-blu/ready-to-pay/{ready_to_pay_id_or_bill_id}",
+    "api_mark_ready": "POST /api/bzg/uma-blu/ready-to-pay/allow"
+  },
+  "tables": {
+    "created": [
+      "bzg_ops_ready_to_pay"
+    ],
+    "reused": [
+      "bzg_ops_ap_ready",
+      "bzg_ops_supplier_bills",
+      "bzg_ops_three_way_matches",
+      "bzg_ops_goods_receipts",
+      "bzg_ops_purchase_orders"
+    ],
+    "live_counts": {
+      "bzg_ops_ready_to_pay": 0,
+      "bzg_ops_ap_ready": 0,
+      "bzg_ops_three_way_matches": 0,
+      "bzg_ops_supplier_bills": 0
+    }
+  },
+  "permission": [
+    "bzg.pay.list_ready",
+    "bzg.pay.mark_ready"
+  ],
+  "migration": "scripts/migrations/migrate_bzg_p2p_ready_to_pay1_20261005.py",
+  "backup": "catalog/backups/pre-bzg-p2p-ready-to-pay1-20261005-065712.sqlite",
+  "core": "scripts/core/bzg_ready_to_pay.py",
+  "test_file": "scripts/tests/test_bzg_p2p_ready_to_pay1_20261005.py",
+  "files_changed": [
+    "scripts/core/bzg_ready_to_pay.py",
+    "scripts/migrations/migrate_bzg_p2p_ready_to_pay1_20261005.py",
+    "scripts/serve_beta.py",
+    "scripts/tests/test_bzg_p2p_ready_to_pay1_20261005.py",
+    "dashboards/bzg-uma-blu-ready-to-pay.html",
+    "dashboards/bzg-uma-blu-ap.html",
+    "dashboards/bzg-uma-blu-purchase-orders.html"
+  ],
+  "tests_pass": {
+    "test_bzg_p2p_ready_to_pay1_20261005.py": 29,
+    "test_bzg_p2p_ap1_20261005.py": 24,
+    "test_bzg_p2p_three_way1_20261005.py": 27,
+    "test_bzg_p2p_nota1_20261005.py": 24,
+    "test_bzg_p2p_recv1_20261005.py": 25,
+    "test_bzg_p2p_po1_20261004.py": 27
+  },
+  "tests_fail": {
+    "test_bzg_p2p_ready_to_pay1_20261005.py": 0,
+    "test_bzg_p2p_ap1_20261005.py": 0,
+    "test_bzg_p2p_three_way1_20261005.py": 0,
+    "test_bzg_p2p_nota1_20261005.py": 0,
+    "test_bzg_p2p_recv1_20261005.py": 0,
+    "test_bzg_p2p_po1_20261004.py": 0
+  },
+  "beta_reloaded": true,
+  "beta_listener_pid": 1671,
+  "beta_port": 8788,
+  "prod_pid_unchanged": 1297,
+  "prod_port": 8787,
+  "protected_close_untouched": true,
+  "protected_close_states": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": "EXCEPTION",
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": "CANCELLED",
+    "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5": "DATA_CAPTURED"
+  },
+  "no_prod": true,
+  "no_commit": true,
+  "no_money_movement": true,
+  "what_was_not_built": [
+    "payment execution",
+    "bank payment",
+    "bank API",
+    "transfer or disbursement",
+    "payment file export",
+    "PAYMENT_REQUESTED transition",
+    "PAYMENT_APPROVED transition",
+    "PAID_CLAIMED transition",
+    "PAYMENT_VERIFIED transition",
+    "CLOSED transition",
+    "ggv_* table writes",
+    "GL / journal posting",
+    "Pay now button",
+    "purchase request rebuild",
+    "purchase order rebuild",
+    "goods receiving rebuild",
+    "supplier nota capture rebuild",
+    "three-way match rebuild",
+    "AP-ready rebuild"
+  ]
+}

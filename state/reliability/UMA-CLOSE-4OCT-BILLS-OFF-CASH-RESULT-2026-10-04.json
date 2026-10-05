@@ -1,0 +1,96 @@
+{
+  "repair": "UMA-CLOSE-4OCT-BILLS-OFF-CASH",
+  "close_id": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+  "business_date": "2026-10-04",
+  "outlet": "BZG-UMA",
+  "entity": "ENT-BZG",
+  "venue": "Uma Blu",
+  "state": "DATA_CAPTURED",
+  "display": {
+    "cash_box_excludes_finished_bills": true,
+    "finished_bills_operational_section": true,
+    "render_close_wires_section": true,
+    "served_page_source": "disk",
+    "served_page_http_status": 403,
+    "served_page_has_finished_bills_section": true,
+    "served_cash_box_excludes_finished_bills": true,
+    "esb_cash": 360000.0,
+    "esb_cash_field": "cash_from_payments",
+    "esb_cash_formatted": "Rp360,000",
+    "finished_bills": 61,
+    "difference_label": "Cannot calculate yet",
+    "difference_excludes_finished_count": true,
+    "petty_cash_paid_today": 451000.0,
+    "expected_cash": 909000.0,
+    "expected_cash_formula": "opening 1000000 + ESB cash 360000 \u2212 451000 = 909000"
+  },
+  "photo": {
+    "photo_phone_proved": false,
+    "hop": "POST /api/venue-close/receipt-photo",
+    "close_id": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+    "business_date": "2026-10-04",
+    "outlet": "BZG-UMA",
+    "entity": "ENT-BZG",
+    "venue": "Uma Blu",
+    "actor_email": "matt@thehabitatlombok.com",
+    "http_detail": {
+      "ok": false,
+      "error": "missing_auth",
+      "message": "Cf-Access-Jwt-Assertion required. Local :8788 without Cloudflare JWT is denied (fail-closed).",
+      "identity_assurance": "none",
+      "real_authentication": false,
+      "auth_mode": "cloudflare_access",
+      "required_permission": "venue.close.*",
+      "_http_status": 403
+    },
+    "note": "Beta upload path requires authenticated identity; input tags alone are not proof."
+  },
+  "photo_inputs": {
+    "esbCam_capture_environment": true,
+    "esbFile_library_upload": true,
+    "btn_take_photo": true,
+    "btn_upload_photo": true
+  },
+  "takeover_not_repeated": true,
+  "taken_by_person_id": "PERS-MATT",
+  "submitted_by_person_id": "PERS-IZA",
+  "governance": {
+    "close_id": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+    "business_date": "2026-10-04",
+    "outlet_id": "BZG-UMA",
+    "original_closer_person_id": "PERS-IZA",
+    "original_closer_display_name": "Iza Zainatulloh Hulhidayati",
+    "current_holder_person_id": "PERS-MATT",
+    "current_holder_display_name": "Matthew Goss",
+    "taken_over": true,
+    "taken_over_by_person_id": "PERS-MATT",
+    "taken_over_by_display_name": "Matthew Goss",
+    "taken_over_at": "2026-10-04T13:56:05Z",
+    "takeover_reason": "Iza shift ended / Owner takeover after workflow failure",
+    "takeover_actor_person_id": "PERS-MATT",
+    "takeover_actor_display_name": "Matthew Goss",
+    "started_by_person_id": "PERS-IZA",
+    "started_at": "2026-10-04T13:24:15Z"
+  },
+  "declared_still_null": true,
+  "esb_totals_unchanged": true,
+  "protected_closes_unchanged": true,
+  "protected_close_snapshots": {
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95": {
+      "state": "EXCEPTION",
+      "declared_cash_amount": 3225000.0,
+      "variance_cash_amount": -125000.0,
+      "updated_at": "2026-10-03T13:47:39Z"
+    },
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6": {
+      "state": "CANCELLED",
+      "declared_cash_amount": null,
+      "variance_cash_amount": null,
+      "updated_at": "2026-10-03T12:32:22Z"
+    }
+  },
+  "beta_pid": 35235,
+  "prod_pid": 1297,
+  "beta_reload": false,
+  "beta_reload_reason": "HTML/test only \u2014 no Python changes"
+}

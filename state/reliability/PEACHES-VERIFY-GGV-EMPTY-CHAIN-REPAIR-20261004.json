@@ -1,0 +1,56 @@
+{
+  "run_id": "BF-91f5182fb155",
+  "pack": "GGV-EMPTY-CHAIN-REPAIR",
+  "verified_at": "2026-10-04T19:35:45+08:00",
+  "verdict": "IMPLEMENTATION_DONE_BETA_READY_FOR_HUMAN_TEST",
+  "factory_blocker_overridden": "FACTORY_FAILURE:inspect_retry_ceiling",
+  "child_pid": 11197,
+  "child_alive": false,
+  "cursor_result": "ALREADY_PRESENT_PROVED",
+  "tests_pass": 21,
+  "tests_fail": 0,
+  "tests_rerun_by_peaches": true,
+  "eng_proved": true,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "ready_for_human_test": true,
+  "live_catalog_counts": {
+    "ggv_invoices": 46,
+    "ggv_notas": 33,
+    "ggv_vendors": 13,
+    "fin_counterparties": 14
+  },
+  "invoice_status_split": {
+    "DRAFT": 17,
+    "ISSUED": 9,
+    "PAID_CLAIMED": 14,
+    "VOID": 6
+  },
+  "nota_workflow_split": {
+    "needs_review": 33
+  },
+  "source_counts": {
+    "sales_invoice": 46,
+    "bill": 605,
+    "ggv_nota": 33
+  },
+  "bills_skipped_no_target_table": 605,
+  "idempotent_second_run": true,
+  "backup_sha256": "9b80fbb22b954598175ec905ca53fa5601ac1f85fa1b7c3dd2115e188bcb6eb3",
+  "protected_close": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+  "protected_cash": 3225000,
+  "protected_variance": -125000,
+  "protected_updated_at": "2026-10-03T13:47:39Z",
+  "protected_state": "EXCEPTION",
+  "protected_untouched": true,
+  "prod_pid": 1297,
+  "beta_pid": 10393,
+  "beta_reloaded": false,
+  "prod_untouched": true,
+  "no_commit": true,
+  "beta_links": [
+    "https://beta.wolfcommand.net/ggv/finance",
+    "https://beta.wolfcommand.net/wolf"
+  ],
+  "note": "Peaches re-ran tests 21/0; live catalog 46 invoices / 33 notas; overridden false inspect_retry_ceiling BLOCKED; no listener restart; no next Cursor this tick."
+}

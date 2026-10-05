@@ -1,0 +1,719 @@
+{
+  "schema": "bzg.history.register.v1",
+  "id": "BZG-HISTORY-REGISTER-2026-10-05",
+  "generated_at": "2026-10-05T07:34:54+08:00",
+  "reader": "read-only python sqlite uri mode=ro",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "writer": {
+    "action": "QUEUED_NOT_LAUNCHED",
+    "reason": "live beta-os cursor holds the writer",
+    "active_run_id": "BF-5031a6f54de6",
+    "active_slice": "UMA-CLOSE-DATE-TRUTH-1",
+    "active_stage": "WAITING_CURSOR",
+    "active_cursor_pid": 15569,
+    "active_cwd": "/Users/wolfterminal/beta-os",
+    "prior_petty_run": {
+      "run_id": "BF-8ea2e896ee33",
+      "slice": "PETTY-OWNER-CASH-IN-1",
+      "final_state": "READY FOR HUMAN TEST",
+      "updated_at": "2026-10-04T23:30:57Z",
+      "cursor_pid_9618": "dead"
+    },
+    "prod": {
+      "pid": 1297,
+      "note": "untouched; listener on 8787 not restarted"
+    },
+    "beta_listener_pid": 11882,
+    "wolf_system_cursor_left_alone": {
+      "pid": 2627,
+      "cwd": "/Users/wolfterminal/.openclaw/workspace/wolf-system"
+    }
+  },
+  "canonical_beta_db": "/Users/wolfterminal/beta-os/catalog/content_library.sqlite",
+  "legal_entity": {
+    "entity_id": "ENT-BZG",
+    "legal_name": "Blu Zone Group"
+  },
+  "outlets_under_bzg": [
+    {
+      "outlet_id": "BZG-UMA",
+      "display_name": "Uma Blu",
+      "status": "OPEN"
+    },
+    {
+      "outlet_id": "BZG-RAIN",
+      "display_name": "Rainforest",
+      "status": "OPEN",
+      "procurement_history": "NOT INVENTORIED \u2014 do not invent"
+    },
+    {
+      "outlet_id": "OU-BZG-RAIN-POOL",
+      "display_name": "Pool Bar",
+      "status": "OPEN",
+      "parent_outlet_id": "BZG-RAIN",
+      "procurement_history": "NOT INVENTORIED \u2014 do not invent"
+    },
+    {
+      "outlet_id": "BZG-MERAH",
+      "display_name": "Merah",
+      "status": "PRE-OPENING"
+    },
+    {
+      "outlet_id": "BZG-ROOF",
+      "display_name": "Rooftop",
+      "status": "PRE-OPENING"
+    },
+    {
+      "outlet_id": "BZG-RS",
+      "display_name": "Room Service",
+      "status": "PRE-OPENING"
+    },
+    {
+      "outlet_id": "BZG-CAT",
+      "display_name": "Catering",
+      "status": "PRE-OPENING"
+    }
+  ],
+  "cut_lines": {
+    "v1_authoritative_through": "UNKNOWN",
+    "v1_evidence": "state/finance-core-sprint/V1-STATUS-REGISTER-20260929.json as_of 2026-09-29T22:40:00+08:00. beta-uma-bzg-ops cutover_at null. Alchemist remains SoR for PRs. No proved calendar cutover date. V1 BZG finance board is a historical shell, not a dated ledger.",
+    "alchemist_data_through": {
+      "pr_orders.order_date_max": "2026-09-30",
+      "pr_orders.created_at_max": "2026-09-30T10:42:06+08:00",
+      "ledger.invoice_date_max": "2026-09-30",
+      "petty_cash.entry_date_max": "2026-10-01",
+      "petty_cash.created_at_max": "2026-10-01T15:37:01+08:00",
+      "authority_end": "UNKNOWN \u2014 register says no destructive cutover; dates above are observed maxima only"
+    },
+    "esb_for": "Uma Blu POS warehouse, branchCode BLZ only (9167/9167 sales). Not procurement receipts (goods_receipts=0). Not bank statements.",
+    "esb_sales_biz_date": {
+      "min": "2026-04-05",
+      "max": "2026-10-04",
+      "distinct_days": 183,
+      "calendar_gaps_inside_span": 0
+    },
+    "esb_pulled_at_max": "2026-10-05T05:47:49.040451+08:00",
+    "esb_biz_date_2026-10-05": 0,
+    "wolf_beta_beginning": {
+      "org_entities.created_at": "2026-09-16T21:36:53+08:00",
+      "earliest_venue_daily_close_business_date": "2026-09-28",
+      "finance_sor_start": "UNKNOWN \u2014 daily close rows exist; historical P2P is not in Beta"
+    },
+    "gap_days": {
+      "proved_missing_records": "UNKNOWN",
+      "alchemist_pr_orders_with_order_date_after_2026-09-30": 0,
+      "calendar_dates_inside_po_span_with_zero_orders": [
+        "2026-07-31",
+        "2026-08-03",
+        "2026-08-21",
+        "2026-09-03",
+        "2026-09-04",
+        "2026-09-08",
+        "2026-09-09",
+        "2026-09-12",
+        "2026-09-13",
+        "2026-09-16",
+        "2026-09-17",
+        "2026-09-18",
+        "2026-09-19",
+        "2026-09-20",
+        "2026-09-24",
+        "2026-09-25",
+        "2026-09-26",
+        "2026-09-28"
+      ],
+      "note": "Zero-order dates are absence, not proved missing records.",
+      "bank_statement_months_not_on_disk_after_last_file": [
+        "2026-09",
+        "2026-10"
+      ],
+      "bank_pre_start_not_a_gap": "BZG README 10 Sep 2026: no earlier activity before Mandiri Mar 2026 and BNI/BRI Apr 2026. Do not treat Jan-Feb as missing."
+    },
+    "unresolved_historical_rows_not_in_beta": {
+      "pr_orders": 543,
+      "pr_order_lines": 2017,
+      "pr_receipt_lines": 477,
+      "ledger": 473,
+      "petty_cash": 443
+    }
+  },
+  "sources": {
+    "alchemist_db": "/Users/wolfterminal/.openclaw/workspace/alchemist/data/alchemist.db",
+    "alchemist_size_bytes": 757760,
+    "esb_sqlite": "/Users/wolfterminal/.openclaw/data/esb.sqlite",
+    "esb_size_bytes": 71884800,
+    "v1_status_register": "/Users/wolfterminal/beta-os/state/finance-core-sprint/V1-STATUS-REGISTER-20260929.json",
+    "v1_ggv_money_sqlite": "/Users/wolfterminal/.openclaw/workspace/wolf-system/ggv-finance/money.sqlite",
+    "v1_uma_recipes": "/Users/wolfterminal/.openclaw/workspace/wolf-system/uma-blu/recipes.sqlite",
+    "beta_bzg_recipes": "/Users/wolfterminal/beta-os/catalog/bzg_recipes.sqlite",
+    "bzg_bank_pack": "/Users/wolfterminal/.openclaw/workspace/wolf-system/state/shareholder-bank-statements/BZG",
+    "alchemist_notas_dir": "/Users/wolfterminal/.openclaw/workspace/alchemist/notas",
+    "alchemist_receive_dir": "/Users/wolfterminal/.openclaw/workspace/alchemist/media/receive",
+    "alchemist_nightly_dir": "/Users/wolfterminal/.openclaw/workspace/alchemist/media/nightly",
+    "beta_petty_receipts": "/Users/wolfterminal/beta-os/state/uma-petty-receipts",
+    "empty_or_unused": {
+      "state/wolf.db": 0,
+      "catalog/beta.sqlite": 0,
+      "catalog/atrium-bzg.sqlite": 0,
+      "alchemist/alchemist.db_root": 0
+    },
+    "prior_expected_counts_not_canonical": "HIST-RECON-BZG-UMA-20261002 quotes UMAREAL 2026-09-29 (pr_orders 514, lines 1883, ledger 435, petty 433). Live recount this pass is higher. Do not use the old snapshot as source of truth."
+  },
+  "datasets": {
+    "sales": {
+      "source_count": 9167,
+      "source_system": "esb.sqlite sales",
+      "beta_count": 0,
+      "linked_count": 0,
+      "evidence_count": 0,
+      "earliest_date": "2026-04-05",
+      "latest_date": "2026-10-04",
+      "gaps": "No biz_date 2026-10-05 in warehouse at this read. Calendar gaps inside 2026-04-05..2026-10-04: 0.",
+      "duplicates": "UNKNOWN (nk uniqueness not re-proved this pass)",
+      "unresolved": 9167,
+      "status": "GAP",
+      "detail": {
+        "finished": 8626,
+        "cancelled": 541,
+        "branch": "BLZ/UMA BLU only",
+        "beta_table": "none"
+      }
+    },
+    "daily_closes": {
+      "source_count": 8,
+      "source_system": "beta venue_daily_closes (already the Wolf close book; not an Alchemist table)",
+      "beta_count": 8,
+      "linked_count": "UNKNOWN",
+      "evidence_count": "PARTIAL",
+      "earliest_date": "2026-09-28",
+      "latest_date": "2026-10-04",
+      "gaps": "No close row before 2026-09-28. 2026-10-05 not opened in this read. ESB sales exist from 2026-04-05, so historical closes before 2026-09-28 are absent.",
+      "duplicates": "Two rows for business_date 2026-10-02 (VDC-87202768 CANCELLED and VDC-da1b6621 OPEN). Not merged.",
+      "unresolved": "Historical days 2026-04-05..2026-09-27 have ESB sales and no venue_daily_closes row. Count of those days not expanded here.",
+      "status": "GAP",
+      "protected": [
+        {
+          "close_id": "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+          "business_date": "2026-10-03",
+          "state": "EXCEPTION",
+          "declared_cash_amount": 3225000,
+          "variance_cash_amount": -125000,
+          "updated_at": "2026-10-03T13:47:39Z"
+        },
+        {
+          "close_id": "VDC-87202768-55af-4c8e-abc3-382a5496b8c6",
+          "business_date": "2026-10-02",
+          "state": "CANCELLED",
+          "declared_cash_amount": null,
+          "updated_at": "2026-10-03T12:32:22Z"
+        },
+        {
+          "close_id": "VDC-64f5f529-5485-4ff1-a0cc-11941a64e6f5",
+          "business_date": "2026-10-04",
+          "state": "DATA_CAPTURED",
+          "declared_cash_amount": null,
+          "updated_at": "2026-10-04T13:56:05Z"
+        }
+      ],
+      "other_rows": [
+        {
+          "close_id": "VDC-4046a805-8c76-4439-8019-f879f3b49513",
+          "business_date": "2026-09-28",
+          "state": "DATA_CAPTURED",
+          "declared_cash_amount": null
+        },
+        {
+          "close_id": "VDC-8fd544e2-2132-4a4a-b714-720eb0cd18ad",
+          "business_date": "2026-09-29",
+          "state": "DATA_CAPTURED",
+          "declared_cash_amount": null,
+          "updated_at": "2026-10-04T23:21:20Z"
+        },
+        {
+          "close_id": "VDC-25a3123a-3e26-43db-8085-10c6f208bbcd",
+          "business_date": "2026-09-30",
+          "state": "DATA_CAPTURED",
+          "declared_cash_amount": null
+        },
+        {
+          "close_id": "VDC-3353351f-3234-4f7d-acf0-a63e0e176114",
+          "business_date": "2026-10-01",
+          "state": "OPEN",
+          "declared_cash_amount": null
+        },
+        {
+          "close_id": "VDC-da1b6621-b657-4444-bc7c-7161a0bf5b94",
+          "business_date": "2026-10-02",
+          "state": "OPEN",
+          "declared_cash_amount": null
+        }
+      ]
+    },
+    "payments_tenders": {
+      "source_count": 8655,
+      "source_system": "esb.sqlite sales.raw.salesPayments lines",
+      "beta_count": 0,
+      "linked_count": 0,
+      "evidence_count": 0,
+      "earliest_date": "2026-04-05",
+      "latest_date": "2026-10-04",
+      "gaps": "541 Cancelled bills have zero payment lines. 8626 bills have at least one payment line.",
+      "duplicates": "UNKNOWN",
+      "unresolved": 8655,
+      "status": "GAP",
+      "tender_names_top": [
+        "EDC MANDIRI",
+        "CASH",
+        "EDC BRI",
+        "EDC BNI",
+        "QRIS MANDIRI",
+        "QRIS BRI",
+        "QRIS BNI",
+        "SCOTT & ETIK",
+        "ROB & FAMILY",
+        "MATT AND FAMILY"
+      ]
+    },
+    "bank_statements": {
+      "source_count": 15,
+      "source_system": "shareholder-bank-statements/BZG files (5 Mandiri CSV, 5 BRI CSV, 5 BNI XLS)",
+      "beta_count": 0,
+      "linked_count": 0,
+      "evidence_count": 15,
+      "earliest_date": "2026-03-01",
+      "latest_date": "2026-08-31",
+      "gaps": "No statement file on disk for 2026-09 or 2026-10. Pre-Mar Mandiri and pre-Apr BNI/BRI called CLOSED by README, not a missing-file gap. No PDF e-statements for these three banks.",
+      "duplicates": "No overlapping month files observed across the 15 names. Jul-Aug Mandiri is one combined CSV.",
+      "unresolved": 15,
+      "status": "GAP",
+      "beta_note": "ggv_bank_statement_imports=2 and ggv_bank_transactions=6 are GGV, not BZG. Not counted as BZG.",
+      "files": {
+        "mandiri_csv_nonempty_lines": {
+          "2026-03": 54,
+          "2026-04": 185,
+          "2026-05": 226,
+          "2026-06": 156,
+          "2026-07_to_2026-08": 465
+        },
+        "bri_csv_nonempty_lines": {
+          "2026-04": 41,
+          "2026-05": 47,
+          "2026-06": 28,
+          "2026-07": 36,
+          "2026-08": 29
+        },
+        "bni_xls": [
+          "2026-04",
+          "2026-05",
+          "2026-06",
+          "2026-07",
+          "2026-08"
+        ],
+        "transaction_row_count": "UNKNOWN \u2014 header/footer not proved; XLS not parsed"
+      }
+    },
+    "bank_transactions": {
+      "source_count": "UNKNOWN",
+      "beta_count": 0,
+      "linked_count": 0,
+      "evidence_count": 15,
+      "earliest_date": "2026-03-01",
+      "latest_date": "2026-08-31",
+      "gaps": "Same as bank_statements. Parsed txn count not proved.",
+      "duplicates": "UNKNOWN",
+      "unresolved": "UNKNOWN",
+      "status": "GAP"
+    },
+    "bank_reconciliations": {
+      "source_count": 0,
+      "beta_count": 0,
+      "linked_count": 0,
+      "evidence_count": 0,
+      "earliest_date": "UNKNOWN",
+      "latest_date": "UNKNOWN",
+      "gaps": "No BZG bank reconciliation table or matched set found. Do not manufacture.",
+      "duplicates": 0,
+      "unresolved": "UNKNOWN",
+      "status": "GAP"
+    },
+    "suppliers": {
+      "source_count": 103,
+      "source_system": "alchemist.suppliers",
+      "beta_count": 0,
+      "beta_note": "bzg_shared_vendors=0. Four bzg_ops_purchase_requests carry supplier_name text only.",
+      "linked_count": 0,
+      "evidence_count": 0,
+      "earliest_date": "UNKNOWN",
+      "latest_date": "UNKNOWN",
+      "gaps": "No created_at on suppliers.",
+      "duplicates": "1 name collision: 'Bake House' id 5 and id 90.",
+      "unresolved": 103,
+      "status": "GAP",
+      "also": {
+        "pr_vendors": 40,
+        "pr_vendor_items": 987
+      }
+    },
+    "ingredients_items": {
+      "source_count": {
+        "esb_products": 610,
+        "alchemist_pr_vendor_items": 987,
+        "bzg_recipes.ingredient_master": 292
+      },
+      "beta_count": 0,
+      "linked_count": 0,
+      "evidence_count": 0,
+      "earliest_date": "UNKNOWN",
+      "latest_date": "UNKNOWN",
+      "gaps": "Three sources, no proved crosswalk. esb products biz_date null.",
+      "duplicates": "UNKNOWN",
+      "unresolved": "UNKNOWN",
+      "status": "GAP"
+    },
+    "purchase_requests": {
+      "source_count": {
+        "pr_orders": 543,
+        "legacy_purchase_requests": 2,
+        "legacy_pr_lines": 9
+      },
+      "beta_count": 4,
+      "linked_count": 0,
+      "evidence_count": 0,
+      "earliest_date": "2026-06-23",
+      "latest_date": "2026-09-30",
+      "gaps": "Legacy purchase_requests are 2 drafts (2026-06-23..2026-07-27), separate from pr_orders which start 2026-07-27.",
+      "duplicates": "pr_num duplicates: 0",
+      "unresolved": 543,
+      "status": "GAP",
+      "beta_rows": [
+        "PR-UMA-EXAMPLE-WAIT",
+        "PR-UMA-EXAMPLE-POLICY",
+        "PR-UMA-EXAMPLE-CLAIM",
+        "PR-UMA-0E65E353A422"
+      ],
+      "note": "Alchemist pr_orders are the live PR/PO document (pr_num PR-####). Beta alchemist_pr_order_id is null on all 4 rows."
+    },
+    "purchase_orders": {
+      "source_count": 543,
+      "source_system": "alchemist.pr_orders (same rows as purchase requests; no separate PO table)",
+      "beta_count": 0,
+      "beta_table": "bzg_ops_purchase_orders",
+      "linked_count": 0,
+      "evidence_count": 102,
+      "earliest_date": "2026-07-27",
+      "latest_date": "2026-09-30",
+      "gaps": "18 dates inside the span have zero orders (listed under cut_lines). No order_date after 2026-09-30.",
+      "duplicates": "pr_num duplicates: 0. id duplicates: 0.",
+      "unresolved": 543,
+      "status": "GAP",
+      "status_breakdown": {
+        "Paid": 304,
+        "Received": 166,
+        "Awaiting Devi": 39,
+        "Cancelled": 27,
+        "Ordered": 6,
+        "Rejected": 1
+      },
+      "source_all": "live",
+      "orders_with_zero_lines": 0,
+      "receipt_photo_url_set": 102,
+      "invoice_total_set": 104,
+      "linked_payment_set": 464,
+      "linked_payment_matching_ledger_id": 464
+    },
+    "po_lines": {
+      "source_count": 2017,
+      "source_system": "alchemist.pr_order_lines",
+      "beta_count": 0,
+      "beta_table": "bzg_ops_po_lines",
+      "linked_count": 0,
+      "evidence_count": 0,
+      "earliest_date": "UNKNOWN",
+      "latest_date": "UNKNOWN",
+      "gaps": "No date column on lines. Parent orders span 2026-07-27..2026-09-30. Orphan lines: 0.",
+      "duplicates": 0,
+      "unresolved": 2017,
+      "status": "GAP"
+    },
+    "goods_receipts": {
+      "source_count": {
+        "pr_receipt_lines": 477,
+        "distinct_parent_pr": 104,
+        "deliveries_table": 0,
+        "esb_goods_receipts": 0,
+        "receive_jpg": 497
+      },
+      "beta_count": {
+        "bzg_ops_goods_receipts": 0,
+        "bzg_ops_receipt_events": 1
+      },
+      "linked_count": 0,
+      "evidence_count": 497,
+      "earliest_date": "2026-07-28",
+      "latest_date": "2026-09-22",
+      "date_basis": "parent pr_orders.order_date for the 104 PRs that have receipt lines. Receipt lines themselves have no date.",
+      "gaps": "deliveries and delivery_lines tables are empty. ESB goods_receipts is empty. Receive photos continue to mtime 2026-09-30 while receipt-line parent orders stop 2026-09-22. Relationship photo\u2194line not proved.",
+      "duplicates": "receipt line id duplicates: 0. orphan lines: 0.",
+      "unresolved": 477,
+      "status": "GAP",
+      "receipt_line_source": "typed",
+      "beta_receipt_event": "RCP-d8d0d12a-903f-4f50-aa5e-216ed31394fe for live PR-UMA-0E65E353A422, alchemist_pr_id null, not a historical import"
+    },
+    "deliveries": {
+      "source_count": 0,
+      "beta_count": 0,
+      "linked_count": 0,
+      "evidence_count": 497,
+      "earliest_date": "UNKNOWN",
+      "latest_date": "UNKNOWN",
+      "gaps": "alchemist.deliveries is empty. media/receive has 497 jpgs that are not a delivery table.",
+      "duplicates": 0,
+      "unresolved": 497,
+      "status": "GAP"
+    },
+    "supplier_notas": {
+      "source_count": {
+        "ledger_rows": 473,
+        "nota_prefix_jpg": 2,
+        "notas_dir_all_jpg": 462
+      },
+      "beta_count": 0,
+      "beta_table": "bzg_ops_supplier_bills",
+      "linked_count": 0,
+      "evidence_count": 2,
+      "earliest_date": "2026-08-02",
+      "latest_date": "2026-09-30",
+      "date_basis": "ledger.invoice_date. Image file dates are mtime, not business date.",
+      "gaps": "notas/ directory is mostly petty_ (382) and topup_ (78). Only 2 files use prefix nota_. Supplier nota images are not a complete set.",
+      "duplicates": "ledger id duplicates: 0",
+      "unresolved": 473,
+      "status": "GAP",
+      "ledger_payment_status": {
+        "paid": 362,
+        "unpaid": 106,
+        "cancelled": 5
+      },
+      "ledger_null_supplier": 0,
+      "ledger_null_amount": 0,
+      "ledger_delivery_id_set": 0,
+      "payment_date_null": 111,
+      "payment_date_min": "2026-08-04",
+      "payment_date_max": "2026-09-17T16:11:14+08:00"
+    },
+    "bills": {
+      "source_count": 473,
+      "source_system": "alchemist.ledger (AP/bill book). Not a separate bills table.",
+      "beta_count": 0,
+      "linked_count": 0,
+      "evidence_count": 2,
+      "earliest_date": "2026-08-02",
+      "latest_date": "2026-09-30",
+      "gaps": "Same as supplier_notas.",
+      "duplicates": 0,
+      "unresolved": 473,
+      "status": "GAP"
+    },
+    "petty_cash": {
+      "source_count": 443,
+      "source_system": "alchemist.petty_cash",
+      "beta_count": 17,
+      "beta_table": "bzg_ops_petty_movements",
+      "linked_count": 0,
+      "evidence_count": {
+        "alchemist_http_photo_link": 431,
+        "alchemist_photo_link_empty": 12,
+        "beta_local_file_exists": 16
+      },
+      "earliest_date": "2026-07-20",
+      "latest_date": "2026-10-01",
+      "gaps": "One row id 317 has entry_date 2026-01-09 but created_at 2026-09-01T16:19:54+08:00. Treated as a bad entry_date, not as January history. Beta movements start 2026-10-01 and are live ops, not this 443.",
+      "duplicates": "0 id duplicates. 33 fingerprint groups (entry_date+outlet+flow+amount+description) covering 36 extra rows. Not auto-merged.",
+      "unresolved": 443,
+      "status": "GAP",
+      "flow": {
+        "Cash In (Top-up)": 78,
+        "Cash Out (Spend)": 364,
+        "Reset / Adjustment": 1
+      },
+      "live_balance": {
+        "formula": "bzg_ops_petty_days 2026-10-02 opening_float 56000 plus movements with business_date>=2026-10-02",
+        "amount_idr": 52700,
+        "sum_of_all_17_movements_from_zero": -53300,
+        "changed_by_this_pass": false,
+        "do_not_duplicate": [
+          "PETTY-UMA-6E512800FE",
+          "PETTY-UMA-80867C2504"
+        ],
+        "movement_without_local_file": "PETTY-UMA-2321496C6D"
+      }
+    },
+    "petty_cash_evidence": {
+      "source_count": 462,
+      "source_system": "alchemist/notas jpg (382 petty_ + 78 topup_ + 2 nota_)",
+      "beta_count": 16,
+      "linked_count": 16,
+      "evidence_count": 462,
+      "earliest_date": "2026-07-20T15:21:31+08:00",
+      "latest_date": "2026-10-01T15:36:43+08:00",
+      "date_basis": "file mtime, not business date",
+      "gaps": "431 Alchemist rows point at Google Drive http links, not these local files. Link file\u2194row not proved by id. 12 petty rows have no photo_link.",
+      "duplicates": "UNKNOWN",
+      "unresolved": 462,
+      "status": "GAP",
+      "beta_petty_receipts_dir_count": 16
+    },
+    "expenses": {
+      "source_count": "UNKNOWN",
+      "beta_count": 0,
+      "linked_count": 0,
+      "evidence_count": 0,
+      "earliest_date": "UNKNOWN",
+      "latest_date": "UNKNOWN",
+      "gaps": "No separate expenses table. Petty cash and ledger are the only spend books counted above.",
+      "duplicates": "UNKNOWN",
+      "unresolved": "UNKNOWN",
+      "status": "GAP"
+    },
+    "inventory_movements": {
+      "source_count": 19802,
+      "source_system": "esb.sqlite material_usage",
+      "beta_count": 0,
+      "linked_count": 0,
+      "evidence_count": 0,
+      "earliest_date": "2026-06-01",
+      "latest_date": "2026-10-04",
+      "gaps": "Usage is sales consumption, not a stock ledger. No Beta inventory movement table.",
+      "duplicates": "UNKNOWN",
+      "unresolved": 19802,
+      "status": "GAP"
+    },
+    "stock_transfers": {
+      "source_count": 0,
+      "beta_count": 0,
+      "linked_count": 0,
+      "evidence_count": 0,
+      "earliest_date": "UNKNOWN",
+      "latest_date": "UNKNOWN",
+      "gaps": "No stock transfer table found in Alchemist, ESB, or Beta.",
+      "duplicates": 0,
+      "unresolved": 0,
+      "status": "GAP"
+    },
+    "recipes_cost_inputs": {
+      "source_count": {
+        "v1_recipes": 127,
+        "v1_recipe_lines": 756,
+        "beta_catalog_recipes": 127,
+        "beta_catalog_recipe_lines": 756,
+        "ingredient_master": 292,
+        "outlet_menu_items": 0
+      },
+      "beta_count": "UNKNOWN in content_library (no recipe table in the 116 tables). Counts above are bzg_recipes.sqlite and uma-blu/recipes.sqlite, both read this pass.",
+      "linked_count": 0,
+      "evidence_count": 0,
+      "earliest_date": "UNKNOWN",
+      "latest_date": "UNKNOWN",
+      "gaps": "outlet_menu_items=0. Rainforest and Pool Bar menus not present. Do not invent them.",
+      "duplicates": "UNKNOWN whether the two sqlite files are the same rows.",
+      "unresolved": 127,
+      "status": "GAP"
+    },
+    "ap": {
+      "source_count": 106,
+      "source_system": "alchemist.ledger payment_status=unpaid",
+      "beta_count": 0,
+      "beta_table": "bzg_ops_ap_ready",
+      "linked_count": 0,
+      "evidence_count": 0,
+      "earliest_date": "2026-08-02",
+      "latest_date": "2026-09-30",
+      "gaps": "Unpaid is a status on ledger, not a separate AP subledger with due dates proved.",
+      "duplicates": 0,
+      "unresolved": 106,
+      "status": "GAP",
+      "also": {
+        "paid": 362,
+        "cancelled": 5
+      }
+    },
+    "payments_where_evidence_exists": {
+      "source_count": 362,
+      "source_system": "alchemist.ledger payment_status=paid",
+      "beta_count": 0,
+      "linked_count": 464,
+      "link_note": "464 pr_orders.linked_payment values match ledger id as L-{id}. That link is inside Alchemist only. Beta has 0 payment rows. 111 ledger rows have null payment_date (includes unpaid and cancelled).",
+      "evidence_count": "UNKNOWN",
+      "earliest_date": "2026-08-04",
+      "latest_date": "2026-09-17T16:11:14+08:00",
+      "gaps": "Paid rows are not bank-matched.",
+      "duplicates": 0,
+      "unresolved": 362,
+      "status": "NEEDS RECONCILIATION"
+    },
+    "gl_ledger": {
+      "source_count": {
+        "alchemist_ledger": 473,
+        "esb_gl_journal": 6062
+      },
+      "beta_count": 0,
+      "linked_count": 0,
+      "evidence_count": 0,
+      "earliest_date": "2026-04-01",
+      "latest_date": "2026-10-04",
+      "date_basis": "esb gl_journal biz_date 2026-04-01..2026-10-04. Alchemist ledger invoice_date 2026-08-02..2026-09-30.",
+      "gaps": "ESB gl_journal is POS GL JSON (branch BLZ), not imported. Sample account includes 'Petty cash outlet'. Not a Beta GL.",
+      "duplicates": "UNKNOWN for esb gl nk",
+      "unresolved": 6062,
+      "status": "GAP"
+    },
+    "supporting_images_files": {
+      "source_count": {
+        "notas_jpg": 462,
+        "receive_jpg": 497,
+        "nightly_jpg": 404,
+        "beta_petty_jpg": 16
+      },
+      "beta_count": 16,
+      "linked_count": 16,
+      "evidence_count": 1379,
+      "earliest_date": "2026-07-20T15:21:31+08:00",
+      "latest_date": "2026-10-04T20:44:12+08:00",
+      "date_basis": "mtime",
+      "gaps": "Historical jpg directories are not linked from Beta rows. Nightly POS photos latest mtime 2026-09-27; later days not in that folder.",
+      "duplicates": "UNKNOWN",
+      "unresolved": 1363,
+      "status": "EVIDENCE UNLINKED",
+      "beta_linked_note": "16 live petty receipt files exist on disk. 1 live movement has no path."
+    }
+  },
+  "assignment_scope_observed": {
+    "model": "PERSON\u2192ASSIGNMENT\u2192ROLE via position.role_id\u2192SCOPE\u2192PERMISSION. Not hardcoded.",
+    "zayen": {
+      "person_id": "PERS-ZAYEN",
+      "active_assignments": [
+        "ASG-ZAYEN-FC-1 ROLE-AMG-FINANCIAL-CONTROLLER SCOPE-AMG-FINANCE ENT-AMG",
+        "ASG-ZAYEN-AR-1 ROLE-AMG-ACCOUNTS-RECEIVABLE SCOPE-AMG-FINANCE ENT-AMG",
+        "ASG-ZAYEN-BZG-FC-1 ROLE-BZG-FINANCIAL-CONTROLLER SCOPE-BZG-FINANCE ENT-BZG"
+      ],
+      "ggv_finance_scope": false
+    },
+    "amanda": {
+      "person_id": "PERS-AMANDA",
+      "finance_scope": "ASG-AMANDA-GGV-FIN-1 SCOPE-GGV-FINANCE ENT-GGV only",
+      "amg_or_bzg_finance_scope": false
+    },
+    "matt": {
+      "person_id": "PERS-MATT",
+      "scopes_include": [
+        "SCOPE-GGV-ALL",
+        "SCOPE-GGV-FINANCE",
+        "SCOPE-BZG-ENTITY",
+        "SCOPE-AMG-FINANCE"
+      ]
+    }
+  },
+  "switcher_proved": false,
+  "zayen_ready": false,
+  "import_slice": "BZG-HISTORY-IMPORT-1 QUEUED behind UMA-CLOSE-DATE-TRUTH-1"
+}

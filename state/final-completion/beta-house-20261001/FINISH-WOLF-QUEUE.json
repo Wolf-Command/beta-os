@@ -1,0 +1,76 @@
+{
+  "schema": "FINISH-WOLF-QUEUE/v1",
+  "mission": "BETA_HOUSE_REAL_CONNECTIONS",
+  "generated_at_wita": "2026-10-01T09:46:44+08:00",
+  "executor": "Peaches-executor",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "desktop_gate_ready": false,
+  "exit_report": "NOT_CREATED",
+  "wolf_desktop_ready_claim": false,
+  "prod_8787": "READ_ONLY_SACRED",
+  "policy": "Matt essentials only: Canva, Yanolja Bookings, CF shots last. Klaviyo+W4 optional.",
+  "matt_card_count": 3,
+  "cards": [
+    {
+      "id": "FW-CANVA-REAUTH",
+      "WHAT": "Re-auth Canva Connect OAuth (expired 2026-06-18)",
+      "WHY": "CREDENTIAL_PRESENT_UNTESTED",
+      "WHERE": "https://www.canva.com/developers/integrations/connect-api",
+      "EXPECTED": "Fresh token; LIVE_READ_OK",
+      "TIME": "10-15 min",
+      "STATUS": "WAITING_OWNER",
+      "NEXT": "CANVA-CAPABILITY-TRUTH-1 READ prove",
+      "owner_only": true
+    },
+    {
+      "id": "FW-YANOLJA-BOOKINGS-ENABLE",
+      "WHAT": "Enable Yanolja Bookings API HotelCode 63221",
+      "WHY": "Guest depth UNKNOWN (302)",
+      "WHERE": "https://live.ipms247.com",
+      "EXPECTED": "Bookings 200; guest probes",
+      "TIME": "15-30 min",
+      "STATUS": "WAITING_OWNER",
+      "NEXT": "Guest-depth probe; write NO",
+      "owner_only": true
+    },
+    {
+      "id": "FW-CF-SCREENSHOT-ACCEPTANCE",
+      "WHAT": "CF Access session for final screenshot acceptance",
+      "WHY": "Matt last, non-build-blocker",
+      "WHERE": "https://beta.wolfcommand.net/owner-empire-pack",
+      "EXPECTED": "Real CF screenshots",
+      "TIME": "10-15 min",
+      "STATUS": "WAITING_OWNER_LAST",
+      "NEXT": "Screenshot audit",
+      "owner_only": true,
+      "last_card": true
+    }
+  ],
+  "optional_non_gating": [
+    {
+      "id": "FW-KLAVIYO-READ-PROVE-OPTIONAL",
+      "STATUS": "OPTIONAL_NON_GATING",
+      "note": "Does not block desktop; Habitat sheet covers leads READ"
+    },
+    {
+      "id": "FW-W4-SEED-OR-ACCEPT-EMPTY",
+      "STATUS": "OPTIONAL_NON_GATING",
+      "note": "Vesper queue — not platform blocker"
+    }
+  ],
+  "staff_not_matt": {
+    "note": "Finance STAFF queue — entity isolation CLOSED REPAIRED+VERIFIED; KEEP Zayen seat; CF/browser UI residual in STAFF_COMMISSIONING",
+    "queue": "state/final-completion/p0-v1/STAFF-PROVE-QUEUE-20260930.json",
+    "items": [
+      "SP-ZAYEN-AMG-BZG-FINANCE",
+      "ZAYEN-CF-BROWSER-ENTITY-ISOLATION-UI",
+      "SP-AMANDA-GGV-FINANCE",
+      "BANK-IMPORT-COMMISSIONING",
+      "ATRIUM-FINANCE-8790-COMMISSIONING"
+    ]
+  },
+  "updated_at_wita": "2026-10-01T11:24:15+08:00",
+  "phase_note": "Owner: continue INTERNAL+STAFF around Canva/Yanolja — do not freeze. Entity isolation CLOSED. staff_ready/human_commissioned/desktop_gate_ready remain false.",
+  "entity_isolation": "REPAIRED_VERIFIED_OWNER_ACCEPTED"
+}

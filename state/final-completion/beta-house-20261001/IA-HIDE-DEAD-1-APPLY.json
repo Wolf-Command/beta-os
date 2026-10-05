@@ -1,0 +1,28 @@
+{
+  "pack": "IA-HIDE-DEAD-1",
+  "applied_at_wita": "2026-10-01T07:42:49+08:00",
+  "executor": "Peaches-executor",
+  "target": "beta-os :8788",
+  "prod_8787": "UNTOUCHED",
+  "backup": "/Users/wolfterminal/beta-os/backups/beta-house-ia-hide-20261001/",
+  "mutations": [
+    "wolf_shell.IA_TREE: remove Gatekeeper + Event Bus from SYSTEM primary (routes kept; inventory HIDE_UNTIL_USEFUL)",
+    "owner_pulse_ro: atrium_occ href /amg/occ-truth-1 to /amg-ops-pack",
+    "owner_radar_ro: 12wy/mars/radar_cap/wire hrefs leave prove pages to /progress|/owner/radar|/content-2.0",
+    "owner_radar_ro: board links drop eng prove; add Progress/Content/Integrations",
+    "Beta :8788 kickstart only via beta_restart.py; Prod :8787 pid 15975 untouched"
+  ],
+  "proof": {
+    "primary_ia_count": 22,
+    "pulse_atrium_href": "/amg-ops-pack",
+    "radar_12wy_href": "/progress",
+    "radar_mars_href": "/owner/radar",
+    "radar_wire_href": "/content-2.0"
+  },
+  "honesty": {
+    "pages_deleted": false,
+    "routes_kept": true,
+    "staff_ready": false,
+    "desktop_gate_ready": false
+  }
+}

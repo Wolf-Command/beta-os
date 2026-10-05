@@ -1,0 +1,112 @@
+{
+ "steps": [
+  {
+   "screen": "wizIntro",
+   "top": [
+    "Protected historical close \u2014 complete missing steps and submit once."
+   ],
+   "buttons": [
+    "btnTakePhoto:Take photo",
+    "btnUploadPhoto:Upload photo",
+    "btnReadReceipt:Read shift report",
+    "btnBackCalendar:\u2190 Back to history"
+   ],
+   "inputs": [],
+   "text": "Protected historical close \u2014 complete missing steps and submit once. | CLOSE UMA BLU | 29 September 2026 \u00b7 HISTORICAL CLOSE | Sales | Rp13.435.000 | Bills | 50 | Cash | Rp3.790.000 | Add the printed shift report. | Take photo | Upload photo | Read shift report | \u2190 Back to history",
+   "step": [
+    "tap",
+    ".queue-card[data-queue-date=\"2026-09-29\"]",
+    3
+   ],
+   "err": null,
+   "posts": []
+  },
+  {
+   "screen": "wizIntro",
+   "top": [
+    "Protected historical close \u2014 complete missing steps and submit once."
+   ],
+   "buttons": [
+    "btnTakePhoto:Take photo",
+    "btnUploadPhoto:Upload photo",
+    "btnReadReceipt:Read shift report",
+    "btnBackCalendar:\u2190 Back to history"
+   ],
+   "inputs": [],
+   "text": "Protected historical close \u2014 complete missing steps and submit once. | CLOSE UMA BLU | 29 September 2026 \u00b7 HISTORICAL CLOSE | Sales | Rp13.435.000 | Bills | 50 | Cash | Rp3.790.000 | Photo uploaded \u2014 read shift report next. | Take photo | Upload photo | Read shift report | \u2190 Back to history",
+   "step": [
+    "upload",
+    "#btnUploadPhoto",
+    3
+   ],
+   "err": null,
+   "posts": [
+    [
+     "/api/venue-close/receipt-photo",
+     200
+    ]
+   ]
+  },
+  {
+   "screen": "wizWeRead",
+   "top": [],
+   "buttons": [
+    "btnCorrect:Correct",
+    "btnEditShift:Edit"
+   ],
+   "inputs": [],
+   "text": "WE READ | Gross sales | Rp13.435.000 | Cash | Rp3.790.000 | BNI card | Rp2.545.000 | BNI QRIS | Rp145.000 | BRI card | Rp4.465.000 | BRI QRIS | Rp1.065.000 | Scott & Etik | Rp1.425.000 | Bills | 50 | Pax | 79 | Correct Edit",
+   "step": [
+    "tap",
+    "#btnReadReceipt",
+    4
+   ],
+   "err": null,
+   "posts": [
+    [
+     "/api/venue-close/esb-receipt-extract",
+     200
+    ],
+    [
+     "/api/venue-close/esb-receipt",
+     200
+    ]
+   ]
+  },
+  {
+   "screen": "wizSourceDiff",
+   "top": [],
+   "buttons": [
+    "btnContinueShift:Continue with shift report",
+    "btnSendReview:Send for review"
+   ],
+   "inputs": [],
+   "text": "SOURCE DIFFERENCE FOUND | Warehouse cash | Rp4.135.000 | Shift report cash | Rp3.790.000 | Cash difference | Rp345.000 | Warehouse bills | 51 | Shift report bills | 50 | Bills difference | 1 | Continue with shift report Send for review",
+   "step": [
+    "tap",
+    "#btnCorrect",
+    3
+   ],
+   "err": null,
+   "posts": []
+  },
+  {
+   "screen": "wizTerminals",
+   "top": [],
+   "buttons": [
+    ":Add bank receipt",
+    ":Add bank receipt"
+   ],
+   "inputs": [],
+   "text": "CARD TERMINALS | MANDIRI NOT USED | Not on shift report. | BNI ADD BANK RECEIPT | Expected EDC | Rp2.545.000 | Expected QRIS | Rp145.000 | Add bank receipt | BRI ADD BANK RECEIPT | Expected EDC | Rp4.465.000 | Expected QRIS | Rp1.065.000 | Add bank receipt",
+   "step": [
+    "tap",
+    "#btnContinueShift",
+    3
+   ],
+   "err": null,
+   "posts": []
+  }
+ ],
+ "errors": []
+}

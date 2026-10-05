@@ -1,0 +1,115 @@
+{
+  "slice": "UMA-CLOSE-6STEP-REBUILD-2",
+  "status": "PASS",
+  "files_changed": [
+    "scripts/core/bzg_daily_close.py",
+    "scripts/core/venue_close.py",
+    "scripts/core/uma_hist_close_queue1.py",
+    "scripts/serve_beta.py",
+    "dashboards/uma-blu-close.html",
+    "scripts/tests/test_uma_close_6step_rebuild1_20261005.py",
+    "scripts/tests/test_uma_close_6step_rebuild2_20261005.py",
+    "scripts/tests/prove_uma_close_6step_rebuild2_20261005.py"
+  ],
+  "defect_fixes": {
+    "1_progressive_shift": {
+      "fix": "shiftPhase() hides figures/ESB diff until read + YES; owner-typed label before photo",
+      "proof": "harness opened_29sep_photo_only — no YES/ESB diff on first screen"
+    },
+    "2_yes_button": {
+      "fix": "POST /api/venue-close/confirm-shift-figures + shift_figures_yes workflow ack",
+      "proof": "harness after_yes — Figures confirmed + confirm-shift-figures API"
+    },
+    "3_upload_resume": {
+      "fix": "register_shift_report_photo DRAFT row on esb upload; _resolve includes DRAFT images",
+      "proof": "harness fresh_resume_after_upload — thumbnail + Read shift report"
+    },
+    "4_bank_one_tap": {
+      "fix": "ADD RECEIPT opens file chooser directly; removed bankWork sub-panel",
+      "proof": "harness esb_diff_continue — single ADD RECEIPT per bank"
+    },
+    "5_no_fabricated_receipt": {
+      "fix": "Removed expected fallback in confirmBank; EDIT human entry path",
+      "proof": "harness banks_done — Couldn't read + human EDIT amounts, receipt not auto-filled"
+    },
+    "6_opening_till_float": {
+      "fix": "Opening till float line in cash + review",
+      "proof": "harness cash_counted — Opening till float Rp1.000.000, EXPECTED Rp4.420.000"
+    },
+    "7_cash_why": {
+      "fix": "declare_cash_with_note + cash_count_confirmed ack; submit payload cash_why_note",
+      "proof": "harness review — WHY? Petty timing in Exceptions"
+    },
+    "8_till_declare_debounce": {
+      "fix": "Cash save on Continue only; idempotent declare_cash_with_note",
+      "proof": "unit test_review_exceptions_include_cash idempotent declare"
+    },
+    "9_review_layout": {
+      "fix": "renderReviewHtml — Exceptions heading, bank expected/receipt/diff, omit Mandiri",
+      "proof": "harness cash_counted review text with EXCEPTIONS + BNI/BRI triple lines"
+    },
+    "10_submit_expected_cash": {
+      "fix": "staff_submit_close + reconcile use wizard expected via cash_expected_basis ack",
+      "proof": "harness submit_result — Cash short Rp20.000; Expected Rp4.420.000 in review"
+    },
+    "11_view_close_readonly": {
+      "fix": "viewReadOnly mode hides Continue/submit; exception review uses wizard_review",
+      "proof": "harness view_close_readonly — no Continue to submit button"
+    },
+    "12_sep03_discovery": {
+      "fix": "discover_unlinked_evidence_for_date in peek; link-unlinked-evidence API",
+      "proof": "harness sep03_discovery — Shift report photo found + USE THIS REPORT; peek no close row"
+    },
+    "13_status_vocabulary": {
+      "fix": "close_date_register uses canonical_ui_status from uma_hist_close_queue1",
+      "proof": "unit test_date_register_status_unified — 29 Sep queue/register match"
+    }
+  },
+  "per_step_render_proof": {
+    "step1_choose_date": { "screen": "stepChoose", "on_screen": ["CLOSE UMA BLU", "TODAY", "Missing closes"] },
+    "step2_shift_upload_read_yes_diff": {
+      "labels": ["opened_29sep_photo_only", "after_upload", "after_read", "after_yes"],
+      "harness": "state/reliability/UMA-CLOSE-6STEP-REBUILD-2-HARNESS-2026-10-05.json"
+    },
+    "step3_banks": { "label": "banks_done", "one_tap_add_receipt": true },
+    "step4_cash": { "label": "cash_counted", "expected": "Rp4.420.000", "counted": "Rp4.400.000" },
+    "step5_review": { "label": "cash_counted", "exceptions_heading": true },
+    "step6_submit": { "label": "submit_result", "on_screen": ["CLOSE SAVED WITH EXCEPTION", "Cash short Rp20.000"] }
+  },
+  "idempotency_proof": {
+    "staff_submit_taps": 10,
+    "submit_results": ["CLOSE SAVED WITH EXCEPTION"],
+    "unit_test": "test_submit_idempotent in rebuild1 suite"
+  },
+  "sep03_discovery": {
+    "shift_reports": 1,
+    "edc_receipts": 4,
+    "peek_no_close_created": true,
+    "harness_label": "sep03_discovery"
+  },
+  "harness": {
+    "device": "Playwright WebKit iPhone 14",
+    "server": "probe_server.py :8798 WOLF_CLOSE_VISION_DRY=1 BETA_LLM_DRY_RUN=1",
+    "artifact": "state/reliability/UMA-CLOSE-6STEP-REBUILD-2-HARNESS-2026-10-05.json",
+    "fresh_resume": ["fresh_resume_after_upload", "fresh_resume_after_banks"]
+  },
+  "suites": {
+    "test_uma_close_6step_rebuild2_20261005.py": { "pass": 15, "fail": 0, "exit_code": 0 },
+    "test_uma_close_6step_rebuild1_20261005.py": { "pass": 46, "fail": 0, "exit_code": 0 },
+    "test_uma_hist_close_complete1_20261005.py": { "pass": 28, "fail": 0, "exit_code": 0 },
+    "test_uma_hist_close_complete2_20261005.py": { "pass": 29, "fail": 0, "exit_code": 0 },
+    "test_uma_hist_close_nav_mobile1_20261005.py": { "pass": 52, "fail": 0, "exit_code": 0 },
+    "test_uma_hist_close_nav_mobile2_20261005.py": { "pass": 94, "fail": 0, "exit_code": 0 },
+    "test_uma_hist_close_queue1_20261005.py": { "pass": 35, "fail": 0, "exit_code": 0 }
+  },
+  "beta_pid_before": 26143,
+  "beta_pid_after": 26143,
+  "beta_reload": "scripts/beta_restart.py",
+  "live_29sep_incomplete": true,
+  "oct3_oct4_unchanged": true,
+  "prod_pid_8787": 1297,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "no_commit": true,
+  "exit_code": 0
+}

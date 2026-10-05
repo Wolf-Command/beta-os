@@ -1,0 +1,90 @@
+{
+  "pack_id": "GGV-EMPTY-CHAIN-REPAIR",
+  "finished_at_wita": "2026-10-04T19:16:18+08:00",
+  "status": "MIGRATION_APPLIED_IDEMPOTENT_PROVED",
+  "decision": "GGV-EMPTY-CHAIN-REPAIR (2026-10-04)",
+  "staff_ready": false,
+  "human_commissioned": false,
+  "eng_proved": true,
+  "deployed_beta": true,
+  "no_prod": true,
+  "no_commit": true,
+  "no_push": true,
+  "no_listener_restart": true,
+  "source_db": "/Users/wolfterminal/.openclaw/workspace/wolf-system/ggv-finance/money.sqlite",
+  "source_mode": "read_only",
+  "target_db": "catalog/content_library.sqlite",
+  "backup": "catalog/backups/pre-ggv-empty-chain-repair-20261004-191618.sqlite",
+  "backup_sha256": "9b80fbb22b954598175ec905ca53fa5601ac1f85fa1b7c3dd2115e188bcb6eb3",
+  "migration_id": "ggv_empty_chain_repair_20261004",
+  "source_counts": {
+    "sales_invoice": 46,
+    "bill": 605,
+    "ggv_nota": 33,
+    "bank_txn": 339,
+    "contact": 296
+  },
+  "source_invoice_status_split": {
+    "AUTHORISED": 5,
+    "DELETED": 2,
+    "DRAFT": 17,
+    "ISSUED": 4,
+    "PAID": 13,
+    "REPORTED_PAID": 1,
+    "VOIDED": 4
+  },
+  "forty_one_vs_forty_six_note": "Older note counted 41 sales invoices. Source now has 46. All 46 imported. The five not in the older 41-style issued/paid set are the five AUTHORISED rows (mapped to ISSUED in Beta, not hidden). DELETED (2) and VOIDED (4) are imported as VOID with source_status preserved in notes.",
+  "imported": {
+    "ggv_invoices": 46,
+    "ggv_notas": 33,
+    "ggv_bills": 0
+  },
+  "skipped": {
+    "ggv_invoices": {},
+    "ggv_notas": {},
+    "ggv_bills": {
+      "no_target_table": 605
+    }
+  },
+  "target_counts_after": {
+    "ggv_invoices": 46,
+    "ggv_notas": 33,
+    "ggv_vendors": 13,
+    "fin_counterparties": 14
+  },
+  "mapped_invoice_status_split": {
+    "DRAFT": 17,
+    "ISSUED": 9,
+    "PAID_CLAIMED": 14,
+    "VOID": 6
+  },
+  "mapped_nota_workflow_split": {
+    "needs_review": 33
+  },
+  "sequence_next_value_after": 72,
+  "idempotency_second_run": {
+    "ggv_invoices_imported": 0,
+    "ggv_invoices_skipped_already_exists": 46,
+    "ggv_notas_imported": 0,
+    "ggv_notas_skipped_already_exists": 33
+  },
+  "tests": {
+    "command": "python3 scripts/tests/test_ggv_empty_chain_repair_20261004.py",
+    "pass": 21,
+    "fail": 0,
+    "exit_code": 0
+  },
+  "protected_closes_untouched": [
+    "VDC-470e741f-d889-437a-9a40-1ec9c083fb95",
+    "VDC-87202768-55af-4c8e-abc3-382a5496b8c6"
+  ],
+  "not_touched": [
+    "bank_txn",
+    "contact bulk",
+    "opening balances",
+    "petty cash",
+    "purchase-request pages",
+    "prod :8787",
+    "cloudflare permissions"
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "schema": "NEEDS-MATT-P0/v1",
+  "generated_at_wita": "2026-09-30T12:24:22+08:00",
+  "executor": "Peaches-executor",
+  "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+  "bound": "beta",
+  "beta_port": 8788,
+  "prod_8787_touched": false,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "exit_report": "NOT_CREATED",
+  "claim": "Owner-only concise \u2014 biz chips, Access policy gate if needed, Trading/Fitness after deepen. Staff on STAFF-PROVE-QUEUE.",
+  "diff_summary": {
+    "kept_owner": [
+      "NM-P0-WOLF-BIZ-CHIPS",
+      "NM-P0-FINANCE-ACCESS-POLICY (Owner gate only if Access still blocks staff)",
+      "NM-P0-OWNER-TRADING-FITNESS (after deepen; hard-refresh cache-bust folded in)"
+    ],
+    "moved_to_staff_queue": [
+      "Zayen AMG/BZG Finance prove",
+      "Amanda GGV Finance prove",
+      "Hariyanto Recipe Builder",
+      "Content team seats/content",
+      "Devi BZG ops"
+    ],
+    "dropped": [
+      "Matt tests dozens of pages",
+      "Separate NM-P0-OWNER-TRADING-FITNESS-HARD-REFRESH card (merged into #3)",
+      "Owner tour of Voice/Gatekeeper/Habitat/Kuta/EventBus stubs",
+      "Seat boards as Owner-only unblock card"
+    ],
+    "supersedes_concurrent": "Re-applied Owner-only concise after concurrent Trading hard-refresh overwrite; deepen cache-bust retained on card #3"
+  },
+  "items": [
+    {
+      "rank": 1,
+      "id": "NM-P0-WOLF-BIZ-CHIPS",
+      "title": "Wolf biz chips desktop+phone",
+      "who": "Matt (Owner)",
+      "device": [
+        "desktop",
+        "phone"
+      ],
+      "urls": {
+        "external": [
+          "https://beta.wolfcommand.net/wolf",
+          "https://beta.wolfcommand.net/owner-empire-pack"
+        ],
+        "local": [
+          "http://127.0.0.1:8788/wolf",
+          "http://127.0.0.1:8788/owner-empire-pack"
+        ]
+      },
+      "why_blocks_completion": "LIVE_USABLE=0 until Owner proves Empire chrome + #wolfnav-biz",
+      "pass_criteria": [
+        "Authenticated session",
+        "#wolfnav-biz chips Owner/GGV/AMG/BZG/Uma Blu",
+        "Phone + desktop usable",
+        "No staff_ready invent"
+      ],
+      "evidence_to_capture": [
+        "desktop chips screenshot",
+        "phone chips screenshot",
+        "MY COMMISSIONING"
+      ],
+      "source": "NAV-AUTHORITY-SPEC.md \u00b7 GLOBAL-APP-SHELL-SPEC.md"
+    },
+    {
+      "rank": 2,
+      "id": "NM-P0-FINANCE-ACCESS-POLICY",
+      "title": "Finance identity matrix \u2014 Owner Access gate only if needed",
+      "who": "Matt (Owner) only if Access still Owner-gated; else staff queue",
+      "device": [
+        "desktop"
+      ],
+      "urls": {
+        "external": [
+          "https://beta.wolfcommand.net/amg/finance",
+          "https://beta.wolfcommand.net/bzg/finance",
+          "https://beta.wolfcommand.net/ggv/finance"
+        ],
+        "local": [
+          "http://127.0.0.1:8788/amg/finance",
+          "http://127.0.0.1:8788/bzg/finance",
+          "http://127.0.0.1:8788/ggv/finance"
+        ]
+      },
+      "why_blocks_completion": "Staff cannot commission finance if Access policy blocks their seats",
+      "pass_criteria": [
+        "Confirm Zayen+Amanda can authenticate without Owner proxy",
+        "Close Owner card; staff prove on STAFF-PROVE-QUEUE",
+        "Do not invent matrix PASS"
+      ],
+      "evidence_to_capture": [
+        "Access policy decision note",
+        "or handoff to staff queue"
+      ],
+      "source": "FINANCE-AUTH-MATRIX-PREP-20260930.json",
+      "staff_prove_ref": "STAFF-PROVE-QUEUE-20260930.md"
+    },
+    {
+      "rank": 3,
+      "id": "NM-P0-OWNER-TRADING-FITNESS",
+      "title": "Owner Trading/Fitness after deepen (hard-refresh)",
+      "who": "Matt (Owner)",
+      "device": [
+        "desktop",
+        "phone"
+      ],
+      "cache_bust": "20260930-ro-deepen2",
+      "urls": {
+        "external": [
+          "https://beta.wolfcommand.net/owner/trading?v=20260930-ro-deepen2",
+          "https://beta.wolfcommand.net/owner/fitness?v=20260930-ro-deepen2"
+        ],
+        "local": [
+          "http://127.0.0.1:8788/owner/trading?v=20260930-ro-deepen2",
+          "http://127.0.0.1:8788/owner/fitness?v=20260930-ro-deepen2"
+        ]
+      },
+      "why_blocks_completion": "PARTIAL_SHELL until Owner confirms honesty after deepen; API 200 \u2260 LIVE_USABLE",
+      "pass_criteria": [
+        "Trading paper-only / no live broker",
+        "Fitness PARTIAL / Spartacus\u2260HR",
+        "PARTIAL stamp visible",
+        "Hard-refresh with cache-bust"
+      ],
+      "evidence_to_capture": [
+        "Trading screenshot",
+        "Fitness screenshot",
+        "MY COMMISSIONING"
+      ],
+      "source": "TRANSFER-TRADING-SPEC \u00b7 TRANSFER-FITNESS-SPEC \u00b7 deepen pack"
+    }
+  ],
+  "staff_queue_ref": "STAFF-PROVE-QUEUE-20260930.md",
+  "nav_status": "PARTIAL",
+  "honesty": {
+    "staff_ready": false,
+    "exit_report": "NOT_CREATED",
+    "matrix_pass_invented": false,
+    "ia_intersect_pages_transitional": true,
+    "authority_nav_partial": true
+  }
+}

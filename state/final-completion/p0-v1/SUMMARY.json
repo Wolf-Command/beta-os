@@ -1,0 +1,49 @@
+{
+  "capabilities": 68,
+  "counts_by_classification": {
+    "MISSING": 19,
+    "PARTIAL": 35,
+    "HISTORICAL_PRESERVATION_REQUIRED": 8,
+    "REBUILT_BUT_NOT_LIVE": 2,
+    "HR_DEFERRED": 2,
+    "SUPERSEDED": 1,
+    "EXTERNALLY_BLOCKED": 1
+  },
+  "newly_recovered_count": 34,
+  "top_20_newly_recovered": [
+    "Trading Desk (holdings + trade journal)",
+    "TTC / Flint Paper Quant Program",
+    "Spartacus Fitness / Health Command",
+    "Travel Board",
+    "Wolf Radar (Owner plan board)",
+    "Learning Desk",
+    "Personal Health Data Store (Spartacus SQLite + Wolf75)",
+    "Peptide Schedule (legacy Sheets + board tracker)",
+    "Personal Vault Daily Intel Notes",
+    "HOLDINGS-PERSONAL Registry",
+    "Amanda Desk (ads/content tasks)",
+    "Mila Desk",
+    "Peaches Desk (CoS threads)",
+    "Haikal Desk",
+    "Wolf Desk (owner tasks/routines)",
+    "Misa Board",
+    "BZG Monthly Boards",
+    "Ads Studio",
+    "Habitat Investment 2026",
+    "Kuta Rates Competitor Board"
+  ],
+  "trading": [
+    "Trading Desk (holdings + trade journal)",
+    "TTC / Flint Paper Quant Program"
+  ],
+  "fitness": [
+    "Spartacus Fitness / Health Command",
+    "Personal Health Data Store (Spartacus SQLite + Wolf75)",
+    "Peptide Schedule (legacy Sheets + board tracker)"
+  ],
+  "paths": {
+    "box_manifest": "/workspace/state/final-completion/p0-v1/V1-SURFACE-MANIFEST-DRAFT.json",
+    "box_method": "/workspace/state/final-completion/p0-v1/METHOD.md",
+    "mac_target": "~/beta-os/state/final-completion/p0-v1/"
+  }
+}

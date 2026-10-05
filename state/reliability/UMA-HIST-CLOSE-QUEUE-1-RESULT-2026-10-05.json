@@ -1,0 +1,64 @@
+{
+  "slice": "UMA-HIST-CLOSE-QUEUE-1",
+  "status": "IMPLEMENTATION_DONE",
+  "generated_at": "2026-10-05T11:45:00+08:00",
+  "tests_pass": 34,
+  "tests_fail": 0,
+  "test_file": "scripts/tests/test_uma_hist_close_queue1_20261005.py",
+  "routes_added": [
+    "GET /api/venue-close/history-queue",
+    "GET /api/venue-close/{close_id}/history-closed-summary"
+  ],
+  "one_owner_link": "/uma-blu-close#history-queue",
+  "nine_date_statuses": {
+    "2026-09-25": "OPEN",
+    "2026-09-27": "OPEN",
+    "2026-09-28": "INCOMPLETE",
+    "2026-09-29": "INCOMPLETE",
+    "2026-09-30": "INCOMPLETE",
+    "2026-10-01": "OPEN",
+    "2026-10-02": "OPEN",
+    "2026-10-03": "EXCEPTION",
+    "2026-10-04": "INCOMPLETE"
+  },
+  "ready_to_close_now": 6,
+  "evidence_recovery": {
+    "nine_with_any_photo_evidence": 1,
+    "nine_photos_missing_or_no_record": 8,
+    "queue_dates_missing_photos": [
+      "2026-09-25",
+      "2026-09-27",
+      "2026-09-28",
+      "2026-09-29",
+      "2026-09-30",
+      "2026-10-01",
+      "2026-10-02",
+      "2026-10-04"
+    ],
+    "queue_dates_with_photos": [
+      "2026-10-03"
+    ]
+  },
+  "protected_closes_unchanged": true,
+  "protected_petty_unchanged": "PETTY-UMA-6D853EEAE0",
+  "prod_pid_unchanged": 1297,
+  "staff_ready": false,
+  "human_commissioned": false,
+  "zero_closed_sep_oct": true,
+  "preflight_freeze_extended": true,
+  "preflight_freeze_path": "state/reliability/UMA-HIST-CLOSE-QUEUE-PREFLIGHT-FREEZE-2026-10-05.json",
+  "beta_reloaded": false,
+  "reload_held": true,
+  "reload_held_reason": "two listeners on :8788 — reload requires exactly one",
+  "files_changed": [
+    "scripts/core/uma_hist_close_queue1.py",
+    "scripts/core/bzg_daily_close.py",
+    "scripts/serve_beta.py",
+    "dashboards/uma-blu-close.html",
+    "scripts/tests/test_uma_hist_close_queue1_20261005.py",
+    "state/reliability/UMA-HIST-CLOSE-QUEUE-PREFLIGHT-2026-10-05.json",
+    "state/reliability/UMA-HIST-CLOSE-QUEUE-PREFLIGHT-FREEZE-2026-10-05.json"
+  ],
+  "no_commit": true,
+  "exit_code": 0
+}

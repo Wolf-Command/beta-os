@@ -1,0 +1,39 @@
+{
+  "pack": "PULSE-LEADS-BACKUP-HONESTY-2",
+  "applied_at_wita": "2026-10-01T08:17:11+08:00",
+  "executor": "Peaches-executor",
+  "target": "beta-os :8788",
+  "prod_8787": "UNTOUCHED",
+  "prod_pid": 15975,
+  "beta_8788_pid_after": 237,
+  "phase": "DESKTOP_UX",
+  "mutations": [
+    "leads: DEMO SoT stamped DEMO/PARTIAL; sot=DEMO_FIXTURE; precise_state=PARTIAL_DEMO; no invent LIVE",
+    "backup: LIVE only if atrium_fresh+last_ok+pipe not AMBER; STALE \u2192 PARTIAL_STALE_ATRIUM"
+  ],
+  "proof": {
+    "pulse_counts": {
+      "LIVE": 8,
+      "PARTIAL": 2,
+      "EMPTY": 0,
+      "BLOCKED": 0,
+      "tiles": 10
+    },
+    "leads": "PARTIAL DEMO SoT \u00b7 0 live \u00b7 8 fixture \u00b7 3 needs-you",
+    "leads_sot": "DEMO_FIXTURE",
+    "leads_precise_state": "PARTIAL_DEMO",
+    "backup": "PARTIAL \u00b7 STALE atrium snap",
+    "backup_precise_state": "PARTIAL_STALE_ATRIUM",
+    "backup_atrium_fresh": false,
+    "invented_live": false
+  },
+  "honesty": {
+    "invented_live_leads": false,
+    "invented_fresh_backup": false,
+    "metricool_write": false,
+    "finance_sod": "UNCHANGED",
+    "staff_ready": false,
+    "desktop_gate_ready": false
+  },
+  "backup": "/Users/wolfterminal/beta-os/backups/beta-house-ux-20261001/"
+}

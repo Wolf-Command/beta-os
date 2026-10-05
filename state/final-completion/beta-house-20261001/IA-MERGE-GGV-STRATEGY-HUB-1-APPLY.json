@@ -1,0 +1,70 @@
+{
+  "pack": "IA-MERGE-GGV-STRATEGY-HUB-1",
+  "applied_at_wita": "2026-10-01T07:53:47+08:00",
+  "executor": "Peaches-executor",
+  "target": "beta-os :8788",
+  "prod_8787": "UNTOUCHED",
+  "prod_8787_pid": 15975,
+  "backup": "/Users/wolfterminal/beta-os/backups/beta-house-ia-20261001/",
+  "status": "APPLIED",
+  "mutations": [
+    "ggv-ops-pack.html Strategy chrome: /ggv-strategy-machine -> /ggv-ops-pack#strategy",
+    "added #strategy hub panel (empty-framework honesty; no content rewrite; leaf link retained)",
+    "wolf_shell.GGV_GRAMMAR strategy -> /ggv-ops-pack#strategy",
+    "strategy leaf route /ggv-strategy-machine kept; Finance SoD unchanged; Metricool WRITE OFF"
+  ],
+  "proof": {
+    "primary_ia_count": 19,
+    "primary_ia_hrefs": [
+      "/owner-empire-pack",
+      "/finish-war-room",
+      "/my-work",
+      "/staff-ops-routing",
+      "/owner/trading",
+      "/owner/fitness",
+      "/owner/radar",
+      "/owner/travel",
+      "/owner/learning",
+      "/ggv-ops-pack",
+      "/amg-ops-pack",
+      "/bzg",
+      "/bzg/uma-blu",
+      "/intel-ops-pack",
+      "/content-2.0",
+      "/progress",
+      "/integration-health",
+      "/sale-evidence-pack",
+      "/ops/backup-health-1"
+    ],
+    "ggv_strategy_chrome_href": "/ggv-ops-pack#strategy",
+    "ggv_strategy_leaf_kept": "/ggv-strategy-machine",
+    "ggv_pipeline_chrome_href": "/ggv-ops-pack#pipeline",
+    "ggv_social_chrome_href": "/ggv-ops-pack#social",
+    "ggv_finance_href": "/ggv/finance",
+    "amg_finance_empty": true,
+    "metricool_write_enabled": false,
+    "sidenav_js_http": 200,
+    "pulse_ro_http": 200,
+    "html_pages_http": "403_CF_auth_expected \u2014 proved via disk + in-process IA_TREE/GGV_GRAMMAR",
+    "prod_8787_pid": 15975,
+    "beta_8788_pid_after": 94257
+  },
+  "honesty": {
+    "pages_deleted": false,
+    "routes_kept": true,
+    "strategy_content_rewrite": false,
+    "metricool_write": false,
+    "staff_ready": false,
+    "desktop_gate_ready": false,
+    "exit_report": "NOT_CREATED",
+    "wolf_desktop_ready": false
+  },
+  "out_of_scope_honored": [
+    "Finance SoD",
+    "Metricool WRITE",
+    "strategy content rewrite",
+    "Canva",
+    "Klaviyo",
+    "Yanolja writes"
+  ]
+}

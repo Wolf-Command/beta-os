@@ -1,0 +1,31 @@
+{
+  "at_wita": "2026-09-30T12:33:08+08:00",
+  "nav_status": "AUTHORITY_CHROME",
+  "alias": "WIRED_PARTIAL",
+  "beta_pid": 19083,
+  "prod_pid_8787": 15975,
+  "prod_untouched": true,
+  "shell_whoami": {
+    "url": "http://127.0.0.1:8788/api/wolf/shell-whoami",
+    "has_nav_authority": true,
+    "authority_source": "assignment_role_scope",
+    "honesty_nav_status": "AUTHORITY_CHROME",
+    "honesty_authority_chrome_wired": true,
+    "note": "unauthenticated CLIENT \u2192 empty chips; field present + paint prefers authority when non-empty"
+  },
+  "sidenav": {
+    "cache": "20260930-nav-authority-chrome",
+    "navBizSource": true,
+    "data_nav_source": true
+  },
+  "tests": {
+    "test_wolf_nav_authority_20260930.py": "31/31",
+    "test_wolf_nav_authority_chrome_20260930.py": "29/29",
+    "test_wolf_global_app_shell_20260930.py": "39/39"
+  },
+  "staff_ready": false,
+  "live_usable": false,
+  "authority_nav_sole_source": false,
+  "mac_dropped": false,
+  "mac_flapped_during_session": true
+}

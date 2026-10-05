@@ -1,0 +1,499 @@
+{
+  "pack_id": "FINANCE-LIVE-READ",
+  "read_at": "2026-10-04T19:12:13+08:00",
+  "mode": "READ_ONLY",
+  "invented": false,
+  "dbs_scanned": [
+    {
+      "path": "catalog/content_library.sqlite",
+      "size_bytes": 106528768,
+      "mtime": "2026-10-04T19:11:41+08:00",
+      "table_count": 103,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements",
+        "fin_invoice_sequence_audit",
+        "fin_invoice_sequences",
+        "ggv_invoice_documents",
+        "ggv_invoice_history",
+        "ggv_invoices",
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_invoices": 0,
+        "ggv_notas": 0,
+        "ggv_invoice_documents": 0,
+        "ggv_invoice_history": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "catalog/atrium-bzg.sqlite",
+      "size_bytes": 0,
+      "mtime": "2026-09-29T23:56:38+08:00",
+      "table_count": 0,
+      "finance_ish_tables": [],
+      "row_counts": {}
+    },
+    {
+      "path": "./catalog/bzg_recipes.sqlite",
+      "size_bytes": 307200,
+      "mtime": "2026-10-04T16:17:58+08:00",
+      "table_count": 8,
+      "finance_ish_tables": [],
+      "row_counts": {}
+    },
+    {
+      "path": "./catalog/ggv_content_ops_operator.sqlite",
+      "size_bytes": 24576,
+      "mtime": "2026-09-23T01:58:09+08:00",
+      "table_count": 2,
+      "finance_ish_tables": [],
+      "row_counts": {}
+    },
+    {
+      "path": "./catalog/content_library.sqlite",
+      "size_bytes": 106528768,
+      "mtime": "2026-10-04T19:11:41+08:00",
+      "table_count": 103,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements",
+        "fin_invoice_sequence_audit",
+        "fin_invoice_sequences",
+        "ggv_invoice_documents",
+        "ggv_invoice_history",
+        "ggv_invoices",
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_invoices": 0,
+        "ggv_notas": 0,
+        "ggv_invoice_documents": 0,
+        "ggv_invoice_history": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "./catalog/atrium-bzg.sqlite",
+      "size_bytes": 0,
+      "mtime": "2026-09-29T23:56:38+08:00",
+      "table_count": 0,
+      "finance_ish_tables": [],
+      "row_counts": {}
+    },
+    {
+      "path": "./state/opsfix3-catalog-m0p8ov7q/content_library.sqlite",
+      "size_bytes": 94396416,
+      "mtime": "2026-09-29T08:36:49+08:00",
+      "table_count": 87,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements",
+        "fin_invoice_sequence_audit",
+        "fin_invoice_sequences",
+        "ggv_invoice_documents",
+        "ggv_invoice_history",
+        "ggv_invoices",
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_invoices": 0,
+        "ggv_notas": 0,
+        "ggv_invoice_documents": 0,
+        "ggv_invoice_history": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "./state/bzg-pr1-ce8taqop/content_library.sqlite",
+      "size_bytes": 659456,
+      "mtime": "2026-10-04T18:51:47+08:00",
+      "table_count": 38,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements"
+      ],
+      "row_counts": {}
+    },
+    {
+      "path": "./state/uma-pack2-oh5uvg82/content_library.sqlite",
+      "size_bytes": 102195200,
+      "mtime": "2026-10-01T19:30:10+08:00",
+      "table_count": 89,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements",
+        "fin_invoice_sequence_audit",
+        "fin_invoice_sequences",
+        "ggv_invoice_documents",
+        "ggv_invoice_history",
+        "ggv_invoices",
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_invoices": 0,
+        "ggv_notas": 0,
+        "ggv_invoice_documents": 0,
+        "ggv_invoice_history": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "./state/opsfix3-catalog-0zpp611g/content_library.sqlite",
+      "size_bytes": 94629888,
+      "mtime": "2026-09-29T08:52:27+08:00",
+      "table_count": 87,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements",
+        "fin_invoice_sequence_audit",
+        "fin_invoice_sequences",
+        "ggv_invoice_documents",
+        "ggv_invoice_history",
+        "ggv_invoices",
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_invoices": 0,
+        "ggv_notas": 0,
+        "ggv_invoice_documents": 0,
+        "ggv_invoice_history": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "./state/opsfix3-catalog-vxkqtcdc/content_library.sqlite",
+      "size_bytes": 97288192,
+      "mtime": "2026-09-29T14:06:12+08:00",
+      "table_count": 87,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements",
+        "fin_invoice_sequence_audit",
+        "fin_invoice_sequences",
+        "ggv_invoice_documents",
+        "ggv_invoice_history",
+        "ggv_invoices",
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_invoices": 0,
+        "ggv_notas": 0,
+        "ggv_invoice_documents": 0,
+        "ggv_invoice_history": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "./state/bzg-pr1-4mcjz1ic/content_library.sqlite",
+      "size_bytes": 491520,
+      "mtime": "2026-10-04T18:51:30+08:00",
+      "table_count": 31,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements"
+      ],
+      "row_counts": {}
+    },
+    {
+      "path": "./state/opsfix3-catalog-zdwndu9k/content_library.sqlite",
+      "size_bytes": 94081024,
+      "mtime": "2026-09-29T07:34:21+08:00",
+      "table_count": 83,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements",
+        "fin_invoice_sequence_audit",
+        "fin_invoice_sequences",
+        "ggv_invoice_documents",
+        "ggv_invoice_history",
+        "ggv_invoices",
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_invoices": 0,
+        "ggv_notas": 0,
+        "ggv_invoice_documents": 0,
+        "ggv_invoice_history": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "./state/bzg-pr1-xssmn4s2/content_library.sqlite",
+      "size_bytes": 491520,
+      "mtime": "2026-10-04T18:51:21+08:00",
+      "table_count": 31,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements"
+      ],
+      "row_counts": {}
+    },
+    {
+      "path": "./state/opsfix3-catalog-ql3b7fwp/content_library.sqlite",
+      "size_bytes": 97210368,
+      "mtime": "2026-09-29T13:18:20+08:00",
+      "table_count": 87,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements",
+        "fin_invoice_sequence_audit",
+        "fin_invoice_sequences",
+        "ggv_invoice_documents",
+        "ggv_invoice_history",
+        "ggv_invoices",
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_invoices": 0,
+        "ggv_notas": 0,
+        "ggv_invoice_documents": 0,
+        "ggv_invoice_history": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "./state/fcr-ggv-41-8fdskozj/content_library.sqlite",
+      "size_bytes": 335872,
+      "mtime": "2026-10-04T12:00:07+08:00",
+      "table_count": 26,
+      "finance_ish_tables": [
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_notas": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "./state/opsfix3-catalog-5xfg78ma/content_library.sqlite",
+      "size_bytes": 94085120,
+      "mtime": "2026-09-29T07:41:10+08:00",
+      "table_count": 83,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements",
+        "fin_invoice_sequence_audit",
+        "fin_invoice_sequences",
+        "ggv_invoice_documents",
+        "ggv_invoice_history",
+        "ggv_invoices",
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_invoices": 0,
+        "ggv_notas": 0,
+        "ggv_invoice_documents": 0,
+        "ggv_invoice_history": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "./state/fcr-ggv-42-t_oest8j/content_library.sqlite",
+      "size_bytes": 335872,
+      "mtime": "2026-10-04T13:56:03+08:00",
+      "table_count": 26,
+      "finance_ish_tables": [
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_notas": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "./state/opsfix3-catalog-zgi95_zh/content_library.sqlite",
+      "size_bytes": 97210368,
+      "mtime": "2026-09-29T12:52:12+08:00",
+      "table_count": 87,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements",
+        "fin_invoice_sequence_audit",
+        "fin_invoice_sequences",
+        "ggv_invoice_documents",
+        "ggv_invoice_history",
+        "ggv_invoices",
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_invoices": 0,
+        "ggv_notas": 0,
+        "ggv_invoice_documents": 0,
+        "ggv_invoice_history": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "./state/opsfix3-catalog-me6mzuwi/content_library.sqlite",
+      "size_bytes": 94752768,
+      "mtime": "2026-09-29T08:53:29+08:00",
+      "table_count": 87,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements",
+        "fin_invoice_sequence_audit",
+        "fin_invoice_sequences",
+        "ggv_invoice_documents",
+        "ggv_invoice_history",
+        "ggv_invoices",
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_invoices": 0,
+        "ggv_notas": 0,
+        "ggv_invoice_documents": 0,
+        "ggv_invoice_history": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "./state/uma-pack2-a_ol8nk7/content_library.sqlite",
+      "size_bytes": 102195200,
+      "mtime": "2026-10-01T19:30:30+08:00",
+      "table_count": 89,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements",
+        "fin_invoice_sequence_audit",
+        "fin_invoice_sequences",
+        "ggv_invoice_documents",
+        "ggv_invoice_history",
+        "ggv_invoices",
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_invoices": 0,
+        "ggv_notas": 0,
+        "ggv_invoice_documents": 0,
+        "ggv_invoice_history": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "./state/uma-pack2-ou_jgnff/content_library.sqlite",
+      "size_bytes": 102195200,
+      "mtime": "2026-10-01T19:30:41+08:00",
+      "table_count": 89,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements",
+        "fin_invoice_sequence_audit",
+        "fin_invoice_sequences",
+        "ggv_invoice_documents",
+        "ggv_invoice_history",
+        "ggv_invoices",
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_invoices": 0,
+        "ggv_notas": 0,
+        "ggv_invoice_documents": 0,
+        "ggv_invoice_history": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "./state/opsfix3-catalog-hu66w01w/content_library.sqlite",
+      "size_bytes": 97198080,
+      "mtime": "2026-09-29T11:58:09+08:00",
+      "table_count": 87,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements",
+        "fin_invoice_sequence_audit",
+        "fin_invoice_sequences",
+        "ggv_invoice_documents",
+        "ggv_invoice_history",
+        "ggv_invoices",
+        "ggv_nota_files",
+        "ggv_nota_history",
+        "ggv_notas"
+      ],
+      "row_counts": {
+        "ggv_invoices": 0,
+        "ggv_notas": 0,
+        "ggv_invoice_documents": 0,
+        "ggv_invoice_history": 0,
+        "ggv_nota_files": 0,
+        "ggv_nota_history": 0
+      }
+    },
+    {
+      "path": "./state/bzg-pr1-or0dlh_f/content_library.sqlite",
+      "size_bytes": 548864,
+      "mtime": "2026-10-04T18:51:35+08:00",
+      "table_count": 34,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements"
+      ],
+      "row_counts": {}
+    },
+    {
+      "path": "./state/bzg-pr1-8s4p2hvw/content_library.sqlite",
+      "size_bytes": 659456,
+      "mtime": "2026-10-04T18:51:52+08:00",
+      "table_count": 38,
+      "finance_ish_tables": [
+        "bzg_ops_petty_days",
+        "bzg_ops_petty_movements"
+      ],
+      "row_counts": {}
+    }
+  ],
+  "summary": {
+    "ggv_invoice_rows_sum": 0,
+    "ggv_nota_rows_sum": 0,
+    "empty_invoices": true,
+    "empty_notas": true,
+    "clear_for_testable_slice": false,
+    "note": "Live read only. Empty counts mean empty \u2014 do not invent rows. FINANCE-TESTABLE-SLICE not auto-launched."
+  }
+}
