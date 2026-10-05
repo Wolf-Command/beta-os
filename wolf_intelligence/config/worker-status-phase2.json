@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-05T22:31:06+08:00",
+  "at": "2026-10-05T22:31:44+08:00",
   "mode": "SHADOW",
   "production_touched": false,
   "workers_killed": false,
@@ -79,8 +79,13 @@
       "label": "OpenAI API",
       "status": "UNAVAILABLE",
       "ok": false,
-      "evidence": "OPENAI_API_KEY not configured",
-      "data": {},
+      "evidence": "OPENAI_API_KEY name present in beta .env but value empty; ChatGPT sub is separate pool",
+      "data": {
+        "billing": "api",
+        "key_name_present": true,
+        "key_configured": false,
+        "dry_run_flag": true
+      },
       "supports": [
         "health",
         "submit"
@@ -127,8 +132,12 @@
       "label": "Gemini",
       "status": "UNAVAILABLE",
       "ok": false,
-      "evidence": "GEMINI_API_KEY not configured",
-      "data": {},
+      "evidence": "GEMINI_API_KEY name present in beta .env but value empty; no paid without Owner policy",
+      "data": {
+        "billing": "free",
+        "paid_allowed": false,
+        "key_name_present": true
+      },
       "supports": [
         "health",
         "submit"
