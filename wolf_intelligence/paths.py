@@ -23,9 +23,16 @@ SQLITE_PATH = STATE_ROOT / "control_plane.sqlite"
 SCORECARD_PATH = STATE_ROOT / "benchmarks" / "model-scorecard.json"
 WORKER_STATUS_PATH = STATE_ROOT / "workers" / "status.json"
 SHADOW_COMPARE_PATH = STATE_ROOT / "shadow" / "compare.jsonl"
+BUILD_FACTORY_DIR = BETA_ROOT / "state" / "build-factory"
+FACTORY_HISTORY_PATH = CONFIG_DIR / "factory-history-workers.json"
 
 OWNER_UI_PORT = 8799
 OWNER_UI_HOST = "127.0.0.1"
+
+# Live provider calls stay off unless the process sets this to 1/true/yes/on.
+LIVE_SUBMIT_ENV = "WOLF_INTELLIGENCE_LIVE_SUBMIT"
+MAX_COST_ENV = "WOLF_INTELLIGENCE_MAX_COST_USD"
+PROVIDER_MOCK_ENV = "WOLF_INTELLIGENCE_PROVIDER_MOCK"
 
 
 def ensure_dirs() -> None:

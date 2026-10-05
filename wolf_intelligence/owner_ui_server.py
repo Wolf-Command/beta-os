@@ -107,13 +107,13 @@ class Handler(BaseHTTPRequestHandler):
                 self._send(404, b'{"ok":false,"error":"not_found"}', "application/json")
                 return
             if decision == "PASS":
-                learning.record_outcome(wid, human_passed=True, human_rating=int(rating) if rating else 4, notes=notes or "owner pass")
+                learning.record_outcome(wid, human_passed=True, human_rating=int(rating) if rating else 4, notes=notes or "owner pass", source="owner_ui")
             elif decision == "FAIL":
-                learning.record_outcome(wid, human_passed=False, human_rating=int(rating) if rating else 1, notes=notes or "owner fail")
+                learning.record_outcome(wid, human_passed=False, human_rating=int(rating) if rating else 1, notes=notes or "owner fail", source="owner_ui")
             else:
                 if item["state"] in ("READY_TO_TEST", "RUNNING", "RECOMMENDED"):
                     work_items.transition(wid, "NEEDS_YOU", reason=notes or "owner flagged")
-                learning.record_outcome(wid, notes=notes or "needs you", self_eval_rating=None)
+                learning.record_outcome(wid, notes=notes or "needs you", self_eval_rating=None, source="owner_ui")
             item = work_items.get(wid)
             self._send(200, json.dumps({"ok": True, "item": {"id": wid, "state": item["state"]}}).encode(), "application/json")
             return

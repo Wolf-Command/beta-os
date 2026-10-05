@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 from .base import AdapterResult, WorkerAdapter, register
+from .live_gate import execute_requested, unsupported
 
 GROKBOT = Path.home() / ".grokbot"
 
@@ -27,10 +28,13 @@ class GrokBotAdapter(WorkerAdapter):
         return AdapterResult(False, "UNAVAILABLE", "~/.grokbot missing key state")
 
     def submit(self, job: dict[str, Any]) -> AdapterResult:
-        # Shadow: never spawn a real expensive Grok session from control plane Phase 1
+        if execute_requested(job):
+            return unsupported(
+                "grok_bot is health-only. Plan USD is UNKNOWN. No live spawn and the Grok Bot app is not touched."
+            )
         if not job.get("shadow_isolated"):
             return AdapterResult(False, "SHADOW_SKIPPED", "non-isolated submit refused in shadow mode")
-        return AdapterResult(True, "SHADOW_OK", "shadow recommend-only; no live Grok spawn", {"echo": job.get("prompt", "")[:200]})
+        return AdapterResult(True, "SHADOW_OK", "shadow recommend-only; no live Grok spawn", {"echo": job.get("prompt", "")[:200], "provider_called": False})
 
     def status(self, handle: str) -> AdapterResult:
         return AdapterResult(True, "SHADOW_OK", "shadow status", {"handle": handle, "state": "shadow_idle"})

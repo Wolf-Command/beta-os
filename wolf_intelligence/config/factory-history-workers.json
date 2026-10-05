@@ -1,16 +1,23 @@
 {
-  "at": "2026-10-05T22:43:54+08:00",
-  "samples_scanned": 100,
-  "parsed_counts": {
-    "cursor": 96,
-    "unknown": 4
+  "at": "2026-10-06T07:11:05+08:00",
+  "last_worker_hint": "UNKNOWN",
+  "last_worker_hint_source": "UNKNOWN",
+  "per_job_count": 0,
+  "jobs": [],
+  "implied_primary_from_bf_cursor_launch": null,
+  "historical_aggregate_not_per_job": {
+    "samples_scanned": 100,
+    "parsed_counts": {
+      "cursor": 96,
+      "unknown": 4
+    },
+    "usable_as_current_system_worker": false,
+    "why": "Counts from the 2026-10-05 Studio scan are not per-job records. This file does not contain the BF-*.json bodies, so those counts cannot name the current-system worker."
   },
-  "implied_primary_from_bf_cursor_launch": "cursor",
-  "note": "JSON run files rarely name the worker; bf_cursor_launch.sh is the factory executor \u2014 treat historical actual as cursor unless grok markers found",
   "sample_keys_example": {
     "file": "BF-ae8e2ebfc9ed.json",
-    "worker": "cursor",
-    "keys": [
+    "worker": null,
+    "keys_observed_on_studio": [
       "approved_scope",
       "blocker",
       "cursor_log",
@@ -23,6 +30,9 @@
       "run_id",
       "slice",
       "staff_ready"
-    ]
-  }
+    ],
+    "note": "cursor_pid and cursor_log would be per-job cursor evidence if the run file is readable on Studio. The file is not in this repo, so this example is not a worker assignment."
+  },
+  "note": "Current-system worker comes only from per-job records: a worker/worker_id/executor field, or cursor_pid/cursor_log/cursor.pid, or grok_pid/grok_log/grok.pid. Jobs without that are skipped. implied_primary and aggregate counts are not used. If nothing qualifies, the hint is UNKNOWN.",
+  "unknown_runs_assumed_cursor": false
 }

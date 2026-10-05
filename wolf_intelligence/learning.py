@@ -27,6 +27,7 @@ def record_outcome(
     notes: str = "",
     model_id: str | None = None,
     worker_id: str | None = None,
+    source: str | None = None,
 ) -> dict[str, Any]:
     """Human fields dominate. Self-eval stored but never overrides human."""
     ensure_dirs()
@@ -41,6 +42,7 @@ def record_outcome(
         "self_eval_rating": self_eval_rating,
         "human_dominates": True,
         "notes": notes,
+        "source": source,
     }
     # Effective score: human if present else UNKNOWN (not self-eval)
     if human_rating is not None:

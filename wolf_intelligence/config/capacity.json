@@ -9,7 +9,8 @@
       "monthly_usd": 300,
       "prepaid": true,
       "source": "Owner declared Cursor $300/mo prepaid",
-      "verified_owner_declared": true
+      "verified_owner_declared": true,
+      "per_call_metered_usd": "UNKNOWN"
     },
     {
       "id": "claude_sub_25",
@@ -19,7 +20,9 @@
       "prepaid": true,
       "source": "Owner declared Claude sub $25/mo separate from API",
       "verified_owner_declared": true,
-      "public_team_standard_matches": true
+      "public_team_standard_matches": true,
+      "per_call_metered_usd": "UNKNOWN",
+      "separate_from_pool": "anthropic_api"
     },
     {
       "id": "grok_sub",
@@ -28,6 +31,7 @@
       "monthly_usd": null,
       "note": "No local plan-tier file found with certainty; public plans Free/10/30/100/300. Owner must confirm account UI.",
       "plan_name": "UNKNOWN",
+      "per_call_metered_usd": "UNKNOWN",
       "discovered_at": "2026-10-05T22:36:13+08:00"
     },
     {
@@ -37,6 +41,8 @@
       "monthly_usd": null,
       "note": "ChatGPT plan not readable from disk without account session; Plus=$20 Pro=100/200/500 public. Separate from API.",
       "plan_name": "UNKNOWN",
+      "per_call_metered_usd": "UNKNOWN",
+      "separate_from_pool": "openai_api",
       "discovered_at": "2026-10-05T22:36:13+08:00"
     },
     {
@@ -70,7 +76,8 @@
       "billing": "free",
       "monthly_usd": 0,
       "note": "No paid Gemini without Owner policy",
-      "key_value_nonempty": false
+      "key_value_nonempty": false,
+      "per_call_metered_usd": 0
     },
     {
       "id": "ollama_local",
