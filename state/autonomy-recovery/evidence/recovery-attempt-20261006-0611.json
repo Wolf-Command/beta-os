@@ -1,0 +1,32 @@
+{
+  "ts_wita": "2026-10-06T06:12:34+08:00",
+  "incident_id": "INCIDENT-20261005-2255",
+  "attempt": "BOX_APPROVED_PRIVATE_PATHS",
+  "paths_tried": [
+    {
+      "path": "box\u2192Studio:2222",
+      "result": "TIMEOUT",
+      "detail": "no Tailscale on box"
+    },
+    {
+      "path": "box\u2192NAS TS/LAN",
+      "result": "TIMEOUT",
+      "detail": "BOX_NOT_ON_TAILNET"
+    },
+    {
+      "path": "box\u2192NAS\u2192Studio forced command",
+      "result": "IMPOSSIBLE",
+      "detail": "no route/key/DSM session"
+    },
+    {
+      "path": "ListMachines+Shell hostname;date",
+      "result": "FAIL",
+      "detail": "connected=false"
+    }
+  ],
+  "recover_watchdog_ran": false,
+  "green": false,
+  "blocker": "HARD_INFRASTRUCTURE_BLOCKER",
+  "matt_ask": false,
+  "prod_touched": false
+}

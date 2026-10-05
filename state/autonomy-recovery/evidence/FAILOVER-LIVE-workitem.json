@@ -1,0 +1,66 @@
+{
+  "ts_wita": "2026-10-06T06:15:07+08:00",
+  "work_item_id": "WI-FAILOVER-LIVE-20261006",
+  "studio_connected": false,
+  "assign_result": {
+    "action": "ASSIGN",
+    "assigned_worker": "cursor_cloud_agent",
+    "reason": "studio_down_repo_eligible_failover",
+    "escalate_human": false,
+    "duplicate_prevented": false,
+    "lock_acquired": true,
+    "item": {
+      "id": "WI-FAILOVER-LIVE-20261006",
+      "title": "LIVE FAILOVER: commit autonomy-recovery tree to build/autonomy-recovery + run unit tests",
+      "kind": "repo_edit",
+      "status": "ASSIGNED",
+      "assigned_worker": "cursor_cloud_agent",
+      "preferred_worker": "studio_shell",
+      "repo_eligible": true,
+      "idempotency_key": "idem-WI-FAILOVER-LIVE-20261006",
+      "failover_history": [
+        {
+          "at": "2026-10-06T06:15:07+08:00",
+          "event": "assign",
+          "worker": "cursor_cloud_agent",
+          "reason": "studio_down_repo_eligible_failover"
+        }
+      ],
+      "lock_holder": "cursor_cloud_agent:idem-WI-FAILOVER-LIVE-20261006",
+      "lock_until": "2026-10-06T06:15:07+08:00",
+      "production_mutation": false
+    }
+  },
+  "duplicate_attempt": {
+    "action": "NOOP_ALREADY_LOCKED",
+    "assigned_worker": "cursor_cloud_agent",
+    "duplicate_prevented": true,
+    "item": {
+      "id": "WI-FAILOVER-LIVE-20261006",
+      "title": "LIVE FAILOVER: commit autonomy-recovery tree to build/autonomy-recovery + run unit tests",
+      "kind": "repo_edit",
+      "status": "ASSIGNED",
+      "assigned_worker": "cursor_cloud_agent",
+      "preferred_worker": "studio_shell",
+      "repo_eligible": true,
+      "idempotency_key": "idem-WI-FAILOVER-LIVE-20261006",
+      "failover_history": [
+        {
+          "at": "2026-10-06T06:15:07+08:00",
+          "event": "assign",
+          "worker": "cursor_cloud_agent",
+          "reason": "studio_down_repo_eligible_failover"
+        }
+      ],
+      "lock_holder": "cursor_cloud_agent:idem-WI-FAILOVER-LIVE-20261006",
+      "lock_until": "2026-10-06T06:15:07+08:00",
+      "production_mutation": false
+    }
+  },
+  "lock_holder": "cursor_cloud_agent:idem-WI-FAILOVER-LIVE-20261006",
+  "assigned_worker": "cursor_cloud_agent",
+  "duplicate_prevented": true,
+  "request_sent_at_wita": "2026-10-06T06:15:07+08:00",
+  "launch_status": "PENDING_CLOUDAGENT_TOOL",
+  "notes": "Work item + lock created before CloudAgent launch attempt"
+}

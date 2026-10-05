@@ -1,0 +1,37 @@
+P0 AUTONOMY RECOVERY REPORT — executor → parent (2026-10-06 ~06:13 WITA)
+
+22:55 ROOT CAUSE (one sentence): UNKNOWN precise OS mechanism — Grok Bot desktop control pipe died between 22:49 and 22:58 WITA (bf-watch) while public beta/dash still answered CF Access 302; asleep/reboot/Tailscale-down not proved (missing Studio process/sleep logs + NAS watcher.audit).
+
+HOP CHAIN:
+1. Studio host: LIKELY_ALIVE_PUBLIC_SIGNALS_ONLY (beta/dash 302 continuous) — not host-local prove
+2. Studio Tailscale / :2222: UNOBSERVABLE_FROM_BOX (TCP timeout; no TS on box)
+3. NAS host/TS: UNOBSERVABLE_FROM_BOX (TCP timeout)
+4. NAS recovery client+key: UNKNOWN (last docs 4 Oct YES; not re-observed)
+5. NAS→Studio forced command: UNKNOWN / NOT INVOKED from box
+6. ListMachines+Shell: DOWN (connected=false)
+FIRST BROKEN HOP FROM BOX: BOX_NOT_ON_TAILNET / BOX_CANNOT_INVOKE_NAS (proved)
+
+AUTOMATIC RECOVERY: FAIL
+NAS RECOVERY: FAIL
+WORKER FAILOVER: PASS (unit tests 6/6) — live Cursor cloud agent E2E UNPROVED
+HUMAN REQUIRED FOR RECOVERY: YES for Studio pipe restore; NO for repo-eligible work once failover armed
+
+TESTED: NAS supervisor miss→recover→latch→backoff→rearm; no restart loops; escalate only without alt worker; Studio-down→cursor_cloud_agent + idempotency lock; prod-mutation hold.
+REMAINING UNPROVED: NAS watcher live; Studio :2222 from NAS; recover-watchdog→ListMachines green; box on tailnet; live CloudAgent invoke.
+
+STUDIO STATE: connected=false (36d8fa4b Wolfs-Mac-Studio.local)
+LATEST COMMIT SHA ON BRANCH: 60d38e251b79901e47f0c78babdbd8260a6016db (branch build/autonomy-recovery created; NO NEW BLOB COMMIT — MCP lacks Contents/push)
+GITHUB ISSUE: https://github.com/wolfcommand/beta-os/issues/1
+
+EVIDENCE PATHS:
+/workspace/autonomy-recovery/evidence/INCIDENT-20261005-2255.json
+/workspace/autonomy-recovery/evidence/probe-20261006-0608.json
+/workspace/autonomy-recovery/evidence/recovery-attempt-20261006-0611.json
+/workspace/autonomy-recovery/evidence/DRILL-20261006-AUTONOMY-RECOVERY.json
+/workspace/bf-watch-out.txt
+/workspace/mac-reachability/state/INCIDENT-20261005-2255.json
+/workspace/autonomy-recovery/ (code tree)
+/workspace/autonomy-recovery-20261006.tgz
+/home/box/wolf-system/state/autonomy-recovery/
+
+PARENT ACTION NEEDED: Use a git-write path (CloudAgent / Studio when up / Cursor App contents:write outside MCP) to commit /workspace/autonomy-recovery onto build/autonomy-recovery; deploy NAS watcher_v2 when NAS reachable. Do not message Matt from executor.

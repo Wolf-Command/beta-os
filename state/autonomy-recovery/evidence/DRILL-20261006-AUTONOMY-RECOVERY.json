@@ -1,0 +1,48 @@
+{
+  "id": "DRILL-20261006-AUTONOMY-RECOVERY",
+  "ts_wita": "2026-10-06T06:12:23+08:00",
+  "type": "SAFE_CONTROLLED_LINK_TESTS",
+  "full_machine_kill": "NOT_RUN \u2014 Studio unreachable; cannot safely stop Grok Bot app via forced command from box",
+  "tested": [
+    {
+      "link": "NAS supervisor miss\u2192threshold\u2192recover\u2192latch\u2192backoff\u2192rearm",
+      "result": "PASS",
+      "method": "FakeTransport unit test"
+    },
+    {
+      "link": "No restart loop while latched",
+      "result": "PASS"
+    },
+    {
+      "link": "Human escalate only when no alt worker",
+      "result": "PASS"
+    },
+    {
+      "link": "Worker failover Studio DOWN \u2192 cursor_cloud_agent for repo-eligible",
+      "result": "PASS"
+    },
+    {
+      "link": "Idempotency lock prevents duplicate worker execution",
+      "result": "PASS"
+    },
+    {
+      "link": "Studio-required / production_mutation held (no silent failover)",
+      "result": "PASS"
+    },
+    {
+      "link": "Prod mutation",
+      "result": "NONE"
+    }
+  ],
+  "remaining_unproved_physical_links": [
+    "NAS DSM task actually running and reading Studio status over Tailscale right now",
+    "Studio recovery listener 100.113.26.51:2222 accept from NAS",
+    "recover-watchdog restart restores ListMachines connected=true + Shell hostname;date",
+    "Box or other always-on host joining tailnet without Matt interactive login",
+    "Live Cursor cloud agent invocation end-to-end on a real work item (tool not exposed to this executor)"
+  ],
+  "unittest_ok": true,
+  "unittest_stdout_tail": "test_detects_misses_and_recovers (__main__.TestNasSupervisor.test_detects_misses_and_recovers) ... ok\ntest_escalate_only_when_no_alt (__main__.TestNasSupervisor.test_escalate_only_when_no_alt) ... ok\ntest_failover_to_cursor_when_studio_down (__main__.TestWorkerFailover.test_failover_to_cursor_when_studio_down) ... ok\ntest_hold_studio_required_without_human_when_alt_exists_for_other_work (__main__.TestWorkerFailover.test_hold_studio_required_without_human_when_alt_exists_for_other_work) ... ok\ntest_no_prod_mutation_eligible (__main__.TestWorkerFailover.test_no_prod_mutation_eligible) ... ok\ntest_studio_up_uses_preferred (__main__.TestWorkerFailover.test_studio_up_uses_preferred) ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 0.007s\n\nOK\n",
+  "production_touched": false,
+  "matt_intervened": false
+}

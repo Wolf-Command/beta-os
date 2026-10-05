@@ -1,0 +1,44 @@
+{
+  "ts_wita": "2026-10-06T06:10:53+08:00",
+  "observer": "grok-bot-vm-405718730",
+  "listmachines": {
+    "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+    "label": "Wolfs-Mac-Studio.local",
+    "connected": false
+  },
+  "box_has_tailscale": false,
+  "box_has_ssh_dir": false,
+  "tcp": {
+    "studio_ts_2222": {
+      "ok": false,
+      "error": "TimeoutError",
+      "ms": 3003
+    },
+    "studio_ts_22": {
+      "ok": false,
+      "error": "TimeoutError",
+      "ms": 3001
+    },
+    "nas_ts_22": {
+      "ok": false,
+      "error": "TimeoutError",
+      "ms": 3001
+    },
+    "nas_lan_22": {
+      "ok": false,
+      "error": "TimeoutError",
+      "ms": 3003
+    },
+    "nas_lan_5001": {
+      "ok": false,
+      "error": "TimeoutError",
+      "ms": 3003
+    }
+  },
+  "http": {
+    "beta_root": "302",
+    "beta_api_health": "302",
+    "dash": "302",
+    "prod_marketing": "200"
+  }
+}

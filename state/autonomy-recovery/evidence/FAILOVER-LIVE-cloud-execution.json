@@ -1,0 +1,16 @@
+{
+  "work_item_id": "WI-FAILOVER-LIVE-20261006",
+  "idempotency_key": "idem-WI-FAILOVER-LIVE-20261006",
+  "executor": "cursor_cloud_agent",
+  "started_at_utc": "2026-10-05T22:16:00Z",
+  "ended_at_utc": "2026-10-05T22:17:43Z",
+  "test_result": {
+    "command": "python3 state/autonomy-recovery/tests/test_recovery_architecture.py -v",
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "ok": true,
+    "summary": "Ran 6 tests in 0.008s\n\nOK"
+  },
+  "note": "This run is the live failover execution while the Mac Studio was unreachable."
+}

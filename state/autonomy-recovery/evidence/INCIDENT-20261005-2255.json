@@ -1,0 +1,134 @@
+{
+  "id": "INCIDENT-20261005-2255",
+  "owner_order": "P0 OWNER ORDER 2026-10-06T06:08 WITA \u2014 make autonomy survive Studio failure",
+  "timezone": "Asia/Makassar (WITA, UTC+8)",
+  "window": {
+    "last_pipe_ok_tick": "2026-10-05T22:49+08:00",
+    "last_pipe_ok_evidence": "bf-watch-out.txt: Studio disk 102Gi free; beta origin api/health 200 pid 47807; ListMachines path working",
+    "first_unreachable_tick": "2026-10-05T22:58+08:00",
+    "first_unreachable_evidence": "bf-watch-out.txt: Mac control pipe UNREACHABLE (desktop app offline)",
+    "still_down_at": "2026-10-06T06:11:26+08:00",
+    "duration_approx": "~7h15m and counting"
+  },
+  "one_sentence_root_cause": "UNKNOWN precise OS mechanism \u2014 evidence shows Grok Bot desktop control pipe died between 22:49 and 22:58 WITA while public beta/dash still answered Cloudflare Access 302; host asleep/reboot/Tailscale-down not proved; box cannot observe Studio processes.",
+  "missing_evidence_for_precise_cause": [
+    "Studio process list / launchctl at failure time",
+    "Studio sleep/hibernation / power log",
+    "Studio Tailscale status",
+    "NAS watcher.audit around 22:55\u201323:30 WITA",
+    "recovery-sshd audit /var/wolfrecover around that window"
+  ],
+  "hop_chain": [
+    {
+      "hop": 1,
+      "name": "Studio host alive?",
+      "class": "LIKELY_ALIVE_PUBLIC_SIGNALS_ONLY",
+      "evidence": "https://beta.wolfcommand.net/ and /api/health \u2192 302 CF Access continuously through overnight bf-watch ticks and 2026-10-06T06:10 probe; dash 302; marketing 200. Not host-local prove."
+    },
+    {
+      "hop": 2,
+      "name": "Studio Tailscale / recovery listener 100.113.26.51:2222",
+      "class": "UNOBSERVABLE_FROM_BOX",
+      "evidence": "TCP connect TimeoutError ~3s from box (probe-20261006-0608.json). Box has no Tailscale. Does not prove Studio TS or listener down."
+    },
+    {
+      "hop": 3,
+      "name": "NAS host / Tailscale (100.86.93.120 / 192.168.77.130)",
+      "class": "UNOBSERVABLE_FROM_BOX",
+      "evidence": "TCP :22/:5001 TimeoutError. Box not on LAN or tailnet."
+    },
+    {
+      "hop": 4,
+      "name": "NAS recovery client + key",
+      "class": "UNKNOWN_LAST_DOCS_YES",
+      "evidence": "NAS-WATCHER-20261004.md 08:06 WITA: DSM task id 7 studio-recovery-watcher enabled; key on NAS only. Not re-observed."
+    },
+    {
+      "hop": 5,
+      "name": "NAS\u2192Studio forced-command status/recover-watchdog",
+      "class": "UNKNOWN_NOT_INVOKED_FROM_BOX",
+      "evidence": "No SAFE invoke; recover-watchdog did not run from box this incident."
+    },
+    {
+      "hop": 6,
+      "name": "Normal control path ListMachines+Shell",
+      "class": "DOWN",
+      "evidence": "ListMachines connected=false at 06:08 and 06:10; machine-targeted Shell refused when disconnected."
+    },
+    {
+      "hop": "FIRST_BROKEN_HOP_FROM_BOX",
+      "name": "BOX_NOT_ON_TAILNET / BOX_CANNOT_INVOKE_NAS",
+      "class": "PROVED",
+      "evidence": "Identical structural block as RECOVERY-CHAIN-VERDICT-20261004-1721.md and OOB-INVOKE-ATTEMPT-20261004-1713.md. No /home/box/.ssh; no tailscale binary; no recovery private key on box (by design)."
+    }
+  ],
+  "why_mac_reachability_supervisor_did_not_recover": {
+    "answer": "UNKNOWN whether it ran; design cannot restore the Grok Bot pipe even if it did.",
+    "evidence": [
+      "supervisor.sh pgrep -f local-exec-daemon \u2014 wrong target (HA design 3 Oct; process absent while PIPE_OK historically)",
+      "recover.sh sticky ceiling at retry 3 (frozen since 2 Oct 16:31 per design)",
+      "supervisor lives ON Studio \u2014 if only desktop app died, launchd agents may still run but target wrong; if host asleep, agents stop \u2014 UNKNOWN",
+      "No Studio-side audit readable from box this window"
+    ]
+  },
+  "why_heartbeat_did_not_trigger_recovery": {
+    "answer": "UNKNOWN \u2014 heartbeat agent on Studio unobservable; box-side heartbeat is not the recovery actuator.",
+    "evidence": "heartbeat.sh writes local JSON; recovery still goes through recover.sh ceiling / wrong target. Overnight bf-watch never recorded a heartbeat-driven recover."
+  },
+  "why_nas_recovery_did_not_recover": {
+    "first_broken_hop_exact": "BOX_NOT_ON_TAILNET (observer cannot reach NAS). System-side first failed hop among NAS\u2192Studio hops: UNKNOWN \u2014 evidence missing: NAS watcher.audit + Studio recovery-sshd audit for 22:55\u201306:10 WITA.",
+    "not": "Never say 'cannot reach the key' \u2014 key correctly stays on NAS; absence of key on box is design.",
+    "possible_system_failures_unproved": [
+      "NAS unreachable from Studio (Tailscale)",
+      "NAS up but recovery client/watcher missing or DSM task stopped",
+      "Studio private listener 100.113.26.51:2222 unreachable from NAS",
+      "SSH auth failure",
+      "forced-command failure",
+      "watchdog/recover-watchdog failure",
+      "Grok Bot app restart failure after recover-watchdog",
+      "control path up but execution unavailable"
+    ],
+    "note": "Controlled E2E kill/failover drill was NEVER run (NAS-WATCHER-20261004.md; Owner order)."
+  },
+  "why_peaches_could_not_execute_recovery": {
+    "answer": "ZERO_ACTUATOR from box/Peaches \u2014 same BOX_CANNOT_INVOKE_NAS.",
+    "evidence": "bf-watch ticks explicitly deferred: 'Mac pipe watch routine owns that escalation'; wake_parent=false overnight; morning report 7:01 surfaces it."
+  },
+  "why_grok_bot_became_spof": {
+    "answer": "ListMachines/Shell require Grok Bot desktop pipe; Studio-local supervisors cannot be observed or driven from box; NAS secondary path never E2E-proved; no automatic worker failover for repo work.",
+    "evidence": "MANUAL-MAC-GROK-BOT-RECOVERY.json still OPEN since 2026-09-23; RECOVERY-CHAIN-VERDICT BOX_NOT_ON_TAILNET."
+  },
+  "why_work_could_not_continue_on_another_worker": {
+    "answer": "No commissioned worker-failover rule existed; Phase 6 shadow routing only synthetic (hardcodes last_worker_hint=cursor); overnight SINGLE_TRACK_HOLD waiting Matt PASS on Uma Blu close; Cursor cloud agent path not auto-invoked.",
+    "evidence": "bf-watch-out.txt overnight; wolf_intelligence/shadow_compare.py; STATUS.md"
+  },
+  "why_20min_polling_became_fallback": {
+    "answer": "bf-watch continued ~5\u201310 min observation ticks without recovery action; prior 20-minute poll routine referenced by Owner (now deleted) was the only named fallback when pipe died.",
+    "evidence": "62+ ticks from 22:58 through 06:06 WITA all UNREACHABLE + no dispatch/mutate."
+  },
+  "why_matt_physical_interaction_implied": {
+    "answer": "Automatic recovery from box impossible (no Tailscale/NAS invoke); NAS auto-path unproved this night; human morning surface was the escalation plan.",
+    "evidence": "founder-dependency MANUAL-MAC-GROK-BOT-RECOVERY; bf-watch 'morning report 7:01 surfaces it'"
+  },
+  "automatic_recovery_attempt_20261006": {
+    "result": "FAIL",
+    "listmachines_connected": false,
+    "shell_hostname_date": "NOT_ATTEMPTED_DISCONNECTED",
+    "recover_watchdog_ran": false,
+    "status_ran": false,
+    "blocker": "HARD_INFRASTRUCTURE_BLOCKER: BOX_NOT_ON_TAILNET / BOX_CANNOT_INVOKE_NAS",
+    "prod_touched": false,
+    "beta_restarted": false,
+    "secrets_printed": false
+  },
+  "verdicts": {
+    "AUTOMATIC_RECOVERY": "FAIL",
+    "NAS_RECOVERY": "FAIL",
+    "WORKER_FAILOVER": "BUILT_AND_UNIT_TESTED_THIS_SESSION \u2014 live Studio kill drill UNPROVED",
+    "HUMAN_REQUIRED_FOR_RECOVERY": "YES \u2014 for Studio pipe restore (Tailscale/NAS path needs already-on always-on supervisor that box cannot reach tonight). Repo-eligible work MUST NOT wait on Matt once worker-failover is armed."
+  },
+  "phase6_relabel": "BUILT / SYNTHETIC TESTED (not operational/commissioned); quality_diff UNKNOWN; last_worker_hint hardcoded cursor over synthetic jobs",
+  "stamped_at": "2026-10-06T06:11:26+08:00",
+  "stamped_by": "Grok Bot executor subagent on box",
+  "matt_messaged": false
+}

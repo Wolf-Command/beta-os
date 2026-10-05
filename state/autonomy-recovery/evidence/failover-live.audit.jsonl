@@ -1,0 +1,2 @@
+{"ts_wita": "2026-10-06T06:15:07+08:00", "event": "assigned", "id": "WI-FAILOVER-LIVE-20261006", "worker": "cursor_cloud_agent", "reason": "studio_down_repo_eligible_failover", "lock": true, "studio_up": false}
+{"ts_wita": "2026-10-06T06:15:07+08:00", "event": "duplicate_prevented", "id": "WI-FAILOVER-LIVE-20261006", "holder": "cursor_cloud_agent:idem-WI-FAILOVER-LIVE-20261006"}
