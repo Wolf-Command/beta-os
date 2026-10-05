@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-10-05T22:43:54+08:00",
-  "outcomes_total": 15,
-  "outcomes_human": 3,
+  "updated_at": "2026-10-05T22:44:24+08:00",
+  "outcomes_total": 16,
+  "outcomes_human": 4,
   "outcomes_self_eval_recorded": 14,
-  "human_passes": 3,
+  "human_passes": 4,
   "human_fails": 0,
   "shadow_samples": 12,
   "shadow_agreements": 12,

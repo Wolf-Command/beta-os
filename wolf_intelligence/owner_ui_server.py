@@ -83,6 +83,43 @@ class Handler(BaseHTTPRequestHandler):
         self._send(404, b"not found", "text/plain")
 
 
+    def do_POST(self) -> None:  # noqa: N802
+        ensure_dirs()
+        path = urlparse(self.path).path
+        length = int(self.headers.get("Content-Length") or 0)
+        raw = self.rfile.read(length) if length else b"{}"
+        try:
+            body = json.loads(raw.decode() or "{}")
+        except json.JSONDecodeError:
+            self._send(400, b'{"ok":false,"error":"bad_json"}', "application/json")
+            return
+        if path in ("/api/human-decision", "/api/wolf-intelligence/human-decision"):
+            wid = body.get("work_item_id")
+            decision = (body.get("decision") or "").upper()
+            rating = body.get("rating")
+            notes = body.get("notes") or ""
+            if not wid or decision not in ("PASS", "FAIL", "NEEDS_YOU"):
+                self._send(400, b'{"ok":false,"error":"need work_item_id and decision PASS|FAIL|NEEDS_YOU"}', "application/json")
+                return
+            from . import learning, work_items
+            item = work_items.get(wid)
+            if not item:
+                self._send(404, b'{"ok":false,"error":"not_found"}', "application/json")
+                return
+            if decision == "PASS":
+                learning.record_outcome(wid, human_passed=True, human_rating=int(rating) if rating else 4, notes=notes or "owner pass")
+            elif decision == "FAIL":
+                learning.record_outcome(wid, human_passed=False, human_rating=int(rating) if rating else 1, notes=notes or "owner fail")
+            else:
+                if item["state"] in ("READY_TO_TEST", "RUNNING", "RECOMMENDED"):
+                    work_items.transition(wid, "NEEDS_YOU", reason=notes or "owner flagged")
+                learning.record_outcome(wid, notes=notes or "needs you", self_eval_rating=None)
+            item = work_items.get(wid)
+            self._send(200, json.dumps({"ok": True, "item": {"id": wid, "state": item["state"]}}).encode(), "application/json")
+            return
+        self._send(404, b"not found", "text/plain")
+
+
 class ReuseHTTPServer(ThreadingHTTPServer):
     allow_reuse_address = True
 
