@@ -1,0 +1,119 @@
+{
+  "generated_at": "2026-10-05T22:16:21+08:00",
+  "providers": [
+    {
+      "name": "OpenAI",
+      "purpose": "Beta llm_orchestrator hook_generation; Codex app",
+      "integration": "beta-os/.env OPENAI_API_KEY (value redacted); scripts/llm_orchestrator.py",
+      "credential_config_locations": [
+        "beta-os/.env (KEY NAME ONLY)",
+        "~/.codex"
+      ],
+      "agents_using": [
+        "llm_orchestrator",
+        "codex"
+      ],
+      "actually_used": "configured; BETA_LLM_DRY_RUN present",
+      "usage_visibility": "llm_logs table in content_library if enabled",
+      "overlap": "with Cursor/Codex",
+      "classification": "KEEP"
+    },
+    {
+      "name": "Anthropic/Claude",
+      "purpose": "OpenClaw default model; caption_writer role",
+      "integration": "openclaw.json model primary anthropic/claude-haiku-4-5; ANTHROPIC_API_KEY in beta .env",
+      "credential_config_locations": [
+        "~/.openclaw/openclaw.json",
+        "beta-os/.env"
+      ],
+      "agents_using": [
+        "openclaw-main",
+        "llm_orchestrator"
+      ],
+      "actually_used": "YES via OpenClaw gateway",
+      "usage_visibility": "OpenClaw sessions; provider dashboards",
+      "overlap": "Claude Desktop ~/.claude 197M",
+      "classification": "KEEP"
+    },
+    {
+      "name": "Gemini",
+      "purpose": "brand_alignment role in llm_orchestrator",
+      "integration": "GEMINI_API_KEY in beta .env",
+      "credential_config_locations": [
+        "beta-os/.env"
+      ],
+      "agents_using": [
+        "llm_orchestrator"
+      ],
+      "actually_used": "configured",
+      "usage_visibility": "llm_logs",
+      "overlap": "none major",
+      "classification": "KEEP"
+    },
+    {
+      "name": "xAI/Grok",
+      "purpose": "Grok Bot owner agent + Studio local-exec",
+      "integration": "Grok Bot.app; ~/.grokbot",
+      "credential_config_locations": [
+        "Grok Bot app storage (not inspected for secrets)",
+        "~/.grokbot settings (no secrets copied)"
+      ],
+      "agents_using": [
+        "grok-bot-app",
+        "this audit executor"
+      ],
+      "actually_used": "YES actively",
+      "usage_visibility": "Grok account; local-exec logs",
+      "overlap": "Cursor/Peaches for owner tasks",
+      "classification": "KEEP"
+    },
+    {
+      "name": "Cursor/Anysphere",
+      "purpose": "IDE coding agents; factory bf_cursor_launch",
+      "integration": "Cursor.app; scripts/build-factory/bf_cursor_launch*",
+      "credential_config_locations": [
+        "Cursor app account",
+        "~/.cursor"
+      ],
+      "agents_using": [
+        "cursor-ide",
+        "cursor-agent-worker",
+        "build-factory"
+      ],
+      "actually_used": "YES",
+      "usage_visibility": "Cursor usage UI",
+      "overlap": "Grok Bot factory work",
+      "classification": "KEEP"
+    },
+    {
+      "name": "Ollama local",
+      "purpose": "local llama3.2:3b + nomic-embed-text",
+      "integration": "ollama serve :11434",
+      "credential_config_locations": [
+        "none"
+      ],
+      "agents_using": [
+        "unknown callers \u2014 INVESTIGATE"
+      ],
+      "actually_used": "models last modified 3-4 months ago",
+      "usage_visibility": "ollama list",
+      "overlap": "local vs cloud embeddings",
+      "classification": "UNKNOWN/INVESTIGATE",
+      "disk": "2.1G"
+    },
+    {
+      "name": "HuggingFace cache",
+      "purpose": "model weights cache",
+      "integration": "~/.cache/huggingface",
+      "credential_config_locations": [
+        "cache only"
+      ],
+      "agents_using": "UNKNOWN",
+      "actually_used": "UNKNOWN",
+      "classification": "UNKNOWN/INVESTIGATE",
+      "disk": "3.1G"
+    }
+  ],
+  "wolf_intelligence_control_plane": "NOT BUILT \u2014 this inventory is input only (scripts/wolf_intelligence.py is Phase 1 helpers for permissions/memory, not a control plane)",
+  "notes": "Never expose secret values. BETA_LLM_DRY_RUN key present in beta .env."
+}

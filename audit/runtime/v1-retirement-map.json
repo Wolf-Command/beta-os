@@ -1,0 +1,118 @@
+{
+  "generated_at": "2026-10-05T22:16:21+08:00",
+  "note": "MAP ONLY \u2014 do not retire/delete in this phase",
+  "buckets": {
+    "CAN EVENTUALLY DELETE": [
+      {
+        "item": "beta catalog/backups pre-*/test tmpdirs after NAS archive",
+        "est_gb": 35
+      },
+      {
+        "item": "state/build-factory/tmp-f1 residual",
+        "est_gb": 0.1
+      },
+      {
+        "item": "openclaw/tmp",
+        "est_gb": 2.1
+      },
+      {
+        "item": "parked launchagent plists (files only) after confirm unused",
+        "est_gb": 0.01
+      }
+    ],
+    "MUST ARCHIVE TO NAS FIRST": [
+      {
+        "item": ".openclaw/backups/wolf-system (77G)",
+        "est_gb": 77
+      },
+      {
+        "item": ".openclaw/backups/daily + backup-v2",
+        "est_gb": 4.7
+      },
+      {
+        "item": "state opsfix3-catalog-* scratch copies",
+        "est_gb": 1.5
+      }
+    ],
+    "MUST PRESERVE LONG TERM": [
+      {
+        "item": "~/.openclaw/workspace/wolf-system PRODUCTION",
+        "est_gb": 45
+      },
+      {
+        "item": "beta-os live catalog + library_v2",
+        "est_gb": 4
+      },
+      {
+        "item": "WolfRecoveryPoints",
+        "est_gb": 0.8
+      },
+      {
+        "item": "WolfCommandSystem vault",
+        "est_gb": 0.3
+      },
+      {
+        "item": "NAS WolfArchive / vault mirror",
+        "est_gb": "NAS"
+      }
+    ],
+    "SHARED WITH BETA \u2014 DO NOT DELETE": [
+      {
+        "item": "launchd services used by both (openclaw gateway, ollama, peaches)",
+        "est_gb": 0
+      },
+      {
+        "item": "atrium-finance sidecar",
+        "est_gb": 0.6
+      },
+      {
+        "item": "cloudflared config",
+        "est_gb": 0
+      },
+      {
+        "item": "beta-os git tree",
+        "est_gb": 45
+      }
+    ],
+    "UNKNOWN": [
+      {
+        "item": "Desktop Haikal + Morrison Camera",
+        "est_gb": 14.6
+      },
+      {
+        "item": "Library Application Support 34G",
+        "est_gb": 34
+      },
+      {
+        "item": "alchemist/reel-bot/content fleet V1 workers",
+        "est_gb": 0.3
+      },
+      {
+        "item": "aios-* / alpha-* parked agents",
+        "est_gb": 0
+      },
+      {
+        "item": "huggingface + ollama caches",
+        "est_gb": 5.2
+      }
+    ]
+  },
+  "v1_only_services_workers_agents": [
+    "alchemist (+ many alchemist-* plists)",
+    "reel-bot (+ watchdog)",
+    "atlas-auto-produce (parked)",
+    "atlas-overnight-render",
+    "content-brief-generator / content-input-watch",
+    "footage-catalogue / clip-embeddings-backfill / clip-cache",
+    "produce-metricool (prod path; beta has own metricool scripts)",
+    "thinking-engine",
+    "aios-compounder (parked) / aios-* suite",
+    "alpha-* (parked/retired 20260820)",
+    "WolfCommandSystem vault sync consumers (partially shared)"
+  ],
+  "estimated_eventual_reclaimable_gb": {
+    "conservative_after_nas_archive": 110,
+    "aggressive_including_caches_unknowns": 140,
+    "notes": "77G openclaw backups + 35G catalog backups + ~5G caches/tmp + scratch state; excludes Desktop user media and Library App Support until classified"
+  }
+}

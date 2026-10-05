@@ -1,0 +1,111 @@
+{
+  "generated_at": "2026-10-05T22:16:21+08:00",
+  "machine": {
+    "id": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+    "label": "Wolfs-Mac-Studio",
+    "hostname": "Wolfs-Mac-Studio-2.local"
+  },
+  "scope": "DISCOVERY ONLY \u2014 no retires, no prod mods, no factory restart, no Wolf Intelligence build",
+  "paths": {
+    "beta": "/Users/wolfterminal/beta-os",
+    "prod": "/Users/wolfterminal/.openclaw/workspace/wolf-system"
+  },
+  "ports": {
+    "prod": 8787,
+    "beta": 8788,
+    "openclaw_gateway": 18789,
+    "ollama": 11434,
+    "hr_capture": 8765,
+    "realtime": 8780,
+    "atrium": "24678/8790"
+  },
+  "docker": "unavailable / not running",
+  "counts": {
+    "configured_wolf_launchagents_plists": 179,
+    "loaded_running_with_pid": 22,
+    "loaded_idle": 139,
+    "parked_disabled_bak_files": 109,
+    "services_documented": 18,
+    "agents_documented": 33
+  },
+  "emergency_pause_taken": false,
+  "prod_untouched": true,
+  "daily_close_petty_code_untouched_by_audit": true,
+  "preexisting_dirty_daily_close_dashboards_left_uncommitted": true,
+  "git": {
+    "repo": "wolfcommand/beta-os",
+    "branch": "build/wolf-command-rebuild",
+    "head": "0b0e50d BZG close: Peaches independent ESB document photo verify stamp"
+  },
+  "summary_for_matt": {
+    "TOTAL_AGENTS": 33,
+    "GROK_AGENTS": 2,
+    "ACTIVE": 24,
+    "IDLE": 15,
+    "DUPLICATES": 5,
+    "ORPHANS": 5,
+    "RETIRE_CANDIDATES": 6,
+    "CURRENT_FREE_GB": 102.0,
+    "EVENTUAL_RECLAIMABLE_GB": 110,
+    "BACKUP_GROWTH_ROOT_CAUSE": "Beta migrations/tests copied ~110MB content_library.sqlite into catalog/backups (pre-*.sqlite + mkdtemp); factory tmp-f1 held 53GB isolated copies; prod daily-backup wrote 44GB wolf-system copy on 2026-10-05. Contained by retention agent + tmp-f1 cleanup; free now ~102GB.",
+    "FACTORY_ISSUES": "Soft-held single-track; multi-queue; ACTIVE.done residue; human-gate backlog; credit-conservation idle; Cursor/Grok/Peaches multi-orchestrator overlap; watch WAIT_SILENT_IDLE; undelivered GATEFAILs",
+    "AI_CREDIT_WASTE": "Overlapping owner agents (Grok/Cursor/Peaches/OpenClaw); factory Cursor launches while Grok active; stale ollama; keepalive polling; PARKED factory work still configured"
+  },
+  "active_set": [
+    "atrium-finance-sidecar",
+    "beta-serve",
+    "cloudflared-wolf-dash",
+    "codex",
+    "cursor-agent-worker",
+    "cursor-ide",
+    "event-bus",
+    "grok-bot-app",
+    "hr-capture-upload",
+    "kirana",
+    "mac-reachability-heartbeat",
+    "mac-reachability-supervisor",
+    "nirmata",
+    "obsidian-mcp-hangwatcher",
+    "ollama",
+    "openclaw-gateway",
+    "openclaw-main-agent",
+    "openclaw-node",
+    "peaches-command-bot",
+    "peaches-voice-bot",
+    "prod-dashboards-serve",
+    "realtime-dashboard",
+    "spartacus-bot",
+    "vault-trigger-watcher"
+  ],
+  "idle_set": [
+    "alchemist",
+    "alpha-*",
+    "atlas-auto-produce",
+    "grok-bot-keepalive",
+    "reel-bot",
+    "workspace-agent-def-amg",
+    "workspace-agent-def-atlas",
+    "workspace-agent-def-bzg",
+    "workspace-agent-def-content",
+    "workspace-agent-def-finance",
+    "workspace-agent-def-ggv",
+    "workspace-agent-def-hr",
+    "workspace-agent-def-legal",
+    "workspace-agent-def-obsidian",
+    "workspace-agent-def-tech"
+  ],
+  "duplicates": [
+    "Grok Bot \u2194 Cursor \u2194 Peaches for owner tasking",
+    "prod :8787 \u2194 beta :8788 dual serve",
+    "OpenClaw Claude \u2194 llm_orchestrator multi-LLM \u2194 Cursor models",
+    "V1 content fleet (alchemist/reel/atlas) \u2194 Beta Content Engine",
+    "multiple factory queues / orchestrators"
+  ],
+  "orphans": [
+    "alchemist (exited, unclear caller)",
+    "reel-bot (exited)",
+    "ollama models (no recent caller evidence)",
+    "many parked launch agents with no active parent",
+    "workspace agent defs without recent invocation evidence"
+  ]
+}

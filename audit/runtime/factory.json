@@ -1,0 +1,83 @@
+{
+  "generated_at": "2026-10-05T22:16:21+08:00",
+  "lifecycle": "work\u2192PRIORITY-QUEUE\u2192bf_supervisor.tick\u2192bf_dispatch/bf_cursor_launch\u2192heartbeat/watch\u2192complete/fail/block\u2192evidence\u2192NOTIFY-QUEUE / human gate",
+  "supervisor": {
+    "plist": "net.wolfcommand.build-factory-supervisor",
+    "script": "scripts/build-factory/bf_supervisor.py",
+    "process_running": false,
+    "watch_tick": {
+      "at": "2026-10-05T04:10:18+08:00",
+      "status": "WAIT_SILENT_IDLE"
+    },
+    "last_watch_tick_mtime": "2026-10-05 22:04 WITA (LAST-WATCH-TICK.txt)",
+    "active_held": {
+      "run_id": "BF-ae8e2ebfc9ed",
+      "slice": "GGV-RECEIPT-WORKFLOW-1-PROOF-REPAIR-1",
+      "held_reason": "OWNER P0 SINGLE TRACK \u2014 soft-stop non-tonight writer",
+      "at": "2026-10-05T13:20:26Z"
+    }
+  },
+  "queues": [
+    {
+      "name": "PRIORITY-QUEUE.json",
+      "items": 44,
+      "statuses": {
+        "PARKED": 30,
+        "NEEDS_HUMAN_GATE": 5,
+        "DONE": 4,
+        "DONE_ENGINEERING_PASS_WAITING_HUMAN": 2,
+        "HUMAN_FAILED_RETEST_REQUIRED": 1,
+        "READY_FREE_LOCAL_FOLLOWS_UX": 1,
+        "READY_FREE_LOCAL": 1
+      },
+      "classification": "KEEP"
+    },
+    {
+      "name": "FREE-LOCAL-PRIORITY-QUEUE.json",
+      "note": "credit_conservation prefer free-local; do_not_auto_arm",
+      "classification": "KEEP"
+    },
+    {
+      "name": "OVERNIGHT-MORNING-QUEUE-2026-10-05.json",
+      "classification": "UNKNOWN/INVESTIGATE"
+    },
+    {
+      "name": "QUEUE-ATRIUM-OPS-TOURS-CONCIERGE-1.json",
+      "classification": "UNKNOWN/INVESTIGATE"
+    },
+    {
+      "name": "NOTIFY-QUEUE.jsonl",
+      "note": "undelivered GATEFAILs + DISK_INCIDENT_CONTAINED events",
+      "classification": "KEEP"
+    }
+  ],
+  "problems": [
+    "Multiple orchestrators historically: bf_supervisor + Peaches + Grok + Cursor + OpenClaw \u2014 overlap risk",
+    "ACTIVE.done* residue files (~40+) clutter ACTIVE namespace; ACTIVE empty but many ACTIVE.done-* remain",
+    "RUNNING-without-execution risk: serve-beta LastExitStatus -15 while PID alive; alchemist/reel-bot -15",
+    "Human-gate / Matt-manual-next: 5 NEEDS_HUMAN_GATE + 2 waiting human + PARKED 30",
+    "Credit-idle: FREE-LOCAL queue + credit_conservation; Cursor/Grok both available for same work",
+    "Disk-growing test copies previously from factory (tmp-f1 53GB cleaned earlier today)",
+    "Gatefail spam in NOTIFY-QUEUE without delivery",
+    "Watch tick WAIT_SILENT_IDLE since 04:10 WITA while LAST-WATCH-TICK.txt touched 22:04 \u2014 possible ticker without dispatch"
+  ],
+  "dead_or_duplicate_queues": [
+    "multiple dated overnight/atrium queues alongside PRIORITY-QUEUE"
+  ],
+  "pollers": [
+    "bf_watch.py",
+    "LAST-WATCH-TICK",
+    "mac-reachability heartbeat",
+    "grok-bot-keepalive"
+  ],
+  "disk_guard": {
+    "script": "scripts/build-factory/bf_disk_guard.py",
+    "thresholds_gb": {
+      "warn": 100,
+      "clean_pause": 50,
+      "p0": 25
+    }
+  },
+  "classification_summary": "KEEP factory; do not restart; soft-held for single-track",
+  "ACTIVE_marker_files_count": 47
+}

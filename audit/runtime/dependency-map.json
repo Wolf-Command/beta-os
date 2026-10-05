@@ -1,0 +1,80 @@
+{
+  "generated_at": "2026-10-05T22:16:21+08:00",
+  "edges": [
+    {
+      "from": "users/Peaches/Grok",
+      "to": "beta-serve :8788",
+      "via": "HTTP/local-exec"
+    },
+    {
+      "from": "users",
+      "to": "prod-dashboards :8787",
+      "via": "cloudflared wolf-dash"
+    },
+    {
+      "from": "cloudflared",
+      "to": "prod-dashboards-serve",
+      "via": "localhost"
+    },
+    {
+      "from": "build-factory-supervisor",
+      "to": "bf_dispatch / bf_cursor_launch",
+      "via": "queue"
+    },
+    {
+      "from": "bf_cursor_launch",
+      "to": "Cursor agent",
+      "via": "spawn"
+    },
+    {
+      "from": "factory tests/migrations",
+      "to": "catalog/backups",
+      "via": "copy content_library.sqlite"
+    },
+    {
+      "from": "catalog-backup-retention",
+      "to": "NAS WolfArchive",
+      "via": "archive+verify+prune"
+    },
+    {
+      "from": "daily-backup",
+      "to": ".openclaw/backups/wolf-system",
+      "via": "copy tree"
+    },
+    {
+      "from": "openclaw-gateway",
+      "to": "anthropic API",
+      "via": "model primary"
+    },
+    {
+      "from": "llm_orchestrator",
+      "to": "OpenAI/Anthropic/Gemini",
+      "via": "REST"
+    },
+    {
+      "from": "peaches-command-bot",
+      "to": "openclaw / wolf-system scripts",
+      "via": "commands"
+    },
+    {
+      "from": "grok-bot-keepalive",
+      "to": "Grok Bot.app",
+      "via": "respawn"
+    },
+    {
+      "from": "hr-capture",
+      "to": "hr-capture-upload :8765",
+      "via": "upload"
+    },
+    {
+      "from": "vault-sync cron",
+      "to": "WolfCommandSystem + NAS",
+      "via": "weekly"
+    },
+    {
+      "from": "bf_disk_guard",
+      "to": "NOTIFY-QUEUE / dispatch pause",
+      "via": "free space thresholds"
+    }
+  ]
+}

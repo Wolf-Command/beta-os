@@ -1,0 +1,204 @@
+{
+  "generated_at": "2026-10-05T22:16:21+08:00",
+  "studio_data_volume": {
+    "size_gi": 460,
+    "used_gi": 329,
+    "free_gi": 102.0,
+    "capacity": "77%"
+  },
+  "home_total_gb": 270,
+  "beta_os_gb": 45,
+  "openclaw_gb": 137,
+  "items": [
+    {
+      "PATH": "/Users/wolfterminal/.openclaw/backups/wolf-system",
+      "SIZE_GB": 77,
+      "PURPOSE": "Prod wolf-system dated backups",
+      "KIND": "BACKUP",
+      "CREATED_BY": "daily-backup.py / checkpoint-backup",
+      "LAST_MODIFIED": "2026-10-05 (44G that day)",
+      "RETENTION": "prune script exists; backlog large",
+      "SAFE_RETIRE": "UNKNOWN \u2014 archive to NAS first",
+      "CLASSIFICATION": "MUST ARCHIVE TO NAS FIRST"
+    },
+    {
+      "PATH": "/Users/wolfterminal/.openclaw/backups/daily",
+      "SIZE_GB": 2.6,
+      "PURPOSE": "Daily backup bundle",
+      "KIND": "BACKUP",
+      "CREATED_BY": "daily-backup",
+      "SAFE_RETIRE": "UNKNOWN",
+      "CLASSIFICATION": "MUST ARCHIVE TO NAS FIRST"
+    },
+    {
+      "PATH": "/Users/wolfterminal/.openclaw/workspace/wolf-system",
+      "SIZE_GB": 45,
+      "PURPOSE": "PRODUCTION wolf-system tree",
+      "KIND": "CANONICAL",
+      "CREATED_BY": "prod",
+      "SAFE_RETIRE": "NO",
+      "CLASSIFICATION": "MUST PRESERVE LONG TERM"
+    },
+    {
+      "PATH": "/Users/wolfterminal/beta-os/catalog/backups",
+      "SIZE_GB": 34.9,
+      "PURPOSE": "Beta pre-migration + test catalog copies",
+      "KIND": "BACKUP/CACHE",
+      "CREATED_BY": "migrations premig/shutil.copy2 + tests mkdtemp + canonical_guard",
+      "LAST_MODIFIED": "2026-10-05 +26.12GB by mtime",
+      "RETENTION": "catalog_backup_retention every 6h to NAS",
+      "SAFE_RETIRE": "YES after NAS verify (policy exists)",
+      "CLASSIFICATION": "CAN EVENTUALLY DELETE",
+      "breakdown": {
+        "pre-*.sqlite_GB": 24.65,
+        "test_tmpdir_GB": 5.04,
+        "intel-connect-dm_GB": 3.48,
+        "content_library_copies_GB": 1.51
+      }
+    },
+    {
+      "PATH": "/Users/wolfterminal/beta-os/catalog/content_library.sqlite",
+      "SIZE_GB": 0.11,
+      "PURPOSE": "Live Beta catalog DB",
+      "KIND": "CANONICAL",
+      "SAFE_RETIRE": "NO",
+      "CLASSIFICATION": "MUST PRESERVE LONG TERM"
+    },
+    {
+      "PATH": "/Users/wolfterminal/beta-os/library_v2",
+      "SIZE_GB": 3.8,
+      "PURPOSE": "Beta content library RAW/EDIT/FINAL",
+      "KIND": "CANONICAL/COPY",
+      "SAFE_RETIRE": "NO",
+      "CLASSIFICATION": "SHARED WITH BETA \u2014 DO NOT DELETE",
+      "NOTES": "why content/library entered backup path: tests/migrations copy entire content_library.sqlite (~110MB) into catalog/backups"
+    },
+    {
+      "PATH": "/Users/wolfterminal/beta-os/state",
+      "SIZE_GB": 5.9,
+      "PURPOSE": "Beta runtime state, thumbs, factory, scratch catalogs",
+      "KIND": "MIXED",
+      "SAFE_RETIRE": "PARTIAL",
+      "breakdown_top": {
+        "content-thumbs": "2.5G",
+        "build-factory": "0.24G",
+        "opsfix3-catalog-* many ~93M": "~1.5G+",
+        "reliability": "0.17G"
+      },
+      "CLASSIFICATION": "UNKNOWN \u2014 investigate scratch catalogs"
+    },
+    {
+      "PATH": "/Users/wolfterminal/beta-os/state/build-factory/tmp-f1",
+      "SIZE_GB": 0.109,
+      "PURPOSE": "Residual factory test catalog copies (was 53G earlier today)",
+      "KIND": "CACHE",
+      "CREATED_BY": "canonical_guard.backup_catalog",
+      "SAFE_RETIRE": "YES residual",
+      "CLASSIFICATION": "CAN EVENTUALLY DELETE",
+      "NOTES": "DISK_INCIDENT_CONTAINED deleted 57.04GB / 511 dirs earlier today"
+    },
+    {
+      "PATH": "/Users/wolfterminal/.cursor",
+      "SIZE_GB": 9.6,
+      "PURPOSE": "Cursor chats/projects",
+      "KIND": "CACHE",
+      "SAFE_RETIRE": "UNKNOWN",
+      "CLASSIFICATION": "UNKNOWN"
+    },
+    {
+      "PATH": "/Users/wolfterminal/.cache/huggingface",
+      "SIZE_GB": 3.1,
+      "PURPOSE": "HF model cache",
+      "KIND": "CACHE",
+      "SAFE_RETIRE": "UNKNOWN",
+      "CLASSIFICATION": "UNKNOWN"
+    },
+    {
+      "PATH": "/Users/wolfterminal/.ollama",
+      "SIZE_GB": 2.1,
+      "PURPOSE": "Local models",
+      "KIND": "CACHE",
+      "SAFE_RETIRE": "UNKNOWN",
+      "CLASSIFICATION": "UNKNOWN/INVESTIGATE"
+    },
+    {
+      "PATH": "/Users/wolfterminal/WolfRecoveryPoints",
+      "SIZE_GB": 0.827,
+      "PURPOSE": "Recovery points",
+      "KIND": "BACKUP",
+      "SAFE_RETIRE": "NO",
+      "CLASSIFICATION": "MUST PRESERVE LONG TERM"
+    },
+    {
+      "PATH": "/Users/wolfterminal/WolfCommandSystem",
+      "SIZE_GB": 0.343,
+      "PURPOSE": "Vault / knowledge system V1-ish",
+      "KIND": "CANONICAL",
+      "SAFE_RETIRE": "NO",
+      "CLASSIFICATION": "MUST PRESERVE LONG TERM"
+    },
+    {
+      "PATH": "/Users/wolfterminal/Desktop/Haikal",
+      "SIZE_GB": 7.9,
+      "PURPOSE": "User desktop media",
+      "KIND": "UNKNOWN",
+      "SAFE_RETIRE": "UNKNOWN",
+      "CLASSIFICATION": "UNKNOWN"
+    },
+    {
+      "PATH": "/Users/wolfterminal/Desktop/Morrison Camera",
+      "SIZE_GB": 6.7,
+      "PURPOSE": "User desktop media",
+      "KIND": "UNKNOWN",
+      "SAFE_RETIRE": "UNKNOWN",
+      "CLASSIFICATION": "UNKNOWN"
+    },
+    {
+      "PATH": "/Users/wolfterminal/.openclaw/media",
+      "SIZE_GB": 1.8,
+      "PURPOSE": "OpenClaw media",
+      "KIND": "UNKNOWN",
+      "SAFE_RETIRE": "UNKNOWN",
+      "CLASSIFICATION": "UNKNOWN"
+    },
+    {
+      "PATH": "/Users/wolfterminal/.openclaw/tmp",
+      "SIZE_GB": 2.1,
+      "PURPOSE": "OpenClaw tmp",
+      "KIND": "CACHE",
+      "SAFE_RETIRE": "UNKNOWN",
+      "CLASSIFICATION": "CAN EVENTUALLY DELETE"
+    },
+    {
+      "PATH": "/Users/wolfterminal/.openclaw/backup-v2",
+      "SIZE_GB": 2.1,
+      "PURPOSE": "backup-v2",
+      "KIND": "BACKUP",
+      "SAFE_RETIRE": "UNKNOWN",
+      "CLASSIFICATION": "MUST ARCHIVE TO NAS FIRST"
+    },
+    {
+      "PATH": "/Volumes/05-Wolf-Vault-Mirror",
+      "SIZE_GB": null,
+      "PURPOSE": "NAS vault mirror + WolfArchive catalog-backups",
+      "KIND": "BACKUP/MIRROR",
+      "SAFE_RETIRE": "NO",
+      "CLASSIFICATION": "MUST PRESERVE LONG TERM",
+      "NOTES": "NAS 7Ti pool ~1.4Ti free"
+    },
+    {
+      "PATH": "/Users/wolfterminal/Library",
+      "SIZE_GB": 43,
+      "PURPOSE": "macOS Library (App Support 34G, Caches 6.1G)",
+      "KIND": "MIXED",
+      "SAFE_RETIRE": "NO wholesale",
+      "CLASSIFICATION": "UNKNOWN"
+    }
+  ],
+  "emergency_pause_taken": false,
+  "growth_still_occurring": {
+    "catalog_backups_last_60min_entries": 4,
+    "new_pre_sqlite_last_60min": 0,
+    "assessment": "Growth largely contained after today's cleanup + retention agent; residual intel-connect/tmp dirs still appear; no uncontrolled exhaustion threat (free ~102GB)"
+  }
+}

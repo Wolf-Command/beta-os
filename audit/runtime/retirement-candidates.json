@@ -1,0 +1,55 @@
+{
+  "generated_at": "2026-10-05T22:16:21+08:00",
+  "disclaimer": "RECOMMENDATION ONLY \u2014 DO NOT ACT",
+  "candidates": [
+    {
+      "name": "alchemist suite",
+      "classification": "RETIRE CANDIDATE",
+      "why": "exited -15; V1 PR pipeline overlaps Beta factory",
+      "risk": "may still have scheduled side plists"
+    },
+    {
+      "name": "reel-bot",
+      "classification": "RETIRE CANDIDATE",
+      "why": "exited -15; V1 content fleet",
+      "risk": "watchdog may respawn"
+    },
+    {
+      "name": "parked atlas-auto-produce / alpha-* / aios-compounder",
+      "classification": "RETIRE CANDIDATE",
+      "why": "already parked 202608*",
+      "risk": "low"
+    },
+    {
+      "name": "catalog/backups explosion residue",
+      "classification": "RETIRE CANDIDATE",
+      "why": "35G duplicates of live DB",
+      "risk": "need NAS verify first",
+      "action_when_authorized": "run retention --delete"
+    },
+    {
+      "name": "openclaw/backups/wolf-system old days",
+      "classification": "RETIRE CANDIDATE",
+      "why": "77G prod tree copies",
+      "risk": "archive NAS first"
+    },
+    {
+      "name": "opsfix3-catalog-* state dirs",
+      "classification": "RETIRE CANDIDATE",
+      "why": "many ~93M scratch catalogs",
+      "risk": "confirm not referenced"
+    },
+    {
+      "name": "ollama stale models",
+      "classification": "UNKNOWN/INVESTIGATE",
+      "why": "unused 3-4 months",
+      "risk": "someone may still call :11434"
+    },
+    {
+      "name": "duplicate owner orchestration (Grok vs Cursor vs Peaches for same factory work)",
+      "classification": "MERGE CANDIDATE",
+      "why": "credit waste / conflicting writers",
+      "risk": "operational \u2014 route via future Wolf Intelligence Control Plane (not built)"
+    }
+  ]
+}

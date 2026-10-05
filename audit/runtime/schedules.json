@@ -1,0 +1,1148 @@
+{
+  "generated_at": "2026-10-05T22:16:21+08:00",
+  "cron": [
+    {
+      "schedule": "0 9 * * 1",
+      "command": "/Users/wolfterminal/vault-sync.sh",
+      "log": "/tmp/vault-sync.log",
+      "env": "SHARED",
+      "classification": "KEEP"
+    }
+  ],
+  "launchd_start_interval_or_calendar": [
+    {
+      "label": "net.wolfcommand.catalog-backup-retention",
+      "interval_s": 21600,
+      "purpose": "catalog backup archive/prune"
+    },
+    {
+      "label": "com.wolfcommandsystem.daily-backup",
+      "calendar": "03:16",
+      "purpose": "prod daily backup"
+    },
+    {
+      "label": "com.wolf.mac-reachability.heartbeat",
+      "purpose": "reachability heartbeat"
+    }
+  ],
+  "configured_wolf_plists_count": 179,
+  "loaded_wolf_labels_running": 22,
+  "loaded_wolf_labels_idle": 139,
+  "parked_disabled_bak_files_approx": 109,
+  "running_labels": [
+    {
+      "pid": 2626,
+      "status": "0",
+      "label": "com.wolfcommand.nirmata"
+    },
+    {
+      "pid": 1338,
+      "status": "0",
+      "label": "com.wolfcommandsystem.peaches-voice-bot"
+    },
+    {
+      "pid": 1357,
+      "status": "0",
+      "label": "com.wolf.mac-reachability.supervisor"
+    },
+    {
+      "pid": 1323,
+      "status": "0",
+      "label": "com.wolfcommand.hr-capture"
+    },
+    {
+      "pid": 1354,
+      "status": "0",
+      "label": "com.wolfcommandsystem.spartacus-bot"
+    },
+    {
+      "pid": 1360,
+      "status": "0",
+      "label": "ai.openclaw.node"
+    },
+    {
+      "pid": 1306,
+      "status": "0",
+      "label": "com.wolfcommand.event-bus"
+    },
+    {
+      "pid": 1307,
+      "status": "0",
+      "label": "com.wolfcommandsystem.dashboards-tunnel"
+    },
+    {
+      "pid": 1309,
+      "status": "0",
+      "label": "com.wolfcommand.vault-trigger-watcher"
+    },
+    {
+      "pid": 2319,
+      "status": "-15",
+      "label": "com.wolfcommand.alchemist"
+    },
+    {
+      "pid": 1297,
+      "status": "0",
+      "label": "com.wolfcommandsystem.dashboards-serve"
+    },
+    {
+      "pid": 1333,
+      "status": "0",
+      "label": "com.wolfcommand.kirana"
+    },
+    {
+      "pid": 1343,
+      "status": "0",
+      "label": "com.wolfcommandsystem.realtime-dashboard"
+    },
+    {
+      "pid": 1363,
+      "status": "0",
+      "label": "com.wolf.mac-reachability.heartbeat"
+    },
+    {
+      "pid": 1302,
+      "status": "0",
+      "label": "net.wolfcommand.atrium-finance-sidecar"
+    },
+    {
+      "pid": 1305,
+      "status": "0",
+      "label": "com.wolfcommandsystem.obsidian-mcp-hangwatcher"
+    },
+    {
+      "pid": 1308,
+      "status": "0",
+      "label": "ai.openclaw.gateway"
+    },
+    {
+      "pid": 1328,
+      "status": "0",
+      "label": "homebrew.mxcl.ollama"
+    },
+    {
+      "pid": 2061,
+      "status": "-15",
+      "label": "com.wolfcommandsystem.reel-bot"
+    },
+    {
+      "pid": 1335,
+      "status": "0",
+      "label": "com.wolfcommand.hr-capture-upload"
+    },
+    {
+      "pid": 1336,
+      "status": "0",
+      "label": "com.wolfcommandsystem.peaches-command-bot"
+    },
+    {
+      "pid": 47807,
+      "status": "-15",
+      "label": "net.wolfcommand.serve-beta"
+    }
+  ],
+  "idle_loaded_sample": [
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.hr-photo-bridge"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.atlas-measure"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.atrium-tax-watch"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.cost-monitor"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.craft-to-obsidian"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.atlas-style-profile"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.dashboards-refresh"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.atlas-heartbeat"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.alchemist-pr-pipeline"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.ttc-discord-silent-ingest"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.inbox-router"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.hr-weekly-digest"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.bzg-cutover-flip"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.reflexes"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.vault-decision-log"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.email-calendar-brain"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.vault-guest-intel"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.monthly-reports"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.alchemist-approval-sla"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.atlas-learning-digest"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.daemon-monitor"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.clip-cache"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.aios-energy-audit"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.content-analytics-backfill"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.esb-oms-reply-watcher"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.b2-archive"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.vault-nirmata-feed"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.nirmata-monthly-report"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.break-rate-tick"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.evening-vision-sweep"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.thinking-engine"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.bzg-esb-sync"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.clip-embeddings-backfill"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "net.wolfcommand.catalog-backup-retention"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.brief-intelligence"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.vault-session-capture"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.vault-ingest"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.vault-content-brain"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.alchemist-autopr"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.bzg-board-pdf"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.cross-entity"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.bzg-control-sync"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.bank-drop-nudge"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.aios-roi-digest"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.alchemist-prep-push"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.disk-alert"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.alchemist-sop-report"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.uma-blu-sales-nudge"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.vault-evolution-tracker"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.vision-cap"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.content-input-watch"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.desk-file-watch"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.vault-finance"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.vault-group-cash"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.backup"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.bzg-sheet-sync"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.alchemist-intake"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.vault-pipeline-health"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.cross-outlet-handler"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.log-rotate"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.team-coach"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.kirana-daily-report"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.sc-autosend"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.google-reviews-watcher"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.drive-inbox-watcher"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.footage-b2-sync"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.prf-forms-ingest"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.living-docs-sync"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.nirmata-weekly-summary"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.grok-bot-keepalive"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.nirmata-voice-inbox"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.vault-competitor-intel"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.calendly-atrium-sync"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.secrets-offsite"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.hr-monthly-collation"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.money-brain-weekly"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.alchemist-vault-feed"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommandsystem.telegram-keepalive"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.design-brand-sync"
+    },
+    {
+      "pid": null,
+      "status": "0",
+      "label": "com.wolfcommand.uma-blu-sales"
+    }
+  ],
+  "configured_sample": [
+    {
+      "label": "ai.openclaw.gateway",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/ai.openclaw.gateway.plist",
+      "program0": "/Users/wolfterminal/.openclaw/service-env/ai.openclaw.gateway-env-wrapper.sh",
+      "file": "ai.openclaw.gateway.plist"
+    },
+    {
+      "label": "ai.openclaw.node",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/ai.openclaw.node.plist",
+      "program0": "/Users/wolfterminal/.openclaw/service-env/ai.openclaw.node-env-wrapper.sh",
+      "file": "ai.openclaw.node.plist"
+    },
+    {
+      "label": "com.wolf.mac-reachability.drill-once",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolf.mac-reachability.drill-once.plist",
+      "program0": "/bin/bash",
+      "file": "com.wolf.mac-reachability.drill-once.plist"
+    },
+    {
+      "label": "com.wolf.mac-reachability.drill-unattended",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolf.mac-reachability.drill-unattended.plist",
+      "program0": "/bin/bash",
+      "file": "com.wolf.mac-reachability.drill-unattended.plist"
+    },
+    {
+      "label": "com.wolf.mac-reachability.heartbeat",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolf.mac-reachability.heartbeat.plist",
+      "program0": "/bin/bash",
+      "file": "com.wolf.mac-reachability.heartbeat.plist"
+    },
+    {
+      "label": "com.wolf.mac-reachability.supervisor",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolf.mac-reachability.supervisor.plist",
+      "program0": "/bin/bash",
+      "file": "com.wolf.mac-reachability.supervisor.plist"
+    },
+    {
+      "label": "com.wolfcommand.aios-energy-audit",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.aios-energy-audit.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.aios-energy-audit.plist"
+    },
+    {
+      "label": "com.wolfcommand.aios-gatekeeper",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.aios-gatekeeper.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.aios-gatekeeper.plist"
+    },
+    {
+      "label": "com.wolfcommand.aios-moc",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.aios-moc.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.aios-moc.plist"
+    },
+    {
+      "label": "com.wolfcommand.aios-roi-digest",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.aios-roi-digest.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.aios-roi-digest.plist"
+    },
+    {
+      "label": "com.wolfcommand.alchemist-approval-sla",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.alchemist-approval-sla.plist",
+      "program0": "/Users/wolfterminal/.openclaw/workspace/alchemist/.venv/bin/python3",
+      "file": "com.wolfcommand.alchemist-approval-sla.plist"
+    },
+    {
+      "label": "com.wolfcommand.alchemist-autopr",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.alchemist-autopr.plist",
+      "program0": "/Users/wolfterminal/.openclaw/workspace/alchemist/.venv/bin/python3",
+      "file": "com.wolfcommand.alchemist-autopr.plist"
+    },
+    {
+      "label": "com.wolfcommand.alchemist-intake",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.alchemist-intake.plist",
+      "program0": "/Users/wolfterminal/.openclaw/workspace/alchemist/.venv/bin/python3",
+      "file": "com.wolfcommand.alchemist-intake.plist"
+    },
+    {
+      "label": "com.wolfcommand.alchemist-monday",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.alchemist-monday.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.alchemist-monday.plist"
+    },
+    {
+      "label": "com.wolfcommand.alchemist-nightly-report",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.alchemist-nightly-report.plist",
+      "program0": "/opt/homebrew/bin/python3",
+      "file": "com.wolfcommand.alchemist-nightly-report.plist"
+    },
+    {
+      "label": "com.wolfcommand.alchemist-pr-pipeline",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.alchemist-pr-pipeline.plist",
+      "program0": "/Users/wolfterminal/.openclaw/workspace/alchemist/.venv/bin/python3",
+      "file": "com.wolfcommand.alchemist-pr-pipeline.plist"
+    },
+    {
+      "label": "com.wolfcommand.alchemist-prep-push",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.alchemist-prep-push.plist",
+      "program0": "/Users/wolfterminal/.openclaw/workspace/alchemist/.venv/bin/python3",
+      "file": "com.wolfcommand.alchemist-prep-push.plist"
+    },
+    {
+      "label": "com.wolfcommand.alchemist-sop-report",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.alchemist-sop-report.plist",
+      "program0": "/Users/wolfterminal/.openclaw/workspace/alchemist/.venv/bin/python3",
+      "file": "com.wolfcommand.alchemist-sop-report.plist"
+    },
+    {
+      "label": "com.wolfcommand.alchemist-vault-feed",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.alchemist-vault-feed.plist",
+      "program0": "/Users/wolfterminal/.openclaw/workspace/alchemist/.venv/bin/python3",
+      "file": "com.wolfcommand.alchemist-vault-feed.plist"
+    },
+    {
+      "label": "com.wolfcommand.alchemist-watchdog",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.alchemist-watchdog.plist",
+      "program0": "/opt/homebrew/bin/python3",
+      "file": "com.wolfcommand.alchemist-watchdog.plist"
+    },
+    {
+      "label": "com.wolfcommand.alchemist",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.alchemist.plist",
+      "program0": "/Users/wolfterminal/.openclaw/workspace/alchemist/.venv/bin/python3",
+      "file": "com.wolfcommand.alchemist.plist"
+    },
+    {
+      "label": "com.wolfcommand.atlas-cob-proof",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.atlas-cob-proof.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.atlas-cob-proof.plist"
+    },
+    {
+      "label": "com.wolfcommand.atlas-cob-sweep",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.atlas-cob-sweep.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.atlas-cob-sweep.plist"
+    },
+    {
+      "label": "com.wolfcommand.atlas-heartbeat",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.atlas-heartbeat.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.atlas-heartbeat.plist"
+    },
+    {
+      "label": "com.wolfcommand.atlas-hypothesis-verifier",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.atlas-hypothesis-verifier.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.atlas-hypothesis-verifier.plist"
+    },
+    {
+      "label": "com.wolfcommand.atlas-ingestion-checkpoint",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.atlas-ingestion-checkpoint.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.atlas-ingestion-checkpoint.plist"
+    },
+    {
+      "label": "com.wolfcommand.atlas-learning-digest",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.atlas-learning-digest.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.atlas-learning-digest.plist"
+    },
+    {
+      "label": "com.wolfcommand.atlas-monday-brief",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.atlas-monday-brief.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.atlas-monday-brief.plist"
+    },
+    {
+      "label": "com.wolfcommand.atlas-overnight-render",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.atlas-overnight-render.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.atlas-overnight-render.plist"
+    },
+    {
+      "label": "com.wolfcommand.atlas-safe-to-clear",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.atlas-safe-to-clear.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.atlas-safe-to-clear.plist"
+    },
+    {
+      "label": "com.wolfcommand.atlas-scoreboard",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.atlas-scoreboard.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.atlas-scoreboard.plist"
+    },
+    {
+      "label": "com.wolfcommand.atlas-storyteller",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.atlas-storyteller.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.atlas-storyteller.plist"
+    },
+    {
+      "label": "com.wolfcommand.atrium-tax-watch",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.atrium-tax-watch.plist",
+      "program0": "/usr/bin/python3",
+      "file": "com.wolfcommand.atrium-tax-watch.plist"
+    },
+    {
+      "label": "com.wolfcommand.autonomy-shadow",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.autonomy-shadow.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.autonomy-shadow.plist"
+    },
+    {
+      "label": "com.wolfcommand.b2-archive-proof",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.b2-archive-proof.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.b2-archive-proof.plist"
+    },
+    {
+      "label": "com.wolfcommand.b2-cap-monitor",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.b2-cap-monitor.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.b2-cap-monitor.plist"
+    },
+    {
+      "label": "com.wolfcommand.backup",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.backup.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.backup.plist"
+    },
+    {
+      "label": "com.wolfcommand.bank-drop-nudge",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.bank-drop-nudge.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.bank-drop-nudge.plist"
+    },
+    {
+      "label": "com.wolfcommand.bank-hr-sync",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.bank-hr-sync.plist",
+      "program0": "/usr/bin/python3",
+      "file": "com.wolfcommand.bank-hr-sync.plist"
+    },
+    {
+      "label": "com.wolfcommand.break-rate-tick.plist",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.break-rate-tick.plist",
+      "program0": "",
+      "file": "com.wolfcommand.break-rate-tick.plist"
+    },
+    {
+      "label": "com.wolfcommand.brief-intelligence",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.brief-intelligence.plist",
+      "program0": "/Users/wolfterminal/.openclaw/workspace/wolf-system/.venv-tts/bin/python3",
+      "file": "com.wolfcommand.brief-intelligence.plist"
+    },
+    {
+      "label": "com.wolfcommand.bzg-board-pdf",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.bzg-board-pdf.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.bzg-board-pdf.plist"
+    },
+    {
+      "label": "com.wolfcommand.bzg-control-sync",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.bzg-control-sync.plist",
+      "program0": "/Users/wolfterminal/.openclaw/workspace/alchemist/.venv/bin/python3",
+      "file": "com.wolfcommand.bzg-control-sync.plist"
+    },
+    {
+      "label": "com.wolfcommand.bzg-cutover-flip",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.bzg-cutover-flip.plist",
+      "program0": "/opt/homebrew/bin/python3",
+      "file": "com.wolfcommand.bzg-cutover-flip.plist"
+    },
+    {
+      "label": "com.wolfcommand.bzg-report-monthstart",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.bzg-report-monthstart.plist",
+      "program0": "/opt/homebrew/bin/python3",
+      "file": "com.wolfcommand.bzg-report-monthstart.plist"
+    },
+    {
+      "label": "com.wolfcommand.bzg-sheet-sync",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.bzg-sheet-sync.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.bzg-sheet-sync.plist"
+    },
+    {
+      "label": "com.wolfcommand.calendly-atrium-sync",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.calendly-atrium-sync.plist",
+      "program0": "/opt/homebrew/bin/python3",
+      "file": "com.wolfcommand.calendly-atrium-sync.plist"
+    },
+    {
+      "label": "com.wolfcommand.competitor-rates-digest",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.competitor-rates-digest.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.competitor-rates-digest.plist"
+    },
+    {
+      "label": "com.wolfcommand.competitor-rates",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.competitor-rates.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.competitor-rates.plist"
+    },
+    {
+      "label": "com.wolfcommand.content-brief-generator",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.content-brief-generator.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.content-brief-generator.plist"
+    },
+    {
+      "label": "com.wolfcommand.content-input-watch",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.content-input-watch.plist",
+      "program0": "/Users/wolfterminal/.openclaw/workspace/wolf-system/.venv-tts/bin/python3",
+      "file": "com.wolfcommand.content-input-watch.plist"
+    },
+    {
+      "label": "com.wolfcommand.craft-to-obsidian",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.craft-to-obsidian.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.craft-to-obsidian.plist"
+    },
+    {
+      "label": "com.wolfcommand.cross-entity",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.cross-entity.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.cross-entity.plist"
+    },
+    {
+      "label": "com.wolfcommand.design-brand-sync",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.design-brand-sync.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.design-brand-sync.plist"
+    },
+    {
+      "label": "com.wolfcommand.desk-file-watch",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.desk-file-watch.plist",
+      "program0": "/usr/bin/python3",
+      "file": "com.wolfcommand.desk-file-watch.plist"
+    },
+    {
+      "label": "com.wolfcommand.disk-alert",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.disk-alert.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.disk-alert.plist"
+    },
+    {
+      "label": "com.wolfcommand.drive-watcher",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.drive-watcher.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.drive-watcher.plist"
+    },
+    {
+      "label": "com.wolfcommand.egress-review",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.egress-review.plist",
+      "program0": "/Users/wolfterminal/.openclaw/workspace/wolf-system/.venv-tts/bin/python3",
+      "file": "com.wolfcommand.egress-review.plist"
+    },
+    {
+      "label": "com.wolfcommand.email-calendar-brain",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.email-calendar-brain.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.email-calendar-brain.plist"
+    },
+    {
+      "label": "com.wolfcommand.esb-ingest",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.esb-ingest.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.esb-ingest.plist"
+    },
+    {
+      "label": "com.wolfcommand.esb-oms-reply-watcher",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.esb-oms-reply-watcher.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.esb-oms-reply-watcher.plist"
+    },
+    {
+      "label": "com.wolfcommand.evening-vision-sweep",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.evening-vision-sweep.plist",
+      "program0": "/opt/homebrew/bin/python3",
+      "file": "com.wolfcommand.evening-vision-sweep.plist"
+    },
+    {
+      "label": "com.wolfcommand.event-bus",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.event-bus.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.event-bus.plist"
+    },
+    {
+      "label": "com.wolfcommand.footage-b2-sync",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.footage-b2-sync.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.footage-b2-sync.plist"
+    },
+    {
+      "label": "com.wolfcommand.grok-bot-keepalive",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.grok-bot-keepalive.plist",
+      "program0": "/bin/bash",
+      "file": "com.wolfcommand.grok-bot-keepalive.plist"
+    },
+    {
+      "label": "com.wolfcommand.hr-alive",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.hr-alive.plist",
+      "program0": "/usr/bin/python3",
+      "file": "com.wolfcommand.hr-alive.plist"
+    },
+    {
+      "label": "com.wolfcommand.hr-capture-upload",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.hr-capture-upload.plist",
+      "program0": "/Users/wolfterminal/.openclaw/workspace/wolf-system/.venv-tts/bin/python3",
+      "file": "com.wolfcommand.hr-capture-upload.plist"
+    },
+    {
+      "label": "com.wolfcommand.hr-capture",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.hr-capture.plist",
+      "program0": "/Users/wolfterminal/.openclaw/workspace/wolf-system/.venv-tts/bin/python3",
+      "file": "com.wolfcommand.hr-capture.plist"
+    },
+    {
+      "label": "com.wolfcommand.hr-compliance-alerts",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.hr-compliance-alerts.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.hr-compliance-alerts.plist"
+    },
+    {
+      "label": "com.wolfcommand.hr-event-hooks",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.hr-event-hooks.plist",
+      "program0": "/Users/wolfterminal/.openclaw/nirmata/venv/bin/python",
+      "file": "com.wolfcommand.hr-event-hooks.plist"
+    },
+    {
+      "label": "com.wolfcommand.hr-monthly-collation",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.hr-monthly-collation.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.hr-monthly-collation.plist"
+    },
+    {
+      "label": "com.wolfcommand.hr-reminders",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.hr-reminders.plist",
+      "program0": "/Users/wolfterminal/.openclaw/nirmata/venv/bin/python3",
+      "file": "com.wolfcommand.hr-reminders.plist"
+    },
+    {
+      "label": "com.wolfcommand.hr-sheet-sync",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.hr-sheet-sync.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.hr-sheet-sync.plist"
+    },
+    {
+      "label": "com.wolfcommand.hr-weekly-001-exec",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.hr-weekly-001-exec.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.hr-weekly-001-exec.plist"
+    },
+    {
+      "label": "com.wolfcommand.hr-weekly-digest",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.hr-weekly-digest.plist",
+      "program0": "/Users/wolfterminal/.openclaw/nirmata/venv/bin/python3",
+      "file": "com.wolfcommand.hr-weekly-digest.plist"
+    },
+    {
+      "label": "com.wolfcommand.kirana-daily-report",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.kirana-daily-report.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.kirana-daily-report.plist"
+    },
+    {
+      "label": "com.wolfcommand.kirana",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.kirana.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.kirana.plist"
+    },
+    {
+      "label": "com.wolfcommand.living-docs-sync",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.living-docs-sync.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.living-docs-sync.plist"
+    },
+    {
+      "label": "com.wolfcommand.monitoring-snapshot",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.monitoring-snapshot.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.monitoring-snapshot.plist"
+    },
+    {
+      "label": "com.wolfcommand.nas-throttle-watch",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.nas-throttle-watch.plist",
+      "program0": "/Users/wolfterminal/.openclaw/workspace/wolf-system/.venv-tts/bin/python3",
+      "file": "com.wolfcommand.nas-throttle-watch.plist"
+    },
+    {
+      "label": "com.wolfcommand.nirmata-digest-watchdog",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.nirmata-digest-watchdog.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.nirmata-digest-watchdog.plist"
+    },
+    {
+      "label": "com.wolfcommand.nirmata-monthly-report",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.nirmata-monthly-report.plist",
+      "program0": "/Users/wolfterminal/.openclaw/nirmata/venv/bin/python3",
+      "file": "com.wolfcommand.nirmata-monthly-report.plist"
+    },
+    {
+      "label": "com.wolfcommand.nirmata-voice-inbox",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.nirmata-voice-inbox.plist",
+      "program0": "/Users/wolfterminal/.openclaw/nirmata/venv/bin/python3",
+      "file": "com.wolfcommand.nirmata-voice-inbox.plist"
+    },
+    {
+      "label": "com.wolfcommand.nirmata-weekly-summary",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.nirmata-weekly-summary.plist",
+      "program0": "/Users/wolfterminal/.openclaw/nirmata/venv/bin/python3",
+      "file": "com.wolfcommand.nirmata-weekly-summary.plist"
+    },
+    {
+      "label": "com.wolfcommand.nirmata",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.nirmata.plist",
+      "program0": "/Users/wolfterminal/.openclaw/nirmata/venv/bin/python3",
+      "file": "com.wolfcommand.nirmata.plist"
+    },
+    {
+      "label": "com.wolfcommand.ota-confirm-publish",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.ota-confirm-publish.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.ota-confirm-publish.plist"
+    },
+    {
+      "label": "com.wolfcommand.prf-forms-ingest",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.prf-forms-ingest.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.prf-forms-ingest.plist"
+    },
+    {
+      "label": "com.wolfcommand.prf-forms-poller",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.prf-forms-poller.plist",
+      "program0": "/Users/wolfterminal/.openclaw/nirmata/venv/bin/python3",
+      "file": "com.wolfcommand.prf-forms-poller.plist"
+    },
+    {
+      "label": "com.wolfcommand.reflexes",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.reflexes.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.reflexes.plist"
+    },
+    {
+      "label": "com.wolfcommand.secrets-offsite",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.secrets-offsite.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.secrets-offsite.plist"
+    },
+    {
+      "label": "com.wolfcommand.thinking-engine",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.thinking-engine.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.thinking-engine.plist"
+    },
+    {
+      "label": "com.wolfcommand.uma-blu-sales-nudge",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.uma-blu-sales-nudge.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.uma-blu-sales-nudge.plist"
+    },
+    {
+      "label": "com.wolfcommand.uma-blu-sales",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.uma-blu-sales.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.uma-blu-sales.plist"
+    },
+    {
+      "label": "com.wolfcommand.vault-atlas-feed",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.vault-atlas-feed.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.vault-atlas-feed.plist"
+    },
+    {
+      "label": "com.wolfcommand.vault-competitor-intel",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.vault-competitor-intel.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.vault-competitor-intel.plist"
+    },
+    {
+      "label": "com.wolfcommand.vault-content-brain",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.vault-content-brain.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.vault-content-brain.plist"
+    },
+    {
+      "label": "com.wolfcommand.vault-decision-log",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.vault-decision-log.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.vault-decision-log.plist"
+    },
+    {
+      "label": "com.wolfcommand.vault-evolution-tracker",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.vault-evolution-tracker.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.vault-evolution-tracker.plist"
+    },
+    {
+      "label": "com.wolfcommand.vault-finance",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.vault-finance.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.vault-finance.plist"
+    },
+    {
+      "label": "com.wolfcommand.vault-group-cash",
+      "plist": "/Users/wolfterminal/Library/LaunchAgents/com.wolfcommand.vault-group-cash.plist",
+      "program0": "/bin/zsh",
+      "file": "com.wolfcommand.vault-group-cash.plist"
+    }
+  ]
+}
