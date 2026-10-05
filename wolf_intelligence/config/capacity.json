@@ -1,0 +1,71 @@
+{
+  "generated_at": "2026-10-05T22:30:00+08:00",
+  "rule": "Subscription pools and API pools are NEVER fungible. Prefer already-paid capacity when quality sufficient.",
+  "pools": [
+    {
+      "id": "cursor_sub_300",
+      "provider": "cursor",
+      "billing": "subscription",
+      "monthly_usd": 300,
+      "prepaid": true,
+      "source": "Owner declared Cursor $300/mo prepaid"
+    },
+    {
+      "id": "claude_sub_25",
+      "provider": "anthropic",
+      "billing": "subscription",
+      "monthly_usd": 25,
+      "prepaid": true,
+      "source": "Owner declared Claude sub $25/mo separate from API"
+    },
+    {
+      "id": "grok_sub",
+      "provider": "xai_grok",
+      "billing": "subscription",
+      "monthly_usd": null,
+      "note": "UNKNOWN which SuperGrok tier active — discover do not guess dollars remaining"
+    },
+    {
+      "id": "chatgpt_sub",
+      "provider": "openai",
+      "billing": "subscription",
+      "monthly_usd": null,
+      "note": "UNKNOWN which ChatGPT plan — separate from API"
+    },
+    {
+      "id": "openai_api",
+      "provider": "openai",
+      "billing": "api",
+      "monthly_usd": null,
+      "note": "Pay-as-you-go; avoid duplicate expensive dispatch in shadow"
+    },
+    {
+      "id": "anthropic_api",
+      "provider": "anthropic",
+      "billing": "api",
+      "monthly_usd": null,
+      "note": "Separate from Claude subscription"
+    },
+    {
+      "id": "xai_api",
+      "provider": "xai_grok",
+      "billing": "api",
+      "monthly_usd": null,
+      "note": "Separate from SuperGrok subscription"
+    },
+    {
+      "id": "gemini_free",
+      "provider": "google_gemini",
+      "billing": "free",
+      "monthly_usd": 0,
+      "note": "No paid Gemini without Owner policy"
+    },
+    {
+      "id": "ollama_local",
+      "provider": "ollama_local",
+      "billing": "local",
+      "monthly_usd": 0,
+      "note": "Local free"
+    }
+  ]
+}

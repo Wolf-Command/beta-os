@@ -1,0 +1,100 @@
+{
+  "generated_at": "2026-10-05T22:30:00+08:00",
+  "notes": "Discovered plan costs from public pricing pages 2026-10-05. Owner-declared: Cursor $300/mo prepaid; Claude sub $25/mo separate from API. Gemini: no paid without Owner policy. Capability scores UNKNOWN until benchmarked. Sub vs API always separate pools.",
+  "providers": [
+    {
+      "id": "xai_grok",
+      "label": "xAI / Grok",
+      "workers": ["grok_bot"],
+      "plans_discovered": {
+        "consumer_sub": [
+          {"name": "Free", "usd_mo": 0, "source": "https://x.ai/pricing"},
+          {"name": "SuperGrok Lite", "usd_mo": 10, "source": "https://x.ai/pricing"},
+          {"name": "SuperGrok", "usd_mo": 30, "source": "https://x.ai/pricing"},
+          {"name": "SuperGrok Plus", "usd_mo": 100, "source": "third-party summary geotoolbox 2026"},
+          {"name": "SuperGrok Heavy", "usd_mo": 300, "source": "third-party summary geotoolbox 2026"}
+        ],
+        "api": {
+          "note": "Usage-based; separate from SuperGrok sub",
+          "flagship_example": "grok-4.6 ~$2/M in $6/M out (docs.x.ai 2026-10-05)",
+          "source": "https://docs.x.ai/developers/pricing"
+        }
+      },
+      "owner_active": "UNKNOWN_WHICH_SUB — Grok Bot local-exec active on Studio"
+    },
+    {
+      "id": "openai",
+      "label": "OpenAI / ChatGPT",
+      "workers": ["openai_chatgpt", "openai_api"],
+      "plans_discovered": {
+        "chatgpt_sub": [
+          {"name": "Free", "usd_mo": 0, "source": "https://openai.com/chatgpt/pricing"},
+          {"name": "Go", "usd_mo": 8, "source": "help.openai.com Pro tiers article context 2026"},
+          {"name": "Plus", "usd_mo": 20, "source": "https://openai.com/chatgpt/pricing"},
+          {"name": "Pro 100", "usd_mo": 100, "source": "https://help.openai.com/en/articles/9793128-about-chatgpt-pro-tiers"},
+          {"name": "Pro 200", "usd_mo": 200, "source": "same"},
+          {"name": "Pro 500", "usd_mo": 500, "source": "same"}
+        ],
+        "api": {
+          "note": "Pay-per-token; NOT included in ChatGPT subscription",
+          "source": "https://developers.openai.com/api/docs/pricing"
+        }
+      },
+      "separation_rule": "ChatGPT subscription pool != OpenAI API pool"
+    },
+    {
+      "id": "anthropic",
+      "label": "Anthropic / Claude",
+      "workers": ["anthropic_api", "claude_sub"],
+      "plans_discovered": {
+        "claude_sub": [
+          {"name": "Free", "usd_mo": 0, "source": "https://www.anthropic.com/pricing"},
+          {"name": "Pro monthly", "usd_mo": 20, "source": "https://www.anthropic.com/pricing"},
+          {"name": "Pro annual effective", "usd_mo": 17, "source": "https://www.anthropic.com/pricing"},
+          {"name": "Max from", "usd_mo": 100, "source": "https://www.anthropic.com/pricing"},
+          {"name": "Team Standard seat monthly", "usd_mo": 25, "source": "https://claude.com/pricing/"}
+        ],
+        "api": {
+          "note": "Separate Console billing; Haiku is default-fast not best",
+          "examples_per_mtok_in_out": {
+            "haiku_4_5": [1, 5],
+            "sonnet_5": [2, 10],
+            "opus_5": [5, 25]
+          },
+          "source": "https://www.anthropic.com/pricing"
+        }
+      },
+      "owner_declared_sub_usd_mo": 25,
+      "note": "Owner: Claude sub $25/mo separate from API. Haiku=default not best."
+    },
+    {
+      "id": "google_gemini",
+      "label": "Google Gemini",
+      "workers": ["gemini"],
+      "plans_discovered": {
+        "note": "Beta has GEMINI_API_KEY configured; free tier presumed until Owner policy for paid",
+        "owner_policy": "NO_PAID_WITHOUT_OWNER_POLICY"
+      }
+    },
+    {
+      "id": "cursor",
+      "label": "Cursor / Anysphere",
+      "workers": ["cursor"],
+      "owner_declared_sub_usd_mo": 300,
+      "note": "Owner: Cursor $300/mo prepaid. Factory bf_cursor_launch."
+    },
+    {
+      "id": "ollama_local",
+      "label": "Ollama local",
+      "workers": ["ollama"],
+      "billing": "local",
+      "note": "Free local; callers of :11434 investigated in Phase 2"
+    },
+    {
+      "id": "peaches_openclaw",
+      "label": "Peaches / OpenClaw",
+      "workers": ["peaches"],
+      "note": "CoS / ops routing only — NOT the intelligence brain. Uses underlying model pools."
+    }
+  ]
+}

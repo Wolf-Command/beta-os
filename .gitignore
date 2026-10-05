@@ -87,3 +87,62 @@ state/**/*operator-events.jsonl
 
 # Generated NAS index sample dumps
 state/nas-index/sample-*
+
+# ---------------------------------------------------------------------------
+# GitHub hygiene for wolfcommand/beta-os (Owner P0 5 Oct 2026 20:30 WITA)
+# Never push secrets, raw financial evidence, PII, runtime DBs, or bulk backups.
+# ---------------------------------------------------------------------------
+# Extra secret / key material
+*.p12
+*.pfx
+*.keystore
+*.jwk.json
+id_rsa*
+id_ed25519*
+.netrc
+service-account*.json
+*cookies*.json
+*.session.json
+# Bulk backups / catalog (catalog/backups ~61 GB) / uploads
+backups/
+catalog/
+uploads/
+.peaches-uploads/
+.pytest_cache/
+# Raw financial evidence + PII (bank statements, receipts, nota photos, petty cash)
+state/**/originals/
+state/bzg-daily-close/receipts/
+state/uma-petty-receipts/
+state/work-evidence/blobs/
+state/**/nota-photos/
+state/**/*.jpg
+state/**/*.jpeg
+state/**/*.JPG
+state/**/*.JPEG
+state/**/*.heic
+state/**/*.HEIC
+state/**/*.pdf
+state/**/*.xls
+state/**/*.xlsx
+state/**/*.csv
+state/amg-bank-statements/
+state/bzg-bank-statements/
+state/ggv-bank-statements/
+# Throwaway test-run dirs + large forensic packs + runtime stamps
+state/bzg-ap1-*/
+state/bzg-rtp1-*/
+state/bzg-3wm1-*/
+state/bzg-nota1-*/
+state/final-completion/p0-v1/finance-core-human-fail-*/
+state/uma-blu-daily-close-backup-*
+state/mac-reachability/
+*.tgz
+*.tar.gz
+*.zip
+*.pid
+*.flock
+/0
+
+# Wolf Intelligence control-plane runtime (canonical store lives on disk; code under wolf_intelligence/)
+state/wolf-intelligence/
+

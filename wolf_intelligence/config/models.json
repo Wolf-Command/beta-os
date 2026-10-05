@@ -1,0 +1,184 @@
+{
+  "generated_at": "2026-10-05T22:30:00+08:00",
+  "rule": "capability_scores remain UNKNOWN until Phase 3 benchmark harness writes evidence. Do not invent.",
+  "models": [
+    {
+      "id": "grok-bot-local-exec",
+      "provider": "xai_grok",
+      "billing": "subscription",
+      "worker": "grok_bot",
+      "role": "owner_executor",
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      }
+    },
+    {
+      "id": "cursor-agent",
+      "provider": "cursor",
+      "billing": "subscription",
+      "worker": "cursor",
+      "role": "code_factory",
+      "pool_id": "cursor_sub_300",
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      }
+    },
+    {
+      "id": "chatgpt-sub",
+      "provider": "openai",
+      "billing": "subscription",
+      "worker": "openai_chatgpt",
+      "role": "chat_sub",
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      }
+    },
+    {
+      "id": "openai-api",
+      "provider": "openai",
+      "billing": "api",
+      "worker": "openai_api",
+      "role": "api",
+      "pool_id": "openai_api",
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      }
+    },
+    {
+      "id": "claude-sub",
+      "provider": "anthropic",
+      "billing": "subscription",
+      "worker": "claude_sub",
+      "role": "chat_sub",
+      "pool_id": "claude_sub_25",
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      }
+    },
+    {
+      "id": "claude-haiku",
+      "provider": "anthropic",
+      "billing": "api",
+      "worker": "anthropic_api",
+      "role": "default_fast_not_best",
+      "note": "Haiku is default not best",
+      "pool_id": "anthropic_api",
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      }
+    },
+    {
+      "id": "claude-sonnet",
+      "provider": "anthropic",
+      "billing": "api",
+      "worker": "anthropic_api",
+      "role": "strong_default",
+      "pool_id": "anthropic_api",
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      }
+    },
+    {
+      "id": "gemini-free",
+      "provider": "google_gemini",
+      "billing": "free",
+      "worker": "gemini",
+      "role": "beta_configured_free",
+      "pool_id": "gemini_free",
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      }
+    },
+    {
+      "id": "ollama-llama3.2-3b",
+      "provider": "ollama_local",
+      "billing": "local",
+      "worker": "ollama",
+      "role": "local_free",
+      "pool_id": "ollama_local",
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      }
+    },
+    {
+      "id": "peaches-cos",
+      "provider": "peaches_openclaw",
+      "billing": "subscription",
+      "worker": "peaches",
+      "role": "cos_only_not_brain",
+      "capability_scores": {
+        "code_debug": "UNKNOWN",
+        "review": "UNKNOWN",
+        "security": "UNKNOWN",
+        "data_recon": "UNKNOWN",
+        "ui_ux": "UNKNOWN",
+        "large_context": "UNKNOWN",
+        "vision": "UNKNOWN",
+        "research": "UNKNOWN"
+      }
+    }
+  ]
+}
