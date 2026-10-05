@@ -54,8 +54,8 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(ledger.snapshot(), indent=2))
         return 0
     if args.cmd == "secret-scan":
-        from . import secret_scan
-        r = secret_scan.scan_tree()
+        from . import scan_secrets
+        r = scan_secrets.scan_tree()
         print(json.dumps(r, indent=2))
         return 0 if r["ok"] else 1
     if args.cmd == "accept-phase1":

@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path("/Users/wolfterminal/beta-os")
 sys.path.insert(0, str(ROOT))
 
-from wolf_intelligence import dispatcher, events, ledger, registry, secret_scan, work_items  # noqa: E402
+from wolf_intelligence import dispatcher, events, ledger, registry, scan_secrets, work_items  # noqa: E402
 from wolf_intelligence.paths import AUDIT_DIR, EVENTS_PATH, ensure_dirs  # noqa: E402
 
 
@@ -69,8 +69,8 @@ def main() -> int:
     check("audit_persist", len(audit_files) >= 1, f"n={len(audit_files)}")
 
     # 5. secret scan
-    scan = secret_scan.scan_tree()
-    check("secret_scan_clean", scan["ok"], json.dumps(scan.get("hits")[:3]))
+    scan = scan_secrets.scan_tree()
+    check("scan_secrets_clean", scan["ok"], json.dumps(scan.get("hits")[:3]))
 
     # 6. prove we did not touch Production serve :8787 mtime via this phase
     prod = Path.home() / ".openclaw/workspace/wolf-system/dashboards/serve.py"
