@@ -1,0 +1,16 @@
+{
+  "updated_at": "2026-10-05T22:42:56+08:00",
+  "outcomes_total": 13,
+  "outcomes_human": 2,
+  "outcomes_self_eval_recorded": 12,
+  "human_passes": 2,
+  "human_fails": 0,
+  "shadow_samples": 5,
+  "shadow_agreements": 5,
+  "workers": {
+    "CONNECTED": 5,
+    "PARTIAL": 2,
+    "UNAVAILABLE": 2
+  },
+  "rule": "human > self-eval"
+}

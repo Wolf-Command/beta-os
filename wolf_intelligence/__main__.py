@@ -29,6 +29,8 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("benchmark-local")
     sub.add_parser("learn-demo")
     sub.add_parser("shadow-compare")
+    sub.add_parser("overnight-tick")
+    sub.add_parser("stats")
     sub.add_parser("serve-ui")
 
     args = p.parse_args(argv)
@@ -81,6 +83,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "shadow-compare":
         from . import shadow_compare
         print(json.dumps(shadow_compare.run_compare(), indent=2))
+        return 0
+    if args.cmd == "overnight-tick":
+        from . import overnight_tick
+        print(json.dumps(overnight_tick.run(), indent=2))
+        return 0
+    if args.cmd == "stats":
+        from . import stats_store
+        print(json.dumps(stats_store.recompute(), indent=2))
         return 0
     if args.cmd == "serve-ui":
         from . import owner_ui_server

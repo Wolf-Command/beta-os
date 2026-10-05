@@ -13,6 +13,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from . import work_items
+from . import stats_store
 from .paths import OWNER_UI_HOST, OWNER_UI_PORT, UI_DIR, WORKER_STATUS_PATH, ensure_dirs, AUDIT_DIR
 
 HTML = UI_DIR / "owner.html"
@@ -46,7 +47,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path in ("/api/owner-board", "/api/wolf-intelligence/board"):
             buckets = work_items.by_ui_bucket()
-            tech = {"mode": "SHADOW", "production_touched": False, "workers": None, "store": work_items.store_info()}
+            tech = {"mode": "SHADOW", "production_touched": False, "workers": None, "store": work_items.store_info(), "stats": stats_store.recompute()}
             if WORKER_STATUS_PATH.exists():
                 try:
                     tech["workers"] = json.loads(WORKER_STATUS_PATH.read_text()).get("summary")

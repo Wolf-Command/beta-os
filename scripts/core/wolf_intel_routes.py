@@ -40,6 +40,11 @@ def board_payload() -> dict[str, Any]:
             tech["workers"] = json.loads(WORKER_STATUS_PATH.read_text()).get("summary")
         except json.JSONDecodeError:
             pass
+    try:
+        from wolf_intelligence import stats_store as _stats_store
+        tech["stats"] = _stats_store.recompute()
+    except Exception:
+        pass
     slim: dict[str, Any] = {}
     for k, items in buckets.items():
         slim[k] = [

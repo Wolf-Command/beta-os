@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.wolfcommand.wolf-intelligence-overnight-tick</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/python3</string>
+    <string>-m</string>
+    <string>wolf_intelligence</string>
+    <string>overnight-tick</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/wolfterminal/beta-os</string>
+  <key>StartInterval</key>
+  <integer>3600</integer>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>/Users/wolfterminal/beta-os/state/wolf-intelligence/audit/overnight-tick.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/wolfterminal/beta-os/state/wolf-intelligence/audit/overnight-tick.err.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/bin:/bin</string>
+    <key>PYTHONUNBUFFERED</key>
+    <string>1</string>
+  </dict>
+</dict>
+</plist>
