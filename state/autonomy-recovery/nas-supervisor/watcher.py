@@ -20,12 +20,12 @@ import json
 import os
 import time
 from dataclasses import dataclass, field, asdict
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Callable, Optional
-from zoneinfo import ZoneInfo
 
-TZ = ZoneInfo("Asia/Makassar")
+# Asia/Makassar fixed UTC+8 (no DST). ZoneInfo module needs Py>=3.9; NAS is 3.8.
+TZ = timezone(timedelta(hours=8), name="WITA")
 
 DEFAULT_MISS_THRESHOLD = 3
 DEFAULT_INTERVAL_SEC = 60
@@ -87,13 +87,20 @@ class FakeTransport(Transport):
 
 
 def parse_control_up(status: dict[str, Any]) -> bool:
+    """Control-path UP iff Grok Bot process present AND pipe healthy.
+
+    PIPE_DEAD (app alive but unresponsive / SIGSTOP / AE timeout) is a miss —
+    that is the 2026-10-05 22:55 failure shape. keepalive oneshot is ignored.
+    """
     if not status.get("ok"):
         return False
     grok = str(status.get("GROK_APP") or "").upper()
-    keep = str(status.get("keepalive") or "").upper()
-    if grok in ("NONE", "DOWN", ""):
+    if grok in ("NONE", "DOWN", "", "0"):
         return False
-    if keep == "DOWN":
+    pipe = str(status.get("PIPE") or status.get("pipe") or "").upper()
+    if pipe in ("PIPE_DEAD", "DEAD", "DOWN"):
+        return False
+    if status.get("pipe_ok") is False:
         return False
     return True
 

@@ -61,6 +61,8 @@
   "assigned_worker": "cursor_cloud_agent",
   "duplicate_prevented": true,
   "request_sent_at_wita": "2026-10-06T06:15:07+08:00",
-  "launch_status": "PENDING_CLOUDAGENT_TOOL",
-  "notes": "Work item + lock created before CloudAgent launch attempt"
+  "launch_status": "BLOCKED_CLOUDAGENT_TOOL_UNAVAILABLE_TO_EXECUTOR",
+  "notes": "Work item + lock created before CloudAgent launch attempt",
+  "blocked_at_wita": "2026-10-06T06:15:30+08:00",
+  "prompt_path": "/workspace/autonomy-recovery/evidence/CLOUDAGENT-PROMPT.md"
 }

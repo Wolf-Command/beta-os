@@ -1,0 +1,10 @@
+{"ts_wita":"2026-10-06T06:56:55+0800","event":"recover_start","source":"keepalive","detail":"pid=2542"}
+{"ts_wita":"2026-10-06T06:56:55+0800","event":"recover_done","source":"keepalive","detail":"new_pid=4209"}
+{"ts_wita":"2026-10-06T06:57:50+0800","event":"marker_pre_sigstop","source":"executor","detail":"pid=4209"}
+{"ts_wita":"2026-10-06T06:59:03+0800","event":"recover_start","source":"keepalive","detail":"pid=4209"}
+{"ts_wita":"2026-10-06T06:59:03+0800","event":"force_kill","source":"keepalive","detail":"pid=4209"}
+{"ts_wita":"2026-10-06T06:59:03+0800","event":"recover_done","source":"keepalive","detail":"new_pid=4957"}
+{"ts_wita":"2026-10-06T07:03:03+0800","event":"marker_pre_sigstop_round2","source":"executor","detail":"pid=4957"}
+{"ts_wita":"2026-10-06T07:05:02+0800","event":"recover_start","source":"keepalive","detail":"pid=4957"}
+{"ts_wita":"2026-10-06T07:05:02+0800","event":"force_kill","source":"keepalive","detail":"pid=4957"}
+{"ts_wita":"2026-10-06T07:05:02+0800","event":"recover_done","source":"keepalive","detail":"new_pid=5819"}

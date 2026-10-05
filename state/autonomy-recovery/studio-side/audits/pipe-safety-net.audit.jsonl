@@ -1,0 +1,17 @@
+{"ts_wita":"2026-10-06T06:54:13+0800","event":"skip","detail":"no_heartbeat_file"}
+{"ts_wita":"2026-10-06T06:55:13+0800","event":"pipe_ok","detail":"clear_stamp"}
+{"ts_wita":"2026-10-06T06:56:13+0800","event":"pipe_ok","detail":"clear_stamp"}
+{"ts_wita":"2026-10-06T06:57:13+0800","event":"pipe_ok","detail":"clear_stamp"}
+{"ts_wita":"2026-10-06T06:58:13+0800","event":"pipe_ok","detail":"clear_stamp"}
+{"ts_wita":"2026-10-06T06:59:13+0800","event":"pipe_dead_start","detail":"stamp=1791241153"}
+{"ts_wita":"2026-10-06T07:00:13+0800","event":"pipe_ok","detail":"clear_stamp"}
+{"ts_wita":"2026-10-06T07:01:13+0800","event":"pipe_ok","detail":"clear_stamp"}
+{"ts_wita":"2026-10-06T07:02:13+0800","event":"pipe_ok","detail":"clear_stamp"}
+{"ts_wita":"2026-10-06T07:03:13+0800","event":"pipe_ok","detail":"clear_stamp"}
+{"ts_wita":"2026-10-06T07:04:13+0800","event":"pipe_dead_start","detail":"stamp=1791241453"}
+{"ts_wita":"2026-10-06T07:05:14+0800","event":"pipe_ok","detail":"clear_stamp"}
+{"ts_wita":"2026-10-06T07:06:14+0800","event":"pipe_ok","detail":"clear_stamp"}
+{"ts_wita":"2026-10-06T07:07:14+0800","event":"pipe_ok","detail":"clear_stamp"}
+{"ts_wita":"2026-10-06T07:08:14+0800","event":"pipe_ok","detail":"clear_stamp"}
+{"ts_wita":"2026-10-06T07:09:14+0800","event":"pipe_ok","detail":"clear_stamp"}
+{"ts_wita":"2026-10-06T07:10:14+0800","event":"pipe_ok","detail":"clear_stamp"}

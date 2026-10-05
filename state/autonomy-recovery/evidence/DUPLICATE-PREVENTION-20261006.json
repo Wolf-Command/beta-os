@@ -1,0 +1,9 @@
+{
+  "check": "duplicate execution prevention after cloud completion (store-level; Studio return SIMULATED via probe=up, real Studio still connected=false)",
+  "at": "2026-10-06T06:18:34+08:00",
+  "action": "NOOP_ALREADY_LOCKED",
+  "duplicate_prevented": true,
+  "assigned_worker": "cursor_cloud_agent",
+  "item_status": "COMPLETED",
+  "truth": "DUPLICATE EXECUTION PREVENTION: store-level PASS (real worker lock, cloud-completed item); live Studio rejoin UNPROVED"
+}

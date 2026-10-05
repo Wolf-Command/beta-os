@@ -1,0 +1,39 @@
+{
+  "id": "STUDIO-REJOIN-20261006",
+  "stamped_at_wita": "2026-10-06T06:49:03+08:00",
+  "timezone": "Asia/Makassar (WITA, UTC+8)",
+  "verdict": "PROVED",
+  "listmachines": {
+    "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78",
+    "label": "Wolfs-Mac-Studio-2.local",
+    "connected": true,
+    "observed_wita": "2026-10-06T06:43+08:00_context_and_06:44_executor"
+  },
+  "studio_shell": {
+    "hostname": "Wolfs-Mac-Studio-2.local",
+    "date": "Tue Oct 6 06:44:21 WITA 2026",
+    "uptime": "1 day 12:41 (boot Oct 4 18:03 \u2014 NO reboot overnight)",
+    "ComputerName": "Wolf\u2019s Mac Studio",
+    "LocalHostName": "Wolfs-Mac-Studio-2"
+  },
+  "who_brought_it_back": {
+    "class": "USER_HID_ACTIVITY_NOT_AUTOMATIC_RECOVERY",
+    "evidence": [
+      "2026-10-06 06:40:10 +0800 WindowServer UserIsActive USB Receiver (AppleUserHIDEventService) \u2192 Display is turned on",
+      "ListMachines connected=true observed ~06:43 WITA",
+      "NAS watcher.audit continued result=status_up through outage; never result=recover_fired this night",
+      "wolfrecover audit.log shows status every 5m all night; no recover-watchdog cmd"
+    ],
+    "not": "NAS recover-watchdog / automatic supervisor recovery"
+  },
+  "idle_system_sleep_hypothesis": {
+    "verdict": "DISPROVED",
+    "supporting": [
+      "pmset currently sleep=0 disksleep=0 standby=0 SleepDisabled=1 womp=1 autorestart=1",
+      "No 'Entering Sleep' lines in pmset -g log for 2026-10-05 22:45 through morning",
+      "Display off at 22:45:14 after UserIsActive TimedOut; assertions released to No Assertions \u2014 display sleep only",
+      "NAS\u2192Studio forced-command status succeeded every ~5m overnight (watcher.audit + /var/wolfrecover/logs/audit.log)"
+    ]
+  },
+  "matt_messaged": false
+}

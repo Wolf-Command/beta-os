@@ -1,0 +1,12 @@
+{
+  "armed": true,
+  "consecutive_misses": 0,
+  "last_status_ok": "2026-10-06T07:10:36+08:00",
+  "last_recovery_at": "2026-10-06T07:05:03+08:00",
+  "recovery_attempts": 1,
+  "last_backoff_sec": 60,
+  "next_eligible_at_epoch": 1791241561.6979342,
+  "last_event": "status_up",
+  "escalate_human": false,
+  "escalate_reason": null
+}

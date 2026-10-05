@@ -1,0 +1,133 @@
+{
+  "id": "NAS-SUPERVISOR-DEPLOY-20261006",
+  "stamped_at_wita": "2026-10-06T06:49:03+08:00",
+  "verdicts": {
+    "NAS_SUPERVISOR_DEPLOYED": "PROVED",
+    "NAS_HEARTBEAT_DETECTION_HEALTHY": "PROVED_LIVE_STATUS_UP",
+    "NAS_HEARTBEAT_DETECTION_MISS": "PROVED_DRY_RUN_ONLY",
+    "RESTRICTED_RECOVERY_PATH": "PROVED_YES",
+    "SLEEP_FIX_APPLIED_THIS_SESSION": "NO_ALREADY_AT_TARGET_SUDO_N_FAILS",
+    "DESTRUCTIVE_LIVE_KILL": "NOT_RUN_AWAITING_PARENT_COORDINATION",
+    "NAS_SUPERVISOR_ON_SCHEDULER": "PROVED"
+  },
+  "nas": {
+    "hostname": "Wolf_Command_1",
+    "tailnet_ip": "100.86.93.120",
+    "studio_alias_from_studio": "wolfnas \u2192 192.168.77.130",
+    "deploy_dir": "/var/services/homes/Mr Wolf/.ssh/wolf-recovery/",
+    "files": [
+      "watcher.py",
+      "run_watcher_v2.py",
+      "watcher.sh (v2 dispatcher)",
+      "watcher.sh.v1-bak-20261006"
+    ],
+    "scheduler": {
+      "dsm_task_id": 7,
+      "name": "studio-recovery-watcher",
+      "state": "enabled",
+      "interval": "every 5 minutes (00:00\u201323:55 daily)",
+      "next_trigger_observed": "2026-10-06 06:50",
+      "command": "bash \"/var/services/homes/Mr Wolf/.ssh/wolf-recovery/watcher.sh\"",
+      "dispatcher_exec": "python3 run_watcher_v2.py --once --label live --miss-threshold 1 --probe-host 100.113.26.51 --probe-port 2222",
+      "scheduler_tick_proved": {
+        "ts_wita": "2026-10-06T06:50:01+08:00",
+        "event": "status_up",
+        "audit_lines": 3,
+        "next_trigger": "2026-10-06 06:55"
+      }
+    },
+    "probe_target": {
+      "host": "100.113.26.51",
+      "port": 2222,
+      "user": "wolfrecover",
+      "via": "tailscale nc ProxyCommand"
+    },
+    "backoff_params": {
+      "miss_threshold_live": 1,
+      "BACKOFF_SCHEDULE_sec": [
+        60,
+        180,
+        600,
+        1800
+      ],
+      "latch": "armed=false after recover_fired until status_up rearms",
+      "escalate_human": "only after recovery_attempts >= 4 and no alt_worker"
+    },
+    "safe_tests": {
+      "healthy_live_status": {
+        "ts_wita": "2026-10-06T06:48:16+08:00",
+        "last_event": "status_up",
+        "GROK_APP": "2542",
+        "audit": "watcher_v2.healthy.audit.jsonl"
+      },
+      "forced_command_dry_run": {
+        "result": "DRY_RUN_RECOVER_WATCHDOG",
+        "status_sample": {
+          "GROK_APP": "2542",
+          "keepalive": "DOWN_ignored",
+          "host": "Wolfs-Mac-Studio-2.local"
+        }
+      },
+      "miss_detection_dry_run": {
+        "probe": "100.113.26.51:9 (closed)",
+        "events": [
+          "status_miss",
+          "recover_fired(dry_run)",
+          "latched_wait_rearm"
+        ],
+        "audit": "watcher_v2.missdrill.audit.jsonl",
+        "note": "NOT LIVE PROVED for real recover-watchdog side effects"
+      },
+      "live_prime_tick": {
+        "ts_wita": "2026-10-06T06:48:37+08:00",
+        "last_event": "status_up",
+        "dry_run": false,
+        "audit": "watcher_v2.live.audit.jsonl"
+      }
+    }
+  },
+  "restricted_recovery_path": {
+    "exists": true,
+    "what": "Studio /var/wolfrecover/sshd on 100.113.26.51:2222; AllowUsers wolfrecover; ForceCommand /var/wolfrecover/recover-bounded.sh; allowed SSH_ORIGINAL_COMMAND: status | recover-watchdog (else DENIED)",
+    "recover_watchdog_actions": "launchctl kickstart gui/*/com.wolf.mac-reachability.{supervisor,heartbeat} and com.wolfcommand.grok-bot-keepalive",
+    "authorized_keys_wolfterminal": "no command= restriction (unrelated interactive key)",
+    "nas_client_key": "lives only on NAS under .ssh/wolf-recovery/id_ed25519 (not printed)"
+  },
+  "sleep_settings": {
+    "before_after_same": {
+      "SleepDisabled": 1,
+      "sleep": 0,
+      "disksleep": 0,
+      "standby": 0,
+      "womp": 1,
+      "autorestart": 1,
+      "powernap": 0,
+      "displaysleep": 10
+    },
+    "proposed_fix_if_needed": "sudo pmset -a sleep 0 disksleep 0 standby 0 womp 1 autorestart 1",
+    "sudo_n": "FAILS (password required) \u2014 could not apply changes non-interactively",
+    "applied_this_session": false,
+    "note": "Already at no-system-sleep target; overnight outage was NOT system sleep"
+  },
+  "how_to_observe_live_kill_test": {
+    "nas_audit": "/var/services/homes/Mr Wolf/.ssh/wolf-recovery/watcher_v2.live.audit.jsonl",
+    "nas_state": "/var/services/homes/Mr Wolf/.ssh/wolf-recovery/watcher_v2.live.state.json",
+    "studio_recover_audit": "/var/wolfrecover/logs/audit.log",
+    "box_observer": "wolf-box-observer 100.83.109.8 (userspace; SOCKS5 localhost:1055) \u2014 no SSH key; watch ListMachines + public health",
+    "expected_on_GROK_APP_NONE": "within <=5 min DSM tick: status_miss \u2192 recover_fired \u2192 latch; backoff 60s before next eligible; status_up rearms",
+    "blind_spot_warning": "If kill leaves a zombie/helper counted as GROK_APP PID, or only kills local-exec pipe while app stays, v2 still may status_up \u2014 kill must make recover-bounded status print GROK_APP NONE"
+  },
+  "destructive_live_recovery_test_exact": {
+    "what": "From an authorised coordinator (not this executor yet): stop/kill ONLY the Grok Bot.app main process so ForceCommand status returns GROK_APP NONE, while leaving Prod :8787, Beta app, cursor-agent, and recovery sshd :2222 untouched; observe NAS v2 within one 5-min DSM tick fire recover-watchdog for real; confirm ListMachines reconnects without Matt HID.",
+    "what_could_go_wrong": [
+      "Kill leaves helpers/name match so status still shows GROK_APP PID \u2192 no recover",
+      "recover-watchdog relaunches app but remote-control pipe still dead \u2192 false SUCCESS on NAS, ListMachines still false",
+      "Accidentally kill recovery sshd :2222 or Tailscale \u2192 NAS cannot reach Studio",
+      "Accidentally touch Prod pid/port 8787 or Beta",
+      "Latch stuck fired if status never returns GROK_APP token after partial recover",
+      "Cutting control path before observers ready loses box Shell mid-test"
+    ]
+  },
+  "box_tailnet_note": "wolf-box-observer 100.83.109.8 now on tailnet; box has no SSH key \u2014 deploy/tests used Studio\u2192NAS wolfnas hop",
+  "matt_messaged": false
+}

@@ -1,2 +1,6 @@
 {"ts_wita": "2026-10-06T06:15:07+08:00", "event": "assigned", "id": "WI-FAILOVER-LIVE-20261006", "worker": "cursor_cloud_agent", "reason": "studio_down_repo_eligible_failover", "lock": true, "studio_up": false}
 {"ts_wita": "2026-10-06T06:15:07+08:00", "event": "duplicate_prevented", "id": "WI-FAILOVER-LIVE-20261006", "holder": "cursor_cloud_agent:idem-WI-FAILOVER-LIVE-20261006"}
+{"ts": "2026-10-05T22:16:04.943885+00:00", "event": "cloud_agent_launched", "work_item": "WI-FAILOVER-LIVE-20261006", "lock": "cursor_cloud_agent:idem-WI-FAILOVER-LIVE-20261006", "agent_id": "bc-64b1af89-52d3-5be0-83a0-66e4f6628e23", "url": "https://cursor.com/agents/bc-64b1af89-52d3-5be0-83a0-66e4f6628e23", "launched_by": "peaches_parent", "studio_connected": false}
+{"ts":"2026-10-06T06:18+08:00","event":"cloud_commit_verified","work_item":"WI-FAILOVER-LIVE-20261006","sha":"de256dad98d8055b35819329e83edca73eed39bd","state":"COMPLETED_BY_cursor_cloud_agent"}
+{"ts_wita": "2026-10-06T06:18:34+08:00", "event": "duplicate_prevented", "id": "WI-FAILOVER-LIVE-20261006", "holder": "cursor_cloud_agent:idem-WI-FAILOVER-LIVE-20261006"}
+{"ts_wita": "2026-10-06T07:07:40+08:00", "event": "duplicate_prevented", "id": "WI-FAILOVER-LIVE-20261006", "holder": "cursor_cloud_agent:idem-WI-FAILOVER-LIVE-20261006"}

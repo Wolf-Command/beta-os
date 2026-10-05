@@ -125,3 +125,11 @@ class TestWorkerFailover(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestPipeDeadDetection(unittest.TestCase):
+    def test_pipe_dead_is_miss_even_if_pid_present(self):
+        from watcher import parse_control_up
+        self.assertTrue(parse_control_up({"ok": True, "GROK_APP": "2542", "PIPE": "PIPE_OK", "pipe_ok": True}))
+        self.assertFalse(parse_control_up({"ok": True, "GROK_APP": "2542", "PIPE": "PIPE_DEAD", "pipe_ok": False}))
+        self.assertFalse(parse_control_up({"ok": True, "GROK_APP": "NONE", "PIPE": "PIPE_OK"}))

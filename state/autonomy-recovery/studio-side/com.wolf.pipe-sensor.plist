@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.wolf.pipe-sensor</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>/Users/wolfterminal/beta-os/scripts/mac-reachability/pipe_sensor_server.py</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/tmp/wolf-pipe-sensor.out</string>
+  <key>StandardErrorPath</key><string>/tmp/wolf-pipe-sensor.err</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>WOLF_PIPE_BIND</key><string>100.113.26.51</string>
+    <key>WOLF_PIPE_PORT</key><string>2223</string>
+  </dict>
+</dict>
+</plist>

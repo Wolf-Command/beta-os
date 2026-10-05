@@ -1,0 +1,111 @@
+{
+  "doc": "BOX-TAILNET-JOIN",
+  "date": "2026-10-06",
+  "timestamp_wita": "2026-10-06T06:47:20 WITA",
+  "joined": true,
+  "node_name": "wolf-box-observer",
+  "box_tailnet_ip": "100.83.109.8",
+  "tailscale_version": "1.102.5",
+  "mode": "userspace-networking",
+  "socks5": "localhost:1055",
+  "http_proxy": "localhost:1056",
+  "state_dir": "/home/box/.tailscale-state",
+  "bin_dir": "/home/box/.local/tailscale",
+  "accept_routes": false,
+  "accept_dns": false,
+  "peers_observed": [
+    {
+      "name": "wolf-command-1",
+      "ip": "100.86.93.120",
+      "os": "linux",
+      "role": "NAS",
+      "online": true
+    },
+    {
+      "name": "wolfs-mac-studio",
+      "ip": "100.113.26.51",
+      "os": "macOS",
+      "role": "Mac Studio",
+      "online": true
+    },
+    {
+      "name": "iphone182",
+      "ip": "100.93.195.99",
+      "os": "iOS",
+      "online": true
+    },
+    {
+      "name": "mr-wolf",
+      "ip": "100.104.71.75",
+      "os": "macOS",
+      "online": false
+    }
+  ],
+  "reachability": {
+    "nas": {
+      "name": "wolf-command-1",
+      "ip": "100.86.93.120",
+      "ping": {
+        "ok": true,
+        "count": 3,
+        "latencies_ms": [
+          810,
+          277,
+          438
+        ],
+        "path": "DERP(sin)",
+        "direct": false
+      },
+      "ports": [
+        {
+          "port": 5000,
+          "proto": "tcp",
+          "via": "socks5",
+          "http_code": 200,
+          "ok": true,
+          "note": "Synology DSM HTTP"
+        },
+        {
+          "port": 5001,
+          "proto": "tcp",
+          "via": "socks5",
+          "http_code": 200,
+          "ok": true,
+          "note": "Synology DSM HTTPS"
+        }
+      ]
+    },
+    "studio": {
+      "name": "wolfs-mac-studio",
+      "ip": "100.113.26.51",
+      "ping": {
+        "ok": true,
+        "count": 3,
+        "latencies_ms": [
+          280,
+          278,
+          277
+        ],
+        "path": "DERP(sin)",
+        "direct": false
+      },
+      "ports": [
+        {
+          "port": 2222,
+          "proto": "tcp",
+          "via": "socks5",
+          "ok": true,
+          "elapsed_s": 0.572,
+          "note": "SSH listen check only; no login attempted"
+        }
+      ]
+    }
+  },
+  "blockers": [],
+  "notes": [
+    "Auth via file:/dev/stdin; key not printed, not in logs, not in evidence",
+    "No TUN; userspace networking with local SOCKS5/HTTP proxies",
+    "Did not scan beyond NAS and Studio; did not attempt SSH login",
+    "Peer list includes other online devices seen in status for context only"
+  ]
+}

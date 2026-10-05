@@ -1,0 +1,22 @@
+{
+  "updated_at_wita": "2026-10-06T07:07:40+08:00",
+  "workers": {
+    "studio_grok": {
+      "status": "AVAILABLE",
+      "history": [
+        {
+          "status": "UNAVAILABLE",
+          "ts_wita": "2026-10-06T07:03:34+08:00",
+          "reason": "PIPE_DEAD STATE_T pid=4957 SIGSTOP live test round2"
+        },
+        {
+          "status": "AVAILABLE",
+          "ts_wita": "2026-10-06T07:05:35+08:00",
+          "reason": "NAS recover_fired 07:05:03 \u2192 recover_pipe new_pid=5819; ListMachines connected=true"
+        }
+      ],
+      "current_pid": 5819,
+      "source": "NAS watcher_v2.live.audit.jsonl + Studio recover-pipe.audit.jsonl"
+    }
+  }
+}

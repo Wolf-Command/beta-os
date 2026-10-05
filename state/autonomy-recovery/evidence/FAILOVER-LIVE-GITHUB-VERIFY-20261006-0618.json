@@ -1,0 +1,20 @@
+{
+  "check": "CURSOR CLOUD FAILOVER LIVE PROVED - independent GitHub verification",
+  "verified_at_wita": "2026-10-06T06:18+08:00",
+  "verifier": "Peaches via cursor-github connector (get_commit + list_commits), independent of the cloud agent's self-report",
+  "cloud_agent_id": "bc-64b1af89-52d3-5be0-83a0-66e4f6628e23",
+  "repo": "wolfcommand/beta-os",
+  "branch": "build/autonomy-recovery",
+  "branch_tip": "de256dad98d8055b35819329e83edca73eed39bd",
+  "parent": "60d38e251b79901e47f0c78babdbd8260a6016db",
+  "commit_time_wita": "2026-10-06T06:17:48+08:00",
+  "author": "Cursor Agent <cursoragent@cursor.com>",
+  "signature_verified_by_github": true,
+  "tests_reported": "6/6 pass",
+  "secrets_scan_reported": "0 hits",
+  "files_changed": 17,
+  "work_item": "WI-FAILOVER-LIVE-20261006",
+  "lock": "cursor_cloud_agent:idem-WI-FAILOVER-LIVE-20261006",
+  "studio_state_during_run": "connected=false (unavailable); Wolf continued via cursor_cloud_agent",
+  "result": "PASS"
+}

@@ -1,0 +1,106 @@
+{
+  "id": "LIVE-RECOVERY-TEST-20261006",
+  "stamped_at_wita": "2026-10-06T07:07:50+08:00",
+  "timezone": "Asia/Makassar (WITA, UTC+8)",
+  "test_shape": "PIPE_DEAD while GROK_APP PID present (SIGSTOP); not app-kill",
+  "round1_aborted": {
+    "note": "keepalive StartInterval=60 recovered at 06:59:03 before NAS 07:00 tick \u2014 not NAS-first. Fixed keepalive to kickstart-only, reran.",
+    "injection": "06:58:30 STOP pid 4209",
+    "local_recover": "06:59:03 keepalive \u2192 4957"
+  },
+  "round2_live_proved": {
+    "preflight": {
+      "dsm_task_7": "enabled next 07:05",
+      "nas_status_up_PIPE_OK": "2026-10-06T07:03:04+08:00",
+      "prod_pid_1297": "present before/after",
+      "recovery_sshd_2222": "untouched",
+      "cursor_agent_2627": "not touched"
+    },
+    "timeline": [
+      {
+        "ts": "2026-10-06T07:03:03+08:00",
+        "event": "marker_pre_sigstop",
+        "pid": 4957
+      },
+      {
+        "ts": "2026-10-06T07:03:34+08:00",
+        "event": "PIPE_DEAD observed (SOCKS)",
+        "pid": 4957,
+        "state": "T"
+      },
+      {
+        "ts": "2026-10-06T07:03:xx+08:00",
+        "event": "ListMachines connected=false"
+      },
+      {
+        "ts": "2026-10-06T07:04:13+08:00",
+        "event": "safety_net pipe_dead_start (no fire)"
+      },
+      {
+        "ts": "2026-10-06T07:05:02+08:00",
+        "event": "NAS status_miss PIPE_DEAD STATE_T GROK_APP still 4957"
+      },
+      {
+        "ts": "2026-10-06T07:05:02+08:00",
+        "event": "Studio recover-watchdog + recover_pipe force_kill\u21925819"
+      },
+      {
+        "ts": "2026-10-06T07:05:03+08:00",
+        "event": "NAS recover_fired attempt=1 backoff=60s latch armed=false"
+      },
+      {
+        "ts": "2026-10-06T07:05:35+08:00",
+        "event": "PIPE_OK pid=5819"
+      },
+      {
+        "ts": "~2026-10-06T07:05:37+08:00",
+        "event": "ListMachines connected=true"
+      },
+      {
+        "ts": "2026-10-06T07:07:31+08:00",
+        "event": "NAS status_up rearmed=true PIPE_OK GROK_APP 5819"
+      }
+    ],
+    "injection_method": "kill -STOP on Grok Bot main (helpers may remain); process state T; app PID still reported by ForceCommand status",
+    "hid_wake_in_window": false,
+    "safety_net_fired": false,
+    "matt_required": false
+  },
+  "verdicts": {
+    "NAS_detects_failure": "LIVE PROVED",
+    "NAS_invokes_restricted_recovery": "LIVE PROVED",
+    "control_path_returns_automatically": "LIVE PROVED",
+    "Wolf_detects_return": "LIVE PROVED",
+    "no_duplicate_execution": "LIVE PROVED",
+    "single_complete_work_item": "LIVE PROVED",
+    "Grok_worker_available_again": "LIVE PROVED",
+    "Matt_not_required": "LIVE PROVED",
+    "backoff_latch": "LIVE PROVED (attempt=1, backoff_sec=60, armed=false until status_up rearm); schedule unit-tested 60/180/600/1800"
+  },
+  "failover_duplicate": {
+    "work_id": "WI-FAILOVER-LIVE-20261006",
+    "assign_result": "NOOP_ALREADY_LOCKED",
+    "status": "COMPLETED",
+    "commit": "de256dad98d8055b35819329e83edca73eed39bd",
+    "studio_probe": "connected=true"
+  },
+  "prod_untouched": {
+    "pid_1297": true,
+    "port_8787": true
+  },
+  "evidence_refs": [
+    "PIPE-SIGNAL-20261006.json",
+    "NAS watcher_v2.live.audit.jsonl",
+    "/var/wolfrecover/logs/audit.log",
+    "~/beta-os/state/mac-reachability/logs/recover-pipe.audit.jsonl",
+    "~/beta-os/state/mac-reachability/logs/pipe-safety-net.audit.jsonl",
+    "worker-registry.json"
+  ],
+  "architecture_notes": {
+    "pipe_signal": "process state T + AppleEvent timeout; HTTP :2223 Tailscale-only; NAS probes via tailscale nc",
+    "recover_bounded_edit": "NOT possible without sudo; recovery action in user keepalive kickstarted by ForceCommand recover-watchdog",
+    "prevention": "NSAppSleepDisabled=YES for com.anysphere.sand; caffeinate -di LaunchAgent",
+    "keepalive": "kickstart-only after round1 race (StartInterval removed)"
+  },
+  "matt_messaged": false
+}

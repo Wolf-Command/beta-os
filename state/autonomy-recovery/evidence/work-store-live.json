@@ -4,7 +4,7 @@
       "id": "WI-FAILOVER-LIVE-20261006",
       "title": "LIVE FAILOVER: commit autonomy-recovery tree to build/autonomy-recovery + run unit tests",
       "kind": "repo_edit",
-      "status": "ASSIGNED",
+      "status": "COMPLETED",
       "assigned_worker": "cursor_cloud_agent",
       "preferred_worker": "studio_shell",
       "repo_eligible": true,
@@ -15,11 +15,22 @@
           "event": "assign",
           "worker": "cursor_cloud_agent",
           "reason": "studio_down_repo_eligible_failover"
+        },
+        {
+          "at": "2026-10-06T06:18:34+08:00",
+          "event": "complete",
+          "worker": "cursor_cloud_agent",
+          "commit": "de256dad98d8055b35819329e83edca73eed39bd",
+          "verified": "github get_commit"
         }
       ],
       "lock_holder": "cursor_cloud_agent:idem-WI-FAILOVER-LIVE-20261006",
       "lock_until": "2026-10-06T06:15:07+08:00",
-      "production_mutation": false
+      "production_mutation": false,
+      "completed_by": "cursor_cloud_agent",
+      "completed_commit": "de256dad98d8055b35819329e83edca73eed39bd",
+      "completed_at": "2026-10-06T06:17:48+08:00",
+      "github_verified": true
     }
   }
 }

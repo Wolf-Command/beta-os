@@ -1,0 +1,39 @@
+{
+  "id": "PIPE-SIGNAL-20261006",
+  "stamped_at_wita": "2026-10-06T06:56:40+08:00",
+  "verdict": "PROVED_SIGNAL_FOUND",
+  "historical_failure_shape": {
+    "one_line": "App process stayed up (GROK_APP PID present; NAS status_up all night) while desktop remote-control pipe was dead from ~22:55 until HID wake 06:40.",
+    "logs": [
+      "Cursor renderer 2026-10-06 06:43:35 WorkspaceConnectionService priorState=reconnecting \u2192 connected (pipe rejoin)",
+      "pmset: Display off 22:45:14; UserIsActive USB Receiver 06:40:10 \u2192 Display on (HID, not NAS)",
+      "NAS watcher.audit status_up throughout \u2014 PID-only blind spot"
+    ],
+    "tcp_established": "REJECTED as signal: all Grok Bot PIDs had established_count=0 while pipe was healthy (Shell working)",
+    "displaysleep": 10,
+    "AppNap_NSAppSleepDisabled_before": "unset"
+  },
+  "chosen_signals": {
+    "primary": "process state T (SIGSTOP/zombie) \u2192 PIPE_DEAD without needing AppleEvent",
+    "secondary": "timed AppleEvent osascript 'tell app Grok Bot to get name' within 5s \u2014 healthy ~0.05s; hang/timeout \u2192 PIPE_DEAD",
+    "delivery_to_NAS": "HTTP GET /pipe-health on Tailscale-only bind 100.113.26.51:2223 (via tailscale nc from NAS; curl from Synology times out)",
+    "heartbeat_file": "/tmp/wolf-pipe-heartbeat.json mode 644"
+  },
+  "prevention_applied": {
+    "NSAppSleepDisabled": {
+      "bundle": "com.anysphere.sand",
+      "before": "unset",
+      "after": true
+    },
+    "caffeinate_di_LaunchAgent": "com.wolf.caffeinate-di running",
+    "sudo_required_for_recover_bounded_edit": true,
+    "note": "/var/wolfrecover/recover-bounded.sh not writable without sudo; pipe signal delivered via HTTP :2223 instead of ForceCommand status text"
+  },
+  "studio_agents_installed": [
+    "com.wolf.pipe-sensor",
+    "com.wolf.pipe-safety-net (20 min)",
+    "com.wolf.caffeinate-di"
+  ],
+  "recovery_action": "recover_pipe.sh: CONT \u2192 osascript quit \u2192 wait \u226420s \u2192 kill -9 if needed \u2192 open -a Grok Bot; max 3/hour; invoked by keepalive on NAS recover-watchdog kickstart",
+  "matt_messaged": false
+}

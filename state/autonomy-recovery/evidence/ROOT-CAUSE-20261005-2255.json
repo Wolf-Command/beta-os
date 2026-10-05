@@ -1,0 +1,17 @@
+{
+  "id": "ROOT-CAUSE-20261005-2255",
+  "stamped_at_wita": "2026-10-06T06:49:03+08:00",
+  "one_sentence_root_cause": "The Grok Bot desktop remote-control pipe died ~22:55 WITA 5 Oct while the Studio host stayed awake (sleep=0; NAS status probes every 5m kept seeing GROK_APP PID present), so the NAS watcher never fired recover-watchdog; the pipe only returned after HID USB-receiver activity at 06:40 WITA 6 Oct.",
+  "idle_system_sleep": "DISPROVED",
+  "supporting_lines": [
+    "pmset: Display is turned off 2026-10-05 22:45:14; UserIsActive TimedOut 22:45:04; System: No Assertions after powerd/coreaudiod releases \u2014 no Entering Sleep",
+    "NAS watcher.audit: result=status_up at 22:50, 22:55, 23:00 \u2026 through 06:40 (GROK_APP process present)",
+    "/var/wolfrecover/logs/audit.log: cmd=status every 5m same window; no recover-watchdog",
+    "bf-watch / ListMachines: pipe UNREACHABLE from ~22:58 through ~06:43",
+    "Rejoin: 2026-10-06 06:40:10 UserIsActive product:USB Receiver \u2192 display on; connected=true ~06:43",
+    "Blind spot: watcher.sh/v1 only treats GROK_APP NONE as down \u2014 not remote-control pipe death"
+  ],
+  "hostname_minus_2": "LocalHostName Wolfs-Mac-Studio-2 (Bonjour conflict suffix); not proved tied to system sleep this night",
+  "grok_bot_pid_stable": "GROK_APP 2542 present since Oct 4 drill new_pid; process did not exit during pipe outage",
+  "matt_messaged": false
+}

@@ -1,0 +1,35 @@
+{
+  "id": "FAILOVER-LIVE-20261006-0615",
+  "ts_wita": "2026-10-06T06:15:30+08:00",
+  "work_item_id": "WI-FAILOVER-LIVE-20261006",
+  "idempotency_key": "idem-WI-FAILOVER-LIVE-20261006",
+  "lock_holder": "cursor_cloud_agent:idem-WI-FAILOVER-LIVE-20261006",
+  "assigned_worker": "cursor_cloud_agent",
+  "studio_connected_at_assign": false,
+  "duplicate_prevented_on_reassign": true,
+  "payload": {
+    "tgz_path": "/tmp/ar-pack/autonomy-recovery.tgz",
+    "tgz_sha256": "089b6067238abf3c48512e623ceddee91ed5ab10f5b81380d843c941b3b263cb",
+    "tgz_bytes": 13156,
+    "b64_chars": 17544,
+    "secrets_scan": "CLEAN"
+  },
+  "cloud_agent": {
+    "launch_attempted": true,
+    "result": "BLOCKED_TOOL_UNAVAILABLE",
+    "detail": "GetDynamicTools: namespace \"cursor\" not found; CallDynamicTool CloudAgent \u2192 MCP server \"cursor\" not available to this executor subagent. No CloudAgent in executor tool schema. Parent/main agent must launch CloudAgent with evidence/CLOUDAGENT-PROMPT.md (includes base64 tarball).",
+    "agent_id": null,
+    "agent_url": null,
+    "commit_sha": null,
+    "tests": null,
+    "latency_ms": null
+  },
+  "listmachines": {
+    "connected": false,
+    "machineId": "36d8fa4b-2d58-4983-b227-e5bfa5495e78"
+  },
+  "production_touched": false,
+  "matt_messaged": false,
+  "verdict": "FAIL \u2014 work item + lock PROVED; live CloudAgent launch blocked on missing tool for this executor",
+  "parent_action": "Launch CloudAgent on wolfcommand/beta-os baseRef=build/autonomy-recovery with prompt from /workspace/autonomy-recovery/evidence/CLOUDAGENT-PROMPT.md; revive this executor on completion to verify SHA via cursor-github and write FAILOVER-LIVE-result.json"
+}
