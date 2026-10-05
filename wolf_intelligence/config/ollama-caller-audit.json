@@ -1,0 +1,177 @@
+{
+  "at": "2026-10-05T22:30:49+08:00",
+  "beta_os_callers": 18,
+  "wolf_system_callers": 46,
+  "callers": [
+    {
+      "path": "~/beta-os/audit/runtime/models.json",
+      "hit_count": 3
+    },
+    {
+      "path": "~/beta-os/audit/runtime/runtime-inventory.json",
+      "hit_count": 4
+    },
+    {
+      "path": "~/beta-os/audit/runtime/services.json",
+      "hit_count": 6
+    },
+    {
+      "path": "~/beta-os/audit/runtime/retirement-candidates.json",
+      "hit_count": 2
+    },
+    {
+      "path": "~/beta-os/audit/runtime/v1-retirement-map.json",
+      "hit_count": 2
+    },
+    {
+      "path": "~/beta-os/audit/runtime/README.md",
+      "hit_count": 5
+    },
+    {
+      "path": "~/beta-os/audit/runtime/schedules.json",
+      "hit_count": 1
+    },
+    {
+      "path": "~/beta-os/audit/runtime/disk-inventory.json",
+      "hit_count": 1
+    },
+    {
+      "path": "~/beta-os/state/legacy/legacy-work-candidates.json",
+      "hit_count": 1
+    },
+    {
+      "path": "~/beta-os/state/legacy/proposed-migration.json",
+      "hit_count": 1
+    },
+    {
+      "path": "~/beta-os/state/wolf-intelligence/ledger/snapshot.json",
+      "hit_count": 2
+    },
+    {
+      "path": "~/beta-os/state/wolf-intelligence/work_items/wi_5a680764a37d.json",
+      "hit_count": 10
+    },
+    {
+      "path": "~/beta-os/docs/wolf/ops/LEGACY-1-RESULT.md",
+      "hit_count": 1
+    },
+    {
+      "path": "~/beta-os/wolf_intelligence/config/models.json",
+      "hit_count": 4
+    },
+    {
+      "path": "~/beta-os/wolf_intelligence/config/providers.json",
+      "hit_count": 4
+    },
+    {
+      "path": "~/beta-os/wolf_intelligence/config/capacity.json",
+      "hit_count": 2
+    },
+    {
+      "path": "~/beta-os/wolf_intelligence/adapters/__init__.py",
+      "hit_count": 1
+    },
+    {
+      "path": "~/beta-os/wolf_intelligence/adapters/ollama.py",
+      "hit_count": 8
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/usage/hybrid-lock.md",
+      "hit_count": 1
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/docs/WOLF-COMMAND-CURSOR-BRIEF.md",
+      "hit_count": 1
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/wolf-desk/tasks.json.bak-20260831-peaches-out",
+      "hit_count": 2
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/wolf-desk/tasks.json.bak-20260831-uma-blu-pay-names",
+      "hit_count": 2
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/wolf-desk/tasks.json.bak-20260902-haikal-cf",
+      "hit_count": 2
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/wolf-desk/tasks.json",
+      "hit_count": 1
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/wolf-desk/tasks.jsonl",
+      "hit_count": 1
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/scripts/ollama-draft.py",
+      "hit_count": 5
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/scripts/spartacus_bot.py",
+      "hit_count": 1
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/scripts/DESK-FILE-WATCH.md",
+      "hit_count": 3
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/scripts/local_llm.py",
+      "hit_count": 11
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/scripts/model_router.py",
+      "hit_count": 3
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/scripts/aios_lib.py",
+      "hit_count": 3
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/.venv-tts/lib/python3.14/site-packages/huggingface_hub/hf_api.py",
+      "hit_count": 1
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/.venv-tts/lib/python3.14/site-packages/pygments/unistring.py",
+      "hit_count": 2
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/.venv-tts/lib/python3.14/site-packages/pydantic-2.13.4.dist-info/METADATA",
+      "hit_count": 1
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/.venv-tts/lib/python3.14/site-packages/scipy/spatial/tests/data/pdist-minkowski-5.8-ml-iris.txt",
+      "hit_count": 1
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/.venv-tts/lib/python3.14/site-packages/scipy/spatial/tests/data/random-double-data.txt",
+      "hit_count": 1
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/.venv-tts/lib/python3.14/site-packages/scipy/io/arff/tests/data/test10.arff",
+      "hit_count": 1
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/.venv-tts/lib/python3.14/site-packages/transformers/models/video_llama_3/image_processing_video_llama_3.py",
+      "hit_count": 6
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/.venv-tts/lib/python3.14/site-packages/transformers/models/video_llama_3/video_processing_video_llama_3.py",
+      "hit_count": 5
+    },
+    {
+      "path": "~/.openclaw/workspace/wolf-system/.venv-tts/lib/python3.14/site-packages/transformers/models/video_llama_3/modeling_video_llama_3.py",
+      "hit_count": 48
+    }
+  ],
+  "recent_ollama_drafts": [
+    {
+      "name": "draft-20260824-200658.txt",
+      "mtime": "2026-09-10T19:15:01+08:00"
+    }
+  ],
+  "classification": "RETIRE CANDIDATE",
+  "action": "DO_NOT_DELETE \u2014 mark RETIRE CANDIDATE only",
+  "notes": "beta-os has essentially no 11434 callers; wolf-system has model_router/local_llm/ollama-draft. Models stale 3-4mo per audit.",
+  "why": "Callers exist in wolf-system (model_router/local_llm/ollama-draft) but last draft mtime 2026-09-10; models stale 3-4 months per audit; beta-os has no live :11434 dependency for control plane. DO NOT DELETE."
+}

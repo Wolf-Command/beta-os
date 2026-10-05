@@ -1,0 +1,173 @@
+{
+  "at": "2026-10-05T22:31:06+08:00",
+  "mode": "SHADOW",
+  "production_touched": false,
+  "workers_killed": false,
+  "workers": {
+    "grok_bot": {
+      "label": "Grok Bot",
+      "status": "CONNECTED",
+      "ok": true,
+      "evidence": "settings.json present; local-exec-daemon.json present; daemon-connection present",
+      "data": {
+        "path": "/Users/wolfterminal/.grokbot"
+      },
+      "supports": [
+        "health",
+        "result",
+        "status",
+        "submit"
+      ],
+      "isolated_submit_test": {
+        "status": "SHADOW_OK",
+        "ok": true,
+        "message": "shadow recommend-only; no live Grok spawn"
+      }
+    },
+    "cursor": {
+      "label": "Cursor",
+      "status": "CONNECTED",
+      "ok": true,
+      "evidence": "bf_cursor_launch.sh present; ~/.cursor present; cursor-agent on PATH: /Users/wolfterminal/.local/bin/cursor-agent",
+      "data": {
+        "launch": "/Users/wolfterminal/beta-os/scripts/build-factory/bf_cursor_launch.sh"
+      },
+      "supports": [
+        "cancel",
+        "health",
+        "result",
+        "status",
+        "submit"
+      ],
+      "isolated_submit_test": {
+        "status": "SHADOW_OK",
+        "ok": true,
+        "message": "shadow only \u2014 would have used bf_cursor_launch"
+      }
+    },
+    "peaches": {
+      "label": "Peaches/OpenClaw CoS",
+      "status": "CONNECTED",
+      "ok": true,
+      "evidence": "peaches-command-bot.py present; peaches-command process running; openclaw.json present | role=CoS_only_not_brain",
+      "data": {
+        "role": "cos_only_not_brain"
+      },
+      "supports": [
+        "health",
+        "submit"
+      ],
+      "isolated_submit_test": {
+        "status": "SHADOW_OK",
+        "ok": true,
+        "message": "shadow CoS recommend path only"
+      }
+    },
+    "openai_chatgpt": {
+      "label": "OpenAI ChatGPT (subscription)",
+      "status": "PARTIAL",
+      "ok": true,
+      "evidence": "ChatGPT subscription status UNKNOWN without account UI; separate from API. ~/.codex present (may be API/Codex, not ChatGPT sub)",
+      "data": {
+        "billing": "subscription"
+      },
+      "supports": [
+        "health"
+      ]
+    },
+    "openai_api": {
+      "label": "OpenAI API",
+      "status": "UNAVAILABLE",
+      "ok": false,
+      "evidence": "OPENAI_API_KEY not configured",
+      "data": {},
+      "supports": [
+        "health",
+        "submit"
+      ],
+      "isolated_submit_test": {
+        "status": "SHADOW_OK",
+        "ok": true,
+        "message": "shadow \u2014 no tokens spent"
+      }
+    },
+    "claude_sub": {
+      "label": "Claude Subscription",
+      "status": "PARTIAL",
+      "ok": true,
+      "evidence": "Owner-declared Claude sub $25/mo; live plan tier not probed. ~/.claude present",
+      "data": {
+        "billing": "subscription",
+        "owner_declared_usd_mo": 25
+      },
+      "supports": [
+        "health"
+      ]
+    },
+    "anthropic_api": {
+      "label": "Anthropic API",
+      "status": "PARTIAL",
+      "ok": true,
+      "evidence": "openclaw primary mentions haiku (default not best); openclaw references anthropic",
+      "data": {
+        "billing": "api",
+        "note": "haiku_is_default_not_best"
+      },
+      "supports": [
+        "health",
+        "submit"
+      ],
+      "isolated_submit_test": {
+        "status": "SHADOW_OK",
+        "ok": true,
+        "message": "shadow \u2014 no tokens spent"
+      }
+    },
+    "gemini": {
+      "label": "Gemini",
+      "status": "UNAVAILABLE",
+      "ok": false,
+      "evidence": "GEMINI_API_KEY not configured",
+      "data": {},
+      "supports": [
+        "health",
+        "submit"
+      ],
+      "isolated_submit_test": {
+        "status": "SHADOW_OK",
+        "ok": true,
+        "message": "shadow \u2014 free path only"
+      }
+    },
+    "ollama": {
+      "label": "Ollama",
+      "status": "CONNECTED",
+      "ok": true,
+      "evidence": "ollama :11434 up; models=['nomic-embed-text:latest', 'llama3.2:3b']",
+      "data": {
+        "models": [
+          "nomic-embed-text:latest",
+          "llama3.2:3b"
+        ],
+        "retire_candidate": "PENDING_PHASE2_CALLER_AUDIT"
+      },
+      "supports": [
+        "health",
+        "submit"
+      ],
+      "isolated_submit_test": {
+        "status": "SHADOW_OK",
+        "ok": true,
+        "message": "shadow \u2014 no generate invoked"
+      },
+      "retire_candidate": "RETIRE CANDIDATE",
+      "retire_why": "Callers exist in wolf-system (model_router/local_llm/ollama-draft) but last draft mtime 2026-09-10; models stale 3-4 months per audit; beta-os has no live :11434 dependency for control plane. DO NOT DELETE.",
+      "action": "DO_NOT_DELETE"
+    }
+  },
+  "summary": {
+    "CONNECTED": 4,
+    "PARTIAL": 3,
+    "UNAVAILABLE": 2
+  }
+}
