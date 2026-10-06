@@ -1,0 +1,1235 @@
+{
+ "generated_at": "2026-10-06T08:47:20+08:00",
+ "evidence_class": "REAL",
+ "evidence_root": "/Users/wolfterminal/wi-real-evidence/real-workers-20261006",
+ "workers": {
+  "claude_pro_sub": {
+   "provider_family": "anthropic",
+   "execution_path": "claude -p (Claude Code CLI), child env scrubbed of ANTHROPIC_API_KEY & co",
+   "auth_class": "oauth_subscription_login (claude.ai)",
+   "billing_class": "subscription",
+   "cost_class": "flat_subscription",
+   "allowance_visibility": "PARTIAL: claude auth status shows plan tier; remaining 5h/weekly allowance not exposed to CLI -p",
+   "human_commissioned": "2026-10-06 Matt: Claude Pro gosscap@gmail.com, header 'Opus 5.5 \u00b7 Claude Pro'",
+   "gated": false,
+   "adapter": "claude_pro_sub",
+   "legacy_ids": [
+    "claude_sub"
+   ],
+   "worker_id": "claude_pro_sub",
+   "configured": null,
+   "availability": "CONNECTED",
+   "availability_message": "subscription login pro (gosscap@gmail.com)",
+   "billing_verification": {
+    "authMethod": "claude.ai",
+    "apiKeySource": null,
+    "subscriptionType": "pro",
+    "email": "gosscap@gmail.com",
+    "apiProvider": "firstParty",
+    "env_scrubbed": [
+     "ANTHROPIC_API_KEY"
+    ],
+    "check": "claude auth status --json (scrubbed env)"
+   },
+   "routable": true,
+   "connectivity_last": {
+    "status": "LIVE_OK",
+    "pass": true,
+    "timestamp": "2026-10-06T08:29:11+08:00",
+    "latency_ms": 3627.8,
+    "evidence_file": "records/dispatch.jsonl#rq-ef0869876b20"
+   },
+   "last_success": "2026-10-06T08:43:21+08:00",
+   "last_failure": null,
+   "latency_history_ms": [
+    3627.8,
+    6448.3,
+    20255.7,
+    11557.2,
+    9038.1,
+    41791.7,
+    12956.1,
+    7470.8,
+    9094.4,
+    8540.2,
+    26050.4
+   ],
+   "latency_median_ms": 9094.4,
+   "model_observed": [
+    "claude-opus-5-5"
+   ],
+   "benchmark_history": [
+    {
+     "task_class": "coding",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "debugging",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "security",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "finance",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "large_context",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "vision_document",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "structured_extraction",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "reasoning_planning",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "ux_product",
+     "quality_score": 0.959,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    }
+   ],
+   "capabilities_evidence": {
+    "coding": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "debugging": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "security": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "finance": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "ux_product": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 0.959,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "large_context": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "vision_document": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "structured_extraction": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "reasoning_planning": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    }
+   },
+   "vision": "EVIDENCED_STRONG",
+   "large_context": "EVIDENCED_STRONG",
+   "limit_hits": 0,
+   "commissioning_state": "HUMAN_COMMISSIONED + WI_CONNECTED",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+  },
+  "anthropic_api": {
+   "provider_family": "anthropic",
+   "execution_path": "HTTPS api.anthropic.com/v1/messages",
+   "auth_class": "api_key",
+   "billing_class": "metered_api",
+   "cost_class": "metered_per_token",
+   "allowance_visibility": "NONE (console only)",
+   "gated": true,
+   "adapter": "anthropic_api",
+   "config_note": "ANTHROPIC_API_KEY exists only as a persistent shell export (~/.zshenv:1, ~/.zshrc:13); beta .env value empty.",
+   "worker_id": "anthropic_api",
+   "configured": null,
+   "availability": "CONNECTED",
+   "availability_message": "ANTHROPIC_API_KEY name present in beta .env but value empty; openclaw primary mentions haiku (default not best); openclaw references anthropic; auth-profiles references anthropic (auth-profiles.json)",
+   "billing_verification": {
+    "billing": "api",
+    "note": "haiku_is_default_not_best",
+    "openclaw_may_hold_creds": true
+   },
+   "routable": false,
+   "connectivity_last": {
+    "status": "GATED",
+    "pass": false,
+    "timestamp": "2026-10-06T08:29:47+08:00",
+    "latency_ms": null,
+    "evidence_file": "records/dispatch.jsonl#rq-9fcd5eb77157"
+   },
+   "last_success": null,
+   "last_failure": null,
+   "latency_history_ms": [],
+   "latency_median_ms": null,
+   "model_observed": null,
+   "benchmark_history": [],
+   "capabilities_evidence": {
+    "coding": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "debugging": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "security": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "finance": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "ux_product": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "large_context": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "vision_document": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "structured_extraction": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "reasoning_planning": {
+     "status": "UNTESTED",
+     "n": 0
+    }
+   },
+   "vision": "UNTESTED",
+   "large_context": "UNTESTED",
+   "limit_hits": 0,
+   "commissioning_state": "GATED_METERED (needs Owner approval)",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+  },
+  "codex_sub": {
+   "provider_family": "openai",
+   "execution_path": "codex exec --ignore-user-config -s read-only, OPENAI_API_KEY/CODEX_API_KEY scrubbed, -c forced_login_method=chatgpt",
+   "auth_class": "oauth_subscription_login (ChatGPT)",
+   "billing_class": "subscription",
+   "cost_class": "flat_subscription",
+   "allowance_visibility": "PARTIAL: Owner saw 100% weekly remaining at commissioning; codex exec does not report remaining allowance",
+   "human_commissioned": "2026-10-06 Matt: Account Business, GPT-6.1-Sol, 100% weekly remaining",
+   "gated": false,
+   "adapter": "codex_sub",
+   "legacy_ids": [
+    "openai_chatgpt"
+   ],
+   "worker_id": "codex_sub",
+   "configured": null,
+   "availability": "CONNECTED",
+   "availability_message": "ChatGPT/Codex subscription login",
+   "billing_verification": {
+    "login_status": "Logged in using ChatGPT",
+    "auth_json_auth_mode": "chatgpt",
+    "auth_json_api_key_field_set": false,
+    "env_scrubbed": [],
+    "forced_login_method": "chatgpt",
+    "check": "codex login status (scrubbed env) + auth.json auth_mode (names only)"
+   },
+   "routable": true,
+   "connectivity_last": {
+    "status": "LIVE_OK",
+    "pass": true,
+    "timestamp": "2026-10-06T08:29:15+08:00",
+    "latency_ms": 6907.0,
+    "evidence_file": "records/dispatch.jsonl#rq-3fe504154347"
+   },
+   "last_success": "2026-10-06T08:43:47+08:00",
+   "last_failure": null,
+   "latency_history_ms": [
+    6907.0,
+    12162.5,
+    16392.2,
+    16589.3,
+    10928.6,
+    40462.1,
+    14998.2,
+    10425.2,
+    9343.4,
+    10896.3,
+    22388.1
+   ],
+   "latency_median_ms": 12162.5,
+   "model_observed": [
+    "account default (not reported by codex exec)"
+   ],
+   "benchmark_history": [
+    {
+     "task_class": "coding",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "debugging",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "security",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "finance",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "large_context",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "vision_document",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "structured_extraction",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "reasoning_planning",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "ux_product",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    }
+   ],
+   "capabilities_evidence": {
+    "coding": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "debugging": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "security": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "finance": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "ux_product": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "large_context": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "vision_document": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "structured_extraction": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "reasoning_planning": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    }
+   },
+   "vision": "EVIDENCED_STRONG",
+   "large_context": "EVIDENCED_STRONG",
+   "limit_hits": 0,
+   "commissioning_state": "HUMAN_COMMISSIONED + WI_CONNECTED",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+  },
+  "openai_api": {
+   "provider_family": "openai",
+   "execution_path": "HTTPS api.openai.com",
+   "auth_class": "api_key",
+   "billing_class": "metered_api",
+   "cost_class": "metered_per_token",
+   "allowance_visibility": "NONE",
+   "gated": true,
+   "adapter": "openai_api",
+   "configured_check": "OPENAI_API_KEY",
+   "worker_id": "openai_api",
+   "configured": false,
+   "availability": "NOT_CONFIGURED",
+   "availability_message": "",
+   "billing_verification": {},
+   "routable": false,
+   "connectivity_last": {
+    "status": "GATED",
+    "pass": false,
+    "timestamp": "2026-10-06T08:29:47+08:00",
+    "latency_ms": null,
+    "evidence_file": "records/dispatch.jsonl#rq-28312dc2c1c1"
+   },
+   "last_success": null,
+   "last_failure": null,
+   "latency_history_ms": [],
+   "latency_median_ms": null,
+   "model_observed": null,
+   "benchmark_history": [],
+   "capabilities_evidence": {
+    "coding": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "debugging": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "security": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "finance": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "ux_product": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "large_context": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "vision_document": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "structured_extraction": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "reasoning_planning": {
+     "status": "UNTESTED",
+     "n": 0
+    }
+   },
+   "vision": "UNTESTED",
+   "large_context": "UNTESTED",
+   "limit_hits": 0,
+   "commissioning_state": "NOT_CONFIGURED",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+  },
+  "cursor_sub": {
+   "provider_family": "cursor",
+   "execution_path": "cursor-agent --print --mode ask --trust --workspace <scoped temp dir>",
+   "auth_class": "subscription_login",
+   "billing_class": "subscription",
+   "cost_class": "flat_subscription_with_included_usage",
+   "allowance_visibility": "NONE via CLI (dashboard only)",
+   "human_commissioned": "2026-10-06 Matt: mrwolf@wolfcommand.net, Composer 2.5, tested in /private/tmp/wolf-cursor-test",
+   "gated": false,
+   "adapter": "cursor_sub",
+   "legacy_ids": [
+    "cursor"
+   ],
+   "worker_id": "cursor_sub",
+   "configured": null,
+   "availability": "CONNECTED",
+   "availability_message": "Logged in as mrwolf@wolfcommand.net",
+   "billing_verification": {
+    "status_line": "Logged in as mrwolf@wolfcommand.net",
+    "env_scrubbed": [],
+    "check": "cursor-agent status (scrubbed env)"
+   },
+   "routable": true,
+   "connectivity_last": {
+    "status": "LIVE_OK",
+    "pass": true,
+    "timestamp": "2026-10-06T08:46:30+08:00",
+    "latency_ms": 18949.9,
+    "evidence_file": "records/dispatch.jsonl#rq-a5daa0aaf82b"
+   },
+   "last_success": "2026-10-06T08:46:30+08:00",
+   "last_failure": null,
+   "latency_history_ms": [
+    19946.9,
+    25904.1,
+    33946.6,
+    34946.8,
+    39054.1,
+    30531.5,
+    32066.4,
+    37953.8,
+    30444.2,
+    43292.1,
+    18949.9
+   ],
+   "latency_median_ms": 32066.4,
+   "model_observed": [
+    "composer-2.5 (requested; cli-config selectedModel)"
+   ],
+   "benchmark_history": [
+    {
+     "task_class": "coding",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "debugging",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "security",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "finance",
+     "quality_score": 0.78,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "large_context",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "vision_document",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "structured_extraction",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "reasoning_planning",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "ux_product",
+     "quality_score": 0.944,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    }
+   ],
+   "capabilities_evidence": {
+    "coding": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "debugging": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "security": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "finance": {
+     "status": "EVIDENCED_PARTIAL",
+     "mean_quality": 0.78,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "ux_product": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 0.944,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "large_context": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "vision_document": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "structured_extraction": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "reasoning_planning": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    }
+   },
+   "vision": "EVIDENCED_STRONG",
+   "large_context": "EVIDENCED_STRONG",
+   "limit_hits": 0,
+   "commissioning_state": "HUMAN_COMMISSIONED + WI_CONNECTED",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+  },
+  "grok_bot_sub": {
+   "provider_family": "xai_grok_bot",
+   "execution_path": "PULL ONLY: WI outbox -> human-started Grok Bot session (local-exec) -> WI inbox",
+   "auth_class": "grok_bot_app_login",
+   "billing_class": "subscription",
+   "cost_class": "flat_subscription",
+   "allowance_visibility": "NONE",
+   "human_commissioned": "2026-10-06 Matt: Grok Bot app replied 'WOLF GROK CONNECTED'",
+   "gated": false,
+   "adapter": "grok_bot_sub",
+   "legacy_ids": [
+    "grok_bot"
+   ],
+   "push_dispatchable": false,
+   "worker_id": "grok_bot_sub",
+   "configured": null,
+   "availability": "PULL_ONLY",
+   "availability_message": "Grok Bot reachable only in pull mode",
+   "billing_verification": {
+    "app_present": true,
+    "local_exec_state_present": true,
+    "push_route": "NONE (no local API/CLI/deep-link prompt route; local-exec is inbound only)",
+    "pull_route": "outbox/inbox under REAL evidence root, answered by a human-started Grok Bot session"
+   },
+   "routable": false,
+   "connectivity_last": {
+    "status": "PULL_PASS",
+    "pass": true,
+    "timestamp": "2026-10-06T08:30:08+08:00",
+    "latency_ms": null,
+    "evidence_file": "records/dispatch.jsonl#rq-3ccb3e452842"
+   },
+   "last_success": "2026-10-06T08:30:08+08:00",
+   "last_failure": null,
+   "latency_history_ms": [],
+   "latency_median_ms": null,
+   "model_observed": [
+    "UNKNOWN (Grok Bot does not expose its model to WI)"
+   ],
+   "benchmark_history": [],
+   "capabilities_evidence": {
+    "coding": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "debugging": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "security": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "finance": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "ux_product": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "large_context": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "vision_document": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "structured_extraction": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "reasoning_planning": {
+     "status": "UNTESTED",
+     "n": 0
+    }
+   },
+   "vision": "UNTESTED",
+   "large_context": "UNTESTED",
+   "limit_hits": 0,
+   "commissioning_state": "HUMAN_COMMISSIONED / NOT_WI_PUSH_DISPATCHABLE (pull-mode PASS)",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+  },
+  "xai_api": {
+   "provider_family": "xai",
+   "execution_path": "HTTPS api.x.ai",
+   "auth_class": "api_key",
+   "billing_class": "metered_api",
+   "cost_class": "metered_per_token",
+   "allowance_visibility": "NONE",
+   "gated": true,
+   "adapter": null,
+   "configured_check": "XAI_API_KEY",
+   "worker_id": "xai_api",
+   "configured": false,
+   "availability": "NOT_CONFIGURED",
+   "availability_message": "",
+   "billing_verification": {},
+   "routable": false,
+   "connectivity_last": {
+    "status": "GATED",
+    "pass": false,
+    "timestamp": "2026-10-06T08:29:47+08:00",
+    "latency_ms": null,
+    "evidence_file": "records/dispatch.jsonl#rq-8d80ccfe807d"
+   },
+   "last_success": null,
+   "last_failure": null,
+   "latency_history_ms": [],
+   "latency_median_ms": null,
+   "model_observed": null,
+   "benchmark_history": [],
+   "capabilities_evidence": {
+    "coding": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "debugging": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "security": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "finance": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "ux_product": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "large_context": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "vision_document": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "structured_extraction": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "reasoning_planning": {
+     "status": "UNTESTED",
+     "n": 0
+    }
+   },
+   "vision": "UNTESTED",
+   "large_context": "UNTESTED",
+   "limit_hits": 0,
+   "commissioning_state": "NOT_CONFIGURED",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+  },
+  "gemini_free": {
+   "provider_family": "google",
+   "execution_path": "generativelanguage v1beta generateContent, flash allowlist",
+   "auth_class": "api_key (openclaw credential file)",
+   "billing_class": "free",
+   "cost_class": "free_tier_owner_declared",
+   "allowance_visibility": "NONE (429 on exhaustion)",
+   "gated": false,
+   "adapter": "gemini_free",
+   "legacy_ids": [
+    "gemini"
+   ],
+   "billing_caveat": "free tier is Owner-declared; key's project billing status is not observable from the Studio",
+   "worker_id": "gemini_free",
+   "configured": null,
+   "availability": "CONNECTED",
+   "availability_message": "Gemini key present (free path, flash only)",
+   "billing_verification": {
+    "key_present": true,
+    "allowed_models": [
+     "gemini-flash-latest",
+     "gemini-flash-lite-latest"
+    ],
+    "billing_note": "Owner-declared free path. Project billing status is not observable from the key; only flash models are allowed; per-response serviceTier is recorded."
+   },
+   "routable": true,
+   "connectivity_last": {
+    "status": "LIVE_OK",
+    "pass": true,
+    "timestamp": "2026-10-06T08:29:43+08:00",
+    "latency_ms": 2457.2,
+    "evidence_file": "records/dispatch.jsonl#rq-86d74af2feb4"
+   },
+   "last_success": "2026-10-06T08:44:09+08:00",
+   "last_failure": null,
+   "latency_history_ms": [
+    2457.2,
+    10184.9,
+    8341.0,
+    11307.5,
+    24133.4,
+    10543.7,
+    9059.0,
+    5041.4,
+    11804.0,
+    10767.1,
+    9990.5
+   ],
+   "latency_median_ms": 10184.9,
+   "model_observed": [
+    "gemini-3.8-flash"
+   ],
+   "benchmark_history": [
+    {
+     "task_class": "coding",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "debugging",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "security",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "finance",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "large_context",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "vision_document",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "structured_extraction",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "reasoning_planning",
+     "quality_score": 1.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "ux_product",
+     "quality_score": 0.916,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    }
+   ],
+   "capabilities_evidence": {
+    "coding": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "debugging": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "security": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "finance": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "ux_product": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 0.916,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "large_context": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "vision_document": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "structured_extraction": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "reasoning_planning": {
+     "status": "EVIDENCED_STRONG",
+     "mean_quality": 1.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    }
+   },
+   "vision": "EVIDENCED_STRONG",
+   "large_context": "EVIDENCED_STRONG",
+   "limit_hits": 0,
+   "commissioning_state": "WI_CONNECTED (not human-commissioned)",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+  },
+  "gemini_paid": {
+   "provider_family": "google",
+   "execution_path": "generativelanguage (pro/paid models)",
+   "auth_class": "api_key",
+   "billing_class": "metered_api",
+   "cost_class": "metered_per_token",
+   "allowance_visibility": "NONE",
+   "gated": true,
+   "adapter": null,
+   "configured_check": "GEMINI_PAID_ENABLED",
+   "worker_id": "gemini_paid",
+   "configured": false,
+   "availability": "NOT_CONFIGURED",
+   "availability_message": "",
+   "billing_verification": {},
+   "routable": false,
+   "connectivity_last": {
+    "status": "GATED",
+    "pass": false,
+    "timestamp": "2026-10-06T08:29:47+08:00",
+    "latency_ms": null,
+    "evidence_file": "records/dispatch.jsonl#rq-82060b67af47"
+   },
+   "last_success": null,
+   "last_failure": null,
+   "latency_history_ms": [],
+   "latency_median_ms": null,
+   "model_observed": null,
+   "benchmark_history": [],
+   "capabilities_evidence": {
+    "coding": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "debugging": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "security": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "finance": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "ux_product": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "large_context": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "vision_document": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "structured_extraction": {
+     "status": "UNTESTED",
+     "n": 0
+    },
+    "reasoning_planning": {
+     "status": "UNTESTED",
+     "n": 0
+    }
+   },
+   "vision": "UNTESTED",
+   "large_context": "UNTESTED",
+   "limit_hits": 0,
+   "commissioning_state": "NOT_CONFIGURED",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+  },
+  "ollama_local": {
+   "provider_family": "ollama",
+   "execution_path": "HTTP 127.0.0.1:11434/api/generate",
+   "auth_class": "none_local",
+   "billing_class": "local",
+   "cost_class": "local_compute",
+   "allowance_visibility": "N/A (local)",
+   "gated": false,
+   "adapter": "ollama_local",
+   "legacy_ids": [
+    "ollama"
+   ],
+   "worker_id": "ollama_local",
+   "configured": null,
+   "availability": "CONNECTED",
+   "availability_message": "models=['nomic-embed-text:latest', 'llama3.2:3b']",
+   "billing_verification": {
+    "models": [
+     "nomic-embed-text:latest",
+     "llama3.2:3b"
+    ],
+    "generative_models": [
+     "llama3.2:3b"
+    ]
+   },
+   "routable": true,
+   "connectivity_last": {
+    "status": "LIVE_OK",
+    "pass": true,
+    "timestamp": "2026-10-06T08:29:45+08:00",
+    "latency_ms": 2125.8,
+    "evidence_file": "records/dispatch.jsonl#rq-3df291cdf62e"
+   },
+   "last_success": "2026-10-06T08:45:47+08:00",
+   "last_failure": null,
+   "latency_history_ms": [
+    2125.8,
+    2620.9,
+    1512.8,
+    1931.6,
+    1514.0,
+    6285.0,
+    1586.8,
+    1399.7,
+    1815.5,
+    29821.6
+   ],
+   "latency_median_ms": 1873.5,
+   "model_observed": [
+    "llama3.2:3b"
+   ],
+   "benchmark_history": [
+    {
+     "task_class": "coding",
+     "quality_score": 0.167,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "debugging",
+     "quality_score": 0.6,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "security",
+     "quality_score": 0.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "finance",
+     "quality_score": 0.11,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "vision_document",
+     "quality_score": null,
+     "completion": "UNSUPPORTED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "structured_extraction",
+     "quality_score": 0.769,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "reasoning_planning",
+     "quality_score": 0.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "ux_product",
+     "quality_score": 0.222,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1"
+    },
+    {
+     "task_class": "large_context",
+     "quality_score": 0.0,
+     "completion": "COMPLETED",
+     "run_id": "bench-20261006-r1b-ollama-ctx32k"
+    }
+   ],
+   "capabilities_evidence": {
+    "coding": {
+     "status": "EVIDENCED_WEAK",
+     "mean_quality": 0.167,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "debugging": {
+     "status": "EVIDENCED_PARTIAL",
+     "mean_quality": 0.6,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "security": {
+     "status": "EVIDENCED_WEAK",
+     "mean_quality": 0.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "finance": {
+     "status": "EVIDENCED_WEAK",
+     "mean_quality": 0.11,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "ux_product": {
+     "status": "EVIDENCED_WEAK",
+     "mean_quality": 0.222,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "large_context": {
+     "status": "EVIDENCED_WEAK",
+     "mean_quality": 0.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "vision_document": {
+     "status": "UNSUPPORTED",
+     "n": 1,
+     "reason": "installed model llama3.2:3b is text-only"
+    },
+    "structured_extraction": {
+     "status": "EVIDENCED_PARTIAL",
+     "mean_quality": 0.769,
+     "n": 1,
+     "confidence": "low (n=1)"
+    },
+    "reasoning_planning": {
+     "status": "EVIDENCED_WEAK",
+     "mean_quality": 0.0,
+     "n": 1,
+     "confidence": "low (n=1)"
+    }
+   },
+   "vision": "UNSUPPORTED",
+   "large_context": "EVIDENCED_WEAK",
+   "limit_hits": 0,
+   "commissioning_state": "WI_CONNECTED (not human-commissioned)",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+  }
+ }
+}
