@@ -15,7 +15,7 @@ from . import real_evidence, worker_registry
 from .adapters import ADAPTER_REGISTRY
 from .real_dispatch import dispatch_real
 
-PING_WORKERS = ("claude_pro_sub", "codex_sub", "cursor_sub", "gemini_free", "ollama_local", "grok_bot_sub",
+PING_WORKERS = ("claude_pro_sub", "codex_sub", "cursor_sub", "gemini_api", "ollama_local", "grok_bot_sub",
                 "anthropic_api", "openai_api", "xai_api", "gemini_paid")
 
 

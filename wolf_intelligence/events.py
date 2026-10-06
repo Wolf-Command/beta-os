@@ -42,6 +42,17 @@ CANONICAL_EVENTS = frozenset(
         "shadow.compare_recorded",
         "ui.owner_viewed",
         "audit.secret_scan",
+        # Grok work bridge (claim/lease protocol). Authoritative audit lives in grok_bridge_audit.
+        "grok_bridge.offered",
+        "grok_bridge.claimed",
+        "grok_bridge.renewed",
+        "grok_bridge.completed",
+        "grok_bridge.failed",
+        "grok_bridge.released",
+        "grok_bridge.reassign_flagged",
+        "grok_bridge.doorbell_rung",
+        "grok_bridge.doorbell_failed",
+        "grok_bridge.doorbell_closed",
     }
 )
 

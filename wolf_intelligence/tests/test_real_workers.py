@@ -140,8 +140,8 @@ class BillingSeparationTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 sc.safe_workspace(bad, "x")
 
-    def test_gemini_refuses_non_free_model(self):
-        a = ADAPTER_REGISTRY["gemini_free"]
+    def test_gemini_refuses_non_allowlisted_model(self):
+        a = ADAPTER_REGISTRY["gemini_api"]
         with mock.patch.dict(os.environ, {"WOLF_INTELLIGENCE_LIVE_SUBMIT": "1", "GEMINI_API_KEY": FAKE_KEY}):
             res = a.submit({"execute": True, "prompt": "hi", "model": "gemini-3-pro"})
         self.assertFalse(res.ok)
@@ -169,7 +169,7 @@ class DispatchGatingTests(unittest.TestCase):
         _fresh_real_root(self)
         fail = AdapterResult(False, "ERROR", "down", {"provider_called": True})
         others = {w: mock.patch.object(ADAPTER_REGISTRY[w], "submit", side_effect=AssertionError("fallback!"))
-                  for w in ("codex_sub", "cursor_sub", "gemini_free", "ollama_local", "anthropic_api")}
+                  for w in ("codex_sub", "cursor_sub", "gemini_api", "ollama_local", "anthropic_api")}
         for p in others.values():
             p.start()
             self.addCleanup(p.stop)
@@ -190,7 +190,7 @@ class RegistryRoutingTests(unittest.TestCase):
     def test_every_billing_path_is_its_own_worker(self):
         ids = set(worker_registry.WORKERS)
         for w in ("claude_pro_sub", "anthropic_api", "codex_sub", "openai_api", "cursor_sub", "grok_bot_sub",
-                  "xai_api", "gemini_free", "gemini_paid", "ollama_local"):
+                  "xai_api", "gemini_api", "gemini_paid", "ollama_local"):
             self.assertIn(w, ids)
         for w, d in worker_registry.WORKERS.items():
             if d["billing_class"] == worker_registry.METERED:

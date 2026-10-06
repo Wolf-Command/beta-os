@@ -34,9 +34,14 @@ def latest_runs() -> list[dict[str, Any]]:
     return list(latest.values())
 
 
+DRAFT_STATUS = ("DRAFT - NOT WIRED. Benchmark-derived preferences only; not read by router.py, dispatcher.py, "
+                "real_dispatch.py or grok_bridge.py. Owner order 2026-10-06 09:03 WITA: do not promote.")
+
+
 def learn() -> dict[str, Any]:
-    runs = latest_runs()
-    policy: dict[str, Any] = {"generated_at": real_evidence.now_wita(), "evidence_class": "REAL",
+    runs = [{**r, "worker": worker_registry.canonical_id(str(r.get("worker", "")))} for r in latest_runs()]
+    policy: dict[str, Any] = {"status": DRAFT_STATUS, "wired": False,
+                              "generated_at": real_evidence.now_wita(), "evidence_class": "REAL",
                               "source": "records/bench_runs.jsonl (REAL only)", "synthetic_history_used": False,
                               "metered_workers_excluded": sorted(w for w in worker_registry.WORKERS if worker_registry.is_metered(w)),
                               "fallback_to_metered": "NEVER", "task_classes": {}}

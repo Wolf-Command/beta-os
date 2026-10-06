@@ -6,7 +6,10 @@ success/failure, benchmark history) is derived from REAL evidence records
 (real_evidence.py) and live preflights — never hardcoded. Synthetic history is
 ignored because real_evidence.read() returns only evidence_class=REAL rows.
 
-Billing classes: subscription | free | local | metered_api.
+Billing classes: subscription | billing_unverified | local | metered_api.
+
+Commissioning states follow the Owner taxonomy (order 2026-10-06 09:03 WITA) and are
+applied only when the evidence supports them; nothing is upgraded without evidence.
 Metered workers are gated: routing never selects them and the dispatcher refuses
 them unless an unexpired Owner approval record exists. No silent fallback.
 """
@@ -61,17 +64,20 @@ WORKERS: dict[str, dict[str, Any]] = {
         "auth_class": "grok_bot_app_login", "billing_class": "subscription", "cost_class": "flat_subscription",
         "allowance_visibility": "NONE", "human_commissioned": "2026-10-06 Matt: Grok Bot app replied 'WOLF GROK CONNECTED'",
         "gated": False, "adapter": "grok_bot_sub", "legacy_ids": ["grok_bot"], "push_dispatchable": False,
+        "dispatch_mode": "grok_bridge: WI rings a GitHub-issue doorbell (id + nonce only); a Grok routine on issue-assigned claims a lease via the Studio CLI",
     },
     "xai_api": {
         "provider_family": "xai", "execution_path": "HTTPS api.x.ai", "auth_class": "api_key", "billing_class": METERED,
         "cost_class": "metered_per_token", "allowance_visibility": "NONE", "gated": True, "adapter": None,
         "configured_check": "XAI_API_KEY",
     },
-    "gemini_free": {
+    "gemini_api": {
         "provider_family": "google", "execution_path": "generativelanguage v1beta generateContent, flash allowlist",
-        "auth_class": "api_key (openclaw credential file)", "billing_class": "free", "cost_class": "free_tier_owner_declared",
-        "allowance_visibility": "NONE (429 on exhaustion)", "gated": False, "adapter": "gemini_free", "legacy_ids": ["gemini"],
-        "billing_caveat": "free tier is Owner-declared; key's project billing status is not observable from the Studio",
+        "auth_class": "api_key (openclaw credential file)", "billing_class": "billing_unverified",
+        "cost_class": "billing_unverified",
+        "allowance_visibility": "NONE (429 on exhaustion)", "gated": False, "adapter": "gemini_api",
+        "legacy_ids": ["gemini", "gemini_free"],
+        "billing_caveat": "billing UNVERIFIED: the key's project billing status is not observable from the Studio and the Owner has not confirmed it",
     },
     "gemini_paid": {
         "provider_family": "google", "execution_path": "generativelanguage (pro/paid models)", "auth_class": "api_key",
@@ -84,6 +90,29 @@ WORKERS: dict[str, dict[str, Any]] = {
         "gated": False, "adapter": "ollama_local", "legacy_ids": ["ollama"],
     },
 }
+
+# Owner taxonomy, 2026-10-06 09:03 WITA. Each label is applied only when its evidence condition holds
+# (see _commissioning_state); otherwise a lower, truthful label is shown. Metered workers are always GATED.
+OWNER_TAXONOMY: dict[str, str] = {
+    "claude_pro_sub": "HUMAN COMMISSIONED / CONNECTED",
+    "codex_sub": "HUMAN COMMISSIONED / CONNECTED",
+    "cursor_sub": "HUMAN COMMISSIONED / CONNECTED",
+    "grok_bot_sub": "HUMAN COMMISSIONED MANUALLY / WOLF DISPATCH PARTIAL",
+    "gemini_api": "CONNECTED / BILLING UNVERIFIED / NOT HUMAN COMMISSIONED",
+    "ollama_local": "CONNECTED / LOCAL / NOT HUMAN COMMISSIONED",
+}
+METERED_STATE = "GATED"
+
+
+def canonical_id(worker_id: str) -> str:
+    """Map a legacy worker id (e.g. one recorded in older REAL evidence) to its registry id."""
+    if worker_id in WORKERS:
+        return worker_id
+    for wid, d in WORKERS.items():
+        if worker_id in (d.get("legacy_ids") or []):
+            return wid
+    return worker_id
+
 
 TASK_CLASSES = ("coding", "debugging", "security", "finance", "ux_product", "large_context",
                 "vision_document", "structured_extraction", "reasoning_planning")
@@ -111,10 +140,11 @@ def _configured(wid: str, d: dict[str, Any]) -> bool | None:
 
 
 def _derive(wid: str) -> dict[str, Any]:
-    conn = [r for r in real_evidence.read("connectivity") if r.get("worker") == wid]
+    ids = {wid, *(WORKERS.get(wid, {}).get("legacy_ids") or [])}
+    conn = [r for r in real_evidence.read("connectivity") if r.get("worker") in ids]
     from .routing_policy import latest_runs
-    runs = [r for r in latest_runs() if r.get("worker") == wid]
-    calls = [r for r in real_evidence.read("dispatch") if r.get("worker") == wid]
+    runs = [r for r in latest_runs() if r.get("worker") in ids]
+    calls = [r for r in real_evidence.read("dispatch") if r.get("worker") in ids]
     ok_calls = [c for c in calls if c.get("ok")]
     bad_calls = [c for c in calls if not c.get("ok") and c.get("status") not in {"GATED", "QUEUED_FOR_PULL"}]
     lat = [c.get("latency_ms") for c in ok_calls if isinstance(c.get("latency_ms"), (int, float))]
@@ -151,19 +181,25 @@ def _derive(wid: str) -> dict[str, Any]:
 
 
 def _commissioning_state(wid: str, d: dict[str, Any], avail: str, derived: dict[str, Any], configured: bool | None) -> str:
+    """Owner taxonomy, gated by evidence. Never upgrades a worker beyond what the evidence shows."""
+    if d.get("billing_class") == METERED or d.get("gated"):
+        return METERED_STATE
     if d.get("adapter") is None or configured is False:
         return "NOT_CONFIGURED"
-    if d.get("gated") and wid == "anthropic_api":
-        return "GATED_METERED (needs Owner approval)"
-    if d.get("gated"):
-        return "GATED_METERED (needs Owner approval)"
     conn_ok = bool(derived.get("connectivity_last") and derived["connectivity_last"].get("pass"))
-    if d.get("push_dispatchable") is False:
-        return ("HUMAN_COMMISSIONED / NOT_WI_PUSH_DISPATCHABLE (pull-mode PASS)" if conn_ok
-                else "HUMAN_COMMISSIONED / NOT_WI_PUSH_DISPATCHABLE")
-    if d.get("human_commissioned"):
-        return "HUMAN_COMMISSIONED + WI_CONNECTED" if conn_ok else f"HUMAN_COMMISSIONED / WI_PREFLIGHT_{avail} (no WI connectivity pass yet)"
-    return "WI_CONNECTED (not human-commissioned)" if conn_ok else f"WI_PREFLIGHT_{avail} (no WI connectivity pass yet)"
+    human = bool(d.get("human_commissioned"))
+    label = OWNER_TAXONOMY.get(wid)
+    if wid == "grok_bot_sub":
+        return label if (human and label) else "NOT HUMAN COMMISSIONED / WOLF DISPATCH PARTIAL"
+    if label and label.startswith("HUMAN COMMISSIONED"):
+        if human and conn_ok:
+            return label
+        return "HUMAN COMMISSIONED / NOT CONNECTED (no WI connectivity pass)" if human else "NOT HUMAN COMMISSIONED / NOT CONNECTED"
+    if label:  # CONNECTED / ... / NOT HUMAN COMMISSIONED
+        return label if conn_ok else label.replace("CONNECTED", "NOT CONNECTED", 1)
+    if human:
+        return "HUMAN COMMISSIONED / CONNECTED" if conn_ok else "HUMAN COMMISSIONED / NOT CONNECTED (no WI connectivity pass)"
+    return "CONNECTED / NOT HUMAN COMMISSIONED" if conn_ok else "NOT CONNECTED / NOT HUMAN COMMISSIONED"
 
 
 def build(*, live_preflight: bool = True) -> dict[str, Any]:
