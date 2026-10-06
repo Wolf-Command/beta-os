@@ -79,7 +79,7 @@ def route(task_class: str, policy: dict[str, Any], registry: dict[str, Any]) -> 
     order = (policy.get("task_classes", {}).get(task_class) or {}).get("order") or []
     workers = registry.get("workers", {})
     return [w for w in order if workers.get(w, {}).get("routable") and not worker_registry.is_metered(w)
-            and (worker_registry.WORKERS.get(w) or {}).get("billing_status", "VERIFIED") != "UNVERIFIED"]
+            and not worker_registry.billing_unverified(w)]
 
 
 def write(path: Path | str) -> dict[str, Any]:
