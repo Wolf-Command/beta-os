@@ -10,8 +10,9 @@ from pathlib import Path
 from unittest import mock
 
 from wolf_intelligence import orchestrator as orch
-from wolf_intelligence.governance import GROK_WORKER_ID
+from wolf_intelligence.governance import GROK_WORKER_ID, load_policy
 from wolf_intelligence.paths import rebind_state_paths
+from wolf_intelligence.scope_guard import build_worker_env, check_invocation
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 OK_WORKER = str(FIXTURES / "orch_worker_ok.py")
@@ -252,6 +253,131 @@ class OrchestratorTestCase(unittest.TestCase):
         rargv = orch._worker_cmd("codex_sub", cfg, review, self.worktree)
         self.assertEqual(rargv[0], "codex")
         self.assertIn("VERDICT", rargv[-1])
+
+
+class DispatchEnvTests(unittest.TestCase):
+    """Real-dispatch env isolation — allowlist-only child env for scope guard."""
+
+    SANDBOX = Path.home() / "wi-sandboxes"
+    ZDOTDIR_EMPTY = SANDBOX / ".zdotdir-empty"
+
+    def setUp(self) -> None:
+        self._prev = os.environ.get("WOLF_INTELLIGENCE_STATE_ROOT")
+        self.state_root = tempfile.mkdtemp(prefix="wi-dispatch-env-")
+        os.environ["WOLF_INTELLIGENCE_STATE_ROOT"] = self.state_root
+        rebind_state_paths()
+        orch.rebind_orchestrator_paths()
+        self.worktree = self.SANDBOX / "wi-orch-unit-wt"
+        self.worktree.mkdir(parents=True, exist_ok=True)
+        self.ZDOTDIR_EMPTY.mkdir(parents=True, exist_ok=True)
+        self.policy = load_policy().policy
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.state_root, ignore_errors=True)
+        shutil.rmtree(self.worktree / ".tmp", ignore_errors=True)
+        if self._prev is None:
+            os.environ.pop("WOLF_INTELLIGENCE_STATE_ROOT", None)
+        else:
+            os.environ["WOLF_INTELLIGENCE_STATE_ROOT"] = self._prev
+        rebind_state_paths()
+
+    def _minimal_parent(self, *, path_prefix: str = "/usr/bin") -> dict[str, str]:
+        return {
+            "PATH": path_prefix,
+            "HOME": str(Path.home()),
+            "USER": os.environ.get("USER", "test"),
+            "TERM": "xterm",
+            "LANG": "C",
+        }
+
+    def test_build_dispatch_env_allowlist_only(self) -> None:
+        parent = {
+            **self._minimal_parent(),
+            "PWD": "/tmp",
+            "SHLVL": "2",
+            "OLDPWD": "/",
+            "_": "/bin/env",
+            "WI_TEST_STATE_ISOLATED": "/tmp/x",
+            "WOLF_INTELLIGENCE_STATE_ROOT": self.state_root,
+            "ZDOTDIR": "/wrong/zdot",
+        }
+        env, refused = build_worker_env(str(self.worktree), parent, policy=self.policy)
+        self.assertEqual(
+            set(env.keys()),
+            {"PATH", "HOME", "USER", "TERM", "LANG", "TMPDIR", "ZDOTDIR"},
+        )
+        self.assertEqual(env["TMPDIR"], str(self.worktree / ".tmp"))
+        self.assertEqual(env["ZDOTDIR"], str(self.ZDOTDIR_EMPTY.resolve()))
+        self.assertIn("PWD", refused)
+        self.assertIn("SHLVL", refused)
+        self.assertIn("WI_TEST_STATE_ISOLATED", refused)
+        self.assertIn("WOLF_INTELLIGENCE_STATE_ROOT", refused)
+
+    def test_refused_env_key_names_reported(self) -> None:
+        parent = {**self._minimal_parent(), "PWD": "/tmp", "WI_EXTRA": "1"}
+        _, refused = build_worker_env(str(self.worktree), parent, policy=self.policy)
+        reported = orch._env_refused_exceptions(refused)
+        self.assertIn("env_refused:PWD", reported)
+        self.assertIn("env_refused:WI_EXTRA", reported)
+        for entry in reported:
+            self.assertTrue(entry.startswith("env_refused:"))
+            self.assertNotIn("=", entry.split(":", 1)[-1])
+
+    def test_guard_passes_minimal_parent_env(self) -> None:
+        parent = self._minimal_parent()
+        env, refused = build_worker_env(str(self.worktree), parent, policy=self.policy)
+        self.assertEqual(refused, [])
+        item = {"id": "wi-scope-1", "kind": "build", "attempt": 1, "spec": {"prompt": "x", "model": "composer-2.5"}}
+        cfg = {"worktree_cwd": str(self.worktree)}
+        argv = orch._worker_cmd("cursor_sub", cfg, item, str(self.worktree))
+        ok, reasons = check_invocation("cursor_sub", argv, str(self.worktree), env, policy=self.policy)
+        self.assertTrue(ok, reasons)
+
+    def test_real_dispatch_scope_passes_with_fake_cli(self) -> None:
+        fake_bin = Path(tempfile.mkdtemp(prefix="wi-fake-cli-"))
+        fake_cursor = fake_bin / "cursor-agent"
+        fake_cursor.write_text("#!/usr/bin/env python3\nimport sys\nsys.exit(0)\n", encoding="utf-8")
+        fake_cursor.chmod(0o755)
+        self.addCleanup(shutil.rmtree, fake_bin, True)
+
+        fixture_dir = self.worktree / "fixture"
+        fixture_dir.mkdir(parents=True, exist_ok=True)
+        (fixture_dir / "hello.py").write_text("def hello():\n    return 'hello'\n", encoding="utf-8")
+        (fixture_dir / "test_hello.py").write_text(
+            "from fixture.hello import hello\n\ndef test_hello():\n    assert hello() == 'hello'\n",
+            encoding="utf-8",
+        )
+
+        orch.save_config({"claude_paused": True, "worktree_cwd": str(self.worktree)})
+        item = orch.submit(
+            {
+                "id": "wi-real-scope",
+                "kind": "build",
+                "spec": {"prompt": "noop", "model": "composer-2.5"},
+                "acceptance": "hello passes",
+                "reviewer_gate": False,
+                "timeout_s": 10,
+                "max_attempts": 1,
+            },
+            now="2026-10-06T12:10:00+08:00",
+        )
+        claimed, _ = orch.claim("wi-real-scope", now="2026-10-06T12:10:01+08:00")
+        self.assertIsNotNone(claimed)
+
+        parent = self._minimal_parent(path_prefix=f"{fake_bin}:/usr/bin:/bin")
+        with mock.patch.dict(os.environ, parent, clear=True):
+            out = orch.dispatch_item(
+                claimed,
+                "cursor_sub",
+                worktree=str(self.worktree),
+                config=orch.load_config(),
+                now="2026-10-06T12:10:02+08:00",
+            )
+        self.assertTrue(out.get("ok"), out)
+        self.assertEqual(out.get("status"), "COMPLETED")
+        comp = json.loads((orch.COMPLETIONS_DIR / "wi-real-scope-1.json").read_text())
+        self.assertNotIn("ENV_NOT_ALLOWLISTED", comp.get("EXCEPTIONS", []))
+        self.assertNotIn("ZDOTDIR_NOT_ISOLATED", comp.get("EXCEPTIONS", []))
 
 
 if __name__ == "__main__":

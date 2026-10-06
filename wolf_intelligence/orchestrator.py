@@ -14,12 +14,11 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from . import failover, worker_registry
-from .adapters.subscription_cli import scrubbed_env
 from .capacity import TZ, capacity_snapshot
 from .governance import GROK_WORKER_ID, load_policy
 from . import paths
 from .paths import ensure_dirs
-from .scope_guard import check_invocation
+from .scope_guard import build_worker_env, check_invocation
 
 def _orch_paths() -> dict[str, Path]:
     root = paths.STATE_ROOT / "orchestrator"
@@ -418,6 +417,10 @@ def refuse_fixture_worker(config: dict[str, Any], argv: list[str]) -> bool:
     return is_fixture_worker_cmd(argv)
 
 
+def _env_refused_exceptions(refused: list[str]) -> list[str]:
+    return [f"env_refused:{key}" for key in refused]
+
+
 def _runtime_path(item_id: str, attempt: int, suffix: str) -> Path:
     return ORCH_DIR / "runtime" / f"{item_id}-{attempt}{suffix}"
 
@@ -613,7 +616,9 @@ def dispatch_item(
     audit_transition(item_id, "dispatch", before, items[item_id], now=now, extra={"worker": worker_id})
 
     argv = _worker_cmd(worker_id, config, items[item_id], worktree)
-    env = scrubbed_env()
+    pl = load_policy()
+    policy = pl.policy if pl and pl.policy else None
+    env, refused_env = build_worker_env(worktree, os.environ, policy=policy)
     cwd = worktree
     using_override = worker_id in (config.get("worker_cmds") or {})
     if refuse_fixture_worker(config, argv):
@@ -628,14 +633,16 @@ def dispatch_item(
             argv=argv,
             using_override=using_override,
         )
-    scope_ok, scope_reasons = (True, []) if using_override else check_invocation(worker_id, argv, cwd, env)
+    scope_ok, scope_reasons = (True, []) if using_override else check_invocation(
+        worker_id, argv, cwd, env, policy=policy
+    )
     if not scope_ok:
         return _finish_dispatch(
             items[item_id],
             worker_id,
             status="FAILED",
             summary="scope refused",
-            exceptions=scope_reasons,
+            exceptions=scope_reasons + _env_refused_exceptions(refused_env),
             exit_code=None,
             now=now,
             argv=argv,
@@ -740,7 +747,7 @@ def dispatch_item(
             now=now,
         )
 
-    exceptions: list[str] = []
+    exceptions: list[str] = _env_refused_exceptions(refused_env)
     if using_override:
         verdict = str(payload.get("verdict") or payload.get("status") or "").upper()
         if exit_code != 0:

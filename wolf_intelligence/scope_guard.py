@@ -324,6 +324,51 @@ def _env_secret_violation(env: dict[str, str]) -> list[str]:
     return reasons
 
 
+def refused_env_keys(parent: dict[str, str], allowlist: list[str]) -> list[str]:
+    """Return sorted parent env keys not on the allowlist (names only, never values)."""
+    allowed = set(allowlist)
+    return sorted(k for k in parent if k not in allowed)
+
+
+def build_worker_env(
+    worktree: str,
+    parent_env: dict[str, str] | None = None,
+    *,
+    policy: dict[str, Any] | None = None,
+) -> tuple[dict[str, str], list[str]]:
+    """Construct a worker child env strictly from policy env_allowlist.
+
+    TMPDIR is always set to <worktree>/.tmp (created). ZDOTDIR is always set to
+    the configured isolated empty directory (created if missing). Other
+    allowlisted keys are copied from parent_env when present.
+    Returns (env, refused_key_names).
+    """
+    parent = parent_env if parent_env is not None else dict(os.environ)
+    cfg = _scope_config(policy)
+    allowlist = list(
+        cfg.get("env_allowlist")
+        or ["PATH", "HOME", "USER", "TERM", "LANG", "TMPDIR", "ZDOTDIR"]
+    )
+    sandbox_root = _expand(str(cfg.get("isolated_sandbox_root", HOME / "wi-sandboxes")))
+    zdotdir_empty = _expand(str(cfg.get("zdotdir_empty", sandbox_root / ".zdotdir-empty")))
+    refused = refused_env_keys(parent, allowlist)
+
+    wt = Path(worktree).resolve()
+    tmpdir = wt / ".tmp"
+    tmpdir.mkdir(parents=True, exist_ok=True)
+    zdotdir_empty.mkdir(parents=True, exist_ok=True)
+
+    env: dict[str, str] = {}
+    for key in allowlist:
+        if key == "TMPDIR":
+            env["TMPDIR"] = str(tmpdir)
+        elif key == "ZDOTDIR":
+            env["ZDOTDIR"] = str(zdotdir_empty)
+        elif key in parent:
+            env[key] = parent[key]
+    return env, refused
+
+
 def _env_allowed(env: dict[str, str], allowlist: list[str]) -> tuple[bool, list[str]]:
     reasons: list[str] = []
     allowed = set(allowlist)
