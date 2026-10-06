@@ -59,6 +59,17 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("stats")
     sub.add_parser("serve-ui")
 
+    orch_p = sub.add_parser("orchestrate")
+    orch_sub = orch_p.add_subparsers(dest="orch_cmd", required=True)
+    o_submit = orch_sub.add_parser("submit")
+    o_submit.add_argument("--file", required=True, help="JSON work item file")
+    orch_sub.add_parser("run")
+    orch_sub.add_parser("status")
+    o_show = orch_sub.add_parser("show")
+    o_show.add_argument("item_id")
+    o_run = orch_sub.add_parser("health")
+    o_run.add_argument("--now", default=None)
+
     gov = sub.add_parser("governance")
     gov_sub = gov.add_subparsers(dest="gov_cmd", required=True)
     gov_sub.add_parser("status")
@@ -192,6 +203,30 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "serve-ui":
         from . import owner_ui_server
         return owner_ui_server.main()
+    if args.cmd == "orchestrate":
+        from . import orchestrator as orch
+
+        if args.orch_cmd == "submit":
+            item = json.loads(Path(args.file).read_text(encoding="utf-8"))
+            print(json.dumps(orch.submit(item), indent=2))
+            return 0
+        if args.orch_cmd == "run":
+            print(json.dumps(orch.run_until_idle(), indent=2))
+            return 0
+        if args.orch_cmd == "status":
+            print(json.dumps(orch.status(), indent=2))
+            return 0
+        if args.orch_cmd == "show":
+            rec = orch.show(args.item_id)
+            if rec is None:
+                print(json.dumps({"ok": False, "error": "not_found"}, indent=2))
+                return 1
+            print(json.dumps(rec, indent=2))
+            return 0
+        if args.orch_cmd == "health":
+            h = orch.health(now=args.now)
+            print(json.dumps(h, indent=2))
+            return 0 if h.get("ok") else 1
     if args.cmd == "governance":
         if args.gov_cmd == "status":
             from .allocation import load_tightening, new_orchestrator_session

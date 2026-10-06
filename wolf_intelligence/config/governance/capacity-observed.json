@@ -3,7 +3,10 @@
     {
       "worker_id": "cursor_sub",
       "plan": "Cursor Ultra $200/mo",
-      "included_usage_pct": {"cursor_models": 41, "other_models": 1},
+      "included_usage_pct": {
+        "cursor_models": 41,
+        "other_models": 1
+      },
       "remaining": null,
       "reset_at": null,
       "on_demand": "DISABLED",
@@ -13,7 +16,9 @@
     {
       "worker_id": "grok_bot_sub",
       "plan": "Grok Bot subscription",
-      "included_usage_pct": {"weekly": 41},
+      "included_usage_pct": {
+        "weekly": 41
+      },
       "remaining": null,
       "reset_at": null,
       "on_demand": "UNKNOWN",
@@ -23,7 +28,9 @@
     {
       "worker_id": "grok_bot_sub",
       "plan": "Grok Bot subscription",
-      "included_usage_pct": {"weekly": 49},
+      "included_usage_pct": {
+        "weekly": 49
+      },
       "remaining": null,
       "reset_at": null,
       "on_demand": "UNKNOWN",
@@ -31,9 +38,24 @@
       "observed_at": "2026-10-06T10:34:00+08:00"
     },
     {
+      "worker_id": "grok_bot_sub",
+      "plan": "Grok Bot subscription",
+      "included_usage_pct": {
+        "weekly": 53
+      },
+      "remaining": null,
+      "reset_at": null,
+      "on_demand": "UNKNOWN",
+      "source": "owner_observed",
+      "observed_at": "2026-10-06T12:06:00+08:00"
+    },
+    {
       "worker_id": "claude_pro_sub",
       "plan": "Claude Pro",
-      "included_usage_pct": {"session": 15, "week_all_models": 1},
+      "included_usage_pct": {
+        "session": 15,
+        "week_all_models": 1
+      },
       "remaining": null,
       "reset_at": null,
       "on_demand": "DISABLED",
@@ -43,7 +65,9 @@
     {
       "worker_id": "codex_sub",
       "plan": "ChatGPT team",
-      "included_usage_pct": {"week": 2.0},
+      "included_usage_pct": {
+        "week": 2.0
+      },
       "remaining": null,
       "reset_at": "2026-10-13T07:23:50+08:00",
       "on_demand": "DISABLED",

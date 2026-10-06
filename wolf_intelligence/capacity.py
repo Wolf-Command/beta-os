@@ -260,7 +260,11 @@ def merge_observations(now: datetime | None = None) -> tuple[dict[str, dict[str,
     return merged, corrupt
 
 
-def _seed_latest_pool_observation(worker_id: str, pool: str) -> tuple[datetime | None, float | None]:
+def _seed_latest_pool_observation(
+    worker_id: str,
+    pool: str,
+    now: datetime | None = None,
+) -> tuple[datetime | None, float | None]:
     latest_at: datetime | None = None
     latest_pct: float | None = None
     for rec in _load_seed():
@@ -271,6 +275,8 @@ def _seed_latest_pool_observation(worker_id: str, pool: str) -> tuple[datetime |
             continue
         observed = _parse_dt(rec.get("observed_at"))
         if observed is None:
+            continue
+        if now is not None and observed > now:
             continue
         if latest_at is None or observed > latest_at:
             latest_at = observed
@@ -300,7 +306,7 @@ def record_observation(
             for pool, pct in pct_map_in.items():
                 if not _is_valid_pct(pct):
                     continue
-                seed_at, seed_pct = _seed_latest_pool_observation(worker_id, pool)
+                seed_at, seed_pct = _seed_latest_pool_observation(worker_id, pool, obs_dt)
                 if (
                     seed_at is not None
                     and seed_pct is not None
@@ -465,6 +471,8 @@ def _newest_pool_record_issue(
         ok, reason = _validate_observation_record(rec, now)
         observed_at = _record_observed_dt(rec)
         if not ok:
+            if reason == "future_observed_at":
+                continue
             if observed_at is not None and observed_at < window_cutoff:
                 continue
             append_audit_event(
