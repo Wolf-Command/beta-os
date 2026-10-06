@@ -553,6 +553,20 @@ def _canonical_hash(payload: dict[str, Any]) -> str:
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
+def _k2_fallback_allowed(exclusion_reason: str | None) -> bool:
+    """K2 dispatch only when canonical Grok was blocked by conserve conduct or reserve pressure."""
+    if not exclusion_reason:
+        return False
+    if exclusion_reason.startswith("GROK_JUSTIFICATION_INVALID:"):
+        return False
+    return exclusion_reason.startswith("GROK_CONSERVE_CONDUCT:") or exclusion_reason in (
+        "grok_reserve_substantive_blocked",
+        "grok_exhausted",
+        "grok_conserve_polling_forbidden",
+        "grok_conserve_routine_review",
+    )
+
+
 def _audit_grok_rejection(
     work_item_id: str,
     task_class: str,
@@ -838,11 +852,7 @@ def decide(
     elif canonical_requested:
         if worker_registry.is_metered(canonical_requested):
             requested_worker_rejected = "metered"
-            if ranked_eligible:
-                selected = ranked_eligible[0]["worker"]
-                decision_type = "DISPATCH"
-            else:
-                decision_type = "QUEUE"
+            decision_type = "QUEUE"
         elif canonical_requested == grok_id:
             req_c = next(
                 (c for c in candidates_scored if c["worker"] == grok_id and c.get("eligible")),
@@ -853,21 +863,16 @@ def decide(
                 decision_type = "DISPATCH"
             else:
                 req_row = next((c for c in candidates_scored if c["worker"] == grok_id), None)
-                requested_worker_rejected = (
-                    (req_row or {}).get("exclusion_reason") or "grok_ineligible"
-                )
-                if ranked_eligible:
+                excl = (req_row or {}).get("exclusion_reason") or "grok_ineligible"
+                requested_worker_rejected = excl
+                if ranked_eligible and _k2_fallback_allowed(excl):
                     selected = ranked_eligible[0]["worker"]
                     decision_type = "DISPATCH"
                 else:
                     decision_type = "QUEUE"
         elif policy_load.mode == "FAIL_CLOSED" and canonical_requested not in HARDCODED_FAIL_CLOSED_ORDER:
             requested_worker_rejected = requested_worker_rejected or "policy_fail_closed"
-            if ranked_eligible:
-                selected = ranked_eligible[0]["worker"]
-                decision_type = "DISPATCH"
-            else:
-                decision_type = "QUEUE"
+            decision_type = "QUEUE"
         else:
             req_c = next(
                 (c for c in candidates_scored if c["worker"] == canonical_requested and c.get("eligible")),
@@ -883,18 +888,10 @@ def decide(
                     or (req_row or {}).get("exclusion_reason")
                     or "ineligible"
                 )
-                if ranked_eligible:
-                    selected = ranked_eligible[0]["worker"]
-                    decision_type = "DISPATCH"
-                else:
-                    decision_type = "QUEUE"
+                decision_type = "QUEUE"
     elif requested:
         requested_worker_rejected = requested_worker_rejected or "unknown"
-        if ranked_eligible:
-            selected = ranked_eligible[0]["worker"]
-            decision_type = "DISPATCH"
-        else:
-            decision_type = "QUEUE"
+        decision_type = "QUEUE"
     elif ranked_eligible:
         selected = ranked_eligible[0]["worker"]
         decision_type = "DISPATCH"

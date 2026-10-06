@@ -237,6 +237,24 @@ def merge_observations(now: datetime | None = None) -> tuple[dict[str, dict[str,
     return merged, corrupt
 
 
+def _seed_latest_pool_observation(worker_id: str, pool: str) -> tuple[datetime | None, float | None]:
+    latest_at: datetime | None = None
+    latest_pct: float | None = None
+    for rec in _load_seed():
+        if rec.get("worker_id") != worker_id:
+            continue
+        pct_map = rec.get("included_usage_pct") or {}
+        if pool not in pct_map or not _is_valid_pct(pct_map[pool]):
+            continue
+        observed = _parse_dt(rec.get("observed_at"))
+        if observed is None:
+            continue
+        if latest_at is None or observed > latest_at:
+            latest_at = observed
+            latest_pct = float(pct_map[pool])
+    return latest_at, latest_pct
+
+
 def record_observation(
     *,
     worker_id: str,
@@ -249,6 +267,26 @@ def record_observation(
     observed_at: str | None = None,
 ) -> dict[str, Any]:
     ensure_dirs()
+    observed_at_s = observed_at or datetime.now(TZ).isoformat(timespec="seconds")
+    pct_map_in = included_usage_pct or {}
+    if isinstance(pct_map_in, dict):
+        obs_dt = _parse_dt(observed_at_s)
+        if obs_dt is not None:
+            thresholds = _worker_thresholds(worker_id, fail_closed_policy())
+            exhausted_at = thresholds["exhausted_at"]
+            for pool, pct in pct_map_in.items():
+                if not _is_valid_pct(pct):
+                    continue
+                seed_at, seed_pct = _seed_latest_pool_observation(worker_id, pool)
+                if (
+                    seed_at is not None
+                    and seed_pct is not None
+                    and seed_at > obs_dt
+                    and float(pct) >= exhausted_at
+                    and float(pct) > seed_pct
+                ):
+                    observed_at_s = datetime.now(TZ).isoformat(timespec="seconds")
+                    break
     rec = {
         "worker_id": worker_id,
         "plan": plan,
@@ -257,7 +295,7 @@ def record_observation(
         "reset_at": reset_at,
         "on_demand": on_demand,
         "source": source,
-        "observed_at": observed_at or datetime.now(TZ).isoformat(timespec="seconds"),
+        "observed_at": observed_at_s,
     }
     pct_map = rec.get("included_usage_pct") or {}
     if not isinstance(pct_map, dict):
