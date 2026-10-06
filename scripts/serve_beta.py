@@ -203,6 +203,8 @@ from core import owner_learning_ro as _owner_learning_ro
 from core import owner_radar_ro as _owner_radar_ro
 from core import god_mode_register_ro as _god_mode_register_ro
 # --- OWNER_RO_DEEPEN_20260930_IMPORT END ---
+from core import scoped_read_auth as _scoped_read
+from core import owner_front_door as _owner_front_door
 from core import ggv_speed_to_lead_prove as _ggv_speed
 from core import ggv_ops_pack as _ggv_ops
 from core import ggv_finance_nota as _ggv_fin
@@ -2080,7 +2082,10 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_json({"ok": True, "root": "beta-os", "planner": "sqlite"})
             return
 
-        # PACK-03 Atrium sales desk. Read-only. Before auth walls, same as owner RO routes.
+        if self._legacy_open_read_guard(path):
+            return
+
+        # PACK-03 Atrium sales desk. Read-only. Server-side scope gate above.
         if path == "/api/amg/sales-desk" or path.startswith("/api/amg/sales-desk/"):
             try:
                 view = None
@@ -2112,7 +2117,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_html_shell(page.read_bytes(), rel="amg-sales-desk.html")
             return
 
-        # PACK-07-GUEST AMG stay honesty. Read-only. Before auth walls, same as the sales desk.
+        # PACK-07-GUEST AMG stay honesty. Read-only. Same AMG scope gate as the sales desk.
         if path == "/api/amg/guest-stay" or path.startswith("/api/amg/guest-stay/"):
             try:
                 self._send_json(_amg_guest_stay.load_guest_stay())
@@ -3344,6 +3349,9 @@ class BetaHandler(SimpleHTTPRequestHandler):
         # --- OWNER_RO_DEEPEN_20260930_ROUTES END ---
 
         # Owner Command Centre. Owner only. Read model over Wolf Core. No writes.
+        if path == "/api/owner/front-door" or path.startswith("/api/owner/front-door"):
+            self._owner_front_door_get()
+            return
         if path == "/api/owner/command" or path.startswith("/api/owner/command/"):
             self._owner_command_get(path)
             return
@@ -6552,6 +6560,11 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = urlparse(self.path).path
+        if self._legacy_open_read_guard(path):
+            return
+        if path == "/api/owner/ask":
+            self._owner_ask_post()
+            return
         if path == "/api/amg/sales-desk" or path.startswith("/api/amg/sales-desk/"):
             self._send_json(_amg_sales_desk_ro.refuse_write(), status=405)
             return
@@ -8166,6 +8179,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_PATCH(self) -> None:
         path = urlparse(self.path).path
+        if self._legacy_open_read_guard(path):
+            return
         if self._atrium_finance_wall():
             return
         if self._atrium_product_dispatch():
@@ -9761,6 +9776,8 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def do_PUT(self) -> None:
         path = urlparse(self.path).path
+        if self._legacy_open_read_guard(path):
+            return
         if path.startswith("/api/bzg/recipe-builder"):
             self._recipe_builder_write(path, method="PUT")
             return
@@ -11122,6 +11139,64 @@ class BetaHandler(SimpleHTTPRequestHandler):
 
     def _request_headers_dict(self) -> dict:
         return {k: v for k, v in self.headers.items()}
+
+    def _legacy_open_read_guard(self, path: str) -> bool:
+        """Deny historically open Owner and AMG reads. True means a response was sent."""
+        kind = _scoped_read.classify_open_route(path)
+        if not kind:
+            return False
+        try:
+            identity = self._resolve_identity(emit_audit=False)
+        except Exception:
+            identity = {"ok": False, "person_id": None}
+        decision = _scoped_read.decide(kind, identity if isinstance(identity, dict) else {"ok": False})
+        if decision.get("allowed"):
+            return False
+        self._send_json(
+            {
+                "ok": False,
+                "error": "forbidden",
+                "message": "You do not have access to this.",
+                "ui": {
+                    "component": "permission-denied",
+                    "message": "You do not have access to this.",
+                },
+                "kind": kind,
+                "server_side": True,
+                "staff_ready": False,
+                "human_commissioned": False,
+            },
+            status=403,
+        )
+        return True
+
+    def _owner_front_door_get(self) -> None:
+        identity = self._require_owner_command()
+        if identity is None:
+            return
+        report = _owner_front_door.build_front_door()
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
+
+    def _owner_ask_post(self) -> None:
+        identity = self._require_owner_command()
+        if identity is None:
+            return
+        try:
+            body = self._read_json()
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        question = str(body.get("question") or body.get("q") or "")
+        report = _owner_front_door.answer(
+            question,
+            action=body.get("action"),
+            work_item_id=body.get("work_item_id"),
+            worker=body.get("worker"),
+        )
+        report["person_id"] = identity.get("person_id")
+        self._send_json(report)
 
     def _resolve_identity(self, body: dict | None = None, *, emit_audit: bool = True) -> dict:
         """Single identity entry — Cloudflare JWT or explicit development assertion."""
@@ -37936,12 +38011,33 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if not identity.get("ok"):
             self._owner_command_denied(identity.get("message") or "You do not have access to this.")
             return None
+        conn = None
+        allowed: bool | None = None
+        try:
+            conn = _scoped_read.open_decision_conn()
+            allowed = _scoped_read.is_owner(identity.get("person_id"), conn)
+        except Exception:
+            allowed = None
+        finally:
+            if conn is not None:
+                conn.close()
+        if allowed is True:
+            return identity
+        if allowed is False:
+            if identity.get("person_id") != _progress.PERS_MATT:
+                self._owner_command_denied("Owner Command is Owner only.")
+            else:
+                self._owner_command_denied("You do not have access to this.")
+            return None
         person_id = identity.get("person_id")
         if person_id != _progress.PERS_MATT:
             self._owner_command_denied("Owner Command is Owner only.")
             return None
         subject = identity.get("permission_subject") or identity.get("email")
         if subject and not _wi.has_permission(subject, "progress.read"):
+            self._owner_command_denied("You do not have access to this.")
+            return None
+        if not subject:
             self._owner_command_denied("You do not have access to this.")
             return None
         return identity
@@ -45715,31 +45811,72 @@ class BetaHandler(SimpleHTTPRequestHandler):
             "note": identity.get("note"),
         })
 
+    def _safe_identity(self) -> dict:
+        try:
+            identity = self._resolve_identity()
+        except Exception:
+            return {"ok": False, "person_id": None}
+        return identity if isinstance(identity, dict) else {"ok": False, "person_id": None}
+
+    def _person_read_conn(self):
+        try:
+            return _scoped_read.open_decision_conn()
+        except Exception:
+            return None
+
+    def _deny_person_read(self, identity: dict) -> None:
+        self._send_json({
+            "ok": False,
+            "error": "forbidden",
+            "permission": "organisation.person.read",
+            "message": "You do not have access to this.",
+            "server_side": True,
+            "identity_assurance": identity.get("identity_assurance") if isinstance(identity, dict) else None,
+            "real_authentication": identity.get("real_authentication") if isinstance(identity, dict) else False,
+        }, status=403)
+
     def _get_core_persons(self) -> None:
-        identity = self._resolve_identity()
+        identity = self._safe_identity()
         if not identity.get("ok"):
             self._send_identity_deny(identity)
             return
         person_id = identity.get("person_id")
-        if not person_id or not _rbac.can(
-            person_id, "organisation.person.read", _rbac.default_content_target()
-        ):
-            self._send_json({
-                "ok": False,
-                "error": "forbidden",
-                "permission": "organisation.person.read",
-                "identity_assurance": identity.get("identity_assurance"),
-                "real_authentication": identity.get("real_authentication"),
-            }, status=403)
+        conn = self._person_read_conn()
+        if conn is None or not person_id:
+            if conn is not None:
+                conn.close()
+            self._deny_person_read(identity)
             return
-        self._send_json({"ok": True, "persons": _identity.list_persons()})
+        try:
+            rows = _identity.list_persons(conn=conn)
+            scoped = _scoped_read.visible_persons(person_id, rows, conn)
+        finally:
+            conn.close()
+        self._send_json({
+            "ok": True,
+            "persons": rows if scoped is None else scoped,
+            "staff_ready": False,
+            "human_commissioned": False,
+        })
 
     def _get_core_person(self, person_id: str) -> None:
-        person = _identity.get_person(person_id)
+        identity = self._safe_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
+            return
+        conn = self._person_read_conn()
+        if conn is None or not _scoped_read.person_record_allowed(identity.get("person_id"), person_id, conn):
+            if conn is not None:
+                conn.close()
+            self._deny_person_read(identity)
+            return
+        try:
+            person = _identity.get_person(person_id, conn=conn)
+        finally:
+            conn.close()
         if not person:
             self._send_json({"ok": False, "error": "not_found", "person_id": person_id}, status=404)
             return
-        # Omit nothing required; legal_name may be null
         self._send_json({
             "ok": True,
             "person": {
@@ -45751,10 +45888,23 @@ class BetaHandler(SimpleHTTPRequestHandler):
         })
 
     def _get_core_person_auth_identities(self, person_id: str) -> None:
-        if not _identity.get_person(person_id):
-            self._send_json({"ok": False, "error": "not_found", "person_id": person_id}, status=404)
+        identity = self._safe_identity()
+        if not identity.get("ok"):
+            self._send_identity_deny(identity)
             return
-        rows = _identity.list_auth_identities_for_person(person_id)
+        conn = self._person_read_conn()
+        if conn is None or not _scoped_read.person_record_allowed(identity.get("person_id"), person_id, conn):
+            if conn is not None:
+                conn.close()
+            self._deny_person_read(identity)
+            return
+        try:
+            if not _identity.get_person(person_id, conn=conn):
+                self._send_json({"ok": False, "error": "not_found", "person_id": person_id}, status=404)
+                return
+            rows = _identity.list_auth_identities_for_person(person_id, conn=conn)
+        finally:
+            conn.close()
         # Return identifiers for operator debug on Beta; not a public marketing API
         safe = [
             {
