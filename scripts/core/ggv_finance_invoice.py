@@ -339,6 +339,9 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
         END;
         """
     )
+    inv_cols = {row[1] for row in conn.execute("PRAGMA table_info(ggv_invoices)").fetchall()}
+    if "withholding_amount" not in inv_cols:
+        conn.execute("ALTER TABLE ggv_invoices ADD COLUMN withholding_amount TEXT NULL")
     seed_ggv_sequence(conn)
     conn.commit()
 

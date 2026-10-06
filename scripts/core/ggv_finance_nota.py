@@ -130,12 +130,19 @@ STATE_LABEL = {
     "needs_review": "Needs review",
     "ready": "Ready",
     "waiting_approval": "Waiting approval",
+    "not_business": "Not a business document",
+    "duplicate": "Marked duplicate",
+    "evidence_missing": "Evidence missing",
     "approved": "Approved",
     "paid_claimed": "Paid — claimed",
     "payment_verified": "Payment verified",
 }
-# This pack may write only the first three. The rest are reserved and refused.
-PACK_WRITE_STATES = frozenset({"needs_review", "ready", "waiting_approval"})
+# This pack may write only the first group. Money terminal states are reserved and refused.
+PACK_WRITE_STATES = frozenset(
+    {"needs_review", "ready", "waiting_approval", "not_business", "duplicate", "evidence_missing"}
+)
+
+NOTA_DISPOSITION_ACTIONS = frozenset({"mark_duplicate", "not_a_business_receipt", "evidence_missing"})
 TERMINAL_MONEY_STATES = frozenset({"approved", "paid_claimed", "payment_verified"})
 
 STAGE_LABEL = {
@@ -416,6 +423,20 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
         """
     )
     _migrate_file_columns(conn)
+    _migrate_nota_tax_columns(conn)
+
+
+NOTA_TAX_COLUMNS: tuple[tuple[str, str], ...] = (
+    ("tax_detail_json", "TEXT"),
+)
+
+
+def _migrate_nota_tax_columns(conn: sqlite3.Connection) -> None:
+    have = {row[1] for row in conn.execute("PRAGMA table_info(ggv_notas)").fetchall()}
+    for name, kind in NOTA_TAX_COLUMNS:
+        if name in have:
+            continue
+        conn.execute(f"ALTER TABLE ggv_notas ADD COLUMN {name} {kind}")
 
 
 FILE_EXTRA_COLUMNS: tuple[tuple[str, str], ...] = (
@@ -573,6 +594,31 @@ def _seed_accountant_role(conn: sqlite3.Connection, ts: str) -> None:
 
 def _target() -> dict[str, str]:
     return {"entity_id": _eid()}
+
+
+def _nota_or_404(conn: sqlite3.Connection, nota_id: str) -> sqlite3.Row:
+    row = conn.execute(
+        "SELECT * FROM ggv_notas WHERE nota_id=? AND entity_id=?",
+        (nota_id, _eid()),
+    ).fetchone()
+    if not row:
+        raise FinanceNotaError("That nota was not found.", code="not_found", http_status=404)
+    return row
+
+
+def _file_or_404(conn: sqlite3.Connection, file_id: str) -> sqlite3.Row:
+    row = conn.execute(
+        """
+        SELECT f.*, u.entity_id AS upload_entity_id
+        FROM ggv_nota_files f
+        JOIN ggv_uploads u ON u.upload_id = f.upload_id
+        WHERE f.file_id=? AND u.entity_id=?
+        """,
+        (file_id, _eid()),
+    ).fetchone()
+    if not row:
+        raise FinanceNotaError("That file was not found.", code="not_found", http_status=404)
+    return row
 
 
 def person_can(person_id: str | None, code: str, conn: sqlite3.Connection) -> bool:
@@ -973,6 +1019,15 @@ def _nota_public(conn: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
         (row["nota_id"],),
     ).fetchone()
     state = row["workflow_state"]
+    tax_detail: dict[str, Any] = {}
+    try:
+        raw_tax = row["tax_detail_json"] if "tax_detail_json" in row.keys() else None
+        if raw_tax:
+            tax_detail = json.loads(raw_tax) if isinstance(raw_tax, str) else dict(raw_tax or {})
+    except (TypeError, ValueError, json.JSONDecodeError):
+        tax_detail = {}
+    ppn_claimed = bool(tax_detail.get("ppn") or row["tax"])
+    missing_faktur = ppn_claimed and not _blank(tax_detail.get("faktur_pajak_no"))
     return {
         "nota_id": row["nota_id"],
         "vendor_id": row["vendor_id"],
@@ -982,6 +1037,8 @@ def _nota_public(conn: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
         "currency": row["currency"],
         "amount": row["amount"],
         "tax": row["tax"],
+        "tax_detail": tax_detail,
+        "ppn_evidence_missing": missing_faktur,
         "category": row["category"],
         "items": json.loads(row["items_json"] or "[]"),
         "notes": row["notes"],
@@ -1342,7 +1399,10 @@ def create_upload(person_id: str, files: list[dict[str, Any]], *, conn: sqlite3.
 
 
 def _upload_or_404(conn: sqlite3.Connection, upload_id: str, person_id: str) -> sqlite3.Row:
-    row = conn.execute("SELECT * FROM ggv_uploads WHERE upload_id=?", (upload_id,)).fetchone()
+    row = conn.execute(
+        "SELECT * FROM ggv_uploads WHERE upload_id=? AND entity_id=?",
+        (upload_id, _eid()),
+    ).fetchone()
     if not row:
         raise FinanceNotaError("That upload is not here.", code="not_found", http_status=404)
     if row["created_by_person_id"] != person_id and not person_can(person_id, "finance.nota.edit", conn):
@@ -1380,7 +1440,7 @@ def read_upload(person_id: str, upload_id: str, *, conn: sqlite3.Connection | No
             )
             c.commit()
             raise FinanceNotaError(
-                "Reading the document failed. Your upload is still saved — retry reading or type fields manually.",
+                "Reading the document failed. Your upload is still saved — do not upload again; retry reading or type fields manually.",
                 code=exc.code,
                 http_status=exc.http_status,
                 extra={"upload_id": upload_id, "preserved": True, "retry": "read", "manual_entry": True},
@@ -2010,9 +2070,7 @@ def edit_nota(person_id: str, nota_id: str, body: dict[str, Any], *, conn: sqlit
                 code="payment_refused",
                 http_status=405,
             )
-        row = c.execute("SELECT * FROM ggv_notas WHERE nota_id=?", (nota_id,)).fetchone()
-        if not row:
-            raise FinanceNotaError("That nota was not found.", code="not_found", http_status=404)
+        row = _nota_or_404(c, nota_id)
         fields = _apply_nota_fields(body)
         if fields["vendor_id"]:
             vendor = c.execute(
@@ -2021,6 +2079,61 @@ def edit_nota(person_id: str, nota_id: str, body: dict[str, Any], *, conn: sqlit
             ).fetchone()
             if not vendor:
                 raise FinanceNotaError("Choose a vendor from the list, or create one.", code="unknown_vendor")
+        if "vendor_id" not in body and not fields["vendor_id"] and row["vendor_id"]:
+            fields["vendor_id"] = row["vendor_id"]
+        if "invoice_no" not in body and not fields["invoice_no"] and row["invoice_no"]:
+            fields["invoice_no"] = row["invoice_no"]
+        if "date" not in body and "nota_date" not in body and not fields["nota_date"] and row["nota_date"]:
+            fields["nota_date"] = row["nota_date"]
+        if "amount" not in body and fields["amount"] is None and row["amount"] is not None:
+            fields["amount"] = row["amount"]
+            fields["amount_confirmed"] = row["amount_confirmed"]
+        if "currency" not in body and not fields["currency"] and row["currency"]:
+            fields["currency"] = row["currency"]
+        if "tax" not in body and fields["tax"] is None and row["tax"] is not None:
+            fields["tax"] = row["tax"]
+        prior_tax_detail: dict[str, Any] = {}
+        try:
+            prior_tax_detail = json.loads(row["tax_detail_json"] or "{}") if "tax_detail_json" in row.keys() else {}
+        except (TypeError, ValueError, json.JSONDecodeError):
+            prior_tax_detail = {}
+        if isinstance(body.get("tax_detail"), dict):
+            fields["tax_detail"] = {**prior_tax_detail, **body["tax_detail"]}
+        else:
+            fields["tax_detail"] = prior_tax_detail
+        if "category" not in body and not fields["category"] and row["category"]:
+            fields["category"] = row["category"]
+        if "notes" not in body and row["notes"]:
+            fields["notes"] = row["notes"]
+        if not fields["vendor_confirmed"] and fields["vendor_id"]:
+            fields["vendor_confirmed"] = max(fields["vendor_confirmed"], row["vendor_confirmed"])
+        if not fields["date_confirmed"] and fields["nota_date"]:
+            fields["date_confirmed"] = max(fields["date_confirmed"], row["date_confirmed"])
+        if not fields["amount_confirmed"] and fields["amount"] is not None:
+            fields["amount_confirmed"] = max(fields["amount_confirmed"], row["amount_confirmed"])
+        corrections: list[dict[str, Any]] = []
+        for key, col in (
+            ("invoice_no", "invoice_no"),
+            ("nota_date", "nota_date"),
+            ("amount", "amount"),
+            ("tax", "tax"),
+            ("category", "category"),
+            ("notes", "notes"),
+        ):
+            old_val = row[col]
+            new_val = fields.get(key if key != "nota_date" else "nota_date")
+            if str(old_val or "") != str(new_val or ""):
+                corrections.append({"field": key, "old": old_val, "new": new_val})
+        if json.dumps(prior_tax_detail, sort_keys=True) != json.dumps(
+            fields.get("tax_detail") or {}, sort_keys=True
+        ):
+            corrections.append(
+                {
+                    "field": "tax_detail",
+                    "old": prior_tax_detail,
+                    "new": fields.get("tax_detail") or {},
+                }
+            )
         state = row["workflow_state"]
         if state in PACK_WRITE_STATES and state != "waiting_approval":
             state = _state_for(fields)
@@ -2029,9 +2142,9 @@ def edit_nota(person_id: str, nota_id: str, body: dict[str, Any], *, conn: sqlit
             """
             UPDATE ggv_notas SET
               vendor_id=?, invoice_no=?, nota_date=?, currency=?, amount=?, tax=?,
-              category=?, items_json=?, notes=?, workflow_state=?,
+              tax_detail_json=?, category=?, items_json=?, notes=?, workflow_state=?,
               amount_confirmed=?, date_confirmed=?, vendor_confirmed=?, updated_at=?
-            WHERE nota_id=?
+            WHERE nota_id=? AND entity_id=?
             """,
             (
                 fields["vendor_id"],
@@ -2040,6 +2153,7 @@ def edit_nota(person_id: str, nota_id: str, body: dict[str, Any], *, conn: sqlit
                 fields["currency"],
                 fields["amount"],
                 fields["tax"],
+                json.dumps(fields.get("tax_detail") or {}, separators=(",", ":")),
                 fields["category"],
                 json.dumps(fields["items"]),
                 fields["notes"],
@@ -2049,9 +2163,16 @@ def edit_nota(person_id: str, nota_id: str, body: dict[str, Any], *, conn: sqlit
                 fields["vendor_confirmed"],
                 ts,
                 nota_id,
+                _eid(),
             ),
         )
-        _history(c, person_id=person_id, nota_id=nota_id, action="nota_edited", detail={"state": state})
+        _history(
+            c,
+            person_id=person_id,
+            nota_id=nota_id,
+            action="nota_edited",
+            detail={"state": state, "corrections": corrections},
+        )
         _audit(c, person_id=person_id, action="ggv.nota.edit", resource_type="ggv_nota", resource_id=nota_id)
         c.commit()
         saved = c.execute("SELECT * FROM ggv_notas WHERE nota_id=?", (nota_id,)).fetchone()
@@ -2066,9 +2187,7 @@ def submit_nota(person_id: str, nota_id: str, *, conn: sqlite3.Connection | None
     c = conn or _open_ready()
     try:
         require(person_id, "finance.nota.edit", c)
-        row = c.execute("SELECT * FROM ggv_notas WHERE nota_id=?", (nota_id,)).fetchone()
-        if not row:
-            raise FinanceNotaError("That nota was not found.", code="not_found", http_status=404)
+        row = _nota_or_404(c, nota_id)
         if not (row["vendor_confirmed"] and row["amount_confirmed"] and row["date_confirmed"] and row["vendor_id"] and row["amount"] and row["nota_date"]):
             raise FinanceNotaError(
                 "Confirm the vendor, date, and amount before you submit. This still does not pay the nota.",
@@ -2143,9 +2262,7 @@ def get_nota(person_id: str, nota_id: str, *, conn: sqlite3.Connection | None = 
     c = conn or _open_ready()
     try:
         require(person_id, "finance.nota.read", c)
-        row = c.execute("SELECT * FROM ggv_notas WHERE nota_id=?", (nota_id,)).fetchone()
-        if not row:
-            raise FinanceNotaError("That nota was not found.", code="not_found", http_status=404)
+        row = _nota_or_404(c, nota_id)
         return public_payload({"ok": True, "nota": _nota_public(c, row)})
     finally:
         if own:
@@ -2197,6 +2314,34 @@ def list_bills(person_id: str, *, conn: sqlite3.Connection | None = None) -> dic
                 "bill_count": total,
             }
         )
+    finally:
+        if own:
+            c.close()
+
+
+def get_bill(person_id: str, bill_id: str, *, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
+    own = conn is None
+    c = conn or _open_ready()
+    try:
+        require(person_id, "finance.nota.read", c)
+        from core import ggv_bills_import1 as _bills
+
+        _bills.ensure_schema(c)
+        row = c.execute(
+            "SELECT * FROM ggv_bills WHERE bill_id=? AND entity_id=?",
+            (bill_id.strip(), _eid()),
+        ).fetchone()
+        if not row:
+            raise FinanceNotaError("That bill was not found.", code="not_found", http_status=404)
+        pub = _bills.bill_public(row)
+        label = pub.get("contact_name") or pub.get("bill_number") or "Imported bill"
+        pub["label"] = label
+        pub["imported_at"] = row["imported_at"]
+        if not pub.get("has_original_document"):
+            pub.pop("source_file_path", None)
+        else:
+            pub["source_file_path"] = row["source_file_path"]
+        return public_payload({"ok": True, "bill": pub})
     finally:
         if own:
             c.close()
@@ -2477,6 +2622,19 @@ def overview(person_id: str, *, conn: sqlite3.Connection | None = None) -> dict[
                 "operational_sections": desk_payload.get("operational_sections") or [],
                 "desk_counts": desk_payload.get("counts") or {},
                 "reconciliation_summary": desk_payload.get("reconciliation") or {},
+                "needs_reconciling": desk_payload.get("needs_reconciling", 0),
+                "missing_evidence": desk_payload.get("missing_evidence", 0),
+                "needs_paying_idr": desk_payload.get("needs_paying_idr", "0"),
+                "needs_paying_count": desk_payload.get("needs_paying_count", 0),
+                "draft_bills_count": desk_payload.get("draft_bills_count", 0),
+                "draft_bills_idr": desk_payload.get("draft_bills_idr", "0"),
+                "possible_duplicate_groups": desk_payload.get("possible_duplicate_groups", 0),
+                "money_in_this_month_idr": desk_payload.get("money_in_this_month_idr", "0"),
+                "money_out_this_month_idr": desk_payload.get("money_out_this_month_idr", "0"),
+                "money_flow_month": desk_payload.get("money_flow_month", ""),
+                "money_flow_note": desk_payload.get("money_flow_note", ""),
+                "unresolved_exceptions": desk_payload.get("unresolved_exceptions", 0),
+                "finance_links": desk_payload.get("links") or {},
                 "matt_test_urls": desk_payload.get("matt_test_urls") or {},
                 "boundary_note": ZAYEN_NOTE,
                 "payment_note": "Entering a nota is not the same as paying it.",
@@ -2504,9 +2662,7 @@ def file_bytes(person_id: str, file_id: str, *, conn: sqlite3.Connection | None 
     c = conn or _open_ready()
     try:
         require(person_id, "finance.nota.read", c)
-        row = c.execute("SELECT * FROM ggv_nota_files WHERE file_id=?", (file_id,)).fetchone()
-        if not row:
-            raise FinanceNotaError("That file was not found.", code="not_found", http_status=404)
+        row = _file_or_404(c, file_id)
         data = _load_bytes(_col(row, "nas_rel_path") or row["rel_path"])
         return {
             "_file": {
@@ -2594,6 +2750,231 @@ def accountant_desk(person_id: str, *, conn: sqlite3.Connection | None = None) -
                 "export_note": "A month evidence pack is a download copy. Original files stay one by one.",
             }
         )
+    finally:
+        if own:
+            c.close()
+
+
+def confirm_nota(
+    person_id: str,
+    nota_id: str,
+    body: dict[str, Any],
+    *,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    """Accountant confirms extracted fields beside proposals — needs_review → ready when complete."""
+    own = conn is None
+    c = conn or _open_ready()
+    try:
+        if not (
+            person_can(person_id, "finance.nota.review", c)
+            or person_can(person_id, "finance.nota.edit", c)
+        ):
+            raise FinanceNotaError(
+                "You do not have access to confirm GGV notas.",
+                code="forbidden",
+                http_status=403,
+            )
+        row = c.execute(
+            "SELECT * FROM ggv_notas WHERE nota_id=? AND entity_id=?",
+            (nota_id, _eid()),
+        ).fetchone()
+        if not row:
+            raise FinanceNotaError("That nota was not found.", code="not_found", http_status=404)
+        proposals = json.loads(row["proposals_json"] or "{}")
+        fields = _apply_nota_fields(body)
+        corrections: list[dict[str, Any]] = []
+        for key, col in (
+            ("invoice_no", "invoice_no"),
+            ("nota_date", "nota_date"),
+            ("amount", "amount"),
+            ("tax", "tax"),
+            ("category", "category"),
+            ("notes", "notes"),
+        ):
+            if key == "nota_date":
+                if "date" not in body and "nota_date" not in body:
+                    continue
+            elif key not in body:
+                continue
+            old_val = row[col]
+            new_val = fields.get(key if key != "nota_date" else "nota_date")
+            if str(old_val or "") != str(new_val or ""):
+                corrections.append({"field": key, "old": old_val, "new": new_val})
+        if not fields["vendor_id"] and row["vendor_id"]:
+            fields["vendor_id"] = row["vendor_id"]
+        if not fields["invoice_no"] and row["invoice_no"]:
+            fields["invoice_no"] = row["invoice_no"]
+        if not fields["nota_date"] and row["nota_date"]:
+            fields["nota_date"] = row["nota_date"]
+        if fields["amount"] is None and row["amount"]:
+            fields["amount"] = row["amount"]
+            fields["amount_confirmed"] = 1
+        if not fields["currency"] and row["currency"]:
+            fields["currency"] = row["currency"]
+        if fields["tax"] is None and row["tax"]:
+            fields["tax"] = row["tax"]
+        if not fields["category"] and row["category"]:
+            fields["category"] = row["category"]
+        if not fields["notes"] and row["notes"]:
+            fields["notes"] = row["notes"]
+        if not fields["vendor_confirmed"] and fields["vendor_id"]:
+            fields["vendor_confirmed"] = 1
+        if not fields["date_confirmed"] and fields["nota_date"]:
+            fields["date_confirmed"] = 1
+        if not fields["amount_confirmed"] and fields["amount"]:
+            fields["amount_confirmed"] = 1
+        state = _state_for(fields)
+        if row["workflow_state"] in ("not_business", "duplicate", "evidence_missing"):
+            state = row["workflow_state"]
+        ts = _now()
+        c.execute(
+            """
+            UPDATE ggv_notas SET
+              vendor_id=?, invoice_no=?, nota_date=?, currency=?, amount=?, tax=?,
+              category=?, items_json=?, notes=?, workflow_state=?,
+              amount_confirmed=?, date_confirmed=?, vendor_confirmed=?, updated_at=?
+            WHERE nota_id=?
+            """,
+            (
+                fields["vendor_id"],
+                fields["invoice_no"],
+                fields["nota_date"],
+                fields["currency"],
+                fields["amount"],
+                fields["tax"],
+                fields["category"],
+                json.dumps(fields["items"]),
+                fields["notes"],
+                state,
+                fields["amount_confirmed"],
+                fields["date_confirmed"],
+                fields["vendor_confirmed"],
+                ts,
+                nota_id,
+            ),
+        )
+        _history(
+            c,
+            person_id=person_id,
+            nota_id=nota_id,
+            vendor_id=fields["vendor_id"],
+            action="nota_confirmed",
+            detail={"state": state, "proposals_retained": bool(proposals), "corrections": corrections},
+        )
+        _audit(
+            c,
+            person_id=person_id,
+            action="ggv.nota.confirm",
+            resource_type="ggv_nota",
+            resource_id=nota_id,
+            metadata={
+                "workflow_state": state,
+                "extraction_retained": bool(proposals),
+                "corrections": corrections,
+            },
+        )
+        c.commit()
+        saved = c.execute("SELECT * FROM ggv_notas WHERE nota_id=?", (nota_id,)).fetchone()
+        pub = _nota_public(c, saved)
+        return public_payload(
+            {
+                "ok": True,
+                "nota": pub,
+                "extraction_retained": bool(proposals),
+                "human_beside_extraction": bool(proposals),
+                "message": "Confirmed beside extraction." if state == "ready" else "Saved — still needs review.",
+            }
+        )
+    finally:
+        if own:
+            c.close()
+
+
+def disposition_nota(
+    person_id: str,
+    nota_id: str,
+    action: str,
+    body: dict[str, Any],
+    *,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    own = conn is None
+    c = conn or _open_ready()
+    try:
+        if not (
+            person_can(person_id, "finance.nota.review", c)
+            or person_can(person_id, "finance.nota.edit", c)
+        ):
+            raise FinanceNotaError(
+                "You do not have access to review GGV notas.",
+                code="forbidden",
+                http_status=403,
+            )
+        act = (action or "").strip().lower()
+        if act not in NOTA_DISPOSITION_ACTIONS:
+            raise FinanceNotaError(
+                f"action must be one of: {', '.join(sorted(NOTA_DISPOSITION_ACTIONS))}",
+                code="invalid_action",
+            )
+        reason = _blank(body.get("reason"))
+        if act == "evidence_missing" and not reason:
+            raise FinanceNotaError(
+                "Write a reason when marking evidence missing.",
+                code="missing_reason",
+            )
+        row = c.execute(
+            "SELECT * FROM ggv_notas WHERE nota_id=? AND entity_id=?",
+            (nota_id, _eid()),
+        ).fetchone()
+        if not row:
+            raise FinanceNotaError("That nota was not found.", code="not_found", http_status=404)
+        ts = _now()
+        state = row["workflow_state"]
+        dup_of = row["duplicate_of_nota_id"]
+        dup_reason = row["duplicate_reason"]
+        if act == "mark_duplicate":
+            state = "duplicate"
+            dup_of = _blank(body.get("duplicate_of_nota_id")) or dup_of
+            dup_reason = reason or dup_reason
+        elif act == "not_a_business_receipt":
+            state = "not_business"
+        elif act == "evidence_missing":
+            state = "evidence_missing"
+        c.execute(
+            """
+            UPDATE ggv_notas SET
+              workflow_state=?, duplicate_of_nota_id=?, duplicate_reason=?, notes=?, updated_at=?
+            WHERE nota_id=?
+            """,
+            (
+                state,
+                dup_of,
+                dup_reason,
+                reason or row["notes"],
+                ts,
+                nota_id,
+            ),
+        )
+        _history(
+            c,
+            person_id=person_id,
+            nota_id=nota_id,
+            vendor_id=row["vendor_id"],
+            action=f"nota_{act}",
+            detail={"reason": reason, "workflow_state": state},
+        )
+        _audit(
+            c,
+            person_id=person_id,
+            action=f"ggv.nota.{act}",
+            resource_type="ggv_nota",
+            resource_id=nota_id,
+            metadata={"reason": reason, "workflow_state": state},
+        )
+        c.commit()
+        saved = c.execute("SELECT * FROM ggv_notas WHERE nota_id=?", (nota_id,)).fetchone()
+        return public_payload({"ok": True, "nota": _nota_public(c, saved), "message": "Disposition saved."})
     finally:
         if own:
             c.close()
@@ -3048,7 +3429,30 @@ def dispatch(method: str, path: str, qs: dict[str, list[str]], body: dict | None
 
         rc = _open_ready()
         try:
-            return public_payload(_desk.reconciliation_board(person_id or "", rc))
+            iid = ((qs.get("import_id") or [""])[0] or "").strip() or None
+            month = ((qs.get("month") or [""])[0] or "").strip() or None
+            mst = ((qs.get("match_status") or [""])[0] or "").strip() or None
+            off_raw = (qs.get("offset") or ["0"])[0]
+            lim_raw = (qs.get("limit") or ["100"])[0]
+            try:
+                off = int(off_raw or 0)
+            except (TypeError, ValueError):
+                off = 0
+            try:
+                lim = int(lim_raw or 100)
+            except (TypeError, ValueError):
+                lim = 100
+            return public_payload(
+                _desk.reconciliation_board(
+                    person_id or "",
+                    rc,
+                    import_id=iid,
+                    month=month,
+                    match_status=mst,
+                    offset=off,
+                    limit=lim,
+                )
+            )
         except _desk.GgvFinanceDeskError as exc:
             raise FinanceNotaError(str(exc), code=exc.code, http_status=exc.http_status) from exc
         finally:
@@ -3072,6 +3476,9 @@ def dispatch(method: str, path: str, qs: dict[str, list[str]], body: dict | None
         return list_notas(person_id)
     if method == "GET" and rest == "/bills":
         return list_bills(person_id)
+    m_bill = re.fullmatch(r"/bills/([^/]+)", rest)
+    if m_bill and method == "GET":
+        return get_bill(person_id or "", m_bill.group(1))
     if method == "GET" and rest == "/vendors":
         return search_vendors(person_id, ((qs.get("q") or [""])[0]))
     if method == "GET" and rest in {"/history", "/search"}:
@@ -3145,6 +3552,62 @@ def dispatch(method: str, path: str, qs: dict[str, list[str]], body: dict | None
                     verified_person_id=person_id or "",
                     receipt_key=m_acct_confirm.group(1),
                     body=body,
+                )
+            )
+        except _gra.GgvReceiptAccountingError as exc:
+            raise FinanceNotaError(
+                str(exc), code=exc.code, http_status=exc.http_status, extra=exc.details
+            ) from exc
+    m_acct_disp = re.fullmatch(r"/accounting/receipts/([^/]+)/disposition", rest)
+    if m_acct_disp and method == "POST":
+        from core import ggv_receipt_accounting1 as _gra
+
+        try:
+            return public_payload(
+                _gra.disposition_receipt(
+                    verified_person_id=person_id or "",
+                    receipt_key=m_acct_disp.group(1),
+                    action=str(body.get("action") or ""),
+                    body=body,
+                )
+            )
+        except _gra.GgvReceiptAccountingError as exc:
+            raise FinanceNotaError(
+                str(exc), code=exc.code, http_status=exc.http_status, extra=exc.details
+            ) from exc
+    m_acct_link = re.fullmatch(r"/accounting/receipts/([^/]+)/link", rest)
+    if m_acct_link and method == "POST":
+        from core import ggv_receipt_accounting1 as _gra
+
+        try:
+            return public_payload(
+                _gra.link_receipt(
+                    verified_person_id=person_id or "",
+                    receipt_key=m_acct_link.group(1),
+                    body=body,
+                )
+            )
+        except _gra.GgvReceiptAccountingError as exc:
+            raise FinanceNotaError(
+                str(exc), code=exc.code, http_status=exc.http_status, extra=exc.details
+            ) from exc
+    if method == "GET" and rest == "/accounting/link-search":
+        from core import ggv_receipt_accounting1 as _gra
+
+        q = ((qs.get("q") or [""])[0] or "").strip()
+        kind = ((qs.get("kind") or [""])[0] or "").strip() or None
+        lim_raw = (qs.get("limit") or ["20"])[0]
+        try:
+            lim = int(lim_raw or 20)
+        except (TypeError, ValueError):
+            lim = 20
+        try:
+            return public_payload(
+                _gra.search_link_targets(
+                    verified_person_id=person_id or "",
+                    query=q,
+                    kind=kind,
+                    limit=lim,
                 )
             )
         except _gra.GgvReceiptAccountingError as exc:
@@ -3234,6 +3697,68 @@ def dispatch(method: str, path: str, qs: dict[str, list[str]], body: dict | None
                 limit=lim,
             )
         )
+    m_bank_match_search = re.fullmatch(r"/bank-transactions/([^/]+)/match-search", rest)
+    if m_bank_match_search and method == "GET":
+        from core import ggv_bank_statement1 as _gbs
+
+        q = ((qs.get("q") or [""])[0] or "").strip()
+        lim_raw = (qs.get("limit") or ["20"])[0]
+        try:
+            lim = int(lim_raw or 20)
+        except (TypeError, ValueError):
+            lim = 20
+        try:
+            return public_payload(
+                _gbs.search_manual_match_targets(
+                    verified_person_id=person_id or "",
+                    txn_id=m_bank_match_search.group(1),
+                    query=q,
+                    limit=lim,
+                )
+            )
+        except _gbs.GgvBankStatementError as exc:
+            raise FinanceNotaError(
+                str(exc), code=exc.code, http_status=exc.http_status, extra=exc.details
+            ) from exc
+    m_stmt_find = re.fullmatch(r"/bank-statements/([^/]+)/find-matches", rest)
+    if m_stmt_find and method == "POST":
+        from core import ggv_bank_statement1 as _gbs
+
+        if not (person_id or "").strip():
+            raise FinanceNotaError("Sign in required.", code="unauthenticated", http_status=401)
+        try:
+            return public_payload(
+                _gbs.propose_matches(
+                    m_stmt_find.group(1),
+                    verified_person_id=person_id or "",
+                )
+            )
+        except _gbs.GgvBankStatementError as exc:
+            raise FinanceNotaError(
+                str(exc), code=exc.code, http_status=exc.http_status, extra=exc.details
+            ) from exc
+    m_bank_confirm = re.fullmatch(r"/bank-transactions/([^/]+)/confirm", rest)
+    if m_bank_confirm and method == "POST":
+        from core import ggv_bank_statement1 as _gbs
+
+        return public_payload(
+            _gbs.confirm_match(
+                verified_person_id=person_id or "",
+                txn_id=m_bank_confirm.group(1),
+                body=body,
+            )
+        )
+    m_bank_unmatch = re.fullmatch(r"/bank-transactions/([^/]+)/unmatch", rest)
+    if m_bank_unmatch and method == "POST":
+        from core import ggv_bank_statement1 as _gbs
+
+        return public_payload(
+            _gbs.unmatch(
+                verified_person_id=person_id or "",
+                txn_id=m_bank_unmatch.group(1),
+                body=body,
+            )
+        )
     if method == "POST" and rest == "/bank-statements/import":
         from core import ggv_bank_statement1 as _gbs
         import base64
@@ -3275,6 +3800,17 @@ def dispatch(method: str, path: str, qs: dict[str, list[str]], body: dict | None
     m_review = re.fullmatch(r"/notas/([^/]+)/review", rest)
     if m_review and method == "POST":
         return review_nota(person_id or "", m_review.group(1), body)
+    m_nota_confirm = re.fullmatch(r"/notas/([^/]+)/confirm", rest)
+    if m_nota_confirm and method == "POST":
+        return confirm_nota(person_id or "", m_nota_confirm.group(1), body)
+    m_nota_disp = re.fullmatch(r"/notas/([^/]+)/disposition", rest)
+    if m_nota_disp and method == "POST":
+        return disposition_nota(
+            person_id or "",
+            m_nota_disp.group(1),
+            str(body.get("action") or ""),
+            body,
+        )
     m_nota = re.fullmatch(r"/notas/([^/]+)", rest)
     if m_nota and method == "GET":
         return get_nota(person_id, m_nota.group(1))

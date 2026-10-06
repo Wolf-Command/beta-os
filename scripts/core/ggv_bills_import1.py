@@ -260,14 +260,29 @@ def run_import(
         target.close()
 
 
+BILL_STATUS_LABELS = {
+    "DRAFT": "Draft — not approved",
+    "DELETED": "Deleted",
+    "VOID": "Void",
+    "VOIDED": "Void",
+    "AUTHORISED": "Approved",
+    "PAID": "Paid",
+    "SUBMITTED": "Submitted",
+}
+
+
 def bill_public(row: sqlite3.Row) -> dict[str, Any]:
+    status = str(row["status"] or "")
+    src_path = str(row["source_file_path"] or "")
+    has_doc = bool(src_path) and not src_path.endswith("money.sqlite")
     return {
         "bill_id": row["bill_id"],
         "bill_number": row["bill_number"],
         "contact_name": row["contact_name"],
         "issued_on": row["issued_on"],
         "due_on": row["due_on"],
-        "status": row["status"],
+        "status": status,
+        "status_label": BILL_STATUS_LABELS.get(status.upper(), status.replace("_", " ").title()),
         "amount": row["amount"],
         "currency": row["currency"],
         "amount_due": row["amount_due"],
@@ -276,4 +291,10 @@ def bill_public(row: sqlite3.Row) -> dict[str, Any]:
         "notes": row["notes"],
         "source_status": row["source_status"],
         "source": row["source"],
+        "has_original_document": has_doc,
+        "source_note": (
+            "No original document — imported from old finance records"
+            if not has_doc
+            else None
+        ),
     }

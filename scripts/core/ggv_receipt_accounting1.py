@@ -32,9 +32,13 @@ QUEUE_LABELS = {
     "needs_review": "NEEDS REVIEW",
     "unmatched": "UNMATCHED",
     "duplicate": "POSSIBLE DUPLICATE",
+    "not_business": "NOT A BUSINESS RECEIPT",
+    "evidence_missing": "EVIDENCE MISSING",
     "matched": "MATCHED",
     "completed": "COMPLETED",
 }
+
+DISPOSITION_ACTIONS = frozenset({"mark_duplicate", "not_a_business_receipt", "evidence_missing"})
 
 HONESTY = {
     "staff_ready": False,
@@ -208,6 +212,15 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
             WHERE upload_date IS NULL OR upload_date = ''
             """
         )
+    for col, kind in (
+        ("linked_bill_id", "TEXT NULL"),
+        ("linked_nota_id", "TEXT NULL"),
+        ("disposition_reason", "TEXT NULL"),
+        ("disposition_by_person_id", "TEXT NULL"),
+        ("disposition_at", "TEXT NULL"),
+    ):
+        if col not in cols:
+            conn.execute(f"ALTER TABLE ggv_receipt_accounting ADD COLUMN {col} {kind}")
     conn.execute(
         """
         CREATE INDEX IF NOT EXISTS idx_ggv_rx_acct_queue
@@ -390,7 +403,7 @@ def sync_vault_receipts(
             c.close()
 
 
-def _row_public(row: sqlite3.Row | dict[str, Any]) -> dict[str, Any]:
+def _row_public(row: sqlite3.Row | dict[str, Any], *, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
     d = dict(row)
     extraction = None
     human = None
@@ -402,7 +415,8 @@ def _row_public(row: sqlite3.Row | dict[str, Any]) -> dict[str, Any]:
         human = json.loads(d.pop("human_confirmed_json") or "null")
     except json.JSONDecodeError:
         human = None
-    path = Path(str(d.get("vault_path") or ""))
+    vault_path = str(d.pop("vault_path", "") or "")
+    path = Path(vault_path)
     d["extraction"] = extraction
     d["human_confirmed"] = human
     d["queue_label"] = QUEUE_LABELS.get(d.get("accounting_queue") or "", d.get("accounting_queue"))
@@ -411,6 +425,33 @@ def _row_public(row: sqlite3.Row | dict[str, Any]) -> dict[str, Any]:
     d["extraction_retained"] = extraction is not None
     d["human_beside_extraction"] = human is not None and extraction is not None
     d["missing_evidence_visible"] = bool(d.get("missing_evidence"))
+    d["linked_bill"] = None
+    d["linked_nota"] = None
+    if conn and d.get("linked_bill_id"):
+        bill = conn.execute(
+            "SELECT bill_id, bill_number, contact_name, issued_on, amount FROM ggv_bills WHERE bill_id=? AND entity_id=?",
+            (d["linked_bill_id"], ENTITY_GGV),
+        ).fetchone()
+        if bill:
+            d["linked_bill"] = {
+                "bill_id": bill["bill_id"],
+                "bill_number": bill["bill_number"],
+                "contact_name": bill["contact_name"],
+                "issued_on": bill["issued_on"],
+                "amount": bill["amount"],
+            }
+    if conn and d.get("linked_nota_id"):
+        nota = conn.execute(
+            "SELECT nota_id, invoice_no, nota_date, amount FROM ggv_notas WHERE nota_id=? AND entity_id=?",
+            (d["linked_nota_id"], ENTITY_GGV),
+        ).fetchone()
+        if nota:
+            d["linked_nota"] = {
+                "nota_id": nota["nota_id"],
+                "invoice_no": nota["invoice_no"],
+                "date": nota["nota_date"],
+                "amount": nota["amount"],
+            }
     return d
 
 
@@ -443,7 +484,7 @@ def list_accounting_queues(
             args.append(qfilter)
         sql.append("ORDER BY updated_at DESC LIMIT ?")
         args.append(lim)
-        rows = [_row_public(r) for r in c.execute(" ".join(sql), tuple(args)).fetchall()]
+        rows = [_row_public(r, conn=c) for r in c.execute(" ".join(sql), tuple(args)).fetchall()]
         counts = {
             k: int(
                 c.execute(
@@ -516,7 +557,7 @@ def get_receipt(
         ).fetchone()
         if not row:
             raise GgvReceiptAccountingError("Receipt not found.", code="not_found", http_status=404)
-        return {"ok": True, "receipt": _row_public(row), **HONESTY}
+        return {"ok": True, "receipt": _row_public(row, conn=c), **HONESTY}
     finally:
         if own:
             c.close()
@@ -620,7 +661,7 @@ def confirm_receipt(
             "SELECT * FROM ggv_receipt_accounting WHERE receipt_key=?",
             (receipt_key.strip(),),
         ).fetchone()
-        pub = _row_public(updated)
+        pub = _row_public(updated, conn=c)
         assert pub.get("extraction") is not None or extraction is None
         assert pub.get("extraction_retained") is True or extraction is None
         stored_human = pub.get("human_confirmed") or {}
@@ -633,6 +674,260 @@ def confirm_receipt(
             "human_beside_extraction": bool(pub.get("human_confirmed") and pub.get("extraction")),
             **HONESTY,
         }
+    finally:
+        if own:
+            c.close()
+
+
+def _require_review(person_id: str, conn: sqlite3.Connection) -> None:
+    if not (
+        _nota.person_can(person_id, "finance.nota.review", conn)
+        or _nota.person_can(person_id, "finance.nota.edit", conn)
+    ):
+        raise GgvReceiptAccountingError(
+            "You do not have access to review GGV receipts.",
+            code="forbidden",
+            http_status=403,
+        )
+
+
+def disposition_receipt(
+    *,
+    verified_person_id: str,
+    receipt_key: str,
+    action: str,
+    body: dict[str, Any],
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    own = conn is None
+    c = conn or _nota._open_ready()
+    try:
+        ensure_schema(c)
+        _require_review(verified_person_id, c)
+        _assert_ggv_finance(verified_person_id, c)
+        act = (action or "").strip().lower()
+        if act not in DISPOSITION_ACTIONS:
+            raise GgvReceiptAccountingError(
+                f"action must be one of: {', '.join(sorted(DISPOSITION_ACTIONS))}",
+                code="invalid_action",
+            )
+        reason = str(body.get("reason") or "").strip()
+        if act == "evidence_missing" and not reason:
+            raise GgvReceiptAccountingError(
+                "Write a reason when marking evidence missing.",
+                code="missing_reason",
+            )
+        row = c.execute(
+            "SELECT * FROM ggv_receipt_accounting WHERE entity_id=? AND receipt_key=?",
+            (ENTITY_GGV, receipt_key.strip()),
+        ).fetchone()
+        if not row:
+            raise GgvReceiptAccountingError("Receipt not found.", code="not_found", http_status=404)
+        ts = _now()
+        queue = row["accounting_queue"]
+        duplicate_of = row["duplicate_of"]
+        missing_evidence = bool(row["missing_evidence"])
+        if act == "mark_duplicate":
+            queue = "duplicate"
+            dup_ref = str(body.get("duplicate_of") or body.get("duplicate_of_receipt") or "").strip()
+            if dup_ref:
+                duplicate_of = dup_ref
+        elif act == "not_a_business_receipt":
+            queue = "not_business"
+        elif act == "evidence_missing":
+            queue = "evidence_missing"
+            missing_evidence = True
+        c.execute(
+            """
+            UPDATE ggv_receipt_accounting SET
+              accounting_queue=?, duplicate_of=?, missing_evidence=?,
+              disposition_reason=?, disposition_by_person_id=?, disposition_at=?, updated_at=?
+            WHERE receipt_key=?
+            """,
+            (
+                queue,
+                duplicate_of,
+                1 if missing_evidence else 0,
+                reason or None,
+                verified_person_id,
+                ts,
+                ts,
+                receipt_key.strip(),
+            ),
+        )
+        _audit.safe_record(
+            action=f"ggv_receipt_accounting.{act}",
+            result="ALLOWED",
+            source="ggv_receipt_accounting1",
+            actor_type="PERSON",
+            verified_person_id=verified_person_id,
+            actor_person_id=verified_person_id,
+            entity_id=ENTITY_GGV,
+            resource_type="ggv_receipt_accounting",
+            resource_id=receipt_key.strip(),
+            reason_code=act,
+            metadata={"reason": reason, "accounting_queue": queue},
+            conn=c,
+        )
+        c.commit()
+        updated = c.execute(
+            "SELECT * FROM ggv_receipt_accounting WHERE receipt_key=?",
+            (receipt_key.strip(),),
+        ).fetchone()
+        return {"ok": True, "receipt": _row_public(updated, conn=c), **HONESTY}
+    finally:
+        if own:
+            c.close()
+
+
+def link_receipt(
+    *,
+    verified_person_id: str,
+    receipt_key: str,
+    body: dict[str, Any],
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    own = conn is None
+    c = conn or _nota._open_ready()
+    try:
+        ensure_schema(c)
+        _require_review(verified_person_id, c)
+        _assert_ggv_finance(verified_person_id, c)
+        bill_id = str(body.get("bill_id") or "").strip() or None
+        nota_id = str(body.get("nota_id") or "").strip() or None
+        if not bill_id and not nota_id:
+            raise GgvReceiptAccountingError(
+                "Choose a bill or nota to link.",
+                code="missing_link",
+            )
+        if bill_id:
+            found = c.execute(
+                "SELECT bill_id FROM ggv_bills WHERE bill_id=? AND entity_id=?",
+                (bill_id, ENTITY_GGV),
+            ).fetchone()
+            if not found:
+                raise GgvReceiptAccountingError("Bill not found.", code="not_found", http_status=404)
+        if nota_id:
+            found = c.execute(
+                "SELECT nota_id FROM ggv_notas WHERE nota_id=? AND entity_id=?",
+                (nota_id, ENTITY_GGV),
+            ).fetchone()
+            if not found:
+                raise GgvReceiptAccountingError("Nota not found.", code="not_found", http_status=404)
+        row = c.execute(
+            "SELECT receipt_key FROM ggv_receipt_accounting WHERE entity_id=? AND receipt_key=?",
+            (ENTITY_GGV, receipt_key.strip()),
+        ).fetchone()
+        if not row:
+            raise GgvReceiptAccountingError("Receipt not found.", code="not_found", http_status=404)
+        ts = _now()
+        c.execute(
+            """
+            UPDATE ggv_receipt_accounting SET
+              linked_bill_id=?, linked_nota_id=?, updated_at=?
+            WHERE receipt_key=?
+            """,
+            (bill_id, nota_id, ts, receipt_key.strip()),
+        )
+        _audit.safe_record(
+            action="ggv_receipt_accounting.link",
+            result="ALLOWED",
+            source="ggv_receipt_accounting1",
+            actor_type="PERSON",
+            verified_person_id=verified_person_id,
+            actor_person_id=verified_person_id,
+            entity_id=ENTITY_GGV,
+            resource_type="ggv_receipt_accounting",
+            resource_id=receipt_key.strip(),
+            reason_code="link",
+            metadata={"bill_id": bill_id, "nota_id": nota_id},
+            conn=c,
+        )
+        c.commit()
+        updated = c.execute(
+            "SELECT * FROM ggv_receipt_accounting WHERE receipt_key=?",
+            (receipt_key.strip(),),
+        ).fetchone()
+        return {"ok": True, "receipt": _row_public(updated, conn=c), **HONESTY}
+    finally:
+        if own:
+            c.close()
+
+
+def search_link_targets(
+    *,
+    verified_person_id: str,
+    query: str,
+    kind: str | None = None,
+    limit: int = 20,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    own = conn is None
+    c = conn or _nota._open_ready()
+    try:
+        ensure_schema(c)
+        _assert_ggv_finance(verified_person_id, c)
+        q = (query or "").strip()
+        like = f"%{q}%"
+        lim = max(1, min(int(limit or 20), 50))
+        bills: list[dict[str, Any]] = []
+        notas: list[dict[str, Any]] = []
+        want_bills = kind in (None, "", "bill", "bills", "all")
+        want_notas = kind in (None, "", "nota", "notas", "all")
+        if want_bills:
+            from core import ggv_bills_import1 as _bills
+
+            _bills.ensure_schema(c)
+            if q:
+                rows = c.execute(
+                    """
+                    SELECT * FROM ggv_bills
+                    WHERE entity_id=?
+                      AND (
+                        ifnull(bill_number,'') LIKE ? OR ifnull(contact_name,'') LIKE ?
+                        OR ifnull(reference,'') LIKE ?
+                      )
+                    ORDER BY issued_on DESC LIMIT ?
+                    """,
+                    (ENTITY_GGV, like, like, like, lim),
+                ).fetchall()
+            else:
+                rows = c.execute(
+                    "SELECT * FROM ggv_bills WHERE entity_id=? ORDER BY issued_on DESC LIMIT ?",
+                    (ENTITY_GGV, lim),
+                ).fetchall()
+            bills = [_bills.bill_public(r) for r in rows]
+        if want_notas:
+            if q:
+                rows = c.execute(
+                    """
+                    SELECT n.* FROM ggv_notas n
+                    LEFT JOIN ggv_vendors v ON v.vendor_id = n.vendor_id
+                    WHERE n.entity_id=?
+                      AND (
+                        ifnull(n.invoice_no,'') LIKE ? OR ifnull(v.display_name,'') LIKE ?
+                        OR ifnull(n.notes,'') LIKE ?
+                      )
+                    ORDER BY n.updated_at DESC LIMIT ?
+                    """,
+                    (ENTITY_GGV, like, like, like, lim),
+                ).fetchall()
+            else:
+                rows = c.execute(
+                    "SELECT * FROM ggv_notas WHERE entity_id=? ORDER BY updated_at DESC LIMIT ?",
+                    (ENTITY_GGV, lim),
+                ).fetchall()
+            notas = [
+                {
+                    "nota_id": r["nota_id"],
+                    "invoice_no": r["invoice_no"],
+                    "date": r["nota_date"],
+                    "amount": r["amount"],
+                    "state_label": str(r["workflow_state"] or "").replace("_", " ").title(),
+                }
+                for r in rows
+            ]
+        return {"ok": True, "bills": bills, "notas": notas, "query": q, **HONESTY}
     finally:
         if own:
             c.close()

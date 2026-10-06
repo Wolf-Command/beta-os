@@ -152,25 +152,39 @@ def _norm_desc(text: str | None) -> str:
     return re.sub(r"\s+", " ", (text or "").strip().upper())[:120]
 
 
+def _valid_iso_date(s: str | None) -> bool:
+    if not s or len(s) < 10:
+        return False
+    try:
+        datetime.strptime(s[:10], "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
+
 def _parse_iso_date(raw: str | None) -> str | None:
     if not raw:
         return None
     s = str(raw).strip()
     if re.match(r"\d{4}-\d{2}-\d{2}", s):
-        return s[:10]
+        iso = s[:10]
+        return iso if _valid_iso_date(iso) else None
     m = re.match(r"(\d{1,2})[/-](\d{1,2})[/-](\d{4})", s)
     if m:
-        return f"{int(m.group(3)):04d}-{int(m.group(2)):02d}-{int(m.group(1)):02d}"
+        iso = f"{int(m.group(3)):04d}-{int(m.group(2)):02d}-{int(m.group(1)):02d}"
+        return iso if _valid_iso_date(iso) else None
     m = re.match(r"(\d{1,2})\s+(\w+)\s+(\d{4})", s)
     if m:
         mon = MONTHS.get(m.group(2)[:3].lower()) or MONTHS.get(m.group(2).lower())
         if mon:
-            return f"{int(m.group(3)):04d}-{mon:02d}-{int(m.group(1)):02d}"
+            iso = f"{int(m.group(3)):04d}-{mon:02d}-{int(m.group(1)):02d}"
+            return iso if _valid_iso_date(iso) else None
     m = re.match(r"(\d{1,2})\s+(\w+)\s+(\d{4})", s, re.I)
     if m:
         mon = MONTHS.get(m.group(2)[:3].lower()) or MONTHS.get(m.group(2).lower())
         if mon:
-            return f"{int(m.group(3)):04d}-{mon:02d}-{int(m.group(1)):02d}"
+            iso = f"{int(m.group(3)):04d}-{mon:02d}-{int(m.group(1)):02d}"
+            return iso if _valid_iso_date(iso) else None
     return None
 
 
@@ -297,36 +311,121 @@ def _pdf_text(data: bytes) -> str:
 
 
 def _parse_mandiri_csv(text: str) -> tuple[dict[str, Any], list[dict[str, Any]], str]:
-    rows = [r for r in csv.reader(io.StringIO(text), delimiter=";") if r and len(r) >= 8]
-    if not rows or "AccountNo" not in (rows[0][0] or ""):
+    from core import ggv_bank_statement1 as _gbs
+
+    raw_rows = list(csv.reader(io.StringIO(text), delimiter=";"))
+    if not raw_rows or "AccountNo" not in (raw_rows[0][0] or ""):
         return {}, [], ""
     meta: dict[str, Any] = {"bank_label": "MANDIRI"}
-    acct = str(rows[1][0]).strip() if len(rows) > 1 else None
+    row_audit: dict[str, Any] = {
+        "source_rows": 0,
+        "parsed": 0,
+        "exceptions": [],
+        "non_transaction": [],
+    }
+    acct = str(raw_rows[1][0]).strip() if len(raw_rows) > 1 and raw_rows[1] else None
     if acct and acct.isdigit():
         meta["account_number"] = acct
     out: list[dict[str, Any]] = []
-    for r in rows[1:]:
-        if not str(r[0]).strip().isdigit():
+    seen: dict[tuple[Any, ...], int] = {}
+    for line_no, r in enumerate(raw_rows[1:], start=2):
+        row_audit["source_rows"] += 1
+        if not r or not any(str(c or "").strip() for c in r):
+            row_audit["exceptions"].append(
+                {"line": line_no, "reason": "blank_row", "text": ""}
+            )
             continue
+        if len(r) < 8:
+            row_audit["exceptions"].append(
+                {"line": line_no, "reason": "short_row", "text": ";".join(r)[:120]}
+            )
+            continue
+        if not str(r[0]).strip().isdigit():
+            desc = f"{r[3]} {r[4]}".strip() if len(r) > 4 else ";".join(r)
+            credit_probe, credit_probe_err = _gbs._parse_amount(r[5]) if len(r) > 5 else (0.0, None)
+            debit_probe, debit_probe_err = _gbs._parse_amount(r[6]) if len(r) > 6 else (0.0, None)
+            if re.match(r"^(total|saldo|balance)\s*$", desc, re.I) and not credit_probe_err and not debit_probe_err and float(credit_probe or 0) == 0 and float(debit_probe or 0) == 0:
+                row_audit["non_transaction"].append(
+                    {"line": line_no, "reason": "header_or_total", "text": desc[:120]}
+                )
+            else:
+                row_audit["exceptions"].append(
+                    {"line": line_no, "reason": "unparseable_row", "text": desc[:120] or str(r[0])[:40]}
+                )
+            continue
+        txn_date = _parse_iso_date(r[2])
+        if not txn_date:
+            row_audit["exceptions"].append(
+                {"line": line_no, "reason": "invalid_date", "text": str(r[2])[:40]}
+            )
+            continue
+        description = f"{r[3]} {r[4]}".strip()
+        ref_val = str(r[0]).strip()
+        credit_val, credit_err = _gbs._parse_amount(r[5])
+        debit_val, debit_err = _gbs._parse_amount(r[6])
+        balance_val, balance_err = _gbs._parse_amount(r[7])
+        if debit_err or credit_err:
+            row_audit["exceptions"].append(
+                {
+                    "line": line_no,
+                    "reason": "invalid_amount",
+                    "text": description[:120] or str(r[6])[:40],
+                }
+            )
+            continue
+        credit_f = float(credit_val or 0)
+        debit_f = float(debit_val or 0)
+        fp = (
+            txn_date,
+            round(debit_f, 2),
+            round(credit_f, 2),
+            description,
+            ref_val,
+            str(r[5]).strip(),
+            str(r[6]).strip(),
+            str(r[7]).strip(),
+        )
+        if fp in seen:
+            row_audit["exceptions"].append(
+                {
+                    "line": line_no,
+                    "reason": "possible_duplicate",
+                    "text": description[:120],
+                    "first_line": seen[fp],
+                }
+            )
+            continue
+        seen[fp] = line_no
         out.append(
             {
-                "txn_date": _parse_iso_date(r[2]),
-                "value_date": _parse_iso_date(r[2]),
-                "description": f"{r[3]} {r[4]}".strip(),
-                "reference": str(r[0]).strip(),
-                "credit": _num(r[5]),
-                "debit": _num(r[6]),
-                "running_balance": _num(r[7]),
+                "txn_date": txn_date,
+                "value_date": txn_date,
+                "description": description,
+                "reference": ref_val,
+                "credit": credit_f,
+                "debit": debit_f,
+                "running_balance": float(balance_val) if balance_val is not None and not balance_err else None,
                 "bank_account": acct or "MANDIRI",
                 "raw": {"cols": r[:8]},
             }
         )
+        row_audit["parsed"] += 1
+    row_audit["reconciled"] = (
+        int(row_audit["parsed"])
+        + len(row_audit["exceptions"])
+        + len(row_audit["non_transaction"])
+    ) == int(row_audit["source_rows"])
+    meta["row_counts"] = row_audit
     if out:
         dates = [t["txn_date"] for t in out if t.get("txn_date")]
         meta["period_start"] = min(dates)
         meta["period_end"] = max(dates)
         meta["closing_balance"] = out[-1].get("running_balance")
-    return meta, out, "mandiri_semicolon_csv"
+    notes = json.dumps(
+        {"parser": "mandiri_semicolon_csv", "row_counts": row_audit},
+        separators=(",", ":"),
+    )
+    return meta, out, notes
 
 
 def _parse_bri_csv(text: str) -> tuple[dict[str, Any], list[dict[str, Any]], str]:
@@ -370,10 +469,24 @@ def _parse_bri_csv(text: str) -> tuple[dict[str, Any], list[dict[str, Any]], str
         dates = [t["txn_date"] for t in out if t.get("txn_date")]
         meta["period_start"] = min(dates)
         meta["period_end"] = max(dates)
-    return meta, out, "bri_internet_banking_csv"
+    row_audit = {
+        "source_rows": max(0, len(rows) - 1),
+        "parsed": len(out),
+        "exceptions": [],
+        "non_transaction": [],
+        "reconciled": len(out) == max(0, len(rows) - 1) or not rows,
+    }
+    meta["row_counts"] = row_audit
+    notes = json.dumps(
+        {"parser": "bri_internet_banking_csv", "row_counts": row_audit},
+        separators=(",", ":"),
+    )
+    return meta, out, notes
 
 
 def _parse_mandiri_pdf(text: str) -> tuple[dict[str, Any], list[dict[str, Any]], str]:
+    from core import ggv_bank_statement1 as _gbs
+
     meta: dict[str, Any] = {"bank_label": "MANDIRI"}
     m_acct = re.search(r"Account No\s+(\d{10,16})", text)
     if m_acct:
@@ -383,34 +496,97 @@ def _parse_mandiri_pdf(text: str) -> tuple[dict[str, Any], list[dict[str, Any]],
     m_open = re.search(r"Opening Balance\s+([\d,]+\.\d{2})", text)
     m_close = re.search(r"Closing Balance\s+([\d,]+\.\d{2})", text)
     if m_open:
-        meta["opening_balance"] = _num(m_open.group(1))
+        open_val, open_err = _gbs._parse_amount(m_open.group(1))
+        if not open_err:
+            meta["opening_balance"] = float(open_val or 0)
     if m_close:
-        meta["closing_balance"] = _num(m_close.group(1))
+        close_val, close_err = _gbs._parse_amount(m_close.group(1))
+        if not close_err:
+            meta["closing_balance"] = float(close_val or 0)
     blocks = re.split(r"\nDetails:\s*\n", text)
     out: list[dict[str, Any]] = []
-    for block in blocks[1:]:
+    row_audit: dict[str, Any] = {
+        "source_rows": 0,
+        "parsed": 0,
+        "exceptions": [],
+        "non_transaction": [],
+    }
+    seen: dict[tuple[Any, ...], int] = {}
+    for block_no, block in enumerate(blocks[1:], start=1):
+        row_audit["source_rows"] += 1
         m_date = re.search(r"Posting Date\s+(\d{2}/\d{2}/\d{4})", block)
         m_amt = re.search(r"Amount\s+IDR\s+([\d,]+\.\d{2})", block)
         m_desc = re.search(r"Transaction Description\s+(.+?)(?:\nReference No|\nCheque)", block, re.S)
         if not m_date or not m_amt:
+            row_audit["exceptions"].append(
+                {"line": block_no, "reason": "incomplete_pdf_block", "text": block[:120].strip()}
+            )
             continue
-        amt = _num(m_amt.group(1))
+        amt_val, amt_err = _gbs._parse_amount(m_amt.group(1))
+        if amt_err:
+            row_audit["exceptions"].append(
+                {"line": block_no, "reason": "invalid_amount", "text": m_amt.group(1)[:40]}
+            )
+            continue
+        amt = float(amt_val or 0)
         desc = re.sub(r"\s+", " ", (m_desc.group(1) if m_desc else "").strip())
         is_credit = "Credit Account" in block or "credit account" in block.lower()
+        txn_date = _parse_iso_date(m_date.group(1))
+        if not txn_date:
+            row_audit["exceptions"].append(
+                {"line": block_no, "reason": "invalid_date", "text": block[:120].strip()}
+            )
+            continue
+        m_ref = re.search(r"Reference No\s+(.+?)(?:\n|$)", block)
+        ref_val = re.sub(r"\s+", " ", (m_ref.group(1) if m_ref else "").strip())
+        credit_f = amt if is_credit else 0.0
+        debit_f = 0.0 if is_credit else amt
+        fp = (
+            txn_date,
+            round(debit_f, 2),
+            round(credit_f, 2),
+            desc,
+            m_amt.group(1).strip(),
+            ref_val,
+        )
+        if fp in seen:
+            row_audit["exceptions"].append(
+                {
+                    "line": block_no,
+                    "reason": "possible_duplicate",
+                    "text": desc[:120],
+                    "first_line": seen[fp],
+                }
+            )
+            continue
+        seen[fp] = block_no
         out.append(
             {
-                "txn_date": _parse_iso_date(m_date.group(1)),
-                "value_date": _parse_iso_date(m_date.group(1)),
+                "txn_date": txn_date,
+                "value_date": txn_date,
                 "description": desc or None,
-                "reference": None,
-                "credit": amt if is_credit else 0.0,
-                "debit": 0.0 if is_credit else amt,
+                "reference": ref_val or None,
+                "credit": credit_f,
+                "debit": debit_f,
                 "running_balance": None,
                 "bank_account": meta.get("account_number") or "MANDIRI",
                 "raw": {"block": block[:500]},
             }
         )
-    return meta, out, "mandiri_livin_pdf"
+        row_audit["parsed"] += 1
+    row_audit["reconciled"] = (
+        int(row_audit["parsed"])
+        + len(row_audit["exceptions"])
+        + len(row_audit["non_transaction"])
+    ) == int(row_audit["source_rows"])
+    meta["row_counts"] = row_audit
+    if row_audit["exceptions"]:
+        meta["evidence_status"] = "PARTIAL_PDF_EXTRACTION"
+    notes = json.dumps(
+        {"parser": "mandiri_livin_pdf", "row_counts": row_audit},
+        separators=(",", ":"),
+    )
+    return meta, out, notes
 
 
 def _parse_cimb_pdf(text: str) -> tuple[dict[str, Any], list[dict[str, Any]], str]:
@@ -471,14 +647,15 @@ def _parse_cimb_pdf(text: str) -> tuple[dict[str, Any], list[dict[str, Any]], st
 def _parse_generic_csv(text: str) -> tuple[dict[str, Any], list[dict[str, Any]], str]:
     from core import ggv_bank_statement1 as _gbs
 
-    rows = _gbs._parse_generic_csv(text)
-    meta: dict[str, Any] = {}
+    rows, row_audit = _gbs._parse_generic_csv_audited(text)
+    meta: dict[str, Any] = {"row_counts": row_audit}
     if rows:
         dates = [r.get("txn_date") for r in rows if r.get("txn_date")]
         if dates:
             meta["period_start"] = min(dates)
             meta["period_end"] = max(dates)
-    return meta, rows, "generic_csv_header"
+    notes = json.dumps({"parser": "generic_csv_header", "row_counts": row_audit}, separators=(",", ":"))
+    return meta, rows, notes
 
 
 def parse_statement_bytes(data: bytes, filename: str) -> tuple[dict[str, Any], list[dict[str, Any]], str]:
@@ -519,7 +696,8 @@ def parse_statement_bytes(data: bytes, filename: str) -> tuple[dict[str, Any], l
     if rows:
         return meta, rows, notes
     meta, rows, notes = _parse_generic_csv(text)
-    if rows:
+    row_counts = meta.get("row_counts") if isinstance(meta.get("row_counts"), dict) else {}
+    if rows or int(row_counts.get("source_rows") or 0) > 0:
         bank = "BNI" if "bni" in name else ("MANDIRI" if "mandiri" in name else "GENERIC")
         meta["bank_label"] = bank
         return meta, rows, notes
@@ -586,8 +764,42 @@ def _library_filter_sql() -> str:
     return " AND COALESCE(is_test_fixture, 0) = 0"
 
 
+def _parse_notes_meta(notes: str | None) -> dict[str, Any]:
+    if not notes:
+        return {}
+    try:
+        parsed = json.loads(notes)
+        return parsed if isinstance(parsed, dict) else {}
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return {"parser": notes}
+
+
+def _human_evidence_status(raw: str | None, parse_status: str | None = None) -> str:
+    from core import ggv_bank_statement1 as _gbs
+
+    if raw:
+        return _gbs.EVIDENCE_STATUS_LABELS.get(str(raw), str(raw).replace("_", " ").title())
+    if str(parse_status or "") in ("EXCEPTION", "PARSE_FAILED"):
+        return "Parse failed — original kept"
+    return "Original kept"
+
+
+def _human_recon_status(raw: str | None) -> str:
+    from core import ggv_bank_statement1 as _gbs
+
+    return _gbs.RECON_STATUS_LABELS.get(str(raw or "UNRECONCILED"), "Not reconciled yet")
+
+
 def _public_import(row: dict[str, Any]) -> dict[str, Any]:
     acct = row.get("account_number") or row.get("account_label")
+    notes_meta = _parse_notes_meta(row.get("parse_notes"))
+    row_counts = notes_meta.get("row_counts") if isinstance(notes_meta.get("row_counts"), dict) else None
+    evidence_raw = row.get("evidence_status") or (
+        "PARSE FAILED — ORIGINAL KEPT"
+        if str(row.get("parse_status")) in ("EXCEPTION", "PARSE_FAILED")
+        else "ORIGINAL_KEPT"
+    )
+    recon_raw = row.get("reconciliation_status") or "UNRECONCILED"
     return {
         "statement_id": row["import_id"],
         "bank": row.get("bank_label"),
@@ -597,11 +809,13 @@ def _public_import(row: dict[str, Any]) -> dict[str, Any]:
         "opening_balance": row.get("opening_balance"),
         "closing_balance": row.get("closing_balance"),
         "txn_count": row.get("txn_count"),
-        "reconciliation_status": row.get("reconciliation_status") or "UNRECONCILED",
-        "evidence_status": row.get("evidence_status")
-        or ("PARSE FAILED — ORIGINAL KEPT" if str(row.get("parse_status")) in ("EXCEPTION", "PARSE_FAILED") else "ORIGINAL_KEPT"),
+        "reconciliation_status": recon_raw,
+        "reconciliation_label": _human_recon_status(recon_raw),
+        "evidence_status": evidence_raw,
+        "evidence_label": _human_evidence_status(evidence_raw, row.get("parse_status")),
         "parse_status": row.get("parse_status"),
         "uploaded_at": row.get("uploaded_at"),
+        "row_counts": row_counts,
         "open_href": f"{_fce.entity_config(row['entity_id'])['page_prefix']}/statements/{row['import_id']}",
     }
 
@@ -737,7 +951,13 @@ def import_statement(
             prefix = "GBSI" if eid != "ENT-BZG" else "BZG-BANK"
             import_id = f"{prefix}-{uuid.uuid4()}" if eid != "ENT-BZG" else f"BZG-BANK-{uuid.uuid4().hex[:12].upper()}"
             safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", Path(filename or "statement").name)[:180]
-            dest = originals / f"{import_id}__{safe_name}" if eid != "ENT-BZG" else originals / safe_name
+            dest = originals / f"{import_id}__{safe_name}"
+            if dest.exists():
+                raise FinanceStatementError(
+                    "Statement original path collision — import aborted.",
+                    code="path_collision",
+                    http_status=500,
+                )
             dest.write_bytes(content)
 
             if not period_start and rows:
@@ -828,6 +1048,24 @@ def import_statement(
             if eid != "ENT-BZG" and rows and not parse_failed:
                 proposed = _gbs.propose_matches(import_id, conn=c, commit=False)
 
+            row_counts = meta.get("row_counts")
+            if isinstance(row_counts, dict):
+                rc = row_counts
+                rc["reconciled"] = (
+                    int(rc.get("parsed", 0))
+                    + len(rc.get("exceptions") or [])
+                    + len(rc.get("non_transaction") or [])
+                ) == int(rc.get("source_rows", 0))
+            else:
+                row_counts = {
+                    "source_rows": len(rows),
+                    "parsed": len(rows),
+                    "exceptions": [],
+                    "non_transaction": [],
+                    "reconciled": len(rows) == 0,
+                    "baseline_missing_audit": True,
+                }
+
             _audit.safe_record(
                 action="finance_core_statement.import",
                 result="ALLOWED",
@@ -844,6 +1082,7 @@ def import_statement(
                     "txn_count": len(rows),
                     "parse_status": parse_status,
                     "content_sha256": sha,
+                    "row_counts": row_counts,
                 },
                 conn=c,
             )
@@ -867,6 +1106,7 @@ def import_statement(
                 "parse_notes": notes,
                 "evidence_status": evidence_status,
                 "proposed_matches": proposed,
+                "row_counts": row_counts,
                 "entity_id": eid,
                 **HONESTY,
             }
@@ -980,7 +1220,10 @@ def get_statement(
             public["audit_trail"] = audit_tail
             public["original_download_href"] = f"{_fce.entity_config(eid)['api_prefix']}/statements/{import_id}/original"
             public["content_sha256"] = imp.get("content_sha256")
+            notes_meta = _parse_notes_meta(imp.get("parse_notes"))
             public["parse_notes"] = imp.get("parse_notes")
+            public["row_counts"] = notes_meta.get("row_counts")
+            public["parse_exceptions"] = (notes_meta.get("row_counts") or {}).get("exceptions") or []
             return {"ok": True, "statement": public, "entity_id": eid, **HONESTY}
     finally:
         if own:

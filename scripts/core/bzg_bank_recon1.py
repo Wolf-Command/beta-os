@@ -275,6 +275,26 @@ def _build_ledger_pools(conn: sqlite3.Connection) -> tuple[dict[tuple[date, floa
         if d:
             exact[(d, amount)].append(ref)
         by_amount[amount].append({**ref, "date": d})
+    try:
+        for row in conn.execute(
+            """
+            SELECT payment_record_id, amount, paid_date, bill_id
+            FROM bzg_ops_payment_records
+            WHERE status='claimed'
+            """
+        ):
+            amount = float(row["amount"] or 0)
+            d = _parse_date(row["paid_date"])
+            ref = {
+                "kind": "payment",
+                "ref": str(row["payment_record_id"]),
+                "bill_id": str(row["bill_id"]),
+            }
+            if d:
+                exact[(d, amount)].append(ref)
+            by_amount[amount].append({**ref, "date": d})
+    except sqlite3.OperationalError:
+        pass
     for row in conn.execute(
         """
         SELECT movement_id, amount, business_date

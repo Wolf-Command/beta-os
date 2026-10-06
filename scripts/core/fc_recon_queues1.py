@@ -50,6 +50,7 @@ RULE_LABELS = {
     "INTER_ACCOUNT_TRANSFER": "Transfer between accounts",
     "EXACT_LEDGER_BILL": "Supplier bill payment",
     "EXACT_LEDGER_AP": "Accounts payable payment",
+    "EXACT_LEDGER_PAYMENT": "Recorded supplier payment",
     "EXACT_LEDGER_PETTY": "Petty cash movement",
     "MULTI_EXACT_AMOUNT_DATE": "Several exact matches",
     "AMOUNT_DATE_SLACK": "Amount match within a week",
@@ -327,6 +328,62 @@ def _deny_self_confirm(row: sqlite3.Row, person_id: str) -> None:
         )
 
 
+def _txn_amount(row: sqlite3.Row | dict[str, Any]) -> float:
+    debit = float(row["debit"] or 0)
+    credit = float(row["credit"] or 0)
+    return debit if debit > 0 else credit
+
+
+def _amg_internal_transfer_pair(source: sqlite3.Row, other: sqlite3.Row) -> bool:
+    source_debit = float(source["debit"] or 0)
+    source_credit = float(source["credit"] or 0)
+    other_debit = float(other["debit"] or 0)
+    other_credit = float(other["credit"] or 0)
+    if source_debit > 0 and other_credit <= 0:
+        return False
+    if source_credit > 0 and other_debit <= 0:
+        return False
+    if str(source["txn_date"])[:10] != str(other["txn_date"])[:10]:
+        return False
+    if abs(_txn_amount(source) - _txn_amount(other)) > 1.0:
+        return False
+    if str(source["bank_account"]) == str(other["bank_account"]):
+        return False
+    return True
+
+
+def _amg_ref_exists(
+    conn: sqlite3.Connection,
+    ref: str,
+    *,
+    source_row: sqlite3.Row | None = None,
+) -> bool:
+    if conn.execute(
+        "SELECT 1 FROM ggv_bills WHERE bill_id=? AND entity_id=?",
+        (ref, AMG_ENTITY),
+    ).fetchone():
+        return True
+    if conn.execute(
+        "SELECT 1 FROM ggv_notas WHERE nota_id=? AND entity_id=?",
+        (ref, AMG_ENTITY),
+    ).fetchone():
+        return True
+    if conn.execute(
+        "SELECT 1 FROM ggv_invoices WHERE invoice_id=? AND entity_id=?",
+        (ref, AMG_ENTITY),
+    ).fetchone():
+        return True
+    other = conn.execute(
+        "SELECT * FROM ggv_bank_transactions WHERE txn_id=? AND entity_id=?",
+        (ref, AMG_ENTITY),
+    ).fetchone()
+    if not other:
+        return False
+    if source_row is None:
+        return True
+    return _amg_internal_transfer_pair(source_row, other)
+
+
 def confirm_match(
     conn: sqlite3.Connection,
     *,
@@ -343,7 +400,48 @@ def confirm_match(
     if entity == AMG_ENTITY:
         if not int(row["match_proposed"] or 0) and not int(row["human_confirmed"] or 0):
             raise ReconQueueError("No proposed match to confirm.", code="not_proposed")
-        ref = matched_ref or row["matched_receipt_ref"]
+        candidates = meta.get("candidates") or []
+        candidate_refs = {str(c.get("ref")) for c in candidates if c.get("ref")}
+        proposed_ref = str(row["matched_receipt_ref"] or "")
+        body_ref = str(matched_ref or "").strip()
+        if body_ref:
+            ref = body_ref
+            allowed = candidate_refs or ({proposed_ref} if proposed_ref else set())
+            if allowed and ref not in allowed:
+                raise ReconQueueError(
+                    "That reference is not among the proposed candidates.",
+                    code="invalid_ref",
+                    http_status=400,
+                )
+        elif proposed_ref:
+            ref = proposed_ref
+        elif len(candidates) == 1:
+            ref = str(candidates[0].get("ref") or "")
+        else:
+            raise ReconQueueError(
+                "Pick which record to match — several candidates may share this amount and date.",
+                code="ambiguous_match",
+                http_status=409,
+            )
+        if not ref or not _amg_ref_exists(conn, ref, source_row=row):
+            raise ReconQueueError(
+                "That record does not exist for this company.",
+                code="invalid_ref",
+                http_status=400,
+            )
+        taken = conn.execute(
+            """
+            SELECT txn_id FROM ggv_bank_transactions
+            WHERE entity_id=? AND human_confirmed=1 AND matched_receipt_ref=? AND txn_id<>?
+            """,
+            (AMG_ENTITY, ref, txn_id),
+        ).fetchone()
+        if taken:
+            raise ReconQueueError(
+                "That record is already matched to another bank line.",
+                code="duplicate_match",
+                http_status=409,
+            )
         conn.execute(
             """
             UPDATE ggv_bank_transactions
@@ -370,9 +468,26 @@ def confirm_match(
             (ref, txn_id, BZG_ENTITY),
         )
     _audit_action(conn, entity=entity, person_id=person_id, txn_id=txn_id, action="bank_recon.confirm", rule=rule)
+    payment_verified = None
+    if entity == BZG_ENTITY and ref:
+        from core import bzg_payment_record as _pay_rec
+
+        try:
+            payment_verified = _pay_rec.verify_from_bank_match(
+                conn,
+                payment_record_id=str(ref),
+                bank_txn_id=txn_id,
+                person_id=person_id,
+                commit=False,
+            )
+        except Exception:
+            payment_verified = None
     if commit:
         conn.commit()
-    return public(ok=True, txn_id=txn_id, action="confirm", human_confirmed=True)
+    out = public(ok=True, txn_id=txn_id, action="confirm", human_confirmed=True)
+    if payment_verified:
+        out["payment_verified"] = payment_verified
+    return out
 
 
 def reject_match(

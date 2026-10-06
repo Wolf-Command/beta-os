@@ -400,6 +400,28 @@ def dispatch(
             offset=_qs_int(qs, "offset", 0),
             outlet_id=_qs_str(qs, "outlet") or None,
         )
+    if rest == "/payments/bank-accounts":
+        require_board(person_id, conn)
+        from core import bzg_payment_record as _pay_rec
+
+        return {
+            **_pay_rec.HONESTY,
+            "ok": True,
+            "accounts": _pay_rec.list_bank_accounts(conn),
+        }
+    m_pay_bill = re.fullmatch(r"/payments/bill/([^/]+)", rest)
+    if m_pay_bill:
+        require_board(person_id, conn)
+        from core import bzg_payment_record as _pay_rec
+
+        bid = m_pay_bill.group(1)
+        return {
+            **_pay_rec.HONESTY,
+            "ok": True,
+            "bill_id": bid,
+            "payments": _pay_rec.list_payments_for_bill(bid, person_id=person_id, conn=conn),
+            **(_pay_rec.ap_payment_columns(conn, bid)),
+        }
     if rest == "/exceptions":
         require_board(person_id, conn)
         return _browse.list_exceptions(
@@ -535,6 +557,44 @@ def _dispatch_post(
                 rule=str(body.get("rule") or ""),
             )
         except _queue.ReconQueueError as exc:
+            raise BzgFinanceError(str(exc), code=exc.code, http_status=exc.http_status) from exc
+    from core import bzg_payment_record as _pay_rec
+
+    if rest == "/payments/proof":
+        require_board(person_id, conn)
+        try:
+            raw = body.get("proof_bytes")
+            if isinstance(raw, str):
+                import base64
+
+                data = base64.b64decode(raw)
+            elif isinstance(raw, (bytes, bytearray)):
+                data = bytes(raw)
+            else:
+                raise BzgFinanceError("Proof file required.", code="missing_proof", http_status=400)
+            return _pay_rec.save_proof_bytes(
+                data=data,
+                filename=str(body.get("filename") or ""),
+                content_type=str(body.get("content_type") or ""),
+            )
+        except _pay_rec.PaymentRecordError as exc:
+            raise BzgFinanceError(str(exc), code=exc.code, http_status=exc.http_status) from exc
+    if rest == "/payments/record":
+        require_board(person_id, conn)
+        try:
+            result = _pay_rec.record_payment(
+                person_id=person_id or "",
+                bill_id=str(body.get("bill_id") or ""),
+                paid_date=str(body.get("paid_date") or ""),
+                amount=float(body.get("amount") or 0),
+                from_account=str(body.get("from_account") or ""),
+                bank_reference=str(body.get("bank_reference") or ""),
+                proof_object_ref=str(body.get("proof_object_ref") or "") or None,
+                conn=conn,
+                commit=True,
+            )
+            return {**_pay_rec.HONESTY, "ok": True, "payment": result}
+        except _pay_rec.PaymentRecordError as exc:
             raise BzgFinanceError(str(exc), code=exc.code, http_status=exc.http_status) from exc
     raise BzgFinanceError(
         "BZG Finance money writes are not opened on this pack.",

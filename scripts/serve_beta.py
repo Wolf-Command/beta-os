@@ -7735,6 +7735,12 @@ class BetaHandler(SimpleHTTPRequestHandler):
             if nye_refuse:
                 self._uma_ops_connective_refuse(path, nye_refuse)
                 return
+            if path in (
+                "/api/bzg/uma-blu/payments/record",
+                "/api/bzg/uma-blu/payments/record/",
+            ):
+                self._uma_ops_payment_record()
+                return
             if path in ("/api/bzg/uma-blu/pay", "/api/bzg/uma-blu/payment"):
                 self._uma_ops_payment_refused()
                 return
@@ -42357,6 +42363,54 @@ class BetaHandler(SimpleHTTPRequestHandler):
                 }
             )
         except _bzg_rtp.ReadyToPayError as exc:
+            self._send_json(
+                {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
+                status=int(getattr(exc, "http_status", 400) or 400),
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._send_err(500, str(exc))
+
+    def _uma_ops_payment_record(self) -> None:
+        from core import bzg_payment_record as _bzg_pay
+
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"ok": False, "error": f"invalid JSON: {exc}"}, status=400)
+            return
+        if not isinstance(body, dict):
+            body = {}
+        actor = self._uma_ops_actor(body)
+        if actor is None:
+            return
+        person_id, identity = actor
+        try:
+            conn = _uma_ops.db_connect()
+            try:
+                result = _bzg_pay.record_payment(
+                    person_id=person_id,
+                    bill_id=(body.get("bill_id") or "").strip(),
+                    paid_date=str(body.get("paid_date") or ""),
+                    amount=float(body.get("amount") or 0),
+                    from_account=str(body.get("from_account") or ""),
+                    bank_reference=str(body.get("bank_reference") or ""),
+                    proof_object_ref=str(body.get("proof_object_ref") or "") or None,
+                    identity=identity,
+                    conn=conn,
+                    commit=True,
+                )
+            finally:
+                conn.close()
+            self._send_json(
+                {
+                    "ok": True,
+                    "payment": result,
+                    "payment_execution": False,
+                    "recording_only": True,
+                    "no_money_movement": True,
+                }
+            )
+        except _bzg_pay.PaymentRecordError as exc:
             self._send_json(
                 {"ok": False, "error": str(exc), "code": getattr(exc, "code", None)},
                 status=int(getattr(exc, "http_status", 400) or 400),

@@ -76,12 +76,19 @@
     .line-card, .totals, .grid { display: block; }
   }
   @media (max-width: 860px) {
-    nav.tabs {
+    nav.tabs.finance-core {
+      display: none;
+    }
+    nav.tabs.mobile-nota {
+      display: flex;
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
       margin: 0; padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
       background: #08171a; border-top: 1px solid var(--border);
     }
-    nav.tabs button { flex: 1 1 18%; font-size: 0.78rem; padding: 8px 4px; }
+    nav.tabs.mobile-nota button { flex: 1 1 22%; font-size: 0.78rem; padding: 8px 4px; }
+  }
+  @media (min-width: 861px) {
+    nav.tabs.mobile-nota { display: none; }
   }
 </style>
 </head>
@@ -98,7 +105,7 @@
     <p class="note">Bank details seen on a document are not verified.</p>
     <p class="note">An issued invoice is not a paid invoice. A claimed payment is not a verified payment.</p>
   </div>
-  <nav class="tabs" aria-label="Finance">
+  <nav class="tabs finance-core" aria-label="Finance">
     <button type="button" data-tab="overview" class="active">Overview</button>
     <button type="button" data-tab="banking">Banking</button>
     <button type="button" data-tab="transactions">Transactions</button>
@@ -111,15 +118,20 @@
     <button type="button" data-tab="reports">Reports</button>
     <button type="button" data-tab="audit">Audit</button>
     <button type="button" data-tab="customers" class="hidden">Customers</button>
-    <button type="button" data-tab="history" class="hidden">History</button>
     <button type="button" data-tab="receipts" class="hidden">Receipts</button>
+  </nav>
+  <nav class="tabs mobile-nota" aria-label="Notas mobile">
+    <button type="button" data-tab="overview" class="active">Overview</button>
+    <button type="button" data-tab="notas">Notas / Bills</button>
+    <button type="button" data-tab="vendors">Vendors</button>
+    <button type="button" data-tab="history">History</button>
   </nav>
 
   <section id="overview">
     <div class="grid" id="primary-actions">
       <a class="file-btn primary" href="/ggv/finance/banking">UPLOAD STATEMENT</a>
       <a class="file-btn primary" href="/ggv/finance/notas">UPLOAD NOTA / RECEIPT</a>
-      <a class="file-btn primary" href="/ggv/finance/statements">Historical statements</a>
+      <a class="file-btn primary" href="/ggv/finance/statements">HISTORICAL STATEMENTS</a>
       <a class="file-btn primary" href="/ggv/finance/reconciliation">RECONCILIATION</a>
     </div>
     <div class="grid" id="overview-cards"></div>
@@ -180,6 +192,48 @@
   <section id="notas" class="hidden">
     <div id="nota-list-wrap">
       <button type="button" class="primary" id="start-upload">+ Upload Nota</button>
+      <h2>Receipts to check</h2>
+      <p class="note">Spend receipts for accountant review. Original images stay evidence — paths are never shown.</p>
+      <label>Receipts to check
+        <select id="rx-queue-inline">
+          <option value="">All receipts</option>
+          <option value="needs_review">Needs review</option>
+          <option value="duplicate">Duplicate</option>
+          <option value="not_business">Not a business receipt</option>
+          <option value="evidence_missing">Evidence missing</option>
+        </select>
+      </label>
+      <button type="button" class="secondary" id="rx-reload-inline">Reload receipts to check</button>
+      <p class="note" id="rx-summary-inline">Loading…</p>
+      <div id="rx-list-inline"></div>
+      <div id="rx-detail-inline" class="hidden card warn">
+        <h2 id="rx-detail-title-inline">Receipt detail</h2>
+        <div id="rx-detail-image-inline"></div>
+        <div class="grid">
+          <div><h3>Extracted</h3><div id="rx-fields-extraction" class="meta"></div></div>
+          <div><h3>Your confirmation</h3>
+            <label>Vendor<input id="rx-vendor-inline" /></label>
+            <label>Amount<input id="rx-amount-inline" inputmode="decimal" /></label>
+            <label>Tax<input id="rx-tax-inline" inputmode="decimal" placeholder="Leave blank if not shown" /></label>
+            <label>Date<input id="rx-date-inline" placeholder="YYYY-MM-DD" /></label>
+            <label>Category<input id="rx-category-inline" /></label>
+            <label>Account code<input id="rx-account-inline" /></label>
+            <label>Notes<textarea id="rx-notes-inline"></textarea></label>
+          </div>
+        </div>
+        <button type="button" class="primary" id="rx-confirm-inline">Confirm beside extraction</button>
+        <p class="note" id="rx-confirm-msg-inline"></p>
+        <label>Reason (required for evidence missing)<textarea id="rx-disposition-reason" placeholder="Why you are marking this"></textarea></label>
+        <button type="button" class="secondary" id="rx-mark-duplicate">Mark duplicate</button>
+        <button type="button" class="secondary" id="rx-not-business">Not a business receipt</button>
+        <button type="button" class="secondary" id="rx-evidence-missing">Evidence missing</button>
+        <h3>Link to bill or nota</h3>
+        <label>Search<input id="rx-link-q" placeholder="Supplier, invoice, bill number" /></label>
+        <button type="button" class="secondary" id="rx-link-search">Search</button>
+        <div id="rx-link-results"></div>
+        <p class="note" id="rx-linked"></p>
+        <button type="button" class="secondary" id="rx-detail-close-inline">Close</button>
+      </div>
       <h2>Notas</h2>
       <div id="nota-list"></div>
       <h2>Bills</h2>
@@ -189,9 +243,9 @@
     <div id="upload-panel" class="hidden">
       <button type="button" class="secondary" id="cancel-upload">Back to notas</button>
       <h2>Upload nota</h2>
-      <label class="file-btn">Take photo<input id="cam" type="file" accept="image/*" capture="environment" /></label>
-      <label class="file-btn">Choose photo or PDF<input id="file" type="file" accept="image/*,.pdf,application/pdf" /></label>
-      <label class="file-btn">Add more photos<input id="more" type="file" accept="image/*" multiple /></label>
+      <label class="file-btn">Take photo<input id="cam" type="file" accept="image/*,image/heic,image/heif,.heic,.heif" capture="environment" /></label>
+      <label class="file-btn">Choose photo or PDF<input id="file" type="file" accept="image/*,image/heic,image/heif,.heic,.heif,.pdf,application/pdf" /></label>
+      <label class="file-btn">Add more photos<input id="more" type="file" accept="image/*,image/heic,image/heif,.heic,.heif" multiple /></label>
       <p class="meta" id="file-names">No file chosen yet.</p>
       <button type="button" class="primary" id="run-upload">Upload and read</button>
       <ol class="progress" id="progress">
@@ -254,17 +308,17 @@
   </section>
 
   <section id="receipts" class="hidden">
-    <p class="note">Vault receipts from the existing Peaches / receipt-from-telegram bridge. GGV only — AMG and BZG excluded. Original images stay evidence. Human confirm keeps extraction beside it. Xero stays fail-closed.</p>
-    <label>Accounting queue
+    <p class="note">Receipt images captured for GGV. Original files stay evidence. You confirm amounts beside the extraction. Payments are not sent from this screen.</p>
+    <label>Receipts to check
       <select id="rx-queue">
-        <option value="">All queues</option>
+        <option value="">All receipts</option>
         <option value="needs_review">Needs review</option>
         <option value="needs_coding">Needs coding</option>
         <option value="unmatched">Unmatched</option>
         <option value="duplicate">Duplicate</option>
       </select>
     </label>
-    <button type="button" class="secondary" id="rx-reload">Reload accounting queues</button>
+    <button type="button" class="secondary" id="rx-reload">Reload receipts to check</button>
     <p class="note" id="rx-summary">Loading…</p>
     <div id="rx-counts" class="grid"></div>
     <div id="rx-list"></div>
@@ -329,11 +383,28 @@
 
   <section id="reconciliation" class="hidden">
     <p class="note">Propose-only reconciliation. No auto-post. No Reconcile button.</p>
+    <div class="grid">
+      <label>Statement
+        <select id="recon-import-filter"><option value="">All statements</option></select>
+      </label>
+      <label>Month<input id="recon-month-filter" placeholder="YYYY-MM" /></label>
+      <label>Status
+        <select id="recon-status-filter">
+          <option value="">Any status</option>
+          <option value="MATCHED">Matched</option>
+          <option value="PROPOSE">Possible match</option>
+          <option value="UNMATCHED">Unmatched</option>
+        </select>
+      </label>
+      <button type="button" class="secondary" id="recon-apply-filter">Apply filters</button>
+    </div>
+    <p class="note" id="recon-page-note"></p>
     <div id="recon-summary" class="grid"></div>
     <h2>Imports</h2>
     <div id="recon-imports"></div>
-    <h2>Transactions</h2>
+    <h2>Bank lines</h2>
     <div id="recon-txns"></div>
+    <button type="button" class="secondary hidden" id="recon-more">Show more bank lines</button>
   </section>
 
   <section id="missing_evidence" class="hidden">
@@ -409,11 +480,13 @@ let existingNotaId = null;
 function showTab(name) {
   tabs.forEach((tab) => {
     $(tab).classList.toggle("hidden", tab !== name);
-    document.querySelector(`[data-tab="${tab}"]`).classList.toggle("active", tab === name);
+    document.querySelectorAll(`nav.tabs [data-tab="${tab}"]`).forEach((btn) => {
+      btn.classList.toggle("active", tab === name);
+    });
   });
   if (name === "overview") loadOverview();
   if (name === "invoices") loadInvoices();
-  if (name === "notas") loadNotas();
+  if (name === "notas") { loadNotas(); loadReceiptsInline(); }
   if (name === "bills") loadBillsOnly();
   if (name === "vendors") searchVendors();
   if (name === "customers") searchCustomers();
@@ -447,6 +520,58 @@ function esc(value) {
   return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
 }
 
+function idr(value) {
+  const n = Number(value || 0);
+  if (!Number.isFinite(n)) return esc(String(value || "0"));
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
+}
+
+const AUDIT_LABELS = {
+  "ggv.bank_recon.confirm": "Bank match confirmed",
+  "ggv.bank_recon.unmatch": "Bank match removed",
+  "ggv.bank_recon.backfill_propose": "Find matches run on existing statements",
+  "finance_core_statement.import": "Bank statement imported",
+  "nota_edited": "Nota updated",
+  "ggv.nota.edit": "Nota updated",
+};
+
+const HISTORY_LABELS = {
+  nota_edited: "Nota updated",
+  duplicate_use_existing: "Marked as duplicate",
+  mark_duplicate: "Marked duplicate",
+};
+
+const VAULT_QUEUE_LABELS = {
+  inbox: "Inbox",
+  processed: "Processed",
+  needs_review: "Needs review",
+  needs_coding: "Needs coding",
+};
+
+const EXTRACTION_LABELS = {
+  vendor_name: "Supplier name",
+  invoice_no: "Invoice number",
+  nota_date: "Receipt date",
+  amount: "Amount",
+  amount_raw: "Amount (as read)",
+  tax: "Tax",
+  tax_raw: "Tax (as read)",
+  currency: "Currency",
+  bank_observed: "Bank details observed",
+};
+
+function auditLabel(action) {
+  return AUDIT_LABELS[action] || HISTORY_LABELS[action] || String(action || "").replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function vaultQueueLabel(code) {
+  return VAULT_QUEUE_LABELS[code] || String(code || "").replace(/_/g, " ");
+}
+
+function reconErrMsg(err) {
+  return (err && err.message) ? err.message : "Could not complete that action.";
+}
+
 function renderProgress(steps) {
   $("progress").innerHTML = (steps || []).map((step) => {
     const mark = step.status === "done" ? "✓" : step.status === "failed" ? "!" : "·";
@@ -456,12 +581,25 @@ function renderProgress(steps) {
 
 async function loadOverview() {
   const data = await api("/api/ggv/finance/overview");
+  const links = data.finance_links || {};
+  const card = (label, count, href) =>
+    `<article class="card">${href ? `<a class="inline" href="${esc(href)}">` : ""}<p class="meta">${esc(label)}</p><p class="count">${esc(count)}</p>${href ? "</a>" : ""}</article>`;
+  const flowMonth = data.money_flow_month || "";
+  const flowNote = data.money_flow_note || "";
   const cards = [
-    ["Needs review", data.needs_review],
-    ["Waiting approval", data.waiting_approval],
-    ["Not paid from this screen", data.payment_unverified],
-    ["Vendor issues", data.vendor_issues],
-    ["Bills on record", data.bill_count || 0],
+    card("Needs reconciling", data.needs_reconciling || 0, links.reconciliation),
+    card("Missing evidence", data.missing_evidence || 0, links.missing_evidence),
+    card("Needs paying (approved bills)", idr(data.needs_paying_idr || 0), links.bills),
+    card("Draft bills to check", `${data.draft_bills_count || 0} · ${idr(data.draft_bills_idr || 0)}`, links.bills),
+    card("Possible duplicate bills", data.possible_duplicate_groups || 0, links.bills),
+    card(flowMonth ? `Money in (${flowMonth})` : "Money in this month", idr(data.money_in_this_month_idr || 0), links.banking),
+    card(flowMonth ? `Money out (${flowMonth})` : "Money out this month", idr(data.money_out_this_month_idr || 0), links.banking),
+    card("Unresolved exceptions", data.unresolved_exceptions || 0, links.banking),
+    card("Needs review", data.needs_review, links.notas),
+    card("Waiting approval", data.waiting_approval, links.notas),
+    card("Not paid from this screen", data.payment_unverified, links.notas),
+    card("Supplier issues", data.vendor_issues, links.notas),
+    card("Bills on record", data.bill_count || 0, links.bills),
   ];
   const desk = data.invoice_desk || {};
   if (desk.invoice_access) {
@@ -469,19 +607,22 @@ async function loadOverview() {
     cards.push(["Overdue invoices", desk.overdue]);
     cards.push(["Payment claimed, not verified", desk.payment_unverified]);
   }
-  $("overview-cards").innerHTML = cards.map(([label, count]) =>
-    `<article class="card"><p class="meta">${esc(label)}</p><p class="count">${esc(count)}</p></article>`
-  ).join("");
+  $("overview-cards").innerHTML = cards.join("");
+  if (flowNote) {
+    const note = document.createElement("p");
+    note.className = "note";
+    note.textContent = flowNote;
+    $("overview-cards").after(note);
+  }
   const recent = data.recently_added || [];
   $("recent").innerHTML = recent.length ? recent.map(notaCard).join("") : `<p class="note">Nothing added yet.</p>`;
   const activity = desk.recent_activity || [];
   $("activity").innerHTML = activity.length
-    ? activity.map((item) => `<article class="card">${esc(item.at)} · ${esc(item.action)}</article>`).join("")
+    ? activity.map((item) => `<article class="card">${esc(item.at)} · ${esc(auditLabel(item.action))}</article>`).join("")
     : `<p class="note">No invoice activity yet.</p>`;
   if (data.boundary_note) $("boundary").textContent = data.boundary_note;
   const shell = $("books-shell");
   if (shell) {
-    const dbFile = data.db_file || (data.books_shell && data.books_shell.db_file) || "atrium-ggv.sqlite";
     const kind = data.shell_kind || (data.books_shell && data.books_shell.shell_kind) || "empty_shell";
     const accounts = Number(
       (data.books_shell && data.books_shell.accounts != null)
@@ -507,10 +648,12 @@ function notaCard(nota) {
 
 function billCard(bill) {
   const who = bill.contact_name || "No supplier name";
-  const amount = bill.amount ? esc(bill.amount) + " " + esc(bill.currency || "") : "Amount not recorded";
+  const amount = bill.amount ? idr(bill.amount) : "Amount not recorded";
   const number = bill.bill_number || bill.reference || "No bill number";
   const due = bill.due_on ? " · due " + esc(bill.due_on) : "";
-  return `<article class="card row"><strong>${esc(who)}</strong><br>${esc(number)} · ${esc(bill.issued_on || "No date")}${due}<br>${amount}<br>${esc(bill.status || "")}</article>`;
+  const bid = bill.bill_id || "";
+  const status = bill.status_label || bill.status || "";
+  return `<article class="card row"><button type="button" data-bill="${esc(bid)}"><strong>${esc(who)}</strong><br>${esc(number)} · ${esc(bill.issued_on || "No date")}${due}<br>${amount}<br>${esc(status)}</button></article>`;
 }
 
 async function loadNotas() {
@@ -532,28 +675,66 @@ async function loadNotas() {
   $("bill-list").innerHTML = bills.length
     ? bills.map(billCard).join("") + (total > bills.length ? `<p class="note">Showing ${bills.length} of ${total} bills.</p>` : "")
     : `<p class="note">No bills on record yet.</p>`;
+  $("bill-list").querySelectorAll("[data-bill]").forEach((btn) => btn.addEventListener("click", () => openBill(btn.dataset.bill)));
+}
+
+function extractionFields(obj) {
+  if (!obj || typeof obj !== "object") return "<p class='note'>No extraction on file.</p>";
+  const rows = Object.entries(obj).filter(([k]) => !["raw_meta"].includes(k)).map(([k, v]) =>
+    `<p><span class="meta">${esc(EXTRACTION_LABELS[k] || k.replace(/_/g, " "))}</span><br>${esc(String(v ?? ""))}</p>`
+  ).join("");
+  return rows || "<p class='note'>No fields read.</p>";
 }
 
 async function openNota(id) {
   const data = await api("/api/ggv/finance/notas/" + encodeURIComponent(id));
   const nota = data.nota;
+  const proposals = (nota.proposals && nota.proposals.fields) || {};
   $("nota-list-wrap").classList.add("hidden");
   $("upload-panel").classList.add("hidden");
   $("nota-detail").classList.remove("hidden");
-  const files = (nota.files || []).map((file) => `<p><a class="inline" href="/api/ggv/finance/files/${esc(file.file_id)}">${esc(file.original_filename || file.filename || "Attachment")}</a> <span class="meta">Backup: ${esc(file.backup_label || "Unknown")}</span></p>`).join("");
-  const history = (nota.history || []).map((item) => `<li>${esc(item.at)} · ${esc(item.action)}</li>`).join("");
+  const files = (nota.files || []).map((file) => `<p><a class="inline" href="/api/ggv/finance/files/${esc(file.file_id)}">${esc(file.original_filename || file.filename || "Attachment")}</a> <span class="meta">Backup: ${esc(file.backup_label || "Unknown")}</span></p>`).join("") || `<p class="bad">No file attached — evidence missing.</p>`;
+  const history = (nota.history || []).map((item) => `<li>${esc(item.at)} · ${esc(auditLabel(item.action))}</li>`).join("");
+  const taxDetail = nota.tax_detail || {};
+  const taxFields = `
+    <label>Faktur Pajak number<input id="nd-faktur" value="${esc(taxDetail.faktur_pajak_no || "")}" placeholder="Optional" /></label>
+    <label>Supplier NPWP<input id="nd-npwp" value="${esc(taxDetail.supplier_npwp || "")}" placeholder="Optional" /></label>
+    <label>DPP (tax base)<input id="nd-dpp" inputmode="decimal" value="${esc(taxDetail.dpp || "")}" placeholder="Optional" /></label>
+    <label>PPN<input id="nd-ppn" inputmode="decimal" value="${esc(taxDetail.ppn || nota.tax || "")}" placeholder="Optional" /></label>
+    <label>PPh withheld<input id="nd-pph" inputmode="decimal" value="${esc(taxDetail.pph || "")}" placeholder="Optional" /></label>
+    <label><input type="checkbox" id="nd-tax-inclusive" ${taxDetail.tax_inclusive ? "checked" : ""} /> Amount is tax-inclusive</label>
+    ${nota.ppn_evidence_missing ? `<p class="bad">PPN claimed, no Faktur number — add Faktur or correct tax.</p>` : ""}`;
   const bank = nota.bank_details && nota.bank_details.text
     ? `<p class="warn">Bank details observed: ${esc(nota.bank_details.text)}. Not verified. This does not pay anyone.</p>`
     : "";
   $("nota-detail").innerHTML = `
     <button type="button" class="secondary" id="detail-back">Back to notas</button>
     <article class="card">
-      <h2>${esc(nota.vendor && nota.vendor.name || "No vendor yet")}</h2>
-      <p>${esc(nota.state_label)} · ${esc(nota.invoice_no || "")}</p>
-      <p>Date ${esc(nota.date || "—")} · Amount ${esc(nota.amount || "not confirmed")} ${esc(nota.currency || "")}</p>
+      <h2>${esc(nota.vendor && nota.vendor.name || proposals.vendor_name || "No vendor yet")}</h2>
+      <p>${esc(nota.state_label)} · ${esc(nota.invoice_no || proposals.invoice_no || "")}</p>
       <p class="note">Entering this nota is not approval, not payment, and not payment verified.</p>
       ${bank}
       ${files}
+      <div class="grid">
+        <div><h3>Extracted</h3>${extractionFields(proposals)}</div>
+        <div><h3>Your confirmation</h3>
+          <label>Invoice number<input id="nd-invoice" value="${esc(nota.invoice_no || proposals.invoice_no || "")}" /></label>
+          <label>Date<input id="nd-date" value="${esc(nota.date || proposals.date || "")}" /></label>
+          <label>Amount<input id="nd-amount" value="${esc(nota.amount || proposals.amount || "")}" inputmode="decimal" /></label>
+          <label>Tax<input id="nd-tax" value="${esc(nota.tax || proposals.tax || "")}" inputmode="decimal" /></label>
+          <label>Currency<input id="nd-currency" value="${esc(nota.currency || proposals.currency || "IDR")}" /></label>
+          <label>Category<input id="nd-category" value="${esc(nota.category || proposals.category || "")}" /></label>
+          <label>Notes<textarea id="nd-notes">${esc(nota.notes || "")}</textarea></label>
+          <h3>Indonesian tax (optional)</h3>
+          ${taxFields}
+          <label>Reason (required for evidence missing)<textarea id="nd-disposition-reason" placeholder="Why you are marking this"></textarea></label>
+        </div>
+      </div>
+      <button type="button" class="primary" id="nd-confirm">Confirm beside extraction</button>
+      <p class="note" id="nd-confirm-msg"></p>
+      <button type="button" class="secondary" id="nd-mark-duplicate">Mark duplicate</button>
+      <button type="button" class="secondary" id="nd-not-business">Not a business document</button>
+      <button type="button" class="secondary" id="nd-evidence-missing">Evidence missing</button>
       <h2>History</h2>
       <ul>${history}</ul>
     </article>`;
@@ -562,6 +743,49 @@ async function openNota(id) {
     $("nota-list-wrap").classList.remove("hidden");
     loadNotas();
   });
+  $("nd-confirm").addEventListener("click", async () => {
+    $("nd-confirm-msg").textContent = "Saving…";
+    try {
+      const body = {
+        invoice_no: $("nd-invoice").value,
+        date: $("nd-date").value,
+        amount: $("nd-amount").value,
+        tax: $("nd-tax").value,
+        currency: $("nd-currency").value,
+        category: $("nd-category").value,
+        notes: $("nd-notes").value,
+        tax_detail: {
+          faktur_pajak_no: $("nd-faktur") ? $("nd-faktur").value : "",
+          supplier_npwp: $("nd-npwp") ? $("nd-npwp").value : "",
+          dpp: $("nd-dpp") ? $("nd-dpp").value : "",
+          ppn: $("nd-ppn") ? $("nd-ppn").value : "",
+          pph: $("nd-pph") ? $("nd-pph").value : "",
+          tax_inclusive: $("nd-tax-inclusive") ? $("nd-tax-inclusive").checked : false,
+        },
+        confirm: { vendor: true, invoice_no: true, date: true, amount: true, tax: true, currency: true, category: true },
+      };
+      const res = await api(`/api/ggv/finance/notas/${encodeURIComponent(id)}/confirm`, { method: "POST", body: JSON.stringify(body) });
+      $("nd-confirm-msg").textContent = res.message || "Confirmed.";
+      openNota(id);
+    } catch (err) {
+      $("nd-confirm-msg").textContent = err.message || String(err);
+    }
+  });
+  async function notaDisposition(action) {
+    const reason = ($("nd-disposition-reason").value || "").trim();
+    try {
+      await api(`/api/ggv/finance/notas/${encodeURIComponent(id)}/disposition`, {
+        method: "POST",
+        body: JSON.stringify({ action, reason }),
+      });
+      openNota(id);
+    } catch (err) {
+      $("nd-confirm-msg").textContent = err.message || String(err);
+    }
+  }
+  $("nd-mark-duplicate").addEventListener("click", () => notaDisposition("mark_duplicate"));
+  $("nd-not-business").addEventListener("click", () => notaDisposition("not_a_business_receipt"));
+  $("nd-evidence-missing").addEventListener("click", () => notaDisposition("evidence_missing"));
 }
 
 function rememberFiles(list, reset) {
@@ -794,7 +1018,7 @@ async function openVendor(id) {
   const notas = (data.notas || []).map((row) => `<li>${esc(row.invoice_no || row.nota_id)} · ${esc(row.state_label)}</li>`).join("");
   $("vendor-detail").classList.remove("hidden");
   $("vendor-detail").innerHTML = `<article class="card"><button type="button" class="secondary" id="vendor-back">Back</button>
-    <h2>${esc(vendor.name)}</h2><p>${esc(vendor.vendor_id)}</p><p>${esc(vendor.category || "")}</p>${banks}<ul>${notas}</ul></article>`;
+    <h2>${esc(vendor.name)}</h2><p>${esc(vendor.category || "")}</p>${banks}<ul>${notas}</ul></article>`;
   $("vendor-back").addEventListener("click", () => $("vendor-detail").classList.add("hidden"));
 }
 
@@ -870,7 +1094,7 @@ async function loadReceipts() {
   const counts = data.queue_counts || {};
   const labels = data.queue_labels || {};
   $("rx-summary").textContent =
-    `Accounting queue · showing ${data.count || 0}` +
+    `Receipts to check · showing ${data.count || 0}` +
     (data.amg_bzg_isolated ? "" : " · check business isolation");
   $("rx-counts").innerHTML = Object.keys(labels).map((key) => `
     <article class="card">
@@ -882,7 +1106,7 @@ async function loadReceipts() {
     ? rows.map((r) => `
       <article class="card" data-rx-key="${esc(r.receipt_key || "")}">
         <strong>${esc(r.vault_filename || r.receipt_key || "")}</strong><br>
-        ${rxQueueBadge(r.accounting_queue, r.queue_label)} · ${esc(r.vault_queue || "")} · ${esc(r.updated_at || "")}<br>
+        ${rxQueueBadge(r.accounting_queue, r.queue_label)} · ${esc(vaultQueueLabel(r.vault_queue))} · ${esc(r.updated_at || "")}<br>
         <span class="meta">${esc((r.extraction && r.extraction.note) || "")}</span>
         <div class="meta">
           ${r.image_retrievable ? "Original image attached" : "<span class='bad'>Missing evidence</span>"}
@@ -898,7 +1122,7 @@ async function loadReceipts() {
   });
   const acct = await api("/api/ggv/finance/accountant");
   const missingRx = (data.missing_evidence_receipts || 0) > 0
-    ? `<p class="bad">${esc(String(data.missing_evidence_receipts))} vault receipt(s) missing image on disk.</p>`
+    ? `<p class="bad">${esc(String(data.missing_evidence_receipts))} receipt(s) missing image on disk.</p>`
     : "";
   $("rx-missing-notas").innerHTML =
     missingRx + (periodCards(acct.missing_evidence) || `<p class="note">No missing nota evidence.</p>`);
@@ -979,6 +1203,163 @@ if ($("rx-confirm")) {
 if ($("rx-reload")) $("rx-reload").addEventListener("click", () => loadReceipts());
 if ($("rx-queue")) $("rx-queue").addEventListener("change", () => loadReceipts());
 
+let rxInlineKey = null;
+
+function rxFieldList(extraction) {
+  if (!extraction || typeof extraction !== "object") return "<p class='note'>No extraction on file.</p>";
+  return Object.entries(extraction).filter(([k]) => !["raw_meta"].includes(k)).map(([k, v]) =>
+    `<p><span class="meta">${esc(EXTRACTION_LABELS[k] || k.replace(/_/g, " "))}</span><br>${esc(String(v ?? ""))}</p>`
+  ).join("") || "<p class='note'>No fields read.</p>";
+}
+
+async function loadReceiptsInline() {
+  const elQ = $("rx-queue-inline");
+  const elSummary = $("rx-summary-inline");
+  const elList = $("rx-list-inline");
+  if (!elQ || !elSummary || !elList) return;
+  const q = (elQ.value || "").trim();
+  const path = q
+    ? `/api/ggv/finance/accounting/queues?queue=${encodeURIComponent(q)}&limit=40`
+    : "/api/ggv/finance/accounting/queues?limit=40";
+  const data = await api(path);
+  elSummary.textContent = `Receipts to check · showing ${data.count || 0}`;
+  const rows = data.items || [];
+  elList.innerHTML = rows.length
+    ? rows.map((r) => `
+      <article class="card">
+        <strong>${esc(r.queue_label || r.accounting_queue || "")}</strong> · ${esc(r.upload_date || r.updated_at || "")}<br>
+        <span class="meta">${esc((r.extraction && r.extraction.note) || (r.extraction && r.extraction.vendor) || "")}</span>
+        <div class="meta">
+          ${r.image_retrievable ? "Image attached" : "<span class='bad'>Missing evidence</span>"}
+          ${r.linked_bill ? " · linked bill " + esc(r.linked_bill.bill_number || "") : ""}
+          ${r.linked_nota ? " · linked nota " + esc(r.linked_nota.invoice_no || "") : ""}
+        </div>
+        <button type="button" class="secondary rx-open-inline" data-rx-key="${esc(r.receipt_key || "")}">Open</button>
+      </article>`).join("")
+    : `<p class="note">No receipts in this queue.</p>`;
+  document.querySelectorAll(".rx-open-inline").forEach((btn) => {
+    btn.addEventListener("click", () => openReceiptInline(btn.dataset.rxKey));
+  });
+}
+
+async function openReceiptInline(key) {
+  if (!key) return;
+  rxInlineKey = key;
+  const data = await api(`/api/ggv/finance/accounting/receipts/${encodeURIComponent(key)}`);
+  const r = data.receipt || {};
+  $("rx-detail-inline").classList.remove("hidden");
+  $("rx-detail-title-inline").textContent = r.queue_label || "Receipt detail";
+  $("rx-fields-extraction").innerHTML = rxFieldList(r.extraction);
+  $("rx-detail-image-inline").innerHTML = r.image_retrievable
+    ? `<img src="/api/ggv/finance/accounting/receipts/${encodeURIComponent(key)}/image" alt="Receipt evidence" style="max-width:100%;border-radius:12px;border:1px solid var(--border)" />`
+    : `<p class="bad">Missing evidence — original image not on disk.</p>`;
+  const h = r.human_confirmed || {};
+  $("rx-vendor-inline").value = h.vendor || (r.extraction && r.extraction.vendor) || "";
+  $("rx-amount-inline").value = h.amount || (r.extraction && r.extraction.amount) || "";
+  $("rx-tax-inline").value = h.tax || (r.extraction && r.extraction.tax) || "";
+  $("rx-date-inline").value = h.date || (r.extraction && r.extraction.receipt_date) || "";
+  $("rx-category-inline").value = h.category || (r.extraction && r.extraction.category) || "";
+  $("rx-account-inline").value = h.account_code || (r.extraction && r.extraction.account_code) || "";
+  $("rx-notes-inline").value = h.notes || "";
+  $("rx-confirm-msg-inline").textContent = "";
+  $("rx-disposition-reason").value = r.disposition_reason || "";
+  const linked = [];
+  if (r.linked_bill) linked.push(`Bill ${r.linked_bill.bill_number || ""} · ${r.linked_bill.contact_name || ""}`);
+  if (r.linked_nota) linked.push(`Nota ${r.linked_nota.invoice_no || ""}`);
+  $("rx-linked").textContent = linked.length ? "Linked: " + linked.join(" · ") : "";
+  $("rx-link-results").innerHTML = "";
+}
+
+async function rxDispositionInline(action) {
+  if (!rxInlineKey) return;
+  const reason = ($("rx-disposition-reason").value || "").trim();
+  try {
+    await api(`/api/ggv/finance/accounting/receipts/${encodeURIComponent(rxInlineKey)}/disposition`, {
+      method: "POST",
+      body: JSON.stringify({ action, reason }),
+    });
+    await openReceiptInline(rxInlineKey);
+    await loadReceiptsInline();
+  } catch (err) {
+    $("rx-confirm-msg-inline").textContent = err.message || String(err);
+  }
+}
+
+if ($("rx-reload-inline")) $("rx-reload-inline").addEventListener("click", () => loadReceiptsInline());
+if ($("rx-queue-inline")) $("rx-queue-inline").addEventListener("change", () => loadReceiptsInline());
+if ($("rx-detail-close-inline")) {
+  $("rx-detail-close-inline").addEventListener("click", () => {
+    $("rx-detail-inline").classList.add("hidden");
+    rxInlineKey = null;
+  });
+}
+if ($("rx-confirm-inline")) {
+  $("rx-confirm-inline").addEventListener("click", async () => {
+    if (!rxInlineKey) return;
+    $("rx-confirm-msg-inline").textContent = "Saving…";
+    try {
+      const body = {
+        vendor: $("rx-vendor-inline").value,
+        amount: $("rx-amount-inline").value,
+        date: $("rx-date-inline").value,
+        category: $("rx-category-inline").value,
+        account_code: $("rx-account-inline").value,
+        notes: $("rx-notes-inline").value,
+      };
+      const taxVal = ($("rx-tax-inline").value || "").trim();
+      if (taxVal) body.tax = taxVal;
+      const data = await api(
+        `/api/ggv/finance/accounting/receipts/${encodeURIComponent(rxInlineKey)}/confirm`,
+        { method: "POST", body: JSON.stringify(body) }
+      );
+      $("rx-confirm-msg-inline").textContent = data.extraction_retained
+        ? "Confirmed — extraction kept beside human fields."
+        : "Confirmed.";
+      await openReceiptInline(rxInlineKey);
+      await loadReceiptsInline();
+    } catch (err) {
+      $("rx-confirm-msg-inline").textContent = err.message || String(err);
+    }
+  });
+}
+if ($("rx-mark-duplicate")) $("rx-mark-duplicate").addEventListener("click", () => rxDispositionInline("mark_duplicate"));
+if ($("rx-not-business")) $("rx-not-business").addEventListener("click", () => rxDispositionInline("not_a_business_receipt"));
+if ($("rx-evidence-missing")) $("rx-evidence-missing").addEventListener("click", () => rxDispositionInline("evidence_missing"));
+if ($("rx-link-search")) {
+  $("rx-link-search").addEventListener("click", async () => {
+    if (!rxInlineKey) return;
+    const q = ($("rx-link-q").value || "").trim();
+    const data = await api(`/api/ggv/finance/accounting/link-search?q=${encodeURIComponent(q)}&limit=12`);
+    const bills = (data.bills || []).map((b) =>
+      `<button type="button" class="secondary rx-link-bill" data-bill-id="${esc(b.bill_id)}">${esc(b.contact_name || "")} · ${esc(b.bill_number || "")}</button>`
+    ).join("");
+    const notas = (data.notas || []).map((n) =>
+      `<button type="button" class="secondary rx-link-nota" data-nota-id="${esc(n.nota_id)}">${esc(n.invoice_no || "No invoice")} · ${esc(n.date || "")}</button>`
+    ).join("");
+    $("rx-link-results").innerHTML = (bills || notas)
+      ? `<div>${bills}</div><div>${notas}</div>`
+      : `<p class="note">No matches.</p>`;
+    document.querySelectorAll(".rx-link-bill").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        await api(`/api/ggv/finance/accounting/receipts/${encodeURIComponent(rxInlineKey)}/link`, {
+          method: "POST",
+          body: JSON.stringify({ bill_id: btn.dataset.billId }),
+        });
+        await openReceiptInline(rxInlineKey);
+      });
+    });
+    document.querySelectorAll(".rx-link-nota").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        await api(`/api/ggv/finance/accounting/receipts/${encodeURIComponent(rxInlineKey)}/link`, {
+          method: "POST",
+          body: JSON.stringify({ nota_id: btn.dataset.notaId }),
+        });
+        await openReceiptInline(rxInlineKey);
+      });
+    });
+  });
+}
+
 async function loadTransactions() {
   const tx = await api("/api/ggv/finance/bank-transactions?limit=200");
   const rows = tx.transactions || [];
@@ -1002,33 +1383,221 @@ async function loadBillsOnly() {
   $("bills-only-list").innerHTML = bills.length
     ? bills.map(billCard).join("") + (total > bills.length ? `<p class="note">Showing ${bills.length} of ${total}.</p>` : "")
     : `<p class="note">No bills on record yet.</p>`;
+  $("bills-only-list").querySelectorAll("[data-bill]").forEach((btn) => btn.addEventListener("click", () => openBill(btn.dataset.bill)));
 }
 
-async function loadReconciliation() {
-  const data = await api("/api/ggv/finance/reconciliation");
+async function openBill(id) {
+  if (!id) return;
+  const data = await api("/api/ggv/finance/bills/" + encodeURIComponent(id));
+  const bill = data.bill || {};
+  const host = $("bills-only-list");
+  const detail = document.createElement("div");
+  detail.id = "bill-detail";
+  detail.className = "card warn";
+  detail.innerHTML = `
+    <button type="button" class="secondary" id="bill-detail-close">Back</button>
+    <h2>${esc(bill.label || bill.contact_name || "Bill")}</h2>
+    <p>${esc(bill.bill_number || bill.reference || "No bill number")} · ${esc(bill.issued_on || "No date")}</p>
+    <p>${bill.amount ? idr(bill.amount) : "Amount not recorded"} · ${esc(bill.status_label || bill.status || "")}</p>
+    <p class="note">Due ${esc(bill.due_on || "not set")} · paid ${bill.amount_paid ? idr(bill.amount_paid) : idr(0)} · due ${bill.amount_due ? idr(bill.amount_due) : (bill.amount ? idr(bill.amount) : "")}</p>
+    <p class="note">Imported from finance record · ${esc(bill.imported_at || "")}</p>
+    ${bill.source_note ? `<p class="note">${esc(bill.source_note)}</p>` : ""}
+    <p class="note">${esc(bill.notes || "")}</p>`;
+  const existing = document.getElementById("bill-detail");
+  if (existing) existing.remove();
+  (host || $("bill-list")).prepend(detail);
+  $("bill-detail-close").addEventListener("click", () => detail.remove());
+}
+
+function renderTxnCard(t) {
+  const candidates = t.match_candidates || [];
+  const multi = candidates.length > 1 && !t.matched_receipt_ref;
+  const radios = multi
+    ? `<div class="meta">${candidates.map((c) => `
+        <label><input type="radio" name="pick-${esc(t.txn_id)}" value="${esc(c.ref || "")}" />
+        ${esc(c.label || c.party || c.kind || "Record")}</label>`).join("")}</div>`
+    : "";
+  const proposed = t.proposed_not_confirmed
+    ? `<div class="meta">${esc(t.proposal_text || "Possible match")}: ${esc(t.matched_display || t.matched_receipt_ref || "pick a record below")}</div>`
+    : "";
+  const matchedLabel = t.matched_display || t.matched_receipt_ref || "";
+  const matched = t.can_unmatch
+    ? (t.matched_href
+      ? `<div class="meta ok">Matched: <a class="inline" href="${esc(t.matched_href)}">${esc(matchedLabel)}</a></div>`
+      : `<div class="meta ok">Matched: ${esc(matchedLabel)}</div>`)
+    : "";
+  const actions = [];
+  if (t.proposed_not_confirmed || multi) {
+    const disabled = multi ? " disabled" : "";
+    actions.push(`<button type="button" class="primary recon-confirm" data-txn="${esc(t.txn_id || "")}" data-multi="${multi ? "1" : "0"}"${disabled}>Confirm match</button>`);
+  }
+  if (t.proposed_not_confirmed || t.can_unmatch) {
+    actions.push(`<button type="button" class="secondary recon-unmatch" data-txn="${esc(t.txn_id || "")}">Unmatch</button>`);
+  }
+  actions.push(`<button type="button" class="secondary recon-find" data-import="${esc(t.import_id || "")}">Find matches</button>`);
+  return `<article class="card" data-txn="${esc(t.txn_id || "")}">
+    <strong>${esc(t.txn_date || "")}</strong> · ${esc(t.match_label || "Unmatched")}<br>
+    ${t.money_in ? `Money in ${idr(t.money_in)}<br>` : ""}
+    ${t.money_out ? `Money out ${idr(t.money_out)}<br>` : ""}
+    ${esc(t.description || "")}
+    ${proposed}${matched}${radios}
+    <p class="meta recon-err" id="recon-err-${esc(t.txn_id || "")}"></p>
+    ${actions.join(" ")}
+    <details class="meta"><summary>Link another record</summary>
+      <input class="manual-q" data-txn="${esc(t.txn_id || "")}" placeholder="Search supplier, number, amount" />
+      <button type="button" class="secondary manual-search" data-txn="${esc(t.txn_id || "")}">Search</button>
+      <div class="manual-results" id="manual-${esc(t.txn_id || "")}"></div>
+    </details>
+  </article>`;
+}
+
+let reconOffset = 0;
+const reconLimit = 100;
+
+async function loadReconciliation(append) {
+  if (!append) reconOffset = 0;
+  const imp = ($("recon-import-filter") && $("recon-import-filter").value) || "";
+  const month = ($("recon-month-filter") && $("recon-month-filter").value) || "";
+  const status = ($("recon-status-filter") && $("recon-status-filter").value) || "";
+  const qs = new URLSearchParams({ limit: String(reconLimit), offset: String(reconOffset) });
+  if (imp) qs.set("import_id", imp);
+  if (month) qs.set("month", month);
+  if (status) qs.set("match_status", status);
+  const data = await api("/api/ggv/finance/reconciliation?" + qs.toString());
   const s = data.summary || {};
   $("recon-summary").innerHTML = [
-    ["Unmatched bank rows", s.bank_unmatched],
-    ["Propose match", s.bank_propose_match],
-    ["Human review", s.bank_human_review],
+    ["Bank lines total", s.bank_total],
+    ["Matched", s.bank_matched],
+    ["Possible match", s.bank_possible_match],
+    ["Unmatched", s.bank_unmatched],
+    ["Exception", s.bank_exception],
     ["Receipt missing evidence", s.receipt_missing_evidence],
   ].map(([label, count]) =>
     `<article class="card"><p class="meta">${esc(label)}</p><p class="count">${esc(String(count || 0))}</p></article>`
   ).join("");
-  $("recon-imports").innerHTML = (data.imports || []).length
-    ? (data.imports || []).map((imp) => `
+  const imports = data.imports || [];
+  const importSel = $("recon-import-filter");
+  if (importSel && importSel.options.length <= 1 && imports.length) {
+    imports.forEach((row) => {
+      const opt = document.createElement("option");
+      opt.value = row.statement_id || row.import_id || "";
+      opt.textContent = `${row.bank || row.bank_label || ""} ${row.period_start || ""} → ${row.period_end || ""}`;
+      importSel.appendChild(opt);
+    });
+  }
+  if (importSel && imp) importSel.value = imp;
+  const total = data.transaction_total || 0;
+  const shown = (append ? ($("recon-txns").querySelectorAll("[data-txn]").length) : 0) + (data.transactions || []).length;
+  const pageNote = $("recon-page-note");
+  if (pageNote) {
+    pageNote.textContent = total
+      ? `Showing ${shown} of ${total} bank lines${imp || month || status ? " (filtered)" : ""}.`
+      : "No bank lines yet.";
+  }
+  const moreBtn = $("recon-more");
+  if (moreBtn) {
+    if (shown < total) {
+      moreBtn.classList.remove("hidden");
+      moreBtn.onclick = () => { reconOffset += reconLimit; loadReconciliation(true); };
+    } else {
+      moreBtn.classList.add("hidden");
+    }
+  }
+  $("recon-imports").innerHTML = imports.length
+    ? imports.map((imp) => `
       <article class="card">
-        <strong>${esc(imp.bank_label || "")}</strong> · ${esc(imp.original_filename || "")}<br>
-        ${esc(String(imp.txn_count || 0))} txns · ${esc(imp.period_start || "?")} → ${esc(imp.period_end || "?")}
+        <strong>${esc(imp.bank || imp.bank_label || "")}</strong> · ${esc(imp.period_start || "?")} → ${esc(imp.period_end || "?")}<br>
+        ${esc(String(imp.txn_count || 0))} bank lines
+        <button type="button" class="secondary recon-find" data-import="${esc(imp.statement_id || imp.import_id || "")}">Find matches</button>
       </article>`).join("")
     : `<p class="note">No statement imports yet.</p>`;
-  $("recon-txns").innerHTML = (data.transactions || []).length
-    ? (data.transactions || []).map((t) => `
-      <article class="card">
-        <strong>${esc(t.txn_date || "")}</strong> · ${esc(t.match_label || "UNMATCHED")}<br>
-        ${esc(t.description || "")}
-      </article>`).join("")
-    : `<p class="note">No transactions to reconcile.</p>`;
+  const txnHtml = (data.transactions || []).length
+    ? (data.transactions || []).map(renderTxnCard).join("")
+    : `<p class="note">No bank lines to reconcile.</p>`;
+  if (append) $("recon-txns").innerHTML += txnHtml;
+  else $("recon-txns").innerHTML = txnHtml;
+  document.querySelectorAll(`input[name^="pick-"]`).forEach((radio) => {
+    radio.addEventListener("change", () => {
+      const txn = radio.name.replace("pick-", "");
+      const btn = document.querySelector(`.recon-confirm[data-txn="${txn}"]`);
+      if (btn && btn.dataset.multi === "1") btn.disabled = !radio.checked;
+    });
+  });
+  document.querySelectorAll(".recon-confirm").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const txn = btn.dataset.txn;
+      const picked = document.querySelector(`input[name="pick-${txn}"]:checked`);
+      const body = picked && picked.value ? { matched_receipt_ref: picked.value } : {};
+      const errEl = document.getElementById(`recon-err-${txn}`);
+      try {
+        await api(`/api/ggv/finance/bank-transactions/${encodeURIComponent(txn)}/confirm`, {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+        loadReconciliation();
+      } catch (err) {
+        if (errEl) errEl.textContent = reconErrMsg(err);
+      }
+    });
+  });
+  document.querySelectorAll(".recon-unmatch").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const reason = window.prompt("Why are you removing this match?");
+      if (!reason || !reason.trim()) return;
+      const txn = btn.dataset.txn;
+      const errEl = document.getElementById(`recon-err-${txn}`);
+      try {
+        await api(`/api/ggv/finance/bank-transactions/${encodeURIComponent(txn)}/unmatch`, {
+          method: "POST",
+          body: JSON.stringify({ reason: reason.trim() }),
+        });
+        loadReconciliation();
+      } catch (err) {
+        if (errEl) errEl.textContent = reconErrMsg(err);
+      }
+    });
+  });
+  document.querySelectorAll(".recon-find").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const importId = btn.dataset.import;
+      if (!importId) return;
+      try {
+        await api(`/api/ggv/finance/bank-statements/${encodeURIComponent(importId)}/find-matches`, {
+          method: "POST",
+          body: "{}",
+        });
+        loadReconciliation();
+      } catch (err) {
+        window.alert(reconErrMsg(err));
+      }
+    });
+  });
+  document.querySelectorAll(".manual-search").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const txn = btn.dataset.txn;
+      const q = document.querySelector(`.manual-q[data-txn="${txn}"]`);
+      const host = document.getElementById(`manual-${txn}`);
+      if (!host) return;
+      const out = await api(`/api/ggv/finance/bank-transactions/${encodeURIComponent(txn)}/match-search?q=${encodeURIComponent(q && q.value || "")}`);
+      host.innerHTML = (out.targets || []).map((row) =>
+        `<button type="button" class="secondary manual-pick" data-txn="${esc(txn)}" data-ref="${esc(row.ref || "")}">${esc(row.label || row.kind)}</button>`
+      ).join("") || `<p class="note">No matching records.</p>`;
+      host.querySelectorAll(".manual-pick").forEach((pick) => {
+        pick.addEventListener("click", async () => {
+          const errEl = document.getElementById(`recon-err-${pick.dataset.txn}`);
+          try {
+            await api(`/api/ggv/finance/bank-transactions/${encodeURIComponent(pick.dataset.txn)}/confirm`, {
+              method: "POST",
+              body: JSON.stringify({ matched_receipt_ref: pick.dataset.ref }),
+            });
+            loadReconciliation();
+          } catch (err) {
+            if (errEl) errEl.textContent = reconErrMsg(err);
+          }
+        });
+      });
+    });
+  });
 }
 
 async function loadMissingEvidence() {
@@ -1054,8 +1623,8 @@ async function loadAudit() {
   $("audit-list").innerHTML = rows.length
     ? rows.map((e) => `
       <article class="card">
-        <strong>${esc(e.action || "")}</strong> · ${esc(e.occurred_at || "")}<br>
-        <span class="meta">${esc(e.resource_type || "")} ${esc(e.resource_id || "")}</span>
+        <strong>${esc(auditLabel(e.action))}</strong> · ${esc(e.occurred_at || "")}<br>
+        <span class="meta">${esc(e.summary || e.resource_type || "Finance record")}</span>
       </article>`).join("")
     : `<p class="note">No audit events yet.</p>`;
 }
@@ -1075,9 +1644,10 @@ async function loadBanking() {
     ? stmts.map((imp) => `
       <article class="card">
         <strong>${esc(imp.bank || imp.bank_label || "")}</strong> · ${esc(imp.account || "")}<br>
-        ${esc(imp.period_start || "?")} → ${esc(imp.period_end || "?")} · ${esc(String(imp.txn_count || 0))} txns<br>
+        ${esc(imp.period_start || "?")} → ${esc(imp.period_end || "?")} · ${esc(String(imp.txn_count || 0))} bank lines<br>
         Open ${esc(String(imp.opening_balance ?? "—"))} · Close ${esc(String(imp.closing_balance ?? "—"))}<br>
-        <span class="meta">${esc(imp.evidence_status || "")} · ${esc(imp.reconciliation_status || "")}</span><br>
+        <span class="meta">${esc(imp.evidence_label || imp.evidence_status || "Original kept")} · ${esc(imp.reconciliation_label || "Not reconciled yet")}</span><br>
+        ${imp.row_counts ? `<span class="meta">${esc(String(imp.row_counts.source_rows || 0))} rows read · ${esc(String((imp.row_counts.exceptions || []).length))} exceptions · ${esc(String((imp.row_counts.non_transaction || []).length))} skipped totals</span><br>` : ""}
         <a class="inline" href="${esc(imp.open_href || "#")}">OPEN</a>
       </article>`).join("")
     : `<p class="note">No statements in library yet.</p>`;
@@ -1086,9 +1656,23 @@ async function loadBanking() {
       <article class="card">
         <strong>${esc(imp.bank || imp.bank_label || "")}</strong> · ${esc(imp.account || "")}<br>
         ${esc(imp.uploaded_at || "")} · ${esc(String(imp.txn_count || 0))} txns · ${esc(imp.period_start || "?")} → ${esc(imp.period_end || "?")}<br>
-        <span class="meta">${esc(imp.evidence_status || "Original kept")}</span>
+        <span class="meta">${esc(imp.evidence_label || "Original kept")}</span>
+        <button type="button" class="secondary recon-find" data-import="${esc(imp.statement_id || imp.import_id || "")}">Find matches</button>
       </article>`).join("")
     : `<p class="note">No statements imported yet.</p>`;
+  document.querySelectorAll("#bank-imports .recon-find, #stmt-library .recon-find").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      try {
+        await api(`/api/ggv/finance/bank-statements/${encodeURIComponent(btn.dataset.import)}/find-matches`, {
+          method: "POST",
+          body: "{}",
+        });
+        loadBanking();
+      } catch (err) {
+        $("bank-msg").textContent = reconErrMsg(err);
+      }
+    });
+  });
   const tx = await api("/api/ggv/finance/bank-transactions?limit=80");
   const need = (tx.transactions || []).filter((t) =>
     ["NEEDS_RECEIPT", "NEEDS_REVIEW", "UNIDENTIFIED"].includes(String(t.recon_status || "").toUpperCase())
@@ -1096,10 +1680,11 @@ async function loadBanking() {
   $("bank-txns").innerHTML = need.length
     ? need.map((t) => `
       <article class="card">
-        <strong>${esc(t.txn_date || "")}</strong> · ${esc(t.recon_status || "")}<br>
-        debit ${esc(String(t.debit || 0))} · credit ${esc(String(t.credit || 0))}<br>
+        <strong>${esc(t.txn_date || "")}</strong> · ${esc(t.match_label || "Unmatched")}<br>
+        ${t.money_in ? `Money in ${idr(t.money_in)}<br>` : ""}
+        ${t.money_out ? `Money out ${idr(t.money_out)}<br>` : ""}
         <span class="meta">${esc(t.description || "")}</span>
-        <div class="meta">${t.matched_receipt_ref ? "Proposed: " + esc(t.matched_receipt_ref) + " (not confirmed)" : "Missing evidence"}</div>
+        <div class="meta">${t.matched_display || t.proposal_text || (t.matched_receipt_ref ? "Possible match — not confirmed" : "Missing evidence")}</div>
       </article>`).join("")
     : `<p class="note">No unmatched / missing-evidence bank rows yet. Missing evidence count: ${esc(String(data.missing_evidence_txns || 0))}.</p>`;
 }
@@ -1127,8 +1712,11 @@ if ($("bank-upload")) {
         method: "POST",
         body: JSON.stringify(body),
       });
+      const rc = data.row_counts || {};
+      const exc = (rc.exceptions || []).length;
+      const skip = (rc.non_transaction || []).length;
       $("bank-msg").textContent =
-        `Imported ${data.txn_count || 0} rows · original kept · proposed matches ${((data.proposed_matches || {}).proposed_count) || 0} (not auto-reconciled).`;
+        `${rc.source_rows || data.txn_count || 0} rows read · ${data.txn_count || 0} bank lines · ${exc} exceptions · ${skip} skipped totals · ${((data.proposed_matches || {}).proposed_count) || 0} possible matches (you confirm each one).`;
       loadBanking();
     } catch (err) {
       $("bank-msg").textContent = err.message || String(err);
@@ -1389,6 +1977,8 @@ async function searchCustomers() {
     ? rows.map((row) => `<article class="card"><strong>${esc(row.legal_name)}</strong><br>${esc(row.trading_name || "")}<br>${esc(row.email || "No email")}</article>`).join("")
     : `<p class="note">No matching customer.</p>`;
 }
+
+if ($("recon-apply-filter")) $("recon-apply-filter").addEventListener("click", () => loadReconciliation(false));
 
 loadOverview().then(function () {
   const tab = pathTab[location.pathname.replace(/\/$/, "")] || "overview";

@@ -242,8 +242,8 @@ class FinanceCoreGgv1Tests(unittest.TestCase):
         self.assertTrue(second.get("ok"))
         self.assertNotEqual(second["import_id"], imp_id)
         listed = gbs.list_transactions(verified_person_id=MATT, conn=self.conn)
-        labels = {t.get("match_label") for t in listed.get("transactions") or []}
-        self.assertTrue(labels.issubset({"PROPOSE MATCH", "HUMAN REVIEW", "UNMATCHED"}))
+        labels = {t.get("match_code") or t.get("match_label") for t in listed.get("transactions") or []}
+        self.assertTrue(labels.issubset({"PROPOSE MATCH", "HUMAN REVIEW", "UNMATCHED", "MATCHED", "EXCEPTION"}))
 
     def test_permissions_no_hardcoded_people(self) -> None:
         self.assertTrue(_rbac.can(MATT, "finance.nota.read", {"entity_id": ENTITY}, conn=self.conn))
