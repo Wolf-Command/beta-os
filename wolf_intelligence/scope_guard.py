@@ -33,6 +33,18 @@ def _resolve_cwd(cwd: str) -> Path | None:
     return p.resolve()
 
 
+def _shipped_sandbox_root() -> Path:
+    defaults = fail_closed_policy().get("worker_execution_scope") or {}
+    return _expand(str(defaults.get("isolated_sandbox_root", HOME / "wi-sandboxes")))
+
+
+def _is_shipped_sandbox_root(sandbox_root: Path) -> bool:
+    try:
+        return sandbox_root.resolve() == _shipped_sandbox_root().resolve()
+    except OSError:
+        return False
+
+
 def _scope_config(policy: dict[str, Any] | None) -> dict[str, Any]:
     defaults = fail_closed_policy().get("worker_execution_scope") or {}
     if policy is None:
@@ -133,14 +145,22 @@ def _all_resolved_workspace_targets(argv: list[str], cli: str | None, cwd: Path)
     return [_resolve_workspace_target(v, cwd) for v in raw_vals]
 
 
-def _derive_worktree(flag_targets: list[Path], cwd: Path, sandbox_root: Path) -> Path | None:
+def _derive_worktree(
+    flag_targets: list[Path],
+    cwd: Path,
+    sandbox_root: Path,
+    cfg: dict[str, Any],
+) -> Path | None:
     """Strict worktree from sandbox workspace flags, not ambient cwd alone."""
+    shipped_root = _is_shipped_sandbox_root(sandbox_root)
     candidates = [
         p for p in flag_targets if _under_sandbox(p, sandbox_root) and p != sandbox_root
     ]
     if candidates:
         return max(candidates, key=lambda p: len(p.parts))
     if _under_sandbox(cwd, sandbox_root):
+        if cwd == sandbox_root and shipped_root:
+            return None
         return cwd
     return None
 
@@ -249,12 +269,16 @@ def _strict_worktree(
     worktree: Path,
     sandbox_root: Path,
     zdotdir_empty: Path,
+    cfg: dict[str, Any],
 ) -> bool:
     if path == zdotdir_empty or zdotdir_empty in path.parents:
         return False
+    shipped_root = _is_shipped_sandbox_root(sandbox_root)
     if path == sandbox_root:
+        if shipped_root:
+            return False
         return worktree == sandbox_root
-    if worktree == sandbox_root:
+    if worktree == sandbox_root and shipped_root:
         return False
     if not _under_sandbox(worktree, sandbox_root):
         return False
@@ -272,12 +296,15 @@ def _path_allowed(
     zdotdir_empty: Path,
     globs: list[str],
     allow_temp: bool,
+    cfg: dict[str, Any],
 ) -> bool:
     if path == sandbox_root:
+        if worktree is not None and _is_shipped_sandbox_root(sandbox_root):
+            return False
         return worktree == sandbox_root
     if worktree is None:
         return _glob_allowed(path, globs)
-    if _strict_worktree(path, worktree, sandbox_root, zdotdir_empty):
+    if _strict_worktree(path, worktree, sandbox_root, zdotdir_empty, cfg):
         return True
     if allow_temp and _under_sandbox(path, sandbox_root) and path != sandbox_root:
         if path == zdotdir_empty or zdotdir_empty in path.parents:
@@ -366,7 +393,7 @@ def check_invocation(
 
     if cwd_path is not None:
         flag_targets = _flag_workspace_targets(argv, cli, cwd_path)
-        worktree = _derive_worktree(flag_targets, cwd_path, sandbox_root)
+        worktree = _derive_worktree(flag_targets, cwd_path, sandbox_root, cfg)
         paths_to_check: list[Path] = [cwd_path]
         audit_targets = (
             _all_resolved_workspace_targets(argv, cli, cwd_path)
@@ -397,6 +424,7 @@ def check_invocation(
                 zdotdir_empty=zdotdir_empty,
                 globs=globs,
                 allow_temp=allow_temp and not bypass,
+                cfg=cfg,
             ):
                 reasons.append("SCOPE_WORKSPACE_NOT_ALLOWED")
 
@@ -415,7 +443,7 @@ def check_invocation(
     codex_modes = _codex_sandbox_modes(argv)
     if cwd_path is not None:
         flag_targets = _flag_workspace_targets(argv, cli, cwd_path)
-        strict_tree = _derive_worktree(flag_targets, cwd_path, sandbox_root)
+        strict_tree = _derive_worktree(flag_targets, cwd_path, sandbox_root, cfg)
         bypass_paths: list[Path] = [cwd_path]
         for p in _workspace_paths(argv, cwd_path):
             if p not in bypass_paths:
@@ -426,11 +454,14 @@ def check_invocation(
             and all(p == sandbox_root for p in bypass_paths)
         )
         if needs_strict:
-            if root_only_bypass and not globs:
-                reasons.append("BYPASS_OUTSIDE_SANDBOX")
-            elif strict_tree is None or not all(
-                _strict_worktree(p, strict_tree, sandbox_root, zdotdir_empty)
-                for p in bypass_paths
+            shipped_root = _is_shipped_sandbox_root(sandbox_root)
+            if (
+                (root_only_bypass and (shipped_root or not globs))
+                or strict_tree is None
+                or not all(
+                    _strict_worktree(p, strict_tree, sandbox_root, zdotdir_empty, cfg)
+                    for p in bypass_paths
+                )
             ):
                 reasons.append("BYPASS_OUTSIDE_SANDBOX")
         if bypass:

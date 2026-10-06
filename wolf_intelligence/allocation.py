@@ -888,11 +888,7 @@ def decide(
                 req_row = next((c for c in candidates_scored if c["worker"] == grok_id), None)
                 excl = (req_row or {}).get("exclusion_reason") or "grok_ineligible"
                 requested_worker_rejected = excl
-                if (
-                    ranked_eligible
-                    and penalty < hard_block_at
-                    and _k2_fallback_allowed(excl)
-                ):
+                if ranked_eligible and _k2_fallback_allowed(excl):
                     selected = ranked_eligible[0]["worker"]
                     decision_type = "DISPATCH"
                     requested_worker_rejected = excl
@@ -927,7 +923,20 @@ def decide(
     if protected:
         grok_verdict = "NOT_APPLICABLE"
     elif grok_code or requested == grok_id:
-        if grok_verdict is None:
+        grok_row = next((c for c in candidates_scored if c["worker"] == grok_id), None)
+        grok_excl = (grok_row or {}).get("exclusion_reason")
+        grok_rec = workers_cap.get(grok_id) or {}
+        velocity_pressure = (
+            grok_excl
+            and grok_excl.startswith("GROK_CONSERVE_CONDUCT:")
+            and (grok_rec.get("velocity") or {}).get("pct_per_hour") is not None
+            and decision_type == "DISPATCH"
+            and selected != grok_id
+            and requested == grok_id
+        )
+        if velocity_pressure:
+            grok_verdict = "REJECTED"
+        elif grok_verdict is None:
             grok_verdict, detail = _verify_grok_reason(
                 grok_code, grok_just, bench_class, policy, routing,
                 eligible_non_grok, grok_state, allowed_codes, penalty, hard_block_at,

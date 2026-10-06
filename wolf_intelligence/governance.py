@@ -281,6 +281,55 @@ def _validate_unknown_state_value(value: Any, path: str, errors: list[str]) -> N
         errors.append(f"invariant: {path} must be CONSERVE or stricter, got {value!r}")
 
 
+def _glob_literal_prefix(pattern: str) -> str:
+    for i, ch in enumerate(pattern):
+        if ch in "*?[":
+            return pattern[:i]
+    return pattern
+
+
+def _home_relative_literal_prefix(pattern: str) -> str | None:
+    lit = _glob_literal_prefix(os.path.expanduser(str(pattern)))
+    home = str(Path.home())
+    if lit in ("~", "/", home, f"{home}/"):
+        return None
+    if lit.startswith(home + "/"):
+        return lit[len(home) + 1 :]
+    if lit.startswith("~/"):
+        return lit[2:]
+    return None
+
+
+def _allowed_glob_prefixes(roots: list[str]) -> list[str]:
+    prefixes: list[str] = []
+    home = str(Path.home())
+    for root in roots:
+        lit = _glob_literal_prefix(os.path.expanduser(str(root)))
+        if lit.startswith(home + "/"):
+            prefixes.append(lit[len(home) + 1 :])
+        elif lit.startswith("~/"):
+            prefixes.append(lit[2:])
+    return prefixes
+
+
+def _scope_glob_widens_scope(pattern: str, allowed_roots: list[str]) -> bool:
+    pat = os.path.expanduser(str(pattern))
+    home = str(Path.home())
+    if pat in ("~", "/", home, str(Path("/"))):
+        return True
+    if pat in ("~/*", "/*", f"{home}/*", "/Users/*", "/home/*"):
+        return True
+    if pat.endswith("/*") and pat[:-2] in (home, "/"):
+        return True
+    rel = _home_relative_literal_prefix(pattern)
+    if rel is None:
+        return True
+    prefixes = _allowed_glob_prefixes(allowed_roots)
+    if not prefixes:
+        return True
+    return not any(rel.startswith(p) for p in prefixes)
+
+
 def validate_hardcoded_safety_invariants(policy: dict[str, Any]) -> list[str]:
     """Hardcoded safety invariants independent of schema file."""
     errors: list[str] = []
@@ -324,50 +373,13 @@ def validate_hardcoded_safety_invariants(policy: dict[str, Any]) -> list[str]:
                 errors.append(f"invariant: worker_execution_scope.{key} is pinned")
         globs = scope.get("allowed_workspace_globs")
         if isinstance(globs, list):
-            import fnmatch
-
-            home = str(Path.home())
-            home_path = Path.home()
-            widen_probe_paths = [
-                home,
-                "/",
-                str(home_path / "beta-os"),
-                str(home_path / "Documents"),
-                str(home_path / "Desktop"),
-                str(home_path / "Downloads"),
-                f"{home}/suffixx",
-            ]
+            allowed_roots = list(hardcoded.get("allowed_workspace_globs") or [])
             for pattern in globs:
-                pat = os.path.expanduser(str(pattern))
-                if pat in ("~", "/", home, str(Path("/"))):
+                if _scope_glob_widens_scope(pattern, allowed_roots):
                     errors.append(
                         "invariant: worker_execution_scope.allowed_workspace_globs cannot widen scope"
                     )
                     break
-                if pat in ("~/*", "/*", f"{home}/*", "/Users/*", "/home/*"):
-                    errors.append(
-                        "invariant: worker_execution_scope.allowed_workspace_globs cannot widen scope"
-                    )
-                    break
-                if pat.endswith("/*") and pat[:-2] in (home, "/"):
-                    errors.append(
-                        "invariant: worker_execution_scope.allowed_workspace_globs cannot widen scope"
-                    )
-                    break
-                resolved_pat = str(Path(pat).resolve()) if pat.startswith("/") or pat.startswith("~") else pat
-                for probe in widen_probe_paths:
-                    if (
-                        fnmatch.fnmatch(probe, pat)
-                        or fnmatch.fnmatch(probe, resolved_pat)
-                        or (pat.startswith("~/") and fnmatch.fnmatch(probe, pat.replace("~", home, 1)))
-                    ):
-                        errors.append(
-                            "invariant: worker_execution_scope.allowed_workspace_globs cannot widen scope"
-                        )
-                        break
-                else:
-                    continue
-                break
         denied = scope.get("denied_paths") or []
         beta = str(Path.home() / "beta-os")
         if beta not in [str(Path(os.path.expanduser(str(p)))) for p in denied]:

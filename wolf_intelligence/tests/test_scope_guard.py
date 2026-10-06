@@ -300,7 +300,7 @@ class ScopeGuardTests(unittest.TestCase):
 
     def test_scope_glob_invariant_rejects_fnmatch_widening(self) -> None:
         base = json.loads((GOVERNANCE_CONFIG_DIR / "worker-allocation-policy.json").read_text())
-        for bad_globs in (["~/**"], ["~/D*"]):
+        for bad_globs in (["~/**"], ["~/D*"], ["~/Pictures/**"]):
             policy = json.loads(json.dumps(base))
             policy["worker_execution_scope"]["allowed_workspace_globs"] = bad_globs
             errors = validate_policy_invariants(policy)
@@ -308,6 +308,43 @@ class ScopeGuardTests(unittest.TestCase):
                 any("allowed_workspace_globs cannot widen scope" in e for e in errors),
                 f"expected rejection for {bad_globs}: {errors}",
             )
+
+    def test_sandbox_root_default_globs_workspace_write_refused(self) -> None:
+        ok, reasons = check_invocation(
+            "codex_sub",
+            ["codex", "exec", "-s", "workspace-write", "-C", str(SANDBOX)],
+            str(SANDBOX),
+            ALLOWED_ENV,
+            policy=self.policy,
+        )
+        self.assertFalse(ok)
+        self.assertIn("BYPASS_OUTSIDE_SANDBOX", reasons)
+
+    def test_sandbox_root_default_globs_force_refused(self) -> None:
+        ok, reasons = check_invocation(
+            "cursor_sub",
+            ["cursor-agent", "--workspace", str(SANDBOX), "--force"],
+            str(SANDBOX),
+            ALLOWED_ENV,
+            policy=self.policy,
+        )
+        self.assertFalse(ok)
+        self.assertIn("BYPASS_OUTSIDE_SANDBOX", reasons)
+
+    def test_pictures_workspace_refused(self) -> None:
+        pictures = str(HOME / "Pictures")
+        ok, reasons = check_invocation(
+            "cursor_sub",
+            ["cursor-agent", "--workspace", pictures, "--mode", "ask"],
+            pictures,
+            ALLOWED_ENV,
+            policy=self.policy,
+        )
+        self.assertFalse(ok)
+        self.assertTrue(
+            "SCOPE_WORKSPACE_NOT_ALLOWED" in reasons or "SCOPE_HOME_GLOBAL" in reasons,
+            reasons,
+        )
 
     def test_missing_policy_section_fail_closed(self) -> None:
         policy = dict(self.policy or {})

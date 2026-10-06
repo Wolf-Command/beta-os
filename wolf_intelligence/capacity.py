@@ -596,18 +596,60 @@ def _split_pairs_at_drops(pairs: list[tuple[datetime, float]]) -> list[list[tupl
     return segments
 
 
+def _regression_slope(
+    pairs: list[tuple[datetime, float]],
+    min_span_minutes: float,
+) -> float | None:
+    """Least-squares pct/hour over the window; ignores sub-min-span noise."""
+    if len(pairs) < 2:
+        return None
+    t0 = pairs[0][0]
+    xs = [(t - t0).total_seconds() / 3600.0 for t, _ in pairs]
+    ys = [p for _, p in pairs]
+    span_h = xs[-1] - xs[0]
+    if span_h <= 0 or span_h * 60.0 < min_span_minutes:
+        return None
+    n = len(xs)
+    mean_x = sum(xs) / n
+    mean_y = sum(ys) / n
+    num = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
+    den = sum((x - mean_x) ** 2 for x in xs)
+    if den <= 0:
+        return None
+    slope = num / den
+    return slope if slope > 0 else None
+
+
+def _endpoint_slope(
+    pairs: list[tuple[datetime, float]],
+    min_span_minutes: float,
+    *,
+    require_min_span: bool = True,
+) -> float | None:
+    if len(pairs) < 2:
+        return None
+    t0, p0 = pairs[0]
+    t1, p1 = pairs[-1]
+    span_h = (t1 - t0).total_seconds() / 3600.0
+    if span_h <= 0:
+        return None
+    if require_min_span and span_h * 60.0 < min_span_minutes:
+        return None
+    slope = (p1 - p0) / span_h
+    return slope if slope > 0 else None
+
+
 def _steepest_slope(
     pairs: list[tuple[datetime, float]],
     min_span_minutes: float,
     *,
     enforce_min_span: bool = True,
     min_significant_pct_delta: float = 5.0,
-) -> tuple[float | None, float | None]:
-    """Return (max_pct_per_hour, span_hours) from steepest valid pairwise slope."""
+) -> float | None:
+    """Return max pct/hour from steepest valid pairwise slope."""
     if len(pairs) < 2:
-        return None, None
+        return None
     best_slope: float | None = None
-    best_span_h: float | None = None
     n = len(pairs)
     for i in range(n):
         t0, p0 = pairs[i]
@@ -623,8 +665,61 @@ def _steepest_slope(
             slope = delta / span_h
             if best_slope is None or slope > best_slope:
                 best_slope = slope
-                best_span_h = span_h
-    return best_slope, best_span_h
+    return best_slope if best_slope is not None and best_slope > 0 else None
+
+
+def _established_plateau_start(
+    pairs: list[tuple[datetime, float]],
+    min_span_minutes: float,
+    *,
+    min_plateau_points: int = 3,
+) -> int:
+    if len(pairs) < min_plateau_points:
+        return 0
+    latest = pairs[-1][1]
+    run_start = len(pairs) - 1
+    while run_start > 0 and pairs[run_start - 1][1] == latest:
+        run_start -= 1
+    run_len = len(pairs) - run_start
+    if run_len < min_plateau_points:
+        return 0
+    span_h = (pairs[-1][0] - pairs[run_start][0]).total_seconds() / 3600.0
+    if span_h * 60.0 < min_span_minutes:
+        return 0
+    return run_start
+
+
+def _recent_window_slope(
+    pairs: list[tuple[datetime, float]],
+    min_span_minutes: float,
+) -> float | None:
+    if len(pairs) < 2:
+        return None
+    plateau_start = _established_plateau_start(pairs, min_span_minutes)
+    if plateau_start > 0:
+        tail = pairs[plateau_start:]
+        tail_slope = _regression_slope(tail, min_span_minutes)
+        if tail_slope is not None:
+            return tail_slope
+        return 0.0
+    if len(pairs) == 2:
+        t0, p0 = pairs[0]
+        t1, p1 = pairs[-1]
+        span_h = (t1 - t0).total_seconds() / 3600.0
+        if span_h <= 0:
+            return None
+        delta = p1 - p0
+        if span_h * 60.0 < min_span_minutes and delta < 5.0:
+            return None
+        slope = delta / span_h
+        return slope if slope > 0 else None
+    ramp_slope = _steepest_slope(pairs, min_span_minutes, enforce_min_span=True)
+    reg_slope = _regression_slope(pairs, min_span_minutes)
+    if ramp_slope is None:
+        return reg_slope
+    if reg_slope is None:
+        return ramp_slope
+    return max(ramp_slope, reg_slope)
 
 
 def _velocity_projection(
@@ -670,18 +765,10 @@ def _velocity_projection(
     recent_cutoff = now - timedelta(hours=cfg["short_slope_window_hours"])
     recent_active = [(t, p) for t, p in active if t >= recent_cutoff]
     slope_pairs = recent_active if len(recent_active) >= cfg["min_points"] else []
-    short_slope, _ = _steepest_slope(
-        slope_pairs,
-        cfg["min_span_minutes"],
-        enforce_min_span=True,
-    )
+    short_slope = _recent_window_slope(slope_pairs, cfg["min_span_minutes"])
     long_slope: float | None = None
     if len(active) >= cfg["min_points"]:
-        t0, p0 = active[0]
-        t1, p1 = active[-1]
-        span_h = (t1 - t0).total_seconds() / 3600.0
-        if span_h > 0 and span_h * 60.0 >= cfg["min_span_minutes"]:
-            long_slope = (p1 - p0) / span_h
+        long_slope = _recent_window_slope(active, cfg["min_span_minutes"])
 
     pct_per_hour = short_slope
     if long_slope is not None and (pct_per_hour is None or long_slope > pct_per_hour):

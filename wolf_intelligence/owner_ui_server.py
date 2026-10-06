@@ -321,15 +321,6 @@ class ReuseHTTPServer(_ThreadingHTTPServer):
     allow_reuse_address = True
 
     def server_bind(self) -> None:
-        state_root = os.environ.get("WOLF_INTELLIGENCE_STATE_ROOT", "")
-        tmpdir = os.environ.get("TMPDIR", "")
-        if state_root and tmpdir:
-            try:
-                scratch = Path(state_root).resolve().is_relative_to(Path(tmpdir).resolve())
-            except (ValueError, OSError):
-                scratch = False
-            if scratch:
-                raise PermissionError("refuse UI bind with scratch state root")
         super().server_bind()
 
 
