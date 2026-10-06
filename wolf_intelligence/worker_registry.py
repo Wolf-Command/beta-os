@@ -72,6 +72,8 @@ WORKERS: dict[str, dict[str, Any]] = {
         "auth_class": "api_key (openclaw credential file)", "billing_class": "free", "cost_class": "free_tier_owner_declared",
         "allowance_visibility": "NONE (429 on exhaustion)", "gated": False, "adapter": "gemini_free", "legacy_ids": ["gemini"],
         "billing_caveat": "free tier is Owner-declared; key's project billing status is not observable from the Studio",
+        "state": "CONNECTED / BILLING UNVERIFIED / SPEND BLOCKED", "billing_status": "UNVERIFIED", "billing_status_evidence": None,
+        "billing_gate": "every call passes live_gate.gemini_spend_gate (canonical f7c78f2 spend cap, no bypass); denied OWNER_ACTION_REQUIRED while unverified",
     },
     "gemini_paid": {
         "provider_family": "google", "execution_path": "generativelanguage (pro/paid models)", "auth_class": "api_key",
@@ -187,7 +189,8 @@ def build(*, live_preflight: bool = True) -> dict[str, Any]:
             "availability": avail,
             "availability_message": real_evidence.redact(str(avail_msg))[:300],
             "billing_verification": avail_facts,
-            "routable": (not d.get("gated")) and d.get("push_dispatchable", True) and avail == "CONNECTED",
+            "routable": (not d.get("gated")) and d.get("push_dispatchable", True) and avail == "CONNECTED"
+                        and d.get("billing_status", "VERIFIED") != "UNVERIFIED",
             **derived,
         })
         rec["commissioning_state"] = _commissioning_state(wid, d, avail, derived, configured)

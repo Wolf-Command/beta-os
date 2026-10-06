@@ -1,7 +1,7 @@
 """Run the REAL benchmark pack through WI's dispatcher; grade; blind cross-review; record REAL evidence.
 
   WOLF_INTELLIGENCE_LIVE_SUBMIT=1 WOLF_INTELLIGENCE_REAL_EVIDENCE_ROOT=<root> WOLF_INTELLIGENCE_STATE_ROOT=<scratch> \
-  python3 -m wolf_intelligence.real_bench.runner run --workers claude_pro_sub,codex_sub,cursor_sub,gemini_free,ollama_local
+  python3 -m wolf_intelligence.real_bench.runner run --workers claude_pro_sub,codex_sub,cursor_sub,ollama_local
 """
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ TASKS: list[dict[str, Any]] = [
 ]
 GRADER_VERSION = "1.1"  # 1.0 = first run; 1.1 fixes 3 grader/spec ambiguities (see REAL-WORKERS.md)
 VISION_UNSUPPORTED = {"ollama_local": "installed model llama3.2:3b is text-only"}
-REVIEWERS = ("claude_pro_sub", "codex_sub", "gemini_free")
+REVIEWERS = ("claude_pro_sub", "codex_sub", "cursor_sub")  # gemini removed: SPEND BLOCKED
 
 
 def _receipt() -> str:
@@ -179,7 +179,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["run", "review", "regrade"])
     ap.add_argument("--run-id", default=time.strftime("bench-%Y%m%d-%H%M"))
-    ap.add_argument("--workers", default="claude_pro_sub,codex_sub,cursor_sub,gemini_free,ollama_local")
+    ap.add_argument("--workers", default="claude_pro_sub,codex_sub,cursor_sub,ollama_local")
     ap.add_argument("--tasks", default="")
     a = ap.parse_args()
     workers = [w for w in a.workers.split(",") if w]

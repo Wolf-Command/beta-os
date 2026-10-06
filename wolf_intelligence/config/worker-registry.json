@@ -845,7 +845,7 @@
     ],
     "billing_note": "Owner-declared free path. Project billing status is not observable from the key; only flash models are allowed; per-response serviceTier is recorded."
    },
-   "routable": true,
+   "routable": false,
    "connectivity_last": {
     "status": "LIVE_OK",
     "pass": true,
@@ -988,7 +988,11 @@
    "large_context": "EVIDENCED_STRONG",
    "limit_hits": 0,
    "commissioning_state": "WI_CONNECTED (not human-commissioned)",
-   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker",
+   "state": "CONNECTED / BILLING UNVERIFIED / SPEND BLOCKED",
+   "billing_status": "UNVERIFIED",
+   "billing_status_evidence": null,
+   "billing_gate": "every call passes live_gate.gemini_spend_gate (canonical f7c78f2 spend cap, no bypass); denied OWNER_ACTION_REQUIRED while unverified"
   },
   "gemini_paid": {
    "provider_family": "google",

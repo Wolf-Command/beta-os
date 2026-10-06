@@ -36,7 +36,8 @@ def latest_runs() -> list[dict[str, Any]]:
 
 def learn() -> dict[str, Any]:
     runs = latest_runs()
-    policy: dict[str, Any] = {"generated_at": real_evidence.now_wita(), "evidence_class": "REAL",
+    policy: dict[str, Any] = {"label": "DRAFT - NOT WIRED", "status": "DRAFT", "wired": False, "active": False,
+                              "generated_at": real_evidence.now_wita(), "evidence_class": "REAL",
                               "source": "records/bench_runs.jsonl (REAL only)", "synthetic_history_used": False,
                               "metered_workers_excluded": sorted(w for w in worker_registry.WORKERS if worker_registry.is_metered(w)),
                               "fallback_to_metered": "NEVER", "task_classes": {}}
@@ -77,7 +78,8 @@ def route(task_class: str, policy: dict[str, Any], registry: dict[str, Any]) -> 
     """Ordered candidate list: policy order filtered to routable, non-metered workers. Never metered."""
     order = (policy.get("task_classes", {}).get(task_class) or {}).get("order") or []
     workers = registry.get("workers", {})
-    return [w for w in order if workers.get(w, {}).get("routable") and not worker_registry.is_metered(w)]
+    return [w for w in order if workers.get(w, {}).get("routable") and not worker_registry.is_metered(w)
+            and (worker_registry.WORKERS.get(w) or {}).get("billing_status", "VERIFIED") != "UNVERIFIED"]
 
 
 def write(path: Path | str) -> dict[str, Any]:

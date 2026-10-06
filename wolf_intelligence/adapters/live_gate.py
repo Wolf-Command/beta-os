@@ -308,6 +308,28 @@ def enforce_cost_cap(
     return None, cap, estimate
 
 
+GEMINI_STATE = "CONNECTED / BILLING UNVERIFIED / SPEND BLOCKED"
+
+
+def gemini_spend_gate(
+    job: dict[str, Any], *, model_id: str, prompt: str, max_output_tokens: int
+) -> tuple[AdapterResult | None, float | None, float | None]:
+    """THE single gate every Gemini execution path must pass before any provider call (Owner order 09:39, Vesper B4-1).
+
+    It is the canonical f7c78f2 spend policy (enforce_cost_cap) with no bypass: a "free" declaration in the
+    registry does not skip it. While the key's billing is unverified, every price entry ships verified=false,
+    so every call is DENIED with OWNER_ACTION_REQUIRED and no provider call. Retries and fallbacks re-enter
+    the adapter and therefore this gate. Returns (refusal, cap, estimate).
+    """
+    refusal, cap, estimate = enforce_cost_cap(job, model_id=model_id, prompt=prompt, max_output_tokens=max_output_tokens)
+    if refusal is None:
+        return None, cap, estimate
+    data = dict(refusal.data or {})
+    data.update({"provider_called": False, "owner_action_required": True, "gemini_state": GEMINI_STATE,
+                 "gate": "gemini_spend_gate"})
+    return AdapterResult(False, "GATED", f"{refusal.message} [Gemini {GEMINI_STATE}]", data), None, None
+
+
 def read_secret(name: str) -> str:
     """Return a secret for a request. Callers must not put it on a result."""
     value = os.environ.get(name, "")

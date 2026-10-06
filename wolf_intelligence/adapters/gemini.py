@@ -7,7 +7,7 @@ from typing import Any
 
 from .base import AdapterResult, WorkerAdapter, register
 from .live_gate import (
-    enforce_cost_cap,
+    gemini_spend_gate,
     env_enabled,
     execute_requested,
     http_json,
@@ -92,7 +92,7 @@ class GeminiAdapter(WorkerAdapter):
         except (TypeError, ValueError):
             max_tokens = 64
         # Free tier is expected, but a billed key would be charged: the cap still applies.
-        refusal, cap, estimate = enforce_cost_cap(
+        refusal, cap, estimate = gemini_spend_gate(
             job, model_id=model_id, prompt=str(job.get("prompt") or ""), max_output_tokens=max_tokens
         )
         if refusal is not None:

@@ -62,3 +62,22 @@ WOLF_INTELLIGENCE_LIVE_SUBMIT=1 python3 -m wolf_intelligence.real_bench.runner r
 python3 -m wolf_intelligence.real_report --out-dir $R
 python3 -m wolf_intelligence.real_commission approve-metered anthropic_api 1   # Owner, interactive TTY only
 ```
+
+## 2026-10-06 09:39 hardening (Vesper B4-1, Owner order)
+
+- **Gemini = CONNECTED / BILLING UNVERIFIED / SPEND BLOCKED.** Every Gemini execution path passes
+  `adapters/live_gate.gemini_spend_gate`, which is the canonical f7c78f2 spend policy (`enforce_cost_cap`), with no bypass.
+  A registry "free" declaration does not skip it. Path audit (wolf_intelligence/): the only Gemini endpoints are
+  `adapters/gemini.py` (legacy worker `gemini`) and `adapters/subscription_cli.py` (`gemini_free`). Both call the gate
+  before the endpoint, and a static test enforces this. There are no google SDK imports. Dispatch has no fallback.
+  Routing excludes workers with unverified billing. The gen-1 harness no longer uses Gemini as a reviewer.
+  Tests: `tests/test_gemini_gate.py` (adapters, owner caps with unverified prices, registry-free-not-a-bypass, dispatch,
+  retry x3, fallback, harness, static audit).
+- Outside wolf_intelligence (not changed here; they are protected surfaces):
+  - `scripts/llm_orchestrator.py` `call_gemini` is a direct HTTP call. It is used by serve_beta (the Content Engine).
+    Its key is read from beta-os/.env, where GEMINI_API_KEY is EMPTY.
+  - `scripts/core/bzg_close_vision.py` (Daily Close) only names "gemini" in an error filter, and its `call_gemini_vision`
+    delegates to an external model_router.
+  These need an Owner decision.
+- `config/routing-policy-real.json` and `routing_policy.learn()` now carry `label: "DRAFT - NOT WIRED"`, `wired/active: false`.
+- The cursor worker runs with `--sandbox enabled` (live-verified: it can still read a staged workspace file).
