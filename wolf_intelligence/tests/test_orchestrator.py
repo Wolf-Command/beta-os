@@ -21,6 +21,8 @@ OK_WORKER = str(FIXTURES / "orch_worker_ok.py")
 FAIL_WORKER = str(FIXTURES / "orch_worker_fail.py")
 SLOW_WORKER = str(FIXTURES / "orch_worker_slow.py")
 IGNORE_TERM_WORKER = str(FIXTURES / "orch_worker_ignore_term.py")
+ORPHAN_CHILD_WORKER = str(FIXTURES / "orch_worker_orphan_child.py")
+STDIN_CAPTURE_WORKER = str(FIXTURES / "orch_worker_capture_stdin.py")
 
 
 class OrchestratorTestCase(unittest.TestCase):
@@ -267,6 +269,11 @@ class OrchestratorTestCase(unittest.TestCase):
         claude_review = orch._worker_cmd("claude_pro_sub", cfg, review, self.worktree)
         self.assertIn("--permission-mode", claude_review)
         self.assertEqual(claude_review[claude_review.index("--permission-mode") + 1], "plan")
+        claude_build = orch._worker_cmd("claude_pro_sub", cfg, item, self.worktree)
+        self.assertEqual(claude_build[claude_build.index("--permission-mode") + 1], "acceptEdits")
+        tools_idx = claude_build.index("--allowedTools") + 1
+        self.assertIn("Edit", claude_build[tools_idx])
+        self.assertIn("Bash(python3 -m unittest:*)", claude_build[tools_idx])
         self.assertEqual(orch._worker_cmd("ollama_local", cfg, item, self.worktree), [])
 
     def test_build_awaits_review_before_close(self) -> None:
@@ -316,6 +323,118 @@ class OrchestratorTestCase(unittest.TestCase):
         elapsed = time.perf_counter() - started
         self.assertEqual(out["processed"][0]["status"], "TIMED_OUT")
         self.assertLess(elapsed, 3.0)
+
+    def test_timeout_orphan_child_pipes_bounded(self) -> None:
+        cfg = orch.load_config()
+        cfg["worker_cmds"]["cursor_sub"] = ["python3", ORPHAN_CHILD_WORKER]
+        cfg["timeout_kill_grace_s"] = 0.2
+        orch.save_config(cfg)
+        self._submit_build(timeout_s=1)
+        started = time.perf_counter()
+        out = orch.run_once(now="2026-10-06T12:00:01+08:00")
+        elapsed = time.perf_counter() - started
+        self.assertEqual(out["processed"][0]["status"], "TIMED_OUT")
+        self.assertLess(elapsed, 2.5)
+
+    def test_dispatch_ledger_blocks_replay_after_lease_removed(self) -> None:
+        self._submit_build(reviewer_gate=False)
+        claimed, _ = orch.claim("wi-build-1", now="2026-10-06T12:00:01+08:00")
+        self.assertIsNotNone(claimed)
+        out = orch.dispatch_item(
+            claimed,
+            "cursor_sub",
+            worktree=self.worktree,
+            config=orch.load_config(),
+            now="2026-10-06T12:00:02+08:00",
+        )
+        self.assertTrue(out["ok"])
+        self.assertFalse(orch.load_leases())
+        ledger = orch.load_dispatch_ledger()
+        self.assertEqual(ledger["wi-build-1:1"]["status"], "completed")
+        replay = orch.dispatch_item(
+            orch.show("wi-build-1"),
+            "cursor_sub",
+            worktree=self.worktree,
+            config=orch.load_config(),
+            now="2026-10-06T12:00:03+08:00",
+        )
+        self.assertFalse(replay["ok"])
+        self.assertEqual(replay["error"], "already_dispatched")
+
+    def test_closed_item_cannot_be_claimed(self) -> None:
+        self._submit_build(reviewer_gate=False, max_attempts=1)
+        orch.run_once(now="2026-10-06T12:00:01+08:00")
+        self.assertEqual(orch.show("wi-build-1")["status"], "CLOSED")
+        claimed, reason = orch.claim("wi-build-1", now="2026-10-06T12:00:02+08:00")
+        self.assertIsNone(claimed)
+        self.assertEqual(reason, "status:CLOSED")
+
+    def test_claim_never_exceeds_max_attempts(self) -> None:
+        orch.submit(
+            {
+                "id": "wi-max-1",
+                "kind": "build",
+                "spec": {},
+                "acceptance": "x",
+                "reviewer_gate": False,
+                "timeout_s": 5,
+                "max_attempts": 1,
+            },
+            now="2026-10-06T12:00:00+08:00",
+        )
+        items = orch.load_items()
+        items["wi-max-1"]["status"] = "CLOSED"
+        items["wi-max-1"]["attempt"] = 1
+        orch.save_items(items)
+        claimed, reason = orch.claim("wi-max-1", now="2026-10-06T12:00:01+08:00")
+        self.assertIsNone(claimed)
+        self.assertEqual(reason, "status:CLOSED")
+
+    def test_claude_build_dispatch_uses_implementation_prompt(self) -> None:
+        stdin_path = orch.ORCH_DIR / "runtime" / "claude-build-stdin.txt"
+        stdin_path.parent.mkdir(parents=True, exist_ok=True)
+        cfg = orch.load_config()
+        cfg["worker_cmds"] = {
+            "claude_pro_sub": [
+                "python3",
+                STDIN_CAPTURE_WORKER,
+                str(stdin_path),
+            ],
+        }
+        orch.save_config(cfg)
+        item = orch.submit(
+            {
+                "id": "wi-claude-build",
+                "kind": "build",
+                "spec": {"prompt": "add widget"},
+                "acceptance": "widget works",
+                "reviewer_gate": False,
+                "timeout_s": 5,
+                "max_attempts": 1,
+            },
+            now="2026-10-06T12:00:00+08:00",
+        )
+        claimed, _ = orch.claim("wi-claude-build", now="2026-10-06T12:00:01+08:00")
+        out = orch.dispatch_item(
+            claimed,
+            "claude_pro_sub",
+            worktree=self.worktree,
+            config=cfg,
+            now="2026-10-06T12:00:02+08:00",
+        )
+        self.assertTrue(out.get("ok"), out)
+        captured = stdin_path.read_text(encoding="utf-8")
+        self.assertIn("Implement work item wi-claude-build", captured)
+        self.assertIn("add widget", captured)
+        self.assertNotIn("VERDICT:", captured)
+        claimed_item = orch.show("wi-claude-build")
+        argv = orch._worker_cmd(
+            "claude_pro_sub",
+            {"worktree_cwd": self.worktree},
+            claimed_item,
+            self.worktree,
+        )
+        self.assertEqual(argv[argv.index("--permission-mode") + 1], "acceptEdits")
 
     def test_submit_preserves_context_and_urgent(self) -> None:
         rec = orch.submit(

@@ -69,6 +69,9 @@ Seed (Owner-observed 2026-10-06T09:49:00+08:00, source owner_observed):
 Persisted observations live in `$STATE_ROOT/governance/capacity-observations.jsonl` (append-only); the repo seed is
 merged in at load (newest observed_at per worker/pool wins). Provide `record_observation(...)` and `capacity_snapshot(now)`.
 `now` must be injectable everywhere (tests, determinism).
+**Clock skew:** `observed_at` values up to 60 seconds in the future (relative to injectable `now`) are accepted as
+within tolerance; readings more than 60 seconds ahead are rejected and the worker fails closed to at least CONSERVE
+(an audit event `CAPACITY_OBSERVATION_REJECTED` with reason `future_observed_at` is recorded).
 
 ## Deliverable 3: Grok protected reserve
 Policy config `grok_reserve`: reserved for protected classes `owner_conversation`, `orchestration`,

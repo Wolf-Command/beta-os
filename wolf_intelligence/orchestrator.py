@@ -28,6 +28,7 @@ def _orch_paths() -> dict[str, Path]:
         "ORCH_DIR": root,
         "ITEMS_PATH": root / "work_items.json",
         "LEASES_PATH": root / "leases.json",
+        "DISPATCH_LEDGER_PATH": root / "dispatch-ledger.json",
         "CONFIG_PATH": root / "config.json",
         "AUDIT_PATH": root / "audit.jsonl",
         "NOTIFICATIONS_PATH": root / "notifications.jsonl",
@@ -39,18 +40,23 @@ _paths = _orch_paths()
 ORCH_DIR = _paths["ORCH_DIR"]
 ITEMS_PATH = _paths["ITEMS_PATH"]
 LEASES_PATH = _paths["LEASES_PATH"]
+DISPATCH_LEDGER_PATH = _paths["DISPATCH_LEDGER_PATH"]
 CONFIG_PATH = _paths["CONFIG_PATH"]
 AUDIT_PATH = _paths["AUDIT_PATH"]
 NOTIFICATIONS_PATH = _paths["NOTIFICATIONS_PATH"]
 COMPLETIONS_DIR = _paths["COMPLETIONS_DIR"]
 
+DISPATCH_LEDGER_BLOCKING = frozenset({"in_flight", "completed", "failed"})
+
 
 def rebind_orchestrator_paths() -> None:
-    global ORCH_DIR, ITEMS_PATH, LEASES_PATH, CONFIG_PATH, AUDIT_PATH, NOTIFICATIONS_PATH, COMPLETIONS_DIR
+    global ORCH_DIR, ITEMS_PATH, LEASES_PATH, DISPATCH_LEDGER_PATH
+    global CONFIG_PATH, AUDIT_PATH, NOTIFICATIONS_PATH, COMPLETIONS_DIR
     p = _orch_paths()
     ORCH_DIR = p["ORCH_DIR"]
     ITEMS_PATH = p["ITEMS_PATH"]
     LEASES_PATH = p["LEASES_PATH"]
+    DISPATCH_LEDGER_PATH = p["DISPATCH_LEDGER_PATH"]
     CONFIG_PATH = p["CONFIG_PATH"]
     AUDIT_PATH = p["AUDIT_PATH"]
     NOTIFICATIONS_PATH = p["NOTIFICATIONS_PATH"]
@@ -142,6 +148,48 @@ def load_leases() -> dict[str, dict[str, Any]]:
 
 def save_leases(leases: dict[str, dict[str, Any]]) -> None:
     _write_json(LEASES_PATH, leases)
+
+
+def load_dispatch_ledger() -> dict[str, dict[str, Any]]:
+    data = _read_json(DISPATCH_LEDGER_PATH, {})
+    return data if isinstance(data, dict) else {}
+
+
+def save_dispatch_ledger(ledger: dict[str, dict[str, Any]]) -> None:
+    _write_json(DISPATCH_LEDGER_PATH, ledger)
+
+
+def _dispatch_ledger_entry(
+    item_id: str,
+    attempt: int,
+    *,
+    status: str,
+    worker: str | None = None,
+    now: datetime | str | None = None,
+) -> dict[str, Any]:
+    key = _lease_key(item_id, attempt)
+    ledger = load_dispatch_ledger()
+    entry = ledger.get(key) or {
+        "work_item_id": item_id,
+        "attempt": attempt,
+        "idempotency_key": _dispatch_idempotency_key(item_id, attempt),
+    }
+    entry["status"] = status
+    if worker is not None:
+        entry["worker"] = worker
+    ts = _now_iso(now)
+    if status == "in_flight":
+        entry["dispatched_at"] = ts
+    else:
+        entry["completed_at"] = ts
+    ledger[key] = entry
+    save_dispatch_ledger(ledger)
+    return entry
+
+
+def _dispatch_ledger_blocks(item_id: str, attempt: int) -> bool:
+    entry = load_dispatch_ledger().get(_lease_key(item_id, attempt))
+    return bool(entry and entry.get("status") in DISPATCH_LEDGER_BLOCKING)
 
 
 def audit_transition(
@@ -417,7 +465,14 @@ def claim(
         now_dt = _parse_now(now)
         if _active_item_lease(item_id, now_dt) and not force:
             return None, "lease_active"
+        if item.get("status") in TERMINAL_STATUSES:
+            return None, f"status:{item.get('status')}"
+        if item.get("status") not in ("QUEUED", "FAILED", "WAITING_FOR_CAPACITY"):
+            return None, f"status:{item.get('status')}"
         attempt = int(item.get("attempt") or 0) + 1
+        max_attempts = int(item.get("max_attempts") or 3)
+        if attempt > max_attempts:
+            return None, "max_attempts_exceeded"
         key = _lease_key(item_id, attempt)
         leases = load_leases()
         existing = leases.get(key)
@@ -447,6 +502,8 @@ def claim(
 
 
 def refuse_double_claim(item_id: str, attempt: int) -> bool:
+    if _dispatch_ledger_blocks(item_id, attempt):
+        return True
     leases = load_leases()
     key = _lease_key(item_id, attempt)
     lease = leases.get(key)
@@ -487,6 +544,18 @@ def _review_prompt(item: dict[str, Any]) -> str:
         f"Acceptance criteria: {acceptance}. "
         "Respond with a line VERDICT: PASS or VERDICT: FAIL "
         "followed by a 5-line summary."
+    )
+
+
+def _build_prompt(item: dict[str, Any]) -> str:
+    spec = item.get("spec") or {}
+    acceptance = item.get("acceptance") or ""
+    task = spec.get("prompt") or json.dumps(spec)
+    return (
+        f"Implement work item {item['id']}. "
+        f"Task: {task}. "
+        f"Acceptance criteria: {acceptance}. "
+        "Make the required changes in the workspace and run tests as needed."
     )
 
 
@@ -628,15 +697,18 @@ def _worker_cmd(worker_id: str, config: dict[str, Any], item: dict[str, Any], wo
             prompt,
         ]
     if worker_id == "claude_pro_sub":
-        return [
+        argv = [
             "claude",
             "-p",
             "--output-format",
             "json",
             "--no-session-persistence",
             "--permission-mode",
-            "plan",
+            "plan" if item.get("kind") == "review" else "acceptEdits",
         ]
+        if item.get("kind") != "review":
+            argv.extend(["--allowedTools", "Edit,Write,Read,Bash(python3 -m unittest:*)"])
+        return argv
     return []
 
 
@@ -654,25 +726,70 @@ def _timeout_kill_grace_s(config: dict[str, Any]) -> float:
     return float(config.get("timeout_kill_grace_s") or DEFAULT_TIMEOUT_KILL_GRACE_S)
 
 
-def _terminate_process_group(proc: subprocess.Popen, *, grace_s: float) -> None:
+def _terminate_process_group(pgid: int, *, grace_s: float) -> None:
     try:
-        os.killpg(proc.pid, signal.SIGTERM)
+        os.killpg(pgid, signal.SIGTERM)
     except (ProcessLookupError, PermissionError, OSError):
-        return
+        pass
     if grace_s > 0:
         deadline = time.perf_counter() + grace_s
         while time.perf_counter() < deadline:
-            if proc.poll() is not None:
-                return
             time.sleep(0.05)
     try:
-        os.killpg(proc.pid, signal.SIGKILL)
+        os.killpg(pgid, signal.SIGKILL)
     except (ProcessLookupError, PermissionError, OSError):
         pass
 
 
-def _kill_group(proc: subprocess.Popen, *, grace_s: float = 0) -> None:
-    _terminate_process_group(proc, grace_s=grace_s)
+def _close_proc_pipes(proc: subprocess.Popen) -> None:
+    for stream in (proc.stdin, proc.stdout, proc.stderr):
+        if stream is not None:
+            try:
+                stream.close()
+            except OSError:
+                pass
+
+
+def _communicate_bounded(
+    proc: subprocess.Popen,
+    *,
+    pgid: int,
+    stdin_data: str | None,
+    timeout_s: float,
+    kill_grace_s: float,
+    started: float,
+) -> tuple[str | None, str | None, str | None]:
+    hard_deadline = started + timeout_s + kill_grace_s + 1.0
+    try:
+        out, err_txt = proc.communicate(input=stdin_data, timeout=timeout_s)
+        return out, err_txt, None
+    except subprocess.TimeoutExpired as te:
+        _terminate_process_group(pgid, grace_s=kill_grace_s)
+        drain_timeout = max(0.05, hard_deadline - time.perf_counter())
+        out = te.output if isinstance(te.output, str) else (te.output or b"").decode(errors="replace")
+        err_txt = te.stderr if isinstance(te.stderr, str) else (te.stderr or b"").decode(errors="replace")
+        try:
+            more_out, more_err = proc.communicate(timeout=drain_timeout)
+            if isinstance(more_out, bytes):
+                more_out = more_out.decode(errors="replace")
+            if isinstance(more_err, bytes):
+                more_err = more_err.decode(errors="replace")
+            out = (out or "") + (more_out or "")
+            err_txt = (err_txt or "") + (more_err or "")
+        except subprocess.TimeoutExpired as te2:
+            part_out = te2.output if isinstance(te2.output, str) else (te2.output or b"").decode(errors="replace")
+            part_err = te2.stderr if isinstance(te2.stderr, str) else (te2.stderr or b"").decode(errors="replace")
+            out = (out or "") + (part_out or "")
+            err_txt = (err_txt or "") + (part_err or "")
+            _terminate_process_group(pgid, grace_s=0)
+            try:
+                proc.communicate(timeout=0.2)
+            except subprocess.TimeoutExpired:
+                pass
+        if proc.poll() is None:
+            _terminate_process_group(pgid, grace_s=0)
+        _close_proc_pipes(proc)
+        return out, err_txt, "TIMEOUT"
 
 
 def dispatch_item(
@@ -689,6 +806,13 @@ def dispatch_item(
     idempotency_key = _dispatch_idempotency_key(item_id, attempt)
 
     with _orch_exclusive_lock():
+        if _dispatch_ledger_blocks(item_id, attempt):
+            return {
+                "ok": False,
+                "error": "already_dispatched",
+                "lease_key": key,
+                "idempotency_key": idempotency_key,
+            }
         leases = load_leases()
         lease = leases.get(key)
         if lease and lease.get("dispatched"):
@@ -766,14 +890,27 @@ def dispatch_item(
     stdin_data = spec.get("stdin") if using_override else None
     if using_override and worker_id == "codex_sub" and stdin_data is None:
         stdin_data = json.dumps({"acceptance": items[item_id].get("acceptance"), "spec": spec})
-    elif not using_override and worker_id == "claude_pro_sub":
-        stdin_data = _review_prompt(items[item_id])
+    elif worker_id == "claude_pro_sub" and stdin_data is None:
+        stdin_data = (
+            _review_prompt(items[item_id])
+            if items[item_id].get("kind") == "review"
+            else _build_prompt(items[item_id])
+        )
     elif not using_override and worker_id == "codex_sub" and items[item_id].get("kind") != "review":
         stdin_data = json.dumps({"acceptance": items[item_id].get("acceptance"), "spec": spec})
 
     timeout_s = float(items[item_id].get("timeout_s") or 300)
     kill_grace_s = _timeout_kill_grace_s(config)
     started = time.perf_counter()
+    with _orch_exclusive_lock():
+        if _dispatch_ledger_blocks(item_id, attempt):
+            return {
+                "ok": False,
+                "error": "already_dispatched",
+                "lease_key": key,
+                "idempotency_key": idempotency_key,
+            }
+        _dispatch_ledger_entry(item_id, attempt, status="in_flight", worker=worker_id, now=now)
     try:
         proc = subprocess.Popen(
             argv,
@@ -786,6 +923,7 @@ def dispatch_item(
             start_new_session=True,
         )
     except OSError as exc:
+        _dispatch_ledger_entry(item_id, attempt, status="failed", worker=worker_id, now=now)
         return _finish_dispatch(
             items[item_id],
             worker_id,
@@ -799,16 +937,15 @@ def dispatch_item(
         )
 
     worker_pid = proc.pid
-    err_kind = None
-    try:
-        out, err_txt = proc.communicate(input=stdin_data, timeout=timeout_s)
-    except subprocess.TimeoutExpired:
-        err_kind = "TIMEOUT"
-        _terminate_process_group(proc, grace_s=kill_grace_s)
-        out, err_txt = proc.communicate()
-    finally:
-        if proc.poll() is None:
-            _kill_group(proc, grace_s=0)
+    pgid = proc.pid
+    out, err_txt, err_kind = _communicate_bounded(
+        proc,
+        pgid=pgid,
+        stdin_data=stdin_data,
+        timeout_s=timeout_s,
+        kill_grace_s=kill_grace_s,
+        started=started,
+    )
 
     elapsed_ms = round((time.perf_counter() - started) * 1000, 1)
     exit_code = proc.returncode if err_kind is None else None
@@ -1015,6 +1152,8 @@ def _finish_dispatch(
     leases = load_leases()
     leases.pop(key, None)
     save_leases(leases)
+    ledger_status = "completed" if status == "COMPLETED" else "failed"
+    _dispatch_ledger_entry(item["id"], attempt, status=ledger_status, worker=worker_id, now=now)
 
     audit_transition(item["id"], "complete", before, item, now=now, extra={"worker": worker_id, "exit_code": exit_code})
     terminal_fail = item["status"] in ("FAILED", "TIMED_OUT") and int(item.get("attempt") or 0) >= int(item.get("max_attempts") or 1)
