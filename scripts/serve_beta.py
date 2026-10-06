@@ -2376,15 +2376,6 @@ class BetaHandler(SimpleHTTPRequestHandler):
             self._send_html_shell(page.read_bytes(), rel="atrium-ops-maintenance-pm-1.html")
             return
 
-
-        # Wolf Intelligence Owner board (SHADOW control plane). No Daily Close/Petty coupling.
-        try:
-            from core import wolf_intel_routes as _wolf_intel_routes
-            if _wolf_intel_routes.handle_get(self, path):
-                return
-        except Exception:
-            pass
-
         # PACK-01 Owner cockpit. Read-only JSON and a read board.
         # /wolf and /owner-empire-pack stay on _owner_empire_page (JWT).
         if path == "/api/owner/cockpit" or path.rstrip("/") == "/api/owner/cockpit":
@@ -6560,15 +6551,6 @@ class BetaHandler(SimpleHTTPRequestHandler):
         return SimpleHTTPRequestHandler.do_GET(self)
 
     def do_POST(self) -> None:
-
-        # Wolf Intelligence human decisions (SHADOW). No Daily Close/Petty coupling.
-        try:
-            from core import wolf_intel_routes as _wolf_intel_routes
-            if _wolf_intel_routes.handle_post(self, path):
-                return
-        except Exception:
-            pass
-
         path = urlparse(self.path).path
         if path == "/api/amg/sales-desk" or path.startswith("/api/amg/sales-desk/"):
             self._send_json(_amg_sales_desk_ro.refuse_write(), status=405)
