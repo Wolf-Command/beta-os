@@ -895,7 +895,6 @@ def decide(
                 ):
                     selected = ranked_eligible[0]["worker"]
                     decision_type = "DISPATCH"
-                    grok_verdict = "REJECTED"
                     requested_worker_rejected = excl
                 else:
                     decision_type = "QUEUE"
@@ -928,11 +927,12 @@ def decide(
     if protected:
         grok_verdict = "NOT_APPLICABLE"
     elif grok_code or requested == grok_id:
-        grok_verdict, detail = _verify_grok_reason(
-            grok_code, grok_just, bench_class, policy, routing,
-            eligible_non_grok, grok_state, allowed_codes, penalty, hard_block_at,
-            conduct=conduct_cfg,
-        )
+        if grok_verdict is None:
+            grok_verdict, detail = _verify_grok_reason(
+                grok_code, grok_just, bench_class, policy, routing,
+                eligible_non_grok, grok_state, allowed_codes, penalty, hard_block_at,
+                conduct=conduct_cfg,
+            )
     elif requested == grok_id and not grok_code:
         grok_verdict = "REJECTED"
 
@@ -1036,6 +1036,8 @@ def decide(
 def _ensure_tightening_baseline(policy: dict[str, Any] | None) -> None:
     """Persist default penalty on first decision so restart sees consistent state."""
     if GOVERNANCE_TIGHTENING_PATH.exists():
+        return
+    if _established_install():
         return
     default_pen, _ = _penalty_bounds(policy)
     data = {"grok_routing_penalty": default_pen}

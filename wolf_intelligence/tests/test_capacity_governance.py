@@ -936,7 +936,8 @@ class TestCapacityGovernance(unittest.TestCase):
             + "\n",
             encoding="utf-8",
         )
-        snap = capacity_snapshot("2026-10-06T10:35:00+08:00", policy=policy, policy_mode="ENFORCED")
+        with mock.patch.object(capacity, "_load_seed", return_value=[]):
+            snap = capacity_snapshot("2026-10-06T10:35:00+08:00", policy=policy, policy_mode="ENFORCED")
         grok = snap["workers"]["grok_bot_sub"]
         self.assertIn(grok["state"], ("CONSERVE", "RESERVE", "EXHAUSTED"))
         audit = paths.GOVERNANCE_AUDIT_PATH.read_text() if paths.GOVERNANCE_AUDIT_PATH.exists() else ""
@@ -1000,6 +1001,66 @@ class TestCapacityGovernance(unittest.TestCase):
         self.assertEqual(d.decision, "DISPATCH")
         self.assertNotEqual(d.selected_worker, "grok_bot_sub")
         self.assertIsNotNone(d.requested_worker_rejected)
+
+    def test_peak_raw_pct_resets_after_weekly_drop(self) -> None:
+        policy = self._velocity_policy_fixture(conserve_at=60)
+        if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
+            paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.unlink()
+        seed_patch = mock.patch.object(capacity, "_load_seed", return_value=[])
+        future_reset = "2026-10-13T10:00:00+08:00"
+        with seed_patch:
+            record_observation(
+                worker_id="grok_bot_sub",
+                included_usage_pct={"weekly": 95},
+                source="owner_observed",
+                observed_at="2026-10-05T10:00:00+08:00",
+                reset_at=future_reset,
+            )
+            record_observation(
+                worker_id="grok_bot_sub",
+                included_usage_pct={"weekly": 5},
+                source="owner_observed",
+                observed_at="2026-10-06T09:00:00+08:00",
+                reset_at=future_reset,
+            )
+            record_observation(
+                worker_id="grok_bot_sub",
+                included_usage_pct={"weekly": 6},
+                source="owner_observed",
+                observed_at="2026-10-06T10:00:00+08:00",
+                reset_at=future_reset,
+            )
+            now = "2026-10-06T10:05:00+08:00"
+            snap = capacity_snapshot(now, policy=policy, policy_mode="ENFORCED")
+        grok = snap["workers"]["grok_bot_sub"]
+        self.assertEqual(grok["state"], "NORMAL")
+        self.assertLessEqual(grok.get("effective_pct", 100), 10)
+
+    def test_velocity_one_minute_step_does_not_reserve(self) -> None:
+        policy = self._velocity_policy_fixture(conserve_at=60)
+        if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
+            paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.unlink()
+        future_reset = "2026-10-13T10:00:00+08:00"
+        with mock.patch.object(capacity, "_load_seed", return_value=[]):
+            record_observation(
+                worker_id="grok_bot_sub",
+                included_usage_pct={"weekly": 41},
+                source="owner_observed",
+                observed_at="2026-10-06T10:00:00+08:00",
+                reset_at=future_reset,
+            )
+            record_observation(
+                worker_id="grok_bot_sub",
+                included_usage_pct={"weekly": 42},
+                source="owner_observed",
+                observed_at="2026-10-06T10:01:00+08:00",
+                reset_at=future_reset,
+            )
+            now = "2026-10-06T10:05:00+08:00"
+            snap = capacity_snapshot(now, policy=policy, policy_mode="ENFORCED")
+        grok = snap["workers"]["grok_bot_sub"]
+        self.assertEqual(grok["state"], "NORMAL")
+        self.assertIs(grok.get("projected_exhaustion_before_reset"), False)
 
     def test_r1_first_decision_baseline_survives_restart(self) -> None:
         """Fresh install: first decision writes tightening baseline; restart keeps default penalty."""

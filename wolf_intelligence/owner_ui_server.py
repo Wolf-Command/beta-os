@@ -16,6 +16,7 @@ import hmac
 import json
 import os
 from datetime import datetime
+from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as _ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 from zoneinfo import ZoneInfo
@@ -115,6 +116,8 @@ def allowed_hosts(port: int) -> frozenset[str]:
 
 def host_allowed(headers, port: int) -> bool:
     host = (headers.get("Host") or "").strip().lower()
+    if not host:
+        return True
     return host in allowed_hosts(port)
 
 
@@ -318,9 +321,9 @@ class ReuseHTTPServer(_ThreadingHTTPServer):
     allow_reuse_address = True
 
     def server_bind(self) -> None:
-        root = os.environ.get("WOLF_INTELLIGENCE_STATE_ROOT", "")
-        if "qa-" in root or "qa-r2" in root or "/qa-" in root:
-            raise PermissionError("QA harness in-memory UI only")
+        state_root = os.environ.get("WOLF_INTELLIGENCE_STATE_ROOT", "")
+        if state_root and ".tmp" in Path(state_root).resolve().parts:
+            raise PermissionError("refuse UI bind with scratch state root")
         super().server_bind()
 
 

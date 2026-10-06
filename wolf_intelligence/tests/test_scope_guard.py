@@ -6,7 +6,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from wolf_intelligence.governance import load_policy
+import json
+
+from wolf_intelligence.governance import GOVERNANCE_CONFIG_DIR, load_policy, validate_policy_invariants
 from wolf_intelligence.scope_guard import check_invocation
 
 HOME = Path.home()
@@ -146,6 +148,57 @@ class ScopeGuardTests(unittest.TestCase):
             policy=self.policy,
         )
         self.assertTrue(ok, reasons)
+
+    def test_mixed_cd_flags_last_wins(self) -> None:
+        denied = tempfile.mkdtemp(prefix="wi-denied-", dir="/tmp")
+        ws = str(WORKTREE)
+        ok, reasons = check_invocation(
+            "codex_sub",
+            ["codex", "exec", "-s", "read-only", "-C", ws, "--cd", denied],
+            ws,
+            ALLOWED_ENV,
+            policy=self.policy,
+        )
+        self.assertFalse(ok)
+        self.assertTrue(
+            "SCOPE_DENIED_PATH" in reasons or "SCOPE_WORKSPACE_NOT_ALLOWED" in reasons,
+            reasons,
+        )
+
+    def test_unknown_argv0_refused(self) -> None:
+        ws = str(WORKTREE)
+        ok, reasons = check_invocation(
+            "codex_sub",
+            ["unrecognised-executable", "codex", "exec", "-s", "read-only", "-C", ws],
+            ws,
+            ALLOWED_ENV,
+            policy=self.policy,
+        )
+        self.assertFalse(ok)
+        self.assertIn("SCOPE_CLI_UNRECOGNIZED", reasons)
+
+    def test_sandbox_root_force_refused(self) -> None:
+        ws = str(WORKTREE)
+        ok, reasons = check_invocation(
+            "cursor_sub",
+            ["cursor-agent", "--workspace", str(SANDBOX), "-f"],
+            ws,
+            ALLOWED_ENV,
+            policy=self.policy,
+        )
+        self.assertFalse(ok)
+        self.assertIn("BYPASS_OUTSIDE_SANDBOX", reasons)
+
+    def test_scope_glob_invariant_rejects_widening_patterns(self) -> None:
+        base = json.loads((GOVERNANCE_CONFIG_DIR / "worker-allocation-policy.json").read_text())
+        for bad_globs in (["~/*"], ["/Users/*"], ["/*"], ["~"]):
+            policy = json.loads(json.dumps(base))
+            policy["worker_execution_scope"]["allowed_workspace_globs"] = bad_globs
+            errors = validate_policy_invariants(policy)
+            self.assertTrue(
+                any("allowed_workspace_globs cannot widen scope" in e for e in errors),
+                f"expected rejection for {bad_globs}: {errors}",
+            )
 
     def test_missing_policy_section_fail_closed(self) -> None:
         policy = dict(self.policy or {})

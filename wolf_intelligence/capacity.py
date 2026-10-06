@@ -64,11 +64,11 @@ def _load_seed() -> list[dict[str, Any]]:
 
 
 _PERSISTED_CACHE: tuple[int, list[dict[str, Any]], bool] | None = None
-_CORRUPT_AUDITED = False
+_CORRUPT_AUDITED_MTIME: int | None = None
 
 
 def _load_persisted() -> tuple[list[dict[str, Any]], bool]:
-    global _PERSISTED_CACHE, _CORRUPT_AUDITED
+    global _PERSISTED_CACHE, _CORRUPT_AUDITED_MTIME
     path = GOVERNANCE_CAPACITY_OBSERVATIONS_PATH
     if not path.exists():
         _PERSISTED_CACHE = (0, [], False)
@@ -98,8 +98,8 @@ def _load_persisted() -> tuple[list[dict[str, Any]], bool]:
             corrupt = True
             continue
         out.append(rec)
-    if corrupt and not _CORRUPT_AUDITED:
-        _CORRUPT_AUDITED = True
+    if corrupt and _CORRUPT_AUDITED_MTIME != mtime:
+        _CORRUPT_AUDITED_MTIME = mtime
         append_audit_event(
             "CAPACITY_OBSERVATIONS_CORRUPT",
             {"path": str(path), "error": "corrupt_lines"},
@@ -381,6 +381,12 @@ def _velocity_config(policy: dict[str, Any]) -> dict[str, Any]:
         "assumed_reset_hours_if_unknown": float(
             cfg.get("assumed_reset_hours_if_unknown", HARDCODED_VELOCITY["assumed_reset_hours_if_unknown"])
         ),
+        "short_slope_window_hours": float(
+            cfg.get(
+                "short_slope_window_hours",
+                min(24.0, float(cfg.get("window_hours", HARDCODED_VELOCITY["window_hours"]))),
+            )
+        ),
     }
 
 
@@ -423,7 +429,7 @@ def _newest_pool_record_issue(
     now: datetime,
     max_age_h: float,
 ) -> tuple[bool, str]:
-    """Fail closed when any raw reading for a pool has timestamp issues."""
+    """Fail closed only on timestamp issues inside the freshness window."""
     persisted, _ = _load_persisted()
     records = [
         r
@@ -433,13 +439,18 @@ def _newest_pool_record_issue(
     if not records:
         return False, ""
 
+    window_cutoff = now - timedelta(hours=max_age_h)
     newest: dict[str, Any] | None = None
     newest_at: datetime | None = None
     earliest_at: datetime | None = None
     valid_times: list[datetime] = []
+
     for rec in records:
         ok, reason = _validate_observation_record(rec, now)
+        observed_at = _record_observed_dt(rec)
         if not ok:
+            if observed_at is not None and observed_at < window_cutoff:
+                continue
             append_audit_event(
                 "CAPACITY_OBSERVATION_REJECTED",
                 {
@@ -451,9 +462,8 @@ def _newest_pool_record_issue(
                 },
             )
             return True, reason
-        observed_at = _record_observed_dt(rec)
         if observed_at is None:
-            return True, "invalid_observed_at"
+            continue
         valid_times.append(observed_at)
         if newest_at is None or observed_at > newest_at:
             newest_at = observed_at
@@ -461,15 +471,29 @@ def _newest_pool_record_issue(
         if earliest_at is None or observed_at < earliest_at:
             earliest_at = observed_at
 
-    if newest is None or newest_at is None or earliest_at is None:
+    if newest is None or newest_at is None:
         return True, "invalid_observed_at"
+
+    newest_age_h = (now - newest_at).total_seconds() / 3600.0
+    if newest_age_h > max_age_h:
+        append_audit_event(
+            "CAPACITY_OBSERVATION_STALE",
+            {
+                "worker_id": worker_id,
+                "pool": pool,
+                "observed_at": newest.get("observed_at"),
+                "age_hours": round(newest_age_h, 4),
+                "max_age_hours": max_age_h,
+            },
+        )
+        return True, "stale_observation"
+
+    if earliest_at is None:
+        return False, ""
 
     span_h = (newest_at - earliest_at).total_seconds() / 3600.0
     slow_velocity_series = len(valid_times) >= 2 and span_h > max(max_age_h * 2.0, 48.0)
-    newest_age_h = (now - newest_at).total_seconds() / 3600.0
-    has_fresh_newest = newest_age_h <= max_age_h
-
-    if has_fresh_newest and not slow_velocity_series:
+    if not slow_velocity_series:
         for rec in records:
             observed_at = _record_observed_dt(rec)
             if observed_at is None or observed_at >= newest_at:
@@ -489,38 +513,6 @@ def _newest_pool_record_issue(
                 )
                 return True, "stale_pollution"
 
-    for rec in records:
-        observed_at = _record_observed_dt(rec)
-        if observed_at is None:
-            continue
-        age_h = (now - observed_at).total_seconds() / 3600.0
-        if age_h > max_age_h:
-            if slow_velocity_series:
-                continue
-            append_audit_event(
-                "CAPACITY_OBSERVATION_STALE",
-                {
-                    "worker_id": worker_id,
-                    "pool": pool,
-                    "observed_at": rec.get("observed_at"),
-                    "age_hours": round(age_h, 4),
-                    "max_age_hours": max_age_h,
-                },
-            )
-            return True, "stale_observation"
-
-    if newest_age_h > max_age_h:
-        append_audit_event(
-            "CAPACITY_OBSERVATION_STALE",
-            {
-                "worker_id": worker_id,
-                "pool": pool,
-                "observed_at": newest.get("observed_at"),
-                "age_hours": round(newest_age_h, 4),
-                "max_age_hours": max_age_h,
-            },
-        )
-        return True, "stale_observation"
     return False, ""
 
 
@@ -565,6 +557,7 @@ def _steepest_slope(
     min_span_minutes: float,
     *,
     enforce_min_span: bool = True,
+    min_significant_pct_delta: float = 5.0,
 ) -> tuple[float | None, float | None]:
     """Return (max_pct_per_hour, span_hours) from steepest valid pairwise slope."""
     if len(pairs) < 2:
@@ -579,9 +572,11 @@ def _steepest_slope(
             span_h = (t1 - t0).total_seconds() / 3600.0
             if span_h <= 0:
                 continue
+            delta = p1 - p0
             if enforce_min_span and span_h * 60.0 < min_span_minutes:
-                continue
-            slope = (p1 - p0) / span_h
+                if delta < min_significant_pct_delta:
+                    continue
+            slope = delta / span_h
             if best_slope is None or slope > best_slope:
                 best_slope = slope
                 best_span_h = span_h
@@ -621,7 +616,14 @@ def _velocity_projection(
     if len(active) < cfg["min_points"]:
         active = pairs
 
-    short_slope, _ = _steepest_slope(active, cfg["min_span_minutes"], enforce_min_span=False)
+    recent_cutoff = now - timedelta(hours=cfg["short_slope_window_hours"])
+    recent_active = [(t, p) for t, p in active if t >= recent_cutoff]
+    slope_pairs = recent_active if len(recent_active) >= cfg["min_points"] else []
+    short_slope, _ = _steepest_slope(
+        slope_pairs,
+        cfg["min_span_minutes"],
+        enforce_min_span=True,
+    )
     long_slope: float | None = None
     if len(active) >= cfg["min_points"]:
         t0, p0 = active[0]
@@ -720,18 +722,22 @@ def _observation_records_for_worker(worker_id: str) -> list[dict[str, Any]]:
     return [r for r in _load_seed() if r.get("worker_id") == worker_id]
 
 
-def _peak_raw_pct(worker_id: str, pool: str, now: datetime) -> float | None:
-    peak: float | None = None
-    for rec in _observation_records_for_worker(worker_id):
-        ok, _ = _validate_observation_record(rec, now)
-        if not ok:
-            continue
-        pct_map = rec.get("included_usage_pct") or {}
-        if pool not in pct_map or not _is_valid_pct(pct_map[pool]):
-            continue
-        val = float(pct_map[pool])
-        peak = val if peak is None else max(peak, val)
-    return peak
+def _peak_raw_pct(
+    worker_id: str,
+    pool: str,
+    now: datetime,
+    window_hours: float,
+) -> float | None:
+    pairs = _pool_velocity_pairs(worker_id, pool, now, window_hours)
+    if not pairs:
+        return None
+    segments = _split_pairs_at_drops(pairs)
+    active = segments[-1] if segments else pairs
+    active_peak = max(p for _, p in active)
+    if len(active) == 1 and len(segments) > 1:
+        prev_peak = max(p for _, p in segments[-2])
+        return max(active_peak, prev_peak)
+    return active_peak
 
 
 def _effective_pct(
@@ -889,7 +895,8 @@ def worker_capacity_record(
         timestamp_issue, _ = _newest_pool_record_issue(worker_id, pool, now, max_age_h)
 
     effective = _effective_pct(observed_pct, observed_at, now, decay_rate)
-    peak_raw = _peak_raw_pct(worker_id, pool, now) if pool else None
+    vel_cfg = _velocity_config(policy)
+    peak_raw = _peak_raw_pct(worker_id, pool, now, vel_cfg["window_hours"]) if pool else None
     state_pct = max(effective, peak_raw) if peak_raw is not None else effective
     state = _state_from_pct(state_pct, thresholds)
 

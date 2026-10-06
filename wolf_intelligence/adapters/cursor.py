@@ -1,6 +1,7 @@
 """Cursor adapter. Shadow submit does not spawn. Live submit needs execute=True and the env flag."""
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import tempfile
@@ -68,6 +69,9 @@ class CursorAdapter(WorkerAdapter):
         )
 
     def _live(self, job: dict[str, Any]) -> AdapterResult:
+        from ..scope_guard import check_invocation
+        from .subscription_cli import scrubbed_env
+
         binary = _cursor_bin()
         if not binary:
             return AdapterResult(False, "UNAVAILABLE", "cursor-agent not on PATH", {"provider_called": False})
@@ -79,7 +83,19 @@ class CursorAdapter(WorkerAdapter):
         if not workspace:
             created = tempfile.mkdtemp(prefix="wi-cursor-ask-")
             workspace = created
-        argv = [binary, "--print", "--mode", "ask", "--trust", "--workspace", workspace, prompt]
+        workspace_path = Path(workspace).resolve()
+        cwd = str(workspace_path)
+        argv = [binary, "--print", "--mode", "ask", "--trust", "--workspace", cwd, prompt]
+        inherited = dict(os.environ)
+        ok, reasons = check_invocation("cursor", argv, cwd, inherited)
+        if not ok:
+            return AdapterResult(
+                False,
+                "GATED",
+                "scope refused: " + ",".join(reasons),
+                {"provider_called": False, "scope_reasons": reasons},
+            )
+        child_env = scrubbed_env()
         started = time.perf_counter()
         try:
             try:
@@ -89,6 +105,8 @@ class CursorAdapter(WorkerAdapter):
                     text=True,
                     timeout=timeout,
                     check=False,
+                    env=child_env,
+                    cwd=cwd,
                 )
             except subprocess.TimeoutExpired:
                 return AdapterResult(False, "ERROR", "cursor-agent timeout", {"provider_called": True, "mocked": providers_mocked()})
