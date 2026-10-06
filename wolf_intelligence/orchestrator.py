@@ -114,6 +114,17 @@ def _write_json(path: Path, data: Any) -> None:
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def _atomic_write_json(path: Path, data: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    payload = json.dumps(data, indent=2, sort_keys=True) + "\n"
+    with tmp.open("w", encoding="utf-8") as f:
+        f.write(payload)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
+
+
 def _append_jsonl(path: Path, rec: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as f:
@@ -156,10 +167,10 @@ def load_dispatch_ledger() -> dict[str, dict[str, Any]]:
 
 
 def save_dispatch_ledger(ledger: dict[str, dict[str, Any]]) -> None:
-    _write_json(DISPATCH_LEDGER_PATH, ledger)
+    _atomic_write_json(DISPATCH_LEDGER_PATH, ledger)
 
 
-def _dispatch_ledger_entry(
+def _dispatch_ledger_entry_unlocked(
     item_id: str,
     attempt: int,
     *,
@@ -185,6 +196,24 @@ def _dispatch_ledger_entry(
     ledger[key] = entry
     save_dispatch_ledger(ledger)
     return entry
+
+
+def _dispatch_ledger_entry(
+    item_id: str,
+    attempt: int,
+    *,
+    status: str,
+    worker: str | None = None,
+    now: datetime | str | None = None,
+) -> dict[str, Any]:
+    with _orch_exclusive_lock():
+        return _dispatch_ledger_entry_unlocked(
+            item_id,
+            attempt,
+            status=status,
+            worker=worker,
+            now=now,
+        )
 
 
 def _dispatch_ledger_blocks(item_id: str, attempt: int) -> bool:
@@ -712,6 +741,15 @@ def _worker_cmd(worker_id: str, config: dict[str, Any], item: dict[str, Any], wo
     return []
 
 
+def worker_has_command_builder(
+    worker_id: str,
+    config: dict[str, Any],
+    item: dict[str, Any],
+) -> bool:
+    worktree = str(config.get("worktree_cwd") or ".")
+    return bool(_worker_cmd(worker_id, config, item, worktree))
+
+
 def _billing_class(worker_id: str) -> str:
     if worker_registry.is_metered(worker_id):
         return "metered"
@@ -910,7 +948,7 @@ def dispatch_item(
                 "lease_key": key,
                 "idempotency_key": idempotency_key,
             }
-        _dispatch_ledger_entry(item_id, attempt, status="in_flight", worker=worker_id, now=now)
+        _dispatch_ledger_entry_unlocked(item_id, attempt, status="in_flight", worker=worker_id, now=now)
     try:
         proc = subprocess.Popen(
             argv,

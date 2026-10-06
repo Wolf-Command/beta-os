@@ -131,6 +131,26 @@ class FailoverTestCase(unittest.TestCase):
         self.assertEqual(d["action"], "FAILOVER")
         self.assertEqual(d["worker_id"], "codex_sub")
 
+    def test_ollama_without_command_builder_never_selected(self) -> None:
+        reg = failover.load_registry()
+        reg["workers"]["ollama_local"]["commissioning_state"] = "commissioned"
+        reg["workers"]["cursor_sub"]["commissioning_state"] = "suspended"
+        reg["workers"]["codex_sub"]["commissioning_state"] = "suspended"
+        failover.save_registry(reg)
+        cfg = orch.load_config()
+        item = {"id": "build-ollama", "kind": "build", "spec": {}}
+        cap = self._capacity(cursor="EXHAUSTED", codex="EXHAUSTED")
+        d = failover.decide_routing(
+            item,
+            capacity=cap,
+            orch_config=cfg,
+            now="2026-10-06T12:00:00+08:00",
+        )
+        self.assertNotEqual(d.get("worker_id"), "ollama_local")
+        self.assertIn(d["action"], ("WAITING_FOR_CAPACITY", "WAIT"))
+        worker = orch.route_worker("build", cfg, cap, item=item, now="2026-10-06T12:00:00+08:00")
+        self.assertIsNone(worker)
+
     def test_failover_cursor_limit_engineering_replacement(self) -> None:
         failover.set_worker_availability("cursor_sub", "weekly_limit", evidence=["weekly limit"])
         item = {"id": "build-1", "kind": "build", "spec": {}}

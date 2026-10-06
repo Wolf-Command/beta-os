@@ -25,6 +25,36 @@ ORPHAN_CHILD_WORKER = str(FIXTURES / "orch_worker_orphan_child.py")
 STDIN_CAPTURE_WORKER = str(FIXTURES / "orch_worker_capture_stdin.py")
 
 
+def _mp_complete_ledger_entry(item_id: str, state_root: str) -> None:
+    os.environ["WOLF_INTELLIGENCE_STATE_ROOT"] = state_root
+    rebind_state_paths()
+    orch.rebind_orchestrator_paths()
+    orch._dispatch_ledger_entry(
+        item_id,
+        1,
+        status="completed",
+        worker="cursor_sub",
+        now="2026-10-06T12:00:01+08:00",
+    )
+
+
+def _mp_try_in_flight_after_completed(state_root: str) -> str:
+    os.environ["WOLF_INTELLIGENCE_STATE_ROOT"] = state_root
+    rebind_state_paths()
+    orch.rebind_orchestrator_paths()
+    with orch._orch_exclusive_lock():
+        if orch._dispatch_ledger_blocks("wi-race-b", 1):
+            return "blocked"
+        orch._dispatch_ledger_entry_unlocked(
+            "wi-race-b",
+            1,
+            status="in_flight",
+            worker="cursor_sub",
+            now="2026-10-06T12:00:02+08:00",
+        )
+    return "dispatched"
+
+
 class OrchestratorTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self._prev = os.environ.get("WOLF_INTELLIGENCE_STATE_ROOT")
@@ -360,6 +390,43 @@ class OrchestratorTestCase(unittest.TestCase):
         )
         self.assertFalse(replay["ok"])
         self.assertEqual(replay["error"], "already_dispatched")
+
+    def test_dispatch_ledger_concurrent_updates_preserve_all_entries(self) -> None:
+        import multiprocessing as mp
+
+        orch.ORCH_DIR.mkdir(parents=True, exist_ok=True)
+        orch.save_dispatch_ledger({})
+        workers = [f"wi-race-{i}" for i in range(8)]
+        procs = [
+            mp.Process(target=_mp_complete_ledger_entry, args=(wid, self.state_root))
+            for wid in workers
+        ]
+        for proc in procs:
+            proc.start()
+        for proc in procs:
+            proc.join(timeout=30)
+            self.assertEqual(proc.exitcode, 0)
+        ledger = orch.load_dispatch_ledger()
+        self.assertEqual(len(ledger), len(workers))
+        for wid in workers:
+            self.assertEqual(ledger[f"{wid}:1"]["status"], "completed")
+
+    def test_dispatch_ledger_completed_blocks_concurrent_relaunch(self) -> None:
+        import multiprocessing as mp
+
+        orch._dispatch_ledger_entry(
+            "wi-race-b",
+            1,
+            status="completed",
+            worker="cursor_sub",
+            now="2026-10-06T12:00:01+08:00",
+        )
+
+        with mp.Pool(6) as pool:
+            results = pool.map(_mp_try_in_flight_after_completed, [self.state_root] * 6)
+        self.assertNotIn("dispatched", results)
+        self.assertTrue(all(r == "blocked" for r in results))
+        self.assertEqual(orch.load_dispatch_ledger()["wi-race-b:1"]["status"], "completed")
 
     def test_closed_item_cannot_be_claimed(self) -> None:
         self._submit_build(reviewer_gate=False, max_attempts=1)

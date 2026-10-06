@@ -392,11 +392,17 @@ def _is_eligible(
     item: dict[str, Any],
     items: dict[str, dict[str, Any]],
     min_score: float,
+    orch_config: dict[str, Any] | None = None,
 ) -> tuple[bool, list[str]]:
     notes: list[str] = []
     worker = _worker_record(registry, worker_id)
     if not worker:
         return False, ["unknown_worker"]
+    if orch_config is not None:
+        from .orchestrator import worker_has_command_builder
+
+        if not worker_has_command_builder(worker_id, orch_config, item):
+            return False, ["no_command_builder"]
     if capability not in (worker.get("capabilities") or []):
         return False, ["missing_capability"]
     if worker.get("commissioning_state") != "commissioned":
@@ -436,6 +442,7 @@ def _rank_eligible(
     item: dict[str, Any],
     items: dict[str, dict[str, Any]],
     min_score: float,
+    orch_config: dict[str, Any] | None = None,
 ) -> list[tuple[str, float, list[str]]]:
     ranked: list[tuple[str, float, list[str]]] = []
     for wid in candidates:
@@ -449,6 +456,7 @@ def _rank_eligible(
             item=item,
             items=items,
             min_score=min_score,
+            orch_config=orch_config,
         )
         if ok:
             worker = _worker_record(registry, wid) or {}
@@ -566,6 +574,7 @@ def decide_routing(
             item=item,
             items=all_items,
             min_score=min_score,
+            orch_config=orch_config,
         )
 
     if pref_ok:
@@ -607,6 +616,7 @@ def decide_routing(
         item=item,
         items=all_items,
         min_score=min_score,
+        orch_config=orch_config,
     )
 
     pref_score = 0.0
