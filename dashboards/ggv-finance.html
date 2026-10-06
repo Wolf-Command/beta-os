@@ -90,6 +90,39 @@
   @media (min-width: 861px) {
     nav.tabs.mobile-nota { display: none; }
   }
+  .nota-review { padding-bottom: 8px; }
+  .review-field {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px 12px; margin: 8px 0;
+  }
+  .review-field label { margin: 0 0 4px; font-size: 0.82rem; display: flex; justify-content: space-between; gap: 8px; }
+  .review-field input, .review-field select { margin-top: 4px; }
+  .prov { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .prov.extracted { color: var(--gold); }
+  .prov.check_this, .prov.suggested { color: #e8a84a; }
+  .prov.default { color: var(--muted); }
+  .prov.not_read, .prov.unknown { color: var(--bad); }
+  .prov.human { color: var(--ok); }
+  .nota-preview-thumb img { max-width: 100%; max-height: 140px; border-radius: 10px; border: 1px solid var(--border); }
+  details.nota-more { margin: 10px 0; border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px; background: var(--panel); }
+  details.nota-more summary { cursor: pointer; font-weight: 650; color: var(--gold); }
+  #nota-action-bar {
+    position: sticky; bottom: calc(64px + env(safe-area-inset-bottom)); z-index: 25;
+    background: linear-gradient(180deg, rgba(8,23,26,0.05), rgba(8,23,26,0.96) 18%);
+    padding: 10px 0 6px; margin-top: 8px;
+  }
+  @media (min-width: 861px) {
+    #nota-action-bar { bottom: 0; }
+  }
+  #nota-action-bar .action-hint { margin: 0 0 8px; font-size: 0.82rem; line-height: 1.35; }
+  #nota-action-bar .action-row { display: flex; gap: 8px; }
+  #nota-action-bar .action-row button { flex: 1; margin: 0; min-height: var(--touch, 44px); }
+  #nota-action-msg { margin: 0 0 8px; font-size: 0.85rem; color: var(--bad); }
+  #nota-action-msg.ok { color: var(--ok); }
+  #nota-result { margin: 12px 0 calc(72px + env(safe-area-inset-bottom)); }
+  .vendor-pick.selected { outline: 2px solid var(--gold); }
+  .date-raw-hint { font-size: 0.78rem; color: var(--muted); margin: 4px 0 0; }
+  .prov.human_confirmed { color: var(--ok); }
 </style>
 </head>
 <body data-wolf-page-type="WORKSPACE" data-wolf-org="GGV" data-wolf-shell="global">
@@ -256,22 +289,52 @@
         <li>✓ Saved</li>
       </ol>
       <p id="upload-msg"></p>
-      <div id="review" class="hidden">
-        <h2>Review</h2>
+      <div id="review" class="hidden nota-review">
+        <h2>Review Wolf's reading</h2>
         <p class="note" id="review-hint"></p>
+        <div id="preview" class="nota-preview-thumb"></div>
         <div id="vendor-box"></div>
-        <label>Invoice number<input id="f-invoice" /></label>
-        <label>Date<input id="f-date" placeholder="2026-09-01" /></label>
-        <label>Amount<input id="f-amount" inputmode="decimal" placeholder="Type the amount, or leave blank" /></label>
-        <label>Tax<input id="f-tax" inputmode="decimal" placeholder="Leave blank if not shown" /></label>
-        <label>Currency<input id="f-currency" placeholder="IDR" /></label>
-        <label>Category<input id="f-category" /></label>
-        <label>Notes<textarea id="f-notes"></textarea></label>
-        <div id="preview"></div>
+        <div class="review-field" data-field="date">
+          <label><span>Date</span><span class="prov" id="prov-date">NOT READ</span></label>
+          <input id="f-date" type="date" />
+          <p class="date-raw-hint hidden" id="date-raw-hint"></p>
+        </div>
+        <div class="review-field" data-field="currency">
+          <label><span>Currency</span><span class="prov default" id="prov-currency">DEFAULT</span></label>
+          <input id="f-currency-display" value="IDR (default)" readonly />
+        </div>
+        <div class="review-field" data-field="amount">
+          <label><span>Amount</span><span class="prov" id="prov-amount">NOT READ</span></label>
+          <input id="f-amount" inputmode="decimal" placeholder="Type what you see" />
+        </div>
+        <div class="review-field" data-field="tax">
+          <label><span>Tax</span><span class="prov" id="prov-tax">NOT SHOWN</span></label>
+          <input id="f-tax" inputmode="decimal" placeholder="Leave blank or type UNKNOWN" />
+        </div>
+        <div class="review-field" data-field="category">
+          <label><span>Category</span><span class="prov" id="prov-category">NOT SHOWN</span></label>
+          <input id="f-category" placeholder="Optional" />
+        </div>
+        <div class="review-field" data-field="invoice">
+          <label><span>Invoice / nota number</span><span class="prov" id="prov-invoice">NOT SHOWN</span></label>
+          <input id="f-invoice" placeholder="Optional" />
+        </div>
+        <details class="nota-more" id="txn-more">
+          <summary>More details</summary>
+          <label>Currency override<input id="f-currency" placeholder="IDR" /></label>
+          <label>Transaction notes<textarea id="f-notes" placeholder="Optional"></textarea></label>
+        </details>
         <p class="meta" id="confidence"></p>
         <div id="dup-box"></div>
-        <button type="button" class="primary" id="save-nota">Save</button>
-        <button type="button" class="secondary" id="submit-nota" disabled>Submit</button>
+      </div>
+      <div id="nota-result" class="hidden card ok"></div>
+      <div id="nota-action-bar" class="hidden">
+        <p class="note action-hint">Save keeps a draft; Confirm sends for accounting review. Neither pays the nota.</p>
+        <p id="nota-action-msg" class="note hidden"></p>
+        <div class="action-row">
+          <button type="button" class="secondary" id="save-nota">SAVE FOR LATER</button>
+          <button type="button" class="primary" id="submit-nota" disabled>CONFIRM NOTA</button>
+        </div>
       </div>
     </div>
     <div id="nota-detail" class="hidden"></div>
@@ -797,8 +860,10 @@ $("cam").addEventListener("change", () => rememberFiles($("cam").files, true));
 $("file").addEventListener("change", () => rememberFiles($("file").files, true));
 $("more").addEventListener("change", () => rememberFiles($("more").files, false));
 $("start-upload").addEventListener("click", () => {
-  uploadId = null; notaId = null; dupDecision = null; chosen = [];
+  uploadId = null; notaId = null; chosen = [];
+  resetReviewForm();
   $("review").classList.add("hidden");
+  $("nota-action-bar").classList.add("hidden");
   $("nota-list-wrap").classList.add("hidden");
   $("nota-detail").classList.add("hidden");
   $("upload-panel").classList.remove("hidden");
@@ -808,6 +873,7 @@ $("start-upload").addEventListener("click", () => {
 });
 $("cancel-upload").addEventListener("click", () => {
   $("upload-panel").classList.add("hidden");
+  $("nota-action-bar").classList.add("hidden");
   $("nota-list-wrap").classList.remove("hidden");
   loadNotas();
 });
@@ -825,89 +891,330 @@ function fileToPayload(file) {
   });
 }
 
+const fieldProv = { vendor_name: "not_read", nota_date: "not_read", amount: "not_read", tax: "not_shown", currency: "unknown", category: "not_shown", invoice_no: "not_shown" };
+
+function resetReviewForm() {
+  const box = $("vendor-box");
+  if (box) {
+    box.innerHTML = "";
+    box.dataset.vendorId = "";
+    delete box.dataset.confirmed;
+    delete box.dataset.decision;
+    delete box.dataset.existing;
+  }
+  if ($("f-category")) $("f-category").value = "";
+  if ($("f-notes")) $("f-notes").value = "";
+  if ($("dup-box")) $("dup-box").innerHTML = "";
+  if ($("nota-result")) { $("nota-result").classList.add("hidden"); $("nota-result").innerHTML = ""; }
+  if ($("nota-action-msg")) { $("nota-action-msg").classList.add("hidden"); $("nota-action-msg").textContent = ""; }
+  if ($("date-raw-hint")) { $("date-raw-hint").classList.add("hidden"); $("date-raw-hint").textContent = ""; }
+  Object.assign(fieldProv, {
+    vendor_name: "not_read", nota_date: "not_read", amount: "not_read",
+    tax: "not_shown", currency: "unknown", category: "not_shown", invoice_no: "not_shown",
+  });
+  dupDecision = null;
+  dupReason = null;
+  existingNotaId = null;
+}
+
+const REVIEW_FIELD_LABELS = {
+  vendor_name: "vendor",
+  nota_date: "date",
+  invoice_no: "invoice number",
+  amount: "amount",
+  tax: "tax",
+  currency: "currency",
+  category: "category",
+};
+
+function provLabel(key) {
+  const map = {
+    extracted: "EXTRACTED",
+    human: "HUMAN-ENTERED",
+    check_this: "CHECK THIS",
+    suggested: "SUGGESTED MATCH",
+    default: "DEFAULT",
+    not_read: "NOT READ",
+    not_shown: "NOT SHOWN",
+    unknown: "UNKNOWN",
+  };
+  return map[key] || "UNKNOWN";
+}
+
+function setProvEl(id, key) {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = provLabel(key);
+  const cls = ["prov"];
+  if (key === "extracted") cls.push("extracted");
+  else if (key === "human") cls.push("human");
+  else if (key === "check_this") cls.push("check_this");
+  else if (key === "suggested") cls.push("suggested");
+  else if (key === "default") cls.push("default");
+  else cls.push("not_read");
+  el.className = cls.join(" ");
+}
+
+function bindHumanProv(inputId, provKey) {
+  const el = $(inputId);
+  if (!el || el.dataset.provBound) return;
+  el.dataset.provBound = "1";
+  el.addEventListener("input", () => {
+    fieldProv[provKey] = "human";
+    const provId = "prov-" + provKey.replace("_", "-").replace("nota_date", "date").replace("invoice_no", "invoice").replace("vendor_name", "vendor");
+    if (provKey === "nota_date") setProvEl("prov-date", "human");
+    else if (provKey === "invoice_no") setProvEl("prov-invoice", "human");
+    else if (provKey === "vendor_name") setProvEl("prov-vendor", "human");
+    else setProvEl(provId, "human");
+    updateConfirmEnabled();
+  });
+}
+
+function showActionMsg(text, ok) {
+  const el = $("nota-action-msg");
+  if (!el) return;
+  el.textContent = text || "";
+  el.classList.toggle("hidden", !text);
+  el.classList.toggle("ok", !!ok);
+}
+
+function setActionBusy(busy) {
+  if ($("save-nota")) $("save-nota").disabled = busy;
+  if ($("submit-nota")) $("submit-nota").disabled = busy || !reviewReady();
+}
+
+function showConfirmResult(message, notaIdVal) {
+  $("review").classList.add("hidden");
+  $("nota-action-bar").classList.add("hidden");
+  showActionMsg("", false);
+  const card = $("nota-result");
+  card.classList.remove("hidden");
+  card.innerHTML = `<h2>Confirmed for accounting review</h2>
+    <p>${esc(message || "This is not a payment.")}</p>
+    <p class="meta">${esc(notaIdVal || notaId || "")}</p>
+    <button type="button" class="secondary" id="nota-result-back">Upload another</button>`;
+  card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  $("nota-result-back").addEventListener("click", () => {
+    card.classList.add("hidden");
+    $("cancel-upload").click();
+  });
+}
+
+function markVendorPick(btn) {
+  const box = $("vendor-box");
+  if (!box) return;
+  box.querySelectorAll("[data-vendor-id]").forEach((b) => {
+    b.classList.remove("selected");
+    b.classList.remove("primary");
+    b.classList.add("secondary");
+  });
+  btn.classList.add("selected");
+  btn.classList.remove("secondary");
+  btn.classList.add("primary");
+  setProvEl("prov-vendor", "human");
+  const prov = $("prov-vendor");
+  if (prov) { prov.textContent = "HUMAN-CONFIRMED"; prov.classList.add("human_confirmed"); }
+}
+
+function setDateRawHint(fields) {
+  const hint = $("date-raw-hint");
+  if (!hint) return;
+  const raw = (fields && fields.nota_date_raw) || "";
+  if (raw) {
+    hint.textContent = "Nota says: " + raw;
+    hint.classList.remove("hidden");
+  } else {
+    hint.classList.add("hidden");
+    hint.textContent = "";
+  }
+}
+
 function fillReview(data) {
+  resetReviewForm();
   proposals = (data && data.proposals) || proposals || {};
   const fields = proposals.fields || {};
+  const prov = proposals.provenance || {};
+  Object.assign(fieldProv, {
+    vendor_name: prov.vendor_name || (fields.vendor_name ? "extracted" : "not_read"),
+    nota_date: prov.nota_date || (fields.nota_date ? "extracted" : "not_read"),
+    amount: prov.amount || (fields.amount ? "extracted" : "not_read"),
+    tax: prov.tax || (fields.tax ? "extracted" : "not_shown"),
+    currency: prov.currency || (fields.currency ? "extracted" : "unknown"),
+    category: prov.category || (fields.category ? "extracted" : "not_shown"),
+    invoice_no: prov.invoice_no || (fields.invoice_no ? "extracted" : "not_shown"),
+  });
   $("f-invoice").value = fields.invoice_no || "";
-  $("f-date").value = fields.nota_date || "";
+  const dateIso = fields.nota_date || "";
+  $("f-date").value = /^\d{4}-\d{2}-\d{2}$/.test(dateIso) ? dateIso : "";
+  setDateRawHint(fields);
   $("f-amount").value = fields.amount || "";
   $("f-tax").value = fields.tax || "";
-  $("f-currency").value = fields.currency || "";
+  const currencyCode = fields.currency || "IDR";
+  const currencyProv = prov.currency || (fields.currency ? "extracted" : "default");
+  fieldProv.currency = currencyProv === "extracted" ? "extracted" : currencyProv === "check_this" ? "check_this" : "default";
+  if ($("f-currency")) $("f-currency").value = currencyCode;
+  if ($("f-currency-display")) {
+    $("f-currency-display").value = fieldProv.currency === "default" ? currencyCode + " (default)" : currencyCode;
+    $("f-currency-display").readOnly = fieldProv.currency !== "human";
+  }
+  setProvEl("prov-date", fieldProv.nota_date);
+  setProvEl("prov-amount", fieldProv.amount);
+  setProvEl("prov-tax", fieldProv.tax);
+  setProvEl("prov-category", fieldProv.category);
+  setProvEl("prov-invoice", fieldProv.invoice_no);
+  setProvEl("prov-currency", fieldProv.currency);
+  bindHumanProv("f-date", "nota_date");
+  const dateInput = $("f-date");
+  if (dateInput) dateInput.addEventListener("input", () => {
+    if ($("date-raw-hint") && $("date-raw-hint").textContent) {
+      $("date-raw-hint").classList.add("hidden");
+    }
+  });
+  bindHumanProv("f-amount", "amount");
+  bindHumanProv("f-tax", "tax");
+  bindHumanProv("f-category", "category");
+  bindHumanProv("f-invoice", "invoice_no");
+  if ($("f-currency")) {
+    $("f-currency").addEventListener("input", () => {
+      fieldProv.currency = "human";
+      setProvEl("prov-currency", "human");
+      if ($("f-currency-display")) {
+        $("f-currency-display").value = $("f-currency").value || "IDR";
+        $("f-currency-display").readOnly = false;
+      }
+      updateConfirmEnabled();
+    });
+  }
   const low = proposals.low_confidence || [];
-  $("confidence").textContent = low.length ? "Check this: " + low.join(", ") : "";
-  $("review-hint").textContent = data.message || proposals.message || "Check the reading, then correct anything that is wrong.";
+  const lowLabels = low.map((key) => REVIEW_FIELD_LABELS[key] || key.replace(/_/g, " "));
+  $("confidence").textContent = lowLabels.length ? "Wolf is unsure about: " + lowLabels.join(", ") : "";
+  $("review-hint").textContent = data.message || proposals.message || "Check Wolf's reading, then correct anything that is wrong.";
   const matches = data.vendor_matches || [];
   const box = $("vendor-box");
+  const vendorName = fields.vendor_name || "";
   if (matches.length) {
-    box.innerHTML = `<div class="card warn"><p>We think this is: <strong>${esc(matches[0].name)}</strong></p>
-      <button type="button" class="primary" id="use-vendor">Use existing</button>
-      <button type="button" class="secondary" id="new-vendor">+ Create new</button>
+    const top = matches.slice(0, 3);
+    box.innerHTML = `<div class="review-field" data-field="vendor">
+      <label><span>Vendor</span><span class="prov suggested" id="prov-vendor">SUGGESTED MATCH</span></label>
+      <p>Suggested from your vendor list:</p>
+      ${top.map((row, idx) => `<button type="button" class="vendor-pick ${idx === 0 ? "primary" : "secondary"}" data-vendor-id="${esc(row.vendor_id)}" data-vendor-name="${esc(row.name)}">Use ${esc(row.name)}</button>`).join(" ")}
+      <button type="button" class="secondary" id="new-vendor">Different vendor</button>
       <div id="vendor-form" class="hidden"></div></div>`;
-    $("use-vendor").addEventListener("click", () => { box.dataset.vendorId = matches[0].vendor_id; box.dataset.confirmed = "1"; $("upload-msg").textContent = "Using " + matches[0].name; });
+    box.querySelectorAll("[data-vendor-id]").forEach((btn) => btn.addEventListener("click", () => {
+      box.dataset.vendorId = btn.dataset.vendorId;
+      box.dataset.confirmed = "1";
+      markVendorPick(btn);
+      showActionMsg("Using " + btn.dataset.vendorName, true);
+      updateConfirmEnabled();
+    }));
   } else {
-    box.innerHTML = `<div class="card"><p>Vendor not found.</p><div id="vendor-form"></div></div>`;
+    box.innerHTML = `<div class="review-field" data-field="vendor">
+      <label><span>Vendor</span><span class="prov ${vendorName ? "extracted" : "not_read"}" id="prov-vendor">${vendorName ? "EXTRACTED" : "NOT READ"}</span></label>
+      <input id="v-name" value="${esc(vendorName)}" placeholder="Name from the nota" />
+      <button type="button" class="primary" id="v-save-min">Use this vendor</button>
+      <details class="nota-more" id="vendor-more"><summary>MORE VENDOR DETAILS</summary><div id="vendor-form-extra"></div></details>
+      <div id="v-dup"></div></div>`;
     box.dataset.vendorId = "";
-    renderVendorForm(fields.vendor_name || "");
+    bindHumanProv("v-name", "vendor_name");
+    $("v-save-min").addEventListener("click", () => saveVendor(true));
+    renderVendorExtra(vendorName);
   }
   const formBtn = $("new-vendor");
-  if (formBtn) formBtn.addEventListener("click", () => renderVendorForm(fields.vendor_name || ""));
+  if (formBtn) formBtn.addEventListener("click", () => {
+    box.dataset.vendorId = "";
+    const name = $("v-name") ? $("v-name").value : vendorName;
+    box.innerHTML = `<div class="review-field" data-field="vendor">
+      <label><span>Vendor</span><span class="prov human" id="prov-vendor">HUMAN-ENTERED</span></label>
+      <input id="v-name" value="${esc(name)}" />
+      <button type="button" class="primary" id="v-save-min">Use this vendor</button>
+      <details class="nota-more"><summary>MORE VENDOR DETAILS</summary><div id="vendor-form-extra"></div></details>
+      <div id="v-dup"></div></div>`;
+    bindHumanProv("v-name", "vendor_name");
+    $("v-save-min").addEventListener("click", () => saveVendor(true));
+    renderVendorExtra(name);
+  });
   $("review").classList.remove("hidden");
-  $("preview").innerHTML = chosen[0] ? `<p class="meta">Attachment: ${esc(chosen[0].name)}</p>` : "";
+  $("nota-action-bar").classList.remove("hidden");
+  if (chosen[0] && chosen[0].type && chosen[0].type.startsWith("image/")) {
+    const url = URL.createObjectURL(chosen[0]);
+    $("preview").innerHTML = `<img src="${url}" alt="Nota attachment preview" />`;
+  } else {
+    $("preview").innerHTML = chosen[0] ? `<p class="meta">Attachment: ${esc(chosen[0].name)}</p>` : "";
+  }
+  updateConfirmEnabled();
+}
+
+function renderVendorExtra(prefill) {
+  const host = $("vendor-form-extra");
+  if (!host) return;
+  host.innerHTML = `
+    <label>Contact<input id="v-contact" placeholder="Optional" /></label>
+    <label>Phone<input id="v-phone" placeholder="Optional" /></label>
+    <label>Email<input id="v-email" placeholder="Optional" /></label>
+    <label>Tax id<input id="v-tax" placeholder="Optional" /></label>
+    <label>Address<textarea id="v-address" placeholder="Optional"></textarea></label>
+    <label>Notes<textarea id="v-notes" placeholder="Optional"></textarea></label>`;
 }
 
 function renderVendorForm(prefill) {
   const host = $("vendor-form");
+  if (!host) return;
   host.classList.remove("hidden");
   host.innerHTML = `
-    <label>Vendor name<input id="v-name" value="${esc(prefill)}" /></label>
-    <label>Category<input id="v-category" placeholder="Unknown is fine" /></label>
-    <label>Contact<input id="v-contact" /></label>
-    <label>Phone<input id="v-phone" /></label>
-    <label>Email<input id="v-email" /></label>
-    <label>Tax id<input id="v-tax" /></label>
-    <label>Address<textarea id="v-address"></textarea></label>
-    <label>Notes<textarea id="v-notes"></textarea></label>
-    <button type="button" class="primary" id="v-save">Create vendor</button>
+    <input id="v-name" value="${esc(prefill)}" />
+    <button type="button" class="primary" id="v-save-min">Use this vendor</button>
+    <details class="nota-more"><summary>MORE VENDOR DETAILS</summary><div id="vendor-form-extra"></div></details>
     <div id="v-dup"></div>`;
-  $("v-save").addEventListener("click", saveVendor);
+  $("v-save-min").addEventListener("click", () => saveVendor(true));
+  renderVendorExtra(prefill);
 }
 
-async function saveVendor() {
-  const payload = {
-    display_name: $("v-name").value,
-    category: $("v-category").value,
-    contact_name: $("v-contact").value,
-    phone: $("v-phone").value,
-    email: $("v-email").value,
-    tax_id: $("v-tax").value,
-    address: $("v-address").value,
-    notes: $("v-notes").value,
-    duplicate_decision: $("vendor-form").dataset.decision || null,
-    duplicate_reason: $("v-reason") ? $("v-reason").value : "",
-    existing_vendor_id: $("vendor-form").dataset.existing || null,
-  };
-  const data = await api("/api/ggv/finance/vendors", { method: "POST", body: JSON.stringify(payload) });
-  if (data.error === "possible_duplicate_vendor") {
-    const matches = data.matches || [];
-    $("v-dup").innerHTML = `<div class="card warn"><p>${esc(data.message)}</p>
-      ${matches.map((row) => `<button type="button" data-existing="${esc(row.vendor_id)}">Use ${esc(row.name)}</button>`).join("")}
-      <label>Why this is a separate vendor<input id="v-reason" /></label>
-      <button type="button" id="v-separate">Create separate</button></div>`;
-    $("v-dup").querySelectorAll("[data-existing]").forEach((btn) => btn.addEventListener("click", () => {
-      $("vendor-form").dataset.decision = "use_existing";
-      $("vendor-form").dataset.existing = btn.dataset.existing;
-      saveVendor();
-    }));
-    $("v-separate").addEventListener("click", () => {
-      $("vendor-form").dataset.decision = "create_separate";
-      saveVendor();
-    });
-    return;
+async function saveVendor(minimal) {
+  try {
+    const payload = {
+      display_name: $("v-name").value,
+      category: $("v-category") ? $("v-category").value : "",
+      contact_name: $("v-contact") ? $("v-contact").value : "",
+      phone: $("v-phone") ? $("v-phone").value : "",
+      email: $("v-email") ? $("v-email").value : "",
+      tax_id: $("v-tax") ? $("v-tax").value : "",
+      address: $("v-address") ? $("v-address").value : "",
+      notes: $("v-notes") ? $("v-notes").value : "",
+      duplicate_decision: ($("vendor-box") || {}).dataset?.decision || null,
+      duplicate_reason: $("v-reason") ? $("v-reason").value : "",
+      existing_vendor_id: ($("vendor-box") || {}).dataset?.existing || null,
+    };
+    const data = await api("/api/ggv/finance/vendors", { method: "POST", body: JSON.stringify(payload) });
+    if (data.error === "possible_duplicate_vendor") {
+      const matches = data.matches || [];
+      $("v-dup").innerHTML = `<div class="card warn"><p>${esc(data.message)}</p>
+        ${matches.map((row) => `<button type="button" data-existing="${esc(row.vendor_id)}">Use ${esc(row.name)}</button>`).join("")}
+        <label>Why this is a separate vendor<input id="v-reason" /></label>
+        <button type="button" id="v-separate">Create separate</button></div>`;
+      $("v-dup").querySelectorAll("[data-existing]").forEach((btn) => btn.addEventListener("click", () => {
+        $("vendor-box").dataset.decision = "use_existing";
+        $("vendor-box").dataset.existing = btn.dataset.existing;
+        saveVendor(minimal);
+      }));
+      $("v-separate").addEventListener("click", () => {
+        $("vendor-box").dataset.decision = "create_separate";
+        saveVendor(minimal);
+      });
+      return;
+    }
+    const vendor = data.vendor;
+    $("vendor-box").dataset.vendorId = vendor.vendor_id;
+    $("vendor-box").dataset.confirmed = "1";
+    setProvEl("prov-vendor", "human");
+    const prov = $("prov-vendor");
+    if (prov) { prov.textContent = "HUMAN-CONFIRMED"; prov.classList.add("human_confirmed"); }
+    showActionMsg(minimal ? "Vendor set: " + vendor.name : "Vendor created. You are still on the same nota.", true);
+    updateConfirmEnabled();
+  } catch (err) {
+    const host = $("v-dup") || $("vendor-box");
+    if (host) host.insertAdjacentHTML("beforeend", `<p class="note">${esc(err.message)}</p>`);
+    showActionMsg(err.message, false);
   }
-  const vendor = data.vendor;
-  $("vendor-box").dataset.vendorId = vendor.vendor_id;
-  $("vendor-box").dataset.confirmed = "1";
-  $("upload-msg").textContent = "Vendor created. You are still on the same nota. " + vendor.vendor_id;
 }
 
 $("run-upload").addEventListener("click", async () => {
@@ -936,16 +1243,35 @@ $("run-upload").addEventListener("click", async () => {
   }
 });
 
+function reviewCurrency() {
+  const code = (($("f-currency") && $("f-currency").value) || "").trim().toUpperCase();
+  if (fieldProv.currency === "human") return code || "IDR";
+  if (fieldProv.currency === "extracted" || fieldProv.currency === "check_this" || fieldProv.currency === "default") {
+    return code || "";
+  }
+  return "";
+}
+
+function currencyConfirmOk() {
+  if (fieldProv.currency === "human") return true;
+  const code = reviewCurrency() || "IDR";
+  return code === "IDR";
+}
+
 function reviewBody() {
+  const taxVal = ($("f-tax").value || "").trim();
+  const invoiceVal = ($("f-invoice").value || "").trim();
+  const categoryVal = ($("f-category").value || "").trim();
+  const currencyVal = reviewCurrency();
   return {
     upload_id: uploadId,
     vendor_id: $("vendor-box").dataset.vendorId || "",
-    invoice_no: $("f-invoice").value,
+    invoice_no: invoiceVal || (["not_shown", "not_read", "unknown"].includes(fieldProv.invoice_no) ? "UNKNOWN" : ""),
     date: $("f-date").value,
     amount: $("f-amount").value,
-    tax: $("f-tax").value,
-    currency: $("f-currency").value,
-    category: $("f-category").value,
+    tax: taxVal || (["not_shown", "unknown"].includes(fieldProv.tax) ? "UNKNOWN" : ""),
+    currency: currencyVal,
+    category: categoryVal || (["not_shown", "unknown"].includes(fieldProv.category) ? "UNKNOWN" : ""),
     notes: $("f-notes").value,
     items: [],
     confirm: {
@@ -953,9 +1279,9 @@ function reviewBody() {
       invoice_no: true,
       date: !!$("f-date").value,
       amount: !!$("f-amount").value,
-      tax: !!$("f-tax").value,
-      currency: !!$("f-currency").value,
-      category: !!$("f-category").value,
+      tax: true,
+      currency: fieldProv.currency === "human",
+      category: true,
     },
     duplicate_decision: dupDecision,
     duplicate_reason: dupReason,
@@ -963,40 +1289,93 @@ function reviewBody() {
   };
 }
 
+function reviewReady() {
+  const vendorOk = $("vendor-box").dataset.confirmed === "1" && !!$("vendor-box").dataset.vendorId;
+  const dateOk = !!($("f-date").value || "").trim();
+  const amountOk = !!($("f-amount").value || "").trim();
+  return vendorOk && dateOk && amountOk && currencyConfirmOk();
+}
+
+function updateConfirmEnabled() {
+  $("submit-nota").disabled = !reviewReady();
+}
+
+function dupMatchLabel(row) {
+  const inv = row.invoice_no && row.invoice_no !== "UNKNOWN" ? row.invoice_no : "no invoice no.";
+  const date = row.date || "no date";
+  const amount = row.amount || "no amount";
+  return date + " · " + amount + " · " + inv;
+}
+
+function renderDupBox(data, onResolved) {
+  const matches = data.matches || [];
+  if (!matches.length) return false;
+  $("dup-box").innerHTML = `<div class="card warn"><p>${esc(data.message)}</p>
+    ${matches.map((row) => `<button type="button" data-nota="${esc(row.nota_id)}">Same nota — use this one (${esc(dupMatchLabel(row))})</button>`).join("")}
+    <label>Why save a separate copy<input id="dup-reason" /></label>
+    <button type="button" id="dup-separate">Save separate</button></div>`;
+  $("dup-box").querySelectorAll("[data-nota]").forEach((btn) => btn.addEventListener("click", () => {
+    dupDecision = "use_existing";
+    existingNotaId = btn.dataset.nota;
+    onResolved();
+  }));
+  $("dup-separate").addEventListener("click", () => {
+    dupDecision = "create_separate";
+    dupReason = $("dup-reason").value;
+    onResolved();
+  });
+  return true;
+}
+
+function renderSimilarNotice(data) {
+  if (!data.similar_notice || !(data.similar_notas || []).length) return;
+  const rows = data.similar_notas.map((row) => dupMatchLabel(row)).join("; ");
+  $("dup-box").innerHTML = `<div class="card warn"><p>${esc(data.similar_notice)}</p><p class="meta">Similar: ${esc(rows)}</p></div>`;
+}
+
 $("save-nota").addEventListener("click", async () => {
+  setActionBusy(true);
+  showActionMsg("", false);
   try {
     const data = await api("/api/ggv/finance/notas", { method: "POST", body: JSON.stringify(reviewBody()) });
     if (data.error === "possible_duplicate_nota") {
-      const matches = data.matches || [];
-      $("dup-box").innerHTML = `<div class="card warn"><p>${esc(data.message)}</p>
-        ${matches.map((row) => `<button type="button" data-nota="${esc(row.nota_id)}">Open ${esc(row.invoice_no || row.nota_id)}</button>`).join("")}
-        <label>Why save a separate copy<input id="dup-reason" /></label>
-        <button type="button" id="dup-separate">Save separate</button></div>`;
-      $("dup-box").querySelectorAll("[data-nota]").forEach((btn) => btn.addEventListener("click", () => {
-        dupDecision = "use_existing"; existingNotaId = btn.dataset.nota; $("save-nota").click();
-      }));
-      $("dup-separate").addEventListener("click", () => {
-        dupDecision = "create_separate"; dupReason = $("dup-reason").value; $("save-nota").click();
-      });
+      showActionMsg("Possible duplicate — choose below", false);
+      renderDupBox(data, () => $("save-nota").click());
+      if ($("dup-box")) $("dup-box").scrollIntoView({ behavior: "smooth", block: "nearest" });
       return;
     }
     renderProgress(data.progress);
     notaId = data.nota.nota_id;
-    $("upload-msg").textContent = "Saved. " + notaId;
-    $("submit-nota").disabled = data.nota.state !== "ready" && data.nota.state !== "waiting_approval";
-    if (data.nota.state === "ready") $("submit-nota").disabled = false;
+    showActionMsg("Saved for later — " + notaId + ". You can still edit.", true);
+    renderSimilarNotice(data);
+    updateConfirmEnabled();
   } catch (err) {
-    $("upload-msg").textContent = err.message;
+    showActionMsg(err.message, false);
+  } finally {
+    setActionBusy(false);
   }
 });
 
 $("submit-nota").addEventListener("click", async () => {
-  if (!notaId) { $("upload-msg").textContent = "Save the nota before you submit."; return; }
+  const body = reviewBody();
+  setActionBusy(true);
+  showActionMsg("", false);
   try {
+    const saved = await api("/api/ggv/finance/notas", { method: "POST", body: JSON.stringify(body) });
+    if (saved.error === "possible_duplicate_nota") {
+      showActionMsg("Possible duplicate — choose below", false);
+      renderDupBox(saved, () => $("submit-nota").click());
+      if ($("dup-box")) $("dup-box").scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return;
+    }
+    notaId = saved.nota.nota_id;
+    renderSimilarNotice(saved);
     const data = await api("/api/ggv/finance/notas/" + encodeURIComponent(notaId) + "/submit", { method: "POST", body: "{}" });
-    $("upload-msg").textContent = data.message || "Submitted. This is not a payment.";
+    showConfirmResult(data.message || "Confirmed for accounting review — not a payment.", notaId);
   } catch (err) {
-    $("upload-msg").textContent = err.message;
+    showActionMsg(err.message, false);
+  } finally {
+    setActionBusy(false);
   }
 });
 

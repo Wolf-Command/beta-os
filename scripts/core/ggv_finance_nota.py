@@ -34,12 +34,16 @@ import json
 import os
 import re
 import sqlite3
+import subprocess
 import sys
 import uuid
 import zipfile
 from datetime import datetime, timezone
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any
+
+from core import ggv_nota_local_read as _local_read
 
 from core import audit as audit_log
 from core import evidence as _evidence
@@ -54,6 +58,15 @@ LIVE_CATALOG_DB = CATALOG_DB.resolve()
 # verified copy lives on the media library. Do not write new evidence here.
 LEGACY_BLOB_DIR = BETA_ROOT / "state" / "ggv-finance-nota" / "blobs"
 ENTITY_GGV = "ENT-GGV"
+# Stored when a human explicitly marks a field as unknown (distinct from null/empty/error).
+UNKNOWN_SENTINEL = "UNKNOWN"
+# Fields that block CONFIRM NOTA / waiting_approval. Entity is always scoped at intake.
+# vendor_id + amount + nota_date are required for a reconcilable AP line.
+# currency defaults to IDR for GGV when amount is confirmed. Invoice, tax, category,
+# tax_id, email, phone, and address may stay UNKNOWN without blocking.
+BLOCKING_CONFIRM_FIELDS = frozenset({"vendor_id", "nota_date", "amount", "currency"})
+SUPPORTED_CURRENCIES = frozenset({"IDR", "USD", "EUR"})
+SUBMIT_LOCKED_STATES = frozenset({"waiting_approval", "approved", "paid_claimed", "payment_verified"})
 
 
 def _eid() -> str:
@@ -424,16 +437,42 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
     )
     _migrate_file_columns(conn)
     _migrate_nota_tax_columns(conn)
+    _migrate_nota_revision_column(conn)
+    _migrate_nota_currency_columns(conn)
 
 
 NOTA_TAX_COLUMNS: tuple[tuple[str, str], ...] = (
     ("tax_detail_json", "TEXT"),
 )
 
+NOTA_REVISION_COLUMNS: tuple[tuple[str, str], ...] = (
+    ("material_revision", "INTEGER NOT NULL DEFAULT 0"),
+)
+
+NOTA_CURRENCY_COLUMNS: tuple[tuple[str, str], ...] = (
+    ("currency_source", "TEXT"),
+)
+
 
 def _migrate_nota_tax_columns(conn: sqlite3.Connection) -> None:
     have = {row[1] for row in conn.execute("PRAGMA table_info(ggv_notas)").fetchall()}
     for name, kind in NOTA_TAX_COLUMNS:
+        if name in have:
+            continue
+        conn.execute(f"ALTER TABLE ggv_notas ADD COLUMN {name} {kind}")
+
+
+def _migrate_nota_revision_column(conn: sqlite3.Connection) -> None:
+    have = {row[1] for row in conn.execute("PRAGMA table_info(ggv_notas)").fetchall()}
+    for name, kind in NOTA_REVISION_COLUMNS:
+        if name in have:
+            continue
+        conn.execute(f"ALTER TABLE ggv_notas ADD COLUMN {name} {kind}")
+
+
+def _migrate_nota_currency_columns(conn: sqlite3.Connection) -> None:
+    have = {row[1] for row in conn.execute("PRAGMA table_info(ggv_notas)").fetchall()}
+    for name, kind in NOTA_CURRENCY_COLUMNS:
         if name in have:
             continue
         conn.execute(f"ALTER TABLE ggv_notas ADD COLUMN {name} {kind}")
@@ -606,6 +645,88 @@ def _nota_or_404(conn: sqlite3.Connection, nota_id: str) -> sqlite3.Row:
     return row
 
 
+def _begin_write_txn(conn: sqlite3.Connection, *, own: bool) -> None:
+    """Acquire a write lock before read on mutating nota paths (BEGIN IMMEDIATE)."""
+    if own and not conn.in_transaction:
+        conn.execute("BEGIN IMMEDIATE")
+
+
+def _nota_revision(row: sqlite3.Row) -> int:
+    if "material_revision" not in row.keys():
+        return 0
+    return int(row["material_revision"] or 0)
+
+
+def _material_cas_tuple(
+    *,
+    vendor_id: Any,
+    nota_date: Any,
+    amount: Any,
+    currency: Any,
+) -> tuple[str, str, str, str]:
+    return (
+        str(vendor_id or ""),
+        str(nota_date or ""),
+        "" if amount is None else str(amount),
+        str(currency or "").upper(),
+    )
+
+
+def _material_cas_from_row(row: sqlite3.Row) -> tuple[str, str, str, str]:
+    return _material_cas_tuple(
+        vendor_id=row["vendor_id"],
+        nota_date=row["nota_date"],
+        amount=row["amount"],
+        currency=row["currency"],
+    )
+
+
+def _material_cas_from_fields(fields: dict[str, Any]) -> tuple[str, str, str, str]:
+    return _material_cas_tuple(
+        vendor_id=fields.get("vendor_id"),
+        nota_date=fields.get("nota_date"),
+        amount=fields.get("amount"),
+        currency=fields.get("currency"),
+    )
+
+
+def _material_revision_bump(row: sqlite3.Row, fields: dict[str, Any]) -> int:
+    rev = _nota_revision(row)
+    if _material_cas_from_row(row) != _material_cas_from_fields(fields):
+        return rev + 1
+    return rev
+
+
+def _raise_if_stale_nota_write(
+    conn: sqlite3.Connection,
+    nota_id: str,
+    expected_state: str,
+    *,
+    updated: int,
+) -> None:
+    """Reject when workflow_state or material_revision changed between read and write."""
+    if updated:
+        return
+    fresh = conn.execute(
+        "SELECT workflow_state FROM ggv_notas WHERE nota_id=? AND entity_id=?",
+        (nota_id, _eid()),
+    ).fetchone()
+    if not fresh:
+        raise FinanceNotaError("That nota was not found.", code="not_found", http_status=404)
+    current = str(fresh["workflow_state"] or "")
+    if current in SUBMIT_LOCKED_STATES or expected_state in SUBMIT_LOCKED_STATES:
+        raise FinanceNotaError(
+            "This nota is already submitted for review.",
+            code="already_submitted",
+            http_status=409,
+        )
+    raise FinanceNotaError(
+        "This nota changed while you were editing. Refresh and try again.",
+        code="stale_write",
+        http_status=409,
+    )
+
+
 def _file_or_404(conn: sqlite3.Connection, file_id: str) -> sqlite3.Row:
     row = conn.execute(
         """
@@ -741,6 +862,70 @@ def parse_confirmed_amount(value: Any) -> str | None:
     return text
 
 
+def _valid_calendar_date(value: str | None) -> bool:
+    if not value or value == UNKNOWN_SENTINEL:
+        return False
+    try:
+        datetime.strptime(value, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
+
+def _validate_vendor_for_entity(conn: sqlite3.Connection, vendor_id: str | None) -> None:
+    if not vendor_id:
+        return
+    row = conn.execute(
+        "SELECT vendor_id, status FROM ggv_vendors WHERE vendor_id=? AND entity_id=?",
+        (vendor_id, _eid()),
+    ).fetchone()
+    if not row or row["status"] != "ACTIVE":
+        raise FinanceNotaError("Choose a vendor from the list, or create one.", code="unknown_vendor")
+
+
+def _validate_submit_ready(row: sqlite3.Row) -> None:
+    """Blocking fields for CONFIRM NOTA: vendor, real calendar date, amount, supported currency."""
+    if not row["vendor_id"]:
+        raise FinanceNotaError(
+            "Confirm the vendor, date, and amount before you submit. This still does not pay the nota.",
+            code="not_ready",
+        )
+    if row["amount"] is None or str(row["amount"]) == UNKNOWN_SENTINEL:
+        raise FinanceNotaError(
+            "Confirm the vendor, date, and amount before you submit. This still does not pay the nota.",
+            code="not_ready",
+        )
+    if not row["nota_date"] or row["nota_date"] == UNKNOWN_SENTINEL:
+        raise FinanceNotaError(
+            "Confirm the vendor, date, and amount before you submit. This still does not pay the nota.",
+            code="not_ready",
+        )
+    if not _valid_calendar_date(row["nota_date"]):
+        raise FinanceNotaError(
+            "Enter a real calendar date, for example 2026-10-06.",
+            code="bad_date",
+        )
+    currency = (row["currency"] or "").upper()
+    if not currency or currency == UNKNOWN_SENTINEL:
+        raise FinanceNotaError(
+            "Confirm the vendor, date, and amount before you submit. This still does not pay the nota.",
+            code="not_ready",
+        )
+    if currency not in SUPPORTED_CURRENCIES:
+        raise FinanceNotaError(f"Currency {currency} is not supported here.", code="bad_currency")
+    currency_source = row["currency_source"] if "currency_source" in row.keys() else None
+    if not _currency_submit_ready({"currency": currency, "currency_source": currency_source}):
+        raise FinanceNotaError(
+            "Confirm the currency before you submit. Wolf read a non-IDR amount — check it matches the nota.",
+            code="not_ready",
+        )
+    if not (row["vendor_confirmed"] and row["amount_confirmed"] and row["date_confirmed"]):
+        raise FinanceNotaError(
+            "Confirm the vendor, date, and amount before you submit. This still does not pay the nota.",
+            code="not_ready",
+        )
+
+
 def _unambiguous_amount(token: str | None) -> str | None:
     raw = (token or "").strip()
     if re.fullmatch(r"\d+", raw):
@@ -750,11 +935,196 @@ def _unambiguous_amount(token: str | None) -> str | None:
     return None
 
 
+def _normalize_decimal_currency(token: str | None) -> str | None:
+    """EUR/USD: decimal comma is cents (10,50 -> 10.50); never strip comma into a larger integer."""
+    raw = (token or "").replace(" ", "")
+    if not raw:
+        return None
+    if re.fullmatch(r"\d{1,3}(?:\.\d{3})*,\d{2}", raw):
+        return raw.replace(".", "").replace(",", ".")
+    if re.fullmatch(r"\d+,\d{2}", raw):
+        return raw.replace(",", ".")
+    if re.fullmatch(r"\d{1,3}(?:,\d{3})*\.\d{2}", raw):
+        return raw.replace(",", "")
+    if re.fullmatch(r"\d+\.\d{2}", raw):
+        return raw
+    if re.fullmatch(r"\d+", raw):
+        return raw
+    return None
+
+
+def _normalize_idr_token(token: str | None) -> str | None:
+    raw = re.sub(r"^[Rr][Pp]\.?\s*", "", (token or "").strip())
+    raw = raw.replace(" ", "")
+    if not raw:
+        return None
+    if re.fullmatch(r"\d{1,3}(?:\.\d{3})+", raw):
+        return raw.replace(".", "")
+    if re.fullmatch(r"\d{1,3}(?:,\d{3})+", raw):
+        return raw.replace(",", "")
+    if re.fullmatch(r"\d+\.\d{3}", raw):
+        return raw.replace(".", "")
+    if re.fullmatch(r"\d+", raw):
+        return raw
+    return None
+
+
+def _normalize_amount_token(token: str | None, currency: str | None = None) -> str | None:
+    curr = (currency or "IDR").upper()
+    if curr in {"EUR", "USD"}:
+        return _normalize_decimal_currency(token)
+    return _normalize_idr_token(token)
+
+
+def _money_token_is_clean(token: str | None) -> bool:
+    """Reject OCR tokens with letters, replacement chars, or invalid money grammar."""
+    raw = (token or "").strip()
+    if not raw:
+        return False
+    if raw.startswith("-"):
+        return False
+    if re.search(r"[A-Za-z]", raw):
+        return False
+    if re.search(r"[\ufffd\uFFFD]", raw):
+        return False
+    return bool(re.fullmatch(r"[\d.,]+", raw))
+
+
+def _line_excluded_from_total(line: str) -> bool:
+    """Tax, unit price, change, and bank lines are not payable totals."""
+    return bool(
+        re.search(
+            r"(?i)\b(tax|ppn|vat|unit|harga|price|change|kembalian|rekening|bank|saldo|"
+            r"discount|diskon|subtotal|qty|quantity|tip|service)\b",
+            line,
+        )
+    )
+
+
+def _propose_money_field(
+    token: str | None,
+    currency: str | None,
+) -> tuple[str | None, str | None, str]:
+    """Return (normalized, raw, confidence) for amount/tax extraction."""
+    if not token:
+        return None, None, "missing"
+    raw = token.strip()
+    if not _money_token_is_clean(raw):
+        return None, raw, "check_this"
+    normalized = _normalize_amount_token(raw, currency)
+    return normalized, raw, "read_from_document" if normalized else "check_this"
+
+
+_MONTHS = {
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "may": 5,
+    "mei": 5,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "agu": 8,
+    "agt": 8,
+    "sep": 9,
+    "oct": 10,
+    "opt": 10,
+    "okt": 10,
+    "nov": 11,
+    "dec": 12,
+    "des": 12,
+}
+
+
+def _slash_date_id_iso(raw: str) -> str | None:
+    """Indonesia default DD/MM/YY(YY) → ISO candidate. Unparseable → None."""
+    text = (raw or "").strip()
+    match = re.match(r"^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$", text)
+    if not match:
+        return None
+    day, month, year = int(match.group(1)), int(match.group(2)), int(match.group(3))
+    if year < 100:
+        year += 2000
+    if not (1 <= day <= 31 and 1 <= month <= 12):
+        return None
+    iso = f"{year:04d}-{month:02d}-{day:02d}"
+    return iso if _valid_calendar_date(iso) else None
+
+
+def _parse_receipt_date(body: str) -> tuple[str | None, str, str | None]:
+    """Return (value, confidence, raw_hint). Slash dates → ISO candidate + raw, check_this."""
+    iso = re.search(r"\b(20\d{2}-\d{2}-\d{2})\b", body)
+    if iso:
+        return iso.group(1), "read_from_document", None
+    for match in re.finditer(
+        r"(?i)(?:date|tanggal|tgl)\s*[:\-•.]?\s*(\d{1,2})\s+([a-z]{3,9})\w*\s+(20\d{2})",
+        body,
+    ):
+        day = int(match.group(1))
+        month_key = match.group(2).lower()[:3]
+        year = int(match.group(3))
+        month = _MONTHS.get(month_key)
+        if month and 1 <= day <= 31:
+            return f"{year:04d}-{month:02d}-{day:02d}", "read_from_document", None
+    bare_month = re.search(
+        r"(?i)(?<![a-z])(\d{1,2})\s+([a-z]{3,9})\w*\s+(20\d{2})\b",
+        body,
+    )
+    if bare_month:
+        day = int(bare_month.group(1))
+        month_key = bare_month.group(2).lower()[:3]
+        year = int(bare_month.group(3))
+        month = _MONTHS.get(month_key)
+        if month and 1 <= day <= 31:
+            return f"{year:04d}-{month:02d}-{day:02d}", "read_from_document", None
+    slash = re.search(
+        r"(?i)(?:date|tanggal|tgl)\s*[:\-]?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})",
+        body,
+    )
+    if slash:
+        raw = slash.group(1)
+        candidate = _slash_date_id_iso(raw)
+        if candidate:
+            return candidate, "check_this", raw
+        return raw, "check_this", raw
+    bare_slash = re.search(r"\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b", body)
+    if bare_slash:
+        raw = bare_slash.group(1)
+        candidate = _slash_date_id_iso(raw)
+        if candidate:
+            return candidate, "check_this", raw
+        return raw, "check_this", raw
+    return None, "missing", None
+
+
+def _field_provenance(fields: dict[str, Any], confidence: dict[str, str]) -> dict[str, str]:
+    provenance: dict[str, str] = {}
+    for key in ("vendor_name", "invoice_no", "nota_date", "amount", "tax", "currency", "category"):
+        value = fields.get(key)
+        level = confidence.get(key, "")
+        if value is None or value == "":
+            if level == "missing":
+                provenance[key] = "not_read"
+            else:
+                provenance[key] = "unknown"
+        elif level in {"read_from_document", "observed_not_verified"}:
+            provenance[key] = "extracted"
+        elif level == "check_this":
+            provenance[key] = "check_this"
+        elif level == "default":
+            provenance[key] = "default"
+        else:
+            provenance[key] = "extracted" if value else "unknown"
+    return provenance
+
+
 def extract_text(data: bytes, content_type: str, filename: str) -> str:
     ctype = (content_type or "").lower()
     name = (filename or "").lower()
     if ctype.startswith("image/") or name.endswith((".jpg", ".jpeg", ".png", ".heic", ".webp", ".gif")):
-        return ""
+        text, _meta = _local_read.read_image_bytes(data)
+        return text
     if ctype.startswith("text/") or name.endswith((".txt", ".csv")):
         return data.decode("utf-8", "replace")
     parts: list[str] = []
@@ -798,6 +1168,20 @@ def propose_from_text(text: str) -> dict[str, Any]:
     if vendor:
         fields["vendor_name"] = vendor.group(1).strip(" .")
         confidence["vendor_name"] = "read_from_document"
+    if not fields["vendor_name"]:
+        skip = re.compile(
+            r"(?i)(terminal|merchant|card|sale|date|batch|ref|amount|time|appr|debit|chip|bri|bca|bni|mandiri|not paid|buka rekening)",
+        )
+        for line in body.splitlines():
+            candidate = line.strip()
+            if not candidate or len(candidate) < 3 or len(candidate) > 48:
+                continue
+            if skip.search(candidate):
+                continue
+            if re.fullmatch(r"[A-Z][A-Z0-9 .&'/-]{2,47}", candidate):
+                fields["vendor_name"] = candidate.strip(" .")
+                confidence["vendor_name"] = "read_from_document"
+                break
     invoice = re.search(
         r"(?i)(?:invoice|nota|inv)\s*(?:no\.?|number|#|:)?\s*[:#-]?\s*([A-Z0-9][A-Z0-9\-/]{2,})",
         body,
@@ -805,45 +1189,93 @@ def propose_from_text(text: str) -> dict[str, Any]:
     if invoice:
         fields["invoice_no"] = invoice.group(1).strip()
         confidence["invoice_no"] = "read_from_document"
-    date = re.search(r"\b(20\d{2}-\d{2}-\d{2})\b", body) or re.search(
-        r"(?i)(?:date)\s*[:\-]?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})",
-        body,
-    )
-    if date:
-        fields["nota_date"] = date.group(1)
-        confidence["nota_date"] = "read_from_document"
-    totals = re.findall(
-        r"(?i)(?:grand\s*total|jumlah|total)\s*[:\-]?\s*(?:idr|rp\.?|usd|eur)?\s*([0-9][0-9.,]*)",
-        body,
-    )
-    if len(totals) == 1:
-        fields["amount_raw"] = totals[0]
-        fields["amount"] = _unambiguous_amount(totals[0].replace(",", ""))
-        confidence["amount"] = "read_from_document" if fields["amount"] else "check_this"
-    elif len(totals) > 1:
-        fields["amount_raw"] = totals[-1]
-        fields["amount"] = None
-        confidence["amount"] = "check_this"
-    else:
-        confidence["amount"] = "missing"
-    taxes = re.findall(
-        r"(?i)(?:\bppn\b|\btax\b|\bvat\b)\s*[:\-]?\s*(?:idr|rp\.?|usd|eur)?\s*([0-9][0-9.,]*)",
-        body,
-    )
-    if len(taxes) == 1:
-        fields["tax_raw"] = taxes[0]
-        fields["tax"] = _unambiguous_amount(taxes[0].replace(",", ""))
-        confidence["tax"] = "read_from_document" if fields["tax"] else "check_this"
-    elif taxes:
-        fields["tax_raw"] = taxes[-1]
-        confidence["tax"] = "check_this"
+    parsed_date, date_conf, date_raw = _parse_receipt_date(body)
+    if parsed_date:
+        fields["nota_date"] = parsed_date
+        confidence["nota_date"] = date_conf
+        if date_raw:
+            fields["nota_date_raw"] = date_raw
+    body_currency = None
     currency = re.search(r"\b(IDR|USD|EUR)\b", body, re.I)
     if currency:
-        fields["currency"] = currency.group(1).upper()
+        body_currency = currency.group(1).upper()
+    # Capture full OCR token on the same line; validate later — never truncate corrupt prefixes.
+    _hsp = r"[ \t]*"
+    amount_token: str | None = None
+    amount_currency = body_currency
+    rp_totals = False
+    for line in reversed(body.splitlines()):
+        if _line_excluded_from_total(line):
+            continue
+        # Hyphen is a delimiter only when not starting a signed amount (Total -510000).
+        total_m = re.search(
+            rf"(?i)(?:grand[ \t]+total|jumlah|total|amount){_hsp}"
+            rf"(?:[:\-](?![0-9]))?{_hsp}"
+            rf"(?:(idr|rp\.?|usd|eur){_hsp})?(\S+)",
+            line,
+        )
+        if total_m:
+            curr_prefix, token = total_m.group(1), total_m.group(2)
+            amount_token = token
+            if curr_prefix:
+                prefix = curr_prefix.lower().replace(".", "")
+                amount_currency = "IDR" if prefix.startswith("rp") or prefix == "idr" else prefix.upper()[:3]
+            break
+    if not amount_token:
+        for line in reversed(body.splitlines()):
+            if _line_excluded_from_total(line):
+                continue
+            rp_matches = re.findall(r"(?i)[Rr][Pp]\.?\s*(\S+)", line)
+            if rp_matches:
+                rp_totals = True
+                amount_currency = "IDR"
+                amount_token = rp_matches[-1]
+                break
+    if amount_token:
+        amount, amount_raw, amount_conf = _propose_money_field(amount_token, amount_currency)
+        fields["amount_raw"] = amount_raw
+        fields["amount"] = amount
+        confidence["amount"] = amount_conf
+    else:
+        confidence["amount"] = "missing"
+    tax_matches = []
+    for line in body.splitlines():
+        tax_m = re.search(
+            rf"(?i)(?:\bppn\b|\btax\b|\bvat\b){_hsp}"
+            rf"(?:[:\-](?![0-9]))?{_hsp}"
+            rf"(?:(idr|rp\.?|usd|eur){_hsp})?(\S+)",
+            line,
+        )
+        if tax_m:
+            tax_matches.append((tax_m.group(1), tax_m.group(2)))
+    if len(tax_matches) == 1:
+        tax_curr_prefix, tax_token = tax_matches[0]
+        tax_currency = body_currency
+        if tax_curr_prefix:
+            prefix = tax_curr_prefix.lower().replace(".", "")
+            tax_currency = "IDR" if prefix.startswith("rp") or prefix == "idr" else prefix.upper()[:3]
+        tax, tax_raw, tax_conf = _propose_money_field(tax_token, tax_currency)
+        fields["tax_raw"] = tax_raw
+        fields["tax"] = tax
+        confidence["tax"] = tax_conf
+    elif tax_matches:
+        fields["tax_raw"] = tax_matches[-1][1]
+        confidence["tax"] = "check_this"
+    # Bind currency to the extracted total line, not unrelated mentions elsewhere in the doc.
+    if amount_currency and fields.get("amount"):
+        fields["currency"] = amount_currency
         confidence["currency"] = "read_from_document"
-    elif re.search(r"\bRp\.?\b", body):
+        if body_currency and body_currency != amount_currency:
+            confidence["currency"] = "check_this"
+    elif body_currency:
+        fields["currency"] = body_currency
+        confidence["currency"] = "read_from_document"
+    elif amount_currency:
+        fields["currency"] = amount_currency
+        confidence["currency"] = "read_from_document"
+    elif rp_totals or (fields.get("amount") and re.search(r"(?i)[Rr][Pp]", body)):
         fields["currency"] = "IDR"
-        confidence["currency"] = "read_from_document"
+        confidence["currency"] = "default"
     bank = re.search(
         r"(?i)((?:bank\s+[a-z][a-z ]{1,30}|bca|bni|bri|mandiri|rekening)\s*[:#-]?\s*[0-9][0-9 \-]{5,24})",
         body,
@@ -853,24 +1285,43 @@ def propose_from_text(text: str) -> dict[str, Any]:
         confidence["bank_observed"] = "observed_not_verified"
     if not body.strip():
         confidence = {key: "missing" for key in ("vendor_name", "invoice_no", "nota_date", "amount", "tax", "currency")}
+    provenance = _field_provenance(fields, confidence)
     return {
         "fields": fields,
         "confidence": confidence,
+        "provenance": provenance,
         "low_confidence": [key for key, level in confidence.items() if level in {"check_this", "missing"}],
         "read_something": bool(body.strip()),
     }
 
 
 def propose_from_bytes(data: bytes, content_type: str, filename: str) -> dict[str, Any]:
-    text = extract_text(data, content_type, filename)
+    ctype = (content_type or "").lower()
+    name = (filename or "").lower()
+    extraction_meta: dict[str, Any] = {"reader": "text", "ok": True}
+    if ctype.startswith("image/") or name.endswith((".jpg", ".jpeg", ".png", ".heic", ".webp", ".gif")):
+        text, extraction_meta = _local_read.read_image_bytes(data)
+    else:
+        text = extract_text(data, content_type, filename)
     proposal = propose_from_text(text)
+    proposal["extraction"] = extraction_meta
+    read_fields = sum(
+        1
+        for key in ("vendor_name", "nota_date", "amount")
+        if (proposal.get("fields") or {}).get(key)
+    )
     if not proposal["read_something"]:
         proposal["message"] = (
-            "We could not read amounts from this photo. Type what you see on the nota. "
+            "Wolf couldn't read this clearly. Type the few fields you see on the nota. "
             "Nothing was invented."
         )
+    elif read_fields == 0:
+        proposal["message"] = (
+            "Wolf read text from the photo but could not pick out vendor, date, or amount. "
+            "Correct what you see — nothing was invented."
+        )
     else:
-        proposal["message"] = "Check the reading, then correct anything that is wrong."
+        proposal["message"] = "Check Wolf's reading, then correct anything that is wrong."
     return proposal
 
 
@@ -989,7 +1440,10 @@ def _vendor_public(row: sqlite3.Row) -> dict[str, Any]:
 def _nota_public(conn: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
     vendor = None
     if row["vendor_id"]:
-        v = conn.execute("SELECT * FROM ggv_vendors WHERE vendor_id=?", (row["vendor_id"],)).fetchone()
+        v = conn.execute(
+            "SELECT * FROM ggv_vendors WHERE vendor_id=? AND entity_id=?",
+            (row["vendor_id"], row["entity_id"]),
+        ).fetchone()
         if v:
             vendor = _vendor_public(v)
     files = [
@@ -1035,6 +1489,7 @@ def _nota_public(conn: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
         "invoice_no": row["invoice_no"],
         "date": row["nota_date"],
         "currency": row["currency"],
+        "currency_source": row["currency_source"] if "currency_source" in row.keys() else None,
         "amount": row["amount"],
         "tax": row["tax"],
         "tax_detail": tax_detail,
@@ -1428,7 +1883,26 @@ def read_upload(person_id: str, upload_id: str, *, conn: sqlite3.Connection | No
             raise FinanceNotaError("The upload has no document to read.", code="missing_file", http_status=409)
         try:
             data = _load_bytes(_col(primary, "nas_rel_path") or primary["rel_path"])
-            proposal = propose_from_bytes(data, primary["content_type"] or "", primary["filename"] or "")
+            try:
+                proposal = propose_from_bytes(data, primary["content_type"] or "", primary["filename"] or "")
+            except subprocess.TimeoutExpired:
+                proposal = propose_from_text("")
+                proposal["message"] = (
+                    "Wolf couldn't read this clearly. Type the few fields you see on the nota. "
+                    "Nothing was invented."
+                )
+                proposal["extraction"] = {"reader": "local_ocr", "ok": False, "timeout": True}
+            except OSError as exc:
+                proposal = propose_from_text("")
+                proposal["message"] = (
+                    "Wolf couldn't read this clearly. Type the few fields you see on the nota. "
+                    "Nothing was invented."
+                )
+                proposal["extraction"] = {
+                    "reader": "local_ocr",
+                    "ok": False,
+                    "error": type(exc).__name__,
+                }
         except FinanceNotaError as exc:
             c.execute(
                 """
@@ -1477,20 +1951,10 @@ def read_upload(person_id: str, upload_id: str, *, conn: sqlite3.Connection | No
 
 def _vendor_matches(conn: sqlite3.Connection, proposal: dict[str, Any]) -> list[dict[str, Any]]:
     fields = (proposal or {}).get("fields") or {}
-    name = norm_name(fields.get("vendor_name"))
+    name = fields.get("vendor_name")
     if not name:
         return []
-    rows = conn.execute(
-        """
-        SELECT * FROM ggv_vendors
-        WHERE entity_id=? AND status='ACTIVE'
-          AND (name_norm=? OR name_norm LIKE ?)
-        ORDER BY display_name
-        LIMIT 8
-        """,
-        (_eid(), name, f"%{name}%"),
-    ).fetchall()
-    return [_vendor_public(row) for row in rows]
+    return _fuzzy_vendor_name_matches(conn, name, limit=8)
 
 
 def check_vendor(person_id: str, upload_id: str, *, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
@@ -1579,11 +2043,91 @@ def search_vendors(person_id: str, query: str, *, conn: sqlite3.Connection | Non
             c.close()
 
 
+def _fuzzy_vendor_name_matches(
+    conn: sqlite3.Connection,
+    name: str,
+    *,
+    limit: int = 8,
+    min_ratio: float = 0.72,
+    pool_fallback_ratio: float = 0.82,
+) -> list[dict[str, Any]]:
+    """Fuzzy name match scoped to entity."""
+    norm = norm_name(name)
+    if not norm:
+        return []
+    rows = conn.execute(
+        """
+        SELECT * FROM ggv_vendors
+        WHERE entity_id=? AND status='ACTIVE'
+          AND (name_norm=? OR name_norm LIKE ? OR ? LIKE '%' || name_norm || '%')
+        ORDER BY display_name
+        LIMIT 12
+        """,
+        (_eid(), norm, f"%{norm}%", norm),
+    ).fetchall()
+    scored: list[tuple[float, sqlite3.Row]] = []
+    seen: set[str] = set()
+    for row in rows:
+        vid = row["vendor_id"]
+        if vid in seen:
+            continue
+        seen.add(vid)
+        ratio = SequenceMatcher(None, norm, row["name_norm"] or "").ratio()
+        if ratio >= min_ratio:
+            scored.append((ratio, row))
+    if not scored:
+        pool = conn.execute(
+            """
+            SELECT * FROM ggv_vendors
+            WHERE entity_id=? AND status='ACTIVE'
+            ORDER BY updated_at DESC LIMIT 80
+            """,
+            (_eid(),),
+        ).fetchall()
+        for row in pool:
+            ratio = SequenceMatcher(None, norm, row["name_norm"] or "").ratio()
+            if ratio >= pool_fallback_ratio:
+                scored.append((ratio, row))
+    scored.sort(key=lambda item: item[0], reverse=True)
+    return [_vendor_public(row) for _, row in scored[:limit]]
+
+
+def _names_differ_only_by_digit(a: str, b: str) -> bool:
+    """True when names match after removing digit tokens (Toko 1 vs Toko 2)."""
+    if not a or not b or a == b:
+        return False
+    stripped_a = re.sub(r"\d+", "", a).strip()
+    stripped_b = re.sub(r"\d+", "", b).strip()
+    return bool(stripped_a and stripped_b and stripped_a == stripped_b)
+
+
+def _duplicate_vendor_fuzzy_matches(conn: sqlite3.Connection, name: str) -> list[dict[str, Any]]:
+    """Strict fuzzy duplicate guard for create_vendor — ratio only, no substring false positives."""
+    norm = norm_name(name)
+    if not norm:
+        return []
+    rows = conn.execute(
+        "SELECT * FROM ggv_vendors WHERE entity_id=? AND status='ACTIVE'",
+        (_eid(),),
+    ).fetchall()
+    scored: list[tuple[float, sqlite3.Row]] = []
+    for row in rows:
+        existing_norm = row["name_norm"] or ""
+        if _names_differ_only_by_digit(norm, existing_norm):
+            continue
+        ratio = SequenceMatcher(None, norm, existing_norm).ratio()
+        if ratio >= 0.82:
+            scored.append((ratio, row))
+    scored.sort(key=lambda item: item[0], reverse=True)
+    return [_vendor_public(row) for _, row in scored[:8]]
+
+
 def _duplicate_vendors(conn: sqlite3.Connection, fields: dict[str, Any]) -> list[dict[str, Any]]:
     name = norm_name(fields.get("display_name") or fields.get("name"))
     phone = norm_phone(fields.get("phone"))
     email = norm_email(fields.get("email"))
     tax = norm_tax(fields.get("tax_id"))
+    found: dict[str, sqlite3.Row] = {}
     clauses = []
     params: list[Any] = [_eid()]
     if name:
@@ -1598,16 +2142,24 @@ def _duplicate_vendors(conn: sqlite3.Connection, fields: dict[str, Any]) -> list
     if len(tax) >= 4:
         clauses.append("tax_norm=?")
         params.append(tax)
-    if not clauses:
-        return []
-    rows = conn.execute(
-        f"""
-        SELECT * FROM ggv_vendors
-        WHERE entity_id=? AND status='ACTIVE' AND ({' OR '.join(clauses)})
-        """,
-        params,
-    ).fetchall()
-    return [_vendor_public(row) for row in rows]
+    if clauses:
+        rows = conn.execute(
+            f"""
+            SELECT * FROM ggv_vendors
+            WHERE entity_id=? AND status='ACTIVE' AND ({' OR '.join(clauses)})
+            """,
+            params,
+        ).fetchall()
+        for row in rows:
+            found[row["vendor_id"]] = row
+    if name:
+        for match in _duplicate_vendor_fuzzy_matches(conn, name):
+            vid = match["vendor_id"]
+            if vid not in found:
+                row = conn.execute("SELECT * FROM ggv_vendors WHERE vendor_id=?", (vid,)).fetchone()
+                if row:
+                    found[vid] = row
+    return [_vendor_public(row) for row in found.values()]
 
 
 def create_vendor(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
@@ -1642,8 +2194,24 @@ def create_vendor(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connect
                 }
             )
         if decision == "use_existing":
-            existing_id = _blank(body.get("existing_vendor_id")) or matches[0]["vendor_id"]
-            row = c.execute("SELECT * FROM ggv_vendors WHERE vendor_id=?", (existing_id,)).fetchone()
+            existing_id = _blank(body.get("existing_vendor_id"))
+            if not existing_id:
+                if not matches:
+                    raise FinanceNotaError(
+                        "No matching vendor found. Enter the vendor name or pick from suggestions.",
+                        code="vendor_not_found",
+                    )
+                existing_id = matches[0]["vendor_id"]
+            match_ids = {m["vendor_id"] for m in matches}
+            if match_ids and existing_id not in match_ids:
+                raise FinanceNotaError(
+                    "Choose a vendor from the suggested matches for this entity.",
+                    code="foreign_vendor",
+                )
+            row = c.execute(
+                "SELECT * FROM ggv_vendors WHERE vendor_id=? AND entity_id=? AND status='ACTIVE'",
+                (existing_id, _eid()),
+            ).fetchone()
             if not row:
                 raise FinanceNotaError("That vendor was not found.", code="not_found", http_status=404)
             _audit(
@@ -1676,6 +2244,24 @@ def create_vendor(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connect
             raise FinanceNotaError(
                 "Say why this is a separate vendor. We will not merge them silently.",
                 code="reason_required",
+            )
+        # Close check-then-act race: lock, recheck, then insert (including supplied connections).
+        started_txn = not c.in_transaction
+        if started_txn:
+            c.execute("BEGIN IMMEDIATE")
+        matches = _duplicate_vendors(c, fields)
+        if matches and decision not in {"use_existing", "create_separate"}:
+            if started_txn:
+                c.rollback()
+            return public_payload(
+                {
+                    "ok": False,
+                    "error": "possible_duplicate_vendor",
+                    "message": "Possible existing vendor. Use the existing one, or create a separate vendor and say why.",
+                    "matches": matches,
+                    "preserved": True,
+                    "_status": 409,
+                }
             )
         vendor_id = _mint("VEND")
         ts = _now()
@@ -1742,6 +2328,25 @@ def create_vendor(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connect
             c.close()
 
 
+def _invoice_identity_for_match(invoice_no: str | None) -> str | None:
+    """UNKNOWN / blank invoice numbers are missing evidence, not matching identifiers."""
+    text = _blank(invoice_no)
+    if not text or text.upper() == UNKNOWN_SENTINEL:
+        return None
+    return text
+
+
+def _nota_match_public(row: sqlite3.Row) -> dict[str, Any]:
+    return {
+        "nota_id": row["nota_id"],
+        "invoice_no": row["invoice_no"],
+        "date": row["nota_date"],
+        "amount": row["amount"],
+        "vendor_id": row["vendor_id"],
+        "state_label": STATE_LABEL.get(row["workflow_state"], row["workflow_state"]),
+    }
+
+
 def _duplicate_notas(
     conn: sqlite3.Connection,
     *,
@@ -1764,30 +2369,57 @@ def _duplicate_notas(
         ).fetchall()
         for row in rows:
             found[row["nota_id"]] = row
-    if vendor_id and invoice_no and nota_date and amount:
+    inv = _invoice_identity_for_match(invoice_no)
+    if (
+        vendor_id
+        and inv
+        and nota_date
+        and amount
+        and nota_date != UNKNOWN_SENTINEL
+        and amount != UNKNOWN_SENTINEL
+    ):
         rows = conn.execute(
             """
             SELECT * FROM ggv_notas
             WHERE entity_id=? AND vendor_id=? AND lower(invoice_no)=lower(?)
               AND nota_date=? AND amount=?
             """,
-            (_eid(), vendor_id, invoice_no, nota_date, amount),
+            (_eid(), vendor_id, inv, nota_date, amount),
         ).fetchall()
         for row in rows:
             found[row["nota_id"]] = row
     if exclude_id:
         found.pop(exclude_id, None)
-    return [
-        {
-            "nota_id": row["nota_id"],
-            "invoice_no": row["invoice_no"],
-            "date": row["nota_date"],
-            "amount": row["amount"],
-            "vendor_id": row["vendor_id"],
-            "state_label": STATE_LABEL.get(row["workflow_state"], row["workflow_state"]),
-        }
-        for row in found.values()
-    ]
+    return [_nota_match_public(row) for row in found.values()]
+
+
+def _similar_notas(
+    conn: sqlite3.Connection,
+    *,
+    vendor_id: str | None,
+    nota_date: str | None,
+    amount: str | None,
+    exclude_id: str | None = None,
+) -> list[dict[str, Any]]:
+    """Soft, non-blocking notice: same vendor/date/amount without a readable invoice number."""
+    if (
+        not vendor_id
+        or not nota_date
+        or not amount
+        or nota_date == UNKNOWN_SENTINEL
+        or amount == UNKNOWN_SENTINEL
+    ):
+        return []
+    rows = conn.execute(
+        """
+        SELECT * FROM ggv_notas
+        WHERE entity_id=? AND vendor_id=? AND nota_date=? AND amount=?
+        """,
+        (_eid(), vendor_id, nota_date, amount),
+    ).fetchall()
+    if exclude_id:
+        rows = [row for row in rows if row["nota_id"] != exclude_id]
+    return [_nota_match_public(row) for row in rows]
 
 
 def _confirm_map(body: dict[str, Any]) -> dict[str, bool]:
@@ -1795,32 +2427,158 @@ def _confirm_map(body: dict[str, Any]) -> dict[str, bool]:
     return {str(key): bool(raw.get(key)) for key in ("vendor", "invoice_no", "date", "amount", "tax", "currency", "category")}
 
 
+def _coerce_optional_field(value: Any) -> str | None:
+    text = _blank(value)
+    if text is None:
+        return None
+    if text.upper() == UNKNOWN_SENTINEL:
+        return UNKNOWN_SENTINEL
+    return text
+
+
 def _apply_nota_fields(body: dict[str, Any]) -> dict[str, Any]:
     confirm = _confirm_map(body)
-    amount = parse_confirmed_amount(body.get("amount")) if confirm.get("amount") else None
-    if not confirm.get("amount"):
-        amount = None
-    tax = parse_confirmed_amount(body.get("tax")) if confirm.get("tax") and _blank(body.get("tax")) else None
+    amount_raw = body.get("amount")
+    amount: str | None = None
+    if confirm.get("amount"):
+        raw_text = str(amount_raw or "").strip()
+        if raw_text.upper() == UNKNOWN_SENTINEL:
+            amount = UNKNOWN_SENTINEL
+        elif _blank(amount_raw) is None:
+            amount = None
+        else:
+            amount = parse_confirmed_amount(amount_raw)
+    elif amount_raw is not None and str(amount_raw).strip().upper() == UNKNOWN_SENTINEL:
+        # Draft save: explicit UNKNOWN is stored even before the human confirms the field.
+        amount = UNKNOWN_SENTINEL
+    tax: str | None = None
+    if confirm.get("tax"):
+        tax_text = _blank(body.get("tax"))
+        if tax_text and tax_text.upper() != UNKNOWN_SENTINEL:
+            tax = parse_confirmed_amount(tax_text)
+        elif tax_text and tax_text.upper() == UNKNOWN_SENTINEL:
+            tax = UNKNOWN_SENTINEL
+    elif "tax" in body:
+        tax_text = _blank(body.get("tax"))
+        if tax_text and tax_text.upper() == UNKNOWN_SENTINEL:
+            tax = UNKNOWN_SENTINEL
+    nota_date = _coerce_optional_field(body.get("date") or body.get("nota_date"))
+    currency_raw = (_blank(body.get("currency")) or "").upper() or None
+    currency_human = confirm.get("currency")
+    currency_source: str | None = None
+    if currency_raw == UNKNOWN_SENTINEL:
+        currency = UNKNOWN_SENTINEL
+        currency_source = "human"
+    elif currency_human and currency_raw:
+        currency = currency_raw
+        currency_source = "human"
+    elif currency_raw:
+        currency = currency_raw
+        currency_source = "extracted"
+    elif confirm.get("amount") and amount is not None and amount != UNKNOWN_SENTINEL:
+        currency = "IDR"
+        currency_source = "default"
+    else:
+        currency = currency_raw
     return {
         "vendor_id": _blank(body.get("vendor_id")) if confirm.get("vendor") else _blank(body.get("vendor_id")),
-        "invoice_no": _blank(body.get("invoice_no")),
-        "nota_date": _blank(body.get("date") or body.get("nota_date")),
-        "currency": (_blank(body.get("currency")) or "").upper() or None,
+        "invoice_no": _coerce_optional_field(body.get("invoice_no")),
+        "nota_date": nota_date,
+        "currency": currency,
+        "currency_source": currency_source,
         "amount": amount,
         "tax": tax,
-        "category": _blank(body.get("category")),
+        "category": _coerce_optional_field(body.get("category")),
         "items": body.get("items") if isinstance(body.get("items"), list) else [],
         "notes": _blank(body.get("notes")),
-        "amount_confirmed": 1 if confirm.get("amount") and amount is not None else 0,
-        "date_confirmed": 1 if confirm.get("date") and _blank(body.get("date") or body.get("nota_date")) else 0,
+        "amount_confirmed": 1
+        if confirm.get("amount") and amount is not None and amount != UNKNOWN_SENTINEL
+        else 0,
+        "date_confirmed": 1
+        if confirm.get("date") and nota_date and nota_date != UNKNOWN_SENTINEL and _valid_calendar_date(nota_date)
+        else 0,
         "vendor_confirmed": 1 if confirm.get("vendor") and _blank(body.get("vendor_id")) else 0,
     }
 
 
+def _currency_ready(currency: str | None) -> bool:
+    code = (currency or "").upper()
+    return code in SUPPORTED_CURRENCIES
+
+
+def _currency_submit_ready(fields: dict[str, Any]) -> bool:
+    """IDR extracted from Wolf may proceed; non-IDR extracted needs a human confirm."""
+    currency = (fields.get("currency") or "").upper()
+    if not _currency_ready(currency):
+        return False
+    if (fields.get("currency_source") or "") == "extracted" and currency != "IDR":
+        return False
+    return True
+
+
+def _reconcile_currency_from_proposal(fields: dict[str, Any], proposal: dict[str, Any]) -> None:
+    """Persist currency_source=extracted only when body currency matches the upload read proposal."""
+    if (fields.get("currency_source") or "") == "human":
+        return
+    proposed = ((proposal or {}).get("fields") or {}).get("currency")
+    proposed = (proposed or "").upper() if proposed else None
+    currency = (fields.get("currency") or "").upper() if fields.get("currency") else None
+    if not currency:
+        return
+    if proposed and currency == proposed:
+        fields["currency_source"] = "extracted"
+    elif proposed and currency != proposed:
+        fields["currency_source"] = "human"
+    elif fields.get("currency_source") == "extracted" and not proposed:
+        fields["currency_source"] = "default" if currency == "IDR" else "human"
+
+
 def _state_for(fields: dict[str, Any]) -> str:
-    if fields["vendor_confirmed"] and fields["amount_confirmed"] and fields["date_confirmed"]:
-        return "ready"
-    return "needs_review"
+    if not (fields["vendor_confirmed"] and fields["amount_confirmed"] and fields["date_confirmed"]):
+        return "needs_review"
+    if not _currency_submit_ready(fields):
+        return "needs_review"
+    return "ready"
+
+
+def _saved_fields_match(row: sqlite3.Row, fields: dict[str, Any]) -> bool:
+    return (
+        str(row["vendor_id"] or "") == str(fields["vendor_id"] or "")
+        and str(row["invoice_no"] or "") == str(fields["invoice_no"] or "")
+        and str(row["nota_date"] or "") == str(fields["nota_date"] or "")
+        and str(row["currency"] or "") == str(fields["currency"] or "")
+        and str(row["amount"] or "") == str(fields["amount"] or "")
+        and str(row["tax"] or "") == str(fields["tax"] or "")
+        and str(row["category"] or "") == str(fields["category"] or "")
+        and str(row["notes"] or "") == str(fields["notes"] or "")
+        and int(row["amount_confirmed"] or 0) == int(fields["amount_confirmed"] or 0)
+        and int(row["date_confirmed"] or 0) == int(fields["date_confirmed"] or 0)
+        and int(row["vendor_confirmed"] or 0) == int(fields["vendor_confirmed"] or 0)
+    )
+
+
+def _material_fields_differ(
+    row: sqlite3.Row,
+    fields: dict[str, Any],
+    *,
+    prior_tax_detail: dict[str, Any] | None = None,
+) -> bool:
+    """True when intake edit would change bound nota values (incl. vendor, currency, items)."""
+    if not _saved_fields_match(row, fields):
+        return True
+    try:
+        prior_items = json.loads(row["items_json"] or "[]")
+    except (TypeError, ValueError, json.JSONDecodeError):
+        prior_items = []
+    new_items = fields.get("items") if isinstance(fields.get("items"), list) else []
+    if json.dumps(prior_items, sort_keys=True) != json.dumps(new_items, sort_keys=True):
+        return True
+    if prior_tax_detail is not None:
+        if json.dumps(prior_tax_detail, sort_keys=True) != json.dumps(
+            fields.get("tax_detail") or {}, sort_keys=True
+        ):
+            return True
+    return False
 
 
 def _attach_evidence(
@@ -1870,6 +2628,7 @@ def save_nota(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connection 
     own = conn is None
     c = conn or _open_ready()
     try:
+        _begin_write_txn(c, own=own)
         require(person_id, "finance.nota.create", c)
         upload_id = _blank(body.get("upload_id"))
         if not upload_id:
@@ -1877,17 +2636,26 @@ def save_nota(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connection 
         upload = _upload_or_404(c, upload_id, person_id)
         if upload["nota_id"]:
             existing = c.execute("SELECT * FROM ggv_notas WHERE nota_id=?", (upload["nota_id"],)).fetchone()
-            return public_payload(
-                {
-                    "ok": True,
-                    "saved": True,
-                    "already_saved": True,
-                    "nota": _nota_public(c, existing),
-                    "progress": _stage_view("saved"),
-                    "message": "Saved",
-                }
-            )
+            fields = _apply_nota_fields(body)
+            if existing and _saved_fields_match(existing, fields):
+                return public_payload(
+                    {
+                        "ok": True,
+                        "saved": True,
+                        "already_saved": True,
+                        "nota": _nota_public(c, existing),
+                        "progress": _stage_view("saved"),
+                        "message": "Saved",
+                    }
+                )
+            edited = edit_nota(person_id, upload["nota_id"], body, conn=c)
+            edited["already_saved"] = False
+            edited["saved"] = True
+            edited["progress"] = _stage_view("saved")
+            return edited
         fields = _apply_nota_fields(body)
+        proposal = json.loads(upload["proposals_json"] or "{}")
+        _reconcile_currency_from_proposal(fields, proposal)
         if fields["vendor_id"]:
             vendor = c.execute(
                 "SELECT vendor_id FROM ggv_vendors WHERE vendor_id=? AND entity_id=?",
@@ -1923,8 +2691,24 @@ def save_nota(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connection 
                 }
             )
         if decision == "use_existing":
-            existing_id = _blank(body.get("existing_nota_id")) or matches[0]["nota_id"]
-            existing = c.execute("SELECT * FROM ggv_notas WHERE nota_id=?", (existing_id,)).fetchone()
+            existing_id = _blank(body.get("existing_nota_id"))
+            if not existing_id:
+                if not matches:
+                    raise FinanceNotaError(
+                        "No matching nota found. Save a new nota or pick from suggestions.",
+                        code="nota_not_found",
+                    )
+                existing_id = matches[0]["nota_id"]
+            match_ids = {m["nota_id"] for m in matches}
+            if match_ids and existing_id not in match_ids:
+                raise FinanceNotaError(
+                    "Choose a nota from the suggested matches for this entity.",
+                    code="foreign_nota",
+                )
+            existing = c.execute(
+                "SELECT * FROM ggv_notas WHERE nota_id=? AND entity_id=?",
+                (existing_id, _eid()),
+            ).fetchone()
             if not existing:
                 raise FinanceNotaError("That nota was not found.", code="not_found", http_status=404)
             _audit(
@@ -1957,24 +2741,23 @@ def save_nota(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connection 
                 "Say why this copy should be saved separately. We will not reject it silently.",
                 code="reason_required",
             )
-        proposal = json.loads(upload["proposals_json"] or "{}")
         nota_id = _mint("NOTA")
         state = _state_for(fields)
         ts = _now()
         c.execute(
             """
             INSERT INTO ggv_notas (
-              nota_id, entity_id, vendor_id, invoice_no, nota_date, currency, amount, tax,
-              category, items_json, notes, workflow_state, amount_confirmed, date_confirmed,
-              vendor_confirmed, proposals_json, confidence_json, created_by_person_id,
-              created_at, updated_at, submitted_at, approval_request_id, duplicate_of_nota_id,
-              duplicate_reason
+              nota_id, entity_id, vendor_id, invoice_no, nota_date, currency, currency_source,
+              amount, tax, category, items_json, notes, workflow_state, amount_confirmed,
+              date_confirmed, vendor_confirmed, proposals_json, confidence_json,
+              created_by_person_id, created_at, updated_at, submitted_at, approval_request_id,
+              duplicate_of_nota_id, duplicate_reason, material_revision
             ) VALUES (
-              ?, ?, ?, ?, ?, ?, ?, ?,
-              ?, ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?, ?, ?,
               ?, ?, ?, ?,
-              ?, ?, NULL, NULL, ?,
-              ?
+              ?, ?, ?, NULL, NULL, ?,
+              ?, ?
             )
             """,
             (
@@ -1984,6 +2767,7 @@ def save_nota(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connection 
                 fields["invoice_no"],
                 fields["nota_date"],
                 fields["currency"],
+                fields.get("currency_source"),
                 fields["amount"],
                 fields["tax"],
                 fields["category"],
@@ -2000,6 +2784,7 @@ def save_nota(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connection 
                 ts,
                 matches[0]["nota_id"] if matches else None,
                 _blank(body.get("duplicate_reason")),
+                0,
             ),
         )
         for file_row in files:
@@ -2044,16 +2829,28 @@ def save_nota(person_id: str, body: dict[str, Any], *, conn: sqlite3.Connection 
         )
         c.commit()
         saved = c.execute("SELECT * FROM ggv_notas WHERE nota_id=?", (nota_id,)).fetchone()
-        return public_payload(
-            {
-                "ok": True,
-                "saved": True,
-                "nota": _nota_public(c, saved),
-                "queue_state": NOTA_QUEUE_LABELS["completed"],
-                "progress": _stage_view("saved"),
-                "message": "Saved",
-            }
+        similar = _similar_notas(
+            c,
+            vendor_id=fields["vendor_id"],
+            nota_date=fields["nota_date"],
+            amount=fields["amount"],
+            exclude_id=nota_id,
         )
+        payload: dict[str, Any] = {
+            "ok": True,
+            "saved": True,
+            "nota": _nota_public(c, saved),
+            "queue_state": NOTA_QUEUE_LABELS["completed"],
+            "progress": _stage_view("saved"),
+            "message": "Saved",
+        }
+        if similar and not _invoice_identity_for_match(fields["invoice_no"]):
+            payload["similar_notas"] = similar
+            payload["similar_notice"] = (
+                "Another nota from this vendor has the same date and amount. "
+                "Invoice number was not read — check this is not a duplicate."
+            )
+        return public_payload(payload)
     finally:
         if own:
             c.close()
@@ -2063,6 +2860,7 @@ def edit_nota(person_id: str, nota_id: str, body: dict[str, Any], *, conn: sqlit
     own = conn is None
     c = conn or _open_ready()
     try:
+        _begin_write_txn(c, own=own)
         require(person_id, "finance.nota.edit", c)
         if _blank(body.get("workflow_state")) in TERMINAL_MONEY_STATES or _blank(body.get("state")) in TERMINAL_MONEY_STATES:
             raise FinanceNotaError(
@@ -2071,7 +2869,18 @@ def edit_nota(person_id: str, nota_id: str, body: dict[str, Any], *, conn: sqlit
                 http_status=405,
             )
         row = _nota_or_404(c, nota_id)
+        expected_state = row["workflow_state"]
+        expected_revision = _nota_revision(row)
+        if row["workflow_state"] in TERMINAL_MONEY_STATES:
+            # Terminal money states are immutable via intake — corrections need a separate amendment workflow.
+            raise FinanceNotaError(
+                "This nota is locked after approval or payment — field changes are not allowed here.",
+                code="nota_locked",
+                http_status=409,
+            )
         fields = _apply_nota_fields(body)
+        proposal = json.loads(row["proposals_json"] or "{}")
+        _reconcile_currency_from_proposal(fields, proposal)
         if fields["vendor_id"]:
             vendor = c.execute(
                 "SELECT vendor_id FROM ggv_vendors WHERE vendor_id=? AND entity_id=?",
@@ -2090,6 +2899,8 @@ def edit_nota(person_id: str, nota_id: str, body: dict[str, Any], *, conn: sqlit
             fields["amount_confirmed"] = row["amount_confirmed"]
         if "currency" not in body and not fields["currency"] and row["currency"]:
             fields["currency"] = row["currency"]
+            if "currency_source" not in fields and "currency_source" in row.keys():
+                fields["currency_source"] = row["currency_source"]
         if "tax" not in body and fields["tax"] is None and row["tax"] is not None:
             fields["tax"] = row["tax"]
         prior_tax_detail: dict[str, Any] = {}
@@ -2107,12 +2918,19 @@ def edit_nota(person_id: str, nota_id: str, body: dict[str, Any], *, conn: sqlit
             fields["notes"] = row["notes"]
         if not fields["vendor_confirmed"] and fields["vendor_id"]:
             fields["vendor_confirmed"] = max(fields["vendor_confirmed"], row["vendor_confirmed"])
-        if not fields["date_confirmed"] and fields["nota_date"]:
+        if (
+            not fields["date_confirmed"]
+            and fields["nota_date"]
+            and fields["nota_date"] != UNKNOWN_SENTINEL
+            and _valid_calendar_date(fields["nota_date"])
+        ):
             fields["date_confirmed"] = max(fields["date_confirmed"], row["date_confirmed"])
-        if not fields["amount_confirmed"] and fields["amount"] is not None:
+        if not fields["amount_confirmed"] and fields["amount"] is not None and fields["amount"] != UNKNOWN_SENTINEL:
             fields["amount_confirmed"] = max(fields["amount_confirmed"], row["amount_confirmed"])
         corrections: list[dict[str, Any]] = []
         for key, col in (
+            ("vendor_id", "vendor_id"),
+            ("currency", "currency"),
             ("invoice_no", "invoice_no"),
             ("nota_date", "nota_date"),
             ("amount", "amount"),
@@ -2124,6 +2942,11 @@ def edit_nota(person_id: str, nota_id: str, body: dict[str, Any], *, conn: sqlit
             new_val = fields.get(key if key != "nota_date" else "nota_date")
             if str(old_val or "") != str(new_val or ""):
                 corrections.append({"field": key, "old": old_val, "new": new_val})
+        for flag in ("amount_confirmed", "date_confirmed", "vendor_confirmed"):
+            old_flag = int(row[flag] or 0)
+            new_flag = int(fields.get(flag) or 0)
+            if old_flag != new_flag:
+                corrections.append({"field": flag, "old": old_flag, "new": new_flag})
         if json.dumps(prior_tax_detail, sort_keys=True) != json.dumps(
             fields.get("tax_detail") or {}, sort_keys=True
         ):
@@ -2134,23 +2957,45 @@ def edit_nota(person_id: str, nota_id: str, body: dict[str, Any], *, conn: sqlit
                     "new": fields.get("tax_detail") or {},
                 }
             )
+        try:
+            prior_items = json.loads(row["items_json"] or "[]")
+        except (TypeError, ValueError, json.JSONDecodeError):
+            prior_items = []
+        new_items = fields.get("items") if isinstance(fields.get("items"), list) else []
+        if json.dumps(prior_items, sort_keys=True) != json.dumps(new_items, sort_keys=True):
+            corrections.append({"field": "items", "old": prior_items, "new": new_items})
+        if row["workflow_state"] == "waiting_approval" and _material_fields_differ(
+            row, fields, prior_tax_detail=prior_tax_detail
+        ):
+            # Pending approval binds vendor, currency, amounts, and confirmation flags.
+            # Withdraw and resubmit for corrections — do not mutate under the same approval_request_id.
+            return public_payload(
+                {
+                    "ok": True,
+                    "nota": _nota_public(c, row),
+                    "message": "This nota is waiting approval — field changes are locked.",
+                }
+            )
         state = row["workflow_state"]
         if state in PACK_WRITE_STATES and state != "waiting_approval":
             state = _state_for(fields)
         ts = _now()
-        c.execute(
+        new_revision = _material_revision_bump(row, fields)
+        cur = c.execute(
             """
             UPDATE ggv_notas SET
-              vendor_id=?, invoice_no=?, nota_date=?, currency=?, amount=?, tax=?,
+              vendor_id=?, invoice_no=?, nota_date=?, currency=?, currency_source=?, amount=?, tax=?,
               tax_detail_json=?, category=?, items_json=?, notes=?, workflow_state=?,
-              amount_confirmed=?, date_confirmed=?, vendor_confirmed=?, updated_at=?
-            WHERE nota_id=? AND entity_id=?
+              amount_confirmed=?, date_confirmed=?, vendor_confirmed=?, updated_at=?,
+              material_revision=?
+            WHERE nota_id=? AND entity_id=? AND workflow_state=? AND material_revision=?
             """,
             (
                 fields["vendor_id"],
                 fields["invoice_no"],
                 fields["nota_date"],
                 fields["currency"],
+                fields.get("currency_source"),
                 fields["amount"],
                 fields["tax"],
                 json.dumps(fields.get("tax_detail") or {}, separators=(",", ":")),
@@ -2162,10 +3007,14 @@ def edit_nota(person_id: str, nota_id: str, body: dict[str, Any], *, conn: sqlit
                 fields["date_confirmed"],
                 fields["vendor_confirmed"],
                 ts,
+                new_revision,
                 nota_id,
                 _eid(),
+                expected_state,
+                expected_revision,
             ),
         )
+        _raise_if_stale_nota_write(c, nota_id, expected_state, updated=cur.rowcount)
         _history(
             c,
             person_id=person_id,
@@ -2186,13 +3035,21 @@ def submit_nota(person_id: str, nota_id: str, *, conn: sqlite3.Connection | None
     own = conn is None
     c = conn or _open_ready()
     try:
+        _begin_write_txn(c, own=own)
         require(person_id, "finance.nota.edit", c)
         row = _nota_or_404(c, nota_id)
-        if not (row["vendor_confirmed"] and row["amount_confirmed"] and row["date_confirmed"] and row["vendor_id"] and row["amount"] and row["nota_date"]):
+        if row["workflow_state"] in SUBMIT_LOCKED_STATES:
             raise FinanceNotaError(
-                "Confirm the vendor, date, and amount before you submit. This still does not pay the nota.",
-                code="not_ready",
+                "This nota is already submitted for review.",
+                code="already_submitted",
+                http_status=409,
             )
+        expected_revision = _nota_revision(row)
+        material_vendor = row["vendor_id"]
+        material_date = row["nota_date"]
+        material_amount = row["amount"]
+        material_currency = row["currency"]
+        _validate_submit_ready(row)
         approval_id = None
         approval_note = None
         try:
@@ -2209,6 +3066,8 @@ def submit_nota(person_id: str, nota_id: str, *, conn: sqlite3.Connection | None
                 source_id=nota_id,
                 governed_object_type="ggv_nota",
                 governed_object_id=nota_id,
+                material_amount=str(material_amount),
+                currency=(material_currency or "IDR").upper(),
                 bind_policy=False,
                 enforce_evidence=False,
                 link_work_item=False,
@@ -2216,18 +3075,49 @@ def submit_nota(person_id: str, nota_id: str, *, conn: sqlite3.Connection | None
                 commit=False,
             )
             approval_id = created.get("approval_request_id")
+            if not approval_id:
+                raise RuntimeError("approval_request_id missing")
+        except FinanceNotaError:
+            c.rollback()
+            raise
         except Exception as exc:  # noqa: BLE001
-            approval_note = type(exc).__name__
-            approval_id = None
+            c.rollback()
+            raise FinanceNotaError(
+                "Could not queue this nota for approval. Your draft is saved — try again shortly.",
+                code="approval_failed",
+                http_status=503,
+                extra={"nota_id": nota_id, "preserved": True, "retry": "submit"},
+            ) from exc
         ts = _now()
-        c.execute(
+        cur = c.execute(
             """
             UPDATE ggv_notas
                SET workflow_state='waiting_approval', submitted_at=?, approval_request_id=?, updated_at=?
-             WHERE nota_id=?
+             WHERE nota_id=? AND entity_id=? AND material_revision=?
+               AND vendor_id IS ? AND nota_date IS ? AND amount IS ? AND currency IS ?
+               AND workflow_state='ready'
             """,
-            (ts, approval_id, ts, nota_id),
+            (
+                ts,
+                approval_id,
+                ts,
+                nota_id,
+                _eid(),
+                expected_revision,
+                material_vendor,
+                material_date,
+                material_amount,
+                material_currency,
+            ),
         )
+        # rowcount only — total_changes would count the approval insert in this txn.
+        if cur.rowcount != 1:
+            c.rollback()
+            raise FinanceNotaError(
+                "This nota changed while you were editing. Refresh and try again.",
+                code="stale_write",
+                http_status=409,
+            )
         _history(
             c,
             person_id=person_id,
@@ -2415,12 +3305,23 @@ def get_vendor(person_id: str, vendor_id: str, *, conn: sqlite3.Connection | Non
         if not row:
             raise FinanceNotaError("That vendor was not found.", code="not_found", http_status=404)
         notas = c.execute(
-            "SELECT nota_id, invoice_no, nota_date, amount, workflow_state FROM ggv_notas WHERE vendor_id=? ORDER BY updated_at DESC",
-            (vendor_id,),
+            """
+            SELECT nota_id, invoice_no, nota_date, amount, workflow_state
+              FROM ggv_notas
+             WHERE vendor_id=? AND entity_id=?
+             ORDER BY updated_at DESC
+            """,
+            (vendor_id, _eid()),
         ).fetchall()
         banks = c.execute(
-            "SELECT raw_text, status, created_at FROM ggv_vendor_bank_observed WHERE vendor_id=? ORDER BY created_at DESC",
-            (vendor_id,),
+            """
+            SELECT b.raw_text, b.status, b.created_at
+              FROM ggv_vendor_bank_observed b
+              JOIN ggv_notas n ON n.nota_id = b.nota_id AND n.entity_id = ?
+             WHERE b.vendor_id=?
+             ORDER BY b.created_at DESC
+            """,
+            (_eid(), vendor_id),
         ).fetchall()
         return public_payload(
             {
@@ -2766,6 +3667,7 @@ def confirm_nota(
     own = conn is None
     c = conn or _open_ready()
     try:
+        _begin_write_txn(c, own=own)
         if not (
             person_can(person_id, "finance.nota.review", c)
             or person_can(person_id, "finance.nota.edit", c)
@@ -2781,8 +3683,17 @@ def confirm_nota(
         ).fetchone()
         if not row:
             raise FinanceNotaError("That nota was not found.", code="not_found", http_status=404)
+        expected_state = row["workflow_state"]
+        expected_revision = _nota_revision(row)
+        if row["workflow_state"] in SUBMIT_LOCKED_STATES:
+            raise FinanceNotaError(
+                "This nota is already submitted for review.",
+                code="already_submitted",
+                http_status=409,
+            )
         proposals = json.loads(row["proposals_json"] or "{}")
         fields = _apply_nota_fields(body)
+        _validate_vendor_for_entity(c, fields["vendor_id"])
         corrections: list[dict[str, Any]] = []
         for key, col in (
             ("invoice_no", "invoice_no"),
@@ -2801,46 +3712,63 @@ def confirm_nota(
             new_val = fields.get(key if key != "nota_date" else "nota_date")
             if str(old_val or "") != str(new_val or ""):
                 corrections.append({"field": key, "old": old_val, "new": new_val})
-        if not fields["vendor_id"] and row["vendor_id"]:
+        if "vendor_id" not in body and not fields["vendor_id"] and row["vendor_id"]:
             fields["vendor_id"] = row["vendor_id"]
-        if not fields["invoice_no"] and row["invoice_no"]:
+        if "invoice_no" not in body and not fields["invoice_no"] and row["invoice_no"]:
             fields["invoice_no"] = row["invoice_no"]
-        if not fields["nota_date"] and row["nota_date"]:
+        if (
+            "date" not in body
+            and "nota_date" not in body
+            and not fields["nota_date"]
+            and row["nota_date"]
+        ):
             fields["nota_date"] = row["nota_date"]
-        if fields["amount"] is None and row["amount"]:
+        if "amount" not in body and fields["amount"] is None and row["amount"]:
             fields["amount"] = row["amount"]
-            fields["amount_confirmed"] = 1
-        if not fields["currency"] and row["currency"]:
+            # UNKNOWN is a valid stored state — never auto-confirm a missing required amount.
+            if str(row["amount"]) != UNKNOWN_SENTINEL:
+                fields["amount_confirmed"] = 1
+        if "currency" not in body and not fields["currency"] and row["currency"]:
             fields["currency"] = row["currency"]
-        if fields["tax"] is None and row["tax"]:
+        if "tax" not in body and fields["tax"] is None and row["tax"]:
             fields["tax"] = row["tax"]
-        if not fields["category"] and row["category"]:
+        if "category" not in body and not fields["category"] and row["category"]:
             fields["category"] = row["category"]
-        if not fields["notes"] and row["notes"]:
+        if "notes" not in body and not fields["notes"] and row["notes"]:
             fields["notes"] = row["notes"]
         if not fields["vendor_confirmed"] and fields["vendor_id"]:
             fields["vendor_confirmed"] = 1
-        if not fields["date_confirmed"] and fields["nota_date"]:
+        if (
+            not fields["date_confirmed"]
+            and fields["nota_date"]
+            and fields["nota_date"] != UNKNOWN_SENTINEL
+            and _valid_calendar_date(fields["nota_date"])
+        ):
             fields["date_confirmed"] = 1
-        if not fields["amount_confirmed"] and fields["amount"]:
+        if not fields["amount_confirmed"] and fields["amount"] is not None and fields["amount"] != UNKNOWN_SENTINEL:
             fields["amount_confirmed"] = 1
         state = _state_for(fields)
         if row["workflow_state"] in ("not_business", "duplicate", "evidence_missing"):
             state = row["workflow_state"]
+        elif row["workflow_state"] in SUBMIT_LOCKED_STATES:
+            state = row["workflow_state"]
         ts = _now()
-        c.execute(
+        new_revision = _material_revision_bump(row, fields)
+        cur = c.execute(
             """
             UPDATE ggv_notas SET
-              vendor_id=?, invoice_no=?, nota_date=?, currency=?, amount=?, tax=?,
+              vendor_id=?, invoice_no=?, nota_date=?, currency=?, currency_source=?, amount=?, tax=?,
               category=?, items_json=?, notes=?, workflow_state=?,
-              amount_confirmed=?, date_confirmed=?, vendor_confirmed=?, updated_at=?
-            WHERE nota_id=?
+              amount_confirmed=?, date_confirmed=?, vendor_confirmed=?, updated_at=?,
+              material_revision=?
+            WHERE nota_id=? AND entity_id=? AND workflow_state=? AND material_revision=?
             """,
             (
                 fields["vendor_id"],
                 fields["invoice_no"],
                 fields["nota_date"],
                 fields["currency"],
+                fields.get("currency_source"),
                 fields["amount"],
                 fields["tax"],
                 fields["category"],
@@ -2851,9 +3779,14 @@ def confirm_nota(
                 fields["date_confirmed"],
                 fields["vendor_confirmed"],
                 ts,
+                new_revision,
                 nota_id,
+                _eid(),
+                expected_state,
+                expected_revision,
             ),
         )
+        _raise_if_stale_nota_write(c, nota_id, expected_state, updated=cur.rowcount)
         _history(
             c,
             person_id=person_id,

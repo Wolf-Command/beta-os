@@ -24,6 +24,7 @@ os.environ["BETA_AUTH_MODE"] = "development_assertion"
 
 from core import approvals as approvals  # noqa: E402
 from core import evidence as evidence  # noqa: E402
+from core import canonical_guard as cg  # noqa: E402
 from core import ggv_finance_nota as fin  # noqa: E402
 from core import identity as identity  # noqa: E402
 from core import rbac as rbac  # noqa: E402
@@ -142,8 +143,11 @@ def test_static() -> None:
     check("boundary sentence", "Payment and full books live with Finance reconciliation later" in html)
     check("not a payment", "Entering a nota is not the same as paying it." in html)
     check("bank not verified", "Bank details seen on a document are not verified." in html)
-    check("use existing", "Use existing" in html)
-    check("create new", "Create new" in html)
+    check("use existing vendor", 'data-vendor-id="' in html or 'id="use-vendor"' in html)
+    check("different vendor", "Different vendor" in html)
+    check("save for later", "SAVE FOR LATER" in html)
+    check("confirm nota", "CONFIRM NOTA" in html)
+    check("more vendor details", "MORE VENDOR DETAILS" in html)
     check("camera input", 'capture="environment"' in html)
     check("pdf input", ".pdf" in html)
     check("no name auth", "Matt" not in html and "Amanda" not in html)
@@ -363,6 +367,9 @@ def test_http(db_path: Path, store: Path) -> None:
     wire(db_path, store)
     import serve_beta as sb
 
+    sb.CATALOG_DB = db_path
+    identity.CATALOG_DB = db_path
+
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), sb.BetaHandler)
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
@@ -451,23 +458,20 @@ def test_http(db_path: Path, store: Path) -> None:
 
 def main() -> int:
     test_static()
-    tmp = ROOT / "state" / ".tmp-ggv-finance-nota"
-    if tmp.exists():
-        shutil.rmtree(tmp)
-    tmp.mkdir(parents=True)
-    db_path = tmp / "catalog.sqlite"
-    store = tmp / "blobs"
-    shutil.copy(ROOT / "catalog" / "content_library.sqlite", db_path)
+    db_path = cg.isolate_runtime_catalog()
+    store = db_path.parent / "blobs"
     seed_client(db_path)
     wire(db_path, store)
-    conn = fin.db_connect(db_path)
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys=ON")
     try:
         test_permissions(conn)
         test_workflow(conn)
     finally:
         conn.close()
     test_http(db_path, store)
-    shutil.rmtree(tmp, ignore_errors=True)
+    shutil.rmtree(db_path.parent, ignore_errors=True)
     print(f"PASS={PASS} FAIL={FAIL}")
     print("EXIT: SUCCESS" if FAIL == 0 else "EXIT: FAIL")
     return 0 if FAIL == 0 else 1

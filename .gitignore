@@ -64,8 +64,8 @@ state/commissioning/cf-sim-public.jwk.json
 # Watch tick stamps
 LAST-WATCH-TICK.txt
 
-# Runtime SQLite backups
-state/backups/
+# Compiled macOS Vision OCR helper (built locally from ggv_nota_vision_ocr.swift)
+scripts/helpers/ggv_nota_vision_ocr
 
 # Generated packs
 state/*.tgz
@@ -104,6 +104,7 @@ service-account*.json
 *cookies*.json
 *.session.json
 # Bulk backups / catalog (catalog/backups ~61 GB) / uploads
+state/backups/
 backups/
 catalog/
 uploads/

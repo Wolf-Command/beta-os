@@ -1,0 +1,128 @@
+[
+  {
+    "id": "ggv-finance-fix-claude-20261006",
+    "claim": "GGV-FINANCE-FIX-CLAUDE-r2: payable bills summary, deploy backfill, status filters, recon paging, human labels, tax_detail_json",
+    "check": "python3 scripts/tests/test_ggv_finance_core1_20261006.py && PYTHONDONTWRITEBYTECODE=1 python3 /Users/wolfterminal/ggv-finance-20261006-evidence/attack/verify_fixed.py",
+    "expect": "8 passed 0 failed; 30 passed verify_fixed",
+    "by": "cursor-fix-claude",
+    "pack": "GGV-FINANCE-CORE-1",
+    "created_at": "2026-10-06T13:00:00+08:00"
+  },
+  {
+    "id": "ggv-finance-fix-claude-r3-20261006",
+    "claim": "GGV-FINANCE-FIX-CLAUDE-r3: IDR dot-thousands parsing (500.000→500000), verify dot grouped==1234, unmatch skips ledger on proposals",
+    "check": "PYTHONPATH=scripts python3 -c \"from core.ggv_bank_statement1 import _parse_amount; v,e=_parse_amount('500.000'); assert v==500000 and e is None\" && PYTHONDONTWRITEBYTECODE=1 python3 /Users/wolfterminal/ggv-finance-20261006-evidence/attack/verify_fixed.py",
+    "expect": "500000.0; 30 passed verify_fixed",
+    "by": "cursor-fix-claude-r3",
+    "pack": "GGV-FINANCE-CORE-1",
+    "created_at": "2026-10-06T13:30:00+08:00"
+  },
+  {
+    "id": "ggv-nota-capture-1-fix-20261006",
+    "claim": "GGV-NOTA-CAPTURE-1 fix round: entity-scoped reuse, submit validation, SoD material approval, OCR timeout, confirm UX persist",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_ggv_nota_capture1_20261006.py && PYTHONPATH=scripts python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_independent.py && node /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_review.js",
+    "expect": "capture1 32/0; independent 23+/0 (UNKNOWN sentinel); review.js 2/0",
+    "by": "cursor-composer-nota1-fix",
+    "pack": "GGV-NOTA-CAPTURE-1",
+    "created_at": "2026-10-06T15:00:00+08:00"
+  },
+  {
+    "id": "ggv-nota-capture-1-fix-r2-20261006",
+    "claim": "GGV-NOTA-CAPTURE-1 fix-r2: QA findings 1-6 — approval lock, explicit clear, entity vendor scope, UNKNOWN draft, currency ready gate, OCR OSError",
+    "check": "PYTHONPATH=scripts python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_codex_verification.py && PYTHONPATH=scripts python3 scripts/tests/test_ggv_nota_capture1_20261006.py && node /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_review.js",
+    "expect": "codex 34/0; capture1 32/0; review.js 2/0",
+    "by": "cursor-composer-nota1-fix-r2",
+    "pack": "GGV-NOTA-CAPTURE-1",
+    "created_at": "2026-10-06T15:45:00+08:00"
+  },
+  {
+    "id": "ggv-nota-capture-1-fix-r3-20261006",
+    "claim": "GGV-NOTA-CAPTURE-1 fix-r3: pending approval binds vendor/currency/items/confirm flags; terminal money states deny intake edits",
+    "check": "PYTHONPATH=scripts python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_attack_oct06.py && PYTHONPATH=scripts python3 scripts/tests/test_ggv_nota_capture1_20261006.py",
+    "expect": "attack 6/0; capture1 39/0",
+    "by": "cursor-composer-nota1-fix-r3",
+    "pack": "GGV-NOTA-CAPTURE-1",
+    "created_at": "2026-10-06T16:00:00+08:00"
+  },
+  {
+    "id": "ggv-nota-capture-1-fix-r4-20261006",
+    "claim": "GGV-NOTA-CAPTURE-1 fix-r4: reset vendor/form on new upload; UNKNOWN amount not auto-confirmed; use_existing no-match error",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_ggv_nota_capture1_20261006.py && python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_codex_final.py && node /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_codex_final_review.js",
+    "expect": "capture1 44/0; codex_final 14/0; review.js 4/0",
+    "by": "cursor-composer-nota1-fix-r4",
+    "pack": "GGV-NOTA-CAPTURE-1",
+    "created_at": "2026-10-06T15:00:00+08:00"
+  },
+  {
+    "id": "ggv-nota-capture-1-fix-r5-20261006",
+    "claim": "GGV-NOTA-CAPTURE-1 fix-r5: concurrent CONFIRM rowcount guard; nota use_existing without matches returns nota_not_found",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_ggv_nota_capture1_20261006.py && PYTHONPATH=scripts python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_verification_edges.py",
+    "expect": "capture1 44/0; verification_edges 6/6",
+    "by": "cursor-composer-nota1-fix-r5",
+    "pack": "GGV-NOTA-CAPTURE-1",
+    "created_at": "2026-10-06T17:00:00+08:00"
+  },
+  {
+    "id": "ggv-nota-capture-1-fix-r6-20261006",
+    "claim": "GGV-NOTA-CAPTURE-1 fix-r6: edit_nota and confirm_nota atomic workflow_state predicate rejects stale writes after concurrent submit (409)",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_ggv_nota_capture1_20261006.py && PYTHONPATH=scripts python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_independent_races.py && PYTHONPATH=scripts python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_codex_final.py",
+    "expect": "capture1 47/0; races 3/3; codex_final 14/0",
+    "by": "cursor-composer-nota1-fix-r6",
+    "pack": "GGV-NOTA-CAPTURE-1",
+    "created_at": "2026-10-06T15:10:00+08:00"
+  },
+  {
+    "id": "ggv-nota-capture-1-fix-r7-20261006",
+    "claim": "GGV-NOTA-CAPTURE-1 fix-r7: material_revision CAS + BEGIN IMMEDIATE on mutating paths; submit binds approval only when vendor/date/amount/currency/revision unchanged (409 stale_write)",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_ggv_nota_capture1_20261006.py && PYTHONPATH=scripts python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_submit_snapshot.py && PYTHONPATH=scripts python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_independent_races.py && PYTHONPATH=scripts python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_verification_edges.py && PYTHONPATH=scripts python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_codex_final.py && node /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_codex_final_review.js",
+    "expect": "capture1 47/0; submit_snapshot 2/2; races 3/3; edges 6/6; codex_final 14/0; review.js 4/4",
+    "by": "cursor-composer-nota1-fix-r7",
+    "pack": "GGV-NOTA-CAPTURE-1",
+    "created_at": "2026-10-06T15:45:00+08:00"
+  },
+  {
+    "id": "ggv-nota-capture-1-fix-r8-20261006",
+    "claim": "GGV-NOTA-CAPTURE-1 fix-r8: EUR/USD decimal-comma amounts (10,50→10.50 not 1050); vendor create BEGIN IMMEDIATE recheck closes duplicate race",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_ggv_nota_capture1_20261006.py && PYTHONDONTWRITEBYTECODE=1 python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_qa_fresh.py && PYTHONDONTWRITEBYTECODE=1 python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_codex_final.py",
+    "expect": "capture1 47/0; qa_fresh 6/6; codex_final 14/0",
+    "by": "cursor-composer-nota1-fix-r8",
+    "pack": "GGV-NOTA-CAPTURE-1",
+    "created_at": "2026-10-06T15:50:00+08:00"
+  },
+  {
+    "id": "ggv-nota-capture-1-fix-r9-20261006",
+    "claim": "GGV-NOTA-CAPTURE-1 fix-r9: garbled OCR money tokens (51O.000) rejected not truncated; full raw retained; macOS Vision reads Matt nota",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_ggv_nota_capture1_20261006.py && PYTHONPATH=scripts python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_codex_final.py",
+    "expect": "capture1 56/0; codex_final 14/0",
+    "by": "cursor-composer-nota1-builder",
+    "pack": "GGV-NOTA-CAPTURE-1",
+    "created_at": "2026-10-06T15:49:00+08:00"
+  },
+  {
+    "id": "ggv-nota-capture-1-fix-r10-20261006",
+    "claim": "GGV-NOTA-CAPTURE-1 fix-r10: tax-only Rp no longer invents total; Unicode \\ufffd corruption rejected with full raw; same-line amount labels only",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_ggv_nota_capture1_20261006.py && PYTHONPATH=scripts python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_session_adversarial.py && PYTHONPATH=scripts python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_codex_final.py",
+    "expect": "capture1 62/0; adversarial 5/5; codex_final 14/0",
+    "by": "cursor-composer-nota1-builder",
+    "pack": "GGV-NOTA-CAPTURE-1",
+    "created_at": "2026-10-06T16:36:00+08:00"
+  },
+  {
+    "id": "ggv-nota-capture-1-fix-r12-20261006",
+    "claim": "GGV-NOTA-CAPTURE-1 fix-r12: FINDINGS-INPUT r2 — confirm UX result card, slash-date ISO+raw, currency_source, digit vendor guard, Vision binary gitignored",
+    "check": "PYTHONPATH=scripts python3 scripts/tests/test_ggv_nota_capture1_20261006.py && PYTHONPATH=scripts python3 scripts/tests/test_ggv_finance_mobile_nota.py && PYTHONPATH=scripts python3 /Users/wolfterminal/ggv-finance-20261006-evidence/NOTA1/qa/test_independent_current.py",
+    "expect": "capture1 83/0; mobile 141/0; independent_current 6/6",
+    "by": "cursor-composer-nota1-builder",
+    "pack": "GGV-NOTA-CAPTURE-1",
+    "created_at": "2026-10-06T17:30:00+08:00"
+  },
+  {
+    "id": "ggv-nota-capture-1-fix-r13-20261006",
+    "claim": "GGV-NOTA-CAPTURE-1 fix-r13: extracted currency persisted (USD not IDR); Vision OCR pre-built; Matt nota readable",
+    "check": "test -x scripts/helpers/ggv_nota_vision_ocr && PYTHONPATH=scripts python3 -c \"from pathlib import Path; from core import ggv_nota_local_read as lr; from core import ggv_finance_nota as fin; p=Path('/Users/wolfterminal/ggv-finance-20261006-evidence/HUMAN-FAIL-NOTA-20261006/ORIGINAL-COPY-FILE-01E2F5C9CF7B-image.jpg'); d=p.read_bytes(); t,m=lr.read_image_bytes(d); f=fin.propose_from_bytes(d,'image/jpeg','x.jpg')['fields']; import re; assert re.search(r'UMA BLU', t or f.get('vendor_name') or ''); assert f.get('amount')=='510000'\" && PYTHONPATH=scripts python3 scripts/tests/test_ggv_nota_capture1_20261006.py && PYTHONPATH=scripts python3 scripts/tests/test_ggv_finance_mobile_nota.py",
+    "expect": "vision binary executable; Matt nota UMA BLU+510000; capture1+mobile all pass",
+    "by": "cursor-composer-nota1-builder",
+    "pack": "GGV-NOTA-CAPTURE-1",
+    "created_at": "2026-10-06T18:00:00+08:00"
+  }
+]
