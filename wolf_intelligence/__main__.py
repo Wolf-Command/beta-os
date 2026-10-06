@@ -29,6 +29,13 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("benchmark-local")
     sub.add_parser("learn-demo")
     sub.add_parser("shadow-compare")
+    shadow_real = sub.add_parser("shadow-real")
+    shadow_real.add_argument("--n", type=int, default=3)
+    shadow_real.add_argument("--primary", default=None)
+    shadow_real.add_argument("--shadow", default=None)
+    live = sub.add_parser("live-submit")
+    live.add_argument("--worker", required=True)
+    live.add_argument("--execute", action="store_true")
     sub.add_parser("overnight-tick")
     sub.add_parser("stats")
     sub.add_parser("serve-ui")
@@ -84,6 +91,55 @@ def main(argv: list[str] | None = None) -> int:
         from . import shadow_compare
         print(json.dumps(shadow_compare.run_compare(), indent=2))
         return 0
+    if args.cmd == "shadow-real":
+        from . import shadow_compare
+        print(json.dumps(shadow_compare.run_real_shadow(args.n, primary_worker=args.primary, shadow_worker=args.shadow), indent=2))
+        return 0
+    if args.cmd == "live-submit":
+        from .adapters import get_adapter
+        from .adapters.live_gate import env_enabled
+        from .shadow_compare import TINY_PROMPT
+        from . import work_items
+        if not args.execute or not env_enabled():
+            print(json.dumps({
+                "ok": False,
+                "status": "LIVE_DISABLED",
+                "provider_called": False,
+                "message": "Pass --execute and set WOLF_INTELLIGENCE_LIVE_SUBMIT=1. Default is off. No provider call.",
+            }, indent=2))
+            return 2
+        adapter = get_adapter(args.worker)
+        if adapter is None:
+            print(json.dumps({"ok": False, "status": "UNAVAILABLE", "message": "unknown worker"}, indent=2))
+            return 2
+        wi = work_items.create(
+            title=f"Live submit {args.worker}",
+            kind="code_debug",
+            payload={"prompt": TINY_PROMPT},
+            isolated_safe=True,
+            tags=["live_submit", "SHADOW"],
+        )
+        result = adapter.submit({
+            "execute": True,
+            "prompt": TINY_PROMPT,
+            "work_item_id": wi["id"],
+            "shadow_mode": False,
+            "label": "LIVE_SUBMIT",
+            "ledger_note": "live submit tiny task; took_action false",
+            "num_predict": 64,
+        })
+        public = {
+            "ok": result.ok,
+            "status": result.status,
+            "message": result.message,
+            "work_item_id": wi["id"],
+            "worker": args.worker,
+            "data": result.data,
+            "took_action": False,
+            "mode": "SHADOW",
+        }
+        print(json.dumps(public, indent=2))
+        return 0 if result.ok else 1
     if args.cmd == "overnight-tick":
         from . import overnight_tick
         print(json.dumps(overnight_tick.run(), indent=2))

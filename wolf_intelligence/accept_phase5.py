@@ -29,7 +29,13 @@ def accept() -> dict:
         with urllib.request.urlopen(f"{base}/api/health", timeout=2) as resp:
             health = json.loads(resp.read().decode())
         checks.append({"name": "health_ok", "ok": health.get("ok") is True, "detail": f"pid={health.get('pid')}"})
-        with urllib.request.urlopen(f"{base}/api/owner-board", timeout=2) as resp:
+        from .owner_ui_server import ui_token
+        token = ui_token()
+        board_req = urllib.request.Request(
+            f"{base}/api/owner-board",
+            headers={"Authorization": "Bearer " + token} if token else {},
+        )
+        with urllib.request.urlopen(board_req, timeout=2) as resp:
             board = json.loads(resp.read().decode())
         checks.append(
             {

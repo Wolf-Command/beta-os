@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from typing import Any
 from .base import AdapterResult, WorkerAdapter, register
+from .live_gate import execute_requested, unsupported
 
 OPENCLAW = Path.home() / ".openclaw"
 PEACHES_CMD = OPENCLAW / "workspace" / "wolf-system" / "scripts" / "peaches-command-bot.py"
@@ -35,8 +36,10 @@ class PeachesAdapter(WorkerAdapter):
         return AdapterResult(False, "UNAVAILABLE", "Peaches/OpenClaw not found")
 
     def submit(self, job: dict[str, Any]) -> AdapterResult:
+        if execute_requested(job):
+            return unsupported("peaches is health-only CoS, not an intelligence worker. Live submit is UNSUPPORTED.")
         if not job.get("shadow_isolated"):
             return AdapterResult(False, "SHADOW_SKIPPED", "CoS submit only in shadow isolate")
-        return AdapterResult(True, "SHADOW_OK", "shadow CoS recommend path only", {"note": "not brain"})
+        return AdapterResult(True, "SHADOW_OK", "shadow CoS recommend path only", {"note": "not brain", "provider_called": False})
 
 register(PeachesAdapter())

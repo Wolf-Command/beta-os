@@ -10,7 +10,8 @@
       "source": "Owner declared Cursor $300/mo prepaid",
       "verified_owner_declared": true,
       "used_usd_period": 0.0,
-      "remaining_usd_estimate": 300.0
+      "remaining_usd_estimate": 300.0,
+      "per_call_metered_usd": "UNKNOWN"
     },
     {
       "id": "claude_sub_25",
@@ -22,7 +23,9 @@
       "verified_owner_declared": true,
       "public_team_standard_matches": true,
       "used_usd_period": 0.0,
-      "remaining_usd_estimate": 25.0
+      "remaining_usd_estimate": 25.0,
+      "per_call_metered_usd": "UNKNOWN",
+      "separate_from_pool": "anthropic_api"
     },
     {
       "id": "grok_sub",
@@ -33,7 +36,8 @@
       "plan_name": "UNKNOWN",
       "discovered_at": "2026-10-05T22:36:13+08:00",
       "used_usd_period": 0.0,
-      "remaining_usd_estimate": "UNKNOWN"
+      "remaining_usd_estimate": "UNKNOWN",
+      "per_call_metered_usd": "UNKNOWN"
     },
     {
       "id": "chatgpt_sub",
@@ -44,7 +48,9 @@
       "plan_name": "UNKNOWN",
       "discovered_at": "2026-10-05T22:36:13+08:00",
       "used_usd_period": 0.0,
-      "remaining_usd_estimate": "UNKNOWN"
+      "remaining_usd_estimate": "UNKNOWN",
+      "per_call_metered_usd": "UNKNOWN",
+      "separate_from_pool": "openai_api"
     },
     {
       "id": "openai_api",
@@ -85,7 +91,8 @@
       "note": "No paid Gemini without Owner policy",
       "key_value_nonempty": false,
       "used_usd_period": 0.0,
-      "remaining_usd_estimate": 0.0
+      "remaining_usd_estimate": 0.0,
+      "per_call_metered_usd": 0
     },
     {
       "id": "ollama_local",

@@ -99,13 +99,13 @@ def score_candidates(work_item: dict[str, Any]) -> list[dict[str, Any]]:
 def recommend(work_item: dict[str, Any]) -> dict[str, Any]:
     scores = score_candidates(work_item)
     # Pick first CONNECTED/PARTIAL with non-api preference when scores UNKNOWN
+    # A recommendation is not the factory's current-system worker.
+    # No named worker, including cursor, is filled in when nothing is CONNECTED or PARTIAL.
     pick = None
     for s in scores:
         if s["health"] in ("CONNECTED", "PARTIAL"):
             pick = s
             break
-    if not pick and scores:
-        pick = scores[0]
     rec = {
         "mode": "SHADOW",
         "recommended_model_id": pick["model_id"] if pick else None,
@@ -113,7 +113,7 @@ def recommend(work_item: dict[str, Any]) -> dict[str, Any]:
         "reason": (
             "Prefer already-paid/connected capacity; capability scores UNKNOWN until benchmarked"
             if pick
-            else "no candidates"
+            else "no connected worker; current-system worker is not defaulted"
         ),
         "capability_score": pick["capability_score"] if pick else "UNKNOWN",
         "execute": False,

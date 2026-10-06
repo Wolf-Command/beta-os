@@ -3,6 +3,7 @@
 ## Primary (sidecar — always on via LaunchAgent)
 
 1. On Mac Studio Safari/Chrome: open **http://127.0.0.1:8799/**
+   Pass and Fail need your name plus `WOLF_INTELLIGENCE_UI_TOKEN` (Authorization bearer, or cookie `wolf_intelligence_session`). If the token is unset, the page still loads and every POST returns 401. The token is not written to the access log.
 2. Phone on same LAN: use Studio’s local IP with port 8799 (or SSH tunnel).
 3. LaunchAgent label: `com.wolfcommand.wolf-intelligence-owner-ui` (KeepAlive).
 4. Manual restart: `~/beta-os/wolf_intelligence/bin/start_owner_ui.sh`

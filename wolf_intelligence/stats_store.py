@@ -7,10 +7,11 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from .paths import LEARNING_DIR, SHADOW_DIR, WORKERS_DIR, CONFIG_DIR, ensure_dirs
+from .paths import LEARNING_DIR, SHADOW_DIR, WORKERS_DIR, CONFIG_DIR, ensure_dirs, mirror_path, mirror_read_path
 
 TZ = ZoneInfo("Asia/Makassar")
 STATS_PATH = LEARNING_DIR / "stats.json"
+SUMMARY_PATH = mirror_path("stats-summary.json")
 
 
 def now_iso() -> str:
@@ -18,8 +19,10 @@ def now_iso() -> str:
 
 
 def recompute() -> dict[str, Any]:
+    from .learning import OUTCOMES_PATH, is_real_human_outcome
+
     ensure_dirs()
-    outcomes = LEARNING_DIR / "outcomes.jsonl"
+    outcomes = OUTCOMES_PATH
     n = n_human = n_self = passes = fails = 0
     if outcomes.exists():
         for line in outcomes.read_text(encoding="utf-8").splitlines():
@@ -30,17 +33,18 @@ def recompute() -> dict[str, Any]:
             except json.JSONDecodeError:
                 continue
             n += 1
-            if rec.get("effective_source", "").startswith("human"):
-                n_human += 1
             if rec.get("self_eval_rating") is not None:
                 n_self += 1
+            if not is_real_human_outcome(rec):
+                continue
+            n_human += 1
             if rec.get("human_passed") is True:
                 passes += 1
             elif rec.get("human_passed") is False:
                 fails += 1
     shadow_n = 0
     agree = 0
-    sc = CONFIG_DIR / "shadow-compare-phase6.json"
+    sc = mirror_read_path("shadow-compare-phase6.json")
     if sc.exists():
         try:
             s = json.loads(sc.read_text())
@@ -65,8 +69,9 @@ def recompute() -> dict[str, Any]:
         "shadow_samples": shadow_n,
         "shadow_agreements": agree,
         "workers": workers,
-        "rule": "human > self-eval",
+        "rule": "human > self-eval; human counts require an actor",
     }
     STATS_PATH.write_text(json.dumps(stats, indent=2) + "\n")
-    (CONFIG_DIR / "stats-summary.json").write_text(json.dumps(stats, indent=2) + "\n")
+    SUMMARY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    SUMMARY_PATH.write_text(json.dumps(stats, indent=2) + "\n")
     return stats
