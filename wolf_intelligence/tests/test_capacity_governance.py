@@ -645,6 +645,7 @@ class TestCapacityGovernance(unittest.TestCase):
 
     def test_k_invalid_grok_justification_rejected(self) -> None:
         just_ok = "x" * 25
+        _set_grok_pct(10.0)
         # Positive control: valid code ACCEPTED and Grok DISPATCH when requested
         d_ok = _decide(
             "coding",
@@ -701,14 +702,23 @@ class TestCapacityGovernance(unittest.TestCase):
 
     def test_capacity_seed_values_exact(self) -> None:
         seed = json.loads(SEED_PATH.read_text())
-        by_id = {o["worker_id"]: o for o in seed["observations"]}
+        grok_obs = [o for o in seed["observations"] if o["worker_id"] == "grok_bot_sub"]
+        self.assertEqual(len(grok_obs), 2)
+        grok_by_time = {o["observed_at"]: o for o in grok_obs}
+        self.assertEqual(
+            grok_by_time["2026-10-06T09:49:00+08:00"]["included_usage_pct"]["weekly"],
+            41,
+        )
+        self.assertEqual(
+            grok_by_time["2026-10-06T10:34:00+08:00"]["included_usage_pct"]["weekly"],
+            49,
+        )
+        by_id = {o["worker_id"]: o for o in seed["observations"] if o["worker_id"] != "grok_bot_sub"}
         cursor = by_id["cursor_sub"]
         self.assertEqual(cursor["plan"], "Cursor Ultra $200/mo")
         self.assertEqual(cursor["included_usage_pct"], {"cursor_models": 41, "other_models": 1})
         self.assertIsNone(cursor["remaining"])
-        grok = by_id["grok_bot_sub"]
-        self.assertEqual(grok["included_usage_pct"], {"weekly": 41})
-        self.assertEqual(grok["on_demand"], "UNKNOWN")
+        self.assertEqual(grok_by_time["2026-10-06T09:49:00+08:00"]["on_demand"], "UNKNOWN")
 
     def test_capacity_remaining_null_unless_exposed(self) -> None:
         merged, _ = merge_observations()
@@ -745,7 +755,8 @@ class TestCapacityGovernance(unittest.TestCase):
                     f.write(json.dumps(rec) + "\n")
             snap = capacity_snapshot(t1)
             vel = snap["workers"]["codex_sub"]["velocity"]
-            self.assertEqual(vel.get("pct_per_day"), 2.0)
+            self.assertAlmostEqual(vel.get("pct_per_hour"), 2.0 / 24.0, places=4)
+            self.assertAlmostEqual(vel.get("pct_per_day"), 2.0, places=4)
             self.assertEqual(vel.get("dispatch_24h"), 3)
             self.assertEqual(vel.get("dispatch_7d"), 3)
 
@@ -770,20 +781,21 @@ class TestCapacityGovernance(unittest.TestCase):
         self.assertIs(snap2["workers"]["codex_sub"]["projected_exhaustion_before_reset"], True)
         if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
             paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.unlink()
-        record_observation(
-            worker_id="codex_sub",
-            included_usage_pct={"week": 80},
-            reset_at="2026-10-07T12:00:00+08:00",
-            observed_at="2026-10-06T10:00:00+08:00",
-        )
-        record_observation(
-            worker_id="codex_sub",
-            included_usage_pct={"week": 80},
-            reset_at="2026-10-07T12:00:00+08:00",
-            observed_at="2026-10-06T11:00:00+08:00",
-        )
-        snap3 = capacity_snapshot("2026-10-06T12:00:00+08:00", policy=policy, policy_mode=pl.mode)
-        self.assertIs(snap3["workers"]["codex_sub"]["projected_exhaustion_before_reset"], False)
+        with mock.patch.object(capacity, "_load_seed", return_value=[]):
+            record_observation(
+                worker_id="codex_sub",
+                included_usage_pct={"week": 80},
+                reset_at="2026-10-07T12:00:00+08:00",
+                observed_at="2026-10-06T10:00:00+08:00",
+            )
+            record_observation(
+                worker_id="codex_sub",
+                included_usage_pct={"week": 80},
+                reset_at="2026-10-07T12:00:00+08:00",
+                observed_at="2026-10-06T11:00:00+08:00",
+            )
+            snap3 = capacity_snapshot("2026-10-06T12:00:00+08:00", policy=policy, policy_mode=pl.mode)
+            self.assertIs(snap3["workers"]["codex_sub"]["projected_exhaustion_before_reset"], False)
 
     def test_quality_tie_band_reasoning_share(self) -> None:
         claude_wins = 0
@@ -813,6 +825,171 @@ class TestCapacityGovernance(unittest.TestCase):
         _set_worker_pct("codex_sub", "week", 10.0)
         d_cap = _decide("ux_product", id=cap_reorder_id)
         self.assertEqual(d_cap.selected_worker, "codex_sub")
+
+    def _velocity_policy_fixture(self, conserve_at: float = 60) -> dict:
+        pl = load_policy()
+        policy = json.loads(json.dumps(pl.policy))
+        policy["capacity_thresholds"]["grok_bot_sub"] = {
+            "conserve_at": conserve_at,
+            "reserve_at": 85,
+            "exhausted_at": 95,
+        }
+        return policy
+
+    def test_velocity_owner_data_trips_conserve(self) -> None:
+        policy = self._velocity_policy_fixture(conserve_at=60)
+        now = "2026-10-06T10:35:00+08:00"
+        if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
+            paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.unlink()
+        snap = capacity_snapshot(now, policy=policy, policy_mode="ENFORCED")
+        grok = snap["workers"]["grok_bot_sub"]
+        self.assertGreaterEqual(
+            {"NORMAL": 0, "CONSERVE": 1, "RESERVE": 2, "EXHAUSTED": 3}[grok["state"]],
+            1,
+        )
+        self.assertLess(grok.get("effective_pct", 100), 60)
+        self.assertIs(snap["grok_state"], grok["state"])
+        d = decide(
+            {
+                "id": "vel-owner-trip",
+                "task_class": "coding",
+                "requested_worker": "grok_bot_sub",
+                "grok_reason_code": "BENCHMARK_SELECTED",
+            },
+            policy_load=load_policy(),
+            capacity=snap,
+            now=now,
+            record=False,
+        )
+        self.assertNotEqual(d.selected_worker, "grok_bot_sub")
+        self.assertIsNotNone(d.grok_conserve_conduct)
+
+    def test_velocity_slow_drift_not_tripped(self) -> None:
+        policy = self._velocity_policy_fixture(conserve_at=60)
+        if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
+            paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.unlink()
+        record_observation(
+            worker_id="grok_bot_sub",
+            included_usage_pct={"weekly": 41},
+            source="owner_observed",
+            observed_at="2026-10-02T10:34:00+08:00",
+        )
+        record_observation(
+            worker_id="grok_bot_sub",
+            included_usage_pct={"weekly": 49},
+            source="owner_observed",
+            observed_at="2026-10-06T10:34:00+08:00",
+            reset_at="2026-10-09T10:34:00+08:00",
+        )
+        now = "2026-10-06T10:35:00+08:00"
+        snap = capacity_snapshot(now, policy=policy, policy_mode="ENFORCED")
+        grok = snap["workers"]["grok_bot_sub"]
+        self.assertEqual(grok["state"], "NORMAL")
+        self.assertIs(grok.get("projected_exhaustion_before_reset"), False)
+
+    def test_velocity_monotonic_in_velocity(self) -> None:
+        policy = self._velocity_policy_fixture(conserve_at=60)
+        if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
+            paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.unlink()
+        record_observation(
+            worker_id="grok_bot_sub",
+            included_usage_pct={"weekly": 41},
+            source="owner_observed",
+            observed_at="2026-10-06T09:49:00+08:00",
+        )
+        states: list[str] = []
+        for pct, ts in [(45, "2026-10-06T10:00:00+08:00"), (49, "2026-10-06T10:34:00+08:00"), (55, "2026-10-06T10:40:00+08:00")]:
+            record_observation(
+                worker_id="grok_bot_sub",
+                included_usage_pct={"weekly": float(pct)},
+                source="owner_observed",
+                observed_at=ts,
+            )
+            snap = capacity_snapshot(ts, policy=policy, policy_mode="ENFORCED")
+            states.append(snap["workers"]["grok_bot_sub"]["state"])
+        ranks = [{"NORMAL": 0, "CONSERVE": 1, "RESERVE": 2, "EXHAUSTED": 3}[s] for s in states]
+        self.assertEqual(ranks, sorted(ranks))
+
+    def test_velocity_bad_timestamp_conserve(self) -> None:
+        policy = self._velocity_policy_fixture(conserve_at=60)
+        if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
+            paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.unlink()
+        bad_path = paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH
+        bad_path.parent.mkdir(parents=True, exist_ok=True)
+        bad_path.write_text(
+            json.dumps({
+                "worker_id": "grok_bot_sub",
+                "included_usage_pct": {"weekly": 10},
+                "observed_at": "not-an-iso-timestamp",
+                "source": "owner_observed",
+            })
+            + "\n",
+            encoding="utf-8",
+        )
+        snap = capacity_snapshot("2026-10-06T10:35:00+08:00", policy=policy, policy_mode="ENFORCED")
+        grok = snap["workers"]["grok_bot_sub"]
+        self.assertIn(grok["state"], ("CONSERVE", "RESERVE", "EXHAUSTED"))
+        audit = paths.GOVERNANCE_AUDIT_PATH.read_text() if paths.GOVERNANCE_AUDIT_PATH.exists() else ""
+        self.assertIn("CAPACITY_OBSERVATION_REJECTED", audit)
+
+    def test_velocity_reseed_values_exact(self) -> None:
+        seed = json.loads(SEED_PATH.read_text())
+        grok = [o for o in seed["observations"] if o["worker_id"] == "grok_bot_sub"]
+        times = sorted(o["observed_at"] for o in grok)
+        self.assertEqual(times, ["2026-10-06T09:49:00+08:00", "2026-10-06T10:34:00+08:00"])
+        pcts = {o["observed_at"]: o["included_usage_pct"]["weekly"] for o in grok}
+        self.assertEqual(pcts["2026-10-06T09:49:00+08:00"], 41)
+        self.assertEqual(pcts["2026-10-06T10:34:00+08:00"], 49)
+
+    def test_velocity_conduct_flags_present(self) -> None:
+        _set_grok_pct(49.0, now="2026-10-06T10:34:00+08:00")
+        d = _decide("coding", id="vel-conduct", now="2026-10-06T10:35:00+08:00")
+        self.assertIsNotNone(d.grok_conserve_conduct)
+        self.assertTrue(d.grok_conserve_conduct.get("no_grok_when_other_qualified"))
+        self.assertEqual(d.grok_conserve_conduct.get("polling"), "FORBIDDEN")
+        self.assertEqual(d.completion_event_format, "COMPACT")
+
+    def test_velocity_routine_review_never_grok_under_conserve(self) -> None:
+        _set_grok_pct(49.0, now="2026-10-06T10:34:00+08:00")
+        d = _decide(
+            "routine_review",
+            id="vel-routine",
+            requested_worker="grok_bot_sub",
+            grok_reason="EXPLICIT_JUSTIFIED",
+            justification="x" * 25,
+            now="2026-10-06T10:35:00+08:00",
+        )
+        self.assertNotEqual(d.selected_worker, "grok_bot_sub")
+        self.assertEqual(d.decision, "DISPATCH")
+
+    def test_velocity_final_gate_to_grok_under_conserve(self) -> None:
+        _set_grok_pct(49.0, now="2026-10-06T10:34:00+08:00")
+        d = _decide("final_gate", id="vel-final-gate", now="2026-10-06T10:35:00+08:00")
+        self.assertEqual(d.decision, "DISPATCH")
+        self.assertEqual(d.selected_worker, "grok_bot_sub")
+
+    def test_velocity_polling_never_grok_under_conserve(self) -> None:
+        _set_grok_pct(49.0, now="2026-10-06T10:34:00+08:00")
+        d = _decide(
+            "polling",
+            id="vel-polling",
+            requested_worker="grok_bot_sub",
+            now="2026-10-06T10:35:00+08:00",
+        )
+        self.assertNotEqual(d.selected_worker, "grok_bot_sub")
+
+    def test_velocity_requested_grok_ineligible_falls_back(self) -> None:
+        _set_grok_pct(49.0, now="2026-10-06T10:34:00+08:00")
+        d = _decide(
+            "coding",
+            id="vel-k2-fallback",
+            requested_worker="grok_bot_sub",
+            grok_reason="BENCHMARK_SELECTED",
+            now="2026-10-06T10:35:00+08:00",
+        )
+        self.assertEqual(d.decision, "DISPATCH")
+        self.assertNotEqual(d.selected_worker, "grok_bot_sub")
+        self.assertIsNotNone(d.requested_worker_rejected)
 
 
 if __name__ == "__main__":

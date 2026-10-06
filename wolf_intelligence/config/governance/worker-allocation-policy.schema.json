@@ -85,6 +85,42 @@
         "unknown_state": {"type": "object"}
       }
     },
+    "velocity": {
+      "type": "object",
+      "required": [
+        "window_hours",
+        "min_points",
+        "min_span_minutes",
+        "reserve_if_exhaustion_within_hours",
+        "assumed_reset_hours_if_unknown"
+      ],
+      "properties": {
+        "window_hours": {"type": "number", "minimum": 1, "maximum": 8760},
+        "min_points": {"type": "integer", "minimum": 2, "maximum": 1000},
+        "min_span_minutes": {"type": "number", "minimum": 0, "maximum": 10080},
+        "reserve_if_exhaustion_within_hours": {"type": "number", "minimum": 0, "maximum": 8760},
+        "assumed_reset_hours_if_unknown": {"type": "number", "minimum": 1, "maximum": 8760}
+      }
+    },
+    "grok_conserve_conduct": {
+      "type": "object",
+      "required": [
+        "no_grok_when_other_qualified",
+        "polling",
+        "completion_events",
+        "vesper_reserved_for"
+      ],
+      "properties": {
+        "no_grok_when_other_qualified": {"const": true},
+        "polling": {"const": "FORBIDDEN"},
+        "completion_events": {"const": "COMPACT"},
+        "vesper_reserved_for": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"const": "final_gate"}
+        }
+      }
+    },
     "grok_reserve": {
       "type": "object",
       "required": ["protected_classes", "allowed_reason_codes_by_state"],

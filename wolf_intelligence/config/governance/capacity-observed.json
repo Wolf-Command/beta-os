@@ -21,6 +21,16 @@
       "observed_at": "2026-10-06T09:49:00+08:00"
     },
     {
+      "worker_id": "grok_bot_sub",
+      "plan": "Grok Bot subscription",
+      "included_usage_pct": {"weekly": 49},
+      "remaining": null,
+      "reset_at": null,
+      "on_demand": "UNKNOWN",
+      "source": "owner_observed",
+      "observed_at": "2026-10-06T10:34:00+08:00"
+    },
+    {
       "worker_id": "claude_pro_sub",
       "plan": "Claude Pro",
       "included_usage_pct": {"session": 15, "week_all_models": 1},

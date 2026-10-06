@@ -314,36 +314,194 @@ def _dispatch_counts(worker_id: str, now: datetime) -> dict[str, int]:
     return counts
 
 
-def _velocity(worker_id: str, pool: str | None, now: datetime) -> dict[str, Any]:
-    """pct_per_day only when two observations of the same pool exist."""
+def _velocity_config(policy: dict[str, Any]) -> dict[str, Any]:
+    from .governance import HARDCODED_VELOCITY
+
+    cfg = policy.get("velocity") or {}
+    if not isinstance(cfg, dict):
+        cfg = {}
+    return {
+        "window_hours": float(cfg.get("window_hours", HARDCODED_VELOCITY["window_hours"])),
+        "min_points": int(cfg.get("min_points", HARDCODED_VELOCITY["min_points"])),
+        "min_span_minutes": float(cfg.get("min_span_minutes", HARDCODED_VELOCITY["min_span_minutes"])),
+        "reserve_if_exhaustion_within_hours": float(
+            cfg.get("reserve_if_exhaustion_within_hours", HARDCODED_VELOCITY["reserve_if_exhaustion_within_hours"])
+        ),
+        "assumed_reset_hours_if_unknown": float(
+            cfg.get("assumed_reset_hours_if_unknown", HARDCODED_VELOCITY["assumed_reset_hours_if_unknown"])
+        ),
+    }
+
+
+def _pool_velocity_pairs(
+    worker_id: str,
+    pool: str,
+    now: datetime,
+    window_hours: float,
+) -> list[tuple[datetime, float]]:
+    cutoff = now - timedelta(hours=window_hours)
     persisted, _ = _load_persisted()
     obs_list = [r for r in persisted + _load_seed() if r.get("worker_id") == worker_id]
-    if pool:
-        pairs = []
-        for rec in obs_list:
-            ok, _ = _validate_observation_record(rec, now)
-            if not ok:
-                continue
-            pct_map = rec.get("included_usage_pct") or {}
-            if pool in pct_map and _is_valid_pct(pct_map[pool]):
-                t = _parse_dt(rec.get("observed_at"))
-                if t:
-                    pairs.append((t, float(pct_map[pool])))
-        pairs.sort(key=lambda x: x[0])
-        pct_per_day = None
-        if len(pairs) >= 2:
-            t0, p0 = pairs[-2]
-            t1, p1 = pairs[-1]
-            days = max((t1 - t0).total_seconds() / 86400.0, 1e-6)
-            pct_per_day = round((p1 - p0) / days, 4)
-    else:
-        pct_per_day = None
+    pairs: list[tuple[datetime, float]] = []
+    for rec in obs_list:
+        ok, _ = _validate_observation_record(rec, now)
+        if not ok:
+            continue
+        pct_map = rec.get("included_usage_pct") or {}
+        if pool not in pct_map or not _is_valid_pct(pct_map[pool]):
+            continue
+        t = _parse_dt(rec.get("observed_at"))
+        if t is None or t < cutoff:
+            continue
+        pairs.append((t, float(pct_map[pool])))
+    pairs.sort(key=lambda x: x[0])
+    return pairs
+
+
+def _newest_pool_record_issue(
+    worker_id: str,
+    pool: str,
+    now: datetime,
+    max_age_h: float,
+) -> tuple[bool, str]:
+    """Fail closed when the newest raw reading for a pool has timestamp issues."""
+    persisted, _ = _load_persisted()
+    records = [
+        r
+        for r in persisted + _load_seed()
+        if r.get("worker_id") == worker_id and pool in (r.get("included_usage_pct") or {})
+    ]
+    if not records:
+        return False, ""
+    newest = max(records, key=lambda r: str(r.get("observed_at") or ""))
+    ok, reason = _validate_observation_record(newest, now)
+    if not ok:
+        append_audit_event(
+            "CAPACITY_OBSERVATION_REJECTED",
+            {
+                "worker_id": worker_id,
+                "pool": pool,
+                "reason": reason,
+                "observed_at": newest.get("observed_at"),
+                "fail_closed": True,
+            },
+        )
+        return True, reason
+    observed_at = _parse_dt(newest.get("observed_at"))
+    if observed_at is None:
+        return True, "invalid_observed_at"
+    age_h = (now - observed_at).total_seconds() / 3600.0
+    if age_h > max_age_h:
+        append_audit_event(
+            "CAPACITY_OBSERVATION_STALE",
+            {
+                "worker_id": worker_id,
+                "pool": pool,
+                "observed_at": newest.get("observed_at"),
+                "age_hours": round(age_h, 4),
+                "max_age_hours": max_age_h,
+            },
+        )
+        return True, "stale_observation"
+    return False, ""
+
+
+def _reset_at_for_worker(worker_id: str, pool: str, pairs: list[tuple[datetime, float]]) -> datetime | None:
+    reset_dt: datetime | None = None
+    persisted, _ = _load_persisted()
+    for rec in persisted + _load_seed():
+        if rec.get("worker_id") != worker_id:
+            continue
+        pct_map = rec.get("included_usage_pct") or {}
+        if pool not in pct_map:
+            continue
+        candidate = _parse_dt(rec.get("reset_at"))
+        if candidate is not None:
+            reset_dt = candidate
+    return reset_dt
+
+
+def _velocity_projection(
+    worker_id: str,
+    pool: str | None,
+    now: datetime,
+    policy: dict[str, Any],
+    thresholds: dict[str, float],
+    latest_pct: float | None,
+    reset_at: str | None,
+) -> tuple[dict[str, Any], bool | None, float | None]:
+    """Compute velocity metrics, projected_exhaustion_before_reset, hours_to_exhaustion."""
     disp = _dispatch_counts(worker_id, now)
-    return {
+    vel: dict[str, Any] = {
         "dispatch_24h": disp["24h"],
         "dispatch_7d": disp["7d"],
-        "pct_per_day": pct_per_day,
+        "pct_per_hour": None,
+        "pct_per_day": None,
+        "hours_to_exhaustion": None,
+        "points_in_window": 0,
     }
+    if not pool or latest_pct is None:
+        return vel, None, None
+
+    cfg = _velocity_config(policy)
+    pairs = _pool_velocity_pairs(worker_id, pool, now, cfg["window_hours"])
+    vel["points_in_window"] = len(pairs)
+    if len(pairs) < cfg["min_points"]:
+        return vel, None, None
+
+    t_earliest, p_earliest = pairs[0]
+    t_latest, p_latest = pairs[-1]
+    span_hours = (t_latest - t_earliest).total_seconds() / 3600.0
+    if span_hours <= 0 or span_hours * 60.0 < cfg["min_span_minutes"]:
+        return vel, None, None
+
+    pct_per_hour = (p_latest - p_earliest) / span_hours
+    vel["pct_per_hour"] = round(pct_per_hour, 4)
+    vel["pct_per_day"] = round(pct_per_hour * 24.0, 4)
+
+    hours_to_exhaustion: float | None = None
+    exhausted_at = float(thresholds["exhausted_at"])
+    if pct_per_hour > 0:
+        hours_to_exhaustion = (exhausted_at - latest_pct) / pct_per_hour
+        vel["hours_to_exhaustion"] = round(hours_to_exhaustion, 4)
+
+    reset_dt = _parse_dt(reset_at) or _reset_at_for_worker(worker_id, pool, pairs)
+    if reset_dt is None:
+        reset_dt = t_earliest + timedelta(hours=cfg["assumed_reset_hours_if_unknown"])
+
+    projected: bool | None = None
+    if hours_to_exhaustion is not None and hours_to_exhaustion > 0:
+        exhaustion_at = now + timedelta(hours=hours_to_exhaustion)
+        projected = exhaustion_at < reset_dt
+    elif pct_per_hour <= 0:
+        projected = False
+
+    return vel, projected, hours_to_exhaustion
+
+
+def _velocity_state_from_projection(
+    projected: bool | None,
+    hours_to_exhaustion: float | None,
+    policy: dict[str, Any],
+) -> str:
+    cfg = _velocity_config(policy)
+    state = "NORMAL"
+    if projected is True:
+        state = _max_state(state, "CONSERVE")
+    if (
+        hours_to_exhaustion is not None
+        and hours_to_exhaustion > 0
+        and hours_to_exhaustion <= cfg["reserve_if_exhaustion_within_hours"]
+    ):
+        state = _max_state(state, "RESERVE")
+    return state
+
+
+def _velocity(worker_id: str, pool: str | None, now: datetime, policy: dict[str, Any] | None = None) -> dict[str, Any]:
+    effective_policy = policy or fail_closed_policy()
+    thresholds = _worker_thresholds(worker_id, effective_policy)
+    vel, _, _ = _velocity_projection(worker_id, pool, now, effective_policy, thresholds, None, None)
+    return vel
 
 
 def _effective_pct(
@@ -395,22 +553,6 @@ def _unknown_state(worker_id: str, policy: dict[str, Any]) -> str:
     return unknown_cfg.get(worker_id, unknown_cfg.get(GROK_WORKER_ID, unknown_default))
 
 
-def _projected_exhaustion(
-    effective_pct: float | None,
-    velocity_pct_per_day: float | None,
-    reset_at: datetime | None,
-    now: datetime,
-) -> bool | None:
-    if effective_pct is None or velocity_pct_per_day is None or reset_at is None:
-        return None
-    if velocity_pct_per_day <= 0:
-        return False
-    hours_to_reset = max((reset_at - now).total_seconds() / 3600.0, 0.0)
-    days_to_reset = hours_to_reset / 24.0
-    projected = effective_pct + velocity_pct_per_day * days_to_reset
-    return projected >= 100.0
-
-
 def worker_capacity_record(
     worker_id: str,
     obs: dict[str, Any] | None,
@@ -435,7 +577,7 @@ def worker_capacity_record(
                 "included_usage_pct": {},
                 "remaining": None,
                 "reset_at": None,
-                "velocity": _velocity(worker_id, pool, now),
+                "velocity": _velocity(worker_id, pool, now, policy),
                 "projected_exhaustion_before_reset": None,
                 "on_demand": "UNKNOWN",
                 "source": "local",
@@ -452,7 +594,7 @@ def worker_capacity_record(
             "included_usage_pct": {},
             "remaining": None,
             "reset_at": None,
-            "velocity": _velocity(worker_id, pool, now),
+            "velocity": _velocity(worker_id, pool, now, policy),
             "projected_exhaustion_before_reset": None,
             "on_demand": "UNKNOWN",
             "source": None,
@@ -483,7 +625,7 @@ def worker_capacity_record(
             "included_usage_pct": pct_map,
             "remaining": obs.get("remaining"),
             "reset_at": obs.get("reset_at"),
-            "velocity": _velocity(worker_id, pool, now),
+            "velocity": _velocity(worker_id, pool, now, policy),
             "projected_exhaustion_before_reset": None,
             "on_demand": obs.get("on_demand", "UNKNOWN"),
             "source": obs.get("source") or "local",
@@ -501,7 +643,7 @@ def worker_capacity_record(
             "included_usage_pct": pct_map,
             "remaining": obs.get("remaining"),
             "reset_at": obs.get("reset_at"),
-            "velocity": _velocity(worker_id, pool, now),
+            "velocity": _velocity(worker_id, pool, now, policy),
             "projected_exhaustion_before_reset": None,
             "on_demand": obs.get("on_demand", "UNKNOWN"),
             "source": obs.get("source"),
@@ -512,6 +654,10 @@ def worker_capacity_record(
             "grok_available": grok_avail,
         }
 
+    timestamp_issue = False
+    if pool:
+        timestamp_issue, _ = _newest_pool_record_issue(worker_id, pool, now, max_age_h)
+
     effective = _effective_pct(observed_pct, observed_at, now, decay_rate)
     state = _state_from_pct(effective, thresholds)
 
@@ -520,13 +666,20 @@ def worker_capacity_record(
         if age_h > max_age_h:
             state = _max_state(state, "CONSERVE")
 
-    vel = _velocity(worker_id, pool, now)
-    reset_dt = _parse_dt(obs.get("reset_at"))
-    projected = _projected_exhaustion(effective, vel.get("pct_per_day"), reset_dt, now)
-    if projected is True:
+    if timestamp_issue:
         state = _max_state(state, "CONSERVE")
-    if projected is False:
-        pass  # explicit false case preserved
+
+    vel, projected, hours_to_exhaustion = _velocity_projection(
+        worker_id,
+        pool,
+        now,
+        policy,
+        thresholds,
+        effective,
+        obs.get("reset_at"),
+    )
+    vel_state = _velocity_state_from_projection(projected, hours_to_exhaustion, policy)
+    state = _max_state(state, vel_state)
 
     if worker_id == policy.get("grok_worker_id", GROK_WORKER_ID) and not grok_avail:
         state = "EXHAUSTED"

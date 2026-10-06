@@ -15,6 +15,7 @@ from . import worker_registry
 from .adapters import live_gate
 from .governance import (
     HARDCODED_FAIL_CLOSED_ORDER,
+    HARDCODED_GROK_CONSERVE_CONDUCT,
     GROK_WORKER_ID,
     PolicyLoad,
     append_audit_event,
@@ -64,6 +65,8 @@ class Decision:
     quality_floor_waived_reason: str | None = None
     routing_policy_sha256: str | None = None
     requested_worker_rejected: str | None = None
+    completion_event_format: str | None = None
+    grok_conserve_conduct: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -89,6 +92,8 @@ class Decision:
             "quality_floor_waived_reason": self.quality_floor_waived_reason,
             "routing_policy_sha256": self.routing_policy_sha256,
             "requested_worker_rejected": self.requested_worker_rejected,
+            "completion_event_format": self.completion_event_format,
+            "grok_conserve_conduct": self.grok_conserve_conduct,
         }
 
 
@@ -465,6 +470,26 @@ def _resolve_task_class(work_item: dict[str, Any]) -> tuple[str | None, str | No
     return task_class, None
 
 
+def _grok_conserve_conduct(policy: dict[str, Any] | None) -> dict[str, Any]:
+    conduct = (policy or {}).get("grok_conserve_conduct") or {}
+    if not isinstance(conduct, dict):
+        conduct = {}
+    return {
+        "no_grok_when_other_qualified": conduct.get(
+            "no_grok_when_other_qualified",
+            HARDCODED_GROK_CONSERVE_CONDUCT["no_grok_when_other_qualified"],
+        ),
+        "polling": conduct.get("polling", HARDCODED_GROK_CONSERVE_CONDUCT["polling"]),
+        "completion_events": conduct.get(
+            "completion_events",
+            HARDCODED_GROK_CONSERVE_CONDUCT["completion_events"],
+        ),
+        "vesper_reserved_for": list(
+            conduct.get("vesper_reserved_for", HARDCODED_GROK_CONSERVE_CONDUCT["vesper_reserved_for"])
+        ),
+    }
+
+
 def _verify_grok_reason(
     code: str | None,
     justification: str | None,
@@ -476,6 +501,8 @@ def _verify_grok_reason(
     allowed_codes: list[str],
     penalty: float,
     hard_block_at: float,
+    *,
+    conduct: dict[str, Any] | None = None,
 ) -> tuple[str, str]:
     """Return (verdict, detail). verdict: ACCEPTED | REJECTED | NOT_APPLICABLE."""
     min_len = int(policy.get("grok_justification_min_length", 20))
@@ -491,6 +518,15 @@ def _verify_grok_reason(
 
     if penalty >= hard_block_at and code != "OTHERS_UNAVAILABLE":
         return "REJECTED", "GROK_JUSTIFICATION_INVALID:penalty_hard_block"
+
+    conduct_cfg = conduct or _grok_conserve_conduct(policy)
+    if (
+        STATE_RANK.get(grok_state, 0) >= STATE_RANK["CONSERVE"]
+        and conduct_cfg.get("no_grok_when_other_qualified")
+        and eligible_non_grok
+        and code in ("BENCHMARK_SELECTED", "REQUIRES_GROK_ENVIRONMENT")
+    ):
+        return "REJECTED", "GROK_CONSERVE_CONDUCT:no_grok_when_other_qualified"
 
     if code == "BENCHMARK_SELECTED":
         band = _tie_band_workers(bench_class, routing, delta)
@@ -607,14 +643,26 @@ def decide(
         bench_class = task_class
 
     family = task_family(task_class, effective_policy)
-    protected = is_protected_class(task_class, effective_policy)
-    delegatable = not protected
+    conduct_cfg = _grok_conserve_conduct(effective_policy)
     grok_id = grok_worker_id(effective_policy)
     workers_cap = capacity.get("workers") or {}
     capacity_states = {w: (workers_cap.get(w) or {}).get("state", "UNKNOWN") for w in workers_cap}
     grok_rec = workers_cap.get(grok_id) or {}
     grok_state = grok_rec.get("state", "CONSERVE")
     grok_avail = grok_rec.get("grok_available") is True
+    grok_conserve_or_stricter = STATE_RANK.get(grok_state, 0) >= STATE_RANK["CONSERVE"]
+    vesper_reserved = set(conduct_cfg.get("vesper_reserved_for") or [])
+    final_gate_reserved = task_class == "final_gate" and "final_gate" in vesper_reserved
+    protected = is_protected_class(task_class, effective_policy) or (
+        final_gate_reserved and grok_state not in ("EXHAUSTED",) and grok_avail
+    )
+    delegatable = not protected
+    completion_event_format: str | None = None
+    decision_conduct: dict[str, Any] | None = None
+    if grok_conserve_or_stricter:
+        decision_conduct = conduct_cfg
+        if conduct_cfg.get("completion_events") == "COMPACT":
+            completion_event_format = "COMPACT"
 
     reserve_cfg = policy.get("grok_reserve") or {}
     allowed_by_state = reserve_cfg.get("allowed_reason_codes_by_state") or {}
@@ -673,7 +721,17 @@ def decide(
             }
 
         if worker == grok_id:
-            if not grok_avail:
+            if (
+                grok_conserve_or_stricter
+                and conduct_cfg.get("polling") == "FORBIDDEN"
+                and task_class in ("polling", "status_poll")
+            ):
+                scored["eligible"] = False
+                scored["exclusion_reason"] = "grok_conserve_polling_forbidden"
+            elif grok_conserve_or_stricter and task_class == "routine_review":
+                scored["eligible"] = False
+                scored["exclusion_reason"] = "grok_conserve_routine_review"
+            elif not grok_avail:
                 scored["eligible"] = False
                 scored["exclusion_reason"] = "grok_unavailable"
             elif protected:
@@ -697,6 +755,7 @@ def decide(
                 verdict, detail = _verify_grok_reason(
                     grok_code, grok_just, bench_class, policy, routing,
                     eligible_non_grok, grok_state, allowed_codes, penalty, hard_block_at,
+                    conduct=conduct_cfg,
                 )
                 if verdict == "REJECTED":
                     scored["eligible"] = False
@@ -779,7 +838,11 @@ def decide(
     elif canonical_requested:
         if worker_registry.is_metered(canonical_requested):
             requested_worker_rejected = "metered"
-            decision_type = "QUEUE"
+            if ranked_eligible:
+                selected = ranked_eligible[0]["worker"]
+                decision_type = "DISPATCH"
+            else:
+                decision_type = "QUEUE"
         elif canonical_requested == grok_id:
             req_c = next(
                 (c for c in candidates_scored if c["worker"] == grok_id and c.get("eligible")),
@@ -793,9 +856,18 @@ def decide(
                 requested_worker_rejected = (
                     (req_row or {}).get("exclusion_reason") or "grok_ineligible"
                 )
-                decision_type = "QUEUE"
+                if ranked_eligible:
+                    selected = ranked_eligible[0]["worker"]
+                    decision_type = "DISPATCH"
+                else:
+                    decision_type = "QUEUE"
         elif policy_load.mode == "FAIL_CLOSED" and canonical_requested not in HARDCODED_FAIL_CLOSED_ORDER:
             requested_worker_rejected = requested_worker_rejected or "policy_fail_closed"
+            if ranked_eligible:
+                selected = ranked_eligible[0]["worker"]
+                decision_type = "DISPATCH"
+            else:
+                decision_type = "QUEUE"
         else:
             req_c = next(
                 (c for c in candidates_scored if c["worker"] == canonical_requested and c.get("eligible")),
@@ -814,8 +886,15 @@ def decide(
                 if ranked_eligible:
                     selected = ranked_eligible[0]["worker"]
                     decision_type = "DISPATCH"
+                else:
+                    decision_type = "QUEUE"
     elif requested:
-        decision_type = "QUEUE"
+        requested_worker_rejected = requested_worker_rejected or "unknown"
+        if ranked_eligible:
+            selected = ranked_eligible[0]["worker"]
+            decision_type = "DISPATCH"
+        else:
+            decision_type = "QUEUE"
     elif ranked_eligible:
         selected = ranked_eligible[0]["worker"]
         decision_type = "DISPATCH"
@@ -826,6 +905,7 @@ def decide(
         grok_verdict, detail = _verify_grok_reason(
             grok_code, grok_just, bench_class, policy, routing,
             eligible_non_grok, grok_state, allowed_codes, penalty, hard_block_at,
+            conduct=conduct_cfg,
         )
     elif requested == grok_id and not grok_code:
         grok_verdict = "REJECTED"
@@ -851,6 +931,7 @@ def decide(
             _, audit_detail = _verify_grok_reason(
                 grok_code, grok_just, bench_class, policy, routing,
                 eligible_non_grok, grok_state, allowed_codes, penalty, hard_block_at,
+                conduct=conduct_cfg,
             )
             if not audit_detail:
                 audit_detail = "GROK_JUSTIFICATION_INVALID:missing_code"
@@ -914,6 +995,8 @@ def decide(
         quality_floor_waived_reason=quality_floor_waived_reason,
         routing_policy_sha256=routing_sha,
         requested_worker_rejected=requested_worker_rejected,
+        completion_event_format=completion_event_format,
+        grok_conserve_conduct=decision_conduct,
     )
 
     if record:

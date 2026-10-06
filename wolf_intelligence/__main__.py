@@ -74,6 +74,12 @@ def main(argv: list[str] | None = None) -> int:
     g_dec.add_argument("--now", default=None)
     g_scope = gov_sub.add_parser("scope-check")
     g_scope.add_argument("argv", nargs=argparse.REMAINDER)
+    g_obs = gov_sub.add_parser("observe")
+    g_obs.add_argument("--worker", required=True)
+    g_obs.add_argument("--pool", required=True)
+    g_obs.add_argument("--pct", type=float, required=True)
+    g_obs.add_argument("--observed-at", required=True)
+    g_obs.add_argument("--source", default="owner_observed")
 
     args = p.parse_args(argv)
 
@@ -192,13 +198,16 @@ def main(argv: list[str] | None = None) -> int:
             ctx = new_orchestrator_session()
             pl = ctx["policy_load"]
             tightening = load_tightening(pl.policy)
+            policy = pl.policy or {}
             print(json.dumps({
                 "policy_mode": pl.mode,
                 "policy_sha256": pl.sha256,
                 "policy_sha256_prefix": pl.sha256[:12] if pl.sha256 else "",
-                "policy_id": (pl.policy or {}).get("policy_id"),
+                "policy_id": policy.get("policy_id"),
                 "capacity": ctx["capacity"],
                 "grok_routing_penalty": tightening.get("grok_routing_penalty", 0.0),
+                "grok_conserve_conduct": policy.get("grok_conserve_conduct"),
+                "velocity": policy.get("velocity"),
                 "errors": pl.errors,
             }, indent=2))
             return 0
@@ -247,6 +256,47 @@ def main(argv: list[str] | None = None) -> int:
             payload = scope_check_json(argv, os.getcwd(), dict(os.environ))
             print(json.dumps(payload, indent=2))
             return 0 if payload["ok"] else 1
+        if args.gov_cmd == "observe":
+            from datetime import datetime
+
+            from .capacity import TZ, record_observation
+
+            allowed_sources = {"owner_observed", "api", "ledger_derived"}
+            source = (args.source or "owner_observed").strip()
+            if source not in allowed_sources:
+                print(json.dumps({
+                    "ok": False,
+                    "error": "invalid_source",
+                    "allowed": sorted(allowed_sources),
+                }, indent=2))
+                return 2
+            if not (0 <= args.pct <= 100):
+                print(json.dumps({"ok": False, "error": "invalid_pct", "pct": args.pct}, indent=2))
+                return 2
+            try:
+                observed_dt = datetime.fromisoformat(args.observed_at)
+            except ValueError:
+                print(json.dumps({
+                    "ok": False,
+                    "error": "invalid_observed_at",
+                    "observed_at": args.observed_at,
+                }, indent=2))
+                return 2
+            if observed_dt.tzinfo is None:
+                print(json.dumps({
+                    "ok": False,
+                    "error": "naive_observed_at",
+                    "observed_at": args.observed_at,
+                }, indent=2))
+                return 2
+            rec = record_observation(
+                worker_id=args.worker.strip(),
+                included_usage_pct={args.pool.strip(): float(args.pct)},
+                source=source,
+                observed_at=args.observed_at,
+            )
+            print(json.dumps({"ok": True, "observation": rec}, indent=2))
+            return 0
     return 2
 
 

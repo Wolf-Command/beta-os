@@ -33,7 +33,9 @@
       "large_context",
       "structured_extraction",
       "ux_product",
-      "vision_document"
+      "vision_document",
+      "final_gate",
+      "routine_review"
     ],
     "protected": [
       "owner_conversation",
@@ -42,7 +44,7 @@
       "recovery_communication",
       "critical_synthesis"
     ],
-    "operations": ["state_update", "evidence_collection", "recovery"]
+    "operations": ["state_update", "evidence_collection", "recovery", "polling", "status_poll"]
   },
   "quality_floors": {
     "default": 0.5,
@@ -58,7 +60,11 @@
     "testing": "coding",
     "state_update": "structured_extraction",
     "evidence_collection": "structured_extraction",
-    "recovery": "structured_extraction"
+    "recovery": "structured_extraction",
+    "final_gate": "reasoning_planning",
+    "routine_review": "reasoning_planning",
+    "polling": "structured_extraction",
+    "status_poll": "structured_extraction"
   },
   "routing_policy_path": "routing-policy-real.json",
   "specialisation": {
@@ -98,6 +104,19 @@
       "default": "CONSERVE",
       "grok_bot_sub": "CONSERVE"
     }
+  },
+  "velocity": {
+    "window_hours": 168,
+    "min_points": 2,
+    "min_span_minutes": 10,
+    "reserve_if_exhaustion_within_hours": 48,
+    "assumed_reset_hours_if_unknown": 168
+  },
+  "grok_conserve_conduct": {
+    "no_grok_when_other_qualified": true,
+    "polling": "FORBIDDEN",
+    "completion_events": "COMPACT",
+    "vesper_reserved_for": ["final_gate"]
   },
   "grok_reserve": {
     "protected_classes": [

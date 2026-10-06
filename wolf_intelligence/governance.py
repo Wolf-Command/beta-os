@@ -61,6 +61,21 @@ HARDCODED_TASK_FAMILIES: dict[str, list[str]] = {
     "operations": ["state_update", "evidence_collection", "recovery"],
 }
 
+HARDCODED_VELOCITY: dict[str, Any] = {
+    "window_hours": 168,
+    "min_points": 2,
+    "min_span_minutes": 10,
+    "reserve_if_exhaustion_within_hours": 48,
+    "assumed_reset_hours_if_unknown": 168,
+}
+
+HARDCODED_GROK_CONSERVE_CONDUCT: dict[str, Any] = {
+    "no_grok_when_other_qualified": True,
+    "polling": "FORBIDDEN",
+    "completion_events": "COMPACT",
+    "vesper_reserved_for": ["final_gate"],
+}
+
 HARDCODED_BENCHMARK_CLASS_MAP: dict[str, str] = {
     "review": "reasoning_planning",
     "analysis": "reasoning_planning",
@@ -403,6 +418,29 @@ def validate_policy_invariants(policy: dict[str, Any]) -> list[str]:
             errors.append(
                 f"invariant: capacity_thresholds.{name} must be monotonic 0 <= conserve < reserve < exhausted <= 100"
             )
+    vel = policy.get("velocity") or {}
+    if not isinstance(vel, dict):
+        errors.append("invariant: velocity must be object")
+        vel = {}
+    for key, spec in HARDCODED_VELOCITY.items():
+        val = vel.get(key)
+        if not _is_finite_number(val):
+            errors.append(f"invariant: velocity.{key} must be a finite number")
+        elif key == "min_points" and (not isinstance(val, int) or isinstance(val, bool) or val < 2):
+            errors.append("invariant: velocity.min_points must be integer >= 2")
+        elif key in ("window_hours", "assumed_reset_hours_if_unknown") and val <= 0:
+            errors.append(f"invariant: velocity.{key} must be > 0")
+        elif key == "min_span_minutes" and val < 0:
+            errors.append("invariant: velocity.min_span_minutes must be >= 0")
+        elif key == "reserve_if_exhaustion_within_hours" and val < 0:
+            errors.append("invariant: velocity.reserve_if_exhaustion_within_hours must be >= 0")
+    conduct = policy.get("grok_conserve_conduct") or {}
+    if not isinstance(conduct, dict):
+        errors.append("invariant: grok_conserve_conduct must be object")
+        conduct = {}
+    for key, expected in HARDCODED_GROK_CONSERVE_CONDUCT.items():
+        if conduct.get(key) != expected:
+            errors.append(f"invariant: grok_conserve_conduct.{key} must be {expected!r}")
     for pen_key in ("grok_routing_penalty_default", "grok_routing_penalty_step", "grok_routing_penalty_max"):
         val = policy.get(pen_key)
         if val is not None and (not _is_finite_number(val) or val < 0):
@@ -591,6 +629,8 @@ def fail_closed_policy() -> dict[str, Any]:
             "max_observation_age_hours": 24,
             "unknown_state": {"default": "CONSERVE", GROK_WORKER_ID: "CONSERVE"},
         },
+        "velocity": dict(HARDCODED_VELOCITY),
+        "grok_conserve_conduct": dict(HARDCODED_GROK_CONSERVE_CONDUCT),
         "grok_justification_min_length": MIN_JUSTIFICATION_LENGTH,
         "tie_band_quality_delta": 0.05,
         "fail_closed_conservative_order": list(HARDCODED_FAIL_CLOSED_ORDER),
