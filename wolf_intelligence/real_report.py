@@ -15,22 +15,24 @@ from . import real_evidence, routing_policy, worker_registry
 from .paths import CONFIG_DIR
 
 LABELS = {"claude_pro_sub": "Claude Pro (subscription)", "codex_sub": "ChatGPT/Codex (subscription)",
-          "cursor_sub": "Cursor (subscription)", "grok_bot_sub": "Grok Bot (subscription, pull-only)",
-          "gemini_free": "Gemini (free path)", "ollama_local": "Ollama llama3.2:3b (local)",
+          "cursor_sub": "Cursor (subscription)", "grok_bot_sub": "Grok Bot (subscription, event-driven doorbell + lease)",
+          "gemini_api": "Gemini API (billing unverified)", "ollama_local": "Ollama llama3.2:3b (local)",
           "anthropic_api": "Anthropic API (metered)", "openai_api": "OpenAI API (metered)",
           "xai_api": "xAI API (metered)", "gemini_paid": "Gemini paid (metered)"}
 
 
 def owner_bucket(w: str, r: dict) -> str:
     st = r["commissioning_state"]
-    if "WI_CONNECTED" in st and "NOT_WI" not in st:
-        return "CONNECTED"
-    if "pull-mode PASS" in st:
-        return "NEEDS YOU"
-    if st.startswith("GATED"):
-        return "GATED (metered; stays off unless Owner approves)" if w == "anthropic_api" else "NOT CONFIGURED"
+    if st == worker_registry.METERED_STATE:
+        return "GATED (metered; stays off unless Owner approves)"
     if st.startswith("NOT_CONFIGURED"):
         return "NOT CONFIGURED"
+    if "WOLF DISPATCH PARTIAL" in st:
+        return "PARTIAL (event-driven doorbell + lease)"
+    if "NOT CONNECTED" in st:
+        return "NOT CONNECTED"
+    if "CONNECTED" in st:
+        return "CONNECTED"
     return "FAILED"
 
 

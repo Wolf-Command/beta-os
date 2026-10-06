@@ -1,4 +1,4 @@
-"""Subscription / free / local workers driven through their own CLIs or local APIs.
+"""Subscription / billing-unverified API / local workers driven through their own CLIs or local APIs.
 
 Billing is decided EXPLICITLY here, never by environment precedence:
 
@@ -11,7 +11,7 @@ Billing is decided EXPLICITLY here, never by environment precedence:
   does not report the subscription login, the call is refused (BILLING_MISMATCH)
   and no model call is made.
 * These workers are outside the metered cost-cap path (they are flat-rate
-  subscription, free tier or local) but every result carries billing_class.
+  subscription, billing-unverified API key or local) but every result carries billing_class.
 
 Never logs or returns secret values.
 """
@@ -389,10 +389,10 @@ class CursorSubAdapter(_CliSubAdapter):
                 shutil.rmtree(workspace, ignore_errors=True)
 
 
-# --------------------------------------------------------------------------- Gemini free
+# --------------------------------------------------------------------------- Gemini (billing unverified)
 GEMINI_CRED_FILE_ENV = "WOLF_INTELLIGENCE_GEMINI_CRED_FILE"
 DEFAULT_GEMINI_CRED = HOME / ".openclaw" / "credentials" / "google-gemini.json"
-GEMINI_FREE_MODELS = ("gemini-flash-latest", "gemini-flash-lite-latest")
+GEMINI_FLASH_ALLOWLIST = ("gemini-flash-latest", "gemini-flash-lite-latest")
 
 
 def _gemini_key() -> tuple[str, str]:
@@ -410,25 +410,25 @@ def _gemini_key() -> tuple[str, str]:
     return "", "none"
 
 
-class GeminiFreeAdapter(_CliSubAdapter):
-    worker_id = "gemini_free"
-    label = "Gemini API — free path (flash models only)"
-    billing_class = "free"
+class GeminiApiAdapter(_CliSubAdapter):
+    worker_id = "gemini_api"
+    label = "Gemini API — billing unverified (flash allowlist only)"
+    billing_class = "billing_unverified"
 
     def preflight(self) -> AdapterResult:
         key, src = _gemini_key()
-        facts = {"key_source": src, "key_present": bool(key), "allowed_models": list(GEMINI_FREE_MODELS),
-                 "billing_note": "Owner-declared free path. Project billing status is not observable from the key; "
+        facts = {"key_source": src, "key_present": bool(key), "allowed_models": list(GEMINI_FLASH_ALLOWLIST),
+                 "billing_note": "Billing UNVERIFIED. Project billing status is not observable from the key; "
                                  "only flash models are allowed; per-response serviceTier is recorded."}
         if not key:
             return AdapterResult(False, "UNAVAILABLE", "no Gemini key configured", facts)
-        return AdapterResult(True, "CONNECTED", "Gemini key present (free path, flash only)", facts)
+        return AdapterResult(True, "CONNECTED", "Gemini key present (billing unverified, flash allowlist only)", facts)
 
     def _live(self, job: dict[str, Any]) -> AdapterResult:
         key, _src = _gemini_key()
-        model = str(job.get("model") or GEMINI_FREE_MODELS[0])
-        if model not in GEMINI_FREE_MODELS:
-            raise ValueError(f"model {model} not on the Gemini free allowlist")
+        model = str(job.get("model") or GEMINI_FLASH_ALLOWLIST[0])
+        if model not in GEMINI_FLASH_ALLOWLIST:
+            raise ValueError(f"model {model} not on the Gemini flash allowlist")
         parts: list[dict[str, Any]] = [{"text": str(job.get("prompt") or "")}]
         for f in job.get("files") or []:
             ext = Path(f).suffix.lower()
@@ -467,7 +467,7 @@ class GeminiFreeAdapter(_CliSubAdapter):
         if not text:
             data["error_excerpt"] = safe_excerpt(json.dumps(body)[:600], [key])
             return AdapterResult(False, "ERROR", "empty Gemini response", data)
-        return AdapterResult(True, "LIVE_OK", "gemini free path", data)
+        return AdapterResult(True, "LIVE_OK", "gemini flash allowlist (billing unverified)", data)
 
 
 # --------------------------------------------------------------------------- Ollama local
@@ -514,5 +514,5 @@ class OllamaLocalAdapter(_CliSubAdapter):
 register(ClaudeProSubAdapter())
 register(CodexSubAdapter())
 register(CursorSubAdapter())
-register(GeminiFreeAdapter())
+register(GeminiApiAdapter())
 register(OllamaLocalAdapter())

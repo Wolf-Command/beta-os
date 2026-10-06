@@ -1,4 +1,6 @@
 {
+ "status": "DRAFT - NOT WIRED. Benchmark-derived preferences only; not read by router.py, dispatcher.py, real_dispatch.py or grok_bridge.py. Owner order 2026-10-06 09:03 WITA: do not promote.",
+ "wired": false,
  "generated_at": "2026-10-06T08:47:21+08:00",
  "evidence_class": "REAL",
  "source": "records/bench_runs.jsonl (REAL only)",
@@ -21,7 +23,7 @@
      "failure_modes": []
     },
     {
-     "worker": "gemini_free",
+     "worker": "gemini_api",
      "mean_quality": 1.0,
      "n": 1,
      "median_latency_ms": 10184.9,
@@ -55,20 +57,20 @@
    "preferred": null,
    "tied_top": [
     "claude_pro_sub",
-    "gemini_free",
+    "gemini_api",
     "codex_sub",
     "cursor_sub"
    ],
    "fast_acceptable": [
     "claude_pro_sub",
-    "gemini_free",
+    "gemini_api",
     "codex_sub",
     "cursor_sub"
    ],
    "confidence": "low (n=1 per worker; margin 0.00)",
    "order": [
     "claude_pro_sub",
-    "gemini_free",
+    "gemini_api",
     "codex_sub",
     "cursor_sub",
     "ollama_local"
@@ -77,7 +79,7 @@
   "debugging": {
    "ranking": [
     {
-     "worker": "gemini_free",
+     "worker": "gemini_api",
      "mean_quality": 1.0,
      "n": 1,
      "median_latency_ms": 8341.0,
@@ -117,20 +119,20 @@
    "unsupported": [],
    "preferred": null,
    "tied_top": [
-    "gemini_free",
+    "gemini_api",
     "codex_sub",
     "claude_pro_sub",
     "cursor_sub"
    ],
    "fast_acceptable": [
-    "gemini_free",
+    "gemini_api",
     "codex_sub",
     "claude_pro_sub",
     "cursor_sub"
    ],
    "confidence": "low (n=1 per worker; margin 0.00)",
    "order": [
-    "gemini_free",
+    "gemini_api",
     "codex_sub",
     "claude_pro_sub",
     "cursor_sub",
@@ -140,7 +142,7 @@
   "security": {
    "ranking": [
     {
-     "worker": "gemini_free",
+     "worker": "gemini_api",
      "mean_quality": 1.0,
      "n": 1,
      "median_latency_ms": 11307.5,
@@ -180,20 +182,20 @@
    "unsupported": [],
    "preferred": null,
    "tied_top": [
-    "gemini_free",
+    "gemini_api",
     "claude_pro_sub",
     "codex_sub",
     "cursor_sub"
    ],
    "fast_acceptable": [
-    "gemini_free",
+    "gemini_api",
     "claude_pro_sub",
     "codex_sub",
     "cursor_sub"
    ],
    "confidence": "low (n=1 per worker; margin 0.00)",
    "order": [
-    "gemini_free",
+    "gemini_api",
     "claude_pro_sub",
     "codex_sub",
     "cursor_sub",
@@ -217,7 +219,7 @@
      "failure_modes": []
     },
     {
-     "worker": "gemini_free",
+     "worker": "gemini_api",
      "mean_quality": 1.0,
      "n": 1,
      "median_latency_ms": 24133.4,
@@ -247,18 +249,18 @@
    "tied_top": [
     "claude_pro_sub",
     "codex_sub",
-    "gemini_free"
+    "gemini_api"
    ],
    "fast_acceptable": [
     "claude_pro_sub",
     "codex_sub",
-    "gemini_free"
+    "gemini_api"
    ],
    "confidence": "low (n=1 per worker; margin 0.00)",
    "order": [
     "claude_pro_sub",
     "codex_sub",
-    "gemini_free",
+    "gemini_api",
     "cursor_sub",
     "ollama_local"
    ]
@@ -287,7 +289,7 @@
      "failure_modes": []
     },
     {
-     "worker": "gemini_free",
+     "worker": "gemini_api",
      "mean_quality": 0.916,
      "n": 1,
      "median_latency_ms": 10543.7,
@@ -313,21 +315,21 @@
     "codex_sub",
     "claude_pro_sub",
     "cursor_sub",
-    "gemini_free"
+    "gemini_api"
    ],
    "confidence": "low (n=1 per worker; margin 0.04)",
    "order": [
     "codex_sub",
     "claude_pro_sub",
     "cursor_sub",
-    "gemini_free",
+    "gemini_api",
     "ollama_local"
    ]
   },
   "large_context": {
    "ranking": [
     {
-     "worker": "gemini_free",
+     "worker": "gemini_api",
      "mean_quality": 1.0,
      "n": 1,
      "median_latency_ms": 9059.0,
@@ -367,20 +369,20 @@
    "unsupported": [],
    "preferred": null,
    "tied_top": [
-    "gemini_free",
+    "gemini_api",
     "claude_pro_sub",
     "codex_sub",
     "cursor_sub"
    ],
    "fast_acceptable": [
-    "gemini_free",
+    "gemini_api",
     "claude_pro_sub",
     "codex_sub",
     "cursor_sub"
    ],
    "confidence": "low (n=1 per worker; margin 0.00)",
    "order": [
-    "gemini_free",
+    "gemini_api",
     "claude_pro_sub",
     "codex_sub",
     "cursor_sub",
@@ -390,7 +392,7 @@
   "vision_document": {
    "ranking": [
     {
-     "worker": "gemini_free",
+     "worker": "gemini_api",
      "mean_quality": 1.0,
      "n": 1,
      "median_latency_ms": 5041.4,
@@ -423,20 +425,20 @@
    ],
    "preferred": null,
    "tied_top": [
-    "gemini_free",
+    "gemini_api",
     "claude_pro_sub",
     "codex_sub",
     "cursor_sub"
    ],
    "fast_acceptable": [
-    "gemini_free",
+    "gemini_api",
     "claude_pro_sub",
     "codex_sub",
     "cursor_sub"
    ],
    "confidence": "low (n=1 per worker; margin 0.00)",
    "order": [
-    "gemini_free",
+    "gemini_api",
     "claude_pro_sub",
     "codex_sub",
     "cursor_sub"
@@ -459,7 +461,7 @@
      "failure_modes": []
     },
     {
-     "worker": "gemini_free",
+     "worker": "gemini_api",
      "mean_quality": 1.0,
      "n": 1,
      "median_latency_ms": 11804.0,
@@ -487,20 +489,20 @@
    "tied_top": [
     "claude_pro_sub",
     "codex_sub",
-    "gemini_free",
+    "gemini_api",
     "cursor_sub"
    ],
    "fast_acceptable": [
     "claude_pro_sub",
     "codex_sub",
-    "gemini_free",
+    "gemini_api",
     "cursor_sub"
    ],
    "confidence": "low (n=1 per worker; margin 0.00)",
    "order": [
     "claude_pro_sub",
     "codex_sub",
-    "gemini_free",
+    "gemini_api",
     "cursor_sub",
     "ollama_local"
    ]
@@ -515,7 +517,7 @@
      "failure_modes": []
     },
     {
-     "worker": "gemini_free",
+     "worker": "gemini_api",
      "mean_quality": 1.0,
      "n": 1,
      "median_latency_ms": 10767.1,
@@ -549,20 +551,20 @@
    "preferred": null,
    "tied_top": [
     "claude_pro_sub",
-    "gemini_free",
+    "gemini_api",
     "codex_sub",
     "cursor_sub"
    ],
    "fast_acceptable": [
     "claude_pro_sub",
-    "gemini_free",
+    "gemini_api",
     "codex_sub",
     "cursor_sub"
    ],
    "confidence": "low (n=1 per worker; margin 0.00)",
    "order": [
     "claude_pro_sub",
-    "gemini_free",
+    "gemini_api",
     "codex_sub",
     "cursor_sub",
     "ollama_local"

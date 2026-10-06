@@ -1,4 +1,4 @@
-"""Gemini — beta configured, free; no paid without Owner policy."""
+"""Gemini — beta configured, billing unverified; no paid without Owner policy."""
 from __future__ import annotations
 
 import time
@@ -60,14 +60,14 @@ class GeminiAdapter(WorkerAdapter):
                 True,
                 "CONNECTED",
                 "GEMINI_API_KEY configured; Owner policy=no paid without approval",
-                {"billing": "free", "paid_allowed": False},
+                {"billing": "unverified", "paid_allowed": False},
             )
         if name_present:
             return AdapterResult(
                 False,
                 "UNAVAILABLE",
                 "GEMINI_API_KEY name present in beta .env but value empty; no paid without Owner policy",
-                {"billing": "free", "paid_allowed": False, "key_name_present": True},
+                {"billing": "unverified", "paid_allowed": False, "key_name_present": True},
             )
         return AdapterResult(False, "UNAVAILABLE", "GEMINI_API_KEY not configured")
 
@@ -78,7 +78,7 @@ class GeminiAdapter(WorkerAdapter):
             return self._live(job)
         if not job.get("shadow_isolated"):
             return AdapterResult(False, "SHADOW_SKIPPED", "no live Gemini call in shadow")
-        return AdapterResult(True, "SHADOW_OK", "shadow — free path only", {"billing": "free", "provider_called": False})
+        return AdapterResult(True, "SHADOW_OK", "shadow — flash path only (billing unverified)", {"billing": "unverified", "provider_called": False})
 
     def _live(self, job: dict[str, Any]) -> AdapterResult:
         key = read_secret("GEMINI_API_KEY") or read_secret("GOOGLE_API_KEY")
@@ -91,7 +91,7 @@ class GeminiAdapter(WorkerAdapter):
             max_tokens = max(1, min(int(job.get("num_predict") or 64), 128))
         except (TypeError, ValueError):
             max_tokens = 64
-        # Free tier is expected, but a billed key would be charged: the cap still applies.
+        # Billing is unverified and a billed key would be charged: the cap still applies.
         refusal, cap, estimate = enforce_cost_cap(
             job, model_id=model_id, prompt=str(job.get("prompt") or ""), max_output_tokens=max_tokens
         )
@@ -123,7 +123,7 @@ class GeminiAdapter(WorkerAdapter):
             work_item_id=job.get("work_item_id"),
             amount_usd=0.0,
             metered_usd=0.0,
-            note="gemini free tier; no paid model",
+            note="gemini flash path (billing unverified); no paid model",
             shadow_mode=bool(job.get("shadow_mode")),
             latency_ms=latency_ms,
             status="LIVE_OK",
@@ -134,7 +134,7 @@ class GeminiAdapter(WorkerAdapter):
         return AdapterResult(
             True,
             "LIVE_OK",
-            "gemini generateContent free tier",
+            "gemini generateContent (billing unverified)",
             {
                 "output": output,
                 "latency_ms": latency_ms,
@@ -143,7 +143,7 @@ class GeminiAdapter(WorkerAdapter):
                 "mocked": providers_mocked(),
                 "usage": usage,
                 "took_action": False,
-                "billing": "free",
+                "billing": "unverified",
             },
             usage=usage,
         )

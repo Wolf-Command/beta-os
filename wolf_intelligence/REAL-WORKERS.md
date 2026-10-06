@@ -11,9 +11,9 @@ Built 2026-10-06 (WITA) on branch `build/wi-real-workers-1`, off PR #2 head `4ac
 | codex_sub | subscription | `codex exec --ignore-user-config -s read-only -c forced_login_method="chatgpt"`, OPENAI_API_KEY/CODEX_API_KEY scrubbed, preflight `codex login status` must say ChatGPT | no |
 | openai_api | metered_api | api.openai.com (not configured) | **yes** |
 | cursor_sub | subscription | `cursor-agent --print --mode ask --trust --workspace <scoped temp dir>`, CURSOR_API_KEY scrubbed, preflight `cursor-agent status` | no |
-| grok_bot_sub | subscription | PULL ONLY (see below) | no, not push-dispatchable |
+| grok_bot_sub | subscription | event-driven doorbell + lease (`grok_bridge.py`, see GROK-BRIDGE.md) | no, not push-dispatchable |
 | xai_api | metered_api | not configured | **yes** |
-| gemini_free | free (Owner-declared) | generateContent, flash allowlist only | no |
+| gemini_api | billing_unverified | generateContent, flash allowlist only | no |
 | gemini_paid | metered_api | not configured | **yes** |
 | ollama_local | local | 127.0.0.1:11434 | no |
 

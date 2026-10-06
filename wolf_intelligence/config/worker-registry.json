@@ -173,8 +173,9 @@
    "vision": "EVIDENCED_STRONG",
    "large_context": "EVIDENCED_STRONG",
    "limit_hits": 0,
-   "commissioning_state": "HUMAN_COMMISSIONED + WI_CONNECTED",
-   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+   "commissioning_state": "HUMAN COMMISSIONED / CONNECTED",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker",
+   "commissioning_state_previous": "HUMAN_COMMISSIONED + WI_CONNECTED"
   },
   "anthropic_api": {
    "provider_family": "anthropic",
@@ -250,8 +251,9 @@
    "vision": "UNTESTED",
    "large_context": "UNTESTED",
    "limit_hits": 0,
-   "commissioning_state": "GATED_METERED (needs Owner approval)",
-   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+   "commissioning_state": "GATED",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker",
+   "commissioning_state_previous": "GATED_METERED (needs Owner approval)"
   },
   "codex_sub": {
    "provider_family": "openai",
@@ -420,8 +422,9 @@
    "vision": "EVIDENCED_STRONG",
    "large_context": "EVIDENCED_STRONG",
    "limit_hits": 0,
-   "commissioning_state": "HUMAN_COMMISSIONED + WI_CONNECTED",
-   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+   "commissioning_state": "HUMAN COMMISSIONED / CONNECTED",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker",
+   "commissioning_state_previous": "HUMAN_COMMISSIONED + WI_CONNECTED"
   },
   "openai_api": {
    "provider_family": "openai",
@@ -493,8 +496,9 @@
    "vision": "UNTESTED",
    "large_context": "UNTESTED",
    "limit_hits": 0,
-   "commissioning_state": "NOT_CONFIGURED",
-   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+   "commissioning_state": "GATED",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker",
+   "commissioning_state_previous": "NOT_CONFIGURED"
   },
   "cursor_sub": {
    "provider_family": "cursor",
@@ -660,8 +664,9 @@
    "vision": "EVIDENCED_STRONG",
    "large_context": "EVIDENCED_STRONG",
    "limit_hits": 0,
-   "commissioning_state": "HUMAN_COMMISSIONED + WI_CONNECTED",
-   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+   "commissioning_state": "HUMAN COMMISSIONED / CONNECTED",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker",
+   "commissioning_state_previous": "HUMAN_COMMISSIONED + WI_CONNECTED"
   },
   "grok_bot_sub": {
    "provider_family": "xai_grok_bot",
@@ -744,8 +749,10 @@
    "vision": "UNTESTED",
    "large_context": "UNTESTED",
    "limit_hits": 0,
-   "commissioning_state": "HUMAN_COMMISSIONED / NOT_WI_PUSH_DISPATCHABLE (pull-mode PASS)",
-   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+   "commissioning_state": "HUMAN COMMISSIONED MANUALLY / WOLF DISPATCH PARTIAL",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker",
+   "dispatch_mode": "grok_bridge: WI rings a GitHub-issue doorbell (id + nonce only); a Grok routine on issue-assigned claims a lease via the Studio CLI",
+   "commissioning_state_previous": "HUMAN_COMMISSIONED / NOT_WI_PUSH_DISPATCHABLE (pull-mode PASS)"
   },
   "xai_api": {
    "provider_family": "xai",
@@ -817,33 +824,35 @@
    "vision": "UNTESTED",
    "large_context": "UNTESTED",
    "limit_hits": 0,
-   "commissioning_state": "NOT_CONFIGURED",
-   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+   "commissioning_state": "GATED",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker",
+   "commissioning_state_previous": "NOT_CONFIGURED"
   },
-  "gemini_free": {
+  "gemini_api": {
    "provider_family": "google",
    "execution_path": "generativelanguage v1beta generateContent, flash allowlist",
    "auth_class": "api_key (openclaw credential file)",
-   "billing_class": "free",
-   "cost_class": "free_tier_owner_declared",
+   "billing_class": "billing_unverified",
+   "cost_class": "billing_unverified",
    "allowance_visibility": "NONE (429 on exhaustion)",
    "gated": false,
-   "adapter": "gemini_free",
+   "adapter": "gemini_api",
    "legacy_ids": [
-    "gemini"
+    "gemini",
+    "gemini_free"
    ],
-   "billing_caveat": "free tier is Owner-declared; key's project billing status is not observable from the Studio",
-   "worker_id": "gemini_free",
+   "billing_caveat": "billing UNVERIFIED: the key's project billing status is not observable from the Studio and the Owner has not confirmed it",
+   "worker_id": "gemini_api",
    "configured": null,
    "availability": "CONNECTED",
-   "availability_message": "Gemini key present (free path, flash only)",
+   "availability_message": "Gemini key present (billing unverified, flash allowlist only)",
    "billing_verification": {
     "key_present": true,
     "allowed_models": [
      "gemini-flash-latest",
      "gemini-flash-lite-latest"
     ],
-    "billing_note": "Owner-declared free path. Project billing status is not observable from the key; only flash models are allowed; per-response serviceTier is recorded."
+    "billing_note": "Billing UNVERIFIED. Project billing status is not observable from the key; only flash models are allowed; per-response serviceTier is recorded."
    },
    "routable": true,
    "connectivity_last": {
@@ -987,8 +996,9 @@
    "vision": "EVIDENCED_STRONG",
    "large_context": "EVIDENCED_STRONG",
    "limit_hits": 0,
-   "commissioning_state": "WI_CONNECTED (not human-commissioned)",
-   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+   "commissioning_state": "CONNECTED / BILLING UNVERIFIED / NOT HUMAN COMMISSIONED",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker",
+   "commissioning_state_previous": "WI_CONNECTED (not human-commissioned)"
   },
   "gemini_paid": {
    "provider_family": "google",
@@ -1060,8 +1070,9 @@
    "vision": "UNTESTED",
    "large_context": "UNTESTED",
    "limit_hits": 0,
-   "commissioning_state": "NOT_CONFIGURED",
-   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+   "commissioning_state": "GATED",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker",
+   "commissioning_state_previous": "NOT_CONFIGURED"
   },
   "ollama_local": {
    "provider_family": "ollama",
@@ -1228,8 +1239,14 @@
    "vision": "UNSUPPORTED",
    "large_context": "EVIDENCED_WEAK",
    "limit_hits": 0,
-   "commissioning_state": "WI_CONNECTED (not human-commissioned)",
-   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+   "commissioning_state": "CONNECTED / LOCAL / NOT HUMAN COMMISSIONED",
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker",
+   "commissioning_state_previous": "WI_CONNECTED (not human-commissioned)"
   }
+ },
+ "taxonomy": {
+  "source": "Owner order 2026-10-06 09:03 WITA (Matt)",
+  "applied_by": "worker_registry._commissioning_state (evidence-gated)",
+  "note": "Labels relabelled in place from the 08:47 REAL snapshot; availability, connectivity and benchmark evidence fields are unchanged. gemini_free renamed gemini_api (legacy id kept only to link existing REAL evidence)."
  }
 }

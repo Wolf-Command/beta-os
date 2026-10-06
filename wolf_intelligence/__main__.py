@@ -39,6 +39,36 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("overnight-tick")
     sub.add_parser("stats")
     sub.add_parser("serve-ui")
+    gb = sub.add_parser("grok-bridge", help="event-driven Grok work bridge (claim/lease protocol)")
+    gbs = gb.add_subparsers(dest="gb_cmd", required=True)
+    o = gbs.add_parser("offer")
+    o.add_argument("work_item_id")
+    o.add_argument("--lease-seconds", type=int, default=1800)
+    o.add_argument("--max-attempts", type=int, default=3)
+    cl = gbs.add_parser("claim")
+    cl.add_argument("work_item_id")
+    cl.add_argument("--nonce", required=True)
+    cl.add_argument("--claimant", required=True)
+    rn = gbs.add_parser("renew")
+    rn.add_argument("work_item_id")
+    rn.add_argument("--lease", required=True)
+    co = gbs.add_parser("complete")
+    co.add_argument("work_item_id")
+    co.add_argument("--lease", required=True)
+    src = co.add_mutually_exclusive_group(required=True)
+    src.add_argument("--result-file")
+    src.add_argument("--result-stdin", action="store_true")
+    co.add_argument("--evidence-file")
+    fa = gbs.add_parser("fail")
+    fa.add_argument("work_item_id")
+    fa.add_argument("--lease", required=True)
+    fa.add_argument("--reason", required=True)
+    fa.add_argument("--retryable", action="store_true")
+    gbs.add_parser("release-expired")
+    st = gbs.add_parser("status")
+    st.add_argument("work_item_id")
+    au = gbs.add_parser("audit")
+    au.add_argument("work_item_id", nargs="?")
 
     args = p.parse_args(argv)
 
@@ -148,10 +178,62 @@ def main(argv: list[str] | None = None) -> int:
         from . import stats_store
         print(json.dumps(stats_store.recompute(), indent=2))
         return 0
+    if args.cmd == "grok-bridge":
+        return _grok_bridge(args)
     if args.cmd == "serve-ui":
         from . import owner_ui_server
         return owner_ui_server.main()
     return 2
+
+
+# Exit codes for grok-bridge: 0 ok, 3 protocol rejection (ALREADY_CLAIMED, STALE_LEASE, ...),
+# 2 usage / not found / bad input, 1 internal error. stdout is always exactly one JSON object.
+_GB_USAGE_CODES = {"NOT_FOUND", "NOT_OFFERED", "BAD_LEASE_ID", "EMPTY_RESULT", "RESULT_TOO_LARGE", "ITEM_TERMINAL"}
+
+
+def _grok_bridge(args) -> int:
+    from . import grok_bridge as gb
+    try:
+        c = args.gb_cmd
+        if c == "offer":
+            out = gb.offer(args.work_item_id, lease_seconds=args.lease_seconds, max_attempts=args.max_attempts)
+        elif c == "claim":
+            out = gb.claim(args.work_item_id, claimant=args.claimant, nonce=args.nonce)
+        elif c == "renew":
+            out = gb.renew(args.work_item_id, lease_id=args.lease)
+        elif c == "complete":
+            if args.result_stdin:
+                result = sys.stdin.buffer.read(gb.MAX_RESULT_BYTES + 1)
+            else:
+                with open(args.result_file, "rb") as fh:
+                    result = fh.read(gb.MAX_RESULT_BYTES + 1)
+            evidence = None
+            if args.evidence_file:
+                with open(args.evidence_file, "rb") as fh:
+                    evidence = fh.read(gb.MAX_RESULT_BYTES + 1)
+            out = gb.complete(args.work_item_id, lease_id=args.lease, result=result, evidence=evidence)
+        elif c == "fail":
+            out = gb.fail(args.work_item_id, lease_id=args.lease, reason=args.reason, retryable=args.retryable)
+        elif c == "release-expired":
+            out = gb.release_expired(actor="cli")
+        elif c == "status":
+            out = gb.status(args.work_item_id)
+        elif c == "audit":
+            rows = gb.audit_rows(args.work_item_id)
+            out = {"ok": True, "code": "AUDIT", "work_item_id": args.work_item_id, "rows": rows,
+                   "chain": gb.verify_audit_chain()}
+        else:
+            out = {"ok": False, "code": "USAGE"}
+    except (ValueError, OSError) as exc:
+        print(json.dumps({"ok": False, "code": "BAD_INPUT", "message": str(exc)[:200]}, sort_keys=True))
+        return 2
+    except Exception as exc:  # noqa: BLE001
+        print(json.dumps({"ok": False, "code": "INTERNAL_ERROR", "message": type(exc).__name__}, sort_keys=True))
+        return 1
+    print(json.dumps(out, sort_keys=True, default=str))
+    if out.get("ok"):
+        return 0
+    return 2 if out.get("code") in _GB_USAGE_CODES else 3
 
 
 if __name__ == "__main__":
