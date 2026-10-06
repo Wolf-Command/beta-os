@@ -40,6 +40,16 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("stats")
     sub.add_parser("serve-ui")
 
+    gov = sub.add_parser("governance")
+    gov_sub = gov.add_subparsers(dest="gov_cmd", required=True)
+    gov_sub.add_parser("status")
+    g_dec = gov_sub.add_parser("decide")
+    g_dec.add_argument("--task-class", required=True)
+    g_dec.add_argument("--id", default=None)
+    g_dec.add_argument("--grok-reason", default=None)
+    g_dec.add_argument("--justification", default=None)
+    g_dec.add_argument("--now", default=None)
+
     args = p.parse_args(argv)
 
     if args.cmd == "create":
@@ -151,6 +161,32 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "serve-ui":
         from . import owner_ui_server
         return owner_ui_server.main()
+    if args.cmd == "governance":
+        if args.gov_cmd == "status":
+            from .allocation import new_orchestrator_session
+            ctx = new_orchestrator_session()
+            pl = ctx["policy_load"]
+            print(json.dumps({
+                "policy_mode": pl.mode,
+                "policy_sha256": pl.sha256,
+                "policy_sha256_prefix": pl.sha256[:12] if pl.sha256 else "",
+                "policy_id": (pl.policy or {}).get("policy_id"),
+                "capacity": ctx["capacity"],
+                "grok_routing_penalty": ctx["tightening"].get("grok_routing_penalty", 0.0),
+                "errors": pl.errors,
+            }, indent=2))
+            return 0
+        if args.gov_cmd == "decide":
+            from .allocation import decide_and_record
+            wi = {
+                "id": args.id or "cli-decide",
+                "task_class": args.task_class,
+                "grok_reason_code": args.grok_reason,
+                "grok_justification": args.justification,
+            }
+            dec = decide_and_record(wi, now=args.now)
+            print(json.dumps(dec.to_dict(), indent=2))
+            return 0
     return 2
 
 

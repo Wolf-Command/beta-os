@@ -1,0 +1,130 @@
+{
+  "version": 1,
+  "policy_id": "wi-capacity-governance-2026-10-06",
+  "effective_from": "2026-10-06T09:49:00+08:00",
+  "metered_fallback": "NEVER",
+  "paid_spend": "OFF",
+  "on_demand_policy": "NEVER_ENABLE",
+  "grok_worker_id": "grok_bot_sub",
+  "grok_reason_codes": [
+    "BENCHMARK_SELECTED",
+    "REQUIRES_GROK_ENVIRONMENT",
+    "OTHERS_UNAVAILABLE",
+    "EXPLICIT_JUSTIFIED"
+  ],
+  "grok_justification_min_length": 20,
+  "protected_classes": [
+    "owner_conversation",
+    "orchestration",
+    "exception_handling",
+    "recovery_communication",
+    "critical_synthesis"
+  ],
+  "task_families": {
+    "engineering": ["coding", "debugging", "refactor", "testing"],
+    "reasoning_review": [
+      "reasoning_planning",
+      "review",
+      "red_team",
+      "security",
+      "analysis",
+      "research",
+      "finance",
+      "large_context",
+      "structured_extraction",
+      "ux_product",
+      "vision_document"
+    ],
+    "protected": [
+      "owner_conversation",
+      "orchestration",
+      "exception_handling",
+      "recovery_communication",
+      "critical_synthesis"
+    ],
+    "operations": ["state_update", "evidence_collection", "recovery"]
+  },
+  "quality_floors": {
+    "default": 0.5,
+    "by_task_class": {}
+  },
+  "tie_band_quality_delta": 0.05,
+  "routing_policy_path": "routing-policy-real.json",
+  "specialisation": {
+    "engineering": {
+      "prefer_workers": ["cursor_sub"],
+      "require_included_capacity": true
+    },
+    "reasoning_review": {
+      "prefer_workers": ["claude_pro_sub", "codex_sub"],
+      "tie_break": "work_item_id_hash"
+    }
+  },
+  "primary_capacity_pool": {
+    "cursor_sub": "cursor_models",
+    "grok_bot_sub": "weekly",
+    "claude_pro_sub": "week_all_models",
+    "codex_sub": "week",
+    "ollama_local": null,
+    "gemini_free": null
+  },
+  "capacity_thresholds": {
+    "default": {
+      "conserve_at": 70,
+      "reserve_at": 85,
+      "exhausted_at": 100
+    },
+    "grok_bot_sub": {
+      "conserve_at": 30,
+      "reserve_at": 60,
+      "exhausted_at": 95
+    }
+  },
+  "capacity_decay": {
+    "decay_pct_per_hour": 0.5,
+    "max_observation_age_hours": 24,
+    "unknown_state": {
+      "default": "CONSERVE",
+      "grok_bot_sub": "CONSERVE"
+    }
+  },
+  "grok_reserve": {
+    "protected_classes": [
+      "owner_conversation",
+      "orchestration",
+      "exception_handling",
+      "recovery_communication",
+      "critical_synthesis"
+    ],
+    "allowed_reason_codes_by_state": {
+      "NORMAL": [
+        "BENCHMARK_SELECTED",
+        "REQUIRES_GROK_ENVIRONMENT",
+        "OTHERS_UNAVAILABLE",
+        "EXPLICIT_JUSTIFIED"
+      ],
+      "CONSERVE": ["OTHERS_UNAVAILABLE", "EXPLICIT_JUSTIFIED"],
+      "RESERVE": [],
+      "EXHAUSTED": []
+    }
+  },
+  "grok_routing_penalty_default": 0.0,
+  "grok_routing_penalty_step": 0.15,
+  "grok_routing_penalty_max": 1.0,
+  "imbalance": {
+    "window_hours": 24,
+    "window_decisions": 50,
+    "min_samples": 5,
+    "max_grok_share_delegatable": 0.4,
+    "penalty_step": 0.15,
+    "penalty_max": 1.0
+  },
+  "marginal_cost_order": ["subscription", "free", "local", "metered_api"],
+  "fail_closed_conservative_order": [
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub",
+    "gemini_free",
+    "ollama_local"
+  ]
+}

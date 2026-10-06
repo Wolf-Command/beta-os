@@ -41,8 +41,31 @@ MIRROR_DIR = STATE_ROOT / "mirror"
 BUILD_FACTORY_DIR = BETA_ROOT / "state" / "build-factory"
 FACTORY_HISTORY_PATH = CONFIG_DIR / "factory-history-workers.json"
 
-OWNER_UI_PORT = 8799
 OWNER_UI_HOST = "127.0.0.1"
+UI_PORT_ENV = "WOLF_INTELLIGENCE_UI_PORT"
+FORBIDDEN_UI_PORTS = frozenset({8787, 8788})
+
+
+def owner_ui_port() -> int:
+    """Owner UI listen port. Refuses 8787 and 8788 (production default 8799)."""
+    raw = os.environ.get(UI_PORT_ENV, "8799").strip()
+    try:
+        port = int(raw)
+    except ValueError:
+        port = 8799
+    if port in FORBIDDEN_UI_PORTS:
+        raise ValueError(f"refusing forbidden Owner UI port {port}")
+    return port
+
+
+# Back-compat alias; prefer owner_ui_port() at runtime (tests override via env).
+OWNER_UI_PORT = owner_ui_port() if UI_PORT_ENV in os.environ else 8799
+
+GOVERNANCE_DIR = STATE_ROOT / "governance"
+GOVERNANCE_AUDIT_PATH = GOVERNANCE_DIR / "audit.jsonl"
+GOVERNANCE_DISPATCH_LEDGER_PATH = GOVERNANCE_DIR / "dispatch-ledger.jsonl"
+GOVERNANCE_CAPACITY_OBSERVATIONS_PATH = GOVERNANCE_DIR / "capacity-observations.jsonl"
+GOVERNANCE_TIGHTENING_PATH = GOVERNANCE_DIR / "tightening.json"
 
 # Live provider calls stay off unless the process sets this to 1/true/yes/on.
 LIVE_SUBMIT_ENV = "WOLF_INTELLIGENCE_LIVE_SUBMIT"
@@ -79,5 +102,6 @@ def ensure_dirs() -> None:
         WORKERS_DIR,
         TMP_DIR,
         MIRROR_DIR,
+        GOVERNANCE_DIR,
     ):
         d.mkdir(parents=True, exist_ok=True)

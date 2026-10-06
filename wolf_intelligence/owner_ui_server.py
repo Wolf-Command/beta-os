@@ -20,7 +20,23 @@ from urllib.parse import urlparse
 
 from . import work_items
 from . import stats_store
-from .paths import OWNER_UI_HOST, OWNER_UI_PORT, UI_DIR, UI_TOKEN_ENV, WORKER_STATUS_PATH, ensure_dirs, AUDIT_DIR
+from .paths import OWNER_UI_HOST, UI_DIR, UI_TOKEN_ENV, WORKER_STATUS_PATH, ensure_dirs, AUDIT_DIR, owner_ui_port
+
+# Governance context loaded once at process startup.
+_GOVERNANCE_CTX: dict | None = None
+
+
+def load_governance_startup() -> dict:
+    """Load policy + capacity at startup; recorded for status/decide endpoints."""
+    from .allocation import load_tightening, new_orchestrator_session
+    return new_orchestrator_session()
+
+
+def governance_ctx() -> dict:
+    global _GOVERNANCE_CTX
+    if _GOVERNANCE_CTX is None:
+        _GOVERNANCE_CTX = load_governance_startup()
+    return _GOVERNANCE_CTX
 
 HTML = UI_DIR / "owner.html"
 _SESSION_COOKIE = "wolf_intelligence_session"
@@ -161,13 +177,33 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, json.dumps(slim).encode(), "application/json")
             return
         if path == "/api/health":
+            port = self._port()
             payload = {
                 "ok": True,
                 "service": "wolf-intelligence-owner-ui",
-                "port": OWNER_UI_PORT,
+                "port": port,
                 "pid": os.getpid(),
-                "how_to_open": f"http://{OWNER_UI_HOST}:{OWNER_UI_PORT}/",
+                "how_to_open": f"http://{OWNER_UI_HOST}:{port}/",
                 "board_auth": "token",
+            }
+            self._send(200, json.dumps(payload).encode(), "application/json")
+            return
+        if path == "/api/governance/status":
+            if not board_authorized(self.headers):
+                self._send(401, b'{"ok":false,"error":"unauthorized"}', "application/json")
+                return
+            ctx = governance_ctx()
+            pl = ctx["policy_load"]
+            tightening = ctx["tightening"]
+            payload = {
+                "ok": True,
+                "policy_mode": pl.mode,
+                "policy_sha256": pl.sha256,
+                "policy_sha256_prefix": pl.sha256[:12] if pl.sha256 else "",
+                "policy_version": (pl.policy or {}).get("version"),
+                "policy_id": (pl.policy or {}).get("policy_id"),
+                "capacity": ctx["capacity"],
+                "grok_routing_penalty": tightening.get("grok_routing_penalty", 0.0),
             }
             self._send(200, json.dumps(payload).encode(), "application/json")
             return
@@ -232,6 +268,21 @@ class Handler(BaseHTTPRequestHandler):
             item = work_items.get(wid)
             self._send(200, json.dumps({"ok": True, "item": {"id": wid, "state": item["state"]}}).encode(), "application/json")
             return
+        if path == "/api/governance/decide":
+            from .allocation import decide, LedgerView
+            from .imbalance import check_imbalance
+            ctx = governance_ctx()
+            dec = decide(
+                body,
+                policy_load=ctx["policy_load"],
+                capacity=ctx["capacity"],
+                ledger_view=LedgerView(),
+                now=body.get("now"),
+                record=True,
+            )
+            check_imbalance(ctx["policy_load"], LedgerView(), now=body.get("now"))
+            self._send(200, json.dumps({"ok": True, "decision": dec.to_dict()}).encode(), "application/json")
+            return
         self._send(404, b"not found", "text/plain")
 
 
@@ -243,14 +294,28 @@ def main() -> int:
     if OWNER_UI_HOST != "127.0.0.1":
         print("OWNER_UI refusing non-loopback bind", flush=True)
         return 2
+    try:
+        port = owner_ui_port()
+    except ValueError as exc:
+        print(f"OWNER_UI {exc}", flush=True)
+        return 2
     ensure_dirs()
     AUDIT_DIR.mkdir(parents=True, exist_ok=True)
+    ctx = load_governance_startup()
+    pl = ctx["policy_load"]
+    cap = ctx["capacity"]
+    sha_prefix = pl.sha256[:12] if pl.sha256 else "none"
+    grok_state = cap.get("grok_state", "UNKNOWN")
+    print(
+        f"GOVERNANCE policy={sha_prefix} mode={pl.mode} grok_state={grok_state}",
+        flush=True,
+    )
     pid_path = AUDIT_DIR / "owner-ui.pid"
     pid_path.write_text(str(os.getpid()) + "\n", encoding="utf-8")
-    server = ReuseHTTPServer((OWNER_UI_HOST, OWNER_UI_PORT), Handler)
+    server = ReuseHTTPServer((OWNER_UI_HOST, port), Handler)
     post_mode = "auth" if ui_token() else "read-only"
     print(
-        f"OWNER_UI http://{OWNER_UI_HOST}:{OWNER_UI_PORT}/ pid={os.getpid()} post={post_mode}",
+        f"OWNER_UI http://{OWNER_UI_HOST}:{port}/ pid={os.getpid()} post={post_mode}",
         flush=True,
     )
     try:

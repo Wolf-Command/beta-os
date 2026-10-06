@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WI Worker Allocation Policy",
+  "type": "object",
+  "required": [
+    "version",
+    "policy_id",
+    "effective_from",
+    "metered_fallback",
+    "paid_spend",
+    "on_demand_policy",
+    "grok_worker_id",
+    "grok_reason_codes",
+    "protected_classes",
+    "task_families",
+    "capacity_thresholds",
+    "grok_reserve",
+    "imbalance"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "version": {"type": "integer", "minimum": 1},
+    "policy_id": {"type": "string", "minLength": 1},
+    "effective_from": {"type": "string", "minLength": 1},
+    "metered_fallback": {"const": "NEVER"},
+    "paid_spend": {"const": "OFF"},
+    "on_demand_policy": {"const": "NEVER_ENABLE"},
+    "grok_worker_id": {"type": "string", "minLength": 1},
+    "grok_reason_codes": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "BENCHMARK_SELECTED",
+          "REQUIRES_GROK_ENVIRONMENT",
+          "OTHERS_UNAVAILABLE",
+          "EXPLICIT_JUSTIFIED"
+        ]
+      }
+    },
+    "grok_justification_min_length": {"type": "integer", "minimum": 1, "maximum": 1000},
+    "protected_classes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "task_families": {
+      "type": "object",
+      "required": ["engineering", "reasoning_review", "protected", "operations"],
+      "properties": {
+        "engineering": {"type": "array", "items": {"type": "string"}},
+        "reasoning_review": {"type": "array", "items": {"type": "string"}},
+        "protected": {"type": "array", "items": {"type": "string"}},
+        "operations": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "quality_floors": {
+      "type": "object",
+      "required": ["default"],
+      "properties": {
+        "default": {"type": "number", "minimum": 0, "maximum": 1},
+        "by_task_class": {"type": "object"}
+      }
+    },
+    "tie_band_quality_delta": {"type": "number", "minimum": 0, "maximum": 1},
+    "capacity_thresholds": {
+      "type": "object",
+      "required": ["default"],
+      "properties": {
+        "default": {"$ref": "#/$defs/thresholds"},
+        "grok_bot_sub": {"$ref": "#/$defs/thresholds"}
+      }
+    },
+    "capacity_decay": {
+      "type": "object",
+      "properties": {
+        "decay_pct_per_hour": {"type": "number", "minimum": 0, "maximum": 100},
+        "max_observation_age_hours": {"type": "number", "minimum": 0, "maximum": 8760},
+        "unknown_state": {"type": "object"}
+      }
+    },
+    "grok_reserve": {
+      "type": "object",
+      "required": ["protected_classes", "allowed_reason_codes_by_state"],
+      "properties": {
+        "protected_classes": {"type": "array", "minItems": 1},
+        "allowed_reason_codes_by_state": {
+          "type": "object",
+          "required": ["NORMAL", "CONSERVE", "RESERVE", "EXHAUSTED"]
+        }
+      }
+    },
+    "imbalance": {
+      "type": "object",
+      "required": ["window_hours", "min_samples", "max_grok_share_delegatable"],
+      "properties": {
+        "window_hours": {"type": "number", "minimum": 1, "maximum": 168},
+        "window_decisions": {"type": "integer", "minimum": 1, "maximum": 10000},
+        "min_samples": {"type": "integer", "minimum": 1, "maximum": 10000},
+        "max_grok_share_delegatable": {"type": "number", "minimum": 0, "maximum": 1},
+        "penalty_step": {"type": "number", "minimum": 0, "maximum": 1},
+        "penalty_max": {"type": "number", "minimum": 0, "maximum": 10}
+      }
+    },
+    "grok_routing_penalty_default": {"type": "number", "minimum": 0, "maximum": 10},
+    "grok_routing_penalty_step": {"type": "number", "minimum": 0, "maximum": 1},
+    "grok_routing_penalty_max": {"type": "number", "minimum": 0, "maximum": 10}
+  },
+  "$defs": {
+    "thresholds": {
+      "type": "object",
+      "required": ["conserve_at", "reserve_at", "exhausted_at"],
+      "properties": {
+        "conserve_at": {"type": "number", "minimum": 0, "maximum": 100},
+        "reserve_at": {"type": "number", "minimum": 0, "maximum": 100},
+        "exhausted_at": {"type": "number", "minimum": 0, "maximum": 100}
+      }
+    }
+  }
+}
