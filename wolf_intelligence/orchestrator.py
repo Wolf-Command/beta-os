@@ -1372,8 +1372,10 @@ def _finish_dispatch(
                 parent_item = dict(items_now[parent])
                 if int(parent_item.get("attempt") or 0) < int(parent_item.get("max_attempts") or 1):
                     parent_item["status"] = "QUEUED"
-                    parent_item["updated_at"] = _now_iso(now)
-                    parent_updates[parent] = parent_item
+                else:
+                    parent_item["status"] = "FAILED"
+                parent_item["updated_at"] = _now_iso(now)
+                parent_updates[parent] = parent_item
             updated["status"] = "FAILED"
         elif status in ("FAILED", "TIMED_OUT") and int(updated.get("attempt") or 0) < int(updated.get("max_attempts") or 1):
             updated["status"] = "QUEUED"

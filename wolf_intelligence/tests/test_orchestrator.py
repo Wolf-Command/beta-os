@@ -218,6 +218,30 @@ class OrchestratorTestCase(unittest.TestCase):
         self.assertEqual(orch.show("wi-build-2")["status"], "CLOSED")
         self.assertEqual(orch.show("wi-build-2-review-2")["status"], "CLOSED")
 
+    def test_review_fail_parent_terminal_when_no_attempts_left(self) -> None:
+        cfg = orch.load_config()
+        cfg["worker_cmds"]["codex_sub"][3] = "FAIL"
+        cfg["worker_cmds"]["codex_sub"][4] = "review rejected"
+        orch.save_config(cfg)
+        orch.submit(
+            {
+                "id": "wi-build-stuck",
+                "kind": "build",
+                "spec": {},
+                "acceptance": "x",
+                "reviewer_gate": True,
+                "timeout_s": 5,
+                "max_attempts": 1,
+            },
+            now="2026-10-06T12:10:00+08:00",
+        )
+        orch.run_once(now="2026-10-06T12:10:01+08:00")
+        orch.run_once(now="2026-10-06T12:10:02+08:00")
+        self.assertEqual(orch.show("wi-build-stuck")["status"], "FAILED")
+        self.assertEqual(orch.show("wi-build-stuck-review-1")["status"], "FAILED")
+        out = orch.run_until_idle(now="2026-10-06T12:10:03+08:00")
+        self.assertEqual(out["pending"], 0)
+
     def test_completion_record_schema(self) -> None:
         self._submit_build(reviewer_gate=False)
         orch.run_once(now="2026-10-06T12:00:01+08:00")

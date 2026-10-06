@@ -267,10 +267,11 @@ class AdapterGateTests(unittest.TestCase):
         os.environ.pop(LIVE_SUBMIT_ENV, None)
         os.environ.pop(MAX_COST_ENV, None)
         os.environ.pop(PROVIDER_MOCK_ENV, None)
-        os.environ.pop("OPENAI_API_KEY", None)
-        os.environ.pop("ANTHROPIC_API_KEY", None)
-        os.environ.pop("GEMINI_API_KEY", None)
         os.environ.pop("WOLF_INTELLIGENCE_MAX_DAILY_COST_USD", None)
+        from wolf_intelligence.adapters.subscription_cli import ALL_PROVIDER_KEYS
+
+        for key in ALL_PROVIDER_KEYS:
+            os.environ.pop(key, None)
 
     def tearDown(self) -> None:
         os.environ.clear()
