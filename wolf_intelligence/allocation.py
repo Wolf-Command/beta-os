@@ -201,9 +201,33 @@ def _established_install() -> bool:
     return False
 
 
+def _latest_valid_reset() -> tuple[float | None, datetime | None]:
+    """Penalty and timestamp from the latest owner TIGHTENING_RESET audit record."""
+    records, _ = _audit_lines()
+    reset_pen: float | None = None
+    reset_at: datetime | None = None
+    for rec in records:
+        if rec.get("event") != "TIGHTENING_RESET":
+            continue
+        actor = rec.get("actor")
+        if not isinstance(actor, str) or not actor.strip():
+            continue
+        val = rec.get("grok_routing_penalty")
+        if isinstance(val, (int, float)) and not isinstance(val, bool) and math.isfinite(val):
+            reset_pen = float(val)
+        ts = _parse_dt(rec.get("at") or rec.get("timestamp"))
+        if ts is not None:
+            reset_at = ts
+    return reset_pen, reset_at
+
+
 def _penalty_from_ledger() -> float:
+    _, reset_at = _latest_valid_reset()
     hwm = 0.0
     for rec in LedgerView().decisions():
+        ts = _parse_dt(rec.get("recorded_at"))
+        if reset_at is not None and ts is not None and ts <= reset_at:
+            continue
         pen = rec.get("grok_routing_penalty")
         if isinstance(pen, (int, float)) and not isinstance(pen, bool) and math.isfinite(pen):
             hwm = max(hwm, float(pen))
@@ -519,15 +543,6 @@ def _verify_grok_reason(
     if penalty >= hard_block_at and code != "OTHERS_UNAVAILABLE":
         return "REJECTED", "GROK_JUSTIFICATION_INVALID:penalty_hard_block"
 
-    conduct_cfg = conduct or _grok_conserve_conduct(policy)
-    if (
-        STATE_RANK.get(grok_state, 0) >= STATE_RANK["CONSERVE"]
-        and conduct_cfg.get("no_grok_when_other_qualified")
-        and eligible_non_grok
-        and code in ("BENCHMARK_SELECTED", "REQUIRES_GROK_ENVIRONMENT")
-    ):
-        return "REJECTED", "GROK_CONSERVE_CONDUCT:no_grok_when_other_qualified"
-
     if code == "BENCHMARK_SELECTED":
         band = _tie_band_workers(bench_class, routing, delta)
         if grok not in band:
@@ -765,6 +780,14 @@ def decide(
             elif grok_state == "RESERVE":
                 scored["eligible"] = False
                 scored["exclusion_reason"] = "grok_reserve_substantive_blocked"
+            elif (
+                grok_conserve_or_stricter
+                and conduct_cfg.get("no_grok_when_other_qualified")
+                and eligible_non_grok
+                and grok_code != "OTHERS_UNAVAILABLE"
+            ):
+                scored["eligible"] = False
+                scored["exclusion_reason"] = "GROK_CONSERVE_CONDUCT:no_grok_when_other_qualified"
             else:
                 verdict, detail = _verify_grok_reason(
                     grok_code, grok_just, bench_class, policy, routing,
@@ -865,9 +888,15 @@ def decide(
                 req_row = next((c for c in candidates_scored if c["worker"] == grok_id), None)
                 excl = (req_row or {}).get("exclusion_reason") or "grok_ineligible"
                 requested_worker_rejected = excl
-                if ranked_eligible and _k2_fallback_allowed(excl):
+                if (
+                    ranked_eligible
+                    and penalty < hard_block_at
+                    and _k2_fallback_allowed(excl)
+                ):
                     selected = ranked_eligible[0]["worker"]
                     decision_type = "DISPATCH"
+                    grok_verdict = "REJECTED"
+                    requested_worker_rejected = excl
                 else:
                     decision_type = "QUEUE"
         elif policy_load.mode == "FAIL_CLOSED" and canonical_requested not in HARDCODED_FAIL_CLOSED_ORDER:
@@ -935,6 +964,9 @@ def decide(
         elif decision_type in ("QUEUE", "DENY") and selected != grok_id:
             grok_row = next((c for c in candidates_scored if c["worker"] == grok_id), None)
             audit_detail = (grok_row or {}).get("exclusion_reason") or f"grok_state:{grok_state}"
+        elif decision_type == "DISPATCH" and selected != grok_id and requested == grok_id:
+            grok_row = next((c for c in candidates_scored if c["worker"] == grok_id), None)
+            audit_detail = (grok_row or {}).get("exclusion_reason") or requested_worker_rejected
         if audit_detail:
             _audit_grok_rejection(wi_id, task_class, grok_code, audit_detail)
 
@@ -1001,8 +1033,26 @@ def decide(
     return dec
 
 
+def _ensure_tightening_baseline(policy: dict[str, Any] | None) -> None:
+    """Persist default penalty on first decision so restart sees consistent state."""
+    if GOVERNANCE_TIGHTENING_PATH.exists():
+        return
+    default_pen, _ = _penalty_bounds(policy)
+    data = {"grok_routing_penalty": default_pen}
+    append_audit_event(
+        "TIGHTENING_SAVE",
+        {
+            "reason": "first_decision_baseline",
+            "grok_routing_penalty": default_pen,
+        },
+    )
+    _atomic_write_tightening(data)
+
+
 def record_decision(decision: Decision, now: datetime | str | None = None) -> dict[str, Any]:
     ensure_dirs()
+    pl = load_policy()
+    _ensure_tightening_baseline(pl.policy if pl.mode == "ENFORCED" else None)
     if isinstance(now, datetime):
         ts = now.isoformat(timespec="seconds")
     elif isinstance(now, str):
@@ -1013,6 +1063,19 @@ def record_decision(decision: Decision, now: datetime | str | None = None) -> di
     rec["recorded_at"] = ts
     with GOVERNANCE_DISPATCH_LEDGER_PATH.open("a", encoding="utf-8") as f:
         f.write(json.dumps(rec, ensure_ascii=False, sort_keys=True) + "\n")
+    if decision.completion_event_format == "COMPACT":
+        try:
+            from . import events
+
+            payload = {
+                "decision": decision.decision,
+                "selected_worker": decision.selected_worker,
+                "task_class": decision.task_class,
+                "format": "COMPACT",
+            }
+            events.emit("governance.decision_recorded", payload, work_item_id=decision.work_item_id)
+        except ValueError:
+            pass
     return rec
 
 
@@ -1107,8 +1170,7 @@ def decide_and_record(
 
     pl = load_policy()
     server_now = datetime.now(TZ)
-    cap_now = now if now is not None else server_now
-    cap = capacity_snapshot(cap_now, policy=pl.policy, policy_mode=pl.mode)
+    cap = capacity_snapshot(server_now, policy=pl.policy, policy_mode=pl.mode)
     dec = decide(
         work_item,
         policy_load=pl,

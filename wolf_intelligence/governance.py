@@ -308,6 +308,27 @@ def validate_hardcoded_safety_invariants(policy: dict[str, Any]) -> list[str]:
     delta = policy.get("tie_band_quality_delta")
     if delta is not None and (not _is_finite_number(delta) or not (0 <= delta <= 1)):
         errors.append("invariant: tie_band_quality_delta must be finite in [0, 1]")
+    scope = policy.get("worker_execution_scope") or {}
+    if isinstance(scope, dict):
+        hardcoded = fail_closed_policy().get("worker_execution_scope") or {}
+
+        def _scope_path(value: Any) -> Path:
+            return Path(os.path.expanduser(str(value))).resolve()
+
+        for key in ("isolated_sandbox_root", "zdotdir_empty"):
+            val = scope.get(key)
+            expected = hardcoded.get(key)
+            if val is None or expected is None:
+                continue
+            if _scope_path(val) != _scope_path(expected):
+                errors.append(f"invariant: worker_execution_scope.{key} is pinned")
+        globs = scope.get("allowed_workspace_globs")
+        if globs == ["~"] or globs == ["/*"]:
+            errors.append("invariant: worker_execution_scope.allowed_workspace_globs cannot widen to ~")
+        denied = scope.get("denied_paths") or []
+        beta = str(Path.home() / "beta-os")
+        if beta not in [str(Path(os.path.expanduser(str(p)))) for p in denied]:
+            errors.append("invariant: worker_execution_scope.denied_paths must include beta-os")
     return errors
 
 

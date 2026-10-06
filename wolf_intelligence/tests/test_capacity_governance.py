@@ -192,6 +192,16 @@ class TestCapacityGovernance(unittest.TestCase):
         self.assertNotEqual(d_conserve_bench.selected_worker, "grok_bot_sub")
         self.assertEqual(d_conserve_bench.grok_reason_verdict, "REJECTED")
 
+        d_conserve_explicit = _decide(
+            "coding",
+            id="c-conserve-explicit",
+            requested_worker="grok_bot_sub",
+            grok_reason="EXPLICIT_JUSTIFIED",
+            justification=just,
+        )
+        self.assertNotEqual(d_conserve_explicit.selected_worker, "grok_bot_sub")
+        self.assertEqual(d_conserve_explicit.grok_reason_verdict, "ACCEPTED")
+
         # RESERVE -> substantive never Grok but protected -> Grok
         _set_grok_pct(70.0)
         d_reserve_sub = _decide(
@@ -990,6 +1000,21 @@ class TestCapacityGovernance(unittest.TestCase):
         self.assertEqual(d.decision, "DISPATCH")
         self.assertNotEqual(d.selected_worker, "grok_bot_sub")
         self.assertIsNotNone(d.requested_worker_rejected)
+
+    def test_r1_first_decision_baseline_survives_restart(self) -> None:
+        """Fresh install: first decision writes tightening baseline; restart keeps default penalty."""
+        for p in paths.GOVERNANCE_DIR.iterdir():
+            if p.is_file():
+                p.unlink()
+        policy = load_policy().policy
+        for i in range(22):
+            dec, _ = allocation.decide_and_record({"id": f"r1-wi-{i}", "task_class": "coding"})
+            self.assertEqual(dec.decision, "DISPATCH")
+        self.assertTrue(paths.GOVERNANCE_TIGHTENING_PATH.exists())
+        pen_before = float(load_tightening(policy)["grok_routing_penalty"])
+        self.assertEqual(pen_before, 0.0)
+        pen_after = float(load_tightening(policy)["grok_routing_penalty"])
+        self.assertEqual(pen_after, 0.0)
 
 
 if __name__ == "__main__":

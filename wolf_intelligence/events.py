@@ -28,6 +28,7 @@ CANONICAL_EVENTS = frozenset(
         "dispatch.shadow_completed",
         "dispatch.shadow_failed",
         "dispatch.shadow_skipped_expensive",
+        "governance.decision_recorded",
         "worker.health_checked",
         "worker.status_reported",
         "usage.recorded",

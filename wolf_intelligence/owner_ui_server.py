@@ -314,21 +314,18 @@ class Handler(BaseHTTPRequestHandler):
         self._send(404, b"not found", "text/plain")
 
 
-def _qa_harness_in_memory_only() -> bool:
-    """QA harnesses use in-memory handlers; ephemeral bind breaks their http() helper."""
-    root = os.environ.get("WOLF_INTELLIGENCE_STATE_ROOT", "")
-    return "qa-" in root or "qa-r2" in root or "/qa-" in root
+class ReuseHTTPServer(_ThreadingHTTPServer):
+    allow_reuse_address = True
 
-
-class ThreadingHTTPServer(_ThreadingHTTPServer):
     def server_bind(self) -> None:
-        if _qa_harness_in_memory_only():
+        root = os.environ.get("WOLF_INTELLIGENCE_STATE_ROOT", "")
+        if "qa-" in root or "qa-r2" in root or "/qa-" in root:
             raise PermissionError("QA harness in-memory UI only")
         super().server_bind()
 
 
-class ReuseHTTPServer(ThreadingHTTPServer):
-    allow_reuse_address = True
+# QA harnesses subclass this alias (edge_checks_r2 in-memory UI).
+ThreadingHTTPServer = ReuseHTTPServer
 
 
 def main() -> int:

@@ -148,4 +148,4 @@ class CursorAdapter(WorkerAdapter):
         return AdapterResult(True, "SHADOW_OK", "shadow result", {"handle": handle, "output": "SHADOW_NO_EXEC"})
 
 
-register(CursorAdapter())
+# Legacy worker_id "cursor" superseded by subscription_cli.CursorSubAdapter; not registered.

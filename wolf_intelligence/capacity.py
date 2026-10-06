@@ -46,11 +46,13 @@ def _max_state(a: str, b: str) -> str:
 
 
 def _is_valid_pct(value: Any) -> bool:
-    if not isinstance(value, (int, float)) or isinstance(value, bool):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
         return False
+    if isinstance(value, int):
+        return 0 <= value <= 100
     if not math.isfinite(value):
         return False
-    return 0 <= value <= 100
+    return 0.0 <= float(value) <= 100.0
 
 
 def _load_seed() -> list[dict[str, Any]]:
@@ -61,10 +63,22 @@ def _load_seed() -> list[dict[str, Any]]:
     return list(data.get("observations") or [])
 
 
+_PERSISTED_CACHE: tuple[int, list[dict[str, Any]], bool] | None = None
+_CORRUPT_AUDITED = False
+
+
 def _load_persisted() -> tuple[list[dict[str, Any]], bool]:
+    global _PERSISTED_CACHE, _CORRUPT_AUDITED
     path = GOVERNANCE_CAPACITY_OBSERVATIONS_PATH
     if not path.exists():
+        _PERSISTED_CACHE = (0, [], False)
         return [], False
+    try:
+        mtime = path.stat().st_mtime_ns
+    except OSError:
+        return [], False
+    if _PERSISTED_CACHE is not None and _PERSISTED_CACHE[0] == mtime:
+        return _PERSISTED_CACHE[1], _PERSISTED_CACHE[2]
     out: list[dict[str, Any]] = []
     corrupt = False
     try:
@@ -79,19 +93,18 @@ def _load_persisted() -> tuple[list[dict[str, Any]], bool]:
             rec = json.loads(line)
         except json.JSONDecodeError:
             corrupt = True
-            append_audit_event(
-                "CAPACITY_OBSERVATIONS_CORRUPT",
-                {"path": str(path), "error": "json_decode", "line_prefix": line[:80]},
-            )
             continue
         if not isinstance(rec, dict):
             corrupt = True
-            append_audit_event(
-                "CAPACITY_OBSERVATIONS_CORRUPT",
-                {"path": str(path), "error": "not_object"},
-            )
             continue
         out.append(rec)
+    if corrupt and not _CORRUPT_AUDITED:
+        _CORRUPT_AUDITED = True
+        append_audit_event(
+            "CAPACITY_OBSERVATIONS_CORRUPT",
+            {"path": str(path), "error": "corrupt_lines"},
+        )
+    _PERSISTED_CACHE = (mtime, out, corrupt)
     return out, corrupt
 
 
@@ -379,7 +392,11 @@ def _pool_velocity_pairs(
 ) -> list[tuple[datetime, float]]:
     cutoff = now - timedelta(hours=window_hours)
     persisted, _ = _load_persisted()
-    obs_list = [r for r in persisted + _load_seed() if r.get("worker_id") == worker_id]
+    worker_persisted = [r for r in persisted if r.get("worker_id") == worker_id]
+    if worker_persisted:
+        obs_list = worker_persisted
+    else:
+        obs_list = [r for r in _load_seed() if r.get("worker_id") == worker_id]
     pairs: list[tuple[datetime, float]] = []
     for rec in obs_list:
         ok, _ = _validate_observation_record(rec, now)
@@ -396,13 +413,17 @@ def _pool_velocity_pairs(
     return pairs
 
 
+def _record_observed_dt(rec: dict[str, Any]) -> datetime | None:
+    return _parse_dt(rec.get("observed_at"))
+
+
 def _newest_pool_record_issue(
     worker_id: str,
     pool: str,
     now: datetime,
     max_age_h: float,
 ) -> tuple[bool, str]:
-    """Fail closed when the newest raw reading for a pool has timestamp issues."""
+    """Fail closed when any raw reading for a pool has timestamp issues."""
     persisted, _ = _load_persisted()
     records = [
         r
@@ -411,32 +432,91 @@ def _newest_pool_record_issue(
     ]
     if not records:
         return False, ""
-    newest = max(records, key=lambda r: str(r.get("observed_at") or ""))
-    ok, reason = _validate_observation_record(newest, now)
-    if not ok:
-        append_audit_event(
-            "CAPACITY_OBSERVATION_REJECTED",
-            {
-                "worker_id": worker_id,
-                "pool": pool,
-                "reason": reason,
-                "observed_at": newest.get("observed_at"),
-                "fail_closed": True,
-            },
-        )
-        return True, reason
-    observed_at = _parse_dt(newest.get("observed_at"))
-    if observed_at is None:
+
+    newest: dict[str, Any] | None = None
+    newest_at: datetime | None = None
+    earliest_at: datetime | None = None
+    valid_times: list[datetime] = []
+    for rec in records:
+        ok, reason = _validate_observation_record(rec, now)
+        if not ok:
+            append_audit_event(
+                "CAPACITY_OBSERVATION_REJECTED",
+                {
+                    "worker_id": worker_id,
+                    "pool": pool,
+                    "reason": reason,
+                    "observed_at": rec.get("observed_at"),
+                    "fail_closed": True,
+                },
+            )
+            return True, reason
+        observed_at = _record_observed_dt(rec)
+        if observed_at is None:
+            return True, "invalid_observed_at"
+        valid_times.append(observed_at)
+        if newest_at is None or observed_at > newest_at:
+            newest_at = observed_at
+            newest = rec
+        if earliest_at is None or observed_at < earliest_at:
+            earliest_at = observed_at
+
+    if newest is None or newest_at is None or earliest_at is None:
         return True, "invalid_observed_at"
-    age_h = (now - observed_at).total_seconds() / 3600.0
-    if age_h > max_age_h:
+
+    span_h = (newest_at - earliest_at).total_seconds() / 3600.0
+    slow_velocity_series = len(valid_times) >= 2 and span_h > max(max_age_h * 2.0, 48.0)
+    newest_age_h = (now - newest_at).total_seconds() / 3600.0
+    has_fresh_newest = newest_age_h <= max_age_h
+
+    if has_fresh_newest and not slow_velocity_series:
+        for rec in records:
+            observed_at = _record_observed_dt(rec)
+            if observed_at is None or observed_at >= newest_at:
+                continue
+            age_h = (now - observed_at).total_seconds() / 3600.0
+            if age_h > max_age_h:
+                append_audit_event(
+                    "CAPACITY_OBSERVATION_STALE",
+                    {
+                        "worker_id": worker_id,
+                        "pool": pool,
+                        "observed_at": rec.get("observed_at"),
+                        "age_hours": round(age_h, 4),
+                        "max_age_hours": max_age_h,
+                        "stale_pollution": True,
+                    },
+                )
+                return True, "stale_pollution"
+
+    for rec in records:
+        observed_at = _record_observed_dt(rec)
+        if observed_at is None:
+            continue
+        age_h = (now - observed_at).total_seconds() / 3600.0
+        if age_h > max_age_h:
+            if slow_velocity_series:
+                continue
+            append_audit_event(
+                "CAPACITY_OBSERVATION_STALE",
+                {
+                    "worker_id": worker_id,
+                    "pool": pool,
+                    "observed_at": rec.get("observed_at"),
+                    "age_hours": round(age_h, 4),
+                    "max_age_hours": max_age_h,
+                },
+            )
+            return True, "stale_observation"
+
+    if newest_age_h > max_age_h:
         append_audit_event(
             "CAPACITY_OBSERVATION_STALE",
             {
                 "worker_id": worker_id,
                 "pool": pool,
                 "observed_at": newest.get("observed_at"),
-                "age_hours": round(age_h, 4),
+                "age_hours": round(newest_age_h, 4),
                 "max_age_hours": max_age_h,
             },
         )
@@ -445,6 +525,7 @@ def _newest_pool_record_issue(
 
 
 def _reset_at_for_worker(worker_id: str, pool: str, pairs: list[tuple[datetime, float]]) -> datetime | None:
+    newest_at: datetime | None = None
     reset_dt: datetime | None = None
     persisted, _ = _load_persisted()
     for rec in persisted + _load_seed():
@@ -453,10 +534,58 @@ def _reset_at_for_worker(worker_id: str, pool: str, pairs: list[tuple[datetime, 
         pct_map = rec.get("included_usage_pct") or {}
         if pool not in pct_map:
             continue
+        observed = _record_observed_dt(rec)
+        if observed is None:
+            continue
         candidate = _parse_dt(rec.get("reset_at"))
-        if candidate is not None:
+        if candidate is None:
+            continue
+        if newest_at is None or observed > newest_at:
+            newest_at = observed
             reset_dt = candidate
     return reset_dt
+
+
+def _split_pairs_at_drops(pairs: list[tuple[datetime, float]]) -> list[list[tuple[datetime, float]]]:
+    if not pairs:
+        return []
+    segments: list[list[tuple[datetime, float]]] = [[pairs[0]]]
+    for i in range(1, len(pairs)):
+        t, p = pairs[i]
+        _, prev_p = pairs[i - 1]
+        if p < prev_p:
+            segments.append([(t, p)])
+        else:
+            segments[-1].append((t, p))
+    return segments
+
+
+def _steepest_slope(
+    pairs: list[tuple[datetime, float]],
+    min_span_minutes: float,
+    *,
+    enforce_min_span: bool = True,
+) -> tuple[float | None, float | None]:
+    """Return (max_pct_per_hour, span_hours) from steepest valid pairwise slope."""
+    if len(pairs) < 2:
+        return None, None
+    best_slope: float | None = None
+    best_span_h: float | None = None
+    n = len(pairs)
+    for i in range(n):
+        t0, p0 = pairs[i]
+        for j in range(i + 1, n):
+            t1, p1 = pairs[j]
+            span_h = (t1 - t0).total_seconds() / 3600.0
+            if span_h <= 0:
+                continue
+            if enforce_min_span and span_h * 60.0 < min_span_minutes:
+                continue
+            slope = (p1 - p0) / span_h
+            if best_slope is None or slope > best_slope:
+                best_slope = slope
+                best_span_h = span_h
+    return best_slope, best_span_h
 
 
 def _velocity_projection(
@@ -487,32 +616,73 @@ def _velocity_projection(
     if len(pairs) < cfg["min_points"]:
         return vel, None, None
 
-    t_earliest, p_earliest = pairs[0]
-    t_latest, p_latest = pairs[-1]
-    span_hours = (t_latest - t_earliest).total_seconds() / 3600.0
-    if span_hours <= 0 or span_hours * 60.0 < cfg["min_span_minutes"]:
+    segments = _split_pairs_at_drops(pairs)
+    active = segments[-1] if segments else pairs
+    if len(active) < cfg["min_points"]:
+        active = pairs
+
+    short_slope, _ = _steepest_slope(active, cfg["min_span_minutes"], enforce_min_span=False)
+    long_slope: float | None = None
+    if len(active) >= cfg["min_points"]:
+        t0, p0 = active[0]
+        t1, p1 = active[-1]
+        span_h = (t1 - t0).total_seconds() / 3600.0
+        if span_h > 0 and span_h * 60.0 >= cfg["min_span_minutes"]:
+            long_slope = (p1 - p0) / span_h
+
+    pct_per_hour = short_slope
+    if long_slope is not None and (pct_per_hour is None or long_slope > pct_per_hour):
+        pct_per_hour = long_slope
+    if pct_per_hour is None:
         return vel, None, None
 
-    pct_per_hour = (p_latest - p_earliest) / span_hours
     vel["pct_per_hour"] = round(pct_per_hour, 4)
     vel["pct_per_day"] = round(pct_per_hour * 24.0, 4)
 
-    hours_to_exhaustion: float | None = None
     exhausted_at = float(thresholds["exhausted_at"])
-    if pct_per_hour > 0:
-        hours_to_exhaustion = (exhausted_at - latest_pct) / pct_per_hour
+    reset_dt = _parse_dt(reset_at) or _reset_at_for_worker(worker_id, pool, pairs)
+
+    def _hours_for_slope(slope: float | None) -> float | None:
+        if slope is None or slope <= 0:
+            return None
+        hte = (exhausted_at - latest_pct) / slope
+        return hte if hte > 0 else None
+
+    def _projected_for_slope(slope: float | None) -> bool | None:
+        if slope is None:
+            return None
+        if slope <= 0:
+            return False
+        hte = _hours_for_slope(slope)
+        if hte is None:
+            return False
+        if reset_dt is None or reset_dt <= now:
+            return True
+        exhaustion_at = now + timedelta(hours=hte)
+        return exhaustion_at < reset_dt
+
+    projected_short = _projected_for_slope(short_slope)
+    projected_long = _projected_for_slope(long_slope)
+    if projected_short is None and projected_long is None:
+        projected = None
+    elif projected_short is True or projected_long is True:
+        projected = True
+    elif projected_short is False and projected_long is False:
+        projected = False
+    else:
+        projected = projected_short if projected_long is None else projected_long
+
+    short_hours = _hours_for_slope(short_slope)
+    long_hours = _hours_for_slope(long_slope)
+    hour_candidates = [h for h in (short_hours, long_hours) if h is not None]
+    hours_to_exhaustion = min(hour_candidates) if hour_candidates else None
+    if hours_to_exhaustion is not None:
         vel["hours_to_exhaustion"] = round(hours_to_exhaustion, 4)
 
-    reset_dt = _parse_dt(reset_at) or _reset_at_for_worker(worker_id, pool, pairs)
-    if reset_dt is None:
-        reset_dt = t_earliest + timedelta(hours=cfg["assumed_reset_hours_if_unknown"])
-
-    projected: bool | None = None
-    if hours_to_exhaustion is not None and hours_to_exhaustion > 0:
-        exhaustion_at = now + timedelta(hours=hours_to_exhaustion)
-        projected = exhaustion_at < reset_dt
-    elif pct_per_hour <= 0:
-        projected = False
+    vel["velocity_state"] = _max_state(
+        _velocity_state_from_projection(projected_short, short_hours, policy),
+        _velocity_state_from_projection(projected_long, long_hours, policy),
+    )
 
     return vel, projected, hours_to_exhaustion
 
@@ -540,6 +710,28 @@ def _velocity(worker_id: str, pool: str | None, now: datetime, policy: dict[str,
     thresholds = _worker_thresholds(worker_id, effective_policy)
     vel, _, _ = _velocity_projection(worker_id, pool, now, effective_policy, thresholds, None, None)
     return vel
+
+
+def _observation_records_for_worker(worker_id: str) -> list[dict[str, Any]]:
+    persisted, _ = _load_persisted()
+    worker_persisted = [r for r in persisted if r.get("worker_id") == worker_id]
+    if worker_persisted:
+        return worker_persisted
+    return [r for r in _load_seed() if r.get("worker_id") == worker_id]
+
+
+def _peak_raw_pct(worker_id: str, pool: str, now: datetime) -> float | None:
+    peak: float | None = None
+    for rec in _observation_records_for_worker(worker_id):
+        ok, _ = _validate_observation_record(rec, now)
+        if not ok:
+            continue
+        pct_map = rec.get("included_usage_pct") or {}
+        if pool not in pct_map or not _is_valid_pct(pct_map[pool]):
+            continue
+        val = float(pct_map[pool])
+        peak = val if peak is None else max(peak, val)
+    return peak
 
 
 def _effective_pct(
@@ -697,7 +889,9 @@ def worker_capacity_record(
         timestamp_issue, _ = _newest_pool_record_issue(worker_id, pool, now, max_age_h)
 
     effective = _effective_pct(observed_pct, observed_at, now, decay_rate)
-    state = _state_from_pct(effective, thresholds)
+    peak_raw = _peak_raw_pct(worker_id, pool, now) if pool else None
+    state_pct = max(effective, peak_raw) if peak_raw is not None else effective
+    state = _state_from_pct(state_pct, thresholds)
 
     if observed_at:
         age_h = (now - observed_at).total_seconds() / 3600.0
@@ -716,7 +910,9 @@ def worker_capacity_record(
         effective,
         obs.get("reset_at"),
     )
-    vel_state = _velocity_state_from_projection(projected, hours_to_exhaustion, policy)
+    vel_state = vel.pop("velocity_state", None) or _velocity_state_from_projection(
+        projected, hours_to_exhaustion, policy
+    )
     state = _max_state(state, vel_state)
 
     if worker_id == policy.get("grok_worker_id", GROK_WORKER_ID) and not grok_avail:
@@ -780,7 +976,9 @@ def capacity_snapshot(
             rec["state"] = _max_state(rec.get("state", "NORMAL"), "CONSERVE")
             if wid == grok_id:
                 rec["state"] = _max_state(rec["state"], "RESERVE")
-        workers[grok_id]["state"] = _max_state(workers.get(grok_id, {}).get("state", "CONSERVE"), "RESERVE")
+        grok_rec = workers.get(grok_id)
+        if grok_rec is not None:
+            grok_rec["state"] = _max_state(grok_rec.get("state", "CONSERVE"), "RESERVE")
     grok_id = effective_policy.get("grok_worker_id", GROK_WORKER_ID)
     return {
         "at": now_dt.isoformat(timespec="seconds"),
